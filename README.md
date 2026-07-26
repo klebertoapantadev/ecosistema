@@ -5,7 +5,7 @@ Monorepo para las 6 aplicaciones de Tranqi, FastFix Home y Tinkay, sobre un stac
 ## Empezar aquí
 
 1. [`gobernanza/manuales/habilitar-ambiente.md`](gobernanza/manuales/habilitar-ambiente.md) — cómo levantar el entorno de desarrollo.
-2. [`CLAUDE.md`](CLAUDE.md) — reglas obligatorias para cualquier cambio, humano o agente.
+2. [`AGENTS.md`](AGENTS.md) — reglas obligatorias para cualquier cambio, humano o agente de IA (Claude Code, Copilot, Antigravity, Cursor, Windsurf — todos lo leen nativamente).
 3. [`gobernanza/arquitectura/marco-de-trabajo.md`](gobernanza/arquitectura/marco-de-trabajo.md) — cómo se construye cada producto.
 
 ## Estructura
