@@ -17,6 +17,12 @@ Ver el detalle completo en [`arquitectura/marco-de-trabajo.md`](../arquitectura/
 - **Se comparte:** lógica de dominio, validaciones Zod, acceso a datos, hooks de estado, primitivas de UI *sin estilo* (comportamiento, no apariencia).
 - **No se comparte:** componentes visuales terminados, layout, tipografía, color, identidad de marca. Cada producto tiene estilo propio.
 
+## 1.1. Precedencia: lo común se especifica antes que lo particular
+
+Antes de escribir la especificación funcional o técnica de un producto, revisar [`gobernanza/productos/plataforma/`](../productos/plataforma/especificacion-funcional.md). Identidad, MFA, roles, chat con agentes de IA (ARIA), auditoría y facturación son comportamiento **de plataforma**, no de un producto — se documentan una sola vez ahí, con código `PLT-xxx`.
+
+La especificación de un producto **nunca redefine** estos comportamientos: los referencia por código y documenta solo lo que agrega o lo que es distinto (ej. "qué flujo de Tranqi exige MFA" es específico de Tranqi; "cómo funciona MFA" es de plataforma). Si dos productos necesitan una variante genuinamente distinta de algo común, se corrige la especificación de plataforma — no se bifurca en cada producto.
+
 ## 2. Estructura de un módulo de negocio (obligatoria)
 
 Toda entidad de dominio —un caso judicial, una solicitud de servicio, un pedido— sigue exactamente esta forma dentro de `apps/{producto}/modulos/{entidad}/`:

@@ -10,6 +10,7 @@ Monorepo (Turborepo + pnpm) para 6 aplicaciones sobre 3 negocios (Tranqi, FastFi
 - [`gobernanza/estandares/00-nomenclatura-base-datos.md`](gobernanza/estandares/00-nomenclatura-base-datos.md) — obligatorio para cualquier tabla o columna nueva.
 - [`gobernanza/estandares/01-convenciones-codificacion.md`](gobernanza/estandares/01-convenciones-codificacion.md) — estructura de módulo, capas, manejo de errores.
 - [`gobernanza/politicas/seguridad-y-datos.md`](gobernanza/politicas/seguridad-y-datos.md) — RLS, MFA, cifrado. No opcional.
+- [`gobernanza/productos/plataforma/especificacion-funcional.md`](gobernanza/productos/plataforma/especificacion-funcional.md) — identidad, MFA, roles, chat ARIA, auditoría, facturación. Antes de tocar cualquiera de estos temas en un producto, verificar si ya está resuelto aquí (código `PLT-xxx`).
 
 ## Reglas que no se negocian
 
