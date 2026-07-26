@@ -23,6 +23,7 @@ responsable: Kleber Toapanta
 | Data masking | `seg_enmascarar_texto()` en PL/pgSQL | Ofuscamiento dinámico de datos sensibles en lectura. |
 | Autenticación y MFA | Supabase Auth: Google OAuth 2.0 + correo/contraseña + biometría nativa. TOTP obligatorio para procesos críticos. | Ver detalle de flujo por tipo de app en `politicas/seguridad-y-datos.md` §3. |
 | IA para análisis documental | API de Claude (`claude-opus-5` síntesis, `claude-sonnet-5` extracción rutinaria) | Gemini permanece disponible para casos de uso de producto; la elección de motor por flujo se documenta como ADR. |
+| Agentes conversacionales de producto | ARIA (vía `packages/agentes-ia` + `aria-mcp`) | Motor estándar de chat/buddie para todo el ecosistema. Un producto puede tener agentes distintos por rol. Credenciales server-only, resueltas vía `comun_agentes`. Ver [ADR-0002](adr/0002-aria-como-estandar-de-agentes-conversacionales.md). |
 | Gestión de secretos | Gestor externo (Doppler / Infisical) | El ecosistema no almacena valores de credenciales en base de datos propia. Ver `politicas/gestion-credenciales.md`. |
 | Gestión de trabajo | GitHub Issues + GitHub Projects (v2) | Un solo Project, campos personalizados por producto/tipo/estado. |
 

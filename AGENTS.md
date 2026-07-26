@@ -21,6 +21,7 @@ Monorepo (Turborepo + pnpm) para 6 aplicaciones sobre 3 negocios (Tranqi, FastFi
 6. **Rol ≠ capacidad.** Un rol en `seg_membresia` no habilita acceso si el proceso de negocio exige un estado adicional (ej. verificación aprobada). Verificar el estado real en la política RLS.
 7. **Nomenclatura de base de datos**: prefijo de tabla de 3 letras, prefijo de columna por entidad, PK `uuid`, secuencial legible, columna JSONB `_detalle_*`. Ver el estándar antes de crear cualquier tabla.
 8. **Si un PR cambia el comportamiento descrito en un artefacto de `gobernanza/`, el PR actualiza ese artefacto.**
+9. **Todo chat o agente conversacional de producto usa `packages/agentes-ia`.** Ninguna app reimplementa su propio proxy hacia ARIA. Ver [ADR-0002](gobernanza/arquitectura/adr/0002-aria-como-estandar-de-agentes-conversacionales.md).
 
 ## Comandos del proyecto
 
@@ -48,7 +49,7 @@ gobernanza/     Estándares, arquitectura, políticas, manuales, especificacione
 
 | Esquema | Propietario | Prefijo de tabla |
 | :--- | :--- | :--- |
-| `comun_seguridad`, `comun_auditoria`, `comun_facturacion`, `comun_catalogo` | Plataforma | `seg_`, `aud_`, `fac_`, `cat_` |
+| `comun_seguridad`, `comun_auditoria`, `comun_facturacion`, `comun_catalogo`, `comun_agentes` | Plataforma | `seg_`, `aud_`, `fac_`, `cat_`, `agc_` |
 | `tranqui_legal` | Tranqi | `trq_` |
 | `fastfix_mantenimiento` | FastFix Home | `ffh_` |
 | `tinkay_floristeria` | Tinkay | `tnk_` |
