@@ -9,3 +9,6 @@ dist/
 supabase/.branches/
 supabase/.temp/
 *.log
+
+.vercel
+.env*
