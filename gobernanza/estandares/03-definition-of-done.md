@@ -15,6 +15,7 @@ Un issue no pasa a `Hecho` en el GitHub Project si falta alguno de estos puntos 
 - [ ] CI verde: build, lint, tipos, verificaciones de conformidad de nomenclatura.
 - [ ] PR revisado y aprobado (CODEOWNERS si toca `comun_*`, `supabase/migrations/**` o `packages/auth/**`).
 - [ ] Sin `service_role` fuera de `supabase/functions/`.
+- [ ] `pnpm audit --audit-level=high` en verde; sin dependencias de producción con rango flotante (`^`/`~`). Ver [`politicas/seguridad-dependencias.md`](../politicas/seguridad-dependencias.md).
 
 ## Si el cambio toca base de datos
 

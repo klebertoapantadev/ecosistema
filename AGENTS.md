@@ -22,6 +22,7 @@ Monorepo (Turborepo + pnpm) para 6 aplicaciones sobre 3 negocios (Tranqi, FastFi
 7. **Nomenclatura de base de datos**: prefijo de tabla de 3 letras, prefijo de columna por entidad, PK `uuid`, secuencial legible, columna JSONB `_detalle_*`. Ver el estándar antes de crear cualquier tabla.
 8. **Si un PR cambia el comportamiento descrito en un artefacto de `gobernanza/`, el PR actualiza ese artefacto.**
 9. **Todo chat o agente conversacional de producto usa `packages/agentes-ia`.** Ninguna app reimplementa su propio proxy hacia ARIA. Ver [ADR-0002](gobernanza/arquitectura/adr/0002-aria-como-estandar-de-agentes-conversacionales.md).
+10. **Ninguna dependencia de producción usa rangos flotantes (`^`, `~`).** Versión exacta fijada; las actualizaciones llegan vía Dependabot. Ver [`politicas/seguridad-dependencias.md`](gobernanza/politicas/seguridad-dependencias.md).
 
 ## Comandos del proyecto
 

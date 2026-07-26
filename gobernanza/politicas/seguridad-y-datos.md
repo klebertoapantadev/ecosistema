@@ -8,6 +8,8 @@ responsable: Kleber Toapanta
 
 # Política de Seguridad y Datos
 
+Para vulnerabilidades de dependencias, SLA de parcheo y el nivel de referencia OWASP ASVS por producto, ver [`seguridad-dependencias.md`](seguridad-dependencias.md).
+
 ## 1. Row Level Security
 
 RLS habilitado en el 100% de las tablas, sin excepciones temporales. Ninguna tabla llega a `main` sin política definida — ver [Definition of Done](../estandares/03-definition-of-done.md).
