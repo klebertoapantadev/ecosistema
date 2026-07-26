@@ -1,0 +1,65 @@
+name: Requerimiento funcional
+description: Nueva funcionalidad o cambio de comportamiento en un producto del ecosistema
+title: "[CODIGO] "
+labels: []
+body:
+  - type: dropdown
+    id: producto
+    attributes:
+      label: Producto
+      options:
+        - Tranqi
+        - FastFix Home
+        - Tinkay
+        - Plataforma (comun_*)
+    validations:
+      required: true
+  - type: dropdown
+    id: app
+    attributes:
+      label: App
+      options:
+        - web
+        - app-cliente
+        - app-abogado
+        - base-datos
+        - n/a
+    validations:
+      required: true
+  - type: dropdown
+    id: prioridad
+    attributes:
+      label: Prioridad (MoSCoW)
+      options:
+        - Must
+        - Should
+        - Could
+        - "Won't"
+    validations:
+      required: true
+  - type: input
+    id: esquema
+    attributes:
+      label: Esquema de base de datos afectado
+      placeholder: "tranqui_legal, comun_seguridad, n/a"
+  - type: textarea
+    id: descripcion
+    attributes:
+      label: Descripción
+      description: Qué necesidad funcional cubre, en lenguaje de negocio.
+    validations:
+      required: true
+  - type: textarea
+    id: criterios
+    attributes:
+      label: Criterios de aceptación
+      value: |
+        - [ ]
+        - [ ]
+    validations:
+      required: true
+  - type: input
+    id: origen
+    attributes:
+      label: Origen
+      placeholder: "Reunión del 2026-07-20 / decisión de negocio / bug reportado"

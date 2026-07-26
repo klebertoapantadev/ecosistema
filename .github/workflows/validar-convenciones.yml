@@ -1,0 +1,22 @@
+name: Validar convenciones
+
+# Pendiente de implementar en Sprint 0 (tareas 0.2 y 0.6 del plan del Entregable 1),
+# una vez existan migraciones reales contra las que correr las verificaciones.
+# Debe bloquear el PR si detecta:
+#   - Tabla nueva sin trigger aud_fn_auditar_tabla()
+#   - Tabla nueva con RLS deshabilitado
+#   - Columna que no respeta el prefijo de 3 letras de su tabla
+#   - Esquema de negocio nuevo sin entrada en gobernanza/productos/
+# Ver gobernanza/estandares/00-nomenclatura-base-datos.md §4
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "supabase/migrations/**"
+
+jobs:
+  placeholder:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Workflow pendiente de implementación — ver comentario en este archivo."

@@ -1,0 +1,27 @@
+name: ADR (decisión de arquitectura)
+description: Registrar una decisión de arquitectura que afecta a más de un producto
+title: "[ADR] "
+labels: []
+body:
+  - type: textarea
+    id: contexto
+    attributes:
+      label: Contexto
+      description: Qué problema o disyuntiva obliga a decidir.
+    validations:
+      required: true
+  - type: textarea
+    id: decision
+    attributes:
+      label: Decisión propuesta
+    validations:
+      required: true
+  - type: textarea
+    id: alternativas
+    attributes:
+      label: Alternativas evaluadas y por qué no se eligieron
+  - type: textarea
+    id: consecuencias
+    attributes:
+      label: Consecuencias
+      description: Qué se gana, qué se sacrifica, qué queda pendiente.
