@@ -1,7 +1,7 @@
 ---
 tipo: esp_funcional
 estado: vigente
-version: 1.6
+version: 1.7
 fecha: 2026-07-27
 responsable: Kleber Toapanta
 ---
@@ -58,19 +58,40 @@ Un usuario posee una **única identidad base** en todo el ecosistema (`comun_seg
 ## PLT-002 — Autenticación Multifactor (MFA) para Procesos Críticos y Reseteo de Credenciales
 
 ### Descripción
-Implementa la autenticación multifactor basada en TOTP (compatible con Google Authenticator / Authy) mediante Supabase Auth para proteger transacciones irreversibles o envíos de datos sensibles, garantizando enrolamiento oportuno y flujos de recuperación accesibles.
+Implementa la autenticación multifactor basada en TOTP (compatible con Google Authenticator / Authy) mediante Supabase Auth para proteger transacciones irreversibles o envíos de datos sensibles, permitiendo la gestión autónoma del usuario en su panel y garantizando flujos de enrolamiento y recuperación accesibles.
 
 ### Reglas de Negocio
-1. **MFA No Bloqueante en Navegación ni Registro:** El MFA no es obligatorio para registrarse, iniciar sesión, navegar o consultar datos.
-2. **Enrolamiento y Disparo de MFA Ante la Primera Invocación Crítica:**
-   - El autenticador TOTP se debe configurar/enrolar **exclusivamente ante la primera invocación a un proceso crítico**.
-   - Si el usuario nunca ejecuta una acción crítica, nunca se le interrumpe para enrolar MFA.
-3. **Procesos Críticos Comunes y Específicos:**
+1. **MFA No Bloqueante en Navegación Ordinaria ni Registro:** El MFA no es obligatorio para registrarse, iniciar sesión (en su modalidad por defecto), navegar o consultar datos.
+2. **Configuración y Gestión Autónoma en Panel de Usuario (Auto-Servicio MFA):**
+   - Desde la sección de seguridad de su panel (`/panel/seguridad`), el usuario puede enrolar, re-vincular o reiniciar (reseteo autogestionado) su autenticador TOTP en cualquier momento sin esperar a ejecutar un proceso crítico.
+3. **Modalidades de Exigencia Elegibles por el Usuario (Únicamente 2 Opciones):**
+   El usuario puede seleccionar la modalidad de exigencia de MFA según su preferencia de seguridad desde su panel:
+   - **Opción A: Solo Procesos Críticos (`SOLO_PROCESOS_CRITICOS` - Modalidad por Defecto / Estándar):** El MFA TOTP se solicita únicamente al ejecutar transacciones irreversibles o envíos de datos sensibles (ej. pasarela de pagos `PLT-006` o solicitudes críticas del negocio).
+   - **Opción B: Solicitar Siempre (`SOLICITAR_SIEMPRE` - MFA en cada Inicio de Sesión):** El MFA TOTP se solicita obligatoriamente en cada inicio de sesión (segundo factor completo / 2FA al autenticarse) **además** de la confirmación en procesos críticos.
+   - **Regla Estricta:** El sistema permite **exclusivamente** seleccionar entre estas 2 opciones (`SOLO_PROCESOS_CRITICOS` | `SOLICITAR_SIEMPRE`). No existen modalidades intermedias ni la opción de desactivar MFA en procesos críticos si el enrolamiento TOTP está activo.
+4. **Enrolamiento Automático Ante la Primera Invocación Crítica:**
+   - Si el usuario mantiene la modalidad *"Solo Procesos Críticos"* y aún no ha enrolado TOTP voluntariamente en su panel, el sistema lo interrumpe y exige el enrolamiento TOTP **exclusivamente ante la primera invocación a un proceso crítico**.
+   - Si el usuario nunca ejecuta una acción crítica y no enrola MFA voluntariamente desde su panel, el sistema **nunca lo interrumpe** para solicitar MFA.
+5. **Procesos Críticos Comunes y Específicos:**
    - **Proceso Crítico Común:** El uso de la **pasarela de pagos (`PLT-006`)** es el proceso crítico común a todas las aplicaciones del ecosistema que exige MFA o confirmación de seguridad.
    - **Procesos Críticos Específicos:** Cualquier otro flujo o acción que requiera MFA (ej. enviar solicitud de abogado socio en Tranqi) se especificará individualmente en la especificación del producto correspondiente (`gobernanza/productos/{producto}/especificacion-funcional.md`).
-4. **Mecanismo de Recuperación (Contraseña y MFA):**
+6. **Mecanismo de Recuperación (Contraseña y MFA):**
    - **Auto-servicio vía Correo:** En caso de olvido de contraseña o pérdida del dispositivo TOTP, el usuario puede solicitar el reseteo desde la pantalla de ingreso. El sistema envía automáticamente un enlace seguro de reseteo al correo de registro.
-   - **Reseteo Asistido por Administrador:** El Administrador de cada aplicación (o el SuperAdmin) tiene la capacidad desde la consola de gestión de **forzar o enviar manualmente el enlace de reseteo** al correo del usuario para restaurar su acceso o desvincular su MFA.
+   - **Reseteo Asistido por Administrador:** El Administrador de cada aplicación (o el SuperAdmin) tiene la capacidad desde la consola de gestión de **forzar o enviar manualmente el enlace de reseteo** o desvincular el MFA del usuario para restaurar su acceso en caso de pérdida total de credenciales.
+
+### Criterios de Aceptación (Gherkin)
+* **Escenario:** Enrolamiento voluntario y cambio de modalidad en panel
+  * **Dado que** un usuario autenticado accede a su panel en `/panel/seguridad`.
+  * **Cuando** enrola su app de autenticación TOTP y selecciona la opción "Solicitar Siempre".
+  * **Entonces** en su próximo inicio de sesión el sistema le exigirá obligatoriamente el código TOTP tras ingresar su contraseña.
+* **Escenario:** Enrolamiento automático en primer proceso crítico
+  * **Dado que** un usuario en modalidad por defecto ("Solo Procesos Críticos") no ha enrolado MFA TOTP.
+  * **Cuando** intenta realizar un pago por primera vez en la pasarela (`PLT-006`).
+  * **Entonces** el sistema interrumpe el flujo y le solicita enrolar TOTP antes de procesar el pago.
+* **Escenario:** Usuario sin acciones críticas no es interrumpido
+  * **Dado que** un usuario registrado solo navega, busca servicios o consulta información.
+  * **Cuando** no ejecuta ninguna acción crítica ni ingresa a su panel a enrolar MFA.
+  * **Entonces** el sistema nunca le solicita configurar ni ingresar códigos MFA.
 
 ---
 
@@ -107,13 +128,26 @@ Proporciona una interfaz conversacional inteligente ("buddie") integrada en las 
 ## PLT-005 — Auditoría de Cambios y Telemetría
 
 ### Descripción
-Registra automáticamente todas las modificaciones de datos en las tablas de negocio mediante el trigger PostgreSQL `aud_fn_auditar_tabla()`.
+Registra automáticamente todas las modificaciones de datos en las tablas de negocio mediante el trigger PostgreSQL `aud_fn_auditar_tabla()` y despliega el historial a través de un **Widget Único y Común de Auditoría** integrado en las consolas de administración.
 
 ### Reglas de Negocio
-1. **Auditoría Transparente:** Todas las operaciones `INSERT`, `UPDATE` y `DELETE` guardan el estado anterior y nuevo (`JSONB`) en `comun_auditoria.aud_registro`.
-2. **Aislamiento de Visibilidad:**
-   - Los roles `ADMINISTRADOR` de un negocio solo pueden visualizar el historial de auditoría correspondiente a su dominio de datos (`/admin/auditoria`).
-   - El rol `SUPERADMIN` de Plataforma posee visibilidad global de la auditoría de todos los negocios.
+1. **Auditoría Transparente por DB Trigger:** Todas las operaciones `INSERT`, `UPDATE` y `DELETE` guardan el estado anterior y nuevo (`JSONB`) en `comun_auditoria.aud_registro`.
+2. **Widget Único y Común de Auditoría (`auditoria`):**
+   - La funcionalidad de visualización de auditoría es un componente de software **único, transversal y reutilizable** para todas las aplicaciones del ecosistema.
+   - **Adaptabilidad Visual:** El widget mantiene exactamente la misma lógica operativa en todas las apps, adaptando únicamente su paleta de colores, tokens CSS y tema gráfico al branding del producto que lo hospeda.
+3. **Aislamiento y Visibilidad por Rol:**
+   - **Rol `ADMINISTRADOR`:** Visualiza únicamente los registros de auditoría pertenecientes al negocio donde ejerce dicho rol (`/admin/auditoria`).
+   - **Rol `SUPERADMIN` de Plataforma:** Desde **cualquier aplicación** del ecosistema, al abrir el widget de auditoría posee la facultad de visualizar la auditoría de **todas las aplicaciones** (con selector/filtro global por negocio o vista consolidada).
+
+### Criterios de Aceptación (Gherkin)
+* **Escenario:** Administrador visualiza auditoría de su negocio
+  * **Dado que** un `ADMINISTRADOR` de FastFix accede al widget de auditoría en FastFix.
+  * **Cuando** consulta el historial de registros.
+  * **Entonces** solo visualiza las operaciones realizadas dentro del negocio y esquemas de FastFix (`FFH`).
+* **Escenario:** SuperAdmin visualiza auditoría global desde cualquier app
+  * **Dado que** el `SUPERADMIN` abre el widget de auditoría desde la consola de Tinkay.
+  * **Cuando** activa el filtro multitenant o consulta la lista global.
+  * **Entonces** puede inspeccionar la auditoría de Tranqi, FastFix, Tinkay y Margaritas sin cambiar de aplicación.
 
 ---
 
@@ -219,15 +253,43 @@ Distribución del catálogo (`PLT-009`) hacia canales sociales sin carga manual 
 ## PLT-011 — Configuración de Empresa y Sistema de Widgets por Rol
 
 ### Descripción
-Pantalla de configuración del negocio (identidad legal + datos de `PLT-008`) y un sistema de permisos basado en **widgets**: cada funcionalidad implementada se registra como un widget asignable dinámicamente a un rol, en vez de codificar permisos fijos por aplicación.
+Pantalla de configuración del negocio (identidad legal + datos de `PLT-008`) y un sistema de permisos basado en **widgets**: **todas las vistas de las consolas administrativas de todas las aplicaciones deben construirse bajo este único patrón estándar de Widgets** (componentes autocontenidos y reutilizables), donde cada funcionalidad se asigna dinámicamente a roles sin duplicar código entre aplicaciones.
 
 ### Reglas de Negocio
-1. **Identificación legal del negocio:** cada negocio configura su Identificación/NIT, Nombre Comercial y Razón Social, además de los datos de `PLT-008` (redes sociales, canales, términos, locales).
-2. **Roles por defecto:** todo negocio tiene como mínimo `SUPERADMIN` (rol de plataforma, no de negocio — ver `PLT-003`), `ADMINISTRADOR`, `CLIENTE`, y puede definir roles adicionales (`OPERADOR`, `TECNICO`, `ABOGADO`, etc.).
-3. **Funcionalidad como widget:** cada capacidad de la consola de administración (gestión de usuarios, catálogo, pedidos, configuración) se registra como un widget con clave única por negocio.
-4. **Asignación dinámica, no fija en código:** un `ADMINISTRADOR` (o `SUPERADMIN`) decide qué widgets ve cada rol desde una pantalla de configuración — no requiere despliegue de código para cambiar quién ve qué.
-5. **Widget obligatorio de gestión de usuarios:** todo negocio trae, por defecto, un widget de "Gestión de usuarios" visible para `ADMINISTRADOR`, que permite buscar entre los usuarios registrados y asignarles rol dentro de ese negocio.
-6. **SuperAdmin de plataforma:** `kleber.toapanta.ch@gmail.com` es `SUPERADMIN` en los 4 negocios desde su primer inicio de sesión — no requiere asignación manual por negocio.
+1. **Estándar Unificado de Vistas Basado en Widgets ("Un Solo Patrón"):**
+   - Todas las consolas de administración de las aplicaciones del ecosistema se rigen obligatoriamente por el **patrón estándar de arquitectura de Widgets**.
+   - Cada capacidad administrativa se concibe como un Widget único y autocontenido registrado con clave descriptiva en `seg_widget`.
+   - Ninguna aplicación implementa pantallas administrativas ad-hoc fuera de este estándar; la funcionalidad es única y común, adaptando únicamente los estilos visuales (paleta de colores/tema) de cada marca.
+2. **Estándar Interactivo de DataGrids y Tablas de Datos en Widgets:**
+   - Todo widget que despliegue tablas o listas de datos (ej. `auditoria`, `gestion_usuarios`, catálogos, pedidos, transacciones o cualquier listado tabulado) debe incorporar obligatoriamente un **DataGrid enriquecido** con las siguientes capacidades estándar:
+     - **Búsqueda Global Multi-campo (Global Search):** Caja de búsqueda en tiempo real habilitada permanentemente en la barra superior del Grid, que evalúa coincidencias de texto sobre la totalidad de los campos y columnas de los registros.
+     - **Columnas Ordenables (Sorting):** Ordenamiento ascendente y descendente al hacer clic en los encabezados.
+     - **Reordenamiento de Columnas (Drag & Drop):** Permite cambiar el orden visual de las columnas arrastrando los encabezados a la posición deseada.
+     - **Agrupamiento Dinámico por Columnas (Drag-to-Group):** Permite arrastrar uno o más encabezados de columna hacia una zona superior de agrupamiento para clasificar y colapsar/expandir filas dinámicamente.
+     - **Exportación Nativa a Excel (`.xlsx`) y CSV (`.csv`):** Botones en la barra de herramientas del Grid para exportar el conjunto de datos filtrado o visible directamente a hojas de cálculo.
+3. **Identificación legal del negocio:** cada negocio configura su Identificación/NIT, Nombre Comercial y Razón Social, además de los datos de `PLT-008` (redes sociales, canales, términos, locales).
+4. **Roles por defecto:** todo negocio tiene como mínimo `SUPERADMIN` (rol de plataforma, no de negocio — ver `PLT-003`), `ADMINISTRADOR`, `CLIENTE`, y puede definir roles adicionales (`OPERADOR`, `TECNICO`, `ABOGADO`, etc.).
+5. **Widget Único y Común de Gestión de Usuarios Registrados (`gestion_usuarios`):**
+   - Es un componente de software **único y transversal** para todas las aplicaciones. Su diseño y lógica funcional son 100% idénticos en todo el ecosistema, adaptando únicamente la paleta de colores y tema de la app correspondiente.
+   - **Comportamiento por Rol:**
+     - **Rol `ADMINISTRADOR`:** Ve y gestiona únicamente los usuarios registrados en su propia aplicación (miembros de `seg_membresia` de su negocio).
+     - **Rol `SUPERADMIN` de Plataforma:** Desde **cualquier aplicación**, al abrir el widget de gestión de usuarios, posee la facultad de visualizar y administrar a **todos los usuarios registrados de todo el ecosistema** (con selector por negocio o vista consolidada de plataforma).
+6. **Asignación dinámica de widgets por rol:** un `ADMINISTRADOR` (o `SUPERADMIN`) decide qué widgets ve cada rol desde la consola de configuración de permisos — sin requerir cambios en código para ajustar visibilidades.
+7. **SuperAdmin de plataforma:** `kleber.toapanta.ch@gmail.com` es `SUPERADMIN` en los 4 negocios desde su primer inicio de sesión — no requiere asignación manual y posee acceso universal a todos los widgets en todas las apps.
+
+### Criterios de Aceptación (Gherkin)
+* **Escenario:** Gestión de usuarios por Administrador de Negocio
+  * **Dado que** el `ADMINISTRADOR` de Tinkay abre el widget de Gestión de Usuarios en Tinkay.
+  * **Cuando** busca en la lista de usuarios.
+  * **Entonces** solo obtiene los usuarios con membresía registrada en Tinkay.
+* **Escenario:** Vista global de usuarios por SuperAdmin
+  * **Dado que** el `SUPERADMIN` accede al widget de Gestión de Usuarios desde la app de Tranqi.
+  * **Cuando** selecciona la opción de filtro "Todos los Negocios".
+  * **Entonces** puede visualizar y gestionar los usuarios de Tranqi, FastFix, Tinkay y Margaritas.
+* **Escenario:** Interacción avanzada y exportación en DataGrid de Widget
+  * **Dado que** un usuario administrativo abre cualquier widget con listados de datos (ej. auditoría o usuarios).
+  * **Cuando** arrastra una columna a la zona de agrupamiento y presiona el botón "Exportar a Excel".
+  * **Entonces** la tabla agrupa dinámicamente los registros por dicha columna y genera la descarga inmediata del archivo `.xlsx` estructurado.
 
 **Implementación técnica:** ver [`especificacion-tecnica.md`](especificacion-tecnica.md) §1.1 y §9.
 
@@ -260,10 +322,138 @@ Todo usuario registrado puede solicitar, por auto-servicio y sin intervención d
 
 ---
 
-## PLT-013 — Historial de Accesos y Continuidad de Sesión
+## PLT-013 — Centro Transversal de Notificaciones y Alertas (In-App, Push, Email y WhatsApp)
 
 ### Descripción
-Todo usuario registrado puede ver los últimos accesos a su cuenta (dispositivo/navegador aproximado y fecha) desde su panel, y el sistema lo saluda de forma distinta según cuánto tiempo pasó desde su última visita — sin exponer huella digital real, solo una etiqueta legible.
+Motor unificado de eventos de comunicación y alertas en tiempo real para todos los productos del ecosistema, gestionado de forma centralizada sin que cada negocio reimplemente su propia infraestructura de mensajes.
+
+### Reglas de Negocio
+1. **Componente / Widget In-App de Notificaciones:**
+   - Barra superior de todas las aplicaciones con icono de campana e indicador numérico de notificaciones no leídas.
+   - Drawer táctil / modal interactivo que despliega el historial de alertas, ordenadas cronológicamente, con opción de marcar como leídas o ir al detalle del evento (ej. pedido, cita o causa).
+2. **Multicanalidad de Envío:**
+   - **In-App:** Notificación nativa persistida en base de datos.
+   - **Web / Mobile Push:** Notificaciones push para navegadores web y apps nativas Capacitor.
+   - **Correo Transaccional (Email):** Envío automático de notificaciones formales (confirmación de compra, factura SRI, reseteo de clave).
+   - **WhatsApp Business API:** Notificaciones operativas de alto valor (estado de entrega de pedido, confirmación de técnico en camino, alerta de cita urgente), exclusivamente si el usuario lo autorizó (`autorizacion_contacto_whatsapp` en `PLT-001`).
+3. **Aislamiento y Preferencias por Usuario:**
+   - El usuario puede gestionar desde `/panel/notificaciones` qué tipos de alertas desea recibir y por qué canales.
+
+### Criterios de Aceptación (Gherkin)
+* **Escenario:** Recepción de notificación in-app y push de pedido
+  * **Dado que** un cliente realizó un pedido en Tinkay.
+  * **Cuando** el estado cambia a "En Ruta de Entrega".
+  * **Entonces** el sistema genera la notificación in-app, incrementa el contador de la campana y dispara la alerta push a su dispositivo.
+
+---
+
+## PLT-014 — Motor de Cupones, Descuentos y Promociones
+
+### Descripción
+Motor centralizado de incentivos comerciales y códigos promocionales para todos los productos del ecosistema que comercialicen bienes o servicios (`PLT-009`).
+
+### Reglas de Negocio
+1. **Modalidades de Descuento:**
+   - **Monto Fijo ($):** Descuento directo en la moneda local sobre el total.
+   - **Porcentaje (%):** Descuento porcentual aplicable al total del carrito o a ítems específicos.
+2. **Reglas de Aplicación y Restricciones:**
+   - **Vigencia:** Fecha y hora exacta de inicio y fin.
+   - **Monto Mínimo:** Restricción opcional de valor mínimo de compra para activar el cupón.
+   - **Límites de Uso:** Límite máximo de canjes globales y límite máximo de canjes por usuario (`seg_usuario`).
+3. **Aislamiento Multitenant:**
+   - Cada cupón pertenece a un negocio específico (`com_negocio`); un código de Tinkay es inválido en FastFix o Tranqi.
+
+### Criterios de Aceptación (Gherkin)
+* **Escenario:** Canje exitoso de cupón de descuento por monto mínimo
+  * **Dado que** un cliente ingresa un cupón de 10% de descuento en el checkout de Tinkay.
+  * **Cuando** el total de su carrito supera el monto mínimo configurado.
+  * **Entonces** el sistema aplica el descuento, recalcula el total y registra el uso del cupón.
+
+---
+
+## PLT-015 — Sistema Transversal de Calificaciones, Reseñas y Reputación
+
+### Descripción
+Módulo unificado para capturar valoraciones (1 a 5 estrellas) y comentarios sobre servicios prestados (FastFix, Tranqi) o productos entregados (Tinkay, Margaritas).
+
+### Reglas de Negocio
+1. **Garantía de Cliente / Comprador Verificado (*Verified Purchase*):**
+   - Únicamente los usuarios que hayan completado una transacción o servicio real verificado en el sistema pueden emitir una valoración y reseña.
+2. **Estructura de la Reseña:**
+   - Calificación cuantitativa (1 a 5 estrellas), comentario de texto libre y etiquetas rápidas de calidad (ej. *Puntualidad*, *Excelente acabado*, *Atención amable*).
+3. **Moderación y Respuesta Oficial:**
+   - Publicación transparente. El Administrador del negocio posee la facultad de emitir una respuesta oficial pública visible debajo de la reseña y reportar contenido ofensivo.
+4. **Cálculo de Reputación:**
+   - El sistema calcula y actualiza automáticamente el promedio ponderado de calificación y total de reseñas para mostrarlos en las vitrinas públicas del negocio.
+
+### Criterios de Aceptación (Gherkin)
+* **Escenario:** Emisión de reseña por comprador verificado
+  * **Dado que** un usuario completó un servicio de reparación en FastFix.
+  * **Cuando** accede al detalle de su servicio finalizado y envía una calificación de 5 estrellas con comentario.
+  * **Entonces** el sistema valida la transacción real, publica la reseña y recalcula la calificación promedio del técnico.
+
+---
+
+## PLT-016 — Gestión de Archivos, Evidencias y Supabase Storage Standard
+
+### Descripción
+Estándar centralizado de almacenamiento de objetos, documentos, evidencias y medios digitales en Supabase Storage, estructurado para garantizar organización multitenant, seguridad RLS y persistencia de larga duración.
+
+### Reglas de Negocio
+1. **Estructura Jerárquica Obligatoria de Directorios (Storage Hierarchy):**
+   Todo archivo u objeto almacenado en Supabase Storage debe estructurarse estrictamente bajo el siguiente patrón de rutas:
+   `[bucket]/[codigo_negocio]/[categoria_uso]/[yyyy-mm]/[uuid_archivo].[ext]`
+   - `bucket`: Bucket de almacenamiento (`comun-publico` o `comun-privado`).
+   - `codigo_negocio`: Identificador del negocio (`TRANQ`, `FFH`, `TNK`, `MRG`, `PLT`).
+   - `categoria_uso`: Subcarpeta por propósito (`documentos-legales`, `evidencias-tecnicas`, `catalogo-productos`, `fotos-entrega`, `avatares-perfil`).
+   - `yyyy-mm`: Año y mes de carga para optimización de particionamiento y navegación de larga duración.
+   - `uuid_archivo`: Nombre único e inmutable (UUID v4) para evitar colisiones y sobrescrituras accidentales.
+
+   *Ejemplo Privado:* `comun-privado/TRANQ/documentos-legales/2026-07/9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d.pdf`  
+   *Ejemplo Público:* `comun-publico/TNK/catalogo-productos/2026-07/a1b2c3d4-e5f6-7890-abcd-ef1234567890.jpg`
+
+2. **Tipos de Buckets y Políticas de Seguridad RLS:**
+   - **Bucket Público (`comun-publico`):** Diseñado para contenido de vitrina (catálogo `PLT-009`, imágenes de locales `PLT-008`, avatares públicos). Lectura anónima global; escritura restringida a roles autorizados (`ADMINISTRADOR`, `OPERADOR`).
+   - **Bucket Privado Cifrado (`comun-privado`):** Diseñado para información sensible o privada (documentos legales de Tranqi, fotografías de inspección técnica de FastFix, comprobantes SRI de `PLT-006`). Lectura y escritura estrictamente protegidas por políticas RLS sobre `storage.objects`. Acceso exclusivo mediante **URLs firmadas de vida corta (máximo 15 minutos)** emitidas tras verificar la propiedad o rol del usuario.
+3. **Persistencia de Larga Duración y Ciclo de Vida (Retention & Lifecycle):**
+   - **Retención Inalterable:** Archivos con valor legal o tributario (comprobantes SRI, evidencias de causas legales, contratos) se marcan con bandera de retención inalterable para garantizar su disponibilidad por el tiempo exigido por la ley.
+   - **Optimización Previa a la Subida:** Toda imagen subida se procesa en cliente/servidor para conversión automática a formato **WebP** y compresión optimizada, reduciendo el consumo de ancho de banda y almacenamiento sin degradar la calidad visual.
+   - **Validación Estricta de Formatos y Pesos:** Validación en servidor del tipo MIME y límite de tamaño máximo según la categoría de uso (ej. máx. 5MB para imágenes, 20MB para documentos PDF).
+
+### Criterios de Aceptación (Gherkin)
+* **Escenario:** Carga de documento privado en estructura jerárquica
+  * **Dado que** un usuario adjunta un PDF de identidad en el portal de Tranqi.
+  * **Cuando** se completa la subida a Storage.
+  * **Entonces** el archivo se guarda en el bucket `comun-privado/TRANQ/documentos-legales/2026-07/{uuid}.pdf` y solo es accesible mediante URL firmada de vida corta.
+
+---
+
+## PLT-017 — Gestión de Sesiones Activas y Revocación Remota de Dispositivos
+
+### Descripción
+Módulo de auditoría de seguridad y control de accesos en el panel del usuario (`/panel/seguridad`) para gestionar dispositivos conectados a su cuenta única (`PLT-001`).
+
+### Reglas de Negocio
+1. **Listado de Sesiones Activas:**
+   - Visualización clara de todos los dispositivos y navegadores con sesión activa en el ecosistema, incluyendo: navegador, sistema operativo, tipo de dispositivo (móvil / escritorio), dirección IP aproximada y fecha/hora de última actividad.
+   - Indicador explícito de "Sesión Actual".
+2. **Cierre de Sesión Remoto (Revocación de Tokens):**
+   - Opción "Cerrar sesión en otros dispositivos" que revoca de inmediato los refresh tokens en Supabase Auth de las demás sesiones activas, forzando la reautenticación remota sin cerrar la sesión en el dispositivo actual.
+
+### Criterios de Aceptación (Gherkin)
+* **Escenario:** Revocación remota de sesiones
+  * **Dado que** un usuario nota una sesión activa en un navegador desconocido desde su panel de seguridad.
+  * **Cuando** hace clic en "Cerrar sesión en otros dispositivos".
+  * **Entonces** el sistema invalida los tokens de los demás dispositivos y solo mantiene activa su sesión actual.
+
+**Estado:** regla 2 (revocación remota de refresh tokens) pendiente. Regla 1 (listado de accesos) tiene un primer building block ya implementado y verificado — ver `PLT-018`, que registra IP/User-Agent en cada login pero todavía no distingue "sesión activa" de "acceso histórico" ni puede revocar tokens.
+
+---
+
+## PLT-018 — Historial de Accesos y Saludo Personalizado
+
+### Descripción
+Todo usuario registrado puede ver sus últimos accesos (dispositivo/navegador aproximado y fecha) desde su panel, y el sistema lo saluda de forma distinta según cuánto tiempo pasó desde su visita anterior. Es el primer building block de `PLT-017` — un registro histórico simple, no un listado de sesiones activas ni revocación de tokens (eso sigue pendiente en `PLT-017`).
 
 ### Reglas de Negocio
 1. **Registro automático en cada inicio de sesión:** cualquier login exitoso (correo/contraseña, confirmación de registro con sesión inmediata, o Google OAuth) registra una fila con IP y User-Agent, sin intervención del usuario.
@@ -281,7 +471,7 @@ Todo usuario registrado puede ver los últimos accesos a su cuenta (dispositivo/
   * **Cuando** entra a "Mi cuenta".
   * **Entonces** ve una lista con los 3 accesos, cada uno con una etiqueta de dispositivo legible y su fecha/hora.
 
-**Implementación técnica:** ver [`especificacion-tecnica.md`](especificacion-tecnica.md) §1.4.
+**✅ Implementado (2026-07-27)** y verificado de punta a punta contra el proyecto real, en las 4 apps. **Implementación técnica:** ver [`especificacion-tecnica.md`](especificacion-tecnica.md) §1.4.
 
 ---
 

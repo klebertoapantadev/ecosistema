@@ -1,7 +1,7 @@
 ---
 tipo: esp_tecnica
 estado: vigente
-version: 1.5
+version: 1.6
 fecha: 2026-07-27
 responsable: Kleber Toapanta
 ---
@@ -12,7 +12,7 @@ Contraparte técnica de [`especificacion-funcional.md`](especificacion-funcional
 
 **Regla de arquitectura (2026-07-27):** todo lo que implementa un requerimiento `PLT-xxx` (transversal a los 4 negocios) vive en un paquete compartido (`packages/*`), no dentro de `apps/{app}/modulos/`, aunque hoy solo un negocio lo use. `packages/supabase` (`@eco/supabase`) y `packages/identidad` (`@eco/identidad`) son los primeros en seguir este patrón — nacieron dentro de `tranqi-web` y se extrajeron cuando quedó claro que los otros 3 negocios necesitaban exactamente lo mismo. `configuracion-negocio` y `gestion-usuarios` todavía no se extrajeron (pendiente, ver §1.1 y §9) — es deuda de secuencia, no una decisión de diseño distinta.
 
-## 1. `comun_seguridad` — implementa PLT-001, PLT-002, PLT-003, PLT-011, PLT-012
+## 1. `comun_seguridad` — implementa PLT-001, PLT-002, PLT-003, PLT-011, PLT-012, PLT-018
 
 | Tabla | Prefijo | Estado |
 | :--- | :--- | :--- |
@@ -27,7 +27,7 @@ Asignación de rol: RPC transaccional `seg_fn_asignar_rol(usuario, negocio, rol)
 
 **Fix de seguridad (`20260727000006`):** la política de `UPDATE` de `seg_usuario` permitía escribir cualquier columna de la propia fila, incluida `usu_superadmin_plataforma` — un usuario podía auto-otorgarse SuperAdmin. Cerrado con `GRANT UPDATE` por columna (ver [`politicas/seguridad-y-datos.md`](../../politicas/seguridad-y-datos.md) §9). Verificado con `information_schema.column_privileges` tras aplicar.
 
-MFA (PLT-002): Supabase Auth TOTP, exigido vía claim `aal` en políticas RLS — ver [`politicas/seguridad-y-datos.md`](../../politicas/seguridad-y-datos.md) §3. **Pendiente todavía** — las políticas actuales no exigen `aal2` porque ningún flujo crítico se ha implementado aún.
+MFA (PLT-002): Supabase Auth TOTP con auto-servicio en `/panel/seguridad` y 2 modalidades elegibles guardadas en `seg_usuario.usu_mfa_modalidad` (`SOLO_PROCESOS_CRITICOS` por defecto | `SOLICITAR_SIEMPRE`). Exigido vía claim `aal` (`aal2`) en políticas RLS — ver [`politicas/seguridad-y-datos.md`](../../politicas/seguridad-y-datos.md) §3. **Pendiente todavía** — las políticas actuales no exigen `aal2` porque ningún flujo crítico se ha implementado aún.
 Rol en JWT: *Custom Access Token Hook* — pendiente de implementar. Mientras no exista, las políticas RLS resuelven el rol consultando `seg_membresia` directamente (vía `comun_seguridad.seg_fn_es_admin_negocio()`), no desde un claim del token.
 
 ### 1.1. Sistema de widgets (PLT-011)
@@ -37,7 +37,11 @@ Rol en JWT: *Custom Access Token Hook* — pendiente de implementar. Mientras no
 | `seg_widget` | `wdg_` | ✅ Migrada. Catálogo de funcionalidades por negocio (`unique (wdg_negocio, wdg_clave)`). |
 | `seg_rol_widget` | `rlw_` | ✅ Migrada. Asignación dinámica widget↔rol (`unique (rlw_negocio, rlw_rol, rlw_widget_id)`). |
 
-Seed aplicado: widgets `gestion_usuarios` y `configuracion_negocio` (`20260727000010`) en los 4 negocios, asignados por defecto al rol `ADMINISTRADOR`. `SUPERADMIN` (vía `usu_superadmin_plataforma`) no necesita fila en `seg_rol_widget` — `seg_fn_es_admin_negocio()` lo autoriza siempre.
+Seed aplicado: widgets `gestion_usuarios` (`20260727000002`) y `configuracion_negocio` (`20260727000010`) en los 4 negocios, asignados por defecto al rol `ADMINISTRADOR`. Todos los widgets de consola administrativa deben ser componentes **únicos y comunes** que comparten código lógico y adaptan su tema/colores según la app hospedante (regla de arquitectura, ver inicio de este documento). `SUPERADMIN` (vía `usu_superadmin_plataforma`) no necesita fila en `seg_rol_widget` y obtiene visibilidad global multitenant en cualquier widget común desde cualquier app.
+
+**❌ Pendiente — widget `auditoria`:** planeado (ver PLT-005), sin seed en `seg_widget` todavía — verificado contra el proyecto real (2026-07-27), no confundir con "ya construido".
+
+**❌ Pendiente — Estándar de DataGrid UI:** el plan es que todo widget con listas tabuladas use un componente común `DataGrid` (`@ecosistema/ui` o similar), con búsqueda global, ordenamiento, reordenamiento de columnas, agrupamiento por arrastre y exportación a Excel/CSV. Ese paquete de UI **no existe todavía** — `packages/` hoy no tiene ningún componente de tabla compartido; `gestion_usuarios` en `tranqi-web` usa una tabla HTML simple (`tabla-panel`), no un DataGrid.
 
 **Fix (`20260727000010`):** "Configuración del negocio" vivía como link fijo en `app/panel/layout.tsx`, visible a cualquier usuario autenticado incluido un `CLIENTE` (rol por defecto de todo registro, `PLT-003` regla 1) — que nunca debería verlo, aunque RLS ya bloqueaba la escritura. Se registró como widget normal para que el sistema de permisos de `PLT-011` sea la única fuente de verdad de qué ve cada rol. Verificado: un `CLIENTE` de prueba solo ve "Mi cuenta"; un `ADMINISTRADOR` de prueba ve ambos.
 
@@ -65,9 +69,11 @@ Migración `20260727000008_seg_terminos_y_baja_cuenta.sql`.
 - `eliminarCuenta()` (`packages/identidad/src/acciones.ts`) llama al RPC y cierra sesión. UI (`<EliminarCuenta />`) exige escribir la palabra "ELIMINAR" antes de habilitar el botón — no es una acción de un solo clic.
 - `grant execute on function seg_fn_eliminar_cuenta() to authenticated` — cualquier usuario autenticado puede llamarlo, pero solo actúa sobre su propia sesión (`auth.uid()`), nunca recibe un ID como parámetro.
 
-### 1.4. Historial de accesos y saludo personalizado
+### 1.4. Historial de accesos y saludo personalizado (PLT-018)
 
 `comun_seguridad.seg_acceso` (`acc_id`, `acc_usuario_id`, `acc_ip`, `acc_user_agent`, `acc_creado_en`; `20260727000011`) — una fila por login, RLS `select`/`insert` solo sobre las filas propias (`acc_usuario_id = auth.uid()`). Escrita desde `iniciarSesion()`, `registrarUsuario()` (si deja sesión activa) y `crearManejadorCallbackOAuth()` — los tres puntos de entrada de sesión, en `packages/identidad/src/acceso.ts`.
+
+**No confundir con `seg_sesion` (PLT-017, §8.2, todavía no migrada):** `seg_acceso` es un log histórico de solo inserción — no sabe cuáles de esas sesiones siguen activas ni puede revocar tokens. `PLT-017` (gestión de sesiones activas + revocación remota) es un requerimiento más grande, pendiente, que puede apoyarse en este log pero necesita además integrar la Admin API de Supabase Auth para invalidar refresh tokens.
 
 - `<HistorialAccesos />` — lista de "dispositivos recientes" en `/panel/cuenta`, con etiqueta legible del User-Agent (`etiquetaDispositivo()`, heurística simple, sin librería de parseo).
 - `obtenerSaludo(usuarioId, nombre)` — compara la fila más reciente (login que acaba de ocurrir) contra la anterior para elegir el tono del saludo en `/panel` ("Hola de nuevo" / "Cuánto tiempo sin verte" / etc.). Deliberadamente no usa `auth.users.last_sign_in_at` (no expuesto al propio usuario vía PostgREST sin lógica adicional) — se apoya solo en `seg_acceso`, ya bajo RLS propio.
@@ -145,6 +151,27 @@ Ver [ADR-0003](../../arquitectura/adr/0003-catalogo-comercial-unificado.md) para
 Seed aplicado: una fila por negocio (`tranqi`, `fastfix`, `tinkay`, `margaritas`) con nombre comercial, el resto vacío. Lectura pública (es información de vitrina), escritura restringida a `ADMINISTRADOR`/`SUPERADMIN` del negocio. ✅ Consumido: `app/panel/configuracion/` en `tranqi-web` (solo visible para `ADMINISTRADOR`/`SUPERADMIN` vía el widget `configuracion_negocio`, ver §1.1).
 
 `cfg_detalle_configuracion` incluye ahora `correoNotificaciones` (`PLT-008` regla 2, canal de correo) — **solo captura el dato**, no está conectado a envío real; ver [`modulos/configuracion-negocio/README.md`](../../../apps/tranqi-web/modulos/configuracion-negocio/README.md) de `tranqi-web` para el detalle de la limitación (Supabase Auth solo permite un remitente por proyecto, compartido por los 4 negocios).
+
+## 8. Supabase Storage y Módulos Transversales (PLT-013 a PLT-017)
+
+### 8.1. Estructura y Seguridad de Storage (PLT-016)
+- **Buckets Nativos:** `comun-publico` (lectura anónima, escritura RLS admin) y `comun-privado` (lectura/escritura RLS estricta + URLs firmadas expirables a 15 min).
+- **Patrón Jerárquico de Rutas Obligatorio:**
+  `[bucket]/[codigo_negocio]/[categoria_uso]/[yyyy-mm]/[uuid_archivo].[ext]`
+- **Seguridad RLS en `storage.objects`:**
+  ```sql
+  create policy "Acceso privado por membresia de negocio"
+    on storage.objects for select using (
+      bucket_id = 'comun-privado'
+      and comun_seguridad.seg_fn_es_miembro_negocio(auth.uid(), (string_to_array(name, '/'))[2])
+    );
+  ```
+
+### 8.2. Esquemas Comunes Adicionales
+- **`comun_notificacion` (PLT-013):** Tabla `not_registro` con `not_usuario_id`, `not_negocio`, `not_titulo`, `not_contenido`, `not_canal` (`IN_APP`, `PUSH`, `EMAIL`, `WHATSAPP`), `not_leido_en`.
+- **`comun_comercio.com_cupon` (PLT-014):** Cupones multitenant con restricción de monto mínimo, usos globales y por usuario.
+- **`comun_evaluacion` (PLT-015):** Reseñas de comprador/cliente verificado (`eva_usuario_id`, `eva_negocio`, `eva_calificacion`, `eva_comentario`, `eva_respuesta_oficial`).
+- **`comun_seguridad.seg_sesion` (PLT-017):** Auditoría de dispositivos y revocación remota de refresh tokens en Supabase Auth.
 
 ## 10. Tabla resumen de estado (para no perder el hilo)
 
