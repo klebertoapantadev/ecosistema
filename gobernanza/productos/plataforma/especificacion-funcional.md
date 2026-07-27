@@ -1,82 +1,198 @@
 ---
 tipo: esp_funcional
 estado: vigente
-version: 1.0
+version: 1.4
 fecha: 2026-07-26
 responsable: Kleber Toapanta
 ---
 
 # Plataforma — Especificación Funcional Común
 
-**Prefijo de código de requerimiento:** `PLT-xxx`
-**Propietario:** Plataforma (no un producto individual)
+**Prefijo de código de requerimiento:** `PLT-xxx`  
+**Propietario:** Plataforma (transversal a todos los negocios del ecosistema)
 
-Este documento describe **comportamiento compartido por los 3 productos** (y por cualquier producto nuevo que se incorpore). Ningún producto redefine estos requerimientos en su propia especificación — los referencia por código y documenta solo lo adicional o distinto.
+Este documento describe el **comportamiento compartido por los 3 productos** (Tranqi, FastFix Home, Tinkay) y por cualquier nuevo negocio que se incorpore. Ningún producto redefine estos requerimientos en su propia especificación; únicamente los referencia por su código `PLT-xxx` y documenta lo específico de su dominio.
 
-**Regla de precedencia:** esta especificación se escribe y aprueba **antes** de que un producto nuevo construya su propio login, su propio chat o su propia facturación. Si dos productos necesitan comportamientos de auth genuinamente distintos, es señal de que este documento está incompleto — se corrige aquí, no duplicando en cada producto.
-
----
-
-## PLT-001 — Identidad única de usuario
-
-Un usuario tiene **un solo perfil** en todo el ecosistema, sin importar en cuántos productos participa.
-
-- Registro con Google OAuth 2.0 o correo + contraseña.
-- Al registrarse, se solicitan datos básicos: nombres, apellidos, cédula, teléfono/WhatsApp, provincia y ciudad de residencia.
-- Un mismo correo/cuenta de Google identifica al mismo usuario en Tranqi, FastFix y Tinkay — no hay registro duplicado por producto.
-- El usuario puede tener **roles distintos en productos distintos** (ej. cliente en Tinkay, abogado verificado en Tranqi).
-
-**Implementación técnica:** ver [`especificacion-tecnica.md`](especificacion-tecnica.md) §1 (`comun_seguridad`).
-
-## PLT-002 — Autenticación multifactor (MFA) para procesos críticos
-
-- MFA por TOTP (compatible con Google Authenticator), vía Supabase Auth.
-- **No es obligatorio para navegar o consultar** — es obligatorio para ejecutar una acción crítica: enviar una solicitud con datos sensibles, aprobar/rechazar algo, procesar un pago, o cualquier transición de estado irreversible.
-- Cada producto define en su propia especificación **cuáles** de sus flujos son "críticos" a este efecto (ej. Tranqi: enviar solicitud de socio abogado). La *mecánica* de exigir MFA es común; la *lista de qué la dispara* es de cada producto.
-
-## PLT-003 — Membresías y roles por producto
-
-- Un usuario puede solicitar o recibir un rol distinto en cada producto (`CLIENTE`, `ADMIN`, y roles específicos de cada negocio como `ABOGADO` en Tranqi).
-- **Tener un rol no equivale a tener capacidades.** Algunos roles requieren un proceso de verificación adicional antes de habilitar acceso real (ver la especificación del producto correspondiente — ej. Tranqi PLT-relacionado TRQ-xxx de solicitud de socio).
-- Un usuario administrador de un producto no tiene automáticamente acceso a los otros — el rol es por producto.
-
-## PLT-004 — Buddie conversacional (chat con agente de IA)
-
-- Todo producto puede ofrecer un asistente conversacional en su interfaz ("buddie"), respaldado por un agente de ARIA.
-- El agente puede ser **distinto por producto y por rol** dentro de un mismo producto (ej. un agente para clientes de Tranqi y otro para sus abogados).
-- Si el agente no está disponible o no hay credenciales configuradas, el chat responde con texto de respaldo predefinido — la interfaz nunca se cae por esto.
-- Las conversaciones no requieren que el usuario esté autenticado para la interacción básica de bienvenida (ej. landing pública), pero sí para funciones que toquen datos del usuario.
-
-**Implementación técnica:** ver [ADR-0002](../../arquitectura/adr/0002-aria-como-estandar-de-agentes-conversacionales.md).
-
-## PLT-005 — Auditoría de cambios visible para administradores
-
-- Todo cambio de datos relevante queda registrado automáticamente (quién, cuándo, qué cambió), sin que el usuario final lo note.
-- Los roles `SUPERADMIN` y `ADMINISTRADOR` de cualquier producto pueden consultar el historial de cambios de su propio dominio de datos en `/admin/auditoria`, con vista de diff (antes/después).
-
-## PLT-006 — Facturación y pagos
-
-- Todo cobro del ecosistema (cualquier producto) se factura contra el SRI de Ecuador de forma centralizada.
-- El pago se procesa a través de una pasarela abstraída — el usuario no percibe diferencia según qué proveedor de pago esté activo detrás.
-
-## PLT-007 — Catálogo geográfico
-
-- Provincias y ciudades de Ecuador son un catálogo único, consultado por cualquier producto que necesite dirección, cobertura o zona de servicio (Tranqi: residencia/cobertura de abogados; FastFix: zona de técnicos; Tinkay: dirección de entrega).
+**Regla de precedencia:** Esta especificación establece los criterios de aceptación y reglas de negocio no negociables. Los agentes de codificación (Claude Code, Antigravity, Copilot, Cursor) e ingenieros deben implementar la lógica ajustándose estrictamente a este documento.
 
 ---
 
-## Cómo referenciar esto desde la especificación de un producto
+## PLT-001 — Identidad Única y Registro de Usuario Sin Fricción
 
-En `gobernanza/productos/{producto}/especificacion-funcional.md`, en vez de describir el login o el chat desde cero:
+### Descripción
+Un usuario posee una **única identidad base** en todo el ecosistema (`comun_seguridad.seg_usuario`), pero ejecuta un **flujo de registro independiente por cada negocio** al que desea ingresar. El registro inicial prioriza la fluidez y conversión cero fricción.
+
+### Reglas de Negocio
+1. **Registro Inicial Ultra-Fluido (Cero Frenos):**
+   - **Vía Google OAuth 2.0:** Se completa en 1 solo clic. Se extraen automáticamente el nombre, apellido, correo electrónico y foto de perfil. No se solicita ningún dato obligatorio adicional en este paso.
+   - **Vía Correo Directo (Registro Simple):** Formulario mínimo con únicamente 4 campos: Nombres, Apellidos, Correo Electrónico y Contraseña.
+2. **Opción "Contáctame vía WhatsApp" (Exclusivamente Post-Registro):**
+   - La opción de ingresar el número de WhatsApp y autorizar contacto **NUNCA debe ser un freno en el formulario de registro inicial**.
+   - Se presenta únicamente **DESPUÉS** de que el usuario ha completado el registro (en la pantalla de bienvenida/onboarding posterior o dentro de la edición de su perfil), mediante un campo opcional con casilla de verificación (*checkbox*) desmarcada por defecto para autorización explícita (`autorizacion_contacto_whatsapp`).
+3. **Información Transparente de Ubicación y Alcance Local:** En la pantalla de registro u onboarding de cada producto se expone de forma clara la información de presencia local en Ecuador y el alcance de atención (gestionados a través de `PLT-008`).
+4. **Registro e Identidad Independiente por Negocio (`comun_seguridad.seg_membresia`):**
+   - Aunque la cuenta base exista en el ecosistema, la suscripción a cada negocio crea un registro de membresía **100% independiente** que contiene:
+     - `mem_fecha_registro`: Fecha y hora exacta de incorporación a dicho negocio.
+     - `mem_estado`: Estado operativo de la membresía en ese producto (`ACTIVO`, `PENDIENTE`, `SUSPENDIDO`, `INACTIVO`).
+     - Credencial / PIN específico si la aplicación lo requiere.
+5. **Autenticación Biométrica y PIN Móvil (Apps Nativas Capacitor):**
+   - En las aplicaciones nativas para smartphones (iOS/Android), se habilita el acceso rápido mediante **Biometría (Face ID / Touch ID / Huella Dactilar)** o mediante la **Clave / Patrón de desbloqueo del dispositivo móvil**, permitiendo re-ingresar al negocio sin solicitar la contraseña de Supabase en cada apertura.
+6. **Aceptación de Términos Específicos por Negocio:**
+   - **Términos Globales:** Se aceptan en el registro inicial del ecosistema.
+   - **Términos Específicos del Negocio:** Casilla obligatoria al ingresar por primera vez a un producto individual. Los textos legales de cada negocio son totalmente configurables en formato Markdown (`.md`) desde la consola de administración (`PLT-008`).
+
+### Criterios de Aceptación (Gherkin)
+* **Escenario:** Registro ultra-rápido con Google OAuth sin fricción
+  * **Dado que** un cliente no registrado hace clic en "Registrarse con Google" en el portal de Tinkay.
+  * **Cuando** concede permisos en Google.
+  * **Entonces** se crea de inmediato su registro en `comun_seguridad.seg_usuario` y accede al sistema sin que se le interrumpa exigiendo campos adicionales obligatorios.
+* **Escenario:** Re-ingreso con biometría en App Móvil
+  * **Dado que** un usuario registrado abre la app nativa de FastFix en su smartphone.
+  * **Cuando** activa el sensor de huella dactilar / Face ID.
+  * **Entonces** el sistema valida la credencial biométrica local y le otorga acceso inmediato a su sesión en FastFix.
+
+**Implementación técnica:** Ver [`especificacion-tecnica.md`](especificacion-tecnica.md) §1 (`comun_seguridad.seg_usuario`).
+
+---
+
+## PLT-002 — Autenticación Multifactor (MFA) para Procesos Críticos y Reseteo de Credenciales
+
+### Descripción
+Implementa la autenticación multifactor basada en TOTP (compatible con Google Authenticator / Authy) mediante Supabase Auth para proteger transacciones irreversibles o envíos de datos sensibles, garantizando enrolamiento oportuno y flujos de recuperación accesibles.
+
+### Reglas de Negocio
+1. **MFA No Bloqueante en Navegación ni Registro:** El MFA no es obligatorio para registrarse, iniciar sesión, navegar o consultar datos.
+2. **Enrolamiento y Disparo de MFA Ante la Primera Invocación Crítica:**
+   - El autenticador TOTP se debe configurar/enrolar **exclusivamente ante la primera invocación a un proceso crítico**.
+   - Si el usuario nunca ejecuta una acción crítica, nunca se le interrumpe para enrolar MFA.
+3. **Procesos Críticos Comunes y Específicos:**
+   - **Proceso Crítico Común:** El uso de la **pasarela de pagos (`PLT-006`)** es el proceso crítico común a todas las aplicaciones del ecosistema que exige MFA o confirmación de seguridad.
+   - **Procesos Críticos Específicos:** Cualquier otro flujo o acción que requiera MFA (ej. enviar solicitud de abogado socio en Tranqi) se especificará individualmente en la especificación del producto correspondiente (`gobernanza/productos/{producto}/especificacion-funcional.md`).
+4. **Mecanismo de Recuperación (Contraseña y MFA):**
+   - **Auto-servicio vía Correo:** En caso de olvido de contraseña o pérdida del dispositivo TOTP, el usuario puede solicitar el reseteo desde la pantalla de ingreso. El sistema envía automáticamente un enlace seguro de reseteo al correo de registro.
+   - **Reseteo Asistido por Administrador:** El Administrador de cada aplicación (o el SuperAdmin) tiene la capacidad desde la consola de gestión de **forzar o enviar manualmente el enlace de reseteo** al correo del usuario para restaurar su acceso o desvincular su MFA.
+
+---
+
+## PLT-003 — Membresías y Roles por Producto
+
+### Descripción
+Gestiona el control de acceso basado en roles (RBAC) aislado por negocio a través de `comun_seguridad.seg_membresia`.
+
+### Reglas de Negocio
+1. **Asignación Automática de Rol 'CLIENTE':** Al completar el registro u onboarding por primera vez en cualquier producto, el sistema asigna automáticamente el rol `CLIENTE` para ese negocio específico.
+2. **Aislamiento de Roles por Negocio:** Un usuario puede ser `CLIENTE` en Tinkay y tener el rol `ABOGADO` en Tranqi. Ser administrador de un producto no otorga permisos en los demás.
+3. **Asignación de Roles Privilegiados:** El Administrador de cada negocio (o el SuperAdmin) es el único facultado para asignar roles distintos (`ADMINISTRADOR`, `TECNICO`, `ABOGADO`, `OPERADOR`) desde la consola de gestión.
+4. **Verificación de Estado para Capacidades:** Tener un rol asignado en `seg_membresia` no habilita capacidades si el proceso exige un estado verificado en las tablas del producto (ej. `trq_abogado` en estado `APROBADO`).
+
+---
+
+## PLT-004 — Buddie Conversacional (Chat Asistido por IA)
+
+### Descripción
+Proporciona una interfaz conversacional inteligente ("buddie") integrada en las aplicaciones del ecosistema, respaldada por agentes especializados en el motor ARIA.
+
+### Reglas de Negocio
+1. **Estándar de Diseño Responsive (Mobile-First):**
+   - **En pantallas de escritorio (MD/LG):** Widget flotante compacto en la esquina inferior derecha (minimizable).
+   - **En pantallas móviles/celulares (SM):** Botón flotante táctil que despliega una interfaz **Drawer Full-Screen / Modal Táctil adaptativo**, diseñado para no superponerse a los elementos principales de la app y compatible con el teclado virtual del teléfono.
+2. **Acceso Anónimo vs. Autenticado:**
+   - Se permite la interacción anónima para consultas públicas e informativas en las landings del producto.
+   - Si la consulta del usuario requiere acceder o modificar información personal, citas o pedidos, el Buddie solicita explícitamente el inicio de sesión.
+3. **Persistencia del Historial:** Las conversaciones se persisten en PostgreSQL asociadas al usuario/sesión para permitir reanudar el contexto de la charla en futuras visitas.
+4. **Resistencia a Fallos (Fallback):** Si el servidor de ARIA no responde o no hay credenciales, el componente muestra respuestas de contingencia predefinidas sin degradar la aplicación web.
+
+---
+
+## PLT-005 — Auditoría de Cambios y Telemetría
+
+### Descripción
+Registra automáticamente todas las modificaciones de datos en las tablas de negocio mediante el trigger PostgreSQL `aud_fn_auditar_tabla()`.
+
+### Reglas de Negocio
+1. **Auditoría Transparente:** Todas las operaciones `INSERT`, `UPDATE` y `DELETE` guardan el estado anterior y nuevo (`JSONB`) en `comun_auditoria.aud_registro`.
+2. **Aislamiento de Visibilidad:**
+   - Los roles `ADMINISTRADOR` de un negocio solo pueden visualizar el historial de auditoría correspondiente a su dominio de datos (`/admin/auditoria`).
+   - El rol `SUPERADMIN` de Plataforma posee visibilidad global de la auditoría de todos los negocios.
+
+---
+
+## PLT-006 — Facturación Electrónica SRI y Pasarela de Pagos
+
+### Descripción
+Unifica el procesamiento de pagos y la emisión de comprobantes electrónicos autorizados por el Servicio de Rentas Internas (SRI) de Ecuador.
+
+### Reglas de Negocio
+1. **Pasarela de Pagos como Proceso Crítico Común:** El flujo de cobro es la acción crítica común transversal a todas las aplicaciones que activa las garantías de seguridad y MFA TOTP de `PLT-002`.
+2. **Emisión de Facturas Electrónicas:** Todo pago completado exitosamente genera la factura electrónica SRI.
+3. **Confirmación de Datos de Facturación:**
+   - Antes de procesar el cobro, el sistema solicita al cliente confirmar si requiere la factura a nombre de **Consumidor Final** o con **Datos Personalizados (RUC/Cédula, Razón Social, Dirección, Correo)**.
+   - Si el cliente elige emitir con datos y no los ha registrado previamente en su perfil, el sistema exige su ingreso antes de habilitar la pasarela de pago.
+4. **Abstracción de Pasarela:** El flujo de cobro utiliza una interfaz unificada que soporta pasarelas locales (Payphone, Kushki, Placetopay) de forma transparente para el cliente.
+
+---
+
+## PLT-007 — Catálogo Geográfico Unificado (Ecuador)
+
+### Descripción
+Proporciona el catálogo maestro de las 24 Provincias y sus respectivos Cantones/Ciudades de la República del Ecuador en `comun_catalogo`.
+
+### Reglas de Negocio
+1. **Carga Inicial Completa:** La base de datos se inicializa con la totalidad de las 24 provincias y cantones oficializados por el INEC.
+2. **Activación Zonal por Negocio:** Cada producto activa las provincias/ciudades en las que opera comercialmente (ej. Tinkay y FastFix operan inicialmente en *Pichincha / Quito*, mientras que Tranqi habilita *Cobertura Nacional*).
+3. **Estandarización de Direcciones:** Cualquier entidad que requiera provincia o ciudad (residencia de cliente, cobertura de abogado, zona de técnico o dirección de entrega) consulta obligatoriamente este catálogo.
+
+---
+
+## PLT-008 — Configuración de Datos Generales del Negocio, Términos y Redes Sociales
+
+### Descripción
+Proporciona una consola de configuración para que el Administrador de cada negocio defina la información corporativa, canales de atención, términos legales y locales físicos de su producto.
+
+### Reglas de Negocio
+1. **Provincias y Ciudades de Operación:** Selección de 1 o más provincias/ciudades activas del catálogo de `PLT-007` que delimitan la zona de cobertura comercial del negocio.
+2. **Canales de Contacto (1 o más):**
+   - Tipo de canal: Teléfono de Atención, WhatsApp Oficial, Correo Electrónico de Soporte, Horario de Atención.
+   - Estado activo/inactivo por canal.
+3. **Redes Sociales Oficiales del Negocio (Top 3 Ecuador):**
+   - Configuración de enlaces oficiales para el **Top 3 de Redes Sociales más usadas en Ecuador**:
+     - **Facebook** (Página Oficial / Fanpage)
+     - **Instagram** (Perfil Oficial)
+     - **TikTok** (Cuenta Oficial de Contenido)
+     - *(Opcional: WhatsApp Business / X)*
+4. **Editor de Términos de Servicio en Markdown (`.md`):**
+   - Módulo en la consola administrativa para redactar y editar en formato **Markdown (`.md`)** los Términos de Servicio y Políticas de Privacidad específicos del negocio.
+   - Vista previa en tiempo real y versionado de cambios legales.
+5. **Locales / Puntos de Atención Física (1 o más):**
+   - **Nombre del Local / Sucursal:** Identificador descriptivo (ej. *Matriz Quito Norte*, *Sucursal Cumbayá*).
+   - **Dirección Física:** Calle principal, secundaria, número y referencia.
+   - **Ubicación en Google Maps:** Coordenadas GPS (latitud, longitud) y/o URL embebida de Google Maps para navegación.
+   - **Fotografía del Local (Opcional):** Imagen representativa de la fachada u oficina para brindar confianza visual al cliente.
+   - **Indicador de Sede Principal:** Un local debe marcarse como Matriz/Sede Principal.
+
+### Criterios de Aceptación (Gherkin)
+* **Escenario:** Edición de Términos de Servicio en Markdown
+  * **Dado que** el Administrador de FastFix accede al panel `/admin/configuracion-negocio/terminos`.
+  * **Cuando** edita el contenido legal en formato Markdown y hace clic en "Guardar y Publicar".
+  * **Entonces** el sistema actualiza el texto y lo despliega instantáneamente en el modal de Términos de la app de FastFix.
+
+---
+
+## Cómo Referenciar desde la Especificación de un Producto
+
+En la especificación funcional de cualquier producto (`gobernanza/productos/{producto}/especificacion-funcional.md`), se referencian estos requerimientos por su código:
 
 ```markdown
-## Identidad y autenticación
+## Identidad y Autenticación
+Ver PLT-001, PLT-002 y PLT-003 en la Especificación de Plataforma. Registro sin fricción y acceso biométrico en app móvil.
 
-Ver especificación de Plataforma (PLT-001, PLT-002, PLT-003). Sin adiciones específicas de este producto.
+## Configuración y Ubicación del Negocio
+Ver PLT-008. Sucursal matriz en Quito, Redes Sociales (FB, IG, TikTok) y Términos en Markdown.
 
-## Chat conversacional
+## Chat Conversacional
+Ver PLT-004. Agente asignado en ARIA: "Asistente Legal Tranqi".
 
-Ver PLT-004. Agente asignado: "{nombre del agente}" — ver especificacion-tecnica.md de este producto para el ID de agente en ARIA.
+## Facturación y Pagos
+Ver PLT-006. Emisión de factura SRI automática al aprobar la solicitud.
 ```
 
-Solo se documenta en el producto lo que **cambia o se agrega** respecto a esta especificación.
