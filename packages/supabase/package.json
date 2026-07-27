@@ -1,0 +1,24 @@
+{
+  "name": "@eco/supabase",
+  "version": "0.0.0",
+  "private": true,
+  "exports": {
+    ".": "./src/client.ts",
+    "./servidor": "./src/server.ts",
+    "./middleware": "./src/middleware.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@eco/db": "workspace:*",
+    "@supabase/ssr": "0.12.3",
+    "@supabase/supabase-js": "2.110.8"
+  },
+  "devDependencies": {
+    "@eco/config": "workspace:*",
+    "@types/node": "^22.10.0",
+    "next": "15.5.22",
+    "typescript": "^5.7.0"
+  }
+}

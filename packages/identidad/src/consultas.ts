@@ -1,6 +1,4 @@
-import { crearClienteServidor } from "@/lib/supabase/server";
-
-const NEGOCIO = "tranqi";
+import { crearClienteServidor } from "@eco/supabase/servidor";
 
 // Server-only. No importar desde un client component.
 
@@ -29,22 +27,22 @@ export async function obtenerPerfilActual() {
   return perfil;
 }
 
-export async function obtenerMembresiaTranqi(usuarioId: string) {
+export async function obtenerMembresia(usuarioId: string, negocio: string) {
   const supabase = await crearClienteServidor();
   const { data } = await supabase
     .schema("comun_seguridad")
     .from("seg_membresia")
     .select("*")
     .eq("mem_usuario_id", usuarioId)
-    .eq("mem_negocio", NEGOCIO)
+    .eq("mem_negocio", negocio)
     .maybeSingle();
 
   return data;
 }
 
-// PLT-011: que widgets ve el usuario actual en Tranqi. SUPERADMIN (flag de
-// plataforma) ve todos sin necesidad de fila en seg_rol_widget.
-export async function obtenerWidgetsVisiblesTranqi(usuarioId: string, esSuperadmin: boolean) {
+// PLT-011: que widgets ve el usuario actual en un negocio. SUPERADMIN (flag
+// de plataforma) ve todos sin necesidad de fila en seg_rol_widget.
+export async function obtenerWidgetsVisibles(usuarioId: string, esSuperadmin: boolean, negocio: string) {
   const supabase = await crearClienteServidor();
 
   if (esSuperadmin) {
@@ -52,19 +50,19 @@ export async function obtenerWidgetsVisiblesTranqi(usuarioId: string, esSuperadm
       .schema("comun_seguridad")
       .from("seg_widget")
       .select("wdg_clave, wdg_nombre")
-      .eq("wdg_negocio", NEGOCIO)
+      .eq("wdg_negocio", negocio)
       .eq("wdg_activo", true);
     return data ?? [];
   }
 
-  const membresia = await obtenerMembresiaTranqi(usuarioId);
+  const membresia = await obtenerMembresia(usuarioId, negocio);
   if (!membresia) return [];
 
   const { data: asignaciones } = await supabase
     .schema("comun_seguridad")
     .from("seg_rol_widget")
     .select("rlw_widget_id")
-    .eq("rlw_negocio", NEGOCIO)
+    .eq("rlw_negocio", negocio)
     .eq("rlw_rol", membresia.mem_rol)
     .eq("rlw_visible", true);
 

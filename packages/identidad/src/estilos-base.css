@@ -1,0 +1,136 @@
+/* Estilos base neutrales para las pantallas de @eco/identidad, pensados
+   para apps que todavia no tienen sistema de marca propio (fastfix-web,
+   tinkay-web, margaritas-web). tranqi-web NO importa este archivo -- ya
+   tiene su propio diseno de marca en app/globals.css con las mismas
+   clases. Cuando un negocio defina su marca, reemplaza este import por su
+   propio CSS (mismo patron que tranqi-web). */
+
+:root {
+  --eco-acento: #2563eb;
+  --eco-negro: #111111;
+  --eco-blanco: #ffffff;
+  --eco-gris: #6b7280;
+  --eco-borde: rgba(17, 17, 17, 0.15);
+  --eco-fondo: #f6f6f8;
+  --eco-peligro: #b00020;
+}
+
+.pagina-auth {
+  min-height: 100vh;
+  background: var(--eco-blanco);
+  color: var(--eco-negro);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  padding: 40px 20px;
+  text-align: center;
+  font-family: system-ui, sans-serif;
+}
+.logo-auth { font-size: 1.4rem; font-weight: 800; color: var(--eco-acento); text-decoration: none; }
+.pagina-auth h1 { font-size: clamp(1.4rem, 3vw, 1.9rem); font-weight: 800; }
+
+.tarjeta-auth { width: min(380px, 100%); display: flex; flex-direction: column; gap: 16px; }
+.btn-google {
+  padding: 13px 20px; border-radius: 999px; border: 1.5px solid var(--eco-negro);
+  background: var(--eco-blanco); font-weight: 700; cursor: pointer;
+}
+.btn-google:hover { background: var(--eco-fondo); }
+.btn-google:disabled { opacity: 0.5; cursor: wait; }
+.separador { font-size: 0.82rem; color: var(--eco-gris); }
+.aviso-terminos { font-size: 0.78rem; color: var(--eco-gris); text-align: center; margin-top: -6px; }
+.aviso-terminos a { color: var(--eco-acento); font-weight: 700; }
+
+.form-auth { display: flex; flex-direction: column; gap: 10px; text-align: left; }
+.form-auth input {
+  padding: 12px 14px; border-radius: 10px; border: 1.5px solid var(--eco-borde);
+  font-family: inherit; font-size: 0.95rem;
+}
+.form-auth input:focus { outline: none; border-color: var(--eco-acento); }
+
+.campo-check { display: flex; align-items: center; gap: 10px; font-size: 0.92rem; font-weight: 500; cursor: pointer; }
+.campo-check input { width: 18px; height: 18px; }
+.campo-check a { color: var(--eco-acento); font-weight: 700; }
+.etiqueta-campo { display: flex; flex-direction: column; gap: 6px; font-size: 0.82rem; font-weight: 700; }
+
+.error-auth { color: var(--eco-peligro); font-size: 0.85rem; text-align: left; }
+.mensaje-ok { color: #05876e; font-size: 0.85rem; }
+.enlace-auth { font-size: 0.9rem; }
+.enlace-auth a { color: var(--eco-acento); font-weight: 700; }
+
+.btn {
+  display: inline-block; font-weight: 700; font-size: 1.02rem; text-decoration: none;
+  padding: 14px 28px; border-radius: 999px; cursor: pointer; border: none;
+  transition: background 0.15s, color 0.15s;
+}
+.btn-primario { background: var(--eco-acento); color: var(--eco-blanco); }
+.btn-primario:hover { background: #1d4ed8; }
+.btn-primario:disabled { opacity: 0.5; cursor: wait; }
+
+.pagina-bienvenida {
+  min-height: 100vh; background: var(--eco-fondo); color: var(--eco-negro);
+  display: flex; align-items: center; justify-content: center; padding: 40px 20px;
+  font-family: system-ui, sans-serif;
+}
+.tarjeta-bienvenida { width: min(420px, 100%); display: flex; flex-direction: column; gap: 16px; }
+.saludo-bienvenida { font-size: clamp(2rem, 5vw, 2.8rem); font-weight: 800; }
+
+.pagina-legal {
+  min-height: 100vh; max-width: 720px; margin: 0 auto; background: var(--eco-blanco); color: var(--eco-negro);
+  padding: 40px 20px 80px; display: flex; flex-direction: column; gap: 14px; font-family: system-ui, sans-serif;
+}
+.pagina-legal h1 { font-size: clamp(1.4rem, 3vw, 1.9rem); font-weight: 800; margin-top: 8px; }
+.pagina-legal .seccion-legal { display: flex; flex-direction: column; gap: 8px; }
+.pagina-legal h2 { font-size: 1.15rem; font-weight: 800; }
+.pagina-legal p, .pagina-legal li { line-height: 1.6; color: rgba(17, 17, 17, 0.85); }
+.pagina-legal ul { padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+.pagina-legal a { color: var(--eco-acento); font-weight: 700; }
+.fecha-legal { font-size: 0.85rem; color: var(--eco-gris); }
+.aviso-borrador { background: #fef08a; color: var(--eco-negro); font-weight: 700; font-size: 0.85rem; padding: 10px 14px; border-radius: 10px; }
+
+.panel-layout { display: flex; min-height: 100vh; background: var(--eco-fondo); color: var(--eco-negro); font-family: system-ui, sans-serif; }
+.panel-nav { width: 240px; flex: none; background: var(--eco-negro); color: var(--eco-blanco); display: flex; flex-direction: column; padding: 24px 18px; gap: 24px; }
+.panel-marca { font-size: 1.3rem; font-weight: 800; }
+.panel-nav-links { display: flex; flex-direction: column; gap: 4px; flex: 1; }
+.panel-nav-links a { color: var(--eco-blanco); text-decoration: none; padding: 10px 12px; border-radius: 8px; font-size: 0.92rem; }
+.panel-nav-links a:hover { background: rgba(255, 255, 255, 0.1); }
+.panel-usuario { font-size: 0.8rem; opacity: 0.85; display: flex; flex-direction: column; gap: 8px; }
+.etiqueta-superadmin { display: inline-block; background: #fde047; color: var(--eco-negro); font-weight: 800; font-size: 0.68rem; padding: 3px 8px; border-radius: 999px; width: fit-content; }
+.panel-contenido { flex: 1; padding: 36px clamp(20px, 4vw, 48px); }
+.panel-contenido h1 { font-size: 1.5rem; font-weight: 800; margin-bottom: 20px; }
+.nombre-usuario-activo { display: block; font-weight: 700; }
+.correo-usuario-activo { display: block; font-size: 0.75rem; opacity: 0.7; }
+
+.form-panel { display: flex; flex-direction: column; gap: 14px; max-width: 480px; }
+.form-panel label { display: flex; flex-direction: column; gap: 6px; font-size: 0.85rem; font-weight: 700; }
+.form-panel input { padding: 11px 13px; border-radius: 8px; border: 1.5px solid var(--eco-borde); font-family: inherit; font-size: 0.95rem; font-weight: 400; }
+
+.form-busqueda { display: flex; gap: 10px; margin-bottom: 20px; max-width: 420px; }
+.form-busqueda input { flex: 1; padding: 10px 13px; border-radius: 8px; border: 1.5px solid var(--eco-borde); font-family: inherit; }
+
+.btn-mini { padding: 8px 16px; border-radius: 999px; border: none; background: var(--eco-negro); color: var(--eco-blanco); font-weight: 700; font-size: 0.82rem; cursor: pointer; }
+.btn-mini:hover { background: var(--eco-acento); }
+.btn-mini:disabled { opacity: 0.5; cursor: wait; }
+.mensaje-fila { font-size: 0.78rem; color: #05876e; margin-left: 6px; }
+
+.tabla-panel { width: 100%; border-collapse: collapse; background: var(--eco-blanco); border-radius: 12px; overflow: hidden; }
+.tabla-panel th, .tabla-panel td { padding: 12px 14px; text-align: left; font-size: 0.88rem; border-bottom: 1px solid var(--eco-borde); }
+.tabla-panel th { background: #eef2ff; font-weight: 700; }
+.tabla-panel select { padding: 6px 8px; border-radius: 6px; border: 1px solid var(--eco-borde); font-family: inherit; }
+
+.zona-peligro {
+  margin-top: 40px; padding: 20px; border: 1.5px solid var(--eco-peligro); border-radius: 12px;
+  max-width: 480px; display: flex; flex-direction: column; gap: 10px; background: rgba(176, 0, 32, 0.04);
+}
+.zona-peligro h2 { font-size: 1.05rem; font-weight: 800; color: var(--eco-peligro); }
+.zona-peligro p { font-size: 0.85rem; line-height: 1.5; }
+.btn-peligro { align-self: flex-start; padding: 10px 18px; border-radius: 999px; border: 1.5px solid var(--eco-peligro); background: var(--eco-blanco); color: var(--eco-peligro); font-weight: 700; cursor: pointer; }
+.btn-peligro:hover { background: var(--eco-peligro); color: var(--eco-blanco); }
+.btn-peligro:disabled { opacity: 0.5; cursor: wait; }
+
+.historial-accesos { margin-top: 32px; max-width: 480px; }
+.historial-accesos h2 { font-size: 1.05rem; font-weight: 800; margin-bottom: 10px; }
+.historial-accesos ul { list-style: none; display: flex; flex-direction: column; gap: 6px; }
+.historial-accesos li { display: flex; justify-content: space-between; font-size: 0.85rem; padding: 8px 12px; background: var(--eco-blanco); border-radius: 8px; border: 1px solid var(--eco-borde); }
+.historial-fecha { color: var(--eco-gris); }

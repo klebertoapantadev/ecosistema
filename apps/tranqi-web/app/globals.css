@@ -79,8 +79,8 @@ nav .links a.cta:hover { background: var(--menta); }
   padding: 16px 34px; border-radius: 999px; cursor: pointer; border: none;
   transition: background 0.15s, color 0.15s;
 }
-.btn-amarillo { background: var(--amarillo); color: var(--negro); }
-.btn-amarillo:hover { background: var(--menta); }
+.btn-amarillo, .btn-primario { background: var(--amarillo); color: var(--negro); }
+.btn-amarillo:hover, .btn-primario:hover { background: var(--menta); }
 .btn-negro { background: var(--negro); color: var(--blanco); }
 .btn-negro:hover { background: var(--violeta); }
 .btn-blanco-borde { background: transparent; color: var(--blanco); box-shadow: inset 0 0 0 2px var(--blanco); }

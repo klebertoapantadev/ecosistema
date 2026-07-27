@@ -80,6 +80,7 @@ Extensiones relevantes ya instaladas en el proyecto (heredadas, no instaladas po
 | `20260727000008_seg_terminos_y_baja_cuenta` | Consentimiento de términos (`usu_terminos_aceptados_en`, `usu_terminos_version`, PLT-001 regla 6) y baja de cuenta (`usu_eliminado_en`, RPC `seg_fn_eliminar_cuenta()`, PLT-012) |
 | `20260727000009_seg_provisionar_usuario_fallback_nombre` | **Fix**: el trigger solo leía `given_name`/`family_name` de Google, que este proveedor no siempre envía (solo `name`/`full_name`) — deja `usu_nombres`/`usu_apellidos` sin prellenar en la bienvenida. Agrega fallback partiendo `name`/`full_name` por el primer espacio. |
 | `20260727000010_seg_widget_configuracion_negocio` | **Fix**: "Configuración del negocio" era un link fijo visible a cualquier usuario autenticado (incluido `CLIENTE`). Se registra como widget `configuracion_negocio` asignado a `ADMINISTRADOR`, igual que `gestion_usuarios`. |
+| `20260727000011_seg_acceso` | Historial de accesos por usuario/dispositivo (PLT-013), común a los 4 negocios — alimenta el saludo personalizado y la lista de "dispositivos recientes" en Mi cuenta. |
 
 Tipos TypeScript regenerados en cada migración que cambia columnas — ver `packages/db/src/tipos-generados.ts` (`20260727000009` solo reescribe el cuerpo de una función, no requiere regeneración).
 

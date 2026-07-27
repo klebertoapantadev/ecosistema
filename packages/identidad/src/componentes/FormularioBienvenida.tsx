@@ -41,11 +41,7 @@ export function FormularioBienvenida({ nombresIniciales, apellidosIniciales }: P
       <input value={apellidos} onChange={(e) => setApellidos(e.target.value)} placeholder="Apellidos" required />
 
       <label className="campo-check">
-        <input
-          type="checkbox"
-          checked={autorizaWhatsapp}
-          onChange={(e) => setAutorizaWhatsapp(e.target.checked)}
-        />
+        <input type="checkbox" checked={autorizaWhatsapp} onChange={(e) => setAutorizaWhatsapp(e.target.checked)} />
         ¿Podemos contactarte por WhatsApp?
       </label>
 
@@ -59,8 +55,12 @@ export function FormularioBienvenida({ nombresIniciales, apellidosIniciales }: P
         />
       )}
 
-      {error && <p className="error-auth" role="alert">{error}</p>}
-      <button type="submit" className="btn btn-amarillo" disabled={cargando}>
+      {error && (
+        <p className="error-auth" role="alert">
+          {error}
+        </p>
+      )}
+      <button type="submit" className="btn btn-primario" disabled={cargando}>
         {cargando ? "Guardando…" : "Continuar"}
       </button>
     </form>

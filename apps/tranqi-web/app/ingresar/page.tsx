@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { FormularioIngreso } from "@/modulos/identidad/componentes/FormularioIngreso";
+import { FormularioIngreso } from "@eco/identidad";
 
 export const metadata: Metadata = { title: "Ingresar — tranqi" };
 

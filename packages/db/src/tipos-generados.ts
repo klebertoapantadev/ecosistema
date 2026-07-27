@@ -1,8 +1,9 @@
-// Generado con: supabase gen types typescript --project-id oaybbpdxhlxjbpwnoymy
+﻿// Generado con: npx supabase gen types typescript --project-id oaybbpdxhlxjbpwnoymy
 //   --schema comun_seguridad,comun_auditoria,comun_configuracion
-// Regenerar en el mismo PR que aplique una migracion nueva. Esquemas
-// pendientes de incluir cuando existan: comun_facturacion, comun_catalogo,
-// comun_agentes, comun_comercio, y los de cada negocio.
+// Regenerar en el mismo PR que cualquier migracion nueva que toque columnas
+// (no hace falta si la migracion solo reescribe el cuerpo de una funcion).
+// Pendientes de incluir cuando se migren: comun_facturacion, comun_catalogo,
+// comun_agentes, comun_comercio.
 export type Json =
   | string
   | number
@@ -159,6 +160,41 @@ export type Database = {
   }
   comun_seguridad: {
     Tables: {
+      seg_acceso: {
+        Row: {
+          acc_creado_en: string
+          acc_id: string
+          acc_ip: string | null
+          acc_secuencial: number
+          acc_user_agent: string | null
+          acc_usuario_id: string
+        }
+        Insert: {
+          acc_creado_en?: string
+          acc_id?: string
+          acc_ip?: string | null
+          acc_secuencial?: never
+          acc_user_agent?: string | null
+          acc_usuario_id: string
+        }
+        Update: {
+          acc_creado_en?: string
+          acc_id?: string
+          acc_ip?: string | null
+          acc_secuencial?: never
+          acc_user_agent?: string | null
+          acc_usuario_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seg_acceso_acc_usuario_id_fkey"
+            columns: ["acc_usuario_id"]
+            isOneToOne: false
+            referencedRelation: "seg_usuario"
+            referencedColumns: ["usu_id"]
+          },
+        ]
+      }
       seg_membresia: {
         Row: {
           mem_actualizado_en: string

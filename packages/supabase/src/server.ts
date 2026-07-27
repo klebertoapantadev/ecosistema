@@ -4,7 +4,9 @@ import type { Database } from "@eco/db";
 
 // Cliente para Server Components / Server Actions / Route Handlers.
 // Propaga la sesion del usuario via cookies -- las politicas RLS ven al
-// usuario real, no un rol generico.
+// usuario real, no un rol generico. Comun a los 4 negocios: un solo
+// proyecto Supabase (NEXT_PUBLIC_SUPABASE_URL/PUBLISHABLE_KEY) sirve a
+// tranqi-web, fastfix-web, tinkay-web y margaritas-web por igual.
 export async function crearClienteServidor() {
   const cookieStore = await cookies();
 

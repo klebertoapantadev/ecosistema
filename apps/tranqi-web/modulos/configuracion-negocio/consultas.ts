@@ -1,4 +1,4 @@
-import { crearClienteServidor } from "@/lib/supabase/server";
+import { crearClienteServidor } from "@eco/supabase/servidor";
 
 const NEGOCIO = "tranqi";
 

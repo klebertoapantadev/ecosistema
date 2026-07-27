@@ -18,6 +18,21 @@ importers:
 
   apps/fastfix-web:
     dependencies:
+      '@eco/db':
+        specifier: workspace:*
+        version: link:../../packages/db
+      '@eco/identidad':
+        specifier: workspace:*
+        version: link:../../packages/identidad
+      '@eco/supabase':
+        specifier: workspace:*
+        version: link:../../packages/supabase
+      '@supabase/ssr':
+        specifier: 0.12.3
+        version: 0.12.3(@supabase/supabase-js@2.110.8)
+      '@supabase/supabase-js':
+        specifier: 2.110.8
+        version: 2.110.8
       next:
         specifier: 15.5.22
         version: 15.5.22(@types/node@22.20.1)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
@@ -27,6 +42,9 @@ importers:
       react-dom:
         specifier: 19.0.0
         version: 19.0.0(react@19.0.0)
+      zod:
+        specifier: 4.4.3
+        version: 4.4.3
     devDependencies:
       '@eco/config':
         specifier: workspace:*
@@ -46,6 +64,21 @@ importers:
 
   apps/margaritas-web:
     dependencies:
+      '@eco/db':
+        specifier: workspace:*
+        version: link:../../packages/db
+      '@eco/identidad':
+        specifier: workspace:*
+        version: link:../../packages/identidad
+      '@eco/supabase':
+        specifier: workspace:*
+        version: link:../../packages/supabase
+      '@supabase/ssr':
+        specifier: 0.12.3
+        version: 0.12.3(@supabase/supabase-js@2.110.8)
+      '@supabase/supabase-js':
+        specifier: 2.110.8
+        version: 2.110.8
       next:
         specifier: 15.5.22
         version: 15.5.22(@types/node@22.20.1)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
@@ -55,6 +88,9 @@ importers:
       react-dom:
         specifier: 19.0.0
         version: 19.0.0(react@19.0.0)
+      zod:
+        specifier: 4.4.3
+        version: 4.4.3
     devDependencies:
       '@eco/config':
         specifier: workspace:*
@@ -74,6 +110,21 @@ importers:
 
   apps/tinkay-web:
     dependencies:
+      '@eco/db':
+        specifier: workspace:*
+        version: link:../../packages/db
+      '@eco/identidad':
+        specifier: workspace:*
+        version: link:../../packages/identidad
+      '@eco/supabase':
+        specifier: workspace:*
+        version: link:../../packages/supabase
+      '@supabase/ssr':
+        specifier: 0.12.3
+        version: 0.12.3(@supabase/supabase-js@2.110.8)
+      '@supabase/supabase-js':
+        specifier: 2.110.8
+        version: 2.110.8
       next:
         specifier: 15.5.22
         version: 15.5.22(@types/node@22.20.1)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
@@ -83,6 +134,9 @@ importers:
       react-dom:
         specifier: 19.0.0
         version: 19.0.0(react@19.0.0)
+      zod:
+        specifier: 4.4.3
+        version: 4.4.3
     devDependencies:
       '@eco/config':
         specifier: workspace:*
@@ -108,6 +162,12 @@ importers:
       '@eco/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@eco/identidad':
+        specifier: workspace:*
+        version: link:../../packages/identidad
+      '@eco/supabase':
+        specifier: workspace:*
+        version: link:../../packages/supabase
       '@supabase/ssr':
         specifier: 0.12.3
         version: 0.12.3(@supabase/supabase-js@2.110.8)
@@ -162,6 +222,65 @@ importers:
       '@eco/config':
         specifier: workspace:*
         version: link:../config
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
+
+  packages/identidad:
+    dependencies:
+      '@eco/db':
+        specifier: workspace:*
+        version: link:../db
+      '@eco/supabase':
+        specifier: workspace:*
+        version: link:../supabase
+      zod:
+        specifier: 4.4.3
+        version: 4.4.3
+    devDependencies:
+      '@eco/config':
+        specifier: workspace:*
+        version: link:../config
+      '@types/node':
+        specifier: ^22.10.0
+        version: 22.20.1
+      '@types/react':
+        specifier: ^19.0.0
+        version: 19.2.17
+      '@types/react-dom':
+        specifier: ^19.0.0
+        version: 19.2.3(@types/react@19.2.17)
+      next:
+        specifier: 15.5.22
+        version: 15.5.22(@types/node@22.20.1)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
+      react:
+        specifier: 19.0.0
+        version: 19.0.0
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
+
+  packages/supabase:
+    dependencies:
+      '@eco/db':
+        specifier: workspace:*
+        version: link:../db
+      '@supabase/ssr':
+        specifier: 0.12.3
+        version: 0.12.3(@supabase/supabase-js@2.110.8)
+      '@supabase/supabase-js':
+        specifier: 2.110.8
+        version: 2.110.8
+    devDependencies:
+      '@eco/config':
+        specifier: workspace:*
+        version: link:../config
+      '@types/node':
+        specifier: ^22.10.0
+        version: 22.20.1
+      next:
+        specifier: 15.5.22
+        version: 15.5.22(@types/node@22.20.1)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
       typescript:
         specifier: ^5.7.0
         version: 5.9.3

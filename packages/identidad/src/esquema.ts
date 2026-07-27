@@ -1,9 +1,9 @@
 import { z } from "zod";
 
-// PLT-001 regla 6: version de terminos vigente. Subir este numero cuando el
-// texto de /terminos cambie de forma sustantiva -- queda registrado por
-// usuario en usu_terminos_version, quien acepto una version vieja se puede
-// identificar y renotificar.
+// PLT-001 regla 6: version de terminos vigente, comun a los 4 negocios.
+// Subir este numero cuando el texto de /terminos cambie de forma
+// sustantiva -- queda registrado por usuario en usu_terminos_version, quien
+// acepto una version vieja se puede identificar y renotificar.
 export const TERMINOS_VERSION = "v1";
 
 // PLT-001: registro cero-friccion via correo -- exactamente 4 campos + el

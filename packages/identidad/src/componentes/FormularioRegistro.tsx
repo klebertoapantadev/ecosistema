@@ -3,9 +3,9 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { registrarUsuario } from "../acciones";
-import { crearClienteNavegador } from "@/lib/supabase/client";
+import { crearClienteNavegador } from "@eco/supabase";
 
-export function FormularioRegistro() {
+export function FormularioRegistro({ negocio }: { negocio: string }) {
   const router = useRouter();
   const [nombres, setNombres] = useState("");
   const [apellidos, setApellidos] = useState("");
@@ -20,7 +20,7 @@ export function FormularioRegistro() {
     e.preventDefault();
     setError(null);
     setCargando(true);
-    const resultado = await registrarUsuario({ nombres, apellidos, correo, contrasena, aceptaTerminos });
+    const resultado = await registrarUsuario({ nombres, apellidos, correo, contrasena, aceptaTerminos }, negocio);
     setCargando(false);
     if (!resultado.ok) {
       setError(resultado.error);
@@ -106,10 +106,17 @@ export function FormularioRegistro() {
         />
         <label className="campo-check">
           <input type="checkbox" checked={aceptaTerminos} onChange={(e) => setAceptaTerminos(e.target.checked)} />
-          Acepto los <a href="/terminos" target="_blank" rel="noopener" onClick={(e) => e.stopPropagation()}>Términos de Servicio</a>
+          Acepto los{" "}
+          <a href="/terminos" target="_blank" rel="noopener" onClick={(e) => e.stopPropagation()}>
+            Términos de Servicio
+          </a>
         </label>
-        {error && <p className="error-auth" role="alert">{error}</p>}
-        <button type="submit" className="btn btn-amarillo" disabled={cargando || !aceptaTerminos}>
+        {error && (
+          <p className="error-auth" role="alert">
+            {error}
+          </p>
+        )}
+        <button type="submit" className="btn btn-primario" disabled={cargando || !aceptaTerminos}>
           {cargando ? "Creando cuenta…" : "Crear cuenta"}
         </button>
       </form>

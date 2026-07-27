@@ -1,7 +1,7 @@
 ---
 tipo: esp_funcional
 estado: vigente
-version: 1.5
+version: 1.6
 fecha: 2026-07-27
 responsable: Kleber Toapanta
 ---
@@ -257,6 +257,31 @@ Todo usuario registrado puede solicitar, por auto-servicio y sin intervención d
   * **Entonces** el sistema anonimiza sus datos personales y conserva el registro transaccional exigido por el SRI, sin vincularlo a su identidad real.
 
 **Implementación técnica:** ver [`especificacion-tecnica.md`](especificacion-tecnica.md) §1.3.
+
+---
+
+## PLT-013 — Historial de Accesos y Continuidad de Sesión
+
+### Descripción
+Todo usuario registrado puede ver los últimos accesos a su cuenta (dispositivo/navegador aproximado y fecha) desde su panel, y el sistema lo saluda de forma distinta según cuánto tiempo pasó desde su última visita — sin exponer huella digital real, solo una etiqueta legible.
+
+### Reglas de Negocio
+1. **Registro automático en cada inicio de sesión:** cualquier login exitoso (correo/contraseña, confirmación de registro con sesión inmediata, o Google OAuth) registra una fila con IP y User-Agent, sin intervención del usuario.
+2. **Visibilidad estrictamente propia:** un usuario únicamente puede ver su propio historial — nunca el de otro usuario, ni siquiera un `ADMINISTRADOR` del negocio.
+3. **Saludo por antigüedad del acceso anterior:** el panel saluda distinto según el tiempo transcurrido desde el penúltimo acceso (mismo día, última semana, último mes, más de un mes) — el primer acceso de una cuenta nueva no dispara un saludo especial (lo cubre la pantalla de bienvenida, `PLT-001` regla 2).
+4. **Común a los 4 negocios:** al ser parte de la identidad única del ecosistema, el historial es uno solo por usuario, no uno por negocio en el que tenga membresía.
+
+### Criterios de Aceptación (Gherkin)
+* **Escenario:** Saludo distinto en un reingreso el mismo día
+  * **Dado que** un usuario inició sesión hace 2 horas y vuelve a entrar ahora.
+  * **Cuando** llega a su panel.
+  * **Entonces** ve un saludo tipo "Hola de nuevo, {nombre}", no el saludo genérico de primera vez.
+* **Escenario:** Historial visible en Mi cuenta
+  * **Dado que** un usuario ha iniciado sesión 3 veces desde 2 dispositivos distintos.
+  * **Cuando** entra a "Mi cuenta".
+  * **Entonces** ve una lista con los 3 accesos, cada uno con una etiqueta de dispositivo legible y su fecha/hora.
+
+**Implementación técnica:** ver [`especificacion-tecnica.md`](especificacion-tecnica.md) §1.4.
 
 ---
 

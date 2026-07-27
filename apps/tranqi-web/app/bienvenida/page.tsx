@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { obtenerPerfilActual } from "@/modulos/identidad/consultas";
-import { FormularioBienvenida } from "@/modulos/identidad/componentes/FormularioBienvenida";
+import { obtenerPerfilActual, FormularioBienvenida } from "@eco/identidad";
 
 export const metadata: Metadata = { title: "Hola — tranqi" };
 

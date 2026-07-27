@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import "@eco/identidad/estilos-base.css";
 import "./globals.css";
 
 export const metadata: Metadata = {

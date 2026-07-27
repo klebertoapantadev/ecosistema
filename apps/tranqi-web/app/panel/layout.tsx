@@ -1,8 +1,9 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { obtenerPerfilActual, obtenerWidgetsVisiblesTranqi } from "@/modulos/identidad/consultas";
-import { cerrarSesion, asegurarMembresiaCliente } from "@/modulos/identidad/acciones";
-import { crearClienteServidor } from "@/lib/supabase/server";
+import { obtenerPerfilActual, obtenerWidgetsVisibles, cerrarSesion, asegurarMembresiaCliente } from "@eco/identidad";
+import { crearClienteServidor } from "@eco/supabase/servidor";
+
+const NEGOCIO = "tranqi";
 
 export default async function LayoutPanel({ children }: { children: React.ReactNode }) {
   const perfil = await obtenerPerfilActual();
@@ -12,13 +13,13 @@ export default async function LayoutPanel({ children }: { children: React.ReactN
 
   // Auto-reparacion: si signUp() se completo bajo "confirmar correo" activo,
   // no habia sesion todavia y la membresia CLIENTE pudo no crearse (ver
-  // asegurarMembresiaCliente en acciones.ts). Aqui SI hay sesion valida
+  // asegurarMembresiaCliente en @eco/identidad). Aqui SI hay sesion valida
   // garantizada (ya se redirigio arriba si no la hay), asi que es el lugar
   // confiable para completar el aprovisionamiento si quedo pendiente.
   const supabase = await crearClienteServidor();
-  await asegurarMembresiaCliente(supabase, perfil.usu_id);
+  await asegurarMembresiaCliente(supabase, perfil.usu_id, NEGOCIO);
 
-  const widgets = await obtenerWidgetsVisiblesTranqi(perfil.usu_id, perfil.usu_superadmin_plataforma);
+  const widgets = await obtenerWidgetsVisibles(perfil.usu_id, perfil.usu_superadmin_plataforma, NEGOCIO);
 
   return (
     <div className="panel-layout">

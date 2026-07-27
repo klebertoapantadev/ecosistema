@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { iniciarSesion } from "../acciones";
-import { crearClienteNavegador } from "@/lib/supabase/client";
+import { crearClienteNavegador } from "@eco/supabase";
 
 export function FormularioIngreso() {
   const router = useRouter();
@@ -69,8 +69,12 @@ export function FormularioIngreso() {
           autoComplete="current-password"
           required
         />
-        {error && <p className="error-auth" role="alert">{error}</p>}
-        <button type="submit" className="btn btn-amarillo" disabled={cargando}>
+        {error && (
+          <p className="error-auth" role="alert">
+            {error}
+          </p>
+        )}
+        <button type="submit" className="btn btn-primario" disabled={cargando}>
           {cargando ? "Ingresando…" : "Ingresar"}
         </button>
       </form>

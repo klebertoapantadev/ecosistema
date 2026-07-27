@@ -19,6 +19,8 @@ Ver especificación de [Plataforma](../plataforma/especificacion-funcional.md) �
 - **Flujo de Registro Independiente (Cero Fricción):** El registro en Margaritas Floristería es 100% independiente del resto de aplicaciones. El registro inicial prioriza la fluidez inmediata (OAuth Google 1-clic o Correo/Nombre/Password).
 - **Contacto WhatsApp Opcional:** No bloquea el registro inicial. Se ofrece de forma opcional post-registro.
 
+**✅ Implementado (2026-07-27):** registro (Google OAuth + correo/contraseña) con consentimiento de términos, bienvenida, historial de accesos y baja de cuenta (PLT-012) — vía el paquete compartido `@eco/identidad` (ver [`especificacion-tecnica.md` de Plataforma](../plataforma/especificacion-tecnica.md) §1). Configuración del negocio y gestión de usuarios todavía no — solo existen en `tranqi-web` por ahora.
+
 ---
 
 ## 2. Asistente Conversacional (ARIA)

@@ -14,6 +14,8 @@ responsable: Kleber Toapanta
 
 Ver especificación de [Plataforma](../plataforma/especificacion-funcional.md) — PLT-001, PLT-002, PLT-003. Sin adiciones específicas de Tinkay todavía.
 
+**✅ Implementado (2026-07-27):** registro (Google OAuth + correo/contraseña) con consentimiento de términos, bienvenida, historial de accesos y baja de cuenta (PLT-012) — vía el paquete compartido `@eco/identidad` (ver [`especificacion-tecnica.md` de Plataforma](../plataforma/especificacion-tecnica.md) §1). Configuración del negocio y gestión de usuarios todavía no — solo existen en `tranqi-web` por ahora.
+
 ## Chat conversacional
 
 Ver PLT-004. Agente de ARIA para Tinkay: pendiente de asignar.

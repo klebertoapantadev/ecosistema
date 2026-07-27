@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { crearClienteServidor } from "@/lib/supabase/server";
+import { crearClienteServidor } from "@eco/supabase/servidor";
 import { esquemaConfiguracionNegocio, type DatosConfiguracionNegocio } from "./esquema";
 
 type Resultado<T = undefined> = { ok: true; data: T } | { ok: false; error: string };

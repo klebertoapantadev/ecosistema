@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { TERMINOS_VERSION } from "@/modulos/identidad/esquema";
+import { TERMINOS_VERSION } from "@eco/identidad";
 
 export const metadata: Metadata = { title: "Términos de Servicio — tranqi" };
 
