@@ -11,7 +11,7 @@ responsable: Kleber Toapanta
 **Prefijo de código de requerimiento:** `PLT-xxx`  
 **Propietario:** Plataforma (transversal a todos los negocios del ecosistema)
 
-Este documento describe el **comportamiento compartido por los 3 productos** (Tranqi, FastFix Home, Tinkay) y por cualquier nuevo negocio que se incorpore. Ningún producto redefine estos requerimientos en su propia especificación; únicamente los referencia por su código `PLT-xxx` y documenta lo específico de su dominio.
+Este documento describe el **comportamiento compartido por los 4 productos** (Tranqi, FastFix Home, Tinkay, Margaritas Floristería) y por cualquier nuevo negocio que se incorpore. Ningún producto redefine estos requerimientos en su propia especificación; únicamente los referencia por su código `PLT-xxx` y documenta lo específico de su dominio.
 
 **Regla de precedencia:** Esta especificación establece los criterios de aceptación y reglas de negocio no negociables. Los agentes de codificación (Claude Code, Antigravity, Copilot, Cursor) e ingenieros deben implementar la lógica ajustándose estrictamente a este documento.
 

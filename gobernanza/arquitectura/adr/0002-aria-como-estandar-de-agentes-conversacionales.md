@@ -27,7 +27,7 @@ Esquema transversal — todo producto lo consulta, ninguno lo duplica. Sigue la 
 create table comun_agentes.age_agente_conversacional (
   agc_id uuid primary key default gen_random_uuid(),
   agc_secuencial bigint generated always as identity,
-  agc_producto text not null,                    -- 'tranqi' | 'fastfix' | 'tinkay' | 'plataforma'
+  agc_producto text not null,                    -- 'tranqi' | 'fastfix' | 'tinkay' | 'margaritas' | 'plataforma'
   agc_rol text,                                   -- null = agente por defecto del producto; o 'CLIENTE' | 'ABOGADO' | 'ADMIN' | ...
   agc_nombre text not null,                       -- descriptivo, ej. "Tranqi Buddy — Cliente"
   agc_agente_externo_id text not null,            -- ID del agente en ARIA

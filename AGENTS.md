@@ -2,7 +2,7 @@
 
 Este archivo es la fuente de contexto para **cualquier agente de codificación** que trabaje en este repositorio — Claude Code, GitHub Copilot, Antigravity, Cursor, Windsurf u otro. Sigue el estándar abierto [AGENTS.md](https://agents.md).
 
-Monorepo (Turborepo + pnpm) para 6 aplicaciones sobre 3 negocios (Tranqi, FastFix Home, Tinkay) que comparten una única instancia Supabase multi-esquema.
+Monorepo (Turborepo + pnpm) para 8 aplicaciones sobre 4 negocios (Tranqi, FastFix Home, Tinkay, Margaritas Floristería) que comparten una única instancia Supabase multi-esquema.
 
 ## Antes de escribir código, lee
 
@@ -55,6 +55,7 @@ gobernanza/     Estándares, arquitectura, políticas, manuales, especificacione
 | `tranqui_legal` | Tranqi | `trq_` |
 | `fastfix_mantenimiento` | FastFix Home | `ffh_` |
 | `tinkay_floristeria` | Tinkay | `tnk_` |
+| `margaritas_floristeria` | Margaritas Floristería | `mrg_` |
 
 ## Qué hacer si una instrucción del usuario contradice este archivo
 

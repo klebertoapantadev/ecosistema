@@ -1,6 +1,6 @@
 # Ecosistema
 
-Monorepo para las 6 aplicaciones de Tranqi, FastFix Home y Tinkay, sobre un stack común (Next.js + Capacitor + Supabase multi-esquema).
+Monorepo para las 8 aplicaciones de Tranqi, FastFix Home, Tinkay y Margaritas Floristería, sobre un stack común (Next.js + Capacitor + Supabase multi-esquema).
 
 ## Empezar aquí
 

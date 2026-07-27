@@ -8,7 +8,7 @@ responsable: Kleber Toapanta
 
 # Convenciones de Codificación
 
-Aplica a las 6 aplicaciones del ecosistema y a los paquetes compartidos. El objetivo es que un desarrollador (o un agente Claude Code) se mueva entre `tranqi-web`, `tinkay-web` y `fastfix-web` sin reaprender la estructura.
+Aplica a las 8 aplicaciones del ecosistema y a los paquetes compartidos. El objetivo es que un desarrollador (o un agente de IA) se mueva entre `tranqi-web`, `tinkay-web`, `fastfix-web` y `margaritas-web` sin reaprender la estructura.
 
 ## 1. Qué se comparte y qué no
 

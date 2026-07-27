@@ -49,7 +49,7 @@ Los esquemas comunes y las políticas de seguridad no cambian sin revisión del 
 
 Cada aplicación web es **un proyecto de Vercel independiente**, con:
 
-- **Root Directory** apuntando a su carpeta: `apps/tranqi-web`, `apps/tinkay-web`, `apps/fastfix-web`.
+- **Root Directory** apuntando a su carpeta: `apps/tranqi-web`, `apps/tinkay-web`, `apps/fastfix-web`, `apps/margaritas-web`.
 - **Dominio propio** asignado a cada proyecto.
 - **Ignored Build Step** configurado como:
 
@@ -59,7 +59,7 @@ npx turbo-ignore
 
 `turbo-ignore` compara el commit actual contra el último deploy exitoso de ese proyecto y determina si la app o alguna de sus dependencias en `packages/` cambió. Si no cambió nada relevante, Vercel marca el build como `Skipped` y el dominio de esa app no se toca.
 
-**Efecto práctico:** un push que solo modifica `apps/tinkay-web` dispara los 3 proyectos de Vercel, pero solo Tinkay construye y publica; Tranqi y FastFix quedan en `Skipped`. Un push que modifica `packages/ui` reconstruye correctamente todas las apps que lo consumen.
+**Efecto práctico:** un push que solo modifica `apps/tinkay-web` dispara los 4 proyectos de Vercel, pero solo Tinkay construye y publica; las demás quedan en `Skipped`. Un push que modifica `packages/ui` reconstruye correctamente todas las apps que lo consumen.
 
 ### 5.1. Apps nativas
 

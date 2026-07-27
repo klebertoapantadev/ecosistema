@@ -14,9 +14,9 @@ Todo proyecto del ecosistema comparte una única instancia PostgreSQL (Supabase)
 
 | Elemento | Regla | Ejemplo |
 | :--- | :--- | :--- |
-| Esquema de negocio | `{identificador_corto}_{dominio}`, minúsculas | `tranqui_legal`, `fastfix_mantenimiento`, `tinkay_floristeria` |
+| Esquema de negocio | `{identificador_corto}_{dominio}`, minúsculas | `tranqui_legal`, `fastfix_mantenimiento`, `tinkay_floristeria`, `margaritas_floristeria` |
 | Esquema transversal | `comun_{dominio}` | `comun_seguridad`, `comun_auditoria`, `comun_facturacion`, `comun_catalogo` |
-| Prefijo de tabla | 3 letras del identificador de marca + `_` | `trq_`, `ffh_`, `tnk_` |
+| Prefijo de tabla | 3 letras del identificador de marca + `_` | `trq_`, `ffh_`, `tnk_`, `mrg_` |
 | Nombre de tabla | `{prefijo_tabla}{entidad_snake_case}` | `trq_caso_judicial` |
 | Prefijo de columna | Abreviatura de 3 letras de la entidad (sin el prefijo de tabla) + `_` | `cas_`, `sol_`, `ped_` |
 | Clave primaria | `{prefijo_columna}id`, tipo `uuid`, default `gen_random_uuid()` | `cas_id` |
