@@ -16,6 +16,7 @@ Un issue no pasa a `Hecho` en el GitHub Project si falta alguno de estos puntos 
 - [ ] PR revisado y aprobado (CODEOWNERS si toca `comun_*`, `supabase/migrations/**` o `packages/auth/**`).
 - [ ] Sin `service_role` fuera de `supabase/functions/`.
 - [ ] `pnpm audit --audit-level=high` en verde; sin dependencias de producción con rango flotante (`^`/`~`). Ver [`politicas/seguridad-dependencias.md`](../politicas/seguridad-dependencias.md).
+- [ ] `pnpm test` en verde. Lógica nueva en `packages/*` tiene test unitario — ver criterio de qué probar en [`04-pruebas.md`](04-pruebas.md).
 
 ## Si el cambio toca base de datos
 

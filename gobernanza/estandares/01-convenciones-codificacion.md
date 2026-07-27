@@ -74,11 +74,9 @@ modulos/{entidad}/
 - Errores de Supabase/PostgREST se traducen a mensajes de dominio en `acciones.ts` — el componente no interpreta códigos de Postgres.
 - Toda Edge Function registra el error en `comun_auditoria.aud_log_api` antes de responder.
 
-## 7. Pruebas mínimas por módulo
+## 7. Pruebas
 
-- Validaciones Zod: casos válidos e inválidos.
-- Políticas RLS: al menos una prueba negativa por rol (un cliente no puede leer el caso de otro cliente).
-- RPC transaccionales: prueba de que un fallo a mitad de camino no deja estado parcial.
+Ver [`04-pruebas.md`](04-pruebas.md) para la herramienta (Vitest), qué se prueba en qué orden de prioridad, y por qué no perseguimos cobertura como meta. Resumen: RLS y RPC transaccionales son obligatorios; lógica pura de `packages/*` se prueba con Vitest; CRUD trivial que delega en RLS no necesita test propio.
 
 ## 8. Aislamiento de UI (regla de CI)
 
