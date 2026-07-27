@@ -336,6 +336,27 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      seg_fn_asignar_rol: {
+        Args: { p_negocio: string; p_rol: string; p_usuario_id: string }
+        Returns: {
+          mem_actualizado_en: string
+          mem_creado_en: string
+          mem_detalle_membresia: Json
+          mem_estado: string
+          mem_fecha_registro: string
+          mem_id: string
+          mem_negocio: string
+          mem_rol: string
+          mem_secuencial: number
+          mem_usuario_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "seg_membresia"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       seg_fn_es_admin_negocio: { Args: { p_negocio: string }; Returns: boolean }
     }
     Enums: {

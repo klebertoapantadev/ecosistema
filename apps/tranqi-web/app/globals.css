@@ -290,3 +290,91 @@ nav .links a.cta:hover { background: var(--menta); }
   #buddie .cuerpo { animation: none; }
   .reveal { transition: none; }
 }
+
+/* ═══════════ Autenticación (registro / ingreso) ═══════════ */
+.pagina-auth {
+  min-height: 100vh;
+  background: var(--blanco);
+  color: var(--negro);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  padding: 40px 20px;
+  text-align: center;
+}
+.logo-auth { font-size: 1.6rem; font-weight: 800; color: var(--violeta); text-decoration: none; }
+.pagina-auth h1 { font-size: clamp(1.4rem, 3vw, 1.9rem); font-weight: 800; }
+
+.tarjeta-auth {
+  width: min(380px, 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.btn-google {
+  padding: 13px 20px; border-radius: 999px; border: 1.5px solid var(--negro);
+  background: var(--blanco); font-weight: 700; cursor: pointer;
+}
+.btn-google:hover { background: var(--menta); }
+.btn-google:disabled { opacity: 0.5; cursor: wait; }
+.separador { font-size: 0.82rem; color: rgba(17,17,17,0.5); }
+
+.form-auth { display: flex; flex-direction: column; gap: 10px; text-align: left; }
+.form-auth input {
+  padding: 12px 14px; border-radius: 10px; border: 1.5px solid rgba(17,17,17,0.2);
+  font-family: inherit; font-size: 0.95rem;
+}
+.form-auth input:focus { outline: none; border-color: var(--violeta); }
+
+.error-auth { color: #B00020; font-size: 0.85rem; text-align: left; }
+.mensaje-ok { color: var(--esmeralda); font-size: 0.85rem; }
+
+.enlace-auth { font-size: 0.9rem; }
+.enlace-auth a { color: var(--violeta); font-weight: 700; }
+
+/* ═══════════ Panel administrativo ═══════════ */
+.panel-layout { display: flex; min-height: 100vh; background: #F6F4FB; color: var(--negro); }
+.panel-nav {
+  width: 240px; flex: none; background: var(--negro); color: var(--blanco);
+  display: flex; flex-direction: column; padding: 24px 18px; gap: 24px;
+}
+.panel-marca { font-size: 1.3rem; font-weight: 800; }
+.panel-nav-links { display: flex; flex-direction: column; gap: 4px; flex: 1; }
+.panel-nav-links a {
+  color: var(--blanco); text-decoration: none; padding: 10px 12px; border-radius: 8px; font-size: 0.92rem;
+}
+.panel-nav-links a:hover { background: rgba(255,255,255,0.1); }
+.panel-usuario { font-size: 0.8rem; opacity: 0.85; display: flex; flex-direction: column; gap: 8px; }
+.etiqueta-superadmin {
+  display: inline-block; background: var(--amarillo); color: var(--negro);
+  font-weight: 800; font-size: 0.68rem; padding: 3px 8px; border-radius: 999px; width: fit-content;
+}
+.panel-contenido { flex: 1; padding: 36px clamp(20px, 4vw, 48px); }
+.panel-contenido h1 { font-size: 1.5rem; font-weight: 800; margin-bottom: 20px; }
+
+.form-panel { display: flex; flex-direction: column; gap: 14px; max-width: 480px; }
+.form-panel label { display: flex; flex-direction: column; gap: 6px; font-size: 0.85rem; font-weight: 700; }
+.form-panel input {
+  padding: 11px 13px; border-radius: 8px; border: 1.5px solid rgba(17,17,17,0.2);
+  font-family: inherit; font-size: 0.95rem; font-weight: 400;
+}
+
+.form-busqueda { display: flex; gap: 10px; margin-bottom: 20px; max-width: 420px; }
+.form-busqueda input {
+  flex: 1; padding: 10px 13px; border-radius: 8px; border: 1.5px solid rgba(17,17,17,0.2); font-family: inherit;
+}
+
+.btn-mini {
+  padding: 8px 16px; border-radius: 999px; border: none; background: var(--negro);
+  color: var(--blanco); font-weight: 700; font-size: 0.82rem; cursor: pointer;
+}
+.btn-mini:hover { background: var(--violeta); }
+.btn-mini:disabled { opacity: 0.5; cursor: wait; }
+.mensaje-fila { font-size: 0.78rem; color: var(--esmeralda); margin-left: 6px; }
+
+.tabla-panel { width: 100%; border-collapse: collapse; background: var(--blanco); border-radius: 12px; overflow: hidden; }
+.tabla-panel th, .tabla-panel td { padding: 12px 14px; text-align: left; font-size: 0.88rem; border-bottom: 1px solid rgba(17,17,17,0.08); }
+.tabla-panel th { background: #EFEBFA; font-weight: 700; }
+.tabla-panel select { padding: 6px 8px; border-radius: 6px; border: 1px solid rgba(17,17,17,0.2); font-family: inherit; }
