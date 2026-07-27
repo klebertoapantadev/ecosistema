@@ -1,7 +1,7 @@
 ---
 tipo: esp_tecnica
 estado: vigente
-version: 1.1
+version: 1.2
 fecha: 2026-07-26
 responsable: Kleber Toapanta
 ---
@@ -10,15 +10,28 @@ responsable: Kleber Toapanta
 
 Contraparte técnica de [`especificacion-funcional.md`](especificacion-funcional.md). Este documento es un **índice con estado**, no redefine lo que ya vive en ADRs y políticas — apunta a la fuente y dice qué está construido y qué falta.
 
-## 1. `comun_seguridad` — implementa PLT-001, PLT-002, PLT-003
+## 1. `comun_seguridad` — implementa PLT-001, PLT-002, PLT-003, PLT-011
 
 | Tabla | Prefijo | Estado |
 | :--- | :--- | :--- |
-| `seg_usuario` | `usu_` | Definida en el TRD original. Migración pendiente (Sprint 0). |
-| `seg_membresia` | `mem_` | Definida en el TRD original. Migración pendiente (Sprint 0). |
+| `seg_usuario` | `usu_` | ✅ Migrada (`20260727000002_comun_seguridad.sql`). Incluye `usu_superadmin_plataforma`. |
+| `seg_membresia` | `mem_` | ✅ Migrada. `unique (mem_usuario_id, mem_negocio)` — una membresía por usuario y negocio. |
 
-MFA (PLT-002): Supabase Auth TOTP, exigido vía claim `aal` en políticas RLS — ver [`politicas/seguridad-y-datos.md`](../../politicas/seguridad-y-datos.md) §3.
-Rol en JWT: *Custom Access Token Hook* — pendiente de implementar (Sprint 0/1).
+Aprovisionamiento: trigger `comun_seguridad.seg_fn_provisionar_usuario()` sobre `auth.users` — toda alta crea automáticamente su fila en `seg_usuario`. El correo `kleber.toapanta.ch@gmail.com` queda marcado `usu_superadmin_plataforma = true` desde su primer login real (bootstrap, sin asignación manual).
+
+MFA (PLT-002): Supabase Auth TOTP, exigido vía claim `aal` en políticas RLS — ver [`politicas/seguridad-y-datos.md`](../../politicas/seguridad-y-datos.md) §3. **Pendiente todavía** — las políticas actuales no exigen `aal2` porque ningún flujo crítico se ha implementado aún.
+Rol en JWT: *Custom Access Token Hook* — pendiente de implementar. Mientras no exista, las políticas RLS resuelven el rol consultando `seg_membresia` directamente (vía `comun_seguridad.seg_fn_es_admin_negocio()`), no desde un claim del token.
+
+### 1.1. Sistema de widgets (PLT-011)
+
+| Tabla | Prefijo col. | Estado |
+| :--- | :--- | :--- |
+| `seg_widget` | `wdg_` | ✅ Migrada. Catálogo de funcionalidades por negocio (`unique (wdg_negocio, wdg_clave)`). |
+| `seg_rol_widget` | `rlw_` | ✅ Migrada. Asignación dinámica widget↔rol (`unique (rlw_negocio, rlw_rol, rlw_widget_id)`). |
+
+Seed aplicado: widget `gestion_usuarios` en los 4 negocios, asignado por defecto al rol `ADMINISTRADOR`. `SUPERADMIN` (vía `usu_superadmin_plataforma`) no necesita fila en `seg_rol_widget` — `seg_fn_es_admin_negocio()` lo autoriza siempre.
+
+**Pendiente:** UI de la pantalla de configuración (marcar/desmarcar widgets por rol) — hoy solo existe el modelo de datos y el seed inicial, no hay app que lo consuma todavía.
 
 ## 2. `comun_agentes` — implementa PLT-004
 
@@ -30,10 +43,10 @@ Ver [ADR-0002](../../arquitectura/adr/0002-aria-como-estandar-de-agentes-convers
 
 | Tabla | Prefijo | Estado |
 | :--- | :--- | :--- |
-| `aud_registro` | `reg_` | Definida en el TRD original. Migración pendiente. |
-| `aud_log_api` | `log_` | Definida en el TRD original. Migración pendiente. |
+| `aud_registro` | `reg_` | ✅ Migrada (`20260727000001_comun_auditoria.sql`). |
+| `aud_log_api` | `log_` | ✅ Migrada. Sin escritores todavía (ninguna Edge Function la usa aún). |
 
-Función `aud_fn_auditar_tabla()`: pendiente de implementar. Obligatoria en toda tabla de negocio nueva desde el momento en que exista (ver [`estandares/00-nomenclatura-base-datos.md`](../../estandares/00-nomenclatura-base-datos.md)).
+Función `aud_fn_auditar_tabla()`: ✅ implementada y aplicada como trigger en las 8 tablas de `comun_seguridad`/`comun_configuracion` creadas hasta ahora. Obligatoria en toda tabla de negocio nueva desde el momento en que exista (ver [`estandares/00-nomenclatura-base-datos.md`](../../estandares/00-nomenclatura-base-datos.md)). Lectura de `aud_registro`/`aud_log_api` restringida a `usu_superadmin_plataforma` — visibilidad acotada por negocio para `ADMINISTRADOR` queda pendiente de diseñar (requiere mapear esquema→negocio).
 
 ## 4. `comun_facturacion` — implementa PLT-006
 
@@ -73,15 +86,26 @@ Ver [ADR-0003](../../arquitectura/adr/0003-catalogo-comercial-unificado.md) para
 | `packages/comercio` (armado de link de WhatsApp, resolución de precio final) | Pendiente — mismo patrón que `packages/agentes-ia` |
 | Endpoints de consulta para el Buddie | Pendiente — reutiliza `packages/agentes-ia`, agrega función de lectura de catálogo |
 
-## 8. Tabla resumen de estado (para no perder el hilo)
+## 9. `comun_configuracion` — implementa PLT-008, PLT-011
+
+| Tabla | Prefijo col. | Estado |
+| :--- | :--- | :--- |
+| `cfg_negocio` | `cfg_` | ✅ Migrada (`20260727000003_comun_configuracion.sql`). Identificación/NIT, nombre comercial, razón social en columnas propias; redes sociales, canales, términos y locales en `cfg_detalle_configuracion` (JSONB) hasta que su volumen justifique tablas propias. |
+
+Seed aplicado: una fila por negocio (`tranqi`, `fastfix`, `tinkay`, `margaritas`) con nombre comercial, el resto vacío. Lectura pública (es información de vitrina), escritura restringida a `ADMINISTRADOR`/`SUPERADMIN` del negocio.
+
+## 10. Tabla resumen de estado (para no perder el hilo)
 
 | Esquema común | Migración SQL | Función/lógica asociada | Consumido hoy por |
 | :--- | :--- | :--- | :--- |
-| `comun_seguridad` | ❌ Pendiente | ❌ Custom Access Token Hook pendiente | Ninguno todavía (bloqueante para Sprint 1 de Tranqi) |
+| `comun_seguridad` | ✅ Aplicada | ⚠️ Custom Access Token Hook pendiente (RLS resuelve rol vía subconsulta por ahora) | Ninguna app todavía — modelo listo, falta la UI |
 | `comun_agentes` | ❌ Pendiente (tabla) | ✅ `packages/agentes-ia` (vía env vars) | `tranqi-web` |
-| `comun_auditoria` | ❌ Pendiente | ❌ `aud_fn_auditar_tabla()` pendiente | Ninguno todavía |
+| `comun_auditoria` | ✅ Aplicada | ✅ `aud_fn_auditar_tabla()` en las 8 tablas nuevas | `comun_seguridad`, `comun_configuracion` |
+| `comun_configuracion` | ✅ Aplicada | — | Ninguna app todavía — modelo listo, falta la UI |
 | `comun_facturacion` | ❌ Pendiente | — | Ninguno todavía |
 | `comun_catalogo` | ❌ Pendiente | — | Ninguno todavía |
 | `comun_comercio` | ❌ Pendiente | ❌ `packages/comercio` pendiente | Ninguno todavía (bloqueante para Tinkay/Margaritas) |
 
-**Ninguna migración de base de datos existe aún en `supabase/migrations/`.** Este documento se actualiza en el mismo PR que aplique cada migración — no antes, no después.
+**Proyecto Supabase:** `ecosistema` (`oaybbpdxhlxjbpwnoymy`) — ver [`arquitectura/inventario-supabase.md`](../../arquitectura/inventario-supabase.md). Las 3 migraciones aplicadas viven en `supabase/migrations/` con timestamp `20260727000001`–`20260727000003`.
+
+**Paso manual pendiente, fuera de SQL:** en el dashboard de Supabase → Settings → API → *Exposed schemas*, agregar `comun_seguridad`, `comun_auditoria`, `comun_configuracion` — sin esto, PostgREST no expone estos esquemas y `supabase-js` no puede consultarlos aunque las migraciones ya estén aplicadas.

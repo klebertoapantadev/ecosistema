@@ -84,6 +84,9 @@ pnpm build          # Turborepo construye solo lo afectado por el cambio
 
 ## 9. Pendiente de completar en Sprint 0
 
-- [ ] Estructura real de `turbo.json` y scripts raíz.
+- [x] Estructura real de `turbo.json` y scripts raíz.
+- [x] Primeras migraciones aplicadas (`comun_auditoria`, `comun_seguridad`, `comun_configuracion`) — ver [`arquitectura/inventario-supabase.md`](../arquitectura/inventario-supabase.md).
+- [ ] **Exposed schemas** en el dashboard de Supabase (Settings → API) — paso manual, no se puede hacer por SQL.
+- [ ] `packages/db` con tipos generados (`supabase gen types typescript`) — pendiente de correr contra el proyecto real.
 - [ ] Seed de datos de desarrollo (`supabase/seed/`).
 - [ ] Instrucciones específicas para levantar cada app nativa en emulador/dispositivo.

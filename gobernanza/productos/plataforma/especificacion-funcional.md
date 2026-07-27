@@ -216,6 +216,23 @@ Distribución del catálogo (`PLT-009`) hacia canales sociales sin carga manual 
 
 ---
 
+## PLT-011 — Configuración de Empresa y Sistema de Widgets por Rol
+
+### Descripción
+Pantalla de configuración del negocio (identidad legal + datos de `PLT-008`) y un sistema de permisos basado en **widgets**: cada funcionalidad implementada se registra como un widget asignable dinámicamente a un rol, en vez de codificar permisos fijos por aplicación.
+
+### Reglas de Negocio
+1. **Identificación legal del negocio:** cada negocio configura su Identificación/NIT, Nombre Comercial y Razón Social, además de los datos de `PLT-008` (redes sociales, canales, términos, locales).
+2. **Roles por defecto:** todo negocio tiene como mínimo `SUPERADMIN` (rol de plataforma, no de negocio — ver `PLT-003`), `ADMINISTRADOR`, `CLIENTE`, y puede definir roles adicionales (`OPERADOR`, `TECNICO`, `ABOGADO`, etc.).
+3. **Funcionalidad como widget:** cada capacidad de la consola de administración (gestión de usuarios, catálogo, pedidos, configuración) se registra como un widget con clave única por negocio.
+4. **Asignación dinámica, no fija en código:** un `ADMINISTRADOR` (o `SUPERADMIN`) decide qué widgets ve cada rol desde una pantalla de configuración — no requiere despliegue de código para cambiar quién ve qué.
+5. **Widget obligatorio de gestión de usuarios:** todo negocio trae, por defecto, un widget de "Gestión de usuarios" visible para `ADMINISTRADOR`, que permite buscar entre los usuarios registrados y asignarles rol dentro de ese negocio.
+6. **SuperAdmin de plataforma:** `kleber.toapanta.ch@gmail.com` es `SUPERADMIN` en los 4 negocios desde su primer inicio de sesión — no requiere asignación manual por negocio.
+
+**Implementación técnica:** ver [`especificacion-tecnica.md`](especificacion-tecnica.md) §1.1 y §9.
+
+---
+
 ## Cómo Referenciar desde la Especificación de un Producto
 
 En la especificación funcional de cualquier producto (`gobernanza/productos/{producto}/especificacion-funcional.md`), se referencian estos requerimientos por su código:

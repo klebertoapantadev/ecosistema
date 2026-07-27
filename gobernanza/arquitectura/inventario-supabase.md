@@ -48,18 +48,20 @@ Al arrancar Sprint 0 se encontró primero `kleber.toapanta.ch@gmail.com's Projec
 
 Extensiones relevantes ya instaladas en el proyecto (heredadas, no instaladas por este ecosistema): `vector` (pgvector), `pgcrypto`, `uuid-ossp`, `unaccent`, `pg_stat_statements`, `hypopg`, `index_advisor`, `supabase_vault`.
 
-## Esquemas del ecosistema (nuevos, este documento se actualiza según se creen)
+## Esquemas del ecosistema (este documento se actualiza en el mismo PR que aplica cada migración)
 
 | Esquema | Estado |
 | :--- | :--- |
-| `comun_seguridad` | Pendiente de crear |
-| `comun_auditoria` | Pendiente de crear |
+| `comun_auditoria` | ✅ Creado 2026-07-27 (`20260727000001`) |
+| `comun_seguridad` | ✅ Creado 2026-07-27 (`20260727000002`) |
+| `comun_configuracion` | ✅ Creado 2026-07-27 (`20260727000003`) |
 | `comun_facturacion` | Pendiente de crear |
 | `comun_catalogo` | Pendiente de crear |
 | `comun_agentes` | Pendiente de crear |
 | `comun_comercio` | Pendiente de crear |
-| `comun_configuracion` | Pendiente de crear |
 | `tranqui_legal` | Pendiente de crear |
 | `fastfix_mantenimiento` | Pendiente de crear |
 | `tinkay_floristeria` | Pendiente de crear — **nombre nuevo, no reutiliza ninguna tabla `tinkay_*` de `public`** |
 | `margaritas_floristeria` | Pendiente de crear |
+
+**Paso manual pendiente:** dashboard de Supabase → Settings → API → *Exposed schemas* → agregar `comun_seguridad`, `comun_auditoria`, `comun_configuracion` (necesario para que PostgREST/`supabase-js` puedan consultarlos; no se puede hacer por SQL/migración).
