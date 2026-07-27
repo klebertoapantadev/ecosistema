@@ -145,6 +145,15 @@ importers:
 
   packages/config: {}
 
+  packages/db:
+    devDependencies:
+      '@eco/config':
+        specifier: workspace:*
+        version: link:../config
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
+
 packages:
 
   '@emnapi/runtime@1.11.3':

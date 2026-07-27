@@ -16,7 +16,7 @@ responsable: Kleber Toapanta
 | :--- | :--- | :--- |
 | Node.js | LTS vigente | Usar `nvm`/`fnm` para fijar versión por proyecto |
 | pnpm | 9.x | `corepack enable` lo resuelve desde el `package.json` |
-| Supabase CLI | última estable | `npm install -g supabase` |
+| Supabase CLI | última estable | `npm install -g supabase` (o `npx supabase@latest`). Autenticar con `npx supabase login` — abre navegador; en Windows PowerShell usar `npx.cmd` si la política de ejecución bloquea `npx.ps1`. |
 | Git | — | — |
 | Cuenta de Supabase | — | Acceso al proyecto `ecosistema` (ref `oaybbpdxhlxjbpwnoymy`, org `kt-services`) — ver [`arquitectura/inventario-supabase.md`](../arquitectura/inventario-supabase.md). Proyecto dedicado, exclusivo de este monorepo. |
 | Cuenta de Vercel | — | Acceso a los proyectos web (`tranqi-web`, `tinkay-web`, `fastfix-web`, `margaritas-web`) |
@@ -86,7 +86,7 @@ pnpm build          # Turborepo construye solo lo afectado por el cambio
 
 - [x] Estructura real de `turbo.json` y scripts raíz.
 - [x] Primeras migraciones aplicadas (`comun_auditoria`, `comun_seguridad`, `comun_configuracion`) — ver [`arquitectura/inventario-supabase.md`](../arquitectura/inventario-supabase.md).
-- [ ] **Exposed schemas** en el dashboard de Supabase (Settings → API) — paso manual, no se puede hacer por SQL.
-- [ ] `packages/db` con tipos generados (`supabase gen types typescript`) — pendiente de correr contra el proyecto real.
+- [x] **Exposed schemas** en el dashboard de Supabase (Settings → API).
+- [x] `packages/db` con tipos generados contra el proyecto real (`comun_seguridad`, `comun_auditoria`, `comun_configuracion`). Regenerar con `npx supabase gen types typescript --project-id oaybbpdxhlxjbpwnoymy --schema {esquemas}` en el mismo PR que aplique una migración nueva.
 - [ ] Seed de datos de desarrollo (`supabase/seed/`).
 - [ ] Instrucciones específicas para levantar cada app nativa en emulador/dispositivo.
