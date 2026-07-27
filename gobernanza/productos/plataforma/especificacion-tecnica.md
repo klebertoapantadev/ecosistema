@@ -128,6 +128,27 @@ Seed aplicado: una fila por negocio (`tranqi`, `fastfix`, `tinkay`, `margaritas`
 
 `cfg_detalle_configuracion` incluye ahora `correoNotificaciones` (`PLT-008` regla 2, canal de correo) — **solo captura el dato**, no está conectado a envío real; ver [`modulos/configuracion-negocio/README.md`](../../../apps/tranqi-web/modulos/configuracion-negocio/README.md) de `tranqi-web` para el detalle de la limitación (Supabase Auth solo permite un remitente por proyecto, compartido por los 4 negocios).
 
+## 8. Supabase Storage y Módulos Transversales (PLT-013 a PLT-017)
+
+### 8.1. Estructura y Seguridad de Storage (PLT-016)
+- **Buckets Nativos:** `comun-publico` (lectura anónima, escritura RLS admin) y `comun-privado` (lectura/escritura RLS estricta + URLs firmadas expirables a 15 min).
+- **Patrón Jerárquico de Rutas Obligatorio:**
+  `[bucket]/[codigo_negocio]/[categoria_uso]/[yyyy-mm]/[uuid_archivo].[ext]`
+- **Seguridad RLS en `storage.objects`:**
+  ```sql
+  create policy "Acceso privado por membresia de negocio"
+    on storage.objects for select using (
+      bucket_id = 'comun-privado'
+      and comun_seguridad.seg_fn_es_miembro_negocio(auth.uid(), (string_to_array(name, '/'))[2])
+    );
+  ```
+
+### 8.2. Esquemas Comunes Adicionales
+- **`comun_notificacion` (PLT-013):** Tabla `not_registro` con `not_usuario_id`, `not_negocio`, `not_titulo`, `not_contenido`, `not_canal` (`IN_APP`, `PUSH`, `EMAIL`, `WHATSAPP`), `not_leido_en`.
+- **`comun_comercio.com_cupon` (PLT-014):** Cupones multitenant con restricción de monto mínimo, usos globales y por usuario.
+- **`comun_evaluacion` (PLT-015):** Reseñas de comprador/cliente verificado (`eva_usuario_id`, `eva_negocio`, `eva_calificacion`, `eva_comentario`, `eva_respuesta_oficial`).
+- **`comun_seguridad.seg_sesion` (PLT-017):** Auditoría de dispositivos y revocación remota de refresh tokens en Supabase Auth.
+
 ## 10. Tabla resumen de estado (para no perder el hilo)
 
 | Esquema común | Migración SQL | Función/lógica asociada | Consumido hoy por |

@@ -322,6 +322,132 @@ Todo usuario registrado puede solicitar, por auto-servicio y sin intervención d
 
 ---
 
+## PLT-013 — Centro Transversal de Notificaciones y Alertas (In-App, Push, Email y WhatsApp)
+
+### Descripción
+Motor unificado de eventos de comunicación y alertas en tiempo real para todos los productos del ecosistema, gestionado de forma centralizada sin que cada negocio reimplemente su propia infraestructura de mensajes.
+
+### Reglas de Negocio
+1. **Componente / Widget In-App de Notificaciones:**
+   - Barra superior de todas las aplicaciones con icono de campana e indicador numérico de notificaciones no leídas.
+   - Drawer táctil / modal interactivo que despliega el historial de alertas, ordenadas cronológicamente, con opción de marcar como leídas o ir al detalle del evento (ej. pedido, cita o causa).
+2. **Multicanalidad de Envío:**
+   - **In-App:** Notificación nativa persistida en base de datos.
+   - **Web / Mobile Push:** Notificaciones push para navegadores web y apps nativas Capacitor.
+   - **Correo Transaccional (Email):** Envío automático de notificaciones formales (confirmación de compra, factura SRI, reseteo de clave).
+   - **WhatsApp Business API:** Notificaciones operativas de alto valor (estado de entrega de pedido, confirmación de técnico en camino, alerta de cita urgente), exclusivamente si el usuario lo autorizó (`autorizacion_contacto_whatsapp` en `PLT-001`).
+3. **Aislamiento y Preferencias por Usuario:**
+   - El usuario puede gestionar desde `/panel/notificaciones` qué tipos de alertas desea recibir y por qué canales.
+
+### Criterios de Aceptación (Gherkin)
+* **Escenario:** Recepción de notificación in-app y push de pedido
+  * **Dado que** un cliente realizó un pedido en Tinkay.
+  * **Cuando** el estado cambia a "En Ruta de Entrega".
+  * **Entonces** el sistema genera la notificación in-app, incrementa el contador de la campana y dispara la alerta push a su dispositivo.
+
+---
+
+## PLT-014 — Motor de Cupones, Descuentos y Promociones
+
+### Descripción
+Motor centralizado de incentivos comerciales y códigos promocionales para todos los productos del ecosistema que comercialicen bienes o servicios (`PLT-009`).
+
+### Reglas de Negocio
+1. **Modalidades de Descuento:**
+   - **Monto Fijo ($):** Descuento directo en la moneda local sobre el total.
+   - **Porcentaje (%):** Descuento porcentual aplicable al total del carrito o a ítems específicos.
+2. **Reglas de Aplicación y Restricciones:**
+   - **Vigencia:** Fecha y hora exacta de inicio y fin.
+   - **Monto Mínimo:** Restricción opcional de valor mínimo de compra para activar el cupón.
+   - **Límites de Uso:** Límite máximo de canjes globales y límite máximo de canjes por usuario (`seg_usuario`).
+3. **Aislamiento Multitenant:**
+   - Cada cupón pertenece a un negocio específico (`com_negocio`); un código de Tinkay es inválido en FastFix o Tranqi.
+
+### Criterios de Aceptación (Gherkin)
+* **Escenario:** Canje exitoso de cupón de descuento por monto mínimo
+  * **Dado que** un cliente ingresa un cupón de 10% de descuento en el checkout de Tinkay.
+  * **Cuando** el total de su carrito supera el monto mínimo configurado.
+  * **Entonces** el sistema aplica el descuento, recalcula el total y registra el uso del cupón.
+
+---
+
+## PLT-015 — Sistema Transversal de Calificaciones, Reseñas y Reputación
+
+### Descripción
+Módulo unificado para capturar valoraciones (1 a 5 estrellas) y comentarios sobre servicios prestados (FastFix, Tranqi) o productos entregados (Tinkay, Margaritas).
+
+### Reglas de Negocio
+1. **Garantía de Cliente / Comprador Verificado (*Verified Purchase*):**
+   - Únicamente los usuarios que hayan completado una transacción o servicio real verificado en el sistema pueden emitir una valoración y reseña.
+2. **Estructura de la Reseña:**
+   - Calificación cuantitativa (1 a 5 estrellas), comentario de texto libre y etiquetas rápidas de calidad (ej. *Puntualidad*, *Excelente acabado*, *Atención amable*).
+3. **Moderación y Respuesta Oficial:**
+   - Publicación transparente. El Administrador del negocio posee la facultad de emitir una respuesta oficial pública visible debajo de la reseña y reportar contenido ofensivo.
+4. **Cálculo de Reputación:**
+   - El sistema calcula y actualiza automáticamente el promedio ponderado de calificación y total de reseñas para mostrarlos en las vitrinas públicas del negocio.
+
+### Criterios de Aceptación (Gherkin)
+* **Escenario:** Emisión de reseña por comprador verificado
+  * **Dado que** un usuario completó un servicio de reparación en FastFix.
+  * **Cuando** accede al detalle de su servicio finalizado y envía una calificación de 5 estrellas con comentario.
+  * **Entonces** el sistema valida la transacción real, publica la reseña y recalcula la calificación promedio del técnico.
+
+---
+
+## PLT-016 — Gestión de Archivos, Evidencias y Supabase Storage Standard
+
+### Descripción
+Estándar centralizado de almacenamiento de objetos, documentos, evidencias y medios digitales en Supabase Storage, estructurado para garantizar organización multitenant, seguridad RLS y persistencia de larga duración.
+
+### Reglas de Negocio
+1. **Estructura Jerárquica Obligatoria de Directorios (Storage Hierarchy):**
+   Todo archivo u objeto almacenado en Supabase Storage debe estructurarse estrictamente bajo el siguiente patrón de rutas:
+   `[bucket]/[codigo_negocio]/[categoria_uso]/[yyyy-mm]/[uuid_archivo].[ext]`
+   - `bucket`: Bucket de almacenamiento (`comun-publico` o `comun-privado`).
+   - `codigo_negocio`: Identificador del negocio (`TRANQ`, `FFH`, `TNK`, `MRG`, `PLT`).
+   - `categoria_uso`: Subcarpeta por propósito (`documentos-legales`, `evidencias-tecnicas`, `catalogo-productos`, `fotos-entrega`, `avatares-perfil`).
+   - `yyyy-mm`: Año y mes de carga para optimización de particionamiento y navegación de larga duración.
+   - `uuid_archivo`: Nombre único e inmutable (UUID v4) para evitar colisiones y sobrescrituras accidentales.
+
+   *Ejemplo Privado:* `comun-privado/TRANQ/documentos-legales/2026-07/9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d.pdf`  
+   *Ejemplo Público:* `comun-publico/TNK/catalogo-productos/2026-07/a1b2c3d4-e5f6-7890-abcd-ef1234567890.jpg`
+
+2. **Tipos de Buckets y Políticas de Seguridad RLS:**
+   - **Bucket Público (`comun-publico`):** Diseñado para contenido de vitrina (catálogo `PLT-009`, imágenes de locales `PLT-008`, avatares públicos). Lectura anónima global; escritura restringida a roles autorizados (`ADMINISTRADOR`, `OPERADOR`).
+   - **Bucket Privado Cifrado (`comun-privado`):** Diseñado para información sensible o privada (documentos legales de Tranqi, fotografías de inspección técnica de FastFix, comprobantes SRI de `PLT-006`). Lectura y escritura estrictamente protegidas por políticas RLS sobre `storage.objects`. Acceso exclusivo mediante **URLs firmadas de vida corta (máximo 15 minutos)** emitidas tras verificar la propiedad o rol del usuario.
+3. **Persistencia de Larga Duración y Ciclo de Vida (Retention & Lifecycle):**
+   - **Retención Inalterable:** Archivos con valor legal o tributario (comprobantes SRI, evidencias de causas legales, contratos) se marcan con bandera de retención inalterable para garantizar su disponibilidad por el tiempo exigido por la ley.
+   - **Optimización Previa a la Subida:** Toda imagen subida se procesa en cliente/servidor para conversión automática a formato **WebP** y compresión optimizada, reduciendo el consumo de ancho de banda y almacenamiento sin degradar la calidad visual.
+   - **Validación Estricta de Formatos y Pesos:** Validación en servidor del tipo MIME y límite de tamaño máximo según la categoría de uso (ej. máx. 5MB para imágenes, 20MB para documentos PDF).
+
+### Criterios de Aceptación (Gherkin)
+* **Escenario:** Carga de documento privado en estructura jerárquica
+  * **Dado que** un usuario adjunta un PDF de identidad en el portal de Tranqi.
+  * **Cuando** se completa la subida a Storage.
+  * **Entonces** el archivo se guarda en el bucket `comun-privado/TRANQ/documentos-legales/2026-07/{uuid}.pdf` y solo es accesible mediante URL firmada de vida corta.
+
+---
+
+## PLT-017 — Gestión de Sesiones Activas y Revocación Remota de Dispositivos
+
+### Descripción
+Módulo de auditoría de seguridad y control de accesos en el panel del usuario (`/panel/seguridad`) para gestionar dispositivos conectados a su cuenta única (`PLT-001`).
+
+### Reglas de Negocio
+1. **Listado de Sesiones Activas:**
+   - Visualización clara de todos los dispositivos y navegadores con sesión activa en el ecosistema, incluyendo: navegador, sistema operativo, tipo de dispositivo (móvil / escritorio), dirección IP aproximada y fecha/hora de última actividad.
+   - Indicador explícito de "Sesión Actual".
+2. **Cierre de Sesión Remoto (Revocación de Tokens):**
+   - Opción "Cerrar sesión en otros dispositivos" que revoca de inmediato los refresh tokens en Supabase Auth de las demás sesiones activas, forzando la reautenticación remota sin cerrar la sesión en el dispositivo actual.
+
+### Criterios de Aceptación (Gherkin)
+* **Escenario:** Revocación remota de sesiones
+  * **Dado que** un usuario nota una sesión activa en un navegador desconocido desde su panel de seguridad.
+  * **Cuando** hace clic en "Cerrar sesión en otros dispositivos".
+  * **Entonces** el sistema invalida los tokens de los demás dispositivos y solo mantiene activa su sesión actual.
+
+---
+
 ## Cómo Referenciar desde la Especificación de un Producto
 
 En la especificación funcional de cualquier producto (`gobernanza/productos/{producto}/especificacion-funcional.md`), se referencian estos requerimientos por su código:
