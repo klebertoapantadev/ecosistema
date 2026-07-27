@@ -24,6 +24,7 @@ Monorepo (Turborepo + pnpm) para 8 aplicaciones sobre 4 negocios (Tranqi, FastFi
 8. **Si un PR cambia el comportamiento descrito en un artefacto de `gobernanza/`, el PR actualiza ese artefacto.**
 9. **Todo chat o agente conversacional de producto usa `packages/agentes-ia`.** Ninguna app reimplementa su propio proxy hacia ARIA. Ver [ADR-0002](gobernanza/arquitectura/adr/0002-aria-como-estandar-de-agentes-conversacionales.md).
 10. **Ninguna dependencia de producción usa rangos flotantes (`^`, `~`).** Versión exacta fijada; las actualizaciones llegan vía Dependabot. Ver [`politicas/seguridad-dependencias.md`](gobernanza/politicas/seguridad-dependencias.md).
+11. **Ningún producto tiene su propia tabla de catálogo de productos.** Todo lo que se vende (físico, servicio, suscripción, digital) vive en `comun_comercio`. Ver [ADR-0003](gobernanza/arquitectura/adr/0003-catalogo-comercial-unificado.md).
 
 ## Comandos del proyecto
 
@@ -51,7 +52,7 @@ gobernanza/     Estándares, arquitectura, políticas, manuales, especificacione
 
 | Esquema | Propietario | Prefijo de tabla |
 | :--- | :--- | :--- |
-| `comun_seguridad`, `comun_auditoria`, `comun_facturacion`, `comun_catalogo`, `comun_agentes` | Plataforma | `seg_`, `aud_`, `fac_`, `cat_`, `agc_` |
+| `comun_seguridad`, `comun_auditoria`, `comun_facturacion`, `comun_catalogo`, `comun_agentes`, `comun_comercio` | Plataforma | `seg_`, `aud_`, `fac_`, `cat_`, `agc_`, `com_` |
 | `tranqui_legal` | Tranqi | `trq_` |
 | `fastfix_mantenimiento` | FastFix Home | `ffh_` |
 | `tinkay_floristeria` | Tinkay | `tnk_` |

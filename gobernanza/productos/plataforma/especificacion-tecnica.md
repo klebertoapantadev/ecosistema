@@ -1,7 +1,7 @@
 ---
 tipo: esp_tecnica
 estado: vigente
-version: 1.0
+version: 1.1
 fecha: 2026-07-26
 responsable: Kleber Toapanta
 ---
@@ -49,7 +49,31 @@ Función `aud_fn_auditar_tabla()`: pendiente de implementar. Obligatoria en toda
 | `cat_provincia` | `pvc_` | Diseñada en el plan de Tranqi Entregable 1. Migración pendiente. |
 | `cat_ciudad` | `ciu_` | Diseñada en el plan de Tranqi Entregable 1. Migración pendiente. |
 
-## 6. Tabla resumen de estado (para no perder el hilo)
+## 7. `comun_comercio` — implementa PLT-009, PLT-010
+
+Ver [ADR-0003](../../arquitectura/adr/0003-catalogo-comercial-unificado.md) para el esquema completo (`com_categoria`, `com_producto`, `com_variante`, `com_media`, y las tablas de personalización/adicionales) y las políticas de RLS con lectura pública de catálogo activo.
+
+| Tabla | Prefijo col. | Estado |
+| :--- | :--- | :--- |
+| `com_categoria` | `ctg_` | Diseñada en ADR-0003. Migración pendiente. |
+| `com_producto` | `pro_` | Diseñada en ADR-0003. Migración pendiente. |
+| `com_variante` | `var_` | Diseñada en ADR-0003. Migración pendiente. |
+| `com_media` | `med_` | Diseñada en ADR-0003. Migración pendiente. |
+| `com_personalizacion_campo` | `pzc_` | Pendiente de diseño detallado (se hace junto con la implementación). |
+| `com_adicional` | `adc_` | Pendiente de diseño detallado. |
+| `com_variante_adicional` | `van_` | Pendiente de diseño detallado. |
+
+**Ningún negocio tiene tabla de producto propia.** `margaritas_floristeria` y `tinkay_floristeria` consumen este esquema — ver corrección aplicada el mismo día en `margaritas/especificacion-tecnica.md`.
+
+### 7.1. Integración omnicanal (PLT-010)
+
+| Pieza | Estado |
+| :--- | :--- |
+| `GET /api/comercio/feed/{negocio}` (feed Meta Commerce Manager) | Pendiente — se construye junto con `comun_comercio` |
+| `packages/comercio` (armado de link de WhatsApp, resolución de precio final) | Pendiente — mismo patrón que `packages/agentes-ia` |
+| Endpoints de consulta para el Buddie | Pendiente — reutiliza `packages/agentes-ia`, agrega función de lectura de catálogo |
+
+## 8. Tabla resumen de estado (para no perder el hilo)
 
 | Esquema común | Migración SQL | Función/lógica asociada | Consumido hoy por |
 | :--- | :--- | :--- | :--- |
@@ -58,5 +82,6 @@ Función `aud_fn_auditar_tabla()`: pendiente de implementar. Obligatoria en toda
 | `comun_auditoria` | ❌ Pendiente | ❌ `aud_fn_auditar_tabla()` pendiente | Ninguno todavía |
 | `comun_facturacion` | ❌ Pendiente | — | Ninguno todavía |
 | `comun_catalogo` | ❌ Pendiente | — | Ninguno todavía |
+| `comun_comercio` | ❌ Pendiente | ❌ `packages/comercio` pendiente | Ninguno todavía (bloqueante para Tinkay/Margaritas) |
 
 **Ninguna migración de base de datos existe aún en `supabase/migrations/`.** Este documento se actualiza en el mismo PR que aplique cada migración — no antes, no después.

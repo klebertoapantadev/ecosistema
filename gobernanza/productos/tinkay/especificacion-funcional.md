@@ -18,6 +18,10 @@ Ver especificación de [Plataforma](../plataforma/especificacion-funcional.md) �
 
 Ver PLT-004. Agente de ARIA para Tinkay: pendiente de asignar.
 
+## Catálogo de productos
+
+Ver PLT-009 y PLT-010 (Plataforma) — [ADR-0003](../../arquitectura/adr/0003-catalogo-comercial-unificado.md). Tinkay consume `comun_comercio`, igual que Margaritas Floristería. **No crear una tabla de producto propia** cuando se definan los requerimientos de negocio.
+
 ## Requerimientos de negocio
 
 Sin requerimientos formalizados aún. Siguiente producto después del Entregable 1 de Tranqi — valida la arquitectura completa de punta a punta (catálogo, carrito, pagos, SRI, CMS) con el menor riesgo relativo, según [`Marco_Trabajo_Multi_Producto.md`](../../../../Marco_Trabajo_Multi_Producto.md) §9.
