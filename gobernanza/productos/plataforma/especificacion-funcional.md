@@ -1,8 +1,8 @@
 ---
 tipo: esp_funcional
 estado: vigente
-version: 1.4
-fecha: 2026-07-26
+version: 1.5
+fecha: 2026-07-27
 responsable: Kleber Toapanta
 ---
 
@@ -38,8 +38,8 @@ Un usuario posee una **única identidad base** en todo el ecosistema (`comun_seg
 5. **Autenticación Biométrica y PIN Móvil (Apps Nativas Capacitor):**
    - En las aplicaciones nativas para smartphones (iOS/Android), se habilita el acceso rápido mediante **Biometría (Face ID / Touch ID / Huella Dactilar)** o mediante la **Clave / Patrón de desbloqueo del dispositivo móvil**, permitiendo re-ingresar al negocio sin solicitar la contraseña de Supabase en cada apertura.
 6. **Aceptación de Términos Específicos por Negocio:**
-   - **Términos Globales:** Se aceptan en el registro inicial del ecosistema.
-   - **Términos Específicos del Negocio:** Casilla obligatoria al ingresar por primera vez a un producto individual. Los textos legales de cada negocio son totalmente configurables en formato Markdown (`.md`) desde la consola de administración (`PLT-008`).
+   - **Términos Globales:** Se aceptan en el registro inicial del ecosistema. ✅ Implementado — checkbox obligatorio en registro por correo, disclaimer + registro automático de aceptación en el callback para Google OAuth (ver `especificacion-tecnica.md` §1). Queda versionado por usuario (`usu_terminos_version`) para poder renotificar ante un cambio sustantivo del texto.
+   - **Términos Específicos del Negocio:** Casilla obligatoria al ingresar por primera vez a un producto individual. Los textos legales de cada negocio son totalmente configurables en formato Markdown (`.md`) desde la consola de administración (`PLT-008`). **Pendiente** — hoy el texto de `/terminos` es un borrador estático, no editable desde la consola.
 
 ### Criterios de Aceptación (Gherkin)
 * **Escenario:** Registro ultra-rápido con Google OAuth sin fricción
@@ -230,6 +230,33 @@ Pantalla de configuración del negocio (identidad legal + datos de `PLT-008`) y 
 6. **SuperAdmin de plataforma:** `kleber.toapanta.ch@gmail.com` es `SUPERADMIN` en los 4 negocios desde su primer inicio de sesión — no requiere asignación manual por negocio.
 
 **Implementación técnica:** ver [`especificacion-tecnica.md`](especificacion-tecnica.md) §1.1 y §9.
+
+---
+
+## PLT-012 — Baja de Cuenta y Derecho al Olvido
+
+### Descripción
+Todo usuario registrado puede solicitar, por auto-servicio y sin intervención de soporte, la eliminación de su cuenta e información personal desde su panel. La ejecución real respeta las obligaciones legales de conservación de registros contables/tributarios cuando el usuario ya tiene historial transaccional.
+
+### Reglas de Negocio
+1. **Auto-servicio, sin ticket de soporte:** la opción "Eliminar mi cuenta" vive en el panel del usuario (`/panel/cuenta`), accesible en cualquier momento, con un paso de confirmación explícito (no un solo clic) por ser una acción irreversible.
+2. **Decisión según historial transaccional (regla central):**
+   - **Sin compras ni transacciones registradas:** la cuenta y todos sus datos personales se eliminan de forma **permanente e inmediata** (hard delete) — incluye `auth.users`, `seg_usuario` y `seg_membresia` en cascada.
+   - **Con compras o transacciones registradas:** el hard delete **no procede**. El sistema debe **anonimizar** los datos personales identificables (nombre, correo, WhatsApp) y conservar únicamente lo exigido por la normativa contable/tributaria del SRI, desvinculado de la identidad real del usuario.
+3. **Fallar cerrado, no silenciosamente mal:** mientras la verificación real de historial transaccional no esté implementada (porque el esquema `comun_facturacion` todavía no existe — ver `PLT-006`), el sistema debe **rechazar explícitamente** la baja con un mensaje claro, nunca ejecutar un hard delete "optimista" que asuma que no hay historial. Ver nota de diseño en la implementación técnica.
+4. **Sin retención oculta más allá de lo legal:** ninguna otra tabla o proceso puede quedarse con datos personales identificables de un usuario dado de baja fuera de lo que esta regla permite conservar.
+
+### Criterios de Aceptación (Gherkin)
+* **Escenario:** Baja de cuenta sin historial de compras
+  * **Dado que** un usuario registrado en Tranqi nunca ha realizado un pago.
+  * **Cuando** confirma "Eliminar mi cuenta" desde su panel.
+  * **Entonces** su cuenta y todos sus datos personales se eliminan de forma permanente y pierde el acceso de inmediato.
+* **Escenario:** Baja de cuenta con historial de compras (una vez exista `comun_facturacion`)
+  * **Dado que** un usuario ya realizó al menos un pago registrado.
+  * **Cuando** solicita eliminar su cuenta.
+  * **Entonces** el sistema anonimiza sus datos personales y conserva el registro transaccional exigido por el SRI, sin vincularlo a su identidad real.
+
+**Implementación técnica:** ver [`especificacion-tecnica.md`](especificacion-tecnica.md) §1.3.
 
 ---
 

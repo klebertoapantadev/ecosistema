@@ -33,6 +33,7 @@ export default async function LayoutPanel({ children }: { children: React.ReactN
             </Link>
           ))}
           <Link href="/panel/configuracion">Configuración del negocio</Link>
+          <Link href="/panel/cuenta">Mi cuenta</Link>
         </div>
         <div className="panel-usuario">
           {/* Identificador del usuario activo en el portal: el nombre que

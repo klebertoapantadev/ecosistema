@@ -1,12 +1,14 @@
 # Módulo: Identidad
 
-Implementa `PLT-001` completo (registro sin fricción + confirmación de identidad/WhatsApp post-registro) y la parte de `PLT-003` que asigna automáticamente el rol `CLIENTE` en Tranqi al registrarse. Ver [`gobernanza/productos/plataforma/especificacion-funcional.md`](../../../../gobernanza/productos/plataforma/especificacion-funcional.md).
+Implementa `PLT-001` completo (registro sin fricción + consentimiento de términos + confirmación de identidad/WhatsApp post-registro), `PLT-012` (baja de cuenta) y la parte de `PLT-003` que asigna automáticamente el rol `CLIENTE` en Tranqi al registrarse. Ver [`gobernanza/productos/plataforma/especificacion-funcional.md`](../../../../gobernanza/productos/plataforma/especificacion-funcional.md).
 
 ## Rutas que lo consumen
 
 - `app/registro/page.tsx`, `app/ingresar/page.tsx`
 - `app/auth/callback/route.ts` (callback de OAuth)
 - `app/bienvenida/page.tsx` (PLT-001 regla 2 — ver más abajo)
+- `app/terminos/page.tsx` (borrador de Términos de Servicio, PLT-001 regla 6)
+- `app/panel/cuenta/page.tsx` (baja de cuenta, PLT-012 — ver más abajo)
 
 ## Decisiones ya resueltas
 
@@ -25,6 +27,22 @@ Post-registro, antes de entrar al panel (`app/panel/layout.tsx` redirige a `/bie
 Diseño: fondo **menta**, el mismo color que la sección "hola" de la landing — reutiliza el significado de marca ya establecido en vez de introducir uno nuevo.
 
 Una vez confirmado, el panel usa el nombre confirmado (`usu_nombres` + `usu_apellidos`) como identificador visible del usuario activo — no el correo ni el nombre crudo de Google.
+
+## Consentimiento de términos (PLT-001 regla 6)
+
+`usu_terminos_aceptados_en` + `usu_terminos_version` (`comun_seguridad.seg_usuario`, migración `20260727000008`). `TERMINOS_VERSION` vive en `esquema.ts` — subirla ante un cambio sustantivo del texto de `/terminos` permite identificar quién aceptó una versión vieja.
+
+- **Registro por correo:** checkbox obligatorio en `FormularioRegistro.tsx` (deshabilita "Crear cuenta" hasta marcarlo). `registrarUsuario()` manda `terminos_version` en `raw_user_meta_data`; el trigger de aprovisionamiento la lee y guarda la aceptación en el mismo `INSERT`.
+- **Google OAuth:** no se puede inyectar `raw_user_meta_data` propia vía `signInWithOAuth()`. En su lugar, ambos formularios muestran un disclaimer bajo el botón de Google ("Al continuar, aceptas los Términos de Servicio"), y `asegurarTerminosAceptados()` registra la aceptación en `app/auth/callback/route.ts`, donde ya existe sesión real. Idempotente: no pisa una aceptación previa en logins siguientes.
+- `/terminos` es texto **borrador**, marcado explícitamente como pendiente de revisión legal — no el editor Markdown configurable por negocio de `PLT-008` (ese sigue sin implementar).
+
+## Baja de cuenta (PLT-012)
+
+RPC `comun_seguridad.seg_fn_eliminar_cuenta()` (`SECURITY DEFINER`, migración `20260727000008`), expuesto vía `eliminarCuenta()` en `acciones.ts`. UI en `app/panel/cuenta/page.tsx` (`componentes/EliminarCuenta.tsx`) — exige escribir la palabra "ELIMINAR" antes de habilitar el botón, por ser una acción irreversible.
+
+**Regla de negocio:** si el usuario tiene historial transaccional (compras), no se puede hacer hard delete — hay que anonimizar sus datos y conservar el registro que exige la ley (SRI). Hoy, **ningún esquema transaccional existe todavía** en el ecosistema (`comun_facturacion` sigue sin migrar), así que no puede existir ese historial y el hard delete es siempre seguro: borra `auth.users`, que en cascada elimina `seg_usuario` y `seg_membresia`.
+
+La función usa `to_regclass('comun_facturacion.fac_transaccion_pago')` como válvula de seguridad hacia el futuro: en cuanto exista esa tabla, la función **falla explícitamente** en vez de seguir haciendo hard delete a ciegas — obliga a reescribirla para consultar el historial real antes de volver a habilitar la baja. Ver detalle en [`especificacion-tecnica.md` de Plataforma](../../../../gobernanza/productos/plataforma/especificacion-tecnica.md) §1.3.
 
 ## Bugs encontrados y corregidos (2026-07-27), verificados de punta a punta contra el proyecto real
 

@@ -1,7 +1,7 @@
 ---
 tipo: esp_tecnica
 estado: vigente
-version: 1.3
+version: 1.4
 fecha: 2026-07-27
 responsable: Kleber Toapanta
 ---
@@ -14,7 +14,7 @@ Contraparte técnica de [`especificacion-funcional.md`](especificacion-funcional
 
 | Tabla | Prefijo | Estado |
 | :--- | :--- | :--- |
-| `seg_usuario` | `usu_` | ✅ Migrada (`20260727000002`). Incluye `usu_superadmin_plataforma`, `usu_autorizacion_whatsapp` y `usu_onboarding_completo` (`20260727000005`). |
+| `seg_usuario` | `usu_` | ✅ Migrada (`20260727000002`). Incluye `usu_superadmin_plataforma`, `usu_autorizacion_whatsapp` y `usu_onboarding_completo` (`20260727000005`); `usu_terminos_aceptados_en`, `usu_terminos_version` y `usu_eliminado_en` (`20260727000008`). |
 | `seg_membresia` | `mem_` | ✅ Migrada. `unique (mem_usuario_id, mem_negocio)` — una membresía por usuario y negocio. Auto-alta como `CLIENTE` habilitada por política (`20260727000004`). |
 
 Aprovisionamiento: trigger `comun_seguridad.seg_fn_provisionar_usuario()` sobre `auth.users` — toda alta crea automáticamente su fila en `seg_usuario`, incluyendo `usu_nombres`/`usu_apellidos` desde los metadatos del proveedor (`20260727000007` — antes solo quedaban en el JSONB de detalle, no en columna). El correo `kleber.toapanta.ch@gmail.com` queda marcado `usu_superadmin_plataforma = true` desde su primer login real (bootstrap, sin asignación manual).
@@ -40,6 +40,24 @@ Seed aplicado: widget `gestion_usuarios` en los 4 negocios, asignado por defecto
 ### 1.2. Bienvenida post-registro (PLT-001 regla 2)
 
 Confirmación de nombre/apellido (Google no siempre los da claros — ej. cuentas de correo comerciales) + autorización opt-in de contacto por WhatsApp. `usu_onboarding_completo` evita repetir la pantalla. ✅ Implementado en `tranqi-web` (`app/bienvenida/`), verificado de punta a punta contra el proyecto real: login → bienvenida → guarda `usu_nombres`/`usu_apellidos`/`usu_whatsapp`/`usu_autorizacion_whatsapp` → panel muestra el nombre confirmado, no el correo.
+
+### 1.3. Consentimiento de términos y baja de cuenta (PLT-001 regla 6, PLT-012)
+
+Migración `20260727000008_seg_terminos_y_baja_cuenta.sql`.
+
+**Consentimiento de términos:**
+- `usu_terminos_aceptados_en` (timestamptz) y `usu_terminos_version` (text) registran cuándo y qué versión de `/terminos` aceptó el usuario. `TERMINOS_VERSION` vive en `modulos/identidad/esquema.ts` — subirla ante un cambio sustantivo del texto permite identificar y renotificar a quien aceptó una versión vieja.
+- **Registro por correo:** el checkbox es obligatorio en el formulario (`FormularioRegistro.tsx`); `registrarUsuario()` envía `terminos_version` en `raw_user_meta_data`, y `seg_fn_provisionar_usuario()` (trigger sobre `auth.users`) lo lee y escribe la aceptación en el mismo `INSERT`.
+- **Google OAuth:** `signInWithOAuth()` no permite inyectar `raw_user_meta_data` propia, así que no hay forma de mandar `terminos_version` antes de que exista sesión. En su lugar, el botón de Google muestra un disclaimer visible ("Al continuar, aceptas los Términos de Servicio") y `asegurarTerminosAceptados()` registra la aceptación en `app/auth/callback/route.ts`, donde ya hay sesión real tras `exchangeCodeForSession`. Es idempotente (`.is("usu_terminos_aceptados_en", null)`): un login posterior no pisa la fecha de una aceptación previa.
+- Grant de columna: `usu_terminos_aceptados_en`/`usu_terminos_version` se agregan al `GRANT UPDATE` por columna existente (ver §"Fix de seguridad" arriba) — el usuario puede escribir su propia aceptación, nada más.
+- `/terminos` (`app/terminos/page.tsx`) es texto **borrador**, marcado explícitamente como pendiente de revisión legal — no es el editor Markdown por negocio de `PLT-008` (ese sigue pendiente).
+
+**Baja de cuenta (PLT-012):**
+- `usu_eliminado_en` (timestamptz) existe en el esquema para un futuro modelo de anonimización, pero **deliberadamente no tiene GRANT a `authenticated`** — solo la función `SECURITY DEFINER` de abajo podría escribirla, y hoy ni siquiera lo hace (ver limitación).
+- RPC `comun_seguridad.seg_fn_eliminar_cuenta()` (`SECURITY DEFINER`, sin argumentos, opera sobre `auth.uid()`): borra `auth.users`, lo que en cascada elimina `seg_usuario` y `seg_membresia` (`ON DELETE CASCADE`, `20260727000002`).
+- **Limitación de diseño conocida, deliberada:** la regla de negocio real (PLT-012 regla 2) exige anonimizar en vez de borrar si el usuario tiene historial transaccional. Ese esquema (`comun_facturacion.fac_transaccion_pago`) todavía no existe en ningún negocio del ecosistema, así que hoy **no hay historial que pueda existir** y el hard delete es siempre seguro. La función usa `to_regclass('comun_facturacion.fac_transaccion_pago')` como válvula de seguridad: en cuanto una migración futura cree esa tabla, `seg_fn_eliminar_cuenta()` empieza a **rechazar explícitamente** toda baja (falla cerrado, con un mensaje pidiendo contactar soporte) hasta que se reescriba para consultar el historial real y decidir entre hard delete y anonimización. Nunca debe quedar en un estado donde borre datos "por accidente" solo porque la tabla ya existe.
+- `eliminarCuenta()` (`modulos/identidad/acciones.ts`) llama al RPC y cierra sesión. UI en `app/panel/cuenta/page.tsx` (`EliminarCuenta.tsx`): exige escribir la palabra "ELIMINAR" antes de habilitar el botón — no es una acción de un solo clic.
+- `grant execute on function seg_fn_eliminar_cuenta() to authenticated` — cualquier usuario autenticado puede llamarlo, pero solo actúa sobre su propia sesión (`auth.uid()`), nunca recibe un ID como parámetro.
 
 ## 2. `comun_agentes` — implementa PLT-004
 
@@ -106,7 +124,7 @@ Seed aplicado: una fila por negocio (`tranqi`, `fastfix`, `tinkay`, `margaritas`
 
 | Esquema común | Migración SQL | Función/lógica asociada | Consumido hoy por |
 | :--- | :--- | :--- | :--- |
-| `comun_seguridad` | ✅ Aplicada (7 migraciones) | ⚠️ Custom Access Token Hook pendiente (RLS resuelve rol vía subconsulta por ahora) | `tranqi-web` — registro, bienvenida, gestión de usuarios |
+| `comun_seguridad` | ✅ Aplicada (8 migraciones) | ⚠️ Custom Access Token Hook pendiente (RLS resuelve rol vía subconsulta por ahora) | `tranqi-web` — registro, bienvenida, gestión de usuarios, consentimiento de términos, baja de cuenta |
 | `comun_agentes` | ❌ Pendiente (tabla) | ✅ `packages/agentes-ia` (vía env vars) | `tranqi-web` |
 | `comun_auditoria` | ✅ Aplicada | ✅ `aud_fn_auditar_tabla()` en las 9 tablas nuevas | `comun_seguridad`, `comun_configuracion` |
 | `comun_configuracion` | ✅ Aplicada | — | `tranqi-web` — configuración del negocio |
@@ -114,7 +132,7 @@ Seed aplicado: una fila por negocio (`tranqi`, `fastfix`, `tinkay`, `margaritas`
 | `comun_catalogo` | ❌ Pendiente | — | Ninguno todavía |
 | `comun_comercio` | ❌ Pendiente | ❌ `packages/comercio` pendiente | Ninguno todavía (bloqueante para Tinkay/Margaritas) |
 
-**Proyecto Supabase de origen de todo lo `✅ Aplicada`:** `ecosistema` (`oaybbpdxhlxjbpwnoymy`). Migraciones `20260727000001` a `20260727000007` en `supabase/migrations/`.
+**Proyecto Supabase de origen de todo lo `✅ Aplicada`:** `ecosistema` (`oaybbpdxhlxjbpwnoymy`). Migraciones `20260727000001` a `20260727000008` en `supabase/migrations/`.
 
 **Proyecto Supabase:** `ecosistema` (`oaybbpdxhlxjbpwnoymy`) — ver [`arquitectura/inventario-supabase.md`](../../arquitectura/inventario-supabase.md). Las 3 migraciones aplicadas viven en `supabase/migrations/` con timestamp `20260727000001`–`20260727000003`.
 

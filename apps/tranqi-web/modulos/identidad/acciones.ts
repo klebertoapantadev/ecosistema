@@ -7,6 +7,7 @@ import {
   esquemaRegistro,
   esquemaIngreso,
   esquemaBienvenida,
+  TERMINOS_VERSION,
   type DatosRegistro,
   type DatosIngreso,
   type DatosBienvenida,
@@ -38,6 +39,22 @@ export async function asegurarMembresiaCliente(
     );
 }
 
+// PLT-001 regla 6: registra la aceptacion de terminos para el camino de
+// Google OAuth, donde no se puede inyectar raw_user_meta_data propia. Solo
+// escribe si todavia no habia aceptado (no pisa la fecha de una aceptacion
+// anterior en logins siguientes).
+export async function asegurarTerminosAceptados(
+  supabase: Awaited<ReturnType<typeof crearClienteServidor>>,
+  usuarioId: string,
+) {
+  await supabase
+    .schema("comun_seguridad")
+    .from("seg_usuario")
+    .update({ usu_terminos_aceptados_en: new Date().toISOString(), usu_terminos_version: TERMINOS_VERSION })
+    .eq("usu_id", usuarioId)
+    .is("usu_terminos_aceptados_en", null);
+}
+
 type ResultadoRegistro =
   | { ok: true; sesionActiva: boolean }
   | { ok: false; error: string };
@@ -64,6 +81,10 @@ export async function registrarUsuario(datos: DatosRegistro): Promise<ResultadoR
       data: {
         given_name: parseo.data.nombres,
         family_name: parseo.data.apellidos,
+        // Leido por seg_fn_provisionar_usuario() -- Google OAuth no permite
+        // inyectar metadata propia, por eso ese camino registra la
+        // aceptacion en el callback en vez de aqui.
+        terminos_version: TERMINOS_VERSION,
       },
       emailRedirectTo: `${origen}/auth/callback`,
     },
@@ -126,6 +147,18 @@ export async function completarBienvenida(datos: DatosBienvenida): Promise<Resul
   if (error) return { ok: false, error: error.message };
 
   revalidatePath("/panel");
+  return { ok: true, data: undefined };
+}
+
+// PLT-012: baja de cuenta / derecho al olvido. Delega toda la decision
+// (eliminar vs. rechazar) al RPC -- ver seg_fn_eliminar_cuenta() y su
+// comentario sobre el chequeo de historial transaccional pendiente para
+// cuando exista comun_facturacion.
+export async function eliminarCuenta(): Promise<Resultado> {
+  const supabase = await crearClienteServidor();
+  const { error } = await supabase.schema("comun_seguridad").rpc("seg_fn_eliminar_cuenta");
+  if (error) return { ok: false, error: error.message };
+  await supabase.auth.signOut();
   return { ok: true, data: undefined };
 }
 

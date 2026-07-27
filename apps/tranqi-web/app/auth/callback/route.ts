@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { crearClienteServidor } from "@/lib/supabase/server";
-import { asegurarMembresiaCliente } from "@/modulos/identidad/acciones";
+import { asegurarMembresiaCliente, asegurarTerminosAceptados } from "@/modulos/identidad/acciones";
 
 // Destino del redirectTo de signInWithOAuth (Google). Intercambia el codigo
-// por sesion y asegura el rol CLIENTE en Tranqi (PLT-003 regla 1), igual que
-// el registro por correo.
+// por sesion, asegura el rol CLIENTE en Tranqi (PLT-003 regla 1) y registra
+// la aceptacion de terminos (PLT-001 regla 6) -- Google no permite inyectar
+// metadata propia como el registro por correo, asi que se registra aqui,
+// donde ya hay sesion real. Es idempotente: en un login de un usuario que
+// ya habia aceptado, no hace nada (ver asegurarTerminosAceptados).
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
@@ -16,6 +19,7 @@ export async function GET(request: NextRequest) {
 
     if (!error && data.user) {
       await asegurarMembresiaCliente(supabase, data.user.id);
+      await asegurarTerminosAceptados(supabase, data.user.id);
       return NextResponse.redirect(`${origin}${siguiente}`);
     }
   }

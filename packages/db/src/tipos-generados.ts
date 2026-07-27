@@ -257,12 +257,15 @@ export type Database = {
           usu_correo: string
           usu_creado_en: string
           usu_detalle_usuario: Json
+          usu_eliminado_en: string | null
           usu_id: string
           usu_nombres: string | null
           usu_onboarding_completo: boolean
           usu_provincia_id: string | null
           usu_secuencial: number
           usu_superadmin_plataforma: boolean
+          usu_terminos_aceptados_en: string | null
+          usu_terminos_version: string | null
           usu_whatsapp: string | null
         }
         Insert: {
@@ -274,12 +277,15 @@ export type Database = {
           usu_correo: string
           usu_creado_en?: string
           usu_detalle_usuario?: Json
+          usu_eliminado_en?: string | null
           usu_id: string
           usu_nombres?: string | null
           usu_onboarding_completo?: boolean
           usu_provincia_id?: string | null
           usu_secuencial?: never
           usu_superadmin_plataforma?: boolean
+          usu_terminos_aceptados_en?: string | null
+          usu_terminos_version?: string | null
           usu_whatsapp?: string | null
         }
         Update: {
@@ -291,12 +297,15 @@ export type Database = {
           usu_correo?: string
           usu_creado_en?: string
           usu_detalle_usuario?: Json
+          usu_eliminado_en?: string | null
           usu_id?: string
           usu_nombres?: string | null
           usu_onboarding_completo?: boolean
           usu_provincia_id?: string | null
           usu_secuencial?: never
           usu_superadmin_plataforma?: boolean
+          usu_terminos_aceptados_en?: string | null
+          usu_terminos_version?: string | null
           usu_whatsapp?: string | null
         }
         Relationships: []
@@ -363,6 +372,7 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      seg_fn_eliminar_cuenta: { Args: never; Returns: string }
       seg_fn_es_admin_negocio: { Args: { p_negocio: string }; Returns: boolean }
     }
     Enums: {

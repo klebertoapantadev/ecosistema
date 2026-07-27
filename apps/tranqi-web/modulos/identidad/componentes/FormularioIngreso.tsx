@@ -44,6 +44,13 @@ export function FormularioIngreso() {
       <button type="button" className="btn-google" onClick={conGoogle} disabled={cargando}>
         Continuar con Google
       </button>
+      <p className="aviso-terminos">
+        Al continuar, aceptas los{" "}
+        <a href="/terminos" target="_blank" rel="noopener">
+          Términos de Servicio
+        </a>
+        .
+      </p>
       <div className="separador">o con correo</div>
       <form onSubmit={alEnviar} className="form-auth">
         <input

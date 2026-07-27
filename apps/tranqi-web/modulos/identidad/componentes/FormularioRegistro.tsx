@@ -11,6 +11,7 @@ export function FormularioRegistro() {
   const [apellidos, setApellidos] = useState("");
   const [correo, setCorreo] = useState("");
   const [contrasena, setContrasena] = useState("");
+  const [aceptaTerminos, setAceptaTerminos] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [cargando, setCargando] = useState(false);
   const [revisarCorreo, setRevisarCorreo] = useState(false);
@@ -19,7 +20,7 @@ export function FormularioRegistro() {
     e.preventDefault();
     setError(null);
     setCargando(true);
-    const resultado = await registrarUsuario({ nombres, apellidos, correo, contrasena });
+    const resultado = await registrarUsuario({ nombres, apellidos, correo, contrasena, aceptaTerminos });
     setCargando(false);
     if (!resultado.ok) {
       setError(resultado.error);
@@ -64,6 +65,13 @@ export function FormularioRegistro() {
       <button type="button" className="btn-google" onClick={conGoogle} disabled={cargando}>
         Continuar con Google
       </button>
+      <p className="aviso-terminos">
+        Al continuar, aceptas los{" "}
+        <a href="/terminos" target="_blank" rel="noopener">
+          Términos de Servicio
+        </a>
+        .
+      </p>
       <div className="separador">o con correo</div>
       <form onSubmit={alEnviar} className="form-auth">
         <input
@@ -96,8 +104,12 @@ export function FormularioRegistro() {
           autoComplete="new-password"
           required
         />
+        <label className="campo-check">
+          <input type="checkbox" checked={aceptaTerminos} onChange={(e) => setAceptaTerminos(e.target.checked)} />
+          Acepto los <a href="/terminos" target="_blank" rel="noopener" onClick={(e) => e.stopPropagation()}>Términos de Servicio</a>
+        </label>
         {error && <p className="error-auth" role="alert">{error}</p>}
-        <button type="submit" className="btn btn-amarillo" disabled={cargando}>
+        <button type="submit" className="btn btn-amarillo" disabled={cargando || !aceptaTerminos}>
           {cargando ? "Creando cuenta…" : "Crear cuenta"}
         </button>
       </form>

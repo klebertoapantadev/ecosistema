@@ -27,7 +27,7 @@ Diseño completo, máquina de estados y decisiones de modelado: ver `Plan_Entreg
 
 ## Dependencias de esquemas comunes
 
-- `comun_seguridad.seg_usuario` / `seg_membresia` — identidad y rol. ✅ Migrado y en uso (registro, bienvenida, gestión de usuarios) — ver [`especificacion-tecnica.md` de Plataforma](../plataforma/especificacion-tecnica.md) §1.
+- `comun_seguridad.seg_usuario` / `seg_membresia` — identidad y rol. ✅ Migrado y en uso (registro, bienvenida, gestión de usuarios, consentimiento de términos, baja de cuenta) — ver [`especificacion-tecnica.md` de Plataforma](../plataforma/especificacion-tecnica.md) §1 y §1.3.
 - `comun_configuracion.cfg_negocio` — ✅ Migrado y en uso (pantalla de configuración del negocio).
 - `comun_catalogo.cat_provincia` / `cat_ciudad` — residencia y cobertura. ❌ Pendiente.
 - `comun_auditoria` — vía `aud_fn_auditar_tabla()`. ✅ Migrado, aplicado a las tablas de `comun_seguridad`/`comun_configuracion`; pendiente en las 8 tablas propias de Tranqi (`trq_*`) cuando se migren.
