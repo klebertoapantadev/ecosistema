@@ -32,7 +32,6 @@ export default async function LayoutPanel({ children }: { children: React.ReactN
               {w.wdg_nombre}
             </Link>
           ))}
-          <Link href="/panel/configuracion">Configuración del negocio</Link>
           <Link href="/panel/cuenta">Mi cuenta</Link>
         </div>
         <div className="panel-usuario">
@@ -54,6 +53,7 @@ export default async function LayoutPanel({ children }: { children: React.ReactN
 function rutaDeWidget(clave: string) {
   // Mapeo explicito clave->ruta; evita construir rutas arbitrarias desde datos.
   if (clave === "gestion_usuarios") return "usuarios";
+  if (clave === "configuracion_negocio") return "configuracion";
   return "";
 }
 

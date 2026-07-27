@@ -35,7 +35,9 @@ Rol en JWT: *Custom Access Token Hook* — pendiente de implementar. Mientras no
 | `seg_widget` | `wdg_` | ✅ Migrada. Catálogo de funcionalidades por negocio (`unique (wdg_negocio, wdg_clave)`). |
 | `seg_rol_widget` | `rlw_` | ✅ Migrada. Asignación dinámica widget↔rol (`unique (rlw_negocio, rlw_rol, rlw_widget_id)`). |
 
-Seed aplicado: widget `gestion_usuarios` en los 4 negocios, asignado por defecto al rol `ADMINISTRADOR`. `SUPERADMIN` (vía `usu_superadmin_plataforma`) no necesita fila en `seg_rol_widget` — `seg_fn_es_admin_negocio()` lo autoriza siempre.
+Seed aplicado: widgets `gestion_usuarios` y `configuracion_negocio` (`20260727000010`) en los 4 negocios, asignados por defecto al rol `ADMINISTRADOR`. `SUPERADMIN` (vía `usu_superadmin_plataforma`) no necesita fila en `seg_rol_widget` — `seg_fn_es_admin_negocio()` lo autoriza siempre.
+
+**Fix (`20260727000010`):** "Configuración del negocio" vivía como link fijo en `app/panel/layout.tsx`, visible a cualquier usuario autenticado incluido un `CLIENTE` (rol por defecto de todo registro, `PLT-003` regla 1) — que nunca debería verlo, aunque RLS ya bloqueaba la escritura. Se registró como widget normal para que el sistema de permisos de `PLT-011` sea la única fuente de verdad de qué ve cada rol. Verificado: un `CLIENTE` de prueba solo ve "Mi cuenta"; un `ADMINISTRADOR` de prueba ve ambos.
 
 ✅ Consumido en `tranqi-web`: el panel arma su navegación dinámicamente a partir de `seg_rol_widget` — ver `app/panel/layout.tsx`. **Pendiente:** UI para que un admin marque/desmarque widgets por rol desde la consola (hoy solo se edita por SQL/seed).
 
@@ -120,7 +122,9 @@ Ver [ADR-0003](../../arquitectura/adr/0003-catalogo-comercial-unificado.md) para
 | :--- | :--- | :--- |
 | `cfg_negocio` | `cfg_` | ✅ Migrada (`20260727000003_comun_configuracion.sql`). Identificación/NIT, nombre comercial, razón social en columnas propias; redes sociales, canales, términos y locales en `cfg_detalle_configuracion` (JSONB) hasta que su volumen justifique tablas propias. |
 
-Seed aplicado: una fila por negocio (`tranqi`, `fastfix`, `tinkay`, `margaritas`) con nombre comercial, el resto vacío. Lectura pública (es información de vitrina), escritura restringida a `ADMINISTRADOR`/`SUPERADMIN` del negocio. ✅ Consumido: `app/panel/configuracion/` en `tranqi-web`.
+Seed aplicado: una fila por negocio (`tranqi`, `fastfix`, `tinkay`, `margaritas`) con nombre comercial, el resto vacío. Lectura pública (es información de vitrina), escritura restringida a `ADMINISTRADOR`/`SUPERADMIN` del negocio. ✅ Consumido: `app/panel/configuracion/` en `tranqi-web` (solo visible para `ADMINISTRADOR`/`SUPERADMIN` vía el widget `configuracion_negocio`, ver §1.1).
+
+`cfg_detalle_configuracion` incluye ahora `correoNotificaciones` (`PLT-008` regla 2, canal de correo) — **solo captura el dato**, no está conectado a envío real; ver [`modulos/configuracion-negocio/README.md`](../../../apps/tranqi-web/modulos/configuracion-negocio/README.md) de `tranqi-web` para el detalle de la limitación (Supabase Auth solo permite un remitente por proyecto, compartido por los 4 negocios).
 
 ## 10. Tabla resumen de estado (para no perder el hilo)
 

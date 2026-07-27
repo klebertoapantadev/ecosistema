@@ -7,9 +7,13 @@ import type { Tables } from "@eco/db";
 type CfgNegocio = Tables<{ schema: "comun_configuracion" }, "cfg_negocio">;
 
 export function FormularioConfiguracionNegocio({ inicial }: { inicial: CfgNegocio | null }) {
+  const detalleInicial = (inicial?.cfg_detalle_configuracion as Record<string, unknown> | null) ?? {};
   const [identificacion, setIdentificacion] = useState(inicial?.cfg_identificacion ?? "");
   const [nombreComercial, setNombreComercial] = useState(inicial?.cfg_nombre_comercial ?? "");
   const [razonSocial, setRazonSocial] = useState(inicial?.cfg_razon_social ?? "");
+  const [correoNotificaciones, setCorreoNotificaciones] = useState(
+    typeof detalleInicial.correoNotificaciones === "string" ? detalleInicial.correoNotificaciones : "",
+  );
   const [mensaje, setMensaje] = useState<{ tipo: "ok" | "error"; texto: string } | null>(null);
   const [guardando, setGuardando] = useState(false);
 
@@ -17,7 +21,12 @@ export function FormularioConfiguracionNegocio({ inicial }: { inicial: CfgNegoci
     e.preventDefault();
     setMensaje(null);
     setGuardando(true);
-    const resultado = await actualizarConfiguracionNegocio({ identificacion, nombreComercial, razonSocial });
+    const resultado = await actualizarConfiguracionNegocio({
+      identificacion,
+      nombreComercial,
+      razonSocial,
+      correoNotificaciones,
+    });
     setGuardando(false);
     setMensaje(
       resultado.ok
@@ -39,6 +48,15 @@ export function FormularioConfiguracionNegocio({ inicial }: { inicial: CfgNegoci
       <label>
         Razón social
         <input value={razonSocial} onChange={(e) => setRazonSocial(e.target.value)} />
+      </label>
+      <label>
+        Correo de notificaciones
+        <input
+          value={correoNotificaciones}
+          onChange={(e) => setCorreoNotificaciones(e.target.value)}
+          type="email"
+          placeholder="notificaciones@tudominio.com"
+        />
       </label>
       {mensaje && (
         <p className={mensaje.tipo === "error" ? "error-auth" : "mensaje-ok"}>{mensaje.texto}</p>

@@ -18,6 +18,19 @@ export async function actualizarConfiguracionNegocio(datos: DatosConfiguracionNe
   }
 
   const supabase = await crearClienteServidor();
+
+  const { data: actual } = await supabase
+    .schema("comun_configuracion")
+    .from("cfg_negocio")
+    .select("cfg_detalle_configuracion")
+    .eq("cfg_negocio", NEGOCIO)
+    .maybeSingle();
+
+  const detalle = {
+    ...((actual?.cfg_detalle_configuracion as Record<string, unknown> | null) ?? {}),
+    correoNotificaciones: parseo.data.correoNotificaciones || null,
+  };
+
   const { error } = await supabase
     .schema("comun_configuracion")
     .from("cfg_negocio")
@@ -25,6 +38,7 @@ export async function actualizarConfiguracionNegocio(datos: DatosConfiguracionNe
       cfg_identificacion: parseo.data.identificacion || null,
       cfg_nombre_comercial: parseo.data.nombreComercial,
       cfg_razon_social: parseo.data.razonSocial || null,
+      cfg_detalle_configuracion: detalle,
     })
     .eq("cfg_negocio", NEGOCIO);
 
