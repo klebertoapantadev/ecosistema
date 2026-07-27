@@ -64,5 +64,6 @@ La función usa `to_regclass('comun_facturacion.fac_transaccion_pago')` como vá
 
 ## Pendiente
 
-- Extraer `configuracion-negocio` y `gestion-usuarios` (hoy solo existen dentro de `apps/tranqi-web/modulos/`) a paquetes compartidos, mismo patrón que este. Son igual de PLT-xxx (plataforma) que identidad — la única razón por la que no viven aquí todavía es orden de trabajo, no una decisión de diseño.
+- **✅ Hecho (2026-07-27):** `configuracion-negocio` y `gestion-usuarios` también se extrajeron a paquetes compartidos (`@eco/configuracion-negocio`, `@eco/gestion-usuarios`), mismo patrón que este, y ya están montados en las 4 apps.
 - **✅ Desplegado (2026-07-27):** `fastfix-web`, `tinkay-web` y `margaritas-web` ya tienen proyecto Vercel propio (`{app}.vercel.app`) con las variables de Supabase configuradas, registro/login verificados en vivo. Falta decidir dominio propio de cada negocio (hoy solo `tranqi-web` tiene `tranqi24.com`).
+- **⚠️ Pendiente, bloqueante para Google OAuth en las 3 apps nuevas:** sus URLs `/auth/callback` (`https://{app}.vercel.app/auth/callback`) todavía no están en la lista de Redirect URLs de Supabase (Authentication → URL Configuration) — mientras tanto, `signInWithOAuth()` cae de vuelta al Site URL (`tranqi24.com`), igual que el bug original documentado más arriba con `localhost`. Paso manual del dashboard, sin herramienta MCP para Auth Provider config.
