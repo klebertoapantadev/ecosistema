@@ -65,4 +65,4 @@ La función usa `to_regclass('comun_facturacion.fac_transaccion_pago')` como vá
 ## Pendiente
 
 - Extraer `configuracion-negocio` y `gestion-usuarios` (hoy solo existen dentro de `apps/tranqi-web/modulos/`) a paquetes compartidos, mismo patrón que este. Son igual de PLT-xxx (plataforma) que identidad — la única razón por la que no viven aquí todavía es orden de trabajo, no una decisión de diseño.
-- Wiring de producción (dominio propio + proyecto Vercel) para `fastfix-web`, `tinkay-web` y `margaritas-web` — hoy funcionan en local contra el mismo Supabase; falta decidir dominio/hosting de cada uno.
+- **✅ Desplegado (2026-07-27):** `fastfix-web`, `tinkay-web` y `margaritas-web` ya tienen proyecto Vercel propio (`{app}.vercel.app`) con las variables de Supabase configuradas, registro/login verificados en vivo. Falta decidir dominio propio de cada negocio (hoy solo `tranqi-web` tiene `tranqi24.com`).

@@ -30,3 +30,6 @@ body {
   opacity: 0.7;
   font-size: 1rem;
 }
+
+.placeholder-enlaces { display: flex; gap: 14px; align-items: center; margin-top: 24px; }
+.placeholder-enlace-secundario { color: #fff; text-decoration: underline; font-weight: 600; }
