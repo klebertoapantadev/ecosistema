@@ -5,7 +5,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  transpilePackages: ["@eco/supabase", "@eco/identidad"],
+  transpilePackages: ["@eco/supabase", "@eco/identidad", "@eco/configuracion-negocio", "@eco/gestion-usuarios"],
   outputFileTracingRoot: path.join(__dirname, "../../"),
 };
 

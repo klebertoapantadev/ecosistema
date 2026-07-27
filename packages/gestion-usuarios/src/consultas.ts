@@ -1,7 +1,5 @@
 import { crearClienteServidor } from "@eco/supabase/servidor";
 
-const NEGOCIO = "tranqi";
-
 export interface UsuarioConMembresia {
   usu_id: string;
   usu_nombres: string | null;
@@ -11,20 +9,20 @@ export interface UsuarioConMembresia {
   mem_estado: string;
 }
 
-// Busca entre los usuarios ya registrados en Tranqi (RLS solo deja ver a los
-// que tienen membresia en un negocio donde el llamador es admin -- PLT-003
-// regla 2: aislamiento por negocio).
-export async function buscarUsuariosTranqi(consulta: string): Promise<{
-  data: UsuarioConMembresia[];
-  error: string | null;
-}> {
+// Busca entre los usuarios ya registrados en un negocio (RLS solo deja ver
+// a los que tienen membresia en un negocio donde el llamador es admin --
+// PLT-003 regla 2: aislamiento por negocio).
+export async function buscarUsuarios(
+  consulta: string,
+  negocio: string,
+): Promise<{ data: UsuarioConMembresia[]; error: string | null }> {
   const supabase = await crearClienteServidor();
 
   const { data: membresias, error: errorMembresias } = await supabase
     .schema("comun_seguridad")
     .from("seg_membresia")
     .select("mem_usuario_id, mem_rol, mem_estado")
-    .eq("mem_negocio", NEGOCIO);
+    .eq("mem_negocio", negocio);
 
   if (errorMembresias) return { data: [], error: errorMembresias.message };
   if (!membresias || membresias.length === 0) return { data: [], error: null };

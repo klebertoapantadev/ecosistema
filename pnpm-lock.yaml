@@ -18,9 +18,15 @@ importers:
 
   apps/fastfix-web:
     dependencies:
+      '@eco/configuracion-negocio':
+        specifier: workspace:*
+        version: link:../../packages/configuracion-negocio
       '@eco/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@eco/gestion-usuarios':
+        specifier: workspace:*
+        version: link:../../packages/gestion-usuarios
       '@eco/identidad':
         specifier: workspace:*
         version: link:../../packages/identidad
@@ -64,9 +70,15 @@ importers:
 
   apps/margaritas-web:
     dependencies:
+      '@eco/configuracion-negocio':
+        specifier: workspace:*
+        version: link:../../packages/configuracion-negocio
       '@eco/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@eco/gestion-usuarios':
+        specifier: workspace:*
+        version: link:../../packages/gestion-usuarios
       '@eco/identidad':
         specifier: workspace:*
         version: link:../../packages/identidad
@@ -110,9 +122,15 @@ importers:
 
   apps/tinkay-web:
     dependencies:
+      '@eco/configuracion-negocio':
+        specifier: workspace:*
+        version: link:../../packages/configuracion-negocio
       '@eco/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@eco/gestion-usuarios':
+        specifier: workspace:*
+        version: link:../../packages/gestion-usuarios
       '@eco/identidad':
         specifier: workspace:*
         version: link:../../packages/identidad
@@ -159,9 +177,15 @@ importers:
       '@eco/agentes-ia':
         specifier: workspace:*
         version: link:../../packages/agentes-ia
+      '@eco/configuracion-negocio':
+        specifier: workspace:*
+        version: link:../../packages/configuracion-negocio
       '@eco/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@eco/gestion-usuarios':
+        specifier: workspace:*
+        version: link:../../packages/gestion-usuarios
       '@eco/identidad':
         specifier: workspace:*
         version: link:../../packages/identidad
@@ -217,11 +241,76 @@ importers:
 
   packages/config: {}
 
+  packages/configuracion-negocio:
+    dependencies:
+      '@eco/db':
+        specifier: workspace:*
+        version: link:../db
+      '@eco/supabase':
+        specifier: workspace:*
+        version: link:../supabase
+      zod:
+        specifier: 4.4.3
+        version: 4.4.3
+    devDependencies:
+      '@eco/config':
+        specifier: workspace:*
+        version: link:../config
+      '@types/node':
+        specifier: ^22.10.0
+        version: 22.20.1
+      '@types/react':
+        specifier: ^19.0.0
+        version: 19.2.17
+      '@types/react-dom':
+        specifier: ^19.0.0
+        version: 19.2.3(@types/react@19.2.17)
+      next:
+        specifier: 15.5.22
+        version: 15.5.22(@types/node@22.20.1)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
+      react:
+        specifier: 19.0.0
+        version: 19.0.0
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
+
   packages/db:
     devDependencies:
       '@eco/config':
         specifier: workspace:*
         version: link:../config
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
+
+  packages/gestion-usuarios:
+    dependencies:
+      '@eco/db':
+        specifier: workspace:*
+        version: link:../db
+      '@eco/supabase':
+        specifier: workspace:*
+        version: link:../supabase
+    devDependencies:
+      '@eco/config':
+        specifier: workspace:*
+        version: link:../config
+      '@types/node':
+        specifier: ^22.10.0
+        version: 22.20.1
+      '@types/react':
+        specifier: ^19.0.0
+        version: 19.2.17
+      '@types/react-dom':
+        specifier: ^19.0.0
+        version: 19.2.3(@types/react@19.2.17)
+      next:
+        specifier: 15.5.22
+        version: 15.5.22(@types/node@22.20.1)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
+      react:
+        specifier: 19.0.0
+        version: 19.0.0
       typescript:
         specifier: ^5.7.0
         version: 5.9.3

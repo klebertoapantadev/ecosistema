@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import { obtenerConfiguracionNegocio, FormularioConfiguracionNegocio } from "@eco/configuracion-negocio";
 
-export const metadata: Metadata = { title: "Configuración del negocio — tranqi" };
+export const metadata: Metadata = { title: "Configuración del negocio — Margaritas Floristería" };
 
-const NEGOCIO = "tranqi";
+const NEGOCIO = "margaritas";
 
 export default async function PaginaConfiguracionNegocio() {
   const configuracion = await obtenerConfiguracionNegocio(NEGOCIO);

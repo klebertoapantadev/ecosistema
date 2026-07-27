@@ -10,7 +10,9 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@eco/configuracion-negocio": "workspace:*",
     "@eco/db": "workspace:*",
+    "@eco/gestion-usuarios": "workspace:*",
     "@eco/identidad": "workspace:*",
     "@eco/supabase": "workspace:*",
     "@supabase/ssr": "0.12.3",

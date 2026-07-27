@@ -6,7 +6,7 @@ import type { Tables } from "@eco/db";
 
 type CfgNegocio = Tables<{ schema: "comun_configuracion" }, "cfg_negocio">;
 
-export function FormularioConfiguracionNegocio({ inicial }: { inicial: CfgNegocio | null }) {
+export function FormularioConfiguracionNegocio({ inicial, negocio }: { inicial: CfgNegocio | null; negocio: string }) {
   const detalleInicial = (inicial?.cfg_detalle_configuracion as Record<string, unknown> | null) ?? {};
   const [identificacion, setIdentificacion] = useState(inicial?.cfg_identificacion ?? "");
   const [nombreComercial, setNombreComercial] = useState(inicial?.cfg_nombre_comercial ?? "");
@@ -21,12 +21,10 @@ export function FormularioConfiguracionNegocio({ inicial }: { inicial: CfgNegoci
     e.preventDefault();
     setMensaje(null);
     setGuardando(true);
-    const resultado = await actualizarConfiguracionNegocio({
-      identificacion,
-      nombreComercial,
-      razonSocial,
-      correoNotificaciones,
-    });
+    const resultado = await actualizarConfiguracionNegocio(
+      { identificacion, nombreComercial, razonSocial, correoNotificaciones },
+      negocio,
+    );
     setGuardando(false);
     setMensaje(
       resultado.ok

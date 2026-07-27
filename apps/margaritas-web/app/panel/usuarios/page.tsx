@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import { buscarUsuarios, FilaUsuario } from "@eco/gestion-usuarios";
 
-export const metadata: Metadata = { title: "Gestión de usuarios — tranqi" };
+export const metadata: Metadata = { title: "Gestión de usuarios — Margaritas Floristería" };
 
-const NEGOCIO = "tranqi";
-const ROLES = ["CLIENTE", "ADMINISTRADOR", "ABOGADO"];
+const NEGOCIO = "margaritas";
+const ROLES = ["CLIENTE", "ADMINISTRADOR", "OPERADOR"];
 
 export default async function PaginaGestionUsuarios({
   searchParams,

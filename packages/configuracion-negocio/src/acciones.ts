@@ -6,12 +6,14 @@ import { esquemaConfiguracionNegocio, type DatosConfiguracionNegocio } from "./e
 
 type Resultado<T = undefined> = { ok: true; data: T } | { ok: false; error: string };
 
-const NEGOCIO = "tranqi";
-
 // Escritura simple guardada por RLS (cfg_negocio_admin_escritura exige
 // seg_fn_es_admin_negocio) -- no es una transicion de estado irreversible
-// como aprobar/pagar, no necesita RPC dedicado.
-export async function actualizarConfiguracionNegocio(datos: DatosConfiguracionNegocio): Promise<Resultado> {
+// como aprobar/pagar, no necesita RPC dedicado. Comun a los 4 negocios --
+// "negocio" es el slug del que llama.
+export async function actualizarConfiguracionNegocio(
+  datos: DatosConfiguracionNegocio,
+  negocio: string,
+): Promise<Resultado> {
   const parseo = esquemaConfiguracionNegocio.safeParse(datos);
   if (!parseo.success) {
     return { ok: false, error: parseo.error.issues[0]?.message ?? "Datos invalidos" };
@@ -23,7 +25,7 @@ export async function actualizarConfiguracionNegocio(datos: DatosConfiguracionNe
     .schema("comun_configuracion")
     .from("cfg_negocio")
     .select("cfg_detalle_configuracion")
-    .eq("cfg_negocio", NEGOCIO)
+    .eq("cfg_negocio", negocio)
     .maybeSingle();
 
   const detalle = {
@@ -40,7 +42,7 @@ export async function actualizarConfiguracionNegocio(datos: DatosConfiguracionNe
       cfg_razon_social: parseo.data.razonSocial || null,
       cfg_detalle_configuracion: detalle,
     })
-    .eq("cfg_negocio", NEGOCIO);
+    .eq("cfg_negocio", negocio);
 
   if (error) return { ok: false, error: error.message };
 

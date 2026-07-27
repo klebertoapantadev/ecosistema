@@ -4,9 +4,15 @@ import { useState } from "react";
 import { asignarRol } from "../acciones";
 import type { UsuarioConMembresia } from "../consultas";
 
-const ROLES_TRANQI = ["CLIENTE", "ADMINISTRADOR", "ABOGADO"];
-
-export function FilaUsuario({ usuario }: { usuario: UsuarioConMembresia }) {
+export function FilaUsuario({
+  usuario,
+  negocio,
+  roles,
+}: {
+  usuario: UsuarioConMembresia;
+  negocio: string;
+  roles: string[];
+}) {
   const [rol, setRol] = useState(usuario.mem_rol);
   const [guardando, setGuardando] = useState(false);
   const [mensaje, setMensaje] = useState<string | null>(null);
@@ -14,7 +20,7 @@ export function FilaUsuario({ usuario }: { usuario: UsuarioConMembresia }) {
   async function alGuardar() {
     setGuardando(true);
     setMensaje(null);
-    const resultado = await asignarRol(usuario.usu_id, rol);
+    const resultado = await asignarRol(usuario.usu_id, rol, negocio);
     setGuardando(false);
     setMensaje(resultado.ok ? "Actualizado" : resultado.error);
   }
@@ -28,7 +34,7 @@ export function FilaUsuario({ usuario }: { usuario: UsuarioConMembresia }) {
       <td>{usuario.mem_estado}</td>
       <td>
         <select value={rol} onChange={(e) => setRol(e.target.value)}>
-          {ROLES_TRANQI.map((r) => (
+          {roles.map((r) => (
             <option key={r} value={r}>
               {r}
             </option>
