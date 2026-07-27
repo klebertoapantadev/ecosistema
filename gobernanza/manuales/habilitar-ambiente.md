@@ -18,8 +18,8 @@ responsable: Kleber Toapanta
 | pnpm | 9.x | `corepack enable` lo resuelve desde el `package.json` |
 | Supabase CLI | última estable | `npm install -g supabase` |
 | Git | — | — |
-| Cuenta de Supabase | — | Acceso al proyecto del ecosistema |
-| Cuenta de Vercel | — | Acceso a los 3 proyectos web |
+| Cuenta de Supabase | — | Acceso al proyecto `ecosistema` (ref `oaybbpdxhlxjbpwnoymy`, org `kt-services`) — ver [`arquitectura/inventario-supabase.md`](../arquitectura/inventario-supabase.md). Proyecto dedicado, exclusivo de este monorepo. |
+| Cuenta de Vercel | — | Acceso a los proyectos web (`tranqi-web`, `tinkay-web`, `fastfix-web`, `margaritas-web`) |
 | Gestor de secretos (Doppler/Infisical) | — | Ver [`politicas/gestion-credenciales.md`](../politicas/gestion-credenciales.md) |
 
 ## 2. Clonar y preparar el monorepo

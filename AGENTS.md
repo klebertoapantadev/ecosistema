@@ -25,6 +25,7 @@ Monorepo (Turborepo + pnpm) para 8 aplicaciones sobre 4 negocios (Tranqi, FastFi
 9. **Todo chat o agente conversacional de producto usa `packages/agentes-ia`.** Ninguna app reimplementa su propio proxy hacia ARIA. Ver [ADR-0002](gobernanza/arquitectura/adr/0002-aria-como-estandar-de-agentes-conversacionales.md).
 10. **Ninguna dependencia de producción usa rangos flotantes (`^`, `~`).** Versión exacta fijada; las actualizaciones llegan vía Dependabot. Ver [`politicas/seguridad-dependencias.md`](gobernanza/politicas/seguridad-dependencias.md).
 11. **Ningún producto tiene su propia tabla de catálogo de productos.** Todo lo que se vende (físico, servicio, suscripción, digital) vive en `comun_comercio`. Ver [ADR-0003](gobernanza/arquitectura/adr/0003-catalogo-comercial-unificado.md).
+12. **El ecosistema vive en su propio proyecto Supabase dedicado (`ecosistema`, ver [`inventario-supabase.md`](gobernanza/arquitectura/inventario-supabase.md)).** Nunca se reutiliza o comparte instancia con una base de datos operativa ajena a este monorepo — si alguna vez se conecta un proyecto Supabase distinto al listado en ese inventario, confirmar con el usuario antes de crear o modificar cualquier esquema.
 
 ## Comandos del proyecto
 
