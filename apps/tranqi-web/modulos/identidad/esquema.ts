@@ -14,3 +14,18 @@ export const esquemaIngreso = z.object({
   contrasena: z.string().min(1, "Requerido"),
 });
 export type DatosIngreso = z.infer<typeof esquemaIngreso>;
+
+// PLT-001 regla 2: confirmar identidad (Google no siempre da un nombre claro
+// -- ej. cuentas de correo comerciales) + WhatsApp opt-in, siempre opcional.
+export const esquemaBienvenida = z
+  .object({
+    nombres: z.string().trim().min(1, "Requerido"),
+    apellidos: z.string().trim().min(1, "Requerido"),
+    autorizaWhatsapp: z.boolean(),
+    whatsapp: z.string().trim().optional(),
+  })
+  .refine((d) => !d.autorizaWhatsapp || (d.whatsapp && d.whatsapp.length >= 7), {
+    message: "Ingresa un número válido para que podamos contactarte",
+    path: ["whatsapp"],
+  });
+export type DatosBienvenida = z.infer<typeof esquemaBienvenida>;

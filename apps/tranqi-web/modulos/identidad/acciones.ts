@@ -1,8 +1,16 @@
 "use server";
 
 import { headers } from "next/headers";
+import { revalidatePath } from "next/cache";
 import { crearClienteServidor } from "@/lib/supabase/server";
-import { esquemaRegistro, esquemaIngreso, type DatosRegistro, type DatosIngreso } from "./esquema";
+import {
+  esquemaRegistro,
+  esquemaIngreso,
+  esquemaBienvenida,
+  type DatosRegistro,
+  type DatosIngreso,
+  type DatosBienvenida,
+} from "./esquema";
 
 type Resultado<T = undefined> = { ok: true; data: T } | { ok: false; error: string };
 
@@ -85,6 +93,39 @@ export async function iniciarSesion(datos: DatosIngreso): Promise<Resultado> {
   });
 
   if (error) return { ok: false, error: error.message };
+  return { ok: true, data: undefined };
+}
+
+// PLT-001 regla 2: confirma identidad (Google no siempre da un nombre claro)
+// y guarda la autorizacion de WhatsApp -- opt-in real, nunca se asume.
+// Marca usu_onboarding_completo para no repetir esta pantalla.
+export async function completarBienvenida(datos: DatosBienvenida): Promise<Resultado> {
+  const parseo = esquemaBienvenida.safeParse(datos);
+  if (!parseo.success) {
+    return { ok: false, error: parseo.error.issues[0]?.message ?? "Datos invalidos" };
+  }
+
+  const supabase = await crearClienteServidor();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "Sesión no encontrada" };
+
+  const { error } = await supabase
+    .schema("comun_seguridad")
+    .from("seg_usuario")
+    .update({
+      usu_nombres: parseo.data.nombres,
+      usu_apellidos: parseo.data.apellidos,
+      usu_whatsapp: parseo.data.autorizaWhatsapp ? parseo.data.whatsapp : null,
+      usu_autorizacion_whatsapp: parseo.data.autorizaWhatsapp,
+      usu_onboarding_completo: true,
+    })
+    .eq("usu_id", user.id);
+
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath("/panel");
   return { ok: true, data: undefined };
 }
 

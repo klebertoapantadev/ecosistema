@@ -1,8 +1,8 @@
 ---
 tipo: politica
 estado: vigente
-version: 1.0
-fecha: 2026-07-26
+version: 1.1
+fecha: 2026-07-27
 responsable: Kleber Toapanta
 ---
 
@@ -76,3 +76,16 @@ Integración vía API abstraída, agnóstica de proveedor. Toda operación con c
 ## 8. Transiciones de estado críticas
 
 Ninguna transición de estado irreversible o sensible (aprobar, rechazar, procesar pago, activar cuenta) se ejecuta con un `UPDATE` directo desde el cliente. Se ejecuta vía RPC transaccional que valida precondiciones y aplica todos los efectos relacionados de forma atómica.
+
+## 9. Restricción de columnas en filas auto-editables (obligatorio)
+
+**RLS filtra filas, no columnas.** Una política `for update using (usu_id = auth.uid())` permite al usuario modificar *cualquier* columna de su propia fila — incluidos campos privilegiados como `usu_superadmin_plataforma` — si no se restringe aparte. Esto pasó en producción: la política de `seg_usuario` permitía auto-escalar a SuperAdmin con un `PATCH` directo a la API, sin pasar por la UI (corregido 2026-07-27, ver `supabase/migrations/20260727000006_*.sql`).
+
+**Regla:** toda tabla donde el propio usuario edita su fila (perfil, configuración) debe **revocar `UPDATE` de tabla completa** y otorgar `GRANT UPDATE` solo sobre las columnas editables por el usuario:
+
+```sql
+revoke update on {esquema}.{tabla} from authenticated;
+grant update (columna_a, columna_b, ...) on {esquema}.{tabla} to authenticated;
+```
+
+Columnas de identidad (`*_id`), de auditoría (`*_creado_en`) y cualquier flag de privilegio (`*_superadmin_*`, `*_rol`, `*_estado` cuando representa una transición crítica) quedan fuera del `GRANT` — se escriben solo vía función `SECURITY DEFINER` (ver §8) o por un admin.

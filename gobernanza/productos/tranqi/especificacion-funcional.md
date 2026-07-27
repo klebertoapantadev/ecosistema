@@ -12,7 +12,9 @@ responsable: Kleber Toapanta
 
 ## Identidad y autenticación
 
-Ver especificación de [Plataforma](../plataforma/especificacion-funcional.md) — PLT-001 (identidad única), PLT-002 (MFA), PLT-003 (membresías). Sin adiciones de Tranqi al mecanismo en sí.
+Ver especificación de [Plataforma](../plataforma/especificacion-funcional.md) — PLT-001 (identidad única + bienvenida), PLT-002 (MFA), PLT-003 (membresías), PLT-011 (configuración + widgets). Sin adiciones de Tranqi al mecanismo en sí.
+
+**✅ Implementado y verificado (2026-07-27):** registro (Google OAuth + correo/contraseña), pantalla de bienvenida, configuración del negocio, gestión de usuarios/roles (el widget). Ver [`especificacion-tecnica.md`](especificacion-tecnica.md) y el README de cada módulo en `apps/tranqi-web/modulos/`.
 
 **Lo que Tranqi agrega:** enviar la solicitud de socio abogado es uno de los flujos "críticos" que exige MFA (PLT-002) — ver TRQ-xxx más abajo. Rol `ABOGADO` (PLT-003) no otorga capacidades hasta que `trq_abogado` esté verificado.
 

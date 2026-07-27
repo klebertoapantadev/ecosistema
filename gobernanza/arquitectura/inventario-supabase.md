@@ -1,8 +1,8 @@
 ---
 tipo: arquitectura
 estado: vigente
-version: 1.0
-fecha: 2026-07-26
+version: 1.1
+fecha: 2026-07-27
 responsable: Kleber Toapanta
 ---
 
@@ -64,4 +64,20 @@ Extensiones relevantes ya instaladas en el proyecto (heredadas, no instaladas po
 | `tinkay_floristeria` | Pendiente de crear — **nombre nuevo, no reutiliza ninguna tabla `tinkay_*` de `public`** |
 | `margaritas_floristeria` | Pendiente de crear |
 
-**Paso manual pendiente:** dashboard de Supabase → Settings → API → *Exposed schemas* → agregar `comun_seguridad`, `comun_auditoria`, `comun_configuracion` (necesario para que PostgREST/`supabase-js` puedan consultarlos; no se puede hacer por SQL/migración).
+**Exposed schemas: ✅ hecho** (2026-07-27) — `comun_seguridad`, `comun_auditoria`, `comun_configuracion` accesibles vía PostgREST/`supabase-js`.
+
+## Migraciones aplicadas
+
+| Migración | Contenido |
+| :--- | :--- |
+| `20260727000001_comun_auditoria` | `aud_registro`, `aud_log_api`, `aud_fn_auditar_tabla()` |
+| `20260727000002_comun_seguridad` | `seg_usuario`, `seg_membresia`, `seg_widget`, `seg_rol_widget`, trigger de aprovisionamiento, `seg_fn_es_admin_negocio()` |
+| `20260727000003_comun_configuracion` | `cfg_negocio` (PLT-008) |
+| `20260727000004_seg_registro_y_asignacion_rol` | Política de auto-alta como `CLIENTE`, RPC `seg_fn_asignar_rol()` |
+| `20260727000005_seg_bienvenida` | `usu_autorizacion_whatsapp`, `usu_onboarding_completo` (PLT-001 regla 2) |
+| `20260727000006_seg_usuario_restringir_columnas_update` | **Fix de seguridad**: cierra escalación de privilegios vía `PATCH` directo — ver [`politicas/seguridad-y-datos.md`](../politicas/seguridad-y-datos.md) §9 |
+| `20260727000007_seg_provisionar_usuario_nombres_columna` | El trigger ahora puebla `usu_nombres`/`usu_apellidos` en columna, no solo en JSONB |
+
+Tipos TypeScript regenerados en cada una — ver `packages/db/src/tipos-generados.ts`.
+
+Verificado de punta a punta contra el proyecto real (no simulado): registro por correo, confirmación de correo, login, bienvenida, panel, gestión de usuarios. Cuentas de prueba (`prueba.sprint0*.ecosistema@gmail.com`) eliminadas tras la verificación.

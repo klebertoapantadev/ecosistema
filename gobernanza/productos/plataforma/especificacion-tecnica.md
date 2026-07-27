@@ -1,8 +1,8 @@
 ---
 tipo: esp_tecnica
 estado: vigente
-version: 1.2
-fecha: 2026-07-26
+version: 1.3
+fecha: 2026-07-27
 responsable: Kleber Toapanta
 ---
 
@@ -14,10 +14,14 @@ Contraparte técnica de [`especificacion-funcional.md`](especificacion-funcional
 
 | Tabla | Prefijo | Estado |
 | :--- | :--- | :--- |
-| `seg_usuario` | `usu_` | ✅ Migrada (`20260727000002_comun_seguridad.sql`). Incluye `usu_superadmin_plataforma`. |
-| `seg_membresia` | `mem_` | ✅ Migrada. `unique (mem_usuario_id, mem_negocio)` — una membresía por usuario y negocio. |
+| `seg_usuario` | `usu_` | ✅ Migrada (`20260727000002`). Incluye `usu_superadmin_plataforma`, `usu_autorizacion_whatsapp` y `usu_onboarding_completo` (`20260727000005`). |
+| `seg_membresia` | `mem_` | ✅ Migrada. `unique (mem_usuario_id, mem_negocio)` — una membresía por usuario y negocio. Auto-alta como `CLIENTE` habilitada por política (`20260727000004`). |
 
-Aprovisionamiento: trigger `comun_seguridad.seg_fn_provisionar_usuario()` sobre `auth.users` — toda alta crea automáticamente su fila en `seg_usuario`. El correo `kleber.toapanta.ch@gmail.com` queda marcado `usu_superadmin_plataforma = true` desde su primer login real (bootstrap, sin asignación manual).
+Aprovisionamiento: trigger `comun_seguridad.seg_fn_provisionar_usuario()` sobre `auth.users` — toda alta crea automáticamente su fila en `seg_usuario`, incluyendo `usu_nombres`/`usu_apellidos` desde los metadatos del proveedor (`20260727000007` — antes solo quedaban en el JSONB de detalle, no en columna). El correo `kleber.toapanta.ch@gmail.com` queda marcado `usu_superadmin_plataforma = true` desde su primer login real (bootstrap, sin asignación manual).
+
+Asignación de rol: RPC transaccional `seg_fn_asignar_rol(usuario, negocio, rol)` (`20260727000004`) — nunca `UPDATE` directo, ver regla 5 de `AGENTS.md`.
+
+**Fix de seguridad (`20260727000006`):** la política de `UPDATE` de `seg_usuario` permitía escribir cualquier columna de la propia fila, incluida `usu_superadmin_plataforma` — un usuario podía auto-otorgarse SuperAdmin. Cerrado con `GRANT UPDATE` por columna (ver [`politicas/seguridad-y-datos.md`](../../politicas/seguridad-y-datos.md) §9). Verificado con `information_schema.column_privileges` tras aplicar.
 
 MFA (PLT-002): Supabase Auth TOTP, exigido vía claim `aal` en políticas RLS — ver [`politicas/seguridad-y-datos.md`](../../politicas/seguridad-y-datos.md) §3. **Pendiente todavía** — las políticas actuales no exigen `aal2` porque ningún flujo crítico se ha implementado aún.
 Rol en JWT: *Custom Access Token Hook* — pendiente de implementar. Mientras no exista, las políticas RLS resuelven el rol consultando `seg_membresia` directamente (vía `comun_seguridad.seg_fn_es_admin_negocio()`), no desde un claim del token.
@@ -31,7 +35,11 @@ Rol en JWT: *Custom Access Token Hook* — pendiente de implementar. Mientras no
 
 Seed aplicado: widget `gestion_usuarios` en los 4 negocios, asignado por defecto al rol `ADMINISTRADOR`. `SUPERADMIN` (vía `usu_superadmin_plataforma`) no necesita fila en `seg_rol_widget` — `seg_fn_es_admin_negocio()` lo autoriza siempre.
 
-**Pendiente:** UI de la pantalla de configuración (marcar/desmarcar widgets por rol) — hoy solo existe el modelo de datos y el seed inicial, no hay app que lo consuma todavía.
+✅ Consumido en `tranqi-web`: el panel arma su navegación dinámicamente a partir de `seg_rol_widget` — ver `app/panel/layout.tsx`. **Pendiente:** UI para que un admin marque/desmarque widgets por rol desde la consola (hoy solo se edita por SQL/seed).
+
+### 1.2. Bienvenida post-registro (PLT-001 regla 2)
+
+Confirmación de nombre/apellido (Google no siempre los da claros — ej. cuentas de correo comerciales) + autorización opt-in de contacto por WhatsApp. `usu_onboarding_completo` evita repetir la pantalla. ✅ Implementado en `tranqi-web` (`app/bienvenida/`), verificado de punta a punta contra el proyecto real: login → bienvenida → guarda `usu_nombres`/`usu_apellidos`/`usu_whatsapp`/`usu_autorizacion_whatsapp` → panel muestra el nombre confirmado, no el correo.
 
 ## 2. `comun_agentes` — implementa PLT-004
 
@@ -92,19 +100,21 @@ Ver [ADR-0003](../../arquitectura/adr/0003-catalogo-comercial-unificado.md) para
 | :--- | :--- | :--- |
 | `cfg_negocio` | `cfg_` | ✅ Migrada (`20260727000003_comun_configuracion.sql`). Identificación/NIT, nombre comercial, razón social en columnas propias; redes sociales, canales, términos y locales en `cfg_detalle_configuracion` (JSONB) hasta que su volumen justifique tablas propias. |
 
-Seed aplicado: una fila por negocio (`tranqi`, `fastfix`, `tinkay`, `margaritas`) con nombre comercial, el resto vacío. Lectura pública (es información de vitrina), escritura restringida a `ADMINISTRADOR`/`SUPERADMIN` del negocio.
+Seed aplicado: una fila por negocio (`tranqi`, `fastfix`, `tinkay`, `margaritas`) con nombre comercial, el resto vacío. Lectura pública (es información de vitrina), escritura restringida a `ADMINISTRADOR`/`SUPERADMIN` del negocio. ✅ Consumido: `app/panel/configuracion/` en `tranqi-web`.
 
 ## 10. Tabla resumen de estado (para no perder el hilo)
 
 | Esquema común | Migración SQL | Función/lógica asociada | Consumido hoy por |
 | :--- | :--- | :--- | :--- |
-| `comun_seguridad` | ✅ Aplicada | ⚠️ Custom Access Token Hook pendiente (RLS resuelve rol vía subconsulta por ahora) | Ninguna app todavía — modelo listo, falta la UI |
+| `comun_seguridad` | ✅ Aplicada (7 migraciones) | ⚠️ Custom Access Token Hook pendiente (RLS resuelve rol vía subconsulta por ahora) | `tranqi-web` — registro, bienvenida, gestión de usuarios |
 | `comun_agentes` | ❌ Pendiente (tabla) | ✅ `packages/agentes-ia` (vía env vars) | `tranqi-web` |
-| `comun_auditoria` | ✅ Aplicada | ✅ `aud_fn_auditar_tabla()` en las 8 tablas nuevas | `comun_seguridad`, `comun_configuracion` |
-| `comun_configuracion` | ✅ Aplicada | — | Ninguna app todavía — modelo listo, falta la UI |
+| `comun_auditoria` | ✅ Aplicada | ✅ `aud_fn_auditar_tabla()` en las 9 tablas nuevas | `comun_seguridad`, `comun_configuracion` |
+| `comun_configuracion` | ✅ Aplicada | — | `tranqi-web` — configuración del negocio |
 | `comun_facturacion` | ❌ Pendiente | — | Ninguno todavía |
 | `comun_catalogo` | ❌ Pendiente | — | Ninguno todavía |
 | `comun_comercio` | ❌ Pendiente | ❌ `packages/comercio` pendiente | Ninguno todavía (bloqueante para Tinkay/Margaritas) |
+
+**Proyecto Supabase de origen de todo lo `✅ Aplicada`:** `ecosistema` (`oaybbpdxhlxjbpwnoymy`). Migraciones `20260727000001` a `20260727000007` en `supabase/migrations/`.
 
 **Proyecto Supabase:** `ecosistema` (`oaybbpdxhlxjbpwnoymy`) — ver [`arquitectura/inventario-supabase.md`](../../arquitectura/inventario-supabase.md). Las 3 migraciones aplicadas viven en `supabase/migrations/` con timestamp `20260727000001`–`20260727000003`.
 

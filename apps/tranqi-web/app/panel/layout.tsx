@@ -7,6 +7,8 @@ import { crearClienteServidor } from "@/lib/supabase/server";
 export default async function LayoutPanel({ children }: { children: React.ReactNode }) {
   const perfil = await obtenerPerfilActual();
   if (!perfil) redirect("/ingresar");
+  // PLT-001 regla 2: confirmar identidad + WhatsApp antes de usar el panel.
+  if (!perfil.usu_onboarding_completo) redirect("/bienvenida");
 
   // Auto-reparacion: si signUp() se completo bajo "confirmar correo" activo,
   // no habia sesion todavia y la membresia CLIENTE pudo no crearse (ver
@@ -33,7 +35,10 @@ export default async function LayoutPanel({ children }: { children: React.ReactN
           <Link href="/panel/configuracion">Configuración del negocio</Link>
         </div>
         <div className="panel-usuario">
-          <span>{perfil.usu_correo}</span>
+          {/* Identificador del usuario activo en el portal: el nombre que
+              confirmo en /bienvenida, no el correo crudo de Google. */}
+          <span className="nombre-usuario-activo">{[perfil.usu_nombres, perfil.usu_apellidos].filter(Boolean).join(" ")}</span>
+          <span className="correo-usuario-activo">{perfil.usu_correo}</span>
           {perfil.usu_superadmin_plataforma && <span className="etiqueta-superadmin">SuperAdmin</span>}
           <form action={cerrarSesionYRedirigir}>
             <button type="submit" className="btn-mini">Cerrar sesión</button>

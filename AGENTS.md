@@ -26,6 +26,7 @@ Monorepo (Turborepo + pnpm) para 8 aplicaciones sobre 4 negocios (Tranqi, FastFi
 10. **Ninguna dependencia de producción usa rangos flotantes (`^`, `~`).** Versión exacta fijada; las actualizaciones llegan vía Dependabot. Ver [`politicas/seguridad-dependencias.md`](gobernanza/politicas/seguridad-dependencias.md).
 11. **Ningún producto tiene su propia tabla de catálogo de productos.** Todo lo que se vende (físico, servicio, suscripción, digital) vive en `comun_comercio`. Ver [ADR-0003](gobernanza/arquitectura/adr/0003-catalogo-comercial-unificado.md).
 12. **El ecosistema vive en su propio proyecto Supabase dedicado (`ecosistema`, ver [`inventario-supabase.md`](gobernanza/arquitectura/inventario-supabase.md)).** Nunca se reutiliza o comparte instancia con una base de datos operativa ajena a este monorepo — si alguna vez se conecta un proyecto Supabase distinto al listado en ese inventario, confirmar con el usuario antes de crear o modificar cualquier esquema.
+13. **Toda tabla donde el usuario edita su propia fila revoca `UPDATE` de tabla completa y otorga `GRANT UPDATE` solo por columna.** RLS filtra filas, no columnas — sin esto, un `PATCH` directo puede escribir campos privilegiados (`*_superadmin_*`, `*_rol`) aunque la UI nunca lo permita. Ver [`politicas/seguridad-y-datos.md`](gobernanza/politicas/seguridad-y-datos.md) §9 (encontrado y corregido en `seg_usuario`, 2026-07-27).
 
 ## Comandos del proyecto
 
@@ -65,4 +66,4 @@ Señalarlo explícitamente antes de proceder, citando la regla de `gobernanza/` 
 
 ## Estado actual
 
-Sprint 0 (Entregable 1 — Tranqi: identidad de usuario y solicitud de socios abogados). Ver [`gobernanza/productos/tranqi/`](gobernanza/productos/tranqi/) para la especificación en progreso.
+Sprint 0 en curso. En `tranqi-web` ya funcionan de punta a punta: registro (Google OAuth + correo/contraseña), pantalla de bienvenida (PLT-001 regla 2), configuración del negocio (PLT-008/011) y gestión de usuarios/roles (el widget, PLT-011). Pendiente del Entregable 1: solicitud de socios abogados. Ver [`gobernanza/productos/tranqi/`](gobernanza/productos/tranqi/).
