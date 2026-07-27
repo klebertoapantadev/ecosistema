@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { AsYouType, isValidPhoneNumber, parsePhoneNumberFromString, type CountryCode } from "libphonenumber-js";
 import { completarBienvenida } from "../acciones";
+import { PAISES_TELEFONO, PAIS_TELEFONO_DEFECTO } from "../paises";
 
 interface Props {
   nombresIniciales: string;
@@ -14,13 +16,33 @@ export function FormularioBienvenida({ nombresIniciales, apellidosIniciales }: P
   const [nombres, setNombres] = useState(nombresIniciales);
   const [apellidos, setApellidos] = useState(apellidosIniciales);
   const [autorizaWhatsapp, setAutorizaWhatsapp] = useState(false);
-  const [whatsapp, setWhatsapp] = useState("");
+  const [paisWhatsapp, setPaisWhatsapp] = useState<CountryCode>(PAIS_TELEFONO_DEFECTO);
+  const [numeroWhatsapp, setNumeroWhatsapp] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [cargando, setCargando] = useState(false);
+
+  const paisSeleccionado = PAISES_TELEFONO.find((p) => p.codigo === paisWhatsapp)!;
+
+  function alCambiarNumero(valor: string) {
+    // AsYouType formatea a medida que se escribe (espacios/guiones segun el
+    // pais) -- ayuda a que el usuario vea si va bien encaminado, la
+    // validacion real de cantidad de digitos es isValidPhoneNumber al enviar.
+    setNumeroWhatsapp(new AsYouType(paisWhatsapp).input(valor));
+  }
 
   async function alEnviar(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+
+    let whatsapp = "";
+    if (autorizaWhatsapp) {
+      if (!isValidPhoneNumber(numeroWhatsapp, paisWhatsapp)) {
+        setError(`Ingresa un número de WhatsApp válido de ${paisSeleccionado.nombre}`);
+        return;
+      }
+      whatsapp = parsePhoneNumberFromString(numeroWhatsapp, paisWhatsapp)!.number;
+    }
+
     setCargando(true);
     const resultado = await completarBienvenida({ nombres, apellidos, autorizaWhatsapp, whatsapp });
     setCargando(false);
@@ -46,13 +68,29 @@ export function FormularioBienvenida({ nombresIniciales, apellidosIniciales }: P
       </label>
 
       {autorizaWhatsapp && (
-        <input
-          value={whatsapp}
-          onChange={(e) => setWhatsapp(e.target.value)}
-          type="tel"
-          placeholder="Tu número de WhatsApp"
-          autoComplete="tel"
-        />
+        <div className="campo-telefono">
+          <select
+            value={paisWhatsapp}
+            onChange={(e) => {
+              setPaisWhatsapp(e.target.value as CountryCode);
+              setNumeroWhatsapp("");
+            }}
+          >
+            {PAISES_TELEFONO.map((p) => (
+              <option key={p.codigo} value={p.codigo}>
+                {p.prefijo} {p.nombre}
+              </option>
+            ))}
+          </select>
+          <input
+            value={numeroWhatsapp}
+            onChange={(e) => alCambiarNumero(e.target.value)}
+            type="tel"
+            placeholder="Número de WhatsApp"
+            autoComplete="tel-national"
+            required
+          />
+        </div>
       )}
 
       {error && (

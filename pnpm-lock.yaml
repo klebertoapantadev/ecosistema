@@ -323,6 +323,9 @@ importers:
       '@eco/supabase':
         specifier: workspace:*
         version: link:../supabase
+      libphonenumber-js:
+        specifier: 1.13.9
+        version: 1.13.9
       zod:
         specifier: 4.4.3
         version: 4.4.3
@@ -1056,6 +1059,9 @@ packages:
   js-tokens@9.0.1:
     resolution: {integrity: sha512-mxa9E9ITFOt0ban3j6L5MpjwegGz6lBQmM1IJkWeBZGcMxto50+eWdjC/52xDbS2vy0k7vIMK0Fe2wfL9OQSpQ==}
 
+  libphonenumber-js@1.13.9:
+    resolution: {integrity: sha512-VNS5vWMM7r0P66BYv+TQJATxExEgLxN+34hfHDVhDkUsGAE4cRg0shCNSLTXNKm7nIUscC7AfB51TjxEeF7msQ==}
+
   loupe@3.2.1:
     resolution: {integrity: sha512-CdzqowRJCeLU72bHvWqwRBBlLcMEtIvGrlvef74kMnV2AolS9Y8xUv1I0U/MNAWMhBlKIoyuEgoJ0t/bbwHbLQ==}
 
@@ -1782,6 +1788,8 @@ snapshots:
   iceberg-js@0.8.1: {}
 
   js-tokens@9.0.1: {}
+
+  libphonenumber-js@1.13.9: {}
 
   loupe@3.2.1: {}
 

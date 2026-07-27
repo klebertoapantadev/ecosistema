@@ -13,7 +13,14 @@ export {
 
 export { obtenerSesionActual, obtenerPerfilActual, obtenerMembresia, obtenerWidgetsVisibles } from "./consultas";
 
-export { registrarAcceso, obtenerHistorialAccesos, etiquetaDispositivo, calcularSaludo, obtenerSaludo } from "./acceso";
+export {
+  registrarAcceso,
+  obtenerHistorialAccesos,
+  etiquetaDispositivo,
+  etiquetaNegocio,
+  calcularSaludo,
+  obtenerSaludo,
+} from "./acceso";
 
 export { crearManejadorCallbackOAuth } from "./servidor";
 

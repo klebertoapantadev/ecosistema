@@ -29,7 +29,7 @@ Cada app añade `"@eco/identidad"` y `"@eco/supabase"` a `transpilePackages` en 
 Post-registro, antes de entrar al panel (`app/panel/layout.tsx` de cada app redirige a `/bienvenida` mientras `usu_onboarding_completo = false`):
 
 1. **Confirmar identidad.** Precarga `usu_nombres`/`usu_apellidos` (poblados por el trigger de aprovisionamiento desde los metadatos del proveedor, con fallback si Google no manda `given_name`/`family_name` — ver migración `20260727000009`) y deja editarlos.
-2. **Autorización de WhatsApp, opt-in real.** Checkbox desmarcado por defecto; el campo de número solo aparece si se marca. Guarda `usu_whatsapp` + `usu_autorizacion_whatsapp`.
+2. **Autorización de WhatsApp, opt-in real.** Checkbox desmarcado por defecto; el campo de número solo aparece si se marca. Selector de país (`paises.ts`, lista curada, Ecuador por defecto) + input formateado con `libphonenumber-js` (`AsYouType`) — la validación de dígitos es la real de cada país (`isValidPhoneNumber`), no un `length >= 7` genérico. Guarda `usu_whatsapp` en E.164 (`+593991234567`) + `usu_autorizacion_whatsapp`.
 3. Al completar, marca `usu_onboarding_completo = true` — no se repite en logins siguientes.
 
 ## Consentimiento de términos (PLT-001 regla 6)
@@ -48,12 +48,13 @@ RPC `comun_seguridad.seg_fn_eliminar_cuenta()` (`SECURITY DEFINER`, migración `
 
 La función usa `to_regclass('comun_facturacion.fac_transaccion_pago')` como válvula de seguridad hacia el futuro: en cuanto exista esa tabla, la función **falla explícitamente** en vez de seguir haciendo hard delete a ciegas. Ver detalle en [`especificacion-tecnica.md` de Plataforma](../../gobernanza/productos/plataforma/especificacion-tecnica.md) §1.3.
 
-## Historial de accesos y saludo personalizado
+## Historial de accesos y saludo personalizado (PLT-018)
 
-`comun_seguridad.seg_acceso` (migración `20260727000011`) — una fila por login (IP + User-Agent), escrita desde `iniciarSesion()`, `registrarUsuario()` (si deja sesión activa) y `crearManejadorCallbackOAuth()`. RLS: cada usuario solo ve/inserta sus propias filas.
+`comun_seguridad.seg_acceso` (migración `20260727000011`, `acc_negocio` agregada en `20260727000012`) — una fila por login (IP + User-Agent + negocio de origen), escrita desde `iniciarSesion()`, `registrarUsuario()` (si deja sesión activa) y `crearManejadorCallbackOAuth()`. RLS: cada usuario solo ve/inserta sus propias filas.
 
-- `<HistorialAccesos historial={...} />` — lista de "dispositivos recientes" con una etiqueta legible (`etiquetaDispositivo()`, heurística simple sobre el User-Agent, sin librería de parseo).
+- `<HistorialAccesos historial={...} />` — lista de "dispositivos recientes" con una etiqueta legible (`etiquetaDispositivo()`, heurística simple sobre el User-Agent, sin librería de parseo) **y el negocio de origen** (`etiquetaNegocio()`) — el historial es único por usuario en todo el ecosistema (regla 4), no por negocio, así que sin esta etiqueta un usuario que entra a dos negocios ve filas que parecen "duplicadas" sin explicación.
 - `obtenerSaludo(usuarioId, nombre)` — compara la fila más reciente (el login que acaba de ocurrir) contra la anterior para elegir el tono del saludo ("Hola de nuevo" / "Cuánto tiempo sin verte" / etc.). No depende de `auth.users.last_sign_in_at` (no expuesto al propio usuario vía PostgREST sin lógica adicional) — usa exclusivamente `seg_acceso`, ya bajo nuestro control de RLS.
+- `iniciarSesion(datos, negocio)` y `<FormularioIngreso negocio="..." />` reciben el slug de negocio igual que registro — el login por correo también queda etiquetado.
 
 ## Bugs encontrados y corregidos, verificados de punta a punta contra el proyecto real
 
@@ -61,6 +62,8 @@ La función usa `to_regclass('comun_facturacion.fac_transaccion_pago')` como vá
 2. **Nombres de Google atrapados en JSONB.** El trigger de aprovisionamiento solo guardaba `given_name`/`family_name` en `usu_detalle_usuario`, nunca en las columnas `usu_nombres`/`usu_apellidos`. Corregido en el trigger (`20260727000007`).
 3. **Escalación de privilegios vía `PATCH` directo.** La política de `UPDATE` de `seg_usuario` no restringía columnas — un usuario podía escribir `usu_superadmin_plataforma` en su propia fila sin pasar por la UI. Corregido con `GRANT UPDATE` por columna (`20260727000006`) — ver [`politicas/seguridad-y-datos.md`](../../gobernanza/politicas/seguridad-y-datos.md) §9.
 4. **Google no siempre manda `given_name`/`family_name`.** Confirmado con datos reales — solo trae `name`/`full_name`. Sin fallback, la bienvenida no prellenaba nada. Corregido partiendo `name`/`full_name` por el primer espacio (`20260727000009`).
+5. **Historial de accesos sin etiqueta de negocio confundía con "duplicación".** Detectado por el usuario al entrar por primera vez a Margaritas con una cuenta que ya tenía accesos en Tranqi (comportamiento correcto por diseño — PLT-018 regla 4 — pero sin explicación en la UI). Corregido agregando `acc_negocio` y mostrándolo en `<HistorialAccesos />` (`20260727000012`).
+6. **Validación de WhatsApp era `length >= 7` genérico, sin selector de país.** No pedía país ni validaba la cantidad real de dígitos por país. Corregido con selector de país + `libphonenumber-js` (`isValidPhoneNumber`/`AsYouType`), guardando el número en E.164.
 
 ## Pendiente
 

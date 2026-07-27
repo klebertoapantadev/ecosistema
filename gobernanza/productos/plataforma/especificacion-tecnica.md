@@ -51,6 +51,8 @@ Seed aplicado: widgets `gestion_usuarios` (`20260727000002`) y `configuracion_ne
 
 Confirmación de nombre/apellido (Google no siempre los da claros — ej. cuentas de correo comerciales) + autorización opt-in de contacto por WhatsApp. `usu_onboarding_completo` evita repetir la pantalla. ✅ Implementado y verificado de punta a punta contra el proyecto real: login → bienvenida → guarda `usu_nombres`/`usu_apellidos`/`usu_whatsapp`/`usu_autorizacion_whatsapp` → panel muestra el nombre confirmado, no el correo.
 
+**Validación de WhatsApp (`libphonenumber-js`, exacto `1.13.9`):** el campo de número es un `<select>` de país (`packages/identidad/src/paises.ts`, lista curada — Ecuador por defecto, ver `PLT-007`) + un input que se formatea a medida que se escribe (`AsYouType`). Al enviar, `isValidPhoneNumber(numero, pais)` valida la cantidad de dígitos real de ese país antes de componer el E.164 (`+593991234567`) que se guarda en `usu_whatsapp` — la validación de longitud ya no es un `length >= 7` genérico. `esquemaBienvenida` (Zod) repite la validación en el servidor sobre el E.164 ya compuesto, como respaldo si alguien evita el cliente.
+
 ### 1.3. Consentimiento de términos y baja de cuenta (PLT-001 regla 6, PLT-012)
 
 Migración `20260727000008_seg_terminos_y_baja_cuenta.sql`.
@@ -71,7 +73,9 @@ Migración `20260727000008_seg_terminos_y_baja_cuenta.sql`.
 
 ### 1.4. Historial de accesos y saludo personalizado (PLT-018)
 
-`comun_seguridad.seg_acceso` (`acc_id`, `acc_usuario_id`, `acc_ip`, `acc_user_agent`, `acc_creado_en`; `20260727000011`) — una fila por login, RLS `select`/`insert` solo sobre las filas propias (`acc_usuario_id = auth.uid()`). Escrita desde `iniciarSesion()`, `registrarUsuario()` (si deja sesión activa) y `crearManejadorCallbackOAuth()` — los tres puntos de entrada de sesión, en `packages/identidad/src/acceso.ts`.
+`comun_seguridad.seg_acceso` (`acc_id`, `acc_usuario_id`, `acc_ip`, `acc_user_agent`, `acc_creado_en`, `acc_negocio`; `20260727000011`, `acc_negocio` agregada en `20260727000012`) — una fila por login, RLS `select`/`insert` solo sobre las filas propias (`acc_usuario_id = auth.uid()`). Escrita desde `iniciarSesion()`, `registrarUsuario()` (si deja sesión activa) y `crearManejadorCallbackOAuth()` — los tres puntos de entrada de sesión, en `packages/identidad/src/acceso.ts`.
+
+**Fix (`20260727000012`):** PLT-018 regla 4 dice que el historial es único por usuario en todo el ecosistema, no uno por negocio — correcto por diseño, pero al probarlo en producción con una cuenta real que ya tenía accesos en Tranqi, entrar por primera vez a Margaritas mostraba 3 accesos sin explicación (parecía un bug de duplicación). `acc_negocio` etiqueta cada fila con la app de origen (`etiquetaNegocio()`) para que `<HistorialAccesos />` muestre "Chrome en Windows · Tranqi" en vez de una lista ambigua — no cambia el alcance (sigue siendo un solo historial compartido), solo lo hace legible. Columna nullable: las filas previas a la migración no tienen negocio y simplemente no muestran la etiqueta.
 
 **No confundir con `seg_sesion` (PLT-017, §8.2, todavía no migrada):** `seg_acceso` es un log histórico de solo inserción — no sabe cuáles de esas sesiones siguen activas ni puede revocar tokens. `PLT-017` (gestión de sesiones activas + revocación remota) es un requerimiento más grande, pendiente, que puede apoyarse en este log pero necesita además integrar la Admin API de Supabase Auth para invalidar refresh tokens.
 

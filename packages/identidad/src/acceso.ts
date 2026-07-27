@@ -6,11 +6,18 @@ type ClienteServidor = Awaited<ReturnType<typeof crearClienteServidor>>;
 // en comun_seguridad.seg_acceso -- ver migracion 20260727000011). Alimenta
 // la lista de "dispositivos recientes" en Mi cuenta y el saludo
 // personalizado, calculado a partir de la fila anterior a la mas reciente.
+//
+// PLT-018 regla 4: el historial es UNO SOLO por usuario, no uno por
+// negocio -- si el mismo usuario entra a Tranqi y despues a Margaritas,
+// ve ambos accesos en cualquiera de las dos apps. acc_negocio (20260727000012)
+// no cambia eso; solo etiqueta cada fila con la app de origen para que la
+// lista no parezca "duplicar" accesos de otra app sin explicacion.
 export async function registrarAcceso(
   supabase: ClienteServidor,
   usuarioId: string,
   ip: string | null,
   userAgent: string | null,
+  negocio: string | null = null,
 ) {
   const { data: anterior } = await supabase
     .schema("comun_seguridad")
@@ -25,6 +32,7 @@ export async function registrarAcceso(
     acc_usuario_id: usuarioId,
     acc_ip: ip,
     acc_user_agent: userAgent,
+    acc_negocio: negocio,
   });
 
   return anterior?.acc_creado_en ?? null;
@@ -34,7 +42,7 @@ export async function obtenerHistorialAccesos(supabase: ClienteServidor, usuario
   const { data } = await supabase
     .schema("comun_seguridad")
     .from("seg_acceso")
-    .select("acc_id, acc_ip, acc_user_agent, acc_creado_en")
+    .select("acc_id, acc_ip, acc_user_agent, acc_creado_en, acc_negocio")
     .eq("acc_usuario_id", usuarioId)
     .order("acc_creado_en", { ascending: false })
     .limit(limite);
@@ -61,6 +69,18 @@ export function etiquetaDispositivo(userAgent: string | null): string {
   else if (/safari\//i.test(userAgent) && !/chrome\//i.test(userAgent)) navegador = "Safari";
 
   return navegador ? `${navegador} en ${sistema}` : sistema;
+}
+
+const NOMBRES_NEGOCIO: Record<string, string> = {
+  tranqi: "Tranqi",
+  fastfix: "FastFix Home",
+  tinkay: "Tinkay",
+  margaritas: "Margaritas",
+};
+
+export function etiquetaNegocio(negocio: string | null): string | null {
+  if (!negocio) return null;
+  return NOMBRES_NEGOCIO[negocio] ?? negocio;
 }
 
 // Saludo personalizado segun cuanto paso desde el acceso anterior (no el

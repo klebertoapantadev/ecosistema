@@ -28,7 +28,7 @@ export function crearManejadorCallbackOAuth(negocio: string) {
         await asegurarMembresiaCliente(supabase, data.user.id, negocio);
         await asegurarTerminosAceptados(supabase, data.user.id);
         const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? null;
-        await registrarAcceso(supabase, data.user.id, ip, request.headers.get("user-agent"));
+        await registrarAcceso(supabase, data.user.id, ip, request.headers.get("user-agent"), negocio);
         return NextResponse.redirect(`${origin}${siguiente}`);
       }
     }

@@ -423,6 +423,9 @@ nav .links a.cta:hover { background: var(--menta); }
 .tarjeta-bienvenida > p { font-size: 0.98rem; line-height: 1.5; }
 
 .etiqueta-campo { display: flex; flex-direction: column; gap: 6px; font-size: 0.82rem; font-weight: 700; }
+.campo-telefono { display: flex; gap: 8px; }
+.campo-telefono select { flex: none; width: 40%; padding: 12px 8px; border-radius: 10px; border: 1.5px solid rgba(17,17,17,0.2); font-family: inherit; font-size: 0.85rem; }
+.campo-telefono input { flex: 1; min-width: 0; }
 .campo-check { display: flex; align-items: center; gap: 10px; font-size: 0.92rem; font-weight: 500; cursor: pointer; }
 .campo-check input { width: 18px; height: 18px; }
 .campo-check a { color: var(--violeta); font-weight: 700; }
@@ -443,3 +446,11 @@ nav .links a.cta:hover { background: var(--menta); }
 }
 .btn-peligro:hover { background: #B00020; color: var(--blanco); }
 .btn-peligro:disabled { opacity: 0.5; cursor: wait; }
+
+/* ═══════════ Historial de accesos (PLT-018) ═══════════ */
+.historial-accesos { margin-top: 32px; max-width: 480px; }
+.historial-accesos h2 { font-size: 1.05rem; font-weight: 800; margin-bottom: 10px; }
+.historial-accesos ul { list-style: none; display: flex; flex-direction: column; gap: 6px; }
+.historial-accesos li { display: flex; justify-content: space-between; font-size: 0.85rem; padding: 8px 12px; background: var(--blanco); border-radius: 8px; border: 1px solid rgba(17,17,17,0.1); }
+.historial-negocio { opacity: 0.6; }
+.historial-fecha { color: rgba(17,17,17,0.55); }

@@ -9,7 +9,7 @@ export default function PaginaIngreso() {
     <div className="pagina-auth">
       <Link href="/" className="logo-auth">tinkay</Link>
       <h1>Ingresa a tu cuenta</h1>
-      <FormularioIngreso />
+      <FormularioIngreso negocio="tinkay" />
       <p className="enlace-auth">
         ¿No tienes cuenta? <Link href="/registro">Regístrate</Link>
       </p>

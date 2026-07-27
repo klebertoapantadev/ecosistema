@@ -165,6 +165,7 @@ export type Database = {
           acc_creado_en: string
           acc_id: string
           acc_ip: string | null
+          acc_negocio: string | null
           acc_secuencial: number
           acc_user_agent: string | null
           acc_usuario_id: string
@@ -173,6 +174,7 @@ export type Database = {
           acc_creado_en?: string
           acc_id?: string
           acc_ip?: string | null
+          acc_negocio?: string | null
           acc_secuencial?: never
           acc_user_agent?: string | null
           acc_usuario_id: string
@@ -181,6 +183,7 @@ export type Database = {
           acc_creado_en?: string
           acc_id?: string
           acc_ip?: string | null
+          acc_negocio?: string | null
           acc_secuencial?: never
           acc_user_agent?: string | null
           acc_usuario_id?: string

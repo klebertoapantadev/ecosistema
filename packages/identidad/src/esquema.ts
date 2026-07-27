@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { isValidPhoneNumber } from "libphonenumber-js";
 
 // PLT-001 regla 6: version de terminos vigente, comun a los 4 negocios.
 // Subir este numero cuando el texto de /terminos cambie de forma
@@ -26,6 +27,10 @@ export type DatosIngreso = z.infer<typeof esquemaIngreso>;
 
 // PLT-001 regla 2: confirmar identidad (Google no siempre da un nombre claro
 // -- ej. cuentas de correo comerciales) + WhatsApp opt-in, siempre opcional.
+// El formulario compone `whatsapp` en formato E.164 (+593987654321) antes
+// de enviarlo -- el pais y el conteo de digitos por pais se validan en el
+// cliente con libphonenumber-js (ver componentes/FormularioBienvenida),
+// esto es la validacion de respaldo en el servidor.
 export const esquemaBienvenida = z
   .object({
     nombres: z.string().trim().min(1, "Requerido"),
@@ -33,7 +38,7 @@ export const esquemaBienvenida = z
     autorizaWhatsapp: z.boolean(),
     whatsapp: z.string().trim().optional(),
   })
-  .refine((d) => !d.autorizaWhatsapp || (d.whatsapp && d.whatsapp.length >= 7), {
+  .refine((d) => !d.autorizaWhatsapp || (d.whatsapp && isValidPhoneNumber(d.whatsapp)), {
     message: "Ingresa un número válido para que podamos contactarte",
     path: ["whatsapp"],
   });

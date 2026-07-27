@@ -103,13 +103,13 @@ export async function registrarUsuario(datos: DatosRegistro, negocio: string): P
   if (sesionActiva) {
     await asegurarMembresiaCliente(supabase, data.user.id, negocio);
     const { ip, userAgent } = await obtenerIpYAgente();
-    await registrarAcceso(supabase, data.user.id, ip, userAgent);
+    await registrarAcceso(supabase, data.user.id, ip, userAgent, negocio);
   }
 
   return { ok: true, sesionActiva };
 }
 
-export async function iniciarSesion(datos: DatosIngreso): Promise<Resultado> {
+export async function iniciarSesion(datos: DatosIngreso, negocio: string): Promise<Resultado> {
   const parseo = esquemaIngreso.safeParse(datos);
   if (!parseo.success) {
     return { ok: false, error: parseo.error.issues[0]?.message ?? "Datos invalidos" };
@@ -124,7 +124,7 @@ export async function iniciarSesion(datos: DatosIngreso): Promise<Resultado> {
   if (error) return { ok: false, error: error.message };
 
   const { ip, userAgent } = await obtenerIpYAgente();
-  await registrarAcceso(supabase, data.user.id, ip, userAgent);
+  await registrarAcceso(supabase, data.user.id, ip, userAgent, negocio);
 
   return { ok: true, data: undefined };
 }

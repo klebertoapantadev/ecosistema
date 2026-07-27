@@ -53,6 +53,9 @@
 .campo-check input { width: 18px; height: 18px; }
 .campo-check a { color: var(--eco-acento); font-weight: 700; }
 .etiqueta-campo { display: flex; flex-direction: column; gap: 6px; font-size: 0.82rem; font-weight: 700; }
+.campo-telefono { display: flex; gap: 8px; }
+.campo-telefono select { flex: none; width: 40%; padding: 12px 8px; border-radius: 10px; border: 1.5px solid var(--eco-borde); font-family: inherit; font-size: 0.85rem; }
+.campo-telefono input { flex: 1; min-width: 0; }
 
 .error-auth { color: var(--eco-peligro); font-size: 0.85rem; text-align: left; }
 .mensaje-ok { color: #05876e; font-size: 0.85rem; }
@@ -133,4 +136,5 @@
 .historial-accesos h2 { font-size: 1.05rem; font-weight: 800; margin-bottom: 10px; }
 .historial-accesos ul { list-style: none; display: flex; flex-direction: column; gap: 6px; }
 .historial-accesos li { display: flex; justify-content: space-between; font-size: 0.85rem; padding: 8px 12px; background: var(--eco-blanco); border-radius: 8px; border: 1px solid var(--eco-borde); }
+.historial-negocio { opacity: 0.6; }
 .historial-fecha { color: var(--eco-gris); }

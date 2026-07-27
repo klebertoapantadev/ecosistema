@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { iniciarSesion } from "../acciones";
 import { crearClienteNavegador } from "@eco/supabase";
 
-export function FormularioIngreso() {
+export function FormularioIngreso({ negocio }: { negocio: string }) {
   const router = useRouter();
   const [correo, setCorreo] = useState("");
   const [contrasena, setContrasena] = useState("");
@@ -16,7 +16,7 @@ export function FormularioIngreso() {
     e.preventDefault();
     setError(null);
     setCargando(true);
-    const resultado = await iniciarSesion({ correo, contrasena });
+    const resultado = await iniciarSesion({ correo, contrasena }, negocio);
     setCargando(false);
     if (!resultado.ok) {
       setError(resultado.error);
