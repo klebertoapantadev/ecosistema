@@ -27,7 +27,7 @@ No hay rama `develop`. Cada PR a `main` debe ser desplegable por sí solo (featu
 - El repositorio trae `.github/pull_request_template.md`: todo PR nace con el checklist de [Definition of Done](03-definition-of-done.md). No se vacía la plantilla, se marca lo que aplica.
 - Descripción incluye `Closes #123` para que el issue se cierre automáticamente al hacer merge.
 - CI debe pasar: build de Turborepo (solo apps afectadas), lint, tipos, las 6 verificaciones de conformidad del [estándar de nomenclatura](00-nomenclatura-base-datos.md).
-- Si el PR cambia un esquema `comun_*`, requiere aprobación de CODEOWNERS (afecta a los 3 productos).
+- Si el PR cambia un esquema `comun_*`, requiere aprobación de CODEOWNERS (afecta a los 4 productos).
 - Si el PR cambia el comportamiento descrito en un artefacto de `gobernanza/`, el PR actualiza ese artefacto en el mismo commit. No se aprueba el PR si el artefacto queda desactualizado.
 
 ## 3.1. Por qué esto no depende de que el desarrollador use un agente de IA en particular
@@ -86,4 +86,4 @@ Cuando se requiera generar la entrega para el cliente de Tranqi, el workflow `.g
 4. Reescribe las dependencias de workspace a rutas locales.
 5. Publica en un repositorio de entrega etiquetado: `entrega-tranqi-v{fecha}`.
 
-Este workflow se construye antes del primer hito de entrega contractual, no en el Sprint 0. Tinkay y FastFix Home no lo necesitan — son proyectos propios.
+Este workflow se construye antes del primer hito de entrega contractual, no en el Sprint 0. Tinkay, FastFix Home y Margaritas Floristería no lo necesitan — son proyectos propios.
