@@ -297,7 +297,7 @@ export default function TranqiLanding() {
           <a href="#app">la app</a>
           <a href="#planes">planes</a>
           <a href="#red">abogados</a>
-          <a href="#contacto" className="cta">Únete</a>
+          <a href="/registro" className="cta">Únete</a>
         </div>
       </nav>
 
@@ -405,7 +405,7 @@ export default function TranqiLanding() {
           <div className="precio reveal">USD 20 <span style={{ fontSize: "0.35em", fontWeight: 800 }}>al año</span></div>
           <p className="sub reveal">Un sistema diseñado para que cualquier persona pueda contar con respaldo legal permanente.</p>
           <p className="nota reveal">Sé parte de un futuro donde la justicia es rápida, eficiente y accesible.</p>
-          <a className="btn btn-negro reveal" href="#contacto">Unirme ahora</a>
+          <a className="btn btn-negro reveal" href="/registro">Unirme ahora</a>
         </div>
       </section>
 
@@ -436,7 +436,7 @@ export default function TranqiLanding() {
             <li><b>Cuenta</b> digital</li>
             <li><b>Crédito</b> y desarrollo</li>
           </ul>
-          <a className="btn btn-blanco-borde reveal" href="#contacto">Quiero ser parte de la red</a>
+          <a className="btn btn-blanco-borde reveal" href="/registro">Quiero ser parte de la red</a>
           <p className="pub-date reveal" style={{ marginTop: 24, fontSize: "0.78rem", color: "rgba(255, 255, 255, 0.45)", fontWeight: 500, letterSpacing: "0.04em" }}>Publicado: 23 de julio de 2026 06:21</p>
         </div>
       </section>
