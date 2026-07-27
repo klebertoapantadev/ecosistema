@@ -23,16 +23,16 @@ export default function PaginaTerminos() {
       <h1>Términos de Servicio y Política de Privacidad</h1>
       <p className="fecha-legal">Última actualización: 27 de julio de 2026</p>
 
-      <section>
+      <div className="seccion-legal">
         <h2>1. Qué es tranqi</h2>
         <p>
           tranqi es una plataforma que conecta personas con abogados independientes para resolver consultas y
           gestionar trámites legales. Al crear una cuenta, aceptas estos Términos y nuestra Política de
           Privacidad.
         </p>
-      </section>
+      </div>
 
-      <section>
+      <div className="seccion-legal">
         <h2>2. Datos que recogemos</h2>
         <p>Al registrarte (por correo o con Google) guardamos:</p>
         <ul>
@@ -45,9 +45,9 @@ export default function PaginaTerminos() {
           Usamos estos datos para identificarte, darte acceso a la plataforma y, si lo autorizaste, contactarte
           por WhatsApp sobre tu consulta o trámite.
         </p>
-      </section>
+      </div>
 
-      <section>
+      <div className="seccion-legal">
         <h2>3. Cómo eliminar tu cuenta</h2>
         <p>
           Puedes solicitar la eliminación de tu cuenta y tus datos personales en cualquier momento desde tu panel
@@ -60,15 +60,15 @@ export default function PaginaTerminos() {
           personales (nombre, correo, WhatsApp) y conservamos únicamente lo necesario para cumplir esa
           obligación legal, sin que quede vinculado a tu identidad.
         </p>
-      </section>
+      </div>
 
-      <section>
+      <div className="seccion-legal">
         <h2>4. Contacto</h2>
         <p>
           Para preguntas sobre estos Términos o el tratamiento de tus datos, escríbenos a{" "}
           <a href="mailto:hola@tranqi24.com">hola@tranqi24.com</a>.
         </p>
-      </section>
+      </div>
     </div>
   );
 }

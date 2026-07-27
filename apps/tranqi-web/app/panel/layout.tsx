@@ -60,5 +60,5 @@ function rutaDeWidget(clave: string) {
 async function cerrarSesionYRedirigir() {
   "use server";
   await cerrarSesion();
-  redirect("/ingresar");
+  redirect("/");
 }

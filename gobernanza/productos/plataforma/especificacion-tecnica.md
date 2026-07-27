@@ -19,6 +19,8 @@ Contraparte técnica de [`especificacion-funcional.md`](especificacion-funcional
 
 Aprovisionamiento: trigger `comun_seguridad.seg_fn_provisionar_usuario()` sobre `auth.users` — toda alta crea automáticamente su fila en `seg_usuario`, incluyendo `usu_nombres`/`usu_apellidos` desde los metadatos del proveedor (`20260727000007` — antes solo quedaban en el JSONB de detalle, no en columna). El correo `kleber.toapanta.ch@gmail.com` queda marcado `usu_superadmin_plataforma = true` desde su primer login real (bootstrap, sin asignación manual).
 
+**Fix (`20260727000009`):** el trigger leía exclusivamente `given_name`/`family_name` de `raw_user_meta_data`, pero el proveedor Google de este proyecto no siempre los envía (confirmado con datos reales — solo trae `name`/`full_name`, ej. `"Kleber Toapanta"`). Sin fallback, `usu_nombres`/`usu_apellidos` quedaban `NULL` y la bienvenida no prellenaba nada. Ahora, si no hay `given_name`/`family_name`, se parte `name`/`full_name` por el primer espacio — heurística imperfecta para nombres compuestos, cubierta por el paso de confirmación de la bienvenida (`PLT-001` regla 2).
+
 Asignación de rol: RPC transaccional `seg_fn_asignar_rol(usuario, negocio, rol)` (`20260727000004`) — nunca `UPDATE` directo, ver regla 5 de `AGENTS.md`.
 
 **Fix de seguridad (`20260727000006`):** la política de `UPDATE` de `seg_usuario` permitía escribir cualquier columna de la propia fila, incluida `usu_superadmin_plataforma` — un usuario podía auto-otorgarse SuperAdmin. Cerrado con `GRANT UPDATE` por columna (ver [`politicas/seguridad-y-datos.md`](../../politicas/seguridad-y-datos.md) §9). Verificado con `information_schema.column_privileges` tras aplicar.

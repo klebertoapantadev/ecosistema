@@ -78,7 +78,8 @@ Extensiones relevantes ya instaladas en el proyecto (heredadas, no instaladas po
 | `20260727000006_seg_usuario_restringir_columnas_update` | **Fix de seguridad**: cierra escalación de privilegios vía `PATCH` directo — ver [`politicas/seguridad-y-datos.md`](../politicas/seguridad-y-datos.md) §9 |
 | `20260727000007_seg_provisionar_usuario_nombres_columna` | El trigger ahora puebla `usu_nombres`/`usu_apellidos` en columna, no solo en JSONB |
 | `20260727000008_seg_terminos_y_baja_cuenta` | Consentimiento de términos (`usu_terminos_aceptados_en`, `usu_terminos_version`, PLT-001 regla 6) y baja de cuenta (`usu_eliminado_en`, RPC `seg_fn_eliminar_cuenta()`, PLT-012) |
+| `20260727000009_seg_provisionar_usuario_fallback_nombre` | **Fix**: el trigger solo leía `given_name`/`family_name` de Google, que este proveedor no siempre envía (solo `name`/`full_name`) — deja `usu_nombres`/`usu_apellidos` sin prellenar en la bienvenida. Agrega fallback partiendo `name`/`full_name` por el primer espacio. |
 
-Tipos TypeScript regenerados en cada una — ver `packages/db/src/tipos-generados.ts`.
+Tipos TypeScript regenerados en cada migración que cambia columnas — ver `packages/db/src/tipos-generados.ts` (`20260727000009` solo reescribe el cuerpo de una función, no requiere regeneración).
 
 Verificado de punta a punta contra el proyecto real (no simulado): registro por correo, confirmación de correo, login, bienvenida, panel, gestión de usuarios. Cuentas de prueba (`prueba.sprint0*.ecosistema@gmail.com`) eliminadas tras la verificación.

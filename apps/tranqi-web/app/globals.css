@@ -320,7 +320,8 @@ nav .links a.cta:hover { background: var(--menta); }
   gap: 14px;
 }
 .pagina-legal h1 { font-size: clamp(1.4rem, 3vw, 1.9rem); font-weight: 800; margin-top: 8px; }
-.pagina-legal h2 { font-size: 1.15rem; font-weight: 800; margin-top: 18px; }
+.pagina-legal .seccion-legal { display: flex; flex-direction: column; gap: 8px; }
+.pagina-legal h2 { font-size: 1.15rem; font-weight: 800; }
 .pagina-legal p, .pagina-legal li { line-height: 1.6; color: rgba(17,17,17,0.85); }
 .pagina-legal ul { padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
 .pagina-legal a { color: var(--violeta); font-weight: 700; }
