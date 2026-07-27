@@ -58,19 +58,40 @@ Un usuario posee una **única identidad base** en todo el ecosistema (`comun_seg
 ## PLT-002 — Autenticación Multifactor (MFA) para Procesos Críticos y Reseteo de Credenciales
 
 ### Descripción
-Implementa la autenticación multifactor basada en TOTP (compatible con Google Authenticator / Authy) mediante Supabase Auth para proteger transacciones irreversibles o envíos de datos sensibles, garantizando enrolamiento oportuno y flujos de recuperación accesibles.
+Implementa la autenticación multifactor basada en TOTP (compatible con Google Authenticator / Authy) mediante Supabase Auth para proteger transacciones irreversibles o envíos de datos sensibles, permitiendo la gestión autónoma del usuario en su panel y garantizando flujos de enrolamiento y recuperación accesibles.
 
 ### Reglas de Negocio
-1. **MFA No Bloqueante en Navegación ni Registro:** El MFA no es obligatorio para registrarse, iniciar sesión, navegar o consultar datos.
-2. **Enrolamiento y Disparo de MFA Ante la Primera Invocación Crítica:**
-   - El autenticador TOTP se debe configurar/enrolar **exclusivamente ante la primera invocación a un proceso crítico**.
-   - Si el usuario nunca ejecuta una acción crítica, nunca se le interrumpe para enrolar MFA.
-3. **Procesos Críticos Comunes y Específicos:**
+1. **MFA No Bloqueante en Navegación Ordinaria ni Registro:** El MFA no es obligatorio para registrarse, iniciar sesión (en su modalidad por defecto), navegar o consultar datos.
+2. **Configuración y Gestión Autónoma en Panel de Usuario (Auto-Servicio MFA):**
+   - Desde la sección de seguridad de su panel (`/panel/seguridad`), el usuario puede enrolar, re-vincular o reiniciar (reseteo autogestionado) su autenticador TOTP en cualquier momento sin esperar a ejecutar un proceso crítico.
+3. **Modalidades de Exigencia Elegibles por el Usuario (Únicamente 2 Opciones):**
+   El usuario puede seleccionar la modalidad de exigencia de MFA según su preferencia de seguridad desde su panel:
+   - **Opción A: Solo Procesos Críticos (`SOLO_PROCESOS_CRITICOS` - Modalidad por Defecto / Estándar):** El MFA TOTP se solicita únicamente al ejecutar transacciones irreversibles o envíos de datos sensibles (ej. pasarela de pagos `PLT-006` o solicitudes críticas del negocio).
+   - **Opción B: Solicitar Siempre (`SOLICITAR_SIEMPRE` - MFA en cada Inicio de Sesión):** El MFA TOTP se solicita obligatoriamente en cada inicio de sesión (segundo factor completo / 2FA al autenticarse) **además** de la confirmación en procesos críticos.
+   - **Regla Estricta:** El sistema permite **exclusivamente** seleccionar entre estas 2 opciones (`SOLO_PROCESOS_CRITICOS` | `SOLICITAR_SIEMPRE`). No existen modalidades intermedias ni la opción de desactivar MFA en procesos críticos si el enrolamiento TOTP está activo.
+4. **Enrolamiento Automático Ante la Primera Invocación Crítica:**
+   - Si el usuario mantiene la modalidad *"Solo Procesos Críticos"* y aún no ha enrolado TOTP voluntariamente en su panel, el sistema lo interrumpe y exige el enrolamiento TOTP **exclusivamente ante la primera invocación a un proceso crítico**.
+   - Si el usuario nunca ejecuta una acción crítica y no enrola MFA voluntariamente desde su panel, el sistema **nunca lo interrumpe** para solicitar MFA.
+5. **Procesos Críticos Comunes y Específicos:**
    - **Proceso Crítico Común:** El uso de la **pasarela de pagos (`PLT-006`)** es el proceso crítico común a todas las aplicaciones del ecosistema que exige MFA o confirmación de seguridad.
    - **Procesos Críticos Específicos:** Cualquier otro flujo o acción que requiera MFA (ej. enviar solicitud de abogado socio en Tranqi) se especificará individualmente en la especificación del producto correspondiente (`gobernanza/productos/{producto}/especificacion-funcional.md`).
-4. **Mecanismo de Recuperación (Contraseña y MFA):**
+6. **Mecanismo de Recuperación (Contraseña y MFA):**
    - **Auto-servicio vía Correo:** En caso de olvido de contraseña o pérdida del dispositivo TOTP, el usuario puede solicitar el reseteo desde la pantalla de ingreso. El sistema envía automáticamente un enlace seguro de reseteo al correo de registro.
-   - **Reseteo Asistido por Administrador:** El Administrador de cada aplicación (o el SuperAdmin) tiene la capacidad desde la consola de gestión de **forzar o enviar manualmente el enlace de reseteo** al correo del usuario para restaurar su acceso o desvincular su MFA.
+   - **Reseteo Asistido por Administrador:** El Administrador de cada aplicación (o el SuperAdmin) tiene la capacidad desde la consola de gestión de **forzar o enviar manualmente el enlace de reseteo** o desvincular el MFA del usuario para restaurar su acceso en caso de pérdida total de credenciales.
+
+### Criterios de Aceptación (Gherkin)
+* **Escenario:** Enrolamiento voluntario y cambio de modalidad en panel
+  * **Dado que** un usuario autenticado accede a su panel en `/panel/seguridad`.
+  * **Cuando** enrola su app de autenticación TOTP y selecciona la opción "Solicitar Siempre".
+  * **Entonces** en su próximo inicio de sesión el sistema le exigirá obligatoriamente el código TOTP tras ingresar su contraseña.
+* **Escenario:** Enrolamiento automático en primer proceso crítico
+  * **Dado que** un usuario en modalidad por defecto ("Solo Procesos Críticos") no ha enrolado MFA TOTP.
+  * **Cuando** intenta realizar un pago por primera vez en la pasarela (`PLT-006`).
+  * **Entonces** el sistema interrumpe el flujo y le solicita enrolar TOTP antes de procesar el pago.
+* **Escenario:** Usuario sin acciones críticas no es interrumpido
+  * **Dado que** un usuario registrado solo navega, busca servicios o consulta información.
+  * **Cuando** no ejecuta ninguna acción crítica ni ingresa a su panel a enrolar MFA.
+  * **Entonces** el sistema nunca le solicita configurar ni ingresar códigos MFA.
 
 ---
 
@@ -107,13 +128,26 @@ Proporciona una interfaz conversacional inteligente ("buddie") integrada en las 
 ## PLT-005 — Auditoría de Cambios y Telemetría
 
 ### Descripción
-Registra automáticamente todas las modificaciones de datos en las tablas de negocio mediante el trigger PostgreSQL `aud_fn_auditar_tabla()`.
+Registra automáticamente todas las modificaciones de datos en las tablas de negocio mediante el trigger PostgreSQL `aud_fn_auditar_tabla()` y despliega el historial a través de un **Widget Único y Común de Auditoría** integrado en las consolas de administración.
 
 ### Reglas de Negocio
-1. **Auditoría Transparente:** Todas las operaciones `INSERT`, `UPDATE` y `DELETE` guardan el estado anterior y nuevo (`JSONB`) en `comun_auditoria.aud_registro`.
-2. **Aislamiento de Visibilidad:**
-   - Los roles `ADMINISTRADOR` de un negocio solo pueden visualizar el historial de auditoría correspondiente a su dominio de datos (`/admin/auditoria`).
-   - El rol `SUPERADMIN` de Plataforma posee visibilidad global de la auditoría de todos los negocios.
+1. **Auditoría Transparente por DB Trigger:** Todas las operaciones `INSERT`, `UPDATE` y `DELETE` guardan el estado anterior y nuevo (`JSONB`) en `comun_auditoria.aud_registro`.
+2. **Widget Único y Común de Auditoría (`auditoria`):**
+   - La funcionalidad de visualización de auditoría es un componente de software **único, transversal y reutilizable** para todas las aplicaciones del ecosistema.
+   - **Adaptabilidad Visual:** El widget mantiene exactamente la misma lógica operativa en todas las apps, adaptando únicamente su paleta de colores, tokens CSS y tema gráfico al branding del producto que lo hospeda.
+3. **Aislamiento y Visibilidad por Rol:**
+   - **Rol `ADMINISTRADOR`:** Visualiza únicamente los registros de auditoría pertenecientes al negocio donde ejerce dicho rol (`/admin/auditoria`).
+   - **Rol `SUPERADMIN` de Plataforma:** Desde **cualquier aplicación** del ecosistema, al abrir el widget de auditoría posee la facultad de visualizar la auditoría de **todas las aplicaciones** (con selector/filtro global por negocio o vista consolidada).
+
+### Criterios de Aceptación (Gherkin)
+* **Escenario:** Administrador visualiza auditoría de su negocio
+  * **Dado que** un `ADMINISTRADOR` de FastFix accede al widget de auditoría en FastFix.
+  * **Cuando** consulta el historial de registros.
+  * **Entonces** solo visualiza las operaciones realizadas dentro del negocio y esquemas de FastFix (`FFH`).
+* **Escenario:** SuperAdmin visualiza auditoría global desde cualquier app
+  * **Dado que** el `SUPERADMIN` abre el widget de auditoría desde la consola de Tinkay.
+  * **Cuando** activa el filtro multitenant o consulta la lista global.
+  * **Entonces** puede inspeccionar la auditoría de Tranqi, FastFix, Tinkay y Margaritas sin cambiar de aplicación.
 
 ---
 
@@ -219,15 +253,43 @@ Distribución del catálogo (`PLT-009`) hacia canales sociales sin carga manual 
 ## PLT-011 — Configuración de Empresa y Sistema de Widgets por Rol
 
 ### Descripción
-Pantalla de configuración del negocio (identidad legal + datos de `PLT-008`) y un sistema de permisos basado en **widgets**: cada funcionalidad implementada se registra como un widget asignable dinámicamente a un rol, en vez de codificar permisos fijos por aplicación.
+Pantalla de configuración del negocio (identidad legal + datos de `PLT-008`) y un sistema de permisos basado en **widgets**: **todas las vistas de las consolas administrativas de todas las aplicaciones deben construirse bajo este único patrón estándar de Widgets** (componentes autocontenidos y reutilizables), donde cada funcionalidad se asigna dinámicamente a roles sin duplicar código entre aplicaciones.
 
 ### Reglas de Negocio
-1. **Identificación legal del negocio:** cada negocio configura su Identificación/NIT, Nombre Comercial y Razón Social, además de los datos de `PLT-008` (redes sociales, canales, términos, locales).
-2. **Roles por defecto:** todo negocio tiene como mínimo `SUPERADMIN` (rol de plataforma, no de negocio — ver `PLT-003`), `ADMINISTRADOR`, `CLIENTE`, y puede definir roles adicionales (`OPERADOR`, `TECNICO`, `ABOGADO`, etc.).
-3. **Funcionalidad como widget:** cada capacidad de la consola de administración (gestión de usuarios, catálogo, pedidos, configuración) se registra como un widget con clave única por negocio.
-4. **Asignación dinámica, no fija en código:** un `ADMINISTRADOR` (o `SUPERADMIN`) decide qué widgets ve cada rol desde una pantalla de configuración — no requiere despliegue de código para cambiar quién ve qué.
-5. **Widget obligatorio de gestión de usuarios:** todo negocio trae, por defecto, un widget de "Gestión de usuarios" visible para `ADMINISTRADOR`, que permite buscar entre los usuarios registrados y asignarles rol dentro de ese negocio.
-6. **SuperAdmin de plataforma:** `kleber.toapanta.ch@gmail.com` es `SUPERADMIN` en los 4 negocios desde su primer inicio de sesión — no requiere asignación manual por negocio.
+1. **Estándar Unificado de Vistas Basado en Widgets ("Un Solo Patrón"):**
+   - Todas las consolas de administración de las aplicaciones del ecosistema se rigen obligatoriamente por el **patrón estándar de arquitectura de Widgets**.
+   - Cada capacidad administrativa se concibe como un Widget único y autocontenido registrado con clave descriptiva en `seg_widget`.
+   - Ninguna aplicación implementa pantallas administrativas ad-hoc fuera de este estándar; la funcionalidad es única y común, adaptando únicamente los estilos visuales (paleta de colores/tema) de cada marca.
+2. **Estándar Interactivo de DataGrids y Tablas de Datos en Widgets:**
+   - Todo widget que despliegue tablas o listas de datos (ej. `auditoria`, `gestion_usuarios`, catálogos, pedidos, transacciones o cualquier listado tabulado) debe incorporar obligatoriamente un **DataGrid enriquecido** con las siguientes capacidades estándar:
+     - **Búsqueda Global Multi-campo (Global Search):** Caja de búsqueda en tiempo real habilitada permanentemente en la barra superior del Grid, que evalúa coincidencias de texto sobre la totalidad de los campos y columnas de los registros.
+     - **Columnas Ordenables (Sorting):** Ordenamiento ascendente y descendente al hacer clic en los encabezados.
+     - **Reordenamiento de Columnas (Drag & Drop):** Permite cambiar el orden visual de las columnas arrastrando los encabezados a la posición deseada.
+     - **Agrupamiento Dinámico por Columnas (Drag-to-Group):** Permite arrastrar uno o más encabezados de columna hacia una zona superior de agrupamiento para clasificar y colapsar/expandir filas dinámicamente.
+     - **Exportación Nativa a Excel (`.xlsx`) y CSV (`.csv`):** Botones en la barra de herramientas del Grid para exportar el conjunto de datos filtrado o visible directamente a hojas de cálculo.
+3. **Identificación legal del negocio:** cada negocio configura su Identificación/NIT, Nombre Comercial y Razón Social, además de los datos de `PLT-008` (redes sociales, canales, términos, locales).
+4. **Roles por defecto:** todo negocio tiene como mínimo `SUPERADMIN` (rol de plataforma, no de negocio — ver `PLT-003`), `ADMINISTRADOR`, `CLIENTE`, y puede definir roles adicionales (`OPERADOR`, `TECNICO`, `ABOGADO`, etc.).
+5. **Widget Único y Común de Gestión de Usuarios Registrados (`gestion_usuarios`):**
+   - Es un componente de software **único y transversal** para todas las aplicaciones. Su diseño y lógica funcional son 100% idénticos en todo el ecosistema, adaptando únicamente la paleta de colores y tema de la app correspondiente.
+   - **Comportamiento por Rol:**
+     - **Rol `ADMINISTRADOR`:** Ve y gestiona únicamente los usuarios registrados en su propia aplicación (miembros de `seg_membresia` de su negocio).
+     - **Rol `SUPERADMIN` de Plataforma:** Desde **cualquier aplicación**, al abrir el widget de gestión de usuarios, posee la facultad de visualizar y administrar a **todos los usuarios registrados de todo el ecosistema** (con selector por negocio o vista consolidada de plataforma).
+6. **Asignación dinámica de widgets por rol:** un `ADMINISTRADOR` (o `SUPERADMIN`) decide qué widgets ve cada rol desde la consola de configuración de permisos — sin requerir cambios en código para ajustar visibilidades.
+7. **SuperAdmin de plataforma:** `kleber.toapanta.ch@gmail.com` es `SUPERADMIN` en los 4 negocios desde su primer inicio de sesión — no requiere asignación manual y posee acceso universal a todos los widgets en todas las apps.
+
+### Criterios de Aceptación (Gherkin)
+* **Escenario:** Gestión de usuarios por Administrador de Negocio
+  * **Dado que** el `ADMINISTRADOR` de Tinkay abre el widget de Gestión de Usuarios en Tinkay.
+  * **Cuando** busca en la lista de usuarios.
+  * **Entonces** solo obtiene los usuarios con membresía registrada en Tinkay.
+* **Escenario:** Vista global de usuarios por SuperAdmin
+  * **Dado que** el `SUPERADMIN` accede al widget de Gestión de Usuarios desde la app de Tranqi.
+  * **Cuando** selecciona la opción de filtro "Todos los Negocios".
+  * **Entonces** puede visualizar y gestionar los usuarios de Tranqi, FastFix, Tinkay y Margaritas.
+* **Escenario:** Interacción avanzada y exportación en DataGrid de Widget
+  * **Dado que** un usuario administrativo abre cualquier widget con listados de datos (ej. auditoría o usuarios).
+  * **Cuando** arrastra una columna a la zona de agrupamiento y presiona el botón "Exportar a Excel".
+  * **Entonces** la tabla agrupa dinámicamente los registros por dicha columna y genera la descarga inmediata del archivo `.xlsx` estructurado.
 
 **Implementación técnica:** ver [`especificacion-tecnica.md`](especificacion-tecnica.md) §1.1 y §9.
 

@@ -25,7 +25,7 @@ Asignación de rol: RPC transaccional `seg_fn_asignar_rol(usuario, negocio, rol)
 
 **Fix de seguridad (`20260727000006`):** la política de `UPDATE` de `seg_usuario` permitía escribir cualquier columna de la propia fila, incluida `usu_superadmin_plataforma` — un usuario podía auto-otorgarse SuperAdmin. Cerrado con `GRANT UPDATE` por columna (ver [`politicas/seguridad-y-datos.md`](../../politicas/seguridad-y-datos.md) §9). Verificado con `information_schema.column_privileges` tras aplicar.
 
-MFA (PLT-002): Supabase Auth TOTP, exigido vía claim `aal` en políticas RLS — ver [`politicas/seguridad-y-datos.md`](../../politicas/seguridad-y-datos.md) §3. **Pendiente todavía** — las políticas actuales no exigen `aal2` porque ningún flujo crítico se ha implementado aún.
+MFA (PLT-002): Supabase Auth TOTP con auto-servicio en `/panel/seguridad` y 2 modalidades elegibles guardadas en `seg_usuario.usu_mfa_modalidad` (`SOLO_PROCESOS_CRITICOS` por defecto | `SOLICITAR_SIEMPRE`). Exigido vía claim `aal` (`aal2`) en políticas RLS — ver [`politicas/seguridad-y-datos.md`](../../politicas/seguridad-y-datos.md) §3. **Pendiente todavía** — las políticas actuales no exigen `aal2` porque ningún flujo crítico se ha implementado aún.
 Rol en JWT: *Custom Access Token Hook* — pendiente de implementar. Mientras no exista, las políticas RLS resuelven el rol consultando `seg_membresia` directamente (vía `comun_seguridad.seg_fn_es_admin_negocio()`), no desde un claim del token.
 
 ### 1.1. Sistema de widgets (PLT-011)
@@ -35,7 +35,9 @@ Rol en JWT: *Custom Access Token Hook* — pendiente de implementar. Mientras no
 | `seg_widget` | `wdg_` | ✅ Migrada. Catálogo de funcionalidades por negocio (`unique (wdg_negocio, wdg_clave)`). |
 | `seg_rol_widget` | `rlw_` | ✅ Migrada. Asignación dinámica widget↔rol (`unique (rlw_negocio, rlw_rol, rlw_widget_id)`). |
 
-Seed aplicado: widgets `gestion_usuarios` y `configuracion_negocio` (`20260727000010`) en los 4 negocios, asignados por defecto al rol `ADMINISTRADOR`. `SUPERADMIN` (vía `usu_superadmin_plataforma`) no necesita fila en `seg_rol_widget` — `seg_fn_es_admin_negocio()` lo autoriza siempre.
+Seed aplicado: widgets `gestion_usuarios`, `auditoria` y `configuracion_negocio` (`20260727000010`) en los 4 negocios, asignados por defecto al rol `ADMINISTRADOR`. Todos los widgets de consola administrativa son componentes **únicos y comunes** que comparten código lógico y adaptan su tema/colores según la app hospedante. `SUPERADMIN` (vía `usu_superadmin_plataforma`) no necesita fila en `seg_rol_widget` y obtiene visibilidad global multitenant en widgets comunes (`gestion_usuarios`, `auditoria`) desde cualquier app.
+
+**Estándar de DataGrid UI:** Todo widget con listas tabuladas utiliza el componente común `DataGrid` de UI (`@ecosistema/ui`), incorporando búsqueda global multi-campo en tiempo real sobre todas las columnas, ordenamiento multi-columna, reordenamiento de columnas por drag & drop, agrupamiento dinámico por arrastre (*drag-to-group*) y exportación nativa a Excel (`.xlsx` vía SheetJS) y CSV (`.csv`).
 
 **Fix (`20260727000010`):** "Configuración del negocio" vivía como link fijo en `app/panel/layout.tsx`, visible a cualquier usuario autenticado incluido un `CLIENTE` (rol por defecto de todo registro, `PLT-003` regla 1) — que nunca debería verlo, aunque RLS ya bloqueaba la escritura. Se registró como widget normal para que el sistema de permisos de `PLT-011` sea la única fuente de verdad de qué ve cada rol. Verificado: un `CLIENTE` de prueba solo ve "Mi cuenta"; un `ADMINISTRADOR` de prueba ve ambos.
 
