@@ -297,6 +297,7 @@ export default function TranqiLanding() {
           <a href="#app">la app</a>
           <a href="#planes">planes</a>
           <a href="#red">abogados</a>
+          <a href="/ingresar" className="link-ingresar">Ingresar</a>
           <a href="/registro" className="cta">Únete</a>
         </div>
       </nav>
