@@ -16,7 +16,7 @@ responsable: Kleber Toapanta
 | :--- | :--- | :--- |
 | `trq_solicitud_socio` | `ssc_` | ✅ Migrada (`20260728000002`) |
 | `trq_experiencia_laboral` | `exp_` | ✅ Migrada |
-| `trq_documento_socio` | `dcs_` | ✅ Migrada — modelada, sin UI de carga (sin bucket de Storage todavía) |
+| `trq_documento_socio` | `dcs_` | ✅ Migrada, con UI de carga (`titulo`/`matricula`/`otro`/`respaldo_revision`, `dcs_subido_por`, `dcs_comentario`) |
 | `trq_materia` | `mat_` | ✅ Migrada, con seed (12 especialidades) |
 | `trq_solicitud_materia` | `sma_` | ✅ Migrada |
 | `trq_solicitud_provincia` | `spr_` | ✅ Migrada |
@@ -34,6 +34,15 @@ directo sobre `ssc_estado` — solo este RPC.
 **Widget de panel:** `socios` (negocio `tranqi`, visible para `ADMINISTRADOR`) — sembrado en la misma
 migración, sigue el patrón de `gestion_usuarios`/`configuracion_negocio`.
 
+**`comun_notificaciones.not_cola_correo`** (`not_`) — ✅ Migrada (`20260728000006`), esquema nuevo y
+compartido. Cola de correo, no envío — ver notas de seguridad. `trq_fn_decidir_solicitud()` encola una
+fila al aceptar/rechazar (`not_plantilla`: `socio_aceptado` | `socio_rechazado`).
+
+**Vista de auditoría** (`/panel/socios/auditoria`) lee `comun_auditoria.aud_registro` filtrado a
+`reg_esquema = 'tranqui_legal'` — sin tabla nueva, reutiliza la infraestructura de auditoría ya existente
+(`aud_fn_auditar_tabla()`, aplicado a las 8 tablas de socios desde su creación). RLS de `aud_registro` ya
+restringía a `SUPERADMIN` de plataforma (política preexistente, no nueva).
+
 El documento `Plan_Entregable_1_Tranqi_Identidad_Socios.md` referenciado aquí antes nunca se creó (no
 existe en el repo ni en su historial de git). Diseño completo, decisiones de alcance (MFA, cifrado,
 documentos) y máquina de estados: ver
@@ -43,8 +52,8 @@ documentos) y máquina de estados: ver
 
 - `comun_seguridad.seg_usuario` / `seg_membresia` — identidad y rol. ✅ Migrado y en uso (registro, bienvenida, gestión de usuarios, consentimiento de términos, baja de cuenta) — ver [`especificacion-tecnica.md` de Plataforma](../plataforma/especificacion-tecnica.md) §1 y §1.3.
 - `comun_configuracion.cfg_negocio` — ✅ Migrado y en uso (pantalla de configuración del negocio).
-- `comun_catalogo.cat_provincia` / `cat_ciudad` — residencia y cobertura. ❌ Pendiente.
-- `comun_auditoria` — vía `aud_fn_auditar_tabla()`. ✅ Migrado, aplicado a las tablas de `comun_seguridad`/`comun_configuracion`; pendiente en las 8 tablas propias de Tranqi (`trq_*`) cuando se migren.
+- `comun_catalogo.cat_provincia` — ✅ Migrado (`20260728000001`), en uso (cobertura de socios). `cat_ciudad` sigue ❌ Pendiente.
+- `comun_auditoria` — vía `aud_fn_auditar_tabla()`. ✅ Migrado y aplicado también a las 8 tablas de `tranqui_legal` (`trq_*`) desde su creación — visible en `/panel/socios/auditoria`.
 
 ## Notas de seguridad específicas de Tranqi
 
@@ -68,3 +77,16 @@ documentos) y máquina de estados: ver
   Tinkay/Margaritas, que necesitan un bucket público más liviano y todavía no existe (esperando el
   catálogo, PLT-009/010).
 - Rol `ABOGADO` no otorga capacidades sin `trq_abogado` en estado verificado — ver [`gobernanza/politicas/seguridad-y-datos.md`](../../politicas/seguridad-y-datos.md) §4.
+
+### Bugs de permisos encontrados y corregidos (2026-07-28)
+
+- **`GRANT USAGE ON SCHEMA` faltante, dos veces** (`tranqui_legal`, luego `comun_auditoria`) — mismo patrón
+  en ambos casos: el esquema tenía tablas con `GRANT SELECT`/`INSERT` correctos, pero sin `USAGE` en el
+  esquema esos grants no sirven de nada. Pasó desapercibido porque hasta ahora nada leía esas tablas vía
+  PostgREST directamente (solo funciones `SECURITY DEFINER`, que no necesitan grants). Ver
+  `20260728000003` y `20260728000007`.
+- **Dos FK sin `ON DELETE` bloqueando la baja de cuenta (PLT-012)** — `trq_revision_solicitud.rev_admin_id`
+  y `trq_documento_socio.dcs_subido_por`, ambas cambiadas a `ON DELETE SET NULL`. Ver `20260728000004` y
+  `20260728000008`. Regla a futuro: toda FK hacia `seg_usuario` desde una tabla de bitácora/auditoría
+  necesita `ON DELETE SET NULL`, no el `RESTRICT` por defecto — de lo contrario cualquiera que participe
+  en el flujo (no solo el dueño del registro principal) queda bloqueado para eliminar su cuenta.

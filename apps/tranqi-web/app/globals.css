@@ -563,6 +563,15 @@ nav .links a.cta:hover { background: var(--menta); }
   font-family: inherit; font-size: 0.85rem; background: var(--blanco);
 }
 
+.subir-documento-revision { max-width: 420px; margin-top: 16px; gap: 10px; }
+.subir-documento-revision input[type="file"] {
+  padding: 8px 10px; border-radius: 8px; border: 1.5px solid var(--panel-linea); font-family: inherit; font-size: 0.85rem;
+}
+.chip-admin-doc {
+  font-size: 0.62rem; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase;
+  background: rgba(80,0,186,0.08); color: var(--violeta); padding: 2px 6px; border-radius: 999px; margin-left: 4px;
+}
+
 /* ═══════════ MFA (administradores de Tranqi -- panel Socios) ═══════════ */
 .pagina-mfa {
   max-width: 480px; margin: 60px auto; padding: 0 20px;

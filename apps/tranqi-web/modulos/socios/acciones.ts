@@ -90,17 +90,22 @@ export async function enviarSolicitudSocio(
 // (ver migracion tranqui_legal_socios), esta accion solo valida el tipo.
 export async function registrarDocumentoSocio(
   solicitudId: string,
-  tipo: "titulo" | "matricula" | "otro",
+  tipo: "titulo" | "matricula" | "otro" | "respaldo_revision",
   path: string,
   nombreArchivo: string,
+  comentario?: string,
 ): Promise<Resultado> {
   const supabase = await crearClienteServidor();
-  const { error } = await supabase
-    .schema("tranqui_legal")
-    .from("trq_documento_socio")
-    .insert({ dcs_solicitud_id: solicitudId, dcs_tipo: tipo, dcs_url: path, dcs_nombre_archivo: nombreArchivo });
+  const { error } = await supabase.schema("tranqui_legal").from("trq_documento_socio").insert({
+    dcs_solicitud_id: solicitudId,
+    dcs_tipo: tipo,
+    dcs_url: path,
+    dcs_nombre_archivo: nombreArchivo,
+    dcs_comentario: comentario || null,
+  });
 
   if (error) return { ok: false, error: error.message };
+  revalidatePath("/panel/socios");
   return { ok: true, data: undefined };
 }
 

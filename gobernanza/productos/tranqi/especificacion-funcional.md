@@ -34,20 +34,29 @@ decisiones de alcance se definieron directamente en la implementación — ver e
 
 - **Flujo:** landing (botón "Quiero ser parte de la red") → `/panel/solicitud-socio` (exige sesión, un
   visitante nuevo pasa primero por `/registro`) → formulario (datos profesionales, especialidades,
-  cobertura por provincia, experiencia laboral, verificación asistida) → panel admin (widget "Socios") →
-  revisión y aceptar/rechazar → si se acepta, rol `ABOGADO` asignado automáticamente.
-- **Corrección de alcance sobre MFA (PLT-002):** enviar la solicitud **no** requiere MFA. MFA se exige
-  para activar las capacidades reales de un socio ya aceptado (agenda, casos — todavía no construidas),
-  no para postular. Un cliente que ya configuró MFA en un flujo de pago previo (proceso crítico) ya lo
-  cumpliría sin repetir el paso. MFA en sí no está implementado en el código todavía — la columna
-  `trq_abogado.abg_mfa_verificado` deja el esquema listo para cuando exista.
-- **Verificación asistida de matrícula profesional (Foro de Abogados) y título (SENESCYT)** — manual,
-  autodeclarada por el solicitante (checkbox + enlace a cada portal) y confirmada por el administrador al
-  revisar, no automatizada.
-- **Pendiente:** carga de documentos de respaldo (`trq_documento_socio` modelada, sin UI — no existe
-  ningún bucket de Supabase Storage en el proyecto todavía) y cifrado real de cédula/matrícula
-  (`pgp_sym_encrypt` con Supabase Vault — hoy protegidas solo por RLS, decisión de gestión de claves
-  pendiente de análisis propio).
+  cobertura por provincia, experiencia laboral, verificación asistida, documentos) → panel admin
+  (`/panel/socios`, un socio existe desde que envía la solicitud, con estado `Pendiente aprobación` visible
+  — no una pestaña separada) → revisión, documentos de respaldo del admin, comentarios → aceptar/rechazar
+  → si se acepta, rol `ABOGADO` asignado automáticamente y se encola notificación al solicitante.
+- **MFA obligatorio para administradores (actualizado 2026-07-28).** Enviar la solicitud **no** requiere
+  MFA. Pero un `ADMINISTRADOR`/`SUPERADMIN` de Tranqi sí necesita `aal2` (TOTP) para acceder a
+  `/panel/socios` y para que se acepte su decisión — exigido en app, RLS y RPC. Alcance explícito: **solo
+  Tranqi**, decisión de negocio, los otros 3 no lo requieren. Distinto de
+  `trq_abogado.abg_mfa_verificado` (activación de capacidades del socio ya aceptado — agenda, casos,
+  todavía no construidas — sigue pendiente, PLT-002).
+- **Verificación asistida de matrícula profesional (Foro de Abogados) y título (SENESCYT)** — autodeclarada
+  por el solicitante (checkbox + enlace a cada portal + documento adjunto) y confirmada por el
+  administrador al revisar (puede adjuntar su propio respaldo con comentario), no automatizada.
+- **Documentos de respaldo con carga real** — bucket privado en Supabase Storage, tanto del solicitante
+  (título, matrícula, certificados) como del administrador que revisa.
+- **Notificación por correo al decidir — solo modelada, envío real pendiente.** Se encola una fila en
+  `comun_notificaciones.not_cola_correo` al aceptar/rechazar; no hay proveedor de correo transaccional
+  configurado en el proyecto todavía.
+- **Auditoría** — `/panel/socios/auditoria` (solo `SUPERADMIN`), lee `comun_auditoria.aud_registro`.
+  Quién decidió cada solicitud ya queda en `trq_revision_solicitud.rev_admin_id`.
+- **Pendiente:** cifrado real de cédula/matrícula (`pgp_sym_encrypt` con Supabase Vault — hoy protegidas
+  solo por RLS, decisión de gestión de claves pendiente de análisis propio) y envío real de las
+  notificaciones encoladas.
 
 ## Pendiente
 

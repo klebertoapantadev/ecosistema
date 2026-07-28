@@ -169,37 +169,42 @@ export async function obtenerSolicitudDetalle(solicitudId: string) {
   };
 }
 
-// Admin: socios ya verificados (trq_abogado), con su solicitud de origen.
-export async function listarSocios() {
+// Complementa el detalle de una solicitud aceptada con su registro de
+// trq_abogado (abg_mfa_verificado, fecha de verificacion) -- null si la
+// solicitud todavia no fue aceptada.
+export async function obtenerAbogadoPorSolicitud(solicitudId: string) {
   const supabase = await crearClienteServidor();
   const { data } = await supabase
     .schema("tranqui_legal")
     .from("trq_abogado")
     .select("*")
-    .order("abg_verificado_en", { ascending: false });
-  const filas = (data ?? []).map((a) => ({ ...a, usuarioId: a.abg_usuario_id }));
-  return adjuntarUsuarios(filas);
+    .eq("abg_solicitud_id", solicitudId)
+    .maybeSingle();
+  return data;
 }
 
-export async function obtenerSocioDetalle(abogadoId: string) {
+// Admin (SUPERADMIN via RLS de comun_auditoria): bitacora de cambios sobre
+// las tablas de socios -- misma fuente que ya escribe aud_fn_auditar_tabla()
+// en cada INSERT/UPDATE/DELETE, aqui solo se lee.
+export async function listarAuditoria(limite = 100) {
   const supabase = await crearClienteServidor();
-  const { data: socio } = await supabase
-    .schema("tranqui_legal")
-    .from("trq_abogado")
+  const { data } = await supabase
+    .schema("comun_auditoria")
+    .from("aud_registro")
     .select("*")
-    .eq("abg_id", abogadoId)
-    .maybeSingle();
-  if (!socio) return null;
+    .eq("reg_esquema", "tranqui_legal")
+    .order("reg_creado_en", { ascending: false })
+    .limit(limite);
 
-  const [{ data: usuario }, detalleSolicitud] = await Promise.all([
-    supabase
-      .schema("comun_seguridad")
-      .from("seg_usuario")
-      .select("usu_id, usu_nombres, usu_apellidos, usu_correo, usu_whatsapp")
-      .eq("usu_id", socio.abg_usuario_id)
-      .maybeSingle(),
-    obtenerSolicitudDetalle(socio.abg_solicitud_id),
-  ]);
+  const filas = (data ?? []).map((r) => ({ ...r, usuarioId: r.reg_usuario_id }));
+  const ids = [...new Set(filas.map((f) => f.usuarioId).filter((id): id is string => !!id))];
+  if (ids.length === 0) return filas.map((f) => ({ ...f, usuario: null as UsuarioResumen | null }));
 
-  return { socio, usuario: usuario ?? null, solicitud: detalleSolicitud };
+  const { data: usuarios } = await supabase
+    .schema("comun_seguridad")
+    .from("seg_usuario")
+    .select("usu_id, usu_nombres, usu_apellidos, usu_correo")
+    .in("usu_id", ids);
+  const mapa = new Map((usuarios ?? []).map((u) => [u.usu_id, u]));
+  return filas.map((f) => ({ ...f, usuario: f.usuarioId ? (mapa.get(f.usuarioId) ?? null) : null }));
 }

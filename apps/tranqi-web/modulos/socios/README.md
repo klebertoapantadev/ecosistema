@@ -18,8 +18,11 @@ y [`especificacion-tecnica.md`](../../../../gobernanza/productos/tranqi/especifi
    (`trq_experiencia_laboral`, `trq_solicitud_materia`, `trq_solicitud_provincia`) en una sola acción
    (`enviarSolicitudSocio`) — no hay estado "borrador" persistido, se llena y envía de una vez.
 4. Panel admin → widget "Socios" (visible solo para `ADMINISTRADOR`/`SUPERADMIN`, vía
-   `seg_widget`/`seg_rol_widget`) → `/panel/socios` (lista de socios verificados) y
-   `/panel/socios/solicitudes` (lista de solicitudes, con detalle y acciones aceptar/rechazar).
+   `seg_widget`/`seg_rol_widget`) → `/panel/socios` — **una sola lista unificada**, cualquier `trq_solicitud_socio`
+   con su estado visible (`Pendiente aprobación` / `En revisión` / `Aprobado` / `Rechazado`). No hay una
+   pestaña separada de "solicitudes": un socio existe desde que envía la solicitud, no solo desde que se
+   acepta (corrección 2026-07-28 — antes "Socios" solo mostraba `trq_abogado`, es decir aceptados, y una
+   solicitud recién enviada no aparecía en ningún lado obvio para el admin).
 5. Aceptar/rechazar es el RPC `tranqui_legal.trq_fn_decidir_solicitud` (transaccional, `SECURITY
    DEFINER`) — al aceptar, crea `trq_abogado` y asigna el rol `ABOGADO` vía
    `comun_seguridad.seg_fn_asignar_rol`, el mismo RPC de plataforma que usa gestión de usuarios.
@@ -36,6 +39,21 @@ y [`especificacion-tecnica.md`](../../../../gobernanza/productos/tranqi/especifi
    navegador (`crearClienteNavegador().storage`) después de que la solicitud ya existe (necesita el
    `ssc_id` como prefijo de ruta) y quedan registrados en `trq_documento_socio`. El admin los ve con URLs
    firmadas de 10 minutos, nunca públicas.
+8. **El admin también puede adjuntar su propio respaldo de revisión** (2026-07-28,
+   `SubirDocumentoRevision.tsx`) — ej. una captura de la verificación manual en SENESCYT — siempre con un
+   comentario obligatorio explicando qué es (`dcs_tipo = 'respaldo_revision'`, `dcs_comentario`,
+   `dcs_subido_por`). Documentos del solicitante y del admin conviven en la misma lista del detalle.
+9. **Notificación por correo al decidir** (2026-07-28) — `trq_fn_decidir_solicitud()` encola una fila en
+   `comun_notificaciones.not_cola_correo` (plantilla `socio_aceptado`/`socio_rechazado`) al aceptar o
+   rechazar. **Solo encola — no envía.** No hay proveedor de correo transaccional configurado en el
+   proyecto todavía (ni Resend, ni SendGrid, ni ningún otro) — el envío real es trabajo pendiente una vez
+   se decida el proveedor. Mismo patrón de "modelar ahora, conectar después" que ya se usó con
+   `abg_mfa_verificado` y con los documentos antes de tener Storage.
+10. **Vista de auditoría** (`/panel/socios/auditoria`, 2026-07-28) — lee `comun_auditoria.aud_registro`
+    filtrado a `reg_esquema = 'tranqui_legal'`. Solo visible para `SUPERADMIN` de plataforma (política de
+    RLS ya existente, no nueva) — un `ADMINISTRADOR` de negocio normal no la ve, ve la página vacía sin
+    error. Quién decidió una solicitud ya quedaba registrado en `trq_revision_solicitud.rev_admin_id`;
+    esta vista es la bitácora completa de cambios (INSERT/UPDATE/DELETE) sobre las 8 tablas de socios.
 
 ## Decisiones de alcance tomadas en esta implementación
 
@@ -62,6 +80,22 @@ decisiones se definieron en esta implementación:
   `aceptada`/`rechazada`. Se dejan en el esquema para no tener que migrar de nuevo si se necesitan.
 - **Una sola solicitud activa por usuario** (índice único parcial) — permite volver a postular después de
   un rechazo, bloquea duplicados mientras una sigue en curso.
+
+## Bugs encontrados y corregidos, verificados de punta a punta contra el proyecto real (2026-07-28)
+
+1. **"Socios" solo mostraba aceptados.** Reportado por el usuario probando el flujo real: envió una
+   solicitud, entró como admin, y "Socios" decía que no había ninguno — la solicitud pendiente vivía en
+   una pestaña separada sin ningún indicio de que estuviera ahí. Corregido unificando en una sola lista
+   con estado visible (ver punto 4 del flujo).
+2. **`GRANT USAGE ON SCHEMA` faltante, dos veces.** `tranqui_legal` (ya corregido en la ronda anterior) y
+   ahora `comun_auditoria` — el patrón se repitió porque hasta esta actualización nadie leía
+   `aud_registro` vía PostgREST, solo el trigger `aud_fn_auditar_tabla()` escribía ahí como
+   `SECURITY DEFINER` (bypassa RLS y grants). La vista de auditoría fue la primera lectora real y expuso
+   el permiso faltante (`permission denied for schema comun_auditoria`).
+3. **Dos FK sin `ON DELETE`, bloqueando baja de cuenta (PLT-012).** `trq_revision_solicitud.rev_admin_id`
+   (corregido en la ronda anterior) y ahora `trq_documento_socio.dcs_subido_por` — cualquiera que hubiera
+   subido un documento (solicitante o admin) no podía dar de baja su cuenta sin violar la FK. Ambas
+   cambiadas a `ON DELETE SET NULL` — se preserva el registro, no a quién bloquea.
 
 ## Catálogos
 

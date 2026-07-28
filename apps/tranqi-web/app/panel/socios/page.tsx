@@ -1,42 +1,55 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { listarSocios } from "../../../modulos/socios/consultas";
+import { listarSolicitudes } from "../../../modulos/socios/consultas";
 
 export const metadata: Metadata = { title: "Socios — tranqi" };
 
+// Un socio existe desde que envia la solicitud -- no solo desde que se
+// acepta. Antes "Socios" y "Solicitudes" eran pestañas separadas y una
+// solicitud recien enviada no aparecia en ningun lado obvio; ahora es una
+// sola lista con estado visible.
+const ETIQUETA_ESTADO: Record<string, string> = {
+  enviada: "Pendiente aprobación",
+  en_revision: "En revisión",
+  aceptada: "Aprobado",
+  rechazada: "Rechazado",
+};
+
 export default async function PaginaSocios() {
-  const socios = await listarSocios();
+  const solicitudes = await listarSolicitudes();
 
   return (
     <div>
       <h1>Socios</h1>
       <nav className="subnav-socios">
         <span className="subnav-activo">Socios</span>
-        <Link href="/panel/socios/solicitudes">Solicitudes</Link>
+        <Link href="/panel/socios/auditoria">Auditoría</Link>
       </nav>
 
-      {socios.length === 0 ? (
-        <p>Todavía no hay socios verificados.</p>
+      {solicitudes.length === 0 ? (
+        <p>Todavía no hay solicitudes de socios.</p>
       ) : (
         <table className="tabla-panel">
           <thead>
             <tr>
               <th>Nombre</th>
               <th>Correo</th>
-              <th>Verificado desde</th>
+              <th>Enviada</th>
               <th>Estado</th>
               <th></th>
             </tr>
           </thead>
           <tbody>
-            {socios.map((s) => (
-              <tr key={s.abg_id}>
+            {solicitudes.map((s) => (
+              <tr key={s.ssc_id}>
                 <td>{[s.usuario?.usu_nombres, s.usuario?.usu_apellidos].filter(Boolean).join(" ") || "—"}</td>
                 <td>{s.usuario?.usu_correo}</td>
-                <td>{new Date(s.abg_verificado_en).toLocaleDateString("es-EC")}</td>
-                <td>{s.abg_estado}</td>
+                <td>{new Date(s.ssc_enviada_en).toLocaleDateString("es-EC")}</td>
                 <td>
-                  <Link href={`/panel/socios/${s.abg_id}`} className="btn-mini">
+                  <span className={`chip-estado-solicitud chip-${s.ssc_estado}`}>{ETIQUETA_ESTADO[s.ssc_estado]}</span>
+                </td>
+                <td>
+                  <Link href={`/panel/socios/${s.ssc_id}`} className="btn-mini">
                     Ver
                   </Link>
                 </td>

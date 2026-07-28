@@ -1,5 +1,5 @@
 // Generado con: npx supabase gen types typescript --project-id oaybbpdxhlxjbpwnoymy
-//   --schema comun_seguridad,comun_auditoria,comun_configuracion,comun_catalogo,tranqui_legal
+//   --schema comun_seguridad,comun_auditoria,comun_configuracion,comun_catalogo,comun_notificaciones,tranqui_legal
 // Regenerar en el mismo PR que cualquier migracion nueva que toque columnas
 // (no hace falta si la migracion solo reescribe el cuerpo de una funcion).
 // Pendientes de incluir cuando se migren: comun_facturacion, comun_agentes, comun_comercio.
@@ -174,6 +174,70 @@ export type Database = {
           cfg_nombre_comercial?: string | null
           cfg_razon_social?: string | null
           cfg_secuencial?: never
+        }
+        Relationships: []
+      }
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      [_ in never]: never
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
+  comun_notificaciones: {
+    Tables: {
+      not_cola_correo: {
+        Row: {
+          not_asunto: string
+          not_creado_en: string
+          not_datos: Json
+          not_destinatario_correo: string
+          not_destinatario_usuario_id: string | null
+          not_enviado_en: string | null
+          not_error: string | null
+          not_estado: string
+          not_id: string
+          not_intentos: number
+          not_negocio: string
+          not_plantilla: string
+          not_secuencial: number
+        }
+        Insert: {
+          not_asunto: string
+          not_creado_en?: string
+          not_datos?: Json
+          not_destinatario_correo: string
+          not_destinatario_usuario_id?: string | null
+          not_enviado_en?: string | null
+          not_error?: string | null
+          not_estado?: string
+          not_id?: string
+          not_intentos?: number
+          not_negocio: string
+          not_plantilla: string
+          not_secuencial?: never
+        }
+        Update: {
+          not_asunto?: string
+          not_creado_en?: string
+          not_datos?: Json
+          not_destinatario_correo?: string
+          not_destinatario_usuario_id?: string | null
+          not_enviado_en?: string | null
+          not_error?: string | null
+          not_estado?: string
+          not_id?: string
+          not_intentos?: number
+          not_negocio?: string
+          not_plantilla?: string
+          not_secuencial?: never
         }
         Relationships: []
       }
@@ -499,26 +563,32 @@ export type Database = {
       }
       trq_documento_socio: {
         Row: {
+          dcs_comentario: string | null
           dcs_creado_en: string
           dcs_id: string
           dcs_nombre_archivo: string | null
           dcs_solicitud_id: string
+          dcs_subido_por: string | null
           dcs_tipo: string
           dcs_url: string
         }
         Insert: {
+          dcs_comentario?: string | null
           dcs_creado_en?: string
           dcs_id?: string
           dcs_nombre_archivo?: string | null
           dcs_solicitud_id: string
+          dcs_subido_por?: string | null
           dcs_tipo: string
           dcs_url: string
         }
         Update: {
+          dcs_comentario?: string | null
           dcs_creado_en?: string
           dcs_id?: string
           dcs_nombre_archivo?: string | null
           dcs_solicitud_id?: string
+          dcs_subido_por?: string | null
           dcs_tipo?: string
           dcs_url?: string
         }
@@ -785,6 +855,7 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      trq_fn_es_admin_mfa_verificado: { Args: never; Returns: boolean }
     }
     Enums: {
       [_ in never]: never
@@ -920,6 +991,9 @@ export const Constants = {
     Enums: {},
   },
   comun_configuracion: {
+    Enums: {},
+  },
+  comun_notificaciones: {
     Enums: {},
   },
   comun_seguridad: {
