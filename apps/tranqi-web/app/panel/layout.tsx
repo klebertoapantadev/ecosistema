@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
-import Link from "next/link";
 import { obtenerPerfilActual, obtenerWidgetsVisibles, cerrarSesion, asegurarMembresiaCliente } from "@eco/identidad";
+import { EnlacePanel } from "./EnlacePanel";
 import { crearClienteServidor } from "@eco/supabase/servidor";
 
 const NEGOCIO = "tranqi";
@@ -28,12 +28,13 @@ export default async function LayoutPanel({ children }: { children: React.ReactN
         {/* div, no <nav>: el <nav> global de la landing es position:fixed y
             rompería este layout -- ver globals.css */}
         <div className="panel-nav-links">
+          <EnlacePanel href="/panel">Inicio</EnlacePanel>
           {widgets.map((w) => (
-            <Link key={w.wdg_clave} href={`/panel/${rutaDeWidget(w.wdg_clave)}`}>
+            <EnlacePanel key={w.wdg_clave} href={`/panel/${rutaDeWidget(w.wdg_clave)}`}>
               {w.wdg_nombre}
-            </Link>
+            </EnlacePanel>
           ))}
-          <Link href="/panel/cuenta">Mi cuenta</Link>
+          <EnlacePanel href="/panel/cuenta">Mi cuenta</EnlacePanel>
         </div>
         <div className="panel-usuario">
           {/* Identificador del usuario activo en el portal: el nombre que
