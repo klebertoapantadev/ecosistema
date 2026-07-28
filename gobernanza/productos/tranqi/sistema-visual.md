@@ -118,3 +118,25 @@ reescribe siguiendo la estructura de módulo obligatoria.
 
 - `maqueta-cliente.html` — pantalla principal del cliente.
 - `maqueta-abogado.html` — escritorio del abogado.
+
+Ambas maquetas son de las futuras apps nativas Cliente/Abogado — más ricas
+(buscador, notificaciones, mensajes, agenda) que el panel web de hoy, que no
+tiene esa funcionalidad construida todavía. Lo que sí se adoptó ya en
+`apps/tranqi-web` (2026-07-28): el quiebre responsive del rail (`≤860px`, el
+rail deja de ser columna lateral fija y se vuelve barra horizontal con
+scroll) — ver `.rail` en ambas maquetas y su equivalente `.panel-nav` en
+`app/globals.css`. Antes de esto el panel no era usable en móvil (el rail
+fijo de 240px no colapsaba, empujando el contenido fuera de pantalla).
+
+## 10. Responsive — regla de orden de cascada
+
+Un bug real encontrado al implementar el punto anterior: varias reglas base
+(`.correo-usuario-activo`, `.fila-dos-columnas`, etc.) están definidas *sin*
+`@media` en secciones que se fueron agregando a lo largo del archivo. Un
+`@media (max-width: ...)` insertado en medio del archivo, con igual
+especificidad que una regla base que aparece *después* en el texto, **pierde**
+esa pelea de cascada sin importar el viewport — el override nunca se aplica.
+Regla a seguir: todo bloque `@media` de ajuste móvil va **al final** de
+`globals.css`, nunca intercalado entre secciones — así siempre gana por orden
+de cascada contra cualquier regla base ya existente, sin depender de subir
+especificidad artificialmente.

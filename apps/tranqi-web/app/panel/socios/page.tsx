@@ -29,6 +29,7 @@ export default async function PaginaSocios() {
       {solicitudes.length === 0 ? (
         <p>Todavía no hay solicitudes de socios.</p>
       ) : (
+        <div className="tabla-panel-envoltura">
         <table className="tabla-panel">
           <thead>
             <tr>
@@ -57,6 +58,7 @@ export default async function PaginaSocios() {
             ))}
           </tbody>
         </table>
+        </div>
       )}
     </div>
   );

@@ -24,6 +24,7 @@ export default async function PaginaGestionUsuarios({
 
       {error && <p className="error-auth">{error}</p>}
 
+      <div className="tabla-panel-envoltura">
       <table className="tabla-panel">
         <thead>
           <tr>
@@ -45,6 +46,7 @@ export default async function PaginaGestionUsuarios({
           )}
         </tbody>
       </table>
+      </div>
     </div>
   );
 }

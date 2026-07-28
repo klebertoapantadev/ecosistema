@@ -454,10 +454,15 @@ nav .links a.cta:hover { background: var(--menta); }
 .btn-mini:disabled { opacity: 0.5; cursor: wait; }
 .mensaje-fila { font-size: 0.78rem; color: var(--esmeralda); margin-left: 6px; }
 
+/* Envoltura con scroll horizontal -- una tabla con varias columnas no cabe
+   en un telefono, mismo problema que resuelve .tabla-envoltura en las
+   maquetas de referencia. La tabla no encoge sus columnas, la envoltura
+   se desplaza. */
+.tabla-panel-envoltura { overflow-x: auto; border-radius: 16px; border: 1px solid var(--panel-linea); }
 .tabla-panel {
-  width: 100%; border-collapse: collapse; background: var(--blanco);
-  border: 1px solid var(--panel-linea); border-radius: 16px; overflow: hidden;
+  width: 100%; min-width: 480px; border-collapse: collapse; background: var(--blanco);
 }
+.tabla-panel-envoltura .tabla-panel { border: none; border-radius: 0; }
 .tabla-panel th, .tabla-panel td {
   padding: 13px 16px; text-align: left; font-size: 0.88rem;
   border-bottom: 1px solid var(--panel-linea-suave);
@@ -635,3 +640,39 @@ nav .links a.cta:hover { background: var(--menta); }
 .historial-accesos li { display: flex; justify-content: space-between; font-size: 0.85rem; padding: 8px 12px; background: var(--blanco); border-radius: 8px; border: 1px solid rgba(17,17,17,0.1); }
 .historial-negocio { opacity: 0.6; }
 .historial-fecha { color: rgba(17,17,17,0.55); }
+
+/* ═══════════ Responsive del panel (movil) ═══════════
+   Al final del archivo a propósito: varias reglas base de estas mismas
+   clases (definidas mas arriba, fuera de @media) tienen igual especificidad
+   -- si este bloque no fuera el ultimo en el archivo, esas reglas base
+   ganarian por orden de cascada sin importar el viewport. Mismo quiebre y
+   misma tecnica que las maquetas de referencia
+   (gobernanza/productos/tranqi/maquetas/*.html, ≤860px: el rail deja de
+   ser una columna lateral fija y se vuelve una barra horizontal con
+   scroll). Adaptado: ahi el rail oculta el bloque de apoyo por completo
+   porque es solo un contacto decorativo; aca "panel-usuario" tiene el
+   boton real de cerrar sesion, no se puede ocultar -- se suma a la barra
+   horizontal en vez de desaparecer. */
+@media (max-width: 860px) {
+  .panel-layout { flex-direction: column; min-height: auto; }
+  .panel-nav {
+    width: auto; flex-direction: row; align-items: center;
+    padding: 10px 14px; gap: 10px; overflow-x: auto;
+    position: sticky; top: 0; z-index: 20;
+  }
+  .panel-marca { flex: none; }
+  .panel-nav-links { flex-direction: row; flex: none; gap: 2px; }
+  .panel-nav-links a { padding: 8px 10px; white-space: nowrap; }
+  .panel-nav-links a[aria-current="page"] { box-shadow: inset 0 -2px 0 var(--lavanda); }
+  .panel-usuario {
+    flex-direction: row; align-items: center; flex: none; margin-left: auto;
+    border-top: none; border-left: 1px solid rgba(255,255,255,0.16);
+    padding-top: 0; padding-left: 12px; gap: 8px;
+  }
+  .nombre-usuario-activo, .correo-usuario-activo, .etiqueta-superadmin { display: none; }
+  .panel-contenido { padding: 20px clamp(16px, 5vw, 28px) 40px; }
+  .fila-dos-columnas { grid-template-columns: 1fr; }
+  .tarjeta-legal-score { flex-wrap: wrap; }
+  .acciones-solicitud-botones { flex-direction: column; }
+  .acciones-solicitud-botones .btn-mini, .acciones-solicitud-botones .btn-peligro { width: 100%; align-self: stretch; text-align: center; }
+}

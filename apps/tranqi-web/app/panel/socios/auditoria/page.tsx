@@ -23,6 +23,7 @@ export default async function PaginaAuditoria() {
       {registros.length === 0 ? (
         <p>Sin registros de auditoría todavía — o tu cuenta no es SuperAdmin.</p>
       ) : (
+        <div className="tabla-panel-envoltura">
         <table className="tabla-panel">
           <thead>
             <tr>
@@ -47,6 +48,7 @@ export default async function PaginaAuditoria() {
             ))}
           </tbody>
         </table>
+        </div>
       )}
     </div>
   );
