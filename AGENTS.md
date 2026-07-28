@@ -29,6 +29,20 @@ Monorepo (Turborepo + pnpm) para 8 aplicaciones sobre 4 negocios (Tranqi, FastFi
 13. **Toda tabla donde el usuario edita su propia fila revoca `UPDATE` de tabla completa y otorga `GRANT UPDATE` solo por columna.** RLS filtra filas, no columnas — sin esto, un `PATCH` directo puede escribir campos privilegiados (`*_superadmin_*`, `*_rol`) aunque la UI nunca lo permita. Ver [`politicas/seguridad-y-datos.md`](gobernanza/politicas/seguridad-y-datos.md) §9 (encontrado y corregido en `seg_usuario`, 2026-07-27).
 14. **Todo lo que implementa un requerimiento `PLT-xxx` va en `packages/*`, no en `apps/{app}/modulos/`** — aunque hoy solo un negocio lo use. `packages/identidad` y `packages/supabase` son el patrón a seguir: nacieron dentro de `tranqi-web`, se extrajeron cuando los otros 3 negocios necesitaron lo mismo. Un paquete que mezcla código de servidor (`next/headers`) y componentes cliente en un solo barril rompe el build del navegador — separar en subpaths (`package.json` → `exports`) cuando haga falta, ver `packages/supabase/package.json`.
 
+## Protocolo de inicio de sesión (Claude Token Optimizer)
+
+Instalado el 2026-07-27 ([nadimtuhin/claude-token-optimizer](https://github.com/nadimtuhin/claude-token-optimizer)) para mantener el contexto de arranque liviano. **Al inicio de cada sesión, leer:**
+
+```bash
+✓ .claude/COMMON_MISTAKES.md      # ⚠️ Errores conocidos — leer primero
+✓ .claude/QUICK_START.md          # Comandos esenciales
+✓ .claude/ARCHITECTURE_MAP.md     # Ubicación de archivos
+```
+
+**Al terminar una tarea:** crear un doc de cierre en `.claude/completions/YYYY-MM-DD-nombre-tarea.md` y mover cualquier archivo de sesión a `.claude/sessions/archive/`.
+
+**Nunca cargar automáticamente** (costo cero de tokens, son archivo histórico): `.claude/completions/`, `.claude/sessions/`, `docs/archive/`.
+
 ## Comandos del proyecto
 
 ```bash
