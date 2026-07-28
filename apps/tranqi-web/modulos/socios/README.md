@@ -23,6 +23,19 @@ y [`especificacion-tecnica.md`](../../../../gobernanza/productos/tranqi/especifi
 5. Aceptar/rechazar es el RPC `tranqui_legal.trq_fn_decidir_solicitud` (transaccional, `SECURITY
    DEFINER`) — al aceptar, crea `trq_abogado` y asigna el rol `ABOGADO` vía
    `comun_seguridad.seg_fn_asignar_rol`, el mismo RPC de plataforma que usa gestión de usuarios.
+6. **MFA obligatorio para administradores** (2026-07-28, decisión de negocio — solo Tranqi, los otros 3
+   negocios no lo requieren). `apps/tranqi-web/app/panel/socios/layout.tsx` gatea toda la sección
+   (lista, detalle, solicitudes, aceptar/rechazar) exigiendo `aal2` — si el admin no tiene un factor TOTP
+   configurado, se le pide inscribirlo ahí mismo (`modulos/mfa/componentes/VerificacionMFA.tsx`, sobre la
+   API nativa `auth.mfa.*` de Supabase, sin criptografía propia). Defensa en profundidad: el mismo
+   requisito está en RLS (`trq_fn_es_admin_mfa_verificado()`) y dentro del RPC de aceptar/rechazar — el
+   layout evita una pantalla vacía sin explicación, pero no es el único lugar que lo exige.
+7. **Documentos de respaldo con carga real** (2026-07-28) — bucket privado `socios-documentos` en
+   Supabase Storage (PDF/imagen/Word, 15MB máx). El solicitante adjunta título y matrícula en
+   "Verificación asistida" y certificados opcionales en "Experiencia laboral"; se suben directo desde el
+   navegador (`crearClienteNavegador().storage`) después de que la solicitud ya existe (necesita el
+   `ssc_id` como prefijo de ruta) y quedan registrados en `trq_documento_socio`. El admin los ve con URLs
+   firmadas de 10 minutos, nunca públicas.
 
 ## Decisiones de alcance tomadas en esta implementación
 
@@ -31,20 +44,19 @@ El documento `Plan_Entregable_1_Tranqi_Identidad_Socios.md` referenciado en `esp
 de tabla y prefijos, ya fijados. Los campos del formulario, la máquina de estados y las siguientes
 decisiones se definieron en esta implementación:
 
-- **MFA no bloquea el envío de la solicitud.** MFA (PLT-002) todavía no existe en el código
-  (`packages/auth` está explícitamente marcado como "solo para futuro trabajo de MFA"). Se exige más
-  adelante, para activar capacidades reales del socio, no para postular — ver `abg_mfa_verificado` en
-  `trq_abogado`, columna lista pero sin verificación real implementada todavía. Un cliente que ya
-  configuró MFA en un flujo de pago (proceso crítico, PLT-002) ya lo cumpliría sin repetir el paso.
+- **MFA no bloquea el envío de la solicitud, sí el acceso admin (actualizado 2026-07-28).** Postular
+  sigue sin requerir MFA. Pero revisar/aceptar/rechazar solicitudes SÍ lo exige desde esta actualización
+  — ver punto 6 del flujo arriba. `abg_mfa_verificado` en `trq_abogado` sigue como columna sin uso real
+  todavía (activación de capacidades del socio ya aceptado, no de quien lo revisa) — son dos MFA
+  distintos: el del admin que revisa (implementado) y el del abogado ya activo (pendiente, PLT-002).
 - **Cédula/matrícula en texto plano, no `pgp_sym_encrypt`.** Cifrar de verdad requiere gestión de claves
   (Supabase Vault) que el proyecto no tiene todavía — es una decisión aparte, no algo para improvisar en
   esta migración. Protegidas por RLS (solo el dueño de la solicitud y administradores de `tranqi` pueden
   leerlas); la vista de detalle del admin las muestra completas (las necesita para verificar), la vista
   de lista no las expone.
-- **`trq_documento_socio` está modelada pero sin UI de carga.** No existe ningún bucket de Supabase
-  Storage en el proyecto todavía — es la primera vez que se necesitaría. Por ahora la verificación
-  depende de los enlaces asistidos a SENESCYT/Foro de Abogados (autodeclarados por el solicitante) más
-  la revisión manual del administrador.
+- **`trq_documento_socio` ya tiene UI de carga (actualización 2026-07-28)** — ver punto 7 del flujo
+  arriba. Es el primer uso de Supabase Storage en el proyecto; el patrón (bucket privado + RLS por
+  carpeta + URLs firmadas) queda como referencia para el resto del ecosistema.
 - **Estados `borrador`/`en_revision` existen en el `check` de `ssc_estado` pero no se usan todavía** — el
   formulario es de un solo envío (sin guardado parcial), y la revisión pasa directo de `enviada` a
   `aceptada`/`rechazada`. Se dejan en el esquema para no tener que migrar de nuevo si se necesitan.

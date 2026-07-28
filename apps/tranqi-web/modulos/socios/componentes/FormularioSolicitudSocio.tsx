@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { enviarSolicitudSocio } from "../acciones";
+import { crearClienteNavegador } from "@eco/supabase";
+import { enviarSolicitudSocio, registrarDocumentoSocio } from "../acciones";
 import { ENLACES_VERIFICACION, type DatosExperienciaLaboral } from "../esquema";
 
 interface Props {
@@ -13,6 +14,27 @@ interface Props {
 }
 
 const EXPERIENCIA_VACIA: DatosExperienciaLaboral = { empresa: "", cargo: "", fechaInicio: "", fechaFin: "", descripcion: "" };
+
+// Debe coincidir con allowed_mime_types del bucket "socios-documentos"
+// (ver migracion socios_mfa_y_documentos) -- validar aqui evita una subida
+// que Storage va a rechazar de todos modos, con mejor mensaje para el usuario.
+const TIPOS_ACEPTADOS =
+  "application/pdf,image/jpeg,image/png,image/webp,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.oasis.opendocument.text";
+const TAMANO_MAXIMO_MB = 15;
+
+async function subirDocumento(solicitudId: string, tipo: "titulo" | "matricula" | "otro", archivo: File) {
+  if (archivo.size > TAMANO_MAXIMO_MB * 1024 * 1024) {
+    return { ok: false as const, error: `${archivo.name}: supera ${TAMANO_MAXIMO_MB}MB` };
+  }
+  const supabase = crearClienteNavegador();
+  const path = `${solicitudId}/${tipo}-${crypto.randomUUID()}-${archivo.name}`;
+  const { error: errorSubida } = await supabase.storage.from("socios-documentos").upload(path, archivo);
+  if (errorSubida) return { ok: false as const, error: `${archivo.name}: ${errorSubida.message}` };
+
+  const resultado = await registrarDocumentoSocio(solicitudId, tipo, path, archivo.name);
+  if (!resultado.ok) return { ok: false as const, error: `${archivo.name}: ${resultado.error}` };
+  return { ok: true as const };
+}
 
 export function FormularioSolicitudSocio({ usuarioId, materias, provincias, correoInicial }: Props) {
   const router = useRouter();
@@ -26,10 +48,14 @@ export function FormularioSolicitudSocio({ usuarioId, materias, provincias, corr
   const [materiaIds, setMateriaIds] = useState<string[]>([]);
   const [provinciaIds, setProvinciaIds] = useState<string[]>([]);
   const [experiencia, setExperiencia] = useState<DatosExperienciaLaboral[]>([]);
+  const [certificados, setCertificados] = useState<File[]>([]);
+  const [tituloArchivo, setTituloArchivo] = useState<File | null>(null);
+  const [matriculaArchivo, setMatriculaArchivo] = useState<File | null>(null);
   const [senescytVerificado, setSenescytVerificado] = useState(false);
   const [foroVerificado, setForoVerificado] = useState(false);
   const [declaracion, setDeclaracion] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [avisoArchivos, setAvisoArchivos] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
 
   const alternar = (lista: string[], id: string, set: (v: string[]) => void) =>
@@ -41,6 +67,7 @@ export function FormularioSolicitudSocio({ usuarioId, materias, provincias, corr
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    setAvisoArchivos(null);
     setEnviando(true);
     const resultado = await enviarSolicitudSocio(
       {
@@ -60,9 +87,29 @@ export function FormularioSolicitudSocio({ usuarioId, materias, provincias, corr
       },
       usuarioId,
     );
-    setEnviando(false);
     if (!resultado.ok) {
+      setEnviando(false);
       setError(resultado.error);
+      return;
+    }
+
+    // La solicitud ya quedo registrada -- los archivos son un adjunto, si
+    // alguno falla no se pierde la solicitud, solo se avisa.
+    const solicitudId = resultado.data.solicitudId;
+    const subidas = await Promise.all([
+      tituloArchivo ? subirDocumento(solicitudId, "titulo", tituloArchivo) : null,
+      matriculaArchivo ? subirDocumento(solicitudId, "matricula", matriculaArchivo) : null,
+      ...certificados.map((archivo) => subirDocumento(solicitudId, "otro", archivo)),
+    ]);
+    const fallidas = subidas.filter((s): s is { ok: false; error: string } => s !== null && !s.ok);
+
+    setEnviando(false);
+    if (fallidas.length > 0) {
+      // No navega todavia -- el aviso se perderia. El usuario decide cuando
+      // continuar; la solicitud en si ya quedo enviada.
+      setAvisoArchivos(
+        `Tu solicitud se envió correctamente, pero estos archivos no se pudieron subir: ${fallidas.map((f) => f.error).join("; ")}.`,
+      );
       return;
     }
     router.push("/panel/solicitud-socio");
@@ -158,11 +205,20 @@ export function FormularioSolicitudSocio({ usuarioId, materias, provincias, corr
       <button type="button" className="btn-mini" onClick={() => setExperiencia((prev) => [...prev, { ...EXPERIENCIA_VACIA }])}>
         + Agregar experiencia
       </button>
+      <label>
+        Certificados o cartas de referencia (opcional, PDF/imagen/Word, máx {TAMANO_MAXIMO_MB}MB c/u)
+        <input
+          type="file"
+          multiple
+          accept={TIPOS_ACEPTADOS}
+          onChange={(e) => setCertificados(Array.from(e.target.files ?? []))}
+        />
+      </label>
 
       <h2>Verificación asistida</h2>
       <p className="aviso-borrador">
-        La verificación de tu título y matrícula es manual — visita los portales oficiales, confírmalo ahí y luego marca las casillas.
-        Nuestro equipo también lo revisará antes de aceptar tu solicitud.
+        La verificación de tu título y matrícula es manual — visita los portales oficiales, confírmalo ahí, marca las casillas y adjunta el documento.
+        Nuestro equipo también lo revisará antes de aceptar tu solicitud. Tus documentos se guardan cifrados y solo tú y el equipo de tranqi pueden verlos.
       </p>
       <label className="campo-check">
         <input type="checkbox" checked={senescytVerificado} onChange={(e) => setSenescytVerificado(e.target.checked)} />
@@ -171,6 +227,10 @@ export function FormularioSolicitudSocio({ usuarioId, materias, provincias, corr
           SENESCYT ↗
         </a>
       </label>
+      <label>
+        Documento del título (PDF o imagen, máx {TAMANO_MAXIMO_MB}MB)
+        <input type="file" accept={TIPOS_ACEPTADOS} onChange={(e) => setTituloArchivo(e.target.files?.[0] ?? null)} />
+      </label>
       <label className="campo-check">
         <input type="checkbox" checked={foroVerificado} onChange={(e) => setForoVerificado(e.target.checked)} />
         Verifiqué mi matrícula en el{" "}
@@ -178,15 +238,28 @@ export function FormularioSolicitudSocio({ usuarioId, materias, provincias, corr
           Foro de Abogados ↗
         </a>
       </label>
+      <label>
+        Documento de la matrícula (PDF o imagen, máx {TAMANO_MAXIMO_MB}MB)
+        <input type="file" accept={TIPOS_ACEPTADOS} onChange={(e) => setMatriculaArchivo(e.target.files?.[0] ?? null)} />
+      </label>
       <label className="campo-check">
         <input type="checkbox" checked={declaracion} onChange={(e) => setDeclaracion(e.target.checked)} />
         Confirmo que la información proporcionada es verídica
       </label>
 
       {error && <p className="error-auth">{error}</p>}
-      <button type="submit" className="btn btn-primario" disabled={enviando}>
-        {enviando ? "Enviando…" : "Enviar solicitud"}
-      </button>
+      {avisoArchivos ? (
+        <>
+          <p className="aviso-borrador">{avisoArchivos}</p>
+          <button type="button" className="btn btn-primario" onClick={() => router.push("/panel/solicitud-socio")}>
+            Continuar
+          </button>
+        </>
+      ) : (
+        <button type="submit" className="btn btn-primario" disabled={enviando}>
+          {enviando ? "Enviando…" : "Enviar solicitud"}
+        </button>
+      )}
     </form>
   );
 }

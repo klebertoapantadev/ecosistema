@@ -89,37 +89,59 @@ export async function obtenerSolicitudDetalle(solicitudId: string) {
     .maybeSingle();
   if (!solicitud) return null;
 
-  const [{ data: usuario }, { data: experiencia }, { data: solicitudMaterias }, { data: solicitudProvincias }, { data: revisiones }] =
-    await Promise.all([
-      supabase
-        .schema("comun_seguridad")
-        .from("seg_usuario")
-        .select("usu_id, usu_nombres, usu_apellidos, usu_correo, usu_whatsapp")
-        .eq("usu_id", solicitud.ssc_usuario_id)
-        .maybeSingle(),
-      supabase
-        .schema("tranqui_legal")
-        .from("trq_experiencia_laboral")
-        .select("*")
-        .eq("exp_solicitud_id", solicitudId)
-        .order("exp_fecha_inicio", { ascending: false }),
-      supabase
-        .schema("tranqui_legal")
-        .from("trq_solicitud_materia")
-        .select("sma_materia_id")
-        .eq("sma_solicitud_id", solicitudId),
-      supabase
-        .schema("tranqui_legal")
-        .from("trq_solicitud_provincia")
-        .select("spr_provincia_id")
-        .eq("spr_solicitud_id", solicitudId),
-      supabase
-        .schema("tranqui_legal")
-        .from("trq_revision_solicitud")
-        .select("*")
-        .eq("rev_solicitud_id", solicitudId)
-        .order("rev_creado_en", { ascending: false }),
-    ]);
+  const [
+    { data: usuario },
+    { data: experiencia },
+    { data: solicitudMaterias },
+    { data: solicitudProvincias },
+    { data: revisiones },
+    { data: documentos },
+  ] = await Promise.all([
+    supabase
+      .schema("comun_seguridad")
+      .from("seg_usuario")
+      .select("usu_id, usu_nombres, usu_apellidos, usu_correo, usu_whatsapp")
+      .eq("usu_id", solicitud.ssc_usuario_id)
+      .maybeSingle(),
+    supabase
+      .schema("tranqui_legal")
+      .from("trq_experiencia_laboral")
+      .select("*")
+      .eq("exp_solicitud_id", solicitudId)
+      .order("exp_fecha_inicio", { ascending: false }),
+    supabase
+      .schema("tranqui_legal")
+      .from("trq_solicitud_materia")
+      .select("sma_materia_id")
+      .eq("sma_solicitud_id", solicitudId),
+    supabase
+      .schema("tranqui_legal")
+      .from("trq_solicitud_provincia")
+      .select("spr_provincia_id")
+      .eq("spr_solicitud_id", solicitudId),
+    supabase
+      .schema("tranqui_legal")
+      .from("trq_revision_solicitud")
+      .select("*")
+      .eq("rev_solicitud_id", solicitudId)
+      .order("rev_creado_en", { ascending: false }),
+    supabase
+      .schema("tranqui_legal")
+      .from("trq_documento_socio")
+      .select("*")
+      .eq("dcs_solicitud_id", solicitudId)
+      .order("dcs_creado_en", { ascending: false }),
+  ]);
+
+  // URL firmada, nunca publica -- el bucket "socios-documentos" es privado
+  // (ver migracion socios_mfa_y_documentos). 10 min alcanza para revisar un
+  // documento durante la sesion de admin sin dejar el enlace vivo despues.
+  const documentosConUrl = await Promise.all(
+    (documentos ?? []).map(async (d) => {
+      const { data: firmada } = await supabase.storage.from("socios-documentos").createSignedUrl(d.dcs_url, 600);
+      return { ...d, url: firmada?.signedUrl ?? null };
+    }),
+  );
 
   // Embeds cruzando esquema (spr_provincia_id -> comun_catalogo.cat_provincia)
   // no son confiables via PostgREST -- join manual, mismo patron que
@@ -143,6 +165,7 @@ export async function obtenerSolicitudDetalle(solicitudId: string) {
     materias: materiasCatalogo ?? [],
     provincias: provinciasCatalogo ?? [],
     revisiones: revisiones ?? [],
+    documentos: documentosConUrl,
   };
 }
 

@@ -558,6 +558,26 @@ nav .links a.cta:hover { background: var(--menta); }
 }
 .acciones-solicitud-botones { display: flex; gap: 10px; }
 
+.form-solicitud-socio input[type="file"] {
+  padding: 9px 10px; border-radius: 8px; border: 1.5px solid var(--panel-linea);
+  font-family: inherit; font-size: 0.85rem; background: var(--blanco);
+}
+
+/* ═══════════ MFA (administradores de Tranqi -- panel Socios) ═══════════ */
+.pagina-mfa {
+  max-width: 480px; margin: 60px auto; padding: 0 20px;
+  display: flex; flex-direction: column; gap: 12px; text-align: center;
+}
+.tarjeta-mfa {
+  display: flex; flex-direction: column; gap: 14px; align-items: center;
+  background: var(--blanco); border: 1px solid var(--panel-linea); border-radius: 16px; padding: 28px;
+}
+.tarjeta-mfa input {
+  padding: 12px 14px; border-radius: 10px; border: 1.5px solid var(--panel-linea);
+  font-family: inherit; font-size: 1.4rem; letter-spacing: 0.3em; text-align: center; width: 160px;
+}
+.qr-mfa { width: 180px; height: 180px; border: 1px solid var(--panel-linea); border-radius: 12px; padding: 8px; background: var(--blanco); }
+
 /* ═══════════ Bienvenida (post-registro, PLT-001 regla 2) ═══════════ */
 /* Fondo menta: es el mismo color que usa la seccion "hola" de la landing --
    se reutiliza el significado de marca que ya existe, no uno nuevo. */

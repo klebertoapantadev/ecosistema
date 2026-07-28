@@ -12,7 +12,8 @@ export default async function PaginaDetalleSolicitud({ params }: { params: Promi
   const detalle = await obtenerSolicitudDetalle(id);
   if (!detalle) notFound();
 
-  const { solicitud, usuario, experiencia, materias, provincias, revisiones } = detalle;
+  const { solicitud, usuario, experiencia, materias, provincias, revisiones, documentos } = detalle;
+  const ETIQUETA_TIPO: Record<string, string> = { titulo: "Título profesional", matricula: "Matrícula profesional", otro: "Certificado" };
   const pendiente = solicitud.ssc_estado === "enviada" || solicitud.ssc_estado === "en_revision";
 
   return (
@@ -78,6 +79,30 @@ export default async function PaginaDetalleSolicitud({ params }: { params: Promi
           <a href={ENLACES_VERIFICACION.foroAbogados} target="_blank" rel="noopener noreferrer">Foro de Abogados ↗</a>
         </p>
         <p className="aviso-borrador">Esto es autodeclarado por el solicitante — confirma tú también antes de aceptar.</p>
+      </div>
+
+      <div className="tarjeta-panel detalle-solicitud">
+        <h2>Documentos adjuntos</h2>
+        {documentos.length === 0 ? (
+          <p>El solicitante no adjuntó documentos.</p>
+        ) : (
+          <ul className="lista-experiencia">
+            {documentos.map((d) => (
+              <li key={d.dcs_id}>
+                <strong>{ETIQUETA_TIPO[d.dcs_tipo] ?? d.dcs_tipo}</strong>
+                {" — "}
+                {d.url ? (
+                  <a href={d.url} target="_blank" rel="noopener noreferrer">
+                    {d.dcs_nombre_archivo ?? "ver documento"} ↗
+                  </a>
+                ) : (
+                  <span className="historial-fecha">enlace no disponible</span>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+        <p className="aviso-borrador">Enlace temporal (10 min) — se regenera cada vez que abres esta página.</p>
       </div>
 
       {revisiones.length > 0 && (

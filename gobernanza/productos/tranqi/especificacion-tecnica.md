@@ -53,7 +53,18 @@ documentos) y máquina de estados: ver
   (Supabase Vault) que el proyecto no tiene todavía. Decisión explícita, no un olvido — ver
   `apps/tranqi-web/modulos/socios/README.md`. Enmascarado en listados del admin, texto completo solo en
   la vista de detalle (donde sí se necesita para verificar contra SENESCYT/Foro de Abogados).
-- **Envío de solicitud NO requiere `aal2`/MFA.** Corrección sobre el diseño original: MFA se exige para
-  activar capacidades reales de un socio ya aceptado (`trq_abogado.abg_mfa_verificado`), no para postular
-  — MFA en sí no está implementado en el código todavía (PLT-002 sigue pendiente).
+- **Envío de solicitud NO requiere `aal2`/MFA. Revisarla/aceptarla SÍ (actualizado 2026-07-28).**
+  Postular no pide MFA. Pero un `ADMINISTRADOR`/`SUPERADMIN` de Tranqi necesita `aal2` (TOTP, API nativa
+  `auth.mfa.*` de Supabase) para acceder a `/panel/socios` y para que
+  `trq_fn_decidir_solicitud()` acepte su llamada — exigido en tres capas: layout de la app, políticas RLS
+  (`trq_fn_es_admin_mfa_verificado()`) y dentro del propio RPC. Decisión de negocio explícita: **solo
+  Tranqi** — los otros 3 negocios no lo requieren todavía, no está en `@eco/identidad`. Distinto del MFA
+  de `trq_abogado.abg_mfa_verificado` (activación de capacidades del socio ya aceptado, todavía pendiente).
+- **Documentos de respaldo: bucket privado, nunca URL pública (2026-07-28).** `socios-documentos` en
+  Supabase Storage — primer uso de Storage en el proyecto. RLS por carpeta (`{ssc_id}/archivo`, el dueño
+  de esa solicitud o un admin-MFA-verificado), tipos MIME restringidos (PDF/imagen/Word), 15MB máx, URLs
+  de acceso siempre firmadas (10 min) generadas server-side. Patrón de referencia para el resto del
+  ecosistema cuando necesite almacenar archivos sensibles — **no aplica** a galerías de producto de
+  Tinkay/Margaritas, que necesitan un bucket público más liviano y todavía no existe (esperando el
+  catálogo, PLT-009/010).
 - Rol `ABOGADO` no otorga capacidades sin `trq_abogado` en estado verificado — ver [`gobernanza/politicas/seguridad-y-datos.md`](../../politicas/seguridad-y-datos.md) §4.

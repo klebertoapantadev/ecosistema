@@ -11,7 +11,10 @@ type Resultado<T = undefined> = { ok: true; data: T } | { ok: false; error: stri
 // especificacion-funcional.md de Tranqi. Es un INSERT simple con hijos, no
 // una transicion de estado sensible -- no necesita RPC (mismo criterio que
 // actualizarConfiguracionNegocio en @eco/configuracion-negocio).
-export async function enviarSolicitudSocio(datos: DatosSolicitudSocio, usuarioId: string): Promise<Resultado> {
+export async function enviarSolicitudSocio(
+  datos: DatosSolicitudSocio,
+  usuarioId: string,
+): Promise<Resultado<{ solicitudId: string }>> {
   const parseo = esquemaSolicitudSocio.safeParse(datos);
   if (!parseo.success) {
     return { ok: false, error: parseo.error.issues[0]?.message ?? "Datos inválidos" };
@@ -77,6 +80,27 @@ export async function enviarSolicitudSocio(datos: DatosSolicitudSocio, usuarioId
   if (errorProv) return { ok: false, error: errorProv.message };
 
   revalidatePath("/panel/solicitud-socio");
+  return { ok: true, data: { solicitudId } };
+}
+
+// Registra los metadatos de un archivo ya subido a Storage (el binario se
+// sube directo desde el navegador con crearClienteNavegador() -- server
+// actions no son el medio adecuado para transferir archivos grandes). RLS
+// de trq_documento_socio ya exige que la solicitud sea del usuario logueado
+// (ver migracion tranqui_legal_socios), esta accion solo valida el tipo.
+export async function registrarDocumentoSocio(
+  solicitudId: string,
+  tipo: "titulo" | "matricula" | "otro",
+  path: string,
+  nombreArchivo: string,
+): Promise<Resultado> {
+  const supabase = await crearClienteServidor();
+  const { error } = await supabase
+    .schema("tranqui_legal")
+    .from("trq_documento_socio")
+    .insert({ dcs_solicitud_id: solicitudId, dcs_tipo: tipo, dcs_url: path, dcs_nombre_archivo: nombreArchivo });
+
+  if (error) return { ok: false, error: error.message };
   return { ok: true, data: undefined };
 }
 
