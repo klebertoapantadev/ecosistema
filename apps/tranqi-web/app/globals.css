@@ -79,8 +79,8 @@ nav .links a.cta:hover { background: var(--menta); }
   padding: 16px 34px; border-radius: 999px; cursor: pointer; border: none;
   transition: background 0.15s, color 0.15s;
 }
-.btn-amarillo, .btn-primario { background: var(--amarillo); color: var(--negro); }
-.btn-amarillo:hover, .btn-primario:hover { background: var(--menta); }
+.btn-amarillo { background: var(--amarillo); color: var(--negro); }
+.btn-amarillo:hover { background: var(--menta); }
 .btn-negro { background: var(--negro); color: var(--blanco); }
 .btn-negro:hover { background: var(--violeta); }
 .btn-blanco-borde { background: transparent; color: var(--blanco); box-shadow: inset 0 0 0 2px var(--blanco); }
@@ -307,6 +307,13 @@ nav .links a.cta:hover { background: var(--menta); }
 .logo-auth { font-size: 1.6rem; font-weight: 800; color: var(--violeta); text-decoration: none; }
 .pagina-auth h1 { font-size: clamp(1.4rem, 3vw, 1.9rem); font-weight: 800; }
 
+/* Pantalla de trabajo, no landing: el acento identifica el perfil (aquí
+   cliente, ver sistema-visual.md §2/§3) -- botón violeta rectangular, no la
+   píldora amarilla reservada a los CTA de la landing. */
+.btn-primario { background: var(--violeta); color: var(--blanco); border-radius: 8px; padding: 13px 22px; }
+.btn-primario:hover { background: #3B0089; }
+.btn-primario:disabled { opacity: 0.5; cursor: wait; }
+
 /* ═══════════ Legal (términos / privacidad) ═══════════ */
 .pagina-legal {
   min-height: 100vh;
@@ -328,7 +335,7 @@ nav .links a.cta:hover { background: var(--menta); }
 .fecha-legal { font-size: 0.85rem; color: rgba(17,17,17,0.55); }
 .aviso-borrador {
   background: var(--amarillo); color: var(--negro); font-weight: 700; font-size: 0.85rem;
-  padding: 10px 14px; border-radius: 10px;
+  padding: 10px 14px; border-radius: 12px;
 }
 
 .tarjeta-auth {
@@ -338,7 +345,7 @@ nav .links a.cta:hover { background: var(--menta); }
   gap: 16px;
 }
 .btn-google {
-  padding: 13px 20px; border-radius: 999px; border: 1.5px solid var(--negro);
+  padding: 13px 20px; border-radius: 8px; border: 1.5px solid var(--negro);
   background: var(--blanco); font-weight: 700; cursor: pointer;
 }
 .btn-google:hover { background: var(--menta); }
@@ -350,10 +357,10 @@ nav .links a.cta:hover { background: var(--menta); }
 
 .form-auth { display: flex; flex-direction: column; gap: 10px; text-align: left; }
 .form-auth input {
-  padding: 12px 14px; border-radius: 10px; border: 1.5px solid rgba(17,17,17,0.2);
+  padding: 12px 14px; border-radius: 8px; border: 1px solid var(--panel-linea);
   font-family: inherit; font-size: 0.95rem;
 }
-.form-auth input:focus { outline: none; border-color: var(--violeta); }
+.form-auth input:focus { outline: none; border-color: var(--violeta); box-shadow: 0 0 0 3px rgba(80,0,186,0.13); }
 
 .error-auth { color: #B00020; font-size: 0.85rem; text-align: left; }
 .mensaje-ok { color: var(--esmeralda); font-size: 0.85rem; }
@@ -482,7 +489,7 @@ nav .links a.cta:hover { background: var(--menta); }
 
 .etiqueta-campo { display: flex; flex-direction: column; gap: 6px; font-size: 0.82rem; font-weight: 700; }
 .campo-telefono { display: flex; gap: 8px; }
-.campo-telefono select { flex: none; width: 40%; padding: 12px 8px; border-radius: 10px; border: 1.5px solid rgba(17,17,17,0.2); font-family: inherit; font-size: 0.85rem; }
+.campo-telefono select { flex: none; width: 40%; padding: 12px 8px; border-radius: 8px; border: 1px solid var(--panel-linea); font-family: inherit; font-size: 0.85rem; }
 .campo-telefono input { flex: 1; min-width: 0; }
 .campo-check { display: flex; align-items: center; gap: 10px; font-size: 0.92rem; font-weight: 500; cursor: pointer; }
 .campo-check input { width: 18px; height: 18px; }
@@ -499,7 +506,7 @@ nav .links a.cta:hover { background: var(--menta); }
 .zona-peligro h2 { font-size: 1.05rem; font-weight: 800; color: #B00020; }
 .zona-peligro p { font-size: 0.85rem; line-height: 1.5; }
 .btn-peligro {
-  align-self: flex-start; padding: 10px 18px; border-radius: 999px; border: 1.5px solid #B00020;
+  align-self: flex-start; padding: 10px 18px; border-radius: 8px; border: 1.5px solid #B00020;
   background: var(--blanco); color: #B00020; font-weight: 700; cursor: pointer;
 }
 .btn-peligro:hover { background: #B00020; color: var(--blanco); }

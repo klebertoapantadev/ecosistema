@@ -16,7 +16,7 @@ Implementa `PLT-001` completo (registro sin fricción + consentimiento de térmi
 
 Cada app añade `"@eco/identidad"` y `"@eco/supabase"` a `transpilePackages` en su `next.config.mjs` (mismo patrón que `@eco/agentes-ia`) y necesita las mismas dos variables de entorno (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`) — un solo proyecto Supabase sirve a los 4 negocios.
 
-**La marca/estilo queda fuera del paquete.** Los componentes usan nombres de clase genéricos (`tarjeta-auth`, `btn-primario`, `zona-peligro`, etc.); cada app define su propio CSS con esas clases. `tranqi-web` tiene su propio diseño en `app/globals.css`. Las apps sin marca todavía (`fastfix-web`, `tinkay-web`, `margaritas-web`) importan `@eco/identidad/estilos-base.css`, un estilo neutral de referencia — se reemplaza por el diseño real de cada negocio cuando exista.
+**La marca/estilo queda fuera del paquete.** Los componentes usan nombres de clase genéricos (`tarjeta-auth`, `btn-primario`, `zona-peligro`, etc.); cada app define su propio CSS con esas clases. `tranqi-web` tiene su propio diseño en `app/globals.css`, alineado con [`gobernanza/productos/tranqi/sistema-visual.md`](../../gobernanza/productos/tranqi/sistema-visual.md) (2026-07-27) — radios 8/12/16px según control/bloque/tarjeta, píldora solo en landing y etiquetas, acento violeta en las pantallas de identidad (perfil cliente). Las apps sin marca todavía (`fastfix-web`, `tinkay-web`, `margaritas-web`) importan `@eco/identidad/estilos-base.css`, un estilo neutral de referencia — se reemplaza por el diseño real de cada negocio cuando exista.
 
 ## Decisiones ya resueltas
 
