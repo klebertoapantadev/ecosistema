@@ -82,6 +82,8 @@ Extensiones relevantes ya instaladas en el proyecto (heredadas, no instaladas po
 | `20260727000010_seg_widget_configuracion_negocio` | **Fix**: "Configuración del negocio" era un link fijo visible a cualquier usuario autenticado (incluido `CLIENTE`). Se registra como widget `configuracion_negocio` asignado a `ADMINISTRADOR`, igual que `gestion_usuarios`. |
 | `20260727000011_seg_acceso` | Historial de accesos por usuario/dispositivo (PLT-018), común a los 4 negocios — alimenta el saludo personalizado y la lista de "dispositivos recientes" en Mi cuenta. |
 | `20260727000012_seg_acceso_negocio` | **Fix**: agrega `acc_negocio` — el historial es único por usuario (correcto por diseño), pero sin etiqueta de app cada fila parecía una duplicación confusa al entrar por primera vez a un segundo negocio. |
+| `20260728000001_comun_catalogo_provincia` | Esquema `comun_catalogo` nuevo. Tabla `cat_provincia`, seed de las 24 provincias de Ecuador — la necesita TRQ-001 (cobertura geográfica de socios), reutilizable por cualquier negocio. |
+| `20260728000002_tranqui_legal_socios` | TRQ-001: esquema `tranqui_legal` nuevo (primera tabla propia de Tranqi). 8 tablas (`trq_solicitud_socio`, `trq_experiencia_laboral`, `trq_documento_socio`, `trq_materia` con seed, `trq_solicitud_materia`, `trq_solicitud_provincia`, `trq_revision_solicitud`, `trq_abogado`), RPC `trq_fn_decidir_solicitud()` (aceptar/rechazar, asigna rol `ABOGADO` al aceptar), widget de panel `socios`. |
 
 Tipos TypeScript regenerados en cada migración que cambia columnas — ver `packages/db/src/tipos-generados.ts` (`20260727000009` solo reescribe el cuerpo de una función, no requiere regeneración).
 

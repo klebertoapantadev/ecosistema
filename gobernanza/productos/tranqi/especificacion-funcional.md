@@ -18,21 +18,36 @@ Ver especificación de [Plataforma](../plataforma/especificacion-funcional.md) �
 
 **✅ Implementado y verificado (2026-07-27):** registro (Google OAuth + correo/contraseña) con consentimiento de términos (PLT-001 regla 6), pantalla de bienvenida, configuración del negocio, gestión de usuarios/roles (el widget), baja de cuenta desde el panel (PLT-012). Ver [`especificacion-tecnica.md`](especificacion-tecnica.md) y el README de cada módulo en `apps/tranqi-web/modulos/`.
 
-**Lo que Tranqi agrega:** enviar la solicitud de socio abogado es uno de los flujos "críticos" que exige MFA (PLT-002) — ver TRQ-xxx más abajo. Rol `ABOGADO` (PLT-003) no otorga capacidades hasta que `trq_abogado` esté verificado.
+**Lo que Tranqi agrega:** rol `ABOGADO` (PLT-003) se asigna automáticamente al aceptar una solicitud de socio (TRQ-001) — no otorga capacidades reales de agenda/casos hasta que `trq_abogado.abg_mfa_verificado` sea `true` (MFA, PLT-002 — ver corrección de alcance en TRQ-001 más abajo).
 
 ## Chat conversacional
 
 Ver PLT-004. Agente asignado hoy: variables de entorno `ARIA_*` de `apps/tranqi-web` (buddie de la landing). Pendiente de migrar a `comun_agentes` cuando exista (ver especificacion-tecnica.md de Plataforma).
 
-## Entregable 1 — en curso
+## TRQ-001 — Solicitud de registro de socio abogado
 
-Identidad de usuario (registro, MFA) y solicitud de registro de socios abogados. Detalle completo del modelo de datos, máquina de estados y plan de sprints en el documento de trabajo `Plan_Entregable_1_Tranqi_Identidad_Socios.md` (raíz del proyecto, pendiente de trasladar a este archivo por requerimiento a medida que se implementa cada sprint).
+**✅ Implementado (2026-07-28).** El documento de trabajo `Plan_Entregable_1_Tranqi_Identidad_Socios.md`
+referenciado aquí antes **nunca se creó** (no existe en el repo ni en su historial de git) — solo existían
+los 8 nombres de tabla ya fijados en `especificacion-tecnica.md`. Los campos, la máquina de estados y las
+decisiones de alcance se definieron directamente en la implementación — ver el detalle completo en
+[`apps/tranqi-web/modulos/socios/README.md`](../../../apps/tranqi-web/modulos/socios/README.md).
 
-### Requerimientos identificados (a formalizar con código TRQ-xxx en GitHub Issues)
-
-- Solicitud de registro como socio abogado (20 campos, ver plan de trabajo).
-- Revisión y aprobación/rechazo de solicitud por administrador.
-- Verificación asistida de matrícula profesional (Foro de Abogados) y título (SENESCYT) — manual, con enlace pre-rellenado a los portales oficiales.
+- **Flujo:** landing (botón "Quiero ser parte de la red") → `/panel/solicitud-socio` (exige sesión, un
+  visitante nuevo pasa primero por `/registro`) → formulario (datos profesionales, especialidades,
+  cobertura por provincia, experiencia laboral, verificación asistida) → panel admin (widget "Socios") →
+  revisión y aceptar/rechazar → si se acepta, rol `ABOGADO` asignado automáticamente.
+- **Corrección de alcance sobre MFA (PLT-002):** enviar la solicitud **no** requiere MFA. MFA se exige
+  para activar las capacidades reales de un socio ya aceptado (agenda, casos — todavía no construidas),
+  no para postular. Un cliente que ya configuró MFA en un flujo de pago previo (proceso crítico) ya lo
+  cumpliría sin repetir el paso. MFA en sí no está implementado en el código todavía — la columna
+  `trq_abogado.abg_mfa_verificado` deja el esquema listo para cuando exista.
+- **Verificación asistida de matrícula profesional (Foro de Abogados) y título (SENESCYT)** — manual,
+  autodeclarada por el solicitante (checkbox + enlace a cada portal) y confirmada por el administrador al
+  revisar, no automatizada.
+- **Pendiente:** carga de documentos de respaldo (`trq_documento_socio` modelada, sin UI — no existe
+  ningún bucket de Supabase Storage en el proyecto todavía) y cifrado real de cédula/matrícula
+  (`pgp_sym_encrypt` con Supabase Vault — hoy protegidas solo por RLS, decisión de gestión de claves
+  pendiente de análisis propio).
 
 ## Pendiente
 

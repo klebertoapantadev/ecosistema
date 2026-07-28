@@ -437,7 +437,7 @@ export default function TranqiLanding() {
             <li><b>Cuenta</b> digital</li>
             <li><b>Crédito</b> y desarrollo</li>
           </ul>
-          <a className="btn btn-blanco-borde reveal" href="/registro">Quiero ser parte de la red</a>
+          <a className="btn btn-blanco-borde reveal" href="/panel/solicitud-socio">Quiero ser parte de la red</a>
           <p className="pub-date reveal" style={{ marginTop: 24, fontSize: "0.78rem", color: "rgba(255, 255, 255, 0.45)", fontWeight: 500, letterSpacing: "0.04em" }}>Publicado: 23 de julio de 2026 06:21</p>
         </div>
       </section>

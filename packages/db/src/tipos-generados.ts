@@ -1,9 +1,8 @@
-﻿// Generado con: npx supabase gen types typescript --project-id oaybbpdxhlxjbpwnoymy
-//   --schema comun_seguridad,comun_auditoria,comun_configuracion
+// Generado con: npx supabase gen types typescript --project-id oaybbpdxhlxjbpwnoymy
+//   --schema comun_seguridad,comun_auditoria,comun_configuracion,comun_catalogo,tranqui_legal
 // Regenerar en el mismo PR que cualquier migracion nueva que toque columnas
 // (no hace falta si la migracion solo reescribe el cuerpo de una funcion).
-// Pendientes de incluir cuando se migren: comun_facturacion, comun_catalogo,
-// comun_agentes, comun_comercio.
+// Pendientes de incluir cuando se migren: comun_facturacion, comun_agentes, comun_comercio.
 export type Json =
   | string
   | number
@@ -89,6 +88,40 @@ export type Database = {
           reg_secuencial?: never
           reg_tabla?: string
           reg_usuario_id?: string | null
+        }
+        Relationships: []
+      }
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      [_ in never]: never
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
+  comun_catalogo: {
+    Tables: {
+      cat_provincia: {
+        Row: {
+          cat_creado_en: string
+          cat_id: string
+          cat_nombre: string
+        }
+        Insert: {
+          cat_creado_en?: string
+          cat_id?: string
+          cat_nombre: string
+        }
+        Update: {
+          cat_creado_en?: string
+          cat_id?: string
+          cat_nombre?: string
         }
         Relationships: []
       }
@@ -421,6 +454,345 @@ export type Database = {
       [_ in never]: never
     }
   }
+  tranqui_legal: {
+    Tables: {
+      trq_abogado: {
+        Row: {
+          abg_actualizado_en: string
+          abg_creado_en: string
+          abg_estado: string
+          abg_id: string
+          abg_mfa_verificado: boolean
+          abg_solicitud_id: string
+          abg_usuario_id: string
+          abg_verificado_en: string
+        }
+        Insert: {
+          abg_actualizado_en?: string
+          abg_creado_en?: string
+          abg_estado?: string
+          abg_id?: string
+          abg_mfa_verificado?: boolean
+          abg_solicitud_id: string
+          abg_usuario_id: string
+          abg_verificado_en?: string
+        }
+        Update: {
+          abg_actualizado_en?: string
+          abg_creado_en?: string
+          abg_estado?: string
+          abg_id?: string
+          abg_mfa_verificado?: boolean
+          abg_solicitud_id?: string
+          abg_usuario_id?: string
+          abg_verificado_en?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trq_abogado_abg_solicitud_id_fkey"
+            columns: ["abg_solicitud_id"]
+            isOneToOne: false
+            referencedRelation: "trq_solicitud_socio"
+            referencedColumns: ["ssc_id"]
+          },
+        ]
+      }
+      trq_documento_socio: {
+        Row: {
+          dcs_creado_en: string
+          dcs_id: string
+          dcs_nombre_archivo: string | null
+          dcs_solicitud_id: string
+          dcs_tipo: string
+          dcs_url: string
+        }
+        Insert: {
+          dcs_creado_en?: string
+          dcs_id?: string
+          dcs_nombre_archivo?: string | null
+          dcs_solicitud_id: string
+          dcs_tipo: string
+          dcs_url: string
+        }
+        Update: {
+          dcs_creado_en?: string
+          dcs_id?: string
+          dcs_nombre_archivo?: string | null
+          dcs_solicitud_id?: string
+          dcs_tipo?: string
+          dcs_url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trq_documento_socio_dcs_solicitud_id_fkey"
+            columns: ["dcs_solicitud_id"]
+            isOneToOne: false
+            referencedRelation: "trq_solicitud_socio"
+            referencedColumns: ["ssc_id"]
+          },
+        ]
+      }
+      trq_experiencia_laboral: {
+        Row: {
+          exp_cargo: string
+          exp_creado_en: string
+          exp_descripcion: string | null
+          exp_empresa: string
+          exp_fecha_fin: string | null
+          exp_fecha_inicio: string
+          exp_id: string
+          exp_solicitud_id: string
+        }
+        Insert: {
+          exp_cargo: string
+          exp_creado_en?: string
+          exp_descripcion?: string | null
+          exp_empresa: string
+          exp_fecha_fin?: string | null
+          exp_fecha_inicio: string
+          exp_id?: string
+          exp_solicitud_id: string
+        }
+        Update: {
+          exp_cargo?: string
+          exp_creado_en?: string
+          exp_descripcion?: string | null
+          exp_empresa?: string
+          exp_fecha_fin?: string | null
+          exp_fecha_inicio?: string
+          exp_id?: string
+          exp_solicitud_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trq_experiencia_laboral_exp_solicitud_id_fkey"
+            columns: ["exp_solicitud_id"]
+            isOneToOne: false
+            referencedRelation: "trq_solicitud_socio"
+            referencedColumns: ["ssc_id"]
+          },
+        ]
+      }
+      trq_materia: {
+        Row: {
+          mat_activa: boolean
+          mat_creado_en: string
+          mat_id: string
+          mat_nombre: string
+        }
+        Insert: {
+          mat_activa?: boolean
+          mat_creado_en?: string
+          mat_id?: string
+          mat_nombre: string
+        }
+        Update: {
+          mat_activa?: boolean
+          mat_creado_en?: string
+          mat_id?: string
+          mat_nombre?: string
+        }
+        Relationships: []
+      }
+      trq_revision_solicitud: {
+        Row: {
+          rev_admin_id: string | null
+          rev_comentario: string | null
+          rev_creado_en: string
+          rev_decision: string
+          rev_id: string
+          rev_solicitud_id: string
+        }
+        Insert: {
+          rev_admin_id?: string | null
+          rev_comentario?: string | null
+          rev_creado_en?: string
+          rev_decision: string
+          rev_id?: string
+          rev_solicitud_id: string
+        }
+        Update: {
+          rev_admin_id?: string | null
+          rev_comentario?: string | null
+          rev_creado_en?: string
+          rev_decision?: string
+          rev_id?: string
+          rev_solicitud_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trq_revision_solicitud_rev_solicitud_id_fkey"
+            columns: ["rev_solicitud_id"]
+            isOneToOne: false
+            referencedRelation: "trq_solicitud_socio"
+            referencedColumns: ["ssc_id"]
+          },
+        ]
+      }
+      trq_solicitud_materia: {
+        Row: {
+          sma_id: string
+          sma_materia_id: string
+          sma_solicitud_id: string
+        }
+        Insert: {
+          sma_id?: string
+          sma_materia_id: string
+          sma_solicitud_id: string
+        }
+        Update: {
+          sma_id?: string
+          sma_materia_id?: string
+          sma_solicitud_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trq_solicitud_materia_sma_materia_id_fkey"
+            columns: ["sma_materia_id"]
+            isOneToOne: false
+            referencedRelation: "trq_materia"
+            referencedColumns: ["mat_id"]
+          },
+          {
+            foreignKeyName: "trq_solicitud_materia_sma_solicitud_id_fkey"
+            columns: ["sma_solicitud_id"]
+            isOneToOne: false
+            referencedRelation: "trq_solicitud_socio"
+            referencedColumns: ["ssc_id"]
+          },
+        ]
+      }
+      trq_solicitud_provincia: {
+        Row: {
+          spr_id: string
+          spr_provincia_id: string
+          spr_solicitud_id: string
+        }
+        Insert: {
+          spr_id?: string
+          spr_provincia_id: string
+          spr_solicitud_id: string
+        }
+        Update: {
+          spr_id?: string
+          spr_provincia_id?: string
+          spr_solicitud_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trq_solicitud_provincia_spr_solicitud_id_fkey"
+            columns: ["spr_solicitud_id"]
+            isOneToOne: false
+            referencedRelation: "trq_solicitud_socio"
+            referencedColumns: ["ssc_id"]
+          },
+        ]
+      }
+      trq_solicitud_socio: {
+        Row: {
+          ssc_actualizado_en: string
+          ssc_anio_graduacion: number
+          ssc_anos_experiencia: number
+          ssc_cedula: string
+          ssc_creado_en: string
+          ssc_eliminado_en: string | null
+          ssc_enlace_foro_verificado: boolean
+          ssc_enlace_senescyt_verificado: boolean
+          ssc_enviada_en: string
+          ssc_estado: string
+          ssc_id: string
+          ssc_matricula_profesional: string
+          ssc_resumen_profesional: string
+          ssc_secuencial: number
+          ssc_telefono_contacto: string | null
+          ssc_universidad: string
+          ssc_usuario_id: string
+        }
+        Insert: {
+          ssc_actualizado_en?: string
+          ssc_anio_graduacion: number
+          ssc_anos_experiencia?: number
+          ssc_cedula: string
+          ssc_creado_en?: string
+          ssc_eliminado_en?: string | null
+          ssc_enlace_foro_verificado?: boolean
+          ssc_enlace_senescyt_verificado?: boolean
+          ssc_enviada_en?: string
+          ssc_estado?: string
+          ssc_id?: string
+          ssc_matricula_profesional: string
+          ssc_resumen_profesional: string
+          ssc_secuencial?: never
+          ssc_telefono_contacto?: string | null
+          ssc_universidad: string
+          ssc_usuario_id: string
+        }
+        Update: {
+          ssc_actualizado_en?: string
+          ssc_anio_graduacion?: number
+          ssc_anos_experiencia?: number
+          ssc_cedula?: string
+          ssc_creado_en?: string
+          ssc_eliminado_en?: string | null
+          ssc_enlace_foro_verificado?: boolean
+          ssc_enlace_senescyt_verificado?: boolean
+          ssc_enviada_en?: string
+          ssc_estado?: string
+          ssc_id?: string
+          ssc_matricula_profesional?: string
+          ssc_resumen_profesional?: string
+          ssc_secuencial?: never
+          ssc_telefono_contacto?: string | null
+          ssc_universidad?: string
+          ssc_usuario_id?: string
+        }
+        Relationships: []
+      }
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      trq_fn_decidir_solicitud: {
+        Args: {
+          p_comentario?: string
+          p_decision: string
+          p_solicitud_id: string
+        }
+        Returns: {
+          ssc_actualizado_en: string
+          ssc_anio_graduacion: number
+          ssc_anos_experiencia: number
+          ssc_cedula: string
+          ssc_creado_en: string
+          ssc_eliminado_en: string | null
+          ssc_enlace_foro_verificado: boolean
+          ssc_enlace_senescyt_verificado: boolean
+          ssc_enviada_en: string
+          ssc_estado: string
+          ssc_id: string
+          ssc_matricula_profesional: string
+          ssc_resumen_profesional: string
+          ssc_secuencial: number
+          ssc_telefono_contacto: string | null
+          ssc_universidad: string
+          ssc_usuario_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "trq_solicitud_socio"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
 }
 
 type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
@@ -544,10 +916,16 @@ export const Constants = {
   comun_auditoria: {
     Enums: {},
   },
+  comun_catalogo: {
+    Enums: {},
+  },
   comun_configuracion: {
     Enums: {},
   },
   comun_seguridad: {
+    Enums: {},
+  },
+  tranqui_legal: {
     Enums: {},
   },
 } as const

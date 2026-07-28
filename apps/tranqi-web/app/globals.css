@@ -510,6 +510,54 @@ nav .links a.cta:hover { background: var(--menta); }
   background: rgba(80,0,186,0.08); color: var(--violeta); padding: 3px 8px; border-radius: 999px;
 }
 
+/* ═══════════ Socios (TRQ-001: solicitud de registro de socio abogado) ═══════════ */
+.subnav-socios { display: flex; gap: 18px; margin-bottom: 20px; font-size: 0.92rem; }
+.subnav-socios a { color: var(--panel-gris); text-decoration: none; font-weight: 600; }
+.subnav-socios a:hover { color: var(--violeta); }
+.subnav-activo { font-weight: 700; color: var(--negro); border-bottom: 2px solid var(--lavanda); padding-bottom: 2px; }
+
+.form-solicitud-socio { max-width: 640px; }
+.form-solicitud-socio h2 { font-size: 1.05rem; font-weight: 800; margin-top: 12px; }
+.fila-dos-columnas { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+.grupo-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip-seleccionable {
+  display: flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 999px;
+  border: 1.5px solid var(--panel-linea); font-size: 0.85rem; font-weight: 600; cursor: pointer;
+}
+.chip-seleccionable:has(input:checked) { background: rgba(80,0,186,0.08); border-color: var(--violeta); color: var(--violeta); }
+.chip-seleccionable input { accent-color: var(--violeta); }
+
+.tarjeta-experiencia {
+  border: 1px solid var(--panel-linea); border-radius: 12px; padding: 14px; margin-bottom: 10px;
+  display: flex; flex-direction: column; gap: 10px;
+}
+
+.tarjeta-estado-solicitud {
+  display: flex; align-items: center; gap: 12px; margin-bottom: 20px;
+  padding: 14px 18px; background: var(--blanco); border-radius: 12px; border: 1px solid var(--panel-linea);
+}
+.chip-estado-solicitud {
+  font-size: 0.68rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase;
+  padding: 4px 10px; border-radius: 999px; width: fit-content;
+}
+.chip-enviada, .chip-en_revision { background: #FEF3C7; color: #92400E; }
+.chip-aceptada { background: rgba(5,135,110,0.12); color: var(--esmeralda); }
+.chip-rechazada { background: rgba(176,0,32,0.08); color: var(--peligro, #B00020); }
+
+.detalle-solicitud { max-width: 640px; margin-bottom: 16px; }
+.lista-detalle { display: grid; grid-template-columns: auto 1fr; gap: 6px 16px; font-size: 0.9rem; }
+.lista-detalle dt { font-weight: 700; color: var(--panel-gris); }
+.lista-detalle dd { margin: 0; }
+.lista-experiencia { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+.lista-experiencia li { border-bottom: 1px solid var(--panel-linea); padding-bottom: 10px; }
+
+.acciones-solicitud { display: flex; flex-direction: column; gap: 10px; max-width: 480px; }
+.acciones-solicitud textarea {
+  padding: 10px 12px; border-radius: 8px; border: 1.5px solid var(--panel-linea); font-family: inherit; width: 100%;
+}
+.acciones-solicitud-botones { display: flex; gap: 10px; }
+
 /* ═══════════ Bienvenida (post-registro, PLT-001 regla 2) ═══════════ */
 /* Fondo menta: es el mismo color que usa la seccion "hola" de la landing --
    se reutiliza el significado de marca que ya existe, no uno nuevo. */
