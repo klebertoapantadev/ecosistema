@@ -361,50 +361,108 @@ nav .links a.cta:hover { background: var(--menta); }
 .enlace-auth { font-size: 0.9rem; }
 .enlace-auth a { color: var(--violeta); font-weight: 700; }
 
-/* ═══════════ Panel administrativo ═══════════ */
-.panel-layout { display: flex; min-height: 100vh; background: #F6F4FB; color: var(--negro); }
+/* ═══════════ Panel administrativo ═══════════
+   Sistema visual sobrio: ver gobernanza/productos/tranqi/sistema-visual.md.
+   Aquí el color es señal, no superficie — fondo neutro, tarjetas blancas con
+   línea de 1px y el acento reservado a la acción y al estado. El rail del
+   panel administrativo es negro con acento violeta; las pantallas de cliente
+   y abogado usan su propio par (§4 del sistema visual).                    */
+
+/* neutros del panel: grises puros, sin tinte de marca — el color solo
+   aparece donde significa algo */
+:root {
+  --panel-papel: #F6F6F5;
+  --panel-linea: #E4E4E4;
+  --panel-linea-suave: #F1F1F1;
+  --panel-gris: #737373;
+  --panel-negro-alto: #1E1E1E;
+}
+
+.panel-layout { display: flex; min-height: 100vh; background: var(--panel-papel); color: var(--negro); }
 .panel-nav {
   width: 240px; flex: none; background: var(--negro); color: var(--blanco);
   display: flex; flex-direction: column; padding: 24px 18px; gap: 24px;
 }
-.panel-marca { font-size: 1.3rem; font-weight: 800; }
-.panel-nav-links { display: flex; flex-direction: column; gap: 4px; flex: 1; }
+.panel-marca { font-size: 1.3rem; font-weight: 800; letter-spacing: -0.02em; }
+.panel-nav-links { display: flex; flex-direction: column; gap: 2px; flex: 1; }
 .panel-nav-links a {
-  color: var(--blanco); text-decoration: none; padding: 10px 12px; border-radius: 8px; font-size: 0.92rem;
+  color: rgba(255,255,255,0.66); text-decoration: none; padding: 10px 12px;
+  border-radius: 8px; font-size: 0.92rem; font-weight: 500;
+  transition: background 0.15s, color 0.15s;
 }
-.panel-nav-links a:hover { background: rgba(255,255,255,0.1); }
-.panel-usuario { font-size: 0.8rem; opacity: 0.85; display: flex; flex-direction: column; gap: 8px; }
+.panel-nav-links a:hover { background: var(--panel-negro-alto); color: var(--blanco); }
+/* activo: filo de 2px en el acento, no relleno saturado (sistema visual §4).
+   Se marca desde el servidor con aria-current="page". */
+.panel-nav-links a[aria-current="page"] {
+  background: var(--panel-negro-alto); color: var(--blanco); font-weight: 600;
+  box-shadow: inset 2px 0 0 var(--lavanda);
+}
+.panel-usuario {
+  font-size: 0.8rem; display: flex; flex-direction: column; gap: 8px;
+  border-top: 1px solid rgba(255,255,255,0.16); padding-top: 16px;
+}
 .etiqueta-superadmin {
   display: inline-block; background: var(--amarillo); color: var(--negro);
   font-weight: 800; font-size: 0.68rem; padding: 3px 8px; border-radius: 999px; width: fit-content;
 }
-.panel-contenido { flex: 1; padding: 36px clamp(20px, 4vw, 48px); }
-.panel-contenido h1 { font-size: 1.5rem; font-weight: 800; margin-bottom: 20px; }
+.panel-contenido { flex: 1; padding: 36px clamp(20px, 4vw, 48px); max-width: 1280px; }
+.panel-contenido h1 { font-size: 1.5rem; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 6px; }
+/* el aire bajo el título lo pone el elemento siguiente, no el título: así la
+   portada (que lleva subtítulo) y las páginas que no lo llevan respiran igual */
+.panel-contenido h1 + p { color: var(--panel-gris); margin-bottom: 24px; }
+.panel-contenido h1 + *:not(p) { margin-top: 20px; }
+
+/* tarjeta: el contenedor por defecto del panel */
+.tarjeta-panel {
+  background: var(--blanco); border: 1px solid var(--panel-linea);
+  border-radius: 16px; padding: 20px; max-width: 640px;
+}
 
 .form-panel { display: flex; flex-direction: column; gap: 14px; max-width: 480px; }
 .form-panel label { display: flex; flex-direction: column; gap: 6px; font-size: 0.85rem; font-weight: 700; }
 .form-panel input {
-  padding: 11px 13px; border-radius: 8px; border: 1.5px solid rgba(17,17,17,0.2);
+  padding: 11px 13px; border-radius: 8px; border: 1px solid var(--panel-linea);
   font-family: inherit; font-size: 0.95rem; font-weight: 400;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.form-panel input:focus,
+.form-busqueda input:focus {
+  outline: none; border-color: var(--violeta); box-shadow: 0 0 0 3px rgba(80,0,186,0.13);
 }
 
 .form-busqueda { display: flex; gap: 10px; margin-bottom: 20px; max-width: 420px; }
 .form-busqueda input {
-  flex: 1; padding: 10px 13px; border-radius: 8px; border: 1.5px solid rgba(17,17,17,0.2); font-family: inherit;
+  flex: 1; padding: 10px 13px; border-radius: 8px; border: 1px solid var(--panel-linea);
+  font-family: inherit; transition: border-color 0.15s, box-shadow 0.15s;
 }
 
+/* el botón del panel es rectangular redondeado, no píldora: la píldora es
+   de la landing, y aquí compite con los campos de formulario */
 .btn-mini {
-  padding: 8px 16px; border-radius: 999px; border: none; background: var(--negro);
-  color: var(--blanco); font-weight: 700; font-size: 0.82rem; cursor: pointer;
+  padding: 9px 16px; border-radius: 8px; border: none; background: var(--violeta);
+  color: var(--blanco); font-weight: 600; font-size: 0.82rem; cursor: pointer;
+  transition: background 0.15s;
 }
-.btn-mini:hover { background: var(--violeta); }
+.btn-mini:hover { background: #33007A; }
 .btn-mini:disabled { opacity: 0.5; cursor: wait; }
 .mensaje-fila { font-size: 0.78rem; color: var(--esmeralda); margin-left: 6px; }
 
-.tabla-panel { width: 100%; border-collapse: collapse; background: var(--blanco); border-radius: 12px; overflow: hidden; }
-.tabla-panel th, .tabla-panel td { padding: 12px 14px; text-align: left; font-size: 0.88rem; border-bottom: 1px solid rgba(17,17,17,0.08); }
-.tabla-panel th { background: #EFEBFA; font-weight: 700; }
-.tabla-panel select { padding: 6px 8px; border-radius: 6px; border: 1px solid rgba(17,17,17,0.2); font-family: inherit; }
+.tabla-panel {
+  width: 100%; border-collapse: collapse; background: var(--blanco);
+  border: 1px solid var(--panel-linea); border-radius: 16px; overflow: hidden;
+}
+.tabla-panel th, .tabla-panel td {
+  padding: 13px 16px; text-align: left; font-size: 0.88rem;
+  border-bottom: 1px solid var(--panel-linea-suave);
+}
+.tabla-panel tr:last-child td { border-bottom: 0; }
+.tabla-panel th {
+  background: #FAFAF9; font-weight: 800; font-size: 0.7rem;
+  letter-spacing: 0.1em; text-transform: uppercase; color: var(--panel-gris);
+  border-bottom: 1px solid var(--panel-linea);
+}
+.tabla-panel td { font-variant-numeric: tabular-nums; }
+.tabla-panel select { padding: 7px 9px; border-radius: 8px; border: 1px solid var(--panel-linea); font-family: inherit; }
 
 /* ═══════════ Bienvenida (post-registro, PLT-001 regla 2) ═══════════ */
 /* Fondo menta: es el mismo color que usa la seccion "hola" de la landing --

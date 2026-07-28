@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>tranqi · Mi protección — pantalla cliente</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+  /* ═══════════════════════════════════════════════════════════════════
+     tranqi · APP CLIENTE — pantalla principal
+     Sistema sobrio derivado del brochure. Tres colores de marca:
+       · violeta  #5000BA  → identidad, acciones primarias
+       · menta    #B1FBE3  → estado positivo, "todo en orden"
+       · negro    #111111  → texto y superficies profundas
+     Todo lo demás son neutros derivados (papel, líneas, grises).
+     El naranja de marca aparece SOLO en lo urgente, nunca decorativo.
+     ═══════════════════════════════════════════════════════════════════ */
+  :root {
+    --violeta: #5000BA;
+    --violeta-oscuro: #33007A;
+    --violeta-tinta: #1E0046;
+    --lavanda: #7866FF;
+    --menta: #B1FBE3;
+    --menta-honda: #056B57;
+    --naranja: #FE5800;
+
+    --tinta: #141019;
+    --gris-70: #4B4556;
+    --gris-50: #736C81;
+    --gris-30: #A9A3B4;
+    --linea: #E6E2ED;
+    --linea-suave: #F0EDF5;
+    --papel: #F7F6FA;
+    --blanco: #FFFFFF;
+
+    --r-sm: 8px;
+    --r-md: 12px;
+    --r-lg: 16px;
+    --rail: 236px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    font-family: "Archivo", system-ui, sans-serif;
+    background: var(--papel);
+    color: var(--tinta);
+    font-size: 15px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  ::selection { background: var(--menta); color: var(--tinta); }
+  img, svg { display: block; max-width: 100%; }
+  button, input { font: inherit; color: inherit; }
+  a { color: inherit; text-decoration: none; }
+
+  h1, h2, h3 { font-weight: 700; letter-spacing: -0.02em; line-height: 1.2; }
+  .num { font-variant-numeric: tabular-nums; }
+
+  /* etiqueta de sección: versalita fina, el recurso sobrio de la marca */
+  .eyebrow {
+    font-size: 0.688rem; font-weight: 700; letter-spacing: 0.13em;
+    text-transform: uppercase; color: var(--gris-50);
+  }
+
+  /* ── LAYOUT ──────────────────────────────────────────────────────── */
+  .shell { display: grid; grid-template-columns: var(--rail) 1fr; min-height: 100vh; }
+
+  /* ── RAIL DE NAVEGACIÓN ──────────────────────────────────────────── */
+  .rail {
+    position: sticky; top: 0; height: 100vh;
+    background: var(--violeta-tinta);
+    color: var(--blanco);
+    display: flex; flex-direction: column;
+    padding: 22px 16px 18px;
+    overflow: hidden;
+  }
+  /* Guiño a la cinta de la landing: un solo hilo, al 8% de opacidad.
+     Decora sin competir con la navegación. */
+  .rail .hilo { position: absolute; inset: 0; pointer-events: none; opacity: 0.09; }
+  .rail .hilo path { fill: none; stroke: var(--menta); stroke-width: 44; stroke-linecap: round; }
+  .rail > * { position: relative; z-index: 1; }
+
+  .rail .marca { padding: 4px 8px 26px; }
+  .rail .marca img { height: 22px; width: auto; }
+
+  .rail nav { display: flex; flex-direction: column; gap: 2px; }
+  .rail nav a {
+    display: flex; align-items: center; gap: 11px;
+    padding: 10px 12px; border-radius: var(--r-sm);
+    font-size: 0.906rem; font-weight: 500;
+    color: rgba(255,255,255,0.72);
+    transition: background 0.15s, color 0.15s;
+  }
+  .rail nav a svg { width: 17px; height: 17px; flex: none; stroke-width: 1.6; }
+  .rail nav a:hover { background: rgba(255,255,255,0.07); color: var(--blanco); }
+  .rail nav a[aria-current="page"] {
+    background: rgba(255,255,255,0.11); color: var(--blanco); font-weight: 600;
+  }
+  .rail nav a .pin {
+    margin-left: auto; background: var(--menta); color: var(--menta-honda);
+    font-size: 0.688rem; font-weight: 800; padding: 1px 7px; border-radius: 999px;
+  }
+
+  .rail .apoyo { margin-top: auto; }
+  .rail .abogado {
+    border: 1px solid rgba(255,255,255,0.16); border-radius: var(--r-md);
+    padding: 13px; display: grid; gap: 3px;
+  }
+  .rail .abogado .rol { font-size: 0.688rem; letter-spacing: 0.11em; text-transform: uppercase; color: rgba(255,255,255,0.5); font-weight: 700; }
+  .rail .abogado .nom { font-size: 0.875rem; font-weight: 600; }
+  .rail .abogado a { font-size: 0.813rem; color: var(--menta); font-weight: 600; margin-top: 6px; }
+  .rail .abogado a:hover { text-decoration: underline; }
+
+  /* ── CABECERA ────────────────────────────────────────────────────── */
+  .main { min-width: 0; }
+  .topbar {
+    position: sticky; top: 0; z-index: 20;
+    background: rgba(247,246,250,0.88);
+    backdrop-filter: saturate(1.4) blur(10px);
+    border-bottom: 1px solid var(--linea);
+    display: flex; align-items: center; gap: 16px;
+    padding: 14px clamp(20px, 3vw, 40px);
+  }
+  .buscador {
+    flex: 1; max-width: 420px; position: relative;
+  }
+  .buscador svg { position: absolute; left: 12px; top: 50%; translate: 0 -50%; width: 16px; height: 16px; stroke: var(--gris-50); stroke-width: 1.7; }
+  .buscador input {
+    width: 100%; background: var(--blanco); border: 1px solid var(--linea);
+    border-radius: var(--r-sm); padding: 9px 12px 9px 36px; font-size: 0.875rem;
+    outline: none; transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .buscador input::placeholder { color: var(--gris-30); }
+  .buscador input:focus { border-color: var(--lavanda); box-shadow: 0 0 0 3px rgba(120,102,255,0.15); }
+
+  .topbar .acciones { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+  .icono-btn {
+    width: 36px; height: 36px; display: grid; place-items: center;
+    background: var(--blanco); border: 1px solid var(--linea); border-radius: var(--r-sm);
+    cursor: pointer; position: relative; transition: border-color 0.15s;
+  }
+  .icono-btn:hover { border-color: var(--gris-30); }
+  .icono-btn svg { width: 17px; height: 17px; stroke: var(--gris-70); stroke-width: 1.6; }
+  .icono-btn .punto { position: absolute; top: 7px; right: 8px; width: 6px; height: 6px; border-radius: 50%; background: var(--naranja); }
+
+  .usuario { display: flex; align-items: center; gap: 9px; padding-left: 6px; }
+  .usuario .foto {
+    width: 34px; height: 34px; border-radius: 50%; flex: none;
+    background: var(--violeta); color: var(--blanco);
+    display: grid; place-items: center; font-size: 0.813rem; font-weight: 700;
+  }
+  .usuario .txt { display: grid; line-height: 1.25; }
+  .usuario .txt b { font-size: 0.844rem; font-weight: 600; }
+  .usuario .txt span { font-size: 0.75rem; color: var(--gris-50); }
+
+  /* ── CONTENIDO ───────────────────────────────────────────────────── */
+  .contenido { padding: clamp(24px, 3vw, 38px) clamp(20px, 3vw, 40px) 56px; max-width: 1280px; }
+
+  .saludo { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; flex-wrap: wrap; margin-bottom: 26px; }
+  .saludo h1 { font-size: clamp(1.5rem, 2.6vw, 1.938rem); font-weight: 800; }
+  .saludo h1 i { font-style: normal; color: var(--violeta); }
+  .saludo p { color: var(--gris-50); font-size: 0.938rem; margin-top: 4px; }
+
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    border: 1px solid transparent; border-radius: var(--r-sm);
+    padding: 10px 18px; font-size: 0.875rem; font-weight: 600; cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+  }
+  .btn svg { width: 16px; height: 16px; stroke-width: 1.8; }
+  .btn-primario { background: var(--violeta); color: var(--blanco); }
+  .btn-primario:hover { background: var(--violeta-oscuro); }
+  .btn-neutro { background: var(--blanco); border-color: var(--linea); color: var(--tinta); }
+  .btn-neutro:hover { border-color: var(--gris-30); }
+  .btn-menta { background: var(--menta); color: var(--menta-honda); }
+  .btn-menta:hover { background: #9DF4D8; }
+  .btn-fantasma { background: transparent; color: var(--violeta); padding: 8px 0; }
+  .btn-fantasma:hover { text-decoration: underline; }
+
+  /* rejilla principal: contenido + columna lateral */
+  .rejilla { display: grid; grid-template-columns: minmax(0, 1.62fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+  .col { display: grid; gap: 20px; align-content: start; }
+
+  .tarjeta {
+    background: var(--blanco); border: 1px solid var(--linea);
+    border-radius: var(--r-lg); overflow: hidden;
+  }
+  .tarjeta > header {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    padding: 16px 20px; border-bottom: 1px solid var(--linea-suave);
+  }
+  .tarjeta > header h2 { font-size: 1rem; font-weight: 700; }
+  .tarjeta .cuerpo { padding: 20px; }
+
+  /* ── PÓLIZA: la única superficie de color pleno de la pantalla ────── */
+  .poliza {
+    background: var(--violeta); color: var(--blanco);
+    border-radius: var(--r-lg); padding: 24px; position: relative; overflow: hidden;
+  }
+  .poliza .hilo { position: absolute; inset: 0; opacity: 0.13; pointer-events: none; }
+  .poliza .hilo path { fill: none; stroke: var(--menta); stroke-width: 46; stroke-linecap: round; }
+  .poliza > * { position: relative; z-index: 1; }
+  .poliza .fila { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
+  .poliza .eyebrow { color: rgba(255,255,255,0.62); }
+  .poliza .plan { font-size: 1.5rem; font-weight: 800; margin-top: 8px; letter-spacing: -0.025em; }
+  .poliza .plan i { font-style: normal; color: var(--menta); }
+  .poliza .meta { font-size: 0.875rem; color: rgba(255,255,255,0.78); margin-top: 5px; }
+  .estado-pill {
+    display: inline-flex; align-items: center; gap: 7px;
+    background: var(--menta); color: var(--menta-honda);
+    font-size: 0.75rem; font-weight: 800; letter-spacing: 0.04em;
+    padding: 6px 12px; border-radius: 999px; text-transform: uppercase;
+  }
+  .estado-pill::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--menta-honda); }
+
+  .consumo { margin-top: 24px; display: grid; gap: 9px; }
+  .consumo .cifras { display: flex; align-items: baseline; justify-content: space-between; font-size: 0.844rem; color: rgba(255,255,255,0.78); }
+  .consumo .cifras b { color: var(--blanco); font-weight: 600; }
+  .barra { height: 6px; border-radius: 999px; background: rgba(255,255,255,0.22); overflow: hidden; }
+  .barra span { display: block; height: 100%; border-radius: 999px; background: var(--menta); }
+
+  .poliza .pie { margin-top: 22px; display: flex; gap: 10px; flex-wrap: wrap; }
+  .poliza .pie .btn-borde { background: transparent; color: var(--blanco); border-color: rgba(255,255,255,0.4); }
+  .poliza .pie .btn-borde:hover { background: rgba(255,255,255,0.1); }
+
+  /* ── ACCIONES RÁPIDAS ────────────────────────────────────────────── */
+  .accesos { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  .acceso {
+    background: var(--blanco); border: 1px solid var(--linea); border-radius: var(--r-md);
+    padding: 16px 14px; display: grid; gap: 9px; cursor: pointer; text-align: left;
+    transition: border-color 0.15s, transform 0.15s;
+  }
+  .acceso:hover { border-color: var(--violeta); transform: translateY(-2px); }
+  .acceso .ico {
+    width: 34px; height: 34px; border-radius: 9px; display: grid; place-items: center;
+    background: var(--linea-suave); color: var(--violeta);
+  }
+  .acceso:hover .ico { background: var(--menta); color: var(--menta-honda); }
+  .acceso .ico svg { width: 17px; height: 17px; stroke-width: 1.7; }
+  .acceso b { font-size: 0.875rem; font-weight: 600; }
+  .acceso span { font-size: 0.781rem; color: var(--gris-50); line-height: 1.4; }
+
+  /* ── TRÁMITES ────────────────────────────────────────────────────── */
+  .tramite {
+    display: grid; grid-template-columns: 1fr auto; gap: 4px 16px;
+    padding: 16px 20px; border-bottom: 1px solid var(--linea-suave);
+    align-items: center; cursor: pointer; transition: background 0.14s;
+  }
+  .tramite:last-child { border-bottom: 0; }
+  .tramite:hover { background: var(--linea-suave); }
+  .tramite .titulo { font-size: 0.938rem; font-weight: 600; display: flex; align-items: center; gap: 9px; }
+  .tramite .sub { font-size: 0.813rem; color: var(--gris-50); grid-column: 1; }
+  .tramite .avance { grid-column: 2; grid-row: 1 / span 2; text-align: right; display: grid; gap: 7px; justify-items: end; }
+  .tramite .avance .paso { font-size: 0.75rem; color: var(--gris-50); font-weight: 600; }
+  .tramite .avance .barra { width: 108px; background: var(--linea); }
+  .tramite .avance .barra span { background: var(--violeta); }
+
+  .chip {
+    font-size: 0.688rem; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase;
+    padding: 3px 8px; border-radius: 5px; white-space: nowrap;
+  }
+  .chip-menta { background: var(--menta); color: var(--menta-honda); }
+  .chip-violeta { background: #EFE7FB; color: var(--violeta); }
+  .chip-neutro { background: var(--linea-suave); color: var(--gris-70); }
+  .chip-urgente { background: #FFE9DE; color: #C33F00; }
+
+  /* ── CITA ────────────────────────────────────────────────────────── */
+  .cita { display: grid; gap: 14px; }
+  .cita .cuando {
+    display: flex; align-items: center; gap: 14px;
+    background: var(--linea-suave); border-radius: var(--r-md); padding: 14px;
+  }
+  .cita .fecha {
+    width: 52px; flex: none; text-align: center; background: var(--blanco);
+    border: 1px solid var(--linea); border-radius: 9px; padding: 6px 0;
+  }
+  .cita .fecha span { display: block; font-size: 0.688rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--violeta); }
+  .cita .fecha b { display: block; font-size: 1.25rem; font-weight: 800; line-height: 1.1; }
+  .cita .cuando .det b { display: block; font-size: 0.906rem; font-weight: 600; }
+  .cita .cuando .det span { font-size: 0.813rem; color: var(--gris-50); }
+  .cita .quien { display: flex; align-items: center; gap: 11px; }
+  .cita .quien .foto { width: 40px; height: 40px; border-radius: 50%; background: var(--violeta); color: var(--blanco); display: grid; place-items: center; font-weight: 700; font-size: 0.875rem; flex: none; }
+  .cita .quien b { display: block; font-size: 0.906rem; font-weight: 600; }
+  .cita .quien span { font-size: 0.813rem; color: var(--gris-50); }
+  .cita .botones { display: grid; grid-template-columns: 1fr auto; gap: 9px; }
+
+  /* ── DOCUMENTOS ──────────────────────────────────────────────────── */
+  .doc {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 20px; border-bottom: 1px solid var(--linea-suave);
+    cursor: pointer; transition: background 0.14s;
+  }
+  .doc:last-of-type { border-bottom: 0; }
+  .doc:hover { background: var(--linea-suave); }
+  .doc .ico { width: 32px; height: 32px; border-radius: 7px; background: var(--linea-suave); display: grid; place-items: center; flex: none; color: var(--gris-70); }
+  .doc:hover .ico { background: var(--blanco); }
+  .doc .ico svg { width: 15px; height: 15px; stroke-width: 1.7; }
+  .doc .txt { min-width: 0; }
+  .doc .txt b { display: block; font-size: 0.875rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .doc .txt span { font-size: 0.75rem; color: var(--gris-50); }
+  .doc .flecha { margin-left: auto; color: var(--gris-30); }
+  .doc .flecha svg { width: 15px; height: 15px; stroke-width: 1.8; }
+
+  /* ── AYUDA / BUDDIE en reposo ────────────────────────────────────── */
+  .ayuda {
+    background: var(--menta); border-radius: var(--r-lg); padding: 20px;
+    display: grid; gap: 12px; border: 1px solid #9AF0D4;
+  }
+  .ayuda .cabeza { display: flex; align-items: center; gap: 11px; }
+  .ayuda .ojitos {
+    width: 38px; height: 38px; flex: none; background: var(--lavanda);
+    border-radius: 47% 53% 50% 50% / 55% 55% 45% 45%;
+    position: relative; box-shadow: 0 0 0 2px var(--blanco);
+  }
+  .ayuda .ojitos::before {
+    content: ""; position: absolute; left: 12px; top: 13px;
+    width: 5px; height: 10px; background: var(--tinta); border-radius: 3px;
+    box-shadow: 9px 0 0 var(--tinta);
+  }
+  .ayuda b { font-size: 0.938rem; font-weight: 700; color: var(--menta-honda); }
+  .ayuda p { font-size: 0.875rem; color: #05594A; }
+  .ayuda .btn { background: var(--menta-honda); color: var(--menta); justify-content: center; }
+  .ayuda .btn:hover { background: #044A3E; }
+
+  .pie-legal { margin-top: 34px; font-size: 0.75rem; color: var(--gris-30); display: flex; gap: 16px; flex-wrap: wrap; }
+
+  /* ── entrada escalonada, una sola vez, discreta ───────────────────── */
+  .anim { opacity: 0; transform: translateY(10px); animation: sube 0.5s cubic-bezier(0.22, 0.8, 0.3, 1) forwards; }
+  .anim:nth-child(1) { animation-delay: 0.04s; }
+  .anim:nth-child(2) { animation-delay: 0.10s; }
+  .anim:nth-child(3) { animation-delay: 0.16s; }
+  .anim:nth-child(4) { animation-delay: 0.22s; }
+  @keyframes sube { to { opacity: 1; transform: none; } }
+
+  /* ── responsive ──────────────────────────────────────────────────── */
+  @media (max-width: 1080px) {
+    .rejilla { grid-template-columns: 1fr; }
+    .accesos { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (max-width: 860px) {
+    :root { --rail: 0px; }
+    .shell { grid-template-columns: 1fr; }
+    .rail {
+      /* relative, no static: el hilo va posicionado contra el rail y con
+         static se escaparía del overflow y taparía la página */
+      position: relative; height: auto; flex-direction: row; align-items: center;
+      gap: 6px; padding: 10px 16px; overflow-x: auto;
+    }
+    .rail .marca { padding: 0 14px 0 0; }
+    .rail nav { flex-direction: row; }
+    .rail nav a span.et { display: none; }
+    .rail nav a { padding: 9px 11px; }
+    .rail .apoyo { display: none; }
+    .buscador { max-width: none; }
+    .usuario .txt { display: none; }
+  }
+  @media (max-width: 560px) {
+    .accesos { grid-template-columns: 1fr; }
+    .tramite { grid-template-columns: 1fr; }
+    .tramite .avance { grid-column: 1; grid-row: auto; justify-items: start; text-align: left; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .anim { animation: none; opacity: 1; transform: none; }
+    * { transition: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="shell">
+
+  <!-- ══════════ RAIL ══════════ -->
+  <aside class="rail">
+    <svg class="hilo" viewBox="0 0 236 900" preserveAspectRatio="none" aria-hidden="true">
+      <path d="M 200 -40 C 200 160 40 240 60 430 C 78 610 210 660 200 900" />
+    </svg>
+
+    <div class="marca"><img src="../../../../apps/tranqi-web/public/assets/tranqi-white.svg" alt="tranqi" /></div>
+
+    <nav aria-label="Principal">
+      <a href="#" aria-current="page">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>
+        <span class="et">Inicio</span>
+      </a>
+      <a href="#">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></svg>
+        <span class="et">Mis trámites</span><span class="pin">3</span>
+      </a>
+      <a href="#">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 11h18"/></svg>
+        <span class="et">Citas</span>
+      </a>
+      <a href="#">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+        <span class="et">Documentos</span>
+      </a>
+      <a href="#">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="2" y="6" width="20" height="13" rx="2"/><path d="M2 10h20"/></svg>
+        <span class="et">Pagos y plan</span>
+      </a>
+      <a href="#">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.6 2.6 0 1 1 3.4 2.5c-.6.2-.9.8-.9 1.4v.4"/><path d="M12 17h.01"/></svg>
+        <span class="et">Ayuda</span>
+      </a>
+    </nav>
+
+    <div class="apoyo">
+      <div class="abogado">
+        <div class="rol">Tu abogado</div>
+        <div class="nom">Lucía Ferrer</div>
+        <a href="#">Escribirle →</a>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ══════════ MAIN ══════════ -->
+  <div class="main">
+
+    <header class="topbar">
+      <div class="buscador">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input type="search" placeholder="Buscar un trámite, documento o contrato" aria-label="Buscar" />
+      </div>
+      <div class="acciones">
+        <button class="icono-btn" aria-label="Notificaciones">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M18 9a6 6 0 1 0-12 0c0 5-2 6-2 6h16s-2-1-2-6"/><path d="M10.3 20a2 2 0 0 0 3.4 0"/></svg>
+          <span class="punto"></span>
+        </button>
+        <button class="icono-btn" aria-label="Mensajes">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg>
+        </button>
+        <div class="usuario">
+          <div class="foto">MR</div>
+          <div class="txt"><b>Mariana Rivas</b><span>Plan Esencial</span></div>
+        </div>
+      </div>
+    </header>
+
+    <main class="contenido">
+
+      <div class="saludo">
+        <div>
+          <h1>Hola, Mariana. Estás <i>tranqi</i>.</h1>
+          <p>Tu protección jurídica está activa y sin pendientes de tu parte.</p>
+        </div>
+        <button class="btn btn-primario">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 5v14M5 12h14"/></svg>
+          Nueva consulta
+        </button>
+      </div>
+
+      <div class="rejilla">
+
+        <!-- ───── columna principal ───── -->
+        <div class="col">
+
+          <!-- PÓLIZA -->
+          <section class="poliza anim" aria-labelledby="t-plan">
+            <svg class="hilo" viewBox="0 0 800 300" preserveAspectRatio="none" aria-hidden="true">
+              <path d="M 540 -60 C 760 40 840 190 700 300 C 620 362 470 340 430 420" />
+            </svg>
+            <div class="fila">
+              <div>
+                <div class="eyebrow" id="t-plan">Tu protección</div>
+                <div class="plan">Plan <i>Esencial</i> · Familiar</div>
+                <div class="meta">Póliza TQ-84 021 447 · vigente hasta el 14 de marzo de 2027</div>
+              </div>
+              <span class="estado-pill">Activa</span>
+            </div>
+
+            <div class="consumo">
+              <div class="cifras">
+                <span>Consultas legales usadas este año</span>
+                <b class="num">4 de 12</b>
+              </div>
+              <div class="barra"><span style="width: 33%"></span></div>
+            </div>
+
+            <div class="pie">
+              <button class="btn btn-menta">Ver coberturas</button>
+              <button class="btn btn-borde">Descargar certificado</button>
+            </div>
+          </section>
+
+          <!-- ACCESOS -->
+          <section class="accesos anim" aria-label="Acciones rápidas">
+            <button class="acceso">
+              <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 11h18"/></svg></div>
+              <b>Agendar cita</b><span>Presencial o por video</span>
+            </button>
+            <button class="acceso">
+              <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 16V4"/><path d="m7 9 5-5 5 5"/><path d="M4 20h16"/></svg></div>
+              <b>Subir documento</b><span>Contratos, cédulas, actas</span>
+            </button>
+            <button class="acceso">
+              <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 3v18"/><path d="M17 7.5C17 5.6 14.8 4.5 12 4.5S7 5.6 7 7.5s2.2 2.6 5 3.2 5 1.4 5 3.3-2.2 3-5 3-5-1.1-5-3"/></svg></div>
+              <b>Financiamiento</b><span>Cuotas para tu caso</span>
+            </button>
+            <button class="acceso">
+              <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg></div>
+              <b>Preguntar a tranqi</b><span>Respuesta en minutos</span>
+            </button>
+          </section>
+
+          <!-- TRÁMITES -->
+          <section class="tarjeta anim" aria-labelledby="t-tramites">
+            <header>
+              <h2 id="t-tramites">Tus trámites</h2>
+              <a class="btn btn-fantasma" href="#">Ver todos</a>
+            </header>
+
+            <div class="tramite">
+              <div class="titulo">Reclamo laboral — despido injustificado <span class="chip chip-urgente">Requiere tu firma</span></div>
+              <div class="sub">Expediente TQ-2411 · Lucía Ferrer · actualizado hace 2 horas</div>
+              <div class="avance">
+                <div class="paso num">Paso 3 de 5</div>
+                <div class="barra"><span style="width: 60%"></span></div>
+              </div>
+            </div>
+
+            <div class="tramite">
+              <div class="titulo">Revisión de contrato de arriendo <span class="chip chip-violeta">En revisión</span></div>
+              <div class="sub">Expediente TQ-2380 · Andrés Molina · entrega estimada el 30 de julio</div>
+              <div class="avance">
+                <div class="paso num">Paso 2 de 4</div>
+                <div class="barra"><span style="width: 50%"></span></div>
+              </div>
+            </div>
+
+            <div class="tramite">
+              <div class="titulo">Carta de cobro a proveedor <span class="chip chip-menta">Resuelto</span></div>
+              <div class="sub">Expediente TQ-2298 · cerrado el 2 de julio</div>
+              <div class="avance">
+                <div class="paso num">Completo</div>
+                <div class="barra"><span style="width: 100%"></span></div>
+              </div>
+            </div>
+          </section>
+
+        </div>
+
+        <!-- ───── columna lateral ───── -->
+        <div class="col">
+
+          <!-- PRÓXIMA CITA -->
+          <section class="tarjeta anim" aria-labelledby="t-cita">
+            <header><h2 id="t-cita">Tu próxima cita</h2></header>
+            <div class="cuerpo cita">
+              <div class="cuando">
+                <div class="fecha"><span>Jul</span><b class="num">29</b></div>
+                <div class="det">
+                  <b class="num">10:30 — 11:00</b>
+                  <span>Videollamada · revisión del reclamo</span>
+                </div>
+              </div>
+              <div class="quien">
+                <div class="foto">LF</div>
+                <div>
+                  <b>Lucía Ferrer</b>
+                  <span>Derecho laboral · 8 años de experiencia</span>
+                </div>
+              </div>
+              <div class="botones">
+                <button class="btn btn-primario" style="justify-content:center">Entrar a la sala</button>
+                <button class="btn btn-neutro">Reagendar</button>
+              </div>
+            </div>
+          </section>
+
+          <!-- DOCUMENTOS -->
+          <section class="tarjeta anim" aria-labelledby="t-docs">
+            <header>
+              <h2 id="t-docs">Documentos recientes</h2>
+              <a class="btn btn-fantasma" href="#">Ver todos</a>
+            </header>
+            <div class="doc">
+              <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></svg></div>
+              <div class="txt"><b>Demanda laboral — borrador v3</b><span>PDF · 240 KB · hace 2 horas</span></div>
+              <div class="flecha"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="m9 6 6 6-6 6"/></svg></div>
+            </div>
+            <div class="doc">
+              <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></svg></div>
+              <div class="txt"><b>Contrato de arriendo — original</b><span>PDF · 1,1 MB · 22 de julio</span></div>
+              <div class="flecha"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="m9 6 6 6-6 6"/></svg></div>
+            </div>
+            <div class="doc">
+              <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></svg></div>
+              <div class="txt"><b>Certificado de cobertura 2026</b><span>PDF · 96 KB · 14 de marzo</span></div>
+              <div class="flecha"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="m9 6 6 6-6 6"/></svg></div>
+            </div>
+          </section>
+
+          <!-- AYUDA -->
+          <section class="ayuda anim" aria-labelledby="t-ayuda">
+            <div class="cabeza">
+              <div class="ojitos" aria-hidden="true"></div>
+              <b id="t-ayuda">¿Una duda rápida?</b>
+            </div>
+            <p>tranqi te responde al instante y, si hace falta, te deriva con un abogado de la red sin costo adicional.</p>
+            <button class="btn">Hablar con tranqi</button>
+          </section>
+
+        </div>
+      </div>
+
+      <div class="pie-legal">
+        <span>© tranqi® 2026</span>
+        <a href="#">Términos</a>
+        <a href="#">Privacidad</a>
+        <a href="#">Centro de ayuda</a>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+</body>
+</html>

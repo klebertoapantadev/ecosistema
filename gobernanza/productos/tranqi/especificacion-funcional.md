@@ -10,6 +10,8 @@ responsable: Kleber Toapanta
 
 **Prefijo de tabla:** `trq_` · **Esquema:** `tranqui_legal`
 
+**Sistema visual:** [`sistema-visual.md`](sistema-visual.md) — paleta, uso del color por perfil (cliente, abogado, administración) y maquetas de referencia. Aplica a `tranqi-web` y a las apps nativas.
+
 ## Identidad y autenticación
 
 Ver especificación de [Plataforma](../plataforma/especificacion-funcional.md) — PLT-001 (identidad única + bienvenida), PLT-002 (MFA), PLT-003 (membresías), PLT-011 (configuración + widgets), PLT-012 (baja de cuenta). Sin adiciones de Tranqi al mecanismo en sí.
