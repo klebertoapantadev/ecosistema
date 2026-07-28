@@ -1,35 +1,219 @@
+/* Sistema visual de Tinkay -- ver gobernanza/productos/tinkay/sistema-visual.md.
+   Reemplaza el fallback neutro (@eco/identidad/estilos-base.css): mismas clases
+   que consumen los componentes compartidos (registro/ingresar/bienvenida/
+   terminos/panel/cuenta), reimplementadas con la marca real de Tinkay. */
+
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 :root {
-  --eco-acento: #05876e;
+  --rosa: #EC7FA7;
+  --rosa-oscuro: #D45E89;
+  --verde: #3D5A45;
+  --dorado: #B8923F;
+  --crema: #F7F1E6;
+  --blanco: #FFFFFF;
+  --tinta: #221D1A;
+  --gris: rgba(34, 29, 26, 0.55);
+  --linea: rgba(34, 29, 26, 0.14);
+  --coral-urgente: #D9524B;
+  --peligro: #B00020;
 }
 
 body {
   min-height: 100vh;
-  font-family: system-ui, -apple-system, sans-serif;
+  font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
+  background: var(--crema);
+  color: var(--tinta);
 }
 
-.placeholder {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  background: #111;
-  color: #fff;
-  text-align: center;
+h1, h2, h3, .fuente-display { font-family: var(--font-fraunces), Georgia, serif; }
+
+/* ═══════════ Auth (registro / ingresar) ═══════════ */
+.pagina-auth {
+  min-height: 100vh; background: var(--crema); color: var(--tinta);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 18px; padding: 40px 20px; text-align: center;
+}
+.logo-auth { font-family: var(--font-fraunces), serif; font-size: 1.6rem; font-weight: 600; color: var(--rosa); text-decoration: none; }
+.pagina-auth h1 { font-size: clamp(1.5rem, 3vw, 2rem); font-weight: 600; }
+
+.tarjeta-auth {
+  width: min(380px, 100%); display: flex; flex-direction: column; gap: 16px;
+  background: var(--blanco); border: 1px solid var(--linea); border-top: 2px solid var(--dorado);
+  border-radius: 16px; padding: 28px 24px;
+}
+.btn-google {
+  padding: 13px 20px; border-radius: 999px; border: 1.5px solid var(--tinta);
+  background: var(--blanco); font-weight: 700; cursor: pointer; color: var(--tinta);
+}
+.btn-google:hover { background: var(--crema); }
+.btn-google:disabled { opacity: 0.5; cursor: wait; }
+.separador { font-size: 0.82rem; color: var(--gris); }
+.aviso-terminos { font-size: 0.78rem; color: var(--gris); text-align: center; margin-top: -6px; }
+.aviso-terminos a { color: var(--rosa-oscuro); font-weight: 700; }
+
+.form-auth { display: flex; flex-direction: column; gap: 10px; text-align: left; }
+.form-auth input {
+  padding: 12px 14px; border-radius: 10px; border: 1.5px solid var(--linea);
+  font-family: inherit; font-size: 0.95rem; background: var(--blanco); color: var(--tinta);
+}
+.form-auth input:focus { outline: none; border-color: var(--rosa); box-shadow: 0 0 0 3px rgba(236, 127, 167, 0.15); }
+
+.campo-check { display: flex; align-items: center; gap: 10px; font-size: 0.92rem; font-weight: 500; cursor: pointer; }
+.campo-check input { width: 18px; height: 18px; accent-color: var(--rosa); }
+.campo-check a { color: var(--rosa-oscuro); font-weight: 700; }
+.etiqueta-campo { display: flex; flex-direction: column; gap: 6px; font-size: 0.82rem; font-weight: 700; }
+.campo-telefono { display: flex; gap: 8px; }
+.campo-telefono select { flex: none; width: 40%; padding: 12px 8px; border-radius: 10px; border: 1.5px solid var(--linea); font-family: inherit; font-size: 0.85rem; background: var(--blanco); color: var(--tinta); }
+.campo-telefono input { flex: 1; min-width: 0; }
+
+.error-auth { color: var(--peligro); font-size: 0.85rem; text-align: left; }
+.mensaje-ok { color: var(--verde); font-size: 0.85rem; }
+.enlace-auth { font-size: 0.9rem; }
+.enlace-auth a { color: var(--rosa-oscuro); font-weight: 700; }
+
+.btn {
+  display: inline-block; font-weight: 700; font-size: 1.02rem; text-decoration: none;
+  padding: 14px 28px; border-radius: 999px; cursor: pointer; border: none;
+  transition: background 0.15s, color 0.15s;
+}
+.btn-primario { background: var(--rosa); color: var(--blanco); }
+.btn-primario:hover { background: var(--rosa-oscuro); }
+.btn-primario:disabled { opacity: 0.5; cursor: wait; }
+
+/* ═══════════ Bienvenida ═══════════ */
+.pagina-bienvenida {
+  min-height: 100vh; background: var(--crema); color: var(--tinta);
+  display: flex; align-items: center; justify-content: center; padding: 40px 20px;
+}
+.tarjeta-bienvenida { width: min(420px, 100%); display: flex; flex-direction: column; gap: 16px; }
+.saludo-bienvenida { font-family: var(--font-fraunces), serif; font-size: clamp(2rem, 5vw, 2.6rem); font-weight: 600; }
+
+/* ═══════════ Legal / Términos ═══════════ */
+.pagina-legal {
+  min-height: 100vh; max-width: 720px; margin: 0 auto; background: var(--blanco); color: var(--tinta);
+  padding: 40px 20px 80px; display: flex; flex-direction: column; gap: 14px;
+}
+.pagina-legal h1 { font-size: clamp(1.5rem, 3vw, 2rem); font-weight: 600; margin-top: 8px; }
+.pagina-legal .seccion-legal { display: flex; flex-direction: column; gap: 8px; }
+.pagina-legal h2 { font-size: 1.15rem; font-weight: 700; }
+.pagina-legal p, .pagina-legal li { line-height: 1.6; color: rgba(34, 29, 26, 0.85); }
+.pagina-legal ul { padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+.pagina-legal a { color: var(--rosa-oscuro); font-weight: 700; }
+.fecha-legal { font-size: 0.85rem; color: var(--gris); }
+.aviso-borrador { background: #FCEFC7; color: var(--tinta); font-weight: 700; font-size: 0.85rem; padding: 10px 14px; border-radius: 10px; }
+
+/* ═══════════ Panel ═══════════ */
+.panel-layout { display: flex; min-height: 100vh; background: var(--crema); color: var(--tinta); }
+.panel-nav { width: 240px; flex: none; background: var(--tinta); color: var(--blanco); display: flex; flex-direction: column; padding: 24px 18px; gap: 24px; }
+.panel-marca { font-family: var(--font-fraunces), serif; font-size: 1.3rem; font-weight: 600; }
+.panel-nav-links { display: flex; flex-direction: column; gap: 4px; flex: 1; }
+.panel-nav-links a { color: var(--blanco); text-decoration: none; padding: 10px 12px; border-radius: 10px; font-size: 0.92rem; opacity: 0.85; }
+.panel-nav-links a:hover { background: rgba(255, 255, 255, 0.08); opacity: 1; }
+.panel-nav-links a[aria-current="page"] { background: rgba(236, 127, 167, 0.16); box-shadow: inset 2px 0 0 var(--rosa); opacity: 1; }
+.panel-usuario { font-size: 0.8rem; opacity: 0.85; display: flex; flex-direction: column; gap: 8px; }
+.etiqueta-superadmin { display: inline-block; background: var(--dorado); color: var(--tinta); font-weight: 800; font-size: 0.68rem; padding: 3px 8px; border-radius: 999px; width: fit-content; }
+.panel-contenido { flex: 1; min-width: 0; padding: 36px clamp(20px, 4vw, 48px); max-width: 1280px; }
+.panel-contenido h1 { font-size: 1.6rem; font-weight: 600; margin-bottom: 20px; }
+.nombre-usuario-activo { display: block; font-weight: 700; }
+.correo-usuario-activo { display: block; font-size: 0.75rem; opacity: 0.7; }
+
+.form-panel { display: flex; flex-direction: column; gap: 14px; max-width: 480px; }
+.form-panel label { display: flex; flex-direction: column; gap: 6px; font-size: 0.85rem; font-weight: 700; }
+.form-panel input { padding: 11px 13px; border-radius: 10px; border: 1.5px solid var(--linea); font-family: inherit; font-size: 0.95rem; font-weight: 400; background: var(--blanco); color: var(--tinta); }
+
+.form-busqueda { display: flex; gap: 10px; margin-bottom: 20px; max-width: 420px; }
+.form-busqueda input { flex: 1; padding: 10px 13px; border-radius: 10px; border: 1.5px solid var(--linea); font-family: inherit; background: var(--blanco); color: var(--tinta); }
+
+.btn-mini { padding: 8px 16px; border-radius: 999px; border: none; background: var(--tinta); color: var(--blanco); font-weight: 700; font-size: 0.82rem; cursor: pointer; }
+.btn-mini:hover { background: var(--rosa-oscuro); }
+.btn-mini:disabled { opacity: 0.5; cursor: wait; }
+.mensaje-fila { font-size: 0.78rem; color: var(--verde); margin-left: 6px; }
+
+.tabla-panel { width: 100%; border-collapse: collapse; background: var(--blanco); border-radius: 16px; overflow: hidden; }
+.tabla-panel th, .tabla-panel td { padding: 12px 14px; text-align: left; font-size: 0.88rem; border-bottom: 1px solid var(--linea); }
+.tabla-panel th { background: var(--crema); font-weight: 700; }
+.tabla-panel select { padding: 6px 8px; border-radius: 8px; border: 1px solid var(--linea); font-family: inherit; }
+
+.zona-peligro {
+  margin-top: 40px; padding: 20px; border: 1.5px solid var(--peligro); border-radius: 16px;
+  max-width: 480px; display: flex; flex-direction: column; gap: 10px; background: rgba(176, 0, 32, 0.04);
+}
+.zona-peligro h2 { font-size: 1.05rem; font-weight: 800; color: var(--peligro); }
+.zona-peligro p { font-size: 0.85rem; line-height: 1.5; }
+.btn-peligro { align-self: flex-start; padding: 10px 18px; border-radius: 999px; border: 1.5px solid var(--peligro); background: var(--blanco); color: var(--peligro); font-weight: 700; cursor: pointer; }
+.btn-peligro:hover { background: var(--peligro); color: var(--blanco); }
+.btn-peligro:disabled { opacity: 0.5; cursor: wait; }
+
+.historial-accesos { margin-top: 32px; max-width: 480px; }
+.historial-accesos h2 { font-size: 1.05rem; font-weight: 800; margin-bottom: 10px; }
+.historial-accesos ul { list-style: none; display: flex; flex-direction: column; gap: 6px; }
+.historial-accesos li { display: flex; justify-content: space-between; font-size: 0.85rem; padding: 8px 12px; background: var(--blanco); border-radius: 10px; border: 1px solid var(--linea); }
+.historial-negocio { opacity: 0.6; }
+.historial-fecha { color: var(--gris); }
+
+/* ═══════════ Muestra de dirección visual (temporal, sin funcionalidad) ═══════════
+   Preview de hacia dónde va tinkay-web como ecommerce -- ver
+   gobernanza/productos/tinkay/sistema-visual.md §5-6. Datos estáticos, no hay
+   catálogo real todavía (comun_comercio sin poblar para este negocio). */
+
+.muestra-encabezado {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 20px clamp(20px, 5vw, 48px); border-bottom: 1px solid var(--linea);
+}
+.muestra-encabezado-enlaces { display: flex; gap: 18px; align-items: center; font-size: 0.9rem; }
+.muestra-encabezado-enlaces a { color: var(--tinta); text-decoration: none; font-weight: 600; }
+.muestra-encabezado-enlaces a:hover { color: var(--rosa-oscuro); }
+
+.muestra-hero {
+  padding: clamp(48px, 8vw, 96px) clamp(20px, 5vw, 48px);
+  display: flex; flex-direction: column; align-items: center; text-align: center; gap: 18px;
+  max-width: 720px; margin: 0 auto;
+}
+.muestra-hero h1 { font-size: clamp(2.2rem, 5vw, 3.4rem); font-weight: 600; line-height: 1.1; }
+.muestra-hero p { font-size: 1.05rem; color: var(--gris); max-width: 480px; }
+.muestra-etiqueta {
+  font-size: 0.7rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--dorado); border: 1px solid var(--dorado); border-radius: 999px; padding: 5px 14px;
 }
 
-.placeholder h1 {
-  font-size: clamp(2rem, 6vw, 3.5rem);
-  font-weight: 800;
-  margin-bottom: 12px;
-}
+.muestra-seccion { padding: 40px clamp(20px, 5vw, 48px) 64px; max-width: 1200px; margin: 0 auto; }
+.muestra-seccion-titulo { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 24px; }
+.muestra-seccion-titulo h2 { font-size: 1.6rem; font-weight: 600; }
+.muestra-seccion-titulo span { font-size: 0.85rem; color: var(--gris); }
 
-.placeholder p {
-  opacity: 0.7;
-  font-size: 1rem;
+.grid-productos { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 24px; }
+.tarjeta-producto {
+  display: flex; flex-direction: column; gap: 10px; background: var(--blanco);
+  border-radius: 20px; overflow: hidden; border: 1px solid var(--linea);
 }
+.tarjeta-producto-foto {
+  aspect-ratio: 4 / 5; background: linear-gradient(155deg, var(--crema), #EFE3D0);
+  display: flex; align-items: center; justify-content: center; font-size: 2.4rem; position: relative;
+}
+.tarjeta-producto-info { padding: 4px 18px 18px; display: flex; flex-direction: column; gap: 4px; }
+.tarjeta-producto-info strong { font-family: var(--font-fraunces), serif; font-size: 1.05rem; font-weight: 600; }
+.tarjeta-producto-info span { font-size: 0.85rem; color: var(--gris); }
+.tarjeta-producto-precio { font-weight: 700; margin-top: 4px; }
 
-.placeholder-enlaces { display: flex; gap: 14px; align-items: center; margin-top: 24px; }
-.placeholder-enlace-secundario { color: #fff; text-decoration: underline; font-weight: 600; }
+.chip-estado {
+  position: absolute; top: 12px; left: 12px;
+  font-size: 0.62rem; font-weight: 800; letter-spacing: 0.07em; text-transform: uppercase;
+  padding: 4px 10px; border-radius: 999px;
+}
+.chip-disponible { background: rgba(61, 90, 69, 0.12); color: var(--verde); }
+.chip-agotado { background: rgba(34, 29, 26, 0.08); color: var(--gris); }
+.chip-urgente { background: rgba(217, 82, 75, 0.12); color: var(--coral-urgente); }
+.chip-nuevo { background: rgba(184, 146, 63, 0.14); color: var(--dorado); }
+
+.seccion-condolencias {
+  background: var(--blanco); border-top: 1px solid var(--linea); border-bottom: 1px solid var(--linea);
+  padding: 48px clamp(20px, 5vw, 48px); display: flex; flex-direction: column; align-items: center;
+  text-align: center; gap: 12px;
+}
+.seccion-condolencias h2 { font-size: 1.5rem; font-weight: 600; color: var(--verde); }
+.seccion-condolencias p { color: var(--gris); max-width: 480px; }
+.btn-condolencias { background: var(--verde); color: var(--blanco); }
+.btn-condolencias:hover { background: #2E4635; }
+
+.muestra-pie { text-align: center; padding: 32px 20px; font-size: 0.8rem; color: var(--gris); }

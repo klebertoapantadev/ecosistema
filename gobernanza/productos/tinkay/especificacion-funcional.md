@@ -10,6 +10,10 @@ responsable: Kleber Toapanta
 
 **Prefijo de tabla:** `tnk_` · **Esquema:** `tinkay_floristeria`
 
+**Sistema visual:** [`sistema-visual.md`](sistema-visual.md) — paleta consolidada desde
+materiales de marca reales (rosa + verde botánico + dorado), reglas de color y caso
+especial de condolencias. Aplica a `tinkay-web`.
+
 ## Identidad y autenticación
 
 Ver especificación de [Plataforma](../plataforma/especificacion-funcional.md) — PLT-001, PLT-002, PLT-003. Sin adiciones específicas de Tinkay todavía.
