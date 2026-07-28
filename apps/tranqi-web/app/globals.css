@@ -412,7 +412,7 @@ nav .links a.cta:hover { background: var(--menta); }
   display: inline-block; background: var(--amarillo); color: var(--negro);
   font-weight: 800; font-size: 0.68rem; padding: 3px 8px; border-radius: 999px; width: fit-content;
 }
-.panel-contenido { flex: 1; padding: 36px clamp(20px, 4vw, 48px); max-width: 1280px; }
+.panel-contenido { flex: 1; min-width: 0; padding: 36px clamp(20px, 4vw, 48px); max-width: 1280px; }
 .panel-contenido h1 { font-size: 1.5rem; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 6px; }
 /* el aire bajo el título lo pone el elemento siguiente, no el título: así la
    portada (que lleva subtítulo) y las páginas que no lo llevan respiran igual */
@@ -470,6 +470,45 @@ nav .links a.cta:hover { background: var(--menta); }
 }
 .tabla-panel td { font-variant-numeric: tabular-nums; }
 .tabla-panel select { padding: 7px 9px; border-radius: 8px; border: 1px solid var(--panel-linea); font-family: inherit; }
+
+/* ═══════════ Inicio de cliente (panel, temporal) ═══════════
+   Placeholder visual mientras se definen TRQ-xxx propios de cada acceso --
+   sin destino real (ver comentario en app/panel/page.tsx). Unica superficie
+   de color pleno de la pantalla: la tarjeta de Legal Score (sistema-visual
+   §3 regla 1); el resto son tarjetas blancas de línea 1px. */
+.inicio-cliente-sub { color: var(--panel-gris); font-size: 0.95rem; margin-top: -4px; margin-bottom: 24px; }
+
+.tarjeta-legal-score {
+  background: var(--violeta); color: var(--blanco);
+  border-radius: 16px; padding: 20px 24px;
+  display: flex; align-items: center; gap: 20px;
+  max-width: 640px; margin-bottom: 28px;
+}
+.legal-score-numero {
+  font-size: 1.8rem; font-weight: 800; font-variant-numeric: tabular-nums;
+  width: 64px; height: 64px; border-radius: 50%; flex: none;
+  border: 3px solid var(--menta); color: var(--menta);
+  display: flex; align-items: center; justify-content: center;
+}
+.tarjeta-legal-score strong { display: block; font-size: 1rem; margin-bottom: 4px; }
+.tarjeta-legal-score p { font-size: 0.85rem; color: rgba(255,255,255,0.75); }
+
+.accesos-cliente {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 14px; max-width: 900px;
+}
+.tarjeta-acceso {
+  background: var(--blanco); border: 1px solid var(--panel-linea); border-radius: 16px;
+  padding: 18px; display: flex; flex-direction: column; gap: 4px;
+}
+.tarjeta-acceso-icono { font-size: 1.6rem; margin-bottom: 6px; }
+.tarjeta-acceso strong { font-size: 0.95rem; }
+.tarjeta-acceso p { font-size: 0.8rem; color: var(--panel-gris); line-height: 1.4; }
+.chip-proximamente {
+  align-self: flex-start; margin-top: 8px;
+  font-size: 0.64rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase;
+  background: rgba(80,0,186,0.08); color: var(--violeta); padding: 3px 8px; border-radius: 999px;
+}
 
 /* ═══════════ Bienvenida (post-registro, PLT-001 regla 2) ═══════════ */
 /* Fondo menta: es el mismo color que usa la seccion "hola" de la landing --
