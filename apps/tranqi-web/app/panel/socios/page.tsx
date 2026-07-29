@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Users } from "lucide-react";
 import { listarSolicitudes } from "../../../modulos/socios/consultas";
 
 export const metadata: Metadata = { title: "Socios — tranqi" };
@@ -26,7 +27,10 @@ export default async function PaginaSocios() {
           SuperAdmin sin pasar por Socios. */}
 
       {solicitudes.length === 0 ? (
-        <p>Todavía no hay solicitudes de socios.</p>
+        <div className="estado-vacio">
+          <Users aria-hidden="true" strokeWidth={1.6} />
+          <p>Todavía no hay solicitudes de socios.</p>
+        </div>
       ) : (
         <div className="tabla-panel-envoltura">
         <table className="tabla-panel">

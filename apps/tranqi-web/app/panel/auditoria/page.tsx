@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { ShieldCheck } from "lucide-react";
 import { listarAuditoria } from "../../../modulos/socios/consultas";
 
 export const metadata: Metadata = { title: "Auditoría — tranqi" };
@@ -16,7 +17,10 @@ export default async function PaginaAuditoria() {
       </p>
 
       {registros.length === 0 ? (
-        <p>Sin registros de auditoría todavía.</p>
+        <div className="estado-vacio">
+          <ShieldCheck aria-hidden="true" strokeWidth={1.6} />
+          <p>Sin registros de auditoría todavía.</p>
+        </div>
       ) : (
         <div className="tabla-panel-envoltura">
         <table className="tabla-panel">

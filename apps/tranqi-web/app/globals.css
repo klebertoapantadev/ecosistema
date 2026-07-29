@@ -482,7 +482,20 @@ p { line-height: 1.55; }
   border-bottom: 1px solid var(--panel-linea);
 }
 .tabla-panel td { font-variant-numeric: tabular-nums; }
+.tabla-panel tbody tr { transition: background 0.1s; }
+.tabla-panel tbody tr:hover { background: #FAFAF9; }
 .tabla-panel select { padding: 7px 9px; border-radius: 8px; border: 1px solid var(--panel-linea); font-family: inherit; }
+
+/* Estado vacío: reemplaza el <p> suelto ("todavía no hay...") en listas
+   (Socios, Auditoría) -- icono + mensaje, mismo tratamiento sobrio que el
+   resto del panel (sin ilustración, sin color de marca fuera de lugar). */
+.estado-vacio {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 8px;
+  padding: 28px 20px; background: var(--blanco); border: 1px dashed var(--panel-linea);
+  border-radius: 16px; color: var(--panel-gris); max-width: 480px;
+}
+.estado-vacio svg { width: 22px; height: 22px; color: var(--panel-gris); }
+.estado-vacio p { font-size: 0.9rem; margin: 0; }
 
 /* ═══════════ Inicio de cliente (panel, temporal) ═══════════
    Placeholder visual mientras se definen TRQ-xxx propios de cada acceso --
@@ -533,11 +546,6 @@ p { line-height: 1.55; }
 }
 
 /* ═══════════ Socios (TRQ-001: solicitud de registro de socio abogado) ═══════════ */
-.subnav-socios { display: flex; gap: 18px; margin-bottom: 20px; font-size: 0.92rem; }
-.subnav-socios a { color: var(--panel-gris); text-decoration: none; font-weight: 600; }
-.subnav-socios a:hover { color: var(--violeta); }
-.subnav-activo { font-weight: 700; color: var(--negro); border-bottom: 2px solid var(--lavanda); padding-bottom: 2px; }
-
 .form-solicitud-socio { max-width: 640px; }
 .form-solicitud-socio h2 { font-size: 1.05rem; font-weight: 800; margin-top: 12px; }
 .fila-dos-columnas { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
