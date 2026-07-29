@@ -353,9 +353,11 @@ p { line-height: 1.55; }
 .btn-google {
   padding: 13px 20px; border-radius: 8px; border: 1.5px solid var(--negro);
   background: var(--blanco); font-weight: 700; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 10px;
 }
 .btn-google:hover { background: var(--menta); }
 .btn-google:disabled { opacity: 0.5; cursor: wait; }
+.logo-google { width: 20px; height: 20px; flex: none; }
 .separador { font-size: 0.82rem; color: rgba(17,17,17,0.5); }
 
 .aviso-terminos { font-size: 0.78rem; color: rgba(17,17,17,0.55); text-align: center; margin-top: -6px; }
@@ -610,6 +612,48 @@ p { line-height: 1.55; }
 .icono-verificado { color: var(--esmeralda); }
 .icono-no-verificado { color: var(--panel-gris); }
 .icono-enlace-externo { display: inline; width: 13px; height: 13px; vertical-align: -1px; margin-left: 1px; }
+
+/* ═══════════ Auditoría: lista expandible (no tabla) ═══════════
+   Un diff de campos no cabe bien en columnas fijas -- cada fila es un
+   <details> nativo (sin JS) que expande el detalle completo del cambio. */
+.lista-auditoria { list-style: none; display: flex; flex-direction: column; gap: 1px; max-width: 900px; }
+.fila-auditoria {
+  background: var(--blanco); border: 1px solid var(--panel-linea);
+}
+.fila-auditoria + .fila-auditoria { border-top: none; }
+.fila-auditoria:first-child { border-radius: 16px 16px 0 0; }
+.fila-auditoria:last-child { border-radius: 0 0 16px 16px; }
+.fila-auditoria:only-child { border-radius: 16px; }
+.fila-auditoria summary {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  padding: 13px 16px; cursor: pointer; list-style: none; font-size: 0.88rem;
+}
+.fila-auditoria summary::-webkit-details-marker { display: none; }
+.fila-auditoria summary::before {
+  content: "▸"; color: var(--panel-gris); font-size: 0.7rem; transition: transform 0.15s;
+}
+.fila-auditoria[open] summary::before { transform: rotate(90deg); }
+.fila-auditoria summary:hover { background: #FAFAF9; }
+.fila-auditoria summary strong { font-size: 0.88rem; }
+.id-registro {
+  font-family: ui-monospace, monospace; font-size: 0.75rem; color: var(--panel-gris);
+  background: var(--panel-linea-suave); padding: 2px 6px; border-radius: 6px;
+}
+.chip-operacion {
+  font-size: 0.68rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase;
+  padding: 4px 10px; border-radius: 999px; width: fit-content;
+}
+.chip-operacion-INSERT { background: rgba(5,135,110,0.12); color: var(--esmeralda); }
+.chip-operacion-UPDATE { background: #FEF3C7; color: #92400E; }
+.chip-operacion-DELETE { background: rgba(176,0,32,0.08); color: var(--peligro, #B00020); }
+.diferencias-auditoria {
+  margin: 0; padding: 4px 16px 16px 34px; display: flex; flex-direction: column; gap: 8px;
+  border-top: 1px solid var(--panel-linea-suave);
+}
+.diferencias-auditoria > div { display: flex; flex-direction: column; gap: 2px; font-size: 0.85rem; }
+.diferencias-auditoria dt { font-weight: 700; color: var(--panel-gris); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em; }
+.diferencias-auditoria dd { margin: 0; word-break: break-word; }
+.diferencias-auditoria dd s { color: var(--panel-gris); }
 
 /* ═══════════ MFA (administradores de Tranqi -- panel Socios) ═══════════ */
 .pagina-mfa {

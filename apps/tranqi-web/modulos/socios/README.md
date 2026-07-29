@@ -59,6 +59,12 @@ y [`especificacion-tecnica.md`](../../../../gobernanza/productos/tranqi/especifi
     (`app/panel/auditoria/layout.tsx`, replicado explícitamente al mover la ruta fuera del árbol que lo
     heredaba). Quién decidió una solicitud ya quedaba registrado en `trq_revision_solicitud.rev_admin_id`;
     esta vista es la bitácora completa de cambios (INSERT/UPDATE/DELETE) sobre las 8 tablas de socios.
+    **Detalle expandible** (2026-07-29) — cada fila es un `<details>` nativo (sin JS) que al abrirse
+    muestra: el id corto del registro (mapa `PK_POR_TABLA` explícito en `app/panel/auditoria/page.tsx`,
+    ya que Postgres no garantiza el orden de claves de un `jsonb` para inferir la PK del orden de
+    columnas) y, para `UPDATE`, el diff campo por campo entre `reg_datos_anteriores`/`reg_datos_nuevos`
+    (se omiten `*_creado_en`/`*_actualizado_en`, redundantes con la columna Fecha); para `INSERT`/`DELETE`,
+    el registro completo. Antes solo se veía "tabla + operación", sin saber qué cambió ni en qué fila.
 
 ## Decisiones de alcance tomadas en esta implementación
 
