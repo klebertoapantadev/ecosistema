@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { MessageCircle, ClipboardList, Scale, Users, FolderOpen, CreditCard, Bell, Landmark, type LucideIcon } from "lucide-react";
 import { obtenerPerfilActual, obtenerWidgetsVisibles, obtenerSaludo } from "@eco/identidad";
 
 export const metadata: Metadata = { title: "Panel — tranqi" };
@@ -9,15 +10,18 @@ const NEGOCIO = "tranqi";
 // Abogados + Tecnologia Juridica + Financiamiento Legal, los 3 pilares de
 // la landing). Temporal hasta tener PLT-xxx/TRQ-xxx propios de cada uno --
 // por eso son tarjetas sin destino real ("Proximamente"), no enlaces rotos.
-const ACCESOS_CLIENTE = [
-  { icono: "💬", nombre: "Asistente Legal IA", detalle: "Cuéntanos tu problema, te orientamos" },
-  { icono: "📋", nombre: "Mis Trámites", detalle: "Consultas y gestiones en curso" },
-  { icono: "⚖️", nombre: "Seguimiento de mi caso", detalle: "Estado y próximos pasos" },
-  { icono: "👤", nombre: "Mis Abogados", detalle: "Tu red de confianza" },
-  { icono: "📁", nombre: "Documentos", detalle: "Contratos, poderes, escrituras" },
-  { icono: "💳", nombre: "Mis Pagos", detalle: "Financiamiento y facturas" },
-  { icono: "🔔", nombre: "Recordatorios", detalle: "Vencimientos y plazos" },
-  { icono: "🏛️", nombre: "Notarías y Multas", detalle: "Trámites rápidos" },
+// Iconos lucide-react (trazo fino, sin relleno) en vez de emoji -- mismo
+// registro visual que los iconos SVG de las maquetas de referencia
+// (gobernanza/productos/tranqi/maquetas/*.html).
+const ACCESOS_CLIENTE: { icono: LucideIcon; nombre: string; detalle: string }[] = [
+  { icono: MessageCircle, nombre: "Asistente Legal IA", detalle: "Cuéntanos tu problema, te orientamos" },
+  { icono: ClipboardList, nombre: "Mis Trámites", detalle: "Consultas y gestiones en curso" },
+  { icono: Scale, nombre: "Seguimiento de mi caso", detalle: "Estado y próximos pasos" },
+  { icono: Users, nombre: "Mis Abogados", detalle: "Tu red de confianza" },
+  { icono: FolderOpen, nombre: "Documentos", detalle: "Contratos, poderes, escrituras" },
+  { icono: CreditCard, nombre: "Mis Pagos", detalle: "Financiamiento y facturas" },
+  { icono: Bell, nombre: "Recordatorios", detalle: "Vencimientos y plazos" },
+  { icono: Landmark, nombre: "Notarías y Multas", detalle: "Trámites rápidos" },
 ];
 
 export default async function PaginaPanel() {
@@ -57,7 +61,7 @@ export default async function PaginaPanel() {
       <div className="accesos-cliente">
         {ACCESOS_CLIENTE.map((a) => (
           <div key={a.nombre} className="tarjeta-acceso">
-            <span className="tarjeta-acceso-icono" aria-hidden="true">{a.icono}</span>
+            <a.icono className="tarjeta-acceso-icono" aria-hidden="true" strokeWidth={1.6} />
             <strong>{a.nombre}</strong>
             <p>{a.detalle}</p>
             <span className="chip-proximamente">Próximamente</span>

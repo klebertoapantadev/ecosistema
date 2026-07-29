@@ -511,8 +511,17 @@ p { line-height: 1.55; }
 .tarjeta-acceso {
   background: var(--blanco); border: 1px solid var(--panel-linea); border-radius: 16px;
   padding: 18px; display: flex; flex-direction: column; gap: 4px;
+  transition: border-color 0.15s, transform 0.15s;
 }
-.tarjeta-acceso-icono { font-size: 1.6rem; margin-bottom: 6px; }
+/* filo violeta + leve elevacion al pasar el mouse -- sin sombra, la
+   jerarquia la da el borde y el movimiento, no un blur (sistema-visual §5) */
+.tarjeta-acceso:hover { border-color: var(--violeta); transform: translateY(-2px); }
+.tarjeta-acceso-icono {
+  width: 34px; height: 34px; padding: 7px; box-sizing: border-box; margin-bottom: 8px;
+  border-radius: 9px; background: var(--panel-linea-suave); color: var(--violeta);
+  transition: background 0.15s, color 0.15s;
+}
+.tarjeta-acceso:hover .tarjeta-acceso-icono { background: var(--menta); color: var(--esmeralda); }
 .tarjeta-acceso strong { font-size: 0.95rem; }
 .tarjeta-acceso p { font-size: 0.8rem; color: var(--panel-gris); line-height: 1.4; }
 .chip-proximamente {
@@ -582,6 +591,15 @@ p { line-height: 1.55; }
   font-size: 0.62rem; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase;
   background: rgba(80,0,186,0.08); color: var(--violeta); padding: 2px 6px; border-radius: 999px; margin-left: 4px;
 }
+
+/* Iconos lucide-react inline (reemplazan ✅/❌/↗ de texto) -- ver
+   gobernanza/productos/tranqi/sistema-visual.md, mismo registro de trazo
+   fino que usan las maquetas de referencia. */
+.linea-verificacion { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.icono-verificado, .icono-no-verificado { width: 17px; height: 17px; flex: none; }
+.icono-verificado { color: var(--esmeralda); }
+.icono-no-verificado { color: var(--panel-gris); }
+.icono-enlace-externo { display: inline; width: 13px; height: 13px; vertical-align: -1px; margin-left: 1px; }
 
 /* ═══════════ MFA (administradores de Tranqi -- panel Socios) ═══════════ */
 .pagina-mfa {

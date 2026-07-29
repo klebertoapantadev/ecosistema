@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { CheckCircle2, XCircle, ExternalLink } from "lucide-react";
 import { obtenerSolicitudDetalle, obtenerAbogadoPorSolicitud } from "../../../../modulos/socios/consultas";
 import { AccionesSolicitud } from "../../../../modulos/socios/componentes/AccionesSolicitud";
 import { SubirDocumentoRevision } from "../../../../modulos/socios/componentes/SubirDocumentoRevision";
@@ -97,13 +98,27 @@ export default async function PaginaDetalleSocio({ params }: { params: Promise<{
 
       <div className="tarjeta-panel detalle-solicitud">
         <h2>Verificación asistida (autodeclarada por el solicitante)</h2>
-        <p>
-          {solicitud.ssc_enlace_senescyt_verificado ? "✅" : "❌"} Título verificado en{" "}
-          <a href={ENLACES_VERIFICACION.senescyt} target="_blank" rel="noopener noreferrer">SENESCYT ↗</a>
+        <p className="linea-verificacion">
+          {solicitud.ssc_enlace_senescyt_verificado ? (
+            <CheckCircle2 className="icono-verificado" aria-hidden="true" strokeWidth={1.8} />
+          ) : (
+            <XCircle className="icono-no-verificado" aria-hidden="true" strokeWidth={1.8} />
+          )}
+          Título verificado en{" "}
+          <a href={ENLACES_VERIFICACION.senescyt} target="_blank" rel="noopener noreferrer">
+            SENESCYT <ExternalLink className="icono-enlace-externo" aria-hidden="true" strokeWidth={2} />
+          </a>
         </p>
-        <p>
-          {solicitud.ssc_enlace_foro_verificado ? "✅" : "❌"} Matrícula verificada en el{" "}
-          <a href={ENLACES_VERIFICACION.foroAbogados} target="_blank" rel="noopener noreferrer">Foro de Abogados ↗</a>
+        <p className="linea-verificacion">
+          {solicitud.ssc_enlace_foro_verificado ? (
+            <CheckCircle2 className="icono-verificado" aria-hidden="true" strokeWidth={1.8} />
+          ) : (
+            <XCircle className="icono-no-verificado" aria-hidden="true" strokeWidth={1.8} />
+          )}
+          Matrícula verificada en el{" "}
+          <a href={ENLACES_VERIFICACION.foroAbogados} target="_blank" rel="noopener noreferrer">
+            Foro de Abogados <ExternalLink className="icono-enlace-externo" aria-hidden="true" strokeWidth={2} />
+          </a>
         </p>
         <p className="aviso-borrador">Esto es autodeclarado por el solicitante — confirma tú también antes de aceptar.</p>
       </div>
@@ -121,7 +136,8 @@ export default async function PaginaDetalleSocio({ params }: { params: Promise<{
                 {" — "}
                 {d.url ? (
                   <a href={d.url} target="_blank" rel="noopener noreferrer">
-                    {d.dcs_nombre_archivo ?? "ver documento"} ↗
+                    {d.dcs_nombre_archivo ?? "ver documento"}{" "}
+                    <ExternalLink className="icono-enlace-externo" aria-hidden="true" strokeWidth={2} />
                   </a>
                 ) : (
                   <span className="historial-fecha">enlace no disponible</span>

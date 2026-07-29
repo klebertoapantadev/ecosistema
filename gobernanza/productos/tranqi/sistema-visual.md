@@ -77,6 +77,11 @@ y la superficie oscura no se ensucia.
 - Líneas: 1 px. La jerarquía la dan el peso tipográfico y el espacio, no la sombra.
 - Densidad: la pantalla de cliente respira; la del abogado es una herramienta de
   trabajo y admite más densidad y cifras tabulares.
+- **Iconos: `lucide-react` (2026-07-28), no emoji.** Mismo registro de trazo fino
+  (`strokeWidth` 1.6–2, sin relleno) que los SVG inline de las maquetas de
+  referencia — ver §9. Un emoji renderiza distinto por SO/navegador y no se puede
+  afinar (grosor de trazo, tamaño exacto, color); un icono de trazo sí. Sustituye
+  los emoji que existían en `/panel` y en las pantallas de socios.
 
 ## 6. Estados
 

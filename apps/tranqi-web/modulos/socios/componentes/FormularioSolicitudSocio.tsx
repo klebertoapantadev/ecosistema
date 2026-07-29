@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { ExternalLink } from "lucide-react";
 import { crearClienteNavegador } from "@eco/supabase";
 import { enviarSolicitudSocio, registrarDocumentoSocio } from "../acciones";
 import { ENLACES_VERIFICACION, type DatosExperienciaLaboral } from "../esquema";
@@ -224,7 +225,7 @@ export function FormularioSolicitudSocio({ usuarioId, materias, provincias, corr
         <input type="checkbox" checked={senescytVerificado} onChange={(e) => setSenescytVerificado(e.target.checked)} />
         Verifiqué mi título en{" "}
         <a href={ENLACES_VERIFICACION.senescyt} target="_blank" rel="noopener noreferrer">
-          SENESCYT ↗
+          SENESCYT <ExternalLink className="icono-enlace-externo" aria-hidden="true" strokeWidth={2} />
         </a>
       </label>
       <label>
@@ -235,7 +236,7 @@ export function FormularioSolicitudSocio({ usuarioId, materias, provincias, corr
         <input type="checkbox" checked={foroVerificado} onChange={(e) => setForoVerificado(e.target.checked)} />
         Verifiqué mi matrícula en el{" "}
         <a href={ENLACES_VERIFICACION.foroAbogados} target="_blank" rel="noopener noreferrer">
-          Foro de Abogados ↗
+          Foro de Abogados <ExternalLink className="icono-enlace-externo" aria-hidden="true" strokeWidth={2} />
         </a>
       </label>
       <label>
