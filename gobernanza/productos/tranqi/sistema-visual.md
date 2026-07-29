@@ -130,8 +130,11 @@ reescribe siguiendo la estructura de módulo obligatoria.
 
 - `maqueta-cliente.html` — pantalla principal del cliente.
 - `maqueta-abogado.html` — escritorio del abogado.
+- `maqueta-equipo.html` — sección "Nuestro equipo" de la landing pública (TRQ-002), con acento
+  esmeralda/lima del lado abogado. A diferencia de las dos anteriores, esta sí es la landing web
+  actual (`apps/tranqi-web/app/page.tsx`), no una futura app nativa.
 
-Ambas maquetas son de las futuras apps nativas Cliente/Abogado — más ricas
+Las dos primeras maquetas son de las futuras apps nativas Cliente/Abogado — más ricas
 (buscador, notificaciones, mensajes, agenda) que el panel web de hoy, que no
 tiene esa funcionalidad construida todavía. Lo que sí se adoptó ya en
 `apps/tranqi-web` (2026-07-28): el quiebre responsive del rail (`≤860px`, el

@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>tranqi · Nuestro equipo — sección landing pública</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+  /* ═══════════════════════════════════════════════════════════════════
+     tranqi · NUESTRO EQUIPO — sección de la landing pública (TRQ-002)
+     Registro de landing (color pleno), pero con el acento reservado al
+     lado abogado en sistema-visual.md §2:
+       · esmeralda #05876E → identidad y acción del lado abogado
+       · lima      #D8FFB3 → acento sobre fondo oscuro, lado abogado
+     Esta maqueta es material de decisión, no código a copiar — en
+     apps/tranqi-web/app/page.tsx se reescribe como sección React dentro
+     de la estructura de secciones existente (ribbon + reveal + buddie),
+     y las tarjetas se alimentan de tranqui_legal.trq_abogado (solo
+     abg_estado = 'verificado' y abg_visible_publico = true), no de
+     texto fijo como aquí.
+     ═══════════════════════════════════════════════════════════════════ */
+  :root {
+    --esmeralda: #05876E;
+    --esmeralda-tinta: #052A23;
+    --esmeralda-alta: #0A3A30;
+    --lima: #D8FFB3;
+    --lima-tinta: #06251D;
+
+    --blanco: #FFFFFF;
+    --linea: rgba(216, 255, 179, 0.16);
+    --texto-muted: rgba(255, 255, 255, 0.62);
+    --texto-tenue: rgba(255, 255, 255, 0.4);
+
+    --r-sm: 8px;
+    --r-lg: 16px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    font-family: "Archivo", system-ui, sans-serif;
+    background: var(--esmeralda-tinta);
+    color: var(--blanco);
+    -webkit-font-smoothing: antialiased;
+    padding: clamp(28px, 6vw, 88px) clamp(18px, 5vw, 64px) clamp(64px, 8vw, 96px);
+    overflow-x: hidden;
+  }
+  img, svg { display: block; max-width: 100%; }
+  a { color: inherit; text-decoration: none; }
+
+  .cinta {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.55;
+    z-index: 0;
+  }
+
+  .lienzo {
+    position: relative;
+    z-index: 1;
+    max-width: 1180px;
+    margin: 0 auto;
+  }
+
+  .rotulo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--lima);
+    margin: 0 0 18px;
+  }
+  .rotulo::before {
+    content: "";
+    width: 22px;
+    height: 1px;
+    background: var(--lima);
+  }
+
+  h1 {
+    font-size: clamp(2.1rem, 4.6vw, 3.4rem);
+    line-height: 1.06;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    margin: 0 0 18px;
+    max-width: 15ch;
+    text-wrap: balance;
+  }
+  h1 i { color: var(--lima); font-style: normal; }
+
+  .intro {
+    max-width: 56ch;
+    font-size: 1.05rem;
+    line-height: 1.6;
+    color: var(--texto-muted);
+    margin: 0 0 44px;
+  }
+
+  .cuadricula {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 22px;
+  }
+
+  .card {
+    background: var(--esmeralda-alta);
+    border: 1px solid var(--linea);
+    border-radius: var(--r-lg);
+    overflow: hidden;
+    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.35s;
+  }
+  @media (hover: hover) {
+    .card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(216, 255, 179, 0.4);
+    }
+  }
+
+  .retrato {
+    position: relative;
+    aspect-ratio: 4 / 5;
+    background:
+      radial-gradient(120% 90% at 30% 0%, rgba(216, 255, 179, 0.16), transparent 60%),
+      linear-gradient(165deg, #0C4738 0%, #062F26 72%);
+  }
+
+  .etiqueta {
+    position: absolute;
+    top: 14px;
+    left: 14px;
+    background: var(--lima);
+    color: var(--lima-tinta);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    padding: 6px 12px;
+    border-radius: 999px;
+  }
+
+  .verificado {
+    position: absolute;
+    right: 14px;
+    bottom: 14px;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: var(--esmeralda);
+    border: 2px solid var(--esmeralda-alta);
+    display: grid;
+    place-items: center;
+  }
+  .verificado svg { width: 15px; height: 15px; }
+
+  .silueta {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+  }
+  .silueta svg { width: 54%; opacity: 0.9; }
+
+  .datos {
+    padding: 18px 18px 20px;
+  }
+
+  .nombre {
+    font-size: 1.06rem;
+    font-weight: 800;
+    margin: 0 0 2px;
+  }
+
+  .cargo {
+    font-size: 0.86rem;
+    font-weight: 600;
+    color: var(--lima);
+    margin: 0 0 12px;
+  }
+
+  .fila-meta {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    padding-top: 12px;
+    border-top: 1px solid var(--linea);
+    font-size: 0.8rem;
+    color: var(--texto-muted);
+  }
+  .fila-meta b {
+    font-variant-numeric: tabular-nums;
+    color: var(--blanco);
+    font-weight: 800;
+  }
+
+  .pie {
+    margin-top: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    flex-wrap: wrap;
+    padding-top: 28px;
+    border-top: 1px solid var(--linea);
+  }
+
+  .confianza {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.82rem;
+    color: var(--texto-tenue);
+  }
+  .confianza svg { width: 16px; height: 16px; flex-shrink: 0; color: var(--lima); }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--lima);
+    color: var(--lima-tinta);
+    font-weight: 800;
+    font-size: 0.9rem;
+    padding: 13px 22px;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+
+  .nota {
+    max-width: 1180px;
+    margin: 56px auto 0;
+    padding-top: 24px;
+    border-top: 1px dashed var(--linea);
+    font-size: 0.82rem;
+    line-height: 1.6;
+    color: var(--texto-tenue);
+  }
+  .nota b { color: var(--texto-muted); }
+  .nota code {
+    font-family: ui-monospace, monospace;
+    color: var(--lima);
+  }
+
+  @media (max-width: 980px) {
+    .cuadricula { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (max-width: 560px) {
+    .cuadricula { grid-template-columns: 1fr; gap: 16px; }
+    .pie { flex-direction: column; align-items: flex-start; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .card { transition: none; }
+  }
+</style>
+</head>
+<body>
+
+<svg class="cinta" viewBox="0 0 1440 1400" preserveAspectRatio="none" aria-hidden="true">
+  <path d="M -40 120 C 300 40 520 260 480 480 C 440 700 120 680 160 900 C 200 1120 560 1080 620 1300"
+        fill="none" stroke="#D8FFB3" stroke-width="1" opacity="0.5"/>
+  <path d="M 1480 200 C 1180 260 1180 520 1360 620 C 1520 700 1420 940 1160 940 C 940 940 900 1160 1120 1260"
+        fill="none" stroke="#05876E" stroke-width="1" opacity="0.6"/>
+</svg>
+
+<div class="lienzo">
+  <p class="rotulo">Nuestro equipo</p>
+  <h1>Abogados reales, <i>verificados</i>, listos para acompañarte.</h1>
+  <p class="intro">Cada perfil de la red tranqi pasa por título verificado en SENESCYT y matrícula
+    confirmada en el Foro de Abogados antes de aparecer aquí. Esta cuadrícula es el concepto de
+    presentación — cada tarjeta se llena con datos reales del socio ya aprobado.</p>
+
+  <div class="cuadricula">
+
+    <article class="card">
+      <div class="retrato">
+        <span class="etiqueta">Derecho Civil</span>
+        <div class="silueta">
+          <svg viewBox="0 0 100 100" fill="none" stroke="#D8FFB3" stroke-width="1.6">
+            <circle cx="50" cy="38" r="19"/>
+            <path d="M14 92c0-24 16-38 36-38s36 14 36 38"/>
+          </svg>
+        </div>
+        <span class="verificado" title="Verificado">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#06251D" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 6 9 17l-5-5"/>
+          </svg>
+        </span>
+      </div>
+      <div class="datos">
+        <p class="nombre">Mateo Salazar</p>
+        <p class="cargo">Socio fundador</p>
+        <div class="fila-meta"><span>Quito · 4 provincias</span><b>12 años</b></div>
+      </div>
+    </article>
+
+    <article class="card">
+      <div class="retrato">
+        <span class="etiqueta">Derecho Laboral</span>
+        <div class="silueta">
+          <svg viewBox="0 0 100 100" fill="none" stroke="#D8FFB3" stroke-width="1.6">
+            <circle cx="50" cy="38" r="19"/>
+            <path d="M14 92c0-24 16-38 36-38s36 14 36 38"/>
+          </svg>
+        </div>
+        <span class="verificado" title="Verificado">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#06251D" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 6 9 17l-5-5"/>
+          </svg>
+        </span>
+      </div>
+      <div class="datos">
+        <p class="nombre">Camila Rosero</p>
+        <p class="cargo">Abogada litigante</p>
+        <div class="fila-meta"><span>Guayaquil · 2 provincias</span><b>8 años</b></div>
+      </div>
+    </article>
+
+    <article class="card">
+      <div class="retrato">
+        <span class="etiqueta">Derecho Penal</span>
+        <div class="silueta">
+          <svg viewBox="0 0 100 100" fill="none" stroke="#D8FFB3" stroke-width="1.6">
+            <circle cx="50" cy="38" r="19"/>
+            <path d="M14 92c0-24 16-38 36-38s36 14 36 38"/>
+          </svg>
+        </div>
+        <span class="verificado" title="Verificado">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#06251D" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 6 9 17l-5-5"/>
+          </svg>
+        </span>
+      </div>
+      <div class="datos">
+        <p class="nombre">Andrés Villacís</p>
+        <p class="cargo">Abogado litigante</p>
+        <div class="fila-meta"><span>Cuenca · 3 provincias</span><b>15 años</b></div>
+      </div>
+    </article>
+
+    <article class="card">
+      <div class="retrato">
+        <span class="etiqueta">Derecho de Familia</span>
+        <div class="silueta">
+          <svg viewBox="0 0 100 100" fill="none" stroke="#D8FFB3" stroke-width="1.6">
+            <circle cx="50" cy="38" r="19"/>
+            <path d="M14 92c0-24 16-38 36-38s36 14 36 38"/>
+          </svg>
+        </div>
+        <span class="verificado" title="Verificado">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#06251D" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 6 9 17l-5-5"/>
+          </svg>
+        </span>
+      </div>
+      <div class="datos">
+        <p class="nombre">Fernanda Cevallos</p>
+        <p class="cargo">Asesora legal</p>
+        <div class="fila-meta"><span>Quito · 1 provincia</span><b>6 años</b></div>
+      </div>
+    </article>
+
+  </div>
+
+  <div class="pie">
+    <p class="confianza">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 2 4 6v6c0 5 3.4 8.5 8 10 4.6-1.5 8-5 8-10V6z"/>
+        <path d="M9 12l2 2 4-4"/>
+      </svg>
+      Título y matrícula verificados antes de aparecer en la red
+    </p>
+    <a class="btn" href="#red">
+      ¿Eres abogado? Únete a la red
+      <svg viewBox="0 0 24 24" fill="none" stroke="#06251D" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+    </a>
+  </div>
+
+  <p class="nota"><b>Nota de implementación (TRQ-002):</b> concepto visual únicamente — nombres y
+    especialidades son de ejemplo. La sección real en <code>apps/tranqi-web/app/page.tsx</code> se
+    inserta entre <code>#red</code> y <code>#contacto</code> siguiendo el mismo patrón de sección
+    (ribbon + reveal + buddie) y se alimenta desde <code>tranqui_legal.trq_abogado</code> (solo
+    <code>abg_estado = 'verificado'</code> y <code>abg_visible_publico = true</code>, opt-in del
+    abogado) vía una vista pública acotada a columnas seguras — nunca lectura abierta de la tabla
+    base. Ver <a href="../especificacion-funcional.md">especificacion-funcional.md</a> y
+    <a href="../sistema-visual.md">sistema-visual.md</a> §2.</p>
+</div>
+
+</body>
+</html>
