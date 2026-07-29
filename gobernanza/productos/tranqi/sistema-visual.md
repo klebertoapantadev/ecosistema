@@ -70,6 +70,13 @@ La opción activa se marca con un **filo de 2 px** en el color de acento más un
 fondo apenas más claro, no con un relleno saturado: el color entra por el borde
 y la superficie oscura no se ensucia.
 
+Cada enlace lleva icono (`lucide-react`, ver §5) + texto. En `≤860px` el rail
+ya es horizontal con scroll (ver §9); en `≤600px` el texto se oculta
+**solo visualmente** (`.etiqueta-nav`, técnica de clip-rect, no `display:none`)
+y queda solo el icono — sigue en el DOM para lector de pantalla y como
+`title` en desktop. Se adoptó al crecer el rail a 6 enlaces (2026-07-28):
+con texto completo el scroll horizontal era largo e incómodo con el pulgar.
+
 ## 5. Escala y forma
 
 - Radios: 8 px (controles), 12 px (bloques), 16 px (tarjetas). Píldora (999 px)

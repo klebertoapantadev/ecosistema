@@ -1,9 +1,17 @@
 import { redirect } from "next/navigation";
-import { obtenerPerfilActual, obtenerWidgetsVisibles, cerrarSesion, asegurarMembresiaCliente } from "@eco/identidad";
+import { Home, Users, UserCog, Settings, ShieldCheck, CircleUser, type LucideIcon } from "lucide-react";
+import { obtenerPerfilActual, obtenerWidgetsVisibles, asegurarMembresiaCliente } from "@eco/identidad";
 import { EnlacePanel } from "./EnlacePanel";
 import { crearClienteServidor } from "@eco/supabase/servidor";
 
 const NEGOCIO = "tranqi";
+
+const ICONOS_WIDGET: Record<string, LucideIcon> = {
+  socios: Users,
+  gestion_usuarios: UserCog,
+  configuracion_negocio: Settings,
+  auditoria: ShieldCheck,
+};
 
 export default async function LayoutPanel({ children }: { children: React.ReactNode }) {
   const perfil = await obtenerPerfilActual();
@@ -28,23 +36,33 @@ export default async function LayoutPanel({ children }: { children: React.ReactN
         {/* div, no <nav>: el <nav> global de la landing es position:fixed y
             rompería este layout -- ver globals.css */}
         <div className="panel-nav-links">
-          <EnlacePanel href="/panel">Inicio</EnlacePanel>
-          {widgets.map((w) => (
-            <EnlacePanel key={w.wdg_clave} href={`/panel/${rutaDeWidget(w.wdg_clave)}`}>
-              {w.wdg_nombre}
-            </EnlacePanel>
-          ))}
-          <EnlacePanel href="/panel/cuenta">Mi cuenta</EnlacePanel>
+          <EnlacePanel href="/panel" icono={<Home className="icono-nav" aria-hidden="true" strokeWidth={1.8} />}>
+            Inicio
+          </EnlacePanel>
+          {widgets.map((w) => {
+            const IconoWidget = ICONOS_WIDGET[w.wdg_clave] ?? Home;
+            return (
+              <EnlacePanel
+                key={w.wdg_clave}
+                href={`/panel/${rutaDeWidget(w.wdg_clave)}`}
+                icono={<IconoWidget className="icono-nav" aria-hidden="true" strokeWidth={1.8} />}
+              >
+                {w.wdg_nombre}
+              </EnlacePanel>
+            );
+          })}
+          <EnlacePanel href="/panel/cuenta" icono={<CircleUser className="icono-nav" aria-hidden="true" strokeWidth={1.8} />}>
+            Mi cuenta
+          </EnlacePanel>
         </div>
         <div className="panel-usuario">
           {/* Identificador del usuario activo en el portal: el nombre que
-              confirmo en /bienvenida, no el correo crudo de Google. */}
+              confirmo en /bienvenida, no el correo crudo de Google. Cerrar
+              sesion vive en Mi cuenta (TRQ-001 correccion de UX) -- este
+              bloque ya solo identifica, no ejecuta acciones. */}
           <span className="nombre-usuario-activo">{[perfil.usu_nombres, perfil.usu_apellidos].filter(Boolean).join(" ")}</span>
           <span className="correo-usuario-activo">{perfil.usu_correo}</span>
           {perfil.usu_superadmin_plataforma && <span className="etiqueta-superadmin">SuperAdmin</span>}
-          <form action={cerrarSesionYRedirigir}>
-            <button type="submit" className="btn-mini">Cerrar sesión</button>
-          </form>
         </div>
       </aside>
       <main className="panel-contenido">{children}</main>
@@ -57,11 +75,6 @@ function rutaDeWidget(clave: string) {
   if (clave === "gestion_usuarios") return "usuarios";
   if (clave === "configuracion_negocio") return "configuracion";
   if (clave === "socios") return "socios";
+  if (clave === "auditoria") return "auditoria";
   return "";
-}
-
-async function cerrarSesionYRedirigir() {
-  "use server";
-  await cerrarSesion();
-  redirect("/");
 }

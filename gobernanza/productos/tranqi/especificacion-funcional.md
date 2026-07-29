@@ -52,8 +52,9 @@ decisiones de alcance se definieron directamente en la implementación — ver e
 - **Notificación por correo al decidir — solo modelada, envío real pendiente.** Se encola una fila en
   `comun_notificaciones.not_cola_correo` al aceptar/rechazar; no hay proveedor de correo transaccional
   configurado en el proyecto todavía.
-- **Auditoría** — `/panel/socios/auditoria` (solo `SUPERADMIN`), lee `comun_auditoria.aud_registro`.
-  Quién decidió cada solicitud ya queda en `trq_revision_solicitud.rev_admin_id`.
+- **Auditoría** — `/panel/auditoria` (sección propia del rail, no sub-pestaña de Socios), visible para
+  `ADMINISTRADOR` y `SUPERADMIN` de tranqi, lee `comun_auditoria.aud_registro`. Quién decidió cada
+  solicitud ya queda en `trq_revision_solicitud.rev_admin_id`.
 - **Pendiente:** cifrado real de cédula/matrícula (`pgp_sym_encrypt` con Supabase Vault — hoy protegidas
   solo por RLS, decisión de gestión de claves pendiente de análisis propio) y envío real de las
   notificaciones encoladas.

@@ -49,10 +49,15 @@ y [`especificacion-tecnica.md`](../../../../gobernanza/productos/tranqi/especifi
    proyecto todavía (ni Resend, ni SendGrid, ni ningún otro) — el envío real es trabajo pendiente una vez
    se decida el proveedor. Mismo patrón de "modelar ahora, conectar después" que ya se usó con
    `abg_mfa_verificado` y con los documentos antes de tener Storage.
-10. **Vista de auditoría** (`/panel/socios/auditoria`, 2026-07-28) — lee `comun_auditoria.aud_registro`
-    filtrado a `reg_esquema = 'tranqui_legal'`. Solo visible para `SUPERADMIN` de plataforma (política de
-    RLS ya existente, no nueva) — un `ADMINISTRADOR` de negocio normal no la ve, ve la página vacía sin
-    error. Quién decidió una solicitud ya quedaba registrado en `trq_revision_solicitud.rev_admin_id`;
+10. **Vista de auditoría** (`/panel/auditoria`, 2026-07-28; movida fuera de `/panel/socios/auditoria`
+    el mismo día — corrección de UX, ya no es una sub-pestaña de Socios sino su propia sección del rail) —
+    lee `comun_auditoria.aud_registro` filtrado a `reg_esquema = 'tranqui_legal'`. Visible para
+    `SUPERADMIN` de plataforma (política RLS original `aud_registro_superadmin_select`) y para
+    `ADMINISTRADOR` de tranqi (política nueva `aud_registro_administrador_tranqi_select`, acotada a
+    `reg_esquema = 'tranqui_legal'` — un administrador de tranqi no ve auditoría de otros negocios ni de
+    esquemas `comun_*`, eso sigue siendo solo-SuperAdmin). Mantiene el mismo gate `aal2` que Socios
+    (`app/panel/auditoria/layout.tsx`, replicado explícitamente al mover la ruta fuera del árbol que lo
+    heredaba). Quién decidió una solicitud ya quedaba registrado en `trq_revision_solicitud.rev_admin_id`;
     esta vista es la bitácora completa de cambios (INSERT/UPDATE/DELETE) sobre las 8 tablas de socios.
 
 ## Decisiones de alcance tomadas en esta implementación

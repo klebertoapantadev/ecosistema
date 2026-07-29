@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import { listarAuditoria } from "../../../../modulos/socios/consultas";
+import { listarAuditoria } from "../../../modulos/socios/consultas";
 
-export const metadata: Metadata = { title: "Auditoría de socios — tranqi" };
+export const metadata: Metadata = { title: "Auditoría — tranqi" };
 
 const ETIQUETA_OPERACION: Record<string, string> = { INSERT: "Creado", UPDATE: "Modificado", DELETE: "Eliminado" };
 
@@ -12,16 +11,12 @@ export default async function PaginaAuditoria() {
   return (
     <div>
       <h1>Auditoría</h1>
-      <nav className="subnav-socios">
-        <Link href="/panel/socios">Socios</Link>
-        <span className="subnav-activo">Auditoría</span>
-      </nav>
       <p className="historial-fecha">
-        Solo visible para SuperAdmin de plataforma. Cambios en las tablas de socios (`tranqui_legal`), más recientes primero.
+        Cambios en las tablas de tranqi (`tranqui_legal`), más recientes primero. Visible para Administrador y SuperAdmin.
       </p>
 
       {registros.length === 0 ? (
-        <p>Sin registros de auditoría todavía — o tu cuenta no es SuperAdmin.</p>
+        <p>Sin registros de auditoría todavía.</p>
       ) : (
         <div className="tabla-panel-envoltura">
         <table className="tabla-panel">

@@ -38,10 +38,15 @@ migración, sigue el patrón de `gestion_usuarios`/`configuracion_negocio`.
 compartido. Cola de correo, no envío — ver notas de seguridad. `trq_fn_decidir_solicitud()` encola una
 fila al aceptar/rechazar (`not_plantilla`: `socio_aceptado` | `socio_rechazado`).
 
-**Vista de auditoría** (`/panel/socios/auditoria`) lee `comun_auditoria.aud_registro` filtrado a
-`reg_esquema = 'tranqui_legal'` — sin tabla nueva, reutiliza la infraestructura de auditoría ya existente
-(`aud_fn_auditar_tabla()`, aplicado a las 8 tablas de socios desde su creación). RLS de `aud_registro` ya
-restringía a `SUPERADMIN` de plataforma (política preexistente, no nueva).
+**Vista de auditoría** (`/panel/auditoria`, movida fuera de `/panel/socios/auditoria` el 2026-07-28 —
+corrección de UX, es sección propia del rail, no sub-pestaña de Socios) lee `comun_auditoria.aud_registro`
+filtrado a `reg_esquema = 'tranqui_legal'` — sin tabla nueva, reutiliza la infraestructura de auditoría ya
+existente (`aud_fn_auditar_tabla()`, aplicado a las 8 tablas de socios desde su creación). RLS de
+`aud_registro` restringía a `SUPERADMIN` de plataforma (política preexistente); se sumó una política
+(`aud_registro_administrador_tranqi_select`) que también deja pasar a `ADMINISTRADOR` de tranqi, acotada a
+`reg_esquema = 'tranqui_legal'` — no ve auditoría de otros negocios ni de esquemas `comun_*`. Mantiene el
+gate `aal2` de Socios, replicado en `app/panel/auditoria/layout.tsx` (se perdía al salir del árbol de
+rutas que lo heredaba).
 
 El documento `Plan_Entregable_1_Tranqi_Identidad_Socios.md` referenciado aquí antes nunca se creó (no
 existe en el repo ni en su historial de git). Diseño completo, decisiones de alcance (MFA, cifrado,
@@ -53,7 +58,7 @@ documentos) y máquina de estados: ver
 - `comun_seguridad.seg_usuario` / `seg_membresia` — identidad y rol. ✅ Migrado y en uso (registro, bienvenida, gestión de usuarios, consentimiento de términos, baja de cuenta) — ver [`especificacion-tecnica.md` de Plataforma](../plataforma/especificacion-tecnica.md) §1 y §1.3.
 - `comun_configuracion.cfg_negocio` — ✅ Migrado y en uso (pantalla de configuración del negocio).
 - `comun_catalogo.cat_provincia` — ✅ Migrado (`20260728000001`), en uso (cobertura de socios). `cat_ciudad` sigue ❌ Pendiente.
-- `comun_auditoria` — vía `aud_fn_auditar_tabla()`. ✅ Migrado y aplicado también a las 8 tablas de `tranqui_legal` (`trq_*`) desde su creación — visible en `/panel/socios/auditoria`.
+- `comun_auditoria` — vía `aud_fn_auditar_tabla()`. ✅ Migrado y aplicado también a las 8 tablas de `tranqui_legal` (`trq_*`) desde su creación — visible en `/panel/auditoria`.
 
 ## Notas de seguridad específicas de Tranqi
 

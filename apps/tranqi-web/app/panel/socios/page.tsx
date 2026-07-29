@@ -21,10 +21,9 @@ export default async function PaginaSocios() {
   return (
     <div>
       <h1>Socios</h1>
-      <nav className="subnav-socios">
-        <span className="subnav-activo">Socios</span>
-        <Link href="/panel/socios/auditoria">Auditoría</Link>
-      </nav>
+      {/* Auditoría vivía aquí como subnav -- ahora es su propia sección
+          en el rail (app/panel/auditoria), visible a Administrador y
+          SuperAdmin sin pasar por Socios. */}
 
       {solicitudes.length === 0 ? (
         <p>Todavía no hay solicitudes de socios.</p>
