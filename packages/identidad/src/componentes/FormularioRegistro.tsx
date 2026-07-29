@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { registrarUsuario } from "../acciones";
 import { crearClienteNavegador } from "@eco/supabase";
+import { IconoGoogle } from "./IconoGoogle";
 
 export function FormularioRegistro({ negocio }: { negocio: string }) {
   const router = useRouter();
@@ -63,6 +64,7 @@ export function FormularioRegistro({ negocio }: { negocio: string }) {
   return (
     <div className="tarjeta-auth">
       <button type="button" className="btn-google" onClick={conGoogle} disabled={cargando}>
+        <IconoGoogle />
         Continuar con Google
       </button>
       <p className="aviso-terminos">

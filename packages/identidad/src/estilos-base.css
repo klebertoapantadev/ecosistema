@@ -35,6 +35,7 @@
 .btn-google {
   padding: 13px 20px; border-radius: 999px; border: 1.5px solid var(--eco-negro);
   background: var(--eco-blanco); font-weight: 700; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 10px;
 }
 .btn-google:hover { background: var(--eco-fondo); }
 .btn-google:disabled { opacity: 0.5; cursor: wait; }

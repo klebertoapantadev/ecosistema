@@ -45,6 +45,7 @@ h1, h2, h3, .fuente-display { font-family: var(--font-fraunces), Georgia, serif;
 .btn-google {
   padding: 13px 20px; border-radius: 999px; border: 1.5px solid var(--tinta);
   background: var(--blanco); font-weight: 700; cursor: pointer; color: var(--tinta);
+  display: flex; align-items: center; justify-content: center; gap: 10px;
 }
 .btn-google:hover { background: var(--crema); }
 .btn-google:disabled { opacity: 0.5; cursor: wait; }
