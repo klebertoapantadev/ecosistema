@@ -60,19 +60,25 @@ section {
 h1, h2 { font-weight: 800; letter-spacing: -0.025em; line-height: 1.02; }
 p { line-height: 1.55; }
 
-/* ── nav ── */
-nav {
+/* ── nav de la landing ──
+   Clase dedicada a propósito (no el tag <nav> a secas): un selector de
+   etiqueta se filtra a CUALQUIER <nav> del sitio, incluidos los <nav> del
+   panel (ej. subnav-socios) -- asi se descubrio el bug real de "la barra
+   superior no se ve en Socios": ese <nav> heredaba position:fixed,
+   z-index:60 y fondo violeta de esta regla, tapando/empujando la barra
+   negra real del panel. */
+.nav-landing {
   position: fixed; top: 0; left: 0; right: 0; z-index: 60;
   display: flex; align-items: center; justify-content: space-between;
   padding: 16px clamp(20px, 4vw, 48px);
   background: var(--violeta);
 }
-nav .logo img { height: 30px; width: auto; }
-nav .links { display: flex; gap: 30px; align-items: center; }
-nav .links a { color: var(--blanco); text-decoration: none; font-weight: 500; font-size: 0.94rem; }
-nav .links a:hover { color: var(--menta); }
-nav .links a.cta { background: var(--amarillo); color: var(--negro); font-weight: 700; padding: 10px 22px; border-radius: 999px; }
-nav .links a.cta:hover { background: var(--menta); }
+.nav-landing .logo img { height: 30px; width: auto; }
+.nav-landing .links { display: flex; gap: 30px; align-items: center; }
+.nav-landing .links a { color: var(--blanco); text-decoration: none; font-weight: 500; font-size: 0.94rem; }
+.nav-landing .links a:hover { color: var(--menta); }
+.nav-landing .links a.cta { background: var(--amarillo); color: var(--negro); font-weight: 700; padding: 10px 22px; border-radius: 999px; }
+.nav-landing .links a.cta:hover { background: var(--menta); }
 
 .btn {
   display: inline-block; font-weight: 700; font-size: 1.02rem; text-decoration: none;
@@ -193,7 +199,7 @@ nav .links a.cta:hover { background: var(--menta); }
 #contacto .pie { margin-top: auto; padding-top: 60px; color: rgba(255,255,255,0.5); font-size: 0.84rem; position: relative; z-index: 2; }
 
 @media (max-width: 900px) {
-  nav .links a:not(.cta) { display: none; }
+  .nav-landing .links a:not(.cta) { display: none; }
   .app-grid { grid-template-columns: 1fr; }
   #red .beneficios { columns: 1; }
   #problema .items { margin-left: 0; }

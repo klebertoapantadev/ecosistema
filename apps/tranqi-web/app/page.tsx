@@ -289,7 +289,7 @@ export default function TranqiLanding() {
 
   return (
     <>
-      <nav>
+      <nav className="nav-landing">
         <a className="logo" href="#hero"><img src="/assets/tranqi-white.svg" alt="tranqi" /></a>
         <div className="links">
           <a href="#hola">hola</a>
