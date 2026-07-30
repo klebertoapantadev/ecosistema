@@ -12,7 +12,7 @@ Para vulnerabilidades de dependencias, SLA de parcheo y el nivel de referencia O
 
 ## 1. Row Level Security
 
-RLS habilitado en el 100% de las tablas, sin excepciones temporales. Ninguna tabla llega a `main` sin política definida — ver [Definition of Done](../estandares/03-definition-of-done.md).
+RLS habilitado en el 100% de las tablas, sin excepciones temporales. Ninguna tabla llega a `master` sin política definida — ver [Definition of Done](../estandares/03-definition-of-done.md).
 
 ## 2. Autenticación
 
