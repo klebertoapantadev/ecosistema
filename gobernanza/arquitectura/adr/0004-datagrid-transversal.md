@@ -71,6 +71,32 @@ ambos huecos a la vez.
    (`over.id === "zona-agrupamiento"` agrupa, cualquier otra columna reordena). Cualquier widget nuevo que
    toque `DataGrid.tsx` debe mantener un único `DndContext` para ambos gestos.
 
+8. **La zona de agrupamiento gana la colisión por puntero, no por `closestCenter`; y agrupar tiene además
+   un botón.** Unificar el `DndContext` (Decisión 7) era necesario pero no suficiente: soltar un encabezado
+   sobre la zona seguía sin agrupar. Causa real: `collisionDetection={closestCenter}` compara centro contra
+   centro, y la zona es una caja de ancho completo (~1200 px) cuyo centro queda más lejos del encabezado
+   arrastrado que el centro de la columna vecina. La zona nunca ganaba la colisión, así que `onDragEnd`
+   jamás veía `over.id === "zona-agrupamiento"`. Confirmado en runtime leyendo la live region de dnd-kit
+   durante el gesto: `"Draggable item tabla was moved over droppable area fecha."` — la columna vecina, con
+   el cursor ya dentro de la zona. Se reemplazó por una detección propia: si el puntero está dentro de la
+   zona, o si el centro de la columna arrastrada subió hasta la banda, la colisión es la zona; en cualquier
+   otro caso cae a `closestCenter`, que sí es lo correcto para reordenar entre columnas de tamaño parecido.
+   Como el arrastre además no es alcanzable con teclado ni cómodo en táctil, **cada encabezado lleva un
+   botón `+`/`−` (`aria-pressed`) que agrega o quita esa columna del agrupamiento** — misma acción, dos
+   caminos, y el camino accesible no depende de que la detección de colisión acierte. Lección: al mezclar un
+   droppable de ancho completo con droppables angostos en un mismo `DndContext`, `closestCenter` a secas es
+   siempre la elección equivocada.
+9. **Correcciones colaterales encontradas al habilitar el agrupamiento de verdad** (ninguna era visible
+   mientras agrupar estaba roto):
+   - *Contador de grupo.* Mostraba `subRows.length`; con agrupamiento anidado esos son los subgrupos, no las
+     filas, y `getLeafRows()` mezcla ambos. Se cuenta `getLeafRows().filter(f => !f.getIsGrouped())`.
+   - *Exportación.* `getRowModel()` solo lista las subfilas de los grupos expandidos, así que exportar con
+     grupos colapsados perdía filas. Ahora se baja a las hojas antes de armar el `.xlsx`/`.csv`, y el archivo
+     siempre lleva el dataset filtrado completo sin importar qué grupos estén abiertos.
+   - *Hidratación.* `DndContext` sin `id` numera sus `aria-describedby` con un contador global que no coincide
+     entre servidor y cliente: error de hidratación en cada carga. Se le pasa un `useId()`.
+   - *Táctil.* El handle de arrastre necesita `touch-action: none` o el gesto no arranca en pantallas táctiles.
+
 ## Alternativas evaluadas
 
 | Alternativa | Por qué no se eligió |

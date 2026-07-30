@@ -861,12 +861,23 @@ p { line-height: 1.55; }
   background: #FAFAF9; font-weight: 800; font-size: 0.7rem; letter-spacing: 0.08em; text-transform: uppercase;
   color: var(--panel-gris); border-bottom: 1px solid var(--panel-linea); padding: 0; white-space: nowrap;
 }
-.datagrid-th-arrastrar { padding: 10px 4px 10px 12px; cursor: grab; color: var(--panel-gris); user-select: none; }
+.datagrid-th-arrastrar {
+  padding: 10px 4px 10px 12px; cursor: grab; color: var(--panel-gris); user-select: none;
+  touch-action: none; /* sin esto el arrastre no arranca en tactil */
+}
 .datagrid-th-boton {
   background: none; border: none; font: inherit; font-weight: inherit; letter-spacing: inherit; text-transform: inherit;
   color: inherit; cursor: pointer; padding: 10px 12px 10px 2px;
 }
 .datagrid-th-boton:disabled { cursor: default; }
+.datagrid-th-agrupar {
+  background: none; border: 1px solid transparent; border-radius: 6px; color: var(--panel-gris);
+  cursor: pointer; font: inherit; font-size: 0.95rem; line-height: 1; padding: 3px 6px; margin-right: 10px;
+  opacity: 0.55; transition: opacity 0.15s, background 0.15s, color 0.15s, border-color 0.15s;
+}
+.datagrid-th:hover .datagrid-th-agrupar, .datagrid-th-agrupar:focus-visible { opacity: 1; }
+.datagrid-th-agrupar:hover { background: rgba(80,0,186,0.08); color: var(--violeta); border-color: rgba(80,0,186,0.2); }
+.datagrid-th-agrupar-activa { opacity: 1; background: rgba(80,0,186,0.08); color: var(--violeta); border-color: rgba(80,0,186,0.2); }
 .datagrid-th-expandir, .datagrid-td-expandir { width: 32px; }
 .datagrid-boton-expandir, .datagrid-toggle-grupo { background: none; border: none; cursor: pointer; color: var(--panel-gris); font: inherit; }
 .datagrid-toggle-grupo { font-weight: 700; color: var(--negro); padding: 10px 16px; }
