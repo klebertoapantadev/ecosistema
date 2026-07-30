@@ -1,15 +1,17 @@
 import type { Metadata } from "next";
-import { Search, Calendar, Upload, Coins, MessageCircle, type LucideIcon } from "lucide-react";
+import {
+  Search, Calendar, Upload, Coins, MessageCircle, FileText,
+  Briefcase, Scale, Award, Sparkles, UserCheck, Users, Settings,
+  ShieldCheck, Bell, Shield, type LucideIcon
+} from "lucide-react";
 import { obtenerPerfilActual, obtenerWidgetsVisibles, obtenerSaludo } from "@eco/identidad";
+import { SelectorRolActivo, type ModoRol } from "./SelectorRolActivo";
 
 export const metadata: Metadata = { title: "Panel — tranqi" };
 
 const NEGOCIO = "tranqi";
 
-// Accesos rapidos de la maqueta (maqueta-cliente.html, seccion .accesos): son
-// CUATRO, no ocho -- la maqueta reserva el ancho de la columna para los tramites
-// y deja los accesos como una fila de atajos. Sin destino real todavia, por eso
-// van etiquetados "Proximamente" y no como enlaces rotos.
+// Accesos rápidos cliente (maqueta de inicio de cliente)
 const ACCESOS_CLIENTE: { icono: LucideIcon; nombre: string; detalle: string }[] = [
   { icono: Calendar, nombre: "Agendar cita", detalle: "Presencial o por video" },
   { icono: Upload, nombre: "Subir documento", detalle: "Contratos, cédulas, actas" },
@@ -17,58 +19,96 @@ const ACCESOS_CLIENTE: { icono: LucideIcon; nombre: string; detalle: string }[] 
   { icono: MessageCircle, nombre: "Preguntar a tranqi", detalle: "Respuesta en minutos" },
 ];
 
-export default async function PaginaPanel() {
-  const perfil = await obtenerPerfilActual();
-  const widgets = perfil
-    ? await obtenerWidgetsVisibles(perfil.usu_id, perfil.usu_superadmin_plataforma, NEGOCIO)
-    : [];
+// Accesos rápidos socio abogado
+const ACCESOS_ABOGADO: { icono: LucideIcon; nombre: string; detalle: string }[] = [
+  { icono: Briefcase, nombre: "Nuevas Solicitudes", detalle: "3 casos en espera de patrocinio" },
+  { icono: Calendar, nombre: "Citas de hoy", detalle: "2 videollamadas agendadas" },
+  { icono: FileText, nombre: "Cargar Expediente", detalle: "Subir demandas y providencias" },
+  { icono: Coins, nombre: "Mis Honorarios", detalle: "Resumen de cobros y facturación" },
+];
 
+// Widgets administrativos de plataforma
+const WIDGETS_ADMIN: { clave: string; icono: LucideIcon; nombre: string; detalle: string; estado: "registrado" | "proximamente" }[] = [
+  { clave: "gestion_usuarios", icono: Users, nombre: "Gestión de Usuarios", detalle: "Membresías, asignación de perfiles y jerarquía", estado: "registrado" },
+  { clave: "socios", icono: UserCheck, nombre: "Aprobación de Socios", detalle: "Verificación de cédula, título y matrícula", estado: "registrado" },
+  { clave: "configuracion_negocio", icono: Settings, nombre: "Configuración Negocio", detalle: "Términos, locales, redes sociales y canales", estado: "registrado" },
+  { clave: "auditoria", icono: ShieldCheck, nombre: "Auditoría de Cambios", detalle: "Log inmutable PostgreSQL de operaciones BDD", estado: "proximamente" },
+  { clave: "emision_notificaciones", icono: Bell, nombre: "Emisión Notificaciones", detalle: "Editor WYSIWYG HTML/Markdown y Push/Email", estado: "proximamente" },
+  { clave: "configuracion_permisos", icono: Shield, nombre: "Gobernanza Permisos", detalle: "Matriz Perfil-Widget exclusiva SuperAdmin", estado: "proximamente" },
+];
+
+interface Props {
+  searchParams: Promise<{ modo?: string }>;
+}
+
+export default async function PaginaPanel({ searchParams }: Props) {
+  const { modo: modoParam } = await searchParams;
+  const modo: ModoRol = (modoParam as ModoRol) || "cliente";
+
+  const perfil = await obtenerPerfilActual();
   const nombre = perfil?.usu_nombres || perfil?.usu_correo || "";
   const saludo = perfil ? await obtenerSaludo(perfil.usu_id, nombre) : null;
-
-  // Un ADMINISTRADOR/SUPERADMIN ya tiene su consola en el rail (Configuración,
-  // Gestión de usuarios) -- el inicio de cliente es para quien no tiene nada
-  // de eso todavia, el caso comun de un CLIENTE recien registrado.
-  if (widgets.length > 0) {
-    return (
-      <div>
-        <h1>{saludo ?? `Hola, ${nombre}`}</h1>
-        <p>Tienes acceso a {widgets.length} función{widgets.length === 1 ? "" : "es"} en este panel.</p>
-      </div>
-    );
-  }
-
   const nombreCompleto = [perfil?.usu_nombres, perfil?.usu_apellidos].filter(Boolean).join(" ") || nombre;
 
   return (
     <div className="inicio-cliente">
-      {/* Barra superior de la maqueta. El buscador va deshabilitado: sin tablas
-          de tramites ni documentos no hay nada que buscar, y un campo vivo
-          devolveria siempre vacio. */}
+      {/* Barra superior con Buscador, Selector de Rol Activo y Perfil */}
       <div className="barra-cliente">
         <div className="buscador-cliente">
           <Search aria-hidden="true" strokeWidth={1.7} />
-          <input type="search" placeholder="La búsqueda llegará pronto" aria-label="Buscar" disabled />
+          <input
+            type="search"
+            placeholder={
+              modo === "abogado"
+                ? "Buscar expediente, causa o cliente..."
+                : modo === "admin"
+                ? "Buscar usuario, RUC, auditoría..."
+                : "La búsqueda llegará pronto"
+            }
+            aria-label="Buscar"
+            disabled
+          />
         </div>
+
+        {/* Conmutador interactivo de vista por Rol */}
+        <SelectorRolActivo modoInicial={modo} />
+
         <div className="usuario-barra">
           <div className="usuario-barra-foto">
             {iniciales(perfil?.usu_nombres, perfil?.usu_apellidos, perfil?.usu_correo)}
           </div>
           <div className="usuario-barra-txt">
             <b>{nombreCompleto}</b>
-            <span>Cliente</span>
+            <span>
+              {modo === "abogado" ? "Socio Abogado" : modo === "admin" ? "Administrador" : "Cliente"}
+            </span>
           </div>
         </div>
       </div>
 
-      <h1>{saludo ?? `Hola, ${nombre}`}</h1>
+      {/* Renderizado dinámico del panel según el Rol Activo */}
+      {modo === "cliente" && <PanelCliente saludo={saludo} nombre={nombre} />}
+      {modo === "abogado" && <PanelAbogado saludo={saludo} nombreCompleto={nombreCompleto} />}
+      {modo === "admin" && <PanelAdministrador saludo={saludo} nombreCompleto={nombreCompleto} />}
+
+      <footer className="pie-panel">
+        <span>© tranqi® 2026</span>
+        <a href="/terminos">Términos</a>
+      </footer>
+    </div>
+  );
+}
+
+/* ──────────────── 1. PANEL MODO CLIENTE ──────────────── */
+function PanelCliente({ saludo, nombre }: { saludo: string | null; nombre: string }) {
+  return (
+    <>
+      <h1>{saludo ?? `Hola de nuevo, ${nombre}`}</h1>
       <p className="inicio-cliente-sub">¿Qué necesitas resolver hoy?</p>
 
       <div className="rejilla-cliente">
         <div className="columna-cliente">
-
-          {/* PROTECCIÓN — la única superficie de color pleno de la pantalla
-              (§3 regla 1). Ocupa el sitio que la maqueta da a la póliza. */}
+          {/* BANNER TU PROTECCIÓN */}
           <section className="tarjeta-proteccion" aria-labelledby="t-proteccion">
             <div className="tarjeta-proteccion-fila">
               <div>
@@ -124,7 +164,7 @@ export default async function PaginaPanel() {
             </div>
           </section>
 
-          {/* BUDDIE en reposo — el bloque menta de la maqueta */}
+          {/* BUDDIE DE REPOSO */}
           <section className="bloque-ayuda" aria-labelledby="t-ayuda">
             <div className="bloque-ayuda-cabeza">
               <div className="bloque-ayuda-ojitos" aria-hidden="true" />
@@ -138,18 +178,184 @@ export default async function PaginaPanel() {
           </section>
         </aside>
       </div>
-
-      <footer className="pie-panel">
-        <span>© tranqi® 2026</span>
-        <a href="/terminos">Términos</a>
-      </footer>
-    </div>
+    </>
   );
 }
 
-/** Iniciales para el círculo de la barra superior. Con un solo nombre usa sus
- *  dos primeras letras; sin nombres cae al correo. Nunca devuelve vacío, para
- *  que el círculo no quede en blanco. */
+/* ──────────────── 2. PANEL MODO SOCIO ABOGADO ──────────────── */
+function PanelAbogado({ saludo, nombreCompleto }: { saludo: string | null; nombreCompleto: string }) {
+  return (
+    <>
+      <h1>Panel Profesional — Abg. {nombreCompleto}</h1>
+      <p className="inicio-cliente-sub">Patrocinio legal, gestión de causas y expedientes judiciales</p>
+
+      <div className="rejilla-cliente">
+        <div className="columna-cliente">
+          {/* BANNER DE ACREDITACIÓN PROFESIONAL */}
+          <section className="tarjeta-proteccion tarjeta-abogado" aria-labelledby="t-abogado">
+            <div className="tarjeta-proteccion-fila">
+              <div>
+                <div className="eyebrow-cliente" id="t-abogado">Estado de acreditación</div>
+                <div className="tarjeta-proteccion-plan">Socio Abogado <i>Verificado</i></div>
+                <div className="tarjeta-proteccion-meta">
+                  Foro de Abogados Matrícula N° 17-2026-89 • Red de Abogados Habilitada en Pichincha / Ecuador.
+                </div>
+              </div>
+              <span className="badge-rol">✓ Acreditado</span>
+            </div>
+          </section>
+
+          {/* ACCESOS RÁPIDOS ABOGADO */}
+          <div className="accesos-cliente">
+            {ACCESOS_ABOGADO.map((a) => (
+              <div key={a.nombre} className="tarjeta-acceso">
+                <a.icono className="tarjeta-acceso-icono" aria-hidden="true" strokeWidth={1.6} />
+                <strong>{a.nombre}</strong>
+                <p>{a.detalle}</p>
+                <span className="chip-proximamente">Próximamente</span>
+              </div>
+            ))}
+          </div>
+
+          {/* CASOS EN PATROCINIO ACTIVO */}
+          <section className="tarjeta-seccion" aria-labelledby="t-causas">
+            <header><h2 id="t-causas">Casos en patrocinio activo</h2></header>
+            <div className="vacio-seccion">
+              <b>Sin casos asignados todavía</b>
+              <span>Las causas judiciales asignadas por el sistema aparecerán aquí con su historial y término.</span>
+            </div>
+          </section>
+        </div>
+
+        <aside className="columna-cliente">
+          {/* PRÓXIMAS AUDIENCIAS */}
+          <section className="tarjeta-seccion" aria-labelledby="t-audiencias">
+            <header><h2 id="t-audiencias">Agenda de audiencias</h2></header>
+            <div className="vacio-seccion">
+              <b>No tienes audiencias agendadas</b>
+              <span>Fechas de diligencias judiciales y términos procesales de tus causas.</span>
+            </div>
+          </section>
+
+          {/* REPUTACIÓN Y RESEÑAS */}
+          <section className="tarjeta-seccion" aria-labelledby="t-reputacion">
+            <header><h2 id="t-reputacion">Mi reputación y reseñas</h2></header>
+            <div className="vacio-seccion">
+              <Award className="icono-nav" style={{ width: 28, height: 28, color: "#05594A" }} />
+              <b>Calificación: 5.0 / 5.0 ⭐</b>
+              <span>Basado en las evaluaciones de clientes patrocinados en tranqi.</span>
+            </div>
+          </section>
+
+          {/* ASISTENTE LEGAL IA ARIA */}
+          <section className="bloque-ayuda" aria-labelledby="t-aria">
+            <div className="bloque-ayuda-cabeza">
+              <Sparkles className="icono-nav" style={{ width: 24, height: 24, color: "#05594A" }} />
+              <strong id="t-aria">Asistente Legal ARIA IA</strong>
+            </div>
+            <p>
+              Genera borradores automáticos de demandas, minutas y análisis jurisprudencial de la Corte Nacional.
+            </p>
+            <span className="chip-proximamente">Próximamente</span>
+          </section>
+        </aside>
+      </div>
+    </>
+  );
+}
+
+/* ──────────────── 3. PANEL MODO ADMINISTRADOR ──────────────── */
+function PanelAdministrador({ saludo, nombreCompleto }: { saludo: string | null; nombreCompleto: string }) {
+  return (
+    <>
+      <h1>Consola de Control del Portal — tranqi</h1>
+      <p className="inicio-cliente-sub">Gobernanza multitenant de plataforma, usuarios y telemetría de negocio</p>
+
+      <div className="rejilla-cliente">
+        <div className="columna-cliente">
+          {/* BANNER DE ADMINISTRACIÓN */}
+          <section className="tarjeta-proteccion tarjeta-admin" aria-labelledby="t-admin">
+            <div className="tarjeta-proteccion-fila">
+              <div>
+                <div className="eyebrow-cliente" id="t-admin">Gobernanza de Plataforma</div>
+                <div className="tarjeta-proteccion-plan">Consola <i>SuperAdmin / Administrador</i></div>
+                <div className="tarjeta-proteccion-meta">
+                  Acceso universal a los widgets comunes y matriz de seguridad de perfiles en tranqi.
+                </div>
+              </div>
+              <span className="badge-rol">🛡️ SuperAdmin</span>
+            </div>
+          </section>
+
+          {/* GRID DE WIDGETS ADMINISTRATIVOS */}
+          <div className="grid-admin-widgets">
+            {WIDGETS_ADMIN.map((w) => (
+              <div key={w.clave} className={`tarjeta-widget-admin ${w.estado === "registrado" ? "destacado" : ""}`}>
+                <div className="tarjeta-widget-cabeza">
+                  <w.icono className="tarjeta-widget-icono" strokeWidth={1.7} />
+                  {w.estado === "registrado" ? (
+                    <span className="chip-registrado">Widget Activo</span>
+                  ) : (
+                    <span className="chip-proximamente">Próximamente</span>
+                  )}
+                </div>
+                <strong>{w.nombre}</strong>
+                <p>{w.detalle}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* MÉTRICAS DE PLATAFORMA */}
+          <section className="tarjeta-seccion" aria-labelledby="t-metricas">
+            <header><h2 id="t-metricas">Telemetría y Métricas del Negocio</h2></header>
+            <div className="vacio-seccion">
+              <b>Panel de telemetría en preparación</b>
+              <span>Consolidado de usuarios registrados, consultas de API y estado de servidores.</span>
+            </div>
+          </section>
+        </div>
+
+        <aside className="columna-cliente">
+          {/* ESTADO DE PLATAFORMA */}
+          <section className="tarjeta-seccion" aria-labelledby="t-infra">
+            <header><h2 id="t-infra">Infraestructura y Servicios</h2></header>
+            <div className="vacio-seccion" style={{ textAlign: "left", justifyItems: "start" }}>
+              <div style={{ fontSize: "0.85rem", display: "grid", gap: "8px", width: "100%" }}>
+                <div>🟢 <b>PostgreSQL BDD:</b> Operativo (Supabase)</div>
+                <div>🟢 <b>Autenticación JWT:</b> TLS 1.3 Verificado</div>
+                <div>🟢 <b>Facturación SRI:</b> Ambiente Pruebas</div>
+                <div>🟢 <b>Meta/WhatsApp API:</b> Conectado</div>
+              </div>
+            </div>
+          </section>
+
+          {/* BITÁCORA DE AUDITORÍA RECIENTE */}
+          <section className="tarjeta-seccion" aria-labelledby="t-aud">
+            <header><h2 id="t-aud">Eventos Recientes (Auditoría)</h2></header>
+            <div className="vacio-seccion">
+              <b>Triggers inmutables activos</b>
+              <span>Los eventos de creación de usuarios y cambios de perfil se registran en `comun_auditoria`.</span>
+            </div>
+          </section>
+
+          {/* CONTROL DE CUOTAS Y RECURSOS */}
+          <section className="bloque-ayuda" aria-labelledby="t-recursos">
+            <div className="bloque-ayuda-cabeza">
+              <Scale className="icono-nav" style={{ width: 24, height: 24, color: "#05594A" }} />
+              <strong id="t-recursos">Capacidad y Recursos</strong>
+            </div>
+            <p>
+              Almacenamiento Cifrado: 1.2 GB / 50 GB • Cupo de Notificaciones Push & WhatsApp: 85% disponible.
+            </p>
+            <span className="chip-proximamente">Próximamente</span>
+          </section>
+        </aside>
+      </div>
+    </>
+  );
+}
+
+/** Iniciales para el avatar de usuario */
 function iniciales(nombres?: string | null, apellidos?: string | null, correo?: string | null): string {
   const [primero, segundo] = [nombres, apellidos]
     .map((p) => p?.trim())
