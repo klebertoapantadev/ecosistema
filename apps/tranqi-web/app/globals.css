@@ -396,13 +396,15 @@ p { line-height: 1.55; }
      visual). No son colores de marca: son fondos sobre los que va tipografía
      blanca, y solo aparecen en el rail.
 
-     Los dos nombres salen de las maquetas, y por eso no son simétricos:
-     #33007A es --violeta-oscuro (allí, hover del botón primario) y #052A23 es
-     --esmeralda-tinta. La maqueta de cliente usaba para el rail una tinta más
-     honda (--violeta-tinta #1E0046); se subió a --violeta-oscuro porque
-     #1E0046 se lee casi negro y el rail dejaba de decir "cliente". */
-  --violeta-oscuro: #33007A;
+     Ambos son los valores exactos de las maquetas. #33007A se probó como rail
+     de cliente por parecer "más púrpura", y al verlo junto a la maqueta se
+     descartó: el rail de la maqueta es esta tinta honda, y el púrpura de marca
+     vive en la superficie de contenido, no en el rail. */
+  --violeta-tinta: #1E0046;
   --esmeralda-tinta: #052A23;
+  /* papel con tinte de marca de la maqueta de cliente; el del panel
+     administrativo sigue siendo gris puro */
+  --papel-cliente: #F7F6FA;
   /* verde honda: la menta no es fondo de texto pequeño (§8), así que cuando
      hace de fondo necesita esta tinta encima */
   --menta-honda: #056B57;
@@ -422,12 +424,12 @@ p { line-height: 1.55; }
   --rail-acento: var(--lavanda);
 }
 .panel-layout.perfil-cliente {
-  --rail-superficie: var(--violeta-oscuro);
-  /* un paso POR ENCIMA de la superficie, camino del violeta pleno. Sin llegar
-     a #5000BA: ese es el color de la acción, y como fondo del enlace activo
-     parecería un relleno saturado, que es lo que §4 descarta. */
-  --rail-alta: #431499;
+  --rail-superficie: var(--violeta-tinta);
+  /* un paso por encima de la superficie, no un relleno saturado del acento (§4) */
+  --rail-alta: #2C0A5E;
   --rail-acento: var(--menta);
+  /* la maqueta de cliente usa papel con tinte de marca, no el gris del panel */
+  --panel-papel: var(--papel-cliente);
 }
 .panel-layout.perfil-abogado {
   --rail-superficie: var(--esmeralda-tinta);
@@ -458,10 +460,27 @@ p { line-height: 1.55; }
 
 .panel-layout { display: flex; min-height: 100vh; background: var(--panel-papel); color: var(--negro); }
 .panel-nav {
-  width: 240px; flex: none; background: var(--rail-superficie); color: var(--blanco);
+  /* 236px es el ancho de las maquetas. overflow+relative son para la cinta:
+     el SVG se posiciona contra el rail, y si el rail quedara static el trazo
+     escaparía del recorte y cubriría la página (§7). */
+  width: 236px; flex: none; background: var(--rail-superficie); color: var(--blanco);
   display: flex; flex-direction: column; padding: 24px 18px; gap: 24px;
+  position: relative; overflow: hidden;
 }
+/* ── La cinta dentro del rail ────────────────────────────────────────
+   §7: en pantallas de trabajo la cinta es TEXTURA, no protagonista — un solo
+   trazo, opacidad baja, dentro del rail, nunca sobre texto. El 9% es el valor
+   de la maqueta; por encima empieza a competir con la navegación. */
+.cinta-rail { position: absolute; inset: 0; pointer-events: none; opacity: 0.09; }
+.cinta-rail path {
+  fill: none; stroke: var(--rail-acento); stroke-width: 44; stroke-linecap: round;
+}
+/* los hijos del rail suben por encima de la cinta */
+.panel-nav > *:not(.cinta-rail) { position: relative; z-index: 1; }
+
 .panel-marca { font-size: 1.3rem; font-weight: 800; letter-spacing: -0.02em; }
+/* logo de marca en vez del nombre en texto, como las maquetas */
+.panel-marca img { height: 22px; width: auto; }
 .panel-nav-links { display: flex; flex-direction: column; gap: 2px; flex: 1; }
 .panel-nav-links a {
   display: flex; align-items: center; gap: 10px;
@@ -625,11 +644,29 @@ p { line-height: 1.55; }
 .usuario-barra-txt b { font-size: 0.844rem; font-weight: 600; }
 .usuario-barra-txt span { font-size: 0.75rem; color: var(--panel-gris); }
 
+/* Escala tipográfica de la maqueta: el h1 del panel es 1.5rem fijo y en la
+   maqueta llega a 1.938rem. Solo en el inicio de cliente -- el panel
+   administrativo mantiene el suyo. */
+.inicio-cliente h1 {
+  font-size: clamp(1.5rem, 2.6vw, 1.938rem); font-weight: 800;
+  letter-spacing: -0.02em; line-height: 1.2;
+}
+/* "Estás tranqi" es la línea de marca del saludo (§ maqueta .saludo h1 i) */
+.inicio-cliente h1 i { font-style: normal; color: var(--violeta); }
+
 /* ── Protección: la única superficie de color pleno ──────────────── */
 .tarjeta-proteccion {
   background: var(--violeta); color: var(--blanco);
   border-radius: 16px; padding: 24px;
+  position: relative; overflow: hidden;
 }
+/* segunda y última aparición de la cinta en la pantalla: §7 permite dos
+   elementos como máximo, y aquí va al 13% como en la maqueta */
+.cinta-proteccion { position: absolute; inset: 0; pointer-events: none; opacity: 0.13; }
+.cinta-proteccion path {
+  fill: none; stroke: var(--menta); stroke-width: 46; stroke-linecap: round;
+}
+.tarjeta-proteccion > *:not(.cinta-proteccion) { position: relative; z-index: 1; }
 .tarjeta-proteccion-fila {
   display: flex; align-items: flex-start; justify-content: space-between;
   gap: 20px; flex-wrap: wrap;

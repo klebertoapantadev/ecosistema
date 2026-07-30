@@ -51,7 +51,20 @@ export default async function LayoutPanel({ children }: { children: React.ReactN
   return (
     <div className={`panel-layout ${clasePerfil}`}>
       <aside className="panel-nav">
-        <div className="panel-marca">tranqi</div>
+        {/* La cinta como textura del rail (§7). Solo en cliente y abogado: para
+            administración el sistema visual no define cinta, y un trazo de color
+            sobre el rail negro sería decoración sin significado. El path es el
+            de maqueta-cliente.html; preserveAspectRatio="none" lo estira a la
+            altura real del rail. */}
+        {clasePerfil !== "perfil-admin" && (
+          <svg className="cinta-rail" viewBox="0 0 236 900" preserveAspectRatio="none" aria-hidden="true">
+            <path d="M 200 -40 C 200 160 40 240 60 430 C 78 610 210 660 200 900" />
+          </svg>
+        )}
+
+        <div className="panel-marca">
+          <img src="/assets/tranqi-white.svg" alt="tranqi" />
+        </div>
         {/* div, no <nav>: el <nav> global de la landing es position:fixed y
             rompería este layout -- ver globals.css */}
         <div className="panel-nav-links">

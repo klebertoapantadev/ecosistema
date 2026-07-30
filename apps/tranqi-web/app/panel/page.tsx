@@ -61,8 +61,15 @@ export default async function PaginaPanel() {
         </div>
       </div>
 
-      <h1>{saludo ?? `Hola, ${nombre}`}</h1>
-      <p className="inicio-cliente-sub">¿Qué necesitas resolver hoy?</p>
+      {/* El saludo de la maqueta es "Hola, X. Estás tranqi." con "tranqi" en
+          violeta. Se conserva el saludo dinámico de calcularSaludo() -- cambia
+          según cuándo entraste por última vez y lo comparten las 4 apps -- y se
+          le añade encima la línea de marca. */}
+      <h1>{saludo ?? `Hola, ${nombre}`}. Estás <i>tranqi</i>.</h1>
+      {/* La maqueta dice aquí "Tu protección jurídica está activa y sin
+          pendientes de tu parte". No se copia: sin póliza contratada sería
+          falso. */}
+      <p className="inicio-cliente-sub">Tu protección jurídica y tus trámites, en un solo lugar.</p>
 
       <div className="rejilla-cliente">
         <div className="columna-cliente">
@@ -70,6 +77,11 @@ export default async function PaginaPanel() {
           {/* PROTECCIÓN — la única superficie de color pleno de la pantalla
               (§3 regla 1). Ocupa el sitio que la maqueta da a la póliza. */}
           <section className="tarjeta-proteccion" aria-labelledby="t-proteccion">
+            {/* Segunda y última cinta de la pantalla (§7 permite dos). Path de
+                maqueta-cliente.html. */}
+            <svg className="cinta-proteccion" viewBox="0 0 800 300" preserveAspectRatio="none" aria-hidden="true">
+              <path d="M 540 -60 C 760 40 840 190 700 300 C 620 362 470 340 430 420" />
+            </svg>
             <div className="tarjeta-proteccion-fila">
               <div>
                 <div className="eyebrow-cliente" id="t-proteccion">Tu protección</div>
