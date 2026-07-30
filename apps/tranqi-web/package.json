@@ -11,7 +11,9 @@
   },
   "dependencies": {
     "@eco/agentes-ia": "workspace:*",
+    "@eco/auditoria": "workspace:*",
     "@eco/configuracion-negocio": "workspace:*",
+    "@eco/datagrid": "workspace:*",
     "@eco/db": "workspace:*",
     "@eco/gestion-usuarios": "workspace:*",
     "@eco/identidad": "workspace:*",

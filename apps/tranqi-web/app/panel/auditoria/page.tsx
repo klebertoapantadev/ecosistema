@@ -1,14 +1,20 @@
 import type { Metadata } from "next";
 import { ShieldCheck } from "lucide-react";
-import { listarAuditoria } from "../../../modulos/socios/consultas";
+import { listarAuditoriaNegocio, type RegistroAuditoria } from "@eco/auditoria";
+import { DataGrid, type ColumnaDataGrid } from "@eco/datagrid";
 
 export const metadata: Metadata = { title: "Auditoría — tranqi" };
 
+const NEGOCIO = "tranqi";
+const ESQUEMA_NEGOCIO = "tranqui_legal";
+
 const ETIQUETA_OPERACION: Record<string, string> = { INSERT: "Creado", UPDATE: "Modificado", DELETE: "Eliminado" };
 
-// PK real de cada tabla de tranqui_legal -- no se puede inferir del orden
-// de claves de un jsonb (Postgres no garantiza preservar el orden de
-// columnas al pasar por el tipo jsonb), así que se declara explícito.
+// PK real de cada tabla -- no se puede inferir del orden de claves de un
+// jsonb (Postgres no garantiza preservar el orden de columnas al pasar por
+// el tipo jsonb), asi que se declara explicito. Incluye tranqui_legal (el
+// negocio) y comun_seguridad (identidad de plataforma, acotada a miembros
+// de este negocio por aud_fn_listar_auditoria_negocio en el servidor).
 const PK_POR_TABLA: Record<string, string> = {
   trq_abogado: "abg_id",
   trq_documento_socio: "dcs_id",
@@ -18,6 +24,10 @@ const PK_POR_TABLA: Record<string, string> = {
   trq_solicitud_materia: "sma_id",
   trq_solicitud_provincia: "spr_id",
   trq_solicitud_socio: "ssc_id",
+  seg_usuario: "usu_id",
+  seg_membresia: "mem_id",
+  seg_otp_correo: "otp_id",
+  seg_recuperacion_correo: "rec_id",
 };
 
 const ETIQUETA_TABLA: Record<string, string> = {
@@ -29,11 +39,12 @@ const ETIQUETA_TABLA: Record<string, string> = {
   trq_solicitud_materia: "Solicitud × materia",
   trq_solicitud_provincia: "Solicitud × provincia",
   trq_solicitud_socio: "Solicitud de socio",
+  seg_usuario: "Cuenta de usuario",
+  seg_membresia: "Membresía",
+  seg_otp_correo: "Verificación de correo (OTP)",
+  seg_recuperacion_correo: "Recuperación de contraseña",
 };
 
-// *_creado_en/*_actualizado_en cambian en casi todo UPDATE y no aportan
-// nada que la columna Fecha ya no diga -- se omiten del diff para que lo
-// que sí importa (el campo de negocio que cambió) no quede enterrado.
 const SUFIJOS_OMITIDOS = new Set(["creado_en", "actualizado_en"]);
 
 function sufijoCampo(campo: string) {
@@ -68,9 +79,6 @@ function calcularDiferencias(
   return diferencias;
 }
 
-// INSERT/DELETE no tienen "antes y después" que comparar -- se muestra el
-// registro completo (menos la PK, ya visible aparte, y los timestamps de
-// auditoría, redundantes con la columna Fecha).
 function camposDelRegistro(datos: Record<string, unknown> | null, pk: string | undefined): Diferencia[] {
   if (!datos) return [];
   return Object.entries(datos)
@@ -78,83 +86,147 @@ function camposDelRegistro(datos: Record<string, unknown> | null, pk: string | u
     .map(([campo, valor]) => ({ campo, antes: "", despues: formatearValor(valor) }));
 }
 
-export default async function PaginaAuditoria() {
-  const registros = await listarAuditoria();
+function idCorto(registro: RegistroAuditoria): string {
+  const pk = PK_POR_TABLA[registro.reg_tabla];
+  const id = pk ? ((registro.reg_datos_nuevos?.[pk] ?? registro.reg_datos_anteriores?.[pk]) as string | undefined) : undefined;
+  return typeof id === "string" ? id.slice(0, 8) : "—";
+}
+
+function nombreActor(registro: RegistroAuditoria): string {
+  const nombre = [registro.actor_nombres, registro.actor_apellidos].filter(Boolean).join(" ");
+  return nombre || registro.actor_correo || "—";
+}
+
+const COLUMNAS: ColumnaDataGrid<RegistroAuditoria>[] = [
+  {
+    id: "fecha",
+    encabezado: "Fecha",
+    valor: (r) => new Date(r.reg_creado_en).getTime(),
+    render: (r) => new Date(r.reg_creado_en).toLocaleString("es-EC"),
+  },
+  {
+    id: "tabla",
+    encabezado: "Tabla",
+    valor: (r) => ETIQUETA_TABLA[r.reg_tabla] ?? r.reg_tabla,
+  },
+  {
+    id: "operacion",
+    encabezado: "Operación",
+    valor: (r) => ETIQUETA_OPERACION[r.reg_operacion] ?? r.reg_operacion,
+    render: (r) => (
+      <span className={`chip-operacion chip-operacion-${r.reg_operacion}`}>
+        {ETIQUETA_OPERACION[r.reg_operacion] ?? r.reg_operacion}
+      </span>
+    ),
+  },
+  { id: "registro", encabezado: "Registro", valor: idCorto, render: (r) => <code className="id-registro">{idCorto(r)}</code> },
+  { id: "usuario", encabezado: "Usuario", valor: nombreActor },
+];
+
+export default async function PaginaAuditoria({
+  searchParams,
+}: {
+  searchParams: Promise<{ desde?: string; hasta?: string; tabla?: string; operacion?: string; correo?: string }>;
+}) {
+  const { desde = "", hasta = "", tabla = "", operacion = "", correo = "" } = await searchParams;
+
+  const { data: registros, error } = await listarAuditoriaNegocio(NEGOCIO, ESQUEMA_NEGOCIO, {
+    desde: desde || undefined,
+    hasta: hasta || undefined,
+    tabla: tabla || undefined,
+    operacion: operacion || undefined,
+    correoActor: correo || undefined,
+  });
 
   return (
     <div>
       <h1>Auditoría</h1>
       <p className="historial-fecha">
-        Cambios en las tablas de tranqi (`tranqui_legal`), más recientes primero. Visible para Administrador y SuperAdmin.
+        Cambios en las tablas de tranqi (`tranqui_legal`) y eventos de identidad de sus usuarios (registro,
+        verificación de correo, recuperación de contraseña). Visible para Administrador y SuperAdmin.
       </p>
+
+      <form method="GET" className="form-filtros-auditoria">
+        <label>
+          Desde
+          <input type="date" name="desde" defaultValue={desde} />
+        </label>
+        <label>
+          Hasta
+          <input type="date" name="hasta" defaultValue={hasta} />
+        </label>
+        <label>
+          Tabla
+          <select name="tabla" defaultValue={tabla}>
+            <option value="">Todas</option>
+            {Object.entries(ETIQUETA_TABLA).map(([clave, etiqueta]) => (
+              <option key={clave} value={clave}>
+                {etiqueta}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          Operación
+          <select name="operacion" defaultValue={operacion}>
+            <option value="">Todas</option>
+            {Object.entries(ETIQUETA_OPERACION).map(([clave, etiqueta]) => (
+              <option key={clave} value={clave}>
+                {etiqueta}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          Correo del usuario
+          <input type="text" name="correo" defaultValue={correo} placeholder="correo@ejemplo.com" />
+        </label>
+        <button type="submit" className="btn-mini">
+          Filtrar
+        </button>
+      </form>
+
+      {error && <p className="error-auth">{error}</p>}
 
       {registros.length === 0 ? (
         <div className="estado-vacio">
           <ShieldCheck aria-hidden="true" strokeWidth={1.6} />
-          <p>Sin registros de auditoría todavía.</p>
+          <p>Sin registros de auditoría para estos filtros.</p>
         </div>
       ) : (
-        <ul className="lista-auditoria">
-          {registros.map((r) => {
+        <DataGrid
+          columnas={COLUMNAS}
+          filas={registros}
+          idFila={(r) => r.reg_id}
+          nombreExportacion="auditoria-tranqi"
+          contenidoExpandible={(r) => {
             const pk = PK_POR_TABLA[r.reg_tabla];
-            const idRegistro = pk
-              ? ((r.reg_datos_nuevos as Record<string, unknown> | null)?.[pk] ??
-                (r.reg_datos_anteriores as Record<string, unknown> | null)?.[pk])
-              : null;
             const cambios =
               r.reg_operacion === "UPDATE"
-                ? calcularDiferencias(
-                    r.reg_datos_anteriores as Record<string, unknown> | null,
-                    r.reg_datos_nuevos as Record<string, unknown> | null,
-                  )
-                : camposDelRegistro(
-                    (r.reg_operacion === "DELETE" ? r.reg_datos_anteriores : r.reg_datos_nuevos) as Record<
-                      string,
-                      unknown
-                    > | null,
-                    pk,
-                  );
+                ? calcularDiferencias(r.reg_datos_anteriores, r.reg_datos_nuevos)
+                : camposDelRegistro(r.reg_operacion === "DELETE" ? r.reg_datos_anteriores : r.reg_datos_nuevos, pk);
+
+            if (cambios.length === 0) return <p className="historial-fecha">Sin cambios de campos registrados.</p>;
 
             return (
-              <li key={r.reg_id} className="fila-auditoria">
-                <details>
-                  <summary>
-                    <span className="historial-fecha">{new Date(r.reg_creado_en).toLocaleString("es-EC")}</span>
-                    <span className={`chip-operacion chip-operacion-${r.reg_operacion}`}>
-                      {ETIQUETA_OPERACION[r.reg_operacion] ?? r.reg_operacion}
-                    </span>
-                    <strong>{ETIQUETA_TABLA[r.reg_tabla] ?? r.reg_tabla}</strong>
-                    {typeof idRegistro === "string" && <code className="id-registro">{idRegistro.slice(0, 8)}</code>}
-                    <span className="historial-fecha">
-                      {r.usuario
-                        ? [r.usuario.usu_nombres, r.usuario.usu_apellidos].filter(Boolean).join(" ") || r.usuario.usu_correo
-                        : "—"}
-                    </span>
-                  </summary>
-                  {cambios.length === 0 ? (
-                    <p className="historial-fecha">Sin cambios de campos registrados.</p>
-                  ) : (
-                    <dl className="diferencias-auditoria">
-                      {cambios.map((c) => (
-                        <div key={c.campo}>
-                          <dt>{c.campo}</dt>
-                          <dd>
-                            {c.antes && (
-                              <>
-                                <s>{c.antes}</s> →{" "}
-                              </>
-                            )}
-                            {c.despues}
-                          </dd>
-                        </div>
-                      ))}
-                    </dl>
-                  )}
-                </details>
-              </li>
+              <dl className="diferencias-auditoria">
+                {cambios.map((c) => (
+                  <div key={c.campo}>
+                    <dt>{c.campo}</dt>
+                    <dd>
+                      {c.antes && (
+                        <>
+                          <s>{c.antes}</s> →{" "}
+                        </>
+                      )}
+                      {c.despues}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
             );
-          })}
-        </ul>
+          }}
+        />
       )}
     </div>
   );

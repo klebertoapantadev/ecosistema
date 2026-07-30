@@ -96,7 +96,30 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      aud_fn_listar_auditoria_negocio: {
+        Args: {
+          p_correo_actor?: string
+          p_desde?: string
+          p_esquema_negocio: string
+          p_hasta?: string
+          p_limite?: number
+          p_negocio: string
+          p_operacion?: string
+          p_tabla?: string
+        }
+        Returns: {
+          actor_apellidos: string
+          actor_correo: string
+          actor_nombres: string
+          reg_creado_en: string
+          reg_datos_anteriores: Json
+          reg_datos_nuevos: Json
+          reg_esquema: string
+          reg_id: string
+          reg_operacion: string
+          reg_tabla: string
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never

@@ -825,28 +825,53 @@ p { line-height: 1.55; }
 .icono-no-verificado { color: var(--panel-gris); }
 .icono-enlace-externo { display: inline; width: 13px; height: 13px; vertical-align: -1px; margin-left: 1px; }
 
-/* ═══════════ Auditoría: lista expandible (no tabla) ═══════════
-   Un diff de campos no cabe bien en columnas fijas -- cada fila es un
-   <details> nativo (sin JS) que expande el detalle completo del cambio. */
-.lista-auditoria { list-style: none; display: flex; flex-direction: column; gap: 1px; max-width: 900px; }
-.fila-auditoria {
-  background: var(--blanco); border: 1px solid var(--panel-linea);
+/* ═══════════ Filtro server-side de Auditoría (PLT-011 regla 2, Criterio 1) ═══════════ */
+.form-filtros-auditoria {
+  display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; margin-bottom: 20px; max-width: 900px;
 }
-.fila-auditoria + .fila-auditoria { border-top: none; }
-.fila-auditoria:first-child { border-radius: 16px 16px 0 0; }
-.fila-auditoria:last-child { border-radius: 0 0 16px 16px; }
-.fila-auditoria:only-child { border-radius: 16px; }
-.fila-auditoria summary {
-  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
-  padding: 13px 16px; cursor: pointer; list-style: none; font-size: 0.88rem;
+.form-filtros-auditoria label {
+  display: flex; flex-direction: column; gap: 4px; font-size: 0.78rem; font-weight: 700; color: var(--panel-gris);
 }
-.fila-auditoria summary::-webkit-details-marker { display: none; }
-.fila-auditoria summary::before {
-  content: "▸"; color: var(--panel-gris); font-size: 0.7rem; transition: transform 0.15s;
+.form-filtros-auditoria input, .form-filtros-auditoria select {
+  padding: 8px 10px; border-radius: 8px; border: 1px solid var(--panel-linea); font-family: inherit; font-size: 0.85rem;
 }
-.fila-auditoria[open] summary::before { transform: rotate(90deg); }
-.fila-auditoria summary:hover { background: #FAFAF9; }
-.fila-auditoria summary strong { font-size: 0.88rem; }
+
+/* ═══════════ @eco/datagrid: clases en español que consume el paquete
+   compartido, sin apariencia propia empaquetada (§8 convenciones) ═══════════ */
+.datagrid-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 10px; flex-wrap: wrap; }
+.datagrid-busqueda { padding: 9px 12px; border-radius: 8px; border: 1px solid var(--panel-linea); font-family: inherit; font-size: 0.85rem; min-width: 240px; }
+.datagrid-exportar { display: flex; gap: 8px; }
+.datagrid-zona-agrupamiento {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-height: 40px;
+  padding: 8px 12px; margin-bottom: 10px; border: 1.5px dashed var(--panel-linea); border-radius: 10px;
+  transition: border-color 0.15s, background 0.15s;
+}
+.datagrid-zona-agrupamiento-activa { border-color: var(--violeta); background: rgba(80,0,186,0.04); }
+.datagrid-zona-vacia { font-size: 0.8rem; color: var(--panel-gris); }
+.datagrid-chip-agrupado {
+  display: inline-flex; align-items: center; gap: 6px; font-size: 0.78rem; font-weight: 700;
+  background: rgba(80,0,186,0.08); color: var(--violeta); padding: 4px 6px 4px 10px; border-radius: 999px;
+}
+.datagrid-chip-agrupado button { background: none; border: none; color: inherit; cursor: pointer; font-size: 0.9rem; line-height: 1; padding: 2px; }
+.datagrid-envoltura { overflow-x: auto; border-radius: 16px; border: 1px solid var(--panel-linea); }
+.datagrid-tabla { width: 100%; min-width: 640px; border-collapse: collapse; background: var(--blanco); }
+.datagrid-tabla td { padding: 13px 16px; font-size: 0.88rem; border-bottom: 1px solid var(--panel-linea-suave); font-variant-numeric: tabular-nums; }
+.datagrid-tabla tbody tr:hover { background: #FAFAF9; }
+.datagrid-th {
+  background: #FAFAF9; font-weight: 800; font-size: 0.7rem; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--panel-gris); border-bottom: 1px solid var(--panel-linea); padding: 0; white-space: nowrap;
+}
+.datagrid-th-arrastrar { padding: 10px 4px 10px 12px; cursor: grab; color: var(--panel-gris); user-select: none; }
+.datagrid-th-boton {
+  background: none; border: none; font: inherit; font-weight: inherit; letter-spacing: inherit; text-transform: inherit;
+  color: inherit; cursor: pointer; padding: 10px 12px 10px 2px;
+}
+.datagrid-th-boton:disabled { cursor: default; }
+.datagrid-th-expandir, .datagrid-td-expandir { width: 32px; }
+.datagrid-boton-expandir, .datagrid-toggle-grupo { background: none; border: none; cursor: pointer; color: var(--panel-gris); font: inherit; }
+.datagrid-toggle-grupo { font-weight: 700; color: var(--negro); padding: 10px 16px; }
+.datagrid-fila-grupo { background: var(--panel-linea-suave); }
+.datagrid-fila-detalle td { padding: 4px 16px 16px 44px; border-top: 1px solid var(--panel-linea-suave); }
 .id-registro {
   font-family: ui-monospace, monospace; font-size: 0.75rem; color: var(--panel-gris);
   background: var(--panel-linea-suave); padding: 2px 6px; border-radius: 6px;
