@@ -95,16 +95,66 @@ Implementa la autenticación multifactor basada en TOTP (compatible con Google A
 
 ---
 
-## PLT-003 — Membresías y Roles por Producto
+## PLT-003 — Membresías, Múltiples Perfiles y Jerarquía de Roles por Producto
 
 ### Descripción
-Gestiona el control de acceso basado en roles (RBAC) aislado por negocio a través de `comun_seguridad.seg_membresia`.
+Gestiona el control de acceso basado en roles y perfiles (RBAC/ABAC) aislado por negocio a través de `comun_seguridad.seg_membresia` y su jerarquía de perfiles. Implementa el principio de **Gobernanza Exclusiva de Plataforma por SuperAdmin** (para la matriz Perfil-Widget) y la **Operación de Usuarios por Administradores de Negocio** (para la asignación de perfiles a usuarios basada en niveles jerárquicos).
 
 ### Reglas de Negocio
-1. **Asignación Automática de Rol 'CLIENTE':** Al completar el registro u onboarding por primera vez en cualquier producto, el sistema asigna automáticamente el rol `CLIENTE` para ese negocio específico.
-2. **Aislamiento de Roles por Negocio:** Un usuario puede ser `CLIENTE` en Tinkay y tener el rol `ABOGADO` en Tranqi. Ser administrador de un producto no otorga permisos en los demás.
-3. **Asignación de Roles Privilegiados:** El Administrador de cada negocio (o el SuperAdmin) es el único facultado para asignar roles distintos (`ADMINISTRADOR`, `TECNICO`, `ABOGADO`, `OPERADOR`) desde la consola de gestión.
-4. **Verificación de Estado para Capacidades:** Tener un rol asignado en `seg_membresia` no habilita capacidades si el proceso exige un estado verificado en las tablas del producto (ej. `trq_abogado` en estado `APROBADO`).
+1. **Separación de Responsabilidades (Gobernanza vs. Operación):**
+   - **Gobernanza de Permisos (`SUPERADMIN` Exclusivo):** **Únicamente el `SUPERADMIN` de plataforma posee la facultad de configurar y modificar la matriz de widgets por perfil (`seg_rol_widget`)** y definir qué capacidades otorga cada perfil. Los Administradores locales de negocio no pueden crear perfiles no autorizados ni reconfigurar los widgets o permisos de un perfil.
+   - **Operación de Usuarios (`ADMINISTRADOR` de Negocio):** El Administrador de una empresa asigna y desasigna perfiles pre-aprobados por la plataforma a los usuarios de su negocio, respetando la regla del techo jerárquico ($\le$ a su propia jerarquía).
+2. **Registro Inicial Obligatorio como 'CLIENTE' (Jerarquía Base):**
+   - Al completar el registro u onboarding por primera vez en cualquier empresa/producto del ecosistema, el sistema asigna **obligatoriamente y por defecto** el perfil `CLIENTE`.
+   - `CLIENTE` representa indefectiblemente el nivel jerárquico más bajo (Nivel 1 / Base) en todas las aplicaciones del ecosistema.
+3. **Configuración de Múltiples Perfiles por Usuario por Empresa:**
+   - En cada empresa o negocio, un mismo usuario puede tener configurados **múltiples perfiles activos simultáneamente** dentro de su membresía (`comun_seguridad.seg_membresia`).
+   - *Ejemplos:* Un usuario en Tranqi puede ostentar simultáneamente los perfiles `CLIENTE` y `ABOGADO`; un usuario en FastFix puede poseer los perfiles `CLIENTE` y `TECNICO`.
+4. **Escala y Matriz Estándar de Niveles Jerárquicos:**
+   - Cada perfil posee un nivel jerárquico numérico ascendente ($1$ a $100$) estandarizado por la plataforma:
+
+   | Nivel Jerárquico | Perfil Estándar | Ámbito de Permisos | Quién lo Asigna a Usuarios | Gobernanza de Permisos/Widgets |
+   | :---: | :--- | :--- | :--- | :--- |
+   | **1 (Base)** | `CLIENTE` | Empresa | Asignación automática por sistema | Exclusivo `SUPERADMIN` |
+   | **30** | `OPERADOR` / `AUXILIAR` | Empresa | Administrador o SuperAdmin | Exclusivo `SUPERADMIN` |
+   | **50** | `TECNICO` / `ABOGADO` | Empresa | Administrador o SuperAdmin | Exclusivo `SUPERADMIN` |
+   | **80** | `ADMINISTRADOR` | Empresa | SuperAdmin (o Admin existente) | Exclusivo `SUPERADMIN` |
+   | **100 (Techo)** | `SUPERADMIN` | Plataforma | Bootstrap / Solo SuperAdmin | Exclusivo `SUPERADMIN` |
+
+5. **Control de Asignación y Delegación por Jerarquía (Techo Jerárquico):**
+   - Un usuario gestor únicamente puede **asignar, modificar o remover perfiles** a otros usuarios si la jerarquía del perfil a asignar es **igual o menor ($\le$)** a la jerarquía máxima que ostenta el gestor en esa empresa.
+   - Ningún gestor puede asignar perfiles de jerarquía superior a la suya propia ni auto-elevar sus privilegios.
+6. **Aislamiento de Perfiles por Negocio:**
+   - Los perfiles y membresías están aislados por producto. Tener el perfil `ADMINISTRADOR` en Tranqi no otorga privilegios ni perfiles en Tinkay, FastFix o Margaritas.
+7. **Verificación de Estado Adicional para Capacidades Operativas:**
+   - Ostentar un perfil en la membresía es condición necesaria pero no suficiente: si el negocio exige una aprobación explícita en sus tablas operativas (ej. registro en `trq_abogado` en estado `APROBADO` o `ffh_tecnico` habilitado), las capacidades operativas avanzadas se activan únicamente al verificar dicho estado.
+8. **Notificación Automática Multicanal por Cambio de Perfil:**
+   - Cada vez que a un usuario se le asigna o revoca un perfil dentro de un negocio (vía `seg_fn_asignar_rol`), el sistema dispara **automáticamente e de forma inmediata** una notificación multicanal (`PLT-013`):
+     - **Correo Electrónico (Email):** Notificación formal detallando el cambio de perfil y las nuevas capacidades otorgadas en la empresa.
+     - **Notificación Push (Web / Mobile Push):** Alerta instantánea al dispositivo móvil / navegador registrado del usuario.
+     - **In-App:** Registro persistente en la bandeja/campana de notificaciones de la aplicación.
+
+### Criterios de Aceptación (Gherkin)
+* **Escenario:** Asignación automática inicial de perfil CLIENTE
+  * **Dado que** un usuario no registrado ingresa por primera vez a FastFix.
+  * **Cuando** completa el flujo de registro u onboarding.
+  * **Entonces** el sistema le crea su membresía en FastFix asignándole automáticamente el perfil `CLIENTE` como nivel jerárquico base.
+* **Escenario:** Asignación de múltiples perfiles en una misma empresa y notificación automática
+  * **Dado que** un usuario registrado en Tranqi posee el perfil `CLIENTE`.
+  * **Cuando** el Administrador de Tranqi aprueba su solicitud profesional y le asigna el perfil `ABOGADO`.
+  * **Entonces** el sistema le agrega el perfil `ABOGADO` manteniendo activo `CLIENTE`, y dispara automáticamente una notificación por Email y Push al usuario informando el cambio de perfil.
+* **Escenario:** Asignación permitida de perfil de igual o menor jerarquía
+  * **Dado que** un usuario gestor posee el perfil `ADMINISTRADOR` (Jerarquía Nivel 80) en Tinkay.
+  * **Cuando** asigna a un usuario los perfiles `OPERADOR` (Jerarquía Nivel 30) o `ADMINISTRADOR` (Jerarquía Nivel 80).
+  * **Entonces** el sistema valida que la jerarquía es igual o menor a la del gestor y procesa exitosamente la asignación.
+* **Escenario:** Intento bloqueado de asignar perfil de jerarquía superior
+  * **Dado que** un gestor posee el perfil `ADMINISTRADOR` (Jerarquía Nivel 80) en FastFix.
+  * **Cuando** intenta asignar a otro usuario el perfil `SUPERADMIN` (Jerarquía Nivel 100).
+  * **Entonces** el sistema bloquea la transacción con una excepción de seguridad indicando "No posee jerarquía suficiente para asignar este perfil".
+* **Escenario:** Intento de modificación no autorizada de la matriz de widgets por un Administrador
+  * **Dado que** un usuario con perfil `ADMINISTRADOR` de negocio intenta modificar las asignaciones en `seg_rol_widget`.
+  * **Cuando** ejecuta la solicitud de actualización de widgets por perfil.
+  * **Entonces** la política de seguridad RLS bloquea la operación indicando "La gobernanza de perfiles y widgets es exclusiva del SuperAdmin de plataforma".
 
 ---
 
@@ -261,8 +311,14 @@ Pantalla de configuración del negocio (identidad legal + datos de `PLT-008`) y 
    - Cada capacidad administrativa se concibe como un Widget único y autocontenido registrado con clave descriptiva en `seg_widget`.
    - Ninguna aplicación implementa pantallas administrativas ad-hoc fuera de este estándar; la funcionalidad es única y común, adaptando únicamente los estilos visuales (paleta de colores/tema) de cada marca.
 2. **Estándar Interactivo de DataGrids y Tablas de Datos en Widgets:**
-   - Todo widget que despliegue tablas o listas de datos (ej. `auditoria`, `gestion_usuarios`, catálogos, pedidos, transacciones o cualquier listado tabulado) debe incorporar obligatoriamente un **DataGrid enriquecido** con las siguientes capacidades estándar:
-     - **Búsqueda Global Multi-campo (Global Search):** Caja de búsqueda en tiempo real habilitada permanentemente en la barra superior del Grid, que evalúa coincidencias de texto sobre la totalidad de los campos y columnas de los registros.
+   - Todo widget que despliegue tablas o listas de datos (ej. `auditoria`, `gestion_usuarios`, catálogos, pedidos, transacciones o cualquier listado tabulado) debe incorporar obligatoriamente un **DataGrid enriquecido** que implementa la **Estrategia de Doble Criterio de Búsqueda y Filtrado (2 Capas)**:
+     - **Criterio 1 — Búsqueda y Filtrado Server-Side en Base de Datos (BDD Query Filters):**
+       - Formulario / barra de filtros primarios para consultar directamente en la base de datos (PostgreSQL/Supabase) antes de renderizar la tabla.
+       - Incluye campos de filtrado específicos según el contexto de la consulta: *Rango de Fechas (Desde / Hasta)*, *Correo Electrónico*, *Nombres y Apellidos*, *Cédula / RUC / Identificación*, *Estado*, *Rol / Perfil*, *Técnico / Abogado Asignado*, *Sucursal / Negocio*, etc.
+       - Garantiza paginación eficiente, alto rendimiento y control de volumen de datos traídos desde el servidor.
+     - **Criterio 2 — Búsqueda Global Client-Side sobre el Dataset Consultado (In-Memory Grid Search):**
+       - Caja de búsqueda en tiempo real habilitada permanentemente en la barra de herramientas del DataGrid.
+       - Una vez obtenidos los registros resultantes de la consulta BDD en la vista, evalúa coincidencias instantáneas sobre **la totalidad de las columnas y campos** de los datos retornados en memoria cliente a medida que se tipea, sin realizar llamadas adicionales a la base de datos.
      - **Columnas Ordenables (Sorting):** Ordenamiento ascendente y descendente al hacer clic en los encabezados.
      - **Reordenamiento de Columnas (Drag & Drop):** Permite cambiar el orden visual de las columnas arrastrando los encabezados a la posición deseada.
      - **Agrupamiento Dinámico por Columnas (Drag-to-Group):** Permite arrastrar uno o más encabezados de columna hacia una zona superior de agrupamiento para clasificar y colapsar/expandir filas dinámicamente.
@@ -274,8 +330,16 @@ Pantalla de configuración del negocio (identidad legal + datos de `PLT-008`) y 
    - **Comportamiento por Rol:**
      - **Rol `ADMINISTRADOR`:** Ve y gestiona únicamente los usuarios registrados en su propia aplicación (miembros de `seg_membresia` de su negocio).
      - **Rol `SUPERADMIN` de Plataforma:** Desde **cualquier aplicación**, al abrir el widget de gestión de usuarios, posee la facultad de visualizar y administrar a **todos los usuarios registrados de todo el ecosistema** (con selector por negocio o vista consolidada de plataforma).
-6. **Asignación dinámica de widgets por rol:** un `ADMINISTRADOR` (o `SUPERADMIN`) decide qué widgets ve cada rol desde la consola de configuración de permisos — sin requerir cambios en código para ajustar visibilidades.
-7. **SuperAdmin de plataforma:** `kleber.toapanta.ch@gmail.com` es `SUPERADMIN` en los 4 negocios desde su primer inicio de sesión — no requiere asignación manual y posee acceso universal a todos los widgets en todas las apps.
+   - **Gestión Multi-Perfil y Selector por Jerarquía:**
+     - Permite asignar o desasignar múltiples perfiles a un usuario en una misma empresa.
+     - El selector interactivo de perfiles filtra dinámicamente el catálogo de perfiles, mostrando **exclusivamente los perfiles con jerarquía igual o menor** a la jerarquía máxima que ostenta el usuario gestor autenticado (`PLT-003` regla 4).
+6. **Widget de Gobernanza de Permisos (`configuracion_permisos` - Exclusivo `SUPERADMIN`):**
+   - La asignación dinámica de widgets por perfil en `seg_rol_widget` se realiza mediante el widget especializado `configuracion_permisos`.
+   - **Facultad Exclusiva:** **Únicamente el `SUPERADMIN`** puede acceder a este widget para marcar/desmarcar qué widgets están autorizados para cada perfil (`PLT-003` regla 1). Los Administradores locales no ven ni pueden acceder a este widget de gobernanza.
+7. **Widget Único y Común de Emisión de Notificaciones (`emision_notificaciones`):**
+   - Componente administrativo transversal registrado en `seg_widget` que permite a los Administradores de negocio y SuperAdmins redactar y despachar comunicaciones masivas o dirigidas (`PLT-013`).
+   - Incorpora la matriz de segmentación de audiencia (`TODOS`, `POR_ROL`, `POR_USUARIOS`), selección multicanal (`IN_APP`, `EMAIL`, `PUSH`) y el **Editor WYSIWYG de Texto Enriquecido (HTML)** con barra de herramientas completa (estilos de texto, listas, colores, tablas, hipervínculos, imágenes, variables dinámicas) y conmutación transparente a modo de edición/visualización **Markdown (`.md`)** y **Live Preview**.
+8. **SuperAdmin de plataforma:** `kleber.toapanta.ch@gmail.com` y `jesus251296@gmail.com` son `SUPERADMIN` en los 4 negocios desde su primer inicio de sesión — no requiere asignación manual y posee acceso universal a todos los widgets en todas las apps.
 
 ### Criterios de Aceptación (Gherkin)
 * **Escenario:** Gestión de usuarios por Administrador de Negocio
@@ -290,6 +354,10 @@ Pantalla de configuración del negocio (identidad legal + datos de `PLT-008`) y 
   * **Dado que** un usuario administrativo abre cualquier widget con listados de datos (ej. auditoría o usuarios).
   * **Cuando** arrastra una columna a la zona de agrupamiento y presiona el botón "Exportar a Excel".
   * **Entonces** la tabla agrupa dinámicamente los registros por dicha columna y genera la descarga inmediata del archivo `.xlsx` estructurado.
+* **Escenario:** Filtrado en dos capas (Server-Side BDD + Client-Side Multi-columna) en DataGrid
+  * **Dado que** un usuario administrativo aplica un filtro por rango de fechas y correo en el formulario de BDD (Criterio 1).
+  * **Cuando** el servidor retorna el conjunto de registros filtrados y el usuario escribe un término en la caja de búsqueda global del DataGrid (Criterio 2).
+  * **Entonces** la tabla filtra instantáneamente en memoria cliente sobre todas las columnas del dataset consultado sin re-consultar a la base de datos.
 
 **Implementación técnica:** ver [`especificacion-tecnica.md`](especificacion-tecnica.md) §1.1 y §9.
 
@@ -325,25 +393,61 @@ Todo usuario registrado puede solicitar, por auto-servicio y sin intervención d
 ## PLT-013 — Centro Transversal de Notificaciones y Alertas (In-App, Push, Email y WhatsApp)
 
 ### Descripción
-Motor unificado de eventos de comunicación y alertas en tiempo real para todos los productos del ecosistema, gestionado de forma centralizada sin que cada negocio reimplemente su propia infraestructura de mensajes.
+Motor unificado de comunicación multicanal y alertas en tiempo real para todos los productos del ecosistema. Proporciona infraestructura automatizada para eventos del sistema y una consola administrativa de emisión masiva y dirigida de notificaciones por empresa.
 
 ### Reglas de Negocio
-1. **Componente / Widget In-App de Notificaciones:**
-   - Barra superior de todas las aplicaciones con icono de campana e indicador numérico de notificaciones no leídas.
-   - Drawer táctil / modal interactivo que despliega el historial de alertas, ordenadas cronológicamente, con opción de marcar como leídas o ir al detalle del evento (ej. pedido, cita o causa).
-2. **Multicanalidad de Envío:**
-   - **In-App:** Notificación nativa persistida en base de datos.
-   - **Web / Mobile Push:** Notificaciones push para navegadores web y apps nativas Capacitor.
-   - **Correo Transaccional (Email):** Envío automático de notificaciones formales (confirmación de compra, factura SRI, reseteo de clave).
-   - **WhatsApp Business API:** Notificaciones operativas de alto valor (estado de entrega de pedido, confirmación de técnico en camino, alerta de cita urgente), exclusivamente si el usuario lo autorizó (`autorizacion_contacto_whatsapp` en `PLT-001`).
-3. **Aislamiento y Preferencias por Usuario:**
-   - El usuario puede gestionar desde `/panel/notificaciones` qué tipos de alertas desea recibir y por qué canales.
+1. **Componente In-App de Notificaciones (Receptor):**
+   - Barra superior de todas las aplicaciones con icono de campana e indicador numérico interactivo de notificaciones no leídas.
+   - Drawer táctil / modal adaptativo con historial cronológico, filtro por leídas/no leídas y enlaces de acción directa (*deep linking*) hacia la sección del evento.
+2. **Infraestructura Multicanal Integrada:**
+   - **In-App:** Notificación persistida en base de datos (`comun_notificacion.not_registro`).
+   - **Web & Mobile Push:** Alertas push inmediatas enviadas a navegadores (Web Push API - VAPID) y aplicaciones nativas móviles (Capacitor / FCM).
+   - **Correo Transaccional (Email):** Envíos por correo electrónico estructurado (HTML responsive / Markdown) para notificaciones formales y comunicados corporativos.
+   - **WhatsApp Business API:** Mensajes operativos de alto valor (estado de entregas, asignación de técnicos/abogados), requiriendo previa autorización explícita (`autorizacion_contacto_whatsapp` en `PLT-001`).
+3. **Widget Administrativo de Emisión de Notificaciones (`emision_notificaciones`):**
+   - Módulo común registrado en la consola de administración (`PLT-011`) que permite a los Administradores y SuperAdmins redactar y enviar comunicaciones masivas o segmentadas dentro de su negocio activo.
+   - **Segmentación Dinámica de Audiencia (Dentro del Negocio):**
+     - `TODOS`: Envío a la totalidad de miembros registrados con membresía activa en la empresa.
+     - `POR_ROL`: Selección de 1 o más perfiles/roles específicos del negocio (ej. enviar únicamente a usuarios con perfil `TECNICO`, `ABOGADO` o `CLIENTE`).
+     - `POR_USUARIOS`: Buscador multi-selección de usuarios específicos pertenecientes al negocio.
+   - **Selección Flexible de Canales de Envío:**
+     - Selección de 1 o múltiples canales simultáneos: `IN_APP`, `EMAIL`, `PUSH`.
+   - **Editor WYSIWYG de Texto Enriquecido (HTML) y Conmutador Markdown (`.md`):**
+     - **Modo Editor Visual (WYSIWYG Rich Text Editor):** Incorpora una barra de herramientas completa con controles interactivos para redacción visual enriquecida:
+       - *Formato de texto:* Negrita (**B**), Cursiva (*I*), Subrayado (_U_), Tachado (~S~), Familia tipográfica, Tamaño de fuente, Color de fuente y Resaltador de texto.
+       - *Párrafo y estructura:* Alineación (Izquierda, Centro, Derecha, Justificado), Encabezados H1-H6, Listas con viñetas y numeradas, Sangría (Aumentar/Disminuir) e Interlineado.
+       - *Elementos enriquecidos:* Inserción de tablas con control de filas/columnas, Hipervínculos, Imágenes (carga local/URL), Citas en bloque, Código formateado y Limpiador de formato (*Clear Formatting*).
+       - *Asistente y Variables Dinámicas:* Botón selector de variables dinámicas interpolables (`{{nombre_usuario}}`, `{{negocio}}`, `{{perfil}}`, `{{fecha}}`).
+     - **Modo Código / Markdown (`.md`):** Pestaña de visualización y edición directa en código **Markdown (`.md`)** o código HTML estructurado, permitiendo insumo o exportación transparente entre ambos formatos.
+     - **Modo Vista Previa Live (*Live Preview*):** Renderizado simulado en tiempo real que refleja exactamente cómo visualizará el usuario el contenido en la campana In-App, en pantalla de dispositivo móvil (Push) y en cliente de correo electrónico (Email responsive).
+   - **Historial y Métricas de Despacho:**
+     - Registro auditado de cada campaña emitida (`not_campana`) almacenando fecha, emisor, audiencia seleccionada, canales activados, total de envíos exitosos y fallidos.
+4. **Despacho Automático de Notificaciones del Sistema:**
+   - Además de la emisión manual desde la consola, el motor ejecuta envíos automáticos ante eventos clave:
+     - **Asignación / Revocación de Perfiles (`PLT-003`):** Envío automático por Email y Push al modificar la jerarquía o roles de un usuario.
+     - **Lanzamiento de Funcionalidades:** Comunicados masivos de nuevas herramientas en la app.
+     - **Alertas Operativas:** Cambios de estado en pedidos (`PLT-009`), citas, facturación (`PLT-006`) o expedientes.
+     - **Promociones y Noticias:** Difusión de cupones y boletines informativos del negocio.
+5. **Preferencias del Usuario:**
+   - El usuario puede ajustar en su panel (`/panel/notificaciones`) sus preferencias de recepción por canal (excepto para notificaciones críticas de seguridad o reseteo de clave).
 
 ### Criterios de Aceptación (Gherkin)
-* **Escenario:** Recepción de notificación in-app y push de pedido
-  * **Dado que** un cliente realizó un pedido en Tinkay.
-  * **Cuando** el estado cambia a "En Ruta de Entrega".
-  * **Entonces** el sistema genera la notificación in-app, incrementa el contador de la campana y dispara la alerta push a su dispositivo.
+* **Escenario:** Emisión de notificación segmentada por rol usando Editor WYSIWYG HTML
+  * **Dado que** el `ADMINISTRADOR` de Tranqi accede al widget `emision_notificaciones`.
+  * **Cuando** selecciona la audiencia `POR_ROL` (Perfil `ABOGADO`), redacta el mensaje utilizando la barra de herramientas del Editor WYSIWYG (aplicando negritas, listas e imágenes) y presiona "Enviar Notificación".
+  * **Entonces** el sistema convierte y sanitiza el contenido, procesa el envío masivo únicamente a los usuarios con membresía `ABOGADO` en Tranqi y registra la campaña en la bitácora de despacho.
+* **Escenario:** Conmutación entre Editor WYSIWYG HTML y Formato Markdown
+  * **Dado que** un administrador redacta una notificación en el modo WYSIWYG visual.
+  * **Cuando** hace clic en la pestaña "Formato Markdown (.md)".
+  * **Entonces** el sistema convierte instantáneamente el contenido HTML formateado a su equivalente exacto en sintaxis Markdown (`.md`) para inspección o edición directa.
+* **Escenario:** Vista previa interactiva de notificación Markdown/HTML
+  * **Dado que** un administrador redacta una nueva notificación con el editor e inyecta la variable `{{nombre_usuario}}`.
+  * **Cuando** conmuta a la pestaña "Vista Previa Live".
+  * **Entonces** el sistema renderiza en tiempo real el diseño HTML simétrico al formato que recibirá el usuario en su correo y pantalla.
+* **Escenario:** Despacho automático de notificación push y email al modificar perfil
+  * **Dado que** un gestor asigna el perfil `TECNICO` a un usuario en FastFix.
+  * **Cuando** se completa la transacción en `seg_fn_asignar_rol`.
+  * **Entonces** el sistema envía automáticamente una notificación Push al dispositivo del usuario y un Correo informando de su nuevo perfil.
 
 ---
 
