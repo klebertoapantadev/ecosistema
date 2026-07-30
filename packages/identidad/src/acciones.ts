@@ -2,6 +2,7 @@
 
 import { headers } from "next/headers";
 import { crearClienteServidor } from "@eco/supabase/servidor";
+import { enviarCorreo } from "@eco/notificaciones";
 import {
   esquemaRegistro,
   esquemaIngreso,
@@ -14,11 +15,6 @@ import {
 import { registrarAcceso } from "./acceso";
 
 type Resultado<T = undefined> = { ok: true; data: T } | { ok: false; error: string };
-
-async function obtenerOrigen() {
-  const h = await headers();
-  return h.get("origin") ?? `https://${h.get("host")}`;
-}
 
 async function obtenerIpYAgente() {
   const h = await headers();
@@ -63,22 +59,21 @@ export async function asegurarTerminosAceptados(
     .is("usu_terminos_aceptados_en", null);
 }
 
-type ResultadoRegistro = { ok: true; sesionActiva: boolean } | { ok: false; error: string };
-
-// El registro por correo exige confirmar el correo (decision del usuario:
-// solo el flujo de correo/contraseña, Google conecta directo porque Google
-// ya lo verifico). Sin confirmar, signUp() no crea sesion -- sesionActiva
-// le dice al formulario si redirigir al panel o mostrar "revisa tu correo".
-// emailRedirectTo apunta al mismo callback que usa OAuth: al confirmar,
-// exchangeCodeForSession establece la sesion y la auto-reparacion del
-// layout del panel completa la membresia CLIENTE si quedo pendiente.
-export async function registrarUsuario(datos: DatosRegistro, negocio: string): Promise<ResultadoRegistro> {
+// El registro por correo ya no depende del link magico de Supabase Auth (un
+// solo remitente de SMTP a nivel de proyecto, compartido por los 4
+// negocios -- no puede salir "de" cada negocio). "Confirm email" esta
+// desactivado en el proyecto Supabase: signUp() entrega sesion activa de
+// inmediato y la verificacion pasa a ser 100% nuestra
+// (usu_correo_verificado_en), via un OTP de 6 digitos que mandamos con el
+// SMTP propio de esta app (@eco/notificaciones, variables SMTP_* de
+// Vercel). Google OAuth sigue sin pasar por esto -- Google ya verifico el
+// correo (ver seg_fn_provisionar_usuario()).
+export async function registrarUsuario(datos: DatosRegistro, negocio: string): Promise<Resultado> {
   const parseo = esquemaRegistro.safeParse(datos);
   if (!parseo.success) {
     return { ok: false, error: parseo.error.issues[0]?.message ?? "Datos invalidos" };
   }
 
-  const origen = await obtenerOrigen();
   const supabase = await crearClienteServidor();
   const { data, error } = await supabase.auth.signUp({
     email: parseo.data.correo,
@@ -92,21 +87,50 @@ export async function registrarUsuario(datos: DatosRegistro, negocio: string): P
         // aceptacion en el callback en vez de aqui.
         terminos_version: TERMINOS_VERSION,
       },
-      emailRedirectTo: `${origen}/auth/callback`,
     },
   });
 
   if (error) return { ok: false, error: error.message };
-  if (!data.user) return { ok: false, error: "No se pudo crear el usuario" };
+  if (!data.user || !data.session) return { ok: false, error: "No se pudo crear el usuario" };
 
-  const sesionActiva = data.session !== null;
-  if (sesionActiva) {
-    await asegurarMembresiaCliente(supabase, data.user.id, negocio);
-    const { ip, userAgent } = await obtenerIpYAgente();
-    await registrarAcceso(supabase, data.user.id, ip, userAgent, negocio);
-  }
+  await asegurarMembresiaCliente(supabase, data.user.id, negocio);
+  const { ip, userAgent } = await obtenerIpYAgente();
+  await registrarAcceso(supabase, data.user.id, ip, userAgent, negocio);
 
-  return { ok: true, sesionActiva };
+  const { data: codigo, error: errorOtp } = await supabase.schema("comun_seguridad").rpc("seg_fn_generar_otp_registro");
+  if (errorOtp || !codigo) return { ok: false, error: errorOtp?.message ?? "No se pudo generar el código de verificación" };
+
+  await enviarCorreo({
+    para: parseo.data.correo,
+    asunto: "Tu código de verificación",
+    html: `<p>Hola${parseo.data.nombres ? ` ${parseo.data.nombres}` : ""},</p><p>Tu código de verificación es <strong style="font-size:1.4em; letter-spacing:0.2em;">${codigo}</strong></p><p>Vence en 10 minutos.</p>`,
+  });
+
+  return { ok: true, data: undefined };
+}
+
+// Reenvío desde la pantalla de verificación -- mismo RPC, sin volver a
+// crear el usuario. negocio no hace falta: enviarCorreo() ya usa el SMTP
+// de la app que llama.
+export async function reenviarOtpRegistro(correo: string, nombres?: string | null): Promise<Resultado> {
+  const supabase = await crearClienteServidor();
+  const { data: codigo, error } = await supabase.schema("comun_seguridad").rpc("seg_fn_generar_otp_registro");
+  if (error || !codigo) return { ok: false, error: error?.message ?? "No se pudo generar el código de verificación" };
+
+  await enviarCorreo({
+    para: correo,
+    asunto: "Tu código de verificación",
+    html: `<p>Hola${nombres ? ` ${nombres}` : ""},</p><p>Tu código de verificación es <strong style="font-size:1.4em; letter-spacing:0.2em;">${codigo}</strong></p><p>Vence en 10 minutos.</p>`,
+  });
+
+  return { ok: true, data: undefined };
+}
+
+export async function verificarOtpRegistro(codigo: string): Promise<Resultado<boolean>> {
+  const supabase = await crearClienteServidor();
+  const { data: valido, error } = await supabase.schema("comun_seguridad").rpc("seg_fn_verificar_otp_registro", { p_codigo: codigo });
+  if (error) return { ok: false, error: error.message };
+  return { ok: true, data: valido ?? false };
 }
 
 export async function iniciarSesion(datos: DatosIngreso, negocio: string): Promise<Resultado> {

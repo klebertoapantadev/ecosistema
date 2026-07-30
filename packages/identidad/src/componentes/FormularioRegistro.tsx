@@ -15,7 +15,6 @@ export function FormularioRegistro({ negocio }: { negocio: string }) {
   const [aceptaTerminos, setAceptaTerminos] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [cargando, setCargando] = useState(false);
-  const [revisarCorreo, setRevisarCorreo] = useState(false);
 
   async function alEnviar(e: React.FormEvent) {
     e.preventDefault();
@@ -27,25 +26,11 @@ export function FormularioRegistro({ negocio }: { negocio: string }) {
       setError(resultado.error);
       return;
     }
-    if (!resultado.sesionActiva) {
-      // Registro por correo: exige confirmar el enlace enviado al correo
-      // antes de tener sesión (Google OAuth, en cambio, entra directo).
-      setRevisarCorreo(true);
-      return;
-    }
-    router.push("/panel");
+    // Registro por correo: falta verificar el código de 6 dígitos que se
+    // acaba de enviar (Google OAuth, en cambio, entra directo -- Google ya
+    // verificó el correo).
+    router.push("/verificar-correo");
     router.refresh();
-  }
-
-  if (revisarCorreo) {
-    return (
-      <div className="tarjeta-auth">
-        <p>
-          Te enviamos un enlace de confirmación a <strong>{correo}</strong>. Ábrelo para activar tu cuenta —
-          con Google Sign-In no hace falta este paso.
-        </p>
-      </div>
-    );
   }
 
   async function conGoogle() {

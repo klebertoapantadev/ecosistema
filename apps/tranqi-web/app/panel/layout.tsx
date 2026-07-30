@@ -18,6 +18,9 @@ export default async function LayoutPanel({ children }: { children: React.ReactN
   if (!perfil) redirect("/ingresar");
   // PLT-001 regla 2: confirmar identidad + WhatsApp antes de usar el panel.
   if (!perfil.usu_onboarding_completo) redirect("/bienvenida");
+  // Registro por correo/contraseña exige verificar el OTP enviado -- Google
+  // OAuth ya llega verificado (ver seg_fn_provisionar_usuario()).
+  if (!perfil.usu_correo_verificado_en) redirect("/verificar-correo");
 
   // Auto-reparacion: si signUp() se completo bajo "confirmar correo" activo,
   // no habia sesion todavia y la membresia CLIENTE pudo no crearse (ver

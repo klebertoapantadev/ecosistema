@@ -342,6 +342,47 @@ export type Database = {
           },
         ]
       }
+      seg_otp_correo: {
+        Row: {
+          otp_codigo_hash: string
+          otp_creado_en: string
+          otp_expira_en: string
+          otp_id: string
+          otp_intentos: number
+          otp_secuencial: number
+          otp_usuario_id: string
+          otp_verificado_en: string | null
+        }
+        Insert: {
+          otp_codigo_hash: string
+          otp_creado_en?: string
+          otp_expira_en: string
+          otp_id?: string
+          otp_intentos?: number
+          otp_secuencial?: never
+          otp_usuario_id: string
+          otp_verificado_en?: string | null
+        }
+        Update: {
+          otp_codigo_hash?: string
+          otp_creado_en?: string
+          otp_expira_en?: string
+          otp_id?: string
+          otp_intentos?: number
+          otp_secuencial?: never
+          otp_usuario_id?: string
+          otp_verificado_en?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seg_otp_correo_otp_usuario_id_fkey"
+            columns: ["otp_usuario_id"]
+            isOneToOne: false
+            referencedRelation: "seg_usuario"
+            referencedColumns: ["usu_id"]
+          },
+        ]
+      }
       seg_rol_widget: {
         Row: {
           rlw_actualizado_en: string
@@ -391,6 +432,7 @@ export type Database = {
           usu_cedula: string | null
           usu_ciudad_id: string | null
           usu_correo: string
+          usu_correo_verificado_en: string | null
           usu_creado_en: string
           usu_detalle_usuario: Json
           usu_eliminado_en: string | null
@@ -411,6 +453,7 @@ export type Database = {
           usu_cedula?: string | null
           usu_ciudad_id?: string | null
           usu_correo: string
+          usu_correo_verificado_en?: string | null
           usu_creado_en?: string
           usu_detalle_usuario?: Json
           usu_eliminado_en?: string | null
@@ -431,6 +474,7 @@ export type Database = {
           usu_cedula?: string | null
           usu_ciudad_id?: string | null
           usu_correo?: string
+          usu_correo_verificado_en?: string | null
           usu_creado_en?: string
           usu_detalle_usuario?: Json
           usu_eliminado_en?: string | null
@@ -510,6 +554,11 @@ export type Database = {
       }
       seg_fn_eliminar_cuenta: { Args: never; Returns: string }
       seg_fn_es_admin_negocio: { Args: { p_negocio: string }; Returns: boolean }
+      seg_fn_generar_otp_registro: { Args: never; Returns: string }
+      seg_fn_verificar_otp_registro: {
+        Args: { p_codigo: string }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never

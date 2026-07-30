@@ -5,6 +5,8 @@ export {
   asegurarMembresiaCliente,
   asegurarTerminosAceptados,
   registrarUsuario,
+  reenviarOtpRegistro,
+  verificarOtpRegistro,
   iniciarSesion,
   completarBienvenida,
   eliminarCuenta,
@@ -27,5 +29,6 @@ export { crearManejadorCallbackOAuth } from "./servidor";
 export { FormularioRegistro } from "./componentes/FormularioRegistro";
 export { FormularioIngreso } from "./componentes/FormularioIngreso";
 export { FormularioBienvenida } from "./componentes/FormularioBienvenida";
+export { VerificacionCorreo } from "./componentes/VerificacionCorreo";
 export { EliminarCuenta } from "./componentes/EliminarCuenta";
 export { HistorialAccesos } from "./componentes/HistorialAccesos";

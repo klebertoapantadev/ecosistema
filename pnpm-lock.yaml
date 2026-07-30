@@ -323,6 +323,9 @@ importers:
       '@eco/db':
         specifier: workspace:*
         version: link:../db
+      '@eco/notificaciones':
+        specifier: workspace:*
+        version: link:../notificaciones
       '@eco/supabase':
         specifier: workspace:*
         version: link:../supabase
@@ -351,6 +354,25 @@ importers:
       react:
         specifier: 19.0.0
         version: 19.0.0
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
+
+  packages/notificaciones:
+    dependencies:
+      nodemailer:
+        specifier: 9.0.3
+        version: 9.0.3
+    devDependencies:
+      '@eco/config':
+        specifier: workspace:*
+        version: link:../config
+      '@types/node':
+        specifier: ^22.10.0
+        version: 22.20.1
+      '@types/nodemailer':
+        specifier: 8.0.1
+        version: 8.0.1
       typescript:
         specifier: ^5.7.0
         version: 5.9.3
@@ -943,6 +965,9 @@ packages:
   '@types/node@22.20.1':
     resolution: {integrity: sha512-EANqOCF9QFyra+4pfxUcX9STKJpCLjMbObVzljIJomAWSnuSIEAvyzEU53GaajbXJEgdh0iEcPL+DGvpUd4k1Q==}
 
+  '@types/nodemailer@8.0.1':
+    resolution: {integrity: sha512-PxpaInm8V1JQDd4j0ds5HfvWQk8JupS1C0Picb96QJsrrRDjBH+DlK7L4ZdNSqNULhiZRQHc40nLVShaGxXAMw==}
+
   '@types/react-dom@19.2.3':
     resolution: {integrity: sha512-jp2L/eY6fn+KgVVQAOqYItbF0VY/YApe5Mz2F0aykSO8gx31bYCZyvSeYxCHKvzHG5eZjc+zyaS5BrBWya2+kQ==}
     peerDependencies:
@@ -1104,6 +1129,10 @@ packages:
         optional: true
       sass:
         optional: true
+
+  nodemailer@9.0.3:
+    resolution: {integrity: sha512-n+YP+NKwR5zRWa60k3GiQ6Q3B4KXCoAw40dAKeCtYn020iNN74aWK2liXIC3ZEATeGql7we3tE3t8QwhY0eskw==}
+    engines: {node: '>=6.0.0'}
 
   pathe@2.0.3:
     resolution: {integrity: sha512-WUjGcAqP1gQacoQe+OBJsFA7Ld4DyXuUIjZ5cc75cLHvJ7dtNsTugphxIADwspS+AraAUePCKrSVtPLFj/F88w==}
@@ -1668,6 +1697,10 @@ snapshots:
     dependencies:
       undici-types: 6.21.0
 
+  '@types/nodemailer@8.0.1':
+    dependencies:
+      '@types/node': 22.20.1
+
   '@types/react-dom@19.2.3(@types/react@19.2.17)':
     dependencies:
       '@types/react': 19.2.17
@@ -1836,6 +1869,8 @@ snapshots:
       - '@babel/core'
       - '@types/node'
       - babel-plugin-macros
+
+  nodemailer@9.0.3: {}
 
   pathe@2.0.3: {}
 

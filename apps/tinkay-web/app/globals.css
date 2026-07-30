@@ -82,6 +82,19 @@ h1, h2, h3, .fuente-display { font-family: var(--font-fraunces), Georgia, serif;
 .btn-primario:hover { background: var(--rosa-oscuro); }
 .btn-primario:disabled { opacity: 0.5; cursor: wait; }
 
+.pagina-mfa {
+  max-width: 480px; margin: 60px auto; padding: 0 20px;
+  display: flex; flex-direction: column; gap: 12px; text-align: center;
+}
+.tarjeta-mfa {
+  display: flex; flex-direction: column; gap: 14px; align-items: center;
+  background: var(--blanco); border: 1px solid var(--linea); border-radius: 16px; padding: 28px;
+}
+.tarjeta-mfa input {
+  padding: 12px 14px; border-radius: 10px; border: 1.5px solid var(--linea);
+  font-family: inherit; font-size: 1.4rem; letter-spacing: 0.3em; text-align: center; width: 160px;
+}
+
 /* ═══════════ Bienvenida ═══════════ */
 .pagina-bienvenida {
   min-height: 100vh; background: var(--crema); color: var(--tinta);

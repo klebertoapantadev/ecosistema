@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@eco/db": "workspace:*",
+    "@eco/notificaciones": "workspace:*",
     "@eco/supabase": "workspace:*",
     "libphonenumber-js": "1.13.9",
     "zod": "4.4.3"
