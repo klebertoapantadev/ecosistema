@@ -4,7 +4,7 @@ import {
   Briefcase, Scale, Award, Sparkles, UserCheck, Users, Settings,
   ShieldCheck, Bell, Shield, type LucideIcon
 } from "lucide-react";
-import { obtenerPerfilActual, obtenerWidgetsVisibles, obtenerSaludo } from "@eco/identidad";
+import { obtenerPerfilActual, obtenerWidgetsVisibles, obtenerSaludo, obtenerMembresia } from "@eco/identidad";
 import { SelectorRolActivo, type ModoRol } from "./SelectorRolActivo";
 
 export const metadata: Metadata = { title: "Panel — tranqi" };
@@ -41,14 +41,48 @@ interface Props {
   searchParams: Promise<{ modo?: string }>;
 }
 
+const MODOS: readonly ModoRol[] = ["cliente", "abogado", "admin"];
+
+/** Valida el parametro de URL contra la lista cerrada de modos. Sin esto un
+ *  `?modo=cualquier-cosa` caia en el ternario final y renderizaba la vista de
+ *  cliente por descarte, en vez de rechazarse. */
+function modoValido(valor: string | undefined): ModoRol | null {
+  return MODOS.includes(valor as ModoRol) ? (valor as ModoRol) : null;
+}
+
+/** Modo que le corresponde a un rol de negocio. Es el unico modo que vera quien
+ *  no es superadmin, sin importar lo que traiga la URL. */
+function modoDeRol(memRol: string | null | undefined): ModoRol {
+  if (memRol === "ABOGADO") return "abogado";
+  if (memRol === "ADMINISTRADOR") return "admin";
+  return "cliente";
+}
+
 export default async function PaginaPanel({ searchParams }: Props) {
   const { modo: modoParam } = await searchParams;
-  const modo: ModoRol = (modoParam as ModoRol) || "cliente";
 
   const perfil = await obtenerPerfilActual();
   const nombre = perfil?.usu_nombres || perfil?.usu_correo || "";
   const saludo = perfil ? await obtenerSaludo(perfil.usu_id, nombre) : null;
   const nombreCompleto = [perfil?.usu_nombres, perfil?.usu_apellidos].filter(Boolean).join(" ") || nombre;
+
+  // Ver el portal con los ojos de otro rol es una capacidad de plataforma, no
+  // de negocio: solo `usu_superadmin_plataforma`. Antes el modo se tomaba de
+  // `?modo=` sin contrastarlo con nada, asi que cualquier CLIENTE con sesion
+  // podia escribir `?modo=admin` y ver la consola de administracion -- no
+  // filtraba datos (esas tarjetas son texto fijo y las pantallas reales estan
+  // protegidas por RLS y por sus guardas), pero si el mapa completo de la
+  // arquitectura interna: que widgets existen, cuales estan activos, que hay
+  // auditoria inmutable, cuanto almacenamiento hay contratado.
+  const puedeConmutar = perfil?.usu_superadmin_plataforma === true;
+
+  // Para quien no puede conmutar, el modo NO se lee de la URL: se deriva de su
+  // membresia real. Ignorar el parametro en vez de redirigir evita un rebote
+  // visible y deja la URL inofensiva.
+  const membresia = perfil ? await obtenerMembresia(perfil.usu_id, NEGOCIO) : null;
+  const modo: ModoRol = puedeConmutar
+    ? modoValido(modoParam) ?? "admin"
+    : modoDeRol(membresia?.mem_rol);
 
   return (
     <div className="inicio-cliente">
@@ -70,8 +104,11 @@ export default async function PaginaPanel({ searchParams }: Props) {
           />
         </div>
 
-        {/* Conmutador interactivo de vista por Rol */}
-        <SelectorRolActivo modoInicial={modo} />
+        {/* Conmutador de vista por rol: solo superadmin de plataforma. Ocultarlo
+            no basta por si solo -- lo que de verdad cierra la puerta es que
+            `modo` se derive de la membresia cuando no se puede conmutar. Esto
+            evita ademas ofrecer un control que no haria nada. */}
+        {puedeConmutar && <SelectorRolActivo modoInicial={modo} />}
 
         <div className="usuario-barra">
           <div className="usuario-barra-foto">
@@ -89,7 +126,9 @@ export default async function PaginaPanel({ searchParams }: Props) {
       {/* Renderizado dinámico del panel según el Rol Activo */}
       {modo === "cliente" && <PanelCliente saludo={saludo} nombre={nombre} />}
       {modo === "abogado" && <PanelAbogado saludo={saludo} nombreCompleto={nombreCompleto} />}
-      {modo === "admin" && <PanelAdministrador saludo={saludo} nombreCompleto={nombreCompleto} />}
+      {modo === "admin" && (
+        <PanelAdministrador saludo={saludo} nombreCompleto={nombreCompleto} esSuperadmin={puedeConmutar} />
+      )}
 
       <footer className="pie-panel">
         <span>© tranqi® 2026</span>
@@ -265,7 +304,11 @@ function PanelAbogado({ saludo, nombreCompleto }: { saludo: string | null; nombr
 }
 
 /* ──────────────── 3. PANEL MODO ADMINISTRADOR ──────────────── */
-function PanelAdministrador({ saludo, nombreCompleto }: { saludo: string | null; nombreCompleto: string }) {
+function PanelAdministrador({
+  saludo,
+  nombreCompleto,
+  esSuperadmin,
+}: { saludo: string | null; nombreCompleto: string; esSuperadmin: boolean }) {
   return (
     <>
       <h1>Consola de Control del Portal — tranqi</h1>
@@ -277,13 +320,24 @@ function PanelAdministrador({ saludo, nombreCompleto }: { saludo: string | null;
           <section className="tarjeta-proteccion tarjeta-admin" aria-labelledby="t-admin">
             <div className="tarjeta-proteccion-fila">
               <div>
+                {/* El titulo se ajusta a quien mira: un ADMINISTRADOR de negocio
+                    llega aqui por su rol y no es superadmin de plataforma. */}
                 <div className="eyebrow-cliente" id="t-admin">Gobernanza de Plataforma</div>
-                <div className="tarjeta-proteccion-plan">Consola <i>SuperAdmin / Administrador</i></div>
+                <div className="tarjeta-proteccion-plan">
+                  Consola <i>{esSuperadmin ? "SuperAdmin / Administrador" : "de Administración"}</i>
+                </div>
                 <div className="tarjeta-proteccion-meta">
                   Acceso universal a los widgets comunes y matriz de seguridad de perfiles en tranqi.
                 </div>
               </div>
-              <span className="badge-rol">🛡️ SuperAdmin</span>
+              {/* Solo se anuncia SuperAdmin a quien lo es de verdad. Icono de
+                  lucide-react, no emoji: §5 del sistema visual. */}
+              {esSuperadmin && (
+                <span className="badge-rol">
+                  <ShieldCheck className="icono-badge-rol" aria-hidden="true" strokeWidth={2} />
+                  SuperAdmin
+                </span>
+              )}
             </div>
           </section>
 
