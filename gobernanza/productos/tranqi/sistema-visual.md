@@ -60,15 +60,41 @@ Tipografía: **Archivo** (grotesca), pesos 400–800. Cifras con
 
 Ancho 240 px, superficie oscura, tipografía blanca al 66–72 % de opacidad.
 
-| Perfil | Superficie | Acento |
-| :--- | :--- | :--- |
-| Administración (`/panel`) | `--negro` | `--violeta` |
-| Cliente | Violeta oscuro `#1E0046` | `--menta` |
-| Abogado | Verde oscuro `#052A23` | `--lima` |
+| Perfil | Superficie | Acento | Clase |
+| :--- | :--- | :--- | :--- |
+| Administración | `--negro` | `--lavanda` | `.perfil-admin` |
+| Cliente | `--violeta-oscuro` `#33007A` | `--menta` | `.perfil-cliente` |
+| Abogado | `--esmeralda-tinta` `#052A23` | `--lima` | `.perfil-abogado` |
 
 La opción activa se marca con un **filo de 2 px** en el color de acento más un
 fondo apenas más claro, no con un relleno saturado: el color entra por el borde
 y la superficie oscura no se ensucia.
+
+El rail **no tiene color propio**: lo toma de tres variables
+(`--rail-superficie`, `--rail-alta`, `--rail-acento`) que define la clase de
+perfil que el layout del panel pone en `.panel-layout`. Añadir un perfil es
+añadir un bloque de tres líneas en `globals.css`, no duplicar las reglas del
+rail. La clase la decide `clasePerfilVisual()` en `app/panel/layout.tsx` y es
+**solo apariencia**: no concede ni restringe ningún permiso.
+
+Tres decisiones que conviene no revertir sin motivo:
+
+- **El rail de cliente es `#33007A`, no el `#1E0046` de la maqueta.** La maqueta
+  usaba una tinta más honda, y en pantalla se lee casi negro: el rail dejaba de
+  decir "cliente", que es su única función (regla 2). Se subió al púrpura
+  inmediatamente superior, que ya existía en la maqueta como hover del botón
+  primario. **No se sube a `--violeta` `#5000BA`**: ese es el color de la
+  superficie de contenido —la tarjeta de Legal Score, antes la de póliza— y con
+  el rail del mismo tono las dos superficies llenas compiten y ninguna gana
+  (§3, regla 1).
+- El acento de administración es `--lavanda`, no `--violeta`. El violeta
+  `#5000BA` sobre negro `#111111` no llega a distinguirse como filo; la lavanda
+  sí. La tabla decía `--violeta` desde el borrador inicial y el código nunca lo
+  implementó así.
+- Un superadmin de plataforma ve el rail **negro** aunque su `mem_rol` en el
+  negocio sea `CLIENTE` — caso real, la membresía cliente se crea sola al
+  registrarse. Si mirásemos solo `mem_rol` vería el rail violeta con la consola
+  de administración delante, que es justo la confusión que evita la regla 2.
 
 Cada enlace lleva icono (`lucide-react`, ver §5) + texto. En `≤860px` el rail
 ya es horizontal con scroll (ver §9); en `≤600px` el texto se oculta
