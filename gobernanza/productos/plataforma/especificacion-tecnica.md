@@ -34,10 +34,10 @@ Rol en JWT: *Custom Access Token Hook* — pendiente de implementar. Mientras no
 
 | Tabla | Prefijo col. | Estado |
 | :--- | :--- | :--- |
-| `seg_widget` | `wdg_` | ✅ Migrada. Catálogo de funcionalidades por negocio (`unique (wdg_negocio, wdg_clave)`). |
+| `seg_widget` | `wdg_` | ✅ Migrada. Catálogo de funcionalidades por negocio (`unique (wdg_negocio, wdg_clave)`). Incluye `wdg_categoria` (`INICIO`, `MI_CUENTA`, `PANEL_PROFESIONAL`, `CONSOLA_ADMINISTRATIVA`) para agrupamiento de navegación (`PLT-011` regla 8). |
 | `seg_rol_widget` | `rlw_` | ✅ Migrada. Asignación dinámica widget↔rol (`unique (rlw_negocio, rlw_rol, rlw_widget_id)`). |
 
-Seed aplicado: widgets `gestion_usuarios` (`20260727000002`) y `configuracion_negocio` (`20260727000010`) en los 4 negocios, asignados por defecto al rol `ADMINISTRADOR`. Todos los widgets de consola administrativa deben ser componentes **únicos y comunes** que comparten código lógico y adaptan su tema/colores según la app hospedante (regla de arquitectura, ver inicio de este documento). `SUPERADMIN` (vía `usu_superadmin_plataforma`) no necesita fila en `seg_rol_widget` y obtiene visibilidad global multitenant en cualquier widget común desde cualquier app.
+Seed aplicado: widgets `gestion_usuarios` (`20260727000002`) y `configuracion_negocio` (`20260727000010`) en los 4 negocios, asignados por defecto al rol `ADMINISTRADOR`. Todos los widgets de consola administrativa deben ser componentes **únicos y comunes** que comparten código lógico y adaptan su tema/colores según la app hospedante (regla de arquitectura, ver inicio de este documento). `SUPERADMIN` (vía `usu_superadmin_plataforma`) no necesita fila en `seg_rol_widget` y obtiene visibilidad global multitenant en cualquier widget común desde cualquier app. Navegación multi-rol: `@eco/identidad` expone `obtenerWidgetsVisiblesPorRol(negocio, rolActivo)` para re-renderizar dinámicamente las secciones según el rol seleccionado en el *Active Role Switcher* (`PLT-003` regla 9).
 
 **❌ Pendiente — widget `auditoria`:** planeado (ver PLT-005), sin seed en `seg_widget` todavía — verificado contra el proyecto real (2026-07-27), no confundir con "ya construido".
 

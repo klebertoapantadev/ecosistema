@@ -133,6 +133,11 @@ Gestiona el control de acceso basado en roles y perfiles (RBAC/ABAC) aislado por
      - **Correo Electrónico (Email):** Notificación formal detallando el cambio de perfil y las nuevas capacidades otorgadas en la empresa.
      - **Notificación Push (Web / Mobile Push):** Alerta instantánea al dispositivo móvil / navegador registrado del usuario.
      - **In-App:** Registro persistente en la bandeja/campana de notificaciones de la aplicación.
+9. **Experiencia de Usuario Multi-Rol y Selector de Rol Activo (Active Role Switcher UI):**
+   - **Independencia Operativa por Aplicación:** Cada negocio (Tranqi, FastFix, Tinkay, Margaritas) opera como una aplicación independiente con su propio dominio/despliegue. La experiencia multi-rol actúa dentro de la propia app del negocio.
+   - **Conmutador de Rol Activo (*Active Role Switcher*):**
+     - Si un usuario ostenta múltiples perfiles activos en una misma empresa (ej. `CLIENTE` + `ABOGADO` + `ADMINISTRADOR` en Tranqi), la interfaz del panel despliega un **Selector de Rol Activo** en la barra superior/perfil (*"Modo Cliente"* | *"Modo Abogado / Socio"* | *"Modo Administrador"*).
+     - Al alternar el rol activo, el panel reestructura instantáneamente su menú de navegación y renderiza únicamente las secciones y widgets asignados a dicho rol (`PLT-011`).
 
 ### Criterios de Aceptación (Gherkin)
 * **Escenario:** Asignación automática inicial de perfil CLIENTE
@@ -143,6 +148,10 @@ Gestiona el control de acceso basado en roles y perfiles (RBAC/ABAC) aislado por
   * **Dado que** un usuario registrado en Tranqi posee el perfil `CLIENTE`.
   * **Cuando** el Administrador de Tranqi aprueba su solicitud profesional y le asigna el perfil `ABOGADO`.
   * **Entonces** el sistema le agrega el perfil `ABOGADO` manteniendo activo `CLIENTE`, y dispara automáticamente una notificación por Email y Push al usuario informando el cambio de perfil.
+* **Escenario:** Conmutación de rol activo en usuario multi-perfil (Active Role Switcher)
+  * **Dado que** un usuario registrado en Tranqi posee los perfiles `CLIENTE` y `ABOGADO`.
+  * **Cuando** abre el selector de rol activo en el panel y conmuta de "Modo Cliente" a "Modo Abogado".
+  * **Entonces** el sistema actualiza la navegación cliente por el panel profesional de abogado, mostrando los widgets de causas asignadas, citas y expedientes.
 * **Escenario:** Asignación permitida de perfil de igual o menor jerarquía
   * **Dado que** un usuario gestor posee el perfil `ADMINISTRADOR` (Jerarquía Nivel 80) en Tinkay.
   * **Cuando** asigna a un usuario los perfiles `OPERADOR` (Jerarquía Nivel 30) o `ADMINISTRADOR` (Jerarquía Nivel 80).
@@ -339,7 +348,17 @@ Pantalla de configuración del negocio (identidad legal + datos de `PLT-008`) y 
 7. **Widget Único y Común de Emisión de Notificaciones (`emision_notificaciones`):**
    - Componente administrativo transversal registrado en `seg_widget` que permite a los Administradores de negocio y SuperAdmins redactar y despachar comunicaciones masivas o dirigidas (`PLT-013`).
    - Incorpora la matriz de segmentación de audiencia (`TODOS`, `POR_ROL`, `POR_USUARIOS`), selección multicanal (`IN_APP`, `EMAIL`, `PUSH`) y el **Editor WYSIWYG de Texto Enriquecido (HTML)** con barra de herramientas completa (estilos de texto, listas, colores, tablas, hipervínculos, imágenes, variables dinámicas) y conmutación transparente a modo de edición/visualización **Markdown (`.md`)** y **Live Preview**.
-8. **SuperAdmin de plataforma:** `kleber.toapanta.ch@gmail.com` y `jesus251296@gmail.com` son `SUPERADMIN` en los 4 negocios desde su primer inicio de sesión — no requiere asignación manual y posee acceso universal a todos los widgets en todas las apps.
+8. **Agrupamiento Estructurado de Widgets por Sección/Navegación según Rol:**
+   - Cada widget registrado en `seg_widget` posee una categoría de sección (`wdg_categoria`): `INICIO`, `MI_CUENTA`, `PANEL_PROFESIONAL`, `CONSOLA_ADMINISTRATIVA`.
+   - **Distribución Estándar de Widgets por Rol Activo:**
+     - **Rol `CLIENTE`:**
+       - *Sección "Inicio" (Dashboard Principal):* Mis Trámites / Servicios | Chat Buddie (`PLT-004`) | Documentos | Productos/Planes (`PLT-009`).
+       - *Sección "Mi Cuenta":* Mi Perfil | Historial de Accesos (`PLT-018`) | Datos de Facturación (`PLT-006`) | Preferencias de Notificaciones (`PLT-013`) | Baja de Cuenta (`PLT-012`).
+     - **Rol `SOCIO` / `PROFESIONAL` (`ABOGADO` / `TECNICO`):**
+       - *Sección "Panel Profesional":* Causas / Servicios Asignados | Expedientes & Evidencias (`PLT-016`) | Citas Programadas | Calificaciones & Reputación (`PLT-015`) | Mis Honorarios / Cobros.
+     - **Rol `ADMINISTRADOR` / `SUPERADMIN`:**
+       - *Sección "Consola Administrativa":* Gestión de Usuarios (`gestion_usuarios`), Configuración del Negocio (`configuracion_negocio`), Auditoría (`auditoria`), Emisión de Notificaciones (`emision_notificaciones`), Gobernanza de Permisos (`configuracion_permisos`), Aprobación de Socios.
+9. **SuperAdmin de plataforma:** `kleber.toapanta.ch@gmail.com` y `jesus251296@gmail.com` son `SUPERADMIN` en los 4 negocios desde su primer inicio de sesión — no requiere asignación manual y posee acceso universal a todos los widgets en todas las apps.
 
 ### Criterios de Aceptación (Gherkin)
 * **Escenario:** Gestión de usuarios por Administrador de Negocio

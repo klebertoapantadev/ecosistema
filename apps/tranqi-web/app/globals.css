@@ -1021,3 +1021,67 @@ p { line-height: 1.55; }
   .panel-nav-links a { padding: 10px; }
   .icono-nav { width: 20px; height: 20px; }
 }
+
+/* ═══════════ Selector de Rol Activo (Multi-Role UX Switcher) ═══════════ */
+.selector-rol-activo {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  background: var(--blanco); padding: 6px 14px; border-radius: 999px;
+  border: 1px solid var(--panel-linea); margin-left: auto;
+}
+.selector-rol-etiqueta {
+  font-size: 0.75rem; font-weight: 700; color: var(--panel-gris); text-transform: uppercase; letter-spacing: 0.05em;
+}
+.selector-rol-botones { display: flex; align-items: center; gap: 6px; }
+.btn-rol {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 0.813rem; font-weight: 600; padding: 5px 12px; border-radius: 999px;
+  border: 1px solid transparent; background: transparent; color: var(--panel-gris);
+  cursor: pointer; transition: all 0.15s ease;
+}
+.btn-rol:hover { background: var(--panel-linea-suave); color: var(--negro); }
+.btn-rol.activo {
+  background: #0A2B22; color: #FFFFFF; font-weight: 700; border-color: #0A2B22;
+  box-shadow: 0 2px 6px rgba(10, 43, 34, 0.2);
+}
+.icono-btn-rol { width: 15px; height: 15px; }
+
+/* ── Estilos de Banner Abogado y Administrador ── */
+.tarjeta-proteccion.tarjeta-abogado {
+  background: linear-gradient(135deg, #05594A 0%, #0A2B22 100%);
+  border-color: #0A2B22;
+}
+.tarjeta-proteccion.tarjeta-admin {
+  background: linear-gradient(135deg, #2D1B69 0%, #1A0D40 100%);
+  border-color: #1A0D40;
+}
+
+.badge-rol {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 0.72rem; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase;
+  padding: 4px 10px; border-radius: 999px; background: rgba(255, 255, 255, 0.15); color: #FFFFFF;
+}
+
+.grid-admin-widgets {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px;
+}
+.tarjeta-widget-admin {
+  background: var(--blanco); border: 1px solid var(--panel-linea); border-radius: 16px;
+  padding: 20px; display: flex; flex-direction: column; gap: 8px;
+  transition: all 0.15s ease; position: relative; overflow: hidden;
+}
+.tarjeta-widget-admin:hover { border-color: var(--violeta); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04); }
+.tarjeta-widget-admin.destacado { border-left: 4px solid var(--esmeralda); }
+.tarjeta-widget-cabeza { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.tarjeta-widget-icono {
+  width: 36px; height: 36px; padding: 8px; border-radius: 10px;
+  background: var(--panel-linea-suave); color: var(--violeta);
+}
+.tarjeta-widget-admin.destacado .tarjeta-widget-icono { background: rgba(5, 135, 110, 0.1); color: var(--esmeralda); }
+.tarjeta-widget-admin strong { font-size: 1rem; font-weight: 700; color: var(--negro); }
+.tarjeta-widget-admin p { font-size: 0.835rem; color: var(--panel-gris); line-height: 1.45; }
+
+.chip-registrado {
+  font-size: 0.64rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase;
+  background: rgba(5, 135, 110, 0.12); color: var(--esmeralda); padding: 3px 8px; border-radius: 999px;
+}
+
