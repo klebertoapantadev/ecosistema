@@ -142,13 +142,22 @@ export default async function PaginaPanel({ searchParams }: Props) {
 function PanelCliente({ saludo, nombre }: { saludo: string | null; nombre: string }) {
   return (
     <>
-      <h1>{saludo ?? `Hola de nuevo, ${nombre}`}</h1>
+      {/* El saludo de la maqueta es "Hola, X. Estás tranqi." con "tranqi" en
+          violeta. No se toca calcularSaludo() -- vive en @eco/identidad, lo usan
+          las 4 apps y su texto depende de cuándo entraste --: se le añade encima
+          la línea de marca. */}
+      <h1>{saludo ?? `Hola de nuevo, ${nombre}`}. Estás <i>tranqi</i>.</h1>
       <p className="inicio-cliente-sub">¿Qué necesitas resolver hoy?</p>
 
       <div className="rejilla-cliente">
         <div className="columna-cliente">
           {/* BANNER TU PROTECCIÓN */}
           <section className="tarjeta-proteccion" aria-labelledby="t-proteccion">
+            {/* Segunda y última cinta de la pantalla (§7 permite dos). Path de
+                maqueta-cliente.html. */}
+            <svg className="cinta-proteccion" viewBox="0 0 800 300" preserveAspectRatio="none" aria-hidden="true">
+              <path d="M 540 -60 C 760 40 840 190 700 300 C 620 362 470 340 430 420" />
+            </svg>
             <div className="tarjeta-proteccion-fila">
               <div>
                 <div className="eyebrow-cliente" id="t-proteccion">Tu protección</div>
