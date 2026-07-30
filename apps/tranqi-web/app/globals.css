@@ -391,11 +391,44 @@ p { line-height: 1.55; }
   --panel-linea-suave: #F1F1F1;
   --panel-gris: #737373;
   --panel-negro-alto: #1E1E1E;
+
+  /* tintas profundas de los rails de cliente y abogado (§4 del sistema
+     visual). No son las tintas de marca: son las superficies sobre las que
+     va tipografía blanca, y solo aparecen en el rail. */
+  --violeta-tinta: #1E0046;
+  --esmeralda-tinta: #052A23;
+  /* verde honda: la menta no es fondo de texto pequeño (§8), así que cuando
+     hace de fondo necesita esta tinta encima */
+  --menta-honda: #056B57;
+}
+
+/* ── El rail identifica el perfil ────────────────────────────────────
+   Regla 2 del sistema visual: un usuario que ve las tres pantallas debe saber
+   en cuál está sin leer el título. El rail no tiene color propio; lo toma de
+   la clase de perfil que el layout pone en .panel-layout, así que añadir un
+   perfil es añadir un bloque aquí y nada más.
+
+   --rail-alta es la superficie del hover y del activo: un paso por encima de
+   la superficie base, nunca un relleno saturado del acento (§4).            */
+.panel-layout {
+  --rail-superficie: var(--negro);
+  --rail-alta: var(--panel-negro-alto);
+  --rail-acento: var(--lavanda);
+}
+.panel-layout.perfil-cliente {
+  --rail-superficie: var(--violeta-tinta);
+  --rail-alta: #2C0A5E;
+  --rail-acento: var(--menta);
+}
+.panel-layout.perfil-abogado {
+  --rail-superficie: var(--esmeralda-tinta);
+  --rail-alta: #0B3B31;
+  --rail-acento: var(--lima);
 }
 
 .panel-layout { display: flex; min-height: 100vh; background: var(--panel-papel); color: var(--negro); }
 .panel-nav {
-  width: 240px; flex: none; background: var(--negro); color: var(--blanco);
+  width: 240px; flex: none; background: var(--rail-superficie); color: var(--blanco);
   display: flex; flex-direction: column; padding: 24px 18px; gap: 24px;
 }
 .panel-marca { font-size: 1.3rem; font-weight: 800; letter-spacing: -0.02em; }
@@ -407,12 +440,12 @@ p { line-height: 1.55; }
   transition: background 0.15s, color 0.15s;
 }
 .icono-nav { width: 18px; height: 18px; flex: none; }
-.panel-nav-links a:hover { background: var(--panel-negro-alto); color: var(--blanco); }
+.panel-nav-links a:hover { background: var(--rail-alta); color: var(--blanco); }
 /* activo: filo de 2px en el acento, no relleno saturado (sistema visual §4).
    Se marca desde el servidor con aria-current="page". */
 .panel-nav-links a[aria-current="page"] {
-  background: var(--panel-negro-alto); color: var(--blanco); font-weight: 600;
-  box-shadow: inset 2px 0 0 var(--lavanda);
+  background: var(--rail-alta); color: var(--blanco); font-weight: 600;
+  box-shadow: inset 2px 0 0 var(--rail-acento);
 }
 .panel-usuario {
   font-size: 0.8rem; display: flex; flex-direction: column; gap: 8px;
@@ -538,7 +571,11 @@ p { line-height: 1.55; }
   border-radius: 9px; background: var(--panel-linea-suave); color: var(--violeta);
   transition: background 0.15s, color 0.15s;
 }
-.tarjeta-acceso:hover .tarjeta-acceso-icono { background: var(--menta); color: var(--esmeralda); }
+/* menta con tinta honda encima, no esmeralda: la esmeralda es la identidad del
+   lado abogado (§2) y en una tarjeta de cliente contradice la regla 2 -- el
+   acento tiene que decirte en qué perfil estás. Además la menta no es fondo de
+   texto oscuro pequeño (§8), y --menta-honda es su par legible. */
+.tarjeta-acceso:hover .tarjeta-acceso-icono { background: var(--menta); color: var(--menta-honda); }
 .tarjeta-acceso strong { font-size: 0.95rem; }
 .tarjeta-acceso p { font-size: 0.8rem; color: var(--panel-gris); line-height: 1.4; }
 .chip-proximamente {
