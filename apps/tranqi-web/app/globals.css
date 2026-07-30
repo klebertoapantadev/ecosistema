@@ -391,11 +391,74 @@ p { line-height: 1.55; }
   --panel-linea-suave: #F1F1F1;
   --panel-gris: #737373;
   --panel-negro-alto: #1E1E1E;
+
+  /* Superficies oscuras de los rails de cliente y abogado (§4 del sistema
+     visual). No son colores de marca: son fondos sobre los que va tipografía
+     blanca, y solo aparecen en el rail.
+
+     Los dos nombres salen de las maquetas, y por eso no son simétricos:
+     #33007A es --violeta-oscuro (allí, hover del botón primario) y #052A23 es
+     --esmeralda-tinta. La maqueta de cliente usaba para el rail una tinta más
+     honda (--violeta-tinta #1E0046); se subió a --violeta-oscuro porque
+     #1E0046 se lee casi negro y el rail dejaba de decir "cliente". */
+  --violeta-oscuro: #33007A;
+  --esmeralda-tinta: #052A23;
+  /* verde honda: la menta no es fondo de texto pequeño (§8), así que cuando
+     hace de fondo necesita esta tinta encima */
+  --menta-honda: #056B57;
+}
+
+/* ── El rail identifica el perfil ────────────────────────────────────
+   Regla 2 del sistema visual: un usuario que ve las tres pantallas debe saber
+   en cuál está sin leer el título. El rail no tiene color propio; lo toma de
+   la clase de perfil que el layout pone en .panel-layout, así que añadir un
+   perfil es añadir un bloque aquí y nada más.
+
+   --rail-alta es la superficie del hover y del activo: un paso por encima de
+   la superficie base, nunca un relleno saturado del acento (§4).            */
+.panel-layout {
+  --rail-superficie: var(--negro);
+  --rail-alta: var(--panel-negro-alto);
+  --rail-acento: var(--lavanda);
+}
+.panel-layout.perfil-cliente {
+  --rail-superficie: var(--violeta-oscuro);
+  /* un paso POR ENCIMA de la superficie, camino del violeta pleno. Sin llegar
+     a #5000BA: ese es el color de la acción, y como fondo del enlace activo
+     parecería un relleno saturado, que es lo que §4 descarta. */
+  --rail-alta: #431499;
+  --rail-acento: var(--menta);
+}
+.panel-layout.perfil-abogado {
+  --rail-superficie: var(--esmeralda-tinta);
+  --rail-alta: #0B3B31;
+  --rail-acento: var(--lima);
+}
+
+/* ── Trampa heredada de la landing ───────────────────────────────────
+   `section` a secas está definido más arriba como UNA PÁGINA COMPLETA:
+   min-height 100svh, contenido centrado en vertical, padding de 96px y anclaje
+   de scroll. Dentro del panel eso convierte cualquier <section> en un bloque de
+   900px con el contenido flotando en el medio, y además engancha el scroll.
+
+   Se neutraliza aquí una vez, en vez de prohibir la etiqueta: usar <section>
+   para agrupar contenido con su título es lo correcto en HTML, y quien lo haga
+   no tiene por qué saber que la landing se apropió del selector.
+
+   :where() a propósito: aporta especificidad CERO, así que este bloque queda en
+   (0,0,1) y cualquier clase de componente lo pisa sin pelear. Con
+   `.panel-layout section` (0,1,1) el reset ganaría a `.bloque-ayuda` y le
+   borraría su propio display y padding.                                      */
+:where(.panel-layout) section {
+  position: static; overflow: visible;
+  min-height: 0; padding: 0; display: block;
+  justify-content: normal;
+  scroll-snap-align: none; scroll-snap-stop: normal;
 }
 
 .panel-layout { display: flex; min-height: 100vh; background: var(--panel-papel); color: var(--negro); }
 .panel-nav {
-  width: 240px; flex: none; background: var(--negro); color: var(--blanco);
+  width: 240px; flex: none; background: var(--rail-superficie); color: var(--blanco);
   display: flex; flex-direction: column; padding: 24px 18px; gap: 24px;
 }
 .panel-marca { font-size: 1.3rem; font-weight: 800; letter-spacing: -0.02em; }
@@ -407,13 +470,37 @@ p { line-height: 1.55; }
   transition: background 0.15s, color 0.15s;
 }
 .icono-nav { width: 18px; height: 18px; flex: none; }
-.panel-nav-links a:hover { background: var(--panel-negro-alto); color: var(--blanco); }
+.panel-nav-links a:hover { background: var(--rail-alta); color: var(--blanco); }
 /* activo: filo de 2px en el acento, no relleno saturado (sistema visual §4).
    Se marca desde el servidor con aria-current="page". */
 .panel-nav-links a[aria-current="page"] {
-  background: var(--panel-negro-alto); color: var(--blanco); font-weight: 600;
-  box-shadow: inset 2px 0 0 var(--lavanda);
+  background: var(--rail-alta); color: var(--blanco); font-weight: 600;
+  box-shadow: inset 2px 0 0 var(--rail-acento);
 }
+/* Separador de grupo dentro del rail y secciones sin pantalla todavía. Misma
+   caja que un enlace, pero apagadas: son <span>, no <a>, así que no reciben
+   foco ni cursor de mano y el lector de pantalla no las anuncia como destino. */
+.separador-nav {
+  margin: 14px 12px 6px; font-size: 0.656rem; font-weight: 800;
+  letter-spacing: 0.14em; text-transform: uppercase; color: rgba(255,255,255,0.38);
+}
+.enlace-inerte {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px; border-radius: 8px;
+  font-size: 0.92rem; font-weight: 500;
+  color: rgba(255,255,255,0.34); cursor: default;
+}
+/* la etiqueta no se parte: con el chip al lado, "Mis trámites" y "Pagos y
+   plan" caían a dos líneas y desalineaban toda la lista */
+.enlace-inerte .etiqueta-nav { white-space: nowrap; }
+.chip-pronto-nav {
+  margin-left: auto; flex: none;
+  font-size: 0.55rem; font-weight: 800;
+  letter-spacing: 0.06em; text-transform: uppercase; white-space: nowrap;
+  color: rgba(255,255,255,0.42); border: 1px solid rgba(255,255,255,0.18);
+  padding: 1px 5px; border-radius: 999px;
+}
+
 .panel-usuario {
   font-size: 0.8rem; display: flex; flex-direction: column; gap: 8px;
   border-top: 1px solid rgba(255,255,255,0.16); padding-top: 16px;
@@ -499,31 +586,114 @@ p { line-height: 1.55; }
 .estado-vacio svg { width: 22px; height: 22px; color: var(--panel-gris); }
 .estado-vacio p { font-size: 0.9rem; margin: 0; }
 
-/* ═══════════ Inicio de cliente (panel, temporal) ═══════════
-   Placeholder visual mientras se definen TRQ-xxx propios de cada acceso --
-   sin destino real (ver comentario en app/panel/page.tsx). Unica superficie
-   de color pleno de la pantalla: la tarjeta de Legal Score (sistema-visual
-   §3 regla 1); el resto son tarjetas blancas de línea 1px. */
+/* ═══════════ Inicio de cliente (panel) ═══════════
+   Estructura de gobernanza/productos/tranqi/maquetas/maqueta-cliente.html:
+   barra superior, protección como única superficie de color pleno (§3 regla 1),
+   accesos rápidos, trámites, y columna lateral con cita, documentos y buddie.
+
+   Los bloques cuyo dato no existe todavía muestran estado vacío. La maqueta
+   traía una póliza, tres expedientes y una cita escritos a mano; en producción
+   un cliente los leería como suyos, así que no se copian. */
 .inicio-cliente-sub { color: var(--panel-gris); font-size: 0.95rem; margin-top: -4px; margin-bottom: 24px; }
 
-.tarjeta-legal-score {
+/* ── Barra superior ──────────────────────────────────────────────── */
+.barra-cliente {
+  display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+  padding-bottom: 18px; margin-bottom: 22px;
+  border-bottom: 1px solid var(--panel-linea);
+}
+.buscador-cliente { flex: 1; min-width: 200px; max-width: 420px; position: relative; }
+.buscador-cliente svg {
+  position: absolute; left: 12px; top: 50%; translate: 0 -50%;
+  width: 16px; height: 16px; color: var(--panel-gris);
+}
+.buscador-cliente input {
+  width: 100%; background: var(--blanco); border: 1px solid var(--panel-linea);
+  border-radius: 8px; padding: 9px 12px 9px 36px; font-size: 0.875rem;
+  font-family: inherit; outline: none;
+}
+/* deshabilitado mientras no haya nada que buscar: no hay tablas de trámites
+   ni documentos, y un campo vivo devolvería siempre vacío */
+.buscador-cliente input:disabled { background: var(--panel-linea-suave); cursor: not-allowed; }
+.usuario-barra { display: flex; align-items: center; gap: 9px; margin-left: auto; }
+.usuario-barra-foto {
+  width: 34px; height: 34px; border-radius: 50%; flex: none;
   background: var(--violeta); color: var(--blanco);
-  border-radius: 16px; padding: 20px 24px;
-  display: flex; align-items: center; gap: 20px;
-  max-width: 640px; margin-bottom: 28px;
+  display: grid; place-items: center; font-size: 0.813rem; font-weight: 700;
 }
-.legal-score-numero {
-  font-size: 1.8rem; font-weight: 800; font-variant-numeric: tabular-nums;
-  width: 64px; height: 64px; border-radius: 50%; flex: none;
-  border: 3px solid var(--menta); color: var(--menta);
-  display: flex; align-items: center; justify-content: center;
-}
-.tarjeta-legal-score strong { display: block; font-size: 1rem; margin-bottom: 4px; }
-.tarjeta-legal-score p { font-size: 0.85rem; color: rgba(255,255,255,0.75); }
+.usuario-barra-txt { display: grid; line-height: 1.25; }
+.usuario-barra-txt b { font-size: 0.844rem; font-weight: 600; }
+.usuario-barra-txt span { font-size: 0.75rem; color: var(--panel-gris); }
 
+/* ── Protección: la única superficie de color pleno ──────────────── */
+.tarjeta-proteccion {
+  background: var(--violeta); color: var(--blanco);
+  border-radius: 16px; padding: 24px;
+}
+.tarjeta-proteccion-fila {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: 20px; flex-wrap: wrap;
+}
+.eyebrow-cliente {
+  font-size: 0.688rem; font-weight: 700; letter-spacing: 0.13em;
+  text-transform: uppercase; color: rgba(255,255,255,0.62);
+}
+.tarjeta-proteccion-plan {
+  font-size: 1.5rem; font-weight: 800; margin-top: 8px; letter-spacing: -0.025em;
+}
+.tarjeta-proteccion-plan i { font-style: normal; color: var(--menta); }
+.tarjeta-proteccion-meta {
+  font-size: 0.875rem; color: rgba(255,255,255,0.78); margin-top: 6px;
+  max-width: 52ch; line-height: 1.45;
+}
+.pildora-estado {
+  display: inline-flex; align-items: center; gap: 7px;
+  font-size: 0.75rem; font-weight: 800; letter-spacing: 0.04em;
+  padding: 6px 12px; border-radius: 999px; text-transform: uppercase;
+  background: var(--menta); color: var(--menta-honda); white-space: nowrap;
+}
+.pildora-estado::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+/* "sin activar" no es un estado positivo: la menta se reserva a lo que va
+   bien (§6), así que aquí el chip va en blanco diluido */
+.pildora-estado.pendiente { background: rgba(255,255,255,0.16); color: var(--blanco); }
+
+/* ── Tarjeta de sección: cabecera + cuerpo ───────────────────────── */
+.tarjeta-seccion {
+  background: var(--blanco); border: 1px solid var(--panel-linea);
+  border-radius: 16px; overflow: hidden;
+}
+.tarjeta-seccion > header {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 15px 20px; border-bottom: 1px solid var(--panel-linea-suave);
+}
+.tarjeta-seccion > header h2 { font-size: 1rem; font-weight: 700; margin: 0; }
+/* estado vacío dentro de una tarjeta: sin borde propio, la tarjeta ya lo pone */
+.vacio-seccion {
+  padding: 30px 20px; display: grid; gap: 5px; justify-items: center; text-align: center;
+}
+.vacio-seccion b { font-size: 0.938rem; font-weight: 600; color: var(--negro); }
+.vacio-seccion span { font-size: 0.844rem; color: var(--panel-gris); max-width: 36ch; line-height: 1.45; }
+
+/* ── Rejilla del inicio de cliente ───────────────────────────────────
+   La maqueta reparte la pantalla en columna principal + lateral (1.62fr / 1fr).
+   No es decorativo: la columna estrecha es donde vive lo que acompaña sin
+   competir — en la maqueta, la cita, los documentos y buddie. Aquí, de momento,
+   solo buddie.
+
+   Colapsa a una columna a 1080px, el mismo punto que la maqueta.            */
+.rejilla-cliente {
+  display: grid; grid-template-columns: minmax(0, 1.62fr) minmax(0, 1fr);
+  gap: 20px; align-items: start;
+}
+.columna-cliente { display: grid; gap: 20px; align-content: start; min-width: 0; }
+
+/* La maqueta pone los cuatro accesos en UNA fila. auto-fit con 150px lo
+   consigue en la columna principal (≈660px − 3 huecos ÷ 4 = 154px) y va
+   reduciendo columnas solo cuando de verdad no caben, en vez de fijar
+   repeat(4,1fr) y forzar tarjetas ilegibles en móvil. */
 .accesos-cliente {
-  display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 14px; max-width: 900px;
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 14px;
 }
 .tarjeta-acceso {
   background: var(--blanco); border: 1px solid var(--panel-linea); border-radius: 16px;
@@ -538,7 +708,11 @@ p { line-height: 1.55; }
   border-radius: 9px; background: var(--panel-linea-suave); color: var(--violeta);
   transition: background 0.15s, color 0.15s;
 }
-.tarjeta-acceso:hover .tarjeta-acceso-icono { background: var(--menta); color: var(--esmeralda); }
+/* menta con tinta honda encima, no esmeralda: la esmeralda es la identidad del
+   lado abogado (§2) y en una tarjeta de cliente contradice la regla 2 -- el
+   acento tiene que decirte en qué perfil estás. Además la menta no es fondo de
+   texto oscuro pequeño (§8), y --menta-honda es su par legible. */
+.tarjeta-acceso:hover .tarjeta-acceso-icono { background: var(--menta); color: var(--menta-honda); }
 .tarjeta-acceso strong { font-size: 0.95rem; }
 .tarjeta-acceso p { font-size: 0.8rem; color: var(--panel-gris); line-height: 1.4; }
 .chip-proximamente {
@@ -546,6 +720,44 @@ p { line-height: 1.55; }
   font-size: 0.64rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase;
   background: rgba(80,0,186,0.08); color: var(--violeta); padding: 3px 8px; border-radius: 999px;
 }
+
+/* ── Buddie en reposo ────────────────────────────────────────────────
+   El bloque menta de la maqueta, el único sitio donde la menta es superficie
+   y no acento. Va en la columna lateral porque acompaña: no es la acción
+   principal de la pantalla, pero es la cara de la marca.
+
+   La menta no es fondo de texto oscuro pequeño (§8), así que el título lleva
+   --menta-honda y el cuerpo una tinta aún más honda. */
+.bloque-ayuda {
+  background: var(--menta); border: 1px solid #9AF0D4; border-radius: 16px;
+  padding: 20px; display: grid; gap: 12px;
+}
+.bloque-ayuda-cabeza { display: flex; align-items: center; gap: 11px; }
+/* los ojitos de buddie: la forma irregular es del brochure, no un círculo */
+.bloque-ayuda-ojitos {
+  width: 38px; height: 38px; flex: none; background: var(--lavanda);
+  border-radius: 47% 53% 50% 50% / 55% 55% 45% 45%;
+  position: relative; box-shadow: 0 0 0 2px var(--blanco);
+}
+.bloque-ayuda-ojitos::before {
+  content: ""; position: absolute; left: 12px; top: 13px;
+  width: 5px; height: 10px; background: var(--negro); border-radius: 3px;
+  box-shadow: 9px 0 0 var(--negro);
+}
+.bloque-ayuda strong { font-size: 0.938rem; font-weight: 700; color: var(--menta-honda); }
+.bloque-ayuda p { font-size: 0.875rem; color: #05594A; line-height: 1.45; }
+.bloque-ayuda .chip-proximamente {
+  background: rgba(5,107,87,0.12); color: var(--menta-honda); margin-top: 0;
+}
+
+/* pie legal: cierra la pantalla en vez de dejarla desangrarse en blanco */
+.pie-panel {
+  margin-top: 32px; padding-top: 16px; border-top: 1px solid var(--panel-linea);
+  display: flex; gap: 16px; flex-wrap: wrap;
+  font-size: 0.75rem; color: var(--panel-gris);
+}
+.pie-panel a { color: var(--panel-gris); text-decoration: none; }
+.pie-panel a:hover { color: var(--violeta); text-decoration: underline; }
 
 /* ═══════════ Socios (TRQ-001: solicitud de registro de socio abogado) ═══════════ */
 .form-solicitud-socio { max-width: 640px; }
@@ -719,6 +931,13 @@ p { line-height: 1.55; }
 .historial-negocio { opacity: 0.6; }
 .historial-fecha { color: rgba(17,17,17,0.55); }
 
+/* ≤1080px: la columna lateral del inicio de cliente deja de caber al lado.
+   Mismo quiebre que la maqueta (maqueta-cliente.html). Va ANTES del bloque de
+   860px para que la cascada quede de mayor a menor.                         */
+@media (max-width: 1080px) {
+  .rejilla-cliente { grid-template-columns: 1fr; }
+}
+
 /* ═══════════ Responsive del panel (movil) ═══════════
    Al final del archivo a propósito: varias reglas base de estas mismas
    clases (definidas mas arriba, fuera de @media) tienen igual especificidad
@@ -741,14 +960,24 @@ p { line-height: 1.55; }
   .panel-marca { flex: none; }
   .panel-nav-links { flex-direction: row; flex: none; gap: 2px; }
   .panel-nav-links a { padding: 8px 10px; white-space: nowrap; }
-  .panel-nav-links a[aria-current="page"] { box-shadow: inset 0 -2px 0 var(--lavanda); }
+  /* en fila solo caben iconos: el separador de grupo y las etiquetas "pronto"
+     desaparecen, y los inertes quedan como icono apagado */
+  .separador-nav, .chip-pronto-nav { display: none; }
+  .enlace-inerte { padding: 8px 10px; white-space: nowrap; }
+  /* --rail-acento, no --lavanda fijo: en horizontal el filo pasa de izquierda
+     a abajo, pero sigue siendo el acento del perfil. Con lavanda escrito a
+     mano, cliente y abogado perdían su color solo en móvil. */
+  .panel-nav-links a[aria-current="page"] { box-shadow: inset 0 -2px 0 var(--rail-acento); }
   /* Ya no lleva el boton de cerrar sesion (vive en Mi cuenta, TRQ-001) --
      solo mostraba nombre/correo/SuperAdmin, que aca ya estaban ocultos, asi
      que la version movil no tiene nada que enseñar. */
   .panel-usuario { display: none; }
   .panel-contenido { padding: 20px clamp(16px, 5vw, 28px) 40px; }
   .fila-dos-columnas { grid-template-columns: 1fr; }
-  .tarjeta-legal-score { flex-wrap: wrap; }
+  .tarjeta-proteccion-fila { flex-wrap: wrap; }
+  /* la rejilla de cliente ya colapsó en su propio quiebre de 1080px; aquí solo
+     queda por si se llega directo a móvil sin pasar por ese punto */
+  .rejilla-cliente { grid-template-columns: 1fr; }
   .acciones-solicitud-botones { flex-direction: column; }
   .acciones-solicitud-botones .btn-mini, .acciones-solicitud-botones .btn-peligro { width: 100%; align-self: stretch; text-align: center; }
 }

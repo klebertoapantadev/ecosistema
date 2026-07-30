@@ -1,6 +1,10 @@
 import { redirect } from "next/navigation";
-import { Home, Users, UserCog, Settings, ShieldCheck, CircleUser, type LucideIcon } from "lucide-react";
-import { obtenerPerfilActual, obtenerWidgetsVisibles, asegurarMembresiaCliente } from "@eco/identidad";
+import {
+  Home, Users, UserCog, Settings, ShieldCheck, CircleUser,
+  ClipboardList, CalendarDays, FolderOpen, CreditCard, LifeBuoy,
+  type LucideIcon,
+} from "lucide-react";
+import { obtenerPerfilActual, obtenerWidgetsVisibles, asegurarMembresiaCliente, obtenerMembresia } from "@eco/identidad";
 import { EnlacePanel } from "./EnlacePanel";
 import { crearClienteServidor } from "@eco/supabase/servidor";
 
@@ -12,6 +16,16 @@ const ICONOS_WIDGET: Record<string, LucideIcon> = {
   configuracion_negocio: Settings,
   auditoria: ShieldCheck,
 };
+
+// Secciones del rail de maqueta-cliente.html sin pantalla todavia. El orden es
+// el de la maqueta.
+const SECCIONES_CLIENTE: { icono: LucideIcon; et: string }[] = [
+  { icono: ClipboardList, et: "Mis trámites" },
+  { icono: CalendarDays, et: "Citas" },
+  { icono: FolderOpen, et: "Documentos" },
+  { icono: CreditCard, et: "Pagos y plan" },
+  { icono: LifeBuoy, et: "Ayuda" },
+];
 
 export default async function LayoutPanel({ children }: { children: React.ReactNode }) {
   const perfil = await obtenerPerfilActual();
@@ -32,8 +46,13 @@ export default async function LayoutPanel({ children }: { children: React.ReactN
 
   const widgets = await obtenerWidgetsVisibles(perfil.usu_id, perfil.usu_superadmin_plataforma, NEGOCIO);
 
+  // Perfil visual del rail (§4 del sistema visual). Va DESPUES de
+  // asegurarMembresiaCliente, que es lo que garantiza que haya fila que leer.
+  const membresia = await obtenerMembresia(perfil.usu_id, NEGOCIO);
+  const clasePerfil = clasePerfilVisual(perfil.usu_superadmin_plataforma, membresia?.mem_rol);
+
   return (
-    <div className="panel-layout">
+    <div className={`panel-layout ${clasePerfil}`}>
       <aside className="panel-nav">
         <div className="panel-marca">tranqi</div>
         {/* div, no <nav>: el <nav> global de la landing es position:fixed y
@@ -57,6 +76,25 @@ export default async function LayoutPanel({ children }: { children: React.ReactN
           <EnlacePanel href="/panel/cuenta" icono={<CircleUser className="icono-nav" aria-hidden="true" strokeWidth={1.8} />}>
             Mi cuenta
           </EnlacePanel>
+
+          {/* Secciones del rail de la maqueta de cliente que todavía no tienen
+              pantalla. Se dibujan apagadas y etiquetadas, no como enlaces
+              vivos: mantienen la forma del rail aprobado sin prometer un
+              destino que no responde. Son <span>, así que no reciben foco ni
+              clic. Solo para el perfil cliente -- un administrador tiene su
+              consola real y no necesita ver un mapa de lo que vendrá. */}
+          {clasePerfil === "perfil-cliente" && (
+            <>
+              <div className="separador-nav">Pronto</div>
+              {SECCIONES_CLIENTE.map((s) => (
+                <span className="enlace-inerte" key={s.et}>
+                  <s.icono className="icono-nav" aria-hidden="true" strokeWidth={1.8} />
+                  <span className="etiqueta-nav">{s.et}</span>
+                  <span className="chip-pronto-nav">pronto</span>
+                </span>
+              ))}
+            </>
+          )}
         </div>
         <div className="panel-usuario">
           {/* Identificador del usuario activo en el portal: el nombre que
@@ -71,6 +109,23 @@ export default async function LayoutPanel({ children }: { children: React.ReactN
       <main className="panel-contenido">{children}</main>
     </div>
   );
+}
+
+/** Clase de perfil que colorea el rail — solo apariencia, ningún permiso.
+ *
+ *  El flag de plataforma manda sobre `mem_rol`, y no es un caso teórico: hay
+ *  superadmins cuya membresía en tranqi es CLIENTE (se crea sola al
+ *  registrarse, ver `asegurarMembresiaCliente`). Mirando solo `mem_rol`
+ *  verían el rail violeta de cliente teniendo delante la consola de
+ *  administración, que es justo la confusión que la regla 2 evita.
+ *
+ *  Sin membresía todavía cae en administración, no en cliente: el negro es el
+ *  rail neutro y es mejor no afirmar un perfil que afirmar el equivocado. */
+function clasePerfilVisual(esSuperadmin: boolean, memRol: string | null | undefined): string {
+  if (esSuperadmin) return "perfil-admin";
+  if (memRol === "CLIENTE") return "perfil-cliente";
+  if (memRol === "ABOGADO") return "perfil-abogado";
+  return "perfil-admin";
 }
 
 function rutaDeWidget(clave: string) {
