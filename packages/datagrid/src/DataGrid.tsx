@@ -82,20 +82,25 @@ export function DataGrid<T>({ columnas, filas, idFila, nombreExportacion, conten
     autoResetExpanded: false,
   });
 
-  function alTerminarArrastreColumna(evento: DragEndEvent) {
+  // Un solo DndContext maneja ambos gestos sobre el mismo handle de columna:
+  // soltar sobre "zona-agrupamiento" agrupa, soltar sobre otra columna
+  // reordena. Dos DndContext anidados (uno para cada gesto) no funciona --
+  // useSortable solo se conecta al DndContext mas cercano, asi que el gesto
+  // nunca llega al contexto externo.
+  function alTerminarArrastre(evento: DragEndEvent) {
     const { active, over } = evento;
-    if (!over || active.id === over.id) return;
+    if (!over) return;
+    const columnaId = String(active.id);
+    if (over.id === "zona-agrupamiento") {
+      if (!agrupamiento.includes(columnaId)) setAgrupamiento((actual) => [...actual, columnaId]);
+      return;
+    }
+    if (active.id === over.id) return;
     setOrdenColumnas((actual) => {
-      const desde = actual.indexOf(String(active.id));
+      const desde = actual.indexOf(columnaId);
       const hasta = actual.indexOf(String(over.id));
       return arrayMove(actual, desde, hasta);
     });
-  }
-
-  function alSoltarEnZonaAgrupamiento(evento: DragEndEvent) {
-    const columnaId = String(evento.active.id);
-    if (evento.over?.id !== "zona-agrupamiento" || agrupamiento.includes(columnaId)) return;
-    setAgrupamiento((actual) => [...actual, columnaId]);
   }
 
   function quitarAgrupamiento(columnaId: string) {
@@ -158,28 +163,26 @@ export function DataGrid<T>({ columnas, filas, idFila, nombreExportacion, conten
         </div>
       </div>
 
-      <DndContext collisionDetection={closestCenter} onDragEnd={alSoltarEnZonaAgrupamiento}>
+      <DndContext collisionDetection={closestCenter} onDragEnd={alTerminarArrastre}>
         <ZonaAgrupamiento columnas={columnas} agrupamiento={agrupamiento} onQuitar={quitarAgrupamiento} />
 
         <div className="datagrid-envoltura">
           <table className="datagrid-tabla">
             <thead>
-              <DndContext collisionDetection={closestCenter} onDragEnd={alTerminarArrastreColumna}>
-                <SortableContext items={ordenColumnas} strategy={horizontalListSortingStrategy}>
-                  <tr>
-                    {contenidoExpandible && <th className="datagrid-th-expandir" />}
-                    {tabla.getHeaderGroups()[0]?.headers.map((encabezado) => (
-                      <EncabezadoArrastrable
-                        key={encabezado.id}
-                        id={encabezado.id}
-                        titulo={String(encabezado.column.columnDef.header)}
-                        ordenActual={encabezado.column.getIsSorted()}
-                        alOrdenar={encabezado.column.getCanSort() ? encabezado.column.getToggleSortingHandler() : undefined}
-                      />
-                    ))}
-                  </tr>
-                </SortableContext>
-              </DndContext>
+              <SortableContext items={ordenColumnas} strategy={horizontalListSortingStrategy}>
+                <tr>
+                  {contenidoExpandible && <th className="datagrid-th-expandir" />}
+                  {tabla.getHeaderGroups()[0]?.headers.map((encabezado) => (
+                    <EncabezadoArrastrable
+                      key={encabezado.id}
+                      id={encabezado.id}
+                      titulo={String(encabezado.column.columnDef.header)}
+                      ordenActual={encabezado.column.getIsSorted()}
+                      alOrdenar={encabezado.column.getCanSort() ? encabezado.column.getToggleSortingHandler() : undefined}
+                    />
+                  ))}
+                </tr>
+              </SortableContext>
             </thead>
             <tbody>
               {tabla.getRowModel().rows.map((fila) => {
