@@ -60,6 +60,16 @@ ambos huecos a la vez.
    `comun_seguridad` para roles de negocio.
 6. **Sin paginación por cursor.** El rango de fechas del filtro server-side (Criterio 1) mantiene el set
    acotado (`limit` simple, `p_limite` default 500); todo lo demás es 100% client-side, como pide la spec.
+7. **Un solo `DndContext` para reordenar Y agrupar columnas — no dos anidados.** El primer intento envolvía
+   `<ZonaAgrupamiento>` en un `DndContext` externo y los `<th>` en uno interno (para el `SortableContext`
+   de reordenamiento). `useSortable`/`useDraggable` solo se conectan al `DndContext` más cercano en el
+   árbol de React, así que el gesto de arrastre de un header nunca podía llegar al contexto externo —
+   agrupar por drag era físicamente inalcanzable, aunque la UI (zona de drop, chips) se veía correcta.
+   Verificado con eventos de puntero sintéticos (`pointerdown`/`pointermove`/`pointerup` vía
+   `dispatchEvent`, simulando el gesto real): reordenar funcionaba, agrupar nunca disparaba su callback.
+   Corregido unificando en un solo `DndContext` con un `onDragEnd` que distingue el destino
+   (`over.id === "zona-agrupamiento"` agrupa, cualquier otra columna reordena). Cualquier widget nuevo que
+   toque `DataGrid.tsx` debe mantener un único `DndContext` para ambos gestos.
 
 ## Alternativas evaluadas
 
