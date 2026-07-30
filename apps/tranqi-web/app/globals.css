@@ -1059,7 +1059,10 @@ p { line-height: 1.55; }
   display: inline-flex; align-items: center; gap: 6px;
   font-size: 0.72rem; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase;
   padding: 4px 10px; border-radius: 999px; background: rgba(255, 255, 255, 0.15); color: #FFFFFF;
+  white-space: nowrap;
 }
+/* icono de lucide en vez del emoji que llevaba antes (§5) */
+.icono-badge-rol { width: 14px; height: 14px; flex: none; }
 
 .grid-admin-widgets {
   display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px;
