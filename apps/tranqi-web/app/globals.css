@@ -435,6 +435,27 @@ p { line-height: 1.55; }
   --rail-acento: var(--lima);
 }
 
+/* ── Trampa heredada de la landing ───────────────────────────────────
+   `section` a secas está definido más arriba como UNA PÁGINA COMPLETA:
+   min-height 100svh, contenido centrado en vertical, padding de 96px y anclaje
+   de scroll. Dentro del panel eso convierte cualquier <section> en un bloque de
+   900px con el contenido flotando en el medio, y además engancha el scroll.
+
+   Se neutraliza aquí una vez, en vez de prohibir la etiqueta: usar <section>
+   para agrupar contenido con su título es lo correcto en HTML, y quien lo haga
+   no tiene por qué saber que la landing se apropió del selector.
+
+   :where() a propósito: aporta especificidad CERO, así que este bloque queda en
+   (0,0,1) y cualquier clase de componente lo pisa sin pelear. Con
+   `.panel-layout section` (0,1,1) el reset ganaría a `.bloque-ayuda` y le
+   borraría su propio display y padding.                                      */
+:where(.panel-layout) section {
+  position: static; overflow: visible;
+  min-height: 0; padding: 0; display: block;
+  justify-content: normal;
+  scroll-snap-align: none; scroll-snap-stop: normal;
+}
+
 .panel-layout { display: flex; min-height: 100vh; background: var(--panel-papel); color: var(--negro); }
 .panel-nav {
   width: 240px; flex: none; background: var(--rail-superficie); color: var(--blanco);
@@ -548,11 +569,23 @@ p { line-height: 1.55; }
    §3 regla 1); el resto son tarjetas blancas de línea 1px. */
 .inicio-cliente-sub { color: var(--panel-gris); font-size: 0.95rem; margin-top: -4px; margin-bottom: 24px; }
 
+/* ── Rejilla del inicio de cliente ───────────────────────────────────
+   La maqueta reparte la pantalla en columna principal + lateral (1.62fr / 1fr).
+   No es decorativo: la columna estrecha es donde vive lo que acompaña sin
+   competir — en la maqueta, la cita, los documentos y buddie. Aquí, de momento,
+   solo buddie.
+
+   Colapsa a una columna a 1080px, el mismo punto que la maqueta.            */
+.rejilla-cliente {
+  display: grid; grid-template-columns: minmax(0, 1.62fr) minmax(0, 1fr);
+  gap: 20px; align-items: start;
+}
+.columna-cliente { display: grid; gap: 20px; align-content: start; min-width: 0; }
+
 .tarjeta-legal-score {
   background: var(--violeta); color: var(--blanco);
   border-radius: 16px; padding: 20px 24px;
   display: flex; align-items: center; gap: 20px;
-  max-width: 640px; margin-bottom: 28px;
 }
 .legal-score-numero {
   font-size: 1.8rem; font-weight: 800; font-variant-numeric: tabular-nums;
@@ -563,9 +596,12 @@ p { line-height: 1.55; }
 .tarjeta-legal-score strong { display: block; font-size: 1rem; margin-bottom: 4px; }
 .tarjeta-legal-score p { font-size: 0.85rem; color: rgba(255,255,255,0.75); }
 
+/* minmax baja de 200px a 168px y se quita el max-width: dentro de la columna
+   principal el ancho ya está acotado por la rejilla, y con 200px las tarjetas
+   caían a una sola por fila en pantallas medianas. */
 .accesos-cliente {
-  display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 14px; max-width: 900px;
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
+  gap: 14px;
 }
 .tarjeta-acceso {
   background: var(--blanco); border: 1px solid var(--panel-linea); border-radius: 16px;
@@ -592,6 +628,44 @@ p { line-height: 1.55; }
   font-size: 0.64rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase;
   background: rgba(80,0,186,0.08); color: var(--violeta); padding: 3px 8px; border-radius: 999px;
 }
+
+/* ── Buddie en reposo ────────────────────────────────────────────────
+   El bloque menta de la maqueta, el único sitio donde la menta es superficie
+   y no acento. Va en la columna lateral porque acompaña: no es la acción
+   principal de la pantalla, pero es la cara de la marca.
+
+   La menta no es fondo de texto oscuro pequeño (§8), así que el título lleva
+   --menta-honda y el cuerpo una tinta aún más honda. */
+.bloque-ayuda {
+  background: var(--menta); border: 1px solid #9AF0D4; border-radius: 16px;
+  padding: 20px; display: grid; gap: 12px;
+}
+.bloque-ayuda-cabeza { display: flex; align-items: center; gap: 11px; }
+/* los ojitos de buddie: la forma irregular es del brochure, no un círculo */
+.bloque-ayuda-ojitos {
+  width: 38px; height: 38px; flex: none; background: var(--lavanda);
+  border-radius: 47% 53% 50% 50% / 55% 55% 45% 45%;
+  position: relative; box-shadow: 0 0 0 2px var(--blanco);
+}
+.bloque-ayuda-ojitos::before {
+  content: ""; position: absolute; left: 12px; top: 13px;
+  width: 5px; height: 10px; background: var(--negro); border-radius: 3px;
+  box-shadow: 9px 0 0 var(--negro);
+}
+.bloque-ayuda strong { font-size: 0.938rem; font-weight: 700; color: var(--menta-honda); }
+.bloque-ayuda p { font-size: 0.875rem; color: #05594A; line-height: 1.45; }
+.bloque-ayuda .chip-proximamente {
+  background: rgba(5,107,87,0.12); color: var(--menta-honda); margin-top: 0;
+}
+
+/* pie legal: cierra la pantalla en vez de dejarla desangrarse en blanco */
+.pie-panel {
+  margin-top: 32px; padding-top: 16px; border-top: 1px solid var(--panel-linea);
+  display: flex; gap: 16px; flex-wrap: wrap;
+  font-size: 0.75rem; color: var(--panel-gris);
+}
+.pie-panel a { color: var(--panel-gris); text-decoration: none; }
+.pie-panel a:hover { color: var(--violeta); text-decoration: underline; }
 
 /* ═══════════ Socios (TRQ-001: solicitud de registro de socio abogado) ═══════════ */
 .form-solicitud-socio { max-width: 640px; }
@@ -765,6 +839,13 @@ p { line-height: 1.55; }
 .historial-negocio { opacity: 0.6; }
 .historial-fecha { color: rgba(17,17,17,0.55); }
 
+/* ≤1080px: la columna lateral del inicio de cliente deja de caber al lado.
+   Mismo quiebre que la maqueta (maqueta-cliente.html). Va ANTES del bloque de
+   860px para que la cascada quede de mayor a menor.                         */
+@media (max-width: 1080px) {
+  .rejilla-cliente { grid-template-columns: 1fr; }
+}
+
 /* ═══════════ Responsive del panel (movil) ═══════════
    Al final del archivo a propósito: varias reglas base de estas mismas
    clases (definidas mas arriba, fuera de @media) tienen igual especificidad
@@ -787,7 +868,10 @@ p { line-height: 1.55; }
   .panel-marca { flex: none; }
   .panel-nav-links { flex-direction: row; flex: none; gap: 2px; }
   .panel-nav-links a { padding: 8px 10px; white-space: nowrap; }
-  .panel-nav-links a[aria-current="page"] { box-shadow: inset 0 -2px 0 var(--lavanda); }
+  /* --rail-acento, no --lavanda fijo: en horizontal el filo pasa de izquierda
+     a abajo, pero sigue siendo el acento del perfil. Con lavanda escrito a
+     mano, cliente y abogado perdían su color solo en móvil. */
+  .panel-nav-links a[aria-current="page"] { box-shadow: inset 0 -2px 0 var(--rail-acento); }
   /* Ya no lleva el boton de cerrar sesion (vive en Mi cuenta, TRQ-001) --
      solo mostraba nombre/correo/SuperAdmin, que aca ya estaban ocultos, asi
      que la version movil no tiene nada que enseñar. */
@@ -795,6 +879,9 @@ p { line-height: 1.55; }
   .panel-contenido { padding: 20px clamp(16px, 5vw, 28px) 40px; }
   .fila-dos-columnas { grid-template-columns: 1fr; }
   .tarjeta-legal-score { flex-wrap: wrap; }
+  /* la rejilla de cliente ya colapsó en su propio quiebre de 1080px; aquí solo
+     queda por si se llega directo a móvil sin pasar por ese punto */
+  .rejilla-cliente { grid-template-columns: 1fr; }
   .acciones-solicitud-botones { flex-direction: column; }
   .acciones-solicitud-botones .btn-mini, .acciones-solicitud-botones .btn-peligro { width: 100%; align-self: stretch; text-align: center; }
 }
