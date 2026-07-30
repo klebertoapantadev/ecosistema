@@ -12,3 +12,6 @@ supabase/.temp/
 
 .vercel
 .env*
+
+# TypeScript incremental build info
+*.tsbuildinfo
