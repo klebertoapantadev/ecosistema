@@ -172,9 +172,13 @@ export async function solicitarRecuperacion(correo: string): Promise<Resultado> 
   }
 
   const supabase = await crearClienteServidor();
-  const { data: token } = await supabase.schema("comun_seguridad").rpc("seg_fn_solicitar_recuperacion", {
+  const { data: token, error } = await supabase.schema("comun_seguridad").rpc("seg_fn_solicitar_recuperacion", {
     p_correo: parseo.data.correo,
   });
+  // El mensaje al usuario es SIEMPRE el mismo (por diseño, ver comentario de
+  // arriba) -- pero un error real (permisos, conexion) no debe pasar
+  // desapercibido solo porque el resultado visible es igual al de "no existe".
+  if (error) console.error("solicitarRecuperacion: seg_fn_solicitar_recuperacion falló", error);
 
   if (token) {
     const origen = await obtenerOrigen();
