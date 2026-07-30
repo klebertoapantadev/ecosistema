@@ -392,10 +392,16 @@ p { line-height: 1.55; }
   --panel-gris: #737373;
   --panel-negro-alto: #1E1E1E;
 
-  /* tintas profundas de los rails de cliente y abogado (§4 del sistema
-     visual). No son las tintas de marca: son las superficies sobre las que
-     va tipografía blanca, y solo aparecen en el rail. */
-  --violeta-tinta: #1E0046;
+  /* Superficies oscuras de los rails de cliente y abogado (§4 del sistema
+     visual). No son colores de marca: son fondos sobre los que va tipografía
+     blanca, y solo aparecen en el rail.
+
+     Los dos nombres salen de las maquetas, y por eso no son simétricos:
+     #33007A es --violeta-oscuro (allí, hover del botón primario) y #052A23 es
+     --esmeralda-tinta. La maqueta de cliente usaba para el rail una tinta más
+     honda (--violeta-tinta #1E0046); se subió a --violeta-oscuro porque
+     #1E0046 se lee casi negro y el rail dejaba de decir "cliente". */
+  --violeta-oscuro: #33007A;
   --esmeralda-tinta: #052A23;
   /* verde honda: la menta no es fondo de texto pequeño (§8), así que cuando
      hace de fondo necesita esta tinta encima */
@@ -416,8 +422,11 @@ p { line-height: 1.55; }
   --rail-acento: var(--lavanda);
 }
 .panel-layout.perfil-cliente {
-  --rail-superficie: var(--violeta-tinta);
-  --rail-alta: #2C0A5E;
+  --rail-superficie: var(--violeta-oscuro);
+  /* un paso POR ENCIMA de la superficie, camino del violeta pleno. Sin llegar
+     a #5000BA: ese es el color de la acción, y como fondo del enlace activo
+     parecería un relleno saturado, que es lo que §4 descarta. */
+  --rail-alta: #431499;
   --rail-acento: var(--menta);
 }
 .panel-layout.perfil-abogado {
