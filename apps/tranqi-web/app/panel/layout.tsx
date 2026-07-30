@@ -1,5 +1,9 @@
 import { redirect } from "next/navigation";
-import { Home, Users, UserCog, Settings, ShieldCheck, CircleUser, type LucideIcon } from "lucide-react";
+import {
+  Home, Users, UserCog, Settings, ShieldCheck, CircleUser,
+  ClipboardList, CalendarDays, FolderOpen, CreditCard, LifeBuoy,
+  type LucideIcon,
+} from "lucide-react";
 import { obtenerPerfilActual, obtenerWidgetsVisibles, asegurarMembresiaCliente, obtenerMembresia } from "@eco/identidad";
 import { EnlacePanel } from "./EnlacePanel";
 import { crearClienteServidor } from "@eco/supabase/servidor";
@@ -12,6 +16,16 @@ const ICONOS_WIDGET: Record<string, LucideIcon> = {
   configuracion_negocio: Settings,
   auditoria: ShieldCheck,
 };
+
+// Secciones del rail de maqueta-cliente.html sin pantalla todavia. El orden es
+// el de la maqueta.
+const SECCIONES_CLIENTE: { icono: LucideIcon; et: string }[] = [
+  { icono: ClipboardList, et: "Mis trámites" },
+  { icono: CalendarDays, et: "Citas" },
+  { icono: FolderOpen, et: "Documentos" },
+  { icono: CreditCard, et: "Pagos y plan" },
+  { icono: LifeBuoy, et: "Ayuda" },
+];
 
 export default async function LayoutPanel({ children }: { children: React.ReactNode }) {
   const perfil = await obtenerPerfilActual();
@@ -59,6 +73,25 @@ export default async function LayoutPanel({ children }: { children: React.ReactN
           <EnlacePanel href="/panel/cuenta" icono={<CircleUser className="icono-nav" aria-hidden="true" strokeWidth={1.8} />}>
             Mi cuenta
           </EnlacePanel>
+
+          {/* Secciones del rail de la maqueta de cliente que todavía no tienen
+              pantalla. Se dibujan apagadas y etiquetadas, no como enlaces
+              vivos: mantienen la forma del rail aprobado sin prometer un
+              destino que no responde. Son <span>, así que no reciben foco ni
+              clic. Solo para el perfil cliente -- un administrador tiene su
+              consola real y no necesita ver un mapa de lo que vendrá. */}
+          {clasePerfil === "perfil-cliente" && (
+            <>
+              <div className="separador-nav">Pronto</div>
+              {SECCIONES_CLIENTE.map((s) => (
+                <span className="enlace-inerte" key={s.et}>
+                  <s.icono className="icono-nav" aria-hidden="true" strokeWidth={1.8} />
+                  <span className="etiqueta-nav">{s.et}</span>
+                  <span className="chip-pronto-nav">pronto</span>
+                </span>
+              ))}
+            </>
+          )}
         </div>
         <div className="panel-usuario">
           {/* Identificador del usuario activo en el portal: el nombre que

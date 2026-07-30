@@ -477,6 +477,30 @@ p { line-height: 1.55; }
   background: var(--rail-alta); color: var(--blanco); font-weight: 600;
   box-shadow: inset 2px 0 0 var(--rail-acento);
 }
+/* Separador de grupo dentro del rail y secciones sin pantalla todavía. Misma
+   caja que un enlace, pero apagadas: son <span>, no <a>, así que no reciben
+   foco ni cursor de mano y el lector de pantalla no las anuncia como destino. */
+.separador-nav {
+  margin: 14px 12px 6px; font-size: 0.656rem; font-weight: 800;
+  letter-spacing: 0.14em; text-transform: uppercase; color: rgba(255,255,255,0.38);
+}
+.enlace-inerte {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px; border-radius: 8px;
+  font-size: 0.92rem; font-weight: 500;
+  color: rgba(255,255,255,0.34); cursor: default;
+}
+/* la etiqueta no se parte: con el chip al lado, "Mis trámites" y "Pagos y
+   plan" caían a dos líneas y desalineaban toda la lista */
+.enlace-inerte .etiqueta-nav { white-space: nowrap; }
+.chip-pronto-nav {
+  margin-left: auto; flex: none;
+  font-size: 0.55rem; font-weight: 800;
+  letter-spacing: 0.06em; text-transform: uppercase; white-space: nowrap;
+  color: rgba(255,255,255,0.42); border: 1px solid rgba(255,255,255,0.18);
+  padding: 1px 5px; border-radius: 999px;
+}
+
 .panel-usuario {
   font-size: 0.8rem; display: flex; flex-direction: column; gap: 8px;
   border-top: 1px solid rgba(255,255,255,0.16); padding-top: 16px;
@@ -562,12 +586,93 @@ p { line-height: 1.55; }
 .estado-vacio svg { width: 22px; height: 22px; color: var(--panel-gris); }
 .estado-vacio p { font-size: 0.9rem; margin: 0; }
 
-/* ═══════════ Inicio de cliente (panel, temporal) ═══════════
-   Placeholder visual mientras se definen TRQ-xxx propios de cada acceso --
-   sin destino real (ver comentario en app/panel/page.tsx). Unica superficie
-   de color pleno de la pantalla: la tarjeta de Legal Score (sistema-visual
-   §3 regla 1); el resto son tarjetas blancas de línea 1px. */
+/* ═══════════ Inicio de cliente (panel) ═══════════
+   Estructura de gobernanza/productos/tranqi/maquetas/maqueta-cliente.html:
+   barra superior, protección como única superficie de color pleno (§3 regla 1),
+   accesos rápidos, trámites, y columna lateral con cita, documentos y buddie.
+
+   Los bloques cuyo dato no existe todavía muestran estado vacío. La maqueta
+   traía una póliza, tres expedientes y una cita escritos a mano; en producción
+   un cliente los leería como suyos, así que no se copian. */
 .inicio-cliente-sub { color: var(--panel-gris); font-size: 0.95rem; margin-top: -4px; margin-bottom: 24px; }
+
+/* ── Barra superior ──────────────────────────────────────────────── */
+.barra-cliente {
+  display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+  padding-bottom: 18px; margin-bottom: 22px;
+  border-bottom: 1px solid var(--panel-linea);
+}
+.buscador-cliente { flex: 1; min-width: 200px; max-width: 420px; position: relative; }
+.buscador-cliente svg {
+  position: absolute; left: 12px; top: 50%; translate: 0 -50%;
+  width: 16px; height: 16px; color: var(--panel-gris);
+}
+.buscador-cliente input {
+  width: 100%; background: var(--blanco); border: 1px solid var(--panel-linea);
+  border-radius: 8px; padding: 9px 12px 9px 36px; font-size: 0.875rem;
+  font-family: inherit; outline: none;
+}
+/* deshabilitado mientras no haya nada que buscar: no hay tablas de trámites
+   ni documentos, y un campo vivo devolvería siempre vacío */
+.buscador-cliente input:disabled { background: var(--panel-linea-suave); cursor: not-allowed; }
+.usuario-barra { display: flex; align-items: center; gap: 9px; margin-left: auto; }
+.usuario-barra-foto {
+  width: 34px; height: 34px; border-radius: 50%; flex: none;
+  background: var(--violeta); color: var(--blanco);
+  display: grid; place-items: center; font-size: 0.813rem; font-weight: 700;
+}
+.usuario-barra-txt { display: grid; line-height: 1.25; }
+.usuario-barra-txt b { font-size: 0.844rem; font-weight: 600; }
+.usuario-barra-txt span { font-size: 0.75rem; color: var(--panel-gris); }
+
+/* ── Protección: la única superficie de color pleno ──────────────── */
+.tarjeta-proteccion {
+  background: var(--violeta); color: var(--blanco);
+  border-radius: 16px; padding: 24px;
+}
+.tarjeta-proteccion-fila {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: 20px; flex-wrap: wrap;
+}
+.eyebrow-cliente {
+  font-size: 0.688rem; font-weight: 700; letter-spacing: 0.13em;
+  text-transform: uppercase; color: rgba(255,255,255,0.62);
+}
+.tarjeta-proteccion-plan {
+  font-size: 1.5rem; font-weight: 800; margin-top: 8px; letter-spacing: -0.025em;
+}
+.tarjeta-proteccion-plan i { font-style: normal; color: var(--menta); }
+.tarjeta-proteccion-meta {
+  font-size: 0.875rem; color: rgba(255,255,255,0.78); margin-top: 6px;
+  max-width: 52ch; line-height: 1.45;
+}
+.pildora-estado {
+  display: inline-flex; align-items: center; gap: 7px;
+  font-size: 0.75rem; font-weight: 800; letter-spacing: 0.04em;
+  padding: 6px 12px; border-radius: 999px; text-transform: uppercase;
+  background: var(--menta); color: var(--menta-honda); white-space: nowrap;
+}
+.pildora-estado::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+/* "sin activar" no es un estado positivo: la menta se reserva a lo que va
+   bien (§6), así que aquí el chip va en blanco diluido */
+.pildora-estado.pendiente { background: rgba(255,255,255,0.16); color: var(--blanco); }
+
+/* ── Tarjeta de sección: cabecera + cuerpo ───────────────────────── */
+.tarjeta-seccion {
+  background: var(--blanco); border: 1px solid var(--panel-linea);
+  border-radius: 16px; overflow: hidden;
+}
+.tarjeta-seccion > header {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 15px 20px; border-bottom: 1px solid var(--panel-linea-suave);
+}
+.tarjeta-seccion > header h2 { font-size: 1rem; font-weight: 700; margin: 0; }
+/* estado vacío dentro de una tarjeta: sin borde propio, la tarjeta ya lo pone */
+.vacio-seccion {
+  padding: 30px 20px; display: grid; gap: 5px; justify-items: center; text-align: center;
+}
+.vacio-seccion b { font-size: 0.938rem; font-weight: 600; color: var(--negro); }
+.vacio-seccion span { font-size: 0.844rem; color: var(--panel-gris); max-width: 36ch; line-height: 1.45; }
 
 /* ── Rejilla del inicio de cliente ───────────────────────────────────
    La maqueta reparte la pantalla en columna principal + lateral (1.62fr / 1fr).
@@ -582,25 +687,12 @@ p { line-height: 1.55; }
 }
 .columna-cliente { display: grid; gap: 20px; align-content: start; min-width: 0; }
 
-.tarjeta-legal-score {
-  background: var(--violeta); color: var(--blanco);
-  border-radius: 16px; padding: 20px 24px;
-  display: flex; align-items: center; gap: 20px;
-}
-.legal-score-numero {
-  font-size: 1.8rem; font-weight: 800; font-variant-numeric: tabular-nums;
-  width: 64px; height: 64px; border-radius: 50%; flex: none;
-  border: 3px solid var(--menta); color: var(--menta);
-  display: flex; align-items: center; justify-content: center;
-}
-.tarjeta-legal-score strong { display: block; font-size: 1rem; margin-bottom: 4px; }
-.tarjeta-legal-score p { font-size: 0.85rem; color: rgba(255,255,255,0.75); }
-
-/* minmax baja de 200px a 168px y se quita el max-width: dentro de la columna
-   principal el ancho ya está acotado por la rejilla, y con 200px las tarjetas
-   caían a una sola por fila en pantallas medianas. */
+/* La maqueta pone los cuatro accesos en UNA fila. auto-fit con 150px lo
+   consigue en la columna principal (≈660px − 3 huecos ÷ 4 = 154px) y va
+   reduciendo columnas solo cuando de verdad no caben, en vez de fijar
+   repeat(4,1fr) y forzar tarjetas ilegibles en móvil. */
 .accesos-cliente {
-  display: grid; grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: 14px;
 }
 .tarjeta-acceso {
@@ -868,6 +960,10 @@ p { line-height: 1.55; }
   .panel-marca { flex: none; }
   .panel-nav-links { flex-direction: row; flex: none; gap: 2px; }
   .panel-nav-links a { padding: 8px 10px; white-space: nowrap; }
+  /* en fila solo caben iconos: el separador de grupo y las etiquetas "pronto"
+     desaparecen, y los inertes quedan como icono apagado */
+  .separador-nav, .chip-pronto-nav { display: none; }
+  .enlace-inerte { padding: 8px 10px; white-space: nowrap; }
   /* --rail-acento, no --lavanda fijo: en horizontal el filo pasa de izquierda
      a abajo, pero sigue siendo el acento del perfil. Con lavanda escrito a
      mano, cliente y abogado perdían su color solo en móvil. */
@@ -878,7 +974,7 @@ p { line-height: 1.55; }
   .panel-usuario { display: none; }
   .panel-contenido { padding: 20px clamp(16px, 5vw, 28px) 40px; }
   .fila-dos-columnas { grid-template-columns: 1fr; }
-  .tarjeta-legal-score { flex-wrap: wrap; }
+  .tarjeta-proteccion-fila { flex-wrap: wrap; }
   /* la rejilla de cliente ya colapsó en su propio quiebre de 1080px; aquí solo
      queda por si se llega directo a móvil sin pasar por ese punto */
   .rejilla-cliente { grid-template-columns: 1fr; }
