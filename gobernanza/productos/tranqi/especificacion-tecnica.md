@@ -39,14 +39,23 @@ compartido. Cola de correo, no envío — ver notas de seguridad. `trq_fn_decidi
 fila al aceptar/rechazar (`not_plantilla`: `socio_aceptado` | `socio_rechazado`).
 
 **Vista de auditoría** (`/panel/auditoria`, movida fuera de `/panel/socios/auditoria` el 2026-07-28 —
-corrección de UX, es sección propia del rail, no sub-pestaña de Socios) lee `comun_auditoria.aud_registro`
-filtrado a `reg_esquema = 'tranqui_legal'` — sin tabla nueva, reutiliza la infraestructura de auditoría ya
-existente (`aud_fn_auditar_tabla()`, aplicado a las 8 tablas de socios desde su creación). RLS de
-`aud_registro` restringía a `SUPERADMIN` de plataforma (política preexistente); se sumó una política
-(`aud_registro_administrador_tranqi_select`) que también deja pasar a `ADMINISTRADOR` de tranqi, acotada a
-`reg_esquema = 'tranqui_legal'` — no ve auditoría de otros negocios ni de esquemas `comun_*`. Mantiene el
-gate `aal2` de Socios, replicado en `app/panel/auditoria/layout.tsx` (se perdía al salir del árbol de
-rutas que lo heredaba).
+corrección de UX, es sección propia del rail, no sub-pestaña de Socios) usa el DataGrid transversal
+`@eco/datagrid` (PLT-011 regla 2, ver [ADR-0004](../../arquitectura/adr/0004-datagrid-transversal.md)) vía
+el paquete `@eco/auditoria`. La consulta ya no filtra directo `aud_registro` — llama al RPC
+`comun_auditoria.aud_fn_listar_auditoria_negocio(p_negocio, p_esquema_negocio, ...)`, que unifica en un
+solo `returns table(...)` las filas de `reg_esquema = 'tranqui_legal'` con las de `comun_seguridad`
+(`seg_usuario`, `seg_membresia`, `seg_otp_correo`, `seg_recuperacion_correo`) acotadas por
+`exists (... seg_membresia ... mem_estado = 'ACTIVO')` a solo usuarios con membresía activa en tranqi.
+`security definer`, autoriza con `seg_fn_es_admin_negocio('tranqi')` — la política RLS existente de
+`aud_registro` (`aud_registro_administrador_tranqi_select`, acotada a `reg_esquema = 'tranqui_legal'`, no
+abre `comun_*` ni otros negocios) sigue vigente para acceso directo a la tabla, pero el RPC no depende de
+ella al ser `security definer` con su propio chequeo. Mantiene el gate `aal2` de Socios, replicado en
+`app/panel/auditoria/layout.tsx` (se perdía al salir del árbol de rutas que lo heredaba).
+
+La página (`page.tsx`, Server Component) solo hace la consulta y pasa `registros` (datos planos) a
+`TablaAuditoria.tsx` (Client Component), que arma las columnas (con sus funciones `valor`/`render`) y
+renderiza `<DataGrid>` — Next.js no permite pasar funciones directo de Server a Client Component; ver
+Decisión 4 del ADR-0004 para el patrón a replicar en widgets nuevos.
 
 El documento `Plan_Entregable_1_Tranqi_Identidad_Socios.md` referenciado aquí antes nunca se creó (no
 existe en el repo ni en su historial de git). Diseño completo, decisiones de alcance (MFA, cifrado,

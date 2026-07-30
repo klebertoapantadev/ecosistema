@@ -53,8 +53,14 @@ decisiones de alcance se definieron directamente en la implementación — ver e
   `comun_notificaciones.not_cola_correo` al aceptar/rechazar; no hay proveedor de correo transaccional
   configurado en el proyecto todavía.
 - **Auditoría** — `/panel/auditoria` (sección propia del rail, no sub-pestaña de Socios), visible para
-  `ADMINISTRADOR` y `SUPERADMIN` de tranqi, lee `comun_auditoria.aud_registro`. Quién decidió cada
-  solicitud ya queda en `trq_revision_solicitud.rev_admin_id`.
+  `ADMINISTRADOR` y `SUPERADMIN` de tranqi. Implementa el DataGrid transversal de PLT-011 regla 2 (filtro
+  server-side por fecha/tabla/operación/correo, búsqueda global instantánea, orden y reordenamiento de
+  columnas por drag, agrupamiento por drag, export a Excel/CSV, detalle expandible por fila) — ver
+  [ADR-0004](../../arquitectura/adr/0004-datagrid-transversal.md). Unifica cambios en tablas de
+  `tranqui_legal` con eventos de identidad de `comun_seguridad` (alta de cuenta, membresía, verificación de
+  correo, recuperación de contraseña) acotados a usuarios con membresía activa en tranqi, vía
+  `comun_auditoria.aud_fn_listar_auditoria_negocio()`. Quién decidió cada solicitud ya queda en
+  `trq_revision_solicitud.rev_admin_id`.
 - **Pendiente:** cifrado real de cédula/matrícula (`pgp_sym_encrypt` con Supabase Vault — hoy protegidas
   solo por RLS, decisión de gestión de claves pendiente de análisis propio) y envío real de las
   notificaciones encoladas.
