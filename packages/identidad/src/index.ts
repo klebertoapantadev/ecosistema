@@ -8,6 +8,8 @@ export {
   reenviarOtpRegistro,
   verificarOtpRegistro,
   iniciarSesion,
+  solicitarRecuperacion,
+  restablecerContrasena,
   completarBienvenida,
   eliminarCuenta,
   cerrarSesion,
@@ -30,5 +32,7 @@ export { FormularioRegistro } from "./componentes/FormularioRegistro";
 export { FormularioIngreso } from "./componentes/FormularioIngreso";
 export { FormularioBienvenida } from "./componentes/FormularioBienvenida";
 export { VerificacionCorreo } from "./componentes/VerificacionCorreo";
+export { FormularioRecuperacion } from "./componentes/FormularioRecuperacion";
+export { FormularioRestablecer } from "./componentes/FormularioRestablecer";
 export { EliminarCuenta } from "./componentes/EliminarCuenta";
 export { HistorialAccesos } from "./componentes/HistorialAccesos";

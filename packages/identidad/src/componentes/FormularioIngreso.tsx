@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { iniciarSesion } from "../acciones";
 import { crearClienteNavegador } from "@eco/supabase";
 import { IconoGoogle } from "./IconoGoogle";
@@ -71,6 +72,9 @@ export function FormularioIngreso({ negocio }: { negocio: string }) {
           autoComplete="current-password"
           required
         />
+        <p className="enlace-auth">
+          <Link href="/recuperar">¿Olvidaste tu contraseña?</Link>
+        </p>
         {error && (
           <p className="error-auth" role="alert">
             {error}

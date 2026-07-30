@@ -383,6 +383,44 @@ export type Database = {
           },
         ]
       }
+      seg_recuperacion_correo: {
+        Row: {
+          rec_creado_en: string
+          rec_expira_en: string
+          rec_id: string
+          rec_secuencial: number
+          rec_token_hash: string
+          rec_usado_en: string | null
+          rec_usuario_id: string
+        }
+        Insert: {
+          rec_creado_en?: string
+          rec_expira_en: string
+          rec_id?: string
+          rec_secuencial?: never
+          rec_token_hash: string
+          rec_usado_en?: string | null
+          rec_usuario_id: string
+        }
+        Update: {
+          rec_creado_en?: string
+          rec_expira_en?: string
+          rec_id?: string
+          rec_secuencial?: never
+          rec_token_hash?: string
+          rec_usado_en?: string | null
+          rec_usuario_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seg_recuperacion_correo_rec_usuario_id_fkey"
+            columns: ["rec_usuario_id"]
+            isOneToOne: false
+            referencedRelation: "seg_usuario"
+            referencedColumns: ["usu_id"]
+          },
+        ]
+      }
       seg_rol_widget: {
         Row: {
           rlw_actualizado_en: string
@@ -555,6 +593,10 @@ export type Database = {
       seg_fn_eliminar_cuenta: { Args: never; Returns: string }
       seg_fn_es_admin_negocio: { Args: { p_negocio: string }; Returns: boolean }
       seg_fn_generar_otp_registro: { Args: never; Returns: string }
+      seg_fn_solicitar_recuperacion: {
+        Args: { p_correo: string }
+        Returns: string
+      }
       seg_fn_verificar_otp_registro: {
         Args: { p_codigo: string }
         Returns: boolean

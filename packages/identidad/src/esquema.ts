@@ -25,6 +25,17 @@ export const esquemaIngreso = z.object({
 });
 export type DatosIngreso = z.infer<typeof esquemaIngreso>;
 
+export const esquemaSolicitarRecuperacion = z.object({
+  correo: z.string().email("Correo invalido"),
+});
+export type DatosSolicitarRecuperacion = z.infer<typeof esquemaSolicitarRecuperacion>;
+
+export const esquemaRestablecerContrasena = z.object({
+  token: z.string().min(1, "Enlace invalido"),
+  contrasena: z.string().min(8, "Minimo 8 caracteres"),
+});
+export type DatosRestablecerContrasena = z.infer<typeof esquemaRestablecerContrasena>;
+
 // PLT-001 regla 2: confirmar identidad (Google no siempre da un nombre claro
 // -- ej. cuentas de correo comerciales) + WhatsApp opt-in, siempre opcional.
 // El formulario compone `whatsapp` en formato E.164 (+593987654321) antes

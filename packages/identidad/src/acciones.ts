@@ -7,6 +7,8 @@ import {
   esquemaRegistro,
   esquemaIngreso,
   esquemaBienvenida,
+  esquemaSolicitarRecuperacion,
+  esquemaRestablecerContrasena,
   TERMINOS_VERSION,
   type DatosRegistro,
   type DatosIngreso,
@@ -20,6 +22,11 @@ async function obtenerIpYAgente() {
   const h = await headers();
   const ip = h.get("x-forwarded-for")?.split(",")[0]?.trim() ?? null;
   return { ip, userAgent: h.get("user-agent") };
+}
+
+async function obtenerOrigen() {
+  const h = await headers();
+  return h.get("origin") ?? `https://${h.get("host")}`;
 }
 
 // Rol CLIENTE automatico al registrarse en un negocio (PLT-003 regla 1). Usa
@@ -103,7 +110,7 @@ export async function registrarUsuario(datos: DatosRegistro, negocio: string): P
   await enviarCorreo({
     para: parseo.data.correo,
     asunto: "Tu código de verificación",
-    html: `<p>Hola${parseo.data.nombres ? ` ${parseo.data.nombres}` : ""},</p><p>Tu código de verificación es <strong style="font-size:1.4em; letter-spacing:0.2em;">${codigo}</strong></p><p>Vence en 10 minutos.</p>`,
+    html: `<p>Hola${parseo.data.nombres ? ` ${parseo.data.nombres}` : ""},</p><p>Tu código de verificación es <strong style="font-size:1.4em; letter-spacing:0.2em;">${codigo}</strong></p><p>Vence en 15 minutos.</p>`,
   });
 
   return { ok: true, data: undefined };
@@ -120,7 +127,7 @@ export async function reenviarOtpRegistro(correo: string, nombres?: string | nul
   await enviarCorreo({
     para: correo,
     asunto: "Tu código de verificación",
-    html: `<p>Hola${nombres ? ` ${nombres}` : ""},</p><p>Tu código de verificación es <strong style="font-size:1.4em; letter-spacing:0.2em;">${codigo}</strong></p><p>Vence en 10 minutos.</p>`,
+    html: `<p>Hola${nombres ? ` ${nombres}` : ""},</p><p>Tu código de verificación es <strong style="font-size:1.4em; letter-spacing:0.2em;">${codigo}</strong></p><p>Vence en 15 minutos.</p>`,
   });
 
   return { ok: true, data: undefined };
@@ -149,6 +156,55 @@ export async function iniciarSesion(datos: DatosIngreso, negocio: string): Promi
 
   const { ip, userAgent } = await obtenerIpYAgente();
   await registrarAcceso(supabase, data.user.id, ip, userAgent, negocio);
+
+  return { ok: true, data: undefined };
+}
+
+// Solicitud de recuperacion de contraseña -- SIEMPRE responde ok:true, exista
+// o no la cuenta (evita que este formulario sirva para averiguar que correos
+// estan registrados). seg_fn_solicitar_recuperacion() ya hace ese mismo
+// trabajo del lado de la base: retorna null tanto si el correo no existe
+// como si hay un token sin usar pedido hace menos de 60s.
+export async function solicitarRecuperacion(correo: string): Promise<Resultado> {
+  const parseo = esquemaSolicitarRecuperacion.safeParse({ correo });
+  if (!parseo.success) {
+    return { ok: false, error: parseo.error.issues[0]?.message ?? "Datos invalidos" };
+  }
+
+  const supabase = await crearClienteServidor();
+  const { data: token } = await supabase.schema("comun_seguridad").rpc("seg_fn_solicitar_recuperacion", {
+    p_correo: parseo.data.correo,
+  });
+
+  if (token) {
+    const origen = await obtenerOrigen();
+    await enviarCorreo({
+      para: parseo.data.correo,
+      asunto: "Restablece tu contraseña",
+      html: `<p>Para elegir una nueva contraseña, abre este enlace (vence en 30 minutos):</p><p><a href="${origen}/restablecer-contrasena?token=${token}">${origen}/restablecer-contrasena?token=${token}</a></p><p>Si no pediste este cambio, ignora este correo.</p>`,
+    });
+  }
+
+  return { ok: true, data: undefined };
+}
+
+// El cambio real de contraseña lo hace la Edge Function
+// restablecer-contrasena (unico lugar con service_role -- el usuario no
+// tiene sesion en este flujo, llego por un link de correo).
+export async function restablecerContrasena(token: string, contrasena: string): Promise<Resultado> {
+  const parseo = esquemaRestablecerContrasena.safeParse({ token, contrasena });
+  if (!parseo.success) {
+    return { ok: false, error: parseo.error.issues[0]?.message ?? "Datos invalidos" };
+  }
+
+  const supabase = await crearClienteServidor();
+  const { data, error } = await supabase.functions.invoke<{ ok?: boolean; error?: string }>("restablecer-contrasena", {
+    body: { token: parseo.data.token, nuevaContrasena: parseo.data.contrasena },
+  });
+
+  if (error || !data?.ok) {
+    return { ok: false, error: data?.error ?? error?.message ?? "No se pudo restablecer la contraseña" };
+  }
 
   return { ok: true, data: undefined };
 }
