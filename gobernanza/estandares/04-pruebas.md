@@ -30,7 +30,7 @@ La pregunta que decide si algo se prueba no es "¿qué % cubrimos?" sino: **¿qu
 
 Elegido por ser nativo de TypeScript/ESM, rápido, y con buen soporte de monorepos pnpm + Turborepo — sin configuración adicional de transpilación como requeriría Jest en este stack.
 
-- Config base compartida: `packages/config/vitest.base.ts`.
+- Config base compartida: `packages/config/vitest.base.mjs`.
 - Cada `package`/`app` que tenga tests trae su propio `vitest.config.ts` extendiendo la base, y un script `test` en su `package.json`.
 - Comando raíz: `pnpm test` → `turbo run test` (Turborepo corre solo los tests de paquetes afectados por el cambio, igual que `build`).
 
