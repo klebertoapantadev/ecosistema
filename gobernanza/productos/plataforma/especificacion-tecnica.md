@@ -17,13 +17,13 @@ Contraparte técnica de [`especificacion-funcional.md`](especificacion-funcional
 | Tabla | Prefijo | Estado |
 | :--- | :--- | :--- |
 | `seg_usuario` | `usu_` | ✅ Migrada (`20260727000002`). Incluye `usu_superadmin_plataforma`, `usu_autorizacion_whatsapp` y `usu_onboarding_completo` (`20260727000005`); `usu_terminos_aceptados_en`, `usu_terminos_version` y `usu_eliminado_en` (`20260727000008`). |
-| `seg_membresia` | `mem_` | ✅ Migrada. `unique (mem_usuario_id, mem_negocio)` — una membresía por usuario y negocio. Auto-alta como `CLIENTE` habilitada por política (`20260727000004`). |
+| `seg_membresia` | `mem_` | ✅ Migrada. `unique (mem_usuario_id, mem_negocio)` — una membresía por usuario y negocio. Auto-alta como `CLIENTE` (jerarquía base Nivel 1) habilitada por política (`20260727000004`). Soporta múltiples perfiles activos por membresía (`PLT-003`). |
 
 Aprovisionamiento: trigger `comun_seguridad.seg_fn_provisionar_usuario()` sobre `auth.users` — toda alta crea automáticamente su fila en `seg_usuario`, incluyendo `usu_nombres`/`usu_apellidos` desde los metadatos del proveedor (`20260727000007` — antes solo quedaban en el JSONB de detalle, no en columna). El correo `kleber.toapanta.ch@gmail.com` queda marcado `usu_superadmin_plataforma = true` desde su primer login real (bootstrap, sin asignación manual).
 
 **Fix (`20260727000009`):** el trigger leía exclusivamente `given_name`/`family_name` de `raw_user_meta_data`, pero el proveedor Google de este proyecto no siempre los envía (confirmado con datos reales — solo trae `name`/`full_name`, ej. `"Kleber Toapanta"`). Sin fallback, `usu_nombres`/`usu_apellidos` quedaban `NULL` y la bienvenida no prellenaba nada. Ahora, si no hay `given_name`/`family_name`, se parte `name`/`full_name` por el primer espacio — heurística imperfecta para nombres compuestos, cubierta por el paso de confirmación de la bienvenida (`PLT-001` regla 2).
 
-Asignación de rol: RPC transaccional `seg_fn_asignar_rol(usuario, negocio, rol)` (`20260727000004`) — nunca `UPDATE` directo, ver regla 5 de `AGENTS.md`.
+Asignación de rol: RPC transaccional `seg_fn_asignar_rol(usuario, negocio, rol)` (`20260727000004`) — asigna y administra múltiples perfiles validando que la jerarquía del perfil asignado sea de igual o menor nivel a la del asignador (`PLT-003`). Nunca `UPDATE` directo, ver regla 5 de `AGENTS.md`.
 
 **Fix de seguridad (`20260727000006`):** la política de `UPDATE` de `seg_usuario` permitía escribir cualquier columna de la propia fila, incluida `usu_superadmin_plataforma` — un usuario podía auto-otorgarse SuperAdmin. Cerrado con `GRANT UPDATE` por columna (ver [`politicas/seguridad-y-datos.md`](../../politicas/seguridad-y-datos.md) §9). Verificado con `information_schema.column_privileges` tras aplicar.
 
@@ -41,11 +41,13 @@ Seed aplicado: widgets `gestion_usuarios` (`20260727000002`) y `configuracion_ne
 
 **❌ Pendiente — widget `auditoria`:** planeado (ver PLT-005), sin seed en `seg_widget` todavía — verificado contra el proyecto real (2026-07-27), no confundir con "ya construido".
 
-**❌ Pendiente — Estándar de DataGrid UI:** el plan es que todo widget con listas tabuladas use un componente común `DataGrid` (`@ecosistema/ui` o similar), con búsqueda global, ordenamiento, reordenamiento de columnas, agrupamiento por arrastre y exportación a Excel/CSV. Ese paquete de UI **no existe todavía** — `packages/` hoy no tiene ningún componente de tabla compartido; `gestion_usuarios` en `tranqi-web` usa una tabla HTML simple (`tabla-panel`), no un DataGrid.
+**❌ Pendiente — Estándar de DataGrid UI:** El plan es que todo widget con listas tabuladas use un componente común `DataGrid` (`@ecosistema/ui` o similar), estructurado bajo una **Estrategia de Doble Criterio de Búsqueda y Filtrado (2 Capas)**:
+- **Capa 1 (Server-Side BDD):** Filtros primarios traducidos a PostgREST/Supabase API (`.gte()`, `.lte()`, `.ilike()`, `.eq()`, `.or()`) para consultar por fechas, correo, nombres, abogado/técnico, cédula/RUC o estados directamente en la base de datos.
+- **Capa 2 (Client-Side In-Memory Search):** Búsqueda global multi-columna en tiempo real sobre el dataset retornado en memoria cliente, ordenamiento por encabezados, drag-and-drop de columnas, agrupamiento dinámico por arrastre y exportación nativa a Excel/CSV. Ese paquete de UI **no existe todavía** — `packages/` hoy no tiene ningún componente de tabla compartido; `gestion_usuarios` en `tranqi-web` usa una tabla HTML simple (`tabla-panel`), no un DataGrid.
 
 **Fix (`20260727000010`):** "Configuración del negocio" vivía como link fijo en `app/panel/layout.tsx`, visible a cualquier usuario autenticado incluido un `CLIENTE` (rol por defecto de todo registro, `PLT-003` regla 1) — que nunca debería verlo, aunque RLS ya bloqueaba la escritura. Se registró como widget normal para que el sistema de permisos de `PLT-011` sea la única fuente de verdad de qué ve cada rol. Verificado: un `CLIENTE` de prueba solo ve "Mi cuenta"; un `ADMINISTRADOR` de prueba ve ambos.
 
-✅ Consumido en `tranqi-web`: el panel arma su navegación dinámicamente a partir de `seg_rol_widget` (vía `obtenerWidgetsVisibles()` de `@eco/identidad`) — ver `app/panel/layout.tsx`. Los otros 3 negocios ya llaman la misma función, pero solo tienen seed para `gestion_usuarios`/`configuracion_negocio`, y esas dos pantallas todavía no existen fuera de `tranqi-web` (§9), así que hoy siempre ven 0 widgets. **Pendiente:** UI para que un admin marque/desmarque widgets por rol desde la consola (hoy solo se edita por SQL/seed).
+✅ Consumido en `tranqi-web`: el panel arma su navegación dinámicamente a partir de `seg_rol_widget` (vía `obtenerWidgetsVisibles()` de `@eco/identidad`) — ver `app/panel/layout.tsx`. Los otros 3 negocios ya llaman la misma función, pero solo tienen seed para `gestion_usuarios`/`configuracion_negocio`, y esas dos pantallas todavía no existen fuera de `tranqi-web` (§9), así que hoy siempre ven 0 widgets. **Gobernanza de permisos (`PLT-003` regla 1, `PLT-011` regla 6):** Las operaciones de escritura (`INSERT`, `UPDATE`, `DELETE`) en `seg_rol_widget` están restringidas por RLS exclusivamente a `usu_superadmin_plataforma = true`. El widget UI `configuracion_permisos` sólo estará disponible para el `SUPERADMIN` de plataforma.
 
 ### 1.2. Bienvenida post-registro (PLT-001 regla 2)
 
@@ -172,7 +174,12 @@ Seed aplicado: una fila por negocio (`tranqi`, `fastfix`, `tinkay`, `margaritas`
   ```
 
 ### 8.2. Esquemas Comunes Adicionales
-- **`comun_notificacion` (PLT-013):** Tabla `not_registro` con `not_usuario_id`, `not_negocio`, `not_titulo`, `not_contenido`, `not_canal` (`IN_APP`, `PUSH`, `EMAIL`, `WHATSAPP`), `not_leido_en`.
+- **`comun_notificacion` (PLT-013 - Emisión Multicanal y Notificaciones Push):**
+  - **`not_campana` (`cmp_`):** Registro auditado de campañas emitidas desde el widget `emision_notificaciones` (`cmp_id`, `cmp_negocio`, `cmp_emisor_id`, `cmp_tipo_audiencia` (`TODOS` | `POR_ROL` | `POR_USUARIOS`), `cmp_roles_jsonb`, `cmp_canales_jsonb` (`IN_APP`, `PUSH`, `EMAIL`), `cmp_asunto`, `cmp_cuerpo_html`, `cmp_cuerpo_markdown`, `cmp_estado`, `cmp_creado_en`).
+  - **`not_registro` (`not_`):** Log individual de despachos in-app/push/email por usuario (`not_id`, `not_campana_id`, `not_usuario_id`, `not_negocio`, `not_canal`, `not_titulo`, `not_contenido_html`, `not_leido_en`, `not_creado_en`).
+  - **`comun_seguridad.seg_dispositivo_push` (`dsp_`):** Tokens de suscripción Push por dispositivo (`dsp_id`, `dsp_usuario_id`, `dsp_token_push`, `dsp_plataforma` (`WEB`, `ANDROID`, `IOS`), `dsp_activo`).
+  - **Componente Rich Text Editor (WYSIWYG & Markdown):** Integración UI mediante `@tiptap/react` / Quill con barra de herramientas completa (estilos, colores, alineación, tablas, imágenes, variables), sanitización contra XSS (`isomorphic-dompurify`) y conversión transparente bidireccional HTML $\leftrightarrow$ Markdown (`turndown` + `marked`).
+  - **Disparo Automático en RPC `seg_fn_asignar_rol()`:** Invoca el servicio de notificación transaccional al cambiar los perfiles de un usuario (`PLT-003` regla 8).
 - **`comun_comercio.com_cupon` (PLT-014):** Cupones multitenant con restricción de monto mínimo, usos globales y por usuario.
 - **`comun_evaluacion` (PLT-015):** Reseñas de comprador/cliente verificado (`eva_usuario_id`, `eva_negocio`, `eva_calificacion`, `eva_comentario`, `eva_respuesta_oficial`).
 - **`comun_seguridad.seg_sesion` (PLT-017):** Auditoría de dispositivos y revocación remota de refresh tokens en Supabase Auth.
