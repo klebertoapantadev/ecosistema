@@ -396,11 +396,17 @@ p { line-height: 1.55; }
      visual). No son colores de marca: son fondos sobre los que va tipografía
      blanca, y solo aparecen en el rail.
 
-     Ambos son los valores exactos de las maquetas. #33007A se probó como rail
-     de cliente por parecer "más púrpura", y al ponerlo junto a la maqueta se
-     descartó: el rail de la maqueta es esta tinta honda, y el púrpura de marca
-     vive en la superficie de contenido, no en el rail. */
+     #1E0046 es el valor exacto de la maqueta de cliente, pero NO se usa en el
+     rail: en pantalla se lee casi negro y el rail dejaba de decir "cliente",
+     que es su única función (§4, regla 2). TRQ-008 lo devolvió a esa tinta
+     buscando fidelidad al calco y el resultado fue indistinguible del rail
+     negro de administración -- reportado como fallo visual. Se vuelve a
+     #33007A, que es además lo que el sistema visual manda desde TRQ-003 y
+     nunca dejó de mandar: el documento y el código llevaban contradiciéndose
+     desde entonces. Se conserva el token de la maqueta para la superficie de
+     contenido, donde esa tinta sí funciona. */
   --violeta-tinta: #1E0046;
+  --violeta-oscuro: #33007A;
   --esmeralda-tinta: #052A23;
   /* papel con tinte de marca de la maqueta de cliente; el del panel
      administrativo sigue siendo gris puro */
@@ -424,13 +430,20 @@ p { line-height: 1.55; }
   --rail-acento: var(--lavanda);
 }
 .panel-layout.perfil-cliente {
-  --rail-superficie: var(--violeta-tinta);
-  /* un paso por encima de la superficie, no un relleno saturado del acento (§4) */
-  --rail-alta: #2C0A5E;
+  --rail-superficie: var(--violeta-oscuro);
+  /* un paso POR ENCIMA de la superficie, camino del violeta pleno. Sin llegar
+     a #5000BA: ese es el color de la acción, y como fondo del enlace activo
+     parecería un relleno saturado, que es lo que §4 descarta. */
+  --rail-alta: #431499;
   --rail-acento: var(--menta);
   /* la maqueta de cliente usa papel con tinte de marca, no el gris del panel */
   --panel-papel: var(--papel-cliente);
 }
+/* La cinta es textura de los perfiles de color: sobre el rail negro de
+   administración sería decoración sin significado (§7). Se oculta por CSS y
+   no con un condicional en el layout porque el perfil puede cambiar en
+   cliente al usar el conmutador «Ver como». */
+.panel-layout.perfil-admin .cinta-rail { display: none; }
 .panel-layout.perfil-abogado {
   --rail-superficie: var(--esmeralda-tinta);
   --rail-alta: #0B3B31;

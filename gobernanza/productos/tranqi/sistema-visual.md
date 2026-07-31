@@ -87,6 +87,12 @@ Tres decisiones que conviene no revertir sin motivo:
   superficie de contenido —la tarjeta de Legal Score, antes la de póliza— y con
   el rail del mismo tono las dos superficies llenas compiten y ninguna gana
   (§3, regla 1).
+  **Se revirtió una vez y se volvió a restaurar (TRQ-008 → TRQ-009):** el calco
+  de la maqueta devolvió el rail a `#1E0046` buscando fidelidad, y el resultado
+  fue indistinguible del rail negro de administración —contraste 1.03 entre
+  ambas superficies, frente a 1.28 con `#33007A`—. Se reportó como fallo visual.
+  Si alguien vuelve a proponer la tinta de la maqueta, este es el dato que lo
+  cierra: no es cuestión de gusto, es que deja de cumplir la regla 2.
 - El acento de administración es `--lavanda`, no `--violeta`. El violeta
   `#5000BA` sobre negro `#111111` no llega a distinguirse como filo; la lavanda
   sí. La tabla decía `--violeta` desde el borrador inicial y el código nunca lo
@@ -96,6 +102,14 @@ Tres decisiones que conviene no revertir sin motivo:
   registrarse. Si mirásemos solo `mem_rol` vería el rail violeta con la consola
   de administración delante, que es justo la confusión que evita la regla 2.
 
+- **El conmutador «Ver como» recolorea el rail, no solo el contenido.** Un
+  superadmin que elige «Cliente» ve el rail del perfil cliente: si el
+  conmutador existe para mirar el portal con los ojos de otro rol, enseñar la
+  cromática de administración contradice su único propósito. Se implementa en
+  `CapaPerfilRail`, un componente cliente, porque un layout de Next no recibe
+  `searchParams` y el modo viaja en la URL. El parámetro se ignora para quien
+  no puede conmutar — apariencia, sí, pero apariencia que afirmaría un rol
+  que no se tiene.
 Cada enlace lleva icono (`lucide-react`, ver §5) + texto. En `≤860px` el rail
 ya es horizontal con scroll (ver §9); en `≤600px` el texto se oculta
 **solo visualmente** (`.etiqueta-nav`, técnica de clip-rect, no `display:none`)
