@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useMemo, useState } from "react";
+import { Fragment, useCallback, useId, useMemo, useState } from "react";
 import {
   useReactTable,
   getCoreRowModel,
@@ -13,16 +13,19 @@ import {
   type SortingState,
   type GroupingState,
 } from "@tanstack/react-table";
-import { DndContext, useDroppable, type DragEndEvent, closestCenter } from "@dnd-kit/core";
+import { DndContext, useDroppable, type CollisionDetection, type DragEndEvent, closestCenter } from "@dnd-kit/core";
 import { SortableContext, horizontalListSortingStrategy, useSortable, arrayMove } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import * as XLSX from "xlsx";
+
+const ID_ZONA = "zona-agrupamiento";
 
 // Widget único y transversal (PLT-011 regla 2): server-side ya filtró el
 // dataset (rango de fechas, correo, etc. -- eso lo arma cada pagina en su
 // propio formulario, este componente no lo sabe). Lo que sigue es 100%
 // client-side sobre lo ya traido: busqueda global, orden, reordenar
-// columnas (drag), agrupar (drag a la zona de arriba), exportar.
+// columnas (drag), agrupar (drag a la zona de arriba o boton + del
+// encabezado), exportar.
 //
 // `valor()` es lo que se busca/ordena/exporta (texto/numero plano);
 // `render()` es opcional para una presentacion mas rica (chip, icono) --
@@ -51,6 +54,10 @@ export function DataGrid<T>({ columnas, filas, idFila, nombreExportacion, conten
   const [agrupamiento, setAgrupamiento] = useState<GroupingState>([]);
   const [ordenColumnas, setOrdenColumnas] = useState<string[]>(columnas.map((c) => c.id));
   const [expandidas, setExpandidas] = useState<Set<string>>(new Set());
+  // Sin un id propio, dnd-kit numera sus `aria-describedby` con un contador
+  // global que no coincide entre servidor y cliente y React tira un error de
+  // hidratacion en cada carga. `useId` si es estable entre ambos.
+  const idDnd = useId();
 
   const definicionColumnas = useMemo<ColumnDef<T>[]>(
     () =>
@@ -82,6 +89,36 @@ export function DataGrid<T>({ columnas, filas, idFila, nombreExportacion, conten
     autoResetExpanded: false,
   });
 
+  // La zona de agrupamiento es una caja ancha (100% del grid) y las columnas
+  // son angostas: con `closestCenter` a secas el centro de la zona queda mas
+  // lejos del centro de la columna arrastrada que el de la columna vecina, asi
+  // que la zona NUNCA gana la colision y soltar encima de ella no agrupaba.
+  // Por eso primero preguntamos si el puntero esta literalmente dentro de la
+  // zona; solo si no lo esta caemos a `closestCenter`, que es lo correcto para
+  // reordenar entre columnas de tamaño parecido.
+  const deteccionColision = useCallback<CollisionDetection>((argumentos) => {
+    const zonaRect = argumentos.droppableRects.get(ID_ZONA);
+    if (zonaRect) {
+      const punto = argumentos.pointerCoordinates;
+      const bajoElPuntero =
+        punto != null &&
+        punto.x >= zonaRect.left &&
+        punto.x <= zonaRect.left + zonaRect.width &&
+        punto.y >= zonaRect.top &&
+        punto.y <= zonaRect.top + zonaRect.height;
+      // La zona vive justo encima de la fila de encabezados: si el centro de la
+      // columna arrastrada subio hasta la banda, la intencion es agrupar.
+      // Reordenar es un gesto horizontal, asi que no se pisan.
+      const centroVertical = argumentos.collisionRect.top + argumentos.collisionRect.height / 2;
+      const subioALaBanda = centroVertical < zonaRect.top + zonaRect.height;
+      if (bajoElPuntero || subioALaBanda) {
+        const contenedorZona = argumentos.droppableContainers.find((contenedor) => contenedor.id === ID_ZONA);
+        if (contenedorZona) return [{ id: ID_ZONA, data: { droppableContainer: contenedorZona, value: 0 } }];
+      }
+    }
+    return closestCenter(argumentos);
+  }, []);
+
   // Un solo DndContext maneja ambos gestos sobre el mismo handle de columna:
   // soltar sobre "zona-agrupamiento" agrupa, soltar sobre otra columna
   // reordena. Dos DndContext anidados (uno para cada gesto) no funciona --
@@ -91,7 +128,7 @@ export function DataGrid<T>({ columnas, filas, idFila, nombreExportacion, conten
     const { active, over } = evento;
     if (!over) return;
     const columnaId = String(active.id);
-    if (over.id === "zona-agrupamiento") {
+    if (over.id === ID_ZONA) {
       if (!agrupamiento.includes(columnaId)) setAgrupamiento((actual) => [...actual, columnaId]);
       return;
     }
@@ -107,6 +144,15 @@ export function DataGrid<T>({ columnas, filas, idFila, nombreExportacion, conten
     setAgrupamiento((actual) => actual.filter((id) => id !== columnaId));
   }
 
+  // El arrastre no es alcanzable con teclado ni comodo en tactil, asi que cada
+  // encabezado ofrece ademas un boton que agrega/quita esa columna del
+  // agrupamiento. Misma accion, dos caminos.
+  function alternarAgrupamiento(columnaId: string) {
+    setAgrupamiento((actual) =>
+      actual.includes(columnaId) ? actual.filter((id) => id !== columnaId) : [...actual, columnaId],
+    );
+  }
+
   function alternarExpandida(id: string) {
     setExpandidas((actual) => {
       const siguiente = new Set(actual);
@@ -118,10 +164,19 @@ export function DataGrid<T>({ columnas, filas, idFila, nombreExportacion, conten
 
   function filasParaExportar(): string[][] {
     const encabezados = columnas.map((c) => c.encabezado);
-    const cuerpo = tabla
-      .getRowModel()
-      .rows.filter((f) => !f.getIsGrouped())
-      .map((f) => columnas.map((c) => String(c.valor(f.original))));
+    // Con agrupamiento activo, `getRowModel()` solo lista las subfilas de los
+    // grupos expandidos: exportar tal cual perderia todo lo colapsado. Bajamos
+    // a las hojas para que el archivo siempre lleve el dataset filtrado
+    // completo, sin importar que grupos esten abiertos.
+    const hojas: T[] = [];
+    const recorrer = (filas: { getIsGrouped: () => boolean; subRows: unknown[]; original: T }[]) => {
+      for (const fila of filas) {
+        if (fila.getIsGrouped()) recorrer(fila.subRows as typeof filas);
+        else hojas.push(fila.original);
+      }
+    };
+    recorrer(tabla.getRowModel().rows);
+    const cuerpo = hojas.map((fila) => columnas.map((c) => String(c.valor(fila))));
     return [encabezados, ...cuerpo];
   }
 
@@ -163,7 +218,7 @@ export function DataGrid<T>({ columnas, filas, idFila, nombreExportacion, conten
         </div>
       </div>
 
-      <DndContext collisionDetection={closestCenter} onDragEnd={alTerminarArrastre}>
+      <DndContext id={idDnd} collisionDetection={deteccionColision} onDragEnd={alTerminarArrastre}>
         <ZonaAgrupamiento columnas={columnas} agrupamiento={agrupamiento} onQuitar={quitarAgrupamiento} />
 
         <div className="datagrid-envoltura">
@@ -179,6 +234,8 @@ export function DataGrid<T>({ columnas, filas, idFila, nombreExportacion, conten
                       titulo={String(encabezado.column.columnDef.header)}
                       ordenActual={encabezado.column.getIsSorted()}
                       alOrdenar={encabezado.column.getCanSort() ? encabezado.column.getToggleSortingHandler() : undefined}
+                      agrupada={agrupamiento.includes(encabezado.column.id)}
+                      alAgrupar={() => alternarAgrupamiento(encabezado.column.id)}
                     />
                   ))}
                 </tr>
@@ -191,7 +248,10 @@ export function DataGrid<T>({ columnas, filas, idFila, nombreExportacion, conten
                     <tr key={fila.id} className="datagrid-fila-grupo">
                       <td colSpan={columnas.length + (contenidoExpandible ? 1 : 0)}>
                         <button type="button" className="datagrid-toggle-grupo" onClick={fila.getToggleExpandedHandler()}>
-                          {fila.getIsExpanded() ? "▾" : "▸"} {String(fila.getValue(fila.groupingColumnId ?? ""))} ({fila.subRows.length})
+                          {/* Con agrupamiento anidado `subRows` son los subgrupos y `getLeafRows()`
+                              mezcla subgrupos con filas: ambos mienten. Contamos solo hojas reales. */}
+                          {fila.getIsExpanded() ? "▾" : "▸"} {String(fila.getValue(fila.groupingColumnId ?? ""))} (
+                          {fila.getLeafRows().filter((hoja) => !hoja.getIsGrouped()).length})
                         </button>
                       </td>
                     </tr>
@@ -239,11 +299,11 @@ function ZonaAgrupamiento<T>({
   agrupamiento: string[];
   onQuitar: (id: string) => void;
 }) {
-  const { setNodeRef, isOver } = useDroppable({ id: "zona-agrupamiento" });
+  const { setNodeRef, isOver } = useDroppable({ id: ID_ZONA });
   return (
     <div ref={setNodeRef} className={`datagrid-zona-agrupamiento${isOver ? " datagrid-zona-agrupamiento-activa" : ""}`}>
       {agrupamiento.length === 0 ? (
-        <span className="datagrid-zona-vacia">Arrastra una columna aquí para agrupar</span>
+        <span className="datagrid-zona-vacia">Arrastra una columna aquí, o usa el + del encabezado, para agrupar</span>
       ) : (
         agrupamiento.map((id) => {
           const columna = columnas.find((c) => c.id === id);
@@ -266,23 +326,36 @@ function EncabezadoArrastrable({
   titulo,
   ordenActual,
   alOrdenar,
+  agrupada,
+  alAgrupar,
 }: {
   id: string;
   titulo: string;
   ordenActual: false | "asc" | "desc";
   alOrdenar?: (evento: unknown) => void;
+  agrupada: boolean;
+  alAgrupar: () => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id });
   const estilo = { transform: CSS.Transform.toString(transform), transition };
   return (
     <th ref={setNodeRef} style={estilo} className="datagrid-th">
-      <span className="datagrid-th-arrastrar" {...attributes} {...listeners} title="Arrastra para reordenar">
+      <span className="datagrid-th-arrastrar" {...attributes} {...listeners} title="Arrastra para reordenar o agrupar">
         ⠿
       </span>
       <button type="button" className="datagrid-th-boton" onClick={alOrdenar} disabled={!alOrdenar}>
         {titulo}
         {ordenActual === "asc" && " ▲"}
         {ordenActual === "desc" && " ▼"}
+      </button>
+      <button
+        type="button"
+        className={`datagrid-th-agrupar${agrupada ? " datagrid-th-agrupar-activa" : ""}`}
+        onClick={alAgrupar}
+        aria-pressed={agrupada}
+        title={agrupada ? `Quitar agrupamiento por ${titulo}` : `Agrupar por ${titulo}`}
+      >
+        {agrupada ? "−" : "+"}
       </button>
     </th>
   );
