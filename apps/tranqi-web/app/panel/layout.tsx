@@ -59,16 +59,13 @@ export default async function LayoutPanel({ children }: { children: React.ReactN
     <Suspense fallback={<div className={`panel-layout ${clasePerfil}`}>{children}</div>}>
       <CapaPerfilRail claseBase={clasePerfil} puedeConmutar={perfil.usu_superadmin_plataforma}>
       <aside className="panel-nav">
-        {/* La cinta como textura del rail (§7). Solo en cliente y abogado: para
-            administración el sistema visual no define cinta, y un trazo de color
-            sobre el rail negro sería decoración sin significado. El path es el
-            de maqueta-cliente.html; preserveAspectRatio="none" lo estira a la
+        {/* La cinta como textura del rail (§7), en los tres perfiles. El path es
+            el de maqueta-cliente.html; preserveAspectRatio="none" lo estira a la
             altura real del rail.
 
-            Se oculta por CSS (`.perfil-admin .cinta-rail`) y no con un
-            condicional de servidor: el perfil ahora puede cambiar en cliente
-            al usar el conmutador, y un condicional aquí dejaría el rail
-            púrpura sin su textura hasta recargar. */}
+            Su intensidad la gradúa el CSS por perfil, no un condicional aquí:
+            el perfil puede cambiar en cliente al usar el conmutador, y un
+            condicional de servidor dejaría el rail sin textura hasta recargar. */}
         <svg className="cinta-rail" viewBox="0 0 236 900" preserveAspectRatio="none" aria-hidden="true">
           <path d="M 200 -40 C 200 160 40 240 60 430 C 78 610 210 660 200 900" />
         </svg>
