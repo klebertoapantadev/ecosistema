@@ -49,6 +49,18 @@ Lo que **no** está cubierto todavía y queda pendiente para cuando el equipo cr
 | **`pnpm audit` programado** | Corre semanalmente aunque no haya PRs — captura CVEs publicados *después* de que el código ya se mergeó (exactamente lo que pasó con Next.js) | Mismo workflow, cron semanal, abre un issue si encuentra algo |
 | **Dependabot para GitHub Actions** | Los workflows de CI también son superficie de ataque (supply chain) | `.github/dependabot.yml` |
 
+### Overrides activos en el `package.json` raíz
+
+Un `pnpm.overrides` fuerza una versión de una dependencia **transitiva**, la que nos llega a través de otro paquete y que por tanto no podemos subir editando nuestro propio `package.json`. Cada uno existe por una vulnerabilidad concreta y se documenta aquí para que una auditoría futura no lo lea como una anomalía:
+
+| Override | Llega vía | Por qué |
+| :--- | :--- | :--- |
+| `sharp >= 0.35.0` | Next.js | 3 vulnerabilidades altas transitivas — ver [`registro-incidentes-seguridad.md`](registro-incidentes-seguridad.md), incidente 2026-07-26 |
+| `postcss >= 8.5.18` | Next.js | 1 vulnerabilidad media, mismo incidente |
+| `minimatch 10.2.6` | ESLint 9 (`@eslint/config-array`, `@eslint/eslintrc`) | `minimatch@3` arrastra `brace-expansion@1`, afectado por `GHSA-mh99-v99m-4gvg` (alta, DoS por expansión sin límite). El aviso solo se considera parcheado desde `brace-expansion >= 5.0.8`, así que ninguna versión de la línea 1.x/2.x sirve. Forzar `brace-expansion` directamente **no** funciona: la v5 eliminó el export CommonJS por defecto y `minimatch@3` revienta con `TypeError: expand is not a function`. La vía que sí funciona es saltar a `minimatch@10`, que ya usa `@isaacs/brace-expansion` (sin el aviso) y mantiene la API que ESLint consume. Verificado: `pnpm audit` limpio y las 4 apps lintean, tipan, testean y compilan. |
+
+**Regla:** un override se retira en cuanto el paquete de origen actualice su propia dependencia. Los PR de Dependabot son el momento natural para comprobarlo.
+
 ## 4. SLA de parcheo por severidad
 
 Basado en CVSS del aviso (GitHub Advisory / NVD). Tranqi tiene el SLA más estricto por manejar datos sensibles.

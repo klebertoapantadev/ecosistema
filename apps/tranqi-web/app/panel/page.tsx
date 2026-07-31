@@ -4,7 +4,7 @@ import {
   Briefcase, Scale, Award, Sparkles, UserCheck, Users, Settings,
   ShieldCheck, Bell, Shield, type LucideIcon
 } from "lucide-react";
-import { obtenerPerfilActual, obtenerWidgetsVisibles, obtenerSaludo, obtenerMembresia } from "@eco/identidad";
+import { obtenerPerfilActual, obtenerSaludo, obtenerMembresia } from "@eco/identidad";
 import { SelectorRolActivo, type ModoRol } from "./SelectorRolActivo";
 
 export const metadata: Metadata = { title: "Panel — tranqi" };
@@ -125,10 +125,8 @@ export default async function PaginaPanel({ searchParams }: Props) {
 
       {/* Renderizado dinámico del panel según el Rol Activo */}
       {modo === "cliente" && <PanelCliente saludo={saludo} nombre={nombre} />}
-      {modo === "abogado" && <PanelAbogado saludo={saludo} nombreCompleto={nombreCompleto} />}
-      {modo === "admin" && (
-        <PanelAdministrador saludo={saludo} nombreCompleto={nombreCompleto} esSuperadmin={puedeConmutar} />
-      )}
+      {modo === "abogado" && <PanelAbogado nombreCompleto={nombreCompleto} />}
+      {modo === "admin" && <PanelAdministrador esSuperadmin={puedeConmutar} />}
 
       <footer className="pie-panel">
         <span>© tranqi® 2026</span>
@@ -231,7 +229,7 @@ function PanelCliente({ saludo, nombre }: { saludo: string | null; nombre: strin
 }
 
 /* ──────────────── 2. PANEL MODO SOCIO ABOGADO ──────────────── */
-function PanelAbogado({ saludo, nombreCompleto }: { saludo: string | null; nombreCompleto: string }) {
+function PanelAbogado({ nombreCompleto }: { nombreCompleto: string }) {
   return (
     <>
       <h1>Panel Profesional — Abg. {nombreCompleto}</h1>
@@ -313,11 +311,7 @@ function PanelAbogado({ saludo, nombreCompleto }: { saludo: string | null; nombr
 }
 
 /* ──────────────── 3. PANEL MODO ADMINISTRADOR ──────────────── */
-function PanelAdministrador({
-  saludo,
-  nombreCompleto,
-  esSuperadmin,
-}: { saludo: string | null; nombreCompleto: string; esSuperadmin: boolean }) {
+function PanelAdministrador({ esSuperadmin }: { esSuperadmin: boolean }) {
   return (
     <>
       <h1>Consola de Control del Portal — tranqi</h1>
