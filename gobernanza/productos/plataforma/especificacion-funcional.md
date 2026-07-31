@@ -15,29 +15,29 @@ Este documento describe el **comportamiento compartido por los 4 productos** (Tr
 
 **Regla de precedencia:** Esta especificación establece los criterios de aceptación y reglas de negocio no negociables. Los agentes de codificación (Claude Code, Antigravity, Copilot, Cursor) e ingenieros deben implementar la lógica ajustándose strictly a este documento.
 
-### Matriz de Responsables de Revisión e Implementación
+### Matriz de Responsables de Revisión, Implementación y Avance (%)
 
-| Código | Funcionalidad / Requerimiento | Estado | Responsable Asignado |
-| :--- | :--- | :---: | :--- |
-| **`PLT-001`** | Identidad Única, Registro Cero Fricción y Auth | ✅ Implementado | Kleber Toapanta |
-| **`PLT-002`** | Autenticación Multifactor (MFA TOTP) | 🟡 Parcial | Kleber Toapanta |
-| **`PLT-003`** | Membresías, Jerarquía & Active Role Switcher | ✅ Implementado | Kleber Toapanta / Jesus Navarrete |
-| **`PLT-004`** | **Buddie Conversacional (Chat IA ARIA)** | 🟡 En Desarrollo | **Jesus Navarrete** |
-| **`PLT-005`** | Auditoría por Triggers y Widget Común | ✅ Implementado | Kleber Toapanta |
-| **`PLT-006`** | Facturación SRI y Pasarela de Pagos | ⏳ Pendiente | Kleber Toapanta |
-| **`PLT-007`** | Catálogo Geográfico (Ecuador 24 Provincias) | ✅ Implementado | Kleber Toapanta |
-| **`PLT-008`** | Configuración de Negocio & SMTP en Vault | ✅ Implementado | Kleber Toapanta |
-| **`PLT-009`** | Catálogo Comercial Unificado (Productos/Planes) | 🟡 Especificado | Kleber Toapanta |
-| **`PLT-010`** | Integración Omnicanal (WhatsApp & Meta Feed) | ⏳ Pendiente | **Jesus Navarrete** |
-| **`PLT-011`** | Sistema de Widgets por Rol & DataGrids 2 Capas | ✅ Implementado | Kleber Toapanta |
-| **`PLT-012`** | Baja de Cuenta y Derecho al Olvido | ⏳ Pendiente | Kleber Toapanta |
-| **`PLT-013`** | Notificaciones Multicanal (Push/Email/In-App) | 🟡 Parcial | Kleber Toapanta |
-| **`PLT-014`** | Motor de Cupones y Promociones | ⏳ Pendiente | **Jesus Navarrete** |
-| **`PLT-015`** | Calificaciones, Reseñas y Reputación | ⏳ Pendiente | **Jesus Navarrete** |
-| **`PLT-016`** | Storage Standard (Buckets Privado/Público) | ✅ Implementado | Kleber Toapanta |
-| **`PLT-017`** | Gestión de Sesiones y Revocación Remota | 🟡 Parcial | Kleber Toapanta |
-| **`PLT-018`** | Historial de Accesos y Saludo Personalizado | ✅ Implementado | Kleber Toapanta |
-| **`PLT-019`** | **Reclutamiento, Bolsa de Empleo y "Únete al Equipo"** | 🟡 Especificado | **Jesus Navarrete / Kleber Toapanta** |
+| Código | Funcionalidad / Requerimiento | Estado | Avance (%) | Responsable Asignado |
+| :--- | :--- | :---: | :---: | :--- |
+| **`PLT-001`** | Identidad Única, Registro Cero Fricción y Auth | ✅ Implementado | **85%** | Kleber Toapanta |
+| **`PLT-002`** | Autenticación Multifactor (MFA TOTP) | 🟡 Parcial | **50%** | Kleber Toapanta |
+| **`PLT-003`** | Membresías, Jerarquía & Active Role Switcher | ✅ Implementado | **100%** | Kleber Toapanta / Jesus Navarrete |
+| **`PLT-004`** | **Buddie Conversacional (Chat IA ARIA)** | 🟡 En Desarrollo | **40%** | **Jesus Navarrete** |
+| **`PLT-005`** | Auditoría por Triggers y Widget Común | ✅ Implementado | **100%** | Kleber Toapanta |
+| **`PLT-006`** | Facturación SRI y Pasarela de Pagos | ⏳ Pendiente | **0%** | Kleber Toapanta |
+| **`PLT-007`** | Catálogo Geográfico (Ecuador 24 Provincias) | ✅ Implementado | **100%** | Kleber Toapanta |
+| **`PLT-008`** | Configuración de Negocio & SMTP en Vault | ✅ Implementado | **90%** | Kleber Toapanta |
+| **`PLT-009`** | Catálogo Comercial Unificado (Productos/Planes) | 🟡 Especificado | **25%** | Kleber Toapanta |
+| **`PLT-010`** | Integración Omnicanal (WhatsApp & Meta Feed) | ⏳ Pendiente | **0%** | **Jesus Navarrete** |
+| **`PLT-011`** | Sistema de Widgets por Rol & DataGrids 2 Capas | ✅ Implementado | **100%** | Kleber Toapanta |
+| **`PLT-012`** | Baja de Cuenta y Derecho al Olvido | ⏳ Pendiente | **20%** | Kleber Toapanta |
+| **`PLT-013`** | Notificaciones Multicanal (Push/Email/In-App) | 🟡 Parcial | **65%** | Kleber Toapanta |
+| **`PLT-014`** | Motor de Cupones y Promociones | ⏳ Pendiente | **0%** | **Jesus Navarrete** |
+| **`PLT-015`** | Calificaciones, Reseñas y Reputación | ⏳ Pendiente | **0%** | **Jesus Navarrete** |
+| **`PLT-016`** | Storage Standard (Buckets Privado/Público) | ✅ Implementado | **100%** | Kleber Toapanta |
+| **`PLT-017`** | Gestión de Sesiones y Revocación Remota | 🟡 Parcial | **40%** | Kleber Toapanta |
+| **`PLT-018`** | Historial de Accesos y Saludo Personalizado | ✅ Implementado | **100%** | Kleber Toapanta |
+| **`PLT-019`** | **Reclutamiento, Bolsa de Empleo y "Únete al Equipo"** | 🟡 Especificado | **15%** | **Jesus Navarrete / Kleber Toapanta** |
 
 ---
 
