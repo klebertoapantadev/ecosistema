@@ -7,7 +7,7 @@ name: Auditoria de dependencias
 
 on:
   pull_request:
-    branches: [master, main]
+    branches: [master]
   schedule:
     - cron: "0 6 * * 1" # todos los lunes 06:00 UTC
   workflow_dispatch:

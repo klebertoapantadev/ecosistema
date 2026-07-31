@@ -11,7 +11,7 @@ name: Validar convenciones
 
 on:
   pull_request:
-    branches: [main]
+    branches: [master]
     paths:
       - "supabase/migrations/**"
 
