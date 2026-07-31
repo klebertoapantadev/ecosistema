@@ -79,6 +79,17 @@ gobernanza/     Estándares, arquitectura, políticas, manuales, especificacione
 
 Señalarlo explícitamente antes de proceder, citando la regla de `gobernanza/` en conflicto. No asumir que la instrucción puntual deroga el estándar — el estándar cambia por PR a `gobernanza/`, no por una instrucción de chat.
 
+## Actualización Obligatoria de Gobernanza y Matriz de Requerimientos (`especificacion-funcional.md`)
+
+- **Control de Estado y Porcentaje de Avance (%)**:
+  - Tras implementar, modificar o verificar cualquier requerimiento o funcionalidad (`PLT-xxx`, `TRQ-xxx`, `FFH-xxx`, `TNK-xxx`, `MRG-xxx`), el agente DEBE actualizar de inmediato la **Matriz de Responsables, Estado y Avance (%)** en [especificacion-funcional.md](file:///c:/Users/Kleber%20Toapanta/Documents/BK2026/Antigravity2026/Ley/ecosistema/gobernanza/productos/plataforma/especificacion-funcional.md) (o en la especificación del producto correspondiente).
+  - **Criterios de Actualización**:
+    - **`Estado`**: Actualizar a `✅ Implementado`, `🟡 Parcial / En Desarrollo` o `⏳ Pendiente`.
+    - **`Avance (%)`**: Recalcular y actualizar el porcentaje real de avance (0% a 100%) según las reglas de negocio verificadas.
+    - **`Responsable`**: Asignar y mantener el responsable de revisión e implementación.
+  - **Criterio de Cierre de Tarea**: Ninguna funcionalidad se dará por finalizada ni entregada sin haber actualizado previamente su fila en la matriz de la especificación funcional.
+
 ## Estado actual
 
 Sprint 0 en curso. Identidad (registro Google OAuth + correo/contraseña, bienvenida, consentimiento de términos, historial de accesos, baja de cuenta — `PLT-001`/`012`/`018`), configuración del negocio (`PLT-008`) y gestión de usuarios/roles (el widget, `PLT-011`) viven en paquetes compartidos (`packages/identidad`, `packages/configuracion-negocio`, `packages/gestion-usuarios`) y funcionan de punta a punta en las **4 apps** (`tranqi-web`, `fastfix-web`, `tinkay-web`, `margaritas-web`), todas desplegadas en Vercel. **Pendiente manual:** agregar el `/auth/callback` de `fastfix-web`/`tinkay-web`/`margaritas-web` a los Redirect URLs de Supabase para que Google OAuth funcione en esas 3 (dashboard, sin herramienta MCP). Pendiente del Entregable 1 de Tranqi: solicitud de socios abogados. Ver [`gobernanza/productos/tranqi/`](gobernanza/productos/tranqi/) y el [README de `packages/identidad`](packages/identidad/README.md).
+
