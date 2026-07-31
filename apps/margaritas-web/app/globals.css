@@ -33,3 +33,18 @@ body {
 
 .placeholder-enlaces { display: flex; gap: 14px; align-items: center; margin-top: 24px; }
 .placeholder-enlace-secundario { color: #fff; text-decoration: underline; font-weight: 600; }
+
+/* PLT-008: sección de servidor SMTP dentro de Configuración del negocio.
+   Separada visualmente del formulario de identidad legal porque se guarda
+   por otra vía y tiene su propio botón. */
+.seccion-panel { margin-top: 34px; padding-top: 26px; border-top: 1px solid var(--panel-linea); }
+.seccion-panel h2 { font-size: 1.05rem; font-weight: 800; margin-bottom: 6px; }
+.texto-apoyo { font-size: 0.85rem; color: var(--panel-gris); max-width: 480px; margin-bottom: 18px; line-height: 1.5; }
+/* La casilla va en fila con su etiqueta, al revés que el resto de .form-panel label */
+.form-panel .campo-casilla {
+  flex-direction: row; align-items: flex-start; gap: 9px;
+  font-weight: 400; font-size: 0.85rem; line-height: 1.45; color: var(--panel-gris);
+}
+.form-panel .campo-casilla input { width: auto; margin-top: 2px; flex-shrink: 0; }
+.form-panel small { font-weight: 400; font-size: 0.78rem; color: var(--panel-gris); line-height: 1.45; }
+.fila-botones { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }

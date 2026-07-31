@@ -7,7 +7,15 @@ import { verificarOtpRegistro, reenviarOtpRegistro } from "../acciones";
 // Verifica el OTP de 6 digitos enviado al registrarse (ver registrarUsuario()
 // en acciones.ts) -- mismo patron de UI que VerificacionMFA.tsx (input +
 // boton + error), pero este es de una sola vez, no un factor persistente.
-export function VerificacionCorreo({ correo, nombres }: { correo: string; nombres?: string | null }) {
+export function VerificacionCorreo({
+  correo,
+  negocio,
+  nombres,
+}: {
+  correo: string;
+  negocio: string;
+  nombres?: string | null;
+}) {
   const router = useRouter();
   const [codigo, setCodigo] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -37,7 +45,7 @@ export function VerificacionCorreo({ correo, nombres }: { correo: string; nombre
     setReenviando(true);
     setError(null);
     setAviso(null);
-    const resultado = await reenviarOtpRegistro(correo, nombres);
+    const resultado = await reenviarOtpRegistro(correo, negocio, nombres);
     setReenviando(false);
     if (!resultado.ok) {
       setError(resultado.error);

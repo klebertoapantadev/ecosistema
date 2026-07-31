@@ -200,12 +200,95 @@ export type Database = {
         }
         Relationships: []
       }
+      cfg_smtp: {
+        Row: {
+          smt_activo: boolean
+          smt_actualizado_en: string
+          smt_creado_en: string
+          smt_detalle_smtp: Json
+          smt_host: string | null
+          smt_id: string
+          smt_negocio: string
+          smt_puerto: number
+          smt_remitente_nombre: string | null
+          smt_secreto_id: string | null
+          smt_secuencial: number
+          smt_seguro: boolean
+          smt_usuario: string | null
+        }
+        Insert: {
+          smt_activo?: boolean
+          smt_actualizado_en?: string
+          smt_creado_en?: string
+          smt_detalle_smtp?: Json
+          smt_host?: string | null
+          smt_id?: string
+          smt_negocio: string
+          smt_puerto?: number
+          smt_remitente_nombre?: string | null
+          smt_secreto_id?: string | null
+          smt_secuencial?: never
+          smt_seguro?: boolean
+          smt_usuario?: string | null
+        }
+        Update: {
+          smt_activo?: boolean
+          smt_actualizado_en?: string
+          smt_creado_en?: string
+          smt_detalle_smtp?: Json
+          smt_host?: string | null
+          smt_id?: string
+          smt_negocio?: string
+          smt_puerto?: number
+          smt_remitente_nombre?: string | null
+          smt_secreto_id?: string | null
+          smt_secuencial?: never
+          smt_seguro?: boolean
+          smt_usuario?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cfg_smtp_smt_negocio_fkey"
+            columns: ["smt_negocio"]
+            isOneToOne: true
+            referencedRelation: "cfg_negocio"
+            referencedColumns: ["cfg_negocio"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      cfg_fn_borrar_smtp_contrasena: {
+        Args: { p_negocio: string }
+        Returns: undefined
+      }
+      cfg_fn_guardar_smtp: {
+        Args: {
+          p_activo: boolean
+          p_contrasena?: string | null
+          p_host: string | null
+          p_negocio: string
+          p_puerto: number
+          p_remitente_nombre: string | null
+          p_seguro: boolean
+          p_usuario: string | null
+        }
+        Returns: undefined
+      }
+      cfg_fn_obtener_smtp_credenciales: {
+        Args: { p_negocio: string }
+        Returns: {
+          contrasena: string
+          host: string
+          puerto: number
+          remitente_nombre: string
+          seguro: boolean
+          usuario: string
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never

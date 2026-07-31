@@ -12,7 +12,7 @@ export default async function PaginaVerificarCorreo() {
   return (
     <div className="pagina-mfa">
       <h1>Verifica tu correo</h1>
-      <VerificacionCorreo correo={perfil.usu_correo} nombres={perfil.usu_nombres} />
+      <VerificacionCorreo correo={perfil.usu_correo} negocio="fastfix" nombres={perfil.usu_nombres} />
     </div>
   );
 }

@@ -262,8 +262,20 @@ Proporciona una consola de configuración para que el Administrador de cada nego
    - **Ubicación en Google Maps:** Coordenadas GPS (latitud, longitud) y/o URL embebida de Google Maps para navegación.
    - **Fotografía del Local (Opcional):** Imagen representativa de la fachada u oficina para brindar confianza visual al cliente.
    - **Indicador de Sede Principal:** Un local debe marcarse como Matriz/Sede Principal.
+6. **Servidor de Correo Saliente (SMTP) propio del negocio:**
+   - El Administrador configura desde la consola el servidor por el que sale el correo transaccional de su negocio: **servidor (host), puerto, tipo de cifrado (TLS implícito o STARTTLS), usuario, contraseña y nombre del remitente**. No son variables de despliegue: cambiar de buzón no debe requerir intervención técnica ni un nuevo despliegue.
+   - **La contraseña se guarda cifrada en Supabase Vault y no vuelve a mostrarse a nadie**, ni siquiera al Administrador que la escribió. La pantalla solo indica si existe; dejar el campo vacío conserva la guardada, y hay una acción explícita y separada para eliminarla. Ver [`ADR-0005`](../../arquitectura/adr/0005-smtp-por-negocio.md).
+   - **Interruptor de activación independiente de la configuración:** los datos pueden quedar cargados sin que el negocio empiece a enviar. Solo se puede activar si host, usuario y contraseña están completos.
+   - Mientras un negocio no tenga SMTP activo **no envía correo**: no existe un remitente compartido por defecto que enmascare una configuración faltante. Afecta al código de verificación de registro (`PLT-001`) y al enlace de recuperación de contraseña.
 
 ### Criterios de Aceptación (Gherkin)
+* **Escenario:** Configuración del servidor SMTP del negocio
+  * **Dado que** el Administrador de Tranqi abre la sección "Servidor de correo (SMTP)" de la configuración de su negocio.
+  * **Cuando** completa servidor, puerto, usuario y contraseña, marca "Enviar los correos de este negocio por este servidor" y guarda.
+  * **Entonces** el sistema almacena la contraseña cifrada, deja de mostrarla, y los siguientes códigos de verificación y enlaces de recuperación salen desde ese remitente.
+* **Escenario:** Intento de activar el envío sin credenciales completas
+  * **Dado que** el Administrador marca la casilla de activación sin haber indicado el servidor.
+  * **Entonces** el sistema rechaza el guardado indicando qué dato falta, en vez de activar una configuración que fallaría en cada envío.
 * **Escenario:** Edición de Términos de Servicio en Markdown
   * **Dado que** el Administrador de FastFix accede al panel `/admin/configuracion-negocio/terminos`.
   * **Cuando** edita el contenido legal en formato Markdown y hace clic en "Guardar y Publicar".

@@ -1,22 +1,47 @@
-import nodemailer from "nodemailer";
+import { crearClienteServidor } from "@eco/supabase/servidor";
 
-// Server-only. No importar desde un client component -- lee variables de
-// entorno sin NEXT_PUBLIC_ (nunca deben llegar al bundle del navegador, ver
-// gobernanza/politicas/gestion-credenciales.md §3). Cada app de Vercel es un
-// negocio distinto con su propio SMTP_*, por eso no hay parametro "negocio":
-// esta funcion siempre manda desde el remitente de LA app que la llama.
-export async function enviarCorreo({ para, asunto, html }: { para: string; asunto: string; html: string }) {
-  const transportador = nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port: Number(process.env.SMTP_PORT),
-    secure: true,
-    auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+// Server-only. Delega el envio en la Edge Function `enviar-correo`, que es
+// quien tiene service_role y por tanto quien puede descifrar la contrasena
+// SMTP del negocio desde Supabase Vault (PLT-008, ver ADR-0005).
+//
+// Antes esta funcion hablaba SMTP directo con nodemailer leyendo variables
+// SMTP_* de Vercel. Eso ataba el remitente al despliegue: cambiar de buzon
+// exigia un redeploy, y el ADMINISTRADOR del negocio -- que es quien conoce
+// su propio correo -- no podia tocarlo. Ahora la configuracion vive en
+// comun_configuracion.cfg_smtp y se edita desde la pantalla de Configuracion
+// del Negocio.
+//
+// `negocio` es obligatorio: ya no se asume "el SMTP de la app que llama",
+// porque la app dejo de ser la que guarda la credencial.
+export async function enviarCorreo({
+  negocio,
+  para,
+  asunto,
+  html,
+}: {
+  negocio: string;
+  para: string;
+  asunto: string;
+  html: string;
+}): Promise<{ ok: true } | { ok: false; error: string }> {
+  const clave = process.env.CORREO_FUNCION_CLAVE;
+  if (!clave) {
+    console.error("enviarCorreo: falta CORREO_FUNCION_CLAVE");
+    return { ok: false, error: "El envío de correo no está configurado" };
+  }
+
+  const supabase = await crearClienteServidor();
+  const { data, error } = await supabase.functions.invoke<{ ok?: boolean; error?: string }>("enviar-correo", {
+    body: { negocio, para, asunto, html },
+    headers: { "x-correo-clave": clave },
   });
 
-  await transportador.sendMail({
-    from: `"${process.env.SMTP_FROM_NOMBRE}" <${process.env.SMTP_USER}>`,
-    to: para,
-    subject: asunto,
-    html,
-  });
+  if (error || !data?.ok) {
+    // Se registra pero no se propaga el detalle al usuario final: un mensaje
+    // del proveedor SMTP puede revelar el buzon o la topologia del negocio.
+    console.error("enviarCorreo: falló el envío", { negocio, error, respuesta: data });
+    return { ok: false, error: data?.error ?? "No se pudo enviar el correo" };
+  }
+
+  return { ok: true };
 }
