@@ -150,6 +150,19 @@ es textura**: un solo trazo, entre 10 % y 35 % de opacidad, dentro del rail o de
 la superficie de color, nunca sobre texto y nunca en más de dos elementos por
 pantalla.
 
+**Va en los tres perfiles del rail, administración incluida.** Una versión
+anterior la excluía del rail negro por considerarla ahí "decoración sin
+significado"; el efecto real fue que administración quedaba como la única
+superficie plana de las tres, y se reportó como fallo visual. La cinta se dibuja
+con `--rail-acento`, que en administración es la lavanda `#7866FF` — el mismo
+color que §4 eligió precisamente porque se distingue sobre el negro.
+
+La opacidad **se calibra por perfil, no se fija una sola**: lo que debe coincidir
+es el peso visual, no el número. Menta al 9 % sobre `#33007A` da 1.16 de
+contraste contra su propio fondo; lavanda necesita el 14 % sobre `#111111` para
+dar 1.15. Al añadir un perfil, medir ese contraste en vez de copiar la opacidad
+del anterior.
+
 Detalle de implementación: el SVG va posicionado contra un ancestro con
 `position: relative` u otro valor posicionado. Si el contenedor queda `static`
 —por ejemplo un rail que deja de ser `sticky` en móvil— el trazo se posiciona

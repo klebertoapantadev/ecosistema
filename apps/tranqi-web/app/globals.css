@@ -443,7 +443,18 @@ p { line-height: 1.55; }
    administración sería decoración sin significado (§7). Se oculta por CSS y
    no con un condicional en el layout porque el perfil puede cambiar en
    cliente al usar el conmutador «Ver como». */
-.panel-layout.perfil-admin .cinta-rail { display: none; }
+/* La cinta también en administración. §7 la excluía por considerarla
+   "decoración sin significado" sobre el rail negro, pero el efecto real era
+   que ese perfil quedaba como la única superficie plana de los tres, y así se
+   reportó. La cinta usa `--rail-acento`, que en administración es la lavanda
+   `#7866FF` — el mismo color que §4 eligió justamente porque SÍ se distingue
+   sobre el negro.
+
+   Sube al 14% y no al 9% de los otros dos porque la opacidad estaba calibrada
+   para menta sobre púrpura. Medido: menta al 9% sobre `#33007A` da contraste
+   1.16 contra su propio fondo; lavanda al 14% sobre `#111111` da 1.15. Mismo
+   peso visual, no un número a ojo. */
+.panel-layout.perfil-admin .cinta-rail { opacity: 0.14; }
 .panel-layout.perfil-abogado {
   --rail-superficie: var(--esmeralda-tinta);
   --rail-alta: #0B3B31;
