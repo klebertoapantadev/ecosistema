@@ -40,6 +40,22 @@ export async function obtenerMembresia(usuarioId: string, negocio: string) {
   return data;
 }
 
+// PLT-003 reglas 3 y 4: claves de perfil que el usuario actual tiene en un
+// negocio, y su nivel jerarquico maximo. Ambos salen de RPC y no de una
+// consulta directa: la verdad vive en seg_membresia_perfil, y las funciones
+// resuelven ya el caso del superadmin de plataforma, que no necesita membresia.
+export async function obtenerPerfiles(negocio: string): Promise<string[]> {
+  const supabase = await crearClienteServidor();
+  const { data } = await supabase.schema("comun_seguridad").rpc("seg_fn_perfiles", { p_negocio: negocio });
+  return (data as string[] | null) ?? [];
+}
+
+export async function obtenerNivelMaximo(negocio: string): Promise<number> {
+  const supabase = await crearClienteServidor();
+  const { data } = await supabase.schema("comun_seguridad").rpc("seg_fn_nivel_maximo", { p_negocio: negocio });
+  return (data as number | null) ?? 0;
+}
+
 // PLT-011: que widgets ve el usuario actual en un negocio. SUPERADMIN (flag
 // de plataforma) ve todos sin necesidad de fila en seg_rol_widget.
 export async function obtenerWidgetsVisibles(usuarioId: string, esSuperadmin: boolean, negocio: string) {
@@ -55,15 +71,19 @@ export async function obtenerWidgetsVisibles(usuarioId: string, esSuperadmin: bo
     return data ?? [];
   }
 
-  const membresia = await obtenerMembresia(usuarioId, negocio);
-  if (!membresia) return [];
+  // PLT-003 regla 3: un usuario puede tener varios perfiles a la vez, asi que
+  // lo que ve es la UNION de los widgets de todos ellos. Antes se filtraba por
+  // `membresia.mem_rol`, una sola clave: un CLIENTE + ABOGADO habria visto
+  // solo los widgets de uno de los dos, sin aviso.
+  const perfiles = await obtenerPerfiles(negocio);
+  if (perfiles.length === 0) return [];
 
   const { data: asignaciones } = await supabase
     .schema("comun_seguridad")
     .from("seg_rol_widget")
     .select("rlw_widget_id")
     .eq("rlw_negocio", negocio)
-    .eq("rlw_rol", membresia.mem_rol)
+    .in("rlw_rol", perfiles)
     .eq("rlw_visible", true);
 
   if (!asignaciones || asignaciones.length === 0) return [];

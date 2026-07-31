@@ -139,6 +139,23 @@ Gestiona el control de acceso basado en roles y perfiles (RBAC/ABAC) aislado por
      - Si un usuario ostenta múltiples perfiles activos en una misma empresa (ej. `CLIENTE` + `ABOGADO` + `ADMINISTRADOR` en Tranqi), la interfaz del panel despliega un **Selector de Rol Activo** en la barra superior/perfil (*"Modo Cliente"* | *"Modo Abogado / Socio"* | *"Modo Administrador"*).
      - Al alternar el rol activo, el panel reestructura instantáneamente su menú de navegación y renderiza únicamente las secciones y widgets asignados a dicho rol (`PLT-011`).
 
+### Estado de implementación
+
+Actualizado en cada PR que toque este requerimiento. `Parcial` significa que existe algo funcionando pero no cubre la regla entera.
+
+| Regla | Estado | Dónde vive |
+| :--- | :--- | :--- |
+| 1 · Gobernanza vs. operación | Parcial | `seg_rol_widget` existe y el widget de correo ya es solo-SuperAdmin; falta la pantalla de gobernanza de la matriz (widget `configuracion_permisos`) |
+| 2 · `CLIENTE` obligatorio al registrarse | Implementado | `seg_fn_asegurar_membresia_cliente()`; crea membresía **y** fila de perfil |
+| 3 · Perfiles múltiples simultáneos | Implementado | `seg_membresia_perfil` (tabla de unión). `mem_rol` queda deprecada |
+| 4 · Escala jerárquica 1–100 | Implementado | `seg_perfil` con `per_nivel`; `SUPERADMIN` figura como techo pero `per_asignable = false` |
+| 5 · Techo jerárquico | Implementado | `seg_fn_asignar_perfil()` / `seg_fn_quitar_perfil()`; la tabla de unión no tiene política de escritura, así que no hay vía que lo evite |
+| 6 · Aislamiento por negocio | Implementado | `mem_negocio`; el nivel del gestor se calcula **por negocio**, no global |
+| 7 · Verificación de estado adicional | Parcial | Existe para `trq_abogado`; no hay equivalente en los otros productos |
+| 8 · Notificación multicanal por cambio de perfil | Pendiente | Depende de `PLT-013` y del envío por SMTP (`ADR-0005`) |
+| 9 · Conmutador de rol activo | Parcial | Existe y recolorea el rail (`TRQ-009`), pero sigue siendo solo-SuperAdmin con tres modos fijos: aún no se construye desde los perfiles reales del usuario |
+
+**Deuda declarada:** `seg_membresia.mem_rol` sigue existiendo, marcada como deprecada en el comentario de la columna. Es una transición expand/contract deliberada — se retira en una migración posterior, cuando producción lleve tiempo leyendo del modelo nuevo. Ningún código la lee ya.
 ### Criterios de Aceptación (Gherkin)
 * **Escenario:** Asignación automática inicial de perfil CLIENTE
   * **Dado que** un usuario no registrado ingresa por primera vez a FastFix.

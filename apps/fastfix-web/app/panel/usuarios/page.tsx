@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
-import { buscarUsuarios, FilaUsuario } from "@eco/gestion-usuarios";
+import { buscarUsuarios, obtenerPerfilesAsignables, FilaUsuario } from "@eco/gestion-usuarios";
+import { obtenerNivelMaximo } from "@eco/identidad";
 
 export const metadata: Metadata = { title: "Gestión de usuarios — FastFix Home" };
 
 const NEGOCIO = "fastfix";
-const ROLES = ["CLIENTE", "ADMINISTRADOR", "TECNICO"];
+
 
 export default async function PaginaGestionUsuarios({
   searchParams,
@@ -12,7 +13,13 @@ export default async function PaginaGestionUsuarios({
   searchParams: Promise<{ q?: string }>;
 }) {
   const { q = "" } = await searchParams;
-  const { data: usuarios, error } = await buscarUsuarios(q, NEGOCIO);
+  // El catálogo de perfiles y el techo del gestor salen de la base, no de una
+  // lista fija en código: PLT-003 regla 4 los estandariza a nivel plataforma.
+  const [{ data: usuarios, error }, perfiles, nivelMaximoGestor] = await Promise.all([
+    buscarUsuarios(q, NEGOCIO),
+    obtenerPerfilesAsignables(),
+    obtenerNivelMaximo(NEGOCIO),
+  ]);
 
   return (
     <div>
@@ -30,17 +37,22 @@ export default async function PaginaGestionUsuarios({
             <th>Nombre</th>
             <th>Correo</th>
             <th>Estado</th>
-            <th>Rol</th>
-            <th></th>
-          </tr>
+            <th>Perfiles</th>
+            </tr>
         </thead>
         <tbody>
           {usuarios.map((u) => (
-            <FilaUsuario key={u.usu_id} usuario={u} negocio={NEGOCIO} roles={ROLES} />
+            <FilaUsuario
+              key={u.usu_id}
+              usuario={u}
+              negocio={NEGOCIO}
+              perfiles={perfiles}
+              nivelMaximoGestor={nivelMaximoGestor}
+            />
           ))}
           {usuarios.length === 0 && (
             <tr>
-              <td colSpan={5}>Sin resultados.</td>
+              <td colSpan={4}>Sin resultados.</td>
             </tr>
           )}
         </tbody>

@@ -40,13 +40,12 @@ export async function asegurarMembresiaCliente(
   usuarioId: string,
   negocio: string,
 ) {
-  await supabase
-    .schema("comun_seguridad")
-    .from("seg_membresia")
-    .upsert(
-      { mem_usuario_id: usuarioId, mem_negocio: negocio, mem_rol: "CLIENTE" },
-      { onConflict: "mem_usuario_id,mem_negocio", ignoreDuplicates: true },
-    );
+  // PLT-003 regla 2: el alta crea membresia Y perfil CLIENTE. Va por RPC y no
+  // por upsert directo porque seg_membresia_perfil no tiene politica de
+  // escritura -- es donde se aplica el techo jerarquico de la regla 5, y
+  // abrirla al cliente lo saltaria. El RPC solo actua sobre auth.uid(), asi
+  // que `usuarioId` ya no hace falta.
+  await supabase.schema("comun_seguridad").rpc("seg_fn_asegurar_membresia_cliente", { p_negocio: negocio });
 }
 
 // PLT-001 regla 6: registra la aceptacion de terminos para el camino de

@@ -634,6 +634,93 @@ export type Database = {
         }
         Relationships: []
       }
+      seg_perfil: {
+        Row: {
+          per_activo: boolean
+          per_actualizado_en: string
+          per_asignable: boolean
+          per_clave: string
+          per_creado_en: string
+          per_detalle_perfil: Json
+          per_id: string
+          per_nivel: number
+          per_nombre: string
+          per_secuencial: number
+        }
+        Insert: {
+          per_activo?: boolean
+          per_actualizado_en?: string
+          per_asignable?: boolean
+          per_clave: string
+          per_creado_en?: string
+          per_detalle_perfil?: Json
+          per_id?: string
+          per_nivel: number
+          per_nombre: string
+          per_secuencial?: never
+        }
+        Update: {
+          per_activo?: boolean
+          per_actualizado_en?: string
+          per_asignable?: boolean
+          per_clave?: string
+          per_creado_en?: string
+          per_detalle_perfil?: Json
+          per_id?: string
+          per_nivel?: number
+          per_nombre?: string
+          per_secuencial?: never
+        }
+        Relationships: []
+      }
+      seg_membresia_perfil: {
+        Row: {
+          mpe_actualizado_en: string
+          mpe_asignado_por: string | null
+          mpe_creado_en: string
+          mpe_detalle_membresia_perfil: Json
+          mpe_id: string
+          mpe_membresia_id: string
+          mpe_perfil_id: string
+          mpe_secuencial: number
+        }
+        Insert: {
+          mpe_actualizado_en?: string
+          mpe_asignado_por?: string | null
+          mpe_creado_en?: string
+          mpe_detalle_membresia_perfil?: Json
+          mpe_id?: string
+          mpe_membresia_id: string
+          mpe_perfil_id: string
+          mpe_secuencial?: never
+        }
+        Update: {
+          mpe_actualizado_en?: string
+          mpe_asignado_por?: string | null
+          mpe_creado_en?: string
+          mpe_detalle_membresia_perfil?: Json
+          mpe_id?: string
+          mpe_membresia_id?: string
+          mpe_perfil_id?: string
+          mpe_secuencial?: never
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seg_membresia_perfil_mpe_membresia_id_fkey"
+            columns: ["mpe_membresia_id"]
+            isOneToOne: false
+            referencedRelation: "seg_membresia"
+            referencedColumns: ["mem_id"]
+          },
+          {
+            foreignKeyName: "seg_membresia_perfil_mpe_perfil_id_fkey"
+            columns: ["mpe_perfil_id"]
+            isOneToOne: false
+            referencedRelation: "seg_perfil"
+            referencedColumns: ["per_id"]
+          },
+        ]
+      }
       seg_widget: {
         Row: {
           wdg_activo: boolean
@@ -675,6 +762,20 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      seg_fn_asegurar_membresia_cliente: { Args: { p_negocio: string }; Returns: undefined }
+      seg_fn_asignar_perfil: {
+        Args: { p_negocio: string; p_perfil: string; p_usuario_id: string }
+        Returns: undefined
+      }
+      seg_fn_quitar_perfil: {
+        Args: { p_negocio: string; p_perfil: string; p_usuario_id: string }
+        Returns: undefined
+      }
+      seg_fn_perfiles: { Args: { p_negocio: string }; Returns: string[] }
+      seg_fn_perfiles_de: { Args: { p_negocio: string; p_usuario_id: string }; Returns: string[] }
+      seg_fn_tiene_perfil: { Args: { p_clave: string; p_negocio: string }; Returns: boolean }
+      seg_fn_nivel_maximo: { Args: { p_negocio: string }; Returns: number }
+      seg_fn_es_superadmin: { Args: never; Returns: boolean }
       seg_fn_asignar_rol: {
         Args: { p_negocio: string; p_rol: string; p_usuario_id: string }
         Returns: {
