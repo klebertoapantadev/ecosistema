@@ -247,3 +247,12 @@ h1, h2, h3, .fuente-display { font-family: var(--font-fraunces), Georgia, serif;
 .btn-condolencias:hover { background: #2E4635; }
 
 .muestra-pie { text-align: center; padding: 32px 20px; font-size: 0.8rem; color: var(--gris); }
+
+/* Sello de versión en el pie del rail: fecha de compilación y commit.
+   Deliberadamente discreto — es una herramienta de diagnóstico, no
+   información para el usuario final. */
+.sello-compilacion {
+  display: block; margin-top: 8px; font-size: 0.66rem; letter-spacing: 0.02em;
+  opacity: 0.45; font-variant-numeric: tabular-nums; cursor: default;
+}
+.sello-compilacion:hover { opacity: 0.75; }

@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
+import { SelloCompilacion } from "@eco/primitivas";
 import {
   Home, Users, UserCog, Settings, ShieldCheck, CircleUser,
   Mail,
@@ -121,6 +122,7 @@ export default async function LayoutPanel({ children }: { children: React.ReactN
               bloque ya solo identifica, no ejecuta acciones. */}
           <span className="nombre-usuario-activo">{[perfil.usu_nombres, perfil.usu_apellidos].filter(Boolean).join(" ")}</span>
           <span className="correo-usuario-activo">{perfil.usu_correo}</span>
+          <SelloCompilacion className="sello-compilacion" />
           {perfil.usu_superadmin_plataforma && <span className="etiqueta-superadmin">SuperAdmin</span>}
         </div>
       </aside>

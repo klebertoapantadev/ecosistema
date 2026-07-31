@@ -1,0 +1,1 @@
+export { SelloCompilacion } from "./SelloCompilacion";

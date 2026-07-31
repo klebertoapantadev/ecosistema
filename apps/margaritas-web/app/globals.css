@@ -48,3 +48,12 @@ body {
 .form-panel .campo-casilla input { width: auto; margin-top: 2px; flex-shrink: 0; }
 .form-panel small { font-weight: 400; font-size: 0.78rem; color: var(--panel-gris); line-height: 1.45; }
 .fila-botones { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+/* Sello de versión en el pie del rail: fecha de compilación y commit.
+   Deliberadamente discreto — es una herramienta de diagnóstico, no
+   información para el usuario final. */
+.sello-compilacion {
+  display: block; margin-top: 8px; font-size: 0.66rem; letter-spacing: 0.02em;
+  opacity: 0.45; font-variant-numeric: tabular-nums; cursor: default;
+}
+.sello-compilacion:hover { opacity: 0.75; }
