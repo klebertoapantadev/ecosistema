@@ -22,11 +22,23 @@ Solo visible para `ADMINISTRADOR`/`SUPERADMIN` — es el widget `configuracion_n
 
 ## Correo de notificaciones (`PLT-008` regla 2)
 
-Campo `correoNotificaciones` en `cfg_detalle_configuracion` (JSONB) — **solo captura el dato hoy**. No está conectado a envío real: los correos transaccionales de Supabase Auth (confirmación, reset de contraseña) siguen saliendo del remitente único configurado a nivel de proyecto, compartido por los 4 negocios. Conectar un remitente por negocio requiere un proveedor de correo transaccional con dominio propio verificado (evaluando Resend) y probablemente un Auth Email Hook — pendiente de decisión.
+Campo `correoNotificaciones` en `cfg_detalle_configuracion` (JSONB) — es el correo de contacto que se publica como canal de atención, no el remitente. El remitente real es lo de abajo.
+
+## Servidor SMTP del negocio (`PLT-008` regla 6)
+
+`FormularioSmtp` + `guardarSmtp()` / `borrarContrasenaSmtp()` + `obtenerSmtpNegocio()`. Guarda en `comun_configuracion.cfg_smtp` (tabla propia, **no** `cfg_negocio`: esa tiene lectura pública para `anon` y dejaría las credenciales expuestas).
+
+Tres cosas que no son obvias al leer el código:
+
+- **La contraseña no pasa por la tabla.** Va a Supabase Vault desde el RPC `cfg_fn_guardar_smtp`, y en `cfg_smtp` solo queda `smt_secreto_id`. Por eso `guardarSmtp()` no es un `update` como `actualizarConfiguracionNegocio()`: guardar el secreto y la fila tiene que ser atómico, y `cfg_smtp` no tiene política de escritura.
+- **Nadie puede volver a leer la contraseña, ni el admin.** El campo vacío significa "consérvala"; hay una acción aparte para eliminarla. Es intencional, no una limitación de la UI.
+- **El envío no ocurre aquí.** Lo hace la Edge Function `enviar-correo`, que es quien tiene `service_role` para descifrar el secreto. Ver [`ADR-0005`](../../gobernanza/arquitectura/adr/0005-smtp-por-negocio.md).
+
+Mientras `smt_activo` sea `false` o falte host/usuario/contraseña, **ese negocio no envía correo** — no hay remitente compartido de respaldo.
 
 **✅ Montado en las 4 apps** (`app/panel/configuracion/page.tsx` de cada una, 2026-07-27).
 
 ## Pendiente
 
 - Redes sociales, canales de contacto adicionales, términos en Markdown y locales físicos (resto de `PLT-008`) — hoy viven sin UI en `cfg_detalle_configuracion` (JSONB).
-- Envío real de correo por negocio (ver arriba).
+- Botón de "enviar correo de prueba" en la sección SMTP: hoy la única forma de saber que la configuración es correcta es provocar un registro real.
