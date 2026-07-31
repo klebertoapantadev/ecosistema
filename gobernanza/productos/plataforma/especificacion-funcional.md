@@ -1,23 +1,49 @@
 ---
 tipo: esp_funcional
 estado: vigente
-version: 1.7
-fecha: 2026-07-27
-responsable: Kleber Toapanta
+version: 1.8
+fecha: 2026-07-31
+responsables: Kleber Toapanta / Jesus Navarrete
 ---
 
 # Plataforma — Especificación Funcional Común
 
 **Prefijo de código de requerimiento:** `PLT-xxx`  
-**Propietario:** Plataforma (transversal a todos los negocios del ecosistema)
+**Propietarios:** Plataforma (transversal a todos los negocios del ecosistema)
 
 Este documento describe el **comportamiento compartido por los 4 productos** (Tranqi, FastFix Home, Tinkay, Margaritas Floristería) y por cualquier nuevo negocio que se incorpore. Ningún producto redefine estos requerimientos en su propia especificación; únicamente los referencia por su código `PLT-xxx` y documenta lo específico de su dominio.
 
-**Regla de precedencia:** Esta especificación establece los criterios de aceptación y reglas de negocio no negociables. Los agentes de codificación (Claude Code, Antigravity, Copilot, Cursor) e ingenieros deben implementar la lógica ajustándose estrictamente a este documento.
+**Regla de precedencia:** Esta especificación establece los criterios de aceptación y reglas de negocio no negociables. Los agentes de codificación (Claude Code, Antigravity, Copilot, Cursor) e ingenieros deben implementar la lógica ajustándose strictly a este documento.
+
+### Matriz de Responsables de Revisión e Implementación
+
+| Código | Funcionalidad / Requerimiento | Estado | Responsable Asignado |
+| :--- | :--- | :---: | :--- |
+| **`PLT-001`** | Identidad Única, Registro Cero Fricción y Auth | ✅ Implementado | Kleber Toapanta |
+| **`PLT-002`** | Autenticación Multifactor (MFA TOTP) | 🟡 Parcial | Kleber Toapanta |
+| **`PLT-003`** | Membresías, Jerarquía & Active Role Switcher | ✅ Implementado | Kleber Toapanta / Jesus Navarrete |
+| **`PLT-004`** | **Buddie Conversacional (Chat IA ARIA)** | 🟡 En Desarrollo | **Jesus Navarrete** |
+| **`PLT-005`** | Auditoría por Triggers y Widget Común | ✅ Implementado | Kleber Toapanta |
+| **`PLT-006`** | Facturación SRI y Pasarela de Pagos | ⏳ Pendiente | Kleber Toapanta |
+| **`PLT-007`** | Catálogo Geográfico (Ecuador 24 Provincias) | ✅ Implementado | Kleber Toapanta |
+| **`PLT-008`** | Configuración de Negocio & SMTP en Vault | ✅ Implementado | Kleber Toapanta |
+| **`PLT-009`** | Catálogo Comercial Unificado (Productos/Planes) | 🟡 Especificado | Kleber Toapanta |
+| **`PLT-010`** | Integración Omnicanal (WhatsApp & Meta Feed) | ⏳ Pendiente | **Jesus Navarrete** |
+| **`PLT-011`** | Sistema de Widgets por Rol & DataGrids 2 Capas | ✅ Implementado | Kleber Toapanta |
+| **`PLT-012`** | Baja de Cuenta y Derecho al Olvido | ⏳ Pendiente | Kleber Toapanta |
+| **`PLT-013`** | Notificaciones Multicanal (Push/Email/In-App) | 🟡 Parcial | Kleber Toapanta |
+| **`PLT-014`** | Motor de Cupones y Promociones | ⏳ Pendiente | **Jesus Navarrete** |
+| **`PLT-015`** | Calificaciones, Reseñas y Reputación | ⏳ Pendiente | **Jesus Navarrete** |
+| **`PLT-016`** | Storage Standard (Buckets Privado/Público) | ✅ Implementado | Kleber Toapanta |
+| **`PLT-017`** | Gestión de Sesiones y Revocación Remota | 🟡 Parcial | Kleber Toapanta |
+| **`PLT-018`** | Historial de Accesos y Saludo Personalizado | ✅ Implementado | Kleber Toapanta |
+| **`PLT-019`** | **Reclutamiento, Bolsa de Empleo y "Únete al Equipo"** | 🟡 Especificado | **Jesus Navarrete / Kleber Toapanta** |
 
 ---
 
 ## PLT-001 — Identidad Única y Registro de Usuario Sin Fricción
+
+**Responsable:** Kleber Toapanta  
 
 ### Descripción
 Un usuario posee una **única identidad base** en todo el ecosistema (`comun_seguridad.seg_usuario`), pero ejecuta un **flujo de registro independiente por cada negocio** al que desea ingresar. El registro inicial prioriza la fluidez y conversión cero fricción.
@@ -56,6 +82,8 @@ Un usuario posee una **única identidad base** en todo el ecosistema (`comun_seg
 ---
 
 ## PLT-002 — Autenticación Multifactor (MFA) para Procesos Críticos y Reseteo de Credenciales
+
+**Responsable:** Kleber Toapanta  
 
 ### Descripción
 Implementa la autenticación multifactor basada en TOTP (compatible con Google Authenticator / Authy) mediante Supabase Auth para proteger transacciones irreversibles o envíos de datos sensibles, permitiendo la gestión autónoma del usuario en su panel y garantizando flujos de enrolamiento y recuperación accesibles.
@@ -96,6 +124,8 @@ Implementa la autenticación multifactor basada en TOTP (compatible con Google A
 ---
 
 ## PLT-003 — Membresías, Múltiples Perfiles y Jerarquía de Roles por Producto
+
+**Responsables:** Kleber Toapanta / Jesus Navarrete  
 
 ### Descripción
 Gestiona el control de acceso basado en roles y perfiles (RBAC/ABAC) aislado por negocio a través de `comun_seguridad.seg_membresia` y su jerarquía de perfiles. Implementa el principio de **Gobernanza Exclusiva de Plataforma por SuperAdmin** (para la matriz Perfil-Widget) y la **Operación de Usuarios por Administradores de Negocio** (para la asignación de perfiles a usuarios basada en niveles jerárquicos).
@@ -186,6 +216,8 @@ Actualizado en cada PR que toque este requerimiento. `Parcial` significa que exi
 
 ## PLT-004 — Buddie Conversacional (Chat Asistido por IA)
 
+**Responsable:** **Jesus Navarrete**  
+
 ### Descripción
 Proporciona una interfaz conversacional inteligente ("buddie") integrada en las aplicaciones del ecosistema, respaldada por agentes especializados en el motor ARIA.
 
@@ -202,6 +234,8 @@ Proporciona una interfaz conversacional inteligente ("buddie") integrada en las 
 ---
 
 ## PLT-005 — Auditoría de Cambios y Telemetría
+
+**Responsable:** Kleber Toapanta  
 
 ### Descripción
 Registra automáticamente todas las modificaciones de datos en las tablas de negocio mediante el trigger PostgreSQL `aud_fn_auditar_tabla()` y despliega el historial a través de un **Widget Único y Común de Auditoría** integrado en las consolas de administración.
@@ -229,6 +263,8 @@ Registra automáticamente todas las modificaciones de datos en las tablas de neg
 
 ## PLT-006 — Facturación Electrónica SRI y Pasarela de Pagos
 
+**Responsable:** Kleber Toapanta  
+
 ### Descripción
 Unifica el procesamiento de pagos y la emisión de comprobantes electrónicos autorizados por el Servicio de Rentas Internas (SRI) de Ecuador.
 
@@ -244,6 +280,8 @@ Unifica el procesamiento de pagos y la emisión de comprobantes electrónicos au
 
 ## PLT-007 — Catálogo Geográfico Unificado (Ecuador)
 
+**Responsable:** Kleber Toapanta  
+
 ### Descripción
 Proporciona el catálogo maestro de las 24 Provincias y sus respectivos Cantones/Ciudades de la República del Ecuador en `comun_catalogo`.
 
@@ -255,6 +293,8 @@ Proporciona el catálogo maestro de las 24 Provincias y sus respectivos Cantones
 ---
 
 ## PLT-008 — Configuración de Datos Generales del Negocio, Términos y Redes Sociales
+
+**Responsable:** Kleber Toapanta  
 
 ### Descripción
 Proporciona una consola de configuración para que el Administrador de cada negocio defina la información corporativa, canales de atención, términos legales y locales físicos de su producto.
@@ -306,6 +346,8 @@ Proporciona una consola de configuración para que el Administrador de cada nego
 
 ## PLT-009 — Catálogo Comercial Unificado (Productos, Servicios y Suscripciones)
 
+**Responsable:** Kleber Toapanta  
+
 ### Descripción
 Motor centralizado de gestión de bienes, servicios y suscripciones para todo negocio que venda algo (Tinkay, Margaritas Floristería, planes de Tranqi, servicios de FastFix). Un solo modelo de datos (`comun_comercio`), aislado por negocio, en vez de que cada producto reimplemente su propio catálogo. Ver [ADR-0003](../../arquitectura/adr/0003-catalogo-comercial-unificado.md) para la decisión completa y el esquema.
 
@@ -330,6 +372,8 @@ Motor centralizado de gestión de bienes, servicios y suscripciones para todo ne
 
 ## PLT-010 — Integración Omnicanal (WhatsApp Business y Meta Commerce Manager)
 
+**Responsable:** **Jesus Navarrete**  
+
 ### Descripción
 Distribución del catálogo (`PLT-009`) hacia canales sociales sin carga manual duplicada.
 
@@ -343,6 +387,8 @@ Distribución del catálogo (`PLT-009`) hacia canales sociales sin carga manual 
 ---
 
 ## PLT-011 — Configuración de Empresa y Sistema de Widgets por Rol
+
+**Responsable:** Kleber Toapanta  
 
 ### Descripción
 Pantalla de configuración del negocio (identidad legal + datos de `PLT-008`) y un sistema de permisos basado en **widgets**: **todas las vistas de las consolas administrativas de todas las aplicaciones deben construirse bajo este único patrón estándar de Widgets** (componentes autocontenidos y reutilizables), donde cada funcionalidad se asigna dinámicamente a roles sin duplicar código entre aplicaciones.
@@ -417,6 +463,8 @@ Pantalla de configuración del negocio (identidad legal + datos de `PLT-008`) y 
 
 ## PLT-012 — Baja de Cuenta y Derecho al Olvido
 
+**Responsable:** Kleber Toapanta  
+
 ### Descripción
 Todo usuario registrado puede solicitar, por auto-servicio y sin intervención de soporte, la eliminación de su cuenta e información personal desde su panel. La ejecución real respeta las obligaciones legales de conservación de registros contables/tributarios cuando el usuario ya tiene historial transaccional.
 
@@ -443,6 +491,8 @@ Todo usuario registrado puede solicitar, por auto-servicio y sin intervención d
 ---
 
 ## PLT-013 — Centro Transversal de Notificaciones y Alertas (In-App, Push, Email y WhatsApp)
+
+**Responsable:** Kleber Toapanta  
 
 ### Descripción
 Motor unificado de comunicación multicanal y alertas en tiempo real para todos los productos del ecosistema. Proporciona infraestructura automatizada para eventos del sistema y una consola administrativa de emisión masiva y dirigida de notificaciones por empresa.
@@ -505,6 +555,8 @@ Motor unificado de comunicación multicanal y alertas en tiempo real para todos 
 
 ## PLT-014 — Motor de Cupones, Descuentos y Promociones
 
+**Responsable:** **Jesus Navarrete**  
+
 ### Descripción
 Motor centralizado de incentivos comerciales y códigos promocionales para todos los productos del ecosistema que comercialicen bienes o servicios (`PLT-009`).
 
@@ -529,6 +581,8 @@ Motor centralizado de incentivos comerciales y códigos promocionales para todos
 
 ## PLT-015 — Sistema Transversal de Calificaciones, Reseñas y Reputación
 
+**Responsable:** **Jesus Navarrete**  
+
 ### Descripción
 Módulo unificado para capturar valoraciones (1 a 5 estrellas) y comentarios sobre servicios prestados (FastFix, Tranqi) o productos entregados (Tinkay, Margaritas).
 
@@ -551,6 +605,8 @@ Módulo unificado para capturar valoraciones (1 a 5 estrellas) y comentarios sob
 ---
 
 ## PLT-016 — Gestión de Archivos, Evidencias y Supabase Storage Standard
+
+**Responsable:** Kleber Toapanta  
 
 ### Descripción
 Estándar centralizado de almacenamiento de objetos, documentos, evidencias y medios digitales en Supabase Storage, estructurado para garantizar organización multitenant, seguridad RLS y persistencia de larga duración.
@@ -586,6 +642,8 @@ Estándar centralizado de almacenamiento de objetos, documentos, evidencias y me
 
 ## PLT-017 — Gestión de Sesiones Activas y Revocación Remota de Dispositivos
 
+**Responsable:** Kleber Toapanta  
+
 ### Descripción
 Módulo de auditoría de seguridad y control de accesos en el panel del usuario (`/panel/seguridad`) para gestionar dispositivos conectados a su cuenta única (`PLT-001`).
 
@@ -608,6 +666,8 @@ Módulo de auditoría de seguridad y control de accesos en el panel del usuario 
 
 ## PLT-018 — Historial de Accesos y Saludo Personalizado
 
+**Responsable:** Kleber Toapanta  
+
 ### Descripción
 Todo usuario registrado puede ver sus últimos accesos (dispositivo/navegador aproximado y fecha) desde su panel, y el sistema lo saluda de forma distinta según cuánto tiempo pasó desde su visita anterior. Es el primer building block de `PLT-017` — un registro histórico simple, no un listado de sesiones activas ni revocación de tokens (eso sigue pendiente en `PLT-017`).
 
@@ -628,6 +688,65 @@ Todo usuario registrado puede ver sus últimos accesos (dispositivo/navegador ap
   * **Entonces** ve una lista con los 3 accesos, cada uno con una etiqueta de dispositivo legible y su fecha/hora.
 
 **✅ Implementado (2026-07-27)** y verificado de punta a punta contra el proyecto real, en las 4 apps. **Implementación técnica:** ver [`especificacion-tecnica.md`](especificacion-tecnica.md) §1.4.
+
+---
+
+## PLT-019 — Reclutamiento, Bolsa de Empleo y Presentación de Equipo ("Nuestro Equipo & Únete al Equipo")
+
+**Responsable:** Jesus Navarrete / Kleber Toapanta  
+
+### Descripción
+Proporciona la infraestructura unificada para exhibir al equipo de trabajo verificado en la portada de cada negocio y capturar postulaciones continuas de talento (socios profesionales, contratistas, técnicos independientes, repartidores y personal operativo). Integra un motor dinámico de ofertas de empleo en formato Markdown/HTML y un flujo de postulación seguro protegido por autenticación obligatoria y consentimiento de protección de datos.
+
+### Reglas de Negocio
+1. **Widget Público "Nuestro Equipo":**
+   - Presente en las landings/index de cada aplicación (`TRQ-002`, `FFH-002`, `TNK-002`, `MRG-002`), estilizado según `maqueta-equipo.html`.
+   - Se alimenta únicamente de miembros aprobados y verificados (`VISIBLE_PUBLICO = true`) de las tablas del negocio (`trq_abogado`, `ffh_tecnico`, `tnk_personal`, `mrg_personal`).
+   - Expone la foto o silueta/iniciales, cargo, provincia/zona de atención, años de experiencia e insignia de título o credencial verificada.
+2. **Requisito Obligatorio de Autenticación (`PLT-001`):**
+   - Para postular a cualquier vacante o enviar una solicitud de socio/técnico, el usuario **debe estar autenticado obligatoriamente como cliente/usuario base** (`comun_seguridad.seg_usuario`).
+   - Si un visitante no autenticado hace clic en "Postular" o "Enviar Solicitud", el sistema despliega el modal de inicio de sesión / registro ultra-fluido (`PLT-001`) y retoma el flujo automáticamente tras autenticarse.
+3. **Modalidad Dual de Postulación ("Súmate al Equipo"):**
+   - **Ruta A — Solicitud de Socio / Profesional / Contratista:** Formulario estructurado para registro especializado (Abogados en Tranqi, Contratistas y Técnicos en FastFix).
+   - **Ruta B — Bolsa de Empleo / Vacantes Dinámicas:** Convocatorias internas administrables (Secretarias, Asistentes Jurídicos, Mensajeros, Repartidores, Floristas, Soporte Operativo).
+4. **Administración Dinámica de Vacantes (`gestion_vacantes`):**
+   - El Administrador/SuperAdmin gestiona la oferta de empleo desde la consola administrativa.
+   - **Campos de Vacante:** Título del cargo, tipo de contrato, estado (`PUBLICADA`, `PAUSADA`, `CERRADA`), fecha de expiración y descripción detallada en formato **Markdown (`.md`) o HTML** mediante editor WYSIWYG.
+   - **Switches de Notificación por Vacante:** Cada vacante cuenta con opciones independientes de alerta:
+     - `[x] Notificar por Correo Electrónico (Email)` al Administrador ante cada nueva postulación.
+     - `[x] Notificar por Alerta Push (Web / Mobile)` al Administrador ante cada nueva postulación.
+5. **Términos y Condiciones Legales de Talentos en Markdown (`.md`):**
+   - La plataforma incluye un módulo de **Términos y Condiciones de Reclutamiento y Privacidad de Talentos (en Markdown `.md`)**, editable desde la consola (`PLT-008`).
+   - El formulario de postulación despliega obligatoriamente la casilla de consentimiento conforme a la Ley Orgánica de Protección de Datos Personales (LOPDP Ecuador):
+     - `[x] Autorizo el tratamiento de mis datos personales y almacenamiento de mi Hoja de Vida según los Términos de Talentos.`
+6. **Formulario Ágil de Postulación y Subida de Archivos (`PLT-016`):**
+   - Datos autocompletados desde el perfil del usuario (`PLT-001`): Nombres, Apellidos, Correo y WhatsApp.
+   - **Carga Obligatoria de CV / Hoja de Vida:** Archivo en formato PDF o Word (máx. 10 MB).
+   - **Carga Múltiple de Documentos Adjuntos:** Subida libre de certificados, títulos, licencias o fotos (PDF, PNG, JPG).
+   - Almacenamiento seguro en Supabase Storage Privado (`comun-privado/[NEGOCIO]/postulaciones/[YYYY-MM]/...`).
+7. **Notificación de Confirmación Automática al Postulante (`PLT-013`):**
+   - Tras enviar la postulación, el sistema despacha inmediatamente un correo transaccional de confirmación al candidato vía SMTP propio del negocio (`PLT-008`), indicando que sus documentos fueron recibidos exitosamente.
+8. **Protección Anti-Spam y Rate Limiting:**
+   - Trampa silenciosa **Honeypot** + límite de seguridad de máximo 3 postulaciones por usuario/IP por hora.
+9. **Consola Administrativa de Postulaciones (`gestion_postulaciones`):**
+   - DataGrid interactivo de 2 capas (`PLT-011`) que lista todas las solicitudes recibidas.
+   - Estados de postulación: `NUEVO` (badge destacado), `EN_REVISION`, `ENTREVISTADO`, `APROBADO`, `RECHAZADO`.
+   - Visor de candidatos con previsualización/descarga de CV y documentos adjuntos mediante URLs firmadas de vida corta (`PLT-016`).
+   - **Aprobación Directa:** Botón para otorgar el perfil o membresía correspondiente al candidato aceptado.
+
+### Criterios de Aceptación (Gherkin)
+* **Escenario:** Postulante no autenticado intenta aplicar a una vacante
+  * **Dado que** un visitante no registrado examina la bolsa de empleo en la landing de Tranqi y hace clic en "Postular" para Asistente Jurídico.
+  * **Cuando** intenta enviar el formulario.
+  * **Entonces** el sistema interrumpe la acción solicitando inicio de sesión o registro rápido (`PLT-001`), y una vez autenticado le permite adjuntar su Hoja de Vida y enviar la solicitud.
+* **Escenario:** Notificación al Administrador y al Postulante tras recibir una postulación
+  * **Dado que** una vacante tiene activado el interruptor de notificación por Email.
+  * **Cuando** un usuario autenticado completa su postulación aceptando los Términos en Markdown.
+  * **Entonces** el sistema guarda los adjuntos en Supabase Storage, genera la notificación Push e Email al Administrador y despacha un correo de confirmación automática al postulante.
+* **Escenario:** Gestión y aprobación de postulante desde la consola administrativa
+  * **Dado que** el Administrador accede al widget `gestion_postulaciones` en FastFix.
+  * **Cuando** revisa el expediente de un postulante a Técnico, descarga su CV y presiona "Aprobar Postulante".
+  * **Entonces** el sistema actualiza el estado a `APROBADO`, habilita su perfil en la empresa (`PLT-003`) y notifica al usuario del resultado favorable.
 
 ---
 
