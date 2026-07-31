@@ -31,6 +31,9 @@ importers:
       '@eco/identidad':
         specifier: workspace:*
         version: link:../../packages/identidad
+      '@eco/primitivas':
+        specifier: workspace:*
+        version: link:../../packages/primitivas
       '@eco/supabase':
         specifier: workspace:*
         version: link:../../packages/supabase
@@ -86,6 +89,9 @@ importers:
       '@eco/identidad':
         specifier: workspace:*
         version: link:../../packages/identidad
+      '@eco/primitivas':
+        specifier: workspace:*
+        version: link:../../packages/primitivas
       '@eco/supabase':
         specifier: workspace:*
         version: link:../../packages/supabase
@@ -141,6 +147,9 @@ importers:
       '@eco/identidad':
         specifier: workspace:*
         version: link:../../packages/identidad
+      '@eco/primitivas':
+        specifier: workspace:*
+        version: link:../../packages/primitivas
       '@eco/supabase':
         specifier: workspace:*
         version: link:../../packages/supabase
@@ -205,6 +214,9 @@ importers:
       '@eco/identidad':
         specifier: workspace:*
         version: link:../../packages/identidad
+      '@eco/primitivas':
+        specifier: workspace:*
+        version: link:../../packages/primitivas
       '@eco/supabase':
         specifier: workspace:*
         version: link:../../packages/supabase
@@ -461,6 +473,27 @@ importers:
       '@types/node':
         specifier: ^22.10.0
         version: 22.20.1
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
+
+  packages/primitivas:
+    devDependencies:
+      '@eco/config':
+        specifier: workspace:*
+        version: link:../config
+      '@types/node':
+        specifier: ^22.10.0
+        version: 22.20.1
+      '@types/react':
+        specifier: ^19.0.0
+        version: 19.2.17
+      eslint:
+        specifier: 9.39.5
+        version: 9.39.5
+      react:
+        specifier: 19.0.0
+        version: 19.0.0
       typescript:
         specifier: ^5.7.0
         version: 5.9.3

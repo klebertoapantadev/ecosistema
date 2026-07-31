@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { SelloCompilacion } from "@eco/primitivas";
 import Link from "next/link";
 import { obtenerPerfilActual, obtenerWidgetsVisibles, cerrarSesion, asegurarMembresiaCliente } from "@eco/identidad";
 import { crearClienteServidor } from "@eco/supabase/servidor";
@@ -38,6 +39,7 @@ export default async function LayoutPanel({ children }: { children: React.ReactN
         <div className="panel-usuario">
           <span className="nombre-usuario-activo">{[perfil.usu_nombres, perfil.usu_apellidos].filter(Boolean).join(" ")}</span>
           <span className="correo-usuario-activo">{perfil.usu_correo}</span>
+          <SelloCompilacion className="sello-compilacion" />
           {perfil.usu_superadmin_plataforma && <span className="etiqueta-superadmin">SuperAdmin</span>}
           <form action={cerrarSesionYRedirigir}>
             <button type="submit" className="btn-mini">Cerrar sesión</button>

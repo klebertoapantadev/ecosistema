@@ -82,4 +82,4 @@ Ver [`04-pruebas.md`](04-pruebas.md) para la herramienta (Vitest), qué se prueb
 
 `packages/primitivas` y `packages/core` no pueden importar nada de `next/*`. Se valida con una regla de ESLint (`no-restricted-imports`) en [`packages/config/eslint.base.mjs`](../../packages/config/eslint.base.mjs), la configuración plana (ESLint 9) que comparten las 4 apps vía `eslint.config.mjs`. Si un paquete compartido depende de Next.js, deja de ser usable en las apps nativas Capacitor.
 
-Hoy ambos paquetes son placeholders sin `src/` ni script `lint`, así que la regla existe pero todavía no se ejecuta sobre ningún archivo: al darles código hay que añadirles `"lint": "eslint ."` y su propio `eslint.config.mjs` para que CI la haga cumplir.
+`packages/primitivas` ya tiene código (`SelloCompilacion`), su script `lint` y su `eslint.config.mjs`, así que la regla se ejecuta de verdad sobre él. `packages/core` sigue siendo un placeholder: al darle código hay que añadirle lo mismo.

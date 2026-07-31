@@ -1,0 +1,19 @@
+{
+  "name": "@eco/primitivas",
+  "version": "0.0.0",
+  "private": true,
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@eco/config": "workspace:*",
+    "@types/node": "^22.10.0",
+    "@types/react": "^19.0.0",
+    "eslint": "9.39.5",
+    "react": "19.0.0",
+    "typescript": "^5.7.0"
+  }
+}

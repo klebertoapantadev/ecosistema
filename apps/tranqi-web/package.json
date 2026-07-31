@@ -17,6 +17,7 @@
     "@eco/db": "workspace:*",
     "@eco/gestion-usuarios": "workspace:*",
     "@eco/identidad": "workspace:*",
+    "@eco/primitivas": "workspace:*",
     "@eco/supabase": "workspace:*",
     "@supabase/ssr": "0.12.3",
     "@supabase/supabase-js": "2.110.8",

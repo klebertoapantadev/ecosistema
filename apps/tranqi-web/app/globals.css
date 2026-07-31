@@ -1194,3 +1194,12 @@ p { line-height: 1.55; }
 .perfil-casilla:has(input:disabled) { opacity: 0.45; cursor: not-allowed; }
 .perfil-nivel { font-variant-numeric: tabular-nums; font-size: 0.7rem; opacity: 0.6; }
 .mensaje-fila { font-size: 0.78rem; margin-top: 6px; }
+
+/* Sello de versión en el pie del rail: fecha de compilación y commit.
+   Deliberadamente discreto — es una herramienta de diagnóstico, no
+   información para el usuario final. */
+.sello-compilacion {
+  display: block; margin-top: 8px; font-size: 0.66rem; letter-spacing: 0.02em;
+  opacity: 0.45; font-variant-numeric: tabular-nums; cursor: default;
+}
+.sello-compilacion:hover { opacity: 0.75; }
