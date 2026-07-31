@@ -1178,3 +1178,19 @@ p { line-height: 1.55; }
   background: rgba(5, 135, 110, 0.12); color: var(--esmeralda); padding: 3px 8px; border-radius: 999px;
 }
 
+
+/* PLT-003 regla 3: perfiles múltiples por usuario en la consola de gestión.
+   Casillas y no un desplegable, porque el requerimiento pide simultaneidad. */
+.perfiles-usuario { display: flex; flex-wrap: wrap; gap: 6px; }
+.perfil-casilla {
+  display: inline-flex; align-items: center; gap: 6px; font-size: 0.78rem;
+  padding: 4px 9px; border-radius: 999px; border: 1px solid var(--panel-linea);
+  cursor: pointer; user-select: none; transition: background 0.15s, border-color 0.15s;
+}
+.perfil-casilla:hover { border-color: var(--violeta); }
+.perfil-casilla-activa { background: rgba(80,0,186,0.08); border-color: rgba(80,0,186,0.25); color: var(--violeta); font-weight: 700; }
+/* Deshabilitada = fuera del techo jerárquico del gestor, o el perfil base.
+   Se muestra igualmente para que se vea que existe, no se oculta. */
+.perfil-casilla:has(input:disabled) { opacity: 0.45; cursor: not-allowed; }
+.perfil-nivel { font-variant-numeric: tabular-nums; font-size: 0.7rem; opacity: 0.6; }
+.mensaje-fila { font-size: 0.78rem; margin-top: 6px; }

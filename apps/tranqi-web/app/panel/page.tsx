@@ -4,7 +4,7 @@ import {
   Briefcase, Scale, Award, Sparkles, UserCheck, Users, Settings,
   ShieldCheck, Bell, Shield, type LucideIcon
 } from "lucide-react";
-import { obtenerPerfilActual, obtenerSaludo, obtenerMembresia } from "@eco/identidad";
+import { obtenerPerfilActual, obtenerSaludo, obtenerPerfiles } from "@eco/identidad";
 import { SelectorRolActivo, type ModoRol } from "./SelectorRolActivo";
 
 export const metadata: Metadata = { title: "Panel — tranqi" };
@@ -52,9 +52,10 @@ function modoValido(valor: string | undefined): ModoRol | null {
 
 /** Modo que le corresponde a un rol de negocio. Es el unico modo que vera quien
  *  no es superadmin, sin importar lo que traiga la URL. */
-function modoDeRol(memRol: string | null | undefined): ModoRol {
-  if (memRol === "ABOGADO") return "abogado";
-  if (memRol === "ADMINISTRADOR") return "admin";
+function modoDePerfiles(perfiles: string[]): ModoRol {
+  // PLT-003 regla 3: manda el perfil de mayor jerarquía de los que tenga.
+  if (perfiles.includes("ADMINISTRADOR")) return "admin";
+  if (perfiles.includes("ABOGADO")) return "abogado";
   return "cliente";
 }
 
@@ -79,10 +80,10 @@ export default async function PaginaPanel({ searchParams }: Props) {
   // Para quien no puede conmutar, el modo NO se lee de la URL: se deriva de su
   // membresia real. Ignorar el parametro en vez de redirigir evita un rebote
   // visible y deja la URL inofensiva.
-  const membresia = perfil ? await obtenerMembresia(perfil.usu_id, NEGOCIO) : null;
+  const perfiles = perfil ? await obtenerPerfiles(NEGOCIO) : [];
   const modo: ModoRol = puedeConmutar
     ? modoValido(modoParam) ?? "admin"
-    : modoDeRol(membresia?.mem_rol);
+    : modoDePerfiles(perfiles);
 
   return (
     <div className="inicio-cliente">

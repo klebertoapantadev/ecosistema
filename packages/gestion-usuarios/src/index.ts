@@ -1,4 +1,4 @@
-export { buscarUsuarios } from "./consultas";
-export type { UsuarioConMembresia } from "./consultas";
-export { asignarRol } from "./acciones";
+export { buscarUsuarios, obtenerPerfilesAsignables } from "./consultas";
+export type { UsuarioConMembresia, PerfilAsignable } from "./consultas";
+export { asignarPerfil, quitarPerfil } from "./acciones";
 export { FilaUsuario } from "./componentes/FilaUsuario";

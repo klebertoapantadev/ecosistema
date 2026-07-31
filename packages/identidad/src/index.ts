@@ -15,7 +15,14 @@ export {
   cerrarSesion,
 } from "./acciones";
 
-export { obtenerSesionActual, obtenerPerfilActual, obtenerMembresia, obtenerWidgetsVisibles } from "./consultas";
+export {
+  obtenerSesionActual,
+  obtenerPerfilActual,
+  obtenerMembresia,
+  obtenerPerfiles,
+  obtenerNivelMaximo,
+  obtenerWidgetsVisibles,
+} from "./consultas";
 
 export {
   registrarAcceso,
