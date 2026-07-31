@@ -96,6 +96,14 @@ Tres decisiones que conviene no revertir sin motivo:
   registrarse. Si mirásemos solo `mem_rol` vería el rail violeta con la consola
   de administración delante, que es justo la confusión que evita la regla 2.
 
+- **El conmutador «Ver como» recolorea el rail, no solo el contenido.** Un
+  superadmin que elige «Cliente» ve el rail del perfil cliente: si el
+  conmutador existe para mirar el portal con los ojos de otro rol, enseñar la
+  cromática de administración contradice su único propósito. Se implementa en
+  `CapaPerfilRail`, un componente cliente, porque un layout de Next no recibe
+  `searchParams` y el modo viaja en la URL. El parámetro se ignora para quien
+  no puede conmutar — apariencia, sí, pero apariencia que afirmaría un rol
+  que no se tiene.
 Cada enlace lleva icono (`lucide-react`, ver §5) + texto. En `≤860px` el rail
 ya es horizontal con scroll (ver §9); en `≤600px` el texto se oculta
 **solo visualmente** (`.etiqueta-nav`, técnica de clip-rect, no `display:none`)

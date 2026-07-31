@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import {
   Home, Users, UserCog, Settings, ShieldCheck, CircleUser,
@@ -7,6 +8,7 @@ import {
 } from "lucide-react";
 import { obtenerPerfilActual, obtenerWidgetsVisibles, asegurarMembresiaCliente, obtenerMembresia } from "@eco/identidad";
 import { EnlacePanel } from "./EnlacePanel";
+import { CapaPerfilRail } from "./CapaPerfilRail";
 import { crearClienteServidor } from "@eco/supabase/servidor";
 
 const NEGOCIO = "tranqi";
@@ -54,18 +56,22 @@ export default async function LayoutPanel({ children }: { children: React.ReactN
   const clasePerfil = clasePerfilVisual(perfil.usu_superadmin_plataforma, membresia?.mem_rol);
 
   return (
-    <div className={`panel-layout ${clasePerfil}`}>
+    <Suspense fallback={<div className={`panel-layout ${clasePerfil}`}>{children}</div>}>
+      <CapaPerfilRail claseBase={clasePerfil} puedeConmutar={perfil.usu_superadmin_plataforma}>
       <aside className="panel-nav">
         {/* La cinta como textura del rail (§7). Solo en cliente y abogado: para
             administración el sistema visual no define cinta, y un trazo de color
             sobre el rail negro sería decoración sin significado. El path es el
             de maqueta-cliente.html; preserveAspectRatio="none" lo estira a la
-            altura real del rail. */}
-        {clasePerfil !== "perfil-admin" && (
-          <svg className="cinta-rail" viewBox="0 0 236 900" preserveAspectRatio="none" aria-hidden="true">
-            <path d="M 200 -40 C 200 160 40 240 60 430 C 78 610 210 660 200 900" />
-          </svg>
-        )}
+            altura real del rail.
+
+            Se oculta por CSS (`.perfil-admin .cinta-rail`) y no con un
+            condicional de servidor: el perfil ahora puede cambiar en cliente
+            al usar el conmutador, y un condicional aquí dejaría el rail
+            púrpura sin su textura hasta recargar. */}
+        <svg className="cinta-rail" viewBox="0 0 236 900" preserveAspectRatio="none" aria-hidden="true">
+          <path d="M 200 -40 C 200 160 40 240 60 430 C 78 610 210 660 200 900" />
+        </svg>
 
         <div className="panel-marca">
           <img src="/assets/tranqi-white.svg" alt="tranqi" />
@@ -121,8 +127,9 @@ export default async function LayoutPanel({ children }: { children: React.ReactN
           {perfil.usu_superadmin_plataforma && <span className="etiqueta-superadmin">SuperAdmin</span>}
         </div>
       </aside>
-      <main className="panel-contenido">{children}</main>
-    </div>
+        <main className="panel-contenido">{children}</main>
+      </CapaPerfilRail>
+    </Suspense>
   );
 }
 

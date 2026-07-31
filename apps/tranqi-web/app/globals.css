@@ -431,6 +431,11 @@ p { line-height: 1.55; }
   /* la maqueta de cliente usa papel con tinte de marca, no el gris del panel */
   --panel-papel: var(--papel-cliente);
 }
+/* La cinta es textura de los perfiles de color: sobre el rail negro de
+   administración sería decoración sin significado (§7). Se oculta por CSS y
+   no con un condicional en el layout porque el perfil puede cambiar en
+   cliente al usar el conmutador «Ver como». */
+.panel-layout.perfil-admin .cinta-rail { display: none; }
 .panel-layout.perfil-abogado {
   --rail-superficie: var(--esmeralda-tinta);
   --rail-alta: #0B3B31;
