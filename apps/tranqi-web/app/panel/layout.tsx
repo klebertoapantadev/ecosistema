@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import {
   Home, Users, UserCog, Settings, ShieldCheck, CircleUser,
+  Mail,
   ClipboardList, CalendarDays, FolderOpen, CreditCard, LifeBuoy,
   type LucideIcon,
 } from "lucide-react";
@@ -15,6 +16,7 @@ const ICONOS_WIDGET: Record<string, LucideIcon> = {
   gestion_usuarios: UserCog,
   configuracion_negocio: Settings,
   auditoria: ShieldCheck,
+  configuracion_correo: Mail,
 };
 
 // Secciones del rail de maqueta-cliente.html sin pantalla todavia. El orden es
@@ -147,5 +149,6 @@ function rutaDeWidget(clave: string) {
   if (clave === "configuracion_negocio") return "configuracion";
   if (clave === "socios") return "socios";
   if (clave === "auditoria") return "auditoria";
+  if (clave === "configuracion_correo") return "correo";
   return "";
 }

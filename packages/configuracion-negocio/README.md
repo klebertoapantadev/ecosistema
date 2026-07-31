@@ -28,6 +28,8 @@ Campo `correoNotificaciones` en `cfg_detalle_configuracion` (JSONB) — es el co
 
 `FormularioSmtp` + `guardarSmtp()` / `borrarContrasenaSmtp()` + `obtenerSmtpNegocio()`. Guarda en `comun_configuracion.cfg_smtp` (tabla propia, **no** `cfg_negocio`: esa tiene lectura pública para `anon` y dejaría las credenciales expuestas).
 
+**Vive en su propio widget (`configuracion_correo`, ruta `/panel/correo`), no en esta pantalla, y es exclusivo del `SUPERADMIN` de plataforma.** Aunque el componente se exporte desde este paquete, no lo montes dentro de `FormularioConfiguracionNegocio`: ese widget es de `ADMINISTRADOR`, y quien controla el SMTP puede enviar correo suplantando al negocio.
+
 Tres cosas que no son obvias al leer el código:
 
 - **La contraseña no pasa por la tabla.** Va a Supabase Vault desde el RPC `cfg_fn_guardar_smtp`, y en `cfg_smtp` solo queda `smt_secreto_id`. Por eso `guardarSmtp()` no es un `update` como `actualizarConfiguracionNegocio()`: guardar el secreto y la fila tiene que ser atómico, y `cfg_smtp` no tiene política de escritura.
