@@ -84,11 +84,13 @@ Los cuatro proyectos se configuran igual salvo el Root Directory y el dominio. T
 | :--- | :--- | :--- |
 | `NEXT_PUBLIC_SUPABASE_URL` | Cliente | El prefijo `NEXT_PUBLIC_` la expone al navegador: solo valores públicos |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Cliente | Clave publicable, protegida por RLS |
-| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM_NOMBRE` | Servidor | Sin prefijo `NEXT_PUBLIC_`: nunca llegan al bundle del navegador |
+| `CORREO_FUNCION_CLAVE` | Servidor | Secreto compartido con la Edge Function `enviar-correo`. **No es configuración de correo** —esa la edita cada negocio desde su consola, ver `ADR-0005`— sino la autenticación entre nuestros propios servicios. El mismo valor se carga como secreto de la función en Supabase |
 | `ARIA_BASE`, `ARIA_AGENT_ID`, `ARIA_AGENT_KEY` | Servidor | Agente conversacional, ver `ADR-0002` |
 | `TRQ_ABOGADO_BASE`, `TRQ_ABOGADO_AGENT_ID`, `TRQ_ABOGADO_AGENT_KEY` | Servidor | Solo Tranqi |
 
 La `service_role` de Supabase **no** aparece en esta tabla y no debe cargarse en Vercel: vive solo en Edge Functions, según §3 de las convenciones de codificación.
+
+Tampoco aparecen ya las antiguas `SMTP_*`: desde `ADR-0005` el servidor de correo saliente es configuración del negocio, editable por su `ADMINISTRADOR` desde la consola, y su contraseña vive en Supabase Vault. Un cambio de buzón no requiere redeploy.
 
 ### 5.1. Apps nativas
 

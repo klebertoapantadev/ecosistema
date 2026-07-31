@@ -9,7 +9,7 @@ export default function PaginaRecuperar() {
     <div className="pagina-auth">
       <Link href="/" className="logo-auth">tranqi</Link>
       <h1>Recupera tu contraseña</h1>
-      <FormularioRecuperacion />
+      <FormularioRecuperacion negocio="tranqi" />
       <p className="enlace-auth">
         <Link href="/ingresar">Volver a ingresar</Link>
       </p>

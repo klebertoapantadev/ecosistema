@@ -72,9 +72,9 @@ export async function asegurarTerminosAceptados(
 // desactivado en el proyecto Supabase: signUp() entrega sesion activa de
 // inmediato y la verificacion pasa a ser 100% nuestra
 // (usu_correo_verificado_en), via un OTP de 6 digitos que mandamos con el
-// SMTP propio de esta app (@eco/notificaciones, variables SMTP_* de
-// Vercel). Google OAuth sigue sin pasar por esto -- Google ya verifico el
-// correo (ver seg_fn_provisionar_usuario()).
+// SMTP que ese negocio configuro en su consola (@eco/notificaciones ->
+// Edge Function enviar-correo, ver ADR-0005). Google OAuth sigue sin pasar
+// por esto -- Google ya verifico el correo (ver seg_fn_provisionar_usuario()).
 export async function registrarUsuario(datos: DatosRegistro, negocio: string): Promise<Resultado> {
   const parseo = esquemaRegistro.safeParse(datos);
   if (!parseo.success) {
@@ -107,28 +107,42 @@ export async function registrarUsuario(datos: DatosRegistro, negocio: string): P
   const { data: codigo, error: errorOtp } = await supabase.schema("comun_seguridad").rpc("seg_fn_generar_otp_registro");
   if (errorOtp || !codigo) return { ok: false, error: errorOtp?.message ?? "No se pudo generar el código de verificación" };
 
-  await enviarCorreo({
+  const envio = await enviarCorreo({
+    negocio,
     para: parseo.data.correo,
     asunto: "Tu código de verificación",
     html: `<p>Hola${parseo.data.nombres ? ` ${parseo.data.nombres}` : ""},</p><p>Tu código de verificación es <strong style="font-size:1.4em; letter-spacing:0.2em;">${codigo}</strong></p><p>Vence en 15 minutos.</p>`,
   });
+  // La cuenta ya quedo creada: no se revierte el registro porque el correo
+  // falle. Se avisa para que la pantalla de verificacion ofrezca reenviar en
+  // vez de dejar al usuario esperando un codigo que nunca llegara.
+  if (!envio.ok) {
+    return { ok: false, error: "Tu cuenta se creó, pero no pudimos enviarte el código. Usa «Reenviar código»." };
+  }
 
   return { ok: true, data: undefined };
 }
 
-// Reenvío desde la pantalla de verificación -- mismo RPC, sin volver a
-// crear el usuario. negocio no hace falta: enviarCorreo() ya usa el SMTP
-// de la app que llama.
-export async function reenviarOtpRegistro(correo: string, nombres?: string | null): Promise<Resultado> {
+// Reenvío desde la pantalla de verificación -- mismo RPC, sin volver a crear
+// el usuario. `negocio` si hace falta desde PLT-008: el SMTP ya no es el de
+// la app que llama sino el que ese negocio configuro en su pantalla de
+// Configuracion del Negocio.
+export async function reenviarOtpRegistro(
+  correo: string,
+  negocio: string,
+  nombres?: string | null,
+): Promise<Resultado> {
   const supabase = await crearClienteServidor();
   const { data: codigo, error } = await supabase.schema("comun_seguridad").rpc("seg_fn_generar_otp_registro");
   if (error || !codigo) return { ok: false, error: error?.message ?? "No se pudo generar el código de verificación" };
 
-  await enviarCorreo({
+  const envio = await enviarCorreo({
+    negocio,
     para: correo,
     asunto: "Tu código de verificación",
     html: `<p>Hola${nombres ? ` ${nombres}` : ""},</p><p>Tu código de verificación es <strong style="font-size:1.4em; letter-spacing:0.2em;">${codigo}</strong></p><p>Vence en 15 minutos.</p>`,
   });
+  if (!envio.ok) return { ok: false, error: envio.error };
 
   return { ok: true, data: undefined };
 }
@@ -165,7 +179,7 @@ export async function iniciarSesion(datos: DatosIngreso, negocio: string): Promi
 // estan registrados). seg_fn_solicitar_recuperacion() ya hace ese mismo
 // trabajo del lado de la base: retorna null tanto si el correo no existe
 // como si hay un token sin usar pedido hace menos de 60s.
-export async function solicitarRecuperacion(correo: string): Promise<Resultado> {
+export async function solicitarRecuperacion(correo: string, negocio: string): Promise<Resultado> {
   const parseo = esquemaSolicitarRecuperacion.safeParse({ correo });
   if (!parseo.success) {
     return { ok: false, error: parseo.error.issues[0]?.message ?? "Datos invalidos" };
@@ -182,7 +196,11 @@ export async function solicitarRecuperacion(correo: string): Promise<Resultado> 
 
   if (token) {
     const origen = await obtenerOrigen();
+    // No se propaga el fallo de envio: la respuesta al usuario es siempre la
+    // misma por diseño (ver comentario de arriba). Un error distinto cuando
+    // el correo no sale delataria que la cuenta si existe.
     await enviarCorreo({
+      negocio,
       para: parseo.data.correo,
       asunto: "Restablece tu contraseña",
       html: `<p>Para elegir una nueva contraseña, abre este enlace (vence en 30 minutos):</p><p><a href="${origen}/restablecer-contrasena?token=${token}">${origen}/restablecer-contrasena?token=${token}</a></p><p>Si no pediste este cambio, ignora este correo.</p>`,

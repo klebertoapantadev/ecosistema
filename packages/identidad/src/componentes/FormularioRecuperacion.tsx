@@ -6,7 +6,7 @@ import { solicitarRecuperacion } from "../acciones";
 // Pide el correo y siempre muestra el mismo mensaje de exito -- ver el
 // comentario en solicitarRecuperacion() sobre por que no se distingue si la
 // cuenta existe o no.
-export function FormularioRecuperacion() {
+export function FormularioRecuperacion({ negocio }: { negocio: string }) {
   const [correo, setCorreo] = useState("");
   const [enviado, setEnviado] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -16,7 +16,7 @@ export function FormularioRecuperacion() {
     e.preventDefault();
     setError(null);
     setCargando(true);
-    const resultado = await solicitarRecuperacion(correo);
+    const resultado = await solicitarRecuperacion(correo, negocio);
     setCargando(false);
     if (!resultado.ok) {
       setError(resultado.error);

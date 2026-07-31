@@ -8,12 +8,11 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "nodemailer": "9.0.3"
+    "@eco/supabase": "workspace:*"
   },
   "devDependencies": {
     "@eco/config": "workspace:*",
     "@types/node": "^22.10.0",
-    "@types/nodemailer": "8.0.1",
     "typescript": "^5.7.0"
   }
 }
