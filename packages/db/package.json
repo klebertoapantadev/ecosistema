@@ -6,6 +6,6 @@
   "types": "./src/index.ts",
   "devDependencies": {
     "@eco/config": "workspace:*",
-    "typescript": "^5.7.0"
+    "typescript": "^7.0.2"
   }
 }

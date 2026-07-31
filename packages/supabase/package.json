@@ -19,6 +19,6 @@
     "@eco/config": "workspace:*",
     "@types/node": "^22.10.0",
     "next": "15.5.22",
-    "typescript": "^5.7.0"
+    "typescript": "^7.0.2"
   }
 }
