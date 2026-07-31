@@ -45,13 +45,13 @@ importers:
         version: 2.110.8
       next:
         specifier: 15.5.22
-        version: 15.5.22(@types/node@22.20.1)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
+        version: 15.5.22(@types/node@22.20.1)(react-dom@19.0.0(react@19.2.8))(react@19.2.8)
       react:
-        specifier: 19.0.0
-        version: 19.0.0
+        specifier: 19.2.8
+        version: 19.2.8
       react-dom:
         specifier: 19.0.0
-        version: 19.0.0(react@19.0.0)
+        version: 19.0.0(react@19.2.8)
       zod:
         specifier: 4.4.3
         version: 4.4.3
@@ -103,13 +103,13 @@ importers:
         version: 2.110.8
       next:
         specifier: 15.5.22
-        version: 15.5.22(@types/node@22.20.1)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
+        version: 15.5.22(@types/node@22.20.1)(react-dom@19.0.0(react@19.2.8))(react@19.2.8)
       react:
-        specifier: 19.0.0
-        version: 19.0.0
+        specifier: 19.2.8
+        version: 19.2.8
       react-dom:
         specifier: 19.0.0
-        version: 19.0.0(react@19.0.0)
+        version: 19.0.0(react@19.2.8)
       zod:
         specifier: 4.4.3
         version: 4.4.3
@@ -161,13 +161,13 @@ importers:
         version: 2.110.8
       next:
         specifier: 15.5.22
-        version: 15.5.22(@types/node@22.20.1)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
+        version: 15.5.22(@types/node@22.20.1)(react-dom@19.0.0(react@19.2.8))(react@19.2.8)
       react:
-        specifier: 19.0.0
-        version: 19.0.0
+        specifier: 19.2.8
+        version: 19.2.8
       react-dom:
         specifier: 19.0.0
-        version: 19.0.0(react@19.0.0)
+        version: 19.0.0(react@19.2.8)
       zod:
         specifier: 4.4.3
         version: 4.4.3
@@ -228,16 +228,16 @@ importers:
         version: 2.110.8
       lucide-react:
         specifier: 1.27.0
-        version: 1.27.0(react@19.0.0)
+        version: 1.27.0(react@19.2.8)
       next:
         specifier: 15.5.22
-        version: 15.5.22(@types/node@22.20.1)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
+        version: 15.5.22(@types/node@22.20.1)(react-dom@19.0.0(react@19.2.8))(react@19.2.8)
       react:
-        specifier: 19.0.0
-        version: 19.0.0
+        specifier: 19.2.8
+        version: 19.2.8
       react-dom:
         specifier: 19.0.0
-        version: 19.0.0(react@19.0.0)
+        version: 19.0.0(react@19.2.8)
       zod:
         specifier: 4.4.3
         version: 4.4.3
@@ -336,10 +336,10 @@ importers:
         version: 19.2.3(@types/react@19.2.17)
       next:
         specifier: 15.5.22
-        version: 15.5.22(@types/node@22.20.1)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
+        version: 15.5.22(@types/node@22.20.1)(react-dom@19.0.0(react@19.2.8))(react@19.2.8)
       react:
-        specifier: 19.0.0
-        version: 19.0.0
+        specifier: 19.2.8
+        version: 19.2.8
       typescript:
         specifier: ^5.7.0
         version: 5.9.3
@@ -348,16 +348,16 @@ importers:
     dependencies:
       '@dnd-kit/core':
         specifier: 6.3.1
-        version: 6.3.1(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
+        version: 6.3.1(react-dom@19.0.0(react@19.2.8))(react@19.2.8)
       '@dnd-kit/sortable':
         specifier: 10.0.0
-        version: 10.0.0(@dnd-kit/core@6.3.1(react-dom@19.0.0(react@19.0.0))(react@19.0.0))(react@19.0.0)
+        version: 10.0.0(@dnd-kit/core@6.3.1(react-dom@19.0.0(react@19.2.8))(react@19.2.8))(react@19.2.8)
       '@dnd-kit/utilities':
         specifier: 3.2.2
-        version: 3.2.2(react@19.0.0)
+        version: 3.2.2(react@19.2.8)
       '@tanstack/react-table':
         specifier: 8.21.3
-        version: 8.21.3(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
+        version: 8.21.3(react-dom@19.0.0(react@19.2.8))(react@19.2.8)
       xlsx:
         specifier: https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz
         version: https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz
@@ -375,8 +375,8 @@ importers:
         specifier: ^19.0.0
         version: 19.2.3(@types/react@19.2.17)
       react:
-        specifier: 19.0.0
-        version: 19.0.0
+        specifier: 19.2.8
+        version: 19.2.8
       typescript:
         specifier: ^5.7.0
         version: 5.9.3
@@ -413,10 +413,10 @@ importers:
         version: 19.2.3(@types/react@19.2.17)
       next:
         specifier: 15.5.22
-        version: 15.5.22(@types/node@22.20.1)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
+        version: 15.5.22(@types/node@22.20.1)(react-dom@19.0.0(react@19.2.8))(react@19.2.8)
       react:
-        specifier: 19.0.0
-        version: 19.0.0
+        specifier: 19.2.8
+        version: 19.2.8
       typescript:
         specifier: ^5.7.0
         version: 5.9.3
@@ -453,10 +453,10 @@ importers:
         version: 19.2.3(@types/react@19.2.17)
       next:
         specifier: 15.5.22
-        version: 15.5.22(@types/node@22.20.1)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
+        version: 15.5.22(@types/node@22.20.1)(react-dom@19.0.0(react@19.2.8))(react@19.2.8)
       react:
-        specifier: 19.0.0
-        version: 19.0.0
+        specifier: 19.2.8
+        version: 19.2.8
       typescript:
         specifier: ^5.7.0
         version: 5.9.3
@@ -492,8 +492,8 @@ importers:
         specifier: 9.39.5
         version: 9.39.5
       react:
-        specifier: 19.0.0
-        version: 19.0.0
+        specifier: 19.2.8
+        version: 19.2.8
       typescript:
         specifier: ^5.7.0
         version: 5.9.3
@@ -518,7 +518,7 @@ importers:
         version: 22.20.1
       next:
         specifier: 15.5.22
-        version: 15.5.22(@types/node@22.20.1)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
+        version: 15.5.22(@types/node@22.20.1)(react-dom@19.0.0(react@19.2.8))(react@19.2.8)
       typescript:
         specifier: ^5.7.0
         version: 5.9.3
@@ -1716,8 +1716,8 @@ packages:
     peerDependencies:
       react: ^19.0.0
 
-  react@19.0.0:
-    resolution: {integrity: sha512-V8AVnmPIICiWpGfm6GLzCR/W5FXLchHop40W4nXBmdlEceh16rCN8O8LNWm5bh5XUX91fh7KpA+W0TgMKmgTpQ==}
+  react@19.2.8:
+    resolution: {integrity: sha512-PWaYA1L/q9u2u7xYQi+Y3L3Yfnie7XyLeaJICV1MGD6LprsBxcAqGjYyr0eY3p+QdsA+x/Irkt4Qif8D63+Sbw==}
     engines: {node: '>=0.10.0'}
 
   resolve-from@4.0.0:
@@ -1961,29 +1961,29 @@ packages:
 
 snapshots:
 
-  '@dnd-kit/accessibility@3.1.1(react@19.0.0)':
+  '@dnd-kit/accessibility@3.1.1(react@19.2.8)':
     dependencies:
-      react: 19.0.0
+      react: 19.2.8
       tslib: 2.8.1
 
-  '@dnd-kit/core@6.3.1(react-dom@19.0.0(react@19.0.0))(react@19.0.0)':
+  '@dnd-kit/core@6.3.1(react-dom@19.0.0(react@19.2.8))(react@19.2.8)':
     dependencies:
-      '@dnd-kit/accessibility': 3.1.1(react@19.0.0)
-      '@dnd-kit/utilities': 3.2.2(react@19.0.0)
-      react: 19.0.0
-      react-dom: 19.0.0(react@19.0.0)
+      '@dnd-kit/accessibility': 3.1.1(react@19.2.8)
+      '@dnd-kit/utilities': 3.2.2(react@19.2.8)
+      react: 19.2.8
+      react-dom: 19.0.0(react@19.2.8)
       tslib: 2.8.1
 
-  '@dnd-kit/sortable@10.0.0(@dnd-kit/core@6.3.1(react-dom@19.0.0(react@19.0.0))(react@19.0.0))(react@19.0.0)':
+  '@dnd-kit/sortable@10.0.0(@dnd-kit/core@6.3.1(react-dom@19.0.0(react@19.2.8))(react@19.2.8))(react@19.2.8)':
     dependencies:
-      '@dnd-kit/core': 6.3.1(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
-      '@dnd-kit/utilities': 3.2.2(react@19.0.0)
-      react: 19.0.0
+      '@dnd-kit/core': 6.3.1(react-dom@19.0.0(react@19.2.8))(react@19.2.8)
+      '@dnd-kit/utilities': 3.2.2(react@19.2.8)
+      react: 19.2.8
       tslib: 2.8.1
 
-  '@dnd-kit/utilities@3.2.2(react@19.0.0)':
+  '@dnd-kit/utilities@3.2.2(react@19.2.8)':
     dependencies:
-      react: 19.0.0
+      react: 19.2.8
       tslib: 2.8.1
 
   '@emnapi/runtime@1.11.3':
@@ -2398,11 +2398,11 @@ snapshots:
     dependencies:
       tslib: 2.8.1
 
-  '@tanstack/react-table@8.21.3(react-dom@19.0.0(react@19.0.0))(react@19.0.0)':
+  '@tanstack/react-table@8.21.3(react-dom@19.0.0(react@19.2.8))(react@19.2.8)':
     dependencies:
       '@tanstack/table-core': 8.21.3
-      react: 19.0.0
-      react-dom: 19.0.0(react@19.0.0)
+      react: 19.2.8
+      react-dom: 19.0.0(react@19.2.8)
 
   '@tanstack/table-core@8.21.3': {}
 
@@ -2885,9 +2885,9 @@ snapshots:
 
   loupe@3.2.1: {}
 
-  lucide-react@1.27.0(react@19.0.0):
+  lucide-react@1.27.0(react@19.2.8):
     dependencies:
-      react: 19.0.0
+      react: 19.2.8
 
   magic-string@0.30.21:
     dependencies:
@@ -2910,15 +2910,15 @@ snapshots:
 
   natural-compare@1.4.0: {}
 
-  next@15.5.22(@types/node@22.20.1)(react-dom@19.0.0(react@19.0.0))(react@19.0.0):
+  next@15.5.22(@types/node@22.20.1)(react-dom@19.0.0(react@19.2.8))(react@19.2.8):
     dependencies:
       '@next/env': 15.5.22
       '@swc/helpers': 0.5.15
       caniuse-lite: 1.0.30001806
       postcss: 8.5.23
-      react: 19.0.0
-      react-dom: 19.0.0(react@19.0.0)
-      styled-jsx: 5.1.6(react@19.0.0)
+      react: 19.2.8
+      react-dom: 19.0.0(react@19.2.8)
+      styled-jsx: 5.1.6(react@19.2.8)
     optionalDependencies:
       '@next/swc-darwin-arm64': 15.5.22
       '@next/swc-darwin-x64': 15.5.22
@@ -2981,12 +2981,12 @@ snapshots:
 
   queue-microtask@1.2.3: {}
 
-  react-dom@19.0.0(react@19.0.0):
+  react-dom@19.0.0(react@19.2.8):
     dependencies:
-      react: 19.0.0
+      react: 19.2.8
       scheduler: 0.25.0
 
-  react@19.0.0: {}
+  react@19.2.8: {}
 
   resolve-from@4.0.0: {}
 
@@ -3085,10 +3085,10 @@ snapshots:
     dependencies:
       js-tokens: 9.0.1
 
-  styled-jsx@5.1.6(react@19.0.0):
+  styled-jsx@5.1.6(react@19.2.8):
     dependencies:
       client-only: 0.0.1
-      react: 19.0.0
+      react: 19.2.8
 
   supports-color@7.2.0:
     dependencies:
