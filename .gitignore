@@ -15,3 +15,6 @@ supabase/.temp/
 
 # TypeScript incremental build info
 *.tsbuildinfo
+
+# Local machine dev-server config (absolute paths)
+.claude/launch.json
