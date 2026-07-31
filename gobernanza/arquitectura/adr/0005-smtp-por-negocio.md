@@ -80,6 +80,29 @@ guarda en Supabase Vault.**
    `solicitarRecuperacion()` es la excepción deliberada: sigue ignorando el resultado del envío, porque su
    respuesta es idéntica exista o no la cuenta y un error distinto delataría cuáles correos están registrados.
 
+8. **Widget propio `configuracion_correo`, restringido a SUPERADMIN de plataforma.** La primera versión dejó el
+   SMTP como una sección dentro del widget `configuracion_negocio`, que está asignado a `ADMINISTRADOR`. Eso
+   equiparaba dos capacidades que no son comparables: corregir la razón social y configurar el remitente de
+   correo. **Quien controla el SMTP puede enviar correo en nombre del negocio** —códigos de verificación,
+   enlaces de restablecimiento de contraseña— a cualquier dirección. Es una capacidad de suplantación, no un
+   ajuste de ficha, y merece su propia asignación de permiso.
+
+   Registrar el widget **no basta**: eso solo cambia lo que se dibuja en el rail. La puerta real son la
+   política RLS y los RPC, así que el estrechamiento ocurre en los tres sitios a la vez —misma lección que
+   `20260728000009_auditoria_widget_top_level_y_acceso_administrador.sql`, donde el widget necesitó además su
+   política—. Concretamente:
+
+   - Helper nuevo `comun_seguridad.seg_fn_es_superadmin()`. No se pudo reutilizar `seg_fn_es_admin_negocio()`
+     porque ese devuelve `true` también para el `ADMINISTRADOR` del negocio, que es justo a quien hay que
+     excluir.
+   - `cfg_smtp_admin_lectura` se reemplaza por `cfg_smtp_superadmin_lectura`.
+   - `cfg_fn_guardar_smtp()` y `cfg_fn_borrar_smtp_contrasena()` validan el helper nuevo.
+
+   El widget se registra **sin filas en `seg_rol_widget`**, y eso es deliberado: `obtenerWidgetsVisibles()`
+   devuelve todos los widgets activos del negocio cuando el usuario es superadmin, y solo los asignados a su
+   rol cuando no lo es. Un widget sin asignaciones queda, por construcción, reservado a superadmin — no hace
+   falta inventar un rol nuevo.
+
 ## Alternativas evaluadas
 
 | Alternativa | Por qué no se eligió |

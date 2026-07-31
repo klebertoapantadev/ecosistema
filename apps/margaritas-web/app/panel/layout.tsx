@@ -53,6 +53,7 @@ function rutaDeWidget(clave: string) {
   // Mapeo explicito clave->ruta; evita construir rutas arbitrarias desde datos.
   if (clave === "gestion_usuarios") return "usuarios";
   if (clave === "configuracion_negocio") return "configuracion";
+  if (clave === "configuracion_correo") return "correo";
   return "";
 }
 
