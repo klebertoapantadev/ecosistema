@@ -67,6 +67,26 @@ Un usuario posee una **única identidad base** en todo el ecosistema (`comun_seg
    - **Términos Globales:** Se aceptan en el registro inicial del ecosistema. ✅ Implementado — checkbox obligatorio en registro por correo, disclaimer + registro automático de aceptación en el callback para Google OAuth (ver `especificacion-tecnica.md` §1). Queda versionado por usuario (`usu_terminos_version`) para poder renotificar ante un cambio sustantivo del texto.
    - **Términos Específicos del Negocio:** Casilla obligatoria al ingresar por primera vez a un producto individual. Los textos legales de cada negocio son totalmente configurables en formato Markdown (`.md`) desde la consola de administración (`PLT-008`). **Pendiente** — hoy el texto de `/terminos` es un borrador estático, no editable desde la consola.
 
+### Estado de implementación
+
+Actualizado en cada PR que toque este requerimiento. `Parcial` significa que existe algo funcionando pero no cubre la regla entera.
+
+| Regla / Ítem | Estado | Dónde vive / Detalle de lo que falta |
+| :--- | :---: | :--- |
+| 1 · Registro Ultra-Fluido (Google OAuth + Correo) | ✅ Implementado | `packages/identidad` (`FormularioRegistro.tsx`, `auth.tranqi24.com`) |
+| 2 · WhatsApp Opcional Post-Registro | ✅ Implementado | `autorizacion_contacto_whatsapp` en `seg_usuario`, no frena el registro |
+| 3 · Ubicación y Alcance Local | ✅ Implementado | Expuesto en onboarding y footer según catálogo `PLT-008` |
+| 4 · Identidad Base y Membresías Independientes | ✅ Implementado | `comun_seguridad.seg_usuario` y `comun_seguridad.seg_membresia` |
+| 5 · Biometría (Face ID / Touch ID) y PIN Móvil | ⏳ Pendiente | Plugin `@capacitor-community/biometrics` en apps nativas Capacitor |
+| 6.a · Términos Globales del Ecosistema | ✅ Implementado | Checkbox obligatorio en correo, auto-registro en Google OAuth (`usu_terminos_version`) |
+| 6.b · Términos Específicos del Negocio en Markdown | 🟡 Parcial | El texto en `/terminos` es estático; falta renderizarlo dinámicamente desde Markdown (`PLT-008`) |
+| *Configuración OAuth en Supabase (Redirect URLs)* | 🟡 Parcial | Funciona 100% en `tranqi-web`; pendiente agregar Redirect URLs en Supabase para FastFix, Tinkay y Margaritas |
+
+**Resumen de Deuda / Pendientes para 100%:**
+1. Integrar biometría Capacitor en las Apps Móviles (Regla 5).
+2. Conectar la página `/terminos` al Markdown configurable por negocio de `PLT-008` (Regla 6.b).
+3. Registrar los Redirect URLs de las 3 apps restantes en Supabase Dashboard.
+
 ### Criterios de Aceptación (Gherkin)
 * **Escenario:** Registro ultra-rápido con Google OAuth sin fricción
   * **Dado que** un cliente no registrado hace clic en "Registrarse con Google" en el portal de Tinkay.
