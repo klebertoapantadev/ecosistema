@@ -31,7 +31,7 @@ Este documento describe el **comportamiento compartido por los 4 productos** (Tr
 | **`PLT-010`** | Integración Omnicanal (WhatsApp & Meta Feed) | ⏳ Pendiente | **0%** | **Jesus Navarrete** |
 | **`PLT-011`** | Sistema de Widgets por Rol & DataGrids 2 Capas | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`PLT-012`** | Baja de Cuenta y Derecho al Olvido | ⏳ Pendiente | **20%** | Kleber Toapanta |
-| **`PLT-013`** | Notificaciones Multicanal (Push/Email/In-App) | 🟡 Parcial | **65%** | Kleber Toapanta |
+| **`PLT-013`** | Notificaciones Multicanal (Push/Email/In-App) | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`PLT-014`** | Motor de Cupones y Promociones | ⏳ Pendiente | **0%** | **Jesus Navarrete** |
 | **`PLT-015`** | Calificaciones, Reseñas y Reputación | ⏳ Pendiente | **0%** | **Jesus Navarrete** |
 | **`PLT-016`** | Storage Standard (Buckets Privado/Público) | ✅ Implementado | **100%** | Kleber Toapanta |
