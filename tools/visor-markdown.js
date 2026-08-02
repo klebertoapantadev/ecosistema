@@ -185,7 +185,6 @@ function generarHTML(contenidoInicial, rutaInicial) {
     }
     #toc a:hover { background-color: rgba(110, 118, 129, 0.15); color: var(--text-color); }
 
-    /* Tarjetas de Comentarios en Sidebar */
     .comment-card {
       background-color: #21262d;
       border: 1px solid var(--border-color);
@@ -242,7 +241,6 @@ function generarHTML(contenidoInicial, rutaInicial) {
       border: 1px solid rgba(255,255,255,0.05);
     }
 
-    /* Caja del Resumen del Cambio Aplicado por la IA */
     .ai-summary-box {
       background-color: rgba(56, 139, 253, 0.1);
       border: 1px dashed var(--accent-color);
@@ -300,6 +298,16 @@ function generarHTML(contenidoInicial, rutaInicial) {
       max-width: 980px;
       margin: 0 auto;
       font-size: 15px;
+    }
+
+    /* COMPENSACIÓN DE DESPLAZAMIENTO PARA ENCABEZADOS (CORRIGE TÍTULOS OCULTOS BAJO LA BARRA FIJA) */
+    .markdown-body h1,
+    .markdown-body h2,
+    .markdown-body h3,
+    .markdown-body h4,
+    .markdown-body h5,
+    .markdown-body h6 {
+      scroll-margin-top: 95px !important;
     }
 
     .markdown-body table { display: table !important; width: 100% !important; }
@@ -481,7 +489,6 @@ function generarHTML(contenidoInicial, rutaInicial) {
       gap: 8px;
     }
 
-    /* ESTILOS DE COMPARACIÓN DIFF EN MODAL */
     .diff-container {
       display: flex;
       flex-direction: column;
@@ -543,7 +550,6 @@ function generarHTML(contenidoInicial, rutaInicial) {
 </head>
 <body>
 
-  <!-- SIDEBAR CON CONTROL DE CAMBIOS -->
   <aside id="sidebar">
     <div class="sidebar-header">
       <h2>💬 Visor & Revisiones IA</h2>
@@ -571,7 +577,6 @@ function generarHTML(contenidoInicial, rutaInicial) {
     </div>
   </aside>
 
-  <!-- TOP BAR -->
   <header class="top-bar">
     <div class="input-box" title="Ruta completa absoluta del archivo en disco">
       <span style="font-size: 0.82rem; color: #8b949e; margin-right: 6px;">📁 Ruta:</span>
@@ -593,7 +598,6 @@ function generarHTML(contenidoInicial, rutaInicial) {
     <button class="btn" onclick="recargarActual()">🔄 Recargar</button>
   </header>
 
-  <!-- MAIN CONTENT -->
   <main id="main-content">
     <article class="markdown-body" id="rendered-content">
     </article>
@@ -601,7 +605,6 @@ function generarHTML(contenidoInicial, rutaInicial) {
 
   <div id="selection-popup" onclick="abrirModalConSeleccion()">💬 Comentar para la IA</div>
 
-  <!-- MODAL DE COMENTARIO -->
   <div class="modal-overlay" id="comment-modal">
     <div class="modal-content">
       <h3 id="modal-title">💬 Dejar Comentario u Observación para la IA</h3>
@@ -614,7 +617,6 @@ function generarHTML(contenidoInicial, rutaInicial) {
     </div>
   </div>
 
-  <!-- MODAL DE CONTROL DE CAMBIOS (DIFF VIEWER) -->
   <div class="modal-overlay" id="diff-modal">
     <div class="modal-content">
       <h3>🔍 Control de Cambios Aplicado por la IA</h3>
@@ -726,7 +728,7 @@ function generarHTML(contenidoInicial, rutaInicial) {
               return;
             }
             e.preventDefault();
-            heading.scrollIntoView({ behavior: 'smooth' });
+            heading.scrollIntoView({ behavior: 'smooth', block: 'start' });
           });
 
           li.appendChild(a);
@@ -976,7 +978,6 @@ function generarHTML(contenidoInicial, rutaInicial) {
           card.appendChild(snippet);
           card.appendChild(text);
 
-          // Si el cambio ya fue atendido por la IA, mostrar el resumen y las opciones de ACEPTAR / REVERSAR
           if (c.status === 'ATENDIDO' && c.aiChange) {
             const aiBox = document.createElement('div');
             aiBox.className = 'ai-summary-box';
@@ -1046,7 +1047,7 @@ function generarHTML(contenidoInicial, rutaInicial) {
         const headings = document.querySelectorAll('#rendered-content h1, #rendered-content h2, #rendered-content h3');
         for (const h of headings) {
           if (h.textContent.includes(c.section)) {
-            h.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            h.scrollIntoView({ behavior: 'smooth', block: 'start' });
             break;
           }
         }
@@ -1205,7 +1206,6 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  // API: ACEPTAR CAMBIO IA (Elimina comentario del historial activo)
   if (parsedUrl.pathname === '/api/comments/accept' && req.method === 'POST') {
     const commentId = parsedUrl.searchParams.get('id');
     if (commentId) {
@@ -1218,7 +1218,6 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  // API: REVERSAR CAMBIO IA (Restaura el texto original antes del cambio)
   if (parsedUrl.pathname === '/api/comments/revert' && req.method === 'POST') {
     const commentId = parsedUrl.searchParams.get('id');
     const comentarios = leerComentarios();
@@ -1238,7 +1237,6 @@ const server = http.createServer((req, res) => {
         }
       }
 
-      // Remover comentario tras reversar
       const filtrados = comentarios.filter(item => item.id !== commentId);
       guardarComentarios(filtrados);
 
@@ -1247,7 +1245,6 @@ const server = http.createServer((req, res) => {
       return;
     }
 
-    // Si no hay datos de revertir pero se pide eliminar
     const filtrados = comentarios.filter(item => item.id !== commentId);
     guardarComentarios(filtrados);
     res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
@@ -1377,7 +1374,7 @@ const server = http.createServer((req, res) => {
 server.listen(PORT, () => {
   const url = `http://localhost:${PORT}`;
   console.log(`====================================================`);
-  console.log(`🚀 Visor Markdown Universal con Control de Cambios IA (Diff / Aceptar / Reversar)`);
+  console.log(`🚀 Visor Markdown Universal con Compensación de Scroll Offset (scroll-margin-top: 95px)`);
   console.log(`📄 Archivo Inicial: ${targetFile}`);
   console.log(`🌐 Navegar a: ${url}`);
   console.log(`====================================================`);
