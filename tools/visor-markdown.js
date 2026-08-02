@@ -90,7 +90,7 @@ function generarHTML(contenidoInicial, rutaInicial) {
     }
     
     #sidebar {
-      width: 410px;
+      width: 420px;
       background-color: var(--bg-sidebar);
       border-right: 1px solid var(--border-color);
       display: flex;
@@ -163,6 +163,42 @@ function generarHTML(contenidoInicial, rutaInicial) {
       border-bottom-color: var(--accent-color);
     }
 
+    .toc-toolbar {
+      padding: 8px 12px;
+      background-color: #0d1117;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .filter-comments-btn {
+      background: #21262d;
+      border: 1px solid var(--border-color);
+      color: #8b949e;
+      font-size: 0.76rem;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 20px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.2s;
+    }
+
+    .filter-comments-btn:hover {
+      border-color: #58a6ff;
+      color: #58a6ff;
+    }
+
+    .filter-comments-btn.active {
+      background: #1f6feb;
+      border-color: #388bfd;
+      color: #ffffff;
+      box-shadow: 0 0 8px rgba(31, 111, 235, 0.5);
+    }
+
     #toc-panel, #comments-panel {
       flex: 1;
       overflow-y: auto;
@@ -192,26 +228,51 @@ function generarHTML(contenidoInicial, rutaInicial) {
       border-left: 3px solid var(--accent-color);
     }
 
+    /* ESTILOS DE DESTACADO EN EL ÍNDICE CUANDO TIENE COMENTARIOS */
+    #toc a.toc-has-comment {
+      color: #388bfd !important;
+      font-weight: 700 !important;
+      background-color: rgba(56, 139, 253, 0.12) !important;
+    }
+
+    .toc-comment-badge {
+      background-color: #1f6feb;
+      color: #ffffff;
+      font-size: 0.72rem;
+      font-weight: 800;
+      padding: 2px 7px;
+      border-radius: 12px;
+      margin-left: 6px;
+      box-shadow: 0 0 8px rgba(31, 111, 235, 0.6);
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+    }
+
     .toc-item.level-1 a { font-weight: 700; color: #c9d1d9; font-size: 0.86rem; margin-top: 6px; }
     .toc-item.level-2 a { font-weight: 600; color: #58a6ff; font-size: 0.84rem; }
     .toc-item.level-3 a { font-weight: 500; color: #8b949e; font-size: 0.80rem; }
     .toc-item.level-4 a { font-weight: 400; color: #8b949e; font-size: 0.77rem; }
     .toc-item.level-rule a { font-weight: 400; color: #79c0ff; font-size: 0.76rem; font-style: normal; }
 
-    /* BADGE EN EL ÍNDICE SIDEBAR */
-    .toc-comment-badge {
-      background-color: #d29922;
-      color: #0d1117;
-      font-size: 0.7rem;
-      font-weight: 800;
-      padding: 1px 6px;
-      border-radius: 10px;
-      margin-left: 6px;
-      box-shadow: 0 0 6px rgba(210, 153, 34, 0.5);
-    }
-
-    #toc a .comment-icon { opacity: 0.4; font-size: 0.8rem; margin-left: 6px; }
+    #toc a .comment-icon { opacity: 0.35; font-size: 0.8rem; margin-left: 6px; transition: opacity 0.2s; }
     #toc a .comment-icon:hover { opacity: 1; }
+
+    /* ESTILO RESPLANDECIENTE DEL ICONO DE COMENTARIOS CON COMENTARIOS ACTIVOS */
+    #toc a .comment-icon.has-comments,
+    .heading-comment-btn.has-comments {
+      opacity: 1 !important;
+      background-color: #1f6feb !important;
+      color: #ffffff !important;
+      border-radius: 12px !important;
+      padding: 2px 7px !important;
+      font-size: 0.74rem !important;
+      font-weight: 800 !important;
+      box-shadow: 0 0 10px rgba(31, 111, 235, 0.8) !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      gap: 3px !important;
+    }
 
     .comment-card {
       background-color: #21262d;
@@ -338,51 +399,13 @@ function generarHTML(contenidoInicial, rutaInicial) {
       scroll-margin-top: 95px !important;
     }
 
-    /* ESTILO RESALTADO DE ELEMENTOS CON COMENTARIOS ACTIVOS */
+    /* MARCO ILUMINADO EN EL DOCUMENTO PRINCIPAL CUANDO TIENE COMENTARIOS */
     .has-active-comment {
-      background-color: rgba(210, 153, 34, 0.14) !important;
-      border-left: 4px solid #d29922 !important;
+      background-color: rgba(31, 111, 235, 0.12) !important;
+      border-left: 4px solid #1f6feb !important;
       padding-left: 8px !important;
       border-radius: 4px;
       transition: background-color 0.3s;
-    }
-
-    .doc-comment-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      background-color: #d29922;
-      color: #0d1117;
-      font-size: 0.74rem;
-      font-weight: 800;
-      padding: 2px 8px;
-      border-radius: 12px;
-      margin-left: 10px;
-      cursor: pointer;
-      box-shadow: 0 0 10px rgba(210, 153, 34, 0.6);
-      vertical-align: middle;
-      transition: transform 0.2s;
-    }
-
-    .doc-comment-badge:hover {
-      transform: scale(1.1);
-      background-color: #f2cc60;
-    }
-
-    .markdown-body table { display: table !important; width: 100% !important; }
-
-    mark.doc-search-highlight {
-      background-color: #f2cc60 !important;
-      color: #000000 !important;
-      border-radius: 2px;
-      padding: 0 2px;
-      font-weight: bold;
-    }
-
-    mark.doc-search-highlight.active-match {
-      background-color: #f78166 !important;
-      color: #ffffff !important;
-      outline: 2px solid #f78166;
     }
 
     .heading-comment-btn {
@@ -407,7 +430,7 @@ function generarHTML(contenidoInicial, rutaInicial) {
     .top-bar {
       position: fixed;
       top: 0;
-      left: 410px;
+      left: 420px;
       right: 0;
       height: 64px;
       background-color: rgba(22, 27, 34, 0.95);
@@ -609,6 +632,7 @@ function generarHTML(contenidoInicial, rutaInicial) {
 </head>
 <body>
 
+  <!-- SIDEBAR CON FILTRO "SOLO CON COMENTARIOS" -->
   <aside id="sidebar">
     <div class="sidebar-header">
       <h2>💬 Visor & Revisiones IA</h2>
@@ -621,6 +645,14 @@ function generarHTML(contenidoInicial, rutaInicial) {
     <div class="sidebar-tabs">
       <button class="tab-btn active" id="tab-toc-btn" onclick="cambiarTab('toc')">📌 Índice</button>
       <button class="tab-btn" id="tab-comments-btn" onclick="cambiarTab('comments')">💬 Revisiones IA (<span id="comments-count">0</span>)</button>
+    </div>
+
+    <!-- BOTÓN FILTRO "SOLO CON COMENTARIOS" EN EL ÍNDICE -->
+    <div class="toc-toolbar" id="toc-toolbar">
+      <span style="font-size: 0.76rem; color: #8b949e;">Filtrar Índice:</span>
+      <button class="filter-comments-btn" id="filter-comments-toggle-btn" onclick="toggleFiltroSoloComentarios()">
+        💬 Solo con Comentarios
+      </button>
     </div>
     
     <div id="toc-panel">
@@ -712,6 +744,7 @@ function generarHTML(contenidoInicial, rutaInicial) {
     let seccionSeleccionadaTemp = '';
     let matchesBusqueda = [];
     let indiceMatchActual = -1;
+    let filtroSoloComentariosActivo = false;
 
     mermaid.initialize({ startOnLoad: false, theme: 'dark' });
 
@@ -737,15 +770,35 @@ function generarHTML(contenidoInicial, rutaInicial) {
     function cambiarTab(tab) {
       if (tab === 'toc') {
         document.getElementById('toc-panel').style.display = 'block';
+        document.getElementById('toc-toolbar').style.display = 'flex';
         document.getElementById('comments-panel').style.display = 'none';
         document.getElementById('tab-toc-btn').classList.add('active');
         document.getElementById('tab-comments-btn').classList.remove('active');
       } else {
         document.getElementById('toc-panel').style.display = 'none';
+        document.getElementById('toc-toolbar').style.display = 'none';
         document.getElementById('comments-panel').style.display = 'block';
         document.getElementById('tab-toc-btn').classList.remove('active');
         document.getElementById('tab-comments-btn').classList.add('active');
       }
+    }
+
+    function toggleFiltroSoloComentarios() {
+      filtroSoloComentariosActivo = !filtroSoloComentariosActivo;
+      const btn = document.getElementById('filter-comments-toggle-btn');
+      btn.classList.toggle('active', filtroSoloComentariosActivo);
+
+      const tocItems = document.querySelectorAll('#toc li');
+      tocItems.forEach(li => {
+        const a = li.querySelector('a');
+        if (!a) return;
+        if (filtroSoloComentariosActivo) {
+          const tieneComentario = a.classList.contains('toc-has-comment');
+          li.style.display = tieneComentario ? 'block' : 'none';
+        } else {
+          li.style.display = 'block';
+        }
+      });
     }
 
     function renderizarMarkdown(textoMd) {
@@ -1082,7 +1135,7 @@ function generarHTML(contenidoInicial, rutaInicial) {
       }
     }
 
-    // CARGAR Y DECORAR INDICADORES VISUALES EN EL DOCUMENTO Y EN EL ÍNDICE
+    // CARGAR Y DECORAR INDICADORES VISUALES + FILTRO EN ÍNDICE
     async function cargarComentarios() {
       try {
         const res = await fetch('/api/comments?file=' + encodeURIComponent(rutaActual));
@@ -1091,72 +1144,76 @@ function generarHTML(contenidoInicial, rutaInicial) {
         document.getElementById('comments-count').textContent = comentariosActuales.length;
         const listContainer = document.getElementById('comments-list');
 
-        // Limpiar resaltados previos en el documento e índice
-        document.querySelectorAll('.has-active-comment').forEach(el => {
-          el.classList.remove('has-active-comment');
+        // Limpiar resaltados previos en documento e índice
+        document.querySelectorAll('.has-active-comment, .toc-has-comment').forEach(el => {
+          el.classList.remove('has-active-comment', 'toc-has-comment');
         });
-        document.querySelectorAll('.doc-comment-badge, .toc-comment-badge').forEach(el => el.remove());
+        document.querySelectorAll('.heading-comment-btn.has-comments, .comment-icon.has-comments').forEach(el => {
+          el.classList.remove('has-comments');
+          if (el.classList.contains('heading-comment-btn')) el.innerHTML = '💬';
+          else el.innerHTML = '💬';
+        });
 
         if (comentariosActuales.length === 0) {
           listContainer.innerHTML = '<p style="padding: 12px; color: #8b949e; font-size: 0.85rem;">Sin revisiones pendientes en este archivo</p>';
+          if (filtroSoloComentariosActivo) toggleFiltroSoloComentarios();
           return;
         }
 
-        // Agrupar comentarios por sección para mostrar badges contadores (ej: 💬 1)
         const conteoPorSeccion = {};
         comentariosActuales.forEach(c => {
           const key = c.section || 'General';
           conteoPorSeccion[key] = (conteoPorSeccion[key] || 0) + 1;
         });
 
-        // 1. Marcar e inyectar Badges Visuales en el DOCUMENTO PRINCIPAL
+        // 1. ILUMINAR BOTONES E ÍTEMS EN EL DOCUMENTO
         const docElems = document.querySelectorAll('#rendered-content h1, #rendered-content h2, #rendered-content h3, #rendered-content h4, #rendered-content li[id^="rule-item-"]');
         
         docElems.forEach(elem => {
           const textoElem = elem.textContent.replace(/^[#\s]+/, '').trim();
           
           Object.keys(conteoPorSeccion).forEach(sec => {
-            if (sec && (textoElem.includes(sec) || sec.includes(textoElem.slice(0, 30)))) {
+            if (sec && (textoElem.includes(sec) || sec.includes(textoElem.slice(0, 25)))) {
               elem.classList.add('has-active-comment');
-              
-              if (!elem.querySelector('.doc-comment-badge')) {
-                const badge = document.createElement('span');
-                badge.className = 'doc-comment-badge';
-                badge.title = 'Ir a revisiones IA para esta sección (' + conteoPorSeccion[sec] + ')';
-                badge.innerHTML = '💬 ' + conteoPorSeccion[sec] + ' PENDIENTE';
-                badge.onclick = (e) => {
-                  e.stopPropagation();
-                  cambiarTab('comments');
-                };
-
-                const targetBtn = elem.querySelector('.heading-comment-btn');
-                if (targetBtn) {
-                  elem.insertBefore(badge, targetBtn);
-                } else {
-                  elem.appendChild(badge);
-                }
+              const commentBtn = elem.querySelector('.heading-comment-btn');
+              if (commentBtn) {
+                commentBtn.classList.add('has-comments');
+                commentBtn.innerHTML = '💬 ' + conteoPorSeccion[sec];
+                commentBtn.title = 'Ver/Agregar comentarios en esta sección (' + conteoPorSeccion[sec] + ')';
               }
             }
           });
         });
 
-        // 2. Marcar e inyectar Badges Visuales en el ÍNDICE SIDEBAR (TOC)
+        // 2. ILUMINAR ICONOS E ÍTEMS EN EL ÍNDICE (TOC)
         const tocLinks = document.querySelectorAll('#toc a');
         tocLinks.forEach(a => {
           const secTitle = a.dataset.section || a.textContent.trim();
           Object.keys(conteoPorSeccion).forEach(sec => {
-            if (sec && (secTitle.includes(sec) || sec.includes(secTitle.slice(0, 30)))) {
-              if (!a.querySelector('.toc-comment-badge')) {
-                const tocBadge = document.createElement('span');
-                tocBadge.className = 'toc-comment-badge';
-                tocBadge.textContent = '💬 ' + conteoPorSeccion[sec];
-                a.appendChild(tocBadge);
+            if (sec && (secTitle.includes(sec) || sec.includes(secTitle.slice(0, 25)))) {
+              a.classList.add('toc-has-comment');
+              const icon = a.querySelector('.comment-icon');
+              if (icon) {
+                icon.classList.add('has-comments');
+                icon.innerHTML = '💬 ' + conteoPorSeccion[sec];
+                icon.title = 'Tiene ' + conteoPorSeccion[sec] + ' comentario(s)';
               }
             }
           });
         });
 
-        // Renderizar lista de Tarjetas en la pestaña "Revisiones IA"
+        // Si el filtro de "Solo con comentarios" está activo, re-filtrar
+        if (filtroSoloComentariosActivo) {
+          const tocItems = document.querySelectorAll('#toc li');
+          tocItems.forEach(li => {
+            const a = li.querySelector('a');
+            if (a) {
+              li.style.display = a.classList.contains('toc-has-comment') ? 'block' : 'none';
+            }
+          });
+        }
+
+        // Renderizar Tarjetas
         listContainer.innerHTML = '';
         comentariosActuales.forEach(c => {
           const card = document.createElement('div');
@@ -1583,7 +1640,7 @@ const server = http.createServer((req, res) => {
 server.listen(PORT, () => {
   const url = `http://localhost:${PORT}`;
   console.log(`====================================================`);
-  console.log(`🚀 Visor Markdown Universal con Indicadores Visuales de Comentarios (Badges en Doc e Índice)`);
+  console.log(`🚀 Visor Markdown Universal con Botón Filtro e Indicadores Azules de Comentarios`);
   console.log(`📄 Archivo Inicial: ${targetFile}`);
   console.log(`🌐 Navegar a: ${url}`);
   console.log(`====================================================`);
