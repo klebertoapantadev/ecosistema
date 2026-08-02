@@ -547,6 +547,7 @@ Motor unificado de comunicación multicanal y alertas en tiempo real para todos 
      - **Validación y Métricas de Tasa de Apertura:** El sistema ejecuta el rastreo de notificaciones leídas vs. ignoradas/sin abrir, calculando y actualizando dinámicamente las métricas de porcentaje de apertura (`% leídas`, `% ignoradas`, `% entregadas exitosas` y `% fallidas`).
 4. **Despacho Automático de Notificaciones del Sistema:**
    - Además de la emisión manual desde la consola, el motor ejecuta envíos automáticos ante eventos clave:
+     - **Notificaciones de Seguridad por Inicio de Sesión (`PLT-018`):** Envío automático por Correo Electrónico (Email) ante cualquier inicio de sesión exitoso o intento fallido de autenticación para todos los usuarios con roles/perfiles distintos a `CLIENTE` (ej. `ABOGADO`, `ADMINISTRADOR`, `TECNICO`). Si el usuario únicamente posee el perfil `CLIENTE`, no recibe correo por logins rutinarios. Adicionalmente, si cualquier usuario posee una sesión activa en algún dispositivo y se registra un inicio de sesión exitoso o intento fallido desde otro dispositivo/IP, el sistema despacha inmediatamente una **alerta de seguridad multicanal (Email + Push / In-App)** advirtiendo del acceso.
      - **Asignación / Revocación de Perfiles (`PLT-003`):** Envío automático por Email y Push al modificar la jerarquía o roles de un usuario.
      - **Lanzamiento de Funcionalidades:** Comunicados masivos de nuevas herramientas en la app.
      - **Alertas Operativas:** Cambios de estado en pedidos (`PLT-009`), citas, facturación (`PLT-006`) o expedientes.
@@ -694,8 +695,8 @@ Módulo de auditoría de seguridad y control de accesos en el panel del usuario 
 Todo usuario registrado puede ver sus últimos accesos (dispositivo/navegador aproximado y fecha) desde su panel, y el sistema lo saluda de forma distinta según cuánto tiempo pasó desde su visita anterior. Es el primer building block de `PLT-017` — un registro histórico simple, no un listado de sesiones activas ni revocación de tokens (eso sigue pendiente en `PLT-017`).
 
 ### Reglas de Negocio
-1. **Registro automático en cada inicio de sesión:** cualquier login exitoso (correo/contraseña, confirmación de registro con sesión inmediata, o Google OAuth) registra una fila con IP y User-Agent, sin intervención del usuario.
-2. **Visibilidad estrictamente propia:** un usuario únicamente puede ver su propio historial — nunca el de otro usuario, ni siquiera un `ADMINISTRADOR` del negocio.
+1. **Registro automático en cada inicio de sesión:** cualquier login exitoso (correo/contraseña, confirmación de registro con sesión inmediata, o Google OAuth) e **intentos fallidos de autenticación** (contraseña errónea, OTP vencido o cuenta bloqueada) registran automáticamente una fila con fecha/hora, IP, User-Agent, dispositivo y el estado/motivo del intento.
+2. **Visibilidad y Controles del Administrador:** un usuario regular (`CLIENTE`) únicamente puede ver su propio historial de accesos. El `ADMINISTRADOR` de negocio posee una vista consolidada en la consola administrativa para supervisar el historial de **intentos fallidos, logins exitosos, sesiones activas y dispositivos vinculados** de los miembros del negocio para auditoría de seguridad.
 3. **Saludo por antigüedad del acceso anterior:** el panel saluda distinto según el tiempo transcurrido desde el penúltimo acceso (mismo día, última semana, último mes, más de un mes) — el primer acceso de una cuenta nueva no dispara un saludo especial (lo cubre la pantalla de bienvenida, `PLT-001` regla 2).
 4. **Común a los 4 negocios:** al ser parte de la identidad única del ecosistema, el historial es uno solo por usuario, no uno por negocio en el que tenga membresía.
 
