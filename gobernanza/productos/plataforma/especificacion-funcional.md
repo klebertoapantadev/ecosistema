@@ -551,8 +551,9 @@ Motor unificado de comunicación multicanal y alertas en tiempo real para todos 
      - **Lanzamiento de Funcionalidades:** Comunicados masivos de nuevas herramientas en la app.
      - **Alertas Operativas:** Cambios de estado en pedidos (`PLT-009`), citas, facturación (`PLT-006`) o expedientes.
      - **Promociones y Noticias:** Difusión de cupones y boletines informativos del negocio.
-5. **Preferencias del Usuario:**
+5. **Preferencias del Usuario y Silenciado Temporal:**
    - El usuario puede ajustar en su panel (`/panel/notificaciones`) sus preferencias de recepción por canal (excepto para notificaciones críticas de seguridad o reseteo de clave).
+   - **Silenciado por Tiempo (Mute Temporal):** El sistema permite al usuario silenciar las notificaciones por periodos configurables: *Hoy*, *Esta Semana*, *Este Mes* o *Rango Personalizado de Fechas*, reactivando los despachos automáticamente al vencer la vigencia.
 
 ### Criterios de Aceptación (Gherkin)
 * **Escenario:** Emisión de notificación segmentada por rol usando Editor WYSIWYG HTML

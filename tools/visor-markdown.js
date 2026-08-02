@@ -198,6 +198,18 @@ function generarHTML(contenidoInicial, rutaInicial) {
     .toc-item.level-4 a { font-weight: 400; color: #8b949e; font-size: 0.77rem; }
     .toc-item.level-rule a { font-weight: 400; color: #79c0ff; font-size: 0.76rem; font-style: normal; }
 
+    /* BADGE EN EL ÍNDICE SIDEBAR */
+    .toc-comment-badge {
+      background-color: #d29922;
+      color: #0d1117;
+      font-size: 0.7rem;
+      font-weight: 800;
+      padding: 1px 6px;
+      border-radius: 10px;
+      margin-left: 6px;
+      box-shadow: 0 0 6px rgba(210, 153, 34, 0.5);
+    }
+
     #toc a .comment-icon { opacity: 0.4; font-size: 0.8rem; margin-left: 6px; }
     #toc a .comment-icon:hover { opacity: 1; }
 
@@ -326,6 +338,37 @@ function generarHTML(contenidoInicial, rutaInicial) {
       scroll-margin-top: 95px !important;
     }
 
+    /* ESTILO RESALTADO DE ELEMENTOS CON COMENTARIOS ACTIVOS */
+    .has-active-comment {
+      background-color: rgba(210, 153, 34, 0.14) !important;
+      border-left: 4px solid #d29922 !important;
+      padding-left: 8px !important;
+      border-radius: 4px;
+      transition: background-color 0.3s;
+    }
+
+    .doc-comment-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background-color: #d29922;
+      color: #0d1117;
+      font-size: 0.74rem;
+      font-weight: 800;
+      padding: 2px 8px;
+      border-radius: 12px;
+      margin-left: 10px;
+      cursor: pointer;
+      box-shadow: 0 0 10px rgba(210, 153, 34, 0.6);
+      vertical-align: middle;
+      transition: transform 0.2s;
+    }
+
+    .doc-comment-badge:hover {
+      transform: scale(1.1);
+      background-color: #f2cc60;
+    }
+
     .markdown-body table { display: table !important; width: 100% !important; }
 
     mark.doc-search-highlight {
@@ -348,7 +391,7 @@ function generarHTML(contenidoInicial, rutaInicial) {
       justify-content: center;
       margin-left: 8px;
       font-size: 0.85rem;
-      opacity: 0.3;
+      opacity: 0.35;
       cursor: pointer;
       border: none;
       background: none;
@@ -708,7 +751,6 @@ function generarHTML(contenidoInicial, rutaInicial) {
     function renderizarMarkdown(textoMd) {
       document.getElementById('rendered-content').innerHTML = marked.parse(textoMd);
 
-      // PROCESAR REGLAS NUMERADAS 1, 2, 3, 4, 5... EN EL DOCUMENTO RENDERIZADO
       const olElements = document.querySelectorAll('#rendered-content ol');
       let ruleCounter = 0;
 
@@ -719,11 +761,9 @@ function generarHTML(contenidoInicial, rutaInicial) {
           const ruleId = 'rule-item-' + ruleCounter;
           li.id = ruleId;
 
-          // Extraer primera línea / título de la regla
           const firstLine = li.textContent.trim().split('\\n')[0];
           const cleanRuleTitle = (idx + 1) + '. ' + firstLine.replace(/^[0-9.]+\\s*/, '').slice(0, 65);
 
-          // Inyectar botón de comentario 💬 al lado de la regla numerada
           const commentBtn = document.createElement('button');
           commentBtn.className = 'heading-comment-btn';
           commentBtn.title = 'Agregar comentario a esta regla: ' + cleanRuleTitle;
@@ -742,7 +782,6 @@ function generarHTML(contenidoInicial, rutaInicial) {
         });
       });
 
-      // CONSTRUIR ÍNDICE MULTINIVEL H1, H2, H3, H4 Y REGLAS NUMERADAS 1,2,3,4,5
       const headings = document.querySelectorAll('#rendered-content h1, #rendered-content h2, #rendered-content h3, #rendered-content h4');
       const tocNav = document.getElementById('toc');
       
@@ -772,6 +811,7 @@ function generarHTML(contenidoInicial, rutaInicial) {
 
           const a = document.createElement('a');
           a.href = '#' + id;
+          a.dataset.section = tituloLimpio;
           
           let prefixIcon = '';
           if (level === 1) prefixIcon = '📌 ';
@@ -799,9 +839,7 @@ function generarHTML(contenidoInicial, rutaInicial) {
           li.appendChild(a);
           ul.appendChild(li);
 
-          // Si el encabezado es "Reglas de Negocio" (o H3 relevante), insertar sus reglas numeradas 1, 2, 3... en el índice
           if (heading.tagName === 'H3' && /reglas de negocio/i.test(tituloLimpio)) {
-            // Buscar la siguiente lista <ol> después de este H3
             let nextElem = heading.nextElementSibling;
             while (nextElem && nextElem.tagName !== 'OL' && !/^H[1-4]$/.test(nextElem.tagName)) {
               nextElem = nextElem.nextElementSibling;
@@ -820,6 +858,7 @@ function generarHTML(contenidoInicial, rutaInicial) {
 
                 const ruleA = document.createElement('a');
                 ruleA.href = '#' + ruleId;
+                ruleA.dataset.section = cleanRuleTitle;
                 ruleA.innerHTML = '<span class="toc-title">⚡ ' + cleanRuleTitle + '</span><span class="comment-icon" title="Comentar regla">💬</span>';
 
                 ruleA.addEventListener('click', (e) => {
@@ -1043,6 +1082,7 @@ function generarHTML(contenidoInicial, rutaInicial) {
       }
     }
 
+    // CARGAR Y DECORAR INDICADORES VISUALES EN EL DOCUMENTO Y EN EL ÍNDICE
     async function cargarComentarios() {
       try {
         const res = await fetch('/api/comments?file=' + encodeURIComponent(rutaActual));
@@ -1051,11 +1091,72 @@ function generarHTML(contenidoInicial, rutaInicial) {
         document.getElementById('comments-count').textContent = comentariosActuales.length;
         const listContainer = document.getElementById('comments-list');
 
+        // Limpiar resaltados previos en el documento e índice
+        document.querySelectorAll('.has-active-comment').forEach(el => {
+          el.classList.remove('has-active-comment');
+        });
+        document.querySelectorAll('.doc-comment-badge, .toc-comment-badge').forEach(el => el.remove());
+
         if (comentariosActuales.length === 0) {
           listContainer.innerHTML = '<p style="padding: 12px; color: #8b949e; font-size: 0.85rem;">Sin revisiones pendientes en este archivo</p>';
           return;
         }
 
+        // Agrupar comentarios por sección para mostrar badges contadores (ej: 💬 1)
+        const conteoPorSeccion = {};
+        comentariosActuales.forEach(c => {
+          const key = c.section || 'General';
+          conteoPorSeccion[key] = (conteoPorSeccion[key] || 0) + 1;
+        });
+
+        // 1. Marcar e inyectar Badges Visuales en el DOCUMENTO PRINCIPAL
+        const docElems = document.querySelectorAll('#rendered-content h1, #rendered-content h2, #rendered-content h3, #rendered-content h4, #rendered-content li[id^="rule-item-"]');
+        
+        docElems.forEach(elem => {
+          const textoElem = elem.textContent.replace(/^[#\s]+/, '').trim();
+          
+          Object.keys(conteoPorSeccion).forEach(sec => {
+            if (sec && (textoElem.includes(sec) || sec.includes(textoElem.slice(0, 30)))) {
+              elem.classList.add('has-active-comment');
+              
+              if (!elem.querySelector('.doc-comment-badge')) {
+                const badge = document.createElement('span');
+                badge.className = 'doc-comment-badge';
+                badge.title = 'Ir a revisiones IA para esta sección (' + conteoPorSeccion[sec] + ')';
+                badge.innerHTML = '💬 ' + conteoPorSeccion[sec] + ' PENDIENTE';
+                badge.onclick = (e) => {
+                  e.stopPropagation();
+                  cambiarTab('comments');
+                };
+
+                const targetBtn = elem.querySelector('.heading-comment-btn');
+                if (targetBtn) {
+                  elem.insertBefore(badge, targetBtn);
+                } else {
+                  elem.appendChild(badge);
+                }
+              }
+            }
+          });
+        });
+
+        // 2. Marcar e inyectar Badges Visuales en el ÍNDICE SIDEBAR (TOC)
+        const tocLinks = document.querySelectorAll('#toc a');
+        tocLinks.forEach(a => {
+          const secTitle = a.dataset.section || a.textContent.trim();
+          Object.keys(conteoPorSeccion).forEach(sec => {
+            if (sec && (secTitle.includes(sec) || sec.includes(secTitle.slice(0, 30)))) {
+              if (!a.querySelector('.toc-comment-badge')) {
+                const tocBadge = document.createElement('span');
+                tocBadge.className = 'toc-comment-badge';
+                tocBadge.textContent = '💬 ' + conteoPorSeccion[sec];
+                a.appendChild(tocBadge);
+              }
+            }
+          });
+        });
+
+        // Renderizar lista de Tarjetas en la pestaña "Revisiones IA"
         listContainer.innerHTML = '';
         comentariosActuales.forEach(c => {
           const card = document.createElement('div');
@@ -1482,7 +1583,7 @@ const server = http.createServer((req, res) => {
 server.listen(PORT, () => {
   const url = `http://localhost:${PORT}`;
   console.log(`====================================================`);
-  console.log(`🚀 Visor Markdown Universal con Selección y Comentarios en Reglas 1, 2, 3, 4, 5...`);
+  console.log(`🚀 Visor Markdown Universal con Indicadores Visuales de Comentarios (Badges en Doc e Índice)`);
   console.log(`📄 Archivo Inicial: ${targetFile}`);
   console.log(`🌐 Navegar a: ${url}`);
   console.log(`====================================================`);
