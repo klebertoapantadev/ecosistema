@@ -99,12 +99,12 @@ function generarHTML(contenidoInicial, rutaInicial) {
     }
     
     .sidebar-header {
-      padding: 16px;
+      padding: 14px 16px;
       border-bottom: 1px solid var(--border-color);
       background-color: #0d1117;
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 8px;
     }
 
     .sidebar-header h2 {
@@ -116,13 +116,28 @@ function generarHTML(contenidoInicial, rutaInicial) {
       gap: 8px;
     }
 
-    .file-select {
+    .search-file-box {
       width: 100%;
       background: #21262d;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 6px 10px;
+      color: #c9d1d9;
+      font-size: 0.82rem;
+      outline: none;
+    }
+
+    .search-file-box:focus {
+      border-color: var(--accent-color);
+    }
+
+    .file-select {
+      width: 100%;
+      background: #161b22;
       color: #c9d1d9;
       border: 1px solid var(--border-color);
       border-radius: 6px;
-      padding: 7px 10px;
+      padding: 6px 8px;
       font-size: 0.82rem;
       outline: none;
       cursor: pointer;
@@ -247,6 +262,20 @@ function generarHTML(contenidoInicial, rutaInicial) {
 
     .markdown-body table { display: table !important; width: 100% !important; }
 
+    mark.doc-search-highlight {
+      background-color: #f2cc60 !important;
+      color: #000000 !important;
+      border-radius: 2px;
+      padding: 0 2px;
+      font-weight: bold;
+    }
+
+    mark.doc-search-highlight.active-match {
+      background-color: #f78166 !important;
+      color: #ffffff !important;
+      outline: 2px solid #f78166;
+    }
+
     .heading-comment-btn {
       display: inline-flex;
       align-items: center;
@@ -277,8 +306,8 @@ function generarHTML(contenidoInicial, rutaInicial) {
       border-bottom: 1px solid var(--border-color);
       display: flex;
       align-items: center;
-      gap: 12px;
-      padding: 0 24px;
+      gap: 10px;
+      padding: 0 20px;
       z-index: 100;
     }
 
@@ -297,23 +326,61 @@ function generarHTML(contenidoInicial, rutaInicial) {
       background: transparent;
       border: none;
       color: #c9d1d9;
-      font-size: 0.84rem;
+      font-size: 0.82rem;
       font-family: monospace;
       outline: none;
+    }
+
+    .doc-search-container {
+      display: flex;
+      align-items: center;
+      background: #161b22;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 2px 8px;
+      width: 280px;
+    }
+
+    .doc-search-container input {
+      width: 100%;
+      background: transparent;
+      border: none;
+      color: #c9d1d9;
+      font-size: 0.82rem;
+      outline: none;
+      padding: 4px 0;
+    }
+
+    .search-nav-btn {
+      background: none;
+      border: none;
+      color: #8b949e;
+      cursor: pointer;
+      font-size: 0.75rem;
+      padding: 2px 4px;
+    }
+
+    .search-nav-btn:hover { color: var(--accent-color); }
+
+    .search-count {
+      font-size: 0.72rem;
+      color: #8b949e;
+      margin: 0 6px;
+      white-space: nowrap;
     }
 
     .btn {
       background-color: #21262d;
       color: #c9d1d9;
       border: 1px solid var(--border-color);
-      padding: 7px 14px;
+      padding: 6px 12px;
       border-radius: 6px;
-      font-size: 0.85rem;
+      font-size: 0.82rem;
       font-weight: 600;
       cursor: pointer;
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 5px;
       white-space: nowrap;
       transition: background 0.2s;
     }
@@ -424,10 +491,12 @@ function generarHTML(contenidoInicial, rutaInicial) {
 </head>
 <body>
 
-  <!-- SIDEBAR -->
   <aside id="sidebar">
     <div class="sidebar-header">
       <h2>💬 Visor & Revisiones IA</h2>
+      
+      <input type="text" id="file-filter-input" class="search-file-box" placeholder="🔍 Filtrar archivo .md (ej: tranqi, PLT)..." />
+      
       <select id="project-files-select" class="file-select">
         <option value="">📂 Seleccionar archivo .md...</option>
       </select>
@@ -451,11 +520,17 @@ function generarHTML(contenidoInicial, rutaInicial) {
     </div>
   </aside>
 
-  <!-- TOP BAR CON RUTA COMPLETA -->
   <header class="top-bar">
     <div class="input-box" title="Ruta completa absoluta del archivo en disco">
-      <span style="font-size: 0.85rem; color: #8b949e; margin-right: 8px;">📁 Ruta Completa:</span>
-      <input type="text" id="path-input" value="${fullPathInicial}" placeholder="Pega o escribe la ruta completa absoluta de cualquier archivo .md..." />
+      <span style="font-size: 0.82rem; color: #8b949e; margin-right: 6px;">📁 Ruta:</span>
+      <input type="text" id="path-input" value="${fullPathInicial}" placeholder="Ruta completa del archivo .md..." />
+    </div>
+
+    <div class="doc-search-container" title="Buscar texto en el documento actual">
+      <input type="text" id="doc-search-input" placeholder="🔍 Buscar en documento..." oninput="ejecutarBusquedaTexto()" />
+      <span class="search-count" id="search-counter">0/0</span>
+      <button class="search-nav-btn" onclick="navegarBusqueda(-1)" title="Anterior match">▲</button>
+      <button class="search-nav-btn" onclick="navegarBusqueda(1)" title="Siguiente match">▼</button>
     </div>
     
     <button class="btn btn-primary" onclick="cargarArchivoDesdeInput()">🚀 Visualizar</button>
@@ -466,7 +541,6 @@ function generarHTML(contenidoInicial, rutaInicial) {
     <button class="btn" onclick="recargarActual()">🔄 Recargar</button>
   </header>
 
-  <!-- MAIN CONTENT -->
   <main id="main-content">
     <article class="markdown-body" id="rendered-content">
     </article>
@@ -491,9 +565,12 @@ function generarHTML(contenidoInicial, rutaInicial) {
   <script>
     let contenidoActual = ${JSON.stringify(contenidoInicial)};
     let rutaActual = ${JSON.stringify(fullPathInicial)};
+    let listaArchivosProyecto = [];
     let comentariosActuales = [];
     let textoSeleccionadoTemp = '';
     let seccionSeleccionadaTemp = '';
+    let matchesBusqueda = [];
+    let indiceMatchActual = -1;
 
     mermaid.initialize({ startOnLoad: false, theme: 'dark' });
 
@@ -592,6 +669,86 @@ function generarHTML(contenidoInicial, rutaInicial) {
 
       cargarComentarios();
     }
+
+    function ejecutarBusquedaTexto() {
+      const query = document.getElementById('doc-search-input').value.trim();
+      const contentArticle = document.getElementById('rendered-content');
+      
+      document.querySelectorAll('mark.doc-search-highlight').forEach(el => {
+        const parent = el.parentNode;
+        parent.replaceChild(document.createTextNode(el.textContent), el);
+        parent.normalize();
+      });
+
+      matchesBusqueda = [];
+      indiceMatchActual = -1;
+      document.getElementById('search-counter').textContent = '0/0';
+
+      if (!query || query.length < 2) return;
+
+      const escapedQuery = query.replace(/[.*+?^$\${}()|[\\]\\\\]/g, '\\\\$&');
+      const regex = new RegExp('(' + escapedQuery + ')', 'gi');
+      
+      function resaltarNodoTexto(nodo) {
+        if (nodo.nodeType === 3) {
+          const val = nodo.nodeValue;
+          if (regex.test(val)) {
+            const span = document.createElement('span');
+            span.innerHTML = val.replace(regex, '<mark class="doc-search-highlight">$1</mark>');
+            nodo.parentNode.replaceChild(span, nodo);
+          }
+        } else if (nodo.nodeType === 1 && !['SCRIPT', 'STYLE', 'BUTTON', 'TEXTAREA'].includes(nodo.tagName)) {
+          Array.from(nodo.childNodes).forEach(resaltarNodoTexto);
+        }
+      }
+
+      resaltarNodoTexto(contentArticle);
+
+      matchesBusqueda = Array.from(document.querySelectorAll('mark.doc-search-highlight'));
+      if (matchesBusqueda.length > 0) {
+        indiceMatchActual = 0;
+        actualizarMatchNavegacion();
+      }
+    }
+
+    function navegarBusqueda(direccion) {
+      if (matchesBusqueda.length === 0) return;
+      indiceMatchActual += direccion;
+      if (indiceMatchActual >= matchesBusqueda.length) indiceMatchActual = 0;
+      if (indiceMatchActual < 0) indiceMatchActual = matchesBusqueda.length - 1;
+      actualizarMatchNavegacion();
+    }
+
+    function actualizarMatchNavegacion() {
+      matchesBusqueda.forEach((el, idx) => {
+        if (idx === indiceMatchActual) {
+          el.classList.add('active-match');
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } else {
+          el.classList.remove('active-match');
+        }
+      });
+      document.getElementById('search-counter').textContent = (indiceMatchActual + 1) + '/' + matchesBusqueda.length;
+    }
+
+    document.getElementById('file-filter-input').addEventListener('input', (e) => {
+      const filtro = e.target.value.toLowerCase().trim();
+      const select = document.getElementById('project-files-select');
+      
+      select.innerHTML = '<option value="">📂 Seleccionar archivo .md del proyecto...</option>';
+      const filtrados = listaArchivosProyecto.filter(f => f.relPath.toLowerCase().includes(filtro) || f.name.toLowerCase().includes(filtro));
+      
+      filtrados.forEach(file => {
+        const opt = document.createElement('option');
+        opt.value = file.fullPath;
+        opt.textContent = file.relPath;
+        opt.title = file.fullPath;
+        if (file.fullPath === rutaActual || file.relPath === rutaActual) {
+          opt.selected = true;
+        }
+        select.appendChild(opt);
+      });
+    });
 
     document.getElementById('main-content').addEventListener('mouseup', (e) => {
       const selection = window.getSelection();
@@ -728,11 +885,11 @@ function generarHTML(contenidoInicial, rutaInicial) {
     async function cargarListaArchivosProyecto() {
       try {
         const res = await fetch('/api/list-markdown');
-        const archivos = await res.json();
+        listaArchivosProyecto = await res.json();
         const select = document.getElementById('project-files-select');
         
         select.innerHTML = '<option value="">📂 Seleccionar archivo .md del proyecto...</option>';
-        archivos.forEach(file => {
+        listaArchivosProyecto.forEach(file => {
           const opt = document.createElement('option');
           opt.value = file.fullPath;
           opt.textContent = file.relPath;
@@ -950,7 +1107,7 @@ const server = http.createServer((req, res) => {
 server.listen(PORT, () => {
   const url = `http://localhost:${PORT}`;
   console.log(`====================================================`);
-  console.log(`🚀 Visor Markdown Universal (Sintaxis JS Corregida)`);
+  console.log(`🚀 Visor Markdown Universal con Buscadores de Archivos y Texto`);
   console.log(`📄 Archivo Inicial: ${targetFile}`);
   console.log(`🌐 Navegar a: ${url}`);
   console.log(`====================================================`);
