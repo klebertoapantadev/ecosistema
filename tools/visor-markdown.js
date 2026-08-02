@@ -44,7 +44,7 @@ function escanearArchivosMd(dir, lista = [], baseDir = ROOT_DIR) {
         lista.push({
           name: elem.name,
           relPath: relPath,
-          fullPath: fullPath
+          fullPath: fullPath.replace(/\\/g, '/')
         });
       }
     }
@@ -53,8 +53,8 @@ function escanearArchivosMd(dir, lista = [], baseDir = ROOT_DIR) {
 }
 
 function generarHTML(contenidoInicial, rutaInicial) {
+  const fullPathInicial = path.resolve(rutaInicial).replace(/\\/g, '/');
   const filenameInicial = path.basename(rutaInicial);
-  const relPathInicial = path.relative(ROOT_DIR, rutaInicial).replace(/\\/g, '/');
 
   return `<!DOCTYPE html>
 <html lang="es">
@@ -77,7 +77,6 @@ function generarHTML(contenidoInicial, rutaInicial) {
       --border-color: #30363d;
       --text-color: #c9d1d9;
       --accent-color: #58a6ff;
-      --highlight-bg: rgba(210, 153, 34, 0.25);
     }
     
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -178,7 +177,6 @@ function generarHTML(contenidoInicial, rutaInicial) {
     #toc a .comment-icon { opacity: 0.4; font-size: 0.8rem; margin-left: 6px; }
     #toc a .comment-icon:hover { opacity: 1; }
 
-    /* Tarjetas de Comentarios en Sidebar */
     .comment-card {
       background-color: #21262d;
       border: 1px solid var(--border-color);
@@ -250,7 +248,6 @@ function generarHTML(contenidoInicial, rutaInicial) {
 
     .markdown-body table { display: table !important; width: 100% !important; }
 
-    /* Icono flotante de comentario al lado de encabezados */
     .heading-comment-btn {
       display: inline-flex;
       align-items: center;
@@ -301,7 +298,8 @@ function generarHTML(contenidoInicial, rutaInicial) {
       background: transparent;
       border: none;
       color: #c9d1d9;
-      font-size: 0.88rem;
+      font-size: 0.84rem;
+      font-family: monospace;
       outline: none;
     }
 
@@ -324,11 +322,9 @@ function generarHTML(contenidoInicial, rutaInicial) {
     .btn:hover { background-color: #30363d; border-color: #8b949e; }
     .btn-primary { background-color: #238636; color: #ffffff; border-color: rgba(240,246,252,0.1); }
     .btn-primary:hover { background-color: #2ea043; }
-    .btn-warning { background-color: #9e6a03; color: #ffffff; }
 
     #file-picker { display: none; }
 
-    /* POPUP DE SELECCIÓN DE TEXTO */
     #selection-popup {
       position: absolute;
       display: none;
@@ -345,7 +341,6 @@ function generarHTML(contenidoInicial, rutaInicial) {
     }
     #selection-popup:hover { transform: scale(1.05); }
 
-    /* MODAL DE CREACIÓN DE COMENTARIO */
     .modal-overlay {
       position: fixed;
       inset: 0;
@@ -452,20 +447,20 @@ function generarHTML(contenidoInicial, rutaInicial) {
 
     <div id="comments-panel" style="display: none;">
       <div id="comments-list">
-        <p style="padding: 12px; color: #8b949e; font-size: 0.85rem;">Sin comentarios registrados</p>
+        <p style="padding: 12px; color: #8b949e; font-size: 0.85rem;">Sin comentarios en este archivo</p>
       </div>
     </div>
   </aside>
 
-  <!-- TOP BAR -->
+  <!-- TOP BAR CON RUTA COMPLETA -->
   <header class="top-bar">
-    <div class="input-box">
-      <span style="font-size: 0.85rem; color: #8b949e; margin-right: 8px;">📄 Ruta:</span>
-      <input type="text" id="path-input" value="${relPathInicial}" placeholder="Escribe la ruta de cualquier archivo .md..." />
+    <div class="input-box" title="Ruta completa absoluta del archivo en disco">
+      <span style="font-size: 0.85rem; color: #8b949e; margin-right: 8px;">📁 Ruta Completa:</span>
+      <input type="text" id="path-input" value="${fullPathInicial}" placeholder="Pega o escribe la ruta completa absoluta de cualquier archivo .md..." />
     </div>
     
     <button class="btn btn-primary" onclick="cargarArchivoDesdeInput()">🚀 Visualizar</button>
-    <label class="btn" for="file-picker">💻 Cargar Local</label>
+    <label class="btn" title="Cargar archivo .md desde el disco local" for="file-picker">💻 Cargar Local</label>
     <input type="file" id="file-picker" accept=".md" onchange="cargarArchivoLocal(event)" />
     
     <button class="btn" onclick="document.getElementById('main-content').scrollTo({top: 0, behavior: 'smooth'})">⬆ Arriba</button>
@@ -478,15 +473,13 @@ function generarHTML(contenidoInicial, rutaInicial) {
     </article>
   </main>
 
-  <!-- POPUP BOTÓN SELECCIÓN DE TEXTO -->
   <div id="selection-popup" onclick="abrirModalConSeleccion()">💬 Comentar para la IA</div>
 
-  <!-- MODAL DE COMENTARIO -->
   <div class="modal-overlay" id="comment-modal">
     <div class="modal-content">
       <h3>💬 Dejar Comentario u Observación para la IA</h3>
       <div class="context-box" id="modal-context-box">Texto o sección seleccionada...</div>
-      <textarea id="modal-comment-text" placeholder="Escribe aquí tu instrucción o cambio deseado (ej: 'Modificar regla 3 para agregar soporte de webhooks', 'Actualizar avance a 90%')..."></textarea>
+      <textarea id="modal-comment-text" placeholder="Escribe tu instrucción o cambio deseado para la IA..."></textarea>
       <div class="modal-actions">
         <button class="btn" onclick="cerrarModalComentario()">Cancelar</button>
         <button class="btn btn-primary" onclick="guardarComentarioModal()">💾 Guardar Comentario</button>
@@ -494,12 +487,11 @@ function generarHTML(contenidoInicial, rutaInicial) {
     </div>
   </div>
 
-  <!-- NOTIFICACIÓN TOAST -->
   <div id="status-toast"></div>
 
   <script>
     let contenidoActual = ${JSON.stringify(contenidoInicial)};
-    let rutaActual = ${JSON.stringify(relPathInicial)};
+    let rutaActual = ${JSON.stringify(fullPathInicial)};
     let comentariosActuales = [];
     let textoSeleccionadoTemp = '';
     let seccionSeleccionadaTemp = '';
@@ -542,7 +534,6 @@ function generarHTML(contenidoInicial, rutaInicial) {
     function renderizarMarkdown(textoMd) {
       document.getElementById('rendered-content').innerHTML = marked.parse(textoMd);
 
-      // Agregar botón de comentario 💬 al lado de cada encabezado H1, H2, H3
       const headings = document.querySelectorAll('#rendered-content h1, #rendered-content h2, #rendered-content h3');
       const tocNav = document.getElementById('toc');
       
@@ -554,7 +545,6 @@ function generarHTML(contenidoInicial, rutaInicial) {
           
           const tituloLimpio = heading.textContent.replace(/^[#\s]+/, '');
           
-          // Inyectar botón de comentario en el título de la página
           const commentBtn = document.createElement('button');
           commentBtn.className = 'heading-comment-btn';
           commentBtn.title = 'Agregar comentario a esta sección';
@@ -565,7 +555,6 @@ function generarHTML(contenidoInicial, rutaInicial) {
           };
           heading.appendChild(commentBtn);
 
-          // Construir TOC
           const li = document.createElement('li');
           const a = document.createElement('a');
           a.href = '#' + id;
@@ -593,7 +582,6 @@ function generarHTML(contenidoInicial, rutaInicial) {
         tocNav.innerHTML = '<p style="padding: 12px; color: #8b949e;">Sin secciones principales</p>';
       }
 
-      // Renderizar Mermaid
       document.querySelectorAll('.language-mermaid').forEach((block) => {
         const code = block.textContent;
         const div = document.createElement('div');
@@ -603,11 +591,9 @@ function generarHTML(contenidoInicial, rutaInicial) {
       });
       mermaid.run();
 
-      // Cargar y mostrar comentarios existentes
       cargarComentarios();
     }
 
-    // Detección de Selección de Texto para Mostrar Popup 💬
     document.getElementById('main-content').addEventListener('mouseup', (e) => {
       const selection = window.getSelection();
       const selectedText = selection.toString().trim();
@@ -666,7 +652,7 @@ function generarHTML(contenidoInicial, rutaInicial) {
 
         if (res.ok) {
           cerrarModalComentario();
-          mostrarToast('Comentario guardado. La IA lo revisará.', false);
+          mostrarToast('Comentario guardado para la IA', false);
           cargarComentarios();
         } else {
           mostrarToast('Error al guardar comentario');
@@ -736,12 +722,13 @@ function generarHTML(contenidoInicial, rutaInicial) {
         const archivos = await res.json();
         const select = document.getElementById('project-files-select');
         
-        select.innerHTML = '<option value="">📂 Seleccionar archivo .md...</option>';
+        select.innerHTML = '<option value="">📂 Seleccionar archivo .md del proyecto...</option>';
         archivos.forEach(file => {
           const opt = document.createElement('option');
-          opt.value = file.relPath;
+          opt.value = file.fullPath;
           opt.textContent = file.relPath;
-          if (file.relPath === rutaActual) {
+          opt.title = file.fullPath;
+          if (file.fullPath === rutaActual || file.relPath === rutaActual) {
             opt.selected = true;
           }
           select.appendChild(opt);
@@ -766,8 +753,8 @@ function generarHTML(contenidoInicial, rutaInicial) {
         }
 
         contenidoActual = data.content;
-        rutaActual = data.relPath;
-        document.getElementById('path-input').value = data.relPath;
+        rutaActual = data.fullPath;
+        document.getElementById('path-input').value = data.fullPath;
         document.title = 'Visor Markdown · ' + data.name;
         
         renderizarMarkdown(data.content);
@@ -831,7 +818,6 @@ function generarHTML(contenidoInicial, rutaInicial) {
 const server = http.createServer((req, res) => {
   const parsedUrl = new URL(req.url, `http://localhost:${PORT}`);
   
-  // API: Listar comentarios del archivo
   if (parsedUrl.pathname === '/api/comments' && req.method === 'GET') {
     const reqPath = parsedUrl.searchParams.get('file');
     const todosComentarios = leerComentarios();
@@ -844,7 +830,6 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  // API: Guardar nuevo comentario
   if (parsedUrl.pathname === '/api/comments' && req.method === 'POST') {
     let body = '';
     req.on('data', chunk => { body += chunk; });
@@ -869,7 +854,6 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  // API: Eliminar comentario por ID
   if (parsedUrl.pathname === '/api/comments' && req.method === 'DELETE') {
     const commentId = parsedUrl.searchParams.get('id');
     if (commentId) {
@@ -882,7 +866,6 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  // API: Listar archivos .md
   if (parsedUrl.pathname === '/api/list-markdown') {
     const listaMd = escanearArchivosMd(ROOT_DIR);
     res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
@@ -890,7 +873,6 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  // API: Leer archivo
   if (parsedUrl.pathname === '/api/file') {
     const reqPath = parsedUrl.searchParams.get('path');
     if (!reqPath) {
@@ -919,17 +901,19 @@ const server = http.createServer((req, res) => {
       }
       
       const relPath = path.relative(ROOT_DIR, fullPath).replace(/\\/g, '/');
+      const normalizedFullPath = path.resolve(fullPath).replace(/\\/g, '/');
+
       res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
       res.end(JSON.stringify({
         name: path.basename(fullPath),
         relPath: relPath,
+        fullPath: normalizedFullPath,
         content: data
       }));
     });
     return;
   }
 
-  // Auto-Reload SSE
   if (parsedUrl.pathname === '/events') {
     res.writeHead(200, {
       'Content-Type': 'text/event-stream',
@@ -957,9 +941,8 @@ const server = http.createServer((req, res) => {
 server.listen(PORT, () => {
   const url = `http://localhost:${PORT}`;
   console.log(`====================================================`);
-  console.log(`🚀 Visor Markdown Universal + Sistema de Revisiones IA Activo`);
+  console.log(`🚀 Visor Markdown Universal con Ruta Absoluta Completa`);
   console.log(`📄 Archivo Inicial: ${targetFile}`);
-  console.log(`💬 Comentarios guardados en: ${COMMENTS_FILE}`);
   console.log(`🌐 Navegar a: ${url}`);
   console.log(`====================================================`);
 
