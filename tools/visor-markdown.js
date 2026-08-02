@@ -60,7 +60,7 @@ function generarHTML(contenidoInicial, rutaInicial) {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Visor Markdown Universal · Control de Cambios IA</title>
+  <title>Visor Markdown Universal · Revisiones IA</title>
   
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.5.1/github-markdown-dark.min.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
@@ -90,7 +90,7 @@ function generarHTML(contenidoInicial, rutaInicial) {
     }
     
     #sidebar {
-      width: 390px;
+      width: 410px;
       background-color: var(--bg-sidebar);
       border-right: 1px solid var(--border-color);
       display: flex;
@@ -169,7 +169,6 @@ function generarHTML(contenidoInicial, rutaInicial) {
       padding: 12px;
     }
 
-    /* ESTILOS DEL ÍNDICE MULTINIVEL (H1, H2, H3, H4) */
     #toc ul { list-style: none; padding-left: 0; }
     #toc li { margin: 2px 0; }
     #toc a {
@@ -193,11 +192,11 @@ function generarHTML(contenidoInicial, rutaInicial) {
       border-left: 3px solid var(--accent-color);
     }
 
-    /* Niveles de Jerarquía en el Índice */
     .toc-item.level-1 a { font-weight: 700; color: #c9d1d9; font-size: 0.86rem; margin-top: 6px; }
     .toc-item.level-2 a { font-weight: 600; color: #58a6ff; font-size: 0.84rem; }
     .toc-item.level-3 a { font-weight: 500; color: #8b949e; font-size: 0.80rem; }
-    .toc-item.level-4 a { font-weight: 400; color: #6e7681; font-size: 0.76rem; font-style: italic; }
+    .toc-item.level-4 a { font-weight: 400; color: #8b949e; font-size: 0.77rem; }
+    .toc-item.level-rule a { font-weight: 400; color: #79c0ff; font-size: 0.76rem; font-style: normal; }
 
     #toc a .comment-icon { opacity: 0.4; font-size: 0.8rem; margin-left: 6px; }
     #toc a .comment-icon:hover { opacity: 1; }
@@ -317,13 +316,13 @@ function generarHTML(contenidoInicial, rutaInicial) {
       font-size: 15px;
     }
 
-    /* COMPENSACIÓN DE DESPLAZAMIENTO PARA TODOS LOS ENCABEZADOS (H1 - H6) */
     .markdown-body h1,
     .markdown-body h2,
     .markdown-body h3,
     .markdown-body h4,
     .markdown-body h5,
-    .markdown-body h6 {
+    .markdown-body h6,
+    .markdown-body li[id^="rule-item-"] {
       scroll-margin-top: 95px !important;
     }
 
@@ -347,7 +346,7 @@ function generarHTML(contenidoInicial, rutaInicial) {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      margin-left: 10px;
+      margin-left: 8px;
       font-size: 0.85rem;
       opacity: 0.3;
       cursor: pointer;
@@ -359,13 +358,13 @@ function generarHTML(contenidoInicial, rutaInicial) {
 
     .heading-comment-btn:hover {
       opacity: 1;
-      transform: scale(1.2);
+      transform: scale(1.25);
     }
 
     .top-bar {
       position: fixed;
       top: 0;
-      left: 390px;
+      left: 410px;
       right: 0;
       height: 64px;
       background-color: rgba(22, 27, 34, 0.95);
@@ -567,7 +566,6 @@ function generarHTML(contenidoInicial, rutaInicial) {
 </head>
 <body>
 
-  <!-- SIDEBAR CON ÍNDICE MULTINIVEL (H1, H2, H3, H4) -->
   <aside id="sidebar">
     <div class="sidebar-header">
       <h2>💬 Visor & Revisiones IA</h2>
@@ -595,7 +593,6 @@ function generarHTML(contenidoInicial, rutaInicial) {
     </div>
   </aside>
 
-  <!-- TOP BAR -->
   <header class="top-bar">
     <div class="input-box" title="Ruta completa absoluta del archivo en disco">
       <span style="font-size: 0.82rem; color: #8b949e; margin-right: 6px;">📁 Ruta:</span>
@@ -617,7 +614,6 @@ function generarHTML(contenidoInicial, rutaInicial) {
     <button class="btn" onclick="recargarActual()">🔄 Recargar</button>
   </header>
 
-  <!-- MAIN CONTENT -->
   <main id="main-content">
     <article class="markdown-body" id="rendered-content">
     </article>
@@ -659,7 +655,7 @@ function generarHTML(contenidoInicial, rutaInicial) {
         <button class="btn btn-accept" id="diff-modal-accept-btn">✅ Aceptar Cambio</button>
       </div>
     </div>
-  </aside>
+  </div>
 
   <div id="status-toast"></div>
 
@@ -709,10 +705,44 @@ function generarHTML(contenidoInicial, rutaInicial) {
       }
     }
 
-    // RENDERIZADO DEL ÍNDICE MULTINIVEL H1 -> H2 -> H3 -> H4
     function renderizarMarkdown(textoMd) {
       document.getElementById('rendered-content').innerHTML = marked.parse(textoMd);
 
+      // PROCESAR REGLAS NUMERADAS 1, 2, 3, 4, 5... EN EL DOCUMENTO RENDERIZADO
+      const olElements = document.querySelectorAll('#rendered-content ol');
+      let ruleCounter = 0;
+
+      olElements.forEach((ol) => {
+        const lis = Array.from(ol.children).filter(el => el.tagName === 'LI');
+        lis.forEach((li, idx) => {
+          ruleCounter++;
+          const ruleId = 'rule-item-' + ruleCounter;
+          li.id = ruleId;
+
+          // Extraer primera línea / título de la regla
+          const firstLine = li.textContent.trim().split('\\n')[0];
+          const cleanRuleTitle = (idx + 1) + '. ' + firstLine.replace(/^[0-9.]+\\s*/, '').slice(0, 65);
+
+          // Inyectar botón de comentario 💬 al lado de la regla numerada
+          const commentBtn = document.createElement('button');
+          commentBtn.className = 'heading-comment-btn';
+          commentBtn.title = 'Agregar comentario a esta regla: ' + cleanRuleTitle;
+          commentBtn.innerHTML = '💬';
+          commentBtn.onclick = (e) => {
+            e.stopPropagation();
+            abrirModalSeccion(cleanRuleTitle);
+          };
+
+          const firstStrong = li.querySelector('strong') || li.querySelector('b');
+          if (firstStrong) {
+            firstStrong.appendChild(commentBtn);
+          } else {
+            li.insertBefore(commentBtn, li.firstChild);
+          }
+        });
+      });
+
+      // CONSTRUIR ÍNDICE MULTINIVEL H1, H2, H3, H4 Y REGLAS NUMERADAS 1,2,3,4,5
       const headings = document.querySelectorAll('#rendered-content h1, #rendered-content h2, #rendered-content h3, #rendered-content h4');
       const tocNav = document.getElementById('toc');
       
@@ -737,13 +767,12 @@ function generarHTML(contenidoInicial, rutaInicial) {
           heading.appendChild(commentBtn);
 
           const li = document.createElement('li');
-          const level = parseInt(heading.tagName.substring(1)); // 1, 2, 3, 4
+          const level = parseInt(heading.tagName.substring(1));
           li.className = 'toc-item level-' + level;
 
           const a = document.createElement('a');
           a.href = '#' + id;
           
-          // Icono prefijo de jerarquía según nivel
           let prefixIcon = '';
           if (level === 1) prefixIcon = '📌 ';
           else if (level === 2) prefixIcon = '▫️ ';
@@ -751,8 +780,6 @@ function generarHTML(contenidoInicial, rutaInicial) {
           else if (level === 4) prefixIcon = '   • ';
 
           a.innerHTML = '<span class="toc-title">' + prefixIcon + tituloLimpio + '</span><span class="comment-icon" title="Comentar sección">💬</span>';
-          
-          // Indentación matemática por nivel de anidamiento
           li.style.paddingLeft = ((level - 1) * 12) + 'px';
           
           a.addEventListener('click', (e) => {
@@ -763,7 +790,6 @@ function generarHTML(contenidoInicial, rutaInicial) {
             }
             e.preventDefault();
 
-            // Resaltar elemento activo en el índice
             document.querySelectorAll('#toc a').forEach(el => el.classList.remove('active'));
             a.classList.add('active');
 
@@ -772,6 +798,49 @@ function generarHTML(contenidoInicial, rutaInicial) {
 
           li.appendChild(a);
           ul.appendChild(li);
+
+          // Si el encabezado es "Reglas de Negocio" (o H3 relevante), insertar sus reglas numeradas 1, 2, 3... en el índice
+          if (heading.tagName === 'H3' && /reglas de negocio/i.test(tituloLimpio)) {
+            // Buscar la siguiente lista <ol> después de este H3
+            let nextElem = heading.nextElementSibling;
+            while (nextElem && nextElem.tagName !== 'OL' && !/^H[1-4]$/.test(nextElem.tagName)) {
+              nextElem = nextElem.nextElementSibling;
+            }
+
+            if (nextElem && nextElem.tagName === 'OL') {
+              const ruleLis = Array.from(nextElem.children).filter(el => el.tagName === 'LI');
+              ruleLis.forEach((ruleLi, rIdx) => {
+                const ruleId = ruleLi.id;
+                const ruleFirstLine = ruleLi.textContent.trim().split('\\n')[0];
+                const cleanRuleTitle = (rIdx + 1) + '. ' + ruleFirstLine.replace(/^[0-9.]+\\s*/, '').slice(0, 55);
+
+                const ruleItemLi = document.createElement('li');
+                ruleItemLi.className = 'toc-item level-rule';
+                ruleItemLi.style.paddingLeft = '36px';
+
+                const ruleA = document.createElement('a');
+                ruleA.href = '#' + ruleId;
+                ruleA.innerHTML = '<span class="toc-title">⚡ ' + cleanRuleTitle + '</span><span class="comment-icon" title="Comentar regla">💬</span>';
+
+                ruleA.addEventListener('click', (e) => {
+                  if (e.target.classList.contains('comment-icon')) {
+                    e.preventDefault();
+                    abrirModalSeccion(cleanRuleTitle);
+                    return;
+                  }
+                  e.preventDefault();
+
+                  document.querySelectorAll('#toc a').forEach(el => el.classList.remove('active'));
+                  ruleA.classList.add('active');
+
+                  ruleLi.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                });
+
+                ruleItemLi.appendChild(ruleA);
+                ul.appendChild(ruleItemLi);
+              });
+            }
+          }
         });
         tocNav.innerHTML = '';
         tocNav.appendChild(ul);
@@ -901,7 +970,7 @@ function generarHTML(contenidoInicial, rutaInicial) {
       document.getElementById('modal-title').textContent = '💬 Dejar Comentario u Observación para la IA';
       seccionSeleccionadaTemp = nombreSeccion;
       textoSeleccionadoTemp = '';
-      document.getElementById('modal-context-box').textContent = 'Sección: ' + nombreSeccion;
+      document.getElementById('modal-context-box').textContent = 'Sección/Regla: ' + nombreSeccion;
       document.getElementById('modal-comment-text').value = '';
       document.getElementById('comment-modal').style.display = 'grid';
     }
@@ -911,7 +980,7 @@ function generarHTML(contenidoInicial, rutaInicial) {
       document.getElementById('modal-title').textContent = '✏️ Editar Comentario para la IA';
       seccionSeleccionadaTemp = c.section || '';
       textoSeleccionadoTemp = c.selectedText || '';
-      document.getElementById('modal-context-box').textContent = (c.selectedText ? 'Texto: "' + c.selectedText + '"' : ('Sección: ' + (c.section || 'General')));
+      document.getElementById('modal-context-box').textContent = (c.selectedText ? 'Texto: "' + c.selectedText + '"' : ('Sección/Regla: ' + (c.section || 'General')));
       document.getElementById('modal-comment-text').value = c.comment;
       document.getElementById('comment-modal').style.display = 'grid';
     }
@@ -1083,7 +1152,7 @@ function generarHTML(contenidoInicial, rutaInicial) {
         document.getElementById('doc-search-input').value = c.selectedText;
         ejecutarBusquedaTexto();
       } else if (c.section) {
-        const headings = document.querySelectorAll('#rendered-content h1, #rendered-content h2, #rendered-content h3, #rendered-content h4');
+        const headings = document.querySelectorAll('#rendered-content h1, #rendered-content h2, #rendered-content h3, #rendered-content h4, #rendered-content li[id^="rule-item-"]');
         for (const h of headings) {
           if (h.textContent.includes(c.section)) {
             h.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -1413,7 +1482,7 @@ const server = http.createServer((req, res) => {
 server.listen(PORT, () => {
   const url = `http://localhost:${PORT}`;
   console.log(`====================================================`);
-  console.log(`🚀 Visor Markdown Universal con Índice Jerárquico Multinivel (H1-H4)`);
+  console.log(`🚀 Visor Markdown Universal con Selección y Comentarios en Reglas 1, 2, 3, 4, 5...`);
   console.log(`📄 Archivo Inicial: ${targetFile}`);
   console.log(`🌐 Navegar a: ${url}`);
   console.log(`====================================================`);
