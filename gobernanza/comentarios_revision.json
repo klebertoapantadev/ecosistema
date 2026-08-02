@@ -1,0 +1,32 @@
+[
+  {
+    "file": "C:/Users/Kleber Toapanta/Documents/BK2026/Antigravity2026/Ley/ecosistema/gobernanza/productos/plataforma/especificacion-funcional.md",
+    "section": "PLT-013 — Centro Transversal de Notificaciones y Alertas (In-App, Push, Email y WhatsApp)",
+    "selectedText": "WhatsApp Business API: Mensajes operativos de alto valor...",
+    "comment": "\"WhatsApp Business API\": solo déjalo como idea, de momento no se hará ninguna integración.",
+    "id": "comment_1785662783217",
+    "timestamp": "2026-08-02T09:26:23.217Z",
+    "status": "ATENDIDO",
+    "aiChange": {
+      "appliedAt": "2026-08-02T09:35:15Z",
+      "summary": "Se modificó la regla 2 de PLT-013 para establecer WhatsApp Business API únicamente como propuesta/idea futura sin integración operativa actual.",
+      "beforeText": "   - **WhatsApp Business API:** Mensajes operativos de alto valor (estado de entregas, asignación de técnicos/abogados), requiriendo previa autorización explícita (`autorizacion_contacto_whatsapp` en `PLT-001`).",
+      "afterText": "   - **Propuesta / Idea Futura (WhatsApp Business API):** Mensajes operativos de alto valor (estado de entregas, asignación de técnicos/abogados). Se mantiene documentado exclusivamente como propuesta/idea futura; de momento no se realizará ninguna integración operativa con WhatsApp API."
+    }
+  },
+  {
+    "file": "C:/Users/Kleber Toapanta/Documents/BK2026/Antigravity2026/Ley/ecosistema/gobernanza/productos/plataforma/especificacion-funcional.md",
+    "section": "PLT-013 — Centro Transversal de Notificaciones y Alertas (In-App, Push, Email y WhatsApp)",
+    "selectedText": "Historial y Métricas de Despacho",
+    "comment": "\"Historial y Métricas de Despacho\": Debemos tener una validación de notificaciones leidas / ignoradas y actualizar las metricas con el porcentaje de leidos/ignorados / enviados, etc.",
+    "id": "comment_1785662913967",
+    "timestamp": "2026-08-02T09:28:33.967Z",
+    "status": "ATENDIDO",
+    "aiChange": {
+      "appliedAt": "2026-08-02T09:35:15Z",
+      "summary": "Se agregó la regla de validación de notificaciones leídas vs. ignoradas/sin abrir con cálculo de métricas de apertura (% leídas, % ignoradas, % entregadas exitosas, % fallidas) en PLT-013.",
+      "beforeText": "   - **Historial y Métricas de Despacho:**\n     - Registro auditado de cada campaña emitida (`not_campana`) almacenando fecha, emisor, audiencia seleccionada, canales activados, total de envíos exitosos y fallidos.",
+      "afterText": "   - **Historial y Métricas de Despacho (Con Medición de Leídas / Ignoradas):**\n     - Registro auditado de cada campaña emitida (`not_campana`) almacenando fecha, emisor, audiencia seleccionada, canales activados, total de envíos exitosos y fallidos.\n     - **Validación y Métricas de Tasa de Apertura:** El sistema ejecuta el rastreo de notificaciones leídas vs. ignoradas/sin abrir, calculando y actualizando dinámicamente las métricas de porcentaje de apertura (`% leídas`, `% ignoradas`, `% entregadas exitosas` y `% fallidas`)."
+    }
+  }
+]

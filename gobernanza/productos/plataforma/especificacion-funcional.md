@@ -525,7 +525,7 @@ Motor unificado de comunicación multicanal y alertas en tiempo real para todos 
    - **In-App:** Notificación persistida en base de datos (`comun_notificacion.not_registro`).
    - **Web & Mobile Push:** Alertas push inmediatas enviadas a navegadores (Web Push API - VAPID) y aplicaciones nativas móviles (Capacitor / FCM).
    - **Correo Transaccional (Email):** Envíos por correo electrónico estructurado (HTML responsive / Markdown) para notificaciones formales y comunicados corporativos.
-   - **WhatsApp Business API:** Mensajes operativos de alto valor (estado de entregas, asignación de técnicos/abogados), requiriendo previa autorización explícita (`autorizacion_contacto_whatsapp` en `PLT-001`).
+   - **Propuesta / Idea Futura (WhatsApp Business API):** Mensajes operativos de alto valor (estado de entregas, asignación de técnicos/abogados). Se mantiene documentado exclusivamente como propuesta/idea futura; de momento no se realizará ninguna integración operativa con WhatsApp API.
 3. **Widget Administrativo de Emisión de Notificaciones (`emision_notificaciones`):**
    - Módulo común registrado en la consola de administración (`PLT-011`) que permite a los Administradores y SuperAdmins redactar y enviar comunicaciones masivas o segmentadas dentro de su negocio activo.
    - **Segmentación Dinámica de Audiencia (Dentro del Negocio):**
@@ -542,8 +542,9 @@ Motor unificado de comunicación multicanal y alertas en tiempo real para todos 
        - *Asistente y Variables Dinámicas:* Botón selector de variables dinámicas interpolables (`{{nombre_usuario}}`, `{{negocio}}`, `{{perfil}}`, `{{fecha}}`).
      - **Modo Código / Markdown (`.md`):** Pestaña de visualización y edición directa en código **Markdown (`.md`)** o código HTML estructurado, permitiendo insumo o exportación transparente entre ambos formatos.
      - **Modo Vista Previa Live (*Live Preview*):** Renderizado simulado en tiempo real que refleja exactamente cómo visualizará el usuario el contenido en la campana In-App, en pantalla de dispositivo móvil (Push) y en cliente de correo electrónico (Email responsive).
-   - **Historial y Métricas de Despacho:**
+   - **Historial y Métricas de Despacho (Con Medición de Leídas / Ignoradas):**
      - Registro auditado de cada campaña emitida (`not_campana`) almacenando fecha, emisor, audiencia seleccionada, canales activados, total de envíos exitosos y fallidos.
+     - **Validación y Métricas de Tasa de Apertura:** El sistema ejecuta el rastreo de notificaciones leídas vs. ignoradas/sin abrir, calculando y actualizando dinámicamente las métricas de porcentaje de apertura (`% leídas`, `% ignoradas`, `% entregadas exitosas` y `% fallidas`).
 4. **Despacho Automático de Notificaciones del Sistema:**
    - Además de la emisión manual desde la consola, el motor ejecuta envíos automáticos ante eventos clave:
      - **Asignación / Revocación de Perfiles (`PLT-003`):** Envío automático por Email y Push al modificar la jerarquía o roles de un usuario.

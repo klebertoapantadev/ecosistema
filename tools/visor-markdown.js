@@ -60,7 +60,7 @@ function generarHTML(contenidoInicial, rutaInicial) {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Visor Markdown Universal · Revisiones IA</title>
+  <title>Visor Markdown Universal · Control de Cambios IA</title>
   
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.5.1/github-markdown-dark.min.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
@@ -90,7 +90,7 @@ function generarHTML(contenidoInicial, rutaInicial) {
     }
     
     #sidebar {
-      width: 380px;
+      width: 390px;
       background-color: var(--bg-sidebar);
       border-right: 1px solid var(--border-color);
       display: flex;
@@ -125,10 +125,6 @@ function generarHTML(contenidoInicial, rutaInicial) {
       color: #c9d1d9;
       font-size: 0.82rem;
       outline: none;
-    }
-
-    .search-file-box:focus {
-      border-color: var(--accent-color);
     }
 
     .file-select {
@@ -188,8 +184,6 @@ function generarHTML(contenidoInicial, rutaInicial) {
       transition: background 0.15s, color 0.15s;
     }
     #toc a:hover { background-color: rgba(110, 118, 129, 0.15); color: var(--text-color); }
-    #toc a .comment-icon { opacity: 0.4; font-size: 0.8rem; margin-left: 6px; }
-    #toc a .comment-icon:hover { opacity: 1; }
 
     /* Tarjetas de Comentarios en Sidebar */
     .comment-card {
@@ -205,8 +199,9 @@ function generarHTML(contenidoInicial, rutaInicial) {
       transition: border-color 0.2s;
     }
 
-    .comment-card:hover {
-      border-color: #58a6ff;
+    .comment-card.atendido {
+      border-color: #3fb950;
+      background-color: rgba(46, 160, 67, 0.08);
     }
 
     .comment-card .header {
@@ -218,13 +213,14 @@ function generarHTML(contenidoInicial, rutaInicial) {
       font-size: 0.78rem;
     }
 
-    .comment-card .status-badge {
+    .status-badge {
       font-size: 0.7rem;
       padding: 2px 6px;
       border-radius: 4px;
-      background-color: rgba(210, 153, 34, 0.2);
-      color: #d29922;
+      font-weight: 700;
     }
+    .status-pendiente { background-color: rgba(210, 153, 34, 0.2); color: #d29922; }
+    .status-atendido { background-color: rgba(46, 160, 67, 0.25); color: #3fb950; }
 
     .comment-card .snippet {
       color: #8b949e;
@@ -246,37 +242,50 @@ function generarHTML(contenidoInicial, rutaInicial) {
       border: 1px solid rgba(255,255,255,0.05);
     }
 
+    /* Caja del Resumen del Cambio Aplicado por la IA */
+    .ai-summary-box {
+      background-color: rgba(56, 139, 253, 0.1);
+      border: 1px dashed var(--accent-color);
+      border-radius: 6px;
+      padding: 8px;
+      font-size: 0.78rem;
+      color: #58a6ff;
+      margin-top: 4px;
+    }
+
     .comment-card .actions {
       display: flex;
-      justify-content: space-between;
-      align-items: center;
+      flex-wrap: wrap;
+      gap: 6px;
       margin-top: 6px;
       padding-top: 6px;
-      border-top: 1px solid rgba(255,255,255,0.05);
+      border-top: 1px solid rgba(255,255,255,0.08);
     }
 
     .comment-card-btn {
-      background: none;
-      border: none;
+      background: #161b22;
+      border: 1px solid var(--border-color);
+      color: #c9d1d9;
       cursor: pointer;
-      font-size: 0.78rem;
+      font-size: 0.76rem;
       font-weight: 600;
       display: flex;
       align-items: center;
       gap: 4px;
-      padding: 3px 6px;
+      padding: 4px 8px;
       border-radius: 4px;
       transition: background 0.15s;
     }
 
-    .btn-view { color: #58a6ff; }
-    .btn-view:hover { background-color: rgba(88, 166, 255, 0.15); }
-
-    .btn-edit { color: #d29922; }
-    .btn-edit:hover { background-color: rgba(210, 153, 34, 0.15); }
-
-    .btn-del { color: #f85149; }
-    .btn-del:hover { background-color: rgba(248, 81, 73, 0.15); }
+    .btn-view:hover { background-color: rgba(88, 166, 255, 0.2); color: #58a6ff; }
+    .btn-diff { color: #58a6ff; border-color: #58a6ff; }
+    .btn-diff:hover { background-color: rgba(88, 166, 255, 0.25); }
+    .btn-accept { color: #3fb950; border-color: #2ea043; background-color: rgba(46,160,67,0.15); }
+    .btn-accept:hover { background-color: #238636; color: #fff; }
+    .btn-revert { color: #f85149; border-color: #da3633; background-color: rgba(218,54,51,0.15); }
+    .btn-revert:hover { background-color: #da3633; color: #fff; }
+    .btn-edit:hover { background-color: rgba(210, 153, 34, 0.2); color: #d29922; }
+    .btn-del:hover { background-color: rgba(248, 81, 73, 0.2); color: #f85149; }
 
     #main-content {
       flex: 1;
@@ -331,7 +340,7 @@ function generarHTML(contenidoInicial, rutaInicial) {
     .top-bar {
       position: fixed;
       top: 0;
-      left: 380px;
+      left: 390px;
       right: 0;
       height: 64px;
       background-color: rgba(22, 27, 34, 0.95);
@@ -438,12 +447,11 @@ function generarHTML(contenidoInicial, rutaInicial) {
       z-index: 200;
       transition: transform 0.1s;
     }
-    #selection-popup:hover { transform: scale(1.05); }
 
     .modal-overlay {
       position: fixed;
       inset: 0;
-      background-color: rgba(0,0,0,0.75);
+      background-color: rgba(0,0,0,0.8);
       backdrop-filter: blur(4px);
       display: none;
       place-items: center;
@@ -454,13 +462,15 @@ function generarHTML(contenidoInicial, rutaInicial) {
       background-color: #161b22;
       border: 1px solid var(--border-color);
       border-radius: 12px;
-      width: 90%;
-      max-width: 580px;
+      width: 92%;
+      max-width: 720px;
       padding: 24px;
       display: flex;
       flex-direction: column;
       gap: 16px;
       box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+      max-height: 90vh;
+      overflow-y: auto;
     }
 
     .modal-content h3 {
@@ -471,33 +481,42 @@ function generarHTML(contenidoInicial, rutaInicial) {
       gap: 8px;
     }
 
-    .modal-content .context-box {
-      background-color: #0d1117;
-      border-left: 3px solid #d29922;
-      padding: 10px 14px;
-      border-radius: 4px;
-      font-size: 0.85rem;
-      color: #8b949e;
-      max-height: 100px;
-      overflow-y: auto;
+    /* ESTILOS DE COMPARACIÓN DIFF EN MODAL */
+    .diff-container {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      font-family: monospace;
+      font-size: 0.84rem;
     }
 
-    .modal-content textarea {
-      width: 100%;
-      height: 130px;
-      background-color: #0d1117;
-      border: 1px solid var(--border-color);
+    .diff-block {
       border-radius: 6px;
       padding: 12px;
-      color: #c9d1d9;
-      font-size: 0.9rem;
-      font-family: inherit;
-      outline: none;
-      resize: vertical;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      word-break: break-all;
     }
 
-    .modal-content textarea:focus {
-      border-color: var(--accent-color);
+    .diff-before {
+      background-color: rgba(248, 81, 73, 0.12);
+      border: 1px solid rgba(248, 81, 73, 0.4);
+      color: #ff7b72;
+    }
+
+    .diff-after {
+      background-color: rgba(46, 160, 67, 0.12);
+      border: 1px solid rgba(46, 160, 67, 0.4);
+      color: #56d364;
+    }
+
+    .diff-label {
+      font-weight: 700;
+      font-size: 0.76rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 6px;
+      display: block;
     }
 
     .modal-actions {
@@ -524,13 +543,11 @@ function generarHTML(contenidoInicial, rutaInicial) {
 </head>
 <body>
 
-  <!-- SIDEBAR CON GESTIÓN COMPLETA DE COMENTARIOS (VER / EDITAR / ELIMINAR) -->
+  <!-- SIDEBAR CON CONTROL DE CAMBIOS -->
   <aside id="sidebar">
     <div class="sidebar-header">
       <h2>💬 Visor & Revisiones IA</h2>
-      
       <input type="text" id="file-filter-input" class="search-file-box" placeholder="🔍 Filtrar archivo .md (ej: tranqi, PLT)..." />
-      
       <select id="project-files-select" class="file-select">
         <option value="">📂 Seleccionar archivo .md...</option>
       </select>
@@ -538,7 +555,7 @@ function generarHTML(contenidoInicial, rutaInicial) {
 
     <div class="sidebar-tabs">
       <button class="tab-btn active" id="tab-toc-btn" onclick="cambiarTab('toc')">📌 Índice</button>
-      <button class="tab-btn" id="tab-comments-btn" onclick="cambiarTab('comments')">💬 Comentarios IA (<span id="comments-count">0</span>)</button>
+      <button class="tab-btn" id="tab-comments-btn" onclick="cambiarTab('comments')">💬 Revisiones IA (<span id="comments-count">0</span>)</button>
     </div>
     
     <div id="toc-panel">
@@ -549,7 +566,7 @@ function generarHTML(contenidoInicial, rutaInicial) {
 
     <div id="comments-panel" style="display: none;">
       <div id="comments-list">
-        <p style="padding: 12px; color: #8b949e; font-size: 0.85rem;">Sin comentarios en este archivo</p>
+        <p style="padding: 12px; color: #8b949e; font-size: 0.85rem;">Sin revisiones pendientes</p>
       </div>
     </div>
   </aside>
@@ -584,7 +601,7 @@ function generarHTML(contenidoInicial, rutaInicial) {
 
   <div id="selection-popup" onclick="abrirModalConSeleccion()">💬 Comentar para la IA</div>
 
-  <!-- MODAL DE COMENTARIO (CREAR Y EDITAR) -->
+  <!-- MODAL DE COMENTARIO -->
   <div class="modal-overlay" id="comment-modal">
     <div class="modal-content">
       <h3 id="modal-title">💬 Dejar Comentario u Observación para la IA</h3>
@@ -593,6 +610,31 @@ function generarHTML(contenidoInicial, rutaInicial) {
       <div class="modal-actions">
         <button class="btn" onclick="cerrarModalComentario()">Cancelar</button>
         <button class="btn btn-primary" onclick="guardarComentarioModal()">💾 Guardar Comentario</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL DE CONTROL DE CAMBIOS (DIFF VIEWER) -->
+  <div class="modal-overlay" id="diff-modal">
+    <div class="modal-content">
+      <h3>🔍 Control de Cambios Aplicado por la IA</h3>
+      <div id="diff-summary-text" style="font-size: 0.9rem; color: #58a6ff; font-weight: 600;"></div>
+      
+      <div class="diff-container">
+        <div>
+          <span class="diff-label" style="color: #ff7b72;">🟥 Texto Anterior (Original):</span>
+          <div class="diff-block diff-before" id="diff-before-content"></div>
+        </div>
+        <div>
+          <span class="diff-label" style="color: #56d364;">🟩 Texto Nuevo (Modificado por la IA):</span>
+          <div class="diff-block diff-after" id="diff-after-content"></div>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn" onclick="cerrarModalDiff()">Cerrar</button>
+        <button class="btn btn-revert" id="diff-modal-revert-btn">↩️ Reversar Cambio</button>
+        <button class="btn btn-accept" id="diff-modal-accept-btn">✅ Aceptar Cambio</button>
       </div>
     </div>
   </div>
@@ -838,6 +880,25 @@ function generarHTML(contenidoInicial, rutaInicial) {
       document.getElementById('comment-modal').style.display = 'none';
     }
 
+    function abrirModalDiff(c) {
+      if (!c.aiChange) {
+        mostrarToast('Este comentario no tiene un cambio registrado para comparar.');
+        return;
+      }
+      document.getElementById('diff-summary-text').textContent = c.aiChange.summary || 'Ajuste aplicado por la IA';
+      document.getElementById('diff-before-content').textContent = c.aiChange.beforeText || '(Sin texto previo)';
+      document.getElementById('diff-after-content').textContent = c.aiChange.afterText || '(Sin texto nuevo)';
+
+      document.getElementById('diff-modal-accept-btn').onclick = () => aceptarCambioIA(c.id);
+      document.getElementById('diff-modal-revert-btn').onclick = () => reversarCambioIA(c.id);
+
+      document.getElementById('diff-modal').style.display = 'grid';
+    }
+
+    function cerrarModalDiff() {
+      document.getElementById('diff-modal').style.display = 'none';
+    }
+
     async function guardarComentarioModal() {
       const commentText = document.getElementById('modal-comment-text').value.trim();
       if (!commentText) {
@@ -881,14 +942,14 @@ function generarHTML(contenidoInicial, rutaInicial) {
         const listContainer = document.getElementById('comments-list');
 
         if (comentariosActuales.length === 0) {
-          listContainer.innerHTML = '<p style="padding: 12px; color: #8b949e; font-size: 0.85rem;">Sin comentarios en este archivo</p>';
+          listContainer.innerHTML = '<p style="padding: 12px; color: #8b949e; font-size: 0.85rem;">Sin revisiones pendientes en este archivo</p>';
           return;
         }
 
         listContainer.innerHTML = '';
         comentariosActuales.forEach(c => {
           const card = document.createElement('div');
-          card.className = 'comment-card';
+          card.className = 'comment-card' + (c.status === 'ATENDIDO' ? ' atendido' : '');
           
           const header = document.createElement('div');
           header.className = 'header';
@@ -897,8 +958,8 @@ function generarHTML(contenidoInicial, rutaInicial) {
           titleSpan.textContent = c.section || 'General';
           
           const badgeSpan = document.createElement('span');
-          badgeSpan.className = 'status-badge';
-          badgeSpan.textContent = c.status || 'PENDIENTE';
+          badgeSpan.className = 'status-badge ' + (c.status === 'ATENDIDO' ? 'status-atendido' : 'status-pendiente');
+          badgeSpan.textContent = c.status === 'ATENDIDO' ? '🟡 CAMBIO REALIZADO' : '⏳ PENDIENTE IA';
 
           header.appendChild(titleSpan);
           header.appendChild(badgeSpan);
@@ -911,37 +972,65 @@ function generarHTML(contenidoInicial, rutaInicial) {
           text.className = 'text';
           text.textContent = c.comment;
 
-          // BARRA DE ACCIONES COMPLETA: VER | EDITAR | ELIMINAR
+          card.appendChild(header);
+          card.appendChild(snippet);
+          card.appendChild(text);
+
+          // Si el cambio ya fue atendido por la IA, mostrar el resumen y las opciones de ACEPTAR / REVERSAR
+          if (c.status === 'ATENDIDO' && c.aiChange) {
+            const aiBox = document.createElement('div');
+            aiBox.className = 'ai-summary-box';
+            aiBox.textContent = '🤖 ' + (c.aiChange.summary || 'Cambio listo para revisión');
+            card.appendChild(aiBox);
+          }
+
           const actions = document.createElement('div');
           actions.className = 'actions';
 
           const viewBtn = document.createElement('button');
           viewBtn.className = 'comment-card-btn btn-view';
-          viewBtn.innerHTML = '👁 Ver';
+          viewBtn.innerHTML = '👁 Ver Doc';
           viewBtn.title = 'Ir a la ubicación en el documento';
           viewBtn.onclick = () => saltarAComentarioEnDoc(c);
-
-          const editBtn = document.createElement('button');
-          editBtn.className = 'comment-card-btn btn-edit';
-          editBtn.innerHTML = '✏️ Editar';
-          editBtn.title = 'Modificar este comentario';
-          editBtn.onclick = () => abrirModalEditarComentario(c);
-
-          const delBtn = document.createElement('button');
-          delBtn.className = 'comment-card-btn btn-del';
-          delBtn.innerHTML = '🗑 Eliminar';
-          delBtn.title = 'Eliminar este comentario';
-          delBtn.onclick = () => eliminarComentario(c.id);
-
           actions.appendChild(viewBtn);
-          actions.appendChild(editBtn);
-          actions.appendChild(delBtn);
 
-          card.appendChild(header);
-          card.appendChild(snippet);
-          card.appendChild(text);
+          if (c.status === 'ATENDIDO' && c.aiChange) {
+            const diffBtn = document.createElement('button');
+            diffBtn.className = 'comment-card-btn btn-diff';
+            diffBtn.innerHTML = '🔍 Ver Diff';
+            diffBtn.onclick = () => abrirModalDiff(c);
+
+            const acceptBtn = document.createElement('button');
+            acceptBtn.className = 'comment-card-btn btn-accept';
+            acceptBtn.innerHTML = '✅ Aceptar';
+            acceptBtn.title = 'Aceptar el cambio y remover del historial';
+            acceptBtn.onclick = () => aceptarCambioIA(c.id);
+
+            const revertBtn = document.createElement('button');
+            revertBtn.className = 'comment-card-btn btn-revert';
+            revertBtn.innerHTML = '↩️ Reversar';
+            revertBtn.title = 'Deshacer el cambio en el documento';
+            revertBtn.onclick = () => reversarCambioIA(c.id);
+
+            actions.appendChild(diffBtn);
+            actions.appendChild(acceptBtn);
+            actions.appendChild(revertBtn);
+          } else {
+            const editBtn = document.createElement('button');
+            editBtn.className = 'comment-card-btn btn-edit';
+            editBtn.innerHTML = '✏️ Editar';
+            editBtn.onclick = () => abrirModalEditarComentario(c);
+
+            const delBtn = document.createElement('button');
+            delBtn.className = 'comment-card-btn btn-del';
+            delBtn.innerHTML = '🗑 Eliminar';
+            delBtn.onclick = () => eliminarComentario(c.id);
+
+            actions.appendChild(editBtn);
+            actions.appendChild(delBtn);
+          }
+
           card.appendChild(actions);
-
           listContainer.appendChild(card);
         });
       } catch (err) {
@@ -961,6 +1050,35 @@ function generarHTML(contenidoInicial, rutaInicial) {
             break;
           }
         }
+      }
+    }
+
+    async function aceptarCambioIA(id) {
+      try {
+        const res = await fetch('/api/comments/accept?id=' + encodeURIComponent(id), { method: 'POST' });
+        if (res.ok) {
+          cerrarModalDiff();
+          mostrarToast('✅ Cambio ACEPTADO. Removido del historial.', false);
+          cargarComentarios();
+        }
+      } catch (err) {
+        mostrarToast('Error al aceptar cambio');
+      }
+    }
+
+    async function reversarCambioIA(id) {
+      if (!confirm('¿Seguro que deseas REVERSAR este cambio? El texto original del archivo será restaurado.')) return;
+      try {
+        const res = await fetch('/api/comments/revert?id=' + encodeURIComponent(id), { method: 'POST' });
+        if (res.ok) {
+          cerrarModalDiff();
+          mostrarToast('↩️ Cambio REVERSADO. El documento ha sido restaurado.', false);
+          recargarActual();
+        } else {
+          mostrarToast('No se pudo reversar el cambio automáticamente');
+        }
+      } catch (err) {
+        mostrarToast('Error al reversar cambio');
       }
     }
 
@@ -1087,7 +1205,56 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  // API: Crear o Editar Comentario
+  // API: ACEPTAR CAMBIO IA (Elimina comentario del historial activo)
+  if (parsedUrl.pathname === '/api/comments/accept' && req.method === 'POST') {
+    const commentId = parsedUrl.searchParams.get('id');
+    if (commentId) {
+      let comentarios = leerComentarios();
+      comentarios = comentarios.filter(c => c.id !== commentId);
+      guardarComentarios(comentarios);
+    }
+    res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+    res.end(JSON.stringify({ success: true }));
+    return;
+  }
+
+  // API: REVERSAR CAMBIO IA (Restaura el texto original antes del cambio)
+  if (parsedUrl.pathname === '/api/comments/revert' && req.method === 'POST') {
+    const commentId = parsedUrl.searchParams.get('id');
+    const comentarios = leerComentarios();
+    const c = comentarios.find(item => item.id === commentId);
+
+    if (c && c.aiChange && c.aiChange.beforeText && c.aiChange.afterText) {
+      let filePath = c.file;
+      if (!path.isAbsolute(filePath)) {
+        filePath = path.resolve(ROOT_DIR, filePath);
+      }
+      
+      if (fs.existsSync(filePath)) {
+        let content = fs.readFileSync(filePath, 'utf8');
+        if (content.includes(c.aiChange.afterText)) {
+          content = content.replace(c.aiChange.afterText, c.aiChange.beforeText);
+          fs.writeFileSync(filePath, content, 'utf8');
+        }
+      }
+
+      // Remover comentario tras reversar
+      const filtrados = comentarios.filter(item => item.id !== commentId);
+      guardarComentarios(filtrados);
+
+      res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+      res.end(JSON.stringify({ success: true, reverted: true }));
+      return;
+    }
+
+    // Si no hay datos de revertir pero se pide eliminar
+    const filtrados = comentarios.filter(item => item.id !== commentId);
+    guardarComentarios(filtrados);
+    res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+    res.end(JSON.stringify({ success: true, reverted: false }));
+    return;
+  }
+
   if (parsedUrl.pathname === '/api/comments' && req.method === 'POST') {
     let body = '';
     req.on('data', chunk => { body += chunk; });
@@ -1097,7 +1264,6 @@ const server = http.createServer((req, res) => {
         let comentarios = leerComentarios();
 
         if (payload.id) {
-          // Edición de comentario existente
           const idx = comentarios.findIndex(c => c.id === payload.id);
           if (idx !== -1) {
             comentarios[idx].comment = payload.comment;
@@ -1106,7 +1272,6 @@ const server = http.createServer((req, res) => {
             comentarios[idx].updatedAt = new Date().toISOString();
           }
         } else {
-          // Creación de nuevo comentario
           payload.id = 'comment_' + Date.now();
           payload.timestamp = new Date().toISOString();
           payload.status = 'PENDIENTE';
@@ -1212,7 +1377,7 @@ const server = http.createServer((req, res) => {
 server.listen(PORT, () => {
   const url = `http://localhost:${PORT}`;
   console.log(`====================================================`);
-  console.log(`🚀 Visor Markdown Universal con Gestión Completa de Comentarios (Ver/Editar/Eliminar)`);
+  console.log(`🚀 Visor Markdown Universal con Control de Cambios IA (Diff / Aceptar / Reversar)`);
   console.log(`📄 Archivo Inicial: ${targetFile}`);
   console.log(`🌐 Navegar a: ${url}`);
   console.log(`====================================================`);
