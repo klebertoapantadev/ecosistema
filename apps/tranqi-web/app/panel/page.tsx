@@ -71,6 +71,7 @@ export default async function PagePanel({ searchParams }: Props) {
   const saludo = await obtenerSaludo(perfil?.usu_nombres ?? "", perfil?.usu_apellidos ?? "");
   const nombre = perfil?.usu_nombres?.split(/\s+/)[0] ?? "Usuario";
   const nombreCompleto = [perfil?.usu_nombres, perfil?.usu_apellidos].filter(Boolean).join(" ") || "Usuario";
+  const esAdminGlobal = puedeConmutar || perfiles.includes("ADMINISTRADOR");
 
   return (
     <div className="contenedor-panel">
@@ -108,7 +109,7 @@ export default async function PagePanel({ searchParams }: Props) {
 
       {modo === "cliente" && <PanelCliente saludo={saludo} nombre={nombre} />}
       {modo === "abogado" && <PanelAbogado nombreCompleto={nombreCompleto} />}
-      {modo === "admin" && <PanelAdministrador esSuperadmin={puedeConmutar} />}
+      {modo === "admin" && <PanelAdministrador esSuperadmin={puedeConmutar} esAdminGlobal={esAdminGlobal} />}
 
       <footer className="pie-panel">
         <span>© tranqi® 2026</span>
@@ -119,12 +120,12 @@ export default async function PagePanel({ searchParams }: Props) {
 }
 
 /* ──────────────── SECCIÓN NOTIFICACIONES ECOSISTEMA ──────────────── */
-function SeccionNotificacionesEcosistema() {
+function SeccionNotificacionesEcosistema({ esAdmin }: { esAdmin: boolean }) {
   return (
     <section className="tarjeta-seccion" aria-labelledby="t-notificaciones-eco" style={{ borderLeft: "4px solid #1f6feb" }}>
       <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <h2 id="t-notificaciones-eco" style={{ display: "flex", alignItems: "center", gap: "8px", color: "#58a6ff" }}>
-          <Bell style={{ width: 20, height: 20, color: "#1f6feb" }} /> Notificaciones & Alertas Ecosistema
+          <Bell style={{ width: 20, height: 20, color: "#1f6feb" }} /> Notificaciones & Alertas
         </h2>
         <span className="chip-registrado" style={{ background: "#1f6feb", color: "#fff", fontWeight: 700, padding: "2px 8px" }}>
           🔔 2 Alertas
@@ -144,22 +145,24 @@ function SeccionNotificacionesEcosistema() {
 
         <div style={{ padding: "10px 12px", background: "#161b22", borderRadius: "8px", border: "1px solid #30363d" }}>
           <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.82rem", fontWeight: 600, color: "#c9d1d9" }}>
-            <span>Nuevo perfil asignado: ABOGADO</span>
+            <span>Actualización de Servicios</span>
             <span style={{ fontSize: "0.74rem", color: "#8b949e" }}>Hace 1 hora</span>
           </div>
           <p style={{ fontSize: "0.78rem", color: "#8b949e", marginTop: "4px" }}>
-            Se ha actualizado la jerarquía de tu usuario en el negocio tranqi.
+            Nuevas funcionalidades de seguimiento y consultas en línea activadas.
           </p>
         </div>
       </div>
 
       <div style={{ display: "flex", gap: "10px", marginTop: "14px", flexWrap: "wrap" }}>
         <a href="/panel/notificaciones" style={{ fontSize: "0.78rem", color: "#c9d1d9", background: "#21262d", border: "1px solid #30363d", borderRadius: "6px", padding: "6px 12px", textDecoration: "none", fontWeight: 600, display: "inline-flex", alignItems: "center", gap: "6px" }}>
-          <Settings size={14} /> Preferencias & Mute Temporal
+          <Settings size={14} /> Preferencias & Alertas Recibidas
         </a>
-        <a href="/panel/emision-notificaciones" style={{ fontSize: "0.78rem", color: "#fff", background: "#1f6feb", border: "none", borderRadius: "6px", padding: "6px 12px", textDecoration: "none", fontWeight: 600, display: "inline-flex", alignItems: "center", gap: "6px" }}>
-          <Bell size={14} /> Consola de Notificaciones
-        </a>
+        {esAdmin && (
+          <a href="/panel/emision-notificaciones" style={{ fontSize: "0.78rem", color: "#fff", background: "#1f6feb", border: "none", borderRadius: "6px", padding: "6px 12px", textDecoration: "none", fontWeight: 600, display: "inline-flex", alignItems: "center", gap: "6px" }}>
+            <Bell size={14} /> Consola de Emisión Multicanal
+          </a>
+        )}
       </div>
     </section>
   );
@@ -212,7 +215,7 @@ function PanelCliente({ saludo, nombre }: { saludo: string | null; nombre: strin
         </div>
 
         <aside className="columna-cliente">
-          <SeccionNotificacionesEcosistema />
+          <SeccionNotificacionesEcosistema esAdmin={false} />
 
           <section className="tarjeta-seccion" aria-labelledby="t-cita">
             <header><h2 id="t-cita">Tu próxima cita</h2></header>
@@ -280,7 +283,7 @@ function PanelAbogado({ nombreCompleto }: { nombreCompleto: string }) {
         </div>
 
         <aside className="columna-cliente">
-          <SeccionNotificacionesEcosistema />
+          <SeccionNotificacionesEcosistema esAdmin={false} />
 
           <section className="tarjeta-seccion" aria-labelledby="t-audiencias">
             <header><h2 id="t-audiencias">Agenda de audiencias</h2></header>
@@ -316,7 +319,7 @@ function PanelAbogado({ nombreCompleto }: { nombreCompleto: string }) {
 }
 
 /* ──────────────── 3. PANEL MODO ADMINISTRADOR ──────────────── */
-function PanelAdministrador({ esSuperadmin }: { esSuperadmin: boolean }) {
+function PanelAdministrador({ esSuperadmin, esAdminGlobal }: { esSuperadmin: boolean; esAdminGlobal: boolean }) {
   return (
     <>
       <h1>Consola de Control del Portal — tranqi</h1>
@@ -377,7 +380,7 @@ function PanelAdministrador({ esSuperadmin }: { esSuperadmin: boolean }) {
         </div>
 
         <aside className="columna-cliente">
-          <SeccionNotificacionesEcosistema />
+          <SeccionNotificacionesEcosistema esAdmin={esAdminGlobal} />
 
           <section className="tarjeta-seccion" aria-labelledby="t-infra">
             <header><h2 id="t-infra">Infraestructura y Servicios</h2></header>

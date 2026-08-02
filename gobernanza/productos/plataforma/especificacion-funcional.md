@@ -555,8 +555,15 @@ Motor unificado de comunicación multicanal y alertas en tiempo real para todos 
 5. **Preferencias del Usuario y Silenciado Temporal:**
    - El usuario puede ajustar en su panel (`/panel/notificaciones`) sus preferencias de recepción por canal (excepto para notificaciones críticas de seguridad o reseteo de clave).
    - **Silenciado por Tiempo (Mute Temporal):** El sistema permite al usuario silenciar las notificaciones por periodos configurables: *Hoy*, *Esta Semana*, *Este Mes* o *Rango Personalizado de Fechas*, reactivando los despachos automáticamente al vencer la vigencia.
+6. **Matriz Estricta de Control de Acceso por Perfil:**
+   - **SuperAdmin y Administrador de Negocio (`SUPERADMIN`, `ADMINISTRADOR`):** Tienen acceso total a la Consola Transversal de Emisión de Notificaciones (`/panel/emision-notificaciones`), emisión manual por WYSIWYG/Markdown, segmentación por audiencia, selección de canales y bitácora de métricas de apertura.
+   - **Clientes y Roles Operativos (`CLIENTE`, `ABOGADO`, `TECNICO`, etc.):** **No poseen acceso a la consola de emisión ni al botón de redacción**. Únicamente tienen acceso a su vista propia de notificaciones recibidas y configuración de preferencias (`/panel/notificaciones`). Si un usuario con rol exclusivo de `CLIENTE` (ej. `kleber.toapanta@satcomla.com`) intenta acceder directamente a `/panel/emision-notificaciones`, el servidor intercepta la solicitud y despliega una pantalla de **Acceso Restringido**.
 
 ### Criterios de Aceptación (Gherkin)
+* **Escenario:** Usuario con rol únicamente de Cliente intenta acceder a la consola de emisión
+  * **Dado que** el usuario `kleber.toapanta@satcomla.com` está autenticado únicamente con el perfil `CLIENTE`.
+  * **Cuando** ingresa a `/panel` o intenta navegar directamente a `/panel/emision-notificaciones`.
+  * **Entonces** el sistema no muestra ningún botón de emisión en su panel y al ingresar a la URL despliega una pantalla de "Acceso Restringido", ofreciéndole un botón directo para consultar sus notificaciones recibidas (`/panel/notificaciones`).
 * **Escenario:** Emisión de notificación segmentada por rol usando Editor WYSIWYG HTML
   * **Dado que** el `ADMINISTRADOR` de Tranqi accede al widget `emision_notificaciones`.
   * **Cuando** selecciona la audiencia `POR_ROL` (Perfil `ABOGADO`), redacta el mensaje utilizando la barra de herramientas del Editor WYSIWYG (aplicando negritas, listas e imágenes) y presiona "Enviar Notificación".
