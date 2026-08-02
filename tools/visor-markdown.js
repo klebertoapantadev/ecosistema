@@ -10,7 +10,6 @@ const COMMENTS_FILE = path.join(__dirname, '../gobernanza/comentarios_revision.j
 
 let targetFile = process.argv[2] ? path.resolve(process.argv[2]) : DEFAULT_FILE;
 
-// Asegurar que el archivo de comentarios JSON exista
 if (!fs.existsSync(COMMENTS_FILE)) {
   fs.mkdirSync(path.dirname(COMMENTS_FILE), { recursive: true });
   fs.writeFileSync(COMMENTS_FILE, JSON.stringify([], null, 2), 'utf8');
@@ -682,7 +681,12 @@ function generarHTML(contenidoInicial, rutaInicial) {
           
           const header = document.createElement('div');
           header.className = 'header';
-          header.innerHTML = '<span>' + (c.section || 'General') + '</span><span>' + new Date(c.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) + '</span>';
+          const titleSpan = document.createElement('span');
+          titleSpan.textContent = c.section || 'General';
+          const timeSpan = document.createElement('span');
+          timeSpan.textContent = new Date(c.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+          header.appendChild(titleSpan);
+          header.appendChild(timeSpan);
 
           const snippet = document.createElement('div');
           snippet.className = 'snippet';
@@ -694,7 +698,12 @@ function generarHTML(contenidoInicial, rutaInicial) {
 
           const actions = document.createElement('div');
           actions.className = 'actions';
-          actions.innerHTML = '<button class="del-btn" onclick="eliminarComentario(\'' + c.id + '\')">🗑 Eliminar</button>';
+          
+          const delBtn = document.createElement('button');
+          delBtn.className = 'del-btn';
+          delBtn.textContent = '🗑 Eliminar';
+          delBtn.onclick = () => eliminarComentario(c.id);
+          actions.appendChild(delBtn);
 
           card.appendChild(header);
           card.appendChild(snippet);
@@ -941,7 +950,7 @@ const server = http.createServer((req, res) => {
 server.listen(PORT, () => {
   const url = `http://localhost:${PORT}`;
   console.log(`====================================================`);
-  console.log(`🚀 Visor Markdown Universal con Ruta Absoluta Completa`);
+  console.log(`🚀 Visor Markdown Universal (Sintaxis JS Corregida)`);
   console.log(`📄 Archivo Inicial: ${targetFile}`);
   console.log(`🌐 Navegar a: ${url}`);
   console.log(`====================================================`);
