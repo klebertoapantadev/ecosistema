@@ -1,4 +1,4 @@
-import { crearClienteServidor } from "@eco/supabase/servidor";
+import type { crearClienteServidor } from "@eco/supabase/servidor";
 
 type ClienteServidor = Awaited<ReturnType<typeof crearClienteServidor>>;
 
@@ -101,6 +101,7 @@ export function calcularSaludo(nombre: string, fechaAccesoAnterior: string | nul
 // cliente, igual que el resto de consultas.ts): la fila mas reciente es la
 // del login que acaba de ocurrir, la segunda es el "acceso anterior" real.
 export async function obtenerSaludo(usuarioId: string, nombre: string): Promise<string | null> {
+  const { crearClienteServidor } = await import("@eco/supabase/servidor");
   const supabase = await crearClienteServidor();
   const historial = await obtenerHistorialAccesos(supabase, usuarioId, 2);
   const anterior = historial[1]?.acc_creado_en ?? null;

@@ -1,4 +1,4 @@
-import { etiquetaDispositivo, etiquetaNegocio } from "../acceso";
+import { etiquetaDispositivo, etiquetaNegocio } from "../formatos";
 
 interface FilaAcceso {
   acc_id: string;
