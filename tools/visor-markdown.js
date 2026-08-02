@@ -784,7 +784,19 @@ function generarHTML(contenidoInicial, rutaInicial) {
       });
     }
 
-    // ALGORITMO ROBUSTO DE COINCIDENCIA CONTEXTUAL EXACTA
+    // EXTRAER ÚNICAMENTE EL TÍTULO/ENCABEZADO LIMPIO DE UN ELEMENTO
+    function obtenerTituloLimpio(elem) {
+      if (!elem) return '';
+      const clone = elem.cloneNode(true);
+      
+      // Remover botones o elementos inyectados en la clonacion
+      clone.querySelectorAll('.heading-comment-btn, .doc-comment-badge, ul, ol').forEach(node => node.remove());
+      
+      const fullText = clone.textContent.trim().split('\\n')[0];
+      return fullText.replace(/^[#\s0-9.]+\\s*/, '').trim();
+    }
+
+    // ALGORITMO ROBUSTO DE COINCIDENCIA CONTEXTUAL DE TÍTULOS
     function coincidenSecciones(secDoc, secComentario) {
       if (!secDoc || !secComentario) return false;
 
@@ -792,10 +804,8 @@ function generarHTML(contenidoInicial, rutaInicial) {
       const norm2 = secComentario.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9\s]/g, " ").replace(/\s+/g, " ").trim();
 
       if (!norm1 || !norm2) return false;
-
       if (norm1 === norm2) return true;
 
-      // Filtrar palabras significativas (ignorar numeros sueltos como "5")
       const palabras1 = norm1.split(' ').filter(w => w.length > 2 && !/^\d+$/.test(w));
       const palabras2 = norm2.split(' ').filter(w => w.length > 2 && !/^\d+$/.test(w));
 
@@ -804,8 +814,8 @@ function generarHTML(contenidoInicial, rutaInicial) {
       const coincidencias = palabras2.filter(w => palabras1.includes(w));
       const porcentaje = coincidencias.length / palabras2.length;
 
-      // Debe coincidir al menos el 50% de las palabras clave principales del titulo/regla
-      return porcentaje >= 0.5;
+      // Debe coincidir al menos el 60% de las palabras clave principales del titulo
+      return porcentaje >= 0.6;
     }
 
     function renderizarMarkdown(textoMd) {
@@ -1170,14 +1180,14 @@ function generarHTML(contenidoInicial, rutaInicial) {
           conteoPorSeccion[key] = (conteoPorSeccion[key] || 0) + 1;
         });
 
-        // 1. ILUMINAR BOTONES E ÍTEMS EN EL DOCUMENTO
+        // 1. ILUMINAR ÚNICAMENTE EL ENCABEZADO/REGLA QUE COINCIDA CON EL TÍTULO LIMPIO
         const docElems = document.querySelectorAll('#rendered-content h1, #rendered-content h2, #rendered-content h3, #rendered-content h4, #rendered-content li[id^="rule-item-"]');
         
         docElems.forEach(elem => {
-          const textoElem = elem.textContent.replace(/^[#\s]+/, '').trim();
+          const tituloElem = obtenerTituloLimpio(elem);
           
           Object.keys(conteoPorSeccion).forEach(sec => {
-            if (sec && coincidenSecciones(textoElem, sec)) {
+            if (sec && coincidenSecciones(tituloElem, sec)) {
               elem.classList.add('has-active-comment');
               const commentBtn = elem.querySelector('.heading-comment-btn');
               if (commentBtn) {
@@ -1189,7 +1199,7 @@ function generarHTML(contenidoInicial, rutaInicial) {
           });
         });
 
-        // 2. ILUMINAR ICONOS E ÍTEMS EN EL ÍNDICE (TOC)
+        // 2. ILUMINAR ÚNICAMENTE LA FILA DEL ÍNDICE QUE COINCIDA
         const tocLinks = document.querySelectorAll('#toc a');
         tocLinks.forEach(a => {
           const secTitle = a.dataset.section || a.textContent.trim();
@@ -1239,7 +1249,8 @@ function generarHTML(contenidoInicial, rutaInicial) {
           snippet.className = 'snippet';
           snippet.textContent = c.selectedText || c.section || 'Comentario general';
 
-          const text = document.className = 'text';
+          const text = document.createElement('div');
+          text.className = 'text';
           text.textContent = c.comment;
 
           card.appendChild(header);
@@ -1314,7 +1325,8 @@ function generarHTML(contenidoInicial, rutaInicial) {
       } else if (c.section) {
         const headings = document.querySelectorAll('#rendered-content h1, #rendered-content h2, #rendered-content h3, #rendered-content h4, #rendered-content li[id^="rule-item-"]');
         for (const h of headings) {
-          if (coincidenSecciones(h.textContent, c.section)) {
+          const tit = obtenerTituloLimpio(h);
+          if (coincidenSecciones(tit, c.section)) {
             h.scrollIntoView({ behavior: 'smooth', block: 'start' });
             break;
           }
@@ -1642,7 +1654,7 @@ const server = http.createServer((req, res) => {
 server.listen(PORT, () => {
   const url = `http://localhost:${PORT}`;
   console.log(`====================================================`);
-  console.log(`🚀 Visor Markdown Universal con Coincidencia Exacta Contextual de Comentarios`);
+  console.log(`🚀 Visor Markdown Universal con Extracción Limpia de Título (Strict Matching 60%)`);
   console.log(`📄 Archivo Inicial: ${targetFile}`);
   console.log(`🌐 Navegar a: ${url}`);
   console.log(`====================================================`);
