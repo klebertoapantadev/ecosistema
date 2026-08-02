@@ -388,10 +388,10 @@ export function EmisionNotificacionesWidget({ negocio }: Props) {
               {/* Botones de Variables Interpolables */}
               <div style={{ display: "flex", gap: "4px" }}>
                 <button type="button" onClick={() => inyectarVariable("{{nombre_usuario}}")} title="Inyectar nombre del destinatario" style={{ background: "#21262d", border: "1px solid #30363d", color: "#58a6ff", fontSize: "0.7rem", borderRadius: "4px", padding: "2px 6px", cursor: "pointer" }}>
-                  + {{nombre_usuario}}
+                  + {"{{nombre_usuario}}"}
                 </button>
                 <button type="button" onClick={() => inyectarVariable("{{negocio}}")} title="Inyectar nombre del negocio" style={{ background: "#21262d", border: "1px solid #30363d", color: "#58a6ff", fontSize: "0.7rem", borderRadius: "4px", padding: "2px 6px", cursor: "pointer" }}>
-                  + {{negocio}}
+                  + {"{{negocio}}"}
                 </button>
               </div>
             </div>
