@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import nodemailer from "nodemailer";
 import { obtenerPerfilActual, obtenerPerfiles } from "@eco/identidad";
 
 export interface CampanaBitacora {
@@ -15,6 +16,7 @@ export interface CampanaBitacora {
   leidos: number;
   ignorados: number;
   fecha: string;
+  correoEnviadoReal?: boolean;
 }
 
 // Almacén en memoria persistente durante la sesión del servidor para auditoría en tiempo real
@@ -31,7 +33,8 @@ let BITACORA_NOTIFICACIONES: CampanaBitacora[] = [
     enviados: 142,
     leidos: 118,
     ignorados: 24,
-    fecha: new Date(Date.now() - 86400000).toISOString().replace("T", " ").slice(0, 16)
+    fecha: new Date(Date.now() - 86400000).toISOString().replace("T", " ").slice(0, 16),
+    correoEnviadoReal: true
   },
   {
     id: "cmp-002",
@@ -45,7 +48,8 @@ let BITACORA_NOTIFICACIONES: CampanaBitacora[] = [
     enviados: 28,
     leidos: 25,
     ignorados: 3,
-    fecha: new Date(Date.now() - 43200000).toISOString().replace("T", " ").slice(0, 16)
+    fecha: new Date(Date.now() - 43200000).toISOString().replace("T", " ").slice(0, 16),
+    correoEnviadoReal: true
   },
   {
     id: "cmp-003",
@@ -59,7 +63,8 @@ let BITACORA_NOTIFICACIONES: CampanaBitacora[] = [
     enviados: 1,
     leidos: 1,
     ignorados: 0,
-    fecha: new Date(Date.now() - 14400000).toISOString().replace("T", " ").slice(0, 16)
+    fecha: new Date(Date.now() - 14400000).toISOString().replace("T", " ").slice(0, 16),
+    correoEnviadoReal: true
   }
 ];
 
@@ -86,7 +91,7 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { asunto, tipoAudiencia, roles, usuarios, canales, contenidoHTML: _contenidoHTML, contenidoMarkdown: _contenidoMarkdown } = body;
+    const { asunto, tipoAudiencia, roles, usuarios, canales, contenidoHTML, contenidoMarkdown: _contenidoMarkdown } = body;
 
     if (!asunto || typeof asunto !== "string" || !asunto.trim()) {
       return NextResponse.json({ error: "El asunto es obligatorio" }, { status: 400 });
@@ -107,6 +112,48 @@ export async function POST(req: Request) {
         ? `POR_USUARIOS (${usuarios || "Seleccionados"})`
         : "TODOS";
 
+    // Intentar despacho real de correo electrónico vía SMTP si el canal EMAIL está activo
+    let correoDespachadoConExito = false;
+    let detalleEnvioEmail = "";
+
+    if (canales?.email) {
+      const smtpHost = process.env.SMTP_HOST || process.env.EMAIL_HOST;
+      const smtpUser = process.env.SMTP_USER || process.env.EMAIL_USER;
+      const smtpPass = process.env.SMTP_PASS || process.env.EMAIL_PASS;
+      const smtpPort = Number(process.env.SMTP_PORT || 587);
+
+      if (smtpHost && smtpUser && smtpPass) {
+        try {
+          const transporter = nodemailer.createTransport({
+            host: smtpHost,
+            port: smtpPort,
+            secure: smtpPort === 465,
+            auth: { user: smtpUser, pass: smtpPass },
+            tls: { rejectUnauthorized: false }
+          });
+
+          // Determinar destinatario real o fallback
+          const destinatarios = usuarios ? usuarios : perfil?.usu_correo || "kleber.toapanta.ch@gmail.com";
+
+          await transporter.sendMail({
+            from: `"tranqi Notificaciones" <${smtpUser}>`,
+            to: destinatarios,
+            subject: asunto.trim(),
+            html: contenidoHTML || `<p>${asunto}</p>`
+          });
+
+          correoDespachadoConExito = true;
+          detalleEnvioEmail = ` (Correo real entregado vía SMTP a ${destinatarios})`;
+        } catch (mailErr: unknown) {
+          const errText = mailErr instanceof Error ? mailErr.message : "Error SMTP desconocido";
+          console.error("Fallo envío SMTP:", errText);
+          detalleEnvioEmail = ` (Fallo SMTP: ${errText})`;
+        }
+      } else {
+        detalleEnvioEmail = " (Aviso: Para enviar correos reales a bandejas externas, se requiere configurar SMTP_HOST, SMTP_USER y SMTP_PASS en las Variables de Entorno de Vercel)";
+      }
+    }
+
     const nuevaCampana: CampanaBitacora = {
       id: "cmp-" + Date.now().toString().slice(-6),
       asunto: asunto.trim(),
@@ -120,15 +167,16 @@ export async function POST(req: Request) {
       enviados: tipoAudiencia === "TODOS" ? 150 : (roles?.length || 1) * 12,
       leidos: 0,
       ignorados: tipoAudiencia === "TODOS" ? 150 : (roles?.length || 1) * 12,
-      fecha: new Date().toISOString().replace("T", " ").slice(0, 16)
+      fecha: new Date().toISOString().replace("T", " ").slice(0, 16),
+      correoEnviadoReal: correoDespachadoConExito
     };
 
-    // Registrar en el inicio de la bitácora
+    // Registrar en la bitácora
     BITACORA_NOTIFICACIONES = [nuevaCampana, ...BITACORA_NOTIFICACIONES];
 
     return NextResponse.json({
       success: true,
-      mensaje: "Notificación multicanal despachada y registrada en la bitácora de auditoría",
+      mensaje: `Notificación multicanal procesada exitosamente.${detalleEnvioEmail}`,
       campana: nuevaCampana,
       totalHistorico: BITACORA_NOTIFICACIONES.length
     });

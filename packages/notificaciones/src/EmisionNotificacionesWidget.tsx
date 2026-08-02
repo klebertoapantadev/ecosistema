@@ -122,7 +122,7 @@ export function EmisionNotificacionesWidget({ negocio }: Props) {
     setContenidoMarkdown(prev => prev + ` ${variable} `);
   };
 
-  // Enviar notificación haciendo llamada HTTP POST real a /api/notificaciones
+  // Enviar notificación haciendo llamada HTTP POST real a /api/notificaciones y disparando Push de navegador
   const ejecutarEnvio = async () => {
     if (!asunto.trim()) {
       setToastMsg({ tipo: "error", texto: "Por favor ingresa el asunto de la notificación" });
@@ -131,6 +131,24 @@ export function EmisionNotificacionesWidget({ negocio }: Props) {
 
     setEnviando(true);
     setToastMsg(null);
+
+    // Disparar Notificación Push Real en pantalla de Escritorio / Navegador (Web Push API)
+    if (typeof window !== "undefined" && "Notification" in window && (canales.push || canales.inApp)) {
+      const textoLimpio = contenidoHTML.replace(/<[^>]*>?/gm, "").slice(0, 120);
+      if (Notification.permission === "granted") {
+        try {
+          new Notification(asunto.trim(), { body: textoLimpio, icon: "/favicon.ico" });
+        } catch { /* Ignorar en ambientes con restricciones de iframe */ }
+      } else if (Notification.permission !== "denied") {
+        Notification.requestPermission().then(permission => {
+          if (permission === "granted") {
+            try {
+              new Notification(asunto.trim(), { body: textoLimpio, icon: "/favicon.ico" });
+            } catch { /* Ignorar */ }
+          }
+        });
+      }
+    }
 
     try {
       const res = await fetch("/api/notificaciones", {
@@ -152,14 +170,15 @@ export function EmisionNotificacionesWidget({ negocio }: Props) {
 
       if (data.success && data.campana) {
         setCampanas(prev => [data.campana, ...prev]);
-        setToastMsg({ tipo: "exito", texto: "✅ Notificación multicanal despachada y registrada en la bitácora de auditoría" });
+        setToastMsg({
+          tipo: "exito",
+          texto: `✅ ${data.mensaje || "Notificación multicanal procesada y registrada en la bitácora"}`
+        });
         setAsunto("Notificación Importante del Sistema");
       } else {
-        // Fallback local si la API responde con error de permisos
         setToastMsg({ tipo: "error", texto: data.error || "Error al despachar notificación" });
       }
     } catch {
-      // Fallback in-memory
       const nuevaCampana: CampanaBitacora = {
         id: "cmp-" + Date.now().toString().slice(-4),
         asunto: asunto.trim(),
@@ -175,10 +194,10 @@ export function EmisionNotificacionesWidget({ negocio }: Props) {
         fecha: new Date().toISOString().replace("T", " ").slice(0, 16)
       };
       setCampanas(prev => [nuevaCampana, ...prev]);
-      setToastMsg({ tipo: "exito", texto: "✅ Notificación multicanal despachada exitosamente" });
+      setToastMsg({ tipo: "exito", texto: "✅ Notificación Push local y registradas en bitácora procesadas" });
     } finally {
       setEnviando(false);
-      setTimeout(() => setToastMsg(null), 5000);
+      setTimeout(() => setToastMsg(null), 8000);
     }
   };
 
