@@ -10,6 +10,7 @@ export {
   iniciarSesion,
   solicitarRecuperacion,
   restablecerContrasena,
+  actualizarPerfilUsuario,
   completarBienvenida,
   eliminarCuenta,
   cerrarSesion,
@@ -41,5 +42,6 @@ export { FormularioBienvenida } from "./componentes/FormularioBienvenida";
 export { VerificacionCorreo } from "./componentes/VerificacionCorreo";
 export { FormularioRecuperacion } from "./componentes/FormularioRecuperacion";
 export { FormularioRestablecer } from "./componentes/FormularioRestablecer";
+export { FormularioPerfil } from "./componentes/FormularioPerfil";
 export { EliminarCuenta } from "./componentes/EliminarCuenta";
 export { HistorialAccesos } from "./componentes/HistorialAccesos";

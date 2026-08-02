@@ -230,6 +230,36 @@ export async function restablecerContrasena(token: string, contrasena: string): 
   return { ok: true, data: undefined };
 }
 
+// PLT-001 / PLT-012: Actualizacion de datos de perfil desde el panel Mi Cuenta
+export async function actualizarPerfilUsuario(datos: {
+  nombres: string;
+  apellidos: string;
+  whatsapp?: string | null;
+  autorizaWhatsapp?: boolean;
+}): Promise<Resultado> {
+  const supabase = await crearClienteServidor();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "Sesión no encontrada" };
+
+  const { error } = await supabase
+    .schema("comun_seguridad")
+    .from("seg_usuario")
+    .update({
+      usu_nombres: datos.nombres.trim(),
+      usu_apellidos: datos.apellidos.trim(),
+      usu_whatsapp: datos.autorizaWhatsapp ? (datos.whatsapp?.trim() || null) : null,
+      usu_autorizacion_whatsapp: Boolean(datos.autorizaWhatsapp),
+      usu_actualizado_en: new Date().toISOString(),
+    })
+    .eq("usu_id", user.id);
+
+  if (error) return { ok: false, error: error.message };
+
+  return { ok: true, data: undefined };
+}
+
 // PLT-001 regla 2: confirma identidad (Google no siempre da un nombre claro)
 // y guarda la autorizacion de WhatsApp -- opt-in real, nunca se asume.
 // Marca usu_onboarding_completo para no repetir esta pantalla. A nivel de

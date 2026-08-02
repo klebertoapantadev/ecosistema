@@ -16,6 +16,7 @@
     "@eco/notificaciones": "workspace:*",
     "@eco/supabase": "workspace:*",
     "libphonenumber-js": "1.13.9",
+    "lucide-react": "1.27.0",
     "zod": "4.4.3"
   },
   "devDependencies": {
