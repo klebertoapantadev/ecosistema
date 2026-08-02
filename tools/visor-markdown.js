@@ -4,22 +4,48 @@ const path = require('path');
 const { exec } = require('child_process');
 
 const PORT = 3333;
+const ROOT_DIR = path.resolve(__dirname, '../..'); // Raíz del proyecto (Ley)
 const DEFAULT_FILE = path.join(__dirname, '../gobernanza/productos/plataforma/especificacion-funcional.md');
 
 let targetFile = process.argv[2] ? path.resolve(process.argv[2]) : DEFAULT_FILE;
 
-if (!fs.existsSync(targetFile)) {
-  console.error(`El archivo no existe: ${targetFile}`);
-  process.exit(1);
+// Función para escanear recursivamente todos los archivos .md del proyecto
+function escanearArchivosMd(dir, lista = [], baseDir = ROOT_DIR) {
+  try {
+    const elementos = fs.readdirSync(dir, { withFileTypes: true });
+    for (const elem of elementos) {
+      // Ignorar node_modules, .git, .next, dist, build, temp
+      if (elem.isDirectory()) {
+        if (['node_modules', '.git', '.next', 'dist', 'build', 'Temp', '.turbo'].includes(elem.name)) {
+          continue;
+        }
+        escanearArchivosMd(path.join(dir, elem.name), lista, baseDir);
+      } else if (elem.isFile() && elem.name.endsWith('.md')) {
+        const fullPath = path.join(dir, elem.name);
+        const relPath = path.relative(baseDir, fullPath).replace(/\\/g, '/');
+        lista.push({
+          name: elem.name,
+          relPath: relPath,
+          fullPath: fullPath
+        });
+      }
+    }
+  } catch (err) {
+    // Silenciar errores de permisos o lectura de carpetas restringidas
+  }
+  return lista;
 }
 
-function generarHTML(contenidoMd, titulo) {
+function generarHTML(contenidoInicial, rutaInicial) {
+  const filenameInicial = path.basename(rutaInicial);
+  const relPathInicial = path.relative(ROOT_DIR, rutaInicial).replace(/\\/g, '/');
+
   return `<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Visor Markdown · ${titulo}</title>
+  <title>Visor Markdown Universal</title>
   
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.5.1/github-markdown-dark.min.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
@@ -49,7 +75,7 @@ function generarHTML(contenidoMd, titulo) {
     }
     
     #sidebar {
-      width: 340px;
+      width: 360px;
       background-color: var(--bg-sidebar);
       border-right: 1px solid var(--border-color);
       display: flex;
@@ -58,9 +84,12 @@ function generarHTML(contenidoMd, titulo) {
     }
     
     .sidebar-header {
-      padding: 18px 16px;
+      padding: 16px;
       border-bottom: 1px solid var(--border-color);
       background-color: #0d1117;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
     }
 
     .sidebar-header h2 {
@@ -72,17 +101,36 @@ function generarHTML(contenidoMd, titulo) {
       gap: 8px;
     }
 
-    .sidebar-header .filename {
-      font-size: 0.8rem;
+    /* Selector desplegable de archivos del proyecto */
+    .file-select {
+      width: 100%;
+      background: #21262d;
+      color: #c9d1d9;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 7px 10px;
+      font-size: 0.82rem;
+      outline: none;
+      cursor: pointer;
+    }
+
+    .file-select:focus {
+      border-color: var(--accent-color);
+    }
+
+    #toc-title {
+      font-size: 0.75rem;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
       color: #8b949e;
-      margin-top: 6px;
-      word-break: break-all;
+      padding: 12px 16px 4px;
     }
 
     #toc {
       flex: 1;
       overflow-y: auto;
-      padding: 12px;
+      padding: 4px 12px 12px;
     }
 
     #toc ul {
@@ -101,7 +149,7 @@ function generarHTML(contenidoMd, titulo) {
       display: block;
       padding: 5px 8px;
       border-radius: 6px;
-      line-height: 1.3;
+      line-height: 1.35;
       transition: background 0.15s, color 0.15s;
     }
 
@@ -110,16 +158,10 @@ function generarHTML(contenidoMd, titulo) {
       color: var(--text-color);
     }
 
-    #toc a.active {
-      color: var(--accent-color);
-      font-weight: 600;
-      background-color: rgba(56, 139, 253, 0.15);
-    }
-
     #main-content {
       flex: 1;
       overflow-y: auto;
-      padding: 32px 56px;
+      padding: 80px 56px 40px;
       scroll-behavior: smooth;
     }
 
@@ -135,13 +177,52 @@ function generarHTML(contenidoMd, titulo) {
       width: 100% !important;
     }
 
-    .top-actions {
+    /* BARRA SUPERIOR DE ENTRADA Y NAVEGACIÓN DE ARCHIVOS */
+    .top-bar {
       position: fixed;
-      top: 16px;
-      right: 24px;
+      top: 0;
+      left: 360px;
+      right: 0;
+      height: 64px;
+      background-color: rgba(22, 27, 34, 0.95);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--border-color);
       display: flex;
-      gap: 8px;
+      align-items: center;
+      gap: 12px;
+      padding: 0 24px;
       z-index: 100;
+    }
+
+    .input-box {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      background: #0d1117;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 4px 10px;
+      transition: border-color 0.15s;
+    }
+
+    .input-box:focus-within {
+      border-color: var(--accent-color);
+      box-shadow: 0 0 0 3px rgba(56, 139, 253, 0.15);
+    }
+
+    .input-box span {
+      font-size: 0.85rem;
+      color: #8b949e;
+      margin-right: 8px;
+    }
+
+    .input-box input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: #c9d1d9;
+      font-size: 0.88rem;
+      outline: none;
     }
 
     .btn {
@@ -156,6 +237,7 @@ function generarHTML(contenidoMd, titulo) {
       display: flex;
       align-items: center;
       gap: 6px;
+      white-space: nowrap;
       transition: background 0.2s;
     }
 
@@ -163,32 +245,84 @@ function generarHTML(contenidoMd, titulo) {
       background-color: #30363d;
       border-color: #8b949e;
     }
+
+    .btn-primary {
+      background-color: #238636;
+      color: #ffffff;
+      border-color: rgba(240, 246, 252, 0.1);
+    }
+
+    .btn-primary:hover {
+      background-color: #2ea043;
+    }
+
+    #file-picker {
+      display: none;
+    }
+
+    /* MENSAJES DE ESTADO / ALERTA DE ERROR */
+    #status-toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background-color: #da3633;
+      color: #ffffff;
+      padding: 10px 18px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+      display: none;
+      z-index: 1000;
+    }
   </style>
 </head>
 <body>
 
+  <!-- BARRA LATERAL -->
   <aside id="sidebar">
     <div class="sidebar-header">
-      <h2>📖 Visor de Markdown</h2>
-      <div class="filename" id="file-title">${titulo}</div>
+      <h2>📖 Visor Markdown Universal</h2>
+      
+      <!-- Selector desplegable de archivos .md del proyecto -->
+      <select id="project-files-select" class="file-select">
+        <option value="">📂 Seleccionar archivo .md del proyecto...</option>
+      </select>
     </div>
+    
+    <div id="toc-title">Índice de Secciones</div>
     <nav id="toc">
       <p style="padding: 12px; color: #8b949e; font-size: 0.85rem;">Cargando índice...</p>
     </nav>
   </aside>
 
-  <main id="main-content">
-    <div class="top-actions">
-      <button class="btn" onclick="document.getElementById('main-content').scrollTo({top: 0, behavior: 'smooth'})">⬆ Arriba</button>
-      <button class="btn" onclick="location.reload()">🔄 Recargar</button>
+  <!-- BARRA SUPERIOR DE ENTRADA Y BOTONES -->
+  <header class="top-bar">
+    <div class="input-box">
+      <span>📄 Ruta:</span>
+      <input type="text" id="path-input" value="${relPathInicial}" placeholder="Escribe la ruta de cualquier archivo .md..." />
     </div>
     
+    <button class="btn btn-primary" onclick="cargarArchivoDesdeInput()">🚀 Visualizar</button>
+    <label class="btn" for="file-picker">💻 Cargar .md Local</label>
+    <input type="file" id="file-picker" accept=".md" onchange="cargarArchivoLocal(event)" />
+    
+    <button class="btn" onclick="document.getElementById('main-content').scrollTo({top: 0, behavior: 'smooth'})">⬆ Arriba</button>
+    <button class="btn" onclick="recargarActual()">🔄 Recargar</button>
+  </header>
+
+  <!-- CONTENIDO RENDERIZADO -->
+  <main id="main-content">
     <article class="markdown-body" id="rendered-content">
     </article>
   </main>
 
+  <!-- NOTIFICACIÓN TOAST -->
+  <div id="status-toast"></div>
+
   <script>
-    const rawMarkdown = ${JSON.stringify(contenidoMd)};
+    let contenidoActual = ${JSON.stringify(contenidoInicial)};
+    let rutaActual = ${JSON.stringify(relPathInicial)};
 
     mermaid.initialize({ startOnLoad: false, theme: 'dark' });
 
@@ -203,52 +337,157 @@ function generarHTML(contenidoMd, titulo) {
       gfm: true
     });
 
-    document.getElementById('rendered-content').innerHTML = marked.parse(rawMarkdown);
-
-    const headings = document.querySelectorAll('#rendered-content h1, #rendered-content h2, #rendered-content h3');
-    const tocNav = document.getElementById('toc');
-    
-    if (headings.length > 0) {
-      const ul = document.createElement('ul');
-      headings.forEach((heading, index) => {
-        const id = 'heading-' + index;
-        heading.id = id;
-        
-        const li = document.createElement('li');
-        const a = document.createElement('a');
-        a.href = '#' + id;
-        a.textContent = heading.textContent.replace(/^[#\s]+/, '');
-        
-        const level = parseInt(heading.tagName.substring(1));
-        li.style.paddingLeft = ((level - 1) * 10) + 'px';
-        
-        a.addEventListener('click', (e) => {
-          e.preventDefault();
-          heading.scrollIntoView({ behavior: 'smooth' });
-        });
-
-        li.appendChild(a);
-        ul.appendChild(li);
-      });
-      tocNav.innerHTML = '';
-      tocNav.appendChild(ul);
-    } else {
-      tocNav.innerHTML = '<p style="padding: 12px; color: #8b949e;">Sin secciones principales</p>';
+    function mostrarToast(mensaje, esError = true) {
+      const toast = document.getElementById('status-toast');
+      toast.style.backgroundColor = esError ? '#da3633' : '#238636';
+      toast.textContent = mensaje;
+      toast.style.display = 'block';
+      setTimeout(() => { toast.style.display = 'none'; }, 4000);
     }
 
-    document.querySelectorAll('.language-mermaid').forEach((block) => {
-      const code = block.textContent;
-      const div = document.createElement('div');
-      div.className = 'mermaid';
-      div.textContent = code;
-      block.parentNode.replaceWith(div);
-    });
-    mermaid.run();
+    function renderizarMarkdown(textoMd) {
+      document.getElementById('rendered-content').innerHTML = marked.parse(textoMd);
 
+      // Generar TOC
+      const headings = document.querySelectorAll('#rendered-content h1, #rendered-content h2, #rendered-content h3');
+      const tocNav = document.getElementById('toc');
+      
+      if (headings.length > 0) {
+        const ul = document.createElement('ul');
+        headings.forEach((heading, index) => {
+          const id = 'heading-' + index;
+          heading.id = id;
+          
+          const li = document.createElement('li');
+          const a = document.createElement('a');
+          a.href = '#' + id;
+          a.textContent = heading.textContent.replace(/^[#\s]+/, '');
+          
+          const level = parseInt(heading.tagName.substring(1));
+          li.style.paddingLeft = ((level - 1) * 10) + 'px';
+          
+          a.addEventListener('click', (e) => {
+            e.preventDefault();
+            heading.scrollIntoView({ behavior: 'smooth' });
+          });
+
+          li.appendChild(a);
+          ul.appendChild(li);
+        });
+        tocNav.innerHTML = '';
+        tocNav.appendChild(ul);
+      } else {
+        tocNav.innerHTML = '<p style="padding: 12px; color: #8b949e; font-size: 0.85rem;">Sin secciones principales</p>';
+      }
+
+      // Renderizar Mermaid
+      document.querySelectorAll('.language-mermaid').forEach((block) => {
+        const code = block.textContent;
+        const div = document.createElement('div');
+        div.className = 'mermaid';
+        div.textContent = code;
+        block.parentNode.replaceWith(div);
+      });
+      mermaid.run();
+    }
+
+    // Cargar contenido inicial
+    renderizarMarkdown(contenidoActual);
+
+    // Cargar lista de archivos .md del proyecto
+    async function cargarListaArchivosProyecto() {
+      try {
+        const res = await fetch('/api/list-markdown');
+        const archivos = await res.json();
+        const select = document.getElementById('project-files-select');
+        
+        archivos.forEach(file => {
+          const opt = document.createElement('option');
+          opt.value = file.relPath;
+          opt.textContent = file.relPath;
+          if (file.relPath === rutaActual) {
+            opt.selected = true;
+          }
+          select.appendChild(opt);
+        });
+
+        select.addEventListener('change', (e) => {
+          if (e.target.value) {
+            solicitarArchivoServidor(e.target.value);
+          }
+        });
+      } catch (err) {
+        console.error('Error al cargar lista de archivos:', err);
+      }
+    }
+
+    async function solicitarArchivoServidor(filePath) {
+      try {
+        const res = await fetch('/api/file?path=' + encodeURIComponent(filePath));
+        const data = await res.json();
+        
+        if (!res.ok || data.error) {
+          mostrarToast(data.error || 'No se pudo abrir el archivo');
+          return;
+        }
+
+        contenidoActual = data.content;
+        rutaActual = data.relPath;
+        document.getElementById('path-input').value = data.relPath;
+        document.title = 'Visor Markdown · ' + data.name;
+        
+        renderizarMarkdown(data.content);
+        mostrarToast('Cargado: ' + data.name, false);
+      } catch (err) {
+        mostrarToast('Error de conexión al servidor');
+      }
+    }
+
+    function cargarArchivoDesdeInput() {
+      const inputPath = document.getElementById('path-input').value.trim();
+      if (inputPath) {
+        solicitarArchivoServidor(inputPath);
+      }
+    }
+
+    document.getElementById('path-input').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        cargarArchivoDesdeInput();
+      }
+    });
+
+    function cargarArchivoLocal(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        contenidoActual = e.target.result;
+        rutaActual = file.name;
+        document.getElementById('path-input').value = file.name;
+        document.title = 'Visor Markdown · ' + file.name;
+        
+        renderizarMarkdown(contenidoActual);
+        mostrarToast('Archivo local cargado: ' + file.name, false);
+      };
+      reader.readAsText(file);
+    }
+
+    function recargarActual() {
+      if (rutaActual && !document.getElementById('file-picker').files[0]) {
+        solicitarArchivoServidor(rutaActual);
+      } else {
+        location.reload();
+      }
+    }
+
+    cargarListaArchivosProyecto();
+
+    // Auto-reload SSE
     const evtSource = new EventSource('/events');
     evtSource.onmessage = function(e) {
       if (e.data === 'reload') {
-        location.reload();
+        recargarActual();
       }
     };
   </script>
@@ -257,7 +496,60 @@ function generarHTML(contenidoMd, titulo) {
 }
 
 const server = http.createServer((req, res) => {
-  if (req.url === '/events') {
+  const parsedUrl = new URL(req.url, `http://localhost:${PORT}`);
+  
+  // API: Escanear y listar todos los archivos .md del proyecto
+  if (parsedUrl.pathname === '/api/list-markdown') {
+    const listaMd = escanearArchivosMd(ROOT_DIR);
+    res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+    res.end(JSON.stringify(listaMd));
+    return;
+  }
+
+  // API: Leer contenido de cualquier archivo .md por su ruta
+  if (parsedUrl.pathname === '/api/file') {
+    const reqPath = parsedUrl.searchParams.get('path');
+    if (!reqPath) {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Ruta no especificada' }));
+      return;
+    }
+
+    // Intentar resolver la ruta
+    let fullPath = path.isAbsolute(reqPath) ? reqPath : path.resolve(ROOT_DIR, reqPath);
+    
+    // Si no termina en .md y existe agregándolo
+    if (!fs.existsSync(fullPath) && fs.existsSync(fullPath + '.md')) {
+      fullPath = fullPath + '.md';
+    }
+
+    if (!fs.existsSync(fullPath)) {
+      res.writeHead(440, { 'Content-Type': 'application/json; charset=utf-8' });
+      res.end(JSON.stringify({ error: `El archivo no existe: ${reqPath}` }));
+      return;
+    }
+
+    targetFile = fullPath; // Actualizar el archivo observado
+    fs.readFile(fullPath, 'utf8', (err, data) => {
+      if (err) {
+        res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify({ error: 'Error al leer el archivo' }));
+        return;
+      }
+      
+      const relPath = path.relative(ROOT_DIR, fullPath).replace(/\\/g, '/');
+      res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+      res.end(JSON.stringify({
+        name: path.basename(fullPath),
+        relPath: relPath,
+        content: data
+      }));
+    });
+    return;
+  }
+
+  // EventSource para Auto-Reload SSE
+  if (parsedUrl.pathname === '/events') {
     res.writeHead(200, {
       'Content-Type': 'text/event-stream',
       'Cache-Control': 'no-cache',
@@ -272,24 +564,21 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  // Servir la página HTML principal
   fs.readFile(targetFile, 'utf8', (err, data) => {
-    if (err) {
-      res.writeHead(500, { 'Content-Type': 'text/plain' });
-      res.end('Error al leer el archivo markdown');
-      return;
-    }
+    const fileToRender = err ? DEFAULT_FILE : targetFile;
+    const initialContent = err ? '# Error\nNo se pudo leer el archivo especificado' : data;
     
-    const filename = path.basename(targetFile);
     res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-    res.end(generarHTML(data, filename));
+    res.end(generarHTML(initialContent, fileToRender));
   });
 });
 
 server.listen(PORT, () => {
   const url = `http://localhost:${PORT}`;
   console.log(`====================================================`);
-  console.log(`🚀 Visor Visual de Markdown Activo`);
-  console.log(`📄 Archivo: ${targetFile}`);
+  console.log(`🚀 Visor Markdown Universal Activo con Selector y Entrada de Ruta`);
+  console.log(`📄 Archivo Inicial: ${targetFile}`);
   console.log(`🌐 Navegar a: ${url}`);
   console.log(`====================================================`);
 
