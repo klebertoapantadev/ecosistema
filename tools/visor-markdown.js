@@ -90,7 +90,7 @@ function generarHTML(contenidoInicial, rutaInicial) {
     }
     
     #sidebar {
-      width: 360px;
+      width: 380px;
       background-color: var(--bg-sidebar);
       border-right: 1px solid var(--border-color);
       display: flex;
@@ -191,16 +191,22 @@ function generarHTML(contenidoInicial, rutaInicial) {
     #toc a .comment-icon { opacity: 0.4; font-size: 0.8rem; margin-left: 6px; }
     #toc a .comment-icon:hover { opacity: 1; }
 
+    /* Tarjetas de Comentarios en Sidebar */
     .comment-card {
       background-color: #21262d;
       border: 1px solid var(--border-color);
       border-radius: 8px;
       padding: 12px;
-      margin-bottom: 10px;
+      margin-bottom: 12px;
       display: flex;
       flex-direction: column;
       gap: 6px;
       font-size: 0.83rem;
+      transition: border-color 0.2s;
+    }
+
+    .comment-card:hover {
+      border-color: #58a6ff;
     }
 
     .comment-card .header {
@@ -212,38 +218,65 @@ function generarHTML(contenidoInicial, rutaInicial) {
       font-size: 0.78rem;
     }
 
+    .comment-card .status-badge {
+      font-size: 0.7rem;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background-color: rgba(210, 153, 34, 0.2);
+      color: #d29922;
+    }
+
     .comment-card .snippet {
       color: #8b949e;
       font-style: italic;
-      border-left: 2px solid #d29922;
+      border-left: 3px solid #d29922;
       padding-left: 8px;
-      margin: 2px 0;
+      margin: 4px 0;
       font-size: 0.8rem;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      word-break: break-word;
     }
 
     .comment-card .text {
       color: #c9d1d9;
       line-height: 1.4;
       font-weight: 500;
+      background-color: #161b22;
+      padding: 8px;
+      border-radius: 6px;
+      border: 1px solid rgba(255,255,255,0.05);
     }
 
     .comment-card .actions {
       display: flex;
-      justify-content: flex-end;
-      gap: 8px;
-      margin-top: 4px;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 6px;
+      padding-top: 6px;
+      border-top: 1px solid rgba(255,255,255,0.05);
     }
 
-    .comment-card .del-btn {
-      color: #f85149;
+    .comment-card-btn {
       background: none;
       border: none;
       cursor: pointer;
-      font-size: 0.75rem;
+      font-size: 0.78rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 6px;
+      border-radius: 4px;
+      transition: background 0.15s;
     }
+
+    .btn-view { color: #58a6ff; }
+    .btn-view:hover { background-color: rgba(88, 166, 255, 0.15); }
+
+    .btn-edit { color: #d29922; }
+    .btn-edit:hover { background-color: rgba(210, 153, 34, 0.15); }
+
+    .btn-del { color: #f85149; }
+    .btn-del:hover { background-color: rgba(248, 81, 73, 0.15); }
 
     #main-content {
       flex: 1;
@@ -298,7 +331,7 @@ function generarHTML(contenidoInicial, rutaInicial) {
     .top-bar {
       position: fixed;
       top: 0;
-      left: 360px;
+      left: 380px;
       right: 0;
       height: 64px;
       background-color: rgba(22, 27, 34, 0.95);
@@ -338,7 +371,7 @@ function generarHTML(contenidoInicial, rutaInicial) {
       border: 1px solid var(--border-color);
       border-radius: 6px;
       padding: 2px 8px;
-      width: 280px;
+      width: 260px;
     }
 
     .doc-search-container input {
@@ -410,7 +443,7 @@ function generarHTML(contenidoInicial, rutaInicial) {
     .modal-overlay {
       position: fixed;
       inset: 0;
-      background-color: rgba(0,0,0,0.7);
+      background-color: rgba(0,0,0,0.75);
       backdrop-filter: blur(4px);
       display: none;
       place-items: center;
@@ -422,7 +455,7 @@ function generarHTML(contenidoInicial, rutaInicial) {
       border: 1px solid var(--border-color);
       border-radius: 12px;
       width: 90%;
-      max-width: 560px;
+      max-width: 580px;
       padding: 24px;
       display: flex;
       flex-direction: column;
@@ -451,7 +484,7 @@ function generarHTML(contenidoInicial, rutaInicial) {
 
     .modal-content textarea {
       width: 100%;
-      height: 120px;
+      height: 130px;
       background-color: #0d1117;
       border: 1px solid var(--border-color);
       border-radius: 6px;
@@ -491,6 +524,7 @@ function generarHTML(contenidoInicial, rutaInicial) {
 </head>
 <body>
 
+  <!-- SIDEBAR CON GESTIÓN COMPLETA DE COMENTARIOS (VER / EDITAR / ELIMINAR) -->
   <aside id="sidebar">
     <div class="sidebar-header">
       <h2>💬 Visor & Revisiones IA</h2>
@@ -520,6 +554,7 @@ function generarHTML(contenidoInicial, rutaInicial) {
     </div>
   </aside>
 
+  <!-- TOP BAR -->
   <header class="top-bar">
     <div class="input-box" title="Ruta completa absoluta del archivo en disco">
       <span style="font-size: 0.82rem; color: #8b949e; margin-right: 6px;">📁 Ruta:</span>
@@ -541,6 +576,7 @@ function generarHTML(contenidoInicial, rutaInicial) {
     <button class="btn" onclick="recargarActual()">🔄 Recargar</button>
   </header>
 
+  <!-- MAIN CONTENT -->
   <main id="main-content">
     <article class="markdown-body" id="rendered-content">
     </article>
@@ -548,9 +584,10 @@ function generarHTML(contenidoInicial, rutaInicial) {
 
   <div id="selection-popup" onclick="abrirModalConSeleccion()">💬 Comentar para la IA</div>
 
+  <!-- MODAL DE COMENTARIO (CREAR Y EDITAR) -->
   <div class="modal-overlay" id="comment-modal">
     <div class="modal-content">
-      <h3>💬 Dejar Comentario u Observación para la IA</h3>
+      <h3 id="modal-title">💬 Dejar Comentario u Observación para la IA</h3>
       <div class="context-box" id="modal-context-box">Texto o sección seleccionada...</div>
       <textarea id="modal-comment-text" placeholder="Escribe tu instrucción o cambio deseado para la IA..."></textarea>
       <div class="modal-actions">
@@ -567,6 +604,7 @@ function generarHTML(contenidoInicial, rutaInicial) {
     let rutaActual = ${JSON.stringify(fullPathInicial)};
     let listaArchivosProyecto = [];
     let comentariosActuales = [];
+    let editandoCommentId = null;
     let textoSeleccionadoTemp = '';
     let seccionSeleccionadaTemp = '';
     let matchesBusqueda = [];
@@ -767,6 +805,8 @@ function generarHTML(contenidoInicial, rutaInicial) {
     });
 
     function abrirModalConSeleccion() {
+      editandoCommentId = null;
+      document.getElementById('modal-title').textContent = '💬 Dejar Comentario u Observación para la IA';
       document.getElementById('selection-popup').style.display = 'none';
       document.getElementById('modal-context-box').textContent = 'Texto Seleccionado: "' + textoSeleccionadoTemp + '"';
       document.getElementById('modal-comment-text').value = '';
@@ -774,6 +814,8 @@ function generarHTML(contenidoInicial, rutaInicial) {
     }
 
     function abrirModalSeccion(nombreSeccion) {
+      editandoCommentId = null;
+      document.getElementById('modal-title').textContent = '💬 Dejar Comentario u Observación para la IA';
       seccionSeleccionadaTemp = nombreSeccion;
       textoSeleccionadoTemp = '';
       document.getElementById('modal-context-box').textContent = 'Sección: ' + nombreSeccion;
@@ -781,7 +823,18 @@ function generarHTML(contenidoInicial, rutaInicial) {
       document.getElementById('comment-modal').style.display = 'grid';
     }
 
+    function abrirModalEditarComentario(c) {
+      editandoCommentId = c.id;
+      document.getElementById('modal-title').textContent = '✏️ Editar Comentario para la IA';
+      seccionSeleccionadaTemp = c.section || '';
+      textoSeleccionadoTemp = c.selectedText || '';
+      document.getElementById('modal-context-box').textContent = (c.selectedText ? 'Texto: "' + c.selectedText + '"' : ('Sección: ' + (c.section || 'General')));
+      document.getElementById('modal-comment-text').value = c.comment;
+      document.getElementById('comment-modal').style.display = 'grid';
+    }
+
     function cerrarModalComentario() {
+      editandoCommentId = null;
       document.getElementById('comment-modal').style.display = 'none';
     }
 
@@ -793,6 +846,7 @@ function generarHTML(contenidoInicial, rutaInicial) {
       }
 
       const payload = {
+        id: editandoCommentId,
         file: rutaActual,
         section: seccionSeleccionadaTemp,
         selectedText: textoSeleccionadoTemp,
@@ -808,7 +862,7 @@ function generarHTML(contenidoInicial, rutaInicial) {
 
         if (res.ok) {
           cerrarModalComentario();
-          mostrarToast('Comentario guardado para la IA', false);
+          mostrarToast(editandoCommentId ? 'Comentario actualizado' : 'Comentario guardado para la IA', false);
           cargarComentarios();
         } else {
           mostrarToast('Error al guardar comentario');
@@ -838,12 +892,16 @@ function generarHTML(contenidoInicial, rutaInicial) {
           
           const header = document.createElement('div');
           header.className = 'header';
+          
           const titleSpan = document.createElement('span');
           titleSpan.textContent = c.section || 'General';
-          const timeSpan = document.createElement('span');
-          timeSpan.textContent = new Date(c.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+          
+          const badgeSpan = document.createElement('span');
+          badgeSpan.className = 'status-badge';
+          badgeSpan.textContent = c.status || 'PENDIENTE';
+
           header.appendChild(titleSpan);
-          header.appendChild(timeSpan);
+          header.appendChild(badgeSpan);
 
           const snippet = document.createElement('div');
           snippet.className = 'snippet';
@@ -853,13 +911,30 @@ function generarHTML(contenidoInicial, rutaInicial) {
           text.className = 'text';
           text.textContent = c.comment;
 
+          // BARRA DE ACCIONES COMPLETA: VER | EDITAR | ELIMINAR
           const actions = document.createElement('div');
           actions.className = 'actions';
-          
+
+          const viewBtn = document.createElement('button');
+          viewBtn.className = 'comment-card-btn btn-view';
+          viewBtn.innerHTML = '👁 Ver';
+          viewBtn.title = 'Ir a la ubicación en el documento';
+          viewBtn.onclick = () => saltarAComentarioEnDoc(c);
+
+          const editBtn = document.createElement('button');
+          editBtn.className = 'comment-card-btn btn-edit';
+          editBtn.innerHTML = '✏️ Editar';
+          editBtn.title = 'Modificar este comentario';
+          editBtn.onclick = () => abrirModalEditarComentario(c);
+
           const delBtn = document.createElement('button');
-          delBtn.className = 'del-btn';
-          delBtn.textContent = '🗑 Eliminar';
+          delBtn.className = 'comment-card-btn btn-del';
+          delBtn.innerHTML = '🗑 Eliminar';
+          delBtn.title = 'Eliminar este comentario';
           delBtn.onclick = () => eliminarComentario(c.id);
+
+          actions.appendChild(viewBtn);
+          actions.appendChild(editBtn);
           actions.appendChild(delBtn);
 
           card.appendChild(header);
@@ -874,7 +949,23 @@ function generarHTML(contenidoInicial, rutaInicial) {
       }
     }
 
+    function saltarAComentarioEnDoc(c) {
+      if (c.selectedText) {
+        document.getElementById('doc-search-input').value = c.selectedText;
+        ejecutarBusquedaTexto();
+      } else if (c.section) {
+        const headings = document.querySelectorAll('#rendered-content h1, #rendered-content h2, #rendered-content h3');
+        for (const h of headings) {
+          if (h.textContent.includes(c.section)) {
+            h.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            break;
+          }
+        }
+      }
+    }
+
     async function eliminarComentario(id) {
+      if (!confirm('¿Deseas eliminar este comentario?')) return;
       try {
         await fetch('/api/comments?id=' + encodeURIComponent(id), { method: 'DELETE' });
         cargarComentarios();
@@ -996,22 +1087,36 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  // API: Crear o Editar Comentario
   if (parsedUrl.pathname === '/api/comments' && req.method === 'POST') {
     let body = '';
     req.on('data', chunk => { body += chunk; });
     req.on('end', () => {
       try {
-        const nuevoComentario = JSON.parse(body);
-        nuevoComentario.id = 'comment_' + Date.now();
-        nuevoComentario.timestamp = new Date().toISOString();
-        nuevoComentario.status = 'PENDIENTE';
+        const payload = JSON.parse(body);
+        let comentarios = leerComentarios();
 
-        const comentarios = leerComentarios();
-        comentarios.push(nuevoComentario);
+        if (payload.id) {
+          // Edición de comentario existente
+          const idx = comentarios.findIndex(c => c.id === payload.id);
+          if (idx !== -1) {
+            comentarios[idx].comment = payload.comment;
+            comentarios[idx].section = payload.section || comentarios[idx].section;
+            comentarios[idx].selectedText = payload.selectedText || comentarios[idx].selectedText;
+            comentarios[idx].updatedAt = new Date().toISOString();
+          }
+        } else {
+          // Creación de nuevo comentario
+          payload.id = 'comment_' + Date.now();
+          payload.timestamp = new Date().toISOString();
+          payload.status = 'PENDIENTE';
+          comentarios.push(payload);
+        }
+
         guardarComentarios(comentarios);
 
         res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
-        res.end(JSON.stringify({ success: true, comment: nuevoComentario }));
+        res.end(JSON.stringify({ success: true }));
       } catch (e) {
         res.writeHead(400, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: 'Payload inválido' }));
@@ -1107,7 +1212,7 @@ const server = http.createServer((req, res) => {
 server.listen(PORT, () => {
   const url = `http://localhost:${PORT}`;
   console.log(`====================================================`);
-  console.log(`🚀 Visor Markdown Universal con Buscadores de Archivos y Texto`);
+  console.log(`🚀 Visor Markdown Universal con Gestión Completa de Comentarios (Ver/Editar/Eliminar)`);
   console.log(`📄 Archivo Inicial: ${targetFile}`);
   console.log(`🌐 Navegar a: ${url}`);
   console.log(`====================================================`);
