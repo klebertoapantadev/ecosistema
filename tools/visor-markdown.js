@@ -169,12 +169,13 @@ function generarHTML(contenidoInicial, rutaInicial) {
       padding: 12px;
     }
 
-    #toc ul { list-style: none; padding-left: 8px; }
-    #toc li { margin: 4px 0; }
+    /* ESTILOS DEL ÍNDICE MULTINIVEL (H1, H2, H3, H4) */
+    #toc ul { list-style: none; padding-left: 0; }
+    #toc li { margin: 2px 0; }
     #toc a {
       color: #8b949e;
       text-decoration: none;
-      font-size: 0.84rem;
+      font-size: 0.83rem;
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -183,7 +184,23 @@ function generarHTML(contenidoInicial, rutaInicial) {
       line-height: 1.35;
       transition: background 0.15s, color 0.15s;
     }
+
     #toc a:hover { background-color: rgba(110, 118, 129, 0.15); color: var(--text-color); }
+    #toc a.active {
+      color: var(--accent-color);
+      font-weight: 700;
+      background-color: rgba(56, 139, 253, 0.15);
+      border-left: 3px solid var(--accent-color);
+    }
+
+    /* Niveles de Jerarquía en el Índice */
+    .toc-item.level-1 a { font-weight: 700; color: #c9d1d9; font-size: 0.86rem; margin-top: 6px; }
+    .toc-item.level-2 a { font-weight: 600; color: #58a6ff; font-size: 0.84rem; }
+    .toc-item.level-3 a { font-weight: 500; color: #8b949e; font-size: 0.80rem; }
+    .toc-item.level-4 a { font-weight: 400; color: #6e7681; font-size: 0.76rem; font-style: italic; }
+
+    #toc a .comment-icon { opacity: 0.4; font-size: 0.8rem; margin-left: 6px; }
+    #toc a .comment-icon:hover { opacity: 1; }
 
     .comment-card {
       background-color: #21262d;
@@ -300,7 +317,7 @@ function generarHTML(contenidoInicial, rutaInicial) {
       font-size: 15px;
     }
 
-    /* COMPENSACIÓN DE DESPLAZAMIENTO PARA ENCABEZADOS (CORRIGE TÍTULOS OCULTOS BAJO LA BARRA FIJA) */
+    /* COMPENSACIÓN DE DESPLAZAMIENTO PARA TODOS LOS ENCABEZADOS (H1 - H6) */
     .markdown-body h1,
     .markdown-body h2,
     .markdown-body h3,
@@ -550,6 +567,7 @@ function generarHTML(contenidoInicial, rutaInicial) {
 </head>
 <body>
 
+  <!-- SIDEBAR CON ÍNDICE MULTINIVEL (H1, H2, H3, H4) -->
   <aside id="sidebar">
     <div class="sidebar-header">
       <h2>💬 Visor & Revisiones IA</h2>
@@ -577,6 +595,7 @@ function generarHTML(contenidoInicial, rutaInicial) {
     </div>
   </aside>
 
+  <!-- TOP BAR -->
   <header class="top-bar">
     <div class="input-box" title="Ruta completa absoluta del archivo en disco">
       <span style="font-size: 0.82rem; color: #8b949e; margin-right: 6px;">📁 Ruta:</span>
@@ -598,6 +617,7 @@ function generarHTML(contenidoInicial, rutaInicial) {
     <button class="btn" onclick="recargarActual()">🔄 Recargar</button>
   </header>
 
+  <!-- MAIN CONTENT -->
   <main id="main-content">
     <article class="markdown-body" id="rendered-content">
     </article>
@@ -639,7 +659,7 @@ function generarHTML(contenidoInicial, rutaInicial) {
         <button class="btn btn-accept" id="diff-modal-accept-btn">✅ Aceptar Cambio</button>
       </div>
     </div>
-  </div>
+  </aside>
 
   <div id="status-toast"></div>
 
@@ -689,14 +709,17 @@ function generarHTML(contenidoInicial, rutaInicial) {
       }
     }
 
+    // RENDERIZADO DEL ÍNDICE MULTINIVEL H1 -> H2 -> H3 -> H4
     function renderizarMarkdown(textoMd) {
       document.getElementById('rendered-content').innerHTML = marked.parse(textoMd);
 
-      const headings = document.querySelectorAll('#rendered-content h1, #rendered-content h2, #rendered-content h3');
+      const headings = document.querySelectorAll('#rendered-content h1, #rendered-content h2, #rendered-content h3, #rendered-content h4');
       const tocNav = document.getElementById('toc');
       
       if (headings.length > 0) {
         const ul = document.createElement('ul');
+        ul.className = 'toc-tree';
+        
         headings.forEach((heading, index) => {
           const id = 'heading-' + index;
           heading.id = id;
@@ -714,12 +737,23 @@ function generarHTML(contenidoInicial, rutaInicial) {
           heading.appendChild(commentBtn);
 
           const li = document.createElement('li');
+          const level = parseInt(heading.tagName.substring(1)); // 1, 2, 3, 4
+          li.className = 'toc-item level-' + level;
+
           const a = document.createElement('a');
           a.href = '#' + id;
-          a.innerHTML = '<span>' + tituloLimpio + '</span><span class="comment-icon" title="Comentar sección">💬</span>';
           
-          const level = parseInt(heading.tagName.substring(1));
-          li.style.paddingLeft = ((level - 1) * 10) + 'px';
+          // Icono prefijo de jerarquía según nivel
+          let prefixIcon = '';
+          if (level === 1) prefixIcon = '📌 ';
+          else if (level === 2) prefixIcon = '▫️ ';
+          else if (level === 3) prefixIcon = '↳ ';
+          else if (level === 4) prefixIcon = '   • ';
+
+          a.innerHTML = '<span class="toc-title">' + prefixIcon + tituloLimpio + '</span><span class="comment-icon" title="Comentar sección">💬</span>';
+          
+          // Indentación matemática por nivel de anidamiento
+          li.style.paddingLeft = ((level - 1) * 12) + 'px';
           
           a.addEventListener('click', (e) => {
             if (e.target.classList.contains('comment-icon')) {
@@ -728,6 +762,11 @@ function generarHTML(contenidoInicial, rutaInicial) {
               return;
             }
             e.preventDefault();
+
+            // Resaltar elemento activo en el índice
+            document.querySelectorAll('#toc a').forEach(el => el.classList.remove('active'));
+            a.classList.add('active');
+
             heading.scrollIntoView({ behavior: 'smooth', block: 'start' });
           });
 
@@ -1044,7 +1083,7 @@ function generarHTML(contenidoInicial, rutaInicial) {
         document.getElementById('doc-search-input').value = c.selectedText;
         ejecutarBusquedaTexto();
       } else if (c.section) {
-        const headings = document.querySelectorAll('#rendered-content h1, #rendered-content h2, #rendered-content h3');
+        const headings = document.querySelectorAll('#rendered-content h1, #rendered-content h2, #rendered-content h3, #rendered-content h4');
         for (const h of headings) {
           if (h.textContent.includes(c.section)) {
             h.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -1374,7 +1413,7 @@ const server = http.createServer((req, res) => {
 server.listen(PORT, () => {
   const url = `http://localhost:${PORT}`;
   console.log(`====================================================`);
-  console.log(`🚀 Visor Markdown Universal con Compensación de Scroll Offset (scroll-margin-top: 95px)`);
+  console.log(`🚀 Visor Markdown Universal con Índice Jerárquico Multinivel (H1-H4)`);
   console.log(`📄 Archivo Inicial: ${targetFile}`);
   console.log(`🌐 Navegar a: ${url}`);
   console.log(`====================================================`);
