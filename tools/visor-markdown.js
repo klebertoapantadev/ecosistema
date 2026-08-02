@@ -4,17 +4,35 @@ const path = require('path');
 const { exec } = require('child_process');
 
 const PORT = 3333;
-const ROOT_DIR = path.resolve(__dirname, '../..'); // Raíz del proyecto (Ley)
+const ROOT_DIR = path.resolve(__dirname, '../..');
 const DEFAULT_FILE = path.join(__dirname, '../gobernanza/productos/plataforma/especificacion-funcional.md');
+const COMMENTS_FILE = path.join(__dirname, '../gobernanza/comentarios_revision.json');
 
 let targetFile = process.argv[2] ? path.resolve(process.argv[2]) : DEFAULT_FILE;
 
-// Función para escanear recursivamente todos los archivos .md del proyecto
+// Asegurar que el archivo de comentarios JSON exista
+if (!fs.existsSync(COMMENTS_FILE)) {
+  fs.mkdirSync(path.dirname(COMMENTS_FILE), { recursive: true });
+  fs.writeFileSync(COMMENTS_FILE, JSON.stringify([], null, 2), 'utf8');
+}
+
+function leerComentarios() {
+  try {
+    const data = fs.readFileSync(COMMENTS_FILE, 'utf8');
+    return JSON.parse(data);
+  } catch (e) {
+    return [];
+  }
+}
+
+function guardarComentarios(comentarios) {
+  fs.writeFileSync(COMMENTS_FILE, JSON.stringify(comentarios, null, 2), 'utf8');
+}
+
 function escanearArchivosMd(dir, lista = [], baseDir = ROOT_DIR) {
   try {
     const elementos = fs.readdirSync(dir, { withFileTypes: true });
     for (const elem of elementos) {
-      // Ignorar node_modules, .git, .next, dist, build, temp
       if (elem.isDirectory()) {
         if (['node_modules', '.git', '.next', 'dist', 'build', 'Temp', '.turbo'].includes(elem.name)) {
           continue;
@@ -30,9 +48,7 @@ function escanearArchivosMd(dir, lista = [], baseDir = ROOT_DIR) {
         });
       }
     }
-  } catch (err) {
-    // Silenciar errores de permisos o lectura de carpetas restringidas
-  }
+  } catch (err) {}
   return lista;
 }
 
@@ -45,7 +61,7 @@ function generarHTML(contenidoInicial, rutaInicial) {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Visor Markdown Universal</title>
+  <title>Visor Markdown Universal · Revisiones IA</title>
   
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.5.1/github-markdown-dark.min.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
@@ -61,6 +77,7 @@ function generarHTML(contenidoInicial, rutaInicial) {
       --border-color: #30363d;
       --text-color: #c9d1d9;
       --accent-color: #58a6ff;
+      --highlight-bg: rgba(210, 153, 34, 0.25);
     }
     
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -101,7 +118,6 @@ function generarHTML(contenidoInicial, rutaInicial) {
       gap: 8px;
     }
 
-    /* Selector desplegable de archivos del proyecto */
     .file-select {
       width: 100%;
       background: #21262d;
@@ -114,48 +130,107 @@ function generarHTML(contenidoInicial, rutaInicial) {
       cursor: pointer;
     }
 
-    .file-select:focus {
-      border-color: var(--accent-color);
+    .sidebar-tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border-color);
+      background-color: #0d1117;
     }
 
-    #toc-title {
-      font-size: 0.75rem;
-      font-weight: 800;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
+    .tab-btn {
+      flex: 1;
+      padding: 10px;
+      background: transparent;
+      border: none;
       color: #8b949e;
-      padding: 12px 16px 4px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: color 0.15s, border-color 0.15s;
     }
 
-    #toc {
+    .tab-btn.active {
+      color: var(--accent-color);
+      border-bottom-color: var(--accent-color);
+    }
+
+    #toc-panel, #comments-panel {
       flex: 1;
       overflow-y: auto;
-      padding: 4px 12px 12px;
+      padding: 12px;
     }
 
-    #toc ul {
-      list-style: none;
-      padding-left: 8px;
-    }
-
-    #toc li {
-      margin: 4px 0;
-    }
-
+    #toc ul { list-style: none; padding-left: 8px; }
+    #toc li { margin: 4px 0; }
     #toc a {
       color: #8b949e;
       text-decoration: none;
       font-size: 0.84rem;
-      display: block;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
       padding: 5px 8px;
       border-radius: 6px;
       line-height: 1.35;
       transition: background 0.15s, color 0.15s;
     }
+    #toc a:hover { background-color: rgba(110, 118, 129, 0.15); color: var(--text-color); }
+    #toc a .comment-icon { opacity: 0.4; font-size: 0.8rem; margin-left: 6px; }
+    #toc a .comment-icon:hover { opacity: 1; }
 
-    #toc a:hover {
-      background-color: rgba(110, 118, 129, 0.15);
-      color: var(--text-color);
+    /* Tarjetas de Comentarios en Sidebar */
+    .comment-card {
+      background-color: #21262d;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 0.83rem;
+    }
+
+    .comment-card .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: var(--accent-color);
+      font-weight: 700;
+      font-size: 0.78rem;
+    }
+
+    .comment-card .snippet {
+      color: #8b949e;
+      font-style: italic;
+      border-left: 2px solid #d29922;
+      padding-left: 8px;
+      margin: 2px 0;
+      font-size: 0.8rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .comment-card .text {
+      color: #c9d1d9;
+      line-height: 1.4;
+      font-weight: 500;
+    }
+
+    .comment-card .actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .comment-card .del-btn {
+      color: #f85149;
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 0.75rem;
     }
 
     #main-content {
@@ -163,6 +238,7 @@ function generarHTML(contenidoInicial, rutaInicial) {
       overflow-y: auto;
       padding: 80px 56px 40px;
       scroll-behavior: smooth;
+      position: relative;
     }
 
     .markdown-body {
@@ -172,12 +248,28 @@ function generarHTML(contenidoInicial, rutaInicial) {
       font-size: 15px;
     }
 
-    .markdown-body table {
-      display: table !important;
-      width: 100% !important;
+    .markdown-body table { display: table !important; width: 100% !important; }
+
+    /* Icono flotante de comentario al lado de encabezados */
+    .heading-comment-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-left: 10px;
+      font-size: 0.85rem;
+      opacity: 0.3;
+      cursor: pointer;
+      border: none;
+      background: none;
+      color: var(--accent-color);
+      transition: opacity 0.2s, transform 0.2s;
     }
 
-    /* BARRA SUPERIOR DE ENTRADA Y NAVEGACIÓN DE ARCHIVOS */
+    .heading-comment-btn:hover {
+      opacity: 1;
+      transform: scale(1.2);
+    }
+
     .top-bar {
       position: fixed;
       top: 0;
@@ -202,18 +294,6 @@ function generarHTML(contenidoInicial, rutaInicial) {
       border: 1px solid var(--border-color);
       border-radius: 6px;
       padding: 4px 10px;
-      transition: border-color 0.15s;
-    }
-
-    .input-box:focus-within {
-      border-color: var(--accent-color);
-      box-shadow: 0 0 0 3px rgba(56, 139, 253, 0.15);
-    }
-
-    .input-box span {
-      font-size: 0.85rem;
-      color: #8b949e;
-      margin-right: 8px;
     }
 
     .input-box input {
@@ -241,26 +321,97 @@ function generarHTML(contenidoInicial, rutaInicial) {
       transition: background 0.2s;
     }
 
-    .btn:hover {
-      background-color: #30363d;
-      border-color: #8b949e;
-    }
+    .btn:hover { background-color: #30363d; border-color: #8b949e; }
+    .btn-primary { background-color: #238636; color: #ffffff; border-color: rgba(240,246,252,0.1); }
+    .btn-primary:hover { background-color: #2ea043; }
+    .btn-warning { background-color: #9e6a03; color: #ffffff; }
 
-    .btn-primary {
-      background-color: #238636;
-      color: #ffffff;
-      border-color: rgba(240, 246, 252, 0.1);
-    }
+    #file-picker { display: none; }
 
-    .btn-primary:hover {
-      background-color: #2ea043;
-    }
-
-    #file-picker {
+    /* POPUP DE SELECCIÓN DE TEXTO */
+    #selection-popup {
+      position: absolute;
       display: none;
+      background-color: #1f6feb;
+      color: white;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+      z-index: 200;
+      transition: transform 0.1s;
+    }
+    #selection-popup:hover { transform: scale(1.05); }
+
+    /* MODAL DE CREACIÓN DE COMENTARIO */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background-color: rgba(0,0,0,0.7);
+      backdrop-filter: blur(4px);
+      display: none;
+      place-items: center;
+      z-index: 1000;
     }
 
-    /* MENSAJES DE ESTADO / ALERTA DE ERROR */
+    .modal-content {
+      background-color: #161b22;
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      width: 90%;
+      max-width: 560px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+    }
+
+    .modal-content h3 {
+      font-size: 1.1rem;
+      color: var(--accent-color);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .modal-content .context-box {
+      background-color: #0d1117;
+      border-left: 3px solid #d29922;
+      padding: 10px 14px;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      color: #8b949e;
+      max-height: 100px;
+      overflow-y: auto;
+    }
+
+    .modal-content textarea {
+      width: 100%;
+      height: 120px;
+      background-color: #0d1117;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 12px;
+      color: #c9d1d9;
+      font-size: 0.9rem;
+      font-family: inherit;
+      outline: none;
+      resize: vertical;
+    }
+
+    .modal-content textarea:focus {
+      border-color: var(--accent-color);
+    }
+
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
     #status-toast {
       position: fixed;
       bottom: 24px;
@@ -273,49 +424,75 @@ function generarHTML(contenidoInicial, rutaInicial) {
       font-weight: 600;
       box-shadow: 0 4px 12px rgba(0,0,0,0.5);
       display: none;
-      z-index: 1000;
+      z-index: 2000;
     }
   </style>
 </head>
 <body>
 
-  <!-- BARRA LATERAL -->
+  <!-- SIDEBAR -->
   <aside id="sidebar">
     <div class="sidebar-header">
-      <h2>📖 Visor Markdown Universal</h2>
-      
-      <!-- Selector desplegable de archivos .md del proyecto -->
+      <h2>💬 Visor & Revisiones IA</h2>
       <select id="project-files-select" class="file-select">
-        <option value="">📂 Seleccionar archivo .md del proyecto...</option>
+        <option value="">📂 Seleccionar archivo .md...</option>
       </select>
     </div>
+
+    <div class="sidebar-tabs">
+      <button class="tab-btn active" id="tab-toc-btn" onclick="cambiarTab('toc')">📌 Índice</button>
+      <button class="tab-btn" id="tab-comments-btn" onclick="cambiarTab('comments')">💬 Comentarios IA (<span id="comments-count">0</span>)</button>
+    </div>
     
-    <div id="toc-title">Índice de Secciones</div>
-    <nav id="toc">
-      <p style="padding: 12px; color: #8b949e; font-size: 0.85rem;">Cargando índice...</p>
-    </nav>
+    <div id="toc-panel">
+      <nav id="toc">
+        <p style="padding: 12px; color: #8b949e; font-size: 0.85rem;">Cargando índice...</p>
+      </nav>
+    </div>
+
+    <div id="comments-panel" style="display: none;">
+      <div id="comments-list">
+        <p style="padding: 12px; color: #8b949e; font-size: 0.85rem;">Sin comentarios registrados</p>
+      </div>
+    </div>
   </aside>
 
-  <!-- BARRA SUPERIOR DE ENTRADA Y BOTONES -->
+  <!-- TOP BAR -->
   <header class="top-bar">
     <div class="input-box">
-      <span>📄 Ruta:</span>
+      <span style="font-size: 0.85rem; color: #8b949e; margin-right: 8px;">📄 Ruta:</span>
       <input type="text" id="path-input" value="${relPathInicial}" placeholder="Escribe la ruta de cualquier archivo .md..." />
     </div>
     
     <button class="btn btn-primary" onclick="cargarArchivoDesdeInput()">🚀 Visualizar</button>
-    <label class="btn" for="file-picker">💻 Cargar .md Local</label>
+    <label class="btn" for="file-picker">💻 Cargar Local</label>
     <input type="file" id="file-picker" accept=".md" onchange="cargarArchivoLocal(event)" />
     
     <button class="btn" onclick="document.getElementById('main-content').scrollTo({top: 0, behavior: 'smooth'})">⬆ Arriba</button>
     <button class="btn" onclick="recargarActual()">🔄 Recargar</button>
   </header>
 
-  <!-- CONTENIDO RENDERIZADO -->
+  <!-- MAIN CONTENT -->
   <main id="main-content">
     <article class="markdown-body" id="rendered-content">
     </article>
   </main>
+
+  <!-- POPUP BOTÓN SELECCIÓN DE TEXTO -->
+  <div id="selection-popup" onclick="abrirModalConSeleccion()">💬 Comentar para la IA</div>
+
+  <!-- MODAL DE COMENTARIO -->
+  <div class="modal-overlay" id="comment-modal">
+    <div class="modal-content">
+      <h3>💬 Dejar Comentario u Observación para la IA</h3>
+      <div class="context-box" id="modal-context-box">Texto o sección seleccionada...</div>
+      <textarea id="modal-comment-text" placeholder="Escribe aquí tu instrucción o cambio deseado (ej: 'Modificar regla 3 para agregar soporte de webhooks', 'Actualizar avance a 90%')..."></textarea>
+      <div class="modal-actions">
+        <button class="btn" onclick="cerrarModalComentario()">Cancelar</button>
+        <button class="btn btn-primary" onclick="guardarComentarioModal()">💾 Guardar Comentario</button>
+      </div>
+    </div>
+  </div>
 
   <!-- NOTIFICACIÓN TOAST -->
   <div id="status-toast"></div>
@@ -323,6 +500,9 @@ function generarHTML(contenidoInicial, rutaInicial) {
   <script>
     let contenidoActual = ${JSON.stringify(contenidoInicial)};
     let rutaActual = ${JSON.stringify(relPathInicial)};
+    let comentariosActuales = [];
+    let textoSeleccionadoTemp = '';
+    let seccionSeleccionadaTemp = '';
 
     mermaid.initialize({ startOnLoad: false, theme: 'dark' });
 
@@ -345,10 +525,24 @@ function generarHTML(contenidoInicial, rutaInicial) {
       setTimeout(() => { toast.style.display = 'none'; }, 4000);
     }
 
+    function cambiarTab(tab) {
+      if (tab === 'toc') {
+        document.getElementById('toc-panel').style.display = 'block';
+        document.getElementById('comments-panel').style.display = 'none';
+        document.getElementById('tab-toc-btn').classList.add('active');
+        document.getElementById('tab-comments-btn').classList.remove('active');
+      } else {
+        document.getElementById('toc-panel').style.display = 'none';
+        document.getElementById('comments-panel').style.display = 'block';
+        document.getElementById('tab-toc-btn').classList.remove('active');
+        document.getElementById('tab-comments-btn').classList.add('active');
+      }
+    }
+
     function renderizarMarkdown(textoMd) {
       document.getElementById('rendered-content').innerHTML = marked.parse(textoMd);
 
-      // Generar TOC
+      // Agregar botón de comentario 💬 al lado de cada encabezado H1, H2, H3
       const headings = document.querySelectorAll('#rendered-content h1, #rendered-content h2, #rendered-content h3');
       const tocNav = document.getElementById('toc');
       
@@ -358,15 +552,34 @@ function generarHTML(contenidoInicial, rutaInicial) {
           const id = 'heading-' + index;
           heading.id = id;
           
+          const tituloLimpio = heading.textContent.replace(/^[#\s]+/, '');
+          
+          // Inyectar botón de comentario en el título de la página
+          const commentBtn = document.createElement('button');
+          commentBtn.className = 'heading-comment-btn';
+          commentBtn.title = 'Agregar comentario a esta sección';
+          commentBtn.innerHTML = '💬';
+          commentBtn.onclick = (e) => {
+            e.stopPropagation();
+            abrirModalSeccion(tituloLimpio);
+          };
+          heading.appendChild(commentBtn);
+
+          // Construir TOC
           const li = document.createElement('li');
           const a = document.createElement('a');
           a.href = '#' + id;
-          a.textContent = heading.textContent.replace(/^[#\s]+/, '');
+          a.innerHTML = '<span>' + tituloLimpio + '</span><span class="comment-icon" title="Comentar sección">💬</span>';
           
           const level = parseInt(heading.tagName.substring(1));
           li.style.paddingLeft = ((level - 1) * 10) + 'px';
           
           a.addEventListener('click', (e) => {
+            if (e.target.classList.contains('comment-icon')) {
+              e.preventDefault();
+              abrirModalSeccion(tituloLimpio);
+              return;
+            }
             e.preventDefault();
             heading.scrollIntoView({ behavior: 'smooth' });
           });
@@ -377,7 +590,7 @@ function generarHTML(contenidoInicial, rutaInicial) {
         tocNav.innerHTML = '';
         tocNav.appendChild(ul);
       } else {
-        tocNav.innerHTML = '<p style="padding: 12px; color: #8b949e; font-size: 0.85rem;">Sin secciones principales</p>';
+        tocNav.innerHTML = '<p style="padding: 12px; color: #8b949e;">Sin secciones principales</p>';
       }
 
       // Renderizar Mermaid
@@ -389,18 +602,141 @@ function generarHTML(contenidoInicial, rutaInicial) {
         block.parentNode.replaceWith(div);
       });
       mermaid.run();
+
+      // Cargar y mostrar comentarios existentes
+      cargarComentarios();
     }
 
-    // Cargar contenido inicial
-    renderizarMarkdown(contenidoActual);
+    // Detección de Selección de Texto para Mostrar Popup 💬
+    document.getElementById('main-content').addEventListener('mouseup', (e) => {
+      const selection = window.getSelection();
+      const selectedText = selection.toString().trim();
+      const popup = document.getElementById('selection-popup');
 
-    // Cargar lista de archivos .md del proyecto
+      if (selectedText.length > 3) {
+        textoSeleccionadoTemp = selectedText;
+        seccionSeleccionadaTemp = '';
+        popup.style.left = Math.min(e.pageX, window.innerWidth - 180) + 'px';
+        popup.style.top = (e.pageY - 40) + 'px';
+        popup.style.display = 'block';
+      } else {
+        popup.style.display = 'none';
+      }
+    });
+
+    function abrirModalConSeleccion() {
+      document.getElementById('selection-popup').style.display = 'none';
+      document.getElementById('modal-context-box').textContent = 'Texto Seleccionado: "' + textoSeleccionadoTemp + '"';
+      document.getElementById('modal-comment-text').value = '';
+      document.getElementById('comment-modal').style.display = 'grid';
+    }
+
+    function abrirModalSeccion(nombreSeccion) {
+      seccionSeleccionadaTemp = nombreSeccion;
+      textoSeleccionadoTemp = '';
+      document.getElementById('modal-context-box').textContent = 'Sección: ' + nombreSeccion;
+      document.getElementById('modal-comment-text').value = '';
+      document.getElementById('comment-modal').style.display = 'grid';
+    }
+
+    function cerrarModalComentario() {
+      document.getElementById('comment-modal').style.display = 'none';
+    }
+
+    async function guardarComentarioModal() {
+      const commentText = document.getElementById('modal-comment-text').value.trim();
+      if (!commentText) {
+        mostrarToast('Por favor escribe tu comentario o instrucción');
+        return;
+      }
+
+      const payload = {
+        file: rutaActual,
+        section: seccionSeleccionadaTemp,
+        selectedText: textoSeleccionadoTemp,
+        comment: commentText
+      };
+
+      try {
+        const res = await fetch('/api/comments', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        if (res.ok) {
+          cerrarModalComentario();
+          mostrarToast('Comentario guardado. La IA lo revisará.', false);
+          cargarComentarios();
+        } else {
+          mostrarToast('Error al guardar comentario');
+        }
+      } catch (err) {
+        mostrarToast('Error de conexión');
+      }
+    }
+
+    async function cargarComentarios() {
+      try {
+        const res = await fetch('/api/comments?file=' + encodeURIComponent(rutaActual));
+        comentariosActuales = await res.json();
+        
+        document.getElementById('comments-count').textContent = comentariosActuales.length;
+        const listContainer = document.getElementById('comments-list');
+
+        if (comentariosActuales.length === 0) {
+          listContainer.innerHTML = '<p style="padding: 12px; color: #8b949e; font-size: 0.85rem;">Sin comentarios en este archivo</p>';
+          return;
+        }
+
+        listContainer.innerHTML = '';
+        comentariosActuales.forEach(c => {
+          const card = document.createElement('div');
+          card.className = 'comment-card';
+          
+          const header = document.createElement('div');
+          header.className = 'header';
+          header.innerHTML = '<span>' + (c.section || 'General') + '</span><span>' + new Date(c.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) + '</span>';
+
+          const snippet = document.createElement('div');
+          snippet.className = 'snippet';
+          snippet.textContent = c.selectedText || c.section || 'Comentario general';
+
+          const text = document.createElement('div');
+          text.className = 'text';
+          text.textContent = c.comment;
+
+          const actions = document.createElement('div');
+          actions.className = 'actions';
+          actions.innerHTML = '<button class="del-btn" onclick="eliminarComentario(\'' + c.id + '\')">🗑 Eliminar</button>';
+
+          card.appendChild(header);
+          card.appendChild(snippet);
+          card.appendChild(text);
+          card.appendChild(actions);
+
+          listContainer.appendChild(card);
+        });
+      } catch (err) {
+        console.error('Error al cargar comentarios:', err);
+      }
+    }
+
+    async function eliminarComentario(id) {
+      try {
+        await fetch('/api/comments?id=' + encodeURIComponent(id), { method: 'DELETE' });
+        cargarComentarios();
+        mostrarToast('Comentario eliminado', false);
+      } catch (err) {}
+    }
+
     async function cargarListaArchivosProyecto() {
       try {
         const res = await fetch('/api/list-markdown');
         const archivos = await res.json();
         const select = document.getElementById('project-files-select');
         
+        select.innerHTML = '<option value="">📂 Seleccionar archivo .md...</option>';
         archivos.forEach(file => {
           const opt = document.createElement('option');
           opt.value = file.relPath;
@@ -416,9 +752,7 @@ function generarHTML(contenidoInicial, rutaInicial) {
             solicitarArchivoServidor(e.target.value);
           }
         });
-      } catch (err) {
-        console.error('Error al cargar lista de archivos:', err);
-      }
+      } catch (err) {}
     }
 
     async function solicitarArchivoServidor(filePath) {
@@ -483,7 +817,6 @@ function generarHTML(contenidoInicial, rutaInicial) {
 
     cargarListaArchivosProyecto();
 
-    // Auto-reload SSE
     const evtSource = new EventSource('/events');
     evtSource.onmessage = function(e) {
       if (e.data === 'reload') {
@@ -498,7 +831,58 @@ function generarHTML(contenidoInicial, rutaInicial) {
 const server = http.createServer((req, res) => {
   const parsedUrl = new URL(req.url, `http://localhost:${PORT}`);
   
-  // API: Escanear y listar todos los archivos .md del proyecto
+  // API: Listar comentarios del archivo
+  if (parsedUrl.pathname === '/api/comments' && req.method === 'GET') {
+    const reqPath = parsedUrl.searchParams.get('file');
+    const todosComentarios = leerComentarios();
+    const filtrados = reqPath 
+      ? todosComentarios.filter(c => c.file === reqPath || c.file.endsWith(path.basename(reqPath)))
+      : todosComentarios;
+      
+    res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+    res.end(JSON.stringify(filtrados));
+    return;
+  }
+
+  // API: Guardar nuevo comentario
+  if (parsedUrl.pathname === '/api/comments' && req.method === 'POST') {
+    let body = '';
+    req.on('data', chunk => { body += chunk; });
+    req.on('end', () => {
+      try {
+        const nuevoComentario = JSON.parse(body);
+        nuevoComentario.id = 'comment_' + Date.now();
+        nuevoComentario.timestamp = new Date().toISOString();
+        nuevoComentario.status = 'PENDIENTE';
+
+        const comentarios = leerComentarios();
+        comentarios.push(nuevoComentario);
+        guardarComentarios(comentarios);
+
+        res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify({ success: true, comment: nuevoComentario }));
+      } catch (e) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Payload inválido' }));
+      }
+    });
+    return;
+  }
+
+  // API: Eliminar comentario por ID
+  if (parsedUrl.pathname === '/api/comments' && req.method === 'DELETE') {
+    const commentId = parsedUrl.searchParams.get('id');
+    if (commentId) {
+      let comentarios = leerComentarios();
+      comentarios = comentarios.filter(c => c.id !== commentId);
+      guardarComentarios(comentarios);
+    }
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ success: true }));
+    return;
+  }
+
+  // API: Listar archivos .md
   if (parsedUrl.pathname === '/api/list-markdown') {
     const listaMd = escanearArchivosMd(ROOT_DIR);
     res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
@@ -506,7 +890,7 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  // API: Leer contenido de cualquier archivo .md por su ruta
+  // API: Leer archivo
   if (parsedUrl.pathname === '/api/file') {
     const reqPath = parsedUrl.searchParams.get('path');
     if (!reqPath) {
@@ -515,10 +899,7 @@ const server = http.createServer((req, res) => {
       return;
     }
 
-    // Intentar resolver la ruta
     let fullPath = path.isAbsolute(reqPath) ? reqPath : path.resolve(ROOT_DIR, reqPath);
-    
-    // Si no termina en .md y existe agregándolo
     if (!fs.existsSync(fullPath) && fs.existsSync(fullPath + '.md')) {
       fullPath = fullPath + '.md';
     }
@@ -529,7 +910,7 @@ const server = http.createServer((req, res) => {
       return;
     }
 
-    targetFile = fullPath; // Actualizar el archivo observado
+    targetFile = fullPath;
     fs.readFile(fullPath, 'utf8', (err, data) => {
       if (err) {
         res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
@@ -548,7 +929,7 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  // EventSource para Auto-Reload SSE
+  // Auto-Reload SSE
   if (parsedUrl.pathname === '/events') {
     res.writeHead(200, {
       'Content-Type': 'text/event-stream',
@@ -564,7 +945,6 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  // Servir la página HTML principal
   fs.readFile(targetFile, 'utf8', (err, data) => {
     const fileToRender = err ? DEFAULT_FILE : targetFile;
     const initialContent = err ? '# Error\nNo se pudo leer el archivo especificado' : data;
@@ -577,8 +957,9 @@ const server = http.createServer((req, res) => {
 server.listen(PORT, () => {
   const url = `http://localhost:${PORT}`;
   console.log(`====================================================`);
-  console.log(`🚀 Visor Markdown Universal Activo con Selector y Entrada de Ruta`);
+  console.log(`🚀 Visor Markdown Universal + Sistema de Revisiones IA Activo`);
   console.log(`📄 Archivo Inicial: ${targetFile}`);
+  console.log(`💬 Comentarios guardados en: ${COMMENTS_FILE}`);
   console.log(`🌐 Navegar a: ${url}`);
   console.log(`====================================================`);
 
