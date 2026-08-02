@@ -228,25 +228,10 @@ function generarHTML(contenidoInicial, rutaInicial) {
       border-left: 3px solid var(--accent-color);
     }
 
-    /* ESTILOS DE DESTACADO EN EL ÍNDICE CUANDO TIENE COMENTARIOS */
     #toc a.toc-has-comment {
       color: #388bfd !important;
       font-weight: 700 !important;
       background-color: rgba(56, 139, 253, 0.12) !important;
-    }
-
-    .toc-comment-badge {
-      background-color: #1f6feb;
-      color: #ffffff;
-      font-size: 0.72rem;
-      font-weight: 800;
-      padding: 2px 7px;
-      border-radius: 12px;
-      margin-left: 6px;
-      box-shadow: 0 0 8px rgba(31, 111, 235, 0.6);
-      display: inline-flex;
-      align-items: center;
-      gap: 3px;
     }
 
     .toc-item.level-1 a { font-weight: 700; color: #c9d1d9; font-size: 0.86rem; margin-top: 6px; }
@@ -258,20 +243,22 @@ function generarHTML(contenidoInicial, rutaInicial) {
     #toc a .comment-icon { opacity: 0.35; font-size: 0.8rem; margin-left: 6px; transition: opacity 0.2s; }
     #toc a .comment-icon:hover { opacity: 1; }
 
-    /* ESTILO RESPLANDECIENTE DEL ICONO DE COMENTARIOS CON COMENTARIOS ACTIVOS */
+    /* ESTILO RESPLANDECIENTE AZUL IDÉNTICO PARA ICONOS CON COMENTARIO EN DOCUMENTO E ÍNDICE */
     #toc a .comment-icon.has-comments,
     .heading-comment-btn.has-comments {
       opacity: 1 !important;
       background-color: #1f6feb !important;
       color: #ffffff !important;
       border-radius: 12px !important;
-      padding: 2px 7px !important;
-      font-size: 0.74rem !important;
+      padding: 2px 8px !important;
+      font-size: 0.75rem !important;
       font-weight: 800 !important;
-      box-shadow: 0 0 10px rgba(31, 111, 235, 0.8) !important;
+      box-shadow: 0 0 12px rgba(31, 111, 235, 0.85) !important;
       display: inline-flex !important;
       align-items: center !important;
-      gap: 3px !important;
+      gap: 4px !important;
+      vertical-align: middle !important;
+      margin-left: 8px !important;
     }
 
     .comment-card {
@@ -399,7 +386,6 @@ function generarHTML(contenidoInicial, rutaInicial) {
       scroll-margin-top: 95px !important;
     }
 
-    /* MARCO ILUMINADO EN EL DOCUMENTO PRINCIPAL CUANDO TIENE COMENTARIOS */
     .has-active-comment {
       background-color: rgba(31, 111, 235, 0.12) !important;
       border-left: 4px solid #1f6feb !important;
@@ -632,7 +618,6 @@ function generarHTML(contenidoInicial, rutaInicial) {
 </head>
 <body>
 
-  <!-- SIDEBAR CON FILTRO "SOLO CON COMENTARIOS" -->
   <aside id="sidebar">
     <div class="sidebar-header">
       <h2>💬 Visor & Revisiones IA</h2>
@@ -647,7 +632,6 @@ function generarHTML(contenidoInicial, rutaInicial) {
       <button class="tab-btn" id="tab-comments-btn" onclick="cambiarTab('comments')">💬 Revisiones IA (<span id="comments-count">0</span>)</button>
     </div>
 
-    <!-- BOTÓN FILTRO "SOLO CON COMENTARIOS" EN EL ÍNDICE -->
     <div class="toc-toolbar" id="toc-toolbar">
       <span style="font-size: 0.76rem; color: #8b949e;">Filtrar Índice:</span>
       <button class="filter-comments-btn" id="filter-comments-toggle-btn" onclick="toggleFiltroSoloComentarios()">
@@ -799,6 +783,19 @@ function generarHTML(contenidoInicial, rutaInicial) {
           li.style.display = 'block';
         }
       });
+    }
+
+    function coincidenSecciones(secDoc, secComentario) {
+      if (!secDoc || !secComentario) return false;
+      const s1 = secDoc.toLowerCase().replace(/[^a-z0-9]/g, '');
+      const s2 = secComentario.toLowerCase().replace(/[^a-z0-9]/g, '');
+      if (s1.includes(s2) || s2.includes(s1)) return true;
+      
+      const num1 = secDoc.match(/^[0-9]+/);
+      const num2 = secComentario.match(/^[0-9]+/);
+      if (num1 && num2 && num1[0] === num2[0]) return true;
+      
+      return false;
     }
 
     function renderizarMarkdown(textoMd) {
@@ -1135,7 +1132,6 @@ function generarHTML(contenidoInicial, rutaInicial) {
       }
     }
 
-    // CARGAR Y DECORAR INDICADORES VISUALES + FILTRO EN ÍNDICE
     async function cargarComentarios() {
       try {
         const res = await fetch('/api/comments?file=' + encodeURIComponent(rutaActual));
@@ -1144,14 +1140,12 @@ function generarHTML(contenidoInicial, rutaInicial) {
         document.getElementById('comments-count').textContent = comentariosActuales.length;
         const listContainer = document.getElementById('comments-list');
 
-        // Limpiar resaltados previos en documento e índice
         document.querySelectorAll('.has-active-comment, .toc-has-comment').forEach(el => {
           el.classList.remove('has-active-comment', 'toc-has-comment');
         });
         document.querySelectorAll('.heading-comment-btn.has-comments, .comment-icon.has-comments').forEach(el => {
           el.classList.remove('has-comments');
-          if (el.classList.contains('heading-comment-btn')) el.innerHTML = '💬';
-          else el.innerHTML = '💬';
+          el.innerHTML = '💬';
         });
 
         if (comentariosActuales.length === 0) {
@@ -1166,31 +1160,31 @@ function generarHTML(contenidoInicial, rutaInicial) {
           conteoPorSeccion[key] = (conteoPorSeccion[key] || 0) + 1;
         });
 
-        // 1. ILUMINAR BOTONES E ÍTEMS EN EL DOCUMENTO
+        // 1. ILUMINAR BOTONES E ÍTEMS EN EL DOCUMENTO (CON BADGE AZUL RESPLANDECIENTE 💬 N)
         const docElems = document.querySelectorAll('#rendered-content h1, #rendered-content h2, #rendered-content h3, #rendered-content h4, #rendered-content li[id^="rule-item-"]');
         
         docElems.forEach(elem => {
           const textoElem = elem.textContent.replace(/^[#\s]+/, '').trim();
           
           Object.keys(conteoPorSeccion).forEach(sec => {
-            if (sec && (textoElem.includes(sec) || sec.includes(textoElem.slice(0, 25)))) {
+            if (sec && coincidenSecciones(textoElem, sec)) {
               elem.classList.add('has-active-comment');
               const commentBtn = elem.querySelector('.heading-comment-btn');
               if (commentBtn) {
                 commentBtn.classList.add('has-comments');
                 commentBtn.innerHTML = '💬 ' + conteoPorSeccion[sec];
-                commentBtn.title = 'Ver/Agregar comentarios en esta sección (' + conteoPorSeccion[sec] + ')';
+                commentBtn.title = 'Tiene ' + conteoPorSeccion[sec] + ' comentario(s) de la IA. Clic para ver/agregar.';
               }
             }
           });
         });
 
-        // 2. ILUMINAR ICONOS E ÍTEMS EN EL ÍNDICE (TOC)
+        // 2. ILUMINAR ICONOS E ÍTEMS EN EL ÍNDICE (TOC) (CON BADGE AZUL RESPLANDECIENTE 💬 N)
         const tocLinks = document.querySelectorAll('#toc a');
         tocLinks.forEach(a => {
           const secTitle = a.dataset.section || a.textContent.trim();
           Object.keys(conteoPorSeccion).forEach(sec => {
-            if (sec && (secTitle.includes(sec) || sec.includes(secTitle.slice(0, 25)))) {
+            if (sec && coincidenSecciones(secTitle, sec)) {
               a.classList.add('toc-has-comment');
               const icon = a.querySelector('.comment-icon');
               if (icon) {
@@ -1202,7 +1196,6 @@ function generarHTML(contenidoInicial, rutaInicial) {
           });
         });
 
-        // Si el filtro de "Solo con comentarios" está activo, re-filtrar
         if (filtroSoloComentariosActivo) {
           const tocItems = document.querySelectorAll('#toc li');
           tocItems.forEach(li => {
@@ -1312,7 +1305,7 @@ function generarHTML(contenidoInicial, rutaInicial) {
       } else if (c.section) {
         const headings = document.querySelectorAll('#rendered-content h1, #rendered-content h2, #rendered-content h3, #rendered-content h4, #rendered-content li[id^="rule-item-"]');
         for (const h of headings) {
-          if (h.textContent.includes(c.section)) {
+          if (coincidenSecciones(h.textContent, c.section)) {
             h.scrollIntoView({ behavior: 'smooth', block: 'start' });
             break;
           }
@@ -1640,7 +1633,7 @@ const server = http.createServer((req, res) => {
 server.listen(PORT, () => {
   const url = `http://localhost:${PORT}`;
   console.log(`====================================================`);
-  console.log(`🚀 Visor Markdown Universal con Botón Filtro e Indicadores Azules de Comentarios`);
+  console.log(`🚀 Visor Markdown Universal con Alertas Idénticas Azules (💬 1) en Documento e Índice`);
   console.log(`📄 Archivo Inicial: ${targetFile}`);
   console.log(`🌐 Navegar a: ${url}`);
   console.log(`====================================================`);
