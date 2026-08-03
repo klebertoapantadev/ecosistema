@@ -41,7 +41,9 @@ export default async function LayoutPanel({ children }: { children: React.ReactN
   const supabase = await crearClienteServidor();
   await asegurarMembresiaCliente(supabase, perfil.usu_id, NEGOCIO);
 
-  const widgets = await obtenerWidgetsVisibles(perfil.usu_id, perfil.usu_superadmin_plataforma, NEGOCIO);
+  const widgetsRaw = await obtenerWidgetsVisibles(perfil.usu_id, perfil.usu_superadmin_plataforma, NEGOCIO);
+  // Filtrar configuracion_negocio y configuracion_correo porque ahora estan agrupados bajo el panel modular 'Configurar' (/panel/configuracion)
+  const widgets = widgetsRaw.filter(w => w.wdg_clave !== "configuracion_negocio" && w.wdg_clave !== "configuracion_correo");
 
   const perfiles = await obtenerPerfiles(NEGOCIO);
   const clasePerfil = clasePerfilVisual(perfil.usu_superadmin_plataforma, perfiles);
@@ -75,8 +77,8 @@ export default async function LayoutPanel({ children }: { children: React.ReactN
               </EnlacePanel>
             );
           })}
-          <EnlacePanel href="/panel/notificaciones" icono={<Bell className="icono-nav" aria-hidden="true" strokeWidth={1.8} />}>
-            Preferencias Alertas
+          <EnlacePanel href="/panel/configuracion" icono={<Settings className="icono-nav" aria-hidden="true" strokeWidth={1.8} />}>
+            Configurar
           </EnlacePanel>
           <EnlacePanel href="/panel/cuenta" icono={<CircleUser className="icono-nav" aria-hidden="true" strokeWidth={1.8} />}>
             Mi cuenta

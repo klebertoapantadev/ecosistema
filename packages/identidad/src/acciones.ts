@@ -2,7 +2,7 @@
 
 import { headers } from "next/headers";
 import { crearClienteServidor } from "@eco/supabase/servidor";
-import { enviarCorreo } from "@eco/notificaciones";
+import { enviarCorreo } from "@eco/notificaciones/enviar-correo";
 import {
   esquemaRegistro,
   esquemaIngreso,

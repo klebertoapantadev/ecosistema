@@ -1,15 +1,10 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { crearClienteServidor } from "@eco/supabase/servidor";
 import { esquemaConfiguracionNegocio, type DatosConfiguracionNegocio } from "./esquema";
 
 type Resultado<T = undefined> = { ok: true; data: T } | { ok: false; error: string };
 
-// Escritura simple guardada por RLS (cfg_negocio_admin_escritura exige
-// seg_fn_es_admin_negocio) -- no es una transicion de estado irreversible
-// como aprobar/pagar, no necesita RPC dedicado. Comun a los 4 negocios --
-// "negocio" es el slug del que llama.
 export async function actualizarConfiguracionNegocio(
   datos: DatosConfiguracionNegocio,
   negocio: string,
@@ -19,6 +14,7 @@ export async function actualizarConfiguracionNegocio(
     return { ok: false, error: parseo.error.issues[0]?.message ?? "Datos invalidos" };
   }
 
+  const { crearClienteServidor } = await import("@eco/supabase/servidor");
   const supabase = await crearClienteServidor();
 
   const { data: actual } = await supabase
