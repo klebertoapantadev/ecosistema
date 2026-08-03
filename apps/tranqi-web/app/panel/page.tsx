@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 import { obtenerPerfilActual, obtenerSaludo, obtenerPerfiles } from "@eco/identidad";
 import { SelectorRolActivo, type ModoRol } from "./SelectorRolActivo";
+import { SeccionFavoritosInicio } from "./SeccionFavoritosInicio";
 
 export const metadata: Metadata = { title: "Panel — tranqi" };
 
@@ -107,6 +108,8 @@ export default async function PagePanel({ searchParams }: Props) {
         </div>
       </div>
 
+      <SeccionFavoritosInicio />
+
       {modo === "cliente" && <PanelCliente saludo={saludo} nombre={nombre} />}
       {modo === "abogado" && <PanelAbogado nombreCompleto={nombreCompleto} />}
       {modo === "admin" && <PanelAdministrador esSuperadmin={puedeConmutar} esAdminGlobal={esAdminGlobal} />}
@@ -155,7 +158,7 @@ function SeccionNotificacionesEcosistema({ esAdmin }: { esAdmin: boolean }) {
       </div>
 
       <div style={{ display: "flex", gap: "10px", marginTop: "14px", flexWrap: "wrap" }}>
-        <a href="/panel/notificaciones" style={{ fontSize: "0.78rem", color: "#c9d1d9", background: "#21262d", border: "1px solid #30363d", borderRadius: "6px", padding: "6px 12px", textDecoration: "none", fontWeight: 600, display: "inline-flex", alignItems: "center", gap: "6px" }}>
+        <a href="/panel/configuracion" style={{ fontSize: "0.78rem", color: "#c9d1d9", background: "#21262d", border: "1px solid #30363d", borderRadius: "6px", padding: "6px 12px", textDecoration: "none", fontWeight: 600, display: "inline-flex", alignItems: "center", gap: "6px" }}>
           <Settings size={14} /> Preferencias & Alertas Recibidas
         </a>
         {esAdmin && (
@@ -330,51 +333,43 @@ function PanelAdministrador({ esSuperadmin, esAdminGlobal }: { esSuperadmin: boo
           <section className="tarjeta-proteccion tarjeta-admin" aria-labelledby="t-admin">
             <div className="tarjeta-proteccion-fila">
               <div>
-                <div className="eyebrow-cliente" id="t-admin">Gobernanza de Plataforma</div>
+                <div className="eyebrow-cliente" id="t-admin">Plataforma Ecosistema</div>
                 <div className="tarjeta-proteccion-plan">
-                  Consola <i>{esSuperadmin ? "SuperAdmin / Administrador" : "de Administración"}</i>
+                  Administrador de <i>tranqi</i> {esSuperadmin && "(SuperAdmin Activo)"}
                 </div>
                 <div className="tarjeta-proteccion-meta">
-                  Acceso universal a los widgets comunes y matriz de seguridad de perfiles en tranqi.
+                  Gestión centralizada de miembros, aprobación de socios abogados, configuración SMTP en Vault y auditoría BDD.
                 </div>
               </div>
-              {esSuperadmin && (
-                <span className="badge-rol">
-                  <ShieldCheck className="icono-badge-rol" aria-hidden="true" strokeWidth={2} />
-                  SuperAdmin
-                </span>
-              )}
+              <span className="badge-rol">✓ Operativo</span>
             </div>
           </section>
 
-          <div className="grid-admin-widgets">
+          <div className="accesos-cliente">
             {WIDGETS_ADMIN.map((w) => (
               <a
                 key={w.clave}
-                href={w.clave === "emision_notificaciones" ? "/panel/emision-notificaciones" : `#`}
-                style={{ textDecoration: "none" }}
+                href={w.clave === "gestion_usuarios" ? "/panel/usuarios" : w.clave === "socios" ? "/panel/socios" : w.clave === "configuracion_negocio" ? "/panel/configuracion" : w.clave === "emision_notificaciones" ? "/panel/emision-notificaciones" : "/panel/configuracion"}
+                className="tarjeta-acceso"
+                style={{ textDecoration: "none", color: "inherit" }}
               >
-                <div className={`tarjeta-widget-admin ${w.estado === "registrado" ? "destacado" : ""}`}>
-                  <div className="tarjeta-widget-cabeza">
-                    <w.icono className="tarjeta-widget-icono" strokeWidth={1.7} />
-                    {w.estado === "registrado" ? (
-                      <span className="chip-registrado">Widget Activo</span>
-                    ) : (
-                      <span className="chip-proximamente">Próximamente</span>
-                    )}
-                  </div>
-                  <strong>{w.nombre}</strong>
-                  <p>{w.detalle}</p>
-                </div>
+                <w.icono className="tarjeta-acceso-icono" aria-hidden="true" strokeWidth={1.6} />
+                <strong>{w.nombre}</strong>
+                <p>{w.detalle}</p>
+                {w.estado === "proximamente" ? (
+                  <span className="chip-proximamente">Próximamente</span>
+                ) : (
+                  <span className="chip-registrado">Abrir widget</span>
+                )}
               </a>
             ))}
           </div>
 
           <section className="tarjeta-seccion" aria-labelledby="t-metricas">
-            <header><h2 id="t-metricas">Telemetría y Métricas del Negocio</h2></header>
+            <header><h2 id="t-metricas">Métricas de Plataforma & Auditoría</h2></header>
             <div className="vacio-seccion">
-              <b>Panel de telemetría en preparación</b>
-              <span>Consolidado de usuarios registrados, consultas de API y estado de servidores.</span>
+              <b>Telemetría en Vivo BDD</b>
+              <span>Monitoreo de RPCs, peticiones HTTP, logs de auditoría por triggers y latencia de respuesta.</span>
             </div>
           </section>
         </div>
@@ -382,13 +377,11 @@ function PanelAdministrador({ esSuperadmin, esAdminGlobal }: { esSuperadmin: boo
         <aside className="columna-cliente">
           <SeccionNotificacionesEcosistema esAdmin={esAdminGlobal} />
 
-          <section className="tarjeta-seccion" aria-labelledby="t-infra">
-            <header><h2 id="t-infra">Infraestructura y Servicios</h2></header>
-            <div className="vacio-seccion" style={{ textAlign: "left", justifyItems: "start" }}>
-              <b>Cluster PostgreSQL Supabase & Vercel Edge</b>
-              <span style={{ fontSize: "0.8rem", color: "#8b949e", marginTop: "4px" }}>
-                11 tablas en comun_seguridad • RLS Activo • TLS 1.3
-              </span>
+          <section className="tarjeta-seccion" aria-labelledby="t-superadmin">
+            <header><h2 id="t-superadmin">Gobernanza Multitenant</h2></header>
+            <div className="vacio-seccion">
+              <b>4 Negocios Activos</b>
+              <span>tranqi, FastFix Home, Tinkay Floristería, Margaritas Floristería.</span>
             </div>
           </section>
         </aside>
