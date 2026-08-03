@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect } from "react";
 import { Settings, Mail, Bell, Star, X, ChevronRight, ShieldCheck } from "lucide-react";
-import { FormularioConfiguracionNegocio, FormularioSmtp } from "@eco/configuracion-negocio";
+import { FormularioConfiguracionNegocio } from "@eco/configuracion-negocio/componentes/FormularioConfiguracionNegocio";
+import { FormularioSmtp } from "@eco/configuracion-negocio/componentes/FormularioSmtp";
 import { PreferenciasNotificacionWidget } from "@eco/notificaciones";
 
 interface Props {
