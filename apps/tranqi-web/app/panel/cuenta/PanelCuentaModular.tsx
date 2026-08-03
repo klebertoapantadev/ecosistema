@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { User, History, KeyRound, ShieldAlert, Star, ArrowLeft, CheckCircle2, ChevronRight } from "lucide-react";
+import { User, History, KeyRound, ShieldAlert, Star, X, CheckCircle2, ChevronRight } from "lucide-react";
 import { FormularioPerfil } from "@eco/identidad/componentes/FormularioPerfil";
 import { HistorialAccesos } from "@eco/identidad/componentes/HistorialAccesos";
 import { EliminarCuenta } from "@eco/identidad/componentes/EliminarCuenta";
@@ -120,42 +120,22 @@ export function PanelCuentaModular({ perfil, historial }: Props) {
 
   const widgetActualDef = WIDGETS_DISPONIBLES.find(w => w.id === widgetActivo);
 
-  // VISTA 2: PANEL DEDICADO DEL WIDGET ENFOCADO (Oculta el Hero Card superior para dar 100% de espacio)
+  // VISTA 2: PANEL DEDICADO DEL WIDGET ENFOCADO (Con botón circular 'X' en la esquina superior derecha)
   if (widgetActivo && widgetActualDef) {
     return (
       <div style={{ width: "100%", animation: "fadeIn 0.15s ease" }}>
-        {/* Barra de Navegación "Volver a Mi cuenta" */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px", flexWrap: "wrap", gap: "10px" }}>
-          <button
-            type="button"
-            onClick={() => setWidgetActivo(null)}
-            className="btn-mini"
-            style={{
-              background: "var(--blanco, #ffffff)",
-              color: "var(--negro, #111111)",
-              border: "1.5px solid var(--panel-linea, #E4E4E4)",
-              padding: "10px 18px",
-              borderRadius: "10px",
-              fontWeight: 700,
-              fontSize: "0.88rem",
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "8px",
-              cursor: "pointer",
-              boxShadow: "0 1px 3px rgba(0,0,0,0.05)"
-            }}
-          >
-            <ArrowLeft size={18} /> Volver a Mi cuenta
-          </button>
-
-          <span style={{ fontSize: "0.82rem", color: "var(--panel-gris, #737373)", fontWeight: 600 }}>
-            Categoría: {widgetActualDef.categoria}
-          </span>
-        </div>
-
         {/* Tarjeta Full Width del Widget Enfocado */}
         <section className="tarjeta-seccion" style={{ background: "var(--blanco, #ffffff)", borderRadius: "16px", overflow: "hidden", width: "100%" }}>
-          <header style={{ padding: "18px 20px", background: "var(--panel-papel, #F7F6FA)", borderBottom: "1px solid var(--panel-linea, #E4E4E4)" }}>
+          <header
+            style={{
+              padding: "16px 20px",
+              background: "var(--panel-papel, #F7F6FA)",
+              borderBottom: "1px solid var(--panel-linea, #E4E4E4)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between"
+            }}
+          >
             <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
               <div
                 style={{
@@ -166,28 +146,52 @@ export function PanelCuentaModular({ perfil, historial }: Props) {
                   display: "flex"
                 }}
               >
-                {React.createElement(widgetActualDef.icono, { size: 22, color: widgetActualDef.colorIcono })}
+                {React.createElement(widgetActualDef.icono, { size: 20, color: widgetActualDef.colorIcono })}
               </div>
               <div>
                 <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
-                  <h2 style={{ fontSize: "1.1rem", fontWeight: 800, color: "var(--negro, #111111)", margin: 0 }}>
+                  <h2 style={{ fontSize: "1.05rem", fontWeight: 800, color: "var(--negro, #111111)", margin: 0 }}>
                     {widgetActualDef.titulo}
                   </h2>
                   {favoritos.includes(widgetActivo) && (
-                    <span className="pildora-estado" style={{ background: "var(--amarillo)", color: "var(--negro)", fontSize: "0.68rem" }}>
+                    <span className="pildora-estado" style={{ background: "var(--amarillo)", color: "var(--negro)", fontSize: "0.65rem" }}>
                       ⭐ Favorito
                     </span>
                   )}
                 </div>
-                <span style={{ fontSize: "0.84rem", color: "var(--panel-gris, #737373)", marginTop: "2px", display: "block" }}>
+                <span style={{ fontSize: "0.8rem", color: "var(--panel-gris, #737373)", marginTop: "2px", display: "block" }}>
                   {widgetActualDef.subtitulo}
                 </span>
               </div>
             </div>
+
+            {/* Botón Circular de Cerrar (X) en la esquina superior derecha */}
+            <button
+              type="button"
+              onClick={() => setWidgetActivo(null)}
+              title="Cerrar widget y volver a Mi cuenta"
+              style={{
+                background: "var(--blanco, #ffffff)",
+                border: "1.5px solid var(--panel-linea, #E4E4E4)",
+                color: "var(--negro, #111111)",
+                borderRadius: "50%",
+                width: "36px",
+                height: "36px",
+                flexShrink: 0,
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
+                transition: "all 0.15s ease"
+              }}
+            >
+              <X size={18} />
+            </button>
           </header>
 
           {/* Cuerpo a 100% de Ancho */}
-          <div style={{ padding: "24px 20px", width: "100%" }}>
+          <div style={{ padding: "20px 16px", width: "100%" }}>
             {/* WIDGET 1: PERFIL & DATOS */}
             {widgetActivo === "perfil" && (
               <FormularioPerfil
@@ -205,7 +209,7 @@ export function PanelCuentaModular({ perfil, historial }: Props) {
             {widgetActivo === "historial" && (
               <div>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", flexWrap: "wrap", gap: "8px" }}>
-                  <span style={{ fontSize: "0.88rem", color: "var(--panel-gris, #737373)" }}>
+                  <span style={{ fontSize: "0.85rem", color: "var(--panel-gris, #737373)" }}>
                     Registros de seguridad e inicio de sesión unificados en el ecosistema (PLT-018):
                   </span>
                   <span className="pildora-estado">
@@ -271,7 +275,7 @@ export function PanelCuentaModular({ perfil, historial }: Props) {
     );
   }
 
-  // VISTA 1: PANEL GENERAL "MI CUENTA" (Hero Card + Grid de Section Cards de Accesos)
+  // VISTA 1: PANEL GENERAL "MI CUENTA" (Hero Card + Grid de Cards compactas apiladas de 2 en 2 en movil)
   return (
     <div style={{ width: "100%" }}>
       {/* Header Hero Card del Panel */}
@@ -302,8 +306,8 @@ export function PanelCuentaModular({ perfil, historial }: Props) {
           </span>
         </div>
 
-        {/* Rejilla de Section Cards */}
-        <div className="accesos-cliente" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "16px" }}>
+        {/* Rejilla de Section Cards Compactas (2 por fila en móvil vía clase rejilla-tarjetas-2col) */}
+        <div className="accesos-cliente rejilla-tarjetas-2col" style={{ gap: "14px" }}>
           {widgetsOrdenados.map(w => {
             const IconoComponente = w.icono;
             const esFav = favoritos.includes(w.id);
@@ -319,7 +323,7 @@ export function PanelCuentaModular({ perfil, historial }: Props) {
                     : "1px solid var(--panel-linea, #E4E4E4)",
                   background: "var(--blanco, #ffffff)",
                   borderRadius: "16px",
-                  padding: "18px",
+                  padding: "16px",
                   position: "relative",
                   boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
                   cursor: "pointer",
@@ -333,51 +337,72 @@ export function PanelCuentaModular({ perfil, historial }: Props) {
                   onClick={e => toggleFavorito(e, w.id)}
                   style={{
                     position: "absolute",
-                    top: "12px",
-                    right: "12px",
+                    top: "10px",
+                    right: "10px",
                     background: "transparent",
                     border: "none",
                     cursor: "pointer",
-                    padding: "4px",
+                    padding: "3px",
                     color: esFav ? "#D97706" : "var(--panel-gris, #737373)",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center"
                   }}
                 >
-                  <Star size={18} fill={esFav ? "#FEE300" : "none"} stroke={esFav ? "#D97706" : "currentColor"} />
+                  <Star size={16} fill={esFav ? "#FEE300" : "none"} stroke={esFav ? "#D97706" : "currentColor"} />
                 </button>
 
                 {/* Encabezado e Icono de Tarjeta */}
-                <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "8px" }}>
-                  <div className="tarjeta-acceso-icono" style={{ margin: 0 }}>
-                    <IconoComponente size={20} color={w.esPeligro ? "#B00020" : undefined} />
+                <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "8px" }}>
+                  <div className="tarjeta-acceso-icono" style={{ margin: 0, padding: "8px", borderRadius: "10px" }}>
+                    <IconoComponente size={18} color={w.esPeligro ? "#B00020" : undefined} />
                   </div>
-                  <div>
+                  <div style={{ minWidth: 0, flex: 1 }}>
                     {esFav && (
                       <span
                         style={{
-                          fontSize: "0.62rem",
+                          fontSize: "0.58rem",
                           fontWeight: 800,
                           color: "#92400E",
                           background: "var(--amarillo, #FEE300)",
-                          padding: "2px 7px",
+                          padding: "1px 6px",
                           borderRadius: "999px",
                           display: "inline-block",
-                          marginBottom: "3px",
+                          marginBottom: "2px",
                           letterSpacing: "0.04em"
                         }}
                       >
                         FAVORITO
                       </span>
                     )}
-                    <strong style={{ display: "block", color: w.esPeligro ? "#B00020" : "var(--negro, #111111)", fontSize: "0.94rem" }}>
+                    <strong
+                      style={{
+                        display: "block",
+                        color: w.esPeligro ? "#B00020" : "var(--negro, #111111)",
+                        fontSize: "0.88rem",
+                        lineHeight: "1.25",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap"
+                      }}
+                    >
                       {w.titulo}
                     </strong>
                   </div>
                 </div>
 
-                <p style={{ margin: 0, fontSize: "0.82rem", color: "var(--panel-gris, #737373)" }}>
+                <p
+                  style={{
+                    margin: 0,
+                    fontSize: "0.78rem",
+                    color: "var(--panel-gris, #737373)",
+                    lineHeight: "1.35",
+                    display: "-webkit-box",
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: "vertical",
+                    overflow: "hidden"
+                  }}
+                >
                   {w.subtitulo}
                 </p>
 
@@ -386,16 +411,16 @@ export function PanelCuentaModular({ perfil, historial }: Props) {
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "space-between",
-                    marginTop: "12px",
-                    paddingTop: "10px",
+                    marginTop: "10px",
+                    paddingTop: "8px",
                     borderTop: "1px solid var(--panel-linea-suave, #F1F1F1)",
-                    fontSize: "0.76rem",
+                    fontSize: "0.74rem",
                     color: "var(--violeta, #5000BA)",
                     fontWeight: 700
                   }}
                 >
-                  <span>Abrir panel de widget</span>
-                  <ChevronRight size={14} />
+                  <span>Abrir widget</span>
+                  <ChevronRight size={13} />
                 </div>
               </div>
             );
