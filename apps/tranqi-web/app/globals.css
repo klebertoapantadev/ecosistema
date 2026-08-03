@@ -1066,11 +1066,12 @@ p { line-height: 1.55; }
    boton real de cerrar sesion, no se puede ocultar -- se suma a la barra
    horizontal en vez de desaparecer. */
 @media (max-width: 860px) {
-  .panel-layout { flex-direction: column; min-height: auto; }
+  .panel-layout { flex-direction: column; min-height: 100vh; padding-bottom: 64px; }
   .panel-nav {
-    width: auto; flex-direction: row; align-items: center;
+    width: 100%; flex-direction: row; align-items: center;
     padding: 10px 14px; gap: 10px; overflow-x: auto;
-    position: sticky; top: 0; z-index: 20;
+    position: fixed; bottom: 0; left: 0; right: 0; top: auto; z-index: 1000;
+    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.18);
   }
   .panel-marca { flex: none; }
   .panel-nav-links { flex-direction: row; flex: none; gap: 2px; }

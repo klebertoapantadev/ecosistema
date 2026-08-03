@@ -120,7 +120,7 @@ export function PanelCuentaModular({ perfil, historial }: Props) {
 
   const widgetActualDef = WIDGETS_DISPONIBLES.find(w => w.id === widgetActivo);
 
-  // VISTA 2: PANEL DEDICADO DEL WIDGET ENFOCADO (Usa 100% del ancho móvil y escritorio sin modales)
+  // VISTA 2: PANEL DEDICADO DEL WIDGET ENFOCADO (Oculta el Hero Card superior para dar 100% de espacio)
   if (widgetActivo && widgetActualDef) {
     return (
       <div style={{ width: "100%", animation: "fadeIn 0.15s ease" }}>
@@ -271,9 +271,27 @@ export function PanelCuentaModular({ perfil, historial }: Props) {
     );
   }
 
-  // VISTA 1: PANEL GENERAL "MI CUENTA" (Grid de Section Cards de Accesos)
+  // VISTA 1: PANEL GENERAL "MI CUENTA" (Hero Card + Grid de Section Cards de Accesos)
   return (
     <div style={{ width: "100%" }}>
+      {/* Header Hero Card del Panel */}
+      <section className="tarjeta-proteccion tarjeta-admin" style={{ marginBottom: "20px" }}>
+        <div className="tarjeta-proteccion-fila">
+          <div>
+            <div className="eyebrow-cliente">Gobernanza de Identidad & Perfil</div>
+            <div className="tarjeta-proteccion-plan">
+              Mi Cuenta — <i>Identidad Unificada (tranqi)</i>
+            </div>
+            <div className="tarjeta-proteccion-meta">
+              Acceso individualizado a widgets, gestión de perfil, historial de accesos y seguridad de la cuenta.
+            </div>
+          </div>
+          <span className="badge-rol">
+            <User style={{ width: 14, height: 14, marginRight: 4 }} /> Identidad Activa
+          </span>
+        </div>
+      </section>
+
       <div style={{ marginBottom: "24px" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px" }}>
           <h3 style={{ fontSize: "0.88rem", fontWeight: 800, color: "var(--panel-gris, #737373)", textTransform: "uppercase", letterSpacing: "0.08em", margin: 0 }}>
