@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { User, History, KeyRound, ShieldAlert, Settings, Mail, Bell, Star, ChevronRight, type LucideIcon } from "lucide-react";
+import { User, History, KeyRound, ShieldAlert, Settings, Mail, Bell, Star, ChevronRight, ShieldCheck, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 
 interface WidgetFavInfo {
@@ -39,6 +39,15 @@ const CATALOGO_FAVORITOS: Record<string, WidgetFavInfo> = {
     titulo: "Sesión & Claves de Seguridad",
     subtitulo: "Gestión de sesión activa y cierre de sesión",
     icono: KeyRound,
+    colorIcono: "var(--violeta, #5000BA)",
+    href: "/panel/cuenta",
+    origen: "Mi cuenta"
+  },
+  rol_activo: {
+    id: "rol_activo",
+    titulo: "Conmutador de Rol (Ver como)",
+    subtitulo: "Vista previa del portal como Cliente, Abogado o Administrador",
+    icono: ShieldCheck,
     colorIcono: "var(--violeta, #5000BA)",
     href: "/panel/cuenta",
     origen: "Mi cuenta"

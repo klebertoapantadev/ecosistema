@@ -1,11 +1,12 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { User, History, KeyRound, ShieldAlert, Star, X, CheckCircle2, ChevronRight } from "lucide-react";
+import { User, History, KeyRound, ShieldAlert, Star, X, CheckCircle2, ChevronRight, ShieldCheck } from "lucide-react";
 import { FormularioPerfil } from "@eco/identidad/componentes/FormularioPerfil";
 import { HistorialAccesos } from "@eco/identidad/componentes/HistorialAccesos";
 import { EliminarCuenta } from "@eco/identidad/componentes/EliminarCuenta";
 import { cerrarSesionYRedirigir } from "../acciones";
+import { SelectorRolActivo } from "../SelectorRolActivo";
 
 export interface PerfilUsuario {
   usu_id?: string;
@@ -15,6 +16,7 @@ export interface PerfilUsuario {
   usu_correo?: string | null;
   usu_whatsapp?: string | null;
   usu_autorizacion_whatsapp?: boolean | null;
+  usu_superadmin_plataforma?: boolean | null;
 }
 
 export interface FilaAcceso {
@@ -28,6 +30,7 @@ export interface FilaAcceso {
 interface Props {
   perfil: PerfilUsuario | null;
   historial: FilaAcceso[];
+  puedeConmutar?: boolean;
 }
 
 export interface WidgetDef {
@@ -40,7 +43,7 @@ export interface WidgetDef {
   esPeligro?: boolean;
 }
 
-const WIDGETS_DISPONIBLES: WidgetDef[] = [
+const WIDGETS_BASE: WidgetDef[] = [
   {
     id: "perfil",
     titulo: "Perfil & Datos de Contacto",
@@ -66,6 +69,14 @@ const WIDGETS_DISPONIBLES: WidgetDef[] = [
     categoria: "Seguridad"
   },
   {
+    id: "rol_activo",
+    titulo: "Conmutador de Rol (Ver como)",
+    subtitulo: "Vista previa del portal como Cliente, Abogado o Administrador",
+    icono: ShieldCheck,
+    colorIcono: "var(--violeta, #5000BA)",
+    categoria: "Gobernanza"
+  },
+  {
     id: "peligro",
     titulo: "Baja de Cuenta (PLT-012)",
     subtitulo: "Eliminación permanente conforme a Ley LOPDP",
@@ -76,9 +87,13 @@ const WIDGETS_DISPONIBLES: WidgetDef[] = [
   }
 ];
 
-export function PanelCuentaModular({ perfil, historial }: Props) {
+export function PanelCuentaModular({ perfil, historial, puedeConmutar = true }: Props) {
   const [favoritos, setFavoritos] = useState<string[]>([]);
   const [widgetActivo, setWidgetActivo] = useState<string | null>(null); // null = ver galería de accesos del panel Mi cuenta
+
+  const widgetsDisponibles = puedeConmutar
+    ? WIDGETS_BASE
+    : WIDGETS_BASE.filter(w => w.id !== "rol_activo");
 
   // Cargar favoritos de localStorage
   useEffect(() => {
@@ -99,54 +114,69 @@ export function PanelCuentaModular({ perfil, historial }: Props) {
     e.stopPropagation();
     let nuevos: string[];
     if (favoritos.includes(id)) {
-      nuevos = favoritos.filter(item => item !== id);
+      nuevos = favoritos.filter((f) => f !== id);
     } else {
       nuevos = [...favoritos, id];
     }
     setFavoritos(nuevos);
     try {
       localStorage.setItem("tranqi_favoritos_cuenta", JSON.stringify(nuevos));
-    } catch { /* Ignorar */ }
+    } catch {
+      // Ignore
+    }
   };
 
-  // Ordenar tarjetas: favoritos primero
-  const widgetsOrdenados = [...WIDGETS_DISPONIBLES].sort((a, b) => {
-    const aFav = favoritos.includes(a.id);
-    const bFav = favoritos.includes(b.id);
-    if (aFav && !bFav) return -1;
-    if (!aFav && bFav) return 1;
+  // Reorganizar widgets poniendo los favoritos primero
+  const widgetsOrdenados = [...widgetsDisponibles].sort((a, b) => {
+    const esFavA = favoritos.includes(a.id);
+    const esFavB = favoritos.includes(b.id);
+    if (esFavA && !esFavB) return -1;
+    if (!esFavA && esFavB) return 1;
     return 0;
   });
 
-  const widgetActualDef = WIDGETS_DISPONIBLES.find(w => w.id === widgetActivo);
+  const widgetActualDef = widgetsDisponibles.find((w) => w.id === widgetActivo);
 
-  // VISTA 2: PANEL DEDICADO DEL WIDGET ENFOCADO (Con botón circular 'X' en la esquina superior derecha)
+  // VISTA 2: SI HAY UN WIDGET SELECCIONADO (VISTA A PANTALLA COMPLETA CON BOTÓN X DE CIERRE)
   if (widgetActivo && widgetActualDef) {
+    const IconoComponente = widgetActualDef.icono;
     return (
-      <div style={{ width: "100%", animation: "fadeIn 0.15s ease" }}>
-        {/* Tarjeta Full Width del Widget Enfocado */}
-        <section className="tarjeta-seccion" style={{ background: "var(--blanco, #ffffff)", borderRadius: "16px", overflow: "hidden", width: "100%" }}>
+      <div style={{ width: "100%", animation: "fadeIn 0.2s ease" }}>
+        <section
+          style={{
+            background: "var(--blanco, #ffffff)",
+            border: "1px solid var(--panel-linea, #E4E4E4)",
+            borderRadius: "16px",
+            padding: "24px",
+            boxShadow: "0 4px 20px rgba(0,0,0,0.04)"
+          }}
+        >
+          {/* Header del Widget con Título, Icono, Subtítulo y Botón Cierre X */}
           <header
             style={{
-              padding: "16px 20px",
-              background: "var(--panel-papel, #F7F6FA)",
-              borderBottom: "1px solid var(--panel-linea, #E4E4E4)",
               display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between"
+              justifyContent: "space-between",
+              alignItems: "flex-start",
+              borderBottom: "1px solid var(--panel-linea, #E4E4E4)",
+              paddingBottom: "16px",
+              marginBottom: "20px"
             }}
           >
-            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
               <div
                 style={{
-                  padding: "8px",
-                  borderRadius: "8px",
-                  background: "var(--blanco, #ffffff)",
-                  border: "1px solid var(--panel-linea, #E4E4E4)",
-                  display: "flex"
+                  width: "44px",
+                  height: "44px",
+                  borderRadius: "12px",
+                  background: widgetActualDef.esPeligro ? "rgba(176, 0, 32, 0.1)" : "var(--panel-linea-suave, #FAFAF9)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  color: widgetActualDef.esPeligro ? "#B00020" : widgetActualDef.colorIcono,
+                  border: "1px solid var(--panel-linea, #E4E4E4)"
                 }}
               >
-                {React.createElement(widgetActualDef.icono, { size: 20, color: widgetActualDef.colorIcono })}
+                <IconoComponente size={22} />
               </div>
               <div>
                 <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
@@ -263,7 +293,25 @@ export function PanelCuentaModular({ perfil, historial }: Props) {
               </div>
             )}
 
-            {/* WIDGET 4: BAJA DE CUENTA (PLT-012) */}
+            {/* WIDGET 4: CONMUTADOR DE ROL (VER COMO) */}
+            {widgetActivo === "rol_activo" && (
+              <div style={{ maxWidth: "680px", margin: "0 auto", textAlign: "center" }}>
+                <div style={{ background: "var(--panel-linea-suave, #FAFAF9)", padding: "20px", borderRadius: "12px", border: "1px solid var(--panel-linea, #E4E4E4)", marginBottom: "24px" }}>
+                  <h3 style={{ fontSize: "1.05rem", fontWeight: 800, color: "var(--negro, #111111)", marginBottom: "8px" }}>
+                    Conmutador de Vista de Rol (Ver como)
+                  </h3>
+                  <p style={{ fontSize: "0.85rem", color: "var(--panel-gris, #737373)", margin: 0 }}>
+                    Selecciona el rol con el que deseas previsualizar la plataforma en tiempo real. Esta opción te permite experimentar el portal con la perspectiva visual de un Cliente, Socio Abogado o Administrador.
+                  </p>
+                </div>
+
+                <div style={{ display: "inline-flex", justifyContent: "center", padding: "16px 24px", background: "#ffffff", borderRadius: "999px", border: "1px solid var(--panel-linea, #E4E4E4)", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
+                  <SelectorRolActivo />
+                </div>
+              </div>
+            )}
+
+            {/* WIDGET 5: BAJA DE CUENTA (PLT-012) */}
             {widgetActivo === "peligro" && (
               <div style={{ maxWidth: "640px", margin: "0 auto" }}>
                 <EliminarCuenta />
@@ -302,13 +350,13 @@ export function PanelCuentaModular({ perfil, historial }: Props) {
             Accesos & Widgets de Cuenta
           </h3>
           <span style={{ fontSize: "0.82rem", color: "var(--panel-gris, #737373)", fontWeight: 600 }}>
-            ⭐ {favoritos.length} Marcados como Favorito
+            ⭐ {favoritos.length} {favoritos.length === 1 ? "Marcado como Favorito" : "Marcados como Favorito"}
           </span>
         </div>
 
-        {/* Rejilla de Cards idéntica al Inicio (.accesos-cliente) */}
+        {/* Rejilla Idéntica al Panel de Inicio (.accesos-cliente: 2 por fila) */}
         <div className="accesos-cliente">
-          {widgetsOrdenados.map(w => {
+          {widgetsOrdenados.map((w) => {
             const IconoComponente = w.icono;
             const esFav = favoritos.includes(w.id);
 
@@ -367,6 +415,7 @@ export function PanelCuentaModular({ perfil, historial }: Props) {
                       FAVORITO
                     </span>
                   )}
+
                   <strong style={{ display: "block", color: w.esPeligro ? "#B00020" : undefined, lineHeight: 1.25 }}>
                     {w.titulo}
                   </strong>
@@ -382,7 +431,7 @@ export function PanelCuentaModular({ perfil, historial }: Props) {
                     marginTop: "auto",
                     paddingTop: "10px",
                     fontSize: "0.76rem",
-                    color: "var(--violeta, #5000BA)",
+                    color: w.esPeligro ? "#B00020" : "var(--violeta, #5000BA)",
                     fontWeight: 700
                   }}
                 >

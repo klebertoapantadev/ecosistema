@@ -5,7 +5,7 @@ import {
   ShieldCheck, Bell, Shield, type LucideIcon
 } from "lucide-react";
 import { obtenerPerfilActual, obtenerSaludo, obtenerPerfiles } from "@eco/identidad";
-import { SelectorRolActivo, type ModoRol } from "./SelectorRolActivo";
+import type { ModoRol } from "./SelectorRolActivo";
 import { TarjetasFavoritasGrid } from "./SeccionFavoritosInicio";
 
 export const metadata: Metadata = { title: "Panel — tranqi" };
@@ -92,8 +92,6 @@ export default async function PagePanel({ searchParams }: Props) {
             disabled
           />
         </div>
-
-        {puedeConmutar && <SelectorRolActivo modoInicial={modo} />}
 
         <div className="usuario-barra">
           <div className="usuario-barra-foto">

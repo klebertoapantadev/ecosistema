@@ -57,14 +57,13 @@ export default async function LayoutPanel({ children }: { children: React.ReactN
         </svg>
 
         <div className="panel-marca" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingRight: "12px" }}>
-          <img src="/assets/tranqi-white.svg" alt="tranqi" />
+          <a href="/panel" style={{ display: "flex", alignItems: "center", textDecoration: "none" }} title="Ir al tablero principal (Inicio)">
+            <img src="/assets/tranqi-white.svg" alt="tranqi" style={{ cursor: "pointer" }} />
+          </a>
           <CampanaNotificaciones negocio={NEGOCIO} usuarioId={perfil.usu_id} />
         </div>
 
         <div className="panel-nav-links">
-          <EnlacePanel href="/panel" icono={<Home className="icono-nav" aria-hidden="true" strokeWidth={1.8} />}>
-            Inicio
-          </EnlacePanel>
           {widgets.map((w) => {
             const IconoWidget = ICONOS_WIDGET[w.wdg_clave] ?? Home;
             return (
