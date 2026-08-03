@@ -7,9 +7,10 @@ export type ModoRol = "cliente" | "abogado" | "admin";
 
 interface Props {
   modoInicial?: ModoRol;
+  ocultarEtiqueta?: boolean;
 }
 
-export function SelectorRolActivo({ modoInicial = "cliente" }: Props) {
+export function SelectorRolActivo({ modoInicial = "cliente", ocultarEtiqueta = false }: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const modoActual = (searchParams.get("modo") as ModoRol) || modoInicial;
@@ -22,7 +23,7 @@ export function SelectorRolActivo({ modoInicial = "cliente" }: Props) {
 
   return (
     <div className="selector-rol-activo">
-      <span className="selector-rol-etiqueta">Ver como:</span>
+      {!ocultarEtiqueta && <span className="selector-rol-etiqueta">Ver como:</span>}
       <div className="selector-rol-botones">
         <button
           type="button"

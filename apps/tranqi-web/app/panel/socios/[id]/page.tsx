@@ -47,7 +47,7 @@ export default async function PaginaDetalleSocio({ params }: { params: Promise<{
             <dt>Verificado desde</dt>
             <dd>{new Date(abogado.abg_verificado_en).toLocaleDateString("es-EC")}</dd>
             <dt>MFA configurado</dt>
-            <dd>{abogado.abg_mfa_verificado ? "Sí" : "Pendiente — se exigirá para activar capacidades (ver PLT-002)"}</dd>
+            <dd>{abogado.abg_mfa_verificado ? "Sí" : "Pendiente — se exigirá para activar capacidades críticas"}</dd>
           </dl>
         </div>
       )}

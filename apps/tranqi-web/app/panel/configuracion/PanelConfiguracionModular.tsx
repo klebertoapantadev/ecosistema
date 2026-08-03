@@ -37,7 +37,7 @@ const TODOS_WIDGETS_CONFIG: WidgetConfigDef[] = [
   },
   {
     id: "correo",
-    titulo: "Servidor de Correo SMTP (PLT-008)",
+    titulo: "Servidor de Correo SMTP",
     subtitulo: "Servidor saliente, credenciales Vault y pruebas de envío email",
     icono: Mail,
     colorIcono: "var(--violeta, #5000BA)",
@@ -46,7 +46,7 @@ const TODOS_WIDGETS_CONFIG: WidgetConfigDef[] = [
   },
   {
     id: "notificaciones",
-    titulo: "Preferencias de Alertas & Notificaciones (PLT-013)",
+    titulo: "Preferencias de Alertas & Notificaciones",
     subtitulo: "Frecuencia, canales de recepción Email, WhatsApp y Desktop Push",
     icono: Bell,
     colorIcono: "var(--violeta, #5000BA)",

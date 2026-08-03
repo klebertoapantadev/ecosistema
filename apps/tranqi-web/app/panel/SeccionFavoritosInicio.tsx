@@ -27,7 +27,7 @@ const CATALOGO_FAVORITOS: Record<string, WidgetFavInfo> = {
   },
   historial: {
     id: "historial",
-    titulo: "Historial de Accesos (PLT-018)",
+    titulo: "Historial de Accesos",
     subtitulo: "Seguridad de inicio de sesión, IP y dispositivos",
     icono: History,
     colorIcono: "var(--violeta, #5000BA)",
@@ -45,8 +45,8 @@ const CATALOGO_FAVORITOS: Record<string, WidgetFavInfo> = {
   },
   rol_activo: {
     id: "rol_activo",
-    titulo: "Conmutador de Rol (Ver como)",
-    subtitulo: "Vista previa del portal como Cliente, Abogado o Administrador",
+    titulo: "Ver Como",
+    subtitulo: "Alternar la vista previa del portal entre Cliente, Socio Abogado y Administrador",
     icono: ShieldCheck,
     colorIcono: "var(--violeta, #5000BA)",
     href: "/panel/cuenta",
@@ -54,7 +54,7 @@ const CATALOGO_FAVORITOS: Record<string, WidgetFavInfo> = {
   },
   peligro: {
     id: "peligro",
-    titulo: "Baja de Cuenta (PLT-012)",
+    titulo: "Baja de Cuenta",
     subtitulo: "Eliminación permanente conforme a Ley LOPDP",
     icono: ShieldAlert,
     colorIcono: "#B00020",
@@ -73,7 +73,7 @@ const CATALOGO_FAVORITOS: Record<string, WidgetFavInfo> = {
   },
   correo: {
     id: "correo",
-    titulo: "Servidor de Correo SMTP (PLT-008)",
+    titulo: "Servidor de Correo SMTP",
     subtitulo: "Servidor saliente, credenciales Vault y pruebas",
     icono: Mail,
     colorIcono: "var(--violeta, #5000BA)",

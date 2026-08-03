@@ -54,7 +54,7 @@ const WIDGETS_BASE: WidgetDef[] = [
   },
   {
     id: "historial",
-    titulo: "Historial de Accesos (PLT-018)",
+    titulo: "Historial de Accesos",
     subtitulo: "Seguridad de inicio de sesión, IP y dispositivos",
     icono: History,
     colorIcono: "var(--violeta, #5000BA)",
@@ -70,15 +70,15 @@ const WIDGETS_BASE: WidgetDef[] = [
   },
   {
     id: "rol_activo",
-    titulo: "Conmutador de Rol (Ver como)",
-    subtitulo: "Vista previa del portal como Cliente, Abogado o Administrador",
+    titulo: "Ver Como",
+    subtitulo: "Alternar la vista previa del portal entre Cliente, Socio Abogado y Administrador",
     icono: ShieldCheck,
     colorIcono: "var(--violeta, #5000BA)",
     categoria: "Gobernanza"
   },
   {
     id: "peligro",
-    titulo: "Baja de Cuenta (PLT-012)",
+    titulo: "Baja de Cuenta",
     subtitulo: "Eliminación permanente conforme a Ley LOPDP",
     icono: ShieldAlert,
     colorIcono: "#B00020",
@@ -235,12 +235,12 @@ export function PanelCuentaModular({ perfil, historial, puedeConmutar = true }: 
               />
             )}
 
-            {/* WIDGET 2: HISTORIAL DE ACCESOS (PLT-018) */}
+            {/* WIDGET 2: HISTORIAL DE ACCESOS */}
             {widgetActivo === "historial" && (
               <div>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", flexWrap: "wrap", gap: "8px" }}>
                   <span style={{ fontSize: "0.85rem", color: "var(--panel-gris, #737373)" }}>
-                    Registros de seguridad e inicio de sesión unificados en el ecosistema (PLT-018):
+                    Registros de seguridad e inicio de sesión unificados en el ecosistema:
                   </span>
                   <span className="pildora-estado">
                     {historial.length} Accesos Registrados
@@ -293,25 +293,25 @@ export function PanelCuentaModular({ perfil, historial, puedeConmutar = true }: 
               </div>
             )}
 
-            {/* WIDGET 4: CONMUTADOR DE ROL (VER COMO) */}
+            {/* WIDGET 4: VER COMO */}
             {widgetActivo === "rol_activo" && (
-              <div style={{ maxWidth: "680px", margin: "0 auto", textAlign: "center" }}>
-                <div style={{ background: "var(--panel-linea-suave, #FAFAF9)", padding: "20px", borderRadius: "12px", border: "1px solid var(--panel-linea, #E4E4E4)", marginBottom: "24px" }}>
+              <div style={{ maxWidth: "600px", margin: "0 auto", textAlign: "center", width: "100%" }}>
+                <div style={{ background: "var(--panel-linea-suave, #FAFAF9)", padding: "20px", borderRadius: "12px", border: "1px solid var(--panel-linea, #E4E4E4)", marginBottom: "20px" }}>
                   <h3 style={{ fontSize: "1.05rem", fontWeight: 800, color: "var(--negro, #111111)", marginBottom: "8px" }}>
-                    Conmutador de Vista de Rol (Ver como)
+                    Ver Como
                   </h3>
                   <p style={{ fontSize: "0.85rem", color: "var(--panel-gris, #737373)", margin: 0 }}>
-                    Selecciona el rol con el que deseas previsualizar la plataforma en tiempo real. Esta opción te permite experimentar el portal con la perspectiva visual de un Cliente, Socio Abogado o Administrador.
+                    Selecciona el rol con el que deseas previsualizar la plataforma en tiempo real.
                   </p>
                 </div>
 
-                <div style={{ display: "inline-flex", justifyContent: "center", padding: "16px 24px", background: "#ffffff", borderRadius: "999px", border: "1px solid var(--panel-linea, #E4E4E4)", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
-                  <SelectorRolActivo />
+                <div style={{ display: "flex", justifyContent: "center", width: "100%" }}>
+                  <SelectorRolActivo ocultarEtiqueta />
                 </div>
               </div>
             )}
 
-            {/* WIDGET 5: BAJA DE CUENTA (PLT-012) */}
+            {/* WIDGET 5: BAJA DE CUENTA */}
             {widgetActivo === "peligro" && (
               <div style={{ maxWidth: "640px", margin: "0 auto" }}>
                 <EliminarCuenta />
