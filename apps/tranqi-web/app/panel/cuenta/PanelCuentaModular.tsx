@@ -34,7 +34,7 @@ export interface WidgetDef {
   id: string;
   titulo: string;
   subtitulo: string;
-  icono: React.ComponentType<{ size?: number; color?: string; style?: React.CSSProperties }>;
+  icono: React.ComponentType<{ size?: number; color?: string; style?: React.CSSProperties; className?: string; strokeWidth?: number }>;
   colorIcono: string;
   categoria: string;
   esPeligro?: boolean;
@@ -275,7 +275,7 @@ export function PanelCuentaModular({ perfil, historial }: Props) {
     );
   }
 
-  // VISTA 1: PANEL GENERAL "MI CUENTA" (Hero Card + Grid de Cards compactas apiladas de 2 en 2 en movil)
+  // VISTA 1: PANEL GENERAL "MI CUENTA" (Hero Card + Grid .accesos-cliente idéntico al Inicio)
   return (
     <div style={{ width: "100%" }}>
       {/* Header Hero Card del Panel */}
@@ -297,7 +297,7 @@ export function PanelCuentaModular({ perfil, historial }: Props) {
       </section>
 
       <div style={{ marginBottom: "24px" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px", flexWrap: "wrap", gap: "8px" }}>
           <h3 style={{ fontSize: "0.88rem", fontWeight: 800, color: "var(--panel-gris, #737373)", textTransform: "uppercase", letterSpacing: "0.08em", margin: 0 }}>
             Accesos & Widgets de Cuenta
           </h3>
@@ -306,8 +306,8 @@ export function PanelCuentaModular({ perfil, historial }: Props) {
           </span>
         </div>
 
-        {/* Rejilla de Section Cards Compactas (2 por fila en móvil vía clase rejilla-tarjetas-2col) */}
-        <div className="accesos-cliente rejilla-tarjetas-2col" style={{ gap: "14px" }}>
+        {/* Rejilla de Cards idéntica al Inicio (.accesos-cliente) */}
+        <div className="accesos-cliente">
           {widgetsOrdenados.map(w => {
             const IconoComponente = w.icono;
             const esFav = favoritos.includes(w.id);
@@ -321,13 +321,8 @@ export function PanelCuentaModular({ perfil, historial }: Props) {
                   border: esFav
                     ? "2px solid var(--amarillo, #FEE300)"
                     : "1px solid var(--panel-linea, #E4E4E4)",
-                  background: "var(--blanco, #ffffff)",
-                  borderRadius: "16px",
-                  padding: "16px",
-                  position: "relative",
-                  boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
                   cursor: "pointer",
-                  transition: "all 0.18s ease"
+                  position: "relative"
                 }}
               >
                 {/* Botón de Estrella Favorito */}
@@ -352,75 +347,49 @@ export function PanelCuentaModular({ perfil, historial }: Props) {
                   <Star size={16} fill={esFav ? "#FEE300" : "none"} stroke={esFav ? "#D97706" : "currentColor"} />
                 </button>
 
-                {/* Encabezado e Icono de Tarjeta */}
-                <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "8px" }}>
-                  <div className="tarjeta-acceso-icono" style={{ margin: 0, padding: "8px", borderRadius: "10px" }}>
-                    <IconoComponente size={18} color={w.esPeligro ? "#B00020" : undefined} />
-                  </div>
-                  <div style={{ minWidth: 0, flex: 1 }}>
-                    {esFav && (
-                      <span
-                        style={{
-                          fontSize: "0.58rem",
-                          fontWeight: 800,
-                          color: "#92400E",
-                          background: "var(--amarillo, #FEE300)",
-                          padding: "1px 6px",
-                          borderRadius: "999px",
-                          display: "inline-block",
-                          marginBottom: "2px",
-                          letterSpacing: "0.04em"
-                        }}
-                      >
-                        FAVORITO
-                      </span>
-                    )}
-                    <strong
-                      style={{
-                        display: "block",
-                        color: w.esPeligro ? "#B00020" : "var(--negro, #111111)",
-                        fontSize: "0.88rem",
-                        lineHeight: "1.25",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        whiteSpace: "nowrap"
-                      }}
-                    >
-                      {w.titulo}
-                    </strong>
-                  </div>
+                <div className="tarjeta-acceso-icono" style={{ margin: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <IconoComponente size={20} color={w.esPeligro ? "#B00020" : undefined} />
                 </div>
 
-                <p
-                  style={{
-                    margin: 0,
-                    fontSize: "0.78rem",
-                    color: "var(--panel-gris, #737373)",
-                    lineHeight: "1.35",
-                    display: "-webkit-box",
-                    WebkitLineClamp: 2,
-                    WebkitBoxOrient: "vertical",
-                    overflow: "hidden"
-                  }}
-                >
-                  {w.subtitulo}
-                </p>
+                <div style={{ minWidth: 0, marginTop: "6px" }}>
+                  {esFav && (
+                    <span
+                      style={{
+                        fontSize: "0.58rem",
+                        fontWeight: 800,
+                        color: "#92400E",
+                        background: "var(--amarillo, #FEE300)",
+                        padding: "1px 6px",
+                        borderRadius: "999px",
+                        display: "inline-block",
+                        marginBottom: "4px",
+                        letterSpacing: "0.04em"
+                      }}
+                    >
+                      FAVORITO
+                    </span>
+                  )}
+                  <strong style={{ display: "block", color: w.esPeligro ? "#B00020" : undefined, lineHeight: 1.25 }}>
+                    {w.titulo}
+                  </strong>
+                </div>
+
+                <p style={{ margin: "4px 0 0 0" }}>{w.subtitulo}</p>
 
                 <div
                   style={{
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "space-between",
-                    marginTop: "10px",
-                    paddingTop: "8px",
-                    borderTop: "1px solid var(--panel-linea-suave, #F1F1F1)",
-                    fontSize: "0.74rem",
+                    marginTop: "auto",
+                    paddingTop: "10px",
+                    fontSize: "0.76rem",
                     color: "var(--violeta, #5000BA)",
                     fontWeight: 700
                   }}
                 >
                   <span>Abrir widget</span>
-                  <ChevronRight size={13} />
+                  <ChevronRight size={14} />
                 </div>
               </div>
             );

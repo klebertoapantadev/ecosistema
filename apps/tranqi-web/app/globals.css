@@ -1111,10 +1111,6 @@ p { line-height: 1.55; }
   }
   .panel-nav-links a { padding: 10px; }
   .icono-nav { width: 20px; height: 20px; }
-  .rejilla-tarjetas-2col {
-    grid-template-columns: repeat(2, 1fr) !important;
-    gap: 10px !important;
-  }
 }
 
 /* ═══════════ Selector de Rol Activo (Multi-Role UX Switcher) ═══════════ */
