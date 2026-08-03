@@ -82,7 +82,7 @@ const CATALOGO_FAVORITOS: Record<string, WidgetFavInfo> = {
   }
 };
 
-export function SeccionFavoritosInicio() {
+export function TarjetasFavoritasGrid() {
   const [favsCuenta, setFavsCuenta] = useState<string[]>([]);
   const [favsConfig, setFavsConfig] = useState<string[]>([]);
   const [cargado, setCargado] = useState(false);
@@ -110,81 +110,85 @@ export function SeccionFavoritosInicio() {
   if (itemsFavoritos.length === 0) return null;
 
   return (
-    <section style={{ marginBottom: "24px" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px", flexWrap: "wrap", gap: "8px" }}>
-        <h2 style={{ fontSize: "0.92rem", fontWeight: 800, color: "var(--negro, #111111)", display: "flex", alignItems: "center", gap: "8px", margin: 0 }}>
-          <Star size={18} fill="#FEE300" color="#D97706" /> Mis Accesos Favoritos
-        </h2>
-        <span style={{ fontSize: "0.78rem", color: "var(--panel-gris, #737373)", fontWeight: 600 }}>
-          {itemsFavoritos.length} {itemsFavoritos.length === 1 ? "widget fijado" : "widgets fijados"}
-        </span>
-      </div>
-
-      <div className="accesos-cliente">
-        {itemsFavoritos.map(item => {
-          const Icono = item.icono;
-          return (
-            <Link
-              key={item.id}
-              href={item.href}
-              className="tarjeta-acceso"
+    <>
+      {itemsFavoritos.map(item => {
+        const Icono = item.icono;
+        return (
+          <Link
+            key={`fav-${item.id}`}
+            href={item.href}
+            className="tarjeta-acceso"
+            style={{
+              border: "1px solid var(--panel-linea, #E4E4E4)",
+              textDecoration: "none",
+              color: "inherit",
+              display: "flex",
+              flexDirection: "column",
+              position: "relative"
+            }}
+          >
+            {/* Estrella de Favorito en la esquina superior derecha */}
+            <div
               style={{
-                border: "2px solid var(--amarillo, #FEE300)",
-                textDecoration: "none",
-                color: "inherit",
+                position: "absolute",
+                top: "10px",
+                right: "10px",
                 display: "flex",
-                flexDirection: "column"
+                alignItems: "center",
+                justifyContent: "center"
               }}
             >
-              <div className="tarjeta-acceso-icono" style={{ margin: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <Icono size={20} color={item.esPeligro ? "#B00020" : item.colorIcono} />
-              </div>
+              <Star size={16} fill="#FEE300" color="#D97706" />
+            </div>
 
-              <div style={{ minWidth: 0, marginTop: "6px" }}>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "4px", marginBottom: "4px" }}>
-                  <span
-                    style={{
-                      fontSize: "0.56rem",
-                      fontWeight: 800,
-                      color: "#92400E",
-                      background: "var(--amarillo, #FEE300)",
-                      padding: "1px 6px",
-                      borderRadius: "999px",
-                      letterSpacing: "0.04em"
-                    }}
-                  >
-                    FAVORITO
-                  </span>
-                  <span style={{ fontSize: "0.62rem", color: "var(--panel-gris, #737373)", fontWeight: 700 }}>
-                    {item.origen}
-                  </span>
-                </div>
-                <strong style={{ display: "block", color: item.esPeligro ? "#B00020" : undefined, lineHeight: 1.25 }}>
-                  {item.titulo}
-                </strong>
-              </div>
+            <div className="tarjeta-acceso-icono" style={{ margin: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <Icono size={20} color={item.esPeligro ? "#B00020" : item.colorIcono} />
+            </div>
 
-              <p style={{ margin: "4px 0 0 0" }}>{item.subtitulo}</p>
-
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  marginTop: "auto",
-                  paddingTop: "10px",
-                  fontSize: "0.76rem",
-                  color: "var(--violeta, #5000BA)",
-                  fontWeight: 700
-                }}
-              >
-                <span>Ir al widget</span>
-                <ChevronRight size={14} />
+            <div style={{ minWidth: 0, marginTop: "6px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "4px", marginBottom: "4px" }}>
+                <span
+                  style={{
+                    fontSize: "0.56rem",
+                    fontWeight: 800,
+                    color: "#92400E",
+                    background: "var(--amarillo, #FEE300)",
+                    padding: "1px 6px",
+                    borderRadius: "999px",
+                    letterSpacing: "0.04em"
+                  }}
+                >
+                  FAVORITO
+                </span>
+                <span style={{ fontSize: "0.62rem", color: "var(--panel-gris, #737373)", fontWeight: 700 }}>
+                  • {item.origen}
+                </span>
               </div>
-            </Link>
-          );
-        })}
-      </div>
-    </section>
+              <strong style={{ display: "block", color: item.esPeligro ? "#B00020" : undefined, lineHeight: 1.25 }}>
+                {item.titulo}
+              </strong>
+            </div>
+
+            <p style={{ margin: "4px 0 0 0" }}>{item.subtitulo}</p>
+
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                marginTop: "auto",
+                paddingTop: "10px",
+                fontSize: "0.76rem",
+                color: "var(--violeta, #5000BA)",
+                fontWeight: 700
+              }}
+            >
+              <span>Abrir widget</span>
+              <ChevronRight size={14} />
+            </div>
+          </Link>
+        );
+      })}
+    </>
   );
 }

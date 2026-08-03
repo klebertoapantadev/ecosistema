@@ -6,7 +6,7 @@ import {
 } from "lucide-react";
 import { obtenerPerfilActual, obtenerSaludo, obtenerPerfiles } from "@eco/identidad";
 import { SelectorRolActivo, type ModoRol } from "./SelectorRolActivo";
-import { SeccionFavoritosInicio } from "./SeccionFavoritosInicio";
+import { TarjetasFavoritasGrid } from "./SeccionFavoritosInicio";
 
 export const metadata: Metadata = { title: "Panel — tranqi" };
 
@@ -108,8 +108,6 @@ export default async function PagePanel({ searchParams }: Props) {
         </div>
       </div>
 
-      <SeccionFavoritosInicio />
-
       {modo === "cliente" && <PanelCliente saludo={saludo} nombre={nombre} />}
       {modo === "abogado" && <PanelAbogado nombreCompleto={nombreCompleto} />}
       {modo === "admin" && <PanelAdministrador esSuperadmin={puedeConmutar} esAdminGlobal={esAdminGlobal} />}
@@ -180,6 +178,7 @@ function PanelCliente({ saludo, nombre }: { saludo: string | null; nombre: strin
 
       <div className="rejilla-cliente">
         <div className="columna-cliente">
+          {/* 1) HERO CARD */}
           <section className="tarjeta-proteccion" aria-labelledby="t-proteccion">
             <svg className="cinta-proteccion" viewBox="0 0 800 300" preserveAspectRatio="none" aria-hidden="true">
               <path d="M 540 -60 C 760 40 840 190 700 300 C 620 362 470 340 430 420" />
@@ -197,7 +196,9 @@ function PanelCliente({ saludo, nombre }: { saludo: string | null; nombre: strin
             </div>
           </section>
 
+          {/* 2) ACCESS GRID (Favoritos primero + Accesos predeterminados) */}
           <div className="accesos-cliente">
+            <TarjetasFavoritasGrid />
             {ACCESOS_CLIENTE.map((a) => (
               <div key={a.nombre} className="tarjeta-acceso">
                 <a.icono className="tarjeta-acceso-icono" aria-hidden="true" strokeWidth={1.6} />
@@ -252,6 +253,7 @@ function PanelAbogado({ nombreCompleto }: { nombreCompleto: string }) {
 
       <div className="rejilla-cliente">
         <div className="columna-cliente">
+          {/* 1) HERO CARD */}
           <section className="tarjeta-proteccion tarjeta-abogado" aria-labelledby="t-abogado">
             <div className="tarjeta-proteccion-fila">
               <div>
@@ -265,7 +267,9 @@ function PanelAbogado({ nombreCompleto }: { nombreCompleto: string }) {
             </div>
           </section>
 
+          {/* 2) ACCESS GRID (Favoritos primero + Accesos predeterminados) */}
           <div className="accesos-cliente">
+            <TarjetasFavoritasGrid />
             {ACCESOS_ABOGADO.map((a) => (
               <div key={a.nombre} className="tarjeta-acceso">
                 <a.icono className="tarjeta-acceso-icono" aria-hidden="true" strokeWidth={1.6} />
@@ -330,6 +334,7 @@ function PanelAdministrador({ esSuperadmin, esAdminGlobal }: { esSuperadmin: boo
 
       <div className="rejilla-cliente">
         <div className="columna-cliente">
+          {/* 1) HERO CARD */}
           <section className="tarjeta-proteccion tarjeta-admin" aria-labelledby="t-admin">
             <div className="tarjeta-proteccion-fila">
               <div>
@@ -345,7 +350,9 @@ function PanelAdministrador({ esSuperadmin, esAdminGlobal }: { esSuperadmin: boo
             </div>
           </section>
 
+          {/* 2) ACCESS GRID (Favoritos primero + Accesos predeterminados) */}
           <div className="accesos-cliente">
+            <TarjetasFavoritasGrid />
             {WIDGETS_ADMIN.map((w) => (
               <a
                 key={w.clave}

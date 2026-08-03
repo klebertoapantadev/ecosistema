@@ -318,9 +318,7 @@ export function PanelCuentaModular({ perfil, historial }: Props) {
                 onClick={() => setWidgetActivo(w.id)}
                 className="tarjeta-acceso"
                 style={{
-                  border: esFav
-                    ? "2px solid var(--amarillo, #FEE300)"
-                    : "1px solid var(--panel-linea, #E4E4E4)",
+                  border: "1px solid var(--panel-linea, #E4E4E4)",
                   cursor: "pointer",
                   position: "relative"
                 }}
