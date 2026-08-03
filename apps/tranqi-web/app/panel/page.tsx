@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import {
   Search, Calendar, Upload, Coins, MessageCircle, FileText,
   Briefcase, Award, Sparkles, UserCheck, Users, Settings,
@@ -67,7 +68,12 @@ export default async function PagePanel({ searchParams }: Props) {
 
   const rawParams = await searchParams;
   const modoURL = modoValido(rawParams?.modo);
-  const modo: ModoRol = puedeConmutar && modoURL ? modoURL : modoDePerfiles(perfiles);
+  const cookieStore = await cookies();
+  const modoCookie = modoValido(cookieStore.get("tranqi_modo_rol")?.value);
+
+  const modo: ModoRol = puedeConmutar
+    ? (modoURL ?? modoCookie ?? modoDePerfiles(perfiles))
+    : modoDePerfiles(perfiles);
 
   const saludo = await obtenerSaludo(perfil?.usu_nombres ?? "", perfil?.usu_apellidos ?? "");
   const nombre = perfil?.usu_nombres?.split(/\s+/)[0] ?? "Usuario";
