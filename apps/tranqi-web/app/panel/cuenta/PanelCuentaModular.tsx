@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { User, History, KeyRound, ShieldAlert, Star, ArrowLeft, CheckCircle2, ChevronRight } from "lucide-react";
+import { User, History, KeyRound, ShieldAlert, Star, X, CheckCircle2, ChevronRight, Maximize2 } from "lucide-react";
 import { FormularioPerfil } from "@eco/identidad/componentes/FormularioPerfil";
 import { HistorialAccesos } from "@eco/identidad/componentes/HistorialAccesos";
 import { EliminarCuenta } from "@eco/identidad/componentes/EliminarCuenta";
@@ -78,7 +78,7 @@ const WIDGETS_DISPONIBLES: WidgetDef[] = [
 
 export function PanelCuentaModular({ perfil, historial }: Props) {
   const [favoritos, setFavoritos] = useState<string[]>([]);
-  const [widgetActivo, setWidgetActivo] = useState<string | null>("perfil");
+  const [widgetActivo, setWidgetActivo] = useState<string | null>(null); // Inicialmente cerrado para ver el panel general
 
   // Cargar favoritos de localStorage
   useEffect(() => {
@@ -93,6 +93,17 @@ export function PanelCuentaModular({ perfil, historial }: Props) {
       setFavoritos(["perfil"]);
     }
   }, []);
+
+  // Manejar tecla ESC para cerrar el widget maximizado
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && widgetActivo) {
+        setWidgetActivo(null);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [widgetActivo]);
 
   // Alternar estado de favorito
   const toggleFavorito = (e: React.MouseEvent, id: string) => {
@@ -118,6 +129,8 @@ export function PanelCuentaModular({ perfil, historial }: Props) {
     return 0;
   });
 
+  const widgetActualDef = WIDGETS_DISPONIBLES.find(w => w.id === widgetActivo);
+
   return (
     <div style={{ width: "100%" }}>
       {/* ACCESOS & WIDGETS DE CUENTA (Grid de Tarjetas Limpias) */}
@@ -136,7 +149,6 @@ export function PanelCuentaModular({ perfil, historial }: Props) {
           {widgetsOrdenados.map(w => {
             const IconoComponente = w.icono;
             const esFav = favoritos.includes(w.id);
-            const esSeleccionado = widgetActivo === w.id;
 
             return (
               <div
@@ -144,16 +156,14 @@ export function PanelCuentaModular({ perfil, historial }: Props) {
                 onClick={() => setWidgetActivo(w.id)}
                 className="tarjeta-acceso"
                 style={{
-                  border: esSeleccionado
-                    ? "2px solid var(--violeta, #5000BA)"
-                    : esFav
+                  border: esFav
                     ? "2px solid var(--amarillo, #FEE300)"
                     : "1px solid var(--panel-linea, #E4E4E4)",
                   background: "var(--blanco, #ffffff)",
                   borderRadius: "16px",
                   padding: "18px",
                   position: "relative",
-                  boxShadow: esSeleccionado ? "0 4px 14px rgba(80, 0, 186, 0.12)" : "0 1px 3px rgba(0,0,0,0.04)",
+                  boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
                   cursor: "pointer",
                   transition: "all 0.18s ease"
                 }}
@@ -222,11 +232,13 @@ export function PanelCuentaModular({ perfil, historial }: Props) {
                     paddingTop: "10px",
                     borderTop: "1px solid var(--panel-linea-suave, #F1F1F1)",
                     fontSize: "0.76rem",
-                    color: esSeleccionado ? "var(--violeta, #5000BA)" : "var(--panel-gris, #737373)",
+                    color: "var(--violeta, #5000BA)",
                     fontWeight: 700
                   }}
                 >
-                  <span>{esSeleccionado ? "● Abierto en pantalla" : "Clic para ver widget"}</span>
+                  <span style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                    <Maximize2 size={13} /> Abrir Widget Maximizado
+                  </span>
                   <ChevronRight size={14} />
                 </div>
               </div>
@@ -235,45 +247,107 @@ export function PanelCuentaModular({ perfil, historial }: Props) {
         </div>
       </div>
 
-      {/* VISTA EN DETALLE DEL WIDGET ENFOCADO (Tarjeta de Sección idéntica al Inicio) */}
-      {widgetActivo && (
-        <section className="tarjeta-seccion" style={{ background: "var(--blanco, #ffffff)", borderRadius: "16px", overflow: "hidden" }}>
-          {/* Header del Widget enfocado */}
-          <header style={{ padding: "16px 20px", background: "#FAFAF9" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-              <h2 style={{ fontSize: "1rem", fontWeight: 800, color: "var(--negro, #111111)", margin: 0 }}>
-                Widget Enfocado: {WIDGETS_DISPONIBLES.find(w => w.id === widgetActivo)?.titulo}
-              </h2>
-              {favoritos.includes(widgetActivo) && (
-                <span className="pildora-estado" style={{ background: "var(--amarillo)", color: "var(--negro)", fontSize: "0.68rem" }}>
-                  ⭐ Favorito Pinned
-                </span>
-              )}
-            </div>
-
-            <button
-              type="button"
-              onClick={() => setWidgetActivo(null)}
-              className="btn-mini"
+      {/* WIDGET MAXIMIZADO PANTALLA COMPLETA (Modal Fullscreen Canvas con Botón de Cerrar) */}
+      {widgetActivo && widgetActualDef && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 1000,
+            background: "rgba(17, 17, 17, 0.48)",
+            backdropFilter: "blur(6px)",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            padding: "24px",
+            animation: "fadeIn 0.2s ease"
+          }}
+          onClick={() => setWidgetActivo(null)} // Cerrar al hacer clic en el backdrop
+        >
+          <div
+            onClick={e => e.stopPropagation()} // Prevenir que el clic dentro cierre el modal
+            style={{
+              width: "100%",
+              maxWidth: "860px",
+              maxHeight: "90vh",
+              overflowY: "auto",
+              background: "var(--blanco, #ffffff)",
+              borderRadius: "20px",
+              border: "1px solid var(--panel-linea, #E4E4E4)",
+              boxShadow: "0 24px 60px rgba(0,0,0,0.22)",
+              display: "flex",
+              flexDirection: "column"
+            }}
+          >
+            {/* Cabecera del Modal Maximizado */}
+            <header
               style={{
-                background: "var(--panel-linea-suave, #F1F1F1)",
-                color: "var(--negro, #111111)",
-                border: "1px solid var(--panel-linea, #E4E4E4)",
-                padding: "6px 14px",
+                padding: "20px 24px",
+                borderBottom: "1px solid var(--panel-linea, #E4E4E4)",
                 display: "flex",
                 alignItems: "center",
-                gap: "6px"
+                justifyContent: "space-between",
+                background: "var(--panel-papel, #F7F6FA)",
+                borderRadius: "20px 20px 0 0"
               }}
             >
-              <ArrowLeft size={14} /> Ocultar detalle
-            </button>
-          </header>
+              <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                <div
+                  style={{
+                    padding: "10px",
+                    borderRadius: "10px",
+                    background: "var(--blanco, #ffffff)",
+                    border: "1px solid var(--panel-linea, #E4E4E4)",
+                    display: "flex"
+                  }}
+                >
+                  {React.createElement(widgetActualDef.icono, { size: 22, color: widgetActualDef.colorIcono })}
+                </div>
+                <div>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    <h2 style={{ fontSize: "1.1rem", fontWeight: 800, color: "var(--negro, #111111)", margin: 0 }}>
+                      {widgetActualDef.titulo}
+                    </h2>
+                    {favoritos.includes(widgetActivo) && (
+                      <span className="pildora-estado" style={{ background: "var(--amarillo)", color: "var(--negro)", fontSize: "0.68rem" }}>
+                        ⭐ Favorito
+                      </span>
+                    )}
+                  </div>
+                  <span style={{ fontSize: "0.82rem", color: "var(--panel-gris, #737373)" }}>
+                    {widgetActualDef.subtitulo}
+                  </span>
+                </div>
+              </div>
 
-          {/* Cuerpo Físico del Widget Activo */}
-          <div style={{ padding: "24px" }}>
-            {/* WIDGET 1: PERFIL & DATOS */}
-            {widgetActivo === "perfil" && (
-              <div>
+              {/* Botón de Cerrar (X / Esc) */}
+              <button
+                type="button"
+                onClick={() => setWidgetActivo(null)}
+                title="Cerrar Widget y volver a Mi cuenta (Esc)"
+                style={{
+                  background: "var(--blanco, #ffffff)",
+                  border: "1.5px solid var(--panel-linea, #E4E4E4)",
+                  color: "var(--negro, #111111)",
+                  borderRadius: "50%",
+                  width: "38px",
+                  height: "38px",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontWeight: 700,
+                  transition: "all 0.15s ease"
+                }}
+              >
+                <X size={20} />
+              </button>
+            </header>
+
+            {/* Cuerpo Maximizado del Widget */}
+            <div style={{ padding: "28px" }}>
+              {/* WIDGET 1: PERFIL & DATOS */}
+              {widgetActivo === "perfil" && (
                 <FormularioPerfil
                   inicial={{
                     nombres: perfil?.usu_nombres || "",
@@ -283,75 +357,75 @@ export function PanelCuentaModular({ perfil, historial }: Props) {
                     autorizaWhatsapp: Boolean(perfil?.usu_autorizacion_whatsapp)
                   }}
                 />
-              </div>
-            )}
+              )}
 
-            {/* WIDGET 2: HISTORIAL DE ACCESOS (PLT-018) */}
-            {widgetActivo === "historial" && (
-              <div>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
-                  <span style={{ fontSize: "0.88rem", color: "var(--panel-gris, #737373)" }}>
-                    Registros de seguridad e inicio de sesión unificados en el ecosistema (PLT-018):
-                  </span>
-                  <span className="pildora-estado">
-                    {historial.length} Accesos Registrados
-                  </span>
+              {/* WIDGET 2: HISTORIAL DE ACCESOS (PLT-018) */}
+              {widgetActivo === "historial" && (
+                <div>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+                    <span style={{ fontSize: "0.88rem", color: "var(--panel-gris, #737373)" }}>
+                      Registros de seguridad e inicio de sesión unificados en el ecosistema (PLT-018):
+                    </span>
+                    <span className="pildora-estado">
+                      {historial.length} Accesos Registrados
+                    </span>
+                  </div>
+
+                  {historial.length === 0 ? (
+                    <div className="vacio-seccion">
+                      <b>Sin historial previo de accesos</b>
+                      <span>Los registros de inicio de sesión e IP aparecerán reflejados aquí.</span>
+                    </div>
+                  ) : (
+                    <HistorialAccesos historial={historial} />
+                  )}
                 </div>
+              )}
 
-                {historial.length === 0 ? (
-                  <div className="vacio-seccion">
-                    <b>Sin historial previo de accesos</b>
-                    <span>Los registros de inicio de sesión e IP aparecerán reflejados aquí.</span>
+              {/* WIDGET 3: SESIÓN & SEGURIDAD */}
+              {widgetActivo === "sesion" && (
+                <div style={{ maxWidth: "520px", margin: "0 auto" }}>
+                  <div style={{ background: "var(--panel-linea-suave, #FAFAF9)", padding: "18px", borderRadius: "12px", border: "1px solid var(--panel-linea, #E4E4E4)", marginBottom: "20px" }}>
+                    <div style={{ fontSize: "0.82rem", color: "var(--panel-gris, #737373)" }}>Cuenta / Correo Autenticado:</div>
+                    <div style={{ fontWeight: 800, fontSize: "1.05rem", color: "var(--negro, #111111)", marginTop: "4px" }}>
+                      {perfil?.usu_correo}
+                    </div>
+                    <div style={{ fontSize: "0.82rem", color: "var(--esmeralda, #05876e)", marginTop: "8px", fontWeight: 700, display: "flex", alignItems: "center", gap: "6px" }}>
+                      <CheckCircle2 size={16} /> Sesión activa y autenticada en Vercel & Supabase Vault
+                    </div>
                   </div>
-                ) : (
-                  <HistorialAccesos historial={historial} />
-                )}
-              </div>
-            )}
 
-            {/* WIDGET 3: SESIÓN & SEGURIDAD */}
-            {widgetActivo === "sesion" && (
-              <div style={{ maxWidth: "520px", margin: "0 auto" }}>
-                <div style={{ background: "var(--panel-linea-suave, #FAFAF9)", padding: "18px", borderRadius: "12px", border: "1px solid var(--panel-linea, #E4E4E4)", marginBottom: "20px" }}>
-                  <div style={{ fontSize: "0.82rem", color: "var(--panel-gris, #737373)" }}>Cuenta / Correo Autenticado:</div>
-                  <div style={{ fontWeight: 800, fontSize: "1.05rem", color: "var(--negro, #111111)", marginTop: "4px" }}>
-                    {perfil?.usu_correo}
-                  </div>
-                  <div style={{ fontSize: "0.82rem", color: "var(--esmeralda, #05876e)", marginTop: "8px", fontWeight: 700, display: "flex", alignItems: "center", gap: "6px" }}>
-                    <CheckCircle2 size={16} /> Sesión activa y autenticada en Vercel & Supabase Vault
-                  </div>
+                  <form action={cerrarSesionYRedirigir}>
+                    <button
+                      type="submit"
+                      className="btn-mini"
+                      style={{
+                        width: "100%",
+                        background: "rgba(176, 0, 32, 0.12)",
+                        border: "1px solid #B00020",
+                        color: "#B00020",
+                        padding: "14px",
+                        fontSize: "0.92rem",
+                        fontWeight: 800,
+                        justifyContent: "center",
+                        gap: "8px"
+                      }}
+                    >
+                      Cerrar Sesión Segura en esta Aplicación
+                    </button>
+                  </form>
                 </div>
+              )}
 
-                <form action={cerrarSesionYRedirigir}>
-                  <button
-                    type="submit"
-                    className="btn-mini"
-                    style={{
-                      width: "100%",
-                      background: "rgba(176, 0, 32, 0.12)",
-                      border: "1px solid #B00020",
-                      color: "#B00020",
-                      padding: "14px",
-                      fontSize: "0.92rem",
-                      fontWeight: 800,
-                      justifyContent: "center",
-                      gap: "8px"
-                    }}
-                  >
-                    Cerrar Sesión Segura en esta Aplicación
-                  </button>
-                </form>
-              </div>
-            )}
-
-            {/* WIDGET 4: BAJA DE CUENTA (PLT-012) */}
-            {widgetActivo === "peligro" && (
-              <div style={{ maxWidth: "600px", margin: "0 auto" }}>
-                <EliminarCuenta />
-              </div>
-            )}
+              {/* WIDGET 4: BAJA DE CUENTA (PLT-012) */}
+              {widgetActivo === "peligro" && (
+                <div style={{ maxWidth: "600px", margin: "0 auto" }}>
+                  <EliminarCuenta />
+                </div>
+              )}
+            </div>
           </div>
-        </section>
+        </div>
       )}
     </div>
   );
