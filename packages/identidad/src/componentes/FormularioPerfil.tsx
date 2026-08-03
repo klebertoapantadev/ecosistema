@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { User, Mail, MessageSquare, Check, ShieldCheck } from "lucide-react";
+import { Check, ShieldCheck } from "lucide-react";
 import { actualizarPerfilUsuario } from "../acciones";
 
 interface Props {
@@ -50,17 +50,17 @@ export function FormularioPerfil({ inicial }: Props) {
   };
 
   return (
-    <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+    <form onSubmit={handleSubmit} className="form-panel" style={{ maxWidth: "100%", gap: "16px" }}>
       {mensaje && (
         <div
           style={{
-            padding: "10px 14px",
-            borderRadius: "6px",
-            background: mensaje.tipo === "exito" ? "rgba(46, 160, 67, 0.15)" : "rgba(248, 81, 73, 0.15)",
-            border: mensaje.tipo === "exito" ? "1px solid #2ea043" : "1px solid #f85149",
-            color: mensaje.tipo === "exito" ? "#3fb950" : "#f85149",
-            fontSize: "0.82rem",
-            fontWeight: 600
+            padding: "12px 16px",
+            borderRadius: "8px",
+            background: mensaje.tipo === "exito" ? "rgba(5, 135, 110, 0.12)" : "rgba(176, 0, 32, 0.12)",
+            border: mensaje.tipo === "exito" ? "1px solid var(--esmeralda, #05876e)" : "1px solid #B00020",
+            color: mensaje.tipo === "exito" ? "var(--esmeralda, #05876e)" : "#B00020",
+            fontSize: "0.86rem",
+            fontWeight: 700
           }}
         >
           {mensaje.texto}
@@ -68,54 +68,33 @@ export function FormularioPerfil({ inicial }: Props) {
       )}
 
       {/* Grid Nombres y Apellidos */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
-        <div>
-          <label style={{ display: "block", fontSize: "0.78rem", color: "#8b949e", marginBottom: "4px" }}>
-            Nombres
-          </label>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "14px" }}>
+        <label>
+          Nombres
           <input
             type="text"
             value={nombres}
             onChange={e => setNombres(e.target.value)}
             required
-            style={{
-              width: "100%",
-              padding: "8px 12px",
-              background: "#0d1117",
-              border: "1px solid #30363d",
-              borderRadius: "6px",
-              color: "#c9d1d9",
-              fontSize: "0.84rem"
-            }}
+            placeholder="Tus nombres"
           />
-        </div>
-        <div>
-          <label style={{ display: "block", fontSize: "0.78rem", color: "#8b949e", marginBottom: "4px" }}>
-            Apellidos
-          </label>
+        </label>
+
+        <label>
+          Apellidos
           <input
             type="text"
             value={apellidos}
             onChange={e => setApellidos(e.target.value)}
             required
-            style={{
-              width: "100%",
-              padding: "8px 12px",
-              background: "#0d1117",
-              border: "1px solid #30363d",
-              borderRadius: "6px",
-              color: "#c9d1d9",
-              fontSize: "0.84rem"
-            }}
+            placeholder="Tus apellidos"
           />
-        </div>
+        </label>
       </div>
 
       {/* Correo Electrónico (Solo Lectura) */}
-      <div>
-        <label style={{ display: "block", fontSize: "0.78rem", color: "#8b949e", marginBottom: "4px" }}>
-          Correo Electrónico (Identidad Unificada)
-        </label>
+      <label>
+        Correo Electrónico (Identidad Unificada)
         <div style={{ position: "relative" }}>
           <input
             type="email"
@@ -123,50 +102,35 @@ export function FormularioPerfil({ inicial }: Props) {
             disabled
             style={{
               width: "100%",
-              padding: "8px 12px",
-              background: "#161b22",
-              border: "1px solid #30363d",
-              borderRadius: "6px",
-              color: "#8b949e",
-              fontSize: "0.84rem",
+              background: "var(--panel-linea-suave, #F1F1F1)",
+              color: "var(--panel-gris, #737373)",
               cursor: "not-allowed"
             }}
           />
-          <span style={{ position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)", fontSize: "0.72rem", color: "#3fb950", display: "flex", alignItems: "center", gap: "2px" }}>
-            <ShieldCheck size={14} /> Verificado
+          <span style={{ position: "absolute", right: "12px", top: "50%", transform: "translateY(-50%)", fontSize: "0.78rem", color: "var(--esmeralda, #05876e)", fontWeight: 700, display: "flex", alignItems: "center", gap: "3px" }}>
+            <ShieldCheck size={16} /> Verificado
           </span>
         </div>
-      </div>
+      </label>
 
       {/* Teléfono WhatsApp y Checkbox */}
-      <div>
-        <label style={{ display: "block", fontSize: "0.78rem", color: "#8b949e", marginBottom: "4px" }}>
-          Número de Celular / WhatsApp (Opcional)
-        </label>
+      <label>
+        Número de Celular / WhatsApp (Opcional)
         <input
           type="tel"
-          placeholder="0991234567"
+          placeholder="Ej: 0991234567"
           value={whatsapp}
           onChange={e => setWhatsapp(e.target.value)}
-          style={{
-            width: "100%",
-            padding: "8px 12px",
-            background: "#0d1117",
-            border: "1px solid #30363d",
-            borderRadius: "6px",
-            color: "#c9d1d9",
-            fontSize: "0.84rem"
-          }}
         />
-      </div>
+      </label>
 
-      <label style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "0.78rem", color: "#8b949e", cursor: "pointer", marginTop: "4px" }}>
+      <label className="campo-casilla" style={{ cursor: "pointer" }}>
         <input
           type="checkbox"
           checked={autorizaWhatsapp}
           onChange={e => setAutorizaWhatsapp(e.target.checked)}
         />
-        Autorizo el contacto opcional vía WhatsApp para notificaciones de mis casos
+        <span>Autorizo el contacto opcional vía WhatsApp para notificaciones sobre el estado de mis casos</span>
       </label>
 
       {/* Botón de Guardado */}
@@ -174,19 +138,14 @@ export function FormularioPerfil({ inicial }: Props) {
         <button
           type="submit"
           disabled={guardando}
-          className="btn-primario"
+          className="btn-mini"
           style={{
-            background: "#1f6feb",
-            color: "#ffffff",
-            border: "none",
-            borderRadius: "6px",
-            padding: "8px 18px",
-            fontSize: "0.82rem",
+            padding: "11px 24px",
+            fontSize: "0.88rem",
             fontWeight: 700,
-            cursor: guardando ? "not-allowed" : "pointer",
             display: "inline-flex",
             alignItems: "center",
-            gap: "6px"
+            gap: "8px"
           }}
         >
           <Check size={16} /> {guardando ? "Guardando..." : "Guardar Cambios de Perfil"}

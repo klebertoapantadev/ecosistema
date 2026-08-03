@@ -46,7 +46,7 @@ const WIDGETS_DISPONIBLES: WidgetDef[] = [
     titulo: "Perfil & Datos de Contacto",
     subtitulo: "Nombres, apellidos, correo verificado y WhatsApp",
     icono: User,
-    colorIcono: "#1f6feb",
+    colorIcono: "var(--violeta, #5000BA)",
     categoria: "Datos Personales"
   },
   {
@@ -54,7 +54,7 @@ const WIDGETS_DISPONIBLES: WidgetDef[] = [
     titulo: "Historial de Accesos (PLT-018)",
     subtitulo: "Seguridad de inicio de sesión, IP y dispositivos",
     icono: History,
-    colorIcono: "#58a6ff",
+    colorIcono: "var(--violeta, #5000BA)",
     categoria: "Auditoría"
   },
   {
@@ -62,7 +62,7 @@ const WIDGETS_DISPONIBLES: WidgetDef[] = [
     titulo: "Sesión & Claves de Seguridad",
     subtitulo: "Gestión de sesión activa y cierre de sesión",
     icono: KeyRound,
-    colorIcono: "#388bfd",
+    colorIcono: "var(--violeta, #5000BA)",
     categoria: "Seguridad"
   },
   {
@@ -70,7 +70,7 @@ const WIDGETS_DISPONIBLES: WidgetDef[] = [
     titulo: "Baja de Cuenta (PLT-012)",
     subtitulo: "Eliminación permanente conforme a Ley LOPDP",
     icono: ShieldAlert,
-    colorIcono: "#ef4444",
+    colorIcono: "#B00020",
     categoria: "Zona de Peligro",
     esPeligro: true
   }
@@ -78,7 +78,7 @@ const WIDGETS_DISPONIBLES: WidgetDef[] = [
 
 export function PanelCuentaModular({ perfil, historial }: Props) {
   const [favoritos, setFavoritos] = useState<string[]>([]);
-  const [widgetActivo, setWidgetActivo] = useState<string | null>("perfil"); // Por defecto Perfil abierto o lista
+  const [widgetActivo, setWidgetActivo] = useState<string | null>("perfil");
 
   // Cargar favoritos de localStorage
   useEffect(() => {
@@ -87,7 +87,7 @@ export function PanelCuentaModular({ perfil, historial }: Props) {
       if (guardados) {
         setFavoritos(JSON.parse(guardados));
       } else {
-        setFavoritos(["perfil"]); // Perfil favorito por defecto
+        setFavoritos(["perfil"]);
       }
     } catch {
       setFavoritos(["perfil"]);
@@ -106,10 +106,10 @@ export function PanelCuentaModular({ perfil, historial }: Props) {
     setFavoritos(nuevos);
     try {
       localStorage.setItem("tranqi_favoritos_cuenta", JSON.stringify(nuevos));
-    } catch { /* Ignorar en ambientes restringidos */ }
+    } catch { /* Ignorar */ }
   };
 
-  // Ordenar tarjetas: los favoritos primero
+  // Ordenar tarjetas: favoritos primero
   const widgetsOrdenados = [...WIDGETS_DISPONIBLES].sort((a, b) => {
     const aFav = favoritos.includes(a.id);
     const bFav = favoritos.includes(b.id);
@@ -119,26 +119,20 @@ export function PanelCuentaModular({ perfil, historial }: Props) {
   });
 
   return (
-    <div style={{ width: "100%", color: "#c9d1d9" }}>
-      {/* BARRA SUPERIOR DE ACCESOS / SECTION CARDS GRID */}
-      <div style={{ marginBottom: "20px" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
-          <h3 style={{ fontSize: "0.95rem", fontWeight: 700, color: "#8b949e", textTransform: "uppercase", letterSpacing: "0.05em", margin: 0 }}>
+    <div style={{ width: "100%" }}>
+      {/* ACCESOS & WIDGETS DE CUENTA (Grid de Tarjetas Limpias) */}
+      <div style={{ marginBottom: "24px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px" }}>
+          <h3 style={{ fontSize: "0.88rem", fontWeight: 800, color: "var(--panel-gris, #737373)", textTransform: "uppercase", letterSpacing: "0.08em", margin: 0 }}>
             Accesos & Widgets de Cuenta
           </h3>
-          <span style={{ fontSize: "0.78rem", color: "#8b949e" }}>
+          <span style={{ fontSize: "0.82rem", color: "var(--panel-gris, #737373)", fontWeight: 600 }}>
             ⭐ {favoritos.length} Marcados como Favorito
           </span>
         </div>
 
-        {/* Rejilla Modular de Tarjetas de Acceso */}
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-            gap: "12px"
-          }}
-        >
+        {/* Rejilla de Cards idéntica al Inicio (.accesos-cliente) */}
+        <div className="accesos-cliente" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "16px" }}>
           {widgetsOrdenados.map(w => {
             const IconoComponente = w.icono;
             const esFav = favoritos.includes(w.id);
@@ -148,19 +142,20 @@ export function PanelCuentaModular({ perfil, historial }: Props) {
               <div
                 key={w.id}
                 onClick={() => setWidgetActivo(w.id)}
+                className="tarjeta-acceso"
                 style={{
-                  background: esSeleccionado ? "#161b22" : "#0d1117",
                   border: esSeleccionado
-                    ? "2px solid #58a6ff"
+                    ? "2px solid var(--violeta, #5000BA)"
                     : esFav
-                    ? "1px solid #d29922"
-                    : "1px solid #30363d",
-                  borderRadius: "8px",
-                  padding: "14px",
-                  cursor: "pointer",
+                    ? "2px solid var(--amarillo, #FEE300)"
+                    : "1px solid var(--panel-linea, #E4E4E4)",
+                  background: "var(--blanco, #ffffff)",
+                  borderRadius: "16px",
+                  padding: "18px",
                   position: "relative",
-                  transition: "all 0.2s ease-in-out",
-                  boxShadow: esSeleccionado ? "0 4px 12px rgba(88, 166, 255, 0.15)" : "none"
+                  boxShadow: esSeleccionado ? "0 4px 14px rgba(80, 0, 186, 0.12)" : "0 1px 3px rgba(0,0,0,0.04)",
+                  cursor: "pointer",
+                  transition: "all 0.18s ease"
                 }}
               >
                 {/* Botón de Estrella Favorito */}
@@ -170,71 +165,65 @@ export function PanelCuentaModular({ perfil, historial }: Props) {
                   onClick={e => toggleFavorito(e, w.id)}
                   style={{
                     position: "absolute",
-                    top: "10px",
-                    right: "10px",
+                    top: "12px",
+                    right: "12px",
                     background: "transparent",
                     border: "none",
                     cursor: "pointer",
                     padding: "4px",
-                    color: esFav ? "#e3b341" : "#484f58",
+                    color: esFav ? "#D97706" : "var(--panel-gris, #737373)",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center"
                   }}
                 >
-                  <Star size={18} fill={esFav ? "#e3b341" : "none"} />
+                  <Star size={18} fill={esFav ? "#FEE300" : "none"} stroke={esFav ? "#D97706" : "currentColor"} />
                 </button>
 
-                {/* Contenido de la Tarjeta */}
-                <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "8px" }}>
-                  <div
-                    style={{
-                      background: w.esPeligro ? "rgba(239, 68, 68, 0.12)" : "rgba(31, 111, 235, 0.12)",
-                      padding: "8px",
-                      borderRadius: "6px",
-                      display: "flex"
-                    }}
-                  >
-                    <IconoComponente size={20} color={w.colorIcono} />
+                {/* Encabezado e Icono de Tarjeta */}
+                <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "8px" }}>
+                  <div className="tarjeta-acceso-icono" style={{ margin: 0 }}>
+                    <IconoComponente size={20} color={w.esPeligro ? "#B00020" : undefined} />
                   </div>
                   <div>
                     {esFav && (
                       <span
                         style={{
-                          fontSize: "0.65rem",
+                          fontSize: "0.62rem",
                           fontWeight: 800,
-                          color: "#d29922",
-                          background: "rgba(210, 153, 34, 0.12)",
-                          padding: "1px 6px",
-                          borderRadius: "4px",
+                          color: "#92400E",
+                          background: "var(--amarillo, #FEE300)",
+                          padding: "2px 7px",
+                          borderRadius: "999px",
                           display: "inline-block",
-                          marginBottom: "2px"
+                          marginBottom: "3px",
+                          letterSpacing: "0.04em"
                         }}
                       >
                         FAVORITO
                       </span>
                     )}
-                    <div style={{ fontWeight: 700, fontSize: "0.86rem", color: w.esPeligro ? "#f87171" : "#c9d1d9" }}>
+                    <strong style={{ display: "block", color: w.esPeligro ? "#B00020" : "var(--negro, #111111)", fontSize: "0.94rem" }}>
                       {w.titulo}
-                    </div>
+                    </strong>
                   </div>
                 </div>
 
-                <div style={{ fontSize: "0.75rem", color: "#8b949e", lineHeight: 1.35 }}>
+                <p style={{ margin: 0, fontSize: "0.82rem", color: "var(--panel-gris, #737373)" }}>
                   {w.subtitulo}
-                </div>
+                </p>
 
                 <div
                   style={{
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "space-between",
-                    marginTop: "10px",
-                    paddingTop: "8px",
-                    borderTop: "1px solid rgba(255, 255, 255, 0.05)",
-                    fontSize: "0.72rem",
-                    color: esSeleccionado ? "#58a6ff" : "#8b949e",
-                    fontWeight: 600
+                    marginTop: "12px",
+                    paddingTop: "10px",
+                    borderTop: "1px solid var(--panel-linea-suave, #F1F1F1)",
+                    fontSize: "0.76rem",
+                    color: esSeleccionado ? "var(--violeta, #5000BA)" : "var(--panel-gris, #737373)",
+                    fontWeight: 700
                   }}
                 >
                   <span>{esSeleccionado ? "● Abierto en pantalla" : "Clic para ver widget"}</span>
@@ -246,28 +235,17 @@ export function PanelCuentaModular({ perfil, historial }: Props) {
         </div>
       </div>
 
-      {/* VISTA EN DETALLE DEL WIDGET SELECCIONADO */}
+      {/* VISTA EN DETALLE DEL WIDGET ENFOCADO (Tarjeta de Sección idéntica al Inicio) */}
       {widgetActivo && (
-        <div style={{ marginTop: "24px" }}>
+        <section className="tarjeta-seccion" style={{ background: "var(--blanco, #ffffff)", borderRadius: "16px", overflow: "hidden" }}>
           {/* Header del Widget enfocado */}
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              background: "#161b22",
-              padding: "12px 16px",
-              borderRadius: "8px 8px 0 0",
-              border: "1px solid #30363d",
-              borderBottom: "none"
-            }}
-          >
+          <header style={{ padding: "16px 20px", background: "#FAFAF9" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-              <span style={{ fontWeight: 700, fontSize: "0.92rem", color: "#58a6ff" }}>
+              <h2 style={{ fontSize: "1rem", fontWeight: 800, color: "var(--negro, #111111)", margin: 0 }}>
                 Widget Enfocado: {WIDGETS_DISPONIBLES.find(w => w.id === widgetActivo)?.titulo}
-              </span>
+              </h2>
               {favoritos.includes(widgetActivo) && (
-                <span style={{ fontSize: "0.7rem", background: "rgba(210, 153, 34, 0.15)", color: "#e3b341", padding: "2px 8px", borderRadius: "12px", fontWeight: 700 }}>
+                <span className="pildora-estado" style={{ background: "var(--amarillo)", color: "var(--negro)", fontSize: "0.68rem" }}>
                   ⭐ Favorito Pinned
                 </span>
               )}
@@ -276,33 +254,23 @@ export function PanelCuentaModular({ perfil, historial }: Props) {
             <button
               type="button"
               onClick={() => setWidgetActivo(null)}
+              className="btn-mini"
               style={{
-                background: "#21262d",
-                border: "1px solid #30363d",
-                color: "#c9d1d9",
-                borderRadius: "6px",
-                padding: "4px 12px",
-                fontSize: "0.76rem",
-                fontWeight: 600,
-                cursor: "pointer",
+                background: "var(--panel-linea-suave, #F1F1F1)",
+                color: "var(--negro, #111111)",
+                border: "1px solid var(--panel-linea, #E4E4E4)",
+                padding: "6px 14px",
                 display: "flex",
                 alignItems: "center",
-                gap: "4px"
+                gap: "6px"
               }}
             >
               <ArrowLeft size={14} /> Ocultar detalle
             </button>
-          </div>
+          </header>
 
-          {/* Contenedor Físico del Widget Activo */}
-          <div
-            style={{
-              background: "#0d1117",
-              border: "1px solid #30363d",
-              borderRadius: "0 0 8px 8px",
-              padding: "20px"
-            }}
-          >
+          {/* Cuerpo Físico del Widget Activo */}
+          <div style={{ padding: "24px" }}>
             {/* WIDGET 1: PERFIL & DATOS */}
             {widgetActivo === "perfil" && (
               <div>
@@ -321,11 +289,11 @@ export function PanelCuentaModular({ perfil, historial }: Props) {
             {/* WIDGET 2: HISTORIAL DE ACCESOS (PLT-018) */}
             {widgetActivo === "historial" && (
               <div>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px" }}>
-                  <span style={{ fontSize: "0.82rem", color: "#8b949e" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+                  <span style={{ fontSize: "0.88rem", color: "var(--panel-gris, #737373)" }}>
                     Registros de seguridad e inicio de sesión unificados en el ecosistema (PLT-018):
                   </span>
-                  <span className="chip-registrado" style={{ background: "#1f6feb", color: "#fff", fontWeight: 700 }}>
+                  <span className="pildora-estado">
                     {historial.length} Accesos Registrados
                   </span>
                 </div>
@@ -343,32 +311,29 @@ export function PanelCuentaModular({ perfil, historial }: Props) {
 
             {/* WIDGET 3: SESIÓN & SEGURIDAD */}
             {widgetActivo === "sesion" && (
-              <div style={{ maxWidth: "480px", margin: "0 auto" }}>
-                <div style={{ background: "#161b22", padding: "16px", borderRadius: "8px", border: "1px solid #30363d", marginBottom: "16px" }}>
-                  <div style={{ fontSize: "0.78rem", color: "#8b949e" }}>Cuenta / Correo Autenticado:</div>
-                  <div style={{ fontWeight: 700, fontSize: "0.95rem", color: "#c9d1d9", marginTop: "4px" }}>
+              <div style={{ maxWidth: "520px", margin: "0 auto" }}>
+                <div style={{ background: "var(--panel-linea-suave, #FAFAF9)", padding: "18px", borderRadius: "12px", border: "1px solid var(--panel-linea, #E4E4E4)", marginBottom: "20px" }}>
+                  <div style={{ fontSize: "0.82rem", color: "var(--panel-gris, #737373)" }}>Cuenta / Correo Autenticado:</div>
+                  <div style={{ fontWeight: 800, fontSize: "1.05rem", color: "var(--negro, #111111)", marginTop: "4px" }}>
                     {perfil?.usu_correo}
                   </div>
-                  <div style={{ fontSize: "0.76rem", color: "#3fb950", marginTop: "6px", display: "flex", alignItems: "center", gap: "4px" }}>
-                    <CheckCircle2 size={16} /> Sesión activa en Vercel & Supabase Vault
+                  <div style={{ fontSize: "0.82rem", color: "var(--esmeralda, #05876e)", marginTop: "8px", fontWeight: 700, display: "flex", alignItems: "center", gap: "6px" }}>
+                    <CheckCircle2 size={16} /> Sesión activa y autenticada en Vercel & Supabase Vault
                   </div>
                 </div>
 
                 <form action={cerrarSesionYRedirigir}>
                   <button
                     type="submit"
+                    className="btn-mini"
                     style={{
                       width: "100%",
-                      background: "rgba(248, 81, 73, 0.15)",
-                      border: "1px solid #f85149",
-                      color: "#f85149",
-                      borderRadius: "6px",
-                      padding: "12px",
-                      fontSize: "0.88rem",
-                      fontWeight: 700,
-                      cursor: "pointer",
-                      display: "flex",
-                      alignItems: "center",
+                      background: "rgba(176, 0, 32, 0.12)",
+                      border: "1px solid #B00020",
+                      color: "#B00020",
+                      padding: "14px",
+                      fontSize: "0.92rem",
+                      fontWeight: 800,
                       justifyContent: "center",
                       gap: "8px"
                     }}
@@ -381,12 +346,12 @@ export function PanelCuentaModular({ perfil, historial }: Props) {
 
             {/* WIDGET 4: BAJA DE CUENTA (PLT-012) */}
             {widgetActivo === "peligro" && (
-              <div style={{ maxWidth: "560px", margin: "0 auto" }}>
+              <div style={{ maxWidth: "600px", margin: "0 auto" }}>
                 <EliminarCuenta />
               </div>
             )}
           </div>
-        </div>
+        </section>
       )}
     </div>
   );
