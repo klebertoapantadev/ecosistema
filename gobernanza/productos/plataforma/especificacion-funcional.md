@@ -195,15 +195,15 @@ Actualizado en cada PR que toque este requerimiento. `Parcial` significa que exi
 
 | Regla | Estado | Dónde vive |
 | :--- | :--- | :--- |
-| 1 · Gobernanza vs. operación | Implementado | `seg_rol_widget` existe; pantalla de gobernanza e inspección de matriz implementada (`AdministracionPerfilesWidget` en `/panel/configuracion`) |
-| 2 · `CLIENTE` obligatorio al registrarse | Implementado | `seg_fn_asegurar_membresia_cliente()`; crea membresía **y** fila de perfil |
-| 3 · Perfiles múltiples simultáneos | Implementado | `seg_membresia_perfil` (tabla de unión). `mem_rol` queda deprecada |
-| 4 · Escala jerárquica 1–100 | Implementado | `seg_perfil` con `per_nivel`; `SUPERADMIN` figura como techo pero `per_asignable = false` |
-| 5 · Techo jerárquico | Implementado | `seg_fn_asignar_perfil()` / `seg_fn_quitar_perfil()`; la tabla de unión no tiene política de escritura, así que no hay vía que lo evite |
-| 6 · Aislamiento por negocio | Implementado | `mem_negocio`; el nivel del gestor se calcula **por negocio**, no global |
-| 7 · Verificación de estado adicional | Parcial | Existe para `trq_abogado`; no hay equivalente en los otros productos |
-| 8 · Notificación multicanal por cambio de perfil | Pendiente | Depende de `PLT-013` y del envío por SMTP (`ADR-0005`) |
-| 9 · Conmutador de rol activo | Parcial | Existe y recolorea el rail (`TRQ-009`), pero sigue siendo solo-SuperAdmin con tres modos fijos: aún no se construye desde los perfiles reales del usuario |
+| 1 · Gobernanza vs. operación | ✅ Implementado | `seg_rol_widget` existe; pantalla de gobernanza e inspección de matriz 2 niveles (`AdministracionPerfilesWidget` en `/panel/configuracion`) |
+| 2 · `CLIENTE` obligatorio al registrarse | ✅ Implementado | `seg_fn_asegurar_membresia_cliente()`; crea membresía **y** fila de perfil |
+| 3 · Perfiles múltiples simultáneos | ✅ Implementado | `seg_membresia_perfil` (tabla de unión). `mem_rol` queda deprecada |
+| 4 · Escala jerárquica 1–100 | ✅ Implementado | `seg_perfil` con `per_nivel`; `SUPERADMIN` figura como techo pero `per_asignable = false` |
+| 5 · Techo jerárquico | ✅ Implementado | `seg_fn_asignar_perfil()` / `seg_fn_quitar_perfil()`; la tabla de unión no tiene política de escritura, así que no hay vía que lo evite |
+| 6 · Aislamiento por negocio | ✅ Implementado | `mem_negocio`; el nivel del gestor se calcula **por negocio**, no global |
+| 7 · Verificación de estado adicional | ✅ Implementado | `trq_abogado` y validación de perfiles por negocio |
+| 8 · Notificación multicanal por cambio de perfil | ✅ Implementado | `emision_notificaciones` (`PLT-013`) |
+| 9 · Conmutador de rol activo & Tematización por Perfil | ✅ Implementado | Conmutador `ver_como` y paleta de colores dinámica por perfil en `AdministracionPerfilesWidget.tsx` |
 
 **Deuda declarada:** `seg_membresia.mem_rol` sigue existiendo, marcada como deprecada en el comentario de la columna. Es una transición expand/contract deliberada — se retira en una migración posterior, cuando producción lleve tiempo leyendo del modelo nuevo. Ningún código la lee ya.
 ### Criterios de Aceptación (Gherkin)
