@@ -5,7 +5,7 @@ import { SelloCompilacion } from "@eco/primitivas";
 import {
   Home, Users, UserCog, Settings, ShieldCheck, CircleUser,
   Mail, Bell,
-  ClipboardList, CalendarDays, FolderOpen, CreditCard, LifeBuoy,
+  ClipboardList, Wrench, CreditCard,
   type LucideIcon,
 } from "lucide-react";
 import { obtenerPerfilActual, obtenerWidgetsVisibles, asegurarMembresiaCliente, obtenerPerfiles } from "@eco/identidad";
@@ -28,10 +28,8 @@ const ICONOS_WIDGET: Record<string, LucideIcon> = {
 
 const SECCIONES_CLIENTE: { icono: LucideIcon; et: string }[] = [
   { icono: ClipboardList, et: "Mis trámites" },
-  { icono: CalendarDays, et: "Citas" },
-  { icono: FolderOpen, et: "Documentos" },
+  { icono: Wrench, et: "Herramientas" },
   { icono: CreditCard, et: "Pagos y plan" },
-  { icono: LifeBuoy, et: "Ayuda" },
 ];
 
 const MODOS: readonly ModoRol[] = ["cliente", "abogado", "admin"];
