@@ -9,6 +9,32 @@ export interface Resultado<T = void> {
   error?: string;
 }
 
+export async function asignarPerfil(usuarioId: string, perfil: string, negocio: string): Promise<Resultado> {
+  if (!perfil.trim()) return { ok: false, error: "Selecciona un perfil" };
+
+  const supabase = await crearClienteServidor();
+  const { error } = await supabase
+    .schema("comun_seguridad")
+    .rpc("seg_fn_asignar_perfil", { p_usuario_id: usuarioId, p_negocio: negocio, p_perfil: perfil });
+
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath("/panel/usuarios");
+  return { ok: true, data: undefined };
+}
+
+export async function quitarPerfil(usuarioId: string, perfil: string, negocio: string): Promise<Resultado> {
+  const supabase = await crearClienteServidor();
+  const { error } = await supabase
+    .schema("comun_seguridad")
+    .rpc("seg_fn_quitar_perfil", { p_usuario_id: usuarioId, p_negocio: negocio, p_perfil: perfil });
+
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath("/panel/usuarios");
+  return { ok: true, data: undefined };
+}
+
 export interface GuardarPerfilInput {
   clave: string;
   nombre: string;
