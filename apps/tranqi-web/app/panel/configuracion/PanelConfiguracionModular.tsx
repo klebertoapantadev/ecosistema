@@ -5,7 +5,7 @@ import { Settings, Mail, Bell, Star, X, ChevronRight, ShieldCheck, Sliders } fro
 import { FormularioConfiguracionNegocio } from "@eco/configuracion-negocio/componentes/FormularioConfiguracionNegocio";
 import { FormularioSmtp } from "@eco/configuracion-negocio/componentes/FormularioSmtp";
 import { PreferenciasNotificacionWidget } from "@eco/notificaciones";
-import { AdministracionPerfilesWidget } from "@eco/gestion-usuarios";
+import { AdministracionPerfilesWidget } from "@eco/gestion-usuarios/componentes/AdministracionPerfilesWidget";
 
 interface Props {
   esAdmin: boolean;
