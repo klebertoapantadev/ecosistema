@@ -15,7 +15,8 @@
   },
   "dependencies": {
     "@eco/db": "workspace:*",
-    "@eco/supabase": "workspace:*"
+    "@eco/supabase": "workspace:*",
+    "lucide-react": "1.27.0"
   },
   "devDependencies": {
     "@eco/config": "workspace:*",

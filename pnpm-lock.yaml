@@ -407,6 +407,9 @@ importers:
       '@eco/supabase':
         specifier: workspace:*
         version: link:../supabase
+      lucide-react:
+        specifier: 1.27.0
+        version: 1.27.0(react@19.2.8)
     devDependencies:
       '@eco/config':
         specifier: workspace:*
