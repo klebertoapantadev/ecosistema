@@ -195,7 +195,7 @@ Actualizado en cada PR que toque este requerimiento. `Parcial` significa que exi
 
 | Regla | Estado | Dónde vive |
 | :--- | :--- | :--- |
-| 1 · Gobernanza vs. operación | Parcial | `seg_rol_widget` existe y el widget de correo ya es solo-SuperAdmin; falta la pantalla de gobernanza de la matriz (widget `configuracion_permisos`) |
+| 1 · Gobernanza vs. operación | Implementado | `seg_rol_widget` existe; pantalla de gobernanza e inspección de matriz implementada (`AdministracionPerfilesWidget` en `/panel/configuracion`) |
 | 2 · `CLIENTE` obligatorio al registrarse | Implementado | `seg_fn_asegurar_membresia_cliente()`; crea membresía **y** fila de perfil |
 | 3 · Perfiles múltiples simultáneos | Implementado | `seg_membresia_perfil` (tabla de unión). `mem_rol` queda deprecada |
 | 4 · Escala jerárquica 1–100 | Implementado | `seg_perfil` con `per_nivel`; `SUPERADMIN` figura como techo pero `per_asignable = false` |
