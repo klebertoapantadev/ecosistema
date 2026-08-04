@@ -31,7 +31,7 @@ export function FilaUsuario({
     setOcupado(null);
 
     if (!resultado.ok) {
-      setMensaje(resultado.error);
+      setMensaje(resultado.error ?? "Error al procesar la solicitud");
       return;
     }
     // Se refleja solo si el servidor aceptó: el techo jerárquico lo decide el
