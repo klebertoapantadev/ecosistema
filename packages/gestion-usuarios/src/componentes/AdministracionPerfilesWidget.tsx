@@ -4,9 +4,78 @@ import React, { useState } from "react";
 import {
   ShieldCheck, Users,
   CheckCircle2, ChevronDown, ChevronUp, Search, Sliders,
-  Plus, Check, LayoutGrid, Layers, ExternalLink, PanelLeft, Eye, ArrowRight
+  Plus, Check, LayoutGrid, Layers, ExternalLink, PanelLeft, Eye, ArrowRight,
+  Palette, UserCheck
 } from "lucide-react";
 import { guardarPerfil, guardarWidget, guardarAsignacionWidget } from "../acciones";
+
+export interface TemaPerfilDef {
+  colorPrimario: string;
+  colorFondoSuave: string;
+  colorBorde: string;
+  colorTexto: string;
+  badgeBg: string;
+  badgeTexto: string;
+  iconoColor: string;
+}
+
+export const TEMAS_PERFIL: Record<string, TemaPerfilDef> = {
+  CLIENTE: {
+    colorPrimario: "#5000BA", // Violeta Púrpura Tranqi
+    colorFondoSuave: "#F5F3FF",
+    colorBorde: "#7C3AED",
+    colorTexto: "#4C1D95",
+    badgeBg: "#DDD6FE",
+    badgeTexto: "#581C87",
+    iconoColor: "#6D28D9"
+  },
+  OPERADOR: {
+    colorPrimario: "#0284C7", // Cyan / Azul Operativo
+    colorFondoSuave: "#F0F9FF",
+    colorBorde: "#0284C7",
+    colorTexto: "#0369A1",
+    badgeBg: "#BAE6FD",
+    badgeTexto: "#075985",
+    iconoColor: "#0284C7"
+  },
+  ABOGADO: {
+    colorPrimario: "#05876E", // Verde Esmeralda Legal
+    colorFondoSuave: "#ECFDF5",
+    colorBorde: "#05876E",
+    colorTexto: "#065F46",
+    badgeBg: "#A7F3D0",
+    badgeTexto: "#064E3B",
+    iconoColor: "#05876E"
+  },
+  ADMINISTRADOR: {
+    colorPrimario: "#D97706", // Ámbar / Oro Administración
+    colorFondoSuave: "#FFFBEB",
+    colorBorde: "#D97706",
+    colorTexto: "#92400E",
+    badgeBg: "#FDE68A",
+    badgeTexto: "#78350F",
+    iconoColor: "#B45309"
+  },
+  SUPERADMIN: {
+    colorPrimario: "#111827", // Negro Ópalo / Plataforma Elite
+    colorFondoSuave: "#F9FAFB",
+    colorBorde: "#374151",
+    colorTexto: "#111827",
+    badgeBg: "#E5E7EB",
+    badgeTexto: "#1F2937",
+    iconoColor: "#111827"
+  }
+};
+
+const TEMA_POR_DEFECTO: TemaPerfilDef = {
+  colorPrimario: "#5000BA",
+  colorFondoSuave: "#F5F3FF",
+  colorBorde: "#5000BA",
+  colorTexto: "#111111",
+  badgeBg: "#E0E7FF",
+  badgeTexto: "#3730A3",
+  iconoColor: "#5000BA"
+};
 
 export interface PerfilDef {
   clave: string;
@@ -15,7 +84,7 @@ export interface PerfilDef {
   ambito: string;
   descripcion: string;
   panelesAsignados: string[];
-  widgetsAsignados: string[]; // Claves de widgets autorizados para este perfil
+  widgetsAsignados: string[];
   activo: boolean;
   esSuperAdmin?: boolean;
 }
@@ -269,7 +338,10 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
   const [inventarioWidgets, setInventarioWidgets] = useState<WidgetInventarioDef[]>(WIDGETS_INVENTARIO_INICIALES);
 
   // Perfil seleccionado en pestaña 2 (Widgets por Panel & Perfil)
-  const [perfilSeleccionado, setPerfilSeleccionado] = useState<string>("ADMINISTRADOR");
+  const [perfilSeleccionado, setPerfilSeleccionado] = useState<string>("ABOGADO");
+
+  // Tema del perfil activo seleccionado
+  const temaPerfilActivo = TEMAS_PERFIL[perfilSeleccionado] || TEMA_POR_DEFECTO;
 
   // Filtros
   const [filtroTexto, setFiltroTexto] = useState<string>("");
@@ -326,10 +398,8 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
       ? perfil.widgetsAsignados.filter(w => w !== widgetClave)
       : [...perfil.widgetsAsignados, widgetClave];
 
-    // Actualizar estado local
     setPerfiles(perfiles.map(p => p.clave === perfilClave ? { ...p, widgetsAsignados: nuevosWidgets } : p));
 
-    // Persistir en servidor vía Server Action
     await guardarAsignacionWidget(perfilClave, widgetClave, negocio, !asignado);
 
     setMensajeExito(`Widget '${widgetClave}' ${asignado ? "desmarcado para" : "asignado a"} perfil '${perfilClave}'.`);
@@ -386,10 +456,8 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
       activo: true
     };
 
-    // Actualizar inventario local
     setInventarioWidgets([...inventarioWidgets, widgetNuevoDef]);
 
-    // Asignar el nuevo widget a los perfiles seleccionados
     setPerfiles(perfiles.map(p => {
       if (nuevoWidgetPerfiles.includes(p.clave)) {
         return { ...p, widgetsAsignados: [...p.widgetsAsignados, claveLower] };
@@ -409,7 +477,6 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
       negocio
     });
 
-    // Guardar asignación en servidor para cada perfil autorizado
     for (const perfClave of nuevoWidgetPerfiles) {
       await guardarAsignacionWidget(perfClave, claveLower, negocio, true);
     }
@@ -457,7 +524,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
         </div>
       )}
 
-      {/* Banner de Arquitectura de 2 Niveles: Perfil -> Paneles (Sidebar) -> Widgets */}
+      {/* Banner de Arquitectura de Gobernanza */}
       <div
         style={{
           background: "var(--panel-papel, #F7F6FA)",
@@ -579,27 +646,67 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
         </button>
       </div>
 
-      {/* TAB 2: ASIGNACIÓN DE WIDGETS POR PANEL & PERFIL (INTERACTIVA 100%) */}
+      {/* TAB 2: ASIGNACIÓN DE WIDGETS POR PANEL & PERFIL (CON PALETA DE COLOR DINÁMICA POR PERFIL) */}
       {tabActiva === "matriz_widgets" && (
         <div>
-          <div style={{ display: "flex", gap: "16px", alignItems: "center", marginBottom: "20px", flexWrap: "wrap", background: "var(--panel-papel, #F7F6FA)", padding: "14px 18px", borderRadius: "12px", border: "1px solid var(--panel-linea, #E4E4E4)" }}>
-            <div style={{ minWidth: "280px" }}>
-              <label style={{ fontSize: "0.82rem", fontWeight: 800, display: "block", marginBottom: "4px", color: "var(--violeta, #5000BA)" }}>
-                👤 Selecciona Perfil / Rol Activo a Configurar:
-              </label>
+          {/* BANNER DINÁMICO DE TEMATIZACIÓN SEGÚN EL PERFIL SELECCIONADO */}
+          <div
+            style={{
+              display: "flex",
+              gap: "16px",
+              alignItems: "center",
+              marginBottom: "20px",
+              flexWrap: "wrap",
+              background: temaPerfilActivo.colorFondoSuave,
+              padding: "16px 20px",
+              borderRadius: "14px",
+              border: `2px solid ${temaPerfilActivo.colorBorde}`,
+              boxShadow: `0 4px 12px ${temaPerfilActivo.colorPrimario}15`,
+              transition: "all 0.25s ease"
+            }}
+          >
+            <div style={{ minWidth: "300px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
+                <Palette size={18} color={temaPerfilActivo.colorPrimario} />
+                <label style={{ fontSize: "0.82rem", fontWeight: 800, color: temaPerfilActivo.colorTexto, textTransform: "uppercase", letterSpacing: "0.04em" }}>
+                  Perfil / Rol Activo a Configurar:
+                </label>
+              </div>
+
               <select
                 value={perfilSeleccionado}
                 onChange={e => setPerfilSeleccionado(e.target.value)}
-                style={{ width: "100%", padding: "10px 14px", borderRadius: "8px", border: "1.5px solid var(--violeta, #5000BA)", fontWeight: 800, fontSize: "0.9rem", background: "#ffffff", cursor: "pointer" }}
+                style={{
+                  width: "100%",
+                  padding: "10px 14px",
+                  borderRadius: "8px",
+                  border: `2px solid ${temaPerfilActivo.colorBorde}`,
+                  fontWeight: 800,
+                  fontSize: "0.92rem",
+                  background: "#ffffff",
+                  color: temaPerfilActivo.colorTexto,
+                  cursor: "pointer",
+                  boxShadow: "0 2px 5px rgba(0,0,0,0.05)"
+                }}
               >
-                {perfiles.map(p => (
-                  <option key={p.clave} value={p.clave}>{p.nombre} (Nivel {p.nivel})</option>
-                ))}
+                {perfiles.map(p => {
+                  const t = TEMAS_PERFIL[p.clave] || TEMA_POR_DEFECTO;
+                  return (
+                    <option key={p.clave} value={p.clave} style={{ color: t.colorTexto, fontWeight: 700 }}>
+                      {p.nombre} (Nivel {p.nivel})
+                    </option>
+                  );
+                })}
               </select>
             </div>
-            <div style={{ fontSize: "0.8rem", color: "var(--panel-gris, #737373)", flex: 1 }}>
-              Mostrando widgets asignados para: <strong style={{ color: "#111" }}>{perfilActualObj?.nombre}</strong>.
-              Las casillas marcadas <strong>[x]</strong> indican qué widgets están activos en los Paneles para este perfil.
+
+            <div style={{ flex: 1, minWidth: "240px" }}>
+              <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", background: temaPerfilActivo.badgeBg, color: temaPerfilActivo.badgeTexto, padding: "4px 12px", borderRadius: "999px", fontWeight: 800, fontSize: "0.78rem", marginBottom: "6px" }}>
+                <UserCheck size={14} /> MODO CONFIGURACIÓN: {perfilActualObj?.nombre.toUpperCase()} (NIVEL {perfilActualObj?.nivel})
+              </div>
+              <p style={{ fontSize: "0.82rem", color: temaPerfilActivo.colorTexto, margin: 0, lineHeight: 1.4, opacity: 0.9 }}>
+                Configurando visibilidad de widgets. Las tarjetas en <strong>{perfilActualObj?.nombre}</strong> marcadas con <strong>[x]</strong> se renderizarán en los paneles de este perfil.
+              </p>
             </div>
           </div>
 
@@ -608,14 +715,23 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
               const widgetsDelPanel = inventarioWidgets.filter(w => w.panelId === panel.id);
 
               return (
-                <div key={panel.id} style={{ border: "1px solid var(--panel-linea, #E4E4E4)", borderRadius: "12px", padding: "16px", background: "#ffffff" }}>
+                <div
+                  key={panel.id}
+                  style={{
+                    border: `1px solid ${temaPerfilActivo.colorBorde}33`,
+                    borderRadius: "12px",
+                    padding: "16px",
+                    background: "#ffffff",
+                    boxShadow: "0 2px 6px rgba(0,0,0,0.03)"
+                  }}
+                >
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                      <PanelLeft size={18} color="var(--violeta, #5000BA)" />
-                      <strong style={{ fontSize: "0.95rem" }}>{panel.nombre}</strong>
+                      <PanelLeft size={18} color={temaPerfilActivo.colorPrimario} />
+                      <strong style={{ fontSize: "0.95rem", color: "#111111" }}>{panel.nombre}</strong>
                       <code style={{ fontSize: "0.72rem", color: "var(--panel-gris, #737373)" }}>{panel.ruta}</code>
                     </div>
-                    <a href={panel.ruta} target="_blank" rel="noopener noreferrer" style={{ fontSize: "0.75rem", color: "var(--violeta, #5000BA)", fontWeight: 700, textDecoration: "none" }}>
+                    <a href={panel.ruta} target="_blank" rel="noopener noreferrer" style={{ fontSize: "0.75rem", color: temaPerfilActivo.colorPrimario, fontWeight: 700, textDecoration: "none" }}>
                       Previsualizar Panel ↗
                     </a>
                   </div>
@@ -631,26 +747,35 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                           key={w.clave}
                           onClick={() => toggleWidgetPerfil(perfilSeleccionado, w.clave)}
                           style={{
-                            background: estaAsignado ? "var(--panel-linea-suave, #FAFAF9)" : "#ffffff",
+                            background: estaAsignado ? temaPerfilActivo.colorFondoSuave : "#ffffff",
                             padding: "12px 14px",
                             borderRadius: "10px",
-                            border: estaAsignado ? "1.5px solid var(--violeta, #5000BA)" : "1px solid var(--panel-linea, #E4E4E4)",
+                            border: estaAsignado ? `2px solid ${temaPerfilActivo.colorBorde}` : "1px solid var(--panel-linea, #E4E4E4)",
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "space-between",
                             cursor: "pointer",
-                            transition: "all 0.15s ease"
+                            transition: "all 0.18s ease"
                           }}
                         >
                           <div>
-                            <div style={{ fontWeight: 800, fontSize: "0.85rem", color: estaAsignado ? "var(--violeta, #5000BA)" : "#111" }}>{w.nombre}</div>
-                            <div style={{ fontSize: "0.68rem", color: "var(--panel-gris, #737373)" }}>{w.clave}</div>
+                            <div style={{ fontWeight: 800, fontSize: "0.85rem", color: estaAsignado ? temaPerfilActivo.colorTexto : "#111111" }}>
+                              {w.nombre}
+                            </div>
+                            <div style={{ fontSize: "0.68rem", color: estaAsignado ? temaPerfilActivo.colorPrimario : "var(--panel-gris, #737373)", opacity: 0.8 }}>
+                              {w.clave}
+                            </div>
                           </div>
                           <input
                             type="checkbox"
                             checked={estaAsignado}
-                            onChange={() => {}} // Manejado por onClick contenedor
-                            style={{ width: "18px", height: "18px", cursor: "pointer", accentColor: "var(--violeta, #5000BA)" }}
+                            onChange={() => {}}
+                            style={{
+                              width: "18px",
+                              height: "18px",
+                              cursor: "pointer",
+                              accentColor: temaPerfilActivo.colorPrimario
+                            }}
                           />
                         </div>
                       );
@@ -688,27 +813,30 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                 </tr>
               </thead>
               <tbody>
-                {perfiles.map(p => (
-                  <tr key={p.clave} style={{ borderBottom: "1px solid var(--panel-linea, #E4E4E4)" }}>
-                    <td style={{ padding: "14px 16px", fontWeight: 700 }}>
-                      {p.nombre}
-                      <div style={{ fontSize: "0.7rem", color: "var(--panel-gris, #737373)" }}>Nivel {p.nivel}</div>
-                    </td>
-                    {panelesSidebar.map(panel => {
-                      const asignado = p.panelesAsignados.includes(panel.id);
-                      return (
-                        <td key={panel.id} style={{ textAlign: "center", padding: "10px" }}>
-                          <input
-                            type="checkbox"
-                            checked={asignado}
-                            onChange={() => togglePanelPerfil(p.clave, panel.id)}
-                            style={{ width: "18px", height: "18px", cursor: "pointer", accentColor: "var(--violeta, #5000BA)" }}
-                          />
-                        </td>
-                      );
-                    })}
-                  </tr>
-                ))}
+                {perfiles.map(p => {
+                  const t = TEMAS_PERFIL[p.clave] || TEMA_POR_DEFECTO;
+                  return (
+                    <tr key={p.clave} style={{ borderBottom: "1px solid var(--panel-linea, #E4E4E4)" }}>
+                      <td style={{ padding: "14px 16px", fontWeight: 700 }}>
+                        <span style={{ color: t.colorTexto, fontWeight: 800 }}>{p.nombre}</span>
+                        <div style={{ fontSize: "0.7rem", color: "var(--panel-gris, #737373)" }}>Nivel {p.nivel}</div>
+                      </td>
+                      {panelesSidebar.map(panel => {
+                        const asignado = p.panelesAsignados.includes(panel.id);
+                        return (
+                          <td key={panel.id} style={{ textAlign: "center", padding: "10px" }}>
+                            <input
+                              type="checkbox"
+                              checked={asignado}
+                              onChange={() => togglePanelPerfil(p.clave, panel.id)}
+                              style={{ width: "18px", height: "18px", cursor: "pointer", accentColor: t.colorPrimario }}
+                            />
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -836,11 +964,13 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
           <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
             {perfilesFiltrados.map(p => {
               const desplegado = perfilDetalle === p.clave;
+              const t = TEMAS_PERFIL[p.clave] || TEMA_POR_DEFECTO;
+
               return (
                 <div
                   key={p.clave}
                   style={{
-                    border: "1px solid var(--panel-linea, #E4E4E4)",
+                    border: `1px solid ${t.colorBorde}44`,
                     borderRadius: "12px",
                     background: "#ffffff",
                     overflow: "hidden"
@@ -854,7 +984,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                       alignItems: "center",
                       justifyContent: "space-between",
                       cursor: "pointer",
-                      background: desplegado ? "var(--panel-papel, #F7F6FA)" : "#ffffff",
+                      background: desplegado ? t.colorFondoSuave : "#ffffff",
                       gap: "12px",
                       flexWrap: "wrap"
                     }}
@@ -865,12 +995,12 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                           width: "38px",
                           height: "38px",
                           borderRadius: "10px",
-                          background: p.esSuperAdmin ? "rgba(45, 27, 105, 0.1)" : "var(--panel-linea-suave, #FAFAF9)",
-                          color: p.esSuperAdmin ? "#2D1B69" : "var(--violeta, #5000BA)",
+                          background: t.badgeBg,
+                          color: t.badgeTexto,
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
-                          border: "1px solid var(--panel-linea, #E4E4E4)",
+                          border: `1px solid ${t.colorBorde}33`,
                           flexShrink: 0
                         }}
                       >
@@ -878,8 +1008,8 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                       </div>
                       <div>
                         <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
-                          <span style={{ fontWeight: 800, fontSize: "0.95rem" }}>{p.nombre}</span>
-                          <span style={{ fontSize: "0.68rem", fontWeight: 800, padding: "2px 8px", borderRadius: "999px", background: p.nivel >= 80 ? "#0A2B22" : "var(--panel-linea-suave, #FAFAF9)", color: p.nivel >= 80 ? "#fff" : "#111" }}>
+                          <span style={{ fontWeight: 800, fontSize: "0.95rem", color: t.colorTexto }}>{p.nombre}</span>
+                          <span style={{ fontSize: "0.68rem", fontWeight: 800, padding: "2px 8px", borderRadius: "999px", background: t.badgeBg, color: t.badgeTexto }}>
                             Nivel {p.nivel}
                           </span>
                           <span style={{ fontSize: "0.68rem", padding: "2px 8px", borderRadius: "999px", border: "1px solid var(--panel-linea, #E4E4E4)", color: "var(--panel-gris, #737373)" }}>
@@ -901,8 +1031,8 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                       </div>
                       <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginBottom: "14px" }}>
                         {p.widgetsAsignados.map(w => (
-                          <span key={w} style={{ fontSize: "0.75rem", fontWeight: 700, background: "var(--panel-linea-suave, #FAFAF9)", border: "1px solid var(--panel-linea, #E4E4E4)", padding: "4px 10px", borderRadius: "6px" }}>
-                            <Check size={12} style={{ marginRight: 4, color: "green" }} /> {w}
+                          <span key={w} style={{ fontSize: "0.75rem", fontWeight: 700, background: t.colorFondoSuave, color: t.colorTexto, border: `1px solid ${t.colorBorde}33`, padding: "4px 10px", borderRadius: "6px" }}>
+                            <Check size={12} style={{ marginRight: 4, color: t.colorPrimario }} /> {w}
                           </span>
                         ))}
                       </div>
@@ -1014,7 +1144,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
               </select>
             </div>
 
-            {/* SELECTOR DE PERFILES AUTORIZADOS */}
+            {/* SELECTOR DE PERFILES AUTORIZADOS CON COLORES */}
             <div style={{ marginBottom: "16px" }}>
               <label style={{ fontSize: "0.8rem", fontWeight: 700, display: "block", marginBottom: "6px", color: "var(--violeta, #5000BA)" }}>
                 Perfiles Autorizados para este Widget:
@@ -1022,28 +1152,30 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
               <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
                 {perfiles.map(p => {
                   const seleccionado = nuevoWidgetPerfiles.includes(p.clave);
+                  const t = TEMAS_PERFIL[p.clave] || TEMA_POR_DEFECTO;
+
                   return (
                     <label
                       key={p.clave}
                       style={{
                         fontSize: "0.78rem",
                         fontWeight: 700,
-                        background: seleccionado ? "var(--panel-linea-suave, #FAFAF9)" : "#ffffff",
+                        background: seleccionado ? t.colorFondoSuave : "#ffffff",
                         padding: "6px 10px",
                         borderRadius: "6px",
-                        border: seleccionado ? "1.5px solid var(--violeta, #5000BA)" : "1px solid var(--panel-linea, #E4E4E4)",
+                        border: seleccionado ? `1.5px solid ${t.colorBorde}` : "1px solid var(--panel-linea, #E4E4E4)",
                         display: "flex",
                         alignItems: "center",
                         gap: "6px",
                         cursor: "pointer",
-                        color: seleccionado ? "var(--violeta, #5000BA)" : "#111"
+                        color: seleccionado ? t.colorTexto : "#111"
                       }}
                     >
                       <input
                         type="checkbox"
                         checked={seleccionado}
                         onChange={() => togglePerfilNuevoWidget(p.clave)}
-                        style={{ accentColor: "var(--violeta, #5000BA)" }}
+                        style={{ accentColor: t.colorPrimario }}
                       />
                       {p.nombre}
                     </label>
