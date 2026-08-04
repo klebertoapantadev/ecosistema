@@ -75,9 +75,9 @@ export function SelectorRolActivo({ modoInicial = "cliente", ocultarEtiqueta = f
   };
 
   return (
-    <div className="selector-rol-activo" style={{ width: "100%" }}>
+    <div className="selector-rol-activo">
       {!ocultarEtiqueta && <span className="selector-rol-etiqueta">Ver como:</span>}
-      <div className="selector-rol-botones" style={{ flexWrap: "wrap", gap: "8px", justifyContent: "center" }}>
+      <div className="selector-rol-botones">
         {listaRoles.map((rol) => {
           const claveUpper = rol.clave.toUpperCase();
           const modoSlug = rol.clave.toLowerCase();
@@ -91,19 +91,8 @@ export function SelectorRolActivo({ modoInicial = "cliente", ocultarEtiqueta = f
               className={`btn-rol ${esActivo ? "activo" : ""}`}
               onClick={() => cambiarModo(rol.clave)}
               title={`Vista del perfil ${rol.nombre} ${rol.nivel ? `(Nivel ${rol.nivel})` : ""}`}
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "6px",
-                padding: "8px 14px",
-                borderRadius: "8px",
-                fontSize: "0.82rem",
-                fontWeight: 700,
-                cursor: "pointer",
-                transition: "all 0.15s ease"
-              }}
             >
-              <IconoRol className="icono-btn-rol" strokeWidth={2} style={{ width: 16, height: 16 }} />
+              <IconoRol className="icono-btn-rol" strokeWidth={2} />
               <span>{rol.nombre}</span>
             </button>
           );
