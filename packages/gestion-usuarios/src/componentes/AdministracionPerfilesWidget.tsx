@@ -5,7 +5,7 @@ import {
   ShieldCheck, Users,
   CheckCircle2, ChevronDown, ChevronUp, Search, Sliders,
   Plus, Check, LayoutGrid, Layers, ExternalLink, PanelLeft, Eye, ArrowRight,
-  Palette, UserCheck
+  Palette, UserCheck, X
 } from "lucide-react";
 import { guardarPerfil, guardarWidget, guardarAsignacionWidget } from "../acciones";
 
@@ -339,6 +339,9 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
 
   // Perfil seleccionado en pestaña 2 (Widgets por Panel & Perfil)
   const [perfilSeleccionado, setPerfilSeleccionado] = useState<string>("ABOGADO");
+
+  // Widget para previsualizar en Modal Flotante En Vivo
+  const [widgetPrevisualizar, setWidgetPrevisualizar] = useState<WidgetInventarioDef | null>(null);
 
   // Tema del perfil activo seleccionado
   const temaPerfilActivo = TEMAS_PERFIL[perfilSeleccionado] || TEMA_POR_DEFECTO;
@@ -843,14 +846,14 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
         </div>
       )}
 
-      {/* TAB 3: INVENTARIO COMPLETO DE WIDGETS CON PREVISUALIZACIÓN */}
+      {/* TAB 3: INVENTARIO COMPLETO DE WIDGETS CON PREVISUALIZACIÓN EN VIVO (MODAL FLOTANTE) */}
       {tabActiva === "inventario_widgets" && (
         <div>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", flexWrap: "wrap", gap: "12px" }}>
             <div>
               <h4 style={{ fontSize: "0.95rem", fontWeight: 800, margin: "0 0 4px 0" }}>Inventario Completo de Widgets ({inventarioWidgets.length})</h4>
               <p style={{ fontSize: "0.82rem", color: "var(--panel-gris, #737373)", margin: 0 }}>
-                Todos los widgets desarrollados en la plataforma con enlace directo de previsualización.
+                Componentes independientes y desacoplados reutilizables libremente en cualquier panel.
               </p>
             </div>
             <button
@@ -891,10 +894,10 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                   {w.descripcion}
                 </p>
 
-                <a
-                  href={w.ruta}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                {/* BOTÓN PREVISUALIZAR EN VIVO (MODAL FLOTANTE) */}
+                <button
+                  type="button"
+                  onClick={() => setWidgetPrevisualizar(w)}
                   style={{
                     display: "flex",
                     alignItems: "center",
@@ -904,14 +907,16 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                     padding: "9px 12px",
                     background: "var(--violeta, #5000BA)",
                     color: "#ffffff",
+                    border: "none",
                     borderRadius: "8px",
                     fontSize: "0.82rem",
                     fontWeight: 700,
-                    textDecoration: "none"
+                    cursor: "pointer",
+                    transition: "all 0.15s ease"
                   }}
                 >
-                  <Eye size={16} /> Pre-visualizar Widget / Abrir Panel <ExternalLink size={14} />
-                </a>
+                  <Eye size={16} /> Pre-visualizar Widget (Vista Previa Flotante)
+                </button>
               </div>
             ))}
           </div>
@@ -1041,6 +1046,89 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                 </div>
               );
             })}
+          </div>
+        </div>
+      )}
+
+      {/* MODAL DE PREVISUALIZACIÓN FLOTANTE EN VIVO DE WIDGET */}
+      {widgetPrevisualizar && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1100, padding: "20px" }}>
+          <div style={{ background: "#ffffff", borderRadius: "16px", padding: "24px", maxWidth: "700px", width: "100%", maxHeight: "85vh", overflowY: "auto", boxShadow: "0 20px 50px rgba(0,0,0,0.3)" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", borderBottom: "1px solid var(--panel-linea, #E4E4E4)", paddingBottom: "12px" }}>
+              <div>
+                <h3 style={{ fontSize: "1.1rem", fontWeight: 800, margin: 0, color: "var(--violeta, #5000BA)", display: "flex", alignItems: "center", gap: "8px" }}>
+                  <Eye size={20} /> Vista Previa En Vivo: {widgetPrevisualizar.nombre}
+                </h3>
+                <span style={{ fontSize: "0.78rem", color: "var(--panel-gris, #737373)", marginTop: "2px", display: "block" }}>
+                  Clave: <code>{widgetPrevisualizar.clave}</code> | Categoría: {widgetPrevisualizar.categoria}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setWidgetPrevisualizar(null)}
+                style={{ background: "#ffffff", border: "1px solid var(--panel-linea, #E4E4E4)", borderRadius: "50%", width: "32px", height: "32px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <p style={{ fontSize: "0.85rem", color: "var(--panel-gris, #737373)", marginBottom: "16px", lineHeight: 1.5 }}>
+              {widgetPrevisualizar.descripcion}
+            </p>
+
+            {/* CONTENEDOR DE DEMOSTRACIÓN DE RENDIMIENTO INDEPENDIENTE DEL WIDGET */}
+            <div style={{ border: "1px solid var(--panel-linea, #E4E4E4)", borderRadius: "12px", padding: "20px", background: "var(--panel-papel, #F7F6FA)", marginBottom: "20px" }}>
+              <div style={{ fontSize: "0.8rem", fontWeight: 800, color: "var(--violeta, #5000BA)", marginBottom: "10px", textTransform: "uppercase", letterSpacing: "0.04em" }}>
+                🧩 Componente Autolimpiante & Desacoplado
+              </div>
+              <div style={{ background: "#ffffff", padding: "16px", borderRadius: "10px", border: "1px solid var(--panel-linea, #E4E4E4)" }}>
+                <strong style={{ display: "block", fontSize: "0.92rem", marginBottom: "6px" }}>{widgetPrevisualizar.nombre}</strong>
+                <p style={{ fontSize: "0.82rem", color: "var(--panel-gris, #737373)", margin: "0 0 12px 0" }}>
+                  Este widget existe de forma independiente. Puedes incluirlo libremente en cualquier panel configurado (ej: <code>{widgetPrevisualizar.ruta}</code>).
+                </p>
+                <div style={{ fontSize: "0.75rem", background: "#ECFDF5", color: "#065F46", padding: "6px 10px", borderRadius: "6px", border: "1px solid #A7F3D0", display: "inline-block", fontWeight: 700 }}>
+                  ✓ Estado: Widget Listo para Inclusión Libre en Múltiples Paneles
+                </div>
+              </div>
+            </div>
+
+            <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end", flexWrap: "wrap" }}>
+              <a
+                href={widgetPrevisualizar.ruta}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  padding: "9px 16px",
+                  borderRadius: "8px",
+                  border: "1.5px solid var(--violeta, #5000BA)",
+                  color: "var(--violeta, #5000BA)",
+                  fontWeight: 700,
+                  textDecoration: "none",
+                  fontSize: "0.82rem"
+                }}
+              >
+                Abrir Panel Contenedor ({widgetPrevisualizar.ruta}) <ExternalLink size={14} />
+              </a>
+              <button
+                type="button"
+                onClick={() => setWidgetPrevisualizar(null)}
+                style={{
+                  padding: "9px 16px",
+                  borderRadius: "8px",
+                  border: "none",
+                  background: "var(--violeta, #5000BA)",
+                  color: "#ffffff",
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  fontSize: "0.82rem"
+                }}
+              >
+                Cerrar Vista Previa
+              </button>
+            </div>
           </div>
         </div>
       )}
