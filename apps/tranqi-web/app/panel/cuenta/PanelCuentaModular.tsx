@@ -6,7 +6,7 @@ import { FormularioPerfil } from "@eco/identidad/componentes/FormularioPerfil";
 import { HistorialAccesos } from "@eco/identidad/componentes/HistorialAccesos";
 import { EliminarCuenta } from "@eco/identidad/componentes/EliminarCuenta";
 import { cerrarSesionYRedirigir } from "../acciones";
-import { SelectorRolActivo } from "../SelectorRolActivo";
+import { SelectorRolActivo, type RolOpcionDef } from "../SelectorRolActivo";
 
 export interface PerfilUsuario {
   usu_id?: string;
