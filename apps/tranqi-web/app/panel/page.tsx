@@ -43,13 +43,16 @@ interface Props {
 const MODOS: readonly ModoRol[] = ["cliente", "abogado", "admin"];
 
 function modoValido(valor: string | undefined): ModoRol | null {
-  return MODOS.includes(valor as ModoRol) ? (valor as ModoRol) : null;
+  if (!valor || !valor.trim()) return null;
+  return valor.toLowerCase().trim() as ModoRol;
 }
 
 function modoDePerfiles(perfiles: string[]): ModoRol {
+  if (perfiles.includes("SUPERADMIN")) return "superadmin";
   if (perfiles.includes("ADMINISTRADOR")) return "admin";
   if (perfiles.includes("ABOGADO")) return "abogado";
-  return "cliente";
+  if (perfiles.includes("OPERADOR")) return "operador";
+  return (perfiles[0]?.toLowerCase() ?? "cliente") as ModoRol;
 }
 
 function iniciales(nombres?: string | null, apellidos?: string | null, correo?: string | null): string {
@@ -106,15 +109,19 @@ export default async function PagePanel({ searchParams }: Props) {
           <div className="usuario-barra-txt">
             <b>{nombreCompleto}</b>
             <span>
-              {modo === "abogado" ? "Socio Abogado" : modo === "admin" ? "Administrador" : "Cliente"}
+              {modo === "abogado" ? "Socio Abogado" : modo === "admin" ? "Administrador" : modo === "superadmin" ? "SuperAdmin Plataforma" : modo === "operador" ? "Operador / Auxiliar" : modo.charAt(0).toUpperCase() + modo.slice(1)}
             </span>
           </div>
         </div>
       </div>
 
-      {modo === "cliente" && <PanelCliente saludo={saludo} nombre={nombre} />}
-      {modo === "abogado" && <PanelAbogado nombreCompleto={nombreCompleto} />}
-      {modo === "admin" && <PanelAdministrador esSuperadmin={puedeConmutar} esAdminGlobal={esAdminGlobal} />}
+      {modo === "abogado" ? (
+        <PanelAbogado nombreCompleto={nombreCompleto} />
+      ) : (modo === "admin" || modo === "superadmin") ? (
+        <PanelAdministrador esSuperadmin={puedeConmutar} esAdminGlobal={esAdminGlobal} />
+      ) : (
+        <PanelCliente saludo={saludo} nombre={nombre} />
+      )}
 
       <footer className="pie-panel">
         <span>© tranqi® 2026</span>

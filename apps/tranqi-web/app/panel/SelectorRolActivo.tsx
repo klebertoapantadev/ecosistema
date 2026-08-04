@@ -2,79 +2,112 @@
 
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { User, Shield, ShieldCheck } from "lucide-react";
+import { User, Shield, ShieldCheck, UserCheck, ShieldAlert, Sparkles, type LucideIcon } from "lucide-react";
 
-export type ModoRol = "cliente" | "abogado" | "admin";
+export interface RolOpcionDef {
+  clave: string;
+  nombre: string;
+  nivel?: number;
+}
+
+export type ModoRol = string;
+
+// Mapeo predeterminado de iconos e identificadores según la clave del perfil
+const MAPA_ICONOS_ROL: Record<string, LucideIcon> = {
+  CLIENTE: User,
+  OPERADOR: UserCheck,
+  ABOGADO: Shield,
+  SOCIO: Shield,
+  TECNICO: Shield,
+  FLORISTA: Sparkles,
+  ADMINISTRADOR: ShieldCheck,
+  SUPERADMIN: ShieldAlert
+};
+
+// Roles predeterminados del sistema en caso de no especificarse
+export const ROLES_DEFAULT: RolOpcionDef[] = [
+  { clave: "CLIENTE", nombre: "Cliente", nivel: 1 },
+  { clave: "OPERADOR", nombre: "Operador / Auxiliar", nivel: 30 },
+  { clave: "ABOGADO", nombre: "Socio Abogado", nivel: 50 },
+  { clave: "ADMINISTRADOR", nombre: "Administrador del Negocio", nivel: 80 },
+  { clave: "SUPERADMIN", nombre: "SuperAdmin de Plataforma", nivel: 100 }
+];
 
 interface Props {
   modoInicial?: ModoRol;
   ocultarEtiqueta?: boolean;
+  roles?: RolOpcionDef[];
 }
 
-export function SelectorRolActivo({ modoInicial = "cliente", ocultarEtiqueta = false }: Props) {
+export function SelectorRolActivo({ modoInicial = "cliente", ocultarEtiqueta = false, roles = ROLES_DEFAULT }: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [modoActual, setModoActual] = useState<ModoRol>(modoInicial);
+  const [modoActual, setModoActual] = useState<ModoRol>(modoInicial.toLowerCase());
+
+  // Asegurar que la lista de roles tenga al menos los configurados
+  const listaRoles = roles && roles.length > 0 ? roles : ROLES_DEFAULT;
 
   useEffect(() => {
     // 1. Parámetro en URL tiene prioridad
-    const paramModo = searchParams.get("modo") as ModoRol | null;
-    if (paramModo && ["cliente", "abogado", "admin"].includes(paramModo)) {
+    const paramModo = searchParams.get("modo")?.toLowerCase();
+    if (paramModo) {
       setModoActual(paramModo);
       return;
     }
     // 2. Cookie de sesión persistente
     const match = document.cookie.match(/(?:^|; )tranqi_modo_rol=([^;]*)/);
-    if (match && match[1] && ["cliente", "abogado", "admin"].includes(match[1])) {
-      setModoActual(match[1] as ModoRol);
+    if (match && match[1]) {
+      setModoActual(match[1].toLowerCase());
     }
   }, [searchParams, modoInicial]);
 
-  const cambiarModo = (nuevoModo: ModoRol) => {
+  const cambiarModo = (nuevoModoClave: string) => {
+    const modoSlug = nuevoModoClave.toLowerCase();
     // Guardar cookie persistente en todo el dominio por 1 año
-    document.cookie = `tranqi_modo_rol=${nuevoModo}; path=/; max-age=31536000; SameSite=Lax`;
-    setModoActual(nuevoModo);
+    document.cookie = `tranqi_modo_rol=${modoSlug}; path=/; max-age=31536000; SameSite=Lax`;
+    setModoActual(modoSlug);
 
     // Actualizar la URL de la vista actual y refrescar componentes del servidor
     const params = new URLSearchParams(searchParams.toString());
-    params.set("modo", nuevoModo);
+    params.set("modo", modoSlug);
     router.push(`${window.location.pathname}?${params.toString()}`);
     router.refresh();
   };
 
   return (
-    <div className="selector-rol-activo">
+    <div className="selector-rol-activo" style={{ width: "100%" }}>
       {!ocultarEtiqueta && <span className="selector-rol-etiqueta">Ver como:</span>}
-      <div className="selector-rol-botones">
-        <button
-          type="button"
-          className={`btn-rol ${modoActual === "cliente" ? "activo" : ""}`}
-          onClick={() => cambiarModo("cliente")}
-          title="Vista del rol Cliente"
-        >
-          <User className="icono-btn-rol" strokeWidth={2} />
-          <span>Cliente</span>
-        </button>
+      <div className="selector-rol-botones" style={{ flexWrap: "wrap", gap: "8px", justifyContent: "center" }}>
+        {listaRoles.map((rol) => {
+          const claveUpper = rol.clave.toUpperCase();
+          const modoSlug = rol.clave.toLowerCase();
+          const esActivo = modoActual === modoSlug || modoActual === claveUpper.toLowerCase();
+          const IconoRol = MAPA_ICONOS_ROL[claveUpper] || Shield;
 
-        <button
-          type="button"
-          className={`btn-rol ${modoActual === "abogado" ? "activo" : ""}`}
-          onClick={() => cambiarModo("abogado")}
-          title="Vista del rol Socio Abogado"
-        >
-          <Shield className="icono-btn-rol" strokeWidth={2} />
-          <span>Socio Abogado</span>
-        </button>
-
-        <button
-          type="button"
-          className={`btn-rol ${modoActual === "admin" ? "activo" : ""}`}
-          onClick={() => cambiarModo("admin")}
-          title="Vista del rol Administrador / SuperAdmin"
-        >
-          <ShieldCheck className="icono-btn-rol" strokeWidth={2} />
-          <span>Administrador</span>
-        </button>
+          return (
+            <button
+              key={rol.clave}
+              type="button"
+              className={`btn-rol ${esActivo ? "activo" : ""}`}
+              onClick={() => cambiarModo(rol.clave)}
+              title={`Vista del perfil ${rol.nombre} ${rol.nivel ? `(Nivel ${rol.nivel})` : ""}`}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+                padding: "8px 14px",
+                borderRadius: "8px",
+                fontSize: "0.82rem",
+                fontWeight: 700,
+                cursor: "pointer",
+                transition: "all 0.15s ease"
+              }}
+            >
+              <IconoRol className="icono-btn-rol" strokeWidth={2} style={{ width: 16, height: 16 }} />
+              <span>{rol.nombre}</span>
+            </button>
+          );
+        })}
       </div>
     </div>
   );

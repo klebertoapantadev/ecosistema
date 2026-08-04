@@ -31,6 +31,7 @@ interface Props {
   perfil: PerfilUsuario | null;
   historial: FilaAcceso[];
   puedeConmutar?: boolean;
+  rolesDisponibles?: RolOpcionDef[];
 }
 
 export interface WidgetDef {
@@ -87,7 +88,7 @@ const WIDGETS_BASE: WidgetDef[] = [
   }
 ];
 
-export function PanelCuentaModular({ perfil, historial, puedeConmutar = true }: Props) {
+export function PanelCuentaModular({ perfil, historial, puedeConmutar = true, rolesDisponibles }: Props) {
   const [favoritos, setFavoritos] = useState<string[]>([]);
   const [widgetActivo, setWidgetActivo] = useState<string | null>(null); // null = ver galería de accesos del panel Mi cuenta
 
@@ -306,7 +307,7 @@ export function PanelCuentaModular({ perfil, historial, puedeConmutar = true }: 
                 </div>
 
                 <div style={{ display: "flex", justifyContent: "center", width: "100%" }}>
-                  <SelectorRolActivo ocultarEtiqueta />
+                  <SelectorRolActivo ocultarEtiqueta roles={rolesDisponibles} />
                 </div>
               </div>
             )}
