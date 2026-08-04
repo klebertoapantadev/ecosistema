@@ -6,7 +6,7 @@ import {
   CheckCircle2, ChevronDown, ChevronUp, Search, Sliders,
   Plus, Check, LayoutGrid, Layers, ExternalLink, PanelLeft, Eye, ArrowRight
 } from "lucide-react";
-import { guardarPerfil, guardarWidget } from "../acciones";
+import { guardarPerfil, guardarWidget, guardarAsignacionWidget } from "../acciones";
 
 export interface PerfilDef {
   clave: string;
@@ -14,7 +14,8 @@ export interface PerfilDef {
   nivel: number;
   ambito: string;
   descripcion: string;
-  panelesAsignados: string[]; // IDs de Paneles del Sidebar asignados a este perfil
+  panelesAsignados: string[];
+  widgetsAsignados: string[]; // Claves de widgets autorizados para este perfil
   activo: boolean;
   esSuperAdmin?: boolean;
 }
@@ -24,7 +25,7 @@ export interface PanelSidebarDef {
   nombre: string;
   ruta: string;
   descripcion: string;
-  widgetsDisponibles: string[]; // Claves de widgets que pueden asignarse a este panel
+  widgetsDisponibles: string[];
 }
 
 export interface WidgetInventarioDef {
@@ -43,7 +44,7 @@ const PANELES_SIDEBAR_INICIALES: PanelSidebarDef[] = [
     nombre: "Inicio (Tablero Principal)",
     ruta: "/panel",
     descripcion: "Pantalla principal que agrupa accesos rápidos y widgets según el rol del usuario.",
-    widgetsDisponibles: ["favoritos", "ver_como", "notificaciones", "tramites_cliente", "citas_abogado", "telemetria_admin"]
+    widgetsDisponibles: ["favoritos", "ver_como", "notificaciones"]
   },
   {
     id: "panel_cuenta",
@@ -95,8 +96,9 @@ const PERFILES_INICIALES: PerfilDef[] = [
     nombre: "Cliente (Jerarquía Base)",
     nivel: 1,
     ambito: "Empresa",
-    descripcion: "Perfil base de usuario. Acceso a paneles de Inicio y Mi Cuenta.",
+    descripcion: "Perfil base de usuario. Acceso a paneles de Inicio, Mi Cuenta y Preferencias de Notificaciones.",
     panelesAsignados: ["panel_inicio", "panel_cuenta", "panel_configuracion"],
+    widgetsAsignados: ["favoritos", "mi_cuenta", "ver_como", "notificaciones"],
     activo: true
   },
   {
@@ -106,6 +108,7 @@ const PERFILES_INICIALES: PerfilDef[] = [
     ambito: "Empresa",
     descripcion: "Perfil operativo para atención al cliente y seguimiento de solicitudes.",
     panelesAsignados: ["panel_inicio", "panel_cuenta", "panel_configuracion"],
+    widgetsAsignados: ["favoritos", "mi_cuenta", "ver_como", "notificaciones"],
     activo: true
   },
   {
@@ -115,6 +118,7 @@ const PERFILES_INICIALES: PerfilDef[] = [
     ambito: "Empresa",
     descripcion: "Perfil profesional para atención legal de causas y expedientes.",
     panelesAsignados: ["panel_inicio", "panel_cuenta", "panel_configuracion"],
+    widgetsAsignados: ["favoritos", "mi_cuenta", "ver_como", "notificaciones"],
     activo: true
   },
   {
@@ -122,8 +126,9 @@ const PERFILES_INICIALES: PerfilDef[] = [
     nombre: "Administrador del Negocio",
     nivel: 80,
     ambito: "Empresa",
-    descripcion: "Gestión del negocio: usuarios, parámetros de marca, SMTP y auditoría.",
+    descripcion: "Gestión del negocio: usuarios, parámetros de marca, SMTP, perfiles y auditoría.",
     panelesAsignados: ["panel_inicio", "panel_cuenta", "panel_configuracion", "panel_usuarios", "panel_socios", "panel_auditoria"],
+    widgetsAsignados: ["favoritos", "configuracion_negocio", "configuracion_correo", "perfiles", "gestion_usuarios", "socios", "auditoria", "notificaciones", "mi_cuenta", "ver_como"],
     activo: true
   },
   {
@@ -133,6 +138,7 @@ const PERFILES_INICIALES: PerfilDef[] = [
     ambito: "Plataforma",
     descripcion: "Gobernanza exclusiva de la plataforma y matriz global de perfiles.",
     panelesAsignados: ["panel_inicio", "panel_cuenta", "panel_configuracion", "panel_usuarios", "panel_socios", "panel_auditoria", "panel_emision"],
+    widgetsAsignados: ["favoritos", "configuracion_negocio", "configuracion_correo", "perfiles", "gestion_usuarios", "socios", "auditoria", "emision_notificaciones", "mi_cuenta", "ver_como", "historial_accesos"],
     activo: true,
     esSuperAdmin: true
   }
@@ -231,7 +237,7 @@ const WIDGETS_INVENTARIO_INICIALES: WidgetInventarioDef[] = [
   },
   {
     clave: "notificaciones",
-    nombre: "Preferencias de Alertas",
+    nombre: "Preferencias de Alertas & Notificaciones",
     descripcion: "Canales de recepción de correo saliente, WhatsApp y Push.",
     categoria: "Comunicación",
     ruta: "/panel/configuracion",
@@ -255,14 +261,14 @@ interface Props {
 }
 
 export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
-  const [tabActiva, setTabActiva] = useState<"matriz_paneles" | "matriz_widgets" | "inventario_widgets" | "perfiles">("matriz_paneles");
+  const [tabActiva, setTabActiva] = useState<"matriz_paneles" | "matriz_widgets" | "inventario_widgets" | "perfiles">("matriz_widgets");
   
   // Estado local
   const [perfiles, setPerfiles] = useState<PerfilDef[]>(PERFILES_INICIALES);
   const [panelesSidebar] = useState<PanelSidebarDef[]>(PANELES_SIDEBAR_INICIALES);
   const [inventarioWidgets, setInventarioWidgets] = useState<WidgetInventarioDef[]>(WIDGETS_INVENTARIO_INICIALES);
 
-  // Perfil / Panel seleccionado en asignación de widgets
+  // Perfil seleccionado en pestaña 2 (Widgets por Panel & Perfil)
   const [perfilSeleccionado, setPerfilSeleccionado] = useState<string>("ADMINISTRADOR");
 
   // Filtros
@@ -293,6 +299,8 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
     panelId: "panel_configuracion"
   });
 
+  const [nuevoWidgetPerfiles, setNuevoWidgetPerfiles] = useState<string[]>(["ADMINISTRADOR", "SUPERADMIN"]);
+
   // Alternar asignación de Panel al Sidebar de un Perfil
   const togglePanelPerfil = (perfilClave: string, panelId: string) => {
     const perfil = perfiles.find(p => p.clave === perfilClave);
@@ -305,6 +313,26 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
 
     setPerfiles(perfiles.map(p => p.clave === perfilClave ? { ...p, panelesAsignados: nuevosPaneles } : p));
     setMensajeExito(`Panel '${panelId}' ${asignado ? "retirado de" : "asignado a"} la navegación del perfil '${perfilClave}'.`);
+    setTimeout(() => setMensajeExito(null), 3000);
+  };
+
+  // Alternar asignación de Widget a un Perfil dinámicamente
+  const toggleWidgetPerfil = async (perfilClave: string, widgetClave: string) => {
+    const perfil = perfiles.find(p => p.clave === perfilClave);
+    if (!perfil) return;
+
+    const asignado = perfil.widgetsAsignados.includes(widgetClave);
+    const nuevosWidgets = asignado
+      ? perfil.widgetsAsignados.filter(w => w !== widgetClave)
+      : [...perfil.widgetsAsignados, widgetClave];
+
+    // Actualizar estado local
+    setPerfiles(perfiles.map(p => p.clave === perfilClave ? { ...p, widgetsAsignados: nuevosWidgets } : p));
+
+    // Persistir en servidor vía Server Action
+    await guardarAsignacionWidget(perfilClave, widgetClave, negocio, !asignado);
+
+    setMensajeExito(`Widget '${widgetClave}' ${asignado ? "desmarcado para" : "asignado a"} perfil '${perfilClave}'.`);
     setTimeout(() => setMensajeExito(null), 3000);
   };
 
@@ -321,6 +349,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
       ambito: nuevoPerfil.ambito,
       descripcion: nuevoPerfil.descripcion.trim(),
       panelesAsignados: ["panel_inicio", "panel_cuenta", "panel_configuracion"],
+      widgetsAsignados: ["favoritos", "mi_cuenta", "notificaciones"],
       activo: true
     };
 
@@ -357,7 +386,17 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
       activo: true
     };
 
+    // Actualizar inventario local
     setInventarioWidgets([...inventarioWidgets, widgetNuevoDef]);
+
+    // Asignar el nuevo widget a los perfiles seleccionados
+    setPerfiles(perfiles.map(p => {
+      if (nuevoWidgetPerfiles.includes(p.clave)) {
+        return { ...p, widgetsAsignados: [...p.widgetsAsignados, claveLower] };
+      }
+      return p;
+    }));
+
     setMostrarModalWidget(false);
     setNuevoWidget({ clave: "", nombre: "", descripcion: "", categoria: "General", ruta: "/panel/", panelId: "panel_configuracion" });
 
@@ -370,9 +409,24 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
       negocio
     });
 
-    setMensajeExito(`Widget '${claveLower}' registrado en el inventario.`);
+    // Guardar asignación en servidor para cada perfil autorizado
+    for (const perfClave of nuevoWidgetPerfiles) {
+      await guardarAsignacionWidget(perfClave, claveLower, negocio, true);
+    }
+
+    setMensajeExito(`Widget '${claveLower}' registrado y asignado a [${nuevoWidgetPerfiles.join(", ")}].`);
     setTimeout(() => setMensajeExito(null), 4000);
   };
+
+  const togglePerfilNuevoWidget = (clave: string) => {
+    if (nuevoWidgetPerfiles.includes(clave)) {
+      setNuevoWidgetPerfiles(nuevoWidgetPerfiles.filter(c => c !== clave));
+    } else {
+      setNuevoWidgetPerfiles([...nuevoWidgetPerfiles, clave]);
+    }
+  };
+
+  const perfilActualObj = perfiles.find(p => p.clave === perfilSeleccionado);
 
   const perfilesFiltrados = perfiles.filter(p => {
     return p.nombre.toLowerCase().includes(filtroTexto.toLowerCase()) ||
@@ -446,26 +500,6 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
       >
         <button
           type="button"
-          onClick={() => setTabActiva("matriz_paneles")}
-          style={{
-            padding: "10px 16px",
-            border: "none",
-            borderBottom: tabActiva === "matriz_paneles" ? "3px solid var(--violeta, #5000BA)" : "3px solid transparent",
-            background: "transparent",
-            color: tabActiva === "matriz_paneles" ? "var(--violeta, #5000BA)" : "var(--panel-gris, #737373)",
-            fontWeight: tabActiva === "matriz_paneles" ? 800 : 600,
-            fontSize: "0.88rem",
-            cursor: "pointer",
-            display: "flex",
-            alignItems: "center",
-            gap: "8px"
-          }}
-        >
-          <PanelLeft size={18} /> 1. Matriz Perfil ➔ Paneles (Sidebar)
-        </button>
-
-        <button
-          type="button"
           onClick={() => setTabActiva("matriz_widgets")}
           style={{
             padding: "10px 16px",
@@ -482,6 +516,26 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
           }}
         >
           <Layers size={18} /> 2. Widgets por Panel & Perfil
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setTabActiva("matriz_paneles")}
+          style={{
+            padding: "10px 16px",
+            border: "none",
+            borderBottom: tabActiva === "matriz_paneles" ? "3px solid var(--violeta, #5000BA)" : "3px solid transparent",
+            background: "transparent",
+            color: tabActiva === "matriz_paneles" ? "var(--violeta, #5000BA)" : "var(--panel-gris, #737373)",
+            fontWeight: tabActiva === "matriz_paneles" ? 800 : 600,
+            fontSize: "0.88rem",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            gap: "8px"
+          }}
+        >
+          <PanelLeft size={18} /> 1. Matriz Perfil ➔ Paneles (Sidebar)
         </button>
 
         <button
@@ -524,6 +578,90 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
           <Users size={18} /> Catálogo de Perfiles ({perfiles.length})
         </button>
       </div>
+
+      {/* TAB 2: ASIGNACIÓN DE WIDGETS POR PANEL & PERFIL (INTERACTIVA 100%) */}
+      {tabActiva === "matriz_widgets" && (
+        <div>
+          <div style={{ display: "flex", gap: "16px", alignItems: "center", marginBottom: "20px", flexWrap: "wrap", background: "var(--panel-papel, #F7F6FA)", padding: "14px 18px", borderRadius: "12px", border: "1px solid var(--panel-linea, #E4E4E4)" }}>
+            <div style={{ minWidth: "280px" }}>
+              <label style={{ fontSize: "0.82rem", fontWeight: 800, display: "block", marginBottom: "4px", color: "var(--violeta, #5000BA)" }}>
+                👤 Selecciona Perfil / Rol Activo a Configurar:
+              </label>
+              <select
+                value={perfilSeleccionado}
+                onChange={e => setPerfilSeleccionado(e.target.value)}
+                style={{ width: "100%", padding: "10px 14px", borderRadius: "8px", border: "1.5px solid var(--violeta, #5000BA)", fontWeight: 800, fontSize: "0.9rem", background: "#ffffff", cursor: "pointer" }}
+              >
+                {perfiles.map(p => (
+                  <option key={p.clave} value={p.clave}>{p.nombre} (Nivel {p.nivel})</option>
+                ))}
+              </select>
+            </div>
+            <div style={{ fontSize: "0.8rem", color: "var(--panel-gris, #737373)", flex: 1 }}>
+              Mostrando widgets asignados para: <strong style={{ color: "#111" }}>{perfilActualObj?.nombre}</strong>.
+              Las casillas marcadas <strong>[x]</strong> indican qué widgets están activos en los Paneles para este perfil.
+            </div>
+          </div>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+            {panelesSidebar.map(panel => {
+              const widgetsDelPanel = inventarioWidgets.filter(w => w.panelId === panel.id);
+
+              return (
+                <div key={panel.id} style={{ border: "1px solid var(--panel-linea, #E4E4E4)", borderRadius: "12px", padding: "16px", background: "#ffffff" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                      <PanelLeft size={18} color="var(--violeta, #5000BA)" />
+                      <strong style={{ fontSize: "0.95rem" }}>{panel.nombre}</strong>
+                      <code style={{ fontSize: "0.72rem", color: "var(--panel-gris, #737373)" }}>{panel.ruta}</code>
+                    </div>
+                    <a href={panel.ruta} target="_blank" rel="noopener noreferrer" style={{ fontSize: "0.75rem", color: "var(--violeta, #5000BA)", fontWeight: 700, textDecoration: "none" }}>
+                      Previsualizar Panel ↗
+                    </a>
+                  </div>
+
+                  <p style={{ fontSize: "0.78rem", color: "var(--panel-gris, #737373)", margin: "0 0 12px 0" }}>{panel.descripcion}</p>
+
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "10px" }}>
+                    {widgetsDelPanel.map(w => {
+                      const estaAsignado = perfilActualObj?.widgetsAsignados.includes(w.clave) ?? false;
+
+                      return (
+                        <div
+                          key={w.clave}
+                          onClick={() => toggleWidgetPerfil(perfilSeleccionado, w.clave)}
+                          style={{
+                            background: estaAsignado ? "var(--panel-linea-suave, #FAFAF9)" : "#ffffff",
+                            padding: "12px 14px",
+                            borderRadius: "10px",
+                            border: estaAsignado ? "1.5px solid var(--violeta, #5000BA)" : "1px solid var(--panel-linea, #E4E4E4)",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            cursor: "pointer",
+                            transition: "all 0.15s ease"
+                          }}
+                        >
+                          <div>
+                            <div style={{ fontWeight: 800, fontSize: "0.85rem", color: estaAsignado ? "var(--violeta, #5000BA)" : "#111" }}>{w.nombre}</div>
+                            <div style={{ fontSize: "0.68rem", color: "var(--panel-gris, #737373)" }}>{w.clave}</div>
+                          </div>
+                          <input
+                            type="checkbox"
+                            checked={estaAsignado}
+                            onChange={() => {}} // Manejado por onClick contenedor
+                            style={{ width: "18px", height: "18px", cursor: "pointer", accentColor: "var(--violeta, #5000BA)" }}
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* TAB 1: PASO 1 - MATRIZ PERFIL -> PANELES DEL SIDEBAR */}
       {tabActiva === "matriz_paneles" && (
@@ -573,65 +711,6 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                 ))}
               </tbody>
             </table>
-          </div>
-        </div>
-      )}
-
-      {/* TAB 2: PASO 2 - ASIGNACIÓN DE WIDGETS POR PANEL & PERFIL */}
-      {tabActiva === "matriz_widgets" && (
-        <div>
-          <div style={{ display: "flex", gap: "16px", alignItems: "center", marginBottom: "20px", flexWrap: "wrap" }}>
-            <div style={{ minWidth: "240px" }}>
-              <label style={{ fontSize: "0.8rem", fontWeight: 800, display: "block", marginBottom: "4px" }}>Selecciona Perfil / Rol:</label>
-              <select
-                value={perfilSeleccionado}
-                onChange={e => setPerfilSeleccionado(e.target.value)}
-                style={{ width: "100%", padding: "9px 12px", borderRadius: "8px", border: "1px solid var(--panel-linea, #E4E4E4)", fontWeight: 700 }}
-              >
-                {perfiles.map(p => (
-                  <option key={p.clave} value={p.clave}>{p.nombre} (Nivel {p.nivel})</option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-            {panelesSidebar.map(panel => {
-              const widgetsDelPanel = inventarioWidgets.filter(w => w.panelId === panel.id);
-
-              return (
-                <div key={panel.id} style={{ border: "1px solid var(--panel-linea, #E4E4E4)", borderRadius: "12px", padding: "16px", background: "#ffffff" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                      <PanelLeft size={18} color="var(--violeta, #5000BA)" />
-                      <strong style={{ fontSize: "0.95rem" }}>{panel.nombre}</strong>
-                      <code style={{ fontSize: "0.72rem", color: "var(--panel-gris, #737373)" }}>{panel.ruta}</code>
-                    </div>
-                    <a href={panel.ruta} target="_blank" rel="noopener noreferrer" style={{ fontSize: "0.75rem", color: "var(--violeta, #5000BA)", fontWeight: 700, textDecoration: "none" }}>
-                      Previsualizar Panel ↗
-                    </a>
-                  </div>
-
-                  <p style={{ fontSize: "0.78rem", color: "var(--panel-gris, #737373)", margin: "0 0 12px 0" }}>{panel.descripcion}</p>
-
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: "10px" }}>
-                    {widgetsDelPanel.map(w => (
-                      <div key={w.clave} style={{ background: "var(--panel-papel, #F7F6FA)", padding: "10px 12px", borderRadius: "8px", border: "1px solid var(--panel-linea, #E4E4E4)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                        <div>
-                          <div style={{ fontWeight: 700, fontSize: "0.82rem" }}>{w.nombre}</div>
-                          <div style={{ fontSize: "0.68rem", color: "var(--panel-gris, #737373)" }}>{w.clave}</div>
-                        </div>
-                        <input
-                          type="checkbox"
-                          defaultChecked={true}
-                          style={{ width: "16px", height: "16px", cursor: "pointer", accentColor: "var(--violeta, #5000BA)" }}
-                        />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              );
-            })}
           </div>
         </div>
       )}
@@ -818,12 +897,12 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                   {desplegado && (
                     <div style={{ padding: "16px 20px", borderTop: "1px solid var(--panel-linea, #E4E4E4)", background: "#ffffff" }}>
                       <div style={{ fontSize: "0.8rem", fontWeight: 800, color: "var(--panel-gris, #737373)", textTransform: "uppercase", marginBottom: "8px" }}>
-                        Paneles del Sidebar Asignados:
+                        Widgets Autorizados ({p.widgetsAsignados.length}):
                       </div>
                       <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginBottom: "14px" }}>
-                        {p.panelesAsignados.map(panelId => (
-                          <span key={panelId} style={{ fontSize: "0.75rem", fontWeight: 700, background: "var(--panel-linea-suave, #FAFAF9)", border: "1px solid var(--panel-linea, #E4E4E4)", padding: "4px 10px", borderRadius: "6px" }}>
-                            <Check size={12} style={{ marginRight: 4, color: "green" }} /> {panelId}
+                        {p.widgetsAsignados.map(w => (
+                          <span key={w} style={{ fontSize: "0.75rem", fontWeight: 700, background: "var(--panel-linea-suave, #FAFAF9)", border: "1px solid var(--panel-linea, #E4E4E4)", padding: "4px 10px", borderRadius: "6px" }}>
+                            <Check size={12} style={{ marginRight: 4, color: "green" }} /> {w}
                           </span>
                         ))}
                       </div>
@@ -894,10 +973,10 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
         </div>
       )}
 
-      {/* MODAL CREAR WIDGET */}
+      {/* MODAL CREAR WIDGET CON SELECCIÓN DE PERFILES AUTORIZADOS */}
       {mostrarModalWidget && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: "16px" }}>
-          <form onSubmit={handleGuardarWidget} style={{ background: "#ffffff", borderRadius: "16px", padding: "24px", maxWidth: "500px", width: "100%", boxShadow: "0 10px 30px rgba(0,0,0,0.2)" }}>
+          <form onSubmit={handleGuardarWidget} style={{ background: "#ffffff", borderRadius: "16px", padding: "24px", maxWidth: "520px", width: "100%", boxShadow: "0 10px 30px rgba(0,0,0,0.2)" }}>
             <h3 style={{ fontSize: "1.1rem", fontWeight: 800, marginBottom: "16px" }}>+ Registrar Nuevo Widget</h3>
 
             <div style={{ marginBottom: "12px" }}>
@@ -935,15 +1014,42 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
               </select>
             </div>
 
-            <div style={{ marginBottom: "12px" }}>
-              <label style={{ fontSize: "0.8rem", fontWeight: 700, display: "block", marginBottom: "4px" }}>Ruta de la URL (ej: /panel/reportes):</label>
-              <input
-                type="text"
-                required
-                value={nuevoWidget.ruta}
-                onChange={e => setNuevoWidget({ ...nuevoWidget, ruta: e.target.value })}
-                style={{ width: "100%", padding: "8px 12px", borderRadius: "6px", border: "1px solid var(--panel-linea, #E4E4E4)" }}
-              />
+            {/* SELECTOR DE PERFILES AUTORIZADOS */}
+            <div style={{ marginBottom: "16px" }}>
+              <label style={{ fontSize: "0.8rem", fontWeight: 700, display: "block", marginBottom: "6px", color: "var(--violeta, #5000BA)" }}>
+                Perfiles Autorizados para este Widget:
+              </label>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
+                {perfiles.map(p => {
+                  const seleccionado = nuevoWidgetPerfiles.includes(p.clave);
+                  return (
+                    <label
+                      key={p.clave}
+                      style={{
+                        fontSize: "0.78rem",
+                        fontWeight: 700,
+                        background: seleccionado ? "var(--panel-linea-suave, #FAFAF9)" : "#ffffff",
+                        padding: "6px 10px",
+                        borderRadius: "6px",
+                        border: seleccionado ? "1.5px solid var(--violeta, #5000BA)" : "1px solid var(--panel-linea, #E4E4E4)",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "6px",
+                        cursor: "pointer",
+                        color: seleccionado ? "var(--violeta, #5000BA)" : "#111"
+                      }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={seleccionado}
+                        onChange={() => togglePerfilNuevoWidget(p.clave)}
+                        style={{ accentColor: "var(--violeta, #5000BA)" }}
+                      />
+                      {p.nombre}
+                    </label>
+                  );
+                })}
+              </div>
             </div>
 
             <div style={{ marginBottom: "16px" }}>
@@ -951,13 +1057,13 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
               <textarea
                 value={nuevoWidget.descripcion}
                 onChange={e => setNuevoWidget({ ...nuevoWidget, descripcion: e.target.value })}
-                style={{ width: "100%", padding: "8px 12px", borderRadius: "6px", border: "1px solid var(--panel-linea, #E4E4E4)", minHeight: "60px" }}
+                style={{ width: "100%", padding: "8px 12px", borderRadius: "6px", border: "1px solid var(--panel-linea, #E4E4E4)", minHeight: "50px" }}
               />
             </div>
 
             <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
               <button type="button" onClick={() => setMostrarModalWidget(false)} style={{ padding: "8px 16px", borderRadius: "6px", border: "1px solid var(--panel-linea, #E4E4E4)", background: "#fff", cursor: "pointer" }}>Cancelar</button>
-              <button type="submit" style={{ padding: "8px 16px", borderRadius: "6px", border: "none", background: "var(--violeta, #5000BA)", color: "#fff", fontWeight: 700, cursor: "pointer" }}>Guardar Widget</button>
+              <button type="submit" style={{ padding: "8px 16px", borderRadius: "6px", border: "none", background: "var(--violeta, #5000BA)", color: "#fff", fontWeight: 700, cursor: "pointer" }}>Guardar Widget & Permisos</button>
             </div>
           </form>
         </div>
