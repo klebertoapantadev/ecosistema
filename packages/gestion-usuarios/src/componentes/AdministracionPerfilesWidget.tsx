@@ -84,7 +84,7 @@ export interface PerfilDef {
   ambito: string;
   descripcion: string;
   panelesAsignados: string[];
-  widgetsAsignados: string[];
+  widgetsAsignadosPorPanel: Record<string, string[]>;
   activo: boolean;
   esSuperAdmin?: boolean;
 }
@@ -159,7 +159,11 @@ const PERFILES_INICIALES: PerfilDef[] = [
     ambito: "Empresa",
     descripcion: "Perfil base de usuario. Acceso a paneles de Inicio, Mi Cuenta y Preferencias de Notificaciones.",
     panelesAsignados: ["panel_inicio", "panel_cuenta", "panel_configuracion"],
-    widgetsAsignados: ["favoritos", "mi_cuenta", "ver_como", "notificaciones"],
+    widgetsAsignadosPorPanel: {
+      panel_inicio: ["favoritos"],
+      panel_cuenta: ["ver_como", "mi_cuenta"],
+      panel_configuracion: ["notificaciones"]
+    },
     activo: true
   },
   {
@@ -169,7 +173,11 @@ const PERFILES_INICIALES: PerfilDef[] = [
     ambito: "Empresa",
     descripcion: "Perfil operativo para atención al cliente y seguimiento de solicitudes.",
     panelesAsignados: ["panel_inicio", "panel_cuenta", "panel_configuracion"],
-    widgetsAsignados: ["favoritos", "mi_cuenta", "ver_como", "notificaciones"],
+    widgetsAsignadosPorPanel: {
+      panel_inicio: ["favoritos"],
+      panel_cuenta: ["ver_como", "mi_cuenta"],
+      panel_configuracion: ["notificaciones"]
+    },
     activo: true
   },
   {
@@ -179,7 +187,11 @@ const PERFILES_INICIALES: PerfilDef[] = [
     ambito: "Empresa",
     descripcion: "Perfil profesional para atención legal de causas y expedientes.",
     panelesAsignados: ["panel_inicio", "panel_cuenta", "panel_configuracion"],
-    widgetsAsignados: ["favoritos", "mi_cuenta", "ver_como", "notificaciones"],
+    widgetsAsignadosPorPanel: {
+      panel_inicio: ["favoritos"],
+      panel_cuenta: ["ver_como", "mi_cuenta"],
+      panel_configuracion: ["notificaciones"]
+    },
     activo: true
   },
   {
@@ -189,7 +201,14 @@ const PERFILES_INICIALES: PerfilDef[] = [
     ambito: "Empresa",
     descripcion: "Gestión del negocio: usuarios, parámetros de marca, SMTP, perfiles y auditoría.",
     panelesAsignados: ["panel_inicio", "panel_cuenta", "panel_configuracion", "panel_usuarios", "panel_socios", "panel_auditoria"],
-    widgetsAsignados: ["favoritos", "configuracion_negocio", "configuracion_correo", "perfiles", "gestion_usuarios", "socios", "auditoria", "notificaciones", "mi_cuenta", "ver_como"],
+    widgetsAsignadosPorPanel: {
+      panel_inicio: ["favoritos"],
+      panel_cuenta: ["ver_como", "mi_cuenta"],
+      panel_configuracion: ["configuracion_negocio", "configuracion_correo", "perfiles", "notificaciones"],
+      panel_usuarios: ["gestion_usuarios"],
+      panel_socios: ["socios"],
+      panel_auditoria: ["auditoria"]
+    },
     activo: true
   },
   {
@@ -199,7 +218,15 @@ const PERFILES_INICIALES: PerfilDef[] = [
     ambito: "Plataforma",
     descripcion: "Gobernanza exclusiva de la plataforma y matriz global de perfiles.",
     panelesAsignados: ["panel_inicio", "panel_cuenta", "panel_configuracion", "panel_usuarios", "panel_socios", "panel_auditoria", "panel_emision"],
-    widgetsAsignados: ["favoritos", "configuracion_negocio", "configuracion_correo", "perfiles", "gestion_usuarios", "socios", "auditoria", "emision_notificaciones", "mi_cuenta", "ver_como", "historial_accesos"],
+    widgetsAsignadosPorPanel: {
+      panel_inicio: ["favoritos"],
+      panel_cuenta: ["ver_como", "mi_cuenta", "historial_accesos"],
+      panel_configuracion: ["configuracion_negocio", "configuracion_correo", "perfiles", "notificaciones"],
+      panel_usuarios: ["gestion_usuarios"],
+      panel_socios: ["socios"],
+      panel_auditoria: ["auditoria"],
+      panel_emision: ["emision_notificaciones"]
+    },
     activo: true,
     esSuperAdmin: true
   }
@@ -505,22 +532,48 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
     setTimeout(() => setMensajeExito(null), 3000);
   };
 
-  // Asignar o Retirar Widget de un Perfil dinámicamente
-  const toggleWidgetPerfil = async (perfilClave: string, widgetClave: string) => {
+  // AGREGAR WIDGET A UN PANEL ESPECÍFICO DE UN PERFIL
+  const agregarWidgetAPanel = async (perfilClave: string, widgetClave: string, panelId: string) => {
     const perfil = perfiles.find(p => p.clave === perfilClave);
     if (!perfil) return;
 
-    const asignado = perfil.widgetsAsignados.includes(widgetClave);
-    const nuevosWidgets = asignado
-      ? perfil.widgetsAsignados.filter(w => w !== widgetClave)
-      : [...perfil.widgetsAsignados, widgetClave];
+    const asignadosPanel = perfil.widgetsAsignadosPorPanel[panelId] || [];
+    if (asignadosPanel.includes(widgetClave)) return;
 
-    setPerfiles(perfiles.map(p => p.clave === perfilClave ? { ...p, widgetsAsignados: nuevosWidgets } : p));
+    const nuevosAsignados = [...asignadosPanel, widgetClave];
+    const mapaActualizado = {
+      ...perfil.widgetsAsignadosPorPanel,
+      [panelId]: nuevosAsignados
+    };
 
-    await guardarAsignacionWidget(perfilClave, widgetClave, negocio, !asignado);
+    setPerfiles(perfiles.map(p => p.clave === perfilClave ? { ...p, widgetsAsignadosPorPanel: mapaActualizado } : p));
 
-    setMensajeExito(`Widget '${widgetClave}' ${asignado ? "retirado de" : "asignado a"} perfil '${perfilClave}'.`);
-    setTimeout(() => setMensajeExito(null), 3000);
+    await guardarAsignacionWidget(perfilClave, widgetClave, negocio, true, panelId);
+
+    const nombrePanel = panelesSidebar.find(p => p.id === panelId)?.nombre || panelId;
+    setMensajeExito(`Widget '${widgetClave}' asignado exitosamente a '${nombrePanel}' para '${perfilClave}'.`);
+    setTimeout(() => setMensajeExito(null), 3500);
+  };
+
+  // RETIRAR WIDGET DE UN PANEL ESPECÍFICO DE UN PERFIL
+  const retirarWidgetDePanel = async (perfilClave: string, widgetClave: string, panelId: string) => {
+    const perfil = perfiles.find(p => p.clave === perfilClave);
+    if (!perfil) return;
+
+    const asignadosPanel = perfil.widgetsAsignadosPorPanel[panelId] || [];
+    const nuevosAsignados = asignadosPanel.filter(w => w !== widgetClave);
+    const mapaActualizado = {
+      ...perfil.widgetsAsignadosPorPanel,
+      [panelId]: nuevosAsignados
+    };
+
+    setPerfiles(perfiles.map(p => p.clave === perfilClave ? { ...p, widgetsAsignadosPorPanel: mapaActualizado } : p));
+
+    await guardarAsignacionWidget(perfilClave, widgetClave, negocio, false, panelId);
+
+    const nombrePanel = panelesSidebar.find(p => p.id === panelId)?.nombre || panelId;
+    setMensajeExito(`Widget '${widgetClave}' retirado de '${nombrePanel}' para '${perfilClave}'.`);
+    setTimeout(() => setMensajeExito(null), 3500);
   };
 
   // Guardar nuevo Perfil
@@ -536,7 +589,11 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
       ambito: nuevoPerfil.ambito,
       descripcion: nuevoPerfil.descripcion.trim(),
       panelesAsignados: ["panel_inicio", "panel_cuenta", "panel_configuracion"],
-      widgetsAsignados: ["favoritos", "mi_cuenta", "notificaciones"],
+      widgetsAsignadosPorPanel: {
+        panel_inicio: ["favoritos"],
+        panel_cuenta: ["ver_como", "mi_cuenta"],
+        panel_configuracion: ["notificaciones"]
+      },
       activo: true
     };
 
@@ -577,7 +634,14 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
 
     setPerfiles(perfiles.map(p => {
       if (nuevoWidgetPerfiles.includes(p.clave)) {
-        return { ...p, widgetsAsignados: [...p.widgetsAsignados, claveLower] };
+        const prevList = p.widgetsAsignadosPorPanel[nuevoWidget.panelId] || [];
+        return {
+          ...p,
+          widgetsAsignadosPorPanel: {
+            ...p.widgetsAsignadosPorPanel,
+            [nuevoWidget.panelId]: [...prevList, claveLower]
+          }
+        };
       }
       return p;
     }));
@@ -595,10 +659,10 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
     });
 
     for (const perfClave of nuevoWidgetPerfiles) {
-      await guardarAsignacionWidget(perfClave, claveLower, negocio, true);
+      await guardarAsignacionWidget(perfClave, claveLower, negocio, true, nuevoWidget.panelId);
     }
 
-    setMensajeExito(`Widget '${claveLower}' registrado y asignado a [${nuevoWidgetPerfiles.join(", ")}].`);
+    setMensajeExito(`Widget '${claveLower}' registrado en el inventario.`);
     setTimeout(() => setMensajeExito(null), 4000);
   };
 
@@ -763,7 +827,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
         </button>
       </div>
 
-      {/* TAB 2: ASIGNACIÓN DE WIDGETS POR PANEL & PERFIL (ORDENADOS Y VERIFICADOS POR PANEL ESPECÍFICO) */}
+      {/* TAB 2: ASIGNACIÓN DE WIDGETS POR PANEL & PERFIL (100% CORREGIDO POR PANEL ESPECÍFICO) */}
       {tabActiva === "matriz_widgets" && (
         <div>
           {/* BANNER DINÁMICO DE TEMATIZACIÓN SEGÚN EL PERFIL SELECCIONADO */}
@@ -827,15 +891,16 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
             </div>
           </div>
 
-          {/* LISTADO LIMPIO DE PANELES CON SUS WIDGETS AUTORIZADOS */}
+          {/* LISTADO LIMPIO DE PANELES CON SUS WIDGETS AUTORIZADOS POR PANEL */}
           <div style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
             {panelesSidebar.map(panel => {
-              // Filtrar únicamente los widgets asignados a este perfil para este panel contenedor específico
-              const widgetsAsignadosPanel = inventarioWidgets.filter(
-                w => (perfilActualObj?.widgetsAsignados.includes(w.clave) ?? false) && w.panelId === panel.id
-              );
+              // Obtener la lista de claves asignadas a este panel específico para este perfil
+              const clavesAsignadasPanel = perfilActualObj?.widgetsAsignadosPorPanel[panel.id] || [];
 
-              // Ordenamiento prioritario: "favoritos" siempre primero en la posición #1 para Inicio
+              // Obtener las definiciones completas de widgets asignados a este panel
+              const widgetsAsignadosPanel = inventarioWidgets.filter(w => clavesAsignadasPanel.includes(w.clave));
+
+              // Ordenamiento prioritario: "favoritos" siempre en Posición #1
               const widgetsOrdenados = [...widgetsAsignadosPanel].sort((a, b) => {
                 if (a.clave === "favoritos") return -1;
                 if (b.clave === "favoritos") return 1;
@@ -894,7 +959,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
 
                   <p style={{ fontSize: "0.78rem", color: "var(--panel-gris, #737373)", margin: "0 0 14px 0" }}>{panel.descripcion}</p>
 
-                  {/* REJILLA DE WIDGETS ASIGNADOS ACTUALMENTE CON ORDENAMIENTO REGLAMENTARIO */}
+                  {/* REJILLA DE WIDGETS ASIGNADOS CON POSICIONADO Y ORDENAMIENTO GARANTIZADO */}
                   {widgetsOrdenados.length > 0 ? (
                     <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(290px, 1fr))", gap: "12px" }}>
                       {widgetsOrdenados.map((w, idx) => {
@@ -926,8 +991,8 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
 
                             <button
                               type="button"
-                              title="Retirar widget de este perfil"
-                              onClick={() => toggleWidgetPerfil(perfilSeleccionado, w.clave)}
+                              title="Retirar widget de este panel"
+                              onClick={() => retirarWidgetDePanel(perfilSeleccionado, w.clave, panel.id)}
                               style={{
                                 background: "#ffffff",
                                 border: `1px solid ${temaPerfilActivo.colorBorde}66`,
@@ -970,7 +1035,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
         </div>
       )}
 
-      {/* MODAL DE SELECCIÓN CORREGIDO: VERIFICA ASIGNACIÓN ESPECÍFICA POR PANEL */}
+      {/* MODAL DE SELECCIÓN CORREGIDO 100%: EVALÚA ASIGNACIÓN ESPECÍFICA POR PANEL */}
       {panelAgregarWidget && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1100, padding: "20px" }}>
           <div style={{ background: "#ffffff", borderRadius: "18px", padding: "24px", maxWidth: "650px", width: "100%", maxHeight: "85vh", overflowY: "auto", boxShadow: "0 20px 50px rgba(0,0,0,0.3)" }}>
@@ -1010,13 +1075,14 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
               />
             </div>
 
-            {/* LISTA DE WIDGETS DISPONIBLES (CORREGIDO: VERIFICA ASIGNACIÓN AL PANEL ACTUAL) */}
+            {/* LISTA DE WIDGETS DISPONIBLES (EVALÚA ÚNICAMENTE ESTE PANEL ESPECÍFICO) */}
             <div style={{ display: "flex", flexDirection: "column", gap: "10px", maxHeight: "380px", overflowY: "auto" }}>
               {inventarioWidgets
                 .filter(w => w.nombre.toLowerCase().includes(busquedaWidgetAgregar.toLowerCase()) || w.categoria.toLowerCase().includes(busquedaWidgetAgregar.toLowerCase()))
                 .map(w => {
-                  // CORRECCIÓN CENTRAL: Un widget está asignado a ESTE panel si pertenece al perfil Y su panelId coincide
-                  const yaAsignadoEnEstePanel = (perfilActualObj?.widgetsAsignados.includes(w.clave) ?? false) && w.panelId === panelAgregarWidget.id;
+                  // CORRECCIÓN CENTRAL: Evalúa si el widget YA está en la lista de asignados DE ESTE PANEL ESPECÍFICO
+                  const asignadosPanelActual = perfilActualObj?.widgetsAsignadosPorPanel[panelAgregarWidget.id] || [];
+                  const yaAsignadoEnEstePanel = asignadosPanelActual.includes(w.clave);
 
                   return (
                     <div
@@ -1043,13 +1109,13 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
 
                       {yaAsignadoEnEstePanel ? (
                         <span style={{ fontSize: "0.75rem", fontWeight: 800, color: "#05876E", display: "flex", alignItems: "center", gap: "4px", background: "#ffffff", padding: "4px 10px", borderRadius: "6px", border: "1px solid #A7F3D0" }}>
-                          <Check size={14} /> Ya Asignado a {panelAgregarWidget.nombre.split(" ")[0]}
+                          <Check size={14} /> Ya Asignado
                         </span>
                       ) : (
                         <button
                           type="button"
                           onClick={() => {
-                            toggleWidgetPerfil(perfilSeleccionado, w.clave);
+                            agregarWidgetAPanel(perfilSeleccionado, w.clave, panelAgregarWidget.id);
                             setPanelAgregarWidget(null);
                           }}
                           style={{
@@ -1328,12 +1394,12 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                   {desplegado && (
                     <div style={{ padding: "16px 20px", borderTop: "1px solid var(--panel-linea, #E4E4E4)", background: "#ffffff" }}>
                       <div style={{ fontSize: "0.8rem", fontWeight: 800, color: "var(--panel-gris, #737373)", textTransform: "uppercase", marginBottom: "8px" }}>
-                        Widgets Autorizados ({p.widgetsAsignados.length}):
+                        Paneles y Widgets Configurados:
                       </div>
                       <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginBottom: "14px" }}>
-                        {p.widgetsAsignados.map(w => (
-                          <span key={w} style={{ fontSize: "0.75rem", fontWeight: 700, background: t.colorFondoSuave, color: t.colorTexto, border: `1px solid ${t.colorBorde}33`, padding: "4px 10px", borderRadius: "6px" }}>
-                            <Check size={12} style={{ marginRight: 4, color: t.colorPrimario }} /> {w}
+                        {Object.entries(p.widgetsAsignadosPorPanel).flatMap(([panId, list]) => list.map(w => `${panId}:${w}`)).map(wKey => (
+                          <span key={wKey} style={{ fontSize: "0.75rem", fontWeight: 700, background: t.colorFondoSuave, color: t.colorTexto, border: `1px solid ${t.colorBorde}33`, padding: "4px 10px", borderRadius: "6px" }}>
+                            <Check size={12} style={{ marginRight: 4, color: t.colorPrimario }} /> {wKey}
                           </span>
                         ))}
                       </div>

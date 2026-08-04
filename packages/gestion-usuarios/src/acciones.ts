@@ -3,32 +3,10 @@
 import { revalidatePath } from "next/cache";
 import { crearClienteServidor } from "@eco/supabase/servidor";
 
-type Resultado<T = undefined> = { ok: true; data: T } | { ok: false; error: string };
-
-export async function asignarPerfil(usuarioId: string, perfil: string, negocio: string): Promise<Resultado> {
-  if (!perfil.trim()) return { ok: false, error: "Selecciona un perfil" };
-
-  const supabase = await crearClienteServidor();
-  const { error } = await supabase
-    .schema("comun_seguridad")
-    .rpc("seg_fn_asignar_perfil", { p_usuario_id: usuarioId, p_negocio: negocio, p_perfil: perfil });
-
-  if (error) return { ok: false, error: error.message };
-
-  revalidatePath("/panel/usuarios");
-  return { ok: true, data: undefined };
-}
-
-export async function quitarPerfil(usuarioId: string, perfil: string, negocio: string): Promise<Resultado> {
-  const supabase = await crearClienteServidor();
-  const { error } = await supabase
-    .schema("comun_seguridad")
-    .rpc("seg_fn_quitar_perfil", { p_usuario_id: usuarioId, p_negocio: negocio, p_perfil: perfil });
-
-  if (error) return { ok: false, error: error.message };
-
-  revalidatePath("/panel/usuarios");
-  return { ok: true, data: undefined };
+export interface Resultado<T = void> {
+  ok: boolean;
+  data?: T;
+  error?: string;
 }
 
 export interface GuardarPerfilInput {
@@ -42,7 +20,7 @@ export interface GuardarPerfilInput {
 
 export async function guardarPerfil(input: GuardarPerfilInput): Promise<Resultado> {
   if (!input.clave.trim() || !input.nombre.trim()) {
-    return { ok: false, error: "La clave y nombre del perfil son obligatorios" };
+    return { ok: false, error: "La clave y el nombre del perfil son obligatorios" };
   }
 
   const supabase = await crearClienteServidor();
@@ -51,9 +29,9 @@ export async function guardarPerfil(input: GuardarPerfilInput): Promise<Resultad
     per_clave: input.clave.toUpperCase().trim(),
     per_nombre: input.nombre.trim(),
     per_nivel: input.nivel,
-    per_detalles: { descripcion: input.descripcion, ambito: input.ambito },
-    per_activo: input.activo,
-    per_asignable: true
+    per_ambito: input.ambito,
+    per_descripcion: input.descripcion.trim(),
+    per_activo: input.activo
   };
 
   const { error } = await supabase
@@ -109,7 +87,8 @@ export async function guardarAsignacionWidget(
   perfilClave: string,
   widgetClave: string,
   negocio: string,
-  asignar: boolean
+  asignar: boolean,
+  panelId?: string
 ): Promise<Resultado> {
   const supabase = await crearClienteServidor();
 
@@ -129,13 +108,20 @@ export async function guardarAsignacionWidget(
 
     if (error) return { ok: false, error: error.message };
   } else {
-    const { error } = await supabase
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let query: any = supabase
       .schema("comun_seguridad")
       .from("seg_rol_widget")
       .delete()
       .eq("rlw_rol", perfilClave)
       .eq("rlw_widget_id", widgetClave)
       .eq("rlw_negocio", negocio);
+
+    if (panelId) {
+      query = query.eq("rlw_panel_id", panelId);
+    }
+
+    const { error } = await query;
 
     if (error) return { ok: false, error: error.message };
   }
