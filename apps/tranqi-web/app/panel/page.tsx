@@ -40,8 +40,6 @@ interface Props {
   searchParams: Promise<{ modo?: string }>;
 }
 
-const MODOS: readonly ModoRol[] = ["cliente", "abogado", "admin"];
-
 function modoValido(valor: string | undefined): ModoRol | null {
   if (!valor || !valor.trim()) return null;
   return valor.toLowerCase().trim() as ModoRol;

@@ -32,16 +32,17 @@ const SECCIONES_CLIENTE: { icono: LucideIcon; et: string }[] = [
   { icono: CreditCard, et: "Pagos y plan" },
 ];
 
-const MODOS: readonly ModoRol[] = ["cliente", "abogado", "admin"];
-
 function modoValido(valor: string | undefined): ModoRol | null {
-  return MODOS.includes(valor as ModoRol) ? (valor as ModoRol) : null;
+  if (!valor || !valor.trim()) return null;
+  return valor.toLowerCase().trim() as ModoRol;
 }
 
 function modoDePerfiles(perfiles: string[]): ModoRol {
+  if (perfiles.includes("SUPERADMIN")) return "superadmin";
   if (perfiles.includes("ADMINISTRADOR")) return "admin";
   if (perfiles.includes("ABOGADO")) return "abogado";
-  return "cliente";
+  if (perfiles.includes("OPERADOR")) return "operador";
+  return (perfiles[0]?.toLowerCase() ?? "cliente") as ModoRol;
 }
 
 export default async function LayoutPanel({ children }: { children: React.ReactNode }) {
