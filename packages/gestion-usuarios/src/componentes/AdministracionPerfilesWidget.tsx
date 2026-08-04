@@ -5,7 +5,7 @@ import {
   ShieldCheck, Users,
   CheckCircle2, ChevronDown, ChevronUp, Search, Sliders,
   Plus, Check, LayoutGrid, Layers, ExternalLink, PanelLeft, Eye, ArrowRight,
-  Palette, UserCheck, X, Sparkles, Trash2
+  Palette, UserCheck, X, Sparkles, Trash2, Star
 } from "lucide-react";
 import { guardarPerfil, guardarWidget, guardarAsignacionWidget } from "../acciones";
 
@@ -448,7 +448,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
   const [inventarioWidgets, setInventarioWidgets] = useState<WidgetInventarioDef[]>(WIDGETS_INVENTARIO_INICIALES);
 
   // Perfil seleccionado en pestaña 2 (Widgets por Panel & Perfil)
-  const [perfilSeleccionado, setPerfilSeleccionado] = useState<string>("ABOGADO");
+  const [perfilSeleccionado, setPerfilSeleccionado] = useState<string>("CLIENTE");
 
   // Widget para previsualizar en Modal Flotante En Vivo
   const [widgetPrevisualizar, setWidgetPrevisualizar] = useState<WidgetInventarioDef | null>(null);
@@ -763,7 +763,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
         </button>
       </div>
 
-      {/* TAB 2: ASIGNACIÓN DE WIDGETS POR PANEL & PERFIL (UI LIMPIA: SOLO ASIGNADOS + BOTÓN AGREGAR) */}
+      {/* TAB 2: ASIGNACIÓN DE WIDGETS POR PANEL & PERFIL (ORDENADOS Y VERIFICADOS POR PANEL ESPECÍFICO) */}
       {tabActiva === "matriz_widgets" && (
         <div>
           {/* BANNER DINÁMICO DE TEMATIZACIÓN SEGÚN EL PERFIL SELECCIONADO */}
@@ -822,7 +822,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                 <UserCheck size={14} /> MODO CONFIGURACIÓN: {perfilActualObj?.nombre.toUpperCase()} (NIVEL {perfilActualObj?.nivel})
               </div>
               <p style={{ fontSize: "0.82rem", color: temaPerfilActivo.colorTexto, margin: 0, lineHeight: 1.4, opacity: 0.9 }}>
-                Mostrando únicamente los widgets asignados para <strong>{perfilActualObj?.nombre}</strong>. Haz clic en <strong>+ Agregar Widget</strong> en cualquier panel para vincular nuevas herramientas.
+                Mostrando únicamente los widgets asignados para <strong>{perfilActualObj?.nombre}</strong>. En el tablero principal, <strong>Favoritos</strong> se ubica siempre en <strong>Posición #1</strong>.
               </p>
             </div>
           </div>
@@ -830,10 +830,17 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
           {/* LISTADO LIMPIO DE PANELES CON SUS WIDGETS AUTORIZADOS */}
           <div style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
             {panelesSidebar.map(panel => {
-              // Filtrar únicamente los widgets asignados a este perfil para este panel contenedor
+              // Filtrar únicamente los widgets asignados a este perfil para este panel contenedor específico
               const widgetsAsignadosPanel = inventarioWidgets.filter(
-                w => (w.panelId === panel.id || true) && (perfilActualObj?.widgetsAsignados.includes(w.clave) ?? false) && w.panelId === panel.id
+                w => (perfilActualObj?.widgetsAsignados.includes(w.clave) ?? false) && w.panelId === panel.id
               );
+
+              // Ordenamiento prioritario: "favoritos" siempre primero en la posición #1 para Inicio
+              const widgetsOrdenados = [...widgetsAsignadosPanel].sort((a, b) => {
+                if (a.clave === "favoritos") return -1;
+                if (b.clave === "favoritos") return 1;
+                return 0;
+              });
 
               return (
                 <div
@@ -887,54 +894,59 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
 
                   <p style={{ fontSize: "0.78rem", color: "var(--panel-gris, #737373)", margin: "0 0 14px 0" }}>{panel.descripcion}</p>
 
-                  {/* REJILLA DE WIDGETS ASIGNADOS ACTUALMENTE (O ESTADO VACÍO ELEGANTE) */}
-                  {widgetsAsignadosPanel.length > 0 ? (
+                  {/* REJILLA DE WIDGETS ASIGNADOS ACTUALMENTE CON ORDENAMIENTO REGLAMENTARIO */}
+                  {widgetsOrdenados.length > 0 ? (
                     <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(290px, 1fr))", gap: "12px" }}>
-                      {widgetsAsignadosPanel.map(w => (
-                        <div
-                          key={w.clave}
-                          style={{
-                            background: temaPerfilActivo.colorFondoSuave,
-                            padding: "12px 14px",
-                            borderRadius: "10px",
-                            border: `1.5px solid ${temaPerfilActivo.colorBorde}`,
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "space-between",
-                            gap: "10px"
-                          }}
-                        >
-                          <div style={{ flex: 1 }}>
-                            <div style={{ fontWeight: 800, fontSize: "0.85rem", color: temaPerfilActivo.colorTexto }}>
-                              {w.nombre}
-                            </div>
-                            <div style={{ fontSize: "0.68rem", color: temaPerfilActivo.colorPrimario, fontWeight: 700, opacity: 0.85 }}>
-                              {w.clave} • {w.categoria}
-                            </div>
-                          </div>
+                      {widgetsOrdenados.map((w, idx) => {
+                        const esFavoritos = w.clave === "favoritos";
 
-                          <button
-                            type="button"
-                            title="Retirar widget de este perfil"
-                            onClick={() => toggleWidgetPerfil(perfilSeleccionado, w.clave)}
+                        return (
+                          <div
+                            key={w.clave}
                             style={{
-                              background: "#ffffff",
-                              border: `1px solid ${temaPerfilActivo.colorBorde}66`,
-                              color: "#DC2626",
-                              borderRadius: "6px",
-                              padding: "6px 8px",
-                              cursor: "pointer",
-                              fontSize: "0.7rem",
-                              fontWeight: 800,
+                              background: esFavoritos ? `${temaPerfilActivo.colorFondoSuave}` : "#ffffff",
+                              padding: "12px 14px",
+                              borderRadius: "10px",
+                              border: esFavoritos ? `2px solid ${temaPerfilActivo.colorBorde}` : "1.5px solid var(--panel-linea, #E4E4E4)",
                               display: "flex",
                               alignItems: "center",
-                              gap: "4px"
+                              justifyContent: "space-between",
+                              gap: "10px"
                             }}
                           >
-                            <Trash2 size={13} /> Retirar
-                          </button>
-                        </div>
-                      ))}
+                            <div style={{ flex: 1 }}>
+                              <div style={{ fontWeight: 800, fontSize: "0.85rem", color: temaPerfilActivo.colorTexto, display: "flex", alignItems: "center", gap: "6px" }}>
+                                {esFavoritos && <Star size={14} fill={temaPerfilActivo.colorPrimario} color={temaPerfilActivo.colorPrimario} />}
+                                {w.nombre}
+                              </div>
+                              <div style={{ fontSize: "0.68rem", color: temaPerfilActivo.colorPrimario, fontWeight: 700, opacity: 0.85, marginTop: "2px" }}>
+                                Posición #{idx + 1} • {w.clave}
+                              </div>
+                            </div>
+
+                            <button
+                              type="button"
+                              title="Retirar widget de este perfil"
+                              onClick={() => toggleWidgetPerfil(perfilSeleccionado, w.clave)}
+                              style={{
+                                background: "#ffffff",
+                                border: `1px solid ${temaPerfilActivo.colorBorde}66`,
+                                color: "#DC2626",
+                                borderRadius: "6px",
+                                padding: "6px 8px",
+                                cursor: "pointer",
+                                fontSize: "0.7rem",
+                                fontWeight: 800,
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "4px"
+                              }}
+                            >
+                              <Trash2 size={13} /> Retirar
+                            </button>
+                          </div>
+                        );
+                      })}
                     </div>
                   ) : (
                     <div
@@ -958,7 +970,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
         </div>
       )}
 
-      {/* MODAL DE SELECCIÓN LIMPIO: "+ AGREGAR WIDGET A ESTE PANEL" */}
+      {/* MODAL DE SELECCIÓN CORREGIDO: VERIFICA ASIGNACIÓN ESPECÍFICA POR PANEL */}
       {panelAgregarWidget && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1100, padding: "20px" }}>
           <div style={{ background: "#ffffff", borderRadius: "18px", padding: "24px", maxWidth: "650px", width: "100%", maxHeight: "85vh", overflowY: "auto", boxShadow: "0 20px 50px rgba(0,0,0,0.3)" }}>
@@ -998,12 +1010,13 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
               />
             </div>
 
-            {/* LISTA DE WIDGETS DISPONIBLES */}
+            {/* LISTA DE WIDGETS DISPONIBLES (CORREGIDO: VERIFICA ASIGNACIÓN AL PANEL ACTUAL) */}
             <div style={{ display: "flex", flexDirection: "column", gap: "10px", maxHeight: "380px", overflowY: "auto" }}>
               {inventarioWidgets
                 .filter(w => w.nombre.toLowerCase().includes(busquedaWidgetAgregar.toLowerCase()) || w.categoria.toLowerCase().includes(busquedaWidgetAgregar.toLowerCase()))
                 .map(w => {
-                  const yaAsignado = perfilActualObj?.widgetsAsignados.includes(w.clave) ?? false;
+                  // CORRECCIÓN CENTRAL: Un widget está asignado a ESTE panel si pertenece al perfil Y su panelId coincide
+                  const yaAsignadoEnEstePanel = (perfilActualObj?.widgetsAsignados.includes(w.clave) ?? false) && w.panelId === panelAgregarWidget.id;
 
                   return (
                     <div
@@ -1011,8 +1024,8 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                       style={{
                         padding: "12px 16px",
                         borderRadius: "10px",
-                        border: yaAsignado ? "1px solid #A7F3D0" : "1px solid var(--panel-linea, #E4E4E4)",
-                        background: yaAsignado ? "#ECFDF5" : "#ffffff",
+                        border: yaAsignadoEnEstePanel ? "1px solid #A7F3D0" : "1px solid var(--panel-linea, #E4E4E4)",
+                        background: yaAsignadoEnEstePanel ? "#ECFDF5" : "#ffffff",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "space-between",
@@ -1020,7 +1033,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                       }}
                     >
                       <div>
-                        <div style={{ fontWeight: 800, fontSize: "0.88rem", color: yaAsignado ? "#065F46" : "#111111" }}>
+                        <div style={{ fontWeight: 800, fontSize: "0.88rem", color: yaAsignadoEnEstePanel ? "#065F46" : "#111111" }}>
                           {w.nombre}
                         </div>
                         <div style={{ fontSize: "0.74rem", color: "var(--panel-gris, #737373)" }}>
@@ -1028,9 +1041,9 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                         </div>
                       </div>
 
-                      {yaAsignado ? (
+                      {yaAsignadoEnEstePanel ? (
                         <span style={{ fontSize: "0.75rem", fontWeight: 800, color: "#05876E", display: "flex", alignItems: "center", gap: "4px", background: "#ffffff", padding: "4px 10px", borderRadius: "6px", border: "1px solid #A7F3D0" }}>
-                          <Check size={14} /> Ya Asignado
+                          <Check size={14} /> Ya Asignado a {panelAgregarWidget.nombre.split(" ")[0]}
                         </span>
                       ) : (
                         <button
