@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { User, History, KeyRound, ShieldAlert, Settings, Mail, Bell, Star, ChevronRight, ShieldCheck, type LucideIcon } from "lucide-react";
+import { User, History, KeyRound, ShieldAlert, Settings, Mail, Bell, Star, ChevronRight, ShieldCheck, Sliders, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 
 interface WidgetFavInfo {
@@ -67,6 +67,15 @@ const CATALOGO_FAVORITOS: Record<string, WidgetFavInfo> = {
     titulo: "Configuración del Negocio",
     subtitulo: "Identidad legal, términos, locales, WhatsApp y redes",
     icono: Settings,
+    colorIcono: "var(--violeta, #5000BA)",
+    href: "/panel/configuracion",
+    origen: "Configurar"
+  },
+  perfiles: {
+    id: "perfiles",
+    titulo: "Administración de Perfiles & Permisos",
+    subtitulo: "Catálogo de perfiles, jerarquía de roles (1–100) y matriz de gobernanza",
+    icono: Sliders,
     colorIcono: "var(--violeta, #5000BA)",
     href: "/panel/configuracion",
     origen: "Configurar"

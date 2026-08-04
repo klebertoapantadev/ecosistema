@@ -1,10 +1,11 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Settings, Mail, Bell, Star, X, ChevronRight, ShieldCheck } from "lucide-react";
+import { Settings, Mail, Bell, Star, X, ChevronRight, ShieldCheck, Sliders } from "lucide-react";
 import { FormularioConfiguracionNegocio } from "@eco/configuracion-negocio/componentes/FormularioConfiguracionNegocio";
 import { FormularioSmtp } from "@eco/configuracion-negocio/componentes/FormularioSmtp";
 import { PreferenciasNotificacionWidget } from "@eco/notificaciones";
+import { AdministracionPerfilesWidget } from "@eco/gestion-usuarios";
 
 interface Props {
   esAdmin: boolean;
@@ -33,6 +34,15 @@ const TODOS_WIDGETS_CONFIG: WidgetConfigDef[] = [
     icono: Settings,
     colorIcono: "var(--violeta, #5000BA)",
     categoria: "Parámetros del Negocio",
+    soloAdmin: true
+  },
+  {
+    id: "perfiles",
+    titulo: "Administración de Perfiles & Permisos",
+    subtitulo: "Catálogo de perfiles, jerarquía de roles (1–100) y matriz de gobernanza",
+    icono: Sliders,
+    colorIcono: "var(--violeta, #5000BA)",
+    categoria: "Gobernanza & Seguridad",
     soloAdmin: true
   },
   {
@@ -180,7 +190,14 @@ export function PanelConfiguracionModular({ esAdmin, configuracion, smtp, negoci
               </div>
             )}
 
-            {/* WIDGET 2: SERVIDOR DE CORREO SMTP (PLT-008) */}
+            {/* WIDGET 2: ADMINISTRACIÓN DE PERFILES & PERMISOS */}
+            {widgetActivo === "perfiles" && (
+              <div style={{ width: "100%" }}>
+                <AdministracionPerfilesWidget esAdmin={esAdmin} negocio={negocio} />
+              </div>
+            )}
+
+            {/* WIDGET 3: SERVIDOR DE CORREO SMTP */}
             {widgetActivo === "correo" && (
               <div style={{ maxWidth: "640px", margin: "0 auto" }}>
                 <p className="texto-apoyo" style={{ marginBottom: "16px" }}>
@@ -191,7 +208,7 @@ export function PanelConfiguracionModular({ esAdmin, configuracion, smtp, negoci
               </div>
             )}
 
-            {/* WIDGET 3: PREFERENCIAS DE NOTIFICACIONES & ALERTAS (PLT-013) */}
+            {/* WIDGET 4: PREFERENCIAS DE NOTIFICACIONES & ALERTAS */}
             {widgetActivo === "notificaciones" && (
               <div style={{ maxWidth: "800px", margin: "0 auto" }}>
                 <PreferenciasNotificacionWidget negocio={negocio} />
@@ -216,7 +233,7 @@ export function PanelConfiguracionModular({ esAdmin, configuracion, smtp, negoci
             </div>
             <div className="tarjeta-proteccion-meta">
               {esAdmin
-                ? "Gestión centralizada de parámetros del negocio, servidores de correo saliente SMTP y alertas integradas."
+                ? "Gestión centralizada de parámetros del negocio, perfiles, servidores de correo saliente SMTP y alertas integradas."
                 : "Gestión de canales y preferencias para recibir notificaciones legales, avisos y alertas de la plataforma."}
             </div>
           </div>
