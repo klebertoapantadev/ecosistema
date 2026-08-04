@@ -5,7 +5,7 @@ import {
   ShieldCheck, Users,
   CheckCircle2, ChevronDown, ChevronUp, Search, Sliders,
   Plus, Check, LayoutGrid, Layers, ExternalLink, PanelLeft, Eye, ArrowRight,
-  Palette, UserCheck, X, Sparkles
+  Palette, UserCheck, X, Sparkles, Trash2
 } from "lucide-react";
 import { guardarPerfil, guardarWidget, guardarAsignacionWidget } from "../acciones";
 
@@ -453,6 +453,10 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
   // Widget para previsualizar en Modal Flotante En Vivo
   const [widgetPrevisualizar, setWidgetPrevisualizar] = useState<WidgetInventarioDef | null>(null);
 
+  // Panel seleccionado para abrir modal "+ Agregar Widget a este Panel"
+  const [panelAgregarWidget, setPanelAgregarWidget] = useState<PanelSidebarDef | null>(null);
+  const [busquedaWidgetAgregar, setBusquedaWidgetAgregar] = useState<string>("");
+
   // Tema del perfil activo seleccionado
   const temaPerfilActivo = TEMAS_PERFIL[perfilSeleccionado] || TEMA_POR_DEFECTO;
 
@@ -501,7 +505,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
     setTimeout(() => setMensajeExito(null), 3000);
   };
 
-  // Alternar asignación de Widget a un Perfil dinámicamente
+  // Asignar o Retirar Widget de un Perfil dinámicamente
   const toggleWidgetPerfil = async (perfilClave: string, widgetClave: string) => {
     const perfil = perfiles.find(p => p.clave === perfilClave);
     if (!perfil) return;
@@ -515,7 +519,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
 
     await guardarAsignacionWidget(perfilClave, widgetClave, negocio, !asignado);
 
-    setMensajeExito(`Widget '${widgetClave}' ${asignado ? "desmarcado para" : "asignado a"} perfil '${perfilClave}'.`);
+    setMensajeExito(`Widget '${widgetClave}' ${asignado ? "retirado de" : "asignado a"} perfil '${perfilClave}'.`);
     setTimeout(() => setMensajeExito(null), 3000);
   };
 
@@ -663,7 +667,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
           </span>
           <ArrowRight size={14} />
           <span style={{ padding: "3px 10px", borderRadius: "6px", background: "#ffffff", border: "1px solid var(--panel-linea, #E4E4E4)", fontWeight: 700, color: "#05876e" }}>
-            3. Widgets Contenidos por Panel (Inclusión Libre N a N)
+            3. Widgets Contenidos por Panel
           </span>
         </div>
       </div>
@@ -759,7 +763,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
         </button>
       </div>
 
-      {/* TAB 2: ASIGNACIÓN LIBRE DE WIDGETS POR PANEL & PERFIL */}
+      {/* TAB 2: ASIGNACIÓN DE WIDGETS POR PANEL & PERFIL (UI LIMPIA: SOLO ASIGNADOS + BOTÓN AGREGAR) */}
       {tabActiva === "matriz_widgets" && (
         <div>
           {/* BANNER DINÁMICO DE TEMATIZACIÓN SEGÚN EL PERFIL SELECCIONADO */}
@@ -818,84 +822,254 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                 <UserCheck size={14} /> MODO CONFIGURACIÓN: {perfilActualObj?.nombre.toUpperCase()} (NIVEL {perfilActualObj?.nivel})
               </div>
               <p style={{ fontSize: "0.82rem", color: temaPerfilActivo.colorTexto, margin: 0, lineHeight: 1.4, opacity: 0.9 }}>
-                Configuración libre N a N. Puedes habilitar un widget como <strong>'Ver Como'</strong> en <strong>Mi Cuenta</strong> y también en <strong>Configuración</strong> simultáneamente.
+                Mostrando únicamente los widgets asignados para <strong>{perfilActualObj?.nombre}</strong>. Haz clic en <strong>+ Agregar Widget</strong> en cualquier panel para vincular nuevas herramientas.
               </p>
             </div>
           </div>
 
-          <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+          {/* LISTADO LIMPIO DE PANELES CON SUS WIDGETS AUTORIZADOS */}
+          <div style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
             {panelesSidebar.map(panel => {
+              // Filtrar únicamente los widgets asignados a este perfil para este panel contenedor
+              const widgetsAsignadosPanel = inventarioWidgets.filter(
+                w => (w.panelId === panel.id || true) && (perfilActualObj?.widgetsAsignados.includes(w.clave) ?? false) && w.panelId === panel.id
+              );
+
               return (
                 <div
                   key={panel.id}
                   style={{
-                    border: `1px solid ${temaPerfilActivo.colorBorde}33`,
-                    borderRadius: "12px",
-                    padding: "16px",
+                    border: `1.5px solid ${temaPerfilActivo.colorBorde}44`,
+                    borderRadius: "14px",
+                    padding: "18px",
                     background: "#ffffff",
-                    boxShadow: "0 2px 6px rgba(0,0,0,0.03)"
+                    boxShadow: "0 2px 8px rgba(0,0,0,0.03)"
                   }}
                 >
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+                  {/* ENCABEZADO DEL PANEL CON BOTÓN PULCRO "+ AGREGAR WIDGET" */}
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px", flexWrap: "wrap", gap: "10px" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                       <PanelLeft size={18} color={temaPerfilActivo.colorPrimario} />
                       <strong style={{ fontSize: "0.95rem", color: "#111111" }}>{panel.nombre}</strong>
                       <code style={{ fontSize: "0.72rem", color: "var(--panel-gris, #737373)" }}>{panel.ruta}</code>
                     </div>
-                    <a href={panel.ruta} target="_blank" rel="noopener noreferrer" style={{ fontSize: "0.75rem", color: temaPerfilActivo.colorPrimario, fontWeight: 700, textDecoration: "none" }}>
-                      Previsualizar Panel ↗
-                    </a>
+
+                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                      <a href={panel.ruta} target="_blank" rel="noopener noreferrer" style={{ fontSize: "0.75rem", color: temaPerfilActivo.colorPrimario, fontWeight: 700, textDecoration: "none" }}>
+                        Previsualizar Panel ↗
+                      </a>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setPanelAgregarWidget(panel);
+                          setBusquedaWidgetAgregar("");
+                        }}
+                        style={{
+                          background: temaPerfilActivo.colorPrimario,
+                          color: "#ffffff",
+                          border: "none",
+                          borderRadius: "8px",
+                          padding: "6px 14px",
+                          fontSize: "0.78rem",
+                          fontWeight: 800,
+                          cursor: "pointer",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "6px",
+                          boxShadow: `0 2px 6px ${temaPerfilActivo.colorPrimario}33`
+                        }}
+                      >
+                        <Plus size={15} /> Agregar Widget
+                      </button>
+                    </div>
                   </div>
 
-                  <p style={{ fontSize: "0.78rem", color: "var(--panel-gris, #737373)", margin: "0 0 12px 0" }}>{panel.descripcion}</p>
+                  <p style={{ fontSize: "0.78rem", color: "var(--panel-gris, #737373)", margin: "0 0 14px 0" }}>{panel.descripcion}</p>
 
-                  {/* INVENTARIO COMPLETO DISPONIBLE PARA INCLUSIÓN LIBRE EN ESTE PANEL */}
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "10px" }}>
-                    {inventarioWidgets.map(w => {
-                      const estaAsignado = perfilActualObj?.widgetsAsignados.includes(w.clave) ?? false;
-
-                      return (
+                  {/* REJILLA DE WIDGETS ASIGNADOS ACTUALMENTE (O ESTADO VACÍO ELEGANTE) */}
+                  {widgetsAsignadosPanel.length > 0 ? (
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(290px, 1fr))", gap: "12px" }}>
+                      {widgetsAsignadosPanel.map(w => (
                         <div
                           key={w.clave}
-                          onClick={() => toggleWidgetPerfil(perfilSeleccionado, w.clave)}
                           style={{
-                            background: estaAsignado ? temaPerfilActivo.colorFondoSuave : "#ffffff",
+                            background: temaPerfilActivo.colorFondoSuave,
                             padding: "12px 14px",
                             borderRadius: "10px",
-                            border: estaAsignado ? `2px solid ${temaPerfilActivo.colorBorde}` : "1px solid var(--panel-linea, #E4E4E4)",
+                            border: `1.5px solid ${temaPerfilActivo.colorBorde}`,
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "space-between",
-                            cursor: "pointer",
-                            transition: "all 0.18s ease"
+                            gap: "10px"
                           }}
                         >
-                          <div>
-                            <div style={{ fontWeight: 800, fontSize: "0.85rem", color: estaAsignado ? temaPerfilActivo.colorTexto : "#111111" }}>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ fontWeight: 800, fontSize: "0.85rem", color: temaPerfilActivo.colorTexto }}>
                               {w.nombre}
                             </div>
-                            <div style={{ fontSize: "0.68rem", color: estaAsignado ? temaPerfilActivo.colorPrimario : "var(--panel-gris, #737373)", opacity: 0.8 }}>
+                            <div style={{ fontSize: "0.68rem", color: temaPerfilActivo.colorPrimario, fontWeight: 700, opacity: 0.85 }}>
                               {w.clave} • {w.categoria}
                             </div>
                           </div>
-                          <input
-                            type="checkbox"
-                            checked={estaAsignado}
-                            onChange={() => {}}
+
+                          <button
+                            type="button"
+                            title="Retirar widget de este perfil"
+                            onClick={() => toggleWidgetPerfil(perfilSeleccionado, w.clave)}
                             style={{
-                              width: "18px",
-                              height: "18px",
+                              background: "#ffffff",
+                              border: `1px solid ${temaPerfilActivo.colorBorde}66`,
+                              color: "#DC2626",
+                              borderRadius: "6px",
+                              padding: "6px 8px",
                               cursor: "pointer",
-                              accentColor: temaPerfilActivo.colorPrimario
+                              fontSize: "0.7rem",
+                              fontWeight: 800,
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "4px"
                             }}
-                          />
+                          >
+                            <Trash2 size={13} /> Retirar
+                          </button>
                         </div>
-                      );
-                    })}
-                  </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div
+                      style={{
+                        padding: "16px",
+                        borderRadius: "10px",
+                        background: "var(--panel-papel, #F7F6FA)",
+                        border: "1px dashed var(--panel-linea, #E4E4E4)",
+                        textAlign: "center",
+                        fontSize: "0.8rem",
+                        color: "var(--panel-gris, #737373)"
+                      }}
+                    >
+                      No hay widgets asignados a este panel para <strong>{perfilActualObj?.nombre}</strong>. Haz clic en el botón <strong>+ Agregar Widget</strong> para vincular uno.
+                    </div>
+                  )}
                 </div>
               );
             })}
+          </div>
+        </div>
+      )}
+
+      {/* MODAL DE SELECCIÓN LIMPIO: "+ AGREGAR WIDGET A ESTE PANEL" */}
+      {panelAgregarWidget && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1100, padding: "20px" }}>
+          <div style={{ background: "#ffffff", borderRadius: "18px", padding: "24px", maxWidth: "650px", width: "100%", maxHeight: "85vh", overflowY: "auto", boxShadow: "0 20px 50px rgba(0,0,0,0.3)" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px", borderBottom: "1px solid var(--panel-linea, #E4E4E4)", paddingBottom: "12px" }}>
+              <div>
+                <h3 style={{ fontSize: "1.08rem", fontWeight: 800, margin: 0, color: temaPerfilActivo.colorPrimario, display: "flex", alignItems: "center", gap: "8px" }}>
+                  <Plus size={20} /> Vincular Widget a: {panelAgregarWidget.nombre}
+                </h3>
+                <span style={{ fontSize: "0.78rem", color: "var(--panel-gris, #737373)" }}>
+                  Perfil Activo: <strong>{perfilActualObj?.nombre}</strong> (Nivel {perfilActualObj?.nivel})
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setPanelAgregarWidget(null)}
+                style={{ background: "#ffffff", border: "1px solid var(--panel-linea, #E4E4E4)", borderRadius: "50%", width: "32px", height: "32px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* BUSCADOR DENTRO DEL MODAL */}
+            <div style={{ position: "relative", marginBottom: "16px" }}>
+              <Search size={16} style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: "var(--panel-gris, #737373)" }} />
+              <input
+                type="text"
+                placeholder="Buscar widget disponible por nombre o categoría..."
+                value={busquedaWidgetAgregar}
+                onChange={e => setBusquedaWidgetAgregar(e.target.value)}
+                style={{
+                  width: "100%",
+                  padding: "9px 12px 9px 36px",
+                  borderRadius: "8px",
+                  border: "1px solid var(--panel-linea, #E4E4E4)",
+                  fontSize: "0.85rem"
+                }}
+              />
+            </div>
+
+            {/* LISTA DE WIDGETS DISPONIBLES */}
+            <div style={{ display: "flex", flexDirection: "column", gap: "10px", maxHeight: "380px", overflowY: "auto" }}>
+              {inventarioWidgets
+                .filter(w => w.nombre.toLowerCase().includes(busquedaWidgetAgregar.toLowerCase()) || w.categoria.toLowerCase().includes(busquedaWidgetAgregar.toLowerCase()))
+                .map(w => {
+                  const yaAsignado = perfilActualObj?.widgetsAsignados.includes(w.clave) ?? false;
+
+                  return (
+                    <div
+                      key={w.clave}
+                      style={{
+                        padding: "12px 16px",
+                        borderRadius: "10px",
+                        border: yaAsignado ? "1px solid #A7F3D0" : "1px solid var(--panel-linea, #E4E4E4)",
+                        background: yaAsignado ? "#ECFDF5" : "#ffffff",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        gap: "12px"
+                      }}
+                    >
+                      <div>
+                        <div style={{ fontWeight: 800, fontSize: "0.88rem", color: yaAsignado ? "#065F46" : "#111111" }}>
+                          {w.nombre}
+                        </div>
+                        <div style={{ fontSize: "0.74rem", color: "var(--panel-gris, #737373)" }}>
+                          <code>{w.clave}</code> • Categoría: <strong>{w.categoria}</strong>
+                        </div>
+                      </div>
+
+                      {yaAsignado ? (
+                        <span style={{ fontSize: "0.75rem", fontWeight: 800, color: "#05876E", display: "flex", alignItems: "center", gap: "4px", background: "#ffffff", padding: "4px 10px", borderRadius: "6px", border: "1px solid #A7F3D0" }}>
+                          <Check size={14} /> Ya Asignado
+                        </span>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            toggleWidgetPerfil(perfilSeleccionado, w.clave);
+                            setPanelAgregarWidget(null);
+                          }}
+                          style={{
+                            background: temaPerfilActivo.colorPrimario,
+                            color: "#ffffff",
+                            border: "none",
+                            borderRadius: "6px",
+                            padding: "6px 12px",
+                            fontSize: "0.78rem",
+                            fontWeight: 800,
+                            cursor: "pointer",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "4px"
+                          }}
+                        >
+                          <Plus size={14} /> Asignar a {panelAgregarWidget.nombre.split(" ")[0]}
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+            </div>
+
+            <div style={{ marginTop: "20px", display: "flex", justifyContent: "flex-end" }}>
+              <button
+                type="button"
+                onClick={() => setPanelAgregarWidget(null)}
+                style={{ padding: "8px 16px", borderRadius: "8px", border: "1px solid var(--panel-linea, #E4E4E4)", background: "#fff", fontWeight: 700, cursor: "pointer", fontSize: "0.82rem" }}
+              >
+                Cerrar
+              </button>
+            </div>
           </div>
         </div>
       )}
