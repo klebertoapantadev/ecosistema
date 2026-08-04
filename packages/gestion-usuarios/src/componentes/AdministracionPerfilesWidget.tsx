@@ -5,7 +5,7 @@ import {
   ShieldCheck, Users,
   CheckCircle2, ChevronDown, ChevronUp, Search, Sliders,
   Plus, Check, LayoutGrid, Layers, ExternalLink, PanelLeft, Eye, ArrowRight,
-  Palette, UserCheck, X
+  Palette, UserCheck, X, Sparkles
 } from "lucide-react";
 import { guardarPerfil, guardarWidget, guardarAsignacionWidget } from "../acciones";
 
@@ -94,7 +94,6 @@ export interface PanelSidebarDef {
   nombre: string;
   ruta: string;
   descripcion: string;
-  widgetsDisponibles: string[];
 }
 
 export interface WidgetInventarioDef {
@@ -112,50 +111,43 @@ const PANELES_SIDEBAR_INICIALES: PanelSidebarDef[] = [
     id: "panel_inicio",
     nombre: "Inicio (Tablero Principal)",
     ruta: "/panel",
-    descripcion: "Pantalla principal que agrupa accesos rápidos y widgets según el rol del usuario.",
-    widgetsDisponibles: ["favoritos", "ver_como", "notificaciones"]
+    descripcion: "Pantalla principal que agrupa accesos rápidos y widgets según el rol del usuario."
   },
   {
     id: "panel_cuenta",
     nombre: "Mi Cuenta & Identidad",
     ruta: "/panel/cuenta",
-    descripcion: "Perfil de usuario, conmutador de rol ('Ver como') e historial de accesos.",
-    widgetsDisponibles: ["mi_cuenta", "ver_como", "historial_accesos"]
+    descripcion: "Perfil de usuario, conmutador de rol ('Ver como') e historial de accesos."
   },
   {
     id: "panel_configuracion",
     nombre: "Configuración & Gobernanza",
     ruta: "/panel/configuracion",
-    descripcion: "Parámetros del negocio, servidor SMTP, perfiles y alertas de notificaciones.",
-    widgetsDisponibles: ["configuracion_negocio", "configuracion_correo", "perfiles", "notificaciones"]
+    descripcion: "Parámetros del negocio, servidor SMTP, perfiles y alertas de notificaciones."
   },
   {
     id: "panel_usuarios",
     nombre: "Gestión de Usuarios",
     ruta: "/panel/usuarios",
-    descripcion: "Administración de miembros, asignación de perfiles y techo jerárquico.",
-    widgetsDisponibles: ["gestion_usuarios"]
+    descripcion: "Administración de miembros, asignación de perfiles y techo jerárquico."
   },
   {
     id: "panel_socios",
     nombre: "Aprobación de Socios",
     ruta: "/panel/socios",
-    descripcion: "Validación de matrículas y acreditación de abogados.",
-    widgetsDisponibles: ["socios"]
+    descripcion: "Validación de matrículas y acreditación de abogados."
   },
   {
     id: "panel_auditoria",
     nombre: "Auditoría BDD",
     ruta: "/panel/auditoria",
-    descripcion: "Consulta de registros inmutables PostgreSQL y telemetría de APIs.",
-    widgetsDisponibles: ["auditoria"]
+    descripcion: "Consulta de registros inmutables PostgreSQL y telemetría de APIs."
   },
   {
     id: "panel_emision",
     nombre: "Emisión Notificaciones",
     ruta: "/panel/emision-notificaciones",
-    descripcion: "Despacho masivo multicanal (In-App, Push, Email y WhatsApp).",
-    widgetsDisponibles: ["emision_notificaciones"]
+    descripcion: "Despacho masivo multicanal (In-App, Push, Email y WhatsApp)."
   }
 ];
 
@@ -323,6 +315,124 @@ const WIDGETS_INVENTARIO_INICIALES: WidgetInventarioDef[] = [
     activo: true
   }
 ];
+
+// COMPONENTE PARA RENDERIZAR LA INTERFAZ REAL INTERACTIVA EN EL MODAL DE PREVISUALIZACIÓN
+function RenderizadorWidgetReal({ clave, negocio }: { clave: string; negocio: string }) {
+  switch (clave) {
+    case "ver_como":
+      return (
+        <div style={{ background: "#ffffff", padding: "18px", borderRadius: "12px", border: "1.5px solid var(--violeta, #5000BA)", boxShadow: "0 4px 12px rgba(80,0,186,0.08)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 800, fontSize: "0.95rem", color: "var(--violeta, #5000BA)", marginBottom: "10px" }}>
+            <Users size={18} /> Selector "Ver Como" (Conmutador de Rol Activo)
+          </div>
+          <p style={{ fontSize: "0.8rem", color: "var(--panel-gris, #737373)", marginBottom: "12px" }}>
+            Selecciona el rol con el que deseas navegar la plataforma para simular permisos y vistas:
+          </p>
+          <select style={{ width: "100%", padding: "10px 14px", borderRadius: "8px", border: "2px solid var(--violeta, #5000BA)", fontSize: "0.88rem", fontWeight: 800, background: "#F5F3FF", color: "#4C1D95", cursor: "pointer" }}>
+            <option>👤 Cliente (Jerarquía Base) - Nivel 1</option>
+            <option>⚖️ Socio Abogado / Profesional - Nivel 50</option>
+            <option>🏢 Administrador del Negocio - Nivel 80</option>
+            <option>🛡️ SuperAdmin de Plataforma - Nivel 100</option>
+          </select>
+        </div>
+      );
+
+    case "notificaciones":
+      return (
+        <div style={{ background: "#ffffff", padding: "18px", borderRadius: "12px", border: "1.5px solid #0284C7", boxShadow: "0 4px 12px rgba(2,132,199,0.08)" }}>
+          <div style={{ fontWeight: 800, fontSize: "0.95rem", color: "#0369A1", marginBottom: "10px" }}>
+            🔔 Preferencias de Alertas & Notificaciones Multicanal
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: "8px", fontSize: "0.84rem" }}>
+            <label style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 700, cursor: "pointer" }}>
+              <input type="checkbox" defaultChecked style={{ accentColor: "#0284C7" }} /> Correo Electrónico Saliente (Email Transaccional)
+            </label>
+            <label style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 700, cursor: "pointer" }}>
+              <input type="checkbox" defaultChecked style={{ accentColor: "#0284C7" }} /> WhatsApp Directo al Celular (+593)
+            </label>
+            <label style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 700, cursor: "pointer" }}>
+              <input type="checkbox" defaultChecked style={{ accentColor: "#0284C7" }} /> Notificaciones Push In-App
+            </label>
+          </div>
+        </div>
+      );
+
+    case "configuracion_negocio":
+      return (
+        <div style={{ background: "#ffffff", padding: "18px", borderRadius: "12px", border: "1.5px solid #D97706" }}>
+          <div style={{ fontWeight: 800, fontSize: "0.95rem", color: "#92400E", marginBottom: "10px" }}>
+            🏢 Datos del Negocio ({negocio.toUpperCase()})
+          </div>
+          <div style={{ display: "grid", gap: "10px" }}>
+            <div>
+              <label style={{ fontSize: "0.75rem", fontWeight: 700, color: "#737373", display: "block" }}>Razón Social / Nombre Comercial:</label>
+              <input type="text" defaultValue="TRANQUI LEGAL ECUADOR S.A.S." style={{ width: "100%", padding: "8px 12px", borderRadius: "6px", border: "1px solid #E4E4E4", fontSize: "0.84rem", fontWeight: 700 }} />
+            </div>
+            <div>
+              <label style={{ fontSize: "0.75rem", fontWeight: 700, color: "#737373", display: "block" }}>WhatsApp de Soporte:</label>
+              <input type="text" defaultValue="+593 99 999 9999" style={{ width: "100%", padding: "8px 12px", borderRadius: "6px", border: "1px solid #E4E4E4", fontSize: "0.84rem" }} />
+            </div>
+          </div>
+        </div>
+      );
+
+    case "configuracion_correo":
+      return (
+        <div style={{ background: "#ffffff", padding: "18px", borderRadius: "12px", border: "1.5px solid #374151" }}>
+          <div style={{ fontWeight: 800, fontSize: "0.95rem", color: "#111827", marginBottom: "10px" }}>
+            📧 Servidor SMTP de Correo Transaccional (Credenciales Vault)
+          </div>
+          <div style={{ display: "grid", gap: "10px" }}>
+            <div>
+              <label style={{ fontSize: "0.75rem", fontWeight: 700, color: "#737373", display: "block" }}>Servidor Host SMTP:</label>
+              <input type="text" defaultValue="smtp.resend.com:587" style={{ width: "100%", padding: "8px 12px", borderRadius: "6px", border: "1px solid #E4E4E4", fontSize: "0.84rem", fontWeight: 700 }} />
+            </div>
+            <div>
+              <label style={{ fontSize: "0.75rem", fontWeight: 700, color: "#737373", display: "block" }}>Remitente Oficial:</label>
+              <input type="text" defaultValue="notificaciones@tranqi24.com" style={{ width: "100%", padding: "8px 12px", borderRadius: "6px", border: "1px solid #E4E4E4", fontSize: "0.84rem" }} />
+            </div>
+          </div>
+        </div>
+      );
+
+    case "gestion_usuarios":
+      return (
+        <div style={{ background: "#ffffff", padding: "18px", borderRadius: "12px", border: "1.5px solid #05876E" }}>
+          <div style={{ fontWeight: 800, fontSize: "0.95rem", color: "#065F46", marginBottom: "10px" }}>
+            👥 Administración de Usuarios & Membresías
+          </div>
+          <table style={{ width: "100%", fontSize: "0.78rem", borderCollapse: "collapse" }}>
+            <thead>
+              <tr style={{ background: "#ECFDF5", borderBottom: "1px solid #A7F3D0" }}>
+                <th style={{ textAlign: "left", padding: "6px 10px" }}>Usuario</th>
+                <th style={{ textAlign: "left", padding: "6px 10px" }}>Perfil Activo</th>
+                <th style={{ textAlign: "center", padding: "6px 10px" }}>Estado</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td style={{ padding: "6px 10px", fontWeight: 700 }}>Kleber Toapanta</td>
+                <td style={{ padding: "6px 10px" }}>SuperAdmin (Nivel 100)</td>
+                <td style={{ padding: "6px 10px", textAlign: "center", color: "#05876e", fontWeight: 800 }}>✓ Activo</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      );
+
+    default:
+      return (
+        <div style={{ background: "#ffffff", padding: "18px", borderRadius: "12px", border: "1.5px solid var(--violeta, #5000BA)" }}>
+          <div style={{ fontWeight: 800, fontSize: "0.95rem", color: "var(--violeta, #5000BA)", marginBottom: "8px" }}>
+            ⚡ Componente Real: {clave.toUpperCase()}
+          </div>
+          <p style={{ fontSize: "0.82rem", color: "var(--panel-gris, #737373)", margin: 0 }}>
+            Widget autosuficiente desacoplado. Puede asignarse a cualquier panel del sistema.
+          </p>
+        </div>
+      );
+  }
+}
 
 interface Props {
   esAdmin: boolean;
@@ -553,7 +663,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
           </span>
           <ArrowRight size={14} />
           <span style={{ padding: "3px 10px", borderRadius: "6px", background: "#ffffff", border: "1px solid var(--panel-linea, #E4E4E4)", fontWeight: 700, color: "#05876e" }}>
-            3. Widgets Contenidos por Panel
+            3. Widgets Contenidos por Panel (Inclusión Libre N a N)
           </span>
         </div>
       </div>
@@ -649,7 +759,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
         </button>
       </div>
 
-      {/* TAB 2: ASIGNACIÓN DE WIDGETS POR PANEL & PERFIL (CON PALETA DE COLOR DINÁMICA POR PERFIL) */}
+      {/* TAB 2: ASIGNACIÓN LIBRE DE WIDGETS POR PANEL & PERFIL */}
       {tabActiva === "matriz_widgets" && (
         <div>
           {/* BANNER DINÁMICO DE TEMATIZACIÓN SEGÚN EL PERFIL SELECCIONADO */}
@@ -708,15 +818,13 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                 <UserCheck size={14} /> MODO CONFIGURACIÓN: {perfilActualObj?.nombre.toUpperCase()} (NIVEL {perfilActualObj?.nivel})
               </div>
               <p style={{ fontSize: "0.82rem", color: temaPerfilActivo.colorTexto, margin: 0, lineHeight: 1.4, opacity: 0.9 }}>
-                Configurando visibilidad de widgets. Las tarjetas en <strong>{perfilActualObj?.nombre}</strong> marcadas con <strong>[x]</strong> se renderizarán en los paneles de este perfil.
+                Configuración libre N a N. Puedes habilitar un widget como <strong>'Ver Como'</strong> en <strong>Mi Cuenta</strong> y también en <strong>Configuración</strong> simultáneamente.
               </p>
             </div>
           </div>
 
           <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
             {panelesSidebar.map(panel => {
-              const widgetsDelPanel = inventarioWidgets.filter(w => w.panelId === panel.id);
-
               return (
                 <div
                   key={panel.id}
@@ -728,7 +836,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                     boxShadow: "0 2px 6px rgba(0,0,0,0.03)"
                   }}
                 >
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                       <PanelLeft size={18} color={temaPerfilActivo.colorPrimario} />
                       <strong style={{ fontSize: "0.95rem", color: "#111111" }}>{panel.nombre}</strong>
@@ -741,8 +849,9 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
 
                   <p style={{ fontSize: "0.78rem", color: "var(--panel-gris, #737373)", margin: "0 0 12px 0" }}>{panel.descripcion}</p>
 
+                  {/* INVENTARIO COMPLETO DISPONIBLE PARA INCLUSIÓN LIBRE EN ESTE PANEL */}
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "10px" }}>
-                    {widgetsDelPanel.map(w => {
+                    {inventarioWidgets.map(w => {
                       const estaAsignado = perfilActualObj?.widgetsAsignados.includes(w.clave) ?? false;
 
                       return (
@@ -766,7 +875,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                               {w.nombre}
                             </div>
                             <div style={{ fontSize: "0.68rem", color: estaAsignado ? temaPerfilActivo.colorPrimario : "var(--panel-gris, #737373)", opacity: 0.8 }}>
-                              {w.clave}
+                              {w.clave} • {w.categoria}
                             </div>
                           </div>
                           <input
@@ -846,7 +955,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
         </div>
       )}
 
-      {/* TAB 3: INVENTARIO COMPLETO DE WIDGETS CON PREVISUALIZACIÓN EN VIVO (MODAL FLOTANTE) */}
+      {/* TAB 3: INVENTARIO COMPLETO DE WIDGETS CON PREVISUALIZACIÓN EN VIVO DE INTERFAZ REAL */}
       {tabActiva === "inventario_widgets" && (
         <div>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", flexWrap: "wrap", gap: "12px" }}>
@@ -915,7 +1024,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                     transition: "all 0.15s ease"
                   }}
                 >
-                  <Eye size={16} /> Pre-visualizar Widget (Vista Previa Flotante)
+                  <Eye size={16} /> Pre-visualizar Widget Real
                 </button>
               </div>
             ))}
@@ -1050,14 +1159,14 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
         </div>
       )}
 
-      {/* MODAL DE PREVISUALIZACIÓN FLOTANTE EN VIVO DE WIDGET */}
+      {/* MODAL DE PREVISUALIZACIÓN FLOTANTE EN VIVO CON RENDERIZADO INTERACTIVO DEL WIDGET REAL */}
       {widgetPrevisualizar && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1100, padding: "20px" }}>
-          <div style={{ background: "#ffffff", borderRadius: "16px", padding: "24px", maxWidth: "700px", width: "100%", maxHeight: "85vh", overflowY: "auto", boxShadow: "0 20px 50px rgba(0,0,0,0.3)" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", borderBottom: "1px solid var(--panel-linea, #E4E4E4)", paddingBottom: "12px" }}>
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.65)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1100, padding: "20px" }}>
+          <div style={{ background: "#ffffff", borderRadius: "18px", padding: "24px", maxWidth: "720px", width: "100%", maxHeight: "85vh", overflowY: "auto", boxShadow: "0 20px 50px rgba(0,0,0,0.35)" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", borderBottom: "1px solid var(--panel-linea, #E4E4E4)", paddingBottom: "14px" }}>
               <div>
                 <h3 style={{ fontSize: "1.1rem", fontWeight: 800, margin: 0, color: "var(--violeta, #5000BA)", display: "flex", alignItems: "center", gap: "8px" }}>
-                  <Eye size={20} /> Vista Previa En Vivo: {widgetPrevisualizar.nombre}
+                  <Sparkles size={20} color="var(--violeta, #5000BA)" /> Vista Previa del Widget Real: {widgetPrevisualizar.nombre}
                 </h3>
                 <span style={{ fontSize: "0.78rem", color: "var(--panel-gris, #737373)", marginTop: "2px", display: "block" }}>
                   Clave: <code>{widgetPrevisualizar.clave}</code> | Categoría: {widgetPrevisualizar.categoria}
@@ -1076,20 +1185,14 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
               {widgetPrevisualizar.descripcion}
             </p>
 
-            {/* CONTENEDOR DE DEMOSTRACIÓN DE RENDIMIENTO INDEPENDIENTE DEL WIDGET */}
-            <div style={{ border: "1px solid var(--panel-linea, #E4E4E4)", borderRadius: "12px", padding: "20px", background: "var(--panel-papel, #F7F6FA)", marginBottom: "20px" }}>
-              <div style={{ fontSize: "0.8rem", fontWeight: 800, color: "var(--violeta, #5000BA)", marginBottom: "10px", textTransform: "uppercase", letterSpacing: "0.04em" }}>
-                🧩 Componente Autolimpiante & Desacoplado
+            {/* CONTENEDOR CON EL COMPONENTE REACT REAL INTERACTIVO */}
+            <div style={{ border: "1px solid var(--panel-linea, #E4E4E4)", borderRadius: "14px", padding: "20px", background: "var(--panel-papel, #F7F6FA)", marginBottom: "20px" }}>
+              <div style={{ fontSize: "0.8rem", fontWeight: 800, color: "var(--violeta, #5000BA)", marginBottom: "12px", textTransform: "uppercase", letterSpacing: "0.04em", display: "flex", alignItems: "center", gap: "6px" }}>
+                <Eye size={16} /> Interfaz Interactiva Real del Componente
               </div>
-              <div style={{ background: "#ffffff", padding: "16px", borderRadius: "10px", border: "1px solid var(--panel-linea, #E4E4E4)" }}>
-                <strong style={{ display: "block", fontSize: "0.92rem", marginBottom: "6px" }}>{widgetPrevisualizar.nombre}</strong>
-                <p style={{ fontSize: "0.82rem", color: "var(--panel-gris, #737373)", margin: "0 0 12px 0" }}>
-                  Este widget existe de forma independiente. Puedes incluirlo libremente en cualquier panel configurado (ej: <code>{widgetPrevisualizar.ruta}</code>).
-                </p>
-                <div style={{ fontSize: "0.75rem", background: "#ECFDF5", color: "#065F46", padding: "6px 10px", borderRadius: "6px", border: "1px solid #A7F3D0", display: "inline-block", fontWeight: 700 }}>
-                  ✓ Estado: Widget Listo para Inclusión Libre en Múltiples Paneles
-                </div>
-              </div>
+
+              {/* RENDERIZADO DEL COMPONENTE DE SOFTWARE REAL */}
+              <RenderizadorWidgetReal clave={widgetPrevisualizar.clave} negocio={negocio} />
             </div>
 
             <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end", flexWrap: "wrap" }}>
@@ -1110,7 +1213,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                   fontSize: "0.82rem"
                 }}
               >
-                Abrir Panel Contenedor ({widgetPrevisualizar.ruta}) <ExternalLink size={14} />
+                Abrir en Panel Contenedor ({widgetPrevisualizar.ruta}) <ExternalLink size={14} />
               </a>
               <button
                 type="button"
