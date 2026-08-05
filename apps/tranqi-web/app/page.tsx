@@ -461,7 +461,7 @@ export default function TranqiLanding() {
               </p>
             </div>
 
-            <div style={{ display: "flex", gap: "12px", flexWrap: "wrap", alignItems: "center" }}>
+            <div className="acciones-equipo">
               <a className="btn-equipo" href="/panel/solicitud-socio" style={{ backgroundColor: "#05876E", color: "#FFFFFF", border: "1px solid #D8FFB3" }}>
                 Únete al equipo Jurídico
                 <svg viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>

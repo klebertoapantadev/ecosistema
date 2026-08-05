@@ -1458,17 +1458,30 @@ p { line-height: 1.55; }
   color: #D8FFB3;
 }
 
+#equipo .acciones-equipo {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
 #equipo .btn-equipo {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   background: #D8FFB3;
   color: #06251D;
   font-weight: 800;
-  font-size: 0.9rem;
-  padding: 13px 22px;
+  font-size: 0.88rem;
+  padding: 12px 20px;
   border-radius: 999px;
-  white-space: nowrap;
+  white-space: normal;
+  text-wrap: balance;
+  text-align: center;
+  word-break: break-word;
+  max-width: 100%;
+  box-sizing: border-box;
   transition: transform 0.2s, background-color 0.2s;
 }
 #equipo .btn-equipo:hover {
@@ -1479,6 +1492,26 @@ p { line-height: 1.55; }
 @media (max-width: 980px) {
   #equipo .cuadricula-equipo { grid-template-columns: repeat(2, 1fr); }
 }
+
+@media (max-width: 768px) {
+  #equipo .cabecera-equipo {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 18px !important;
+    margin-bottom: 28px !important;
+  }
+  #equipo .acciones-equipo {
+    flex-direction: column !important;
+    width: 100% !important;
+  }
+  #equipo .btn-equipo {
+    width: 100% !important;
+    padding: 13px 16px !important;
+    font-size: 0.85rem !important;
+    border-radius: 12px !important;
+  }
+}
+
 @media (max-width: 560px) {
   #equipo .cuadricula-equipo { grid-template-columns: 1fr; gap: 16px; }
   #equipo .pie-equipo { flex-direction: column; align-items: flex-start; }
