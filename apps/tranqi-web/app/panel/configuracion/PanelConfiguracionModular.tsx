@@ -9,6 +9,7 @@ import { AdministracionPerfilesWidget } from "@eco/gestion-usuarios/componentes/
 
 interface Props {
   esAdmin: boolean;
+  esSuperadmin?: boolean;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   configuracion: any | null;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -65,12 +66,12 @@ const TODOS_WIDGETS_CONFIG: WidgetConfigDef[] = [
   }
 ];
 
-export function PanelConfiguracionModular({ esAdmin, configuracion, smtp, negocio }: Props) {
+export function PanelConfiguracionModular({ esAdmin, esSuperadmin = false, configuracion, smtp, negocio }: Props) {
   const [favoritos, setFavoritos] = useState<string[]>([]);
   const [widgetActivo, setWidgetActivo] = useState<string | null>(null);
 
-  // Filtrar widgets disponibles según rol
-  const widgetsDisponibles = TODOS_WIDGETS_CONFIG.filter(w => !w.soloAdmin || esAdmin);
+  // Filtrar widgets disponibles según rol (visibles para admin o superadmin)
+  const widgetsDisponibles = TODOS_WIDGETS_CONFIG.filter(w => !w.soloAdmin || esAdmin || esSuperadmin);
 
   // Cargar favoritos de localStorage
   useEffect(() => {
