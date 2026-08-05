@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 // Landing de tranqi portada 1:1 desde demo/index.html (klebertoapantadev/tranqi).
 // El JS original era un IIFE de scroll paginado + buddie conversacional que
@@ -24,6 +24,14 @@ const FALLBACK: Record<string, string> = {
 };
 
 export default function TranqiLanding() {
+  const carruselRef = useRef<HTMLDivElement>(null);
+
+  const deslizarCarrusel = (dir: number) => {
+    if (carruselRef.current) {
+      const scrollAmount = carruselRef.current.clientWidth * 0.75 * dir;
+      carruselRef.current.scrollBy({ left: scrollAmount, behavior: "smooth" });
+    }
+  };
   useEffect(() => {
     const convId = crypto.randomUUID();
     const seen = new Set<string>();
@@ -462,6 +470,15 @@ export default function TranqiLanding() {
             </div>
 
             <div className="acciones-equipo">
+              <div className="flechas-carrusel-header" style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                <button type="button" onClick={() => deslizarCarrusel(-1)} aria-label="Anterior abogado" className="btn-carrusel-flecha" title="Anterior">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+                </button>
+                <button type="button" onClick={() => deslizarCarrusel(1)} aria-label="Siguiente abogado" className="btn-carrusel-flecha" title="Siguiente">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+                </button>
+              </div>
+
               <a className="btn-equipo" href="/panel/solicitud-socio" style={{ backgroundColor: "#05876E", color: "#FFFFFF", border: "1px solid #D8FFB3" }}>
                 Únete al equipo Jurídico
                 <svg viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
@@ -473,7 +490,7 @@ export default function TranqiLanding() {
             </div>
           </div>
 
-          <div className="cuadricula-equipo reveal">
+          <div className="cuadricula-equipo reveal" ref={carruselRef}>
             <article className="card-equipo">
               <div className="retrato-equipo">
                 <span className="etiqueta-equipo">Derecho Civil</span>
@@ -571,6 +588,16 @@ export default function TranqiLanding() {
               </svg>
               Título y matrícula verificados antes de aparecer en la red
             </p>
+
+            <div className="flechas-carrusel-pie" style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+              <span style={{ fontSize: "0.78rem", color: "#D8FFB3", fontWeight: 700, opacity: 0.8, marginRight: "4px" }}>Deslizar:</span>
+              <button type="button" onClick={() => deslizarCarrusel(-1)} aria-label="Anterior abogado" className="btn-carrusel-flecha" title="Anterior">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+              </button>
+              <button type="button" onClick={() => deslizarCarrusel(1)} aria-label="Siguiente abogado" className="btn-carrusel-flecha" title="Siguiente">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+              </button>
+            </div>
           </div>
         </div>
       </section>
