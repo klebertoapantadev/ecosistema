@@ -346,7 +346,7 @@ export function BuscadorModulosGlobal({ nivelUsuario, esSuperadmin = false }: Pr
               );
             })
           ) : (
-            <div style={{ padding: "16px", textAling: "center", textAlign: "center", color: "var(--panel-gris, #737373)", fontSize: "0.82rem" }}>
+            <div style={{ padding: "16px", textAlign: "center", color: "var(--panel-gris, #737373)", fontSize: "0.82rem" }}>
               No se encontraron módulos autorizados para &quot;{consulta}&quot;.
             </div>
           )}
