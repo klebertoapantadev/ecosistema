@@ -1176,18 +1176,27 @@ p { line-height: 1.55; }
     border-radius: 14px;
   }
   .selector-rol-botones {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    display: flex;
+    justify-content: center;
+    align-items: center;
     gap: 8px;
     width: 100%;
+    flex-wrap: wrap;
   }
   .btn-rol {
-    width: 100%;
-    min-width: 0;
-    padding: 9px 8px;
-    font-size: 0.76rem;
+    padding: 10px 14px;
+    border-radius: 10px;
     justify-content: center;
+    min-width: 44px;
     box-sizing: border-box;
+  }
+  .btn-rol span,
+  .txt-btn-movil {
+    display: none !important;
+  }
+  .icono-btn-rol {
+    width: 18px !important;
+    height: 18px !important;
   }
 }
 

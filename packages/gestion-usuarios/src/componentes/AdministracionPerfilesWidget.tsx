@@ -763,7 +763,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
             gap: "8px"
           }}
         >
-          <Layers size={18} /> 2. Widgets por Panel & Perfil
+          <Layers size={18} /> 2. Módulos por Panel & Perfil
         </button>
 
         <button
@@ -803,7 +803,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
             gap: "8px"
           }}
         >
-          <LayoutGrid size={18} /> Inventario de Widgets ({inventarioWidgets.length})
+          <LayoutGrid size={18} /> Catálogo de Módulos ({inventarioWidgets.length})
         </button>
 
         <button
@@ -927,10 +927,6 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                     </div>
 
                     <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                      <a href={panel.ruta} target="_blank" rel="noopener noreferrer" style={{ fontSize: "0.75rem", color: temaPerfilActivo.colorPrimario, fontWeight: 700, textDecoration: "none" }}>
-                        Previsualizar Panel ↗
-                      </a>
-
                       <button
                         type="button"
                         onClick={() => {
@@ -952,14 +948,14 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                           boxShadow: `0 2px 6px ${temaPerfilActivo.colorPrimario}33`
                         }}
                       >
-                        <Plus size={15} /> Agregar Widget
+                        <Plus size={15} /> <span className="txt-btn-movil">Agregar</span>
                       </button>
                     </div>
                   </div>
 
                   <p style={{ fontSize: "0.78rem", color: "var(--panel-gris, #737373)", margin: "0 0 14px 0" }}>{panel.descripcion}</p>
 
-                  {/* REJILLA DE WIDGETS ASIGNADOS CON POSICIONADO Y ORDENAMIENTO GARANTIZADO */}
+                  {/* REJILLA DE ELEMENTOS ASIGNADOS CON POSICIONADO Y ORDENAMIENTO GARANTIZADO */}
                   {widgetsOrdenados.length > 0 ? (
                     <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(290px, 1fr))", gap: "12px" }}>
                       {widgetsOrdenados.map((w, idx) => {
@@ -991,7 +987,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
 
                             <button
                               type="button"
-                              title="Retirar widget de este panel"
+                              title="Retirar de este panel"
                               onClick={() => retirarWidgetDePanel(perfilSeleccionado, w.clave, panel.id)}
                               style={{
                                 background: "#ffffff",
@@ -1007,7 +1003,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                                 gap: "4px"
                               }}
                             >
-                              <Trash2 size={13} /> Retirar
+                              <Trash2 size={13} /> <span className="txt-btn-movil">Retirar</span>
                             </button>
                           </div>
                         );

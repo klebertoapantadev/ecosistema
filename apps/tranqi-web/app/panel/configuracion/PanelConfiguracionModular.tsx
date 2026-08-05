@@ -9,7 +9,6 @@ import { AdministracionPerfilesWidget } from "@eco/gestion-usuarios/componentes/
 
 interface Props {
   esAdmin: boolean;
-  esSuperadmin?: boolean;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   configuracion: any | null;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -66,12 +65,12 @@ const TODOS_WIDGETS_CONFIG: WidgetConfigDef[] = [
   }
 ];
 
-export function PanelConfiguracionModular({ esAdmin, esSuperadmin = false, configuracion, smtp, negocio }: Props) {
+export function PanelConfiguracionModular({ esAdmin, configuracion, smtp, negocio }: Props) {
   const [favoritos, setFavoritos] = useState<string[]>([]);
   const [widgetActivo, setWidgetActivo] = useState<string | null>(null);
 
-  // Filtrar widgets disponibles según rol (los widgets de administración y perfiles son visibles para admin y superadmin)
-  const widgetsDisponibles = TODOS_WIDGETS_CONFIG.filter(w => !w.soloAdmin || esAdmin || esSuperadmin);
+  // Filtrar widgets disponibles según rol
+  const widgetsDisponibles = TODOS_WIDGETS_CONFIG.filter(w => !w.soloAdmin || esAdmin);
 
   // Cargar favoritos de localStorage
   useEffect(() => {
@@ -248,7 +247,7 @@ export function PanelConfiguracionModular({ esAdmin, esSuperadmin = false, confi
       <div style={{ marginBottom: "24px" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px", flexWrap: "wrap", gap: "8px" }}>
           <h3 style={{ fontSize: "0.88rem", fontWeight: 800, color: "var(--panel-gris, #737373)", textTransform: "uppercase", letterSpacing: "0.08em", margin: 0 }}>
-            Accesos & Widgets de Configuración
+            Accesos & Módulos de Configuración
           </h3>
           <span style={{ fontSize: "0.82rem", color: "var(--panel-gris, #737373)", fontWeight: 600 }}>
             ⭐ {favoritos.length} Marcados como Favorito
@@ -335,7 +334,7 @@ export function PanelConfiguracionModular({ esAdmin, esSuperadmin = false, confi
                     fontWeight: 700
                   }}
                 >
-                  <span>Abrir widget</span>
+                  <span>Abrir</span>
                   <ChevronRight size={14} />
                 </div>
               </div>

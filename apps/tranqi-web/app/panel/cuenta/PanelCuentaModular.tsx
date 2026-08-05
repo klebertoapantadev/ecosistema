@@ -436,7 +436,7 @@ export function PanelCuentaModular({ perfil, historial, puedeConmutar = true, ro
                     fontWeight: 700
                   }}
                 >
-                  <span>Abrir widget</span>
+                  <span>Abrir</span>
                   <ChevronRight size={14} />
                 </div>
               </div>
