@@ -1,1 +1,42 @@
-[]
+[
+  {
+    "id": "comment_1785922805864",
+    "file": "C:/Users/Kleber Toapanta/Documents/BK2026/Antigravity2026/Ley/ecosistema/gobernanza/productos/plataforma/especificacion-funcional.md",
+    "section": "5. Términos y Condiciones Legales de Talentos en Markdown (.md):",
+    "selectedText": "",
+    "comment": "Necesitamos un widget para gestion de terminos y condiciones. 1)El primero como cliente simple  (recibir notificaiones / tipos de notificaciones) 2) Autorizacion de contactar via whatsapp 3) Si desea enviar una solicitud (bolsa de empleo), concentimiento para revisar sus documentos e investigar sobre sus docuemntos. 4) Para Tranqi, concentimiento para almacenar sus documentos personales/tramites. Revisa donde incluimos esta.",
+    "timestamp": "2026-08-05T09:40:05.865Z",
+    "status": "ATENDIDO",
+    "resolucion": "Incorporado en PLT-001 Regla 7 (gestion_terminos_consentimientos) especificando las 4 categorias de consentimientos expresos."
+  },
+  {
+    "id": "comment_1785922915715",
+    "file": "C:/Users/Kleber Toapanta/Documents/BK2026/Antigravity2026/Ley/ecosistema/gobernanza/productos/plataforma/especificacion-funcional.md",
+    "section": "6. Formulario Ágil de Postulación y Subida de Archivos (PLT-016):",
+    "selectedText": "",
+    "comment": "\"Carga Múltiple de Documentos Adjuntos\", debemos limitar el numero de documentos y el tamaño maximo (por defecto 3 doc y maximo 10mb)",
+    "timestamp": "2026-08-05T09:41:55.715Z",
+    "status": "ATENDIDO",
+    "resolucion": "Incorporado en PLT-016 Regla 3 y PLT-019 Regla 6 fijando limite estricto de maximo 3 documentos y 10 MB acumulados."
+  },
+  {
+    "id": "comment_1785922973988",
+    "file": "C:/Users/Kleber Toapanta/Documents/BK2026/Antigravity2026/Ley/ecosistema/gobernanza/productos/plataforma/especificacion-funcional.md",
+    "section": "7. Notificación de Confirmación Automática al Postulante (PLT-013):",
+    "selectedText": "",
+    "comment": "los usuarios administradores reciben una notificacion push y mail de la solicitud recibida.",
+    "timestamp": "2026-08-05T09:42:53.988Z",
+    "status": "ATENDIDO",
+    "resolucion": "Incorporado en PLT-013 Regla 4 y PLT-019 Regla 7 garantizando alertas inmediatas Push + Email a los Administradores."
+  },
+  {
+    "id": "comment_1785923123714",
+    "file": "C:/Users/Kleber Toapanta/Documents/BK2026/Antigravity2026/Ley/ecosistema/gobernanza/productos/plataforma/especificacion-funcional.md",
+    "section": "1. Widget Público \"Nuestro Equipo\":",
+    "selectedText": "",
+    "comment": "En la configuracion de la cuenta, necesitamos una opcion para cargar el logo del registro de gmail (cuando aplique) y la opcion para cargar una foto de perfil.",
+    "timestamp": "2026-08-05T09:45:23.714Z",
+    "status": "ATENDIDO",
+    "resolucion": "Incorporado en PLT-001 Regla 2 y widget mi_cuenta permitiendo carga de foto de perfil personalizada y sincronizacion del avatar de Gmail."
+  }
+]

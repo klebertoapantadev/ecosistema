@@ -50,22 +50,29 @@ Un usuario posee una **única identidad base** en todo el ecosistema (`comun_seg
 
 ### Reglas de Negocio
 1. **Registro Inicial Ultra-Fluido (Cero Frenos):**
-   - **Vía Google OAuth 2.0:** Se completa en 1 solo clic. Se extraen automáticamente el nombre, apellido, correo electrónico y foto de perfil. No se solicita ningún dato obligatorio adicional en este paso.
+   - **Vía Google OAuth 2.0:** Se completa en 1 solo clic. Se extraen automáticamente el nombre, apellido, correo electrónico y la foto/logo del registro de Gmail. No se solicita ningún dato obligatorio adicional en este paso.
    - **Vía Correo Directo (Registro Simple):** Formulario mínimo con únicamente 4 campos: Nombres, Apellidos, Correo Electrónico y Contraseña.
-2. **Opción "Contáctame vía WhatsApp" (Exclusivamente Post-Registro):**
+2. **Carga de Foto de Perfil & Sincronización de Avatar de Gmail en Mi Cuenta (`mi_cuenta`):**
+   - En la configuración del perfil (`/panel/cuenta`), se habilita la opción de **carga y actualización de Foto de Perfil personalizada** (almacenada y optimizada en WebP en `comun-publico/[NEGOCIO]/avatares-perfil/...`).
+   - Cuando el usuario se registró mediante **Google OAuth / Gmail**, la interfaz ofrece explícitamente la opción de sincronizar/utilizar la **foto/logo oficial de su cuenta de Gmail** o cargar un avatar personalizado propio.
+3. **Opción "Contáctame vía WhatsApp" (Exclusivamente Post-Registro):**
    - La opción de ingresar el número de WhatsApp y autorizar contacto **NUNCA debe ser un freno en el formulario de registro inicial**.
    - Se presenta únicamente **DESPUÉS** de que el usuario ha completado el registro (en la pantalla de bienvenida/onboarding posterior o dentro de la edición de su perfil), mediante un campo opcional con casilla de verificación (*checkbox*) desmarcada por defecto para autorización explícita (`autorizacion_contacto_whatsapp`).
-3. **Información Transparente de Ubicación y Alcance Local:** En la pantalla de registro u onboarding de cada producto se expone de forma clara la información de presencia local en Ecuador y el alcance de atención (gestionados a través de `PLT-008`).
-4. **Registro e Identidad Independiente por Negocio (`comun_seguridad.seg_membresia`):**
+4. **Información Transparente de Ubicación y Alcance Local:** En la pantalla de registro u onboarding de cada producto se expone de forma clara la información de presencia local en Ecuador y el alcance de atención (gestionados a través de `PLT-008`).
+5. **Registro e Identidad Independiente por Negocio (`comun_seguridad.seg_membresia`):**
    - Aunque la cuenta base exista en el ecosistema, la suscripción a cada negocio crea un registro de membresía **100% independiente** que contiene:
      - `mem_fecha_registro`: Fecha y hora exacta de incorporación a dicho negocio.
      - `mem_estado`: Estado operativo de la membresía en ese producto (`ACTIVO`, `PENDIENTE`, `SUSPENDIDO`, `INACTIVO`).
      - Credencial / PIN específico si la aplicación lo requiere.
-5. **Autenticación Biométrica y PIN Móvil (Apps Nativas Capacitor):**
+6. **Autenticación Biométrica y PIN Móvil (Apps Nativas Capacitor):**
    - En las aplicaciones nativas para smartphones (iOS/Android), se habilita el acceso rápido mediante **Biometría (Face ID / Touch ID / Huella Dactilar)** o mediante la **Clave / Patrón de desbloqueo del dispositivo móvil**, permitiendo re-ingresar al negocio sin solicitar la contraseña de Supabase en cada apertura.
-6. **Aceptación de Términos Específicos por Negocio:**
-   - **Términos Globales:** Se aceptan en el registro inicial del ecosistema. ✅ Implementado — checkbox obligatorio en registro por correo, disclaimer + registro automático de aceptación en el callback para Google OAuth (ver `especificacion-tecnica.md` §1). Queda versionado por usuario (`usu_terminos_version`) para poder renotificar ante un cambio sustantivo del texto.
-   - **Términos Específicos del Negocio:** Casilla obligatoria al ingresar por primera vez a un producto individual. Los textos legales de cada negocio son totalmente configurables en formato Markdown (`.md`) desde la consola de administración (`PLT-008`). **Pendiente** — hoy el texto de `/terminos` es un borrador estático, no editable desde la consola.
+7. **Aceptación de Términos y Widget de Gestión de Consentimientos (`gestion_terminos_consentimientos`):**
+   - **Términos Globales:** Se aceptan en el registro inicial del ecosistema. Checkbox obligatorio en registro por correo, disclaimer + registro automático de aceptación en el callback para Google OAuth. Queda versionado por usuario (`usu_terminos_version`).
+   - **Widget Administrativo de Términos, Consentimientos y Cláusulas Legales (`gestion_terminos_consentimientos`):** Módulo común configurable por negocio (`PLT-008`) que estructura y gestiona 4 categorías de consentimientos expresos:
+     1. **Cliente General / Notificaciones:** Aceptación de recibir notificaciones del sistema y selección flexible por tipo de notificación (`PLT-013`).
+     2. **Contacto por WhatsApp:** Autorización explícita desmarcada por defecto (`autorizacion_contacto_whatsapp`) para contacto directo por mensajes del sistema.
+     3. **Bolsa de Empleo / Postulantes:** Cláusula de consentimiento LOPDP para autorizar la revisión, investigación de antecedentes y verificación de documentos/Hoja de Vida (`PLT-019`).
+     4. **Tranqi (Servicios Legales Confidenciales):** Consentimiento para el almacenamiento, cifrado (`pgcrypto`) y tratamiento seguro de documentos personales y expedientes.
 
 ### Estado de implementación
 
@@ -752,10 +759,11 @@ Proporciona la infraestructura unificada para exhibir al equipo de trabajo verif
 6. **Formulario Ágil de Postulación y Subida de Archivos (`PLT-016`):**
    - Datos autocompletados desde el perfil del usuario (`PLT-001`): Nombres, Apellidos, Correo y WhatsApp.
    - **Carga Obligatoria de CV / Hoja de Vida:** Archivo en formato PDF o Word (máx. 10 MB).
-   - **Carga Múltiple de Documentos Adjuntos:** Subida libre de certificados, títulos, licencias o fotos (PDF, PNG, JPG).
+   - **Carga Múltiple de Documentos Adjuntos (Límite Estricto):** Subida de certificados, títulos, licencias o fotos (PDF, PNG, JPG, DOCX). Se establece un **límite estricto de máximo 3 documentos adjuntos** por solicitud y un **tamaño máximo acumulado de 10 MB** por archivo.
    - Almacenamiento seguro en Supabase Storage Privado (`comun-privado/[NEGOCIO]/postulaciones/[YYYY-MM]/...`).
-7. **Notificación de Confirmación Automática al Postulante (`PLT-013`):**
-   - Tras enviar la postulación, el sistema despacha inmediatamente un correo transaccional de confirmación al candidato vía SMTP propio del negocio (`PLT-008`), indicando que sus documentos fueron recibidos exitosamente.
+7. **Notificación de Confirmación Automática al Postulante y Alerta a Administradores (`PLT-013`):**
+   - **Al Postulante:** Tras enviar la postulación, el sistema despacha inmediatamente un correo transaccional de confirmación al candidato vía SMTP propio del negocio (`PLT-008`), indicando que sus documentos fueron recibidos exitosamente.
+   - **A los Administradores:** De forma automática e inmediata, el sistema genera y despacha una **notificación Push y un Correo Electrónico (Email)** a todos los usuarios administradores (`ADMINISTRADOR` / `SUPERADMIN`) del negocio notificando la llegada del nuevo postulante con enlace directo a su expediente.
 8. **Protección Anti-Spam y Rate Limiting:**
    - Trampa silenciosa **Honeypot** + límite de seguridad de máximo 3 postulaciones por usuario/IP por hora.
 9. **Consola Administrativa de Postulaciones (`gestion_postulaciones`):**
