@@ -452,11 +452,26 @@ export default function TranqiLanding() {
           <path pathLength={1} stroke="#05876E" strokeWidth="1" opacity={0.6} d="M 1480 200 C 1180 260 1180 520 1360 620 C 1520 700 1420 940 1160 940 C 940 940 900 1160 1120 1260" />
         </svg></div>
         <div className="lienzo-equipo">
-          <p className="rotulo-equipo reveal">Nuestro equipo</p>
-          <h2 className="reveal">Abogados reales, <i>verificados</i>, listos para acompañarte.</h2>
-          <p className="intro-equipo reveal">
-            Cada perfil de la red tranqi pasa por título verificado en SENESCYT y matrícula confirmada en el Foro de Abogados antes de aparecer aquí.
-          </p>
+          <div className="cabecera-equipo reveal" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: "24px", marginBottom: "44px" }}>
+            <div style={{ maxWidth: "58ch" }}>
+              <p className="rotulo-equipo">Nuestro equipo</p>
+              <h2>Abogados reales, <i>verificados</i>, listos para acompañarte.</h2>
+              <p className="intro-equipo" style={{ marginBottom: 0 }}>
+                Cada perfil de la red tranqi pasa por título verificado en SENESCYT y matrícula confirmada en el Foro de Abogados antes de aparecer aquí.
+              </p>
+            </div>
+
+            <div style={{ display: "flex", gap: "12px", flexWrap: "wrap", alignItems: "center" }}>
+              <a className="btn-equipo" href="/panel/solicitud-socio" style={{ backgroundColor: "#05876E", color: "#FFFFFF", border: "1px solid #D8FFB3" }}>
+                Únete al equipo Jurídico
+                <svg viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+              </a>
+              <a className="btn-equipo" href="/vacantes">
+                Únete al equipo tranqi (Bolsa de Empleo & Vacantes)
+                <svg viewBox="0 0 24 24" fill="none" stroke="#06251D" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+              </a>
+            </div>
+          </div>
 
           <div className="cuadricula-equipo reveal">
             <article className="card-equipo">
@@ -556,16 +571,6 @@ export default function TranqiLanding() {
               </svg>
               Título y matrícula verificados antes de aparecer en la red
             </p>
-            <div style={{ display: "flex", gap: "12px", flexWrap: "wrap", alignItems: "center" }}>
-              <a className="btn-equipo" href="/panel/solicitud-socio" style={{ backgroundColor: "#05876E", color: "#FFFFFF", border: "1px solid #D8FFB3" }}>
-                Únete al equipo Jurídico
-                <svg viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
-              </a>
-              <a className="btn-equipo" href="/vacantes">
-                Únete al equipo tranqi (Bolsa de Empleo & Vacantes)
-                <svg viewBox="0 0 24 24" fill="none" stroke="#06251D" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
-              </a>
-            </div>
           </div>
         </div>
       </section>
