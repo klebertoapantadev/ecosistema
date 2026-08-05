@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { ShieldCheck, UserCog, Users, ClipboardList, Bell, Shield, ChevronRight, Star, Lock } from "lucide-react";
+import { UserCog, Users, ClipboardList, Bell, Shield, ChevronRight, Star, Lock } from "lucide-react";
 import Link from "next/link";
 
 interface Props {
