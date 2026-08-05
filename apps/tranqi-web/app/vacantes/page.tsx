@@ -295,7 +295,10 @@ export default function PaginaBolsaEmpleo() {
               </div>
 
               <div>
-                <label style={{ display: "block", fontSize: "0.8rem", color: "#c9d1d9", marginBottom: "4px" }}>Documentos Adjuntos (Certificados, títulos, máx 3 archivos / 10 MB)</label>
+                <label style={{ display: "block", fontSize: "0.8rem", color: "#c9d1d9", marginBottom: "4px" }}>
+                  Documentos Adjuntos (Certificados, títulos, máx 3 archivos / 10 MB)
+                  {adjuntos.length > 0 && <span style={{ fontSize: "0.76rem", color: "#58a6ff", marginLeft: "8px" }}>({adjuntos.length} seleccionado/s)</span>}
+                </label>
                 <input type="file" multiple accept=".pdf,.png,.jpg,.jpeg,.docx" onChange={(e) => handleAdjuntos(e.target.files)} style={{ width: "100%", background: "#0d1117", border: "1px solid #30363d", borderRadius: "6px", padding: "6px 10px", color: "#8b949e", fontSize: "0.82rem" }} />
               </div>
 
