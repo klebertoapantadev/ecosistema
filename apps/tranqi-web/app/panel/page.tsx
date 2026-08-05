@@ -1,13 +1,14 @@
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import {
-  Search, Calendar, Upload, Coins, MessageCircle, FileText,
+  Calendar, Upload, Coins, MessageCircle, FileText,
   Briefcase, Award, Sparkles, UserCheck, Users, Settings,
   ShieldCheck, Bell, Shield, type LucideIcon
 } from "lucide-react";
-import { obtenerPerfilActual, obtenerSaludo, obtenerPerfiles } from "@eco/identidad";
+import { obtenerPerfilActual, obtenerSaludo, obtenerPerfiles, obtenerNivelMaximo } from "@eco/identidad";
 import type { ModoRol } from "./SelectorRolActivo";
 import { TarjetasFavoritasGrid } from "./SeccionFavoritosInicio";
+import { BuscadorModulosGlobal } from "./BuscadorModulosGlobal";
 
 export const metadata: Metadata = { title: "Panel — tranqi" };
 
@@ -80,25 +81,12 @@ export default async function PagePanel({ searchParams }: Props) {
   const nombre = perfil?.usu_nombres?.split(/\s+/)[0] ?? "Usuario";
   const nombreCompleto = [perfil?.usu_nombres, perfil?.usu_apellidos].filter(Boolean).join(" ") || "Usuario";
   const esAdminGlobal = puedeConmutar || perfiles.includes("ADMINISTRADOR");
+  const nivelMaximo = await obtenerNivelMaximo(NEGOCIO);
 
   return (
     <div className="contenedor-panel">
       <div className="barra-superior-panel">
-        <div className="busqueda-panel">
-          <Search className="busqueda-icono" aria-hidden="true" strokeWidth={1.8} />
-          <input
-            type="search"
-            placeholder={
-              modo === "cliente"
-                ? "Buscar trámites, causas o consultas..."
-                : modo === "abogado"
-                ? "Buscar causas, cédulas o actuaciones..."
-                : "Buscar usuario, RUC, auditoría..."
-            }
-            aria-label="Buscar"
-            disabled
-          />
-        </div>
+        <BuscadorModulosGlobal nivelUsuario={nivelMaximo} esSuperadmin={puedeConmutar} />
 
         <div className="usuario-barra">
           <div className="usuario-barra-foto">

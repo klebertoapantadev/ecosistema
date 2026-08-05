@@ -658,12 +658,15 @@ p { line-height: 1.55; }
 .inicio-cliente-sub { color: var(--panel-gris); font-size: 0.95rem; margin-top: -4px; margin-bottom: 24px; }
 
 /* ── Barra superior ──────────────────────────────────────────────── */
+.barra-superior-panel,
 .barra-cliente {
-  display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+  display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
   padding-bottom: 18px; margin-bottom: 22px;
   border-bottom: 1px solid var(--panel-linea);
+  width: 100%;
 }
-.buscador-cliente { flex: 1; min-width: 200px; max-width: 420px; position: relative; }
+.busqueda-panel-global,
+.buscador-cliente { flex: 1; min-width: 240px; max-width: 480px; position: relative; }
 .buscador-cliente svg {
   position: absolute; left: 12px; top: 50%; translate: 0 -50%;
   width: 16px; height: 16px; color: var(--panel-gris);
