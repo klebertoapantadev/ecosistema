@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { obtenerPerfilActual } from "@eco/identidad";
+import { obtenerPerfilActual, obtenerNivelMaximo } from "@eco/identidad";
 import { PanelAdministrarModular } from "./PanelAdministrarModular";
 
 const NEGOCIO = "TRANQ";
@@ -11,7 +11,9 @@ export default async function PaginaPanelAdministrar() {
     redirect(`/ingresar?redirect=/panel/administrar`);
   }
 
-  if (perfil.nivelMaximo < 80) {
+  const nivelMaximo = await obtenerNivelMaximo(NEGOCIO);
+
+  if (nivelMaximo < 80) {
     redirect("/panel");
   }
 
