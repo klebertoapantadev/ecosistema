@@ -97,6 +97,11 @@ export default async function LayoutPanel({ children }: { children: React.ReactN
                 </EnlacePanel>
               );
             })}
+            {modoActivo !== "cliente" && (
+              <EnlacePanel href="/panel/administrar" icono={<ShieldCheck className="icono-nav" aria-hidden="true" strokeWidth={1.8} />}>
+                Administrar
+              </EnlacePanel>
+            )}
             <EnlacePanel href="/panel/configuracion" icono={<Settings className="icono-nav" aria-hidden="true" strokeWidth={1.8} />}>
               Configurar
             </EnlacePanel>

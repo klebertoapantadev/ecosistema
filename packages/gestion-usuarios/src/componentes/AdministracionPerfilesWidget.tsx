@@ -94,6 +94,8 @@ export interface PanelSidebarDef {
   nombre: string;
   ruta: string;
   descripcion: string;
+  requiereMfa?: boolean;
+  esPersonalizado?: boolean;
 }
 
 export interface WidgetInventarioDef {
@@ -111,43 +113,29 @@ const PANELES_SIDEBAR_INICIALES: PanelSidebarDef[] = [
     id: "panel_inicio",
     nombre: "Inicio (Tablero Principal)",
     ruta: "/panel",
-    descripcion: "Pantalla principal que agrupa accesos rápidos y widgets según el rol del usuario."
+    descripcion: "Pantalla principal que agrupa accesos rápidos y módulos según el rol del usuario.",
+    requiereMfa: false
   },
   {
     id: "panel_cuenta",
     nombre: "Mi Cuenta & Identidad",
     ruta: "/panel/cuenta",
-    descripcion: "Perfil de usuario, conmutador de rol ('Ver como') e historial de accesos."
+    descripcion: "Perfil de usuario, conmutador de rol ('Ver como') e historial de accesos.",
+    requiereMfa: false
   },
   {
     id: "panel_configuracion",
     nombre: "Configuración & Gobernanza",
     ruta: "/panel/configuracion",
-    descripcion: "Parámetros del negocio, servidor SMTP, perfiles y alertas de notificaciones."
+    descripcion: "Parámetros del negocio, servidor SMTP, perfiles y alertas de notificaciones.",
+    requiereMfa: false
   },
   {
-    id: "panel_usuarios",
-    nombre: "Gestión de Usuarios",
-    ruta: "/panel/usuarios",
-    descripcion: "Administración de miembros, asignación de perfiles y techo jerárquico."
-  },
-  {
-    id: "panel_socios",
-    nombre: "Aprobación de Socios",
-    ruta: "/panel/socios",
-    descripcion: "Validación de matrículas y acreditación de abogados."
-  },
-  {
-    id: "panel_auditoria",
-    nombre: "Auditoría BDD",
-    ruta: "/panel/auditoria",
-    descripcion: "Consulta de registros inmutables PostgreSQL y telemetría de APIs."
-  },
-  {
-    id: "panel_emision",
-    nombre: "Emisión Notificaciones",
-    ruta: "/panel/emision-notificaciones",
-    descripcion: "Despacho masivo multicanal (In-App, Push, Email y WhatsApp)."
+    id: "panel_administrar",
+    nombre: "Administrar (Consola de Gestión)",
+    ruta: "/panel/administrar",
+    descripcion: "Consola de administración protegida para usuarios, socios, solicitudes, notificaciones y auditoría.",
+    requiereMfa: true
   }
 ];
 
@@ -200,14 +188,12 @@ const PERFILES_INICIALES: PerfilDef[] = [
     nivel: 80,
     ambito: "Empresa",
     descripcion: "Gestión del negocio: usuarios, parámetros de marca, SMTP, perfiles y auditoría.",
-    panelesAsignados: ["panel_inicio", "panel_cuenta", "panel_configuracion", "panel_usuarios", "panel_socios", "panel_auditoria"],
+    panelesAsignados: ["panel_inicio", "panel_cuenta", "panel_configuracion", "panel_administrar"],
     widgetsAsignadosPorPanel: {
       panel_inicio: ["favoritos"],
       panel_cuenta: ["ver_como", "mi_cuenta"],
       panel_configuracion: ["configuracion_negocio", "configuracion_correo", "perfiles", "notificaciones"],
-      panel_usuarios: ["gestion_usuarios"],
-      panel_socios: ["socios"],
-      panel_auditoria: ["auditoria"]
+      panel_administrar: ["gestion_usuarios", "socios", "solicitud_socio", "emision_notificaciones", "auditoria"]
     },
     activo: true
   },
@@ -217,15 +203,12 @@ const PERFILES_INICIALES: PerfilDef[] = [
     nivel: 100,
     ambito: "Plataforma",
     descripcion: "Gobernanza exclusiva de la plataforma y matriz global de perfiles.",
-    panelesAsignados: ["panel_inicio", "panel_cuenta", "panel_configuracion", "panel_usuarios", "panel_socios", "panel_auditoria", "panel_emision"],
+    panelesAsignados: ["panel_inicio", "panel_cuenta", "panel_configuracion", "panel_administrar"],
     widgetsAsignadosPorPanel: {
       panel_inicio: ["favoritos"],
       panel_cuenta: ["ver_como", "mi_cuenta", "historial_accesos"],
       panel_configuracion: ["configuracion_negocio", "configuracion_correo", "perfiles", "notificaciones"],
-      panel_usuarios: ["gestion_usuarios"],
-      panel_socios: ["socios"],
-      panel_auditoria: ["auditoria"],
-      panel_emision: ["emision_notificaciones"]
+      panel_administrar: ["gestion_usuarios", "socios", "solicitud_socio", "emision_notificaciones", "auditoria"]
     },
     activo: true,
     esSuperAdmin: true
@@ -275,7 +258,7 @@ const WIDGETS_INVENTARIO_INICIALES: WidgetInventarioDef[] = [
     descripcion: "Asignación de perfiles, roles y techo jerárquico.",
     categoria: "Administración",
     ruta: "/panel/usuarios",
-    panelId: "panel_usuarios",
+    panelId: "panel_administrar",
     activo: true
   },
   {
@@ -284,7 +267,16 @@ const WIDGETS_INVENTARIO_INICIALES: WidgetInventarioDef[] = [
     descripcion: "Revisión de matrículas y verificación de credenciales.",
     categoria: "Operación Legal",
     ruta: "/panel/socios",
-    panelId: "panel_socios",
+    panelId: "panel_administrar",
+    activo: true
+  },
+  {
+    clave: "solicitud_socio",
+    nombre: "Solicitudes de Socios",
+    descripcion: "Revisión y procesamiento de formularios de solicitud.",
+    categoria: "Operación Legal",
+    ruta: "/panel/solicitud-socio",
+    panelId: "panel_administrar",
     activo: true
   },
   {
@@ -293,7 +285,16 @@ const WIDGETS_INVENTARIO_INICIALES: WidgetInventarioDef[] = [
     descripcion: "Registro inmutable de transacciones, diffs JSONB e IP.",
     categoria: "Seguridad & Auditoría",
     ruta: "/panel/auditoria",
-    panelId: "panel_auditoria",
+    panelId: "panel_administrar",
+    activo: true
+  },
+  {
+    clave: "emision_notificaciones",
+    nombre: "Emisión de Notificaciones Multicanal",
+    descripcion: "Despacho masivo multicanal (In-App, Push, Email y WhatsApp).",
+    categoria: "Comunicación",
+    ruta: "/panel/emision-notificaciones",
+    panelId: "panel_administrar",
     activo: true
   },
   {
@@ -471,8 +472,67 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
   
   // Estado local
   const [perfiles, setPerfiles] = useState<PerfilDef[]>(PERFILES_INICIALES);
-  const [panelesSidebar] = useState<PanelSidebarDef[]>(PANELES_SIDEBAR_INICIALES);
+  const [panelesSidebar, setPanelesSidebar] = useState<PanelSidebarDef[]>(PANELES_SIDEBAR_INICIALES);
   const [inventarioWidgets, setInventarioWidgets] = useState<WidgetInventarioDef[]>(WIDGETS_INVENTARIO_INICIALES);
+
+  // Modal Crear Nuevo Panel
+  const [mostrarModalPanel, setMostrarModalPanel] = useState(false);
+  const [nuevoPanel, setNuevoPanel] = useState({
+    nombre: "",
+    ruta: "/panel/",
+    descripcion: "",
+    requiereMfa: false
+  });
+
+  const toggleMfaPanel = (panelId: string) => {
+    setPanelesSidebar(panelesSidebar.map(p => {
+      if (p.id === panelId) {
+        const nuevoEstado = !p.requiereMfa;
+        setMensajeExito(`Autenticación MFA (TOTP) ${nuevoEstado ? "ACTIVADA" : "DESACTIVADA"} para el panel '${p.nombre}'.`);
+        setTimeout(() => setMensajeExito(null), 3500);
+        return { ...p, requiereMfa: nuevoEstado };
+      }
+      return p;
+    }));
+  };
+
+  const handleGuardarPanel = () => {
+    if (!nuevoPanel.nombre.trim()) return;
+    const slug = nuevoPanel.nombre.toLowerCase().replace(/[^a-z0-9]/g, "_");
+    const panelId = `panel_${slug}`;
+    const rutaFormateada = nuevoPanel.ruta.startsWith("/") ? nuevoPanel.ruta : `/${nuevoPanel.ruta}`;
+
+    const creado: PanelSidebarDef = {
+      id: panelId,
+      nombre: nuevoPanel.nombre,
+      ruta: rutaFormateada,
+      descripcion: nuevoPanel.descripcion || `Panel personalizado ${nuevoPanel.nombre}`,
+      requiereMfa: nuevoPanel.requiereMfa,
+      esPersonalizado: true
+    };
+
+    setPanelesSidebar([...panelesSidebar, creado]);
+
+    // Asignar por defecto a ADMINISTRADOR y SUPERADMIN
+    setPerfiles(perfiles.map(p => {
+      if (p.clave === "ADMINISTRADOR" || p.clave === "SUPERADMIN") {
+        return {
+          ...p,
+          panelesAsignados: [...p.panelesAsignados, panelId],
+          widgetsAsignadosPorPanel: {
+            ...p.widgetsAsignadosPorPanel,
+            [panelId]: []
+          }
+        };
+      }
+      return p;
+    }));
+
+    setMostrarModalPanel(false);
+    setNuevoPanel({ nombre: "", ruta: "/panel/", descripcion: "", requiereMfa: false });
+    setMensajeExito(`Panel '${nuevoPanel.nombre}' creado exitosamente.`);
+    setTimeout(() => setMensajeExito(null), 3000);
+  };
 
   // Perfil seleccionado en pestaña 2 (Widgets por Panel & Perfil)
   const [perfilSeleccionado, setPerfilSeleccionado] = useState<string>("CLIENTE");
@@ -881,7 +941,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
               </select>
             </div>
 
-            <div style={{ flex: 1, minWidth: "240px" }}>
+        <div style={{ flex: 1, minWidth: "240px" }}>
               <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", background: temaPerfilActivo.badgeBg, color: temaPerfilActivo.badgeTexto, padding: "4px 12px", borderRadius: "999px", fontWeight: 800, fontSize: "0.78rem", marginBottom: "6px" }}>
                 <UserCheck size={14} /> MODO CONFIGURACIÓN: {perfilActualObj?.nombre.toUpperCase()} (NIVEL {perfilActualObj?.nivel})
               </div>
@@ -889,6 +949,35 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                 Mostrando únicamente los widgets asignados para <strong>{perfilActualObj?.nombre}</strong>. En el tablero principal, <strong>Favoritos</strong> se ubica siempre en <strong>Posición #1</strong>.
               </p>
             </div>
+          </div>
+
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", flexWrap: "wrap", gap: "12px" }}>
+            <div>
+              <h4 style={{ fontSize: "0.95rem", fontWeight: 800, margin: "0 0 2px 0" }}>Paneles & Módulos Operativos</h4>
+              <p style={{ fontSize: "0.8rem", color: "var(--panel-gris, #737373)", margin: 0 }}>
+                Administra los módulos de cada panel y configura la exigencia opcional de MFA (TOTP).
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setMostrarModalPanel(true)}
+              style={{
+                background: "var(--violeta, #5000BA)",
+                color: "#ffffff",
+                border: "none",
+                borderRadius: "8px",
+                padding: "9px 16px",
+                fontSize: "0.82rem",
+                fontWeight: 700,
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                gap: "6px"
+              }}
+            >
+              <Plus size={16} /> + Crear Nuevo Panel
+            </button>
           </div>
 
           {/* LISTADO LIMPIO DE PANELES CON SUS WIDGETS AUTORIZADOS POR PANEL */}
@@ -913,12 +1002,11 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                   style={{
                     border: `1.5px solid ${temaPerfilActivo.colorBorde}44`,
                     borderRadius: "14px",
-                    padding: "18px",
-                    background: "#ffffff",
-                    boxShadow: "0 2px 8px rgba(0,0,0,0.03)"
+                    padding: "16px",
+                    background: "#ffffff"
                   }}
                 >
-                  {/* ENCABEZADO DEL PANEL CON BOTÓN PULCRO "+ AGREGAR WIDGET" */}
+                  {/* ENCABEZADO DEL PANEL CON CONMUTADOR MFA Y BOTÓN "+ AGREGAR WIDGET" */}
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px", flexWrap: "wrap", gap: "10px" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                       <PanelLeft size={18} color={temaPerfilActivo.colorPrimario} />
@@ -927,6 +1015,27 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                     </div>
 
                     <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                      <button
+                        type="button"
+                        onClick={() => toggleMfaPanel(panel.id)}
+                        title={panel.requiereMfa ? "MFA (TOTP) Requerido. Haz clic para cambiar a opcional" : "MFA (TOTP) Opcional. Haz clic para requerir MFA"}
+                        style={{
+                          background: panel.requiereMfa ? "rgba(220, 38, 38, 0.12)" : "var(--panel-linea-suave, #FAFAF9)",
+                          color: panel.requiereMfa ? "#DC2626" : "var(--panel-gris, #737373)",
+                          border: panel.requiereMfa ? "1.5px solid rgba(239, 68, 68, 0.4)" : "1px solid var(--panel-linea, #E4E4E4)",
+                          borderRadius: "999px",
+                          padding: "4px 10px",
+                          fontSize: "0.72rem",
+                          fontWeight: 800,
+                          cursor: "pointer",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "4px"
+                        }}
+                      >
+                        {panel.requiereMfa ? "🔒 MFA Requerido" : "🔓 MFA Opcional"}
+                      </button>
+
                       <button
                         type="button"
                         onClick={() => {
@@ -1636,6 +1745,72 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
             <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
               <button type="button" onClick={() => setMostrarModalWidget(false)} style={{ padding: "8px 16px", borderRadius: "6px", border: "1px solid var(--panel-linea, #E4E4E4)", background: "#fff", cursor: "pointer" }}>Cancelar</button>
               <button type="submit" style={{ padding: "8px 16px", borderRadius: "6px", border: "none", background: "var(--violeta, #5000BA)", color: "#fff", fontWeight: 700, cursor: "pointer" }}>Guardar Widget & Permisos</button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* MODAL CREAR NUEVO PANEL CON CONFIGURACIÓN MFA (PLT-002) */}
+      {mostrarModalPanel && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: "16px" }}>
+          <form onSubmit={e => { e.preventDefault(); handleGuardarPanel(); }} style={{ background: "#ffffff", borderRadius: "16px", padding: "24px", maxWidth: "480px", width: "100%", boxShadow: "0 10px 30px rgba(0,0,0,0.2)" }}>
+            <h3 style={{ fontSize: "1.1rem", fontWeight: 800, marginBottom: "16px", display: "flex", alignItems: "center", gap: "8px" }}>
+              <LayoutGrid size={20} color="var(--violeta, #5000BA)" /> + Crear Nuevo Panel Personalizado
+            </h3>
+
+            <div style={{ marginBottom: "12px" }}>
+              <label style={{ fontSize: "0.8rem", fontWeight: 700, display: "block", marginBottom: "4px" }}>Nombre del Panel (ej: Administrar, Operación):</label>
+              <input
+                type="text"
+                required
+                value={nuevoPanel.nombre}
+                onChange={e => setNuevoPanel({ ...nuevoPanel, nombre: e.target.value })}
+                style={{ width: "100%", padding: "8px 12px", borderRadius: "6px", border: "1px solid var(--panel-linea, #E4E4E4)" }}
+                placeholder="Ej. Administrar"
+              />
+            </div>
+
+            <div style={{ marginBottom: "12px" }}>
+              <label style={{ fontSize: "0.8rem", fontWeight: 700, display: "block", marginBottom: "4px" }}>Ruta del Panel (ej: /panel/administrar):</label>
+              <input
+                type="text"
+                required
+                value={nuevoPanel.ruta}
+                onChange={e => setNuevoPanel({ ...nuevoPanel, ruta: e.target.value })}
+                style={{ width: "100%", padding: "8px 12px", borderRadius: "6px", border: "1px solid var(--panel-linea, #E4E4E4)" }}
+                placeholder="/panel/administrar"
+              />
+            </div>
+
+            <div style={{ marginBottom: "16px" }}>
+              <label style={{ fontSize: "0.8rem", fontWeight: 700, display: "block", marginBottom: "4px" }}>Descripción:</label>
+              <textarea
+                value={nuevoPanel.descripcion}
+                onChange={e => setNuevoPanel({ ...nuevoPanel, descripcion: e.target.value })}
+                style={{ width: "100%", padding: "8px 12px", borderRadius: "6px", border: "1px solid var(--panel-linea, #E4E4E4)", minHeight: "50px" }}
+                placeholder="Consola de administración y módulos operativos..."
+              />
+            </div>
+
+            {/* CHECKBOX REQUERIR MFA TOTP (PLT-002) */}
+            <div style={{ marginBottom: "20px", background: "var(--panel-papel, #F7F6FA)", padding: "12px", borderRadius: "8px", border: "1px solid var(--panel-linea, #E4E4E4)" }}>
+              <label style={{ fontSize: "0.82rem", fontWeight: 700, display: "flex", alignItems: "center", gap: "8px", cursor: "pointer", color: "#111" }}>
+                <input
+                  type="checkbox"
+                  checked={nuevoPanel.requiereMfa}
+                  onChange={e => setNuevoPanel({ ...nuevoPanel, requiereMfa: e.target.checked })}
+                  style={{ width: "18px", height: "18px", accentColor: "#DC2626" }}
+                />
+                🔒 Requerir Autenticación Multifactor MFA (TOTP) al ingresar (PLT-002)
+              </label>
+              <p style={{ fontSize: "0.74rem", color: "var(--panel-gris, #737373)", margin: "4px 0 0 26px" }}>
+                Al activar esta opción, los usuarios deberán verificar su código TOTP para acceder a este panel.
+              </p>
+            </div>
+
+            <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
+              <button type="button" onClick={() => setMostrarModalPanel(false)} style={{ padding: "8px 16px", borderRadius: "6px", border: "1px solid var(--panel-linea, #E4E4E4)", background: "#fff", cursor: "pointer" }}>Cancelar</button>
+              <button type="submit" style={{ padding: "8px 16px", borderRadius: "6px", border: "none", background: "var(--violeta, #5000BA)", color: "#fff", fontWeight: 700, cursor: "pointer" }}>Guardar Panel</button>
             </div>
           </form>
         </div>
