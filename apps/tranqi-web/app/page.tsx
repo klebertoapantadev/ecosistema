@@ -19,6 +19,7 @@ const FALLBACK: Record<string, string> = {
   planes: "USD 20 al año. Menos de 6 centavos al día por vivir tranqi.",
   statement: "Así de simple: lo legal, para todos.",
   red: "Si eres abogado, la red te da clientes, ingresos y capacitación constante.",
+  equipo: "Nuestros abogados cuentan con título verificado en SENESCYT y matrícula activa en el Foro de Abogados.",
   contacto: "Este es el momento de dar el paso. Pregúntame cómo unirte.",
 };
 
@@ -297,6 +298,7 @@ export default function TranqiLanding() {
           <a href="#app">la app</a>
           <a href="#planes">planes</a>
           <a href="#red">abogados</a>
+          <a href="#equipo">equipo</a>
           <a href="/ingresar" className="link-ingresar">Ingresar</a>
           <a href="/registro" className="cta">Únete</a>
         </div>
@@ -439,6 +441,125 @@ export default function TranqiLanding() {
           </ul>
           <a className="btn btn-blanco-borde reveal" href="/panel/solicitud-socio">Quiero ser parte de la red</a>
           <p className="pub-date reveal" style={{ marginTop: 24, fontSize: "0.78rem", color: "rgba(255, 255, 255, 0.45)", fontWeight: 500, letterSpacing: "0.04em" }}>Publicado: 23 de julio de 2026 06:21</p>
+        </div>
+      </section>
+
+      {/* NUESTRO EQUIPO · entra 174 · sale 320 (TRQ-002 / PLT-019) */}
+      <section id="equipo" data-buddie="equipo">
+        <div className="ribbon"><svg viewBox="0 0 1440 1400" preserveAspectRatio="none">
+          <path pathLength={1} stroke="#D8FFB3" strokeWidth="1" opacity={0.5} d="M -40 120 C 300 40 520 260 480 480 C 440 700 120 680 160 900 C 200 1120 560 1080 620 1300" />
+          <path pathLength={1} stroke="#05876E" strokeWidth="1" opacity={0.6} d="M 1480 200 C 1180 260 1180 520 1360 620 C 1520 700 1420 940 1160 940 C 940 940 900 1160 1120 1260" />
+        </svg></div>
+        <div className="lienzo-equipo">
+          <p className="rotulo-equipo reveal">Nuestro equipo</p>
+          <h2 className="reveal">Abogados reales, <i>verificados</i>, listos para acompañarte.</h2>
+          <p className="intro-equipo reveal">
+            Cada perfil de la red tranqi pasa por título verificado en SENESCYT y matrícula confirmada en el Foro de Abogados antes de aparecer aquí.
+          </p>
+
+          <div className="cuadricula-equipo reveal">
+            <article className="card-equipo">
+              <div className="retrato-equipo">
+                <span className="etiqueta-equipo">Derecho Civil</span>
+                <div className="silueta-equipo">
+                  <svg viewBox="0 0 100 100" fill="none" stroke="#D8FFB3" strokeWidth="1.6">
+                    <circle cx="50" cy="38" r="19"/>
+                    <path d="M14 92c0-24 16-38 36-38s36 14 36 38"/>
+                  </svg>
+                </div>
+                <span className="verificado-equipo" title="Verificado">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="#06251D" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M20 6 9 17l-5-5"/>
+                  </svg>
+                </span>
+              </div>
+              <div className="datos-equipo">
+                <p className="nombre-equipo">Mateo Salazar</p>
+                <p className="cargo-equipo">Socio fundador</p>
+                <div className="fila-meta-equipo"><span>Quito · 4 provincias</span><b>12 años</b></div>
+              </div>
+            </article>
+
+            <article className="card-equipo">
+              <div className="retrato-equipo">
+                <span className="etiqueta-equipo">Derecho Laboral</span>
+                <div className="silueta-equipo">
+                  <svg viewBox="0 0 100 100" fill="none" stroke="#D8FFB3" strokeWidth="1.6">
+                    <circle cx="50" cy="38" r="19"/>
+                    <path d="M14 92c0-24 16-38 36-38s36 14 36 38"/>
+                  </svg>
+                </div>
+                <span className="verificado-equipo" title="Verificado">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="#06251D" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M20 6 9 17l-5-5"/>
+                  </svg>
+                </span>
+              </div>
+              <div className="datos-equipo">
+                <p className="nombre-equipo">Camila Rosero</p>
+                <p className="cargo-equipo">Abogada litigante</p>
+                <div className="fila-meta-equipo"><span>Guayaquil · 2 provincias</span><b>8 años</b></div>
+              </div>
+            </article>
+
+            <article className="card-equipo">
+              <div className="retrato-equipo">
+                <span className="etiqueta-equipo">Derecho Penal</span>
+                <div className="silueta-equipo">
+                  <svg viewBox="0 0 100 100" fill="none" stroke="#D8FFB3" strokeWidth="1.6">
+                    <circle cx="50" cy="38" r="19"/>
+                    <path d="M14 92c0-24 16-38 36-38s36 14 36 38"/>
+                  </svg>
+                </div>
+                <span className="verificado-equipo" title="Verificado">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="#06251D" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M20 6 9 17l-5-5"/>
+                  </svg>
+                </span>
+              </div>
+              <div className="datos-equipo">
+                <p className="nombre-equipo">Andrés Villacís</p>
+                <p className="cargo-equipo">Abogado litigante</p>
+                <div className="fila-meta-equipo"><span>Cuenca · 3 provincias</span><b>15 años</b></div>
+              </div>
+            </article>
+
+            <article className="card-equipo">
+              <div className="retrato-equipo">
+                <span className="etiqueta-equipo">Derecho de Familia</span>
+                <div className="silueta-equipo">
+                  <svg viewBox="0 0 100 100" fill="none" stroke="#D8FFB3" strokeWidth="1.6">
+                    <circle cx="50" cy="38" r="19"/>
+                    <path d="M14 92c0-24 16-38 36-38s36 14 36 38"/>
+                  </svg>
+                </div>
+                <span className="verificado-equipo" title="Verificado">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="#06251D" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M20 6 9 17l-5-5"/>
+                  </svg>
+                </span>
+              </div>
+              <div className="datos-equipo">
+                <p className="nombre-equipo">Fernanda Cevallos</p>
+                <p className="cargo-equipo">Asesora legal</p>
+                <div className="fila-meta-equipo"><span>Quito · 1 provincia</span><b>6 años</b></div>
+              </div>
+            </article>
+          </div>
+
+          <div className="pie-equipo reveal">
+            <p className="confianza-equipo">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 2 4 6v6c0 5 3.4 8.5 8 10 4.6-1.5 8-5 8-10V6z"/>
+                <path d="M9 12l2 2 4-4"/>
+              </svg>
+              Título y matrícula verificados antes de aparecer en la red
+            </p>
+            <a className="btn-equipo" href="/panel/solicitud-socio">
+              ¿Eres abogado? Únete a la red
+              <svg viewBox="0 0 24 24" fill="none" stroke="#06251D" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+            </a>
+          </div>
         </div>
       </section>
 

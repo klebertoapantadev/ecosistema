@@ -1271,3 +1271,216 @@ p { line-height: 1.55; }
   opacity: 0.45; font-variant-numeric: tabular-nums; cursor: default;
 }
 .sello-compilacion:hover { opacity: 0.75; }
+
+/* ═══════════════════════════════════════════════════════════════════
+   TRQ-002 / PLT-019 · NUESTRO EQUIPO — Sección Landing Pública
+   ═══════════════════════════════════════════════════════════════════ */
+#equipo {
+  position: relative;
+  background: #052A23;
+  color: #FFFFFF;
+  padding: clamp(48px, 7vw, 96px) clamp(20px, 5vw, 64px);
+  overflow: hidden;
+}
+
+#equipo .lienzo-equipo {
+  position: relative;
+  z-index: 1;
+  max-width: 1180px;
+  margin: 0 auto;
+}
+
+#equipo .rotulo-equipo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #D8FFB3;
+  margin-bottom: 18px;
+}
+#equipo .rotulo-equipo::before {
+  content: "";
+  width: 22px;
+  height: 1px;
+  background: #D8FFB3;
+}
+
+#equipo h2 {
+  font-size: clamp(2.1rem, 4.2vw, 3.2rem);
+  line-height: 1.08;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  margin-bottom: 18px;
+  max-width: 22ch;
+  color: #FFFFFF;
+}
+#equipo h2 i {
+  color: #D8FFB3;
+  font-style: normal;
+}
+
+#equipo .intro-equipo {
+  max-width: 58ch;
+  font-size: 1.05rem;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.72);
+  margin-bottom: 44px;
+}
+
+#equipo .cuadricula-equipo {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 22px;
+}
+
+#equipo .card-equipo {
+  background: #0A3A30;
+  border: 1px solid rgba(216, 255, 179, 0.18);
+  border-radius: 16px;
+  overflow: hidden;
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.35s;
+}
+
+@media (hover: hover) {
+  #equipo .card-equipo:hover {
+    transform: translateY(-4px);
+    border-color: rgba(216, 255, 179, 0.45);
+  }
+}
+
+#equipo .retrato-equipo {
+  position: relative;
+  aspect-ratio: 4 / 5;
+  background: radial-gradient(120% 90% at 30% 0%, rgba(216, 255, 179, 0.16), transparent 60%), linear-gradient(165deg, #0C4738 0%, #062F26 72%);
+}
+
+#equipo .etiqueta-equipo {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  background: #D8FFB3;
+  color: #06251D;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  padding: 6px 12px;
+  border-radius: 999px;
+  z-index: 2;
+}
+
+#equipo .verificado-equipo {
+  position: absolute;
+  right: 14px;
+  bottom: 14px;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: #05876E;
+  border: 2px solid #0A3A30;
+  display: grid;
+  place-items: center;
+  z-index: 2;
+}
+#equipo .verificado-equipo svg {
+  width: 15px;
+  height: 15px;
+}
+
+#equipo .silueta-equipo {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+}
+#equipo .silueta-equipo svg {
+  width: 54%;
+  opacity: 0.9;
+}
+
+#equipo .datos-equipo {
+  padding: 18px 18px 20px;
+}
+
+#equipo .nombre-equipo {
+  font-size: 1.06rem;
+  font-weight: 800;
+  margin-bottom: 2px;
+  color: #FFFFFF;
+}
+
+#equipo .cargo-equipo {
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: #D8FFB3;
+  margin-bottom: 12px;
+}
+
+#equipo .fila-meta-equipo {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding-top: 12px;
+  border-top: 1px solid rgba(216, 255, 179, 0.16);
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.65);
+}
+#equipo .fila-meta-equipo b {
+  font-variant-numeric: tabular-nums;
+  color: #FFFFFF;
+  font-weight: 800;
+}
+
+#equipo .pie-equipo {
+  margin-top: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  flex-wrap: wrap;
+  padding-top: 28px;
+  border-top: 1px solid rgba(216, 255, 179, 0.16);
+}
+
+#equipo .confianza-equipo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.84rem;
+  color: rgba(255, 255, 255, 0.65);
+}
+#equipo .confianza-equipo svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  color: #D8FFB3;
+}
+
+#equipo .btn-equipo {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #D8FFB3;
+  color: #06251D;
+  font-weight: 800;
+  font-size: 0.9rem;
+  padding: 13px 22px;
+  border-radius: 999px;
+  white-space: nowrap;
+  transition: transform 0.2s, background-color 0.2s;
+}
+#equipo .btn-equipo:hover {
+  background: #E5FFCA;
+  transform: scale(1.02);
+}
+
+@media (max-width: 980px) {
+  #equipo .cuadricula-equipo { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 560px) {
+  #equipo .cuadricula-equipo { grid-template-columns: 1fr; gap: 16px; }
+  #equipo .pie-equipo { flex-direction: column; align-items: flex-start; }
+}
+

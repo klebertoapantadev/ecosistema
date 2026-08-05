@@ -37,7 +37,7 @@ Este documento describe el **comportamiento compartido por los 4 productos** (Tr
 | **`PLT-016`** | Storage Standard (Buckets Privado/Público) | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`PLT-017`** | Gestión de Sesiones y Revocación Remota | 🟡 Parcial | **40%** | Kleber Toapanta |
 | **`PLT-018`** | Historial de Accesos y Saludo Personalizado | ✅ Implementado | **100%** | Kleber Toapanta |
-| **`PLT-019`** | **Reclutamiento, Bolsa de Empleo y "Únete al Equipo"** | 🟡 Especificado | **15%** | **Jesus Navarrete / Kleber Toapanta** |
+| **`PLT-019`** | **Reclutamiento, Bolsa de Empleo y "Únete al Equipo"** | ✅ Implementado | **100%** | Kleber Toapanta |
 
 ---
 
@@ -730,7 +730,9 @@ Todo usuario registrado puede ver sus últimos accesos (dispositivo/navegador ap
 
 ## PLT-019 — Reclutamiento, Bolsa de Empleo y Presentación de Equipo ("Nuestro Equipo & Únete al Equipo")
 
-**Responsable:** Jesus Navarrete / Kleber Toapanta  
+**Responsable:** Kleber Toapanta  
+
+**✅ Implementado (2026-08-05)** y verificado de punta a punta en el ecosistema (esquema `comun_reclutamiento`, migraciones, RLS, notificaciones multicanal y widgets administrativos).
 
 ### Descripción
 Proporciona la infraestructura unificada para exhibir al equipo de trabajo verificado en la portada de cada negocio y capturar postulaciones continuas de talento (socios profesionales, contratistas, técnicos independientes, repartidores y personal operativo). Integra un motor dinámico de ofertas de empleo en formato Markdown/HTML y un flujo de postulación seguro protegido por autenticación obligatoria y consentimiento de protección de datos.
