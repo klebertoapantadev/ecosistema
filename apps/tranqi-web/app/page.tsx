@@ -299,6 +299,8 @@ export default function TranqiLanding() {
           <a href="#planes">planes</a>
           <a href="#red">abogados</a>
           <a href="#equipo">equipo</a>
+          <a href="/vacantes">vacantes</a>
+          <a href="/panel/solicitud-socio" className="link-ingresar" style={{ color: "#D8FFB3", fontWeight: 700 }}>Registro Abogados</a>
           <a href="/ingresar" className="link-ingresar">Ingresar</a>
           <a href="/registro" className="cta">Únete</a>
         </div>
@@ -555,8 +557,8 @@ export default function TranqiLanding() {
               </svg>
               Título y matrícula verificados antes de aparecer en la red
             </p>
-            <a className="btn-equipo" href="/panel/solicitud-socio">
-              ¿Eres abogado? Únete a la red
+            <a className="btn-equipo" href="/vacantes">
+              Únete al equipo tranqi (Bolsa de Empleo & Vacantes)
               <svg viewBox="0 0 24 24" fill="none" stroke="#06251D" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
             </a>
           </div>
