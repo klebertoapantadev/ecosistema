@@ -38,12 +38,31 @@ const FALLBACK: Record<string, string> = {
 export default function TranqiLanding() {
   const carruselRef = useRef<HTMLDivElement>(null);
   const [abogados, setAbogados] = useState<AbogadoCard[]>(ABOGADOS_BASE);
+  const isDragging = useRef(false);
+  const startX = useRef(0);
+  const scrollLeftPos = useRef(0);
 
   const deslizarCarrusel = (dir: number) => {
     if (carruselRef.current) {
-      const scrollAmount = carruselRef.current.clientWidth * 0.75 * dir;
+      const scrollAmount = 240 * dir;
       carruselRef.current.scrollBy({ left: scrollAmount, behavior: "smooth" });
     }
+  };
+
+  const onMouseDown = (e: React.MouseEvent) => {
+    if (!carruselRef.current) return;
+    isDragging.current = true;
+    startX.current = e.pageX - carruselRef.current.offsetLeft;
+    scrollLeftPos.current = carruselRef.current.scrollLeft;
+  };
+  const onMouseLeave = () => { isDragging.current = false; };
+  const onMouseUp = () => { isDragging.current = false; };
+  const onMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging.current || !carruselRef.current) return;
+    e.preventDefault();
+    const x = e.pageX - carruselRef.current.offsetLeft;
+    const walk = (x - startX.current) * 1.5;
+    carruselRef.current.scrollLeft = scrollLeftPos.current - walk;
   };
 
   useEffect(() => {
@@ -554,32 +573,61 @@ export default function TranqiLanding() {
             </div>
           </div>
 
-          <div className="cuadricula-equipo reveal" ref={carruselRef}>
-            {abogados.map((abg) => (
-              <article key={abg.id} className="card-equipo">
-                <div className="retrato-equipo">
-                  <span className="etiqueta-equipo">{abg.materia}</span>
-                  <div className="silueta-equipo">
-                    <svg viewBox="0 0 100 100" fill="none" stroke="#D8FFB3" strokeWidth="1.6">
-                      <circle cx="50" cy="38" r="19"/>
-                      <path d="M14 92c0-24 16-38 36-38s36 14 36 38"/>
-                    </svg>
-                  </div>
-                  {abg.verificado && (
-                    <span className="verificado-equipo" title="Verificado">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="#06251D" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M20 6 9 17l-5-5"/>
+          <div style={{ position: "relative" }}>
+            <button
+              type="button"
+              onClick={() => deslizarCarrusel(-1)}
+              aria-label="Anterior"
+              className="btn-carrusel-flotante btn-carrusel-flotante-izq"
+              title="Anterior"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+            </button>
+
+            <div
+              className="cuadricula-equipo reveal"
+              ref={carruselRef}
+              onMouseDown={onMouseDown}
+              onMouseLeave={onMouseLeave}
+              onMouseUp={onMouseUp}
+              onMouseMove={onMouseMove}
+            >
+              {abogados.map((abg) => (
+                <article key={abg.id} className="card-equipo">
+                  <div className="retrato-equipo">
+                    <span className="etiqueta-equipo">{abg.materia}</span>
+                    <div className="silueta-equipo">
+                      <svg viewBox="0 0 100 100" fill="none" stroke="#D8FFB3" strokeWidth="1.6">
+                        <circle cx="50" cy="38" r="19"/>
+                        <path d="M14 92c0-24 16-38 36-38s36 14 36 38"/>
                       </svg>
-                    </span>
-                  )}
-                </div>
-                <div className="datos-equipo">
-                  <p className="nombre-equipo">{abg.nombre}</p>
-                  <p className="cargo-equipo">{abg.cargo}</p>
-                  <div className="fila-meta-equipo"><span>{abg.ubicacion}</span><b>{abg.experiencia}</b></div>
-                </div>
-              </article>
-            ))}
+                    </div>
+                    {abg.verificado && (
+                      <span className="verificado-equipo" title="Verificado">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="#06251D" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M20 6 9 17l-5-5"/>
+                        </svg>
+                      </span>
+                    )}
+                  </div>
+                  <div className="datos-equipo">
+                    <p className="nombre-equipo">{abg.nombre}</p>
+                    <p className="cargo-equipo">{abg.cargo}</p>
+                    <div className="fila-meta-equipo"><span>{abg.ubicacion}</span><b>{abg.experiencia}</b></div>
+                  </div>
+                </article>
+              ))}
+            </div>
+
+            <button
+              type="button"
+              onClick={() => deslizarCarrusel(1)}
+              aria-label="Siguiente"
+              className="btn-carrusel-flotante btn-carrusel-flotante-der"
+              title="Siguiente"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+            </button>
           </div>
 
           <div className="pie-equipo reveal">
