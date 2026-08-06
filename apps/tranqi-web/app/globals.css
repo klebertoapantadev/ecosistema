@@ -1332,14 +1332,16 @@ p { line-height: 1.55; }
 
 #equipo .cuadricula-equipo {
   display: flex;
-  gap: 18px;
-  overflow-x: auto;
-  scroll-snap-type: x mandatory;
+  gap: 16px;
+  overflow-x: auto !important;
+  scroll-snap-type: x proximity;
   scroll-behavior: smooth;
+  touch-action: pan-x pan-y;
   padding-bottom: 12px;
   scrollbar-width: thin;
   scrollbar-color: #05876E #052A23;
   -webkit-overflow-scrolling: touch;
+  user-select: none;
 }
 #equipo .cuadricula-equipo::-webkit-scrollbar {
   height: 6px;

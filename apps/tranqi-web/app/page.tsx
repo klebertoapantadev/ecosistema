@@ -18,6 +18,10 @@ const ABOGADOS_BASE: AbogadoCard[] = [
   { id: "2", nombre: "Camila Rosero", cargo: "Abogada litigante", materia: "Derecho Laboral", ubicacion: "Guayaquil · 2 prov.", experiencia: "8 años", verificado: true },
   { id: "3", nombre: "Andrés Villacís", cargo: "Abogado litigante", materia: "Derecho Penal", ubicacion: "Cuenca · 3 prov.", experiencia: "15 años", verificado: true },
   { id: "4", nombre: "Fernanda Cevallos", cargo: "Asesora legal", materia: "Derecho de Familia", ubicacion: "Quito · 1 prov.", experiencia: "6 años", verificado: true },
+  { id: "5", nombre: "Gabriel Mendoza", cargo: "Especialista tributario", materia: "Derecho Mercantil", ubicacion: "Ambato · 3 prov.", experiencia: "10 años", verificado: true },
+  { id: "6", nombre: "Sofía Alarcón", cargo: "Abogada litigante", materia: "Derecho Constitucional", ubicacion: "Loja · 2 prov.", experiencia: "7 años", verificado: true },
+  { id: "7", nombre: "Roberto Peralta", cargo: "Consultor legal", materia: "Derecho Administrativo", ubicacion: "Manta · 4 prov.", experiencia: "14 años", verificado: true },
+  { id: "8", nombre: "Elena Izquierdo", cargo: "Asesora corporativa", materia: "Derecho Societario", ubicacion: "Ibarra · 2 prov.", experiencia: "9 años", verificado: true },
 ];
 
 const PRESENTACION =
@@ -543,31 +547,19 @@ export default function TranqiLanding() {
           <path pathLength={1} stroke="#05876E" strokeWidth="1" opacity={0.6} d="M 1480 200 C 1180 260 1180 520 1360 620 C 1520 700 1420 940 1160 940 C 940 940 900 1160 1120 1260" />
         </svg></div>
         <div className="lienzo-equipo">
-          <div className="cabecera-equipo reveal" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: "24px", marginBottom: "44px" }}>
+          <div className="cabecera-equipo reveal" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: "24px", marginBottom: "32px" }}>
             <div style={{ maxWidth: "58ch" }}>
               <p className="rotulo-equipo">Nuestro equipo</p>
-              <h2>Abogados reales, <i>verificados</i>, listos para acompañarte.</h2>
-              <p className="intro-equipo" style={{ marginBottom: 0 }}>
-                Cada perfil de la red tranqi pasa por título verificado en SENESCYT y matrícula confirmada en el Foro de Abogados antes de aparecer aquí.
-              </p>
+              <h2 style={{ marginBottom: 0 }}>Abogados reales, <i>verificados</i>, listos para acompañarte.</h2>
             </div>
 
             <div className="acciones-equipo">
-              <div className="flechas-carrusel-header" style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-                <button type="button" onClick={() => deslizarCarrusel(-1)} aria-label="Anterior abogado" className="btn-carrusel-flecha" title="Anterior">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
-                </button>
-                <button type="button" onClick={() => deslizarCarrusel(1)} aria-label="Siguiente abogado" className="btn-carrusel-flecha" title="Siguiente">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6"/></svg>
-                </button>
-              </div>
-
               <a className="btn-equipo" href="/panel/solicitud-socio" style={{ backgroundColor: "#05876E", color: "#FFFFFF", border: "1px solid #D8FFB3" }}>
                 Únete al equipo Jurídico
                 <svg viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
               </a>
               <a className="btn-equipo" href="/vacantes">
-                Únete al equipo tranqi (Bolsa de Empleo & Vacantes)
+                Únete al equipo Tranqi
                 <svg viewBox="0 0 24 24" fill="none" stroke="#06251D" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
               </a>
             </div>
@@ -638,16 +630,6 @@ export default function TranqiLanding() {
               </svg>
               Título y matrícula verificados antes de aparecer en la red
             </p>
-
-            <div className="flechas-carrusel-pie" style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-              <span style={{ fontSize: "0.78rem", color: "#D8FFB3", fontWeight: 700, opacity: 0.8, marginRight: "4px" }}>Deslizar:</span>
-              <button type="button" onClick={() => deslizarCarrusel(-1)} aria-label="Anterior abogado" className="btn-carrusel-flecha" title="Anterior">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
-              </button>
-              <button type="button" onClick={() => deslizarCarrusel(1)} aria-label="Siguiente abogado" className="btn-carrusel-flecha" title="Siguiente">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6"/></svg>
-              </button>
-            </div>
           </div>
         </div>
       </section>
