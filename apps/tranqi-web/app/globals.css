@@ -1480,6 +1480,16 @@ p { line-height: 1.55; }
   color: #D8FFB3;
 }
 
+#equipo .cabecera-equipo {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 24px;
+  margin-bottom: 32px;
+  width: 100%;
+}
+
 #equipo .acciones-equipo {
   display: flex;
   gap: 12px;
