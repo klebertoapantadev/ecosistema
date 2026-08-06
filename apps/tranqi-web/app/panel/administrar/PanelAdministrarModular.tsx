@@ -211,6 +211,7 @@ function VisorAuditoriaWidget() {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const adaptados: RegistroAuditoria[] = data.map((r: any) => ({
             reg_id: r.aud_id,
+            reg_esquema: r.aud_esquema || "tranqui_legal",
             reg_tabla: r.aud_tabla || r.aud_tabla_nombre || "trq_solicitud_socio",
             reg_operacion: r.aud_operacion || "UPDATE",
             reg_datos_anteriores: r.aud_datos_anteriores || null,
