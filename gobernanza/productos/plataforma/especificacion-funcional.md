@@ -20,7 +20,7 @@ Este documento describe el **comportamiento compartido por los 4 productos** (Tr
 | Código | Funcionalidad / Requerimiento | Estado | Avance (%) | Responsable Asignado |
 | :--- | :--- | :---: | :---: | :--- |
 | **`PLT-001`** | Identidad Única, Registro Cero Fricción y Auth | ✅ Implementado | **85%** | Kleber Toapanta |
-| **`PLT-002`** | Autenticación Multifactor (MFA TOTP) | 🟡 Parcial | **50%** | Kleber Toapanta |
+| **`PLT-002`** | Autenticación Multifactor (MFA TOTP) | 🟡 Parcial | **75%** | Kleber Toapanta |
 | **`PLT-003`** | Membresías, Jerarquía & Active Role Switcher | ✅ Implementado | **100%** | Kleber Toapanta / Jesus Navarrete |
 | **`PLT-004`** | **Buddie Conversacional (Chat IA ARIA)** | 🟡 En Desarrollo | **40%** | **Jesus Navarrete** |
 | **`PLT-005`** | Auditoría por Triggers y Widget Común | ✅ Implementado | **100%** | Kleber Toapanta |
