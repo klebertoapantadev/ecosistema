@@ -14,18 +14,20 @@ export default async function PaginaConfiguracion() {
   const cookieStore = await cookies();
   const modoCookie = cookieStore.get("tranqi_modo_rol")?.value;
 
-  const puedeConmutar = Boolean(perfil?.usu_superadmin_plataforma);
+  const esSuperadmin = Boolean(perfil?.usu_superadmin_plataforma);
+  const puedeConmutar = esSuperadmin;
   const modo = puedeConmutar && modoCookie ? modoCookie : (perfiles.includes("ADMINISTRADOR") ? "admin" : "cliente");
 
-  const esAdmin = modo === "admin";
+  const esAdmin = modo === "admin" || esSuperadmin;
 
-  const configuracion = esAdmin ? await obtenerConfiguracionNegocio(NEGOCIO) : null;
-  const smtp = esAdmin ? await obtenerSmtpNegocio(NEGOCIO) : null;
+  const configuracion = (esAdmin || esSuperadmin) ? await obtenerConfiguracionNegocio(NEGOCIO) : null;
+  const smtp = (esAdmin || esSuperadmin) ? await obtenerSmtpNegocio(NEGOCIO) : null;
 
   return (
     <div style={{ width: "100%" }}>
       <PanelConfiguracionModular
         esAdmin={esAdmin}
+        esSuperadmin={esSuperadmin}
         configuracion={configuracion}
         smtp={smtp}
         negocio={NEGOCIO}

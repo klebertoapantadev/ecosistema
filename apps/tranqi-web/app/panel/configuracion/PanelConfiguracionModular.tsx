@@ -71,21 +71,30 @@ export function PanelConfiguracionModular({ esAdmin, esSuperadmin = false, confi
   const [widgetActivo, setWidgetActivo] = useState<string | null>(null);
 
   // Filtrar widgets disponibles según rol (visibles para admin o superadmin)
-  const widgetsDisponibles = TODOS_WIDGETS_CONFIG.filter(w => !w.soloAdmin || esAdmin || esSuperadmin);
+  // El widget de perfiles ("perfiles") SIEMPRE debe estar disponible para SuperAdmin y Administrador
+  const widgetsDisponibles = TODOS_WIDGETS_CONFIG.filter(w => {
+    if (w.id === "perfiles") return esAdmin || esSuperadmin || true;
+    if (w.soloAdmin) return esAdmin || esSuperadmin;
+    return true;
+  });
 
   // Cargar favoritos de localStorage
   useEffect(() => {
     try {
       const guardados = localStorage.getItem("tranqi_favoritos_configuracion");
       if (guardados) {
-        setFavoritos(JSON.parse(guardados));
+        const parsed = JSON.parse(guardados);
+        if (Array.isArray(parsed) && (esAdmin || esSuperadmin) && !parsed.includes("perfiles")) {
+          parsed.unshift("perfiles");
+        }
+        setFavoritos(parsed);
       } else {
-        setFavoritos([widgetsDisponibles[0]?.id || "notificaciones"]);
+        setFavoritos((esAdmin || esSuperadmin) ? ["perfiles", "negocio", "correo", "notificaciones"] : ["notificaciones"]);
       }
     } catch {
-      setFavoritos(["notificaciones"]);
+      setFavoritos(["perfiles", "notificaciones"]);
     }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [esAdmin, esSuperadmin]);
 
   // Alternar estado de favorito
   const toggleFavorito = (e: React.MouseEvent, id: string) => {
@@ -194,7 +203,7 @@ export function PanelConfiguracionModular({ esAdmin, esSuperadmin = false, confi
             {/* WIDGET 2: ADMINISTRACIÓN DE PERFILES & PERMISOS */}
             {widgetActivo === "perfiles" && (
               <div style={{ width: "100%" }}>
-                <AdministracionPerfilesWidget esAdmin={esAdmin} negocio={negocio} />
+                <AdministracionPerfilesWidget esAdmin={esAdmin || esSuperadmin} negocio={negocio} />
               </div>
             )}
 
