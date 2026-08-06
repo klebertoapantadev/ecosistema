@@ -43,5 +43,6 @@ export { VerificacionCorreo } from "./componentes/VerificacionCorreo";
 export { FormularioRecuperacion } from "./componentes/FormularioRecuperacion";
 export { FormularioRestablecer } from "./componentes/FormularioRestablecer";
 export { FormularioPerfil } from "./componentes/FormularioPerfil";
+export { FormularioPerfilAbogado } from "./componentes/FormularioPerfilAbogado";
 export { EliminarCuenta } from "./componentes/EliminarCuenta";
 export { HistorialAccesos } from "./componentes/HistorialAccesos";

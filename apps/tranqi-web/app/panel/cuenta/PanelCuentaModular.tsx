@@ -1,8 +1,9 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { User, History, KeyRound, ShieldAlert, Star, X, CheckCircle2, ChevronRight, ShieldCheck } from "lucide-react";
+import { User, History, KeyRound, ShieldAlert, Star, X, CheckCircle2, ChevronRight, ShieldCheck, Briefcase } from "lucide-react";
 import { FormularioPerfil } from "@eco/identidad/componentes/FormularioPerfil";
+import { FormularioPerfilAbogado } from "@eco/identidad/componentes/FormularioPerfilAbogado";
 import { HistorialAccesos } from "@eco/identidad/componentes/HistorialAccesos";
 import { EliminarCuenta } from "@eco/identidad/componentes/EliminarCuenta";
 import { cerrarSesionYRedirigir } from "../acciones";
@@ -52,6 +53,14 @@ const WIDGETS_BASE: WidgetDef[] = [
     icono: User,
     colorIcono: "var(--violeta, #5000BA)",
     categoria: "Datos Personales"
+  },
+  {
+    id: "perfil_abogado",
+    titulo: "Perfil Profesional de Abogado (MFA)",
+    subtitulo: "Visualiza y edita tus datos de registro, SENESCYT, matrícula del Foro y especialidades (Protegido por MFA)",
+    icono: Briefcase,
+    colorIcono: "var(--esmeralda, #05876E)",
+    categoria: "Socio Abogado"
   },
   {
     id: "historial",
@@ -223,15 +232,33 @@ export function PanelCuentaModular({ perfil, historial, puedeConmutar = true, ro
 
           {/* Cuerpo a 100% de Ancho */}
           <div style={{ padding: "20px 16px", width: "100%" }}>
-            {/* WIDGET 1: PERFIL & DATOS */}
+            {/* WIDGET 1: PERFIL */}
             {widgetActivo === "perfil" && (
               <FormularioPerfil
                 inicial={{
                   nombres: perfil?.usu_nombres || "",
-                  apellidos: perfil?.usu_apellidos || "",
+                  apellidos: perfil?.usu_apellidos || perfil?.apellidos || "",
                   correo: perfil?.usu_correo || "",
                   whatsapp: perfil?.usu_whatsapp || "",
                   autorizaWhatsapp: Boolean(perfil?.usu_autorizacion_whatsapp)
+                }}
+              />
+            )}
+
+            {/* WIDGET 1.5: PERFIL ABOGADO (PROTEGIDO POR MFA) */}
+            {widgetActivo === "perfil_abogado" && (
+              <FormularioPerfilAbogado
+                inicial={{
+                  nombres: perfil?.usu_nombres || "",
+                  apellidos: perfil?.usu_apellidos || perfil?.apellidos || "",
+                  correo: perfil?.usu_correo || "",
+                  whatsapp: perfil?.usu_whatsapp || "",
+                  autorizaWhatsapp: Boolean(perfil?.usu_autorizacion_whatsapp),
+                  tituloSenescyt: "Abogado de los Tribunales de la República",
+                  matriculaForo: "",
+                  anosExperiencia: 5,
+                  detalles: "",
+                  mfaVerificadoInicial: false
                 }}
               />
             )}
