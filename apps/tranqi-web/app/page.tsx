@@ -546,20 +546,20 @@ export default function TranqiLanding() {
           <path pathLength={1} stroke="#D8FFB3" strokeWidth="1" opacity={0.55} d="M 174 0 C 174 360 1200 480 1100 800 C 1000 1120 174 1050 174 1400" />
         </svg></div>
         <div className="lienzo-equipo">
-          <div className="cabecera-equipo reveal" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: "24px", marginBottom: "32px" }}>
+          <div className="cabecera-equipo reveal">
             <div style={{ maxWidth: "58ch" }}>
               <p className="rotulo-equipo">Nuestro equipo</p>
               <h2 style={{ marginBottom: 0 }}>Abogados reales, <i>verificados</i>, listos para acompañarte.</h2>
             </div>
 
             <div className="acciones-equipo">
-              <a className="btn-equipo" href="/panel/solicitud-socio" style={{ backgroundColor: "#05876E", color: "#FFFFFF", border: "1px solid #D8FFB3" }}>
-                Únete al equipo Jurídico
-                <svg viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+              <a className="btn-equipo btn-equipo-juridico" href="/panel/solicitud-socio">
+                <span>Únete al equipo Jurídico</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
               </a>
-              <a className="btn-equipo" href="/vacantes">
-                Únete al equipo Tranqi
-                <svg viewBox="0 0 24 24" fill="none" stroke="#06251D" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+              <a className="btn-equipo btn-equipo-tranqi" href="/vacantes">
+                <span>Únete al equipo Tranqi</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
               </a>
             </div>
           </div>
@@ -629,11 +629,6 @@ export default function TranqiLanding() {
               </svg>
               Título y matrícula verificados antes de aparecer en la red
             </p>
-
-            <a className="btn-equipo btn-equipo-tranqi btn-pie-tranqi" href="/vacantes">
-              Únete al equipo Tranqi
-              <svg viewBox="0 0 24 24" fill="none" stroke="#06251D" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
-            </a>
           </div>
         </div>
       </section>
