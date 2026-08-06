@@ -546,7 +546,7 @@ export default function TranqiLanding() {
           <path pathLength={1} stroke="#D8FFB3" strokeWidth="1" opacity={0.55} d="M 174 0 C 174 360 1200 480 1100 800 C 1000 1120 174 1050 174 1400" />
         </svg></div>
         <div className="lienzo-equipo">
-          <div className="cabecera-equipo">
+          <div className="cabecera-equipo reveal">
             <div style={{ maxWidth: "58ch" }}>
               <p className="rotulo-equipo">Nuestro equipo</p>
               <h2 style={{ marginBottom: 0 }}>Abogados reales, <i>verificados</i>, listos para acompañarte.</h2>
