@@ -1608,79 +1608,87 @@ p { line-height: 1.55; }
 
 @media (max-width: 768px) {
   #equipo {
-    padding: 16px 10px 12px !important;
+    padding: 24px 14px 20px !important;
   }
   #equipo .cabecera-equipo {
     display: flex !important;
     flex-direction: column !important;
     align-items: center !important;
     text-align: center !important;
-    gap: 8px !important;
-    margin-bottom: 12px !important;
+    gap: 12px !important;
+    margin-bottom: 20px !important;
     width: 100% !important;
   }
   #equipo .rotulo-equipo {
-    margin-bottom: 2px !important;
-    font-size: 10px !important;
+    display: flex !important;
+    justify-content: center !important;
+    margin: 0 auto 6px !important;
+    font-size: 11px !important;
   }
   #equipo h2 {
-    font-size: 1.12rem !important;
-    margin-bottom: 0px !important;
-    line-height: 1.2 !important;
+    font-size: 1.25rem !important;
+    line-height: 1.25 !important;
+    margin: 0 auto !important;
     text-align: center !important;
     max-width: 100% !important;
   }
   #equipo .acciones-equipo {
     display: flex !important;
-    flex-direction: row !important;
-    flex-wrap: nowrap !important;
+    flex-direction: column !important;
     align-items: center !important;
     justify-content: center !important;
-    gap: 6px !important;
+    gap: 10px !important;
     width: 100% !important;
-    margin: 4px auto 0 !important;
+    max-width: 320px !important;
+    margin: 12px auto 0 !important;
   }
   #equipo .btn-equipo {
     display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
-    gap: 4px !important;
-    flex: 1 1 50% !important;
-    min-width: 0 !important;
-    padding: 7px 6px !important;
+    gap: 8px !important;
+    width: 100% !important;
+    padding: 10px 16px !important;
     border-radius: 999px !important;
-    font-size: 0.72rem !important;
+    font-size: 0.82rem !important;
     font-weight: 800 !important;
     text-align: center !important;
-    line-height: 1.15 !important;
+    line-height: 1.2 !important;
     box-sizing: border-box !important;
     white-space: nowrap !important;
+    margin: 0 auto !important;
   }
   #equipo .btn-equipo span {
     display: inline-block !important;
     font-weight: 800 !important;
+    text-align: center !important;
+  }
+  #equipo .btn-equipo svg {
+    width: 14px !important;
+    height: 14px !important;
+    flex-shrink: 0 !important;
   }
   #equipo .card-equipo {
-    flex: 0 0 185px !important;
+    flex: 0 0 205px !important;
   }
   #equipo .retrato-equipo {
-    aspect-ratio: 16 / 9 !important;
+    aspect-ratio: 16 / 9.5 !important;
   }
   #equipo .pie-equipo {
-    margin-top: 8px !important;
-    padding-top: 6px !important;
-    flex-direction: row !important;
-    justify-content: center !important;
+    margin-top: 14px !important;
+    padding-top: 10px !important;
+    flex-direction: column !important;
+    align-items: center !important;
     text-align: center !important;
   }
   #equipo .confianza-equipo {
-    font-size: 0.72rem !important;
+    font-size: 0.78rem !important;
   }
   #equipo .btn-carrusel-flotante-izq {
-    left: 1px !important;
+    left: 2px !important;
   }
   #equipo .btn-carrusel-flotante-der {
-    right: 1px !important;
+    right: 2px !important;
   }
 }
 
