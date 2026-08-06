@@ -546,7 +546,7 @@ export default function TranqiLanding() {
           <path pathLength={1} stroke="#D8FFB3" strokeWidth="1" opacity={0.55} d="M 174 0 C 174 360 1200 480 1100 800 C 1000 1120 174 1050 174 1400" />
         </svg></div>
         <div className="lienzo-equipo">
-          <div className="cabecera-equipo reveal">
+          <div className="cabecera-equipo">
             <div style={{ maxWidth: "58ch" }}>
               <p className="rotulo-equipo">Nuestro equipo</p>
               <h2 style={{ marginBottom: 0 }}>Abogados reales, <i>verificados</i>, listos para acompañarte.</h2>
@@ -576,7 +576,7 @@ export default function TranqiLanding() {
             </button>
 
             <div
-              className="cuadricula-equipo reveal"
+              className="cuadricula-equipo"
               ref={carruselRef}
               onMouseDown={onMouseDown}
               onMouseLeave={onMouseLeave}
@@ -621,7 +621,7 @@ export default function TranqiLanding() {
             </button>
           </div>
 
-          <div className="pie-equipo reveal">
+          <div className="pie-equipo">
             <p className="confianza-equipo">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M12 2 4 6v6c0 5 3.4 8.5 8 10 4.6-1.5 8-5 8-10V6z"/>
