@@ -1,12 +1,24 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { crearClienteNavegador } from "@eco/supabase";
 
-// Landing de tranqi portada 1:1 desde demo/index.html (klebertoapantadev/tranqi).
-// El JS original era un IIFE de scroll paginado + buddie conversacional que
-// manipula el DOM directamente; se conserva esa forma dentro de useEffect en
-// vez de reescribirlo a idiomas React, para no arriesgar regresiones visuales
-// en un sitio ya en producción. Ver gobernanza/arquitectura/adr/0002-*.
+interface AbogadoCard {
+  id: string;
+  nombre: string;
+  cargo: string;
+  materia: string;
+  ubicacion: string;
+  experiencia: string;
+  verificado: boolean;
+}
+
+const ABOGADOS_BASE: AbogadoCard[] = [
+  { id: "1", nombre: "Mateo Salazar", cargo: "Socio fundador", materia: "Derecho Civil", ubicacion: "Quito · 4 prov.", experiencia: "12 años", verificado: true },
+  { id: "2", nombre: "Camila Rosero", cargo: "Abogada litigante", materia: "Derecho Laboral", ubicacion: "Guayaquil · 2 prov.", experiencia: "8 años", verificado: true },
+  { id: "3", nombre: "Andrés Villacís", cargo: "Abogado litigante", materia: "Derecho Penal", ubicacion: "Cuenca · 3 prov.", experiencia: "15 años", verificado: true },
+  { id: "4", nombre: "Fernanda Cevallos", cargo: "Asesora legal", materia: "Derecho de Familia", ubicacion: "Quito · 1 prov.", experiencia: "6 años", verificado: true },
+];
 
 const PRESENTACION =
   "¡Hola! Soy tranqi, el amigo que estudió derecho. Te acompaño mientras exploras — y si algo te da curiosidad, haz clic en mí y hablamos.";
@@ -25,6 +37,7 @@ const FALLBACK: Record<string, string> = {
 
 export default function TranqiLanding() {
   const carruselRef = useRef<HTMLDivElement>(null);
+  const [abogados, setAbogados] = useState<AbogadoCard[]>(ABOGADOS_BASE);
 
   const deslizarCarrusel = (dir: number) => {
     if (carruselRef.current) {
@@ -32,6 +45,57 @@ export default function TranqiLanding() {
       carruselRef.current.scrollBy({ left: scrollAmount, behavior: "smooth" });
     }
   };
+
+  useEffect(() => {
+    async function cargarAbogadosRegistrados() {
+      try {
+        const supabase = crearClienteNavegador();
+        const { data: solicitudes } = await supabase
+          .schema("tranqui_legal")
+          .from("trq_solicitud_socio")
+          .select("ssc_id, ssc_usuario_id, ssc_estado, ssc_creado_en")
+          .order("ssc_creado_en", { ascending: false })
+          .limit(12);
+
+        if (solicitudes && solicitudes.length > 0) {
+          const uIds = [...new Set(solicitudes.map((s) => s.ssc_usuario_id))];
+          const { data: usuarios } = await supabase
+            .schema("comun_seguridad")
+            .from("seg_usuario")
+            .select("usu_id, usu_nombres, usu_apellidos")
+            .in("usu_id", uIds);
+
+          const mapaUsuarios = new Map((usuarios ?? []).map((u) => [u.usu_id, u]));
+
+          const registrados: AbogadoCard[] = solicitudes.map((sol) => {
+            const u = mapaUsuarios.get(sol.ssc_usuario_id);
+            const nom = u && (u.usu_nombres || u.usu_apellidos)
+              ? `${u.usu_nombres ?? ""} ${u.usu_apellidos ?? ""}`.trim()
+              : "Abogado Registrado";
+            return {
+              id: sol.ssc_id,
+              nombre: nom,
+              cargo: sol.ssc_estado === "ACEPTADA" ? "Abogado de la Red" : "Socio Postulante",
+              materia: "Derecho General",
+              ubicacion: "Ecuador",
+              experiencia: "Verificado",
+              verificado: sol.ssc_estado === "ACEPTADA",
+            };
+          });
+
+          setAbogados((prev) => {
+            const idsExistentes = new Set(prev.map((a) => a.id));
+            const nuevos = registrados.filter((r) => !idsExistentes.has(r.id));
+            return [...prev, ...nuevos];
+          });
+        }
+      } catch {
+        // En caso de RLS sin autenticación previa, se mantienen los abogados base demostrativos
+      }
+    }
+    cargarAbogadosRegistrados();
+  }, []);
+
   useEffect(() => {
     const convId = crypto.randomUUID();
     const seen = new Set<string>();
@@ -491,93 +555,31 @@ export default function TranqiLanding() {
           </div>
 
           <div className="cuadricula-equipo reveal" ref={carruselRef}>
-            <article className="card-equipo">
-              <div className="retrato-equipo">
-                <span className="etiqueta-equipo">Derecho Civil</span>
-                <div className="silueta-equipo">
-                  <svg viewBox="0 0 100 100" fill="none" stroke="#D8FFB3" strokeWidth="1.6">
-                    <circle cx="50" cy="38" r="19"/>
-                    <path d="M14 92c0-24 16-38 36-38s36 14 36 38"/>
-                  </svg>
+            {abogados.map((abg) => (
+              <article key={abg.id} className="card-equipo">
+                <div className="retrato-equipo">
+                  <span className="etiqueta-equipo">{abg.materia}</span>
+                  <div className="silueta-equipo">
+                    <svg viewBox="0 0 100 100" fill="none" stroke="#D8FFB3" strokeWidth="1.6">
+                      <circle cx="50" cy="38" r="19"/>
+                      <path d="M14 92c0-24 16-38 36-38s36 14 36 38"/>
+                    </svg>
+                  </div>
+                  {abg.verificado && (
+                    <span className="verificado-equipo" title="Verificado">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="#06251D" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M20 6 9 17l-5-5"/>
+                      </svg>
+                    </span>
+                  )}
                 </div>
-                <span className="verificado-equipo" title="Verificado">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="#06251D" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M20 6 9 17l-5-5"/>
-                  </svg>
-                </span>
-              </div>
-              <div className="datos-equipo">
-                <p className="nombre-equipo">Mateo Salazar</p>
-                <p className="cargo-equipo">Socio fundador</p>
-                <div className="fila-meta-equipo"><span>Quito · 4 provincias</span><b>12 años</b></div>
-              </div>
-            </article>
-
-            <article className="card-equipo">
-              <div className="retrato-equipo">
-                <span className="etiqueta-equipo">Derecho Laboral</span>
-                <div className="silueta-equipo">
-                  <svg viewBox="0 0 100 100" fill="none" stroke="#D8FFB3" strokeWidth="1.6">
-                    <circle cx="50" cy="38" r="19"/>
-                    <path d="M14 92c0-24 16-38 36-38s36 14 36 38"/>
-                  </svg>
+                <div className="datos-equipo">
+                  <p className="nombre-equipo">{abg.nombre}</p>
+                  <p className="cargo-equipo">{abg.cargo}</p>
+                  <div className="fila-meta-equipo"><span>{abg.ubicacion}</span><b>{abg.experiencia}</b></div>
                 </div>
-                <span className="verificado-equipo" title="Verificado">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="#06251D" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M20 6 9 17l-5-5"/>
-                  </svg>
-                </span>
-              </div>
-              <div className="datos-equipo">
-                <p className="nombre-equipo">Camila Rosero</p>
-                <p className="cargo-equipo">Abogada litigante</p>
-                <div className="fila-meta-equipo"><span>Guayaquil · 2 provincias</span><b>8 años</b></div>
-              </div>
-            </article>
-
-            <article className="card-equipo">
-              <div className="retrato-equipo">
-                <span className="etiqueta-equipo">Derecho Penal</span>
-                <div className="silueta-equipo">
-                  <svg viewBox="0 0 100 100" fill="none" stroke="#D8FFB3" strokeWidth="1.6">
-                    <circle cx="50" cy="38" r="19"/>
-                    <path d="M14 92c0-24 16-38 36-38s36 14 36 38"/>
-                  </svg>
-                </div>
-                <span className="verificado-equipo" title="Verificado">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="#06251D" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M20 6 9 17l-5-5"/>
-                  </svg>
-                </span>
-              </div>
-              <div className="datos-equipo">
-                <p className="nombre-equipo">Andrés Villacís</p>
-                <p className="cargo-equipo">Abogado litigante</p>
-                <div className="fila-meta-equipo"><span>Cuenca · 3 provincias</span><b>15 años</b></div>
-              </div>
-            </article>
-
-            <article className="card-equipo">
-              <div className="retrato-equipo">
-                <span className="etiqueta-equipo">Derecho de Familia</span>
-                <div className="silueta-equipo">
-                  <svg viewBox="0 0 100 100" fill="none" stroke="#D8FFB3" strokeWidth="1.6">
-                    <circle cx="50" cy="38" r="19"/>
-                    <path d="M14 92c0-24 16-38 36-38s36 14 36 38"/>
-                  </svg>
-                </div>
-                <span className="verificado-equipo" title="Verificado">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="#06251D" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M20 6 9 17l-5-5"/>
-                  </svg>
-                </span>
-              </div>
-              <div className="datos-equipo">
-                <p className="nombre-equipo">Fernanda Cevallos</p>
-                <p className="cargo-equipo">Asesora legal</p>
-                <div className="fila-meta-equipo"><span>Quito · 1 provincia</span><b>6 años</b></div>
-              </div>
-            </article>
+              </article>
+            ))}
           </div>
 
           <div className="pie-equipo reveal">
