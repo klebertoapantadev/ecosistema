@@ -553,13 +553,11 @@ export default function TranqiLanding() {
             </div>
 
             <div className="acciones-equipo">
-              <a className="btn-equipo btn-equipo-juridico" href="/panel/solicitud-socio">
-                <span>Únete al equipo Jurídico</span>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+              <a className="btn btn-blanco-borde" href="/panel/solicitud-socio">
+                Únete al equipo Jurídico
               </a>
-              <a className="btn-equipo btn-equipo-tranqi" href="/vacantes">
-                <span>Únete al equipo Tranqi</span>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+              <a className="btn btn-blanco-borde" href="/vacantes">
+                Únete al equipo Tranqi
               </a>
             </div>
           </div>
