@@ -1,10 +1,13 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { UserCog, Users, ClipboardList, Bell, Shield, ChevronRight, Star, Lock, X } from "lucide-react";
+import { UserCog, Users, ClipboardList, Bell, Shield, ChevronRight, Star, Lock, X, Eye } from "lucide-react";
 import Link from "next/link";
+import { crearClienteNavegador } from "@eco/supabase";
 import { AdministracionPerfilesWidget } from "@eco/gestion-usuarios/componentes/AdministracionPerfilesWidget";
 import { EmisionNotificacionesWidget } from "@eco/notificaciones";
+import { TablaAuditoria } from "../auditoria/TablaAuditoria";
+import type { RegistroAuditoria } from "@eco/auditoria";
 
 interface Props {
   negocio: string;
@@ -68,6 +71,177 @@ const MODULOS_ADMIN: ModuloAdminDef[] = [
   }
 ];
 
+// Componente Widget Nativo para Aprobación de Socios Abogados (Sin iframe)
+function SociosWidget() {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [solicitudes, setSolicitudes] = useState<any[]>([]);
+  const [cargando, setCargando] = useState(true);
+
+  useEffect(() => {
+    async function cargar() {
+      try {
+        const supabase = crearClienteNavegador();
+        const { data: sData } = await supabase
+          .schema("tranqui_legal")
+          .from("trq_solicitud_socio")
+          .select("*")
+          .order("ssc_creado_en", { ascending: false });
+
+        if (sData && sData.length > 0) {
+          const userIds = [...new Set(sData.map(s => s.ssc_usuario_id))];
+          const { data: uData } = await supabase
+            .schema("comun_seguridad")
+            .from("seg_usuario")
+            .select("usu_id, usu_nombres, usu_apellidos, usu_correo")
+            .in("usu_id", userIds);
+
+          const uMap = new Map((uData || []).map(u => [u.usu_id, u]));
+          const combinadas = sData.map(s => ({
+            ...s,
+            usuario: uMap.get(s.ssc_usuario_id) || null
+          }));
+          setSolicitudes(combinadas);
+        } else {
+          setSolicitudes([]);
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setCargando(false);
+      }
+    }
+    cargar();
+  }, []);
+
+  const ETIQUETA_ESTADO: Record<string, string> = {
+    enviada: "Pendiente aprobación",
+    en_revision: "En revisión",
+    aceptada: "Aprobado",
+    rechazada: "Rechazado",
+  };
+
+  if (cargando) {
+    return (
+      <div style={{ padding: "40px", textAlign: "center", color: "var(--panel-gris, #737373)" }}>
+        Cargando solicitudes de socios abogados...
+      </div>
+    );
+  }
+
+  if (solicitudes.length === 0) {
+    return (
+      <div className="estado-vacio" style={{ padding: "40px 20px", textAlign: "center" }}>
+        <Users style={{ width: 40, height: 40, color: "#9CA3AF", margin: "0 auto 12px", display: "block" }} />
+        <p style={{ margin: 0, fontWeight: 600, color: "#6B7280" }}>Todavía no hay solicitudes de socios abogados.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ width: "100%" }}>
+      <div className="tabla-panel-envoltura">
+        <table className="tabla-panel">
+          <thead>
+            <tr>
+              <th>Nombre Completo</th>
+              <th>Correo Electrónico</th>
+              <th>Fecha Envío</th>
+              <th>Estado Acreditación</th>
+              <th>Acción</th>
+            </tr>
+          </thead>
+          <tbody>
+            {solicitudes.map((s) => (
+              <tr key={s.ssc_id}>
+                <td>{[s.usuario?.usu_nombres, s.usuario?.usu_apellidos].filter(Boolean).join(" ") || "—"}</td>
+                <td>{s.usuario?.usu_correo || "—"}</td>
+                <td>{new Date(s.ssc_enviada_en || s.ssc_creado_en).toLocaleDateString("es-EC")}</td>
+                <td>
+                  <span className={`chip-estado-solicitud chip-${s.ssc_estado}`}>
+                    {ETIQUETA_ESTADO[s.ssc_estado] || s.ssc_estado}
+                  </span>
+                </td>
+                <td>
+                  <Link href={`/panel/socios/${s.ssc_id}`} className="btn-mini" style={{ textDecoration: "none", display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                    <Eye size={14} /> Evaluar
+                  </Link>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+// Componente Widget Nativo para Solicitudes de Socio (Sin iframe)
+function SolicitudSocioWidget() {
+  return (
+    <div style={{ padding: "24px", textAlign: "center", background: "#FAFAFA", borderRadius: "12px", border: "1px solid #E5E5E5" }}>
+      <ClipboardList style={{ width: 42, height: 42, color: "#05876E", margin: "0 auto 12px", display: "block" }} />
+      <h3 style={{ fontSize: "1.1rem", fontWeight: 700, margin: "0 0 8px 0" }}>Formulario de Solicitud de Socio Abogado</h3>
+      <p style={{ margin: "0 0 20px 0", color: "#666", fontSize: "0.88rem", maxWidth: "540px", marginInline: "auto" }}>
+        Únete a la red de abogados de tranqi. Completa tus datos de acreditación SENESCYT y foro de abogados para revisión.
+      </p>
+      <Link href="/panel/solicitud-socio" className="btn btn-primario" style={{ textDecoration: "none", display: "inline-flex", alignItems: "center", gap: "8px" }}>
+        <ClipboardList size={16} /> Ir al Formulario de Postulación
+      </Link>
+    </div>
+  );
+}
+
+// Componente Widget Nativo para Auditoría BDD (Sin iframe)
+function VisorAuditoriaWidget() {
+  const [registros, setRegistros] = useState<RegistroAuditoria[]>([]);
+  const [cargando, setCargando] = useState(true);
+
+  useEffect(() => {
+    async function cargar() {
+      try {
+        const supabase = crearClienteNavegador();
+        const { data } = await supabase
+          .schema("comun_auditoria")
+          .from("aud_registro")
+          .select("*")
+          .order("aud_creado_en", { ascending: false })
+          .limit(100);
+
+        if (data) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const adaptados: RegistroAuditoria[] = data.map((r: any) => ({
+            reg_id: r.aud_id,
+            reg_tabla: r.aud_tabla || r.aud_tabla_nombre || "trq_solicitud_socio",
+            reg_operacion: r.aud_operacion || "UPDATE",
+            reg_datos_anteriores: r.aud_datos_anteriores || null,
+            reg_datos_nuevos: r.aud_datos_nuevos || null,
+            reg_creado_en: r.aud_creado_en,
+            actor_nombres: r.aud_actor_nombres || null,
+            actor_apellidos: r.aud_actor_apellidos || null,
+            actor_correo: r.aud_actor_correo || null,
+          }));
+          setRegistros(adaptados);
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setCargando(false);
+      }
+    }
+    cargar();
+  }, []);
+
+  if (cargando) {
+    return (
+      <div style={{ padding: "40px", textAlign: "center", color: "var(--panel-gris, #737373)" }}>
+        Cargando registros de auditoría inmutable...
+      </div>
+    );
+  }
+
+  return <TablaAuditoria registros={registros} />;
+}
+
 export function PanelAdministrarModular({ negocio }: Props) {
   const [favoritos, setFavoritos] = useState<string[]>(["gestion_usuarios", "socios"]);
   const [widgetActivo, setWidgetActivo] = useState<string | null>(null);
@@ -112,7 +286,7 @@ export function PanelAdministrarModular({ negocio }: Props) {
 
   const moduloActualDef = MODULOS_ADMIN.find(m => m.id === widgetActivo);
 
-  // VISTA 2: PANEL DEDICADO DEL MÓDULO ENFOCADO (Con botón circular 'X' en la esquina superior derecha)
+  // VISTA 2: PANEL DEDICADO DEL MÓDULO ENFOCADO (Con botón circular 'X' en la esquina superior derecha, SIN iframe)
   if (widgetActivo && moduloActualDef) {
     return (
       <div style={{ width: "100%", animation: "fadeIn 0.15s ease" }}>
@@ -181,7 +355,7 @@ export function PanelAdministrarModular({ negocio }: Props) {
             </button>
           </header>
 
-          {/* Cuerpo del Módulo Activo */}
+          {/* Cuerpo del Módulo Activo - NATIVO SIN IFRAME */}
           <div style={{ padding: "20px 16px", width: "100%" }}>
             {/* 1. GESTIÓN DE USUARIOS */}
             {widgetActivo === "gestion_usuarios" && (
@@ -192,28 +366,12 @@ export function PanelAdministrarModular({ negocio }: Props) {
 
             {/* 2. APROBACIÓN DE SOCIOS ABOGADOS */}
             {widgetActivo === "socios" && (
-              <div style={{ width: "100%", padding: "10px 0" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
-                  <p style={{ margin: 0, fontSize: "0.88rem", color: "#666" }}>
-                    Validación de credenciales SENESCYT y matrículas del Foro de Abogados para ingreso a la red.
-                  </p>
-                  <Link href="/panel/socios" className="btn-mini" style={{ textDecoration: "none", fontSize: "0.78rem" }}>
-                    Ver Tabla Completa
-                  </Link>
-                </div>
-                <div style={{ background: "#FAFAFA", padding: "16px", borderRadius: "10px", border: "1px solid #E5E5E5" }}>
-                  <iframe src="/panel/socios" style={{ width: "100%", height: "540px", border: "none", borderRadius: "8px" }} title="Aprobación de Socios" />
-                </div>
-              </div>
+              <SociosWidget />
             )}
 
             {/* 3. SOLICITUDES DE SOCIOS */}
             {widgetActivo === "solicitud_socio" && (
-              <div style={{ width: "100%", padding: "10px 0" }}>
-                <div style={{ background: "#FAFAFA", padding: "16px", borderRadius: "10px", border: "1px solid #E5E5E5" }}>
-                  <iframe src="/panel/solicitud-socio" style={{ width: "100%", height: "540px", border: "none", borderRadius: "8px" }} title="Solicitudes de Socios" />
-                </div>
-              </div>
+              <SolicitudSocioWidget />
             )}
 
             {/* 4. EMISIÓN DE NOTIFICACIONES */}
@@ -225,11 +383,7 @@ export function PanelAdministrarModular({ negocio }: Props) {
 
             {/* 5. AUDITORÍA BDD & TELEMETRÍA */}
             {widgetActivo === "auditoria" && (
-              <div style={{ width: "100%", padding: "10px 0" }}>
-                <div style={{ background: "#FAFAFA", padding: "16px", borderRadius: "10px", border: "1px solid #E5E5E5" }}>
-                  <iframe src="/panel/auditoria" style={{ width: "100%", height: "560px", border: "none", borderRadius: "8px" }} title="Auditoría BDD" />
-                </div>
-              </div>
+              <VisorAuditoriaWidget />
             )}
           </div>
         </section>
