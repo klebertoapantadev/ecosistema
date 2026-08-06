@@ -540,11 +540,10 @@ export default function TranqiLanding() {
         </div>
       </section>
 
-      {/* NUESTRO EQUIPO · entra 174 · sale 320 (TRQ-002 / PLT-019) */}
+      {/* NUESTRO EQUIPO · entra 174 · sale 174 (TRQ-002 / PLT-019) */}
       <section id="equipo" data-buddie="equipo">
         <div className="ribbon"><svg viewBox="0 0 1440 1400" preserveAspectRatio="none">
-          <path pathLength={1} stroke="#D8FFB3" strokeWidth="1" opacity={0.5} d="M -40 120 C 300 40 520 260 480 480 C 440 700 120 680 160 900 C 200 1120 560 1080 620 1300" />
-          <path pathLength={1} stroke="#05876E" strokeWidth="1" opacity={0.6} d="M 1480 200 C 1180 260 1180 520 1360 620 C 1520 700 1420 940 1160 940 C 940 940 900 1160 1120 1260" />
+          <path pathLength={1} stroke="#D8FFB3" strokeWidth="1" opacity={0.55} d="M 174 0 C 174 360 1200 480 1100 800 C 1000 1120 174 1050 174 1400" />
         </svg></div>
         <div className="lienzo-equipo">
           <div className="cabecera-equipo reveal" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: "24px", marginBottom: "32px" }}>
