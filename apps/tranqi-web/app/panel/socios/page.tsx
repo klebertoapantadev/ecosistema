@@ -1,14 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Users } from "lucide-react";
+import { Users, X } from "lucide-react";
 import { listarSolicitudes } from "../../../modulos/socios/consultas";
 
 export const metadata: Metadata = { title: "Socios — tranqi" };
 
-// Un socio existe desde que envia la solicitud -- no solo desde que se
-// acepta. Antes "Socios" y "Solicitudes" eran pestañas separadas y una
-// solicitud recien enviada no aparecia en ningun lado obvio; ahora es una
-// sola lista con estado visible.
 const ETIQUETA_ESTADO: Record<string, string> = {
   enviada: "Pendiente aprobación",
   en_revision: "En revisión",
@@ -20,8 +16,32 @@ export default async function PaginaSocios() {
   const solicitudes = await listarSolicitudes();
 
   return (
-    <div>
-      <h1>Socios</h1>
+    <div style={{ width: "100%" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          <Users size={22} color="#05876E" />
+          <h1 style={{ margin: 0, fontSize: "1.35rem" }}>Aprobación de Socios Abogados</h1>
+        </div>
+        <Link
+          href="/panel/administrar"
+          title="Cerrar módulo y volver a Administrar"
+          style={{
+            background: "var(--blanco, #ffffff)",
+            border: "1.5px solid var(--panel-linea, #E4E4E4)",
+            color: "var(--negro, #111111)",
+            borderRadius: "50%",
+            width: "36px",
+            height: "36px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            textDecoration: "none",
+            boxShadow: "0 1px 3px rgba(0,0,0,0.06)"
+          }}
+        >
+          <X size={18} />
+        </Link>
+      </div>
       {/* Auditoría vivía aquí como subnav -- ahora es su propia sección
           en el rail (app/panel/auditoria), visible a Administrador y
           SuperAdmin sin pasar por Socios. */}

@@ -1,8 +1,10 @@
 "use client";
 
-import React, { useState } from "react";
-import { UserCog, Users, ClipboardList, Bell, Shield, ChevronRight, Star, Lock } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { UserCog, Users, ClipboardList, Bell, Shield, ChevronRight, Star, Lock, X } from "lucide-react";
 import Link from "next/link";
+import { AdministracionPerfilesWidget } from "@eco/gestion-usuarios/componentes/AdministracionPerfilesWidget";
+import { EmisionNotificacionesWidget } from "@eco/notificaciones";
 
 interface Props {
   negocio: string;
@@ -68,14 +70,36 @@ const MODULOS_ADMIN: ModuloAdminDef[] = [
 
 export function PanelAdministrarModular({ negocio }: Props) {
   const [favoritos, setFavoritos] = useState<string[]>(["gestion_usuarios", "socios"]);
+  const [widgetActivo, setWidgetActivo] = useState<string | null>(null);
+
+  // Leer modulo inicial desde localStorage o URL
+  useEffect(() => {
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const modQuery = urlParams.get("modulo") || urlParams.get("w");
+      if (modQuery && MODULOS_ADMIN.some(m => m.id === modQuery)) {
+        setWidgetActivo(modQuery);
+      }
+
+      const guardados = localStorage.getItem("tranqi_favoritos_administrar");
+      if (guardados) {
+        setFavoritos(JSON.parse(guardados));
+      }
+    } catch { /* Ignorar */ }
+  }, []);
 
   const toggleFavorito = (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
+    let nuevos: string[];
     if (favoritos.includes(id)) {
-      setFavoritos(favoritos.filter(item => item !== id));
+      nuevos = favoritos.filter(item => item !== id);
     } else {
-      setFavoritos([...favoritos, id]);
+      nuevos = [...favoritos, id];
     }
+    setFavoritos(nuevos);
+    try {
+      localStorage.setItem("tranqi_favoritos_administrar", JSON.stringify(nuevos));
+    } catch { /* Ignorar */ }
   };
 
   const modulosOrdenados = [...MODULOS_ADMIN].sort((a, b) => {
@@ -86,6 +110,134 @@ export function PanelAdministrarModular({ negocio }: Props) {
     return 0;
   });
 
+  const moduloActualDef = MODULOS_ADMIN.find(m => m.id === widgetActivo);
+
+  // VISTA 2: PANEL DEDICADO DEL MÓDULO ENFOCADO (Con botón circular 'X' en la esquina superior derecha)
+  if (widgetActivo && moduloActualDef) {
+    return (
+      <div style={{ width: "100%", animation: "fadeIn 0.15s ease" }}>
+        <section className="tarjeta-seccion" style={{ background: "var(--blanco, #ffffff)", borderRadius: "16px", overflow: "hidden", width: "100%", border: "1px solid var(--panel-linea, #E4E4E4)" }}>
+          <header
+            style={{
+              padding: "16px 20px",
+              background: "var(--panel-papel, #F7F6FA)",
+              borderBottom: "1px solid var(--panel-linea, #E4E4E4)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between"
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+              <div
+                style={{
+                  padding: "8px",
+                  borderRadius: "8px",
+                  background: "var(--blanco, #ffffff)",
+                  border: "1px solid var(--panel-linea, #E4E4E4)",
+                  display: "flex"
+                }}
+              >
+                {React.createElement(moduloActualDef.icono, { size: 20, color: moduloActualDef.colorIcono })}
+              </div>
+              <div>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                  <h2 style={{ fontSize: "1.05rem", fontWeight: 800, color: "var(--negro, #111111)", margin: 0 }}>
+                    {moduloActualDef.titulo}
+                  </h2>
+                  {favoritos.includes(widgetActivo) && (
+                    <span className="pildora-estado" style={{ background: "var(--amarillo)", color: "var(--negro)", fontSize: "0.65rem" }}>
+                      ⭐ Destacado
+                    </span>
+                  )}
+                </div>
+                <span style={{ fontSize: "0.8rem", color: "var(--panel-gris, #737373)", marginTop: "2px", display: "block" }}>
+                  {moduloActualDef.subtitulo}
+                </span>
+              </div>
+            </div>
+
+            {/* Botón Circular de Cerrar (X) */}
+            <button
+              type="button"
+              onClick={() => setWidgetActivo(null)}
+              title="Cerrar módulo y volver a Administrar"
+              style={{
+                background: "var(--blanco, #ffffff)",
+                border: "1.5px solid var(--panel-linea, #E4E4E4)",
+                color: "var(--negro, #111111)",
+                borderRadius: "50%",
+                width: "36px",
+                height: "36px",
+                flexShrink: 0,
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
+                transition: "all 0.15s ease"
+              }}
+            >
+              <X size={18} />
+            </button>
+          </header>
+
+          {/* Cuerpo del Módulo Activo */}
+          <div style={{ padding: "20px 16px", width: "100%" }}>
+            {/* 1. GESTIÓN DE USUARIOS */}
+            {widgetActivo === "gestion_usuarios" && (
+              <div style={{ width: "100%" }}>
+                <AdministracionPerfilesWidget esAdmin={true} negocio={negocio} />
+              </div>
+            )}
+
+            {/* 2. APROBACIÓN DE SOCIOS ABOGADOS */}
+            {widgetActivo === "socios" && (
+              <div style={{ width: "100%", padding: "10px 0" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+                  <p style={{ margin: 0, fontSize: "0.88rem", color: "#666" }}>
+                    Validación de credenciales SENESCYT y matrículas del Foro de Abogados para ingreso a la red.
+                  </p>
+                  <Link href="/panel/socios" className="btn-mini" style={{ textDecoration: "none", fontSize: "0.78rem" }}>
+                    Ver Tabla Completa
+                  </Link>
+                </div>
+                <div style={{ background: "#FAFAFA", padding: "16px", borderRadius: "10px", border: "1px solid #E5E5E5" }}>
+                  <iframe src="/panel/socios" style={{ width: "100%", height: "540px", border: "none", borderRadius: "8px" }} title="Aprobación de Socios" />
+                </div>
+              </div>
+            )}
+
+            {/* 3. SOLICITUDES DE SOCIOS */}
+            {widgetActivo === "solicitud_socio" && (
+              <div style={{ width: "100%", padding: "10px 0" }}>
+                <div style={{ background: "#FAFAFA", padding: "16px", borderRadius: "10px", border: "1px solid #E5E5E5" }}>
+                  <iframe src="/panel/solicitud-socio" style={{ width: "100%", height: "540px", border: "none", borderRadius: "8px" }} title="Solicitudes de Socios" />
+                </div>
+              </div>
+            )}
+
+            {/* 4. EMISIÓN DE NOTIFICACIONES */}
+            {widgetActivo === "emision_notificaciones" && (
+              <div style={{ maxWidth: "960px", margin: "0 auto" }}>
+                <EmisionNotificacionesWidget negocio={negocio} />
+              </div>
+            )}
+
+            {/* 5. AUDITORÍA BDD & TELEMETRÍA */}
+            {widgetActivo === "auditoria" && (
+              <div style={{ width: "100%", padding: "10px 0" }}>
+                <div style={{ background: "#FAFAFA", padding: "16px", borderRadius: "10px", border: "1px solid #E5E5E5" }}>
+                  <iframe src="/panel/auditoria" style={{ width: "100%", height: "560px", border: "none", borderRadius: "8px" }} title="Auditoría BDD" />
+                </div>
+              </div>
+            )}
+          </div>
+        </section>
+      </div>
+    );
+  }
+
+  // VISTA 1: REJILLA PRINCIPAL DE MÓDULOS "ADMINISTRAR"
   return (
     <div style={{ width: "100%" }}>
       {/* Header Hero Card con indicador de MFA Requerido (PLT-002) */}
@@ -124,9 +276,9 @@ export function PanelAdministrarModular({ negocio }: Props) {
             const esFav = favoritos.includes(m.id);
 
             return (
-              <Link
+              <div
                 key={m.id}
-                href={m.ruta}
+                onClick={() => setWidgetActivo(m.id)}
                 className="tarjeta-acceso"
                 style={{
                   border: "1px solid var(--panel-linea, #E4E4E4)",
@@ -199,10 +351,10 @@ export function PanelAdministrarModular({ negocio }: Props) {
                     fontWeight: 700
                   }}
                 >
-                  <span>Ingresar a módulo</span>
+                  <span>Abrir módulo</span>
                   <ChevronRight size={14} />
                 </div>
-              </Link>
+              </div>
             );
           })}
         </div>
