@@ -27,6 +27,31 @@ interface SupabaseTypedClient {
   };
 }
 
+// Reemplazo dinámico estricto de variables para el perfil autenticado
+function interpolarParaPerfil(
+  plantilla: string,
+  perfil: { usu_nombres?: string | null; usu_apellidos?: string | null; usu_correo: string },
+  negocio: string = "tranqi"
+): string {
+  if (!plantilla) return "";
+  const nombreCompleto = ([perfil.usu_nombres, perfil.usu_apellidos].filter(Boolean).join(" ") || perfil.usu_correo.split("@")[0]) || "Usuario";
+  const primerNombre = (nombreCompleto.split(" ")[0]) || "Usuario";
+  const fechaEC = new Date().toLocaleTimeString("es-EC", { hour: "2-digit", minute: "2-digit", timeZone: "America/Guayaquil" });
+
+  return plantilla
+    .replace(/\{\{\s*nombre_usuario\s*\}\}/gi, nombreCompleto)
+    .replace(/\{\{\s*nombrecompleto\s*\}\}/gi, nombreCompleto)
+    .replace(/\{\{\s*nombre_completo\s*\}\}/gi, nombreCompleto)
+    .replace(/\{\{\s*nombre\s*\}\}/gi, primerNombre)
+    .replace(/\{\{\s*mail\s*\}\}/gi, perfil.usu_correo)
+    .replace(/\{\{\s*correo\s*\}\}/gi, perfil.usu_correo)
+    .replace(/\{\{\s*negocio\s*\}\}/gi, negocio)
+    .replace(/\{\{\s*fecha\s*\}\}/gi, fechaEC)
+    .replace(/\{Mail\}/gi, perfil.usu_correo)
+    .replace(/\{nombre\}/gi, primerNombre)
+    .replace(/\{nombrecompleto\}/gi, nombreCompleto);
+}
+
 export async function GET() {
   try {
     const perfil = await obtenerPerfilActual();
@@ -49,8 +74,8 @@ export async function GET() {
           (registros as unknown as RegistroNotificacion[]).forEach(r => {
             notificaciones.push({
               not_id: r.not_id,
-              not_titulo: r.not_titulo,
-              not_contenido_html: r.not_contenido_html,
+              not_titulo: interpolarParaPerfil(r.not_titulo, perfil),
+              not_contenido_html: interpolarParaPerfil(r.not_contenido_html, perfil),
               not_url_accion: r.not_url_accion || "/panel",
               not_leido_en: r.not_leido_en,
               not_creado_en: r.not_creado_en,
@@ -67,10 +92,11 @@ export async function GET() {
     const campanas = obtenerCampanasServidor();
     campanas.forEach(c => {
       if (!notificaciones.some(n => n.not_id === c.id)) {
+        const perfilTarget = perfil || { usu_correo: "usuario@tranqi24.com", usu_nombres: "Usuario" };
         notificaciones.push({
           not_id: c.id,
-          not_titulo: c.asunto,
-          not_contenido_html: c.contenidoHTML || `<p>${c.asunto}</p>`,
+          not_titulo: interpolarParaPerfil(c.asunto, perfilTarget),
+          not_contenido_html: interpolarParaPerfil(c.contenidoHTML || `<p>${c.asunto}</p>`, perfilTarget),
           not_url_accion: "/panel",
           not_leido_en: null,
           not_creado_en: new Date().toISOString(),
