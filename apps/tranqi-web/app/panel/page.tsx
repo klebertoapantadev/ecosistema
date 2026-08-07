@@ -71,7 +71,8 @@ export default async function PagePanel({ searchParams }: Props) {
   const rawParams = await searchParams;
   const modoURL = modoValido(rawParams?.modo);
   const cookieStore = await cookies();
-  const modoCookie = modoValido(cookieStore.get("tranqi_modo_rol")?.value);
+  const modoCookie = modoValido(cookieStore.get("tranqi_modo_rol")?.value)
+    || modoValido(cookieStore.get("tranqi_rol_favorito")?.value);
 
   const modo: ModoRol = puedeConmutar
     ? (modoURL ?? modoCookie ?? modoDePerfiles(perfiles))

@@ -1175,31 +1175,40 @@ p { line-height: 1.55; }
 
 @media (max-width: 640px) {
   .selector-rol-activo {
-    padding: 10px 12px;
-    border-radius: 14px;
+    padding: 12px !important;
+    border-radius: 14px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
   }
   .selector-rol-botones {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 8px;
-    width: 100%;
-    flex-wrap: wrap;
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)) !important;
+    gap: 8px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
   }
   .btn-rol {
-    padding: 10px 14px;
-    border-radius: 10px;
-    justify-content: center;
-    min-width: 44px;
-    box-sizing: border-box;
+    padding: 8px 10px !important;
+    border-radius: 10px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: 6px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    font-size: 0.78rem !important;
   }
-  .btn-rol span,
-  .txt-btn-movil {
-    display: none !important;
+  .btn-rol span {
+    display: inline-block !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    font-size: 0.76rem !important;
   }
   .icono-btn-rol {
-    width: 18px !important;
-    height: 18px !important;
+    width: 16px !important;
+    height: 16px !important;
+    flex-shrink: 0 !important;
   }
 }
 
@@ -1589,11 +1598,15 @@ p { line-height: 1.55; }
     text-align: left !important;
   }
   #equipo h2 {
-    font-size: clamp(1.3rem, 5.2vw, 1.8rem) !important;
-    line-height: 1.22 !important;
+    font-size: clamp(1.1rem, 4.4vw, 1.5rem) !important;
+    line-height: 1.25 !important;
     margin: 0 0 10px 0 !important;
     text-align: left !important;
     max-width: 100% !important;
+    overflow-wrap: break-word !important;
+    word-break: normal !important;
+    white-space: normal !important;
+    box-sizing: border-box !important;
   }
   #equipo .acciones-equipo {
     display: flex !important;
@@ -1642,6 +1655,38 @@ p { line-height: 1.55; }
   }
   #equipo .btn-carrusel-flotante-der {
     right: 2px !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   PLT-018 / TRQ-005 · CONSOLA DE EMISIÓN DE NOTIFICACIONES RESPONSIVE MÓVIL
+   ═══════════════════════════════════════════════════════════════════ */
+.grid-emision-notificaciones {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+@media (max-width: 900px) {
+  .grid-emision-notificaciones {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+    width: 100% !important;
+  }
+  .grid-emision-notificaciones section {
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+  }
+  .grid-emision-notificaciones pre,
+  .grid-emision-notificaciones code,
+  .grid-emision-notificaciones textarea {
+    max-width: 100% !important;
+    overflow-x: auto !important;
+    box-sizing: border-box !important;
+    white-space: pre-wrap !important;
+    word-break: break-word !important;
   }
 }
 

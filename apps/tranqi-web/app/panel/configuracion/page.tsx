@@ -12,7 +12,8 @@ export default async function PaginaConfiguracion() {
   const perfil = await obtenerPerfilActual();
   const perfiles = await obtenerPerfiles(NEGOCIO);
   const cookieStore = await cookies();
-  const modoCookie = cookieStore.get("tranqi_modo_rol")?.value;
+  const modoCookie = cookieStore.get("tranqi_modo_rol")?.value
+    || cookieStore.get("tranqi_rol_favorito")?.value;
 
   const esSuperadmin = Boolean(perfil?.usu_superadmin_plataforma);
   const puedeConmutar = esSuperadmin;

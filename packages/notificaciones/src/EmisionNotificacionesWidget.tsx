@@ -283,7 +283,7 @@ export function EmisionNotificacionesWidget({ negocio }: Props) {
 
       {/* VISTA 1: REDACCIÓN Y DESPACHO */}
       {tabPrincipal === "redaccion" && (
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px" }}>
+        <div className="grid-emision-notificaciones">
           {/* Columna Izquierda: Configuración de Audiencia y Canales */}
           <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
             {/* 1. Segmentación de Audiencia */}

@@ -58,7 +58,8 @@ export default async function LayoutPanel({ children }: { children: React.ReactN
   const perfiles = await obtenerPerfiles(NEGOCIO);
 
   const cookieStore = await cookies();
-  const modoCookie = modoValido(cookieStore.get("tranqi_modo_rol")?.value);
+  const modoCookie = modoValido(cookieStore.get("tranqi_modo_rol")?.value)
+    || modoValido(cookieStore.get("tranqi_rol_favorito")?.value);
   const modoActivo: ModoRol = perfil.usu_superadmin_plataforma && modoCookie
     ? modoCookie
     : modoDePerfiles(perfiles);
