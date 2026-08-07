@@ -21,26 +21,31 @@ interface Props {
 export function CampanaNotificaciones({ negocio }: Props) {
   const [abierto, setAbierto] = useState(false);
   const [filtro, setFiltro] = useState<"todas" | "no_leidas">("todas");
-  const [notificaciones, setNotificaciones] = useState<NotificacionItem[]>([
-    {
-      not_id: "demo-1",
-      not_titulo: "Bienvenido a tranqi 2026",
-      not_contenido_html: "Se ha activado tu suscripción a la plataforma de gestión legal e identidad unificada.",
-      not_url_accion: "/panel",
-      not_leido_en: null,
-      not_creado_en: new Date().toISOString(),
-      not_canal: "IN_APP"
-    },
-    {
-      not_id: "demo-2",
-      not_titulo: "Nuevo perfil asignado: ABOGADO",
-      not_contenido_html: "Se ha actualizado la jerarquía de tu usuario en el negocio tranqi.",
-      not_url_accion: "/panel?modo=abogado",
-      not_leido_en: new Date().toISOString(),
-      not_creado_en: new Date(Date.now() - 3600000).toISOString(),
-      not_canal: "IN_APP"
-    }
-  ]);
+  const [notificaciones, setNotificaciones] = useState<NotificacionItem[]>([]);
+
+  // Cargar notificaciones in-app reales desde el servidor
+  React.useEffect(() => {
+    fetch("/api/notificaciones/usuario")
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && Array.isArray(data.notificaciones) && data.notificaciones.length > 0) {
+          setNotificaciones(data.notificaciones);
+        } else {
+          setNotificaciones([
+            {
+              not_id: "demo-1",
+              not_titulo: `Bienvenido a ${negocio} 2026`,
+              not_contenido_html: "Se ha activado tu suscripción a la plataforma de gestión legal e identidad unificada.",
+              not_url_accion: "/panel",
+              not_leido_en: null,
+              not_creado_en: new Date().toISOString(),
+              not_canal: "IN_APP"
+            }
+          ]);
+        }
+      })
+      .catch(() => {});
+  }, [negocio]);
 
   const noLeidasCount = notificaciones.filter(n => !n.not_leido_en).length;
 

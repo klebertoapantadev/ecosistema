@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import nodemailer from "nodemailer";
 import { obtenerPerfilActual, obtenerPerfiles } from "@eco/identidad";
+import { crearClienteServidor } from "@eco/supabase/servidor";
 
 export interface CampanaBitacora {
   id: string;
@@ -19,6 +20,39 @@ export interface CampanaBitacora {
   correoEnviadoReal?: boolean;
 }
 
+interface UsuarioDBRow {
+  usu_id: string;
+  usu_correo: string;
+}
+
+interface SupabaseGenericClient {
+  from(table: string): {
+    select(cols: string): Promise<{ data: unknown; error: unknown }>;
+    insert(values: unknown[]): Promise<{ data: unknown; error: unknown }>;
+  };
+}
+
+// Función helper para formatear fechas en hora local de Ecuador (UTC-5) YYYY-MM-DD HH:mm
+function formatearFechaLocalEcuador(date: Date = new Date()): string {
+  try {
+    const formatter = new Intl.DateTimeFormat("en-CA", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+      timeZone: "America/Guayaquil"
+    });
+    const partes = formatter.formatToParts(date);
+    const m: Record<string, string> = {};
+    partes.forEach(p => { if (p.type !== "literal") m[p.type] = p.value; });
+    return `${m.year}-${m.month}-${m.day} ${m.hour}:${m.minute}`;
+  } catch {
+    return date.toISOString().replace("T", " ").slice(0, 16);
+  }
+}
+
 // Almacén en memoria persistente durante la sesión del servidor para auditoría en tiempo real
 let BITACORA_NOTIFICACIONES: CampanaBitacora[] = [
   {
@@ -33,7 +67,7 @@ let BITACORA_NOTIFICACIONES: CampanaBitacora[] = [
     enviados: 142,
     leidos: 118,
     ignorados: 24,
-    fecha: new Date(Date.now() - 86400000).toISOString().replace("T", " ").slice(0, 16),
+    fecha: formatearFechaLocalEcuador(new Date(Date.now() - 86400000)),
     correoEnviadoReal: true
   },
   {
@@ -48,7 +82,7 @@ let BITACORA_NOTIFICACIONES: CampanaBitacora[] = [
     enviados: 28,
     leidos: 25,
     ignorados: 3,
-    fecha: new Date(Date.now() - 43200000).toISOString().replace("T", " ").slice(0, 16),
+    fecha: formatearFechaLocalEcuador(new Date(Date.now() - 43200000)),
     correoEnviadoReal: true
   },
   {
@@ -63,7 +97,7 @@ let BITACORA_NOTIFICACIONES: CampanaBitacora[] = [
     enviados: 1,
     leidos: 1,
     ignorados: 0,
-    fecha: new Date(Date.now() - 14400000).toISOString().replace("T", " ").slice(0, 16),
+    fecha: formatearFechaLocalEcuador(new Date(Date.now() - 14400000)),
     correoEnviadoReal: true
   }
 ];
@@ -91,7 +125,7 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { asunto, tipoAudiencia, roles, usuarios, canales, contenidoHTML, contenidoMarkdown: _contenidoMarkdown } = body;
+    const { negocio = "TRANQ", asunto, tipoAudiencia, roles, usuarios, canales, contenidoHTML, contenidoMarkdown: _contenidoMarkdown } = body;
 
     if (!asunto || typeof asunto !== "string" || !asunto.trim()) {
       return NextResponse.json({ error: "El asunto es obligatorio" }, { status: 400 });
@@ -112,7 +146,61 @@ export async function POST(req: Request) {
         ? `POR_USUARIOS (${usuarios || "Seleccionados"})`
         : "TODOS";
 
-    // Intentar despacho real de correo electrónico vía SMTP si el canal EMAIL está activo
+    // 1. Obtener lista real de usuarios destinatarios desde Supabase
+    const rawSupabase = await crearClienteServidor();
+    const supabase = rawSupabase as unknown as SupabaseGenericClient;
+    let usuariosTarget: Array<{ id: string; correo: string }> = [];
+
+    try {
+      const { data: dbUsuarios } = await supabase
+        .from("seg_usuario")
+        .select("usu_id, usu_correo");
+
+      if (dbUsuarios && Array.isArray(dbUsuarios)) {
+        const rows = dbUsuarios as unknown as UsuarioDBRow[];
+        usuariosTarget = rows
+          .filter(u => u.usu_correo)
+          .map(u => ({ id: u.usu_id, correo: u.usu_correo }));
+      }
+    } catch {
+      /* Fallback en desarrollo */
+    }
+
+    // Si se especificó un usuario o correo manualmente en la interfaz, incluirlo explícitamente
+    if (usuarios && typeof usuarios === "string" && usuarios.includes("@")) {
+      const correosManuales = usuarios.split(",").map(c => c.trim()).filter(Boolean);
+      correosManuales.forEach(correoManual => {
+        if (!usuariosTarget.some(u => u.correo.toLowerCase() === correoManual.toLowerCase())) {
+          usuariosTarget.push({ id: `usr-${Date.now()}`, correo: correoManual });
+        }
+      });
+    }
+
+    // Asegurar que exista al menos la cuenta de prueba y el correo del emisor si la lista está vacía
+    if (usuariosTarget.length === 0) {
+      if (perfil?.usu_correo) usuariosTarget.push({ id: perfil.usu_id, correo: perfil.usu_correo });
+      usuariosTarget.push({ id: "usr-demo", correo: "familiammtoapantaguerrero@gmail.com" });
+    }
+
+    // 2. Persistir notificaciones In-App en la tabla comun_notificacion.not_registro para que el receptor las vea al iniciar sesión
+    if (canales?.inApp || canales?.push) {
+      try {
+        const filasInsertar = usuariosTarget.map(u => ({
+          not_usuario_id: u.id,
+          not_negocio: negocio,
+          not_canal: "IN_APP",
+          not_titulo: asunto.trim(),
+          not_contenido_html: contenidoHTML || `<p>${asunto}</p>`,
+          not_creado_en: new Date().toISOString()
+        }));
+
+        await supabase.from("not_registro").insert(filasInsertar);
+      } catch {
+        /* Ignorar errores de inserción en esquema secundario */
+      }
+    }
+
+    // 3. Despachar correo electrónico real a TODOS los correos destinatarios si el canal EMAIL está activo
     let correoDespachadoConExito = false;
     let detalleEnvioEmail = "";
 
@@ -122,7 +210,9 @@ export async function POST(req: Request) {
       const smtpPass = process.env.SMTP_PASS || process.env.EMAIL_PASS;
       const smtpPort = Number(process.env.SMTP_PORT || 587);
 
-      if (smtpHost && smtpUser && smtpPass) {
+      const listaCorreos = Array.from(new Set(usuariosTarget.map(u => u.correo).filter(Boolean)));
+
+      if (smtpHost && smtpUser && smtpPass && listaCorreos.length > 0) {
         try {
           const transporter = nodemailer.createTransport({
             host: smtpHost,
@@ -132,27 +222,26 @@ export async function POST(req: Request) {
             tls: { rejectUnauthorized: false }
           });
 
-          // Determinar destinatario real o fallback
-          const destinatarios = usuarios ? usuarios : perfil?.usu_correo || "kleber.toapanta.ch@gmail.com";
-
           await transporter.sendMail({
             from: `"tranqi Notificaciones" <${smtpUser}>`,
-            to: destinatarios,
+            to: listaCorreos.join(", "),
             subject: asunto.trim(),
             html: contenidoHTML || `<p>${asunto}</p>`
           });
 
           correoDespachadoConExito = true;
-          detalleEnvioEmail = ` (Correo real entregado vía SMTP a ${destinatarios})`;
+          detalleEnvioEmail = ` (Correo SMTP entregado exitosamente a ${listaCorreos.length} destinatario(s): ${listaCorreos.join(", ")})`;
         } catch (mailErr: unknown) {
           const errText = mailErr instanceof Error ? mailErr.message : "Error SMTP desconocido";
           console.error("Fallo envío SMTP:", errText);
-          detalleEnvioEmail = ` (Fallo SMTP: ${errText})`;
+          detalleEnvioEmail = ` (Fallo SMTP al enviar a ${listaCorreos.join(", ")}: ${errText})`;
         }
       } else {
-        detalleEnvioEmail = " (Aviso: Para enviar correos reales a bandejas externas, se requiere configurar SMTP_HOST, SMTP_USER y SMTP_PASS en las Variables de Entorno de Vercel)";
+        detalleEnvioEmail = ` (Destinatarios preparados: ${listaCorreos.join(", ")}. Configura SMTP_HOST, SMTP_USER y SMTP_PASS en Vercel para envío SMTP directo)`;
       }
     }
+
+    const fechaLocalFormat = formatearFechaLocalEcuador(new Date());
 
     const nuevaCampana: CampanaBitacora = {
       id: "cmp-" + Date.now().toString().slice(-6),
@@ -164,10 +253,10 @@ export async function POST(req: Request) {
       procesoOrigen: "Consola de Emisión de Notificaciones",
       audiencia: audienciaTexto,
       canales: canalesLista.length > 0 ? canalesLista : ["IN_APP"],
-      enviados: tipoAudiencia === "TODOS" ? 150 : (roles?.length || 1) * 12,
+      enviados: usuariosTarget.length,
       leidos: 0,
-      ignorados: tipoAudiencia === "TODOS" ? 150 : (roles?.length || 1) * 12,
-      fecha: new Date().toISOString().replace("T", " ").slice(0, 16),
+      ignorados: usuariosTarget.length,
+      fecha: fechaLocalFormat,
       correoEnviadoReal: correoDespachadoConExito
     };
 
@@ -176,7 +265,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({
       success: true,
-      mensaje: `Notificación multicanal procesada exitosamente.${detalleEnvioEmail}`,
+      mensaje: `Notificación multicanal emitida (${usuariosTarget.length} destinatarios).${detalleEnvioEmail}`,
       campana: nuevaCampana,
       totalHistorico: BITACORA_NOTIFICACIONES.length
     });

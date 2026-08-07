@@ -191,7 +191,15 @@ export function EmisionNotificacionesWidget({ negocio }: Props) {
         enviados: tipoAudiencia === "TODOS" ? 150 : 28,
         leidos: 0,
         ignorados: tipoAudiencia === "TODOS" ? 150 : 28,
-        fecha: new Date().toISOString().replace("T", " ").slice(0, 16)
+        fecha: new Intl.DateTimeFormat("en-CA", {
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: false,
+          timeZone: "America/Guayaquil"
+        }).format(new Date()).replace(",", "")
       };
       setCampanas(prev => [nuevaCampana, ...prev]);
       setToastMsg({ tipo: "exito", texto: "✅ Notificación Push local y registradas en bitácora procesadas" });
