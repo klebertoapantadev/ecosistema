@@ -224,8 +224,8 @@ export function EmisionNotificacionesWidget({ negocio }: Props) {
 
   return (
     <div style={{ width: "100%", boxSizing: "border-box" }}>
-      {/* Banner Superior con Identificador de Negocio y Pestañas */}
-      <div style={{ background: "linear-[#18002E, #2A085C]", borderRadius: "16px", padding: "20px 24px", color: "#ffffff", marginBottom: "20px", boxShadow: "0 4px 20px rgba(0,0,0,0.15)" }}>
+      {/* Banner Superior con Identificador de Negocio */}
+      <div style={{ background: "linear-gradient(135deg, #18002E 0%, #2A085C 100%)", borderRadius: "16px", padding: "20px 24px", color: "#ffffff", marginBottom: "16px", boxShadow: "0 4px 20px rgba(0,0,0,0.15)" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px" }}>
           <div>
             <span style={{ fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: "1px", opacity: 0.8, fontWeight: 700 }}>
@@ -238,48 +238,57 @@ export function EmisionNotificacionesWidget({ negocio }: Props) {
               Despacho multicanal (In-App, Push, Email y WhatsApp propuesta) con Editor WYSIWYG / Markdown y Bitácora de Auditoría.
             </p>
           </div>
-
-          <div style={{ display: "flex", gap: "8px" }}>
-            <button
-              type="button"
-              onClick={() => setTabPrincipal("redaccion")}
-              style={{
-                background: tabPrincipal === "redaccion" ? "#ffffff" : "rgba(255,255,255,0.12)",
-                color: tabPrincipal === "redaccion" ? "#18002E" : "#ffffff",
-                border: "none",
-                borderRadius: "8px",
-                padding: "8px 16px",
-                fontSize: "0.84rem",
-                fontWeight: 700,
-                cursor: "pointer",
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "6px"
-              }}
-            >
-              <Send size={15} /> Redacción & Despacho
-            </button>
-            <button
-              type="button"
-              onClick={() => setTabPrincipal("historial")}
-              style={{
-                background: tabPrincipal === "historial" ? "#ffffff" : "rgba(255,255,255,0.12)",
-                color: tabPrincipal === "historial" ? "#18002E" : "#ffffff",
-                border: "none",
-                borderRadius: "8px",
-                padding: "8px 16px",
-                fontSize: "0.84rem",
-                fontWeight: 700,
-                cursor: "pointer",
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "6px"
-              }}
-            >
-              <BarChart2 size={15} /> Bitácora & Historial ({campanas.length})
-            </button>
-          </div>
         </div>
+      </div>
+
+      {/* Pestañas Principales Visibles y Destacadas */}
+      <div style={{ display: "flex", gap: "10px", marginBottom: "20px", background: "#f1f5f9", padding: "6px", borderRadius: "10px", border: "1px solid #cbd5e1" }}>
+        <button
+          type="button"
+          onClick={() => setTabPrincipal("redaccion")}
+          style={{
+            flex: 1,
+            background: tabPrincipal === "redaccion" ? "#2563eb" : "transparent",
+            color: tabPrincipal === "redaccion" ? "#ffffff" : "#475569",
+            border: "none",
+            borderRadius: "8px",
+            padding: "10px 16px",
+            fontSize: "0.88rem",
+            fontWeight: 800,
+            cursor: "pointer",
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "8px",
+            boxShadow: tabPrincipal === "redaccion" ? "0 2px 6px rgba(37,99,235,0.2)" : "none",
+            transition: "all 0.2s ease"
+          }}
+        >
+          <Send size={16} /> ✈️ Redacción & Despacho
+        </button>
+        <button
+          type="button"
+          onClick={() => setTabPrincipal("historial")}
+          style={{
+            flex: 1,
+            background: tabPrincipal === "historial" ? "#2563eb" : "transparent",
+            color: tabPrincipal === "historial" ? "#ffffff" : "#475569",
+            border: "none",
+            borderRadius: "8px",
+            padding: "10px 16px",
+            fontSize: "0.88rem",
+            fontWeight: 800,
+            cursor: "pointer",
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "8px",
+            boxShadow: tabPrincipal === "historial" ? "0 2px 6px rgba(37,99,235,0.2)" : "none",
+            transition: "all 0.2s ease"
+          }}
+        >
+          <BarChart2 size={16} /> 📊 Bitácora & Historial de Notificaciones ({campanas.length})
+        </button>
       </div>
 
       {/* Toast Notificación Resultante */}
@@ -491,14 +500,26 @@ export function EmisionNotificacionesWidget({ negocio }: Props) {
                 />
               </div>
 
-              {/* Inyector de Variables */}
-              <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "8px", fontSize: "0.72rem", color: "#64748b" }}>
-                <span>Variables:</span>
-                <button type="button" onClick={() => inyectarVariable("{{nombre_usuario}}")} style={{ background: "#e0e7ff", border: "none", color: "#3730a3", borderRadius: "4px", padding: "2px 6px", cursor: "pointer", fontWeight: 600 }}>
+              {/* Inyector de Variables Dinámicas */}
+              <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "10px", fontSize: "0.75rem", color: "#64748b", flexWrap: "wrap" }}>
+                <span style={{ fontWeight: 700 }}>Variables Dinámicas:</span>
+                <button type="button" onClick={() => inyectarVariable("{{nombre_usuario}}")} style={{ background: "#e0e7ff", border: "1px solid #c7d2fe", color: "#3730a3", borderRadius: "4px", padding: "2px 8px", cursor: "pointer", fontWeight: 700, fontSize: "0.72rem" }}>
                   + {"{{nombre_usuario}}"}
                 </button>
-                <button type="button" onClick={() => inyectarVariable("{{negocio}}")} style={{ background: "#e0e7ff", border: "none", color: "#3730a3", borderRadius: "4px", padding: "2px 6px", cursor: "pointer", fontWeight: 600 }}>
+                <button type="button" onClick={() => inyectarVariable("{{nombrecompleto}}")} style={{ background: "#e0e7ff", border: "1px solid #c7d2fe", color: "#3730a3", borderRadius: "4px", padding: "2px 8px", cursor: "pointer", fontWeight: 700, fontSize: "0.72rem" }}>
+                  + {"{{nombrecompleto}}"}
+                </button>
+                <button type="button" onClick={() => inyectarVariable("{{nombre}}")} style={{ background: "#e0e7ff", border: "1px solid #c7d2fe", color: "#3730a3", borderRadius: "4px", padding: "2px 8px", cursor: "pointer", fontWeight: 700, fontSize: "0.72rem" }}>
+                  + {"{{nombre}}"}
+                </button>
+                <button type="button" onClick={() => inyectarVariable("{{mail}}")} style={{ background: "#dcfce7", border: "1px solid #bbf7d0", color: "#166534", borderRadius: "4px", padding: "2px 8px", cursor: "pointer", fontWeight: 700, fontSize: "0.72rem" }}>
+                  + {"{{mail}}"}
+                </button>
+                <button type="button" onClick={() => inyectarVariable("{{negocio}}")} style={{ background: "#fef3c7", border: "1px solid #fde047", color: "#92400e", borderRadius: "4px", padding: "2px 8px", cursor: "pointer", fontWeight: 700, fontSize: "0.72rem" }}>
                   + {"{{negocio}}"}
+                </button>
+                <button type="button" onClick={() => inyectarVariable("{{fecha}}")} style={{ background: "#f3e8ff", border: "1px solid #e9d5ff", color: "#6b21a8", borderRadius: "4px", padding: "2px 8px", cursor: "pointer", fontWeight: 700, fontSize: "0.72rem" }}>
+                  + {"{{fecha}}"}
                 </button>
               </div>
 

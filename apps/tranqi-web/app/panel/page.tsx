@@ -118,53 +118,11 @@ export default async function PagePanel({ searchParams }: Props) {
   );
 }
 
-/* ──────────────── SECCIÓN NOTIFICACIONES ECOSISTEMA ──────────────── */
+import { WidgetNotificacionesCliente } from "@eco/notificaciones";
+
+/* ──────────────── SECCIÓN NOTIFICACIONES ECOSISTEMA DINÁMICA ──────────────── */
 function SeccionNotificacionesEcosistema({ esAdmin }: { esAdmin: boolean }) {
-  return (
-    <section className="tarjeta-seccion" aria-labelledby="t-notificaciones-eco" style={{ borderLeft: "4px solid #1f6feb" }}>
-      <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <h2 id="t-notificaciones-eco" style={{ display: "flex", alignItems: "center", gap: "8px", color: "#58a6ff" }}>
-          <Bell style={{ width: 20, height: 20, color: "#1f6feb" }} /> Notificaciones & Alertas
-        </h2>
-        <span className="chip-registrado" style={{ background: "#1f6feb", color: "#fff", fontWeight: 700, padding: "2px 8px" }}>
-          🔔 2 Alertas
-        </span>
-      </header>
-
-      <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: "12px" }}>
-        <div style={{ padding: "10px 12px", background: "rgba(31, 111, 235, 0.12)", borderRadius: "8px", border: "1px solid #388bfd" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.82rem", fontWeight: 700, color: "#58a6ff" }}>
-            <span>Bienvenido a tranqi 2026</span>
-            <span style={{ fontSize: "0.74rem", color: "#8b949e" }}>Hace 5 min</span>
-          </div>
-          <p style={{ fontSize: "0.78rem", color: "#8b949e", marginTop: "4px" }}>
-            Se ha activado tu suscripción a la plataforma de gestión legal e identidad unificada.
-          </p>
-        </div>
-
-        <div style={{ padding: "10px 12px", background: "#161b22", borderRadius: "8px", border: "1px solid #30363d" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.82rem", fontWeight: 600, color: "#c9d1d9" }}>
-            <span>Actualización de Servicios</span>
-            <span style={{ fontSize: "0.74rem", color: "#8b949e" }}>Hace 1 hora</span>
-          </div>
-          <p style={{ fontSize: "0.78rem", color: "#8b949e", marginTop: "4px" }}>
-            Nuevas funcionalidades de seguimiento y consultas en línea activadas.
-          </p>
-        </div>
-      </div>
-
-      <div style={{ display: "flex", gap: "10px", marginTop: "14px", flexWrap: "wrap" }}>
-        <a href="/panel/configuracion" style={{ fontSize: "0.78rem", color: "#c9d1d9", background: "#21262d", border: "1px solid #30363d", borderRadius: "6px", padding: "6px 12px", textDecoration: "none", fontWeight: 600, display: "inline-flex", alignItems: "center", gap: "6px" }}>
-          <Settings size={14} /> Preferencias & Alertas Recibidas
-        </a>
-        {esAdmin && (
-          <a href="/panel/emision-notificaciones" style={{ fontSize: "0.78rem", color: "#fff", background: "#1f6feb", border: "none", borderRadius: "6px", padding: "6px 12px", textDecoration: "none", fontWeight: 600, display: "inline-flex", alignItems: "center", gap: "6px" }}>
-            <Bell size={14} /> Consola de Emisión Multicanal
-          </a>
-        )}
-      </div>
-    </section>
-  );
+  return <WidgetNotificacionesCliente negocio="tranqi" esAdmin={esAdmin} />;
 }
 
 /* ──────────────── 1. PANEL MODO CLIENTE ──────────────── */

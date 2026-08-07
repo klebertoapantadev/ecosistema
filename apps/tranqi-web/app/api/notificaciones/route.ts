@@ -23,6 +23,13 @@ export interface CampanaBitacora {
   correoEnviadoReal?: boolean;
 }
 
+interface UsuarioDBRow {
+  usu_id: string;
+  usu_correo: string;
+  usu_nombres?: string | null;
+  usu_apellidos?: string | null;
+}
+
 interface SupabaseTypedClient {
   schema(schema: string): {
     from(table: string): {
@@ -53,12 +60,37 @@ function formatearFechaLocalEcuador(date: Date = new Date()): string {
   }
 }
 
+// Reemplazo dinámico de etiquetas interpolables por usuario destinatario
+function interpolarVariables(
+  plantilla: string,
+  user: { correo: string; nombres?: string | null; apellidos?: string | null },
+  negocio: string
+): string {
+  if (!plantilla) return "";
+  const nombreCompleto = ([user.nombres, user.apellidos].filter(Boolean).join(" ") || user.correo.split("@")[0]) || "Usuario";
+  const primerNombre = (nombreCompleto.split(" ")[0]) || "Usuario";
+  const fechaEC = formatearFechaLocalEcuador(new Date());
+
+  return plantilla
+    .replace(/\{\{\s*nombre_usuario\s*\}\}/gi, nombreCompleto)
+    .replace(/\{\{\s*nombrecompleto\s*\}\}/gi, nombreCompleto)
+    .replace(/\{\{\s*nombre_completo\s*\}\}/gi, nombreCompleto)
+    .replace(/\{\{\s*nombre\s*\}\}/gi, primerNombre)
+    .replace(/\{\{\s*mail\s*\}\}/gi, user.correo)
+    .replace(/\{\{\s*correo\s*\}\}/gi, user.correo)
+    .replace(/\{\{\s*negocio\s*\}\}/gi, negocio)
+    .replace(/\{\{\s*fecha\s*\}\}/gi, fechaEC)
+    .replace(/\{Mail\}/gi, user.correo)
+    .replace(/\{nombre\}/gi, primerNombre)
+    .replace(/\{nombrecompleto\}/gi, nombreCompleto);
+}
+
 // Bitácora persistente en memoria para la consola de administración
 let BITACORA_NOTIFICACIONES: CampanaBitacora[] = [
   {
     id: "cmp-001",
     asunto: "Actualización de Términos y Condiciones 2026",
-    contenidoHTML: "<p>Estimado/a usuario/a,<br/><br/>Te informamos que hemos actualizado los Términos y Condiciones de uso de la plataforma tranqi 2026 para incluir la gestión multi-perfil y protección de identidad.</p>",
+    contenidoHTML: "<p>Estimado/a Kleber Toapanta,<br/><br/>Te informamos que hemos actualizado los Términos y Condiciones de uso de la plataforma tranqi 2026 para incluir la gestión multi-perfil y protección de identidad.</p>",
     tipoEmision: "MANUAL",
     emisorNombre: "Kleber Toapanta",
     emisorCorreo: "kleber.toapanta.ch@gmail.com",
@@ -138,18 +170,18 @@ export async function POST(req: Request) {
     // 1. Consultar destinatarios reales desde Supabase usando el esquema comun_seguridad
     const rawSupabase = await crearClienteServidor();
     const supabase = rawSupabase as unknown as SupabaseTypedClient;
-    let usuariosTarget: Array<{ id: string; correo: string }> = [];
+    let usuariosTarget: Array<{ id: string; correo: string; nombres?: string | null; apellidos?: string | null }> = [];
 
     try {
       const { data: dbUsuarios } = await supabase
         .schema("comun_seguridad")
         .from("seg_usuario")
-        .select("usu_id, usu_correo");
+        .select("usu_id, usu_correo, usu_nombres, usu_apellidos");
 
       if (dbUsuarios && Array.isArray(dbUsuarios)) {
-        usuariosTarget = (dbUsuarios as unknown as Array<{ usu_id: string; usu_correo: string }>)
+        usuariosTarget = (dbUsuarios as unknown as UsuarioDBRow[])
           .filter((u) => Boolean(u.usu_correo))
-          .map((u) => ({ id: u.usu_id, correo: u.usu_correo }));
+          .map((u) => ({ id: u.usu_id, correo: u.usu_correo, nombres: u.usu_nombres, apellidos: u.usu_apellidos }));
       }
     } catch {
       /* Fallback */
@@ -167,20 +199,20 @@ export async function POST(req: Request) {
 
     // Asegurar que el correo del usuario emisor esté presente
     if (perfil?.usu_correo && !usuariosTarget.some(u => u.correo.toLowerCase() === perfil.usu_correo.toLowerCase())) {
-      usuariosTarget.push({ id: perfil.usu_id, correo: perfil.usu_correo });
+      usuariosTarget.push({ id: perfil.usu_id, correo: perfil.usu_correo, nombres: perfil.usu_nombres, apellidos: perfil.usu_apellidos });
     }
 
     const listaCorreos = Array.from(new Set(usuariosTarget.map(u => u.correo).filter(Boolean)));
 
-    // 2. Persistir notificaciones In-App en la tabla comun_notificaciones.not_registro
+    // 2. Persistir notificaciones In-App con variables reemplazadas por usuario en comun_notificaciones.not_registro
     if (canales?.inApp || canales?.push) {
       try {
         const filasInsertar = usuariosTarget.map(u => ({
           not_usuario_id: u.id,
           not_negocio: negocio,
           not_canal: "IN_APP",
-          not_titulo: asunto.trim(),
-          not_contenido_html: contenidoHTML || `<p>${asunto}</p>`,
+          not_titulo: interpolarVariables(asunto.trim(), u, negocio),
+          not_contenido_html: interpolarVariables(contenidoHTML || `<p>${asunto}</p>`, u, negocio),
           not_creado_en: new Date().toISOString()
         }));
 
@@ -193,11 +225,11 @@ export async function POST(req: Request) {
       }
     }
 
-    // 3. Despacho real de correos vía SMTP y Edge Function
+    // 3. Despacho real de correos vía SMTP y Edge Function con variables interpoladas por usuario
     let correoDespachadoConExito = false;
     let detalleEnvioEmail = "";
 
-    if (canales?.email && listaCorreos.length > 0) {
+    if (canales?.email && usuariosTarget.length > 0) {
       const smtpHost = process.env.SMTP_HOST || process.env.EMAIL_HOST;
       const smtpUser = process.env.SMTP_USER || process.env.EMAIL_USER;
       const smtpPass = process.env.SMTP_PASS || process.env.EMAIL_PASS;
@@ -213,12 +245,17 @@ export async function POST(req: Request) {
             tls: { rejectUnauthorized: false }
           });
 
-          await transporter.sendMail({
-            from: `"tranqi Notificaciones" <${smtpUser}>`,
-            to: listaCorreos.join(", "),
-            subject: asunto.trim(),
-            html: contenidoHTML || `<p>${asunto}</p>`
-          });
+          for (const u of usuariosTarget) {
+            const htmlPersonalizado = interpolarVariables(contenidoHTML || `<p>${asunto}</p>`, u, negocio);
+            const asuntoPersonalizado = interpolarVariables(asunto.trim(), u, negocio);
+
+            await transporter.sendMail({
+              from: `"tranqi Notificaciones" <${smtpUser}>`,
+              to: u.correo,
+              subject: asuntoPersonalizado,
+              html: htmlPersonalizado
+            });
+          }
 
           correoDespachadoConExito = true;
           detalleEnvioEmail = ` (Entregado vía SMTP a ${listaCorreos.length} destinatario(s): ${listaCorreos.join(", ")})`;
@@ -231,12 +268,15 @@ export async function POST(req: Request) {
         try {
           const { enviarCorreo } = await import("@eco/notificaciones/enviar-correo");
           let enviosEdgeExitosos = 0;
-          for (const destCorreo of listaCorreos) {
+          for (const u of usuariosTarget) {
+            const htmlPersonalizado = interpolarVariables(contenidoHTML || `<p>${asunto}</p>`, u, negocio);
+            const asuntoPersonalizado = interpolarVariables(asunto.trim(), u, negocio);
+
             const resEdge = await enviarCorreo({
               negocio,
-              para: destCorreo,
-              asunto: asunto.trim(),
-              html: contenidoHTML || `<p>${asunto}</p>`
+              para: u.correo,
+              asunto: asuntoPersonalizado,
+              html: htmlPersonalizado
             });
             if (resEdge.ok) enviosEdgeExitosos++;
           }
