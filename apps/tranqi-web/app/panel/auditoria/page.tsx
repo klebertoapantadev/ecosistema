@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { ShieldCheck } from "lucide-react";
+import Link from "next/link";
+import { ShieldCheck, X } from "lucide-react";
 import { listarAuditoriaNegocio } from "@eco/auditoria";
 import { TablaAuditoria, ETIQUETA_TABLA, ETIQUETA_OPERACION_EXPORT as ETIQUETA_OPERACION } from "./TablaAuditoria";
 
@@ -24,12 +25,53 @@ export default async function PaginaAuditoria({
   });
 
   return (
-    <div>
-      <h1>Auditoría</h1>
-      <p className="historial-fecha">
-        Cambios en las tablas de tranqi (`tranqui_legal`) y eventos de identidad de sus usuarios (registro,
-        verificación de correo, recuperación de contraseña). Visible para Administrador y SuperAdmin.
-      </p>
+    <div style={{ width: "100%", boxSizing: "border-box" }}>
+      {/* Banner de Cabecera con Botón Circular de Cierre (X) */}
+      <div
+        className="tarjeta-proteccion tarjeta-admin"
+        style={{
+          marginBottom: "20px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          padding: "20px 24px",
+          borderRadius: "16px",
+          position: "relative"
+        }}
+      >
+        <div>
+          <div className="eyebrow-cliente">Gobernanza & Seguridad</div>
+          <div className="tarjeta-proteccion-plan" style={{ fontSize: "1.3rem", fontWeight: 800 }}>
+            Bitácora de Auditoría del Sistema <i>({NEGOCIO})</i>
+          </div>
+          <div className="tarjeta-proteccion-meta" style={{ marginTop: "4px" }}>
+            Registro inmutable auditado por disparadores PostgreSQL (`tranqui_legal` y `comun_seguridad`).
+          </div>
+        </div>
+
+        {/* Botón Circular de Cierre (X) */}
+        <Link
+          href="/panel/administrar"
+          title="Cerrar vista de auditoría y regresar al panel de administración"
+          style={{
+            background: "#ffffff",
+            border: "1.5px solid #E4E4E4",
+            color: "#111111",
+            borderRadius: "50%",
+            width: "36px",
+            height: "36px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            cursor: "pointer",
+            boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
+            flexShrink: 0,
+            textDecoration: "none"
+          }}
+        >
+          <X size={18} />
+        </Link>
+      </div>
 
       <form method="GET" className="form-filtros-auditoria">
         <label>

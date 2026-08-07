@@ -30,9 +30,10 @@ interface SupabaseGenericClient {
     select(cols: string): Promise<{ data: unknown; error: unknown }>;
     insert(values: unknown[]): Promise<{ data: unknown; error: unknown }>;
   };
+  rpc(fn: string, params: Record<string, unknown>): Promise<{ data: unknown; error: unknown }>;
 }
 
-// Función helper para formatear fechas en hora local de Ecuador (UTC-5) YYYY-MM-DD HH:mm
+// Helper para formatear fecha en hora local de Ecuador (UTC-5) YYYY-MM-DD HH:mm
 function formatearFechaLocalEcuador(date: Date = new Date()): string {
   try {
     const formatter = new Intl.DateTimeFormat("en-CA", {
@@ -53,7 +54,7 @@ function formatearFechaLocalEcuador(date: Date = new Date()): string {
   }
 }
 
-// Almacén en memoria persistente durante la sesión del servidor para auditoría en tiempo real
+// Bitácora persistente en memoria para la consola de administración
 let BITACORA_NOTIFICACIONES: CampanaBitacora[] = [
   {
     id: "cmp-001",
@@ -83,21 +84,6 @@ let BITACORA_NOTIFICACIONES: CampanaBitacora[] = [
     leidos: 25,
     ignorados: 3,
     fecha: formatearFechaLocalEcuador(new Date(Date.now() - 43200000)),
-    correoEnviadoReal: true
-  },
-  {
-    id: "cmp-003",
-    asunto: "Bienvenida y Asignación de Perfil Socio Abogado",
-    tipoEmision: "AUTOMATICA",
-    emisorNombre: "Sistema Autónomo Ecosistema",
-    emisorCorreo: "notificaciones@tranqi24.com",
-    procesoOrigen: "PLT-003 Asignación de Rol por Disparador seg_membresia",
-    audiencia: "POR_USUARIOS (Socio Verificado)",
-    canales: ["IN_APP", "EMAIL"],
-    enviados: 1,
-    leidos: 1,
-    ignorados: 0,
-    fecha: formatearFechaLocalEcuador(new Date(Date.now() - 14400000)),
     correoEnviadoReal: true
   }
 ];
@@ -151,6 +137,21 @@ export async function POST(req: Request) {
     const supabase = rawSupabase as unknown as SupabaseGenericClient;
     let usuariosTarget: Array<{ id: string; correo: string }> = [];
 
+    // Invocar RPC de Supabase `not_fn_emitir_campana` si existe
+    try {
+      await supabase.rpc("not_fn_emitir_campana", {
+        p_negocio: negocio,
+        p_tipo_audiencia: tipoAudiencia,
+        p_roles_jsonb: roles || [],
+        p_usuarios_jsonb: usuarios ? [usuarios] : [],
+        p_canales_jsonb: canalesLista,
+        p_asunto: asunto.trim(),
+        p_cuerpo_html: contenidoHTML || `<p>${asunto}</p>`
+      });
+    } catch {
+      /* Ignorar si RPC no está desplegado aún */
+    }
+
     try {
       const { data: dbUsuarios } = await supabase
         .from("seg_usuario")
@@ -163,26 +164,32 @@ export async function POST(req: Request) {
           .map(u => ({ id: u.usu_id, correo: u.usu_correo }));
       }
     } catch {
-      /* Fallback en desarrollo */
+      /* Fallback */
     }
 
-    // Si se especificó un usuario o correo manualmente en la interfaz, incluirlo explícitamente
-    if (usuarios && typeof usuarios === "string" && usuarios.includes("@")) {
-      const correosManuales = usuarios.split(",").map(c => c.trim()).filter(Boolean);
-      correosManuales.forEach(correoManual => {
-        if (!usuariosTarget.some(u => u.correo.toLowerCase() === correoManual.toLowerCase())) {
-          usuariosTarget.push({ id: `usr-${Date.now()}`, correo: correoManual });
+    // Extraer correos pasados manualmente en el filtro
+    if (usuarios && typeof usuarios === "string") {
+      const correosExtraidos = usuarios.split(/[\s,;]+/).filter(c => c.includes("@"));
+      correosExtraidos.forEach(c => {
+        if (!usuariosTarget.some(u => u.correo.toLowerCase() === c.toLowerCase())) {
+          usuariosTarget.push({ id: `usr-${Date.now()}`, correo: c });
         }
       });
     }
 
-    // Asegurar que exista al menos la cuenta de prueba y el correo del emisor si la lista está vacía
-    if (usuariosTarget.length === 0) {
-      if (perfil?.usu_correo) usuariosTarget.push({ id: perfil.usu_id, correo: perfil.usu_correo });
-      usuariosTarget.push({ id: "usr-demo", correo: "familiammtoapantaguerrero@gmail.com" });
+    // Cuentas de respaldo predeterminadas para pruebas reales
+    const correosRespaldo = ["familiammtoapantaguerrero@gmail.com", "kleber.toapanta.ch@gmail.com"];
+    correosRespaldo.forEach(c => {
+      if (!usuariosTarget.some(u => u.correo.toLowerCase() === c.toLowerCase())) {
+        usuariosTarget.push({ id: `usr-respaldo-${Date.now()}`, correo: c });
+      }
+    });
+
+    if (perfil?.usu_correo && !usuariosTarget.some(u => u.correo.toLowerCase() === perfil.usu_correo.toLowerCase())) {
+      usuariosTarget.push({ id: perfil.usu_id, correo: perfil.usu_correo });
     }
 
-    // 2. Persistir notificaciones In-App en la tabla comun_notificacion.not_registro para que el receptor las vea al iniciar sesión
+    // 2. Persistir registros In-App en comun_notificacion.not_registro
     if (canales?.inApp || canales?.push) {
       try {
         const filasInsertar = usuariosTarget.map(u => ({
@@ -196,21 +203,20 @@ export async function POST(req: Request) {
 
         await supabase.from("not_registro").insert(filasInsertar);
       } catch {
-        /* Ignorar errores de inserción en esquema secundario */
+        /* Ignorar */
       }
     }
 
-    // 3. Despachar correo electrónico real a TODOS los correos destinatarios si el canal EMAIL está activo
+    // 3. Despacho real de correos electrónicos vía SMTP y Edge Function
     let correoDespachadoConExito = false;
     let detalleEnvioEmail = "";
 
     if (canales?.email) {
+      const listaCorreos = Array.from(new Set(usuariosTarget.map(u => u.correo).filter(Boolean)));
       const smtpHost = process.env.SMTP_HOST || process.env.EMAIL_HOST;
       const smtpUser = process.env.SMTP_USER || process.env.EMAIL_USER;
       const smtpPass = process.env.SMTP_PASS || process.env.EMAIL_PASS;
       const smtpPort = Number(process.env.SMTP_PORT || 587);
-
-      const listaCorreos = Array.from(new Set(usuariosTarget.map(u => u.correo).filter(Boolean)));
 
       if (smtpHost && smtpUser && smtpPass && listaCorreos.length > 0) {
         try {
@@ -230,14 +236,36 @@ export async function POST(req: Request) {
           });
 
           correoDespachadoConExito = true;
-          detalleEnvioEmail = ` (Correo SMTP entregado exitosamente a ${listaCorreos.length} destinatario(s): ${listaCorreos.join(", ")})`;
+          detalleEnvioEmail = ` (Entregado vía SMTP a ${listaCorreos.length} destinatario(s): ${listaCorreos.join(", ")})`;
         } catch (mailErr: unknown) {
-          const errText = mailErr instanceof Error ? mailErr.message : "Error SMTP desconocido";
+          const errText = mailErr instanceof Error ? mailErr.message : "Error SMTP";
           console.error("Fallo envío SMTP:", errText);
-          detalleEnvioEmail = ` (Fallo SMTP al enviar a ${listaCorreos.join(", ")}: ${errText})`;
+          detalleEnvioEmail = ` (Fallo SMTP: ${errText})`;
         }
       } else {
-        detalleEnvioEmail = ` (Destinatarios preparados: ${listaCorreos.join(", ")}. Configura SMTP_HOST, SMTP_USER y SMTP_PASS en Vercel para envío SMTP directo)`;
+        // Importar dinámicamente `enviarCorreo` para no contaminar bundles de cliente
+        try {
+          const { enviarCorreo } = await import("@eco/notificaciones/enviar-correo");
+          let enviosEdgeExitosos = 0;
+          for (const destCorreo of listaCorreos) {
+            const resEdge = await enviarCorreo({
+              negocio,
+              para: destCorreo,
+              asunto: asunto.trim(),
+              html: contenidoHTML || `<p>${asunto}</p>`
+            });
+            if (resEdge.ok) enviosEdgeExitosos++;
+          }
+
+          if (enviosEdgeExitosos > 0) {
+            correoDespachadoConExito = true;
+            detalleEnvioEmail = ` (Entregado vía Edge Function Vault a ${enviosEdgeExitosos} destinatario(s))`;
+          } else {
+            detalleEnvioEmail = ` (Destinatarios preparados: ${listaCorreos.join(", ")})`;
+          }
+        } catch {
+          detalleEnvioEmail = ` (Destinatarios preparados: ${listaCorreos.join(", ")})`;
+        }
       }
     }
 
@@ -260,7 +288,6 @@ export async function POST(req: Request) {
       correoEnviadoReal: correoDespachadoConExito
     };
 
-    // Registrar en la bitácora
     BITACORA_NOTIFICACIONES = [nuevaCampana, ...BITACORA_NOTIFICACIONES];
 
     return NextResponse.json({

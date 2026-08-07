@@ -23,28 +23,34 @@ export function CampanaNotificaciones({ negocio }: Props) {
   const [filtro, setFiltro] = useState<"todas" | "no_leidas">("todas");
   const [notificaciones, setNotificaciones] = useState<NotificacionItem[]>([]);
 
-  // Cargar notificaciones in-app reales desde el servidor
+  // Cargar notificaciones in-app reales desde el servidor y consultar cada 8 segundos
   React.useEffect(() => {
-    fetch("/api/notificaciones/usuario")
-      .then(res => res.json())
-      .then(data => {
-        if (data.success && Array.isArray(data.notificaciones) && data.notificaciones.length > 0) {
-          setNotificaciones(data.notificaciones);
-        } else {
-          setNotificaciones([
-            {
-              not_id: "demo-1",
-              not_titulo: `Bienvenido a ${negocio} 2026`,
-              not_contenido_html: "Se ha activado tu suscripción a la plataforma de gestión legal e identidad unificada.",
-              not_url_accion: "/panel",
-              not_leido_en: null,
-              not_creado_en: new Date().toISOString(),
-              not_canal: "IN_APP"
-            }
-          ]);
-        }
-      })
-      .catch(() => {});
+    const cargarNotificaciones = () => {
+      fetch("/api/notificaciones/usuario")
+        .then(res => res.json())
+        .then(data => {
+          if (data.success && Array.isArray(data.notificaciones) && data.notificaciones.length > 0) {
+            setNotificaciones(data.notificaciones);
+          } else {
+            setNotificaciones([
+              {
+                not_id: "demo-1",
+                not_titulo: `Bienvenido a ${negocio} 2026`,
+                not_contenido_html: "Se ha activado tu suscripción a la plataforma de gestión legal e identidad unificada.",
+                not_url_accion: "/panel",
+                not_leido_en: null,
+                not_creado_en: new Date().toISOString(),
+                not_canal: "IN_APP"
+              }
+            ]);
+          }
+        })
+        .catch(() => {});
+    };
+
+    cargarNotificaciones();
+    const interval = setInterval(cargarNotificaciones, 8000);
+    return () => clearInterval(interval);
   }, [negocio]);
 
   const noLeidasCount = notificaciones.filter(n => !n.not_leido_en).length;
