@@ -29,20 +29,8 @@ export function CampanaNotificaciones({ negocio }: Props) {
       fetch("/api/notificaciones/usuario")
         .then(res => res.json())
         .then(data => {
-          if (data.success && Array.isArray(data.notificaciones) && data.notificaciones.length > 0) {
+          if (data.success && Array.isArray(data.notificaciones)) {
             setNotificaciones(data.notificaciones);
-          } else {
-            setNotificaciones([
-              {
-                not_id: "demo-1",
-                not_titulo: `Bienvenido a ${negocio} 2026`,
-                not_contenido_html: "Se ha activado tu suscripción a la plataforma de gestión legal e identidad unificada.",
-                not_url_accion: "/panel",
-                not_leido_en: null,
-                not_creado_en: new Date().toISOString(),
-                not_canal: "IN_APP"
-              }
-            ]);
           }
         })
         .catch(() => {});

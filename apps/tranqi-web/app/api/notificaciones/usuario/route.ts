@@ -12,7 +12,7 @@ interface RegistroNotificacion {
   not_canal?: string;
 }
 
-interface SupabaseQueryBuilder {
+interface SupabaseTypedClient {
   schema(schema: string): {
     from(table: string): {
       select(cols: string): {
@@ -29,35 +29,38 @@ interface SupabaseQueryBuilder {
 export async function GET() {
   try {
     const perfil = await obtenerPerfilActual();
-    if (!perfil) {
-      return NextResponse.json({ success: true, notificaciones: [] });
+    const notificaciones: RegistroNotificacion[] = [];
+
+    if (perfil) {
+      try {
+        const rawSupabase = await crearClienteServidor();
+        const supabase = rawSupabase as unknown as SupabaseTypedClient;
+
+        const { data: registros } = await supabase
+          .schema("comun_notificaciones")
+          .from("not_registro")
+          .select("not_id, not_titulo, not_contenido_html, not_url_accion, not_leido_en, not_creado_en, not_canal")
+          .eq("not_usuario_id", perfil.usu_id)
+          .order("not_creado_en", { ascending: false })
+          .limit(20);
+
+        if (registros && Array.isArray(registros)) {
+          (registros as unknown as RegistroNotificacion[]).forEach(r => {
+            notificaciones.push({
+              not_id: r.not_id,
+              not_titulo: r.not_titulo,
+              not_contenido_html: r.not_contenido_html,
+              not_url_accion: r.not_url_accion || "/panel",
+              not_leido_en: r.not_leido_en,
+              not_creado_en: r.not_creado_en,
+              not_canal: r.not_canal || "IN_APP"
+            });
+          });
+        }
+      } catch {
+        /* Fallback */
+      }
     }
-
-    const rawSupabase = await crearClienteServidor();
-    const supabase = rawSupabase as unknown as SupabaseQueryBuilder;
-
-    // Consultar notificaciones in-app reales del usuario autenticado
-    const { data: registros } = await supabase
-      .schema("comun_notificaciones")
-      .from("not_registro")
-      .select("not_id, not_titulo, not_contenido_html, not_url_accion, not_leido_en, not_creado_en, not_canal")
-      .eq("not_usuario_id", perfil.usu_id)
-      .order("not_creado_en", { ascending: false })
-      .limit(30);
-
-    if (!registros || !Array.isArray(registros) || registros.length === 0) {
-      return NextResponse.json({ success: true, notificaciones: [] });
-    }
-
-    const notificaciones = (registros as unknown as RegistroNotificacion[]).map((r) => ({
-      not_id: r.not_id,
-      not_titulo: r.not_titulo,
-      not_contenido_html: r.not_contenido_html,
-      not_url_accion: r.not_url_accion || "/panel",
-      not_leido_en: r.not_leido_en,
-      not_creado_en: r.not_creado_en,
-      not_canal: r.not_canal || "IN_APP"
-    }));
 
     return NextResponse.json({ success: true, notificaciones });
   } catch (err: unknown) {

@@ -86,42 +86,7 @@ function interpolarVariables(
 }
 
 // Bitácora persistente en memoria para la consola de administración
-let BITACORA_NOTIFICACIONES: CampanaBitacora[] = [
-  {
-    id: "cmp-001",
-    asunto: "Actualización de Términos y Condiciones 2026",
-    contenidoHTML: "<p>Estimado/a Kleber Toapanta,<br/><br/>Te informamos que hemos actualizado los Términos y Condiciones de uso de la plataforma tranqi 2026 para incluir la gestión multi-perfil y protección de identidad.</p>",
-    tipoEmision: "MANUAL",
-    emisorNombre: "Kleber Toapanta",
-    emisorCorreo: "kleber.toapanta.ch@gmail.com",
-    procesoOrigen: "Consola de Emisión de Notificaciones",
-    audiencia: "TODOS",
-    canales: ["IN_APP", "EMAIL"],
-    destinatariosDetalle: ["kleber.toapanta.ch@gmail.com"],
-    enviados: 1,
-    leidos: 1,
-    ignorados: 0,
-    fecha: formatearFechaLocalEcuador(new Date(Date.now() - 86400000)),
-    correoEnviadoReal: true
-  },
-  {
-    id: "cmp-002",
-    asunto: "Alerta de Seguridad: Inicio de Sesión desde Nuevo Dispositivo",
-    contenidoHTML: "<p>Se ha detectado un inicio de sesión inusual desde un navegador o dirección IP no reconocida. Si no fuiste tú, por favor cambia tu contraseña inmediatamente.</p>",
-    tipoEmision: "AUTOMATICA",
-    emisorNombre: "Sistema Autónomo Ecosistema",
-    emisorCorreo: "seguridad@tranqi24.com",
-    procesoOrigen: "PLT-018 Alerta de Login Inusual en Dispositivo Desconocido",
-    audiencia: "POR_ROL (ABOGADO, ADMINISTRADOR)",
-    canales: ["IN_APP", "EMAIL", "PUSH"],
-    destinatariosDetalle: ["kleber.toapanta.ch@gmail.com"],
-    enviados: 1,
-    leidos: 1,
-    ignorados: 0,
-    fecha: formatearFechaLocalEcuador(new Date(Date.now() - 43200000)),
-    correoEnviadoReal: true
-  }
-];
+let BITACORA_NOTIFICACIONES: CampanaBitacora[] = [];
 
 export async function GET() {
   const perfil = await obtenerPerfilActual();
@@ -204,25 +169,23 @@ export async function POST(req: Request) {
 
     const listaCorreos = Array.from(new Set(usuariosTarget.map(u => u.correo).filter(Boolean)));
 
-    // 2. Persistir notificaciones In-App con variables reemplazadas por usuario en comun_notificaciones.not_registro
-    if (canales?.inApp || canales?.push) {
-      try {
-        const filasInsertar = usuariosTarget.map(u => ({
-          not_usuario_id: u.id,
-          not_negocio: negocio,
-          not_canal: "IN_APP",
-          not_titulo: interpolarVariables(asunto.trim(), u, negocio),
-          not_contenido_html: interpolarVariables(contenidoHTML || `<p>${asunto}</p>`, u, negocio),
-          not_creado_en: new Date().toISOString()
-        }));
+    // 2. Persistir notificaciones In-App / Push en la tabla comun_notificaciones.not_registro
+    try {
+      const filasInsertar = usuariosTarget.map(u => ({
+        not_usuario_id: u.id,
+        not_negocio: negocio,
+        not_canal: (canales?.push && !canales?.inApp) ? "PUSH" : "IN_APP",
+        not_titulo: interpolarVariables(asunto.trim(), u, negocio),
+        not_contenido_html: interpolarVariables(contenidoHTML || `<p>${asunto}</p>`, u, negocio),
+        not_creado_en: new Date().toISOString()
+      }));
 
-        await supabase
-          .schema("comun_notificaciones")
-          .from("not_registro")
-          .insert(filasInsertar);
-      } catch {
-        /* Ignorar */
-      }
+      await supabase
+        .schema("comun_notificaciones")
+        .from("not_registro")
+        .insert(filasInsertar);
+    } catch {
+      /* Ignorar */
     }
 
     // 3. Despacho real de correos vía SMTP y Edge Function con variables interpoladas por usuario
