@@ -57,22 +57,32 @@ export default async function LayoutPanel({ children }: { children: React.ReactN
   const widgetsRaw = await obtenerWidgetsVisibles(perfil.usu_id, perfil.usu_superadmin_plataforma, NEGOCIO);
   const perfiles = await obtenerPerfiles(NEGOCIO);
 
+  const MAPA_CLASES_PERFIL: Record<string, string> = {
+    cliente: "perfil-cliente",
+    operador: "perfil-operador",
+    auxiliar: "perfil-operador",
+    abogado: "perfil-abogado",
+    socio: "perfil-abogado",
+    tecnico: "perfil-tecnico",
+    admin: "perfil-admin",
+    administrador: "perfil-admin",
+    superadmin: "perfil-superadmin"
+  };
+
   const cookieStore = await cookies();
   const modoCookie = modoValido(cookieStore.get("tranqi_modo_rol")?.value)
     || modoValido(cookieStore.get("tranqi_rol_favorito")?.value);
-  const modoActivo: ModoRol = perfil.usu_superadmin_plataforma && modoCookie
-    ? modoCookie
-    : modoDePerfiles(perfiles);
+  const modoActivo: ModoRol = modoCookie ? modoCookie : modoDePerfiles(perfiles);
 
-  const clasePerfil = `perfil-${modoActivo}`;
-  const esAdminModo = modoActivo === "admin";
+  const clasePerfil = MAPA_CLASES_PERFIL[modoActivo.toLowerCase()] || `perfil-${modoActivo.toLowerCase()}`;
+  const esAdminModo = modoActivo === "admin" || modoActivo === "administrador" || modoActivo === "superadmin";
   const widgets = esAdminModo
     ? widgetsRaw.filter(w => w.wdg_clave !== "configuracion_negocio" && w.wdg_clave !== "configuracion_correo")
     : [];
 
   return (
     <Suspense fallback={<div className={`panel-layout ${clasePerfil}`}>{children}</div>}>
-      <CapaPerfilRail claseBase={clasePerfil} puedeConmutar={Boolean(perfil.usu_superadmin_plataforma)}>
+      <CapaPerfilRail claseBase={clasePerfil}>
         <aside className="panel-nav">
           <svg className="cinta-rail" viewBox="0 0 236 900" preserveAspectRatio="none" aria-hidden="true">
             <path d="M 200 -40 C 200 160 40 240 60 430 C 78 610 210 660 200 900" />

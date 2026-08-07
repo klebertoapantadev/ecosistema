@@ -430,36 +430,46 @@ p { line-height: 1.55; }
   --rail-acento: var(--lavanda);
 }
 .panel-layout.perfil-cliente {
-  --rail-superficie: var(--violeta-oscuro);
-  /* un paso POR ENCIMA de la superficie, camino del violeta pleno. Sin llegar
-     a #5000BA: ese es el color de la acción, y como fondo del enlace activo
-     parecería un relleno saturado, que es lo que §4 descarta. */
+  --rail-superficie: var(--violeta-oscuro, #33007A);
   --rail-alta: #431499;
-  --rail-acento: var(--menta);
-  /* la maqueta de cliente usa papel con tinte de marca, no el gris del panel */
-  --panel-papel: var(--papel-cliente);
+  --rail-acento: var(--menta, #B1FBE3);
+  --panel-papel: var(--papel-cliente, #F5F3FF);
 }
-/* La cinta es textura de los perfiles de color: sobre el rail negro de
-   administración sería decoración sin significado (§7). Se oculta por CSS y
-   no con un condicional en el layout porque el perfil puede cambiar en
-   cliente al usar el conmutador «Ver como». */
-/* La cinta también en administración. §7 la excluía por considerarla
-   "decoración sin significado" sobre el rail negro, pero el efecto real era
-   que ese perfil quedaba como la única superficie plana de los tres, y así se
-   reportó. La cinta usa `--rail-acento`, que en administración es la lavanda
-   `#7866FF` — el mismo color que §4 eligió justamente porque SÍ se distingue
-   sobre el negro.
-
-   Sube al 14% y no al 9% de los otros dos porque la opacidad estaba calibrada
-   para menta sobre púrpura. Medido: menta al 9% sobre `#33007A` da contraste
-   1.16 contra su propio fondo; lavanda al 14% sobre `#111111` da 1.15. Mismo
-   peso visual, no un número a ojo. */
-.panel-layout.perfil-admin .cinta-rail { opacity: 0.14; }
-.panel-layout.perfil-abogado {
-  --rail-superficie: var(--esmeralda-tinta);
+.panel-layout.perfil-abogado,
+.panel-layout.perfil-socio {
+  --rail-superficie: var(--esmeralda-tinta, #052A23);
   --rail-alta: #0B3B31;
-  --rail-acento: var(--lima);
+  --rail-acento: var(--lima, #D8FFB3);
+  --panel-papel: #F0FDF4;
 }
+.panel-layout.perfil-admin,
+.panel-layout.perfil-administrador {
+  --rail-superficie: var(--negro, #111111);
+  --rail-alta: #1F1F2E;
+  --rail-acento: var(--lavanda, #7866FF);
+  --panel-papel: #F8FAFC;
+}
+.panel-layout.perfil-operador,
+.panel-layout.perfil-auxiliar {
+  --rail-superficie: #0F172A;
+  --rail-alta: #1E293B;
+  --rail-acento: #38BDF8;
+  --panel-papel: #F0F9FF;
+}
+.panel-layout.perfil-tecnico {
+  --rail-superficie: #3B1A04;
+  --rail-alta: #542606;
+  --rail-acento: #FBBF24;
+  --panel-papel: #FFFBEB;
+}
+.panel-layout.perfil-superadmin {
+  --rail-superficie: #18002E;
+  --rail-alta: #2E0054;
+  --rail-acento: #F43F5E;
+  --panel-papel: #FAF5FF;
+}
+.panel-layout.perfil-admin .cinta-rail,
+.panel-layout.perfil-administrador .cinta-rail { opacity: 0.14; }
 
 /* ── Trampa heredada de la landing ───────────────────────────────────
    `section` a secas está definido más arriba como UNA PÁGINA COMPLETA:

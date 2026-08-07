@@ -1,12 +1,15 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 
 const MAPA_CLASES_PERFIL: Record<string, string> = {
   cliente: "perfil-cliente",
   operador: "perfil-operador",
+  auxiliar: "perfil-operador",
   abogado: "perfil-abogado",
   socio: "perfil-abogado",
+  tecnico: "perfil-tecnico",
   admin: "perfil-admin",
   administrador: "perfil-admin",
   superadmin: "perfil-superadmin"
@@ -14,18 +17,50 @@ const MAPA_CLASES_PERFIL: Record<string, string> = {
 
 export function CapaPerfilRail({
   claseBase,
-  puedeConmutar,
   children,
 }: {
   claseBase: string;
-  puedeConmutar: boolean;
+  puedeConmutar?: boolean;
   children: React.ReactNode;
 }) {
-  const parametros = useSearchParams();
-  const modo = parametros.get("modo")?.toLowerCase();
+  const searchParams = useSearchParams();
+  const [clasePerfil, setClasePerfil] = useState<string>(claseBase);
 
-  const claseDinamica = modo ? (MAPA_CLASES_PERFIL[modo] || `perfil-${modo}`) : null;
-  const clase = puedeConmutar && claseDinamica ? claseDinamica : claseBase;
+  useEffect(() => {
+    // 1. Parámetro de URL `?modo=...` tiene máxima prioridad
+    const paramModo = searchParams.get("modo")?.toLowerCase();
+    if (paramModo) {
+      const claseUrl = MAPA_CLASES_PERFIL[paramModo];
+      if (claseUrl) {
+        setClasePerfil(claseUrl);
+        return;
+      }
+    }
 
-  return <div className={`panel-layout ${clase}`}>{children}</div>;
+    // 2. Cookie de modo de rol activo
+    const matchModo = document.cookie.match(/(?:^|; )tranqi_modo_rol=([^;]*)/);
+    if (matchModo && matchModo[1]) {
+      const modoCookieVal = matchModo[1].toLowerCase();
+      const claseCookie = MAPA_CLASES_PERFIL[modoCookieVal];
+      if (claseCookie) {
+        setClasePerfil(claseCookie);
+        return;
+      }
+    }
+
+    // 3. Cookie de rol favorito
+    const matchFav = document.cookie.match(/(?:^|; )tranqi_rol_favorito=([^;]*)/);
+    if (matchFav && matchFav[1]) {
+      const favCookieVal = matchFav[1].toLowerCase();
+      const claseFav = MAPA_CLASES_PERFIL[favCookieVal];
+      if (claseFav) {
+        setClasePerfil(claseFav);
+        return;
+      }
+    }
+
+    setClasePerfil(claseBase);
+  }, [searchParams, claseBase]);
+
+  return <div className={`panel-layout ${clasePerfil}`}>{children}</div>;
 }
