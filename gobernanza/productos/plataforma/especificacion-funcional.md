@@ -195,6 +195,9 @@ Gestiona el control de acceso basado en roles y perfiles (RBAC/ABAC) aislado por
    - **Conmutador de Rol Activo (*Active Role Switcher*):**
      - Si un usuario ostenta múltiples perfiles activos en una misma empresa (ej. `CLIENTE` + `ABOGADO` + `ADMINISTRADOR` en Tranqi), la interfaz del panel despliega un **Selector de Rol Activo** en la barra superior/perfil (*"Modo Cliente"* | *"Modo Abogado / Socio"* | *"Modo Administrador"*).
      - Al alternar el rol activo, el panel reestructura instantáneamente su menú de navegación y renderiza únicamente las secciones y widgets asignados a dicho rol (`PLT-011`).
+10. **Persistencia de Rol Favorito y Visibilidad Móvil (PLT-003.10):**
+    - **Persistencia de Rol Favorito por Defecto:** Cada opción en el Selector de Rol Activo ("Ver Cómo") incluye un botón de estrella (⭐) que permite al usuario fijar su rol preferido. Dicha elección se persiste en la cookie `tranqi_rol_favorito` y `localStorage`. Al iniciar sesión o ingresar a la plataforma, si no existe una sesión activa de modo temporal, el sistema se tematiza y estructura automáticamente en el rol favorito del usuario.
+    - **Garantía de Visibilidad en Dispositivos Móviles:** En pantallas móviles (<640px), las opciones del selector exhiben de forma obligatoria tanto el icono representativo como el **nombre completo del perfil** (`Cliente`, `Operador / Auxiliar`, `Socio Abogado`, `Administrador del Negocio`, `SuperAdmin de Plataforma`), garantizando una navegación legible y operable.
 
 ### Estado de implementación
 
@@ -211,6 +214,7 @@ Actualizado en cada PR que toque este requerimiento. `Parcial` significa que exi
 | 7 · Verificación de estado adicional | ✅ Implementado | `trq_abogado` y validación de perfiles por negocio |
 | 8 · Notificación multicanal por cambio de perfil | ✅ Implementado | `emision_notificaciones` (`PLT-013`) |
 | 9 · Conmutador de rol activo & Tematización por Perfil | ✅ Implementado | Conmutador `ver_como` y paleta de colores dinámica por perfil en `AdministracionPerfilesWidget.tsx` |
+| 10 · Persistencia de rol favorito y visibilidad móvil | ✅ Implementado | Cookie `tranqi_rol_favorito` y maquetación responsive en `SelectorRolActivo.tsx` y `globals.css` |
 
 **Deuda declarada:** `seg_membresia.mem_rol` sigue existiendo, marcada como deprecada en el comentario de la columna. Es una transición expand/contract deliberada — se retira en una migración posterior, cuando producción lleve tiempo leyendo del modelo nuevo. Ningún código la lee ya.
 ### Criterios de Aceptación (Gherkin)
