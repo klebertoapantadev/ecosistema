@@ -13,11 +13,13 @@ interface RegistroNotificacion {
 }
 
 interface SupabaseQueryBuilder {
-  from(table: string): {
-    select(cols: string): {
-      eq(col: string, val: string): {
-        order(col: string, opts: { ascending: boolean }): {
-          limit(n: number): Promise<{ data: unknown; error: unknown }>;
+  schema(schema: string): {
+    from(table: string): {
+      select(cols: string): {
+        eq(col: string, val: string): {
+          order(col: string, opts: { ascending: boolean }): {
+            limit(n: number): Promise<{ data: unknown; error: unknown }>;
+          };
         };
       };
     };
@@ -34,15 +36,16 @@ export async function GET() {
     const rawSupabase = await crearClienteServidor();
     const supabase = rawSupabase as unknown as SupabaseQueryBuilder;
 
-    // Consultar notificaciones in-app reales de comun_notificacion.not_registro
-    const { data: registros, error } = await supabase
+    // Consultar notificaciones in-app reales del usuario autenticado
+    const { data: registros } = await supabase
+      .schema("comun_notificaciones")
       .from("not_registro")
-      .select("*")
+      .select("not_id, not_titulo, not_contenido_html, not_url_accion, not_leido_en, not_creado_en, not_canal")
       .eq("not_usuario_id", perfil.usu_id)
       .order("not_creado_en", { ascending: false })
       .limit(30);
 
-    if (error || !registros) {
+    if (!registros || !Array.isArray(registros) || registros.length === 0) {
       return NextResponse.json({ success: true, notificaciones: [] });
     }
 

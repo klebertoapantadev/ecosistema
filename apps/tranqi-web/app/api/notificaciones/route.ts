@@ -6,6 +6,8 @@ import { crearClienteServidor } from "@eco/supabase/servidor";
 export interface CampanaBitacora {
   id: string;
   asunto: string;
+  contenidoHTML?: string;
+  contenidoMarkdown?: string;
   tipoEmision: "MANUAL" | "AUTOMATICA";
   emisorNombre: string;
   emisorCorreo: string;
@@ -13,6 +15,7 @@ export interface CampanaBitacora {
   procesoOrigen: string;
   audiencia: string;
   canales: string[];
+  destinatariosDetalle: string[];
   enviados: number;
   leidos: number;
   ignorados: number;
@@ -20,17 +23,13 @@ export interface CampanaBitacora {
   correoEnviadoReal?: boolean;
 }
 
-interface UsuarioDBRow {
-  usu_id: string;
-  usu_correo: string;
-}
-
-interface SupabaseGenericClient {
-  from(table: string): {
-    select(cols: string): Promise<{ data: unknown; error: unknown }>;
-    insert(values: unknown[]): Promise<{ data: unknown; error: unknown }>;
+interface SupabaseTypedClient {
+  schema(schema: string): {
+    from(table: string): {
+      select(cols: string): Promise<{ data: unknown; error: unknown }>;
+      insert(values: unknown[]): Promise<{ data: unknown; error: unknown }>;
+    };
   };
-  rpc(fn: string, params: Record<string, unknown>): Promise<{ data: unknown; error: unknown }>;
 }
 
 // Helper para formatear fecha en hora local de Ecuador (UTC-5) YYYY-MM-DD HH:mm
@@ -59,30 +58,34 @@ let BITACORA_NOTIFICACIONES: CampanaBitacora[] = [
   {
     id: "cmp-001",
     asunto: "Actualización de Términos y Condiciones 2026",
+    contenidoHTML: "<p>Estimado/a usuario/a,<br/><br/>Te informamos que hemos actualizado los Términos y Condiciones de uso de la plataforma tranqi 2026 para incluir la gestión multi-perfil y protección de identidad.</p>",
     tipoEmision: "MANUAL",
     emisorNombre: "Kleber Toapanta",
     emisorCorreo: "kleber.toapanta.ch@gmail.com",
     procesoOrigen: "Consola de Emisión de Notificaciones",
     audiencia: "TODOS",
     canales: ["IN_APP", "EMAIL"],
-    enviados: 142,
-    leidos: 118,
-    ignorados: 24,
+    destinatariosDetalle: ["kleber.toapanta.ch@gmail.com"],
+    enviados: 1,
+    leidos: 1,
+    ignorados: 0,
     fecha: formatearFechaLocalEcuador(new Date(Date.now() - 86400000)),
     correoEnviadoReal: true
   },
   {
     id: "cmp-002",
     asunto: "Alerta de Seguridad: Inicio de Sesión desde Nuevo Dispositivo",
+    contenidoHTML: "<p>Se ha detectado un inicio de sesión inusual desde un navegador o dirección IP no reconocida. Si no fuiste tú, por favor cambia tu contraseña inmediatamente.</p>",
     tipoEmision: "AUTOMATICA",
     emisorNombre: "Sistema Autónomo Ecosistema",
     emisorCorreo: "seguridad@tranqi24.com",
     procesoOrigen: "PLT-018 Alerta de Login Inusual en Dispositivo Desconocido",
     audiencia: "POR_ROL (ABOGADO, ADMINISTRADOR)",
     canales: ["IN_APP", "EMAIL", "PUSH"],
-    enviados: 28,
-    leidos: 25,
-    ignorados: 3,
+    destinatariosDetalle: ["kleber.toapanta.ch@gmail.com"],
+    enviados: 1,
+    leidos: 1,
+    ignorados: 0,
     fecha: formatearFechaLocalEcuador(new Date(Date.now() - 43200000)),
     correoEnviadoReal: true
   }
@@ -111,7 +114,7 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { negocio = "TRANQ", asunto, tipoAudiencia, roles, usuarios, canales, contenidoHTML, contenidoMarkdown: _contenidoMarkdown } = body;
+    const { negocio = "TRANQ", asunto, tipoAudiencia, roles, usuarios, canales, contenidoHTML, contenidoMarkdown } = body;
 
     if (!asunto || typeof asunto !== "string" || !asunto.trim()) {
       return NextResponse.json({ error: "El asunto es obligatorio" }, { status: 400 });
@@ -132,42 +135,27 @@ export async function POST(req: Request) {
         ? `POR_USUARIOS (${usuarios || "Seleccionados"})`
         : "TODOS";
 
-    // 1. Obtener lista real de usuarios destinatarios desde Supabase
+    // 1. Consultar destinatarios reales desde Supabase usando el esquema comun_seguridad
     const rawSupabase = await crearClienteServidor();
-    const supabase = rawSupabase as unknown as SupabaseGenericClient;
+    const supabase = rawSupabase as unknown as SupabaseTypedClient;
     let usuariosTarget: Array<{ id: string; correo: string }> = [];
-
-    // Invocar RPC de Supabase `not_fn_emitir_campana` si existe
-    try {
-      await supabase.rpc("not_fn_emitir_campana", {
-        p_negocio: negocio,
-        p_tipo_audiencia: tipoAudiencia,
-        p_roles_jsonb: roles || [],
-        p_usuarios_jsonb: usuarios ? [usuarios] : [],
-        p_canales_jsonb: canalesLista,
-        p_asunto: asunto.trim(),
-        p_cuerpo_html: contenidoHTML || `<p>${asunto}</p>`
-      });
-    } catch {
-      /* Ignorar si RPC no está desplegado aún */
-    }
 
     try {
       const { data: dbUsuarios } = await supabase
+        .schema("comun_seguridad")
         .from("seg_usuario")
         .select("usu_id, usu_correo");
 
       if (dbUsuarios && Array.isArray(dbUsuarios)) {
-        const rows = dbUsuarios as unknown as UsuarioDBRow[];
-        usuariosTarget = rows
-          .filter(u => u.usu_correo)
-          .map(u => ({ id: u.usu_id, correo: u.usu_correo }));
+        usuariosTarget = (dbUsuarios as unknown as Array<{ usu_id: string; usu_correo: string }>)
+          .filter((u) => Boolean(u.usu_correo))
+          .map((u) => ({ id: u.usu_id, correo: u.usu_correo }));
       }
     } catch {
       /* Fallback */
     }
 
-    // Extraer correos pasados manualmente en el filtro
+    // Extraer correos válidos tipeados manualmente en el filtro
     if (usuarios && typeof usuarios === "string") {
       const correosExtraidos = usuarios.split(/[\s,;]+/).filter(c => c.includes("@"));
       correosExtraidos.forEach(c => {
@@ -177,19 +165,14 @@ export async function POST(req: Request) {
       });
     }
 
-    // Cuentas de respaldo predeterminadas para pruebas reales
-    const correosRespaldo = ["familiammtoapantaguerrero@gmail.com", "kleber.toapanta.ch@gmail.com"];
-    correosRespaldo.forEach(c => {
-      if (!usuariosTarget.some(u => u.correo.toLowerCase() === c.toLowerCase())) {
-        usuariosTarget.push({ id: `usr-respaldo-${Date.now()}`, correo: c });
-      }
-    });
-
+    // Asegurar que el correo del usuario emisor esté presente
     if (perfil?.usu_correo && !usuariosTarget.some(u => u.correo.toLowerCase() === perfil.usu_correo.toLowerCase())) {
       usuariosTarget.push({ id: perfil.usu_id, correo: perfil.usu_correo });
     }
 
-    // 2. Persistir registros In-App en comun_notificacion.not_registro
+    const listaCorreos = Array.from(new Set(usuariosTarget.map(u => u.correo).filter(Boolean)));
+
+    // 2. Persistir notificaciones In-App en la tabla comun_notificaciones.not_registro
     if (canales?.inApp || canales?.push) {
       try {
         const filasInsertar = usuariosTarget.map(u => ({
@@ -201,24 +184,26 @@ export async function POST(req: Request) {
           not_creado_en: new Date().toISOString()
         }));
 
-        await supabase.from("not_registro").insert(filasInsertar);
+        await supabase
+          .schema("comun_notificaciones")
+          .from("not_registro")
+          .insert(filasInsertar);
       } catch {
         /* Ignorar */
       }
     }
 
-    // 3. Despacho real de correos electrónicos vía SMTP y Edge Function
+    // 3. Despacho real de correos vía SMTP y Edge Function
     let correoDespachadoConExito = false;
     let detalleEnvioEmail = "";
 
-    if (canales?.email) {
-      const listaCorreos = Array.from(new Set(usuariosTarget.map(u => u.correo).filter(Boolean)));
+    if (canales?.email && listaCorreos.length > 0) {
       const smtpHost = process.env.SMTP_HOST || process.env.EMAIL_HOST;
       const smtpUser = process.env.SMTP_USER || process.env.EMAIL_USER;
       const smtpPass = process.env.SMTP_PASS || process.env.EMAIL_PASS;
       const smtpPort = Number(process.env.SMTP_PORT || 587);
 
-      if (smtpHost && smtpUser && smtpPass && listaCorreos.length > 0) {
+      if (smtpHost && smtpUser && smtpPass) {
         try {
           const transporter = nodemailer.createTransport({
             host: smtpHost,
@@ -243,7 +228,6 @@ export async function POST(req: Request) {
           detalleEnvioEmail = ` (Fallo SMTP: ${errText})`;
         }
       } else {
-        // Importar dinámicamente `enviarCorreo` para no contaminar bundles de cliente
         try {
           const { enviarCorreo } = await import("@eco/notificaciones/enviar-correo");
           let enviosEdgeExitosos = 0;
@@ -274,6 +258,8 @@ export async function POST(req: Request) {
     const nuevaCampana: CampanaBitacora = {
       id: "cmp-" + Date.now().toString().slice(-6),
       asunto: asunto.trim(),
+      contenidoHTML: contenidoHTML || `<p>${asunto}</p>`,
+      contenidoMarkdown: contenidoMarkdown || "",
       tipoEmision: "MANUAL",
       emisorNombre: nombreCompleto,
       emisorCorreo: perfil?.usu_correo || "admin@tranqi24.com",
@@ -281,9 +267,10 @@ export async function POST(req: Request) {
       procesoOrigen: "Consola de Emisión de Notificaciones",
       audiencia: audienciaTexto,
       canales: canalesLista.length > 0 ? canalesLista : ["IN_APP"],
-      enviados: usuariosTarget.length,
+      destinatariosDetalle: listaCorreos,
+      enviados: listaCorreos.length,
       leidos: 0,
-      ignorados: usuariosTarget.length,
+      ignorados: listaCorreos.length,
       fecha: fechaLocalFormat,
       correoEnviadoReal: correoDespachadoConExito
     };
@@ -292,7 +279,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({
       success: true,
-      mensaje: `Notificación multicanal emitida (${usuariosTarget.length} destinatarios).${detalleEnvioEmail}`,
+      mensaje: `Notificación multicanal emitida (${listaCorreos.length} destinatarios).${detalleEnvioEmail}`,
       campana: nuevaCampana,
       totalHistorico: BITACORA_NOTIFICACIONES.length
     });
