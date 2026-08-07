@@ -2,26 +2,7 @@ import { NextResponse } from "next/server";
 import nodemailer from "nodemailer";
 import { obtenerPerfilActual, obtenerPerfiles } from "@eco/identidad";
 import { crearClienteServidor } from "@eco/supabase/servidor";
-
-export interface CampanaBitacora {
-  id: string;
-  asunto: string;
-  contenidoHTML?: string;
-  contenidoMarkdown?: string;
-  tipoEmision: "MANUAL" | "AUTOMATICA";
-  emisorNombre: string;
-  emisorCorreo: string;
-  emisorId?: string;
-  procesoOrigen: string;
-  audiencia: string;
-  canales: string[];
-  destinatariosDetalle: string[];
-  enviados: number;
-  leidos: number;
-  ignorados: number;
-  fecha: string;
-  correoEnviadoReal?: boolean;
-}
+import { agregarCampanaServidor, obtenerCampanasServidor, CampanaBitacora } from "./almacen";
 
 interface UsuarioDBRow {
   usu_id: string;
@@ -85,9 +66,6 @@ function interpolarVariables(
     .replace(/\{nombrecompleto\}/gi, nombreCompleto);
 }
 
-// Bitácora persistente en memoria para la consola de administración
-let BITACORA_NOTIFICACIONES: CampanaBitacora[] = [];
-
 export async function GET() {
   const perfil = await obtenerPerfilActual();
   const perfiles = await obtenerPerfiles("tranqi");
@@ -97,7 +75,7 @@ export async function GET() {
     return NextResponse.json({ error: "Acceso Denegado" }, { status: 403 });
   }
 
-  return NextResponse.json({ success: true, campanas: BITACORA_NOTIFICACIONES });
+  return NextResponse.json({ success: true, campanas: obtenerCampanasServidor() });
 }
 
 export async function POST(req: Request) {
@@ -278,13 +256,13 @@ export async function POST(req: Request) {
       correoEnviadoReal: correoDespachadoConExito
     };
 
-    BITACORA_NOTIFICACIONES = [nuevaCampana, ...BITACORA_NOTIFICACIONES];
+    agregarCampanaServidor(nuevaCampana);
 
     return NextResponse.json({
       success: true,
       mensaje: `Notificación multicanal emitida (${listaCorreos.length} destinatarios).${detalleEnvioEmail}`,
       campana: nuevaCampana,
-      totalHistorico: BITACORA_NOTIFICACIONES.length
+      totalHistorico: obtenerCampanasServidor().length
     });
   } catch (err: unknown) {
     const errorMsg = err instanceof Error ? err.message : "Error al procesar emisión";

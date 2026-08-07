@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { obtenerPerfilActual } from "@eco/identidad";
 import { crearClienteServidor } from "@eco/supabase/servidor";
+import { obtenerCampanasServidor } from "../almacen";
 
 interface RegistroNotificacion {
   not_id: string;
@@ -61,6 +62,22 @@ export async function GET() {
         /* Fallback */
       }
     }
+
+    // Incluir campañas de transmisión (TODOS) activas en la consola
+    const campanas = obtenerCampanasServidor();
+    campanas.forEach(c => {
+      if (!notificaciones.some(n => n.not_id === c.id)) {
+        notificaciones.push({
+          not_id: c.id,
+          not_titulo: c.asunto,
+          not_contenido_html: c.contenidoHTML || `<p>${c.asunto}</p>`,
+          not_url_accion: "/panel",
+          not_leido_en: null,
+          not_creado_en: new Date().toISOString(),
+          not_canal: (c.canales && c.canales.includes("PUSH")) ? "PUSH" : "IN_APP"
+        });
+      }
+    });
 
     return NextResponse.json({ success: true, notificaciones });
   } catch (err: unknown) {
