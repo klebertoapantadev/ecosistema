@@ -1,19 +1,26 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import { Check, ShieldCheck, Camera, Trash2, Upload, Plus, X, Globe, Mail, FileText } from "lucide-react";
+import { Check, ShieldCheck, Camera, Trash2, Upload, Plus, X, Globe, Mail, FileText, ChevronDown } from "lucide-react";
 import { actualizarPerfilUsuario } from "../acciones";
 import { ModalTerminosNotificaciones } from "./ModalTerminosNotificaciones";
 
-const PAISES_WHATSAPP = [
-  { codigo: "+593", nombre: "Ecuador 🇪🇨" },
-  { codigo: "+57", nombre: "Colombia 🇨🇴" },
-  { codigo: "+51", nombre: "Perú 🇵🇪" },
-  { codigo: "+1", nombre: "EE.UU. / Canadá 🇺🇸" },
-  { codigo: "+34", nombre: "España 🇪🇸" },
-  { codigo: "+54", nombre: "Argentina 🇦🇷" },
-  { codigo: "+56", nombre: "Chile 🇨🇱" },
-  { codigo: "+52", nombre: "México 🇲🇽" },
+export interface PaisWhatsappDef {
+  codigo: string;
+  iso: string;
+  nombre: string;
+  bandera: string;
+}
+
+export const PAISES_WHATSAPP: PaisWhatsappDef[] = [
+  { codigo: "+593", iso: "EC", nombre: "Ecuador", bandera: "🇪🇨" },
+  { codigo: "+57", iso: "CO", nombre: "Colombia", bandera: "🇨🇴" },
+  { codigo: "+51", iso: "PE", nombre: "Perú", bandera: "🇵🇪" },
+  { codigo: "+1", iso: "US", nombre: "EE.UU. / Canadá", bandera: "🇺🇸" },
+  { codigo: "+34", iso: "ES", nombre: "España", bandera: "🇪🇸" },
+  { codigo: "+54", iso: "AR", nombre: "Argentina", bandera: "🇦🇷" },
+  { codigo: "+56", iso: "CL", nombre: "Chile", bandera: "🇨🇱" },
+  { codigo: "+52", iso: "MX", nombre: "México", bandera: "🇲🇽" },
 ];
 
 interface Props {
@@ -405,34 +412,91 @@ export function FormularioPerfil({ inicial }: Props) {
         <label style={{ display: "block", marginBottom: "6px", fontSize: "0.82rem", fontWeight: 700, color: "var(--negro, #111111)" }}>
           Número de Celular / WhatsApp (Opcional)
         </label>
-        <div style={{ display: "flex", gap: "8px" }}>
+        <div style={{ display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap" }}>
           {/* Dropdown de Código de País */}
-          <div style={{ position: "relative", minWidth: "150px" }}>
+          <div style={{ position: "relative", width: "190px", flexShrink: 0 }}>
             <select
               value={codigoPaisWhatsapp}
               onChange={(e) => setCodigoPaisWhatsapp(e.target.value)}
+              aria-label="Seleccionar país de WhatsApp"
               style={{
                 width: "100%",
-                paddingLeft: "32px",
+                height: "42px",
+                padding: "0 28px 0 36px",
+                borderRadius: "8px",
+                border: "1px solid var(--panel-linea, #E4E4E4)",
+                background: "var(--blanco, #ffffff)",
+                color: "var(--negro, #111111)",
+                fontSize: "0.85rem",
                 fontWeight: 700,
+                fontFamily: "inherit",
                 appearance: "none",
+                WebkitAppearance: "none",
+                MozAppearance: "none",
+                cursor: "pointer",
+                outline: "none",
+                boxSizing: "border-box",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+                overflow: "hidden",
               }}
             >
               {PAISES_WHATSAPP.map((p) => (
-                <option key={p.codigo} value={p.codigo}>
-                  {p.nombre} ({p.codigo})
+                <option key={p.codigo} value={p.codigo} style={{ padding: "8px", color: "#111111" }}>
+                  {p.bandera} {p.nombre} ({p.codigo})
                 </option>
               ))}
             </select>
-            <Globe size={16} style={{ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)", color: "var(--panel-gris, #737373)", pointerEvents: "none" }} />
+
+            {/* Icono de Bandera del País Seleccionado en la esquina izquierda */}
+            <span
+              style={{
+                position: "absolute",
+                left: "10px",
+                top: "50%",
+                transform: "translateY(-50%)",
+                fontSize: "1.1rem",
+                lineHeight: 1,
+                pointerEvents: "none",
+                display: "flex",
+                alignItems: "center",
+              }}
+            >
+              {PAISES_WHATSAPP.find((p) => p.codigo === codigoPaisWhatsapp)?.bandera || "🌐"}
+            </span>
+
+            {/* Flecha Desplegable a la Derecha */}
+            <ChevronDown
+              size={14}
+              style={{
+                position: "absolute",
+                right: "10px",
+                top: "50%",
+                transform: "translateY(-50%)",
+                color: "var(--panel-gris, #737373)",
+                pointerEvents: "none",
+              }}
+            />
           </div>
 
+          {/* Campo de Entrada de Número de Teléfono */}
           <input
             type="tel"
             placeholder="Ej: 0991234567"
             value={whatsapp}
             onChange={(e) => setWhatsapp(e.target.value)}
-            style={{ flex: 1 }}
+            style={{
+              flex: "1 1 200px",
+              height: "42px",
+              padding: "0 14px",
+              borderRadius: "8px",
+              border: "1px solid var(--panel-linea, #E4E4E4)",
+              background: "var(--blanco, #ffffff)",
+              color: "var(--negro, #111111)",
+              fontSize: "0.88rem",
+              fontFamily: "inherit",
+              boxSizing: "border-box",
+            }}
           />
         </div>
       </div>
