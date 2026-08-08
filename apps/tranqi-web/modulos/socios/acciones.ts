@@ -138,9 +138,12 @@ export async function registrarDocumentoSocio(
   comentario?: string,
 ): Promise<Resultado> {
   const supabase = await crearClienteServidor();
+  const TIPOS_PERMITIDOS = ["titulo", "matricula", "cedula", "otro"];
+  const tipoFinal = TIPOS_PERMITIDOS.includes(tipo) ? tipo : "otro";
+
   const { error } = await supabase.schema("tranqui_legal").from("trq_documento_socio").insert({
     dcs_solicitud_id: solicitudId,
-    dcs_tipo: tipo,
+    dcs_tipo: tipoFinal,
     dcs_url: path,
     dcs_nombre_archivo: nombreArchivo,
     dcs_comentario: comentario || null,

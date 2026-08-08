@@ -1048,6 +1048,21 @@ export function FormularioSolicitudSocio({ usuarioId, materias, provincias, soli
   const [cvYCertificados, setCvYCertificados] = useState<File[]>([]);
   const [senescytVerificado, setSenescytVerificado] = useState(Boolean(solicitudExistente?.ssc_enlace_senescyt_verificado));
   const [declaracion, setDeclaracion] = useState(Boolean(solicitudExistente));
+  const [textoTerminos, setTextoTerminos] = useState<string>(
+    "Autorizo expresamente a tranqi a verificar la autenticidad de mi título profesional en el portal de la SENESCYT, la vigencia de mi matrícula en el Foro de Abogados del Consejo de la Judicatura y la veracidad de la información y documentación proporcionada conforme a la Ley Orgánica de Protección de Datos Personales (LOPDP)."
+  );
+
+  useEffect(() => {
+    try {
+      const localData = typeof window !== "undefined" ? localStorage.getItem("tranqi_config_terminos_tranqi_solicitud_socio") : null;
+      if (localData) {
+        const parsed = JSON.parse(localData);
+        if (parsed.contenidoMarkdown) {
+          setTextoTerminos(parsed.contenidoMarkdown);
+        }
+      }
+    } catch { /* Ignorar fallback */ }
+  }, []);
   const [error, setError] = useState<string | null>(null);
   const [avisoArchivos, setAvisoArchivos] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
@@ -1288,15 +1303,14 @@ export function FormularioSolicitudSocio({ usuarioId, materias, provincias, soli
             type="checkbox"
             checked={declaracion}
             onChange={(e) => setDeclaracion(e.target.checked)}
-            required
             style={{ marginTop: "3px", width: "18px", height: "18px", accentColor: "var(--violeta, #5000BA)" }}
           />
           <span style={{ fontSize: "0.86rem", color: "#111111", lineHeight: "1.45" }}>
-            <strong style={{ display: "inline-flex", alignItems: "center", gap: "5px", color: "var(--violeta, #5000BA)" }}>
+            <strong style={{ display: "inline-flex", alignItems: "center", gap: "5px", color: "var(--violeta, #5000BA)", marginBottom: "4px" }}>
               <ShieldCheck size={16} /> Términos de Servicio & Autorización de Verificación (LOPDP):
             </strong>
             <br />
-            Autorizo expresamente a <strong>tranqi</strong> a verificar la autenticidad de mi título profesional en el portal de la <strong>SENESCYT</strong>, la vigencia de mi matrícula en el <strong>Foro de Abogados del Consejo de la Judicatura</strong> y la veracidad de la información y documentación proporcionada conforme a la Ley Orgánica de Protección de Datos Personales (LOPDP).
+            {textoTerminos}
           </span>
         </label>
       </div>
@@ -1310,9 +1324,21 @@ export function FormularioSolicitudSocio({ usuarioId, materias, provincias, soli
           </button>
         </>
       ) : (
-        <button type="submit" className="btn btn-primario" disabled={enviando} style={{ marginTop: "16px" }}>
+        <button
+          type="submit"
+          className="btn btn-primario"
+          disabled={!declaracion || enviando}
+          style={{
+            marginTop: "16px",
+            opacity: !declaracion ? 0.55 : 1,
+            cursor: !declaracion ? "not-allowed" : "pointer",
+            transition: "all 0.2s ease",
+          }}
+        >
           {enviando
             ? "Guardando..."
+            : !declaracion
+            ? "🔒 Acepta los Términos LOPDP para Enviar Solicitud"
             : solicitudExistente
             ? "Guardar Cambios y Enviar Actualización"
             : "Enviar Solicitud de Socio Abogado"}

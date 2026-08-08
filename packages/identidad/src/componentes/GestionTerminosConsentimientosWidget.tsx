@@ -72,6 +72,15 @@ const CATEGORIAS_TERMINOS: CategoriaTerminoDef[] = [
 2. **Secreto Profesional & Custodia:** Los abogados y especialistas del ecosistema están cobijados por el secreto profesional y deber de custodia estricta de la información personal y legal.
 3. **Derechos ARCO:** El titular puede solicitar el acceso, rectificación o cancelación de sus datos conforme a los protocolos establecidos en la plataforma.`,
   },
+  {
+    key: "solicitud_socio",
+    nombre: "Solicitud Socio Abogado & LOPDP",
+    descripcion: "Términos de Servicio y Autorización de Verificación LOPDP para postulantes a Socio Abogado.",
+    icono: ShieldCheck,
+    color: "#5000BA",
+    defaultVersion: "v1.0.0",
+    defaultMarkdown: `Autorizo expresamente a **tranqi** a verificar la autenticidad de mi título profesional en el portal de la **SENESCYT**, la vigencia de mi matrícula en el **Foro de Abogados del Consejo de la Judicatura** y la veracidad de la información y documentación proporcionada conforme a la Ley Orgánica de Protección de Datos Personales (LOPDP).`,
+  },
 ];
 
 export function GestionTerminosConsentimientosWidget({ negocio = "tranqi", onGuardarExito }: Props) {
