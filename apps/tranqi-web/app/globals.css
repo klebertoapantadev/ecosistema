@@ -1700,3 +1700,16 @@ p { line-height: 1.55; }
   }
 }
 
+/* ═══════════════════════════════════════════════════════════════════
+   DIRECTIVAS MOBILE-FIRST: BOTONES RESPONSIVE E ÍCONOS ACCESIBLES
+   ═══════════════════════════════════════════════════════════════════ */
+@media (max-width: 640px) {
+  .btn-texto-responsive {
+    display: none !important;
+  }
+  .btn-responsive-accion {
+    padding: 8px 10px !important;
+    gap: 0 !important;
+  }
+}
+

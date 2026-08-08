@@ -241,7 +241,9 @@ export function FormularioPerfil({ inicial }: Props) {
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="btn-mini"
+              className="btn-mini btn-responsive-accion"
+              title={fotoUrl ? "Cambiar Foto de perfil" : "Cargar Foto de perfil"}
+              aria-label={fotoUrl ? "Cambiar Foto" : "Cargar Foto"}
               style={{
                 background: "var(--blanco, #ffffff)",
                 border: "1px solid var(--panel-linea, #E4E4E4)",
@@ -252,15 +254,17 @@ export function FormularioPerfil({ inicial }: Props) {
                 fontWeight: 700,
               }}
             >
-              {fotoUrl ? <Camera size={14} /> : <Upload size={14} />}
-              {fotoUrl ? "Cambiar Foto" : "Cargar Foto"}
+              {fotoUrl ? <Camera size={15} /> : <Upload size={15} />}
+              <span className="btn-texto-responsive">{fotoUrl ? "Cambiar Foto" : "Cargar Foto"}</span>
             </button>
 
             {fotoUrl && (
               <button
                 type="button"
                 onClick={handleEliminarFoto}
-                className="btn-mini"
+                className="btn-mini btn-responsive-accion"
+                title="Quitar Foto de perfil"
+                aria-label="Quitar Foto"
                 style={{
                   background: "rgba(176, 0, 32, 0.08)",
                   border: "1px solid rgba(176, 0, 32, 0.3)",
@@ -271,7 +275,8 @@ export function FormularioPerfil({ inicial }: Props) {
                   fontWeight: 700,
                 }}
               >
-                <Trash2 size={14} /> Quitar
+                <Trash2 size={15} />
+                <span className="btn-texto-responsive">Quitar</span>
               </button>
             )}
           </div>
@@ -303,7 +308,7 @@ export function FormularioPerfil({ inicial }: Props) {
         </label>
       </div>
 
-      {/* Correo Electrónico Principal (Solo Lectura) */}
+      {/* Correo Electrónico Principal (Solo Lectura con Padding Seguro para Evitar Traslape) */}
       <label>
         Correo Electrónico Principal (Identidad Unificada)
         <div style={{ position: "relative" }}>
@@ -315,10 +320,28 @@ export function FormularioPerfil({ inicial }: Props) {
               width: "100%",
               background: "var(--panel-linea-suave, #F1F1F1)",
               color: "var(--panel-gris, #737373)",
-              cursor: "not-allowed"
+              cursor: "not-allowed",
+              paddingRight: "115px",
+              textOverflow: "ellipsis",
+              boxSizing: "border-box",
             }}
           />
-          <span style={{ position: "absolute", right: "12px", top: "50%", transform: "translateY(-50%)", fontSize: "0.78rem", color: "var(--esmeralda, #05876e)", fontWeight: 700, display: "flex", alignItems: "center", gap: "3px" }}>
+          <span
+            style={{
+              position: "absolute",
+              right: "12px",
+              top: "50%",
+              transform: "translateY(-50%)",
+              fontSize: "0.78rem",
+              color: "var(--esmeralda, #05876e)",
+              fontWeight: 700,
+              display: "flex",
+              alignItems: "center",
+              gap: "3px",
+              background: "var(--panel-linea-suave, #F1F1F1)",
+              paddingLeft: "4px",
+            }}
+          >
             <ShieldCheck size={16} /> Verificado
           </span>
         </div>
@@ -330,7 +353,7 @@ export function FormularioPerfil({ inicial }: Props) {
           Correos Adicionales para Notificaciones
         </label>
         <div style={{ display: "flex", gap: "8px", marginBottom: "8px" }}>
-          <div style={{ position: "relative", flex: 1 }}>
+          <div style={{ position: "relative", flex: 1, minWidth: 0 }}>
             <input
               type="email"
               placeholder="Ej: equipo@empresa.com o mi_otro_correo@gmail.com"
@@ -349,7 +372,9 @@ export function FormularioPerfil({ inicial }: Props) {
           <button
             type="button"
             onClick={handleAgregarCorreoAdicional}
-            className="btn-mini"
+            className="btn-mini btn-responsive-accion"
+            title="Agregar correo adicional"
+            aria-label="Agregar correo adicional"
             style={{
               background: "var(--violeta-suave, #F3E8FF)",
               color: "var(--violeta, #5000BA)",
@@ -359,9 +384,11 @@ export function FormularioPerfil({ inicial }: Props) {
               display: "inline-flex",
               alignItems: "center",
               padding: "0 16px",
+              flexShrink: 0,
             }}
           >
-            <Plus size={16} /> Agregar
+            <Plus size={16} />
+            <span className="btn-texto-responsive">Agregar</span>
           </button>
         </div>
 
