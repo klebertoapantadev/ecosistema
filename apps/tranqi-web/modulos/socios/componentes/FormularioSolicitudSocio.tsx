@@ -12,6 +12,7 @@ interface Props {
   materias: { mat_id: string; mat_nombre: string }[];
   provincias: { cat_id: string; cat_nombre: string }[];
   correoInicial?: string | null;
+  solicitudExistente?: Record<string, unknown> | null;
 }
 
 interface OpcionItem {
@@ -617,23 +618,35 @@ function SelectorMultiSeleccion({
   );
 }
 
-export function FormularioSolicitudSocio({ usuarioId, materias, provincias }: Props) {
+export function FormularioSolicitudSocio({ usuarioId, materias, provincias, solicitudExistente }: Props) {
   const router = useRouter();
-  const [cedula, setCedula] = useState("");
-  const [matriculaProfesional, setMatriculaProfesional] = useState("");
-  const [universidad, setUniversidad] = useState("");
-  const [anioGraduacion, setAnioGraduacion] = useState("");
-  const [anosExperiencia, setAnosExperiencia] = useState("");
-  const [resumenProfesional, setResumenProfesional] = useState("");
-  const [telefonoContacto, setTelefonoContacto] = useState("");
-  const [materiaIds, setMateriaIds] = useState<string[]>([]);
-  const [provinciaIds, setProvinciaIds] = useState<string[]>([]);
-  const [experiencia, setExperiencia] = useState<DatosExperienciaLaboral[]>([]);
+  const [cedula, setCedula] = useState<string>((solicitudExistente?.ssc_cedula as string) ?? "");
+  const [matriculaProfesional, setMatriculaProfesional] = useState<string>((solicitudExistente?.ssc_matricula_profesional as string) ?? "");
+  const [universidad, setUniversidad] = useState<string>((solicitudExistente?.ssc_universidad as string) ?? "");
+  const [anioGraduacion, setAnioGraduacion] = useState<string>(solicitudExistente?.ssc_anio_graduacion ? String(solicitudExistente.ssc_anio_graduacion) : "");
+  const [anosExperiencia, setAnosExperiencia] = useState<string>(solicitudExistente?.ssc_anos_experiencia !== undefined ? String(solicitudExistente.ssc_anos_experiencia) : "");
+  const [resumenProfesional, setResumenProfesional] = useState<string>((solicitudExistente?.ssc_resumen_profesional as string) ?? "");
+  const [telefonoContacto, setTelefonoContacto] = useState<string>((solicitudExistente?.ssc_telefono_contacto as string) ?? "");
+  const [materiaIds, setMateriaIds] = useState<string[]>(
+    () => ((solicitudExistente?.trq_solicitud_materia as Record<string, unknown>[]) ?? []).map((m) => m.sma_materia_id as string).filter(Boolean)
+  );
+  const [provinciaIds, setProvinciaIds] = useState<string[]>(
+    () => ((solicitudExistente?.trq_solicitud_provincia as Record<string, unknown>[]) ?? []).map((p) => p.spr_provincia_id as string).filter(Boolean)
+  );
+  const [experiencia, setExperiencia] = useState<DatosExperienciaLaboral[]>(
+    () => ((solicitudExistente?.trq_experiencia_laboral as Record<string, unknown>[]) ?? []).map((e) => ({
+      empresa: (e.exp_empresa as string) ?? "",
+      cargo: (e.exp_cargo as string) ?? "",
+      fechaInicio: (e.exp_fecha_inicio as string) ?? "",
+      fechaFin: (e.exp_fecha_fin as string) ?? "",
+      descripcion: (e.exp_descripcion as string) ?? "",
+    }))
+  );
   const [fotoPerfilArchivos, setFotoPerfilArchivos] = useState<File[]>([]);
   const [tituloArchivos, setTituloArchivos] = useState<File[]>([]);
   const [cvYCertificados, setCvYCertificados] = useState<File[]>([]);
-  const [senescytVerificado, setSenescytVerificado] = useState(false);
-  const [declaracion, setDeclaracion] = useState(false);
+  const [senescytVerificado, setSenescytVerificado] = useState(Boolean(solicitudExistente?.ssc_enlace_senescyt_verificado));
+  const [declaracion, setDeclaracion] = useState(Boolean(solicitudExistente));
   const [error, setError] = useState<string | null>(null);
   const [avisoArchivos, setAvisoArchivos] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
@@ -881,7 +894,11 @@ export function FormularioSolicitudSocio({ usuarioId, materias, provincias }: Pr
         </>
       ) : (
         <button type="submit" className="btn btn-primario" disabled={enviando} style={{ marginTop: "16px" }}>
-          {enviando ? "Enviando Solicitud..." : "Enviar Solicitud de Socio Abogado"}
+          {enviando
+            ? "Guardando..."
+            : solicitudExistente
+            ? "Guardar Cambios y Enviar Actualización"
+            : "Enviar Solicitud de Socio Abogado"}
         </button>
       )}
     </form>
