@@ -11,6 +11,7 @@ import {
 import { obtenerPerfilActual, obtenerWidgetsVisibles, asegurarMembresiaCliente, obtenerPerfiles } from "@eco/identidad";
 import { CampanaNotificaciones } from "@eco/notificaciones";
 import { EnlacePanel } from "./EnlacePanel";
+import { BotonCerrarSesion } from "./BotonCerrarSesion";
 import { CapaPerfilRail } from "./CapaPerfilRail";
 import { crearClienteServidor } from "@eco/supabase/servidor";
 import type { ModoRol } from "./SelectorRolActivo";
@@ -119,6 +120,7 @@ export default async function LayoutPanel({ children }: { children: React.ReactN
             <EnlacePanel href="/panel/cuenta" icono={<CircleUser className="icono-nav" aria-hidden="true" strokeWidth={1.8} />}>
               Mi cuenta
             </EnlacePanel>
+            <BotonCerrarSesion variante="nav" />
 
             {modoActivo === "cliente" && (
               <>
@@ -136,6 +138,7 @@ export default async function LayoutPanel({ children }: { children: React.ReactN
           <div className="panel-usuario">
             <span className="nombre-usuario-activo">{[perfil.usu_nombres, perfil.usu_apellidos].filter(Boolean).join(" ")}</span>
             <span className="correo-usuario-activo">{perfil.usu_correo}</span>
+            <BotonCerrarSesion variante="tarjeta" />
             <SelloCompilacion className="sello-compilacion" />
             {perfil.usu_superadmin_plataforma && <span className="etiqueta-superadmin">SuperAdmin ({modoActivo})</span>}
           </div>
