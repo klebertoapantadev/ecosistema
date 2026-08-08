@@ -553,7 +553,7 @@ export default function TranqiLanding() {
             </div>
 
             <div className="acciones-equipo">
-              <a className="btn btn-blanco-borde" href="/panel/solicitud-socio">
+              <a className="btn btn-blanco-borde" href="/registro?intencion=abogado&destino=/panel/solicitud-socio">
                 Únete al equipo Jurídico
               </a>
               <a className="btn btn-blanco-borde" href="/vacantes">

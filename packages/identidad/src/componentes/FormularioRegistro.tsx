@@ -1,12 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { registrarUsuario } from "../acciones";
 import { crearClienteNavegador } from "@eco/supabase";
 import { IconoGoogle } from "./IconoGoogle";
 
-export function FormularioRegistro({ negocio }: { negocio: string }) {
+interface FormularioRegistroProps {
+  negocio: string;
+  intencion?: string;
+  destino?: string;
+}
+
+export function FormularioRegistro({ negocio, intencion = "", destino = "" }: FormularioRegistroProps) {
   const router = useRouter();
   const [nombres, setNombres] = useState("");
   const [apellidos, setApellidos] = useState("");
@@ -15,6 +21,18 @@ export function FormularioRegistro({ negocio }: { negocio: string }) {
   const [aceptaTerminos, setAceptaTerminos] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [cargando, setCargando] = useState(false);
+
+  const esAbogado = intencion === "abogado" || destino.includes("solicitud-socio");
+  const destinoTarget = destino || (esAbogado ? "/panel/solicitud-socio" : "/panel");
+
+  useEffect(() => {
+    if (intencion) {
+      document.cookie = `tranqi_intencion=${intencion}; path=/; max-age=86400`;
+    }
+    if (destinoTarget) {
+      document.cookie = `tranqi_destino=${destinoTarget}; path=/; max-age=86400`;
+    }
+  }, [intencion, destinoTarget]);
 
   async function alEnviar(e: React.FormEvent) {
     e.preventDefault();
@@ -26,9 +44,12 @@ export function FormularioRegistro({ negocio }: { negocio: string }) {
       setError(resultado.error);
       return;
     }
-    // Registro por correo: falta verificar el código de 6 dígitos que se
-    // acaba de enviar (Google OAuth, en cambio, entra directo -- Google ya
-    // verificó el correo).
+
+    if (esAbogado) {
+      document.cookie = `tranqi_modo_rol=abogado; path=/; max-age=86400`;
+      document.cookie = `tranqi_rol_favorito=abogado; path=/; max-age=86400`;
+    }
+
     router.push("/verificar-correo");
     router.refresh();
   }
@@ -36,9 +57,19 @@ export function FormularioRegistro({ negocio }: { negocio: string }) {
   async function conGoogle() {
     setCargando(true);
     const supabase = crearClienteNavegador();
+
+    if (esAbogado) {
+      document.cookie = `tranqi_intencion=abogado; path=/; max-age=86400`;
+      document.cookie = `tranqi_destino=/panel/solicitud-socio; path=/; max-age=86400`;
+      document.cookie = `tranqi_modo_rol=abogado; path=/; max-age=86400`;
+      document.cookie = `tranqi_rol_favorito=abogado; path=/; max-age=86400`;
+    }
+
     const { error: errorGoogle } = await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: `${window.location.origin}/auth/callback` },
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(destinoTarget)}`,
+      },
     });
     if (errorGoogle) {
       setError(errorGoogle.message);
@@ -48,6 +79,17 @@ export function FormularioRegistro({ negocio }: { negocio: string }) {
 
   return (
     <div className="tarjeta-auth">
+      {esAbogado && (
+        <div style={{ marginBottom: "16px", padding: "12px", borderRadius: "10px", background: "rgba(80,0,186,0.08)", border: "1px solid rgba(80,0,186,0.2)", textAlign: "center" }}>
+          <span style={{ fontSize: "0.78rem", fontWeight: 800, color: "#5000BA", textTransform: "uppercase", letterSpacing: "0.05em", display: "block" }}>
+            ⚖️ Registro de Equipo Jurídico — Abogados
+          </span>
+          <strong style={{ fontSize: "0.88rem", color: "#111111", display: "block", marginTop: "4px" }}>
+            Únete a la Red de Abogados Verificados
+          </strong>
+        </div>
+      )}
+
       <button type="button" className="btn-google" onClick={conGoogle} disabled={cargando}>
         <IconoGoogle />
         Continuar con Google
@@ -103,8 +145,8 @@ export function FormularioRegistro({ negocio }: { negocio: string }) {
             {error}
           </p>
         )}
-        <button type="submit" className="btn btn-primario" disabled={cargando || !aceptaTerminos}>
-          {cargando ? "Creando cuenta…" : "Crear cuenta"}
+        <button type="submit" className="btn-auth" disabled={cargando}>
+          {cargando ? "Registrando..." : esAbogado ? "Registrarme como Abogado" : "Registrarme"}
         </button>
       </form>
     </div>

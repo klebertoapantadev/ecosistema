@@ -9,9 +9,11 @@ import { PAISES_TELEFONO, PAIS_TELEFONO_DEFECTO } from "../paises";
 interface Props {
   nombresIniciales: string;
   apellidosIniciales: string;
+  intencion?: string;
+  destinoFinal?: string;
 }
 
-export function FormularioBienvenida({ nombresIniciales, apellidosIniciales }: Props) {
+export function FormularioBienvenida({ nombresIniciales, apellidosIniciales, intencion = "", destinoFinal = "" }: Props) {
   const router = useRouter();
   const [nombres, setNombres] = useState(nombresIniciales);
   const [apellidos, setApellidos] = useState(apellidosIniciales);
@@ -21,12 +23,10 @@ export function FormularioBienvenida({ nombresIniciales, apellidosIniciales }: P
   const [error, setError] = useState<string | null>(null);
   const [cargando, setCargando] = useState(false);
 
+  const esAbogado = intencion === "abogado" || destinoFinal.includes("solicitud-socio");
   const paisSeleccionado = PAISES_TELEFONO.find((p) => p.codigo === paisWhatsapp)!;
 
   function alCambiarNumero(valor: string) {
-    // AsYouType formatea a medida que se escribe (espacios/guiones segun el
-    // pais) -- ayuda a que el usuario vea si va bien encaminado, la
-    // validacion real de cantidad de digitos es isValidPhoneNumber al enviar.
     setNumeroWhatsapp(new AsYouType(paisWhatsapp).input(valor));
   }
 
@@ -50,7 +50,14 @@ export function FormularioBienvenida({ nombresIniciales, apellidosIniciales }: P
       setError(resultado.error);
       return;
     }
-    router.push("/panel");
+
+    if (esAbogado) {
+      document.cookie = `tranqi_modo_rol=abogado; path=/; max-age=86400`;
+      document.cookie = `tranqi_rol_favorito=abogado; path=/; max-age=86400`;
+    }
+
+    const destinoTarget = destinoFinal || (esAbogado ? "/panel/solicitud-socio" : "/panel");
+    router.push(destinoTarget);
     router.refresh();
   }
 
@@ -98,8 +105,9 @@ export function FormularioBienvenida({ nombresIniciales, apellidosIniciales }: P
           {error}
         </p>
       )}
-      <button type="submit" className="btn btn-primario" disabled={cargando}>
-        {cargando ? "Guardando…" : "Continuar"}
+
+      <button type="submit" className="btn-auth" disabled={cargando}>
+        {cargando ? "Guardando..." : esAbogado ? "Continuar al Registro de Abogado ➔" : "Continuar"}
       </button>
     </form>
   );
