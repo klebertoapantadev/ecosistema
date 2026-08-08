@@ -38,6 +38,10 @@ import {
   Trash2,
   FolderTree,
   GraduationCap,
+  LogOut,
+  LogIn,
+  Forward,
+  Inbox,
   type LucideIcon,
 } from "lucide-react";
 
@@ -78,6 +82,10 @@ export const DICCIONARIO_ICONOS_WIDGET: Record<string, { nombre: string; icono: 
   Trash2: { nombre: "Eliminar / Papelera", icono: Trash2 },
   FolderTree: { nombre: "Grupo / Árbol", icono: FolderTree },
   GraduationCap: { nombre: "Rol / Sombrero", icono: GraduationCap },
+  LogOut: { nombre: "Salir / Cerrar Sesión", icono: LogOut },
+  LogIn: { nombre: "Ingresar / Iniciar Sesión", icono: LogIn },
+  Forward: { nombre: "Reenviar / Salida Mail", icono: Forward },
+  Inbox: { nombre: "Bandeja de Entrada Mail", icono: Inbox },
 };
 
 export interface CustomizacionWidget {
