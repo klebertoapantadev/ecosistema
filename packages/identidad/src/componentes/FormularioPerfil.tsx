@@ -407,14 +407,14 @@ export function FormularioPerfil({ inicial }: Props) {
         )}
       </div>
 
-      {/* Teléfono WhatsApp con Selector de País */}
+      {/* Teléfono WhatsApp con Selector de País (100% Responsive en Móviles) */}
       <div>
         <label style={{ display: "block", marginBottom: "6px", fontSize: "0.82rem", fontWeight: 700, color: "var(--negro, #111111)" }}>
           Número de Celular / WhatsApp (Opcional)
         </label>
-        <div style={{ display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap" }}>
-          {/* Dropdown de Código de País */}
-          <div style={{ position: "relative", width: "190px", flexShrink: 0 }}>
+        <div style={{ display: "flex", gap: "8px", alignItems: "center", width: "100%" }}>
+          {/* Dropdown Compacto de Código de País (No se quiebra en móviles) */}
+          <div style={{ position: "relative", width: "125px", flexShrink: 0 }}>
             <select
               value={codigoPaisWhatsapp}
               onChange={(e) => setCodigoPaisWhatsapp(e.target.value)}
@@ -422,12 +422,12 @@ export function FormularioPerfil({ inicial }: Props) {
               style={{
                 width: "100%",
                 height: "42px",
-                padding: "0 28px 0 36px",
+                padding: "0 22px 0 10px",
                 borderRadius: "8px",
                 border: "1px solid var(--panel-linea, #E4E4E4)",
                 background: "var(--blanco, #ffffff)",
                 color: "var(--negro, #111111)",
-                fontSize: "0.85rem",
+                fontSize: "0.88rem",
                 fontWeight: 700,
                 fontFamily: "inherit",
                 appearance: "none",
@@ -443,34 +443,17 @@ export function FormularioPerfil({ inicial }: Props) {
             >
               {PAISES_WHATSAPP.map((p) => (
                 <option key={p.codigo} value={p.codigo} style={{ padding: "8px", color: "#111111" }}>
-                  {p.bandera} {p.nombre} ({p.codigo})
+                  {p.iso} {p.codigo} — {p.nombre}
                 </option>
               ))}
             </select>
-
-            {/* Icono de Bandera del País Seleccionado en la esquina izquierda */}
-            <span
-              style={{
-                position: "absolute",
-                left: "10px",
-                top: "50%",
-                transform: "translateY(-50%)",
-                fontSize: "1.1rem",
-                lineHeight: 1,
-                pointerEvents: "none",
-                display: "flex",
-                alignItems: "center",
-              }}
-            >
-              {PAISES_WHATSAPP.find((p) => p.codigo === codigoPaisWhatsapp)?.bandera || "🌐"}
-            </span>
 
             {/* Flecha Desplegable a la Derecha */}
             <ChevronDown
               size={14}
               style={{
                 position: "absolute",
-                right: "10px",
+                right: "8px",
                 top: "50%",
                 transform: "translateY(-50%)",
                 color: "var(--panel-gris, #737373)",
@@ -479,14 +462,15 @@ export function FormularioPerfil({ inicial }: Props) {
             />
           </div>
 
-          {/* Campo de Entrada de Número de Teléfono */}
+          {/* Campo de Entrada de Número de Teléfono en la Misma Fila */}
           <input
             type="tel"
             placeholder="Ej: 0991234567"
             value={whatsapp}
             onChange={(e) => setWhatsapp(e.target.value)}
             style={{
-              flex: "1 1 200px",
+              flex: 1,
+              minWidth: 0,
               height: "42px",
               padding: "0 14px",
               borderRadius: "8px",
