@@ -236,12 +236,27 @@ export async function actualizarPerfilUsuario(datos: {
   apellidos: string;
   whatsapp?: string | null;
   autorizaWhatsapp?: boolean;
+  fotoUrl?: string | null;
 }): Promise<Resultado> {
   const supabase = await crearClienteServidor();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return { ok: false, error: "Sesión no encontrada" };
+
+  const { data: usuarioExistente } = await supabase
+    .schema("comun_seguridad")
+    .from("seg_usuario")
+    .select("usu_detalle_usuario")
+    .eq("usu_id", user.id)
+    .maybeSingle();
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const detalleActual = (usuarioExistente?.usu_detalle_usuario as Record<string, any>) || {};
+  const nuevoDetalle = {
+    ...detalleActual,
+    foto_url: datos.fotoUrl !== undefined ? datos.fotoUrl : (detalleActual.foto_url || null),
+  };
 
   const { error } = await supabase
     .schema("comun_seguridad")
@@ -251,6 +266,7 @@ export async function actualizarPerfilUsuario(datos: {
       usu_apellidos: datos.apellidos.trim(),
       usu_whatsapp: datos.autorizaWhatsapp ? (datos.whatsapp?.trim() || null) : null,
       usu_autorizacion_whatsapp: Boolean(datos.autorizaWhatsapp),
+      usu_detalle_usuario: nuevoDetalle,
       usu_actualizado_en: new Date().toISOString(),
     })
     .eq("usu_id", user.id);

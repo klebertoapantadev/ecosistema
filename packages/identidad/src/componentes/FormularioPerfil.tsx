@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
-import { Check, ShieldCheck } from "lucide-react";
+import React, { useState, useRef, useEffect } from "react";
+import { Check, ShieldCheck, Camera, Trash2, Upload } from "lucide-react";
 import { actualizarPerfilUsuario } from "../acciones";
 
 interface Props {
@@ -11,6 +11,7 @@ interface Props {
     correo: string;
     whatsapp: string;
     autorizaWhatsapp: boolean;
+    fotoUrl?: string | null;
   };
 }
 
@@ -19,9 +20,54 @@ export function FormularioPerfil({ inicial }: Props) {
   const [apellidos, setApellidos] = useState(inicial.apellidos || "");
   const [whatsapp, setWhatsapp] = useState(inicial.whatsapp || "");
   const [autorizaWhatsapp, setAutorizaWhatsapp] = useState(inicial.autorizaWhatsapp || false);
+  const [fotoUrl, setFotoUrl] = useState<string | null>(inicial.fotoUrl || null);
 
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [guardando, setGuardando] = useState(false);
   const [mensaje, setMensaje] = useState<{ tipo: "exito" | "error"; texto: string } | null>(null);
+
+  // Leer foto guardada localmente si no vino desde props
+  useEffect(() => {
+    if (!inicial.fotoUrl && typeof window !== "undefined") {
+      const local = localStorage.getItem("tranqi_foto_perfil");
+      if (local) setFotoUrl(local);
+    }
+  }, [inicial.fotoUrl]);
+
+  const handleSeleccionarArchivo = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      setMensaje({ tipo: "error", texto: "Selecciona un archivo de imagen válido (JPG, PNG, WebP)." });
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      setMensaje({ tipo: "error", texto: "La imagen es demasiado grande. El tamaño máximo es 5MB." });
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const base64 = event.target?.result as string;
+      if (base64) {
+        setFotoUrl(base64);
+        try {
+          localStorage.setItem("tranqi_foto_perfil", base64);
+        } catch { /* Ignorar */ }
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleEliminarFoto = () => {
+    setFotoUrl(null);
+    try {
+      localStorage.removeItem("tranqi_foto_perfil");
+    } catch { /* Ignorar */ }
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,17 +83,27 @@ export function FormularioPerfil({ inicial }: Props) {
       nombres,
       apellidos,
       whatsapp,
-      autorizaWhatsapp
+      autorizaWhatsapp,
+      fotoUrl,
     });
 
     setGuardando(false);
     if (res.ok) {
-      setMensaje({ tipo: "exito", texto: "✅ Perfil actualizado correctamente." });
+      setMensaje({ tipo: "exito", texto: "✅ Perfil y foto actualizados correctamente." });
       setTimeout(() => setMensaje(null), 4000);
     } else {
       setMensaje({ tipo: "error", texto: res.error || "No se pudo actualizar el perfil." });
     }
   };
+
+  // Iniciales para fallback visual
+  const iniciales = [nombres, apellidos]
+    .filter(Boolean)
+    .map((str) => str.trim()[0])
+    .filter(Boolean)
+    .join("")
+    .substring(0, 2)
+    .toUpperCase() || "U";
 
   return (
     <form onSubmit={handleSubmit} className="form-panel" style={{ maxWidth: "100%", gap: "16px" }}>
@@ -66,6 +122,108 @@ export function FormularioPerfil({ inicial }: Props) {
           {mensaje.texto}
         </div>
       )}
+
+      {/* Sección de Foto de Perfil / Avatar */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "20px",
+          padding: "16px",
+          background: "var(--panel-papel, #F7F6FA)",
+          borderRadius: "12px",
+          border: "1px solid var(--panel-linea, #E4E4E4)",
+          flexWrap: "wrap",
+        }}
+      >
+        {/* Contenedor Circular del Avatar */}
+        <div
+          style={{
+            position: "relative",
+            width: "84px",
+            height: "84px",
+            borderRadius: "50%",
+            background: "var(--violeta-suave, #F3E8FF)",
+            border: "2px solid var(--blanco, #ffffff)",
+            boxShadow: "0 4px 10px rgba(0,0,0,0.08)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            overflow: "hidden",
+            flexShrink: 0,
+          }}
+        >
+          {fotoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={fotoUrl}
+              alt="Foto de perfil"
+              style={{ width: "100%", height: "100%", objectFit: "cover" }}
+            />
+          ) : (
+            <span style={{ fontSize: "1.5rem", fontWeight: 800, color: "var(--violeta, #5000BA)" }}>
+              {iniciales}
+            </span>
+          )}
+        </div>
+
+        {/* Acciones de Carga de Foto */}
+        <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+          <div style={{ fontSize: "0.88rem", fontWeight: 800, color: "var(--negro, #111111)" }}>
+            Foto de Perfil
+          </div>
+          <span style={{ fontSize: "0.78rem", color: "var(--panel-gris, #737373)" }}>
+            Formatos admitidos: JPG, PNG o WebP (Máx. 5MB)
+          </span>
+
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleSeleccionarArchivo}
+            accept="image/*"
+            style={{ display: "none" }}
+          />
+
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", marginTop: "4px" }}>
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="btn-mini"
+              style={{
+                background: "var(--blanco, #ffffff)",
+                border: "1px solid var(--panel-linea, #E4E4E4)",
+                color: "var(--negro, #111111)",
+                gap: "6px",
+                display: "inline-flex",
+                alignItems: "center",
+                fontWeight: 700,
+              }}
+            >
+              {fotoUrl ? <Camera size={14} /> : <Upload size={14} />}
+              {fotoUrl ? "Cambiar Foto" : "Cargar Foto"}
+            </button>
+
+            {fotoUrl && (
+              <button
+                type="button"
+                onClick={handleEliminarFoto}
+                className="btn-mini"
+                style={{
+                  background: "rgba(176, 0, 32, 0.08)",
+                  border: "1px solid rgba(176, 0, 32, 0.3)",
+                  color: "#B00020",
+                  gap: "6px",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  fontWeight: 700,
+                }}
+              >
+                <Trash2 size={14} /> Quitar
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
 
       {/* Grid Nombres y Apellidos */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "14px" }}>
@@ -154,3 +312,4 @@ export function FormularioPerfil({ inicial }: Props) {
     </form>
   );
 }
+

@@ -20,6 +20,8 @@ export interface PerfilUsuario {
   usu_whatsapp?: string | null;
   usu_autorizacion_whatsapp?: boolean | null;
   usu_superadmin_plataforma?: boolean | null;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  usu_detalle_usuario?: any | null;
 }
 
 export interface FilaAcceso {
@@ -247,7 +249,8 @@ export function PanelCuentaModular({ perfil, historial, puedeConmutar = true, ro
                   apellidos: perfil?.usu_apellidos || perfil?.apellidos || "",
                   correo: perfil?.usu_correo || "",
                   whatsapp: perfil?.usu_whatsapp || "",
-                  autorizaWhatsapp: Boolean(perfil?.usu_autorizacion_whatsapp)
+                  autorizaWhatsapp: Boolean(perfil?.usu_autorizacion_whatsapp),
+                  fotoUrl: perfil?.usu_detalle_usuario?.foto_url || null,
                 }}
               />
             )}
