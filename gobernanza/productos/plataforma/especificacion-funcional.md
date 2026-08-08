@@ -507,6 +507,10 @@ Pantalla de configuración del negocio (identidad legal + datos de `PLT-008`) y 
     - **Control Configurable de Visibilidad (`mostrarSinWidgets`):** Los administradores pueden activar o desactivar desde la consola de perfiles si un panel sin módulos asignados debe mostrarse en el sidebar (`👁️ Mostrar este panel en el sidebar aunque no tenga widgets asignados`). Si se desactiva (`false`), el panel se oculta 100% para ese perfil.
     - **Agrupamiento 'Próximamente' y Posición del Cierre de Sesión:** Los paneles sin widgets habilitados se agrupan ordenadamente en una sección separada `"Próximamente"`. **El botón 'Cerrar sesión' se garantiza de forma estricta al final absoluto de la barra lateral**, después de todos los paneles activos y de la sección 'Próximamente'.
     - **Modal Interactivo de Confirmación:** Al hacer clic en 'Cerrar sesión', se despliega un diálogo emergente de confirmación `[🚪 Confirmar Cierre de Sesión]` antes de destruir la sesión con Supabase Auth y redirigir al login.
+18. **Flujo Directo de Incorporación para Equipo Jurídico / Registro de Abogados (`intencion=abogado` & `destino=/panel/solicitud-socio`):**
+    - **Preservación de Intención en Google OAuth & Formularios:** Cuando un profesional inicia su registro o inicio de sesión desde el enlace *"Únete al equipo Jurídico"*, la intención `intencion=abogado` y el destino `/panel/solicitud-socio` se preservan intactos a través de las cookies de sesión y los parámetros de callback de OAuth.
+    - **Pantalla de Bienvenida Adaptada:** La pantalla de onboarding `/bienvenida` reconoce automáticamente la intención del abogado desplegando un saludo personalizado (`¡Bienvenido(a), Doctor(a)!`).
+    - **Redirección Directa al Formulario de Socio:** Tras confirmar los nombres y apellidos, la plataforma redirige directamente al formulario de registro profesional (`/panel/solicitud-socio`), activando automáticamente el modo de rol Abogado sin desviarlo al tablero genérico de cliente.
 
 ### Criterios de Aceptación (Gherkin)
 * **Escenario:** Gestión de usuarios por Administrador de Negocio
