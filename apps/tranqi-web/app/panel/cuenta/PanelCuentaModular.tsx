@@ -11,6 +11,7 @@ import { cerrarSesionYRedirigir } from "../acciones";
 import { SelectorRolActivo, type RolOpcionDef } from "../SelectorRolActivo";
 import { useCustomWidgets } from "../gestorTitulosWidgets";
 import { ModalEditarWidget } from "../ModalEditarWidget";
+import { ModalVerificarMFAWidget } from "../ModalVerificarMFAWidget";
 
 export interface PerfilUsuario {
   usu_id?: string;
@@ -113,9 +114,22 @@ const WIDGETS_BASE: WidgetDef[] = [
 export function PanelCuentaModular({ perfil, historial, puedeConmutar = true, rolesDisponibles }: Props) {
   const [favoritos, setFavoritos] = useState<string[]>([]);
   const [widgetActivo, setWidgetActivo] = useState<string | null>(null);
-  const [widgetEditar, setWidgetEditar] = useState<{ id: string; titulo: string; subtitulo: string } | null>(null);
+  const [widgetEditar, setWidgetEditar] = useState<{
+    id: string;
+    titulo: string;
+    subtitulo: string;
+    iconoKey?: string;
+    requiereMfa?: boolean;
+    tiempoMfaMinutos?: number;
+  } | null>(null);
 
-  const { getWidgetInfo, guardarWidget } = useCustomWidgets();
+  const [widgetMfaPendiente, setWidgetMfaPendiente] = useState<{
+    id: string;
+    titulo: string;
+    tiempoMinutos: number;
+  } | null>(null);
+
+  const { getWidgetInfo, guardarWidget, obtenerIconoComponente } = useCustomWidgets();
   const esAdminOSuper = Boolean(puedeConmutar || perfil?.usu_superadmin_plataforma);
 
   const widgetsDisponibles = puedeConmutar
@@ -153,6 +167,35 @@ export function PanelCuentaModular({ perfil, historial, puedeConmutar = true, ro
     }
   };
 
+  const handleIntentarAbrirWidget = (id: string, w: WidgetDef) => {
+    const infoCustom = getWidgetInfo(id, w.titulo, w.subtitulo);
+    if (infoCustom.requiereMfa) {
+      const rawTs = typeof window !== "undefined" ? localStorage.getItem(`tranqi_mfa_widget_ts_${id}`) : null;
+      const ts = rawTs ? Number(rawTs) : 0;
+      const minutosTranscurridos = (Date.now() - ts) / (1000 * 60);
+
+      if (!ts || infoCustom.tiempoMfaMinutos === 0 || minutosTranscurridos > infoCustom.tiempoMfaMinutos) {
+        setWidgetMfaPendiente({
+          id,
+          titulo: infoCustom.titulo,
+          tiempoMinutos: infoCustom.tiempoMfaMinutos || 0,
+        });
+        return;
+      }
+    }
+    setWidgetActivo(id);
+  };
+
+  const handleConfirmarMfaExitoso = () => {
+    if (widgetMfaPendiente) {
+      try {
+        localStorage.setItem(`tranqi_mfa_widget_ts_${widgetMfaPendiente.id}`, Date.now().toString());
+      } catch { /* Ignorar */ }
+      setWidgetActivo(widgetMfaPendiente.id);
+      setWidgetMfaPendiente(null);
+    }
+  };
+
   // Reorganizar widgets poniendo los favoritos primero
   const widgetsOrdenados = [...widgetsDisponibles].sort((a, b) => {
     const esFavA = favoritos.includes(a.id);
@@ -164,10 +207,10 @@ export function PanelCuentaModular({ perfil, historial, puedeConmutar = true, ro
 
   const widgetActualDef = widgetsDisponibles.find((w) => w.id === widgetActivo);
   const widgetInfoActual = widgetActualDef ? getWidgetInfo(widgetActualDef.id, widgetActualDef.titulo, widgetActualDef.subtitulo) : null;
+  const IconoActualWidget = widgetActualDef && widgetInfoActual ? obtenerIconoComponente(widgetInfoActual.iconoKey, widgetActualDef.icono) : User;
 
   // VISTA 2: SI HAY UN WIDGET SELECCIONADO (VISTA A PANTALLA COMPLETA CON BOTÓN X DE CIERRE)
   if (widgetActivo && widgetActualDef && widgetInfoActual) {
-    const IconoComponente = widgetActualDef.icono;
     return (
       <div style={{ width: "100%", animation: "fadeIn 0.2s ease" }}>
         <section
@@ -204,7 +247,7 @@ export function PanelCuentaModular({ perfil, historial, puedeConmutar = true, ro
                   border: "1px solid var(--panel-linea, #E4E4E4)"
                 }}
               >
-                <IconoComponente size={22} />
+                <IconoActualWidget size={22} />
               </div>
               <div>
                 <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
@@ -216,6 +259,11 @@ export function PanelCuentaModular({ perfil, historial, puedeConmutar = true, ro
                       ⭐ Favorito
                     </span>
                   )}
+                  {widgetInfoActual.requiereMfa && (
+                    <span className="pildora-estado" style={{ background: "rgba(80, 0, 186, 0.12)", color: "var(--violeta, #5000BA)", fontSize: "0.65rem", display: "inline-flex", alignItems: "center", gap: "3px" }}>
+                      <Lock size={12} /> MFA Protegido
+                    </span>
+                  )}
                 </div>
                 <span style={{ fontSize: "0.8rem", color: "var(--panel-gris, #737373)", marginTop: "2px", display: "block" }}>
                   {widgetInfoActual.subtitulo}
@@ -223,11 +271,11 @@ export function PanelCuentaModular({ perfil, historial, puedeConmutar = true, ro
               </div>
             </div>
 
-            {/* Botón Circular de Cerrar (X) en la esquina superior derecha */}
+            {/* Botón Circular de Cerrar (X) */}
             <button
               type="button"
               onClick={() => setWidgetActivo(null)}
-              title="Cerrar widget y volver a Mi cuenta"
+              title="Cerrar widget y volver a Mi Cuenta"
               style={{
                 background: "var(--blanco, #ffffff)",
                 border: "1.5px solid var(--panel-linea, #E4E4E4)",
@@ -250,7 +298,6 @@ export function PanelCuentaModular({ perfil, historial, puedeConmutar = true, ro
 
           {/* Cuerpo a 100% de Ancho */}
           <div style={{ padding: "20px 16px", width: "100%" }}>
-            {/* WIDGET 1: PERFIL */}
             {widgetActivo === "perfil" && (
               <FormularioPerfil
                 inicial={{
@@ -266,7 +313,6 @@ export function PanelCuentaModular({ perfil, historial, puedeConmutar = true, ro
               />
             )}
 
-            {/* WIDGET 1.2: DATOS DE FACTURACIÓN */}
             {widgetActivo === "facturacion" && (
               <FormularioDatosFacturacion
                 nombresRegistro={perfil?.usu_nombres || ""}
@@ -283,7 +329,6 @@ export function PanelCuentaModular({ perfil, historial, puedeConmutar = true, ro
               />
             )}
 
-            {/* WIDGET 1.5: PERFIL ABOGADO (PROTEGIDO POR MFA) */}
             {widgetActivo === "perfil_abogado" && (
               <FormularioPerfilAbogado
                 inicial={{
@@ -302,84 +347,59 @@ export function PanelCuentaModular({ perfil, historial, puedeConmutar = true, ro
             )}
 
             {/* WIDGET 2: HISTORIAL DE ACCESOS */}
-            {widgetActivo === "historial" && (
-              <div>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", flexWrap: "wrap", gap: "8px" }}>
-                  <span style={{ fontSize: "0.85rem", color: "var(--panel-gris, #737373)" }}>
-                    Registros de seguridad e inicio de sesión unificados en el ecosistema:
-                  </span>
-                  <span className="pildora-estado">
-                    {historial.length} Accesos Registrados
-                  </span>
-                </div>
+            {widgetActivo === "historial" && <HistorialAccesos historial={historial} />}
 
-                {historial.length === 0 ? (
-                  <div className="vacio-seccion">
-                    <b>Sin historial previo de accesos</b>
-                    <span>Los registros de inicio de sesión e IP aparecerán reflejados aquí.</span>
-                  </div>
-                ) : (
-                  <HistorialAccesos historial={historial} />
-                )}
-              </div>
-            )}
-
-            {/* WIDGET 3: SESIÓN & SEGURIDAD */}
+            {/* WIDGET 3: SEGURIDAD Y SESIÓN */}
             {widgetActivo === "sesion" && (
-              <div style={{ maxWidth: "560px", margin: "0 auto" }}>
-                <div style={{ background: "var(--panel-linea-suave, #FAFAF9)", padding: "18px", borderRadius: "12px", border: "1px solid var(--panel-linea, #E4E4E4)", marginBottom: "20px" }}>
-                  <div style={{ fontSize: "0.82rem", color: "var(--panel-gris, #737373)" }}>Cuenta / Correo Autenticado:</div>
-                  <div style={{ fontWeight: 800, fontSize: "1.05rem", color: "var(--negro, #111111)", marginTop: "4px" }}>
-                    {perfil?.usu_correo}
-                  </div>
-                  <div style={{ fontSize: "0.82rem", color: "var(--esmeralda, #05876e)", marginTop: "8px", fontWeight: 700, display: "flex", alignItems: "center", gap: "6px" }}>
-                    <CheckCircle2 size={16} /> Sesión activa y autenticada en Vercel & Supabase Vault
+              <div className="bloque-seguridad">
+                <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "16px" }}>
+                  <CheckCircle2 size={24} color="var(--esmeralda, #05876e)" />
+                  <div>
+                    <strong style={{ display: "block", color: "var(--negro, #111111)" }}>Sesión Activa Segura</strong>
+                    <span style={{ fontSize: "0.82rem", color: "var(--panel-gris, #737373)" }}>
+                      Tu cuenta está conectada de forma cifrada mediante autenticación unificada.
+                    </span>
                   </div>
                 </div>
-
-                <form action={cerrarSesionYRedirigir}>
+                <div style={{ textAlign: "right", marginTop: "16px" }}>
                   <button
-                    type="submit"
+                    type="button"
+                    onClick={() => cerrarSesionYRedirigir()}
                     className="btn-mini"
                     style={{
-                      width: "100%",
-                      background: "rgba(176, 0, 32, 0.12)",
-                      border: "1px solid #B00020",
+                      background: "rgba(176, 0, 32, 0.08)",
+                      border: "1px solid rgba(176, 0, 32, 0.3)",
                       color: "#B00020",
-                      padding: "14px",
-                      fontSize: "0.92rem",
-                      fontWeight: 800,
-                      justifyContent: "center",
-                      gap: "8px"
+                      padding: "10px 20px",
+                      fontWeight: 700
                     }}
                   >
-                    Cerrar Sesión Segura en esta Aplicación
+                    Cerrar Sesión en este Dispositivo
                   </button>
-                </form>
+                </div>
               </div>
             )}
 
-            {/* WIDGET 4: VER COMO */}
+            {/* WIDGET 3.5: ACTIVE ROLE SWITCHER (Gobernanza) */}
             {widgetActivo === "rol_activo" && (
-              <div style={{ maxWidth: "600px", margin: "0 auto", textAlign: "center", width: "100%" }}>
-                <div style={{ background: "var(--panel-linea-suave, #FAFAF9)", padding: "20px", borderRadius: "12px", border: "1px solid var(--panel-linea, #E4E4E4)", marginBottom: "20px" }}>
-                  <h3 style={{ fontSize: "1.05rem", fontWeight: 800, color: "var(--negro, #111111)", marginBottom: "8px" }}>
-                    Ver Como
-                  </h3>
-                  <p style={{ fontSize: "0.85rem", color: "var(--panel-gris, #737373)", margin: 0 }}>
-                    Selecciona el rol con el que deseas previsualizar la plataforma en tiempo real.
-                  </p>
-                </div>
-
-                <div style={{ display: "flex", justifyContent: "center", width: "100%" }}>
-                  <SelectorRolActivo ocultarEtiqueta roles={rolesDisponibles} />
-                </div>
+              <div style={{ width: "100%", maxWidth: "800px" }}>
+                <SelectorRolActivo
+                  perfil={{
+                    usu_id: perfil?.usu_id || "",
+                    usu_nombres: perfil?.usu_nombres || null,
+                    usu_apellidos: perfil?.usu_apellidos || null,
+                    usu_correo: perfil?.usu_correo || null,
+                    usu_superadmin_plataforma: Boolean(perfil?.usu_superadmin_plataforma),
+                  }}
+                  rolesDisponibles={rolesDisponibles}
+                  onCambioRol={() => window.location.reload()}
+                />
               </div>
             )}
 
-            {/* WIDGET 5: BAJA DE CUENTA */}
+            {/* WIDGET 4: ZONA DE PELIGRO - BAJA DE CUENTA */}
             {widgetActivo === "peligro" && (
-              <div style={{ maxWidth: "640px", margin: "0 auto" }}>
+              <div style={{ width: "100%", maxWidth: "640px" }}>
                 <EliminarCuenta />
               </div>
             )}
@@ -389,56 +409,56 @@ export function PanelCuentaModular({ perfil, historial, puedeConmutar = true, ro
     );
   }
 
-  // VISTA 1: PANEL GENERAL "MI CUENTA" (Hero Card + Grid .accesos-cliente idéntico al Inicio)
+  // VISTA 1: REJILLA PRINCIPAL DE WIDGETS DE MI CUENTA
   return (
     <div style={{ width: "100%" }}>
-      {/* Header Hero Card del Panel */}
-      <section className="tarjeta-proteccion tarjeta-admin" style={{ marginBottom: "20px" }}>
+      {/* Header Hero Card del Panel Mi Cuenta */}
+      <section className="tarjeta-proteccion" style={{ marginBottom: "20px" }}>
         <div className="tarjeta-proteccion-fila">
           <div>
-            <div className="eyebrow-cliente">Gobernanza de Identidad & Perfil</div>
+            <div className="eyebrow-cliente">Centro de Configuración de Cuenta</div>
             <div className="tarjeta-proteccion-plan">
-              Mi Cuenta — <i>Identidad Unificada (tranqi)</i>
+              Mi Cuenta — <i>Identidad & Preferencias</i>
             </div>
             <div className="tarjeta-proteccion-meta">
-              Acceso individualizado a widgets, gestión de perfil, historial de accesos y seguridad de la cuenta.
+              Gestiona tu información personal, correo electrónico, WhatsApp, historial de accesos y seguridad de la cuenta.
             </div>
           </div>
-          <span className="badge-rol">
-            <User style={{ width: 14, height: 14, marginRight: 4 }} /> Identidad Activa
-          </span>
         </div>
       </section>
 
       <div style={{ marginBottom: "24px" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px", flexWrap: "wrap", gap: "8px" }}>
           <h3 style={{ fontSize: "0.88rem", fontWeight: 800, color: "var(--panel-gris, #737373)", textTransform: "uppercase", letterSpacing: "0.08em", margin: 0 }}>
-            Accesos & Widgets de Cuenta
+            Widgets de Mi Cuenta
           </h3>
           <span style={{ fontSize: "0.82rem", color: "var(--panel-gris, #737373)", fontWeight: 600 }}>
-            ⭐ {favoritos.length} {favoritos.length === 1 ? "Marcado como Favorito" : "Marcados como Favorito"}
+            ⭐ {favoritos.length} Favoritos
           </span>
         </div>
 
-        {/* Rejilla Idéntica al Panel de Inicio (.accesos-cliente: 2 por fila) */}
+        {/* Rejilla de Widgets */}
         <div className="accesos-cliente">
           {widgetsOrdenados.map((w) => {
-            const IconoComponente = w.icono;
-            const esFav = favoritos.includes(w.id);
             const infoCustom = getWidgetInfo(w.id, w.titulo, w.subtitulo);
+            const IconoComponente = obtenerIconoComponente(infoCustom.iconoKey, w.icono);
+            const esFav = favoritos.includes(w.id);
 
             return (
               <div
                 key={w.id}
-                onClick={() => setWidgetActivo(w.id)}
+                onClick={() => handleIntentarAbrirWidget(w.id, w)}
                 className="tarjeta-acceso"
                 style={{
-                  border: "1px solid var(--panel-linea, #E4E4E4)",
+                  border: w.esPeligro ? "1px solid rgba(176, 0, 32, 0.3)" : "1px solid var(--panel-linea, #E4E4E4)",
+                  background: w.esPeligro ? "rgba(176, 0, 32, 0.02)" : undefined,
                   cursor: "pointer",
-                  position: "relative"
+                  position: "relative",
+                  textDecoration: "none",
+                  color: "inherit"
                 }}
               >
-                {/* Botón de Estrella Favorito + Lápiz Edición si es Admin/SuperAdmin */}
+                {/* Acciones en esquina superior derecha (Estrella Favorito + Botón Lápiz Edición para Admin/Superadmin) */}
                 <div
                   style={{
                     position: "absolute",
@@ -453,10 +473,17 @@ export function PanelCuentaModular({ perfil, historial, puedeConmutar = true, ro
                   {esAdminOSuper && (
                     <button
                       type="button"
-                      title="Editar Título y Descripción del Widget"
+                      title="Editar Título, Descripción e Ícono del Widget"
                       onClick={(e) => {
                         e.stopPropagation();
-                        setWidgetEditar({ id: w.id, titulo: infoCustom.titulo, subtitulo: infoCustom.subtitulo });
+                        setWidgetEditar({
+                          id: w.id,
+                          titulo: infoCustom.titulo,
+                          subtitulo: infoCustom.subtitulo,
+                          iconoKey: infoCustom.iconoKey,
+                          requiereMfa: infoCustom.requiereMfa,
+                          tiempoMfaMinutos: infoCustom.tiempoMfaMinutos,
+                        });
                       }}
                       style={{
                         background: "rgba(255,255,255,0.9)",
@@ -499,23 +526,40 @@ export function PanelCuentaModular({ perfil, historial, puedeConmutar = true, ro
                 </div>
 
                 <div style={{ minWidth: 0, marginTop: "6px" }}>
-                  {esFav && (
-                    <span
-                      style={{
-                        fontSize: "0.58rem",
-                        fontWeight: 800,
-                        color: "#92400E",
-                        background: "var(--amarillo, #FEE300)",
-                        padding: "1px 6px",
-                        borderRadius: "999px",
-                        display: "inline-block",
-                        marginBottom: "4px",
-                        letterSpacing: "0.04em"
-                      }}
-                    >
-                      FAVORITO
-                    </span>
-                  )}
+                  <div style={{ display: "flex", alignItems: "center", gap: "4px", flexWrap: "wrap", marginBottom: "4px" }}>
+                    {esFav && (
+                      <span
+                        style={{
+                          fontSize: "0.58rem",
+                          fontWeight: 800,
+                          color: "#92400E",
+                          background: "var(--amarillo, #FEE300)",
+                          padding: "1px 6px",
+                          borderRadius: "999px",
+                          letterSpacing: "0.04em"
+                        }}
+                      >
+                        FAVORITO
+                      </span>
+                    )}
+                    {infoCustom.requiereMfa && (
+                      <span
+                        style={{
+                          fontSize: "0.58rem",
+                          fontWeight: 800,
+                          color: "var(--violeta, #5000BA)",
+                          background: "var(--violeta-suave, #F3E8FF)",
+                          padding: "1px 6px",
+                          borderRadius: "999px",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "3px"
+                        }}
+                      >
+                        <Lock size={10} /> MFA
+                      </span>
+                    )}
+                  </div>
 
                   <strong style={{ display: "block", color: w.esPeligro ? "#B00020" : undefined, lineHeight: 1.25 }}>
                     {infoCustom.titulo}
@@ -524,7 +568,6 @@ export function PanelCuentaModular({ perfil, historial, puedeConmutar = true, ro
 
                 <p style={{ margin: "4px 0 0 0" }}>{infoCustom.subtitulo}</p>
 
-                {/* Pie de Card sin texto "Abrir" */}
                 <div
                   style={{
                     display: "flex",
@@ -543,7 +586,7 @@ export function PanelCuentaModular({ perfil, historial, puedeConmutar = true, ro
         </div>
       </div>
 
-      {/* Modal para Editar Título y Subtítulo de Widget */}
+      {/* Modal para Editar Título, Subtítulo, Ícono y MFA de Widget */}
       {widgetEditar && (
         <ModalEditarWidget
           abierto={Boolean(widgetEditar)}
@@ -551,12 +594,25 @@ export function PanelCuentaModular({ perfil, historial, puedeConmutar = true, ro
           widgetId={widgetEditar.id}
           tituloActual={widgetEditar.titulo}
           subtituloActual={widgetEditar.subtitulo}
-          onGuardar={(id, nuevoTitulo, nuevoSubtitulo) => {
-            guardarWidget(id, nuevoTitulo, nuevoSubtitulo);
+          iconoActualKey={widgetEditar.iconoKey}
+          requiereMfaActual={widgetEditar.requiereMfa}
+          tiempoMfaActualMinutos={widgetEditar.tiempoMfaMinutos}
+          onGuardar={(id, nuevoTitulo, nuevoSubtitulo, nuevoIconoKey, nuevoRequiereMfa, nuevoTiempoMfaMinutos) => {
+            guardarWidget(id, nuevoTitulo, nuevoSubtitulo, nuevoIconoKey, nuevoRequiereMfa, nuevoTiempoMfaMinutos);
           }}
+        />
+      )}
+
+      {/* Modal para Verificación MFA por Inactividad */}
+      {widgetMfaPendiente && (
+        <ModalVerificarMFAWidget
+          abierto={Boolean(widgetMfaPendiente)}
+          onCerrar={() => setWidgetMfaPendiente(null)}
+          tituloWidget={widgetMfaPendiente.titulo}
+          tiempoInactividadMinutos={widgetMfaPendiente.tiempoMinutos}
+          onVerificado={handleConfirmarMfaExitoso}
         />
       )}
     </div>
   );
 }
-

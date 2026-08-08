@@ -1,13 +1,14 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Settings, Mail, Bell, Star, X, ChevronRight, ShieldCheck, Sliders, Pencil } from "lucide-react";
+import { Settings, Mail, Bell, Star, X, ChevronRight, ShieldCheck, Sliders, Pencil, Lock } from "lucide-react";
 import { FormularioConfiguracionNegocio } from "@eco/configuracion-negocio/componentes/FormularioConfiguracionNegocio";
 import { FormularioSmtp } from "@eco/configuracion-negocio/componentes/FormularioSmtp";
 import { PreferenciasNotificacionWidget } from "@eco/notificaciones";
 import { AdministracionPerfilesWidget } from "@eco/gestion-usuarios/componentes/AdministracionPerfilesWidget";
 import { useCustomWidgets } from "../gestorTitulosWidgets";
 import { ModalEditarWidget } from "../ModalEditarWidget";
+import { ModalVerificarMFAWidget } from "../ModalVerificarMFAWidget";
 
 interface Props {
   esAdmin: boolean;
@@ -40,40 +41,52 @@ const TODOS_WIDGETS_CONFIG: WidgetConfigDef[] = [
     soloAdmin: true
   },
   {
-    id: "perfiles",
-    titulo: "Administración de Perfiles & Permisos",
-    subtitulo: "Catálogo de perfiles, jerarquía de roles (1–100) y matriz de gobernanza",
-    icono: Sliders,
-    colorIcono: "var(--violeta, #5000BA)",
-    categoria: "Gobernanza & Seguridad",
-    soloAdmin: true
-  },
-  {
     id: "correo",
-    titulo: "Servidor de Correo SMTP",
-    subtitulo: "Servidor saliente, credenciales Vault y pruebas de envío email",
+    titulo: "Servidor SMTP & Plantillas Vault",
+    subtitulo: "Credenciales cifradas, puerto TLS y plantilla HTML",
     icono: Mail,
-    colorIcono: "var(--violeta, #5000BA)",
-    categoria: "Infraestructura & Correo",
+    colorIcono: "var(--esmeralda, #05876E)",
+    categoria: "Servicios de Despacho",
     soloAdmin: true
   },
   {
     id: "notificaciones",
-    titulo: "Preferencias de Alertas & Notificaciones",
-    subtitulo: "Frecuencia, canales de recepción Email, WhatsApp y Desktop Push",
+    titulo: "Preferencias de Alertas",
+    subtitulo: "Canales de contacto, WhatsApp y avisos legales",
     icono: Bell,
     colorIcono: "var(--violeta, #5000BA)",
-    categoria: "Comunicación & Alertas",
-    soloAdmin: false
+    categoria: "Preferencias"
+  },
+  {
+    id: "perfiles",
+    titulo: "Gestión de Usuarios & Membresías",
+    subtitulo: "Administración de miembros, asignación de perfiles y techo jerárquico",
+    icono: Sliders,
+    colorIcono: "var(--violeta, #5000BA)",
+    categoria: "Gobernanza",
+    soloAdmin: true
   }
 ];
 
 export function PanelConfiguracionModular({ esAdmin, esSuperadmin = false, configuracion, smtp, negocio }: Props) {
   const [favoritos, setFavoritos] = useState<string[]>([]);
   const [widgetActivo, setWidgetActivo] = useState<string | null>(null);
-  const [widgetEditar, setWidgetEditar] = useState<{ id: string; titulo: string; subtitulo: string } | null>(null);
+  const [widgetEditar, setWidgetEditar] = useState<{
+    id: string;
+    titulo: string;
+    subtitulo: string;
+    iconoKey?: string;
+    requiereMfa?: boolean;
+    tiempoMfaMinutos?: number;
+  } | null>(null);
 
-  const { getWidgetInfo, guardarWidget } = useCustomWidgets();
+  const [widgetMfaPendiente, setWidgetMfaPendiente] = useState<{
+    id: string;
+    titulo: string;
+    tiempoMinutos: number;
+  } | null>(null);
+
+  const { getWidgetInfo, guardarWidget, obtenerIconoComponente } = useCustomWidgets();
   const esAdminOSuper = Boolean(esAdmin || esSuperadmin);
 
   // Filtrar widgets disponibles según rol (visibles para admin o superadmin)
@@ -117,6 +130,35 @@ export function PanelConfiguracionModular({ esAdmin, esSuperadmin = false, confi
     } catch { /* Ignorar */ }
   };
 
+  const handleIntentarAbrirWidget = (id: string, w: WidgetConfigDef) => {
+    const infoCustom = getWidgetInfo(id, w.titulo, w.subtitulo);
+    if (infoCustom.requiereMfa) {
+      const rawTs = typeof window !== "undefined" ? localStorage.getItem(`tranqi_mfa_widget_ts_${id}`) : null;
+      const ts = rawTs ? Number(rawTs) : 0;
+      const minutosTranscurridos = (Date.now() - ts) / (1000 * 60);
+
+      if (!ts || infoCustom.tiempoMfaMinutos === 0 || minutosTranscurridos > infoCustom.tiempoMfaMinutos) {
+        setWidgetMfaPendiente({
+          id,
+          titulo: infoCustom.titulo,
+          tiempoMinutos: infoCustom.tiempoMfaMinutos || 0,
+        });
+        return;
+      }
+    }
+    setWidgetActivo(id);
+  };
+
+  const handleConfirmarMfaExitoso = () => {
+    if (widgetMfaPendiente) {
+      try {
+        localStorage.setItem(`tranqi_mfa_widget_ts_${widgetMfaPendiente.id}`, Date.now().toString());
+      } catch { /* Ignorar */ }
+      setWidgetActivo(widgetMfaPendiente.id);
+      setWidgetMfaPendiente(null);
+    }
+  };
+
   // Ordenar tarjetas: favoritos primero
   const widgetsOrdenados = [...widgetsDisponibles].sort((a, b) => {
     const aFav = favoritos.includes(a.id);
@@ -128,6 +170,7 @@ export function PanelConfiguracionModular({ esAdmin, esSuperadmin = false, confi
 
   const widgetActualDef = widgetsDisponibles.find(w => w.id === widgetActivo);
   const widgetInfoActual = widgetActualDef ? getWidgetInfo(widgetActualDef.id, widgetActualDef.titulo, widgetActualDef.subtitulo) : null;
+  const IconoActualWidget = widgetActualDef && widgetInfoActual ? obtenerIconoComponente(widgetInfoActual.iconoKey, widgetActualDef.icono) : Settings;
 
   // VISTA 2: PANEL DEDICADO DEL WIDGET ENFOCADO (Con botón circular 'X' en la esquina superior derecha)
   if (widgetActivo && widgetActualDef && widgetInfoActual) {
@@ -154,7 +197,7 @@ export function PanelConfiguracionModular({ esAdmin, esSuperadmin = false, confi
                   display: "flex"
                 }}
               >
-                {React.createElement(widgetActualDef.icono, { size: 20, color: widgetActualDef.colorIcono })}
+                <IconoActualWidget size={20} color={widgetActualDef.colorIcono} />
               </div>
               <div>
                 <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
@@ -164,6 +207,11 @@ export function PanelConfiguracionModular({ esAdmin, esSuperadmin = false, confi
                   {favoritos.includes(widgetActivo) && (
                     <span className="pildora-estado" style={{ background: "var(--amarillo)", color: "var(--negro)", fontSize: "0.65rem" }}>
                       ⭐ Favorito
+                    </span>
+                  )}
+                  {widgetInfoActual.requiereMfa && (
+                    <span className="pildora-estado" style={{ background: "rgba(80, 0, 186, 0.12)", color: "var(--violeta, #5000BA)", fontSize: "0.65rem", display: "inline-flex", alignItems: "center", gap: "3px" }}>
+                      <Lock size={12} /> MFA Protegido
                     </span>
                   )}
                 </div>
@@ -177,7 +225,7 @@ export function PanelConfiguracionModular({ esAdmin, esSuperadmin = false, confi
             <button
               type="button"
               onClick={() => setWidgetActivo(null)}
-              title="Cerrar widget y volver a Configuración"
+              title="Cerrar módulo y volver a Configuración"
               style={{
                 background: "var(--blanco, #ffffff)",
                 border: "1.5px solid var(--panel-linea, #E4E4E4)",
@@ -198,37 +246,33 @@ export function PanelConfiguracionModular({ esAdmin, esSuperadmin = false, confi
             </button>
           </header>
 
-          {/* Cuerpo del Widget Activo */}
+          {/* Cuerpo del Módulo Activo - NATIVO SIN IFRAME */}
           <div style={{ padding: "20px 16px", width: "100%" }}>
-            {/* WIDGET 1: CONFIGURACIÓN DEL NEGOCIO */}
+            {/* 1. CONFIGURACIÓN DEL NEGOCIO */}
             {widgetActivo === "negocio" && (
-              <div>
-                <FormularioConfiguracionNegocio inicial={configuracion} negocio={negocio} />
+              <div style={{ maxWidth: "800px", margin: "0 auto" }}>
+                <FormularioConfiguracionNegocio inicial={configuracion} />
               </div>
             )}
 
-            {/* WIDGET 2: ADMINISTRACIÓN DE PERFILES & PERMISOS */}
+            {/* 2. SERVIDOR SMTP & CORREO */}
+            {widgetActivo === "correo" && (
+              <div style={{ maxWidth: "700px", margin: "0 auto" }}>
+                <FormularioSmtp inicial={smtp} />
+              </div>
+            )}
+
+            {/* 3. PREFERENCIAS DE NOTIFICACIONES */}
+            {widgetActivo === "notificaciones" && (
+              <div style={{ maxWidth: "700px", margin: "0 auto" }}>
+                <PreferenciasNotificacionWidget negocio={negocio} />
+              </div>
+            )}
+
+            {/* 4. GESTIÓN DE PERFILES Y USUARIOS (ACCESO DIRECTO DE GOBERNANZA) */}
             {widgetActivo === "perfiles" && (
               <div style={{ width: "100%" }}>
-                <AdministracionPerfilesWidget esAdmin={esAdmin || esSuperadmin} negocio={negocio} />
-              </div>
-            )}
-
-            {/* WIDGET 3: SERVIDOR DE CORREO SMTP */}
-            {widgetActivo === "correo" && (
-              <div style={{ maxWidth: "640px", margin: "0 auto" }}>
-                <p className="texto-apoyo" style={{ marginBottom: "16px" }}>
-                  Desde aquí sale el correo de este negocio: códigos de verificación y enlaces para restablecer la contraseña.
-                  Mientras no lo actives, esos correos no se envían.
-                </p>
-                <FormularioSmtp inicial={smtp} negocio={negocio} />
-              </div>
-            )}
-
-            {/* WIDGET 4: PREFERENCIAS DE NOTIFICACIONES & ALERTAS */}
-            {widgetActivo === "notificaciones" && (
-              <div style={{ maxWidth: "800px", margin: "0 auto" }}>
-                <PreferenciasNotificacionWidget negocio={negocio} />
+                <AdministracionPerfilesWidget esAdmin={esAdminOSuper} negocio={negocio} />
               </div>
             )}
           </div>
@@ -237,26 +281,24 @@ export function PanelConfiguracionModular({ esAdmin, esSuperadmin = false, confi
     );
   }
 
-  // VISTA 1: PANEL GENERAL DE CONFIGURACIÓN (Hero Card + Rejilla .accesos-cliente idéntica a Mi Cuenta y Inicio)
+  // VISTA 1: REJILLA PRINCIPAL DE CONFIGURACIÓN
   return (
     <div style={{ width: "100%" }}>
-      {/* Header Hero Card del Panel de Configuración */}
+      {/* Header Hero Card */}
       <section className="tarjeta-proteccion tarjeta-admin" style={{ marginBottom: "20px" }}>
         <div className="tarjeta-proteccion-fila">
           <div>
-            <div className="eyebrow-cliente">Gobernanza de Configuración & Preferencias</div>
+            <div className="eyebrow-cliente">Consola de Configuración General & Servicios</div>
             <div className="tarjeta-proteccion-plan">
-              Configuración — <i>{esAdmin ? "Consola de Administración" : "Preferencias de Usuario"} ({negocio})</i>
+              Configurar — <i>Parámetros del Sistema ({negocio})</i>
             </div>
             <div className="tarjeta-proteccion-meta">
-              {esAdmin
-                ? "Gestión centralizada de parámetros del negocio, perfiles, servidores de correo saliente SMTP y alertas integradas."
-                : "Gestión de canales y preferencias para recibir notificaciones legales, avisos y alertas de la plataforma."}
+              Identidad legal del negocio, servidor SMTP saliente cifrado en Vault, preferencias de notificación y administración de perfiles.
             </div>
           </div>
-          <span className="badge-rol">
+          <span className="badge-rol" style={{ background: "rgba(80, 0, 186, 0.12)", color: "var(--violeta, #5000BA)", border: "1px solid var(--violeta-suave, #F3E8FF)" }}>
             <ShieldCheck style={{ width: 14, height: 14, marginRight: 4 }} />
-            {esAdmin ? "Administrador Activo" : "Preferencias Rol"}
+            Gobernanza Activa
           </span>
         </div>
       </section>
@@ -264,24 +306,24 @@ export function PanelConfiguracionModular({ esAdmin, esSuperadmin = false, confi
       <div style={{ marginBottom: "24px" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px", flexWrap: "wrap", gap: "8px" }}>
           <h3 style={{ fontSize: "0.88rem", fontWeight: 800, color: "var(--panel-gris, #737373)", textTransform: "uppercase", letterSpacing: "0.08em", margin: 0 }}>
-            Accesos & Módulos de Configuración
+            Módulos de Configuración Asignados
           </h3>
           <span style={{ fontSize: "0.82rem", color: "var(--panel-gris, #737373)", fontWeight: 600 }}>
-            ⭐ {favoritos.length} Marcados como Favorito
+            ⭐ {favoritos.length} Destacados
           </span>
         </div>
 
-        {/* Rejilla de Cards idéntica al Inicio y Mi Cuenta (.accesos-cliente) */}
+        {/* Rejilla de Módulos */}
         <div className="accesos-cliente">
           {widgetsOrdenados.map(w => {
-            const IconoComponente = w.icono;
-            const esFav = favoritos.includes(w.id);
             const infoCustom = getWidgetInfo(w.id, w.titulo, w.subtitulo);
+            const IconoComponente = obtenerIconoComponente(infoCustom.iconoKey, w.icono);
+            const esFav = favoritos.includes(w.id);
 
             return (
               <div
                 key={w.id}
-                onClick={() => setWidgetActivo(w.id)}
+                onClick={() => handleIntentarAbrirWidget(w.id, w)}
                 className="tarjeta-acceso"
                 style={{
                   border: "1px solid var(--panel-linea, #E4E4E4)",
@@ -304,10 +346,17 @@ export function PanelConfiguracionModular({ esAdmin, esSuperadmin = false, confi
                   {esAdminOSuper && (
                     <button
                       type="button"
-                      title="Editar Título y Descripción del Widget"
+                      title="Editar Título, Descripción e Ícono del Widget"
                       onClick={(e) => {
                         e.stopPropagation();
-                        setWidgetEditar({ id: w.id, titulo: infoCustom.titulo, subtitulo: infoCustom.subtitulo });
+                        setWidgetEditar({
+                          id: w.id,
+                          titulo: infoCustom.titulo,
+                          subtitulo: infoCustom.subtitulo,
+                          iconoKey: infoCustom.iconoKey,
+                          requiereMfa: infoCustom.requiereMfa,
+                          tiempoMfaMinutos: infoCustom.tiempoMfaMinutos,
+                        });
                       }}
                       style={{
                         background: "rgba(255,255,255,0.9)",
@@ -350,23 +399,40 @@ export function PanelConfiguracionModular({ esAdmin, esSuperadmin = false, confi
                 </div>
 
                 <div style={{ minWidth: 0, marginTop: "6px" }}>
-                  {esFav && (
-                    <span
-                      style={{
-                        fontSize: "0.58rem",
-                        fontWeight: 800,
-                        color: "#92400E",
-                        background: "var(--amarillo, #FEE300)",
-                        padding: "1px 6px",
-                        borderRadius: "999px",
-                        display: "inline-block",
-                        marginBottom: "4px",
-                        letterSpacing: "0.04em"
-                      }}
-                    >
-                      FAVORITO
-                    </span>
-                  )}
+                  <div style={{ display: "flex", alignItems: "center", gap: "4px", flexWrap: "wrap", marginBottom: "4px" }}>
+                    {esFav && (
+                      <span
+                        style={{
+                          fontSize: "0.58rem",
+                          fontWeight: 800,
+                          color: "#92400E",
+                          background: "var(--amarillo, #FEE300)",
+                          padding: "1px 6px",
+                          borderRadius: "999px",
+                          letterSpacing: "0.04em"
+                        }}
+                      >
+                        FAVORITO
+                      </span>
+                    )}
+                    {infoCustom.requiereMfa && (
+                      <span
+                        style={{
+                          fontSize: "0.58rem",
+                          fontWeight: 800,
+                          color: "var(--violeta, #5000BA)",
+                          background: "var(--violeta-suave, #F3E8FF)",
+                          padding: "1px 6px",
+                          borderRadius: "999px",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "3px"
+                        }}
+                      >
+                        <Lock size={10} /> MFA
+                      </span>
+                    )}
+                  </div>
                   <strong style={{ display: "block", lineHeight: 1.25 }}>
                     {infoCustom.titulo}
                   </strong>
@@ -393,7 +459,7 @@ export function PanelConfiguracionModular({ esAdmin, esSuperadmin = false, confi
         </div>
       </div>
 
-      {/* Modal para Editar Título y Subtítulo de Widget */}
+      {/* Modal para Editar Título, Subtítulo, Ícono y MFA de Widget */}
       {widgetEditar && (
         <ModalEditarWidget
           abierto={Boolean(widgetEditar)}
@@ -401,12 +467,25 @@ export function PanelConfiguracionModular({ esAdmin, esSuperadmin = false, confi
           widgetId={widgetEditar.id}
           tituloActual={widgetEditar.titulo}
           subtituloActual={widgetEditar.subtitulo}
-          onGuardar={(id, nuevoTitulo, nuevoSubtitulo) => {
-            guardarWidget(id, nuevoTitulo, nuevoSubtitulo);
+          iconoActualKey={widgetEditar.iconoKey}
+          requiereMfaActual={widgetEditar.requiereMfa}
+          tiempoMfaActualMinutos={widgetEditar.tiempoMfaMinutos}
+          onGuardar={(id, nuevoTitulo, nuevoSubtitulo, nuevoIconoKey, nuevoRequiereMfa, nuevoTiempoMfaMinutos) => {
+            guardarWidget(id, nuevoTitulo, nuevoSubtitulo, nuevoIconoKey, nuevoRequiereMfa, nuevoTiempoMfaMinutos);
           }}
+        />
+      )}
+
+      {/* Modal para Verificación MFA por Inactividad */}
+      {widgetMfaPendiente && (
+        <ModalVerificarMFAWidget
+          abierto={Boolean(widgetMfaPendiente)}
+          onCerrar={() => setWidgetMfaPendiente(null)}
+          tituloWidget={widgetMfaPendiente.titulo}
+          tiempoInactividadMinutos={widgetMfaPendiente.tiempoMinutos}
+          onVerificado={handleConfirmarMfaExitoso}
         />
       )}
     </div>
   );
 }
-

@@ -1,19 +1,38 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { UserCog, Users, ClipboardList, Bell, Shield, ChevronRight, Star, Lock, X, Eye, Pencil } from "lucide-react";
+import { Users, Shield, Lock, ClipboardList, Bell, UserCog, Star, X, Pencil } from "lucide-react";
 import Link from "next/link";
-import { crearClienteNavegador } from "@eco/supabase";
-import { AdministracionPerfilesWidget } from "@eco/gestion-usuarios/componentes/AdministracionPerfilesWidget";
-import { EmisionNotificacionesWidget } from "@eco/notificaciones";
-import { TablaAuditoria } from "../auditoria/TablaAuditoria";
-import type { RegistroAuditoria } from "@eco/auditoria";
+import { crearClienteNavegador } from "@eco/lib/supabase/cliente";
+import { AdministracionPerfilesWidget } from "../../componentes/AdministracionPerfilesWidget";
+import { EmisionNotificacionesWidget } from "../../componentes/EmisionNotificacionesWidget";
 import { useCustomWidgets } from "../gestorTitulosWidgets";
 import { ModalEditarWidget } from "../ModalEditarWidget";
+import { ModalVerificarMFAWidget } from "../ModalVerificarMFAWidget";
 
 interface Props {
   negocio: string;
 }
+
+export function PanelAdministrarModular({ negocio }: Props) {
+  const [favoritos, setFavoritos] = useState<string[]>([]);
+  const [widgetActivo, setWidgetActivo] = useState<string | null>(null);
+  const [widgetEditar, setWidgetEditar] = useState<{
+    id: string;
+    titulo: string;
+    subtitulo: string;
+    iconoKey?: string;
+    requiereMfa?: boolean;
+    tiempoMfaMinutos?: number;
+  } | null>(null);
+
+  const [widgetMfaPendiente, setWidgetMfaPendiente] = useState<{
+    id: string;
+    titulo: string;
+    tiempoMinutos: number;
+  } | null>(null);
+
+  const { getWidgetInfo, guardarWidget, obtenerIconoComponente } = useCustomWidgets();
 
 export interface ModuloAdminDef {
   id: string;
@@ -282,6 +301,35 @@ export function PanelAdministrarModular({ negocio }: Props) {
     } catch { /* Ignorar */ }
   };
 
+  const handleIntentarAbrirWidget = (id: string, m: ModuloAdminDef) => {
+    const infoCustom = getWidgetInfo(id, m.titulo, m.subtitulo);
+    if (infoCustom.requiereMfa) {
+      const rawTs = typeof window !== "undefined" ? localStorage.getItem(`tranqi_mfa_widget_ts_${id}`) : null;
+      const ts = rawTs ? Number(rawTs) : 0;
+      const minutosTranscurridos = (Date.now() - ts) / (1000 * 60);
+
+      if (!ts || infoCustom.tiempoMfaMinutos === 0 || minutosTranscurridos > infoCustom.tiempoMfaMinutos) {
+        setWidgetMfaPendiente({
+          id,
+          titulo: infoCustom.titulo,
+          tiempoMinutos: infoCustom.tiempoMfaMinutos,
+        });
+        return;
+      }
+    }
+    setWidgetActivo(id);
+  };
+
+  const handleConfirmarMfaExitoso = () => {
+    if (widgetMfaPendiente) {
+      try {
+        localStorage.setItem(`tranqi_mfa_widget_ts_${widgetMfaPendiente.id}`, Date.now().toString());
+      } catch { /* Ignorar */ }
+      setWidgetActivo(widgetMfaPendiente.id);
+      setWidgetMfaPendiente(null);
+    }
+  };
+
   const modulosOrdenados = [...MODULOS_ADMIN].sort((a, b) => {
     const aFav = favoritos.includes(a.id);
     const bFav = favoritos.includes(b.id);
@@ -292,6 +340,7 @@ export function PanelAdministrarModular({ negocio }: Props) {
 
   const moduloActualDef = MODULOS_ADMIN.find(m => m.id === widgetActivo);
   const moduloInfoActual = moduloActualDef ? getWidgetInfo(moduloActualDef.id, moduloActualDef.titulo, moduloActualDef.subtitulo) : null;
+  const IconoActualModulo = moduloActualDef && moduloInfoActual ? obtenerIconoComponente(moduloInfoActual.iconoKey, moduloActualDef.icono) : Users;
 
   // VISTA 2: PANEL DEDICADO DEL MÓDULO ENFOCADO (Con botón circular 'X' en la esquina superior derecha, SIN iframe)
   if (widgetActivo && moduloActualDef && moduloInfoActual) {
@@ -318,7 +367,7 @@ export function PanelAdministrarModular({ negocio }: Props) {
                   display: "flex"
                 }}
               >
-                {React.createElement(moduloActualDef.icono, { size: 20, color: moduloActualDef.colorIcono })}
+                <IconoActualModulo size={20} color={moduloActualDef.colorIcono} />
               </div>
               <div>
                 <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
@@ -328,6 +377,11 @@ export function PanelAdministrarModular({ negocio }: Props) {
                   {favoritos.includes(widgetActivo) && (
                     <span className="pildora-estado" style={{ background: "var(--amarillo)", color: "var(--negro)", fontSize: "0.65rem" }}>
                       ⭐ Destacado
+                    </span>
+                  )}
+                  {moduloInfoActual.requiereMfa && (
+                    <span className="pildora-estado" style={{ background: "rgba(80, 0, 186, 0.12)", color: "var(--violeta, #5000BA)", fontSize: "0.65rem", display: "inline-flex", alignItems: "center", gap: "3px" }}>
+                      <Lock size={12} /> MFA Protegido
                     </span>
                   )}
                 </div>
@@ -433,14 +487,14 @@ export function PanelAdministrarModular({ negocio }: Props) {
         {/* Rejilla de Módulos */}
         <div className="accesos-cliente">
           {modulosOrdenados.map(m => {
-            const IconoComponente = m.icono;
-            const esFav = favoritos.includes(m.id);
             const infoCustom = getWidgetInfo(m.id, m.titulo, m.subtitulo);
+            const IconoComponente = obtenerIconoComponente(infoCustom.iconoKey, m.icono);
+            const esFav = favoritos.includes(m.id);
 
             return (
               <div
                 key={m.id}
-                onClick={() => setWidgetActivo(m.id)}
+                onClick={() => handleIntentarAbrirWidget(m.id, m)}
                 className="tarjeta-acceso"
                 style={{
                   border: "1px solid var(--panel-linea, #E4E4E4)",
@@ -464,10 +518,17 @@ export function PanelAdministrarModular({ negocio }: Props) {
                 >
                   <button
                     type="button"
-                    title="Editar Título y Descripción del Widget"
+                    title="Editar Título, Descripción e Ícono del Widget"
                     onClick={(e) => {
                       e.stopPropagation();
-                      setWidgetEditar({ id: m.id, titulo: infoCustom.titulo, subtitulo: infoCustom.subtitulo });
+                      setWidgetEditar({
+                        id: m.id,
+                        titulo: infoCustom.titulo,
+                        subtitulo: infoCustom.subtitulo,
+                        iconoKey: infoCustom.iconoKey,
+                        requiereMfa: infoCustom.requiereMfa,
+                        tiempoMfaMinutos: infoCustom.tiempoMfaMinutos,
+                      });
                     }}
                     style={{
                       background: "rgba(255,255,255,0.9)",
@@ -509,23 +570,41 @@ export function PanelAdministrarModular({ negocio }: Props) {
                 </div>
 
                 <div style={{ minWidth: 0, marginTop: "6px" }}>
-                  {esFav && (
-                    <span
-                      style={{
-                        fontSize: "0.58rem",
-                        fontWeight: 800,
-                        color: "#92400E",
-                        background: "var(--amarillo, #FEE300)",
-                        padding: "1px 6px",
-                        borderRadius: "999px",
-                        display: "inline-block",
-                        marginBottom: "4px",
-                        letterSpacing: "0.04em"
-                      }}
-                    >
-                      DESTACADO
-                    </span>
-                  )}
+                  <div style={{ display: "flex", alignItems: "center", gap: "4px", flexWrap: "wrap", marginBottom: "4px" }}>
+                    {esFav && (
+                      <span
+                        style={{
+                          fontSize: "0.58rem",
+                          fontWeight: 800,
+                          color: "#92400E",
+                          background: "var(--amarillo, #FEE300)",
+                          padding: "1px 6px",
+                          borderRadius: "999px",
+                          letterSpacing: "0.04em"
+                        }}
+                      >
+                        DESTACADO
+                      </span>
+                    )}
+                    {infoCustom.requiereMfa && (
+                      <span
+                        style={{
+                          fontSize: "0.58rem",
+                          fontWeight: 800,
+                          color: "var(--violeta, #5000BA)",
+                          background: "var(--violeta-suave, #F3E8FF)",
+                          padding: "1px 6px",
+                          borderRadius: "999px",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "3px"
+                        }}
+                      >
+                        <Lock size={10} /> MFA
+                      </span>
+                    )}
+                  </div>
+
                   <strong style={{ display: "block", lineHeight: 1.25, fontSize: "0.95rem" }}>
                     {infoCustom.titulo}
                   </strong>
@@ -552,7 +631,7 @@ export function PanelAdministrarModular({ negocio }: Props) {
         </div>
       </div>
 
-      {/* Modal para Editar Título y Subtítulo de Widget */}
+      {/* Modal para Editar Título, Subtítulo, Ícono y MFA de Widget */}
       {widgetEditar && (
         <ModalEditarWidget
           abierto={Boolean(widgetEditar)}
@@ -560,12 +639,27 @@ export function PanelAdministrarModular({ negocio }: Props) {
           widgetId={widgetEditar.id}
           tituloActual={widgetEditar.titulo}
           subtituloActual={widgetEditar.subtitulo}
-          onGuardar={(id, nuevoTitulo, nuevoSubtitulo) => {
-            guardarWidget(id, nuevoTitulo, nuevoSubtitulo);
+          iconoActualKey={widgetEditar.iconoKey}
+          requiereMfaActual={widgetEditar.requiereMfa}
+          tiempoMfaActualMinutos={widgetEditar.tiempoMfaMinutos}
+          onGuardar={(id, nuevoTitulo, nuevoSubtitulo, nuevoIconoKey, nuevoRequiereMfa, nuevoTiempoMfaMinutos) => {
+            guardarWidget(id, nuevoTitulo, nuevoSubtitulo, nuevoIconoKey, nuevoRequiereMfa, nuevoTiempoMfaMinutos);
           }}
+        />
+      )}
+
+      {/* Modal para Verificación MFA por Inactividad */}
+      {widgetMfaPendiente && (
+        <ModalVerificarMFAWidget
+          abierto={Boolean(widgetMfaPendiente)}
+          onCerrar={() => setWidgetMfaPendiente(null)}
+          tituloWidget={widgetMfaPendiente.titulo}
+          tiempoInactividadMinutos={widgetMfaPendiente.tiempoMinutos}
+          onVerificado={handleConfirmarMfaExitoso}
         />
       )}
     </div>
   );
 }
+
 

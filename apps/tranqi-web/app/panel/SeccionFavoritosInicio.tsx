@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { User, History, KeyRound, ShieldAlert, Settings, Mail, Bell, Star, ChevronRight, ShieldCheck, Sliders, Receipt, type LucideIcon } from "lucide-react";
+import { User, History, KeyRound, ShieldAlert, Settings, Mail, Bell, Star, ChevronRight, ShieldCheck, Sliders, Receipt, Lock, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { useCustomWidgets } from "./gestorTitulosWidgets";
 
@@ -75,46 +75,46 @@ const CATALOGO_FAVORITOS: Record<string, WidgetFavInfo> = {
   negocio: {
     id: "negocio",
     titulo: "Configuración del Negocio",
-    subtitulo: "Identidad legal, términos, locales, WhatsApp y redes",
+    subtitulo: "Identidad legal, términos, locales, WhatsApp y redes sociales",
     icono: Settings,
-    colorIcono: "var(--violeta, #5000BA)",
-    href: "/panel/configuracion",
-    origen: "Configurar"
-  },
-  perfiles: {
-    id: "perfiles",
-    titulo: "Administración de Perfiles & Permisos",
-    subtitulo: "Catálogo de perfiles, jerarquía de roles (1–100) y matriz de gobernanza",
-    icono: Sliders,
     colorIcono: "var(--violeta, #5000BA)",
     href: "/panel/configuracion",
     origen: "Configurar"
   },
   correo: {
     id: "correo",
-    titulo: "Servidor de Correo SMTP",
-    subtitulo: "Servidor saliente, credenciales Vault y pruebas",
+    titulo: "Servidor SMTP & Plantillas Vault",
+    subtitulo: "Credenciales cifradas, puerto TLS y plantilla HTML",
     icono: Mail,
-    colorIcono: "var(--violeta, #5000BA)",
+    colorIcono: "var(--esmeralda, #05876E)",
     href: "/panel/configuracion",
     origen: "Configurar"
   },
   notificaciones: {
     id: "notificaciones",
-    titulo: "Preferencias de Alertas & Notificaciones",
-    subtitulo: "Frecuencia, canales de recepción Email, WhatsApp y Push",
+    titulo: "Preferencias de Alertas",
+    subtitulo: "Canales de contacto, WhatsApp y avisos legales",
     icono: Bell,
+    colorIcono: "var(--violeta, #5000BA)",
+    href: "/panel/configuracion",
+    origen: "Configurar"
+  },
+  perfiles: {
+    id: "perfiles",
+    titulo: "Gestión de Usuarios & Membresías",
+    subtitulo: "Administración de miembros, asignación de perfiles y techo jerárquico",
+    icono: Sliders,
     colorIcono: "var(--violeta, #5000BA)",
     href: "/panel/configuracion",
     origen: "Configurar"
   }
 };
 
-export function TarjetasFavoritasGrid() {
+export function SeccionFavoritosInicio() {
   const [favsCuenta, setFavsCuenta] = useState<string[]>([]);
   const [favsConfig, setFavsConfig] = useState<string[]>([]);
   const [cargado, setCargado] = useState(false);
-  const { getWidgetInfo } = useCustomWidgets();
+  const { getWidgetInfo, obtenerIconoComponente } = useCustomWidgets();
 
   useEffect(() => {
     try {
@@ -141,8 +141,8 @@ export function TarjetasFavoritasGrid() {
   return (
     <>
       {itemsFavoritos.map(item => {
-        const Icono = item.icono;
         const infoCustom = getWidgetInfo(item.id, item.titulo, item.subtitulo);
+        const IconoComponente = obtenerIconoComponente(infoCustom.iconoKey, item.icono);
 
         return (
           <Link
@@ -173,27 +173,41 @@ export function TarjetasFavoritasGrid() {
             </div>
 
             <div className="tarjeta-acceso-icono" style={{ margin: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <Icono size={20} color={item.esPeligro ? "#B00020" : item.colorIcono} />
+              <IconoComponente size={20} color={item.esPeligro ? "#B00020" : item.colorIcono} />
             </div>
 
             <div style={{ minWidth: 0, marginTop: "6px" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "4px", marginBottom: "4px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "4px", flexWrap: "wrap", marginBottom: "4px" }}>
                 <span
                   style={{
-                    fontSize: "0.56rem",
+                    fontSize: "0.58rem",
                     fontWeight: 800,
-                    color: "#92400E",
-                    background: "var(--amarillo, #FEE300)",
+                    color: item.origen === "Mi cuenta" ? "#034D3F" : "#5000BA",
+                    background: item.origen === "Mi cuenta" ? "var(--esmeralda-suave, #E6F4F1)" : "var(--violeta-suave, #F3E8FF)",
                     padding: "1px 6px",
                     borderRadius: "999px",
                     letterSpacing: "0.04em"
                   }}
                 >
-                  FAVORITO
+                  {item.origen.toUpperCase()}
                 </span>
-                <span style={{ fontSize: "0.62rem", color: "var(--panel-gris, #737373)", fontWeight: 700 }}>
-                  • {item.origen}
-                </span>
+                {infoCustom.requiereMfa && (
+                  <span
+                    style={{
+                      fontSize: "0.58rem",
+                      fontWeight: 800,
+                      color: "var(--violeta, #5000BA)",
+                      background: "var(--violeta-suave, #F3E8FF)",
+                      padding: "1px 6px",
+                      borderRadius: "999px",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "3px"
+                    }}
+                  >
+                    <Lock size={10} /> MFA
+                  </span>
+                )}
               </div>
               <strong style={{ display: "block", color: item.esPeligro ? "#B00020" : undefined, lineHeight: 1.25 }}>
                 {infoCustom.titulo}
