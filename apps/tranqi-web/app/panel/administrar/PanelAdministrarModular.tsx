@@ -1,11 +1,13 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Users, Shield, Lock, ClipboardList, Bell, UserCog, Star, X, Pencil } from "lucide-react";
+import { UserCog, Users, ClipboardList, Bell, Shield, ChevronRight, Star, Lock, X, Eye, Pencil } from "lucide-react";
 import Link from "next/link";
-import { crearClienteNavegador } from "@eco/lib/supabase/cliente";
-import { AdministracionPerfilesWidget } from "../../componentes/AdministracionPerfilesWidget";
-import { EmisionNotificacionesWidget } from "../../componentes/EmisionNotificacionesWidget";
+import { crearClienteNavegador } from "@eco/supabase";
+import { AdministracionPerfilesWidget } from "@eco/gestion-usuarios/componentes/AdministracionPerfilesWidget";
+import { EmisionNotificacionesWidget } from "@eco/notificaciones";
+import { TablaAuditoria } from "../auditoria/TablaAuditoria";
+import type { RegistroAuditoria } from "@eco/auditoria";
 import { useCustomWidgets } from "../gestorTitulosWidgets";
 import { ModalEditarWidget } from "../ModalEditarWidget";
 import { ModalVerificarMFAWidget } from "../ModalVerificarMFAWidget";
