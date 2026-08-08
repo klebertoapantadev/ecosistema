@@ -4,8 +4,8 @@ import React, { useState } from "react";
 import {
   ShieldCheck, Users,
   CheckCircle2, ChevronDown, ChevronUp, Search, Sliders,
-  Plus, Check, LayoutGrid, Layers, ExternalLink, PanelLeft, Eye, ArrowRight,
-  Palette, UserCheck, X, Sparkles, Trash2, Star
+  Plus, Check, LayoutGrid, Layers, ExternalLink, PanelLeft, Eye, ArrowRight, ArrowLeft,
+  Palette, UserCheck, X, Sparkles, Trash2, Star, Move, Copy, Package
 } from "lucide-react";
 import { guardarPerfil, guardarWidget, guardarAsignacionWidget } from "../acciones";
 
@@ -579,8 +579,92 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
   const [panelAgregarWidget, setPanelAgregarWidget] = useState<PanelSidebarDef | null>(null);
   const [busquedaWidgetAgregar, setBusquedaWidgetAgregar] = useState<string>("");
 
+  // Modal de Reorganización / Transferencia entre Paneles (Mover vs Duplicar)
+  const [widgetTransferir, setWidgetTransferir] = useState<{
+    widget: WidgetInventarioDef;
+    panelOrigenId: string;
+  } | null>(null);
+  const [panelDestinoId, setPanelDestinoId] = useState<string>("");
+  const [accionTransferir, setAccionTransferir] = useState<"mover" | "duplicar">("mover");
+
   // Tema del perfil activo seleccionado
   const temaPerfilActivo = TEMAS_PERFIL[perfilSeleccionado] || TEMA_POR_DEFECTO;
+
+  // Reordenar posición interna de un widget dentro de un panel (Izquierda / Derecha)
+  const reordenarWidgetEnPanel = (
+    perfilClave: string,
+    panelId: string,
+    widgetClave: string,
+    direccion: "izquierda" | "derecha"
+  ) => {
+    const perfil = perfiles.find(p => p.clave === perfilClave);
+    if (!perfil) return;
+
+    const asignados = Array.from(new Set(perfil.widgetsAsignadosPorPanel[panelId] || []));
+    const idx = asignados.indexOf(widgetClave);
+    if (idx === -1) return;
+
+    const targetIdx = direccion === "izquierda" ? idx - 1 : idx + 1;
+    if (targetIdx < 0 || targetIdx >= asignados.length) return;
+
+    const reordenados = [...asignados];
+    const elemActual = reordenados[idx];
+    const elemDestino = reordenados[targetIdx];
+    if (elemActual && elemDestino) {
+      reordenados[idx] = elemDestino;
+      reordenados[targetIdx] = elemActual;
+    }
+
+    const mapaActualizado = {
+      ...perfil.widgetsAsignadosPorPanel,
+      [panelId]: reordenados
+    };
+
+    setPerfiles(perfiles.map(p => p.clave === perfilClave ? { ...p, widgetsAsignadosPorPanel: mapaActualizado } : p));
+  };
+
+  // Ejecutar Transferencia (Mover o Duplicar entre Paneles)
+  const handleEjecutarTransferencia = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!widgetTransferir || !panelDestinoId) return;
+
+    const { widget, panelOrigenId } = widgetTransferir;
+    const perfilClave = perfilSeleccionado;
+    const perfil = perfiles.find(p => p.clave === perfilClave);
+    if (!perfil) return;
+
+    const origenList = Array.from(new Set(perfil.widgetsAsignadosPorPanel[panelOrigenId] || []));
+    const destinoList = Array.from(new Set(perfil.widgetsAsignadosPorPanel[panelDestinoId] || []));
+
+    let nuevoOrigenList = origenList;
+    if (accionTransferir === "mover") {
+      nuevoOrigenList = origenList.filter(w => w !== widget.clave);
+      await guardarAsignacionWidget(perfilClave, widget.clave, negocio, false, panelOrigenId);
+    }
+
+    let nuevoDestinoList = destinoList;
+    if (!destinoList.includes(widget.clave)) {
+      nuevoDestinoList = [...destinoList, widget.clave];
+      await guardarAsignacionWidget(perfilClave, widget.clave, negocio, true, panelDestinoId);
+    }
+
+    const mapaActualizado = {
+      ...perfil.widgetsAsignadosPorPanel,
+      [panelOrigenId]: nuevoOrigenList,
+      [panelDestinoId]: nuevoDestinoList,
+    };
+
+    setPerfiles(perfiles.map(p => p.clave === perfilClave ? { ...p, widgetsAsignadosPorPanel: mapaActualizado } : p));
+
+    const nombreOrigen = panelesSidebar.find(p => p.id === panelOrigenId)?.nombre || panelOrigenId;
+    const nombreDestino = panelesSidebar.find(p => p.id === panelDestinoId)?.nombre || panelDestinoId;
+
+    setMensajeExito(
+      `Widget '${widget.nombre}' ${accionTransferir === "mover" ? "MOVIDO" : "DUPLICADO"} de '${nombreOrigen}' a '${nombreDestino}'.`
+    );
+    setTimeout(() => setMensajeExito(null), 4000);
+    setWidgetTransferir(null);
+  };
 
   // Filtros
   const [filtroTexto, setFiltroTexto] = useState<string>("");
@@ -1139,26 +1223,98 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                               </div>
                             </div>
 
-                            <button
-                              type="button"
-                              title="Retirar de este panel"
-                              onClick={() => retirarWidgetDePanel(perfilSeleccionado, w.clave, panel.id)}
-                              style={{
-                                background: "#ffffff",
-                                border: `1px solid ${temaPerfilActivo.colorBorde}66`,
-                                color: "#DC2626",
-                                borderRadius: "6px",
-                                padding: "6px 8px",
-                                cursor: "pointer",
-                                fontSize: "0.7rem",
-                                fontWeight: 800,
-                                display: "flex",
-                                alignItems: "center",
-                                gap: "4px"
-                              }}
-                            >
-                              <Trash2 size={13} /> <span className="txt-btn-movil">Retirar</span>
-                            </button>
+                             <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                              {/* Reordenamiento Interno: Mover a la Izquierda / Subir Posición */}
+                              <button
+                                type="button"
+                                title="Subir posición / Mover a la izquierda"
+                                disabled={idx === 0}
+                                onClick={() => reordenarWidgetEnPanel(perfilSeleccionado, panel.id, w.clave, "izquierda")}
+                                style={{
+                                  background: "#ffffff",
+                                  border: "1px solid var(--panel-linea, #E4E4E4)",
+                                  borderRadius: "6px",
+                                  padding: "5px 7px",
+                                  cursor: idx === 0 ? "not-allowed" : "pointer",
+                                  opacity: idx === 0 ? 0.3 : 1,
+                                  color: "var(--negro, #111111)",
+                                  display: "flex",
+                                  alignItems: "center"
+                                }}
+                              >
+                                <ArrowLeft size={13} />
+                              </button>
+
+                              {/* Reordenamiento Interno: Mover a la Derecha / Bajar Posición */}
+                              <button
+                                type="button"
+                                title="Bajar posición / Mover a la derecha"
+                                disabled={idx === widgetsOrdenados.length - 1}
+                                onClick={() => reordenarWidgetEnPanel(perfilSeleccionado, panel.id, w.clave, "derecha")}
+                                style={{
+                                  background: "#ffffff",
+                                  border: "1px solid var(--panel-linea, #E4E4E4)",
+                                  borderRadius: "6px",
+                                  padding: "5px 7px",
+                                  cursor: idx === widgetsOrdenados.length - 1 ? "not-allowed" : "pointer",
+                                  opacity: idx === widgetsOrdenados.length - 1 ? 0.3 : 1,
+                                  color: "var(--negro, #111111)",
+                                  display: "flex",
+                                  alignItems: "center"
+                                }}
+                              >
+                                <ArrowRight size={13} />
+                              </button>
+
+                              {/* Modal Reorganizar: Mover o Duplicar a otro Panel */}
+                              <button
+                                type="button"
+                                title="Reorganizar: Mover o duplicar este widget a otro panel"
+                                onClick={() => {
+                                  setWidgetTransferir({ widget: w, panelOrigenId: panel.id });
+                                  const primerDestino = panelesSidebar.find(p => p.id !== panel.id)?.id || "";
+                                  setPanelDestinoId(primerDestino);
+                                  setAccionTransferir("mover");
+                                }}
+                                style={{
+                                  background: "#F3E8FF",
+                                  border: "1px solid #DDD6FE",
+                                  color: "#5000BA",
+                                  borderRadius: "6px",
+                                  padding: "5px 8px",
+                                  fontSize: "0.72rem",
+                                  fontWeight: 800,
+                                  cursor: "pointer",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: "3px"
+                                }}
+                              >
+                                <Move size={13} /> <span className="txt-btn-movil">Mover/Copiar</span>
+                              </button>
+
+                              {/* Retirar de este Panel */}
+                              <button
+                                type="button"
+                                title="Retirar de este panel"
+                                onClick={() => retirarWidgetDePanel(perfilSeleccionado, w.clave, panel.id)}
+                                style={{
+                                  background: "#ffffff",
+                                  border: `1px solid ${temaPerfilActivo.colorBorde}66`,
+                                  color: "#DC2626",
+                                  borderRadius: "6px",
+                                  padding: "5px 8px",
+                                  cursor: "pointer",
+                                  fontSize: "0.72rem",
+                                  fontWeight: 800,
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: "3px"
+                                }}
+                              >
+                                <Trash2 size={13} /> <span className="txt-btn-movil">Retirar</span>
+                              </button>
+                            </div>
                           </div>
                         );
                       })}
@@ -1182,6 +1338,108 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
               );
             })}
           </div>
+
+          {/* SECCIÓN 3: BLOQUE DESTACADO DE WIDGETS DISPONIBLES SIN ASIGNAR */}
+          {(() => {
+            const todasLasClavesAsignadas = new Set(
+              Object.values(perfilActualObj?.widgetsAsignadosPorPanel || {}).flat()
+            );
+            const widgetsDisponiblesSinAsignar = inventarioWidgets.filter(
+              w => !todasLasClavesAsignadas.has(w.clave)
+            );
+
+            return (
+              <div
+                style={{
+                  marginTop: "24px",
+                  background: "#F7F6FA",
+                  borderRadius: "14px",
+                  border: "1.5px dashed #E4E4E4",
+                  padding: "18px",
+                }}
+              >
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px", flexWrap: "wrap", gap: "8px" }}>
+                  <div>
+                    <h4 style={{ fontSize: "0.95rem", fontWeight: 800, margin: "0 0 2px 0", color: "#111111", display: "flex", alignItems: "center", gap: "8px" }}>
+                      <Package size={18} color="#5000BA" /> Widgets Disponibles Sin Asignar
+                    </h4>
+                    <p style={{ fontSize: "0.78rem", color: "#737373", margin: 0 }}>
+                      Widgets del inventario que no están vinculados a ningún panel para el perfil <strong>{perfilActualObj?.nombre}</strong>.
+                    </p>
+                  </div>
+
+                  <span style={{ fontSize: "0.78rem", fontWeight: 800, background: "#F3E8FF", color: "#5000BA", padding: "4px 12px", borderRadius: "999px" }}>
+                    {widgetsDisponiblesSinAsignar.length} Disponibles
+                  </span>
+                </div>
+
+                {widgetsDisponiblesSinAsignar.length > 0 ? (
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(290px, 1fr))", gap: "12px" }}>
+                    {widgetsDisponiblesSinAsignar.map(w => (
+                      <div
+                        key={w.clave}
+                        style={{
+                          background: "#FFFFFF",
+                          borderRadius: "10px",
+                          border: "1px solid #E4E4E4",
+                          padding: "12px 14px",
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: "8px",
+                          boxShadow: "0 1px 3px rgba(0,0,0,0.03)"
+                        }}
+                      >
+                        <div>
+                          <strong style={{ fontSize: "0.85rem", color: "#111111", display: "block" }}>{w.nombre}</strong>
+                          <p style={{ fontSize: "0.75rem", color: "#737373", margin: "2px 0 6px 0", lineHeight: 1.3 }}>{w.descripcion}</p>
+                          <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap", fontSize: "0.68rem" }}>
+                            <code>{w.clave}</code>
+                            <span style={{ color: "#737373" }}>• Categoría: <strong>{w.categoria}</strong></span>
+                            <code style={{ background: "rgba(0,0,0,0.05)", padding: "1px 5px", borderRadius: "4px" }}>
+                              {w.rutaFisica || `/plataforma/${w.clave}.tsx`}
+                            </code>
+                          </div>
+                        </div>
+
+                        <div style={{ display: "flex", gap: "6px", alignItems: "center", marginTop: "auto", paddingTop: "8px", borderTop: "1px solid #E4E4E4" }}>
+                          <select
+                            defaultValue=""
+                            onChange={(e) => {
+                              if (e.target.value) {
+                                agregarWidgetAPanel(perfilSeleccionado, w.clave, e.target.value);
+                                e.target.value = "";
+                              }
+                            }}
+                            style={{
+                              flex: 1,
+                              padding: "6px 8px",
+                              borderRadius: "6px",
+                              border: "1px solid #E4E4E4",
+                              fontSize: "0.75rem",
+                              fontWeight: 700,
+                              cursor: "pointer",
+                              background: "#FFFFFF"
+                            }}
+                          >
+                            <option value="" disabled>+ Asignar a Panel...</option>
+                            {panelesSidebar.map(p => (
+                              <option key={p.id} value={p.id}>
+                                {p.nombre}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div style={{ textAlign: "center", padding: "14px", fontSize: "0.8rem", color: "#05876E", fontWeight: 700 }}>
+                    ✅ ¡Excelente! Todos los widgets del inventario están asignados a algún panel de navegación para este perfil.
+                  </div>
+                )}
+              </div>
+            );
+          })()}
         </div>
       )}
 
@@ -1858,6 +2116,171 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
               <button type="submit" style={{ padding: "8px 16px", borderRadius: "6px", border: "none", background: "var(--violeta, #5000BA)", color: "#fff", fontWeight: 700, cursor: "pointer" }}>Guardar Panel</button>
             </div>
           </form>
+        </div>
+      )}
+
+      {/* MODAL REORGANIZAR / TRANSFERIR WIDGET ENTRE PANELES (MOVER VS DUPLICAR) */}
+      {widgetTransferir && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1200, padding: "20px" }}>
+          <div style={{ background: "#ffffff", borderRadius: "18px", padding: "24px", maxWidth: "520px", width: "100%", boxShadow: "0 20px 50px rgba(0,0,0,0.3)" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px", borderBottom: "1px solid #E4E4E4", paddingBottom: "12px" }}>
+              <div>
+                <h3 style={{ fontSize: "1.05rem", fontWeight: 800, margin: 0, color: "#5000BA", display: "flex", alignItems: "center", gap: "8px" }}>
+                  <Move size={18} /> Reorganizar / Transferir Widget
+                </h3>
+                <span style={{ fontSize: "0.78rem", color: "#737373" }}>
+                  Perfil: <strong>{perfilActualObj?.nombre}</strong>
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setWidgetTransferir(null)}
+                style={{ background: "#ffffff", border: "1px solid #E4E4E4", borderRadius: "50%", width: "32px", height: "32px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <form onSubmit={handleEjecutarTransferencia} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+              {/* Información del Widget */}
+              <div style={{ background: "#F7F6FA", padding: "12px 14px", borderRadius: "10px", border: "1px solid #E4E4E4" }}>
+                <strong style={{ fontSize: "0.88rem", display: "block", color: "#111111" }}>{widgetTransferir.widget.nombre}</strong>
+                <span style={{ fontSize: "0.75rem", color: "#737373", display: "block", marginTop: "2px" }}>
+                  Panel Origen Actual: <strong>{panelesSidebar.find(p => p.id === widgetTransferir.panelOrigenId)?.nombre || widgetTransferir.panelOrigenId}</strong>
+                </span>
+              </div>
+
+              {/* Selección de Acción: Mover (por defecto) vs Duplicar */}
+              <div>
+                <label style={{ fontSize: "0.82rem", fontWeight: 800, color: "#111111", display: "block", marginBottom: "8px" }}>
+                  ¿Qué deseas hacer con este widget?
+                </label>
+                <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                  <label
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "10px",
+                      padding: "10px 12px",
+                      borderRadius: "8px",
+                      border: accionTransferir === "mover" ? "1.5px solid #5000BA" : "1px solid #E4E4E4",
+                      background: accionTransferir === "mover" ? "#F3E8FF" : "#FFFFFF",
+                      cursor: "pointer",
+                      fontSize: "0.84rem",
+                      fontWeight: 700
+                    }}
+                  >
+                    <input
+                      type="radio"
+                      name="accionTransferir"
+                      value="mover"
+                      checked={accionTransferir === "mover"}
+                      onChange={() => setAccionTransferir("mover")}
+                    />
+                    <div>
+                      <span>⇄ Mover Widget (Por Defecto)</span>
+                      <span style={{ display: "block", fontSize: "0.74rem", fontWeight: 500, color: "#737373" }}>
+                        Quita el widget del panel origen y lo transfiere al panel destino.
+                      </span>
+                    </div>
+                  </label>
+
+                  <label
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "10px",
+                      padding: "10px 12px",
+                      borderRadius: "8px",
+                      border: accionTransferir === "duplicar" ? "1.5px solid #5000BA" : "1px solid #E4E4E4",
+                      background: accionTransferir === "duplicar" ? "#F3E8FF" : "#FFFFFF",
+                      cursor: "pointer",
+                      fontSize: "0.84rem",
+                      fontWeight: 700
+                    }}
+                  >
+                    <input
+                      type="radio"
+                      name="accionTransferir"
+                      value="duplicar"
+                      checked={accionTransferir === "duplicar"}
+                      onChange={() => setAccionTransferir("duplicar")}
+                    />
+                    <div>
+                      <span>📋 Duplicar Widget</span>
+                      <span style={{ display: "block", fontSize: "0.74rem", fontWeight: 500, color: "#737373" }}>
+                        Conserva el widget en el panel origen y lo añade también al panel destino.
+                      </span>
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              {/* Selección del Panel Destino */}
+              <div>
+                <label style={{ fontSize: "0.82rem", fontWeight: 800, color: "#111111", display: "block", marginBottom: "6px" }}>
+                  Seleccionar Panel Destino
+                </label>
+                <select
+                  value={panelDestinoId}
+                  onChange={(e) => setPanelDestinoId(e.target.value)}
+                  required
+                  style={{
+                    width: "100%",
+                    padding: "10px 12px",
+                    borderRadius: "8px",
+                    border: "1px solid #E4E4E4",
+                    fontSize: "0.88rem",
+                    fontWeight: 700,
+                    background: "#FFFFFF"
+                  }}
+                >
+                  {panelesSidebar
+                    .filter(p => p.id !== widgetTransferir.panelOrigenId)
+                    .map(p => (
+                      <option key={p.id} value={p.id}>
+                        {p.nombre} ({p.ruta})
+                      </option>
+                    ))}
+                </select>
+              </div>
+
+              {/* Botones de Acción */}
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "10px" }}>
+                <button
+                  type="button"
+                  onClick={() => setWidgetTransferir(null)}
+                  style={{
+                    background: "#F7F6FA",
+                    border: "1px solid #E4E4E4",
+                    borderRadius: "8px",
+                    padding: "8px 16px",
+                    fontSize: "0.82rem",
+                    fontWeight: 700,
+                    cursor: "pointer"
+                  }}
+                >
+                  Cancelar
+                </button>
+
+                <button
+                  type="submit"
+                  style={{
+                    background: "#5000BA",
+                    color: "#FFFFFF",
+                    border: "none",
+                    borderRadius: "8px",
+                    padding: "8px 20px",
+                    fontSize: "0.82rem",
+                    fontWeight: 800,
+                    cursor: "pointer"
+                  }}
+                >
+                  {accionTransferir === "mover" ? "⇄ Mover Widget" : "📋 Duplicar Widget"}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
     </div>
