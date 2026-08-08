@@ -1289,15 +1289,41 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                     </div>
                   )}
 
-                  {/* ENCABEZADO DEL PANEL CON CONMUTADOR MFA Y BOTÓN "+ AGREGAR WIDGET" */}
+                  {/* ENCABEZADO DEL PANEL CON CONMUTADOR MFA, CONFIGURAR ÍCONO Y BOTÓN "+ AGREGAR WIDGET" */}
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px", flexWrap: "wrap", gap: "10px" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                      <PanelLeft size={18} color={temaPerfilActivo.colorPrimario} />
+                    <div
+                      onClick={() => setPanelEditarModal(panel)}
+                      style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer" }}
+                      title="Haz clic para cambiar el ícono del sidebar o editar la ruta/nombre del panel"
+                    >
+                      <IconoPanelDinamico nombreIcono={panel.icono} size={20} color={temaPerfilActivo.colorPrimario} />
                       <strong style={{ fontSize: "0.95rem", color: "#111111" }}>{panel.nombre}</strong>
                       <code style={{ fontSize: "0.72rem", color: "var(--panel-gris, #737373)" }}>{panel.ruta}</code>
                     </div>
 
-                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                      <button
+                        type="button"
+                        onClick={() => setPanelEditarModal(panel)}
+                        title={`Configurar ícono de sidebar (${panel.icono || "PanelLeft"}) y visibilidad del panel`}
+                        style={{
+                          background: "rgba(80, 0, 186, 0.08)",
+                          color: "var(--violeta, #5000BA)",
+                          border: "1px solid rgba(80, 0, 186, 0.25)",
+                          borderRadius: "8px",
+                          padding: "5px 10px",
+                          fontSize: "0.74rem",
+                          fontWeight: 800,
+                          cursor: "pointer",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "5px"
+                        }}
+                      >
+                        <IconoPanelDinamico nombreIcono={panel.icono} size={14} color="var(--violeta, #5000BA)" />
+                        <span>⚙️ Ícono & Visibilidad</span>
+                      </button>
+
                       <button
                         type="button"
                         onClick={() => toggleMfaPanel(panel.id)}

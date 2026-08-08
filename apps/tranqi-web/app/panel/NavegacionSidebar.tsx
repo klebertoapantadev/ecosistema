@@ -139,7 +139,33 @@ export function NavegacionSidebar({
       }
 
       const savedPerfiles = localStorage.getItem(`tranqi_perfiles_${negocio}`);
-      if (savedPerfiles) {
+      if (modoActivo === "superadmin") {
+        const combinacionTotal: Record<string, string[]> = {};
+        if (savedPerfiles) {
+          try {
+            const parsed = JSON.parse(savedPerfiles);
+            if (Array.isArray(parsed)) {
+              parsed.forEach((p: PerfilEstadoSave) => {
+                if (p.widgetsAsignadosPorPanel) {
+                  Object.entries(p.widgetsAsignadosPorPanel).forEach(([pId, listW]) => {
+                    combinacionTotal[pId] = Array.from(new Set([...(combinacionTotal[pId] || []), ...listW]));
+                  });
+                }
+              });
+            }
+          } catch {
+            // Fallback a defaults
+          }
+        }
+        if (Object.keys(combinacionTotal).length === 0) {
+          Object.values(PERFILES_PANEL_WIDGETS_DEFAULT).forEach((mapaRol) => {
+            Object.entries(mapaRol).forEach(([pId, listW]) => {
+              combinacionTotal[pId] = Array.from(new Set([...(combinacionTotal[pId] || []), ...listW]));
+            });
+          });
+        }
+        setPerfilMapaWidgets(combinacionTotal);
+      } else if (savedPerfiles) {
         const parsed = JSON.parse(savedPerfiles);
         if (Array.isArray(parsed)) {
           const perfilObj = parsed.find((p: PerfilEstadoSave) => p.clave?.toUpperCase() === modoActivo.toUpperCase());

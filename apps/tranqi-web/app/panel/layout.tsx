@@ -75,7 +75,9 @@ export default async function LayoutPanel({ children }: { children: React.ReactN
             <span className="nombre-usuario-activo">{[perfil.usu_nombres, perfil.usu_apellidos].filter(Boolean).join(" ")}</span>
             <span className="correo-usuario-activo">{perfil.usu_correo}</span>
             <SelloCompilacion className="sello-compilacion" />
-            {perfil.usu_superadmin_plataforma && <span className="etiqueta-superadmin">SuperAdmin ({modoActivo})</span>}
+            <span className="etiqueta-superadmin" title="Perfil o modo activo de visualización actual">
+              {perfil.usu_superadmin_plataforma ? `SuperAdmin (${modoActivo})` : `Rol Activo (${modoActivo})`}
+            </span>
           </div>
         </aside>
         <main className="panel-contenido">{children}</main>
