@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { ExternalLink, Check, X, Search, Plus, Bold, Italic, Underline, List, Heading, Link as LinkIcon, Code, ShieldCheck, UploadCloud, FileText, Camera, Paperclip, Trash2, Image as ImageIcon } from "lucide-react";
+import { ExternalLink, Check, X, Search, Plus, Bold, Italic, Underline, List, Heading, Link as LinkIcon, Code, ShieldCheck, UploadCloud, FileText, Camera, Paperclip, Trash2, Image as ImageIcon, ZoomIn, ZoomOut, Move, RotateCcw, Crop, Sliders, CheckCircle2 } from "lucide-react";
 import { crearClienteNavegador } from "@eco/supabase";
 import { enviarSolicitudSocio, registrarDocumentoSocio } from "../acciones";
 import { ENLACES_VERIFICACION, type DatosExperienciaLaboral } from "../esquema";
@@ -49,6 +49,290 @@ async function subirDocumento(
   return { ok: true as const };
 }
 
+const btnPillStyle: React.CSSProperties = {
+  background: "#ffffff",
+  border: "1px solid #E4E4E4",
+  borderRadius: "6px",
+  padding: "4px 8px",
+  fontSize: "0.75rem",
+  fontWeight: 700,
+  cursor: "pointer",
+  color: "#5000BA",
+};
+
+// Componente Interactivo para Recortar, Mover y Centrar la Foto de Perfil Profesional
+function RecortadorFotoPerfil({
+  archivo,
+  onGuardarFoto,
+}: {
+  archivo: File;
+  onGuardarFoto: (nuevoArchivo: File) => void;
+}) {
+  const [zoom, setZoom] = useState(1.0);
+  const [offsetX, setOffsetX] = useState(0);
+  const [offsetY, setOffsetY] = useState(0);
+  const [fotoUrl, setFotoUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    const url = URL.createObjectURL(archivo);
+    setFotoUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [archivo]);
+
+  const aplicarRecorteYGuardar = () => {
+    if (!fotoUrl) return;
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.src = fotoUrl;
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = 400;
+      canvas.height = 400;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+
+      ctx.fillStyle = "#FFFFFF";
+      ctx.fillRect(0, 0, 400, 400);
+
+      ctx.save();
+      ctx.translate(200 + offsetX, 200 + offsetY);
+      ctx.scale(zoom, zoom);
+
+      const aspect = img.width / img.height;
+      let drawW = 320;
+      let drawH = 320;
+      if (aspect > 1) {
+        drawH = 320 / aspect;
+      } else {
+        drawW = 320 * aspect;
+      }
+
+      ctx.drawImage(img, -drawW / 2, -drawH / 2, drawW, drawH);
+      ctx.restore();
+
+      canvas.toBlob((blob) => {
+        if (blob) {
+          const recortado = new File([blob], `perfil_${archivo.name.replace(/\.[^/.]+$/, "")}.png`, { type: "image/png" });
+          onGuardarFoto(recortado);
+        }
+      }, "image/png");
+    };
+  };
+
+  const resetear = () => {
+    setZoom(1.0);
+    setOffsetX(0);
+    setOffsetY(0);
+  };
+
+  return (
+    <div style={{ marginTop: "12px", padding: "16px", background: "#F7F6FA", borderRadius: "12px", border: "1px solid #5000BA" }}>
+      <strong style={{ fontSize: "0.88rem", color: "#5000BA", display: "flex", alignItems: "center", gap: "6px", marginBottom: "4px" }}>
+        <Sliders size={16} /> Ajuste y Recorte de Foto de Perfil Profesional
+      </strong>
+      <p style={{ fontSize: "0.76rem", color: "#737373", marginBottom: "14px" }}>
+        Ajusta el zoom, movimiento horizontal/vertical y centrado de tu rostro en la silueta oficial de tu perfil.
+      </p>
+
+      <div style={{ display: "flex", flexWrap: "wrap", gap: "20px", alignItems: "center", justifyContent: "center" }}>
+        {/* Tarjeta de Perfil Profesional Verde (Estilo de la red) */}
+        <div
+          style={{
+            width: "210px",
+            background: "linear-gradient(145deg, #063B2E 0%, #03231B 100%)",
+            borderRadius: "16px",
+            padding: "16px 14px",
+            color: "#ffffff",
+            boxShadow: "0 10px 25px rgba(3, 35, 27, 0.4)",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            position: "relative",
+          }}
+        >
+          <div style={{ alignSelf: "flex-start", background: "#C7F9CC", color: "#063B2E", padding: "3px 8px", borderRadius: "12px", fontSize: "0.68rem", fontWeight: 800 }}>
+            Perfil Verificado
+          </div>
+
+          {/* Contenedor Avatar Circular */}
+          <div style={{ position: "relative", marginTop: "14px", marginBottom: "14px" }}>
+            <div
+              style={{
+                width: "120px",
+                height: "120px",
+                borderRadius: "50%",
+                border: "3px solid #00D09C",
+                overflow: "hidden",
+                position: "relative",
+                background: "#03231B",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              {fotoUrl ? (
+                <img
+                  src={fotoUrl}
+                  alt="Ajuste de foto"
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                    transform: `translate(${offsetX}px, ${offsetY}px) scale(${zoom})`,
+                    transition: "transform 0.05s ease-out",
+                  }}
+                />
+              ) : (
+                <div style={{ color: "#00D09C" }}>Silueta</div>
+              )}
+            </div>
+            <div
+              style={{
+                position: "absolute",
+                bottom: "2px",
+                right: "2px",
+                background: "#00D09C",
+                color: "#03231B",
+                borderRadius: "50%",
+                width: "24px",
+                height: "24px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                border: "2px solid #063B2E",
+              }}
+            >
+              <CheckCircle2 size={15} />
+            </div>
+          </div>
+
+          <strong style={{ fontSize: "0.92rem", fontWeight: 800, textAlign: "center", color: "#ffffff" }}>
+            Foto de Perfil
+          </strong>
+          <span style={{ fontSize: "0.74rem", color: "#80EED3", marginTop: "2px" }}>Abogado(a) Verificado(a)</span>
+        </div>
+
+        {/* Panel de Controles Interactivos */}
+        <div style={{ flex: 1, minWidth: "240px", display: "flex", flexDirection: "column", gap: "10px" }}>
+          <div>
+            <label style={{ fontSize: "0.78rem", fontWeight: 700, display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
+              <span>🔍 Zoom ({zoom.toFixed(2)}x)</span>
+            </label>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <button type="button" onClick={() => setZoom((z) => Math.max(0.5, z - 0.1))} style={btnPillStyle}>
+                <ZoomOut size={13} />
+              </button>
+              <input
+                type="range"
+                min="0.5"
+                max="3.0"
+                step="0.05"
+                value={zoom}
+                onChange={(e) => setZoom(Number(e.target.value))}
+                style={{ flex: 1, accentColor: "#5000BA" }}
+              />
+              <button type="button" onClick={() => setZoom((z) => Math.min(3.0, z + 0.1))} style={btnPillStyle}>
+                <ZoomIn size={13} />
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <label style={{ fontSize: "0.78rem", fontWeight: 700, display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
+              <span>↔️ Mover Horizontal (X: {offsetX}px)</span>
+            </label>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <button type="button" onClick={() => setOffsetX((x) => x - 5)} style={btnPillStyle}>
+                ◄
+              </button>
+              <input
+                type="range"
+                min="-120"
+                max="120"
+                step="1"
+                value={offsetX}
+                onChange={(e) => setOffsetX(Number(e.target.value))}
+                style={{ flex: 1, accentColor: "#5000BA" }}
+              />
+              <button type="button" onClick={() => setOffsetX((x) => x + 5)} style={btnPillStyle}>
+                ►
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <label style={{ fontSize: "0.78rem", fontWeight: 700, display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
+              <span>↕️ Mover Vertical (Y: {offsetY}px)</span>
+            </label>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <button type="button" onClick={() => setOffsetY((y) => y - 5)} style={btnPillStyle}>
+                ▲
+              </button>
+              <input
+                type="range"
+                min="-120"
+                max="120"
+                step="1"
+                value={offsetY}
+                onChange={(e) => setOffsetY(Number(e.target.value))}
+                style={{ flex: 1, accentColor: "#5000BA" }}
+              />
+              <button type="button" onClick={() => setOffsetY((y) => y + 5)} style={btnPillStyle}>
+                ▼
+              </button>
+            </div>
+          </div>
+
+          <div style={{ display: "flex", gap: "8px", marginTop: "4px" }}>
+            <button
+              type="button"
+              onClick={resetear}
+              style={{
+                flex: 1,
+                padding: "8px 10px",
+                background: "#ffffff",
+                border: "1px solid #E4E4E4",
+                borderRadius: "8px",
+                fontSize: "0.78rem",
+                fontWeight: 700,
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "6px",
+              }}
+            >
+              <RotateCcw size={13} /> Resetear
+            </button>
+            <button
+              type="button"
+              onClick={aplicarRecorteYGuardar}
+              style={{
+                flex: 1,
+                padding: "8px 10px",
+                background: "#5000BA",
+                color: "#ffffff",
+                border: "none",
+                borderRadius: "8px",
+                fontSize: "0.78rem",
+                fontWeight: 700,
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "6px",
+                boxShadow: "0 4px 10px rgba(80,0,186,0.3)",
+              }}
+            >
+              <Crop size={13} /> Aplicar Recorte
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // Componente Custom de Carga de Archivos con Botón y Dropzone Estilizados
 function CampoSubidaArchivo({
   etiqueta,
@@ -77,6 +361,15 @@ function CampoSubidaArchivo({
     const lista = Array.from(e.target.files ?? []);
     if (lista.length === 0) return;
 
+    // Validación estricta para Foto de Perfil: Solo formatos de imagen
+    if (esFotoPerfil) {
+      const noImagen = lista.find((f) => !f.type.startsWith("image/"));
+      if (noImagen) {
+        setErrorLocal(`El archivo "${noImagen.name}" no es una imagen válida. Selecciona únicamente imágenes (JPG, PNG o WEBP).`);
+        return;
+      }
+    }
+
     // Validar tamaño máximo
     const excede = lista.find((f) => f.size > TAMANO_MAXIMO_MB * 1024 * 1024);
     if (excede) {
@@ -94,6 +387,10 @@ function CampoSubidaArchivo({
   const eliminarArchivo = (index: number) => {
     onCambiar(archivos.filter((_, i) => i !== index));
   };
+
+  const formateadorAceptar = esFotoPerfil
+    ? "image/jpeg,image/png,image/webp"
+    : aceptar;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "8px", width: "100%", marginTop: "12px" }}>
@@ -124,7 +421,7 @@ function CampoSubidaArchivo({
         <input
           ref={inputRef}
           type="file"
-          accept={aceptar}
+          accept={formateadorAceptar}
           multiple={multiple}
           onChange={manejarSeleccion}
           style={{ display: "none" }}
@@ -135,10 +432,12 @@ function CampoSubidaArchivo({
         </div>
         <div>
           <span style={{ fontSize: "0.84rem", fontWeight: 800, color: "var(--violeta, #5000BA)" }}>
-            {archivos.length > 0 ? "Añadir / Cambiar archivos" : "Seleccionar o arrastrar archivos"}
+            {archivos.length > 0 ? "Añadir / Cambiar imagen" : "Seleccionar o arrastrar fotografía de perfil"}
           </span>
           <span style={{ display: "block", fontSize: "0.72rem", color: "var(--panel-gris, #737373)", marginTop: "2px" }}>
-            Formatos admitidos: PDF, Word, JPG, PNG • Máx {TAMANO_MAXIMO_MB} MB c/u
+            {esFotoPerfil
+              ? `Formatos admitidos: JPG, PNG, WEBP • Solo imágenes • Máx ${TAMANO_MAXIMO_MB} MB`
+              : `Formatos admitidos: PDF, Word, JPG, PNG • Máx ${TAMANO_MAXIMO_MB} MB c/u`}
           </span>
         </div>
       </div>
@@ -208,6 +507,14 @@ function CampoSubidaArchivo({
             );
           })}
         </div>
+      )}
+
+      {/* Herramienta Interactiva de Recorte y Ajuste de Foto de Perfil */}
+      {esFotoPerfil && archivos.length > 0 && archivos[0] && (
+        <RecortadorFotoPerfil
+          archivo={archivos[0]}
+          onGuardarFoto={(fotoRecortada) => onCambiar([fotoRecortada])}
+        />
       )}
     </div>
   );
@@ -746,7 +1053,10 @@ export function FormularioSolicitudSocio({ usuarioId, materias, provincias, soli
   const [enviando, setEnviando] = useState(false);
 
   const opcionesMaterias: OpcionItem[] = materias.map((m) => ({ id: m.mat_id, nombre: m.mat_nombre }));
-  const opcionesProvincias: OpcionItem[] = provincias.map((p) => ({ id: p.cat_id, nombre: p.cat_nombre }));
+  const opcionesProvincias: OpcionItem[] = [
+    { id: "todo_ecuador", nombre: "🇪🇨 Todo el Ecuador (Cobertura Nacional)" },
+    ...provincias.map((p) => ({ id: p.cat_id, nombre: p.cat_nombre })),
+  ];
 
   const actualizarExperiencia = (i: number, campo: keyof DatosExperienciaLaboral, valor: string) =>
     setExperiencia((prev) => prev.map((e, idx) => (idx === i ? { ...e, [campo]: valor } : e)));
@@ -879,11 +1189,24 @@ export function FormularioSolicitudSocio({ usuarioId, materias, provincias, soli
       />
 
       <h2 style={{ marginTop: "24px" }}>Cobertura geográfica</h2>
+      <p style={{ fontSize: "0.82rem", color: "var(--panel-gris, #737373)", marginTop: "-6px", marginBottom: "12px" }}>
+        ¿En qué ubicaciones puedes prestar tus servicios profesionales? Selecciona las provincias donde tienes presencia o litigas, o marca &quot;Todo el Ecuador&quot;.
+      </p>
       <SelectorMultiSeleccion
         opciones={opcionesProvincias}
         seleccionados={provinciaIds}
-        onCambiar={setProvinciaIds}
-        placeholderBusqueda="🔍 Buscar provincias..."
+        onCambiar={(nuevasProvincias) => {
+          const teniaTodo = provinciaIds.includes("todo_ecuador");
+          const tieneTodo = nuevasProvincias.includes("todo_ecuador");
+
+          if (!teniaTodo && tieneTodo) {
+            const todas = opcionesProvincias.map((p) => p.id);
+            setProvinciaIds(todas);
+          } else {
+            setProvinciaIds(nuevasProvincias);
+          }
+        }}
+        placeholderBusqueda="🔍 Buscar provincias o cobertura..."
         labelOtros="✨ Añadir otra provincia o ubicación..."
       />
 
