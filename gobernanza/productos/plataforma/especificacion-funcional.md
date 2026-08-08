@@ -493,6 +493,13 @@ Pantalla de configuración del negocio (identidad legal + datos de `PLT-008`) y 
       - *Panel Destino:* Selector desplegable de paneles receptores autorizados.
     - **Reordenamiento Posicional Interno (`Posición #1, #2...`):** Cada tarjeta dispone de controles direccionales rápidos (`[←]` / `[→]`) para desplazar la posición ordinal del widget dentro del mismo panel.
     - **Bloque Destacado "📦 Widgets Disponibles Sin Asignar":** Sección dinámica situada al final de la matriz que agrupa todos los widgets del inventario maestro que **no están asignados a ningún panel** para el perfil activo, incluyendo un selector rápido `[+ Asignar a Panel...]` para su vinculación directa con un solo clic.
+15. **Persistencia Dinámica en `localStorage` & Supabase por Negocio (`tranqi_paneles_sidebar_${negocio}`):**
+    - **Guardado Inmediato de Estado:** Toda creación de nuevos paneles (ej. *"Herramientas"*), reordenamiento o transferencia de widgets se guarda de forma persistente en `localStorage` y en la base de datos Supabase por negocio.
+    - **Restauración al Refrescar (F5):** Garantiza que al recargar la ventana del navegador (`F5`), los paneles personalizados creados por administradores y la distribución de widgets permanezcan intactos.
+16. **Arrastre Gráfico HTML5 Drag & Drop (Web Desktop) y Configuración de Íconos de Sidebar:**
+    - **Arrastre Gráfico HTML5:** Permite arrastrar libremente tarjetas de widgets (`draggable={true}`) entre paneles o desde la sección *"Widgets Disponibles"* hacia cualquier panel objetivo, destacando visualmente la zona contenedora (`Drop Zone`) con indicador violeta y etiqueta flotante `[📥 Soltar aquí para transferir a {Panel}]`.
+    - **Selector de Ícono para el Sidebar:** El modal de creación y edición de paneles incluye un catálogo gráfico de íconos de la librería `lucide-react` (`Home`, `User`, `Settings`, `Shield`, `Sliders`, `Wrench`, `Folder`, `Building`, `Briefcase`, `Bell`, `Database`, `Activity`, `Globe`, `Sparkles`, `Lock`, `KeyRound`, `CheckSquare`, `Terminal`, `Zap`, `Eye`, `Search`, `Pencil`, `LogOut`, `LogIn`, `Forward`, `Inbox`, `Layers`, `LayoutGrid`, `PanelLeft`).
+    - **Edición Rápida en Encabezado de Panel (`[⚙️ Configurar Ícono]`):** Cada panel en la matriz de administración expone un botón dedicado para actualizar su nombre, ruta, descripción, requerimiento de MFA TOTP e ícono representativo de la barra de navegación lateral.
 
 ### Criterios de Aceptación (Gherkin)
 * **Escenario:** Gestión de usuarios por Administrador de Negocio
