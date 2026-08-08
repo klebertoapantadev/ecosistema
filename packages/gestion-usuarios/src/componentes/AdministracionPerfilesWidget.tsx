@@ -136,6 +136,7 @@ export interface PanelSidebarDef {
   descripcion: string;
   icono?: string;
   requiereMfa?: boolean;
+  mostrarSinWidgets?: boolean;
   esPersonalizado?: boolean;
 }
 
@@ -157,7 +158,8 @@ const PANELES_SIDEBAR_INICIALES: PanelSidebarDef[] = [
     ruta: "/panel",
     descripcion: "Pantalla principal que agrupa accesos rápidos y módulos según el rol del usuario.",
     icono: "Home",
-    requiereMfa: false
+    requiereMfa: false,
+    mostrarSinWidgets: true
   },
   {
     id: "panel_cuenta",
@@ -165,7 +167,8 @@ const PANELES_SIDEBAR_INICIALES: PanelSidebarDef[] = [
     ruta: "/panel/cuenta",
     descripcion: "Perfil de usuario, conmutador de rol ('Ver como') e historial de accesos.",
     icono: "User",
-    requiereMfa: false
+    requiereMfa: false,
+    mostrarSinWidgets: true
   },
   {
     id: "panel_configuracion",
@@ -173,7 +176,8 @@ const PANELES_SIDEBAR_INICIALES: PanelSidebarDef[] = [
     ruta: "/panel/configuracion",
     descripcion: "Parámetros del negocio, servidor SMTP, perfiles y alertas de notificaciones.",
     icono: "Settings",
-    requiereMfa: false
+    requiereMfa: false,
+    mostrarSinWidgets: true
   },
   {
     id: "panel_administrar",
@@ -181,7 +185,8 @@ const PANELES_SIDEBAR_INICIALES: PanelSidebarDef[] = [
     ruta: "/panel/administrar",
     descripcion: "Consola de administración protegida para usuarios, socios, solicitudes, notificaciones y auditoría.",
     icono: "Shield",
-    requiereMfa: true
+    requiereMfa: true,
+    mostrarSinWidgets: true
   }
 ];
 
@@ -632,7 +637,8 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
     ruta: "/panel/",
     descripcion: "",
     icono: "Wrench",
-    requiereMfa: false
+    requiereMfa: false,
+    mostrarSinWidgets: true
   });
 
   const toggleMfaPanel = (panelId: string) => {
@@ -680,7 +686,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
     }));
 
     setMostrarModalPanel(false);
-    setNuevoPanel({ nombre: "", ruta: "/panel/", descripcion: "", icono: "Wrench", requiereMfa: false });
+    setNuevoPanel({ nombre: "", ruta: "/panel/", descripcion: "", icono: "Wrench", requiereMfa: false, mostrarSinWidgets: true });
     setMensajeExito(`Panel '${nuevoPanel.nombre}' creado exitosamente.`);
     setTimeout(() => setMensajeExito(null), 3000);
   };
@@ -2435,6 +2441,19 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                 onChange={e => setPanelEditarModal({ ...panelEditarModal, descripcion: e.target.value })}
                 style={{ width: "100%", padding: "8px 12px", borderRadius: "6px", border: "1px solid #E4E4E4", minHeight: "50px", fontSize: "0.82rem" }}
               />
+            </div>
+
+            {/* Mostrar u Ocultar si no tiene widgets */}
+            <div style={{ marginBottom: "12px", background: "#F7F6FA", padding: "10px 12px", borderRadius: "8px", border: "1px solid #E4E4E4" }}>
+              <label style={{ fontSize: "0.82rem", fontWeight: 700, display: "flex", alignItems: "center", gap: "8px", cursor: "pointer", color: "#111111" }}>
+                <input
+                  type="checkbox"
+                  checked={panelEditarModal.mostrarSinWidgets !== false}
+                  onChange={e => setPanelEditarModal({ ...panelEditarModal, mostrarSinWidgets: e.target.checked })}
+                  style={{ width: "16px", height: "16px", accentColor: "#5000BA" }}
+                />
+                👁️ Mostrar este panel en el sidebar aunque no tenga widgets asignados (como 'Próximamente')
+              </label>
             </div>
 
             {/* Requerir MFA */}

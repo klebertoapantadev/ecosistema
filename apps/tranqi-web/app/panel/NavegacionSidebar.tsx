@@ -17,6 +17,7 @@ interface PanelDefNav {
   ruta: string;
   icono?: string;
   requiereMfa?: boolean;
+  mostrarSinWidgets?: boolean;
 }
 
 interface PerfilEstadoSave {
@@ -57,13 +58,13 @@ const MAPA_ICONOS_NAV: Record<string, LucideIcon> = {
 
 // Configuración inicial por defecto de paneles
 const PANELES_BASE_DEFAULT: PanelDefNav[] = [
-  { id: "panel_inicio", nombre: "Inicio", ruta: "/panel", icono: "Home" },
-  { id: "panel_administrar", nombre: "Administrar", ruta: "/panel/administrar", icono: "ShieldCheck" },
-  { id: "panel_configuracion", nombre: "Configurar", ruta: "/panel/configuracion", icono: "Settings" },
-  { id: "panel_cuenta", nombre: "Mi cuenta", ruta: "/panel/cuenta", icono: "CircleUser" },
-  { id: "panel_tramites", nombre: "Mis trámites", ruta: "/panel/tramites", icono: "ClipboardList" },
-  { id: "panel_herramientas", nombre: "Herramientas", ruta: "/panel/herramientas", icono: "Wrench" },
-  { id: "panel_pagos", nombre: "Pagos y plan", ruta: "/panel/pagos", icono: "CreditCard" },
+  { id: "panel_inicio", nombre: "Inicio", ruta: "/panel", icono: "Home", mostrarSinWidgets: true },
+  { id: "panel_administrar", nombre: "Administrar", ruta: "/panel/administrar", icono: "ShieldCheck", mostrarSinWidgets: true },
+  { id: "panel_configuracion", nombre: "Configurar", ruta: "/panel/configuracion", icono: "Settings", mostrarSinWidgets: true },
+  { id: "panel_cuenta", nombre: "Mi cuenta", ruta: "/panel/cuenta", icono: "CircleUser", mostrarSinWidgets: true },
+  { id: "panel_tramites", nombre: "Mis trámites", ruta: "/panel/tramites", icono: "ClipboardList", mostrarSinWidgets: true },
+  { id: "panel_herramientas", nombre: "Herramientas", ruta: "/panel/herramientas", icono: "Wrench", mostrarSinWidgets: true },
+  { id: "panel_pagos", nombre: "Pagos y plan", ruta: "/panel/pagos", icono: "CreditCard", mostrarSinWidgets: true },
 ];
 
 // Asignaciones por defecto de widgets por perfil
@@ -71,11 +72,11 @@ const PERFILES_PANEL_WIDGETS_DEFAULT: Record<string, Record<string, string[]>> =
   CLIENTE: {
     panel_inicio: ["favoritos", "ultimos_accesos"],
     panel_cuenta: ["mi_cuenta", "ver_como", "datos_facturacion", "baja_cuenta"],
-    panel_administrar: [], // Sin widgets -> [pronto]
-    panel_configuracion: [], // Sin widgets -> [pronto]
-    panel_tramites: [], // [pronto]
-    panel_herramientas: [], // [pronto]
-    panel_pagos: [], // [pronto]
+    panel_administrar: [],
+    panel_configuracion: [],
+    panel_tramites: [],
+    panel_herramientas: [],
+    panel_pagos: [],
   },
   ABOGADO: {
     panel_inicio: ["favoritos", "ultimos_accesos"],
@@ -129,7 +130,6 @@ export function NavegacionSidebar({
 
   useEffect(() => {
     try {
-      // Cargar paneles desde localStorage si se han personalizado en AdministracionPerfilesWidget
       const savedPaneles = localStorage.getItem(`tranqi_paneles_sidebar_${negocio}`);
       if (savedPaneles) {
         const parsed = JSON.parse(savedPaneles);
@@ -138,7 +138,6 @@ export function NavegacionSidebar({
         }
       }
 
-      // Cargar asignación de widgets por perfil desde localStorage
       const savedPerfiles = localStorage.getItem(`tranqi_perfiles_${negocio}`);
       if (savedPerfiles) {
         const parsed = JSON.parse(savedPerfiles);
@@ -154,44 +153,57 @@ export function NavegacionSidebar({
     }
   }, [modoActivo, negocio]);
 
+  // Clasificar los paneles en activos vs. prontos (visibles sin widgets)
+  const panelesActivos: PanelDefNav[] = [];
+  const panelesPronto: PanelDefNav[] = [];
+
+  paneles.forEach((p) => {
+    const asignadosLocales = perfilMapaWidgets[p.id] || [];
+    const tieneWidgetsLocales = asignadosLocales.length > 0;
+    const esPanelNucleo = p.id === "panel_inicio" || p.id === "panel_cuenta";
+    const esActivo = esPanelNucleo || tieneWidgetsLocales || modoActivo === "superadmin" || (modoActivo === "admin" && (p.id === "panel_administrar" || p.id === "panel_configuracion"));
+
+    if (esActivo) {
+      panelesActivos.push(p);
+    } else if (p.mostrarSinWidgets !== false) {
+      panelesPronto.push(p);
+    }
+  });
+
   return (
     <div className="panel-nav-links">
-      {paneles.map((p) => {
+      {/* 1. PANELES ACTIVOS CON MÓDULOS DISPONIBLES */}
+      {panelesActivos.map((p) => {
         const IconoComp = MAPA_ICONOS_NAV[p.icono || ""] || MAPA_ICONOS_NAV[p.id] || PanelLeft;
-        
-        // Determinar si el panel tiene widgets asignados para el perfil activo
-        const asignadosLocales = perfilMapaWidgets[p.id] || [];
-        const tieneWidgetsLocales = asignadosLocales.length > 0;
-        
-        // Caso especial para paneles núcleo obligatorios
-        const esPanelNucleo = p.id === "panel_inicio" || p.id === "panel_cuenta";
-        
-        // Panel activo si tiene widgets asignados o es núcleo (o modo administrador/superadmin)
-        const esPanelActivo = esPanelNucleo || tieneWidgetsLocales || modoActivo === "superadmin" || (modoActivo === "admin" && (p.id === "panel_administrar" || p.id === "panel_configuracion"));
-
-        if (esPanelActivo) {
-          return (
-            <EnlacePanel
-              key={p.id}
-              href={p.ruta}
-              icono={<IconoComp className="icono-nav" aria-hidden="true" strokeWidth={1.8} />}
-            >
-              {p.nombre}
-            </EnlacePanel>
-          );
-        }
-
-        // Si NO tiene widgets asignados para este perfil -> Se muestra como "Próximamente" (pronto)
         return (
-          <span className="enlace-inerte" key={p.id} title={`${p.nombre} - Próximamente (Sin módulos asignados)`}>
-            <IconoComp className="icono-nav" aria-hidden="true" strokeWidth={1.8} />
-            <span className="etiqueta-nav">{p.nombre}</span>
-            <span className="chip-pronto-nav">pronto</span>
-          </span>
+          <EnlacePanel
+            key={p.id}
+            href={p.ruta}
+            icono={<IconoComp className="icono-nav" aria-hidden="true" strokeWidth={1.8} />}
+          >
+            {p.nombre}
+          </EnlacePanel>
         );
       })}
 
-      {/* Botón único de Cerrar Sesión en el menú de navegación */}
+      {/* 2. PANELES INERTES / PRÓXIMAMENTE (SI ESTÁN CONFIGURADOS PARA MOSTRARSE SIN WIDGETS) */}
+      {panelesPronto.length > 0 && (
+        <>
+          <div className="separador-nav">Próximamente</div>
+          {panelesPronto.map((p) => {
+            const IconoComp = MAPA_ICONOS_NAV[p.icono || ""] || MAPA_ICONOS_NAV[p.id] || PanelLeft;
+            return (
+              <span className="enlace-inerte" key={p.id} title={`${p.nombre} - Próximamente (Sin módulos asignados)`}>
+                <IconoComp className="icono-nav" aria-hidden="true" strokeWidth={1.8} />
+                <span className="etiqueta-nav">{p.nombre}</span>
+                <span className="chip-pronto-nav">pronto</span>
+              </span>
+            );
+          })}
+        </>
+      )}
+
+      {/* 3. BOTÓN ÚNICO DE CERRAR SESIÓN (SIEMPRE EN EL FINAL ABSOLUTO DE LA BARRA LATERAL) */}
       <BotonCerrarSesion variante="nav" />
     </div>
   );
