@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { X, Save, Pencil, Shield, Clock, Sparkles } from "lucide-react";
+import { X, Save, Pencil, Shield, Clock, Sparkles, FolderCode } from "lucide-react";
 import { DICCIONARIO_ICONOS_WIDGET } from "./gestorTitulosWidgets";
 
 interface Props {
@@ -13,6 +13,7 @@ interface Props {
   iconoActualKey?: string;
   requiereMfaActual?: boolean;
   tiempoMfaActualMinutos?: number;
+  rutaFisicaActual?: string;
   onGuardar: (
     id: string,
     nuevoTitulo: string,
@@ -32,6 +33,44 @@ const OPCIONES_TIEMPO_MFA = [
   { minutos: 0, etiqueta: "Solicitar siempre (Sin persistencia)" },
 ];
 
+const MAPA_RUTAS_FISICAS_WIDGETS: Record<string, string> = {
+  auditoria: "packages/auditoria/src/componentes/TablaAuditoria.tsx",
+  "tabla-auditoria": "packages/auditoria/src/componentes/TablaAuditoria.tsx",
+  "auditoria-tabla": "packages/auditoria/src/componentes/TablaAuditoria.tsx",
+  auditoria_tabla: "packages/auditoria/src/componentes/TablaAuditoria.tsx",
+  gestion_usuarios: "packages/gestion-usuarios/src/componentes/AdministracionPerfilesWidget.tsx",
+  perfiles: "packages/gestion-usuarios/src/componentes/AdministracionPerfilesWidget.tsx",
+  "admin-perfiles": "packages/gestion-usuarios/src/componentes/AdministracionPerfilesWidget.tsx",
+  admin_perfiles: "packages/gestion-usuarios/src/componentes/AdministracionPerfilesWidget.tsx",
+  perfil: "packages/identidad/src/componentes/FormularioPerfil.tsx",
+  "perfil-usuario": "packages/identidad/src/componentes/FormularioPerfil.tsx",
+  perfil_usuario: "packages/identidad/src/componentes/FormularioPerfil.tsx",
+  "historial-accesos": "packages/identidad/src/componentes/HistorialAccesos.tsx",
+  historial_accesos: "packages/identidad/src/componentes/HistorialAccesos.tsx",
+  "configuracion-mfa": "packages/identidad/src/componentes/WidgetConfiguracionMfa.tsx",
+  configuracion_mfa: "packages/identidad/src/componentes/WidgetConfiguracionMfa.tsx",
+  "datos-facturacion": "packages/identidad/src/componentes/FormularioDatosFacturacion.tsx",
+  datos_facturacion: "packages/identidad/src/componentes/FormularioDatosFacturacion.tsx",
+  "configuracion-negocio": "packages/identidad/src/componentes/ConfiguracionNegocioWidget.tsx",
+  configuracion_negocio: "packages/identidad/src/componentes/ConfiguracionNegocioWidget.tsx",
+  "gestion_terminos_consentimientos": "packages/identidad/src/componentes/GestionTerminosConsentimientosWidget.tsx",
+  "gestion-terminos-consentimientos": "packages/identidad/src/componentes/GestionTerminosConsentimientosWidget.tsx",
+  "modal-terminos-notificaciones": "packages/identidad/src/componentes/ModalTerminosNotificaciones.tsx",
+  "emision_notificaciones": "packages/notificaciones/src/componentes/EmisionNotificacionesWidget.tsx",
+  "emision-notificaciones": "packages/notificaciones/src/componentes/EmisionNotificacionesWidget.tsx",
+  "configuracion-smtp": "packages/notificaciones/src/componentes/ConfiguracionSmtpWidget.tsx",
+  configuracion_smtp: "packages/notificaciones/src/componentes/ConfiguracionSmtpWidget.tsx",
+  socios: "apps/tranqi-web/modulos/socios/componentes/AprobacionSociosWidget.tsx",
+  "aprobacion-socios": "apps/tranqi-web/modulos/socios/componentes/AprobacionSociosWidget.tsx",
+  aprobacion_socios: "apps/tranqi-web/modulos/socios/componentes/AprobacionSociosWidget.tsx",
+  solicitud_socio: "apps/tranqi-web/modulos/socios/componentes/FormularioSolicitudSocio.tsx",
+  "solicitud-socio": "apps/tranqi-web/modulos/socios/componentes/FormularioSolicitudSocio.tsx",
+  favoritos: "apps/tranqi-web/app/panel/SeccionFavoritosInicio.tsx",
+  "seccion-favoritos": "apps/tranqi-web/app/panel/SeccionFavoritosInicio.tsx",
+  "selector-rol": "apps/tranqi-web/app/panel/SelectorRolActivo.tsx",
+  "selector-rol-activo": "apps/tranqi-web/app/panel/SelectorRolActivo.tsx",
+};
+
 export function ModalEditarWidget({
   abierto,
   onCerrar,
@@ -41,6 +80,7 @@ export function ModalEditarWidget({
   iconoActualKey,
   requiereMfaActual = false,
   tiempoMfaActualMinutos = 15,
+  rutaFisicaActual,
   onGuardar,
 }: Props) {
   const [titulo, setTitulo] = useState(tituloActual);
@@ -58,6 +98,12 @@ export function ModalEditarWidget({
   }, [tituloActual, subtituloActual, iconoActualKey, requiereMfaActual, tiempoMfaActualMinutos, abierto]);
 
   if (!abierto) return null;
+
+  const rutaFisicaResuelta =
+    rutaFisicaActual ||
+    MAPA_RUTAS_FISICAS_WIDGETS[widgetId] ||
+    MAPA_RUTAS_FISICAS_WIDGETS[widgetId.toLowerCase()] ||
+    `/packages/${widgetId}.tsx`;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -148,6 +194,51 @@ export function ModalEditarWidget({
 
         {/* Formulario con Scroll */}
         <form onSubmit={handleSubmit} style={{ padding: "20px", overflowY: "auto", display: "flex", flexDirection: "column", gap: "16px" }}>
+          {/* Ruta Física del Componente Fuente (.tsx) */}
+          <div
+            style={{
+              padding: "10px 14px",
+              background: "var(--panel-papel, #F7F6FA)",
+              borderRadius: "10px",
+              border: "1px solid var(--panel-linea, #E4E4E4)",
+              display: "flex",
+              flexDirection: "column",
+              gap: "4px",
+            }}
+          >
+            <label
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+                fontSize: "0.76rem",
+                fontWeight: 800,
+                color: "var(--panel-gris, #737373)",
+                textTransform: "uppercase",
+                letterSpacing: "0.04em",
+              }}
+            >
+              <FolderCode size={14} color="var(--violeta, #5000BA)" />
+              📁 Ruta Física del Componente Fuente (.tsx)
+            </label>
+            <code
+              style={{
+                fontSize: "0.82rem",
+                fontWeight: 700,
+                color: "var(--violeta, #5000BA)",
+                background: "#ffffff",
+                padding: "6px 10px",
+                borderRadius: "6px",
+                border: "1px solid rgba(80, 0, 186, 0.25)",
+                wordBreak: "break-all",
+                fontFamily: "monospace",
+                display: "block",
+              }}
+            >
+              {rutaFisicaResuelta}
+            </code>
+          </div>
+
           {/* Título */}
           <div>
             <label
@@ -379,4 +470,3 @@ export function ModalEditarWidget({
     </div>
   );
 }
-
