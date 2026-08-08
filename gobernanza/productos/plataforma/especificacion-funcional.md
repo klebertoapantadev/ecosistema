@@ -523,6 +523,10 @@ Pantalla de configuración del negocio (identidad legal + datos de `PLT-008`) y 
     - **Ocultamiento Automático tras Aprobación:** Cuando la solicitud es APROBADA (`aceptada`), la plataforma desactiva/oculta automáticamente el widget de postulación del panel y sidebar, y despliega una tarjeta de confirmación de acreditación exitosa como Socio Abogado.
 21. **Diseño Visual Premium del Botón de Registro de Abogados (`FormularioRegistro.tsx`):**
     - **Estilo de Botón Primario Unificado:** Se actualizó el botón de envío del formulario de registro reemplazando el estilo gris básico del navegador por un botón primario con degradado morado de marca (`linear-gradient(135deg, #5000BA 0%, #3B0088 100%)`), esquinas redondeadas (`10px`), elevación con sombra difusa (`box-shadow`), tipografía en negrita (`700`), respuesta táctil y texto destacado con ícono legal (`⚖️ Registrarme como Abogado`).
+22. **Ajuste Interactivo de Foto de Perfil & Cobertura Geográfica Nacional (`FormularioSolicitudSocio.tsx`):**
+    - **Restricción Estricta de Formatos de Imagen:** El campo de foto de perfil valida y admite exclusivamente formatos de imagen (`JPG`, `PNG`, `WEBP`) rechazando PDFs u otros documentos.
+    - **Recortador & Posicionador de Foto en Tiempo Real:** Se incorporó un widget interactivo de recorte que despliega una tarjeta de perfil profesional en verde esmeralda idéntica a la vista pública de la red. Incluye controles deslizantes de Zoom (`0.5x` a `3.0x`), movimiento horizontal X, movimiento vertical Y, botón de centrado/reset y procesador canvas `[✂️ Aplicar Recorte]`.
+    - **Explicación & Opción 'Todo el Ecuador' en Cobertura Geográfica:** La sección incluye una aclaración guiada sobre la selección de ubicaciones y la opción destacada `🇪🇨 Todo el Ecuador (Cobertura Nacional)` que activa automáticamente la representación territorial nacional.
 
 ### Criterios de Aceptación (Gherkin)
 * **Escenario:** Gestión de usuarios por Administrador de Negocio
