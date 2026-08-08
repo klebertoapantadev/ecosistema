@@ -158,7 +158,7 @@ export default function PaginaBolsaEmpleo() {
           tranqi <span style={{ fontSize: "0.75rem", color: "#58a6ff", fontWeight: 600, border: "1px solid #1f6feb", padding: "2px 8px", borderRadius: "12px", marginLeft: "6px" }}>Bolsa de Empleo</span>
         </Link>
         <div style={{ display: "flex", gap: "16px", alignItems: "center" }}>
-          <Link href="/panel/solicitud-socio" style={{ color: "#D8FFB3", textDecoration: "none", fontSize: "0.88rem", fontWeight: 700 }}>
+          <Link href="/registro?intencion=abogado&destino=/panel/solicitud-socio" style={{ color: "#D8FFB3", textDecoration: "none", fontSize: "0.88rem", fontWeight: 700 }}>
             ¿Eres Abogado? Únete a la Red
           </Link>
           <Link href="/ingresar" style={{ color: "#8b949e", textDecoration: "none", fontSize: "0.88rem" }}>
