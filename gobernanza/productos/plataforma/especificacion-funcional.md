@@ -20,11 +20,11 @@ Este documento describe el **comportamiento compartido por los 4 productos** (Tr
 | Código | Funcionalidad / Requerimiento | Estado | Avance (%) | Responsable Asignado |
 | :--- | :--- | :---: | :---: | :--- |
 | **`PLT-001`** | Identidad Única, Registro Cero Fricción y Auth | ✅ Implementado | **85%** | Kleber Toapanta |
-| **`PLT-002`** | Autenticación Multifactor (MFA TOTP) | 🟡 Parcial | **75%** | Kleber Toapanta |
+| **`PLT-002`** | Autenticación Multifactor (MFA TOTP) & Expiración por Inactividad | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`PLT-003`** | Membresías, Jerarquía & Active Role Switcher | ✅ Implementado | **100%** | Kleber Toapanta / Jesus Navarrete |
 | **`PLT-004`** | **Buddie Conversacional (Chat IA ARIA)** | 🟡 En Desarrollo | **40%** | **Jesus Navarrete** |
 | **`PLT-005`** | Auditoría por Triggers y Widget Común | ✅ Implementado | **100%** | Kleber Toapanta |
-| **`PLT-006`** | Datos de Facturación SRI y Comprobantes | 🟡 Parcial | **60%** | Kleber Toapanta |
+| **`PLT-006`** | Datos de Facturación SRI y Comprobantes | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`PLT-007`** | Catálogo Geográfico (Ecuador 24 Provincias) | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`PLT-008`** | Configuración de Negocio & SMTP en Vault | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`PLT-009`** | Catálogo Comercial Unificado (Productos/Planes) | 🟡 Especificado | **25%** | Kleber Toapanta |
