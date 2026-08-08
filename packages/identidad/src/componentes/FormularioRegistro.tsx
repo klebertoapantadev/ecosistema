@@ -145,8 +145,30 @@ export function FormularioRegistro({ negocio, intencion = "", destino = "" }: Fo
             {error}
           </p>
         )}
-        <button type="submit" className="btn-auth" disabled={cargando}>
-          {cargando ? "Registrando..." : esAbogado ? "Registrarme como Abogado" : "Registrarme"}
+        <button
+          type="submit"
+          className="btn-auth btn-primario"
+          disabled={cargando}
+          style={{
+            width: "100%",
+            padding: "14px 20px",
+            background: "linear-gradient(135deg, #5000BA 0%, #3B0088 100%)",
+            color: "#ffffff",
+            border: "none",
+            borderRadius: "10px",
+            fontWeight: 700,
+            fontSize: "0.95rem",
+            cursor: cargando ? "not-allowed" : "pointer",
+            boxShadow: "0 4px 14px rgba(80, 0, 186, 0.3)",
+            transition: "all 0.2s ease",
+            marginTop: "12px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "8px",
+          }}
+        >
+          {cargando ? "Registrando..." : esAbogado ? "⚖️ Registrarme como Abogado" : "Registrarme"}
         </button>
       </form>
     </div>
