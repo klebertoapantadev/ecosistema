@@ -556,7 +556,7 @@ export default function TranqiLanding() {
               <a className="btn btn-blanco-borde" href="/registro?intencion=abogado&destino=/panel/solicitud-socio">
                 Únete al equipo Jurídico
               </a>
-              <a className="btn btn-blanco-borde" href="/vacantes">
+              <a className="btn btn-blanco-borde" href="/registro?intencion=abogado&destino=/panel/solicitud-socio">
                 Únete al equipo Tranqi
               </a>
             </div>
