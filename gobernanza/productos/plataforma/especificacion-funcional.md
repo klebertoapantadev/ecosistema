@@ -484,6 +484,15 @@ Pantalla de configuración del negocio (identidad legal + datos de `PLT-008`) y 
     - **Botones de Acción en Móviles:** En pantallas `<640px`, los botones de acción en formularios compactos (subir foto, eliminar ítem, agregar correos) conmutan a **Solo Ícono** (con `<span className="btn-texto-responsive">` oculto), optimizando el ancho utilizable.
     - **Protección contra Traslape en Inputs:** Inputs con badges flotantes (ej. `[🛡️ Verificado]`) llevan `paddingRight: 110px+` y `text-overflow: ellipsis` para prevenir superposición de texto en móviles.
     - **Selectores de Código de País en 1 Sola Fila:** Los selectores de código telefónico (ej. `+593` Ecuador) y el campo numérico se maquetan dentro de un contenedor flex al 100% con ancho compacto (`width: 125px`), impidiendo saltos de línea a 2 filas en móviles.
+13. **Deduplicación por Clave de Widget e Identificación Físico-Técnica (`rutaFisica`):**
+    - **Deduplicación Estricta:** Se eliminan duplicados tanto a nivel de inicialización en inventario (`WIDGETS_INVENTARIO_INICIALES`) como en lectura de BDD (`Set` / `Map` por `clave`), asegurando que ningún widget se renderice dos veces dentro del mismo panel o perfil.
+    - **Ruta Físico-Técnica:** Cada tarjeta de widget en la matriz de configuración expone un badge legible (`<code>`) con la ubicación del archivo del componente (ej. `/notificaciones/EmisionNotificacionesWidget.tsx`, `/identidad/FormularioPerfil.tsx`), facilitando la depuración e inspección a administradores y desarrolladores.
+14. **Reorganización Gráfica Inter-Panel (Mover vs. Duplicar), Reordenamiento Posicional Interno y Bloque de Disponibles Sin Asignar:**
+    - **Reorganización Inter-Panel (Modal `[⇄ Transferir]`):** Permite transferir gráficamente un widget de un panel a otro mediante un modal interactivo que consulta:
+      - *Acción:* `⇄ Mover (Quitar de Origen)` (opción **por defecto**) vs `📋 Duplicar (Mantener en Origen)`.
+      - *Panel Destino:* Selector desplegable de paneles receptores autorizados.
+    - **Reordenamiento Posicional Interno (`Posición #1, #2...`):** Cada tarjeta dispone de controles direccionales rápidos (`[←]` / `[→]`) para desplazar la posición ordinal del widget dentro del mismo panel.
+    - **Bloque Destacado "📦 Widgets Disponibles Sin Asignar":** Sección dinámica situada al final de la matriz que agrupa todos los widgets del inventario maestro que **no están asignados a ningún panel** para el perfil activo, incluyendo un selector rápido `[+ Asignar a Panel...]` para su vinculación directa con un solo clic.
 
 ### Criterios de Aceptación (Gherkin)
 * **Escenario:** Gestión de usuarios por Administrador de Negocio
