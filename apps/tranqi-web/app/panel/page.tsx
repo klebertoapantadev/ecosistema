@@ -91,11 +91,10 @@ export default async function PagePanel({ searchParams }: Props) {
 
         <div className="usuario-barra">
           <div className="usuario-barra-foto" style={{ overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-            {(perfil?.usu_detalle_usuario as Record<string, any>)?.foto_url ? (
+            {typeof (perfil?.usu_detalle_usuario as Record<string, unknown>)?.foto_url === "string" ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
-                src={(perfil.usu_detalle_usuario as Record<string, any>).foto_url}
+                src={(perfil?.usu_detalle_usuario as Record<string, unknown>).foto_url as string}
                 alt={nombreCompleto}
                 style={{ width: "100%", height: "100%", objectFit: "cover" }}
               />
