@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { ExternalLink, Check, X, Search, Plus, Bold, Italic, Underline, List, Heading, Link as LinkIcon, Code, ShieldCheck, UploadCloud, FileText, Camera, Paperclip, Trash2 } from "lucide-react";
+import { ExternalLink, Check, X, Search, Plus, Bold, Italic, Underline, List, Heading, Link as LinkIcon, Code, ShieldCheck, UploadCloud, FileText, Camera, Paperclip, Trash2, Image as ImageIcon } from "lucide-react";
 import { crearClienteNavegador } from "@eco/supabase";
 import { enviarSolicitudSocio, registrarDocumentoSocio } from "../acciones";
 import { ENLACES_VERIFICACION, type DatosExperienciaLaboral } from "../esquema";
@@ -217,6 +217,8 @@ function CampoSubidaArchivo({
 function EditorHtmlResumen({ valor, onChange }: { valor: string; onChange: (val: string) => void }) {
   const [modoHtml, setModoHtml] = useState(false);
   const editorRef = useRef<HTMLDivElement>(null);
+  const inputImagenRef = useRef<HTMLInputElement>(null);
+  const inputArchivoRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (editorRef.current && !modoHtml && editorRef.current.innerHTML !== valor) {
@@ -238,8 +240,89 @@ function EditorHtmlResumen({ valor, onChange }: { valor: string; onChange: (val:
     }
   };
 
+  const insertarHtmlEnCursor = (htmlText: string) => {
+    if (!editorRef.current) return;
+    editorRef.current.focus();
+    const sel = window.getSelection();
+    if (sel && sel.rangeCount > 0) {
+      const range = sel.getRangeAt(0);
+      range.deleteContents();
+      const el = document.createElement("div");
+      el.innerHTML = htmlText;
+      const frag = document.createDocumentFragment();
+      let node: Node | null;
+      let lastNode: Node | null = null;
+      while ((node = el.firstChild)) {
+        lastNode = frag.appendChild(node);
+      }
+      range.insertNode(frag);
+      if (lastNode) {
+        range.setStartAfter(lastNode);
+        range.collapse(true);
+        sel.removeAllRanges();
+        sel.addRange(range);
+      }
+    } else {
+      editorRef.current.innerHTML += htmlText;
+    }
+    onChange(editorRef.current.innerHTML);
+  };
+
+  const manejarPegar = (e: React.ClipboardEvent<HTMLDivElement>) => {
+    const items = Array.from(e.clipboardData.items ?? []);
+    const imagenItem = items.find((item) => item.type.startsWith("image/"));
+
+    if (imagenItem) {
+      e.preventDefault();
+      const file = imagenItem.getAsFile();
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const dataUrl = event.target?.result as string;
+        if (dataUrl) {
+          insertarHtmlEnCursor(`<img src="${dataUrl}" style="max-width:100%; border-radius:8px; margin:8px 0; display:block;" alt="Imagen pegada" />`);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const manejarSeleccionImagen = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const dataUrl = event.target?.result as string;
+      if (dataUrl) {
+        insertarHtmlEnCursor(`<img src="${dataUrl}" style="max-width:100%; border-radius:8px; margin:8px 0; display:block;" alt="${file.name}" />`);
+      }
+    };
+    reader.readAsDataURL(file);
+    e.target.value = "";
+  };
+
+  const manejarSeleccionArchivo = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const dataUrl = event.target?.result as string;
+      if (dataUrl) {
+        insertarHtmlEnCursor(
+          `<a href="${dataUrl}" download="${file.name}" target="_blank" rel="noopener noreferrer" style="display:inline-flex; align-items:center; gap:6px; padding:6px 12px; background:#F3E8FF; color:#5000BA; border-radius:8px; text-decoration:none; font-weight:700; font-size:0.82rem; margin:4px 0;">📎 ${file.name} (${formatoTamanoArchivo(file.size)})</a>`
+        );
+      }
+    };
+    reader.readAsDataURL(file);
+    e.target.value = "";
+  };
+
   return (
     <div style={{ border: "1px solid var(--panel-linea, #E4E4E4)", borderRadius: "10px", overflow: "hidden", background: "#ffffff" }}>
+      <input ref={inputImagenRef} type="file" accept="image/*" onChange={manejarSeleccionImagen} style={{ display: "none" }} />
+      <input ref={inputArchivoRef} type="file" accept="application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain" onChange={manejarSeleccionArchivo} style={{ display: "none" }} />
+
       {/* Barra de herramientas HTML */}
       <div
         style={{
@@ -271,6 +354,13 @@ function EditorHtmlResumen({ valor, onChange }: { valor: string; onChange: (val:
         <button type="button" title="Agregar enlace" onClick={agregarEnlace} style={btnToolStyle}>
           <LinkIcon size={14} />
         </button>
+        <div style={{ width: "1px", height: "18px", background: "#E4E4E4", margin: "0 4px" }} />
+        <button type="button" title="Insertar imagen" onClick={() => inputImagenRef.current?.click()} style={btnToolStyle}>
+          <ImageIcon size={14} color="var(--violeta, #5000BA)" />
+        </button>
+        <button type="button" title="Adjuntar archivo" onClick={() => inputArchivoRef.current?.click()} style={btnToolStyle}>
+          <Paperclip size={14} color="var(--violeta, #5000BA)" />
+        </button>
 
         <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: "6px" }}>
           <button
@@ -295,7 +385,7 @@ function EditorHtmlResumen({ valor, onChange }: { valor: string; onChange: (val:
         <textarea
           value={valor}
           onChange={(e) => onChange(e.target.value)}
-          rows={5}
+          rows={6}
           placeholder="Escribe o edita etiquetas HTML..."
           style={{
             width: "100%",
@@ -313,16 +403,20 @@ function EditorHtmlResumen({ valor, onChange }: { valor: string; onChange: (val:
         <div
           ref={editorRef}
           contentEditable
+          suppressContentEditableWarning
           onInput={() => editorRef.current && onChange(editorRef.current.innerHTML)}
+          onBlur={() => editorRef.current && onChange(editorRef.current.innerHTML)}
+          onPaste={manejarPegar}
           style={{
-            minHeight: "110px",
-            maxHeight: "260px",
+            minHeight: "120px",
+            maxHeight: "320px",
             padding: "12px",
             fontSize: "0.88rem",
             color: "#111111",
             outline: "none",
             overflowY: "auto",
             lineHeight: "1.5",
+            cursor: "text",
           }}
         />
       )}
@@ -768,12 +862,12 @@ export function FormularioSolicitudSocio({ usuarioId, materias, provincias, soli
         />
       </label>
 
-      <label style={{ display: "block", marginBottom: "16px" }}>
+      <div style={{ display: "block", marginBottom: "16px" }}>
         <span style={{ fontWeight: 700, display: "block", marginBottom: "6px" }}>
           Cuéntanos por qué quieres unirte a la red (Formato HTML / Rich Text)
         </span>
         <EditorHtmlResumen valor={resumenProfesional} onChange={setResumenProfesional} />
-      </label>
+      </div>
 
       <h2>Especialidades profesionales</h2>
       <SelectorMultiSeleccion
