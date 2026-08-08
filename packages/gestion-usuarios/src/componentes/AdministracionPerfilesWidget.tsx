@@ -1293,12 +1293,48 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px", flexWrap: "wrap", gap: "10px" }}>
                     <div
                       onClick={() => setPanelEditarModal(panel)}
-                      style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer" }}
-                      title="Haz clic para cambiar el ícono del sidebar o editar la ruta/nombre del panel"
+                      style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer" }}
+                      title="Haz clic para seleccionar el ícono del sidebar o editar la ruta/nombre del panel"
                     >
-                      <IconoPanelDinamico nombreIcono={panel.icono} size={20} color={temaPerfilActivo.colorPrimario} />
-                      <strong style={{ fontSize: "0.95rem", color: "#111111" }}>{panel.nombre}</strong>
-                      <code style={{ fontSize: "0.72rem", color: "var(--panel-gris, #737373)" }}>{panel.ruta}</code>
+                      <span
+                        style={{
+                          background: "rgba(80, 0, 186, 0.12)",
+                          padding: "6px 8px",
+                          borderRadius: "8px",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          border: "1px solid rgba(80, 0, 186, 0.25)"
+                        }}
+                      >
+                        <IconoPanelDinamico nombreIcono={panel.icono} size={20} color={temaPerfilActivo.colorPrimario} />
+                      </span>
+                      <div>
+                        <strong style={{ fontSize: "0.95rem", color: "#111111", display: "block" }}>{panel.nombre}</strong>
+                        <code style={{ fontSize: "0.72rem", color: "var(--panel-gris, #737373)" }}>{panel.ruta}</code>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setPanelEditarModal(panel);
+                        }}
+                        style={{
+                          background: "#ffffff",
+                          border: "1px solid var(--violeta, #5000BA)",
+                          color: "var(--violeta, #5000BA)",
+                          borderRadius: "6px",
+                          padding: "3px 8px",
+                          fontSize: "0.72rem",
+                          fontWeight: 800,
+                          cursor: "pointer",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "4px"
+                        }}
+                      >
+                        <Pencil size={12} /> <span>Ícono</span>
+                      </button>
                     </div>
 
                     <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
