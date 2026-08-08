@@ -304,9 +304,10 @@ Unifica el procesamiento de pagos y la emisión de comprobantes electrónicos au
 ### Reglas de Negocio
 1. **Pasarela de Pagos como Proceso Crítico Común:** El flujo de cobro es la acción crítica común transversal a todas las aplicaciones que activa las garantías de seguridad y MFA TOTP de `PLT-002`.
 2. **Emisión de Facturas Electrónicas:** Todo pago completado exitosamente genera la factura electrónica SRI.
-3. **Confirmación de Datos de Facturación:**
+3. **Confirmación de Datos de Facturación y Widget Autocontenido (`FormularioDatosFacturacion.tsx`):**
    - Antes de procesar el cobro, el sistema solicita al cliente confirmar si requiere la factura a nombre de **Consumidor Final** o con **Datos Personalizados (RUC/Cédula, Razón Social, Dirección, Correo)**.
    - Si el cliente elige emitir con datos y no los ha registrado previamente en su perfil, el sistema exige su ingreso antes de habilitar la pasarela de pago.
+   - **Widget Autocontenido de Datos de Facturación en Mi Cuenta:** Accesible desde `/panel/cuenta`, permite configurar y respaldar de forma permanente: *Nombre Completo / Razón Social*, *Tipo de Documento (Cédula, RUC, Pasaporte)*, *Número de Identificación*, *Teléfono de Contacto*, *Dirección Fiscal* y *Correo Electrónico de Facturación* (diferenciado de los correos de notificación). Incluye la opción de autocompletar *"Usar Nombres del Registro"*.
 4. **Abstracción de Pasarela:** El flujo de cobro utiliza una interfaz unificada que soporta pasarelas locales (Payphone, Kushki, Placetopay) de forma transparente para el cliente.
 
 ---
@@ -476,6 +477,13 @@ Pantalla de configuración del negocio (identidad legal + datos de `PLT-008`) y 
     - Al activar la edición, pueden definir un **Título** y **Descripción (subtítulo)** personalizados para cada widget individual.
     - Dicha modificación se guarda por widget y se aplica de forma **global e inmediata a todos los perfiles** de usuario que visualicen dicho widget.
     - Se elimina permanentemente el texto repetitivo `"Abrir Módulo"`, `"Abrir widget"` o `"Abrir"` del pie de las tarjetas, sustituyéndolo por una maquetación limpia con indicador sutil de dirección (`ChevronRight`).
+11. **Personalización Administrativa de Ícono de Aplicación y Exigencia de MFA por Inactividad (`ModalEditarWidget.tsx`):**
+    - **Edición de Ícono de Aplicación:** El modal de edición de widget permite seleccionar un ícono de la librería oficial (`lucide-react`) para personalizar la apariencia visual de la tarjeta.
+    - **Requerimiento de MFA por Inactividad:** Permite configurar si la apertura del widget exige verificación MFA TOTP y definir su periodo de validez por inactividad (ej. 5 min, 15 min, 30 min, 1 hora o Exigir Siempre 0 min). Tras este tiempo de inactividad, se vuelve a solicitar la confirmación de 6 dígitos.
+12. **Patrón Responsive Mobile-First para Botones de Acción e Inputs (`.btn-responsive-accion` & `.btn-texto-responsive`):**
+    - **Botones de Acción en Móviles:** En pantallas `<640px`, los botones de acción en formularios compactos (subir foto, eliminar ítem, agregar correos) conmutan a **Solo Ícono** (con `<span className="btn-texto-responsive">` oculto), optimizando el ancho utilizable.
+    - **Protección contra Traslape en Inputs:** Inputs con badges flotantes (ej. `[🛡️ Verificado]`) llevan `paddingRight: 110px+` y `text-overflow: ellipsis` para prevenir superposición de texto en móviles.
+    - **Selectores de Código de País en 1 Sola Fila:** Los selectores de código telefónico (ej. `+593` Ecuador) y el campo numérico se maquetan dentro de un contenedor flex al 100% con ancho compacto (`width: 125px`), impidiendo saltos de línea a 2 filas en móviles.
 
 ### Criterios de Aceptación (Gherkin)
 * **Escenario:** Gestión de usuarios por Administrador de Negocio
