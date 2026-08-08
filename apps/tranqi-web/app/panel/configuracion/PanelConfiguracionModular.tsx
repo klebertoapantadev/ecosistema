@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Settings, Mail, Bell, Star, X, ChevronRight, ShieldCheck, Sliders, Pencil, Lock } from "lucide-react";
+import { Settings, Mail, Bell, Star, X, ChevronRight, ShieldCheck, Sliders, Pencil, Lock, type LucideIcon } from "lucide-react";
 import { FormularioConfiguracionNegocio } from "@eco/configuracion-negocio/componentes/FormularioConfiguracionNegocio";
 import { FormularioSmtp } from "@eco/configuracion-negocio/componentes/FormularioSmtp";
 import { PreferenciasNotificacionWidget } from "@eco/notificaciones";
@@ -24,7 +24,7 @@ export interface WidgetConfigDef {
   id: string;
   titulo: string;
   subtitulo: string;
-  icono: React.ComponentType<{ size?: number; color?: string; style?: React.CSSProperties; className?: string; strokeWidth?: number }>;
+  icono: LucideIcon;
   colorIcono: string;
   categoria: string;
   soloAdmin?: boolean;
@@ -251,14 +251,14 @@ export function PanelConfiguracionModular({ esAdmin, esSuperadmin = false, confi
             {/* 1. CONFIGURACIÓN DEL NEGOCIO */}
             {widgetActivo === "negocio" && (
               <div style={{ maxWidth: "800px", margin: "0 auto" }}>
-                <FormularioConfiguracionNegocio inicial={configuracion} />
+                <FormularioConfiguracionNegocio inicial={configuracion} negocio={negocio} />
               </div>
             )}
 
             {/* 2. SERVIDOR SMTP & CORREO */}
             {widgetActivo === "correo" && (
               <div style={{ maxWidth: "700px", margin: "0 auto" }}>
-                <FormularioSmtp inicial={smtp} />
+                <FormularioSmtp inicial={smtp} negocio={negocio} />
               </div>
             )}
 

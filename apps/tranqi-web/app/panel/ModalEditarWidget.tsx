@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { X, Save, Pencil, Shield, Lock, Clock, Sparkles } from "lucide-react";
+import { X, Save, Pencil, Shield, Clock, Sparkles } from "lucide-react";
 import { DICCIONARIO_ICONOS_WIDGET } from "./gestorTitulosWidgets";
 
 interface Props {

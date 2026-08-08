@@ -235,3 +235,4 @@ export function SeccionFavoritosInicio() {
   );
 }
 
+export const TarjetasFavoritasGrid = SeccionFavoritosInicio;

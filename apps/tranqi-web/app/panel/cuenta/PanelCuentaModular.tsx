@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { User, History, KeyRound, ShieldAlert, Star, X, CheckCircle2, ChevronRight, ShieldCheck, Briefcase, Pencil, Receipt } from "lucide-react";
+import { User, History, KeyRound, ShieldAlert, Star, X, CheckCircle2, ChevronRight, ShieldCheck, Briefcase, Pencil, Receipt, Lock, type LucideIcon } from "lucide-react";
 import { FormularioPerfil } from "@eco/identidad/componentes/FormularioPerfil";
 import { FormularioPerfilAbogado } from "@eco/identidad/componentes/FormularioPerfilAbogado";
 import { FormularioDatosFacturacion } from "@eco/identidad/componentes/FormularioDatosFacturacion";
@@ -45,7 +45,7 @@ export interface WidgetDef {
   id: string;
   titulo: string;
   subtitulo: string;
-  icono: React.ComponentType<{ size?: number; color?: string; style?: React.CSSProperties; className?: string; strokeWidth?: number }>;
+  icono: LucideIcon;
   colorIcono: string;
   categoria: string;
   esPeligro?: boolean;
@@ -383,17 +383,7 @@ export function PanelCuentaModular({ perfil, historial, puedeConmutar = true, ro
             {/* WIDGET 3.5: ACTIVE ROLE SWITCHER (Gobernanza) */}
             {widgetActivo === "rol_activo" && (
               <div style={{ width: "100%", maxWidth: "800px" }}>
-                <SelectorRolActivo
-                  perfil={{
-                    usu_id: perfil?.usu_id || "",
-                    usu_nombres: perfil?.usu_nombres || null,
-                    usu_apellidos: perfil?.usu_apellidos || null,
-                    usu_correo: perfil?.usu_correo || null,
-                    usu_superadmin_plataforma: Boolean(perfil?.usu_superadmin_plataforma),
-                  }}
-                  rolesDisponibles={rolesDisponibles}
-                  onCambioRol={() => window.location.reload()}
-                />
+                <SelectorRolActivo ocultarEtiqueta roles={rolesDisponibles} />
               </div>
             )}
 
