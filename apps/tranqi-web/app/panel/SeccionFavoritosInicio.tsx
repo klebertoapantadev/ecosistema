@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { User, History, KeyRound, ShieldAlert, Settings, Mail, Bell, Star, ChevronRight, ShieldCheck, Sliders, type LucideIcon } from "lucide-react";
 import Link from "next/link";
+import { useCustomWidgets } from "./gestorTitulosWidgets";
 
 interface WidgetFavInfo {
   id: string;
@@ -104,6 +105,7 @@ export function TarjetasFavoritasGrid() {
   const [favsCuenta, setFavsCuenta] = useState<string[]>([]);
   const [favsConfig, setFavsConfig] = useState<string[]>([]);
   const [cargado, setCargado] = useState(false);
+  const { getWidgetInfo } = useCustomWidgets();
 
   useEffect(() => {
     try {
@@ -131,6 +133,8 @@ export function TarjetasFavoritasGrid() {
     <>
       {itemsFavoritos.map(item => {
         const Icono = item.icono;
+        const infoCustom = getWidgetInfo(item.id, item.titulo, item.subtitulo);
+
         return (
           <Link
             key={`fav-${item.id}`}
@@ -183,26 +187,23 @@ export function TarjetasFavoritasGrid() {
                 </span>
               </div>
               <strong style={{ display: "block", color: item.esPeligro ? "#B00020" : undefined, lineHeight: 1.25 }}>
-                {item.titulo}
+                {infoCustom.titulo}
               </strong>
             </div>
 
-            <p style={{ margin: "4px 0 0 0" }}>{item.subtitulo}</p>
+            <p style={{ margin: "4px 0 0 0" }}>{infoCustom.subtitulo}</p>
 
             <div
               style={{
                 display: "flex",
                 alignItems: "center",
-                justifyContent: "space-between",
+                justifyContent: "flex-end",
                 marginTop: "auto",
                 paddingTop: "10px",
-                fontSize: "0.76rem",
-                color: "var(--violeta, #5000BA)",
-                fontWeight: 700
+                color: "var(--violeta, #5000BA)"
               }}
             >
-              <span>Abrir widget</span>
-              <ChevronRight size={14} />
+              <ChevronRight size={16} />
             </div>
           </Link>
         );
@@ -210,3 +211,4 @@ export function TarjetasFavoritasGrid() {
     </>
   );
 }
+

@@ -1,13 +1,15 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { UserCog, Users, ClipboardList, Bell, Shield, ChevronRight, Star, Lock, X, Eye } from "lucide-react";
+import { UserCog, Users, ClipboardList, Bell, Shield, ChevronRight, Star, Lock, X, Eye, Pencil } from "lucide-react";
 import Link from "next/link";
 import { crearClienteNavegador } from "@eco/supabase";
 import { AdministracionPerfilesWidget } from "@eco/gestion-usuarios/componentes/AdministracionPerfilesWidget";
 import { EmisionNotificacionesWidget } from "@eco/notificaciones";
 import { TablaAuditoria } from "../auditoria/TablaAuditoria";
 import type { RegistroAuditoria } from "@eco/auditoria";
+import { useCustomWidgets } from "../gestorTitulosWidgets";
+import { ModalEditarWidget } from "../ModalEditarWidget";
 
 interface Props {
   negocio: string;
@@ -246,6 +248,9 @@ function VisorAuditoriaWidget() {
 export function PanelAdministrarModular({ negocio }: Props) {
   const [favoritos, setFavoritos] = useState<string[]>(["gestion_usuarios", "socios"]);
   const [widgetActivo, setWidgetActivo] = useState<string | null>(null);
+  const [widgetEditar, setWidgetEditar] = useState<{ id: string; titulo: string; subtitulo: string } | null>(null);
+
+  const { getWidgetInfo, guardarWidget } = useCustomWidgets();
 
   // Leer modulo inicial desde localStorage o URL
   useEffect(() => {
@@ -286,9 +291,10 @@ export function PanelAdministrarModular({ negocio }: Props) {
   });
 
   const moduloActualDef = MODULOS_ADMIN.find(m => m.id === widgetActivo);
+  const moduloInfoActual = moduloActualDef ? getWidgetInfo(moduloActualDef.id, moduloActualDef.titulo, moduloActualDef.subtitulo) : null;
 
   // VISTA 2: PANEL DEDICADO DEL MÓDULO ENFOCADO (Con botón circular 'X' en la esquina superior derecha, SIN iframe)
-  if (widgetActivo && moduloActualDef) {
+  if (widgetActivo && moduloActualDef && moduloInfoActual) {
     return (
       <div style={{ width: "100%", animation: "fadeIn 0.15s ease" }}>
         <section className="tarjeta-seccion" style={{ background: "var(--blanco, #ffffff)", borderRadius: "16px", overflow: "hidden", width: "100%", border: "1px solid var(--panel-linea, #E4E4E4)" }}>
@@ -317,7 +323,7 @@ export function PanelAdministrarModular({ negocio }: Props) {
               <div>
                 <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
                   <h2 style={{ fontSize: "1.05rem", fontWeight: 800, color: "var(--negro, #111111)", margin: 0 }}>
-                    {moduloActualDef.titulo}
+                    {moduloInfoActual.titulo}
                   </h2>
                   {favoritos.includes(widgetActivo) && (
                     <span className="pildora-estado" style={{ background: "var(--amarillo)", color: "var(--negro)", fontSize: "0.65rem" }}>
@@ -326,7 +332,7 @@ export function PanelAdministrarModular({ negocio }: Props) {
                   )}
                 </div>
                 <span style={{ fontSize: "0.8rem", color: "var(--panel-gris, #737373)", marginTop: "2px", display: "block" }}>
-                  {moduloActualDef.subtitulo}
+                  {moduloInfoActual.subtitulo}
                 </span>
               </div>
             </div>
@@ -429,6 +435,7 @@ export function PanelAdministrarModular({ negocio }: Props) {
           {modulosOrdenados.map(m => {
             const IconoComponente = m.icono;
             const esFav = favoritos.includes(m.id);
+            const infoCustom = getWidgetInfo(m.id, m.titulo, m.subtitulo);
 
             return (
               <div
@@ -443,27 +450,59 @@ export function PanelAdministrarModular({ negocio }: Props) {
                   color: "inherit"
                 }}
               >
-                {/* Botón de Estrella Favorito */}
-                <button
-                  type="button"
-                  title={esFav ? "Quitar de destacados" : "Marcar como destacado"}
-                  onClick={e => toggleFavorito(e, m.id)}
+                {/* Acciones en esquina superior derecha (Estrella Favorito + Botón Lápiz Edición para Admin/Superadmin) */}
+                <div
                   style={{
                     position: "absolute",
                     top: "10px",
                     right: "10px",
-                    background: "transparent",
-                    border: "none",
-                    cursor: "pointer",
-                    padding: "3px",
-                    color: esFav ? "#D97706" : "var(--panel-gris, #737373)",
                     display: "flex",
                     alignItems: "center",
-                    justifyContent: "center"
+                    gap: "6px",
+                    zIndex: 2
                   }}
                 >
-                  <Star size={16} fill={esFav ? "#FEE300" : "none"} stroke={esFav ? "#D97706" : "currentColor"} />
-                </button>
+                  <button
+                    type="button"
+                    title="Editar Título y Descripción del Widget"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setWidgetEditar({ id: m.id, titulo: infoCustom.titulo, subtitulo: infoCustom.subtitulo });
+                    }}
+                    style={{
+                      background: "rgba(255,255,255,0.9)",
+                      border: "1px solid var(--panel-linea, #E4E4E4)",
+                      borderRadius: "6px",
+                      cursor: "pointer",
+                      padding: "4px",
+                      color: "var(--panel-gris, #737373)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      transition: "all 0.15s ease"
+                    }}
+                  >
+                    <Pencil size={14} />
+                  </button>
+
+                  <button
+                    type="button"
+                    title={esFav ? "Quitar de destacados" : "Marcar como destacado"}
+                    onClick={e => toggleFavorito(e, m.id)}
+                    style={{
+                      background: "transparent",
+                      border: "none",
+                      cursor: "pointer",
+                      padding: "3px",
+                      color: esFav ? "#D97706" : "var(--panel-gris, #737373)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center"
+                    }}
+                  >
+                    <Star size={16} fill={esFav ? "#FEE300" : "none"} stroke={esFav ? "#D97706" : "currentColor"} />
+                  </button>
+                </div>
 
                 <div className="tarjeta-acceso-icono" style={{ margin: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
                   <IconoComponente size={20} color={m.colorIcono} />
@@ -488,32 +527,45 @@ export function PanelAdministrarModular({ negocio }: Props) {
                     </span>
                   )}
                   <strong style={{ display: "block", lineHeight: 1.25, fontSize: "0.95rem" }}>
-                    {m.titulo}
+                    {infoCustom.titulo}
                   </strong>
                 </div>
 
-                <p style={{ margin: "4px 0 0 0", fontSize: "0.82rem" }}>{m.subtitulo}</p>
+                <p style={{ margin: "4px 0 0 0", fontSize: "0.82rem" }}>{infoCustom.subtitulo}</p>
 
+                {/* Pie de Card sin texto "Abrir módulo" */}
                 <div
                   style={{
                     display: "flex",
                     alignItems: "center",
-                    justifyContent: "space-between",
+                    justifyContent: "flex-end",
                     marginTop: "auto",
                     paddingTop: "10px",
-                    fontSize: "0.76rem",
-                    color: "var(--violeta, #5000BA)",
-                    fontWeight: 700
+                    color: "var(--violeta, #5000BA)"
                   }}
                 >
-                  <span>Abrir módulo</span>
-                  <ChevronRight size={14} />
+                  <ChevronRight size={16} />
                 </div>
               </div>
             );
           })}
         </div>
       </div>
+
+      {/* Modal para Editar Título y Subtítulo de Widget */}
+      {widgetEditar && (
+        <ModalEditarWidget
+          abierto={Boolean(widgetEditar)}
+          onCerrar={() => setWidgetEditar(null)}
+          widgetId={widgetEditar.id}
+          tituloActual={widgetEditar.titulo}
+          subtituloActual={widgetEditar.subtitulo}
+          onGuardar={(id, nuevoTitulo, nuevoSubtitulo) => {
+            guardarWidget(id, nuevoTitulo, nuevoSubtitulo);
+          }}
+        />
+      )}
     </div>
   );
 }
+

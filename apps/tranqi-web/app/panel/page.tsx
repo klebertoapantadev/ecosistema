@@ -319,10 +319,8 @@ function PanelAdministrador({ esSuperadmin, esAdminGlobal }: { esSuperadmin: boo
                 <w.icono className="tarjeta-acceso-icono" aria-hidden="true" strokeWidth={1.6} />
                 <strong>{w.nombre}</strong>
                 <p>{w.detalle}</p>
-                {w.estado === "proximamente" ? (
+                {w.estado === "proximamente" && (
                   <span className="chip-proximamente">Próximamente</span>
-                ) : (
-                  <span className="chip-registrado">Abrir widget</span>
                 )}
               </a>
             ))}

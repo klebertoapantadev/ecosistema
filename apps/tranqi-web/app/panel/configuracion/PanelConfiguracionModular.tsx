@@ -1,11 +1,13 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Settings, Mail, Bell, Star, X, ChevronRight, ShieldCheck, Sliders } from "lucide-react";
+import { Settings, Mail, Bell, Star, X, ChevronRight, ShieldCheck, Sliders, Pencil } from "lucide-react";
 import { FormularioConfiguracionNegocio } from "@eco/configuracion-negocio/componentes/FormularioConfiguracionNegocio";
 import { FormularioSmtp } from "@eco/configuracion-negocio/componentes/FormularioSmtp";
 import { PreferenciasNotificacionWidget } from "@eco/notificaciones";
 import { AdministracionPerfilesWidget } from "@eco/gestion-usuarios/componentes/AdministracionPerfilesWidget";
+import { useCustomWidgets } from "../gestorTitulosWidgets";
+import { ModalEditarWidget } from "../ModalEditarWidget";
 
 interface Props {
   esAdmin: boolean;
@@ -69,6 +71,10 @@ const TODOS_WIDGETS_CONFIG: WidgetConfigDef[] = [
 export function PanelConfiguracionModular({ esAdmin, esSuperadmin = false, configuracion, smtp, negocio }: Props) {
   const [favoritos, setFavoritos] = useState<string[]>([]);
   const [widgetActivo, setWidgetActivo] = useState<string | null>(null);
+  const [widgetEditar, setWidgetEditar] = useState<{ id: string; titulo: string; subtitulo: string } | null>(null);
+
+  const { getWidgetInfo, guardarWidget } = useCustomWidgets();
+  const esAdminOSuper = Boolean(esAdmin || esSuperadmin);
 
   // Filtrar widgets disponibles según rol (visibles para admin o superadmin)
   // El widget de perfiles ("perfiles") SIEMPRE debe estar disponible para SuperAdmin y Administrador
@@ -121,9 +127,10 @@ export function PanelConfiguracionModular({ esAdmin, esSuperadmin = false, confi
   });
 
   const widgetActualDef = widgetsDisponibles.find(w => w.id === widgetActivo);
+  const widgetInfoActual = widgetActualDef ? getWidgetInfo(widgetActualDef.id, widgetActualDef.titulo, widgetActualDef.subtitulo) : null;
 
   // VISTA 2: PANEL DEDICADO DEL WIDGET ENFOCADO (Con botón circular 'X' en la esquina superior derecha)
-  if (widgetActivo && widgetActualDef) {
+  if (widgetActivo && widgetActualDef && widgetInfoActual) {
     return (
       <div style={{ width: "100%", animation: "fadeIn 0.15s ease" }}>
         <section className="tarjeta-seccion" style={{ background: "var(--blanco, #ffffff)", borderRadius: "16px", overflow: "hidden", width: "100%" }}>
@@ -152,7 +159,7 @@ export function PanelConfiguracionModular({ esAdmin, esSuperadmin = false, confi
               <div>
                 <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
                   <h2 style={{ fontSize: "1.05rem", fontWeight: 800, color: "var(--negro, #111111)", margin: 0 }}>
-                    {widgetActualDef.titulo}
+                    {widgetInfoActual.titulo}
                   </h2>
                   {favoritos.includes(widgetActivo) && (
                     <span className="pildora-estado" style={{ background: "var(--amarillo)", color: "var(--negro)", fontSize: "0.65rem" }}>
@@ -161,7 +168,7 @@ export function PanelConfiguracionModular({ esAdmin, esSuperadmin = false, confi
                   )}
                 </div>
                 <span style={{ fontSize: "0.8rem", color: "var(--panel-gris, #737373)", marginTop: "2px", display: "block" }}>
-                  {widgetActualDef.subtitulo}
+                  {widgetInfoActual.subtitulo}
                 </span>
               </div>
             </div>
@@ -269,6 +276,7 @@ export function PanelConfiguracionModular({ esAdmin, esSuperadmin = false, confi
           {widgetsOrdenados.map(w => {
             const IconoComponente = w.icono;
             const esFav = favoritos.includes(w.id);
+            const infoCustom = getWidgetInfo(w.id, w.titulo, w.subtitulo);
 
             return (
               <div
@@ -281,27 +289,61 @@ export function PanelConfiguracionModular({ esAdmin, esSuperadmin = false, confi
                   position: "relative"
                 }}
               >
-                {/* Botón de Estrella Favorito */}
-                <button
-                  type="button"
-                  title={esFav ? "Quitar de favoritos" : "Marcar como favorito"}
-                  onClick={e => toggleFavorito(e, w.id)}
+                {/* Botón de Estrella Favorito + Lápiz Edición si es Admin/SuperAdmin */}
+                <div
                   style={{
                     position: "absolute",
                     top: "10px",
                     right: "10px",
-                    background: "transparent",
-                    border: "none",
-                    cursor: "pointer",
-                    padding: "3px",
-                    color: esFav ? "#D97706" : "var(--panel-gris, #737373)",
                     display: "flex",
                     alignItems: "center",
-                    justifyContent: "center"
+                    gap: "6px",
+                    zIndex: 2
                   }}
                 >
-                  <Star size={16} fill={esFav ? "#FEE300" : "none"} stroke={esFav ? "#D97706" : "currentColor"} />
-                </button>
+                  {esAdminOSuper && (
+                    <button
+                      type="button"
+                      title="Editar Título y Descripción del Widget"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setWidgetEditar({ id: w.id, titulo: infoCustom.titulo, subtitulo: infoCustom.subtitulo });
+                      }}
+                      style={{
+                        background: "rgba(255,255,255,0.9)",
+                        border: "1px solid var(--panel-linea, #E4E4E4)",
+                        borderRadius: "6px",
+                        cursor: "pointer",
+                        padding: "4px",
+                        color: "var(--panel-gris, #737373)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        transition: "all 0.15s ease"
+                      }}
+                    >
+                      <Pencil size={14} />
+                    </button>
+                  )}
+
+                  <button
+                    type="button"
+                    title={esFav ? "Quitar de favoritos" : "Marcar como favorito"}
+                    onClick={e => toggleFavorito(e, w.id)}
+                    style={{
+                      background: "transparent",
+                      border: "none",
+                      cursor: "pointer",
+                      padding: "3px",
+                      color: esFav ? "#D97706" : "var(--panel-gris, #737373)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center"
+                    }}
+                  >
+                    <Star size={16} fill={esFav ? "#FEE300" : "none"} stroke={esFav ? "#D97706" : "currentColor"} />
+                  </button>
+                </div>
 
                 <div className="tarjeta-acceso-icono" style={{ margin: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
                   <IconoComponente size={20} color={w.colorIcono} />
@@ -326,32 +368,45 @@ export function PanelConfiguracionModular({ esAdmin, esSuperadmin = false, confi
                     </span>
                   )}
                   <strong style={{ display: "block", lineHeight: 1.25 }}>
-                    {w.titulo}
+                    {infoCustom.titulo}
                   </strong>
                 </div>
 
-                <p style={{ margin: "4px 0 0 0" }}>{w.subtitulo}</p>
+                <p style={{ margin: "4px 0 0 0" }}>{infoCustom.subtitulo}</p>
 
+                {/* Pie de Card sin texto "Abrir" */}
                 <div
                   style={{
                     display: "flex",
                     alignItems: "center",
-                    justifyContent: "space-between",
+                    justifyContent: "flex-end",
                     marginTop: "auto",
                     paddingTop: "10px",
-                    fontSize: "0.76rem",
-                    color: "var(--violeta, #5000BA)",
-                    fontWeight: 700
+                    color: "var(--violeta, #5000BA)"
                   }}
                 >
-                  <span>Abrir</span>
-                  <ChevronRight size={14} />
+                  <ChevronRight size={16} />
                 </div>
               </div>
             );
           })}
         </div>
       </div>
+
+      {/* Modal para Editar Título y Subtítulo de Widget */}
+      {widgetEditar && (
+        <ModalEditarWidget
+          abierto={Boolean(widgetEditar)}
+          onCerrar={() => setWidgetEditar(null)}
+          widgetId={widgetEditar.id}
+          tituloActual={widgetEditar.titulo}
+          subtituloActual={widgetEditar.subtitulo}
+          onGuardar={(id, nuevoTitulo, nuevoSubtitulo) => {
+            guardarWidget(id, nuevoTitulo, nuevoSubtitulo);
+          }}
+        />
+      )}
     </div>
   );
 }
+

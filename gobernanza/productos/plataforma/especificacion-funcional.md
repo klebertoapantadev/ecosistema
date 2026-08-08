@@ -469,6 +469,11 @@ Pantalla de configuración del negocio (identidad legal + datos de `PLT-008`) y 
      - **Rol `ADMINISTRADOR` / `SUPERADMIN`:**
        - *Sección "Consola Administrativa":* Gestión de Usuarios (`gestion_usuarios`), Configuración del Negocio (`configuracion_negocio`), Auditoría (`auditoria`), Emisión de Notificaciones (`emision_notificaciones`), Gobernanza de Permisos (`configuracion_permisos`), Aprobación de Socios.
 9. **SuperAdmin de plataforma:** `kleber.toapanta.ch@gmail.com` y `jesus251296@gmail.com` son `SUPERADMIN` en los 4 negocios desde su primer inicio de sesión — no requiere asignación manual y posee acceso universal a todos los widgets en todas las apps.
+10. **Edición de Título y Descripción de Widget por Administradores y Limpieza Visual:**
+    - Los usuarios con rol `ADMINISTRADOR` o `SUPERADMIN` disponen de una opción de edición interactiva (botón de lápiz `Pencil`) en las tarjetas de accesos de los paneles (`Administrar`, `Mi Cuenta`, `Configuración`).
+    - Al activar la edición, pueden definir un **Título** y **Descripción (subtítulo)** personalizados para cada widget individual.
+    - Dicha modificación se guarda por widget y se aplica de forma **global e inmediata a todos los perfiles** de usuario que visualicen dicho widget.
+    - Se elimina permanentemente el texto repetitivo `"Abrir Módulo"`, `"Abrir widget"` o `"Abrir"` del pie de las tarjetas, sustituyéndolo por una maquetación limpia con indicador sutil de dirección (`ChevronRight`).
 
 ### Criterios de Aceptación (Gherkin)
 * **Escenario:** Gestión de usuarios por Administrador de Negocio
