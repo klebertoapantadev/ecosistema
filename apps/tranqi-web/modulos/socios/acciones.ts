@@ -88,7 +88,7 @@ export async function enviarSolicitudSocio(
 
 export async function registrarDocumentoSocio(
   solicitudId: string,
-  tipo: "titulo" | "matricula" | "otro" | "respaldo_revision",
+  tipo: "foto_perfil" | "titulo" | "matricula" | "otro" | "respaldo_revision" | "cv",
   path: string,
   nombreArchivo: string,
   comentario?: string,

@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { ExternalLink, Check, X, Search, Plus, Bold, Italic, Underline, List, Heading, Link as LinkIcon, Code, ShieldCheck } from "lucide-react";
+import { ExternalLink, Check, X, Search, Plus, Bold, Italic, Underline, List, Heading, Link as LinkIcon, Code, ShieldCheck, UploadCloud, FileText, Camera, Paperclip, Trash2 } from "lucide-react";
 import { crearClienteNavegador } from "@eco/supabase";
 import { enviarSolicitudSocio, registrarDocumentoSocio } from "../acciones";
 import { ENLACES_VERIFICACION, type DatosExperienciaLaboral } from "../esquema";
@@ -22,9 +22,19 @@ interface OpcionItem {
 const EXPERIENCIA_VACIA: DatosExperienciaLaboral = { empresa: "", cargo: "", fechaInicio: "", fechaFin: "", descripcion: "" };
 const TIPOS_ACEPTADOS =
   "application/pdf,image/jpeg,image/png,image/webp,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.oasis.opendocument.text";
-const TAMANO_MAXIMO_MB = 15;
+const TAMANO_MAXIMO_MB = 10;
 
-async function subirDocumento(solicitudId: string, tipo: "titulo" | "matricula" | "otro", archivo: File) {
+function formatoTamanoArchivo(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+async function subirDocumento(
+  solicitudId: string,
+  tipo: "foto_perfil" | "titulo" | "matricula" | "otro" | "cv",
+  archivo: File,
+) {
   if (archivo.size > TAMANO_MAXIMO_MB * 1024 * 1024) {
     return { ok: false as const, error: `${archivo.name}: supera ${TAMANO_MAXIMO_MB}MB` };
   }
@@ -36,6 +46,170 @@ async function subirDocumento(solicitudId: string, tipo: "titulo" | "matricula" 
   const resultado = await registrarDocumentoSocio(solicitudId, tipo, path, archivo.name);
   if (!resultado.ok) return { ok: false as const, error: `${archivo.name}: ${resultado.error}` };
   return { ok: true as const };
+}
+
+// Componente Custom de Carga de Archivos con Botón y Dropzone Estilizados
+function CampoSubidaArchivo({
+  etiqueta,
+  subtitulo,
+  aceptar,
+  multiple = false,
+  archivos,
+  onCambiar,
+  icono: IconoComp = FileText,
+  esFotoPerfil = false,
+}: {
+  etiqueta: string;
+  subtitulo: string;
+  aceptar: string;
+  multiple?: boolean;
+  archivos: File[];
+  onCambiar: (nuevos: File[]) => void;
+  icono?: React.ElementType;
+  esFotoPerfil?: boolean;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [errorLocal, setErrorLocal] = useState<string | null>(null);
+
+  const manejarSeleccion = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setErrorLocal(null);
+    const lista = Array.from(e.target.files ?? []);
+    if (lista.length === 0) return;
+
+    // Validar tamaño máximo
+    const excede = lista.find((f) => f.size > TAMANO_MAXIMO_MB * 1024 * 1024);
+    if (excede) {
+      setErrorLocal(`El archivo "${excede.name}" supera el tamaño máximo permitido de ${TAMANO_MAXIMO_MB} MB.`);
+      return;
+    }
+
+    if (multiple) {
+      onCambiar([...archivos, ...lista]);
+    } else {
+      onCambiar([lista[0]!]);
+    }
+  };
+
+  const eliminarArchivo = (index: number) => {
+    onCambiar(archivos.filter((_, i) => i !== index));
+  };
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: "8px", width: "100%", marginTop: "12px" }}>
+      <label style={{ fontSize: "0.88rem", fontWeight: 800, color: "var(--negro, #111111)", display: "flex", alignItems: "center", gap: "6px", margin: 0 }}>
+        <IconoComp size={17} color="var(--violeta, #5000BA)" />
+        {etiqueta}
+      </label>
+      <span style={{ fontSize: "0.76rem", color: "var(--panel-gris, #737373)" }}>{subtitulo}</span>
+
+      {/* Dropzone Estilizada */}
+      <div
+        onClick={() => inputRef.current?.click()}
+        style={{
+          border: "2px dashed rgba(80, 0, 186, 0.3)",
+          background: "rgba(80, 0, 186, 0.03)",
+          borderRadius: "12px",
+          padding: "16px",
+          textAlign: "center",
+          cursor: "pointer",
+          transition: "all 0.15s ease",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: "8px",
+        }}
+      >
+        <input
+          ref={inputRef}
+          type="file"
+          accept={aceptar}
+          multiple={multiple}
+          onChange={manejarSeleccion}
+          style={{ display: "none" }}
+        />
+
+        <div style={{ background: "#ffffff", padding: "10px", borderRadius: "50%", border: "1px solid rgba(80,0,186,0.2)", color: "var(--violeta, #5000BA)", display: "flex" }}>
+          <UploadCloud size={22} />
+        </div>
+        <div>
+          <span style={{ fontSize: "0.84rem", fontWeight: 800, color: "var(--violeta, #5000BA)" }}>
+            {archivos.length > 0 ? "Añadir / Cambiar archivos" : "Seleccionar o arrastrar archivos"}
+          </span>
+          <span style={{ display: "block", fontSize: "0.72rem", color: "var(--panel-gris, #737373)", marginTop: "2px" }}>
+            Formatos admitidos: PDF, Word, JPG, PNG • Máx {TAMANO_MAXIMO_MB} MB c/u
+          </span>
+        </div>
+      </div>
+
+      {errorLocal && <p style={{ fontSize: "0.78rem", color: "#DC2626", fontWeight: 700, margin: 0 }}>⚠️ {errorLocal}</p>}
+
+      {/* Lista de archivos adjuntados con vista previa */}
+      {archivos.length > 0 && (
+        <div style={{ display: "flex", flexDirection: "column", gap: "6px", marginTop: "4px" }}>
+          {archivos.map((file, idx) => {
+            const esImagen = file.type.startsWith("image/");
+            const previewUrl = esImagen ? URL.createObjectURL(file) : null;
+
+            return (
+              <div
+                key={idx}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  padding: "8px 12px",
+                  background: "#ffffff",
+                  borderRadius: "8px",
+                  border: "1px solid var(--panel-linea, #E4E4E4)",
+                  fontSize: "0.82rem",
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: "10px", overflow: "hidden" }}>
+                  {esFotoPerfil && previewUrl ? (
+                    <img
+                      src={previewUrl}
+                      alt="Vista previa"
+                      style={{ width: "36px", height: "36px", borderRadius: "50%", objectFit: "cover", border: "2px solid #5000BA" }}
+                    />
+                  ) : (
+                    <Paperclip size={16} color="var(--violeta, #5000BA)" style={{ flexShrink: 0 }} />
+                  )}
+                  <div style={{ overflow: "hidden" }}>
+                    <strong style={{ display: "block", color: "#111111", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap" }}>
+                      {file.name}
+                    </strong>
+                    <span style={{ fontSize: "0.72rem", color: "var(--panel-gris, #737373)" }}>
+                      {formatoTamanoArchivo(file.size)}
+                    </span>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => eliminarArchivo(idx)}
+                  style={{
+                    background: "rgba(220, 38, 38, 0.08)",
+                    color: "#DC2626",
+                    border: "none",
+                    borderRadius: "6px",
+                    padding: "6px",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                  title="Quitar archivo"
+                >
+                  <Trash2 size={15} />
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
 }
 
 // Componente Editor HTML para "Cuéntanos por qué quieres unirte a la red"
@@ -167,7 +341,7 @@ const btnToolStyle: React.CSSProperties = {
   color: "#333333",
 };
 
-// Componente Selector Multiselección Avanzado con "Otros" (Editable) para Web & Mobile
+// Componente Selector Multiselección Ajustado (Resuelve la alineación vertical de checkboxes)
 function SelectorMultiSeleccion({
   opciones,
   seleccionados,
@@ -210,7 +384,6 @@ function SelectorMultiSeleccion({
     onCambiar(seleccionados.filter((x) => x !== item));
   };
 
-  // Mapear IDs o texto libre a nombres legibles
   const obtenerNombreLegible = (idOrText: string) => {
     const coincidencia = opciones.find((o) => o.id === idOrText);
     return coincidencia ? coincidencia.nombre : idOrText;
@@ -234,7 +407,7 @@ function SelectorMultiSeleccion({
       >
         {seleccionados.length === 0 ? (
           <span style={{ fontSize: "0.82rem", color: "var(--panel-gris, #737373)", fontStyle: "italic" }}>
-            Ninguno seleccionado. Haz clic abajo para agregar...
+            Ninguno seleccionado. Haz clic abajo para desplegar opciones...
           </span>
         ) : (
           seleccionados.map((item) => (
@@ -289,7 +462,7 @@ function SelectorMultiSeleccion({
         >
           <span>Seleccionar ({seleccionados.length} seleccionados)</span>
           <span style={{ fontSize: "0.75rem", color: "var(--violeta, #5000BA)", fontWeight: 800 }}>
-            {abierto ? "▲ Cerrar" : "▼ Desplegar Opciones"}
+            {abierto ? "▲ Cerrar Opciones" : "▼ Desplegar Opciones"}
           </span>
         </button>
 
@@ -325,33 +498,54 @@ function SelectorMultiSeleccion({
               />
             </div>
 
-            {/* Lista de Opciones */}
+            {/* Lista de Opciones Estilizada Horizontalmente (Sin Checkbox Centrado Vertical) */}
             <div style={{ overflowY: "auto", display: "flex", flexDirection: "column", gap: "4px", maxHeight: "180px", paddingRight: "4px" }}>
               {filtradas.map((o) => {
                 const checked = seleccionados.includes(o.id);
                 return (
                   <label
                     key={o.id}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      alternarId(o.id);
+                    }}
                     style={{
                       display: "flex",
+                      flexDirection: "row",
                       alignItems: "center",
+                      justifyContent: "flex-start",
                       gap: "10px",
-                      padding: "8px 10px",
-                      borderRadius: "6px",
-                      background: checked ? "var(--violeta-suave, #F3E8FF)" : "transparent",
+                      padding: "8px 12px",
+                      borderRadius: "8px",
+                      background: checked ? "#F3E8FF" : "#FFFFFF",
+                      border: checked ? "1px solid #5000BA" : "1px solid #E4E4E4",
                       cursor: "pointer",
-                      fontSize: "0.84rem",
-                      fontWeight: checked ? 800 : 500,
-                      color: checked ? "var(--violeta, #5000BA)" : "var(--negro, #111111)",
+                      fontSize: "0.86rem",
+                      fontWeight: checked ? 700 : 500,
+                      color: checked ? "#5000BA" : "#111111",
+                      textAlign: "left",
+                      margin: 0,
+                      width: "100%",
+                      boxSizing: "border-box",
                     }}
                   >
-                    <input
-                      type="checkbox"
-                      checked={checked}
-                      onChange={() => alternarId(o.id)}
-                      style={{ accentColor: "var(--violeta, #5000BA)", width: "16px", height: "16px" }}
-                    />
-                    <span>{o.nombre}</span>
+                    <span
+                      style={{
+                        width: "18px",
+                        height: "18px",
+                        borderRadius: "4px",
+                        border: checked ? "2px solid #5000BA" : "1.5px solid #A0A0A0",
+                        background: checked ? "#5000BA" : "#FFFFFF",
+                        color: "#FFFFFF",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        flexShrink: 0,
+                      }}
+                    >
+                      {checked && <Check size={13} strokeWidth={3} />}
+                    </span>
+                    <span style={{ flex: 1, textAlign: "left" }}>{o.nombre}</span>
                   </label>
                 );
               })}
@@ -435,9 +629,9 @@ export function FormularioSolicitudSocio({ usuarioId, materias, provincias }: Pr
   const [materiaIds, setMateriaIds] = useState<string[]>([]);
   const [provinciaIds, setProvinciaIds] = useState<string[]>([]);
   const [experiencia, setExperiencia] = useState<DatosExperienciaLaboral[]>([]);
-  const [certificados, setCertificados] = useState<File[]>([]);
-  const [tituloArchivo, setTituloArchivo] = useState<File | null>(null);
-  const [matriculaArchivo, setMatriculaArchivo] = useState<File | null>(null);
+  const [fotoPerfilArchivos, setFotoPerfilArchivos] = useState<File[]>([]);
+  const [tituloArchivos, setTituloArchivos] = useState<File[]>([]);
+  const [cvYCertificados, setCvYCertificados] = useState<File[]>([]);
   const [senescytVerificado, setSenescytVerificado] = useState(false);
   const [declaracion, setDeclaracion] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -486,10 +680,15 @@ export function FormularioSolicitudSocio({ usuarioId, materias, provincias }: Pr
     }
 
     const solicitudId = resultado.data.solicitudId;
+
+    // Subida de archivos con control de formato y tamaño
+    const fotoArchivo = fotoPerfilArchivos[0];
+    const tituloArchivo = tituloArchivos[0];
+
     const subidas = await Promise.all([
+      fotoArchivo ? subirDocumento(solicitudId, "foto_perfil", fotoArchivo) : null,
       tituloArchivo ? subirDocumento(solicitudId, "titulo", tituloArchivo) : null,
-      matriculaArchivo ? subirDocumento(solicitudId, "matricula", matriculaArchivo) : null,
-      ...certificados.map((archivo) => subirDocumento(solicitudId, "otro", archivo)),
+      ...cvYCertificados.map((archivo) => subirDocumento(solicitudId, "cv", archivo)),
     ]);
     const fallidas = subidas.filter((s): s is { ok: false; error: string } => s !== null && !s.ok);
 
@@ -507,14 +706,29 @@ export function FormularioSolicitudSocio({ usuarioId, materias, provincias }: Pr
   return (
     <form className="form-panel form-solicitud-socio" onSubmit={onSubmit}>
       <h2>Datos profesionales</h2>
-      <label>
+
+      {/* Campo Foto para Perfil Profesional */}
+      <CampoSubidaArchivo
+        etiqueta="Foto para el Perfil Profesional (Requerido)"
+        subtitulo="Fotografía clara tipo carné o retrato profesional para tu perfil público en la red"
+        aceptar="image/jpeg,image/png,image/webp"
+        multiple={false}
+        archivos={fotoPerfilArchivos}
+        onCambiar={setFotoPerfilArchivos}
+        icono={Camera}
+        esFotoPerfil={true}
+      />
+
+      <label style={{ marginTop: "16px" }}>
         Cédula de Identidad
         <input value={cedula} onChange={(e) => setCedula(e.target.value)} required maxLength={13} placeholder="ej. 1714898226" />
       </label>
+
       <label>
         Matrícula profesional (Foro de Abogados)
         <input value={matriculaProfesional} onChange={(e) => setMatriculaProfesional(e.target.value)} required placeholder="ej. 17-2020-89" />
       </label>
+
       <label>
         Universidad de graduación
         <input value={universidad} onChange={(e) => setUniversidad(e.target.value)} required placeholder="ej. Universidad Central del Ecuador" />
@@ -602,15 +816,16 @@ export function FormularioSolicitudSocio({ usuarioId, materias, provincias }: Pr
         + Agregar experiencia
       </button>
 
-      <label style={{ marginTop: "12px" }}>
-        Certificados o cartas de referencia (opcional, PDF/imagen/Word, máx {TAMANO_MAXIMO_MB}MB c/u)
-        <input
-          type="file"
-          multiple
-          accept={TIPOS_ACEPTADOS}
-          onChange={(e) => setCertificados(Array.from(e.target.files ?? []))}
-        />
-      </label>
+      {/* Campo Hoja de Vida (CV), Certificados o cartas de referencia */}
+      <CampoSubidaArchivo
+        etiqueta="Hoja de Vida (CV), Certificados o cartas de referencia (opcional)"
+        subtitulo="Adjunta tu CV actualizado, certificados de capacitación o cartas de recomendación en formato PDF, Word o imagen (máx 10 MB cada uno)"
+        aceptar={TIPOS_ACEPTADOS}
+        multiple={true}
+        archivos={cvYCertificados}
+        onCambiar={setCvYCertificados}
+        icono={FileText}
+      />
 
       <h2>Verificación asistida de título</h2>
       <p className="aviso-borrador">
@@ -625,18 +840,19 @@ export function FormularioSolicitudSocio({ usuarioId, materias, provincias }: Pr
         </a>
       </label>
 
-      <label>
-        Documento del título (PDF o imagen, máx {TAMANO_MAXIMO_MB}MB)
-        <input type="file" accept={TIPOS_ACEPTADOS} onChange={(e) => setTituloArchivo(e.target.files?.[0] ?? null)} />
-      </label>
-
-      <label>
-        Documento o Carné de la matrícula (PDF o imagen, máx {TAMANO_MAXIMO_MB}MB)
-        <input type="file" accept={TIPOS_ACEPTADOS} onChange={(e) => setMatriculaArchivo(e.target.files?.[0] ?? null)} />
-      </label>
+      {/* Documento del Título */}
+      <CampoSubidaArchivo
+        etiqueta="Documento del Título Profesional (Requerido)"
+        subtitulo="Copia digital del título universitario registrado en la SENESCYT (PDF o imagen, máx 10 MB)"
+        aceptar={TIPOS_ACEPTADOS}
+        multiple={false}
+        archivos={tituloArchivos}
+        onCambiar={setTituloArchivos}
+        icono={FileText}
+      />
 
       {/* Sección de Términos de Servicio y Autorización de Verificación LOPDP */}
-      <div style={{ background: "rgba(80, 0, 186, 0.05)", border: "1px solid rgba(80, 0, 186, 0.2)", borderRadius: "12px", padding: "16px", marginTop: "20px" }}>
+      <div style={{ background: "rgba(80, 0, 186, 0.05)", border: "1px solid rgba(80, 0, 186, 0.2)", borderRadius: "12px", padding: "16px", marginTop: "24px" }}>
         <label className="campo-check" style={{ display: "flex", alignItems: "flex-start", gap: "10px", cursor: "pointer" }}>
           <input
             type="checkbox"
