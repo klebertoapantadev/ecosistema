@@ -14,26 +14,6 @@ interface Props {
   negocio: string;
 }
 
-export function PanelAdministrarModular({ negocio }: Props) {
-  const [favoritos, setFavoritos] = useState<string[]>([]);
-  const [widgetActivo, setWidgetActivo] = useState<string | null>(null);
-  const [widgetEditar, setWidgetEditar] = useState<{
-    id: string;
-    titulo: string;
-    subtitulo: string;
-    iconoKey?: string;
-    requiereMfa?: boolean;
-    tiempoMfaMinutos?: number;
-  } | null>(null);
-
-  const [widgetMfaPendiente, setWidgetMfaPendiente] = useState<{
-    id: string;
-    titulo: string;
-    tiempoMinutos: number;
-  } | null>(null);
-
-  const { getWidgetInfo, guardarWidget, obtenerIconoComponente } = useCustomWidgets();
-
 export interface ModuloAdminDef {
   id: string;
   titulo: string;
@@ -267,9 +247,22 @@ function VisorAuditoriaWidget() {
 export function PanelAdministrarModular({ negocio }: Props) {
   const [favoritos, setFavoritos] = useState<string[]>(["gestion_usuarios", "socios"]);
   const [widgetActivo, setWidgetActivo] = useState<string | null>(null);
-  const [widgetEditar, setWidgetEditar] = useState<{ id: string; titulo: string; subtitulo: string } | null>(null);
+  const [widgetEditar, setWidgetEditar] = useState<{
+    id: string;
+    titulo: string;
+    subtitulo: string;
+    iconoKey?: string;
+    requiereMfa?: boolean;
+    tiempoMfaMinutos?: number;
+  } | null>(null);
 
-  const { getWidgetInfo, guardarWidget } = useCustomWidgets();
+  const [widgetMfaPendiente, setWidgetMfaPendiente] = useState<{
+    id: string;
+    titulo: string;
+    tiempoMinutos: number;
+  } | null>(null);
+
+  const { getWidgetInfo, guardarWidget, obtenerIconoComponente } = useCustomWidgets();
 
   // Leer modulo inicial desde localStorage o URL
   useEffect(() => {
