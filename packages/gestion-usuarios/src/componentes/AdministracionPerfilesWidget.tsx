@@ -5,9 +5,49 @@ import {
   ShieldCheck, Users,
   CheckCircle2, ChevronDown, ChevronUp, Search, Sliders,
   Plus, Check, LayoutGrid, Layers, ExternalLink, PanelLeft, Eye, ArrowRight, ArrowLeft,
-  Palette, UserCheck, X, Sparkles, Trash2, Star, Move, Copy, Package, GripVertical
+  Palette, UserCheck, X, Sparkles, Trash2, Star, Move, Copy, Package, GripVertical,
+  Home, User, Settings, Shield, Folder, Wrench, Building, Briefcase, Bell, Database,
+  Activity, Globe, Lock, KeyRound, CheckSquare, Terminal, Zap, Pencil, LogOut, LogIn,
+  Forward, Inbox, type LucideIcon
 } from "lucide-react";
 import { guardarPerfil, guardarWidget, guardarAsignacionWidget } from "../acciones";
+
+export const CATALOGO_ICONOS_PANEL: Record<string, LucideIcon> = {
+  Home,
+  User,
+  Settings,
+  Shield,
+  Sliders,
+  Folder,
+  Wrench,
+  Building,
+  Briefcase,
+  Bell,
+  Database,
+  Activity,
+  Globe,
+  Sparkles,
+  Lock,
+  KeyRound,
+  CheckSquare,
+  Terminal,
+  Zap,
+  Eye,
+  Search,
+  Pencil,
+  LogOut,
+  LogIn,
+  Forward,
+  Inbox,
+  Layers,
+  LayoutGrid,
+  PanelLeft,
+};
+
+export function IconoPanelDinamico({ nombreIcono, color, size = 18 }: { nombreIcono?: string; color?: string; size?: number }) {
+  const IconoComp = (nombreIcono && CATALOGO_ICONOS_PANEL[nombreIcono]) || PanelLeft;
+  return <IconoComp size={size} color={color} />;
+}
 
 export interface TemaPerfilDef {
   colorPrimario: string;
@@ -94,6 +134,7 @@ export interface PanelSidebarDef {
   nombre: string;
   ruta: string;
   descripcion: string;
+  icono?: string;
   requiereMfa?: boolean;
   esPersonalizado?: boolean;
 }
@@ -115,6 +156,7 @@ const PANELES_SIDEBAR_INICIALES: PanelSidebarDef[] = [
     nombre: "Inicio (Tablero Principal)",
     ruta: "/panel",
     descripcion: "Pantalla principal que agrupa accesos rápidos y módulos según el rol del usuario.",
+    icono: "Home",
     requiereMfa: false
   },
   {
@@ -122,6 +164,7 @@ const PANELES_SIDEBAR_INICIALES: PanelSidebarDef[] = [
     nombre: "Mi Cuenta & Identidad",
     ruta: "/panel/cuenta",
     descripcion: "Perfil de usuario, conmutador de rol ('Ver como') e historial de accesos.",
+    icono: "User",
     requiereMfa: false
   },
   {
@@ -129,6 +172,7 @@ const PANELES_SIDEBAR_INICIALES: PanelSidebarDef[] = [
     nombre: "Configuración & Gobernanza",
     ruta: "/panel/configuracion",
     descripcion: "Parámetros del negocio, servidor SMTP, perfiles y alertas de notificaciones.",
+    icono: "Settings",
     requiereMfa: false
   },
   {
@@ -136,6 +180,7 @@ const PANELES_SIDEBAR_INICIALES: PanelSidebarDef[] = [
     nombre: "Administrar (Consola de Gestión)",
     ruta: "/panel/administrar",
     descripcion: "Consola de administración protegida para usuarios, socios, solicitudes, notificaciones y auditoría.",
+    icono: "Shield",
     requiereMfa: true
   }
 ];
@@ -579,12 +624,14 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
     setAccionTransferir("mover");
   };
 
-  // Modal Crear Nuevo Panel
+  // Modal Crear y Editar Panel
   const [mostrarModalPanel, setMostrarModalPanel] = useState(false);
+  const [panelEditarModal, setPanelEditarModal] = useState<PanelSidebarDef | null>(null);
   const [nuevoPanel, setNuevoPanel] = useState({
     nombre: "",
     ruta: "/panel/",
     descripcion: "",
+    icono: "Wrench",
     requiereMfa: false
   });
 
@@ -633,7 +680,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
     }));
 
     setMostrarModalPanel(false);
-    setNuevoPanel({ nombre: "", ruta: "/panel/", descripcion: "", requiereMfa: false });
+    setNuevoPanel({ nombre: "", ruta: "/panel/", descripcion: "", icono: "Wrench", requiereMfa: false });
     setMensajeExito(`Panel '${nuevoPanel.nombre}' creado exitosamente.`);
     setTimeout(() => setMensajeExito(null), 3000);
   };
@@ -2241,6 +2288,42 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
               />
             </div>
 
+            {/* SELECTOR DE ÍCONO DE SIDEBAR */}
+            <div style={{ marginBottom: "16px" }}>
+              <label style={{ fontSize: "0.82rem", fontWeight: 800, display: "block", marginBottom: "6px", color: "var(--violeta, #5000BA)" }}>
+                Seleccionar Ícono para Visualizar en el Sidebar:
+              </label>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(75px, 1fr))", gap: "8px", maxHeight: "150px", overflowY: "auto", border: "1px solid #E4E4E4", borderRadius: "8px", padding: "8px", background: "#ffffff" }}>
+                {Object.keys(CATALOGO_ICONOS_PANEL).map(iconKey => {
+                  const esSeleccionado = nuevoPanel.icono === iconKey;
+                  return (
+                    <button
+                      key={iconKey}
+                      type="button"
+                      onClick={() => setNuevoPanel({ ...nuevoPanel, icono: iconKey })}
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: "4px",
+                        padding: "8px 4px",
+                        borderRadius: "6px",
+                        border: esSeleccionado ? "2px solid #5000BA" : "1px solid #E4E4E4",
+                        background: esSeleccionado ? "#F3E8FF" : "#ffffff",
+                        cursor: "pointer"
+                      }}
+                    >
+                      <IconoPanelDinamico nombreIcono={iconKey} color={esSeleccionado ? "#5000BA" : "#555555"} size={18} />
+                      <span style={{ fontSize: "0.64rem", fontWeight: esSeleccionado ? 800 : 500, color: esSeleccionado ? "#5000BA" : "#666", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "65px" }}>
+                        {iconKey}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
             {/* CHECKBOX REQUERIR MFA TOTP (PLT-002) */}
             <div style={{ marginBottom: "20px", background: "var(--panel-papel, #F7F6FA)", padding: "12px", borderRadius: "8px", border: "1px solid var(--panel-linea, #E4E4E4)" }}>
               <label style={{ fontSize: "0.82rem", fontWeight: 700, display: "flex", alignItems: "center", gap: "8px", cursor: "pointer", color: "#111" }}>
@@ -2252,14 +2335,124 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                 />
                 🔒 Requerir Autenticación Multifactor MFA (TOTP) al ingresar (PLT-002)
               </label>
-              <p style={{ fontSize: "0.74rem", color: "var(--panel-gris, #737373)", margin: "4px 0 0 26px" }}>
-                Al activar esta opción, los usuarios deberán verificar su código TOTP para acceder a este panel.
-              </p>
             </div>
 
             <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
               <button type="button" onClick={() => setMostrarModalPanel(false)} style={{ padding: "8px 16px", borderRadius: "6px", border: "1px solid var(--panel-linea, #E4E4E4)", background: "#fff", cursor: "pointer" }}>Cancelar</button>
-              <button type="submit" style={{ padding: "8px 16px", borderRadius: "6px", border: "none", background: "var(--violeta, #5000BA)", color: "#fff", fontWeight: 700, cursor: "pointer" }}>Guardar Panel</button>
+              <button type="submit" style={{ padding: "8px 16px", borderRadius: "6px", border: "none", background: "var(--violeta, #5000BA)", color: "#fff", fontWeight: 700, cursor: "pointer" }}>Crear Panel</button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* MODAL CONFIGURAR ÍCONO DE SIDEBAR Y DETALLES DEL PANEL */}
+      {panelEditarModal && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1200, padding: "20px" }}>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              setPanelesSidebar(panelesSidebar.map(p => p.id === panelEditarModal.id ? panelEditarModal : p));
+              setPanelEditarModal(null);
+              setMensajeExito(`Panel '${panelEditarModal.nombre}' e ícono '${panelEditarModal.icono || "PanelLeft"}' actualizados.`);
+              setTimeout(() => setMensajeExito(null), 3500);
+            }}
+            style={{ background: "#ffffff", borderRadius: "18px", padding: "24px", maxWidth: "560px", width: "100%", boxShadow: "0 20px 50px rgba(0,0,0,0.3)" }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px", borderBottom: "1px solid #E4E4E4", paddingBottom: "12px" }}>
+              <h3 style={{ fontSize: "1.05rem", fontWeight: 800, margin: 0, color: "var(--violeta, #5000BA)", display: "flex", alignItems: "center", gap: "8px" }}>
+                <IconoPanelDinamico nombreIcono={panelEditarModal.icono} color="var(--violeta, #5000BA)" size={20} /> Configurar Ícono & Panel: {panelEditarModal.nombre}
+              </h3>
+              <button type="button" onClick={() => setPanelEditarModal(null)} style={{ background: "#ffffff", border: "1px solid #E4E4E4", borderRadius: "50%", width: "32px", height: "32px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* Selector de Ícono para el Sidebar */}
+            <div style={{ marginBottom: "16px" }}>
+              <label style={{ fontSize: "0.82rem", fontWeight: 800, display: "block", marginBottom: "6px", color: "var(--violeta, #5000BA)" }}>
+                Seleccionar Ícono para Visualizar en el Sidebar:
+              </label>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(75px, 1fr))", gap: "8px", maxHeight: "160px", overflowY: "auto", border: "1px solid #E4E4E4", borderRadius: "8px", padding: "8px" }}>
+                {Object.keys(CATALOGO_ICONOS_PANEL).map(iconKey => {
+                  const esSeleccionado = panelEditarModal.icono === iconKey;
+                  return (
+                    <button
+                      key={iconKey}
+                      type="button"
+                      onClick={() => setPanelEditarModal({ ...panelEditarModal, icono: iconKey })}
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: "4px",
+                        padding: "8px 4px",
+                        borderRadius: "6px",
+                        border: esSeleccionado ? "2px solid #5000BA" : "1px solid #E4E4E4",
+                        background: esSeleccionado ? "#F3E8FF" : "#ffffff",
+                        cursor: "pointer"
+                      }}
+                    >
+                      <IconoPanelDinamico nombreIcono={iconKey} color={esSeleccionado ? "#5000BA" : "#555555"} size={18} />
+                      <span style={{ fontSize: "0.64rem", fontWeight: esSeleccionado ? 800 : 500, color: esSeleccionado ? "#5000BA" : "#666", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "65px" }}>
+                        {iconKey}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Nombre del Panel */}
+            <div style={{ marginBottom: "12px" }}>
+              <label style={{ fontSize: "0.8rem", fontWeight: 700, display: "block", marginBottom: "4px" }}>Nombre del Panel:</label>
+              <input
+                type="text"
+                required
+                value={panelEditarModal.nombre}
+                onChange={e => setPanelEditarModal({ ...panelEditarModal, nombre: e.target.value })}
+                style={{ width: "100%", padding: "8px 12px", borderRadius: "6px", border: "1px solid #E4E4E4", fontSize: "0.86rem", fontWeight: 700 }}
+              />
+            </div>
+
+            {/* Ruta del Panel */}
+            <div style={{ marginBottom: "12px" }}>
+              <label style={{ fontSize: "0.8rem", fontWeight: 700, display: "block", marginBottom: "4px" }}>Ruta de Navegación:</label>
+              <input
+                type="text"
+                required
+                value={panelEditarModal.ruta}
+                onChange={e => setPanelEditarModal({ ...panelEditarModal, ruta: e.target.value })}
+                style={{ width: "100%", padding: "8px 12px", borderRadius: "6px", border: "1px solid #E4E4E4", fontSize: "0.84rem" }}
+              />
+            </div>
+
+            {/* Descripción */}
+            <div style={{ marginBottom: "16px" }}>
+              <label style={{ fontSize: "0.8rem", fontWeight: 700, display: "block", marginBottom: "4px" }}>Descripción del Panel:</label>
+              <textarea
+                value={panelEditarModal.descripcion}
+                onChange={e => setPanelEditarModal({ ...panelEditarModal, descripcion: e.target.value })}
+                style={{ width: "100%", padding: "8px 12px", borderRadius: "6px", border: "1px solid #E4E4E4", minHeight: "50px", fontSize: "0.82rem" }}
+              />
+            </div>
+
+            {/* Requerir MFA */}
+            <div style={{ marginBottom: "18px", background: "#F7F6FA", padding: "10px 12px", borderRadius: "8px", border: "1px solid #E4E4E4" }}>
+              <label style={{ fontSize: "0.82rem", fontWeight: 700, display: "flex", alignItems: "center", gap: "8px", cursor: "pointer" }}>
+                <input
+                  type="checkbox"
+                  checked={!!panelEditarModal.requiereMfa}
+                  onChange={e => setPanelEditarModal({ ...panelEditarModal, requiereMfa: e.target.checked })}
+                  style={{ width: "16px", height: "16px", accentColor: "#DC2626" }}
+                />
+                🔒 Requerir MFA TOTP al ingresar a este panel
+              </label>
+            </div>
+
+            <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
+              <button type="button" onClick={() => setPanelEditarModal(null)} style={{ padding: "8px 16px", borderRadius: "6px", border: "1px solid #E4E4E4", background: "#fff", cursor: "pointer" }}>Cancelar</button>
+              <button type="submit" style={{ padding: "8px 18px", borderRadius: "6px", border: "none", background: "var(--violeta, #5000BA)", color: "#fff", fontWeight: 800, cursor: "pointer" }}>Guardar Ajustes</button>
             </div>
           </form>
         </div>
