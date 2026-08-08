@@ -1,11 +1,12 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { UserCog, Users, ClipboardList, Bell, Shield, ChevronRight, Star, Lock, X, Eye, Pencil, type LucideIcon } from "lucide-react";
+import { UserCog, Users, ClipboardList, Bell, Shield, ChevronRight, Star, Lock, X, Eye, Pencil, FileText, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { crearClienteNavegador } from "@eco/supabase";
 import { AdministracionPerfilesWidget } from "@eco/gestion-usuarios/componentes/AdministracionPerfilesWidget";
 import { EmisionNotificacionesWidget } from "@eco/notificaciones";
+import { GestionTerminosConsentimientosWidget } from "@eco/identidad/componentes/GestionTerminosConsentimientosWidget";
 import { TablaAuditoria } from "../auditoria/TablaAuditoria";
 import type { RegistroAuditoria } from "@eco/auditoria";
 import { useCustomWidgets } from "../gestorTitulosWidgets";
@@ -62,6 +63,15 @@ const MODULOS_ADMIN: ModuloAdminDef[] = [
     icono: Bell,
     colorIcono: "#D97706",
     categoria: "Comunicación"
+  },
+  {
+    id: "gestion_terminos_consentimientos",
+    titulo: "Términos, Consentimientos & LOPDP",
+    subtitulo: "Configuración de cláusulas LOPDP, notificaciones, WhatsApp y protección de datos",
+    ruta: "/panel/administrar?widget=gestion_terminos_consentimientos",
+    icono: FileText,
+    colorIcono: "#5000BA",
+    categoria: "Gobernanza & Legales"
   },
   {
     id: "auditoria",
@@ -434,6 +444,13 @@ export function PanelAdministrarModular({ negocio }: Props) {
             {widgetActivo === "emision_notificaciones" && (
               <div style={{ maxWidth: "960px", margin: "0 auto" }}>
                 <EmisionNotificacionesWidget negocio={negocio} />
+              </div>
+            )}
+
+            {/* 4.5. GESTIÓN DE TÉRMINOS, CONSENTIMIENTOS & LOPDP */}
+            {widgetActivo === "gestion_terminos_consentimientos" && (
+              <div style={{ maxWidth: "960px", margin: "0 auto" }}>
+                <GestionTerminosConsentimientosWidget negocio={negocio} />
               </div>
             )}
 

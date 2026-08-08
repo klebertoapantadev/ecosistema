@@ -576,3 +576,103 @@ export async function activarNuevoMfaTotp(secretKey: string, codigoTotp: string)
   return { ok: true, data: undefined };
 }
 
+// ═══════════════════════════════════════════════════════════════════
+// PLT-001 / PLT-008: WIDGET ADMINISTRATIVO DE GESTIÓN DE TÉRMINOS Y CONSENTIMIENTOS
+// ═══════════════════════════════════════════════════════════════════
+
+export interface ConfigTerminosCategoria {
+  categoria: string;
+  version: string;
+  fechaVigencia: string;
+  requiereAceptacionObligatoria: boolean;
+  contenidoMarkdown: string;
+  actualizadoEn: string;
+}
+
+export async function obtenerConfiguracionTerminos(
+  negocio: string = "tranqi"
+): Promise<Resultado<Record<string, ConfigTerminosCategoria>>> {
+  const supabase = await crearClienteServidor();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "Sesión no encontrada" };
+
+  // Buscar configuración persistida en base de datos
+  const { data: usuarioExistente } = await supabase
+    .schema("comun_seguridad")
+    .from("seg_usuario")
+    .select("usu_detalle_usuario")
+    .eq("usu_id", user.id)
+    .maybeSingle();
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const detalle = (usuarioExistente?.usu_detalle_usuario as Record<string, any>) || {};
+  const terminosGuardados = detalle.configuracion_terminos?.[negocio] || {};
+
+  return {
+    ok: true,
+    data: terminosGuardados,
+  };
+}
+
+export async function guardarConfiguracionTerminos(datos: {
+  negocio: string;
+  categoria: string;
+  version: string;
+  fechaVigencia: string;
+  requiereAceptacionObligatoria: boolean;
+  contenidoMarkdown: string;
+}): Promise<Resultado<{ mensaje: string }>> {
+  const supabase = await crearClienteServidor();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "Sesión no encontrada" };
+
+  const { data: usuarioExistente } = await supabase
+    .schema("comun_seguridad")
+    .from("seg_usuario")
+    .select("usu_detalle_usuario")
+    .eq("usu_id", user.id)
+    .maybeSingle();
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const detalleActual = (usuarioExistente?.usu_detalle_usuario as Record<string, any>) || {};
+  const configActual = detalleActual.configuracion_terminos || {};
+  const configNegocioActual = configActual[datos.negocio] || {};
+
+  const nuevaCategoriaConfig: ConfigTerminosCategoria = {
+    categoria: datos.categoria,
+    version: datos.version.trim(),
+    fechaVigencia: datos.fechaVigencia,
+    requiereAceptacionObligatoria: datos.requiereAceptacionObligatoria,
+    contenidoMarkdown: datos.contenidoMarkdown,
+    actualizadoEn: new Date().toISOString(),
+  };
+
+  const nuevoDetalle = {
+    ...detalleActual,
+    configuracion_terminos: {
+      ...configActual,
+      [datos.negocio]: {
+        ...configNegocioActual,
+        [datos.categoria]: nuevaCategoriaConfig,
+      },
+    },
+  };
+
+  const { error } = await supabase
+    .schema("comun_seguridad")
+    .from("seg_usuario")
+    .update({
+      usu_detalle_usuario: nuevoDetalle,
+      usu_actualizado_en: new Date().toISOString(),
+    })
+    .eq("usu_id", user.id);
+
+  if (error) return { ok: false, error: error.message };
+
+  return {
+    ok: true,
+    data: { mensaje: `✅ Términos y consentimientos de '${datos.categoria}' guardados correctamente.` },
+  };
+}
+
+

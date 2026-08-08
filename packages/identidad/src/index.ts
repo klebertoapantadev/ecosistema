@@ -19,6 +19,8 @@ export {
   verificarYResetearMfa,
   activarNuevoMfaTotp,
   obtenerEstadoMfa,
+  obtenerConfiguracionTerminos,
+  guardarConfiguracionTerminos,
 } from "./acciones";
 
 export {
@@ -53,3 +55,4 @@ export { FormularioDatosFacturacion } from "./componentes/FormularioDatosFactura
 export { EliminarCuenta } from "./componentes/EliminarCuenta";
 export { HistorialAccesos } from "./componentes/HistorialAccesos";
 export { WidgetConfiguracionMfa } from "./componentes/WidgetConfiguracionMfa";
+export { GestionTerminosConsentimientosWidget } from "./componentes/GestionTerminosConsentimientosWidget";
