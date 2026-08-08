@@ -511,6 +511,12 @@ Pantalla de configuración del negocio (identidad legal + datos de `PLT-008`) y 
     - **Preservación de Intención en Google OAuth & Formularios:** Cuando un profesional inicia su registro o inicio de sesión desde el enlace *"Únete al equipo Jurídico"*, la intención `intencion=abogado` y el destino `/panel/solicitud-socio` se preservan intactos a través de las cookies de sesión y los parámetros de callback de OAuth.
     - **Pantalla de Bienvenida Adaptada:** La pantalla de onboarding `/bienvenida` reconoce automáticamente la intención del abogado desplegando un saludo personalizado (`¡Bienvenido(a), Doctor(a)!`).
     - **Redirección Directa al Formulario de Socio:** Tras confirmar los nombres y apellidos, la plataforma redirige directamente al formulario de registro profesional (`/panel/solicitud-socio`), activando automáticamente el modo de rol Abogado sin desviarlo al tablero genérico de cliente.
+19. **Formulario de Registro de Socio Abogado Mejorado (`FormularioSolicitudSocio.tsx`):**
+    - **Placeholder de Teléfono Corregido:** Corregido el placeholder de teléfono a un formato válido móvil (`ej. 099 123 4567 o +593 99 123 4567`) evitando mostrar la dirección de correo del usuario.
+    - **Editor HTML Enriquecido:** Se incluyó un editor Rich Text en formato HTML con barra de herramientas (`Negrita`, `Cursiva`, `Subrayado`, `Viñetas`, `Encabezado h3`, `Enlace` y conmutación a `Código HTML`) para la reseña profesional.
+    - **Controles Multiselección con Opción 'Otros' (Editable):** Selectores desplegables adaptables a Web y Móvil con filtro de búsqueda en vivo y opción `✨ Añadir otra especialidad / ubicación...` para agregar entradas personalizadas.
+    - **Enlace Oficial de SENESCYT:** Actualizado el enlace oficial de verificación de títulos a `https://cdn.ecuadorlegalonline.com/modulo/senescyt/consulta-de-titulos.htm`.
+    - **Términos de Servicio & Autorización de Verificación LOPDP:** Reemplazada la casilla manual por un bloque formal de aceptación de Términos de Servicio y Autorización expresa para consultar registros en SENESCYT y Foro de Abogados conforme a la Ley Orgánica de Protección de Datos Personales (LOPDP).
 
 ### Criterios de Aceptación (Gherkin)
 * **Escenario:** Gestión de usuarios por Administrador de Negocio
