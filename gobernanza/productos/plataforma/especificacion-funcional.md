@@ -521,6 +521,8 @@ Pantalla de configuración del negocio (identidad legal + datos de `PLT-008`) y 
     - **Acceso Continuo a Solicitudes Incompletas:** Si un usuario registrado tiene una solicitud en curso (o sin enviar), el widget de solicitud permanece activo en su panel y menú lateral para retomar y completar el proceso en cualquier momento.
     - **Edición y Envío de Actualizaciones:** Si la solicitud ya fue enviada (estado `enviada` o `en_revision`), el formulario prellena automáticamente toda la información (cédula, universidad, teléfono, especialidades, provincias y experiencia) permitiendo al usuario realizar modificaciones o adjuntar nuevos archivos/fotos y enviar la actualización (`Guardar Cambios y Enviar Actualización`).
     - **Ocultamiento Automático tras Aprobación:** Cuando la solicitud es APROBADA (`aceptada`), la plataforma desactiva/oculta automáticamente el widget de postulación del panel y sidebar, y despliega una tarjeta de confirmación de acreditación exitosa como Socio Abogado.
+21. **Diseño Visual Premium del Botón de Registro de Abogados (`FormularioRegistro.tsx`):**
+    - **Estilo de Botón Primario Unificado:** Se actualizó el botón de envío del formulario de registro reemplazando el estilo gris básico del navegador por un botón primario con degradado morado de marca (`linear-gradient(135deg, #5000BA 0%, #3B0088 100%)`), esquinas redondeadas (`10px`), elevación con sombra difusa (`box-shadow`), tipografía en negrita (`700`), respuesta táctil y texto destacado con ícono legal (`⚖️ Registrarme como Abogado`).
 
 ### Criterios de Aceptación (Gherkin)
 * **Escenario:** Gestión de usuarios por Administrador de Negocio
