@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { decidirSolicitud } from "../acciones";
+import { decidirSolicitudSocio } from "../acciones";
 
 export function AccionesSolicitud({ solicitudId }: { solicitudId: string }) {
   const router = useRouter();
@@ -17,7 +17,7 @@ export function AccionesSolicitud({ solicitudId }: { solicitudId: string }) {
     }
     setError(null);
     setEnviando(decision);
-    const resultado = await decidirSolicitud(solicitudId, decision, comentario || undefined);
+    const resultado = await decidirSolicitudSocio({ solicitudId, decision, comentario: comentario || undefined });
     setEnviando(null);
     if (!resultado.ok) {
       setError(resultado.error);
