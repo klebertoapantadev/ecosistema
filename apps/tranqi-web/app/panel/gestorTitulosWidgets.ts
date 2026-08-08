@@ -30,6 +30,14 @@ import {
   Award,
   Terminal,
   Zap,
+  Eye,
+  Search,
+  Send,
+  Save,
+  Pencil,
+  Trash2,
+  FolderTree,
+  GraduationCap,
   type LucideIcon,
 } from "lucide-react";
 
@@ -62,6 +70,14 @@ export const DICCIONARIO_ICONOS_WIDGET: Record<string, { nombre: string; icono: 
   Award: { nombre: "Insignia / Certificados", icono: Award },
   Terminal: { nombre: "Consola / Logs", icono: Terminal },
   Zap: { nombre: "Acción Rápida", icono: Zap },
+  Eye: { nombre: "Ver / Visualizar", icono: Eye },
+  Search: { nombre: "Buscar / Lupa", icono: Search },
+  Send: { nombre: "Envío Correo / Despacho", icono: Send },
+  Save: { nombre: "Guardar / Disco", icono: Save },
+  Pencil: { nombre: "Editar / Lápiz", icono: Pencil },
+  Trash2: { nombre: "Eliminar / Papelera", icono: Trash2 },
+  FolderTree: { nombre: "Grupo / Árbol", icono: FolderTree },
+  GraduationCap: { nombre: "Rol / Sombrero", icono: GraduationCap },
 };
 
 export interface CustomizacionWidget {
