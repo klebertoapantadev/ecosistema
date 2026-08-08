@@ -517,6 +517,10 @@ Pantalla de configuración del negocio (identidad legal + datos de `PLT-008`) y 
     - **Controles Multiselección con Opción 'Otros' (Editable):** Selectores desplegables adaptables a Web y Móvil con filtro de búsqueda en vivo y opción `✨ Añadir otra especialidad / ubicación...` para agregar entradas personalizadas.
     - **Enlace Oficial de SENESCYT:** Actualizado el enlace oficial de verificación de títulos a `https://cdn.ecuadorlegalonline.com/modulo/senescyt/consulta-de-titulos.htm`.
     - **Términos de Servicio & Autorización de Verificación LOPDP:** Reemplazada la casilla manual por un bloque formal de aceptación de Términos de Servicio y Autorización expresa para consultar registros en SENESCYT y Foro de Abogados conforme a la Ley Orgánica de Protección de Datos Personales (LOPDP).
+20. **Ciclo de Vida Dinámico de la Solicitud de Socio Abogado (`/panel/solicitud-socio`):**
+    - **Acceso Continuo a Solicitudes Incompletas:** Si un usuario registrado tiene una solicitud en curso (o sin enviar), el widget de solicitud permanece activo en su panel y menú lateral para retomar y completar el proceso en cualquier momento.
+    - **Edición y Envío de Actualizaciones:** Si la solicitud ya fue enviada (estado `enviada` o `en_revision`), el formulario prellena automáticamente toda la información (cédula, universidad, teléfono, especialidades, provincias y experiencia) permitiendo al usuario realizar modificaciones o adjuntar nuevos archivos/fotos y enviar la actualización (`Guardar Cambios y Enviar Actualización`).
+    - **Ocultamiento Automático tras Aprobación:** Cuando la solicitud es APROBADA (`aceptada`), la plataforma desactiva/oculta automáticamente el widget de postulación del panel y sidebar, y despliega una tarjeta de confirmación de acreditación exitosa como Socio Abogado.
 
 ### Criterios de Aceptación (Gherkin)
 * **Escenario:** Gestión de usuarios por Administrador de Negocio
