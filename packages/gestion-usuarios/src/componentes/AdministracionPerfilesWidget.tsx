@@ -1175,21 +1175,23 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
               const clavesAsignadasBrutas = perfilActualObj?.widgetsAsignadosPorPanel[panel.id] || [];
               const clavesAsignadasPanel = Array.from(new Set(clavesAsignadasBrutas));
 
-              // Obtener las definiciones completas de widgets asignados a este panel (DESDUPLICADAS POR CLAVE)
-              const mapaWidgetsUnicos = new Map<string, WidgetInventarioDef>();
-              inventarioWidgets.forEach(w => {
-                if (clavesAsignadasPanel.includes(w.clave) && !mapaWidgetsUnicos.has(w.clave)) {
-                  mapaWidgetsUnicos.set(w.clave, w);
+              // Mapear exactamente en el orden personalizado registrado en el perfil
+              const widgetsOrdenados: WidgetInventarioDef[] = [];
+              clavesAsignadasPanel.forEach(clave => {
+                const def = inventarioWidgets.find(w => w.clave === clave);
+                if (def && !widgetsOrdenados.some(w => w.clave === clave)) {
+                  widgetsOrdenados.push(def);
                 }
               });
-              const widgetsAsignadosPanel = Array.from(mapaWidgetsUnicos.values());
 
-              // Ordenamiento prioritario: "favoritos" siempre en Posición #1
-              const widgetsOrdenados = [...widgetsAsignadosPanel].sort((a, b) => {
-                if (a.clave === "favoritos") return -1;
-                if (b.clave === "favoritos") return 1;
-                return 0;
-              });
+              // Si es el panel de inicio y contiene "favoritos", mantener "favoritos" en Posición #1
+              if (panel.id === "panel_inicio" && widgetsOrdenados.some(w => w.clave === "favoritos")) {
+                const favIdx = widgetsOrdenados.findIndex(w => w.clave === "favoritos");
+                if (favIdx > 0) {
+                  const [fav] = widgetsOrdenados.splice(favIdx, 1);
+                  if (fav) widgetsOrdenados.unshift(fav);
+                }
+              }
 
               const esDestinoDropOver = panelOverId === panel.id && widgetArrastrado?.panelOrigenId !== panel.id;
 
@@ -1406,16 +1408,13 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                                   border: "1px solid #DDD6FE",
                                   color: "#5000BA",
                                   borderRadius: "6px",
-                                  padding: "5px 8px",
-                                  fontSize: "0.72rem",
-                                  fontWeight: 800,
+                                  padding: "5px 7px",
                                   cursor: "pointer",
                                   display: "flex",
-                                  alignItems: "center",
-                                  gap: "3px"
+                                  alignItems: "center"
                                 }}
                               >
-                                <Move size={13} /> <span className="txt-btn-movil">Mover/Copiar</span>
+                                <Move size={14} />
                               </button>
 
                               {/* Retirar de este Panel */}
