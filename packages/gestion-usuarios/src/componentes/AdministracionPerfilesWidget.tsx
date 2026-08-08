@@ -104,6 +104,7 @@ export interface WidgetInventarioDef {
   descripcion: string;
   categoria: string;
   ruta: string;
+  rutaFisica?: string;
   panelId: string;
   activo: boolean;
 }
@@ -222,6 +223,7 @@ const WIDGETS_INVENTARIO_INICIALES: WidgetInventarioDef[] = [
     descripcion: "Rejilla dinámica de accesos rápidos marcados con estrella.",
     categoria: "Inicio",
     ruta: "/panel",
+    rutaFisica: "/plataforma/SeccionFavoritosInicio.tsx",
     panelId: "panel_inicio",
     activo: true
   },
@@ -231,6 +233,7 @@ const WIDGETS_INVENTARIO_INICIALES: WidgetInventarioDef[] = [
     descripcion: "Conmutador de rol activo asignado para cambiar de perspectiva.",
     categoria: "Identidad",
     ruta: "/panel/cuenta",
+    rutaFisica: "/plataforma/SelectorRolActivo.tsx",
     panelId: "panel_cuenta",
     activo: true
   },
@@ -240,6 +243,7 @@ const WIDGETS_INVENTARIO_INICIALES: WidgetInventarioDef[] = [
     descripcion: "Edición de perfil de usuario y preferencias de contacto.",
     categoria: "Identidad",
     ruta: "/panel/cuenta",
+    rutaFisica: "/identidad/FormularioPerfil.tsx",
     panelId: "panel_cuenta",
     activo: true
   },
@@ -249,6 +253,27 @@ const WIDGETS_INVENTARIO_INICIALES: WidgetInventarioDef[] = [
     descripcion: "Bitácora de inicios de sesión, navegador e IP.",
     categoria: "Seguridad",
     ruta: "/panel/cuenta",
+    rutaFisica: "/identidad/HistorialAccesos.tsx",
+    panelId: "panel_cuenta",
+    activo: true
+  },
+  {
+    clave: "mfa_seguridad",
+    nombre: "Seguridad MFA & Autenticador",
+    descripcion: "Configuración TOTP y reseteo estándar vía correo.",
+    categoria: "Seguridad",
+    ruta: "/panel/cuenta",
+    rutaFisica: "/identidad/WidgetConfiguracionMfa.tsx",
+    panelId: "panel_cuenta",
+    activo: true
+  },
+  {
+    clave: "datos_facturacion",
+    nombre: "Datos de Facturación SRI & Comprobantes",
+    descripcion: "Razón Social, RUC/Cédula, dirección fiscal y correo SRI.",
+    categoria: "Facturación",
+    ruta: "/panel/cuenta",
+    rutaFisica: "/identidad/FormularioDatosFacturacion.tsx",
     panelId: "panel_cuenta",
     activo: true
   },
@@ -258,6 +283,7 @@ const WIDGETS_INVENTARIO_INICIALES: WidgetInventarioDef[] = [
     descripcion: "Asignación de perfiles, roles y techo jerárquico.",
     categoria: "Administración",
     ruta: "/panel/usuarios",
+    rutaFisica: "/gestion-usuarios/AdministracionPerfilesWidget.tsx",
     panelId: "panel_administrar",
     activo: true
   },
@@ -267,6 +293,7 @@ const WIDGETS_INVENTARIO_INICIALES: WidgetInventarioDef[] = [
     descripcion: "Revisión de matrículas y verificación de credenciales.",
     categoria: "Operación Legal",
     ruta: "/panel/socios",
+    rutaFisica: "/tranqi/AprobacionSociosWidget.tsx",
     panelId: "panel_administrar",
     activo: true
   },
@@ -276,6 +303,7 @@ const WIDGETS_INVENTARIO_INICIALES: WidgetInventarioDef[] = [
     descripcion: "Revisión y procesamiento de formularios de solicitud.",
     categoria: "Operación Legal",
     ruta: "/panel/solicitud-socio",
+    rutaFisica: "/tranqi/SolicitudSocioWidget.tsx",
     panelId: "panel_administrar",
     activo: true
   },
@@ -285,6 +313,7 @@ const WIDGETS_INVENTARIO_INICIALES: WidgetInventarioDef[] = [
     descripcion: "Registro inmutable de transacciones, diffs JSONB e IP.",
     categoria: "Seguridad & Auditoría",
     ruta: "/panel/auditoria",
+    rutaFisica: "/auditoria/TablaAuditoria.tsx",
     panelId: "panel_administrar",
     activo: true
   },
@@ -294,6 +323,7 @@ const WIDGETS_INVENTARIO_INICIALES: WidgetInventarioDef[] = [
     descripcion: "Despacho masivo multicanal (In-App, Push, Email y WhatsApp).",
     categoria: "Comunicación",
     ruta: "/panel/emision-notificaciones",
+    rutaFisica: "/notificaciones/EmisionNotificacionesWidget.tsx",
     panelId: "panel_administrar",
     activo: true
   },
@@ -303,6 +333,7 @@ const WIDGETS_INVENTARIO_INICIALES: WidgetInventarioDef[] = [
     descripcion: "Identidad legal, WhatsApp, redes sociales y locales.",
     categoria: "Configuración",
     ruta: "/panel/configuracion",
+    rutaFisica: "/identidad/ConfiguracionNegocioWidget.tsx",
     panelId: "panel_configuracion",
     activo: true
   },
@@ -312,6 +343,7 @@ const WIDGETS_INVENTARIO_INICIALES: WidgetInventarioDef[] = [
     descripcion: "Credenciales Vault para envío de emails transaccionales.",
     categoria: "Infraestructura",
     ruta: "/panel/configuracion",
+    rutaFisica: "/notificaciones/ConfiguracionSmtpWidget.tsx",
     panelId: "panel_configuracion",
     activo: true
   },
@@ -321,6 +353,7 @@ const WIDGETS_INVENTARIO_INICIALES: WidgetInventarioDef[] = [
     descripcion: "Matriz de perfiles, jerarquía (1-100) y asignación de widgets.",
     categoria: "Gobernanza",
     ruta: "/panel/configuracion",
+    rutaFisica: "/gestion-usuarios/AdministracionPerfilesWidget.tsx",
     panelId: "panel_configuracion",
     activo: true
   },
@@ -330,16 +363,18 @@ const WIDGETS_INVENTARIO_INICIALES: WidgetInventarioDef[] = [
     descripcion: "Canales de recepción de correo saliente, WhatsApp y Push.",
     categoria: "Comunicación",
     ruta: "/panel/configuracion",
+    rutaFisica: "/identidad/ModalTerminosNotificaciones.tsx",
     panelId: "panel_configuracion",
     activo: true
   },
   {
-    clave: "emision_notificaciones",
-    nombre: "Emisión de Notificaciones Multicanal",
-    descripcion: "Despacho masivo multicanal (In-App, Push, Email y WhatsApp).",
-    categoria: "Comunicación",
-    ruta: "/panel/emision-notificaciones",
-    panelId: "panel_emision",
+    clave: "gestion_terminos_consentimientos",
+    nombre: "Términos, Consentimientos & LOPDP",
+    descripcion: "Configuración de cláusulas LOPDP, notificaciones y WhatsApp.",
+    categoria: "Gobernanza & Legales",
+    ruta: "/panel/administrar?widget=gestion_terminos_consentimientos",
+    rutaFisica: "/identidad/GestionTerminosConsentimientosWidget.tsx",
+    panelId: "panel_administrar",
     activo: true
   }
 ];
@@ -983,11 +1018,18 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
           {/* LISTADO LIMPIO DE PANELES CON SUS WIDGETS AUTORIZADOS POR PANEL */}
           <div style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
             {panelesSidebar.map(panel => {
-              // Obtener la lista de claves asignadas a este panel específico para este perfil
-              const clavesAsignadasPanel = perfilActualObj?.widgetsAsignadosPorPanel[panel.id] || [];
+              // Obtener la lista de claves asignadas a este panel específico para este perfil (DESDUPLICADAS)
+              const clavesAsignadasBrutas = perfilActualObj?.widgetsAsignadosPorPanel[panel.id] || [];
+              const clavesAsignadasPanel = Array.from(new Set(clavesAsignadasBrutas));
 
-              // Obtener las definiciones completas de widgets asignados a este panel
-              const widgetsAsignadosPanel = inventarioWidgets.filter(w => clavesAsignadasPanel.includes(w.clave));
+              // Obtener las definiciones completas de widgets asignados a este panel (DESDUPLICADAS POR CLAVE)
+              const mapaWidgetsUnicos = new Map<string, WidgetInventarioDef>();
+              inventarioWidgets.forEach(w => {
+                if (clavesAsignadasPanel.includes(w.clave) && !mapaWidgetsUnicos.has(w.clave)) {
+                  mapaWidgetsUnicos.set(w.clave, w);
+                }
+              });
+              const widgetsAsignadosPanel = Array.from(mapaWidgetsUnicos.values());
 
               // Ordenamiento prioritario: "favoritos" siempre en Posición #1
               const widgetsOrdenados = [...widgetsAsignadosPanel].sort((a, b) => {
@@ -1089,8 +1131,11 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                                 {esFavoritos && <Star size={14} fill={temaPerfilActivo.colorPrimario} color={temaPerfilActivo.colorPrimario} />}
                                 {w.nombre}
                               </div>
-                              <div style={{ fontSize: "0.68rem", color: temaPerfilActivo.colorPrimario, fontWeight: 700, opacity: 0.85, marginTop: "2px" }}>
-                                Posición #{idx + 1} • {w.clave}
+                              <div style={{ fontSize: "0.68rem", color: temaPerfilActivo.colorPrimario, fontWeight: 700, opacity: 0.85, marginTop: "2px", display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
+                                <span>Posición #{idx + 1} • {w.clave}</span>
+                                <code style={{ fontSize: "0.66rem", color: "var(--panel-gris, #737373)", background: "rgba(0,0,0,0.05)", padding: "1px 6px", borderRadius: "4px", fontWeight: 600 }}>
+                                  {w.rutaFisica || `/plataforma/${w.clave}.tsx`}
+                                </code>
                               </div>
                             </div>
 
@@ -1207,8 +1252,8 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                         <div style={{ fontWeight: 800, fontSize: "0.88rem", color: yaAsignadoEnEstePanel ? "#065F46" : "#111111" }}>
                           {w.nombre}
                         </div>
-                        <div style={{ fontSize: "0.74rem", color: "var(--panel-gris, #737373)" }}>
-                          <code>{w.clave}</code> • Categoría: <strong>{w.categoria}</strong>
+                        <div style={{ fontSize: "0.74rem", color: "var(--panel-gris, #737373)", display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap", marginTop: "2px" }}>
+                          <code>{w.clave}</code> • Categoría: <strong>{w.categoria}</strong> • <code style={{ fontSize: "0.68rem", background: "rgba(0,0,0,0.05)", padding: "1px 5px", borderRadius: "4px" }}>{w.rutaFisica || `/plataforma/${w.clave}.tsx`}</code>
                         </div>
                       </div>
 
