@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   ShieldCheck, Users,
   CheckCircle2, ChevronDown, ChevronUp, Search, Sliders,
   Plus, Check, LayoutGrid, Layers, ExternalLink, PanelLeft, Eye, ArrowRight, ArrowLeft,
-  Palette, UserCheck, X, Sparkles, Trash2, Star, Move, Copy, Package
+  Palette, UserCheck, X, Sparkles, Trash2, Star, Move, Copy, Package, GripVertical
 } from "lucide-react";
 import { guardarPerfil, guardarWidget, guardarAsignacionWidget } from "../acciones";
 
@@ -509,6 +509,75 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
   const [perfiles, setPerfiles] = useState<PerfilDef[]>(PERFILES_INICIALES);
   const [panelesSidebar, setPanelesSidebar] = useState<PanelSidebarDef[]>(PANELES_SIDEBAR_INICIALES);
   const [inventarioWidgets, setInventarioWidgets] = useState<WidgetInventarioDef[]>(WIDGETS_INVENTARIO_INICIALES);
+
+  // CLAVES LOCALSTORAGE PERSISTENCIA POR NEGOCIO
+  const KEY_PANELES = `tranqi_paneles_sidebar_${negocio}`;
+  const KEY_PERFILES = `tranqi_perfiles_${negocio}`;
+  const KEY_INVENTARIO = `tranqi_inventario_widgets_${negocio}`;
+
+  // Cargar estado persistido al cargar el componente
+  useEffect(() => {
+    try {
+      const savedPaneles = localStorage.getItem(KEY_PANELES);
+      if (savedPaneles) {
+        const parsed = JSON.parse(savedPaneles);
+        if (Array.isArray(parsed) && parsed.length > 0) setPanelesSidebar(parsed);
+      }
+
+      const savedPerfiles = localStorage.getItem(KEY_PERFILES);
+      if (savedPerfiles) {
+        const parsed = JSON.parse(savedPerfiles);
+        if (Array.isArray(parsed) && parsed.length > 0) setPerfiles(parsed);
+      }
+
+      const savedInventario = localStorage.getItem(KEY_INVENTARIO);
+      if (savedInventario) {
+        const parsed = JSON.parse(savedInventario);
+        if (Array.isArray(parsed) && parsed.length > 0) setInventarioWidgets(parsed);
+      }
+    } catch (err) {
+      console.warn("Error cargando configuración persistida:", err);
+    }
+  }, [negocio]);
+
+  // Guardar dinámicamente ante cualquier cambio de estado
+  useEffect(() => {
+    try {
+      localStorage.setItem(KEY_PANELES, JSON.stringify(panelesSidebar));
+    } catch (e) {}
+  }, [panelesSidebar, negocio]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(KEY_PERFILES, JSON.stringify(perfiles));
+    } catch (e) {}
+  }, [perfiles, negocio]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(KEY_INVENTARIO, JSON.stringify(inventarioWidgets));
+    } catch (e) {}
+  }, [inventarioWidgets, negocio]);
+
+  // Estado Drag & Drop HTML5 (Reorganización Gráfica para Web Desktop)
+  const [widgetArrastrado, setWidgetArrastrado] = useState<{ widgetClave: string; panelOrigenId: string } | null>(null);
+  const [panelOverId, setPanelOverId] = useState<string | null>(null);
+
+  const handleDropWidget = (widgetClave: string, panelOrigenId: string, panelDestinoId: string) => {
+    if (panelOrigenId === panelDestinoId) return;
+
+    if (panelOrigenId === "DISPONIBLES") {
+      agregarWidgetAPanel(perfilSeleccionado, widgetClave, panelDestinoId);
+      return;
+    }
+
+    const wObj = inventarioWidgets.find(w => w.clave === widgetClave);
+    if (!wObj) return;
+
+    setWidgetTransferir({ widget: wObj, panelOrigenId });
+    setPanelDestinoId(panelDestinoId);
+    setAccionTransferir("mover");
+  };
 
   // Modal Crear Nuevo Panel
   const [mostrarModalPanel, setMostrarModalPanel] = useState(false);
@@ -1122,16 +1191,49 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                 return 0;
               });
 
+              const esDestinoDropOver = panelOverId === panel.id && widgetArrastrado?.panelOrigenId !== panel.id;
+
               return (
                 <div
                   key={panel.id}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    if (widgetArrastrado && widgetArrastrado.panelOrigenId !== panel.id) {
+                      setPanelOverId(panel.id);
+                    }
+                  }}
+                  onDragLeave={() => {
+                    if (panelOverId === panel.id) setPanelOverId(null);
+                  }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    try {
+                      const raw = e.dataTransfer.getData("text/plain");
+                      if (raw) {
+                        const parsed = JSON.parse(raw);
+                        handleDropWidget(parsed.widgetClave, parsed.panelOrigenId, panel.id);
+                      }
+                    } catch (err) {}
+                    setPanelOverId(null);
+                    setWidgetArrastrado(null);
+                  }}
                   style={{
-                    border: `1.5px solid ${temaPerfilActivo.colorBorde}44`,
+                    border: esDestinoDropOver
+                      ? "2.5px dashed var(--violeta, #5000BA)"
+                      : `1.5px solid ${temaPerfilActivo.colorBorde}44`,
                     borderRadius: "14px",
                     padding: "16px",
-                    background: "#ffffff"
+                    background: esDestinoDropOver ? "#F5F3FF" : "#ffffff",
+                    transition: "all 0.2s ease",
+                    position: "relative"
                   }}
                 >
+                  {esDestinoDropOver && (
+                    <div style={{ position: "absolute", top: "12px", right: "140px", background: "var(--violeta, #5000BA)", color: "#ffffff", padding: "4px 12px", borderRadius: "999px", fontSize: "0.74rem", fontWeight: 800, zIndex: 10, display: "flex", alignItems: "center", gap: "6px", boxShadow: "0 4px 12px rgba(80,0,186,0.2)" }}>
+                      <Move size={14} /> Soltar aquí para transferir a {panel.nombre}
+                    </div>
+                  )}
+
                   {/* ENCABEZADO DEL PANEL CON CONMUTADOR MFA Y BOTÓN "+ AGREGAR WIDGET" */}
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px", flexWrap: "wrap", gap: "10px" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
@@ -1195,31 +1297,54 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                     <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(290px, 1fr))", gap: "12px" }}>
                       {widgetsOrdenados.map((w, idx) => {
                         const esFavoritos = w.clave === "favoritos";
+                        const esArrastrando = widgetArrastrado?.widgetClave === w.clave;
 
                         return (
                           <div
                             key={w.clave}
+                            draggable={true}
+                            onDragStart={(e) => {
+                              e.dataTransfer.setData("text/plain", JSON.stringify({ widgetClave: w.clave, panelOrigenId: panel.id }));
+                              setWidgetArrastrado({ widgetClave: w.clave, panelOrigenId: panel.id });
+                            }}
+                            onDragEnd={() => {
+                              setWidgetArrastrado(null);
+                              setPanelOverId(null);
+                            }}
                             style={{
                               background: esFavoritos ? `${temaPerfilActivo.colorFondoSuave}` : "#ffffff",
                               padding: "12px 14px",
                               borderRadius: "10px",
-                              border: esFavoritos ? `2px solid ${temaPerfilActivo.colorBorde}` : "1.5px solid var(--panel-linea, #E4E4E4)",
+                              border: esArrastrando
+                                ? "2px dashed var(--violeta, #5000BA)"
+                                : esFavoritos
+                                ? `2px solid ${temaPerfilActivo.colorBorde}`
+                                : "1.5px solid var(--panel-linea, #E4E4E4)",
                               display: "flex",
                               alignItems: "center",
                               justifyContent: "space-between",
-                              gap: "10px"
+                              gap: "10px",
+                              cursor: "grab",
+                              opacity: esArrastrando ? 0.45 : 1,
+                              transform: esArrastrando ? "scale(0.98)" : "none",
+                              transition: "all 0.15s ease"
                             }}
                           >
-                            <div style={{ flex: 1 }}>
-                              <div style={{ fontWeight: 800, fontSize: "0.85rem", color: temaPerfilActivo.colorTexto, display: "flex", alignItems: "center", gap: "6px" }}>
-                                {esFavoritos && <Star size={14} fill={temaPerfilActivo.colorPrimario} color={temaPerfilActivo.colorPrimario} />}
-                                {w.nombre}
-                              </div>
-                              <div style={{ fontSize: "0.68rem", color: temaPerfilActivo.colorPrimario, fontWeight: 700, opacity: 0.85, marginTop: "2px", display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
-                                <span>Posición #{idx + 1} • {w.clave}</span>
-                                <code style={{ fontSize: "0.66rem", color: "var(--panel-gris, #737373)", background: "rgba(0,0,0,0.05)", padding: "1px 6px", borderRadius: "4px", fontWeight: 600 }}>
-                                  {w.rutaFisica || `/plataforma/${w.clave}.tsx`}
-                                </code>
+                            <div style={{ flex: 1, display: "flex", alignItems: "flex-start", gap: "6px" }}>
+                              <span title="Arrastrar para mover entre paneles" style={{ display: "inline-flex", cursor: "grab" }}>
+                                <GripVertical size={16} color="var(--panel-gris, #737373)" style={{ marginTop: "2px", opacity: 0.6, flexShrink: 0 }} />
+                              </span>
+                              <div>
+                                <div style={{ fontWeight: 800, fontSize: "0.85rem", color: temaPerfilActivo.colorTexto, display: "flex", alignItems: "center", gap: "6px" }}>
+                                  {esFavoritos && <Star size={14} fill={temaPerfilActivo.colorPrimario} color={temaPerfilActivo.colorPrimario} />}
+                                  {w.nombre}
+                                </div>
+                                <div style={{ fontSize: "0.68rem", color: temaPerfilActivo.colorPrimario, fontWeight: 700, opacity: 0.85, marginTop: "2px", display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
+                                  <span>Posición #{idx + 1} • {w.clave}</span>
+                                  <code style={{ fontSize: "0.66rem", color: "var(--panel-gris, #737373)", background: "rgba(0,0,0,0.05)", padding: "1px 6px", borderRadius: "4px", fontWeight: 600 }}>
+                                    {w.rutaFisica || `/plataforma/${w.clave}.tsx`}
+                                  </code>
+                                </div>
                               </div>
                             </div>
 
@@ -1375,31 +1500,52 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
 
                 {widgetsDisponiblesSinAsignar.length > 0 ? (
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(290px, 1fr))", gap: "12px" }}>
-                    {widgetsDisponiblesSinAsignar.map(w => (
-                      <div
-                        key={w.clave}
-                        style={{
-                          background: "#FFFFFF",
-                          borderRadius: "10px",
-                          border: "1px solid #E4E4E4",
-                          padding: "12px 14px",
-                          display: "flex",
-                          flexDirection: "column",
-                          gap: "8px",
-                          boxShadow: "0 1px 3px rgba(0,0,0,0.03)"
-                        }}
-                      >
-                        <div>
-                          <strong style={{ fontSize: "0.85rem", color: "#111111", display: "block" }}>{w.nombre}</strong>
-                          <p style={{ fontSize: "0.75rem", color: "#737373", margin: "2px 0 6px 0", lineHeight: 1.3 }}>{w.descripcion}</p>
-                          <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap", fontSize: "0.68rem" }}>
-                            <code>{w.clave}</code>
-                            <span style={{ color: "#737373" }}>• Categoría: <strong>{w.categoria}</strong></span>
-                            <code style={{ background: "rgba(0,0,0,0.05)", padding: "1px 5px", borderRadius: "4px" }}>
-                              {w.rutaFisica || `/plataforma/${w.clave}.tsx`}
-                            </code>
+                    {widgetsDisponiblesSinAsignar.map(w => {
+                      const esArrastrando = widgetArrastrado?.widgetClave === w.clave;
+
+                      return (
+                        <div
+                          key={w.clave}
+                          draggable={true}
+                          onDragStart={(e) => {
+                            e.dataTransfer.setData("text/plain", JSON.stringify({ widgetClave: w.clave, panelOrigenId: "DISPONIBLES" }));
+                            setWidgetArrastrado({ widgetClave: w.clave, panelOrigenId: "DISPONIBLES" });
+                          }}
+                          onDragEnd={() => {
+                            setWidgetArrastrado(null);
+                            setPanelOverId(null);
+                          }}
+                          style={{
+                            background: "#FFFFFF",
+                            borderRadius: "10px",
+                            border: esArrastrando ? "2px dashed #5000BA" : "1px solid #E4E4E4",
+                            padding: "12px 14px",
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: "8px",
+                            boxShadow: "0 1px 3px rgba(0,0,0,0.03)",
+                            cursor: "grab",
+                            opacity: esArrastrando ? 0.45 : 1,
+                            transform: esArrastrando ? "scale(0.98)" : "none",
+                            transition: "all 0.15s ease"
+                          }}
+                        >
+                          <div style={{ display: "flex", alignItems: "flex-start", gap: "6px" }}>
+                            <span title="Arrastrar a cualquier panel para asignar" style={{ display: "inline-flex", cursor: "grab" }}>
+                              <GripVertical size={16} color="#737373" style={{ marginTop: "2px", opacity: 0.6, flexShrink: 0 }} />
+                            </span>
+                            <div>
+                              <strong style={{ fontSize: "0.85rem", color: "#111111", display: "block" }}>{w.nombre}</strong>
+                              <p style={{ fontSize: "0.75rem", color: "#737373", margin: "2px 0 6px 0", lineHeight: 1.3 }}>{w.descripcion}</p>
+                              <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap", fontSize: "0.68rem" }}>
+                                <code>{w.clave}</code>
+                                <span style={{ color: "#737373" }}>• Categoría: <strong>{w.categoria}</strong></span>
+                                <code style={{ background: "rgba(0,0,0,0.05)", padding: "1px 5px", borderRadius: "4px" }}>
+                                  {w.rutaFisica || `/plataforma/${w.clave}.tsx`}
+                                </code>
+                              </div>
+                            </div>
                           </div>
-                        </div>
 
                         <div style={{ display: "flex", gap: "6px", alignItems: "center", marginTop: "auto", paddingTop: "8px", borderTop: "1px solid #E4E4E4" }}>
                           <select
@@ -1430,7 +1576,8 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                           </select>
                         </div>
                       </div>
-                    ))}
+                    );
+                  })}
                   </div>
                 ) : (
                   <div style={{ textAlign: "center", padding: "14px", fontSize: "0.8rem", color: "#05876E", fontWeight: 700 }}>
