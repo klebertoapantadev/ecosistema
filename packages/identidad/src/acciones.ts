@@ -237,6 +237,8 @@ export async function actualizarPerfilUsuario(datos: {
   whatsapp?: string | null;
   autorizaWhatsapp?: boolean;
   fotoUrl?: string | null;
+  codigoPaisWhatsapp?: string;
+  correosAdicionales?: string[];
 }): Promise<Resultado> {
   const supabase = await crearClienteServidor();
   const {
@@ -256,6 +258,8 @@ export async function actualizarPerfilUsuario(datos: {
   const nuevoDetalle = {
     ...detalleActual,
     foto_url: datos.fotoUrl !== undefined ? datos.fotoUrl : (detalleActual.foto_url || null),
+    codigo_pais_whatsapp: datos.codigoPaisWhatsapp || detalleActual.codigo_pais_whatsapp || "+593",
+    correos_adicionales: datos.correosAdicionales ?? detalleActual.correos_adicionales ?? [],
   };
 
   const { error } = await supabase
@@ -266,6 +270,57 @@ export async function actualizarPerfilUsuario(datos: {
       usu_apellidos: datos.apellidos.trim(),
       usu_whatsapp: datos.autorizaWhatsapp ? (datos.whatsapp?.trim() || null) : null,
       usu_autorizacion_whatsapp: Boolean(datos.autorizaWhatsapp),
+      usu_detalle_usuario: nuevoDetalle,
+      usu_actualizado_en: new Date().toISOString(),
+    })
+    .eq("usu_id", user.id);
+
+  if (error) return { ok: false, error: error.message };
+
+  return { ok: true, data: undefined };
+}
+
+// PLT-006: Actualización de datos de facturación electrónica desde el panel Mi Cuenta
+export async function actualizarDatosFacturacion(datos: {
+  razonSocial: string;
+  tipoIdentificacion?: string;
+  identificacion: string;
+  telefono?: string;
+  direccion?: string;
+  correoFacturacion?: string;
+}): Promise<Resultado> {
+  const supabase = await crearClienteServidor();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "Sesión no encontrada" };
+
+  const { data: usuarioExistente } = await supabase
+    .schema("comun_seguridad")
+    .from("seg_usuario")
+    .select("usu_detalle_usuario")
+    .eq("usu_id", user.id)
+    .maybeSingle();
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const detalleActual = (usuarioExistente?.usu_detalle_usuario as Record<string, any>) || {};
+  const nuevoDetalle = {
+    ...detalleActual,
+    datos_facturacion: {
+      razon_social: datos.razonSocial.trim(),
+      tipo_identificacion: datos.tipoIdentificacion || "cedula",
+      identificacion: datos.identificacion.trim(),
+      telefono: datos.telefono?.trim() || null,
+      direccion: datos.direccion?.trim() || null,
+      correo_facturacion: datos.correoFacturacion?.trim() || null,
+      actualizado_en: new Date().toISOString(),
+    },
+  };
+
+  const { error } = await supabase
+    .schema("comun_seguridad")
+    .from("seg_usuario")
+    .update({
       usu_detalle_usuario: nuevoDetalle,
       usu_actualizado_en: new Date().toISOString(),
     })

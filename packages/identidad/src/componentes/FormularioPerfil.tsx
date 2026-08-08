@@ -1,8 +1,20 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import { Check, ShieldCheck, Camera, Trash2, Upload } from "lucide-react";
+import { Check, ShieldCheck, Camera, Trash2, Upload, Plus, X, Globe, Mail, FileText } from "lucide-react";
 import { actualizarPerfilUsuario } from "../acciones";
+import { ModalTerminosNotificaciones } from "./ModalTerminosNotificaciones";
+
+const PAISES_WHATSAPP = [
+  { codigo: "+593", nombre: "Ecuador 🇪🇨" },
+  { codigo: "+57", nombre: "Colombia 🇨🇴" },
+  { codigo: "+51", nombre: "Perú 🇵🇪" },
+  { codigo: "+1", nombre: "EE.UU. / Canadá 🇺🇸" },
+  { codigo: "+34", nombre: "España 🇪🇸" },
+  { codigo: "+54", nombre: "Argentina 🇦🇷" },
+  { codigo: "+56", nombre: "Chile 🇨🇱" },
+  { codigo: "+52", nombre: "México 🇲🇽" },
+];
 
 interface Props {
   inicial: {
@@ -12,6 +24,8 @@ interface Props {
     whatsapp: string;
     autorizaWhatsapp: boolean;
     fotoUrl?: string | null;
+    codigoPaisWhatsapp?: string;
+    correosAdicionales?: string[];
   };
 }
 
@@ -19,9 +33,14 @@ export function FormularioPerfil({ inicial }: Props) {
   const [nombres, setNombres] = useState(inicial.nombres || "");
   const [apellidos, setApellidos] = useState(inicial.apellidos || "");
   const [whatsapp, setWhatsapp] = useState(inicial.whatsapp || "");
+  const [codigoPaisWhatsapp, setCodigoPaisWhatsapp] = useState(inicial.codigoPaisWhatsapp || "+593");
   const [autorizaWhatsapp, setAutorizaWhatsapp] = useState(inicial.autorizaWhatsapp || false);
   const [fotoUrl, setFotoUrl] = useState<string | null>(inicial.fotoUrl || null);
 
+  const [correosAdicionales, setCorreosAdicionales] = useState<string[]>(inicial.correosAdicionales || []);
+  const [nuevoCorreoAdicional, setNuevoCorreoAdicional] = useState("");
+
+  const [modalTerminosAbierto, setModalTerminosAbierto] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [guardando, setGuardando] = useState(false);
   const [mensaje, setMensaje] = useState<{ tipo: "exito" | "error"; texto: string } | null>(null);
@@ -69,6 +88,31 @@ export function FormularioPerfil({ inicial }: Props) {
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
+  const handleAgregarCorreoAdicional = () => {
+    const correoLimpio = nuevoCorreoAdicional.trim().toLowerCase();
+    if (!correoLimpio) return;
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correoLimpio)) {
+      setMensaje({ tipo: "error", texto: "Ingresa un correo electrónico adicional válido." });
+      return;
+    }
+    if (correoLimpio === inicial.correo.toLowerCase()) {
+      setMensaje({ tipo: "error", texto: "El correo adicional no puede ser igual al correo principal." });
+      return;
+    }
+    if (correosAdicionales.includes(correoLimpio)) {
+      setMensaje({ tipo: "error", texto: "Este correo adicional ya está agregado." });
+      return;
+    }
+
+    setCorreosAdicionales([...correosAdicionales, correoLimpio]);
+    setNuevoCorreoAdicional("");
+    setMensaje(null);
+  };
+
+  const handleEliminarCorreoAdicional = (correoBorrar: string) => {
+    setCorreosAdicionales(correosAdicionales.filter((c) => c !== correoBorrar));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!nombres.trim() || !apellidos.trim()) {
@@ -85,11 +129,13 @@ export function FormularioPerfil({ inicial }: Props) {
       whatsapp,
       autorizaWhatsapp,
       fotoUrl,
+      codigoPaisWhatsapp,
+      correosAdicionales,
     });
 
     setGuardando(false);
     if (res.ok) {
-      setMensaje({ tipo: "exito", texto: "✅ Perfil y foto actualizados correctamente." });
+      setMensaje({ tipo: "exito", texto: "✅ Perfil, WhatsApp y correos de notificación guardados correctamente." });
       setTimeout(() => setMensaje(null), 4000);
     } else {
       setMensaje({ tipo: "error", texto: res.error || "No se pudo actualizar el perfil." });
@@ -250,9 +296,9 @@ export function FormularioPerfil({ inicial }: Props) {
         </label>
       </div>
 
-      {/* Correo Electrónico (Solo Lectura) */}
+      {/* Correo Electrónico Principal (Solo Lectura) */}
       <label>
-        Correo Electrónico (Identidad Unificada)
+        Correo Electrónico Principal (Identidad Unificada)
         <div style={{ position: "relative" }}>
           <input
             type="email"
@@ -271,25 +317,171 @@ export function FormularioPerfil({ inicial }: Props) {
         </div>
       </label>
 
-      {/* Teléfono WhatsApp y Checkbox */}
-      <label>
-        Número de Celular / WhatsApp (Opcional)
-        <input
-          type="tel"
-          placeholder="Ej: 0991234567"
-          value={whatsapp}
-          onChange={e => setWhatsapp(e.target.value)}
-        />
-      </label>
+      {/* Correos Adicionales de Notificación */}
+      <div>
+        <label style={{ display: "block", marginBottom: "6px", fontSize: "0.82rem", fontWeight: 700, color: "var(--negro, #111111)" }}>
+          Correos Adicionales para Notificaciones
+        </label>
+        <div style={{ display: "flex", gap: "8px", marginBottom: "8px" }}>
+          <div style={{ position: "relative", flex: 1 }}>
+            <input
+              type="email"
+              placeholder="Ej: equipo@empresa.com o mi_otro_correo@gmail.com"
+              value={nuevoCorreoAdicional}
+              onChange={(e) => setNuevoCorreoAdicional(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  handleAgregarCorreoAdicional();
+                }
+              }}
+              style={{ width: "100%", paddingLeft: "34px" }}
+            />
+            <Mail size={16} style={{ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)", color: "var(--panel-gris, #737373)" }} />
+          </div>
+          <button
+            type="button"
+            onClick={handleAgregarCorreoAdicional}
+            className="btn-mini"
+            style={{
+              background: "var(--violeta-suave, #F3E8FF)",
+              color: "var(--violeta, #5000BA)",
+              border: "1px solid var(--panel-linea, #E4E4E4)",
+              fontWeight: 700,
+              gap: "4px",
+              display: "inline-flex",
+              alignItems: "center",
+              padding: "0 16px",
+            }}
+          >
+            <Plus size={16} /> Agregar
+          </button>
+        </div>
 
-      <label className="campo-casilla" style={{ cursor: "pointer" }}>
-        <input
-          type="checkbox"
-          checked={autorizaWhatsapp}
-          onChange={e => setAutorizaWhatsapp(e.target.checked)}
-        />
-        <span>Autorizo el contacto opcional vía WhatsApp para notificaciones sobre el estado de mis casos</span>
-      </label>
+        {/* Chips de Correos Adicionales */}
+        {correosAdicionales.length > 0 && (
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginTop: "6px" }}>
+            {correosAdicionales.map((c) => (
+              <span
+                key={c}
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  background: "var(--panel-papel, #F7F6FA)",
+                  border: "1px solid var(--panel-linea, #E4E4E4)",
+                  padding: "4px 10px",
+                  borderRadius: "999px",
+                  fontSize: "0.8rem",
+                  fontWeight: 600,
+                  color: "var(--negro, #111111)",
+                }}
+              >
+                <Mail size={13} color="var(--violeta, #5000BA)" />
+                {c}
+                <button
+                  type="button"
+                  onClick={() => handleEliminarCorreoAdicional(c)}
+                  style={{
+                    background: "transparent",
+                    border: "none",
+                    cursor: "pointer",
+                    padding: 0,
+                    color: "var(--panel-gris, #737373)",
+                    display: "flex",
+                  }}
+                  title="Eliminar correo adicional"
+                >
+                  <X size={14} />
+                </button>
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Teléfono WhatsApp con Selector de País */}
+      <div>
+        <label style={{ display: "block", marginBottom: "6px", fontSize: "0.82rem", fontWeight: 700, color: "var(--negro, #111111)" }}>
+          Número de Celular / WhatsApp (Opcional)
+        </label>
+        <div style={{ display: "flex", gap: "8px" }}>
+          {/* Dropdown de Código de País */}
+          <div style={{ position: "relative", minWidth: "150px" }}>
+            <select
+              value={codigoPaisWhatsapp}
+              onChange={(e) => setCodigoPaisWhatsapp(e.target.value)}
+              style={{
+                width: "100%",
+                paddingLeft: "32px",
+                fontWeight: 700,
+                appearance: "none",
+              }}
+            >
+              {PAISES_WHATSAPP.map((p) => (
+                <option key={p.codigo} value={p.codigo}>
+                  {p.nombre} ({p.codigo})
+                </option>
+              ))}
+            </select>
+            <Globe size={16} style={{ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)", color: "var(--panel-gris, #737373)", pointerEvents: "none" }} />
+          </div>
+
+          <input
+            type="tel"
+            placeholder="Ej: 0991234567"
+            value={whatsapp}
+            onChange={(e) => setWhatsapp(e.target.value)}
+            style={{ flex: 1 }}
+          />
+        </div>
+      </div>
+
+      {/* Checkbox y Términos y Condiciones de Notificaciones */}
+      <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+        <label className="campo-casilla" style={{ cursor: "pointer", display: "flex", alignItems: "flex-start", gap: "8px" }}>
+          <input
+            type="checkbox"
+            checked={autorizaWhatsapp}
+            onChange={(e) => setAutorizaWhatsapp(e.target.checked)}
+            style={{ marginTop: "3px" }}
+          />
+          <span style={{ fontSize: "0.85rem", lineHeight: 1.4 }}>
+            Autorizo el contacto vía WhatsApp y correo para notificaciones legales, avisos y seguimiento sobre el estado de mis casos.
+          </span>
+        </label>
+
+        {/* Enlace/Botón a Términos y Condiciones de Notificaciones */}
+        <div style={{ paddingLeft: "26px" }}>
+          <button
+            type="button"
+            onClick={() => setModalTerminosAbierto(true)}
+            style={{
+              background: "transparent",
+              border: "none",
+              cursor: "pointer",
+              color: "var(--violeta, #5000BA)",
+              fontSize: "0.8rem",
+              fontWeight: 700,
+              textDecoration: "underline",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "4px",
+              padding: 0,
+            }}
+          >
+            <FileText size={14} /> Ver Términos y Condiciones de Notificaciones & Privacidad (LOPDP)
+          </button>
+        </div>
+      </div>
+
+      {/* Modal Términos */}
+      <ModalTerminosNotificaciones
+        abierto={modalTerminosAbierto}
+        onCerrar={() => setModalTerminosAbierto(false)}
+        onAceptar={() => setAutorizaWhatsapp(true)}
+        aceptado={autorizaWhatsapp}
+      />
 
       {/* Botón de Guardado */}
       <div style={{ textAlign: "right", marginTop: "8px" }}>
@@ -312,4 +504,5 @@ export function FormularioPerfil({ inicial }: Props) {
     </form>
   );
 }
+
 

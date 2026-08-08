@@ -1,9 +1,10 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { User, History, KeyRound, ShieldAlert, Star, X, CheckCircle2, ChevronRight, ShieldCheck, Briefcase, Pencil } from "lucide-react";
+import { User, History, KeyRound, ShieldAlert, Star, X, CheckCircle2, ChevronRight, ShieldCheck, Briefcase, Pencil, Receipt } from "lucide-react";
 import { FormularioPerfil } from "@eco/identidad/componentes/FormularioPerfil";
 import { FormularioPerfilAbogado } from "@eco/identidad/componentes/FormularioPerfilAbogado";
+import { FormularioDatosFacturacion } from "@eco/identidad/componentes/FormularioDatosFacturacion";
 import { HistorialAccesos } from "@eco/identidad/componentes/HistorialAccesos";
 import { EliminarCuenta } from "@eco/identidad/componentes/EliminarCuenta";
 import { cerrarSesionYRedirigir } from "../acciones";
@@ -53,10 +54,18 @@ const WIDGETS_BASE: WidgetDef[] = [
   {
     id: "perfil",
     titulo: "Perfil & Datos de Contacto",
-    subtitulo: "Nombres, apellidos, correo verificado y WhatsApp",
+    subtitulo: "Nombres, apellidos, correo verificado, correos adicionales y WhatsApp",
     icono: User,
     colorIcono: "var(--violeta, #5000BA)",
     categoria: "Datos Personales"
+  },
+  {
+    id: "facturacion",
+    titulo: "Datos de Facturación & Comprobantes",
+    subtitulo: "Razón social, RUC/Cédula, dirección fiscal y correo electrónico de facturación",
+    icono: Receipt,
+    colorIcono: "var(--esmeralda, #05876E)",
+    categoria: "Facturación & Cobros"
   },
   {
     id: "perfil_abogado",
@@ -251,6 +260,25 @@ export function PanelCuentaModular({ perfil, historial, puedeConmutar = true, ro
                   whatsapp: perfil?.usu_whatsapp || "",
                   autorizaWhatsapp: Boolean(perfil?.usu_autorizacion_whatsapp),
                   fotoUrl: perfil?.usu_detalle_usuario?.foto_url || null,
+                  codigoPaisWhatsapp: perfil?.usu_detalle_usuario?.codigo_pais_whatsapp || "+593",
+                  correosAdicionales: perfil?.usu_detalle_usuario?.correos_adicionales || [],
+                }}
+              />
+            )}
+
+            {/* WIDGET 1.2: DATOS DE FACTURACIÓN */}
+            {widgetActivo === "facturacion" && (
+              <FormularioDatosFacturacion
+                nombresRegistro={perfil?.usu_nombres || ""}
+                apellidosRegistro={perfil?.usu_apellidos || perfil?.apellidos || ""}
+                correoRegistro={perfil?.usu_correo || ""}
+                inicial={{
+                  razonSocial: perfil?.usu_detalle_usuario?.datos_facturacion?.razon_social,
+                  tipoIdentificacion: perfil?.usu_detalle_usuario?.datos_facturacion?.tipo_identificacion,
+                  identificacion: perfil?.usu_detalle_usuario?.datos_facturacion?.identificacion,
+                  telefono: perfil?.usu_detalle_usuario?.datos_facturacion?.telefono,
+                  direccion: perfil?.usu_detalle_usuario?.datos_facturacion?.direccion,
+                  correoFacturacion: perfil?.usu_detalle_usuario?.datos_facturacion?.correo_facturacion,
                 }}
               />
             )}

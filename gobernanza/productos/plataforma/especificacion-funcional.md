@@ -24,7 +24,7 @@ Este documento describe el **comportamiento compartido por los 4 productos** (Tr
 | **`PLT-003`** | Membresías, Jerarquía & Active Role Switcher | ✅ Implementado | **100%** | Kleber Toapanta / Jesus Navarrete |
 | **`PLT-004`** | **Buddie Conversacional (Chat IA ARIA)** | 🟡 En Desarrollo | **40%** | **Jesus Navarrete** |
 | **`PLT-005`** | Auditoría por Triggers y Widget Común | ✅ Implementado | **100%** | Kleber Toapanta |
-| **`PLT-006`** | Facturación SRI y Pasarela de Pagos | ⏳ Pendiente | **0%** | Kleber Toapanta |
+| **`PLT-006`** | Datos de Facturación SRI y Comprobantes | 🟡 Parcial | **60%** | Kleber Toapanta |
 | **`PLT-007`** | Catálogo Geográfico (Ecuador 24 Provincias) | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`PLT-008`** | Configuración de Negocio & SMTP en Vault | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`PLT-009`** | Catálogo Comercial Unificado (Productos/Planes) | 🟡 Especificado | **25%** | Kleber Toapanta |

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { User, History, KeyRound, ShieldAlert, Settings, Mail, Bell, Star, ChevronRight, ShieldCheck, Sliders, type LucideIcon } from "lucide-react";
+import { User, History, KeyRound, ShieldAlert, Settings, Mail, Bell, Star, ChevronRight, ShieldCheck, Sliders, Receipt, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { useCustomWidgets } from "./gestorTitulosWidgets";
 
@@ -20,9 +20,18 @@ const CATALOGO_FAVORITOS: Record<string, WidgetFavInfo> = {
   perfil: {
     id: "perfil",
     titulo: "Perfil & Datos de Contacto",
-    subtitulo: "Nombres, apellidos, correo verificado y WhatsApp",
+    subtitulo: "Nombres, apellidos, correo verificado, correos adicionales y WhatsApp",
     icono: User,
     colorIcono: "var(--violeta, #5000BA)",
+    href: "/panel/cuenta",
+    origen: "Mi cuenta"
+  },
+  facturacion: {
+    id: "facturacion",
+    titulo: "Datos de Facturación & Comprobantes",
+    subtitulo: "Razón social, RUC/Cédula, dirección fiscal y correo electrónico de facturación",
+    icono: Receipt,
+    colorIcono: "var(--esmeralda, #05876E)",
     href: "/panel/cuenta",
     origen: "Mi cuenta"
   },

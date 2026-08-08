@@ -11,6 +11,7 @@ export {
   solicitarRecuperacion,
   restablecerContrasena,
   actualizarPerfilUsuario,
+  actualizarDatosFacturacion,
   completarBienvenida,
   eliminarCuenta,
   cerrarSesion,
@@ -44,5 +45,6 @@ export { FormularioRecuperacion } from "./componentes/FormularioRecuperacion";
 export { FormularioRestablecer } from "./componentes/FormularioRestablecer";
 export { FormularioPerfil } from "./componentes/FormularioPerfil";
 export { FormularioPerfilAbogado } from "./componentes/FormularioPerfilAbogado";
+export { FormularioDatosFacturacion } from "./componentes/FormularioDatosFacturacion";
 export { EliminarCuenta } from "./componentes/EliminarCuenta";
 export { HistorialAccesos } from "./componentes/HistorialAccesos";
