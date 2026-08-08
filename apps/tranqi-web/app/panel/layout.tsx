@@ -2,36 +2,14 @@ import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { SelloCompilacion } from "@eco/primitivas";
-import {
-  Home, Users, UserCog, Settings, ShieldCheck, CircleUser,
-  Mail, Bell,
-  ClipboardList, Wrench, CreditCard,
-  type LucideIcon,
-} from "lucide-react";
-import { obtenerPerfilActual, obtenerWidgetsVisibles, asegurarMembresiaCliente, obtenerPerfiles } from "@eco/identidad";
+import { obtenerPerfilActual, asegurarMembresiaCliente, obtenerPerfiles } from "@eco/identidad";
 import { CampanaNotificaciones } from "@eco/notificaciones";
-import { EnlacePanel } from "./EnlacePanel";
-import { BotonCerrarSesion } from "./BotonCerrarSesion";
+import { NavegacionSidebar } from "./NavegacionSidebar";
 import { CapaPerfilRail } from "./CapaPerfilRail";
 import { crearClienteServidor } from "@eco/supabase/servidor";
 import type { ModoRol } from "./SelectorRolActivo";
 
 const NEGOCIO = "tranqi";
-
-const ICONOS_WIDGET: Record<string, LucideIcon> = {
-  socios: Users,
-  gestion_usuarios: UserCog,
-  configuracion_negocio: Settings,
-  auditoria: ShieldCheck,
-  configuracion_correo: Mail,
-  emision_notificaciones: Bell,
-};
-
-const SECCIONES_CLIENTE: { icono: LucideIcon; et: string }[] = [
-  { icono: ClipboardList, et: "Mis trámites" },
-  { icono: Wrench, et: "Herramientas" },
-  { icono: CreditCard, et: "Pagos y plan" },
-];
 
 function modoValido(valor: string | undefined): ModoRol | null {
   if (!valor || !valor.trim()) return null;
@@ -55,7 +33,6 @@ export default async function LayoutPanel({ children }: { children: React.ReactN
   const supabase = await crearClienteServidor();
   await asegurarMembresiaCliente(supabase, perfil.usu_id, NEGOCIO);
 
-  const widgetsRaw = await obtenerWidgetsVisibles(perfil.usu_id, perfil.usu_superadmin_plataforma, NEGOCIO);
   const perfiles = await obtenerPerfiles(NEGOCIO);
 
   const MAPA_CLASES_PERFIL: Record<string, string> = {
@@ -76,10 +53,6 @@ export default async function LayoutPanel({ children }: { children: React.ReactN
   const modoActivo: ModoRol = modoCookie ? modoCookie : modoDePerfiles(perfiles);
 
   const clasePerfil = MAPA_CLASES_PERFIL[modoActivo.toLowerCase()] || `perfil-${modoActivo.toLowerCase()}`;
-  const esAdminModo = modoActivo === "admin" || modoActivo === "administrador" || modoActivo === "superadmin";
-  const widgets = esAdminModo
-    ? widgetsRaw.filter(w => w.wdg_clave !== "configuracion_negocio" && w.wdg_clave !== "configuracion_correo")
-    : [];
 
   return (
     <Suspense fallback={<div className={`panel-layout ${clasePerfil}`}>{children}</div>}>
@@ -96,49 +69,11 @@ export default async function LayoutPanel({ children }: { children: React.ReactN
             <CampanaNotificaciones negocio={NEGOCIO} usuarioId={perfil.usu_id} />
           </div>
 
-          <div className="panel-nav-links">
-            {widgets.map((w) => {
-              const IconoWidget = ICONOS_WIDGET[w.wdg_clave] ?? Home;
-              return (
-                <EnlacePanel
-                  key={w.wdg_clave}
-                  href={`/panel/${rutaDeWidget(w.wdg_clave)}`}
-                  icono={<IconoWidget className="icono-nav" aria-hidden="true" strokeWidth={1.8} />}
-                >
-                  {w.wdg_nombre}
-                </EnlacePanel>
-              );
-            })}
-            {modoActivo !== "cliente" && (
-              <EnlacePanel href="/panel/administrar" icono={<ShieldCheck className="icono-nav" aria-hidden="true" strokeWidth={1.8} />}>
-                Administrar
-              </EnlacePanel>
-            )}
-            <EnlacePanel href="/panel/configuracion" icono={<Settings className="icono-nav" aria-hidden="true" strokeWidth={1.8} />}>
-              Configurar
-            </EnlacePanel>
-            <EnlacePanel href="/panel/cuenta" icono={<CircleUser className="icono-nav" aria-hidden="true" strokeWidth={1.8} />}>
-              Mi cuenta
-            </EnlacePanel>
-            <BotonCerrarSesion variante="nav" />
+          <NavegacionSidebar modoActivo={modoActivo} negocio={NEGOCIO} />
 
-            {modoActivo === "cliente" && (
-              <>
-                <div className="separador-nav">Pronto</div>
-                {SECCIONES_CLIENTE.map((s) => (
-                  <span className="enlace-inerte" key={s.et}>
-                    <s.icono className="icono-nav" aria-hidden="true" strokeWidth={1.8} />
-                    <span className="etiqueta-nav">{s.et}</span>
-                    <span className="chip-pronto-nav">pronto</span>
-                  </span>
-                ))}
-              </>
-            )}
-          </div>
           <div className="panel-usuario">
             <span className="nombre-usuario-activo">{[perfil.usu_nombres, perfil.usu_apellidos].filter(Boolean).join(" ")}</span>
             <span className="correo-usuario-activo">{perfil.usu_correo}</span>
-            <BotonCerrarSesion variante="tarjeta" />
             <SelloCompilacion className="sello-compilacion" />
             {perfil.usu_superadmin_plataforma && <span className="etiqueta-superadmin">SuperAdmin ({modoActivo})</span>}
           </div>
@@ -147,14 +82,4 @@ export default async function LayoutPanel({ children }: { children: React.ReactN
       </CapaPerfilRail>
     </Suspense>
   );
-}
-
-function rutaDeWidget(clave: string) {
-  if (clave === "gestion_usuarios") return "usuarios";
-  if (clave === "configuracion_negocio") return "configuracion";
-  if (clave === "socios") return "socios";
-  if (clave === "auditoria") return "auditoria";
-  if (clave === "configuracion_correo") return "correo";
-  if (clave === "emision_notificaciones") return "emision-notificaciones";
-  return "";
 }
