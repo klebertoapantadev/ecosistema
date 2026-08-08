@@ -1,10 +1,11 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { User, History, KeyRound, ShieldAlert, Star, X, CheckCircle2, ChevronRight, ShieldCheck, Briefcase, Pencil, Receipt, Lock, type LucideIcon } from "lucide-react";
+import { User, History, KeyRound, ShieldAlert, Star, X, CheckCircle2, ChevronRight, ShieldCheck, Briefcase, Pencil, Receipt, Lock, QrCode, type LucideIcon } from "lucide-react";
 import { FormularioPerfil } from "@eco/identidad/componentes/FormularioPerfil";
 import { FormularioPerfilAbogado } from "@eco/identidad/componentes/FormularioPerfilAbogado";
 import { FormularioDatosFacturacion } from "@eco/identidad/componentes/FormularioDatosFacturacion";
+import { WidgetConfiguracionMfa } from "@eco/identidad/componentes/WidgetConfiguracionMfa";
 import { HistorialAccesos } from "@eco/identidad/componentes/HistorialAccesos";
 import { EliminarCuenta } from "@eco/identidad/componentes/EliminarCuenta";
 import { cerrarSesionYRedirigir } from "../acciones";
@@ -83,6 +84,14 @@ const WIDGETS_BASE: WidgetDef[] = [
     icono: History,
     colorIcono: "var(--violeta, #5000BA)",
     categoria: "Auditoría"
+  },
+  {
+    id: "mfa_seguridad",
+    titulo: "Seguridad MFA & Autenticador",
+    subtitulo: "Configura tu app autenticadora (TOTP) o resetea el acceso por pérdida de dispositivo vía correo",
+    icono: QrCode,
+    colorIcono: "var(--violeta, #5000BA)",
+    categoria: "Seguridad"
   },
   {
     id: "sesion",
@@ -348,6 +357,16 @@ export function PanelCuentaModular({ perfil, historial, puedeConmutar = true, ro
 
             {/* WIDGET 2: HISTORIAL DE ACCESOS */}
             {widgetActivo === "historial" && <HistorialAccesos historial={historial} />}
+
+            {/* WIDGET 2.5: SEGURIDAD MFA & AUTENTICADOR */}
+            {widgetActivo === "mfa_seguridad" && (
+              <div style={{ width: "100%", maxWidth: "680px" }}>
+                <WidgetConfiguracionMfa
+                  correoUsuario={perfil?.usu_correo || ""}
+                  onExitoAccion={() => setWidgetActivo(null)}
+                />
+              </div>
+            )}
 
             {/* WIDGET 3: SEGURIDAD Y SESIÓN */}
             {widgetActivo === "sesion" && (

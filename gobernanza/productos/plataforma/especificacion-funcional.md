@@ -130,9 +130,11 @@ Implementa la autenticación multifactor basada en TOTP (compatible con Google A
 5. **Procesos Críticos Comunes y Específicos:**
    - **Proceso Crítico Común:** El uso de la **pasarela de pagos (`PLT-006`)** es el proceso crítico común a todas las aplicaciones del ecosistema que exige MFA o confirmación de seguridad.
    - **Procesos Críticos Específicos:** Cualquier otro flujo o acción que requiera MFA (ej. enviar solicitud de abogado socio en Tranqi) se especificará individualmente en la especificación del producto correspondiente (`gobernanza/productos/{producto}/especificacion-funcional.md`).
-6. **Mecanismo de Recuperación (Contraseña y MFA):**
-   - **Auto-servicio vía Correo:** En caso de olvido de contraseña o pérdida del dispositivo TOTP, el usuario puede solicitar el reseteo desde la pantalla de ingreso. El sistema envía automáticamente un enlace seguro de reseteo al correo de registro.
-   - **Reseteo Asistido por Administrador:** El Administrador de cada aplicación (o el SuperAdmin) tiene la capacidad desde la consola de gestión de **forzar o enviar manualmente el enlace de reseteo** o desvincular el MFA del usuario para restaurar su acceso en caso de pérdida total de credenciales.
+6. **Mecanismo de Recuperación Estándar de MFA (Auto-Servicio vía Correo OTP & Asistencia):**
+   - **Proceso Estándar de Reseteo por Pérdida de App (OTP de Rescate vía Correo):**
+     Si el usuario cambió de dispositivo o perdió el acceso a su app autenticadora, selecciona *"¿Perdiste tu app? Resetear vía correo"*. El sistema genera y envía automáticamente un **Código OTP de Rescate de 6 dígitos** (válido por 10 minutos) a su dirección de correo electrónico principal de registro. Al validar este código en el sistema, el MFA anterior queda desvinculado/desactivado de inmediato y el asistente le genera una **nueva Clave Secreta y Código QR** para enrolar su nueva aplicación autenticadora en el acto.
+   - **Auto-servicio de Contraseña:** En caso de olvido de contraseña, el usuario puede solicitar el reseteo desde la pantalla de ingreso. El sistema envía automáticamente un enlace seguro de reseteo al correo de registro.
+   - **Reseteo Asistido por Administrador:** El Administrador del negocio (o el SuperAdmin de Plataforma) tiene la facultad desde la consola de administración de desvincular el MFA del usuario o enviar un reseteo manual en caso de pérdida total de correo y dispositivo.
 
 ### Criterios de Aceptación (Gherkin)
 * **Escenario:** Enrolamiento voluntario y cambio de modalidad en panel

@@ -15,6 +15,10 @@ export {
   completarBienvenida,
   eliminarCuenta,
   cerrarSesion,
+  solicitarCodigoRescateMfa,
+  verificarYResetearMfa,
+  activarNuevoMfaTotp,
+  obtenerEstadoMfa,
 } from "./acciones";
 
 export {
@@ -48,3 +52,4 @@ export { FormularioPerfilAbogado } from "./componentes/FormularioPerfilAbogado";
 export { FormularioDatosFacturacion } from "./componentes/FormularioDatosFacturacion";
 export { EliminarCuenta } from "./componentes/EliminarCuenta";
 export { HistorialAccesos } from "./componentes/HistorialAccesos";
+export { WidgetConfiguracionMfa } from "./componentes/WidgetConfiguracionMfa";

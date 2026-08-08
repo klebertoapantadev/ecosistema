@@ -1,8 +1,9 @@
 "use client";
 
 import React, { useState } from "react";
-import { ShieldCheck, ShieldAlert, KeyRound, Check, Lock, UserCheck, Award, BookOpen, MapPin, Briefcase } from "lucide-react";
+import { ShieldCheck, ShieldAlert, KeyRound, Check, Lock, UserCheck, Award, BookOpen, MapPin, Briefcase, QrCode, RefreshCw } from "lucide-react";
 import { actualizarPerfilUsuario } from "../acciones";
+import { WidgetConfiguracionMfa } from "./WidgetConfiguracionMfa";
 
 export interface DatosPerfilAbogado {
   nombres: string;
@@ -37,6 +38,7 @@ export function FormularioPerfilAbogado({ inicial, onGuardarExito }: Props) {
   const [mfaVerificado, setMfaVerificado] = useState(Boolean(inicial.mfaVerificadoInicial));
   const [codigoTotp, setCodigoTotp] = useState("");
   const [errorTotp, setErrorTotp] = useState<string | null>(null);
+  const [mostrarWidgetMfa, setMostrarWidgetMfa] = useState(false);
 
   const [guardando, setGuardando] = useState(false);
   const [mensaje, setMensaje] = useState<{ tipo: "exito" | "error"; texto: string } | null>(null);
@@ -195,19 +197,30 @@ export function FormularioPerfilAbogado({ inicial, onGuardarExito }: Props) {
             </button>
           </div>
 
-          <div style={{ marginTop: "14px", paddingTop: "12px", borderTop: "1px dashed #E0E0E0", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <span style={{ fontSize: "0.78rem", color: "#777" }}>¿No posees una app autenticadora aún?</span>
-            <button
-              type="button"
-              onClick={() => {
-                setCodigoTotp("123456");
-                setMfaVerificado(true);
-                setMensaje({ tipo: "exito", texto: "🔓 Modo Demostrativo MFA activado correctamente." });
-              }}
-              style={{ background: "none", border: "none", color: "var(--violeta, #5000BA)", fontWeight: 700, fontSize: "0.78rem", cursor: "pointer", textDecoration: "underline" }}
-            >
-              Verificar con modo prueba rápida
-            </button>
+          <div style={{ marginTop: "14px", paddingTop: "12px", borderTop: "1px dashed #E0E0E0", display: "flex", flexDirection: "column", gap: "10px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "8px" }}>
+              <span style={{ fontSize: "0.78rem", color: "#777" }}>¿No posees tu app autenticadora o perdiste el acceso?</span>
+              <button
+                type="button"
+                onClick={() => setMostrarWidgetMfa(!mostrarWidgetMfa)}
+                style={{ background: "none", border: "none", color: "var(--violeta, #5000BA)", fontWeight: 700, fontSize: "0.8rem", cursor: "pointer", textDecoration: "underline", display: "inline-flex", alignItems: "center", gap: "4px" }}
+              >
+                <QrCode size={14} /> {mostrarWidgetMfa ? "Ocultar Asistente MFA" : "Configurar / Resetear MFA vía Correo"}
+              </button>
+            </div>
+
+            {/* Despliegue del Widget de Configuración & Reseteo MFA */}
+            {mostrarWidgetMfa && (
+              <div style={{ marginTop: "8px" }}>
+                <WidgetConfiguracionMfa
+                  correoUsuario={inicial.correo}
+                  onExitoAccion={() => {
+                    setMostrarWidgetMfa(false);
+                    setMfaVerificado(true);
+                  }}
+                />
+              </div>
+            )}
           </div>
         </form>
       ) : (
