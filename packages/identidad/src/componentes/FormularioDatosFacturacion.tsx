@@ -143,7 +143,9 @@ export function FormularioDatosFacturacion({
           <button
             type="button"
             onClick={handleUsarDatosRegistro}
-            className="btn-mini"
+            className="btn-mini btn-responsive-accion"
+            title="Usar Nombres del Registro"
+            aria-label="Usar Nombres del Registro"
             style={{
               background: "var(--blanco, #ffffff)",
               border: "1px solid var(--panel-linea, #E4E4E4)",
@@ -154,7 +156,8 @@ export function FormularioDatosFacturacion({
               alignItems: "center",
             }}
           >
-            <UserCheck size={15} /> Usar Nombres del Registro
+            <UserCheck size={15} />
+            <span className="btn-texto-responsive">Usar Nombres del Registro</span>
           </button>
         )}
       </div>
