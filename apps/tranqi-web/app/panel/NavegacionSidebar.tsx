@@ -61,16 +61,6 @@ const PANELES_BASE_DEFAULT: PanelDefNav[] = [
   { id: "panel_seguridad", nombre: "Seguridad", ruta: "/panel/seguridad", icono: "Shield" },
 ];
 
-const DEFAULT_PANELES_POR_ROL: Record<string, string[]> = {
-  CLIENTE: ["panel_inicio", "panel_cuenta"],
-  OPERADOR: ["panel_inicio", "panel_administrar", "panel_configuracion", "panel_cuenta", "panel_herramientas", "panel_seguridad"],
-  AUXILIAR: ["panel_inicio", "panel_administrar", "panel_configuracion", "panel_cuenta", "panel_herramientas", "panel_seguridad"],
-  TECNICO: ["panel_inicio", "panel_administrar", "panel_configuracion", "panel_cuenta", "panel_herramientas", "panel_seguridad"],
-  ABOGADO: ["panel_inicio", "panel_cuenta", "panel_administrar"],
-  ADMINISTRADOR: ["panel_inicio", "panel_administrar", "panel_configuracion", "panel_cuenta", "panel_herramientas", "panel_seguridad"],
-  SUPERADMIN: ["panel_inicio", "panel_administrar", "panel_configuracion", "panel_cuenta", "panel_herramientas", "panel_seguridad"]
-};
-
 export function NavegacionSidebar({
   modoActivo,
   negocio = "tranqi"
@@ -84,14 +74,19 @@ export function NavegacionSidebar({
     async function actualizarNavegacion() {
       try {
         const rolKey = (modoActivo || "CLIENTE").toUpperCase();
-        const asignadosPorDefecto = DEFAULT_PANELES_POR_ROL[rolKey] || ["panel_inicio", "panel_cuenta"];
+
+        // REGLA SUPERADMIN: Mostrar únicamente Inicio y Mi Cuenta en el sidebar (todos los widgets se muestran en el menú Inicio /panel)
+        if (rolKey === "SUPERADMIN") {
+          const panelesSuperAdmin = PANELES_BASE_DEFAULT.filter(p => p.id === "panel_inicio" || p.id === "panel_cuenta");
+          setPanelesVisibles(panelesSuperAdmin);
+          return;
+        }
 
         const savedPaneles = localStorage.getItem(`tranqi_paneles_sidebar_${negocio}`) || localStorage.getItem("tranqi_paneles_sidebar_TRANQ");
         let listaPaneles: PanelDefNav[] = PANELES_BASE_DEFAULT;
         if (savedPaneles) {
           const parsed = JSON.parse(savedPaneles);
           if (Array.isArray(parsed) && parsed.length > 0) {
-            // Unir paneles por defecto con paneles personalizados guardados evitando duplicados
             const idsExistentes = new Set(parsed.map((p: PanelDefNav) => p.id));
             const baseSinDuplicados = PANELES_BASE_DEFAULT.filter(p => !idsExistentes.has(p.id));
             listaPaneles = [...baseSinDuplicados, ...parsed];
@@ -101,11 +96,30 @@ export function NavegacionSidebar({
         // Consultar servidor (PostgreSQL comun_seguridad.seg_rol_widget)
         const resBdd = await obtenerConfiguracionNavegacionRolAction(modoActivo, negocio.toUpperCase());
 
-        let panelesAsignados: string[] = [...asignadosPorDefecto];
-        if (resBdd.ok && resBdd.data) {
-          if (resBdd.data.panelesAsignados && resBdd.data.panelesAsignados.length > 0) {
-            panelesAsignados = Array.from(new Set([...panelesAsignados, ...resBdd.data.panelesAsignados]));
-          }
+        let widgetsPorPanel: Record<string, string[]> = {
+          panel_inicio: ["favoritos"],
+          panel_cuenta: ["ver_como", "mi_cuenta"]
+        };
+
+        if (rolKey === "OPERADOR" || rolKey === "AUXILIAR" || rolKey === "TECNICO") {
+          widgetsPorPanel = {
+            ...widgetsPorPanel,
+            panel_administrar: ["socios"],
+            panel_herramientas: ["emision_notificaciones"],
+            panel_seguridad: ["auditoria", "solicitud_socio"]
+          };
+        } else if (rolKey === "ADMINISTRADOR") {
+          widgetsPorPanel = {
+            ...widgetsPorPanel,
+            panel_configuracion: ["configuracion_negocio", "configuracion_correo", "perfiles", "notificaciones"],
+            panel_administrar: ["gestion_usuarios", "socios", "solicitud_socio", "emision_notificaciones", "auditoria"],
+            panel_herramientas: ["emision_notificaciones"],
+            panel_seguridad: ["auditoria"]
+          };
+        }
+
+        if (resBdd.ok && resBdd.data && resBdd.data.widgetsPorPanel) {
+          widgetsPorPanel = { ...widgetsPorPanel, ...resBdd.data.widgetsPorPanel };
         }
 
         // Complementar con personalizaciones en localStorage si existen
@@ -115,27 +129,22 @@ export function NavegacionSidebar({
           if (Array.isArray(perfiles)) {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const perfilObj = perfiles.find((p: any) => p.clave?.toUpperCase() === rolKey);
-            if (perfilObj) {
-              if (perfilObj.panelesAsignados && perfilObj.panelesAsignados.length > 0) {
-                panelesAsignados = Array.from(new Set([...panelesAsignados, ...perfilObj.panelesAsignados]));
-              }
+            if (perfilObj && perfilObj.widgetsAsignadosPorPanel) {
+              widgetsPorPanel = { ...widgetsPorPanel, ...perfilObj.widgetsAsignadosPorPanel };
             }
           }
         }
 
-        // Filtrar los paneles del sidebar según asignaciones BDD + Local + Defecto
+        // REGLA GENERAL: Mostrar panel únicamente si tiene al menos 1 widget asignado (o si es panel de inicio / mi cuenta)
         const filtrados = listaPaneles.filter((p) => {
           const esNucleo = p.id === "panel_inicio" || p.id === "panel_cuenta";
-          const estaAsignado = panelesAsignados.includes(p.id);
+          if (esNucleo) return true;
 
-          if (!estaAsignado && !esNucleo && rolKey !== "SUPERADMIN") {
-            return false;
-          }
-
-          return true;
+          const widgetsDelPanel = widgetsPorPanel[p.id] || [];
+          return widgetsDelPanel.length > 0;
         });
 
-        setPanelesVisibles(filtrados.length > 0 ? filtrados : PANELES_BASE_DEFAULT);
+        setPanelesVisibles(filtrados.length > 0 ? filtrados : PANELES_BASE_DEFAULT.slice(0, 2));
       } catch (err) {
         console.error("Error cargando navegación sidebar:", err);
         setPanelesVisibles(PANELES_BASE_DEFAULT);

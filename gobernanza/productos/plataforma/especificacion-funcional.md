@@ -541,9 +541,11 @@ Pantalla de configuración del negocio (identidad legal + datos de `PLT-008`) y 
     - **Actualización de Solicitudes y Perfiles Aprobados:** Se modificó la Server Action `enviarSolicitudSocio` para permitir que un socio cuya solicitud se encuentre en estado `aceptada` pueda actualizar continuamente su perfil profesional preservando su estado de aprobación y sincronizando sus datos con la tabla `trq_abogado` y `seg_usuario`.
 28. **Carga Autenticada de Solicitudes de Socios en Consola Administrativa (`obtenerListaSolicitudesSociosAction`, `PanelAdministrarModular.tsx`):**
     - **Resolución de Bloqueo RLS en Cliente (`AprobacionSociosWidget`):** Se reemplazó la consulta cliente directa a Supabase por la Server Action `obtenerListaSolicitudesSociosAction()`, ejecutada en el contexto del servidor. Esto resuelve el vaciado de lista provocado por RLS cuando el token JWT del navegador está en nivel AAL1, mostrando correctamente todas las solicitudes de socios postulantes (ej. la solicitud de Carolina Colcha).
-33. **Persistencia Servidor en BDD (`seg_rol_widget`) y Widget Independiente de Consulta (`ConsultaUsuariosPerfilesWidget.tsx`, `NavegacionSidebar.tsx`):**
-    - **Sincronización Multidispositivo PostgreSQL:** `NavegacionSidebar.tsx` se conectó a la Server Action `obtenerConfiguracionNavegacionRolAction()` para leer directamente las asignaciones guardadas en la base de datos PostgreSQL (`comun_seguridad.seg_rol_widget`). Esto garantiza que cualquier usuario (ej. Carlos Garcia - Operador) que inicie sesión desde cualquier dispositivo o navegador vea exactamente todos los paneles y widgets autorizados por la matriz administrativa.
-    - **Widget Independiente de Consulta (Solo Lectura):** Se construyó el componente `ConsultaUsuariosPerfilesWidget.tsx` (desacoplado y de libre asignación) que permite a roles no administrativos (como Operadores o Auxiliares) consultar el directorio completo de miembros y la matriz de perfiles con sus respectivos permisos sin riesgo de realizar modificaciones destructivas.
+34. **Gobernanza Estricta de Paneles por Mínimo 1 Widget & Consola Unificada de SuperAdmin (`NavegacionSidebar.tsx`, `app/panel/page.tsx`):**
+    - **Visibilidad Estricta de Paneles (Sidebar):** `NavegacionSidebar.tsx` condiciona la visibilidad de cualquier panel (excepto los núcleos `Inicio` y `Mi cuenta`) a la existencia de **al menos 1 widget asignado** (`(widgetsPorPanel[panelId] || []).length > 0`) para el perfil activo. Si un panel carece de widgets asignados en la matriz BDD/local, se oculta automáticamente del menú lateral.
+    - **Consola Master Unificada SuperAdmin:** Para el perfil `SUPERADMIN`, el menú sidebar se restringe a `Inicio` y `Mi cuenta`, desplegando en la pantalla principal de Inicio (`/panel`) los 16 módulos operativos del ecosistema organizados en categorías (`PanelSuperAdmin`), garantizando acceso directo sin navegación redundante por subpaneles.
+
+
 
 
 

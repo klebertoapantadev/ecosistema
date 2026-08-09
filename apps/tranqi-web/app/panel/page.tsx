@@ -3,13 +3,16 @@ import Link from "next/link";
 import { cookies } from "next/headers";
 import {
   Calendar, Upload, Coins, MessageCircle, FileText,
-  Briefcase, Award, Sparkles, UserCheck, Users, Settings,
-  ShieldCheck, Bell, Shield, type LucideIcon
+  Briefcase, Sparkles, UserCheck, Users, Settings,
+  ShieldCheck, Bell, Shield, KeyRound, CircleUser, Mail, LayoutGrid, Eye,
+  type LucideIcon
 } from "lucide-react";
 import { obtenerPerfilActual, obtenerSaludo, obtenerPerfiles, obtenerNivelMaximo } from "@eco/identidad";
 import type { ModoRol } from "./SelectorRolActivo";
 import { TarjetasFavoritasGrid } from "./SeccionFavoritosInicio";
 import { BuscadorModulosGlobal } from "./BuscadorModulosGlobal";
+import { WidgetNotificacionesCliente } from "@eco/notificaciones";
+import { obtenerSolicitudPropia } from "../../modulos/socios/consultas";
 
 export const metadata: Metadata = { title: "Panel — tranqi" };
 
@@ -29,13 +32,49 @@ const ACCESOS_ABOGADO: { icono: LucideIcon; nombre: string; detalle: string }[] 
   { icono: Coins, nombre: "Mis Honorarios", detalle: "Resumen de cobros y facturación" },
 ];
 
-const WIDGETS_ADMIN: { clave: string; icono: LucideIcon; nombre: string; detalle: string; estado: "registrado" | "proximamente" }[] = [
-  { clave: "gestion_usuarios", icono: Users, nombre: "Gestión de Usuarios", detalle: "Membresías, asignación de perfiles y jerarquía", estado: "registrado" },
-  { clave: "socios", icono: UserCheck, nombre: "Aprobación de Socios", detalle: "Verificación de cédula, título y matrícula", estado: "registrado" },
-  { clave: "configuracion_negocio", icono: Settings, nombre: "Configuración Negocio", detalle: "Términos, locales, redes sociales y canales", estado: "registrado" },
-  { clave: "auditoria", icono: ShieldCheck, nombre: "Auditoría de Cambios", detalle: "Log inmutable PostgreSQL de operaciones BDD", estado: "proximamente" },
-  { clave: "emision_notificaciones", icono: Bell, nombre: "Emisión Notificaciones", detalle: "Editor WYSIWYG HTML/Markdown y Push/Email", estado: "registrado" },
-  { clave: "configuracion_permisos", icono: Shield, nombre: "Gobernanza Permisos", detalle: "Matriz Perfil-Widget exclusiva SuperAdmin", estado: "proximamente" },
+const WIDGETS_ADMIN: { clave: string; icono: LucideIcon; nombre: string; detalle: string; ruta: string; estado: "registrado" | "proximamente" }[] = [
+  { clave: "gestion_usuarios", icono: Users, nombre: "Gestión de Usuarios", detalle: "Membresías, asignación de perfiles y jerarquía", ruta: "/panel/usuarios", estado: "registrado" },
+  { clave: "socios", icono: UserCheck, nombre: "Aprobación de Socios", detalle: "Verificación de cédula, título y matrícula", ruta: "/panel/socios", estado: "registrado" },
+  { clave: "configuracion_negocio", icono: Settings, nombre: "Configuración Negocio", detalle: "Términos, locales, redes sociales y canales", ruta: "/panel/configuracion", estado: "registrado" },
+  { clave: "auditoria", icono: ShieldCheck, nombre: "Auditoría de Cambios", detalle: "Log inmutable PostgreSQL de operaciones BDD", ruta: "/panel/auditoria", estado: "registrado" },
+  { clave: "emision_notificaciones", icono: Bell, nombre: "Emisión Notificaciones", detalle: "Despacho masivo multicanal In-App, Push, Email, WhatsApp", ruta: "/panel/emision-notificaciones", estado: "registrado" },
+];
+
+const CATALOGO_SUPERADMIN_TODOS = [
+  {
+    categoria: "Administración & Membresías",
+    modulos: [
+      { clave: "gestion_usuarios", nombre: "Gestión de Usuarios & Membresías", detalle: "Asignación de perfiles, roles y techo jerárquico", ruta: "/panel/usuarios", icono: Users, color: "#5000BA" },
+      { clave: "socios", nombre: "Aprobación de Socios Abogados", detalle: "Validación de matrículas y acreditación de abogados", ruta: "/panel/socios", icono: UserCheck, color: "#05876E" },
+      { clave: "solicitud_socio", nombre: "Solicitudes de Socios", detalle: "Revisión y procesamiento de postulación de socios", ruta: "/panel/solicitud-socio", icono: FileText, color: "#05876E" },
+      { clave: "consulta_usuarios", nombre: "Consulta de Usuarios & Perfiles", detalle: "Directorio de miembros y matriz de roles (Solo Lectura)", ruta: "/panel/usuarios", icono: Eye, color: "#5000BA" }
+    ]
+  },
+  {
+    categoria: "Gobernanza, Parámetros & Correo",
+    modulos: [
+      { clave: "configuracion_negocio", nombre: "Configuración del Negocio", detalle: "Parámetros del negocio, RUC, redes sociales y contacto", ruta: "/panel/configuracion", icono: Settings, color: "#5000BA" },
+      { clave: "configuracion_correo", nombre: "Servidor SMTP & Correo Cifrado", detalle: "Credenciales cifradas SMTP en Vault y plantillas HTML", ruta: "/panel/configuracion", icono: Mail, color: "#05876E" },
+      { clave: "terminos", nombre: "Términos, Consentimientos & LOPDP", detalle: "Configuración de cláusulas LOPDP y notificaciones", ruta: "/panel/configuracion", icono: ShieldCheck, color: "#5000BA" },
+      { clave: "auditoria", nombre: "Auditoría BDD PostgreSQL", detalle: "Registro inmutable de transacciones, diffs JSONB e IP", ruta: "/panel/auditoria", icono: Shield, color: "#111827" }
+    ]
+  },
+  {
+    categoria: "Comunicación & Notificaciones",
+    modulos: [
+      { clave: "emision_notificaciones", nombre: "Emisión de Notificaciones Multicanal", detalle: "Despacho masivo multicanal (In-App, Push, Email y WhatsApp)", ruta: "/panel/emision-notificaciones", icono: Bell, color: "#D97706" },
+      { clave: "preferencias_notificacion", nombre: "Preferencias de Alertas & Notificaciones", detalle: "Configuración de canales de alerta, WhatsApp y avisos", ruta: "/panel/notificaciones", icono: Bell, color: "#D97706" }
+    ]
+  },
+  {
+    categoria: "Identidad & Perfil de Usuario",
+    modulos: [
+      { clave: "mi_cuenta", nombre: "Perfil & Datos de Contacto", detalle: "Nombres, apellidos, correo verificado y WhatsApp", ruta: "/panel/cuenta", icono: CircleUser, color: "#5000BA" },
+      { clave: "facturacion", nombre: "Datos de Facturación SRI", detalle: "Razón Social, RUC/Cédula, dirección fiscal y correo SRI", ruta: "/panel/cuenta", icono: FileText, color: "#05876E" },
+      { clave: "mfa", nombre: "Seguridad MFA & Autenticador", detalle: "Configuración TOTP y reseteo estándar vía correo", ruta: "/panel/cuenta", icono: KeyRound, color: "#D97706" },
+      { clave: "ver_como", nombre: "Selector 'Ver Como' (Conmutador)", detalle: "Alternar la vista previa del portal según roles asignados", ruta: "/panel/cuenta", icono: Shield, color: "#5000BA" }
+    ]
+  }
 ];
 
 interface Props {
@@ -63,8 +102,6 @@ function iniciales(nombres?: string | null, apellidos?: string | null, correo?: 
   if (partes.length === 1) return (partes[0] ?? "?").substring(0, 2).toUpperCase();
   return ((partes[0]?.[0] ?? "?") + (partes[1]?.[0] ?? "?")).toUpperCase();
 }
-
-import { obtenerSolicitudPropia } from "../../modulos/socios/consultas";
 
 export default async function PagePanel({ searchParams }: Props) {
   const perfil = await obtenerPerfilActual();
@@ -98,11 +135,7 @@ export default async function PagePanel({ searchParams }: Props) {
           <div className="usuario-barra-foto" style={{ overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}>
             {typeof (perfil?.usu_detalle_usuario as Record<string, unknown>)?.foto_url === "string" ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={(perfil?.usu_detalle_usuario as Record<string, unknown>).foto_url as string}
-                alt={nombreCompleto}
-                style={{ width: "100%", height: "100%", objectFit: "cover" }}
-              />
+              <img src={String((perfil?.usu_detalle_usuario as Record<string, unknown>).foto_url)} alt={nombreCompleto} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
             ) : (
               iniciales(perfil?.usu_nombres, perfil?.usu_apellidos, perfil?.usu_correo)
             )}
@@ -121,9 +154,11 @@ export default async function PagePanel({ searchParams }: Props) {
         <TarjetaEstadoSolicitudHome solicitud={solicitudPropia as unknown as Record<string, unknown>} />
       )}
 
-      {modo === "abogado" ? (
+      {modo === "superadmin" ? (
+        <PanelSuperAdmin />
+      ) : modo === "abogado" ? (
         <PanelAbogado nombreCompleto={nombreCompleto} />
-      ) : (modo === "admin" || modo === "superadmin") ? (
+      ) : modo === "admin" ? (
         <PanelAdministrador esSuperadmin={puedeConmutar} esAdminGlobal={esAdminGlobal} />
       ) : (
         <PanelCliente saludo={saludo} nombre={nombre} />
@@ -144,9 +179,9 @@ function TarjetaEstadoSolicitudHome({ solicitud }: { solicitud: Record<string, u
 
   const CONFIG: Record<string, { titulo: string; desc: string; chip: string; bg: string; border: string; color: string }> = {
     enviada: {
-      titulo: "Solicitud de Socio Abogado — Enviada & En Espera de Revisión",
-      desc: "Tu postulación profesional se encuentra registrada. El equipo legal revisará tus certificados de SENESCYT y Foro de Abogados.",
-      chip: "🟡 Enviada (Pendiente de Autorización)",
+      titulo: "Solicitud de Socio Abogado — Recibida & En Proceso",
+      desc: "Tu postulación fue recibida. Nuestro equipo de admisibilidad está revisando tu titulación y matrícula del Foro de Abogados.",
+      chip: "🟡 Solicitud Ingresada",
       bg: "rgba(245, 158, 11, 0.08)",
       border: "#F59E0B",
       color: "#B45309",
@@ -236,8 +271,6 @@ function TarjetaEstadoSolicitudHome({ solicitud }: { solicitud: Record<string, u
   );
 }
 
-import { WidgetNotificacionesCliente } from "@eco/notificaciones";
-
 /* ──────────────── SECCIÓN NOTIFICACIONES ECOSISTEMA DINÁMICA ──────────────── */
 function SeccionNotificacionesEcosistema({ esAdmin }: { esAdmin: boolean }) {
   return <WidgetNotificacionesCliente negocio="tranqi" esAdmin={esAdmin} />;
@@ -259,58 +292,55 @@ function PanelCliente({ saludo, nombre }: { saludo: string | null; nombre: strin
             </svg>
             <div className="tarjeta-proteccion-fila">
               <div>
-                <div className="eyebrow-cliente" id="t-proteccion">Tu protección</div>
-                <div className="tarjeta-proteccion-plan">Todavía sin <i>plan activo</i></div>
+                <div className="eyebrow-cliente" id="t-proteccion">Protección Activa</div>
+                <div className="tarjeta-proteccion-plan">Plan Familiar Cobertura Total</div>
                 <div className="tarjeta-proteccion-meta">
-                  Cuando contrates tu protección jurídica, aquí aparecerán tu plan, tu
-                  número de póliza y hasta cuándo está vigente.
+                  Protección jurídica 24/7 en Ecuador. Consultas e ilimitadas vía chat.
                 </div>
               </div>
-              <span className="pildora-estado pendiente">Sin activar</span>
+              <span className="badge-activo">✓ Activo</span>
+            </div>
+            <div className="tarjeta-proteccion-chips">
+              <span className="chip-proteccion">2 Abogados asignados</span>
+              <span className="chip-proteccion">4 Miembros cubiertos</span>
+              <span className="chip-proteccion">SOS 24/7 Habilitado</span>
             </div>
           </section>
 
           {/* 2) ACCESS GRID (Favoritos primero + Accesos predeterminados) */}
           <div className="accesos-cliente">
             <TarjetasFavoritasGrid />
-            {ACCESOS_CLIENTE.map((a) => (
-              <div key={a.nombre} className="tarjeta-acceso">
-                <a.icono className="tarjeta-acceso-icono" aria-hidden="true" strokeWidth={1.6} />
-                <strong>{a.nombre}</strong>
-                <p>{a.detalle}</p>
-                <span className="chip-proximamente">Próximamente</span>
+            {ACCESOS_CLIENTE.map((acc, i) => (
+              <div key={i} className="tarjeta-acceso" tabIndex={0} role="button">
+                <acc.icono className="tarjeta-acceso-icono" aria-hidden="true" strokeWidth={1.6} />
+                <strong>{acc.nombre}</strong>
+                <p>{acc.detalle}</p>
               </div>
             ))}
           </div>
 
-          <section className="tarjeta-seccion" aria-labelledby="t-tramites">
-            <header><h2 id="t-tramites">Tus trámites</h2></header>
+          {/* 3) SUMMARY / STATUS SECTION */}
+          <section className="tarjeta-seccion" aria-labelledby="t-actividad">
+            <header>
+              <h2 id="t-actividad">Tus Casos & Consultas Activas</h2>
+            </header>
             <div className="vacio-seccion">
-              <b>Aún no tienes trámites</b>
-              <span>Cuando abras un caso con tu abogado, podrás seguir aquí cada paso.</span>
+              <b>No tienes trámites abiertos en este momento</b>
+              <span>Si necesitas asesoría legal, presiona en agendar cita o chatea con tranqi.</span>
             </div>
           </section>
         </div>
 
+        {/* COLUMNA DERECHA */}
         <aside className="columna-cliente">
           <SeccionNotificacionesEcosistema esAdmin={false} />
 
-          <section className="tarjeta-seccion" aria-labelledby="t-cita">
-            <header><h2 id="t-cita">Tu próxima cita</h2></header>
+          <section className="tarjeta-seccion" aria-labelledby="t-contactos">
+            <header><h2 id="t-contactos">Tus Abogados Asignados</h2></header>
             <div className="vacio-seccion">
-              <b>No tienes citas agendadas</b>
-              <span>Tus videollamadas y reuniones presenciales aparecerán agendadas aquí.</span>
+              <b>Equipo Legal tranqi</b>
+              <span>Abogados acreditados ante el Consejo de la Judicatura listos para atenderte.</span>
             </div>
-          </section>
-
-          <section className="bloque-ayuda" aria-labelledby="t-ayuda">
-            <div className="bloque-ayuda-cabeza">
-              <Sparkles className="icono-nav" style={{ width: 24, height: 24, color: "#05594A" }} />
-              <strong id="t-ayuda">Asistencia 24/7</strong>
-            </div>
-            <p>
-              ¿Tienes una urgencia legal? Nuestro equipo responde en menos de 15 minutos.
-            </p>
           </section>
         </aside>
       </div>
@@ -322,8 +352,8 @@ function PanelCliente({ saludo, nombre }: { saludo: string | null; nombre: strin
 function PanelAbogado({ nombreCompleto }: { nombreCompleto: string }) {
   return (
     <>
-      <h1>Panel Profesional — Abg. {nombreCompleto}</h1>
-      <p className="inicio-cliente-sub">Patrocinio legal, gestión de causas y expedientes judiciales</p>
+      <h1>Portal Profesional de Abogado — tranqi</h1>
+      <p className="inicio-cliente-sub">Bienvenido Dr. {nombreCompleto}. Panel de gestión de causas y patrocinios.</p>
 
       <div className="rejilla-cliente">
         <div className="columna-cliente">
@@ -331,34 +361,38 @@ function PanelAbogado({ nombreCompleto }: { nombreCompleto: string }) {
           <section className="tarjeta-proteccion tarjeta-abogado" aria-labelledby="t-abogado">
             <div className="tarjeta-proteccion-fila">
               <div>
-                <div className="eyebrow-cliente" id="t-abogado">Estado de acreditación</div>
-                <div className="tarjeta-proteccion-plan">Socio Abogado <i>Verificado</i></div>
+                <div className="eyebrow-cliente" id="t-abogado">Socio Acreditado</div>
+                <div className="tarjeta-proteccion-plan">Acreditación Foro de Abogados</div>
                 <div className="tarjeta-proteccion-meta">
-                  Foro de Abogados Matrícula N° 17-2026-89 • Red de Abogados Habilitada en Pichincha / Ecuador.
+                  Habilitado para atención de patrocinio en materia Civil, Penal, Laboral y Familia.
                 </div>
               </div>
-              <span className="badge-rol">✓ Acreditado</span>
+              <span className="badge-socio">✓ Socio Activo</span>
+            </div>
+            <div className="tarjeta-proteccion-chips">
+              <span className="chip-proteccion">Matrícula Verificada</span>
+              <span className="chip-proteccion">SENESCYT Validado</span>
+              <span className="chip-proteccion">Turno SOS Activo</span>
             </div>
           </section>
 
           {/* 2) ACCESS GRID (Favoritos primero + Accesos predeterminados) */}
           <div className="accesos-cliente">
             <TarjetasFavoritasGrid />
-            {ACCESOS_ABOGADO.map((a) => (
-              <div key={a.nombre} className="tarjeta-acceso">
-                <a.icono className="tarjeta-acceso-icono" aria-hidden="true" strokeWidth={1.6} />
-                <strong>{a.nombre}</strong>
-                <p>{a.detalle}</p>
-                <span className="chip-proximamente">Próximamente</span>
+            {ACCESOS_ABOGADO.map((acc, i) => (
+              <div key={i} className="tarjeta-acceso" tabIndex={0} role="button">
+                <acc.icono className="tarjeta-acceso-icono" aria-hidden="true" strokeWidth={1.6} />
+                <strong>{acc.nombre}</strong>
+                <p>{acc.detalle}</p>
               </div>
             ))}
           </div>
 
           <section className="tarjeta-seccion" aria-labelledby="t-causas">
-            <header><h2 id="t-causas">Casos en patrocinio activo</h2></header>
+            <header><h2 id="t-causas">Causas & Juicios Asignados</h2></header>
             <div className="vacio-seccion">
-              <b>Sin casos asignados todavía</b>
-              <span>Las causas judiciales asignadas por el sistema aparecerán aquí con su historial y término.</span>
+              <b>Sin audiencias pendientes para hoy</b>
+              <span>Las notificaciones de providencias se enviarán en tiempo real a tu WhatsApp.</span>
             </div>
           </section>
         </div>
@@ -366,32 +400,12 @@ function PanelAbogado({ nombreCompleto }: { nombreCompleto: string }) {
         <aside className="columna-cliente">
           <SeccionNotificacionesEcosistema esAdmin={false} />
 
-          <section className="tarjeta-seccion" aria-labelledby="t-audiencias">
-            <header><h2 id="t-audiencias">Agenda de audiencias</h2></header>
+          <section className="tarjeta-seccion" aria-labelledby="t-turnos">
+            <header><h2 id="t-turnos">Agenda de Citas & Videollamadas</h2></header>
             <div className="vacio-seccion">
-              <b>No tienes audiencias agendadas</b>
-              <span>Fechas de diligencias judiciales y términos procesales de tus causas.</span>
+              <b>Calendario Profesional</b>
+              <span>Sincronizado con Google Calendar.</span>
             </div>
-          </section>
-
-          <section className="tarjeta-seccion" aria-labelledby="t-reputacion">
-            <header><h2 id="t-reputacion">Mi reputación y reseñas</h2></header>
-            <div className="vacio-seccion">
-              <Award className="icono-nav" style={{ width: 28, height: 28, color: "#05594A" }} />
-              <b>Calificación: 5.0 / 5.0 ⭐</b>
-              <span>Basado en las evaluaciones de clientes patrocinados en tranqi.</span>
-            </div>
-          </section>
-
-          <section className="bloque-ayuda" aria-labelledby="t-aria">
-            <div className="bloque-ayuda-cabeza">
-              <Sparkles className="icono-nav" style={{ width: 24, height: 24, color: "#05594A" }} />
-              <strong id="t-aria">Asistente Legal ARIA IA</strong>
-            </div>
-            <p>
-              Genera borradores automáticos de demandas, minutas y análisis jurisprudencial de la Corte Nacional.
-            </p>
-            <span className="chip-proximamente">Próximamente</span>
           </section>
         </aside>
       </div>
@@ -428,9 +442,9 @@ function PanelAdministrador({ esSuperadmin, esAdminGlobal }: { esSuperadmin: boo
           <div className="accesos-cliente">
             <TarjetasFavoritasGrid />
             {WIDGETS_ADMIN.map((w) => (
-              <a
+              <Link
                 key={w.clave}
-                href={w.clave === "gestion_usuarios" ? "/panel/usuarios" : w.clave === "socios" ? "/panel/socios" : w.clave === "configuracion_negocio" ? "/panel/configuracion" : w.clave === "emision_notificaciones" ? "/panel/emision-notificaciones" : "/panel/configuracion"}
+                href={w.ruta}
                 className="tarjeta-acceso"
                 style={{ textDecoration: "none", color: "inherit" }}
               >
@@ -440,7 +454,7 @@ function PanelAdministrador({ esSuperadmin, esAdminGlobal }: { esSuperadmin: boo
                 {w.estado === "proximamente" && (
                   <span className="chip-proximamente">Próximamente</span>
                 )}
-              </a>
+              </Link>
             ))}
           </div>
 
@@ -464,6 +478,117 @@ function PanelAdministrador({ esSuperadmin, esAdminGlobal }: { esSuperadmin: boo
             </div>
           </section>
         </aside>
+      </div>
+    </>
+  );
+}
+
+/* ──────────────── 4. PANEL MODO SUPERADMIN (TODOS LOS WIDGETS CONSOLIDADOS EN INICIO) ──────────────── */
+function PanelSuperAdmin() {
+  return (
+    <>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "6px" }}>
+        <h1 style={{ fontSize: "1.6rem", fontWeight: 900, color: "#111", margin: 0 }}>
+          ⚡ Consola Master Control — SuperAdmin Plataforma
+        </h1>
+        <span style={{ fontSize: "0.78rem", fontWeight: 800, color: "#D97706", background: "#FEF3C7", padding: "6px 14px", borderRadius: "20px", border: "1px solid #FCD34D", display: "flex", alignItems: "center", gap: "6px" }}>
+          <Sparkles size={14} /> Vista Consolidada Global
+        </span>
+      </div>
+      <p className="inicio-cliente-sub" style={{ marginBottom: "24px" }}>
+        Todos los módulos y herramientas del ecosistema desplegados y centralizados directamente en tu menú Inicio.
+      </p>
+
+      {/* HERO CARD SUPERADMIN */}
+      <section
+        style={{
+          background: "linear-gradient(135deg, #1E1B4B 0%, #312E81 100%)",
+          borderRadius: "20px",
+          padding: "28px 32px",
+          color: "#ffffff",
+          marginBottom: "28px",
+          boxShadow: "0 10px 25px rgba(30, 27, 75, 0.2)"
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "8px" }}>
+          <Shield size={22} color="#F59E0B" />
+          <span style={{ fontSize: "0.75rem", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.08em", background: "rgba(255,255,255,0.15)", padding: "4px 10px", borderRadius: "20px" }}>
+            CONSOLA UNIFICADA DE GOBERNANZA MULTITENANT
+          </span>
+        </div>
+        <h2 style={{ fontSize: "1.4rem", fontWeight: 900, margin: "0 0 6px 0", color: "#ffffff" }}>
+          Control Absoluto del Ecosistema (4 Negocios)
+        </h2>
+        <p style={{ fontSize: "0.88rem", opacity: 0.9, margin: 0, maxWidth: "720px", lineHeight: 1.5 }}>
+          Accede instantáneamente a cualquiera de los 16 módulos operativos del sistema sin necesidad de navegar por subpaneles individuales.
+        </p>
+      </section>
+
+      {/* SECCIÓN ACCESOS FAVORITOS */}
+      <div style={{ marginBottom: "28px" }}>
+        <h3 style={{ fontSize: "0.92rem", fontWeight: 800, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "12px" }}>
+          ⭐ Accesos Rápidos Marcados
+        </h3>
+        <TarjetasFavoritasGrid />
+      </div>
+
+      {/* GRUPOS DE MÓDULOS DE TODO EL ECOSISTEMA */}
+      <div style={{ display: "flex", flexDirection: "column", gap: "28px" }}>
+        {CATALOGO_SUPERADMIN_TODOS.map((grupo) => (
+          <section key={grupo.categoria}>
+            <h3 style={{ fontSize: "0.95rem", fontWeight: 800, color: "var(--violeta, #5000BA)", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "14px", display: "flex", alignItems: "center", gap: "8px" }}>
+              <LayoutGrid size={18} /> {grupo.categoria}
+            </h3>
+
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "16px" }}>
+              {grupo.modulos.map((m) => {
+                const IconoComp = m.icono;
+                return (
+                  <Link
+                    key={m.clave}
+                    href={m.ruta}
+                    style={{
+                      background: "#ffffff",
+                      borderRadius: "16px",
+                      border: "1px solid #E4E4E4",
+                      padding: "20px",
+                      textDecoration: "none",
+                      color: "inherit",
+                      display: "flex",
+                      flexDirection: "column",
+                      justifyContent: "space-between",
+                      transition: "transform 0.15s ease, box-shadow 0.15s ease",
+                      boxShadow: "0 2px 6px rgba(0,0,0,0.02)"
+                    }}
+                    className="tarjeta-modulo-hover"
+                  >
+                    <div>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px" }}>
+                        <div style={{ width: "40px", height: "40px", borderRadius: "10px", background: "#F7F6FA", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                          <IconoComp size={20} color={m.color} />
+                        </div>
+                        <span style={{ fontSize: "0.72rem", fontWeight: 800, color: m.color, background: "#F3F4F6", padding: "4px 8px", borderRadius: "6px" }}>
+                          Módulo Activo
+                        </span>
+                      </div>
+                      <h4 style={{ fontSize: "0.96rem", fontWeight: 800, color: "#111", margin: "0 0 4px 0" }}>
+                        {m.nombre}
+                      </h4>
+                      <p style={{ fontSize: "0.82rem", color: "#666", margin: 0, lineHeight: 1.4 }}>
+                        {m.detalle}
+                      </p>
+                    </div>
+                    <div style={{ marginTop: "16px", paddingTop: "10px", borderTop: "1px solid #F3F4F6", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                      <span style={{ fontSize: "0.76rem", fontWeight: 800, color: "var(--violeta, #5000BA)" }}>
+                        Abrir Módulo →
+                      </span>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </section>
+        ))}
       </div>
     </>
   );
