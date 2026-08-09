@@ -57,7 +57,19 @@ const PANELES_BASE_DEFAULT: PanelDefNav[] = [
   { id: "panel_administrar", nombre: "Administrar", ruta: "/panel/administrar", icono: "ShieldCheck" },
   { id: "panel_configuracion", nombre: "Configurar", ruta: "/panel/configuracion", icono: "Settings" },
   { id: "panel_cuenta", nombre: "Mi cuenta", ruta: "/panel/cuenta", icono: "CircleUser" },
+  { id: "panel_herramientas", nombre: "Herramientas", ruta: "/panel/herramientas", icono: "Wrench" },
+  { id: "panel_seguridad", nombre: "Seguridad", ruta: "/panel/seguridad", icono: "Shield" },
 ];
+
+const DEFAULT_PANELES_POR_ROL: Record<string, string[]> = {
+  CLIENTE: ["panel_inicio", "panel_cuenta"],
+  OPERADOR: ["panel_inicio", "panel_administrar", "panel_configuracion", "panel_cuenta", "panel_herramientas", "panel_seguridad"],
+  AUXILIAR: ["panel_inicio", "panel_administrar", "panel_configuracion", "panel_cuenta", "panel_herramientas", "panel_seguridad"],
+  TECNICO: ["panel_inicio", "panel_administrar", "panel_configuracion", "panel_cuenta", "panel_herramientas", "panel_seguridad"],
+  ABOGADO: ["panel_inicio", "panel_cuenta", "panel_administrar"],
+  ADMINISTRADOR: ["panel_inicio", "panel_administrar", "panel_configuracion", "panel_cuenta", "panel_herramientas", "panel_seguridad"],
+  SUPERADMIN: ["panel_inicio", "panel_administrar", "panel_configuracion", "panel_cuenta", "panel_herramientas", "panel_seguridad"]
+};
 
 export function NavegacionSidebar({
   modoActivo,
@@ -71,23 +83,31 @@ export function NavegacionSidebar({
   useEffect(() => {
     async function actualizarNavegacion() {
       try {
+        const rolKey = (modoActivo || "CLIENTE").toUpperCase();
+        const asignadosPorDefecto = DEFAULT_PANELES_POR_ROL[rolKey] || ["panel_inicio", "panel_cuenta"];
+
         const savedPaneles = localStorage.getItem(`tranqi_paneles_sidebar_${negocio}`) || localStorage.getItem("tranqi_paneles_sidebar_TRANQ");
         let listaPaneles: PanelDefNav[] = PANELES_BASE_DEFAULT;
         if (savedPaneles) {
           const parsed = JSON.parse(savedPaneles);
           if (Array.isArray(parsed) && parsed.length > 0) {
-            listaPaneles = parsed;
+            // Unir paneles por defecto con paneles personalizados guardados evitando duplicados
+            const idsExistentes = new Set(parsed.map((p: PanelDefNav) => p.id));
+            const baseSinDuplicados = PANELES_BASE_DEFAULT.filter(p => !idsExistentes.has(p.id));
+            listaPaneles = [...baseSinDuplicados, ...parsed];
           }
         }
 
         // Consultar servidor (PostgreSQL comun_seguridad.seg_rol_widget)
         const resBdd = await obtenerConfiguracionNavegacionRolAction(modoActivo, negocio.toUpperCase());
 
-        let panelesAsignados: string[] = [];
+        let panelesAsignados: string[] = [...asignadosPorDefecto];
         let widgetsPorPanel: Record<string, string[]> = {};
 
         if (resBdd.ok && resBdd.data) {
-          panelesAsignados = resBdd.data.panelesAsignados;
+          if (resBdd.data.panelesAsignados && resBdd.data.panelesAsignados.length > 0) {
+            panelesAsignados = Array.from(new Set([...panelesAsignados, ...resBdd.data.panelesAsignados]));
+          }
           widgetsPorPanel = resBdd.data.widgetsPorPanel;
         }
 
@@ -97,7 +117,7 @@ export function NavegacionSidebar({
           const perfiles = JSON.parse(savedPerfiles);
           if (Array.isArray(perfiles)) {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const perfilObj = perfiles.find((p: any) => p.clave?.toUpperCase() === modoActivo.toUpperCase());
+            const perfilObj = perfiles.find((p: any) => p.clave?.toUpperCase() === rolKey);
             if (perfilObj) {
               if (perfilObj.panelesAsignados && perfilObj.panelesAsignados.length > 0) {
                 panelesAsignados = Array.from(new Set([...panelesAsignados, ...perfilObj.panelesAsignados]));
@@ -109,21 +129,16 @@ export function NavegacionSidebar({
           }
         }
 
-        // Filtrar los paneles del sidebar según asignaciones BDD + Local
+        // Filtrar los paneles del sidebar según asignaciones BDD + Local + Defecto
         const filtrados = listaPaneles.filter((p) => {
           const esNucleo = p.id === "panel_inicio" || p.id === "panel_cuenta";
-          const estaAsignado = panelesAsignados.length > 0 ? panelesAsignados.includes(p.id) : true;
-          const widgetsDelPanel = widgetsPorPanel[p.id] || [];
+          const estaAsignado = panelesAsignados.includes(p.id);
 
-          if (!estaAsignado && !esNucleo && modoActivo !== "superadmin") {
+          if (!estaAsignado && !esNucleo && rolKey !== "SUPERADMIN") {
             return false;
           }
 
-          if (p.id === "panel_administrar" || p.id === "panel_configuracion") {
-            return estaAsignado && (widgetsDelPanel.length > 0 || modoActivo === "admin" || modoActivo === "superadmin");
-          }
-
-          return estaAsignado || widgetsDelPanel.length > 0;
+          return true;
         });
 
         setPanelesVisibles(filtrados.length > 0 ? filtrados : PANELES_BASE_DEFAULT);
