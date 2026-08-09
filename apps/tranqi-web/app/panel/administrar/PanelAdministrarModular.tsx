@@ -13,6 +13,8 @@ import { useCustomWidgets } from "../gestorTitulosWidgets";
 import { ModalEditarWidget } from "../ModalEditarWidget";
 import { ModalVerificarMFAWidget } from "../ModalVerificarMFAWidget";
 
+import { obtenerListaSolicitudesSociosAction } from "../../../modulos/socios/acciones";
+
 interface Props {
   negocio: string;
 }
@@ -93,27 +95,9 @@ function SociosWidget() {
   useEffect(() => {
     async function cargar() {
       try {
-        const supabase = crearClienteNavegador();
-        const { data: sData } = await supabase
-          .schema("tranqui_legal")
-          .from("trq_solicitud_socio")
-          .select("*")
-          .order("ssc_creado_en", { ascending: false });
-
-        if (sData && sData.length > 0) {
-          const userIds = [...new Set(sData.map(s => s.ssc_usuario_id))];
-          const { data: uData } = await supabase
-            .schema("comun_seguridad")
-            .from("seg_usuario")
-            .select("usu_id, usu_nombres, usu_apellidos, usu_correo")
-            .in("usu_id", userIds);
-
-          const uMap = new Map((uData || []).map(u => [u.usu_id, u]));
-          const combinadas = sData.map(s => ({
-            ...s,
-            usuario: uMap.get(s.ssc_usuario_id) || null
-          }));
-          setSolicitudes(combinadas);
+        const res = await obtenerListaSolicitudesSociosAction();
+        if (res.ok && res.data) {
+          setSolicitudes(res.data);
         } else {
           setSolicitudes([]);
         }

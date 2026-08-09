@@ -127,10 +127,14 @@ export async function guardarAsignacionWidget(
       rlw_visible: true
     };
 
+    if (panelId) {
+      payload.rlw_panel_id = panelId;
+    }
+
     const { error } = await supabase
       .schema("comun_seguridad")
       .from("seg_rol_widget")
-      .upsert(payload);
+      .upsert(payload, { onConflict: "rlw_rol, rlw_widget_id, rlw_negocio, rlw_panel_id" });
 
     if (error) return { ok: false, error: error.message };
   } else {
@@ -153,6 +157,7 @@ export async function guardarAsignacionWidget(
   }
 
   revalidatePath("/panel/configuracion");
+  revalidatePath("/panel/administrar");
   revalidatePath("/panel");
   return { ok: true, data: undefined };
 }

@@ -185,3 +185,30 @@ export async function decidirSolicitudSocio(datos: {
   revalidatePath(`/panel/socios/${solicitudId}`);
   return { ok: true, data: undefined };
 }
+
+export async function obtenerListaSolicitudesSociosAction(): Promise<Resultado<any[]>> {
+  const supabase = await crearClienteServidor();
+  const { data: sData, error: sErr } = await supabase
+    .schema("tranqui_legal")
+    .from("trq_solicitud_socio")
+    .select("*")
+    .order("ssc_creado_en", { ascending: false });
+
+  if (sErr) return { ok: false, error: sErr.message };
+  if (!sData || sData.length === 0) return { ok: true, data: [] };
+
+  const userIds = [...new Set(sData.map((s) => s.ssc_usuario_id))];
+  const { data: uData } = await supabase
+    .schema("comun_seguridad")
+    .from("seg_usuario")
+    .select("usu_id, usu_nombres, usu_apellidos, usu_correo, usu_whatsapp")
+    .in("usu_id", userIds);
+
+  const uMap = new Map((uData || []).map((u) => [u.usu_id, u]));
+  const combinadas = sData.map((s) => ({
+    ...s,
+    usuario: uMap.get(s.ssc_usuario_id) || null,
+  }));
+
+  return { ok: true, data: combinadas };
+}

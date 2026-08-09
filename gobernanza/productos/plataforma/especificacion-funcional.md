@@ -539,9 +539,12 @@ Pantalla de configuración del negocio (identidad legal + datos de `PLT-008`) y 
 26. **Edición Completa del Perfil Profesional de Abogado en Todas sus Instancias (`FormularioPerfilAbogado.tsx`, `FormularioSolicitudSocio.tsx`, `acciones.ts`):**
     - **Habilitación de Edición de Todos los Parámetros:** Al autenticar el acceso con MFA en `/panel/cuenta` (widget `perfil_abogado`) o en `/panel/perfil-abogado`, la plataforma despliega el formulario completo de edición profesional (`FormularioSolicitudSocio`) precargado con todos los datos registrados del socio (foto con recortador zoom, cédula, universidad, año de graduación, años de experiencia, resumen en editor Rich Text HTML, especialidades, provincias de cobertura y experiencia laboral).
     - **Actualización de Solicitudes y Perfiles Aprobados:** Se modificó la Server Action `enviarSolicitudSocio` para permitir que un socio cuya solicitud se encuentre en estado `aceptada` pueda actualizar continuamente su perfil profesional preservando su estado de aprobación y sincronizando sus datos con la tabla `trq_abogado` y `seg_usuario`.
-27. **Visualización Prioritaria Posición #1 en Panel HOME para Solicitudes No Autorizadas (`app/panel/page.tsx`):**
-    - **Widget Destacado en Inicio Absoluto del Dashboard:** Mientras un usuario posea una solicitud de socio en estado no autorizado (`enviada`, `en_revision`, `rechazada` o en borrador), el panel principal HOME despliega en el primer lugar absoluto (`Posición #1`, por encima del banner de protección y la galería de accesos) una tarjeta de estado en tiempo real.
-    - **Acceso Inmediato a Modificación:** La tarjeta resalta el estado legal de la postulación, expone los detalles de la fecha de envío y provee un botón directo de acción rápida (`✏️ Ver, Modificar y Actualizar Todos los Datos de mi Solicitud`) hacia `/panel/solicitud-socio`.
+28. **Carga Autenticada de Solicitudes de Socios en Consola Administrativa (`obtenerListaSolicitudesSociosAction`, `PanelAdministrarModular.tsx`):**
+    - **Resolución de Bloqueo RLS en Cliente (`AprobacionSociosWidget`):** Se reemplazó la consulta cliente directa a Supabase por la Server Action `obtenerListaSolicitudesSociosAction()`, ejecutada en el contexto del servidor. Esto resuelve el vaciado de lista provocado por RLS cuando el token JWT del navegador está en nivel AAL1, mostrando correctamente todas las solicitudes de socios postulantes (ej. la solicitud de Carolina Colcha).
+29. **Persistencia de Asignación de Widgets por Panel (`guardarAsignacionWidget`, `acciones.ts`):**
+    - **Inclusión Estricta de `rlw_panel_id` en PostgreSQL (`seg_rol_widget`):** Se corrigió la Server Action `guardarAsignacionWidget` para incluir `rlw_panel_id` en el `payload` de `upsert` y especificar el criterio de conflicto `(rlw_rol, rlw_widget_id, rlw_negocio, rlw_panel_id)`. Esto garantiza que al asignar widgets desde la matriz a paneles específicos (como `/panel/administrar`), las asignaciones se guarden permanentemente en la base de datos y no desaparezcan al recargar la página.
+
+
 
 
 
