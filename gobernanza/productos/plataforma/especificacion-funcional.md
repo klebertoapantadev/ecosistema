@@ -532,6 +532,13 @@ Pantalla de configuración del negocio (identidad legal + datos de `PLT-008`) y 
     - **Habilitación Estricta del Botón de Envío:** El botón de envío de la solicitud se mantiene deshabilitado (`disabled={!declaracion}`) con atenuación visual (`opacity: 0.55`) y mensaje explicativo `🔒 Acepta los Términos LOPDP para Enviar Solicitud` hasta que el usuario marque activamente la casilla de aceptación.
     - **Controles de Tamaño de Imagen en Editor HTML:** Se agregaron botones de dimensionamiento rápido (`25%`, `50%`, `75%`, `100%`) en la barra de herramientas del editor rich text para ajustar el ancho de imágenes pegadas o insertadas.
     - **Corrección de Leyendas en Cajas Dropzone:** Se corrigieron los mensajes de carga para mostrar `Seleccionar o arrastrar archivos` en los campos de Título Universitario y Hojas de Vida (CV), reservando la mención de `fotografía de perfil` exclusivamente para la foto del abogado.
+24. **Sanetización de Nombres de Archivos para Supabase Storage / S3 Key Constraints (`esquema.ts`, `FormularioSolicitudSocio.tsx`, `SubirDocumentoRevision.tsx`):**
+    - **Normalización y Limpieza Automática de Nombres (`sanearNombreArchivo`):** Se resuelve la falla HTTP 400 Bad Request (`Invalid key`) al subir documentos o imágenes que contienen caracteres especiales (como virgulillas `~`, espacios, acentos, diacríticos y símbolos especiales). La función normaliza acentos NFD (ej. `á` -> `a`, `ñ` -> `n`) y reemplaza caracteres no alfanuméricos por guiones bajos `_`, garantizando claves de almacenamiento 100% compatibles con Supabase Storage keys (S3).
+25. **Verificación Criptográfica de MFA TOTP en Servidor / Prevención de Códigos Cruzados (`acciones.ts`, `FormularioPerfilAbogado.tsx`):**
+    - **Validación Criptográfica RFC 6238 HMAC-SHA1 (`verificarCodigoTotpUsuario`):** Se eliminó la validación sintáctica cliente basada en longitud (`length >= 6`). La plataforma valida el token de 6 dígitos en el servidor contra la clave secreta Base32 asignada exclusivamente a la cuenta en sesión actual.
+    - **Protección contra Códigos Cruzados de Otras Cuentas:** Si se ingresa un código TOTP generado por la app autenticadora de otra cuenta (ej. usar el TOTP de `kleber.toapanta.ch@gmail.com` en la sesión de `tinkay.uio@gmail.com`), el servidor calcula y compara los códigos TOTP únicos de cada secret y rechaza la autenticación inmediatamente con una alerta de `Código TOTP inválido`.
+
+
 
 ### Criterios de Aceptación (Gherkin)
 * **Escenario:** Gestión de usuarios por Administrador de Negocio

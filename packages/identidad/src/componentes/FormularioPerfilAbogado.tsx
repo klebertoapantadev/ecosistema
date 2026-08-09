@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { ShieldCheck, ShieldAlert, KeyRound, Check, Lock, UserCheck, Award, BookOpen, MapPin, Briefcase, QrCode, RefreshCw } from "lucide-react";
-import { actualizarPerfilUsuario } from "../acciones";
+import { actualizarPerfilUsuario, verificarCodigoTotpUsuario } from "../acciones";
 import { WidgetConfiguracionMfa } from "./WidgetConfiguracionMfa";
 
 export interface DatosPerfilAbogado {
@@ -38,19 +38,30 @@ export function FormularioPerfilAbogado({ inicial, onGuardarExito }: Props) {
   const [mfaVerificado, setMfaVerificado] = useState(Boolean(inicial.mfaVerificadoInicial));
   const [codigoTotp, setCodigoTotp] = useState("");
   const [errorTotp, setErrorTotp] = useState<string | null>(null);
+  const [verificandoTotp, setVerificandoTotp] = useState(false);
   const [mostrarWidgetMfa, setMostrarWidgetMfa] = useState(false);
 
   const [guardando, setGuardando] = useState(false);
   const [mensaje, setMensaje] = useState<{ tipo: "exito" | "error"; texto: string } | null>(null);
 
-  const verificarCodigoTotp = (e: React.FormEvent) => {
+  const verificarCodigoTotp = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorTotp(null);
     if (!codigoTotp.trim() || codigoTotp.trim().length < 6) {
       setErrorTotp("Ingresa un código de autenticación de 6 dígitos válido.");
       return;
     }
-    // Verificación exitosa del TOTP
+
+    setVerificandoTotp(true);
+    const res = await verificarCodigoTotpUsuario(codigoTotp);
+    setVerificandoTotp(false);
+
+    if (!res.ok) {
+      setErrorTotp(res.error);
+      return;
+    }
+
+    // Verificación exitosa del TOTP en servidor
     setMfaVerificado(true);
     setMensaje({ tipo: "exito", texto: "🔓 MFA Autenticado correctamente. Acceso concedido a edición de perfil legal." });
     setTimeout(() => setMensaje(null), 3500);
@@ -191,9 +202,11 @@ export function FormularioPerfilAbogado({ inicial, onGuardarExito }: Props) {
             <button
               type="submit"
               className="btn-primario"
-              style={{ display: "inline-flex", alignItems: "center", gap: "8px", height: "44px" }}
+              disabled={verificandoTotp}
+              style={{ display: "inline-flex", alignItems: "center", gap: "8px", height: "44px", opacity: verificandoTotp ? 0.7 : 1 }}
             >
-              <KeyRound size={16} /> Verificar & Desbloquear
+              {verificandoTotp ? <RefreshCw size={16} className="animate-spin" /> : <KeyRound size={16} />}
+              {verificandoTotp ? "Verificando TOTP..." : "Verificar & Desbloquear"}
             </button>
           </div>
 

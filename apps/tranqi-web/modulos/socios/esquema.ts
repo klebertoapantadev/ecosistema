@@ -43,3 +43,26 @@ export const esquemaDecisionSolicitud = z.object({
   comentario: z.string().trim().optional(),
 });
 export type DatosDecisionSolicitud = z.infer<typeof esquemaDecisionSolicitud>;
+
+/**
+ * Sanitiza nombres de archivo eliminando caracteres especiales, tildes, virgulillas (~),
+ * espacios y símbolos incompatibles con Supabase Storage keys (S3).
+ */
+export function sanearNombreArchivo(nombre: string): string {
+  if (!nombre) return "archivo";
+  const partes = nombre.split(".");
+  const extension = partes.length > 1 ? partes.pop()?.toLowerCase().replace(/[^a-z0-9]/g, "") : "";
+  const base = partes.join(".");
+
+  // Normalizar acentos (ej. á -> a, ñ -> n)
+  const sinAcentos = base.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  // Reemplazar caracteres no alfanuméricos ni guiones por _
+  const baseLimpia = sinAcentos
+    .replace(/[^a-zA-Z0-9_-]/g, "_")
+    .replace(/_+/g, "_")
+    .replace(/^_+|_+$/g, "");
+
+  const nombreFinal = baseLimpia || "documento";
+  return extension ? `${nombreFinal}.${extension}` : nombreFinal;
+}
+

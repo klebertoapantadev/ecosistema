@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { crearClienteNavegador } from "@eco/supabase";
 import { registrarDocumentoSocio } from "../acciones";
+import { sanearNombreArchivo } from "../esquema";
 
 const TIPOS_ACEPTADOS =
   "application/pdf,image/jpeg,image/png,image/webp,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.oasis.opendocument.text";
@@ -36,14 +37,15 @@ export function SubirDocumentoRevision({ solicitudId }: { solicitudId: string })
     }
     setEnviando(true);
     const supabase = crearClienteNavegador();
-    const path = `${solicitudId}/respaldo_revision-${crypto.randomUUID()}-${archivo.name}`;
+    const nombreLimpio = sanearNombreArchivo(archivo.name);
+    const path = `${solicitudId}/respaldo_revision-${crypto.randomUUID()}-${nombreLimpio}`;
     const { error: errorSubida } = await supabase.storage.from("socios-documentos").upload(path, archivo);
     if (errorSubida) {
       setEnviando(false);
       setError(errorSubida.message);
       return;
     }
-    const resultado = await registrarDocumentoSocio(solicitudId, "respaldo_revision", path, archivo.name, comentario);
+    const resultado = await registrarDocumentoSocio(solicitudId, "respaldo_revision", path, nombreLimpio, comentario);
     setEnviando(false);
     if (!resultado.ok) {
       setError(resultado.error);

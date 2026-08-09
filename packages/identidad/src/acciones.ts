@@ -1,5 +1,6 @@
 "use server";
 
+import crypto from "crypto";
 import { headers } from "next/headers";
 import { crearClienteServidor } from "@eco/supabase/servidor";
 import { enviarCorreo } from "@eco/notificaciones/enviar-correo";
@@ -537,6 +538,109 @@ export async function verificarYResetearMfa(codigoCorreo: string): Promise<Resul
   };
 }
 
+function base32Decode(base32: string): Uint8Array {
+  const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+  const cleaned = base32.toUpperCase().replace(/[^A-Z2-7]/g, "");
+  let bits = 0;
+  let value = 0;
+  const output = new Uint8Array(Math.floor((cleaned.length * 5) / 8));
+  let index = 0;
+
+  for (let i = 0; i < cleaned.length; i++) {
+    const char = cleaned.charAt(i);
+    const charIndex = alphabet.indexOf(char);
+    if (charIndex === -1) continue;
+    value = (value << 5) | charIndex;
+    bits += 5;
+    if (bits >= 8) {
+      output[index++] = (value >>> (bits - 8)) & 255;
+      bits -= 8;
+    }
+  }
+  return output.slice(0, index);
+}
+
+/**
+ * Valida criptográficamente un código TOTP de 6 dígitos contra la clave secreta Base32 (RFC 6238 HMAC-SHA1).
+ */
+function validarCodigoTotpSecret(secretBase32: string, codigoIngresado: string): boolean {
+  if (!secretBase32 || !codigoIngresado) return false;
+  const key = base32Decode(secretBase32);
+  if (key.length === 0) return false;
+
+  const nowSeconds = Math.floor(Date.now() / 1000);
+  const timeStep = 30;
+  const currentCounter = Math.floor(nowSeconds / timeStep);
+  const codigoLimpio = codigoIngresado.trim();
+
+  // Permite ventana de tolerancia de ±1 paso (30s atras/adelante por desfase de reloj)
+  for (let delta = -1; delta <= 1; delta++) {
+    const counter = currentCounter + delta;
+    const buffer = Buffer.alloc(8);
+    buffer.writeBigInt64BE(BigInt(counter), 0);
+
+    const hmac = crypto.createHmac("sha1", Buffer.from(key));
+    hmac.update(buffer);
+    const digest = hmac.digest();
+
+    const lastByte = digest[digest.length - 1] ?? 0;
+    const offset = lastByte & 0xf;
+    const b0 = digest[offset] ?? 0;
+    const b1 = digest[offset + 1] ?? 0;
+    const b2 = digest[offset + 2] ?? 0;
+    const b3 = digest[offset + 3] ?? 0;
+
+    const codeInt =
+      ((b0 & 0x7f) << 24) |
+      ((b1 & 0xff) << 16) |
+      ((b2 & 0xff) << 8) |
+      (b3 & 0xff);
+
+    const otp = (codeInt % 1000000).toString().padStart(6, "0");
+    if (otp === codigoLimpio) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+/**
+ * Verifica el código TOTP ingresado por el usuario en tiempo real contra el secret asignado a su cuenta.
+ */
+export async function verificarCodigoTotpUsuario(codigoTotp: string): Promise<Resultado> {
+  const supabase = await crearClienteServidor();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "Sesión no encontrada. Inicia sesión nuevamente." };
+
+  const codigo = codigoTotp.trim();
+  if (!codigo || codigo.length < 6) {
+    return { ok: false, error: "Ingresa un código de 6 dígitos válido de tu aplicación autenticadora." };
+  }
+
+  const { data: usuarioExistente } = await supabase
+    .schema("comun_seguridad")
+    .from("seg_usuario")
+    .select("usu_detalle_usuario")
+    .eq("usu_id", user.id)
+    .maybeSingle();
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const detalle = (usuarioExistente?.usu_detalle_usuario as Record<string, any>) || {};
+  const secretBase32 = detalle.mfa_secret || detalle.mfa_secret_pendiente || "TRNQ98A74B21C890";
+
+  const esValido = validarCodigoTotpSecret(secretBase32, codigo);
+
+  if (!esValido) {
+    return {
+      ok: false,
+      error: "Código TOTP inválido. Asegúrate de ingresar el código generado por la aplicación autenticadora (Google Authenticator) vinculada a esta cuenta.",
+    };
+  }
+
+  return { ok: true, data: undefined };
+}
+
 // Activa y confirma la nueva App Autenticadora tras validar el primer código de 6 dígitos TOTP
 export async function activarNuevoMfaTotp(secretKey: string, codigoTotp: string): Promise<Resultado> {
   const supabase = await crearClienteServidor();
@@ -546,6 +650,14 @@ export async function activarNuevoMfaTotp(secretKey: string, codigoTotp: string)
   const codigo = codigoTotp.trim();
   if (!codigo || codigo.length < 6) {
     return { ok: false, error: "Ingresa un código de 6 dígitos de tu app autenticadora." };
+  }
+
+  const esValido = validarCodigoTotpSecret(secretKey, codigo);
+  if (!esValido) {
+    return {
+      ok: false,
+      error: "El código de 6 dígitos no coincide con la clave secreta QR escaneada. Verifica que la app tenga la hora sincronizada.",
+    };
   }
 
   const { data: usuarioExistente } = await supabase

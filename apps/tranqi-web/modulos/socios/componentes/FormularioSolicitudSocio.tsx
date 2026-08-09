@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { ExternalLink, Check, X, Search, Plus, Bold, Italic, Underline, List, Heading, Link as LinkIcon, Code, ShieldCheck, UploadCloud, FileText, Camera, Paperclip, Trash2, Image as ImageIcon, ZoomIn, ZoomOut, Move, RotateCcw, Crop, Sliders, CheckCircle2 } from "lucide-react";
 import { crearClienteNavegador } from "@eco/supabase";
 import { enviarSolicitudSocio, registrarDocumentoSocio } from "../acciones";
-import { ENLACES_VERIFICACION, type DatosExperienciaLaboral } from "../esquema";
+import { ENLACES_VERIFICACION, sanearNombreArchivo, type DatosExperienciaLaboral } from "../esquema";
 
 interface Props {
   usuarioId: string;
@@ -40,11 +40,12 @@ async function subirDocumento(
     return { ok: false as const, error: `${archivo.name}: supera ${TAMANO_MAXIMO_MB}MB` };
   }
   const supabase = crearClienteNavegador();
-  const path = `${solicitudId}/${tipo}-${crypto.randomUUID()}-${archivo.name}`;
+  const nombreLimpio = sanearNombreArchivo(archivo.name);
+  const path = `${solicitudId}/${tipo}-${crypto.randomUUID()}-${nombreLimpio}`;
   const { error: errorSubida } = await supabase.storage.from("socios-documentos").upload(path, archivo);
   if (errorSubida) return { ok: false as const, error: `${archivo.name}: ${errorSubida.message}` };
 
-  const resultado = await registrarDocumentoSocio(solicitudId, tipo, path, archivo.name);
+  const resultado = await registrarDocumentoSocio(solicitudId, tipo, path, nombreLimpio);
   if (!resultado.ok) return { ok: false as const, error: `${archivo.name}: ${resultado.error}` };
   return { ok: true as const };
 }
@@ -112,7 +113,7 @@ function RecortadorFotoPerfil({
 
       canvas.toBlob((blob) => {
         if (blob) {
-          const recortado = new File([blob], `perfil_${archivo.name.replace(/\.[^/.]+$/, "")}.png`, { type: "image/png" });
+          const recortado = new File([blob], `perfil_${sanearNombreArchivo(archivo.name.replace(/\.[^/.]+$/, ""))}.png`, { type: "image/png" });
           onGuardarFoto(recortado);
         }
       }, "image/png");

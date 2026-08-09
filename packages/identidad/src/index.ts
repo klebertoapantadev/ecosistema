@@ -18,6 +18,7 @@ export {
   solicitarCodigoRescateMfa,
   verificarYResetearMfa,
   activarNuevoMfaTotp,
+  verificarCodigoTotpUsuario,
   obtenerEstadoMfa,
   obtenerConfiguracionTerminos,
   guardarConfiguracionTerminos,
