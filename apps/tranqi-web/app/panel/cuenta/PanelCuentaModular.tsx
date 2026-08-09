@@ -8,6 +8,7 @@ import { FormularioDatosFacturacion } from "@eco/identidad/componentes/Formulari
 import { WidgetConfiguracionMfa } from "@eco/identidad/componentes/WidgetConfiguracionMfa";
 import { HistorialAccesos } from "@eco/identidad/componentes/HistorialAccesos";
 import { EliminarCuenta } from "@eco/identidad/componentes/EliminarCuenta";
+import { FormularioSolicitudSocio } from "../../../modulos/socios/componentes/FormularioSolicitudSocio";
 import { cerrarSesionYRedirigir } from "../acciones";
 import { SelectorRolActivo, type RolOpcionDef } from "../SelectorRolActivo";
 import { useCustomWidgets } from "../gestorTitulosWidgets";
@@ -40,6 +41,9 @@ interface Props {
   historial: FilaAcceso[];
   puedeConmutar?: boolean;
   rolesDisponibles?: RolOpcionDef[];
+  materias?: { mat_id: string; mat_nombre: string }[];
+  provincias?: { cat_id: string; cat_nombre: string }[];
+  solicitudExistente?: Record<string, unknown> | null;
 }
 
 export interface WidgetDef {
@@ -120,7 +124,7 @@ const WIDGETS_BASE: WidgetDef[] = [
   }
 ];
 
-export function PanelCuentaModular({ perfil, historial, puedeConmutar = true, rolesDisponibles }: Props) {
+export function PanelCuentaModular({ perfil, historial, puedeConmutar = true, rolesDisponibles, materias = [], provincias = [], solicitudExistente }: Props) {
   const [favoritos, setFavoritos] = useState<string[]>([]);
   const [widgetActivo, setWidgetActivo] = useState<string | null>(null);
   const [widgetEditar, setWidgetEditar] = useState<{
@@ -346,13 +350,17 @@ export function PanelCuentaModular({ perfil, historial, puedeConmutar = true, ro
                   correo: perfil?.usu_correo || "",
                   whatsapp: perfil?.usu_whatsapp || "",
                   autorizaWhatsapp: Boolean(perfil?.usu_autorizacion_whatsapp),
-                  tituloSenescyt: "Abogado de los Tribunales de la República",
-                  matriculaForo: "",
-                  anosExperiencia: 5,
-                  detalles: "",
                   mfaVerificadoInicial: false
                 }}
-              />
+              >
+                <FormularioSolicitudSocio
+                  usuarioId={perfil?.usu_id || ""}
+                  materias={materias}
+                  provincias={provincias}
+                  correoInicial={perfil?.usu_correo}
+                  solicitudExistente={solicitudExistente}
+                />
+              </FormularioPerfilAbogado>
             )}
 
             {/* WIDGET 2: HISTORIAL DE ACCESOS */}

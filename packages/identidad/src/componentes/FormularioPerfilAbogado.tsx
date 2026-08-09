@@ -21,9 +21,10 @@ export interface DatosPerfilAbogado {
 interface Props {
   inicial: DatosPerfilAbogado;
   onGuardarExito?: () => void;
+  children?: React.ReactNode;
 }
 
-export function FormularioPerfilAbogado({ inicial, onGuardarExito }: Props) {
+export function FormularioPerfilAbogado({ inicial, onGuardarExito, children }: Props) {
   const [nombres, setNombres] = useState(inicial.nombres || "");
   const [apellidos, setApellidos] = useState(inicial.apellidos || "");
   const [whatsapp, setWhatsapp] = useState(inicial.whatsapp || "");
@@ -236,6 +237,8 @@ export function FormularioPerfilAbogado({ inicial, onGuardarExito }: Props) {
             )}
           </div>
         </form>
+      ) : children ? (
+        <div style={{ width: "100%" }}>{children}</div>
       ) : (
         /* FORMULARIO DE PERFIL ABOGADO (DESBLOQUEADO TRAS MFA) */
         <form onSubmit={handleSubmit} className="form-panel" style={{ display: "flex", flexDirection: "column", gap: "18px" }}>

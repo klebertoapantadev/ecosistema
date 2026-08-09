@@ -63,10 +63,14 @@ function iniciales(nombres?: string | null, apellidos?: string | null, correo?: 
   return ((partes[0]?.[0] ?? "?") + (partes[1]?.[0] ?? "?")).toUpperCase();
 }
 
+import { obtenerSolicitudPropia } from "../../modulos/socios/consultas";
+
 export default async function PagePanel({ searchParams }: Props) {
   const perfil = await obtenerPerfilActual();
   const perfiles = await obtenerPerfiles(NEGOCIO);
   const puedeConmutar = Boolean(perfil?.usu_superadmin_plataforma);
+  const solicitudPropia = perfil ? await obtenerSolicitudPropia(perfil.usu_id) : null;
+  const tieneSolicitudNoAutorizada = Boolean(solicitudPropia && solicitudPropia.ssc_estado !== "aceptada");
 
   const rawParams = await searchParams;
   const modoURL = modoValido(rawParams?.modo);
@@ -111,6 +115,11 @@ export default async function PagePanel({ searchParams }: Props) {
         </div>
       </div>
 
+      {/* POSICIÓN #1 EN PANEL HOME: Si existe una solicitud no autorizada, aparece al inicio absoluto */}
+      {tieneSolicitudNoAutorizada && solicitudPropia && (
+        <TarjetaEstadoSolicitudHome solicitud={solicitudPropia as unknown as Record<string, unknown>} />
+      )}
+
       {modo === "abogado" ? (
         <PanelAbogado nombreCompleto={nombreCompleto} />
       ) : (modo === "admin" || modo === "superadmin") ? (
@@ -124,6 +133,105 @@ export default async function PagePanel({ searchParams }: Props) {
         <a href="/terminos">Términos</a>
       </footer>
     </div>
+  );
+}
+
+function TarjetaEstadoSolicitudHome({ solicitud }: { solicitud: Record<string, unknown> }) {
+  const estado = String(solicitud.ssc_estado || "enviada");
+  const fechaStr = solicitud.ssc_enviada_en || solicitud.ssc_creado_en;
+  const fecha = fechaStr ? new Date(String(fechaStr)).toLocaleDateString("es-EC") : null;
+
+  const CONFIG: Record<string, { titulo: string; desc: string; chip: string; bg: string; border: string; color: string }> = {
+    enviada: {
+      titulo: "Solicitud de Socio Abogado — Enviada & En Espera de Revisión",
+      desc: "Tu postulación profesional se encuentra registrada. El equipo legal revisará tus certificados de SENESCYT y Foro de Abogados.",
+      chip: "🟡 Enviada (Pendiente de Autorización)",
+      bg: "rgba(245, 158, 11, 0.08)",
+      border: "#F59E0B",
+      color: "#B45309",
+    },
+    en_revision: {
+      titulo: "Solicitud de Socio Abogado — En Revisión Legal",
+      desc: "Estamos validando tus credenciales en los portales oficiales de la SENESCYT y Consejo de la Judicatura.",
+      chip: "🔵 En Revisión Legal",
+      bg: "rgba(59, 130, 246, 0.08)",
+      border: "#3B82F6",
+      color: "#1D4ED8",
+    },
+    rechazada: {
+      titulo: "Solicitud de Socio Abogado — Requiere Corrección / Actualización",
+      desc: "Se identificaron observaciones en la documentación o datos ingresados. Por favor actualiza la información y vuelve a enviar.",
+      chip: "🔴 No Autorizada (Modificación Requerida)",
+      bg: "rgba(239, 68, 68, 0.08)",
+      border: "#EF4444",
+      color: "#B91C1C",
+    },
+  };
+
+  const info = CONFIG[estado] ?? {
+    titulo: "Solicitud de Socio Abogado — En Curso",
+    desc: "Tienes una solicitud de registro profesional iniciada en la plataforma.",
+    chip: "🟠 En Curso (Incompleta)",
+    bg: "rgba(249, 115, 22, 0.08)",
+    border: "#F97316",
+    color: "#C2410C",
+  };
+
+  return (
+    <section
+      style={{
+        width: "100%",
+        background: info.bg,
+        border: `1.5px solid ${info.border}`,
+        borderRadius: "16px",
+        padding: "20px 24px",
+        marginBottom: "24px",
+        boxShadow: "0 6px 18px rgba(0,0,0,0.04)",
+      }}
+    >
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "16px" }}>
+        <div style={{ flex: 1, minWidth: "280px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "6px" }}>
+            <span
+              style={{
+                fontSize: "0.78rem",
+                fontWeight: 800,
+                padding: "4px 12px",
+                borderRadius: "999px",
+                background: "#FFFFFF",
+                border: `1px solid ${info.border}`,
+                color: info.color,
+              }}
+            >
+              {info.chip}
+            </span>
+            {fecha && <span style={{ fontSize: "0.78rem", color: "#666" }}>Registrada el {fecha}</span>}
+          </div>
+          <h2 style={{ fontSize: "1.15rem", fontWeight: 800, color: "#111111", margin: "6px 0 4px" }}>{info.titulo}</h2>
+          <p style={{ fontSize: "0.88rem", color: "#444444", margin: 0, lineHeight: "1.45" }}>{info.desc}</p>
+        </div>
+
+        <a
+          href="/panel/solicitud-socio"
+          style={{
+            textDecoration: "none",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "8px",
+            background: "linear-gradient(135deg, #5000BA 0%, #3B0088 100%)",
+            color: "#FFF",
+            padding: "12px 20px",
+            borderRadius: "10px",
+            fontSize: "0.88rem",
+            fontWeight: 800,
+            boxShadow: "0 4px 12px rgba(80, 0, 186, 0.25)",
+            whiteSpace: "nowrap",
+          }}
+        >
+          ✏️ Ver, Modificar y Actualizar Todos los Datos de mi Solicitud
+        </a>
+      </div>
+    </section>
   );
 }
 

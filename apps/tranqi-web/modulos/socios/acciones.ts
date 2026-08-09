@@ -33,13 +33,10 @@ export async function enviarSolicitudSocio(
   let solicitudId: string;
 
   if (existente) {
-    if (existente.ssc_estado === "aceptada") {
-      return { ok: false, error: "Tu solicitud ya fue aprobada exitosamente. ¡Ya eres un Socio Abogado acreditado!" };
-    }
-
     solicitudId = existente.ssc_id;
+    const esAceptada = existente.ssc_estado === "aceptada";
 
-    // Actualizar solicitud existente
+    // Actualizar solicitud existente (preservando el estado 'aceptada' si ya fue aprobada)
     const { error: errorUpdate } = await supabase
       .schema("tranqui_legal")
       .from("trq_solicitud_socio")
@@ -53,12 +50,21 @@ export async function enviarSolicitudSocio(
         ssc_telefono_contacto: d.telefonoContacto || null,
         ssc_enlace_senescyt_verificado: d.enlaceSenescytVerificado,
         ssc_enlace_foro_verificado: d.enlaceForoVerificado,
-        ssc_estado: "enviada",
+        ssc_estado: esAceptada ? "aceptada" : "enviada",
         ssc_enviada_en: new Date().toISOString(),
       })
       .eq("ssc_id", solicitudId);
 
     if (errorUpdate) return { ok: false, error: errorUpdate.message };
+
+    // Sincronizar actualización con el usuario si la solicitud está en estado aceptada
+    if (esAceptada && d.telefonoContacto) {
+      await supabase
+        .schema("comun_seguridad")
+        .from("seg_usuario")
+        .update({ usu_whatsapp: d.telefonoContacto })
+        .eq("usu_id", usuarioId);
+    }
 
     // Limpiar relaciones anteriores para insertar la actualizacion limpia
     await Promise.all([
