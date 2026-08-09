@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import {
   Home, CircleUser, Settings, ShieldCheck, ClipboardList, Wrench, CreditCard,
-  PanelLeft, Sliders, Folder, Activity, FileText,
+  PanelLeft, Sliders, Folder, Activity, FileText, UserCog,
   CheckSquare, Globe, Building, Sparkles, Phone, Lock, KeyRound, Terminal, Zap,
   Eye, Search, Pencil, LogOut, LogIn, type LucideIcon
 } from "lucide-react";
@@ -27,6 +27,7 @@ const MAPA_ICONOS_NAV: Record<string, LucideIcon> = {
   Settings,
   Shield: ShieldCheck,
   ShieldCheck,
+  UserCog,
   Wrench,
   ClipboardList,
   CreditCard,
@@ -54,7 +55,7 @@ const MAPA_ICONOS_NAV: Record<string, LucideIcon> = {
 // Configuración inicial de paneles base del ecosistema
 const PANELES_BASE_DEFAULT: PanelDefNav[] = [
   { id: "panel_inicio", nombre: "Inicio", ruta: "/panel", icono: "Home" },
-  { id: "panel_administrar", nombre: "Administrar", ruta: "/panel/administrar", icono: "ShieldCheck" },
+  { id: "panel_administrar", nombre: "Administrar", ruta: "/panel/administrar", icono: "UserCog" },
   { id: "panel_configuracion", nombre: "Configurar", ruta: "/panel/configuracion", icono: "Settings" },
   { id: "panel_cuenta", nombre: "Mi cuenta", ruta: "/panel/cuenta", icono: "CircleUser" },
   { id: "panel_herramientas", nombre: "Herramientas", ruta: "/panel/herramientas", icono: "Wrench" },

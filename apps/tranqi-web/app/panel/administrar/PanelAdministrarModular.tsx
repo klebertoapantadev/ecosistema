@@ -14,6 +14,7 @@ import { ModalEditarWidget } from "../ModalEditarWidget";
 import { ModalVerificarMFAWidget } from "../ModalVerificarMFAWidget";
 
 import { obtenerListaSolicitudesSociosAction } from "../../../modulos/socios/acciones";
+import { obtenerConfiguracionNavegacionRolAction } from "@eco/gestion-usuarios/acciones";
 
 interface Props {
   negocio: string;
@@ -263,47 +264,66 @@ export function PanelAdministrarModular({ negocio }: Props) {
 
   // Cargar widgets dinámicamente desde la matriz de permisos para el perfil activo
   useEffect(() => {
-    function cargarConfiguracionPanel() {
+    async function cargarConfiguracionPanel() {
       try {
+        const cookieStore = typeof document !== "undefined" ? document.cookie : "";
+        let rolActivo = "ADMINISTRADOR";
+        const matchModo = cookieStore.match(/tranqi_modo_rol=([^;]+)/);
+        const matchFav = cookieStore.match(/tranqi_rol_favorito=([^;]+)/);
+        if (matchModo && matchModo[1]) rolActivo = matchModo[1].toUpperCase();
+        else if (matchFav && matchFav[1]) rolActivo = matchFav[1].toUpperCase();
+
+        // 1. Presets de asignación por rol para panel_administrar
+        let idsAsignados: string[] = [];
+        if (rolActivo === "OPERADOR" || rolActivo === "AUXILIAR" || rolActivo === "TECNICO") {
+          idsAsignados = ["socios"];
+        } else if (rolActivo === "ADMINISTRADOR" || rolActivo === "SUPERADMIN") {
+          idsAsignados = ["gestion_usuarios", "socios", "solicitud_socio", "emision_notificaciones", "auditoria"];
+        }
+
+        // 2. Consultar servidor BDD PostgreSQL (comun_seguridad.seg_rol_widget)
+        const resBdd = await obtenerConfiguracionNavegacionRolAction(rolActivo, (negocio || "TRANQ").toUpperCase());
+        if (resBdd.ok && resBdd.data && resBdd.data.widgetsPorPanel) {
+          const wBdd = resBdd.data.widgetsPorPanel["panel_administrar"] || resBdd.data.widgetsPorPanel["administrar"] || [];
+          if (wBdd.length > 0) {
+            idsAsignados = Array.from(new Set([...idsAsignados, ...wBdd]));
+          }
+        }
+
+        // 3. Complementar con personalizaciones en localStorage si existen
         const savedPerfiles = localStorage.getItem(`tranqi_perfiles_${negocio}`) || localStorage.getItem("tranqi_perfiles_TRANQ");
         if (savedPerfiles) {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const perfiles = JSON.parse(savedPerfiles);
           if (Array.isArray(perfiles)) {
-            const cookieStore = typeof document !== "undefined" ? document.cookie : "";
-            let rolActivo = "ADMINISTRADOR";
-            const matchModo = cookieStore.match(/tranqi_modo_rol=([^;]+)/);
-            const matchFav = cookieStore.match(/tranqi_rol_favorito=([^;]+)/);
-            if (matchModo && matchModo[1]) rolActivo = matchModo[1].toUpperCase();
-            else if (matchFav && matchFav[1]) rolActivo = matchFav[1].toUpperCase();
-
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            let perfilObj = perfiles.find((p: any) => p.clave.toUpperCase() === rolActivo);
-            if (!perfilObj) {
+            let perfilObj = perfiles.find((p: any) => p.clave?.toUpperCase() === rolActivo);
+            if (!perfilObj && (rolActivo === "OPERADOR" || rolActivo === "AUXILIAR")) {
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              perfilObj = perfiles.find((p: any) => p.clave.toUpperCase() === "ADMINISTRADOR") || perfiles[0];
+              perfilObj = perfiles.find((p: any) => p.clave?.toUpperCase() === "OPERADOR");
             }
-
             if (perfilObj && perfilObj.widgetsAsignadosPorPanel) {
-              const idsAsignados: string[] = perfilObj.widgetsAsignadosPorPanel["panel_administrar"] || [];
-
-              if (Array.isArray(idsAsignados) && idsAsignados.length > 0) {
-                const filtrados: ModuloAdminDef[] = [];
-                for (const id of idsAsignados) {
-                  const enInventario = MODULOS_ADMIN.find(m =>
-                    m.id === id || (id === "perfiles" && m.id === "gestion_usuarios") || (id === "terminos" && m.id === "gestion_terminos_consentimientos")
-                  );
-                  if (enInventario && !filtrados.some(f => f.id === enInventario.id)) {
-                    filtrados.push(enInventario);
-                  }
-                }
-                if (filtrados.length > 0) {
-                  setModulosAsignados(filtrados);
-                  return;
-                }
+              const wLocal = perfilObj.widgetsAsignadosPorPanel["panel_administrar"] || perfilObj.widgetsAsignadosPorPanel["administrar"] || [];
+              if (wLocal.length > 0) {
+                idsAsignados = Array.from(new Set([...idsAsignados, ...wLocal]));
               }
             }
           }
+        }
+
+        // 4. Mapear y filtrar MODULOS_ADMIN
+        const filtrados: ModuloAdminDef[] = [];
+        for (const id of idsAsignados) {
+          const enInventario = MODULOS_ADMIN.find(m =>
+            m.id === id || (id === "perfiles" && m.id === "gestion_usuarios") || (id === "terminos" && m.id === "gestion_terminos_consentimientos")
+          );
+          if (enInventario && !filtrados.some(f => f.id === enInventario.id)) {
+            filtrados.push(enInventario);
+          }
+        }
+        if (filtrados.length > 0) {
+          setModulosAsignados(filtrados);
+          return;
         }
       } catch (err) {
         console.error("Error al cargar widgets asignados a panel_administrar:", err);

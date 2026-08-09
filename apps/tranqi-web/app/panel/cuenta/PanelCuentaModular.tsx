@@ -15,6 +15,8 @@ import { useCustomWidgets } from "../gestorTitulosWidgets";
 import { ModalEditarWidget } from "../ModalEditarWidget";
 import { ModalVerificarMFAWidget } from "../ModalVerificarMFAWidget";
 
+import { obtenerConfiguracionNavegacionRolAction } from "@eco/gestion-usuarios/acciones";
+
 export interface PerfilUsuario {
   usu_id?: string;
   usu_nombres?: string | null;
@@ -147,56 +149,76 @@ export function PanelCuentaModular({ perfil, historial, puedeConmutar = true, ro
   const esAdminOSuper = Boolean(puedeConmutar || perfil?.usu_superadmin_plataforma);
 
   useEffect(() => {
-    function cargarConfiguracionPanelCuenta() {
+    async function cargarConfiguracionPanelCuenta() {
       try {
+        const cookieStore = typeof document !== "undefined" ? document.cookie : "";
+        let rolActivo = "CLIENTE";
+        const matchModo = cookieStore.match(/tranqi_modo_rol=([^;]+)/);
+        const matchFav = cookieStore.match(/tranqi_rol_favorito=([^;]+)/);
+        if (matchModo && matchModo[1]) rolActivo = matchModo[1].toUpperCase();
+        else if (matchFav && matchFav[1]) rolActivo = matchFav[1].toUpperCase();
+
+        // 1. Presets por defecto según rol para panel_cuenta
+        let idsAsignados: string[] = [];
+        if (rolActivo === "OPERADOR" || rolActivo === "AUXILIAR" || rolActivo === "TECNICO") {
+          idsAsignados = ["ver_como", "mi_cuenta"];
+        } else if (rolActivo === "CLIENTE") {
+          idsAsignados = ["mi_cuenta", "datos_facturacion", "mfa_seguridad"];
+        } else if (rolActivo === "ABOGADO") {
+          idsAsignados = ["perfil_abogado", "mi_cuenta"];
+        } else if (rolActivo === "ADMINISTRADOR" || rolActivo === "SUPERADMIN") {
+          idsAsignados = ["ver_como", "mi_cuenta", "datos_facturacion", "historial_accesos", "mfa_seguridad", "baja_cuenta"];
+        }
+
+        // 2. Consultar BDD PostgreSQL (comun_seguridad.seg_rol_widget)
+        const resBdd = await obtenerConfiguracionNavegacionRolAction(rolActivo, "TRANQ");
+        if (resBdd.ok && resBdd.data && resBdd.data.widgetsPorPanel) {
+          const wBdd = resBdd.data.widgetsPorPanel["panel_cuenta"] || resBdd.data.widgetsPorPanel["cuenta"] || [];
+          if (wBdd.length > 0) {
+            idsAsignados = Array.from(new Set([...idsAsignados, ...wBdd]));
+          }
+        }
+
+        // 3. Complementar con personalizaciones locales si existen
         const savedPerfiles = localStorage.getItem("tranqi_perfiles_TRANQ") || localStorage.getItem("tranqi_perfiles_tranqi");
         if (savedPerfiles) {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const perfiles = JSON.parse(savedPerfiles);
           if (Array.isArray(perfiles)) {
-            const cookieStore = typeof document !== "undefined" ? document.cookie : "";
-            let rolActivo = "CLIENTE";
-            const matchModo = cookieStore.match(/tranqi_modo_rol=([^;]+)/);
-            const matchFav = cookieStore.match(/tranqi_rol_favorito=([^;]+)/);
-            if (matchModo && matchModo[1]) rolActivo = matchModo[1].toUpperCase();
-            else if (matchFav && matchFav[1]) rolActivo = matchFav[1].toUpperCase();
-
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             let perfilObj = perfiles.find((p: any) => p.clave?.toUpperCase() === rolActivo);
             if (!perfilObj && (rolActivo === "OPERADOR" || rolActivo === "AUXILIAR")) {
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               perfilObj = perfiles.find((p: any) => p.clave?.toUpperCase() === "OPERADOR");
             }
-            if (!perfilObj) {
-              perfilObj = perfiles[0];
-            }
-
             if (perfilObj && perfilObj.widgetsAsignadosPorPanel) {
-              const idsAsignados: string[] = perfilObj.widgetsAsignadosPorPanel["panel_cuenta"] || [];
-
-              if (Array.isArray(idsAsignados) && idsAsignados.length > 0) {
-                const filtrados: WidgetDef[] = [];
-                for (const id of idsAsignados) {
-                  const enInventario = WIDGETS_BASE.find(m =>
-                    m.id === id ||
-                    (id === "mi_cuenta" && m.id === "perfil") ||
-                    (id === "ver_como" && m.id === "rol_activo") ||
-                    (id === "datos_facturacion" && m.id === "facturacion") ||
-                    (id === "baja_cuenta" && m.id === "peligro") ||
-                    (id === "seguridad_mfa" && m.id === "mfa_seguridad") ||
-                    (id === "sesion_claves" && m.id === "sesion")
-                  );
-                  if (enInventario && !filtrados.some(f => f.id === enInventario.id)) {
-                    filtrados.push(enInventario);
-                  }
-                }
-                if (filtrados.length > 0) {
-                  setWidgetsFiltradosCuenta(filtrados);
-                  return;
-                }
+              const wLocal = perfilObj.widgetsAsignadosPorPanel["panel_cuenta"] || perfilObj.widgetsAsignadosPorPanel["cuenta"] || [];
+              if (wLocal.length > 0) {
+                idsAsignados = Array.from(new Set([...idsAsignados, ...wLocal]));
               }
             }
           }
+        }
+
+        // 4. Mapear y filtrar WIDGETS_BASE
+        const filtrados: WidgetDef[] = [];
+        for (const id of idsAsignados) {
+          const enInventario = WIDGETS_BASE.find(m =>
+            m.id === id ||
+            (id === "mi_cuenta" && m.id === "perfil") ||
+            (id === "ver_como" && m.id === "rol_activo") ||
+            (id === "datos_facturacion" && m.id === "facturacion") ||
+            (id === "baja_cuenta" && m.id === "peligro") ||
+            (id === "seguridad_mfa" && m.id === "mfa_seguridad") ||
+            (id === "sesion_claves" && m.id === "sesion")
+          );
+          if (enInventario && !filtrados.some(f => f.id === enInventario.id)) {
+            filtrados.push(enInventario);
+          }
+        }
+        if (filtrados.length > 0) {
+          setWidgetsFiltradosCuenta(filtrados);
+          return;
         }
       } catch (err) {
         console.error("Error al cargar widgets asignados a panel_cuenta:", err);
