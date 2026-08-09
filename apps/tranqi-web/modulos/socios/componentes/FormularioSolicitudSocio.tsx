@@ -125,13 +125,35 @@ function RecortadorFotoPerfil({
     setOffsetY(0);
   };
 
+  const [arrastrando, setArrastrando] = useState(false);
+  const [puntoInicio, setPuntoInicio] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [offsetInicio, setOffsetInicio] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+
+  const iniciarArrastre = (clientX: number, clientY: number) => {
+    setArrastrando(true);
+    setPuntoInicio({ x: clientX, y: clientY });
+    setOffsetInicio({ x: offsetX, y: offsetY });
+  };
+
+  const moverArrastre = (clientX: number, clientY: number) => {
+    if (!arrastrando) return;
+    const deltaX = clientX - puntoInicio.x;
+    const deltaY = clientY - puntoInicio.y;
+    setOffsetX(Math.min(120, Math.max(-120, offsetInicio.x + deltaX)));
+    setOffsetY(Math.min(120, Math.max(-120, offsetInicio.y + deltaY)));
+  };
+
+  const finalizarArrastre = () => {
+    setArrastrando(false);
+  };
+
   return (
     <div style={{ marginTop: "12px", padding: "16px", background: "#F7F6FA", borderRadius: "12px", border: "1px solid #5000BA" }}>
       <strong style={{ fontSize: "0.88rem", color: "#5000BA", display: "flex", alignItems: "center", gap: "6px", marginBottom: "4px" }}>
         <Sliders size={16} /> Ajuste y Recorte de Foto de Perfil Profesional
       </strong>
       <p style={{ fontSize: "0.76rem", color: "#737373", marginBottom: "14px" }}>
-        Ajusta el zoom, movimiento horizontal/vertical y centrado de tu rostro en la silueta oficial de tu perfil.
+        Ajusta el zoom, movimiento o <strong>arrastra la foto con el mouse o dedo</strong> directamente sobre la silueta.
       </p>
 
       <div style={{ display: "flex", flexWrap: "wrap", gap: "20px", alignItems: "center", justifyContent: "center" }}>
@@ -154,9 +176,16 @@ function RecortadorFotoPerfil({
             Perfil Verificado
           </div>
 
-          {/* Contenedor Avatar Circular */}
-          <div style={{ position: "relative", marginTop: "14px", marginBottom: "14px" }}>
+          {/* Contenedor Avatar Circular Arrastrable */}
+          <div style={{ position: "relative", marginTop: "14px", marginBottom: "10px", display: "flex", flexDirection: "column", alignItems: "center" }}>
             <div
+              onMouseDown={(e) => { e.preventDefault(); iniciarArrastre(e.clientX, e.clientY); }}
+              onMouseMove={(e) => moverArrastre(e.clientX, e.clientY)}
+              onMouseUp={finalizarArrastre}
+              onMouseLeave={finalizarArrastre}
+              onTouchStart={(e) => { if (e.touches[0]) iniciarArrastre(e.touches[0].clientX, e.touches[0].clientY); }}
+              onTouchMove={(e) => { if (e.touches[0]) moverArrastre(e.touches[0].clientX, e.touches[0].clientY); }}
+              onTouchEnd={finalizarArrastre}
               style={{
                 width: "120px",
                 height: "120px",
@@ -168,18 +197,23 @@ function RecortadorFotoPerfil({
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
+                cursor: arrastrando ? "grabbing" : "grab",
+                userSelect: "none",
+                touchAction: "none",
               }}
             >
               {fotoUrl ? (
                 <img
                   src={fotoUrl}
                   alt="Ajuste de foto"
+                  draggable={false}
                   style={{
                     width: "100%",
                     height: "100%",
                     objectFit: "cover",
                     transform: `translate(${offsetX}px, ${offsetY}px) scale(${zoom})`,
-                    transition: "transform 0.05s ease-out",
+                    transition: arrastrando ? "none" : "transform 0.05s ease-out",
+                    pointerEvents: "none",
                   }}
                 />
               ) : (
@@ -205,6 +239,10 @@ function RecortadorFotoPerfil({
               <CheckCircle2 size={15} />
             </div>
           </div>
+
+          <span style={{ fontSize: "0.68rem", color: "#00D09C", fontWeight: 700, marginBottom: "4px" }}>
+            🖐️ Arrastrar para mover
+          </span>
 
           <strong style={{ fontSize: "0.92rem", fontWeight: 800, textAlign: "center", color: "#ffffff" }}>
             Foto de Perfil
@@ -432,7 +470,9 @@ function CampoSubidaArchivo({
         </div>
         <div>
           <span style={{ fontSize: "0.84rem", fontWeight: 800, color: "var(--violeta, #5000BA)" }}>
-            {archivos.length > 0 ? "Añadir / Cambiar imagen" : "Seleccionar o arrastrar fotografía de perfil"}
+            {archivos.length > 0
+              ? (esFotoPerfil ? "Añadir / Cambiar imagen" : "Añadir / Cambiar archivos")
+              : (esFotoPerfil ? "Seleccionar o arrastrar fotografía de perfil" : "Seleccionar o arrastrar archivos")}
           </span>
           <span style={{ display: "block", fontSize: "0.72rem", color: "var(--panel-gris, #737373)", marginTop: "2px" }}>
             {esFotoPerfil
@@ -625,6 +665,28 @@ function EditorHtmlResumen({ valor, onChange }: { valor: string; onChange: (val:
     e.target.value = "";
   };
 
+  const [imagenSeleccionada, setImagenSeleccionada] = useState<HTMLImageElement | null>(null);
+
+  const cambiarTamanoImagen = (anchoPorcentaje: string) => {
+    if (imagenSeleccionada) {
+      imagenSeleccionada.style.width = anchoPorcentaje;
+      imagenSeleccionada.style.maxWidth = "100%";
+      imagenSeleccionada.style.height = "auto";
+      if (editorRef.current) {
+        onChange(editorRef.current.innerHTML);
+      }
+    } else if (editorRef.current) {
+      const imgs = editorRef.current.querySelectorAll("img");
+      if (imgs.length > 0) {
+        const ultima = imgs[imgs.length - 1] as HTMLImageElement;
+        ultima.style.width = anchoPorcentaje;
+        ultima.style.maxWidth = "100%";
+        ultima.style.height = "auto";
+        onChange(editorRef.current.innerHTML);
+      }
+    }
+  };
+
   return (
     <div style={{ border: "1px solid var(--panel-linea, #E4E4E4)", borderRadius: "10px", overflow: "hidden", background: "#ffffff" }}>
       <input ref={inputImagenRef} type="file" accept="image/*" onChange={manejarSeleccionImagen} style={{ display: "none" }} />
@@ -668,6 +730,15 @@ function EditorHtmlResumen({ valor, onChange }: { valor: string; onChange: (val:
         <button type="button" title="Adjuntar archivo" onClick={() => inputArchivoRef.current?.click()} style={btnToolStyle}>
           <Paperclip size={14} color="var(--violeta, #5000BA)" />
         </button>
+
+        <div style={{ width: "1px", height: "18px", background: "#E4E4E4", margin: "0 4px" }} />
+        <div style={{ display: "inline-flex", alignItems: "center", gap: "3px", background: "rgba(80,0,186,0.06)", padding: "2px 6px", borderRadius: "6px" }}>
+          <span style={{ fontSize: "0.7rem", fontWeight: 700, color: "var(--violeta, #5000BA)" }}>📐 Tamaño Imagen:</span>
+          <button type="button" title="Reducir a 25%" onClick={() => cambiarTamanoImagen("25%")} style={{ ...btnToolStyle, fontSize: "0.7rem", padding: "2px 6px" }}>25%</button>
+          <button type="button" title="Reducir a 50%" onClick={() => cambiarTamanoImagen("50%")} style={{ ...btnToolStyle, fontSize: "0.7rem", padding: "2px 6px" }}>50%</button>
+          <button type="button" title="Reducir a 75%" onClick={() => cambiarTamanoImagen("75%")} style={{ ...btnToolStyle, fontSize: "0.7rem", padding: "2px 6px" }}>75%</button>
+          <button type="button" title="Tamaño 100%" onClick={() => cambiarTamanoImagen("100%")} style={{ ...btnToolStyle, fontSize: "0.7rem", padding: "2px 6px" }}>100%</button>
+        </div>
 
         <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: "6px" }}>
           <button
@@ -714,6 +785,14 @@ function EditorHtmlResumen({ valor, onChange }: { valor: string; onChange: (val:
           onInput={() => editorRef.current && onChange(editorRef.current.innerHTML)}
           onBlur={() => editorRef.current && onChange(editorRef.current.innerHTML)}
           onPaste={manejarPegar}
+          onClick={(e) => {
+            const target = e.target as HTMLElement;
+            if (target.tagName === "IMG") {
+              setImagenSeleccionada(target as HTMLImageElement);
+            } else {
+              setImagenSeleccionada(null);
+            }
+          }}
           style={{
             minHeight: "120px",
             maxHeight: "320px",
