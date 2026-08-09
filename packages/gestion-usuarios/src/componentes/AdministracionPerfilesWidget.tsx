@@ -571,7 +571,18 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
       const savedPaneles = localStorage.getItem(KEY_PANELES);
       if (savedPaneles) {
         const parsed = JSON.parse(savedPaneles);
-        if (Array.isArray(parsed) && parsed.length > 0) setPanelesSidebar(parsed);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const saneados = parsed.map((p: any) => {
+            let r = p.ruta || "/panel";
+            if (r === "/panel/" || r === "/panel") {
+              const slugClean = (p.id || "").replace(/^panel_/, "");
+              if (slugClean) r = `/panel/${slugClean}`;
+            }
+            return { ...p, ruta: r };
+          });
+          setPanelesSidebar(saneados);
+        }
       }
 
       const savedPerfiles = localStorage.getItem(KEY_PERFILES);
@@ -660,7 +671,10 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
     if (!nuevoPanel.nombre.trim()) return;
     const slug = nuevoPanel.nombre.toLowerCase().replace(/[^a-z0-9]/g, "_");
     const panelId = `panel_${slug}`;
-    const rutaFormateada = nuevoPanel.ruta.startsWith("/") ? nuevoPanel.ruta : `/${nuevoPanel.ruta}`;
+    let rutaFormateada = nuevoPanel.ruta.startsWith("/") ? nuevoPanel.ruta : `/${nuevoPanel.ruta}`;
+    if (rutaFormateada === "/panel/" || rutaFormateada === "/panel") {
+      rutaFormateada = `/panel/${slug}`;
+    }
 
     const creado: PanelSidebarDef = {
       id: panelId,

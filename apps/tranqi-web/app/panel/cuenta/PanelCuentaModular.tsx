@@ -126,6 +126,7 @@ const WIDGETS_BASE: WidgetDef[] = [
 
 export function PanelCuentaModular({ perfil, historial, puedeConmutar = true, rolesDisponibles, materias = [], provincias = [], solicitudExistente }: Props) {
   const [favoritos, setFavoritos] = useState<string[]>([]);
+  const [widgetsFiltradosCuenta, setWidgetsFiltradosCuenta] = useState<WidgetDef[]>(WIDGETS_BASE);
   const [widgetActivo, setWidgetActivo] = useState<string | null>(null);
   const [widgetEditar, setWidgetEditar] = useState<{
     id: string;
@@ -145,9 +146,70 @@ export function PanelCuentaModular({ perfil, historial, puedeConmutar = true, ro
   const { getWidgetInfo, guardarWidget, obtenerIconoComponente } = useCustomWidgets();
   const esAdminOSuper = Boolean(puedeConmutar || perfil?.usu_superadmin_plataforma);
 
-  const widgetsDisponibles = puedeConmutar
-    ? WIDGETS_BASE
-    : WIDGETS_BASE.filter(w => w.id !== "rol_activo");
+  useEffect(() => {
+    function cargarConfiguracionPanelCuenta() {
+      try {
+        const savedPerfiles = localStorage.getItem("tranqi_perfiles_TRANQ") || localStorage.getItem("tranqi_perfiles_tranqi");
+        if (savedPerfiles) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const perfiles = JSON.parse(savedPerfiles);
+          if (Array.isArray(perfiles)) {
+            const cookieStore = typeof document !== "undefined" ? document.cookie : "";
+            let rolActivo = "CLIENTE";
+            const matchModo = cookieStore.match(/tranqi_modo_rol=([^;]+)/);
+            const matchFav = cookieStore.match(/tranqi_rol_favorito=([^;]+)/);
+            if (matchModo && matchModo[1]) rolActivo = matchModo[1].toUpperCase();
+            else if (matchFav && matchFav[1]) rolActivo = matchFav[1].toUpperCase();
+
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            let perfilObj = perfiles.find((p: any) => p.clave?.toUpperCase() === rolActivo);
+            if (!perfilObj && (rolActivo === "OPERADOR" || rolActivo === "AUXILIAR")) {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              perfilObj = perfiles.find((p: any) => p.clave?.toUpperCase() === "OPERADOR");
+            }
+            if (!perfilObj) {
+              perfilObj = perfiles[0];
+            }
+
+            if (perfilObj && perfilObj.widgetsAsignadosPorPanel) {
+              const idsAsignados: string[] = perfilObj.widgetsAsignadosPorPanel["panel_cuenta"] || [];
+
+              if (Array.isArray(idsAsignados) && idsAsignados.length > 0) {
+                const filtrados: WidgetDef[] = [];
+                for (const id of idsAsignados) {
+                  const enInventario = WIDGETS_BASE.find(m =>
+                    m.id === id ||
+                    (id === "mi_cuenta" && m.id === "perfil") ||
+                    (id === "ver_como" && m.id === "rol_activo") ||
+                    (id === "datos_facturacion" && m.id === "facturacion") ||
+                    (id === "baja_cuenta" && m.id === "peligro") ||
+                    (id === "seguridad_mfa" && m.id === "mfa_seguridad") ||
+                    (id === "sesion_claves" && m.id === "sesion")
+                  );
+                  if (enInventario && !filtrados.some(f => f.id === enInventario.id)) {
+                    filtrados.push(enInventario);
+                  }
+                }
+                if (filtrados.length > 0) {
+                  setWidgetsFiltradosCuenta(filtrados);
+                  return;
+                }
+              }
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Error al cargar widgets asignados a panel_cuenta:", err);
+      }
+      setWidgetsFiltradosCuenta(puedeConmutar ? WIDGETS_BASE : WIDGETS_BASE.filter(w => w.id !== "rol_activo"));
+    }
+
+    cargarConfiguracionPanelCuenta();
+    window.addEventListener("storage", cargarConfiguracionPanelCuenta);
+    return () => window.removeEventListener("storage", cargarConfiguracionPanelCuenta);
+  }, [puedeConmutar]);
+
+  const widgetsDisponibles = widgetsFiltradosCuenta;
 
   // Cargar favoritos de localStorage
   useEffect(() => {
