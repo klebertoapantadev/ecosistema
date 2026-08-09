@@ -16,7 +16,7 @@ export function WidgetConfiguracionMfa({ negocio = "tranqi", correoUsuario = "",
   const [correo, setCorreo] = useState(correoUsuario);
 
   // Estados para Configuración / Re-enrolamiento QR
-  const [secretKey, setSecretKey] = useState("TRNQ98A74B21C890");
+  const [secretKey, setSecretKey] = useState("");
   const [codigoTotp, setCodigoTotp] = useState("");
   const [copiado, setCopiado] = useState(false);
 
@@ -36,6 +36,7 @@ export function WidgetConfiguracionMfa({ negocio = "tranqi", correoUsuario = "",
       if (res.ok && res.data) {
         setMfaActivo(res.data.mfaActivo);
         if (res.data.correo) setCorreo(res.data.correo);
+        if (res.data.secretKey) setSecretKey(res.data.secretKey);
       }
     }
     cargarEstado();

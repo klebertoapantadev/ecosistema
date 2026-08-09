@@ -387,9 +387,26 @@ export async function cerrarSesion(): Promise<Resultado> {
 
 // ═══════════════════════════════════════════════════════════════════
 // PLT-002: GESTIÓN Y RESETEO ESTÁNDAR DE MFA (TOTP / CORREO OTP)
-// ═══════════════════════════════════════════════════════════════════
+function esBase32Valido(secret: unknown): secret is string {
+  if (typeof secret !== "string" || secret.length < 8) return false;
+  return /^[A-Z2-7]+$/i.test(secret);
+}
 
-export async function obtenerEstadoMfa(): Promise<Resultado<{ mfaActivo: boolean; correo: string; fotoUrl?: string }>> {
+function generarSecretoBase32(longitud: number = 16): string {
+  const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+  let result = "TRNQ";
+  for (let i = 0; i < longitud - 4; i++) {
+    result += alphabet.charAt(Math.floor(Math.random() * alphabet.length));
+  }
+  return result;
+}
+
+export async function obtenerEstadoMfa(): Promise<Resultado<{
+  mfaActivo: boolean;
+  correo: string;
+  secretKey: string;
+  fotoUrl?: string;
+}>> {
   const supabase = await crearClienteServidor();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { ok: false, error: "Sesión no encontrada" };
@@ -403,11 +420,27 @@ export async function obtenerEstadoMfa(): Promise<Resultado<{ mfaActivo: boolean
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const detalle = (usuarioExistente?.usu_detalle_usuario as Record<string, any>) || {};
+  let secretKey = detalle.mfa_secret || detalle.mfa_secret_pendiente;
+
+  if (!esBase32Valido(secretKey)) {
+    secretKey = generarSecretoBase32(16);
+    const nuevoDetalle = {
+      ...detalle,
+      mfa_secret_pendiente: secretKey,
+    };
+    await supabase
+      .schema("comun_seguridad")
+      .from("seg_usuario")
+      .update({ usu_detalle_usuario: nuevoDetalle, usu_actualizado_en: new Date().toISOString() })
+      .eq("usu_id", user.id);
+  }
+
   return {
     ok: true,
     data: {
       mfaActivo: Boolean(detalle.mfa_activo),
       correo: usuarioExistente?.usu_correo || user.email || "",
+      secretKey,
       fotoUrl: detalle.foto_url || null,
     },
   };
@@ -627,7 +660,14 @@ export async function verificarCodigoTotpUsuario(codigoTotp: string): Promise<Re
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const detalle = (usuarioExistente?.usu_detalle_usuario as Record<string, any>) || {};
-  const secretBase32 = detalle.mfa_secret || detalle.mfa_secret_pendiente || "TRNQ98A74B21C890";
+  const secretBase32 = detalle.mfa_secret || detalle.mfa_secret_pendiente;
+
+  if (!esBase32Valido(secretBase32)) {
+    return {
+      ok: false,
+      error: "No tienes un autenticador MFA configurado. Ve a Mi Cuenta -> Configurar MFA para escanear tu código QR.",
+    };
+  }
 
   const esValido = validarCodigoTotpSecret(secretBase32, codigo);
 
