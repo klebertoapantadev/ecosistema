@@ -600,6 +600,9 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
   useEffect(() => {
     try {
       localStorage.setItem(KEY_PERFILES, JSON.stringify(perfiles));
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new Event("storage"));
+      }
     } catch (e) {}
   }, [perfiles, negocio]);
 

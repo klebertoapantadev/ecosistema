@@ -541,8 +541,10 @@ Pantalla de configuración del negocio (identidad legal + datos de `PLT-008`) y 
     - **Actualización de Solicitudes y Perfiles Aprobados:** Se modificó la Server Action `enviarSolicitudSocio` para permitir que un socio cuya solicitud se encuentre en estado `aceptada` pueda actualizar continuamente su perfil profesional preservando su estado de aprobación y sincronizando sus datos con la tabla `trq_abogado` y `seg_usuario`.
 28. **Carga Autenticada de Solicitudes de Socios en Consola Administrativa (`obtenerListaSolicitudesSociosAction`, `PanelAdministrarModular.tsx`):**
     - **Resolución de Bloqueo RLS en Cliente (`AprobacionSociosWidget`):** Se reemplazó la consulta cliente directa a Supabase por la Server Action `obtenerListaSolicitudesSociosAction()`, ejecutada en el contexto del servidor. Esto resuelve el vaciado de lista provocado por RLS cuando el token JWT del navegador está en nivel AAL1, mostrando correctamente todas las solicitudes de socios postulantes (ej. la solicitud de Carolina Colcha).
-29. **Persistencia de Asignación de Widgets por Panel (`guardarAsignacionWidget`, `acciones.ts`):**
-    - **Inclusión Estricta de `rlw_panel_id` en PostgreSQL (`seg_rol_widget`):** Se corrigió la Server Action `guardarAsignacionWidget` para incluir `rlw_panel_id` en el `payload` de `upsert` y especificar el criterio de conflicto `(rlw_rol, rlw_widget_id, rlw_negocio, rlw_panel_id)`. Esto garantiza que al asignar widgets desde la matriz a paneles específicos (como `/panel/administrar`), las asignaciones se guarden permanentemente en la base de datos y no desaparezcan al recargar la página.
+30. **Sincronización Dinámica de Tarjetas de Administración según Matriz de Permisos (`PanelAdministrarModular.tsx`):**
+    - **Filtro Dinámico en `/panel/administrar`:** Se reemplazó la renderización estática e incondicional de los 6 módulos de administración en `PanelAdministrarModular.tsx`. La pantalla consulta dinámicamente la matriz de permisos (`widgetsAsignadosPorPanel["panel_administrar"]`) del perfil activo. Si un widget (ej. `Términos LOPDP`) es desasignado de la consola `/panel/administrar` en la matriz de permisos, su tarjeta se oculta inmediatamente de la vista principal del panel, respetando al 100% la matriz de gobernanza y control de accesos `PLT-003`.
+
+
 
 
 

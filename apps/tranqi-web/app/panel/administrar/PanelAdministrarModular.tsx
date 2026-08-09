@@ -242,6 +242,7 @@ function VisorAuditoriaWidget() {
 
 export function PanelAdministrarModular({ negocio }: Props) {
   const [favoritos, setFavoritos] = useState<string[]>(["gestion_usuarios", "socios"]);
+  const [modulosAsignados, setModulosAsignados] = useState<ModuloAdminDef[]>(MODULOS_ADMIN);
   const [widgetActivo, setWidgetActivo] = useState<string | null>(null);
   const [widgetEditar, setWidgetEditar] = useState<{
     id: string;
@@ -259,6 +260,61 @@ export function PanelAdministrarModular({ negocio }: Props) {
   } | null>(null);
 
   const { getWidgetInfo, guardarWidget, obtenerIconoComponente } = useCustomWidgets();
+
+  // Cargar widgets dinámicamente desde la matriz de permisos para el perfil activo
+  useEffect(() => {
+    function cargarConfiguracionPanel() {
+      try {
+        const savedPerfiles = localStorage.getItem(`tranqi_perfiles_${negocio}`) || localStorage.getItem("tranqi_perfiles_TRANQ");
+        if (savedPerfiles) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const perfiles = JSON.parse(savedPerfiles);
+          if (Array.isArray(perfiles)) {
+            const cookieStore = typeof document !== "undefined" ? document.cookie : "";
+            let rolActivo = "ADMINISTRADOR";
+            const matchModo = cookieStore.match(/tranqi_modo_rol=([^;]+)/);
+            const matchFav = cookieStore.match(/tranqi_rol_favorito=([^;]+)/);
+            if (matchModo && matchModo[1]) rolActivo = matchModo[1].toUpperCase();
+            else if (matchFav && matchFav[1]) rolActivo = matchFav[1].toUpperCase();
+
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            let perfilObj = perfiles.find((p: any) => p.clave.toUpperCase() === rolActivo);
+            if (!perfilObj) {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              perfilObj = perfiles.find((p: any) => p.clave.toUpperCase() === "ADMINISTRADOR") || perfiles[0];
+            }
+
+            if (perfilObj && perfilObj.widgetsAsignadosPorPanel) {
+              const idsAsignados: string[] = perfilObj.widgetsAsignadosPorPanel["panel_administrar"] || [];
+
+              if (Array.isArray(idsAsignados) && idsAsignados.length > 0) {
+                const filtrados: ModuloAdminDef[] = [];
+                for (const id of idsAsignados) {
+                  const enInventario = MODULOS_ADMIN.find(m =>
+                    m.id === id || (id === "perfiles" && m.id === "gestion_usuarios") || (id === "terminos" && m.id === "gestion_terminos_consentimientos")
+                  );
+                  if (enInventario && !filtrados.some(f => f.id === enInventario.id)) {
+                    filtrados.push(enInventario);
+                  }
+                }
+                if (filtrados.length > 0) {
+                  setModulosAsignados(filtrados);
+                  return;
+                }
+              }
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Error al cargar widgets asignados a panel_administrar:", err);
+      }
+      setModulosAsignados(MODULOS_ADMIN);
+    }
+
+    cargarConfiguracionPanel();
+    window.addEventListener("storage", cargarConfiguracionPanel);
+    return () => window.removeEventListener("storage", cargarConfiguracionPanel);
+  }, [negocio]);
 
   // Leer modulo inicial desde localStorage o URL
   useEffect(() => {
@@ -319,7 +375,7 @@ export function PanelAdministrarModular({ negocio }: Props) {
     }
   };
 
-  const modulosOrdenados = [...MODULOS_ADMIN].sort((a, b) => {
+  const modulosOrdenados = [...modulosAsignados].sort((a, b) => {
     const aFav = favoritos.includes(a.id);
     const bFav = favoritos.includes(b.id);
     if (aFav && !bFav) return -1;
