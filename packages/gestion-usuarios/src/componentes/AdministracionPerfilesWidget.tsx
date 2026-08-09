@@ -2349,28 +2349,44 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
               <LayoutGrid size={20} color="var(--violeta, #5000BA)" /> + Crear Nuevo Panel Personalizado
             </h3>
 
-            <div style={{ marginBottom: "12px" }}>
-              <label style={{ fontSize: "0.8rem", fontWeight: 700, display: "block", marginBottom: "4px" }}>Nombre del Panel (ej: Administrar, Operación):</label>
+            <div style={{ marginBottom: "14px" }}>
+              <label style={{ fontSize: "0.8rem", fontWeight: 700, display: "block", marginBottom: "4px" }}>Nombre del Panel (ej: Gestión, Reportes, Operación):</label>
               <input
                 type="text"
                 required
                 value={nuevoPanel.nombre}
-                onChange={e => setNuevoPanel({ ...nuevoPanel, nombre: e.target.value })}
-                style={{ width: "100%", padding: "8px 12px", borderRadius: "6px", border: "1px solid var(--panel-linea, #E4E4E4)" }}
-                placeholder="Ej. Administrar"
+                onChange={e => {
+                  const val = e.target.value;
+                  const slug = val.toLowerCase().trim().replace(/[^a-z0-9]/g, "_");
+                  setNuevoPanel({
+                    ...nuevoPanel,
+                    nombre: val,
+                    ruta: `/panel/${slug || "nuevo"}`
+                  });
+                }}
+                style={{ width: "100%", padding: "9px 12px", borderRadius: "8px", border: "1px solid #D1D5DB", fontSize: "0.88rem", fontWeight: 700 }}
+                placeholder="Ej. Gestión"
               />
             </div>
 
-            <div style={{ marginBottom: "12px" }}>
-              <label style={{ fontSize: "0.8rem", fontWeight: 700, display: "block", marginBottom: "4px" }}>Ruta del Panel (ej: /panel/administrar):</label>
-              <input
-                type="text"
-                required
-                value={nuevoPanel.ruta}
-                onChange={e => setNuevoPanel({ ...nuevoPanel, ruta: e.target.value })}
-                style={{ width: "100%", padding: "8px 12px", borderRadius: "6px", border: "1px solid var(--panel-linea, #E4E4E4)" }}
-                placeholder="/panel/administrar"
-              />
+            {/* Ruta del Panel (Auto-generada) */}
+            <div style={{ marginBottom: "16px", background: "#F3F4F6", padding: "10px 14px", borderRadius: "8px", border: "1px solid #E5E7EB" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <div>
+                  <span style={{ fontSize: "0.75rem", fontWeight: 800, color: "#4B5563", textTransform: "uppercase" }}>
+                    ⚡ Ruta de Navegación (Generada Automáticamente):
+                  </span>
+                  <div style={{ fontSize: "0.88rem", fontWeight: 800, color: "#5000BA", fontFamily: "monospace", marginTop: "2px" }}>
+                    {nuevoPanel.ruta || `/panel/${nuevoPanel.nombre.toLowerCase().trim().replace(/[^a-z0-9]/g, "_") || "nuevo"}`}
+                  </div>
+                </div>
+                <span style={{ fontSize: "0.72rem", fontWeight: 700, color: "#05876E", background: "#D1FAE5", padding: "4px 8px", borderRadius: "6px" }}>
+                  ✓ Automática
+                </span>
+              </div>
+              <p style={{ fontSize: "0.74rem", color: "#6B7280", margin: "4px 0 0 0" }}>
+                No necesitas escribir rutas técnicas. Los widgets vinculados a este panel se renderizarán automáticamente en esta dirección.
+              </p>
             </div>
 
             <div style={{ marginBottom: "16px" }}>
@@ -2499,27 +2515,41 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
             </div>
 
             {/* Nombre del Panel */}
-            <div style={{ marginBottom: "12px" }}>
+            <div style={{ marginBottom: "14px" }}>
               <label style={{ fontSize: "0.8rem", fontWeight: 700, display: "block", marginBottom: "4px" }}>Nombre del Panel:</label>
               <input
                 type="text"
                 required
                 value={panelEditarModal.nombre}
-                onChange={e => setPanelEditarModal({ ...panelEditarModal, nombre: e.target.value })}
-                style={{ width: "100%", padding: "8px 12px", borderRadius: "6px", border: "1px solid #E4E4E4", fontSize: "0.86rem", fontWeight: 700 }}
+                onChange={e => {
+                  const val = e.target.value;
+                  const slug = val.toLowerCase().trim().replace(/[^a-z0-9]/g, "_");
+                  const esBase = ["panel_inicio", "panel_administrar", "panel_configuracion", "panel_cuenta", "panel_herramientas", "panel_seguridad"].includes(panelEditarModal.id);
+                  const rutaAuto = esBase ? panelEditarModal.ruta : `/panel/${slug || "nuevo"}`;
+                  setPanelEditarModal({ ...panelEditarModal, nombre: val, ruta: rutaAuto });
+                }}
+                style={{ width: "100%", padding: "9px 12px", borderRadius: "8px", border: "1px solid #D1D5DB", fontSize: "0.88rem", fontWeight: 700 }}
               />
             </div>
 
-            {/* Ruta del Panel */}
-            <div style={{ marginBottom: "12px" }}>
-              <label style={{ fontSize: "0.8rem", fontWeight: 700, display: "block", marginBottom: "4px" }}>Ruta de Navegación:</label>
-              <input
-                type="text"
-                required
-                value={panelEditarModal.ruta}
-                onChange={e => setPanelEditarModal({ ...panelEditarModal, ruta: e.target.value })}
-                style={{ width: "100%", padding: "8px 12px", borderRadius: "6px", border: "1px solid #E4E4E4", fontSize: "0.84rem" }}
-              />
+            {/* Ruta de Navegación (Auto-generada) */}
+            <div style={{ marginBottom: "16px", background: "#F3F4F6", padding: "10px 14px", borderRadius: "8px", border: "1px solid #E5E7EB" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <div>
+                  <span style={{ fontSize: "0.75rem", fontWeight: 800, color: "#4B5563", textTransform: "uppercase" }}>
+                    ⚡ Ruta de Navegación (Generada Automáticamente):
+                  </span>
+                  <div style={{ fontSize: "0.88rem", fontWeight: 800, color: "#5000BA", fontFamily: "monospace", marginTop: "2px" }}>
+                    {panelEditarModal.ruta}
+                  </div>
+                </div>
+                <span style={{ fontSize: "0.72rem", fontWeight: 700, color: "#05876E", background: "#D1FAE5", padding: "4px 8px", borderRadius: "6px" }}>
+                  ✓ Automática
+                </span>
+              </div>
+              <p style={{ fontSize: "0.74rem", color: "#6B7280", margin: "4px 0 0 0" }}>
+                No necesitas escribir rutas técnicas. Los widgets vinculados a este panel se renderizarán automáticamente en esta dirección.
+              </p>
             </div>
 
             {/* Descripción */}
