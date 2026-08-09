@@ -527,6 +527,10 @@ Pantalla de configuración del negocio (identidad legal + datos de `PLT-008`) y 
     - **Restricción Estricta de Formatos de Imagen:** El campo de foto de perfil valida y admite exclusivamente formatos de imagen (`JPG`, `PNG`, `WEBP`) rechazando PDFs u otros documentos.
     - **Recortador & Posicionador de Foto en Tiempo Real:** Se incorporó un widget interactivo de recorte que despliega una tarjeta de perfil profesional en verde esmeralda idéntica a la vista pública de la red. Incluye controles deslizantes de Zoom (`0.5x` a `3.0x`), movimiento horizontal X, movimiento vertical Y, botón de centrado/reset y procesador canvas `[✂️ Aplicar Recorte]`.
     - **Explicación & Opción 'Todo el Ecuador' en Cobertura Geográfica:** La sección incluye una aclaración guiada sobre la selección de ubicaciones y la opción destacada `🇪🇨 Todo el Ecuador (Cobertura Nacional)` que activa automáticamente la representación territorial nacional.
+23. **Corrección de Restricción BDD, Bloqueo de Envío & Gestión Dinámica de Términos (`acciones.ts`, `FormularioSolicitudSocio.tsx`, `GestionTerminosConsentimientosWidget.tsx`):**
+    - **Resolución de Restricción CHECK BDD (`trq_documento_socio_dcs_tipo_check`):** Se mapean de forma segura los tipos de archivos personalizados (como `foto_perfil` o `cv_certificados`) a los valores admitidos por PostgreSQL (`'titulo'`, `'matricula'`, `'cedula'`, `'otro'`), eliminando el fallo de restricción en la base de datos.
+    - **Habilitación Estricta del Botón de Envío:** El botón de envío de la solicitud se mantiene deshabilitado (`disabled={!declaracion}`) con atenuación visual (`opacity: 0.55`) y mensaje explicativo `🔒 Acepta los Términos LOPDP para Enviar Solicitud` hasta que el usuario marque activamente la casilla de aceptación.
+    - **Categoría Editable en Widget de Términos:** Se integró la nueva categoría `Solicitud Socio Abogado & LOPDP` (`solicitud_socio`) en la Consola Administrativa de Términos y Consentimientos, permitiendo al administrador editar el texto de autorización de SENESCYT y LOPDP en tiempo real.
 
 ### Criterios de Aceptación (Gherkin)
 * **Escenario:** Gestión de usuarios por Administrador de Negocio
