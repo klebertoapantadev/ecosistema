@@ -541,9 +541,11 @@ Pantalla de configuración del negocio (identidad legal + datos de `PLT-008`) y 
     - **Actualización de Solicitudes y Perfiles Aprobados:** Se modificó la Server Action `enviarSolicitudSocio` para permitir que un socio cuya solicitud se encuentre en estado `aceptada` pueda actualizar continuamente su perfil profesional preservando su estado de aprobación y sincronizando sus datos con la tabla `trq_abogado` y `seg_usuario`.
 28. **Carga Autenticada de Solicitudes de Socios en Consola Administrativa (`obtenerListaSolicitudesSociosAction`, `PanelAdministrarModular.tsx`):**
     - **Resolución de Bloqueo RLS en Cliente (`AprobacionSociosWidget`):** Se reemplazó la consulta cliente directa a Supabase por la Server Action `obtenerListaSolicitudesSociosAction()`, ejecutada en el contexto del servidor. Esto resuelve el vaciado de lista provocado por RLS cuando el token JWT del navegador está en nivel AAL1, mostrando correctamente todas las solicitudes de socios postulantes (ej. la solicitud de Carolina Colcha).
-32. **Renderización Dinámica de Paneles Personalizados `/panel/[slug]` y Filtrado por Perfil (`PanelCuentaModular.tsx`, `PanelDinamicoModular.tsx`):**
-    - **Filtrado Estricto de Módulos en Mi Cuenta (`/panel/cuenta`):** Se actualizó `PanelCuentaModular.tsx` para consultar dinámicamente los widgets autorizados para `panel_cuenta` según el perfil activo (ej. para el rol Operador, únicamente despliega `Ver Como` y `Perfil & Datos de Contacto`, ocultando los 5 widgets no autorizados).
-    - **Soporte de Paneles Personalizados Dinámicos (`/panel/[slug]`):** Se implementó la ruta dinámico-modular `app/panel/[slug]/page.tsx` y `PanelDinamicoModular.tsx`. Cualquier panel creado en el sistema (ej. `Herramientas`, `Seguridad`, etc.) genera automáticamente un slug `/panel/[slug]` funcional que renderiza en tiempo real todos los widgets vinculados a dicho panel para el perfil activo.
+33. **Persistencia Servidor en BDD (`seg_rol_widget`) y Widget Independiente de Consulta (`ConsultaUsuariosPerfilesWidget.tsx`, `NavegacionSidebar.tsx`):**
+    - **Sincronización Multidispositivo PostgreSQL:** `NavegacionSidebar.tsx` se conectó a la Server Action `obtenerConfiguracionNavegacionRolAction()` para leer directamente las asignaciones guardadas en la base de datos PostgreSQL (`comun_seguridad.seg_rol_widget`). Esto garantiza que cualquier usuario (ej. Carlos Garcia - Operador) que inicie sesión desde cualquier dispositivo o navegador vea exactamente todos los paneles y widgets autorizados por la matriz administrativa.
+    - **Widget Independiente de Consulta (Solo Lectura):** Se construyó el componente `ConsultaUsuariosPerfilesWidget.tsx` (desacoplado y de libre asignación) que permite a roles no administrativos (como Operadores o Auxiliares) consultar el directorio completo de miembros y la matriz de perfiles con sus respectivos permisos sin riesgo de realizar modificaciones destructivas.
+
+
 
 
 

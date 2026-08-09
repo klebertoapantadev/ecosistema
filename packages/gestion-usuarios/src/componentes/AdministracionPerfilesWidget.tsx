@@ -338,6 +338,16 @@ const WIDGETS_INVENTARIO_INICIALES: WidgetInventarioDef[] = [
     activo: true
   },
   {
+    clave: "consulta_usuarios_perfiles",
+    nombre: "Consulta de Usuarios & Perfiles",
+    descripcion: "Directorio de miembros, matriz de roles y consulta de permisos (Solo Lectura).",
+    categoria: "Consulta & Directorio",
+    ruta: "/panel/usuarios",
+    rutaFisica: "/gestion-usuarios/ConsultaUsuariosPerfilesWidget.tsx",
+    panelId: "panel_administrar",
+    activo: true
+  },
+  {
     clave: "socios",
     nombre: "Aprobación de Socios Abogados",
     descripcion: "Revisión de matrículas y verificación de credenciales.",

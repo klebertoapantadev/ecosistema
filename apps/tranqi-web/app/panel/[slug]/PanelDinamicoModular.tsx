@@ -6,6 +6,7 @@ import {
   Settings, X, ChevronRight, CircleUser, type LucideIcon
 } from "lucide-react";
 import { AdministracionPerfilesWidget } from "@eco/gestion-usuarios/componentes/AdministracionPerfilesWidget";
+import { ConsultaUsuariosPerfilesWidget } from "@eco/gestion-usuarios/componentes/ConsultaUsuariosPerfilesWidget";
 import { EmisionNotificacionesWidget, PreferenciasNotificacionWidget } from "@eco/notificaciones";
 import { GestionTerminosConsentimientosWidget } from "@eco/identidad/componentes/GestionTerminosConsentimientosWidget";
 import { FormularioConfiguracionNegocio } from "@eco/configuracion-negocio/componentes/FormularioConfiguracionNegocio";
@@ -51,6 +52,20 @@ const INVENTARIO_GLOBAL_WIDGETS: Record<string, { titulo: string; subtitulo: str
     icono: UserCog,
     colorIcono: "var(--violeta, #5000BA)",
     categoria: "Usuarios & Permisos"
+  },
+  consulta_usuarios_perfiles: {
+    titulo: "Consulta de Usuarios & Perfiles",
+    subtitulo: "Directorio de miembros, matriz de roles y consulta de permisos (Solo Lectura)",
+    icono: Users,
+    colorIcono: "#5000BA",
+    categoria: "Consulta & Directorio"
+  },
+  consulta_perfiles: {
+    titulo: "Consulta de Usuarios & Perfiles",
+    subtitulo: "Directorio de miembros, matriz de roles y consulta de permisos (Solo Lectura)",
+    icono: Users,
+    colorIcono: "#5000BA",
+    categoria: "Consulta & Directorio"
   },
   socios: {
     titulo: "Aprobación de Socios Abogados",
@@ -223,6 +238,9 @@ export function PanelDinamicoModular({ slug, negocio }: Props) {
       case "gestion_usuarios":
       case "perfiles":
         return <AdministracionPerfilesWidget esAdmin={true} negocio={negocio} />;
+      case "consulta_usuarios_perfiles":
+      case "consulta_perfiles":
+        return <ConsultaUsuariosPerfilesWidget negocio={negocio} />;
       case "gestion_terminos_consentimientos":
       case "terminos":
         return <GestionTerminosConsentimientosWidget />;

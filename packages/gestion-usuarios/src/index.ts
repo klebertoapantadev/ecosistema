@@ -3,3 +3,5 @@ export type { UsuarioConMembresia, PerfilAsignable } from "./consultas";
 export { asignarPerfil, quitarPerfil } from "./acciones";
 export { FilaUsuario } from "./componentes/FilaUsuario";
 export { AdministracionPerfilesWidget } from "./componentes/AdministracionPerfilesWidget";
+export { ConsultaUsuariosPerfilesWidget } from "./componentes/ConsultaUsuariosPerfilesWidget";
+

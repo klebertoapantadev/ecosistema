@@ -10,6 +10,7 @@ import {
 import { EnlacePanel } from "./EnlacePanel";
 import { BotonCerrarSesion } from "./BotonCerrarSesion";
 import type { ModoRol } from "./SelectorRolActivo";
+import { obtenerConfiguracionNavegacionRolAction } from "@eco/gestion-usuarios/acciones";
 
 interface PanelDefNav {
   id: string;
@@ -68,7 +69,7 @@ export function NavegacionSidebar({
   const [panelesVisibles, setPanelesVisibles] = useState<PanelDefNav[]>(PANELES_BASE_DEFAULT);
 
   useEffect(() => {
-    function actualizarNavegacion() {
+    async function actualizarNavegacion() {
       try {
         const savedPaneles = localStorage.getItem(`tranqi_paneles_sidebar_${negocio}`) || localStorage.getItem("tranqi_paneles_sidebar_TRANQ");
         let listaPaneles: PanelDefNav[] = PANELES_BASE_DEFAULT;
@@ -79,41 +80,50 @@ export function NavegacionSidebar({
           }
         }
 
+        // Consultar servidor (PostgreSQL comun_seguridad.seg_rol_widget)
+        const resBdd = await obtenerConfiguracionNavegacionRolAction(modoActivo, negocio.toUpperCase());
+
+        let panelesAsignados: string[] = [];
+        let widgetsPorPanel: Record<string, string[]> = {};
+
+        if (resBdd.ok && resBdd.data) {
+          panelesAsignados = resBdd.data.panelesAsignados;
+          widgetsPorPanel = resBdd.data.widgetsPorPanel;
+        }
+
+        // Complementar con personalizaciones en localStorage si existen
         const savedPerfiles = localStorage.getItem(`tranqi_perfiles_${negocio}`) || localStorage.getItem("tranqi_perfiles_TRANQ");
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        let perfilObj: any = null;
         if (savedPerfiles) {
           const perfiles = JSON.parse(savedPerfiles);
           if (Array.isArray(perfiles)) {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            perfilObj = perfiles.find((p: any) => p.clave?.toUpperCase() === modoActivo.toUpperCase());
-            if (!perfilObj && modoActivo === "admin") {
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              perfilObj = perfiles.find((p: any) => p.clave?.toUpperCase() === "ADMINISTRADOR");
+            const perfilObj = perfiles.find((p: any) => p.clave?.toUpperCase() === modoActivo.toUpperCase());
+            if (perfilObj) {
+              if (perfilObj.panelesAsignados && perfilObj.panelesAsignados.length > 0) {
+                panelesAsignados = Array.from(new Set([...panelesAsignados, ...perfilObj.panelesAsignados]));
+              }
+              if (perfilObj.widgetsAsignadosPorPanel) {
+                widgetsPorPanel = { ...widgetsPorPanel, ...perfilObj.widgetsAsignadosPorPanel };
+              }
             }
           }
         }
 
-        // Obtener paneles asignados al rol activo desde la matriz de perfiles
-        const panelesAsignados: string[] = perfilObj?.panelesAsignados || [];
-        const widgetsPorPanel: Record<string, string[]> = perfilObj?.widgetsAsignadosPorPanel || {};
-
-        // Filtrar únicamente los paneles configurados en el sistema y asignados para el rol
+        // Filtrar los paneles del sidebar según asignaciones BDD + Local
         const filtrados = listaPaneles.filter((p) => {
           const esNucleo = p.id === "panel_inicio" || p.id === "panel_cuenta";
-          const estaAsignadoEnPerfil = panelesAsignados.length > 0 ? panelesAsignados.includes(p.id) : true;
+          const estaAsignado = panelesAsignados.length > 0 ? panelesAsignados.includes(p.id) : true;
+          const widgetsDelPanel = widgetsPorPanel[p.id] || [];
 
-          if (!estaAsignadoEnPerfil && !esNucleo && modoActivo !== "superadmin") {
+          if (!estaAsignado && !esNucleo && modoActivo !== "superadmin") {
             return false;
           }
 
-          // Si es un panel administrativo o de configuración, verificar asignaciones
-          const widgetsDelPanel = widgetsPorPanel[p.id] || [];
           if (p.id === "panel_administrar" || p.id === "panel_configuracion") {
-            return estaAsignadoEnPerfil && (widgetsDelPanel.length > 0 || modoActivo === "admin" || modoActivo === "superadmin");
+            return estaAsignado && (widgetsDelPanel.length > 0 || modoActivo === "admin" || modoActivo === "superadmin");
           }
 
-          return estaAsignadoEnPerfil;
+          return estaAsignado || widgetsDelPanel.length > 0;
         });
 
         setPanelesVisibles(filtrados.length > 0 ? filtrados : PANELES_BASE_DEFAULT);
