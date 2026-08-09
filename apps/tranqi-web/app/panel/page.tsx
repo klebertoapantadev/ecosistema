@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { cookies } from "next/headers";
 import {
   Calendar, Upload, Coins, MessageCircle, FileText,
@@ -211,7 +212,7 @@ function TarjetaEstadoSolicitudHome({ solicitud }: { solicitud: Record<string, u
           <p style={{ fontSize: "0.88rem", color: "#444444", margin: 0, lineHeight: "1.45" }}>{info.desc}</p>
         </div>
 
-        <a
+        <Link
           href="/panel/solicitud-socio"
           style={{
             textDecoration: "none",
@@ -229,7 +230,7 @@ function TarjetaEstadoSolicitudHome({ solicitud }: { solicitud: Record<string, u
           }}
         >
           ✏️ Ver, Modificar y Actualizar Todos los Datos de mi Solicitud
-        </a>
+        </Link>
       </div>
     </section>
   );

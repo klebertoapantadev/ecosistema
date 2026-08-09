@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
@@ -63,9 +64,9 @@ export default async function LayoutPanel({ children }: { children: React.ReactN
           </svg>
 
           <div className="panel-marca" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingRight: "12px" }}>
-            <a href="/panel" style={{ display: "flex", alignItems: "center", textDecoration: "none" }} title="Ir al tablero principal (Inicio)">
+            <Link href="/panel" style={{ display: "flex", alignItems: "center", textDecoration: "none" }} title="Ir al tablero principal (Inicio)">
               <img src="/assets/tranqi-white.svg" alt="tranqi" style={{ cursor: "pointer" }} />
-            </a>
+            </Link>
             <CampanaNotificaciones negocio={NEGOCIO} usuarioId={perfil.usu_id} />
           </div>
 

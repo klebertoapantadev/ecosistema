@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { ShieldAlert, ArrowLeft, Bell } from "lucide-react";
 import { obtenerPerfilActual, obtenerPerfiles } from "@eco/identidad";
 import { EmisionNotificacionesWidget } from "@eco/notificaciones";
@@ -31,7 +32,7 @@ export default async function EmisionNotificacionesPage() {
           </div>
 
           <div style={{ display: "flex", gap: "12px", justifyContent: "center", flexWrap: "wrap" }}>
-            <a
+            <Link
               href="/panel/notificaciones"
               style={{
                 fontSize: "0.82rem",
@@ -48,8 +49,8 @@ export default async function EmisionNotificacionesPage() {
               }}
             >
               <Bell size={16} /> Ver Mis Notificaciones Recibidas
-            </a>
-            <a
+            </Link>
+            <Link
               href="/panel"
               style={{
                 fontSize: "0.82rem",
@@ -66,7 +67,7 @@ export default async function EmisionNotificacionesPage() {
               }}
             >
               <ArrowLeft size={16} /> Volver al Panel Principal
-            </a>
+            </Link>
           </div>
         </section>
       </div>
