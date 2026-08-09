@@ -16,6 +16,8 @@ import { SelectorRolActivo } from "../SelectorRolActivo";
 import { TablaAuditoria } from "../auditoria/TablaAuditoria";
 import { useCustomWidgets } from "../gestorTitulosWidgets";
 
+import { obtenerConfiguracionNavegacionRolAction } from "@eco/gestion-usuarios/acciones";
+
 interface Props {
   slug: string;
   negocio: string;
@@ -174,9 +176,9 @@ export function PanelDinamicoModular({ slug, negocio }: Props) {
 
   const panelIdBuscado = slug.startsWith("panel_") ? slug : `panel_${slug}`;
 
-  // Cargar configuración de panel y widgets asignados
+  // Cargar configuración de panel y widgets asignados (BDD + Presets de Rol + LocalStorage)
   useEffect(() => {
-    function cargarConfiguracion() {
+    async function cargarConfiguracion() {
       try {
         const savedPaneles = localStorage.getItem(`tranqi_paneles_sidebar_${negocio}`) || localStorage.getItem("tranqi_paneles_sidebar_TRANQ");
         if (savedPaneles) {
@@ -196,31 +198,58 @@ export function PanelDinamicoModular({ slug, negocio }: Props) {
           }
         }
 
+        const cookieStore = typeof document !== "undefined" ? document.cookie : "";
+        let rolActivo = "CLIENTE";
+        const matchModo = cookieStore.match(/tranqi_modo_rol=([^;]+)/);
+        const matchFav = cookieStore.match(/tranqi_rol_favorito=([^;]+)/);
+        if (matchModo && matchModo[1]) rolActivo = matchModo[1].toUpperCase();
+        else if (matchFav && matchFav[1]) rolActivo = matchFav[1].toUpperCase();
+
+        // 1. Presets de asignación por rol y por panel
+        let listW: string[] = [];
+        if (rolActivo === "OPERADOR" || rolActivo === "AUXILIAR" || rolActivo === "TECNICO") {
+          if (panelIdBuscado === "panel_herramientas" || slug === "herramientas") listW = ["emision_notificaciones"];
+          else if (panelIdBuscado === "panel_seguridad" || slug === "seguridad") listW = ["auditoria", "solicitud_socio"];
+          else if (panelIdBuscado === "panel_administrar" || slug === "administrar") listW = ["socios"];
+          else if (panelIdBuscado === "panel_cuenta" || slug === "cuenta") listW = ["ver_como", "mi_cuenta"];
+        } else if (rolActivo === "ADMINISTRADOR" || rolActivo === "SUPERADMIN") {
+          if (panelIdBuscado === "panel_herramientas" || slug === "herramientas") listW = ["emision_notificaciones"];
+          else if (panelIdBuscado === "panel_seguridad" || slug === "seguridad") listW = ["auditoria", "solicitud_socio"];
+          else if (panelIdBuscado === "panel_administrar" || slug === "administrar") listW = ["gestion_usuarios", "socios", "solicitud_socio", "emision_notificaciones", "auditoria"];
+          else if (panelIdBuscado === "panel_configuracion" || slug === "configuracion") listW = ["configuracion_negocio", "configuracion_correo", "perfiles", "notificaciones"];
+          else if (panelIdBuscado === "panel_cuenta" || slug === "cuenta") listW = ["ver_como", "mi_cuenta", "historial_accesos"];
+        }
+
+        // 2. Consultar servidor (PostgreSQL comun_seguridad.seg_rol_widget)
+        const resBdd = await obtenerConfiguracionNavegacionRolAction(rolActivo, (negocio || "TRANQ").toUpperCase());
+        if (resBdd.ok && resBdd.data && resBdd.data.widgetsPorPanel) {
+          const wBdd = resBdd.data.widgetsPorPanel[panelIdBuscado] || resBdd.data.widgetsPorPanel[slug] || [];
+          if (wBdd.length > 0) {
+            listW = Array.from(new Set([...listW, ...wBdd]));
+          }
+        }
+
+        // 3. Complementar con personalizaciones en localStorage si existen en esta máquina
         const savedPerfiles = localStorage.getItem(`tranqi_perfiles_${negocio}`) || localStorage.getItem("tranqi_perfiles_TRANQ");
         if (savedPerfiles) {
           const perfiles = JSON.parse(savedPerfiles);
           if (Array.isArray(perfiles)) {
-            const cookieStore = typeof document !== "undefined" ? document.cookie : "";
-            let rolActivo = "CLIENTE";
-            const matchModo = cookieStore.match(/tranqi_modo_rol=([^;]+)/);
-            const matchFav = cookieStore.match(/tranqi_rol_favorito=([^;]+)/);
-            if (matchModo && matchModo[1]) rolActivo = matchModo[1].toUpperCase();
-            else if (matchFav && matchFav[1]) rolActivo = matchFav[1].toUpperCase();
-
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             let perfilObj = perfiles.find((p: any) => p.clave?.toUpperCase() === rolActivo);
             if (!perfilObj && (rolActivo === "OPERADOR" || rolActivo === "AUXILIAR")) {
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               perfilObj = perfiles.find((p: any) => p.clave?.toUpperCase() === "OPERADOR");
             }
-            if (!perfilObj) perfilObj = perfiles[0];
-
             if (perfilObj && perfilObj.widgetsAsignadosPorPanel) {
-              const listW = perfilObj.widgetsAsignadosPorPanel[panelIdBuscado] || perfilObj.widgetsAsignadosPorPanel[slug] || [];
-              setWidgetsAsignados(listW);
+              const wLocal = perfilObj.widgetsAsignadosPorPanel[panelIdBuscado] || perfilObj.widgetsAsignadosPorPanel[slug] || [];
+              if (wLocal.length > 0) {
+                listW = Array.from(new Set([...listW, ...wLocal]));
+              }
             }
           }
         }
+
+        setWidgetsAsignados(listW);
       } catch (err) {
         console.error("Error cargando panel dinámico:", err);
       }
