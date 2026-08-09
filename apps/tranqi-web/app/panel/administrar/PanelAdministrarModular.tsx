@@ -241,9 +241,28 @@ function VisorAuditoriaWidget() {
   return <TablaAuditoria registros={registros} />;
 }
 
+function obtenerModulosInicialesAdmin(): ModuloAdminDef[] {
+  if (typeof document === "undefined") {
+    return MODULOS_ADMIN.filter(m => m.id === "socios");
+  }
+  const cookieStore = document.cookie || "";
+  let rolActivo = "ADMINISTRADOR";
+  const matchModo = cookieStore.match(/tranqi_modo_rol=([^;]+)/);
+  const matchFav = cookieStore.match(/tranqi_rol_favorito=([^;]+)/);
+  if (matchModo && matchModo[1]) rolActivo = matchModo[1].toUpperCase();
+  else if (matchFav && matchFav[1]) rolActivo = matchFav[1].toUpperCase();
+
+  let ids: string[] = ["gestion_usuarios", "socios", "solicitud_socio", "emision_notificaciones", "auditoria"];
+  if (rolActivo === "OPERADOR" || rolActivo === "AUXILIAR" || rolActivo === "TECNICO") {
+    ids = ["socios"];
+  }
+
+  return MODULOS_ADMIN.filter(m => ids.includes(m.id));
+}
+
 export function PanelAdministrarModular({ negocio }: Props) {
   const [favoritos, setFavoritos] = useState<string[]>(["gestion_usuarios", "socios"]);
-  const [modulosAsignados, setModulosAsignados] = useState<ModuloAdminDef[]>(MODULOS_ADMIN);
+  const [modulosAsignados, setModulosAsignados] = useState<ModuloAdminDef[]>(obtenerModulosInicialesAdmin);
   const [widgetActivo, setWidgetActivo] = useState<string | null>(null);
   const [widgetEditar, setWidgetEditar] = useState<{
     id: string;

@@ -162,19 +162,42 @@ const INVENTARIO_GLOBAL_WIDGETS: Record<string, { titulo: string; subtitulo: str
   }
 };
 
+function obtenerWidgetsInicialesDinamicos(panelId: string, slugStr: string): string[] {
+  if (typeof document === "undefined") return [];
+  const cookieStore = document.cookie || "";
+  let rolActivo = "CLIENTE";
+  const matchModo = cookieStore.match(/tranqi_modo_rol=([^;]+)/);
+  const matchFav = cookieStore.match(/tranqi_rol_favorito=([^;]+)/);
+  if (matchModo && matchModo[1]) rolActivo = matchModo[1].toUpperCase();
+  else if (matchFav && matchFav[1]) rolActivo = matchFav[1].toUpperCase();
+
+  if (rolActivo === "OPERADOR" || rolActivo === "AUXILIAR" || rolActivo === "TECNICO") {
+    if (panelId === "panel_herramientas" || slugStr === "herramientas") return ["emision_notificaciones"];
+    if (panelId === "panel_seguridad" || slugStr === "seguridad") return ["auditoria", "solicitud_socio"];
+    if (panelId === "panel_administrar" || slugStr === "administrar") return ["socios"];
+    if (panelId === "panel_cuenta" || slugStr === "cuenta") return ["ver_como", "mi_cuenta"];
+  } else if (rolActivo === "ADMINISTRADOR" || rolActivo === "SUPERADMIN") {
+    if (panelId === "panel_herramientas" || slugStr === "herramientas") return ["emision_notificaciones"];
+    if (panelId === "panel_seguridad" || slugStr === "seguridad") return ["auditoria", "solicitud_socio"];
+    if (panelId === "panel_administrar" || slugStr === "administrar") return ["gestion_usuarios", "socios", "solicitud_socio", "emision_notificaciones", "auditoria"];
+    if (panelId === "panel_configuracion" || slugStr === "configuracion") return ["configuracion_negocio", "configuracion_correo", "perfiles", "notificaciones"];
+    if (panelId === "panel_cuenta" || slugStr === "cuenta") return ["ver_como", "mi_cuenta", "historial_accesos"];
+  }
+  return [];
+}
+
 export function PanelDinamicoModular({ slug, negocio }: Props) {
+  const panelIdBuscado = slug.startsWith("panel_") ? slug : `panel_${slug}`;
+
   const [panelInfo, setPanelInfo] = useState<{ id: string; nombre: string; descripcion: string; icono?: string; requiereMfa?: boolean }>({
     id: `panel_${slug}`,
     nombre: slug.charAt(0).toUpperCase() + slug.slice(1),
     descripcion: `Panel dinámico ${slug}`
   });
 
-  const [widgetsAsignados, setWidgetsAsignados] = useState<string[]>([]);
+  const [widgetsAsignados, setWidgetsAsignados] = useState<string[]>(() => obtenerWidgetsInicialesDinamicos(panelIdBuscado, slug));
   const [widgetActivo, setWidgetActivo] = useState<string | null>(null);
-
   const { getWidgetInfo } = useCustomWidgets();
-
-  const panelIdBuscado = slug.startsWith("panel_") ? slug : `panel_${slug}`;
 
   // Cargar configuración de panel y widgets asignados (BDD + Presets de Rol + LocalStorage)
   useEffect(() => {

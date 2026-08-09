@@ -126,9 +126,40 @@ const WIDGETS_BASE: WidgetDef[] = [
   }
 ];
 
+function obtenerWidgetsInicialesCuenta(): WidgetDef[] {
+  if (typeof document === "undefined") {
+    return WIDGETS_BASE.filter(m => m.id === "mi_cuenta" || m.id === "perfil" || m.id === "ver_como" || m.id === "rol_activo");
+  }
+  const cookieStore = document.cookie || "";
+  let rolActivo = "CLIENTE";
+  const matchModo = cookieStore.match(/tranqi_modo_rol=([^;]+)/);
+  const matchFav = cookieStore.match(/tranqi_rol_favorito=([^;]+)/);
+  if (matchModo && matchModo[1]) rolActivo = matchModo[1].toUpperCase();
+  else if (matchFav && matchFav[1]) rolActivo = matchFav[1].toUpperCase();
+
+  let ids: string[] = ["mi_cuenta", "datos_facturacion", "mfa_seguridad"];
+  if (rolActivo === "OPERADOR" || rolActivo === "AUXILIAR" || rolActivo === "TECNICO") {
+    ids = ["ver_como", "mi_cuenta"];
+  } else if (rolActivo === "ABOGADO") {
+    ids = ["perfil_abogado", "mi_cuenta"];
+  } else if (rolActivo === "ADMINISTRADOR" || rolActivo === "SUPERADMIN") {
+    ids = ["ver_como", "mi_cuenta", "datos_facturacion", "historial_accesos", "mfa_seguridad", "baja_cuenta"];
+  }
+
+  return WIDGETS_BASE.filter(m =>
+    ids.includes(m.id) ||
+    (ids.includes("mi_cuenta") && m.id === "perfil") ||
+    (ids.includes("ver_como") && m.id === "rol_activo") ||
+    (ids.includes("datos_facturacion") && m.id === "facturacion") ||
+    (ids.includes("baja_cuenta") && m.id === "peligro") ||
+    (ids.includes("seguridad_mfa") && m.id === "mfa_seguridad") ||
+    (ids.includes("sesion_claves") && m.id === "sesion")
+  );
+}
+
 export function PanelCuentaModular({ perfil, historial, puedeConmutar = true, rolesDisponibles, materias = [], provincias = [], solicitudExistente }: Props) {
   const [favoritos, setFavoritos] = useState<string[]>([]);
-  const [widgetsFiltradosCuenta, setWidgetsFiltradosCuenta] = useState<WidgetDef[]>(WIDGETS_BASE);
+  const [widgetsFiltradosCuenta, setWidgetsFiltradosCuenta] = useState<WidgetDef[]>(obtenerWidgetsInicialesCuenta);
   const [widgetActivo, setWidgetActivo] = useState<string | null>(null);
   const [widgetEditar, setWidgetEditar] = useState<{
     id: string;
