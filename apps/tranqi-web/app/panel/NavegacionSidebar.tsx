@@ -50,6 +50,12 @@ const MAPA_ICONOS_NAV: Record<string, LucideIcon> = {
   LogOut,
   LogIn,
   PanelLeft,
+  panel_inicio: Home,
+  panel_administrar: UserCog,
+  panel_configuracion: Settings,
+  panel_cuenta: CircleUser,
+  panel_herramientas: Wrench,
+  panel_seguridad: ShieldCheck,
 };
 
 // Configuración inicial de paneles base del ecosistema
