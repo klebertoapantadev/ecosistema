@@ -541,8 +541,11 @@ Pantalla de configuración del negocio (identidad legal + datos de `PLT-008`) y 
     - **Actualización de Solicitudes y Perfiles Aprobados:** Se modificó la Server Action `enviarSolicitudSocio` para permitir que un socio cuya solicitud se encuentre en estado `aceptada` pueda actualizar continuamente su perfil profesional preservando su estado de aprobación y sincronizando sus datos con la tabla `trq_abogado` y `seg_usuario`.
 28. **Carga Autenticada de Solicitudes de Socios en Consola Administrativa (`obtenerListaSolicitudesSociosAction`, `PanelAdministrarModular.tsx`):**
     - **Resolución de Bloqueo RLS en Cliente (`AprobacionSociosWidget`):** Se reemplazó la consulta cliente directa a Supabase por la Server Action `obtenerListaSolicitudesSociosAction()`, ejecutada en el contexto del servidor. Esto resuelve el vaciado de lista provocado por RLS cuando el token JWT del navegador está en nivel AAL1, mostrando correctamente todas las solicitudes de socios postulantes (ej. la solicitud de Carolina Colcha).
-30. **Sincronización Dinámica de Tarjetas de Administración según Matriz de Permisos (`PanelAdministrarModular.tsx`):**
-    - **Filtro Dinámico en `/panel/administrar`:** Se reemplazó la renderización estática e incondicional de los 6 módulos de administración en `PanelAdministrarModular.tsx`. La pantalla consulta dinámicamente la matriz de permisos (`widgetsAsignadosPorPanel["panel_administrar"]`) del perfil activo. Si un widget (ej. `Términos LOPDP`) es desasignado de la consola `/panel/administrar` en la matriz de permisos, su tarjeta se oculta inmediatamente de la vista principal del panel, respetando al 100% la matriz de gobernanza y control de accesos `PLT-003`.
+31. **Renderización 100% Dinámica del Menú Sidebar por Perfil y Matriz de Permisos (`NavegacionSidebar.tsx`):**
+    - **Eliminación Total de Enlaces Hardcoded y Secciones Estáticas:** Se refactorizó `NavegacionSidebar.tsx` para eliminar la sección estática "Próximamente" y listas hardcoded de paneles inactivos.
+    - **Filtrado Estricto por Asignación:** El menú desplegado en el sidebar izquierdo se calcula dinámicamente según los paneles asignados (`panelesAsignados`) y los widgets configurados por panel en la matriz de perfiles del usuario activo. Al modificar las asignaciones en la matriz de administración, el menú sidebar se actualiza al instante en vivo vía eventos `storage`.
+
+
 
 
 

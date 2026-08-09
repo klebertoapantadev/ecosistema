@@ -17,12 +17,6 @@ interface PanelDefNav {
   ruta: string;
   icono?: string;
   requiereMfa?: boolean;
-  mostrarSinWidgets?: boolean;
-}
-
-interface PerfilEstadoSave {
-  clave: string;
-  widgetsAsignadosPorPanel?: Record<string, string[]>;
 }
 
 const MAPA_ICONOS_NAV: Record<string, LucideIcon> = {
@@ -56,65 +50,13 @@ const MAPA_ICONOS_NAV: Record<string, LucideIcon> = {
   PanelLeft,
 };
 
-// Configuración inicial por defecto de paneles
+// Configuración inicial de paneles base del ecosistema
 const PANELES_BASE_DEFAULT: PanelDefNav[] = [
-  { id: "panel_inicio", nombre: "Inicio", ruta: "/panel", icono: "Home", mostrarSinWidgets: true },
-  { id: "panel_administrar", nombre: "Administrar", ruta: "/panel/administrar", icono: "ShieldCheck", mostrarSinWidgets: true },
-  { id: "panel_configuracion", nombre: "Configurar", ruta: "/panel/configuracion", icono: "Settings", mostrarSinWidgets: true },
-  { id: "panel_cuenta", nombre: "Mi cuenta", ruta: "/panel/cuenta", icono: "CircleUser", mostrarSinWidgets: true },
-  { id: "panel_tramites", nombre: "Mis trámites", ruta: "/panel/tramites", icono: "ClipboardList", mostrarSinWidgets: true },
-  { id: "panel_herramientas", nombre: "Herramientas", ruta: "/panel/herramientas", icono: "Wrench", mostrarSinWidgets: true },
-  { id: "panel_pagos", nombre: "Pagos y plan", ruta: "/panel/pagos", icono: "CreditCard", mostrarSinWidgets: true },
+  { id: "panel_inicio", nombre: "Inicio", ruta: "/panel", icono: "Home" },
+  { id: "panel_administrar", nombre: "Administrar", ruta: "/panel/administrar", icono: "ShieldCheck" },
+  { id: "panel_configuracion", nombre: "Configurar", ruta: "/panel/configuracion", icono: "Settings" },
+  { id: "panel_cuenta", nombre: "Mi cuenta", ruta: "/panel/cuenta", icono: "CircleUser" },
 ];
-
-// Asignaciones por defecto de widgets por perfil
-const PERFILES_PANEL_WIDGETS_DEFAULT: Record<string, Record<string, string[]>> = {
-  CLIENTE: {
-    panel_inicio: ["favoritos", "ultimos_accesos"],
-    panel_cuenta: ["mi_cuenta", "ver_como", "datos_facturacion", "baja_cuenta"],
-    panel_administrar: [],
-    panel_configuracion: [],
-    panel_tramites: [],
-    panel_herramientas: [],
-    panel_pagos: [],
-  },
-  ABOGADO: {
-    panel_inicio: ["favoritos", "ultimos_accesos"],
-    panel_cuenta: ["mi_cuenta", "ver_como", "datos_facturacion"],
-    panel_administrar: ["socios", "solicitud_socio"],
-    panel_configuracion: [],
-    panel_tramites: [],
-    panel_herramientas: [],
-    panel_pagos: [],
-  },
-  OPERADOR: {
-    panel_inicio: ["favoritos", "ultimos_accesos"],
-    panel_cuenta: ["mi_cuenta", "ver_como"],
-    panel_administrar: ["gestion_usuarios", "socios"],
-    panel_configuracion: [],
-    panel_tramites: [],
-    panel_herramientas: [],
-    panel_pagos: [],
-  },
-  ADMINISTRADOR: {
-    panel_inicio: ["favoritos", "ultimos_accesos"],
-    panel_cuenta: ["mi_cuenta", "ver_como", "datos_facturacion"],
-    panel_administrar: ["gestion_usuarios", "socios", "solicitud_socio", "auditoria", "emision_notificaciones"],
-    panel_configuracion: ["configuracion_negocio", "configuracion_correo", "gestion_perfiles"],
-    panel_tramites: [],
-    panel_herramientas: [],
-    panel_pagos: [],
-  },
-  SUPERADMIN: {
-    panel_inicio: ["favoritos", "ultimos_accesos"],
-    panel_cuenta: ["mi_cuenta", "ver_como", "datos_facturacion"],
-    panel_administrar: ["gestion_usuarios", "socios", "solicitud_socio", "auditoria", "emision_notificaciones"],
-    panel_configuracion: ["configuracion_negocio", "configuracion_correo", "gestion_perfiles"],
-    panel_tramites: [],
-    panel_herramientas: [],
-    panel_pagos: [],
-  }
-};
 
 export function NavegacionSidebar({
   modoActivo,
@@ -123,83 +65,72 @@ export function NavegacionSidebar({
   modoActivo: ModoRol;
   negocio?: string;
 }) {
-  const [paneles, setPaneles] = useState<PanelDefNav[]>(PANELES_BASE_DEFAULT);
-  const [perfilMapaWidgets, setPerfilMapaWidgets] = useState<Record<string, string[]>>(
-    () => PERFILES_PANEL_WIDGETS_DEFAULT[modoActivo.toUpperCase()] ?? PERFILES_PANEL_WIDGETS_DEFAULT["CLIENTE"] ?? {}
-  );
+  const [panelesVisibles, setPanelesVisibles] = useState<PanelDefNav[]>(PANELES_BASE_DEFAULT);
 
   useEffect(() => {
-    try {
-      const savedPaneles = localStorage.getItem(`tranqi_paneles_sidebar_${negocio}`);
-      if (savedPaneles) {
-        const parsed = JSON.parse(savedPaneles);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          setPaneles(parsed);
+    function actualizarNavegacion() {
+      try {
+        const savedPaneles = localStorage.getItem(`tranqi_paneles_sidebar_${negocio}`) || localStorage.getItem("tranqi_paneles_sidebar_TRANQ");
+        let listaPaneles: PanelDefNav[] = PANELES_BASE_DEFAULT;
+        if (savedPaneles) {
+          const parsed = JSON.parse(savedPaneles);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            listaPaneles = parsed;
+          }
         }
-      }
 
-      const savedPerfiles = localStorage.getItem(`tranqi_perfiles_${negocio}`);
-      if (modoActivo === "superadmin") {
-        const combinacionTotal: Record<string, string[]> = {};
+        const savedPerfiles = localStorage.getItem(`tranqi_perfiles_${negocio}`) || localStorage.getItem("tranqi_perfiles_TRANQ");
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        let perfilObj: any = null;
         if (savedPerfiles) {
-          try {
-            const parsed = JSON.parse(savedPerfiles);
-            if (Array.isArray(parsed)) {
-              parsed.forEach((p: PerfilEstadoSave) => {
-                if (p.widgetsAsignadosPorPanel) {
-                  Object.entries(p.widgetsAsignadosPorPanel).forEach(([pId, listW]) => {
-                    combinacionTotal[pId] = Array.from(new Set([...(combinacionTotal[pId] || []), ...listW]));
-                  });
-                }
-              });
+          const perfiles = JSON.parse(savedPerfiles);
+          if (Array.isArray(perfiles)) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            perfilObj = perfiles.find((p: any) => p.clave?.toUpperCase() === modoActivo.toUpperCase());
+            if (!perfilObj && modoActivo === "admin") {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              perfilObj = perfiles.find((p: any) => p.clave?.toUpperCase() === "ADMINISTRADOR");
             }
-          } catch {
-            // Fallback a defaults
           }
         }
-        if (Object.keys(combinacionTotal).length === 0) {
-          Object.values(PERFILES_PANEL_WIDGETS_DEFAULT).forEach((mapaRol) => {
-            Object.entries(mapaRol).forEach(([pId, listW]) => {
-              combinacionTotal[pId] = Array.from(new Set([...(combinacionTotal[pId] || []), ...listW]));
-            });
-          });
-        }
-        setPerfilMapaWidgets(combinacionTotal);
-      } else if (savedPerfiles) {
-        const parsed = JSON.parse(savedPerfiles);
-        if (Array.isArray(parsed)) {
-          const perfilObj = parsed.find((p: PerfilEstadoSave) => p.clave?.toUpperCase() === modoActivo.toUpperCase());
-          if (perfilObj && perfilObj.widgetsAsignadosPorPanel) {
-            setPerfilMapaWidgets(perfilObj.widgetsAsignadosPorPanel);
+
+        // Obtener paneles asignados al rol activo desde la matriz de perfiles
+        const panelesAsignados: string[] = perfilObj?.panelesAsignados || [];
+        const widgetsPorPanel: Record<string, string[]> = perfilObj?.widgetsAsignadosPorPanel || {};
+
+        // Filtrar únicamente los paneles configurados en el sistema y asignados para el rol
+        const filtrados = listaPaneles.filter((p) => {
+          const esNucleo = p.id === "panel_inicio" || p.id === "panel_cuenta";
+          const estaAsignadoEnPerfil = panelesAsignados.length > 0 ? panelesAsignados.includes(p.id) : true;
+
+          if (!estaAsignadoEnPerfil && !esNucleo && modoActivo !== "superadmin") {
+            return false;
           }
-        }
+
+          // Si es un panel administrativo o de configuración, verificar asignaciones
+          const widgetsDelPanel = widgetsPorPanel[p.id] || [];
+          if (p.id === "panel_administrar" || p.id === "panel_configuracion") {
+            return estaAsignadoEnPerfil && (widgetsDelPanel.length > 0 || modoActivo === "admin" || modoActivo === "superadmin");
+          }
+
+          return estaAsignadoEnPerfil;
+        });
+
+        setPanelesVisibles(filtrados.length > 0 ? filtrados : PANELES_BASE_DEFAULT);
+      } catch (err) {
+        console.error("Error cargando navegación sidebar:", err);
+        setPanelesVisibles(PANELES_BASE_DEFAULT);
       }
-    } catch {
-      // Fallback silencioso a configuracion por defecto
     }
+
+    actualizarNavegacion();
+    window.addEventListener("storage", actualizarNavegacion);
+    return () => window.removeEventListener("storage", actualizarNavegacion);
   }, [modoActivo, negocio]);
-
-  // Clasificar los paneles en activos vs. prontos (visibles sin widgets)
-  const panelesActivos: PanelDefNav[] = [];
-  const panelesPronto: PanelDefNav[] = [];
-
-  paneles.forEach((p) => {
-    const asignadosLocales = perfilMapaWidgets[p.id] || [];
-    const tieneWidgetsLocales = asignadosLocales.length > 0;
-    const esPanelNucleo = p.id === "panel_inicio" || p.id === "panel_cuenta";
-    const esActivo = esPanelNucleo || tieneWidgetsLocales || modoActivo === "superadmin" || (modoActivo === "admin" && (p.id === "panel_administrar" || p.id === "panel_configuracion"));
-
-    if (esActivo) {
-      panelesActivos.push(p);
-    } else if (p.mostrarSinWidgets !== false) {
-      panelesPronto.push(p);
-    }
-  });
 
   return (
     <div className="panel-nav-links">
-      {/* 1. PANELES ACTIVOS CON MÓDULOS DISPONIBLES */}
-      {panelesActivos.map((p) => {
+      {panelesVisibles.map((p) => {
         const IconoComp = MAPA_ICONOS_NAV[p.icono || ""] || MAPA_ICONOS_NAV[p.id] || PanelLeft;
         return (
           <EnlacePanel
@@ -212,24 +143,6 @@ export function NavegacionSidebar({
         );
       })}
 
-      {/* 2. PANELES INERTES / PRÓXIMAMENTE (SI ESTÁN CONFIGURADOS PARA MOSTRARSE SIN WIDGETS) */}
-      {panelesPronto.length > 0 && (
-        <>
-          <div className="separador-nav">Próximamente</div>
-          {panelesPronto.map((p) => {
-            const IconoComp = MAPA_ICONOS_NAV[p.icono || ""] || MAPA_ICONOS_NAV[p.id] || PanelLeft;
-            return (
-              <span className="enlace-inerte" key={p.id} title={`${p.nombre} - Próximamente (Sin módulos asignados)`}>
-                <IconoComp className="icono-nav" aria-hidden="true" strokeWidth={1.8} />
-                <span className="etiqueta-nav">{p.nombre}</span>
-                <span className="chip-pronto-nav">pronto</span>
-              </span>
-            );
-          })}
-        </>
-      )}
-
-      {/* 3. BOTÓN ÚNICO DE CERRAR SESIÓN (SIEMPRE EN EL FINAL ABSOLUTO DE LA BARRA LATERAL) */}
       <BotonCerrarSesion variante="nav" />
     </div>
   );
