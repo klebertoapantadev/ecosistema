@@ -102,13 +102,10 @@ export function NavegacionSidebar({
         const resBdd = await obtenerConfiguracionNavegacionRolAction(modoActivo, negocio.toUpperCase());
 
         let panelesAsignados: string[] = [...asignadosPorDefecto];
-        let widgetsPorPanel: Record<string, string[]> = {};
-
         if (resBdd.ok && resBdd.data) {
           if (resBdd.data.panelesAsignados && resBdd.data.panelesAsignados.length > 0) {
             panelesAsignados = Array.from(new Set([...panelesAsignados, ...resBdd.data.panelesAsignados]));
           }
-          widgetsPorPanel = resBdd.data.widgetsPorPanel;
         }
 
         // Complementar con personalizaciones en localStorage si existen
@@ -121,9 +118,6 @@ export function NavegacionSidebar({
             if (perfilObj) {
               if (perfilObj.panelesAsignados && perfilObj.panelesAsignados.length > 0) {
                 panelesAsignados = Array.from(new Set([...panelesAsignados, ...perfilObj.panelesAsignados]));
-              }
-              if (perfilObj.widgetsAsignadosPorPanel) {
-                widgetsPorPanel = { ...widgetsPorPanel, ...perfilObj.widgetsAsignadosPorPanel };
               }
             }
           }
