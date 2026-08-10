@@ -6,6 +6,7 @@ import {
   CircleUser, ChevronRight, Sliders, Briefcase
 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useCustomWidgets } from "./gestorTitulosWidgets";
 
 export interface ModuloInfoDef {
   clave: string;
@@ -165,8 +166,22 @@ export function BuscadorModulosGlobal({ nivelUsuario, esSuperadmin = false }: Pr
   const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
+  const { getWidgetInfo, obtenerIconoComponente } = useCustomWidgets();
+
+  // Mapear catálogo con títulos e íconos personalizados en tiempo real
+  const modulosConCustom = CATALOGO_MODULOS.map(m => {
+    const info = getWidgetInfo(m.clave, m.nombre, m.detalle);
+    const IconoAdaptado = obtenerIconoComponente(info.iconoKey, m.icono);
+    return {
+      ...m,
+      nombre: info.titulo,
+      detalle: info.subtitulo,
+      icono: IconoAdaptado
+    };
+  });
+
   // Filtrar catálogo estrictamente según permisos de usuario
-  const modulosPermitidos = CATALOGO_MODULOS.filter(m => esSuperadmin || m.minNivel <= nivelUsuario);
+  const modulosPermitidos = modulosConCustom.filter(m => esSuperadmin || m.minNivel <= nivelUsuario);
 
   // Filtrar según texto ingresado
   const resultados = consulta.trim()

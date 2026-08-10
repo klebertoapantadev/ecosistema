@@ -13,6 +13,7 @@ import { TarjetasFavoritasGrid } from "./SeccionFavoritosInicio";
 import { BuscadorModulosGlobal } from "./BuscadorModulosGlobal";
 import { WidgetNotificacionesCliente } from "@eco/notificaciones";
 import { obtenerSolicitudPropia } from "../../modulos/socios/consultas";
+import { ConsolaSuperAdminModular } from "./ConsolaSuperAdminModular";
 
 export const metadata: Metadata = { title: "Panel — tranqi" };
 
@@ -155,7 +156,7 @@ export default async function PagePanel({ searchParams }: Props) {
       )}
 
       {modo === "superadmin" ? (
-        <PanelSuperAdmin />
+        <ConsolaSuperAdminModular />
       ) : modo === "abogado" ? (
         <PanelAbogado nombreCompleto={nombreCompleto} />
       ) : modo === "admin" ? (
@@ -478,117 +479,6 @@ function PanelAdministrador({ esSuperadmin, esAdminGlobal }: { esSuperadmin: boo
             </div>
           </section>
         </aside>
-      </div>
-    </>
-  );
-}
-
-/* ──────────────── 4. PANEL MODO SUPERADMIN (TODOS LOS WIDGETS CONSOLIDADOS EN INICIO) ──────────────── */
-function PanelSuperAdmin() {
-  return (
-    <>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "6px" }}>
-        <h1 style={{ fontSize: "1.6rem", fontWeight: 900, color: "#111", margin: 0 }}>
-          ⚡ Consola Master Control — SuperAdmin Plataforma
-        </h1>
-        <span style={{ fontSize: "0.78rem", fontWeight: 800, color: "#D97706", background: "#FEF3C7", padding: "6px 14px", borderRadius: "20px", border: "1px solid #FCD34D", display: "flex", alignItems: "center", gap: "6px" }}>
-          <Sparkles size={14} /> Vista Consolidada Global
-        </span>
-      </div>
-      <p className="inicio-cliente-sub" style={{ marginBottom: "24px" }}>
-        Todos los módulos y herramientas del ecosistema desplegados y centralizados directamente en tu menú Inicio.
-      </p>
-
-      {/* HERO CARD SUPERADMIN */}
-      <section
-        style={{
-          background: "linear-gradient(135deg, #1E1B4B 0%, #312E81 100%)",
-          borderRadius: "20px",
-          padding: "28px 32px",
-          color: "#ffffff",
-          marginBottom: "28px",
-          boxShadow: "0 10px 25px rgba(30, 27, 75, 0.2)"
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "8px" }}>
-          <Shield size={22} color="#F59E0B" />
-          <span style={{ fontSize: "0.75rem", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.08em", background: "rgba(255,255,255,0.15)", padding: "4px 10px", borderRadius: "20px" }}>
-            CONSOLA UNIFICADA DE GOBERNANZA MULTITENANT
-          </span>
-        </div>
-        <h2 style={{ fontSize: "1.4rem", fontWeight: 900, margin: "0 0 6px 0", color: "#ffffff" }}>
-          Control Absoluto del Ecosistema (4 Negocios)
-        </h2>
-        <p style={{ fontSize: "0.88rem", opacity: 0.9, margin: 0, maxWidth: "720px", lineHeight: 1.5 }}>
-          Accede instantáneamente a cualquiera de los 16 módulos operativos del sistema sin necesidad de navegar por subpaneles individuales.
-        </p>
-      </section>
-
-      {/* SECCIÓN ACCESOS FAVORITOS */}
-      <div style={{ marginBottom: "28px" }}>
-        <h3 style={{ fontSize: "0.92rem", fontWeight: 800, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "12px" }}>
-          ⭐ Accesos Rápidos Marcados
-        </h3>
-        <TarjetasFavoritasGrid />
-      </div>
-
-      {/* GRUPOS DE MÓDULOS DE TODO EL ECOSISTEMA */}
-      <div style={{ display: "flex", flexDirection: "column", gap: "28px" }}>
-        {CATALOGO_SUPERADMIN_TODOS.map((grupo) => (
-          <section key={grupo.categoria}>
-            <h3 style={{ fontSize: "0.95rem", fontWeight: 800, color: "var(--violeta, #5000BA)", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "14px", display: "flex", alignItems: "center", gap: "8px" }}>
-              <LayoutGrid size={18} /> {grupo.categoria}
-            </h3>
-
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "16px" }}>
-              {grupo.modulos.map((m) => {
-                const IconoComp = m.icono;
-                return (
-                  <Link
-                    key={m.clave}
-                    href={m.ruta}
-                    style={{
-                      background: "#ffffff",
-                      borderRadius: "16px",
-                      border: "1px solid #E4E4E4",
-                      padding: "20px",
-                      textDecoration: "none",
-                      color: "inherit",
-                      display: "flex",
-                      flexDirection: "column",
-                      justifyContent: "space-between",
-                      transition: "transform 0.15s ease, box-shadow 0.15s ease",
-                      boxShadow: "0 2px 6px rgba(0,0,0,0.02)"
-                    }}
-                    className="tarjeta-modulo-hover"
-                  >
-                    <div>
-                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px" }}>
-                        <div style={{ width: "40px", height: "40px", borderRadius: "10px", background: "#F7F6FA", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                          <IconoComp size={20} color={m.color} />
-                        </div>
-                        <span style={{ fontSize: "0.72rem", fontWeight: 800, color: m.color, background: "#F3F4F6", padding: "4px 8px", borderRadius: "6px" }}>
-                          Módulo Activo
-                        </span>
-                      </div>
-                      <h4 style={{ fontSize: "0.96rem", fontWeight: 800, color: "#111", margin: "0 0 4px 0" }}>
-                        {m.nombre}
-                      </h4>
-                      <p style={{ fontSize: "0.82rem", color: "#666", margin: 0, lineHeight: 1.4 }}>
-                        {m.detalle}
-                      </p>
-                    </div>
-                    <div style={{ marginTop: "16px", paddingTop: "10px", borderTop: "1px solid #F3F4F6", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                      <span style={{ fontSize: "0.76rem", fontWeight: 800, color: "var(--violeta, #5000BA)" }}>
-                        Abrir Módulo →
-                      </span>
-                    </div>
-                  </Link>
-                );
-              })}
-            </div>
-          </section>
-        ))}
       </div>
     </>
   );
