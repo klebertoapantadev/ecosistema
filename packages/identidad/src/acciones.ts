@@ -16,6 +16,7 @@ import {
   type DatosBienvenida,
 } from "./esquema";
 import { registrarAcceso } from "./acceso";
+import { obtenerPerfiles } from "./consultas";
 
 type Resultado<T = undefined> = { ok: true; data: T } | { ok: false; error: string };
 
@@ -604,10 +605,10 @@ function validarCodigoTotpSecret(secretBase32: string, codigoIngresado: string):
   const nowSeconds = Math.floor(Date.now() / 1000);
   const timeStep = 30;
   const currentCounter = Math.floor(nowSeconds / timeStep);
-  const codigoLimpio = codigoIngresado.trim();
+  const codigoLimpio = codigoIngresado.replace(/[\s-]/g, "").trim();
 
-  // Permite ventana de tolerancia de ±1 paso (30s atras/adelante por desfase de reloj)
-  for (let delta = -1; delta <= 1; delta++) {
+  // Permite ventana de tolerancia amplia de ±4 pasos (120s atras/adelante por desfase de reloj)
+  for (let delta = -4; delta <= 4; delta++) {
     const counter = currentCounter + delta;
     const buffer = Buffer.alloc(8);
     buffer.writeBigInt64BE(BigInt(counter), 0);
@@ -640,13 +641,20 @@ function validarCodigoTotpSecret(secretBase32: string, codigoIngresado: string):
 
 /**
  * Verifica el código TOTP ingresado por el usuario en tiempo real contra el secret asignado a su cuenta.
+ * SuperAdmin y Administrador Plataforma BYPASS (PLT-002 Rule: SuperAdmin no requiere MFA jamás).
  */
 export async function verificarCodigoTotpUsuario(codigoTotp: string): Promise<Resultado> {
   const supabase = await crearClienteServidor();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { ok: false, error: "Sesión no encontrada. Inicia sesión nuevamente." };
 
-  const codigo = codigoTotp.trim();
+  // 1. REGLA PLT-002: SuperAdmin y Administradores Plataforma NUNCA requieren ni son bloqueados por MFA
+  const perfilesUsuario = await obtenerPerfiles("tranqi");
+  if (perfilesUsuario.includes("SUPERADMIN") || perfilesUsuario.includes("ADMINISTRADOR")) {
+    return { ok: true, data: undefined };
+  }
+
+  const codigo = codigoTotp.replace(/[\s-]/g, "").trim();
   if (!codigo || codigo.length < 6) {
     return { ok: false, error: "Ingresa un código de 6 dígitos válido de tu aplicación autenticadora." };
   }
@@ -676,6 +684,22 @@ export async function verificarCodigoTotpUsuario(codigoTotp: string): Promise<Re
       ok: false,
       error: "Código TOTP inválido. Asegúrate de ingresar el código generado por la aplicación autenticadora (Google Authenticator) vinculada a esta cuenta.",
     };
+  }
+
+  // Si el código coincidió con un secret pendiente (re-registro reciente), promover a activo automáticamente
+  if (detalle.mfa_secret_pendiente && validarCodigoTotpSecret(detalle.mfa_secret_pendiente, codigo)) {
+    const nuevoDetalle = {
+      ...detalle,
+      mfa_activo: true,
+      mfa_secret: detalle.mfa_secret_pendiente,
+      mfa_secret_pendiente: null,
+      mfa_activado_en: new Date().toISOString(),
+    };
+    await supabase
+      .schema("comun_seguridad")
+      .from("seg_usuario")
+      .update({ usu_detalle_usuario: nuevoDetalle, usu_actualizado_en: new Date().toISOString() })
+      .eq("usu_id", user.id);
   }
 
   return { ok: true, data: undefined };

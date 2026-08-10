@@ -132,7 +132,7 @@ export function PanelConfiguracionModular({ esAdmin, esSuperadmin = false, confi
 
   const handleIntentarAbrirWidget = (id: string, w: WidgetConfigDef) => {
     const infoCustom = getWidgetInfo(id, w.titulo, w.subtitulo);
-    if (infoCustom.requiereMfa) {
+    if (infoCustom.requiereMfa && !esAdminOSuper) {
       const rawTs = typeof window !== "undefined" ? localStorage.getItem(`tranqi_mfa_widget_ts_${id}`) : null;
       const ts = rawTs ? Number(rawTs) : 0;
       const minutosTranscurridos = (Date.now() - ts) / (1000 * 60);

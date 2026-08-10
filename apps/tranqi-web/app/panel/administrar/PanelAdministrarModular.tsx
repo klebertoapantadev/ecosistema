@@ -261,6 +261,7 @@ function obtenerModulosInicialesAdmin(): ModuloAdminDef[] {
 }
 
 export function PanelAdministrarModular({ negocio }: Props) {
+  const [rolActivo, setRolActivo] = useState<string>("ADMINISTRADOR");
   const [favoritos, setFavoritos] = useState<string[]>(["gestion_usuarios", "socios"]);
   const [modulosAsignados, setModulosAsignados] = useState<ModuloAdminDef[]>(obtenerModulosInicialesAdmin);
   const [widgetActivo, setWidgetActivo] = useState<string | null>(null);
@@ -286,22 +287,24 @@ export function PanelAdministrarModular({ negocio }: Props) {
     async function cargarConfiguracionPanel() {
       try {
         const cookieStore = typeof document !== "undefined" ? document.cookie : "";
-        let rolActivo = "ADMINISTRADOR";
+        let rolEncontrado = "ADMINISTRADOR";
         const matchModo = cookieStore.match(/tranqi_modo_rol=([^;]+)/);
         const matchFav = cookieStore.match(/tranqi_rol_favorito=([^;]+)/);
-        if (matchModo && matchModo[1]) rolActivo = matchModo[1].toUpperCase();
-        else if (matchFav && matchFav[1]) rolActivo = matchFav[1].toUpperCase();
+        if (matchModo && matchModo[1]) rolEncontrado = matchModo[1].toUpperCase();
+        else if (matchFav && matchFav[1]) rolEncontrado = matchFav[1].toUpperCase();
+
+        setRolActivo(rolEncontrado);
 
         // 1. Presets de asignación por rol para panel_administrar
         let idsAsignados: string[] = [];
-        if (rolActivo === "OPERADOR" || rolActivo === "AUXILIAR" || rolActivo === "TECNICO") {
+        if (rolEncontrado === "OPERADOR" || rolEncontrado === "AUXILIAR" || rolEncontrado === "TECNICO") {
           idsAsignados = ["socios"];
-        } else if (rolActivo === "ADMINISTRADOR" || rolActivo === "SUPERADMIN") {
+        } else if (rolEncontrado === "ADMINISTRADOR" || rolEncontrado === "SUPERADMIN") {
           idsAsignados = ["gestion_usuarios", "socios", "solicitud_socio", "emision_notificaciones", "auditoria"];
         }
 
         // 2. Consultar servidor BDD PostgreSQL (comun_seguridad.seg_rol_widget)
-        const resBdd = await obtenerConfiguracionNavegacionRolAction(rolActivo, (negocio || "TRANQ").toUpperCase());
+        const resBdd = await obtenerConfiguracionNavegacionRolAction(rolEncontrado, (negocio || "TRANQ").toUpperCase());
         if (resBdd.ok && resBdd.data && resBdd.data.widgetsPorPanel) {
           const wBdd = resBdd.data.widgetsPorPanel["panel_administrar"] || resBdd.data.widgetsPorPanel["administrar"] || [];
           if (wBdd.length > 0) {
@@ -316,8 +319,8 @@ export function PanelAdministrarModular({ negocio }: Props) {
           const perfiles = JSON.parse(savedPerfiles);
           if (Array.isArray(perfiles)) {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            let perfilObj = perfiles.find((p: any) => p.clave?.toUpperCase() === rolActivo);
-            if (!perfilObj && (rolActivo === "OPERADOR" || rolActivo === "AUXILIAR")) {
+            let perfilObj = perfiles.find((p: any) => p.clave?.toUpperCase() === rolEncontrado);
+            if (!perfilObj && (rolEncontrado === "OPERADOR" || rolEncontrado === "AUXILIAR")) {
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               perfilObj = perfiles.find((p: any) => p.clave?.toUpperCase() === "OPERADOR");
             }
@@ -387,7 +390,9 @@ export function PanelAdministrarModular({ negocio }: Props) {
 
   const handleIntentarAbrirWidget = (id: string, m: ModuloAdminDef) => {
     const infoCustom = getWidgetInfo(id, m.titulo, m.subtitulo);
-    if (infoCustom.requiereMfa) {
+    const esAdminOSuperadmin = rolActivo === "SUPERADMIN" || rolActivo === "SUPER_ADMIN" || rolActivo === "ADMINISTRADOR";
+
+    if (infoCustom.requiereMfa && !esAdminOSuperadmin) {
       const rawTs = typeof window !== "undefined" ? localStorage.getItem(`tranqi_mfa_widget_ts_${id}`) : null;
       const ts = rawTs ? Number(rawTs) : 0;
       const minutosTranscurridos = (Date.now() - ts) / (1000 * 60);
