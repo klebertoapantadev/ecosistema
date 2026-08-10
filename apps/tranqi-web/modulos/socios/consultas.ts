@@ -151,10 +151,26 @@ export async function obtenerDetalleSolicitudParaAdmin(solicitudId: string) {
     .eq("usu_id", solicitud.ssc_usuario_id)
     .single();
 
-  const docsFirmados = (documentosRes.data ?? []).map((d) => {
-    const { data: urlData } = supabase.storage.from("socios-documentos").getPublicUrl(d.dcs_url);
-    return { ...d, url: urlData?.publicUrl ?? d.dcs_url };
-  });
+  const docsFirmados = await Promise.all(
+    (documentosRes.data ?? []).map(async (d) => {
+      if (!d.dcs_url) return { ...d, url: null };
+      if (d.dcs_url.startsWith("data:") || d.dcs_url.startsWith("http")) {
+        return { ...d, url: d.dcs_url };
+      }
+      try {
+        const { data: signedData } = await supabase.storage
+          .from("socios-documentos")
+          .createSignedUrl(d.dcs_url, 3600);
+        const { data: publicData } = supabase.storage
+          .from("socios-documentos")
+          .getPublicUrl(d.dcs_url);
+        return { ...d, url: signedData?.signedUrl || publicData?.publicUrl || d.dcs_url };
+      } catch {
+        const { data: urlData } = supabase.storage.from("socios-documentos").getPublicUrl(d.dcs_url);
+        return { ...d, url: urlData?.publicUrl ?? d.dcs_url };
+      }
+    })
+  );
 
   return {
     solicitud,

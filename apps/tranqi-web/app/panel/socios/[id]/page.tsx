@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { CheckCircle2, XCircle, ExternalLink } from "lucide-react";
+import { CheckCircle2, XCircle, ExternalLink, Download, FileText } from "lucide-react";
 import { obtenerSolicitudDetalle, obtenerAbogadoPorSolicitud } from "../../../../modulos/socios/consultas";
 import { AccionesSolicitud } from "../../../../modulos/socios/componentes/AccionesSolicitud";
 import { SubirDocumentoRevision } from "../../../../modulos/socios/componentes/SubirDocumentoRevision";
@@ -68,8 +68,22 @@ export default async function PaginaDetalleSocio({ params }: { params: Promise<{
           <dt>Teléfono de contacto</dt>
           <dd>{solicitud.ssc_telefono_contacto || "—"}</dd>
         </dl>
-        <h3>Resumen profesional</h3>
-        <p>{solicitud.ssc_resumen_profesional}</p>
+        <h3 style={{ marginTop: "18px", marginBottom: "8px" }}>Resumen profesional</h3>
+        <div
+          style={{
+            background: "#F9FAFB",
+            padding: "16px 20px",
+            borderRadius: "12px",
+            border: "1px solid #E5E7EB",
+            fontSize: "0.92rem",
+            lineHeight: 1.6,
+            color: "#111827",
+            overflowX: "auto"
+          }}
+          dangerouslySetInnerHTML={{
+            __html: solicitud.ssc_resumen_profesional || "<p>Sin resumen especificado.</p>"
+          }}
+        />
       </div>
 
       <div className="tarjeta-panel detalle-solicitud">
@@ -124,30 +138,90 @@ export default async function PaginaDetalleSocio({ params }: { params: Promise<{
       </div>
 
       <div className="tarjeta-panel detalle-solicitud">
-        <h2>Documentos</h2>
+        <h2>Documentos y Adjuntos ({documentos.length})</h2>
         {documentos.length === 0 ? (
           <p>Sin documentos adjuntos todavía.</p>
         ) : (
-          <ul className="lista-experiencia">
+          <div style={{ display: "grid", gap: "12px", marginTop: "12px" }}>
             {documentos.map((d) => (
-              <li key={d.dcs_id}>
-                <strong>{ETIQUETA_TIPO[d.dcs_tipo] ?? d.dcs_tipo}</strong>
-                {d.dcs_subido_por !== usuario?.usu_id && <span className="chip-admin-doc"> admin</span>}
-                {" — "}
+              <div
+                key={d.dcs_id}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  padding: "14px 18px",
+                  borderRadius: "12px",
+                  background: "#F9FAFB",
+                  border: "1px solid #E5E7EB"
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                  <div style={{ padding: "10px", borderRadius: "10px", background: "#EEF2FF", color: "#4F46E5" }}>
+                    <FileText size={20} />
+                  </div>
+                  <div>
+                    <strong style={{ fontSize: "0.9rem", color: "#111827", display: "block" }}>
+                      {ETIQUETA_TIPO[d.dcs_tipo] ?? d.dcs_tipo}
+                      {d.dcs_subido_por !== usuario?.usu_id && <span className="chip-admin-doc"> admin</span>}
+                    </strong>
+                    <span style={{ fontSize: "0.8rem", color: "#6B7280" }}>
+                      {d.dcs_nombre_archivo || "Documento Adjunto"}
+                    </span>
+                    {d.dcs_comentario && <p style={{ fontSize: "0.78rem", color: "#4B5563", margin: "4px 0 0 0" }}>{d.dcs_comentario}</p>}
+                  </div>
+                </div>
                 {d.url ? (
-                  <a href={d.url} target="_blank" rel="noopener noreferrer">
-                    {d.dcs_nombre_archivo ?? "ver documento"}{" "}
-                    <ExternalLink className="icono-enlace-externo" aria-hidden="true" strokeWidth={2} />
-                  </a>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    <a
+                      href={d.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "6px",
+                        padding: "8px 14px",
+                        borderRadius: "8px",
+                        background: "#FFFFFF",
+                        border: "1px solid #D1D5DB",
+                        color: "#374151",
+                        fontSize: "0.82rem",
+                        fontWeight: 600,
+                        textDecoration: "none"
+                      }}
+                    >
+                      <ExternalLink size={14} /> Ver
+                    </a>
+                    <a
+                      href={d.url}
+                      download={d.dcs_nombre_archivo || "adjunto_socio"}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "6px",
+                        padding: "8px 14px",
+                        borderRadius: "8px",
+                        background: "#05876E",
+                        color: "#FFFFFF",
+                        fontSize: "0.82rem",
+                        fontWeight: 700,
+                        textDecoration: "none"
+                      }}
+                    >
+                      <Download size={14} /> Descargar
+                    </a>
+                  </div>
                 ) : (
-                  <span className="historial-fecha">enlace no disponible</span>
+                  <span className="historial-fecha">Enlace no disponible</span>
                 )}
-                {d.dcs_comentario && <p>{d.dcs_comentario}</p>}
-              </li>
+              </div>
             ))}
-          </ul>
+          </div>
         )}
-        <p className="aviso-borrador">Enlace temporal (10 min) — se regenera cada vez que abres esta página.</p>
+        <p className="aviso-borrador" style={{ marginTop: "12px" }}>Enlace firmado temporal (60 min) — se regenera de forma segura al consultar la solicitud.</p>
         <SubirDocumentoRevision solicitudId={solicitud.ssc_id} />
       </div>
 
