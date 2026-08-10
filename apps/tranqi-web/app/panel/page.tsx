@@ -3,8 +3,7 @@ import Link from "next/link";
 import { cookies } from "next/headers";
 import {
   Calendar, Upload, Coins, MessageCircle, FileText,
-  Briefcase, UserCheck, Users, Settings,
-  ShieldCheck, Bell, Shield, KeyRound, CircleUser, Mail, Eye,
+  Briefcase, UserCheck, Users, Settings, ShieldCheck, Bell,
   type LucideIcon
 } from "lucide-react";
 import { obtenerPerfilActual, obtenerSaludo, obtenerPerfiles, obtenerNivelMaximo } from "@eco/identidad";
