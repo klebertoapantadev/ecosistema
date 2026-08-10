@@ -3,8 +3,8 @@ import Link from "next/link";
 import { cookies } from "next/headers";
 import {
   Calendar, Upload, Coins, MessageCircle, FileText,
-  Briefcase, Sparkles, UserCheck, Users, Settings,
-  ShieldCheck, Bell, Shield, KeyRound, CircleUser, Mail, LayoutGrid, Eye,
+  Briefcase, UserCheck, Users, Settings,
+  ShieldCheck, Bell, Shield, KeyRound, CircleUser, Mail, Eye,
   type LucideIcon
 } from "lucide-react";
 import { obtenerPerfilActual, obtenerSaludo, obtenerPerfiles, obtenerNivelMaximo } from "@eco/identidad";
@@ -39,43 +39,6 @@ const WIDGETS_ADMIN: { clave: string; icono: LucideIcon; nombre: string; detalle
   { clave: "configuracion_negocio", icono: Settings, nombre: "Configuración Negocio", detalle: "Términos, locales, redes sociales y canales", ruta: "/panel/configuracion", estado: "registrado" },
   { clave: "auditoria", icono: ShieldCheck, nombre: "Auditoría de Cambios", detalle: "Log inmutable PostgreSQL de operaciones BDD", ruta: "/panel/auditoria", estado: "registrado" },
   { clave: "emision_notificaciones", icono: Bell, nombre: "Emisión Notificaciones", detalle: "Despacho masivo multicanal In-App, Push, Email, WhatsApp", ruta: "/panel/emision-notificaciones", estado: "registrado" },
-];
-
-const CATALOGO_SUPERADMIN_TODOS = [
-  {
-    categoria: "Administración & Membresías",
-    modulos: [
-      { clave: "gestion_usuarios", nombre: "Gestión de Usuarios & Membresías", detalle: "Asignación de perfiles, roles y techo jerárquico", ruta: "/panel/usuarios", icono: Users, color: "#5000BA" },
-      { clave: "socios", nombre: "Aprobación de Socios Abogados", detalle: "Validación de matrículas y acreditación de abogados", ruta: "/panel/socios", icono: UserCheck, color: "#05876E" },
-      { clave: "solicitud_socio", nombre: "Solicitudes de Socios", detalle: "Revisión y procesamiento de postulación de socios", ruta: "/panel/solicitud-socio", icono: FileText, color: "#05876E" },
-      { clave: "consulta_usuarios", nombre: "Consulta de Usuarios & Perfiles", detalle: "Directorio de miembros y matriz de roles (Solo Lectura)", ruta: "/panel/usuarios", icono: Eye, color: "#5000BA" }
-    ]
-  },
-  {
-    categoria: "Gobernanza, Parámetros & Correo",
-    modulos: [
-      { clave: "configuracion_negocio", nombre: "Configuración del Negocio", detalle: "Parámetros del negocio, RUC, redes sociales y contacto", ruta: "/panel/configuracion", icono: Settings, color: "#5000BA" },
-      { clave: "configuracion_correo", nombre: "Servidor SMTP & Correo Cifrado", detalle: "Credenciales cifradas SMTP en Vault y plantillas HTML", ruta: "/panel/configuracion", icono: Mail, color: "#05876E" },
-      { clave: "terminos", nombre: "Términos, Consentimientos & LOPDP", detalle: "Configuración de cláusulas LOPDP y notificaciones", ruta: "/panel/configuracion", icono: ShieldCheck, color: "#5000BA" },
-      { clave: "auditoria", nombre: "Auditoría BDD PostgreSQL", detalle: "Registro inmutable de transacciones, diffs JSONB e IP", ruta: "/panel/auditoria", icono: Shield, color: "#111827" }
-    ]
-  },
-  {
-    categoria: "Comunicación & Notificaciones",
-    modulos: [
-      { clave: "emision_notificaciones", nombre: "Emisión de Notificaciones Multicanal", detalle: "Despacho masivo multicanal (In-App, Push, Email y WhatsApp)", ruta: "/panel/emision-notificaciones", icono: Bell, color: "#D97706" },
-      { clave: "preferencias_notificacion", nombre: "Preferencias de Alertas & Notificaciones", detalle: "Configuración de canales de alerta, WhatsApp y avisos", ruta: "/panel/notificaciones", icono: Bell, color: "#D97706" }
-    ]
-  },
-  {
-    categoria: "Identidad & Perfil de Usuario",
-    modulos: [
-      { clave: "mi_cuenta", nombre: "Perfil & Datos de Contacto", detalle: "Nombres, apellidos, correo verificado y WhatsApp", ruta: "/panel/cuenta", icono: CircleUser, color: "#5000BA" },
-      { clave: "facturacion", nombre: "Datos de Facturación SRI", detalle: "Razón Social, RUC/Cédula, dirección fiscal y correo SRI", ruta: "/panel/cuenta", icono: FileText, color: "#05876E" },
-      { clave: "mfa", nombre: "Seguridad MFA & Autenticador", detalle: "Configuración TOTP y reseteo estándar vía correo", ruta: "/panel/cuenta", icono: KeyRound, color: "#D97706" },
-      { clave: "ver_como", nombre: "Selector 'Ver Como' (Conmutador)", detalle: "Alternar la vista previa del portal según roles asignados", ruta: "/panel/cuenta", icono: Shield, color: "#5000BA" }
-    ]
-  }
 ];
 
 interface Props {
