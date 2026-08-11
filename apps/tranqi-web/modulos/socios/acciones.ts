@@ -196,28 +196,42 @@ export async function obtenerListaSolicitudesSociosAction(): Promise<Resultado<a
 
   const esAdminOSuper = perfiles.includes("SUPERADMIN") || perfiles.includes("ADMINISTRADOR") || perfiles.length === 0;
 
-  // 1. Intentar consulta estándar con RLS
-  let { data: sData, error: sErr } = await supabase
+  // 1. Intentar RPC Security Definer
+  let sData: any[] | null = null;
+  let sErr: any = null;
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: rpcData, error: rpcErr } = await (supabase as any)
     .schema("tranqui_legal")
-    .from("trq_solicitud_socio")
-    .select("*")
-    .order("ssc_creado_en", { ascending: false });
+    .rpc("trq_fn_listar_solicitudes_admin");
 
-  // 2. Si el usuario es SuperAdmin/Admin y el cliente normal devolvió vacio por bloqueo RLS (AAL1 claim),
-  // se utiliza cliente admin service role para garantizar que el SuperAdmin reciba la lista completa.
-  if (esAdminOSuper && (!sData || sData.length === 0)) {
-    const adminSupabase = crearClienteAdmin();
-    if (adminSupabase) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const resAdmin = await (adminSupabase as any)
-        .schema("tranqui_legal")
-        .from("trq_solicitud_socio")
-        .select("*")
-        .order("ssc_creado_en", { ascending: false });
+  if (!rpcErr && rpcData && rpcData.length > 0) {
+    sData = rpcData;
+  } else {
+    // 2. Fallback a consulta de tabla si el RPC no existe
+    const resNorm = await supabase
+      .schema("tranqui_legal")
+      .from("trq_solicitud_socio")
+      .select("*")
+      .order("ssc_creado_en", { ascending: false });
 
-      if (resAdmin.data) {
-        sData = resAdmin.data;
-        sErr = null;
+    sData = resNorm.data;
+    sErr = resNorm.error;
+
+    if (esAdminOSuper && (!sData || sData.length === 0)) {
+      const adminSupabase = crearClienteAdmin();
+      if (adminSupabase) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const resAdmin = await (adminSupabase as any)
+          .schema("tranqui_legal")
+          .from("trq_solicitud_socio")
+          .select("*")
+          .order("ssc_creado_en", { ascending: false });
+
+        if (resAdmin.data) {
+          sData = resAdmin.data;
+          sErr = null;
+        }
       }
     }
   }

@@ -33,7 +33,12 @@ export async function crearClienteServidor() {
 }
 
 export function crearClienteAdmin() {
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!serviceKey) return null;
-  return createClient<Database>(process.env.NEXT_PUBLIC_SUPABASE_URL!, serviceKey);
+  const serviceKey =
+    process.env.SUPABASE_SERVICE_ROLE_KEY ||
+    process.env.SUPABASE_SERVICE_KEY;
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  if (!url || !serviceKey) return null;
+  return createClient<Database>(url, serviceKey, {
+    auth: { persistSession: false, autoRefreshToken: false }
+  });
 }
