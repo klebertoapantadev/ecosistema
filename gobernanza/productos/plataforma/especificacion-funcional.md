@@ -552,6 +552,10 @@ Pantalla de configuración del negocio (identidad legal + datos de `PLT-008`) y 
 37. **Widget Universal de Autogestión "Baja de Cuenta / Eliminar mi Cuenta" (`PanelCuentaModular.tsx`, `EliminarCuenta.tsx`):**
     - **Disponibilidad LOPDP por Defecto para Todos los Roles:** Se integró el identificador de widget `baja_cuenta` (`peligro`) en los presets por defecto de `/panel/cuenta` para **todos los perfiles** (`CLIENTE`, `OPERADOR`, `ABOGADO`, `ADMINISTRADOR`, `SUPERADMIN`), permitiendo la autogestión directa de cualquier usuario mediante la confirmación tipeada `"ELIMINAR"`.
     - **Soporte Deep-Linking:** Habilitado el acceso directo por URL mediante los parámetros `?widget=peligro`, `?widget=baja_cuenta` o `?widget=eliminar_cuenta`.
+38. **Resolución de Conflicto de Solicitud de Socio & Despacho Automático Multicanal (`FormularioSolicitudSocio.tsx`, `acciones.ts`, `almacen.ts`):**
+    - **Resolución de Error Duplicate Key (`trq_solicitud_materia_sma_solicitud_id_sma_materia_id_key`):** Se aseguró la deduplicación de arrays (`Set`) para materias y provincias y el uso de `crearClienteAdmin()` para la limpieza de relaciones relacionales, garantizando escrituras de solicitudes libres de bloqueos RLS.
+    - **Redirección Clara a Inicio:** Al enviar exitosamente la solicitud, el formulario alerta la confirmación y redirige automáticamente al usuario al menú principal (`/panel`).
+    - **Despacho Automático Email/Push & Bitácora en Motor de Notificaciones:** Cada solicitud o actualización genera una notificación In-App/Push, envía correo de confirmación y registra automáticamente una campaña en la `Bitácora & Historial de Notificaciones Emitidas` (`/panel/emision-notificaciones`).
 
 
 
