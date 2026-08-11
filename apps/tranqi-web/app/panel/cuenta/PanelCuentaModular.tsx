@@ -179,6 +179,22 @@ export function PanelCuentaModular({ perfil, historial, puedeConmutar = true, ro
   const { getWidgetInfo, guardarWidget, obtenerIconoComponente } = useCustomWidgets();
   const esAdminOSuper = Boolean(puedeConmutar || perfil?.usu_superadmin_plataforma);
 
+  // Apertura directa por parametro ?widget= en URL
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const paramWidget = params.get("widget");
+      if (paramWidget) {
+        const mapaAlias: Record<string, string> = {
+          facturacion: "datos_facturacion",
+          mfa: "mfa_seguridad"
+        };
+        const targetId = mapaAlias[paramWidget] || paramWidget;
+        setWidgetActivo(targetId);
+      }
+    }
+  }, []);
+
   useEffect(() => {
     async function cargarConfiguracionPanelCuenta() {
       try {

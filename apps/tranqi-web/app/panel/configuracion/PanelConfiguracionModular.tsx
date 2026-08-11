@@ -115,6 +115,24 @@ export function PanelConfiguracionModular({ esAdmin, esSuperadmin = false, confi
     }
   }, [esAdmin, esSuperadmin]);
 
+  // Apertura directa por parametro ?widget= en URL
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const paramWidget = params.get("widget");
+      if (paramWidget) {
+        const mapaAlias: Record<string, string> = {
+          configuracion_negocio: "negocio",
+          configuracion_correo: "correo",
+          preferencias_notificacion: "notificaciones",
+          terminos: "notificaciones"
+        };
+        const targetId = mapaAlias[paramWidget] || paramWidget;
+        setWidgetActivo(targetId);
+      }
+    }
+  }, []);
+
   // Alternar estado de favorito
   const toggleFavorito = (e: React.MouseEvent, id: string) => {
     e.stopPropagation();

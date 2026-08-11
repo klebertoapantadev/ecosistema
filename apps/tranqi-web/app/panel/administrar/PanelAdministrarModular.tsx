@@ -282,6 +282,17 @@ export function PanelAdministrarModular({ negocio }: Props) {
 
   const { getWidgetInfo, guardarWidget, obtenerIconoComponente } = useCustomWidgets();
 
+  // Apertura directa por parametro ?widget= en URL
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const paramWidget = params.get("widget");
+      if (paramWidget) {
+        setWidgetActivo(paramWidget);
+      }
+    }
+  }, []);
+
   // Cargar widgets dinámicamente desde la matriz de permisos para el perfil activo
   useEffect(() => {
     async function cargarConfiguracionPanel() {

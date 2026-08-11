@@ -23,7 +23,7 @@ const CATALOGO_FAVORITOS: Record<string, WidgetFavInfo> = {
     subtitulo: "Nombres, apellidos, correo verificado, correos adicionales y WhatsApp",
     icono: User,
     colorIcono: "var(--violeta, #5000BA)",
-    href: "/panel/cuenta",
+    href: "/panel/cuenta?widget=mi_cuenta",
     origen: "Mi cuenta"
   },
   facturacion: {
@@ -32,7 +32,7 @@ const CATALOGO_FAVORITOS: Record<string, WidgetFavInfo> = {
     subtitulo: "Razón social, RUC/Cédula, dirección fiscal y correo electrónico de facturación",
     icono: Receipt,
     colorIcono: "var(--esmeralda, #05876E)",
-    href: "/panel/cuenta",
+    href: "/panel/cuenta?widget=datos_facturacion",
     origen: "Mi cuenta"
   },
   historial: {
@@ -41,7 +41,7 @@ const CATALOGO_FAVORITOS: Record<string, WidgetFavInfo> = {
     subtitulo: "Seguridad de inicio de sesión, IP y dispositivos",
     icono: History,
     colorIcono: "var(--violeta, #5000BA)",
-    href: "/panel/cuenta",
+    href: "/panel/cuenta?widget=historial_accesos",
     origen: "Mi cuenta"
   },
   sesion: {
@@ -50,7 +50,7 @@ const CATALOGO_FAVORITOS: Record<string, WidgetFavInfo> = {
     subtitulo: "Gestión de sesión activa y cierre de sesión",
     icono: KeyRound,
     colorIcono: "var(--violeta, #5000BA)",
-    href: "/panel/cuenta",
+    href: "/panel/cuenta?widget=mfa_seguridad",
     origen: "Mi cuenta"
   },
   rol_activo: {
@@ -59,7 +59,7 @@ const CATALOGO_FAVORITOS: Record<string, WidgetFavInfo> = {
     subtitulo: "Alternar la vista previa del portal entre Cliente, Socio Abogado y Administrador",
     icono: ShieldCheck,
     colorIcono: "var(--violeta, #5000BA)",
-    href: "/panel/cuenta",
+    href: "/panel/cuenta?widget=ver_como",
     origen: "Mi cuenta"
   },
   peligro: {
@@ -68,7 +68,7 @@ const CATALOGO_FAVORITOS: Record<string, WidgetFavInfo> = {
     subtitulo: "Eliminación permanente conforme a Ley LOPDP",
     icono: ShieldAlert,
     colorIcono: "#B00020",
-    href: "/panel/cuenta",
+    href: "/panel/cuenta?widget=baja_cuenta",
     origen: "Mi cuenta",
     esPeligro: true
   },
@@ -78,7 +78,7 @@ const CATALOGO_FAVORITOS: Record<string, WidgetFavInfo> = {
     subtitulo: "Identidad legal, términos, locales, WhatsApp y redes sociales",
     icono: Settings,
     colorIcono: "var(--violeta, #5000BA)",
-    href: "/panel/configuracion",
+    href: "/panel/configuracion?widget=negocio",
     origen: "Configurar"
   },
   correo: {
@@ -87,7 +87,7 @@ const CATALOGO_FAVORITOS: Record<string, WidgetFavInfo> = {
     subtitulo: "Credenciales cifradas, puerto TLS y plantilla HTML",
     icono: Mail,
     colorIcono: "var(--esmeralda, #05876E)",
-    href: "/panel/configuracion",
+    href: "/panel/configuracion?widget=correo",
     origen: "Configurar"
   },
   notificaciones: {
@@ -96,7 +96,7 @@ const CATALOGO_FAVORITOS: Record<string, WidgetFavInfo> = {
     subtitulo: "Canales de contacto, WhatsApp y avisos legales",
     icono: Bell,
     colorIcono: "var(--violeta, #5000BA)",
-    href: "/panel/configuracion",
+    href: "/panel/configuracion?widget=notificaciones",
     origen: "Configurar"
   },
   perfiles: {
@@ -105,7 +105,7 @@ const CATALOGO_FAVORITOS: Record<string, WidgetFavInfo> = {
     subtitulo: "Administración de miembros, asignación de perfiles y techo jerárquico",
     icono: Sliders,
     colorIcono: "var(--violeta, #5000BA)",
-    href: "/panel/configuracion",
+    href: "/panel/configuracion?widget=perfiles",
     origen: "Configurar"
   }
 };
