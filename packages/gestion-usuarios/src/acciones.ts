@@ -288,3 +288,63 @@ export async function obtenerDirectorioUsuariosPublicoAction(
 
   return { ok: true, data: listaCompleta };
 }
+
+export async function eliminarUsuarioSuperAdminAction(
+  targetUsuarioId: string
+): Promise<Resultado> {
+  const supabase = await crearClienteServidor();
+  const adminSupabase = crearClienteAdmin() || supabase;
+
+  // 1. Intentar RPC en base de datos
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error: rpcErr } = await (supabase as any)
+    .schema("comun_seguridad")
+    .rpc("seg_fn_superadmin_eliminar_usuario", { p_target_usuario_id: targetUsuarioId });
+
+  if (rpcErr) {
+    // Fallback manual en servidor si RPC no se ha corrido en BDD
+    try {
+      await adminSupabase.schema("tranqui_legal").from("trq_solicitud_socio").delete().eq("ssc_usuario_id", targetUsuarioId);
+      await adminSupabase.schema("tranqui_legal").from("trq_abogado").delete().eq("abg_usuario_id", targetUsuarioId);
+      await adminSupabase.schema("comun_seguridad").from("seg_membresia").delete().eq("mem_usuario_id", targetUsuarioId);
+      await adminSupabase.schema("comun_seguridad").from("seg_usuario").delete().eq("usu_id", targetUsuarioId);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      if ((adminSupabase as any).auth?.admin?.deleteUser) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await (adminSupabase as any).auth.admin.deleteUser(targetUsuarioId);
+      }
+    } catch (e: any) {
+      return { ok: false, error: e?.message || rpcErr.message };
+    }
+  }
+
+  revalidatePath("/panel/administrar");
+  revalidatePath("/panel/usuarios");
+  return { ok: true };
+}
+
+export async function resetearSistemaSuperAdminAction(): Promise<Resultado> {
+  const supabase = await crearClienteServidor();
+  const adminSupabase = crearClienteAdmin() || supabase;
+
+  // 1. Intentar RPC en BDD
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error: rpcErr } = await (supabase as any)
+    .schema("comun_seguridad")
+    .rpc("seg_fn_superadmin_resetear_sistema");
+
+  if (rpcErr) {
+    // Fallback manual en servidor
+    try {
+      await adminSupabase.schema("tranqui_legal").from("trq_solicitud_socio").delete().neq("ssc_usuario_id", "00000000-0000-0000-0000-000000000000");
+      await adminSupabase.schema("tranqui_legal").from("trq_abogado").delete().neq("abg_usuario_id", "00000000-0000-0000-0000-000000000000");
+      await adminSupabase.schema("comun_seguridad").from("seg_usuario").delete().neq("usu_correo", "kleber.toapanta.ch@gmail.com");
+    } catch (e: any) {
+      return { ok: false, error: e?.message || rpcErr.message };
+    }
+  }
+
+  revalidatePath("/panel/administrar");
+  revalidatePath("/panel/usuarios");
+  return { ok: true };
+}

@@ -1,12 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { asignarPerfil, quitarPerfil } from "../acciones";
+import { Trash2 } from "lucide-react";
+import { asignarPerfil, quitarPerfil, eliminarUsuarioSuperAdminAction } from "../acciones";
 import type { UsuarioConMembresia, PerfilAsignable } from "../consultas";
 
-// PLT-003 regla 3: casillas y no un desplegable. Un `<select>` obliga a elegir
-// UNO, que es exactamente lo que el requerimiento descarta -- "CLIENTE y
-// ABOGADO simultáneamente" no era expresable en el control anterior.
 export function FilaUsuario({
   usuario,
   negocio,
@@ -21,6 +19,7 @@ export function FilaUsuario({
   const [asignados, setAsignados] = useState<string[]>(usuario.perfiles);
   const [ocupado, setOcupado] = useState<string | null>(null);
   const [mensaje, setMensaje] = useState<string | null>(null);
+  const [eliminando, setEliminando] = useState(false);
 
   async function alternar(clave: string, marcado: boolean) {
     setOcupado(clave);
@@ -34,9 +33,22 @@ export function FilaUsuario({
       setMensaje(resultado.error ?? "Error al procesar la solicitud");
       return;
     }
-    // Se refleja solo si el servidor aceptó: el techo jerárquico lo decide el
-    // RPC, no esta pantalla.
     setAsignados((actual) => (marcado ? [...actual, clave] : actual.filter((c) => c !== clave)));
+  }
+
+  async function handleEliminar() {
+    if (!confirm(`⚠️ ¿Estás seguro de ELIMINAR la cuenta de "${usuario.usu_correo}"?\n\nSe borrarán todas sus solicitudes, perfiles y datos.`)) {
+      return;
+    }
+    setEliminando(true);
+    const res = await eliminarUsuarioSuperAdminAction(usuario.usu_id);
+    if (res.ok) {
+      alert("✅ Usuario eliminado con éxito.");
+      window.location.reload();
+    } else {
+      alert(`❌ Error al eliminar: ${res.error}`);
+      setEliminando(false);
+    }
   }
 
   const nombre = [usuario.usu_nombres, usuario.usu_apellidos].filter(Boolean).join(" ") || "—";
@@ -50,11 +62,7 @@ export function FilaUsuario({
         <div className="perfiles-usuario">
           {perfiles.map((p) => {
             const tiene = asignados.includes(p.clave);
-            // Regla 5: no se ofrece siquiera lo que el gestor no podría
-            // asignar. El RPC lo rechazaría igual, pero un control que
-            // siempre falla es peor que un control ausente.
             const fueraDeAlcance = p.nivel > nivelMaximoGestor;
-            // Regla 2: CLIENTE es el nivel base y no se retira.
             const esBase = p.clave === "CLIENTE";
 
             return (
@@ -82,6 +90,32 @@ export function FilaUsuario({
           })}
         </div>
         {mensaje && <p className="error-auth mensaje-fila">{mensaje}</p>}
+      </td>
+      <td>
+        {usuario.usu_correo !== "kleber.toapanta.ch@gmail.com" ? (
+          <button
+            type="button"
+            onClick={handleEliminar}
+            disabled={eliminando}
+            style={{
+              background: "#FEF2F2",
+              border: "1px solid #FCA5A5",
+              color: "#DC2626",
+              borderRadius: "8px",
+              padding: "4px 8px",
+              fontSize: "0.75rem",
+              fontWeight: 700,
+              cursor: "pointer",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "4px"
+            }}
+          >
+            <Trash2 size={13} /> {eliminando ? "Eliminando..." : "Eliminar"}
+          </button>
+        ) : (
+          <span style={{ fontSize: "0.72rem", color: "#9CA3AF" }}>Protegido</span>
+        )}
       </td>
     </tr>
   );

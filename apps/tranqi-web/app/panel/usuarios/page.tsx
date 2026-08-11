@@ -63,7 +63,8 @@ export default async function PaginaGestionUsuarios({
             <th>Correo</th>
             <th>Estado</th>
             <th>Perfiles</th>
-            </tr>
+            <th>Acción</th>
+          </tr>
         </thead>
         <tbody>
           {usuarios.map((u) => (

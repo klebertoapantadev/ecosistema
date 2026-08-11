@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Users, Search, ShieldCheck, Eye, LayoutGrid, CheckCircle2, UserCheck, Phone, Mail, Filter } from "lucide-react";
-import { obtenerDirectorioUsuariosPublicoAction } from "../acciones";
+import { Users, Search, ShieldCheck, Eye, LayoutGrid, CheckCircle2, UserCheck, Phone, Mail, Filter, Trash2, RotateCcw } from "lucide-react";
+import { obtenerDirectorioUsuariosPublicoAction, eliminarUsuarioSuperAdminAction, resetearSistemaSuperAdminAction } from "../acciones";
 
 interface Props {
   negocio?: string;
@@ -99,6 +99,7 @@ export function ConsultaUsuariosPerfilesWidget({ negocio = "TRANQ" }: Props) {
   const [filtroTexto, setFiltroTexto] = useState("");
   const [filtroRol, setFiltroRol] = useState<string>("TODOS");
   const [perfilSeleccionado, setPerfilSeleccionado] = useState<string>("OPERADOR");
+  const [procesandoAccion, setProcesandoAccion] = useState<string | null>(null);
 
   useEffect(() => {
     async function cargarDirectorio() {
@@ -116,6 +117,48 @@ export function ConsultaUsuariosPerfilesWidget({ negocio = "TRANQ" }: Props) {
     }
     cargarDirectorio();
   }, [negocio]);
+
+  async function handleEliminarUsuario(uId: string, nombreCorr: string) {
+    if (!confirm(`⚠️ ¿Estás seguro de ELIMINAR permanentemente a "${nombreCorr}"?\n\nSe borrarán todas sus solicitudes de socio, perfiles, membresías y datos de autenticación.`)) {
+      return;
+    }
+    try {
+      setProcesandoAccion(uId);
+      const res = await eliminarUsuarioSuperAdminAction(uId);
+      if (res.ok) {
+        setUsuarios(prev => prev.filter(u => u.usuario_id !== uId));
+        alert(`✅ La cuenta "${nombreCorr}" ha sido eliminada por completo.`);
+      } else {
+        alert(`❌ Error al eliminar: ${res.error || "No se pudo eliminar el usuario"}`);
+      }
+    } catch (err: any) {
+      alert(`❌ Error al procesar eliminación: ${err?.message}`);
+    } finally {
+      setProcesandoAccion(null);
+    }
+  }
+
+  async function handleResetearSistema() {
+    const confirmacionText = prompt(`⚠️ ADVERTENCIA DE SEGURIDAD ⚠️\n\nEsta acción eliminará TODOS los usuarios de prueba, perfiles y solicitudes configuradas en la base de datos (conservando únicamente la cuenta SuperAdmin).\n\nPara confirmar, escribe "CONFIRMAR RESET":`);
+    if (confirmacionText !== "CONFIRMAR RESET") {
+      alert("Operación cancelada.");
+      return;
+    }
+    try {
+      setProcesandoAccion("reset_all");
+      const res = await resetearSistemaSuperAdminAction();
+      if (res.ok) {
+        alert("💥 El sistema ha sido reseteado por completo. Se han eliminado todas las cuentas y perfiles de prueba.");
+        window.location.reload();
+      } else {
+        alert(`❌ Error al resetear el sistema: ${res.error}`);
+      }
+    } catch (err: any) {
+      alert(`❌ Error al resetear el sistema: ${err?.message}`);
+    } finally {
+      setProcesandoAccion(null);
+    }
+  }
 
   const usuariosFiltrados = usuarios.filter(u => {
     const coincideTexto = u.nombres.toLowerCase().includes(filtroTexto.toLowerCase()) ||
@@ -145,9 +188,33 @@ export function ConsultaUsuariosPerfilesWidget({ negocio = "TRANQ" }: Props) {
           </div>
         </div>
 
-        <span style={{ fontSize: "0.76rem", fontWeight: 800, color: "#05876E", background: "#ECFDF5", padding: "6px 12px", borderRadius: "20px", border: "1px solid #A7F3D0", display: "flex", alignItems: "center", gap: "6px" }}>
-          <Eye size={14} /> Modo Consulta Libre
-        </span>
+        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          <button
+            type="button"
+            onClick={handleResetearSistema}
+            disabled={procesandoAccion !== null}
+            style={{
+              fontSize: "0.76rem",
+              fontWeight: 800,
+              color: "#DC2626",
+              background: "#FEF2F2",
+              padding: "7px 14px",
+              borderRadius: "20px",
+              border: "1px solid #FCA5A5",
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+              cursor: "pointer",
+              boxShadow: "0 1px 2px rgba(220,38,38,0.1)"
+            }}
+            title="Borrar todos los usuarios de prueba, perfiles y solicitudes para iniciar desde cero"
+          >
+            <RotateCcw size={14} /> Resetear Sistema (Prueba desde Cero)
+          </button>
+          <span style={{ fontSize: "0.76rem", fontWeight: 800, color: "#05876E", background: "#ECFDF5", padding: "6px 12px", borderRadius: "20px", border: "1px solid #A7F3D0", display: "flex", alignItems: "center", gap: "6px" }}>
+            <Eye size={14} /> Modo Consulta Libre
+          </span>
+        </div>
       </div>
 
       {/* PESTAÑAS DE NAVEGACIÓN */}
@@ -245,6 +312,7 @@ export function ConsultaUsuariosPerfilesWidget({ negocio = "TRANQ" }: Props) {
                     <th style={{ textAlign: "left", padding: "10px 14px", color: "#4B5563", fontWeight: 700 }}>Contacto</th>
                     <th style={{ textAlign: "center", padding: "10px 14px", color: "#4B5563", fontWeight: 700 }}>Rol Asignado</th>
                     <th style={{ textAlign: "center", padding: "10px 14px", color: "#4B5563", fontWeight: 700 }}>Estado</th>
+                    <th style={{ textAlign: "center", padding: "10px 14px", color: "#DC2626", fontWeight: 700 }}>Acción</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -274,6 +342,33 @@ export function ConsultaUsuariosPerfilesWidget({ negocio = "TRANQ" }: Props) {
                         <span style={{ color: "#05876E", fontWeight: 800, fontSize: "0.78rem", display: "flex", alignItems: "center", justifyContent: "center", gap: "4px" }}>
                           <CheckCircle2 size={14} /> Activo
                         </span>
+                      </td>
+                      <td style={{ padding: "12px 14px", textAlign: "center" }}>
+                        {u.rol !== "SUPERADMIN" && u.correo !== "kleber.toapanta.ch@gmail.com" ? (
+                          <button
+                            type="button"
+                            onClick={() => handleEliminarUsuario(u.usuario_id, u.correo || u.nombres)}
+                            disabled={procesandoAccion === u.usuario_id}
+                            style={{
+                              background: "#FEF2F2",
+                              border: "1px solid #FCA5A5",
+                              color: "#DC2626",
+                              borderRadius: "8px",
+                              padding: "5px 12px",
+                              fontSize: "0.75rem",
+                              fontWeight: 800,
+                              cursor: "pointer",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "4px"
+                            }}
+                            title="Eliminar cuenta y todo su contenido de forma permanente"
+                          >
+                            <Trash2 size={13} /> {procesandoAccion === u.usuario_id ? "Eliminando..." : "Eliminar"}
+                          </button>
+                        ) : (
+                          <span style={{ fontSize: "0.72rem", color: "#9CA3AF", fontWeight: 700 }}>Protegido</span>
+                        )}
                       </td>
                     </tr>
                   ))}
