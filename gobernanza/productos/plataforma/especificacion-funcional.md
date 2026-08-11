@@ -549,6 +549,9 @@ Pantalla de configuración del negocio (identidad legal + datos de `PLT-008`) y 
 36. **Funcionalidades de Eliminación Total & Reset del Sistema para Pruebas desde Cero (`seg_fn_superadmin_eliminar_usuario`, `seg_fn_superadmin_resetear_sistema`, `20260811000003_superadmin_eliminar_y_resetear.sql`):**
     - **Purga Individual en Cascada (`eliminarUsuarioSuperAdminAction`):** Habilita al SuperAdmin la eliminación permanente de cualquier cuenta de usuario objetivo (borrando sus registros en `trq_solicitud_socio`, `trq_abogado`, `seg_membresia`, `seg_usuario` y `auth.users`), liberando la cuenta para pruebas limpias.
     - **Reset Master del Sistema (`resetearSistemaSuperAdminAction`):** Implementa el botón *"🔴 Resetear Sistema (Prueba desde Cero)"* en el encabezado del directorio para purgar masivamente todos los usuarios de prueba, perfiles asignados y solicitudes postulantes, preservando únicamente la identidad maestra del SuperAdmin (`kleber.toapanta.ch@gmail.com`).
+37. **Widget Universal de Autogestión "Baja de Cuenta / Eliminar mi Cuenta" (`PanelCuentaModular.tsx`, `EliminarCuenta.tsx`):**
+    - **Disponibilidad LOPDP por Defecto para Todos los Roles:** Se integró el identificador de widget `baja_cuenta` (`peligro`) en los presets por defecto de `/panel/cuenta` para **todos los perfiles** (`CLIENTE`, `OPERADOR`, `ABOGADO`, `ADMINISTRADOR`, `SUPERADMIN`), permitiendo la autogestión directa de cualquier usuario mediante la confirmación tipeada `"ELIMINAR"`.
+    - **Soporte Deep-Linking:** Habilitado el acceso directo por URL mediante los parámetros `?widget=peligro`, `?widget=baja_cuenta` o `?widget=eliminar_cuenta`.
 
 
 
