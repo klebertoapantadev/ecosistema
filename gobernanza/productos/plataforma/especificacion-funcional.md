@@ -544,6 +544,8 @@ Pantalla de configuración del negocio (identidad legal + datos de `PLT-008`) y 
 34. **Gobernanza Estricta de Paneles por Mínimo 1 Widget & Consola Unificada de SuperAdmin (`NavegacionSidebar.tsx`, `app/panel/page.tsx`):**
     - **Visibilidad Estricta de Paneles (Sidebar):** `NavegacionSidebar.tsx` condiciona la visibilidad de cualquier panel (excepto los núcleos `Inicio` y `Mi cuenta`) a la existencia de **al menos 1 widget asignado** (`(widgetsPorPanel[panelId] || []).length > 0`) para el perfil activo. Si un panel carece de widgets asignados en la matriz BDD/local, se oculta automáticamente del menú lateral.
     - **Consola Master Unificada SuperAdmin:** Para el perfil `SUPERADMIN`, el menú sidebar se restringe a `Inicio` y `Mi cuenta`, desplegando en la pantalla principal de Inicio (`/panel`) los 16 módulos operativos del ecosistema organizados en categorías (`PanelSuperAdmin`), garantizando acceso directo sin navegación redundante por subpaneles.
+35. **Resolución de Bloqueo RLS de Solicitudes de Socios para SuperAdmin (`trq_fn_listar_solicitudes_admin`, `acciones.ts`, `20260811000001_fix_superadmin_mfa_bypass_rls.sql`):**
+    - **RPC Security Definer & Bypass MFA RLS:** Se creó la función PostgreSQL `trq_fn_listar_solicitudes_admin()` con `SECURITY DEFINER` y se actualizó `trq_fn_es_admin_mfa_verificado()` para otorgar acceso inmediato al perfil `SUPERADMIN` sin requerir claim JWT `aal2`. La Server Action `obtenerListaSolicitudesSociosAction()` ejecuta la función RPC con fallback administrativo, garantizando que la consola de SuperAdmin cargue y despliegue el 100% de las solicitudes de socios postulantes en el ecosistema.
 
 
 
