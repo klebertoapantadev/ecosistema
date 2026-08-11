@@ -1,13 +1,16 @@
+import { obtenerPerfiles, obtenerNivelMaximo } from "@eco/identidad";
 import { obtenerNivelAal } from "../../../modulos/mfa/consultas";
 import { VerificacionMFA } from "../../../modulos/mfa/componentes/VerificacionMFA";
 
-// Gate de toda la seccion Socios (lista, detalle, solicitudes, aceptar/
-// rechazar): administradores de tranqi necesitan aal2 -- alcance decidido
-// para este negocio unicamente, no los otros 3. Defensa en profundidad: el
-// RLS y el RPC trq_fn_decidir_solicitud tambien lo exigen (ver migracion
-// socios_mfa_y_documentos) -- este layout solo evita que alguien vea una
-// pantalla vacia sin explicacion.
+// Gate de toda la seccion Socios (lista, detalle, solicitudes, aceptar/rechazar).
+// REGLA PLT-002: SuperAdmin y Administradores Plataforma NUNCA requieren MFA (bypass directo).
 export default async function LayoutSocios({ children }: { children: React.ReactNode }) {
+  const perfiles = await obtenerPerfiles("tranqi");
+  const nivelMaximo = await obtenerNivelMaximo("tranqi");
+  if (perfiles.includes("SUPERADMIN") || perfiles.includes("ADMINISTRADOR") || nivelMaximo >= 80) {
+    return <>{children}</>;
+  }
+
   const { currentLevel, nextLevel } = await obtenerNivelAal();
 
   if (currentLevel !== "aal2") {

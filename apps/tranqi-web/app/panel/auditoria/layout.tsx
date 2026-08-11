@@ -1,13 +1,16 @@
+import { obtenerPerfiles, obtenerNivelMaximo } from "@eco/identidad";
 import { obtenerNivelAal } from "../../../modulos/mfa/consultas";
 import { VerificacionMFA } from "../../../modulos/mfa/componentes/VerificacionMFA";
 
-// Mismo gate que /panel/socios (ver ese layout.tsx) -- Auditoria vivia ahi
-// adentro y heredaba esta proteccion; al moverla a top-level (TRQ-001
-// correccion de UX) hay que replicarla explicitamente o el aal2 deja de
-// exigirse para esta ruta. Defensa en profundidad: la politica RLS nueva
-// (aud_registro_administrador_tranqi_select) exige rol, no aal2 -- este
-// layout es lo que evita ver la pantalla sin el segundo factor.
+// Gate de la seccion Auditoria.
+// REGLA PLT-002: SuperAdmin y Administradores Plataforma NUNCA requieren MFA (bypass directo).
 export default async function LayoutAuditoria({ children }: { children: React.ReactNode }) {
+  const perfiles = await obtenerPerfiles("tranqi");
+  const nivelMaximo = await obtenerNivelMaximo("tranqi");
+  if (perfiles.includes("SUPERADMIN") || perfiles.includes("ADMINISTRADOR") || nivelMaximo >= 80) {
+    return <>{children}</>;
+  }
+
   const { currentLevel, nextLevel } = await obtenerNivelAal();
 
   if (currentLevel !== "aal2") {
