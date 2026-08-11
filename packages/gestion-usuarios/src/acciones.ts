@@ -376,14 +376,11 @@ export async function resetearSistemaSuperAdminAction(): Promise<Resultado> {
       .rpc("seg_fn_superadmin_resetear_sistema");
 
     if (rpcErr) {
-      await adminSupabase.schema("tranqui_legal").from("trq_solicitud_materia").delete().neq("sma_solicitud_id", "00000000-0000-0000-0000-000000000000");
-      await adminSupabase.schema("tranqui_legal").from("trq_solicitud_provincia").delete().neq("spr_solicitud_id", "00000000-0000-0000-0000-000000000000");
-      await adminSupabase.schema("tranqui_legal").from("trq_experiencia_laboral").delete().neq("exp_solicitud_id", "00000000-0000-0000-0000-000000000000");
-      await adminSupabase.schema("tranqui_legal").from("trq_solicitud_socio").delete().neq("ssc_usuario_id", "00000000-0000-0000-0000-000000000000");
-      await adminSupabase.schema("tranqui_legal").from("trq_abogado").delete().neq("abg_usuario_id", "00000000-0000-0000-0000-000000000000");
-      await adminSupabase.schema("comun_seguridad").from("seg_membresia_perfil").delete().neq("mpe_id", "00000000-0000-0000-0000-000000000000");
-      await adminSupabase.schema("comun_seguridad").from("seg_membresia").delete().neq("mem_usuario_id", "00000000-0000-0000-0000-000000000000");
-      await adminSupabase.schema("comun_seguridad").from("seg_usuario").delete().neq("usu_correo", "kleber.toapanta.ch@gmail.com");
+      console.error("Error RPC seg_fn_superadmin_resetear_sistema:", rpcErr);
+      const { error: fallbackErr } = await adminSupabase.schema("comun_seguridad").from("seg_usuario").delete().neq("usu_correo", "kleber.toapanta.ch@gmail.com");
+      if (fallbackErr) {
+        return { ok: false, error: `Error en RPC Reset: ${rpcErr.message}` };
+      }
     }
   } catch (e: any) {
     return { ok: false, error: e?.message || "Error al resetear el sistema" };
