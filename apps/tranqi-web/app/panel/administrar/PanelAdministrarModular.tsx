@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { UserCog, Users, ClipboardList, Bell, Shield, ChevronRight, Star, Lock, X, Eye, Pencil, FileText, Sliders, type LucideIcon } from "lucide-react";
+import { UserCog, Users, ClipboardList, Bell, Shield, ChevronRight, Star, Lock, X, Eye, Pencil, FileText, Sliders, RotateCcw, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { crearClienteNavegador } from "@eco/supabase";
 import { ConsultaUsuariosPerfilesWidget } from "@eco/gestion-usuarios/componentes/ConsultaUsuariosPerfilesWidget";
@@ -15,7 +15,7 @@ import { ModalEditarWidget } from "../ModalEditarWidget";
 import { ModalVerificarMFAWidget } from "../ModalVerificarMFAWidget";
 
 import { obtenerListaSolicitudesSociosAction } from "../../../modulos/socios/acciones";
-import { obtenerConfiguracionNavegacionRolAction } from "@eco/gestion-usuarios/acciones";
+import { obtenerConfiguracionNavegacionRolAction, resetearSistemaSuperAdminAction } from "@eco/gestion-usuarios/acciones";
 
 interface Props {
   negocio: string;
@@ -298,6 +298,31 @@ export function PanelAdministrarModular({ negocio }: Props) {
     titulo: string;
     tiempoMinutos: number;
   } | null>(null);
+
+  const [reseteando, setReseteando] = useState(false);
+
+  async function handleResetearSistema() {
+    const confirmacionText = prompt(`⚠️ ADVERTENCIA DE SEGURIDAD ⚠️\n\nEsta acción eliminará TODOS los usuarios de prueba, perfiles y solicitudes configuradas en la base de datos (conservando únicamente la cuenta SuperAdmin).\n\nPara confirmar, escribe "CONFIRMAR RESET":`);
+    if (confirmacionText !== "CONFIRMAR RESET") {
+      alert("Operación cancelada.");
+      return;
+    }
+    try {
+      setReseteando(true);
+      const res = await resetearSistemaSuperAdminAction();
+      if (res.ok) {
+        alert("💥 El sistema ha sido reseteado por completo. Se han eliminado todas las cuentas y perfiles de prueba.");
+        window.location.reload();
+      } else {
+        alert(`❌ Error al resetear el sistema: ${res.error}`);
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      alert(`❌ Error al resetear el sistema: ${msg}`);
+    } finally {
+      setReseteando(false);
+    }
+  }
 
   const { getWidgetInfo, guardarWidget, obtenerIconoComponente } = useCustomWidgets();
 
@@ -591,7 +616,7 @@ export function PanelAdministrarModular({ negocio }: Props) {
   // VISTA 1: REJILLA PRINCIPAL DE MÓDULOS "ADMINISTRAR"
   return (
     <div style={{ width: "100%" }}>
-      {/* Header Hero Card con indicador de MFA Requerido (PLT-002) */}
+      {/* Header Hero Card del Panel Administrar */}
       <section className="tarjeta-proteccion tarjeta-admin" style={{ marginBottom: "20px" }}>
         <div className="tarjeta-proteccion-fila">
           <div>
@@ -603,10 +628,34 @@ export function PanelAdministrarModular({ negocio }: Props) {
               Gestión centralizada de usuarios, aprobación de socios profesionales, solicitudes, despacho de notificaciones y auditoría BDD.
             </div>
           </div>
-          <span className="badge-rol" style={{ background: "rgba(220, 38, 38, 0.25)", color: "#FEE2E2", border: "1px solid rgba(239, 68, 68, 0.4)" }}>
-            <Lock style={{ width: 14, height: 14, marginRight: 4 }} />
-            MFA Protegido (TOTP)
-          </span>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
+            <button
+              type="button"
+              onClick={handleResetearSistema}
+              disabled={reseteando}
+              style={{
+                fontSize: "0.78rem",
+                fontWeight: 800,
+                color: "#DC2626",
+                background: "#FEF2F2",
+                padding: "7px 16px",
+                borderRadius: "20px",
+                border: "1.5px solid #FCA5A5",
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+                cursor: "pointer",
+                boxShadow: "0 2px 4px rgba(220,38,38,0.1)"
+              }}
+              title="Borrar todos los usuarios de prueba, perfiles y solicitudes para iniciar desde cero"
+            >
+              <RotateCcw size={15} /> {reseteando ? "Reseteando..." : "Reset Master del Sistema (Pruebas desde Cero)"}
+            </button>
+            <span className="badge-rol" style={{ background: "rgba(220, 38, 38, 0.25)", color: "#FEE2E2", border: "1px solid rgba(239, 68, 68, 0.4)" }}>
+              <Lock style={{ width: 14, height: 14, marginRight: 4 }} />
+              MFA Protegido (TOTP)
+            </span>
+          </div>
         </div>
       </section>
 

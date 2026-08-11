@@ -5,8 +5,9 @@ import Link from "next/link";
 import {
   Sparkles, Shield, LayoutGrid, Pencil, Users, UserCheck, Eye,
   Settings, Mail, ShieldCheck, Bell, CircleUser, KeyRound, Sliders, Briefcase,
-  Receipt, History, type LucideIcon
+  Receipt, History, RotateCcw, type LucideIcon
 } from "lucide-react";
+import { resetearSistemaSuperAdminAction } from "@eco/gestion-usuarios/acciones";
 import { TarjetasFavoritasGrid } from "./SeccionFavoritosInicio";
 import { useCustomWidgets } from "./gestorTitulosWidgets";
 import { ModalEditarWidget } from "./ModalEditarWidget";
@@ -48,6 +49,30 @@ export const CATALOGO_SUPERADMIN_TODOS: ModuloSuperAdminDef[] = [
 
 export function ConsolaSuperAdminModular() {
   const { getWidgetInfo, guardarWidget, obtenerIconoComponente } = useCustomWidgets();
+  const [reseteando, setReseteando] = useState(false);
+
+  async function handleResetearSistema() {
+    const confirmacionText = prompt(`⚠️ ADVERTENCIA DE SEGURIDAD ⚠️\n\nEsta acción eliminará TODOS los usuarios de prueba, perfiles y solicitudes configuradas en la base de datos (conservando únicamente la cuenta SuperAdmin).\n\nPara confirmar, escribe "CONFIRMAR RESET":`);
+    if (confirmacionText !== "CONFIRMAR RESET") {
+      alert("Operación cancelada.");
+      return;
+    }
+    try {
+      setReseteando(true);
+      const res = await resetearSistemaSuperAdminAction();
+      if (res.ok) {
+        alert("💥 El sistema ha sido reseteado por completo. Se han eliminado todas las cuentas y perfiles de prueba.");
+        window.location.reload();
+      } else {
+        alert(`❌ Error al resetear el sistema: ${res.error}`);
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      alert(`❌ Error al resetear el sistema: ${msg}`);
+    } finally {
+      setReseteando(false);
+    }
+  }
 
   const [widgetEditar, setWidgetEditar] = useState<{
     id: string;
@@ -79,13 +104,37 @@ export function ConsolaSuperAdminModular() {
 
   return (
     <>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "6px" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "6px", flexWrap: "wrap", gap: "12px" }}>
         <h1 style={{ fontSize: "1.6rem", fontWeight: 900, color: "#111", margin: 0 }}>
           ⚡ Consola Master Control — SuperAdmin Plataforma
         </h1>
-        <span style={{ fontSize: "0.78rem", fontWeight: 800, color: "#D97706", background: "#FEF3C7", padding: "6px 14px", borderRadius: "20px", border: "1px solid #FCD34D", display: "flex", alignItems: "center", gap: "6px" }}>
-          <Sparkles size={14} /> Vista Consolidada Global
-        </span>
+        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          <button
+            type="button"
+            onClick={handleResetearSistema}
+            disabled={reseteando}
+            style={{
+              fontSize: "0.78rem",
+              fontWeight: 800,
+              color: "#DC2626",
+              background: "#FEF2F2",
+              padding: "7px 16px",
+              borderRadius: "20px",
+              border: "1.5px solid #FCA5A5",
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+              cursor: "pointer",
+              boxShadow: "0 2px 4px rgba(220,38,38,0.1)"
+            }}
+            title="Borrar todos los usuarios de prueba, perfiles y solicitudes para iniciar desde cero"
+          >
+            <RotateCcw size={15} /> {reseteando ? "Reseteando..." : "Reset Master del Sistema (Pruebas desde Cero)"}
+          </button>
+          <span style={{ fontSize: "0.78rem", fontWeight: 800, color: "#D97706", background: "#FEF3C7", padding: "6px 14px", borderRadius: "20px", border: "1px solid #FCD34D", display: "flex", alignItems: "center", gap: "6px" }}>
+            <Sparkles size={14} /> Vista Consolidada Global
+          </span>
+        </div>
       </div>
       <p className="inicio-cliente-sub" style={{ marginBottom: "24px" }}>
         Todos los módulos y herramientas del ecosistema desplegados y centralizados directamente en tu menú Inicio.
