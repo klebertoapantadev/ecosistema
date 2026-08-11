@@ -220,11 +220,11 @@ export async function obtenerDirectorioUsuariosPublicoAction(
   if (!rpcErr && rpcData && rpcData.length > 0) {
     uData = rpcData;
   } else {
-    // Fallback 1: Consulta directa con adminSupabase
+    // Fallback 1: Consulta directa con adminSupabase leyendo estado y atributos
     const resAdmin = await adminSupabase
       .schema("comun_seguridad")
       .from("seg_usuario")
-      .select("usu_id, usu_nombres, usu_apellidos, usu_correo, usu_whatsapp, usu_creado_en, usu_superadmin_plataforma")
+      .select("usu_id, usu_nombres, usu_apellidos, usu_correo, usu_whatsapp, usu_creado_en, usu_superadmin_plataforma, usu_detalle_usuario")
       .order("usu_creado_en", { ascending: false });
 
     uData = resAdmin.data;
@@ -235,7 +235,7 @@ export async function obtenerDirectorioUsuariosPublicoAction(
       const resServ = await supabase
         .schema("comun_seguridad")
         .from("seg_usuario")
-        .select("usu_id, usu_nombres, usu_apellidos, usu_correo, usu_whatsapp, usu_creado_en, usu_superadmin_plataforma")
+        .select("usu_id, usu_nombres, usu_apellidos, usu_correo, usu_whatsapp, usu_creado_en, usu_superadmin_plataforma, usu_detalle_usuario")
         .order("usu_creado_en", { ascending: false });
       uData = resServ.data;
       uErr = resServ.error;
@@ -249,7 +249,7 @@ export async function obtenerDirectorioUsuariosPublicoAction(
   const { data: memData } = await adminSupabase
     .schema("comun_seguridad")
     .from("seg_membresia")
-    .select("mem_usuario_id, mem_negocio, mem_rol, mem_creado_en");
+    .select("mem_usuario_id, mem_negocio, mem_rol, mem_estado, mem_creado_en");
 
   // Mapa de membresías por usuario_id
   const memMap = new Map<string, any[]>();
@@ -261,7 +261,7 @@ export async function obtenerDirectorioUsuariosPublicoAction(
 
   const negocioUpper = (negocio || "").toUpperCase();
 
-  // 3. Mapear cada usuario de seg_usuario garantizando que NINGÚN usuario registrado se pierda
+  // 3. Mapear cada usuario de seg_usuario garantizando visualización de todos los estados (incluso ELIMINADO)
   const listaCompleta = uData.map(u => {
     const membresiasUsuario = memMap.get(u.usu_id) || [];
     const memNegocio = membresiasUsuario.find(m =>
@@ -275,6 +275,9 @@ export async function obtenerDirectorioUsuariosPublicoAction(
       rolFinal = "SUPERADMIN";
     }
 
+    const estadoDetalle = (u.usu_detalle_usuario as any)?.estado;
+    const estadoFinal = estadoDetalle || memNegocio?.mem_estado || "ACTIVO";
+
     return {
       usuario_id: u.usu_id,
       nombres: u.usu_nombres || "Usuario",
@@ -282,6 +285,7 @@ export async function obtenerDirectorioUsuariosPublicoAction(
       correo: u.usu_correo || "",
       whatsapp: u.usu_whatsapp || "",
       rol: rolFinal,
+      estado: estadoFinal,
       creado_en: memNegocio?.mem_creado_en || u.usu_creado_en
     };
   });
@@ -295,31 +299,38 @@ export async function eliminarUsuarioSuperAdminAction(
   const supabase = await crearClienteServidor();
   const adminSupabase = crearClienteAdmin() || supabase;
 
-  // 1. Intentar RPC en base de datos
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error: rpcErr } = await (supabase as any)
-    .schema("comun_seguridad")
-    .rpc("seg_fn_superadmin_eliminar_usuario", { p_target_usuario_id: targetUsuarioId });
+  try {
+    // 1. Borrar en Supabase Auth mediante GoTrue Admin API
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if ((adminSupabase as any).auth?.admin?.deleteUser) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (adminSupabase as any).auth.admin.deleteUser(targetUsuarioId);
+    }
 
-  if (rpcErr) {
-    // Fallback manual en servidor si RPC no se ha corrido en BDD
-    try {
+    // 2. Ejecutar RPC de borrado fisico con cascada FK en Postgres
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error: rpcErr } = await (supabase as any)
+      .schema("comun_seguridad")
+      .rpc("seg_fn_superadmin_eliminar_usuario", { p_target_usuario_id: targetUsuarioId });
+
+    if (rpcErr) {
+      // Fallback manual
+      await adminSupabase.schema("tranqui_legal").from("trq_solicitud_materia").delete().neq("sma_solicitud_id", "00000000-0000-0000-0000-000000000000");
+      await adminSupabase.schema("tranqui_legal").from("trq_solicitud_provincia").delete().neq("spr_solicitud_id", "00000000-0000-0000-0000-000000000000");
+      await adminSupabase.schema("tranqui_legal").from("trq_experiencia_laboral").delete().neq("exp_solicitud_id", "00000000-0000-0000-0000-000000000000");
       await adminSupabase.schema("tranqui_legal").from("trq_solicitud_socio").delete().eq("ssc_usuario_id", targetUsuarioId);
       await adminSupabase.schema("tranqui_legal").from("trq_abogado").delete().eq("abg_usuario_id", targetUsuarioId);
+      await adminSupabase.schema("comun_seguridad").from("seg_membresia_perfil").delete().neq("mpe_id", "00000000-0000-0000-0000-000000000000");
       await adminSupabase.schema("comun_seguridad").from("seg_membresia").delete().eq("mem_usuario_id", targetUsuarioId);
       await adminSupabase.schema("comun_seguridad").from("seg_usuario").delete().eq("usu_id", targetUsuarioId);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      if ((adminSupabase as any).auth?.admin?.deleteUser) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await (adminSupabase as any).auth.admin.deleteUser(targetUsuarioId);
-      }
-    } catch (e: any) {
-      return { ok: false, error: e?.message || rpcErr.message };
     }
+  } catch (e: any) {
+    return { ok: false, error: e?.message || "Error al eliminar usuario" };
   }
 
   revalidatePath("/panel/administrar");
   revalidatePath("/panel/usuarios");
+  revalidatePath("/panel");
   return { ok: true };
 }
 
@@ -327,24 +338,84 @@ export async function resetearSistemaSuperAdminAction(): Promise<Resultado> {
   const supabase = await crearClienteServidor();
   const adminSupabase = crearClienteAdmin() || supabase;
 
-  // 1. Intentar RPC en BDD
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error: rpcErr } = await (supabase as any)
-    .schema("comun_seguridad")
-    .rpc("seg_fn_superadmin_resetear_sistema");
+  try {
+    // 1. Borrado físico exhaustivo en Supabase Auth via GoTrue Admin API
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if ((adminSupabase as any).auth?.admin?.listUsers) {
+      let page = 1;
+      let tieneMas = true;
+      while (tieneMas) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { data: pageData } = await (adminSupabase as any).auth.admin.listUsers({ page, perPage: 100 });
+        if (!pageData || !pageData.users || pageData.users.length === 0) {
+          tieneMas = false;
+          break;
+        }
+        for (const u of pageData.users) {
+          if (u.email?.toLowerCase() !== "kleber.toapanta.ch@gmail.com") {
+            try {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              await (adminSupabase as any).auth.admin.deleteUser(u.id);
+            } catch (errDel) {
+              console.error("Error borrando usuario auth:", u.id, errDel);
+            }
+          }
+        }
+        if (pageData.users.length < 100) {
+          tieneMas = false;
+        } else {
+          page++;
+        }
+      }
+    }
 
-  if (rpcErr) {
-    // Fallback manual en servidor
-    try {
+    // 2. Ejecutar RPC en Postgres con cascada de borrado en tablas y esquema auth
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error: rpcErr } = await (supabase as any)
+      .schema("comun_seguridad")
+      .rpc("seg_fn_superadmin_resetear_sistema");
+
+    if (rpcErr) {
+      await adminSupabase.schema("tranqui_legal").from("trq_solicitud_materia").delete().neq("sma_solicitud_id", "00000000-0000-0000-0000-000000000000");
+      await adminSupabase.schema("tranqui_legal").from("trq_solicitud_provincia").delete().neq("spr_solicitud_id", "00000000-0000-0000-0000-000000000000");
+      await adminSupabase.schema("tranqui_legal").from("trq_experiencia_laboral").delete().neq("exp_solicitud_id", "00000000-0000-0000-0000-000000000000");
       await adminSupabase.schema("tranqui_legal").from("trq_solicitud_socio").delete().neq("ssc_usuario_id", "00000000-0000-0000-0000-000000000000");
       await adminSupabase.schema("tranqui_legal").from("trq_abogado").delete().neq("abg_usuario_id", "00000000-0000-0000-0000-000000000000");
+      await adminSupabase.schema("comun_seguridad").from("seg_membresia_perfil").delete().neq("mpe_id", "00000000-0000-0000-0000-000000000000");
+      await adminSupabase.schema("comun_seguridad").from("seg_membresia").delete().neq("mem_usuario_id", "00000000-0000-0000-0000-000000000000");
       await adminSupabase.schema("comun_seguridad").from("seg_usuario").delete().neq("usu_correo", "kleber.toapanta.ch@gmail.com");
-    } catch (e: any) {
-      return { ok: false, error: e?.message || rpcErr.message };
     }
+  } catch (e: any) {
+    return { ok: false, error: e?.message || "Error al resetear el sistema" };
   }
 
   revalidatePath("/panel/administrar");
   revalidatePath("/panel/usuarios");
+  revalidatePath("/panel");
+  return { ok: true };
+}
+
+export async function reactivarUsuarioSuperAdminAction(
+  targetUsuarioId: string
+): Promise<Resultado> {
+  const supabase = await crearClienteServidor();
+  const adminSupabase = crearClienteAdmin() || supabase;
+
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error: rpcErr } = await (supabase as any)
+      .schema("comun_seguridad")
+      .rpc("seg_fn_superadmin_reactivar_usuario", { p_target_usuario_id: targetUsuarioId });
+
+    if (rpcErr) {
+      await adminSupabase.schema("comun_seguridad").from("seg_membresia").update({ mem_estado: "ACTIVO" }).eq("mem_usuario_id", targetUsuarioId);
+    }
+  } catch (e: any) {
+    return { ok: false, error: e?.message || "Error al reactivar usuario" };
+  }
+
+  revalidatePath("/panel/administrar");
+  revalidatePath("/panel/usuarios");
+  revalidatePath("/panel");
   return { ok: true };
 }

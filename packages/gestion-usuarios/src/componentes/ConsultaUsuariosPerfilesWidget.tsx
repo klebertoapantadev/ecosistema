@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Users, Search, ShieldCheck, Eye, LayoutGrid, CheckCircle2, UserCheck, Phone, Mail, Filter, Trash2, RotateCcw } from "lucide-react";
-import { obtenerDirectorioUsuariosPublicoAction, eliminarUsuarioSuperAdminAction, resetearSistemaSuperAdminAction } from "../acciones";
+import { Users, Search, ShieldCheck, Eye, LayoutGrid, CheckCircle2, UserCheck, Phone, Mail, Filter, Trash2, RotateCcw, AlertTriangle, RefreshCw } from "lucide-react";
+import { obtenerDirectorioUsuariosPublicoAction, eliminarUsuarioSuperAdminAction, resetearSistemaSuperAdminAction, reactivarUsuarioSuperAdminAction } from "../acciones";
 
 interface Props {
   negocio?: string;
@@ -15,6 +15,7 @@ interface UsuarioDirectorio {
   correo: string;
   whatsapp: string;
   rol: string;
+  estado?: string;
   creado_en?: string;
 }
 
@@ -118,8 +119,25 @@ export function ConsultaUsuariosPerfilesWidget({ negocio = "TRANQ" }: Props) {
     cargarDirectorio();
   }, [negocio]);
 
+  async function handleReactivarUsuario(uId: string, nombreCorr: string) {
+    try {
+      setProcesandoAccion(uId);
+      const res = await reactivarUsuarioSuperAdminAction(uId);
+      if (res.ok) {
+        setUsuarios(prev => prev.map(u => u.usuario_id === uId ? { ...u, estado: "ACTIVO" } : u));
+        alert(`✅ La cuenta "${nombreCorr}" ha sido reactivada correctamente.`);
+      } else {
+        alert(`❌ Error al reactivar: ${res.error}`);
+      }
+    } catch (err: any) {
+      alert(`❌ Error al reactivar usuario: ${err?.message}`);
+    } finally {
+      setProcesandoAccion(null);
+    }
+  }
+
   async function handleEliminarUsuario(uId: string, nombreCorr: string) {
-    if (!confirm(`⚠️ ¿Estás seguro de ELIMINAR permanentemente a "${nombreCorr}"?\n\nSe borrarán todas sus solicitudes de socio, perfiles, membresías y datos de autenticación.`)) {
+    if (!confirm(`⚠️ ¿Estás seguro de ELIMINAR FÍSICAMENTE a "${nombreCorr}"?\n\nEsta acción borrará de forma permanente los registros en BDD y la autenticación de Supabase Auth (auth.users).`)) {
       return;
     }
     try {
@@ -127,7 +145,7 @@ export function ConsultaUsuariosPerfilesWidget({ negocio = "TRANQ" }: Props) {
       const res = await eliminarUsuarioSuperAdminAction(uId);
       if (res.ok) {
         setUsuarios(prev => prev.filter(u => u.usuario_id !== uId));
-        alert(`✅ La cuenta "${nombreCorr}" ha sido eliminada por completo.`);
+        alert(`✅ La cuenta "${nombreCorr}" ha sido eliminada físicamente por completo.`);
       } else {
         alert(`❌ Error al eliminar: ${res.error || "No se pudo eliminar el usuario"}`);
       }
@@ -339,33 +357,64 @@ export function ConsultaUsuariosPerfilesWidget({ negocio = "TRANQ" }: Props) {
                         </span>
                       </td>
                       <td style={{ padding: "12px 14px", textAlign: "center" }}>
-                        <span style={{ color: "#05876E", fontWeight: 800, fontSize: "0.78rem", display: "flex", alignItems: "center", justifyContent: "center", gap: "4px" }}>
-                          <CheckCircle2 size={14} /> Activo
-                        </span>
+                        {u.estado === "ELIMINADO" || u.estado === "INACTIVO" || u.estado === "BAJA" ? (
+                          <span style={{ color: "#DC2626", fontWeight: 800, fontSize: "0.76rem", display: "inline-flex", alignItems: "center", gap: "4px", background: "#FEF2F2", padding: "3px 8px", borderRadius: "8px", border: "1px solid #FCA5A5" }}>
+                            <AlertTriangle size={13} /> Eliminado Lógicamente (Baja LOPDP)
+                          </span>
+                        ) : (
+                          <span style={{ color: "#05876E", fontWeight: 800, fontSize: "0.78rem", display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                            <CheckCircle2 size={14} /> Activo
+                          </span>
+                        )}
                       </td>
                       <td style={{ padding: "12px 14px", textAlign: "center" }}>
                         {u.rol !== "SUPERADMIN" && u.correo !== "kleber.toapanta.ch@gmail.com" ? (
-                          <button
-                            type="button"
-                            onClick={() => handleEliminarUsuario(u.usuario_id, u.correo || u.nombres)}
-                            disabled={procesandoAccion === u.usuario_id}
-                            style={{
-                              background: "#FEF2F2",
-                              border: "1px solid #FCA5A5",
-                              color: "#DC2626",
-                              borderRadius: "8px",
-                              padding: "5px 12px",
-                              fontSize: "0.75rem",
-                              fontWeight: 800,
-                              cursor: "pointer",
-                              display: "inline-flex",
-                              alignItems: "center",
-                              gap: "4px"
-                            }}
-                            title="Eliminar cuenta y todo su contenido de forma permanente"
-                          >
-                            <Trash2 size={13} /> {procesandoAccion === u.usuario_id ? "Eliminando..." : "Eliminar"}
-                          </button>
+                          <div style={{ display: "flex", gap: "6px", justifyContent: "center" }}>
+                            {(u.estado === "ELIMINADO" || u.estado === "INACTIVO" || u.estado === "BAJA") && (
+                              <button
+                                type="button"
+                                onClick={() => handleReactivarUsuario(u.usuario_id, u.correo || u.nombres)}
+                                disabled={procesandoAccion === u.usuario_id}
+                                style={{
+                                  background: "#ECFDF5",
+                                  border: "1px solid #6EE7B7",
+                                  color: "#047857",
+                                  borderRadius: "8px",
+                                  padding: "5px 10px",
+                                  fontSize: "0.75rem",
+                                  fontWeight: 800,
+                                  cursor: "pointer",
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  gap: "4px"
+                                }}
+                                title="Reactivar la cuenta del usuario"
+                              >
+                                <RefreshCw size={13} /> Reactivar
+                              </button>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => handleEliminarUsuario(u.usuario_id, u.correo || u.nombres)}
+                              disabled={procesandoAccion === u.usuario_id}
+                              style={{
+                                background: "#FEF2F2",
+                                border: "1px solid #FCA5A5",
+                                color: "#DC2626",
+                                borderRadius: "8px",
+                                padding: "5px 10px",
+                                fontSize: "0.75rem",
+                                fontWeight: 800,
+                                cursor: "pointer",
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "4px"
+                              }}
+                              title="Borrado físico definitivo en BDD y auth.users"
+                            >
+                              <Trash2 size={13} /> {procesandoAccion === u.usuario_id ? "Borrando..." : "Borrar Físicamente"}
+                            </button>
+                          </div>
                         ) : (
                           <span style={{ fontSize: "0.72rem", color: "#9CA3AF", fontWeight: 700 }}>Protegido</span>
                         )}
