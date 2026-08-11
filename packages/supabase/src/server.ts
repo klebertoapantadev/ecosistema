@@ -1,4 +1,5 @@
 import { createServerClient } from "@supabase/ssr";
+import { createClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 import type { Database } from "@eco/db";
 
@@ -29,4 +30,10 @@ export async function crearClienteServidor() {
       },
     },
   );
+}
+
+export function crearClienteAdmin() {
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!serviceKey) return null;
+  return createClient<Database>(process.env.NEXT_PUBLIC_SUPABASE_URL!, serviceKey);
 }

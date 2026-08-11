@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { UserCog, Users, ClipboardList, Bell, Shield, ChevronRight, Star, Lock, X, Eye, Pencil, FileText, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { crearClienteNavegador } from "@eco/supabase";
-import { AdministracionPerfilesWidget } from "@eco/gestion-usuarios/componentes/AdministracionPerfilesWidget";
+import { ConsultaUsuariosPerfilesWidget } from "@eco/gestion-usuarios/componentes/ConsultaUsuariosPerfilesWidget";
 import { EmisionNotificacionesWidget } from "@eco/notificaciones";
 import { GestionTerminosConsentimientosWidget } from "@eco/identidad/componentes/GestionTerminosConsentimientosWidget";
 import { TablaAuditoria } from "../auditoria/TablaAuditoria";
@@ -521,7 +521,7 @@ export function PanelAdministrarModular({ negocio }: Props) {
             {/* 1. GESTIÓN DE USUARIOS */}
             {widgetActivo === "gestion_usuarios" && (
               <div style={{ width: "100%" }}>
-                <AdministracionPerfilesWidget esAdmin={true} negocio={negocio} />
+                <ConsultaUsuariosPerfilesWidget negocio={negocio} />
               </div>
             )}
 

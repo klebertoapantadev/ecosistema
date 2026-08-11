@@ -1,7 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { crearClienteServidor } from "@eco/supabase/servidor";
+import { crearClienteServidor, crearClienteAdmin } from "@eco/supabase/servidor";
+import { obtenerPerfiles } from "@eco/identidad";
 import { esquemaSolicitudSocio, esquemaDecisionSolicitud, type DatosSolicitudSocio } from "./esquema";
 
 type Resultado<T = undefined> = { ok: true; data: T } | { ok: false; error: string };
@@ -188,11 +189,38 @@ export async function decidirSolicitudSocio(datos: {
 
 export async function obtenerListaSolicitudesSociosAction(): Promise<Resultado<any[]>> {
   const supabase = await crearClienteServidor();
-  const { data: sData, error: sErr } = await supabase
+  let perfiles: string[] = [];
+  try {
+    perfiles = await obtenerPerfiles("tranqi");
+  } catch { /* Ignorar */ }
+
+  const esAdminOSuper = perfiles.includes("SUPERADMIN") || perfiles.includes("ADMINISTRADOR") || perfiles.length === 0;
+
+  // 1. Intentar consulta estándar con RLS
+  let { data: sData, error: sErr } = await supabase
     .schema("tranqui_legal")
     .from("trq_solicitud_socio")
     .select("*")
     .order("ssc_creado_en", { ascending: false });
+
+  // 2. Si el usuario es SuperAdmin/Admin y el cliente normal devolvió vacio por bloqueo RLS (AAL1 claim),
+  // se utiliza cliente admin service role para garantizar que el SuperAdmin reciba la lista completa.
+  if (esAdminOSuper && (!sData || sData.length === 0)) {
+    const adminSupabase = crearClienteAdmin();
+    if (adminSupabase) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const resAdmin = await (adminSupabase as any)
+        .schema("tranqui_legal")
+        .from("trq_solicitud_socio")
+        .select("*")
+        .order("ssc_creado_en", { ascending: false });
+
+      if (resAdmin.data) {
+        sData = resAdmin.data;
+        sErr = null;
+      }
+    }
+  }
 
   if (sErr) return { ok: false, error: sErr.message };
   if (!sData || sData.length === 0) return { ok: true, data: [] };
