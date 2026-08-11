@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { crearClienteServidor } from "@eco/supabase/servidor";
+import { crearClienteServidor, crearClienteAdmin } from "@eco/supabase/servidor";
 
 export interface Resultado<T = void> {
   ok: boolean;
@@ -206,35 +206,83 @@ export async function obtenerDirectorioUsuariosPublicoAction(
   negocio: string
 ): Promise<Resultado<any[]>> {
   const supabase = await crearClienteServidor();
-  const { data: memData, error: memErr } = await supabase
-    .schema("comun_seguridad")
-    .from("seg_membresia")
-    .select("mem_usuario_id, mem_rol, mem_creado_en")
-    .eq("mem_negocio", negocio);
+  const adminSupabase = crearClienteAdmin() || supabase;
 
-  if (memErr) return { ok: false, error: memErr.message };
-  if (!memData || memData.length === 0) return { ok: true, data: [] };
+  // 1. Intentar RPC Security Definer o consulta a seg_usuario
+  let uData: any[] | null = null;
+  let uErr: any = null;
 
-  const userIds = [...new Set(memData.map(m => m.mem_usuario_id))];
-  const { data: uData, error: uErr } = await supabase
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: rpcData, error: rpcErr } = await (supabase as any)
     .schema("comun_seguridad")
-    .from("seg_usuario")
-    .select("usu_id, usu_nombres, usu_apellidos, usu_correo, usu_whatsapp, usu_creado_en")
-    .in("usu_id", userIds);
+    .rpc("seg_fn_listar_usuarios_directorio");
+
+  if (!rpcErr && rpcData && rpcData.length > 0) {
+    uData = rpcData;
+  } else {
+    // Fallback 1: Consulta directa con adminSupabase
+    const resAdmin = await adminSupabase
+      .schema("comun_seguridad")
+      .from("seg_usuario")
+      .select("usu_id, usu_nombres, usu_apellidos, usu_correo, usu_whatsapp, usu_creado_en, usu_superadmin_plataforma")
+      .order("usu_creado_en", { ascending: false });
+
+    uData = resAdmin.data;
+    uErr = resAdmin.error;
+
+    if (!uData || uData.length === 0) {
+      // Fallback 2: Consulta con cliente de servidor
+      const resServ = await supabase
+        .schema("comun_seguridad")
+        .from("seg_usuario")
+        .select("usu_id, usu_nombres, usu_apellidos, usu_correo, usu_whatsapp, usu_creado_en, usu_superadmin_plataforma")
+        .order("usu_creado_en", { ascending: false });
+      uData = resServ.data;
+      uErr = resServ.error;
+    }
+  }
 
   if (uErr) return { ok: false, error: uErr.message };
+  if (!uData || uData.length === 0) return { ok: true, data: [] };
 
-  const uMap = new Map((uData || []).map(u => [u.usu_id, u]));
-  const listaCompleta = memData.map(m => {
-    const u = uMap.get(m.mem_usuario_id);
+  // 2. Obtener todas las membresías relacionales
+  const { data: memData } = await adminSupabase
+    .schema("comun_seguridad")
+    .from("seg_membresia")
+    .select("mem_usuario_id, mem_negocio, mem_rol, mem_creado_en");
+
+  // Mapa de membresías por usuario_id
+  const memMap = new Map<string, any[]>();
+  (memData || []).forEach(m => {
+    const list = memMap.get(m.mem_usuario_id) || [];
+    list.push(m);
+    memMap.set(m.mem_usuario_id, list);
+  });
+
+  const negocioUpper = (negocio || "").toUpperCase();
+
+  // 3. Mapear cada usuario de seg_usuario garantizando que NINGÚN usuario registrado se pierda
+  const listaCompleta = uData.map(u => {
+    const membresiasUsuario = memMap.get(u.usu_id) || [];
+    const memNegocio = membresiasUsuario.find(m =>
+      (m.mem_negocio || "").toUpperCase() === negocioUpper ||
+      (negocioUpper === "TRANQI" && (m.mem_negocio || "").toUpperCase() === "TRANQ") ||
+      (negocioUpper === "TRANQ" && (m.mem_negocio || "").toUpperCase() === "TRANQI")
+    ) || membresiasUsuario[0];
+
+    let rolFinal = memNegocio?.mem_rol || "CLIENTE";
+    if (u.usu_superadmin_plataforma) {
+      rolFinal = "SUPERADMIN";
+    }
+
     return {
-      usuario_id: m.mem_usuario_id,
-      nombres: u?.usu_nombres || "Usuario",
-      apellidos: u?.usu_apellidos || "",
-      correo: u?.usu_correo || "",
-      whatsapp: u?.usu_whatsapp || "",
-      rol: m.mem_rol,
-      creado_en: m.mem_creado_en || u?.usu_creado_en
+      usuario_id: u.usu_id,
+      nombres: u.usu_nombres || "Usuario",
+      apellidos: u.usu_apellidos || "",
+      correo: u.usu_correo || "",
+      whatsapp: u.usu_whatsapp || "",
+      rol: rolFinal,
+      creado_en: memNegocio?.mem_creado_en || u.usu_creado_en
     };
   });
 

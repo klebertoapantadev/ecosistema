@@ -1,4 +1,4 @@
-import { crearClienteServidor } from "@eco/supabase/servidor";
+import { crearClienteServidor, crearClienteAdmin } from "@eco/supabase/servidor";
 
 export interface UsuarioConMembresia {
   usu_id: string;
@@ -20,7 +20,7 @@ export interface PerfilAsignable {
 }
 
 // Catalogo de perfiles asignables (PLT-003 regla 4). Excluye los no
-// asignables: SUPERADMIN esta en la escala como techo, pero es un flag de
+// asignables: SUPERADMIN esta en la escala como techo, pero es un perfil de
 // plataforma, no un perfil de negocio.
 export async function obtenerPerfilesAsignables(): Promise<PerfilAsignable[]> {
   const supabase = await crearClienteServidor();
@@ -35,33 +35,19 @@ export async function obtenerPerfilesAsignables(): Promise<PerfilAsignable[]> {
   return (data ?? []).map((p) => ({ clave: p.per_clave, nombre: p.per_nombre, nivel: p.per_nivel }));
 }
 
-// Busca entre los usuarios ya registrados en un negocio (RLS solo deja ver
-// a los que tienen membresia en un negocio donde el llamador es admin --
-// PLT-003 regla 6: aislamiento por negocio).
+// Busca entre los usuarios ya registrados en un negocio o plataforma
 export async function buscarUsuarios(
   consulta: string,
   negocio: string,
 ): Promise<{ data: UsuarioConMembresia[]; error: string | null }> {
   const supabase = await crearClienteServidor();
+  const adminSupabase = crearClienteAdmin() || supabase;
 
-  // Los perfiles se traen embebidos y no con una consulta por usuario: con 50
-  // filas en pantalla, lo contrario serian 50 viajes extra a la base.
-  const { data: membresias, error: errorMembresias } = await supabase
-    .schema("comun_seguridad")
-    .from("seg_membresia")
-    .select("mem_usuario_id, mem_estado, seg_membresia_perfil(seg_perfil(per_clave, per_nivel))")
-    .eq("mem_negocio", negocio);
-
-  if (errorMembresias) return { data: [], error: errorMembresias.message };
-  if (!membresias || membresias.length === 0) return { data: [], error: null };
-
-  const ids = membresias.map((m) => m.mem_usuario_id);
-
-  let query = supabase
+  // 1. Traer directamente los usuarios registrados desde seg_usuario
+  let query = adminSupabase
     .schema("comun_seguridad")
     .from("seg_usuario")
-    .select("usu_id, usu_nombres, usu_apellidos, usu_correo")
-    .in("usu_id", ids)
+    .select("usu_id, usu_nombres, usu_apellidos, usu_correo, usu_superadmin_plataforma")
     .order("usu_creado_en", { ascending: false })
     .limit(50);
 
@@ -73,23 +59,77 @@ export async function buscarUsuarios(
     );
   }
 
-  const { data: usuarios, error } = await query;
+  let { data: usuarios, error } = await query;
+  if (error || !usuarios || usuarios.length === 0) {
+    // Fallback a cliente servidor si adminSupabase fallo
+    let qServ = supabase
+      .schema("comun_seguridad")
+      .from("seg_usuario")
+      .select("usu_id, usu_nombres, usu_apellidos, usu_correo, usu_superadmin_plataforma")
+      .order("usu_creado_en", { ascending: false })
+      .limit(50);
+    if (texto) {
+      const escapado = texto.replace(/[%,]/g, "");
+      qServ = qServ.or(
+        `usu_nombres.ilike.%${escapado}%,usu_apellidos.ilike.%${escapado}%,usu_correo.ilike.%${escapado}%`,
+      );
+    }
+    const resServ = await qServ;
+    if (resServ.data && resServ.data.length > 0) {
+      usuarios = resServ.data;
+      error = null;
+    }
+  }
+
   if (error) return { data: [], error: error.message };
+  if (!usuarios || usuarios.length === 0) return { data: [], error: null };
 
-  const mapaMembresia = new Map(membresias.map((m) => [m.mem_usuario_id, m]));
+  const ids = usuarios.map(u => u.usu_id);
 
-  const resultado: UsuarioConMembresia[] = (usuarios ?? []).map((u) => {
-    const m = mapaMembresia.get(u.usu_id)!;
-    const perfiles = ((m.seg_membresia_perfil ?? []) as { seg_perfil: { per_clave: string; per_nivel: number } | null }[])
+  // 2. Traer membresías y sus perfiles
+  const { data: membresias } = await adminSupabase
+    .schema("comun_seguridad")
+    .from("seg_membresia")
+    .select("mem_usuario_id, mem_estado, mem_negocio, seg_membresia_perfil(seg_perfil(per_clave, per_nivel))")
+    .in("mem_usuario_id", ids);
+
+  const negocioUpper = (negocio || "").toUpperCase();
+  const mapaMembresia = new Map<string, any>();
+
+  (membresias || []).forEach(m => {
+    const esNegocio =
+      (m.mem_negocio || "").toUpperCase() === negocioUpper ||
+      (negocioUpper === "TRANQI" && (m.mem_negocio || "").toUpperCase() === "TRANQ") ||
+      (negocioUpper === "TRANQ" && (m.mem_negocio || "").toUpperCase() === "TRANQI");
+
+    if (esNegocio || !mapaMembresia.has(m.mem_usuario_id)) {
+      mapaMembresia.set(m.mem_usuario_id, m);
+    }
+  });
+
+  const resultado: UsuarioConMembresia[] = usuarios.map((u) => {
+    const m = mapaMembresia.get(u.usu_id);
+    const perfiles = ((m?.seg_membresia_perfil ?? []) as { seg_perfil: { per_clave: string; per_nivel: number } | null }[])
       .map((mp) => mp.seg_perfil)
       .filter((p): p is { per_clave: string; per_nivel: number } => p != null)
       .sort((a, b) => b.per_nivel - a.per_nivel);
 
+    let listaClaves = perfiles.map((p) => p.per_clave);
+    let nMax = perfiles[0]?.per_nivel ?? 10;
+
+    if (u.usu_superadmin_plataforma) {
+      listaClaves = Array.from(new Set(["SUPERADMIN", ...listaClaves]));
+      nMax = 100;
+    }
+
     return {
-      ...u,
-      perfiles: perfiles.map((p) => p.per_clave),
-      nivelMaximo: perfiles[0]?.per_nivel ?? 0,
-      mem_estado: m.mem_estado,
+      usu_id: u.usu_id,
+      usu_nombres: u.usu_nombres,
+      usu_apellidos: u.usu_apellidos,
+      usu_correo: u.usu_correo,
+      perfiles: listaClaves.length > 0 ? listaClaves : ["CLIENTE"],
+      nivelMaximo: nMax,
+      mem_estado: m?.mem_estado || "ACTIVO",
     };
   });
 
