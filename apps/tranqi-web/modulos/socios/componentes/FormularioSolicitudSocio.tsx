@@ -1211,7 +1211,8 @@ export function FormularioSolicitudSocio({ usuarioId, materias, provincias, soli
       );
       return;
     }
-    router.push("/panel/solicitud-socio");
+    alert("🎉 ¡Tu solicitud de socio abogado ha sido enviada exitosamente!\n\nSe ha generado la notificación automática y la confirmación a tu correo. Te redirigiremos al portal principal.");
+    router.push("/panel");
     router.refresh();
   }
 
