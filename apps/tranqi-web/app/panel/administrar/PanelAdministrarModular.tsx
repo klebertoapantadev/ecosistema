@@ -1,10 +1,11 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { UserCog, Users, ClipboardList, Bell, Shield, ChevronRight, Star, Lock, X, Eye, Pencil, FileText, type LucideIcon } from "lucide-react";
+import { UserCog, Users, ClipboardList, Bell, Shield, ChevronRight, Star, Lock, X, Eye, Pencil, FileText, Sliders, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { crearClienteNavegador } from "@eco/supabase";
 import { ConsultaUsuariosPerfilesWidget } from "@eco/gestion-usuarios/componentes/ConsultaUsuariosPerfilesWidget";
+import { AdministracionPerfilesWidget } from "@eco/gestion-usuarios/componentes/AdministracionPerfilesWidget";
 import { EmisionNotificacionesWidget } from "@eco/notificaciones";
 import { GestionTerminosConsentimientosWidget } from "@eco/identidad/componentes/GestionTerminosConsentimientosWidget";
 import { TablaAuditoria } from "../auditoria/TablaAuditoria";
@@ -37,6 +38,24 @@ const MODULOS_ADMIN: ModuloAdminDef[] = [
     subtitulo: "Administración de miembros, asignación de perfiles y techo jerárquico",
     ruta: "/panel/usuarios",
     icono: UserCog,
+    colorIcono: "var(--violeta, #5000BA)",
+    categoria: "Usuarios & Permisos"
+  },
+  {
+    id: "consulta_usuarios",
+    titulo: "Consulta de Usuarios & Perfiles",
+    subtitulo: "Directorio de miembros y matriz de roles (Solo Lectura)",
+    ruta: "/panel/administrar?widget=consulta_usuarios",
+    icono: Eye,
+    colorIcono: "var(--violeta, #5000BA)",
+    categoria: "Usuarios & Permisos"
+  },
+  {
+    id: "perfiles",
+    titulo: "Administración de Perfiles & Permisos",
+    subtitulo: "Catálogo de perfiles, jerarquía (1–100) y matriz de gobernanza BDD",
+    ruta: "/panel/configuracion?widget=perfiles",
+    icono: Sliders,
     colorIcono: "var(--violeta, #5000BA)",
     categoria: "Usuarios & Permisos"
   },
@@ -252,7 +271,7 @@ function obtenerModulosInicialesAdmin(): ModuloAdminDef[] {
   if (matchModo && matchModo[1]) rolActivo = matchModo[1].toUpperCase();
   else if (matchFav && matchFav[1]) rolActivo = matchFav[1].toUpperCase();
 
-  let ids: string[] = ["gestion_usuarios", "socios", "solicitud_socio", "emision_notificaciones", "auditoria"];
+  let ids: string[] = ["gestion_usuarios", "consulta_usuarios", "perfiles", "socios", "solicitud_socio", "emision_notificaciones", "gestion_terminos_consentimientos", "auditoria"];
   if (rolActivo === "OPERADOR" || rolActivo === "AUXILIAR" || rolActivo === "TECNICO") {
     ids = ["socios"];
   }
@@ -311,7 +330,7 @@ export function PanelAdministrarModular({ negocio }: Props) {
         if (rolEncontrado === "OPERADOR" || rolEncontrado === "AUXILIAR" || rolEncontrado === "TECNICO") {
           idsAsignados = ["socios"];
         } else if (rolEncontrado === "ADMINISTRADOR" || rolEncontrado === "SUPERADMIN") {
-          idsAsignados = ["gestion_usuarios", "socios", "solicitud_socio", "emision_notificaciones", "auditoria"];
+          idsAsignados = ["gestion_usuarios", "consulta_usuarios", "perfiles", "socios", "solicitud_socio", "emision_notificaciones", "gestion_terminos_consentimientos", "auditoria"];
         }
 
         // 2. Consultar servidor BDD PostgreSQL (comun_seguridad.seg_rol_widget)
@@ -348,7 +367,10 @@ export function PanelAdministrarModular({ negocio }: Props) {
         const filtrados: ModuloAdminDef[] = [];
         for (const id of idsAsignados) {
           const enInventario = MODULOS_ADMIN.find(m =>
-            m.id === id || (id === "perfiles" && m.id === "gestion_usuarios") || (id === "terminos" && m.id === "gestion_terminos_consentimientos")
+            m.id === id ||
+            (id === "perfiles" && m.id === "perfiles") ||
+            (id === "consulta_usuarios_perfiles" && m.id === "consulta_usuarios") ||
+            (id === "terminos" && m.id === "gestion_terminos_consentimientos")
           );
           if (enInventario && !filtrados.some(f => f.id === enInventario.id)) {
             filtrados.push(enInventario);
@@ -518,10 +540,17 @@ export function PanelAdministrarModular({ negocio }: Props) {
 
           {/* Cuerpo del Módulo Activo - NATIVO SIN IFRAME */}
           <div style={{ padding: "20px 16px", width: "100%" }}>
-            {/* 1. GESTIÓN DE USUARIOS */}
-            {widgetActivo === "gestion_usuarios" && (
+            {/* 1. GESTIÓN DE USUARIOS / CONSULTA DE USUARIOS */}
+            {(widgetActivo === "gestion_usuarios" || widgetActivo === "consulta_usuarios" || widgetActivo === "consulta_usuarios_perfiles") && (
               <div style={{ width: "100%" }}>
                 <ConsultaUsuariosPerfilesWidget negocio={negocio} />
+              </div>
+            )}
+
+            {/* 1.5. ADMINISTRACIÓN DE PERFILES & PERMISOS */}
+            {widgetActivo === "perfiles" && (
+              <div style={{ width: "100%" }}>
+                <AdministracionPerfilesWidget esAdmin={true} negocio={negocio} />
               </div>
             )}
 
