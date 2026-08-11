@@ -137,11 +137,11 @@ function obtenerWidgetsInicialesCuenta(): WidgetDef[] {
   if (matchModo && matchModo[1]) rolActivo = matchModo[1].toUpperCase();
   else if (matchFav && matchFav[1]) rolActivo = matchFav[1].toUpperCase();
 
-  let ids: string[] = ["mi_cuenta", "datos_facturacion", "mfa_seguridad"];
+  let ids: string[] = ["mi_cuenta", "datos_facturacion", "mfa_seguridad", "baja_cuenta"];
   if (rolActivo === "OPERADOR" || rolActivo === "AUXILIAR" || rolActivo === "TECNICO") {
-    ids = ["ver_como", "mi_cuenta"];
+    ids = ["ver_como", "mi_cuenta", "baja_cuenta"];
   } else if (rolActivo === "ABOGADO") {
-    ids = ["perfil_abogado", "mi_cuenta"];
+    ids = ["perfil_abogado", "mi_cuenta", "baja_cuenta"];
   } else if (rolActivo === "ADMINISTRADOR" || rolActivo === "SUPERADMIN") {
     ids = ["ver_como", "mi_cuenta", "datos_facturacion", "historial_accesos", "mfa_seguridad", "baja_cuenta"];
   }
@@ -187,7 +187,9 @@ export function PanelCuentaModular({ perfil, historial, puedeConmutar = true, ro
       if (paramWidget) {
         const mapaAlias: Record<string, string> = {
           facturacion: "datos_facturacion",
-          mfa: "mfa_seguridad"
+          mfa: "mfa_seguridad",
+          baja_cuenta: "peligro",
+          eliminar_cuenta: "peligro"
         };
         const targetId = mapaAlias[paramWidget] || paramWidget;
         setWidgetActivo(targetId);
@@ -208,11 +210,11 @@ export function PanelCuentaModular({ perfil, historial, puedeConmutar = true, ro
         // 1. Presets por defecto según rol para panel_cuenta
         let idsAsignados: string[] = [];
         if (rolActivo === "OPERADOR" || rolActivo === "AUXILIAR" || rolActivo === "TECNICO") {
-          idsAsignados = ["ver_como", "mi_cuenta"];
+          idsAsignados = ["ver_como", "mi_cuenta", "baja_cuenta"];
         } else if (rolActivo === "CLIENTE") {
-          idsAsignados = ["mi_cuenta", "datos_facturacion", "mfa_seguridad"];
+          idsAsignados = ["mi_cuenta", "datos_facturacion", "mfa_seguridad", "baja_cuenta"];
         } else if (rolActivo === "ABOGADO") {
-          idsAsignados = ["perfil_abogado", "mi_cuenta"];
+          idsAsignados = ["perfil_abogado", "mi_cuenta", "baja_cuenta"];
         } else if (rolActivo === "ADMINISTRADOR" || rolActivo === "SUPERADMIN") {
           idsAsignados = ["ver_como", "mi_cuenta", "datos_facturacion", "historial_accesos", "mfa_seguridad", "baja_cuenta"];
         }
