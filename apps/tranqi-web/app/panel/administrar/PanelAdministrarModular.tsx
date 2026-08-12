@@ -1,12 +1,12 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { UserCog, Users, ClipboardList, Bell, Shield, ChevronRight, Star, Lock, X, Eye, Pencil, FileText, Sliders, RotateCcw, type LucideIcon } from "lucide-react";
+import { UserCog, Users, ClipboardList, Bell, Shield, ChevronRight, Star, Lock, X, Eye, Pencil, FileText, Sliders, RotateCcw, BarChart2, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { crearClienteNavegador } from "@eco/supabase";
 import { ConsultaUsuariosPerfilesWidget } from "@eco/gestion-usuarios/componentes/ConsultaUsuariosPerfilesWidget";
 import { AdministracionPerfilesWidget } from "@eco/gestion-usuarios/componentes/AdministracionPerfilesWidget";
-import { EmisionNotificacionesWidget, ModalNotificacionPush } from "@eco/notificaciones";
+import { EmisionNotificacionesWidget, BitacoraNotificacionesWidget, ModalNotificacionPush } from "@eco/notificaciones";
 import { GestionTerminosConsentimientosWidget } from "@eco/identidad/componentes/GestionTerminosConsentimientosWidget";
 import { TablaAuditoria } from "../auditoria/TablaAuditoria";
 import type { RegistroAuditoria } from "@eco/auditoria";
@@ -80,10 +80,19 @@ const MODULOS_ADMIN: ModuloAdminDef[] = [
   {
     id: "emision_notificaciones",
     titulo: "Emisión de Notificaciones Multicanal",
-    subtitulo: "Despacho masivo multicanal (In-App, Push, Email y WhatsApp)",
-    ruta: "/panel/emision-notificaciones",
+    subtitulo: "Redacción y despacho masivo multicanal (In-App, Push, Email y WhatsApp)",
+    ruta: "/panel/administrar?widget=emision_notificaciones",
     icono: Bell,
     colorIcono: "#D97706",
+    categoria: "Comunicación"
+  },
+  {
+    id: "bitacora_notificaciones",
+    titulo: "Bitácora & Historial de Notificaciones",
+    subtitulo: "Consulta auditada e historial en tiempo real de notificaciones emitidas",
+    ruta: "/panel/administrar?widget=bitacora_notificaciones",
+    icono: BarChart2,
+    colorIcono: "#2563EB",
     categoria: "Comunicación"
   },
   {
@@ -630,6 +639,13 @@ export function PanelAdministrarModular({ negocio }: Props) {
             {widgetActivo === "emision_notificaciones" && (
               <div style={{ maxWidth: "960px", margin: "0 auto" }}>
                 <EmisionNotificacionesWidget negocio={negocio} />
+              </div>
+            )}
+
+            {/* 4.1. BITÁCORA DE NOTIFICACIONES */}
+            {(widgetActivo === "bitacora_notificaciones" || widgetActivo === "bitacora-notificaciones") && (
+              <div style={{ maxWidth: "1000px", margin: "0 auto" }}>
+                <BitacoraNotificacionesWidget negocio={negocio} />
               </div>
             )}
 

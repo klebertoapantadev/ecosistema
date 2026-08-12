@@ -44,7 +44,7 @@ async function notificarSolicitudEnviada(
       </div>
     `;
 
-    // 2. Insertar notificación in-app en comun_notificaciones
+    // 2. Insertar notificación in-app para el usuario postulante
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     await (adminSupabase as any).schema("comun_notificaciones").from("not_registro").insert([
       {
@@ -56,6 +56,39 @@ async function notificarSolicitudEnviada(
         not_creado_en: new Date().toISOString()
       }
     ]);
+
+    // 2.b. Notificar in-app a TODOS los SuperAdmins y Administradores de negocio
+    const { data: admins } = await adminSupabase
+      .schema("comun_seguridad")
+      .from("seg_usuario")
+      .select("usu_id, usu_correo")
+      .or("usu_superadmin_plataforma.eq.true");
+
+    if (admins && admins.length > 0) {
+      const tituloAdmin = esActualizacion
+        ? `✏️ Solicitud de Socio Actualizada por ${nombreUsuario}`
+        : `📢 Nueva Solicitud de Socio Abogado de ${nombreUsuario}`;
+
+      const contenidoAdmin = `
+        <div style="font-family: sans-serif; padding: 16px; color: #111;">
+          <h3 style="color: #05876E; margin-top: 0;">${tituloAdmin}</h3>
+          <p>El postulante <strong>${nombreUsuario}</strong> (<code>${u.usu_correo}</code>) ha ${esActualizacion ? "actualizado" : "registrado"} su solicitud de socio abogado en la plataforma.</p>
+          <p><a href="/panel/administrar?widget=socios" style="display: inline-block; padding: 8px 16px; background: #05876E; color: #fff; text-decoration: none; border-radius: 8px; font-weight: 700;">Evaluar Solicitud en la Consola</a></p>
+        </div>
+      `;
+
+      const notifsAdmins = admins.map((adm) => ({
+        not_usuario_id: adm.usu_id,
+        not_negocio: "TRANQ",
+        not_canal: "IN_APP",
+        not_titulo: tituloAdmin,
+        not_contenido_html: contenidoAdmin,
+        not_creado_en: new Date().toISOString()
+      }));
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (adminSupabase as any).schema("comun_notificaciones").from("not_registro").insert(notifsAdmins);
+    }
 
     // 3. Enviar correo SMTP real si están configuradas las variables de entorno
     const smtpHost = process.env.SMTP_HOST || process.env.EMAIL_HOST;
@@ -94,11 +127,11 @@ async function notificarSolicitudEnviada(
       tipoEmision: "AUTOMATICA",
       emisorNombre: "Sistema Autónomo de Acreditación",
       emisorCorreo: "socios@tranqi24.com",
-      procesoOrigen: "PLT-019 Solicitud de Socio Abogado Recibida",
-      audiencia: `USUARIO (${u.usu_correo})`,
+      procesoOrigen: esActualizacion ? "PLT-019 Actualización de Solicitud de Socio Abogado" : "PLT-019 Registro de Solicitud de Socio Abogado",
+      audiencia: `USUARIO (${u.usu_correo}) & SUPERADMINS`,
       canales: ["IN_APP", "EMAIL", "PUSH"],
-      destinatariosDetalle: [u.usu_correo, "kleber.toapanta.ch@gmail.com"],
-      enviados: 1,
+      destinatariosDetalle: [u.usu_correo, ...(admins?.map(a => a.usu_correo) || [])],
+      enviados: 1 + (admins?.length || 0),
       leidos: 0,
       ignorados: 0,
       fecha: new Date().toISOString(),
@@ -298,6 +331,69 @@ export async function decidirSolicitudSocio(datos: {
     });
 
   if (rpcError) return { ok: false, error: rpcError.message };
+
+  // Notificar al solicitante cliente/abogado sobre la actualización de su solicitud
+  const targetUsuId = typeof usuarioId === "string" ? usuarioId : (usuarioId as any)?.ssc_usuario_id;
+  if (targetUsuId) {
+    try {
+      const adminSupabase = crearClienteAdmin() || supabase;
+      const { data: uApplicant } = await adminSupabase
+        .schema("comun_seguridad")
+        .from("seg_usuario")
+        .select("usu_id, usu_correo, usu_nombres, usu_apellidos")
+        .eq("usu_id", targetUsuId)
+        .maybeSingle();
+
+      if (uApplicant) {
+        const nombrePostulante = [uApplicant.usu_nombres, uApplicant.usu_apellidos].filter(Boolean).join(" ") || uApplicant.usu_correo;
+        const tituloNotif = decision === "aceptada"
+          ? "🎉 ¡Tu Acreditación como Socio Abogado fue APROBADA!"
+          : "⚠️ Actualización sobre tu Solicitud de Socio Abogado";
+
+        const cuerpoHTML = `
+          <div style="font-family: sans-serif; padding: 20px; color: #111;">
+            <h2 style="color: ${decision === "aceptada" ? "#059669" : "#DC2626"};">
+              ${decision === "aceptada" ? "¡Felicitaciones, " + nombrePostulante + "!" : "Estimado(a) " + nombrePostulante + ","}
+            </h2>
+            <p>Tu solicitud de acreditación profesional en <strong>tranqi</strong> ha sido evaluada y marcada como <strong>${decision.toUpperCase()}</strong>.</p>
+            ${comentario ? `<div style="background: #F3F4F6; border-left: 4px solid #5000BA; padding: 12px; border-radius: 6px; margin: 16px 0;"><strong>Observación del Evaluador:</strong> ${comentario}</div>` : ""}
+            <p><a href="/panel/solicitud-socio" style="display: inline-block; padding: 10px 18px; background: #5000BA; color: #fff; text-decoration: none; border-radius: 8px; font-weight: 700;">Ver Estado de mi Solicitud</a></p>
+          </div>
+        `;
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await (adminSupabase as any).schema("comun_notificaciones").from("not_registro").insert([
+          {
+            not_usuario_id: uApplicant.usu_id,
+            not_negocio: "TRANQ",
+            not_canal: "IN_APP",
+            not_titulo: tituloNotif,
+            not_contenido_html: cuerpoHTML,
+            not_creado_en: new Date().toISOString()
+          }
+        ]);
+
+        agregarCampanaServidor({
+          id: `camp-dec-${solicitudId}-${Date.now()}`,
+          asunto: tituloNotif,
+          contenidoHTML: cuerpoHTML,
+          tipoEmision: "AUTOMATICA",
+          emisorNombre: "Equipo Evaluador de Acreditación",
+          emisorCorreo: "evaluacion@tranqi24.com",
+          procesoOrigen: "PLT-019 Evaluación de Solicitud de Socio Abogado",
+          audiencia: `SOLICITANTE (${uApplicant.usu_correo})`,
+          canales: ["IN_APP", "EMAIL", "PUSH"],
+          destinatariosDetalle: [uApplicant.usu_correo],
+          enviados: 1,
+          leidos: 0,
+          ignorados: 0,
+          fecha: new Date().toISOString(),
+        });
+      }
+    } catch (errDecNot) {
+      console.error("Error al notificar al solicitante la decisión:", errDecNot);
+    }
+  }
 
   revalidatePath("/panel/socios");
   revalidatePath(`/panel/socios/${solicitudId}`);
