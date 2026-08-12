@@ -25,7 +25,7 @@ as $$
         or (upper(p_negocio) in ('MRG', 'MARGARITAS') and upper(m.mem_negocio) in ('MRG', 'MARGARITAS'))
       )
       and m.mem_estado = 'ACTIVO'
-      and p.per_clave in ('OPERADOR', 'AUXILIAR', 'TECNICO', 'ADMINISTRADOR', 'SUPERADMIN')
+      and upper(p.per_clave) in ('OPERADOR', 'AUXILIAR', 'TECNICO', 'ADMINISTRADOR', 'SUPERADMIN')
   );
 $$;
 
