@@ -24,6 +24,34 @@ export function ModalTerminosWhatsapp({
     if (abierto) {
       setLeidoFinal(false);
       setPorcentajeLectura(0);
+
+      const verificarScroll = () => {
+        const el = contenedorRef.current;
+        if (!el) return;
+
+        const scrollTop = el.scrollTop;
+        const scrollHeight = el.scrollHeight;
+        const clientHeight = el.clientHeight;
+
+        const totalScrolleable = scrollHeight - clientHeight;
+        if (totalScrolleable <= 25) {
+          setPorcentajeLectura(100);
+          setLeidoFinal(true);
+          return;
+        }
+
+        const porcentaje = Math.min(100, Math.round((scrollTop / totalScrolleable) * 100));
+        setPorcentajeLectura(porcentaje);
+
+        if (totalScrolleable - scrollTop <= 35) {
+          setPorcentajeLectura(100);
+          setLeidoFinal(true);
+        }
+      };
+
+      verificarScroll();
+      const timer = setTimeout(verificarScroll, 120);
+      return () => clearTimeout(timer);
     }
   }, [abierto]);
 
@@ -38,7 +66,7 @@ export function ModalTerminosWhatsapp({
     const clientHeight = el.clientHeight;
 
     const totalScrolleable = scrollHeight - clientHeight;
-    if (totalScrolleable <= 0) {
+    if (totalScrolleable <= 25) {
       setPorcentajeLectura(100);
       setLeidoFinal(true);
       return;
@@ -47,16 +75,15 @@ export function ModalTerminosWhatsapp({
     const porcentaje = Math.min(100, Math.round((scrollTop / totalScrolleable) * 100));
     setPorcentajeLectura(porcentaje);
 
-    if (totalScrolleable - scrollTop <= 20) {
+    if (totalScrolleable - scrollTop <= 35) {
+      setPorcentajeLectura(100);
       setLeidoFinal(true);
     }
   }
 
   function confirmarAceptacion() {
-    if (leidoFinal) {
-      alAceptar();
-      alCerrar();
-    }
+    alAceptar();
+    alCerrar();
   }
 
   return (

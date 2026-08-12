@@ -35,10 +35,17 @@ export function FormularioBienvenida({ nombresIniciales, apellidosIniciales, int
 
   function toggleAutorizaWhatsapp(chequeado: boolean) {
     setAutorizaWhatsapp(chequeado);
-    if (chequeado && !aceptaTerminosWhatsapp) {
-      setModalWhatsappAbierto(true);
+    if (!chequeado) {
+      setNumeroWhatsapp("");
+      setAceptaTerminosWhatsapp(false);
     }
   }
+
+  const puedeEnviar =
+    !cargando &&
+    nombres.trim() !== "" &&
+    apellidos.trim() !== "" &&
+    (!autorizaWhatsapp || (numeroWhatsapp.trim() !== "" && aceptaTerminosWhatsapp));
 
   async function alEnviar(e: React.FormEvent) {
     e.preventDefault();
@@ -117,7 +124,6 @@ export function FormularioBienvenida({ nombresIniciales, apellidosIniciales, int
               type="tel"
               placeholder="Número de WhatsApp"
               autoComplete="tel-national"
-              required
             />
           </div>
 
@@ -144,7 +150,7 @@ export function FormularioBienvenida({ nombresIniciales, apellidosIniciales, int
 
           {!aceptaTerminosWhatsapp && (
             <p style={{ fontSize: "0.76rem", color: "#DC2626", fontWeight: 700, margin: 0 }}>
-              ⚠️ Debes leer y autorizar la cláusula de WhatsApp hasta el final para guardar tu teléfono.
+              ⚠️ Debes autorizar la cláusula LOPDP para guardar tu teléfono de WhatsApp.
             </p>
           )}
         </div>
@@ -159,20 +165,20 @@ export function FormularioBienvenida({ nombresIniciales, apellidosIniciales, int
       <button
         type="submit"
         className="btn-auth btn-primario"
-        disabled={cargando || (autorizaWhatsapp && !aceptaTerminosWhatsapp)}
+        disabled={!puedeEnviar}
         style={{
           width: "100%",
           padding: "14px 24px",
-          background: (autorizaWhatsapp && !aceptaTerminosWhatsapp)
-            ? "#D1D5DB"
-            : "linear-gradient(135deg, #5000BA 0%, #3B0088 100%)",
-          color: (autorizaWhatsapp && !aceptaTerminosWhatsapp) ? "#6B7280" : "#ffffff",
+          background: puedeEnviar
+            ? "linear-gradient(135deg, #5000BA 0%, #3B0088 100%)"
+            : "#D1D5DB",
+          color: puedeEnviar ? "#ffffff" : "#6B7280",
           border: "none",
           borderRadius: "12px",
           fontWeight: 800,
           fontSize: "0.98rem",
-          cursor: (cargando || (autorizaWhatsapp && !aceptaTerminosWhatsapp)) ? "not-allowed" : "pointer",
-          boxShadow: (autorizaWhatsapp && !aceptaTerminosWhatsapp) ? "none" : "0 4px 16px rgba(80, 0, 186, 0.3)",
+          cursor: puedeEnviar ? "pointer" : "not-allowed",
+          boxShadow: puedeEnviar ? "0 4px 16px rgba(80, 0, 186, 0.3)" : "none",
           transition: "all 0.2s ease",
           marginTop: "16px",
           display: "flex",
