@@ -170,10 +170,13 @@ export async function enviarSolicitudSocio(
         .eq("usu_id", usuarioId);
     }
 
-    // Limpiar relaciones anteriores de forma limpia con adminSupabase
-    await adminSupabase.schema("tranqui_legal").from("trq_experiencia_laboral").delete().eq("exp_solicitud_id", solicitudId);
-    await adminSupabase.schema("tranqui_legal").from("trq_solicitud_materia").delete().eq("sma_solicitud_id", solicitudId);
-    await adminSupabase.schema("tranqui_legal").from("trq_solicitud_provincia").delete().eq("spr_solicitud_id", solicitudId);
+    try {
+      await adminSupabase.schema("tranqui_legal").from("trq_experiencia_laboral").delete().eq("exp_solicitud_id", solicitudId);
+      await adminSupabase.schema("tranqui_legal").from("trq_solicitud_materia").delete().eq("sma_solicitud_id", solicitudId);
+      await adminSupabase.schema("tranqui_legal").from("trq_solicitud_provincia").delete().eq("spr_solicitud_id", solicitudId);
+    } catch (errDel) {
+      console.warn("Aviso al limpiar relaciones previas de solicitud:", errDel);
+    }
   } else {
     // Insertar nueva solicitud con adminSupabase
     const { data: solicitud, error } = await adminSupabase
@@ -198,7 +201,7 @@ export async function enviarSolicitudSocio(
     solicitudId = solicitud.ssc_id;
   }
 
-  // Insertar experiencias, materias y provincias con IDs DEDUPLICADOS
+  // Insertar/upsert experiencias, materias y provincias con IDs DEDUPLICADOS
   if (d.experiencia.length > 0) {
     const { error: errorExp } = await adminSupabase
       .schema("tranqui_legal")
@@ -221,7 +224,10 @@ export async function enviarSolicitudSocio(
     const { error: errorMat } = await adminSupabase
       .schema("tranqui_legal")
       .from("trq_solicitud_materia")
-      .insert(materiaUuids.map((mat_id) => ({ sma_solicitud_id: solicitudId, sma_materia_id: mat_id })));
+      .upsert(
+        materiaUuids.map((mat_id) => ({ sma_solicitud_id: solicitudId, sma_materia_id: mat_id })),
+        { onConflict: "sma_solicitud_id,sma_materia_id", ignoreDuplicates: true }
+      );
     if (errorMat) return { ok: false, error: errorMat.message };
   }
 
@@ -230,7 +236,10 @@ export async function enviarSolicitudSocio(
     const { error: errorProv } = await adminSupabase
       .schema("tranqui_legal")
       .from("trq_solicitud_provincia")
-      .insert(provinciaUuids.map((cat_id) => ({ spr_solicitud_id: solicitudId, spr_provincia_id: cat_id })));
+      .upsert(
+        provinciaUuids.map((cat_id) => ({ spr_solicitud_id: solicitudId, spr_provincia_id: cat_id })),
+        { onConflict: "spr_solicitud_id,spr_provincia_id", ignoreDuplicates: true }
+      );
     if (errorProv) return { ok: false, error: errorProv.message };
   }
 
