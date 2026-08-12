@@ -304,6 +304,20 @@ export async function registrarDocumentoSocio(
   const TIPOS_PERMITIDOS = ["foto_perfil", "titulo", "matricula", "cedula", "cv", "otro"];
   const tipoFinal = TIPOS_PERMITIDOS.includes(tipo) ? tipo : "otro";
 
+  // Si es un documento único (foto de perfil o título), eliminar el registro previo para evitar duplicidad
+  if (tipoFinal === "foto_perfil" || tipoFinal === "titulo") {
+    try {
+      await supabase
+        .schema("tranqui_legal")
+        .from("trq_documento_socio")
+        .delete()
+        .eq("dcs_solicitud_id", solicitudId)
+        .eq("dcs_tipo", tipoFinal);
+    } catch (errDel) {
+      console.warn("Aviso al eliminar documento previo único:", errDel);
+    }
+  }
+
   const { error } = await supabase.schema("tranqui_legal").from("trq_documento_socio").insert({
     dcs_solicitud_id: solicitudId,
     dcs_tipo: tipoFinal,

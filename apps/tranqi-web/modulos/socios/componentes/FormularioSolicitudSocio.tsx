@@ -1295,7 +1295,7 @@ export function FormularioSolicitudSocio({ usuarioId, materias, provincias, soli
         icono={Camera}
         esFotoPerfil={true}
       />
-      {fotoExistente && (
+      {fotoExistente && fotoPerfilArchivos.length === 0 && (
         <div style={{ display: "flex", alignItems: "center", gap: "12px", padding: "10px 14px", background: "rgba(80, 0, 186, 0.04)", border: "1px solid rgba(80, 0, 186, 0.15)", borderRadius: "8px", marginTop: "8px", fontSize: "0.84rem" }}>
           {fotoExistente.url && (
             // eslint-disable-next-line @next/next/no-img-element
@@ -1476,7 +1476,7 @@ export function FormularioSolicitudSocio({ usuarioId, materias, provincias, soli
         onCambiar={setTituloArchivos}
         icono={FileText}
       />
-      {tituloExistente && (
+      {tituloExistente && tituloArchivos.length === 0 && (
         <div style={{ display: "flex", alignItems: "center", gap: "12px", padding: "10px 14px", background: "rgba(80, 0, 186, 0.04)", border: "1px solid rgba(80, 0, 186, 0.15)", borderRadius: "8px", marginTop: "8px", fontSize: "0.84rem" }}>
           <FileText size={18} color="#5000BA" />
           <div>
