@@ -60,6 +60,12 @@ begin
     raise exception 'Solo el SuperAdmin puede resetear el sistema';
   end if;
 
+  -- Normalizar alias de negocio
+  if v_negocio = 'TRANQI' then v_negocio := 'TRANQ'; end if;
+  if v_negocio = 'FASTFIX' then v_negocio := 'FFH'; end if;
+  if v_negocio = 'TINKAY' then v_negocio := 'TNK'; end if;
+  if v_negocio = 'MARGARITAS' then v_negocio := 'MRG'; end if;
+
   -- 1. Purgar esquemas operacionales según el negocio especificado
   if v_negocio = 'TRANQ' or v_negocio = 'TODOS' then
     delete from tranqui_legal.trq_solicitud_materia where sma_id is not null or true;
@@ -78,14 +84,28 @@ begin
   where mpe_membresia_id in (
     select mem_id from comun_seguridad.seg_membresia m
     join comun_seguridad.seg_usuario u on u.usu_id = m.mem_usuario_id
-    where (v_negocio = 'TODOS' or m.mem_negocio = v_negocio)
+    where (
+        v_negocio = 'TODOS' 
+        or (v_negocio = 'TRANQ' and upper(m.mem_negocio) in ('TRANQ', 'TRANQI'))
+        or (v_negocio = 'FFH' and upper(m.mem_negocio) in ('FFH', 'FASTFIX'))
+        or (v_negocio = 'TNK' and upper(m.mem_negocio) in ('TNK', 'TINKAY'))
+        or (v_negocio = 'MRG' and upper(m.mem_negocio) in ('MRG', 'MARGARITAS'))
+        or upper(m.mem_negocio) = v_negocio
+      )
       and u.usu_superadmin_plataforma = false 
       and u.usu_correo != 'kleber.toapanta.ch@gmail.com'
   );
 
   -- 3. Borrar membresias del negocio especificado (excepto SuperAdmin)
   delete from comun_seguridad.seg_membresia
-  where (v_negocio = 'TODOS' or mem_negocio = v_negocio)
+  where (
+      v_negocio = 'TODOS' 
+      or (v_negocio = 'TRANQ' and upper(mem_negocio) in ('TRANQ', 'TRANQI'))
+      or (v_negocio = 'FFH' and upper(mem_negocio) in ('FFH', 'FASTFIX'))
+      or (v_negocio = 'TNK' and upper(mem_negocio) in ('TNK', 'TINKAY'))
+      or (v_negocio = 'MRG' and upper(mem_negocio) in ('MRG', 'MARGARITAS'))
+      or upper(mem_negocio) = v_negocio
+    )
     and mem_usuario_id in (
       select usu_id from comun_seguridad.seg_usuario
       where usu_superadmin_plataforma = false and usu_correo != 'kleber.toapanta.ch@gmail.com'
