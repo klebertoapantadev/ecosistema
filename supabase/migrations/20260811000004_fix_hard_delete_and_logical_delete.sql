@@ -59,11 +59,11 @@ begin
   end if;
 
   -- Borrar todas las solicitudes y abogados
-  delete from tranqui_legal.trq_solicitud_materia;
-  delete from tranqui_legal.trq_solicitud_provincia;
-  delete from tranqui_legal.trq_experiencia_laboral;
-  delete from tranqui_legal.trq_solicitud_socio;
-  delete from tranqui_legal.trq_abogado;
+  delete from tranqui_legal.trq_solicitud_materia where sma_id is not null or true;
+  delete from tranqui_legal.trq_solicitud_provincia where spr_id is not null or true;
+  delete from tranqui_legal.trq_experiencia_laboral where exp_id is not null or true;
+  delete from tranqui_legal.trq_solicitud_socio where ssc_id is not null or true;
+  delete from tranqui_legal.trq_abogado where abg_id is not null or true;
 
   -- Borrar membresias y perfiles de prueba (conservando unicamente SuperAdmin kleber.toapanta.ch@gmail.com)
   delete from comun_seguridad.seg_membresia_perfil
