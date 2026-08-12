@@ -159,7 +159,7 @@ export async function POST(req: Request) {
       }));
 
       await supabase
-        .schema("comun_notificaciones")
+        .schema("comun_notificacion")
         .from("not_registro")
         .insert(filasInsertar);
     } catch {

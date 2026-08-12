@@ -56,7 +56,7 @@ export async function GET() {
         const client: any = crearClienteAdmin() || await crearClienteServidor();
 
         let query = client
-          .schema("comun_notificaciones")
+          .schema("comun_notificacion")
           .from("not_registro")
           .select("not_id, not_titulo, not_contenido_html, not_url_accion, not_leido_en, not_creado_en, not_canal")
           .order("not_creado_en", { ascending: false })

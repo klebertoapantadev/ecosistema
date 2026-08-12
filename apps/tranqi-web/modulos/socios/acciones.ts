@@ -46,7 +46,7 @@ async function notificarSolicitudEnviada(
 
     // 2. Insertar notificación in-app para el usuario postulante
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (adminSupabase as any).schema("comun_notificaciones").from("not_registro").insert([
+    await (adminSupabase as any).schema("comun_notificacion").from("not_registro").insert([
       {
         not_usuario_id: u.usu_id,
         not_negocio: "TRANQ",
@@ -92,7 +92,7 @@ async function notificarSolicitudEnviada(
 
       if (notifsAdmins.length > 0) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await (adminSupabase as any).schema("comun_notificaciones").from("not_registro").insert(notifsAdmins);
+        await (adminSupabase as any).schema("comun_notificacion").from("not_registro").insert(notifsAdmins);
       }
     }
 
@@ -382,7 +382,7 @@ export async function decidirSolicitudSocio(datos: {
         `;
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await (adminSupabase as any).schema("comun_notificaciones").from("not_registro").insert([
+        await (adminSupabase as any).schema("comun_notificacion").from("not_registro").insert([
           {
             not_usuario_id: uApplicant.usu_id,
             not_negocio: "TRANQ",
