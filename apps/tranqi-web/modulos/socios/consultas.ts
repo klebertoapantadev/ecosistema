@@ -33,12 +33,42 @@ export async function obtenerSolicitudPropia(usuarioId: string) {
       *,
       trq_solicitud_materia(sma_materia_id),
       trq_solicitud_provincia(spr_provincia_id),
-      trq_experiencia_laboral(*)
+      trq_experiencia_laboral(*),
+      trq_documento_socio(*)
     `)
     .eq("ssc_usuario_id", usuarioId)
     .order("ssc_creado_en", { ascending: false })
     .limit(1)
     .maybeSingle();
+
+  if (!data) return null;
+
+  // Firmar URLs de documentos existentes para el solicitante
+  const docs = data.trq_documento_socio;
+  if (Array.isArray(docs) && docs.length > 0) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const docsFirmados = await Promise.all(
+      docs.map(async (d: any) => {
+        if (!d.dcs_url) return { ...d, url: null };
+        if (d.dcs_url.startsWith("data:") || d.dcs_url.startsWith("http")) {
+          return { ...d, url: d.dcs_url };
+        }
+        try {
+          const { data: signedData } = await adminSupabase.storage
+            .from("socios-documentos")
+            .createSignedUrl(d.dcs_url, 3600);
+          const { data: publicData } = adminSupabase.storage
+            .from("socios-documentos")
+            .getPublicUrl(d.dcs_url);
+          return { ...d, url: signedData?.signedUrl || publicData?.publicUrl || d.dcs_url };
+        } catch {
+          const { data: urlData } = adminSupabase.storage.from("socios-documentos").getPublicUrl(d.dcs_url);
+          return { ...d, url: urlData?.publicUrl ?? d.dcs_url };
+        }
+      })
+    );
+    data.trq_documento_socio = docsFirmados;
+  }
 
   return data;
 }

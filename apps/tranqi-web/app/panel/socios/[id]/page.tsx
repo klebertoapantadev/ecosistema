@@ -16,8 +16,11 @@ const ETIQUETA_ESTADO: Record<string, string> = {
   rechazada: "Rechazado",
 };
 const ETIQUETA_TIPO: Record<string, string> = {
+  foto_perfil: "Foto de perfil",
   titulo: "Título profesional",
   matricula: "Matrícula profesional",
+  cedula: "Cédula de identidad",
+  cv: "Hoja de Vida (CV)",
   otro: "Certificado",
   respaldo_revision: "Respaldo de revisión (admin)",
 };
@@ -31,13 +34,35 @@ export default async function PaginaDetalleSocio({ params }: { params: Promise<{
   const pendiente = solicitud.ssc_estado === "enviada" || solicitud.ssc_estado === "en_revision";
   const abogado = solicitud.ssc_estado === "aceptada" ? await obtenerAbogadoPorSolicitud(id) : null;
 
+  // Buscar foto de perfil
+  const docFoto = documentos.find((d) => d.dcs_tipo === "foto_perfil");
+  const urlFoto = docFoto?.url || null;
+
   return (
     <div>
       <Link href="/panel/socios">← Volver a socios</Link>
-      <h1>{[usuario?.usu_nombres, usuario?.usu_apellidos].filter(Boolean).join(" ") || usuario?.usu_correo}</h1>
-      <p className="historial-fecha">
-        {usuario?.usu_correo} {usuario?.usu_whatsapp ? `· ${usuario.usu_whatsapp}` : ""}
-      </p>
+      
+      <div style={{ display: "flex", alignItems: "center", gap: "16px", marginTop: "16px", marginBottom: "16px" }}>
+        {urlFoto ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={urlFoto}
+            alt="Foto de perfil"
+            style={{ width: "80px", height: "80px", borderRadius: "50%", objectFit: "cover", border: "2px solid #5000BA" }}
+          />
+        ) : (
+          <div style={{ width: "80px", height: "80px", borderRadius: "50%", background: "#EEF2FF", color: "#4F46E5", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.8rem", fontWeight: 700 }}>
+            {usuario?.usu_nombres?.[0] || "?"}
+          </div>
+        )}
+        <div>
+          <h1 style={{ margin: 0 }}>{[usuario?.usu_nombres, usuario?.usu_apellidos].filter(Boolean).join(" ") || usuario?.usu_correo}</h1>
+          <p className="historial-fecha" style={{ margin: "4px 0 0 0" }}>
+            {usuario?.usu_correo} {usuario?.usu_whatsapp ? `· ${usuario.usu_whatsapp}` : ""}
+          </p>
+        </div>
+      </div>
+
       <span className={`chip-estado-solicitud chip-${solicitud.ssc_estado}`}>{ETIQUETA_ESTADO[solicitud.ssc_estado]}</span>
 
       {abogado && (

@@ -36,6 +36,7 @@ async function subirDocumento(
   solicitudId: string,
   tipo: "foto_perfil" | "titulo" | "matricula" | "otro" | "cv",
   archivo: File,
+  comentario?: string,
 ) {
   if (archivo.size > TAMANO_MAXIMO_MB * 1024 * 1024) {
     return { ok: false as const, error: `${archivo.name}: supera ${TAMANO_MAXIMO_MB}MB` };
@@ -46,7 +47,7 @@ async function subirDocumento(
   const { error: errorSubida } = await supabase.storage.from("socios-documentos").upload(path, archivo);
   if (errorSubida) return { ok: false as const, error: `${archivo.name}: ${errorSubida.message}` };
 
-  const resultado = await registrarDocumentoSocio(solicitudId, tipo, path, nombreLimpio);
+  const resultado = await registrarDocumentoSocio(solicitudId, tipo, path, nombreLimpio, comentario);
   if (!resultado.ok) return { ok: false as const, error: `${archivo.name}: ${resultado.error}` };
   return { ok: true as const };
 }
@@ -383,6 +384,8 @@ function CampoSubidaArchivo({
   onCambiar,
   icono: IconoComp = FileText,
   esFotoPerfil = false,
+  comentarios,
+  onCambiarComentario,
 }: {
   etiqueta: string;
   subtitulo: string;
@@ -392,6 +395,8 @@ function CampoSubidaArchivo({
   onCambiar: (nuevos: File[]) => void;
   icono?: React.ElementType;
   esFotoPerfil?: boolean;
+  comentarios?: string[];
+  onCambiarComentario?: (idx: number, texto: string) => void;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [errorLocal, setErrorLocal] = useState<string | null>(null);
@@ -517,13 +522,30 @@ function CampoSubidaArchivo({
                   ) : (
                     <Paperclip size={16} color="var(--violeta, #5000BA)" style={{ flexShrink: 0 }} />
                   )}
-                  <div style={{ overflow: "hidden" }}>
+                  <div style={{ overflow: "hidden", flex: 1 }}>
                     <strong style={{ display: "block", color: "#111111", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap" }}>
                       {file.name}
                     </strong>
-                    <span style={{ fontSize: "0.72rem", color: "var(--panel-gris, #737373)" }}>
+                    <span style={{ display: "block", fontSize: "0.72rem", color: "var(--panel-gris, #737373)" }}>
                       {formatoTamanoArchivo(file.size)}
                     </span>
+                    {comentarios && onCambiarComentario && (
+                      <input
+                        type="text"
+                        placeholder="Ej. Certificado de Capacitación / Hoja de Vida"
+                        value={comentarios[idx] || ""}
+                        onChange={(e) => onCambiarComentario(idx, e.target.value)}
+                        style={{
+                          width: "100%",
+                          marginTop: "6px",
+                          padding: "4px 8px",
+                          fontSize: "0.75rem",
+                          borderRadius: "4px",
+                          border: "1px solid #D1D5DB",
+                          outline: "none"
+                        }}
+                      />
+                    )}
                   </div>
                 </div>
 
@@ -1102,6 +1124,13 @@ function SelectorMultiSeleccion({
 
 export function FormularioSolicitudSocio({ usuarioId, materias, provincias, solicitudExistente }: Props) {
   const router = useRouter();
+  
+  // Mapear documentos cargados previamente
+  const documentosExistentes = (solicitudExistente?.trq_documento_socio as any[]) ?? [];
+  const fotoExistente = documentosExistentes.find((d) => d.dcs_tipo === "foto_perfil");
+  const tituloExistente = documentosExistentes.find((d) => d.dcs_tipo === "titulo");
+  const cvYCertificadosExistentes = documentosExistentes.filter((d) => d.dcs_tipo === "cv" || d.dcs_tipo === "otro");
+
   const [cedula, setCedula] = useState<string>((solicitudExistente?.ssc_cedula as string) ?? "");
   const [matriculaProfesional, setMatriculaProfesional] = useState<string>((solicitudExistente?.ssc_matricula_profesional as string) ?? "");
   const [universidad, setUniversidad] = useState<string>((solicitudExistente?.ssc_universidad as string) ?? "");
@@ -1127,6 +1156,26 @@ export function FormularioSolicitudSocio({ usuarioId, materias, provincias, soli
   const [fotoPerfilArchivos, setFotoPerfilArchivos] = useState<File[]>([]);
   const [tituloArchivos, setTituloArchivos] = useState<File[]>([]);
   const [cvYCertificados, setCvYCertificados] = useState<File[]>([]);
+  const [cvYCertificadosComentarios, setCvYCertificadosComentarios] = useState<string[]>([]);
+
+  const manejarCambioComentariosCV = (idx: number, texto: string) => {
+    setCvYCertificadosComentarios((prev) => {
+      const copia = [...prev];
+      copia[idx] = texto;
+      return copia;
+    });
+  };
+
+  const manejarCambioCV = (nuevos: File[]) => {
+    if (nuevos.length < cvYCertificados.length) {
+      const idxEliminado = cvYCertificados.findIndex((f) => !nuevos.includes(f));
+      if (idxEliminado !== -1) {
+        setCvYCertificadosComentarios((prev) => prev.filter((_, i) => i !== idxEliminado));
+      }
+    }
+    setCvYCertificados(nuevos);
+  };
+
   const [senescytVerificado, setSenescytVerificado] = useState(Boolean(solicitudExistente?.ssc_enlace_senescyt_verificado));
   const [declaracion, setDeclaracion] = useState(Boolean(solicitudExistente));
   const [textoTerminos, setTextoTerminos] = useState<string>(
@@ -1212,7 +1261,7 @@ export function FormularioSolicitudSocio({ usuarioId, materias, provincias, soli
     const subidas = await Promise.all([
       fotoArchivo ? subirDocumento(solicitudId, "foto_perfil", fotoArchivo) : null,
       tituloArchivo ? subirDocumento(solicitudId, "titulo", tituloArchivo) : null,
-      ...cvYCertificados.map((archivo) => subirDocumento(solicitudId, "cv", archivo)),
+      ...cvYCertificados.map((archivo, idx) => subirDocumento(solicitudId, "cv", archivo, cvYCertificadosComentarios[idx])),
     ]);
     const fallidas = subidas.filter((s): s is { ok: false; error: string } => s !== null && !s.ok);
 
@@ -1246,6 +1295,21 @@ export function FormularioSolicitudSocio({ usuarioId, materias, provincias, soli
         icono={Camera}
         esFotoPerfil={true}
       />
+      {fotoExistente && (
+        <div style={{ display: "flex", alignItems: "center", gap: "12px", padding: "10px 14px", background: "rgba(80, 0, 186, 0.04)", border: "1px solid rgba(80, 0, 186, 0.15)", borderRadius: "8px", marginTop: "8px", fontSize: "0.84rem" }}>
+          {fotoExistente.url && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={fotoExistente.url} alt="Foto actual" style={{ width: "38px", height: "38px", borderRadius: "50%", objectFit: "cover", border: "1.5px solid #5000BA" }} />
+          )}
+          <div>
+            <span style={{ display: "block", fontWeight: 700, color: "#111111" }}>Foto de Perfil actual cargada</span>
+            <span style={{ fontSize: "0.76rem", color: "#6B7280" }}>{fotoExistente.dcs_nombre_archivo}</span>
+          </div>
+          <a href={fotoExistente.url} target="_blank" rel="noopener noreferrer" style={{ marginLeft: "auto", color: "#5000BA", fontWeight: 800, textDecoration: "none", fontSize: "0.8rem", display: "inline-flex", alignItems: "center", gap: "4px" }}>
+            <ExternalLink size={14} /> Ver archivo
+          </a>
+        </div>
+      )}
 
       <label style={{ marginTop: "16px" }}>
         Cédula de Identidad
@@ -1364,9 +1428,30 @@ export function FormularioSolicitudSocio({ usuarioId, materias, provincias, soli
         aceptar={TIPOS_ACEPTADOS}
         multiple={true}
         archivos={cvYCertificados}
-        onCambiar={setCvYCertificados}
+        onCambiar={manejarCambioCV}
         icono={FileText}
+        comentarios={cvYCertificadosComentarios}
+        onCambiarComentario={manejarCambioComentariosCV}
       />
+      {cvYCertificadosExistentes.length > 0 && (
+        <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginTop: "8px" }}>
+          <span style={{ fontSize: "0.8rem", fontWeight: 700, color: "var(--panel-gris, #737373)", display: "block" }}>Archivos existentes cargados:</span>
+          {cvYCertificadosExistentes.map((d) => (
+            <div key={d.dcs_id} style={{ display: "flex", alignItems: "center", gap: "12px", padding: "10px 14px", background: "rgba(80, 0, 186, 0.04)", border: "1px solid rgba(80, 0, 186, 0.15)", borderRadius: "8px", fontSize: "0.84rem" }}>
+              <FileText size={18} color="#5000BA" />
+              <div>
+                <span style={{ display: "block", fontWeight: 700, color: "#111111" }}>
+                  {d.dcs_tipo === "cv" ? "Hoja de Vida (CV)" : (d.dcs_comentario || "Certificado")}
+                </span>
+                <span style={{ fontSize: "0.76rem", color: "#6B7280" }}>{d.dcs_nombre_archivo}</span>
+              </div>
+              <a href={d.url} target="_blank" rel="noopener noreferrer" style={{ marginLeft: "auto", color: "#5000BA", fontWeight: 800, textDecoration: "none", fontSize: "0.8rem", display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                <ExternalLink size={14} /> Ver archivo
+              </a>
+            </div>
+          ))}
+        </div>
+      )}
 
       <h2>Verificación asistida de título</h2>
       <p className="aviso-borrador">
@@ -1391,6 +1476,18 @@ export function FormularioSolicitudSocio({ usuarioId, materias, provincias, soli
         onCambiar={setTituloArchivos}
         icono={FileText}
       />
+      {tituloExistente && (
+        <div style={{ display: "flex", alignItems: "center", gap: "12px", padding: "10px 14px", background: "rgba(80, 0, 186, 0.04)", border: "1px solid rgba(80, 0, 186, 0.15)", borderRadius: "8px", marginTop: "8px", fontSize: "0.84rem" }}>
+          <FileText size={18} color="#5000BA" />
+          <div>
+            <span style={{ display: "block", fontWeight: 700, color: "#111111" }}>Título Universitario actual cargado</span>
+            <span style={{ fontSize: "0.76rem", color: "#6B7280" }}>{tituloExistente.dcs_nombre_archivo}</span>
+          </div>
+          <a href={tituloExistente.url} target="_blank" rel="noopener noreferrer" style={{ marginLeft: "auto", color: "#5000BA", fontWeight: 800, textDecoration: "none", fontSize: "0.8rem", display: "inline-flex", alignItems: "center", gap: "4px" }}>
+            <ExternalLink size={14} /> Ver archivo
+          </a>
+        </div>
+      )}
 
       {/* Sección de Términos de Servicio y Autorización de Verificación LOPDP */}
       <div style={{ background: "rgba(80, 0, 186, 0.05)", border: "1px solid rgba(80, 0, 186, 0.2)", borderRadius: "12px", padding: "16px", marginTop: "24px" }}>
