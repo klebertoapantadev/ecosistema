@@ -46,56 +46,73 @@ $$;
 
 grant execute on function comun_seguridad.seg_fn_superadmin_eliminar_usuario(uuid) to authenticated;
 
--- 2. RPC para Reset Master del sistema (Borrado Fisico Masivo de Pruebas)
-create or replace function comun_seguridad.seg_fn_superadmin_resetear_sistema()
+-- 2. RPC para Reset Master del sistema con aislamiento estricto por Negocio (default 'TRANQ')
+create or replace function comun_seguridad.seg_fn_superadmin_resetear_sistema(p_negocio text default 'TRANQ')
 returns text
 language plpgsql
 security definer
 set search_path = ''
 as $$
+declare
+  v_negocio text := upper(coalesce(p_negocio, 'TRANQ'));
 begin
   if not comun_seguridad.seg_fn_es_superadmin() then
     raise exception 'Solo el SuperAdmin puede resetear el sistema';
   end if;
 
-  -- Borrar todas las solicitudes y abogados
-  delete from tranqui_legal.trq_solicitud_materia where sma_id is not null or true;
-  delete from tranqui_legal.trq_solicitud_provincia where spr_id is not null or true;
-  delete from tranqui_legal.trq_experiencia_laboral where exp_id is not null or true;
-  delete from tranqui_legal.trq_solicitud_socio where ssc_id is not null or true;
-  delete from tranqui_legal.trq_abogado where abg_id is not null or true;
+  -- 1. Purgar esquemas operacionales según el negocio especificado
+  if v_negocio = 'TRANQ' or v_negocio = 'TODOS' then
+    delete from tranqui_legal.trq_solicitud_materia where sma_id is not null or true;
+    delete from tranqui_legal.trq_solicitud_provincia where spr_id is not null or true;
+    delete from tranqui_legal.trq_experiencia_laboral where exp_id is not null or true;
+    delete from tranqui_legal.trq_solicitud_socio where ssc_id is not null or true;
+    delete from tranqui_legal.trq_abogado where abg_id is not null or true;
+  end if;
 
-  -- Borrar membresias y perfiles de prueba (conservando unicamente SuperAdmin kleber.toapanta.ch@gmail.com)
+  if (v_negocio = 'FFH' or v_negocio = 'TODOS') and to_regclass('fastfix_mantenimiento.ffh_tecnico') is not null then
+    delete from fastfix_mantenimiento.ffh_tecnico where tec_id is not null or true;
+  end if;
+
+  -- 2. Borrar perfiles asignados a membresias del negocio especificado (excepto SuperAdmin)
   delete from comun_seguridad.seg_membresia_perfil
   where mpe_membresia_id in (
     select mem_id from comun_seguridad.seg_membresia m
     join comun_seguridad.seg_usuario u on u.usu_id = m.mem_usuario_id
-    where u.usu_superadmin_plataforma = false and u.usu_correo != 'kleber.toapanta.ch@gmail.com'
+    where (v_negocio = 'TODOS' or m.mem_negocio = v_negocio)
+      and u.usu_superadmin_plataforma = false 
+      and u.usu_correo != 'kleber.toapanta.ch@gmail.com'
   );
 
+  -- 3. Borrar membresias del negocio especificado (excepto SuperAdmin)
   delete from comun_seguridad.seg_membresia
-  where mem_usuario_id in (
-    select usu_id from comun_seguridad.seg_usuario
-    where usu_superadmin_plataforma = false and usu_correo != 'kleber.toapanta.ch@gmail.com'
-  );
+  where (v_negocio = 'TODOS' or mem_negocio = v_negocio)
+    and mem_usuario_id in (
+      select usu_id from comun_seguridad.seg_usuario
+      where usu_superadmin_plataforma = false and usu_correo != 'kleber.toapanta.ch@gmail.com'
+    );
 
-  delete from comun_seguridad.seg_usuario
-  where usu_superadmin_plataforma = false and usu_correo != 'kleber.toapanta.ch@gmail.com';
+  -- 4. Borrar usuarios base (seg_usuario) que hayan quedado HUERFANOS (sin membresia en ningun negocio)
+  delete from comun_seguridad.seg_usuario u
+  where u.usu_superadmin_plataforma = false 
+    and u.usu_correo != 'kleber.toapanta.ch@gmail.com'
+    and not exists (
+      select 1 from comun_seguridad.seg_membresia m where m.mem_usuario_id = u.usu_id
+    );
 
-  -- Borrar en cascada FK en esquema auth
+  -- 5. Borrar en cascada en esquema auth UNICAMENTE los usuarios eliminados de seg_usuario (huerfanos)
   delete from auth.refresh_tokens where session_id in (
-    select id from auth.sessions where user_id in (select id from auth.users where email != 'kleber.toapanta.ch@gmail.com')
+    select id from auth.sessions where user_id not in (select usu_id from comun_seguridad.seg_usuario)
   );
-  delete from auth.sessions where user_id in (select id from auth.users where email != 'kleber.toapanta.ch@gmail.com');
-  delete from auth.mfa_factors where user_id in (select id from auth.users where email != 'kleber.toapanta.ch@gmail.com');
-  delete from auth.identities where user_id in (select id from auth.users where email != 'kleber.toapanta.ch@gmail.com');
-  delete from auth.users where email != 'kleber.toapanta.ch@gmail.com';
+  delete from auth.sessions where user_id not in (select usu_id from comun_seguridad.seg_usuario);
+  delete from auth.mfa_factors where user_id not in (select usu_id from comun_seguridad.seg_usuario);
+  delete from auth.identities where user_id not in (select usu_id from comun_seguridad.seg_usuario);
+  delete from auth.users where id not in (select usu_id from comun_seguridad.seg_usuario);
 
-  return 'sistema_reseteado_fisicamente';
+  return 'sistema_reseteado_por_negocio_' || v_negocio;
 end;
 $$;
 
-grant execute on function comun_seguridad.seg_fn_superadmin_resetear_sistema() to authenticated;
+grant execute on function comun_seguridad.seg_fn_superadmin_resetear_sistema(text) to authenticated;
 
 -- 3. RPC para Reactivacion de Cuenta dada de baja logicamente
 create or replace function comun_seguridad.seg_fn_superadmin_reactivar_usuario(p_target_usuario_id uuid)

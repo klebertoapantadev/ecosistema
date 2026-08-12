@@ -164,9 +164,9 @@ export function ConsultaUsuariosPerfilesWidget({ negocio = "TRANQ" }: Props) {
     }
     try {
       setProcesandoAccion("reset_all");
-      const res = await resetearSistemaSuperAdminAction();
+      const res = await resetearSistemaSuperAdminAction(negocio);
       if (res.ok) {
-        alert("💥 El sistema ha sido reseteado por completo. Se han eliminado todas las cuentas y perfiles de prueba.");
+        alert(`💥 El sistema para el negocio "${negocio}" ha sido reseteado. Se han eliminado todas sus cuentas y perfiles de prueba preservando los demás negocios.`);
         window.location.reload();
       } else {
         alert(`❌ Error al resetear el sistema: ${res.error}`);

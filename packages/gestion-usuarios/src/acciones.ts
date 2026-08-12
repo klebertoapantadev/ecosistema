@@ -327,46 +327,17 @@ export async function eliminarUsuarioSuperAdminAction(
   return { ok: true };
 }
 
-export async function resetearSistemaSuperAdminAction(): Promise<Resultado> {
+export async function resetearSistemaSuperAdminAction(
+  negocio: string = "TRANQ"
+): Promise<Resultado> {
   const supabase = await crearClienteServidor();
-  const adminSupabase = crearClienteAdmin() || supabase;
 
   try {
-    // 1. Borrado físico exhaustivo en Supabase Auth via GoTrue Admin API
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    if ((adminSupabase as any).auth?.admin?.listUsers) {
-      let page = 1;
-      let tieneMas = true;
-      while (tieneMas) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { data: pageData } = await (adminSupabase as any).auth.admin.listUsers({ page, perPage: 100 });
-        if (!pageData || !pageData.users || pageData.users.length === 0) {
-          tieneMas = false;
-          break;
-        }
-        for (const u of pageData.users) {
-          if (u.email?.toLowerCase() !== "kleber.toapanta.ch@gmail.com") {
-            try {
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              await (adminSupabase as any).auth.admin.deleteUser(u.id);
-            } catch (errDel) {
-              console.error("Error borrando usuario auth:", u.id, errDel);
-            }
-          }
-        }
-        if (pageData.users.length < 100) {
-          tieneMas = false;
-        } else {
-          page++;
-        }
-      }
-    }
-
-    // 2. Ejecutar RPC en Postgres con cascada de borrado en tablas y esquema auth
+    // Ejecutar RPC en Postgres con aislamiento estricto por Negocio (preserva los demas negocios y sus usuarios)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { error: rpcErr } = await (supabase as any)
       .schema("comun_seguridad")
-      .rpc("seg_fn_superadmin_resetear_sistema");
+      .rpc("seg_fn_superadmin_resetear_sistema", { p_negocio: negocio });
 
     if (rpcErr) {
       console.error("Error RPC seg_fn_superadmin_resetear_sistema:", rpcErr);
