@@ -6,7 +6,7 @@ import Link from "next/link";
 import { crearClienteNavegador } from "@eco/supabase";
 import { ConsultaUsuariosPerfilesWidget } from "@eco/gestion-usuarios/componentes/ConsultaUsuariosPerfilesWidget";
 import { AdministracionPerfilesWidget } from "@eco/gestion-usuarios/componentes/AdministracionPerfilesWidget";
-import { EmisionNotificacionesWidget } from "@eco/notificaciones";
+import { EmisionNotificacionesWidget, ModalNotificacionPush } from "@eco/notificaciones";
 import { GestionTerminosConsentimientosWidget } from "@eco/identidad/componentes/GestionTerminosConsentimientosWidget";
 import { TablaAuditoria } from "../auditoria/TablaAuditoria";
 import type { RegistroAuditoria } from "@eco/auditoria";
@@ -300,28 +300,65 @@ export function PanelAdministrarModular({ negocio }: Props) {
   } | null>(null);
 
   const [reseteando, setReseteando] = useState(false);
+  const [modalPush, setModalPush] = useState<{
+    abierto: boolean;
+    titulo: string;
+    mensaje: string;
+    tipo?: "exito" | "error" | "info" | "advertencia" | "push";
+    alAceptar?: () => void;
+    alCancelar?: () => void;
+    mostrarConfirmacion?: boolean;
+  }>({
+    abierto: false,
+    titulo: "",
+    mensaje: "",
+    tipo: "exito",
+  });
 
   async function handleResetearSistema() {
-    const confirmacionText = prompt(`⚠️ ADVERTENCIA DE SEGURIDAD ⚠️\n\nEsta acción eliminará TODOS los usuarios de prueba, perfiles y solicitudes configuradas en la base de datos (conservando únicamente la cuenta SuperAdmin).\n\nPara confirmar, escribe "CONFIRMAR RESET":`);
-    if (confirmacionText !== "CONFIRMAR RESET") {
-      alert("Operación cancelada.");
-      return;
-    }
-    try {
-      setReseteando(true);
-      const res = await resetearSistemaSuperAdminAction("TRANQ");
-      if (res.ok) {
-        alert("💥 El sistema para el negocio Tranqi ha sido reseteado. Se han eliminado todas sus cuentas y perfiles de prueba preservando los demás negocios.");
-        window.location.reload();
-      } else {
-        alert(`❌ Error al resetear el sistema: ${res.error}`);
-      }
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : String(err);
-      alert(`❌ Error al resetear el sistema: ${msg}`);
-    } finally {
-      setReseteando(false);
-    }
+    setModalPush({
+      abierto: true,
+      tipo: "advertencia",
+      titulo: "⚠️ Reset Master del Sistema (Tranqi)",
+      mensaje: "Esta acción eliminará TODOS los usuarios de prueba, perfiles y solicitudes configuradas en Tranqi (conservando únicamente la cuenta SuperAdmin). ¿Deseas ejecutar la purga?",
+      mostrarConfirmacion: true,
+      alAceptar: async () => {
+        setModalPush(prev => ({ ...prev, abierto: false }));
+        try {
+          setReseteando(true);
+          const res = await resetearSistemaSuperAdminAction("TRANQ");
+          if (res.ok) {
+            setModalPush({
+              abierto: true,
+              tipo: "push",
+              titulo: "💥 Reset Completado Exitosamente",
+              mensaje: "El sistema para el negocio Tranqi ha sido reseteado. Se han eliminado todas sus cuentas y perfiles de prueba preservando los demás negocios.",
+              alAceptar: () => window.location.reload(),
+            });
+          } else {
+            setModalPush({
+              abierto: true,
+              tipo: "error",
+              titulo: "❌ Error al Resetear el Sistema",
+              mensaje: res.error || "No se pudo resetear el sistema",
+            });
+          }
+        } catch (err: unknown) {
+          const msg = err instanceof Error ? err.message : String(err);
+          setModalPush({
+            abierto: true,
+            tipo: "error",
+            titulo: "❌ Error al Resetear el Sistema",
+            mensaje: msg,
+          });
+        } finally {
+          setReseteando(false);
+        }
+      },
+      alCancelar: () => {
+        setModalPush(prev => ({ ...prev, abierto: false }));
+      },
+    });
   }
 
   const { getWidgetInfo, guardarWidget, obtenerIconoComponente } = useCustomWidgets();
@@ -843,6 +880,16 @@ export function PanelAdministrarModular({ negocio }: Props) {
           onVerificado={handleConfirmarMfaExitoso}
         />
       )}
+
+      <ModalNotificacionPush
+        abierto={modalPush.abierto}
+        tipo={modalPush.tipo}
+        titulo={modalPush.titulo}
+        mensaje={modalPush.mensaje}
+        mostrarConfirmacion={modalPush.mostrarConfirmacion}
+        alAceptar={modalPush.alAceptar || (() => setModalPush(prev => ({ ...prev, abierto: false })))}
+        alCancelar={modalPush.alCancelar || (() => setModalPush(prev => ({ ...prev, abierto: false })))}
+      />
     </div>
   );
 }

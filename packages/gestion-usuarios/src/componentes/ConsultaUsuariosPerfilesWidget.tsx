@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { Users, Search, ShieldCheck, Eye, LayoutGrid, CheckCircle2, UserCheck, Phone, Mail, Filter, Trash2, RotateCcw, AlertTriangle, RefreshCw } from "lucide-react";
+import { ModalNotificacionPush } from "../../../notificaciones/src/ModalNotificacionPush";
 import { obtenerDirectorioUsuariosPublicoAction, eliminarUsuarioSuperAdminAction, resetearSistemaSuperAdminAction, reactivarUsuarioSuperAdminAction } from "../acciones";
 
 interface Props {
@@ -101,6 +102,20 @@ export function ConsultaUsuariosPerfilesWidget({ negocio = "TRANQ" }: Props) {
   const [filtroRol, setFiltroRol] = useState<string>("TODOS");
   const [perfilSeleccionado, setPerfilSeleccionado] = useState<string>("OPERADOR");
   const [procesandoAccion, setProcesandoAccion] = useState<string | null>(null);
+  const [modalPush, setModalPush] = useState<{
+    abierto: boolean;
+    titulo: string;
+    mensaje: string;
+    tipo?: "exito" | "error" | "info" | "advertencia" | "push";
+    alAceptar?: () => void;
+    alCancelar?: () => void;
+    mostrarConfirmacion?: boolean;
+  }>({
+    abierto: false,
+    titulo: "",
+    mensaje: "",
+    tipo: "exito",
+  });
 
   useEffect(() => {
     async function cargarDirectorio() {
@@ -125,57 +140,120 @@ export function ConsultaUsuariosPerfilesWidget({ negocio = "TRANQ" }: Props) {
       const res = await reactivarUsuarioSuperAdminAction(uId);
       if (res.ok) {
         setUsuarios(prev => prev.map(u => u.usuario_id === uId ? { ...u, estado: "ACTIVO" } : u));
-        alert(`✅ La cuenta "${nombreCorr}" ha sido reactivada correctamente.`);
+        setModalPush({
+          abierto: true,
+          tipo: "exito",
+          titulo: "✅ Cuenta Reactivada",
+          mensaje: `La cuenta "${nombreCorr}" ha sido reactivada correctamente.`,
+        });
       } else {
-        alert(`❌ Error al reactivar: ${res.error}`);
+        setModalPush({
+          abierto: true,
+          tipo: "error",
+          titulo: "❌ Error al reactivar",
+          mensaje: res.error || "Ocurrió un error inesperado",
+        });
       }
     } catch (err: any) {
-      alert(`❌ Error al reactivar usuario: ${err?.message}`);
+      setModalPush({
+        abierto: true,
+        tipo: "error",
+        titulo: "❌ Error al reactivar usuario",
+        mensaje: err?.message || "Ocurrió un error inesperado",
+      });
     } finally {
       setProcesandoAccion(null);
     }
   }
 
   async function handleEliminarUsuario(uId: string, nombreCorr: string) {
-    if (!confirm(`⚠️ ¿Estás seguro de ELIMINAR FÍSICAMENTE a "${nombreCorr}"?\n\nEsta acción borrará de forma permanente los registros en BDD y la autenticación de Supabase Auth (auth.users).`)) {
-      return;
-    }
-    try {
-      setProcesandoAccion(uId);
-      const res = await eliminarUsuarioSuperAdminAction(uId);
-      if (res.ok) {
-        setUsuarios(prev => prev.filter(u => u.usuario_id !== uId));
-        alert(`✅ La cuenta "${nombreCorr}" ha sido eliminada físicamente por completo.`);
-      } else {
-        alert(`❌ Error al eliminar: ${res.error || "No se pudo eliminar el usuario"}`);
+    setModalPush({
+      abierto: true,
+      tipo: "advertencia",
+      titulo: "⚠️ Eliminar Usuario",
+      mensaje: `¿Estás seguro de ELIMINAR FÍSICAMENTE a "${nombreCorr}"?\n\nEsta acción borrará de forma permanente los registros en BDD y la autenticación de Supabase Auth.`,
+      mostrarConfirmacion: true,
+      alAceptar: async () => {
+        setModalPush(prev => ({ ...prev, abierto: false }));
+        try {
+          setProcesandoAccion(uId);
+          const res = await eliminarUsuarioSuperAdminAction(uId);
+          if (res.ok) {
+            setUsuarios(prev => prev.filter(u => u.usuario_id !== uId));
+            setModalPush({
+              abierto: true,
+              tipo: "exito",
+              titulo: "✅ Cuenta eliminada",
+              mensaje: `La cuenta "${nombreCorr}" ha sido eliminada físicamente por completo.`,
+            });
+          } else {
+            setModalPush({
+              abierto: true,
+              tipo: "error",
+              titulo: "❌ Error al eliminar",
+              mensaje: res.error || "No se pudo eliminar el usuario",
+            });
+          }
+        } catch (err: any) {
+          setModalPush({
+            abierto: true,
+            tipo: "error",
+            titulo: "❌ Error al eliminar",
+            mensaje: err?.message || "Ocurrió un error inesperado",
+          });
+        } finally {
+          setProcesandoAccion(null);
+        }
+      },
+      alCancelar: () => {
+        setModalPush(prev => ({ ...prev, abierto: false }));
       }
-    } catch (err: any) {
-      alert(`❌ Error al procesar eliminación: ${err?.message}`);
-    } finally {
-      setProcesandoAccion(null);
-    }
+    });
   }
 
   async function handleResetearSistema() {
-    const confirmacionText = prompt(`⚠️ ADVERTENCIA DE SEGURIDAD ⚠️\n\nEsta acción eliminará TODOS los usuarios de prueba, perfiles y solicitudes configuradas en la base de datos (conservando únicamente la cuenta SuperAdmin).\n\nPara confirmar, escribe "CONFIRMAR RESET":`);
-    if (confirmacionText !== "CONFIRMAR RESET") {
-      alert("Operación cancelada.");
-      return;
-    }
-    try {
-      setProcesandoAccion("reset_all");
-      const res = await resetearSistemaSuperAdminAction(negocio);
-      if (res.ok) {
-        alert(`💥 El sistema para el negocio "${negocio}" ha sido reseteado. Se han eliminado todas sus cuentas y perfiles de prueba preservando los demás negocios.`);
-        window.location.reload();
-      } else {
-        alert(`❌ Error al resetear el sistema: ${res.error}`);
+    setModalPush({
+      abierto: true,
+      tipo: "advertencia",
+      titulo: "⚠️ Resetear Sistema",
+      mensaje: `Esta acción eliminará TODOS los usuarios de prueba, perfiles y solicitudes configuradas en la base de datos (conservando únicamente la cuenta SuperAdmin). ¿Deseas continuar?`,
+      mostrarConfirmacion: true,
+      alAceptar: async () => {
+        setModalPush(prev => ({ ...prev, abierto: false }));
+        try {
+          setProcesandoAccion("reset_all");
+          const res = await resetearSistemaSuperAdminAction(negocio);
+          if (res.ok) {
+            setModalPush({
+              abierto: true,
+              tipo: "push",
+              titulo: "💥 Sistema reseteado",
+              mensaje: `El sistema para el negocio "${negocio}" ha sido reseteado.`,
+              alAceptar: () => window.location.reload()
+            });
+          } else {
+            setModalPush({
+              abierto: true,
+              tipo: "error",
+              titulo: "❌ Error al resetear",
+              mensaje: res.error || "No se pudo resetear el sistema",
+            });
+          }
+        } catch (err: any) {
+          setModalPush({
+            abierto: true,
+            tipo: "error",
+            titulo: "❌ Error al resetear",
+            mensaje: err?.message || "Ocurrió un error inesperado",
+          });
+        } finally {
+          setProcesandoAccion(null);
+        }
+      },
+      alCancelar: () => {
+        setModalPush(prev => ({ ...prev, abierto: false }));
       }
-    } catch (err: any) {
-      alert(`❌ Error al resetear el sistema: ${err?.message}`);
-    } finally {
-      setProcesandoAccion(null);
-    }
+    });
   }
 
   const usuariosFiltrados = usuarios.filter(u => {
@@ -485,6 +563,16 @@ export function ConsultaUsuariosPerfilesWidget({ negocio = "TRANQ" }: Props) {
           </div>
         </div>
       )}
+
+      <ModalNotificacionPush
+        abierto={modalPush.abierto}
+        tipo={modalPush.tipo}
+        titulo={modalPush.titulo}
+        mensaje={modalPush.mensaje}
+        mostrarConfirmacion={modalPush.mostrarConfirmacion}
+        alAceptar={modalPush.alAceptar || (() => setModalPush(prev => ({ ...prev, abierto: false })))}
+        alCancelar={modalPush.alCancelar || (() => setModalPush(prev => ({ ...prev, abierto: false })))}
+      />
     </div>
   );
 }

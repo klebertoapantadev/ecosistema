@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ExternalLink, Check, X, Search, Plus, Bold, Italic, Underline, List, Heading, Link as LinkIcon, Code, ShieldCheck, UploadCloud, FileText, Camera, Paperclip, Trash2, Image as ImageIcon, ZoomIn, ZoomOut, Move, RotateCcw, Crop, Sliders, CheckCircle2 } from "lucide-react";
 import { crearClienteNavegador } from "@eco/supabase";
+import { ModalNotificacionPush } from "@eco/notificaciones";
 import { enviarSolicitudSocio, registrarDocumentoSocio } from "../acciones";
 import { ENLACES_VERIFICACION, sanearNombreArchivo, type DatosExperienciaLaboral } from "../esquema";
 
@@ -1146,6 +1147,17 @@ export function FormularioSolicitudSocio({ usuarioId, materias, provincias, soli
   const [error, setError] = useState<string | null>(null);
   const [avisoArchivos, setAvisoArchivos] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
+  const [modalNotificacion, setModalNotificacion] = useState<{
+    abierto: boolean;
+    titulo: string;
+    mensaje: string;
+    tipo?: "exito" | "error" | "info" | "advertencia" | "push";
+  }>({
+    abierto: false,
+    titulo: "",
+    mensaje: "",
+    tipo: "push",
+  });
 
   const opcionesMaterias: OpcionItem[] = materias.map((m) => ({ id: m.mat_id, nombre: m.mat_nombre }));
   const opcionesProvincias: OpcionItem[] = [
@@ -1211,9 +1223,12 @@ export function FormularioSolicitudSocio({ usuarioId, materias, provincias, soli
       );
       return;
     }
-    alert("🎉 ¡Tu solicitud de socio abogado ha sido enviada exitosamente!\n\nSe ha generado la notificación automática y la confirmación a tu correo. Te redirigiremos al portal principal.");
-    router.push("/panel");
-    router.refresh();
+    setModalNotificacion({
+      abierto: true,
+      tipo: "push",
+      titulo: "🎉 ¡Solicitud de Socio Abogado Enviada!",
+      mensaje: "Se ha generado la notificación Push automática y la confirmación en el sistema. Haz clic en continuar para ir al portal principal.",
+    });
   }
 
   return (
@@ -1425,6 +1440,19 @@ export function FormularioSolicitudSocio({ usuarioId, materias, provincias, soli
             : "Enviar Solicitud de Socio Abogado"}
         </button>
       )}
+
+      <ModalNotificacionPush
+        abierto={modalNotificacion.abierto}
+        tipo={modalNotificacion.tipo}
+        titulo={modalNotificacion.titulo}
+        mensaje={modalNotificacion.mensaje}
+        textoBoton="Continuar al Portal"
+        alAceptar={() => {
+          setModalNotificacion((prev) => ({ ...prev, abierto: false }));
+          router.push("/panel");
+          router.refresh();
+        }}
+      />
     </form>
   );
 }

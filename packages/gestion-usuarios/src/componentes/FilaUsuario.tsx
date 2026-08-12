@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Trash2 } from "lucide-react";
+import { ModalNotificacionPush } from "../../../notificaciones/src/ModalNotificacionPush";
 import { asignarPerfil, quitarPerfil, eliminarUsuarioSuperAdminAction } from "../acciones";
 import type { UsuarioConMembresia, PerfilAsignable } from "../consultas";
 
@@ -21,6 +22,21 @@ export function FilaUsuario({
   const [mensaje, setMensaje] = useState<string | null>(null);
   const [eliminando, setEliminando] = useState(false);
 
+  const [modalPush, setModalPush] = useState<{
+    abierto: boolean;
+    titulo: string;
+    mensaje: string;
+    tipo?: "exito" | "error" | "info" | "advertencia" | "push";
+    alAceptar?: () => void;
+    alCancelar?: () => void;
+    mostrarConfirmacion?: boolean;
+  }>({
+    abierto: false,
+    titulo: "",
+    mensaje: "",
+    tipo: "exito",
+  });
+
   async function alternar(clave: string, marcado: boolean) {
     setOcupado(clave);
     setMensaje(null);
@@ -37,18 +53,38 @@ export function FilaUsuario({
   }
 
   async function handleEliminar() {
-    if (!confirm(`⚠️ ¿Estás seguro de ELIMINAR la cuenta de "${usuario.usu_correo}"?\n\nSe borrarán todas sus solicitudes, perfiles y datos.`)) {
-      return;
-    }
-    setEliminando(true);
-    const res = await eliminarUsuarioSuperAdminAction(usuario.usu_id);
-    if (res.ok) {
-      alert("✅ Usuario eliminado con éxito.");
-      window.location.reload();
-    } else {
-      alert(`❌ Error al eliminar: ${res.error}`);
-      setEliminando(false);
-    }
+    setModalPush({
+      abierto: true,
+      tipo: "advertencia",
+      titulo: "⚠️ Eliminar Cuenta de Usuario",
+      mensaje: `¿Estás seguro de ELIMINAR la cuenta de "${usuario.usu_correo}"?\n\nSe borrarán todas sus solicitudes, perfiles y datos.`,
+      mostrarConfirmacion: true,
+      alAceptar: async () => {
+        setModalPush(prev => ({ ...prev, abierto: false }));
+        setEliminando(true);
+        const res = await eliminarUsuarioSuperAdminAction(usuario.usu_id);
+        if (res.ok) {
+          setModalPush({
+            abierto: true,
+            tipo: "exito",
+            titulo: "✅ Usuario Eliminado",
+            mensaje: "El usuario ha sido eliminado exitosamente del sistema.",
+            alAceptar: () => window.location.reload(),
+          });
+        } else {
+          setModalPush({
+            abierto: true,
+            tipo: "error",
+            titulo: "❌ Error al Eliminar",
+            mensaje: res.error || "No se pudo eliminar el usuario",
+          });
+          setEliminando(false);
+        }
+      },
+      alCancelar: () => {
+        setModalPush(prev => ({ ...prev, abierto: false }));
+      },
+    });
   }
 
   const nombre = [usuario.usu_nombres, usuario.usu_apellidos].filter(Boolean).join(" ") || "—";
@@ -116,6 +152,15 @@ export function FilaUsuario({
         ) : (
           <span style={{ fontSize: "0.72rem", color: "#9CA3AF" }}>Protegido</span>
         )}
+        <ModalNotificacionPush
+          abierto={modalPush.abierto}
+          tipo={modalPush.tipo}
+          titulo={modalPush.titulo}
+          mensaje={modalPush.mensaje}
+          mostrarConfirmacion={modalPush.mostrarConfirmacion}
+          alAceptar={modalPush.alAceptar || (() => setModalPush(prev => ({ ...prev, abierto: false })))}
+          alCancelar={modalPush.alCancelar || (() => setModalPush(prev => ({ ...prev, abierto: false })))}
+        />
       </td>
     </tr>
   );
