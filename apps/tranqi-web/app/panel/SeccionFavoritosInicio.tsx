@@ -111,25 +111,20 @@ const CATALOGO_FAVORITOS: Record<string, WidgetFavInfo> = {
 };
 
 export function SeccionFavoritosInicio() {
-  const [favsCuenta, setFavsCuenta] = useState<string[]>([]);
+  const [favsCuenta, setFavsCuenta] = useState<string[]>(["perfil"]);
   const [favsConfig, setFavsConfig] = useState<string[]>([]);
-  const [cargado, setCargado] = useState(false);
   const { getWidgetInfo, obtenerIconoComponente } = useCustomWidgets();
 
   useEffect(() => {
     try {
       const c = localStorage.getItem("tranqi_favoritos_cuenta");
       const cfg = localStorage.getItem("tranqi_favoritos_configuracion");
-      setFavsCuenta(c ? JSON.parse(c) : ["perfil"]);
-      setFavsConfig(cfg ? JSON.parse(cfg) : []);
+      if (c) setFavsCuenta(JSON.parse(c));
+      if (cfg) setFavsConfig(JSON.parse(cfg));
     } catch {
-      setFavsCuenta(["perfil"]);
-    } finally {
-      setCargado(true);
+      /* Mantener valor inicial */
     }
   }, []);
-
-  if (!cargado) return null;
 
   const idsUnicos = Array.from(new Set([...favsCuenta, ...favsConfig]));
   const itemsFavoritos = idsUnicos

@@ -68,6 +68,24 @@ const PANELES_BASE_DEFAULT: PanelDefNav[] = [
   { id: "panel_seguridad", nombre: "Seguridad", ruta: "/panel/seguridad", icono: "Shield" },
 ];
 
+function obtenerPanelesInicialesPorRol(modoActivo: ModoRol): PanelDefNav[] {
+  const rolKey = (modoActivo || "CLIENTE").toUpperCase();
+
+  if (rolKey === "SUPERADMIN") {
+    return PANELES_BASE_DEFAULT.filter(p => p.id === "panel_inicio" || p.id === "panel_cuenta");
+  }
+
+  if (rolKey === "OPERADOR" || rolKey === "AUXILIAR" || rolKey === "TECNICO") {
+    return PANELES_BASE_DEFAULT.filter(p => p.id !== "panel_configuracion");
+  }
+
+  if (rolKey === "CLIENTE") {
+    return PANELES_BASE_DEFAULT.filter(p => p.id === "panel_inicio" || p.id === "panel_cuenta");
+  }
+
+  return PANELES_BASE_DEFAULT;
+}
+
 export function NavegacionSidebar({
   modoActivo,
   negocio = "tranqi"
@@ -75,7 +93,7 @@ export function NavegacionSidebar({
   modoActivo: ModoRol;
   negocio?: string;
 }) {
-  const [panelesVisibles, setPanelesVisibles] = useState<PanelDefNav[]>(PANELES_BASE_DEFAULT);
+  const [panelesVisibles, setPanelesVisibles] = useState<PanelDefNav[]>(() => obtenerPanelesInicialesPorRol(modoActivo));
 
   useEffect(() => {
     async function actualizarNavegacion() {
