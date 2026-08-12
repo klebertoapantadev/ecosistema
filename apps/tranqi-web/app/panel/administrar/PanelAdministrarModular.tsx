@@ -416,7 +416,6 @@ export function PanelAdministrarModular({ negocio }: Props) {
         // 3. Complementar con personalizaciones en localStorage si existen
         const savedPerfiles = localStorage.getItem(`tranqi_perfiles_${negocio}`) || localStorage.getItem("tranqi_perfiles_TRANQ");
         if (savedPerfiles) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const perfiles = JSON.parse(savedPerfiles);
           if (Array.isArray(perfiles)) {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any

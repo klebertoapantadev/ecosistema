@@ -13,19 +13,6 @@ interface RegistroNotificacion {
   not_canal?: string;
 }
 
-interface SupabaseTypedClient {
-  schema(schema: string): {
-    from(table: string): {
-      select(cols: string): {
-        eq(col: string, val: string): {
-          order(col: string, opts: { ascending: boolean }): {
-            limit(n: number): Promise<{ data: unknown; error: unknown }>;
-          };
-        };
-      };
-    };
-  };
-}
 
 // Reemplazo dinámico estricto de variables para el perfil autenticado
 function interpolarParaPerfil(
@@ -65,9 +52,10 @@ export async function GET() {
         const perfiles = await obtenerPerfiles("tranqi");
         const esAutorizado = Boolean(perfil?.usu_superadmin_plataforma) || perfiles.includes("ADMINISTRADOR") || perfiles.includes("OPERADOR");
 
-        const rawSupabase = (crearClienteAdmin() || await crearClienteServidor()) as unknown as SupabaseTypedClient;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const client: any = crearClienteAdmin() || await crearClienteServidor();
 
-        let query = (rawSupabase as any)
+        let query = client
           .schema("comun_notificaciones")
           .from("not_registro")
           .select("not_id, not_titulo, not_contenido_html, not_url_accion, not_leido_en, not_creado_en, not_canal")
