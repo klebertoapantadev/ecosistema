@@ -1,4 +1,6 @@
--- Normalizar resolucion de negocio y asegurar que SuperAdmin y Administradores de Tranqi puedan consultar las solicitudes de socios
+-- Migration: 20260812000001_fix_admin_rls_business_normalization.sql
+-- Normalizar resolucion de negocio y asegurar que SuperAdmin, Administradores y Operadores puedan consultar solicitudes de socios
+
 create or replace function comun_seguridad.seg_fn_es_admin_negocio(p_negocio text)
 returns boolean
 language sql
@@ -23,14 +25,15 @@ as $$
         or (upper(p_negocio) in ('MRG', 'MARGARITAS') and upper(m.mem_negocio) in ('MRG', 'MARGARITAS'))
       )
       and m.mem_estado = 'ACTIVO'
-      and p.per_clave in ('ADMINISTRADOR', 'SUPERADMIN')
+      and p.per_clave in ('OPERADOR', 'AUXILIAR', 'TECNICO', 'ADMINISTRADOR', 'SUPERADMIN')
   );
 $$;
 
--- Asegurar politica de SELECT para administradores en trq_solicitud_socio
+-- Asegurar politica de SELECT para administradores y operadores en trq_solicitud_socio
 drop policy if exists trq_solicitud_socio_admin_select on tranqui_legal.trq_solicitud_socio;
 create policy trq_solicitud_socio_admin_select on tranqui_legal.trq_solicitud_socio
   for select using (
     ssc_usuario_id = auth.uid()
     or comun_seguridad.seg_fn_es_admin_negocio('TRANQ')
+    or comun_seguridad.seg_fn_es_admin_negocio('TRANQI')
   );

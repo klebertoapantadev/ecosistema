@@ -410,22 +410,43 @@ export async function obtenerListaSolicitudesSociosAction(): Promise<Resultado<a
   const supabase = await crearClienteServidor();
   const adminSupabase = crearClienteAdmin() || supabase;
 
-  // Consultar todas las solicitudes registradas usando cliente Admin para omitir bloqueos RLS
-  const { data: sData, error: sErr } = await adminSupabase
+  // Consultar todas las solicitudes registradas con fallback bidireccional
+  let { data: sData, error: sErr } = await adminSupabase
     .schema("tranqui_legal")
     .from("trq_solicitud_socio")
     .select("*")
     .order("ssc_creado_en", { ascending: false });
 
+  if ((!sData || sData.length === 0) && adminSupabase !== supabase) {
+    const resFall = await supabase
+      .schema("tranqui_legal")
+      .from("trq_solicitud_socio")
+      .select("*")
+      .order("ssc_creado_en", { ascending: false });
+    if (resFall.data && resFall.data.length > 0) {
+      sData = resFall.data;
+      sErr = null;
+    }
+  }
+
   if (sErr) return { ok: false, error: sErr.message };
   if (!sData || sData.length === 0) return { ok: true, data: [] };
 
   const userIds = [...new Set(sData.map((s) => s.ssc_usuario_id))];
-  const { data: uData } = await adminSupabase
+  let { data: uData } = await adminSupabase
     .schema("comun_seguridad")
     .from("seg_usuario")
     .select("usu_id, usu_nombres, usu_apellidos, usu_correo, usu_whatsapp")
     .in("usu_id", userIds);
+
+  if (!uData || uData.length === 0) {
+    const resU = await supabase
+      .schema("comun_seguridad")
+      .from("seg_usuario")
+      .select("usu_id, usu_nombres, usu_apellidos, usu_correo, usu_whatsapp")
+      .in("usu_id", userIds);
+    if (resU.data) uData = resU.data;
+  }
 
   const uMap = new Map((uData || []).map((u) => [u.usu_id, u]));
   const combinadas = sData.map((s) => ({
