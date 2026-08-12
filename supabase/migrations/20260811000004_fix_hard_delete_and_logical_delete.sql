@@ -79,6 +79,14 @@ begin
     delete from fastfix_mantenimiento.ffh_tecnico where tec_id is not null or true;
   end if;
 
+  if (v_negocio = 'TNK' or v_negocio = 'TODOS') and to_regclass('tinkay_floristeria.tnk_producto_flor') is not null then
+    delete from tinkay_floristeria.tnk_producto_flor where pro_id is not null or true;
+  end if;
+
+  if (v_negocio = 'MRG' or v_negocio = 'TODOS') and to_regclass('margaritas_floristeria.mrg_producto_flor') is not null then
+    delete from margaritas_floristeria.mrg_producto_flor where pro_id is not null or true;
+  end if;
+
   -- 2. Borrar perfiles asignados a membresias del negocio especificado (excepto SuperAdmin)
   delete from comun_seguridad.seg_membresia_perfil
   where mpe_membresia_id in (
