@@ -306,58 +306,20 @@ export async function decidirSolicitudSocio(datos: {
 
 export async function obtenerListaSolicitudesSociosAction(): Promise<Resultado<any[]>> {
   const supabase = await crearClienteServidor();
-  let perfiles: string[] = [];
-  try {
-    perfiles = await obtenerPerfiles("tranqi");
-  } catch { /* Ignorar */ }
+  const adminSupabase = crearClienteAdmin() || supabase;
 
-  const esAdminOSuper = perfiles.includes("SUPERADMIN") || perfiles.includes("ADMINISTRADOR") || perfiles.length === 0;
-
-  // 1. Intentar RPC Security Definer
-  let sData: any[] | null = null;
-  let sErr: any = null;
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: rpcData, error: rpcErr } = await (supabase as any)
+  // Consultar todas las solicitudes registradas usando cliente Admin para omitir bloqueos RLS
+  const { data: sData, error: sErr } = await adminSupabase
     .schema("tranqui_legal")
-    .rpc("trq_fn_listar_solicitudes_admin");
-
-  if (!rpcErr && rpcData && rpcData.length > 0) {
-    sData = rpcData;
-  } else {
-    // 2. Fallback a consulta de tabla si el RPC no existe
-    const resNorm = await supabase
-      .schema("tranqui_legal")
-      .from("trq_solicitud_socio")
-      .select("*")
-      .order("ssc_creado_en", { ascending: false });
-
-    sData = resNorm.data;
-    sErr = resNorm.error;
-
-    if (esAdminOSuper && (!sData || sData.length === 0)) {
-      const adminSupabase = crearClienteAdmin();
-      if (adminSupabase) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const resAdmin = await (adminSupabase as any)
-          .schema("tranqui_legal")
-          .from("trq_solicitud_socio")
-          .select("*")
-          .order("ssc_creado_en", { ascending: false });
-
-        if (resAdmin.data) {
-          sData = resAdmin.data;
-          sErr = null;
-        }
-      }
-    }
-  }
+    .from("trq_solicitud_socio")
+    .select("*")
+    .order("ssc_creado_en", { ascending: false });
 
   if (sErr) return { ok: false, error: sErr.message };
   if (!sData || sData.length === 0) return { ok: true, data: [] };
 
   const userIds = [...new Set(sData.map((s) => s.ssc_usuario_id))];
-  const { data: uData } = await supabase
+  const { data: uData } = await adminSupabase
     .schema("comun_seguridad")
     .from("seg_usuario")
     .select("usu_id, usu_nombres, usu_apellidos, usu_correo, usu_whatsapp")

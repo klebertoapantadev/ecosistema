@@ -1,4 +1,4 @@
-import { crearClienteServidor } from "@eco/supabase/servidor";
+import { crearClienteServidor, crearClienteAdmin } from "@eco/supabase/servidor";
 
 // Server-only. No importar desde un client component.
 
@@ -25,7 +25,8 @@ export async function listarProvincias() {
 
 export async function obtenerSolicitudPropia(usuarioId: string) {
   const supabase = await crearClienteServidor();
-  const { data } = await supabase
+  const adminSupabase = crearClienteAdmin() || supabase;
+  const { data } = await adminSupabase
     .schema("tranqui_legal")
     .from("trq_solicitud_socio")
     .select(`
@@ -55,8 +56,9 @@ async function adjuntarUsuarios<T extends { usuarioId: string }>(
 ): Promise<(T & { usuario: UsuarioResumen | null })[]> {
   if (filas.length === 0) return [];
   const supabase = await crearClienteServidor();
+  const adminSupabase = crearClienteAdmin() || supabase;
   const ids = [...new Set(filas.map((f) => f.usuarioId))];
-  const { data: usuarios } = await supabase
+  const { data: usuarios } = await adminSupabase
     .schema("comun_seguridad")
     .from("seg_usuario")
     .select("usu_id, usu_nombres, usu_apellidos, usu_correo, usu_whatsapp")
@@ -67,7 +69,8 @@ async function adjuntarUsuarios<T extends { usuarioId: string }>(
 
 export async function listarSolicitudesParaAdmin(estado?: string) {
   const supabase = await crearClienteServidor();
-  let query = supabase
+  const adminSupabase = crearClienteAdmin() || supabase;
+  let query = adminSupabase
     .schema("tranqui_legal")
     .from("trq_solicitud_socio")
     .select("*")
@@ -103,8 +106,9 @@ export const listarSolicitudes = listarSolicitudesParaAdmin;
 
 export async function obtenerDetalleSolicitudParaAdmin(solicitudId: string) {
   const supabase = await crearClienteServidor();
+  const adminSupabase = crearClienteAdmin() || supabase;
 
-  const { data: solicitud, error } = await supabase
+  const { data: solicitud, error } = await adminSupabase
     .schema("tranqui_legal")
     .from("trq_solicitud_socio")
     .select("*")
