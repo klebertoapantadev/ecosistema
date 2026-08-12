@@ -4,6 +4,7 @@ import { X } from "lucide-react";
 import { obtenerPerfilActual } from "@eco/identidad";
 import { obtenerSolicitudPropia, listarMaterias, listarProvincias } from "../../../modulos/socios/consultas";
 import { FormularioSolicitudSocio } from "../../../modulos/socios/componentes/FormularioSolicitudSocio";
+import { GestionContratoPostulante } from "../../../modulos/socios/componentes/GestionContratoPostulante";
 
 export const metadata: Metadata = { title: "Solicitud de socio — tranqi" };
 
@@ -52,9 +53,14 @@ export default async function PaginaSolicitudSocio() {
             {ETIQUETA_ESTADO.aceptada}
           </span>
           <h3 style={{ color: "#065F46", margin: "16px 0 8px" }}>¡Felicitaciones! Tu acreditación como Socio Abogado fue Aprobada</h3>
-          <p style={{ color: "#047857", fontSize: "0.95rem", lineHeight: 1.5 }}>
+          <p style={{ color: "#047857", fontSize: "0.95rem", lineHeight: 1.5, marginBottom: "16px" }}>
             Ya formas parte del Equipo Jurídico de <strong>tranqi</strong>. Tienes acceso completo a las herramientas y funciones profesionales en la plataforma.
           </p>
+
+          <hr style={{ border: "none", borderTop: "1px solid #10B981", opacity: 0.3, margin: "20px 0" }} />
+
+          {/* Gestión de la firma y subida del contrato de sociedad */}
+          <GestionContratoPostulante solicitud={solicitud} />
         </div>
       </div>
     );

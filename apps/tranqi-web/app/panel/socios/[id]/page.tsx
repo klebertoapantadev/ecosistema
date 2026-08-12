@@ -21,6 +21,7 @@ const ETIQUETA_TIPO: Record<string, string> = {
   matricula: "Matrícula profesional",
   cedula: "Cédula de identidad",
   cv: "Hoja de Vida (CV)",
+  contrato_socio: "Contrato de sociedad firmado",
   otro: "Certificado",
   respaldo_revision: "Respaldo de revisión (admin)",
 };
@@ -74,6 +75,28 @@ export default async function PaginaDetalleSocio({ params }: { params: Promise<{
             <dt>MFA configurado</dt>
             <dd>{abogado.abg_mfa_verificado ? "Sí" : "Pendiente — se exigirá para activar capacidades críticas"}</dd>
           </dl>
+          <div style={{ marginTop: "12px", borderTop: "1px solid #E5E7EB", paddingTop: "12px" }}>
+            <a
+              href={`/panel/solicitud-socio/contrato/imprimir?solicitudId=${solicitud.ssc_id}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+                padding: "8px 14px",
+                borderRadius: "8px",
+                background: "#FFFFFF",
+                border: "1px solid #D1D5DB",
+                color: "#374151",
+                fontSize: "0.82rem",
+                fontWeight: 600,
+                textDecoration: "none",
+              }}
+            >
+              <FileText size={14} /> Ver/Imprimir Contrato Generado
+            </a>
+          </div>
         </div>
       )}
 

@@ -9,6 +9,7 @@ import { AdministracionPerfilesWidget } from "@eco/gestion-usuarios/componentes/
 import { EmisionNotificacionesWidget, BitacoraNotificacionesWidget, ModalNotificacionPush } from "@eco/notificaciones";
 import { GestionTerminosConsentimientosWidget } from "@eco/identidad/componentes/GestionTerminosConsentimientosWidget";
 import { TablaAuditoria } from "../auditoria/TablaAuditoria";
+import { ConfiguracionContratoAbogadoWidget } from "../../../modulos/socios/componentes/ConfiguracionContratoAbogadoWidget";
 import type { RegistroAuditoria } from "@eco/auditoria";
 import { useCustomWidgets } from "../gestorTitulosWidgets";
 import { ModalEditarWidget } from "../ModalEditarWidget";
@@ -112,6 +113,15 @@ const MODULOS_ADMIN: ModuloAdminDef[] = [
     icono: Shield,
     colorIcono: "#111827",
     categoria: "Seguridad & Auditoría"
+  },
+  {
+    id: "configuracion_contrato_abogado",
+    titulo: "Configuración de Contrato de Socios",
+    subtitulo: "Administración de la plantilla del contrato de sociedad de abogados (.MD/HTML)",
+    ruta: "/panel/administrar?widget=configuracion_contrato_abogado",
+    icono: FileText,
+    colorIcono: "#05876E",
+    categoria: "Gobernanza & Legales"
   }
 ];
 
@@ -280,9 +290,9 @@ function obtenerModulosInicialesAdmin(): ModuloAdminDef[] {
   if (matchModo && matchModo[1]) rolActivo = matchModo[1].toUpperCase();
   else if (matchFav && matchFav[1]) rolActivo = matchFav[1].toUpperCase();
 
-  let ids: string[] = ["gestion_usuarios", "consulta_usuarios", "perfiles", "socios", "solicitud_socio", "emision_notificaciones", "gestion_terminos_consentimientos", "auditoria"];
+  let ids: string[] = ["gestion_usuarios", "consulta_usuarios", "perfiles", "socios", "solicitud_socio", "emision_notificaciones", "gestion_terminos_consentimientos", "auditoria", "configuracion_contrato_abogado"];
   if (rolActivo === "OPERADOR" || rolActivo === "AUXILIAR" || rolActivo === "TECNICO") {
-    ids = ["socios"];
+    ids = ["socios", "configuracion_contrato_abogado"];
   }
 
   return MODULOS_ADMIN.filter(m => ids.includes(m.id));
@@ -399,9 +409,9 @@ export function PanelAdministrarModular({ negocio }: Props) {
         // 1. Presets de asignación por rol para panel_administrar
         let idsAsignados: string[] = [];
         if (rolEncontrado === "OPERADOR" || rolEncontrado === "AUXILIAR" || rolEncontrado === "TECNICO") {
-          idsAsignados = ["socios"];
+          idsAsignados = ["socios", "configuracion_contrato_abogado"];
         } else if (rolEncontrado === "ADMINISTRADOR" || rolEncontrado === "SUPERADMIN") {
-          idsAsignados = ["gestion_usuarios", "consulta_usuarios", "perfiles", "socios", "solicitud_socio", "emision_notificaciones", "gestion_terminos_consentimientos", "auditoria"];
+          idsAsignados = ["gestion_usuarios", "consulta_usuarios", "perfiles", "socios", "solicitud_socio", "emision_notificaciones", "gestion_terminos_consentimientos", "auditoria", "configuracion_contrato_abogado"];
         }
 
         // 2. Consultar servidor BDD PostgreSQL (comun_seguridad.seg_rol_widget)
@@ -658,6 +668,11 @@ export function PanelAdministrarModular({ negocio }: Props) {
             {/* 5. AUDITORÍA BDD & TELEMETRÍA */}
             {widgetActivo === "auditoria" && (
               <VisorAuditoriaWidget />
+            )}
+
+            {/* 6. CONFIGURACIÓN DE CONTRATO DE SOCIOS */}
+            {widgetActivo === "configuracion_contrato_abogado" && (
+              <ConfiguracionContratoAbogadoWidget />
             )}
           </div>
         </section>

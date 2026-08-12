@@ -70,6 +70,12 @@ decisiones de alcance se definieron directamente en la implementación — ver e
   solo por RLS, decisión de gestión de claves pendiente de análisis propio) y envío real de las
   notificaciones encoladas.
 
+- **Firma de Contrato de Sociedad (2026-08-12):**
+  - **Plantilla de Contrato Configurable:** Se introdujo la tabla `trq_plantilla_contrato` y un widget de administración en la Consola Modular de Tranqi (`configuracion_contrato_abogado`) para que administradores y operadores definan la plantilla del contrato en formato Markdown con variables dinámicas (`{{nombre_completo}}` y `{{cedula}}`).
+  - **Generación Dinámica e Impresión:** Al aprobar la solicitud, tanto el postulante como el operador pueden generar una vista de impresión limpia del contrato con sus datos reales auto-completados. La ruta `/panel/solicitud-socio/contrato/imprimir` invoca el diálogo de impresión nativo del navegador para descargar o guardar como PDF.
+  - **Carga de Contrato Firmado:** El socio debe firmar de forma manuscrita o digital este contrato y subirlo de vuelta obligatoriamente en formato PDF. El archivo se almacena en el bucket privado `socios-documentos` con el tipo `"contrato_socio"`.
+- **Notificación Dual (Email y Push):** La aprobación o rechazo de la solicitud genera ahora un registro de notificación dual (`IN_APP` y `PUSH`) persistido en `comun_notificacion.not_registro` además de la cola de correo.
+
 ## Pendiente
 
 - Gestión de casos judiciales (`trq_caso_judicial`).

@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { crearClienteServidor, crearClienteAdmin } from "@eco/supabase/servidor";
-import { obtenerPerfiles } from "@eco/identidad";
+import { obtenerPerfiles, obtenerPerfilActual } from "@eco/identidad";
 import nodemailer from "nodemailer";
 import { agregarCampanaServidor } from "../../app/api/notificaciones/almacen";
 import { esquemaSolicitudSocio, esquemaDecisionSolicitud, type DatosSolicitudSocio } from "./esquema";
@@ -295,17 +295,17 @@ export async function enviarSolicitudSocio(
 
 export async function registrarDocumentoSocio(
   solicitudId: string,
-  tipo: "foto_perfil" | "titulo" | "matricula" | "otro" | "respaldo_revision" | "cv",
+  tipo: "foto_perfil" | "titulo" | "matricula" | "otro" | "respaldo_revision" | "cv" | "contrato_socio",
   path: string,
   nombreArchivo: string,
   comentario?: string,
 ): Promise<Resultado> {
   const supabase = await crearClienteServidor();
-  const TIPOS_PERMITIDOS = ["foto_perfil", "titulo", "matricula", "cedula", "cv", "otro"];
+  const TIPOS_PERMITIDOS = ["foto_perfil", "titulo", "matricula", "cedula", "cv", "contrato_socio", "otro"];
   const tipoFinal = TIPOS_PERMITIDOS.includes(tipo) ? tipo : "otro";
 
-  // Si es un documento único (foto de perfil o título), eliminar el registro previo para evitar duplicidad
-  if (tipoFinal === "foto_perfil" || tipoFinal === "titulo") {
+  // Si es un documento único (foto de perfil, título o contrato firmado), eliminar el registro previo para evitar duplicidad
+  if (tipoFinal === "foto_perfil" || tipoFinal === "titulo" || tipoFinal === "contrato_socio") {
     try {
       await supabase
         .schema("tranqui_legal")
@@ -390,6 +390,14 @@ export async function decidirSolicitudSocio(datos: {
             not_titulo: tituloNotif,
             not_contenido_html: cuerpoHTML,
             not_creado_en: new Date().toISOString()
+          },
+          {
+            not_usuario_id: uApplicant.usu_id,
+            not_negocio: "TRANQ",
+            not_canal: "PUSH",
+            not_titulo: tituloNotif,
+            not_contenido_html: cuerpoHTML,
+            not_creado_en: new Date().toISOString()
           }
         ]);
 
@@ -469,4 +477,59 @@ export async function obtenerListaSolicitudesSociosAction(): Promise<Resultado<a
   }));
 
   return { ok: true, data: combinadas };
+}
+
+export async function obtenerPlantillaContrato(): Promise<Resultado<{ pct_titulo: string; pct_contenido: string }>> {
+  const supabase = await crearClienteServidor();
+  const { data, error } = await (supabase as any)
+    .schema("tranqui_legal")
+    .from("trq_plantilla_contrato")
+    .select("pct_titulo, pct_contenido")
+    .order("pct_creado_en", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) return { ok: false, error: error.message };
+  if (!data) {
+    const DEFAULT_TEMPLATE = `# CONTRATO DE PRESTACIÓN DE SERVICIOS PROFESIONALES Y SOCIEDAD\n\nPor medio del presente documento, se celebra el Contrato de Prestación de Servicios y Acreditación de Socio Abogado entre **tranqi** y el profesional **{{nombre_completo}}**, portador de la cédula de identidad Nro. **{{cedula}}**.\n\n## ANTECEDENTES Y OBJETO\nEl Socio Abogado declara ser un profesional del derecho debidamente registrado y verificado en la SENESCYT y el Foro de Abogados del Ecuador. tranqi provee al Socio Abogado de una cuenta digital para acceder a solicitudes de asesoría jurídica.\n\n## CLÁUSULAS\n1. **Confidencialidad:** Las partes se obligan a mantener absoluta confidencialidad sobre toda la información y casos de clientes tratados a través del portal.\n2. **Veracidad:** El Socio Abogado garantiza que toda la información académica y matrículas cargadas son reales y vigentes.\n3. **Firma:** El Socio Abogado acepta descargar este contrato, firmarlo de forma manuscrita o digital en formato PDF y subirlo al portal de tranqi.\n\nEn Quito, a la fecha de aceptación de la solicitud.`;
+    return { ok: true, data: { pct_titulo: "Contrato de Prestación de Servicios de Socio Abogado", pct_contenido: DEFAULT_TEMPLATE } };
+  }
+  return { ok: true, data: { pct_titulo: data.pct_titulo, pct_contenido: data.pct_contenido } };
+}
+
+export async function guardarPlantillaContrato(titulo: string, contenido: string): Promise<Resultado> {
+  const supabase = await crearClienteServidor();
+  
+  const perfil = await obtenerPerfilActual();
+  if (!perfil) return { ok: false, error: "Usuario no autenticado" };
+
+  const perfiles = await obtenerPerfiles("tranqi");
+  const esAdmin = Array.isArray(perfiles) && (perfiles.includes("ADMINISTRADOR") || perfiles.includes("SUPERADMIN") || perfiles.includes("OPERADOR"));
+  if (!esAdmin) return { ok: false, error: "No autorizado para configurar plantillas de contrato" };
+
+  const { data: existente } = await (supabase as any)
+    .schema("tranqui_legal")
+    .from("trq_plantilla_contrato")
+    .select("pct_id")
+    .limit(1)
+    .maybeSingle();
+
+  let error;
+  if (existente?.pct_id) {
+    const res = await (supabase as any)
+      .schema("tranqui_legal")
+      .from("trq_plantilla_contrato")
+      .update({ pct_titulo: titulo, pct_contenido: contenido, pct_actualizado_en: new Date().toISOString() })
+      .eq("pct_id", existente.pct_id);
+    error = res.error;
+  } else {
+    const res = await (supabase as any)
+      .schema("tranqui_legal")
+      .from("trq_plantilla_contrato")
+      .insert({ pct_titulo: titulo, pct_contenido: contenido });
+    error = res.error;
+  }
+
+  if (error) return { ok: false, error: error.message };
+  return { ok: true, data: undefined };
 }
