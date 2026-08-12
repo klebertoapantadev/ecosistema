@@ -314,15 +314,8 @@ export async function eliminarUsuarioSuperAdminAction(
       .rpc("seg_fn_superadmin_eliminar_usuario", { p_target_usuario_id: targetUsuarioId });
 
     if (rpcErr) {
-      // Fallback manual
-      await adminSupabase.schema("tranqui_legal").from("trq_solicitud_materia").delete().neq("sma_solicitud_id", "00000000-0000-0000-0000-000000000000");
-      await adminSupabase.schema("tranqui_legal").from("trq_solicitud_provincia").delete().neq("spr_solicitud_id", "00000000-0000-0000-0000-000000000000");
-      await adminSupabase.schema("tranqui_legal").from("trq_experiencia_laboral").delete().neq("exp_solicitud_id", "00000000-0000-0000-0000-000000000000");
-      await adminSupabase.schema("tranqui_legal").from("trq_solicitud_socio").delete().eq("ssc_usuario_id", targetUsuarioId);
-      await adminSupabase.schema("tranqui_legal").from("trq_abogado").delete().eq("abg_usuario_id", targetUsuarioId);
-      await adminSupabase.schema("comun_seguridad").from("seg_membresia_perfil").delete().neq("mpe_id", "00000000-0000-0000-0000-000000000000");
-      await adminSupabase.schema("comun_seguridad").from("seg_membresia").delete().eq("mem_usuario_id", targetUsuarioId);
-      await adminSupabase.schema("comun_seguridad").from("seg_usuario").delete().eq("usu_id", targetUsuarioId);
+      console.error("Error RPC seg_fn_superadmin_eliminar_usuario:", rpcErr);
+      return { ok: false, error: `Error en Base de Datos Supabase: ${rpcErr.message}` };
     }
   } catch (e: any) {
     return { ok: false, error: e?.message || "Error al eliminar usuario" };
@@ -377,10 +370,7 @@ export async function resetearSistemaSuperAdminAction(): Promise<Resultado> {
 
     if (rpcErr) {
       console.error("Error RPC seg_fn_superadmin_resetear_sistema:", rpcErr);
-      const { error: fallbackErr } = await adminSupabase.schema("comun_seguridad").from("seg_usuario").delete().neq("usu_correo", "kleber.toapanta.ch@gmail.com");
-      if (fallbackErr) {
-        return { ok: false, error: `Error en RPC Reset: ${rpcErr.message}` };
-      }
+      return { ok: false, error: `Error en Base de Datos Supabase: ${rpcErr.message}` };
     }
   } catch (e: any) {
     return { ok: false, error: e?.message || "Error al resetear el sistema" };
