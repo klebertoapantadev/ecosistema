@@ -57,14 +57,15 @@ async function notificarSolicitudEnviada(
       }
     ]);
 
-    // 2.b. Notificar in-app a TODOS los SuperAdmins y Administradores de negocio
-    const { data: admins } = await adminSupabase
+    // 2.b. Notificar in-app a TODOS los Operadores, Administradores y SuperAdmins
+    const { data: todosUsuarios } = await adminSupabase
       .schema("comun_seguridad")
       .from("seg_usuario")
-      .select("usu_id, usu_correo")
-      .or("usu_superadmin_plataforma.eq.true");
+      .select("usu_id, usu_correo, usu_superadmin_plataforma");
 
-    if (admins && admins.length > 0) {
+    let correosAdmins: string[] = [];
+
+    if (todosUsuarios && todosUsuarios.length > 0) {
       const tituloAdmin = esActualizacion
         ? `✏️ Solicitud de Socio Actualizada por ${nombreUsuario}`
         : `📢 Nueva Solicitud de Socio Abogado de ${nombreUsuario}`;
@@ -77,7 +78,10 @@ async function notificarSolicitudEnviada(
         </div>
       `;
 
-      const notifsAdmins = admins.map((adm) => ({
+      const destinatariosAdmin = todosUsuarios.filter(adm => adm.usu_id !== u.usu_id);
+      correosAdmins = destinatariosAdmin.map(adm => adm.usu_correo).filter(Boolean);
+
+      const notifsAdmins = destinatariosAdmin.map((adm) => ({
         not_usuario_id: adm.usu_id,
         not_negocio: "TRANQ",
         not_canal: "IN_APP",
@@ -86,8 +90,10 @@ async function notificarSolicitudEnviada(
         not_creado_en: new Date().toISOString()
       }));
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await (adminSupabase as any).schema("comun_notificaciones").from("not_registro").insert(notifsAdmins);
+      if (notifsAdmins.length > 0) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await (adminSupabase as any).schema("comun_notificaciones").from("not_registro").insert(notifsAdmins);
+      }
     }
 
     // 3. Enviar correo SMTP real si están configuradas las variables de entorno
@@ -130,8 +136,8 @@ async function notificarSolicitudEnviada(
       procesoOrigen: esActualizacion ? "PLT-019 Actualización de Solicitud de Socio Abogado" : "PLT-019 Registro de Solicitud de Socio Abogado",
       audiencia: `USUARIO (${u.usu_correo}) & SUPERADMINS`,
       canales: ["IN_APP", "EMAIL", "PUSH"],
-      destinatariosDetalle: [u.usu_correo, ...(admins?.map(a => a.usu_correo) || [])],
-      enviados: 1 + (admins?.length || 0),
+      destinatariosDetalle: [u.usu_correo, ...correosAdmins],
+      enviados: 1 + correosAdmins.length,
       leidos: 0,
       ignorados: 0,
       fecha: new Date().toISOString(),

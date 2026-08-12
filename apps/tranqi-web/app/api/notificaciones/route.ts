@@ -69,9 +69,9 @@ function interpolarVariables(
 export async function GET() {
   const perfil = await obtenerPerfilActual();
   const perfiles = await obtenerPerfiles("tranqi");
-  const esAdmin = Boolean(perfil?.usu_superadmin_plataforma) || perfiles.includes("ADMINISTRADOR");
+  const esAutorizado = Boolean(perfil?.usu_superadmin_plataforma) || perfiles.includes("ADMINISTRADOR") || perfiles.includes("OPERADOR");
 
-  if (!esAdmin) {
+  if (!esAutorizado) {
     return NextResponse.json({ error: "Acceso Denegado" }, { status: 403 });
   }
 

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { BarChart2, RefreshCw, Eye, Search, Filter, Mail, Bell, Smartphone, MessageSquare, X, Users, CheckCircle, ShieldCheck } from "lucide-react";
+import { BarChart2, RefreshCw, Eye, Search, Filter, X } from "lucide-react";
 
 export interface CampanaBitacora {
   id: string;
@@ -27,7 +27,7 @@ interface Props {
   negocio?: string;
 }
 
-export function BitacoraNotificacionesWidget({ negocio = "tranqi" }: Props) {
+export function BitacoraNotificacionesWidget({ negocio = "TRANQ" }: Props) {
   const [campanas, setCampanas] = useState<CampanaBitacora[]>([]);
   const [cargando, setCargando] = useState(true);
   const [busqueda, setBusqueda] = useState("");
@@ -43,13 +43,13 @@ export function BitacoraNotificacionesWidget({ negocio = "tranqi" }: Props) {
           setCampanas(data.campanas);
         }
       })
-      .catch(() => {})
+      .catch((err) => console.error("Error al obtener bitácora de notificaciones:", err))
       .finally(() => setCargando(false));
   };
 
   useEffect(() => {
     cargarBitacora();
-  }, []);
+  }, [negocio]);
 
   const campanasFiltradas = campanas.filter((c) => {
     const coincideTexto =
@@ -66,15 +66,15 @@ export function BitacoraNotificacionesWidget({ negocio = "tranqi" }: Props) {
   });
 
   return (
-    <div className="tarjeta-seccion" style={{ width: "100%", padding: "20px" }}>
-      {/* CABECERA CON ACCIONES DE FILTRADO */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px", marginBottom: "16px" }}>
+    <div style={{ background: "#ffffff", borderRadius: "16px", border: "1px solid #E4E4E4", padding: "24px", width: "100%" }}>
+      {/* CABECERA WIDGET INDEPENDIENTE BITÁCORA */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px", marginBottom: "16px", borderBottom: "1px solid #F1F5F9", paddingBottom: "16px" }}>
         <div>
-          <h2 style={{ fontSize: "1.1rem", fontWeight: 800, margin: 0, color: "#0F172A", display: "flex", alignItems: "center", gap: "8px" }}>
-            <BarChart2 size={20} color="#2563EB" /> 📊 Bitácora & Historial de Notificaciones Emitidas ({negocio.toUpperCase()})
+          <h2 style={{ fontSize: "1.2rem", fontWeight: 900, margin: 0, color: "#0F172A", display: "flex", alignItems: "center", gap: "8px" }}>
+            <BarChart2 size={22} color="#2563EB" /> 📊 Bitácora & Historial de Notificaciones Emitidas ({negocio})
           </h2>
-          <p style={{ fontSize: "0.8rem", color: "#64748B", margin: "2px 0 0 0" }}>
-            Registro auditado en tiempo real de notificaciones multicanal (In-App, Push, Email y WhatsApp).
+          <p style={{ fontSize: "0.82rem", color: "#64748B", margin: "2px 0 0 0" }}>
+            Consulta auditada en tiempo real para Operadores y Administradores. Detalle completo de notificaciones y destinatarios.
           </p>
         </div>
 
@@ -85,8 +85,8 @@ export function BitacoraNotificacionesWidget({ negocio = "tranqi" }: Props) {
             background: "#F1F5F9",
             border: "1px solid #CBD5E1",
             color: "#334155",
-            padding: "8px 14px",
-            borderRadius: "8px",
+            padding: "8px 16px",
+            borderRadius: "20px",
             fontSize: "0.82rem",
             fontWeight: 700,
             cursor: "pointer",
@@ -95,7 +95,7 @@ export function BitacoraNotificacionesWidget({ negocio = "tranqi" }: Props) {
             gap: "6px",
           }}
         >
-          <RefreshCw size={14} /> Actualizar
+          <RefreshCw size={14} /> Actualizar Bitácora
         </button>
       </div>
 
@@ -107,7 +107,7 @@ export function BitacoraNotificacionesWidget({ negocio = "tranqi" }: Props) {
             type="text"
             value={busqueda}
             onChange={(e) => setBusqueda(e.target.value)}
-            placeholder="Buscar en asunto, emisor o proceso..."
+            placeholder="Buscar por asunto, emisor o proceso..."
             style={{ width: "100%", border: "none", background: "transparent", outline: "none", fontSize: "0.85rem", color: "#1E293B" }}
           />
         </div>
@@ -131,18 +131,19 @@ export function BitacoraNotificacionesWidget({ negocio = "tranqi" }: Props) {
       {/* TABLA DATAGRID BITÁCORA */}
       {cargando ? (
         <div style={{ padding: "40px", textAlign: "center", color: "#64748B" }}>
-          Cargando bitácora de notificaciones...
+          Cargando bitácora de notificaciones auditadas...
         </div>
       ) : campanasFiltradas.length === 0 ? (
         <div style={{ padding: "40px", textAlign: "center", background: "#F8FAFC", borderRadius: "12px", border: "1px dashed #CBD5E1" }}>
           <BarChart2 style={{ width: 40, height: 40, color: "#94A3B8", margin: "0 auto 12px", display: "block" }} />
-          <p style={{ margin: 0, fontWeight: 700, color: "#475569" }}>No se encontraron notificaciones en la bitácora.</p>
+          <p style={{ margin: 0, fontWeight: 700, color: "#475569" }}>No se encontraron registros de notificaciones en la bitácora.</p>
         </div>
       ) : (
         <div className="tabla-panel-envoltura">
           <table className="tabla-panel" style={{ width: "100%", fontSize: "0.85rem" }}>
             <thead>
               <tr style={{ background: "#F8FAFC", textAlign: "left" }}>
+                <th style={{ padding: "10px 12px" }}>Tipo</th>
                 <th style={{ padding: "10px 12px" }}>Emisor (Quién lo Envió)</th>
                 <th style={{ padding: "10px 12px" }}>Proceso / Origen</th>
                 <th style={{ padding: "10px 12px" }}>Asunto / Contenido</th>
@@ -155,6 +156,11 @@ export function BitacoraNotificacionesWidget({ negocio = "tranqi" }: Props) {
             <tbody>
               {campanasFiltradas.map((c) => (
                 <tr key={c.id} style={{ borderBottom: "1px solid #F1F5F9" }}>
+                  <td style={{ padding: "12px" }}>
+                    <span style={{ padding: "3px 8px", borderRadius: "12px", fontSize: "0.7rem", fontWeight: 800, background: c.tipoEmision === "MANUAL" ? "#DBEAFE" : "#FEF3C7", color: c.tipoEmision === "MANUAL" ? "#1E40AF" : "#92400E" }}>
+                      {c.tipoEmision}
+                    </span>
+                  </td>
                   <td style={{ padding: "12px" }}>
                     <strong style={{ display: "block", color: "#0F172A" }}>{c.emisorNombre}</strong>
                     <span style={{ fontSize: "0.74rem", color: "#64748B" }}>{c.emisorCorreo}</span>
@@ -291,6 +297,17 @@ export function BitacoraNotificacionesWidget({ negocio = "tranqi" }: Props) {
                   style={{ marginTop: "6px", padding: "16px", background: "#ffffff", border: "1px solid #E2E8F0", borderRadius: "10px", lineHeight: 1.6 }}
                   dangerouslySetInnerHTML={{ __html: campanaSeleccionada.contenidoHTML || campanaSeleccionada.asunto }}
                 />
+              </div>
+
+              <div>
+                <span style={{ fontSize: "0.72rem", color: "#64748B", fontWeight: 800, textTransform: "uppercase" }}>Destinatarios Auditados ({campanaSeleccionada.destinatariosDetalle?.length || campanaSeleccionada.enviados})</span>
+                <div style={{ background: "#F8FAFC", border: "1px solid #E2E8F0", borderRadius: "10px", padding: "10px", marginTop: "6px", maxHeight: "120px", overflowY: "auto" }}>
+                  {(campanaSeleccionada.destinatariosDetalle || [campanaSeleccionada.emisorCorreo]).map((email, idx) => (
+                    <div key={idx} style={{ fontSize: "0.8rem", color: "#0F172A", fontWeight: 600, padding: "3px 0", borderBottom: idx < (campanaSeleccionada.destinatariosDetalle?.length || 1) - 1 ? "1px dashed #E2E8F0" : "none" }}>
+                      • {email}
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
 

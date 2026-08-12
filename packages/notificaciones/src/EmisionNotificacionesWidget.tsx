@@ -1,38 +1,17 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
-  Send, Users, Shield, User, Mail, Bell, Smartphone, MessageSquare,
+  Send, Users, Mail, Bell, Smartphone, MessageSquare,
   Bold, Italic, Underline, List, Link as LinkIcon, Code, Eye, FileText,
-  CheckCircle, RefreshCw, BarChart2, Cpu, UserCheck, AlertTriangle, X, Search, Filter
+  CheckCircle, Shield
 } from "lucide-react";
-
-interface CampanaBitacora {
-  id: string;
-  asunto: string;
-  contenidoHTML?: string;
-  contenidoMarkdown?: string;
-  tipoEmision: "MANUAL" | "AUTOMATICA";
-  emisorNombre: string;
-  emisorCorreo: string;
-  emisorId?: string;
-  procesoOrigen: string;
-  audiencia: string;
-  canales: string[];
-  destinatariosDetalle?: string[];
-  enviados: number;
-  leidos: number;
-  ignorados: number;
-  fecha: string;
-  correoEnviadoReal?: boolean;
-}
 
 interface Props {
   negocio: string;
 }
 
 export function EmisionNotificacionesWidget({ negocio }: Props) {
-  const [tabPrincipal, setTabPrincipal] = useState<"redaccion" | "historial">("redaccion");
   const [tabEditor, setTabEditor] = useState<"wysiwyg" | "markdown" | "preview">("wysiwyg");
 
   // Campos de formulario
@@ -57,239 +36,114 @@ export function EmisionNotificacionesWidget({ negocio }: Props) {
   const [enviando, setEnviando] = useState(false);
   const [toastMsg, setToastMsg] = useState<{ tipo: "exito" | "error"; texto: string } | null>(null);
 
-  // Estado para la campaña seleccionada en el modal de detalle
-  const [campanaSeleccionada, setCampanaSeleccionada] = useState<CampanaBitacora | null>(null);
-  const [busquedaBitacora, setBusquedaBitacora] = useState("");
-
-  // Bitácora real obtenida mediante API HTTP /api/notificaciones
-  const [campanas, setCampanas] = useState<CampanaBitacora[]>([
-    {
-      id: "cmp-001",
-      asunto: "Actualización de Términos y Condiciones 2026",
-      contenidoHTML: "<p>Estimado/a usuario/a,<br/><br/>Te informamos que hemos actualizado los Términos y Condiciones de uso de la plataforma tranqi 2026 para incluir la gestión multi-perfil y protección de identidad.</p>",
-      tipoEmision: "MANUAL",
-      emisorNombre: "Kleber Toapanta",
-      emisorCorreo: "kleber.toapanta.ch@gmail.com",
-      procesoOrigen: "Consola de Emisión de Notificaciones",
-      audiencia: "TODOS",
-      canales: ["IN_APP", "EMAIL"],
-      destinatariosDetalle: ["kleber.toapanta.ch@gmail.com"],
-      enviados: 1,
-      leidos: 1,
-      ignorados: 0,
-      fecha: new Intl.DateTimeFormat("en-CA", {
-        year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "America/Guayaquil"
-      }).format(new Date(Date.now() - 86400000)).replace(",", "")
-    },
-    {
-      id: "cmp-002",
-      asunto: "Alerta de Seguridad: Inicio de Sesión desde Nuevo Dispositivo",
-      contenidoHTML: "<p>Se ha detectado un inicio de sesión inusual desde un navegador o dirección IP no reconocida. Si no fuiste tú, por favor cambia tu contraseña inmediatamente.</p>",
-      tipoEmision: "AUTOMATICA",
-      emisorNombre: "Sistema Autónomo Ecosistema",
-      emisorCorreo: "seguridad@tranqi24.com",
-      procesoOrigen: "PLT-018 Alerta de Login Inusual en Dispositivo Desconocido",
-      audiencia: "POR_ROL (ABOGADO, ADMINISTRADOR)",
-      canales: ["IN_APP", "EMAIL", "PUSH"],
-      destinatariosDetalle: ["kleber.toapanta.ch@gmail.com"],
-      enviados: 1,
-      leidos: 1,
-      ignorados: 0,
-      fecha: new Intl.DateTimeFormat("en-CA", {
-        year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "America/Guayaquil"
-      }).format(new Date(Date.now() - 43200000)).replace(",", "")
+  // Alternar selección de rol
+  const toggleRol = (rol: string) => {
+    if (rolesSeleccionados.includes(rol)) {
+      setRolesSeleccionados(rolesSeleccionados.filter(r => r !== rol));
+    } else {
+      setRolesSeleccionados([...rolesSeleccionados, rol]);
     }
-  ]);
-
-  // Cargar bitácora desde la API al montar
-  useEffect(() => {
-    fetch("/api/notificaciones")
-      .then(res => res.json())
-      .then(data => {
-        if (data.success && Array.isArray(data.campanas) && data.campanas.length > 0) {
-          setCampanas(data.campanas);
-        }
-      })
-      .catch(() => {});
-  }, []);
-
-  const toggleRol = (rolKey: string) => {
-    setRolesSeleccionados(prev =>
-      prev.includes(rolKey) ? prev.filter(r => r !== rolKey) : [...prev, rolKey]
-    );
   };
 
-  const inyectarVariable = (variable: string) => {
-    setContenidoHTML(prev => prev + ` ${variable} `);
-    setContenidoMarkdown(prev => prev + ` ${variable} `);
+  // Alternar canales de despacho
+  const toggleCanal = (canalKey: keyof typeof canales) => {
+    setCanales(prev => ({ ...prev, [canalKey]: !prev[canalKey] }));
   };
 
-  // Enviar notificación haciendo llamada HTTP POST real a /api/notificaciones y disparando Push de navegador
-  const ejecutarEnvio = async () => {
+  // Insertar formato en HTML/Markdown
+  const aplicarFormato = (etiquetaHtml: string, sintaxisMd: string) => {
+    if (tabEditor === "wysiwyg") {
+      setContenidoHTML(prev => prev + `<${etiquetaHtml}>Texto formateado</${etiquetaHtml}>`);
+    } else {
+      setContenidoMarkdown(prev => prev + `${sintaxisMd}Texto formateado${sintaxisMd}`);
+    }
+  };
+
+  // Enviar notificación haciendo llamada HTTP POST a /api/notificaciones
+  const handleEnviarNotificacion = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setToastMsg(null);
+
     if (!asunto.trim()) {
-      setToastMsg({ tipo: "error", texto: "Por favor ingresa el asunto de la notificación" });
+      setToastMsg({ tipo: "error", texto: "⚠️ El asunto es obligatorio para emitir la notificación." });
       return;
     }
 
     setEnviando(true);
-    setToastMsg(null);
-
-    // Disparar Notificación Push Real en pantalla de Escritorio / Navegador (Web Push API)
-    if (typeof window !== "undefined" && "Notification" in window && (canales.push || canales.inApp)) {
-      const textoLimpio = contenidoHTML.replace(/<[^>]*>?/gm, "").slice(0, 120);
-      if (Notification.permission === "granted") {
-        try {
-          new Notification(asunto.trim(), { body: textoLimpio, icon: "/favicon.ico" });
-        } catch { /* Ignorar */ }
-      } else if (Notification.permission !== "denied") {
-        Notification.requestPermission().then(permission => {
-          if (permission === "granted") {
-            try {
-              new Notification(asunto.trim(), { body: textoLimpio, icon: "/favicon.ico" });
-            } catch { /* Ignorar */ }
-          }
-        });
-      }
-    }
 
     try {
+      const payload = {
+        negocio,
+        asunto: asunto.trim(),
+        tipoAudiencia,
+        roles: rolesSeleccionados,
+        usuarios: filtroUsuarios.trim(),
+        canales,
+        contenidoHTML,
+        contenidoMarkdown
+      };
+
       const res = await fetch("/api/notificaciones", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          negocio,
-          asunto: asunto.trim(),
-          tipoAudiencia,
-          roles: rolesSeleccionados,
-          usuarios: filtroUsuarios,
-          canales,
-          contenidoHTML,
-          contenidoMarkdown
-        })
+        body: JSON.stringify(payload)
       });
 
       const data = await res.json();
 
-      if (data.success && data.campana) {
-        setCampanas(prev => [data.campana, ...prev]);
-        setToastMsg({
-          tipo: "exito",
-          texto: `✅ ${data.mensaje || "Notificación multicanal emitida y registrada en la bitácora"}`
-        });
-        setAsunto("Notificación Importante del Sistema");
-      } else {
-        setToastMsg({ tipo: "error", texto: data.error || "Error al despachar notificación" });
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || "Ocurrió un error al despachar la notificación.");
       }
-    } catch {
-      const fechaEcuador = new Intl.DateTimeFormat("en-CA", {
-        year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "America/Guayaquil"
-      }).format(new Date()).replace(",", "");
 
-      const nuevaCampana: CampanaBitacora = {
-        id: "cmp-" + Date.now().toString().slice(-4),
-        asunto: asunto.trim(),
-        contenidoHTML,
-        contenidoMarkdown,
-        tipoEmision: "MANUAL",
-        emisorNombre: "Administrador Actual",
-        emisorCorreo: "admin@tranqi24.com",
-        procesoOrigen: "Consola de Emisión de Notificaciones",
-        audiencia: tipoAudiencia === "POR_ROL" ? `POR_ROL (${rolesSeleccionados.join(", ")})` : tipoAudiencia,
-        canales: Object.keys(canales).filter(k => canales[k as keyof typeof canales]).map(k => k.toUpperCase()),
-        destinatariosDetalle: filtroUsuarios ? [filtroUsuarios] : ["kleber.toapanta.ch@gmail.com"],
-        enviados: 1,
-        leidos: 0,
-        ignorados: 1,
-        fecha: fechaEcuador
-      };
-      setCampanas(prev => [nuevaCampana, ...prev]);
-      setToastMsg({ tipo: "exito", texto: "✅ Notificación procesada y registrada en la bitácora" });
+      setToastMsg({
+        tipo: "exito",
+        texto: `🎉 ${data.mensaje || "Notificación emitida con éxito a los destinatarios."}`
+      });
+
+      // Disparar Web Push Notification nativa en el navegador
+      if ("Notification" in window && Notification.permission === "granted") {
+        try {
+          new Notification(asunto, {
+            body: contenidoHTML.replace(/<[^>]*>?/gm, "").slice(0, 100),
+            icon: "/favicon.ico"
+          });
+        } catch {
+          /* Ignorar */
+        }
+      }
+
+      // Reiniciar formulario
+      setAsunto("");
+
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Error al conectar con la API de notificaciones.";
+      setToastMsg({ tipo: "error", texto: `❌ ${msg}` });
     } finally {
       setEnviando(false);
-      setTimeout(() => setToastMsg(null), 8000);
     }
   };
 
-  const campanasFiltradas = campanas.filter(c => {
-    if (!busquedaBitacora) return true;
-    const q = busquedaBitacora.toLowerCase();
-    return (
-      c.asunto.toLowerCase().includes(q) ||
-      c.emisorNombre.toLowerCase().includes(q) ||
-      c.emisorCorreo.toLowerCase().includes(q) ||
-      c.audiencia.toLowerCase().includes(q) ||
-      (c.destinatariosDetalle || []).some(d => d.toLowerCase().includes(q))
-    );
-  });
-
   return (
-    <div style={{ width: "100%", boxSizing: "border-box" }}>
-      {/* Banner Superior con Identificador de Negocio */}
-      <div style={{ background: "linear-gradient(135deg, #18002E 0%, #2A085C 100%)", borderRadius: "16px", padding: "20px 24px", color: "#ffffff", marginBottom: "16px", boxShadow: "0 4px 20px rgba(0,0,0,0.15)" }}>
+    <div style={{ background: "#ffffff", borderRadius: "16px", border: "1px solid #E4E4E4", padding: "24px", width: "100%" }}>
+      {/* CABECERA HERO MOTOR DE NOTIFICACIONES */}
+      <section className="tarjeta-proteccion" style={{ background: "linear-gradient(135deg, #1e1b4b 0%, #312e81 100%)", color: "#ffffff", marginBottom: "20px", padding: "20px", borderRadius: "14px" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px" }}>
           <div>
-            <span style={{ fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: "1px", opacity: 0.8, fontWeight: 700 }}>
-              Consola Transversal de Gobernanza
+            <span style={{ fontSize: "0.72rem", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.08em", color: "#a5b4fc" }}>
+              CONSOLA TRANSVERSAL DE GOBERNANZA
             </span>
-            <h1 style={{ fontSize: "1.4rem", margin: "4px 0", fontWeight: 800, color: "#ffffff" }}>
-              Motor de Emisión de Notificaciones ({negocio})
-            </h1>
-            <p style={{ margin: 0, fontSize: "0.82rem", opacity: 0.9 }}>
-              Despacho multicanal (In-App, Push, Email y WhatsApp propuesta) con Editor WYSIWYG / Markdown y Bitácora de Auditoría.
+            <h2 style={{ fontSize: "1.2rem", fontWeight: 900, margin: "4px 0", color: "#ffffff" }}>
+              ✈️ Redacción & Despacho de Notificaciones Multicanal ({negocio})
+            </h2>
+            <p style={{ fontSize: "0.82rem", color: "#c7d2fe", margin: 0 }}>
+              Emisión de notificaciones multicanal (In-App, Push, Email y WhatsApp) con editor WYSIWYG / Markdown.
             </p>
           </div>
+          <span style={{ background: "rgba(255,255,255,0.15)", color: "#ffffff", padding: "6px 14px", borderRadius: "20px", fontSize: "0.78rem", fontWeight: 800, display: "inline-flex", alignItems: "center", gap: "6px" }}>
+            <Shield size={14} /> Emisión Autorizada
+          </span>
         </div>
-      </div>
-
-      {/* Pestañas Principales Visibles y Destacadas */}
-      <div style={{ display: "flex", gap: "10px", marginBottom: "20px", background: "#f1f5f9", padding: "6px", borderRadius: "10px", border: "1px solid #cbd5e1" }}>
-        <button
-          type="button"
-          onClick={() => setTabPrincipal("redaccion")}
-          style={{
-            flex: 1,
-            background: tabPrincipal === "redaccion" ? "#2563eb" : "transparent",
-            color: tabPrincipal === "redaccion" ? "#ffffff" : "#475569",
-            border: "none",
-            borderRadius: "8px",
-            padding: "10px 16px",
-            fontSize: "0.88rem",
-            fontWeight: 800,
-            cursor: "pointer",
-            display: "inline-flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: "8px",
-            boxShadow: tabPrincipal === "redaccion" ? "0 2px 6px rgba(37,99,235,0.2)" : "none",
-            transition: "all 0.2s ease"
-          }}
-        >
-          <Send size={16} /> ✈️ Redacción & Despacho
-        </button>
-        <button
-          type="button"
-          onClick={() => setTabPrincipal("historial")}
-          style={{
-            flex: 1,
-            background: tabPrincipal === "historial" ? "#2563eb" : "transparent",
-            color: tabPrincipal === "historial" ? "#ffffff" : "#475569",
-            border: "none",
-            borderRadius: "8px",
-            padding: "10px 16px",
-            fontSize: "0.88rem",
-            fontWeight: 800,
-            cursor: "pointer",
-            display: "inline-flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: "8px",
-            boxShadow: tabPrincipal === "historial" ? "0 2px 6px rgba(37,99,235,0.2)" : "none",
-            transition: "all 0.2s ease"
-          }}
-        >
-          <BarChart2 size={16} /> 📊 Bitácora & Historial de Notificaciones ({campanas.length})
-        </button>
-      </div>
+      </section>
 
       {/* Toast Notificación Resultante */}
       {toastMsg && (
@@ -309,25 +163,25 @@ export function EmisionNotificacionesWidget({ negocio }: Props) {
         </div>
       )}
 
-      {/* VISTA 1: EDITOR DE REDACCIÓN Y SELECCIÓN MULTICANAL */}
-      {tabPrincipal === "redaccion" && (
+      {/* EDITOR DE REDACCIÓN Y SELECCIÓN MULTICANAL */}
+      <form onSubmit={handleEnviarNotificacion}>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: "20px" }}>
           {/* Columna Izquierda: Audiencia y Canales */}
           <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-            {/* Box 1: Segmentación de Audiencia */}
-            <section className="tarjeta-seccion">
-              <h2 style={{ fontSize: "0.95rem", color: "#1e293b", margin: "0 0 12px 0", display: "flex", alignItems: "center", gap: "6px" }}>
+            {/* Segmentación de Audiencia */}
+            <section className="tarjeta-seccion" style={{ padding: "16px", background: "#f8fafc", borderRadius: "12px", border: "1px solid #e2e8f0" }}>
+              <h3 style={{ fontSize: "0.92rem", fontWeight: 800, color: "#1e293b", margin: "0 0 12px 0", display: "flex", alignItems: "center", gap: "6px" }}>
                 <Users size={18} color="#4f46e5" /> 1. Segmentación de Audiencia ({negocio})
-              </h2>
+              </h3>
 
               <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "8px", marginBottom: "12px" }}>
                 <button
                   type="button"
                   onClick={() => setTipoAudiencia("TODOS")}
                   style={{
-                    background: tipoAudiencia === "TODOS" ? "#2563eb" : "#f1f5f9",
+                    background: tipoAudiencia === "TODOS" ? "#2563eb" : "#ffffff",
                     color: tipoAudiencia === "TODOS" ? "#ffffff" : "#475569",
-                    border: "none",
+                    border: "1px solid #cbd5e1",
                     borderRadius: "6px",
                     padding: "8px 4px",
                     fontSize: "0.76rem",
@@ -342,9 +196,9 @@ export function EmisionNotificacionesWidget({ negocio }: Props) {
                   type="button"
                   onClick={() => setTipoAudiencia("POR_ROL")}
                   style={{
-                    background: tipoAudiencia === "POR_ROL" ? "#2563eb" : "#f1f5f9",
+                    background: tipoAudiencia === "POR_ROL" ? "#2563eb" : "#ffffff",
                     color: tipoAudiencia === "POR_ROL" ? "#ffffff" : "#475569",
-                    border: "none",
+                    border: "1px solid #cbd5e1",
                     borderRadius: "6px",
                     padding: "8px 4px",
                     fontSize: "0.76rem",
@@ -359,9 +213,9 @@ export function EmisionNotificacionesWidget({ negocio }: Props) {
                   type="button"
                   onClick={() => setTipoAudiencia("POR_USUARIOS")}
                   style={{
-                    background: tipoAudiencia === "POR_USUARIOS" ? "#2563eb" : "#f1f5f9",
+                    background: tipoAudiencia === "POR_USUARIOS" ? "#2563eb" : "#ffffff",
                     color: tipoAudiencia === "POR_USUARIOS" ? "#ffffff" : "#475569",
-                    border: "none",
+                    border: "1px solid #cbd5e1",
                     borderRadius: "6px",
                     padding: "8px 4px",
                     fontSize: "0.76rem",
@@ -370,36 +224,19 @@ export function EmisionNotificacionesWidget({ negocio }: Props) {
                     textAlign: "center"
                   }}
                 >
-                  Por Usuario
+                  Filtro Específico
                 </button>
               </div>
 
               {tipoAudiencia === "POR_ROL" && (
-                <div style={{ background: "#f8fafc", padding: "10px", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
-                  <span style={{ fontSize: "0.75rem", color: "#64748b", display: "block", marginBottom: "6px", fontWeight: 600 }}>
-                    Selecciona los roles que recibirán la notificación:
+                <div style={{ background: "#ffffff", padding: "10px", borderRadius: "6px", border: "1px solid #e2e8f0" }}>
+                  <span style={{ fontSize: "0.75rem", color: "#64748b", fontWeight: 700, display: "block", marginBottom: "6px" }}>
+                    Selecciona los Roles Destinatarios:
                   </span>
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
-                    {["CLIENTE", "ABOGADO", "ADMINISTRADOR", "OPERADOR", "TECNICO", "SUPERADMIN"].map(r => (
-                      <label
-                        key={r}
-                        style={{
-                          fontSize: "0.75rem",
-                          background: rolesSeleccionados.includes(r) ? "#dbeafe" : "#ffffff",
-                          color: rolesSeleccionados.includes(r) ? "#1e40af" : "#475569",
-                          border: `1px solid ${rolesSeleccionados.includes(r) ? "#93c5fd" : "#cbd5e1"}`,
-                          borderRadius: "4px",
-                          padding: "4px 8px",
-                          cursor: "pointer",
-                          fontWeight: 600
-                        }}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={rolesSeleccionados.includes(r)}
-                          onChange={() => toggleRol(r)}
-                          style={{ marginRight: "4px" }}
-                        />
+                  <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+                    {["CLIENTE", "ABOGADO", "OPERADOR", "ADMINISTRADOR", "SUPERADMIN"].map(r => (
+                      <label key={r} style={{ fontSize: "0.74rem", fontWeight: 700, display: "inline-flex", alignItems: "center", gap: "4px", cursor: "pointer", background: rolesSeleccionados.includes(r) ? "#dbeafe" : "#f1f5f9", padding: "4px 8px", borderRadius: "4px" }}>
+                        <input type="checkbox" checked={rolesSeleccionados.includes(r)} onChange={() => toggleRol(r)} />
                         {r}
                       </label>
                     ))}
@@ -408,128 +245,159 @@ export function EmisionNotificacionesWidget({ negocio }: Props) {
               )}
 
               {tipoAudiencia === "POR_USUARIOS" && (
-                <div style={{ background: "#f8fafc", padding: "10px", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
-                  <span style={{ fontSize: "0.75rem", color: "#64748b", display: "block", marginBottom: "4px", fontWeight: 600 }}>
-                    Correos o IDs de usuarios separados por comas:
-                  </span>
+                <div>
                   <input
                     type="text"
                     value={filtroUsuarios}
                     onChange={e => setFiltroUsuarios(e.target.value)}
-                    placeholder="usuario1@ejemplo.com, usuario2@ejemplo.com"
-                    style={{ width: "100%", padding: "6px 10px", fontSize: "0.8rem", borderRadius: "6px", border: "1px solid #cbd5e1" }}
+                    placeholder="Escribe correos o nombres separados por coma..."
+                    style={{ width: "100%", padding: "8px 10px", fontSize: "0.8rem", borderRadius: "6px", border: "1px solid #cbd5e1" }}
                   />
                 </div>
               )}
             </section>
 
-            {/* Box 2: Selección Multicanal */}
-            <section className="tarjeta-seccion">
-              <h2 style={{ fontSize: "0.95rem", color: "#1e293b", margin: "0 0 12px 0", display: "flex", alignItems: "center", gap: "6px" }}>
-                <Send size={18} color="#2563eb" /> 2. Selección de Canales de Envío Simultáneos
-              </h2>
+            {/* Canales Multicanal */}
+            <section className="tarjeta-seccion" style={{ padding: "16px", background: "#f8fafc", borderRadius: "12px", border: "1px solid #e2e8f0" }}>
+              <h3 style={{ fontSize: "0.92rem", fontWeight: 800, color: "#1e293b", margin: "0 0 12px 0", display: "flex", alignItems: "center", gap: "6px" }}>
+                <Bell size={18} color="#2563eb" /> 2. Canales de Despacho
+              </h3>
 
               <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "8px" }}>
-                <label style={{ display: "flex", alignItems: "center", gap: "8px", background: "#f8fafc", padding: "8px 10px", borderRadius: "6px", border: "1px solid #e2e8f0", fontSize: "0.8rem", cursor: "pointer", fontWeight: 600 }}>
-                  <input type="checkbox" checked={canales.inApp} onChange={e => setCanales({ ...canales, inApp: e.target.checked })} />
-                  <Bell size={15} color="#2563eb" /> In-App (Campana)
+                <label style={{ display: "flex", alignItems: "center", gap: "8px", padding: "8px", background: "#ffffff", borderRadius: "6px", border: "1px solid #cbd5e1", cursor: "pointer" }}>
+                  <input type="checkbox" checked={canales.inApp} onChange={() => toggleCanal("inApp")} />
+                  <Bell size={16} color="#2563eb" />
+                  <span style={{ fontSize: "0.8rem", fontWeight: 700 }}>In-App Banner</span>
                 </label>
 
-                <label style={{ display: "flex", alignItems: "center", gap: "8px", background: "#f8fafc", padding: "8px 10px", borderRadius: "6px", border: "1px solid #e2e8f0", fontSize: "0.8rem", cursor: "pointer", fontWeight: 600 }}>
-                  <input type="checkbox" checked={canales.email} onChange={e => setCanales({ ...canales, email: e.target.checked })} />
-                  <Mail size={15} color="#16a34a" /> Email Responsive
+                <label style={{ display: "flex", alignItems: "center", gap: "8px", padding: "8px", background: "#ffffff", borderRadius: "6px", border: "1px solid #cbd5e1", cursor: "pointer" }}>
+                  <input type="checkbox" checked={canales.email} onChange={() => toggleCanal("email")} />
+                  <Mail size={16} color="#4f46e5" />
+                  <span style={{ fontSize: "0.8rem", fontWeight: 700 }}>Correo Email</span>
                 </label>
 
-                <label style={{ display: "flex", alignItems: "center", gap: "8px", background: "#f8fafc", padding: "8px 10px", borderRadius: "6px", border: "1px solid #e2e8f0", fontSize: "0.8rem", cursor: "pointer", fontWeight: 600 }}>
-                  <input type="checkbox" checked={canales.push} onChange={e => setCanales({ ...canales, push: e.target.checked })} />
-                  <Smartphone size={15} color="#ca8a04" /> Push (Web/Móvil)
+                <label style={{ display: "flex", alignItems: "center", gap: "8px", padding: "8px", background: "#ffffff", borderRadius: "6px", border: "1px solid #cbd5e1", cursor: "pointer" }}>
+                  <input type="checkbox" checked={canales.push} onChange={() => toggleCanal("push")} />
+                  <Smartphone size={16} color="#0284c7" />
+                  <span style={{ fontSize: "0.8rem", fontWeight: 700 }}>Push Notification</span>
                 </label>
 
-                <label style={{ display: "flex", alignItems: "center", gap: "8px", background: "#f8fafc", padding: "8px 10px", borderRadius: "6px", border: "1px solid #e2e8f0", fontSize: "0.8rem", cursor: "pointer", opacity: 0.6, fontWeight: 600 }}>
-                  <input type="checkbox" checked={canales.whatsapp} onChange={e => setCanales({ ...canales, whatsapp: e.target.checked })} />
-                  <MessageSquare size={15} color="#059669" /> WhatsApp (Propuesta)
+                <label style={{ display: "flex", alignItems: "center", gap: "8px", padding: "8px", background: "#ffffff", borderRadius: "6px", border: "1px solid #cbd5e1", cursor: "pointer" }}>
+                  <input type="checkbox" checked={canales.whatsapp} onChange={() => toggleCanal("whatsapp")} />
+                  <MessageSquare size={16} color="#16a34a" />
+                  <span style={{ fontSize: "0.8rem", fontWeight: 700 }}>WhatsApp</span>
                 </label>
               </div>
             </section>
           </div>
 
-          {/* Columna Derecha: Redacción WYSIWYG / Markdown / Live Preview */}
-          <div>
-            <section className="tarjeta-seccion" style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px", flexWrap: "wrap", gap: "8px" }}>
-                <h2 style={{ fontSize: "0.95rem", color: "#1e293b", margin: 0, display: "flex", alignItems: "center", gap: "6px" }}>
-                  <FileText size={18} color="#4f46e5" /> 3. Redacción & Editor Multicanal
-                </h2>
+          {/* Columna Derecha: Editor WYSIWYG / Markdown */}
+          <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+            <section className="tarjeta-seccion" style={{ padding: "16px", background: "#ffffff", borderRadius: "12px", border: "1px solid #e2e8f0" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
+                <h3 style={{ fontSize: "0.92rem", fontWeight: 800, color: "#1e293b", margin: 0, display: "flex", alignItems: "center", gap: "6px" }}>
+                  <FileText size={18} color="#059669" /> 3. Redacción & Editor de Contenido
+                </h3>
 
-                <div style={{ display: "flex", gap: "4px" }}>
+                {/* Sub-tabs del editor */}
+                <div style={{ display: "flex", background: "#f1f5f9", padding: "2px", borderRadius: "6px" }}>
                   <button
                     type="button"
                     onClick={() => setTabEditor("wysiwyg")}
-                    style={{ background: tabEditor === "wysiwyg" ? "#2563eb" : "#f1f5f9", color: tabEditor === "wysiwyg" ? "#fff" : "#475569", border: "none", borderRadius: "6px", padding: "4px 8px", fontSize: "0.75rem", fontWeight: 600, cursor: "pointer" }}
+                    style={{
+                      background: tabEditor === "wysiwyg" ? "#ffffff" : "transparent",
+                      color: tabEditor === "wysiwyg" ? "#059669" : "#64748b",
+                      border: "none",
+                      padding: "4px 8px",
+                      fontSize: "0.72rem",
+                      fontWeight: 700,
+                      borderRadius: "4px",
+                      cursor: "pointer"
+                    }}
                   >
-                    Visual (WYSIWYG)
+                    WYSIWYG / HTML
                   </button>
                   <button
                     type="button"
                     onClick={() => setTabEditor("markdown")}
-                    style={{ background: tabEditor === "markdown" ? "#2563eb" : "#f1f5f9", color: tabEditor === "markdown" ? "#fff" : "#475569", border: "none", borderRadius: "6px", padding: "4px 8px", fontSize: "0.75rem", fontWeight: 600, cursor: "pointer" }}
+                    style={{
+                      background: tabEditor === "markdown" ? "#ffffff" : "transparent",
+                      color: tabEditor === "markdown" ? "#059669" : "#64748b",
+                      border: "none",
+                      padding: "4px 8px",
+                      fontSize: "0.72rem",
+                      fontWeight: 700,
+                      borderRadius: "4px",
+                      cursor: "pointer"
+                    }}
                   >
-                    Markdown (.md)
+                    Markdown
                   </button>
                   <button
                     type="button"
                     onClick={() => setTabEditor("preview")}
-                    style={{ background: tabEditor === "preview" ? "#2563eb" : "#f1f5f9", color: tabEditor === "preview" ? "#fff" : "#475569", border: "none", borderRadius: "6px", padding: "4px 8px", fontSize: "0.75rem", fontWeight: 600, cursor: "pointer" }}
+                    style={{
+                      background: tabEditor === "preview" ? "#ffffff" : "transparent",
+                      color: tabEditor === "preview" ? "#059669" : "#64748b",
+                      border: "none",
+                      padding: "4px 8px",
+                      fontSize: "0.72rem",
+                      fontWeight: 700,
+                      borderRadius: "4px",
+                      cursor: "pointer"
+                    }}
                   >
-                    Live Preview
+                    <Eye size={12} style={{ marginRight: "2px" }} /> Vista Previa
                   </button>
                 </div>
               </div>
 
               {/* Asunto */}
               <div style={{ marginBottom: "12px" }}>
-                <label style={{ fontSize: "0.75rem", color: "#64748b", fontWeight: 600, display: "block", marginBottom: "4px" }}>
-                  Asunto / Título de la Notificación:
+                <label style={{ fontSize: "0.78rem", fontWeight: 700, color: "#475569", display: "block", marginBottom: "4px" }}>
+                  Asunto de la Notificación *
                 </label>
                 <input
                   type="text"
                   value={asunto}
                   onChange={e => setAsunto(e.target.value)}
-                  placeholder="Ej: Notificación Importante del Sistema"
-                  style={{ width: "100%", padding: "8px 12px", fontSize: "0.85rem", fontWeight: 700, borderRadius: "6px", border: "1px solid #cbd5e1" }}
+                  placeholder="Escribe el asunto o título de la notificación..."
+                  style={{ width: "100%", padding: "8px 12px", fontSize: "0.88rem", fontWeight: 700, borderRadius: "6px", border: "1px solid #cbd5e1" }}
+                  required
                 />
               </div>
 
-              {/* Inyector de Variables Dinámicas */}
-              <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "10px", fontSize: "0.75rem", color: "#64748b", flexWrap: "wrap" }}>
-                <span style={{ fontWeight: 700 }}>Variables Dinámicas:</span>
-                <button type="button" onClick={() => inyectarVariable("{{nombre_usuario}}")} style={{ background: "#e0e7ff", border: "1px solid #c7d2fe", color: "#3730a3", borderRadius: "4px", padding: "2px 8px", cursor: "pointer", fontWeight: 700, fontSize: "0.72rem" }}>
-                  + {"{{nombre_usuario}}"}
-                </button>
-                <button type="button" onClick={() => inyectarVariable("{{nombrecompleto}}")} style={{ background: "#e0e7ff", border: "1px solid #c7d2fe", color: "#3730a3", borderRadius: "4px", padding: "2px 8px", cursor: "pointer", fontWeight: 700, fontSize: "0.72rem" }}>
-                  + {"{{nombrecompleto}}"}
-                </button>
-                <button type="button" onClick={() => inyectarVariable("{{nombre}}")} style={{ background: "#e0e7ff", border: "1px solid #c7d2fe", color: "#3730a3", borderRadius: "4px", padding: "2px 8px", cursor: "pointer", fontWeight: 700, fontSize: "0.72rem" }}>
-                  + {"{{nombre}}"}
-                </button>
-                <button type="button" onClick={() => inyectarVariable("{{mail}}")} style={{ background: "#dcfce7", border: "1px solid #bbf7d0", color: "#166534", borderRadius: "4px", padding: "2px 8px", cursor: "pointer", fontWeight: 700, fontSize: "0.72rem" }}>
-                  + {"{{mail}}"}
-                </button>
-                <button type="button" onClick={() => inyectarVariable("{{negocio}}")} style={{ background: "#fef3c7", border: "1px solid #fde047", color: "#92400e", borderRadius: "4px", padding: "2px 8px", cursor: "pointer", fontWeight: 700, fontSize: "0.72rem" }}>
-                  + {"{{negocio}}"}
-                </button>
-                <button type="button" onClick={() => inyectarVariable("{{fecha}}")} style={{ background: "#f3e8ff", border: "1px solid #e9d5ff", color: "#6b21a8", borderRadius: "4px", padding: "2px 8px", cursor: "pointer", fontWeight: 700, fontSize: "0.72rem" }}>
-                  + {"{{fecha}}"}
-                </button>
-              </div>
+              {/* Barra de Formato Rápido */}
+              {tabEditor !== "preview" && (
+                <div style={{ display: "flex", gap: "4px", background: "#f8fafc", padding: "4px", borderRadius: "6px", marginBottom: "8px", border: "1px solid #e2e8f0" }}>
+                  <button type="button" onClick={() => aplicarFormato("strong", "**")} style={{ padding: "4px 8px", border: "none", background: "#ffffff", borderRadius: "4px", cursor: "pointer" }} title="Negrita">
+                    <Bold size={14} />
+                  </button>
+                  <button type="button" onClick={() => aplicarFormato("em", "*")} style={{ padding: "4px 8px", border: "none", background: "#ffffff", borderRadius: "4px", cursor: "pointer" }} title="Cursiva">
+                    <Italic size={14} />
+                  </button>
+                  <button type="button" onClick={() => aplicarFormato("u", "_")} style={{ padding: "4px 8px", border: "none", background: "#ffffff", borderRadius: "4px", cursor: "pointer" }} title="Subrayado">
+                    <Underline size={14} />
+                  </button>
+                  <button type="button" onClick={() => aplicarFormato("li", "- ")} style={{ padding: "4px 8px", border: "none", background: "#ffffff", borderRadius: "4px", cursor: "pointer" }} title="Lista">
+                    <List size={14} />
+                  </button>
+                  <button type="button" onClick={() => aplicarFormato("a", "[Enlace](url)")} style={{ padding: "4px 8px", border: "none", background: "#ffffff", borderRadius: "4px", cursor: "pointer" }} title="Enlace">
+                    <LinkIcon size={14} />
+                  </button>
+                  <button type="button" onClick={() => aplicarFormato("code", "`")} style={{ padding: "4px 8px", border: "none", background: "#ffffff", borderRadius: "4px", cursor: "pointer" }} title="Código">
+                    <Code size={14} />
+                  </button>
+                </div>
+              )}
 
-              {/* Editores */}
+              {/* Área de Texto / Vista Previa */}
               {tabEditor === "wysiwyg" && (
                 <textarea
                   value={contenidoHTML}
                   onChange={e => setContenidoHTML(e.target.value)}
-                  placeholder="Redacta el contenido en HTML o texto enriquecido..."
-                  style={{ flex: 1, minHeight: "200px", width: "100%", padding: "12px", background: "#f8fafc", border: "1px solid #cbd5e1", borderRadius: "6px", fontSize: "0.85rem", lineHeight: 1.5 }}
+                  rows={8}
+                  style={{ width: "100%", padding: "10px", fontFamily: "monospace", fontSize: "0.82rem", borderRadius: "6px", border: "1px solid #cbd5e1" }}
                 />
               )}
 
@@ -537,322 +405,51 @@ export function EmisionNotificacionesWidget({ negocio }: Props) {
                 <textarea
                   value={contenidoMarkdown}
                   onChange={e => setContenidoMarkdown(e.target.value)}
-                  placeholder="Redacta el contenido en sintaxis Markdown..."
-                  style={{ flex: 1, minHeight: "200px", width: "100%", padding: "12px", background: "#0f172a", border: "1px solid #1e293b", borderRadius: "6px", color: "#38bdf8", fontFamily: "monospace", fontSize: "0.82rem", lineHeight: 1.5 }}
+                  rows={8}
+                  style={{ width: "100%", padding: "10px", fontFamily: "monospace", fontSize: "0.82rem", borderRadius: "6px", border: "1px solid #cbd5e1" }}
                 />
               )}
 
               {tabEditor === "preview" && (
-                <div style={{ flex: 1, minHeight: "200px", background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "6px", padding: "16px", color: "#0f172a" }}>
-                  <div style={{ borderBottom: "1px solid #e2e8f0", paddingBottom: "8px", marginBottom: "12px", fontSize: "0.95rem", fontWeight: 800, color: "#1e293b" }}>
-                    {asunto}
-                  </div>
-                  <div dangerouslySetInnerHTML={{ __html: contenidoHTML }} style={{ fontSize: "0.85rem", lineHeight: 1.6 }} />
+                <div style={{ border: "1px solid #e2e8f0", borderRadius: "6px", padding: "14px", background: "#f8fafc", minHeight: "160px", fontSize: "0.88rem", lineHeight: 1.6 }}>
+                  <h4 style={{ margin: "0 0 8px 0", color: "#1e293b" }}>{asunto || "Sin Asunto"}</h4>
+                  <div dangerouslySetInnerHTML={{ __html: contenidoHTML }} />
                 </div>
               )}
 
-              {/* Botón Principal de Despacho por HTTP POST */}
-              <div style={{ marginTop: "16px", textAlign: "right" }}>
-                <button
-                  type="button"
-                  onClick={ejecutarEnvio}
-                  disabled={enviando}
-                  style={{
-                    background: enviando ? "#94a3b8" : "#16a34a",
-                    color: "#ffffff",
-                    border: "none",
-                    borderRadius: "6px",
-                    padding: "10px 24px",
-                    fontSize: "0.88rem",
-                    fontWeight: 700,
-                    cursor: enviando ? "not-allowed" : "pointer",
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "8px",
-                    boxShadow: "0 2px 4px rgba(0,0,0,0.1)"
-                  }}
-                >
-                  <Send size={16} /> {enviando ? "Enviando..." : "Enviar Notificación Multicanal"}
-                </button>
+              <div style={{ marginTop: "12px", fontSize: "0.75rem", color: "#64748b" }}>
+                💡 Variables interpolables disponibles: <code>{"{{nombre_usuario}}"}</code>, <code>{"{{correo}}"}</code>, <code>{"{{negocio}}"}</code>, <code>{"{{fecha}}"}</code>.
               </div>
             </section>
           </div>
         </div>
-      )}
 
-      {/* VISTA 2: BITÁCORA E HISTORIAL AUDITADO (MANUAL VS AUTOMÁTICA) */}
-      {tabPrincipal === "historial" && (
-        <section className="tarjeta-seccion">
-          <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px", marginBottom: "16px" }}>
-            <div>
-              <h2 style={{ fontSize: "1.05rem", color: "#0f172a", margin: 0, fontWeight: 800, display: "flex", alignItems: "center", gap: "8px" }}>
-                <BarChart2 size={20} color="#2563eb" /> Bitácora & Historial de Notificaciones Emitidas ({negocio})
-              </h2>
-              <span style={{ fontSize: "0.78rem", color: "#64748b" }}>
-                Registro auditado en tiempo real. Incluye contenido completo del mensaje y detalle de cuentas notificadas.
-              </span>
-            </div>
-
-            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-              {/* Buscador de Bitácora */}
-              <div style={{ position: "relative" }}>
-                <Search size={15} style={{ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)", color: "#94a3b8" }} />
-                <input
-                  type="text"
-                  value={busquedaBitacora}
-                  onChange={e => setBusquedaBitacora(e.target.value)}
-                  placeholder="Buscar en asunto o correos..."
-                  style={{ padding: "6px 12px 6px 30px", fontSize: "0.78rem", borderRadius: "6px", border: "1px solid #cbd5e1", width: "220px" }}
-                />
-              </div>
-
-              <button
-                type="button"
-                onClick={() => {
-                  fetch("/api/notificaciones")
-                    .then(r => r.json())
-                    .then(d => d.success && setCampanas(d.campanas));
-                }}
-                style={{ background: "#f1f5f9", border: "1px solid #cbd5e1", color: "#334155", borderRadius: "6px", padding: "6px 12px", fontSize: "0.78rem", fontWeight: 600, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "4px" }}
-              >
-                <RefreshCw size={14} /> Actualizar
-              </button>
-            </div>
-          </header>
-
-          {/* Grilla Limpia con Alto Contraste */}
-          <div style={{ background: "#ffffff", borderRadius: "8px", border: "1px solid #e2e8f0", overflowX: "auto" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.82rem", textAlign: "left" }}>
-              <thead>
-                <tr style={{ background: "#f8fafc", borderBottom: "2px solid #e2e8f0", color: "#0f172a" }}>
-                  <th style={{ padding: "12px 14px", fontWeight: 700 }}>Tipo Emisión</th>
-                  <th style={{ padding: "12px 14px", fontWeight: 700 }}>Emisor (Quién lo Envió)</th>
-                  <th style={{ padding: "12px 14px", fontWeight: 700 }}>Proceso / Origen</th>
-                  <th style={{ padding: "12px 14px", fontWeight: 700 }}>Asunto / Contenido</th>
-                  <th style={{ padding: "12px 14px", fontWeight: 700 }}>Audiencia</th>
-                  <th style={{ padding: "12px 14px", fontWeight: 700 }}>Canales</th>
-                  <th style={{ padding: "12px 14px", fontWeight: 700 }}>Fecha / Hora (EC)</th>
-                  <th style={{ padding: "12px 14px", fontWeight: 700, textAlign: "center" }}>Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                {campanasFiltradas.map(c => (
-                  <tr key={c.id} style={{ borderBottom: "1px solid #e2e8f0", transition: "background 0.2s" }}>
-                    {/* Badge Tipo de Emisión */}
-                    <td style={{ padding: "12px 14px", verticalAlign: "middle" }}>
-                      {c.tipoEmision === "MANUAL" ? (
-                        <span style={{ background: "#dbeafe", border: "1px solid #93c5fd", color: "#1e40af", padding: "3px 8px", borderRadius: "12px", fontSize: "0.72rem", fontWeight: 700, display: "inline-flex", alignItems: "center", gap: "4px" }}>
-                          <UserCheck size={12} /> MANUAL
-                        </span>
-                      ) : (
-                        <span style={{ background: "#fef3c7", border: "1px solid #fde047", color: "#92400e", padding: "3px 8px", borderRadius: "12px", fontSize: "0.72rem", fontWeight: 700, display: "inline-flex", alignItems: "center", gap: "4px" }}>
-                          <Cpu size={12} /> AUTOMÁTICA
-                        </span>
-                      )}
-                    </td>
-
-                    {/* Emisor (Quién lo envió) */}
-                    <td style={{ padding: "12px 14px", verticalAlign: "middle" }}>
-                      <div style={{ fontWeight: 700, color: "#0f172a" }}>{c.emisorNombre}</div>
-                      <div style={{ fontSize: "0.74rem", color: "#64748b" }}>{c.emisorCorreo}</div>
-                    </td>
-
-                    {/* Proceso u Origen Disparador */}
-                    <td style={{ padding: "12px 14px", verticalAlign: "middle" }}>
-                      <span style={{ color: "#2563eb", fontWeight: 600, fontSize: "0.78rem" }}>
-                        {c.procesoOrigen}
-                      </span>
-                    </td>
-
-                    {/* Asunto */}
-                    <td style={{ padding: "12px 14px", verticalAlign: "middle", maxWidth: "240px" }}>
-                      <div style={{ fontWeight: 700, color: "#0f172a" }}>
-                        {c.asunto}
-                      </div>
-                      {c.contenidoHTML && (
-                        <div style={{ fontSize: "0.73rem", color: "#64748b", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                          {c.contenidoHTML.replace(/<[^>]*>?/gm, "")}
-                        </div>
-                      )}
-                    </td>
-
-                    {/* Audiencia */}
-                    <td style={{ padding: "12px 14px", verticalAlign: "middle" }}>
-                      <span style={{ background: "#f1f5f9", padding: "3px 8px", borderRadius: "4px", color: "#334155", fontSize: "0.74rem", fontWeight: 600, border: "1px solid #cbd5e1" }}>
-                        {c.audiencia}
-                      </span>
-                    </td>
-
-                    {/* Canales */}
-                    <td style={{ padding: "12px 14px", verticalAlign: "middle" }}>
-                      <div style={{ display: "flex", gap: "4px", flexWrap: "wrap" }}>
-                        {c.canales.map(cn => (
-                          <span key={cn} style={{ background: "#2563eb", color: "#ffffff", padding: "2px 6px", borderRadius: "4px", fontSize: "0.68rem", fontWeight: 700 }}>
-                            {cn}
-                          </span>
-                        ))}
-                      </div>
-                    </td>
-
-                    {/* Fecha */}
-                    <td style={{ padding: "12px 14px", verticalAlign: "middle", whiteSpace: "nowrap", color: "#334155", fontSize: "0.76rem", fontWeight: 600 }}>
-                      {c.fecha}
-                    </td>
-
-                    {/* Botón Ver Detalle */}
-                    <td style={{ padding: "12px 14px", verticalAlign: "middle", textAlign: "center" }}>
-                      <button
-                        type="button"
-                        onClick={() => setCampanaSeleccionada(c)}
-                        style={{
-                          background: "#4f46e5",
-                          color: "#ffffff",
-                          border: "none",
-                          borderRadius: "6px",
-                          padding: "6px 12px",
-                          fontSize: "0.74rem",
-                          fontWeight: 700,
-                          cursor: "pointer",
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: "4px",
-                          boxShadow: "0 1px 2px rgba(0,0,0,0.05)"
-                        }}
-                      >
-                        <Eye size={13} /> Ver Detalle
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
-      )}
-
-      {/* MODAL DE DETALLE COMPLETO DE MENSAJE Y DE CUENTAS NOTIFICADAS */}
-      {campanaSeleccionada && (
-        <>
-          {/* Backdrop Overlay */}
-          <div
-            onClick={() => setCampanaSeleccionada(null)}
+        {/* Botón Acción Principal Despachar */}
+        <div style={{ marginTop: "20px", display: "flex", justifyContent: "flex-end" }}>
+          <button
+            type="submit"
+            disabled={enviando}
             style={{
-              position: "fixed",
-              inset: 0,
-              background: "rgba(0, 0, 0, 0.65)",
-              backdropFilter: "blur(4px)",
-              zIndex: 99998
-            }}
-          />
-
-          {/* Modal Container */}
-          <div
-            style={{
-              position: "fixed",
-              top: "50%",
-              left: "50%",
-              transform: "translate(-50%, -50%)",
-              width: "90%",
-              maxWidth: "650px",
-              maxHeight: "85vh",
-              background: "#ffffff",
-              borderRadius: "16px",
-              boxShadow: "0 20px 50px rgba(0,0,0,0.3)",
-              zIndex: 99999,
-              display: "flex",
-              flexDirection: "column",
-              overflow: "hidden"
+              padding: "12px 28px",
+              background: enviando ? "#94a3b8" : "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)",
+              color: "#ffffff",
+              border: "none",
+              borderRadius: "10px",
+              fontWeight: 800,
+              fontSize: "0.92rem",
+              cursor: enviando ? "not-allowed" : "pointer",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "8px",
+              boxShadow: "0 4px 12px rgba(37,99,235,0.3)",
+              transition: "all 0.2s ease"
             }}
           >
-            {/* Header Modal */}
-            <div style={{ padding: "18px 24px", background: "#f8fafc", borderBottom: "1px solid #e2e8f0", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <div>
-                <span style={{ fontSize: "0.72rem", color: "#64748b", fontWeight: 700, textTransform: "uppercase" }}>
-                  Detalle Auditado de Notificación
-                </span>
-                <h3 style={{ margin: 0, fontSize: "1.1rem", color: "#0f172a", fontWeight: 800 }}>
-                  {campanaSeleccionada.asunto}
-                </h3>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setCampanaSeleccionada(null)}
-                style={{
-                  background: "#ffffff",
-                  border: "1.5px solid #cbd5e1",
-                  borderRadius: "50%",
-                  width: "32px",
-                  height: "32px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  color: "#0f172a",
-                  cursor: "pointer"
-                }}
-              >
-                <X size={16} />
-              </button>
-            </div>
-
-            {/* Modal Body */}
-            <div style={{ padding: "20px 24px", overflowY: "auto", display: "flex", flexDirection: "column", gap: "16px" }}>
-              {/* Metadatos Rápidos */}
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "10px", background: "#f1f5f9", padding: "12px 16px", borderRadius: "10px", fontSize: "0.8rem" }}>
-                <div>
-                  <span style={{ color: "#64748b", fontWeight: 600, display: "block" }}>Emisor:</span>
-                  <span style={{ color: "#0f172a", fontWeight: 700 }}>{campanaSeleccionada.emisorNombre} ({campanaSeleccionada.emisorCorreo})</span>
-                </div>
-                <div>
-                  <span style={{ color: "#64748b", fontWeight: 600, display: "block" }}>Fecha / Hora (EC):</span>
-                  <span style={{ color: "#0f172a", fontWeight: 700 }}>{campanaSeleccionada.fecha}</span>
-                </div>
-                <div>
-                  <span style={{ color: "#64748b", fontWeight: 600, display: "block" }}>Audiencia:</span>
-                  <span style={{ color: "#0f172a", fontWeight: 700 }}>{campanaSeleccionada.audiencia}</span>
-                </div>
-                <div>
-                  <span style={{ color: "#64748b", fontWeight: 600, display: "block" }}>Canales Activados:</span>
-                  <span style={{ color: "#2563eb", fontWeight: 700 }}>{campanaSeleccionada.canales.join(", ")}</span>
-                </div>
-              </div>
-
-              {/* Mensaje Enviado (HTML / Markdown) */}
-              <div>
-                <h4 style={{ margin: "0 0 8px 0", fontSize: "0.88rem", color: "#0f172a", fontWeight: 700 }}>
-                  📄 Mensaje / Cuerpo de la Notificación:
-                </h4>
-                <div
-                  style={{
-                    background: "#f8fafc",
-                    border: "1px solid #e2e8f0",
-                    borderRadius: "8px",
-                    padding: "14px",
-                    fontSize: "0.85rem",
-                    color: "#334155",
-                    lineHeight: 1.6
-                  }}
-                  dangerouslySetInnerHTML={{ __html: campanaSeleccionada.contenidoHTML || campanaSeleccionada.asunto }}
-                />
-              </div>
-
-              {/* Cuentas Notificadas */}
-              <div>
-                <h4 style={{ margin: "0 0 8px 0", fontSize: "0.88rem", color: "#0f172a", fontWeight: 700 }}>
-                  📫 Cuentas de Correo / Destinatarios Notificados ({campanaSeleccionada.destinatariosDetalle?.length || campanaSeleccionada.enviados}):
-                </h4>
-                <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "8px", padding: "10px", maxHeight: "120px", overflowY: "auto" }}>
-                  {(campanaSeleccionada.destinatariosDetalle || [campanaSeleccionada.emisorCorreo]).map((email, idx) => (
-                    <div key={idx} style={{ fontSize: "0.8rem", color: "#0f172a", fontWeight: 600, padding: "3px 0", borderBottom: idx < (campanaSeleccionada.destinatariosDetalle?.length || 1) - 1 ? "1px dashed #e2e8f0" : "none" }}>
-                      • {email}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        </>
-      )}
+            <Send size={18} />
+            {enviando ? "Despachando Notificación..." : "Emitir Notificación Multicanal Ahora"}
+          </button>
+        </div>
+      </form>
     </div>
   );
 }

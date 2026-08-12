@@ -59,16 +59,26 @@ export async function GET() {
 
     if (perfil) {
       try {
-        const rawSupabase = await crearClienteServidor();
-        const supabase = rawSupabase as unknown as SupabaseTypedClient;
+        const { obtenerPerfiles } = await import("@eco/identidad");
+        const { crearClienteAdmin } = await import("@eco/supabase/servidor");
 
-        const { data: registros } = await supabase
+        const perfiles = await obtenerPerfiles("tranqi");
+        const esAutorizado = Boolean(perfil?.usu_superadmin_plataforma) || perfiles.includes("ADMINISTRADOR") || perfiles.includes("OPERADOR");
+
+        const rawSupabase = (crearClienteAdmin() || await crearClienteServidor()) as unknown as SupabaseTypedClient;
+
+        let query = (rawSupabase as any)
           .schema("comun_notificaciones")
           .from("not_registro")
           .select("not_id, not_titulo, not_contenido_html, not_url_accion, not_leido_en, not_creado_en, not_canal")
-          .eq("not_usuario_id", perfil.usu_id)
           .order("not_creado_en", { ascending: false })
-          .limit(20);
+          .limit(30);
+
+        if (!esAutorizado) {
+          query = query.eq("not_usuario_id", perfil.usu_id);
+        }
+
+        const { data: registros } = await query;
 
         if (registros && Array.isArray(registros)) {
           (registros as unknown as RegistroNotificacion[]).forEach(r => {
@@ -83,8 +93,8 @@ export async function GET() {
             });
           });
         }
-      } catch {
-        /* Fallback */
+      } catch (errApi) {
+        console.error("Error al consultar notificaciones en API:", errApi);
       }
     }
 
