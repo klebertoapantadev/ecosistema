@@ -99,26 +99,27 @@ export async function registrarUsuario(datos: DatosRegistro, negocio: string): P
   });
 
   if (error) return { ok: false, error: error.message };
-  if (!data.user || !data.session) return { ok: false, error: "No se pudo crear el usuario" };
+  if (!data.user) return { ok: false, error: "No se pudo crear el usuario" };
 
   await asegurarMembresiaCliente(supabase, data.user.id, negocio);
   const { ip, userAgent } = await obtenerIpYAgente();
   await registrarAcceso(supabase, data.user.id, ip, userAgent, negocio);
 
-  const { data: codigo, error: errorOtp } = await supabase.schema("comun_seguridad").rpc("seg_fn_generar_otp_registro");
-  if (errorOtp || !codigo) return { ok: false, error: errorOtp?.message ?? "No se pudo generar el código de verificación" };
-
-  const envio = await enviarCorreo({
-    negocio,
-    para: parseo.data.correo,
-    asunto: "Tu código de verificación",
-    html: `<p>Hola${parseo.data.nombres ? ` ${parseo.data.nombres}` : ""},</p><p>Tu código de verificación es <strong style="font-size:1.4em; letter-spacing:0.2em;">${codigo}</strong></p><p>Vence en 15 minutos.</p>`,
-  });
-  // La cuenta ya quedo creada: no se revierte el registro porque el correo
-  // falle. Se avisa para que la pantalla de verificacion ofrezca reenviar en
-  // vez de dejar al usuario esperando un codigo que nunca llegara.
-  if (!envio.ok) {
-    return { ok: false, error: "Tu cuenta se creó, pero no pudimos enviarte el código. Usa «Reenviar código»." };
+  try {
+    const { data: codigo, error: errorOtp } = await supabase.schema("comun_seguridad").rpc("seg_fn_generar_otp_registro");
+    if (!errorOtp && codigo) {
+      const envio = await enviarCorreo({
+        negocio,
+        para: parseo.data.correo,
+        asunto: "Tu código de verificación",
+        html: `<p>Hola${parseo.data.nombres ? ` ${parseo.data.nombres}` : ""},</p><p>Tu código de verificación es <strong style="font-size:1.4em; letter-spacing:0.2em;">${codigo}</strong></p><p>Vence en 15 minutos.</p>`,
+      });
+      if (!envio.ok) {
+        console.warn("SMTP no disponible en registro:", envio.error);
+      }
+    }
+  } catch (errOtp) {
+    console.warn("Error secundario generando OTP:", errOtp);
   }
 
   return { ok: true, data: undefined };

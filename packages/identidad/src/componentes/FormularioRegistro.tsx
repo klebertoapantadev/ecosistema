@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { registrarUsuario } from "../acciones";
 import { crearClienteNavegador } from "@eco/supabase";
 import { IconoGoogle } from "./IconoGoogle";
+import { ModalTerminosServicio } from "./ModalTerminosServicio";
 
 interface FormularioRegistroProps {
   negocio: string;
@@ -19,6 +20,7 @@ export function FormularioRegistro({ negocio, intencion = "", destino = "" }: Fo
   const [correo, setCorreo] = useState("");
   const [contrasena, setContrasena] = useState("");
   const [aceptaTerminos, setAceptaTerminos] = useState(false);
+  const [modalTerminosAbierto, setModalTerminosAbierto] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [cargando, setCargando] = useState(false);
 
@@ -36,6 +38,10 @@ export function FormularioRegistro({ negocio, intencion = "", destino = "" }: Fo
 
   async function alEnviar(e: React.FormEvent) {
     e.preventDefault();
+    if (!aceptaTerminos) {
+      setModalTerminosAbierto(true);
+      return;
+    }
     setError(null);
     setCargando(true);
     const resultado = await registrarUsuario({ nombres, apellidos, correo, contrasena, aceptaTerminos }, negocio);
@@ -55,6 +61,10 @@ export function FormularioRegistro({ negocio, intencion = "", destino = "" }: Fo
   }
 
   async function conGoogle() {
+    if (!aceptaTerminos) {
+      setModalTerminosAbierto(true);
+      return;
+    }
     setCargando(true);
     const supabase = crearClienteNavegador();
 
@@ -90,15 +100,19 @@ export function FormularioRegistro({ negocio, intencion = "", destino = "" }: Fo
         </div>
       )}
 
-      <button type="button" className="btn-google" onClick={conGoogle} disabled={cargando}>
+      <button type="button" className="btn-google" onClick={conGoogle} disabled={cargando || !aceptaTerminos} style={{ opacity: aceptaTerminos ? 1 : 0.6, cursor: aceptaTerminos ? "pointer" : "not-allowed" }}>
         <IconoGoogle />
         Continuar con Google
       </button>
       <p className="aviso-terminos">
         Al continuar, aceptas los{" "}
-        <a href="/terminos" target="_blank" rel="noopener">
+        <button
+          type="button"
+          onClick={() => setModalTerminosAbierto(true)}
+          style={{ background: "none", border: "none", color: "#5000BA", textDecoration: "underline", fontWeight: 700, cursor: "pointer", padding: 0 }}
+        >
           Términos de Servicio
-        </a>
+        </button>
         .
       </p>
       <div className="separador">o con correo</div>
@@ -133,13 +147,45 @@ export function FormularioRegistro({ negocio, intencion = "", destino = "" }: Fo
           autoComplete="new-password"
           required
         />
-        <label className="campo-check">
-          <input type="checkbox" checked={aceptaTerminos} onChange={(e) => setAceptaTerminos(e.target.checked)} />
-          Acepto los{" "}
-          <a href="/terminos" target="_blank" rel="noopener" onClick={(e) => e.stopPropagation()}>
-            Términos de Servicio
-          </a>
-        </label>
+
+        <div style={{ margin: "14px 0" }}>
+          <label
+            className="campo-check"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              cursor: "pointer",
+              fontSize: "0.85rem",
+              fontWeight: 600,
+              color: "#374151",
+            }}
+            onClick={(e) => {
+              e.preventDefault();
+              setModalTerminosAbierto(true);
+            }}
+          >
+            <input
+              type="checkbox"
+              checked={aceptaTerminos}
+              readOnly
+              style={{ width: "18px", height: "18px", cursor: "pointer", accentColor: "#5000BA" }}
+            />
+            <span>
+              Acepto los{" "}
+              <span style={{ color: "#5000BA", fontWeight: 800, textDecoration: "underline" }}>
+                Términos de Servicio
+              </span>
+            </span>
+          </label>
+
+          {!aceptaTerminos && (
+            <p style={{ fontSize: "0.76rem", color: "#DC2626", fontWeight: 700, margin: "6px 0 0 26px" }}>
+              ⚠️ Para habilitar el botón debes leer los Términos hasta el final.
+            </p>
+          )}
+        </div>
+
         {error && (
           <p className="error-auth" role="alert">
             {error}
@@ -148,20 +194,22 @@ export function FormularioRegistro({ negocio, intencion = "", destino = "" }: Fo
         <button
           type="submit"
           className="btn-auth btn-primario"
-          disabled={cargando}
+          disabled={!aceptaTerminos || cargando}
           style={{
             width: "100%",
             padding: "14px 20px",
-            background: "linear-gradient(135deg, #5000BA 0%, #3B0088 100%)",
-            color: "#ffffff",
+            background: aceptaTerminos
+              ? "linear-gradient(135deg, #5000BA 0%, #3B0088 100%)"
+              : "#D1D5DB",
+            color: aceptaTerminos ? "#ffffff" : "#6B7280",
             border: "none",
             borderRadius: "10px",
-            fontWeight: 700,
+            fontWeight: 800,
             fontSize: "0.95rem",
-            cursor: cargando ? "not-allowed" : "pointer",
-            boxShadow: "0 4px 14px rgba(80, 0, 186, 0.3)",
+            cursor: !aceptaTerminos || cargando ? "not-allowed" : "pointer",
+            boxShadow: aceptaTerminos ? "0 4px 14px rgba(80, 0, 186, 0.3)" : "none",
             transition: "all 0.2s ease",
-            marginTop: "12px",
+            marginTop: "8px",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -171,6 +219,13 @@ export function FormularioRegistro({ negocio, intencion = "", destino = "" }: Fo
           {cargando ? "Registrando..." : esAbogado ? "⚖️ Registrarme como Abogado" : "Registrarme"}
         </button>
       </form>
+
+      <ModalTerminosServicio
+        abierto={modalTerminosAbierto}
+        alCerrar={() => setModalTerminosAbierto(false)}
+        alAceptar={() => setAceptaTerminos(true)}
+        negocioNombre={negocio.toUpperCase()}
+      />
     </div>
   );
 }
