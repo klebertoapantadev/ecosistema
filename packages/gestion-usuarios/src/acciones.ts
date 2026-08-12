@@ -2,11 +2,38 @@
 
 import { revalidatePath } from "next/cache";
 import { crearClienteServidor, crearClienteAdmin } from "@eco/supabase/servidor";
+import { buscarUsuarios, obtenerPerfilesAsignables } from "./consultas";
 
 export interface Resultado<T = void> {
   ok: boolean;
   data?: T;
   error?: string;
+}
+
+export async function obtenerNivelMaximoGestor(negocio: string): Promise<number> {
+  try {
+    const supabase = await crearClienteServidor();
+    const { data } = await supabase
+      .schema("comun_seguridad")
+      .rpc("seg_fn_nivel_maximo", { p_negocio: negocio });
+    return typeof data === "number" ? data : 100;
+  } catch {
+    return 100;
+  }
+}
+
+export async function obtenerDatosGestionUsuariosAction(consulta: string = "", negocio: string = "TRANQ") {
+  try {
+    const [{ data: usuarios, error }, perfiles, nivelMaximoGestor] = await Promise.all([
+      buscarUsuarios(consulta, negocio),
+      obtenerPerfilesAsignables(),
+      obtenerNivelMaximoGestor(negocio),
+    ]);
+    if (error) return { ok: false, error };
+    return { ok: true, data: { usuarios, perfiles, nivelMaximoGestor } };
+  } catch (err: any) {
+    return { ok: false, error: err?.message || "Error al cargar usuarios" };
+  }
 }
 
 export async function asignarPerfil(usuarioId: string, perfil: string, negocio: string): Promise<Resultado> {
