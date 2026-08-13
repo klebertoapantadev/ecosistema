@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import {
   Search, X, UserCog, UserCheck, Settings, Mail, Bell, Shield, ShieldCheck,
-  CircleUser, ChevronRight, Sliders, Briefcase
+  CircleUser, ChevronRight, Sliders, Briefcase, FileText, BarChart2
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCustomWidgets } from "./gestorTitulosWidgets";
@@ -150,6 +150,36 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
     minNivel: 80,
     icono: ShieldCheck,
     colorIcono: "#111827"
+  },
+  {
+    clave: "configuracion_contrato_abogado",
+    nombre: "Configuración de Contrato de Socios",
+    detalle: "Administración de la plantilla del contrato de sociedad de abogados (.MD/HTML)",
+    ruta: "/panel/administrar?widget=configuracion_contrato_abogado",
+    categoria: "Operación Legal",
+    minNivel: 50,
+    icono: FileText,
+    colorIcono: "#5000BA"
+  },
+  {
+    clave: "gestion_terminos_consentimientos",
+    nombre: "Términos, Consentimientos & LOPDP",
+    detalle: "Configuración de cláusulas LOPDP, notificaciones, WhatsApp y protección de datos",
+    ruta: "/panel/administrar?widget=gestion_terminos_consentimientos",
+    categoria: "Gobernanza & Legales",
+    minNivel: 80,
+    icono: FileText,
+    colorIcono: "#5000BA"
+  },
+  {
+    clave: "bitacora_notificaciones",
+    nombre: "Bitácora & Historial de Notificaciones",
+    detalle: "Consulta auditada e historial en tiempo real de notificaciones emitidas",
+    ruta: "/panel/administrar?widget=bitacora_notificaciones",
+    categoria: "Comunicación",
+    minNivel: 80,
+    icono: BarChart2,
+    colorIcono: "#2563EB"
   }
 ];
 

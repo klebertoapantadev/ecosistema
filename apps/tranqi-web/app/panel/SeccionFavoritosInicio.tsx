@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { User, History, KeyRound, ShieldAlert, Settings, Mail, Bell, Star, ChevronRight, ShieldCheck, Sliders, Receipt, Lock, type LucideIcon } from "lucide-react";
+import { User, History, KeyRound, ShieldAlert, Settings, Mail, Bell, Star, ChevronRight, ShieldCheck, Sliders, Receipt, Lock, FileText, BarChart2, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { useCustomWidgets } from "./gestorTitulosWidgets";
 
@@ -106,6 +106,33 @@ const CATALOGO_FAVORITOS: Record<string, WidgetFavInfo> = {
     icono: Sliders,
     colorIcono: "var(--violeta, #5000BA)",
     href: "/panel/configuracion?widget=perfiles",
+    origen: "Configurar"
+  },
+  configuracion_contrato_abogado: {
+    id: "configuracion_contrato_abogado",
+    titulo: "Configuración de Contrato de Socios",
+    subtitulo: "Administración de la plantilla del contrato de sociedad de abogados (.MD/HTML)",
+    icono: FileText,
+    colorIcono: "#5000BA",
+    href: "/panel/administrar?widget=configuracion_contrato_abogado",
+    origen: "Configurar"
+  },
+  gestion_terminos_consentimientos: {
+    id: "gestion_terminos_consentimientos",
+    titulo: "Términos, Consentimientos & LOPDP",
+    subtitulo: "Configuración de cláusulas LOPDP, notificaciones, WhatsApp y protección de datos",
+    icono: FileText,
+    colorIcono: "#5000BA",
+    href: "/panel/administrar?widget=gestion_terminos_consentimientos",
+    origen: "Configurar"
+  },
+  bitacora_notificaciones: {
+    id: "bitacora_notificaciones",
+    titulo: "Bitácora & Historial de Notificaciones",
+    subtitulo: "Consulta auditada e historial en tiempo real de notificaciones emitidas",
+    icono: BarChart2,
+    colorIcono: "#2563EB",
+    href: "/panel/administrar?widget=bitacora_notificaciones",
     origen: "Configurar"
   }
 };
