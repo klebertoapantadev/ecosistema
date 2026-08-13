@@ -23,9 +23,16 @@ export function GestionContratoPostulante({ solicitud }: Props) {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validar tipo de archivo
-    if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) {
-      setError("Únicamente se permiten archivos en formato PDF.");
+    // Validar tipo de archivo (PDF o Word)
+    const ext = file.name.toLowerCase();
+    const esPdf = file.type === "application/pdf" || ext.endsWith(".pdf");
+    const esWord = file.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" || 
+                   file.type === "application/msword" || 
+                   ext.endsWith(".docx") || 
+                   ext.endsWith(".doc");
+
+    if (!esPdf && !esWord) {
+      setError("Se permiten únicamente archivos en formato PDF o Word (.docx, .doc).");
       return;
     }
 
@@ -58,7 +65,7 @@ export function GestionContratoPostulante({ solicitud }: Props) {
         solicitud.ssc_id,
         "contrato_socio",
         path,
-        file.name,
+        "Contrato Tranqi.docx",
         "Contrato firmado de socio abogado"
       );
 
@@ -91,7 +98,7 @@ export function GestionContratoPostulante({ solicitud }: Props) {
                 ¡Contrato firmado cargado exitosamente!
               </h4>
               <p style={{ margin: "0 0 12px 0", color: "#047857", fontSize: "0.85rem", lineHeight: 1.5 }}>
-                Tu contrato ha sido registrado y está listo para verificación por parte del equipo de operaciones de tranqi.
+                Tu contrato se registró como <strong>"{contratoFirmado.dcs_nombre_archivo || "Contrato Tranqi.docx"}"</strong> y está listo para ser verificado por el equipo de operaciones de tranqi.
               </p>
               
               <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
@@ -116,7 +123,7 @@ export function GestionContratoPostulante({ solicitud }: Props) {
                 </a>
 
                 <a
-                  href={`/panel/solicitud-socio/contrato/imprimir?solicitudId=${solicitud.ssc_id}`}
+                  href={`/api/solicitud-socio/contrato/descargar?solicitudId=${solicitud.ssc_id}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   style={{
@@ -133,7 +140,7 @@ export function GestionContratoPostulante({ solicitud }: Props) {
                     fontWeight: 700,
                   }}
                 >
-                  <Printer size={14} /> Re-imprimir Plantilla
+                  <Download size={14} /> Descargar Plantilla Word (.docx)
                 </a>
               </div>
             </div>
@@ -142,22 +149,22 @@ export function GestionContratoPostulante({ solicitud }: Props) {
       ) : (
         <div style={{ background: "#F9FAFB", border: "1px solid #E5E7EB", borderRadius: "12px", padding: "20px", marginBottom: "20px" }}>
           <p style={{ margin: "0 0 16px 0", fontSize: "0.9rem", color: "#4B5563", lineHeight: 1.5 }}>
-            Para activar completamente tu acreditación profesional y empezar a recibir asesorías de clientes, debes descargar tu contrato generado, firmarlo y subirlo de vuelta en formato <strong>PDF</strong>.
+            Para activar completamente tu acreditación profesional y empezar a recibir asesorías de clientes, debes descargar tu contrato pre-llenado, firmarlo y subirlo de vuelta.
           </p>
 
           <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginBottom: "20px" }}>
             <div style={{ fontSize: "0.85rem", color: "#374151" }}>
               <strong>Pasos para formalizar:</strong>
               <ol style={{ paddingLeft: "20px", margin: "6px 0" }}>
-                <li style={{ marginBottom: "4px" }}>Descarga e imprime el contrato (puedes guardarlo como PDF para firma digital).</li>
-                <li style={{ marginBottom: "4px" }}>Firma de forma manuscrita o digital en la última página del documento.</li>
-                <li style={{ marginBottom: "4px" }}>Sube el archivo escaneado o firmado digitalmente en el panel de abajo (formato PDF).</li>
+                <li style={{ marginBottom: "4px" }}>Descarga el contrato en Word (.docx) o ábrelo en formato de impresión.</li>
+                <li style={{ marginBottom: "4px" }}>Firma el documento de manera física (impreso y escaneado) o digitalmente.</li>
+                <li style={{ marginBottom: "4px" }}>Sube el archivo firmado en el panel de abajo (formato PDF o Word).</li>
               </ol>
             </div>
 
-            <div>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "10px" }}>
               <a
-                href={`/panel/solicitud-socio/contrato/imprimir?solicitudId=${solicitud.ssc_id}`}
+                href={`/api/solicitud-socio/contrato/descargar?solicitudId=${solicitud.ssc_id}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{
@@ -174,7 +181,28 @@ export function GestionContratoPostulante({ solicitud }: Props) {
                   boxShadow: "0 2px 4px rgba(80,0,186,0.15)",
                 }}
               >
-                <Printer size={16} /> Descargar / Imprimir Contrato
+                <Download size={16} /> Descargar Contrato (.docx)
+              </a>
+
+              <a
+                href={`/panel/solicitud-socio/contrato/imprimir?solicitudId=${solicitud.ssc_id}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  background: "#FFF",
+                  color: "#374151",
+                  border: "1px solid #D1D5DB",
+                  textDecoration: "none",
+                  borderRadius: "8px",
+                  padding: "10px 18px",
+                  fontSize: "0.88rem",
+                  fontWeight: 700,
+                }}
+              >
+                <Printer size={16} /> Ver/Imprimir en Línea
               </a>
             </div>
           </div>
@@ -199,10 +227,10 @@ export function GestionContratoPostulante({ solicitud }: Props) {
           <div>
             <UploadCloud size={36} color={contratoFirmado ? "#10B981" : "#5000BA"} style={{ margin: "0 auto 8px" }} />
             <h4 style={{ margin: "0 0 4px 0", fontSize: "0.9rem", fontWeight: 700, color: "#111827" }}>
-              {contratoFirmado ? "Reemplazar Contrato Firmado" : "Subir Contrato Firmado (PDF)"}
+              {contratoFirmado ? "Reemplazar Contrato Firmado" : "Subir Contrato Firmado (PDF/Word)"}
             </h4>
             <p style={{ margin: "0 0 16px 0", fontSize: "0.78rem", color: "#6B7280" }}>
-              Sube el contrato firmado digitalmente o escaneado. Solo se admite formato PDF. Máx. 15MB.
+              Sube el contrato firmado. Se admite formato PDF o Word (.docx, .doc). Máx. 15MB.
             </p>
             <label style={{
               display: "inline-block",
@@ -216,10 +244,10 @@ export function GestionContratoPostulante({ solicitud }: Props) {
               cursor: "pointer",
               boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
             }}>
-              Seleccionar Archivo PDF
+              Seleccionar Archivo (PDF/Word)
               <input
                 type="file"
-                accept="application/pdf"
+                accept="application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                 onChange={handleFileChange}
                 style={{ display: "none" }}
               />

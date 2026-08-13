@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { CheckCircle2, XCircle, ExternalLink, Download, FileText } from "lucide-react";
 import { obtenerSolicitudDetalle, obtenerAbogadoPorSolicitud } from "../../../../modulos/socios/consultas";
 import { AccionesSolicitud } from "../../../../modulos/socios/componentes/AccionesSolicitud";
+import { BotonConfirmarContrato } from "../../../../modulos/socios/componentes/BotonConfirmarContrato";
 import { SubirDocumentoRevision } from "../../../../modulos/socios/componentes/SubirDocumentoRevision";
 import { ENLACES_VERIFICACION } from "../../../../modulos/socios/esquema";
 
@@ -66,15 +67,39 @@ export default async function PaginaDetalleSocio({ params }: { params: Promise<{
 
       <span className={`chip-estado-solicitud chip-${solicitud.ssc_estado}`}>{ETIQUETA_ESTADO[solicitud.ssc_estado]}</span>
 
-      {abogado && (
+      {solicitud.ssc_estado === "aceptada" && (
         <div className="tarjeta-panel detalle-solicitud">
           <h2>Estado del socio</h2>
-          <dl className="lista-detalle">
-            <dt>Verificado desde</dt>
-            <dd>{new Date(abogado.abg_verificado_en).toLocaleDateString("es-EC")}</dd>
-            <dt>MFA configurado</dt>
-            <dd>{abogado.abg_mfa_verificado ? "Sí" : "Pendiente — se exigirá para activar capacidades críticas"}</dd>
-          </dl>
+          {(() => {
+            const s = solicitud as typeof solicitud & { ssc_contrato_confirmado_en?: string | null };
+            return abogado ? (
+              <dl className="lista-detalle">
+                <dt>Verificado desde</dt>
+                <dd>{new Date(abogado.abg_verificado_en).toLocaleDateString("es-EC")}</dd>
+                <dt>MFA configurado</dt>
+                <dd>{abogado.abg_mfa_verificado ? "Sí" : "Pendiente — se exigirá para activar capacidades críticas"}</dd>
+                <dt>Contrato verificado</dt>
+                <dd>
+                  {s.ssc_contrato_confirmado_en
+                    ? `Confirmado el ${new Date(s.ssc_contrato_confirmado_en).toLocaleString("es-EC")}`
+                    : "Confirmado automáticamente"}
+                </dd>
+              </dl>
+            ) : (
+              <div>
+                <p style={{ margin: 0, fontSize: "0.88rem", color: "#4B5563" }}>
+                  <strong>Aprobado (Paso 1).</strong> En espera de que el socio firme y suba el contrato de sociedad en PDF.
+                </p>
+                {documentos.some((d) => d.dcs_tipo === "contrato_socio") ? (
+                  <BotonConfirmarContrato solicitudId={solicitud.ssc_id} />
+                ) : (
+                  <p style={{ marginTop: "8px", fontSize: "0.82rem", color: "#DC2626", fontWeight: 600 }}>
+                    ⏳ El postulante aún no ha cargado el contrato firmado.
+                  </p>
+                )}
+              </div>
+            );
+          })()}
           <div style={{ marginTop: "12px", borderTop: "1px solid #E5E7EB", paddingTop: "12px" }}>
             <a
               href={`/panel/solicitud-socio/contrato/imprimir?solicitudId=${solicitud.ssc_id}`}

@@ -100,6 +100,7 @@ export function FilaUsuario({
             const tiene = asignados.includes(p.clave);
             const fueraDeAlcance = p.nivel > nivelMaximoGestor;
             const esBase = p.clave === "CLIENTE";
+            const esAbogado = p.clave === "ABOGADO";
 
             return (
               <label
@@ -110,13 +111,15 @@ export function FilaUsuario({
                     ? `Requiere jerarquía ${p.nivel} o superior`
                     : esBase
                       ? "Perfil base, no se puede retirar"
-                      : `Nivel ${p.nivel}`
+                      : esAbogado
+                        ? "Se asigna automáticamente al confirmar el contrato de socio firmado"
+                        : `Nivel ${p.nivel}`
                 }
               >
                 <input
                   type="checkbox"
                   checked={tiene}
-                  disabled={ocupado !== null || fueraDeAlcance || (esBase && tiene)}
+                  disabled={ocupado !== null || fueraDeAlcance || (esBase && tiene) || esAbogado}
                   onChange={(e) => alternar(p.clave, e.target.checked)}
                 />
                 {p.nombre}

@@ -370,14 +370,36 @@ export async function decidirSolicitudSocio(datos: {
           ? "🎉 ¡Tu Acreditación como Socio Abogado fue APROBADA!"
           : "⚠️ Actualización sobre tu Solicitud de Socio Abogado";
 
-        const cuerpoHTML = `
+        const cuerpoHTML = decision === "aceptada" ? `
           <div style="font-family: sans-serif; padding: 20px; color: #111;">
-            <h2 style="color: ${decision === "aceptada" ? "#059669" : "#DC2626"};">
-              ${decision === "aceptada" ? "¡Felicitaciones, " + nombrePostulante + "!" : "Estimado(a) " + nombrePostulante + ","}
-            </h2>
-            <p>Tu solicitud de acreditación profesional en <strong>tranqi</strong> ha sido evaluada y marcada como <strong>${decision.toUpperCase()}</strong>.</p>
+            <h2 style="color: #059669;">¡Felicitaciones, ${nombrePostulante}!</h2>
+            <p>Tu solicitud de acreditación profesional en <strong>tranqi</strong> ha sido evaluada y marcada como <strong>APROBADA</strong>.</p>
+            <p>Para formalizar e integrar tu incorporación, por favor sigue estos sencillos pasos:</p>
+            <div style="background: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 8px; padding: 16px; margin: 16px 0;">
+              <ol style="margin: 0; padding-left: 20px; line-height: 1.6;">
+                <li style="margin-bottom: 8px;">
+                  Descarga tu contrato pre-llenado en formato Word (.docx): 
+                  <br/>
+                  <a href="/api/solicitud-socio/contrato/descargar?solicitudId=${solicitudId}" style="color: #5000BA; font-weight: 700; text-decoration: underline;">Descargar Contrato (.docx)</a>
+                </li>
+                <li style="margin-bottom: 8px;">Fírmalo de forma manuscrita o digitalmente.</li>
+                <li style="margin-bottom: 0;">
+                  Ingresa al portal y sube el documento firmado (se admite PDF o Word):
+                  <br/>
+                  <a href="/panel/solicitud-socio" style="color: #5000BA; font-weight: 700; text-decoration: underline;">Subir Contrato Firmado en el Widget</a>
+                </li>
+              </ol>
+            </div>
             ${comentario ? `<div style="background: #F3F4F6; border-left: 4px solid #5000BA; padding: 12px; border-radius: 6px; margin: 16px 0;"><strong>Observación del Evaluador:</strong> ${comentario}</div>` : ""}
-            <p><a href="/panel/solicitud-socio" style="display: inline-block; padding: 10px 18px; background: #5000BA; color: #fff; text-decoration: none; border-radius: 8px; font-weight: 700;">Ver Estado de mi Solicitud</a></p>
+            <p>Una vez recibido el contrato firmado, verificaremos el documento y activaremos tus credenciales de Abogado.</p>
+          </div>
+        ` : `
+          <div style="font-family: sans-serif; padding: 20px; color: #111;">
+            <h2 style="color: #DC2626;">Estimado(a) ${nombrePostulante},</h2>
+            <p>Tu solicitud de acreditación profesional en <strong>tranqi</strong> ha sido evaluada y marcada como <strong>RECHAZADA</strong>.</p>
+            ${comentario ? `<div style="background: #F3F4F6; border-left: 4px solid #DC2626; padding: 12px; border-radius: 6px; margin: 16px 0;"><strong>Observación del Evaluador:</strong> ${comentario}</div>` : ""}
+            <p>Puedes corregir las observaciones ingresando nuevamente a tu panel y volviendo a enviar la solicitud:</p>
+            <p><a href="/panel/solicitud-socio" style="display: inline-block; padding: 10px 18px; background: #5000BA; color: #fff; text-decoration: none; border-radius: 8px; font-weight: 700;">Corregir y Enviar de Nuevo</a></p>
           </div>
         `;
 
@@ -531,5 +553,83 @@ export async function guardarPlantillaContrato(titulo: string, contenido: string
   }
 
   if (error) return { ok: false, error: error.message };
+  return { ok: true, data: undefined };
+}
+
+export async function confirmarContratoSocio(solicitudId: string, comentario?: string): Promise<Resultado> {
+  const supabase = await crearClienteServidor();
+  const { data: solicitud, error } = await (supabase as any)
+    .schema("tranqui_legal")
+    .rpc("trq_fn_confirmar_contrato_socio", { p_solicitud_id: solicitudId, p_comentario: comentario || null });
+
+  if (error) return { ok: false, error: error.message };
+
+  // Enviar notificaciones de confirmación de activación de abogado
+  if (solicitud) {
+    try {
+      const adminSupabase = crearClienteAdmin() || supabase;
+      const { data: uApplicant } = await adminSupabase
+        .schema("comun_seguridad")
+        .from("seg_usuario")
+        .select("usu_id, usu_correo, usu_nombres, usu_apellidos")
+        .eq("usu_id", solicitud.ssc_usuario_id)
+        .maybeSingle();
+
+      if (uApplicant) {
+        const nombrePostulante = [uApplicant.usu_nombres, uApplicant.usu_apellidos].filter(Boolean).join(" ") || uApplicant.usu_correo;
+        const tituloNotif = "💼 ¡Tu Contrato de Socio Abogado ha sido Confirmado!";
+        const cuerpoHTML = `
+          <div style="font-family: sans-serif; padding: 20px; color: #111;">
+            <h2 style="color: #059669;">¡Firma Confirmada, ${nombrePostulante}!</h2>
+            <p>Hemos recibido y verificado tu contrato de sociedad firmado. Tu cuenta ha sido activada con el rol de <strong>Abogado</strong> en la plataforma.</p>
+            <p>Ya puedes acceder a las herramientas de abogado, gestionar tu agenda y recibir casos.</p>
+            <p><a href="/panel" style="display: inline-block; padding: 10px 18px; background: #5000BA; color: #fff; text-decoration: none; border-radius: 8px; font-weight: 700;">Ir a mi Panel de Abogado</a></p>
+          </div>
+        `;
+
+        await (adminSupabase as any).schema("comun_notificacion").from("not_registro").insert([
+          {
+            not_usuario_id: uApplicant.usu_id,
+            not_negocio: "TRANQ",
+            not_canal: "IN_APP",
+            not_titulo: tituloNotif,
+            not_contenido_html: cuerpoHTML,
+            not_creado_en: new Date().toISOString()
+          },
+          {
+            not_usuario_id: uApplicant.usu_id,
+            not_negocio: "TRANQ",
+            not_canal: "PUSH",
+            not_titulo: tituloNotif,
+            not_contenido_html: cuerpoHTML,
+            not_creado_en: new Date().toISOString()
+          }
+        ]);
+
+        agregarCampanaServidor({
+          id: `camp-contrato-conf-${solicitudId}-${Date.now()}`,
+          asunto: tituloNotif,
+          contenidoHTML: cuerpoHTML,
+          tipoEmision: "AUTOMATICA",
+          emisorNombre: "Equipo de Soporte Legal",
+          emisorCorreo: "soporte@tranqi24.com",
+          procesoOrigen: "PLT-020 Activación de Socio Abogado",
+          audiencia: `ABOGADO (${uApplicant.usu_correo})`,
+          canales: ["IN_APP", "EMAIL", "PUSH"],
+          destinatariosDetalle: [uApplicant.usu_correo],
+          enviados: 1,
+          leidos: 0,
+          ignorados: 0,
+          fecha: new Date().toISOString(),
+        });
+      }
+    } catch (errNot) {
+      console.error("Error al enviar notificación de confirmación de contrato:", errNot);
+    }
+  }
+
+  revalidatePath("/panel/socios");
+  revalidatePath(`/panel/socios/${solicitudId}`);
+  revalidatePath("/panel/usuarios");
   return { ok: true, data: undefined };
 }
