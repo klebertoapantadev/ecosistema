@@ -149,6 +149,7 @@ export interface WidgetInventarioDef {
   rutaFisica?: string;
   panelId: string;
   activo: boolean;
+  creadoEn?: string;
 }
 
 const PANELES_SIDEBAR_INICIALES: PanelSidebarDef[] = [
@@ -275,7 +276,8 @@ const WIDGETS_INVENTARIO_INICIALES: WidgetInventarioDef[] = [
     ruta: "/panel",
     rutaFisica: "/plataforma/SeccionFavoritosInicio.tsx",
     panelId: "panel_inicio",
-    activo: true
+    activo: true,
+    creadoEn: "2026-07-27"
   },
   {
     clave: "ver_como",
@@ -285,7 +287,8 @@ const WIDGETS_INVENTARIO_INICIALES: WidgetInventarioDef[] = [
     ruta: "/panel/cuenta",
     rutaFisica: "/plataforma/SelectorRolActivo.tsx",
     panelId: "panel_cuenta",
-    activo: true
+    activo: true,
+    creadoEn: "2026-07-27"
   },
   {
     clave: "mi_cuenta",
@@ -295,7 +298,8 @@ const WIDGETS_INVENTARIO_INICIALES: WidgetInventarioDef[] = [
     ruta: "/panel/cuenta",
     rutaFisica: "/identidad/FormularioPerfil.tsx",
     panelId: "panel_cuenta",
-    activo: true
+    activo: true,
+    creadoEn: "2026-07-27"
   },
   {
     clave: "historial_accesos",
@@ -305,7 +309,8 @@ const WIDGETS_INVENTARIO_INICIALES: WidgetInventarioDef[] = [
     ruta: "/panel/cuenta",
     rutaFisica: "/identidad/HistorialAccesos.tsx",
     panelId: "panel_cuenta",
-    activo: true
+    activo: true,
+    creadoEn: "2026-07-27"
   },
   {
     clave: "mfa_seguridad",
@@ -315,7 +320,8 @@ const WIDGETS_INVENTARIO_INICIALES: WidgetInventarioDef[] = [
     ruta: "/panel/cuenta",
     rutaFisica: "/identidad/WidgetConfiguracionMfa.tsx",
     panelId: "panel_cuenta",
-    activo: true
+    activo: true,
+    creadoEn: "2026-07-27"
   },
   {
     clave: "datos_facturacion",
@@ -325,7 +331,8 @@ const WIDGETS_INVENTARIO_INICIALES: WidgetInventarioDef[] = [
     ruta: "/panel/cuenta",
     rutaFisica: "/identidad/FormularioDatosFacturacion.tsx",
     panelId: "panel_cuenta",
-    activo: true
+    activo: true,
+    creadoEn: "2026-07-27"
   },
   {
     clave: "gestion_usuarios",
@@ -335,7 +342,8 @@ const WIDGETS_INVENTARIO_INICIALES: WidgetInventarioDef[] = [
     ruta: "/panel/usuarios",
     rutaFisica: "/gestion-usuarios/AdministracionPerfilesWidget.tsx",
     panelId: "panel_administrar",
-    activo: true
+    activo: true,
+    creadoEn: "2026-07-27"
   },
   {
     clave: "consulta_usuarios_perfiles",
@@ -345,7 +353,8 @@ const WIDGETS_INVENTARIO_INICIALES: WidgetInventarioDef[] = [
     ruta: "/panel/usuarios",
     rutaFisica: "/gestion-usuarios/ConsultaUsuariosPerfilesWidget.tsx",
     panelId: "panel_administrar",
-    activo: true
+    activo: true,
+    creadoEn: "2026-07-31"
   },
   {
     clave: "socios",
@@ -355,7 +364,8 @@ const WIDGETS_INVENTARIO_INICIALES: WidgetInventarioDef[] = [
     ruta: "/panel/socios",
     rutaFisica: "/tranqi/AprobacionSociosWidget.tsx",
     panelId: "panel_administrar",
-    activo: true
+    activo: true,
+    creadoEn: "2026-07-28"
   },
   {
     clave: "solicitud_socio",
@@ -365,7 +375,8 @@ const WIDGETS_INVENTARIO_INICIALES: WidgetInventarioDef[] = [
     ruta: "/panel/solicitud-socio",
     rutaFisica: "/tranqi/SolicitudSocioWidget.tsx",
     panelId: "panel_administrar",
-    activo: true
+    activo: true,
+    creadoEn: "2026-07-28"
   },
   {
     clave: "auditoria",
@@ -375,7 +386,8 @@ const WIDGETS_INVENTARIO_INICIALES: WidgetInventarioDef[] = [
     ruta: "/panel/auditoria",
     rutaFisica: "/auditoria/TablaAuditoria.tsx",
     panelId: "panel_administrar",
-    activo: true
+    activo: true,
+    creadoEn: "2026-07-28"
   },
   {
     clave: "emision_notificaciones",
@@ -385,7 +397,8 @@ const WIDGETS_INVENTARIO_INICIALES: WidgetInventarioDef[] = [
     ruta: "/panel/emision-notificaciones",
     rutaFisica: "/notificaciones/EmisionNotificacionesWidget.tsx",
     panelId: "panel_administrar",
-    activo: true
+    activo: true,
+    creadoEn: "2026-08-02"
   },
   {
     clave: "configuracion_negocio",
@@ -395,7 +408,8 @@ const WIDGETS_INVENTARIO_INICIALES: WidgetInventarioDef[] = [
     ruta: "/panel/configuracion",
     rutaFisica: "/identidad/ConfiguracionNegocioWidget.tsx",
     panelId: "panel_configuracion",
-    activo: true
+    activo: true,
+    creadoEn: "2026-07-27"
   },
   {
     clave: "configuracion_correo",
@@ -405,7 +419,8 @@ const WIDGETS_INVENTARIO_INICIALES: WidgetInventarioDef[] = [
     ruta: "/panel/configuracion",
     rutaFisica: "/notificaciones/ConfiguracionSmtpWidget.tsx",
     panelId: "panel_configuracion",
-    activo: true
+    activo: true,
+    creadoEn: "2026-07-30"
   },
   {
     clave: "perfiles",
@@ -415,7 +430,8 @@ const WIDGETS_INVENTARIO_INICIALES: WidgetInventarioDef[] = [
     ruta: "/panel/configuracion",
     rutaFisica: "/gestion-usuarios/AdministracionPerfilesWidget.tsx",
     panelId: "panel_configuracion",
-    activo: true
+    activo: true,
+    creadoEn: "2026-07-31"
   },
   {
     clave: "notificaciones",
@@ -425,7 +441,8 @@ const WIDGETS_INVENTARIO_INICIALES: WidgetInventarioDef[] = [
     ruta: "/panel/configuracion",
     rutaFisica: "/identidad/ModalTerminosNotificaciones.tsx",
     panelId: "panel_configuracion",
-    activo: true
+    activo: true,
+    creadoEn: "2026-07-27"
   },
   {
     clave: "gestion_terminos_consentimientos",
@@ -435,7 +452,30 @@ const WIDGETS_INVENTARIO_INICIALES: WidgetInventarioDef[] = [
     ruta: "/panel/administrar?widget=gestion_terminos_consentimientos",
     rutaFisica: "/identidad/GestionTerminosConsentimientosWidget.tsx",
     panelId: "panel_administrar",
-    activo: true
+    activo: true,
+    creadoEn: "2026-08-13"
+  },
+  {
+    clave: "configuracion_contrato_abogado",
+    nombre: "Configuración de Contrato de Socios",
+    descripcion: "Administración de la plantilla del contrato de sociedad de abogados (.MD/HTML).",
+    categoria: "Operación Legal",
+    ruta: "/panel/administrar?widget=configuracion_contrato_abogado",
+    rutaFisica: "/tranqi/ConfiguracionContratoAbogadoWidget.tsx",
+    panelId: "panel_administrar",
+    activo: true,
+    creadoEn: "2026-08-13"
+  },
+  {
+    clave: "bitacora_notificaciones",
+    nombre: "Bitácora & Historial de Notificaciones",
+    descripcion: "Consulta auditada e historial en tiempo real de notificaciones emitidas.",
+    categoria: "Comunicación",
+    ruta: "/panel/administrar?widget=bitacora_notificaciones",
+    rutaFisica: "/notificaciones/BitacoraNotificacionesWidget.tsx",
+    panelId: "panel_administrar",
+    activo: true,
+    creadoEn: "2026-08-13"
   }
 ];
 
@@ -564,11 +604,11 @@ interface Props {
 
 export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
   const [tabActiva, setTabActiva] = useState<"matriz_paneles" | "matriz_widgets" | "inventario_widgets" | "perfiles">("matriz_widgets");
-  
   // Estado local
   const [perfiles, setPerfiles] = useState<PerfilDef[]>(PERFILES_INICIALES);
   const [panelesSidebar, setPanelesSidebar] = useState<PanelSidebarDef[]>(PANELES_SIDEBAR_INICIALES);
   const [inventarioWidgets, setInventarioWidgets] = useState<WidgetInventarioDef[]>(WIDGETS_INVENTARIO_INICIALES);
+  const [criterioOrden, setCriterioOrden] = useState<"fecha" | "nombre" | "directorio">("fecha");
 
   // CLAVES LOCALSTORAGE PERSISTENCIA POR NEGOCIO
   const KEY_PANELES = `tranqi_paneles_sidebar_${negocio}`;
@@ -604,7 +644,19 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
       const savedInventario = localStorage.getItem(KEY_INVENTARIO);
       if (savedInventario) {
         const parsed = JSON.parse(savedInventario);
-        if (Array.isArray(parsed) && parsed.length > 0) setInventarioWidgets(parsed);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          // Fusionar con WIDGETS_INVENTARIO_INICIALES para no perder nuevos widgets y actualizar los campos creados/rutas
+          const clavesExistentes = new Set(parsed.map((w: any) => w.clave));
+          const nuevosWidgets = WIDGETS_INVENTARIO_INICIALES.filter(w => !clavesExistentes.has(w.clave));
+          
+          // Asegurarse de actualizar propiedades de fecha de creación y ruta de los ya cargados si cambian en código
+          const actualizados = parsed.map((w: any) => {
+            const original = WIDGETS_INVENTARIO_INICIALES.find(o => o.clave === w.clave);
+            return original ? { ...w, creadoEn: original.creadoEn, rutaFisica: original.rutaFisica } : w;
+          });
+          
+          setInventarioWidgets([...actualizados, ...nuevosWidgets]);
+        }
       }
     } catch (err) {
       console.warn("Error cargando configuración persistida:", err);
@@ -1614,6 +1666,35 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
               w => !todasLasClavesAsignadas.has(w.clave)
             );
 
+            // Ordenamiento dinámico
+            const widgetsOrdenados = [...widgetsDisponiblesSinAsignar].sort((a, b) => {
+              if (criterioOrden === "fecha") {
+                const dateA = a.creadoEn ? new Date(a.creadoEn).getTime() : 0;
+                const dateB = b.creadoEn ? new Date(b.creadoEn).getTime() : 0;
+                return dateB - dateA; // Más nuevos primero
+              }
+              if (criterioOrden === "nombre") {
+                return a.nombre.localeCompare(b.nombre);
+              }
+              if (criterioOrden === "directorio") {
+                const pathA = a.rutaFisica || "";
+                const pathB = b.rutaFisica || "";
+                return pathA.localeCompare(pathB);
+              }
+              return 0;
+            });
+
+            const esCreadoHoy = (fechaStr?: string) => {
+              if (!fechaStr) return false;
+              try {
+                const hoy = new Date().toISOString().split("T")[0]; // "2026-08-13"
+                const creado = new Date(fechaStr).toISOString().split("T")[0];
+                return hoy === creado;
+              } catch {
+                return false;
+              }
+            };
+
             return (
               <div
                 style={{
@@ -1624,7 +1705,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                   padding: "18px",
                 }}
               >
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px", flexWrap: "wrap", gap: "8px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", flexWrap: "wrap", gap: "8px" }}>
                   <div>
                     <h4 style={{ fontSize: "0.95rem", fontWeight: 800, margin: "0 0 2px 0", color: "#111111", display: "flex", alignItems: "center", gap: "8px" }}>
                       <Package size={18} color="#5000BA" /> Widgets Disponibles Sin Asignar
@@ -1634,15 +1715,40 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                     </p>
                   </div>
 
-                  <span style={{ fontSize: "0.78rem", fontWeight: 800, background: "#F3E8FF", color: "#5000BA", padding: "4px 12px", borderRadius: "999px" }}>
-                    {widgetsDisponiblesSinAsignar.length} Disponibles
-                  </span>
+                  <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                      <span style={{ fontSize: "0.75rem", color: "#737373", fontWeight: 600 }}>Ordenar por:</span>
+                      <select
+                        value={criterioOrden}
+                        onChange={(e) => setCriterioOrden(e.target.value as any)}
+                        style={{
+                          fontSize: "0.75rem",
+                          padding: "4px 8px",
+                          borderRadius: "6px",
+                          border: "1px solid #D1D5DB",
+                          background: "#FFF",
+                          outline: "none",
+                          fontWeight: 600,
+                          color: "#374151",
+                          cursor: "pointer"
+                        }}
+                      >
+                        <option value="fecha">Fecha de Registro</option>
+                        <option value="nombre">Nombre</option>
+                        <option value="directorio">Directorio Real</option>
+                      </select>
+                    </div>
+                    <span style={{ fontSize: "0.78rem", fontWeight: 800, background: "#F3E8FF", color: "#5000BA", padding: "4px 12px", borderRadius: "999px" }}>
+                      {widgetsDisponiblesSinAsignar.length} Disponibles
+                    </span>
+                  </div>
                 </div>
 
-                {widgetsDisponiblesSinAsignar.length > 0 ? (
+                {widgetsOrdenados.length > 0 ? (
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(290px, 1fr))", gap: "12px" }}>
-                    {widgetsDisponiblesSinAsignar.map(w => {
+                    {widgetsOrdenados.map(w => {
                       const esArrastrando = widgetArrastrado?.widgetClave === w.clave;
+                      const nuevo = esCreadoHoy(w.creadoEn);
 
                       return (
                         <div
@@ -1668,57 +1774,86 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                             cursor: "grab",
                             opacity: esArrastrando ? 0.45 : 1,
                             transform: esArrastrando ? "scale(0.98)" : "none",
-                            transition: "all 0.15s ease"
+                            transition: "all 0.15s ease",
+                            position: "relative"
                           }}
                         >
                           <div style={{ display: "flex", alignItems: "flex-start", gap: "6px" }}>
                             <span title="Arrastrar a cualquier panel para asignar" style={{ display: "inline-flex", cursor: "grab" }}>
                               <GripVertical size={16} color="#737373" style={{ marginTop: "2px", opacity: 0.6, flexShrink: 0 }} />
                             </span>
-                            <div>
-                              <strong style={{ fontSize: "0.85rem", color: "#111111", display: "block" }}>{w.nombre}</strong>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
+                                <strong style={{ fontSize: "0.85rem", color: "#111111" }}>{w.nombre}</strong>
+                                {nuevo && (
+                                  <span
+                                    style={{
+                                      fontSize: "0.58rem",
+                                      fontWeight: 800,
+                                      background: "linear-gradient(135deg, #10B981, #05876E)",
+                                      color: "#FFF",
+                                      padding: "1px 6px",
+                                      borderRadius: "999px",
+                                      letterSpacing: "0.05em",
+                                      boxShadow: "0 1px 3px rgba(16,185,129,0.25)"
+                                    }}
+                                  >
+                                    NUEVO
+                                  </span>
+                                )}
+                              </div>
                               <p style={{ fontSize: "0.75rem", color: "#737373", margin: "2px 0 6px 0", lineHeight: 1.3 }}>{w.descripcion}</p>
-                              <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap", fontSize: "0.68rem" }}>
+                              
+                              <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap", fontSize: "0.68rem", marginTop: "6px" }}>
                                 <code>{w.clave}</code>
-                                <span style={{ color: "#737373" }}>• Categoría: <strong>{w.categoria}</strong></span>
-                                <code style={{ background: "rgba(0,0,0,0.05)", padding: "1px 5px", borderRadius: "4px" }}>
+                                <span style={{ color: "#737373" }}>• Cat: <strong>{w.categoria}</strong></span>
+                                {w.creadoEn && (
+                                  <span style={{ color: "#737373" }}>
+                                    • Reg: <strong>{new Date(w.creadoEn).toLocaleDateString("es-EC", { timeZone: "UTC" })}</strong>
+                                  </span>
+                                )}
+                              </div>
+
+                              <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap", fontSize: "0.68rem", marginTop: "4px" }}>
+                                <span style={{ color: "#737373" }}>Dir:</span>
+                                <code style={{ background: "rgba(0,0,0,0.05)", padding: "1px 5px", borderRadius: "4px", color: "#4B5563", wordBreak: "break-all" }}>
                                   {w.rutaFisica || `/plataforma/${w.clave}.tsx`}
                                 </code>
                               </div>
                             </div>
                           </div>
 
-                        <div style={{ display: "flex", gap: "6px", alignItems: "center", marginTop: "auto", paddingTop: "8px", borderTop: "1px solid #E4E4E4" }}>
-                          <select
-                            defaultValue=""
-                            onChange={(e) => {
-                              if (e.target.value) {
-                                agregarWidgetAPanel(perfilSeleccionado, w.clave, e.target.value);
-                                e.target.value = "";
-                              }
-                            }}
-                            style={{
-                              flex: 1,
-                              padding: "6px 8px",
-                              borderRadius: "6px",
-                              border: "1px solid #E4E4E4",
-                              fontSize: "0.75rem",
-                              fontWeight: 700,
-                              cursor: "pointer",
-                              background: "#FFFFFF"
-                            }}
-                          >
-                            <option value="" disabled>+ Asignar a Panel...</option>
-                            {panelesSidebar.map(p => (
-                              <option key={p.id} value={p.id}>
-                                {p.nombre}
-                              </option>
-                            ))}
-                          </select>
+                          <div style={{ display: "flex", gap: "6px", alignItems: "center", marginTop: "auto", paddingTop: "8px", borderTop: "1px solid #E4E4E4" }}>
+                            <select
+                              defaultValue=""
+                              onChange={(e) => {
+                                if (e.target.value) {
+                                  agregarWidgetAPanel(perfilSeleccionado, w.clave, e.target.value);
+                                  e.target.value = "";
+                                }
+                              }}
+                              style={{
+                                flex: 1,
+                                padding: "6px 8px",
+                                borderRadius: "6px",
+                                border: "1px solid #E4E4E4",
+                                fontSize: "0.75rem",
+                                fontWeight: 700,
+                                cursor: "pointer",
+                                background: "#FFFFFF"
+                              }}
+                            >
+                              <option value="" disabled>+ Asignar a Panel...</option>
+                              {panelesSidebar.map(p => (
+                                <option key={p.id} value={p.id}>
+                                  {p.nombre}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
                   </div>
                 ) : (
                   <div style={{ textAlign: "center", padding: "14px", fontSize: "0.8rem", color: "#05876E", fontWeight: 700 }}>
