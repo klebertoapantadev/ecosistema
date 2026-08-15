@@ -20,11 +20,11 @@ begin
   end if;
 
   -- Borrar solicitudes de socio y datos en tranqui_legal
+  delete from tranqui_legal.trq_abogado where abg_usuario_id = p_target_usuario_id;
   delete from tranqui_legal.trq_solicitud_materia where sma_solicitud_id in (select ssc_id from tranqui_legal.trq_solicitud_socio where ssc_usuario_id = p_target_usuario_id);
   delete from tranqui_legal.trq_solicitud_provincia where spr_solicitud_id in (select ssc_id from tranqui_legal.trq_solicitud_socio where ssc_usuario_id = p_target_usuario_id);
   delete from tranqui_legal.trq_experiencia_laboral where exp_solicitud_id in (select ssc_id from tranqui_legal.trq_solicitud_socio where ssc_usuario_id = p_target_usuario_id);
   delete from tranqui_legal.trq_solicitud_socio where ssc_usuario_id = p_target_usuario_id;
-  delete from tranqui_legal.trq_abogado where abg_usuario_id = p_target_usuario_id;
 
   -- Borrar perfiles asignados y membresias en comun_seguridad
   delete from comun_seguridad.seg_membresia_perfil where mpe_membresia_id in (
@@ -68,11 +68,11 @@ begin
 
   -- 1. Purgar esquemas operacionales según el negocio especificado
   if v_negocio = 'TRANQ' or v_negocio = 'TODOS' then
+    delete from tranqui_legal.trq_abogado where abg_id is not null or true;
     delete from tranqui_legal.trq_solicitud_materia where sma_id is not null or true;
     delete from tranqui_legal.trq_solicitud_provincia where spr_id is not null or true;
     delete from tranqui_legal.trq_experiencia_laboral where exp_id is not null or true;
     delete from tranqui_legal.trq_solicitud_socio where ssc_id is not null or true;
-    delete from tranqui_legal.trq_abogado where abg_id is not null or true;
   end if;
 
   if (v_negocio = 'FFH' or v_negocio = 'TODOS') and to_regclass('fastfix_mantenimiento.ffh_tecnico') is not null then

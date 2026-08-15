@@ -68,7 +68,9 @@ function interpolarVariables(
 
 export async function GET() {
   const perfil = await obtenerPerfilActual();
-  const perfiles = await obtenerPerfiles("tranqi");
+  const perfilesTranqi = await obtenerPerfiles("tranqi");
+  const perfilesTRANQ = await obtenerPerfiles("TRANQ");
+  const perfiles = Array.from(new Set([...perfilesTranqi, ...perfilesTRANQ]));
   const esAutorizado = Boolean(perfil?.usu_superadmin_plataforma) || perfiles.includes("ADMINISTRADOR") || perfiles.includes("OPERADOR");
 
   if (!esAutorizado) {
@@ -81,15 +83,18 @@ export async function GET() {
 export async function POST(req: Request) {
   try {
     const perfil = await obtenerPerfilActual();
-    const perfiles = await obtenerPerfiles("tranqi");
-    const esAdmin = Boolean(perfil?.usu_superadmin_plataforma) || perfiles.includes("ADMINISTRADOR");
-
-    if (!esAdmin) {
-      return NextResponse.json({ error: "Acceso Denegado: Solo Administradores pueden emitir notificaciones" }, { status: 403 });
-    }
-
     const body = await req.json();
     const { negocio = "TRANQ", asunto, tipoAudiencia, roles, usuarios, canales, contenidoHTML, contenidoMarkdown } = body;
+
+    const perfilesTranqi = await obtenerPerfiles("tranqi");
+    const perfilesTRANQ = await obtenerPerfiles("TRANQ");
+    const perfilesNegocio = negocio ? await obtenerPerfiles(negocio) : [];
+    const perfiles = Array.from(new Set([...perfilesTranqi, ...perfilesTRANQ, ...perfilesNegocio]));
+    const esAutorizado = Boolean(perfil?.usu_superadmin_plataforma) || perfiles.includes("ADMINISTRADOR") || perfiles.includes("OPERADOR");
+
+    if (!esAutorizado) {
+      return NextResponse.json({ error: "Acceso Denegado: Solo Administradores u Operadores pueden emitir notificaciones." }, { status: 403 });
+    }
 
     if (!asunto || typeof asunto !== "string" || !asunto.trim()) {
       return NextResponse.json({ error: "El asunto es obligatorio" }, { status: 400 });

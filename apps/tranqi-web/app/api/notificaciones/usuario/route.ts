@@ -49,7 +49,9 @@ export async function GET() {
         const { obtenerPerfiles } = await import("@eco/identidad");
         const { crearClienteAdmin } = await import("@eco/supabase/servidor");
 
-        const perfiles = await obtenerPerfiles("tranqi");
+        const perfilesTranqi = await obtenerPerfiles("tranqi");
+        const perfilesTRANQ = await obtenerPerfiles("TRANQ");
+        const perfiles = Array.from(new Set([...perfilesTranqi, ...perfilesTRANQ]));
         const esAutorizado = Boolean(perfil?.usu_superadmin_plataforma) || perfiles.includes("ADMINISTRADOR") || perfiles.includes("OPERADOR");
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any

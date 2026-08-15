@@ -2,7 +2,7 @@
 
 import crypto from "crypto";
 import { headers } from "next/headers";
-import { crearClienteServidor } from "@eco/supabase/servidor";
+import { crearClienteServidor, crearClienteAdmin } from "@eco/supabase/servidor";
 import { enviarCorreo } from "@eco/notificaciones/enviar-correo";
 import {
   esquemaRegistro,
@@ -17,6 +17,7 @@ import {
 } from "./esquema";
 import { registrarAcceso } from "./acceso";
 import { obtenerPerfiles } from "./consultas";
+import { notificarNuevoUsuarioRegistrado } from "@eco/notificaciones/notificar-usuario";
 
 type Resultado<T = undefined> = { ok: true; data: T } | { ok: false; error: string };
 
@@ -104,6 +105,15 @@ export async function registrarUsuario(datos: DatosRegistro, negocio: string): P
   await asegurarMembresiaCliente(supabase, data.user.id, negocio);
   const { ip, userAgent } = await obtenerIpYAgente();
   await registrarAcceso(supabase, data.user.id, ip, userAgent, negocio);
+
+  // Despachar notificación multicanal a Operadores y Administradores de tranqi
+  await notificarNuevoUsuarioRegistrado({
+    usuarioId: data.user.id,
+    nombres: parseo.data.nombres,
+    apellidos: parseo.data.apellidos,
+    correo: parseo.data.correo,
+    negocio,
+  });
 
   try {
     const { data: codigo, error: errorOtp } = await supabase.schema("comun_seguridad").rpc("seg_fn_generar_otp_registro");

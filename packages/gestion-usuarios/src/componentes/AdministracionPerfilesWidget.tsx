@@ -8,9 +8,10 @@ import {
   Palette, UserCheck, X, Sparkles, Trash2, Star, Move, Copy, Package, GripVertical,
   Home, User, Settings, Shield, Folder, Wrench, Building, Briefcase, Bell, Database,
   Activity, Globe, Lock, KeyRound, CheckSquare, Terminal, Zap, Pencil, LogOut, LogIn,
-  Forward, Inbox, type LucideIcon
+  Forward, Inbox, FileText, Download, Printer, Share2, type LucideIcon
 } from "lucide-react";
-import { guardarPerfil, guardarWidget, guardarAsignacionWidget } from "../acciones";
+import { guardarPerfil, guardarWidget, guardarAsignacionWidget, obtenerDatosGestionUsuariosAction } from "../acciones";
+import type { UsuarioConMembresia } from "../consultas";
 
 export const CATALOGO_ICONOS_PANEL: Record<string, LucideIcon> = {
   Home,
@@ -603,12 +604,160 @@ interface Props {
 }
 
 export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
-  const [tabActiva, setTabActiva] = useState<"matriz_paneles" | "matriz_widgets" | "inventario_widgets" | "perfiles">("matriz_widgets");
+  const [tabActiva, setTabActiva] = useState<"matriz_paneles" | "matriz_widgets" | "inventario_widgets" | "perfiles" | "reporte_gobernanza">("matriz_widgets");
   // Estado local
   const [perfiles, setPerfiles] = useState<PerfilDef[]>(PERFILES_INICIALES);
   const [panelesSidebar, setPanelesSidebar] = useState<PanelSidebarDef[]>(PANELES_SIDEBAR_INICIALES);
   const [inventarioWidgets, setInventarioWidgets] = useState<WidgetInventarioDef[]>(WIDGETS_INVENTARIO_INICIALES);
   const [criterioOrden, setCriterioOrden] = useState<"fecha" | "nombre" | "directorio">("fecha");
+
+  // Estado del Reporte de Gobernanza
+  const [usuariosReporte, setUsuariosReporte] = useState<UsuarioConMembresia[]>([]);
+  const [cargandoUsuariosReporte, setCargandoUsuariosReporte] = useState(false);
+  const [filtroPerfilReporte, setFiltroPerfilReporte] = useState<string>("TODOS");
+  const [busquedaReporte, setBusquedaReporte] = useState<string>("");
+
+  const cargarUsuariosParaReporte = async () => {
+    setCargandoUsuariosReporte(true);
+    try {
+      const res = await obtenerDatosGestionUsuariosAction("", negocio);
+      if (res.ok && res.data?.usuarios) {
+        setUsuariosReporte(res.data.usuarios);
+      }
+    } catch (e) {
+      console.warn("Error cargando usuarios para reporte:", e);
+    } finally {
+      setCargandoUsuariosReporte(false);
+    }
+  };
+
+  useEffect(() => {
+    cargarUsuariosParaReporte();
+  }, [negocio]);
+
+  const copiarReporteMarkdown = () => {
+    let md = `# REPORTE DE GOBERNANZA — MATRIZ DE PERFILES, PANELES, WIDGETS Y USUARIOS (${negocio.toUpperCase()})\n\n`;
+    md += `*Fecha de Generación:* ${new Date().toLocaleString("es-EC")}\n\n`;
+
+    const perfilesFiltrados = filtroPerfilReporte === "TODOS" ? perfiles : perfiles.filter(p => p.clave === filtroPerfilReporte);
+
+    perfilesFiltrados.forEach(p => {
+      md += `## 🛡️ PERFIL: ${p.nombre.toUpperCase()} (Nivel ${p.nivel})\n`;
+      md += `- **Clave:** \`${p.clave}\`\n`;
+      md += `- **Ámbito:** ${p.ambito}\n`;
+      md += `- **Descripción:** ${p.descripcion || "Sin descripción"}\n\n`;
+
+      // Paneles y Widgets
+      md += `### 📑 Paneles y Widgets Asignados:\n`;
+      const panelesDelPerfil = panelesSidebar.filter(pan => p.panelesAsignados.includes(pan.id));
+      if (panelesDelPerfil.length === 0) {
+        md += `*Sin paneles asignados.*\n\n`;
+      } else {
+        panelesDelPerfil.forEach(pan => {
+          const widgetsDelPanel = (p.widgetsAsignadosPorPanel[pan.id] || []).map(wClave => {
+            const wObj = inventarioWidgets.find(w => w.clave === wClave);
+            return wObj ? `${wObj.nombre} (\`${wObj.clave}\` - ${wObj.categoria})` : `\`${wClave}\``;
+          });
+          md += `- **Panel:** **${pan.nombre}** (\`${pan.ruta}\`) ${pan.requiereMfa ? "🔒 [MFA Requerido]" : ""}\n`;
+          if (widgetsDelPanel.length > 0) {
+            widgetsDelPanel.forEach(w => {
+              md += `  - 🧩 ${w}\n`;
+            });
+          } else {
+            md += `  - *(Sin widgets asignados)*\n`;
+          }
+        });
+        md += `\n`;
+      }
+
+      // Usuarios Asignados
+      const usuariosDelPerfil = usuariosReporte.filter(u => {
+        if (p.clave === "SUPERADMIN") return u.perfiles.includes("SUPERADMIN");
+        return u.perfiles.map(x => x.toUpperCase()).includes(p.clave.toUpperCase());
+      });
+
+      md += `### 👥 Usuarios Asignados (${usuariosDelPerfil.length}):\n`;
+      if (usuariosDelPerfil.length === 0) {
+        md += `*No hay usuarios con este perfil asignado.*\n\n`;
+      } else {
+        usuariosDelPerfil.forEach(u => {
+          const nombreCompleto = [u.usu_nombres, u.usu_apellidos].filter(Boolean).join(" ") || "Sin Nombre";
+          md += `- **${nombreCompleto}** — \`${u.usu_correo}\` (Estado: ${u.mem_estado || "ACTIVO"})\n`;
+        });
+        md += `\n`;
+      }
+      md += `---\n\n`;
+    });
+
+    if (navigator?.clipboard) {
+      navigator.clipboard.writeText(md);
+      setMensajeExito("📋 Reporte copiado al portapapeles en formato Markdown.");
+      setTimeout(() => setMensajeExito(null), 4000);
+    }
+  };
+
+  const exportarReporteCSV = () => {
+    const filas: string[][] = [
+      ["Perfil", "Nivel", "Ambito", "Panel", "Ruta Panel", "MFA Panel", "Widget Clave", "Widget Nombre", "Categoria Widget", "Usuario Nombre", "Usuario Correo", "Usuario Estado"]
+    ];
+
+    const perfilesFiltrados = filtroPerfilReporte === "TODOS" ? perfiles : perfiles.filter(p => p.clave === filtroPerfilReporte);
+
+    perfilesFiltrados.forEach(p => {
+      const panelesDelPerfil = panelesSidebar.filter(pan => p.panelesAsignados.includes(pan.id));
+      const usuariosDelPerfil = usuariosReporte.filter(u => {
+        if (p.clave === "SUPERADMIN") return u.perfiles.includes("SUPERADMIN");
+        return u.perfiles.map(x => x.toUpperCase()).includes(p.clave.toUpperCase());
+      });
+
+      panelesDelPerfil.forEach(pan => {
+        const widgets = p.widgetsAsignadosPorPanel[pan.id] || [];
+        if (widgets.length === 0) {
+          filas.push([
+            p.nombre,
+            String(p.nivel),
+            p.ambito,
+            pan.nombre,
+            pan.ruta,
+            pan.requiereMfa ? "SI" : "NO",
+            "-",
+            "Sin widgets",
+            "-",
+            usuariosDelPerfil.length > 0 ? usuariosDelPerfil.map(u => [u.usu_nombres, u.usu_apellidos].filter(Boolean).join(" ")).join("; ") : "Sin usuarios",
+            usuariosDelPerfil.length > 0 ? usuariosDelPerfil.map(u => u.usu_correo).join("; ") : "-",
+            "-"
+          ]);
+        } else {
+          widgets.forEach(wClave => {
+            const wObj = inventarioWidgets.find(w => w.clave === wClave);
+            filas.push([
+              p.nombre,
+              String(p.nivel),
+              p.ambito,
+              pan.nombre,
+              pan.ruta,
+              pan.requiereMfa ? "SI" : "NO",
+              wClave,
+              wObj?.nombre || wClave,
+              wObj?.categoria || "General",
+              usuariosDelPerfil.length > 0 ? usuariosDelPerfil.map(u => [u.usu_nombres, u.usu_apellidos].filter(Boolean).join(" ")).join("; ") : "Sin usuarios",
+              usuariosDelPerfil.length > 0 ? usuariosDelPerfil.map(u => u.usu_correo).join("; ") : "-",
+              "-"
+            ]);
+          });
+        }
+      });
+    });
+
+    const csvContent = "data:text/csv;charset=utf-8," + filas.map(e => e.map(cell => `"${(cell || "").replace(/"/g, '""')}"`).join(",")).join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `Reporte_Gobernanza_Perfiles_${negocio}_${new Date().toISOString().slice(0,10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   // CLAVES LOCALSTORAGE PERSISTENCIA POR NEGOCIO
   const KEY_PANELES = `tranqi_paneles_sidebar_${negocio}`;
@@ -1204,6 +1353,29 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
           }}
         >
           <Users size={18} /> Catálogo de Perfiles ({perfiles.length})
+        </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            setTabActiva("reporte_gobernanza");
+            cargarUsuariosParaReporte();
+          }}
+          style={{
+            padding: "10px 16px",
+            border: "none",
+            borderBottom: tabActiva === "reporte_gobernanza" ? "3px solid var(--violeta, #5000BA)" : "3px solid transparent",
+            background: "transparent",
+            color: tabActiva === "reporte_gobernanza" ? "var(--violeta, #5000BA)" : "var(--panel-gris, #737373)",
+            fontWeight: tabActiva === "reporte_gobernanza" ? 800 : 600,
+            fontSize: "0.88rem",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            gap: "8px"
+          }}
+        >
+          <FileText size={18} /> 📊 Reporte Integral de Gobernanza
         </button>
       </div>
 
@@ -2239,6 +2411,426 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                 </div>
               );
             })}
+          </div>
+        </div>
+      )}
+
+      {/* TAB 5: REPORTE INTEGRAL DE GOBERNANZA (PERFILES, PANELES, WIDGETS Y USUARIOS ASIGNADOS) */}
+      {tabActiva === "reporte_gobernanza" && (
+        <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+          {/* CABECERA HERO DEL REPORTE */}
+          <div
+            style={{
+              background: "linear-gradient(135deg, #1e1b4b 0%, #312e81 100%)",
+              borderRadius: "16px",
+              padding: "24px",
+              color: "#ffffff",
+              boxShadow: "0 10px 30px rgba(30, 27, 75, 0.25)"
+            }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "16px" }}>
+              <div>
+                <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", background: "rgba(255,255,255,0.15)", padding: "4px 12px", borderRadius: "999px", fontSize: "0.75rem", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.05em", color: "#c7d2fe", marginBottom: "8px" }}>
+                  <ShieldCheck size={14} /> GOBERNANZA TRANSVERSAL ({negocio.toUpperCase()})
+                </div>
+                <h2 style={{ fontSize: "1.3rem", fontWeight: 900, margin: "0 0 6px 0", color: "#ffffff" }}>
+                  📊 Reporte de Perfiles, Paneles, Widgets y Usuarios Asignados
+                </h2>
+                <p style={{ fontSize: "0.85rem", color: "#c7d2fe", margin: 0, maxWidth: "680px", lineHeight: 1.5 }}>
+                  Consolidado integral de la matriz de seguridad, jerarquías de perfiles (1-100), rutas de paneles, módulos widget activos y lista de usuarios con membresía vinculada.
+                </p>
+              </div>
+
+              {/* BOTONES DE ACCIÓN: COPIAR, EXPORTAR CSV, IMPRIMIR */}
+              <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+                <button
+                  type="button"
+                  onClick={copiarReporteMarkdown}
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    background: "rgba(255,255,255,0.12)",
+                    border: "1px solid rgba(255,255,255,0.25)",
+                    color: "#ffffff",
+                    padding: "9px 16px",
+                    borderRadius: "10px",
+                    fontSize: "0.82rem",
+                    fontWeight: 800,
+                    cursor: "pointer",
+                    transition: "all 0.2s ease"
+                  }}
+                  title="Copiar reporte en formato Markdown al portapapeles"
+                >
+                  <Copy size={16} /> Copiar Reporte
+                </button>
+
+                <button
+                  type="button"
+                  onClick={exportarReporteCSV}
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    background: "#05876E",
+                    border: "none",
+                    color: "#ffffff",
+                    padding: "9px 16px",
+                    borderRadius: "10px",
+                    fontSize: "0.82rem",
+                    fontWeight: 800,
+                    cursor: "pointer",
+                    boxShadow: "0 4px 12px rgba(5,135,110,0.3)"
+                  }}
+                  title="Descargar matriz en formato CSV / Excel"
+                >
+                  <Download size={16} /> Exportar CSV
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => window.print()}
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    background: "#5000BA",
+                    border: "none",
+                    color: "#ffffff",
+                    padding: "9px 16px",
+                    borderRadius: "10px",
+                    fontSize: "0.82rem",
+                    fontWeight: 800,
+                    cursor: "pointer",
+                    boxShadow: "0 4px 12px rgba(80,0,186,0.3)"
+                  }}
+                  title="Imprimir o guardar como PDF"
+                >
+                  <Printer size={16} /> Imprimir / PDF
+                </button>
+              </div>
+            </div>
+
+            {/* FILTROS Y BÚSQUEDA DEL REPORTE */}
+            <div style={{ display: "flex", gap: "12px", marginTop: "20px", flexWrap: "wrap", alignItems: "center" }}>
+              <div style={{ flex: 1, minWidth: "240px", position: "relative" }}>
+                <Search size={16} style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: "#94a3b8" }} />
+                <input
+                  type="text"
+                  placeholder="Buscar en el reporte por perfil, panel, widget o usuario..."
+                  value={busquedaReporte}
+                  onChange={e => setBusquedaReporte(e.target.value)}
+                  style={{
+                    width: "100%",
+                    padding: "9px 12px 9px 36px",
+                    borderRadius: "10px",
+                    border: "1px solid rgba(255,255,255,0.2)",
+                    background: "rgba(255,255,255,0.08)",
+                    color: "#ffffff",
+                    fontSize: "0.85rem",
+                    outline: "none"
+                  }}
+                />
+              </div>
+
+              <div style={{ minWidth: "220px" }}>
+                <select
+                  value={filtroPerfilReporte}
+                  onChange={e => setFiltroPerfilReporte(e.target.value)}
+                  style={{
+                    width: "100%",
+                    padding: "9px 14px",
+                    borderRadius: "10px",
+                    border: "1px solid rgba(255,255,255,0.2)",
+                    background: "#312e81",
+                    color: "#ffffff",
+                    fontSize: "0.85rem",
+                    fontWeight: 700,
+                    cursor: "pointer"
+                  }}
+                >
+                  <option value="TODOS">Todos los Perfiles ({perfiles.length})</option>
+                  {perfiles.map(p => (
+                    <option key={p.clave} value={p.clave}>
+                      {p.nombre} (Nivel {p.nivel})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <button
+                type="button"
+                onClick={cargarUsuariosParaReporte}
+                style={{
+                  background: "rgba(255,255,255,0.1)",
+                  border: "1px solid rgba(255,255,255,0.2)",
+                  color: "#ffffff",
+                  padding: "9px 14px",
+                  borderRadius: "10px",
+                  fontSize: "0.82rem",
+                  fontWeight: 700,
+                  cursor: "pointer"
+                }}
+              >
+                {cargandoUsuariosReporte ? "Cargando..." : "↻ Actualizar"}
+              </button>
+            </div>
+          </div>
+
+          {/* LISTADO DE TARJETAS DE REPORTE POR PERFIL */}
+          <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+            {perfiles
+              .filter(p => {
+                if (filtroPerfilReporte !== "TODOS" && p.clave !== filtroPerfilReporte) return false;
+                if (!busquedaReporte.trim()) return true;
+                const txt = busquedaReporte.toLowerCase();
+                const coincidePerfil = p.nombre.toLowerCase().includes(txt) || p.clave.toLowerCase().includes(txt);
+                const coincideWidget = Object.values(p.widgetsAsignadosPorPanel).flat().some(w => w.toLowerCase().includes(txt));
+                const coincideUsuario = usuariosReporte.some(u => {
+                  const tieneP = p.clave === "SUPERADMIN" ? u.perfiles.includes("SUPERADMIN") : u.perfiles.map(x => x.toUpperCase()).includes(p.clave.toUpperCase());
+                  return tieneP && (u.usu_correo.toLowerCase().includes(txt) || (u.usu_nombres || "").toLowerCase().includes(txt) || (u.usu_apellidos || "").toLowerCase().includes(txt));
+                });
+                return coincidePerfil || coincideWidget || coincideUsuario;
+              })
+              .map(p => {
+                const t = TEMAS_PERFIL[p.clave] || TEMA_POR_DEFECTO;
+                const panelesDelPerfil = panelesSidebar.filter(pan => p.panelesAsignados.includes(pan.id));
+                const usuariosDelPerfil = usuariosReporte.filter(u => {
+                  if (p.clave === "SUPERADMIN") return u.perfiles.includes("SUPERADMIN");
+                  return u.perfiles.map(x => x.toUpperCase()).includes(p.clave.toUpperCase());
+                });
+
+                const totalWidgets = Object.values(p.widgetsAsignadosPorPanel).reduce((acc, list) => acc + list.length, 0);
+
+                return (
+                  <div
+                    key={p.clave}
+                    style={{
+                      border: `2px solid ${t.colorBorde}44`,
+                      borderRadius: "16px",
+                      background: "#ffffff",
+                      boxShadow: "0 4px 16px rgba(0,0,0,0.04)",
+                      overflow: "hidden"
+                    }}
+                  >
+                    {/* CABECERA DE PERFIL */}
+                    <div
+                      style={{
+                        padding: "18px 24px",
+                        background: t.colorFondoSuave,
+                        borderBottom: `1.5px solid ${t.colorBorde}33`,
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        flexWrap: "wrap",
+                        gap: "12px"
+                      }}
+                    >
+                      <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
+                        <div
+                          style={{
+                            width: "44px",
+                            height: "44px",
+                            borderRadius: "12px",
+                            background: t.badgeBg,
+                            color: t.badgeTexto,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            border: `1.5px solid ${t.colorBorde}44`
+                          }}
+                        >
+                          {p.esSuperAdmin ? <ShieldCheck size={24} /> : <Users size={24} />}
+                        </div>
+                        <div>
+                          <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
+                            <h3 style={{ fontSize: "1.15rem", fontWeight: 900, color: t.colorTexto, margin: 0 }}>
+                              {p.nombre}
+                            </h3>
+                            <span style={{ fontSize: "0.72rem", fontWeight: 800, padding: "3px 10px", borderRadius: "999px", background: t.badgeBg, color: t.badgeTexto, border: `1px solid ${t.colorBorde}33` }}>
+                              Nivel {p.nivel} (Jerarquía 1-100)
+                            </span>
+                            <span style={{ fontSize: "0.72rem", fontWeight: 700, padding: "3px 10px", borderRadius: "999px", background: "#ffffff", color: "#555", border: "1px solid #E4E4E4" }}>
+                              {p.clave}
+                            </span>
+                            <span style={{ fontSize: "0.72rem", fontWeight: 700, padding: "3px 10px", borderRadius: "999px", background: "#ffffff", color: "#555", border: "1px solid #E4E4E4" }}>
+                              Ámbito: {p.ambito}
+                            </span>
+                          </div>
+                          <p style={{ fontSize: "0.82rem", color: t.colorTexto, margin: "4px 0 0 0", opacity: 0.85 }}>
+                            {p.descripcion || "Perfil configurado para el sistema."}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* BADGES METRICAS */}
+                      <div style={{ display: "flex", gap: "10px" }}>
+                        <div style={{ textAlign: "center", padding: "6px 14px", background: "#ffffff", borderRadius: "10px", border: "1px solid #E4E4E4" }}>
+                          <span style={{ fontSize: "1.1rem", fontWeight: 900, color: t.colorPrimario, display: "block", lineHeight: 1 }}>{panelesDelPerfil.length}</span>
+                          <span style={{ fontSize: "0.68rem", fontWeight: 700, color: "#737373", textTransform: "uppercase" }}>Paneles</span>
+                        </div>
+                        <div style={{ textAlign: "center", padding: "6px 14px", background: "#ffffff", borderRadius: "10px", border: "1px solid #E4E4E4" }}>
+                          <span style={{ fontSize: "1.1rem", fontWeight: 900, color: t.colorPrimario, display: "block", lineHeight: 1 }}>{totalWidgets}</span>
+                          <span style={{ fontSize: "0.68rem", fontWeight: 700, color: "#737373", textTransform: "uppercase" }}>Widgets</span>
+                        </div>
+                        <div style={{ textAlign: "center", padding: "6px 14px", background: "#ffffff", borderRadius: "10px", border: "1px solid #E4E4E4" }}>
+                          <span style={{ fontSize: "1.1rem", fontWeight: 900, color: "#05876E", display: "block", lineHeight: 1 }}>{usuariosDelPerfil.length}</span>
+                          <span style={{ fontSize: "0.68rem", fontWeight: 700, color: "#737373", textTransform: "uppercase" }}>Usuarios</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* CUERPO DEL REPORTE: PANELES / WIDGETS Y USUARIOS */}
+                    <div style={{ padding: "20px 24px", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: "20px" }}>
+                      {/* COLUMNA 1: PANELES & WIDGETS ASIGNADOS */}
+                      <div style={{ background: "#FBFBFE", padding: "18px", borderRadius: "12px", border: "1px solid #EAE8F2" }}>
+                        <div style={{ fontSize: "0.82rem", fontWeight: 800, color: "#1e1b4b", textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: "14px", display: "flex", alignItems: "center", gap: "8px" }}>
+                          <Layers size={16} color={t.colorPrimario} /> Paneles del Menú & Módulos Asignados ({panelesDelPerfil.length})
+                        </div>
+
+                        {panelesDelPerfil.length === 0 ? (
+                          <p style={{ fontSize: "0.82rem", color: "#888", fontStyle: "italic", margin: 0 }}>
+                            Este perfil no tiene paneles de navegación asignados actualmente.
+                          </p>
+                        ) : (
+                          <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                            {panelesDelPerfil.map(pan => {
+                              const widgetsDeEstePanel = (p.widgetsAsignadosPorPanel[pan.id] || []).map(wClave => {
+                                return inventarioWidgets.find(w => w.clave === wClave) || {
+                                  clave: wClave,
+                                  nombre: wClave,
+                                  categoria: "General",
+                                  descripcion: "",
+                                  ruta: pan.ruta
+                                };
+                              });
+
+                              return (
+                                <div key={pan.id} style={{ background: "#ffffff", padding: "12px", borderRadius: "10px", border: "1px solid #E4E4E4" }}>
+                                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+                                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                                      <IconoPanelDinamico nombreIcono={pan.icono} color={t.colorPrimario} size={16} />
+                                      <strong style={{ fontSize: "0.88rem", color: "#111" }}>{pan.nombre}</strong>
+                                      <code style={{ fontSize: "0.72rem", color: "#666", background: "#f1f1f1", padding: "1px 6px", borderRadius: "4px" }}>{pan.ruta}</code>
+                                    </div>
+                                    {pan.requiereMfa && (
+                                      <span style={{ fontSize: "0.68rem", fontWeight: 800, color: "#dc2626", background: "#fef2f2", padding: "2px 8px", borderRadius: "999px", border: "1px solid #fecaca" }}>
+                                        🔒 MFA TOTP
+                                      </span>
+                                    )}
+                                  </div>
+
+                                  {widgetsDeEstePanel.length === 0 ? (
+                                    <span style={{ fontSize: "0.75rem", color: "#999", fontStyle: "italic" }}>
+                                      (Sin widgets configurados en este panel)
+                                    </span>
+                                  ) : (
+                                    <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
+                                      {widgetsDeEstePanel.map((w, idx) => (
+                                        <span
+                                          key={idx}
+                                          style={{
+                                            fontSize: "0.74rem",
+                                            fontWeight: 700,
+                                            padding: "4px 8px",
+                                            borderRadius: "6px",
+                                            background: t.colorFondoSuave,
+                                            color: t.colorTexto,
+                                            border: `1px solid ${t.colorBorde}33`,
+                                            display: "inline-flex",
+                                            alignItems: "center",
+                                            gap: "4px"
+                                          }}
+                                          title={`Clave: ${w.clave} | Categoría: ${w.categoria}`}
+                                        >
+                                          <Check size={12} color={t.colorPrimario} /> {w.nombre}
+                                        </span>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* COLUMNA 2: USUARIOS ASIGNADOS AL PERFIL */}
+                      <div style={{ background: "#FBFBFE", padding: "18px", borderRadius: "12px", border: "1px solid #EAE8F2" }}>
+                        <div style={{ fontSize: "0.82rem", fontWeight: 800, color: "#1e1b4b", textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: "14px", display: "flex", alignItems: "center", gap: "8px" }}>
+                          <Users size={16} color="#05876E" /> Usuarios con este Perfil ({usuariosDelPerfil.length})
+                        </div>
+
+                        {usuariosDelPerfil.length === 0 ? (
+                          <div style={{ padding: "24px", textAlign: "center", background: "#ffffff", borderRadius: "10px", border: "1px dashed #D1D5DB" }}>
+                            <UserCheck size={28} color="#9CA3AF" style={{ margin: "0 auto 8px" }} />
+                            <p style={{ fontSize: "0.82rem", color: "#6B7280", margin: 0, fontWeight: 600 }}>
+                              No hay usuarios registrados que tengan asignado este perfil actualmente.
+                            </p>
+                          </div>
+                        ) : (
+                          <div style={{ display: "flex", flexDirection: "column", gap: "8px", maxHeight: "380px", overflowY: "auto", paddingRight: "4px" }}>
+                            {usuariosDelPerfil.map((u, idx) => {
+                              const nombreCompleto = [u.usu_nombres, u.usu_apellidos].filter(Boolean).join(" ") || "Usuario Registrado";
+                              const iniciales = (u.usu_nombres?.[0] || u.usu_correo[0] || "U").toUpperCase();
+
+                              return (
+                                <div
+                                  key={u.usu_id || idx}
+                                  style={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "space-between",
+                                    padding: "10px 12px",
+                                    background: "#ffffff",
+                                    borderRadius: "8px",
+                                    border: "1px solid #E4E4E4",
+                                    gap: "10px"
+                                  }}
+                                >
+                                  <div style={{ display: "flex", alignItems: "center", gap: "10px", minWidth: 0 }}>
+                                    <div
+                                      style={{
+                                        width: "32px",
+                                        height: "32px",
+                                        borderRadius: "50%",
+                                        background: t.badgeBg,
+                                        color: t.badgeTexto,
+                                        fontWeight: 800,
+                                        fontSize: "0.82rem",
+                                        display: "flex",
+                                        alignItems: "center",
+                                        justifyContent: "center",
+                                        flexShrink: 0
+                                      }}
+                                    >
+                                      {iniciales}
+                                    </div>
+                                    <div style={{ minWidth: 0 }}>
+                                      <strong style={{ fontSize: "0.84rem", color: "#111", display: "block", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                                        {nombreCompleto}
+                                      </strong>
+                                      <span style={{ fontSize: "0.74rem", color: "#737373", display: "block", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                                        {u.usu_correo}
+                                      </span>
+                                    </div>
+                                  </div>
+
+                                  <div style={{ display: "flex", alignItems: "center", gap: "6px", flexShrink: 0 }}>
+                                    <span style={{ fontSize: "0.68rem", fontWeight: 800, padding: "2px 8px", borderRadius: "999px", background: "#ECFDF5", color: "#059669", border: "1px solid #A7F3D0" }}>
+                                      {u.mem_estado || "ACTIVO"}
+                                    </span>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
           </div>
         </div>
       )}

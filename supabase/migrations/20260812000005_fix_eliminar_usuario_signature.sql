@@ -24,11 +24,11 @@ begin
   end if;
 
   -- Borrar solicitudes de socio y datos en tranqui_legal
+  delete from tranqui_legal.trq_abogado where abg_usuario_id = p_target_usuario_id;
   delete from tranqui_legal.trq_solicitud_materia where sma_solicitud_id in (select ssc_id from tranqui_legal.trq_solicitud_socio where ssc_usuario_id = p_target_usuario_id);
   delete from tranqui_legal.trq_solicitud_provincia where spr_solicitud_id in (select ssc_id from tranqui_legal.trq_solicitud_socio where ssc_usuario_id = p_target_usuario_id);
   delete from tranqui_legal.trq_experiencia_laboral where exp_solicitud_id in (select ssc_id from tranqui_legal.trq_solicitud_socio where ssc_usuario_id = p_target_usuario_id);
   delete from tranqui_legal.trq_solicitud_socio where ssc_usuario_id = p_target_usuario_id;
-  delete from tranqui_legal.trq_abogado where abg_usuario_id = p_target_usuario_id;
 
   -- Borrar perfiles asignados y membresias en comun_seguridad
   delete from comun_seguridad.seg_membresia_perfil where mpe_membresia_id in (

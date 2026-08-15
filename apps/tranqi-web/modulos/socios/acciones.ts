@@ -57,92 +57,165 @@ async function notificarSolicitudEnviada(
       }
     ]);
 
-    // 2.b. Notificar in-app a TODOS los Operadores, Administradores y SuperAdmins
-    const { data: todosUsuarios } = await adminSupabase
+    // 2.b. Notificar multicanal (In-App, Push y Email) a Operadores, Administradores y SuperAdmins
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: todosUsuarios } = await (adminSupabase as any)
       .schema("comun_seguridad")
       .from("seg_usuario")
-      .select("usu_id, usu_correo, usu_superadmin_plataforma");
+      .select(`
+        usu_id,
+        usu_correo,
+        usu_superadmin_plataforma,
+        seg_membresia (
+          mem_id,
+          mem_negocio,
+          seg_membresia_perfil (
+            mpe_perfil_clave
+          )
+        )
+      `);
 
     let correosAdmins: string[] = [];
+    const urlRevision = "/panel/socios";
 
     if (todosUsuarios && todosUsuarios.length > 0) {
       const tituloAdmin = esActualizacion
-        ? `✏️ Solicitud de Socio Actualizada por ${nombreUsuario}`
-        : `📢 Nueva Solicitud de Socio Abogado de ${nombreUsuario}`;
+        ? `✏️ Solicitud de Socio Actualizada: ${nombreUsuario}`
+        : `📢 Nueva Solicitud de Socio Abogado: ${nombreUsuario}`;
 
       const contenidoAdmin = `
         <div style="font-family: sans-serif; padding: 16px; color: #111;">
-          <h3 style="color: #05876E; margin-top: 0;">${tituloAdmin}</h3>
-          <p>El postulante <strong>${nombreUsuario}</strong> (<code>${u.usu_correo}</code>) ha ${esActualizacion ? "actualizado" : "registrado"} su solicitud de socio abogado en la plataforma.</p>
-          <p><a href="/panel/administrar?widget=socios" style="display: inline-block; padding: 8px 16px; background: #05876E; color: #fff; text-decoration: none; border-radius: 8px; font-weight: 700;">Evaluar Solicitud en la Consola</a></p>
+          <h3 style="color: #5000BA; margin-top: 0;">${tituloAdmin}</h3>
+          <p>El postulante <strong>${nombreUsuario}</strong> (<code>${u.usu_correo}</code>) ha ${esActualizacion ? "actualizado" : "registrado"} su solicitud de socio abogado en la plataforma tranqi.</p>
+          <p><a href="${urlRevision}" style="display: inline-block; padding: 10px 18px; background: #5000BA; color: #fff; text-decoration: none; border-radius: 8px; font-weight: 700;">Revisar Solicitud de Socio</a></p>
         </div>
       `;
 
-      const destinatariosAdmin = todosUsuarios.filter(adm => adm.usu_id !== u.usu_id);
-      correosAdmins = destinatariosAdmin.map(adm => adm.usu_correo).filter(Boolean);
+      const destinatariosAdmin: { id: string; correo: string }[] = [];
+      const correosVistos = new Set<string>();
 
-      const notifsAdmins = destinatariosAdmin.map((adm) => ({
-        not_usuario_id: adm.usu_id,
-        not_negocio: "TRANQ",
-        not_canal: "IN_APP",
-        not_titulo: tituloAdmin,
-        not_contenido_html: contenidoAdmin,
-        not_creado_en: new Date().toISOString()
-      }));
+      for (const adm of todosUsuarios) {
+        if (adm.usu_id === u.usu_id) continue;
+        const esSuper = Boolean(adm.usu_superadmin_plataforma);
+        let esStaff = esSuper;
+
+        if (!esStaff && Array.isArray(adm.seg_membresia)) {
+          for (const m of adm.seg_membresia) {
+            const mNeg = (m.mem_negocio || "").toUpperCase();
+            if (mNeg === "TRANQ" || mNeg === "TRANQI") {
+              if (Array.isArray(m.seg_membresia_perfil)) {
+                for (const mp of m.seg_membresia_perfil) {
+                  const clave = (mp.mpe_perfil_clave || "").toUpperCase();
+                  if (clave === "OPERADOR" || clave === "ADMINISTRADOR" || clave === "SUPERADMIN") {
+                    esStaff = true;
+                    break;
+                  }
+                }
+              }
+            }
+            if (esStaff) break;
+          }
+        }
+
+        if (esStaff && adm.usu_correo && !correosVistos.has(adm.usu_correo)) {
+          correosVistos.add(adm.usu_correo);
+          destinatariosAdmin.push({ id: adm.usu_id, correo: adm.usu_correo });
+        }
+      }
+
+      correosAdmins = destinatariosAdmin.map(adm => adm.correo);
+
+      const notifsAdmins: any[] = [];
+      for (const adm of destinatariosAdmin) {
+        notifsAdmins.push({
+          not_usuario_id: adm.id,
+          not_negocio: "TRANQ",
+          not_canal: "IN_APP",
+          not_titulo: tituloAdmin,
+          not_contenido_html: contenidoAdmin,
+          not_url_accion: urlRevision,
+          not_creado_en: new Date().toISOString()
+        });
+        notifsAdmins.push({
+          not_usuario_id: adm.id,
+          not_negocio: "TRANQ",
+          not_canal: "PUSH",
+          not_titulo: tituloAdmin,
+          not_contenido_html: contenidoAdmin,
+          not_url_accion: urlRevision,
+          not_creado_en: new Date().toISOString()
+        });
+      }
 
       if (notifsAdmins.length > 0) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         await (adminSupabase as any).schema("comun_notificacion").from("not_registro").insert(notifsAdmins);
       }
-    }
 
-    // 3. Enviar correo SMTP real si están configuradas las variables de entorno
-    const smtpHost = process.env.SMTP_HOST || process.env.EMAIL_HOST;
-    const smtpUser = process.env.SMTP_USER || process.env.EMAIL_USER;
-    const smtpPass = process.env.SMTP_PASS || process.env.EMAIL_PASS;
-    const smtpPort = Number(process.env.SMTP_PORT || 587);
+      // 3. Enviar correo SMTP real tanto al postulante como a los operadores/admins
+      const smtpHost = process.env.SMTP_HOST || process.env.EMAIL_HOST;
+      const smtpUser = process.env.SMTP_USER || process.env.EMAIL_USER;
+      const smtpPass = process.env.SMTP_PASS || process.env.EMAIL_PASS;
+      const smtpPort = Number(process.env.SMTP_PORT || 587);
 
-    let emailSent = false;
-    if (smtpHost && smtpUser && smtpPass) {
-      try {
-        const transporter = nodemailer.createTransport({
-          host: smtpHost,
-          port: smtpPort,
-          secure: smtpPort === 465,
-          auth: { user: smtpUser, pass: smtpPass },
-          tls: { rejectUnauthorized: false }
-        });
+      let emailSent = false;
+      if (smtpHost && smtpUser && smtpPass) {
+        try {
+          const transporter = nodemailer.createTransport({
+            host: smtpHost,
+            port: smtpPort,
+            secure: smtpPort === 465,
+            auth: { user: smtpUser, pass: smtpPass },
+            tls: { rejectUnauthorized: false }
+          });
 
-        await transporter.sendMail({
-          from: `"tranqi Notificaciones" <${smtpUser}>`,
-          to: u.usu_correo,
-          subject: asunto,
-          html: contenidoHTML
-        });
-        emailSent = true;
-      } catch (errEmail) {
-        console.error("Error SMTP al enviar correo de solicitud:", errEmail);
+          // Correo al solicitante
+          await transporter.sendMail({
+            from: `"tranqi Notificaciones" <${smtpUser}>`,
+            to: u.usu_correo,
+            subject: asunto,
+            html: contenidoHTML
+          });
+
+          // Correo a cada operador / administrador
+          for (const correoStaff of correosAdmins) {
+            try {
+              await transporter.sendMail({
+                from: `"tranqi Notificaciones" <${smtpUser}>`,
+                to: correoStaff,
+                subject: tituloAdmin,
+                html: contenidoAdmin
+              });
+            } catch (errStaffMail) {
+              console.warn("Aviso al enviar correo a staff sobre solicitud:", errStaffMail);
+            }
+          }
+
+          emailSent = true;
+        } catch (errEmail) {
+          console.error("Error SMTP al enviar correo de solicitud:", errEmail);
+        }
       }
-    }
 
-    // 4. Registrar la campaña automática en la Bitácora de Notificaciones (Motor de Notificaciones)
-    agregarCampanaServidor({
-      id: `camp-sol-${solicitudId}-${Date.now()}`,
-      asunto: asunto,
-      contenidoHTML: contenidoHTML,
-      tipoEmision: "AUTOMATICA",
-      emisorNombre: "Sistema Autónomo de Acreditación",
-      emisorCorreo: "socios@tranqi24.com",
-      procesoOrigen: esActualizacion ? "PLT-019 Actualización de Solicitud de Socio Abogado" : "PLT-019 Registro de Solicitud de Socio Abogado",
-      audiencia: `USUARIO (${u.usu_correo}) & SUPERADMINS`,
-      canales: ["IN_APP", "EMAIL", "PUSH"],
-      destinatariosDetalle: [u.usu_correo, ...correosAdmins],
-      enviados: 1 + correosAdmins.length,
-      leidos: 0,
-      ignorados: 0,
-      fecha: new Date().toISOString(),
-      correoEnviadoReal: emailSent
-    });
+      // 4. Registrar la campaña automática en la Bitácora de Notificaciones (Motor de Notificaciones)
+      agregarCampanaServidor({
+        id: `camp-sol-${solicitudId}-${Date.now()}`,
+        asunto: asunto,
+        contenidoHTML: contenidoHTML,
+        tipoEmision: "AUTOMATICA",
+        emisorNombre: "Sistema Autónomo de Acreditación",
+        emisorCorreo: "socios@tranqi24.com",
+        procesoOrigen: esActualizacion ? "PLT-019 Actualización de Solicitud de Socio Abogado" : "PLT-019 Registro de Solicitud de Socio Abogado",
+        audiencia: `USUARIO (${u.usu_correo}) & STAFF TRANQI`,
+        canales: ["IN_APP", "EMAIL", "PUSH"],
+        destinatariosDetalle: [u.usu_correo, ...correosAdmins],
+        enviados: 1 + correosAdmins.length,
+        leidos: 0,
+        ignorados: 0,
+        fecha: new Date().toISOString(),
+        correoEnviadoReal: emailSent
+      });
+    }
 
   } catch (errNot) {
     console.error("Error al despachar notificación de solicitud de socio:", errNot);

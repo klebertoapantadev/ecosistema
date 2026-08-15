@@ -11,9 +11,9 @@ const NEGOCIO = "tranqi";
 export default async function EmisionNotificacionesPage() {
   const perfil = await obtenerPerfilActual();
   const perfiles = await obtenerPerfiles(NEGOCIO);
-  const esAdmin = Boolean(perfil?.usu_superadmin_plataforma) || perfiles.includes("ADMINISTRADOR");
+  const esAutorizado = Boolean(perfil?.usu_superadmin_plataforma) || perfiles.includes("ADMINISTRADOR") || perfiles.includes("OPERADOR");
 
-  if (!esAdmin) {
+  if (!esAutorizado) {
     return (
       <div className="contenedor-panel" style={{ maxWidth: "780px", margin: "40px auto", padding: "0 16px" }}>
         <section className="tarjeta-seccion" style={{ borderLeft: "4px solid #ef4444", padding: "36px 28px", textAlign: "center", background: "#0d1117" }}>

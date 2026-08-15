@@ -6,7 +6,8 @@
   "types": "./src/index.ts",
   "exports": {
     ".": "./src/index.ts",
-    "./enviar-correo": "./src/enviar-correo.ts"
+    "./enviar-correo": "./src/enviar-correo.ts",
+    "./notificar-usuario": "./src/notificar-usuario.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit"
