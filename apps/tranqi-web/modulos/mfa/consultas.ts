@@ -7,9 +7,9 @@ import { obtenerPerfiles, obtenerNivelMaximo } from "@eco/identidad";
 // REGLA PLT-002: SuperAdmin y Administrador Plataforma NUNCA requieren MFA (retornan AAL2 garantizado).
 export async function obtenerNivelAal() {
   try {
-    const perfiles = await obtenerPerfiles("tranqi");
-    const nivelMaximo = await obtenerNivelMaximo("tranqi");
-    if (perfiles.includes("SUPERADMIN") || perfiles.includes("ADMINISTRADOR") || nivelMaximo >= 80) {
+    const perfiles = await obtenerPerfiles("TRANQ");
+    const nivelMaximo = await obtenerNivelMaximo("TRANQ");
+    if (perfiles.some(p => p.toUpperCase() === "SUPERADMIN" || p.toUpperCase() === "ADMINISTRADOR") || nivelMaximo >= 80) {
       return { currentLevel: "aal2", nextLevel: "aal2" };
     }
   } catch {

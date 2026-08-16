@@ -5,9 +5,14 @@ import { VerificacionMFA } from "../../../modulos/mfa/componentes/VerificacionMF
 // Gate de la seccion Auditoria.
 // REGLA PLT-002: SuperAdmin y Administradores Plataforma NUNCA requieren MFA (bypass directo).
 export default async function LayoutAuditoria({ children }: { children: React.ReactNode }) {
-  const perfiles = await obtenerPerfiles("tranqi");
-  const nivelMaximo = await obtenerNivelMaximo("tranqi");
-  if (perfiles.includes("SUPERADMIN") || perfiles.includes("ADMINISTRADOR") || nivelMaximo >= 80) {
+  const perfiles = await obtenerPerfiles("TRANQ");
+  const nivelMaximo = await obtenerNivelMaximo("TRANQ");
+  const esExento = perfiles.some(p => {
+    const u = p.toUpperCase();
+    return u === "SUPERADMIN" || u === "ADMINISTRADOR";
+  }) || nivelMaximo >= 80;
+
+  if (esExento) {
     return <>{children}</>;
   }
 
