@@ -17,13 +17,18 @@ const ETIQUETA_ESTADO: Record<string, string> = {
   rechazada: "Rechazado",
 };
 const ETIQUETA_TIPO: Record<string, string> = {
-  foto_perfil: "Foto de perfil",
+  foto_perfil: "Foto de perfil profesional",
+  foto: "Foto de perfil profesional",
+  perfil: "Foto de perfil profesional",
   titulo: "Título profesional",
   matricula: "Matrícula profesional",
-  cedula: "Cédula de identidad",
+  cedula: "Documento de Identificación (Cédula / Pasaporte)",
+  identificacion: "Documento de Identificación (Cédula / Pasaporte)",
+  identidad: "Documento de Identificación (Cédula / Pasaporte)",
   cv: "Hoja de Vida (CV)",
+  curriculum: "Hoja de Vida (CV)",
   contrato_socio: "Contrato de sociedad firmado",
-  otro: "Certificado",
+  otro: "Certificado / Respaldo",
   respaldo_revision: "Respaldo de revisión (admin)",
 };
 
@@ -36,9 +41,11 @@ export default async function PaginaDetalleSocio({ params }: { params: Promise<{
   const pendiente = solicitud.ssc_estado === "enviada" || solicitud.ssc_estado === "en_revision";
   const abogado = solicitud.ssc_estado === "aceptada" ? await obtenerAbogadoPorSolicitud(id) : null;
 
-  // Buscar foto de perfil
-  const docFoto = documentos.find((d) => d.dcs_tipo === "foto_perfil");
-  const urlFoto = docFoto?.url || null;
+  // Buscar foto de perfil en los documentos cargados o en el perfil de usuario registrado
+  const docFoto = documentos.find((d) => d.dcs_tipo === "foto_perfil" || d.dcs_tipo === "foto" || d.dcs_tipo === "perfil");
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const detalleUsu = (usuario as any)?.usu_detalle_usuario as Record<string, any> | undefined;
+  const urlFoto = docFoto?.url || detalleUsu?.foto_url || detalleUsu?.avatar_url || null;
 
   return (
     <div>

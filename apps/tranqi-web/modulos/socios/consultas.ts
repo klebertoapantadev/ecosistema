@@ -148,29 +148,29 @@ export async function obtenerDetalleSolicitudParaAdmin(solicitudId: string) {
   if (error || !solicitud) return null;
 
   const [materiasRes, provinciasRes, experienciaRes, documentosRes, historialRes] = await Promise.all([
-    supabase
+    adminSupabase
       .schema("tranqui_legal")
       .from("trq_solicitud_materia")
       .select("trq_materia(mat_id, mat_nombre)")
       .eq("sma_solicitud_id", solicitudId),
-    supabase
+    adminSupabase
       .schema("tranqui_legal")
       .from("trq_solicitud_provincia")
       .select("cat_provincia(cat_id, cat_nombre)")
       .eq("spr_solicitud_id", solicitudId),
-    supabase
+    adminSupabase
       .schema("tranqui_legal")
       .from("trq_experiencia_laboral")
       .select("*")
       .eq("exp_solicitud_id", solicitudId)
       .order("exp_fecha_inicio", { ascending: false }),
-    supabase
+    adminSupabase
       .schema("tranqui_legal")
       .from("trq_documento_socio")
       .select("*")
       .eq("dcs_solicitud_id", solicitudId)
       .order("dcs_creado_en", { ascending: false }),
-    supabase
+    adminSupabase
       .schema("tranqui_legal")
       .from("trq_revision_solicitud")
       .select("*")
@@ -178,12 +178,12 @@ export async function obtenerDetalleSolicitudParaAdmin(solicitudId: string) {
       .order("rev_creado_en", { ascending: false }),
   ]);
 
-  const { data: usuario } = await supabase
+  const { data: usuario } = await adminSupabase
     .schema("comun_seguridad")
     .from("seg_usuario")
-    .select("usu_id, usu_nombres, usu_apellidos, usu_correo, usu_whatsapp")
+    .select("usu_id, usu_nombres, usu_apellidos, usu_correo, usu_whatsapp, usu_detalle_usuario")
     .eq("usu_id", solicitud.ssc_usuario_id)
-    .single();
+    .maybeSingle();
 
   const docsFirmados = await Promise.all(
     (documentosRes.data ?? []).map(async (d) => {
@@ -192,15 +192,15 @@ export async function obtenerDetalleSolicitudParaAdmin(solicitudId: string) {
         return { ...d, url: d.dcs_url };
       }
       try {
-        const { data: signedData } = await supabase.storage
+        const { data: signedData } = await adminSupabase.storage
           .from("socios-documentos")
           .createSignedUrl(d.dcs_url, 3600);
-        const { data: publicData } = supabase.storage
+        const { data: publicData } = adminSupabase.storage
           .from("socios-documentos")
           .getPublicUrl(d.dcs_url);
         return { ...d, url: signedData?.signedUrl || publicData?.publicUrl || d.dcs_url };
       } catch {
-        const { data: urlData } = supabase.storage.from("socios-documentos").getPublicUrl(d.dcs_url);
+        const { data: urlData } = adminSupabase.storage.from("socios-documentos").getPublicUrl(d.dcs_url);
         return { ...d, url: urlData?.publicUrl ?? d.dcs_url };
       }
     })
