@@ -368,20 +368,24 @@ export async function enviarSolicitudSocio(
 
 export async function registrarDocumentoSocio(
   solicitudId: string,
-  tipo: "foto_perfil" | "titulo" | "matricula" | "otro" | "respaldo_revision" | "cv" | "contrato_socio",
+  tipo: "foto_perfil" | "titulo" | "matricula" | "cedula" | "identificacion" | "otro" | "respaldo_revision" | "cv" | "contrato_socio",
   path: string,
   nombreArchivo: string,
   comentario?: string,
   concepto?: string,
 ): Promise<Resultado> {
+  const adminSupabase = crearClienteAdmin() || await crearClienteServidor();
   const supabase = await crearClienteServidor();
-  const TIPOS_PERMITIDOS = ["foto_perfil", "titulo", "matricula", "cedula", "cv", "contrato_socio", "otro"];
-  const tipoFinal = TIPOS_PERMITIDOS.includes(tipo) ? tipo : "otro";
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "Sesión no válida o usuario no autenticado." };
 
-  // Si es un documento único (foto de perfil, título o contrato firmado), eliminar el registro previo para evitar duplicidad
-  if (tipoFinal === "foto_perfil" || tipoFinal === "titulo" || tipoFinal === "contrato_socio") {
+  const TIPOS_PERMITIDOS = ["foto_perfil", "titulo", "matricula", "cedula", "identificacion", "cv", "contrato_socio", "otro", "respaldo_revision"];
+  const tipoFinal = TIPOS_PERMITIDOS.includes(tipo) ? (tipo === "identificacion" ? "cedula" : tipo) : "otro";
+
+  // Si es un documento único (foto de perfil, título, cédula/identificación o contrato firmado), eliminar el registro previo para evitar duplicidad
+  if (tipoFinal === "foto_perfil" || tipoFinal === "titulo" || tipoFinal === "cedula" || tipoFinal === "contrato_socio") {
     try {
-      await supabase
+      await adminSupabase
         .schema("tranqui_legal")
         .from("trq_documento_socio")
         .delete()
@@ -394,14 +398,19 @@ export async function registrarDocumentoSocio(
 
   const comentarioFinal = concepto ? `[${concepto}] ${comentario || ""}`.trim() : (comentario || null);
 
-  const { error } = await supabase.schema("tranqui_legal").from("trq_documento_socio").insert({
+  const { error } = await adminSupabase.schema("tranqui_legal").from("trq_documento_socio").insert({
     dcs_solicitud_id: solicitudId,
     dcs_tipo: tipoFinal,
     dcs_url: path,
     dcs_nombre_archivo: nombreArchivo,
     dcs_comentario: comentarioFinal,
+    dcs_subido_por: user.id,
   });
-  if (error) return { ok: false, error: error.message };
+
+  if (error) {
+    console.error("Error al registrar documento socio en BDD:", error);
+    return { ok: false, error: error.message };
+  }
   return { ok: true, data: undefined };
 }
 

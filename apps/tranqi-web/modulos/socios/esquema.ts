@@ -50,6 +50,7 @@ export type DatosDecisionSolicitud = z.infer<typeof esquemaDecisionSolicitud>;
  */
 export const CONCEPTOS_REPOSITORIO = {
   REGISTRO: "registro",
+  IDENTIDAD: "identidad",
   DRIVE_PERSONAL: "drive_personal",
   TRAMITE: "tramite",
   ANALISIS: "analisis",

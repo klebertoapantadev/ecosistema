@@ -41,6 +41,7 @@ import {
   Save,
   FolderTree,
   AlertTriangle,
+  Eye,
 } from "lucide-react";
 import { crearClienteNavegador } from "@eco/supabase";
 import { ModalNotificacionPush } from "@eco/notificaciones";
@@ -83,9 +84,43 @@ function formatoTamanoArchivo(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
+function validarCedulaEcuador(val: string): { esValida: boolean; advertencia?: string } {
+  const c = val.trim();
+  if (!c) return { esValida: true };
+  if (!/^\d+$/.test(c)) return { esValida: false, advertencia: "La cédula solo debe contener dígitos numéricos." };
+  if (c.length < 10) return { esValida: false, advertencia: `Faltan ${10 - c.length} dígitos para completar la cédula (10 dígitos).` };
+  if (c.length > 10) return { esValida: true }; // Permite RUC de 13 dígitos
+
+  const prov = parseInt(c.substring(0, 2), 10);
+  if ((prov < 1 || prov > 24) && prov !== 30) {
+    return { esValida: false, advertencia: "Código de provincia no válido (primeros 2 dígitos entre 01 y 24)." };
+  }
+
+  const tercerDigito = parseInt(c.substring(2, 3), 10);
+  if (tercerDigito >= 6) {
+    return { esValida: false, advertencia: "El tercer dígito de cédula de persona natural debe ser menor a 6." };
+  }
+
+  const coeficientes = [2, 1, 2, 1, 2, 1, 2, 1, 2];
+  let suma = 0;
+  for (let i = 0; i < 9; i++) {
+    const digito = parseInt(c.charAt(i), 10);
+    const coef = coeficientes[i] ?? 1;
+    let valor = digito * coef;
+    if (valor >= 10) valor -= 9;
+    suma += valor;
+  }
+  const digitoVerificador = (10 - (suma % 10)) % 10;
+  if (digitoVerificador !== parseInt(c.charAt(9), 10)) {
+    return { esValida: false, advertencia: "El número no supera la validación del dígito verificador (Módulo 10). Revisa que esté bien escrito." };
+  }
+
+  return { esValida: true };
+}
+
 async function subirDocumento(
   solicitudId: string,
-  tipo: "foto_perfil" | "titulo" | "matricula" | "otro" | "cv",
+  tipo: "foto_perfil" | "titulo" | "matricula" | "cedula" | "identificacion" | "otro" | "cv" | "contrato_socio",
   archivo: File,
   comentario?: string,
   usuarioId?: string,
@@ -1200,6 +1235,7 @@ export function FormularioSolicitudSocio({ usuarioId, materias, provincias, soli
   // Mapear documentos cargados previamente
   const documentosExistentes = (solicitudExistente?.trq_documento_socio as any[]) ?? [];
   const fotoExistente = documentosExistentes.find((d) => d.dcs_tipo === "foto_perfil");
+  const identificacionExistente = documentosExistentes.find((d) => d.dcs_tipo === "cedula" || d.dcs_tipo === "identificacion");
   const tituloExistente = documentosExistentes.find((d) => d.dcs_tipo === "titulo");
   const cvYCertificadosExistentes = documentosExistentes.filter((d) => d.dcs_tipo === "cv" || d.dcs_tipo === "otro");
 
@@ -1240,9 +1276,40 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
     }))
   );
   const [fotoPerfilArchivos, setFotoPerfilArchivos] = useState<File[]>([]);
+  const [identificacionArchivos, setIdentificacionArchivos] = useState<File[]>([]);
+  const [identificacionPreviewUrl, setIdentificacionPreviewUrl] = useState<string | null>(null);
+  const [avisoLegibilidadIdentificacion, setAvisoLegibilidadIdentificacion] = useState<string | null>(null);
+  const [modalInspeccionDoc, setModalInspeccionDoc] = useState<{ url: string; titulo: string } | null>(null);
   const [tituloArchivos, setTituloArchivos] = useState<File[]>([]);
   const [cvYCertificados, setCvYCertificados] = useState<File[]>([]);
   const [cvYCertificadosComentarios, setCvYCertificadosComentarios] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (identificacionArchivos.length > 0 && identificacionArchivos[0]) {
+      const arch = identificacionArchivos[0];
+      if (arch.type.startsWith("image/")) {
+        const url = URL.createObjectURL(arch);
+        setIdentificacionPreviewUrl(url);
+
+        const img = new Image();
+        img.onload = () => {
+          if (img.width < 700 || img.height < 500) {
+            setAvisoLegibilidadIdentificacion("⚠️ La imagen tiene una resolución moderada. Asegúrate de que los números y nombres sean completamente legibles.");
+          } else {
+            setAvisoLegibilidadIdentificacion(null);
+          }
+        };
+        img.src = url;
+        return () => URL.revokeObjectURL(url);
+      } else {
+        setIdentificacionPreviewUrl(null);
+        setAvisoLegibilidadIdentificacion(null);
+      }
+    } else {
+      setIdentificacionPreviewUrl(null);
+      setAvisoLegibilidadIdentificacion(null);
+    }
+  }, [identificacionArchivos]);
 
   const manejarCambioComentariosCV = (idx: number, texto: string) => {
     setCvYCertificadosComentarios((prev) => {
@@ -1422,6 +1489,16 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
       return;
     }
 
+    if (!identificacionExistente && identificacionArchivos.length === 0) {
+      setError("Debes adjuntar obligatoriamente una copia digital clara de tu Cédula de Identidad (anverso y reverso) o Pasaporte vigente.");
+      return;
+    }
+
+    if (!tituloExistente && tituloArchivos.length === 0) {
+      setError("Debes adjuntar obligatoriamente una copia digital de tu Título Profesional registrado en la SENESCYT.");
+      return;
+    }
+
     setEnviando(true);
     const resultado = await enviarSolicitudSocio(
       {
@@ -1454,10 +1531,12 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
 
     // Subida de archivos con control de repositorio común y clasificación por concepto
     const fotoArchivo = fotoPerfilArchivos[0];
+    const identificacionArchivo = identificacionArchivos[0];
     const tituloArchivo = tituloArchivos[0];
 
     const subidas = await Promise.all([
       fotoArchivo ? subirDocumento(solicitudId, "foto_perfil", fotoArchivo, "Foto de Perfil Profesional", usuarioId, CONCEPTOS_REPOSITORIO.PERFIL) : null,
+      identificacionArchivo ? subirDocumento(solicitudId, "cedula", identificacionArchivo, "Documento de Identificación Oficial (Cédula/Pasaporte)", usuarioId, CONCEPTOS_REPOSITORIO.IDENTIDAD) : null,
       tituloArchivo ? subirDocumento(solicitudId, "titulo", tituloArchivo, "Título Universitario Acreditado", usuarioId, CONCEPTOS_REPOSITORIO.REGISTRO) : null,
       ...cvYCertificados.map((archivo, idx) =>
         subirDocumento(
@@ -2007,9 +2086,97 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
       )}
 
       <label style={{ marginTop: "16px" }}>
-        Cédula de Identidad
-        <input value={cedula} onChange={(e) => setCedula(e.target.value)} required maxLength={13} placeholder="ej. 1714898226" />
+        Cédula de Identidad / RUC
+        <input
+          value={cedula}
+          onChange={(e) => setCedula(e.target.value)}
+          required
+          maxLength={13}
+          placeholder="ej. 1714898226"
+        />
       </label>
+
+      {/* Validación en tiempo real de algoritmo de Cédula Ecuatoriana (Módulo 10) */}
+      {(() => {
+        const val = validarCedulaEcuador(cedula);
+        if (!cedula) return null;
+        if (!val.esValida && val.advertencia) {
+          return (
+            <div style={{ marginTop: "-6px", marginBottom: "10px", padding: "6px 12px", background: "rgba(245, 158, 11, 0.08)", border: "1px solid #F59E0B", borderRadius: "8px", fontSize: "0.76rem", color: "#B45309", display: "flex", alignItems: "center", gap: "6px" }}>
+              <AlertTriangle size={14} /> {val.advertencia}
+            </div>
+          );
+        }
+        if (val.esValida && cedula.length === 10) {
+          return (
+            <div style={{ marginTop: "-6px", marginBottom: "10px", padding: "6px 12px", background: "rgba(5, 135, 110, 0.08)", border: "1px solid #05876E", borderRadius: "8px", fontSize: "0.76rem", color: "#05876E", display: "flex", alignItems: "center", gap: "6px" }}>
+              <CheckCircle2 size={14} /> Cédula válida (Módulo 10 del Registro Civil verificado)
+            </div>
+          );
+        }
+        return null;
+      })()}
+
+      {/* Campo Obligatorio: Cédula de Identidad / Pasaporte */}
+      <div style={{ marginTop: "12px", marginBottom: "18px" }}>
+        <CampoSubidaArchivo
+          etiqueta="Documento de Identificación Oficial (Obligatorio • Cédula / Pasaporte) • [Repositorio: Identidad]"
+          subtitulo="Copia digital clara o fotografía legible de tu Cédula de Identidad (anverso y reverso) o Pasaporte vigente (PDF o Imagen JPG/PNG, máx 10 MB)"
+          aceptar={TIPOS_ACEPTADOS}
+          multiple={false}
+          archivos={identificacionArchivos}
+          onCambiar={setIdentificacionArchivos}
+          icono={FileText}
+        />
+
+        {/* Checklist de Criterios de Calidad y Legibilidad */}
+        <div style={{ background: "rgba(5, 135, 110, 0.04)", border: "1px solid rgba(5, 135, 110, 0.2)", borderRadius: "10px", padding: "10px 14px", marginTop: "8px", fontSize: "0.78rem", color: "#065F46" }}>
+          <strong style={{ display: "block", marginBottom: "4px", color: "#05876E" }}>📋 Requisitos de Legibilidad para Acreditación:</strong>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "6px" }}>
+            <span>✓ Anverso y reverso visibles y sin cortes de bordes.</span>
+            <span>✓ Nombres, apellidos y número de cédula 100% nítidos.</span>
+            <span>✓ Sin reflejos de flash sobre el texto ni sombras oscuras.</span>
+          </div>
+        </div>
+
+        {avisoLegibilidadIdentificacion && (
+          <div style={{ marginTop: "8px", padding: "8px 12px", background: "#FFFBEB", border: "1px solid #F59E0B", borderRadius: "8px", fontSize: "0.78rem", color: "#B45309" }}>
+            {avisoLegibilidadIdentificacion}
+          </div>
+        )}
+
+        {/* Previsualizador Rápido con Botón de Inspección Zoom */}
+        {identificacionPreviewUrl && (
+          <div style={{ marginTop: "10px", display: "flex", alignItems: "center", gap: "12px", background: "#FFFFFF", padding: "10px 14px", border: "1px solid #E4E4E4", borderRadius: "10px", boxShadow: "0 2px 6px rgba(0,0,0,0.03)" }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={identificacionPreviewUrl} alt="Vista previa de documento" style={{ width: "60px", height: "45px", objectFit: "cover", borderRadius: "6px", border: "1px solid #D8B4FE" }} />
+            <div>
+              <span style={{ display: "block", fontSize: "0.82rem", fontWeight: 700, color: "#111111" }}>Documento de identificación listo para subir</span>
+              <span style={{ fontSize: "0.74rem", color: "#6B7280" }}>{identificacionArchivos[0]?.name} ({formatoTamanoArchivo(identificacionArchivos[0]?.size || 0)})</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setModalInspeccionDoc({ url: identificacionPreviewUrl, titulo: "Inspección de Legibilidad — Cédula / Pasaporte" })}
+              style={{ marginLeft: "auto", background: "#FAF5FF", border: "1px solid #D8B4FE", color: "#6B21A8", padding: "6px 12px", borderRadius: "8px", fontSize: "0.78rem", fontWeight: 700, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "4px" }}
+            >
+              <ZoomIn size={14} /> Inspeccionar Legibilidad
+            </button>
+          </div>
+        )}
+
+        {identificacionExistente && identificacionArchivos.length === 0 && (
+          <div style={{ display: "flex", alignItems: "center", gap: "12px", padding: "10px 14px", background: "rgba(5, 135, 110, 0.04)", border: "1px solid rgba(5, 135, 110, 0.2)", borderRadius: "8px", marginTop: "8px", fontSize: "0.84rem" }}>
+            <FileText size={18} color="#05876E" />
+            <div>
+              <span style={{ display: "block", fontWeight: 700, color: "#111111" }}>Documento de Identificación Oficial actual cargado</span>
+              <span style={{ fontSize: "0.76rem", color: "#6B7280" }}>{identificacionExistente.dcs_nombre_archivo}</span>
+            </div>
+            <a href={identificacionExistente.url} target="_blank" rel="noopener noreferrer" style={{ marginLeft: "auto", color: "#05876E", fontWeight: 800, textDecoration: "none", fontSize: "0.8rem", display: "inline-flex", alignItems: "center", gap: "4px" }}>
+              <ExternalLink size={14} /> Ver archivo
+            </a>
+          </div>
+        )}
+      </div>
 
       <label>
         Matrícula profesional (Foro de Abogados)
@@ -2385,6 +2552,82 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
                 }}
               >
                 {procesandoAccion ? "Procesando..." : modalConfirmarAccion === "eliminar" ? "Sí, Eliminar" : "Sí, Reiniciar"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Inspección de Documento y Zoom de Legibilidad */}
+      {modalInspeccionDoc && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: "rgba(0, 0, 0, 0.85)",
+            zIndex: 999999,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "16px",
+          }}
+          onClick={() => setModalInspeccionDoc(null)}
+        >
+          <div
+            style={{
+              background: "#FFFFFF",
+              borderRadius: "16px",
+              maxWidth: "920px",
+              width: "100%",
+              maxHeight: "90vh",
+              overflow: "hidden",
+              display: "flex",
+              flexDirection: "column",
+              boxShadow: "0 25px 50px rgba(0, 0, 0, 0.5)",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 20px", borderBottom: "1px solid #E5E7EB" }}>
+              <strong style={{ fontSize: "0.95rem", color: "#111111" }}>🔍 {modalInspeccionDoc.titulo}</strong>
+              <button
+                type="button"
+                onClick={() => setModalInspeccionDoc(null)}
+                style={{ background: "transparent", border: "none", cursor: "pointer", color: "#6B7280", padding: "4px" }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <div style={{ padding: "20px", overflow: "auto", textAlign: "center", background: "#1F2937", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={modalInspeccionDoc.url}
+                alt="Documento ampliado para verificación de legibilidad"
+                style={{ maxWidth: "100%", maxHeight: "68vh", objectFit: "contain", borderRadius: "8px" }}
+              />
+            </div>
+            <div style={{ padding: "12px 20px", borderTop: "1px solid #E5E7EB", display: "flex", justifyContent: "space-between", alignItems: "center", background: "#F9FAFB" }}>
+              <span style={{ fontSize: "0.8rem", color: "#4B5563" }}>
+                Verifica que los nombres, fotografía y número de cédula sean completamente legibles y nítidos.
+              </span>
+              <button
+                type="button"
+                onClick={() => setModalInspeccionDoc(null)}
+                style={{
+                  background: "#5000BA",
+                  color: "#ffffff",
+                  border: "none",
+                  borderRadius: "8px",
+                  padding: "8px 18px",
+                  fontSize: "0.82rem",
+                  fontWeight: 700,
+                  cursor: "pointer",
+                }}
+              >
+                Confirmar Legibilidad y Cerrar
               </button>
             </div>
           </div>
