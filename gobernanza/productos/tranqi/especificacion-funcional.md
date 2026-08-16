@@ -75,6 +75,16 @@ decisiones de alcance se definieron directamente en la implementación — ver e
   - **Generación Dinámica e Impresión:** Al aprobar la solicitud, tanto el postulante como el operador pueden generar una vista de impresión limpia del contrato con sus datos reales auto-completados. La ruta `/panel/solicitud-socio/contrato/imprimir` invoca el diálogo de impresión nativo del navegador para descargar o guardar como PDF.
   - **Carga de Contrato Firmado:** El socio debe firmar de forma manuscrita o digital este contrato y subirlo de vuelta obligatoriamente en formato PDF. El archivo se almacena en el bucket privado `socios-documentos` con el tipo `"contrato_socio"`.
 - **Notificación Dual (Email y Push):** La aprobación o rechazo de la solicitud genera ahora un registro de notificación dual (`IN_APP` y `PUSH`) persistido en `comun_notificacion.not_registro` además de la cola de correo.
+- **Flujo de Incorporación, Repositorio Estructurado y Bienvenida Post-Registro (2026-08-16):**
+  - **Pantalla Informativa Previa de Beneficios con Texto Editable:** Antes de iniciar el registro, el postulante visualiza una vista informativa con los beneficios clave de pertenecer a la red jurídica y un texto preliminar editable respaldado en la configuración común de términos (`incorporacion_red`).
+  - **Opción "No tengo experiencia laboral" (Primera Oportunidad):** Se incorpora la casilla para postulantes recién graduados o noveles, liberando la obligatoriedad de registrar cargos previos y catalogando el perfil adecuadamente.
+  - **Repositorio Común de Archivos y Conceptos:** Convención estructurada de almacenamiento en Supabase Storage (`{negocio}/{usuario_id}/{concepto}/{referencia_id}/{tipo}-{uuid}-{nombre}`) permitiendo categorizar archivos de registro, drive personal, trámites, análisis, expedientes y contratos.
+  - **Pantalla de Bienvenida Post-Registro (Estado en Revisión):** Al enviar la solicitud, el postulante recibe una pantalla de bienvenida con el rastreador de fases de acreditación (SENESCYT, Foro de Abogados, Aprobación) y acceso directo a su menú de cliente mientras se aprueba su postulación.
+  - **Ciclo de Vida de Solicitud Activa, Reinicio y Eliminación:** Si el usuario inicia el registro como abogado y no lo termina o se encuentra en estado no aprobado (`incompleta`, `borrador`, `enviada`, `en_revision`, `rechazada`), visualiza en el menú de inicio (`/panel`) la tarjeta interactiva de postulación activa con las opciones de:
+    1. *✏️ Continuar / Editar Solicitud:* Navegación directa al formulario para completar o ajustar sus datos.
+    2. *🔄 Reiniciar Solicitud:* Limpieza de datos y archivos previos para comenzar un nuevo proceso limpio desde el Paso 0.
+    3. *🗑️ Eliminar Solicitud:* Cancelación y supresión definitiva de la solicitud activa no aprobada mediante el Stored Procedure `tranqui_legal.trq_fn_eliminar_solicitud_propia()`, liberando su perfil para postularse en el futuro.
+    4. *Inactivación Automática:* La solicitud deja de mostrarse como postulación activa cuando el usuario la elimina o cuando un operador/administrador la aprueba (momento en el cual se activa el perfil formal de Socio Abogado).
 
 ## Pendiente
 

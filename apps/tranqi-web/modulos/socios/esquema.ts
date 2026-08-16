@@ -29,6 +29,7 @@ export const esquemaSolicitudSocio = z.object({
   materiaIds: z.array(z.string()).min(1, "Selecciona al menos una especialidad"),
   provinciaIds: z.array(z.string()).min(1, "Selecciona al menos una provincia de cobertura"),
   experiencia: z.array(esquemaExperienciaLaboral).default([]),
+  sinExperienciaPrevia: z.boolean().optional().default(false),
   enlaceSenescytVerificado: z.boolean().default(true),
   enlaceForoVerificado: z.boolean().default(true),
   declaracionVeracidad: z.boolean().refine((v) => v === true, {
@@ -43,6 +44,57 @@ export const esquemaDecisionSolicitud = z.object({
   comentario: z.string().trim().optional(),
 });
 export type DatosDecisionSolicitud = z.infer<typeof esquemaDecisionSolicitud>;
+
+/**
+ * Conceptos estándar de categorización en el repositorio común de archivos del ecosistema.
+ */
+export const CONCEPTOS_REPOSITORIO = {
+  REGISTRO: "registro",
+  DRIVE_PERSONAL: "drive_personal",
+  TRAMITE: "tramite",
+  ANALISIS: "analisis",
+  CONTRATO: "contrato",
+  PERFIL: "perfil",
+  RESPALDO: "respaldo",
+} as const;
+
+export type ConceptoRepositorio = (typeof CONCEPTOS_REPOSITORIO)[keyof typeof CONCEPTOS_REPOSITORIO] | string;
+
+export interface ParametrosRutaRepositorio {
+  negocio?: string; // "TRANQ" | "FFH" | "TNK" | "MRG"
+  usuarioId: string;
+  procesoOConcepto?: ConceptoRepositorio;
+  tramiteORefId?: string;
+  tipoDocumento: string; // "cv" | "titulo" | "foto_perfil" | "cedula" | "otro"
+  nombreOriginal: string;
+}
+
+/**
+ * Genera la ruta jerárquica estandarizada para almacenar y clasificar cualquier archivo en Supabase Storage.
+ * Convención: {negocio}/{usuario_id}/{proceso_concepto}/{tramite_ref}/{tipo}-{uuid}-{nombre_limpio}
+ */
+export function generarRutaRepositorioComun(params: ParametrosRutaRepositorio): {
+  rutaCompleta: string;
+  nombreSanitizado: string;
+  uuidArchivo: string;
+  concepto: string;
+} {
+  const negocio = (params.negocio || "TRANQ").toUpperCase();
+  const concepto = params.procesoOConcepto || CONCEPTOS_REPOSITORIO.REGISTRO;
+  const refId = params.tramiteORefId || "general";
+  const uuidArchivo = crypto.randomUUID();
+  const nombreSanitizado = sanearNombreArchivo(params.nombreOriginal);
+  const tipoDoc = params.tipoDocumento || "doc";
+
+  const rutaCompleta = `${negocio}/${params.usuarioId}/${concepto}/${refId}/${tipoDoc}-${uuidArchivo}-${nombreSanitizado}`;
+
+  return {
+    rutaCompleta,
+    nombreSanitizado,
+    uuidArchivo,
+    concepto,
+  };
+}
 
 /**
  * Sanitiza nombres de archivo eliminando caracteres especiales, tildes, virgulillas (~),

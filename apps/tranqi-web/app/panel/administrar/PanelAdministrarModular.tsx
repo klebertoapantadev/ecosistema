@@ -292,7 +292,7 @@ function obtenerModulosInicialesAdmin(): ModuloAdminDef[] {
 
   let ids: string[] = ["gestion_usuarios", "consulta_usuarios", "perfiles", "socios", "solicitud_socio", "emision_notificaciones", "gestion_terminos_consentimientos", "auditoria", "configuracion_contrato_abogado"];
   if (rolActivo === "OPERADOR" || rolActivo === "AUXILIAR" || rolActivo === "TECNICO") {
-    ids = ["socios", "configuracion_contrato_abogado"];
+    ids = ["socios", "configuracion_contrato_abogado", "gestion_terminos_consentimientos"];
   }
 
   return MODULOS_ADMIN.filter(m => ids.includes(m.id));
@@ -409,7 +409,7 @@ export function PanelAdministrarModular({ negocio }: Props) {
         // 1. Presets de asignación por rol para panel_administrar
         let idsAsignados: string[] = [];
         if (rolEncontrado === "OPERADOR" || rolEncontrado === "AUXILIAR" || rolEncontrado === "TECNICO") {
-          idsAsignados = ["socios", "configuracion_contrato_abogado"];
+          idsAsignados = ["socios", "configuracion_contrato_abogado", "gestion_terminos_consentimientos"];
         } else if (rolEncontrado === "ADMINISTRADOR" || rolEncontrado === "SUPERADMIN") {
           idsAsignados = ["gestion_usuarios", "consulta_usuarios", "perfiles", "socios", "solicitud_socio", "emision_notificaciones", "gestion_terminos_consentimientos", "auditoria", "configuracion_contrato_abogado"];
         }

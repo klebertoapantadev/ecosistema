@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { FileText, Save, Eye, Edit, AlertCircle, RefreshCw } from "lucide-react";
 import { obtenerPlantillaContrato, guardarPlantillaContrato } from "../acciones";
+import { BarraVariablesDinamicas } from "@eco/identidad/componentes/BarraVariablesDinamicas";
 
 export function ConfiguracionContratoAbogadoWidget() {
   const [titulo, setTitulo] = useState("");
@@ -11,6 +12,8 @@ export function ConfiguracionContratoAbogadoWidget() {
   const [cargando, setCargando] = useState(true);
   const [vista, setVista] = useState<"editar" | "vista_previa">("editar");
   const [mensaje, setMensaje] = useState<{ tipo: "exito" | "error"; texto: string } | null>(null);
+
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
   useEffect(() => {
     async function cargar() {
@@ -54,6 +57,23 @@ export function ConfiguracionContratoAbogadoWidget() {
     }
   }
 
+  const insertarVariable = (variable: string) => {
+    const textoAInsertar = `{{${variable}}}`;
+    if (textareaRef.current) {
+      const el = textareaRef.current;
+      const start = el.selectionStart ?? el.value.length;
+      const end = el.selectionEnd ?? el.value.length;
+      const nuevoTexto = contenido.substring(0, start) + textoAInsertar + contenido.substring(end);
+      setContenido(nuevoTexto);
+      setTimeout(() => {
+        el.focus();
+        el.setSelectionRange(start + textoAInsertar.length, start + textoAInsertar.length);
+      }, 50);
+    } else {
+      setContenido((prev) => prev + ` ${textoAInsertar} `);
+    }
+  };
+
   // Mapear tags para la vista previa
   function obtenerContenidoPrevisualizado() {
     let html = contenido;
@@ -63,10 +83,21 @@ export function ConfiguracionContratoAbogadoWidget() {
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;");
 
-    // Reemplazar los placeholders con estilos llamativos
+    // Reemplazar los placeholders estándar con estilos llamativos
     html = html
-      .replace(/\{\{nombre_completo\}\}/g, '<strong style="color: #05876E; background: rgba(5,135,110,0.08); padding: 2px 6px; border-radius: 4px; font-weight: 800;">[NOMBRE COMPLETO POSTULANTE]</strong>')
-      .replace(/\{\{cedula\}\}/g, '<strong style="color: #05876E; background: rgba(5,135,110,0.08); padding: 2px 6px; border-radius: 4px; font-weight: 800;">[CÉDULA / NIT]</strong>');
+      .replace(/\{\{nombre_completo\}\}/g, '<strong style="color: #05876E; background: rgba(5,135,110,0.08); padding: 2px 6px; border-radius: 4px; font-weight: 800;">[DRA. CAROLINA COLCHA]</strong>')
+      .replace(/\{\{cedula\}\}/g, '<strong style="color: #05876E; background: rgba(5,135,110,0.08); padding: 2px 6px; border-radius: 4px; font-weight: 800;">[1715489623]</strong>')
+      .replace(/\{\{correo\}\}/g, '<strong style="color: #05876E; background: rgba(5,135,110,0.08); padding: 2px 6px; border-radius: 4px; font-weight: 800;">[abogada.carolina@gmail.com]</strong>')
+      .replace(/\{\{telefono\}\}/g, '<strong style="color: #05876E; background: rgba(5,135,110,0.08); padding: 2px 6px; border-radius: 4px; font-weight: 800;">[0998765432]</strong>')
+      .replace(/\{\{whatsapp\}\}/g, '<strong style="color: #05876E; background: rgba(5,135,110,0.08); padding: 2px 6px; border-radius: 4px; font-weight: 800;">[+593 998765432]</strong>')
+      .replace(/\{\{negocio\}\}/g, '<strong style="color: #5000BA; background: rgba(80,0,186,0.08); padding: 2px 6px; border-radius: 4px; font-weight: 800;">[TRANQI]</strong>')
+      .replace(/\{\{fecha_actual\}\}/g, `<strong style="color: #5000BA; background: rgba(80,0,186,0.08); padding: 2px 6px; border-radius: 4px; font-weight: 800;">[${new Date().toLocaleDateString("es-EC")}]</strong>`)
+      .replace(/\{\{ciudad\}\}/g, '<strong style="color: #5000BA; background: rgba(80,0,186,0.08); padding: 2px 6px; border-radius: 4px; font-weight: 800;">[Quito, D.M.]</strong>')
+      .replace(/\{\{matricula_profesional\}\}/g, '<strong style="color: #05876E; background: rgba(5,135,110,0.08); padding: 2px 6px; border-radius: 4px; font-weight: 800;">[17-2020-89]</strong>')
+      .replace(/\{\{universidad\}\}/g, '<strong style="color: #05876E; background: rgba(5,135,110,0.08); padding: 2px 6px; border-radius: 4px; font-weight: 800;">[Universidad Central del Ecuador]</strong>')
+      .replace(/\{\{titulo_profesional\}\}/g, '<strong style="color: #05876E; background: rgba(5,135,110,0.08); padding: 2px 6px; border-radius: 4px; font-weight: 800;">[Abogada de los Tribunales de la República]</strong>')
+      .replace(/\{\{representante_legal\}\}/g, '<strong style="color: #5000BA; background: rgba(80,0,186,0.08); padding: 2px 6px; border-radius: 4px; font-weight: 800;">[Dr. Kleber Toapanta]</strong>')
+      .replace(/\{\{([a-zA-Z0-9_]+)\}\}/g, '<strong style="color: #6B21A8; background: rgba(107,33,168,0.08); padding: 2px 6px; border-radius: 4px; font-weight: 800;">[$1]</strong>');
 
     // Parseo básico de Markdown
     // Títulos H1 (# )
@@ -212,13 +243,17 @@ export function ConfiguracionContratoAbogadoWidget() {
           </div>
 
           <div>
-            <label style={{ display: "block", fontSize: "0.88rem", fontWeight: 800, color: "#11", marginBottom: "4px" }}>
+            <label style={{ display: "block", fontSize: "0.88rem", fontWeight: 800, color: "#111", marginBottom: "8px" }}>
               Contenido de la Plantilla (Formato Markdown)
             </label>
-            <span style={{ fontSize: "0.76rem", color: "#6B7280", display: "block", marginBottom: "8px" }}>
-              💡 Usa <code>{"{{nombre_completo}}"}</code> y <code>{"{{cedula}}"}</code> como marcadores de posición. Se rellenarán automáticamente con los datos reales del abogado.
-            </span>
+
+            {/* Barra de Variables Dinámicas */}
+            <div style={{ marginBottom: "12px" }}>
+              <BarraVariablesDinamicas onInsertarVariable={insertarVariable} negocio="tranqi" />
+            </div>
+
             <textarea
+              ref={textareaRef}
               value={contenido}
               onChange={(e) => setContenido(e.target.value)}
               placeholder="Redacta el contrato en formato Markdown aquí..."
@@ -232,6 +267,7 @@ export function ConfiguracionContratoAbogadoWidget() {
                 border: "1px solid #D1D5DB",
                 outline: "none",
                 lineHeight: 1.5,
+                boxSizing: "border-box",
               }}
             />
           </div>

@@ -568,6 +568,18 @@ Pantalla de configuración del negocio (identidad legal + datos de `PLT-008`) y 
       - 📋 **Copiar Reporte:** Genera y copia un informe estructurado en formato Markdown.
       - 📥 **Exportar CSV:** Descarga la matriz completa en hoja de cálculo CSV / Excel.
       - 🖨️ **Imprimir / Guardar PDF:** Vista lista para imprimir directamente desde el navegador.
+42. **Flujo de Incorporación Profesional, Repositorio Común de Archivos & Bienvenida Post-Registro (`FormularioSolicitudSocio.tsx`, `esquema.ts`, `GestionTerminosConsentimientosWidget.tsx`):**
+    - **Pantalla Informativa de Beneficios & Términos Preliminares Editables:** Previo a la captura de datos, el postulante visualiza las ventajas competitivas de unirse al equipo jurídico (red nacional, expedientes cifrados pgcrypto, liquidación de honorarios) con un texto introductorio editable respaldado en la configuración centralizada de consentimientos (`incorporacion_red`).
+    - **Opción 'No tengo experiencia laboral' (Primera Oportunidad):** Se integró una casilla dedicada para graduados noveles o profesionales sin trayectoria previa, eximiendo la obligatoriedad de registrar empleos anteriores y etiquetando su perfil de manera transparente.
+    - **Repositorio Común y Organización de Documentos por Concepto:** Convención jerárquica en Supabase Storage (`{negocio}/{usuario_id}/{concepto}/{referencia_id}/{tipo}-{uuid}-{nombre}`) que categoriza y ordena los archivos de registro, drive personal, trámites, análisis y contratos.
+    - **Pantalla de Bienvenida Post-Registro y Seguimiento:** Al completar el formulario, el usuario es guiado a una pantalla de bienvenida que desglosa las etapas de evaluación (recepción, verificación SENESCYT/Foro, activación) y ofrece navegación fluida al menú de cliente mientras se audita su solicitud.
+43. **Consola Unificada de Configuración de Términos, Contratos & Beneficios (`GestionTerminosConsentimientosWidget.tsx`, `PanelAdministrarModular.tsx`, `AdministracionPerfilesWidget.tsx`):**
+    - **Pilar Tripartito de Gestión Legal:** Integración en un solo widget interactivo de las tres áreas clave de gobernanza textual y legal:
+      1. *📜 Términos y Condiciones / LOPDP:* Notificaciones, WhatsApp opt-in, empleo/reclutamiento, contratación de servicios legales y solicitud de socio.
+      2. *🤝 Beneficios de Red:* Textos preliminares e incentivos formativos para postulantes.
+      3. *⚖️ Contratos de Sociedad & Prestación de Servicios:* Plantilla oficial con variables dinámicas (`{{nombre_completo}}`, `{{cedula}}`, `{{negocio}}`).
+    - **Asignación Universal a Operadores y Administradores:** Módulo registrado y habilitado en los presets de navegación tanto para perfiles `OPERADOR` como para `ADMINISTRADOR` y `SUPERADMIN` en todas las apps del ecosistema.
+    - **Editor Visual & Live Preview:** Modos de conmutación ágiles entre Editor Markdown con inserción asistida de variables dinámicas e interpolación en tiempo real para previsualización idéntica al documento final.
 
 
 

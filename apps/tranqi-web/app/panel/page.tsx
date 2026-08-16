@@ -13,16 +13,18 @@ import { BuscadorModulosGlobal } from "./BuscadorModulosGlobal";
 import { WidgetNotificacionesCliente } from "@eco/notificaciones";
 import { obtenerSolicitudPropia } from "../../modulos/socios/consultas";
 import { ConsolaSuperAdminModular } from "./ConsolaSuperAdminModular";
+import { TarjetaEstadoSolicitudHome } from "./TarjetaEstadoSolicitudHome";
 
 export const metadata: Metadata = { title: "Panel — tranqi" };
 
 const NEGOCIO = "tranqi";
 
-const ACCESOS_CLIENTE: { icono: LucideIcon; nombre: string; detalle: string }[] = [
-  { icono: Calendar, nombre: "Agendar cita", detalle: "Presencial o por video" },
-  { icono: Upload, nombre: "Subir documento", detalle: "Contratos, cédulas, actas" },
-  { icono: Coins, nombre: "Financiamiento", detalle: "Cuotas para tu caso" },
-  { icono: MessageCircle, nombre: "Preguntar a tranqi", detalle: "Respuesta en minutos" },
+const ACCESOS_CLIENTE: { icono: LucideIcon; nombre: string; detalle: string; href?: string }[] = [
+  { icono: Briefcase, nombre: "Registro de Abogados", detalle: "Postúlate a la red oficial de socios profesionales", href: "/panel/solicitud-socio" },
+  { icono: Calendar, nombre: "Agendar cita", detalle: "Presencial o por video", href: "/panel/agendar" },
+  { icono: Upload, nombre: "Subir documento", detalle: "Contratos, cédulas, actas", href: "/panel/cuenta" },
+  { icono: Coins, nombre: "Financiamiento", detalle: "Cuotas para tu caso", href: "/panel" },
+  { icono: MessageCircle, nombre: "Preguntar a tranqi", detalle: "Respuesta en minutos", href: "/panel" },
 ];
 
 const ACCESOS_ABOGADO: { icono: LucideIcon; nombre: string; detalle: string }[] = [
@@ -135,105 +137,6 @@ export default async function PagePanel({ searchParams }: Props) {
   );
 }
 
-function TarjetaEstadoSolicitudHome({ solicitud }: { solicitud: Record<string, unknown> }) {
-  const estado = String(solicitud.ssc_estado || "enviada");
-  const fechaStr = solicitud.ssc_enviada_en || solicitud.ssc_creado_en;
-  const fecha = fechaStr ? new Date(String(fechaStr)).toLocaleDateString("es-EC") : null;
-
-  const CONFIG: Record<string, { titulo: string; desc: string; chip: string; bg: string; border: string; color: string }> = {
-    enviada: {
-      titulo: "Solicitud de Socio Abogado — Recibida & En Proceso",
-      desc: "Tu postulación fue recibida. Nuestro equipo de admisibilidad está revisando tu titulación y matrícula del Foro de Abogados.",
-      chip: "🟡 Solicitud Ingresada",
-      bg: "rgba(245, 158, 11, 0.08)",
-      border: "#F59E0B",
-      color: "#B45309",
-    },
-    en_revision: {
-      titulo: "Solicitud de Socio Abogado — En Revisión Legal",
-      desc: "Estamos validando tus credenciales en los portales oficiales de la SENESCYT y Consejo de la Judicatura.",
-      chip: "🔵 En Revisión Legal",
-      bg: "rgba(59, 130, 246, 0.08)",
-      border: "#3B82F6",
-      color: "#1D4ED8",
-    },
-    rechazada: {
-      titulo: "Solicitud de Socio Abogado — Requiere Corrección / Actualización",
-      desc: "Se identificaron observaciones en la documentación o datos ingresados. Por favor actualiza la información y vuelve a enviar.",
-      chip: "🔴 No Autorizada (Modificación Requerida)",
-      bg: "rgba(239, 68, 68, 0.08)",
-      border: "#EF4444",
-      color: "#B91C1C",
-    },
-  };
-
-  const info = CONFIG[estado] ?? {
-    titulo: "Solicitud de Socio Abogado — En Curso",
-    desc: "Tienes una solicitud de registro profesional iniciada en la plataforma.",
-    chip: "🟠 En Curso (Incompleta)",
-    bg: "rgba(249, 115, 22, 0.08)",
-    border: "#F97316",
-    color: "#C2410C",
-  };
-
-  return (
-    <section
-      style={{
-        width: "100%",
-        background: info.bg,
-        border: `1.5px solid ${info.border}`,
-        borderRadius: "16px",
-        padding: "20px 24px",
-        marginBottom: "24px",
-        boxShadow: "0 6px 18px rgba(0,0,0,0.04)",
-      }}
-    >
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "16px" }}>
-        <div style={{ flex: 1, minWidth: "280px" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "6px" }}>
-            <span
-              style={{
-                fontSize: "0.78rem",
-                fontWeight: 800,
-                padding: "4px 12px",
-                borderRadius: "999px",
-                background: "#FFFFFF",
-                border: `1px solid ${info.border}`,
-                color: info.color,
-              }}
-            >
-              {info.chip}
-            </span>
-            {fecha && <span style={{ fontSize: "0.78rem", color: "#666" }}>Registrada el {fecha}</span>}
-          </div>
-          <h2 style={{ fontSize: "1.15rem", fontWeight: 800, color: "#111111", margin: "6px 0 4px" }}>{info.titulo}</h2>
-          <p style={{ fontSize: "0.88rem", color: "#444444", margin: 0, lineHeight: "1.45" }}>{info.desc}</p>
-        </div>
-
-        <Link
-          href="/panel/solicitud-socio"
-          style={{
-            textDecoration: "none",
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "8px",
-            background: "linear-gradient(135deg, #5000BA 0%, #3B0088 100%)",
-            color: "#FFF",
-            padding: "12px 20px",
-            borderRadius: "10px",
-            fontSize: "0.88rem",
-            fontWeight: 800,
-            boxShadow: "0 4px 12px rgba(80, 0, 186, 0.25)",
-            whiteSpace: "nowrap",
-          }}
-        >
-          ✏️ Ver, Modificar y Actualizar Todos los Datos de mi Solicitud
-        </Link>
-      </div>
-    </section>
-  );
-}
-
 /* ──────────────── SECCIÓN NOTIFICACIONES ECOSISTEMA DINÁMICA ──────────────── */
 function SeccionNotificacionesEcosistema({ esAdmin }: { esAdmin: boolean }) {
   return <WidgetNotificacionesCliente negocio="tranqi" esAdmin={esAdmin} />;
@@ -274,11 +177,24 @@ function PanelCliente({ saludo, nombre }: { saludo: string | null; nombre: strin
           <div className="accesos-cliente">
             <TarjetasFavoritasGrid />
             {ACCESOS_CLIENTE.map((acc, i) => (
-              <div key={i} className="tarjeta-acceso" tabIndex={0} role="button">
-                <acc.icono className="tarjeta-acceso-icono" aria-hidden="true" strokeWidth={1.6} />
-                <strong>{acc.nombre}</strong>
-                <p>{acc.detalle}</p>
-              </div>
+              acc.href ? (
+                <Link
+                  key={i}
+                  href={acc.href}
+                  className="tarjeta-acceso"
+                  style={{ textDecoration: "none", color: "inherit" }}
+                >
+                  <acc.icono className="tarjeta-acceso-icono" aria-hidden="true" strokeWidth={1.6} />
+                  <strong>{acc.nombre}</strong>
+                  <p>{acc.detalle}</p>
+                </Link>
+              ) : (
+                <div key={i} className="tarjeta-acceso" tabIndex={0} role="button">
+                  <acc.icono className="tarjeta-acceso-icono" aria-hidden="true" strokeWidth={1.6} />
+                  <strong>{acc.nombre}</strong>
+                  <p>{acc.detalle}</p>
+                </div>
+              )
             ))}
           </div>
 

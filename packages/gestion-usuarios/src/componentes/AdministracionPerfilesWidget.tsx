@@ -212,12 +212,13 @@ const PERFILES_INICIALES: PerfilDef[] = [
     nombre: "Operador / Auxiliar",
     nivel: 30,
     ambito: "Empresa",
-    descripcion: "Perfil operativo para atención al cliente y seguimiento de solicitudes.",
-    panelesAsignados: ["panel_inicio", "panel_cuenta", "panel_configuracion"],
+    descripcion: "Perfil operativo para atención al cliente, evaluación de solicitudes, configuración de términos, contratos y beneficios.",
+    panelesAsignados: ["panel_inicio", "panel_cuenta", "panel_configuracion", "panel_administrar"],
     widgetsAsignadosPorPanel: {
       panel_inicio: ["favoritos"],
       panel_cuenta: ["ver_como", "mi_cuenta"],
-      panel_configuracion: ["notificaciones"]
+      panel_configuracion: ["notificaciones"],
+      panel_administrar: ["socios", "configuracion_contrato_abogado", "gestion_terminos_consentimientos"]
     },
     activo: true
   },
@@ -240,13 +241,13 @@ const PERFILES_INICIALES: PerfilDef[] = [
     nombre: "Administrador del Negocio",
     nivel: 80,
     ambito: "Empresa",
-    descripcion: "Gestión del negocio: usuarios, parámetros de marca, SMTP, perfiles y auditoría.",
+    descripcion: "Gestión del negocio: usuarios, parámetros de marca, SMTP, perfiles, contratos, términos y auditoría.",
     panelesAsignados: ["panel_inicio", "panel_cuenta", "panel_configuracion", "panel_administrar"],
     widgetsAsignadosPorPanel: {
       panel_inicio: ["favoritos"],
       panel_cuenta: ["ver_como", "mi_cuenta"],
       panel_configuracion: ["configuracion_negocio", "configuracion_correo", "perfiles", "notificaciones"],
-      panel_administrar: ["gestion_usuarios", "socios", "solicitud_socio", "emision_notificaciones", "auditoria"]
+      panel_administrar: ["gestion_usuarios", "socios", "solicitud_socio", "emision_notificaciones", "gestion_terminos_consentimientos", "configuracion_contrato_abogado", "auditoria"]
     },
     activo: true
   },
@@ -447,8 +448,8 @@ const WIDGETS_INVENTARIO_INICIALES: WidgetInventarioDef[] = [
   },
   {
     clave: "gestion_terminos_consentimientos",
-    nombre: "Términos, Consentimientos & LOPDP",
-    descripcion: "Configuración de cláusulas LOPDP, notificaciones y WhatsApp.",
+    nombre: "Términos, Contratos & Beneficios",
+    descripcion: "Configuración centralizada de cláusulas LOPDP, contratos de sociedad, términos y beneficios informativos.",
     categoria: "Gobernanza & Legales",
     ruta: "/panel/administrar?widget=gestion_terminos_consentimientos",
     rutaFisica: "/identidad/GestionTerminosConsentimientosWidget.tsx",

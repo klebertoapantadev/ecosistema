@@ -57,3 +57,5 @@ export { EliminarCuenta } from "./componentes/EliminarCuenta";
 export { HistorialAccesos } from "./componentes/HistorialAccesos";
 export { WidgetConfiguracionMfa } from "./componentes/WidgetConfiguracionMfa";
 export { GestionTerminosConsentimientosWidget } from "./componentes/GestionTerminosConsentimientosWidget";
+export { BarraVariablesDinamicas, VARIABLES_ESTANDAR } from "./componentes/BarraVariablesDinamicas";
+export type { VariableDinamicaDef } from "./componentes/BarraVariablesDinamicas";

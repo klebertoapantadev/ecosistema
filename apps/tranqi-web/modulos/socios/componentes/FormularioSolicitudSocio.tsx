@@ -2,11 +2,62 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { ExternalLink, Check, X, Search, Plus, Bold, Italic, Underline, List, Heading, Link as LinkIcon, Code, ShieldCheck, UploadCloud, FileText, Camera, Paperclip, Trash2, Image as ImageIcon, ZoomIn, ZoomOut, Move, RotateCcw, Crop, Sliders, CheckCircle2 } from "lucide-react";
+import {
+  ExternalLink,
+  Check,
+  X,
+  Search,
+  Plus,
+  Bold,
+  Italic,
+  Underline,
+  List,
+  Heading,
+  Link as LinkIcon,
+  Code,
+  ShieldCheck,
+  UploadCloud,
+  FileText,
+  Camera,
+  Paperclip,
+  Trash2,
+  Image as ImageIcon,
+  ZoomIn,
+  ZoomOut,
+  Move,
+  RotateCcw,
+  Crop,
+  Sliders,
+  CheckCircle2,
+  Sparkles,
+  Award,
+  ArrowRight,
+  Clock,
+  Briefcase,
+  GraduationCap,
+  Scale,
+  Lock,
+  Edit3,
+  Save,
+  FolderTree,
+  AlertTriangle,
+} from "lucide-react";
 import { crearClienteNavegador } from "@eco/supabase";
 import { ModalNotificacionPush } from "@eco/notificaciones";
-import { enviarSolicitudSocio, registrarDocumentoSocio } from "../acciones";
-import { ENLACES_VERIFICACION, sanearNombreArchivo, type DatosExperienciaLaboral } from "../esquema";
+import { BarraVariablesDinamicas } from "@eco/identidad/componentes/BarraVariablesDinamicas";
+import {
+  enviarSolicitudSocio,
+  registrarDocumentoSocio,
+  eliminarSolicitudSocioPropiaAction,
+  reiniciarSolicitudSocioPropiaAction,
+} from "../acciones";
+import {
+  ENLACES_VERIFICACION,
+  sanearNombreArchivo,
+  generarRutaRepositorioComun,
+  CONCEPTOS_REPOSITORIO,
+  type DatosExperienciaLaboral,
+} from "../esquema";
 
 interface Props {
   usuarioId: string;
@@ -37,17 +88,33 @@ async function subirDocumento(
   tipo: "foto_perfil" | "titulo" | "matricula" | "otro" | "cv",
   archivo: File,
   comentario?: string,
+  usuarioId?: string,
+  concepto?: string,
 ) {
   if (archivo.size > TAMANO_MAXIMO_MB * 1024 * 1024) {
     return { ok: false as const, error: `${archivo.name}: supera ${TAMANO_MAXIMO_MB}MB` };
   }
   const supabase = crearClienteNavegador();
-  const nombreLimpio = sanearNombreArchivo(archivo.name);
-  const path = `${solicitudId}/${tipo}-${crypto.randomUUID()}-${nombreLimpio}`;
-  const { error: errorSubida } = await supabase.storage.from("socios-documentos").upload(path, archivo);
+  const infoRuta = generarRutaRepositorioComun({
+    negocio: "TRANQ",
+    usuarioId: usuarioId || solicitudId,
+    procesoOConcepto: concepto || (tipo === "foto_perfil" ? CONCEPTOS_REPOSITORIO.PERFIL : CONCEPTOS_REPOSITORIO.REGISTRO),
+    tramiteORefId: solicitudId,
+    tipoDocumento: tipo,
+    nombreOriginal: archivo.name,
+  });
+
+  const { error: errorSubida } = await supabase.storage.from("socios-documentos").upload(infoRuta.rutaCompleta, archivo);
   if (errorSubida) return { ok: false as const, error: `${archivo.name}: ${errorSubida.message}` };
 
-  const resultado = await registrarDocumentoSocio(solicitudId, tipo, path, nombreLimpio, comentario);
+  const resultado = await registrarDocumentoSocio(
+    solicitudId,
+    tipo,
+    infoRuta.rutaCompleta,
+    infoRuta.nombreSanitizado,
+    comentario,
+    infoRuta.concepto,
+  );
   if (!resultado.ok) return { ok: false as const, error: `${archivo.name}: ${resultado.error}` };
   return { ok: true as const };
 }
@@ -1124,18 +1191,37 @@ function SelectorMultiSeleccion({
 
 export function FormularioSolicitudSocio({ usuarioId, materias, provincias, solicitudExistente }: Props) {
   const router = useRouter();
-  
+
+  // Paso del flujo: "beneficios" (intro informativa) | "formulario" (captura) | "bienvenida" (post-envío / estatus)
+  const [pasoActual, setPasoActual] = useState<"beneficios" | "formulario" | "bienvenida">(() =>
+    solicitudExistente ? "formulario" : "beneficios"
+  );
+
   // Mapear documentos cargados previamente
   const documentosExistentes = (solicitudExistente?.trq_documento_socio as any[]) ?? [];
   const fotoExistente = documentosExistentes.find((d) => d.dcs_tipo === "foto_perfil");
   const tituloExistente = documentosExistentes.find((d) => d.dcs_tipo === "titulo");
   const cvYCertificadosExistentes = documentosExistentes.filter((d) => d.dcs_tipo === "cv" || d.dcs_tipo === "otro");
 
+  // Estado del texto preliminar de beneficios (editable)
+  const [textoBeneficios, setTextoBeneficios] = useState<string>(`### Únete a la Red Jurídica Oficial de tranqi
+
+Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendrás:
+
+- **Red Nacional de Clientes:** Acceso a usuarios y empresas que requieren asesoría legal en todo el Ecuador.
+- **Cuenta Digital y Expedientes Cifrados:** Gestión autónoma de trámites, consultas y documentos protegidos con cifrado de alta seguridad (pgcrypto).
+- **Cobros y Pagos Seguros:** Liquidación puntual y transparente de tus honorarios profesionales.
+- **Acompañamiento y Tecnología:** Respaldo de nuestra plataforma tecnológica, firma electrónica y soporte operativo continuo.
+- **Capacitación Continua:** Acceso a actualizaciones normativas, jurisprudencia y talleres especializados.`);
+  const [editandoBeneficios, setEditandoBeneficios] = useState(false);
+  const [textoBeneficiosTemp, setTextoBeneficiosTemp] = useState("");
+
   const [cedula, setCedula] = useState<string>((solicitudExistente?.ssc_cedula as string) ?? "");
   const [matriculaProfesional, setMatriculaProfesional] = useState<string>((solicitudExistente?.ssc_matricula_profesional as string) ?? "");
   const [universidad, setUniversidad] = useState<string>((solicitudExistente?.ssc_universidad as string) ?? "");
   const [anioGraduacion, setAnioGraduacion] = useState<string>(solicitudExistente?.ssc_anio_graduacion ? String(solicitudExistente.ssc_anio_graduacion) : "");
   const [anosExperiencia, setAnosExperiencia] = useState<string>(solicitudExistente?.ssc_anos_experiencia !== undefined ? String(solicitudExistente.ssc_anos_experiencia) : "");
+  const [sinExperienciaPrevia, setSinExperienciaPrevia] = useState<boolean>(false);
   const [resumenProfesional, setResumenProfesional] = useState<string>((solicitudExistente?.ssc_resumen_profesional as string) ?? "");
   const [telefonoContacto, setTelefonoContacto] = useState<string>((solicitudExistente?.ssc_telefono_contacto as string) ?? "");
   const [materiaIds, setMateriaIds] = useState<string[]>(
@@ -1184,15 +1270,20 @@ export function FormularioSolicitudSocio({ usuarioId, materias, provincias, soli
 
   useEffect(() => {
     try {
-      const localData = typeof window !== "undefined" ? localStorage.getItem("tranqi_config_terminos_tranqi_solicitud_socio") : null;
-      if (localData) {
-        const parsed = JSON.parse(localData);
-        if (parsed.contenidoMarkdown) {
-          setTextoTerminos(parsed.contenidoMarkdown);
-        }
+      const localTerminos = typeof window !== "undefined" ? localStorage.getItem("tranqi_config_terminos_tranqi_solicitud_socio") : null;
+      if (localTerminos) {
+        const parsed = JSON.parse(localTerminos);
+        if (parsed.contenidoMarkdown) setTextoTerminos(parsed.contenidoMarkdown);
+      }
+
+      const localBeneficios = typeof window !== "undefined" ? localStorage.getItem("tranqi_config_terminos_tranqi_incorporacion_red") : null;
+      if (localBeneficios) {
+        const parsedB = JSON.parse(localBeneficios);
+        if (parsedB.contenidoMarkdown) setTextoBeneficios(parsedB.contenidoMarkdown);
       }
     } catch { /* Ignorar fallback */ }
   }, []);
+
   const [error, setError] = useState<string | null>(null);
   const [avisoArchivos, setAvisoArchivos] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
@@ -1208,6 +1299,9 @@ export function FormularioSolicitudSocio({ usuarioId, materias, provincias, soli
     tipo: "push",
   });
 
+  const [modalConfirmarAccion, setModalConfirmarAccion] = useState<"eliminar" | "reiniciar" | null>(null);
+  const [procesandoAccion, setProcesandoAccion] = useState(false);
+
   const opcionesMaterias: OpcionItem[] = materias.map((m) => ({ id: m.mat_id, nombre: m.mat_nombre }));
   const opcionesProvincias: OpcionItem[] = [
     { id: "todo_ecuador", nombre: "🇪🇨 Todo el Ecuador (Cobertura Nacional)" },
@@ -1216,6 +1310,107 @@ export function FormularioSolicitudSocio({ usuarioId, materias, provincias, soli
 
   const actualizarExperiencia = (i: number, campo: keyof DatosExperienciaLaboral, valor: string) =>
     setExperiencia((prev) => prev.map((e, idx) => (idx === i ? { ...e, [campo]: valor } : e)));
+
+  const manejarEliminarSolicitud = async () => {
+    setProcesandoAccion(true);
+    setError(null);
+    try {
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("tranqi_solicitud_socio_borrador");
+      }
+      const solId = (solicitudExistente?.ssc_id as string) || undefined;
+      const res = await eliminarSolicitudSocioPropiaAction(solId);
+      if (res.ok) {
+        setModalConfirmarAccion(null);
+        router.push("/panel");
+        router.refresh();
+      } else {
+        setError(res.error || "No se pudo eliminar la solicitud.");
+        setModalConfirmarAccion(null);
+      }
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Error al procesar eliminación.");
+      setModalConfirmarAccion(null);
+    } finally {
+      setProcesandoAccion(false);
+    }
+  };
+
+  const manejarReiniciarSolicitud = async () => {
+    setProcesandoAccion(true);
+    setError(null);
+    try {
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("tranqi_solicitud_socio_borrador");
+      }
+      const solId = (solicitudExistente?.ssc_id as string) || undefined;
+      if (solId) {
+        await reiniciarSolicitudSocioPropiaAction(solId);
+      }
+      // Resetear campos locales
+      setCedula("");
+      setMatriculaProfesional("");
+      setUniversidad("");
+      setAnioGraduacion("");
+      setAnosExperiencia("");
+      setSinExperienciaPrevia(false);
+      setResumenProfesional("");
+      setTelefonoContacto("");
+      setMateriaIds([]);
+      setProvinciaIds([]);
+      setExperiencia([]);
+      setFotoPerfilArchivos([]);
+      setTituloArchivos([]);
+      setCvYCertificados([]);
+      setSenescytVerificado(false);
+      setDeclaracion(false);
+      setModalConfirmarAccion(null);
+      setPasoActual("beneficios");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Error al reiniciar formulario.");
+      setModalConfirmarAccion(null);
+    } finally {
+      setProcesandoAccion(false);
+    }
+  };
+
+  const textareaBeneficiosRef = useRef<HTMLTextAreaElement | null>(null);
+
+  const insertarVariableBeneficios = (variable: string) => {
+    const textoAInsertar = `{{${variable}}}`;
+    if (textareaBeneficiosRef.current) {
+      const el = textareaBeneficiosRef.current;
+      const start = el.selectionStart ?? el.value.length;
+      const end = el.selectionEnd ?? el.value.length;
+      const nuevo = textoBeneficiosTemp.substring(0, start) + textoAInsertar + textoBeneficiosTemp.substring(end);
+      setTextoBeneficiosTemp(nuevo);
+      setTimeout(() => {
+        el.focus();
+        el.setSelectionRange(start + textoAInsertar.length, start + textoAInsertar.length);
+      }, 50);
+    } else {
+      setTextoBeneficiosTemp((prev) => prev + ` ${textoAInsertar} `);
+    }
+  };
+
+  const guardarEdicionBeneficios = () => {
+    if (!textoBeneficiosTemp.trim()) return;
+    setTextoBeneficios(textoBeneficiosTemp);
+    try {
+      localStorage.setItem(
+        "tranqi_config_terminos_tranqi_incorporacion_red",
+        JSON.stringify({
+          negocio: "tranqi",
+          categoria: "incorporacion_red",
+          version: "v1.0.0",
+          fechaVigencia: new Date().toISOString().split("T")[0],
+          requiereAceptacionObligatoria: true,
+          contenidoMarkdown: textoBeneficiosTemp,
+        })
+      );
+    } catch { /* Ignorar */ }
+    setEditandoBeneficios(false);
+  };
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -1234,12 +1429,15 @@ export function FormularioSolicitudSocio({ usuarioId, materias, provincias, soli
         matriculaProfesional,
         universidad,
         anioGraduacion: Number(anioGraduacion),
-        anosExperiencia: Number(anosExperiencia || 0),
-        resumenProfesional,
+        anosExperiencia: sinExperienciaPrevia ? 0 : Number(anosExperiencia || 0),
+        resumenProfesional: sinExperienciaPrevia && !resumenProfesional.includes("primera oportunidad")
+          ? `${resumenProfesional}<br/><p><em>[Perfil: En búsqueda de primera oportunidad laboral / Recién graduado]</em></p>`
+          : resumenProfesional,
         telefonoContacto,
         materiaIds,
         provinciaIds,
-        experiencia,
+        experiencia: sinExperienciaPrevia ? [] : experiencia,
+        sinExperienciaPrevia,
         enlaceSenescytVerificado: senescytVerificado,
         enlaceForoVerificado: true,
         declaracionVeracidad: declaracion,
@@ -1254,39 +1452,536 @@ export function FormularioSolicitudSocio({ usuarioId, materias, provincias, soli
 
     const solicitudId = resultado.data.solicitudId;
 
-    // Subida de archivos con control de formato y tamaño
+    // Subida de archivos con control de repositorio común y clasificación por concepto
     const fotoArchivo = fotoPerfilArchivos[0];
     const tituloArchivo = tituloArchivos[0];
 
     const subidas = await Promise.all([
-      fotoArchivo ? subirDocumento(solicitudId, "foto_perfil", fotoArchivo) : null,
-      tituloArchivo ? subirDocumento(solicitudId, "titulo", tituloArchivo) : null,
-      ...cvYCertificados.map((archivo, idx) => subirDocumento(solicitudId, "cv", archivo, cvYCertificadosComentarios[idx])),
+      fotoArchivo ? subirDocumento(solicitudId, "foto_perfil", fotoArchivo, "Foto de Perfil Profesional", usuarioId, CONCEPTOS_REPOSITORIO.PERFIL) : null,
+      tituloArchivo ? subirDocumento(solicitudId, "titulo", tituloArchivo, "Título Universitario Acreditado", usuarioId, CONCEPTOS_REPOSITORIO.REGISTRO) : null,
+      ...cvYCertificados.map((archivo, idx) =>
+        subirDocumento(
+          solicitudId,
+          "cv",
+          archivo,
+          cvYCertificadosComentarios[idx] || "Hoja de Vida / Certificación",
+          usuarioId,
+          CONCEPTOS_REPOSITORIO.REGISTRO,
+        )
+      ),
     ]);
     const fallidas = subidas.filter((s): s is { ok: false; error: string } => s !== null && !s.ok);
 
     setEnviando(false);
     if (fallidas.length > 0) {
       setAvisoArchivos(
-        `Tu solicitud se envió correctamente, pero estos archivos no se pudieron subir: ${fallidas.map((f) => f.error).join("; ")}.`,
+        `Tu solicitud se guardó correctamente, pero estos archivos no se pudieron subir: ${fallidas.map((f) => f.error).join("; ")}.`,
       );
       return;
     }
-    setModalNotificacion({
-      abierto: true,
-      tipo: "push",
-      titulo: "🎉 ¡Solicitud de Socio Abogado Enviada!",
-      mensaje: "Se ha generado la notificación Push automática y la confirmación en el sistema. Haz clic en continuar para ir al portal principal.",
-    });
+
+    // Avanzar a la pantalla de bienvenida y seguimiento
+    setPasoActual("bienvenida");
   }
 
+  // ==========================================
+  // VISTA 1: PANTALLA INFORMATIVA DE BENEFICIOS
+  // ==========================================
+  if (pasoActual === "beneficios") {
+    return (
+      <div style={{ maxWidth: "780px", margin: "0 auto", display: "flex", flexDirection: "column", gap: "20px" }}>
+        {/* Banner Hero de Bienvenida al Proceso */}
+        <div
+          style={{
+            background: "linear-gradient(135deg, #2D006B 0%, #5000BA 50%, #03231B 100%)",
+            borderRadius: "18px",
+            padding: "32px 28px",
+            color: "#ffffff",
+            boxShadow: "0 12px 30px rgba(80, 0, 186, 0.25)",
+            position: "relative",
+            overflow: "hidden",
+          }}
+        >
+          <div style={{ position: "relative", zIndex: 2 }}>
+            <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", background: "rgba(255,255,255,0.18)", padding: "4px 12px", borderRadius: "999px", fontSize: "0.78rem", fontWeight: 800, marginBottom: "12px", backdropFilter: "blur(4px)" }}>
+              <Sparkles size={14} color="#C7F9CC" /> Convocatoria de Incorporación Profesional
+            </div>
+            <h1 style={{ fontSize: "1.8rem", fontWeight: 900, margin: "0 0 10px 0", lineHeight: 1.25, color: "#ffffff" }}>
+              Forma parte del Equipo Jurídico de tranqi
+            </h1>
+            <p style={{ fontSize: "0.95rem", lineHeight: 1.55, opacity: 0.92, margin: 0, maxWidth: "620px" }}>
+              Impulsa tu ejercicio profesional con el respaldo de nuestra infraestructura legal digital, red nacional de clientes y herramientas seguras para abogados acreditados.
+            </p>
+          </div>
+        </div>
+
+        {/* Tarjetas de Beneficios Clave */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "14px" }}>
+          <div style={{ background: "#ffffff", border: "1px solid #E4E4E4", borderRadius: "14px", padding: "18px", boxShadow: "0 2px 8px rgba(0,0,0,0.03)" }}>
+            <div style={{ width: "38px", height: "38px", borderRadius: "10px", background: "rgba(80, 0, 186, 0.08)", color: "#5000BA", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "10px" }}>
+              <Scale size={20} />
+            </div>
+            <strong style={{ display: "block", fontSize: "0.92rem", color: "#111111", marginBottom: "4px" }}>Red Nacional Activa</strong>
+            <p style={{ margin: 0, fontSize: "0.8rem", color: "#666666", lineHeight: 1.45 }}>
+              Casos y consultas jurídicas en las 24 provincias del Ecuador, litiga y asesora de forma local o remota.
+            </p>
+          </div>
+
+          <div style={{ background: "#ffffff", border: "1px solid #E4E4E4", borderRadius: "14px", padding: "18px", boxShadow: "0 2px 8px rgba(0,0,0,0.03)" }}>
+            <div style={{ width: "38px", height: "38px", borderRadius: "10px", background: "rgba(5, 135, 110, 0.08)", color: "#05876E", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "10px" }}>
+              <Lock size={20} />
+            </div>
+            <strong style={{ display: "block", fontSize: "0.92rem", color: "#111111", marginBottom: "4px" }}>Expedientes Cifrados</strong>
+            <p style={{ margin: 0, fontSize: "0.8rem", color: "#666666", lineHeight: 1.45 }}>
+              Tus documentos y expedientes están protegidos con cifrado a nivel de columna (pgcrypto) y repositorio privado.
+            </p>
+          </div>
+
+          <div style={{ background: "#ffffff", border: "1px solid #E4E4E4", borderRadius: "14px", padding: "18px", boxShadow: "0 2px 8px rgba(0,0,0,0.03)" }}>
+            <div style={{ width: "38px", height: "38px", borderRadius: "10px", background: "rgba(217, 119, 6, 0.08)", color: "#D97706", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "10px" }}>
+              <Award size={20} />
+            </div>
+            <strong style={{ display: "block", fontSize: "0.92rem", color: "#111111", marginBottom: "4px" }}>Honorarios Claros</strong>
+            <p style={{ margin: 0, fontSize: "0.8rem", color: "#666666", lineHeight: 1.45 }}>
+              Liquidación puntual, comprobantes electrónicos autorizados por el SRI y total transparencia de ingresos.
+            </p>
+          </div>
+        </div>
+
+        {/* Sección de Texto Preliminar Editable */}
+        <div style={{ background: "#ffffff", border: "1px solid #E4E4E4", borderRadius: "16px", padding: "22px", boxShadow: "0 2px 10px rgba(0,0,0,0.04)" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px", flexWrap: "wrap", gap: "8px" }}>
+            <span style={{ fontSize: "0.86rem", fontWeight: 800, color: "#5000BA", display: "flex", alignItems: "center", gap: "6px" }}>
+              <Briefcase size={16} /> Condiciones de Participación y Beneficios del Equipo
+            </span>
+            <button
+              type="button"
+              onClick={() => {
+                if (editandoBeneficios) {
+                  setEditandoBeneficios(false);
+                } else {
+                  setTextoBeneficiosTemp(textoBeneficios);
+                  setEditandoBeneficios(true);
+                }
+              }}
+              style={{
+                background: "rgba(80, 0, 186, 0.06)",
+                border: "1px solid rgba(80, 0, 186, 0.2)",
+                borderRadius: "8px",
+                padding: "4px 10px",
+                fontSize: "0.76rem",
+                fontWeight: 700,
+                color: "#5000BA",
+                cursor: "pointer",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "4px",
+              }}
+            >
+              <Edit3 size={13} /> {editandoBeneficios ? "Cancelar Edición" : "Editar Texto"}
+            </button>
+          </div>
+
+          {editandoBeneficios ? (
+            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+              <BarraVariablesDinamicas onInsertarVariable={insertarVariableBeneficios} negocio="tranqi" />
+
+              <textarea
+                ref={textareaBeneficiosRef}
+                value={textoBeneficiosTemp}
+                onChange={(e) => setTextoBeneficiosTemp(e.target.value)}
+                rows={8}
+                style={{
+                  width: "100%",
+                  padding: "12px",
+                  borderRadius: "10px",
+                  border: "1px solid #5000BA",
+                  fontFamily: "inherit",
+                  fontSize: "0.86rem",
+                  lineHeight: 1.55,
+                  boxSizing: "border-box",
+                }}
+              />
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: "8px" }}>
+                <button
+                  type="button"
+                  onClick={guardarEdicionBeneficios}
+                  style={{
+                    background: "#5000BA",
+                    color: "#ffffff",
+                    border: "none",
+                    borderRadius: "8px",
+                    padding: "6px 14px",
+                    fontSize: "0.8rem",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "6px",
+                  }}
+                >
+                  <Save size={14} /> Guardar Cambios
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div
+              style={{
+                fontSize: "0.88rem",
+                lineHeight: 1.6,
+                color: "#222222",
+                whiteSpace: "pre-wrap",
+                background: "var(--panel-papel, #F7F6FA)",
+                padding: "16px",
+                borderRadius: "12px",
+                border: "1px solid #EAEAEA",
+              }}
+            >
+              {textoBeneficios}
+            </div>
+          )}
+        </div>
+
+        {/* Botón de Acción Principal para Continuar */}
+        <div style={{ display: "flex", justifyContent: "center", marginTop: "10px" }}>
+          <button
+            type="button"
+            onClick={() => setPasoActual("formulario")}
+            className="btn btn-primario"
+            style={{
+              padding: "14px 32px",
+              fontSize: "1rem",
+              fontWeight: 800,
+              borderRadius: "12px",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "10px",
+              boxShadow: "0 6px 20px rgba(80,0,186,0.3)",
+              cursor: "pointer",
+            }}
+          >
+            Continuar con el Registro de Socio <ArrowRight size={18} />
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ==========================================================
+  // VISTA 3: PANTALLA DE BIENVENIDA POST-REGISTRO (EN REVISIÓN)
+  // ==========================================================
+  if (pasoActual === "bienvenida") {
+    return (
+      <div style={{ maxWidth: "720px", margin: "0 auto", display: "flex", flexDirection: "column", gap: "20px" }}>
+        <div
+          style={{
+            background: "#ffffff",
+            borderRadius: "18px",
+            border: "1px solid #E4E4E4",
+            padding: "28px",
+            boxShadow: "0 8px 24px rgba(0,0,0,0.06)",
+            textAlign: "center",
+          }}
+        >
+          <div
+            style={{
+              width: "64px",
+              height: "64px",
+              borderRadius: "50%",
+              background: "rgba(5, 135, 110, 0.1)",
+              color: "#05876E",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              margin: "0 auto 16px auto",
+              border: "2px solid #05876E",
+            }}
+          >
+            <CheckCircle2 size={36} />
+          </div>
+
+          <span
+            style={{
+              display: "inline-block",
+              background: "rgba(217, 119, 6, 0.12)",
+              color: "#D97706",
+              border: "1px solid rgba(217, 119, 6, 0.3)",
+              borderRadius: "999px",
+              padding: "4px 14px",
+              fontSize: "0.8rem",
+              fontWeight: 800,
+              marginBottom: "12px",
+            }}
+          >
+            🟡 Solicitud Recibida — En Proceso de Acreditación
+          </span>
+
+          <h2 style={{ fontSize: "1.5rem", fontWeight: 900, color: "#111111", margin: "0 0 10px 0" }}>
+            ¡Bienvenido(a) a la Red de tranqi!
+          </h2>
+          <p style={{ fontSize: "0.92rem", color: "#555555", lineHeight: 1.55, maxWidth: "560px", margin: "0 auto 24px auto" }}>
+            Hemos recibido tu solicitud de incorporación como Socio Abogado. Tus documentos han sido clasificados y resguardados en nuestro repositorio institucional seguro.
+          </p>
+
+          {/* Rastreador de Estado del Proceso */}
+          <div style={{ background: "#F7F6FA", borderRadius: "14px", padding: "18px", textAlign: "left", marginBottom: "24px", border: "1px solid #EAEAEA" }}>
+            <strong style={{ fontSize: "0.86rem", color: "#5000BA", display: "flex", alignItems: "center", gap: "6px", marginBottom: "14px" }}>
+              <FolderTree size={16} /> Etapas de tu Acreditación Profesional:
+            </strong>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+              <div style={{ display: "flex", alignItems: "flex-start", gap: "10px" }}>
+                <span style={{ background: "#05876E", color: "#fff", borderRadius: "50%", width: "22px", height: "22px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.72rem", fontWeight: 800, flexShrink: 0 }}>
+                  ✓
+                </span>
+                <div>
+                  <strong style={{ fontSize: "0.84rem", color: "#111111", display: "block" }}>1. Registro y Carga de Expediente</strong>
+                  <span style={{ fontSize: "0.76rem", color: "#666" }}>Datos personales, título, fotos y Hoja de Vida indexados en el repositorio de la empresa.</span>
+                </div>
+              </div>
+
+              <div style={{ display: "flex", alignItems: "flex-start", gap: "10px" }}>
+                <span style={{ background: "#D97706", color: "#fff", borderRadius: "50%", width: "22px", height: "22px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.72rem", fontWeight: 800, flexShrink: 0 }}>
+                  2
+                </span>
+                <div>
+                  <strong style={{ fontSize: "0.84rem", color: "#D97706", display: "block" }}>2. Verificación Asistida (SENESCYT & Foro)</strong>
+                  <span style={{ fontSize: "0.76rem", color: "#666" }}>Validación de autenticidad en el Consejo de la Judicatura y acreditación de matrícula profesional.</span>
+                </div>
+              </div>
+
+              <div style={{ display: "flex", alignItems: "flex-start", gap: "10px" }}>
+                <span style={{ background: "#9CA3AF", color: "#fff", borderRadius: "50%", width: "22px", height: "22px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.72rem", fontWeight: 800, flexShrink: 0 }}>
+                  3
+                </span>
+                <div>
+                  <strong style={{ fontSize: "0.84rem", color: "#6B7280", display: "block" }}>3. Activación de Rol y Cuenta Digital</strong>
+                  <span style={{ fontSize: "0.76rem", color: "#666" }}>Te notificaremos por correo y notificación Push al momento de la aprobación para firmar tu contrato digital.</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Botones de Navegación Post-Registro */}
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "12px", justifyContent: "center" }}>
+            <button
+              type="button"
+              onClick={() => {
+                router.push("/panel");
+                router.refresh();
+              }}
+              className="btn btn-primario"
+              style={{
+                padding: "12px 24px",
+                fontSize: "0.92rem",
+                fontWeight: 800,
+                borderRadius: "10px",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "8px",
+                cursor: "pointer",
+              }}
+            >
+              Ingresar al Menú Principal <ArrowRight size={16} />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setPasoActual("formulario")}
+              style={{
+                background: "#ffffff",
+                border: "1px solid #D1D5DB",
+                color: "#374151",
+                padding: "12px 20px",
+                fontSize: "0.88rem",
+                fontWeight: 700,
+                borderRadius: "10px",
+                cursor: "pointer",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+              }}
+            >
+              <Edit3 size={15} /> Ver / Editar Datos Enviados
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setModalConfirmarAccion("reiniciar")}
+              style={{
+                background: "#ffffff",
+                border: "1px solid #5000BA",
+                color: "#5000BA",
+                padding: "12px 18px",
+                fontSize: "0.88rem",
+                fontWeight: 700,
+                borderRadius: "10px",
+                cursor: "pointer",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+              }}
+            >
+              <RotateCcw size={15} /> Reiniciar Solicitud
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setModalConfirmarAccion("eliminar")}
+              style={{
+                background: "#ffffff",
+                border: "1px solid #DC2626",
+                color: "#DC2626",
+                padding: "12px 18px",
+                fontSize: "0.88rem",
+                fontWeight: 700,
+                borderRadius: "10px",
+                cursor: "pointer",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+              }}
+            >
+              <Trash2 size={15} /> Eliminar Solicitud
+            </button>
+          </div>
+        </div>
+
+        {/* Modal de Confirmación para Reiniciar o Eliminar */}
+        {modalConfirmarAccion && (
+          <div
+            style={{
+              position: "fixed",
+              top: 0,
+              left: 0,
+              width: "100%",
+              height: "100%",
+              background: "rgba(0, 0, 0, 0.55)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              zIndex: 99999,
+              padding: "16px",
+            }}
+          >
+            <div
+              style={{
+                background: "#FFFFFF",
+                borderRadius: "16px",
+                padding: "24px",
+                maxWidth: "460px",
+                width: "100%",
+                boxShadow: "0 20px 40px rgba(0,0,0,0.2)",
+                textAlign: "center",
+              }}
+            >
+              <div
+                style={{
+                  width: "48px",
+                  height: "48px",
+                  borderRadius: "50%",
+                  background: modalConfirmarAccion === "eliminar" ? "#FEE2E2" : "#EDE9FE",
+                  color: modalConfirmarAccion === "eliminar" ? "#DC2626" : "#5000BA",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  margin: "0 auto 16px",
+                }}
+              >
+                {modalConfirmarAccion === "eliminar" ? <AlertTriangle size={26} /> : <RotateCcw size={26} />}
+              </div>
+
+              <h3 style={{ fontSize: "1.15rem", fontWeight: 800, color: "#111", margin: "0 0 8px" }}>
+                {modalConfirmarAccion === "eliminar" ? "¿Eliminar solicitud de socio abogado?" : "¿Reiniciar solicitud desde cero?"}
+              </h3>
+
+              <p style={{ fontSize: "0.88rem", color: "#555", lineHeight: "1.5", margin: "0 0 20px" }}>
+                {modalConfirmarAccion === "eliminar"
+                  ? "Esta acción cancelará tu postulación y eliminará los documentos y materias asociadas. Podrás volver a iniciar una nueva solicitud cuando lo desees."
+                  : "Se limpiarán los datos y archivos cargados previamente para que puedas comenzar el formulario completamente limpio."}
+              </p>
+
+              <div style={{ display: "flex", gap: "10px", justifyContent: "center" }}>
+                <button
+                  type="button"
+                  onClick={() => setModalConfirmarAccion(null)}
+                  disabled={procesandoAccion}
+                  style={{
+                    flex: 1,
+                    padding: "10px 16px",
+                    background: "#F3F4F6",
+                    color: "#374151",
+                    border: "none",
+                    borderRadius: "8px",
+                    fontSize: "0.88rem",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                  }}
+                >
+                  Cancelar
+                </button>
+
+                <button
+                  type="button"
+                  onClick={modalConfirmarAccion === "eliminar" ? manejarEliminarSolicitud : manejarReiniciarSolicitud}
+                  disabled={procesandoAccion}
+                  style={{
+                    flex: 1,
+                    padding: "10px 16px",
+                    background: modalConfirmarAccion === "eliminar" ? "#DC2626" : "#5000BA",
+                    color: "#FFF",
+                    border: "none",
+                    borderRadius: "8px",
+                    fontSize: "0.88rem",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                  }}
+                >
+                  {procesandoAccion ? "Procesando..." : modalConfirmarAccion === "eliminar" ? "Sí, Eliminar" : "Sí, Reiniciar"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // ==============================================
+  // VISTA 2: FORMULARIO PRINCIPAL DE REGISTRO
+  // ==============================================
   return (
     <form className="form-panel form-solicitud-socio" onSubmit={onSubmit}>
-      <h2>Datos profesionales</h2>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px", flexWrap: "wrap", gap: "8px" }}>
+        <h2 style={{ margin: 0 }}>Datos profesionales</h2>
+        <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
+          <button
+            type="button"
+            onClick={() => setPasoActual("beneficios")}
+            style={{ background: "transparent", border: "none", color: "#5000BA", fontSize: "0.78rem", fontWeight: 700, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "4px" }}
+          >
+            ← Ver Beneficios
+          </button>
+          <button
+            type="button"
+            onClick={() => setModalConfirmarAccion("reiniciar")}
+            style={{ background: "rgba(80,0,186,0.06)", border: "1px solid rgba(80,0,186,0.2)", borderRadius: "8px", padding: "4px 8px", color: "#5000BA", fontSize: "0.76rem", fontWeight: 700, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "4px" }}
+          >
+            <RotateCcw size={12} /> Reiniciar Formulario
+          </button>
+          <button
+            type="button"
+            onClick={() => setModalConfirmarAccion("eliminar")}
+            style={{ background: "rgba(220,38,38,0.06)", border: "1px solid rgba(220,38,38,0.2)", borderRadius: "8px", padding: "4px 8px", color: "#DC2626", fontSize: "0.76rem", fontWeight: 700, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "4px" }}
+          >
+            <Trash2 size={12} /> Eliminar Solicitud
+          </button>
+        </div>
+      </div>
 
       {/* Campo Foto para Perfil Profesional */}
       <CampoSubidaArchivo
-        etiqueta="Foto para el Perfil Profesional (Requerido)"
+        etiqueta="Foto para el Perfil Profesional (Requerido) • [Repositorio: Perfil]"
         subtitulo="Fotografía clara tipo carné o retrato profesional para tu perfil público en la red"
         aceptar="image/jpeg,image/png,image/webp"
         multiple={false}
@@ -1333,7 +2028,15 @@ export function FormularioSolicitudSocio({ usuarioId, materias, provincias, soli
         </label>
         <label>
           Años de experiencia
-          <input type="number" value={anosExperiencia} onChange={(e) => setAnosExperiencia(e.target.value)} min={0} max={70} placeholder="5" />
+          <input
+            type="number"
+            value={sinExperienciaPrevia ? "0" : anosExperiencia}
+            onChange={(e) => setAnosExperiencia(e.target.value)}
+            disabled={sinExperienciaPrevia}
+            min={0}
+            max={70}
+            placeholder={sinExperienciaPrevia ? "0 (Primera Oportunidad)" : "5"}
+          />
         </label>
       </div>
 
@@ -1386,44 +2089,84 @@ export function FormularioSolicitudSocio({ usuarioId, materias, provincias, soli
       />
 
       <h2 style={{ marginTop: "24px" }}>Experiencia laboral</h2>
-      {experiencia.map((exp, i) => (
-        <div key={i} className="tarjeta-experiencia">
-          <div className="fila-dos-columnas">
-            <label>
-              Empresa / Firma Jurídica
-              <input value={exp.empresa} onChange={(e) => actualizarExperiencia(i, "empresa", e.target.value)} required />
-            </label>
-            <label>
-              Cargo
-              <input value={exp.cargo} onChange={(e) => actualizarExperiencia(i, "cargo", e.target.value)} required />
-            </label>
+
+      {/* Opción Destacada: No tengo experiencia laboral / Primera oportunidad */}
+      <div
+        style={{
+          background: sinExperienciaPrevia ? "rgba(5, 135, 110, 0.08)" : "rgba(80, 0, 186, 0.04)",
+          border: sinExperienciaPrevia ? "1.5px solid #05876E" : "1px solid rgba(80, 0, 186, 0.2)",
+          borderRadius: "12px",
+          padding: "14px 16px",
+          marginBottom: "16px",
+          transition: "all 0.2s ease",
+        }}
+      >
+        <label style={{ display: "flex", alignItems: "flex-start", gap: "10px", cursor: "pointer", margin: 0 }}>
+          <input
+            type="checkbox"
+            checked={sinExperienciaPrevia}
+            onChange={(e) => {
+              const checked = e.target.checked;
+              setSinExperienciaPrevia(checked);
+              if (checked) {
+                setAnosExperiencia("0");
+              }
+            }}
+            style={{ marginTop: "3px", width: "18px", height: "18px", accentColor: "#05876E" }}
+          />
+          <div>
+            <strong style={{ display: "inline-flex", alignItems: "center", gap: "6px", color: sinExperienciaPrevia ? "#05876E" : "#5000BA", fontSize: "0.88rem" }}>
+              <GraduationCap size={17} /> No tengo experiencia laboral previa (estoy buscando mi primera oportunidad)
+            </strong>
+            <p style={{ margin: "4px 0 0 0", fontSize: "0.78rem", color: "#555555", lineHeight: 1.4 }}>
+              Marca esta casilla si eres recién graduado o estás iniciando tu carrera profesional. En tranqi valoramos el talento emergente y te brindamos acompañamiento en tus primeros casos.
+            </p>
           </div>
-          <div className="fila-dos-columnas">
-            <label>
-              Desde
-              <input type="date" value={exp.fechaInicio} onChange={(e) => actualizarExperiencia(i, "fechaInicio", e.target.value)} required />
-            </label>
-            <label>
-              Hasta (vacío si es tu trabajo actual)
-              <input type="date" value={exp.fechaFin} onChange={(e) => actualizarExperiencia(i, "fechaFin", e.target.value)} />
-            </label>
-          </div>
-          <label>
-            Descripción breve
-            <input value={exp.descripcion} onChange={(e) => actualizarExperiencia(i, "descripcion", e.target.value)} />
-          </label>
-          <button type="button" className="btn-mini" onClick={() => setExperiencia((prev) => prev.filter((_, idx) => idx !== i))}>
-            Quitar
+        </label>
+      </div>
+
+      {!sinExperienciaPrevia && (
+        <>
+          {experiencia.map((exp, i) => (
+            <div key={i} className="tarjeta-experiencia">
+              <div className="fila-dos-columnas">
+                <label>
+                  Empresa / Firma Jurídica
+                  <input value={exp.empresa} onChange={(e) => actualizarExperiencia(i, "empresa", e.target.value)} required />
+                </label>
+                <label>
+                  Cargo
+                  <input value={exp.cargo} onChange={(e) => actualizarExperiencia(i, "cargo", e.target.value)} required />
+                </label>
+              </div>
+              <div className="fila-dos-columnas">
+                <label>
+                  Desde
+                  <input type="date" value={exp.fechaInicio} onChange={(e) => actualizarExperiencia(i, "fechaInicio", e.target.value)} required />
+                </label>
+                <label>
+                  Hasta (vacío si es tu trabajo actual)
+                  <input type="date" value={exp.fechaFin} onChange={(e) => actualizarExperiencia(i, "fechaFin", e.target.value)} />
+                </label>
+              </div>
+              <label>
+                Descripción breve
+                <input value={exp.descripcion} onChange={(e) => actualizarExperiencia(i, "descripcion", e.target.value)} />
+              </label>
+              <button type="button" className="btn-mini" onClick={() => setExperiencia((prev) => prev.filter((_, idx) => idx !== i))}>
+                Quitar
+              </button>
+            </div>
+          ))}
+          <button type="button" className="btn-mini" onClick={() => setExperiencia((prev) => [...prev, { ...EXPERIENCIA_VACIA }])}>
+            + Agregar experiencia
           </button>
-        </div>
-      ))}
-      <button type="button" className="btn-mini" onClick={() => setExperiencia((prev) => [...prev, { ...EXPERIENCIA_VACIA }])}>
-        + Agregar experiencia
-      </button>
+        </>
+      )}
 
       {/* Campo Hoja de Vida (CV), Certificados o cartas de referencia */}
       <CampoSubidaArchivo
-        etiqueta="Hoja de Vida (CV), Certificados o cartas de referencia (opcional)"
+        etiqueta="Hoja de Vida (CV), Certificados o cartas de referencia (opcional) • [Repositorio: Registro]"
         subtitulo="Adjunta tu CV actualizado, certificados de capacitación o cartas de recomendación en formato PDF, Word o imagen (máx 10 MB cada uno)"
         aceptar={TIPOS_ACEPTADOS}
         multiple={true}
@@ -1435,7 +2178,7 @@ export function FormularioSolicitudSocio({ usuarioId, materias, provincias, soli
       />
       {cvYCertificadosExistentes.length > 0 && (
         <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginTop: "8px" }}>
-          <span style={{ fontSize: "0.8rem", fontWeight: 700, color: "var(--panel-gris, #737373)", display: "block" }}>Archivos existentes cargados:</span>
+          <span style={{ fontSize: "0.8rem", fontWeight: 700, color: "var(--panel-gris, #737373)", display: "block" }}>Archivos existentes cargados en repositorio:</span>
           {cvYCertificadosExistentes.map((d) => (
             <div key={d.dcs_id} style={{ display: "flex", alignItems: "center", gap: "12px", padding: "10px 14px", background: "rgba(80, 0, 186, 0.04)", border: "1px solid rgba(80, 0, 186, 0.15)", borderRadius: "8px", fontSize: "0.84rem" }}>
               <FileText size={18} color="#5000BA" />
@@ -1468,7 +2211,7 @@ export function FormularioSolicitudSocio({ usuarioId, materias, provincias, soli
 
       {/* Documento del Título */}
       <CampoSubidaArchivo
-        etiqueta="Documento del Título Profesional (Requerido)"
+        etiqueta="Documento del Título Profesional (Requerido) • [Repositorio: Acreditación]"
         subtitulo="Copia digital del título universitario registrado en la SENESCYT (PDF o imagen, máx 10 MB)"
         aceptar={TIPOS_ACEPTADOS}
         multiple={false}
@@ -1512,7 +2255,7 @@ export function FormularioSolicitudSocio({ usuarioId, materias, provincias, soli
       {avisoArchivos ? (
         <>
           <p className="aviso-borrador">{avisoArchivos}</p>
-          <button type="button" className="btn btn-primario" onClick={() => router.push("/panel/solicitud-socio")}>
+          <button type="button" className="btn btn-primario" onClick={() => setPasoActual("bienvenida")}>
             Continuar
           </button>
         </>
@@ -1550,6 +2293,103 @@ export function FormularioSolicitudSocio({ usuarioId, materias, provincias, soli
           router.refresh();
         }}
       />
+
+      {/* Modal de Confirmación para Reiniciar o Eliminar dentro del formulario */}
+      {modalConfirmarAccion && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            background: "rgba(0, 0, 0, 0.55)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 99999,
+            padding: "16px",
+          }}
+        >
+          <div
+            style={{
+              background: "#FFFFFF",
+              borderRadius: "16px",
+              padding: "24px",
+              maxWidth: "460px",
+              width: "100%",
+              boxShadow: "0 20px 40px rgba(0,0,0,0.2)",
+              textAlign: "center",
+            }}
+          >
+            <div
+              style={{
+                width: "48px",
+                height: "48px",
+                borderRadius: "50%",
+                background: modalConfirmarAccion === "eliminar" ? "#FEE2E2" : "#EDE9FE",
+                color: modalConfirmarAccion === "eliminar" ? "#DC2626" : "#5000BA",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                margin: "0 auto 16px",
+              }}
+            >
+              {modalConfirmarAccion === "eliminar" ? <AlertTriangle size={26} /> : <RotateCcw size={26} />}
+            </div>
+
+            <h3 style={{ fontSize: "1.15rem", fontWeight: 800, color: "#111", margin: "0 0 8px" }}>
+              {modalConfirmarAccion === "eliminar" ? "¿Eliminar solicitud de socio abogado?" : "¿Reiniciar solicitud desde cero?"}
+            </h3>
+
+            <p style={{ fontSize: "0.88rem", color: "#555", lineHeight: "1.5", margin: "0 0 20px" }}>
+              {modalConfirmarAccion === "eliminar"
+                ? "Esta acción cancelará tu postulación y eliminará los documentos y materias asociadas. Podrás volver a iniciar una nueva solicitud cuando lo desees."
+                : "Se limpiarán los datos y archivos cargados previamente para que puedas comenzar el formulario completamente limpio."}
+            </p>
+
+            <div style={{ display: "flex", gap: "10px", justifyContent: "center" }}>
+              <button
+                type="button"
+                onClick={() => setModalConfirmarAccion(null)}
+                disabled={procesandoAccion}
+                style={{
+                  flex: 1,
+                  padding: "10px 16px",
+                  background: "#F3F4F6",
+                  color: "#374151",
+                  border: "none",
+                  borderRadius: "8px",
+                  fontSize: "0.88rem",
+                  fontWeight: 700,
+                  cursor: "pointer",
+                }}
+              >
+                Cancelar
+              </button>
+
+              <button
+                type="button"
+                onClick={modalConfirmarAccion === "eliminar" ? manejarEliminarSolicitud : manejarReiniciarSolicitud}
+                disabled={procesandoAccion}
+                style={{
+                  flex: 1,
+                  padding: "10px 16px",
+                  background: modalConfirmarAccion === "eliminar" ? "#DC2626" : "#5000BA",
+                  color: "#FFF",
+                  border: "none",
+                  borderRadius: "8px",
+                  fontSize: "0.88rem",
+                  fontWeight: 700,
+                  cursor: "pointer",
+                }}
+              >
+                {procesandoAccion ? "Procesando..." : modalConfirmarAccion === "eliminar" ? "Sí, Eliminar" : "Sí, Reiniciar"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </form>
   );
 }

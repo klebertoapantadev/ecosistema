@@ -372,6 +372,7 @@ export async function registrarDocumentoSocio(
   path: string,
   nombreArchivo: string,
   comentario?: string,
+  concepto?: string,
 ): Promise<Resultado> {
   const supabase = await crearClienteServidor();
   const TIPOS_PERMITIDOS = ["foto_perfil", "titulo", "matricula", "cedula", "cv", "contrato_socio", "otro"];
@@ -391,12 +392,14 @@ export async function registrarDocumentoSocio(
     }
   }
 
+  const comentarioFinal = concepto ? `[${concepto}] ${comentario || ""}`.trim() : (comentario || null);
+
   const { error } = await supabase.schema("tranqui_legal").from("trq_documento_socio").insert({
     dcs_solicitud_id: solicitudId,
     dcs_tipo: tipoFinal,
     dcs_url: path,
     dcs_nombre_archivo: nombreArchivo,
-    dcs_comentario: comentario || null,
+    dcs_comentario: comentarioFinal,
   });
   if (error) return { ok: false, error: error.message };
   return { ok: true, data: undefined };
@@ -706,3 +709,57 @@ export async function confirmarContratoSocio(solicitudId: string, comentario?: s
   revalidatePath("/panel/usuarios");
   return { ok: true, data: undefined };
 }
+
+export async function eliminarSolicitudSocioPropiaAction(solicitudId?: string): Promise<Resultado> {
+  const perfil = await obtenerPerfilActual();
+  if (!perfil) return { ok: false, error: "Usuario no autenticado" };
+
+  const supabase = await crearClienteServidor();
+  const adminSupabase = crearClienteAdmin() || supabase;
+
+  // 1. Intentar invocar el RPC en PostgreSQL si existe
+  const { error: errorRpc } = await (supabase as any)
+    .schema("tranqui_legal")
+    .rpc("trq_fn_eliminar_solicitud_propia", { p_solicitud_id: solicitudId || null });
+
+  // 2. Si el RPC no estuviera instalado o diera error de permisos, fallback directo con adminSupabase
+  if (errorRpc) {
+    let query = adminSupabase
+      .schema("tranqui_legal")
+      .from("trq_solicitud_socio")
+      .select("ssc_id, ssc_estado")
+      .eq("ssc_usuario_id", perfil.usu_id);
+
+    if (solicitudId) {
+      query = query.eq("ssc_id", solicitudId);
+    }
+
+    const { data: sol, error: solErr } = await query.order("ssc_creado_en", { ascending: false }).limit(1).maybeSingle();
+    if (solErr) return { ok: false, error: solErr.message };
+    if (!sol) return { ok: true, data: undefined };
+
+    if (sol.ssc_estado === "aceptada") {
+      return { ok: false, error: "No es posible eliminar una solicitud que ya ha sido aprobada" };
+    }
+
+    const { error: delErr } = await adminSupabase
+      .schema("tranqui_legal")
+      .from("trq_solicitud_socio")
+      .delete()
+      .eq("ssc_id", sol.ssc_id)
+      .eq("ssc_usuario_id", perfil.usu_id);
+
+    if (delErr) return { ok: false, error: delErr.message };
+  }
+
+  revalidatePath("/panel");
+  revalidatePath("/panel/solicitud-socio");
+  revalidatePath("/panel/socios");
+  revalidatePath("/panel/administrar");
+  return { ok: true, data: undefined };
+}
+
+export async function reiniciarSolicitudSocioPropiaAction(solicitudId?: string): Promise<Resultado> {
+  return eliminarSolicitudSocioPropiaAction(solicitudId);
+}
+
