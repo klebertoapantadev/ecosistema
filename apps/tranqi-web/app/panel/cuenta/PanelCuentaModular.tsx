@@ -139,9 +139,9 @@ function obtenerWidgetsInicialesCuenta(): WidgetDef[] {
 
   let ids: string[] = ["mi_cuenta", "datos_facturacion", "mfa_seguridad", "baja_cuenta"];
   if (rolActivo === "OPERADOR" || rolActivo === "AUXILIAR" || rolActivo === "TECNICO") {
-    ids = ["ver_como", "mi_cuenta", "baja_cuenta"];
+    ids = ["ver_como", "mi_cuenta", "datos_facturacion", "historial_accesos", "mfa_seguridad", "baja_cuenta"];
   } else if (rolActivo === "ABOGADO") {
-    ids = ["perfil_abogado", "mi_cuenta", "baja_cuenta"];
+    ids = ["perfil_abogado", "mi_cuenta", "mfa_seguridad", "baja_cuenta"];
   } else if (rolActivo === "ADMINISTRADOR" || rolActivo === "SUPERADMIN") {
     ids = ["ver_como", "mi_cuenta", "datos_facturacion", "historial_accesos", "mfa_seguridad", "baja_cuenta"];
   }
@@ -210,11 +210,11 @@ export function PanelCuentaModular({ perfil, historial, puedeConmutar = true, ro
         // 1. Presets por defecto según rol para panel_cuenta
         let idsAsignados: string[] = [];
         if (rolActivo === "OPERADOR" || rolActivo === "AUXILIAR" || rolActivo === "TECNICO") {
-          idsAsignados = ["ver_como", "mi_cuenta", "baja_cuenta"];
+          idsAsignados = ["ver_como", "mi_cuenta", "datos_facturacion", "historial_accesos", "mfa_seguridad", "baja_cuenta"];
         } else if (rolActivo === "CLIENTE") {
           idsAsignados = ["mi_cuenta", "datos_facturacion", "mfa_seguridad", "baja_cuenta"];
         } else if (rolActivo === "ABOGADO") {
-          idsAsignados = ["perfil_abogado", "mi_cuenta", "baja_cuenta"];
+          idsAsignados = ["perfil_abogado", "mi_cuenta", "mfa_seguridad", "baja_cuenta"];
         } else if (rolActivo === "ADMINISTRADOR" || rolActivo === "SUPERADMIN") {
           idsAsignados = ["ver_como", "mi_cuenta", "datos_facturacion", "historial_accesos", "mfa_seguridad", "baja_cuenta"];
         }

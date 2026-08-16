@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import {
   LayoutGrid, Wrench, Shield, Users, Bell, UserCog, ClipboardList, FileText,
-  Settings, X, ChevronRight, CircleUser, type LucideIcon
+  Settings, X, ChevronRight, CircleUser, KeyRound, type LucideIcon
 } from "lucide-react";
 import { AdministracionPerfilesWidget } from "@eco/gestion-usuarios/componentes/AdministracionPerfilesWidget";
 import { ConsultaUsuariosPerfilesWidget } from "@eco/gestion-usuarios/componentes/ConsultaUsuariosPerfilesWidget";
@@ -12,6 +12,7 @@ import { GestionTerminosConsentimientosWidget } from "@eco/identidad/componentes
 import { FormularioConfiguracionNegocio } from "@eco/configuracion-negocio/componentes/FormularioConfiguracionNegocio";
 import { FormularioSmtp } from "@eco/configuracion-negocio/componentes/FormularioSmtp";
 import { FormularioPerfil } from "@eco/identidad/componentes/FormularioPerfil";
+import { WidgetConfiguracionMfa } from "@eco/identidad/componentes/WidgetConfiguracionMfa";
 import { SelectorRolActivo } from "../SelectorRolActivo";
 import { TablaAuditoria } from "../auditoria/TablaAuditoria";
 import { useCustomWidgets } from "../gestorTitulosWidgets";
@@ -34,6 +35,27 @@ export interface WidgetInventarioDef {
 }
 
 const INVENTARIO_GLOBAL_WIDGETS: Record<string, { titulo: string; subtitulo: string; icono: LucideIcon; colorIcono: string; categoria: string }> = {
+  mfa_seguridad: {
+    titulo: "Seguridad MFA & Autenticador",
+    subtitulo: "Configuración TOTP, autenticador móvil y reseteo estándar vía correo",
+    icono: KeyRound,
+    colorIcono: "#D97706",
+    categoria: "Seguridad"
+  },
+  mfa: {
+    titulo: "Seguridad MFA & Autenticador",
+    subtitulo: "Configuración TOTP, autenticador móvil y reseteo estándar vía correo",
+    icono: KeyRound,
+    colorIcono: "#D97706",
+    categoria: "Seguridad"
+  },
+  seguridad_mfa: {
+    titulo: "Seguridad MFA & Autenticador",
+    subtitulo: "Configuración TOTP, autenticador móvil y reseteo estándar vía correo",
+    icono: KeyRound,
+    colorIcono: "#D97706",
+    categoria: "Seguridad"
+  },
   emision_notificaciones: {
     titulo: "Emisión de Notificaciones Multicanal",
     subtitulo: "Despacho masivo multicanal (In-App, Push, Email y WhatsApp)",
@@ -173,12 +195,12 @@ function obtenerWidgetsInicialesDinamicos(panelId: string, slugStr: string): str
 
   if (rolActivo === "OPERADOR" || rolActivo === "AUXILIAR" || rolActivo === "TECNICO") {
     if (panelId === "panel_herramientas" || slugStr === "herramientas") return ["emision_notificaciones"];
-    if (panelId === "panel_seguridad" || slugStr === "seguridad") return ["auditoria", "solicitud_socio"];
+    if (panelId === "panel_seguridad" || slugStr === "seguridad") return ["mfa_seguridad", "auditoria", "solicitud_socio"];
     if (panelId === "panel_administrar" || slugStr === "administrar") return ["socios"];
     if (panelId === "panel_cuenta" || slugStr === "cuenta") return ["ver_como", "mi_cuenta"];
   } else if (rolActivo === "ADMINISTRADOR" || rolActivo === "SUPERADMIN") {
     if (panelId === "panel_herramientas" || slugStr === "herramientas") return ["emision_notificaciones"];
-    if (panelId === "panel_seguridad" || slugStr === "seguridad") return ["auditoria", "solicitud_socio"];
+    if (panelId === "panel_seguridad" || slugStr === "seguridad") return ["mfa_seguridad", "auditoria", "solicitud_socio"];
     if (panelId === "panel_administrar" || slugStr === "administrar") return ["gestion_usuarios", "socios", "solicitud_socio", "emision_notificaciones", "auditoria"];
     if (panelId === "panel_configuracion" || slugStr === "configuracion") return ["configuracion_negocio", "configuracion_correo", "perfiles", "notificaciones"];
     if (panelId === "panel_cuenta" || slugStr === "cuenta") return ["ver_como", "mi_cuenta", "historial_accesos"];
@@ -232,12 +254,12 @@ export function PanelDinamicoModular({ slug, negocio }: Props) {
         let listW: string[] = [];
         if (rolActivo === "OPERADOR" || rolActivo === "AUXILIAR" || rolActivo === "TECNICO") {
           if (panelIdBuscado === "panel_herramientas" || slug === "herramientas") listW = ["emision_notificaciones"];
-          else if (panelIdBuscado === "panel_seguridad" || slug === "seguridad") listW = ["auditoria", "solicitud_socio"];
+          else if (panelIdBuscado === "panel_seguridad" || slug === "seguridad") listW = ["mfa_seguridad", "auditoria", "solicitud_socio"];
           else if (panelIdBuscado === "panel_administrar" || slug === "administrar") listW = ["socios"];
           else if (panelIdBuscado === "panel_cuenta" || slug === "cuenta") listW = ["ver_como", "mi_cuenta"];
         } else if (rolActivo === "ADMINISTRADOR" || rolActivo === "SUPERADMIN") {
           if (panelIdBuscado === "panel_herramientas" || slug === "herramientas") listW = ["emision_notificaciones"];
-          else if (panelIdBuscado === "panel_seguridad" || slug === "seguridad") listW = ["auditoria", "solicitud_socio"];
+          else if (panelIdBuscado === "panel_seguridad" || slug === "seguridad") listW = ["mfa_seguridad", "auditoria", "solicitud_socio"];
           else if (panelIdBuscado === "panel_administrar" || slug === "administrar") listW = ["gestion_usuarios", "socios", "solicitud_socio", "emision_notificaciones", "auditoria"];
           else if (panelIdBuscado === "panel_configuracion" || slug === "configuracion") listW = ["configuracion_negocio", "configuracion_correo", "perfiles", "notificaciones"];
           else if (panelIdBuscado === "panel_cuenta" || slug === "cuenta") listW = ["ver_como", "mi_cuenta", "historial_accesos"];
@@ -285,6 +307,10 @@ export function PanelDinamicoModular({ slug, negocio }: Props) {
 
   const renderWidgetComponente = (wClave: string) => {
     switch (wClave) {
+      case "mfa_seguridad":
+      case "mfa":
+      case "seguridad_mfa":
+        return <WidgetConfiguracionMfa negocio={negocio} />;
       case "emision_notificaciones":
         return <EmisionNotificacionesWidget negocio={negocio} />;
       case "gestion_usuarios":

@@ -15,7 +15,7 @@ export default async function PaginaCuenta() {
 
   const [perfilesAsignables, perfilesUsuario, materias, provincias, solicitudExistente] = await Promise.all([
     obtenerPerfilesAsignables(),
-    obtenerPerfiles("tranqi"),
+    obtenerPerfiles("TRANQ"),
     listarMaterias(),
     listarProvincias(),
     perfil ? obtenerSolicitudPropia(perfil.usu_id) : Promise.resolve(null),
@@ -29,8 +29,9 @@ export default async function PaginaCuenta() {
       rolesFinales.push({ clave: "SUPERADMIN", nombre: "SuperAdmin de Plataforma", nivel: 100 });
     }
   } else {
-    // Para usuarios estándar, presentar ÚNICAMENTE los perfiles que tienen configurados/asignados en el negocio
+    // Para usuarios estándar, presentar los perfiles que tienen asignados en el negocio
     const setPerfiles = new Set((perfilesUsuario || []).map(p => p.toUpperCase()));
+    setPerfiles.add("CLIENTE");
     rolesFinales = perfilesAsignables.filter(p => setPerfiles.has(p.clave.toUpperCase()));
     if (rolesFinales.length === 0) {
       rolesFinales = [{ clave: "CLIENTE", nombre: "Cliente", nivel: 1 }];
