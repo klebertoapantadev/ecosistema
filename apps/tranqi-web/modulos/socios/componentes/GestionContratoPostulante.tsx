@@ -192,7 +192,7 @@ export function GestionContratoPostulante({ solicitud }: Props) {
                 Archivo: <strong>"{contratoFirmado.dcs_nombre_archivo || "Contrato_Tranqi_Firmado.pdf"}"</strong>. El documento será evaluado para verificar su contenido y firma digital/física.
               </p>
               <a
-                href={contratoFirmado.url}
+                href={`/api/solicitud-socio/contrato/firmado?solicitudId=${solicitud.ssc_id}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{
@@ -208,7 +208,7 @@ export function GestionContratoPostulante({ solicitud }: Props) {
                   fontWeight: 700,
                 }}
               >
-                <Download size={14} /> Ver / Descargar PDF Firmado
+                <Download size={14} /> Ver / Descargar Contrato Firmado ({contratoFirmado.dcs_nombre_archivo?.toLowerCase().endsWith(".pdf") ? "PDF" : "Archivo"})
               </a>
             </div>
           </div>

@@ -121,6 +121,29 @@ export default async function PaginaDetalleSocio({ params }: { params: Promise<{
             );
           })()}
           <div style={{ marginTop: "16px", borderTop: "1px solid #E5E7EB", paddingTop: "14px", display: "flex", flexWrap: "wrap", alignItems: "center", gap: "10px" }}>
+            {documentos.some((d) => d.dcs_tipo === "contrato_socio") && (
+              <a
+                href={`/api/solicitud-socio/contrato/firmado?solicitudId=${solicitud.ssc_id}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  padding: "8px 14px",
+                  borderRadius: "8px",
+                  background: "#05876E",
+                  color: "#FFFFFF",
+                  fontSize: "0.82rem",
+                  fontWeight: 700,
+                  textDecoration: "none",
+                  boxShadow: "0 2px 6px rgba(5, 135, 110, 0.2)",
+                }}
+              >
+                <Download size={14} /> Ver Contrato Firmado Cargado
+              </a>
+            )}
+
             <a
               href={`/api/solicitud-socio/contrato/descargar?solicitudId=${solicitud.ssc_id}`}
               style={{
@@ -150,12 +173,12 @@ export default async function PaginaDetalleSocio({ params }: { params: Promise<{
                 gap: "6px",
                 padding: "8px 14px",
                 borderRadius: "8px",
-                background: "#05876E",
-                color: "#FFFFFF",
+                background: "#FFFFFF",
+                color: "#374151",
+                border: "1px solid #D1D5DB",
                 fontSize: "0.82rem",
                 fontWeight: 700,
                 textDecoration: "none",
-                boxShadow: "0 2px 6px rgba(5, 135, 110, 0.2)",
               }}
             >
               <FileText size={14} /> Ver / Imprimir Contrato Oficial
