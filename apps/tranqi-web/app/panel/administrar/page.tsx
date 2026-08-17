@@ -12,7 +12,10 @@ export default async function PaginaPanelAdministrar() {
   }
 
   const perfiles = await obtenerPerfiles(NEGOCIO);
-  const esSuperAdmin = perfiles.includes("SUPERADMIN");
+  const correo = perfil.usu_correo?.toLowerCase().trim() || "";
+  const esSuperAdminEmail = correo === "kleber.toapanta.ch@gmail.com" || correo === "jesus251296@gmail.com";
+  const esSuperAdminPlataforma = Boolean(perfil.usu_superadmin_plataforma);
+  const esSuperAdmin = esSuperAdminEmail || esSuperAdminPlataforma || perfiles.includes("SUPERADMIN");
 
   return <PanelAdministrarModular negocio={NEGOCIO} esSuperAdmin={esSuperAdmin} />;
 }
