@@ -65,72 +65,84 @@ async function notificarSolicitudEnviada(
     ]);
 
     // 2.b. Notificar multicanal (In-App, Push y Email) a Operadores, Administradores y SuperAdmins
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: todosUsuarios } = await (adminSupabase as any)
-      .schema("comun_seguridad")
-      .from("seg_usuario")
-      .select(`
-        usu_id,
-        usu_correo,
-        usu_superadmin_plataforma,
-        seg_membresia (
-          mem_id,
-          mem_negocio,
-          seg_membresia_perfil (
-            mpe_perfil_clave
-          )
-        )
-      `);
+    const urlRevision = `/panel/socios/${solicitudId}`;
+    const destinatariosAdmin: { id: string; correo: string }[] = [];
+    const correosVistos = new Set<string>();
 
-    let correosAdmins: string[] = [];
-    const urlRevision = "/panel/socios";
+    try {
+      // a. Obtener superadministradores directos
+      const { data: superAdmins } = await adminSupabase
+        .schema("comun_seguridad")
+        .from("seg_usuario")
+        .select("usu_id, usu_correo, usu_superadmin_plataforma")
+        .eq("usu_superadmin_plataforma", true);
 
-    if (todosUsuarios && todosUsuarios.length > 0) {
-      const tituloAdmin = esActualizacion
-        ? `✏️ Solicitud de Socio Actualizada: ${nombreUsuario}`
-        : `📢 Nueva Solicitud de Socio Abogado: ${nombreUsuario}`;
-
-      const contenidoAdmin = `
-        <div style="font-family: sans-serif; padding: 16px; color: #111;">
-          <h3 style="color: #5000BA; margin-top: 0;">${tituloAdmin}</h3>
-          <p>El postulante <strong>${nombreUsuario}</strong> (<code>${u.usu_correo}</code>) ha ${esActualizacion ? "actualizado" : "registrado"} su solicitud de socio abogado en la plataforma tranqi.</p>
-          <p><a href="${urlRevision}" style="display: inline-block; padding: 10px 18px; background: #5000BA; color: #fff; text-decoration: none; border-radius: 8px; font-weight: 700;">Revisar Solicitud de Socio</a></p>
-        </div>
-      `;
-
-      const destinatariosAdmin: { id: string; correo: string }[] = [];
-      const correosVistos = new Set<string>();
-
-      for (const adm of todosUsuarios) {
-        if (adm.usu_id === u.usu_id) continue;
-        const esSuper = Boolean(adm.usu_superadmin_plataforma);
-        let esStaff = esSuper;
-
-        if (!esStaff && Array.isArray(adm.seg_membresia)) {
-          for (const m of adm.seg_membresia) {
-            const mNeg = (m.mem_negocio || "").toUpperCase();
-            if (mNeg === "TRANQ" || mNeg === "TRANQI") {
-              if (Array.isArray(m.seg_membresia_perfil)) {
-                for (const mp of m.seg_membresia_perfil) {
-                  const clave = (mp.mpe_perfil_clave || "").toUpperCase();
-                  if (clave === "OPERADOR" || clave === "ADMINISTRADOR" || clave === "SUPERADMIN") {
-                    esStaff = true;
-                    break;
-                  }
-                }
-              }
-            }
-            if (esStaff) break;
+      if (Array.isArray(superAdmins)) {
+        for (const sa of superAdmins) {
+          if (sa.usu_id !== u.usu_id && sa.usu_correo && !correosVistos.has(sa.usu_correo)) {
+            correosVistos.add(sa.usu_correo);
+            destinatariosAdmin.push({ id: sa.usu_id, correo: sa.usu_correo });
           }
-        }
-
-        if (esStaff && adm.usu_correo && !correosVistos.has(adm.usu_correo)) {
-          correosVistos.add(adm.usu_correo);
-          destinatariosAdmin.push({ id: adm.usu_id, correo: adm.usu_correo });
         }
       }
 
-      correosAdmins = destinatariosAdmin.map(adm => adm.correo);
+      // b. Obtener miembros con rol de operador o administrador en tranqi
+      const { data: membresias } = await adminSupabase
+        .schema("comun_seguridad")
+        .from("seg_membresia")
+        .select(`
+          mem_id,
+          mem_usuario_id,
+          mem_negocio,
+          seg_usuario (
+            usu_id,
+            usu_correo
+          ),
+          seg_membresia_perfil (
+            mpe_perfil_clave
+          )
+        `)
+        .or("mem_negocio.ilike.TRANQ,mem_negocio.ilike.TRANQI");
+
+      if (Array.isArray(membresias)) {
+        for (const m of membresias) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const usr = (m as any).seg_usuario;
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const perfiles = (m as any).seg_membresia_perfil || [];
+          const esOperadorOAdmin = perfiles.some((p: { mpe_perfil_clave?: string }) => {
+            const c = (p.mpe_perfil_clave || "").toLowerCase();
+            return c === "operador" || c === "administrador" || c === "superadmin";
+          });
+
+          if (esOperadorOAdmin && usr?.usu_correo && usr.usu_id !== u.usu_id && !correosVistos.has(usr.usu_correo)) {
+            correosVistos.add(usr.usu_correo);
+            destinatariosAdmin.push({ id: usr.usu_id, correo: usr.usu_correo });
+          }
+        }
+      }
+    } catch (errStaffSearch) {
+      console.warn("Aviso al buscar operadores/admins para notificación:", errStaffSearch);
+    }
+
+    let correosAdmins: string[] = destinatariosAdmin.map((adm) => adm.correo);
+
+    if (destinatariosAdmin.length > 0) {
+      const tituloAdmin = esActualizacion
+        ? `🔄 Actualización de Solicitud de Socio: ${nombreUsuario}`
+        : `📢 Nueva Postulación de Socio Abogado: ${nombreUsuario}`;
+
+      const contenidoAdmin = `
+        <div style="font-family: sans-serif; padding: 18px; color: #111; max-width: 600px; border: 1px solid #eee; border-radius: 8px;">
+          <h3 style="color: #5000BA; margin-top: 0;">${tituloAdmin}</h3>
+          <p>El profesional <strong>${nombreUsuario}</strong> (<code>${u.usu_correo}</code>) ha <strong>${esActualizacion ? "actualizado su postulación y documentos" : "registrado una nueva solicitud de afiliación"}</strong> en la plataforma tranqi.</p>
+          <p style="margin: 18px 0;">
+            <a href="${urlRevision}" style="display: inline-block; padding: 12px 22px; background: #5000BA; color: #fff; text-decoration: none; border-radius: 8px; font-weight: 700;">Evaluar Solicitud de Socio</a>
+          </p>
+          <hr style="border: none; border-top: 1px solid #eee; margin: 16px 0;" />
+          <p style="font-size: 0.8rem; color: #666;">ID de Solicitud: <code>${solicitudId}</code> • Tranqi Legal</p>
+        </div>
+      `;
 
       const notifsAdmins: any[] = [];
       for (const adm of destinatariosAdmin) {
@@ -155,8 +167,12 @@ async function notificarSolicitudEnviada(
       }
 
       if (notifsAdmins.length > 0) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await (adminSupabase as any).schema("comun_notificacion").from("not_registro").insert(notifsAdmins);
+        try {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          await (adminSupabase as any).schema("comun_notificacion").from("not_registro").insert(notifsAdmins);
+        } catch (errNotInsert) {
+          console.warn("Aviso al insertar notificaciones para staff:", errNotInsert);
+        }
       }
 
       // 3. Enviar correo SMTP real tanto al postulante como a los operadores/admins
