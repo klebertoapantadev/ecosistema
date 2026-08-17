@@ -85,6 +85,53 @@ function formatoTamanoArchivo(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
+function renderizarMarkdownHTML(texto: string): string {
+  if (!texto) return "";
+  const lineas = texto.split("\n");
+  const htmlOut: string[] = [];
+  let enLista = false;
+
+  for (const rawLinea of lineas) {
+    let linea = (rawLinea || "").trim();
+    if (!linea) {
+      if (enLista) {
+        htmlOut.push("</ul>");
+        enLista = false;
+      }
+      continue;
+    }
+
+    // Bold replacement
+    linea = linea.replace(/\*\*(.*?)\*\*/g, "<strong style='color: #111827; font-weight: 700;'>$1</strong>");
+
+    if (linea.startsWith("### ")) {
+      if (enLista) { htmlOut.push("</ul>"); enLista = false; }
+      htmlOut.push(`<h4 style="font-size: 0.98rem; font-weight: 800; color: #5000BA; margin: 16px 0 8px 0;">${linea.replace(/^###\s+/, "")}</h4>`);
+    } else if (linea.startsWith("## ")) {
+      if (enLista) { htmlOut.push("</ul>"); enLista = false; }
+      htmlOut.push(`<h3 style="font-size: 1.08rem; font-weight: 800; color: #111827; margin: 18px 0 10px 0;">${linea.replace(/^##\s+/, "")}</h3>`);
+    } else if (linea.startsWith("# ")) {
+      if (enLista) { htmlOut.push("</ul>"); enLista = false; }
+      htmlOut.push(`<h2 style="font-size: 1.2rem; font-weight: 800; color: #111827; margin: 20px 0 12px 0;">${linea.replace(/^#\s+/, "")}</h2>`);
+    } else if (linea.startsWith("- ") || linea.startsWith("* ")) {
+      if (!enLista) {
+        htmlOut.push("<ul style='padding-left: 20px; margin: 8px 0; display: flex; flex-direction: column; gap: 6px;'>");
+        enLista = true;
+      }
+      htmlOut.push(`<li style="color: #374151; line-height: 1.55; font-size: 0.88rem;">${linea.replace(/^[-*]\s+/, "")}</li>`);
+    } else {
+      if (enLista) { htmlOut.push("</ul>"); enLista = false; }
+      htmlOut.push(`<p style="margin: 0 0 10px 0; color: #374151; line-height: 1.6; font-size: 0.88rem;">${linea}</p>`);
+    }
+  }
+
+  if (enLista) {
+    htmlOut.push("</ul>");
+  }
+
+  return htmlOut.join("");
+}
+
 function validarCedulaEcuador(val: string): { esValida: boolean; advertencia?: string } {
   const c = val.trim();
   if (!c) return { esValida: true };
@@ -1750,15 +1797,13 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
                 fontSize: "0.88rem",
                 lineHeight: 1.6,
                 color: "#222222",
-                whiteSpace: "pre-wrap",
                 background: "var(--panel-papel, #F7F6FA)",
-                padding: "16px",
+                padding: "18px 20px",
                 borderRadius: "12px",
                 border: "1px solid #EAEAEA",
               }}
-            >
-              {textoBeneficios}
-            </div>
+              dangerouslySetInnerHTML={{ __html: renderizarMarkdownHTML(textoBeneficios) }}
+            />
           )}
         </div>
 
