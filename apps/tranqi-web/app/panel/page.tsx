@@ -72,9 +72,6 @@ export default async function PagePanel({ searchParams }: Props) {
   const perfil = await obtenerPerfilActual();
   const perfiles = await obtenerPerfiles(NEGOCIO);
   const puedeConmutar = Boolean(perfil?.usu_superadmin_plataforma);
-  const solicitudPropia = perfil ? await obtenerSolicitudPropia(perfil.usu_id) : null;
-  const tieneSolicitudNoAutorizada = Boolean(solicitudPropia && solicitudPropia.ssc_estado !== "aceptada");
-
   const rawParams = await searchParams;
   const modoURL = modoValido(rawParams?.modo);
   const cookieStore = await cookies();
@@ -84,6 +81,13 @@ export default async function PagePanel({ searchParams }: Props) {
   const modo: ModoRol = puedeConmutar
     ? (modoURL ?? modoCookie ?? modoDePerfiles(perfiles))
     : modoDePerfiles(perfiles);
+
+  const solicitudPropia = perfil ? await obtenerSolicitudPropia(perfil.usu_id) : null;
+  const sPropia = solicitudPropia as unknown as { ssc_contrato_confirmado_en?: string | null; ssc_estado: string } | null;
+  const tieneSolicitudEnProceso = Boolean(
+    sPropia &&
+    (!sPropia.ssc_contrato_confirmado_en || sPropia.ssc_estado !== "aceptada" || modo !== "abogado")
+  );
 
   const saludo = await obtenerSaludo(perfil?.usu_nombres ?? "", perfil?.usu_apellidos ?? "");
   const nombre = perfil?.usu_nombres?.split(/\s+/)[0] ?? "Usuario";
@@ -114,8 +118,8 @@ export default async function PagePanel({ searchParams }: Props) {
         </div>
       </div>
 
-      {/* POSICIÓN #1 EN PANEL HOME: Si existe una solicitud no autorizada, aparece al inicio absoluto */}
-      {tieneSolicitudNoAutorizada && solicitudPropia && (
+      {/* POSICIÓN #1 EN PANEL HOME: Si existe una solicitud en proceso o pendiente de firma, aparece al inicio absoluto */}
+      {tieneSolicitudEnProceso && solicitudPropia && (
         <TarjetaEstadoSolicitudHome solicitud={solicitudPropia as unknown as Record<string, unknown>} />
       )}
 

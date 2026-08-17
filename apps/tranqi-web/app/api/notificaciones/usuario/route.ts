@@ -83,6 +83,40 @@ export async function GET() {
             });
           });
         }
+
+        // Obtener historial y estado de solicitud de socio propia para garantizar notificaciones de acreditación
+        const { data: miSol } = await client
+          .schema("tranqui_legal")
+          .from("trq_solicitud_socio")
+          .select("ssc_id, ssc_estado, ssc_actualizado_en, trq_revision_solicitud(*)")
+          .eq("ssc_usuario_id", perfil.usu_id)
+          .is("ssc_eliminado_en", null)
+          .maybeSingle();
+
+        if (miSol) {
+          const revs = (miSol.trq_revision_solicitud ?? []) as Array<{ rev_id: string; rev_decision: string; rev_comentario?: string | null; rev_creado_en: string }>;
+          revs.forEach((rev) => {
+            const esAprobada = rev.rev_decision === "aceptada";
+            const titulo = esAprobada
+              ? "🎉 ¡Tu Acreditación como Socio Abogado fue APROBADA!"
+              : "⚠️ Observación en tu Solicitud de Socio Abogado";
+            const cuerpo = esAprobada
+              ? `<p>Tu solicitud ha sido aprobada. Por favor <a href="/panel/solicitud-socio" style="color: #5000BA; font-weight: 700; text-decoration: underline;">descarga tu contrato pre-llenado y súbelo firmado</a> para activar tu cuenta de Abogado.</p>`
+              : `<p>${rev.rev_comentario || "Se identificaron observaciones en tu solicitud. Por favor revisa y actualiza los documentos."}</p>`;
+
+            if (!notificaciones.some(n => n.not_id === rev.rev_id)) {
+              notificaciones.push({
+                not_id: rev.rev_id,
+                not_titulo: titulo,
+                not_contenido_html: cuerpo,
+                not_url_accion: "/panel/solicitud-socio",
+                not_leido_en: null,
+                not_creado_en: rev.rev_creado_en || miSol.ssc_actualizado_en || new Date().toISOString(),
+                not_canal: "IN_APP"
+              });
+            }
+          });
+        }
       } catch (errApi) {
         console.error("Error al consultar notificaciones en API:", errApi);
       }
