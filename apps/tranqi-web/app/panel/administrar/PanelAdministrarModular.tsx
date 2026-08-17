@@ -19,7 +19,8 @@ import { obtenerListaSolicitudesSociosAction } from "../../../modulos/socios/acc
 import { obtenerConfiguracionNavegacionRolAction, resetearSistemaSuperAdminAction } from "@eco/gestion-usuarios/acciones";
 
 interface Props {
-  negocio: string;
+  negocio?: string;
+  esSuperAdmin?: boolean;
 }
 
 export interface ModuloAdminDef {
@@ -297,11 +298,6 @@ function obtenerModulosInicialesAdmin(): ModuloAdminDef[] {
   }
 
   return MODULOS_ADMIN.filter(m => ids.includes(m.id));
-}
-
-interface Props {
-  negocio?: string;
-  esSuperAdmin?: boolean;
 }
 
 export function PanelAdministrarModular({ negocio = "TRANQ", esSuperAdmin = false }: Props) {

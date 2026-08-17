@@ -547,6 +547,8 @@ export async function subirDocumentoSocioAction(formData: FormData): Promise<Res
     const msg = errSubida instanceof Error ? errSubida.message : "Error inesperado al subir archivo";
     return { ok: false, error: msg };
   }
+}
+
 export async function enviarPropuestaModificacionContratoAction(datos: {
   solicitudId: string;
   path: string;
@@ -590,7 +592,7 @@ export async function enviarPropuestaModificacionContratoAction(datos: {
       rev_solicitud_id: datos.solicitudId,
       rev_decision: "reingreso",
       rev_comentario: `Propuesta de modificación al contrato (Word): ${datos.comentario.trim()}`,
-      rev_revisado_por: user.id,
+      rev_admin_id: user.id,
     });
 
   // 3. Notificar a los administradores y operadores

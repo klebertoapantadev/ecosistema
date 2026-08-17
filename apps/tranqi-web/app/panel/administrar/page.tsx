@@ -12,7 +12,7 @@ export default async function PaginaPanelAdministrar() {
   }
 
   const perfiles = await obtenerPerfiles(NEGOCIO);
-  const esSuperAdmin = Boolean(perfil.usu_es_superadmin || perfiles.includes("SUPERADMIN"));
+  const esSuperAdmin = perfiles.includes("SUPERADMIN");
 
   return <PanelAdministrarModular negocio={NEGOCIO} esSuperAdmin={esSuperAdmin} />;
 }
