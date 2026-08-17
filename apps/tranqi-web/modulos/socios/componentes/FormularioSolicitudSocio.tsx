@@ -1490,67 +1490,73 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
     }
 
     setEnviando(true);
-    const resultado = await enviarSolicitudSocio(
-      {
-        cedula,
-        matriculaProfesional,
-        universidad,
-        anioGraduacion: Number(anioGraduacion),
-        anosExperiencia: sinExperienciaPrevia ? 0 : Number(anosExperiencia || 0),
-        resumenProfesional: sinExperienciaPrevia && !resumenProfesional.includes("primera oportunidad")
-          ? `${resumenProfesional}<br/><p><em>[Perfil: En búsqueda de primera oportunidad laboral / Recién graduado]</em></p>`
-          : resumenProfesional,
-        telefonoContacto,
-        materiaIds,
-        provinciaIds,
-        experiencia: sinExperienciaPrevia ? [] : experiencia,
-        sinExperienciaPrevia,
-        enlaceSenescytVerificado: senescytVerificado,
-        enlaceForoVerificado: true,
-        declaracionVeracidad: declaracion,
-      },
-      usuarioId,
-    );
-    if (!resultado.ok) {
-      setEnviando(false);
-      setError(resultado.error);
-      return;
-    }
-
-    const solicitudId = resultado.data.solicitudId;
-
-    // Subida de archivos con control de repositorio común y clasificación por concepto
-    const fotoArchivo = fotoPerfilArchivos[0];
-    const identificacionArchivo = identificacionArchivos[0];
-    const tituloArchivo = tituloArchivos[0];
-
-    const subidas = await Promise.all([
-      fotoArchivo ? subirDocumento(solicitudId, "foto_perfil", fotoArchivo, "Foto de Perfil Profesional", usuarioId, CONCEPTOS_REPOSITORIO.PERFIL) : null,
-      identificacionArchivo ? subirDocumento(solicitudId, "cedula", identificacionArchivo, "Documento de Identificación Oficial (Cédula/Pasaporte)", usuarioId, CONCEPTOS_REPOSITORIO.IDENTIDAD) : null,
-      tituloArchivo ? subirDocumento(solicitudId, "titulo", tituloArchivo, "Título Universitario Acreditado", usuarioId, CONCEPTOS_REPOSITORIO.REGISTRO) : null,
-      ...cvYCertificados.map((archivo, idx) =>
-        subirDocumento(
-          solicitudId,
-          "cv",
-          archivo,
-          cvYCertificadosComentarios[idx] || "Hoja de Vida / Certificación",
-          usuarioId,
-          CONCEPTOS_REPOSITORIO.REGISTRO,
-        )
-      ),
-    ]);
-    const fallidas = subidas.filter((s): s is { ok: false; error: string } => s !== null && !s.ok);
-
-    setEnviando(false);
-    if (fallidas.length > 0) {
-      setAvisoArchivos(
-        `Tu solicitud se guardó correctamente, pero estos archivos no se pudieron subir: ${fallidas.map((f) => f.error).join("; ")}.`,
+    try {
+      const resultado = await enviarSolicitudSocio(
+        {
+          cedula,
+          matriculaProfesional,
+          universidad,
+          anioGraduacion: Number(anioGraduacion),
+          anosExperiencia: sinExperienciaPrevia ? 0 : Number(anosExperiencia || 0),
+          resumenProfesional: sinExperienciaPrevia && !resumenProfesional.includes("primera oportunidad")
+            ? `${resumenProfesional}<br/><p><em>[Perfil: En búsqueda de primera oportunidad laboral / Recién graduado]</em></p>`
+            : resumenProfesional,
+          telefonoContacto,
+          materiaIds,
+          provinciaIds,
+          experiencia: sinExperienciaPrevia ? [] : experiencia,
+          sinExperienciaPrevia,
+          enlaceSenescytVerificado: senescytVerificado,
+          enlaceForoVerificado: true,
+          declaracionVeracidad: declaracion,
+        },
+        usuarioId,
       );
-      return;
-    }
 
-    // Avanzar a la pantalla de bienvenida y seguimiento
-    setPasoActual("bienvenida");
+      if (!resultado.ok) {
+        setError(resultado.error);
+        return;
+      }
+
+      const solicitudId = resultado.data.solicitudId;
+
+      // Subida de archivos con control de repositorio común y clasificación por concepto
+      const fotoArchivo = fotoPerfilArchivos[0];
+      const identificacionArchivo = identificacionArchivos[0];
+      const tituloArchivo = tituloArchivos[0];
+
+      const subidas = await Promise.all([
+        fotoArchivo ? subirDocumento(solicitudId, "foto_perfil", fotoArchivo, "Foto de Perfil Profesional", usuarioId, CONCEPTOS_REPOSITORIO.PERFIL) : null,
+        identificacionArchivo ? subirDocumento(solicitudId, "cedula", identificacionArchivo, "Documento de Identificación Oficial (Cédula/Pasaporte)", usuarioId, CONCEPTOS_REPOSITORIO.IDENTIDAD) : null,
+        tituloArchivo ? subirDocumento(solicitudId, "titulo", tituloArchivo, "Título Universitario Acreditado", usuarioId, CONCEPTOS_REPOSITORIO.REGISTRO) : null,
+        ...cvYCertificados.map((archivo, idx) =>
+          subirDocumento(
+            solicitudId,
+            "cv",
+            archivo,
+            cvYCertificadosComentarios[idx] || "Hoja de Vida / Certificación",
+            usuarioId,
+            CONCEPTOS_REPOSITORIO.REGISTRO,
+          )
+        ),
+      ]);
+      const fallidas = subidas.filter((s): s is { ok: false; error: string } => s !== null && !s.ok);
+
+      if (fallidas.length > 0) {
+        setAvisoArchivos(
+          `Tu solicitud se guardó correctamente, pero estos archivos no se pudieron subir: ${fallidas.map((f) => f.error).join("; ")}.`,
+        );
+        return;
+      }
+
+      // Avanzar a la pantalla de bienvenida y seguimiento
+      setPasoActual("bienvenida");
+    } catch (errSubmit: unknown) {
+      const msg = errSubmit instanceof Error ? errSubmit.message : "Error inesperado al procesar la solicitud";
+      setError(msg);
+    } finally {
+      setEnviando(false);
+    }
   }
 
   // ==========================================

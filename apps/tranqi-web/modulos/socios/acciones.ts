@@ -173,7 +173,10 @@ async function notificarSolicitudEnviada(
             port: smtpPort,
             secure: smtpPort === 465,
             auth: { user: smtpUser, pass: smtpPass },
-            tls: { rejectUnauthorized: false }
+            tls: { rejectUnauthorized: false },
+            connectionTimeout: 4000,
+            greetingTimeout: 4000,
+            socketTimeout: 4000,
           });
 
           // Correo al solicitante
@@ -362,8 +365,10 @@ export async function enviarSolicitudSocio(
     if (errorProv) return { ok: false, error: errorProv.message };
   }
 
-  // Despachar notificación automática (Email + Push) e inscribir en bitácora
-  await notificarSolicitudEnviada(usuarioId, solicitudId, esActualizacion);
+  // Despachar notificación automática (Email + Push) e inscribir en bitácora en segundo plano
+  notificarSolicitudEnviada(usuarioId, solicitudId, esActualizacion).catch((errNot) => {
+    console.warn("Aviso en despacho de notificación automática:", errNot);
+  });
 
   revalidatePath("/panel/solicitud-socio");
   revalidatePath("/panel/socios");
