@@ -11,5 +11,18 @@
       "summary": "Se incorporó la Matriz de Responsables y la especificación completa del requerimiento TRQ-002: Billetera Digital de Documentos Seguros y Enlaces Efímeros (TTL).",
       "timestamp": "2026-08-17T10:45:00.000Z"
     }
+  },
+  {
+    "id": "comment_1786963874452",
+    "file": "C:/Users/Kleber Toapanta/Documents/BK2026/Antigravity2026/Ley/ecosistema/gobernanza/productos/tranqi/especificacion-funcional.md",
+    "section": "Tranqi — Especificación Funcional",
+    "selectedText": "",
+    "comment": "Debemos dividir las especificacoines segun los roles (Cliente / Abogado / Operador /administrador de la plataforma y comunes). La billetra-docuemetos  es compartida para todos (porque al final todos somos clientes). Los clientes deben tener la opcion para compartir el documento a Tranqi para (revisión (de un contrato por ejemplo), compartir los documentos permanentemente o por tramite (casos) a su abogado(s) ). Tienes la referencia de un proyecto/estandar para la gestion de un estudio juridico y como lo podemos implementar en tranqi , ayudame .",
+    "timestamp": "2026-08-17T10:51:14.452Z",
+    "status": "ATENDIDO",
+    "aiChange": {
+      "summary": "Se reestructuró la especificación funcional de Tranqi dividiéndola por roles (Comunes, Cliente, Abogado y Operador/Administrador), incorporando el estándar Law Practice Management (LPMS) y la compartición de documentos de la billetera hacia Tranqi (por caso, permanente y revisión express).",
+      "timestamp": "2026-08-17T10:55:00.000Z"
+    }
   }
 ]
