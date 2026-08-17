@@ -136,6 +136,56 @@ export async function GET() {
             }
           }
         }
+
+        // Si el usuario es administrador u operador, sintetizar alertas para contratos firmados recibidos y postulaciones pendientes
+        if (esAutorizado) {
+          try {
+            const { data: solicitudesConContrato } = await client
+              .schema("tranqui_legal")
+              .from("trq_solicitud_socio")
+              .select(`
+                ssc_id,
+                ssc_usuario_id,
+                ssc_estado,
+                ssc_actualizado_en,
+                trq_documento_socio (dcs_tipo, dcs_comentario, dcs_creado_en)
+              `)
+              .is("ssc_eliminado_en", null)
+              .order("ssc_actualizado_en", { ascending: false });
+
+            if (solicitudesConContrato && Array.isArray(solicitudesConContrato)) {
+              for (const sol of solicitudesConContrato) {
+                const docs = (sol.trq_documento_socio || []) as Array<{ dcs_tipo: string; dcs_comentario?: string; dcs_creado_en: string }>;
+                const tieneContrato = docs.some(d => d.dcs_tipo === "contrato_socio" || d.dcs_comentario?.includes("[tipo:contrato_socio]"));
+                if (tieneContrato) {
+                  const { data: uPost } = await client
+                    .schema("comun_seguridad")
+                    .from("seg_usuario")
+                    .select("usu_nombres, usu_apellidos, usu_correo")
+                    .eq("usu_id", sol.ssc_usuario_id)
+                    .maybeSingle();
+
+                  const nombrePost = [uPost?.usu_nombres, uPost?.usu_apellidos].filter(Boolean).join(" ") || uPost?.usu_correo || "Postulante";
+                  const titulo = `📝 Contrato Firmado Recibido — Postulante: ${nombrePost}`;
+                  const yaExiste = notificaciones.some(n => n.not_id === `contrato-${sol.ssc_id}` || n.not_titulo.includes(nombrePost));
+                  if (!yaExiste) {
+                    notificaciones.unshift({
+                      not_id: `contrato-${sol.ssc_id}`,
+                      not_titulo: titulo,
+                      not_contenido_html: `<p>El postulante <strong>${nombrePost}</strong> ha subido su contrato firmado. Haz clic en <a href="/panel/socios/${sol.ssc_id}" style="color: #05876E; font-weight: 700;">Verificar Contrato y Activar Socio</a> para completar su incorporación.</p>`,
+                      not_url_accion: `/panel/socios/${sol.ssc_id}`,
+                      not_leido_en: null,
+                      not_creado_en: sol.ssc_actualizado_en || new Date().toISOString(),
+                      not_canal: "IN_APP"
+                    });
+                  }
+                }
+              }
+            }
+          } catch (errStaffSync) {
+            console.warn("Aviso en sync staff notificaciones:", errStaffSync);
+          }
+        }
       } catch (errApi) {
         console.error("Error al consultar notificaciones en API:", errApi);
       }

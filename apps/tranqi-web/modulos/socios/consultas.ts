@@ -178,7 +178,10 @@ export async function listarSolicitudesParaAdmin(estado?: string) {
   let query = adminSupabase
     .schema("tranqui_legal")
     .from("trq_solicitud_socio")
-    .select("*")
+    .select(`
+      *,
+      trq_revision_solicitud (rev_decision, rev_creado_en)
+    `)
     .order("ssc_enviada_en", { ascending: false });
 
   if (estado) query = query.eq("ssc_estado", estado);
@@ -186,23 +189,44 @@ export async function listarSolicitudesParaAdmin(estado?: string) {
   const { data, error } = await query;
   if (error) throw new Error(error.message);
 
-  const rawList = (data ?? []).map((s) => ({
-    ...s,
-    solicitudId: s.ssc_id,
-    usuarioId: s.ssc_usuario_id,
-    cedula: s.ssc_cedula,
-    matriculaProfesional: s.ssc_matricula_profesional,
-    universidad: s.ssc_universidad,
-    anioGraduacion: s.ssc_anio_graduacion,
-    anosExperiencia: s.ssc_anos_experiencia,
-    resumenProfesional: s.ssc_resumen_profesional,
-    telefonoContacto: s.ssc_telefono_contacto,
-    estado: s.ssc_estado,
-    enlaceSenescytVerificado: s.ssc_enlace_senescyt_verificado,
-    enlaceForoVerificado: s.ssc_enlace_foro_verificado,
-    creadoEn: s.ssc_creado_en,
-    enviadaEn: s.ssc_enviada_en,
-  }));
+  const rawList = (data ?? []).map((s: any) => {
+    let estadoReal = s.ssc_estado;
+    const revs = (s.trq_revision_solicitud || []) as Array<{ rev_decision: string; rev_creado_en: string }>;
+    if (revs.length > 0) {
+      revs.sort((a, b) => new Date(b.rev_creado_en).getTime() - new Date(a.rev_creado_en).getTime());
+      const ultRev = revs[0];
+      if (ultRev?.rev_decision === "aceptada" && estadoReal !== "aceptada") {
+        estadoReal = "aceptada";
+        adminSupabase
+          .schema("tranqui_legal")
+          .from("trq_solicitud_socio")
+          .update({ ssc_estado: "aceptada", ssc_actualizado_en: new Date().toISOString() })
+          .eq("ssc_id", s.ssc_id)
+          .then(() => {});
+      } else if (ultRev?.rev_decision === "reingreso" && estadoReal !== "enviada") {
+        estadoReal = "enviada";
+      }
+    }
+
+    return {
+      ...s,
+      solicitudId: s.ssc_id,
+      usuarioId: s.ssc_usuario_id,
+      cedula: s.ssc_cedula,
+      matriculaProfesional: s.ssc_matricula_profesional,
+      universidad: s.ssc_universidad,
+      anioGraduacion: s.ssc_anio_graduacion,
+      anosExperiencia: s.ssc_anos_experiencia,
+      resumenProfesional: s.ssc_resumen_profesional,
+      telefonoContacto: s.ssc_telefono_contacto,
+      estado: estadoReal,
+      ssc_estado: estadoReal,
+      enlaceSenescytVerificado: s.ssc_enlace_senescyt_verificado,
+      enlaceForoVerificado: s.ssc_enlace_foro_verificado,
+      creadoEn: s.ssc_creado_en,
+      enviadaEn: s.ssc_enviada_en,
+    };
+  });
 
   return adjuntarUsuarios(rawList);
 }

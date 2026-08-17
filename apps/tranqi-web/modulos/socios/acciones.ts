@@ -18,6 +18,71 @@ type Resultado<T = undefined> = { ok: true; data: T } | { ok: false; error: stri
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+async function obtenerDestinatariosStaffTranqi(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  adminSupabase: any,
+  excluirUsuarioId?: string
+): Promise<{ id: string; correo: string }[]> {
+  const destinatariosAdmin: { id: string; correo: string }[] = [];
+  const correosVistos = new Set<string>();
+
+  try {
+    // 1. Superadministradores de la plataforma
+    const { data: superAdmins } = await adminSupabase
+      .schema("comun_seguridad")
+      .from("seg_usuario")
+      .select("usu_id, usu_correo, usu_superadmin_plataforma")
+      .eq("usu_superadmin_plataforma", true);
+
+    if (Array.isArray(superAdmins)) {
+      for (const sa of superAdmins) {
+        if (sa.usu_id !== excluirUsuarioId && sa.usu_correo && !correosVistos.has(sa.usu_correo)) {
+          correosVistos.add(sa.usu_correo);
+          destinatariosAdmin.push({ id: sa.usu_id, correo: sa.usu_correo });
+        }
+      }
+    }
+
+    // 2. Administradores y Operadores de la membresía en TRANQ / TRANQI
+    const { data: membresias } = await adminSupabase
+      .schema("comun_seguridad")
+      .from("seg_membresia")
+      .select(`
+        mem_id,
+        mem_usuario_id,
+        mem_negocio,
+        seg_usuario (
+          usu_id,
+          usu_correo
+        ),
+        seg_membresia_perfil (
+          mpe_perfil_clave
+        )
+      `)
+      .or("mem_negocio.ilike.TRANQ,mem_negocio.ilike.TRANQI");
+
+    if (Array.isArray(membresias)) {
+      for (const m of membresias) {
+        const usr = (m as any).seg_usuario;
+        const perfiles = (m as any).seg_membresia_perfil || [];
+        const esOperadorOAdmin = perfiles.some((p: { mpe_perfil_clave?: string }) => {
+          const c = (p.mpe_perfil_clave || "").toLowerCase();
+          return c === "operador" || c === "administrador" || c === "superadmin";
+        });
+
+        if (esOperadorOAdmin && usr?.usu_correo && usr.usu_id !== excluirUsuarioId && !correosVistos.has(usr.usu_correo)) {
+          correosVistos.add(usr.usu_correo);
+          destinatariosAdmin.push({ id: usr.usu_id, correo: usr.usu_correo });
+        }
+      }
+    }
+  } catch (err) {
+    console.warn("Aviso al obtener staff tranqi:", err);
+  }
+
+  return destinatariosAdmin;
+}
+
 async function notificarSolicitudEnviada(
   usuarioId: string,
   solicitudId: string,
@@ -66,65 +131,7 @@ async function notificarSolicitudEnviada(
 
     // 2.b. Notificar multicanal (In-App, Push y Email) a Operadores, Administradores y SuperAdmins
     const urlRevision = `/panel/socios/${solicitudId}`;
-    const destinatariosAdmin: { id: string; correo: string }[] = [];
-    const correosVistos = new Set<string>();
-
-    try {
-      // a. Obtener superadministradores directos
-      const { data: superAdmins } = await adminSupabase
-        .schema("comun_seguridad")
-        .from("seg_usuario")
-        .select("usu_id, usu_correo, usu_superadmin_plataforma")
-        .eq("usu_superadmin_plataforma", true);
-
-      if (Array.isArray(superAdmins)) {
-        for (const sa of superAdmins) {
-          if (sa.usu_id !== u.usu_id && sa.usu_correo && !correosVistos.has(sa.usu_correo)) {
-            correosVistos.add(sa.usu_correo);
-            destinatariosAdmin.push({ id: sa.usu_id, correo: sa.usu_correo });
-          }
-        }
-      }
-
-      // b. Obtener miembros con rol de operador o administrador en tranqi
-      const { data: membresias } = await adminSupabase
-        .schema("comun_seguridad")
-        .from("seg_membresia")
-        .select(`
-          mem_id,
-          mem_usuario_id,
-          mem_negocio,
-          seg_usuario (
-            usu_id,
-            usu_correo
-          ),
-          seg_membresia_perfil (
-            mpe_perfil_clave
-          )
-        `)
-        .or("mem_negocio.ilike.TRANQ,mem_negocio.ilike.TRANQI");
-
-      if (Array.isArray(membresias)) {
-        for (const m of membresias) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const usr = (m as any).seg_usuario;
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const perfiles = (m as any).seg_membresia_perfil || [];
-          const esOperadorOAdmin = perfiles.some((p: { mpe_perfil_clave?: string }) => {
-            const c = (p.mpe_perfil_clave || "").toLowerCase();
-            return c === "operador" || c === "administrador" || c === "superadmin";
-          });
-
-          if (esOperadorOAdmin && usr?.usu_correo && usr.usu_id !== u.usu_id && !correosVistos.has(usr.usu_correo)) {
-            correosVistos.add(usr.usu_correo);
-            destinatariosAdmin.push({ id: usr.usu_id, correo: usr.usu_correo });
-          }
-        }
-      }
-    } catch (errStaffSearch) {
-      console.warn("Aviso al buscar operadores/admins para notificación:", errStaffSearch);
-    }
-
+    const destinatariosAdmin = await obtenerDestinatariosStaffTranqi(adminSupabase, u.usu_id);
     let correosAdmins: string[] = destinatariosAdmin.map((adm) => adm.correo);
 
     if (destinatariosAdmin.length > 0) {
@@ -652,20 +659,7 @@ export async function registrarDocumentoSocio(
       `;
 
       // 2. Buscar administradores y operadores
-      const destinatariosAdmin: { id: string; correo: string }[] = [];
-      const { data: superAdmins } = await adminSupabase
-        .schema("comun_seguridad")
-        .from("seg_usuario")
-        .select("usu_id, usu_correo")
-        .eq("usu_superadmin_plataforma", true);
-
-      if (superAdmins) {
-        superAdmins.forEach((sa) => {
-          if (sa.usu_correo && !destinatariosAdmin.some((d) => d.id === sa.usu_id)) {
-            destinatariosAdmin.push({ id: sa.usu_id, correo: sa.usu_correo });
-          }
-        });
-      }
+      const destinatariosAdmin = await obtenerDestinatariosStaffTranqi(adminSupabase, user.id);
 
       const notifsAdmins: any[] = [];
       for (const adm of destinatariosAdmin) {
@@ -1113,14 +1107,20 @@ export async function obtenerListaSolicitudesSociosAction(): Promise<Resultado<a
   let { data: sData, error: sErr } = await adminSupabase
     .schema("tranqui_legal")
     .from("trq_solicitud_socio")
-    .select("*")
+    .select(`
+      *,
+      trq_revision_solicitud (rev_decision, rev_creado_en)
+    `)
     .order("ssc_creado_en", { ascending: false });
 
   if ((!sData || sData.length === 0) && adminSupabase !== supabase) {
     const resFall = await supabase
       .schema("tranqui_legal")
       .from("trq_solicitud_socio")
-      .select("*")
+      .select(`
+        *,
+        trq_revision_solicitud (rev_decision, rev_creado_en)
+      `)
       .order("ssc_creado_en", { ascending: false });
     if (resFall.data && resFall.data.length > 0) {
       sData = resFall.data;
@@ -1131,7 +1131,31 @@ export async function obtenerListaSolicitudesSociosAction(): Promise<Resultado<a
   if (sErr) return { ok: false, error: sErr.message };
   if (!sData || sData.length === 0) return { ok: true, data: [] };
 
-  const userIds = [...new Set(sData.map((s) => s.ssc_usuario_id))];
+  const sDataSincronizadas = (sData || []).map((s: any) => {
+    let estadoReal = s.ssc_estado;
+    const revs = (s.trq_revision_solicitud || []) as Array<{ rev_decision: string; rev_creado_en: string }>;
+    if (revs.length > 0) {
+      revs.sort((a, b) => new Date(b.rev_creado_en).getTime() - new Date(a.rev_creado_en).getTime());
+      const ultRev = revs[0];
+      if (ultRev?.rev_decision === "aceptada" && estadoReal !== "aceptada") {
+        estadoReal = "aceptada";
+        adminSupabase
+          .schema("tranqui_legal")
+          .from("trq_solicitud_socio")
+          .update({ ssc_estado: "aceptada", ssc_actualizado_en: new Date().toISOString() })
+          .eq("ssc_id", s.ssc_id)
+          .then(() => {});
+      } else if (ultRev?.rev_decision === "reingreso" && estadoReal !== "enviada") {
+        estadoReal = "enviada";
+      }
+    }
+    return {
+      ...s,
+      ssc_estado: estadoReal,
+    };
+  });
+
+  const userIds = [...new Set(sDataSincronizadas.map((s) => s.ssc_usuario_id))];
   let { data: uData } = await adminSupabase
     .schema("comun_seguridad")
     .from("seg_usuario")
@@ -1148,7 +1172,7 @@ export async function obtenerListaSolicitudesSociosAction(): Promise<Resultado<a
   }
 
   const uMap = new Map((uData || []).map((u) => [u.usu_id, u]));
-  const combinadas = sData.map((s) => ({
+  const combinadas = sDataSincronizadas.map((s) => ({
     ...s,
     usuario: uMap.get(s.ssc_usuario_id) || null,
   }));
