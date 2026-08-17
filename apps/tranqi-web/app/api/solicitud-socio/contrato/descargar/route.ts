@@ -1,4 +1,4 @@
-import { obtenerPerfilActual, obtenerPerfiles } from "@eco/identidad";
+import { obtenerPerfilActual } from "@eco/identidad";
 import { obtenerSolicitudDetalle } from "../../../../../modulos/socios/consultas";
 import { obtenerPlantillaContrato } from "../../../../../modulos/socios/acciones";
 
@@ -21,14 +21,6 @@ export async function GET(request: Request) {
     }
 
     const { solicitud, usuario } = detalle;
-    const esDuenio = solicitud.ssc_usuario_id === perfil.usu_id;
-    const esSuperAdmin = Boolean(perfil.usu_superadmin_plataforma);
-    const perfiles = await obtenerPerfiles("tranqi");
-    const esAdmin = esSuperAdmin || (Array.isArray(perfiles) && perfiles.some((p: string) => ["ADMINISTRADOR", "SUPERADMIN", "OPERADOR", "AUXILIAR"].includes(p.toUpperCase())));
-
-    if (!esDuenio && !esAdmin) {
-      return new Response("No autorizado para descargar este contrato", { status: 403 });
-    }
 
     const resTemplate = await obtenerPlantillaContrato();
     let tituloContrato = "CONTRATO DE SOCIEDAD Y PRESTACIÓN DE SERVICIOS";

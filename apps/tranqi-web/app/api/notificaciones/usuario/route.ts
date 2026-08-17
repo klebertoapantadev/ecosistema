@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { obtenerPerfilActual } from "@eco/identidad";
-import { crearClienteServidor } from "@eco/supabase/servidor";
+import { crearClienteServidor, crearClienteAdmin } from "@eco/supabase/servidor";
 import { obtenerCampanasServidor } from "../almacen";
 
 interface RegistroNotificacion {
@@ -11,8 +11,9 @@ interface RegistroNotificacion {
   not_leido_en?: string | null;
   not_creado_en: string;
   not_canal?: string;
+  not_pospuesta_hasta?: string | null;
+  not_eliminada?: boolean;
 }
-
 
 // Reemplazo dinámico estricto de variables para el perfil autenticado
 function interpolarParaPerfil(
@@ -47,8 +48,6 @@ export async function GET() {
     if (perfil) {
       try {
         const { obtenerPerfiles } = await import("@eco/identidad");
-        const { crearClienteAdmin } = await import("@eco/supabase/servidor");
-
         const perfilesTranqi = await obtenerPerfiles("tranqi");
         const perfilesTRANQ = await obtenerPerfiles("TRANQ");
         const perfiles = Array.from(new Set([...perfilesTranqi, ...perfilesTRANQ]));
@@ -60,9 +59,9 @@ export async function GET() {
         let query = client
           .schema("comun_notificacion")
           .from("not_registro")
-          .select("not_id, not_titulo, not_contenido_html, not_url_accion, not_leido_en, not_creado_en, not_canal")
+          .select("not_id, not_titulo, not_contenido_html, not_url_accion, not_leido_en, not_creado_en, not_canal, not_detalles")
           .order("not_creado_en", { ascending: false })
-          .limit(30);
+          .limit(50);
 
         if (!esAutorizado) {
           query = query.eq("not_usuario_id", perfil.usu_id);
@@ -71,7 +70,19 @@ export async function GET() {
         const { data: registros } = await query;
 
         if (registros && Array.isArray(registros)) {
-          (registros as unknown as RegistroNotificacion[]).forEach(r => {
+          (registros as unknown as Array<{
+            not_id: string;
+            not_titulo: string;
+            not_contenido_html: string;
+            not_url_accion?: string;
+            not_leido_en?: string | null;
+            not_creado_en: string;
+            not_canal?: string;
+            not_detalles?: { eliminada?: boolean; pospuesta_hasta?: string } | null;
+          }>).forEach(r => {
+            const detalles = r.not_detalles ?? {};
+            if (detalles.eliminada) return;
+
             notificaciones.push({
               not_id: r.not_id,
               not_titulo: interpolarParaPerfil(r.not_titulo, perfil),
@@ -79,50 +90,58 @@ export async function GET() {
               not_url_accion: r.not_url_accion || "/panel",
               not_leido_en: r.not_leido_en,
               not_creado_en: r.not_creado_en,
-              not_canal: r.not_canal || "IN_APP"
+              not_canal: r.not_canal || "IN_APP",
+              not_pospuesta_hasta: detalles.pospuesta_hasta || null,
+              not_eliminada: Boolean(detalles.eliminada)
             });
           });
         }
 
-        // Obtener historial y estado de solicitud de socio propia para garantizar notificaciones de acreditación
+        // Si no hay registros explícitos en not_registro para el usuario, sintetizar la notificación activa más reciente de su postulación
         const { data: miSol } = await client
           .schema("tranqui_legal")
           .from("trq_solicitud_socio")
-          .select("ssc_id, ssc_estado, ssc_actualizado_en, trq_revision_solicitud(*)")
+          .select("ssc_id, ssc_estado, ssc_actualizado_en, ssc_creado_en, trq_revision_solicitud(*)")
           .eq("ssc_usuario_id", perfil.usu_id)
           .is("ssc_eliminado_en", null)
           .maybeSingle();
 
         if (miSol) {
           const revs = (miSol.trq_revision_solicitud ?? []) as Array<{ rev_id: string; rev_decision: string; rev_comentario?: string | null; rev_creado_en: string }>;
-          revs.forEach((rev) => {
-            const esAprobada = rev.rev_decision === "aceptada";
+          // Ordenar cronológicamente descendente
+          revs.sort((a, b) => new Date(b.rev_creado_en).getTime() - new Date(a.rev_creado_en).getTime());
+
+          // Solo sintetizar la última resolución activa para evitar spam / alertas repetidas
+          if (revs.length > 0 && revs[0]) {
+            const ultimaRev = revs[0];
+            const esAprobada = ultimaRev.rev_decision === "aceptada";
             const titulo = esAprobada
               ? "🎉 ¡Tu Acreditación como Socio Abogado fue APROBADA!"
               : "⚠️ Observación en tu Solicitud de Socio Abogado";
             const cuerpo = esAprobada
-              ? `<p>Tu solicitud ha sido aprobada. Por favor <a href="/panel/solicitud-socio" style="color: #5000BA; font-weight: 700; text-decoration: underline;">descarga tu contrato pre-llenado y súbelo firmado</a> para activar tu cuenta de Abogado.</p>`
-              : `<p>${rev.rev_comentario || "Se identificaron observaciones en tu solicitud. Por favor revisa y actualiza los documentos."}</p>`;
+              ? `<p>Tu postulación ha sido aprobada. Por favor <a href="/panel/solicitud-socio" style="color: #5000BA; font-weight: 700; text-decoration: underline;">descarga tu contrato pre-llenado y súbelo firmado</a> para activar tu cuenta de Abogado.</p>`
+              : `<p>${ultimaRev.rev_comentario || "Se identificaron observaciones en tu solicitud. Por favor revisa y actualiza los documentos."}</p>`;
 
-            if (!notificaciones.some(n => n.not_id === rev.rev_id)) {
-              notificaciones.push({
-                not_id: rev.rev_id,
+            const yaExiste = notificaciones.some(n => n.not_id === ultimaRev.rev_id || n.not_titulo.includes(titulo));
+            if (!yaExiste) {
+              notificaciones.unshift({
+                not_id: ultimaRev.rev_id || `sol-rev-${miSol.ssc_id}`,
                 not_titulo: titulo,
                 not_contenido_html: cuerpo,
                 not_url_accion: "/panel/solicitud-socio",
                 not_leido_en: null,
-                not_creado_en: rev.rev_creado_en || miSol.ssc_actualizado_en || new Date().toISOString(),
+                not_creado_en: ultimaRev.rev_creado_en || miSol.ssc_actualizado_en || miSol.ssc_creado_en,
                 not_canal: "IN_APP"
               });
             }
-          });
+          }
         }
       } catch (errApi) {
         console.error("Error al consultar notificaciones en API:", errApi);
       }
     }
 
-    // Incluir campañas de transmisión (TODOS) activas en la consola
+    // Incluir campañas de transmisión (TODOS) activas
     const campanas = obtenerCampanasServidor();
     campanas.forEach(c => {
       if (!notificaciones.some(n => n.not_id === c.id)) {
@@ -142,6 +161,60 @@ export async function GET() {
     return NextResponse.json({ success: true, notificaciones });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : "Error al obtener notificaciones";
+    return NextResponse.json({ error: msg }, { status: 500 });
+  }
+}
+
+export async function POST(request: Request) {
+  try {
+    const perfil = await obtenerPerfilActual();
+    if (!perfil) {
+      return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+    }
+
+    const body = await request.json();
+    const { not_id, accion, horas } = body;
+
+    if (!not_id || !accion) {
+      return NextResponse.json({ error: "Parámetros incompletos" }, { status: 400 });
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const client: any = crearClienteAdmin() || await crearClienteServidor();
+
+    if (accion === "aceptar") {
+      // 1. Confirmar lectura
+      await client
+        .schema("comun_notificacion")
+        .from("not_registro")
+        .update({ not_leido_en: new Date().toISOString() })
+        .eq("not_id", not_id);
+    } else if (accion === "eliminar") {
+      // 2. Eliminar (ocultar para el usuario, mantener para auditoría)
+      await client
+        .schema("comun_notificacion")
+        .from("not_registro")
+        .update({
+          not_detalles: { eliminada: true, eliminada_en: new Date().toISOString() },
+          not_leido_en: new Date().toISOString()
+        })
+        .eq("not_id", not_id);
+    } else if (accion === "posponer") {
+      // 3. Posponer por N horas
+      const horasNum = Number(horas) || 3;
+      const fechaPospuesta = new Date(Date.now() + horasNum * 3600 * 1000).toISOString();
+      await client
+        .schema("comun_notificacion")
+        .from("not_registro")
+        .update({
+          not_detalles: { pospuesta_hasta: fechaPospuesta, pospuesta_horas: horasNum }
+        })
+        .eq("not_id", not_id);
+    }
+
+    return NextResponse.json({ success: true, not_id, accion });
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : "Error al procesar la acción";
     return NextResponse.json({ error: msg }, { status: 500 });
   }
 }
