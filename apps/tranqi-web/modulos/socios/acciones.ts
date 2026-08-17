@@ -574,7 +574,7 @@ export async function registrarDocumentoSocio(
 
   const comentarioFinal = concepto ? `[${concepto}] ${comentario || ""}`.trim() : (comentario || null);
 
-  const { error } = await adminSupabase.schema("tranqui_legal").from("trq_documento_socio").insert({
+  let { error } = await adminSupabase.schema("tranqui_legal").from("trq_documento_socio").insert({
     dcs_solicitud_id: solicitudId,
     dcs_tipo: tipoFinal,
     dcs_url: path,
@@ -583,10 +583,170 @@ export async function registrarDocumentoSocio(
     dcs_subido_por: user.id,
   });
 
+  // Si el check constraint de PostgreSQL rechaza contrato_socio o foto_perfil, reintentar con 'otro' y tag [tipo:xxx]
+  if (error && error.message?.includes("trq_documento_socio_dcs_tipo_check")) {
+    const tagComentario = `[tipo:${tipoFinal}] ${comentarioFinal || ""}`.trim();
+    const resFallback = await adminSupabase.schema("tranqui_legal").from("trq_documento_socio").insert({
+      dcs_solicitud_id: solicitudId,
+      dcs_tipo: "otro",
+      dcs_url: path,
+      dcs_nombre_archivo: nombreArchivo,
+      dcs_comentario: tagComentario,
+      dcs_subido_por: user.id,
+    });
+    error = resFallback.error;
+  }
+
   if (error) {
     console.error("Error al registrar documento socio en BDD:", error);
     return { ok: false, error: error.message };
   }
+
+  // Notificar a los administradores y operadores cuando el postulante sube su contrato firmado
+  if (tipoFinal === "contrato_socio") {
+    try {
+      // 1. Obtener datos del postulante
+      const { data: solData } = await adminSupabase
+        .schema("tranqui_legal")
+        .from("trq_solicitud_socio")
+        .select("ssc_id, ssc_usuario_id")
+        .eq("ssc_id", solicitudId)
+        .maybeSingle();
+
+      const usuarioIdPostulante = solData?.ssc_usuario_id || user.id;
+      const { data: uPostulante } = await adminSupabase
+        .schema("comun_seguridad")
+        .from("seg_usuario")
+        .select("usu_nombres, usu_apellidos, usu_correo")
+        .eq("usu_id", usuarioIdPostulante)
+        .maybeSingle();
+
+      const nombrePostulante = [uPostulante?.usu_nombres, uPostulante?.usu_apellidos].filter(Boolean).join(" ") || uPostulante?.usu_correo || "Postulante";
+      const correoPostulante = uPostulante?.usu_correo || "postulante@tranqi24.com";
+      const urlRevision = `https://www.tranqi24.com/panel/socios/${solicitudId}`;
+      const tituloAdmin = `📝 Contrato Firmado Recibido — Postulante: ${nombrePostulante}`;
+
+      const contenidoHTMLAdmin = `
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; padding: 22px; color: #111; max-width: 600px; margin: 0 auto; background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 12px;">
+          <div style="text-align: center; margin-bottom: 16px;">
+            <span style="display: inline-block; background: #ECFDF5; color: #065F46; padding: 6px 14px; border-radius: 999px; font-weight: 800; font-size: 0.82rem; border: 1px solid #10B981;">
+              📝 CONTRATO FIRMADO CARGADO
+            </span>
+          </div>
+          <h2 style="color: #05876E; margin-top: 0; font-size: 1.3rem; text-align: center;">Contrato de Sociedad Listo para Verificación</h2>
+          <p style="font-size: 0.95rem; line-height: 1.5; color: #374151;">
+            El postulante <strong>${nombrePostulante}</strong> (<code>${correoPostulante}</code>) ha subido exitosamente su contrato de sociedad firmado.
+          </p>
+          <p style="font-size: 0.95rem; line-height: 1.5; color: #374151;">
+            Por favor ingresa a la plataforma para verificar el documento adjunto y realizar la confirmación y activación definitiva del nuevo <strong>Socio Abogado</strong>.
+          </p>
+          <div style="text-align: center; margin: 24px 0;">
+            <a href="${urlRevision}" style="display: inline-block; background: #05876E; color: #FFFFFF; padding: 12px 24px; border-radius: 8px; font-weight: 800; text-decoration: none; font-size: 0.95rem; box-shadow: 0 4px 12px rgba(5, 135, 110, 0.3);">
+              Verificar Contrato y Activar Socio →
+            </a>
+          </div>
+          <p style="font-size: 0.8rem; color: #9CA3AF; border-top: 1px solid #E5E7EB; padding-top: 14px; margin-bottom: 0;">
+            ID de Solicitud: <code>${solicitudId}</code> • tranqi® Red Legal
+          </p>
+        </div>
+      `;
+
+      // 2. Buscar administradores y operadores
+      const destinatariosAdmin: { id: string; correo: string }[] = [];
+      const { data: superAdmins } = await adminSupabase
+        .schema("comun_seguridad")
+        .from("seg_usuario")
+        .select("usu_id, usu_correo")
+        .eq("usu_superadmin_plataforma", true);
+
+      if (superAdmins) {
+        superAdmins.forEach((sa) => {
+          if (sa.usu_correo && !destinatariosAdmin.some((d) => d.id === sa.usu_id)) {
+            destinatariosAdmin.push({ id: sa.usu_id, correo: sa.usu_correo });
+          }
+        });
+      }
+
+      const notifsAdmins: any[] = [];
+      for (const adm of destinatariosAdmin) {
+        notifsAdmins.push({
+          not_usuario_id: adm.id,
+          not_negocio: "TRANQ",
+          not_canal: "IN_APP",
+          not_titulo: tituloAdmin,
+          not_contenido_html: contenidoHTMLAdmin,
+          not_url_accion: `/panel/socios/${solicitudId}`,
+          not_creado_en: new Date().toISOString()
+        });
+        notifsAdmins.push({
+          not_usuario_id: adm.id,
+          not_negocio: "TRANQ",
+          not_canal: "PUSH",
+          not_titulo: tituloAdmin,
+          not_contenido_html: contenidoHTMLAdmin,
+          not_url_accion: `/panel/socios/${solicitudId}`,
+          not_creado_en: new Date().toISOString()
+        });
+      }
+
+      if (notifsAdmins.length > 0) {
+        await (adminSupabase as any).schema("comun_notificacion").from("not_registro").insert(notifsAdmins);
+      }
+
+      // 3. Enviar correo SMTP a administradores
+      const smtpHost = process.env.SMTP_HOST || process.env.EMAIL_HOST;
+      const smtpUser = process.env.SMTP_USER || process.env.EMAIL_USER;
+      const smtpPass = process.env.SMTP_PASS || process.env.EMAIL_PASS;
+      const smtpPort = Number(process.env.SMTP_PORT || 587);
+
+      if (smtpHost && smtpUser && smtpPass && destinatariosAdmin.length > 0) {
+        const transporter = nodemailer.createTransport({
+          host: smtpHost,
+          port: smtpPort,
+          secure: smtpPort === 465,
+          auth: { user: smtpUser, pass: smtpPass },
+          tls: { rejectUnauthorized: false },
+        });
+
+        for (const adm of destinatariosAdmin) {
+          try {
+            await transporter.sendMail({
+              from: `"tranqi · Notificaciones" <${smtpUser}>`,
+              to: adm.correo,
+              subject: tituloAdmin,
+              html: contenidoHTMLAdmin,
+            });
+          } catch (errSmtp) {
+            console.warn("Aviso al enviar SMTP a admin:", errSmtp);
+          }
+        }
+      }
+
+      // 4. Bitácora de campañas
+      agregarCampanaServidor({
+        id: `camp-contrato-firmado-${solicitudId}-${Date.now()}`,
+        asunto: tituloAdmin,
+        contenidoHTML: contenidoHTMLAdmin,
+        tipoEmision: "AUTOMATICA",
+        emisorNombre: nombrePostulante,
+        emisorCorreo: correoPostulante,
+        procesoOrigen: "PLT-019 Carga de Contrato Firmado de Socio",
+        audiencia: "ADMINISTRADORES Y OPERADORES",
+        canales: ["IN_APP", "EMAIL", "PUSH"],
+        destinatariosDetalle: destinatariosAdmin.map(d => d.correo),
+        enviados: destinatariosAdmin.length,
+        leidos: 0,
+        ignorados: 0,
+        fecha: new Date().toISOString(),
+      });
+    } catch (errNotifContrato) {
+      console.warn("Aviso al notificar contrato firmado a administradores:", errNotifContrato);
+    }
+  }
+
+  revalidatePath("/panel/solicitud-socio");
+  revalidatePath(`/panel/socios/${solicitudId}`);
+  revalidatePath("/panel/socios");
   return { ok: true, data: undefined };
 }
 
