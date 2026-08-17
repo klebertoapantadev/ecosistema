@@ -18,9 +18,9 @@ export function BotonCerrarSesion({ variante = "nav", className = "" }: BotonCer
       setCargando(true);
       const supabase = crearClienteNavegador();
       await supabase.auth.signOut();
-      window.location.href = "/ingresar";
+      window.location.href = "/";
     } catch {
-      window.location.href = "/ingresar";
+      window.location.href = "/";
     }
   };
 
