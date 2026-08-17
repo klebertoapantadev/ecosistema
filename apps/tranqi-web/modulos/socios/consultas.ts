@@ -89,6 +89,29 @@ export async function obtenerSolicitudPropia(usuarioId: string) {
 
   if (!data) return null;
 
+  // Auto-sincronizar con la última decisión en caso de inconsistencia previa
+  try {
+    const { data: ultRev } = await adminSupabase
+      .schema("tranqui_legal")
+      .from("trq_revision_solicitud")
+      .select("rev_decision")
+      .eq("rev_solicitud_id", data.ssc_id)
+      .order("rev_creado_en", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (ultRev?.rev_decision === "aceptada" && data.ssc_estado !== "aceptada") {
+      data.ssc_estado = "aceptada";
+      await (adminSupabase as any)
+        .schema("tranqui_legal")
+        .from("trq_solicitud_socio")
+        .update({ ssc_estado: "aceptada", ssc_actualizado_en: new Date().toISOString() })
+        .eq("ssc_id", data.ssc_id);
+    }
+  } catch (errSync) {
+    console.warn("Aviso en sync estado solicitud propia:", errSync);
+  }
+
   if (Array.isArray(data.trq_experiencia_laboral)) {
     data.trq_experiencia_laboral = deduplicarExperiencias(data.trq_experiencia_laboral);
   }
@@ -232,6 +255,21 @@ export async function obtenerDetalleSolicitudParaAdmin(solicitudId: string) {
         .eq("rev_solicitud_id", solicitudId)
         .order("rev_creado_en", { ascending: false }),
     ]);
+
+  // Sincronizar estado de la solicitud con la última revisión registrada si es aceptada
+  const ultDecision = historialRes.data?.[0]?.rev_decision;
+  if (ultDecision === "aceptada" && solicitud.ssc_estado !== "aceptada") {
+    solicitud.ssc_estado = "aceptada";
+    try {
+      await (adminSupabase as any)
+        .schema("tranqui_legal")
+        .from("trq_solicitud_socio")
+        .update({ ssc_estado: "aceptada", ssc_actualizado_en: new Date().toISOString() })
+        .eq("ssc_id", solicitudId);
+    } catch (errSync) {
+      console.warn("Aviso en sync admin estado:", errSync);
+    }
+  }
 
   // 3. Obtener el usuario postulante para el avatar y nombre
   const { data: usuario } = await adminSupabase
