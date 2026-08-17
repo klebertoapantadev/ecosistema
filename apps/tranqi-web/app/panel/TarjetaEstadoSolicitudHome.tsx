@@ -24,9 +24,9 @@ export function TarjetaEstadoSolicitudHome({ solicitud }: Props) {
 
   const CONFIG: Record<string, { titulo: string; desc: string; chip: string; bg: string; border: string; color: string }> = {
     enviada: {
-      titulo: "Solicitud de Socio Abogado — Recibida & En Proceso",
-      desc: "Tu postulación fue recibida. Nuestro equipo de admisibilidad está revisando tu titulación y matrícula del Foro de Abogados.",
-      chip: "🟡 Solicitud Ingresada",
+      titulo: "Solicitud de Socio Abogado — Actualizada / En Proceso",
+      desc: "Tu postulación ha sido enviada o actualizada exitosamente. Nuestro equipo de acreditación profesional está revisando tu expediente y documentos.",
+      chip: "🟡 Solicitud Recibida / Actualizada (Pendiente de Revisión)",
       bg: "rgba(245, 158, 11, 0.08)",
       border: "#F59E0B",
       color: "#B45309",
@@ -42,7 +42,7 @@ export function TarjetaEstadoSolicitudHome({ solicitud }: Props) {
     rechazada: {
       titulo: "Solicitud de Socio Abogado — Requiere Corrección / Actualización",
       desc: "Se identificaron observaciones en la documentación o datos ingresados. Por favor actualiza la información y vuelve a enviar.",
-      chip: "🔴 No Autorizada (Modificación Requerida)",
+      chip: "🔴 Requiere Corrección / Actualización",
       bg: "rgba(239, 68, 68, 0.08)",
       border: "#EF4444",
       color: "#B91C1C",

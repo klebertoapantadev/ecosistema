@@ -9,10 +9,10 @@ import { GestionContratoPostulante } from "../../../modulos/socios/componentes/G
 export const metadata: Metadata = { title: "Solicitud de socio — tranqi" };
 
 const ETIQUETA_ESTADO: Record<string, string> = {
-  enviada: "Enviada — en espera de revisión",
-  en_revision: "En revisión",
+  enviada: "Solicitud Recibida / Actualizada — Pendiente de Revisión",
+  en_revision: "En Revisión Legal",
   aceptada: "¡Aprobada! Acreditación completada",
-  rechazada: "No aceptada (puedes actualizar y volver a enviar)",
+  rechazada: "Requiere Corrección / Actualización",
 };
 
 export default async function PaginaSolicitudSocio() {
