@@ -49,6 +49,7 @@ import { BarraVariablesDinamicas } from "@eco/identidad/componentes/BarraVariabl
 import {
   enviarSolicitudSocio,
   registrarDocumentoSocio,
+  subirDocumentoSocioAction,
   eliminarSolicitudSocioPropiaAction,
   reiniciarSolicitudSocioPropiaAction,
 } from "../acciones";
@@ -129,28 +130,17 @@ async function subirDocumento(
   if (archivo.size > TAMANO_MAXIMO_MB * 1024 * 1024) {
     return { ok: false as const, error: `${archivo.name}: supera ${TAMANO_MAXIMO_MB}MB` };
   }
-  const supabase = crearClienteNavegador();
-  const infoRuta = generarRutaRepositorioComun({
-    negocio: "TRANQ",
-    usuarioId: usuarioId || solicitudId,
-    procesoOConcepto: concepto || (tipo === "foto_perfil" ? CONCEPTOS_REPOSITORIO.PERFIL : CONCEPTOS_REPOSITORIO.REGISTRO),
-    tramiteORefId: solicitudId,
-    tipoDocumento: tipo,
-    nombreOriginal: archivo.name,
-  });
 
-  const { error: errorSubida } = await supabase.storage.from("socios-documentos").upload(infoRuta.rutaCompleta, archivo);
-  if (errorSubida) return { ok: false as const, error: `${archivo.name}: ${errorSubida.message}` };
+  const formData = new FormData();
+  formData.append("solicitudId", solicitudId);
+  formData.append("tipo", tipo);
+  formData.append("archivo", archivo);
+  if (comentario) formData.append("comentario", comentario);
+  if (usuarioId) formData.append("usuarioId", usuarioId);
+  if (concepto) formData.append("concepto", concepto);
 
-  const resultado = await registrarDocumentoSocio(
-    solicitudId,
-    tipo,
-    infoRuta.rutaCompleta,
-    infoRuta.nombreSanitizado,
-    comentario,
-    infoRuta.concepto,
-  );
-  if (!resultado.ok) return { ok: false as const, error: `${archivo.name}: ${resultado.error}` };
+  const res = await subirDocumentoSocioAction(formData);
+  if (!res.ok) return { ok: false as const, error: `${archivo.name}: ${res.error}` };
   return { ok: true as const };
 }
 

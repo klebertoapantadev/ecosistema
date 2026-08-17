@@ -5,7 +5,14 @@ import { crearClienteServidor, crearClienteAdmin } from "@eco/supabase/servidor"
 import { obtenerPerfiles, obtenerPerfilActual } from "@eco/identidad";
 import nodemailer from "nodemailer";
 import { agregarCampanaServidor } from "../../app/api/notificaciones/almacen";
-import { esquemaSolicitudSocio, esquemaDecisionSolicitud, type DatosSolicitudSocio } from "./esquema";
+import {
+  esquemaSolicitudSocio,
+  esquemaDecisionSolicitud,
+  type DatosSolicitudSocio,
+  generarRutaRepositorioComun,
+  sanearNombreArchivo,
+  CONCEPTOS_REPOSITORIO,
+} from "./esquema";
 
 type Resultado<T = undefined> = { ok: true; data: T } | { ok: false; error: string };
 
@@ -366,6 +373,127 @@ export async function enviarSolicitudSocio(
   return { ok: true, data: { solicitudId } };
 }
 
+export async function subirDocumentoSocioAction(formData: FormData): Promise<Resultado<{ url: string; path: string }>> {
+  try {
+    const solicitudId = formData.get("solicitudId") as string;
+    const tipo = formData.get("tipo") as "foto_perfil" | "titulo" | "matricula" | "cedula" | "identificacion" | "otro" | "cv" | "contrato_socio" | "respaldo_revision";
+    const archivo = formData.get("archivo") as File;
+    const comentario = (formData.get("comentario") as string) || undefined;
+    const usuarioId = (formData.get("usuarioId") as string) || undefined;
+    const concepto = (formData.get("concepto") as string) || undefined;
+
+    if (!solicitudId || !archivo || !tipo) {
+      return { ok: false, error: "Datos incompletos para subir documento." };
+    }
+
+    const adminSupabase = crearClienteAdmin() || await crearClienteServidor();
+    const supabase = await crearClienteServidor();
+    const { data: { user } } = await supabase.auth.getUser();
+    const targetUsuId = usuarioId || user?.id || solicitudId;
+
+    const infoRuta = generarRutaRepositorioComun({
+      negocio: "TRANQ",
+      usuarioId: targetUsuId,
+      procesoOConcepto: concepto || (tipo === "foto_perfil" ? CONCEPTOS_REPOSITORIO.PERFIL : (tipo === "respaldo_revision" ? "revision" : CONCEPTOS_REPOSITORIO.REGISTRO)),
+      tramiteORefId: solicitudId,
+      tipoDocumento: tipo,
+      nombreOriginal: archivo.name,
+    });
+
+    const arrayBuffer = await archivo.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+
+    const { error: storageError } = await adminSupabase.storage
+      .from("socios-documentos")
+      .upload(infoRuta.rutaCompleta, buffer, {
+        contentType: archivo.type || "application/octet-stream",
+        upsert: true,
+      });
+
+    if (storageError) {
+      console.error("Error al subir archivo a Storage:", storageError);
+      return { ok: false, error: storageError.message };
+    }
+
+    const TIPOS_PERMITIDOS = ["foto_perfil", "titulo", "matricula", "cedula", "identificacion", "cv", "contrato_socio", "otro", "respaldo_revision"];
+    const tipoFinal = TIPOS_PERMITIDOS.includes(tipo) ? (tipo === "identificacion" ? "cedula" : tipo) : "otro";
+
+    if (tipoFinal === "foto_perfil" || tipoFinal === "titulo" || tipoFinal === "cedula" || tipoFinal === "contrato_socio") {
+      try {
+        await adminSupabase
+          .schema("tranqui_legal")
+          .from("trq_documento_socio")
+          .delete()
+          .eq("dcs_solicitud_id", solicitudId)
+          .eq("dcs_tipo", tipoFinal);
+      } catch (errDel) {
+        console.warn("Aviso al limpiar doc previo:", errDel);
+      }
+    }
+
+    const comentarioFinal = concepto ? `[${concepto}] ${comentario || ""}`.trim() : (comentario || null);
+
+    const { error: dbError } = await adminSupabase
+      .schema("tranqui_legal")
+      .from("trq_documento_socio")
+      .insert({
+        dcs_solicitud_id: solicitudId,
+        dcs_tipo: tipoFinal,
+        dcs_url: infoRuta.rutaCompleta,
+        dcs_nombre_archivo: infoRuta.nombreSanitizado,
+        dcs_comentario: comentarioFinal,
+        dcs_subido_por: user?.id || targetUsuId,
+      });
+
+    if (dbError) {
+      console.error("Error al registrar en trq_documento_socio:", dbError);
+      return { ok: false, error: dbError.message };
+    }
+
+    // Sincronizar avatar en seg_usuario si es foto de perfil
+    if (tipoFinal === "foto_perfil" && targetUsuId) {
+      try {
+        const { data: publicUrlData } = adminSupabase.storage
+          .from("socios-documentos")
+          .getPublicUrl(infoRuta.rutaCompleta);
+
+        const fotoUrl = publicUrlData?.publicUrl;
+        if (fotoUrl) {
+          const { data: uExistente } = await adminSupabase
+            .schema("comun_seguridad")
+            .from("seg_usuario")
+            .select("usu_detalle_usuario")
+            .eq("usu_id", targetUsuId)
+            .maybeSingle();
+
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const detalleActual = (uExistente?.usu_detalle_usuario as Record<string, any>) || {};
+          await adminSupabase
+            .schema("comun_seguridad")
+            .from("seg_usuario")
+            .update({
+              usu_detalle_usuario: {
+                ...detalleActual,
+                foto_url: fotoUrl,
+                avatar_url: fotoUrl,
+              }
+            })
+            .eq("usu_id", targetUsuId);
+        }
+      } catch (errFotoSync) {
+        console.warn("Aviso al sincronizar foto en perfil de usuario:", errFotoSync);
+      }
+    }
+
+    revalidatePath(`/panel/socios/${solicitudId}`);
+    revalidatePath("/panel/solicitud-socio");
+    return { ok: true, data: { url: infoRuta.rutaCompleta, path: infoRuta.rutaCompleta } };
+  } catch (errSubida: unknown) {
+    const msg = errSubida instanceof Error ? errSubida.message : "Error inesperado al subir archivo";
+    return { ok: false, error: msg };
+  }
+}
+
 export async function registrarDocumentoSocio(
   solicitudId: string,
   tipo: "foto_perfil" | "titulo" | "matricula" | "cedula" | "identificacion" | "otro" | "respaldo_revision" | "cv" | "contrato_socio",
@@ -426,8 +554,9 @@ export async function decidirSolicitudSocio(datos: {
   const { solicitudId, decision, comentario } = parseo.data;
 
   const supabase = await crearClienteServidor();
+  const adminSupabase = crearClienteAdmin() || supabase;
 
-  const { data: usuarioId, error: rpcError } = await supabase
+  const { data: rpcData, error: rpcError } = await supabase
     .schema("tranqui_legal")
     .rpc("trq_fn_decidir_solicitud", {
       p_solicitud_id: solicitudId,
@@ -437,11 +566,21 @@ export async function decidirSolicitudSocio(datos: {
 
   if (rpcError) return { ok: false, error: rpcError.message };
 
+  // Obtener el ID del postulante con fallback directo a la tabla
+  let targetUsuId = typeof rpcData === "string" ? rpcData : (rpcData as any)?.ssc_usuario_id;
+  if (!targetUsuId) {
+    const { data: solData } = await adminSupabase
+      .schema("tranqui_legal")
+      .from("trq_solicitud_socio")
+      .select("ssc_usuario_id")
+      .eq("ssc_id", solicitudId)
+      .maybeSingle();
+    targetUsuId = solData?.ssc_usuario_id;
+  }
+
   // Notificar al solicitante cliente/abogado sobre la actualización de su solicitud
-  const targetUsuId = typeof usuarioId === "string" ? usuarioId : (usuarioId as any)?.ssc_usuario_id;
   if (targetUsuId) {
     try {
-      const adminSupabase = crearClienteAdmin() || supabase;
       const { data: uApplicant } = await adminSupabase
         .schema("comun_seguridad")
         .from("seg_usuario")
@@ -483,11 +622,12 @@ export async function decidirSolicitudSocio(datos: {
             <h2 style="color: #DC2626;">Estimado(a) ${nombrePostulante},</h2>
             <p>Tu solicitud de acreditación profesional en <strong>tranqi</strong> ha sido evaluada y marcada como <strong>RECHAZADA</strong>.</p>
             ${comentario ? `<div style="background: #F3F4F6; border-left: 4px solid #DC2626; padding: 12px; border-radius: 6px; margin: 16px 0;"><strong>Observación del Evaluador:</strong> ${comentario}</div>` : ""}
-            <p>Puedes corregir las observaciones ingresando nuevamente a tu panel y volviendo a enviar la solicitud:</p>
-            <p><a href="/panel/solicitud-socio" style="display: inline-block; padding: 10px 18px; background: #5000BA; color: #fff; text-decoration: none; border-radius: 8px; font-weight: 700;">Corregir y Enviar de Nuevo</a></p>
+            <p>Puedes corregir las observaciones ingresando nuevamente a tu panel y volviendo a enviar la solicitud con la documentación solicitada:</p>
+            <p><a href="/panel/solicitud-socio" style="display: inline-block; padding: 10px 18px; background: #5000BA; color: #fff; text-decoration: none; border-radius: 8px; font-weight: 700;">Corregir y Reenviar Solicitud</a></p>
           </div>
         `;
 
+        // 1. Guardar notificaciones en base de datos (In-App y Push)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         await (adminSupabase as any).schema("comun_notificacion").from("not_registro").insert([
           {
@@ -496,6 +636,7 @@ export async function decidirSolicitudSocio(datos: {
             not_canal: "IN_APP",
             not_titulo: tituloNotif,
             not_contenido_html: cuerpoHTML,
+            not_url_accion: "/panel/solicitud-socio",
             not_creado_en: new Date().toISOString()
           },
           {
@@ -504,10 +645,39 @@ export async function decidirSolicitudSocio(datos: {
             not_canal: "PUSH",
             not_titulo: tituloNotif,
             not_contenido_html: cuerpoHTML,
+            not_url_accion: "/panel/solicitud-socio",
             not_creado_en: new Date().toISOString()
           }
         ]);
 
+        // 2. Enviar correo SMTP real al postulante
+        const smtpHost = process.env.SMTP_HOST || process.env.EMAIL_HOST;
+        const smtpUser = process.env.SMTP_USER || process.env.EMAIL_USER;
+        const smtpPass = process.env.SMTP_PASS || process.env.EMAIL_PASS;
+        const smtpPort = Number(process.env.SMTP_PORT || 587);
+
+        if (smtpHost && smtpUser && smtpPass && uApplicant.usu_correo) {
+          try {
+            const transporter = nodemailer.createTransport({
+              host: smtpHost,
+              port: smtpPort,
+              secure: smtpPort === 465,
+              auth: { user: smtpUser, pass: smtpPass },
+              tls: { rejectUnauthorized: false }
+            });
+
+            await transporter.sendMail({
+              from: `"tranqi Evaluaciones" <${smtpUser}>`,
+              to: uApplicant.usu_correo,
+              subject: tituloNotif,
+              html: cuerpoHTML,
+            });
+          } catch (errSmtp) {
+            console.error("Error SMTP al despachar decisión de solicitud al postulante:", errSmtp);
+          }
+        }
+
+        // 3. Registrar campaña en Bitácora
         agregarCampanaServidor({
           id: `camp-dec-${solicitudId}-${Date.now()}`,
           asunto: tituloNotif,
@@ -532,6 +702,7 @@ export async function decidirSolicitudSocio(datos: {
 
   revalidatePath("/panel/socios");
   revalidatePath(`/panel/socios/${solicitudId}`);
+  revalidatePath("/panel/solicitud-socio");
   return { ok: true, data: undefined };
 }
 
