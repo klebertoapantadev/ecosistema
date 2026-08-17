@@ -51,6 +51,7 @@ export async function POST(request: Request) {
     const TIPOS_PERMITIDOS = ["foto_perfil", "titulo", "matricula", "cedula", "identificacion", "cv", "contrato_socio", "otro", "respaldo_revision"];
     const tipoFinal = TIPOS_PERMITIDOS.includes(tipo) ? (tipo === "identificacion" ? "cedula" : tipo) : "otro";
 
+    // Limpiar documento previo del mismo tipo (ej. reemplazar foto anterior, cedula anterior o titulo anterior)
     if (tipoFinal === "foto_perfil" || tipoFinal === "titulo" || tipoFinal === "cedula" || tipoFinal === "contrato_socio") {
       try {
         await adminSupabase
@@ -58,7 +59,7 @@ export async function POST(request: Request) {
           .from("trq_documento_socio")
           .delete()
           .eq("dcs_solicitud_id", solicitudId)
-          .eq("dcs_tipo", tipoFinal);
+          .or(`dcs_tipo.eq.${tipoFinal},dcs_comentario.ilike.%[tipo:${tipoFinal}]%,dcs_url.ilike.%/${tipoFinal}-%`);
       } catch (errDel) {
         console.warn("Aviso al limpiar doc previo:", errDel);
       }
@@ -66,7 +67,7 @@ export async function POST(request: Request) {
 
     const comentarioFinal = concepto ? `[${concepto}] ${comentario || ""}`.trim() : (comentario || null);
 
-    const { error: dbError } = await adminSupabase
+    let { error: dbError } = await adminSupabase
       .schema("tranqui_legal")
       .from("trq_documento_socio")
       .insert({
@@ -77,6 +78,23 @@ export async function POST(request: Request) {
         dcs_comentario: comentarioFinal,
         dcs_subido_por: user?.id || targetUsuId,
       });
+
+    // Si el check constraint de PostgreSQL de la base de datos remota rechaza 'foto_perfil' o 'cv', reintentar con 'otro' y tag [tipo:xxx]
+    if (dbError && dbError.message?.includes("trq_documento_socio_dcs_tipo_check")) {
+      const tagComentario = `[tipo:${tipoFinal}] ${comentarioFinal || ""}`.trim();
+      const resFallback = await adminSupabase
+        .schema("tranqui_legal")
+        .from("trq_documento_socio")
+        .insert({
+          dcs_solicitud_id: solicitudId,
+          dcs_tipo: "otro",
+          dcs_url: infoRuta.rutaCompleta,
+          dcs_nombre_archivo: infoRuta.nombreSanitizado,
+          dcs_comentario: tagComentario,
+          dcs_subido_por: user?.id || targetUsuId,
+        });
+      dbError = resFallback.error;
+    }
 
     if (dbError) {
       console.error("Error al registrar en trq_documento_socio:", dbError);

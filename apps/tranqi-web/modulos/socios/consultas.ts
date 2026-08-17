@@ -23,6 +23,17 @@ export async function listarProvincias() {
   return data ?? [];
 }
 
+function normalizarTipoDocumento(d: { dcs_tipo: string; dcs_comentario?: string | null; dcs_url?: string | null }): string {
+  if (d.dcs_tipo && d.dcs_tipo !== "otro") return d.dcs_tipo;
+  if (d.dcs_comentario?.includes("[tipo:foto_perfil]") || d.dcs_comentario?.includes("[perfil]") || d.dcs_url?.includes("foto_perfil")) return "foto_perfil";
+  if (d.dcs_comentario?.includes("[tipo:cv]") || d.dcs_comentario?.includes("[cv]") || d.dcs_url?.includes("/cv-")) return "cv";
+  if (d.dcs_comentario?.includes("[tipo:cedula]") || d.dcs_comentario?.includes("[identidad]") || d.dcs_url?.includes("/cedula-")) return "cedula";
+  if (d.dcs_comentario?.includes("[tipo:titulo]") || d.dcs_url?.includes("/titulo-")) return "titulo";
+  if (d.dcs_comentario?.includes("[tipo:matricula]") || d.dcs_url?.includes("/matricula-")) return "matricula";
+  if (d.dcs_comentario?.includes("[tipo:contrato_socio]") || d.dcs_url?.includes("/contrato_socio-")) return "contrato_socio";
+  return d.dcs_tipo || "otro";
+}
+
 export async function obtenerSolicitudPropia(usuarioId: string) {
   const supabase = await crearClienteServidor();
   const adminSupabase = crearClienteAdmin() || supabase;
@@ -43,15 +54,16 @@ export async function obtenerSolicitudPropia(usuarioId: string) {
 
   if (!data) return null;
 
-  // Firmar URLs de documentos existentes para el solicitante
+  // Firmar URLs de documentos existentes para el solicitante y normalizar tipos
   const docs = data.trq_documento_socio;
   if (Array.isArray(docs) && docs.length > 0) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const docsFirmados = await Promise.all(
       docs.map(async (d: any) => {
-        if (!d.dcs_url) return { ...d, url: null };
+        const tipoNormalizado = normalizarTipoDocumento(d);
+        if (!d.dcs_url) return { ...d, dcs_tipo: tipoNormalizado, url: null };
         if (d.dcs_url.startsWith("data:") || d.dcs_url.startsWith("http")) {
-          return { ...d, url: d.dcs_url };
+          return { ...d, dcs_tipo: tipoNormalizado, url: d.dcs_url };
         }
         try {
           const { data: signedData } = await adminSupabase.storage
@@ -60,10 +72,10 @@ export async function obtenerSolicitudPropia(usuarioId: string) {
           const { data: publicData } = adminSupabase.storage
             .from("socios-documentos")
             .getPublicUrl(d.dcs_url);
-          return { ...d, url: signedData?.signedUrl || publicData?.publicUrl || d.dcs_url };
+          return { ...d, dcs_tipo: tipoNormalizado, url: signedData?.signedUrl || publicData?.publicUrl || d.dcs_url };
         } catch {
           const { data: urlData } = adminSupabase.storage.from("socios-documentos").getPublicUrl(d.dcs_url);
-          return { ...d, url: urlData?.publicUrl ?? d.dcs_url };
+          return { ...d, dcs_tipo: tipoNormalizado, url: urlData?.publicUrl ?? d.dcs_url };
         }
       })
     );
@@ -187,9 +199,10 @@ export async function obtenerDetalleSolicitudParaAdmin(solicitudId: string) {
 
   const docsFirmados = await Promise.all(
     (documentosRes.data ?? []).map(async (d) => {
-      if (!d.dcs_url) return { ...d, url: null };
+      const tipoNormalizado = normalizarTipoDocumento(d);
+      if (!d.dcs_url) return { ...d, dcs_tipo: tipoNormalizado, url: null };
       if (d.dcs_url.startsWith("data:") || d.dcs_url.startsWith("http")) {
-        return { ...d, url: d.dcs_url };
+        return { ...d, dcs_tipo: tipoNormalizado, url: d.dcs_url };
       }
       try {
         const { data: signedData } = await adminSupabase.storage
@@ -198,10 +211,10 @@ export async function obtenerDetalleSolicitudParaAdmin(solicitudId: string) {
         const { data: publicData } = adminSupabase.storage
           .from("socios-documentos")
           .getPublicUrl(d.dcs_url);
-        return { ...d, url: signedData?.signedUrl || publicData?.publicUrl || d.dcs_url };
+        return { ...d, dcs_tipo: tipoNormalizado, url: signedData?.signedUrl || publicData?.publicUrl || d.dcs_url };
       } catch {
         const { data: urlData } = adminSupabase.storage.from("socios-documentos").getPublicUrl(d.dcs_url);
-        return { ...d, url: urlData?.publicUrl ?? d.dcs_url };
+        return { ...d, dcs_tipo: tipoNormalizado, url: urlData?.publicUrl ?? d.dcs_url };
       }
     })
   );

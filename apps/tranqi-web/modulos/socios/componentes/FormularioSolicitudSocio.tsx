@@ -1237,12 +1237,13 @@ export function FormularioSolicitudSocio({ usuarioId, materias, provincias, soli
     solicitudExistente ? "formulario" : "beneficios"
   );
 
-  // Mapear documentos cargados previamente
+  // Mapear documentos cargados previamente con soporte robusto de tags y tipos
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const documentosExistentes = (solicitudExistente?.trq_documento_socio as any[]) ?? [];
-  const fotoExistente = documentosExistentes.find((d) => d.dcs_tipo === "foto_perfil");
-  const identificacionExistente = documentosExistentes.find((d) => d.dcs_tipo === "cedula" || d.dcs_tipo === "identificacion");
-  const tituloExistente = documentosExistentes.find((d) => d.dcs_tipo === "titulo");
-  const cvYCertificadosExistentes = documentosExistentes.filter((d) => d.dcs_tipo === "cv" || d.dcs_tipo === "otro");
+  const fotoExistente = documentosExistentes.find((d) => d.dcs_tipo === "foto_perfil" || d.dcs_comentario?.includes("[tipo:foto_perfil]") || d.dcs_comentario?.includes("[perfil]") || d.dcs_url?.includes("foto_perfil"));
+  const identificacionExistente = documentosExistentes.find((d) => d.dcs_tipo === "cedula" || d.dcs_tipo === "identificacion" || d.dcs_comentario?.includes("[tipo:cedula]") || d.dcs_comentario?.includes("[identidad]") || d.dcs_url?.includes("/cedula-"));
+  const tituloExistente = documentosExistentes.find((d) => d.dcs_tipo === "titulo" || d.dcs_comentario?.includes("[tipo:titulo]") || d.dcs_url?.includes("/titulo-"));
+  const cvYCertificadosExistentes = documentosExistentes.filter((d) => (d.dcs_tipo === "cv" || d.dcs_tipo === "otro" || d.dcs_comentario?.includes("[tipo:cv]") || d.dcs_url?.includes("/cv-")) && d !== fotoExistente && d !== identificacionExistente && d !== tituloExistente);
 
   // Estado del texto preliminar de beneficios (editable)
   const [textoBeneficios, setTextoBeneficios] = useState<string>(`### Únete a la Red Jurídica Oficial de tranqi
