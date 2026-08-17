@@ -58,6 +58,8 @@ export function TarjetaEstadoSolicitudHome({ solicitud }: Props) {
     color: "#C2410C",
   };
 
+  const [eliminada, setEliminada] = useState(false);
+
   const manejarEliminar = async () => {
     setProcesando(true);
     setErrorAccion(null);
@@ -70,9 +72,8 @@ export function TarjetaEstadoSolicitudHome({ solicitud }: Props) {
       if (res.ok) {
         setMensajeExito("Solicitud de socio eliminada correctamente.");
         setModalConfirmar(null);
-        setTimeout(() => {
-          router.refresh();
-        }, 800);
+        setEliminada(true);
+        router.refresh();
       } else {
         setErrorAccion(res.error || "No se pudo eliminar la solicitud.");
       }
@@ -107,6 +108,8 @@ export function TarjetaEstadoSolicitudHome({ solicitud }: Props) {
       setProcesando(false);
     }
   };
+
+  if (eliminada) return null;
 
   return (
     <section

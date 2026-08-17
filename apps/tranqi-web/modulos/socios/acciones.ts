@@ -933,37 +933,44 @@ export async function eliminarSolicitudSocioPropiaAction(solicitudId?: string): 
   const supabase = await crearClienteServidor();
   const adminSupabase = crearClienteAdmin() || supabase;
 
-  // 1. Intentar invocar el RPC en PostgreSQL si existe
-  const { error: errorRpc } = await (supabase as any)
+  // 1. Buscar la solicitud activa no aceptada del usuario
+  let query = adminSupabase
     .schema("tranqui_legal")
-    .rpc("trq_fn_eliminar_solicitud_propia", { p_solicitud_id: solicitudId || null });
+    .from("trq_solicitud_socio")
+    .select("ssc_id, ssc_estado")
+    .eq("ssc_usuario_id", perfil.usu_id)
+    .is("ssc_eliminado_en", null)
+    .neq("ssc_estado", "cancelada");
 
-  // 2. Si el RPC no estuviera instalado o diera error de permisos, fallback directo con adminSupabase
-  if (errorRpc) {
-    let query = adminSupabase
-      .schema("tranqui_legal")
-      .from("trq_solicitud_socio")
-      .select("ssc_id, ssc_estado")
-      .eq("ssc_usuario_id", perfil.usu_id);
+  if (solicitudId) {
+    query = query.eq("ssc_id", solicitudId);
+  }
 
-    if (solicitudId) {
-      query = query.eq("ssc_id", solicitudId);
-    }
+  const { data: sol, error: solErr } = await query.order("ssc_creado_en", { ascending: false }).limit(1).maybeSingle();
+  if (solErr) return { ok: false, error: solErr.message };
+  if (!sol) return { ok: true, data: undefined };
 
-    const { data: sol, error: solErr } = await query.order("ssc_creado_en", { ascending: false }).limit(1).maybeSingle();
-    if (solErr) return { ok: false, error: solErr.message };
-    if (!sol) return { ok: true, data: undefined };
+  if (sol.ssc_estado === "aceptada") {
+    return { ok: false, error: "No es posible eliminar una solicitud que ya ha sido aprobada" };
+  }
 
-    if (sol.ssc_estado === "aceptada") {
-      return { ok: false, error: "No es posible eliminar una solicitud que ya ha sido aprobada" };
-    }
+  // 2. Realizar borrado lógico (preservando registro para analítica/estadística con ssc_eliminado_en y ssc_estado = 'cancelada')
+  const { error: updErr } = await adminSupabase
+    .schema("tranqui_legal")
+    .from("trq_solicitud_socio")
+    .update({
+      ssc_eliminado_en: new Date().toISOString(),
+      ssc_estado: "cancelada",
+    })
+    .eq("ssc_id", sol.ssc_id);
 
+  if (updErr) {
+    // Si falla update por constraint, ejecutar borrado físico de respaldo
     const { error: delErr } = await adminSupabase
       .schema("tranqui_legal")
       .from("trq_solicitud_socio")
       .delete()
-      .eq("ssc_id", sol.ssc_id)
-      .eq("ssc_usuario_id", perfil.usu_id);
+      .eq("ssc_id", sol.ssc_id);
 
     if (delErr) return { ok: false, error: delErr.message };
   }

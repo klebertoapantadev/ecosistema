@@ -61,6 +61,9 @@ export async function obtenerSolicitudPropia(usuarioId: string) {
       trq_documento_socio(*)
     `)
     .eq("ssc_usuario_id", usuarioId)
+    .is("ssc_eliminado_en", null)
+    .neq("ssc_estado", "cancelada")
+    .neq("ssc_estado", "eliminada")
     .order("ssc_creado_en", { ascending: false })
     .limit(1)
     .maybeSingle();
