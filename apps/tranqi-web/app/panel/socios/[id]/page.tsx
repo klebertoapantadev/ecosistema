@@ -39,7 +39,7 @@ export default async function PaginaDetalleSocio({ params }: { params: Promise<{
   if (!detalle) notFound();
 
   const { solicitud, usuario, experiencia, materias, provincias, revisiones, documentos } = detalle;
-  const pendiente = solicitud.ssc_estado === "enviada" || solicitud.ssc_estado === "en_revision";
+  const pendiente = solicitud.ssc_estado !== "aceptada";
   const abogado = solicitud.ssc_estado === "aceptada" ? await obtenerAbogadoPorSolicitud(id) : null;
   const esReingreso = solicitud.ssc_estado === "enviada" && revisiones.length > 0;
 
@@ -367,8 +367,7 @@ export default async function PaginaDetalleSocio({ params }: { params: Promise<{
 
       {pendiente && (
         <div className="tarjeta-panel detalle-solicitud">
-          <h2>Decisión</h2>
-          <AccionesSolicitud solicitudId={solicitud.ssc_id} />
+          <AccionesSolicitud solicitudId={solicitud.ssc_id} estadoActual={solicitud.ssc_estado} />
         </div>
       )}
     </div>

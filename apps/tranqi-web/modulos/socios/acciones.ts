@@ -604,6 +604,8 @@ export async function decidirSolicitudSocio(datos: {
   const supabase = await crearClienteServidor();
   const adminSupabase = crearClienteAdmin() || supabase;
 
+  let targetUsuId: string | null = null;
+
   const { data: rpcData, error: rpcError } = await supabase
     .schema("tranqui_legal")
     .rpc("trq_fn_decidir_solicitud", {
@@ -612,10 +614,58 @@ export async function decidirSolicitudSocio(datos: {
       p_comentario: comentario || undefined,
     });
 
-  if (rpcError) return { ok: false, error: rpcError.message };
+  if (rpcError) {
+    // Fallback con adminSupabase para permitir re-evaluar o cambiar decisión si la solicitud estaba rechazada u observada
+    const { data: solData, error: solErr } = await adminSupabase
+      .schema("tranqui_legal")
+      .from("trq_solicitud_socio")
+      .select("ssc_usuario_id, ssc_estado")
+      .eq("ssc_id", solicitudId)
+      .single();
 
-  // Obtener el ID del postulante con fallback directo a la tabla
-  let targetUsuId = typeof rpcData === "string" ? rpcData : (rpcData as any)?.ssc_usuario_id;
+    if (solErr || !solData) return { ok: false, error: rpcError.message };
+    targetUsuId = solData.ssc_usuario_id;
+
+    // Actualizar estado de la solicitud
+    const { error: updErr } = await adminSupabase
+      .schema("tranqui_legal")
+      .from("trq_solicitud_socio")
+      .update({
+        ssc_estado: decision,
+        ssc_actualizado_en: new Date().toISOString(),
+      })
+      .eq("ssc_id", solicitudId);
+
+    if (updErr) return { ok: false, error: updErr.message };
+
+    // Registrar en trq_revision_solicitud
+    const { data: { user } } = await supabase.auth.getUser();
+    await adminSupabase
+      .schema("tranqui_legal")
+      .from("trq_revision_solicitud")
+      .insert({
+        rev_solicitud_id: solicitudId,
+        rev_admin_id: user?.id || null,
+        rev_decision: decision,
+        rev_comentario: comentario || null,
+      });
+
+    // Si es aceptada, registrar o activar en trq_abogado
+    if (decision === "aceptada" && targetUsuId) {
+      await (adminSupabase as any)
+        .schema("tranqui_legal")
+        .from("trq_abogado")
+        .upsert({
+          abg_usuario_id: targetUsuId,
+          abg_solicitud_id: solicitudId,
+          abg_estado: "verificado",
+          abg_verificado_en: new Date().toISOString(),
+        }, { onConflict: "abg_usuario_id" });
+    }
+  } else {
+    targetUsuId = typeof rpcData === "string" ? rpcData : (rpcData as any)?.ssc_usuario_id;
+  }
+
   if (!targetUsuId) {
     const { data: solData } = await adminSupabase
       .schema("tranqui_legal")
@@ -623,7 +673,7 @@ export async function decidirSolicitudSocio(datos: {
       .select("ssc_usuario_id")
       .eq("ssc_id", solicitudId)
       .maybeSingle();
-    targetUsuId = solData?.ssc_usuario_id;
+    targetUsuId = solData?.ssc_usuario_id || null;
   }
 
   // Notificar al solicitante cliente/abogado sobre la actualización de su solicitud
