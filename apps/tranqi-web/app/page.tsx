@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { crearClienteNavegador } from "@eco/supabase";
 
 interface AbogadoCard {
   id: string;
@@ -72,48 +71,17 @@ export default function TranqiLanding() {
   useEffect(() => {
     async function cargarAbogadosRegistrados() {
       try {
-        const supabase = crearClienteNavegador();
-        const { data: solicitudes } = await supabase
-          .schema("tranqui_legal")
-          .from("trq_solicitud_socio")
-          .select("ssc_id, ssc_usuario_id, ssc_estado, ssc_creado_en")
-          .order("ssc_creado_en", { ascending: false })
-          .limit(12);
-
-        if (solicitudes && solicitudes.length > 0) {
-          const uIds = [...new Set(solicitudes.map((s) => s.ssc_usuario_id))];
-          const { data: usuarios } = await supabase
-            .schema("comun_seguridad")
-            .from("seg_usuario")
-            .select("usu_id, usu_nombres, usu_apellidos")
-            .in("usu_id", uIds);
-
-          const mapaUsuarios = new Map((usuarios ?? []).map((u) => [u.usu_id, u]));
-
-          const registrados: AbogadoCard[] = solicitudes.map((sol) => {
-            const u = mapaUsuarios.get(sol.ssc_usuario_id);
-            const nom = u && (u.usu_nombres || u.usu_apellidos)
-              ? `${u.usu_nombres ?? ""} ${u.usu_apellidos ?? ""}`.trim()
-              : "Abogado Registrado";
-            return {
-              id: sol.ssc_id,
-              nombre: nom,
-              cargo: sol.ssc_estado === "ACEPTADA" ? "Abogado de la Red" : "Socio Postulante",
-              materia: "Derecho General",
-              ubicacion: "Ecuador",
-              experiencia: "Verificado",
-              verificado: sol.ssc_estado === "ACEPTADA",
-            };
-          });
-
+        const res = await fetch("/api/abogados-publicos");
+        const json = await res.json();
+        if (json.ok && Array.isArray(json.abogados) && json.abogados.length > 0) {
           setAbogados((prev) => {
-            const idsExistentes = new Set(prev.map((a) => a.id));
-            const nuevos = registrados.filter((r) => !idsExistentes.has(r.id));
-            return [...prev, ...nuevos];
+            const idsExistentes = new Set(json.abogados.map((a: AbogadoCard) => a.id));
+            const baseSinDuplicar = prev.filter((a) => !idsExistentes.has(a.id));
+            return [...json.abogados, ...baseSinDuplicar];
           });
         }
       } catch {
-        // En caso de RLS sin autenticación previa, se mantienen los abogados base demostrativos
+        // Fallback a plantilla demostrativa
       }
     }
     cargarAbogadosRegistrados();

@@ -23,6 +23,14 @@ export function TarjetaEstadoSolicitudHome({ solicitud }: Props) {
   const [errorAccion, setErrorAccion] = useState<string | null>(null);
 
   const CONFIG: Record<string, { titulo: string; desc: string; chip: string; bg: string; border: string; color: string }> = {
+    aceptada: {
+      titulo: "🎉 ¡Solicitud Aprobada! — Descarga y Firma tu Contrato de Sociedad",
+      desc: "Tu postulación ha sido APROBADA. Para culminar tu acreditación, descarga tu contrato pre-llenado, fírmalo y súbelo para activar tus credenciales de Abogado.",
+      chip: "🟢 Solicitud Aprobada (Firma de Contrato Requerida)",
+      bg: "rgba(16, 185, 129, 0.08)",
+      border: "#10B981",
+      color: "#065F46",
+    },
     enviada: {
       titulo: "Solicitud de Socio Abogado — Actualizada / En Proceso",
       desc: "Tu postulación ha sido enviada o actualizada exitosamente. Nuestro equipo de acreditación profesional está revisando tu expediente y documentos.",
@@ -186,69 +194,91 @@ export function TarjetaEstadoSolicitudHome({ solicitud }: Props) {
           <p style={{ fontSize: "0.88rem", color: "#444444", margin: 0, lineHeight: "1.45" }}>{info.desc}</p>
         </div>
 
-        {/* Botonera de Acciones: Editar, Reiniciar y Eliminar */}
+        {/* Botonera de Acciones: Firma de Contrato (si está aceptada) o Editar, Reiniciar y Eliminar */}
         <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: "10px" }}>
-          <Link
-            href="/panel/solicitud-socio"
-            style={{
-              textDecoration: "none",
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "6px",
-              background: "linear-gradient(135deg, #5000BA 0%, #3B0088 100%)",
-              color: "#FFF",
-              padding: "10px 16px",
-              borderRadius: "10px",
-              fontSize: "0.84rem",
-              fontWeight: 800,
-              boxShadow: "0 4px 12px rgba(80, 0, 186, 0.25)",
-              whiteSpace: "nowrap",
-            }}
-          >
-            <Edit3 size={15} /> Continuar / Editar Solicitud
-          </Link>
+          {estado === "aceptada" ? (
+            <Link
+              href="/panel/solicitud-socio"
+              style={{
+                textDecoration: "none",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "8px",
+                background: "linear-gradient(135deg, #05876E 0%, #046A57 100%)",
+                color: "#FFF",
+                padding: "10px 20px",
+                borderRadius: "10px",
+                fontSize: "0.88rem",
+                fontWeight: 800,
+                boxShadow: "0 4px 12px rgba(5, 135, 110, 0.25)",
+                whiteSpace: "nowrap",
+              }}
+            >
+              <CheckCircle2 size={16} /> Descargar y Subir Contrato Firmado →
+            </Link>
+          ) : (
+            <>
+              <Link
+                href="/panel/solicitud-socio"
+                style={{
+                  textDecoration: "none",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  background: "linear-gradient(135deg, #5000BA 0%, #3B0088 100%)",
+                  color: "#FFF",
+                  padding: "10px 16px",
+                  borderRadius: "10px",
+                  fontSize: "0.84rem",
+                  fontWeight: 800,
+                  boxShadow: "0 4px 12px rgba(80, 0, 186, 0.25)",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                <Edit3 size={15} /> Continuar / Editar Solicitud
+              </Link>
 
-          <button
-            type="button"
-            onClick={() => setModalConfirmar("reiniciar")}
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "6px",
-              background: "#FFFFFF",
-              color: "#5000BA",
-              border: "1px solid #5000BA",
-              padding: "10px 14px",
-              borderRadius: "10px",
-              fontSize: "0.84rem",
-              fontWeight: 700,
-              cursor: "pointer",
-              whiteSpace: "nowrap",
-            }}
-          >
-            <RotateCcw size={15} /> Reiniciar
-          </button>
+              <button
+                type="button"
+                onClick={() => setModalConfirmar("reiniciar")}
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  background: "#FFFFFF",
+                  color: "#5000BA",
+                  border: "1px solid #5000BA",
+                  padding: "9px 14px",
+                  borderRadius: "10px",
+                  fontSize: "0.84rem",
+                  fontWeight: 700,
+                  cursor: "pointer",
+                }}
+              >
+                <RotateCcw size={14} /> Reiniciar
+              </button>
 
-          <button
-            type="button"
-            onClick={() => setModalConfirmar("eliminar")}
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "6px",
-              background: "#FFFFFF",
-              color: "#DC2626",
-              border: "1px solid #DC2626",
-              padding: "10px 14px",
-              borderRadius: "10px",
-              fontSize: "0.84rem",
-              fontWeight: 700,
-              cursor: "pointer",
-              whiteSpace: "nowrap",
-            }}
-          >
-            <Trash2 size={15} /> Eliminar Solicitud
-          </button>
+              <button
+                type="button"
+                onClick={() => setModalConfirmar("eliminar")}
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  background: "#FFFFFF",
+                  color: "#DC2626",
+                  border: "1px solid #DC2626",
+                  padding: "9px 14px",
+                  borderRadius: "10px",
+                  fontSize: "0.84rem",
+                  fontWeight: 700,
+                  cursor: "pointer",
+                }}
+              >
+                <Trash2 size={14} /> Eliminar Solicitud
+              </button>
+            </>
+          )}
         </div>
       </div>
 

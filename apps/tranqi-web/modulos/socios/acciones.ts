@@ -604,76 +604,50 @@ export async function decidirSolicitudSocio(datos: {
   const supabase = await crearClienteServidor();
   const adminSupabase = crearClienteAdmin() || supabase;
 
-  let targetUsuId: string | null = null;
+  const perfilOperador = await obtenerPerfilActual();
+  const { data: { user } } = await supabase.auth.getUser();
 
-  const { data: rpcData, error: rpcError } = await supabase
+  // 1. Obtener la solicitud a evaluar
+  const { data: solData, error: solErr } = await adminSupabase
     .schema("tranqui_legal")
-    .rpc("trq_fn_decidir_solicitud", {
-      p_solicitud_id: solicitudId,
-      p_decision: decision,
-      p_comentario: comentario || undefined,
-    });
+    .from("trq_solicitud_socio")
+    .select("ssc_id, ssc_usuario_id, ssc_estado")
+    .eq("ssc_id", solicitudId)
+    .single();
 
-  if (rpcError) {
-    // Fallback con adminSupabase para permitir re-evaluar o cambiar decisión si la solicitud estaba rechazada u observada
-    const { data: solData, error: solErr } = await adminSupabase
-      .schema("tranqui_legal")
-      .from("trq_solicitud_socio")
-      .select("ssc_usuario_id, ssc_estado")
-      .eq("ssc_id", solicitudId)
-      .single();
+  if (solErr || !solData) {
+    return { ok: false, error: solErr?.message || "Solicitud no encontrada" };
+  }
 
-    if (solErr || !solData) return { ok: false, error: rpcError.message };
-    targetUsuId = solData.ssc_usuario_id;
+  const targetUsuId = solData.ssc_usuario_id;
 
-    // Actualizar estado de la solicitud
-    const { error: updErr } = await adminSupabase
-      .schema("tranqui_legal")
-      .from("trq_solicitud_socio")
-      .update({
-        ssc_estado: decision,
-        ssc_actualizado_en: new Date().toISOString(),
-      })
-      .eq("ssc_id", solicitudId);
+  // 2. Actualizar estado de la solicitud a 'aceptada' o 'rechazada'
+  const { error: updErr } = await adminSupabase
+    .schema("tranqui_legal")
+    .from("trq_solicitud_socio")
+    .update({
+      ssc_estado: decision,
+      ssc_actualizado_en: new Date().toISOString(),
+    })
+    .eq("ssc_id", solicitudId);
 
-    if (updErr) return { ok: false, error: updErr.message };
+  if (updErr) {
+    return { ok: false, error: updErr.message };
+  }
 
-    // Registrar en trq_revision_solicitud
-    const { data: { user } } = await supabase.auth.getUser();
+  // 3. Registrar en la bitácora de revisiones
+  try {
     await adminSupabase
       .schema("tranqui_legal")
       .from("trq_revision_solicitud")
       .insert({
         rev_solicitud_id: solicitudId,
-        rev_admin_id: user?.id || null,
+        rev_admin_id: perfilOperador?.usu_id || user?.id || null,
         rev_decision: decision,
-        rev_comentario: comentario || null,
+        rev_comentario: comentario || (decision === "aceptada" ? "Solicitud aprobada por el evaluador. En espera de firma de contrato." : "Solicitud no aprobada. Requiere actualización."),
       });
-
-    // Si es aceptada, registrar o activar en trq_abogado
-    if (decision === "aceptada" && targetUsuId) {
-      await (adminSupabase as any)
-        .schema("tranqui_legal")
-        .from("trq_abogado")
-        .upsert({
-          abg_usuario_id: targetUsuId,
-          abg_solicitud_id: solicitudId,
-          abg_estado: "verificado",
-          abg_verificado_en: new Date().toISOString(),
-        }, { onConflict: "abg_usuario_id" });
-    }
-  } else {
-    targetUsuId = typeof rpcData === "string" ? rpcData : (rpcData as any)?.ssc_usuario_id;
-  }
-
-  if (!targetUsuId) {
-    const { data: solData } = await adminSupabase
-      .schema("tranqui_legal")
-      .from("trq_solicitud_socio")
-      .select("ssc_usuario_id")
-      .eq("ssc_id", solicitudId)
-      .maybeSingle();
-    targetUsuId = solData?.ssc_usuario_id || null;
+  } catch (errRev) {
+    console.warn("Aviso al registrar revision:", errRev);
   }
 
   // Notificar al solicitante cliente/abogado sobre la actualización de su solicitud
@@ -912,74 +886,139 @@ export async function guardarPlantillaContrato(titulo: string, contenido: string
 
 export async function confirmarContratoSocio(solicitudId: string, comentario?: string): Promise<Resultado> {
   const supabase = await crearClienteServidor();
-  const { data: solicitud, error } = await (supabase as any)
+  const adminSupabase = crearClienteAdmin() || supabase;
+  const perfilAdmin = await obtenerPerfilActual();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  // 1. Obtener la solicitud
+  const { data: solData, error: solErr } = await (adminSupabase as any)
+    .schema("tranqui_legal")
+    .from("trq_solicitud_socio")
+    .select("ssc_id, ssc_usuario_id, ssc_estado, ssc_contrato_confirmado_en")
+    .eq("ssc_id", solicitudId)
+    .single();
+
+  if (solErr || !solData) {
+    return { ok: false, error: solErr?.message || "Solicitud no encontrada" };
+  }
+
+  const targetUsuId = solData.ssc_usuario_id;
+
+  // 2. Intentar ejecutar el RPC de PostgreSQL o fallback directo con adminSupabase
+  const { error: rpcError } = await (supabase as any)
     .schema("tranqui_legal")
     .rpc("trq_fn_confirmar_contrato_socio", { p_solicitud_id: solicitudId, p_comentario: comentario || null });
 
-  if (error) return { ok: false, error: error.message };
+  if (rpcError) {
+    // Actualizar solicitud
+    const { error: updErr } = await (adminSupabase as any)
+      .schema("tranqui_legal")
+      .from("trq_solicitud_socio")
+      .update({
+        ssc_estado: "aceptada",
+        ssc_contrato_confirmado_en: new Date().toISOString(),
+        ssc_contrato_confirmado_por: perfilAdmin?.usu_id || user?.id || null,
+        ssc_actualizado_en: new Date().toISOString(),
+      })
+      .eq("ssc_id", solicitudId);
 
-  // Enviar notificaciones de confirmación de activación de abogado
-  if (solicitud) {
+    if (updErr) return { ok: false, error: updErr.message };
+
+    // Activar en trq_abogado
+    await (adminSupabase as any)
+      .schema("tranqui_legal")
+      .from("trq_abogado")
+      .upsert({
+        abg_usuario_id: targetUsuId,
+        abg_solicitud_id: solicitudId,
+        abg_estado: "verificado",
+        abg_verificado_en: new Date().toISOString(),
+      }, { onConflict: "abg_usuario_id" });
+
+    // Registrar en historial de revisiones
+    await adminSupabase
+      .schema("tranqui_legal")
+      .from("trq_revision_solicitud")
+      .insert({
+        rev_solicitud_id: solicitudId,
+        rev_admin_id: perfilAdmin?.usu_id || user?.id || null,
+        rev_decision: "aceptada",
+        rev_comentario: comentario || "Contrato firmado recibido y confirmado. Activación de credenciales y rol de Abogado.",
+      });
+
+    // Asignar perfil ABOGADO en comun_seguridad
     try {
-      const adminSupabase = crearClienteAdmin() || supabase;
-      const { data: uApplicant } = await adminSupabase
+      await (adminSupabase as any)
         .schema("comun_seguridad")
-        .from("seg_usuario")
-        .select("usu_id, usu_correo, usu_nombres, usu_apellidos")
-        .eq("usu_id", solicitud.ssc_usuario_id)
-        .maybeSingle();
-
-      if (uApplicant) {
-        const nombrePostulante = [uApplicant.usu_nombres, uApplicant.usu_apellidos].filter(Boolean).join(" ") || uApplicant.usu_correo;
-        const tituloNotif = "💼 ¡Tu Contrato de Socio Abogado ha sido Confirmado!";
-        const cuerpoHTML = `
-          <div style="font-family: sans-serif; padding: 20px; color: #111;">
-            <h2 style="color: #059669;">¡Firma Confirmada, ${nombrePostulante}!</h2>
-            <p>Hemos recibido y verificado tu contrato de sociedad firmado. Tu cuenta ha sido activada con el rol de <strong>Abogado</strong> en la plataforma.</p>
-            <p>Ya puedes acceder a las herramientas de abogado, gestionar tu agenda y recibir casos.</p>
-            <p><a href="/panel" style="display: inline-block; padding: 10px 18px; background: #5000BA; color: #fff; text-decoration: none; border-radius: 8px; font-weight: 700;">Ir a mi Panel de Abogado</a></p>
-          </div>
-        `;
-
-        await (adminSupabase as any).schema("comun_notificacion").from("not_registro").insert([
-          {
-            not_usuario_id: uApplicant.usu_id,
-            not_negocio: "TRANQ",
-            not_canal: "IN_APP",
-            not_titulo: tituloNotif,
-            not_contenido_html: cuerpoHTML,
-            not_creado_en: new Date().toISOString()
-          },
-          {
-            not_usuario_id: uApplicant.usu_id,
-            not_negocio: "TRANQ",
-            not_canal: "PUSH",
-            not_titulo: tituloNotif,
-            not_contenido_html: cuerpoHTML,
-            not_creado_en: new Date().toISOString()
-          }
-        ]);
-
-        agregarCampanaServidor({
-          id: `camp-contrato-conf-${solicitudId}-${Date.now()}`,
-          asunto: tituloNotif,
-          contenidoHTML: cuerpoHTML,
-          tipoEmision: "AUTOMATICA",
-          emisorNombre: "Equipo de Soporte Legal",
-          emisorCorreo: "soporte@tranqi24.com",
-          procesoOrigen: "PLT-020 Activación de Socio Abogado",
-          audiencia: `ABOGADO (${uApplicant.usu_correo})`,
-          canales: ["IN_APP", "EMAIL", "PUSH"],
-          destinatariosDetalle: [uApplicant.usu_correo],
-          enviados: 1,
-          leidos: 0,
-          ignorados: 0,
-          fecha: new Date().toISOString(),
+        .rpc("seg_fn_asignar_perfil", {
+          p_target_usuario_id: targetUsuId,
+          p_negocio: "TRANQ",
+          p_perfil_clave: "ABOGADO",
         });
-      }
-    } catch (errNot) {
-      console.error("Error al enviar notificación de confirmación de contrato:", errNot);
+    } catch {
+      // Ignorar si el RPC no existe
     }
+  }
+
+  // Notificar al solicitante cliente/abogado sobre la confirmación de su contrato
+  try {
+    const { data: uApplicant } = await adminSupabase
+      .schema("comun_seguridad")
+      .from("seg_usuario")
+      .select("usu_id, usu_correo, usu_nombres, usu_apellidos")
+      .eq("usu_id", targetUsuId)
+      .maybeSingle();
+
+    if (uApplicant) {
+      const nombrePostulante = [uApplicant.usu_nombres, uApplicant.usu_apellidos].filter(Boolean).join(" ") || uApplicant.usu_correo;
+      const tituloNotif = "💼 ¡Tu Contrato de Socio Abogado ha sido Confirmado!";
+      const cuerpoHTML = `
+        <div style="font-family: sans-serif; padding: 20px; color: #111;">
+          <h2 style="color: #059669;">¡Firma Confirmada, ${nombrePostulante}!</h2>
+          <p>Hemos recibido y verificado tu contrato de sociedad firmado. Tu cuenta ha sido activada con el rol de <strong>Abogado</strong> en la plataforma.</p>
+          <p>Ya puedes acceder a las herramientas de abogado, gestionar tu agenda y recibir casos.</p>
+          <p><a href="/panel" style="display: inline-block; padding: 10px 18px; background: #5000BA; color: #fff; text-decoration: none; border-radius: 8px; font-weight: 700;">Ir a mi Panel de Abogado</a></p>
+        </div>
+      `;
+
+      await (adminSupabase as any).schema("comun_notificacion").from("not_registro").insert([
+        {
+          not_usuario_id: uApplicant.usu_id,
+          not_negocio: "TRANQ",
+          not_canal: "IN_APP",
+          not_titulo: tituloNotif,
+          not_contenido_html: cuerpoHTML,
+          not_creado_en: new Date().toISOString()
+        },
+        {
+          not_usuario_id: uApplicant.usu_id,
+          not_negocio: "TRANQ",
+          not_canal: "PUSH",
+          not_titulo: tituloNotif,
+          not_contenido_html: cuerpoHTML,
+          not_creado_en: new Date().toISOString()
+        }
+      ]);
+
+      agregarCampanaServidor({
+        id: `camp-contrato-conf-${solicitudId}-${Date.now()}`,
+        asunto: tituloNotif,
+        contenidoHTML: cuerpoHTML,
+        tipoEmision: "AUTOMATICA",
+        emisorNombre: "Equipo de Soporte Legal",
+        emisorCorreo: "soporte@tranqi24.com",
+        procesoOrigen: "PLT-020 Activación de Socio Abogado",
+        audiencia: `ABOGADO (${uApplicant.usu_correo})`,
+        canales: ["IN_APP", "EMAIL", "PUSH"],
+        destinatariosDetalle: [uApplicant.usu_correo],
+        enviados: 1,
+        leidos: 0,
+        ignorados: 0,
+        fecha: new Date().toISOString(),
+      });
+    }
+  } catch (errNot) {
+    console.error("Error al enviar notificación de confirmación de contrato:", errNot);
   }
 
   revalidatePath("/panel/socios");
