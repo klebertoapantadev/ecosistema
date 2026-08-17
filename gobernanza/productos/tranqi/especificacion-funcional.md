@@ -112,10 +112,18 @@ Capacidad para que el usuario comparta cualquier documento de su Billetera Digit
 
 ### TRQ-ABG-001 — Acreditación, Contratación y Onboarding de Socio Abogado
 **Responsable:** Kleber Toapanta | **Estado:** ✅ Implementado y Verificado (100%)
-- Formulario de postulación de 5 pasos con opción de primera oportunidad (sin experiencia previa).
-- Generación binaria OpenXML Word (`.docx`) y vista web de impresión del contrato marco de prestación de servicios por intermediación tecnológica.
-- Carga y verificación del contrato firmado con soporte multiformato y fallback BDD.
-- Notificación multicanal inmediata a operadores y activación automática de rol `ABOGADO`.
+
+#### Reglas de Contratación, Formatos y Trazabilidad:
+1. **Firma y Aprobación Definitiva (Exclusivamente PDF):**
+   - Para la formalización y activación final del socio se admite **únicamente el formato PDF (`.pdf`)** con la firma manuscrita o electrónica del abogado.
+   - En fases posteriores, un **Agente de IA** validará automáticamente el documento: integridad del texto frente a la plantilla original, detección de firmas y hash del archivo.
+2. **Propuesta de Modificación o Comentarios a las Cláusulas (Formato Word `.docx` / `.doc`):**
+   - Si el postulante sube un archivo en Word, el sistema lo cataloga como una **Propuesta de Modificación / Observación al Contrato**.
+   - **Campo Obligatorio:** Se exige una justificación/motivo de los cambios propuestos (mínimo 5 caracteres).
+   - **Notificación Multicanal Prioritaria:** Despacho inmediato (In-App, Push y SMTP) a administradores y operadores: *"📝 Propuesta de Modificación al Contrato — Postulante: {nombre}"*.
+3. **Versionamiento Inmutable del Intercambio (Modelo Contract Lifecycle Management - CLM):**
+   - En lugar de repositorios Git en servidor (inadecuados para binarios pesados y consultas SQL), se implementa un modelo de **versionamiento inmutable en Base de Datos (`trq_documento_socio` + `trq_revision_solicitud`)**, registrando versiones consecutivas (`v1`, `v2`, `v3`...), autor, rol, timestamp, archivo binario y motivos.
+   - Los operadores y administradores disponen de la bitácora cronológica en `/panel/socios/[id]` para responder observaciones, emitir nuevas minutas consensuadas o rechazar cláusulas improcedentes.
 
 ### TRQ-ABG-002 — Despacho Virtual y Expediente Digital
 **Responsable:** Kleber Toapanta / Jesus Navarrete | **Estado:** ⏳ Pendiente (0%)

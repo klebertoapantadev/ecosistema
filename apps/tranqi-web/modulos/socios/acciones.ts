@@ -547,6 +547,172 @@ export async function subirDocumentoSocioAction(formData: FormData): Promise<Res
     const msg = errSubida instanceof Error ? errSubida.message : "Error inesperado al subir archivo";
     return { ok: false, error: msg };
   }
+export async function enviarPropuestaModificacionContratoAction(datos: {
+  solicitudId: string;
+  path: string;
+  nombreArchivo: string;
+  comentario: string;
+}): Promise<Resultado> {
+  const adminSupabase = crearClienteAdmin() || await crearClienteServidor();
+  const supabase = await crearClienteServidor();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "Sesión no válida o usuario no autenticado." };
+
+  if (!datos.comentario || datos.comentario.trim().length < 5) {
+    return { ok: false, error: "Debes ingresar una explicación o comentario sobre las modificaciones propuestas al contrato." };
+  }
+
+  // 1. Registrar documento como propuesta de contrato en trq_documento_socio
+  const tagComentario = `[PROPUESTA_MODIFICACION_CONTRATO] ${datos.comentario.trim()}`;
+  
+  const { error: errDoc } = await adminSupabase
+    .schema("tranqui_legal")
+    .from("trq_documento_socio")
+    .insert({
+      dcs_solicitud_id: datos.solicitudId,
+      dcs_tipo: "otro",
+      dcs_url: datos.path,
+      dcs_nombre_archivo: datos.nombreArchivo,
+      dcs_comentario: tagComentario,
+      dcs_subido_por: user.id,
+    });
+
+  if (errDoc) {
+    console.error("Error al registrar propuesta de contrato:", errDoc);
+    return { ok: false, error: errDoc.message };
+  }
+
+  // 2. Registrar en historial de revisiones (trq_revision_solicitud)
+  await adminSupabase
+    .schema("tranqui_legal")
+    .from("trq_revision_solicitud")
+    .insert({
+      rev_solicitud_id: datos.solicitudId,
+      rev_decision: "reingreso",
+      rev_comentario: `Propuesta de modificación al contrato (Word): ${datos.comentario.trim()}`,
+      rev_revisado_por: user.id,
+    });
+
+  // 3. Notificar a los administradores y operadores
+  try {
+    const { data: uPostulante } = await adminSupabase
+      .schema("comun_seguridad")
+      .from("seg_usuario")
+      .select("usu_nombres, usu_apellidos, usu_correo")
+      .eq("usu_id", user.id)
+      .maybeSingle();
+
+    const nombrePostulante = [uPostulante?.usu_nombres, uPostulante?.usu_apellidos].filter(Boolean).join(" ") || uPostulante?.usu_correo || "Postulante";
+    const correoPostulante = uPostulante?.usu_correo || "postulante@tranqi24.com";
+    const urlRevision = `https://www.tranqi24.com/panel/socios/${datos.solicitudId}`;
+    const tituloAdmin = `📝 Propuesta de Modificación al Contrato — Postulante: ${nombrePostulante}`;
+
+    const contenidoHTMLAdmin = `
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; padding: 22px; color: #111; max-width: 600px; margin: 0 auto; background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 12px;">
+        <div style="text-align: center; margin-bottom: 16px;">
+          <span style="display: inline-block; background: #FEF3C7; color: #92400E; padding: 6px 14px; border-radius: 999px; font-weight: 800; font-size: 0.82rem; border: 1px solid #F59E0B;">
+            📝 PROPUESTA DE CAMBIOS AL CONTRATO
+          </span>
+        </div>
+        <h2 style="color: #5000BA; margin-top: 0; font-size: 1.3rem; text-align: center;">Comentarios a las Cláusulas del Contrato</h2>
+        <p style="font-size: 0.95rem; line-height: 1.5; color: #374151;">
+          El postulante <strong>${nombrePostulante}</strong> (<code>${correoPostulante}</code>) ha enviado una propuesta de modificaciones y observaciones al contrato de servicios en formato Word (<code>${datos.nombreArchivo}</code>).
+        </p>
+        <div style="background: #F9FAFB; border-left: 4px solid #5000BA; padding: 12px 16px; margin: 16px 0; border-radius: 4px;">
+          <p style="margin: 0; font-size: 0.9rem; color: #1F2937; font-style: italic;">
+            "${datos.comentario.trim()}"
+          </p>
+        </div>
+        <div style="text-align: center; margin: 24px 0;">
+          <a href="${urlRevision}" style="display: inline-block; background: #5000BA; color: #FFFFFF; padding: 12px 24px; border-radius: 8px; font-weight: 800; text-decoration: none; font-size: 0.95rem;">
+            Revisar Propuesta de Contrato →
+          </a>
+        </div>
+        <p style="font-size: 0.8rem; color: #9CA3AF; border-top: 1px solid #E5E7EB; padding-top: 14px; margin-bottom: 0;">
+          ID de Solicitud: <code>${datos.solicitudId}</code> • tranqi® Red Legal
+        </p>
+      </div>
+    `;
+
+    const destinatariosAdmin = await obtenerDestinatariosStaffTranqi(adminSupabase, user.id);
+
+    const notifsAdmins: any[] = [];
+    for (const adm of destinatariosAdmin) {
+      notifsAdmins.push({
+        not_usuario_id: adm.id,
+        not_negocio: "TRANQ",
+        not_canal: "IN_APP",
+        not_titulo: tituloAdmin,
+        not_contenido_html: contenidoHTMLAdmin,
+        not_url_accion: `/panel/socios/${datos.solicitudId}`,
+        not_creado_en: new Date().toISOString()
+      });
+      notifsAdmins.push({
+        not_usuario_id: adm.id,
+        not_negocio: "TRANQ",
+        not_canal: "PUSH",
+        not_titulo: tituloAdmin,
+        not_contenido_html: contenidoHTMLAdmin,
+        not_url_accion: `/panel/socios/${datos.solicitudId}`,
+        not_creado_en: new Date().toISOString()
+      });
+    }
+
+    if (notifsAdmins.length > 0) {
+      await (adminSupabase as any).schema("comun_notificacion").from("not_registro").insert(notifsAdmins);
+    }
+
+    // SMTP
+    const smtpHost = process.env.SMTP_HOST || process.env.EMAIL_HOST;
+    const smtpUser = process.env.SMTP_USER || process.env.EMAIL_USER;
+    const smtpPass = process.env.SMTP_PASS || process.env.EMAIL_PASS;
+    const smtpPort = Number(process.env.SMTP_PORT || 587);
+
+    if (smtpHost && smtpUser && smtpPass && destinatariosAdmin.length > 0) {
+      const transporter = nodemailer.createTransport({
+        host: smtpHost,
+        port: smtpPort,
+        secure: smtpPort === 465,
+        auth: { user: smtpUser, pass: smtpPass },
+        tls: { rejectUnauthorized: false },
+      });
+
+      for (const adm of destinatariosAdmin) {
+        try {
+          await transporter.sendMail({
+            from: `"tranqi · Notificaciones" <${smtpUser}>`,
+            to: adm.correo,
+            subject: tituloAdmin,
+            html: contenidoHTMLAdmin,
+          });
+        } catch (errSmtp) {}
+      }
+    }
+
+    agregarCampanaServidor({
+      id: `camp-propuesta-contrato-${datos.solicitudId}-${Date.now()}`,
+      asunto: tituloAdmin,
+      contenidoHTML: contenidoHTMLAdmin,
+      tipoEmision: "AUTOMATICA",
+      emisorNombre: nombrePostulante,
+      emisorCorreo: correoPostulante,
+      procesoOrigen: "PLT-019 Propuesta de Modificación al Contrato",
+      audiencia: "ADMINISTRADORES Y OPERADORES",
+      canales: ["IN_APP", "EMAIL", "PUSH"],
+      destinatariosDetalle: destinatariosAdmin.map(d => d.correo),
+      enviados: destinatariosAdmin.length,
+      leidos: 0,
+      ignorados: 0,
+      fecha: new Date().toISOString(),
+    });
+  } catch (err) {
+    console.warn("Aviso al notificar propuesta:", err);
+  }
+
+  revalidatePath("/panel/solicitud-socio");
+  revalidatePath(`/panel/socios/${datos.solicitudId}`);
+  revalidatePath("/panel/socios");
+  return { ok: true, data: undefined };
 }
 
 export async function registrarDocumentoSocio(

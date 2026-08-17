@@ -29,7 +29,8 @@ const ETIQUETA_TIPO: Record<string, string> = {
   identidad: "Documento de Identificación (Cédula / Pasaporte)",
   cv: "Hoja de Vida (CV)",
   curriculum: "Hoja de Vida (CV)",
-  contrato_socio: "Contrato de sociedad firmado",
+  contrato_socio: "Contrato de sociedad firmado (PDF)",
+  propuesta_contrato: "Propuesta de modificación al contrato (Word)",
   otro: "Certificado / Respaldo",
   respaldo_revision: "Respaldo de revisión (admin)",
 };
