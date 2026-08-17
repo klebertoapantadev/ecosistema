@@ -1274,27 +1274,36 @@ function generarHTML(contenidoInicial, rutaInicial) {
           viewBtn.onclick = () => saltarAComentarioEnDoc(c);
           actions.appendChild(viewBtn);
 
-          if (c.status === 'ATENDIDO' && c.aiChange) {
-            const diffBtn = document.createElement('button');
-            diffBtn.className = 'comment-card-btn btn-diff';
-            diffBtn.innerHTML = '🔍 Ver Diff';
-            diffBtn.onclick = () => abrirModalDiff(c);
+          if (c.status === 'ATENDIDO') {
+            if (c.aiChange && c.aiChange.beforeText) {
+              const diffBtn = document.createElement('button');
+              diffBtn.className = 'comment-card-btn btn-diff';
+              diffBtn.innerHTML = '🔍 Ver Diff';
+              diffBtn.onclick = () => abrirModalDiff(c);
+              actions.appendChild(diffBtn);
+            }
 
             const acceptBtn = document.createElement('button');
             acceptBtn.className = 'comment-card-btn btn-accept';
             acceptBtn.innerHTML = '✅ Aceptar';
             acceptBtn.title = 'Aceptar el cambio y remover del historial';
             acceptBtn.onclick = () => aceptarCambioIA(c.id);
-
-            const revertBtn = document.createElement('button');
-            revertBtn.className = 'comment-card-btn btn-revert';
-            revertBtn.innerHTML = '↩️ Reversar';
-            revertBtn.title = 'Deshacer el cambio en el documento';
-            revertBtn.onclick = () => reversarCambioIA(c.id);
-
-            actions.appendChild(diffBtn);
             actions.appendChild(acceptBtn);
-            actions.appendChild(revertBtn);
+
+            if (c.aiChange && c.aiChange.beforeText) {
+              const revertBtn = document.createElement('button');
+              revertBtn.className = 'comment-card-btn btn-revert';
+              revertBtn.innerHTML = '↩️ Reversar';
+              revertBtn.title = 'Deshacer el cambio en el documento';
+              revertBtn.onclick = () => reversarCambioIA(c.id);
+              actions.appendChild(revertBtn);
+            } else {
+              const delBtn = document.createElement('button');
+              delBtn.className = 'comment-card-btn btn-del';
+              delBtn.innerHTML = '🗑 Eliminar';
+              delBtn.onclick = () => eliminarComentario(c.id);
+              actions.appendChild(delBtn);
+            }
           } else {
             const editBtn = document.createElement('button');
             editBtn.className = 'comment-card-btn btn-edit';

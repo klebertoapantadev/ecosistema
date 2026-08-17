@@ -6,6 +6,10 @@
     "selectedText": "",
     "comment": "Para tranqi vamos a ofrecer como una herramienta tanto para clientes como abogados una \"Billetera docuementos\", la idea es administrar aqui los digitales de documentos utilizados con frecuencia (cedula/ licencia / cedulas de mi familia / contratos de servicios (internet / seguro / etc)). La idea es centralizar esos documentos , con opcion para compartir el link (con un TTL NHoras/N Dias / Una Vista / Personalizado). La idea es cargar el documento, analziarlos, lectura de loas parametros importantes (fecha de emision / caducidad/ etc). generar alertas (caducidad de licencias, recordatorios de pago, etc). Este es el apartado que habiamos conversado para gestionar documentos de forma segura.",
     "timestamp": "2026-08-17T10:14:43.612Z",
-    "status": "ATENDIDO"
+    "status": "ATENDIDO",
+    "aiChange": {
+      "summary": "Se incorporó la Matriz de Responsables y la especificación completa del requerimiento TRQ-002: Billetera Digital de Documentos Seguros y Enlaces Efímeros (TTL).",
+      "timestamp": "2026-08-17T10:45:00.000Z"
+    }
   }
 ]
