@@ -75,7 +75,7 @@ decisiones de alcance se definieron directamente en la implementación — ver e
   - **Generación Dinámica e Impresión:** Al aprobar la solicitud, tanto el postulante como el operador pueden generar una vista de impresión limpia del contrato con sus datos reales auto-completados. La ruta `/panel/solicitud-socio/contrato/imprimir` invoca el diálogo de impresión nativo del navegador para descargar o guardar como PDF.
   - **Carga de Contrato Firmado:** El socio debe firmar de forma manuscrita o digital este contrato y subirlo de vuelta obligatoriamente en formato PDF. El archivo se almacena en el bucket privado `socios-documentos` con el tipo `"contrato_socio"`.
 - **Notificación Dual (Email y Push):** La aprobación o rechazo de la solicitud genera ahora un registro de notificación dual (`IN_APP` y `PUSH`) persistido en `comun_notificacion.not_registro` además de la cola de correo.
-- **Flujo de Incorporación, Repositorio Estructurado y Bienvenida Post-Registro (2026-08-16):**
+- **Flujo de Incorporación, Repositorio Estructurado y Bienvenida Post-Registro (2026-08-16 / 2026-08-17):**
   - **Pantalla Informativa Previa de Beneficios con Texto Editable:** Antes de iniciar el registro, el postulante visualiza una vista informativa con los beneficios clave de pertenecer a la red jurídica y un texto preliminar editable respaldado en la configuración común de términos (`incorporacion_red`).
   - **Opción "No tengo experiencia laboral" (Primera Oportunidad):** Se incorpora la casilla para postulantes recién graduados o noveles, liberando la obligatoriedad de registrar cargos previos y catalogando el perfil adecuadamente.
   - **Repositorio Común de Archivos y Conceptos:** Convención estructurada de almacenamiento en Supabase Storage (`{negocio}/{usuario_id}/{concepto}/{referencia_id}/{tipo}-{uuid}-{nombre}`) permitiendo categorizar archivos de registro, drive personal, trámites, análisis, expedientes y contratos.
@@ -84,7 +84,16 @@ decisiones de alcance se definieron directamente en la implementación — ver e
     1. *✏️ Continuar / Editar Solicitud:* Navegación directa al formulario para completar o ajustar sus datos.
     2. *🔄 Reiniciar Solicitud:* Limpieza de datos y archivos previos para comenzar un nuevo proceso limpio desde el Paso 0.
     3. *🗑️ Eliminar Solicitud:* Cancelación y supresión definitiva de la solicitud activa no aprobada mediante el Stored Procedure `tranqui_legal.trq_fn_eliminar_solicitud_propia()`, liberando su perfil para postularse en el futuro.
-    4. *Inactivación Automática:* La solicitud deja de mostrarse como postulación activa cuando el usuario la elimina o cuando un operador/administrador la aprueba (momento en el cual se activa el perfil formal de Socio Abogado).
+    4. *Inactivación Automática:* La solicitud deja de mostrarse como postulación activa cuando el usuario la elimina o cuando se culmina el ciclo de firma y aprobación final.
+  - **Aprobación, Descarga Word (.docx) y Firma de Contrato:**
+    1. Al ser aprobada la postulación, el postulante visualiza el banner esmeralda de aprobación con botón directo para descargar su plantilla pre-llenada en formato Word (`.docx`) o imprimir en PDF.
+    2. El postulante carga el contrato firmado (manuscrito o electrónico) y lo envía a revisión final.
+    3. El operador confirma el contrato, asigna el rol definitivo `ABOGADO` y el perfil se publica en el carrusel de abogados verificados de la landing page (`/api/abogados-publicos`).
+  - **Reenvío Multicanal de Notificación de Aceptación:** El operador dispone de un botón directo para reenviar las alertas y enlaces de descarga/firma al correo del postulante vía SMTP, In-App y Push.
+  - **Centro de Notificaciones Interactivo con 3 Acciones:**
+    1. *✅ Aceptar (Confirmar Lectura):* Marca como leída y traslada la notificación a la pestaña permanente de *Historial*.
+    2. *⏰ Posponer (Snooze):* Pausa la notificación por 3h, 6h, 12h, 24h o tiempo personalizado antes de volver a alertar.
+    3. *🗑️ Eliminar (Descartar):* Oculta la notificación para el usuario manteniendo el registro inmutable en base de datos para auditoría.
 
 ## Pendiente
 
