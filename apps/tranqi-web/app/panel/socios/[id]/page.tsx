@@ -5,6 +5,7 @@ import { CheckCircle2, XCircle, ExternalLink, Download, FileText } from "lucide-
 import { obtenerSolicitudDetalle, obtenerAbogadoPorSolicitud } from "../../../../modulos/socios/consultas";
 import { AccionesSolicitud } from "../../../../modulos/socios/componentes/AccionesSolicitud";
 import { BotonConfirmarContrato } from "../../../../modulos/socios/componentes/BotonConfirmarContrato";
+import { BotonReenviarNotificacionAceptacion } from "../../../../modulos/socios/componentes/BotonReenviarNotificacionAceptacion";
 import { SubirDocumentoRevision } from "../../../../modulos/socios/componentes/SubirDocumentoRevision";
 import { ENLACES_VERIFICACION } from "../../../../modulos/socios/esquema";
 
@@ -118,7 +119,26 @@ export default async function PaginaDetalleSocio({ params }: { params: Promise<{
               </div>
             );
           })()}
-          <div style={{ marginTop: "12px", borderTop: "1px solid #E5E7EB", paddingTop: "12px" }}>
+          <div style={{ marginTop: "16px", borderTop: "1px solid #E5E7EB", paddingTop: "14px", display: "flex", flexWrap: "wrap", alignItems: "center", gap: "10px" }}>
+            <a
+              href={`/api/solicitud-socio/contrato/descargar?solicitudId=${solicitud.ssc_id}`}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+                padding: "8px 14px",
+                borderRadius: "8px",
+                background: "#5000BA",
+                color: "#FFFFFF",
+                fontSize: "0.82rem",
+                fontWeight: 700,
+                textDecoration: "none",
+                boxShadow: "0 2px 6px rgba(80, 0, 186, 0.2)",
+              }}
+            >
+              <Download size={14} /> Descargar Plantilla Word (.docx)
+            </a>
+
             <a
               href={`/panel/solicitud-socio/contrato/imprimir?solicitudId=${solicitud.ssc_id}`}
               target="_blank"
@@ -134,11 +154,14 @@ export default async function PaginaDetalleSocio({ params }: { params: Promise<{
                 fontSize: "0.82rem",
                 fontWeight: 700,
                 textDecoration: "none",
+                boxShadow: "0 2px 6px rgba(5, 135, 110, 0.2)",
               }}
             >
-              <Download size={14} /> Descargar plantilla de contrato para firmar
+              <FileText size={14} /> Ver / Imprimir Contrato Oficial
             </a>
           </div>
+
+          <BotonReenviarNotificacionAceptacion solicitudId={solicitud.ssc_id} correo={usuario?.usu_correo} />
         </div>
       )}
 

@@ -23,9 +23,9 @@ export default async function PaginaImprimirContrato({ searchParams }: Props) {
 
   // Validar autorización: el propio solicitante o un operador/admin de Tranqi
   const esDuenio = solicitud.ssc_usuario_id === perfil.usu_id;
-
+  const esSuperAdmin = Boolean(perfil.usu_superadmin_plataforma);
   const perfiles = await obtenerPerfiles("tranqi");
-  const esAdmin = Array.isArray(perfiles) && (perfiles.includes("ADMINISTRADOR") || perfiles.includes("SUPERADMIN") || perfiles.includes("OPERADOR"));
+  const esAdmin = esSuperAdmin || (Array.isArray(perfiles) && perfiles.some((p: string) => ["ADMINISTRADOR", "SUPERADMIN", "OPERADOR", "AUXILIAR"].includes(p.toUpperCase())));
 
   if (!esDuenio && !esAdmin) {
     return notFound();

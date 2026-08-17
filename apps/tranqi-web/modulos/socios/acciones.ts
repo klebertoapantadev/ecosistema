@@ -778,6 +778,173 @@ export async function decidirSolicitudSocio(datos: {
   return { ok: true, data: undefined };
 }
 
+export async function reenviarNotificacionAceptacionAction(solicitudId: string): Promise<Resultado<{ correo: string }>> {
+  const supabase = await crearClienteServidor();
+  const adminSupabase = crearClienteAdmin() || supabase;
+  const perfilOperador = await obtenerPerfilActual();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  // 1. Obtener la solicitud
+  const { data: solData, error: solErr } = await (adminSupabase as any)
+    .schema("tranqui_legal")
+    .from("trq_solicitud_socio")
+    .select("ssc_id, ssc_usuario_id, ssc_estado")
+    .eq("ssc_id", solicitudId)
+    .single();
+
+  if (solErr || !solData) {
+    return { ok: false, error: solErr?.message || "Solicitud no encontrada" };
+  }
+
+  // 2. Obtener datos del postulante
+  const { data: uApplicant, error: uErr } = await adminSupabase
+    .schema("comun_seguridad")
+    .from("seg_usuario")
+    .select("usu_id, usu_correo, usu_nombres, usu_apellidos")
+    .eq("usu_id", solData.ssc_usuario_id)
+    .maybeSingle();
+
+  if (uErr || !uApplicant || !uApplicant.usu_correo) {
+    return { ok: false, error: "No se encontró el correo del postulante." };
+  }
+
+  const nombrePostulante = [uApplicant.usu_nombres, uApplicant.usu_apellidos].filter(Boolean).join(" ") || uApplicant.usu_correo;
+  const tituloNotif = "🎉 ¡Tu Acreditación como Socio Abogado fue APROBADA! — Descarga y Firma tu Contrato";
+
+  const cuerpoHTML = `
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; padding: 24px; color: #111; max-width: 600px; margin: 0 auto; background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 12px;">
+      <div style="text-align: center; margin-bottom: 20px;">
+        <span style="display: inline-block; background: #ECFDF5; color: #065F46; padding: 6px 16px; border-radius: 999px; font-weight: 800; font-size: 0.85rem; border: 1px solid #10B981;">
+          🟢 ACREDITACIÓN PROFESIONAL APROBADA
+        </span>
+      </div>
+      <h2 style="color: #059669; margin-top: 0; font-size: 1.4rem; text-align: center;">¡Felicitaciones, ${nombrePostulante}!</h2>
+      <p style="font-size: 0.95rem; line-height: 1.5; color: #374151;">
+        Tu postulación para unirte al Equipo Jurídico de <strong>tranqi</strong> ha sido evaluada y marcada formalmente como <strong>APROBADA</strong>.
+      </p>
+      <p style="font-size: 0.95rem; line-height: 1.5; color: #374151;">
+        Para culminar tu incorporación y activar tus credenciales de Socio Abogado, por favor sigue estos 3 sencillos pasos:
+      </p>
+
+      <div style="background: #F9FAFB; border: 1.5px solid #E5E7EB; border-radius: 10px; padding: 18px; margin: 20px 0;">
+        <ol style="margin: 0; padding-left: 20px; line-height: 1.7; color: #1F2937; font-size: 0.92rem;">
+          <li style="margin-bottom: 10px;">
+            <strong>Descarga tu contrato pre-llenado</strong>:<br/>
+            <a href="https://www.tranqi24.com/api/solicitud-socio/contrato/descargar?solicitudId=${solicitudId}" style="display: inline-block; margin-top: 4px; color: #5000BA; font-weight: 700; text-decoration: underline;">
+              📥 Descargar Plantilla Oficial de Contrato (.docx)
+            </a>
+          </li>
+          <li style="margin-bottom: 10px;">
+            <strong>Fírmalo</strong> (de forma manuscrita o con firma electrónica).
+          </li>
+          <li style="margin-bottom: 0;">
+            <strong>Sube el contrato firmado</strong> en la plataforma:<br/>
+            <a href="https://www.tranqi24.com/panel/solicitud-socio" style="display: inline-block; margin-top: 6px; background: #05876E; color: #FFFFFF; padding: 8px 16px; border-radius: 8px; font-weight: 700; text-decoration: none; font-size: 0.88rem;">
+              📝 Subir Contrato Firmado en mi Panel →
+            </a>
+          </li>
+        </ol>
+      </div>
+
+      <p style="font-size: 0.88rem; color: #6B7280; line-height: 1.4; border-top: 1px solid #E5E7EB; padding-top: 16px; margin-bottom: 0;">
+        Si tienes alguna inquietud, responde a este correo o comunícate con nuestro equipo de acreditación.
+      </p>
+    </div>
+  `;
+
+  // 1. Guardar notificaciones in-app y push
+  try {
+    await (adminSupabase as any).schema("comun_notificacion").from("not_registro").insert([
+      {
+        not_usuario_id: uApplicant.usu_id,
+        not_negocio: "TRANQ",
+        not_canal: "IN_APP",
+        not_titulo: tituloNotif,
+        not_contenido_html: cuerpoHTML,
+        not_url_accion: "/panel/solicitud-socio",
+        not_creado_en: new Date().toISOString()
+      },
+      {
+        not_usuario_id: uApplicant.usu_id,
+        not_negocio: "TRANQ",
+        not_canal: "PUSH",
+        not_titulo: tituloNotif,
+        not_contenido_html: cuerpoHTML,
+        not_url_accion: "/panel/solicitud-socio",
+        not_creado_en: new Date().toISOString()
+      }
+    ]);
+  } catch (errNot) {
+    console.warn("Aviso en not_registro:", errNot);
+  }
+
+  // 2. Enviar correo SMTP real
+  const smtpHost = process.env.SMTP_HOST || process.env.EMAIL_HOST;
+  const smtpUser = process.env.SMTP_USER || process.env.EMAIL_USER;
+  const smtpPass = process.env.SMTP_PASS || process.env.EMAIL_PASS;
+  const smtpPort = Number(process.env.SMTP_PORT || 587);
+
+  if (smtpHost && smtpUser && smtpPass && uApplicant.usu_correo) {
+    try {
+      const transporter = nodemailer.createTransport({
+        host: smtpHost,
+        port: smtpPort,
+        secure: smtpPort === 465,
+        auth: {
+          user: smtpUser,
+          pass: smtpPass,
+        },
+      });
+
+      await transporter.sendMail({
+        from: `"tranqi · Red de Abogados" <${smtpUser}>`,
+        to: uApplicant.usu_correo,
+        subject: tituloNotif,
+        html: cuerpoHTML,
+      });
+    } catch (errSmtp) {
+      console.error("Error al enviar correo SMTP de reenvío:", errSmtp);
+    }
+  }
+
+  // 3. Registrar en bitácora de revisiones
+  try {
+    await adminSupabase
+      .schema("tranqui_legal")
+      .from("trq_revision_solicitud")
+      .insert({
+        rev_solicitud_id: solicitudId,
+        rev_admin_id: perfilOperador?.usu_id || user?.id || null,
+        rev_decision: "aceptada",
+        rev_comentario: "Reenvío de notificación formal de aceptación y plantilla de contrato al correo del postulante.",
+      });
+  } catch (errRev) {
+    console.warn("Aviso al registrar revisión de reenvío:", errRev);
+  }
+
+  // 4. Registrar en Campañas
+  agregarCampanaServidor({
+    id: `camp-reenvio-${solicitudId}-${Date.now()}`,
+    asunto: tituloNotif,
+    contenidoHTML: cuerpoHTML,
+    tipoEmision: "MANUAL",
+    emisorNombre: perfilOperador?.usu_nombres || "Operador de Acreditación",
+    emisorCorreo: perfilOperador?.usu_correo || "evaluacion@tranqi24.com",
+    procesoOrigen: "PLT-019 Reenvío de Aprobación de Socio Abogado",
+    audiencia: `SOLICITANTE (${uApplicant.usu_correo})`,
+    canales: ["IN_APP", "EMAIL", "PUSH"],
+    destinatariosDetalle: [uApplicant.usu_correo],
+    enviados: 1,
+    leidos: 0,
+    ignorados: 0,
+    fecha: new Date().toISOString(),
+  });
+
+  revalidatePath(`/panel/socios/${solicitudId}`);
+  revalidatePath("/panel/socios");
+  return { ok: true, data: { correo: uApplicant.usu_correo } };
+}
+
 export async function obtenerListaSolicitudesSociosAction(): Promise<Resultado<any[]>> {
   const supabase = await crearClienteServidor();
   const adminSupabase = crearClienteAdmin() || supabase;
