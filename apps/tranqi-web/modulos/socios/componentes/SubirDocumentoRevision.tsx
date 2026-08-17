@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { subirDocumentoSocioAction } from "../acciones";
 
 const TIPOS_ACEPTADOS =
   "application/pdf,image/jpeg,image/png,image/webp,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.oasis.opendocument.text";
@@ -34,22 +33,36 @@ export function SubirDocumentoRevision({ solicitudId }: { solicitudId: string })
       return;
     }
     setEnviando(true);
-    const formData = new FormData();
-    formData.append("solicitudId", solicitudId);
-    formData.append("tipo", "respaldo_revision");
-    formData.append("archivo", archivo);
-    formData.append("comentario", comentario);
-    formData.append("concepto", "revision");
+    try {
+      const formData = new FormData();
+      formData.append("solicitudId", solicitudId);
+      formData.append("tipo", "respaldo_revision");
+      formData.append("archivo", archivo);
+      formData.append("comentario", comentario);
+      formData.append("concepto", "revision");
 
-    const resultado = await subirDocumentoSocioAction(formData);
-    setEnviando(false);
-    if (!resultado.ok) {
-      setError(resultado.error);
-      return;
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 20000);
+      const resp = await fetch("/api/solicitud-socio/documentos", {
+        method: "POST",
+        body: formData,
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+      const data = await resp.json();
+      if (!resp.ok || !data.ok) {
+        setError(data.error || "Error al subir el documento");
+        return;
+      }
+      setArchivo(null);
+      setComentario("");
+      router.refresh();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Error de red al subir documento";
+      setError(msg);
+    } finally {
+      setEnviando(false);
     }
-    setArchivo(null);
-    setComentario("");
-    router.refresh();
   }
 
   return (

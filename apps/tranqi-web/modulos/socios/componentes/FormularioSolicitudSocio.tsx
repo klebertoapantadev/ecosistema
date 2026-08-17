@@ -139,9 +139,24 @@ async function subirDocumento(
   if (usuarioId) formData.append("usuarioId", usuarioId);
   if (concepto) formData.append("concepto", concepto);
 
-  const res = await subirDocumentoSocioAction(formData);
-  if (!res.ok) return { ok: false as const, error: `${archivo.name}: ${res.error}` };
-  return { ok: true as const };
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 20000);
+    const resp = await fetch("/api/solicitud-socio/documentos", {
+      method: "POST",
+      body: formData,
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+    const data = await resp.json();
+    if (!resp.ok || !data.ok) {
+      return { ok: false as const, error: `${archivo.name}: ${data.error || "Error al subir"}` };
+    }
+    return { ok: true as const };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : "Error de red al subir archivo";
+    return { ok: false as const, error: `${archivo.name}: ${msg}` };
+  }
 }
 
 const btnPillStyle: React.CSSProperties = {
@@ -1520,31 +1535,60 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
 
       const solicitudId = resultado.data.solicitudId;
 
-      // Subida de archivos con control de repositorio común y clasificación por concepto
+      // Subida de archivos con control de repositorio común y clasificación por concepto (Secuencial y robusto)
       const fotoArchivo = fotoPerfilArchivos[0];
       const identificacionArchivo = identificacionArchivos[0];
       const tituloArchivo = tituloArchivos[0];
 
-      const subidas = await Promise.all([
-        fotoArchivo ? subirDocumento(solicitudId, "foto_perfil", fotoArchivo, "Foto de Perfil Profesional", usuarioId, CONCEPTOS_REPOSITORIO.PERFIL) : null,
-        identificacionArchivo ? subirDocumento(solicitudId, "cedula", identificacionArchivo, "Documento de Identificación Oficial (Cédula/Pasaporte)", usuarioId, CONCEPTOS_REPOSITORIO.IDENTIDAD) : null,
-        tituloArchivo ? subirDocumento(solicitudId, "titulo", tituloArchivo, "Título Universitario Acreditado", usuarioId, CONCEPTOS_REPOSITORIO.REGISTRO) : null,
-        ...cvYCertificados.map((archivo, idx) =>
-          subirDocumento(
-            solicitudId,
-            "cv",
-            archivo,
-            cvYCertificadosComentarios[idx] || "Hoja de Vida / Certificación",
-            usuarioId,
-            CONCEPTOS_REPOSITORIO.REGISTRO,
-          )
-        ),
-      ]);
-      const fallidas = subidas.filter((s): s is { ok: false; error: string } => s !== null && !s.ok);
+      const listaParaSubir: { tipo: "foto_perfil" | "cedula" | "titulo" | "cv"; archivo: File; comentario: string; concepto?: string }[] = [];
 
-      if (fallidas.length > 0) {
+      if (fotoArchivo) {
+        listaParaSubir.push({
+          tipo: "foto_perfil",
+          archivo: fotoArchivo,
+          comentario: "Foto de Perfil Profesional",
+          concepto: CONCEPTOS_REPOSITORIO.PERFIL,
+        });
+      }
+
+      if (identificacionArchivo) {
+        listaParaSubir.push({
+          tipo: "cedula",
+          archivo: identificacionArchivo,
+          comentario: "Documento de Identificación Oficial (Cédula/Pasaporte)",
+          concepto: CONCEPTOS_REPOSITORIO.IDENTIDAD,
+        });
+      }
+
+      if (tituloArchivo) {
+        listaParaSubir.push({
+          tipo: "titulo",
+          archivo: tituloArchivo,
+          comentario: "Título Universitario Acreditado",
+          concepto: CONCEPTOS_REPOSITORIO.REGISTRO,
+        });
+      }
+
+      cvYCertificados.forEach((archivo, idx) => {
+        listaParaSubir.push({
+          tipo: "cv",
+          archivo,
+          comentario: cvYCertificadosComentarios[idx] || "Hoja de Vida / Certificación",
+          concepto: CONCEPTOS_REPOSITORIO.REGISTRO,
+        });
+      });
+
+      const erroresSubida: string[] = [];
+      for (const item of listaParaSubir) {
+        const subida = await subirDocumento(solicitudId, item.tipo, item.archivo, item.comentario, usuarioId, item.concepto);
+        if (!subida.ok) {
+          erroresSubida.push(subida.error);
+        }
+      }
+
+      if (erroresSubida.length > 0) {
         setAvisoArchivos(
-          `Tu solicitud se guardó correctamente, pero estos archivos no se pudieron subir: ${fallidas.map((f) => f.error).join("; ")}.`,
+          `Tu solicitud se guardó correctamente, pero estos archivos no se pudieron subir: ${erroresSubida.join("; ")}.`,
         );
         return;
       }
