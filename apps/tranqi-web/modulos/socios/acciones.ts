@@ -1006,9 +1006,56 @@ export async function obtenerPlantillaContrato(): Promise<Resultado<{ pct_titulo
     .limit(1)
     .maybeSingle();
 
-  if (error) return { ok: false, error: error.message };
-  if (!data) {
-    const DEFAULT_TEMPLATE = `# CONTRATO DE PRESTACIÓN DE SERVICIOS PROFESIONALES Y SOCIEDAD\n\nPor medio del presente documento, se celebra el Contrato de Prestación de Servicios y Acreditación de Socio Abogado entre **tranqi** y el profesional **{{nombre_completo}}**, portador de la cédula de identidad Nro. **{{cedula}}**.\n\n## ANTECEDENTES Y OBJETO\nEl Socio Abogado declara ser un profesional del derecho debidamente registrado y verificado en la SENESCYT y el Foro de Abogados del Ecuador. tranqi provee al Socio Abogado de una cuenta digital para acceder a solicitudes de asesoría jurídica.\n\n## CLÁUSULAS\n1. **Confidencialidad:** Las partes se obligan a mantener absoluta confidencialidad sobre toda la información y casos de clientes tratados a través del portal.\n2. **Veracidad:** El Socio Abogado garantiza que toda la información académica y matrículas cargadas son reales y vigentes.\n3. **Firma:** El Socio Abogado acepta descargar este contrato, firmarlo de forma manuscrita o digital en formato PDF y subirlo al portal de tranqi.\n\nEn Quito, a la fecha de aceptación de la solicitud.`;
+  const DEFAULT_TEMPLATE = `# CONTRATO MARCO DE INTERMEDIACIÓN TECNOLÓGICA Y PRESTACIÓN DE SERVICIOS PROFESIONALES INDEPENDIENTES
+
+Conste por el presente instrumento privado, que se celebra al tenor de las siguientes cláusulas y estipulaciones:
+
+## PRIMERA: COMPARECIENTES
+Comparecen a la suscripción del presente Contrato:
+1. Por una parte, **tranqi® Legal Network** (en adelante denominada la **"PLATAFORMA"**), plataforma digital de intermediación tecnológica y gestión de servicios jurídicos.
+2. Por otra parte, el/la profesional del derecho **{{nombre_completo}}**, de nacionalidad ecuatoriana, portador(a) de la cédula de ciudadanía número **{{cedula}}** (en adelante denominado/a el **"SOCIO ABOGADO"**).
+
+Las partes comparecen por sus propios derechos, con plena capacidad legal para obligarse y contratar.
+
+## SEGUNDA: ANTECEDENTES Y NATURALEZA JURÍDICA
+2.1. La **PLATAFORMA** opera un ecosistema tecnológico digital (aplicación web y móvil) diseñado para intermediar, conectar y coordinar la demanda de servicios de orientación y patrocinio legal de usuarios y clientes con profesionales del derecho calificados.
+2.2. El **SOCIO ABOGADO** es un profesional en derecho legalmente autorizado para ejercer la abogacía en la República del Ecuador, con título registrado ante la SENESCYT y matrícula profesional activa ante el Foro de Abogados del Consejo de la Judicatura.
+2.3. Ambas partes declaran y aceptan que la naturaleza del presente acuerdo es estrictamente civil y comercial de intermediación de servicios por medios digitales (modelo marketplace tecnológico), rigiéndose por el principio de autonomía de la voluntad, la Ley de Comercio Electrónico y el Código de Comercio.
+
+## TERCERA: OBJETO DEL CONTRATO
+El objeto del presente contrato es conceder al **SOCIO ABOGADO** una licencia de uso y acceso a la cuenta profesional en la **PLATAFORMA** para la recepción, gestión y atención de requerimientos legales, consultas telemáticas, citas presenciales y patrocinio judicial de clientes y suscriptores del ecosistema.
+
+## CUARTA: OBLIGACIONES Y ESTÁNDARES DEL SOCIO ABOGADO
+El **SOCIO ABOGADO** se compromete a:
+1. **Diligencia Profesional:** Prestar la asesoría y patrocinio jurídico con estricta sujeción a la ética profesional, el Código Orgánico de la Función Judicial y la normativa ecuatoriana vigente.
+2. **Acreditación Vigente:** Mantener activas y sin sanciones sus credenciales ante el Foro de Abogados del Ecuador.
+3. **Calidad de Servicio y Tiempos de Respuesta:** Atender las consultas telemáticas y expedientes asignados dentro de los estándares y plazos acordados en la plataforma.
+4. **Veracidad de la Información:** Responder por la autenticidad de los documentos, títulos y certificaciones consignadas en su postulación.
+
+## QUINTA: HONORARIOS, TARIFAS Y LIQUIDACIÓN
+5.1. Los usuarios abonarán los valores correspondientes a los servicios legales a través de los medios de pago electrónicos habilitados por la **PLATAFORMA**.
+5.2. La **PLATAFORMA** liquidará periódicamente a favor del **SOCIO ABOGADO** el porcentaje pactado por concepto de honorarios profesionales, reteniendo la comisión o tarifa por el uso de la infraestructura digital, pasarela de pagos y soporte tecnológico.
+5.3. Cada parte será responsable de sus propias obligaciones tributarias y de facturación ante el Servicio de Rentas Internas (SRI).
+
+## SEXTA: CONFIDENCIALIDAD Y PROTECCIÓN DE DATOS PERSONALES
+6.1. **Secreto Profesional:** El **SOCIO ABOGADO** se obliga a guardar estricta reserva y secreto profesional sobre todos los hechos, datos, documentos y estrategias jurídicas puestas a su conocimiento por parte de los clientes y la **PLATAFORMA**.
+6.2. **Cumplimiento LOPDP:** Las partes se someten rigurosamente a la Ley Orgánica de Protección de Datos Personales del Ecuador, comprometiéndose a no transferir ni utilizar los datos personales para fines distintos a la prestación del servicio legal encomendado.
+
+## SEXTA BIS: AUSENCIA DE RELACIÓN LABORAL
+Las partes reconocen y ratifican expresamente que el presente contrato **NO genera relación de dependencia, subordinación laboral, ni societaria** entre la **PLATAFORMA** y el **SOCIO ABOGADO**. El profesional actúa con plena libertad técnica, científica y horaria en el ejercicio de su profesión.
+
+## SÉPTIMA: VIGENCIA, SUSPENSIÓN Y RESOLUCIÓN
+7.1. El presente contrato entrará en vigencia a partir de su firma y tendrá duración indefinida.
+7.2. Cualquiera de las partes podrá darlo por terminado en cualquier momento mediante notificación previa a través de la plataforma, sin perjuicio de concluir diligentemente los procesos o consultas en curso.
+7.3. La **PLATAFORMA** se reserva la potestad de suspender o revocar la cuenta en caso de quejas graves, faltas éticas o suspensión de la matrícula profesional.
+
+## OCTAVA: ACEPTACIÓN Y FIRMA
+Para constancia y validez de lo acordado, las partes suscriben el presente contrato en formato físico o digital (conforme a la Ley de Comercio Electrónico, Firmas Electrónicas y Mensajes de Datos del Ecuador).
+
+En la ciudad de Quito, Distrito Metropolitano, a la fecha de aceptación formal de la solicitud.`;
+
+  if (error) return { ok: true, data: { pct_titulo: "Contrato de Prestación de Servicios de Socio Abogado", pct_contenido: DEFAULT_TEMPLATE } };
+  if (!data || !data.pct_contenido || data.pct_contenido.trim().length < 50) {
     return { ok: true, data: { pct_titulo: "Contrato de Prestación de Servicios de Socio Abogado", pct_contenido: DEFAULT_TEMPLATE } };
   }
   return { ok: true, data: { pct_titulo: data.pct_titulo, pct_contenido: data.pct_contenido } };
