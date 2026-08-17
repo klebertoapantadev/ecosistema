@@ -34,6 +34,25 @@ function normalizarTipoDocumento(d: { dcs_tipo: string; dcs_comentario?: string 
   return d.dcs_tipo || "otro";
 }
 
+function deduplicarDocumentos<T extends { dcs_tipo: string; dcs_comentario?: string | null; dcs_url?: string | null; dcs_creado_en?: string | null }>(lista: T[]): T[] {
+  const CATEGORIAS_UNICAS = new Set(["foto_perfil", "cedula", "identificacion", "titulo", "matricula", "cv", "contrato_socio"]);
+  const tiposVistos = new Set<string>();
+  const resultado: T[] = [];
+
+  for (const doc of lista) {
+    const tipoNorm = normalizarTipoDocumento(doc);
+    if (CATEGORIAS_UNICAS.has(tipoNorm)) {
+      if (!tiposVistos.has(tipoNorm)) {
+        tiposVistos.add(tipoNorm);
+        resultado.push({ ...doc, dcs_tipo: tipoNorm });
+      }
+    } else {
+      resultado.push({ ...doc, dcs_tipo: tipoNorm });
+    }
+  }
+  return resultado;
+}
+
 function deduplicarExperiencias<T extends { exp_empresa?: string | null; exp_cargo?: string | null; exp_fecha_inicio?: string | null }>(lista: T[]): T[] {
   const vistos = new Set<string>();
   const resultado: T[] = [];
@@ -99,7 +118,7 @@ export async function obtenerSolicitudPropia(usuarioId: string) {
         }
       })
     );
-    data.trq_documento_socio = docsFirmados;
+    data.trq_documento_socio = deduplicarDocumentos(docsFirmados);
   }
 
   return data;
@@ -275,7 +294,7 @@ export async function obtenerDetalleSolicitudParaAdmin(solicitudId: string) {
     materias: (materiasRes.data ?? []).map((m) => (m as unknown as { trq_materia: { mat_id: string; mat_nombre: string } }).trq_materia).filter(Boolean),
     provincias: (provinciasRes.data ?? []).map((p) => (p as unknown as { cat_provincia: { cat_id: string; cat_nombre: string } }).cat_provincia).filter(Boolean),
     experiencia: deduplicarExperiencias(experienciaRes.data ?? []),
-    documentos: docsFirmados,
+    documentos: deduplicarDocumentos(docsFirmados),
     revisiones: revisionesEnriquecidas,
     historial: revisionesEnriquecidas,
   };

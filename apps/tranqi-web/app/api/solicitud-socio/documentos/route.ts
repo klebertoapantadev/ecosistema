@@ -51,15 +51,39 @@ export async function POST(request: Request) {
     const TIPOS_PERMITIDOS = ["foto_perfil", "titulo", "matricula", "cedula", "identificacion", "cv", "contrato_socio", "otro", "respaldo_revision"];
     const tipoFinal = TIPOS_PERMITIDOS.includes(tipo) ? (tipo === "identificacion" ? "cedula" : tipo) : "otro";
 
-    // Limpiar documento previo del mismo tipo (ej. reemplazar foto anterior, cedula anterior o titulo anterior)
-    if (tipoFinal === "foto_perfil" || tipoFinal === "titulo" || tipoFinal === "cedula" || tipoFinal === "contrato_socio") {
+    // Limpiar documento previo del mismo tipo (ej. reemplazar foto anterior, cedula anterior, titulo anterior o cv anterior)
+    if (["foto_perfil", "titulo", "matricula", "cedula", "cv", "contrato_socio"].includes(tipoFinal)) {
       try {
-        await adminSupabase
+        const { data: docsExistentes } = await adminSupabase
           .schema("tranqui_legal")
           .from("trq_documento_socio")
-          .delete()
-          .eq("dcs_solicitud_id", solicitudId)
-          .or(`dcs_tipo.eq.${tipoFinal},dcs_comentario.ilike.%[tipo:${tipoFinal}]%,dcs_url.ilike.%/${tipoFinal}-%`);
+          .select("dcs_id, dcs_tipo, dcs_comentario, dcs_url")
+          .eq("dcs_solicitud_id", solicitudId);
+
+        if (Array.isArray(docsExistentes)) {
+          const idsAEliminar = docsExistentes
+            .filter((d) => {
+              const tipoNorm = d.dcs_tipo === "otro" 
+                ? (d.dcs_comentario?.includes("[tipo:foto_perfil]") || d.dcs_comentario?.includes("[perfil]") || d.dcs_url?.includes("foto_perfil") ? "foto_perfil"
+                  : d.dcs_comentario?.includes("[tipo:cv]") || d.dcs_comentario?.includes("[cv]") || d.dcs_url?.includes("/cv-") ? "cv"
+                  : d.dcs_comentario?.includes("[tipo:cedula]") || d.dcs_comentario?.includes("[identidad]") || d.dcs_url?.includes("/cedula-") ? "cedula"
+                  : d.dcs_comentario?.includes("[tipo:titulo]") || d.dcs_url?.includes("/titulo-") ? "titulo"
+                  : d.dcs_comentario?.includes("[tipo:matricula]") || d.dcs_url?.includes("/matricula-") ? "matricula"
+                  : d.dcs_comentario?.includes("[tipo:contrato_socio]") || d.dcs_url?.includes("/contrato_socio-") ? "contrato_socio"
+                  : d.dcs_tipo)
+                : d.dcs_tipo;
+              return tipoNorm === tipoFinal || (tipoFinal === "cedula" && tipoNorm === "identificacion");
+            })
+            .map((d) => d.dcs_id);
+
+          if (idsAEliminar.length > 0) {
+            await adminSupabase
+              .schema("tranqui_legal")
+              .from("trq_documento_socio")
+              .delete()
+              .in("dcs_id", idsAEliminar);
+          }
+        }
       } catch (errDel) {
         console.warn("Aviso al limpiar doc previo:", errDel);
       }
