@@ -80,14 +80,14 @@ export function generarRutaRepositorioComun(params: ParametrosRutaRepositorio): 
   uuidArchivo: string;
   concepto: string;
 } {
-  const negocio = (params.negocio || "TRANQ").toUpperCase();
-  const concepto = params.procesoOConcepto || CONCEPTOS_REPOSITORIO.REGISTRO;
-  const refId = params.tramiteORefId || "general";
+  const refId = params.tramiteORefId || params.usuarioId || "general";
   const uuidArchivo = crypto.randomUUID();
   const nombreSanitizado = sanearNombreArchivo(params.nombreOriginal);
   const tipoDoc = params.tipoDocumento || "doc";
+  const concepto = params.procesoOConcepto || CONCEPTOS_REPOSITORIO.REGISTRO;
 
-  const rutaCompleta = `${negocio}/${params.usuarioId}/${concepto}/${refId}/${tipoDoc}-${uuidArchivo}-${nombreSanitizado}`;
+  // Ruta {solicitudId}/{tipo}-{uuid}-{nombre} para cumplir con la política RLS storage.foldername(name)[1]
+  const rutaCompleta = `${refId}/${tipoDoc}-${uuidArchivo}-${nombreSanitizado}`;
 
   return {
     rutaCompleta,
