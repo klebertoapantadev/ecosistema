@@ -1,6 +1,19 @@
 import { obtenerPerfilActual } from "@eco/identidad";
 import { obtenerSolicitudDetalle } from "../../../../../modulos/socios/consultas";
 import { obtenerPlantillaContrato } from "../../../../../modulos/socios/acciones";
+import {
+  Document,
+  Packer,
+  Paragraph,
+  TextRun,
+  HeadingLevel,
+  AlignmentType,
+  Table,
+  TableRow,
+  TableCell,
+  WidthType,
+  BorderStyle,
+} from "docx";
 
 export async function GET(request: Request) {
   try {
@@ -37,79 +50,188 @@ export async function GET(request: Request) {
       .replace(/\{\{nombre_completo\}\}/g, nombreCompleto)
       .replace(/\{\{cedula\}\}/g, cedula);
 
-    // Conversión de Markdown a HTML simple
-    function markdownToHtml(text: string) {
-      let html = text
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;");
+    // Convertir líneas de Markdown a párrafos estructurados de OpenXML docx
+    const lineas = textoInterpolado.split("\n");
+    const docParagraphs: Paragraph[] = [];
 
-      html = html.replace(/^# (.*?)$/gm, '<h1>$1</h1>');
-      html = html.replace(/^## (.*?)$/gm, '<h2>$1</h2>');
-      html = html.replace(/^### (.*?)$/gm, '<h3>$1</h3>');
-      html = html.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
-      html = html.replace(/\*(.*?)\*/g, "<em>$1</em>");
-      html = html.replace(/^\d+\.\s+(.*?)$/gm, '<li>$1</li>');
+    // Título Principal
+    docParagraphs.push(
+      new Paragraph({
+        text: tituloContrato.toUpperCase(),
+        heading: HeadingLevel.HEADING_1,
+        alignment: AlignmentType.CENTER,
+        spacing: { before: 200, after: 400 },
+      })
+    );
 
-      html = html.split("\n\n").map(p => {
-        if (p.trim().startsWith("<h") || p.trim().startsWith("<li")) return p;
-        return `<p>${p}</p>`;
-      }).join("");
+    function parseInlineFormatting(rawText: string): TextRun[] {
+      const runs: TextRun[] = [];
+      const parts = rawText.split(/(\*\*.*?\*\*)/g);
 
-      return html;
+      for (const part of parts) {
+        if (part.startsWith("**") && part.endsWith("**")) {
+          runs.push(
+            new TextRun({
+              text: part.slice(2, -2),
+              bold: true,
+              font: "Calibri",
+              size: 22,
+            })
+          );
+        } else if (part.length > 0) {
+          runs.push(
+            new TextRun({
+              text: part,
+              font: "Calibri",
+              size: 22,
+            })
+          );
+        }
+      }
+      return runs;
     }
 
-    const htmlContrato = markdownToHtml(textoInterpolado);
+    for (const linea of lineas) {
+      const trimmed = linea.trim();
+      if (!trimmed) continue;
 
-    const docContent = `
-      <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
-      <head>
-      <meta charset="utf-8">
-      <title>${tituloContrato}</title>
-      <!--[if gte mso 9]><xml>
-       <w:WordDocument>
-        <w:View>Print</w:View>
-        <w:Zoom>100</w:Zoom>
-       </w:WordDocument>
-      </xml><![endif]-->
-      <style>
-      p { font-family: 'Times New Roman', Times, serif; font-size: 12pt; line-height: 1.5; text-align: justify; margin-bottom: 12pt; }
-      h1 { font-family: 'Times New Roman', Times, serif; font-size: 16pt; font-weight: bold; text-align: center; margin-top: 24px; margin-bottom: 18px; text-transform: uppercase; }
-      h2 { font-family: 'Times New Roman', Times, serif; font-size: 13pt; font-weight: bold; margin-top: 18px; margin-bottom: 8px; }
-      li { font-family: 'Times New Roman', Times, serif; font-size: 12pt; margin-bottom: 6pt; }
-      </style>
-      </head>
-      <body>
-        <div style="text-align: center; margin-bottom: 30px;">
-          <h1>${tituloContrato}</h1>
-          <hr style="border: none; border-top: 2px solid #000; margin: 12px 0 24px;" />
-        </div>
-        <div>
-          ${htmlContrato}
-        </div>
-        <br/><br/><br/>
-        <table style="width: 100%; border: none;">
-          <tr>
-            <td style="width: 50%; text-align: center; font-family: 'Times New Roman', Times, serif; font-size: 12pt;">
-              <div style="border-top: 1px solid #000; width: 80%; margin: 0 auto 8px;"></div>
-              <strong>tranqi</strong><br/>
-              <span style="font-size: 10pt; color: #555;">Por la plataforma</span>
-            </td>
-            <td style="width: 50%; text-align: center; font-family: 'Times New Roman', Times, serif; font-size: 12pt;">
-              <div style="border-top: 1px solid #000; width: 80%; margin: 0 auto 8px;"></div>
-              <strong>${nombreCompleto}</strong><br/>
-              <span style="font-size: 10pt; color: #555;">Socio Abogado Postulante</span>
-            </td>
-          </tr>
-        </table>
-      </body>
-      </html>
-    `;
+      if (trimmed.startsWith("# ")) {
+        docParagraphs.push(
+          new Paragraph({
+            text: trimmed.replace(/^#\s+/, ""),
+            heading: HeadingLevel.HEADING_1,
+            alignment: AlignmentType.CENTER,
+            spacing: { before: 300, after: 200 },
+          })
+        );
+      } else if (trimmed.startsWith("## ")) {
+        docParagraphs.push(
+          new Paragraph({
+            text: trimmed.replace(/^##\s+/, ""),
+            heading: HeadingLevel.HEADING_2,
+            alignment: AlignmentType.LEFT,
+            spacing: { before: 240, after: 140 },
+          })
+        );
+      } else if (trimmed.startsWith("### ")) {
+        docParagraphs.push(
+          new Paragraph({
+            text: trimmed.replace(/^###\s+/, ""),
+            heading: HeadingLevel.HEADING_3,
+            alignment: AlignmentType.LEFT,
+            spacing: { before: 200, after: 100 },
+          })
+        );
+      } else if (trimmed.startsWith("- ") || trimmed.startsWith("* ")) {
+        docParagraphs.push(
+          new Paragraph({
+            children: parseInlineFormatting(trimmed.replace(/^[-*]\s+/, "")),
+            bullet: { level: 0 },
+            alignment: AlignmentType.JUSTIFIED,
+            spacing: { after: 120, line: 320 },
+          })
+        );
+      } else if (/^\d+\.\s+/.test(trimmed)) {
+        docParagraphs.push(
+          new Paragraph({
+            children: parseInlineFormatting(trimmed.replace(/^\d+\.\s+/, "")),
+            alignment: AlignmentType.JUSTIFIED,
+            spacing: { after: 120, line: 320 },
+          })
+        );
+      } else {
+        docParagraphs.push(
+          new Paragraph({
+            children: parseInlineFormatting(trimmed),
+            alignment: AlignmentType.JUSTIFIED,
+            spacing: { after: 180, line: 340 },
+          })
+        );
+      }
+    }
 
-    return new Response(docContent, {
+    // Espaciado antes de las firmas
+    docParagraphs.push(new Paragraph({ spacing: { before: 500, after: 200 } }));
+
+    // Tabla de Firmas (2 columnas sin bordes)
+    const tablaFirmas = new Table({
+      width: { size: 100, type: WidthType.PERCENTAGE },
+      borders: {
+        top: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+        bottom: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+        left: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+        right: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+        insideHorizontal: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+        insideVertical: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+      },
+      rows: [
+        new TableRow({
+          children: [
+            new TableCell({
+              width: { size: 50, type: WidthType.PERCENTAGE },
+              children: [
+                new Paragraph({
+                  text: "____________________________________",
+                  alignment: AlignmentType.CENTER,
+                  spacing: { after: 100 },
+                }),
+                new Paragraph({
+                  children: [new TextRun({ text: "tranqi® Legal Network", bold: true, size: 22 })],
+                  alignment: AlignmentType.CENTER,
+                }),
+                new Paragraph({
+                  children: [new TextRun({ text: "Por la Plataforma y Consejo Directivo", size: 18, color: "666666" })],
+                  alignment: AlignmentType.CENTER,
+                }),
+              ],
+            }),
+            new TableCell({
+              width: { size: 50, type: WidthType.PERCENTAGE },
+              children: [
+                new Paragraph({
+                  text: "____________________________________",
+                  alignment: AlignmentType.CENTER,
+                  spacing: { after: 100 },
+                }),
+                new Paragraph({
+                  children: [new TextRun({ text: nombreCompleto, bold: true, size: 22 })],
+                  alignment: AlignmentType.CENTER,
+                }),
+                new Paragraph({
+                  children: [new TextRun({ text: `Socio Abogado Postulante — C.I.: ${cedula}`, size: 18, color: "666666" })],
+                  alignment: AlignmentType.CENTER,
+                }),
+              ],
+            }),
+          ],
+        }),
+      ],
+    });
+
+    const doc = new Document({
+      sections: [
+        {
+          properties: {
+            page: {
+              margin: {
+                top: 1440, // 1 pulgada
+                right: 1440,
+                bottom: 1440,
+                left: 1440,
+              },
+            },
+          },
+          children: [...docParagraphs, tablaFirmas],
+        },
+      ],
+    });
+
+    const buffer = await Packer.toBuffer(doc);
+
+    return new Response(new Uint8Array(buffer), {
       headers: {
-        "Content-Type": "application/vnd.ms-word",
-        "Content-Disposition": `attachment; filename="Contrato_Tranqi.docx"`,
+        "Content-Type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "Content-Disposition": `attachment; filename="Contrato_Tranqi_${cedula}.docx"`,
       },
     });
   } catch (error: unknown) {
