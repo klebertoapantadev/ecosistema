@@ -6,10 +6,11 @@ import { listarSolicitudes } from "../../../modulos/socios/consultas";
 export const metadata: Metadata = { title: "Socios — tranqi" };
 
 const ETIQUETA_ESTADO: Record<string, string> = {
-  enviada: "Pendiente aprobación",
-  en_revision: "En revisión",
-  aceptada: "Aprobado",
-  rechazada: "Rechazado",
+  enviada: "Pendiente de Aprobación",
+  en_revision: "En Revisión Legal",
+  aceptada: "Aprobada",
+  rechazada: "Requiere Corrección / Observada",
+  cancelada: "Cancelada",
 };
 
 export default async function PaginaSocios() {

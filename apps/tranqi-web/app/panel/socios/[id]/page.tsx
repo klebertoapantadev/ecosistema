@@ -11,10 +11,11 @@ import { ENLACES_VERIFICACION } from "../../../../modulos/socios/esquema";
 export const metadata: Metadata = { title: "Detalle de socio — tranqi" };
 
 const ETIQUETA_ESTADO: Record<string, string> = {
-  enviada: "Pendiente aprobación",
-  en_revision: "En revisión",
-  aceptada: "Aprobado",
-  rechazada: "Rechazado",
+  enviada: "Pendiente de Aprobación",
+  en_revision: "En Revisión Legal",
+  aceptada: "Aprobada",
+  rechazada: "Requiere Corrección / Observada",
+  cancelada: "Cancelada",
 };
 const ETIQUETA_TIPO: Record<string, string> = {
   foto_perfil: "Foto de perfil profesional",
@@ -40,6 +41,7 @@ export default async function PaginaDetalleSocio({ params }: { params: Promise<{
   const { solicitud, usuario, experiencia, materias, provincias, revisiones, documentos } = detalle;
   const pendiente = solicitud.ssc_estado === "enviada" || solicitud.ssc_estado === "en_revision";
   const abogado = solicitud.ssc_estado === "aceptada" ? await obtenerAbogadoPorSolicitud(id) : null;
+  const esReingreso = solicitud.ssc_estado === "enviada" && revisiones.length > 0;
 
   // Buscar foto de perfil en los documentos cargados o en el perfil de usuario registrado
   const docFoto = documentos.find((d) => d.dcs_tipo === "foto_perfil" || d.dcs_tipo === "foto" || d.dcs_tipo === "perfil");
@@ -72,7 +74,16 @@ export default async function PaginaDetalleSocio({ params }: { params: Promise<{
         </div>
       </div>
 
-      <span className={`chip-estado-solicitud chip-${solicitud.ssc_estado}`}>{ETIQUETA_ESTADO[solicitud.ssc_estado]}</span>
+      <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "20px" }}>
+        <span className={`chip-estado-solicitud chip-${solicitud.ssc_estado}`} style={{ fontSize: "0.85rem", fontWeight: 800 }}>
+          {esReingreso ? "🟡 Reingreso / Actualizada (Pendiente)" : (ETIQUETA_ESTADO[solicitud.ssc_estado] || solicitud.ssc_estado)}
+        </span>
+        {revisiones.length > 0 && (
+          <span style={{ fontSize: "0.78rem", fontWeight: 700, color: "#6B7280", background: "#F3F4F6", padding: "4px 10px", borderRadius: "12px" }}>
+            {revisiones.length} {revisiones.length === 1 ? "revisión registrada" : "revisiones / actualizaciones"}
+          </span>
+        )}
+      </div>
 
       {solicitud.ssc_estado === "aceptada" && (
         <div className="tarjeta-panel detalle-solicitud">
@@ -118,16 +129,78 @@ export default async function PaginaDetalleSocio({ params }: { params: Promise<{
                 gap: "6px",
                 padding: "8px 14px",
                 borderRadius: "8px",
-                background: "#FFFFFF",
-                border: "1px solid #D1D5DB",
-                color: "#374151",
+                background: "#05876E",
+                color: "#FFFFFF",
                 fontSize: "0.82rem",
-                fontWeight: 600,
+                fontWeight: 700,
                 textDecoration: "none",
               }}
             >
-              <FileText size={14} /> Ver/Imprimir Contrato Generado
+              <Download size={14} /> Descargar plantilla de contrato para firmar
             </a>
+          </div>
+        </div>
+      )}
+
+      {/* Historial de Revisiones, Acciones y Observaciones Previas */}
+      {revisiones.length > 0 && (
+        <div className="tarjeta-panel detalle-solicitud" style={{ border: "1.5px solid #E5E7EB", borderRadius: "14px", background: "#FFFFFF", marginBottom: "20px" }}>
+          <h2 style={{ display: "flex", alignItems: "center", gap: "8px", color: "#111827", fontSize: "1.1rem", marginTop: 0 }}>
+            📋 Historial de Revisiones, Acciones y Observaciones
+          </h2>
+          <p style={{ fontSize: "0.82rem", color: "#6B7280", marginTop: "-4px", marginBottom: "16px" }}>
+            Bitácora cronológica de decisiones, observaciones de admisibilidad y reingresos del postulante.
+          </p>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+            {(revisiones as Array<{ rev_id?: string; rev_decision: string; rev_comentario?: string | null; rev_creado_en: string; revisor?: { nombre: string; correo: string } | null }>).map((r, idx) => {
+              const esReingresoItem = r.rev_decision === "reingreso";
+              const esRechazo = r.rev_decision === "rechazada" || r.rev_decision === "rechazado";
+              const esAprobado = r.rev_decision === "aceptada" || r.rev_decision === "aceptado";
+              const revisorTxt = r.revisor?.nombre ? `${r.revisor.nombre} (${r.revisor.correo})` : (esReingresoItem ? "Postulante" : "Operador / Administrador");
+
+              return (
+                <div
+                  key={r.rev_id || idx}
+                  style={{
+                    padding: "14px 16px",
+                    borderRadius: "10px",
+                    background: esReingresoItem ? "rgba(243, 232, 255, 0.4)" : esRechazo ? "rgba(254, 226, 226, 0.4)" : esAprobado ? "rgba(220, 252, 231, 0.4)" : "rgba(239, 246, 255, 0.4)",
+                    border: `1px solid ${esReingresoItem ? "#D8B4FE" : esRechazo ? "#FCA5A5" : esAprobado ? "#86EFAC" : "#BFDBFE"}`,
+                  }}
+                >
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "8px", marginBottom: "6px" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                      <span
+                        style={{
+                          padding: "3px 9px",
+                          borderRadius: "6px",
+                          fontSize: "0.76rem",
+                          fontWeight: 800,
+                          textTransform: "uppercase",
+                          background: esReingresoItem ? "#5000BA" : esRechazo ? "#DC2626" : esAprobado ? "#05876E" : "#2563EB",
+                          color: "#FFFFFF",
+                        }}
+                      >
+                        {esReingresoItem ? "🔄 Reingreso / Actualización" : esRechazo ? "🔴 No Aceptada / Observada" : esAprobado ? "🟢 Aprobada" : "🔵 En Revisión"}
+                      </span>
+                      <span style={{ fontSize: "0.82rem", fontWeight: 700, color: "#374151" }}>
+                        {revisorTxt}
+                      </span>
+                    </div>
+                    <span style={{ fontSize: "0.78rem", color: "#6B7280" }}>
+                      {new Date(r.rev_creado_en).toLocaleString("es-EC")}
+                    </span>
+                  </div>
+
+                  {r.rev_comentario && (
+                    <div style={{ marginTop: "8px", padding: "8px 12px", background: "#FFFFFF", borderRadius: "6px", border: "1px solid rgba(0,0,0,0.06)", fontSize: "0.85rem", color: "#1F2937", lineHeight: 1.45 }}>
+                      <strong>Observación / Detalle:</strong> {r.rev_comentario}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
       )}
@@ -135,41 +208,26 @@ export default async function PaginaDetalleSocio({ params }: { params: Promise<{
       <div className="tarjeta-panel detalle-solicitud">
         <h2>Datos profesionales</h2>
         <dl className="lista-detalle">
-          <dt>Cédula</dt>
-          <dd>{solicitud.ssc_cedula}</dd>
+          <dt>Cédula / RUC</dt>
+          <dd>{solicitud.ssc_cedula || "—"}</dd>
           <dt>Matrícula profesional</dt>
           <dd>{solicitud.ssc_matricula_profesional}</dd>
           <dt>Universidad</dt>
           <dd>{solicitud.ssc_universidad}</dd>
-          <dt>Año de graduación</dt>
+          <dt>Año graduación</dt>
           <dd>{solicitud.ssc_anio_graduacion}</dd>
-          <dt>Años de experiencia</dt>
+          <dt>Años experiencia</dt>
           <dd>{solicitud.ssc_anos_experiencia}</dd>
-          <dt>Teléfono de contacto</dt>
-          <dd>{solicitud.ssc_telefono_contacto || "—"}</dd>
+          <dt>Materias</dt>
+          <dd>{materias.map((m) => m.mat_nombre).join(", ") || "Ninguna"}</dd>
+          <dt>Provincias</dt>
+          <dd>{provincias.map((p) => p.cat_nombre).join(", ") || "Ninguna"}</dd>
         </dl>
-        <h3 style={{ marginTop: "18px", marginBottom: "8px" }}>Resumen profesional</h3>
-        <div
-          style={{
-            background: "#F9FAFB",
-            padding: "16px 20px",
-            borderRadius: "12px",
-            border: "1px solid #E5E7EB",
-            fontSize: "0.92rem",
-            lineHeight: 1.6,
-            color: "#111827",
-            overflowX: "auto"
-          }}
-          dangerouslySetInnerHTML={{
-            __html: solicitud.ssc_resumen_profesional || "<p>Sin resumen especificado.</p>"
-          }}
-        />
       </div>
 
       <div className="tarjeta-panel detalle-solicitud">
-        <h2>Especialidades y cobertura</h2>
-        <p><strong>Materias:</strong> {materias.map((m) => m.mat_nombre).join(", ") || "—"}</p>
-        <p><strong>Provincias:</strong> {provincias.map((p) => p.cat_nombre).join(", ") || "—"}</p>
+        <h2>Resumen profesional</h2>
+        <div style={{ fontSize: "0.88rem", lineHeight: 1.6 }} dangerouslySetInnerHTML={{ __html: solicitud.ssc_resumen_profesional || "Sin resumen profesional" }} />
       </div>
 
       {experiencia.length > 0 && (
@@ -181,7 +239,7 @@ export default async function PaginaDetalleSocio({ params }: { params: Promise<{
                 <strong>{e.exp_cargo}</strong> — {e.exp_empresa}
                 <span className="historial-fecha">
                   {" "}
-                  ({e.exp_fecha_inicio} – {e.exp_fecha_fin || "actual"})
+                  ({e.exp_fecha_inicio} — {e.exp_fecha_fin ?? "Actual"})
                 </span>
                 {e.exp_descripcion && <p>{e.exp_descripcion}</p>}
               </li>
@@ -191,62 +249,64 @@ export default async function PaginaDetalleSocio({ params }: { params: Promise<{
       )}
 
       <div className="tarjeta-panel detalle-solicitud">
-        <h2>Verificación asistida (autodeclarada por el solicitante)</h2>
-        <p className="linea-verificacion">
-          {solicitud.ssc_enlace_senescyt_verificado ? (
-            <CheckCircle2 className="icono-verificado" aria-hidden="true" strokeWidth={1.8} />
-          ) : (
-            <XCircle className="icono-no-verificado" aria-hidden="true" strokeWidth={1.8} />
-          )}
-          Título verificado en{" "}
+        <h2>Verificaciones externas</h2>
+        <dl className="lista-detalle">
+          <dt>SENESCYT verificado</dt>
+          <dd>
+            {solicitud.ssc_enlace_senescyt_verificado ? (
+              <span className="verificado-si"><CheckCircle2 size={16} /> Verificado por el postulante</span>
+            ) : (
+              <span className="verificado-no"><XCircle size={16} /> No verificado</span>
+            )}
+          </dd>
+          <dt>Foro de Abogados</dt>
+          <dd>
+            {solicitud.ssc_enlace_foro_verificado ? (
+              <span className="verificado-si"><CheckCircle2 size={16} /> Verificado por el postulante</span>
+            ) : (
+              <span className="verificado-no"><XCircle size={16} /> No verificado</span>
+            )}
+          </dd>
+        </dl>
+        <div className="enlaces-ayuda">
           <a href={ENLACES_VERIFICACION.senescyt} target="_blank" rel="noopener noreferrer">
-            SENESCYT <ExternalLink className="icono-enlace-externo" aria-hidden="true" strokeWidth={2} />
+            Consultar SENESCYT <ExternalLink size={12} />
           </a>
-        </p>
-        <p className="linea-verificacion">
-          {solicitud.ssc_enlace_foro_verificado ? (
-            <CheckCircle2 className="icono-verificado" aria-hidden="true" strokeWidth={1.8} />
-          ) : (
-            <XCircle className="icono-no-verificado" aria-hidden="true" strokeWidth={1.8} />
-          )}
-          Matrícula verificada en el{" "}
           <a href={ENLACES_VERIFICACION.foroAbogados} target="_blank" rel="noopener noreferrer">
-            Foro de Abogados <ExternalLink className="icono-enlace-externo" aria-hidden="true" strokeWidth={2} />
+            Consultar Foro de Abogados <ExternalLink size={12} />
           </a>
-        </p>
-        <p className="aviso-borrador">Esto es autodeclarado por el solicitante — confirma tú también antes de aceptar.</p>
+        </div>
       </div>
 
       <div className="tarjeta-panel detalle-solicitud">
-        <h2>Documentos y Adjuntos ({documentos.length})</h2>
+        <h2>Expediente digital y documentos adjuntos</h2>
         {documentos.length === 0 ? (
-          <p>Sin documentos adjuntos todavía.</p>
+          <p className="historial-fecha">No se adjuntaron documentos a esta solicitud.</p>
         ) : (
-          <div style={{ display: "grid", gap: "12px", marginTop: "12px" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
             {documentos.map((d) => (
               <div
                 key={d.dcs_id}
                 style={{
                   display: "flex",
-                  alignItems: "center",
                   justifyContent: "space-between",
-                  padding: "14px 18px",
-                  borderRadius: "12px",
+                  alignItems: "center",
+                  padding: "12px 16px",
                   background: "#F9FAFB",
-                  border: "1px solid #E5E7EB"
+                  border: "1px solid #E5E7EB",
+                  borderRadius: "10px"
                 }}
               >
                 <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                  <div style={{ padding: "10px", borderRadius: "10px", background: "#EEF2FF", color: "#4F46E5" }}>
-                    <FileText size={20} />
+                  <div style={{ width: "36px", height: "36px", borderRadius: "8px", background: "#EDE9FE", color: "#5000BA", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <FileText size={18} />
                   </div>
                   <div>
-                    <strong style={{ fontSize: "0.9rem", color: "#111827", display: "block" }}>
-                      {ETIQUETA_TIPO[d.dcs_tipo] ?? d.dcs_tipo}
-                      {d.dcs_subido_por !== usuario?.usu_id && <span className="chip-admin-doc"> admin</span>}
-                    </strong>
-                    <span style={{ fontSize: "0.8rem", color: "#6B7280" }}>
-                      {d.dcs_nombre_archivo || "Documento Adjunto"}
+                    <span style={{ fontWeight: 700, fontSize: "0.88rem", color: "#111827", display: "block" }}>
+                      {ETIQUETA_TIPO[d.dcs_tipo] || d.dcs_tipo}
+                    </span>
+                    <span style={{ fontSize: "0.78rem", color: "#6B7280" }}>
+                      {d.dcs_nombre_archivo || "Archivo adjunto"} · {new Date(d.dcs_creado_en).toLocaleString("es-EC")}
                     </span>
                     {d.dcs_comentario && <p style={{ fontSize: "0.78rem", color: "#4B5563", margin: "4px 0 0 0" }}>{d.dcs_comentario}</p>}
                   </div>
@@ -304,21 +364,6 @@ export default async function PaginaDetalleSocio({ params }: { params: Promise<{
         <p className="aviso-borrador" style={{ marginTop: "12px" }}>Enlace firmado temporal (60 min) — se regenera de forma segura al consultar la solicitud.</p>
         <SubirDocumentoRevision solicitudId={solicitud.ssc_id} />
       </div>
-
-      {revisiones.length > 0 && (
-        <div className="tarjeta-panel detalle-solicitud">
-          <h2>Historial de revisión</h2>
-          <ul className="lista-experiencia">
-            {revisiones.map((r) => (
-              <li key={r.rev_id}>
-                <strong>{r.rev_decision}</strong>
-                <span className="historial-fecha"> — {new Date(r.rev_creado_en).toLocaleString("es-EC")}</span>
-                {r.rev_comentario && <p>{r.rev_comentario}</p>}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
 
       {pendiente && (
         <div className="tarjeta-panel detalle-solicitud">

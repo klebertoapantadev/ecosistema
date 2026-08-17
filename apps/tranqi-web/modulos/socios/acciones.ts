@@ -300,6 +300,18 @@ export async function enviarSolicitudSocio(
 
     if (errorUpdate) return { ok: false, error: errorUpdate.message };
 
+    // Registrar en el historial de revisiones el reingreso / actualización del postulante
+    try {
+      await adminSupabase.schema("tranqui_legal").from("trq_revision_solicitud").insert({
+        rev_solicitud_id: solicitudId,
+        rev_decision: "reingreso",
+        rev_comentario: "El postulante actualizó sus datos y documentos de acreditación para una nueva evaluación.",
+        rev_admin_id: usuarioId,
+      });
+    } catch (errRevIns) {
+      console.warn("Aviso al registrar revisión de reingreso:", errRevIns);
+    }
+
     if (esAceptada && d.telefonoContacto) {
       await adminSupabase
         .schema("comun_seguridad")

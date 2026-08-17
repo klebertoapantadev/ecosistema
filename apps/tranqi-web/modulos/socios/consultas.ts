@@ -244,6 +244,31 @@ export async function obtenerDetalleSolicitudParaAdmin(solicitudId: string) {
     })
   );
 
+  // 4. Enriquecer revisiones con información del operador / revisor
+  const revsRaw = historialRes.data ?? [];
+  const adminIds = Array.from(new Set(revsRaw.map((r: { rev_admin_id?: string | null }) => r.rev_admin_id).filter(Boolean))) as string[];
+  const revisoresMap = new Map<string, { nombre: string; correo: string }>();
+
+  if (adminIds.length > 0) {
+    const { data: usuariosRevisores } = await adminSupabase
+      .schema("comun_seguridad")
+      .from("seg_usuario")
+      .select("usu_id, usu_nombres, usu_apellidos, usu_correo")
+      .in("usu_id", adminIds);
+
+    if (Array.isArray(usuariosRevisores)) {
+      for (const u of usuariosRevisores) {
+        const nom = [u.usu_nombres, u.usu_apellidos].filter(Boolean).join(" ") || u.usu_correo;
+        revisoresMap.set(u.usu_id, { nombre: nom, correo: u.usu_correo });
+      }
+    }
+  }
+
+  const revisionesEnriquecidas = revsRaw.map((r: Record<string, unknown>) => ({
+    ...r,
+    revisor: r.rev_admin_id ? revisoresMap.get(r.rev_admin_id as string) || null : null,
+  }));
+
   return {
     solicitud,
     usuario: usuario ?? null,
@@ -251,8 +276,8 @@ export async function obtenerDetalleSolicitudParaAdmin(solicitudId: string) {
     provincias: (provinciasRes.data ?? []).map((p) => (p as unknown as { cat_provincia: { cat_id: string; cat_nombre: string } }).cat_provincia).filter(Boolean),
     experiencia: deduplicarExperiencias(experienciaRes.data ?? []),
     documentos: docsFirmados,
-    revisiones: historialRes.data ?? [],
-    historial: historialRes.data ?? [],
+    revisiones: revisionesEnriquecidas,
+    historial: revisionesEnriquecidas,
   };
 }
 
