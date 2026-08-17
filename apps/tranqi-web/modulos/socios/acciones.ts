@@ -340,12 +340,27 @@ export async function enviarSolicitudSocio(
   }
 
   // Insertar/upsert experiencias, materias y provincias con IDs DEDUPLICADOS
+  // Primero limpiamos cualquier experiencia previa de esta solicitud para evitar duplicados
+  try {
+    await adminSupabase.schema("tranqui_legal").from("trq_experiencia_laboral").delete().eq("exp_solicitud_id", solicitudId);
+  } catch (errExpDel) {
+    console.warn("Aviso al limpiar experiencias previas:", errExpDel);
+  }
+
   if (d.experiencia.length > 0) {
+    const vistosExp = new Set<string>();
+    const experienciasUnicas = d.experiencia.filter((e) => {
+      const clave = `${e.empresa.trim().toLowerCase()}|${e.cargo.trim().toLowerCase()}|${e.fechaInicio.trim()}`;
+      if (vistosExp.has(clave)) return false;
+      vistosExp.add(clave);
+      return true;
+    });
+
     const { error: errorExp } = await adminSupabase
       .schema("tranqui_legal")
       .from("trq_experiencia_laboral")
       .insert(
-        d.experiencia.map((e) => ({
+        experienciasUnicas.map((e) => ({
           exp_solicitud_id: solicitudId,
           exp_empresa: e.empresa,
           exp_cargo: e.cargo,

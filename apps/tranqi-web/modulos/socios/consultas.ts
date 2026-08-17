@@ -34,6 +34,19 @@ function normalizarTipoDocumento(d: { dcs_tipo: string; dcs_comentario?: string 
   return d.dcs_tipo || "otro";
 }
 
+function deduplicarExperiencias<T extends { exp_empresa?: string | null; exp_cargo?: string | null; exp_fecha_inicio?: string | null }>(lista: T[]): T[] {
+  const vistos = new Set<string>();
+  const resultado: T[] = [];
+  for (const item of lista) {
+    const clave = `${(item.exp_empresa || "").trim().toLowerCase()}|${(item.exp_cargo || "").trim().toLowerCase()}|${(item.exp_fecha_inicio || "").trim()}`;
+    if (!vistos.has(clave)) {
+      vistos.add(clave);
+      resultado.push(item);
+    }
+  }
+  return resultado;
+}
+
 export async function obtenerSolicitudPropia(usuarioId: string) {
   const supabase = await crearClienteServidor();
   const adminSupabase = crearClienteAdmin() || supabase;
@@ -53,6 +66,10 @@ export async function obtenerSolicitudPropia(usuarioId: string) {
     .maybeSingle();
 
   if (!data) return null;
+
+  if (Array.isArray(data.trq_experiencia_laboral)) {
+    data.trq_experiencia_laboral = deduplicarExperiencias(data.trq_experiencia_laboral);
+  }
 
   // Firmar URLs de documentos existentes para el solicitante y normalizar tipos
   const docs = data.trq_documento_socio;
@@ -91,6 +108,7 @@ interface UsuarioResumen {
   usu_apellidos: string | null;
   usu_correo: string;
   usu_whatsapp?: string | null;
+  usu_detalle_usuario?: Record<string, unknown> | null;
 }
 
 async function adjuntarUsuarios<T extends { usuarioId: string }>(
@@ -150,46 +168,50 @@ export async function obtenerDetalleSolicitudParaAdmin(solicitudId: string) {
   const supabase = await crearClienteServidor();
   const adminSupabase = crearClienteAdmin() || supabase;
 
-  const { data: solicitud, error } = await adminSupabase
+  // 1. Obtener la solicitud con adminSupabase
+  const { data: solicitud, error: errSol } = await adminSupabase
     .schema("tranqui_legal")
     .from("trq_solicitud_socio")
     .select("*")
     .eq("ssc_id", solicitudId)
     .single();
 
-  if (error || !solicitud) return null;
+  if (errSol || !solicitud) return null;
 
-  const [materiasRes, provinciasRes, experienciaRes, documentosRes, historialRes] = await Promise.all([
-    adminSupabase
-      .schema("tranqui_legal")
-      .from("trq_solicitud_materia")
-      .select("trq_materia(mat_id, mat_nombre)")
-      .eq("sma_solicitud_id", solicitudId),
-    adminSupabase
-      .schema("tranqui_legal")
-      .from("trq_solicitud_provincia")
-      .select("cat_provincia(cat_id, cat_nombre)")
-      .eq("spr_solicitud_id", solicitudId),
-    adminSupabase
-      .schema("tranqui_legal")
-      .from("trq_experiencia_laboral")
-      .select("*")
-      .eq("exp_solicitud_id", solicitudId)
-      .order("exp_fecha_inicio", { ascending: false }),
-    adminSupabase
-      .schema("tranqui_legal")
-      .from("trq_documento_socio")
-      .select("*")
-      .eq("dcs_solicitud_id", solicitudId)
-      .order("dcs_creado_en", { ascending: false }),
-    adminSupabase
-      .schema("tranqui_legal")
-      .from("trq_revision_solicitud")
-      .select("*")
-      .eq("rev_solicitud_id", solicitudId)
-      .order("rev_creado_en", { ascending: false }),
-  ]);
+  // 2. Obtener todas las relaciones concurrentemente con adminSupabase
+  const [materiasRes, provinciasRes, experienciaRes, documentosRes, historialRes] =
+    await Promise.all([
+      adminSupabase
+        .schema("tranqui_legal")
+        .from("trq_solicitud_materia")
+        .select("sma_materia_id, trq_materia(mat_id, mat_nombre)")
+        .eq("sma_solicitud_id", solicitudId),
+      adminSupabase
+        .schema("tranqui_legal")
+        .from("trq_solicitud_provincia")
+        .select("spr_provincia_id, cat_provincia:comun_catalogo!trq_solicitud_provincia_spr_provincia_id_fkey(cat_id, cat_nombre)")
+        .eq("spr_solicitud_id", solicitudId),
+      adminSupabase
+        .schema("tranqui_legal")
+        .from("trq_experiencia_laboral")
+        .select("*")
+        .eq("exp_solicitud_id", solicitudId)
+        .order("exp_fecha_inicio", { ascending: false }),
+      adminSupabase
+        .schema("tranqui_legal")
+        .from("trq_documento_socio")
+        .select("*")
+        .eq("dcs_solicitud_id", solicitudId)
+        .order("dcs_creado_en", { ascending: false }),
+      adminSupabase
+        .schema("tranqui_legal")
+        .from("trq_revision_solicitud")
+        .select("*")
+        .eq("rev_solicitud_id", solicitudId)
+        .order("rev_creado_en", { ascending: false }),
+    ]);
 
+  // 3. Obtener el usuario postulante para el avatar y nombre
   const { data: usuario } = await adminSupabase
     .schema("comun_seguridad")
     .from("seg_usuario")
@@ -224,7 +246,7 @@ export async function obtenerDetalleSolicitudParaAdmin(solicitudId: string) {
     usuario: usuario ?? null,
     materias: (materiasRes.data ?? []).map((m) => (m as unknown as { trq_materia: { mat_id: string; mat_nombre: string } }).trq_materia).filter(Boolean),
     provincias: (provinciasRes.data ?? []).map((p) => (p as unknown as { cat_provincia: { cat_id: string; cat_nombre: string } }).cat_provincia).filter(Boolean),
-    experiencia: experienciaRes.data ?? [],
+    experiencia: deduplicarExperiencias(experienciaRes.data ?? []),
     documentos: docsFirmados,
     revisiones: historialRes.data ?? [],
     historial: historialRes.data ?? [],
