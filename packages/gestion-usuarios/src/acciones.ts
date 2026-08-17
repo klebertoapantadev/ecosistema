@@ -358,6 +358,26 @@ export async function resetearSistemaSuperAdminAction(
   negocio: string = "TRANQ"
 ): Promise<Resultado> {
   const supabase = await crearClienteServidor();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "Sesión no válida o usuario no autenticado." };
+
+  const { data: uData } = await supabase
+    .schema("comun_seguridad")
+    .from("seg_usuario")
+    .select("usu_es_superadmin")
+    .eq("usu_id", user.id)
+    .maybeSingle();
+
+  const { data: perfilesData } = await supabase
+    .schema("comun_seguridad")
+    .rpc("seg_fn_perfiles", { p_negocio: negocio });
+
+  const perfiles = (perfilesData as string[] | null) ?? [];
+  const esSuperAdmin = Boolean(uData?.usu_es_superadmin || perfiles.includes("SUPERADMIN"));
+
+  if (!esSuperAdmin) {
+    return { ok: false, error: "Acceso denegado: El reset del sistema está reservado exclusivamente para el rol SuperAdmin." };
+  }
 
   try {
     // Ejecutar RPC en Postgres con aislamiento estricto por Negocio (preserva los demas negocios y sus usuarios)

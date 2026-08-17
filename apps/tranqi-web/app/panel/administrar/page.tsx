@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { obtenerPerfilActual } from "@eco/identidad";
+import { obtenerPerfilActual, obtenerPerfiles } from "@eco/identidad";
 import { PanelAdministrarModular } from "./PanelAdministrarModular";
 
 const NEGOCIO = "TRANQ";
@@ -11,5 +11,8 @@ export default async function PaginaPanelAdministrar() {
     redirect(`/ingresar?redirect=/panel/administrar`);
   }
 
-  return <PanelAdministrarModular negocio={NEGOCIO} />;
+  const perfiles = await obtenerPerfiles(NEGOCIO);
+  const esSuperAdmin = Boolean(perfil.usu_es_superadmin || perfiles.includes("SUPERADMIN"));
+
+  return <PanelAdministrarModular negocio={NEGOCIO} esSuperAdmin={esSuperAdmin} />;
 }

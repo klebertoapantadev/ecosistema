@@ -299,7 +299,12 @@ function obtenerModulosInicialesAdmin(): ModuloAdminDef[] {
   return MODULOS_ADMIN.filter(m => ids.includes(m.id));
 }
 
-export function PanelAdministrarModular({ negocio }: Props) {
+interface Props {
+  negocio?: string;
+  esSuperAdmin?: boolean;
+}
+
+export function PanelAdministrarModular({ negocio = "TRANQ", esSuperAdmin = false }: Props) {
   const [rolActivo, setRolActivo] = useState<string>("ADMINISTRADOR");
   const [favoritos, setFavoritos] = useState<string[]>(["gestion_usuarios", "socios"]);
   const [modulosAsignados, setModulosAsignados] = useState<ModuloAdminDef[]>(obtenerModulosInicialesAdmin);
@@ -697,28 +702,30 @@ export function PanelAdministrarModular({ negocio }: Props) {
             </div>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
-            <button
-              type="button"
-              onClick={handleResetearSistema}
-              disabled={reseteando}
-              style={{
-                fontSize: "0.78rem",
-                fontWeight: 800,
-                color: "#DC2626",
-                background: "#FEF2F2",
-                padding: "7px 16px",
-                borderRadius: "20px",
-                border: "1.5px solid #FCA5A5",
-                display: "flex",
-                alignItems: "center",
-                gap: "6px",
-                cursor: "pointer",
-                boxShadow: "0 2px 4px rgba(220,38,38,0.1)"
-              }}
-              title="Borrar todos los usuarios de prueba, perfiles y solicitudes para iniciar desde cero"
-            >
-              <RotateCcw size={15} /> {reseteando ? "Reseteando..." : "Reset Master del Sistema (Pruebas desde Cero)"}
-            </button>
+            {esSuperAdmin && (
+              <button
+                type="button"
+                onClick={handleResetearSistema}
+                disabled={reseteando}
+                style={{
+                  fontSize: "0.78rem",
+                  fontWeight: 800,
+                  color: "#DC2626",
+                  background: "#FEF2F2",
+                  padding: "7px 16px",
+                  borderRadius: "20px",
+                  border: "1.5px solid #FCA5A5",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  cursor: "pointer",
+                  boxShadow: "0 2px 4px rgba(220,38,38,0.1)"
+                }}
+                title="Borrar todos los usuarios de prueba, perfiles y solicitudes para iniciar desde cero (Solo SuperAdmin)"
+              >
+                <RotateCcw size={15} /> {reseteando ? "Reseteando..." : "Reset Master del Sistema (Pruebas desde Cero)"}
+              </button>
+            )}
             <span className="badge-rol" style={{ background: "rgba(220, 38, 38, 0.25)", color: "#FEE2E2", border: "1px solid rgba(239, 68, 68, 0.4)" }}>
               <Lock style={{ width: 14, height: 14, marginRight: 4 }} />
               MFA Protegido (TOTP)
