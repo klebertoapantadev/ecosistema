@@ -27,52 +27,50 @@ async function obtenerDestinatariosStaffTranqi(
   const correosVistos = new Set<string>();
 
   try {
-    // 1. Superadministradores de la plataforma
-    const { data: superAdmins } = await adminSupabase
+    // 1. Obtener todos los usuarios del ecosistema
+    const { data: usuarios } = await adminSupabase
       .schema("comun_seguridad")
       .from("seg_usuario")
-      .select("usu_id, usu_correo, usu_superadmin_plataforma")
-      .eq("usu_superadmin_plataforma", true);
+      .select("usu_id, usu_correo, usu_superadmin_plataforma");
 
-    if (Array.isArray(superAdmins)) {
-      for (const sa of superAdmins) {
-        if (sa.usu_id !== excluirUsuarioId && sa.usu_correo && !correosVistos.has(sa.usu_correo)) {
-          correosVistos.add(sa.usu_correo);
-          destinatariosAdmin.push({ id: sa.usu_id, correo: sa.usu_correo });
+    if (Array.isArray(usuarios) && usuarios.length > 0) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const ids = usuarios.map((u: any) => u.usu_id);
+
+      // 2. Traer membresías con sus perfiles de TRANQ / TRANQI
+      const { data: membresias } = await adminSupabase
+        .schema("comun_seguridad")
+        .from("seg_membresia")
+        .select("mem_usuario_id, mem_estado, mem_negocio, seg_membresia_perfil(seg_perfil(per_clave))")
+        .in("mem_usuario_id", ids);
+
+      const mapaStaff = new Map<string, boolean>();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (membresias || []).forEach((m: any) => {
+        const negocioUpper = (m.mem_negocio || "").toUpperCase();
+        if (negocioUpper === "TRANQ" || negocioUpper === "TRANQI") {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const perfiles = (m.seg_membresia_perfil || [])
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            .map((mp: any) => (mp.seg_perfil?.per_clave || "").toUpperCase());
+          if (perfiles.includes("OPERADOR") || perfiles.includes("ADMINISTRADOR") || perfiles.includes("SUPERADMIN") || perfiles.includes("AUXILIAR")) {
+            mapaStaff.set(m.mem_usuario_id, true);
+          }
         }
-      }
-    }
+      });
 
-    // 2. Administradores y Operadores de la membresía en TRANQ / TRANQI
-    const { data: membresias } = await adminSupabase
-      .schema("comun_seguridad")
-      .from("seg_membresia")
-      .select(`
-        mem_id,
-        mem_usuario_id,
-        mem_negocio,
-        seg_usuario (
-          usu_id,
-          usu_correo
-        ),
-        seg_membresia_perfil (
-          mpe_perfil_clave
-        )
-      `)
-      .or("mem_negocio.ilike.TRANQ,mem_negocio.ilike.TRANQI");
+      for (const u of usuarios) {
+        const correo = (u.usu_correo || "").toLowerCase().trim();
+        const esSuperAdmin = Boolean(
+          u.usu_superadmin_plataforma ||
+          correo === "kleber.toapanta.ch@gmail.com" ||
+          correo === "jesus251296@gmail.com"
+        );
+        const esStaff = esSuperAdmin || mapaStaff.has(u.usu_id);
 
-    if (Array.isArray(membresias)) {
-      for (const m of membresias) {
-        const usr = (m as any).seg_usuario;
-        const perfiles = (m as any).seg_membresia_perfil || [];
-        const esOperadorOAdmin = perfiles.some((p: { mpe_perfil_clave?: string }) => {
-          const c = (p.mpe_perfil_clave || "").toLowerCase();
-          return c === "operador" || c === "administrador" || c === "superadmin";
-        });
-
-        if (esOperadorOAdmin && usr?.usu_correo && usr.usu_id !== excluirUsuarioId && !correosVistos.has(usr.usu_correo)) {
-          correosVistos.add(usr.usu_correo);
-          destinatariosAdmin.push({ id: usr.usu_id, correo: usr.usu_correo });
+        if (esStaff && u.usu_id !== excluirUsuarioId && correo && !correosVistos.has(correo)) {
+          correosVistos.add(correo);
+          destinatariosAdmin.push({ id: u.usu_id, correo: u.usu_correo });
         }
       }
     }
