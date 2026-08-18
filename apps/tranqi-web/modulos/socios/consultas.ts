@@ -180,7 +180,8 @@ export async function listarSolicitudesParaAdmin(estado?: string) {
     .from("trq_solicitud_socio")
     .select(`
       *,
-      trq_revision_solicitud (rev_decision, rev_creado_en)
+      trq_revision_solicitud (rev_decision, rev_creado_en),
+      trq_documento_socio (dcs_id, dcs_tipo, dcs_nombre_archivo, dcs_comentario, dcs_url, dcs_creado_en)
     `)
     .order("ssc_enviada_en", { ascending: false });
 
@@ -208,6 +209,30 @@ export async function listarSolicitudesParaAdmin(estado?: string) {
       }
     }
 
+    const docs = (s.trq_documento_socio || []) as Array<{ dcs_id: string; dcs_tipo: string; dcs_nombre_archivo?: string | null; dcs_comentario?: string | null; dcs_creado_en?: string | null }>;
+    const propuestas = docs.filter(d => d.dcs_comentario?.includes("[PROPUESTA_MODIFICACION_CONTRATO]"));
+    const tieneContratoFirmado = docs.some(d => d.dcs_tipo === "contrato_socio");
+
+    let nivelUrgencia: "urgente_propuesta" | "urgente_contrato" | "pendiente_revision" | "esperando_abogado" | "observada" | "normal" = "normal";
+    let etiquetaUrgencia = "";
+
+    if (propuestas.length > 0) {
+      nivelUrgencia = "urgente_propuesta";
+      etiquetaUrgencia = `Propuesta de Modificación (${propuestas.length})`;
+    } else if (tieneContratoFirmado && estadoReal === "aceptada") {
+      nivelUrgencia = "urgente_contrato";
+      etiquetaUrgencia = "Contrato Firmado Cargado";
+    } else if (estadoReal === "enviada" || estadoReal === "en_revision") {
+      nivelUrgencia = "pendiente_revision";
+      etiquetaUrgencia = "Postulación Inicial Pendiente";
+    } else if (estadoReal === "aceptada") {
+      nivelUrgencia = "esperando_abogado";
+      etiquetaUrgencia = "Esperando Firma del Abogado";
+    } else if (estadoReal === "rechazada") {
+      nivelUrgencia = "observada";
+      etiquetaUrgencia = "Observada / Requiere Corrección";
+    }
+
     return {
       ...s,
       solicitudId: s.ssc_id,
@@ -225,6 +250,11 @@ export async function listarSolicitudesParaAdmin(estado?: string) {
       enlaceForoVerificado: s.ssc_enlace_foro_verificado,
       creadoEn: s.ssc_creado_en,
       enviadaEn: s.ssc_enviada_en,
+      propuestas,
+      propuestasPendientesCount: propuestas.length,
+      tieneContratoFirmado,
+      nivelUrgencia,
+      etiquetaUrgencia,
     };
   });
 

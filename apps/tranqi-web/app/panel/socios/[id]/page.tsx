@@ -87,6 +87,99 @@ export default async function PaginaDetalleSocio({ params }: { params: Promise<{
         )}
       </div>
 
+      {/* Propuestas de Modificación al Contrato enviadas por el Postulante */}
+      {(() => {
+        const propuestasContrato = documentos.filter(
+          (d) => d.dcs_comentario?.includes("[PROPUESTA_MODIFICACION_CONTRATO]") || d.dcs_tipo === "propuesta_contrato"
+        );
+        if (propuestasContrato.length === 0) return null;
+
+        return (
+          <div style={{
+            border: "2px solid #F59E0B",
+            borderRadius: "14px",
+            background: "#FFFBEB",
+            padding: "18px 20px",
+            marginBottom: "20px",
+            boxShadow: "0 4px 12px rgba(245, 158, 11, 0.12)",
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "8px" }}>
+              <span style={{ fontSize: "1.3rem" }}>📝</span>
+              <div>
+                <h2 style={{ margin: 0, fontSize: "1.05rem", color: "#92400E", fontWeight: 800 }}>
+                  Propuestas de Modificación al Contrato ({propuestasContrato.length})
+                </h2>
+                <p style={{ margin: "2px 0 0 0", fontSize: "0.82rem", color: "#B45309" }}>
+                  El solicitante ha enviado observaciones y modificaciones al contrato de servicios en formato Word (.docx).
+                </p>
+              </div>
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: "12px" }}>
+              {propuestasContrato.map((p, idx) => (
+                <div
+                  key={p.dcs_id}
+                  style={{
+                    background: "#FFFFFF",
+                    border: "1px solid #FDE68A",
+                    borderRadius: "10px",
+                    padding: "12px 16px",
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    flexWrap: "wrap",
+                    gap: "10px"
+                  }}
+                >
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                      <span style={{ fontSize: "0.78rem", fontWeight: 800, color: "#92400E", background: "#FEF3C7", padding: "2px 8px", borderRadius: "6px" }}>
+                        Versión {propuestasContrato.length - idx}
+                      </span>
+                      <strong style={{ fontSize: "0.88rem", color: "#1F2937" }}>
+                        {p.dcs_nombre_archivo || "Propuesta_Contrato.docx"}
+                      </strong>
+                      <span style={{ fontSize: "0.76rem", color: "#6B7280" }}>
+                        {new Date(p.dcs_creado_en).toLocaleString("es-EC")}
+                      </span>
+                    </div>
+                    {p.dcs_comentario && (
+                      <p style={{ margin: "6px 0 0 0", fontSize: "0.84rem", color: "#4B5563" }}>
+                        <strong>Motivo / Observación del Solicitante:</strong> {p.dcs_comentario.replace("[PROPUESTA_MODIFICACION_CONTRATO] ", "")}
+                      </p>
+                    )}
+                  </div>
+
+                  {p.url && (
+                    <a
+                      href={p.url}
+                      download={p.dcs_nombre_archivo || "propuesta_contrato.docx"}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "6px",
+                        background: "#5000BA",
+                        color: "#FFFFFF",
+                        padding: "8px 14px",
+                        borderRadius: "8px",
+                        fontSize: "0.82rem",
+                        fontWeight: 700,
+                        textDecoration: "none",
+                        boxShadow: "0 2px 6px rgba(80, 0, 186, 0.2)"
+                      }}
+                    >
+                      <Download size={14} /> Descargar Word (.docx)
+                    </a>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
+
       {solicitud.ssc_estado === "aceptada" && (
         <div className="tarjeta-panel detalle-solicitud">
           <h2>Estado del socio</h2>

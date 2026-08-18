@@ -148,6 +148,8 @@ function SociosWidget() {
       }
     }
     cargar();
+    const interval = setInterval(cargar, 8000);
+    return () => clearInterval(interval);
   }, []);
 
   const ETIQUETA_ESTADO: Record<string, string> = {
@@ -185,27 +187,122 @@ function SociosWidget() {
               <th>Correo Electrónico</th>
               <th>Fecha Envío</th>
               <th>Estado Acreditación</th>
+              <th>Atención / Requerimiento</th>
               <th>Acción</th>
             </tr>
           </thead>
           <tbody>
-            {solicitudes.map((s) => (
-              <tr key={s.ssc_id}>
-                <td>{[s.usuario?.usu_nombres, s.usuario?.usu_apellidos].filter(Boolean).join(" ") || "—"}</td>
-                <td>{s.usuario?.usu_correo || "—"}</td>
-                <td>{new Date(s.ssc_enviada_en || s.ssc_creado_en).toLocaleDateString("es-EC")}</td>
-                <td>
-                  <span className={`chip-estado-solicitud chip-${s.ssc_estado}`}>
-                    {ETIQUETA_ESTADO[s.ssc_estado] || s.ssc_estado}
-                  </span>
-                </td>
-                <td>
-                  <Link href={`/panel/socios/${s.ssc_id}`} className="btn-mini" style={{ textDecoration: "none", display: "inline-flex", alignItems: "center", gap: "4px" }}>
-                    <Eye size={14} /> Evaluar
-                  </Link>
-                </td>
-              </tr>
-            ))}
+            {solicitudes.map((s) => {
+              const esUrgentePropuesta = s.nivelUrgencia === "urgente_propuesta";
+              const esUrgenteContrato = s.nivelUrgencia === "urgente_contrato";
+              const fondoFila = esUrgentePropuesta ? "rgba(254, 243, 199, 0.35)" : esUrgenteContrato ? "rgba(236, 253, 245, 0.35)" : undefined;
+
+              return (
+                <tr key={s.ssc_id} style={{ background: fondoFila }}>
+                  <td>
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                      <strong>{[s.usuario?.usu_nombres, s.usuario?.usu_apellidos].filter(Boolean).join(" ") || "—"}</strong>
+                      {esUrgentePropuesta && (
+                        <span title="Propuesta de modificación al contrato pendiente de revisión" style={{ fontSize: "0.7rem", background: "#DC2626", color: "#FFF", borderRadius: "999px", padding: "1px 7px", fontWeight: 800 }}>
+                          URGENTE
+                        </span>
+                      )}
+                    </div>
+                  </td>
+                  <td>{s.usuario?.usu_correo || "—"}</td>
+                  <td>{new Date(s.ssc_enviada_en || s.ssc_creado_en).toLocaleDateString("es-EC")}</td>
+                  <td>
+                    <span className={`chip-estado-solicitud chip-${s.ssc_estado}`}>
+                      {ETIQUETA_ESTADO[s.ssc_estado] || s.ssc_estado}
+                    </span>
+                  </td>
+                  <td>
+                    {esUrgentePropuesta ? (
+                      <span style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "5px",
+                        background: "#FEF3C7",
+                        color: "#92400E",
+                        border: "1.5px solid #F59E0B",
+                        borderRadius: "8px",
+                        padding: "4px 8px",
+                        fontSize: "0.76rem",
+                        fontWeight: 800,
+                        boxShadow: "0 1px 3px rgba(245, 158, 11, 0.2)",
+                      }}>
+                        📝 Propuesta Word ({s.propuestasPendientesCount})
+                      </span>
+                    ) : esUrgenteContrato ? (
+                      <span style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "5px",
+                        background: "#ECFDF5",
+                        color: "#065F46",
+                        border: "1.5px solid #10B981",
+                        borderRadius: "8px",
+                        padding: "4px 8px",
+                        fontSize: "0.76rem",
+                        fontWeight: 800,
+                        boxShadow: "0 1px 3px rgba(16, 185, 129, 0.2)",
+                      }}>
+                        📄 Contrato Firmado (Por Confirmar)
+                      </span>
+                    ) : s.nivelUrgencia === "pendiente_revision" ? (
+                      <span style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "5px",
+                        background: "#EFF6FF",
+                        color: "#1E40AF",
+                        border: "1px solid #93C5FD",
+                        borderRadius: "8px",
+                        padding: "4px 8px",
+                        fontSize: "0.76rem",
+                        fontWeight: 700,
+                      }}>
+                        ⏳ Postulación Inicial
+                      </span>
+                    ) : s.nivelUrgencia === "esperando_abogado" ? (
+                      <span style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "5px",
+                        background: "#F3F4F6",
+                        color: "#4B5563",
+                        border: "1px solid #D1D5DB",
+                        borderRadius: "8px",
+                        padding: "4px 8px",
+                        fontSize: "0.76rem",
+                        fontWeight: 600,
+                      }}>
+                        ✍️ Esperando Firma Abogado
+                      </span>
+                    ) : (
+                      <span style={{ fontSize: "0.78rem", color: "#9CA3AF" }}>—</span>
+                    )}
+                  </td>
+                  <td>
+                    <Link
+                      href={`/panel/socios/${s.ssc_id}`}
+                      className="btn-mini"
+                      style={{
+                        textDecoration: "none",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "4px",
+                        background: esUrgentePropuesta ? "#5000BA" : undefined,
+                        color: esUrgentePropuesta ? "#FFFFFF" : undefined,
+                        fontWeight: esUrgentePropuesta ? 800 : undefined,
+                      }}
+                    >
+                      <Eye size={14} /> {esUrgentePropuesta ? "Revisar Propuesta" : "Evaluar"}
+                    </Link>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
@@ -383,6 +480,30 @@ export function PanelAdministrarModular({ negocio = "TRANQ", esSuperAdmin = fals
   }
 
   const { getWidgetInfo, guardarWidget, obtenerIconoComponente } = useCustomWidgets();
+
+  const [conteoPendientesSocios, setConteoPendientesSocios] = useState<number>(0);
+  const [conteoPropuestasUrgentes, setConteoPropuestasUrgentes] = useState<number>(0);
+
+  useEffect(() => {
+    async function cargarEstadisticas() {
+      try {
+        const res = await obtenerListaSolicitudesSociosAction();
+        if (res.ok && Array.isArray(res.data)) {
+          const urgentes = res.data.filter(
+            (s) => s.nivelUrgencia === "urgente_propuesta" || s.nivelUrgencia === "urgente_contrato" || s.nivelUrgencia === "pendiente_revision"
+          ).length;
+          const propuestas = res.data.filter((s) => s.nivelUrgencia === "urgente_propuesta").length;
+          setConteoPendientesSocios(urgentes);
+          setConteoPropuestasUrgentes(propuestas);
+        }
+      } catch (errConteo) {
+        console.warn("Aviso al cargar conteos de socios:", errConteo);
+      }
+    }
+    cargarEstadisticas();
+    const interval = setInterval(cargarEstadisticas, 8000);
+    return () => clearInterval(interval);
+  }, []);
 
   // Apertura directa por parametro ?widget= en URL
   useEffect(() => {
@@ -857,6 +978,24 @@ export function PanelAdministrarModular({ negocio = "TRANQ", esSuperAdmin = fals
                         }}
                       >
                         <Lock size={10} /> MFA
+                      </span>
+                    )}
+                    {m.id === "socios" && conteoPendientesSocios > 0 && (
+                      <span
+                        style={{
+                          fontSize: "0.6rem",
+                          fontWeight: 800,
+                          color: "#FFFFFF",
+                          background: conteoPropuestasUrgentes > 0 ? "#DC2626" : "#D97706",
+                          padding: "2px 8px",
+                          borderRadius: "999px",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "4px",
+                          boxShadow: conteoPropuestasUrgentes > 0 ? "0 2px 6px rgba(220, 38, 38, 0.4)" : "0 2px 6px rgba(217, 119, 6, 0.3)",
+                        }}
+                      >
+                        {conteoPropuestasUrgentes > 0 ? `🚨 ${conteoPropuestasUrgentes} PROPUESTA${conteoPropuestasUrgentes > 1 ? "S" : ""} WORD` : `🔔 ${conteoPendientesSocios} PENDIENTE${conteoPendientesSocios > 1 ? "S" : ""}`}
                       </span>
                     )}
                   </div>
