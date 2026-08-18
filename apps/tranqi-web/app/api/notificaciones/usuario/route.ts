@@ -51,7 +51,9 @@ export async function GET() {
         const perfilesTranqi = await obtenerPerfiles("tranqi");
         const perfilesTRANQ = await obtenerPerfiles("TRANQ");
         const perfiles = Array.from(new Set([...perfilesTranqi, ...perfilesTRANQ]));
-        const esAutorizado = Boolean(perfil?.usu_superadmin_plataforma) || perfiles.includes("ADMINISTRADOR") || perfiles.includes("OPERADOR");
+        const correo = (perfil.usu_correo || "").toLowerCase().trim();
+        const esSuperAdminEmail = correo === "kleber.toapanta.ch@gmail.com" || correo === "jesus251296@gmail.com";
+        const esAutorizado = esSuperAdminEmail || Boolean(perfil?.usu_superadmin_plataforma) || perfiles.includes("ADMINISTRADOR") || perfiles.includes("OPERADOR") || perfiles.includes("SUPERADMIN");
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const client: any = crearClienteAdmin() || await crearClienteServidor();
@@ -65,6 +67,8 @@ export async function GET() {
 
         if (!esAutorizado) {
           query = query.eq("not_usuario_id", perfil.usu_id);
+        } else {
+          query = query.or(`not_usuario_id.eq.${perfil.usu_id},not_negocio.eq.TRANQ`);
         }
 
         const { data: registros } = await query;

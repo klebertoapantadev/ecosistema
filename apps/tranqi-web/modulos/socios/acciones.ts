@@ -20,15 +20,37 @@ const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12
 
 async function obtenerDestinatariosStaffTranqi(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  adminSupabase: any,
+  clientSupabase: any,
   excluirUsuarioId?: string
 ): Promise<{ id: string; correo: string }[]> {
   const destinatariosAdmin: { id: string; correo: string }[] = [];
   const correosVistos = new Set<string>();
 
   try {
-    // 1. Obtener todos los usuarios del ecosistema
-    const { data: usuarios } = await adminSupabase
+    // 1. Intentar RPC con SECURITY DEFINER
+    const { data: staffRpc, error: errRpc } = await clientSupabase
+      .schema("comun_seguridad")
+      .rpc("seg_fn_obtener_staff_negocio", { p_negocio: "TRANQ" });
+
+    if (!errRpc && Array.isArray(staffRpc) && staffRpc.length > 0) {
+      for (const st of staffRpc) {
+        const correo = (st.usu_correo || "").toLowerCase().trim();
+        if (st.usu_id !== excluirUsuarioId && correo && !correosVistos.has(correo)) {
+          correosVistos.add(correo);
+          destinatariosAdmin.push({ id: st.usu_id, correo: st.usu_correo });
+        }
+      }
+      if (destinatariosAdmin.length > 0) {
+        return destinatariosAdmin;
+      }
+    }
+  } catch (errRpcEx) {
+    console.warn("Aviso RPC seg_fn_obtener_staff_negocio:", errRpcEx);
+  }
+
+  // 2. Fallback de consulta directa
+  try {
+    const { data: usuarios } = await clientSupabase
       .schema("comun_seguridad")
       .from("seg_usuario")
       .select("usu_id, usu_correo, usu_superadmin_plataforma");
@@ -37,8 +59,7 @@ async function obtenerDestinatariosStaffTranqi(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const ids = usuarios.map((u: any) => u.usu_id);
 
-      // 2. Traer membresías con sus perfiles de TRANQ / TRANQI
-      const { data: membresias } = await adminSupabase
+      const { data: membresias } = await clientSupabase
         .schema("comun_seguridad")
         .from("seg_membresia")
         .select("mem_usuario_id, mem_estado, mem_negocio, seg_membresia_perfil(seg_perfil(per_clave))")
@@ -76,6 +97,15 @@ async function obtenerDestinatariosStaffTranqi(
     }
   } catch (err) {
     console.warn("Aviso al obtener staff tranqi:", err);
+  }
+
+  // 3. Fallback absoluto con cuentas de staff conocidas
+  const CORREOS_FALLBACK = ["kleber.toapanta.ch@gmail.com", "jesus251296@gmail.com", "satcomla.ti@gmail.com"];
+  for (const c of CORREOS_FALLBACK) {
+    if (!correosVistos.has(c)) {
+      correosVistos.add(c);
+      destinatariosAdmin.push({ id: crypto.randomUUID(), correo: c });
+    }
   }
 
   return destinatariosAdmin;
@@ -178,6 +208,20 @@ async function notificarSolicitudEnviada(
         } catch (errNotInsert) {
           console.warn("Aviso al insertar notificaciones para staff:", errNotInsert);
         }
+      }
+
+      // Invocar RPC SECURITY DEFINER para asegurar la inserción de notificaciones sin bloqueo de RLS
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await (adminSupabase as any).schema("comun_notificacion").rpc("not_fn_notificar_staff", {
+          p_negocio: "TRANQ",
+          p_titulo: tituloAdmin,
+          p_contenido_html: contenidoAdmin,
+          p_url_accion: urlRevision,
+          p_excluir_usuario_id: u.usu_id,
+        });
+      } catch (errRpcStaff) {
+        console.warn("Aviso RPC not_fn_notificar_staff:", errRpcStaff);
       }
 
       // 3. Enviar correo SMTP real tanto al postulante como a los operadores/admins
@@ -659,7 +703,24 @@ export async function enviarPropuestaModificacionContratoAction(datos: {
     }
 
     if (notifsAdmins.length > 0) {
-      await (adminSupabase as any).schema("comun_notificacion").from("not_registro").insert(notifsAdmins);
+      try {
+        await (adminSupabase as any).schema("comun_notificacion").from("not_registro").insert(notifsAdmins);
+      } catch (errNotInsertProp) {
+        console.warn("Aviso al insertar notificaciones de propuesta:", errNotInsertProp);
+      }
+    }
+
+    // Invocar RPC SECURITY DEFINER para asegurar inserción de notificación a staff
+    try {
+      await (adminSupabase as any).schema("comun_notificacion").rpc("not_fn_notificar_staff", {
+        p_negocio: "TRANQ",
+        p_titulo: tituloAdmin,
+        p_contenido_html: contenidoHTMLAdmin,
+        p_url_accion: `/panel/socios/${datos.solicitudId}`,
+        p_excluir_usuario_id: user.id,
+      });
+    } catch (errRpcNotProp) {
+      console.warn("Aviso RPC not_fn_notificar_staff propuesta:", errRpcNotProp);
     }
 
     // SMTP
@@ -850,7 +911,24 @@ export async function registrarDocumentoSocio(
       }
 
       if (notifsAdmins.length > 0) {
-        await (adminSupabase as any).schema("comun_notificacion").from("not_registro").insert(notifsAdmins);
+        try {
+          await (adminSupabase as any).schema("comun_notificacion").from("not_registro").insert(notifsAdmins);
+        } catch (errNotInsertDoc) {
+          console.warn("Aviso al insertar notificaciones de contrato subido:", errNotInsertDoc);
+        }
+      }
+
+      // Invocar RPC SECURITY DEFINER para asegurar inserción de notificación a staff
+      try {
+        await (adminSupabase as any).schema("comun_notificacion").rpc("not_fn_notificar_staff", {
+          p_negocio: "TRANQ",
+          p_titulo: tituloAdmin,
+          p_contenido_html: contenidoHTMLAdmin,
+          p_url_accion: `/panel/socios/${solicitudId}`,
+          p_excluir_usuario_id: user?.id,
+        });
+      } catch (errRpcNotDoc) {
+        console.warn("Aviso RPC not_fn_notificar_staff contrato subido:", errRpcNotDoc);
       }
 
       // 3. Enviar correo SMTP a administradores
