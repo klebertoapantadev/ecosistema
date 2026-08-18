@@ -144,7 +144,13 @@ Capacidad para que el usuario comparta cualquier documento de su Billetera Digit
 ### TRQ-ADM-001 — Mesa de Control de Acreditación de Socios
 **Responsable:** Kleber Toapanta | **Estado:** ✅ Implementado y Verificado (100%)
 - Panel de evaluación de solicitudes (`/panel/socios` y `/panel/administrar`), validación de títulos SENESCYT y matrículas del Foro de Abogados, con exigencia estricta de MFA TOTP (`aal2`).
-- Reenvío interactivo de notificaciones de aprobación y seguimiento de contratos firmados.
+- **Indicadores de Atención Urgente (Badges & Budget en Cards y Tablas):**
+  - Card del módulo en `/panel/administrar`: Badge dinámico que alerta en tiempo real con conteo de pendientes (`🚨 N Propuestas Word` o `🔔 N Pendientes`).
+  - Tabla de Aprobación de Socios: Columna de *Atención / Requerimiento* con chips específicos (`📝 Propuesta Word (Urgente)`, `📄 Contrato Firmado (Por Confirmar)`, `⏳ Postulación Inicial`, `✍️ Esperando Firma Abogado`) y resaltado de fila para atención inmediata.
+- **Notificaciones Bidireccionales Automáticas:**
+  - *Solicitante ➔ Operador/Admin:* Notificación inmediata ante nueva postulación, subida de contrato firmado o envío de propuesta Word.
+  - *Operador/Admin ➔ Solicitante:* Notificación inmediata ante aprobación, emisión de observaciones/requerimiento de corrección o confirmación definitiva de contrato.
+- Reenvío interactivo de notificaciones de aprobación y visualización destacada de propuestas de modificación de contrato.
 
 ### TRQ-ADM-002 — Asignación de Casos y Liquidación de Honorarios
 **Responsable:** Kleber Toapanta / Jesus Navarrete | **Estado:** ⏳ Pendiente (0%)
