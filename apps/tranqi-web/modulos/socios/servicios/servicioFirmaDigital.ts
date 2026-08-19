@@ -1,5 +1,6 @@
 import forge from "node-forge";
 import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
+import QRCode from "qrcode";
 
 export interface InfoCertificado {
   nombreTitular: string;
@@ -132,7 +133,20 @@ export interface OpcionesEstampaFirma {
 }
 
 /**
- * Estampa la firma visual con metadatos criptográficos en el PDF del contrato.
+ * Convierte un Data URL en Uint8Array sin dependencias externas de Node.js
+ */
+function dataUrlToUint8Array(dataUrl: string): Uint8Array {
+  const base64 = dataUrl.split(",")[1] || "";
+  const binaryString = atob(base64);
+  const bytes = new Uint8Array(binaryString.length);
+  for (let i = 0; i < binaryString.length; i++) {
+    bytes[i] = binaryString.charCodeAt(i);
+  }
+  return bytes;
+}
+
+/**
+ * Estampa la firma visual estilo oficial (con código QR y metadatos) en el PDF del contrato.
  */
 export async function estamparFirmaDigitalEnPdf(
   opciones: OpcionesEstampaFirma
@@ -172,9 +186,9 @@ export async function estamparFirmaDigitalEnPdf(
 
     const esTranqi = rolFirmante === "TRANQI_PLATAFORMA";
     
-    // Dimensiones de la estampa
+    // Dimensiones estándar del sello con QR
     const boxWidth = 230;
-    const boxHeight = 85;
+    const boxHeight = 72;
 
     // Coordenadas calculadas o personalizadas
     const defaultPosX = esTranqi ? 50 : width - boxWidth - 50;
@@ -185,9 +199,10 @@ export async function estamparFirmaDigitalEnPdf(
 
     // Fondo y borde del recuadro de firma digital
     const colorBorde = esTranqi ? rgb(0.31, 0, 0.73) : rgb(0.02, 0.53, 0.43);
-    const colorFondo = esTranqi ? rgb(0.96, 0.94, 1.0) : rgb(0.93, 0.99, 0.96);
+    const colorFondo = rgb(1, 1, 1);
     const colorTexto = rgb(0.1, 0.1, 0.1);
 
+    // Dibujar recuadro de firma
     paginaDestino.drawRectangle({
       x: posX,
       y: posY,
@@ -195,71 +210,107 @@ export async function estamparFirmaDigitalEnPdf(
       height: boxHeight,
       color: colorFondo,
       borderColor: colorBorde,
-      borderWidth: 1.5,
+      borderWidth: 1.2,
     });
 
-    // Encabezado del sello
-    const headerText = esTranqi ? "FIRMA DIGITAL · TRANQI LEGAL" : "FIRMA ELECTRÓNICA AVANZADA";
+    // Generar Código QR con los datos de verificación
+    const textoQr = [
+      `FIRMADO DIGITALMENTE POR: ${infoCertificado.nombreTitular}`,
+      `FECHA: ${fechaHoraStr} (ECT)`,
+      `EMISOR: ${infoCertificado.entidadEmisora}`,
+      `SERIE: ${infoCertificado.numeroSerie}`,
+      `RAZÓN: ${razonFirma || (esTranqi ? "Aprobación Institucional" : "Aceptación Contrato de Sociedad")}`,
+      `LEY DE COMERCIO ELECTRÓNICO (ECUADOR)`,
+    ].join("\n");
+
+    const qrDataUrl = await QRCode.toDataURL(textoQr, {
+      margin: 1,
+      width: 180,
+      errorCorrectionLevel: "M",
+      color: {
+        dark: esTranqi ? "#3B0086" : "#047857",
+        light: "#FFFFFF",
+      },
+    });
+
+    const qrBytes = dataUrlToUint8Array(qrDataUrl);
+    const qrImage = await pdfDoc.embedPng(qrBytes);
+
+    // Dibujar Código QR en el lado izquierdo del recuadro
+    const qrSize = 58;
+    const qrPosX = posX + 7;
+    const qrPosY = posY + (boxHeight - qrSize) / 2;
+
+    paginaDestino.drawImage(qrImage, {
+      x: qrPosX,
+      y: qrPosY,
+      width: qrSize,
+      height: qrSize,
+    });
+
+    // Separador vertical sutil
+    paginaDestino.drawLine({
+      start: { x: posX + qrSize + 13, y: posY + 6 },
+      end: { x: posX + qrSize + 13, y: posY + boxHeight - 6 },
+      thickness: 0.75,
+      color: rgb(0.85, 0.88, 0.92),
+    });
+
+    // Dibujar textos en el lado derecho del recuadro
+    const textoPosX = posX + qrSize + 19;
+    
+    // Encabezado
+    const headerText = esTranqi ? "FIRMADO POR TRANQI LEGAL" : "FIRMADO DIGITALMENTE POR:";
     paginaDestino.drawText(headerText, {
-      x: posX + 10,
-      y: posY + boxHeight - 16,
-      size: 7.5,
+      x: textoPosX,
+      y: posY + boxHeight - 14,
+      size: 6.5,
       font: fontBold,
       color: colorBorde,
     });
 
     // Nombre del Titular
-    const nombreTruncado = infoCertificado.nombreTitular.length > 32 
-      ? infoCertificado.nombreTitular.substring(0, 30) + "..."
+    const nombreTruncado = infoCertificado.nombreTitular.length > 25 
+      ? infoCertificado.nombreTitular.substring(0, 24) + "..."
       : infoCertificado.nombreTitular;
     
     paginaDestino.drawText(nombreTruncado, {
-      x: posX + 10,
-      y: posY + boxHeight - 30,
-      size: 8.5,
+      x: textoPosX,
+      y: posY + boxHeight - 26,
+      size: 7.5,
       font: fontBold,
       color: colorTexto,
     });
 
+    // Fecha y Hora oficial
+    paginaDestino.drawText(`FECHA: ${fechaHoraStr} (ECT)`, {
+      x: textoPosX,
+      y: posY + boxHeight - 38,
+      size: 6,
+      font: fontRegular,
+      color: rgb(0.25, 0.25, 0.25),
+    });
+
     // Emisor / Entidad de Certificación
-    const emisorTruncado = infoCertificado.entidadEmisora.length > 40
-      ? infoCertificado.entidadEmisora.substring(0, 38) + "..."
+    const emisorTruncado = infoCertificado.entidadEmisora.length > 30
+      ? infoCertificado.entidadEmisora.substring(0, 28) + "..."
       : infoCertificado.entidadEmisora;
 
-    paginaDestino.drawText(`Emisor: ${emisorTruncado}`, {
-      x: posX + 10,
-      y: posY + boxHeight - 42,
-      size: 6.5,
-      font: fontRegular,
-      color: rgb(0.3, 0.3, 0.3),
-    });
-
-    // Fecha y Hora oficial
-    paginaDestino.drawText(`Fecha/Hora: ${fechaHoraStr} (ECT)`, {
-      x: posX + 10,
-      y: posY + boxHeight - 54,
-      size: 6.5,
-      font: fontRegular,
-      color: rgb(0.3, 0.3, 0.3),
-    });
-
-    // Razón / Ubicación
-    const razonTexto = razonFirma || (esTranqi ? "Aprobación y Formalización Institucional" : "Aceptación de Contrato de Sociedad");
-    paginaDestino.drawText(`Razón: ${razonTexto}`, {
-      x: posX + 10,
-      y: posY + boxHeight - 66,
-      size: 6.5,
-      font: fontRegular,
-      color: rgb(0.3, 0.3, 0.3),
-    });
-
-    // Sello de Integridad
-    paginaDestino.drawText(`Validez Ley Comercio Electrónico EC · Serie: ${infoCertificado.numeroSerie.substring(0, 16)}...`, {
-      x: posX + 10,
-      y: posY + 8,
+    paginaDestino.drawText(`EMISOR: ${emisorTruncado}`, {
+      x: textoPosX,
+      y: posY + boxHeight - 49,
       size: 5.5,
       font: fontRegular,
-      color: rgb(0.4, 0.4, 0.4),
+      color: rgb(0.35, 0.35, 0.35),
+    });
+
+    // Sello de Ley de Comercio Electrónico
+    paginaDestino.drawText(`VALIDADO · LEY COMERCIO ELECTRÓNICO (EC)`, {
+      x: textoPosX,
+      y: posY + 8,
+      size: 5,
+      font: fontRegular,
+      color: rgb(0.45, 0.45, 0.45),
     });
 
     // Actualizar metadatos del PDF

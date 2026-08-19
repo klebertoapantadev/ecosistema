@@ -28,8 +28,10 @@ import {
   ArrowLeft,
   ArrowRight,
   Check,
+  QrCode,
 } from "lucide-react";
 import { PDFDocument } from "pdf-lib";
+import QRCode from "qrcode";
 import {
   parsearCertificadoP12,
   estamparFirmaDigitalEnPdf,
@@ -66,6 +68,7 @@ export function ModalFirmaDigitalPdf({
   const [procesandoP12, setProcesandoP12] = useState(false);
   const [infoCert, setInfoCert] = useState<InfoCertificado | null>(null);
   const [errorCert, setErrorCert] = useState<string | null>(null);
+  const [qrPreviewDataUrl, setQrPreviewDataUrl] = useState<string | null>(null);
 
   // Estado del PDF original y paginación
   const [cargandoPdf, setCargandoPdf] = useState(false);
@@ -167,6 +170,27 @@ export function ModalFirmaDigitalPdf({
       }
 
       setInfoCert(res.info);
+
+      // Generar preview del código QR para la estampa visual
+      const textoQr = [
+        `FIRMADO DIGITALMENTE POR: ${res.info.nombreTitular}`,
+        `FECHA: ${new Date().toLocaleString("es-EC")} (ECT)`,
+        `EMISOR: ${res.info.entidadEmisora}`,
+        `SERIE: ${res.info.numeroSerie}`,
+        `PLATAFORMA: tranqi (ECUADOR)`,
+      ].join("\n");
+
+      const qrUrl = await QRCode.toDataURL(textoQr, {
+        margin: 1,
+        width: 120,
+        errorCorrectionLevel: "M",
+        color: {
+          dark: esTranqi ? "#3B0086" : "#047857",
+          light: "#FFFFFF",
+        },
+      });
+      setQrPreviewDataUrl(qrUrl);
+
       // Al validar, asegurar que esté en la última página (firmas)
       setPaginaActual(totalPaginas);
       setPasoActual("2_UBICAR_FIRMA");
@@ -195,7 +219,7 @@ export function ModalFirmaDigitalPdf({
       const deltaX = e.clientX - offsetArrastre.current.startX;
       const deltaY = e.clientY - offsetArrastre.current.startY;
 
-      // Convertir delta pixels a porcentaje relativo (asumiendo ancho ~ 600px, alto ~ 800px)
+      // Convertir delta pixels a porcentaje relativo
       const deltaXPorc = (deltaX / 600) * 100;
       const deltaYPorc = (deltaY / 800) * 100;
 
@@ -236,7 +260,7 @@ export function ModalFirmaDigitalPdf({
       
       const xPdf = (posicionXPorcentaje / 100) * pdfWidth;
       // En PDF (0,0) es la esquina inferior izquierda
-      const yPdf = ((100 - posicionYPorcentaje - 12) / 100) * pdfHeight;
+      const yPdf = ((100 - posicionYPorcentaje - 10) / 100) * pdfHeight;
 
       const resEstampa = await estamparFirmaDigitalEnPdf({
         pdfBytes: pdfBytesOriginal,
@@ -367,7 +391,7 @@ export function ModalFirmaDigitalPdf({
                   : "Firma Electrónica Digital del Contrato de Sociedad"}
               </h2>
               <p style={{ margin: "2px 0 0 0", fontSize: "0.8rem", opacity: 0.9 }}>
-                Estándar PAdES / Zero-Custody · Ley de Comercio Electrónico del Ecuador
+                Estándar PAdES / QR Oficial · Ley de Comercio Electrónico del Ecuador
               </p>
             </div>
           </div>
@@ -456,7 +480,7 @@ export function ModalFirmaDigitalPdf({
             >
               2
             </span>
-            Ubicar Firma en Documento
+            Ubicar Firma con QR en Documento
           </div>
 
           <div style={{ color: "#CBD5E1" }}>➔</div>
@@ -676,7 +700,7 @@ export function ModalFirmaDigitalPdf({
             {/* PASO 2: Controles de Ubicación de la Firma */}
             {pasoActual === "2_UBICAR_FIRMA" && infoCert && (
               <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
-                {/* Tarjeta de Certificado Validado */}
+                {/* Tarjeta de Certificado Validado con QR */}
                 <div
                   style={{
                     padding: "12px",
@@ -687,7 +711,7 @@ export function ModalFirmaDigitalPdf({
                 >
                   <div style={{ display: "flex", alignItems: "center", gap: "6px", color: "#16A34A", marginBottom: "6px" }}>
                     <CheckCircle2 size={16} />
-                    <span style={{ fontSize: "0.82rem", fontWeight: 800 }}>Certificado Válido</span>
+                    <span style={{ fontSize: "0.82rem", fontWeight: 800 }}>Certificado Válido con QR Oficial</span>
                   </div>
 
                   <div style={{ fontSize: "0.78rem", color: "#1E293B", lineHeight: 1.35 }}>
@@ -729,10 +753,10 @@ export function ModalFirmaDigitalPdf({
 
                 <div>
                   <h4 style={{ margin: "0 0 4px 0", fontSize: "0.9rem", fontWeight: 700, color: "#1E293B" }}>
-                    2. Posiciona tu Firma en la Página {paginaActual}
+                    2. Posiciona tu Sello QR en la Página {paginaActual}
                   </h4>
                   <p style={{ margin: 0, fontSize: "0.75rem", color: "#64748B" }}>
-                    Usa los botones rápidos o arrastra el recuadro verde directamente en el documento.
+                    Arrastra el recuadro con el QR directamente en el visor o usa las opciones rápidas.
                   </p>
                 </div>
 
@@ -801,7 +825,7 @@ export function ModalFirmaDigitalPdf({
                   }}
                 >
                   <div style={{ fontSize: "0.72rem", fontWeight: 700, color: "#64748B", marginBottom: "6px" }}>
-                    Ajuste fino de posición ({posicionXPorcentaje}%, {posicionYPorcentaje}%):
+                    Ajuste de posición ({posicionXPorcentaje}%, {posicionYPorcentaje}%):
                   </div>
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px" }}>
                     <button
@@ -924,12 +948,12 @@ export function ModalFirmaDigitalPdf({
                   {firmando ? (
                     <>
                       <Loader2 size={18} className="animate-spin" />
-                      Estampando Firma en PDF...
+                      Estampando Firma con QR en PDF...
                     </>
                   ) : (
                     <>
                       <Sparkles size={18} />
-                      Estampar Firma en este Lugar
+                      Estampar Firma con QR
                     </>
                   )}
                 </button>
@@ -964,10 +988,10 @@ export function ModalFirmaDigitalPdf({
                     <CheckCircle2 size={24} />
                   </div>
                   <h4 style={{ margin: "0 0 2px 0", fontSize: "0.95rem", fontWeight: 800, color: "#166534" }}>
-                    ¡Documento Firmado con Éxito!
+                    ¡Documento Firmado con Sello QR!
                   </h4>
                   <p style={{ margin: 0, fontSize: "0.75rem", color: "#15803D" }}>
-                    La firma digital PAdES ha sido estampada en el contrato.
+                    La firma digital y el código QR de verificación han sido estampados en el contrato.
                   </p>
                 </div>
 
@@ -1104,7 +1128,7 @@ export function ModalFirmaDigitalPdf({
                 <FileText size={15} color="#38BDF8" />
                 <span style={{ fontWeight: 600 }}>
                   {pasoActual === "3_REVISAR_Y_ENVIAR"
-                    ? "Vista Previa: Contrato Firmado"
+                    ? "Vista Previa: Contrato Firmado con Sello QR"
                     : `Contrato de Sociedad (${totalPaginas} páginas)`}
                 </span>
               </div>
@@ -1229,7 +1253,7 @@ export function ModalFirmaDigitalPdf({
                     }}
                   />
 
-                  {/* ESTAMPA FLOTANTE INTERACTIVA Y ARRASTRABLE EN PASO 2 */}
+                  {/* ESTAMPA FLOTANTE INTERACTIVA CON CÓDIGO QR EN PASO 2 */}
                   {pasoActual === "2_UBICAR_FIRMA" && infoCert && (
                     <div
                       onMouseDown={(e) => handleInicioArrastre(e.clientX, e.clientY)}
@@ -1242,70 +1266,116 @@ export function ModalFirmaDigitalPdf({
                         position: "absolute",
                         top: `${posicionYPorcentaje}%`,
                         left: `${posicionXPorcentaje}%`,
-                        width: "230px",
-                        height: "85px",
-                        background: esTranqi ? "rgba(245, 243, 255, 0.96)" : "rgba(236, 253, 245, 0.96)",
-                        border: `2px dashed ${esTranqi ? "#5000BA" : "#047857"}`,
-                        borderRadius: "6px",
-                        padding: "6px 8px",
+                        width: "235px",
+                        height: "74px",
+                        background: "rgba(255, 255, 255, 0.98)",
+                        border: `1.5px solid ${esTranqi ? "#5000BA" : "#047857"}`,
+                        borderRadius: "4px",
+                        padding: "4px 6px",
                         boxSizing: "border-box",
-                        boxShadow: "0 8px 20px rgba(0,0,0,0.3)",
+                        boxShadow: "0 8px 20px rgba(0,0,0,0.35)",
                         display: "flex",
-                        flexDirection: "column",
-                        justifyContent: "space-between",
+                        alignItems: "center",
+                        gap: "6px",
                         cursor: arrastrandoFirma ? "grabbing" : "grab",
                         userSelect: "none",
                         zIndex: 50,
                         transition: arrastrandoFirma ? "none" : "all 0.15s ease-out",
                       }}
                     >
+                      {/* Código QR Izquierdo */}
                       <div
                         style={{
-                          fontSize: "0.65rem",
-                          fontWeight: 800,
-                          color: esTranqi ? "#5000BA" : "#047857",
+                          width: "56px",
+                          height: "56px",
+                          flexShrink: 0,
+                          background: "#F8FAFC",
+                          borderRadius: "3px",
                           display: "flex",
-                          justifyContent: "space-between",
                           alignItems: "center",
-                        }}
-                      >
-                        <span>{esTranqi ? "FIRMA DIGITAL · TRANQI LEGAL" : "FIRMA ELECTRÓNICA AVANZADA"}</span>
-                        <div style={{ display: "flex", alignItems: "center", gap: "2px" }}>
-                          <Move size={12} />
-                          <span style={{ fontSize: "0.6rem" }}>Arrastrar</span>
-                        </div>
-                      </div>
-
-                      <div
-                        style={{
-                          fontSize: "0.72rem",
-                          fontWeight: 800,
-                          color: "#0F172A",
+                          justifyContent: "center",
                           overflow: "hidden",
-                          textOverflow: "ellipsis",
-                          whiteSpace: "nowrap",
                         }}
                       >
-                        {infoCert.nombreTitular}
+                        {qrPreviewDataUrl ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={qrPreviewDataUrl}
+                            alt="QR Firma"
+                            style={{ width: "100%", height: "100%", objectFit: "contain" }}
+                          />
+                        ) : (
+                          <QrCode size={36} color={esTranqi ? "#5000BA" : "#047857"} />
+                        )}
                       </div>
 
-                      <div style={{ fontSize: "0.55rem", color: "#475569", lineHeight: 1.1 }}>
-                        <div>Emisor: {infoCert.entidadEmisora.substring(0, 28)}...</div>
-                        <div>Fecha: {new Date().toLocaleDateString("es-EC")} (ECT)</div>
-                      </div>
+                      {/* Separador vertical */}
+                      <div style={{ width: "1px", height: "56px", background: "#E2E8F0" }} />
 
+                      {/* Textos Oficiales Derechos */}
                       <div
                         style={{
-                          fontSize: "0.5rem",
-                          color: "#64748B",
-                          borderTop: "1px solid rgba(0,0,0,0.08)",
-                          paddingTop: "2px",
+                          flex: 1,
                           display: "flex",
+                          flexDirection: "column",
                           justifyContent: "space-between",
+                          height: "58px",
+                          overflow: "hidden",
                         }}
                       >
-                        <span>Ley Comercio Electrónico EC</span>
-                        <span>Pág. {paginaActual}</span>
+                        <div
+                          style={{
+                            fontSize: "0.58rem",
+                            fontWeight: 800,
+                            color: esTranqi ? "#5000BA" : "#047857",
+                            lineHeight: 1,
+                            textTransform: "uppercase",
+                          }}
+                        >
+                          {esTranqi ? "FIRMADO POR TRANQI" : "FIRMADO DIGITALMENTE POR:"}
+                        </div>
+
+                        <div
+                          style={{
+                            fontSize: "0.65rem",
+                            fontWeight: 800,
+                            color: "#0F172A",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
+                            lineHeight: 1.1,
+                          }}
+                        >
+                          {infoCert.nombreTitular}
+                        </div>
+
+                        <div style={{ fontSize: "0.52rem", color: "#334155", lineHeight: 1 }}>
+                          FECHA: {new Date().toLocaleDateString("es-EC")} (ECT)
+                        </div>
+
+                        <div
+                          style={{
+                            fontSize: "0.48rem",
+                            color: "#64748B",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
+                            lineHeight: 1,
+                          }}
+                        >
+                          EMISOR: {infoCert.entidadEmisora.substring(0, 24)}...
+                        </div>
+
+                        <div
+                          style={{
+                            fontSize: "0.44rem",
+                            color: "#047857",
+                            fontWeight: 700,
+                            lineHeight: 1,
+                          }}
+                        >
+                          LEY COMERCIO ELECTRÓNICO (EC)
+                        </div>
                       </div>
                     </div>
                   )}
