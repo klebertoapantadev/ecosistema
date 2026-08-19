@@ -110,28 +110,54 @@ Capacidad para que el usuario comparta cualquier documento de su Billetera Digit
 
 ## 3. Módulos para el Rol Abogado (Socio Profesional)
 
-### TRQ-ABG-001 — Acreditación, Contratación y Onboarding de Socio Abogado
+### TRQ-ABG-001 — Acreditación, Contratación Dual y Onboarding de Socio Abogado
 **Responsable:** Kleber Toapanta | **Estado:** ✅ Implementado y Verificado (100%)
 
+#### Ciclo de Vida de Acreditación y Contratación:
+
+```mermaid
+graph TD
+    A["1. Solicitud de Postulación"] -->|Revisión SENESCYT y Foro de Abogados| B["2. Credenciales Validadas (Paso 1)"]
+    B -->|Notif 1: Descarga y Firma tu Contrato| C{"3. Opciones de Firma del Abogado"}
+    C -->|"Opción A (Recomendada)"| D["Firma Digital en Pantalla con .p12 (Zero-Custody)"]
+    C -->|"Opción B"| E["Firma Manual / Escaneo Físico (PDF)"]
+    C -->|"Opción C"| F["Propuesta de Modificación al Contrato (Word)"]
+    F -->|Revisión legal de cláusulas| B
+    D --> G["4. Contrato Firmado Cargado"]
+    E --> G
+    G -->|Notif 2: Contrato Recibido por Staff| H["5. Verificación y Contra-Firma Tranqi"]
+    H -->|Firma Digital .p12 de Tranqi| I["6. Contrato Bi-firmado y Activación de Rol ABOGADO"]
+    I -->|Notif 3: Bienvenido a Tranqi| J["7. Socio Abogado 100% ACTIVO"]
+```
+
 #### Reglas de Contratación, Formatos y Trazabilidad:
-1. **Firma y Aprobación Definitiva (Exclusivamente PDF):**
+1. **Opciones Duales de Firma para el Postulante:**
+   - **Opción A (Firma Electrónica en Línea `.p12`/`.pfx`):** Asistente interactivo en navegador donde el usuario carga su archivo `.p12` e ingresa su contraseña en memoria (Zero-Custody). El sistema estampa el recuadro visual de firma PAdES en el PDF y lo envía automáticamente.
+   - **Opción B (Firma Manual / Externa):** Descarga el contrato pre-llenado en PDF o Word, lo firma de forma manuscrita o con FirmaEC, y sube el PDF firmado.
+   - **Opción C (Propuesta de Modificación Word `.docx`):** Envío de observaciones a cláusulas con motivo justificado (mínimo 5 caracteres), con gestión de versiones para no bloquear la cola de socios.
+2. **Firma y Aprobación Definitiva (Exclusivamente PDF):**
    - Para la formalización y activación final del socio se admite **únicamente el formato PDF (`.pdf`)** con la firma manuscrita o electrónica del abogado.
-   - En fases posteriores, un **Agente de IA** validará automáticamente el documento: integridad del texto frente a la plantilla original, detección de firmas y hash del archivo.
-2. **Propuesta de Modificación o Comentarios a las Cláusulas (Formato Word `.docx` / `.doc`):**
-   - Si el postulante sube un archivo en Word, el sistema lo cataloga como una **Propuesta de Modificación / Observación al Contrato**.
-   - **Campo Obligatorio:** Se exige una justificación/motivo de los cambios propuestos (mínimo 5 caracteres).
-   - **Notificación Multicanal Prioritaria:** Despacho inmediato (In-App, Push y SMTP) a administradores y operadores: *"📝 Propuesta de Modificación al Contrato — Postulante: {nombre}"*.
 3. **Versionamiento Inmutable del Intercambio (Modelo Contract Lifecycle Management - CLM):**
-   - En lugar de repositorios Git en servidor (inadecuados para binarios pesados y consultas SQL), se implementa un modelo de **versionamiento inmutable en Base de Datos (`trq_documento_socio` + `trq_revision_solicitud`)**, registrando versiones consecutivas (`v1`, `v2`, `v3`...), autor, rol, timestamp, archivo binario y motivos.
-   - Los operadores y administradores disponen de la bitácora cronológica en `/panel/socios/[id]` para responder observaciones, emitir nuevas minutas consensuadas o rechazar cláusulas improcedentes.
+   - Versionamiento inmutable en Base de Datos (`trq_documento_socio` + `trq_revision_solicitud`), registrando versiones consecutivas (`v1`, `v2`, `v3`...), autor, rol, timestamp, archivo binario y motivos.
+
+---
 
 ### TRQ-ABG-002 — Despacho Virtual y Expediente Digital
 **Responsable:** Kleber Toapanta / Jesus Navarrete | **Estado:** ⏳ Pendiente (0%)
 - Bandeja de causas asignadas, acceso a los documentos compartidos por los clientes, gestor de escritos judiciales y bitácora de actuaciones.
 
-### TRQ-ABG-003 — Firma Electrónica Avanzada PAdES en Navegador
-**Responsable:** Jesus Navarrete | **Estado:** ⏳ Pendiente (0%)
-- Firma local de escritos y minutas en formato PDF mediante certificados digitales ecuatorianos (`.p12`), garantizando que **el archivo de certificado y su clave nunca salgan del navegador del abogado**.
+---
+
+### TRQ-ABG-003 — Firma Electrónica Avanzada PAdES en Navegador (Zero-Custody)
+**Responsable:** Kleber Toapanta | **Estado:** ✅ Implementado y Verificado (100%)
+
+#### Arquitectura de Criptografía sin Custodia en Servidor:
+1. **Descifrado Local:** El navegador procesa el archivo `.p12`/`.pfx` mediante `node-forge` en memoria volátil (`ArrayBuffer`).
+2. **Validación X.509:** Extracción en tiempo real del nombre del titular, cédula/RUC, entidad certificadora (Security Data, BCE, CJ, ANFAC, etc.), número de serie y período de validez.
+3. **Estampa Visual PAdES:** Utilizando `pdf-lib`, se dibuja el recuadro oficial de firma con sello institucional, timestamp oficial de Ecuador (ECT), razón jurídica, número de serie y hash criptográfico SHA-256.
+4. **Purga Inmediata de Memoria:** Las claves privadas y contraseñas se eliminan de la memoria inmediatamente tras generar el PDF firmado. **Nunca se transmiten por red ni se almacenan en servidores backend**.
+
+---
 
 ### TRQ-ABG-004 — Agenda Profesional y Videoconsultas
 **Responsable:** Jesus Navarrete | **Estado:** ⏳ Pendiente (0%)
@@ -141,16 +167,22 @@ Capacidad para que el usuario comparta cualquier documento de su Billetera Digit
 
 ## 4. Módulos para el Rol Operador y Administrador
 
-### TRQ-ADM-001 — Mesa de Control de Acreditación de Socios
+### TRQ-ADM-001 — Mesa de Control de Acreditación, Contra-Firma Tranqi y Activación
 **Responsable:** Kleber Toapanta | **Estado:** ✅ Implementado y Verificado (100%)
+
 - Panel de evaluación de solicitudes (`/panel/socios` y `/panel/administrar`), validación de títulos SENESCYT y matrículas del Foro de Abogados, con exigencia estricta de MFA TOTP (`aal2`).
-- **Indicadores de Atención Urgente (Badges & Budget en Cards y Tablas):**
-  - Card del módulo en `/panel/administrar`: Badge dinámico que alerta en tiempo real con conteo de pendientes (`🚨 N Propuestas Word` o `🔔 N Pendientes`).
-  - Tabla de Aprobación de Socios: Columna de *Atención / Requerimiento* con chips específicos (`📝 Propuesta Word (Urgente)`, `📄 Contrato Firmado (Por Confirmar)`, `⏳ Postulación Inicial`, `✍️ Esperando Firma Abogado`) y resaltado de fila para atención inmediata.
-- **Notificaciones Bidireccionales Automáticas:**
-  - *Solicitante ➔ Operador/Admin:* Notificación inmediata ante nueva postulación, subida de contrato firmado o envío de propuesta Word.
-  - *Operador/Admin ➔ Solicitante:* Notificación inmediata ante aprobación, emisión de observaciones/requerimiento de corrección o confirmación definitiva de contrato.
-- Reenvío interactivo de notificaciones de aprobación y visualización destacada de propuestas de modificación de contrato.
+- **Módulo de Contra-Firma Digital Institucional:** El operador/administrador visualiza el contrato firmado por el abogado y ejecuta la contra-firma digital de Tranqi con certificado `.p12` institucional, generando el **Contrato Bi-firmado oficial**.
+- **Activación Inmediata de Credenciales:** Al completar la contra-firma, se actualiza el registro en `trq_abogado`, se asigna el perfil `ABOGADO` en `seg_membresia_perfil` y se despacha la notificación formal de bienvenida.
+- **Indicadores Contextuales de la Tabla de Socios:**
+  - `🎉 Contrato Bi-firmado` ➔ Botón `Ver Expediente`.
+  - `📄 Contrato Listo para Contra-firma` ➔ Botón `Contra-firmar y Activar`.
+  - `📝 Propuesta Word (N)` ➔ Botón `Revisar Propuesta`.
+  - `✍️ Esperando Firma del Abogado` ➔ Estado en espera.
+  - `⏳ Postulación Inicial` ➔ Botón `Evaluar`.
+- **Notificaciones Automáticas Multicanal (In-App, Push y Email):**
+  - *Fase 1:* `📋 ¡Credenciales Validadas! — Descarga y Firma tu Contrato de Sociedad`.
+  - *Fase 2:* `📄 Contrato Firmado Recibido — Listo para Verificación y Contra-Firma`.
+  - *Fase 3:* `🎉 ¡Bienvenido a tranqi! Contrato Bi-firmado y Cuenta de Socio Abogado Activada`.
 
 ### TRQ-ADM-002 — Asignación de Casos y Liquidación de Honorarios
 **Responsable:** Kleber Toapanta / Jesus Navarrete | **Estado:** ⏳ Pendiente (0%)
