@@ -21,7 +21,15 @@ import {
   RotateCcw,
   Sparkles,
   FileText,
+  ChevronLeft,
+  ChevronRight,
+  ArrowUp,
+  ArrowDown,
+  ArrowLeft,
+  ArrowRight,
+  Check,
 } from "lucide-react";
+import { PDFDocument } from "pdf-lib";
 import {
   parsearCertificadoP12,
   estamparFirmaDigitalEnPdf,
@@ -59,18 +67,25 @@ export function ModalFirmaDigitalPdf({
   const [infoCert, setInfoCert] = useState<InfoCertificado | null>(null);
   const [errorCert, setErrorCert] = useState<string | null>(null);
 
-  // Estado del PDF original
+  // Estado del PDF original y paginación
   const [cargandoPdf, setCargandoPdf] = useState(false);
   const [pdfBytesOriginal, setPdfBytesOriginal] = useState<ArrayBuffer | null>(null);
   const [urlPrevisualizacionOriginal, setUrlPrevisualizacionOriginal] = useState<string | null>(null);
+  const [paginaActual, setPaginaActual] = useState<number>(1);
+  const [totalPaginas, setTotalPaginas] = useState<number>(1);
 
-  // Posición interactiva de la firma (porcentajes 0 - 100 dentro del contenedor)
+  // Posición interactiva de la firma (porcentajes 0 - 100 dentro del visor de la página)
   const esTranqi = rolFirmante === "TRANQI_PLATAFORMA";
-  // Default: Abogado a la derecha (60%, 75%), Tranqi a la izquierda (10%, 75%)
-  const [posicionXPorcentaje, setPosicionXPorcentaje] = useState(esTranqi ? 10 : 58);
+  // Default: Abogado a la derecha (56%, 74%), Tranqi a la izquierda (10%, 74%)
+  const [posicionXPorcentaje, setPosicionXPorcentaje] = useState(esTranqi ? 10 : 56);
   const [posicionYPorcentaje, setPosicionYPorcentaje] = useState(74);
-  const [arrastrando, setArrastrando] = useState(false);
-  const contenedorVisorRef = useRef<HTMLDivElement | null>(null);
+  const [arrastrandoFirma, setArrastrandoFirma] = useState(false);
+  const offsetArrastre = useRef<{ startX: number; startY: number; initPosX: number; initPosY: number }>({
+    startX: 0,
+    startY: 0,
+    initPosX: 0,
+    initPosY: 0,
+  });
 
   // Estado de la firma ejecutada
   const [firmando, setFirmando] = useState(false);
@@ -80,7 +95,7 @@ export function ModalFirmaDigitalPdf({
   const [urlPrevisualizacionFirmado, setUrlPrevisualizacionFirmado] = useState<string | null>(null);
   const [enviandoConfirmacion, setEnviandoConfirmacion] = useState(false);
 
-  // Cargar PDF original en memoria al abrir
+  // Cargar PDF original y calcular número total de páginas
   useEffect(() => {
     if (!abierto || !urlPdfOriginal) return;
 
@@ -94,6 +109,13 @@ export function ModalFirmaDigitalPdf({
         const buffer = await res.arrayBuffer();
         if (cancelado) return;
         setPdfBytesOriginal(buffer);
+
+        // Contar páginas con pdf-lib
+        const pdfDoc = await PDFDocument.load(buffer);
+        const numPags = pdfDoc.getPageCount();
+        setTotalPaginas(numPags);
+        // Por defecto colocamos la vista en la última página (página de firmas)
+        setPaginaActual(numPags);
 
         const blob = new Blob([buffer], { type: "application/pdf" });
         const urlBlob = URL.createObjectURL(blob);
@@ -145,6 +167,8 @@ export function ModalFirmaDigitalPdf({
       }
 
       setInfoCert(res.info);
+      // Al validar, asegurar que esté en la última página (firmas)
+      setPaginaActual(totalPaginas);
       setPasoActual("2_UBICAR_FIRMA");
     } catch (err: unknown) {
       setErrorCert(err instanceof Error ? err.message : "Error al procesar el archivo");
@@ -154,22 +178,51 @@ export function ModalFirmaDigitalPdf({
     }
   }
 
-  // Manejador de clic en el visor para posicionar la firma
-  function handleClicVisor(e: React.MouseEvent<HTMLDivElement>) {
-    if (!contenedorVisorRef.current || pasoActual !== "2_UBICAR_FIRMA") return;
-    const rect = contenedorVisorRef.current.getBoundingClientRect();
-    const xRel = ((e.clientX - rect.left) / rect.width) * 100;
-    const yRel = ((e.clientY - rect.top) / rect.height) * 100;
-
-    // Limitar entre 5% y 80% para mantener visible la estampa
-    const posXLimitada = Math.max(5, Math.min(65, xRel - 15));
-    const posYLimitada = Math.max(5, Math.min(85, yRel - 5));
-
-    setPosicionXPorcentaje(posXLimitada);
-    setPosicionYPorcentaje(posYLimitada);
+  // Handlers para arrastrar la estampa de firma con el mouse o touch
+  function handleInicioArrastre(clientX: number, clientY: number) {
+    setArrastrandoFirma(true);
+    offsetArrastre.current = {
+      startX: clientX,
+      startY: clientY,
+      initPosX: posicionXPorcentaje,
+      initPosY: posicionYPorcentaje,
+    };
   }
 
-  // Estampar firma con las coordenadas seleccionadas
+  useEffect(() => {
+    function handleMouseMove(e: MouseEvent) {
+      if (!arrastrandoFirma) return;
+      const deltaX = e.clientX - offsetArrastre.current.startX;
+      const deltaY = e.clientY - offsetArrastre.current.startY;
+
+      // Convertir delta pixels a porcentaje relativo (asumiendo ancho ~ 600px, alto ~ 800px)
+      const deltaXPorc = (deltaX / 600) * 100;
+      const deltaYPorc = (deltaY / 800) * 100;
+
+      const nuevaX = Math.max(5, Math.min(65, offsetArrastre.current.initPosX + deltaXPorc));
+      const nuevaY = Math.max(5, Math.min(85, offsetArrastre.current.initPosY + deltaYPorc));
+
+      setPosicionXPorcentaje(Math.round(nuevaX));
+      setPosicionYPorcentaje(Math.round(nuevaY));
+    }
+
+    function handleMouseUp() {
+      if (arrastrandoFirma) {
+        setArrastrandoFirma(false);
+      }
+    }
+
+    if (arrastrandoFirma) {
+      window.addEventListener("mousemove", handleMouseMove);
+      window.addEventListener("mouseup", handleMouseUp);
+    }
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [arrastrandoFirma]);
+
+  // Estampar firma en las coordenadas seleccionadas
   async function handleEstamparFirma() {
     if (!pdfBytesOriginal || !infoCert) return;
 
@@ -195,6 +248,7 @@ export function ModalFirmaDigitalPdf({
         posicion: {
           x: xPdf,
           y: yPdf,
+          paginaIndex: paginaActual - 1,
         },
       });
 
@@ -259,7 +313,7 @@ export function ModalFirmaDigitalPdf({
         position: "fixed",
         inset: 0,
         zIndex: 9999,
-        background: "rgba(15, 23, 42, 0.78)",
+        background: "rgba(15, 23, 42, 0.82)",
         backdropFilter: "blur(8px)",
         display: "flex",
         alignItems: "center",
@@ -273,7 +327,7 @@ export function ModalFirmaDigitalPdf({
           background: "#FFFFFF",
           borderRadius: "20px",
           width: "100%",
-          maxWidth: "1150px",
+          maxWidth: "1200px",
           maxHeight: "94vh",
           display: "flex",
           flexDirection: "column",
@@ -285,7 +339,7 @@ export function ModalFirmaDigitalPdf({
         {/* Encabezado Modal */}
         <div
           style={{
-            padding: "18px 26px",
+            padding: "16px 24px",
             background: esTranqi
               ? "linear-gradient(135deg, #3B0086 0%, #5000BA 100%)"
               : "linear-gradient(135deg, #047857 0%, #05876E 100%)",
@@ -307,12 +361,12 @@ export function ModalFirmaDigitalPdf({
               <FileCheck size={24} color="#FFF" />
             </div>
             <div>
-              <h2 style={{ margin: 0, fontSize: "1.2rem", fontWeight: 800 }}>
+              <h2 style={{ margin: 0, fontSize: "1.15rem", fontWeight: 800 }}>
                 {esTranqi
                   ? "Contra-Firma Digital Institucional · tranqi"
                   : "Firma Electrónica Digital del Contrato de Sociedad"}
               </h2>
-              <p style={{ margin: "3px 0 0 0", fontSize: "0.82rem", opacity: 0.9 }}>
+              <p style={{ margin: "2px 0 0 0", fontSize: "0.8rem", opacity: 0.9 }}>
                 Estándar PAdES / Zero-Custody · Ley de Comercio Electrónico del Ecuador
               </p>
             </div>
@@ -345,9 +399,9 @@ export function ModalFirmaDigitalPdf({
             display: "flex",
             background: "#F8FAFC",
             borderBottom: "1px solid #E2E8F0",
-            padding: "10px 24px",
+            padding: "8px 24px",
             gap: "16px",
-            fontSize: "0.85rem",
+            fontSize: "0.82rem",
             fontWeight: 700,
           }}
         >
@@ -355,7 +409,7 @@ export function ModalFirmaDigitalPdf({
             style={{
               display: "flex",
               alignItems: "center",
-              gap: "8px",
+              gap: "6px",
               color: pasoActual === "1_VALIDAR_CERTIFICADO" ? (esTranqi ? "#5000BA" : "#047857") : "#64748B",
             }}
           >
@@ -363,13 +417,13 @@ export function ModalFirmaDigitalPdf({
               style={{
                 background: pasoActual === "1_VALIDAR_CERTIFICADO" ? (esTranqi ? "#5000BA" : "#047857") : "#CBD5E1",
                 color: "#FFF",
-                width: "22px",
-                height: "22px",
+                width: "20px",
+                height: "20px",
                 borderRadius: "50%",
                 display: "inline-flex",
                 alignItems: "center",
                 justifyContent: "center",
-                fontSize: "0.75rem",
+                fontSize: "0.72rem",
               }}
             >
               1
@@ -383,7 +437,7 @@ export function ModalFirmaDigitalPdf({
             style={{
               display: "flex",
               alignItems: "center",
-              gap: "8px",
+              gap: "6px",
               color: pasoActual === "2_UBICAR_FIRMA" ? (esTranqi ? "#5000BA" : "#047857") : "#64748B",
             }}
           >
@@ -391,18 +445,18 @@ export function ModalFirmaDigitalPdf({
               style={{
                 background: pasoActual === "2_UBICAR_FIRMA" ? (esTranqi ? "#5000BA" : "#047857") : "#CBD5E1",
                 color: "#FFF",
-                width: "22px",
-                height: "22px",
+                width: "20px",
+                height: "20px",
                 borderRadius: "50%",
                 display: "inline-flex",
                 alignItems: "center",
                 justifyContent: "center",
-                fontSize: "0.75rem",
+                fontSize: "0.72rem",
               }}
             >
               2
             </span>
-            Ubicar y Posicionar Firma
+            Ubicar Firma en Documento
           </div>
 
           <div style={{ color: "#CBD5E1" }}>➔</div>
@@ -411,7 +465,7 @@ export function ModalFirmaDigitalPdf({
             style={{
               display: "flex",
               alignItems: "center",
-              gap: "8px",
+              gap: "6px",
               color: pasoActual === "3_REVISAR_Y_ENVIAR" ? (esTranqi ? "#5000BA" : "#047857") : "#64748B",
             }}
           >
@@ -419,13 +473,13 @@ export function ModalFirmaDigitalPdf({
               style={{
                 background: pasoActual === "3_REVISAR_Y_ENVIAR" ? (esTranqi ? "#5000BA" : "#047857") : "#CBD5E1",
                 color: "#FFF",
-                width: "22px",
-                height: "22px",
+                width: "20px",
+                height: "20px",
                 borderRadius: "50%",
                 display: "inline-flex",
                 alignItems: "center",
                 justifyContent: "center",
-                fontSize: "0.75rem",
+                fontSize: "0.72rem",
               }}
             >
               3
@@ -437,19 +491,19 @@ export function ModalFirmaDigitalPdf({
         {/* Aviso de Seguridad Zero-Custody */}
         <div
           style={{
-            padding: "8px 24px",
+            padding: "6px 24px",
             background: "#F0FDF4",
             borderBottom: "1px solid #DCFCE7",
             display: "flex",
             alignItems: "center",
-            gap: "10px",
-            fontSize: "0.8rem",
+            gap: "8px",
+            fontSize: "0.78rem",
             color: "#166534",
           }}
         >
-          <ShieldCheck size={16} color="#16A34A" />
+          <ShieldCheck size={15} color="#16A34A" />
           <span>
-            <strong>Privacidad Zero-Custody:</strong> Tu certificado .p12 y su clave privada se procesan exclusivamente en la memoria volátil de este navegador. <strong>Nunca se transmiten ni guardan en ningún servidor.</strong>
+            <strong>Privacidad Zero-Custody:</strong> Tu certificado .p12 y contraseña se procesan exclusivamente en la memoria de tu dispositivo. <strong>Nunca se envían a ningún servidor.</strong>
           </span>
         </div>
 
@@ -466,23 +520,23 @@ export function ModalFirmaDigitalPdf({
           {/* Columna Izquierda: Panel de Control del Asistente */}
           <div
             style={{
-              padding: "24px",
+              padding: "20px",
               borderRight: "1px solid #E2E8F0",
               display: "flex",
               flexDirection: "column",
-              gap: "18px",
+              gap: "16px",
               background: "#FFFFFF",
               overflowY: "auto",
             }}
           >
             {/* PASO 1: Formulario de carga de certificado */}
             {pasoActual === "1_VALIDAR_CERTIFICADO" && (
-              <form onSubmit={handleValidarP12} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+              <form onSubmit={handleValidarP12} style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
                 <div>
-                  <h3 style={{ margin: "0 0 6px 0", fontSize: "1rem", fontWeight: 700, color: "#1E293B" }}>
+                  <h3 style={{ margin: "0 0 4px 0", fontSize: "0.95rem", fontWeight: 700, color: "#1E293B" }}>
                     1. Cargar Archivo de Firma (.p12 / .pfx)
                   </h3>
-                  <p style={{ margin: 0, fontSize: "0.8rem", color: "#64748B" }}>
+                  <p style={{ margin: 0, fontSize: "0.78rem", color: "#64748B" }}>
                     Selecciona tu certificado emitido por Security Data, Banco Central, Judicatura, ANFAC, etc.
                   </p>
                 </div>
@@ -494,7 +548,7 @@ export function ModalFirmaDigitalPdf({
                       flexDirection: "column",
                       alignItems: "center",
                       justifyContent: "center",
-                      padding: "20px 16px",
+                      padding: "18px 14px",
                       border: "2px dashed #CBD5E1",
                       borderRadius: "12px",
                       background: "#F8FAFC",
@@ -503,11 +557,11 @@ export function ModalFirmaDigitalPdf({
                       transition: "border-color 0.2s ease",
                     }}
                   >
-                    <KeyRound size={28} color={esTranqi ? "#5000BA" : "#047857"} style={{ marginBottom: "8px" }} />
-                    <span style={{ fontSize: "0.85rem", fontWeight: 600, color: "#334155" }}>
+                    <KeyRound size={26} color={esTranqi ? "#5000BA" : "#047857"} style={{ marginBottom: "6px" }} />
+                    <span style={{ fontSize: "0.82rem", fontWeight: 600, color: "#334155" }}>
                       {archivoP12 ? archivoP12.name : "Examinar archivo .p12 o .pfx"}
                     </span>
-                    <span style={{ fontSize: "0.75rem", color: "#94A3B8", marginTop: "4px" }}>
+                    <span style={{ fontSize: "0.72rem", color: "#94A3B8", marginTop: "3px" }}>
                       Haga clic para seleccionar desde su dispositivo
                     </span>
                     <input
@@ -525,7 +579,7 @@ export function ModalFirmaDigitalPdf({
                 </div>
 
                 <div>
-                  <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 700, color: "#334155", marginBottom: "6px" }}>
+                  <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 700, color: "#334155", marginBottom: "4px" }}>
                     Contraseña de la Firma Electrónica
                   </label>
                   <div style={{ position: "relative" }}>
@@ -538,7 +592,7 @@ export function ModalFirmaDigitalPdf({
                       style={{
                         width: "100%",
                         padding: "10px 40px 10px 12px",
-                        fontSize: "0.9rem",
+                        fontSize: "0.88rem",
                         border: "1.5px solid #CBD5E1",
                         borderRadius: "10px",
                         outline: "none",
@@ -560,7 +614,7 @@ export function ModalFirmaDigitalPdf({
                         display: "flex",
                       }}
                     >
-                      {mostrarPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                      {mostrarPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                     </button>
                   </div>
                 </div>
@@ -568,17 +622,17 @@ export function ModalFirmaDigitalPdf({
                 {errorCert && (
                   <div
                     style={{
-                      padding: "12px",
+                      padding: "10px",
                       background: "#FEF2F2",
                       border: "1px solid #FECACA",
                       borderRadius: "10px",
                       color: "#991B1B",
-                      fontSize: "0.8rem",
+                      fontSize: "0.78rem",
                       display: "flex",
-                      gap: "8px",
+                      gap: "6px",
                     }}
                   >
-                    <AlertTriangle size={16} style={{ flexShrink: 0, marginTop: "2px" }} />
+                    <AlertTriangle size={15} style={{ flexShrink: 0, marginTop: "2px" }} />
                     <div>{errorCert}</div>
                   </div>
                 )}
@@ -595,7 +649,7 @@ export function ModalFirmaDigitalPdf({
                     border: "none",
                     borderRadius: "10px",
                     fontWeight: 700,
-                    fontSize: "0.9rem",
+                    fontSize: "0.88rem",
                     cursor: procesandoP12 || !archivoP12 || !password ? "not-allowed" : "pointer",
                     opacity: procesandoP12 || !archivoP12 || !password ? 0.6 : 1,
                     display: "flex",
@@ -606,12 +660,12 @@ export function ModalFirmaDigitalPdf({
                 >
                   {procesandoP12 ? (
                     <>
-                      <Loader2 size={18} className="animate-spin" />
+                      <Loader2 size={16} className="animate-spin" />
                       Validando Criptografía...
                     </>
                   ) : (
                     <>
-                      <Lock size={18} />
+                      <Lock size={16} />
                       Verificar Certificado y Continuar
                     </>
                   )}
@@ -621,33 +675,33 @@ export function ModalFirmaDigitalPdf({
 
             {/* PASO 2: Controles de Ubicación de la Firma */}
             {pasoActual === "2_UBICAR_FIRMA" && infoCert && (
-              <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
                 {/* Tarjeta de Certificado Validado */}
                 <div
                   style={{
-                    padding: "14px",
+                    padding: "12px",
                     background: "#F0FDF4",
                     border: "1px solid #BBF7D0",
-                    borderRadius: "12px",
+                    borderRadius: "10px",
                   }}
                 >
-                  <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#16A34A", marginBottom: "8px" }}>
-                    <CheckCircle2 size={18} />
-                    <span style={{ fontSize: "0.85rem", fontWeight: 800 }}>Certificado Válido y Listo</span>
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px", color: "#16A34A", marginBottom: "6px" }}>
+                    <CheckCircle2 size={16} />
+                    <span style={{ fontSize: "0.82rem", fontWeight: 800 }}>Certificado Válido</span>
                   </div>
 
-                  <div style={{ fontSize: "0.8rem", color: "#1E293B", lineHeight: 1.4 }}>
-                    <div style={{ display: "flex", alignItems: "flex-start", gap: "6px", marginBottom: "4px" }}>
-                      <UserCheck size={14} color="#047857" style={{ flexShrink: 0, marginTop: "2px" }} />
+                  <div style={{ fontSize: "0.78rem", color: "#1E293B", lineHeight: 1.35 }}>
+                    <div style={{ display: "flex", alignItems: "flex-start", gap: "6px", marginBottom: "3px" }}>
+                      <UserCheck size={13} color="#047857" style={{ flexShrink: 0, marginTop: "2px" }} />
                       <span><strong>Titular:</strong> {infoCert.nombreTitular}</span>
                     </div>
-                    <div style={{ display: "flex", alignItems: "flex-start", gap: "6px", marginBottom: "4px" }}>
-                      <Building size={14} color="#047857" style={{ flexShrink: 0, marginTop: "2px" }} />
+                    <div style={{ display: "flex", alignItems: "flex-start", gap: "6px", marginBottom: "3px" }}>
+                      <Building size={13} color="#047857" style={{ flexShrink: 0, marginTop: "2px" }} />
                       <span><strong>Emisor:</strong> {infoCert.entidadEmisora}</span>
                     </div>
                     <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                      <Calendar size={14} color="#047857" />
-                      <span><strong>Válido hasta:</strong> {new Date(infoCert.validoHasta).toLocaleDateString("es-EC")}</span>
+                      <Calendar size={13} color="#047857" />
+                      <span><strong>Vigencia:</strong> hasta {new Date(infoCert.validoHasta).toLocaleDateString("es-EC")}</span>
                     </div>
                   </div>
 
@@ -661,10 +715,10 @@ export function ModalFirmaDigitalPdf({
                       background: "none",
                       border: "none",
                       color: "#047857",
-                      fontSize: "0.75rem",
+                      fontSize: "0.72rem",
                       fontWeight: 600,
                       cursor: "pointer",
-                      padding: "6px 0 0 0",
+                      padding: "4px 0 0 0",
                       textDecoration: "underline",
                       display: "block",
                     }}
@@ -674,32 +728,29 @@ export function ModalFirmaDigitalPdf({
                 </div>
 
                 <div>
-                  <h4 style={{ margin: "0 0 6px 0", fontSize: "0.95rem", fontWeight: 700, color: "#1E293B" }}>
-                    2. Posiciona tu Firma en el Documento
+                  <h4 style={{ margin: "0 0 4px 0", fontSize: "0.9rem", fontWeight: 700, color: "#1E293B" }}>
+                    2. Posiciona tu Firma en la Página {paginaActual}
                   </h4>
-                  <p style={{ margin: 0, fontSize: "0.8rem", color: "#64748B" }}>
-                    Haz clic o arrastra el recuadro verde sobre el visor de la derecha para ubicar la estampa en el lugar deseado.
+                  <p style={{ margin: 0, fontSize: "0.75rem", color: "#64748B" }}>
+                    Usa los botones rápidos o arrastra el recuadro verde directamente en el documento.
                   </p>
                 </div>
 
                 {/* Botones de Posición Rápida */}
-                <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                  <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "#64748B" }}>
-                    Posiciones Rápidas Recomendadas:
-                  </span>
-                  
+                <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
                   <button
                     type="button"
                     onClick={() => {
-                      setPosicionXPorcentaje(58);
+                      setPaginaActual(totalPaginas);
+                      setPosicionXPorcentaje(56);
                       setPosicionYPorcentaje(74);
                     }}
                     style={{
-                      padding: "8px 12px",
-                      background: posicionXPorcentaje > 50 ? "#DCFCE7" : "#F1F5F9",
+                      padding: "8px 10px",
+                      background: posicionXPorcentaje > 50 ? "#DCFCE7" : "#F8FAFC",
                       border: `1.5px solid ${posicionXPorcentaje > 50 ? "#22C55E" : "#CBD5E1"}`,
                       borderRadius: "8px",
-                      fontSize: "0.8rem",
+                      fontSize: "0.78rem",
                       fontWeight: 600,
                       color: posicionXPorcentaje > 50 ? "#166534" : "#475569",
                       cursor: "pointer",
@@ -710,21 +761,22 @@ export function ModalFirmaDigitalPdf({
                     }}
                   >
                     <span>📌 Columna Derecha (Firma del Abogado)</span>
-                    {posicionXPorcentaje > 50 && <CheckCircle2 size={14} color="#16A34A" />}
+                    {posicionXPorcentaje > 50 && <Check size={14} color="#16A34A" />}
                   </button>
 
                   <button
                     type="button"
                     onClick={() => {
-                      setPosicionXPorcentaje(8);
+                      setPaginaActual(totalPaginas);
+                      setPosicionXPorcentaje(10);
                       setPosicionYPorcentaje(74);
                     }}
                     style={{
-                      padding: "8px 12px",
-                      background: posicionXPorcentaje <= 50 ? "#EDE9FE" : "#F1F5F9",
+                      padding: "8px 10px",
+                      background: posicionXPorcentaje <= 50 ? "#EDE9FE" : "#F8FAFC",
                       border: `1.5px solid ${posicionXPorcentaje <= 50 ? "#8B5CF6" : "#CBD5E1"}`,
                       borderRadius: "8px",
-                      fontSize: "0.8rem",
+                      fontSize: "0.78rem",
                       fontWeight: 600,
                       color: posicionXPorcentaje <= 50 ? "#5B21B6" : "#475569",
                       cursor: "pointer",
@@ -735,19 +787,111 @@ export function ModalFirmaDigitalPdf({
                     }}
                   >
                     <span>📌 Columna Izquierda (Firma Tranqi)</span>
-                    {posicionXPorcentaje <= 50 && <CheckCircle2 size={14} color="#7C3AED" />}
+                    {posicionXPorcentaje <= 50 && <Check size={14} color="#7C3AED" />}
                   </button>
+                </div>
+
+                {/* Micro-ajustes de posición */}
+                <div
+                  style={{
+                    padding: "10px",
+                    background: "#F8FAFC",
+                    border: "1px solid #E2E8F0",
+                    borderRadius: "10px",
+                  }}
+                >
+                  <div style={{ fontSize: "0.72rem", fontWeight: 700, color: "#64748B", marginBottom: "6px" }}>
+                    Ajuste fino de posición ({posicionXPorcentaje}%, {posicionYPorcentaje}%):
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px" }}>
+                    <button
+                      type="button"
+                      onClick={() => setPosicionYPorcentaje((y) => Math.max(5, y - 4))}
+                      style={{
+                        padding: "6px",
+                        background: "#FFF",
+                        border: "1px solid #CBD5E1",
+                        borderRadius: "6px",
+                        fontSize: "0.72rem",
+                        fontWeight: 600,
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: "4px",
+                      }}
+                    >
+                      <ArrowUp size={12} /> Subir
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPosicionYPorcentaje((y) => Math.min(85, y + 4))}
+                      style={{
+                        padding: "6px",
+                        background: "#FFF",
+                        border: "1px solid #CBD5E1",
+                        borderRadius: "6px",
+                        fontSize: "0.72rem",
+                        fontWeight: 600,
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: "4px",
+                      }}
+                    >
+                      <ArrowDown size={12} /> Bajar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPosicionXPorcentaje((x) => Math.max(5, x - 4))}
+                      style={{
+                        padding: "6px",
+                        background: "#FFF",
+                        border: "1px solid #CBD5E1",
+                        borderRadius: "6px",
+                        fontSize: "0.72rem",
+                        fontWeight: 600,
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: "4px",
+                      }}
+                    >
+                      <ArrowLeft size={12} /> Izquierda
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPosicionXPorcentaje((x) => Math.min(65, x + 4))}
+                      style={{
+                        padding: "6px",
+                        background: "#FFF",
+                        border: "1px solid #CBD5E1",
+                        borderRadius: "6px",
+                        fontSize: "0.72rem",
+                        fontWeight: 600,
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: "4px",
+                      }}
+                    >
+                      <ArrowRight size={12} /> Derecha
+                    </button>
+                  </div>
                 </div>
 
                 {errorFirma && (
                   <div
                     style={{
-                      padding: "10px",
+                      padding: "8px 10px",
                       background: "#FEF2F2",
                       border: "1px solid #FECACA",
                       borderRadius: "8px",
                       color: "#991B1B",
-                      fontSize: "0.8rem",
+                      fontSize: "0.75rem",
                     }}
                   >
                     {errorFirma}
@@ -760,31 +904,31 @@ export function ModalFirmaDigitalPdf({
                   disabled={firmando}
                   style={{
                     marginTop: "auto",
-                    padding: "14px",
+                    padding: "12px",
                     background: esTranqi
                       ? "linear-gradient(135deg, #5000BA 0%, #3B0086 100%)"
                       : "linear-gradient(135deg, #047857 0%, #065F46 100%)",
                     color: "#FFFFFF",
                     border: "none",
-                    borderRadius: "12px",
+                    borderRadius: "10px",
                     fontWeight: 800,
-                    fontSize: "0.95rem",
+                    fontSize: "0.9rem",
                     cursor: firmando ? "not-allowed" : "pointer",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    gap: "10px",
+                    gap: "8px",
                     boxShadow: "0 4px 12px rgba(4, 120, 87, 0.25)",
                   }}
                 >
                   {firmando ? (
                     <>
-                      <Loader2 size={20} className="animate-spin" />
+                      <Loader2 size={18} className="animate-spin" />
                       Estampando Firma en PDF...
                     </>
                   ) : (
                     <>
-                      <Sparkles size={20} />
+                      <Sparkles size={18} />
                       Estampar Firma en este Lugar
                     </>
                   )}
@@ -794,52 +938,52 @@ export function ModalFirmaDigitalPdf({
 
             {/* PASO 3: Revisar, Descargar y Enviar */}
             {pasoActual === "3_REVISAR_Y_ENVIAR" && infoCert && (
-              <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
                 <div
                   style={{
-                    padding: "16px",
+                    padding: "14px",
                     background: "#F0FDF4",
                     border: "1.5px solid #86EFAC",
-                    borderRadius: "14px",
+                    borderRadius: "12px",
                     textAlign: "center",
                   }}
                 >
                   <div
                     style={{
-                      width: "48px",
-                      height: "48px",
+                      width: "42px",
+                      height: "42px",
                       borderRadius: "50%",
                       background: "#DCFCE7",
                       color: "#16A34A",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
-                      margin: "0 auto 10px auto",
+                      margin: "0 auto 8px auto",
                     }}
                   >
-                    <CheckCircle2 size={28} />
+                    <CheckCircle2 size={24} />
                   </div>
-                  <h4 style={{ margin: "0 0 4px 0", fontSize: "1.05rem", fontWeight: 800, color: "#166534" }}>
+                  <h4 style={{ margin: "0 0 2px 0", fontSize: "0.95rem", fontWeight: 800, color: "#166534" }}>
                     ¡Documento Firmado con Éxito!
                   </h4>
-                  <p style={{ margin: 0, fontSize: "0.8rem", color: "#15803D" }}>
-                    La firma digital y el sello de integridad han sido estampados correctamente en el contrato.
+                  <p style={{ margin: 0, fontSize: "0.75rem", color: "#15803D" }}>
+                    La firma digital PAdES ha sido estampada en el contrato.
                   </p>
                 </div>
 
                 {/* Acciones del Paso 3 */}
-                <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                   <button
                     type="button"
                     onClick={handleDescargarPdfFirmado}
                     style={{
-                      padding: "12px 14px",
+                      padding: "10px 12px",
                       background: "#F8FAFC",
                       border: "1.5px solid #CBD5E1",
-                      borderRadius: "10px",
+                      borderRadius: "8px",
                       color: "#1E293B",
                       fontWeight: 700,
-                      fontSize: "0.85rem",
+                      fontSize: "0.82rem",
                       cursor: "pointer",
                       display: "flex",
                       alignItems: "center",
@@ -848,7 +992,7 @@ export function ModalFirmaDigitalPdf({
                       transition: "background 0.2s ease",
                     }}
                   >
-                    <Download size={18} color="#047857" />
+                    <Download size={16} color="#047857" />
                     Descargar Copia Firmada (PDF)
                   </button>
 
@@ -859,20 +1003,20 @@ export function ModalFirmaDigitalPdf({
                       setUrlPrevisualizacionFirmado(null);
                     }}
                     style={{
-                      padding: "8px 12px",
+                      padding: "6px 10px",
                       background: "none",
                       border: "none",
                       color: "#64748B",
-                      fontSize: "0.8rem",
+                      fontSize: "0.75rem",
                       fontWeight: 600,
                       cursor: "pointer",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
-                      gap: "6px",
+                      gap: "4px",
                     }}
                   >
-                    <RotateCcw size={14} />
+                    <RotateCcw size={13} />
                     Reubicar o Cambiar Posición de Firma
                   </button>
                 </div>
@@ -880,12 +1024,12 @@ export function ModalFirmaDigitalPdf({
                 {errorFirma && (
                   <div
                     style={{
-                      padding: "10px",
+                      padding: "8px 10px",
                       background: "#FEF2F2",
                       border: "1px solid #FECACA",
                       borderRadius: "8px",
                       color: "#991B1B",
-                      fontSize: "0.8rem",
+                      fontSize: "0.75rem",
                     }}
                   >
                     {errorFirma}
@@ -898,31 +1042,31 @@ export function ModalFirmaDigitalPdf({
                   disabled={enviandoConfirmacion}
                   style={{
                     marginTop: "auto",
-                    padding: "14px",
+                    padding: "12px",
                     background: esTranqi
                       ? "linear-gradient(135deg, #5000BA 0%, #3B0086 100%)"
                       : "linear-gradient(135deg, #047857 0%, #065F46 100%)",
                     color: "#FFFFFF",
                     border: "none",
-                    borderRadius: "12px",
+                    borderRadius: "10px",
                     fontWeight: 800,
-                    fontSize: "0.95rem",
+                    fontSize: "0.9rem",
                     cursor: enviandoConfirmacion ? "not-allowed" : "pointer",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    gap: "10px",
+                    gap: "8px",
                     boxShadow: "0 4px 14px rgba(4, 120, 87, 0.35)",
                   }}
                 >
                   {enviandoConfirmacion ? (
                     <>
-                      <Loader2 size={20} className="animate-spin" />
+                      <Loader2 size={18} className="animate-spin" />
                       Procesando Acreditación...
                     </>
                   ) : (
                     <>
-                      <Send size={20} />
+                      <Send size={18} />
                       {esTranqi
                         ? "Contra-Firmar y Activar Socio"
                         : "Confirmar y Enviar a Tranqi"}
@@ -933,7 +1077,7 @@ export function ModalFirmaDigitalPdf({
             )}
           </div>
 
-          {/* Columna Derecha: Visor Interactivo de Documento con Caja de Firma Flotante */}
+          {/* Columna Derecha: Visor Interactivo del Documento con Controles de Paginación */}
           <div
             style={{
               background: "#334155",
@@ -943,59 +1087,108 @@ export function ModalFirmaDigitalPdf({
               position: "relative",
             }}
           >
-            {/* Barra superior del visor */}
+            {/* Barra superior de navegación y paginación */}
             <div
               style={{
                 padding: "8px 16px",
                 background: "#1E293B",
-                color: "#94A3B8",
-                fontSize: "0.75rem",
+                color: "#E2E8F0",
+                fontSize: "0.8rem",
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "center",
                 borderBottom: "1px solid #475569",
               }}
             >
-              <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                <FileText size={14} color="#38BDF8" />
-                {pasoActual === "3_REVISAR_Y_ENVIAR"
-                  ? "Vista Previa: Contrato Firmado Digitalmente"
-                  : "Visor del Contrato (Página de Suscripción)"}
-              </span>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <FileText size={15} color="#38BDF8" />
+                <span style={{ fontWeight: 600 }}>
+                  {pasoActual === "3_REVISAR_Y_ENVIAR"
+                    ? "Vista Previa: Contrato Firmado"
+                    : `Contrato de Sociedad (${totalPaginas} páginas)`}
+                </span>
+              </div>
 
-              {pasoActual === "2_UBICAR_FIRMA" && (
-                <span
+              {/* Controles de Paginación */}
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <button
+                  type="button"
+                  onClick={() => setPaginaActual((p) => Math.max(1, p - 1))}
+                  disabled={paginaActual <= 1}
                   style={{
-                    background: "#047857",
-                    color: "#FFF",
-                    padding: "3px 8px",
+                    background: paginaActual <= 1 ? "#334155" : "#475569",
+                    border: "none",
                     borderRadius: "6px",
-                    fontWeight: 700,
-                    fontSize: "0.7rem",
+                    color: paginaActual <= 1 ? "#64748B" : "#FFF",
+                    padding: "4px 8px",
+                    cursor: paginaActual <= 1 ? "not-allowed" : "pointer",
                     display: "flex",
                     alignItems: "center",
-                    gap: "4px",
+                    gap: "2px",
+                    fontSize: "0.75rem",
+                    fontWeight: 600,
                   }}
                 >
-                  <Move size={12} />
-                  Haz clic sobre el documento para mover la firma
+                  <ChevronLeft size={14} /> Anterior
+                </button>
+
+                <span style={{ fontWeight: 700, fontSize: "0.8rem", color: "#F8FAFC" }}>
+                  Página {paginaActual} de {totalPaginas}
                 </span>
-              )}
+
+                <button
+                  type="button"
+                  onClick={() => setPaginaActual((p) => Math.min(totalPaginas, p + 1))}
+                  disabled={paginaActual >= totalPaginas}
+                  style={{
+                    background: paginaActual >= totalPaginas ? "#334155" : "#475569",
+                    border: "none",
+                    borderRadius: "6px",
+                    color: paginaActual >= totalPaginas ? "#64748B" : "#FFF",
+                    padding: "4px 8px",
+                    cursor: paginaActual >= totalPaginas ? "not-allowed" : "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "2px",
+                    fontSize: "0.75rem",
+                    fontWeight: 600,
+                  }}
+                >
+                  Siguiente <ChevronRight size={14} />
+                </button>
+
+                {paginaActual !== totalPaginas && (
+                  <button
+                    type="button"
+                    onClick={() => setPaginaActual(totalPaginas)}
+                    style={{
+                      background: "#047857",
+                      border: "none",
+                      borderRadius: "6px",
+                      color: "#FFF",
+                      padding: "4px 8px",
+                      cursor: "pointer",
+                      fontSize: "0.72rem",
+                      fontWeight: 700,
+                      marginLeft: "6px",
+                    }}
+                  >
+                    🏁 Ir a Firmas (Pág. {totalPaginas})
+                  </button>
+                )}
+              </div>
             </div>
 
-            {/* Contenedor del PDF */}
+            {/* Contenedor del PDF con desplazamiento nativo completamente habilitado */}
             <div
-              ref={contenedorVisorRef}
-              onClick={handleClicVisor}
               style={{
                 flex: 1,
                 position: "relative",
                 overflowY: "auto",
                 display: "flex",
                 justifyContent: "center",
-                padding: "20px",
+                padding: "16px",
                 background: "#475569",
-                cursor: pasoActual === "2_UBICAR_FIRMA" ? "crosshair" : "default",
               }}
             >
               {cargandoPdf ? (
@@ -1008,55 +1201,62 @@ export function ModalFirmaDigitalPdf({
                   style={{
                     position: "relative",
                     width: "100%",
-                    maxWidth: "700px",
-                    minHeight: "850px",
+                    maxWidth: "750px",
+                    height: "100%",
+                    minHeight: "750px",
                     background: "#FFFFFF",
                     boxShadow: "0 10px 25px rgba(0,0,0,0.5)",
                     borderRadius: "4px",
                     overflow: "hidden",
                   }}
                 >
-                  {/* Iframe del PDF (firmado en paso 3 o original en paso 1 y 2) */}
+                  {/* Iframe del PDF con soporte nativo de scroll y navegación por página */}
                   <iframe
+                    key={`pdf-page-${paginaActual}-${pasoActual}`}
                     src={
                       pasoActual === "3_REVISAR_Y_ENVIAR" && urlPrevisualizacionFirmado
-                        ? `${urlPrevisualizacionFirmado}#toolbar=0&navpanes=0&scrollbar=1`
+                        ? `${urlPrevisualizacionFirmado}#page=${paginaActual}&view=FitH&toolbar=0&navpanes=0`
                         : urlPrevisualizacionOriginal
-                        ? `${urlPrevisualizacionOriginal}#toolbar=0&navpanes=0&scrollbar=1`
+                        ? `${urlPrevisualizacionOriginal}#page=${paginaActual}&view=FitH&toolbar=0&navpanes=0`
                         : ""
                     }
                     title="Visor Contrato"
                     style={{
                       width: "100%",
                       height: "100%",
+                      minHeight: "750px",
                       border: "none",
-                      minHeight: "850px",
-                      pointerEvents: pasoActual === "2_UBICAR_FIRMA" ? "none" : "auto",
                     }}
                   />
 
-                  {/* ESTAMPA FLOTANTE INTERACTIVA EN PASO 2 */}
+                  {/* ESTAMPA FLOTANTE INTERACTIVA Y ARRASTRABLE EN PASO 2 */}
                   {pasoActual === "2_UBICAR_FIRMA" && infoCert && (
                     <div
+                      onMouseDown={(e) => handleInicioArrastre(e.clientX, e.clientY)}
+                      onTouchStart={(e) => {
+                        if (e.touches[0]) {
+                          handleInicioArrastre(e.touches[0].clientX, e.touches[0].clientY);
+                        }
+                      }}
                       style={{
                         position: "absolute",
                         top: `${posicionYPorcentaje}%`,
                         left: `${posicionXPorcentaje}%`,
                         width: "230px",
                         height: "85px",
-                        background: esTranqi ? "rgba(245, 243, 255, 0.95)" : "rgba(236, 253, 245, 0.95)",
+                        background: esTranqi ? "rgba(245, 243, 255, 0.96)" : "rgba(236, 253, 245, 0.96)",
                         border: `2px dashed ${esTranqi ? "#5000BA" : "#047857"}`,
                         borderRadius: "6px",
                         padding: "6px 8px",
                         boxSizing: "border-box",
-                        boxShadow: "0 8px 16px rgba(0,0,0,0.25)",
+                        boxShadow: "0 8px 20px rgba(0,0,0,0.3)",
                         display: "flex",
                         flexDirection: "column",
                         justifyContent: "space-between",
-                        cursor: "grab",
+                        cursor: arrastrandoFirma ? "grabbing" : "grab",
                         userSelect: "none",
                         zIndex: 50,
-                        animation: "pulse 2s infinite",
+                        transition: arrastrandoFirma ? "none" : "all 0.15s ease-out",
                       }}
                     >
                       <div
@@ -1070,7 +1270,10 @@ export function ModalFirmaDigitalPdf({
                         }}
                       >
                         <span>{esTranqi ? "FIRMA DIGITAL · TRANQI LEGAL" : "FIRMA ELECTRÓNICA AVANZADA"}</span>
-                        <Move size={10} />
+                        <div style={{ display: "flex", alignItems: "center", gap: "2px" }}>
+                          <Move size={12} />
+                          <span style={{ fontSize: "0.6rem" }}>Arrastrar</span>
+                        </div>
                       </div>
 
                       <div
@@ -1097,9 +1300,12 @@ export function ModalFirmaDigitalPdf({
                           color: "#64748B",
                           borderTop: "1px solid rgba(0,0,0,0.08)",
                           paddingTop: "2px",
+                          display: "flex",
+                          justifyContent: "space-between",
                         }}
                       >
-                        Ley Comercio Electrónico EC · Zero-Custody
+                        <span>Ley Comercio Electrónico EC</span>
+                        <span>Pág. {paginaActual}</span>
                       </div>
                     </div>
                   )}
