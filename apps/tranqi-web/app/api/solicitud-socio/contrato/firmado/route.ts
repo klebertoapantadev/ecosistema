@@ -1,4 +1,4 @@
-import { obtenerPerfilActual } from "@eco/identidad";
+import { obtenerPerfilActual, obtenerPerfiles } from "@eco/identidad";
 import { obtenerSolicitudDetalle } from "../../../../../modulos/socios/consultas";
 import { crearClienteAdmin, crearClienteServidor } from "@eco/supabase/servidor";
 
@@ -25,9 +25,12 @@ export async function GET(request: Request) {
     // Verificar permisos: el usuario debe ser el postulante o un admin/operador
     const esPropietario = solicitud.ssc_usuario_id === perfil.usu_id;
     const esSuperAdmin = Boolean(perfil.usu_superadmin_plataforma);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const perfilesUsu = ((perfil as any).perfiles as string[]) || [];
-    const esStaff = esSuperAdmin || perfilesUsu.includes("ADMINISTRADOR") || perfilesUsu.includes("SUPERADMIN") || perfilesUsu.includes("OPERADOR");
+    const perfilesUsu = await obtenerPerfiles("TRANQ");
+    const esStaff =
+      esSuperAdmin ||
+      perfilesUsu.includes("ADMINISTRADOR") ||
+      perfilesUsu.includes("SUPERADMIN") ||
+      perfilesUsu.includes("OPERADOR");
 
     if (!esPropietario && !esStaff) {
       return new Response("Acceso denegado a este documento", { status: 403 });
