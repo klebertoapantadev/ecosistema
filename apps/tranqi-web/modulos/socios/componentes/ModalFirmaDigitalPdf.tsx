@@ -202,6 +202,9 @@ export function ModalFirmaDigitalPdf({
     }
   }
 
+  // Ref del contenedor del PDF para calculo proporcional 1:1
+  const contenedorPdfRef = useRef<HTMLDivElement | null>(null);
+
   // Handlers para arrastrar la estampa de firma con el mouse o touch
   function handleInicioArrastre(clientX: number, clientY: number) {
     setArrastrandoFirma(true);
@@ -216,18 +219,26 @@ export function ModalFirmaDigitalPdf({
   useEffect(() => {
     function handleMouseMove(e: MouseEvent) {
       if (!arrastrandoFirma) return;
+      const rect = contenedorPdfRef.current?.getBoundingClientRect();
+      const containerW = rect?.width || 600;
+      const containerH = rect?.height || (containerW * (841.89 / 595.28));
+
       const deltaX = e.clientX - offsetArrastre.current.startX;
       const deltaY = e.clientY - offsetArrastre.current.startY;
 
-      // Convertir delta pixels a porcentaje relativo
-      const deltaXPorc = (deltaX / 600) * 100;
-      const deltaYPorc = (deltaY / 800) * 100;
+      // Convertir delta pixels a porcentaje relativo exacto
+      const deltaXPorc = (deltaX / containerW) * 100;
+      const deltaYPorc = (deltaY / containerH) * 100;
 
-      const nuevaX = Math.max(5, Math.min(65, offsetArrastre.current.initPosX + deltaXPorc));
-      const nuevaY = Math.max(5, Math.min(85, offsetArrastre.current.initPosY + deltaYPorc));
+      // Limites de la estampa dentro de la pagina (ancho: ~38.6%, alto: ~8.6%)
+      const maxLeft = 100 - (230 / 595.28) * 100; // ~61.3%
+      const maxTop = 100 - (72 / 841.89) * 100;  // ~91.4%
 
-      setPosicionXPorcentaje(Math.round(nuevaX));
-      setPosicionYPorcentaje(Math.round(nuevaY));
+      const nuevaX = Math.max(2, Math.min(maxLeft, offsetArrastre.current.initPosX + deltaXPorc));
+      const nuevaY = Math.max(2, Math.min(maxTop, offsetArrastre.current.initPosY + deltaYPorc));
+
+      setPosicionXPorcentaje(Number(nuevaX.toFixed(1)));
+      setPosicionYPorcentaje(Number(nuevaY.toFixed(1)));
     }
 
     function handleMouseUp() {
@@ -246,7 +257,7 @@ export function ModalFirmaDigitalPdf({
     };
   }, [arrastrandoFirma]);
 
-  // Estampar firma en las coordenadas seleccionadas
+  // Estampar firma en las coordenadas seleccionadas (proyección matemática 1:1)
   async function handleEstamparFirma() {
     if (!pdfBytesOriginal || !infoCert) return;
 
@@ -254,13 +265,18 @@ export function ModalFirmaDigitalPdf({
       setFirmando(true);
       setErrorFirma(null);
 
-      // Convertir porcentajes (0-100) a puntos PDF (A4 estándar: 595.28 x 841.89)
+      // Puntos PDF estándar A4: 595.28 x 841.89 pt
       const pdfWidth = 595.28;
       const pdfHeight = 841.89;
+      const boxHeight = 72;
       
+      // X: desde el borde izquierdo
       const xPdf = (posicionXPorcentaje / 100) * pdfWidth;
-      // En PDF (0,0) es la esquina inferior izquierda
-      const yPdf = ((100 - posicionYPorcentaje - 10) / 100) * pdfHeight;
+      
+      // Y: en DOM posicionYPorcentaje representa la distancia desde el borde SUPERIOR de la página.
+      // En PDF-lib el origen (0,0) es la esquina INFERIOR izquierda y el rectángulo se dibuja hacia arriba con boxHeight.
+      // Por tanto, la base del rectángulo en PDF es exactamente:
+      const yPdf = pdfHeight - ((posicionYPorcentaje / 100) * pdfHeight) - boxHeight;
 
       const resEstampa = await estamparFirmaDigitalEnPdf({
         pdfBytes: pdfBytesOriginal,
@@ -1222,12 +1238,12 @@ export function ModalFirmaDigitalPdf({
                 </div>
               ) : (
                 <div
+                  ref={contenedorPdfRef}
                   style={{
                     position: "relative",
                     width: "100%",
-                    maxWidth: "750px",
-                    height: "100%",
-                    minHeight: "750px",
+                    maxWidth: "600px",
+                    aspectRatio: "595.28 / 841.89",
                     background: "#FFFFFF",
                     boxShadow: "0 10px 25px rgba(0,0,0,0.5)",
                     borderRadius: "4px",
@@ -1248,12 +1264,11 @@ export function ModalFirmaDigitalPdf({
                     style={{
                       width: "100%",
                       height: "100%",
-                      minHeight: "750px",
                       border: "none",
                     }}
                   />
 
-                  {/* ESTAMPA FLOTANTE INTERACTIVA CON CÓDIGO QR EN PASO 2 */}
+                  {/* ESTAMPA FLOTANTE INTERACTIVA CON CÓDIGO QR EN PASO 2 (PROYECCIÓN 1:1) */}
                   {pasoActual === "2_UBICAR_FIRMA" && infoCert && (
                     <div
                       onMouseDown={(e) => handleInicioArrastre(e.clientX, e.clientY)}
@@ -1266,8 +1281,10 @@ export function ModalFirmaDigitalPdf({
                         position: "absolute",
                         top: `${posicionYPorcentaje}%`,
                         left: `${posicionXPorcentaje}%`,
-                        width: "235px",
-                        height: "74px",
+                        width: `${((230 / 595.28) * 100).toFixed(2)}%`,
+                        height: `${((72 / 841.89) * 100).toFixed(2)}%`,
+                        minWidth: "180px",
+                        minHeight: "56px",
                         background: "rgba(255, 255, 255, 0.98)",
                         border: `1.5px solid ${esTranqi ? "#5000BA" : "#047857"}`,
                         borderRadius: "4px",
