@@ -204,7 +204,10 @@ export default async function PaginaDetalleSocio({ params }: { params: Promise<{
                   <strong>Aprobado (Paso 1).</strong> En espera de que el socio firme y suba el contrato de sociedad en PDF.
                 </p>
                 {documentos.some((d) => d.dcs_tipo === "contrato_socio") ? (
-                  <BotonConfirmarContrato solicitudId={solicitud.ssc_id} />
+                  <BotonConfirmarContrato
+                    solicitudId={solicitud.ssc_id}
+                    urlContratoPostulante={`/api/solicitud-socio/contrato/firmado?solicitudId=${solicitud.ssc_id}`}
+                  />
                 ) : (
                   <p style={{ marginTop: "8px", fontSize: "0.82rem", color: "#DC2626", fontWeight: 600 }}>
                     ⏳ El postulante aún no ha cargado el contrato firmado.

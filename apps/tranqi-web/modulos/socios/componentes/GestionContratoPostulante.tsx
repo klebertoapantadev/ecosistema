@@ -2,9 +2,26 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import { FileText, UploadCloud, Printer, CheckCircle, AlertCircle, Loader, Download, MessageSquare, Send, ShieldCheck, HelpCircle } from "lucide-react";
+import {
+  FileText,
+  UploadCloud,
+  Printer,
+  CheckCircle,
+  AlertCircle,
+  Loader,
+  Download,
+  MessageSquare,
+  Send,
+  ShieldCheck,
+  HelpCircle,
+  KeyRound,
+  FileCheck2,
+  Lock,
+} from "lucide-react";
 import { crearClienteNavegador } from "@eco/supabase";
 import { registrarDocumentoSocio, enviarPropuestaModificacionContratoAction } from "../acciones";
+import { ModalFirmaDigitalPdf } from "./ModalFirmaDigitalPdf";
+import type { InfoCertificado } from "../servicios/servicioFirmaDigital";
 
 interface Props {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -13,7 +30,8 @@ interface Props {
 
 export function GestionContratoPostulante({ solicitud }: Props) {
   const router = useRouter();
-  const [pestanaActiva, setPestanaActiva] = useState<"FIRMADO_PDF" | "PROPUESTA_WORD">("FIRMADO_PDF");
+  const [pestanaActiva, setPestanaActiva] = useState<"DIGITAL_P12" | "MANUAL_PDF" | "PROPUESTA_WORD">("DIGITAL_P12");
+  const [modalFirmaAbierto, setModalFirmaAbierto] = useState(false);
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [exito, setExito] = useState<string | null>(null);
@@ -28,7 +46,54 @@ export function GestionContratoPostulante({ solicitud }: Props) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const propuestasWord = documentos.filter((d: any) => d.dcs_comentario?.includes("[PROPUESTA_MODIFICACION_CONTRATO]"));
 
-  // Manejo de Carga de Contrato Firmado (Solo PDF)
+  const urlPdfOriginal = `/api/solicitud-socio/contrato/pdf?solicitudId=${solicitud.ssc_id}`;
+
+  // Manejo de Finalización de Firma Electrónica (.p12)
+  async function handleFirmaDigitalCompletada(pdfBytes: Uint8Array, nombreArchivo: string, infoCert: InfoCertificado) {
+    try {
+      setCargando(true);
+      setError(null);
+      setExito(null);
+
+      const supabase = crearClienteNavegador();
+      const uuid = crypto.randomUUID();
+      const path = `${solicitud.ssc_id}/contrato_firmado_digital-${uuid}-${nombreArchivo}`;
+
+      // Convertir Uint8Array a Blob
+      const blob = new Blob([pdfBytes as unknown as BlobPart], { type: "application/pdf" });
+
+      const { error: uploadError } = await supabase.storage
+        .from("socios-documentos")
+        .upload(path, blob, {
+          contentType: "application/pdf",
+          upsert: true,
+        });
+
+      if (uploadError) throw new Error(uploadError.message);
+
+      const comentario = `Contrato firmado digitalmente por ${infoCert.nombreTitular} (${infoCert.entidadEmisora}) el ${new Date().toLocaleString("es-EC")}`;
+
+      const res = await registrarDocumentoSocio(
+        solicitud.ssc_id,
+        "contrato_socio",
+        path,
+        nombreArchivo,
+        comentario
+      );
+
+      if (!res.ok) throw new Error(res.error);
+
+      setModalFirmaAbierto(false);
+      setExito("🎉 ¡Contrato firmado digitalmente y enviado con éxito! El equipo de tranqi verificará y contra-firmará el documento para la activación definitiva.");
+      router.refresh();
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Error al guardar el contrato firmado");
+    } finally {
+      setCargando(false);
+    }
+  }
+
+  // Manejo de Carga de Contrato Firmado Manual (Solo PDF)
   async function handleFileChangePDF(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -66,12 +131,12 @@ export function GestionContratoPostulante({ solicitud }: Props) {
         "contrato_socio",
         path,
         file.name,
-        "Contrato firmado para aprobación definitiva (PDF)"
+        "Contrato firmado manualmente / escaneado para aprobación definitiva (PDF)"
       );
 
       if (!res.ok) throw new Error(res.error);
 
-      setExito("¡Contrato firmado (PDF) cargado exitosamente! El equipo de operaciones verificará el documento para la activación formal de tu cuenta.");
+      setExito("¡Contrato firmado (PDF) cargado exitosamente! El equipo de operaciones verificará el documento para la contra-firma y activación formal.");
       router.refresh();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Ocurrió un error al subir el contrato.";
@@ -136,7 +201,28 @@ export function GestionContratoPostulante({ solicitud }: Props) {
           <FileText size={22} color="#05876E" /> Contrato de Sociedad de Abogados
         </h3>
 
-        <div style={{ display: "flex", gap: "8px" }}>
+        <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+          <a
+            href={urlPdfOriginal}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+              background: "#05876E",
+              color: "#FFF",
+              textDecoration: "none",
+              borderRadius: "8px",
+              padding: "6px 12px",
+              fontSize: "0.8rem",
+              fontWeight: 700,
+              boxShadow: "0 2px 4px rgba(5,135,110,0.2)",
+            }}
+          >
+            <Download size={14} /> Descargar PDF Pre-llenado
+          </a>
+
           <a
             href={`/api/solicitud-socio/contrato/descargar?solicitudId=${solicitud.ssc_id}`}
             target="_blank"
@@ -155,7 +241,7 @@ export function GestionContratoPostulante({ solicitud }: Props) {
               fontWeight: 700,
             }}
           >
-            <Download size={14} /> Descargar Plantilla Word (.docx)
+            <Download size={14} /> Descargar Word (.docx)
           </a>
 
           <a
@@ -166,8 +252,9 @@ export function GestionContratoPostulante({ solicitud }: Props) {
               display: "inline-flex",
               alignItems: "center",
               gap: "6px",
-              background: "#05876E",
-              color: "#FFF",
+              background: "#F3F4F6",
+              color: "#374151",
+              border: "1px solid #D1D5DB",
               textDecoration: "none",
               borderRadius: "8px",
               padding: "6px 12px",
@@ -175,7 +262,7 @@ export function GestionContratoPostulante({ solicitud }: Props) {
               fontWeight: 700,
             }}
           >
-            <Printer size={14} /> Ver / Imprimir en Línea
+            <Printer size={14} /> Imprimir
           </a>
         </div>
       </div>
@@ -186,10 +273,11 @@ export function GestionContratoPostulante({ solicitud }: Props) {
             <CheckCircle size={24} color="#05876E" style={{ flexShrink: 0, marginTop: "2px" }} />
             <div style={{ flexGrow: 1 }}>
               <h4 style={{ margin: "0 0 4px 0", color: "#065F46", fontWeight: 800, fontSize: "0.98rem" }}>
-                ¡Contrato firmado (PDF) registrado para Aprobación Final!
+                ¡Contrato firmado registrado correctamente!
               </h4>
               <p style={{ margin: "0 0 10px 0", color: "#047857", fontSize: "0.86rem", lineHeight: 1.5 }}>
-                Archivo: <strong>"{contratoFirmado.dcs_nombre_archivo || "Contrato_Tranqi_Firmado.pdf"}"</strong>. El documento será evaluado para verificar su contenido y firma digital/física.
+                Archivo: <strong>"{contratoFirmado.dcs_nombre_archivo || "Contrato_Tranqi_Firmado.pdf"}"</strong>.
+                El equipo legal de tranqi está revisando el documento para efectuar la contra-firma institucional y activar tus credenciales.
               </p>
               <a
                 href={`/api/solicitud-socio/contrato/firmado?solicitudId=${solicitud.ssc_id}`}
@@ -208,25 +296,25 @@ export function GestionContratoPostulante({ solicitud }: Props) {
                   fontWeight: 700,
                 }}
               >
-                <Download size={14} /> Ver / Descargar Contrato Firmado ({contratoFirmado.dcs_nombre_archivo?.toLowerCase().endsWith(".pdf") ? "PDF" : "Archivo"})
+                <Download size={14} /> Ver / Descargar Contrato Firmado (PDF)
               </a>
             </div>
           </div>
         </div>
       )}
 
-      {/* Selector de Pestañas: Firma Definitiva (PDF) vs Propuesta de Cambios (Word) */}
-      <div style={{ display: "flex", borderBottom: "2px solid #E5E7EB", marginBottom: "20px", gap: "8px" }}>
+      {/* Selector de Pestañas: 1. Firma Digital (.p12) vs 2. Firma Manual (PDF) vs 3. Propuesta Word */}
+      <div style={{ display: "flex", borderBottom: "2px solid #E5E7EB", marginBottom: "20px", gap: "8px", flexWrap: "wrap" }}>
         <button
           type="button"
-          onClick={() => { setPestanaActiva("FIRMADO_PDF"); setError(null); }}
+          onClick={() => { setPestanaActiva("DIGITAL_P12"); setError(null); }}
           style={{
             padding: "10px 18px",
             background: "none",
             border: "none",
-            borderBottom: pestanaActiva === "FIRMADO_PDF" ? "3px solid #05876E" : "3px solid transparent",
-            color: pestanaActiva === "FIRMADO_PDF" ? "#05876E" : "#6B7280",
-            fontWeight: pestanaActiva === "FIRMADO_PDF" ? 800 : 600,
+            borderBottom: pestanaActiva === "DIGITAL_P12" ? "3px solid #05876E" : "3px solid transparent",
+            color: pestanaActiva === "DIGITAL_P12" ? "#05876E" : "#6B7280",
+            fontWeight: pestanaActiva === "DIGITAL_P12" ? 800 : 600,
             fontSize: "0.9rem",
             cursor: "pointer",
             display: "flex",
@@ -235,7 +323,28 @@ export function GestionContratoPostulante({ solicitud }: Props) {
             marginBottom: "-2px"
           }}
         >
-          <ShieldCheck size={18} /> 1. Contrato Firmado (Solo PDF · Aprobación Final)
+          <ShieldCheck size={18} /> 1. Firmar Digitalmente en Línea (.p12)
+        </button>
+
+        <button
+          type="button"
+          onClick={() => { setPestanaActiva("MANUAL_PDF"); setError(null); }}
+          style={{
+            padding: "10px 18px",
+            background: "none",
+            border: "none",
+            borderBottom: pestanaActiva === "MANUAL_PDF" ? "3px solid #05876E" : "3px solid transparent",
+            color: pestanaActiva === "MANUAL_PDF" ? "#05876E" : "#6B7280",
+            fontWeight: pestanaActiva === "MANUAL_PDF" ? 800 : 600,
+            fontSize: "0.9rem",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            marginBottom: "-2px"
+          }}
+        >
+          <UploadCloud size={18} /> 2. Firma Manual / Escaneo Físico (PDF)
         </button>
 
         <button
@@ -256,18 +365,80 @@ export function GestionContratoPostulante({ solicitud }: Props) {
             marginBottom: "-2px"
           }}
         >
-          <MessageSquare size={18} /> 2. Propuesta de Modificación / Dudas (Word .docx)
+          <MessageSquare size={18} /> 3. Propuesta de Modificación (Word)
         </button>
       </div>
 
-      {/* PESTAÑA 1: Carga de Contrato Firmado en PDF */}
-      {pestanaActiva === "FIRMADO_PDF" && (
+      {/* PESTAÑA 1: Firma Digital Electrónica (.p12) en el Navegador */}
+      {pestanaActiva === "DIGITAL_P12" && (
+        <div
+          style={{
+            background: "linear-gradient(135deg, #F0FDF4 0%, #FFFFFF 100%)",
+            border: "2px solid #10B981",
+            borderRadius: "14px",
+            padding: "24px",
+            boxShadow: "0 4px 12px rgba(16, 185, 129, 0.1)",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "12px" }}>
+            <div style={{ background: "#05876E", color: "#FFF", padding: "8px", borderRadius: "10px", display: "flex" }}>
+              <KeyRound size={22} />
+            </div>
+            <div>
+              <h4 style={{ margin: 0, fontSize: "1.05rem", fontWeight: 800, color: "#065F46" }}>
+                Firma Electrónica Directa en Pantalla (Recomendado)
+              </h4>
+              <p style={{ margin: "2px 0 0 0", fontSize: "0.82rem", color: "#047857" }}>
+                Firma tu contrato de sociedad en segundos con tu archivo <code>.p12</code> o <code>.pfx</code>.
+              </p>
+            </div>
+          </div>
+
+          <div style={{ background: "#FFFFFF", border: "1px solid #D1FAE5", borderRadius: "10px", padding: "16px", margin: "16px 0" }}>
+            <h5 style={{ margin: "0 0 8px 0", fontSize: "0.86rem", fontWeight: 800, color: "#111827" }}>
+              ¿Qué necesitas para firmar digitalmente?
+            </h5>
+            <ul style={{ margin: 0, paddingLeft: "20px", fontSize: "0.82rem", color: "#374151", lineHeight: 1.6 }}>
+              <li>Tener tu archivo de firma electrónica (<code>.p12</code> o <code>.pfx</code>) en este dispositivo.</li>
+              <li>Conocer la contraseña de tu certificado.</li>
+              <li>
+                <strong>Cero Custodia (Zero-Custody):</strong> Tu clave y firma se procesan exclusivamente en este navegador. Nunca se guardan ni viajan a nuestros servidores.
+              </li>
+            </ul>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setModalFirmaAbierto(true)}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "8px",
+              background: "#05876E",
+              color: "#FFFFFF",
+              borderRadius: "10px",
+              padding: "12px 24px",
+              fontSize: "0.92rem",
+              fontWeight: 800,
+              border: "none",
+              cursor: "pointer",
+              boxShadow: "0 4px 12px rgba(5, 135, 110, 0.25)",
+              transition: "transform 0.15s ease",
+            }}
+          >
+            <FileCheck2 size={18} /> Iniciar Firma Electrónica (.p12)
+          </button>
+        </div>
+      )}
+
+      {/* PESTAÑA 2: Carga de Contrato Firmado Manualmente (Solo PDF) */}
+      {pestanaActiva === "MANUAL_PDF" && (
         <div style={{
           border: "2px dashed " + (cargando ? "#D1D5DB" : contratoFirmado ? "#10B981" : "#05876E"),
           borderRadius: "14px",
           padding: "26px",
           textAlign: "center",
-          background: cargando ? "#F9FAFB" : contratoFirmado ? "#F0FDF4" : "#F0FDF4",
+          background: cargando ? "#F9FAFB" : "#F0FDF4",
         }}>
           {cargando ? (
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "8px" }}>
@@ -278,10 +449,10 @@ export function GestionContratoPostulante({ solicitud }: Props) {
             <div>
               <UploadCloud size={38} color="#05876E" style={{ margin: "0 auto 8px" }} />
               <h4 style={{ margin: "0 0 4px 0", fontSize: "0.95rem", fontWeight: 800, color: "#065F46" }}>
-                {contratoFirmado ? "Reemplazar Contrato Firmado (PDF)" : "Cargar Contrato Firmado (Exclusivamente PDF)"}
+                {contratoFirmado ? "Reemplazar Contrato Firmado (PDF)" : "Cargar Contrato Firmado Físico / Externo (PDF)"}
               </h4>
               <p style={{ margin: "0 0 16px 0", fontSize: "0.82rem", color: "#047857", maxWidth: "550px", marginInline: "auto", lineHeight: 1.45 }}>
-                Descarga la plantilla, fírmala manuscrita o electrónicamente y sube el archivo en formato <strong>PDF</strong>. Este es el único formato que habilita la activación y aprobación final de tu cuenta.
+                Descarga el PDF o Word, fírmalo manuscrita o con tu software externo (ej. FirmaEC), escanéalo y sube el archivo resultante en formato <strong>PDF</strong>.
               </p>
               <label style={{
                 display: "inline-block",
@@ -294,7 +465,7 @@ export function GestionContratoPostulante({ solicitud }: Props) {
                 cursor: "pointer",
                 boxShadow: "0 2px 6px rgba(5,135,110,0.25)",
               }}>
-                Seleccionar Contrato Firmado (PDF)
+                Seleccionar Archivo PDF Firmado
                 <input
                   type="file"
                   accept="application/pdf,.pdf"
@@ -307,7 +478,7 @@ export function GestionContratoPostulante({ solicitud }: Props) {
         </div>
       )}
 
-      {/* PESTAÑA 2: Envío de Propuesta de Modificación en Word con Comentario Obligatorio */}
+      {/* PESTAÑA 3: Envío de Propuesta de Modificación en Word con Comentario Obligatorio */}
       {pestanaActiva === "PROPUESTA_WORD" && (
         <form onSubmit={handleEnviarPropuestaWord} style={{
           background: "#FAF5FF",
@@ -431,9 +602,11 @@ export function GestionContratoPostulante({ solicitud }: Props) {
                 <p style={{ margin: "4px 0", color: "#4B5563" }}>
                   {p.dcs_comentario?.replace("[PROPUESTA_MODIFICACION_CONTRATO]", "").trim()}
                 </p>
-                <a href={p.url} target="_blank" rel="noopener noreferrer" style={{ color: "#05876E", fontWeight: 700, textDecoration: "none", fontSize: "0.78rem" }}>
-                  Descargar Archivo Adjunto →
-                </a>
+                {p.url && (
+                  <a href={p.url} target="_blank" rel="noopener noreferrer" style={{ color: "#05876E", fontWeight: 700, textDecoration: "none", fontSize: "0.78rem" }}>
+                    Descargar Archivo Adjunto →
+                  </a>
+                )}
               </div>
             ))}
           </div>
@@ -475,6 +648,16 @@ export function GestionContratoPostulante({ solicitud }: Props) {
           {exito}
         </div>
       )}
+
+      {/* Modal de Firma Electrónica (.p12) Zero-Custody */}
+      <ModalFirmaDigitalPdf
+        abierto={modalFirmaAbierto}
+        onCerrar={() => setModalFirmaAbierto(false)}
+        urlPdfOriginal={urlPdfOriginal}
+        solicitudId={solicitud.ssc_id}
+        rolFirmante="ABOGADO_POSTULANTE"
+        onFirmaCompletada={handleFirmaDigitalCompletada}
+      />
     </div>
   );
 }

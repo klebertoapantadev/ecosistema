@@ -68,18 +68,35 @@ export default async function PaginaSocios() {
           <tbody>
             {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
             {solicitudes.map((s: any) => {
-              const esUrgentePropuesta = s.nivelUrgencia === "urgente_propuesta";
+              const esActivo = s.nivelUrgencia === "activo_confirmado";
               const esUrgenteContrato = s.nivelUrgencia === "urgente_contrato";
-              const fondoFila = esUrgentePropuesta ? "rgba(254, 243, 199, 0.35)" : esUrgenteContrato ? "rgba(236, 253, 245, 0.35)" : undefined;
+              const esUrgentePropuesta = s.nivelUrgencia === "urgente_propuesta";
+              const fondoFila = esActivo
+                ? "rgba(236, 253, 245, 0.45)"
+                : esUrgenteContrato
+                ? "rgba(238, 242, 255, 0.65)"
+                : esUrgentePropuesta
+                ? "rgba(254, 243, 199, 0.35)"
+                : undefined;
 
               return (
                 <tr key={s.ssc_id} style={{ background: fondoFila }}>
                   <td>
                     <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                       <strong>{[s.usuario?.usu_nombres, s.usuario?.usu_apellidos].filter(Boolean).join(" ") || "—"}</strong>
+                      {esUrgenteContrato && (
+                        <span title="Contrato firmado cargado listo para contra-firma" style={{ fontSize: "0.7rem", background: "#5000BA", color: "#FFF", borderRadius: "999px", padding: "1px 7px", fontWeight: 800 }}>
+                          POR CONTRA-FIRMAR
+                        </span>
+                      )}
                       {esUrgentePropuesta && (
-                        <span title="Propuesta de modificación al contrato pendiente de revisión" style={{ fontSize: "0.7rem", background: "#DC2626", color: "#FFF", borderRadius: "999px", padding: "1px 7px", fontWeight: 800 }}>
-                          URGENTE
+                        <span title="Propuesta de modificación al contrato pendiente de revisión" style={{ fontSize: "0.7rem", background: "#D97706", color: "#FFF", borderRadius: "999px", padding: "1px 7px", fontWeight: 800 }}>
+                          PROPUESTA
+                        </span>
+                      )}
+                      {esActivo && (
+                        <span title="Socio acreditado formalmente con contrato bi-firmado" style={{ fontSize: "0.7rem", background: "#05876E", color: "#FFF", borderRadius: "999px", padding: "1px 7px", fontWeight: 800 }}>
+                          ACTIVO
                         </span>
                       )}
                     </div>
@@ -88,27 +105,15 @@ export default async function PaginaSocios() {
                   <td>{new Date(s.ssc_enviada_en || s.ssc_creado_en).toLocaleDateString("es-EC")}</td>
                   <td>
                     <span className={`chip-estado-solicitud chip-${s.ssc_estado}`}>
-                      {ETIQUETA_ESTADO[s.ssc_estado] || s.ssc_estado}
+                      {esActivo
+                        ? "Acreditado y Activo"
+                        : esUrgenteContrato
+                        ? "Firma Abogado Recibida"
+                        : ETIQUETA_ESTADO[s.ssc_estado] || s.ssc_estado}
                     </span>
                   </td>
                   <td>
-                    {esUrgentePropuesta ? (
-                      <span style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: "5px",
-                        background: "#FEF3C7",
-                        color: "#92400E",
-                        border: "1.5px solid #F59E0B",
-                        borderRadius: "8px",
-                        padding: "4px 8px",
-                        fontSize: "0.76rem",
-                        fontWeight: 800,
-                        boxShadow: "0 1px 3px rgba(245, 158, 11, 0.2)",
-                      }}>
-                        📝 Propuesta Word ({s.propuestasPendientesCount})
-                      </span>
-                    ) : esUrgenteContrato ? (
+                    {esActivo ? (
                       <span style={{
                         display: "inline-flex",
                         alignItems: "center",
@@ -120,9 +125,54 @@ export default async function PaginaSocios() {
                         padding: "4px 8px",
                         fontSize: "0.76rem",
                         fontWeight: 800,
-                        boxShadow: "0 1px 3px rgba(16, 185, 129, 0.2)",
                       }}>
-                        📄 Contrato Firmado (Por Confirmar)
+                        🎉 Contrato Bi-firmado
+                      </span>
+                    ) : esUrgenteContrato ? (
+                      <span style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "5px",
+                        background: "#EEF2FF",
+                        color: "#4338CA",
+                        border: "1.5px solid #6366F1",
+                        borderRadius: "8px",
+                        padding: "4px 8px",
+                        fontSize: "0.76rem",
+                        fontWeight: 800,
+                        boxShadow: "0 1px 3px rgba(99, 102, 241, 0.2)",
+                      }}>
+                        📄 Contrato Listo para Contra-firma
+                      </span>
+                    ) : esUrgentePropuesta ? (
+                      <span style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "5px",
+                        background: "#FEF3C7",
+                        color: "#92400E",
+                        border: "1.5px solid #F59E0B",
+                        borderRadius: "8px",
+                        padding: "4px 8px",
+                        fontSize: "0.76rem",
+                        fontWeight: 800,
+                      }}>
+                        📝 Propuesta Word ({s.propuestasPendientesCount})
+                      </span>
+                    ) : s.nivelUrgencia === "esperando_abogado" ? (
+                      <span style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "5px",
+                        background: "#F3F4F6",
+                        color: "#4B5563",
+                        border: "1px solid #D1D5DB",
+                        borderRadius: "8px",
+                        padding: "4px 8px",
+                        fontSize: "0.76rem",
+                        fontWeight: 600,
+                      }}>
+                        ✍️ Esperando Firma del Abogado
                       </span>
                     ) : s.nivelUrgencia === "pendiente_revision" ? (
                       <span style={{
@@ -139,21 +189,6 @@ export default async function PaginaSocios() {
                       }}>
                         ⏳ Postulación Inicial
                       </span>
-                    ) : s.nivelUrgencia === "esperando_abogado" ? (
-                      <span style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: "5px",
-                        background: "#F3F4F6",
-                        color: "#4B5563",
-                        border: "1px solid #D1D5DB",
-                        borderRadius: "8px",
-                        padding: "4px 8px",
-                        fontSize: "0.76rem",
-                        fontWeight: 600,
-                      }}>
-                        ✍️ Esperando Firma Abogado
-                      </span>
                     ) : (
                       <span style={{ fontSize: "0.78rem", color: "#9CA3AF" }}>—</span>
                     )}
@@ -167,12 +202,19 @@ export default async function PaginaSocios() {
                         display: "inline-flex",
                         alignItems: "center",
                         gap: "4px",
-                        background: esUrgentePropuesta ? "#5000BA" : undefined,
-                        color: esUrgentePropuesta ? "#FFFFFF" : undefined,
-                        fontWeight: esUrgentePropuesta ? 800 : undefined,
+                        background: esUrgenteContrato ? "#5000BA" : esUrgentePropuesta ? "#D97706" : undefined,
+                        color: esUrgenteContrato || esUrgentePropuesta ? "#FFFFFF" : undefined,
+                        fontWeight: esUrgenteContrato || esUrgentePropuesta ? 800 : undefined,
+                        boxShadow: esUrgenteContrato ? "0 2px 6px rgba(80, 0, 186, 0.25)" : undefined,
                       }}
                     >
-                      {esUrgentePropuesta ? "Revisar Propuesta" : "Evaluar"}
+                      {esActivo
+                        ? "Ver Expediente"
+                        : esUrgenteContrato
+                        ? "Contra-firmar y Activar"
+                        : esUrgentePropuesta
+                        ? "Revisar Propuesta"
+                        : "Evaluar"}
                     </Link>
                   </td>
                 </tr>

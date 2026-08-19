@@ -1061,31 +1061,26 @@ export async function decidirSolicitudSocio(datos: {
       if (uApplicant) {
         const nombrePostulante = [uApplicant.usu_nombres, uApplicant.usu_apellidos].filter(Boolean).join(" ") || uApplicant.usu_correo;
         const tituloNotif = decision === "aceptada"
-          ? "🎉 ¡Tu Acreditación como Socio Abogado fue APROBADA!"
-          : "⚠️ Actualización sobre tu Solicitud de Socio Abogado";
+          ? "📋 ¡Credenciales Validadas! — Descarga y Firma tu Contrato de Sociedad"
+          : "⚠️ Observaciones sobre tu Solicitud de Socio Abogado";
 
         const cuerpoHTML = decision === "aceptada" ? `
           <div style="font-family: sans-serif; padding: 20px; color: #111;">
-            <h2 style="color: #059669;">¡Felicitaciones, ${nombrePostulante}!</h2>
-            <p>Tu solicitud de acreditación profesional en <strong>tranqi</strong> ha sido evaluada y marcada como <strong>APROBADA</strong>.</p>
-            <p>Para formalizar e integrar tu incorporación, por favor sigue estos sencillos pasos:</p>
+            <h2 style="color: #059669;">¡Credenciales Validadas, ${nombrePostulante}!</h2>
+            <p>Tu postulación en <strong>tranqi</strong> ha superado la validación de credenciales (Senescyt y Foro de Abogados).</p>
+            <p>Para culminar tu acreditación y activar formalmente tus credenciales de <strong>Socio Abogado</strong>, formalicemos el contrato de sociedad:</p>
             <div style="background: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 8px; padding: 16px; margin: 16px 0;">
               <ol style="margin: 0; padding-left: 20px; line-height: 1.6;">
                 <li style="margin-bottom: 8px;">
-                  Descarga tu contrato pre-llenado en formato Word (.docx): 
-                  <br/>
-                  <a href="/api/solicitud-socio/contrato/descargar?solicitudId=${solicitudId}" style="color: #5000BA; font-weight: 700; text-decoration: underline;">Descargar Contrato (.docx)</a>
+                  <strong>Opción 1 (Recomendada · Rápida):</strong> Firma digitalmente en pantalla con tu archivo <code>.p12</code> y contraseña directamente en tu panel.
                 </li>
-                <li style="margin-bottom: 8px;">Fírmalo de forma manuscrita o digitalmente.</li>
-                <li style="margin-bottom: 0;">
-                  Ingresa al portal y sube el documento firmado (se admite PDF o Word):
-                  <br/>
-                  <a href="/panel/solicitud-socio" style="color: #5000BA; font-weight: 700; text-decoration: underline;">Subir Contrato Firmado en el Widget</a>
+                <li style="margin-bottom: 8px;">
+                  <strong>Opción 2:</strong> Descarga el contrato pre-llenado, fírmalo manualmente o con software externo, y sube el PDF escaneado.
                 </li>
               </ol>
             </div>
             ${comentario ? `<div style="background: #F3F4F6; border-left: 4px solid #5000BA; padding: 12px; border-radius: 6px; margin: 16px 0;"><strong>Observación del Evaluador:</strong> ${comentario}</div>` : ""}
-            <p>Una vez recibido el contrato firmado, verificaremos el documento y activaremos tus credenciales de Abogado.</p>
+            <p><a href="/panel/solicitud-socio" style="display: inline-block; padding: 10px 18px; background: #05876E; color: #fff; text-decoration: none; border-radius: 8px; font-weight: 700;">Ir a Firmar Contrato</a></p>
           </div>
         ` : `
           <div style="font-family: sans-serif; padding: 20px; color: #111;">
@@ -1559,7 +1554,11 @@ export async function guardarPlantillaContrato(titulo: string, contenido: string
   return { ok: true, data: undefined };
 }
 
-export async function confirmarContratoSocio(solicitudId: string, comentario?: string): Promise<Resultado> {
+export async function confirmarContratoSocio(
+  solicitudId: string,
+  comentario?: string,
+  pathContratoBiFirmado?: string
+): Promise<Resultado> {
   const supabase = await crearClienteServidor();
   const adminSupabase = crearClienteAdmin() || supabase;
   const perfilAdmin = await obtenerPerfilActual();
@@ -1578,64 +1577,112 @@ export async function confirmarContratoSocio(solicitudId: string, comentario?: s
   }
 
   const targetUsuId = solData.ssc_usuario_id;
+  const ahoraIso = new Date().toISOString();
 
-  // 2. Intentar ejecutar el RPC de PostgreSQL o fallback directo con adminSupabase
+  // 2. Si se adjunta el contrato bi-firmado de Tranqi, registrarlo como documento oficial
+  if (pathContratoBiFirmado) {
+    try {
+      await adminSupabase
+        .schema("tranqui_legal")
+        .from("trq_documento_socio")
+        .insert({
+          dcs_solicitud_id: solicitudId,
+          dcs_tipo: "contrato_socio",
+          dcs_url: pathContratoBiFirmado,
+          dcs_nombre_archivo: "Contrato_Tranqi_BiFirmado.pdf",
+          dcs_comentario: "[CONTRATO_BIFIRMADO_TRANQI] Contrato formalizado con contra-firma digital de tranqi",
+          dcs_subido_por: perfilAdmin?.usu_id || user?.id || targetUsuId,
+        });
+    } catch (errBiFirm) {
+      console.warn("Aviso al registrar contrato bi-firmado:", errBiFirm);
+    }
+  }
+
+  // 3. Intentar ejecutar el RPC de PostgreSQL o actualización directa con adminSupabase
   const { error: rpcError } = await (supabase as any)
     .schema("tranqui_legal")
     .rpc("trq_fn_confirmar_contrato_socio", { p_solicitud_id: solicitudId, p_comentario: comentario || null });
 
-  if (rpcError) {
-    // Actualizar solicitud
-    const { error: updErr } = await (adminSupabase as any)
-      .schema("tranqui_legal")
-      .from("trq_solicitud_socio")
-      .update({
-        ssc_estado: "aceptada",
-        ssc_contrato_confirmado_en: new Date().toISOString(),
-        ssc_contrato_confirmado_por: perfilAdmin?.usu_id || user?.id || null,
-        ssc_actualizado_en: new Date().toISOString(),
-      })
-      .eq("ssc_id", solicitudId);
+  // Actualizar directamente con adminSupabase para asegurar consistencia
+  const { error: updErr } = await (adminSupabase as any)
+    .schema("tranqui_legal")
+    .from("trq_solicitud_socio")
+    .update({
+      ssc_estado: "aceptada",
+      ssc_contrato_confirmado_en: ahoraIso,
+      ssc_contrato_confirmado_por: perfilAdmin?.usu_id || user?.id || null,
+      ssc_actualizado_en: ahoraIso,
+    })
+    .eq("ssc_id", solicitudId);
 
-    if (updErr) return { ok: false, error: updErr.message };
+  if (updErr && rpcError) return { ok: false, error: updErr.message };
 
-    // Activar en trq_abogado
+  // Activar en trq_abogado
+  await (adminSupabase as any)
+    .schema("tranqui_legal")
+    .from("trq_abogado")
+    .upsert({
+      abg_usuario_id: targetUsuId,
+      abg_solicitud_id: solicitudId,
+      abg_estado: "verificado",
+      abg_verificado_en: ahoraIso,
+    }, { onConflict: "abg_usuario_id" });
+
+  // Registrar en historial de revisiones
+  await adminSupabase
+    .schema("tranqui_legal")
+    .from("trq_revision_solicitud")
+    .insert({
+      rev_solicitud_id: solicitudId,
+      rev_admin_id: perfilAdmin?.usu_id || user?.id || null,
+      rev_decision: "aceptada",
+      rev_comentario: comentario || "Contrato firmado verificado y contra-firmado por tranqi. Activación formal de credenciales y rol de Socio Abogado.",
+    });
+
+  // Asignar perfil ABOGADO en comun_seguridad
+  try {
     await (adminSupabase as any)
-      .schema("tranqui_legal")
-      .from("trq_abogado")
-      .upsert({
-        abg_usuario_id: targetUsuId,
-        abg_solicitud_id: solicitudId,
-        abg_estado: "verificado",
-        abg_verificado_en: new Date().toISOString(),
-      }, { onConflict: "abg_usuario_id" });
-
-    // Registrar en historial de revisiones
-    await adminSupabase
-      .schema("tranqui_legal")
-      .from("trq_revision_solicitud")
-      .insert({
-        rev_solicitud_id: solicitudId,
-        rev_admin_id: perfilAdmin?.usu_id || user?.id || null,
-        rev_decision: "aceptada",
-        rev_comentario: comentario || "Contrato firmado recibido y confirmado. Activación de credenciales y rol de Abogado.",
+      .schema("comun_seguridad")
+      .rpc("seg_fn_asignar_perfil", {
+        p_target_usuario_id: targetUsuId,
+        p_negocio: "TRANQ",
+        p_perfil_clave: "ABOGADO",
       });
-
-    // Asignar perfil ABOGADO en comun_seguridad
+  } catch {
+    // Fallback de asignación directa
     try {
-      await (adminSupabase as any)
+      const { data: mem } = await (adminSupabase as any)
         .schema("comun_seguridad")
-        .rpc("seg_fn_asignar_perfil", {
-          p_target_usuario_id: targetUsuId,
-          p_negocio: "TRANQ",
-          p_perfil_clave: "ABOGADO",
-        });
-    } catch {
-      // Ignorar si el RPC no existe
+        .from("seg_membresia")
+        .select("mem_id")
+        .eq("mem_usuario_id", targetUsuId)
+        .eq("mem_negocio", "TRANQ")
+        .maybeSingle();
+
+      if (mem?.mem_id) {
+        const { data: perfAbg } = await (adminSupabase as any)
+          .schema("comun_seguridad")
+          .from("seg_perfil")
+          .select("per_id")
+          .eq("per_clave", "ABOGADO")
+          .maybeSingle();
+
+        if (perfAbg?.per_id) {
+          await (adminSupabase as any)
+            .schema("comun_seguridad")
+            .from("seg_membresia_perfil")
+            .upsert({
+              mep_membresia_id: mem.mem_id,
+              mep_perfil_id: perfAbg.per_id,
+            }, { onConflict: "mep_membresia_id,mep_perfil_id", ignoreDuplicates: true });
+        }
+      }
+    } catch (errMemDirect) {
+      console.warn("Aviso en asignación directa de perfil ABOGADO:", errMemDirect);
     }
   }
 
-  // Notificar al solicitante cliente/abogado sobre la confirmación de su contrato
+  // Notificar al solicitante cliente/abogado sobre la activación definitiva de su cuenta
   try {
     const { data: uApplicant } = await adminSupabase
       .schema("comun_seguridad")
@@ -1646,13 +1693,30 @@ export async function confirmarContratoSocio(solicitudId: string, comentario?: s
 
     if (uApplicant) {
       const nombrePostulante = [uApplicant.usu_nombres, uApplicant.usu_apellidos].filter(Boolean).join(" ") || uApplicant.usu_correo;
-      const tituloNotif = "💼 ¡Tu Contrato de Socio Abogado ha sido Confirmado!";
+      const tituloNotif = "🎉 ¡Bienvenido a tranqi! Contrato Bi-firmado y Cuenta de Socio Abogado Activada";
       const cuerpoHTML = `
-        <div style="font-family: sans-serif; padding: 20px; color: #111;">
-          <h2 style="color: #059669;">¡Firma Confirmada, ${nombrePostulante}!</h2>
-          <p>Hemos recibido y verificado tu contrato de sociedad firmado. Tu cuenta ha sido activada con el rol de <strong>Abogado</strong> en la plataforma.</p>
-          <p>Ya puedes acceder a las herramientas de abogado, gestionar tu agenda y recibir casos.</p>
-          <p><a href="/panel" style="display: inline-block; padding: 10px 18px; background: #5000BA; color: #fff; text-decoration: none; border-radius: 8px; font-weight: 700;">Ir a mi Panel de Abogado</a></p>
+        <div style="font-family: sans-serif; padding: 22px; color: #111; max-width: 600px; margin: 0 auto; background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 12px;">
+          <div style="text-align: center; margin-bottom: 16px;">
+            <span style="display: inline-block; background: #ECFDF5; color: #065F46; padding: 6px 14px; border-radius: 999px; font-weight: 800; font-size: 0.82rem; border: 1px solid #10B981;">
+              ✨ SOCIO ABOGADO ACREDITADO
+            </span>
+          </div>
+          <h2 style="color: #059669; margin-top: 0; text-align: center;">¡Felicitaciones, Abogado ${nombrePostulante}!</h2>
+          <p style="font-size: 0.95rem; line-height: 1.5; color: #374151;">
+            Hemos completado la verificación y contra-firma digital de tu contrato de sociedad. Tu cuenta profesional ha sido formalmente activada en <strong>tranqi®</strong>.
+          </p>
+          <div style="background: #F0FDF4; border: 1.5px solid #10B981; border-radius: 8px; padding: 16px; margin: 16px 0;">
+            <p style="margin: 0; font-size: 0.88rem; color: #065F46; line-height: 1.5;">
+              ✓ Contrato bi-firmado por ambas partes disponible en tu expediente.<br/>
+              ✓ Rol de <strong>Socio Abogado</strong> activo con acceso completo a casos y agenda.<br/>
+              ✓ Perfil publicado en la red legal de tranqi.
+            </p>
+          </div>
+          <div style="text-align: center; margin: 24px 0;">
+            <a href="/panel" style="display: inline-block; padding: 12px 24px; background: #5000BA; color: #fff; text-decoration: none; border-radius: 8px; font-weight: 800; font-size: 0.95rem; box-shadow: 0 4px 12px rgba(80,0,186,0.3);">
+              Ir a mi Panel de Abogado →
+            </a>
+          </div>
         </div>
       `;
 
@@ -1663,7 +1727,8 @@ export async function confirmarContratoSocio(solicitudId: string, comentario?: s
           not_canal: "IN_APP",
           not_titulo: tituloNotif,
           not_contenido_html: cuerpoHTML,
-          not_creado_en: new Date().toISOString()
+          not_url_accion: "/panel",
+          not_creado_en: ahoraIso,
         },
         {
           not_usuario_id: uApplicant.usu_id,
@@ -1671,7 +1736,8 @@ export async function confirmarContratoSocio(solicitudId: string, comentario?: s
           not_canal: "PUSH",
           not_titulo: tituloNotif,
           not_contenido_html: cuerpoHTML,
-          not_creado_en: new Date().toISOString()
+          not_url_accion: "/panel",
+          not_creado_en: ahoraIso,
         }
       ]);
 
@@ -1680,7 +1746,7 @@ export async function confirmarContratoSocio(solicitudId: string, comentario?: s
         asunto: tituloNotif,
         contenidoHTML: cuerpoHTML,
         tipoEmision: "AUTOMATICA",
-        emisorNombre: "Equipo de Soporte Legal",
+        emisorNombre: "Equipo de Soporte Legal tranqi",
         emisorCorreo: "soporte@tranqi24.com",
         procesoOrigen: "PLT-020 Activación de Socio Abogado",
         audiencia: `ABOGADO (${uApplicant.usu_correo})`,
@@ -1689,7 +1755,7 @@ export async function confirmarContratoSocio(solicitudId: string, comentario?: s
         enviados: 1,
         leidos: 0,
         ignorados: 0,
-        fecha: new Date().toISOString(),
+        fecha: ahoraIso,
       });
     }
   } catch (errNot) {
@@ -1698,7 +1764,9 @@ export async function confirmarContratoSocio(solicitudId: string, comentario?: s
 
   revalidatePath("/panel/socios");
   revalidatePath(`/panel/socios/${solicitudId}`);
+  revalidatePath("/panel/solicitud-socio");
   revalidatePath("/panel/usuarios");
+  revalidatePath("/panel");
   return { ok: true, data: undefined };
 }
 

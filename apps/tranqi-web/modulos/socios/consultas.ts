@@ -212,22 +212,26 @@ export async function listarSolicitudesParaAdmin(estado?: string) {
     const docs = (s.trq_documento_socio || []) as Array<{ dcs_id: string; dcs_tipo: string; dcs_nombre_archivo?: string | null; dcs_comentario?: string | null; dcs_creado_en?: string | null }>;
     const propuestas = docs.filter(d => d.dcs_comentario?.includes("[PROPUESTA_MODIFICACION_CONTRATO]"));
     const tieneContratoFirmado = docs.some(d => d.dcs_tipo === "contrato_socio");
+    const contratoConfirmado = Boolean(s.ssc_contrato_confirmado_en);
 
-    let nivelUrgencia: "urgente_propuesta" | "urgente_contrato" | "pendiente_revision" | "esperando_abogado" | "observada" | "normal" = "normal";
+    let nivelUrgencia: "activo_confirmado" | "urgente_contrato" | "urgente_propuesta" | "pendiente_revision" | "esperando_abogado" | "observada" | "normal" = "normal";
     let etiquetaUrgencia = "";
 
-    if (propuestas.length > 0) {
+    if (contratoConfirmado) {
+      nivelUrgencia = "activo_confirmado";
+      etiquetaUrgencia = "Socio Activo (Contrato Bi-firmado)";
+    } else if (tieneContratoFirmado) {
+      nivelUrgencia = "urgente_contrato";
+      etiquetaUrgencia = "Contrato Firmado (Listo para Contra-firma)";
+    } else if (propuestas.length > 0) {
       nivelUrgencia = "urgente_propuesta";
       etiquetaUrgencia = `Propuesta de Modificación (${propuestas.length})`;
-    } else if (tieneContratoFirmado && estadoReal === "aceptada") {
-      nivelUrgencia = "urgente_contrato";
-      etiquetaUrgencia = "Contrato Firmado Cargado";
-    } else if (estadoReal === "enviada" || estadoReal === "en_revision") {
-      nivelUrgencia = "pendiente_revision";
-      etiquetaUrgencia = "Postulación Inicial Pendiente";
     } else if (estadoReal === "aceptada") {
       nivelUrgencia = "esperando_abogado";
       etiquetaUrgencia = "Esperando Firma del Abogado";
+    } else if (estadoReal === "enviada" || estadoReal === "en_revision") {
+      nivelUrgencia = "pendiente_revision";
+      etiquetaUrgencia = "Postulación Inicial Pendiente";
     } else if (estadoReal === "rechazada") {
       nivelUrgencia = "observada";
       etiquetaUrgencia = "Observada / Requiere Corrección";
@@ -250,6 +254,7 @@ export async function listarSolicitudesParaAdmin(estado?: string) {
       enlaceForoVerificado: s.ssc_enlace_foro_verificado,
       creadoEn: s.ssc_creado_en,
       enviadaEn: s.ssc_enviada_en,
+      contratoConfirmado,
       propuestas,
       propuestasPendientesCount: propuestas.length,
       tieneContratoFirmado,
