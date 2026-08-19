@@ -79,9 +79,9 @@ export function ModalFirmaDigitalPdf({
 
   // Posición interactiva de la firma (porcentajes 0 - 100 dentro del visor de la página)
   const esTranqi = rolFirmante === "TRANQI_PLATAFORMA";
-  // Default: Abogado a la derecha (56%, 74%), Tranqi a la izquierda (10%, 74%)
-  const [posicionXPorcentaje, setPosicionXPorcentaje] = useState(esTranqi ? 10 : 56);
-  const [posicionYPorcentaje, setPosicionYPorcentaje] = useState(74);
+  // Default: Abogado a la derecha (54%, 78%), Tranqi a la izquierda (8%, 78%)
+  const [posicionXPorcentaje, setPosicionXPorcentaje] = useState(esTranqi ? 8 : 54);
+  const [posicionYPorcentaje, setPosicionYPorcentaje] = useState(78);
   const [arrastrandoFirma, setArrastrandoFirma] = useState(false);
   const offsetArrastre = useRef<{ startX: number; startY: number; initPosX: number; initPosY: number }>({
     startX: 0,
@@ -782,8 +782,8 @@ export function ModalFirmaDigitalPdf({
                     type="button"
                     onClick={() => {
                       setPaginaActual(totalPaginas);
-                      setPosicionXPorcentaje(56);
-                      setPosicionYPorcentaje(74);
+                      setPosicionXPorcentaje(54);
+                      setPosicionYPorcentaje(78);
                     }}
                     style={{
                       padding: "8px 10px",
@@ -808,8 +808,8 @@ export function ModalFirmaDigitalPdf({
                     type="button"
                     onClick={() => {
                       setPaginaActual(totalPaginas);
-                      setPosicionXPorcentaje(10);
-                      setPosicionYPorcentaje(74);
+                      setPosicionXPorcentaje(8);
+                      setPosicionYPorcentaje(78);
                     }}
                     style={{
                       padding: "8px 10px",
@@ -1219,16 +1219,18 @@ export function ModalFirmaDigitalPdf({
               </div>
             </div>
 
-            {/* Contenedor del PDF con desplazamiento nativo completamente habilitado */}
+            {/* Contenedor del PDF con ajuste vertical completo sin scrollbars */}
             <div
               style={{
                 flex: 1,
                 position: "relative",
-                overflowY: "auto",
+                overflow: "hidden",
                 display: "flex",
+                alignItems: "center",
                 justifyContent: "center",
-                padding: "16px",
-                background: "#475569",
+                padding: "12px",
+                background: "#334155",
+                height: "100%",
               }}
             >
               {cargandoPdf ? (
@@ -1241,23 +1243,23 @@ export function ModalFirmaDigitalPdf({
                   ref={contenedorPdfRef}
                   style={{
                     position: "relative",
-                    width: "100%",
-                    maxWidth: "600px",
+                    height: "100%",
+                    maxHeight: "calc(92vh - 160px)",
                     aspectRatio: "595.28 / 841.89",
                     background: "#FFFFFF",
-                    boxShadow: "0 10px 25px rgba(0,0,0,0.5)",
+                    boxShadow: "0 10px 30px rgba(0,0,0,0.5)",
                     borderRadius: "4px",
                     overflow: "hidden",
                   }}
                 >
-                  {/* Iframe del PDF con soporte nativo de scroll y navegación por página */}
+                  {/* Iframe del PDF con ajuste de página completa (Fit) sin barra de scroll */}
                   <iframe
                     key={`pdf-page-${paginaActual}-${pasoActual}`}
                     src={
                       pasoActual === "3_REVISAR_Y_ENVIAR" && urlPrevisualizacionFirmado
-                        ? `${urlPrevisualizacionFirmado}#page=${paginaActual}&view=FitH&toolbar=0&navpanes=0`
+                        ? `${urlPrevisualizacionFirmado}#page=${paginaActual}&view=Fit&toolbar=0&navpanes=0&scrollbar=0`
                         : urlPrevisualizacionOriginal
-                        ? `${urlPrevisualizacionOriginal}#page=${paginaActual}&view=FitH&toolbar=0&navpanes=0`
+                        ? `${urlPrevisualizacionOriginal}#page=${paginaActual}&view=Fit&toolbar=0&navpanes=0&scrollbar=0`
                         : ""
                     }
                     title="Visor Contrato"
@@ -1265,6 +1267,7 @@ export function ModalFirmaDigitalPdf({
                       width: "100%",
                       height: "100%",
                       border: "none",
+                      overflow: "hidden",
                     }}
                   />
 
