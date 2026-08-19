@@ -367,8 +367,9 @@ export function ModalFirmaDigitalPdf({
           background: "#FFFFFF",
           borderRadius: "20px",
           width: "100%",
-          maxWidth: "1200px",
-          maxHeight: "94vh",
+          maxWidth: "1400px",
+          height: "95vh",
+          maxHeight: "95vh",
           display: "flex",
           flexDirection: "column",
           boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.45)",
@@ -1286,31 +1287,30 @@ export function ModalFirmaDigitalPdf({
                         left: `${posicionXPorcentaje}%`,
                         width: `${((230 / 595.28) * 100).toFixed(2)}%`,
                         height: `${((72 / 841.89) * 100).toFixed(2)}%`,
-                        minWidth: "180px",
-                        minHeight: "56px",
                         background: "rgba(255, 255, 255, 0.98)",
                         border: `1.5px solid ${esTranqi ? "#5000BA" : "#047857"}`,
-                        borderRadius: "4px",
-                        padding: "4px 6px",
+                        borderRadius: "3px",
+                        padding: "2px 4px",
                         boxSizing: "border-box",
-                        boxShadow: "0 8px 20px rgba(0,0,0,0.35)",
+                        boxShadow: "0 4px 14px rgba(0,0,0,0.35)",
                         display: "flex",
                         alignItems: "center",
-                        gap: "6px",
+                        gap: "4px",
                         cursor: arrastrandoFirma ? "grabbing" : "grab",
                         userSelect: "none",
                         zIndex: 50,
+                        overflow: "hidden",
                         transition: arrastrandoFirma ? "none" : "all 0.15s ease-out",
                       }}
                     >
-                      {/* Código QR Izquierdo */}
+                      {/* Código QR Izquierdo Proporcional */}
                       <div
                         style={{
-                          width: "56px",
-                          height: "56px",
+                          height: "92%",
+                          aspectRatio: "1 / 1",
                           flexShrink: 0,
                           background: "#F8FAFC",
-                          borderRadius: "3px",
+                          borderRadius: "2px",
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
@@ -1325,31 +1325,35 @@ export function ModalFirmaDigitalPdf({
                             style={{ width: "100%", height: "100%", objectFit: "contain" }}
                           />
                         ) : (
-                          <QrCode size={36} color={esTranqi ? "#5000BA" : "#047857"} />
+                          <QrCode size={24} color={esTranqi ? "#5000BA" : "#047857"} />
                         )}
                       </div>
 
                       {/* Separador vertical */}
-                      <div style={{ width: "1px", height: "56px", background: "#E2E8F0" }} />
+                      <div style={{ width: "1px", height: "85%", background: "#CBD5E1", flexShrink: 0 }} />
 
-                      {/* Textos Oficiales Derechos */}
+                      {/* Textos Oficiales Derechos con Tipografía Responsiva */}
                       <div
                         style={{
                           flex: 1,
                           display: "flex",
                           flexDirection: "column",
-                          justifyContent: "space-between",
-                          height: "58px",
+                          justifyContent: "space-around",
+                          height: "92%",
                           overflow: "hidden",
+                          lineHeight: 1.15,
                         }}
                       >
                         <div
                           style={{
-                            fontSize: "0.58rem",
+                            fontSize: "clamp(6px, 0.85vw, 8.5px)",
                             fontWeight: 800,
                             color: esTranqi ? "#5000BA" : "#047857",
-                            lineHeight: 1,
                             textTransform: "uppercase",
+                            letterSpacing: "0.2px",
+                            whiteSpace: "nowrap",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
                           }}
                         >
                           {esTranqi ? "FIRMADO POR TRANQI" : "FIRMADO DIGITALMENTE POR:"}
@@ -1357,44 +1361,41 @@ export function ModalFirmaDigitalPdf({
 
                         <div
                           style={{
-                            fontSize: "0.65rem",
+                            fontSize: "clamp(6.5px, 0.95vw, 9.5px)",
                             fontWeight: 800,
                             color: "#0F172A",
+                            whiteSpace: "nowrap",
                             overflow: "hidden",
                             textOverflow: "ellipsis",
-                            whiteSpace: "nowrap",
-                            lineHeight: 1.1,
                           }}
                         >
                           {infoCert.nombreTitular}
                         </div>
 
-                        <div style={{ fontSize: "0.52rem", color: "#334155", lineHeight: 1 }}>
-                          FECHA: {new Date().toLocaleDateString("es-EC")} (ECT)
-                        </div>
-
                         <div
                           style={{
-                            fontSize: "0.48rem",
-                            color: "#64748B",
+                            fontSize: "clamp(5px, 0.72vw, 7.5px)",
+                            color: "#475569",
+                            whiteSpace: "nowrap",
                             overflow: "hidden",
                             textOverflow: "ellipsis",
-                            whiteSpace: "nowrap",
-                            lineHeight: 1,
                           }}
                         >
-                          EMISOR: {infoCert.entidadEmisora.substring(0, 24)}...
+                          FECHA: {new Date().toLocaleDateString("es-EC")} · {infoCert.entidadEmisora}
                         </div>
 
                         <div
                           style={{
-                            fontSize: "0.44rem",
-                            color: "#047857",
+                            fontSize: "clamp(4.5px, 0.65vw, 7px)",
                             fontWeight: 700,
-                            lineHeight: 1,
+                            color: esTranqi ? "#6D28D9" : "#059669",
+                            letterSpacing: "0.2px",
+                            whiteSpace: "nowrap",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
                           }}
                         >
-                          LEY COMERCIO ELECTRÓNICO (EC)
+                          VALIDADO · LEY COMERCIO ELECTRÓNICO (EC)
                         </div>
                       </div>
                     </div>
