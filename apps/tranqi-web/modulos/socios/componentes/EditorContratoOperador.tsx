@@ -29,6 +29,7 @@ interface EditorContratoOperadorProps {
   tituloInicial: string;
   contenidoInicial: string;
   historialVersiones: VersionContratoSocio[];
+  inicialmenteColapsado?: boolean;
 }
 
 export function EditorContratoOperador({
@@ -39,8 +40,10 @@ export function EditorContratoOperador({
   tituloInicial,
   contenidoInicial,
   historialVersiones,
+  inicialmenteColapsado = false,
 }: EditorContratoOperadorProps) {
   const router = useRouter();
+  const [panelAbierto, setPanelAbierto] = useState(!inicialmenteColapsado);
   const [modo, setModo] = useState<"EDITAR" | "PREVIEW">("EDITAR");
   const [titulo, setTitulo] = useState(tituloInicial);
   const [contenidoMd, setContenidoMd] = useState(contenidoInicial);
@@ -108,6 +111,11 @@ export function EditorContratoOperador({
       return;
     }
 
+    if (inicialmenteColapsado && !comentarioOperador.trim()) {
+      setError("Por favor ingresa un comentario o justificación para el postulante antes de reenviar.");
+      return;
+    }
+
     try {
       setGuardando(true);
       setError(null);
@@ -140,6 +148,61 @@ export function EditorContratoOperador({
     setContenidoMd(v.vcs_contenido_md);
     setModo("EDITAR");
     setExito(`Se cargó el texto de la Versión ${v.vcs_numero_version} en el editor.`);
+  }
+
+  if (!panelAbierto) {
+    return (
+      <div
+        style={{
+          background: "#F8FAFC",
+          border: "1.5px solid #E2E8F0",
+          borderRadius: "14px",
+          padding: "16px 20px",
+          marginTop: "16px",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          flexWrap: "wrap",
+          gap: "12px",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          <div style={{ background: "#EDE9FE", padding: "8px", borderRadius: "8px", color: "#6D28D9" }}>
+            <FileEdit size={20} />
+          </div>
+          <div>
+            <h4 style={{ margin: 0, fontSize: "0.92rem", fontWeight: 800, color: "#1E293B" }}>
+              Reenviar Contrato con Modificaciones
+            </h4>
+            <p style={{ margin: "2px 0 0 0", fontSize: "0.78rem", color: "#64748B" }}>
+              Si requieres ajustar cláusulas tras la firma del postulante, abre el editor para emitir la <strong>Versión {siguienteVersion}</strong>.
+            </p>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => setPanelAbierto(true)}
+          style={{
+            padding: "8px 16px",
+            background: "#FFFFFF",
+            color: "#5000BA",
+            border: "1.5px solid #5000BA",
+            borderRadius: "8px",
+            fontWeight: 700,
+            fontSize: "0.82rem",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            gap: "6px",
+            boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
+          }}
+        >
+          <FileEdit size={14} />
+          Editar y Reenviar Contrato
+        </button>
+      </div>
+    );
   }
 
   return (
@@ -372,38 +435,61 @@ export function EditorContratoOperador({
             {mostrarHistorial ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
           </button>
 
-          {/* Botón de Enviar a Firma */}
-          <button
-            type="button"
-            onClick={handleEmitirContrato}
-            disabled={guardando}
-            style={{
-              padding: "12px 20px",
-              background: "linear-gradient(135deg, #5000BA 0%, #3B0086 100%)",
-              color: "#FFFFFF",
-              border: "none",
-              borderRadius: "10px",
-              fontWeight: 800,
-              fontSize: "0.88rem",
-              cursor: guardando ? "not-allowed" : "pointer",
-              display: "flex",
-              alignItems: "center",
-              gap: "8px",
-              boxShadow: "0 4px 12px rgba(80, 0, 186, 0.25)",
-            }}
-          >
-            {guardando ? (
-              <>
-                <Loader2 size={16} className="animate-spin" />
-                Emitiendo Versión {siguienteVersion}...
-              </>
-            ) : (
-              <>
-                <Send size={16} />
-                Aceptar y Enviar Contrato v{siguienteVersion} a Firma
-              </>
+          <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+            {inicialmenteColapsado && (
+              <button
+                type="button"
+                onClick={() => setPanelAbierto(false)}
+                style={{
+                  padding: "10px 14px",
+                  background: "#F1F5F9",
+                  color: "#475569",
+                  border: "1px solid #CBD5E1",
+                  borderRadius: "8px",
+                  fontWeight: 700,
+                  fontSize: "0.82rem",
+                  cursor: "pointer",
+                }}
+              >
+                Ocultar Editor
+              </button>
             )}
-          </button>
+
+            {/* Botón de Enviar a Firma / Reenviar */}
+            <button
+              type="button"
+              onClick={handleEmitirContrato}
+              disabled={guardando}
+              style={{
+                padding: "12px 20px",
+                background: "linear-gradient(135deg, #5000BA 0%, #3B0086 100%)",
+                color: "#FFFFFF",
+                border: "none",
+                borderRadius: "10px",
+                fontWeight: 800,
+                fontSize: "0.88rem",
+                cursor: guardando ? "not-allowed" : "pointer",
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+                boxShadow: "0 4px 12px rgba(80, 0, 186, 0.25)",
+              }}
+            >
+              {guardando ? (
+                <>
+                  <Loader2 size={16} className="animate-spin" />
+                  Emitiendo Versión {siguienteVersion}...
+                </>
+              ) : (
+                <>
+                  <Send size={16} />
+                  {inicialmenteColapsado
+                    ? `Aceptar y Reenviar Contrato v${siguienteVersion} al Solicitante`
+                    : `Aceptar y Enviar Contrato v${siguienteVersion} a Firma`}
+                </>
+              )}
+            </button>
+          </div>
         </div>
       </div>
 

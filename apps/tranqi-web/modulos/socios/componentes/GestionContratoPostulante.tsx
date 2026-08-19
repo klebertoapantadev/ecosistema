@@ -414,7 +414,7 @@ export function GestionContratoPostulante({ solicitud }: Props) {
                   }}
                 >
                   <KeyRound size={18} />
-                  Abrir Asistente de Firma Electrónica (.p12)
+                  Firma Online
                 </button>
               </div>
             </div>

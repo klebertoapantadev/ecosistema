@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { CheckCircle2, XCircle, ExternalLink, Download, FileText } from "lucide-react";
+import { CheckCircle2, XCircle, ExternalLink, Download, FileText, X } from "lucide-react";
 import {
   obtenerSolicitudDetalle,
   obtenerAbogadoPorSolicitud,
@@ -66,11 +66,50 @@ export default async function PaginaDetalleSocio({ params }: { params: Promise<{
   const detalleUsu = (usuario as any)?.usu_detalle_usuario as Record<string, any> | undefined;
   const urlFoto = docFoto?.url || detalleUsu?.foto_url || detalleUsu?.avatar_url || null;
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const contratoFirmadoCargado = documentos.some((d) => d.dcs_tipo === "contrato_socio") || Boolean((solicitud as any).ssc_archivo_contrato_url);
+
   return (
     <div>
-      <Link href="/panel/socios">← Volver a socios</Link>
-      
-      <div style={{ display: "flex", alignItems: "center", gap: "16px", marginTop: "16px", marginBottom: "16px" }}>
+      {/* Cabecera con Botón Circular de Cierre (X) unificado */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          <span style={{ fontSize: "1.3rem" }}>⚖️</span>
+          <div>
+            <h1 style={{ margin: 0, fontSize: "1.25rem", fontWeight: 800, color: "#111827" }}>
+              Revisión y Gestión de Socio Abogado
+            </h1>
+            <p style={{ margin: "2px 0 0 0", fontSize: "0.8rem", color: "#6B7280" }}>
+              Expediente legal, acreditación documental y formalización de contrato
+            </p>
+          </div>
+        </div>
+
+        <Link
+          href="/panel/socios"
+          title="Cerrar y volver a socios"
+          aria-label="Cerrar y volver a socios"
+          style={{
+            background: "#FFFFFF",
+            border: "1.5px solid #E2E8F0",
+            color: "#1E293B",
+            borderRadius: "50%",
+            width: "36px",
+            height: "36px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            cursor: "pointer",
+            boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
+            textDecoration: "none",
+            transition: "all 0.2s ease",
+          }}
+        >
+          <X size={18} />
+        </Link>
+      </div>
+
+      <div style={{ display: "flex", alignItems: "center", gap: "16px", marginTop: "8px", marginBottom: "16px" }}>
         {urlFoto ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -232,7 +271,7 @@ export default async function PaginaDetalleSocio({ params }: { params: Promise<{
             );
           })()}
           <div style={{ marginTop: "16px", borderTop: "1px solid #E5E7EB", paddingTop: "14px", display: "flex", flexWrap: "wrap", alignItems: "center", gap: "10px" }}>
-            {documentos.some((d) => d.dcs_tipo === "contrato_socio") && (
+            {contratoFirmadoCargado && (
               <a
                 href={`/api/solicitud-socio/contrato/firmado?solicitudId=${solicitud.ssc_id}`}
                 target="_blank"
@@ -255,50 +294,10 @@ export default async function PaginaDetalleSocio({ params }: { params: Promise<{
               </a>
             )}
 
-            <a
-              href={`/api/solicitud-socio/contrato/descargar?solicitudId=${solicitud.ssc_id}`}
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "6px",
-                padding: "8px 14px",
-                borderRadius: "8px",
-                background: "#5000BA",
-                color: "#FFFFFF",
-                fontSize: "0.82rem",
-                fontWeight: 700,
-                textDecoration: "none",
-                boxShadow: "0 2px 6px rgba(80, 0, 186, 0.2)",
-              }}
-            >
-              <Download size={14} /> Descargar Plantilla Word (.docx)
-            </a>
-
-            <a
-              href={`/panel/solicitud-socio/contrato/imprimir?solicitudId=${solicitud.ssc_id}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "6px",
-                padding: "8px 14px",
-                borderRadius: "8px",
-                background: "#FFFFFF",
-                color: "#374151",
-                border: "1px solid #D1D5DB",
-                fontSize: "0.82rem",
-                fontWeight: 700,
-                textDecoration: "none",
-              }}
-            >
-              <FileText size={14} /> Ver / Imprimir Contrato Oficial
-            </a>
-
             <BotonReenviarNotificacionAceptacion solicitudId={solicitud.ssc_id} correo={usuario?.usu_correo} />
           </div>
 
-          {/* Editor de Contrato en Markdown para el Operador */}
+          {/* Editor de Contrato en Markdown para el Operador (colapsado si ya firmó el postulante) */}
           <EditorContratoOperador
             solicitudId={solicitud.ssc_id}
             nombrePostulante={nombreSocio}
@@ -307,6 +306,7 @@ export default async function PaginaDetalleSocio({ params }: { params: Promise<{
             tituloInicial={ultVersion.titulo}
             contenidoInicial={ultVersion.contenido}
             historialVersiones={historialVersiones}
+            inicialmenteColapsado={contratoFirmadoCargado}
           />
         </div>
       )}

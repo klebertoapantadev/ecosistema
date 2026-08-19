@@ -159,7 +159,7 @@ export function BotonConfirmarContrato({
             </>
           ) : (
             <>
-              <KeyRound size={16} /> 🖋️ Contra-Firmar Digitalmente (.p12) y Activar Socio
+              <KeyRound size={16} /> Contrafirmar Contrato
             </>
           )}
         </button>
