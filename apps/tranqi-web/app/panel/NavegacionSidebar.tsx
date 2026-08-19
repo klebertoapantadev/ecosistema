@@ -79,8 +79,8 @@ function obtenerPanelesInicialesPorRol(modoActivo: ModoRol): PanelDefNav[] {
     return PANELES_BASE_DEFAULT.filter(p => p.id !== "panel_configuracion");
   }
 
-  if (rolKey === "CLIENTE") {
-    return PANELES_BASE_DEFAULT.filter(p => p.id === "panel_inicio" || p.id === "panel_cuenta");
+  if (rolKey === "CLIENTE" || rolKey === "ABOGADO") {
+    return PANELES_BASE_DEFAULT.filter(p => p.id === "panel_inicio" || p.id === "panel_cuenta" || p.id === "panel_herramientas");
   }
 
   return PANELES_BASE_DEFAULT;
@@ -123,14 +123,15 @@ export function NavegacionSidebar({
 
         let widgetsPorPanel: Record<string, string[]> = {
           panel_inicio: ["favoritos"],
-          panel_cuenta: ["ver_como", "mi_cuenta"]
+          panel_cuenta: ["ver_como", "mi_cuenta"],
+          panel_herramientas: ["firma_documentos_pdf"]
         };
 
         if (rolKey === "OPERADOR" || rolKey === "AUXILIAR" || rolKey === "TECNICO") {
           widgetsPorPanel = {
             ...widgetsPorPanel,
             panel_administrar: ["socios"],
-            panel_herramientas: ["emision_notificaciones"],
+            panel_herramientas: ["firma_documentos_pdf", "emision_notificaciones"],
             panel_seguridad: ["auditoria", "solicitud_socio"]
           };
         } else if (rolKey === "ADMINISTRADOR") {
@@ -138,8 +139,13 @@ export function NavegacionSidebar({
             ...widgetsPorPanel,
             panel_configuracion: ["configuracion_negocio", "configuracion_correo", "perfiles", "notificaciones"],
             panel_administrar: ["gestion_usuarios", "socios", "solicitud_socio", "emision_notificaciones", "auditoria"],
-            panel_herramientas: ["emision_notificaciones"],
+            panel_herramientas: ["firma_documentos_pdf", "emision_notificaciones"],
             panel_seguridad: ["auditoria"]
+          };
+        } else if (rolKey === "CLIENTE" || rolKey === "ABOGADO") {
+          widgetsPorPanel = {
+            ...widgetsPorPanel,
+            panel_herramientas: ["firma_documentos_pdf"]
           };
         }
 

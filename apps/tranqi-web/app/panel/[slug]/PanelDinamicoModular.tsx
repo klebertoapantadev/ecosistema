@@ -279,16 +279,20 @@ export function PanelDinamicoModular({ slug, negocio }: Props) {
         // 1. Presets de asignación por rol y por panel
         let listW: string[] = [];
         if (rolActivo === "OPERADOR" || rolActivo === "AUXILIAR" || rolActivo === "TECNICO") {
-          if (panelIdBuscado === "panel_herramientas" || slug === "herramientas") listW = ["emision_notificaciones"];
+          if (panelIdBuscado === "panel_herramientas" || slug === "herramientas") listW = ["firma_documentos_pdf", "emision_notificaciones"];
           else if (panelIdBuscado === "panel_seguridad" || slug === "seguridad") listW = ["mfa_seguridad", "auditoria", "solicitud_socio"];
-          else if (panelIdBuscado === "panel_administrar" || slug === "administrar") listW = ["socios"];
+          else if (panelIdBuscado === "panel_administrar" || slug === "administrar") listW = ["socios", "firma_documentos_pdf"];
           else if (panelIdBuscado === "panel_cuenta" || slug === "cuenta") listW = ["ver_como", "mi_cuenta"];
         } else if (rolActivo === "ADMINISTRADOR" || rolActivo === "SUPERADMIN") {
-          if (panelIdBuscado === "panel_herramientas" || slug === "herramientas") listW = ["emision_notificaciones"];
+          if (panelIdBuscado === "panel_herramientas" || slug === "herramientas") listW = ["firma_documentos_pdf", "emision_notificaciones"];
           else if (panelIdBuscado === "panel_seguridad" || slug === "seguridad") listW = ["mfa_seguridad", "auditoria", "solicitud_socio"];
           else if (panelIdBuscado === "panel_administrar" || slug === "administrar") listW = ["gestion_usuarios", "socios", "solicitud_socio", "emision_notificaciones", "auditoria"];
           else if (panelIdBuscado === "panel_configuracion" || slug === "configuracion") listW = ["configuracion_negocio", "configuracion_correo", "perfiles", "notificaciones"];
           else if (panelIdBuscado === "panel_cuenta" || slug === "cuenta") listW = ["ver_como", "mi_cuenta", "historial_accesos"];
+        } else {
+          // ROL CLIENTE / ABOGADO
+          if (panelIdBuscado === "panel_herramientas" || slug === "herramientas") listW = ["firma_documentos_pdf"];
+          else if (panelIdBuscado === "panel_cuenta" || slug === "cuenta") listW = ["mi_cuenta"];
         }
 
         // 2. Consultar servidor (PostgreSQL comun_seguridad.seg_rol_widget)

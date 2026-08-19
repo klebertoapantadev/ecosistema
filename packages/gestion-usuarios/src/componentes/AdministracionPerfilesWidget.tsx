@@ -173,6 +173,24 @@ const PANELES_SIDEBAR_INICIALES: PanelSidebarDef[] = [
     mostrarSinWidgets: true
   },
   {
+    id: "panel_herramientas",
+    nombre: "Herramientas",
+    ruta: "/panel/herramientas",
+    descripcion: "Herramientas digitales, firmado de documentos PDF y utilitarios del ecosistema.",
+    icono: "Wrench",
+    requiereMfa: false,
+    mostrarSinWidgets: true
+  },
+  {
+    id: "panel_seguridad",
+    nombre: "Seguridad",
+    ruta: "/panel/seguridad",
+    descripcion: "Seguridad MFA, autenticador e historial de accesos.",
+    icono: "Shield",
+    requiereMfa: false,
+    mostrarSinWidgets: true
+  },
+  {
     id: "panel_configuracion",
     nombre: "Configuración & Gobernanza",
     ruta: "/panel/configuracion",
@@ -198,11 +216,12 @@ const PERFILES_INICIALES: PerfilDef[] = [
     nombre: "Cliente (Jerarquía Base)",
     nivel: 1,
     ambito: "Empresa",
-    descripcion: "Perfil base de usuario. Acceso a paneles de Inicio, Mi Cuenta y Preferencias de Notificaciones.",
-    panelesAsignados: ["panel_inicio", "panel_cuenta", "panel_configuracion"],
+    descripcion: "Perfil base de usuario. Acceso a paneles de Inicio, Mi Cuenta, Herramientas y Preferencias de Notificaciones.",
+    panelesAsignados: ["panel_inicio", "panel_cuenta", "panel_herramientas", "panel_configuracion"],
     widgetsAsignadosPorPanel: {
       panel_inicio: ["favoritos"],
       panel_cuenta: ["ver_como", "mi_cuenta"],
+      panel_herramientas: ["firma_documentos_pdf"],
       panel_configuracion: ["notificaciones"]
     },
     activo: true
@@ -213,10 +232,11 @@ const PERFILES_INICIALES: PerfilDef[] = [
     nivel: 30,
     ambito: "Empresa",
     descripcion: "Perfil operativo para atención al cliente, evaluación de solicitudes, configuración de términos, contratos y beneficios.",
-    panelesAsignados: ["panel_inicio", "panel_cuenta", "panel_configuracion", "panel_administrar"],
+    panelesAsignados: ["panel_inicio", "panel_cuenta", "panel_herramientas", "panel_configuracion", "panel_administrar"],
     widgetsAsignadosPorPanel: {
       panel_inicio: ["favoritos"],
       panel_cuenta: ["ver_como", "mi_cuenta"],
+      panel_herramientas: ["firma_documentos_pdf", "emision_notificaciones"],
       panel_configuracion: ["notificaciones"],
       panel_administrar: ["socios", "configuracion_contrato_abogado", "gestion_terminos_consentimientos"]
     },
@@ -228,10 +248,11 @@ const PERFILES_INICIALES: PerfilDef[] = [
     nivel: 50,
     ambito: "Empresa",
     descripcion: "Perfil profesional para atención legal de causas y expedientes.",
-    panelesAsignados: ["panel_inicio", "panel_cuenta", "panel_configuracion"],
+    panelesAsignados: ["panel_inicio", "panel_cuenta", "panel_herramientas", "panel_configuracion"],
     widgetsAsignadosPorPanel: {
       panel_inicio: ["favoritos"],
       panel_cuenta: ["ver_como", "mi_cuenta"],
+      panel_herramientas: ["firma_documentos_pdf"],
       panel_configuracion: ["notificaciones"]
     },
     activo: true
@@ -242,10 +263,11 @@ const PERFILES_INICIALES: PerfilDef[] = [
     nivel: 80,
     ambito: "Empresa",
     descripcion: "Gestión del negocio: usuarios, parámetros de marca, SMTP, perfiles, contratos, términos y auditoría.",
-    panelesAsignados: ["panel_inicio", "panel_cuenta", "panel_configuracion", "panel_administrar"],
+    panelesAsignados: ["panel_inicio", "panel_cuenta", "panel_herramientas", "panel_configuracion", "panel_administrar"],
     widgetsAsignadosPorPanel: {
       panel_inicio: ["favoritos"],
       panel_cuenta: ["ver_como", "mi_cuenta"],
+      panel_herramientas: ["firma_documentos_pdf", "emision_notificaciones"],
       panel_configuracion: ["configuracion_negocio", "configuracion_correo", "perfiles", "notificaciones"],
       panel_administrar: ["gestion_usuarios", "socios", "solicitud_socio", "emision_notificaciones", "gestion_terminos_consentimientos", "configuracion_contrato_abogado", "auditoria"]
     },
@@ -257,10 +279,11 @@ const PERFILES_INICIALES: PerfilDef[] = [
     nivel: 100,
     ambito: "Plataforma",
     descripcion: "Gobernanza exclusiva de la plataforma y matriz global de perfiles.",
-    panelesAsignados: ["panel_inicio", "panel_cuenta", "panel_configuracion", "panel_administrar"],
+    panelesAsignados: ["panel_inicio", "panel_cuenta", "panel_herramientas", "panel_configuracion", "panel_administrar"],
     widgetsAsignadosPorPanel: {
       panel_inicio: ["favoritos"],
       panel_cuenta: ["ver_como", "mi_cuenta", "historial_accesos"],
+      panel_herramientas: ["firma_documentos_pdf", "emision_notificaciones"],
       panel_configuracion: ["configuracion_negocio", "configuracion_correo", "perfiles", "notificaciones"],
       panel_administrar: ["gestion_usuarios", "socios", "solicitud_socio", "emision_notificaciones", "auditoria"]
     },
@@ -798,8 +821,10 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
       if (savedPaneles) {
         const parsed = JSON.parse(savedPaneles);
         if (Array.isArray(parsed) && parsed.length > 0) {
+          const idsExistentes = new Set(parsed.map((p: any) => p.id));
+          const faltantes = PANELES_SIDEBAR_INICIALES.filter(p => !idsExistentes.has(p.id));
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const saneados = parsed.map((p: any) => {
+          const saneados = [...parsed, ...faltantes].map((p: any) => {
             let r = p.ruta || "/panel";
             if (r === "/panel/" || r === "/panel") {
               const slugClean = (p.id || "").replace(/^panel_/, "");
@@ -814,7 +839,22 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
       const savedPerfiles = localStorage.getItem(KEY_PERFILES);
       if (savedPerfiles) {
         const parsed = JSON.parse(savedPerfiles);
-        if (Array.isArray(parsed) && parsed.length > 0) setPerfiles(parsed);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          // Asegurar que perfiles base mantengan widgets iniciales si no los tenian
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const combinados = parsed.map((p: any) => {
+            const base = PERFILES_INICIALES.find(b => b.clave === p.clave);
+            if (!base) return p;
+            const panelesMerged = Array.from(new Set([...(p.panelesAsignados || []), ...base.panelesAsignados]));
+            const widgetsMerged = { ...(base.widgetsAsignadosPorPanel || {}), ...(p.widgetsAsignadosPorPanel || {}) };
+            return {
+              ...p,
+              panelesAsignados: panelesMerged,
+              widgetsAsignadosPorPanel: widgetsMerged
+            };
+          });
+          setPerfiles(combinados);
+        }
       }
 
       const savedInventario = localStorage.getItem(KEY_INVENTARIO);

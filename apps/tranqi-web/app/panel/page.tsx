@@ -3,7 +3,7 @@ import Link from "next/link";
 import { cookies } from "next/headers";
 import {
   Calendar, Upload, Coins, MessageCircle, FileText,
-  Briefcase, UserCheck, Users, Settings, ShieldCheck, Bell,
+  Briefcase, UserCheck, Users, Settings, ShieldCheck, Bell, FileCheck,
   type LucideIcon
 } from "lucide-react";
 import { obtenerPerfilActual, obtenerSaludo, obtenerPerfiles, obtenerNivelMaximo } from "@eco/identidad";
@@ -20,6 +20,7 @@ export const metadata: Metadata = { title: "Panel — tranqi" };
 const NEGOCIO = "tranqi";
 
 const ACCESOS_CLIENTE: { icono: LucideIcon; nombre: string; detalle: string; href?: string }[] = [
+  { icono: FileCheck, nombre: "Firmar Documento PDF", detalle: "Firmado digital con certificado .p12 y código QR", href: "/panel/firma-documentos" },
   { icono: Briefcase, nombre: "Registro de Abogados", detalle: "Postúlate a la red oficial de socios profesionales", href: "/panel/solicitud-socio" },
   { icono: Calendar, nombre: "Agendar cita", detalle: "Presencial o por video", href: "/panel/agendar" },
   { icono: Upload, nombre: "Subir documento", detalle: "Contratos, cédulas, actas", href: "/panel/cuenta" },
@@ -27,7 +28,8 @@ const ACCESOS_CLIENTE: { icono: LucideIcon; nombre: string; detalle: string; hre
   { icono: MessageCircle, nombre: "Preguntar a tranqi", detalle: "Respuesta en minutos", href: "/panel" },
 ];
 
-const ACCESOS_ABOGADO: { icono: LucideIcon; nombre: string; detalle: string }[] = [
+const ACCESOS_ABOGADO: { icono: LucideIcon; nombre: string; detalle: string; href?: string }[] = [
+  { icono: FileCheck, nombre: "Firmar Documento PDF", detalle: "Firmado digital con certificado .p12 y código QR", href: "/panel/firma-documentos" },
   { icono: Briefcase, nombre: "Nuevas Solicitudes", detalle: "3 casos en espera de patrocinio" },
   { icono: Calendar, nombre: "Citas de hoy", detalle: "2 videollamadas agendadas" },
   { icono: FileText, nombre: "Cargar Expediente", detalle: "Subir demandas y providencias" },
