@@ -124,6 +124,11 @@ export interface OpcionesEstampaFirma {
   rolFirmante: "ABOGADO_POSTULANTE" | "TRANQI_PLATAFORMA";
   razonFirma?: string;
   ubicacionCiudad?: string;
+  posicion?: {
+    x?: number;
+    y?: number;
+    paginaIndex?: number;
+  };
 }
 
 /**
@@ -133,19 +138,23 @@ export async function estamparFirmaDigitalEnPdf(
   opciones: OpcionesEstampaFirma
 ): Promise<{ ok: true; pdfFirmado: Uint8Array; nombreArchivo: string } | { ok: false; error: string }> {
   try {
-    const { pdfBytes, infoCertificado, rolFirmante, razonFirma } = opciones;
+    const { pdfBytes, infoCertificado, rolFirmante, razonFirma, posicion } = opciones;
     const pdfDoc = await PDFDocument.load(pdfBytes);
     const pages = pdfDoc.getPages();
     if (pages.length === 0) {
       return { ok: false, error: "El archivo PDF no contiene páginas." };
     }
 
-    const ultimaPagina = pages[pages.length - 1];
-    if (!ultimaPagina) {
-      return { ok: false, error: "No se pudo acceder a la página final del PDF." };
+    const targetPageIndex = (posicion?.paginaIndex !== undefined && posicion.paginaIndex >= 0 && posicion.paginaIndex < pages.length)
+      ? posicion.paginaIndex
+      : pages.length - 1;
+
+    const paginaDestino = pages[targetPageIndex] || pages[pages.length - 1];
+    if (!paginaDestino) {
+      return { ok: false, error: "No se pudo acceder a la página destino del PDF." };
     }
 
-    const { width } = ultimaPagina.getSize();
+    const { width, height } = paginaDestino.getSize();
 
     const fontRegular = await pdfDoc.embedFont(StandardFonts.Helvetica);
     const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
@@ -163,19 +172,23 @@ export async function estamparFirmaDigitalEnPdf(
 
     const esTranqi = rolFirmante === "TRANQI_PLATAFORMA";
     
-    // Coordenadas para la estampa
-    // Página final, dos columnas de firmas: izquierda (Tranqi) y derecha (Abogado)
+    // Dimensiones de la estampa
     const boxWidth = 230;
     const boxHeight = 85;
-    const posY = 75; // margen inferior
-    const posX = esTranqi ? 50 : width - boxWidth - 50;
+
+    // Coordenadas calculadas o personalizadas
+    const defaultPosX = esTranqi ? 50 : width - boxWidth - 50;
+    const defaultPosY = 75; // margen inferior arriba de las líneas
+
+    const posX = posicion?.x !== undefined ? Math.max(10, Math.min(width - boxWidth - 10, posicion.x)) : defaultPosX;
+    const posY = posicion?.y !== undefined ? Math.max(10, Math.min(height - boxHeight - 10, posicion.y)) : defaultPosY;
 
     // Fondo y borde del recuadro de firma digital
     const colorBorde = esTranqi ? rgb(0.31, 0, 0.73) : rgb(0.02, 0.53, 0.43);
     const colorFondo = esTranqi ? rgb(0.96, 0.94, 1.0) : rgb(0.93, 0.99, 0.96);
     const colorTexto = rgb(0.1, 0.1, 0.1);
 
-    ultimaPagina.drawRectangle({
+    paginaDestino.drawRectangle({
       x: posX,
       y: posY,
       width: boxWidth,
@@ -187,7 +200,7 @@ export async function estamparFirmaDigitalEnPdf(
 
     // Encabezado del sello
     const headerText = esTranqi ? "FIRMA DIGITAL · TRANQI LEGAL" : "FIRMA ELECTRÓNICA AVANZADA";
-    ultimaPagina.drawText(headerText, {
+    paginaDestino.drawText(headerText, {
       x: posX + 10,
       y: posY + boxHeight - 16,
       size: 7.5,
@@ -200,7 +213,7 @@ export async function estamparFirmaDigitalEnPdf(
       ? infoCertificado.nombreTitular.substring(0, 30) + "..."
       : infoCertificado.nombreTitular;
     
-    ultimaPagina.drawText(nombreTruncado, {
+    paginaDestino.drawText(nombreTruncado, {
       x: posX + 10,
       y: posY + boxHeight - 30,
       size: 8.5,
@@ -213,7 +226,7 @@ export async function estamparFirmaDigitalEnPdf(
       ? infoCertificado.entidadEmisora.substring(0, 38) + "..."
       : infoCertificado.entidadEmisora;
 
-    ultimaPagina.drawText(`Emisor: ${emisorTruncado}`, {
+    paginaDestino.drawText(`Emisor: ${emisorTruncado}`, {
       x: posX + 10,
       y: posY + boxHeight - 42,
       size: 6.5,
@@ -222,7 +235,7 @@ export async function estamparFirmaDigitalEnPdf(
     });
 
     // Fecha y Hora oficial
-    ultimaPagina.drawText(`Fecha/Hora: ${fechaHoraStr} (ECT)`, {
+    paginaDestino.drawText(`Fecha/Hora: ${fechaHoraStr} (ECT)`, {
       x: posX + 10,
       y: posY + boxHeight - 54,
       size: 6.5,
@@ -232,7 +245,7 @@ export async function estamparFirmaDigitalEnPdf(
 
     // Razón / Ubicación
     const razonTexto = razonFirma || (esTranqi ? "Aprobación y Formalización Institucional" : "Aceptación de Contrato de Sociedad");
-    ultimaPagina.drawText(`Razón: ${razonTexto}`, {
+    paginaDestino.drawText(`Razón: ${razonTexto}`, {
       x: posX + 10,
       y: posY + boxHeight - 66,
       size: 6.5,
@@ -241,7 +254,7 @@ export async function estamparFirmaDigitalEnPdf(
     });
 
     // Sello de Integridad
-    ultimaPagina.drawText(`Validez Ley Comercio Electrónico EC · Serie: ${infoCertificado.numeroSerie.substring(0, 16)}...`, {
+    paginaDestino.drawText(`Validez Ley Comercio Electrónico EC · Serie: ${infoCertificado.numeroSerie.substring(0, 16)}...`, {
       x: posX + 10,
       y: posY + 8,
       size: 5.5,
