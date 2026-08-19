@@ -217,14 +217,14 @@ export function ModalFirmaDigitalPdf({
   }
 
   useEffect(() => {
-    function handleMouseMove(e: MouseEvent) {
+    function actualizarArrastre(clientX: number, clientY: number) {
       if (!arrastrandoFirma) return;
       const rect = contenedorPdfRef.current?.getBoundingClientRect();
-      const containerW = rect?.width || 600;
+      const containerW = rect?.width || 360;
       const containerH = rect?.height || (containerW * (841.89 / 595.28));
 
-      const deltaX = e.clientX - offsetArrastre.current.startX;
-      const deltaY = e.clientY - offsetArrastre.current.startY;
+      const deltaX = clientX - offsetArrastre.current.startX;
+      const deltaY = clientY - offsetArrastre.current.startY;
 
       // Convertir delta pixels a porcentaje relativo exacto
       const deltaXPorc = (deltaX / containerW) * 100;
@@ -241,7 +241,17 @@ export function ModalFirmaDigitalPdf({
       setPosicionYPorcentaje(Number(nuevaY.toFixed(1)));
     }
 
-    function handleMouseUp() {
+    function handleMouseMove(e: MouseEvent) {
+      actualizarArrastre(e.clientX, e.clientY);
+    }
+
+    function handleTouchMove(e: TouchEvent) {
+      if (e.touches[0]) {
+        actualizarArrastre(e.touches[0].clientX, e.touches[0].clientY);
+      }
+    }
+
+    function handleFinArrastre() {
       if (arrastrandoFirma) {
         setArrastrandoFirma(false);
       }
@@ -249,11 +259,17 @@ export function ModalFirmaDigitalPdf({
 
     if (arrastrandoFirma) {
       window.addEventListener("mousemove", handleMouseMove);
-      window.addEventListener("mouseup", handleMouseUp);
+      window.addEventListener("mouseup", handleFinArrastre);
+      window.addEventListener("touchmove", handleTouchMove, { passive: true });
+      window.addEventListener("touchend", handleFinArrastre);
+      window.addEventListener("touchcancel", handleFinArrastre);
     }
     return () => {
       window.removeEventListener("mousemove", handleMouseMove);
-      window.removeEventListener("mouseup", handleMouseUp);
+      window.removeEventListener("mouseup", handleFinArrastre);
+      window.removeEventListener("touchmove", handleTouchMove);
+      window.removeEventListener("touchend", handleFinArrastre);
+      window.removeEventListener("touchcancel", handleFinArrastre);
     };
   }, [arrastrandoFirma]);
 
@@ -348,35 +364,102 @@ export function ModalFirmaDigitalPdf({
   if (!abierto) return null;
 
   return (
-    <div
-      style={{
-        position: "fixed",
-        inset: 0,
-        zIndex: 9999,
-        background: "rgba(15, 23, 42, 0.82)",
-        backdropFilter: "blur(8px)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: "16px",
-        overflowY: "auto",
-      }}
-    >
-      <div
-        style={{
-          background: "#FFFFFF",
-          borderRadius: "20px",
-          width: "100%",
-          maxWidth: "1400px",
-          height: "95vh",
-          maxHeight: "95vh",
-          display: "flex",
-          flexDirection: "column",
-          boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.45)",
-          overflow: "hidden",
-          border: "1px solid #E2E8F0",
-        }}
-      >
+    <div className="modal-firma-overlay">
+      <style>{`
+        .modal-firma-overlay {
+          position: fixed;
+          inset: 0;
+          z-index: 9999;
+          background: rgba(15, 23, 42, 0.85);
+          backdrop-filter: blur(8px);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 16px;
+          overflow-y: auto;
+        }
+        .modal-firma-contenedor {
+          background: #FFFFFF;
+          border-radius: 20px;
+          width: 100%;
+          max-width: 1400px;
+          height: 95vh;
+          max-height: 95vh;
+          display: flex;
+          flex-direction: column;
+          box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.45);
+          overflow: hidden;
+          border: 1px solid #E2E8F0;
+        }
+        .modal-firma-cuerpo {
+          display: grid;
+          grid-template-columns: 380px 1fr;
+          flex: 1;
+          min-height: 0;
+          overflow: hidden;
+        }
+        .modal-firma-sidebar {
+          padding: 20px;
+          border-right: 1px solid #E2E8F0;
+          display: flex;
+          flex-direction: column;
+          gap: 14px;
+          background: #FFFFFF;
+          overflow-y: auto;
+        }
+        .modal-firma-visor-col {
+          background: #334155;
+          display: flex;
+          flex-direction: column;
+          overflow: hidden;
+          position: relative;
+          flex: 1;
+        }
+        .modal-firma-pasos-desk {
+          display: flex;
+        }
+        .modal-firma-pasos-mob {
+          display: none;
+        }
+
+        @media (max-width: 900px) {
+          .modal-firma-overlay {
+            padding: 0;
+            align-items: stretch;
+          }
+          .modal-firma-contenedor {
+            border-radius: 0;
+            max-width: 100vw;
+            height: 100dvh;
+            max-height: 100dvh;
+          }
+          .modal-firma-cuerpo {
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+          }
+          .modal-firma-sidebar {
+            border-right: none;
+            border-top: 1px solid #E2E8F0;
+            padding: 12px 14px;
+            flex-shrink: 0;
+            order: 2;
+          }
+          .modal-firma-visor-col {
+            order: 1;
+            min-height: 48vh;
+            max-height: 52vh;
+            flex-shrink: 0;
+          }
+          .modal-firma-pasos-desk {
+            display: none !important;
+          }
+          .modal-firma-pasos-mob {
+            display: flex !important;
+          }
+        }
+      `}</style>
+      <div className="modal-firma-contenedor">
         {/* Encabezado Modal */}
         <div
           style={{
@@ -434,10 +517,10 @@ export function ModalFirmaDigitalPdf({
           </button>
         </div>
 
-        {/* Barra de Pasos de Navegación */}
+        {/* Barra de Pasos de Navegación (Desktop) */}
         <div
+          className="modal-firma-pasos-desk"
           style={{
-            display: "flex",
             background: "#F8FAFC",
             borderBottom: "1px solid #E2E8F0",
             padding: "8px 24px",
@@ -529,47 +612,71 @@ export function ModalFirmaDigitalPdf({
           </div>
         </div>
 
+        {/* Barra de Pasos de Navegación (Móvil Compacta) */}
+        <div
+          className="modal-firma-pasos-mob"
+          style={{
+            background: "#F8FAFC",
+            borderBottom: "1px solid #E2E8F0",
+            padding: "6px 14px",
+            alignItems: "center",
+            justifyContent: "space-between",
+            fontSize: "0.78rem",
+            fontWeight: 800,
+            color: esTranqi ? "#5000BA" : "#047857",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+            <span
+              style={{
+                background: esTranqi ? "#5000BA" : "#047857",
+                color: "#FFF",
+                width: "20px",
+                height: "20px",
+                borderRadius: "50%",
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: "0.72rem",
+              }}
+            >
+              {pasoActual === "1_VALIDAR_CERTIFICADO" ? "1" : pasoActual === "2_UBICAR_FIRMA" ? "2" : "3"}
+            </span>
+            <span>
+              {pasoActual === "1_VALIDAR_CERTIFICADO" && "Paso 1/3: Carga tu firma (.p12)"}
+              {pasoActual === "2_UBICAR_FIRMA" && "Paso 2/3: Ubica la firma en la página"}
+              {pasoActual === "3_REVISAR_Y_ENVIAR" && "Paso 3/3: Revisar y confirmar"}
+            </span>
+          </div>
+
+          <span style={{ fontSize: "0.72rem", color: "#64748B", fontWeight: 600 }}>
+            {pasoActual === "1_VALIDAR_CERTIFICADO" ? "33%" : pasoActual === "2_UBICAR_FIRMA" ? "66%" : "100%"}
+          </span>
+        </div>
+
         {/* Aviso de Seguridad Zero-Custody */}
         <div
           style={{
-            padding: "6px 24px",
+            padding: "6px 16px",
             background: "#F0FDF4",
             borderBottom: "1px solid #DCFCE7",
             display: "flex",
             alignItems: "center",
             gap: "8px",
-            fontSize: "0.78rem",
+            fontSize: "0.74rem",
             color: "#166534",
           }}
         >
-          <ShieldCheck size={15} color="#16A34A" />
-          <span>
-            <strong>Privacidad Zero-Custody:</strong> Tu certificado .p12 y contraseña se procesan exclusivamente en la memoria de tu dispositivo. <strong>Nunca se envían a ningún servidor.</strong>
+          <ShieldCheck size={14} color="#16A34A" style={{ flexShrink: 0 }} />
+          <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+            <strong>Privacidad Zero-Custody:</strong> Tu certificado se procesa localmente en tu dispositivo.
           </span>
         </div>
 
         {/* Cuerpo del Modal con layout dividido */}
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "360px 1fr",
-            flex: 1,
-            minHeight: 0,
-            overflow: "hidden",
-          }}
-        >
+        <div className="modal-firma-cuerpo">
           {/* Columna Izquierda: Panel de Control del Asistente */}
-          <div
-            style={{
-              padding: "20px",
-              borderRight: "1px solid #E2E8F0",
-              display: "flex",
-              flexDirection: "column",
-              gap: "16px",
-              background: "#FFFFFF",
-              overflowY: "auto",
-            }}
-          >
+          <div className="modal-firma-sidebar">
             {/* PASO 1: Formulario de carga de certificado */}
             {pasoActual === "1_VALIDAR_CERTIFICADO" && (
               <form onSubmit={handleValidarP12} style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
@@ -1119,15 +1226,7 @@ export function ModalFirmaDigitalPdf({
           </div>
 
           {/* Columna Derecha: Visor Interactivo del Documento con Controles de Paginación */}
-          <div
-            style={{
-              background: "#334155",
-              display: "flex",
-              flexDirection: "column",
-              overflow: "hidden",
-              position: "relative",
-            }}
-          >
+          <div className="modal-firma-visor-col">
             {/* Barra superior de navegación y paginación */}
             <div
               style={{
@@ -1298,6 +1397,7 @@ export function ModalFirmaDigitalPdf({
                         gap: "4px",
                         cursor: arrastrandoFirma ? "grabbing" : "grab",
                         userSelect: "none",
+                        touchAction: "none",
                         zIndex: 50,
                         overflow: "hidden",
                         transition: arrastrandoFirma ? "none" : "all 0.15s ease-out",

@@ -141,7 +141,85 @@ export default async function PaginaDetalleSocio({ params }: { params: Promise<{
         )}
       </div>
 
-      {/* Propuestas de Modificación al Contrato enviadas por el Postulante */}
+      {/* 1. Panel Principal: Estado del Socio y Formalización de Contrato */}
+      {solicitud.ssc_estado === "aceptada" && (
+        <div className="tarjeta-panel detalle-solicitud" style={{ marginBottom: "20px" }}>
+          <h2 style={{ marginTop: 0 }}>Estado del socio</h2>
+          {(() => {
+            const s = solicitud as typeof solicitud & { ssc_contrato_confirmado_en?: string | null };
+            return abogado ? (
+              <dl className="lista-detalle">
+                <dt>Verificado desde</dt>
+                <dd>{new Date(abogado.abg_verificado_en).toLocaleDateString("es-EC")}</dd>
+                <dt>MFA configurado</dt>
+                <dd>{abogado.abg_mfa_verificado ? "Sí" : "Pendiente — se exigirá para activar capacidades críticas"}</dd>
+                <dt>Contrato verificado</dt>
+                <dd>
+                  {s.ssc_contrato_confirmado_en
+                    ? `Confirmado el ${new Date(s.ssc_contrato_confirmado_en).toLocaleString("es-EC")}`
+                    : "Confirmado automáticamente"}
+                </dd>
+              </dl>
+            ) : (
+              <div>
+                <p style={{ margin: 0, fontSize: "0.88rem", color: "#4B5563" }}>
+                  <strong>Aprobado (Paso 1).</strong> En espera de que el socio firme y suba el contrato de sociedad en PDF.
+                </p>
+                {documentos.some((d) => d.dcs_tipo === "contrato_socio") ? (
+                  <BotonConfirmarContrato
+                    solicitudId={solicitud.ssc_id}
+                    urlContratoPostulante={`/api/solicitud-socio/contrato/firmado?solicitudId=${solicitud.ssc_id}`}
+                  />
+                ) : (
+                  <p style={{ marginTop: "8px", fontSize: "0.82rem", color: "#DC2626", fontWeight: 600 }}>
+                    ⏳ El postulante aún no ha cargado el contrato firmado.
+                  </p>
+                )}
+              </div>
+            );
+          })()}
+          <div style={{ marginTop: "16px", borderTop: "1px solid #E5E7EB", paddingTop: "14px", display: "flex", flexWrap: "wrap", alignItems: "center", gap: "10px" }}>
+            {contratoFirmadoCargado && (
+              <a
+                href={`/api/solicitud-socio/contrato/firmado?solicitudId=${solicitud.ssc_id}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  padding: "8px 14px",
+                  borderRadius: "8px",
+                  background: "#05876E",
+                  color: "#FFFFFF",
+                  fontSize: "0.82rem",
+                  fontWeight: 700,
+                  textDecoration: "none",
+                  boxShadow: "0 2px 6px rgba(5, 135, 110, 0.2)",
+                }}
+              >
+                <Download size={14} /> Ver Contrato Firmado Cargado
+              </a>
+            )}
+
+            <BotonReenviarNotificacionAceptacion solicitudId={solicitud.ssc_id} correo={usuario?.usu_correo} />
+          </div>
+
+          {/* Editor de Contrato en Markdown para el Operador (colapsado si ya firmó el postulante) */}
+          <EditorContratoOperador
+            solicitudId={solicitud.ssc_id}
+            nombrePostulante={nombreSocio}
+            cedulaPostulante={cedulaSocio}
+            versionInicial={ultVersion.version}
+            tituloInicial={ultVersion.titulo}
+            contenidoInicial={ultVersion.contenido}
+            historialVersiones={historialVersiones}
+            inicialmenteColapsado={contratoFirmadoCargado}
+          />
+        </div>
+      )}
+
+      {/* 2. Propuestas de Modificación al Contrato enviadas por el Postulante */}
       {(() => {
         const propuestasContrato = documentos.filter(
           (d) => d.dcs_comentario?.includes("[PROPUESTA_MODIFICACION_CONTRATO]") || d.dcs_tipo === "propuesta_contrato"
@@ -233,83 +311,6 @@ export default async function PaginaDetalleSocio({ params }: { params: Promise<{
           </div>
         );
       })()}
-
-      {solicitud.ssc_estado === "aceptada" && (
-        <div className="tarjeta-panel detalle-solicitud">
-          <h2>Estado del socio</h2>
-          {(() => {
-            const s = solicitud as typeof solicitud & { ssc_contrato_confirmado_en?: string | null };
-            return abogado ? (
-              <dl className="lista-detalle">
-                <dt>Verificado desde</dt>
-                <dd>{new Date(abogado.abg_verificado_en).toLocaleDateString("es-EC")}</dd>
-                <dt>MFA configurado</dt>
-                <dd>{abogado.abg_mfa_verificado ? "Sí" : "Pendiente — se exigirá para activar capacidades críticas"}</dd>
-                <dt>Contrato verificado</dt>
-                <dd>
-                  {s.ssc_contrato_confirmado_en
-                    ? `Confirmado el ${new Date(s.ssc_contrato_confirmado_en).toLocaleString("es-EC")}`
-                    : "Confirmado automáticamente"}
-                </dd>
-              </dl>
-            ) : (
-              <div>
-                <p style={{ margin: 0, fontSize: "0.88rem", color: "#4B5563" }}>
-                  <strong>Aprobado (Paso 1).</strong> En espera de que el socio firme y suba el contrato de sociedad en PDF.
-                </p>
-                {documentos.some((d) => d.dcs_tipo === "contrato_socio") ? (
-                  <BotonConfirmarContrato
-                    solicitudId={solicitud.ssc_id}
-                    urlContratoPostulante={`/api/solicitud-socio/contrato/firmado?solicitudId=${solicitud.ssc_id}`}
-                  />
-                ) : (
-                  <p style={{ marginTop: "8px", fontSize: "0.82rem", color: "#DC2626", fontWeight: 600 }}>
-                    ⏳ El postulante aún no ha cargado el contrato firmado.
-                  </p>
-                )}
-              </div>
-            );
-          })()}
-          <div style={{ marginTop: "16px", borderTop: "1px solid #E5E7EB", paddingTop: "14px", display: "flex", flexWrap: "wrap", alignItems: "center", gap: "10px" }}>
-            {contratoFirmadoCargado && (
-              <a
-                href={`/api/solicitud-socio/contrato/firmado?solicitudId=${solicitud.ssc_id}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "6px",
-                  padding: "8px 14px",
-                  borderRadius: "8px",
-                  background: "#05876E",
-                  color: "#FFFFFF",
-                  fontSize: "0.82rem",
-                  fontWeight: 700,
-                  textDecoration: "none",
-                  boxShadow: "0 2px 6px rgba(5, 135, 110, 0.2)",
-                }}
-              >
-                <Download size={14} /> Ver Contrato Firmado Cargado
-              </a>
-            )}
-
-            <BotonReenviarNotificacionAceptacion solicitudId={solicitud.ssc_id} correo={usuario?.usu_correo} />
-          </div>
-
-          {/* Editor de Contrato en Markdown para el Operador (colapsado si ya firmó el postulante) */}
-          <EditorContratoOperador
-            solicitudId={solicitud.ssc_id}
-            nombrePostulante={nombreSocio}
-            cedulaPostulante={cedulaSocio}
-            versionInicial={ultVersion.version}
-            tituloInicial={ultVersion.titulo}
-            contenidoInicial={ultVersion.contenido}
-            historialVersiones={historialVersiones}
-            inicialmenteColapsado={contratoFirmadoCargado}
-          />
-        </div>
-      )}
 
       {/* Historial de Revisiones, Acciones y Observaciones Previas */}
       {revisiones.length > 0 && (
