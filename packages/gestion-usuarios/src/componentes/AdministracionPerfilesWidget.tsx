@@ -478,12 +478,38 @@ const WIDGETS_INVENTARIO_INICIALES: WidgetInventarioDef[] = [
     panelId: "panel_administrar",
     activo: true,
     creadoEn: "2026-08-13"
+  },
+  {
+    clave: "firma_documentos_pdf",
+    nombre: "Firma Electrónica de Documentos PDF",
+    descripcion: "Firmado digital avanzado de archivos PDF locales con certificado .p12 y estampa QR oficial.",
+    categoria: "Herramientas Digitales",
+    ruta: "/panel/firma-documentos",
+    rutaFisica: "/firma-documentos/WidgetFirmaDocumentosPdf.tsx",
+    panelId: "panel_herramientas",
+    activo: true,
+    creadoEn: "2026-08-19"
   }
 ];
 
 // COMPONENTE PARA RENDERIZAR LA INTERFAZ REAL INTERACTIVA EN EL MODAL DE PREVISUALIZACIÓN
 function RenderizadorWidgetReal({ clave, negocio }: { clave: string; negocio: string }) {
   switch (clave) {
+    case "firma_documentos_pdf":
+      return (
+        <div style={{ background: "#ffffff", padding: "18px", borderRadius: "12px", border: "1.5px solid var(--violeta, #5000BA)", boxShadow: "0 4px 12px rgba(80,0,186,0.08)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 800, fontSize: "0.95rem", color: "var(--violeta, #5000BA)", marginBottom: "10px" }}>
+            <FileText size={18} /> Firma Electrónica de Documentos PDF (.p12 / QR)
+          </div>
+          <p style={{ fontSize: "0.82rem", color: "#64748B", marginBottom: "12px" }}>
+            Herramienta criptográfica PAdES con procesamiento Zero-Custody en memoria local para firmado de contratos, actas e informes en PDF.
+          </p>
+          <div style={{ padding: "12px", background: "#F8FAFC", borderRadius: "8px", border: "1px dashed #CBD5E1", textAlign: "center", fontSize: "0.82rem", color: "#334155", fontWeight: 700 }}>
+            📄 Subir Archivo PDF ➔ 🔑 Cargar Firma .p12 ➔ 📍 Ubicar QR ➔ 📥 Descargar PDF Firmado
+          </div>
+        </div>
+      );
+
     case "ver_como":
       return (
         <div style={{ background: "#ffffff", padding: "18px", borderRadius: "12px", border: "1.5px solid var(--violeta, #5000BA)", boxShadow: "0 4px 12px rgba(80,0,186,0.08)" }}>

@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import {
   Search, X, UserCog, UserCheck, Settings, Mail, Bell, Shield, ShieldCheck,
-  CircleUser, ChevronRight, Sliders, Briefcase, FileText, BarChart2
+  CircleUser, ChevronRight, Sliders, Briefcase, FileText, BarChart2, FileCheck
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCustomWidgets } from "./gestorTitulosWidgets";
@@ -21,6 +21,16 @@ export interface ModuloInfoDef {
 }
 
 const CATALOGO_MODULOS: ModuloInfoDef[] = [
+  {
+    clave: "firma_documentos_pdf",
+    nombre: "Firma Electrónica de Documentos PDF",
+    detalle: "Firmado digital con certificado .p12 / .pfx, estampa visual y código QR oficial",
+    ruta: "/panel/firma-documentos",
+    categoria: "Herramientas Digitales",
+    minNivel: 1,
+    icono: FileCheck,
+    colorIcono: "#5000BA"
+  },
   {
     clave: "mi_cuenta",
     nombre: "Datos Personales & Perfil",

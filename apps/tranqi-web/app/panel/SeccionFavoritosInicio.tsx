@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { User, History, KeyRound, ShieldAlert, Settings, Mail, Bell, Star, ChevronRight, ShieldCheck, Sliders, Receipt, Lock, FileText, BarChart2, type LucideIcon } from "lucide-react";
+import { User, History, KeyRound, ShieldAlert, Settings, Mail, Bell, Star, ChevronRight, ShieldCheck, Sliders, Receipt, Lock, FileText, BarChart2, FileCheck, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { useCustomWidgets } from "./gestorTitulosWidgets";
 
@@ -133,6 +133,15 @@ const CATALOGO_FAVORITOS: Record<string, WidgetFavInfo> = {
     icono: BarChart2,
     colorIcono: "#2563EB",
     href: "/panel/administrar?widget=bitacora_notificaciones",
+    origen: "Configurar"
+  },
+  firma_documentos_pdf: {
+    id: "firma_documentos_pdf",
+    titulo: "Firma Electrónica de Documentos PDF",
+    subtitulo: "Firmado digital avanzado con certificado .p12 / .pfx y código QR oficial",
+    icono: FileCheck,
+    colorIcono: "#5000BA",
+    href: "/panel/firma-documentos",
     origen: "Configurar"
   }
 };

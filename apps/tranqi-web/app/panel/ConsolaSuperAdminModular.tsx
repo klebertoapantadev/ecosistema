@@ -5,7 +5,7 @@ import Link from "next/link";
 import {
   Sparkles, Shield, LayoutGrid, Pencil, Users, UserCheck, Eye,
   Settings, Mail, ShieldCheck, Bell, CircleUser, KeyRound, Sliders, Briefcase,
-  Receipt, History, RotateCcw, type LucideIcon
+  Receipt, History, RotateCcw, FileCheck, type LucideIcon
 } from "lucide-react";
 import { resetearSistemaSuperAdminAction } from "@eco/gestion-usuarios/acciones";
 import { ModalNotificacionPush } from "@eco/notificaciones";
@@ -30,6 +30,7 @@ export interface CategoriaSuperAdminGroup {
 }
 
 export const CATALOGO_SUPERADMIN_TODOS: ModuloSuperAdminDef[] = [
+  { clave: "firma_documentos_pdf", nombre: "Firma Electrónica de Documentos PDF", detalle: "Firmado digital con certificado .p12 / .pfx, estampa visual y código QR oficial", ruta: "/panel/firma-documentos", icono: FileCheck, iconoKey: "FileCheck", color: "#5000BA", rutaFisica: "modulos/firma-documentos/componentes/WidgetFirmaDocumentosPdf.tsx" },
   { clave: "gestion_usuarios", nombre: "Gestión de Usuarios & Membresías", detalle: "Asignación de perfiles, roles y techo jerárquico", ruta: "/panel/usuarios", icono: Users, iconoKey: "Users", color: "var(--violeta, #5000BA)", rutaFisica: "packages/gestion-usuarios/src/componentes/ConsultaUsuariosPerfilesWidget.tsx" },
   { clave: "perfiles", nombre: "Administración de Perfiles & Permisos", detalle: "Catálogo de perfiles, jerarquía (1–100) y matriz de gobernanza BDD", ruta: "/panel/configuracion?widget=perfiles", icono: Sliders, iconoKey: "Sliders", color: "var(--violeta, #5000BA)", rutaFisica: "packages/gestion-usuarios/src/componentes/AdministracionPerfilesWidget.tsx" },
   { clave: "socios", nombre: "Aprobación de Socios Abogados", detalle: "Validación de matrículas y acreditación de abogados", ruta: "/panel/administrar?widget=socios", icono: UserCheck, iconoKey: "UserCheck", color: "#05876E", rutaFisica: "modulos/socios/componentes/AprobacionSociosWidget.tsx" },
