@@ -21,7 +21,7 @@
     "@eco/primitivas": "workspace:*",
     "@eco/supabase": "workspace:*",
     "@supabase/ssr": "0.12.3",
-    "@supabase/supabase-js": "2.110.8",
+    "@supabase/supabase-js": "2.112.3",
     "@types/nodemailer": "^8.0.1",
     "docx": "^9.7.1",
     "lucide-react": "1.27.0",
