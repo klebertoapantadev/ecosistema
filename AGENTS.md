@@ -79,6 +79,15 @@ gobernanza/     Estándares, arquitectura, políticas, manuales, especificacione
 
 Señalarlo explícitamente antes de proceder, citando la regla de `gobernanza/` en conflicto. No asumir que la instrucción puntual deroga el estándar — el estándar cambia por PR a `gobernanza/`, no por una instrucción de chat.
 
+## 6. Estándar de Microcopia (Copywriting) Concisa en Botones y Modo "Solo Ícono" en Móviles
+
+- **Textos Precisos y Simplificados**:
+  - Todo botón de acción en las aplicaciones web del ecosistema DEBE utilizar textos directos, concisos y breves (máximo 2 a 3 palabras).
+  - Quedan prohibidos textos extensos o redundantes (ej. usar `Contrafirmar Contrato` en vez de `Contra-Firmar Digitalmente (.p12) y Activar Socio`; usar `Firma Online` en vez de `Abrir Asistente de Firma Electrónica (.p12)`).
+- **Modo Solo Ícono en Responsive Móvil (`<640px`)**:
+  - En pantallas móviles, los botones de acción deben conmutar preferiblemente a **Solo Ícono** (`.btn-responsive-accion`), ocultando la etiqueta de texto (`.btn-texto-responsive`) para evitar desbordes horizontales o botones excesivamente altos.
+  - Es mandatorio incluir siempre los atributos accesibles `title` y `aria-label` descriptivos de la acción.
+
 ## Actualización Obligatoria de Gobernanza y Matriz de Requerimientos (`especificacion-funcional.md`)
 
 - **Control de Estado y Porcentaje de Avance (%)**:
@@ -92,4 +101,3 @@ Señalarlo explícitamente antes de proceder, citando la regla de `gobernanza/` 
 ## Estado actual
 
 Sprint 0 en curso. Identidad (registro Google OAuth + correo/contraseña, bienvenida, consentimiento de términos, historial de accesos, baja de cuenta — `PLT-001`/`012`/`018`), configuración del negocio (`PLT-008`) y gestión de usuarios/roles (el widget, `PLT-011`) viven en paquetes compartidos (`packages/identidad`, `packages/configuracion-negocio`, `packages/gestion-usuarios`) y funcionan de punta a punta en las **4 apps** (`tranqi-web`, `fastfix-web`, `tinkay-web`, `margaritas-web`), todas desplegadas en Vercel. **Pendiente manual:** agregar el `/auth/callback` de `fastfix-web`/`tinkay-web`/`margaritas-web` a los Redirect URLs de Supabase para que Google OAuth funcione en esas 3 (dashboard, sin herramienta MCP). Pendiente del Entregable 1 de Tranqi: solicitud de socios abogados. Ver [`gobernanza/productos/tranqi/`](gobernanza/productos/tranqi/) y el [README de `packages/identidad`](packages/identidad/README.md).
-
