@@ -76,14 +76,42 @@ Bóveda digital de documentos personales, familiares y profesionales donde cada 
 
 ---
 
-### TRQ-COM-002 — Compartición de Documentos a Tranqi (Revisión Legal & Vinculación a Casos)
-**Responsable:** Kleber Toapanta | **Estado:** 🟡 Especificado (25%)
+### TRQ-COM-003 — Herramienta Universal de Firma Digital de Documentos PDF (.p12 / QR / PAdES)
+**Responsable:** Kleber Toapanta | **Estado:** ✅ Implementado (100%)
 
 #### Descripción
-Capacidad para que el usuario comparta cualquier documento de su Billetera Digital hacia la plataforma Tranqi con dos propósitos clave:
-1. **Compartición a un Caso / Trámite (`Por Caso`):** El documento se vincula como pieza procesal al expediente judicial de un trámite específico, accesible de forma permanente por los abogados patrocinadores asignados a dicha causa.
-2. **Compartición Permanente a su Abogado de Cabecera (`Permanente`):** El cliente otorga acceso continuado a ciertos documentos esenciales (ej. cédulas familiares, nombramiento de empresa) para asistencia legal recurrente.
-3. **Envío a Revisión Express de Contratos:** El cliente envía una minuta o contrato para que el equipo legal de Tranqi emita un dictamen jurídico con control de cambios y recomendaciones de cláusulas de riesgo.
+Widget modular universal (`firma_documentos_pdf`) y ruta directa (`/panel/firma-documentos`) que permite a cualquier usuario o rol del ecosistema firmar electrónicamente cualquier documento PDF local mediante su certificado digital (`.p12` o `.pfx`), estampando una firma visual oficial con código QR y metadatos PAdES conformes a la Ley de Comercio Electrónico del Ecuador.
+
+#### Diagrama de Flujo Criptográfico y Experiencia de Usuario:
+
+```mermaid
+graph TD
+    A["1. Carga de Documento PDF Local<br/>(Hasta 25MB, cálculo de páginas vía pdf-lib)"] --> B["2. Carga de Certificado .p12 / .pfx<br/>y Contraseña"]
+    B --> C["3. Descifrado Zero-Custody en Memoria (node-forge)<br/>Extracción de Titular, Emisor, Vigencia, Serial y Hash SHA-256"]
+    C --> D["4. Visor Interactivo 1:1 y Posicionamiento de Firma<br/>Arrastre táctil/mouse con accesos rápidos y micro-ajustes"]
+    D --> E["5. Estampado PAdES y Generación Criptográfica (pdf-lib)<br/>Incrustación de marco, QR oficial, tipografía y metadatos"]
+    E --> F["6. Previsualización Inmediata y Descarga Directa<br/>(Botón 'Descargar PDF' o 'Firmar Otro')"]
+
+    style A fill:#F5F3FF,stroke:#5000BA,stroke-width:2px;
+    style C fill:#F0FDF4,stroke:#16A34A,stroke-width:2px;
+    style D fill:#FFFBEB,stroke:#F59E0B,stroke-width:2px;
+    style E fill:#EFF6FF,stroke:#2563EB,stroke-width:2px;
+    style F fill:#F0FDF4,stroke:#05876E,stroke-width:2px;
+```
+
+#### Reglas de Negocio y Estándares Técnicos:
+1. **Privacidad Zero-Custody Absoluta:**
+   - Ni el archivo `.p12`, ni la contraseña, ni el documento PDF son transmitidos a ningún servidor externo.
+   - El descifrado ASN.1/PKCS#12 y la composición gráfica ocurren al 100% en la memoria RAM del navegador.
+2. **Proyección Matemática de Coordenadas 1:1:**
+   - La estampa visual mantiene una relación de aspecto fija (`230pt x 72pt`) proyectada matemáticamente desde el DOM porcentual hacia el sistema de coordenadas PDF de origen inferior-izquierdo:
+     $$\text{xPdf} = \left(\frac{\text{posicionX}}{100}\right) \times \text{widthPage}$$
+     $$\text{yPdf} = \text{heightPage} - \left(\frac{\text{posicionY}}{100}\right) \times \text{heightPage} - \text{boxHeight}$$
+3. **Soporte Táctil Móvil Fluido:**
+   - Eventos táctiles nativos (`touchmove`, `touchend`, `touchcancel`) con `touch-action: none` para prevenir colisiones con el scroll de la página.
+4. **Disponibilidad Universal en Base de Datos:**
+   - Registrado en `comun_seguridad.seg_widget` (`firma_documentos_pdf`) y asignado a todos los roles (`CLIENTE`, `ABOGADO`, `OPERADOR`, `ADMINISTRADOR`, `SUPERADMIN`) en `seg_rol_widget`.
+   - Indexado en el buscador global (`BuscadorModulosGlobal`), catálogo superadmin (`ConsolaSuperAdminModular`) y matriz de perfiles (`AdministracionPerfilesWidget`).
 
 ---
 
