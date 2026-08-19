@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import {
   LayoutGrid, Wrench, Shield, Users, Bell, UserCog, ClipboardList, FileText,
-  Settings, X, ChevronRight, CircleUser, KeyRound, type LucideIcon
+  Settings, X, ChevronRight, CircleUser, KeyRound, FileCheck, type LucideIcon
 } from "lucide-react";
 import { AdministracionPerfilesWidget } from "@eco/gestion-usuarios/componentes/AdministracionPerfilesWidget";
 import { ConsultaUsuariosPerfilesWidget } from "@eco/gestion-usuarios/componentes/ConsultaUsuariosPerfilesWidget";
@@ -16,6 +16,7 @@ import { WidgetConfiguracionMfa } from "@eco/identidad/componentes/WidgetConfigu
 import { SelectorRolActivo } from "../SelectorRolActivo";
 import { TablaAuditoria } from "../auditoria/TablaAuditoria";
 import { useCustomWidgets } from "../gestorTitulosWidgets";
+import { WidgetFirmaDocumentosPdf } from "@/modulos/firma-documentos/componentes/WidgetFirmaDocumentosPdf";
 
 import { obtenerConfiguracionNavegacionRolAction } from "@eco/gestion-usuarios/acciones";
 
@@ -35,6 +36,27 @@ export interface WidgetInventarioDef {
 }
 
 const INVENTARIO_GLOBAL_WIDGETS: Record<string, { titulo: string; subtitulo: string; icono: LucideIcon; colorIcono: string; categoria: string }> = {
+  firma_documentos_pdf: {
+    titulo: "Firma Electrónica de Documentos PDF",
+    subtitulo: "Firmado digital con certificado .p12 / .pfx, estampa visual y código QR",
+    icono: FileCheck,
+    colorIcono: "#5000BA",
+    categoria: "Herramientas Digitales"
+  },
+  firma_documentos: {
+    titulo: "Firma Electrónica de Documentos PDF",
+    subtitulo: "Firmado digital con certificado .p12 / .pfx, estampa visual y código QR",
+    icono: FileCheck,
+    colorIcono: "#5000BA",
+    categoria: "Herramientas Digitales"
+  },
+  firma_pdf: {
+    titulo: "Firma Electrónica de Documentos PDF",
+    subtitulo: "Firmado digital con certificado .p12 / .pfx, estampa visual y código QR",
+    icono: FileCheck,
+    colorIcono: "#5000BA",
+    categoria: "Herramientas Digitales"
+  },
   mfa_seguridad: {
     titulo: "Seguridad MFA & Autenticador",
     subtitulo: "Configuración TOTP, autenticador móvil y reseteo estándar vía correo",
@@ -194,16 +216,20 @@ function obtenerWidgetsInicialesDinamicos(panelId: string, slugStr: string): str
   else if (matchFav && matchFav[1]) rolActivo = matchFav[1].toUpperCase();
 
   if (rolActivo === "OPERADOR" || rolActivo === "AUXILIAR" || rolActivo === "TECNICO") {
-    if (panelId === "panel_herramientas" || slugStr === "herramientas") return ["emision_notificaciones"];
+    if (panelId === "panel_herramientas" || slugStr === "herramientas") return ["firma_documentos_pdf", "emision_notificaciones"];
     if (panelId === "panel_seguridad" || slugStr === "seguridad") return ["mfa_seguridad", "auditoria", "solicitud_socio"];
-    if (panelId === "panel_administrar" || slugStr === "administrar") return ["socios"];
+    if (panelId === "panel_administrar" || slugStr === "administrar") return ["socios", "firma_documentos_pdf"];
     if (panelId === "panel_cuenta" || slugStr === "cuenta") return ["ver_como", "mi_cuenta"];
   } else if (rolActivo === "ADMINISTRADOR" || rolActivo === "SUPERADMIN") {
-    if (panelId === "panel_herramientas" || slugStr === "herramientas") return ["emision_notificaciones"];
+    if (panelId === "panel_herramientas" || slugStr === "herramientas") return ["firma_documentos_pdf", "emision_notificaciones"];
     if (panelId === "panel_seguridad" || slugStr === "seguridad") return ["mfa_seguridad", "auditoria", "solicitud_socio"];
-    if (panelId === "panel_administrar" || slugStr === "administrar") return ["gestion_usuarios", "socios", "solicitud_socio", "emision_notificaciones", "auditoria"];
+    if (panelId === "panel_administrar" || slugStr === "administrar") return ["gestion_usuarios", "socios", "firma_documentos_pdf", "solicitud_socio", "emision_notificaciones", "auditoria"];
     if (panelId === "panel_configuracion" || slugStr === "configuracion") return ["configuracion_negocio", "configuracion_correo", "perfiles", "notificaciones"];
     if (panelId === "panel_cuenta" || slugStr === "cuenta") return ["ver_como", "mi_cuenta", "historial_accesos"];
+  } else {
+    // ROL CLIENTE / ABOGADO
+    if (panelId === "panel_herramientas" || slugStr === "herramientas") return ["firma_documentos_pdf"];
+    if (panelId === "panel_cuenta" || slugStr === "cuenta") return ["mi_cuenta"];
   }
   return [];
 }
@@ -307,6 +333,11 @@ export function PanelDinamicoModular({ slug, negocio }: Props) {
 
   const renderWidgetComponente = (wClave: string) => {
     switch (wClave) {
+      case "firma_documentos_pdf":
+      case "firma_documentos":
+      case "firma_pdf":
+      case "firma":
+        return <WidgetFirmaDocumentosPdf negocio={negocio} onCerrar={() => setWidgetActivo(null)} mostrarBotonCerrar={false} />;
       case "mfa_seguridad":
       case "mfa":
       case "seguridad_mfa":
