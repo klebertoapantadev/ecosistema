@@ -110,35 +110,45 @@ Capacidad para que el usuario comparta cualquier documento de su Billetera Digit
 
 ## 3. Módulos para el Rol Abogado (Socio Profesional)
 
-### TRQ-ABG-001 — Acreditación, Contratación Dual y Onboarding de Socio Abogado
+### TRQ-ABG-001 — Acreditación, Negociación de Contratos en Markdown (.MD) y Contratación Dual
 **Responsable:** Kleber Toapanta | **Estado:** ✅ Implementado y Verificado (100%)
 
-#### Ciclo de Vida de Acreditación y Contratación:
+#### Ciclo de Vida de Acreditación, Negociación y Versionamiento de Contratos:
 
 ```mermaid
 graph TD
-    A["1. Solicitud de Postulación"] -->|Revisión SENESCYT y Foro de Abogados| B["2. Credenciales Validadas (Paso 1)"]
-    B -->|Notif 1: Descarga y Firma tu Contrato| C{"3. Opciones de Firma del Abogado"}
-    C -->|"Opción A (Recomendada)"| D["Firma Digital en Pantalla con .p12 (Zero-Custody)"]
-    C -->|"Opción B"| E["Firma Manual / Escaneo Físico (PDF)"]
-    C -->|"Opción C"| F["Propuesta de Modificación al Contrato (Word)"]
-    F -->|Revisión legal de cláusulas| B
-    D --> G["4. Contrato Firmado Cargado"]
-    E --> G
-    G -->|Notif 2: Contrato Recibido por Staff| H["5. Verificación y Contra-Firma Tranqi"]
-    H -->|Firma Digital .p12 de Tranqi| I["6. Contrato Bi-firmado y Activación de Rol ABOGADO"]
-    I -->|Notif 3: Bienvenido a Tranqi| J["7. Socio Abogado 100% ACTIVO"]
+    A["1. Solicitud de Postulación"] -->|Revisión SENESCYT y Foro de Abogados| B["2. Validación por Operador / Admin"]
+    B --> C["3. Operador Edita Contrato en Markdown (.MD)"]
+    C --> D["4. Previsualización y Descarga de Borrador PDF"]
+    D -->|Notif 1: Contrato vN Emitido / Ajustado| E{"5. Opciones del Solicitante (vN)"}
+    E -->|"Opción 1: Aceptar y Firmar"| F["Firma Digital .p12 con QR Oficial / Manual PDF"]
+    E -->|"Opción 2: Enviar Comentarios"| G["Observaciones sobre Cláusulas (Sin Aceptar)"]
+    G -->|Notif 2: Observaciones vN al Operador| C
+    F -->|Notif 3: Contrato vN Firmado por Abogado| H["6. Operador Contra-Firma Digitalmente vN"]
+    H -->|Firma Digital .p12 de Tranqi| I["7. Contrato Bi-firmado y Activación de Rol ABOGADO"]
+    I -->|Notif 4: Bienvenido a Tranqi| J["8. Socio Abogado 100% ACTIVO"]
 ```
 
-#### Reglas de Contratación, Formatos y Trazabilidad:
-1. **Opciones Duales de Firma para el Postulante:**
-   - **Opción A (Firma Electrónica en Línea `.p12`/`.pfx`):** Asistente interactivo en navegador donde el usuario carga su archivo `.p12` e ingresa su contraseña en memoria (Zero-Custody). El sistema estampa el recuadro visual de firma PAdES en el PDF y lo envía automáticamente.
-   - **Opción B (Firma Manual / Externa):** Descarga el contrato pre-llenado en PDF o Word, lo firma de forma manuscrita o con FirmaEC, y sube el PDF firmado.
-   - **Opción C (Propuesta de Modificación Word `.docx`):** Envío de observaciones a cláusulas con motivo justificado (mínimo 5 caracteres), con gestión de versiones para no bloquear la cola de socios.
-2. **Firma y Aprobación Definitiva (Exclusivamente PDF):**
-   - Para la formalización y activación final del socio se admite **únicamente el formato PDF (`.pdf`)** con la firma manuscrita o electrónica del abogado.
-3. **Versionamiento Inmutable del Intercambio (Modelo Contract Lifecycle Management - CLM):**
-   - Versionamiento inmutable en Base de Datos (`trq_documento_socio` + `trq_revision_solicitud`), registrando versiones consecutivas (`v1`, `v2`, `v3`...), autor, rol, timestamp, archivo binario y motivos.
+#### Reglas de Negociación, Edición y Versionamiento Inmutable:
+1. **Edición Dinámica en Markdown (.MD) por Operador/Admin:**
+   - El operador o administrador puede editar directamente las cláusulas del contrato en un editor Markdown (.MD) antes de emitir la versión `vN` al solicitante.
+   - Cuenta con soporte de variables dinámicas interpoladas (`{{nombre_completo}}`, `{{cedula}}`).
+   - Dispone de **Previsualización en tiempo real en PDF** y **Descarga del borrador vectorial en PDF** antes de aprobar y emitir la versión.
+2. **Opciones Exclusivas del Postulante:**
+   - **Opción 1 (Aceptar y Firmar Contrato vN):**
+     - *Firma Electrónica en Línea (.p12 / .pfx):* Asistente interactivo en navegador (Zero-Custody) con posicionamiento visual libre, estampa de QR oficial ecuatoriano y descarga de copia firmada.
+     - *Firma Manual / Escaneada (PDF):* Descarga del PDF oficial, firma física, escaneo y subida en PDF.
+   - **Opción 2 (Enviar Comentarios / Observaciones sin Aceptar):**
+     - El postulante formula observaciones específicas sobre cláusulas, guardadas inmutablemente y notificadas de inmediato al staff.
+3. **Firma y Contra-Firma sobre la Última Versión Activa:**
+   - Ambas partes firman y contra-firman siempre sobre la versión más reciente emitida (`v1`, `v2`, `v3`...).
+4. **Trazabilidad Inmutable en Base de Datos (`trq_version_contrato_socio`):**
+   - Registro inmutable de cada versión, autor, rol (`ADMINISTRADOR`, `OPERADOR`, `SOLICITANTE`), timestamp, motivo y archivo PDF bi-firmado.
+5. **Notificaciones Bidireccionales Clarificadas por Fase:**
+   - *Fase 1 (Emisión/Ajuste):* `📋 Contrato de Sociedad (Versión N) Emitido — Revisa y Firma` (Operador ➔ Solicitante).
+   - *Fase 2A (Observaciones):* `💬 Observaciones al Contrato (Versión N) de {nombre}` (Solicitante ➔ Staff).
+   - *Fase 2B (Firma del Abogado):* `📄 Contrato (Versión N) Firmado por el Abogado — Listo para Contra-Firma` (Solicitante ➔ Staff).
+   - *Fase 3 (Contra-Firma y Activación):* `🎉 ¡Bienvenido a tranqi! Contrato Bi-firmado y Activación Exitosa` (Staff ➔ Solicitante).
 
 ---
 

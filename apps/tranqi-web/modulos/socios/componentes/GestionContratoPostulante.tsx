@@ -17,9 +17,14 @@ import {
   KeyRound,
   FileCheck2,
   Lock,
+  ChevronRight,
+  AlertTriangle,
 } from "lucide-react";
 import { crearClienteNavegador } from "@eco/supabase";
-import { registrarDocumentoSocio, enviarPropuestaModificacionContratoAction } from "../acciones";
+import {
+  registrarDocumentoSocio,
+  enviarObservacionesContratoAction,
+} from "../acciones";
 import { ModalFirmaDigitalPdf } from "./ModalFirmaDigitalPdf";
 import type { InfoCertificado } from "../servicios/servicioFirmaDigital";
 
@@ -30,21 +35,20 @@ interface Props {
 
 export function GestionContratoPostulante({ solicitud }: Props) {
   const router = useRouter();
-  const [pestanaActiva, setPestanaActiva] = useState<"DIGITAL_P12" | "MANUAL_PDF" | "PROPUESTA_WORD">("DIGITAL_P12");
+  const [seccionActiva, setSeccionActiva] = useState<"FIRMAR" | "OBSERVACIONES">("FIRMAR");
   const [modalFirmaAbierto, setModalFirmaAbierto] = useState(false);
+  const [tipoFirma, setTipoFirma] = useState<"DIGITAL_P12" | "MANUAL_PDF">("DIGITAL_P12");
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [exito, setExito] = useState<string | null>(null);
 
-  // Estados para Propuesta Word
-  const [archivoWord, setArchivoWord] = useState<File | null>(null);
-  const [comentarioWord, setComentarioWord] = useState("");
+  // Estados para Observaciones
+  const [textoObservacion, setTextoObservacion] = useState("");
+  const [enviandoObs, setEnviandoObs] = useState(false);
 
   const documentos = solicitud.trq_documento_socio || [];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const contratoFirmado = documentos.find((d: any) => d.dcs_tipo === "contrato_socio");
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const propuestasWord = documentos.filter((d: any) => d.dcs_comentario?.includes("[PROPUESTA_MODIFICACION_CONTRATO]"));
 
   const urlPdfOriginal = `/api/solicitud-socio/contrato/pdf?solicitudId=${solicitud.ssc_id}`;
 
@@ -102,7 +106,7 @@ export function GestionContratoPostulante({ solicitud }: Props) {
     const esPdf = file.type === "application/pdf" || ext.endsWith(".pdf");
 
     if (!esPdf) {
-      setError("Para la aprobación y firma definitiva solo se admite formato PDF (.pdf). Si deseas proponer cambios en Word, usa la pestaña 'Propuesta de Modificación'.");
+      setError("Para la aprobación definitiva solo se admite formato PDF (.pdf).");
       return;
     }
 
@@ -146,56 +150,38 @@ export function GestionContratoPostulante({ solicitud }: Props) {
     }
   }
 
-  // Manejo de Envío de Propuesta de Modificación (Word .docx con Comentario Obligatorio)
-  async function handleEnviarPropuestaWord(e: React.FormEvent) {
+  // Manejo de Envío de Observaciones (Sin Aceptar)
+  async function handleEnviarObservaciones(e: React.FormEvent) {
     e.preventDefault();
-    if (!archivoWord) {
-      setError("Por favor selecciona un archivo en formato Word (.docx o .doc).");
-      return;
-    }
-    if (!comentarioWord.trim() || comentarioWord.trim().length < 5) {
-      setError("El campo de explicación / motivo de las modificaciones propuestas es obligatorio (mínimo 5 caracteres).");
+    if (!textoObservacion.trim() || textoObservacion.trim().length < 5) {
+      setError("Por favor escribe tus observaciones detalladas (mínimo 5 caracteres).");
       return;
     }
 
     try {
-      setExito(null);
+      setEnviandoObs(true);
       setError(null);
-      setCargando(true);
+      setExito(null);
 
-      const supabase = crearClienteNavegador();
-      const uuid = crypto.randomUUID();
-      const path = `${solicitud.ssc_id}/propuesta_contrato-${uuid}-${archivoWord.name.replace(/[^a-zA-Z0-9.-]/g, "_")}`;
+      const res = await enviarObservacionesContratoAction(solicitud.ssc_id, textoObservacion.trim());
 
-      const { error: uploadError } = await supabase.storage
-        .from("socios-documentos")
-        .upload(path, archivoWord);
+      if (!res.ok) {
+        throw new Error(res.error);
+      }
 
-      if (uploadError) throw new Error(uploadError.message);
-
-      const res = await enviarPropuestaModificacionContratoAction({
-        solicitudId: solicitud.ssc_id,
-        path,
-        nombreArchivo: archivoWord.name,
-        comentario: comentarioWord.trim(),
-      });
-
-      if (!res.ok) throw new Error(res.error);
-
-      setExito("¡Propuesta de modificación y comentarios enviados al equipo legal! Un operador revisará tus observaciones y emitirá comentarios en el historial.");
-      setArchivoWord(null);
-      setComentarioWord("");
+      setExito("💬 ¡Tus observaciones han sido enviadas al equipo de operaciones de tranqi! Un operador revisará tu solicitud y emitirá una nueva versión ajustada.");
+      setTextoObservacion("");
       router.refresh();
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Error al enviar la propuesta.";
-      setError(msg);
+      setError(err instanceof Error ? err.message : "Error al enviar observaciones");
     } finally {
-      setCargando(false);
+      setEnviandoObs(false);
     }
   }
 
   return (
     <div style={{ marginTop: "24px", animation: "fadeIn 0.2s ease" }}>
+      {/* Encabezado Principal */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", flexWrap: "wrap", gap: "10px" }}>
         <h3 style={{ fontSize: "1.15rem", fontWeight: 800, color: "#111827", display: "flex", alignItems: "center", gap: "8px", margin: 0 }}>
           <FileText size={22} color="#05876E" /> Contrato de Sociedad de Abogados
@@ -220,28 +206,7 @@ export function GestionContratoPostulante({ solicitud }: Props) {
               boxShadow: "0 2px 4px rgba(5,135,110,0.2)",
             }}
           >
-            <Download size={14} /> Descargar PDF Pre-llenado
-          </a>
-
-          <a
-            href={`/api/solicitud-socio/contrato/descargar?solicitudId=${solicitud.ssc_id}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "6px",
-              background: "#F3F4F6",
-              color: "#374151",
-              border: "1px solid #D1D5DB",
-              textDecoration: "none",
-              borderRadius: "8px",
-              padding: "6px 12px",
-              fontSize: "0.8rem",
-              fontWeight: 700,
-            }}
-          >
-            <Download size={14} /> Descargar Word (.docx)
+            <Download size={14} /> Ver / Descargar PDF Oficial
           </a>
 
           <a
@@ -303,174 +268,191 @@ export function GestionContratoPostulante({ solicitud }: Props) {
         </div>
       )}
 
-      {/* Selector de Pestañas: 1. Firma Digital (.p12) vs 2. Firma Manual (PDF) vs 3. Propuesta Word */}
-      <div style={{ display: "flex", borderBottom: "2px solid #E5E7EB", marginBottom: "20px", gap: "8px", flexWrap: "wrap" }}>
-        <button
-          type="button"
-          onClick={() => { setPestanaActiva("DIGITAL_P12"); setError(null); }}
-          style={{
-            padding: "10px 18px",
-            background: "none",
-            border: "none",
-            borderBottom: pestanaActiva === "DIGITAL_P12" ? "3px solid #05876E" : "3px solid transparent",
-            color: pestanaActiva === "DIGITAL_P12" ? "#05876E" : "#6B7280",
-            fontWeight: pestanaActiva === "DIGITAL_P12" ? 800 : 600,
-            fontSize: "0.9rem",
-            cursor: "pointer",
-            display: "flex",
-            alignItems: "center",
-            gap: "8px",
-            marginBottom: "-2px"
-          }}
-        >
-          <ShieldCheck size={18} /> 1. Firmar Digitalmente en Línea (.p12)
-        </button>
-
-        <button
-          type="button"
-          onClick={() => { setPestanaActiva("MANUAL_PDF"); setError(null); }}
-          style={{
-            padding: "10px 18px",
-            background: "none",
-            border: "none",
-            borderBottom: pestanaActiva === "MANUAL_PDF" ? "3px solid #05876E" : "3px solid transparent",
-            color: pestanaActiva === "MANUAL_PDF" ? "#05876E" : "#6B7280",
-            fontWeight: pestanaActiva === "MANUAL_PDF" ? 800 : 600,
-            fontSize: "0.9rem",
-            cursor: "pointer",
-            display: "flex",
-            alignItems: "center",
-            gap: "8px",
-            marginBottom: "-2px"
-          }}
-        >
-          <UploadCloud size={18} /> 2. Firma Manual / Escaneo Físico (PDF)
-        </button>
-
-        <button
-          type="button"
-          onClick={() => { setPestanaActiva("PROPUESTA_WORD"); setError(null); }}
-          style={{
-            padding: "10px 18px",
-            background: "none",
-            border: "none",
-            borderBottom: pestanaActiva === "PROPUESTA_WORD" ? "3px solid #5000BA" : "3px solid transparent",
-            color: pestanaActiva === "PROPUESTA_WORD" ? "#5000BA" : "#6B7280",
-            fontWeight: pestanaActiva === "PROPUESTA_WORD" ? 800 : 600,
-            fontSize: "0.9rem",
-            cursor: "pointer",
-            display: "flex",
-            alignItems: "center",
-            gap: "8px",
-            marginBottom: "-2px"
-          }}
-        >
-          <MessageSquare size={18} /> 3. Propuesta de Modificación (Word)
-        </button>
-      </div>
-
-      {/* PESTAÑA 1: Firma Digital Electrónica (.p12) en el Navegador */}
-      {pestanaActiva === "DIGITAL_P12" && (
-        <div
-          style={{
-            background: "linear-gradient(135deg, #F0FDF4 0%, #FFFFFF 100%)",
-            border: "2px solid #10B981",
-            borderRadius: "14px",
-            padding: "24px",
-            boxShadow: "0 4px 12px rgba(16, 185, 129, 0.1)",
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "12px" }}>
-            <div style={{ background: "#05876E", color: "#FFF", padding: "8px", borderRadius: "10px", display: "flex" }}>
-              <KeyRound size={22} />
-            </div>
-            <div>
-              <h4 style={{ margin: 0, fontSize: "1.05rem", fontWeight: 800, color: "#065F46" }}>
-                Firma Electrónica Directa en Pantalla (Recomendado)
-              </h4>
-              <p style={{ margin: "2px 0 0 0", fontSize: "0.82rem", color: "#047857" }}>
-                Firma tu contrato de sociedad en segundos con tu archivo <code>.p12</code> o <code>.pfx</code>.
-              </p>
-            </div>
-          </div>
-
-          <div style={{ background: "#FFFFFF", border: "1px solid #D1FAE5", borderRadius: "10px", padding: "16px", margin: "16px 0" }}>
-            <h5 style={{ margin: "0 0 8px 0", fontSize: "0.86rem", fontWeight: 800, color: "#111827" }}>
-              ¿Qué necesitas para firmar digitalmente?
-            </h5>
-            <ul style={{ margin: 0, paddingLeft: "20px", fontSize: "0.82rem", color: "#374151", lineHeight: 1.6 }}>
-              <li>Tener tu archivo de firma electrónica (<code>.p12</code> o <code>.pfx</code>) en este dispositivo.</li>
-              <li>Conocer la contraseña de tu certificado.</li>
-              <li>
-                <strong>Cero Custodia (Zero-Custody):</strong> Tu clave y firma se procesan exclusivamente en este navegador. Nunca se guardan ni viajan a nuestros servidores.
-              </li>
-            </ul>
-          </div>
-
-          <button
-            type="button"
-            onClick={() => setModalFirmaAbierto(true)}
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "8px",
-              background: "#05876E",
-              color: "#FFFFFF",
-              borderRadius: "10px",
-              padding: "12px 24px",
-              fontSize: "0.92rem",
-              fontWeight: 800,
-              border: "none",
-              cursor: "pointer",
-              boxShadow: "0 4px 12px rgba(5, 135, 110, 0.25)",
-              transition: "transform 0.15s ease",
-            }}
-          >
-            <FileCheck2 size={18} /> Iniciar Firma Electrónica (.p12)
-          </button>
+      {error && (
+        <div style={{ background: "#FEF2F2", border: "1px solid #F87171", borderRadius: "10px", padding: "12px", color: "#B91C1C", fontSize: "0.86rem", marginBottom: "16px", display: "flex", gap: "8px" }}>
+          <AlertCircle size={18} style={{ flexShrink: 0, marginTop: "1px" }} />
+          <span>{error}</span>
         </div>
       )}
 
-      {/* PESTAÑA 2: Carga de Contrato Firmado Manualmente (Solo PDF) */}
-      {pestanaActiva === "MANUAL_PDF" && (
-        <div style={{
-          border: "2px dashed " + (cargando ? "#D1D5DB" : contratoFirmado ? "#10B981" : "#05876E"),
-          borderRadius: "14px",
-          padding: "26px",
-          textAlign: "center",
-          background: cargando ? "#F9FAFB" : "#F0FDF4",
-        }}>
-          {cargando ? (
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "8px" }}>
-              <Loader className="animate-spin" size={32} color="#05876E" />
-              <span style={{ fontSize: "0.88rem", fontWeight: 700, color: "#065F46" }}>Registrando contrato firmado...</span>
+      {exito && (
+        <div style={{ background: "#F0FDF4", border: "1px solid #4ADE80", borderRadius: "10px", padding: "12px", color: "#15803D", fontSize: "0.86rem", marginBottom: "16px", display: "flex", gap: "8px" }}>
+          <CheckCircle size={18} style={{ flexShrink: 0, marginTop: "1px" }} />
+          <span>{exito}</span>
+        </div>
+      )}
+
+      {/* Selector de Acciones del Solicitante */}
+      <div style={{ display: "flex", gap: "10px", marginBottom: "16px" }}>
+        <button
+          type="button"
+          onClick={() => setSeccionActiva("FIRMAR")}
+          style={{
+            flex: 1,
+            padding: "14px 18px",
+            borderRadius: "12px",
+            border: `2px solid ${seccionActiva === "FIRMAR" ? "#05876E" : "#E5E7EB"}`,
+            background: seccionActiva === "FIRMAR" ? "#F0FDF4" : "#FFFFFF",
+            color: seccionActiva === "FIRMAR" ? "#065F46" : "#4B5563",
+            fontWeight: 800,
+            fontSize: "0.95rem",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "8px",
+            boxShadow: seccionActiva === "FIRMAR" ? "0 4px 12px rgba(5, 135, 110, 0.15)" : "none",
+          }}
+        >
+          <FileCheck2 size={20} color={seccionActiva === "FIRMAR" ? "#05876E" : "#9CA3AF"} />
+          Opción 1: Aceptar y Firmar Contrato
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setSeccionActiva("OBSERVACIONES")}
+          style={{
+            flex: 1,
+            padding: "14px 18px",
+            borderRadius: "12px",
+            border: `2px solid ${seccionActiva === "OBSERVACIONES" ? "#D97706" : "#E5E7EB"}`,
+            background: seccionActiva === "OBSERVACIONES" ? "#FFFBEB" : "#FFFFFF",
+            color: seccionActiva === "OBSERVACIONES" ? "#92400E" : "#4B5563",
+            fontWeight: 800,
+            fontSize: "0.95rem",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "8px",
+            boxShadow: seccionActiva === "OBSERVACIONES" ? "0 4px 12px rgba(217, 119, 6, 0.15)" : "none",
+          }}
+        >
+          <MessageSquare size={20} color={seccionActiva === "OBSERVACIONES" ? "#D97706" : "#9CA3AF"} />
+          Opción 2: Enviar Comentarios / Observaciones
+        </button>
+      </div>
+
+      {/* SECCIÓN 1: ACEPTAR Y FIRMAR */}
+      {seccionActiva === "FIRMAR" && (
+        <div style={{ background: "#FFFFFF", border: "1.5px solid #E5E7EB", borderRadius: "14px", padding: "20px" }}>
+          <div style={{ display: "flex", gap: "10px", marginBottom: "16px" }}>
+            <button
+              type="button"
+              onClick={() => setTipoFirma("DIGITAL_P12")}
+              style={{
+                padding: "8px 16px",
+                borderRadius: "8px",
+                border: "none",
+                background: tipoFirma === "DIGITAL_P12" ? "#05876E" : "#F3F4F6",
+                color: tipoFirma === "DIGITAL_P12" ? "#FFFFFF" : "#4B5563",
+                fontWeight: 700,
+                fontSize: "0.82rem",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+              }}
+            >
+              <KeyRound size={14} />
+              Firma Electrónica (.p12) con QR Oficial
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setTipoFirma("MANUAL_PDF")}
+              style={{
+                padding: "8px 16px",
+                borderRadius: "8px",
+                border: "none",
+                background: tipoFirma === "MANUAL_PDF" ? "#05876E" : "#F3F4F6",
+                color: tipoFirma === "MANUAL_PDF" ? "#FFFFFF" : "#4B5563",
+                fontWeight: 700,
+                fontSize: "0.82rem",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+              }}
+            >
+              <UploadCloud size={14} />
+              Cargar PDF Firmado y Escaneado
+            </button>
+          </div>
+
+          {tipoFirma === "DIGITAL_P12" ? (
+            <div style={{ background: "#F8FAFC", border: "1px solid #E2E8F0", borderRadius: "12px", padding: "18px" }}>
+              <div style={{ display: "flex", gap: "10px", alignItems: "flex-start", marginBottom: "12px" }}>
+                <ShieldCheck size={24} color="#05876E" />
+                <div>
+                  <h4 style={{ margin: "0 0 4px 0", color: "#1E293B", fontWeight: 800, fontSize: "0.95rem" }}>
+                    Firma Electrónica PAdES con Estampa de QR Oficial
+                  </h4>
+                  <p style={{ margin: 0, color: "#64748B", fontSize: "0.82rem", lineHeight: 1.45 }}>
+                    Firma directamente desde tu navegador utilizando tu archivo de firma electrónica (.p12 / .pfx) emitido por Security Data, Banco Central del Ecuador, Consejo de la Judicatura o ANFAC.
+                  </p>
+                </div>
+              </div>
+
+              <div style={{ marginTop: "16px", display: "flex", justifyContent: "flex-end" }}>
+                <button
+                  type="button"
+                  onClick={() => setModalFirmaAbierto(true)}
+                  style={{
+                    padding: "12px 24px",
+                    background: "linear-gradient(135deg, #05876E 0%, #047857 100%)",
+                    color: "#FFFFFF",
+                    border: "none",
+                    borderRadius: "10px",
+                    fontWeight: 800,
+                    fontSize: "0.92rem",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    boxShadow: "0 4px 12px rgba(5, 135, 110, 0.25)",
+                  }}
+                >
+                  <KeyRound size={18} />
+                  Abrir Asistente de Firma Electrónica (.p12)
+                </button>
+              </div>
             </div>
           ) : (
-            <div>
-              <UploadCloud size={38} color="#05876E" style={{ margin: "0 auto 8px" }} />
-              <h4 style={{ margin: "0 0 4px 0", fontSize: "0.95rem", fontWeight: 800, color: "#065F46" }}>
-                {contratoFirmado ? "Reemplazar Contrato Firmado (PDF)" : "Cargar Contrato Firmado Físico / Externo (PDF)"}
+            <div style={{ background: "#F8FAFC", border: "1px solid #E2E8F0", borderRadius: "12px", padding: "18px" }}>
+              <h4 style={{ margin: "0 0 6px 0", color: "#1E293B", fontWeight: 800, fontSize: "0.95rem" }}>
+                Subir PDF Firmado Manuscrito / Escaneado
               </h4>
-              <p style={{ margin: "0 0 16px 0", fontSize: "0.82rem", color: "#047857", maxWidth: "550px", marginInline: "auto", lineHeight: 1.45 }}>
-                Descarga el PDF o Word, fírmalo manuscrita o con tu software externo (ej. FirmaEC), escanéalo y sube el archivo resultante en formato <strong>PDF</strong>.
+              <p style={{ margin: "0 0 12px 0", color: "#64748B", fontSize: "0.82rem" }}>
+                Descarga el contrato oficial en PDF, imprímelo, fírmalo manualmente, escanéalo y súbelo aquí en formato PDF.
               </p>
-              <label style={{
-                display: "inline-block",
-                background: "#05876E",
-                color: "#FFFFFF",
-                borderRadius: "8px",
-                padding: "8px 18px",
-                fontSize: "0.85rem",
-                fontWeight: 700,
-                cursor: "pointer",
-                boxShadow: "0 2px 6px rgba(5,135,110,0.25)",
-              }}>
-                Seleccionar Archivo PDF Firmado
+
+              <label
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  padding: "24px",
+                  border: "2px dashed #CBD5E1",
+                  borderRadius: "10px",
+                  background: "#FFFFFF",
+                  cursor: "pointer",
+                }}
+              >
+                <UploadCloud size={32} color="#05876E" />
+                <span style={{ marginTop: "8px", fontSize: "0.88rem", fontWeight: 700, color: "#1E293B" }}>
+                  Haz clic para seleccionar el archivo PDF firmado
+                </span>
+                <span style={{ fontSize: "0.75rem", color: "#94A3B8", marginTop: "2px" }}>
+                  Máximo 15 MB · Solo archivos .pdf
+                </span>
                 <input
                   type="file"
-                  accept="application/pdf,.pdf"
+                  accept="application/pdf"
                   onChange={handleFileChangePDF}
                   style={{ display: "none" }}
+                  disabled={cargando}
                 />
               </label>
             </div>
@@ -478,178 +460,72 @@ export function GestionContratoPostulante({ solicitud }: Props) {
         </div>
       )}
 
-      {/* PESTAÑA 3: Envío de Propuesta de Modificación en Word con Comentario Obligatorio */}
-      {pestanaActiva === "PROPUESTA_WORD" && (
-        <form onSubmit={handleEnviarPropuestaWord} style={{
-          background: "#FAF5FF",
-          border: "1.5px solid #D8B4FE",
-          borderRadius: "14px",
-          padding: "24px",
-        }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px", color: "#5000BA" }}>
-            <HelpCircle size={20} />
-            <h4 style={{ margin: 0, fontSize: "0.95rem", fontWeight: 800 }}>
-              Enviar Observaciones o Propuesta de Cambios a las Cláusulas
-            </h4>
-          </div>
-          <p style={{ fontSize: "0.82rem", color: "#6B21A8", marginTop: 0, marginBottom: "16px", lineHeight: 1.45 }}>
-            Si deseas proponer modificaciones al contrato de servicios, adjunta el documento en Word (<code>.docx</code> o <code>.doc</code>) con control de cambios o comentarios e ingresa obligatoriamente el motivo para revisión del equipo legal.
-          </p>
-
-          <div style={{ marginBottom: "16px" }}>
-            <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 700, color: "#374151", marginBottom: "6px" }}>
-              1. Documento Word con Propuesta de Cambios (.docx / .doc) <span style={{ color: "#DC2626" }}>*</span>
-            </label>
-            <input
-              type="file"
-              accept=".docx,.doc,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/msword"
-              onChange={(e) => {
-                const f = e.target.files?.[0];
-                if (f) {
-                  const ext = f.name.toLowerCase();
-                  if (!ext.endsWith(".docx") && !ext.endsWith(".doc")) {
-                    setError("En esta sección solo se admiten archivos en formato Word (.docx, .doc).");
-                    setArchivoWord(null);
-                  } else {
-                    setError(null);
-                    setArchivoWord(f);
-                  }
-                }
-              }}
-              style={{
-                width: "100%",
-                padding: "8px",
-                background: "#FFF",
-                border: "1px solid #D1D5DB",
-                borderRadius: "6px",
-                fontSize: "0.82rem",
-              }}
-            />
-            {archivoWord && (
-              <span style={{ fontSize: "0.78rem", color: "#5000BA", fontWeight: 700, marginTop: "4px", display: "inline-block" }}>
-                ✓ Archivo seleccionado: {archivoWord.name} ({(archivoWord.size / 1024).toFixed(1)} KB)
-              </span>
-            )}
+      {/* SECCIÓN 2: ENVIAR OBSERVACIONES */}
+      {seccionActiva === "OBSERVACIONES" && (
+        <form onSubmit={handleEnviarObservaciones} style={{ background: "#FFFFFF", border: "1.5px solid #FCD34D", borderRadius: "14px", padding: "20px" }}>
+          <div style={{ display: "flex", gap: "10px", alignItems: "flex-start", marginBottom: "14px" }}>
+            <MessageSquare size={24} color="#D97706" />
+            <div>
+              <h4 style={{ margin: "0 0 4px 0", color: "#92400E", fontWeight: 800, fontSize: "0.98rem" }}>
+                Observaciones y Comentarios al Contrato
+              </h4>
+              <p style={{ margin: 0, color: "#78350F", fontSize: "0.82rem" }}>
+                Si requieres ajustar alguna cláusula, porcentaje u obligación antes de firmar, describe tus motivos aquí. Se notificará de inmediato al operador de tranqi para que ajuste el contrato.
+              </p>
+            </div>
           </div>
 
-          <div style={{ marginBottom: "18px" }}>
-            <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 700, color: "#374151", marginBottom: "6px" }}>
-              2. Explicación / Motivo de las modificaciones propuestas <span style={{ color: "#DC2626" }}>* (Obligatorio)</span>
-            </label>
-            <textarea
-              required
-              rows={4}
-              value={comentarioWord}
-              onChange={(e) => setComentarioWord(e.target.value)}
-              placeholder="Explica detalladamente qué cláusulas deseas ajustar, observaciones o motivos..."
-              style={{
-                width: "100%",
-                padding: "10px 12px",
-                borderRadius: "8px",
-                border: "1.5px solid #D1D5DB",
-                fontSize: "0.85rem",
-                fontFamily: "inherit",
-                lineHeight: 1.45,
-                outline: "none",
-                boxSizing: "border-box"
-              }}
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={cargando || !archivoWord || !comentarioWord.trim()}
+          <textarea
+            value={textoObservacion}
+            onChange={(e) => setTextoObservacion(e.target.value)}
+            rows={5}
+            placeholder="Ejemplo: Solicito revisar la cláusula quinta referente al porcentaje de retención en casos corporativos..."
             style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "8px",
-              background: "#5000BA",
-              color: "#FFF",
-              border: "none",
+              width: "100%",
+              padding: "12px",
               borderRadius: "8px",
-              padding: "10px 20px",
+              border: "1px solid #CBD5E1",
               fontSize: "0.88rem",
-              fontWeight: 800,
-              cursor: (cargando || !archivoWord || !comentarioWord.trim()) ? "not-allowed" : "pointer",
-              opacity: (cargando || !archivoWord || !comentarioWord.trim()) ? 0.6 : 1,
-              boxShadow: "0 2px 6px rgba(80,0,186,0.2)",
+              outline: "none",
+              boxSizing: "border-box",
+              marginBottom: "14px",
             }}
-          >
-            {cargando ? <Loader className="animate-spin" size={16} /> : <Send size={16} />}
-            Enviar Propuesta de Contrato a Revisión Legal
-          </button>
+          />
+
+          <div style={{ display: "flex", justifyContent: "flex-end" }}>
+            <button
+              type="submit"
+              disabled={enviandoObs}
+              style={{
+                padding: "12px 22px",
+                background: "#D97706",
+                color: "#FFFFFF",
+                border: "none",
+                borderRadius: "10px",
+                fontWeight: 800,
+                fontSize: "0.88rem",
+                cursor: enviandoObs ? "not-allowed" : "pointer",
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+                boxShadow: "0 4px 12px rgba(217, 119, 6, 0.2)",
+              }}
+            >
+              {enviandoObs ? (
+                <>
+                  <Loader size={16} className="animate-spin" /> Enviando observaciones...
+                </>
+              ) : (
+                <>
+                  <Send size={16} /> Enviar Observaciones al Operador
+                </>
+              )}
+            </button>
+          </div>
         </form>
       )}
 
-      {/* Historial de Propuestas Previas */}
-      {propuestasWord.length > 0 && (
-        <div style={{ marginTop: "20px", padding: "16px", background: "#F9FAFB", borderRadius: "10px", border: "1px solid #E5E7EB" }}>
-          <h5 style={{ margin: "0 0 10px 0", fontSize: "0.85rem", fontWeight: 800, color: "#374151" }}>
-            Historial de Versiones y Propuestas de Contrato Enviadas:
-          </h5>
-          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-            {propuestasWord.map((p: any, idx: number) => (
-              <div key={p.dcs_id || idx} style={{ padding: "10px 12px", background: "#FFF", borderRadius: "6px", border: "1px solid #E5E7EB", fontSize: "0.8rem" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
-                  <span style={{ fontWeight: 700, color: "#5000BA" }}>
-                    📝 Versión {idx + 1}: {p.dcs_nombre_archivo}
-                  </span>
-                  <span style={{ fontSize: "0.74rem", color: "#9CA3AF" }}>
-                    {new Date(p.dcs_creado_en).toLocaleString("es-EC")}
-                  </span>
-                </div>
-                <p style={{ margin: "4px 0", color: "#4B5563" }}>
-                  {p.dcs_comentario?.replace("[PROPUESTA_MODIFICACION_CONTRATO]", "").trim()}
-                </p>
-                {p.url && (
-                  <a href={p.url} target="_blank" rel="noopener noreferrer" style={{ color: "#05876E", fontWeight: 700, textDecoration: "none", fontSize: "0.78rem" }}>
-                    Descargar Archivo Adjunto →
-                  </a>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {error && (
-        <div style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "8px",
-          background: "#FEF2F2",
-          border: "1px solid #EF4444",
-          borderRadius: "8px",
-          padding: "10px 14px",
-          color: "#991B1B",
-          fontSize: "0.82rem",
-          marginTop: "14px",
-        }}>
-          <AlertCircle size={16} />
-          {error}
-        </div>
-      )}
-
-      {exito && (
-        <div style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "8px",
-          background: "#ECFDF5",
-          border: "1px solid #10B981",
-          borderRadius: "8px",
-          padding: "10px 14px",
-          color: "#065F46",
-          fontSize: "0.82rem",
-          marginTop: "14px",
-        }}>
-          <CheckCircle size={16} />
-          {exito}
-        </div>
-      )}
-
-      {/* Modal de Firma Electrónica (.p12) Zero-Custody */}
+      {/* Modal de Firma Digital Zero-Custody */}
       <ModalFirmaDigitalPdf
         abierto={modalFirmaAbierto}
         onCerrar={() => setModalFirmaAbierto(false)}

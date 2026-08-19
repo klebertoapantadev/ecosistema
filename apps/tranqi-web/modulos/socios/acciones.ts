@@ -1830,3 +1830,256 @@ export async function reiniciarSolicitudSocioPropiaAction(solicitudId?: string):
   return eliminarSolicitudSocioPropiaAction(solicitudId);
 }
 
+/**
+ * Permite al Operador / Administrador emitir o ajustar una versión personalizada del contrato en Markdown
+ * antes de enviarla a firma al solicitante, con notificación clara del número de versión.
+ */
+export async function guardarYEnviarVersionContratoAction(
+  solicitudId: string,
+  titulo: string,
+  contenidoMd: string,
+  comentarioOperador?: string
+): Promise<Resultado<{ numeroVersion: number }>> {
+  try {
+    const perfil = await obtenerPerfilActual();
+    if (!perfil) return { ok: false, error: "Usuario no autenticado" };
+
+    const perfiles = await obtenerPerfiles("TRANQ");
+    const esStaff =
+      perfil.usu_superadmin_plataforma ||
+      perfiles.includes("ADMINISTRADOR") ||
+      perfiles.includes("SUPERADMIN") ||
+      perfiles.includes("OPERADOR");
+
+    if (!esStaff) {
+      return { ok: false, error: "No tienes permisos de operador o administrador para emitir contratos." };
+    }
+
+    const supabase = await crearClienteServidor();
+    const adminSupabase = crearClienteAdmin() || supabase;
+
+    // 1. Obtener la solicitud
+    const { data: sol, error: solErr } = await adminSupabase
+      .schema("tranqui_legal")
+      .from("trq_solicitud_socio")
+      .select("ssc_id, ssc_usuario_id, ssc_estado")
+      .eq("ssc_id", solicitudId)
+      .maybeSingle();
+
+    if (solErr || !sol) {
+      return { ok: false, error: "Solicitud no encontrada" };
+    }
+
+    // 2. Obtener el número de versión anterior
+    const { data: ultVersion } = await (adminSupabase.schema("tranqui_legal") as any)
+      .from("trq_version_contrato_socio")
+      .select("vcs_numero_version")
+      .eq("vcs_solicitud_id", solicitudId)
+      .order("vcs_numero_version", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    const nuevaVersion = ultVersion ? ultVersion.vcs_numero_version + 1 : 1;
+    const tipoEvento = nuevaVersion === 1 ? "EMISION_CONTRATO" : "MODIFICACION_OPERADOR";
+    const rolCreador = perfiles.includes("ADMINISTRADOR") || perfil.usu_superadmin_plataforma ? "ADMINISTRADOR" : "OPERADOR";
+
+    // 3. Insertar nueva versión inmutable
+    const { error: insErr } = await (adminSupabase.schema("tranqui_legal") as any)
+      .from("trq_version_contrato_socio")
+      .insert({
+        vcs_solicitud_id: solicitudId,
+        vcs_numero_version: nuevaVersion,
+        vcs_titulo: titulo.trim() || "CONTRATO DE PRESTACIÓN DE SERVICIOS Y ASOCIACIÓN LEGAL",
+        vcs_contenido_md: contenidoMd,
+        vcs_comentarios: comentarioOperador?.trim() || null,
+        vcs_creado_por: perfil.usu_id,
+        vcs_rol_creador: rolCreador,
+        vcs_tipo_evento: tipoEvento,
+      });
+
+    if (insErr) {
+      return { ok: false, error: `Error al registrar versión de contrato: ${insErr.message}` };
+    }
+
+    // 4. Si la solicitud no estaba aceptada (Paso 1), actualizar a 'aceptada' para permitir firma
+    if (sol.ssc_estado !== "aceptada") {
+      await adminSupabase
+        .schema("tranqui_legal")
+        .from("trq_solicitud_socio")
+        .update({ ssc_estado: "aceptada" })
+        .eq("ssc_id", solicitudId);
+    }
+
+    // 5. Notificar al solicitante
+    const { data: usuarioDest } = await adminSupabase
+      .schema("comun_seguridad")
+      .from("seg_usuario")
+      .select("usu_id, usu_correo, usu_nombres")
+      .eq("usu_id", sol.ssc_usuario_id)
+      .maybeSingle();
+
+    if (usuarioDest?.usu_correo) {
+      const ahoraIso = new Date().toISOString();
+      const tituloNotif = `📋 Contrato de Sociedad (Versión ${nuevaVersion}) Emitido — Revisa y Firma`;
+      const mensajeNotif = comentarioOperador?.trim()
+        ? `El equipo de tranqi ha emitido la versión ${nuevaVersion} de tu contrato con las siguientes observaciones: "${comentarioOperador.trim()}". Ingresa para revisar y firmar.`
+        : `El equipo de tranqi ha preparado la versión ${nuevaVersion} de tu contrato de sociedad. Ingresa a tu panel para revisarlo y firmarlo digitalmente.`;
+
+      // In-App
+      await (adminSupabase.schema("comun_notificaciones") as any).from("not_notificacion").insert([
+        {
+          not_usuario_id: usuarioDest.usu_id,
+          not_negocio: "TRANQ",
+          not_canal: "IN_APP",
+          not_titulo: tituloNotif,
+          not_contenido_html: mensajeNotif,
+          not_url_accion: "/panel/solicitud-socio",
+          not_creado_en: ahoraIso,
+        },
+      ]);
+
+      // Bitácora
+      agregarCampanaServidor({
+        id: `camp-contrato-v${nuevaVersion}-${solicitudId}-${Date.now()}`,
+        asunto: tituloNotif,
+        contenidoHTML: mensajeNotif,
+        tipoEmision: "AUTOMATICA",
+        emisorNombre: "tranqi Legal Staff",
+        emisorCorreo: "soporte@tranqi24.com",
+        procesoOrigen: `PLT-020 Emisión de Contrato v${nuevaVersion}`,
+        audiencia: `POSTULANTE (${usuarioDest.usu_correo})`,
+        canales: ["IN_APP", "EMAIL", "PUSH"],
+        destinatariosDetalle: [usuarioDest.usu_correo],
+        enviados: 1,
+        leidos: 0,
+        ignorados: 0,
+        fecha: ahoraIso,
+      });
+    }
+
+    revalidatePath("/panel/socios");
+    revalidatePath(`/panel/socios/${solicitudId}`);
+    revalidatePath("/panel/solicitud-socio");
+    return { ok: true, data: { numeroVersion: nuevaVersion } };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : "Error al emitir versión del contrato";
+    return { ok: false, error: msg };
+  }
+}
+
+/**
+ * Permite al solicitante enviar comentarios u observaciones sobre la versión de contrato recibida (sin firmar ni aceptar).
+ */
+export async function enviarObservacionesContratoAction(
+  solicitudId: string,
+  comentarios: string
+): Promise<Resultado> {
+  try {
+    if (!comentarios || comentarios.trim().length < 5) {
+      return { ok: false, error: "Por favor describe tus comentarios u observaciones (mínimo 5 caracteres)." };
+    }
+
+    const perfil = await obtenerPerfilActual();
+    if (!perfil) return { ok: false, error: "Usuario no autenticado" };
+
+    const supabase = await crearClienteServidor();
+    const adminSupabase = crearClienteAdmin() || supabase;
+
+    // 1. Obtener la solicitud
+    const { data: sol, error: solErr } = await adminSupabase
+      .schema("tranqui_legal")
+      .from("trq_solicitud_socio")
+      .select("ssc_id, ssc_usuario_id")
+      .eq("ssc_id", solicitudId)
+      .maybeSingle();
+
+    if (solErr || !sol) {
+      return { ok: false, error: "Solicitud no encontrada" };
+    }
+
+    if (sol.ssc_usuario_id !== perfil.usu_id) {
+      return { ok: false, error: "Solo el titular de la postulación puede enviar observaciones a su contrato." };
+    }
+
+    // 2. Obtener la última versión activa
+    const { data: ultVersion } = await (adminSupabase.schema("tranqui_legal") as any)
+      .from("trq_version_contrato_socio")
+      .select("*")
+      .eq("vcs_solicitud_id", solicitudId)
+      .order("vcs_numero_version", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    const versionNum = ultVersion ? ultVersion.vcs_numero_version : 1;
+    const titulo = ultVersion ? ultVersion.vcs_titulo : "CONTRATO DE SOCIEDAD";
+    const contenido = ultVersion ? ultVersion.vcs_contenido_md : "";
+
+    // 3. Registrar la observación inmutable en la tabla de versiones
+    const { error: insErr } = await (adminSupabase.schema("tranqui_legal") as any)
+      .from("trq_version_contrato_socio")
+      .insert({
+        vcs_solicitud_id: solicitudId,
+        vcs_numero_version: versionNum,
+        vcs_titulo: titulo,
+        vcs_contenido_md: contenido,
+        vcs_comentarios: `[OBSERVACIÓN SOLICITANTE v${versionNum}]: ${comentarios.trim()}`,
+        vcs_creado_por: perfil.usu_id,
+        vcs_rol_creador: "SOLICITANTE",
+        vcs_tipo_evento: "OBSERVACION_SOLICITANTE",
+      });
+
+    if (insErr) {
+      return { ok: false, error: `Error al registrar observación: ${insErr.message}` };
+    }
+
+    // 4. Notificar a todo el Staff de Tranqi
+    const destinatariosStaff = await obtenerDestinatariosStaffTranqi(adminSupabase, perfil.usu_id);
+    const ahoraIso = new Date().toISOString();
+    const nombreSocio = [perfil.usu_nombres, perfil.usu_apellidos].filter(Boolean).join(" ") || perfil.usu_correo;
+    const tituloStaff = `💬 Observaciones al Contrato (v${versionNum}) — Postulante: ${nombreSocio}`;
+    const mensajeStaff = `${nombreSocio} ha enviado observaciones sobre el contrato v${versionNum}: "${comentarios.trim()}". Ingresa al detalle de la solicitud para revisar o ajustar las cláusulas.`;
+
+    for (const staff of destinatariosStaff) {
+      await (adminSupabase.schema("comun_notificaciones") as any).from("not_notificacion").insert([
+        {
+          not_usuario_id: staff.id,
+          not_negocio: "TRANQ",
+          not_canal: "IN_APP",
+          not_titulo: tituloStaff,
+          not_contenido_html: mensajeStaff,
+          not_url_accion: `/panel/socios/${solicitudId}`,
+          not_creado_en: ahoraIso,
+        },
+      ]);
+    }
+
+    if (destinatariosStaff.length > 0) {
+      agregarCampanaServidor({
+        id: `camp-obs-v${versionNum}-${solicitudId}-${Date.now()}`,
+        asunto: tituloStaff,
+        contenidoHTML: mensajeStaff,
+        tipoEmision: "AUTOMATICA",
+        emisorNombre: nombreSocio,
+        emisorCorreo: perfil.usu_correo,
+        procesoOrigen: `PLT-020 Observaciones de Contrato v${versionNum}`,
+        audiencia: "STAFF TRANQI (Operadores y Administradores)",
+        canales: ["IN_APP", "EMAIL", "PUSH"],
+        destinatariosDetalle: destinatariosStaff.map((s) => s.correo),
+        enviados: destinatariosStaff.length,
+        leidos: 0,
+        ignorados: 0,
+        fecha: ahoraIso,
+      });
+    }
+
+    revalidatePath("/panel/socios");
+    revalidatePath(`/panel/socios/${solicitudId}`);
+    revalidatePath("/panel/solicitud-socio");
+    return { ok: true, data: undefined };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : "Error al enviar observaciones";
+    return { ok: false, error: msg };
+  }
+}
+
+

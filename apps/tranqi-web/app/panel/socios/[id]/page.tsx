@@ -2,11 +2,17 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CheckCircle2, XCircle, ExternalLink, Download, FileText } from "lucide-react";
-import { obtenerSolicitudDetalle, obtenerAbogadoPorSolicitud } from "../../../../modulos/socios/consultas";
+import {
+  obtenerSolicitudDetalle,
+  obtenerAbogadoPorSolicitud,
+  obtenerVersionesContratoSocio,
+  obtenerUltimaVersionContratoSocio,
+} from "../../../../modulos/socios/consultas";
 import { AccionesSolicitud } from "../../../../modulos/socios/componentes/AccionesSolicitud";
 import { BotonConfirmarContrato } from "../../../../modulos/socios/componentes/BotonConfirmarContrato";
 import { BotonReenviarNotificacionAceptacion } from "../../../../modulos/socios/componentes/BotonReenviarNotificacionAceptacion";
 import { SubirDocumentoRevision } from "../../../../modulos/socios/componentes/SubirDocumentoRevision";
+import { EditorContratoOperador } from "../../../../modulos/socios/componentes/EditorContratoOperador";
 import { ENLACES_VERIFICACION } from "../../../../modulos/socios/esquema";
 
 export const metadata: Metadata = { title: "Detalle de socio — tranqi" };
@@ -44,6 +50,15 @@ export default async function PaginaDetalleSocio({ params }: { params: Promise<{
   const pendiente = solicitud.ssc_estado !== "aceptada";
   const abogado = solicitud.ssc_estado === "aceptada" ? await obtenerAbogadoPorSolicitud(id) : null;
   const esReingreso = solicitud.ssc_estado === "enviada" && revisiones.length > 0;
+
+  // Consultar versiones de contrato
+  const [historialVersiones, ultVersion] = await Promise.all([
+    obtenerVersionesContratoSocio(id),
+    obtenerUltimaVersionContratoSocio(id),
+  ]);
+
+  const nombreSocio = [usuario?.usu_nombres, usuario?.usu_apellidos].filter(Boolean).join(" ") || usuario?.usu_correo || "Postulante";
+  const cedulaSocio = solicitud.ssc_cedula || "—";
 
   // Buscar foto de perfil en los documentos cargados o en el perfil de usuario registrado
   const docFoto = documentos.find((d) => d.dcs_tipo === "foto_perfil" || d.dcs_tipo === "foto" || d.dcs_tipo === "perfil");
@@ -279,9 +294,20 @@ export default async function PaginaDetalleSocio({ params }: { params: Promise<{
             >
               <FileText size={14} /> Ver / Imprimir Contrato Oficial
             </a>
+
+            <BotonReenviarNotificacionAceptacion solicitudId={solicitud.ssc_id} correo={usuario?.usu_correo} />
           </div>
 
-          <BotonReenviarNotificacionAceptacion solicitudId={solicitud.ssc_id} correo={usuario?.usu_correo} />
+          {/* Editor de Contrato en Markdown para el Operador */}
+          <EditorContratoOperador
+            solicitudId={solicitud.ssc_id}
+            nombrePostulante={nombreSocio}
+            cedulaPostulante={cedulaSocio}
+            versionInicial={ultVersion.version}
+            tituloInicial={ultVersion.titulo}
+            contenidoInicial={ultVersion.contenido}
+            historialVersiones={historialVersiones}
+          />
         </div>
       )}
 

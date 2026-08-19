@@ -409,3 +409,94 @@ export async function obtenerAbogadoPorSolicitud(usuarioId: string) {
     .maybeSingle();
   return data;
 }
+
+export interface VersionContratoSocio {
+  vcs_id: string;
+  vcs_secuencial: number;
+  vcs_solicitud_id: string;
+  vcs_numero_version: number;
+  vcs_titulo: string;
+  vcs_contenido_md: string;
+  vcs_comentarios: string | null;
+  vcs_creado_por: string | null;
+  vcs_rol_creador: "ADMINISTRADOR" | "OPERADOR" | "SOLICITANTE" | "SISTEMA";
+  vcs_tipo_evento: "EMISION_CONTRATO" | "MODIFICACION_OPERADOR" | "OBSERVACION_SOLICITANTE" | "FIRMA_SOLICITANTE" | "CONTRAFIRMA_TRANQI";
+  vcs_path_pdf_firmado: string | null;
+  vcs_creado_en: string;
+  creador_nombre?: string;
+}
+
+export async function obtenerVersionesContratoSocio(solicitudId: string): Promise<VersionContratoSocio[]> {
+  const supabase = await crearClienteServidor();
+  const adminSupabase = (crearClienteAdmin() || supabase) as any;
+
+  const { data, error } = await adminSupabase
+    .schema("tranqui_legal")
+    .from("trq_version_contrato_socio")
+    .select(`
+      *,
+      creador:vcs_creado_por(usu_nombres, usu_apellidos, usu_correo)
+    `)
+    .eq("vcs_solicitud_id", solicitudId)
+    .order("vcs_numero_version", { ascending: false })
+    .order("vcs_creado_en", { ascending: false });
+
+  if (error || !data) return [];
+
+  return (data as any[]).map((v: any) => {
+    const creadorNom = v.creador
+      ? [v.creador.usu_nombres, v.creador.usu_apellidos].filter(Boolean).join(" ") || v.creador.usu_correo
+      : "Sistema";
+    return {
+      ...v,
+      creador_nombre: creadorNom,
+    };
+  });
+}
+
+export async function obtenerUltimaVersionContratoSocio(solicitudId: string) {
+  const supabase = await crearClienteServidor();
+  const adminSupabase = (crearClienteAdmin() || supabase) as any;
+
+  // 1. Buscar si hay una versión personalizada emitida para esta solicitud
+  const { data } = await adminSupabase
+    .schema("tranqui_legal")
+    .from("trq_version_contrato_socio")
+    .select("*")
+    .eq("vcs_solicitud_id", solicitudId)
+    .order("vcs_numero_version", { ascending: false })
+    .order("vcs_creado_en", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (data) {
+    return {
+      existeVersionPersonalizada: true,
+      version: (data as any).vcs_numero_version as number,
+      titulo: (data as any).vcs_titulo as string,
+      contenido: (data as any).vcs_contenido_md as string,
+      comentarios: (data as any).vcs_comentarios as string | null,
+      tipoEvento: (data as any).vcs_tipo_evento as string,
+      creadoEn: (data as any).vcs_creado_en as string,
+    };
+  }
+
+  // 2. Si aún no se ha emitido una versión específica, obtener la plantilla base
+  const { data: plantilla } = await adminSupabase
+    .schema("tranqui_legal")
+    .from("trq_plantilla_contrato")
+    .select("*")
+    .order("pct_creado_en", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  return {
+    existeVersionPersonalizada: false,
+    version: 1,
+    titulo: (plantilla as any)?.pct_titulo || "CONTRATO DE PRESTACIÓN DE SERVICIOS Y ASOCIACIÓN LEGAL",
+    contenido: (plantilla as any)?.pct_contenido || "",
+    comentarios: null,
+    tipoEvento: "BORRADOR_INICIAL",
+    creadoEn: new Date().toISOString(),
+  };
+}
