@@ -152,6 +152,26 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
     colorIcono: "#D97706"
   },
   {
+    clave: "monitoreo_notificaciones_usuarios",
+    nombre: "Monitoreo de Notificaciones por Usuario",
+    detalle: "Auditoría en tiempo real de notificaciones, fechas de confirmación, tiempo de pospuesto y eliminados",
+    ruta: "/panel/administrar?widget=monitoreo_notificaciones_usuarios",
+    categoria: "Comunicación",
+    minNivel: 50,
+    icono: Bell,
+    colorIcono: "#1F6FEB"
+  },
+  {
+    clave: "bitacora_notificaciones",
+    nombre: "Bitácora & Historial de Notificaciones",
+    detalle: "Consulta auditada en tiempo real de notificaciones emitidas y destinatarios",
+    ruta: "/panel/administrar?widget=bitacora_notificaciones",
+    categoria: "Comunicación",
+    minNivel: 50,
+    icono: BarChart2,
+    colorIcono: "#2563EB"
+  },
+  {
     clave: "auditoria",
     nombre: "Auditoría BDD & Telemetría",
     detalle: "Consulta de registros inmutables PostgreSQL y telemetría de APIs",

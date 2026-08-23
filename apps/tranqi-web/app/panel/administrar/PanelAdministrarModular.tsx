@@ -6,7 +6,7 @@ import Link from "next/link";
 import { crearClienteNavegador } from "@eco/supabase";
 import { ConsultaUsuariosPerfilesWidget } from "@eco/gestion-usuarios/componentes/ConsultaUsuariosPerfilesWidget";
 import { AdministracionPerfilesWidget } from "@eco/gestion-usuarios/componentes/AdministracionPerfilesWidget";
-import { EmisionNotificacionesWidget, BitacoraNotificacionesWidget, ModalNotificacionPush } from "@eco/notificaciones";
+import { EmisionNotificacionesWidget, BitacoraNotificacionesWidget, MonitoreoNotificacionesUsuariosWidget, ModalNotificacionPush } from "@eco/notificaciones";
 import { GestionTerminosConsentimientosWidget } from "@eco/identidad/componentes/GestionTerminosConsentimientosWidget";
 import { TablaAuditoria } from "../auditoria/TablaAuditoria";
 import { ConfiguracionContratoAbogadoWidget } from "../../../modulos/socios/componentes/ConfiguracionContratoAbogadoWidget";
@@ -86,6 +86,15 @@ const MODULOS_ADMIN: ModuloAdminDef[] = [
     ruta: "/panel/administrar?widget=emision_notificaciones",
     icono: Bell,
     colorIcono: "#D97706",
+    categoria: "Comunicación"
+  },
+  {
+    id: "monitoreo_notificaciones_usuarios",
+    titulo: "Monitoreo de Notificaciones por Usuario",
+    subtitulo: "Auditoría en tiempo real de notificaciones, fechas de confirmación, tiempo de pospuesto y eliminados",
+    ruta: "/panel/administrar?widget=monitoreo_notificaciones_usuarios",
+    icono: Bell,
+    colorIcono: "#1F6FEB",
     categoria: "Comunicación"
   },
   {
@@ -389,9 +398,9 @@ function obtenerModulosInicialesAdmin(): ModuloAdminDef[] {
   if (matchModo && matchModo[1]) rolActivo = matchModo[1].toUpperCase();
   else if (matchFav && matchFav[1]) rolActivo = matchFav[1].toUpperCase();
 
-  let ids: string[] = ["gestion_usuarios", "consulta_usuarios", "perfiles", "socios", "solicitud_socio", "emision_notificaciones", "gestion_terminos_consentimientos", "auditoria", "configuracion_contrato_abogado"];
+  let ids: string[] = ["gestion_usuarios", "consulta_usuarios", "perfiles", "socios", "solicitud_socio", "emision_notificaciones", "monitoreo_notificaciones_usuarios", "bitacora_notificaciones", "gestion_terminos_consentimientos", "auditoria", "configuracion_contrato_abogado"];
   if (rolActivo === "OPERADOR" || rolActivo === "AUXILIAR" || rolActivo === "TECNICO") {
-    ids = ["socios", "configuracion_contrato_abogado", "gestion_terminos_consentimientos"];
+    ids = ["socios", "monitoreo_notificaciones_usuarios", "configuracion_contrato_abogado", "gestion_terminos_consentimientos"];
   }
 
   return MODULOS_ADMIN.filter(m => ids.includes(m.id));
@@ -532,9 +541,9 @@ export function PanelAdministrarModular({ negocio = "TRANQ", esSuperAdmin = fals
         // 1. Presets de asignación por rol para panel_administrar
         let idsAsignados: string[] = [];
         if (rolEncontrado === "OPERADOR" || rolEncontrado === "AUXILIAR" || rolEncontrado === "TECNICO") {
-          idsAsignados = ["socios", "configuracion_contrato_abogado", "gestion_terminos_consentimientos"];
+          idsAsignados = ["socios", "monitoreo_notificaciones_usuarios", "configuracion_contrato_abogado", "gestion_terminos_consentimientos"];
         } else if (rolEncontrado === "ADMINISTRADOR" || rolEncontrado === "SUPERADMIN") {
-          idsAsignados = ["gestion_usuarios", "consulta_usuarios", "perfiles", "socios", "solicitud_socio", "emision_notificaciones", "gestion_terminos_consentimientos", "auditoria", "configuracion_contrato_abogado"];
+          idsAsignados = ["gestion_usuarios", "consulta_usuarios", "perfiles", "socios", "solicitud_socio", "emision_notificaciones", "monitoreo_notificaciones_usuarios", "bitacora_notificaciones", "gestion_terminos_consentimientos", "auditoria", "configuracion_contrato_abogado"];
         }
 
         // 2. Consultar servidor BDD PostgreSQL (comun_seguridad.seg_rol_widget)
@@ -774,7 +783,14 @@ export function PanelAdministrarModular({ negocio = "TRANQ", esSuperAdmin = fals
               </div>
             )}
 
-            {/* 4.1. BITÁCORA DE NOTIFICACIONES */}
+            {/* 4.1. MONITOREO DE NOTIFICACIONES POR USUARIO */}
+            {(widgetActivo === "monitoreo_notificaciones_usuarios" || widgetActivo === "monitoreo-notificaciones-usuarios") && (
+              <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
+                <MonitoreoNotificacionesUsuariosWidget negocio={negocio} />
+              </div>
+            )}
+
+            {/* 4.2. BITÁCORA DE NOTIFICACIONES */}
             {(widgetActivo === "bitacora_notificaciones" || widgetActivo === "bitacora-notificaciones") && (
               <div style={{ maxWidth: "1000px", margin: "0 auto" }}>
                 <BitacoraNotificacionesWidget negocio={negocio} />

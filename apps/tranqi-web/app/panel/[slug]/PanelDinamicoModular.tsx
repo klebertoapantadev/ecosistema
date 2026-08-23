@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 import { AdministracionPerfilesWidget } from "@eco/gestion-usuarios/componentes/AdministracionPerfilesWidget";
 import { ConsultaUsuariosPerfilesWidget } from "@eco/gestion-usuarios/componentes/ConsultaUsuariosPerfilesWidget";
-import { EmisionNotificacionesWidget, PreferenciasNotificacionWidget } from "@eco/notificaciones";
+import { EmisionNotificacionesWidget, PreferenciasNotificacionWidget, BitacoraNotificacionesWidget, MonitoreoNotificacionesUsuariosWidget } from "@eco/notificaciones";
 import { GestionTerminosConsentimientosWidget } from "@eco/identidad/componentes/GestionTerminosConsentimientosWidget";
 import { FormularioConfiguracionNegocio } from "@eco/configuracion-negocio/componentes/FormularioConfiguracionNegocio";
 import { FormularioSmtp } from "@eco/configuracion-negocio/componentes/FormularioSmtp";
@@ -83,6 +83,20 @@ const INVENTARIO_GLOBAL_WIDGETS: Record<string, { titulo: string; subtitulo: str
     subtitulo: "Despacho masivo multicanal (In-App, Push, Email y WhatsApp)",
     icono: Bell,
     colorIcono: "#D97706",
+    categoria: "Comunicación"
+  },
+  monitoreo_notificaciones_usuarios: {
+    titulo: "Monitoreo de Notificaciones por Usuario",
+    subtitulo: "Auditoría en tiempo real de notificaciones, fechas de confirmación, tiempo de pospuesto y eliminados",
+    icono: Bell,
+    colorIcono: "#1F6FEB",
+    categoria: "Comunicación"
+  },
+  bitacora_notificaciones: {
+    titulo: "Bitácora & Historial de Notificaciones",
+    subtitulo: "Consulta auditada en tiempo real de notificaciones emitidas y destinatarios",
+    icono: Bell,
+    colorIcono: "#2563EB",
     categoria: "Comunicación"
   },
   gestion_usuarios: {
@@ -348,6 +362,12 @@ export function PanelDinamicoModular({ slug, negocio }: Props) {
         return <WidgetConfiguracionMfa negocio={negocio} />;
       case "emision_notificaciones":
         return <EmisionNotificacionesWidget negocio={negocio} />;
+      case "monitoreo_notificaciones_usuarios":
+      case "monitoreo-notificaciones-usuarios":
+        return <MonitoreoNotificacionesUsuariosWidget negocio={negocio} />;
+      case "bitacora_notificaciones":
+      case "bitacora-notificaciones":
+        return <BitacoraNotificacionesWidget negocio={negocio} />;
       case "gestion_usuarios":
       case "perfiles":
         return <AdministracionPerfilesWidget esAdmin={true} negocio={negocio} />;

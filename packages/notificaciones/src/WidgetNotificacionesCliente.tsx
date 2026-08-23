@@ -3,10 +3,10 @@
 import React, { useState, useEffect, useRef } from "react";
 import {
   Bell, Settings, CheckCircle2, Volume2, X, Clock, Trash2, Check,
-  ChevronDown, History
+  ChevronDown, History, RotateCcw, Info
 } from "lucide-react";
 
-interface NotificacionItem {
+export interface NotificacionItem {
   not_id: string;
   not_titulo: string;
   not_contenido_html: string;
@@ -15,7 +15,9 @@ interface NotificacionItem {
   not_creado_en: string;
   not_canal?: string;
   not_pospuesta_hasta?: string | null;
+  not_pospuesta_horas?: number | null;
   not_eliminada?: boolean;
+  not_eliminada_en?: string | null;
 }
 
 interface Props {
@@ -31,12 +33,13 @@ export function WidgetNotificacionesCliente({ negocio = "tranqi", esAdmin = fals
   const [notificaciones, setNotificaciones] = useState<NotificacionItem[]>([]);
   const [alertaPushToast, setAlertaPushToast] = useState<NotificacionItem | null>(null);
   const [permisoPush, setPermisoPush] = useState<string>("default");
-  const [tabActiva, setTabActiva] = useState<"pendientes" | "historial">("pendientes");
+  const [tabActiva, setTabActiva] = useState<"pendientes" | "historial" | "eliminadas">("pendientes");
   const [dropdownPosponerId, setDropdownPosponerId] = useState<string | null>(null);
+  const [dropdownToastPosponer, setDropdownToastPosponer] = useState<boolean>(false);
   const [horasPersonalizadas, setHorasPersonalizadas] = useState<string>("4");
   const [mostrarInputPersonalizado, setMostrarInputPersonalizado] = useState<string | null>(null);
 
-  // Estados locales de filtrado rápido
+  // Estados locales de filtrado rápido y sincronización
   const [leidasLocal, setLeidasLocal] = useState<Set<string>>(new Set());
   const [eliminadasLocal, setEliminadasLocal] = useState<Set<string>>(new Set());
   const [pospuestasLocal, setPospuestasLocal] = useState<Record<string, number>>({});
@@ -69,12 +72,23 @@ export function WidgetNotificacionesCliente({ negocio = "tranqi", esAdmin = fals
     }
   };
 
-  const enviarAccionServidor = async (notId: string, accion: "aceptar" | "eliminar" | "posponer", horas?: number) => {
+  const enviarAccionServidor = async (
+    item: NotificacionItem,
+    accion: "aceptar" | "eliminar" | "posponer" | "restaurar",
+    horas?: number
+  ) => {
     try {
       await fetch("/api/notificaciones/usuario", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ not_id: notId, accion, horas })
+        body: JSON.stringify({
+          not_id: item.not_id,
+          accion,
+          horas,
+          titulo: item.not_titulo,
+          contenido_html: item.not_contenido_html,
+          url_accion: item.not_url_accion
+        })
       });
     } catch (err) {
       console.warn("Aviso al sincronizar notificación con el servidor:", err);
@@ -82,6 +96,11 @@ export function WidgetNotificacionesCliente({ negocio = "tranqi", esAdmin = fals
   };
 
   const aceptarNotificacion = (item: NotificacionItem) => {
+    const ahoraIso = new Date().toISOString();
+    // 1. Actualizar estado local reactivo
+    setNotificaciones(prev =>
+      prev.map(n => (n.not_id === item.not_id ? { ...n, not_leido_en: ahoraIso } : n))
+    );
     const nextLeidas = new Set(leidasLocal).add(item.not_id);
     setLeidasLocal(nextLeidas);
     if (typeof window !== "undefined") {
@@ -91,10 +110,20 @@ export function WidgetNotificacionesCliente({ negocio = "tranqi", esAdmin = fals
       setAlertaPushToast(null);
     }
     setDropdownPosponerId(null);
-    enviarAccionServidor(item.not_id, "aceptar");
+    setDropdownToastPosponer(false);
+    enviarAccionServidor(item, "aceptar");
   };
 
   const eliminarNotificacion = (item: NotificacionItem) => {
+    const ahoraIso = new Date().toISOString();
+    // 1. Actualizar estado local reactivo marcando eliminada lógicamente
+    setNotificaciones(prev =>
+      prev.map(n =>
+        n.not_id === item.not_id
+          ? { ...n, not_eliminada: true, not_eliminada_en: ahoraIso, not_leido_en: n.not_leido_en || ahoraIso }
+          : n
+      )
+    );
     const nextEliminadas = new Set(eliminadasLocal).add(item.not_id);
     setEliminadasLocal(nextEliminadas);
     if (typeof window !== "undefined") {
@@ -104,11 +133,40 @@ export function WidgetNotificacionesCliente({ negocio = "tranqi", esAdmin = fals
       setAlertaPushToast(null);
     }
     setDropdownPosponerId(null);
-    enviarAccionServidor(item.not_id, "eliminar");
+    setDropdownToastPosponer(false);
+    enviarAccionServidor(item, "eliminar");
+  };
+
+  const restaurarNotificacion = (item: NotificacionItem) => {
+    // 1. Desmarcar eliminación lógica
+    setNotificaciones(prev =>
+      prev.map(n =>
+        n.not_id === item.not_id
+          ? { ...n, not_eliminada: false, not_eliminada_en: null }
+          : n
+      )
+    );
+    const nextEliminadas = new Set(eliminadasLocal);
+    nextEliminadas.delete(item.not_id);
+    setEliminadasLocal(nextEliminadas);
+    if (typeof window !== "undefined") {
+      localStorage.setItem(STORAGE_KEY_ELIMINADAS, JSON.stringify(Array.from(nextEliminadas)));
+    }
+    enviarAccionServidor(item, "restaurar");
   };
 
   const posponerNotificacion = (item: NotificacionItem, horas: number) => {
     const hastaTimestamp = Date.now() + horas * 3600 * 1000;
+    const hastaIso = new Date(hastaTimestamp).toISOString();
+
+    // 1. Actualizar estado local reactivo con fecha de pospuesto
+    setNotificaciones(prev =>
+      prev.map(n =>
+        n.not_id === item.not_id
+          ? { ...n, not_pospuesta_hasta: hastaIso, not_pospuesta_horas: horas }
+          : n
+      )
+    );
     const nextPospuestas = { ...pospuestasLocal, [item.not_id]: hastaTimestamp };
     setPospuestasLocal(nextPospuestas);
     if (typeof window !== "undefined") {
@@ -118,8 +176,9 @@ export function WidgetNotificacionesCliente({ negocio = "tranqi", esAdmin = fals
       setAlertaPushToast(null);
     }
     setDropdownPosponerId(null);
+    setDropdownToastPosponer(false);
     setMostrarInputPersonalizado(null);
-    enviarAccionServidor(item.not_id, "posponer", horas);
+    enviarAccionServidor(item, "posponer", horas);
   };
 
   const cargarNotificaciones = () => {
@@ -132,18 +191,20 @@ export function WidgetNotificacionesCliente({ negocio = "tranqi", esAdmin = fals
           const e = eliminadasLocal;
           const l = leidasLocal;
 
-          // Filtrar las visibles activas
-          const pendientes = data.notificaciones.filter((n: NotificacionItem) => {
-            if (e.has(n.not_id)) return false;
-            const posp = p[n.not_id];
-            if (posp !== undefined && posp > ahora) return false;
-            if (l.has(n.not_id)) return false;
-            return !n.not_leido_en;
+          // Filtrar las visibles activas para toast
+          const pendientesParaToast = data.notificaciones.filter((n: NotificacionItem) => {
+            if (e.has(n.not_id) || n.not_eliminada) return false;
+            const pospServer = n.not_pospuesta_hasta ? new Date(n.not_pospuesta_hasta).getTime() : 0;
+            const pospLocal = p[n.not_id] || 0;
+            const pospFinal = Math.max(pospServer, pospLocal);
+            if (pospFinal > ahora) return false;
+            if (l.has(n.not_id) || Boolean(n.not_leido_en)) return false;
+            return true;
           });
 
           // Si hay una nueva notificación pendiente no mostrada antes
-          if (pendientes.length > 0 && !yaCargadoInicialRef.current) {
-            const masReciente = pendientes[0];
+          if (pendientesParaToast.length > 0 && !yaCargadoInicialRef.current) {
+            const masReciente = pendientesParaToast[0];
             setAlertaPushToast(masReciente);
 
             // Disparar Web Push nativo si el permiso fue concedido
@@ -162,24 +223,30 @@ export function WidgetNotificacionesCliente({ negocio = "tranqi", esAdmin = fals
 
   useEffect(() => {
     cargarNotificaciones();
-    const interval = setInterval(cargarNotificaciones, 5000);
+    const interval = setInterval(cargarNotificaciones, 6000);
     return () => clearInterval(interval);
-  }, [leidasLocal, eliminadasLocal, pospuestasLocal]);
+  }, []);
 
   const ahora = Date.now();
 
-  // Notificaciones sin eliminar
-  const sinEliminar = notificaciones.filter(n => !eliminadasLocal.has(n.not_id) && !n.not_eliminada);
+  // 1. Notificaciones Eliminadas Lógicamente
+  const eliminadas = notificaciones.filter(n => n.not_eliminada || eliminadasLocal.has(n.not_id));
 
-  // Pendientes: No leídas, no eliminadas y no pospuestas activamente
+  // 2. Notificaciones no eliminadas
+  const sinEliminar = notificaciones.filter(n => !n.not_eliminada && !eliminadasLocal.has(n.not_id));
+
+  // 3. Pendientes: No leídas, no eliminadas y no pospuestas activamente
   const pendientes = sinEliminar.filter(n => {
-    const pospuestoHasta = pospuestasLocal[n.not_id] || (n.not_pospuesta_hasta ? new Date(n.not_pospuesta_hasta).getTime() : 0);
+    const pospuestoHasta = Math.max(
+      pospuestasLocal[n.not_id] || 0,
+      n.not_pospuesta_hasta ? new Date(n.not_pospuesta_hasta).getTime() : 0
+    );
     if (pospuestoHasta > ahora) return false;
     if (leidasLocal.has(n.not_id)) return false;
     return !n.not_leido_en;
   });
 
-  // Historial: Leídas o aceptadas, pero no eliminadas
+  // 4. Historial: Leídas o aceptadas, pero no eliminadas
   const historial = sinEliminar.filter(n => {
     return Boolean(n.not_leido_en) || leidasLocal.has(n.not_id);
   });
@@ -249,7 +316,7 @@ export function WidgetNotificacionesCliente({ negocio = "tranqi", esAdmin = fals
           </div>
 
           {/* Botones de Acción en el Toast */}
-          <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "8px", borderTop: "1px solid rgba(255,255,255,0.12)", paddingTop: "10px" }}>
+          <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "8px", borderTop: "1px solid rgba(255,255,255,0.12)", paddingTop: "10px", position: "relative" }}>
             <button
               type="button"
               onClick={() => aceptarNotificacion(alertaPushToast)}
@@ -270,25 +337,74 @@ export function WidgetNotificacionesCliente({ negocio = "tranqi", esAdmin = fals
               <Check size={14} /> Aceptar (Leída)
             </button>
 
-            <button
-              type="button"
-              onClick={() => posponerNotificacion(alertaPushToast, 3)}
-              style={{
-                background: "rgba(255,255,255,0.15)",
-                color: "#ffffff",
-                border: "none",
-                borderRadius: "8px",
-                padding: "6px 12px",
-                fontSize: "0.78rem",
-                fontWeight: 600,
-                cursor: "pointer",
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "5px"
-              }}
-            >
-              <Clock size={14} /> Posponer 3h
-            </button>
+            <div style={{ position: "relative" }}>
+              <button
+                type="button"
+                onClick={() => setDropdownToastPosponer(!dropdownToastPosponer)}
+                style={{
+                  background: "rgba(255,255,255,0.15)",
+                  color: "#ffffff",
+                  border: "none",
+                  borderRadius: "8px",
+                  padding: "6px 12px",
+                  fontSize: "0.78rem",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "5px"
+                }}
+              >
+                <Clock size={14} /> Posponer <ChevronDown size={12} />
+              </button>
+
+              {dropdownToastPosponer && (
+                <div
+                  style={{
+                    position: "absolute",
+                    bottom: "100%",
+                    left: 0,
+                    marginBottom: "6px",
+                    background: "#0f172a",
+                    border: "1.5px solid #334155",
+                    borderRadius: "8px",
+                    boxShadow: "0 10px 25px rgba(0,0,0,0.5)",
+                    zIndex: 100000,
+                    minWidth: "160px",
+                    padding: "6px",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "4px"
+                  }}
+                >
+                  <div style={{ fontSize: "0.68rem", fontWeight: 800, color: "#94a3b8", padding: "4px 8px", textTransform: "uppercase" }}>
+                    Posponer por:
+                  </div>
+                  {[3, 6, 12, 24].map(h => (
+                    <button
+                      key={h}
+                      type="button"
+                      onClick={() => posponerNotificacion(alertaPushToast, h)}
+                      style={{
+                        background: "none",
+                        border: "none",
+                        textAlign: "left",
+                        padding: "6px 8px",
+                        fontSize: "0.76rem",
+                        color: "#e2e8f0",
+                        borderRadius: "4px",
+                        cursor: "pointer",
+                        fontWeight: 600
+                      }}
+                      onMouseEnter={e => (e.currentTarget.style.background = "rgba(255,255,255,0.1)")}
+                      onMouseLeave={e => (e.currentTarget.style.background = "none")}
+                    >
+                      ⏳ {h} horas
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
 
             <button
               type="button"
@@ -307,6 +423,7 @@ export function WidgetNotificacionesCliente({ negocio = "tranqi", esAdmin = fals
                 gap: "5px",
                 marginLeft: "auto"
               }}
+              title="Eliminar lógicamente (se conserva en la pestaña Eliminadas)"
             >
               <Trash2 size={14} /> Eliminar
             </button>
@@ -325,26 +442,26 @@ export function WidgetNotificacionesCliente({ negocio = "tranqi", esAdmin = fals
           </span>
         </header>
 
-        {/* Pestañas: Pendientes vs Historial */}
-        <div style={{ display: "flex", gap: "6px", marginTop: "12px", background: "#f1f5f9", padding: "4px", borderRadius: "8px" }}>
+        {/* Pestañas: Pendientes vs Historial vs Eliminadas */}
+        <div style={{ display: "flex", gap: "4px", marginTop: "12px", background: "#f1f5f9", padding: "4px", borderRadius: "8px" }}>
           <button
             type="button"
             onClick={() => setTabActiva("pendientes")}
             style={{
               flex: 1,
-              padding: "6px 10px",
+              padding: "6px 8px",
               borderRadius: "6px",
               border: "none",
               background: tabActiva === "pendientes" ? "#ffffff" : "transparent",
               color: tabActiva === "pendientes" ? "#0f172a" : "#64748b",
               fontWeight: tabActiva === "pendientes" ? 800 : 600,
-              fontSize: "0.78rem",
+              fontSize: "0.76rem",
               cursor: "pointer",
               boxShadow: tabActiva === "pendientes" ? "0 1px 3px rgba(0,0,0,0.1)" : "none",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              gap: "6px"
+              gap: "4px"
             }}
           >
             <Bell size={13} /> Pendientes ({pendientes.length})
@@ -354,22 +471,44 @@ export function WidgetNotificacionesCliente({ negocio = "tranqi", esAdmin = fals
             onClick={() => setTabActiva("historial")}
             style={{
               flex: 1,
-              padding: "6px 10px",
+              padding: "6px 8px",
               borderRadius: "6px",
               border: "none",
               background: tabActiva === "historial" ? "#ffffff" : "transparent",
               color: tabActiva === "historial" ? "#0f172a" : "#64748b",
               fontWeight: tabActiva === "historial" ? 800 : 600,
-              fontSize: "0.78rem",
+              fontSize: "0.76rem",
               cursor: "pointer",
               boxShadow: tabActiva === "historial" ? "0 1px 3px rgba(0,0,0,0.1)" : "none",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              gap: "6px"
+              gap: "4px"
             }}
           >
             <History size={13} /> Historial ({historial.length})
+          </button>
+          <button
+            type="button"
+            onClick={() => setTabActiva("eliminadas")}
+            style={{
+              flex: 1,
+              padding: "6px 8px",
+              borderRadius: "6px",
+              border: "none",
+              background: tabActiva === "eliminadas" ? "#ffffff" : "transparent",
+              color: tabActiva === "eliminadas" ? "#ef4444" : "#64748b",
+              fontWeight: tabActiva === "eliminadas" ? 800 : 600,
+              fontSize: "0.76rem",
+              cursor: "pointer",
+              boxShadow: tabActiva === "eliminadas" ? "0 1px 3px rgba(0,0,0,0.1)" : "none",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "4px"
+            }}
+          >
+            <Trash2 size={13} /> Eliminadas ({eliminadas.length})
           </button>
         </div>
 
@@ -389,9 +528,9 @@ export function WidgetNotificacionesCliente({ negocio = "tranqi", esAdmin = fals
           </div>
         )}
 
-        {/* Lista de Notificaciones de la Pestaña Activa */}
+        {/* Lista de Notificaciones según pestaña activa */}
         <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: "12px" }}>
-          {tabActiva === "pendientes" ? (
+          {tabActiva === "pendientes" && (
             pendientes.length === 0 ? (
               <div style={{ padding: "16px", background: "#f8fafc", borderRadius: "8px", border: "1px solid #e2e8f0", textAlign: "center", color: "#64748b", fontSize: "0.82rem" }}>
                 <CheckCircle2 size={24} color="#16a34a" style={{ margin: "0 auto 6px auto", display: "block" }} />
@@ -593,7 +732,7 @@ export function WidgetNotificacionesCliente({ negocio = "tranqi", esAdmin = fals
                         gap: "4px",
                         marginLeft: "auto"
                       }}
-                      title="Eliminar de mi vista"
+                      title="Eliminar lógicamente (se guarda en la pestaña Eliminadas)"
                     >
                       <Trash2 size={13} /> Eliminar
                     </button>
@@ -601,7 +740,9 @@ export function WidgetNotificacionesCliente({ negocio = "tranqi", esAdmin = fals
                 </div>
               ))
             )
-          ) : (
+          )}
+
+          {tabActiva === "historial" && (
             historial.length === 0 ? (
               <div style={{ padding: "16px", background: "#f8fafc", borderRadius: "8px", border: "1px solid #e2e8f0", textAlign: "center", color: "#64748b", fontSize: "0.82rem" }}>
                 No tienes notificaciones registradas en tu historial.
@@ -615,7 +756,7 @@ export function WidgetNotificacionesCliente({ negocio = "tranqi", esAdmin = fals
                     background: "#ffffff",
                     borderRadius: "8px",
                     border: "1px solid #e2e8f0",
-                    opacity: 0.9
+                    opacity: 0.95
                   }}
                 >
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "8px" }}>
@@ -630,7 +771,10 @@ export function WidgetNotificacionesCliente({ negocio = "tranqi", esAdmin = fals
                     style={{ fontSize: "0.78rem", color: "#64748b", marginTop: "4px", lineHeight: 1.4 }}
                     dangerouslySetInnerHTML={{ __html: item.not_contenido_html }}
                   />
-                  <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "6px" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "8px", borderTop: "1px dashed #f1f5f9", paddingTop: "6px" }}>
+                    <span style={{ fontSize: "0.7rem", color: "#10b981", fontWeight: 700 }}>
+                      ✓ Leída / Confirmada
+                    </span>
                     <button
                       type="button"
                       onClick={() => eliminarNotificacion(item)}
@@ -638,19 +782,84 @@ export function WidgetNotificacionesCliente({ negocio = "tranqi", esAdmin = fals
                         background: "transparent",
                         color: "#94a3b8",
                         border: "none",
-                        fontSize: "0.7rem",
+                        fontSize: "0.72rem",
                         cursor: "pointer",
                         display: "inline-flex",
                         alignItems: "center",
                         gap: "3px"
                       }}
                     >
-                      <Trash2 size={11} /> Eliminar del historial
+                      <Trash2 size={12} /> Mover a eliminadas
                     </button>
                   </div>
                 </div>
               ))
             )
+          )}
+
+          {tabActiva === "eliminadas" && (
+            <div>
+              <div style={{ padding: "8px 12px", background: "#fef2f2", border: "1px solid #fee2e2", borderRadius: "8px", color: "#991b1b", fontSize: "0.74rem", display: "flex", alignItems: "center", gap: "6px", marginBottom: "10px" }}>
+                <Info size={14} /> Eliminación lógica auditable. Puedes restaurar cualquier notificación en cualquier momento.
+              </div>
+
+              {eliminadas.length === 0 ? (
+                <div style={{ padding: "16px", background: "#f8fafc", borderRadius: "8px", border: "1px solid #e2e8f0", textAlign: "center", color: "#64748b", fontSize: "0.82rem" }}>
+                  No tienes notificaciones eliminadas.
+                </div>
+              ) : (
+                eliminadas.map(item => (
+                  <div
+                    key={item.not_id}
+                    style={{
+                      padding: "10px 12px",
+                      background: "#fefefe",
+                      borderRadius: "8px",
+                      border: "1px dashed #fca5a5",
+                      marginBottom: "8px",
+                      opacity: 0.9
+                    }}
+                  >
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "8px" }}>
+                      <span style={{ fontSize: "0.82rem", fontWeight: 700, color: "#475569" }}>
+                        {item.not_titulo}
+                      </span>
+                      <span style={{ fontSize: "0.68rem", color: "#ef4444", fontWeight: 700, whiteSpace: "nowrap" }}>
+                        Eliminada
+                      </span>
+                    </div>
+                    <div
+                      style={{ fontSize: "0.78rem", color: "#64748b", marginTop: "4px", lineHeight: 1.4 }}
+                      dangerouslySetInnerHTML={{ __html: item.not_contenido_html }}
+                    />
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "8px", borderTop: "1px dashed #fee2e2", paddingTop: "6px" }}>
+                      <span style={{ fontSize: "0.68rem", color: "#94a3b8" }}>
+                        {item.not_eliminada_en ? `Eliminada el ${new Date(item.not_eliminada_en).toLocaleString("es-EC", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit", timeZone: "America/Guayaquil" })}` : "Eliminada lógicamente"}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => restaurarNotificacion(item)}
+                        style={{
+                          background: "#eff6ff",
+                          border: "1px solid #bfdbfe",
+                          color: "#1d4ed8",
+                          borderRadius: "6px",
+                          padding: "4px 8px",
+                          fontSize: "0.72rem",
+                          fontWeight: 700,
+                          cursor: "pointer",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "4px"
+                        }}
+                      >
+                        <RotateCcw size={12} /> Restaurar
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
           )}
         </div>
 

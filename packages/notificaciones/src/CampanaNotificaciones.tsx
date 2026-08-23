@@ -1,17 +1,11 @@
 "use client";
 
 import React, { useState } from "react";
-import { Bell, CheckCheck, ExternalLink, X, Settings } from "lucide-react";
+import { Bell, CheckCheck, ExternalLink, X, Settings, Trash2, Clock, Check, RotateCcw } from "lucide-react";
 
-export interface NotificacionItem {
-  not_id: string;
-  not_titulo: string;
-  not_contenido_html: string;
-  not_url_accion?: string;
-  not_leido_en?: string | null;
-  not_creado_en: string;
-  not_canal: "IN_APP" | "PUSH" | "EMAIL" | "WHATSAPP_PROPUESTA";
-}
+import type { NotificacionItem } from "./WidgetNotificacionesCliente";
+
+export type { NotificacionItem };
 
 interface Props {
   negocio: string;
@@ -20,41 +14,110 @@ interface Props {
 
 export function CampanaNotificaciones({ negocio }: Props) {
   const [abierto, setAbierto] = useState(false);
-  const [filtro, setFiltro] = useState<"todas" | "no_leidas">("todas");
+  const [filtro, setFiltro] = useState<"todas" | "no_leidas" | "eliminadas">("todas");
   const [notificaciones, setNotificaciones] = useState<NotificacionItem[]>([]);
 
-  // Cargar notificaciones in-app reales desde el servidor y consultar cada 8 segundos
-  React.useEffect(() => {
-    const cargarNotificaciones = () => {
-      fetch("/api/notificaciones/usuario")
-        .then(res => res.json())
-        .then(data => {
-          if (data.success && Array.isArray(data.notificaciones)) {
-            setNotificaciones(data.notificaciones);
-          }
-        })
-        .catch(() => {});
-    };
+  // Cargar notificaciones in-app reales desde el servidor y consultar periódicamente
+  const cargarNotificaciones = () => {
+    fetch("/api/notificaciones/usuario")
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && Array.isArray(data.notificaciones)) {
+          setNotificaciones(data.notificaciones);
+        }
+      })
+      .catch(() => {});
+  };
 
+  React.useEffect(() => {
     cargarNotificaciones();
     const interval = setInterval(cargarNotificaciones, 8000);
     return () => clearInterval(interval);
   }, [negocio]);
 
-  const noLeidasCount = notificaciones.filter(n => !n.not_leido_en).length;
+  const ahora = Date.now();
 
-  const marcarComoLeida = (id: string) => {
+  const pendientes = notificaciones.filter(n => {
+    if (n.not_eliminada) return false;
+    const pospuesto = n.not_pospuesta_hasta ? new Date(n.not_pospuesta_hasta).getTime() : 0;
+    if (pospuesto > ahora) return false;
+    return !n.not_leido_en;
+  });
+
+  const noLeidasCount = pendientes.length;
+
+  const enviarAccion = async (item: NotificacionItem, accion: "aceptar" | "eliminar" | "posponer" | "restaurar", horas?: number) => {
+    try {
+      await fetch("/api/notificaciones/usuario", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          not_id: item.not_id,
+          accion,
+          horas,
+          titulo: item.not_titulo,
+          contenido_html: item.not_contenido_html,
+          url_accion: item.not_url_accion
+        })
+      });
+    } catch {
+      /* Ignorar */
+    }
+  };
+
+  const marcarComoLeida = (item: NotificacionItem) => {
+    const ahoraIso = new Date().toISOString();
     setNotificaciones(prev =>
-      prev.map(n => (n.not_id === id ? { ...n, not_leido_en: new Date().toISOString() } : n))
+      prev.map(n => (n.not_id === item.not_id ? { ...n, not_leido_en: ahoraIso } : n))
     );
+    enviarAccion(item, "aceptar");
   };
 
   const marcarTodasComoLeidas = () => {
-    const ahora = new Date().toISOString();
-    setNotificaciones(prev => prev.map(n => ({ ...n, not_leido_en: n.not_leido_en || ahora })));
+    const ahoraIso = new Date().toISOString();
+    setNotificaciones(prev =>
+      prev.map(n => ({ ...n, not_leido_en: n.not_leido_en || ahoraIso }))
+    );
+    notificaciones.forEach(n => {
+      if (!n.not_leido_en && !n.not_eliminada) {
+        enviarAccion(n, "aceptar");
+      }
+    });
   };
 
-  const listaFiltrada = notificaciones.filter(n => (filtro === "no_leidas" ? !n.not_leido_en : true));
+  const posponerItem = (item: NotificacionItem, horas: number) => {
+    const hastaIso = new Date(Date.now() + horas * 3600 * 1000).toISOString();
+    setNotificaciones(prev =>
+      prev.map(n => (n.not_id === item.not_id ? { ...n, not_pospuesta_hasta: hastaIso, not_pospuesta_horas: horas } : n))
+    );
+    enviarAccion(item, "posponer", horas);
+  };
+
+  const eliminarItem = (item: NotificacionItem) => {
+    const ahoraIso = new Date().toISOString();
+    setNotificaciones(prev =>
+      prev.map(n => (n.not_id === item.not_id ? { ...n, not_eliminada: true, not_eliminada_en: ahoraIso, not_leido_en: n.not_leido_en || ahoraIso } : n))
+    );
+    enviarAccion(item, "eliminar");
+  };
+
+  const restaurarItem = (item: NotificacionItem) => {
+    setNotificaciones(prev =>
+      prev.map(n => (n.not_id === item.not_id ? { ...n, not_eliminada: false, not_eliminada_en: null } : n))
+    );
+    enviarAccion(item, "restaurar");
+  };
+
+  const listaFiltrada = notificaciones.filter(n => {
+    if (filtro === "eliminadas") return Boolean(n.not_eliminada);
+    if (n.not_eliminada) return false;
+    if (filtro === "no_leidas") {
+      const pospuesto = n.not_pospuesta_hasta ? new Date(n.not_pospuesta_hasta).getTime() : 0;
+      if (pospuesto > ahora) return false;
+      return !n.not_leido_en;
+    }
+    return true;
+  });
 
   return (
     <>
@@ -123,7 +186,7 @@ export function CampanaNotificaciones({ negocio }: Props) {
               right: 0,
               bottom: 0,
               width: "100%",
-              maxWidth: "420px",
+              maxWidth: "430px",
               background: "#161b22",
               borderLeft: "1px solid #30363d",
               boxShadow: "-8px 0 32px rgba(0, 0, 0, 0.7)",
@@ -174,29 +237,30 @@ export function CampanaNotificaciones({ negocio }: Props) {
             {/* Filtros y acciones rápidas */}
             <div
               style={{
-                padding: "10px 16px",
+                padding: "10px 14px",
                 background: "#0d1117",
                 borderBottom: "1px solid #30363d",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "space-between",
-                fontSize: "0.78rem"
+                fontSize: "0.76rem",
+                gap: "4px"
               }}
             >
-              <div style={{ display: "flex", gap: "6px" }}>
+              <div style={{ display: "flex", gap: "4px" }}>
                 <button
                   onClick={() => setFiltro("todas")}
                   style={{
                     background: filtro === "todas" ? "#1f6feb" : "#21262d",
                     color: filtro === "todas" ? "#fff" : "#8b949e",
                     border: "none",
-                    borderRadius: "12px",
-                    padding: "4px 10px",
+                    borderRadius: "10px",
+                    padding: "3px 8px",
                     cursor: "pointer",
                     fontWeight: 600
                   }}
                 >
-                  Todas ({notificaciones.length})
+                  Todas ({notificaciones.filter(n => !n.not_eliminada).length})
                 </button>
                 <button
                   onClick={() => setFiltro("no_leidas")}
@@ -204,17 +268,31 @@ export function CampanaNotificaciones({ negocio }: Props) {
                     background: filtro === "no_leidas" ? "#1f6feb" : "#21262d",
                     color: filtro === "no_leidas" ? "#fff" : "#8b949e",
                     border: "none",
-                    borderRadius: "12px",
-                    padding: "4px 10px",
+                    borderRadius: "10px",
+                    padding: "3px 8px",
                     cursor: "pointer",
                     fontWeight: 600
                   }}
                 >
                   Sin leer ({noLeidasCount})
                 </button>
+                <button
+                  onClick={() => setFiltro("eliminadas")}
+                  style={{
+                    background: filtro === "eliminadas" ? "#b91c1c" : "#21262d",
+                    color: filtro === "eliminadas" ? "#fff" : "#8b949e",
+                    border: "none",
+                    borderRadius: "10px",
+                    padding: "3px 8px",
+                    cursor: "pointer",
+                    fontWeight: 600
+                  }}
+                >
+                  Eliminadas ({notificaciones.filter(n => n.not_eliminada).length})
+                </button>
               </div>
 
-              {noLeidasCount > 0 && (
+              {noLeidasCount > 0 && filtro !== "eliminadas" && (
                 <button
                   onClick={marcarTodasComoLeidas}
                   style={{
@@ -225,10 +303,11 @@ export function CampanaNotificaciones({ negocio }: Props) {
                     fontWeight: 600,
                     display: "flex",
                     alignItems: "center",
-                    gap: "4px"
+                    gap: "4px",
+                    fontSize: "0.74rem"
                   }}
                 >
-                  <CheckCheck size={14} /> Leídas
+                  <CheckCheck size={13} /> Leídas
                 </button>
               )}
             </div>
@@ -238,26 +317,36 @@ export function CampanaNotificaciones({ negocio }: Props) {
               {listaFiltrada.length === 0 ? (
                 <div style={{ padding: "40px 20px", textAlign: "center", color: "#8b949e", fontSize: "0.85rem" }}>
                   <Bell size={32} style={{ opacity: 0.3, marginBottom: "8px" }} />
-                  <p>No tienes notificaciones pendientes.</p>
+                  <p>No se encontraron notificaciones en esta sección.</p>
                 </div>
               ) : (
                 listaFiltrada.map(n => (
                   <div
                     key={n.not_id}
-                    onClick={() => marcarComoLeida(n.not_id)}
                     style={{
                       padding: "12px 14px",
                       borderRadius: "8px",
                       marginBottom: "10px",
-                      background: n.not_leido_en ? "#161b22" : "rgba(31, 111, 235, 0.12)",
-                      border: n.not_leido_en ? "1px solid #30363d" : "1px solid #388bfd",
-                      borderLeft: n.not_leido_en ? "4px solid transparent" : "4px solid #1f6feb",
-                      cursor: "pointer",
+                      background: n.not_eliminada
+                        ? "rgba(239, 68, 68, 0.08)"
+                        : n.not_leido_en
+                        ? "#161b22"
+                        : "rgba(31, 111, 235, 0.12)",
+                      border: n.not_eliminada
+                        ? "1px dashed rgba(239, 68, 68, 0.4)"
+                        : n.not_leido_en
+                        ? "1px solid #30363d"
+                        : "1px solid #388bfd",
+                      borderLeft: n.not_eliminada
+                        ? "4px solid #ef4444"
+                        : n.not_leido_en
+                        ? "4px solid transparent"
+                        : "4px solid #1f6feb",
                       transition: "background 0.2s"
                     }}
                   >
                     <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
-                      <span style={{ fontWeight: 700, fontSize: "0.85rem", color: n.not_leido_en ? "#c9d1d9" : "#58a6ff" }}>
+                      <span style={{ fontWeight: 700, fontSize: "0.85rem", color: n.not_eliminada ? "#fca5a5" : n.not_leido_en ? "#c9d1d9" : "#58a6ff" }}>
                         {n.not_titulo}
                       </span>
                       <span style={{ fontSize: "0.72rem", color: "#8b949e" }}>
@@ -285,6 +374,94 @@ export function CampanaNotificaciones({ negocio }: Props) {
                         Ir a la sección <ExternalLink size={12} />
                       </a>
                     )}
+
+                    {/* Botones de acción en la tarjeta */}
+                    <div style={{ display: "flex", alignItems: "center", gap: "6px", marginTop: "10px", borderTop: "1px solid #21262d", paddingTop: "8px" }}>
+                      {n.not_eliminada ? (
+                        <button
+                          type="button"
+                          onClick={() => restaurarItem(n)}
+                          style={{
+                            background: "#1e3a8a",
+                            color: "#bfdbfe",
+                            border: "none",
+                            borderRadius: "4px",
+                            padding: "3px 8px",
+                            fontSize: "0.72rem",
+                            fontWeight: 700,
+                            cursor: "pointer",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "4px"
+                          }}
+                        >
+                          <RotateCcw size={11} /> Restaurar
+                        </button>
+                      ) : (
+                        <>
+                          {!n.not_leido_en && (
+                            <button
+                              type="button"
+                              onClick={() => marcarComoLeida(n)}
+                              style={{
+                                background: "#065f46",
+                                color: "#a7f3d0",
+                                border: "none",
+                                borderRadius: "4px",
+                                padding: "3px 8px",
+                                fontSize: "0.72rem",
+                                fontWeight: 700,
+                                cursor: "pointer",
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "3px"
+                              }}
+                            >
+                              <Check size={11} /> Aceptar
+                            </button>
+                          )}
+
+                          <button
+                            type="button"
+                            onClick={() => posponerItem(n, 3)}
+                            style={{
+                              background: "#21262d",
+                              color: "#c9d1d9",
+                              border: "1px solid #30363d",
+                              borderRadius: "4px",
+                              padding: "3px 8px",
+                              fontSize: "0.72rem",
+                              fontWeight: 600,
+                              cursor: "pointer",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "3px"
+                            }}
+                          >
+                            <Clock size={11} /> Posponer 3h
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => eliminarItem(n)}
+                            style={{
+                              background: "transparent",
+                              color: "#f87171",
+                              border: "none",
+                              padding: "3px 6px",
+                              fontSize: "0.72rem",
+                              cursor: "pointer",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "3px",
+                              marginLeft: "auto"
+                            }}
+                          >
+                            <Trash2 size={11} /> Eliminar
+                          </button>
+                        </>
+                      )}
+                    </div>
                   </div>
                 ))
               )}
@@ -293,7 +470,7 @@ export function CampanaNotificaciones({ negocio }: Props) {
             {/* Footer con Enlace a Preferencias */}
             <div style={{ padding: "12px 16px", borderTop: "1px solid #30363d", background: "#0d1117" }}>
               <a
-                href="/panel/notificaciones"
+                href="/panel/configuracion"
                 onClick={() => setAbierto(false)}
                 style={{
                   display: "flex",
@@ -310,7 +487,7 @@ export function CampanaNotificaciones({ negocio }: Props) {
                   textDecoration: "none"
                 }}
               >
-                <Settings size={14} /> Preferencias & Mute Temporal
+                <Settings size={14} /> Preferencias & Configuración
               </a>
             </div>
           </div>

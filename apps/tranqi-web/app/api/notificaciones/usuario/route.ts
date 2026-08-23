@@ -3,7 +3,7 @@ import { obtenerPerfilActual } from "@eco/identidad";
 import { crearClienteServidor, crearClienteAdmin } from "@eco/supabase/servidor";
 import { obtenerCampanasServidor } from "../almacen";
 
-interface RegistroNotificacion {
+export interface RegistroNotificacion {
   not_id: string;
   not_titulo: string;
   not_contenido_html: string;
@@ -12,7 +12,9 @@ interface RegistroNotificacion {
   not_creado_en: string;
   not_canal?: string;
   not_pospuesta_hasta?: string | null;
+  not_pospuesta_horas?: number | null;
   not_eliminada?: boolean;
+  not_eliminada_en?: string | null;
 }
 
 // Reemplazo dinámico estricto de variables para el perfil autenticado
@@ -63,7 +65,7 @@ export async function GET() {
           .from("not_registro")
           .select("not_id, not_titulo, not_contenido_html, not_url_accion, not_leido_en, not_creado_en, not_canal, not_detalles")
           .order("not_creado_en", { ascending: false })
-          .limit(50);
+          .limit(100);
 
         if (!esAutorizado) {
           query = query.eq("not_usuario_id", perfil.usu_id);
@@ -82,10 +84,9 @@ export async function GET() {
             not_leido_en?: string | null;
             not_creado_en: string;
             not_canal?: string;
-            not_detalles?: { eliminada?: boolean; pospuesta_hasta?: string } | null;
+            not_detalles?: { eliminada?: boolean; eliminada_en?: string; pospuesta_hasta?: string; pospuesta_horas?: number; clave_original?: string } | null;
           }>).forEach(r => {
             const detalles = r.not_detalles ?? {};
-            if (detalles.eliminada) return;
 
             notificaciones.push({
               not_id: r.not_id,
@@ -96,7 +97,9 @@ export async function GET() {
               not_creado_en: r.not_creado_en,
               not_canal: r.not_canal || "IN_APP",
               not_pospuesta_hasta: detalles.pospuesta_hasta || null,
-              not_eliminada: Boolean(detalles.eliminada)
+              not_pospuesta_horas: detalles.pospuesta_horas || null,
+              not_eliminada: Boolean(detalles.eliminada),
+              not_eliminada_en: detalles.eliminada_en || null
             });
           });
         }
@@ -112,10 +115,8 @@ export async function GET() {
 
         if (miSol) {
           const revs = (miSol.trq_revision_solicitud ?? []) as Array<{ rev_id: string; rev_decision: string; rev_comentario?: string | null; rev_creado_en: string }>;
-          // Ordenar cronológicamente descendente
           revs.sort((a, b) => new Date(b.rev_creado_en).getTime() - new Date(a.rev_creado_en).getTime());
 
-          // Solo sintetizar la última resolución activa para evitar spam / alertas repetidas
           if (revs.length > 0 && revs[0]) {
             const ultimaRev = revs[0];
             const esAprobada = ultimaRev.rev_decision === "aceptada";
@@ -126,16 +127,18 @@ export async function GET() {
               ? `<p>Tu postulación ha sido aprobada. Por favor <a href="/panel/solicitud-socio" style="color: #5000BA; font-weight: 700; text-decoration: underline;">descarga tu contrato pre-llenado y súbelo firmado</a> para activar tu cuenta de Abogado.</p>`
               : `<p>${ultimaRev.rev_comentario || "Se identificaron observaciones en tu solicitud. Por favor revisa y actualiza los documentos."}</p>`;
 
-            const yaExiste = notificaciones.some(n => n.not_id === ultimaRev.rev_id || n.not_titulo.includes(titulo));
+            const synthId = ultimaRev.rev_id || `sol-rev-${miSol.ssc_id}`;
+            const yaExiste = notificaciones.some(n => n.not_id === synthId || n.not_titulo.includes(titulo));
             if (!yaExiste) {
               notificaciones.unshift({
-                not_id: ultimaRev.rev_id || `sol-rev-${miSol.ssc_id}`,
+                not_id: synthId,
                 not_titulo: titulo,
                 not_contenido_html: cuerpo,
                 not_url_accion: "/panel/solicitud-socio",
                 not_leido_en: null,
                 not_creado_en: ultimaRev.rev_creado_en || miSol.ssc_actualizado_en || miSol.ssc_creado_en,
-                not_canal: "IN_APP"
+                not_canal: "IN_APP",
+                not_eliminada: false
               });
             }
           }
@@ -171,16 +174,18 @@ export async function GET() {
 
                   const nombrePost = [uPost?.usu_nombres, uPost?.usu_apellidos].filter(Boolean).join(" ") || uPost?.usu_correo || "Postulante";
                   const titulo = `📝 Contrato Firmado Recibido — Postulante: ${nombrePost}`;
-                  const yaExiste = notificaciones.some(n => n.not_id === `contrato-${sol.ssc_id}` || n.not_titulo.includes(nombrePost));
+                  const synthContratoId = `contrato-${sol.ssc_id}`;
+                  const yaExiste = notificaciones.some(n => n.not_id === synthContratoId || n.not_titulo.includes(nombrePost));
                   if (!yaExiste) {
                     notificaciones.unshift({
-                      not_id: `contrato-${sol.ssc_id}`,
+                      not_id: synthContratoId,
                       not_titulo: titulo,
                       not_contenido_html: `<p>El postulante <strong>${nombrePost}</strong> ha subido su contrato firmado. Haz clic en <a href="/panel/socios/${sol.ssc_id}" style="color: #05876E; font-weight: 700;">Verificar Contrato y Activar Socio</a> para completar su incorporación.</p>`,
                       not_url_accion: `/panel/socios/${sol.ssc_id}`,
                       not_leido_en: null,
                       not_creado_en: sol.ssc_actualizado_en || new Date().toISOString(),
-                      not_canal: "IN_APP"
+                      not_canal: "IN_APP",
+                      not_eliminada: false
                     });
                   }
                 }
@@ -207,7 +212,8 @@ export async function GET() {
           not_url_accion: "/panel",
           not_leido_en: null,
           not_creado_en: new Date().toISOString(),
-          not_canal: (c.canales && c.canales.includes("PUSH")) ? "PUSH" : "IN_APP"
+          not_canal: (c.canales && c.canales.includes("PUSH")) ? "PUSH" : "IN_APP",
+          not_eliminada: false
         });
       }
     });
@@ -227,7 +233,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { not_id, accion, horas } = body;
+    const { not_id, accion, horas, titulo, contenido_html, url_accion } = body;
 
     if (!not_id || !accion) {
       return NextResponse.json({ error: "Parámetros incompletos" }, { status: 400 });
@@ -236,34 +242,99 @@ export async function POST(request: Request) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const client: any = crearClienteAdmin() || await crearClienteServidor();
 
-    if (accion === "aceptar") {
-      // 1. Confirmar lectura
-      await client
-        .schema("comun_notificacion")
-        .from("not_registro")
-        .update({ not_leido_en: new Date().toISOString() })
-        .eq("not_id", not_id);
-    } else if (accion === "eliminar") {
-      // 2. Eliminar (ocultar para el usuario, mantener para auditoría)
+    // 1. Verificar si el registro existe en comun_notificacion.not_registro
+    const { data: registroExistente } = await client
+      .schema("comun_notificacion")
+      .from("not_registro")
+      .select("not_id, not_detalles, not_leido_en")
+      .eq("not_id", not_id)
+      .maybeSingle();
+
+    const ahora = new Date().toISOString();
+    const detallesActuales = (registroExistente?.not_detalles as Record<string, unknown>) || {};
+
+    if (registroExistente) {
+      let nuevosDetalles = { ...detallesActuales };
+      let nuevoLeidoEn = registroExistente.not_leido_en;
+
+      if (accion === "aceptar") {
+        nuevoLeidoEn = ahora;
+      } else if (accion === "eliminar") {
+        nuevosDetalles = {
+          ...nuevosDetalles,
+          eliminada: true,
+          eliminada_en: ahora
+        };
+        if (!nuevoLeidoEn) nuevoLeidoEn = ahora;
+      } else if (accion === "restaurar") {
+        nuevosDetalles = {
+          ...nuevosDetalles,
+          eliminada: false,
+          restaurada_en: ahora
+        };
+      } else if (accion === "posponer") {
+        const horasNum = Number(horas) || 3;
+        const fechaPospuesta = new Date(Date.now() + horasNum * 3600 * 1000).toISOString();
+        nuevosDetalles = {
+          ...nuevosDetalles,
+          pospuesta_hasta: fechaPospuesta,
+          pospuesta_horas: horasNum,
+          pospuesta_en: ahora
+        };
+      }
+
       await client
         .schema("comun_notificacion")
         .from("not_registro")
         .update({
-          not_detalles: { eliminada: true, eliminada_en: new Date().toISOString() },
-          not_leido_en: new Date().toISOString()
+          not_leido_en: nuevoLeidoEn,
+          not_detalles: nuevosDetalles
         })
         .eq("not_id", not_id);
-    } else if (accion === "posponer") {
-      // 3. Posponer por N horas
-      const horasNum = Number(horas) || 3;
-      const fechaPospuesta = new Date(Date.now() + horasNum * 3600 * 1000).toISOString();
-      await client
-        .schema("comun_notificacion")
-        .from("not_registro")
-        .update({
-          not_detalles: { pospuesta_hasta: fechaPospuesta, pospuesta_horas: horasNum }
-        })
-        .eq("not_id", not_id);
+
+    } else {
+      let detallesInsertar: Record<string, unknown> = {};
+      let leidoEnInsertar: string | null = null;
+
+      if (accion === "aceptar") {
+        leidoEnInsertar = ahora;
+      } else if (accion === "eliminar") {
+        detallesInsertar = { eliminada: true, eliminada_en: ahora };
+        leidoEnInsertar = ahora;
+      } else if (accion === "restaurar") {
+        detallesInsertar = { eliminada: false, restaurada_en: ahora };
+      } else if (accion === "posponer") {
+        const horasNum = Number(horas) || 3;
+        const fechaPospuesta = new Date(Date.now() + horasNum * 3600 * 1000).toISOString();
+        detallesInsertar = { pospuesta_hasta: fechaPospuesta, pospuesta_horas: horasNum, pospuesta_en: ahora };
+      }
+
+      const esUUIDValido = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(not_id);
+
+      const filaInsertar: Record<string, unknown> = {
+        not_usuario_id: perfil.usu_id,
+        not_negocio: "TRANQ",
+        not_canal: "IN_APP",
+        not_titulo: titulo || "Notificación de Sistema",
+        not_contenido_html: contenido_html || "<p>Notificación</p>",
+        not_url_accion: url_accion || "/panel",
+        not_leido_en: leidoEnInsertar,
+        not_detalles: { ...detallesInsertar, clave_original: not_id },
+        not_creado_en: ahora
+      };
+
+      if (esUUIDValido) {
+        filaInsertar.not_id = not_id;
+      }
+
+      try {
+        await client
+          .schema("comun_notificacion")
+          .from("not_registro")
+          .insert(filaInsertar);
+      } catch (errInsert) {
+        console.warn("Aviso al insertar not_registro en POST:", errInsert);
+      }
     }
 
     return NextResponse.json({ success: true, not_id, accion });
