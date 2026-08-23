@@ -690,14 +690,34 @@ Motor unificado de comunicación multicanal y alertas en tiempo real para todos 
      - **Lanzamiento de Funcionalidades:** Comunicados masivos de nuevas herramientas en la app.
      - **Alertas Operativas:** Cambios de estado en pedidos (`PLT-009`), citas, facturación (`PLT-006`) o expedientes.
      - **Promociones y Noticias:** Difusión de cupones y boletines informativos del negocio.
-5. **Preferencias del Usuario y Silenciado Temporal:**
+5. **Acciones Interactivas en Notificaciones y Gestión de Ciclo de Vida:**
+   - **Aceptar (Confirmar Lectura):** Marca la notificación como leída con marca de tiempo precisa (`not_leido_en`), trasladándola inmediatamente a la pestaña de *Historial*.
+   - **Posponer Alerta:** Permite al usuario posponer una notificación por lapsos predefinidos (3h, 6h, 12h, 24h) o personalizado en horas. La alerta permanece oculta y se reactiva automáticamente al vencer el tiempo límite (`not_pospuesta_hasta`).
+   - **Eliminación Lógica y Pestaña de Eliminadas:** La eliminación de notificaciones es **estrictamente lógica** (`not_detalles->eliminada: true, eliminada_en: ...`). La sección de notificaciones y la campana disponen de una pestaña/filtro dedicado **"🗑️ Eliminadas"** donde el usuario puede consultar sus notificaciones descartadas y **Restaurarlas** cuando lo requiera.
+6. **Widget de Monitoreo de Notificaciones por Usuario para Operadores y Administradores (`monitoreo_notificaciones_usuarios`):**
+   - Módulo común y protegido en la consola de administración (`/panel/administrar?widget=monitoreo_notificaciones_usuarios` y en la Consola SuperAdmin) que permite a los Operadores y Administradores auditar las notificaciones recibidas por cualquier usuario del negocio.
+   - **Métricas y DataGrid Auditado:**
+     - KPIs en tiempo real: Total, Pendientes, Confirmadas (Leídas), Pospuestas activas y Eliminadas lógicas.
+     - Detalle exhaustivo por notificación: Destinatario (Nombre, Correo, ID), Asunto, Canal, **Fecha exacta de confirmación/lectura**, **Tiempo y fecha límite de pospuesto**, **Estado de eliminación lógica con fecha** y botón de **Restaurar para el Usuario**.
+     - Filtros multicriterio por usuario específico, estado, canal y búsqueda libre en tiempo real.
+7. **Preferencias del Usuario y Silenciado Temporal:**
    - El usuario puede ajustar en su panel (`/panel/notificaciones`) sus preferencias de recepción por canal (excepto para notificaciones críticas de seguridad o reseteo de clave).
    - **Silenciado por Tiempo (Mute Temporal):** El sistema permite al usuario silenciar las notificaciones por periodos configurables: *Hoy*, *Esta Semana*, *Este Mes* o *Rango Personalizado de Fechas*, reactivando los despachos automáticamente al vencer la vigencia.
-6. **Matriz Estricta de Control de Acceso por Perfil:**
-   - **SuperAdmin y Administrador de Negocio (`SUPERADMIN`, `ADMINISTRADOR`):** Tienen acceso total a la Consola Transversal de Emisión de Notificaciones (`/panel/emision-notificaciones`), emisión manual por WYSIWYG/Markdown, segmentación por audiencia, selección de canales y bitácora de métricas de apertura.
-   - **Clientes y Roles Operativos (`CLIENTE`, `ABOGADO`, `TECNICO`, etc.):** **No poseen acceso a la consola de emisión ni al botón de redacción**. Únicamente tienen acceso a su vista propia de notificaciones recibidas y configuración de preferencias (`/panel/notificaciones`). Si un usuario con rol exclusivo de `CLIENTE` (ej. `kleber.toapanta@satcomla.com`) intenta acceder directamente a `/panel/emision-notificaciones`, el servidor intercepta la solicitud y despliega una pantalla de **Acceso Restringido**.
+8. **Matriz Estricta de Control de Acceso por Perfil:**
+   - **SuperAdmin y Administrador de Negocio (`SUPERADMIN`, `ADMINISTRADOR`):** Tienen acceso total a la Consola Transversal de Emisión de Notificaciones (`/panel/emision-notificaciones`), al Widget de Monitoreo de Notificaciones por Usuario (`monitoreo_notificaciones_usuarios`) y a la Bitácora de Despacho.
+   - **Operadores (`OPERADOR`, `AUXILIAR`):** Poseen acceso al Monitoreo de Notificaciones por Usuario para brindar soporte y verificar confirmaciones/pospuestos.
+   - **Clientes y Roles Operativos (`CLIENTE`, `ABOGADO`, `TECNICO`, etc.):** **No poseen acceso a la consola de emisión ni a herramientas de auditoría global**. Únicamente tienen acceso a su vista propia de notificaciones recibidas, historial, eliminadas y configuración de preferencias (`/panel/notificaciones`).
 
 ### Criterios de Aceptación (Gherkin)
+* **Escenario:** Usuario pospone una notificación y luego consulta eliminadas
+  * **Dado que** un usuario recibe una notificación en su panel o toast en vivo.
+  * **Cuando** presiona "Posponer 3h".
+  * **Entonces** la notificación se oculta inmediatamente de los pendientes y se programa para volver a mostrarse trascurrido el tiempo.
+  * **Y cuando** elimina lógicamente una notificación leída, esta se traslada a la pestaña "Eliminadas", permitiéndole restaurarla en cualquier momento.
+* **Escenario:** Operador audita notificaciones de un usuario específico
+  * **Dado que** un operador o administrador ingresa a `/panel/administrar?widget=monitoreo_notificaciones_usuarios`.
+  * **Cuando** selecciona a un usuario en el filtro desplegable.
+  * **Entonces** el sistema lista todas las notificaciones recibidas por dicho usuario con la fecha exacta de confirmación, tiempo de pospuesto y estado de eliminación lógica, permitiendo restaurarla si fue borrada por error.
 * **Escenario:** Usuario con rol únicamente de Cliente intenta acceder a la consola de emisión
   * **Dado que** el usuario `kleber.toapanta@satcomla.com` está autenticado únicamente con el perfil `CLIENTE`.
   * **Cuando** ingresa a `/panel` o intenta navegar directamente a `/panel/emision-notificaciones`.
