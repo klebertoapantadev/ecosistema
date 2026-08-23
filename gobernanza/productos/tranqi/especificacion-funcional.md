@@ -36,15 +36,16 @@ Tranqi adopta las mejores prácticas y estándares internacionales de **Law Prac
 | **`TRQ-COM-002`** | **Común (Todos)** | **Compartición de Documentos a Tranqi (Revisión de Contratos & Vinculación a Casos)** | 🟡 Especificado | **25%** | Kleber Toapanta |
 | **`TRQ-COM-003`** | **Común (Todos)** | **Herramienta Universal de Firma Digital de Documentos PDF (.p12 / QR / PAdES)** | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`TRQ-CLI-001`** | **Cliente** | **Portal de Casos, Solicitud de Patrocinio y Consultas Telemáticas** | ⏳ Pendiente | **0%** | Jesus Navarrete |
-| **`TRQ-CLI-002`** | **Cliente** | **Módulo Express de Revisión y Dictamen Legal de Contratos/Minutas** | ⏳ Pendiente | **0%** | Jesus Navarrete |
+| **`TRQ-CLI-002`** | **Cliente** | **Módulo Express de Revisión y Dictamen Legal de Contratos/Minutas (IA)** | ⏳ Pendiente | **0%** | **Jesus Navarrete (IA)** |
 | **`TRQ-CLI-003`** | **Cliente** | **Directorio Público y Selección Geolocalizada de Abogados** | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`TRQ-CLI-004`** | **Cliente** | **Calculadora de Honorarios, Pensiones (MIES) e Indemnizaciones Laborales** | ⏳ Pendiente | **0%** | Jesus Navarrete |
 | **`TRQ-ABG-001`** | **Abogado** | **Acreditación, Contratación Dual (Firma Digital .p12 / Manual) y Onboarding** | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`TRQ-ABG-002`** | **Abogado** | **Despacho Virtual: Bandeja de Casos, Expediente Digital y Actuaciones SATJE** | ⏳ Pendiente | **0%** | Kleber Toapanta / Jesus Navarrete |
 | **`TRQ-ABG-003`** | **Abogado** | **Firma Electrónica Avanzada PAdES en Navegador (Zero-Custody `.p12`/`.pfx`)** | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`TRQ-ABG-004`** | **Abogado** | **Agenda Profesional, Citas Presenciales y Sala de Videoconsulta Segura** | ⏳ Pendiente | **0%** | Jesus Navarrete |
+| **`TRQ-ABG-005`** | **Abogado** | **Verificación Inteligente de Identidad y Documentos con Aria (IA) en Registro de Abogados** | 🟡 Especificado | **25%** | **Jesus Navarrete (IA)** |
 | **`TRQ-ADM-001`** | **Operador/Admin** | **Mesa de Control de Acreditación, Contra-Firma Tranqi y Activación de Socios** | ✅ Implementado | **100%** | Kleber Toapanta |
-| **`TRQ-ADM-002`** | **Operador/Admin** | **Asignación de Casos, Liquidación de Honorarios y Comisión de Plataforma** | ⏳ Pendiente | **0%** | Kleber Toapanta / Jesus Navarrete |
+| **`TRQ-ADM-002`** | **Operador/Admin** | **Asignación Inteligente de Casos (IA), Liquidación de Honorarios y Comisiones** | ⏳ Pendiente | **0%** | **Jesus Navarrete (IA)** / Kleber Toapanta |
 | **`TRQ-ADM-003`** | **Operador/Admin** | **Auditoría Transversal BDD, Telemetría API y Bitácora de Campañas** | ✅ Implementado | **100%** | Kleber Toapanta |
 
 ---
@@ -201,6 +202,72 @@ graph TD
 ### TRQ-ABG-004 — Agenda Profesional y Videoconsultas
 **Responsable:** Jesus Navarrete | **Estado:** ⏳ Pendiente (0%)
 - Calendario sincronizado de citas presenciales en despacho y salas de consulta telemática segura.
+
+---
+
+### TRQ-ABG-005 — Verificación Inteligente de Identidad y Documentos con Aria (IA) en Registro de Abogados
+**Responsable:** **Jesus Navarrete (IA)** | **Estado:** 🟡 Especificado (25%)
+
+#### 1. Descripción & Objetivos de Negocio
+Integración del agente de IA multimodal **Aria** (`packages/agentes-ia`) en el flujo de postulación y registro de socios abogados (`/panel/solicitud-socio`). Aria valida en tiempo real la legibilidad y coherencia de la Cédula de Identidad/Pasaporte y ejecuta un **cotejo cruzado inmutable (Cross-Document Verification)** para certificar que el 100% de los documentos adjuntos (Título Universitario SENESCYT, Carnet del Foro de Abogados, RUC, Certificados) pertenezcan legítimamente a la misma persona registrada, previniendo suplantaciones y reduciendo la carga de auditoría humana en la Mesa de Control.
+
+#### 2. Diagrama de Flujo de Inspección Inteligente de Identidad:
+
+```mermaid
+graph TD
+    A["1. Postulante ingresa Nombres, Cédula y sube Identificación"] --> B["2. Aria analiza Documento de Identidad (OCR Multimodal)"]
+    B --> C{"¿Coincide Cédula y Nombres del Formulario?"}
+    C -->|No / Ilegible| D["❌ Alerta Inmediata: Documento ilegible o datos discordantes"]
+    C -->|Sí| E["🟢 Identidad Base Certificada por Aria"]
+    E --> F["3. Postulante carga Título SENESCYT, Matrícula del Foro y RUC"]
+    F --> G["4. Aria ejecuta Cotejo Cruzado (Cross-Document Matching)"]
+    G --> H{"¿Todos los documentos pertenecen al titular?"}
+    H -->|Discordancia de Titular| I["🔴 Alerta Crítica: Documento pertenece a otra persona"]
+    H -->|Coincidencia Plena| J["✅ Expediente 100% Validado por Aria listo para envío"]
+    J --> K["5. Operador evalúa Dictamen con Score de Confianza en Mesa de Control"]
+```
+
+#### 3. Reglas de Negocio Estrictas:
+1. **Extracción y Validación de Identidad Base:**
+   - Aria extrae nombres, apellidos, número de identificación y fecha de caducidad de la cédula o pasaporte.
+   - Si la similitud con los datos del formulario es `< 90%` o el Módulo 10 es inconsistente, se bloquea el avance con alerta explicativa.
+2. **Cotejo Cruzado de Titularidad Única (Cross-Document Matching):**
+   - Aria compara el titular extraído del Título SENESCYT, Matrícula del Foro de Abogados y RUC contra la Identidad Base validada.
+   - Si se detecta un titular ajeno, se emite una alerta roja inmediata impidiendo el envío fraudulento.
+3. **Semáforo de Confianza de Aria:**
+   - 🟢 **90% - 100% (Aprobado):** Coincidencia plena.
+   - 🟡 **70% - 89% (Observación):** Variación leve en nombres para revisión del operador.
+   - 🔴 **< 70% (Rechazado):** Discrepancia crítica o documento ilegible.
+4. **Persistencia e Inmutabilidad en Base de Datos:**
+   - El dictamen de Aria se almacena en `tranqui_legal.trq_solicitud_socio.ssc_detalles` (`aria_validacion: { estado, score, documentos_auditados }`) y en `comun_auditoria.aud_registro`.
+
+#### 4. Criterios de Aceptación (Gherkin):
+
+```gherkin
+Escenario: Validación exitosa de cédula concordante con el formulario
+  Dado que el postulante ingresó "1719103986" y "Carlos Alberto Pérez Mena"
+  Cuando sube la fotografía de su Cédula de Identidad en formato JPG
+  Entonces Aria analiza la imagen en menos de 3 segundos
+  Y muestra un distintivo verde: "✨ Identidad Validada por Aria: Carlos Alberto Pérez Mena (1719103986)"
+  Y habilita la carga de los siguientes documentos probatorios.
+
+Escenario: Detección de documento de título perteneciente a otra persona
+  Dado que la Identidad Base validada pertenece a "Carlos Alberto Pérez Mena (1719103986)"
+  Cuando el postulante sube un Título Universitario perteneciente a "María Fernanda López (1712345678)"
+  Entonces Aria detecta la discrepancia de titular
+  Y despliega una alerta: "⚠️ El documento cargado pertenece a María Fernanda López y no coincide con tu identidad"
+  Y solicita volver a subir el documento correcto antes de permitir el envío.
+
+Escenario: Mesa de Control con Dictamen de Aria para el Operador
+  Dado que un operador ingresa a "/panel/socios" para evaluar una postulación
+  Cuando abre el expediente del postulante
+  Entonces visualiza la tarjeta "Inspección de Identidad Aria" con el desglose de similitud (100%), datos extraídos de cada documento y recomendación de aprobación directa.
+```
+
+#### 5. Contrato de API & Integración Técnica:
+- **Endpoint:** `POST /api/agentes/aria-verificacion-identidad`
+- **Request:** `{ usuarioId, tipoDocumento, archivoBase64, archivoNombre, datosReferencia: { nombres, apellidos, cedula } }`
+- **Response:** `{ ok: true, data: { resultado: "APROBADO" | "OBSERVACION" | "RECHAZADO", scoreConfianza: number, datosExtraidos, concordancia, observaciones } }`
 
 ---
 
