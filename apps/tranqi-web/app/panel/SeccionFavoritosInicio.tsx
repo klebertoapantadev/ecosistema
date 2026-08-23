@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { User, History, KeyRound, ShieldAlert, Settings, Mail, Bell, Star, ChevronRight, ShieldCheck, Sliders, Receipt, Lock, FileText, BarChart2, FileCheck, type LucideIcon } from "lucide-react";
+import { User, History, KeyRound, ShieldAlert, Settings, Mail, Bell, Star, ChevronRight, ShieldCheck, Sliders, Receipt, Lock, FileText, BarChart2, FileCheck, Folder, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { useCustomWidgets } from "./gestorTitulosWidgets";
 
@@ -142,6 +142,15 @@ const CATALOGO_FAVORITOS: Record<string, WidgetFavInfo> = {
     icono: FileCheck,
     colorIcono: "#5000BA",
     href: "/panel/firma-documentos",
+    origen: "Configurar"
+  },
+  billetera_documentos: {
+    id: "billetera_documentos",
+    titulo: "Billetera Digital de Documentos",
+    subtitulo: "Bóveda segura de documentos personales, vehiculares y contratos con OCR y TTL",
+    icono: Folder,
+    colorIcono: "#5000BA",
+    href: "/panel/billetera-documentos",
     origen: "Configurar"
   }
 };

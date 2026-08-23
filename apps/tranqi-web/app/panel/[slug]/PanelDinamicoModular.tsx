@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import {
   LayoutGrid, Wrench, Shield, Users, Bell, UserCog, ClipboardList, FileText,
-  Settings, X, ChevronRight, CircleUser, KeyRound, FileCheck, type LucideIcon
+  Settings, X, ChevronRight, CircleUser, KeyRound, FileCheck, Folder, type LucideIcon
 } from "lucide-react";
 import { AdministracionPerfilesWidget } from "@eco/gestion-usuarios/componentes/AdministracionPerfilesWidget";
 import { ConsultaUsuariosPerfilesWidget } from "@eco/gestion-usuarios/componentes/ConsultaUsuariosPerfilesWidget";
@@ -17,6 +17,7 @@ import { SelectorRolActivo } from "../SelectorRolActivo";
 import { TablaAuditoria } from "../auditoria/TablaAuditoria";
 import { useCustomWidgets } from "../gestorTitulosWidgets";
 import { WidgetFirmaDocumentosPdf } from "@/modulos/firma-documentos/componentes/WidgetFirmaDocumentosPdf";
+import { WidgetBilleteraDocumentos } from "@/modulos/billetera-documentos";
 
 import { obtenerConfiguracionNavegacionRolAction } from "@eco/gestion-usuarios/acciones";
 
@@ -40,6 +41,27 @@ const INVENTARIO_GLOBAL_WIDGETS: Record<string, { titulo: string; subtitulo: str
     titulo: "Firma Electrónica de Documentos PDF",
     subtitulo: "Firmado digital con certificado .p12 / .pfx, estampa visual y código QR",
     icono: FileCheck,
+    colorIcono: "#5000BA",
+    categoria: "Herramientas Digitales"
+  },
+  billetera_documentos: {
+    titulo: "Billetera Digital de Documentos Seguros",
+    subtitulo: "Bóveda digital de documentos personales, vehiculares, contratos y profesionales con OCR y TTL",
+    icono: Folder,
+    colorIcono: "#5000BA",
+    categoria: "Herramientas Digitales"
+  },
+  billetera: {
+    titulo: "Billetera Digital de Documentos Seguros",
+    subtitulo: "Bóveda digital de documentos personales, vehiculares, contratos y profesionales con OCR y TTL",
+    icono: Folder,
+    colorIcono: "#5000BA",
+    categoria: "Herramientas Digitales"
+  },
+  documentos: {
+    titulo: "Billetera Digital de Documentos Seguros",
+    subtitulo: "Bóveda digital de documentos personales, vehiculares, contratos y profesionales con OCR y TTL",
+    icono: Folder,
     colorIcono: "#5000BA",
     categoria: "Herramientas Digitales"
   },
@@ -356,6 +378,10 @@ export function PanelDinamicoModular({ slug, negocio }: Props) {
       case "firma_pdf":
       case "firma":
         return <WidgetFirmaDocumentosPdf negocio={negocio} onCerrar={() => setWidgetActivo(null)} mostrarBotonCerrar={false} />;
+      case "billetera_documentos":
+      case "billetera":
+      case "documentos":
+        return <WidgetBilleteraDocumentos negocio={negocio} onCerrar={() => setWidgetActivo(null)} />;
       case "mfa_seguridad":
       case "mfa":
       case "seguridad_mfa":

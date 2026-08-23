@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import {
   Search, X, UserCog, UserCheck, Settings, Mail, Bell, Shield, ShieldCheck,
-  CircleUser, ChevronRight, Sliders, Briefcase, FileText, BarChart2, FileCheck
+  CircleUser, ChevronRight, Sliders, Briefcase, FileText, BarChart2, FileCheck, Folder
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCustomWidgets } from "./gestorTitulosWidgets";
@@ -29,6 +29,16 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
     categoria: "Herramientas Digitales",
     minNivel: 1,
     icono: FileCheck,
+    colorIcono: "#5000BA"
+  },
+  {
+    clave: "billetera_documentos",
+    nombre: "Billetera Digital de Documentos Seguros",
+    detalle: "Bóveda digital de documentos personales, vehiculares, contratos y profesionales con OCR y TTL",
+    ruta: "/panel/billetera-documentos",
+    categoria: "Herramientas Digitales",
+    minNivel: 1,
+    icono: Folder,
     colorIcono: "#5000BA"
   },
   {
