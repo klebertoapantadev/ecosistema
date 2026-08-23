@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextResponse } from "next/server";
 import { obtenerPerfilActual, obtenerPerfiles } from "@eco/identidad";
 import { crearClienteServidor, crearClienteAdmin } from "@eco/supabase/servidor";
@@ -18,6 +19,11 @@ export interface NotificacionUsuarioAdminItem {
   not_eliminada: boolean;
   not_eliminada_en?: string | null;
   not_creado_en: string;
+  not_detalles?: Record<string, unknown>;
+  confirmada_por?: { usuario_id: string; usuario_nombre: string; usuario_correo: string; fecha: string } | null;
+  pospuesta_por?: { usuario_id: string; usuario_nombre: string; usuario_correo: string; fecha: string; horas?: number } | null;
+  eliminada_por?: { usuario_id: string; usuario_nombre: string; usuario_correo: string; fecha: string } | null;
+  restaurada_por?: { usuario_id: string; usuario_nombre: string; usuario_correo: string; fecha: string } | null;
 }
 
 export async function GET(request: Request) {
@@ -99,7 +105,12 @@ export async function GET(request: Request) {
           not_pospuesta_horas: (detalles.pospuesta_horas as number) || null,
           not_eliminada: Boolean(detalles.eliminada),
           not_eliminada_en: (detalles.eliminada_en as string) || null,
-          not_creado_en: r.not_creado_en
+          not_creado_en: r.not_creado_en,
+          not_detalles: detalles,
+          confirmada_por: (detalles.confirmada_por as any) || (detalles.confirmada_usuario_nombre ? { usuario_id: detalles.confirmada_usuario_id as string, usuario_nombre: detalles.confirmada_usuario_nombre as string, usuario_correo: "", fecha: (detalles.confirmada_en as string) || "" } : null),
+          pospuesta_por: (detalles.pospuesta_por as any) || (detalles.pospuesta_usuario_nombre ? { usuario_id: detalles.pospuesta_usuario_id as string, usuario_nombre: detalles.pospuesta_usuario_nombre as string, usuario_correo: "", fecha: (detalles.pospuesta_en as string) || "", horas: detalles.pospuesta_horas as number } : null),
+          eliminada_por: (detalles.eliminada_por as any) || (detalles.eliminada_usuario_nombre ? { usuario_id: detalles.eliminada_usuario_id as string, usuario_nombre: detalles.eliminada_usuario_nombre as string, usuario_correo: "", fecha: (detalles.eliminada_en as string) || "" } : null),
+          restaurada_por: (detalles.restaurada_por as any) || (detalles.restaurada_usuario_nombre ? { usuario_id: detalles.restaurada_usuario_id as string, usuario_nombre: detalles.restaurada_usuario_nombre as string, usuario_correo: "", fecha: (detalles.restaurada_en as string) || "" } : null)
         });
       });
     }

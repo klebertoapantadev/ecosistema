@@ -301,173 +301,196 @@ export async function enviarSolicitudSocio(
   datos: DatosSolicitudSocio,
   usuarioId: string,
 ): Promise<Resultado<{ solicitudId: string }>> {
-  const parseo = esquemaSolicitudSocio.safeParse(datos);
-  if (!parseo.success) {
-    return { ok: false, error: parseo.error.issues[0]?.message ?? "Datos inválidos" };
-  }
-  const d = parseo.data;
+  try {
+    const parseo = esquemaSolicitudSocio.safeParse(datos);
+    if (!parseo.success) {
+      return { ok: false, error: parseo.error.issues[0]?.message ?? "Datos inválidos" };
+    }
+    const d = parseo.data;
 
-  const supabase = await crearClienteServidor();
-  const adminSupabase = crearClienteAdmin() || supabase;
+    const supabase = await crearClienteServidor();
+    const adminSupabase = (crearClienteAdmin() || supabase) as any;
 
-  // Verificar si ya existe una solicitud para este usuario con adminSupabase
-  const { data: existente } = await adminSupabase
-    .schema("tranqui_legal")
-    .from("trq_solicitud_socio")
-    .select("ssc_id, ssc_estado")
-    .eq("ssc_usuario_id", usuarioId)
-    .order("ssc_creado_en", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  let solicitudId: string;
-  let esActualizacion = false;
-
-  if (existente) {
-    solicitudId = existente.ssc_id;
-    esActualizacion = true;
-    const esAceptada = existente.ssc_estado === "aceptada";
-
-    // Actualizar solicitud existente con adminSupabase
-    const { error: errorUpdate } = await adminSupabase
+    // Verificar si ya existe una solicitud para este usuario con adminSupabase
+    const { data: existente } = await adminSupabase
       .schema("tranqui_legal")
       .from("trq_solicitud_socio")
-      .update({
-        ssc_cedula: d.cedula,
-        ssc_matricula_profesional: d.matriculaProfesional,
-        ssc_universidad: d.universidad,
-        ssc_anio_graduacion: d.anioGraduacion,
-        ssc_anos_experiencia: d.anosExperiencia,
-        ssc_resumen_profesional: d.resumenProfesional,
-        ssc_telefono_contacto: d.telefonoContacto || null,
-        ssc_enlace_senescyt_verificado: d.enlaceSenescytVerificado,
-        ssc_enlace_foro_verificado: d.enlaceForoVerificado,
-        ssc_estado: esAceptada ? "aceptada" : "enviada",
-        ssc_enviada_en: new Date().toISOString(),
-      })
-      .eq("ssc_id", solicitudId);
+      .select("ssc_id, ssc_estado")
+      .eq("ssc_usuario_id", usuarioId)
+      .order("ssc_creado_en", { ascending: false })
+      .limit(1)
+      .maybeSingle();
 
-    if (errorUpdate) return { ok: false, error: errorUpdate.message };
+    let solicitudId: string;
+    let esActualizacion = false;
 
-    // Registrar en el historial de revisiones el reingreso / actualización del postulante
-    try {
-      await adminSupabase.schema("tranqui_legal").from("trq_revision_solicitud").insert({
-        rev_solicitud_id: solicitudId,
-        rev_decision: "reingreso",
-        rev_comentario: "El postulante actualizó sus datos y documentos de acreditación para una nueva evaluación.",
-        rev_admin_id: usuarioId,
-      });
-    } catch (errRevIns) {
-      console.warn("Aviso al registrar revisión de reingreso:", errRevIns);
+    if (existente) {
+      solicitudId = existente.ssc_id;
+      esActualizacion = true;
+      const esAceptada = existente.ssc_estado === "aceptada";
+
+      // Actualizar solicitud existente con adminSupabase
+      const { error: errorUpdate } = await adminSupabase
+        .schema("tranqui_legal")
+        .from("trq_solicitud_socio")
+        .update({
+          ssc_cedula: d.cedula,
+          ssc_matricula_profesional: d.matriculaProfesional,
+          ssc_universidad: d.universidad,
+          ssc_anio_graduacion: d.anioGraduacion,
+          ssc_anos_experiencia: d.anosExperiencia,
+          ssc_resumen_profesional: d.resumenProfesional,
+          ssc_telefono_contacto: d.telefonoContacto || null,
+          ssc_enlace_senescyt_verificado: d.enlaceSenescytVerificado,
+          ssc_enlace_foro_verificado: d.enlaceForoVerificado,
+          ssc_estado: esAceptada ? "aceptada" : "enviada",
+          ssc_enviada_en: new Date().toISOString(),
+        })
+        .eq("ssc_id", solicitudId);
+
+      if (errorUpdate) return { ok: false, error: errorUpdate.message };
+
+      // Registrar en el historial de revisiones el reingreso / actualización del postulante
+      try {
+        await adminSupabase.schema("tranqui_legal").from("trq_revision_solicitud").insert({
+          rev_solicitud_id: solicitudId,
+          rev_decision: "reingreso",
+          rev_comentario: "El postulante actualizó sus datos y documentos de acreditación para una nueva evaluación.",
+          rev_admin_id: usuarioId,
+        });
+      } catch (errRevIns) {
+        console.warn("Aviso al registrar revisión de reingreso:", errRevIns);
+      }
+
+      if (esAceptada && d.telefonoContacto) {
+        await adminSupabase
+          .schema("comun_seguridad")
+          .from("seg_usuario")
+          .update({ usu_whatsapp: d.telefonoContacto })
+          .eq("usu_id", usuarioId);
+      }
+
+      try {
+        await adminSupabase.schema("tranqui_legal").from("trq_experiencia_laboral").delete().eq("exp_solicitud_id", solicitudId);
+        await adminSupabase.schema("tranqui_legal").from("trq_solicitud_materia").delete().eq("sma_solicitud_id", solicitudId);
+        await adminSupabase.schema("tranqui_legal").from("trq_solicitud_provincia").delete().eq("spr_solicitud_id", solicitudId);
+      } catch (errDel) {
+        console.warn("Aviso al limpiar relaciones previas de solicitud:", errDel);
+      }
+    } else {
+      // Insertar nueva solicitud con adminSupabase
+      const { data: solicitud, error } = await adminSupabase
+        .schema("tranqui_legal")
+        .from("trq_solicitud_socio")
+        .insert({
+          ssc_usuario_id: usuarioId,
+          ssc_cedula: d.cedula,
+          ssc_matricula_profesional: d.matriculaProfesional,
+          ssc_universidad: d.universidad,
+          ssc_anio_graduacion: d.anioGraduacion,
+          ssc_anos_experiencia: d.anosExperiencia,
+          ssc_resumen_profesional: d.resumenProfesional,
+          ssc_telefono_contacto: d.telefonoContacto || null,
+          ssc_enlace_senescyt_verificado: d.enlaceSenescytVerificado,
+          ssc_enlace_foro_verificado: d.enlaceForoVerificado,
+        })
+        .select("ssc_id")
+        .single();
+
+      if (error) return { ok: false, error: error.message };
+      solicitudId = solicitud.ssc_id;
     }
 
-    if (esAceptada && d.telefonoContacto) {
-      await adminSupabase
-        .schema("comun_seguridad")
-        .from("seg_usuario")
-        .update({ usu_whatsapp: d.telefonoContacto })
-        .eq("usu_id", usuarioId);
-    }
-
+    // Insertar/upsert experiencias, materias y provincias con IDs DEDUPLICADOS
     try {
       await adminSupabase.schema("tranqui_legal").from("trq_experiencia_laboral").delete().eq("exp_solicitud_id", solicitudId);
-      await adminSupabase.schema("tranqui_legal").from("trq_solicitud_materia").delete().eq("sma_solicitud_id", solicitudId);
-      await adminSupabase.schema("tranqui_legal").from("trq_solicitud_provincia").delete().eq("spr_solicitud_id", solicitudId);
-    } catch (errDel) {
-      console.warn("Aviso al limpiar relaciones previas de solicitud:", errDel);
+    } catch (errExpDel) {
+      console.warn("Aviso al limpiar experiencias previas:", errExpDel);
     }
-  } else {
-    // Insertar nueva solicitud con adminSupabase
-    const { data: solicitud, error } = await adminSupabase
-      .schema("tranqui_legal")
-      .from("trq_solicitud_socio")
-      .insert({
-        ssc_usuario_id: usuarioId,
-        ssc_cedula: d.cedula,
-        ssc_matricula_profesional: d.matriculaProfesional,
-        ssc_universidad: d.universidad,
-        ssc_anio_graduacion: d.anioGraduacion,
-        ssc_anos_experiencia: d.anosExperiencia,
-        ssc_resumen_profesional: d.resumenProfesional,
-        ssc_telefono_contacto: d.telefonoContacto || null,
-        ssc_enlace_senescyt_verificado: d.enlaceSenescytVerificado,
-        ssc_enlace_foro_verificado: d.enlaceForoVerificado,
-      })
-      .select("ssc_id")
-      .single();
 
-    if (error) return { ok: false, error: error.message };
-    solicitudId = solicitud.ssc_id;
-  }
+    if (d.experiencia.length > 0) {
+      const vistosExp = new Set<string>();
+      const experienciasUnicas = d.experiencia.filter((e) => {
+        const clave = `${e.empresa.trim().toLowerCase()}|${e.cargo.trim().toLowerCase()}|${e.fechaInicio.trim()}`;
+        if (vistosExp.has(clave)) return false;
+        vistosExp.add(clave);
+        return true;
+      });
 
-  // Insertar/upsert experiencias, materias y provincias con IDs DEDUPLICADOS
-  // Primero limpiamos cualquier experiencia previa de esta solicitud para evitar duplicados
-  try {
-    await adminSupabase.schema("tranqui_legal").from("trq_experiencia_laboral").delete().eq("exp_solicitud_id", solicitudId);
-  } catch (errExpDel) {
-    console.warn("Aviso al limpiar experiencias previas:", errExpDel);
-  }
+      if (experienciasUnicas.length > 0) {
+        const { error: errorExp } = await adminSupabase
+          .schema("tranqui_legal")
+          .from("trq_experiencia_laboral")
+          .insert(
+            experienciasUnicas.map((e) => ({
+              exp_solicitud_id: solicitudId,
+              exp_empresa: e.empresa,
+              exp_cargo: e.cargo,
+              exp_fecha_inicio: e.fechaInicio,
+              exp_fecha_fin: e.fechaFin || null,
+              exp_descripcion: e.descripcion || null,
+            })),
+          );
+        if (errorExp) console.warn("Aviso al insertar experiencias laborales:", errorExp);
+      }
+    }
 
-  if (d.experiencia.length > 0) {
-    const vistosExp = new Set<string>();
-    const experienciasUnicas = d.experiencia.filter((e) => {
-      const clave = `${e.empresa.trim().toLowerCase()}|${e.cargo.trim().toLowerCase()}|${e.fechaInicio.trim()}`;
-      if (vistosExp.has(clave)) return false;
-      vistosExp.add(clave);
-      return true;
+    const materiaUuids = Array.from(new Set(d.materiaIds.filter((id) => UUID_REGEX.test(id))));
+    if (materiaUuids.length > 0) {
+      const { error: errorMat } = await adminSupabase
+        .schema("tranqui_legal")
+        .from("trq_solicitud_materia")
+        .upsert(
+          materiaUuids.map((mat_id) => ({ sma_solicitud_id: solicitudId, sma_materia_id: mat_id })),
+          { onConflict: "sma_solicitud_id,sma_materia_id", ignoreDuplicates: true }
+        );
+      if (errorMat) console.warn("Aviso al insertar materias:", errorMat);
+    }
+
+    let provinciaUuids = Array.from(new Set(d.provinciaIds.filter((id) => UUID_REGEX.test(id))));
+    if (d.provinciaIds.includes("todo_ecuador") || provinciaUuids.length === 0) {
+      // Si seleccionó todo el país o no hay UUIDs directos, cargar todas las provincias del catálogo
+      try {
+        const { data: provsCat } = await adminSupabase
+          .schema("comun_catalogo")
+          .from("cat_provincia")
+          .select("cat_id");
+        if (provsCat && Array.isArray(provsCat)) {
+          provinciaUuids = provsCat.map((p: any) => p.cat_id).filter((id: string) => UUID_REGEX.test(id));
+        }
+      } catch (errCat) {
+        console.warn("Aviso al consultar catálogo de provincias:", errCat);
+      }
+    }
+
+    if (provinciaUuids.length > 0) {
+      const { error: errorProv } = await adminSupabase
+        .schema("tranqui_legal")
+        .from("trq_solicitud_provincia")
+        .upsert(
+          provinciaUuids.map((cat_id) => ({ spr_solicitud_id: solicitudId, spr_provincia_id: cat_id })),
+          { onConflict: "spr_solicitud_id,spr_provincia_id", ignoreDuplicates: true }
+        );
+      if (errorProv) console.warn("Aviso al insertar provincias:", errorProv);
+    }
+
+    // Despachar notificación automática (In-App, Push y Email) a todos los Administradores y Operadores de Tranqi
+    notificarSolicitudEnviada(usuarioId, solicitudId, esActualizacion).catch((errNot) => {
+      console.warn("Aviso en despacho de notificación automática:", errNot);
     });
 
-    const { error: errorExp } = await adminSupabase
-      .schema("tranqui_legal")
-      .from("trq_experiencia_laboral")
-      .insert(
-        experienciasUnicas.map((e) => ({
-          exp_solicitud_id: solicitudId,
-          exp_empresa: e.empresa,
-          exp_cargo: e.cargo,
-          exp_fecha_inicio: e.fechaInicio,
-          exp_fecha_fin: e.fechaFin || null,
-          exp_descripcion: e.descripcion || null,
-        })),
-      );
-    if (errorExp) return { ok: false, error: errorExp.message };
+    try {
+      revalidatePath("/panel/solicitud-socio");
+      revalidatePath("/panel/socios");
+      revalidatePath("/panel/administrar");
+      revalidatePath("/panel/emision-notificaciones");
+    } catch { /* Ignorar en caso de Server Component */ }
+
+    return { ok: true, data: { solicitudId } };
+  } catch (err: any) {
+    console.error("Error crítico en enviarSolicitudSocio:", err);
+    return { ok: false, error: err?.message || "Ocurrió un error inesperado al procesar tu solicitud. Por favor intenta nuevamente." };
   }
-
-  const materiaUuids = Array.from(new Set(d.materiaIds.filter((id) => UUID_REGEX.test(id))));
-  if (materiaUuids.length > 0) {
-    const { error: errorMat } = await adminSupabase
-      .schema("tranqui_legal")
-      .from("trq_solicitud_materia")
-      .upsert(
-        materiaUuids.map((mat_id) => ({ sma_solicitud_id: solicitudId, sma_materia_id: mat_id })),
-        { onConflict: "sma_solicitud_id,sma_materia_id", ignoreDuplicates: true }
-      );
-    if (errorMat) return { ok: false, error: errorMat.message };
-  }
-
-  const provinciaUuids = Array.from(new Set(d.provinciaIds.filter((id) => UUID_REGEX.test(id))));
-  if (provinciaUuids.length > 0) {
-    const { error: errorProv } = await adminSupabase
-      .schema("tranqui_legal")
-      .from("trq_solicitud_provincia")
-      .upsert(
-        provinciaUuids.map((cat_id) => ({ spr_solicitud_id: solicitudId, spr_provincia_id: cat_id })),
-        { onConflict: "spr_solicitud_id,spr_provincia_id", ignoreDuplicates: true }
-      );
-    if (errorProv) return { ok: false, error: errorProv.message };
-  }
-
-  // Despachar notificación automática (Email + Push) e inscribir en bitácora en segundo plano
-  notificarSolicitudEnviada(usuarioId, solicitudId, esActualizacion).catch((errNot) => {
-    console.warn("Aviso en despacho de notificación automática:", errNot);
-  });
-
-  revalidatePath("/panel/solicitud-socio");
-  revalidatePath("/panel/socios");
-  revalidatePath("/panel/administrar");
-  revalidatePath("/panel/emision-notificaciones");
-
-  return { ok: true, data: { solicitudId } };
 }
 
 export async function subirDocumentoSocioAction(formData: FormData): Promise<Resultado<{ url: string; path: string }>> {

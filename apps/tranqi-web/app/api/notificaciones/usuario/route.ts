@@ -239,6 +239,14 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Parámetros incompletos" }, { status: 400 });
     }
 
+    const nombreActor = [perfil.usu_nombres, perfil.usu_apellidos].filter(Boolean).join(" ") || perfil.usu_correo;
+    const actorInfo = {
+      usuario_id: perfil.usu_id,
+      usuario_nombre: nombreActor,
+      usuario_correo: perfil.usu_correo,
+      fecha: new Date().toISOString()
+    };
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const client: any = crearClienteAdmin() || await crearClienteServidor();
 
@@ -259,18 +267,31 @@ export async function POST(request: Request) {
 
       if (accion === "aceptar") {
         nuevoLeidoEn = ahora;
+        nuevosDetalles = {
+          ...nuevosDetalles,
+          confirmada_por: actorInfo,
+          confirmada_en: ahora,
+          confirmada_usuario_id: perfil.usu_id,
+          confirmada_usuario_nombre: nombreActor
+        };
       } else if (accion === "eliminar") {
         nuevosDetalles = {
           ...nuevosDetalles,
           eliminada: true,
-          eliminada_en: ahora
+          eliminada_en: ahora,
+          eliminada_por: actorInfo,
+          eliminada_usuario_id: perfil.usu_id,
+          eliminada_usuario_nombre: nombreActor
         };
         if (!nuevoLeidoEn) nuevoLeidoEn = ahora;
       } else if (accion === "restaurar") {
         nuevosDetalles = {
           ...nuevosDetalles,
           eliminada: false,
-          restaurada_en: ahora
+          restaurada_en: ahora,
+          restaurada_por: actorInfo,
+          restaurada_usuario_id: perfil.usu_id,
+          restaurada_usuario_nombre: nombreActor
         };
       } else if (accion === "posponer") {
         const horasNum = Number(horas) || 3;
@@ -279,7 +300,10 @@ export async function POST(request: Request) {
           ...nuevosDetalles,
           pospuesta_hasta: fechaPospuesta,
           pospuesta_horas: horasNum,
-          pospuesta_en: ahora
+          pospuesta_en: ahora,
+          pospuesta_por: actorInfo,
+          pospuesta_usuario_id: perfil.usu_id,
+          pospuesta_usuario_nombre: nombreActor
         };
       }
 
@@ -298,15 +322,23 @@ export async function POST(request: Request) {
 
       if (accion === "aceptar") {
         leidoEnInsertar = ahora;
+        detallesInsertar = { confirmada_por: actorInfo, confirmada_en: ahora, confirmada_usuario_id: perfil.usu_id, confirmada_usuario_nombre: nombreActor };
       } else if (accion === "eliminar") {
-        detallesInsertar = { eliminada: true, eliminada_en: ahora };
+        detallesInsertar = { eliminada: true, eliminada_en: ahora, eliminada_por: actorInfo, eliminada_usuario_id: perfil.usu_id, eliminada_usuario_nombre: nombreActor };
         leidoEnInsertar = ahora;
       } else if (accion === "restaurar") {
-        detallesInsertar = { eliminada: false, restaurada_en: ahora };
+        detallesInsertar = { eliminada: false, restaurada_en: ahora, restaurada_por: actorInfo, restaurada_usuario_id: perfil.usu_id, restaurada_usuario_nombre: nombreActor };
       } else if (accion === "posponer") {
         const horasNum = Number(horas) || 3;
         const fechaPospuesta = new Date(Date.now() + horasNum * 3600 * 1000).toISOString();
-        detallesInsertar = { pospuesta_hasta: fechaPospuesta, pospuesta_horas: horasNum, pospuesta_en: ahora };
+        detallesInsertar = {
+          pospuesta_hasta: fechaPospuesta,
+          pospuesta_horas: horasNum,
+          pospuesta_en: ahora,
+          pospuesta_por: actorInfo,
+          pospuesta_usuario_id: perfil.usu_id,
+          pospuesta_usuario_nombre: nombreActor
+        };
       }
 
       const esUUIDValido = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(not_id);
@@ -337,7 +369,7 @@ export async function POST(request: Request) {
       }
     }
 
-    return NextResponse.json({ success: true, not_id, accion });
+    return NextResponse.json({ success: true, not_id, accion, actor: actorInfo });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : "Error al procesar la acción";
     return NextResponse.json({ error: msg }, { status: 500 });

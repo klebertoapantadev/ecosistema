@@ -22,6 +22,11 @@ export interface NotificacionUsuarioAdminItem {
   not_eliminada: boolean;
   not_eliminada_en?: string | null;
   not_creado_en: string;
+  not_detalles?: Record<string, unknown>;
+  confirmada_por?: { usuario_id: string; usuario_nombre: string; usuario_correo: string; fecha: string } | null;
+  pospuesta_por?: { usuario_id: string; usuario_nombre: string; usuario_correo: string; fecha: string; horas?: number } | null;
+  eliminada_por?: { usuario_id: string; usuario_nombre: string; usuario_correo: string; fecha: string } | null;
+  restaurada_por?: { usuario_id: string; usuario_nombre: string; usuario_correo: string; fecha: string } | null;
 }
 
 interface UsuarioOpcion {
@@ -582,7 +587,7 @@ export function MonitoreoNotificacionesUsuariosWidget({ negocio = "TRANQ" }: Pro
                 />
               </div>
 
-              {/* Matriz de Estados */}
+              {/* Matriz de Estados y Auditoría de Acciones */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", background: "#f8fafc", padding: "12px", borderRadius: "10px" }}>
                 <div>
                   <span style={{ fontSize: "0.7rem", color: "#64748b", fontWeight: 700 }}>Canal:</span>
@@ -594,29 +599,55 @@ export function MonitoreoNotificacionesUsuariosWidget({ negocio = "TRANQ" }: Pro
                     {new Date(notifSeleccionada.not_creado_en).toLocaleString("es-EC", { timeZone: "America/Guayaquil" })}
                   </strong>
                 </div>
-                <div>
-                  <span style={{ fontSize: "0.7rem", color: "#64748b", fontWeight: 700 }}>Confirmación (Leída):</span>
-                  <strong style={{ display: "block", color: notifSeleccionada.not_leido_en ? "#15803d" : "#2563eb", fontSize: "0.82rem" }}>
+
+                {/* Confirmación / Aceptación */}
+                <div style={{ gridColumn: "1 / -1", background: "#ffffff", padding: "10px", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
+                  <span style={{ fontSize: "0.7rem", color: "#64748b", fontWeight: 700 }}>Confirmación (Leída / Aceptada):</span>
+                  <strong style={{ display: "block", color: notifSeleccionada.not_leido_en ? "#15803d" : "#2563eb", fontSize: "0.82rem", marginTop: "2px" }}>
                     {notifSeleccionada.not_leido_en
-                      ? new Date(notifSeleccionada.not_leido_en).toLocaleString("es-EC", { timeZone: "America/Guayaquil" })
-                      : "No confirmada / Pendiente"}
+                      ? `✓ Confirmada el ${new Date(notifSeleccionada.not_leido_en).toLocaleString("es-EC", { timeZone: "America/Guayaquil" })}`
+                      : "⏳ No confirmada / Pendiente"}
                   </strong>
+                  {notifSeleccionada.confirmada_por && (
+                    <div style={{ fontSize: "0.74rem", color: "#15803d", marginTop: "4px", background: "#f0fdf4", padding: "4px 8px", borderRadius: "6px" }}>
+                      👤 Acción realizada por: <strong>{notifSeleccionada.confirmada_por.usuario_nombre}</strong> ({notifSeleccionada.confirmada_por.usuario_correo || notifSeleccionada.confirmada_por.usuario_id})
+                    </div>
+                  )}
                 </div>
-                <div>
+
+                {/* Pospuesta */}
+                <div style={{ gridColumn: "1 / -1", background: "#ffffff", padding: "10px", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
                   <span style={{ fontSize: "0.7rem", color: "#64748b", fontWeight: 700 }}>Tiempo Pospuesto:</span>
-                  <strong style={{ display: "block", color: notifSeleccionada.not_pospuesta_hasta ? "#b45309" : "#64748b", fontSize: "0.82rem" }}>
+                  <strong style={{ display: "block", color: notifSeleccionada.not_pospuesta_hasta ? "#b45309" : "#64748b", fontSize: "0.82rem", marginTop: "2px" }}>
                     {notifSeleccionada.not_pospuesta_hasta
-                      ? `Hasta: ${new Date(notifSeleccionada.not_pospuesta_hasta).toLocaleString("es-EC", { timeZone: "America/Guayaquil" })}`
+                      ? `⏰ Pospuesta hasta: ${new Date(notifSeleccionada.not_pospuesta_hasta).toLocaleString("es-EC", { timeZone: "America/Guayaquil" })}`
                       : "Sin posponer"}
                   </strong>
+                  {notifSeleccionada.pospuesta_por && (
+                    <div style={{ fontSize: "0.74rem", color: "#b45309", marginTop: "4px", background: "#fffbeb", padding: "4px 8px", borderRadius: "6px" }}>
+                      👤 Pospuesta por: <strong>{notifSeleccionada.pospuesta_por.usuario_nombre}</strong> ({notifSeleccionada.pospuesta_por.usuario_correo || notifSeleccionada.pospuesta_por.usuario_id}) • +{notifSeleccionada.pospuesta_por.horas || notifSeleccionada.not_pospuesta_horas || 3} horas
+                    </div>
+                  )}
                 </div>
-                <div style={{ gridColumn: "1 / -1" }}>
-                  <span style={{ fontSize: "0.7rem", color: "#64748b", fontWeight: 700 }}>Eliminación Lógica:</span>
-                  <strong style={{ display: "block", color: notifSeleccionada.not_eliminada ? "#b91c1c" : "#16a34a", fontSize: "0.82rem" }}>
+
+                {/* Eliminación Lógica & Restauración */}
+                <div style={{ gridColumn: "1 / -1", background: "#ffffff", padding: "10px", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
+                  <span style={{ fontSize: "0.7rem", color: "#64748b", fontWeight: 700 }}>Estado de Eliminación:</span>
+                  <strong style={{ display: "block", color: notifSeleccionada.not_eliminada ? "#b91c1c" : "#16a34a", fontSize: "0.82rem", marginTop: "2px" }}>
                     {notifSeleccionada.not_eliminada
                       ? `🗑️ Eliminada (${notifSeleccionada.not_eliminada_en ? new Date(notifSeleccionada.not_eliminada_en).toLocaleString("es-EC", { timeZone: "America/Guayaquil" }) : "Lógica"})`
-                      : "✓ Activa"}
+                      : "✓ Activa en bandeja"}
                   </strong>
+                  {notifSeleccionada.eliminada_por && notifSeleccionada.not_eliminada && (
+                    <div style={{ fontSize: "0.74rem", color: "#b91c1c", marginTop: "4px", background: "#fef2f2", padding: "4px 8px", borderRadius: "6px" }}>
+                      👤 Eliminada por: <strong>{notifSeleccionada.eliminada_por.usuario_nombre}</strong> ({notifSeleccionada.eliminada_por.usuario_correo || notifSeleccionada.eliminada_por.usuario_id})
+                    </div>
+                  )}
+                  {notifSeleccionada.restaurada_por && !notifSeleccionada.not_eliminada && (
+                    <div style={{ fontSize: "0.74rem", color: "#15803d", marginTop: "4px", background: "#f0fdf4", padding: "4px 8px", borderRadius: "6px" }}>
+                      🔄 Restaurada por: <strong>{notifSeleccionada.restaurada_por.usuario_nombre}</strong> ({notifSeleccionada.restaurada_por.usuario_correo || notifSeleccionada.restaurada_por.usuario_id})
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
