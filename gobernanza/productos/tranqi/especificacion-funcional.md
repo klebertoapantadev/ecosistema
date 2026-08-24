@@ -32,7 +32,7 @@ Tranqi adopta las mejores prácticas y estándares internacionales de **Law Prac
 
 | Código | Rol / Ámbito | Funcionalidad / Requerimiento | Estado | Avance (%) | Responsable Asignado |
 | :--- | :---: | :--- | :---: | :---: | :--- |
-| **`TRQ-COM-001`** | **Común (Todos)** | **Billetera Digital de Documentos Seguros, Extracción OCR y Enlaces TTL** | ✅ Implementado | **100%** | Kleber Toapanta |
+| **`TRQ-COM-001`** | **Común (Todos)** | **Billetera Digital de Documentos Seguros, Extracción OCR y Enlaces TTL** | ✅ Implementado | **100%** | Jesus Navarrete |
 | **`TRQ-COM-002`** | **Común (Todos)** | **Compartición de Documentos a Tranqi (Revisión de Contratos & Vinculación a Casos)** | 🟡 Especificado | **25%** | Kleber Toapanta |
 | **`TRQ-COM-003`** | **Común (Todos)** | **Herramienta Universal de Firma Digital de Documentos PDF (.p12 / QR / PAdES)** | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`TRQ-CLI-001`** | **Cliente** | **Portal de Casos, Solicitud de Patrocinio y Consultas Telemáticas** | ⏳ Pendiente | **0%** | Jesus Navarrete |
@@ -53,7 +53,7 @@ Tranqi adopta las mejores prácticas y estándares internacionales de **Law Prac
 ## 1. Módulos Comunes (Transversales a Todos los Roles)
 
 ### TRQ-COM-001 — Billetera Digital de Documentos Seguros, OCR y Enlaces Efímeros (TTL)
-**Responsable:** Kleber Toapanta | **Estado:** ✅ Implementado (100%)
+**Responsable:** Jesus Navarrete | **Estado:** ✅ Implementado (100%)
 
 #### Descripción
 Bóveda digital de documentos personales, familiares y profesionales donde cada usuario (cliente, socio abogado u operador) custodia archivos digitales de uso cotidiano con soporte multi-archivo (anverso/reverso/anexos), reconocimiento y extracción inteligente con el agente de IA **Aria**, gestión de alertas de caducidad configurables y generación de enlaces temporales protegidos (TTL).
