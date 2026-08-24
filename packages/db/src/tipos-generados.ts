@@ -268,13 +268,13 @@ export type Database = {
       cfg_fn_guardar_smtp: {
         Args: {
           p_activo: boolean
-          p_contrasena?: string | null
-          p_host: string | null
+          p_contrasena?: string
+          p_host: string
           p_negocio: string
           p_puerto: number
-          p_remitente_nombre: string | null
+          p_remitente_nombre: string
           p_seguro: boolean
-          p_usuario: string | null
+          p_usuario: string
         }
         Returns: undefined
       }
@@ -448,6 +448,61 @@ export type Database = {
           },
         ]
       }
+      seg_membresia_perfil: {
+        Row: {
+          mpe_actualizado_en: string
+          mpe_asignado_por: string | null
+          mpe_creado_en: string
+          mpe_detalle_membresia_perfil: Json
+          mpe_id: string
+          mpe_membresia_id: string
+          mpe_perfil_id: string
+          mpe_secuencial: number
+        }
+        Insert: {
+          mpe_actualizado_en?: string
+          mpe_asignado_por?: string | null
+          mpe_creado_en?: string
+          mpe_detalle_membresia_perfil?: Json
+          mpe_id?: string
+          mpe_membresia_id: string
+          mpe_perfil_id: string
+          mpe_secuencial?: never
+        }
+        Update: {
+          mpe_actualizado_en?: string
+          mpe_asignado_por?: string | null
+          mpe_creado_en?: string
+          mpe_detalle_membresia_perfil?: Json
+          mpe_id?: string
+          mpe_membresia_id?: string
+          mpe_perfil_id?: string
+          mpe_secuencial?: never
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seg_membresia_perfil_mpe_asignado_por_fkey"
+            columns: ["mpe_asignado_por"]
+            isOneToOne: false
+            referencedRelation: "seg_usuario"
+            referencedColumns: ["usu_id"]
+          },
+          {
+            foreignKeyName: "seg_membresia_perfil_mpe_membresia_id_fkey"
+            columns: ["mpe_membresia_id"]
+            isOneToOne: false
+            referencedRelation: "seg_membresia"
+            referencedColumns: ["mem_id"]
+          },
+          {
+            foreignKeyName: "seg_membresia_perfil_mpe_perfil_id_fkey"
+            columns: ["mpe_perfil_id"]
+            isOneToOne: false
+            referencedRelation: "seg_perfil"
+            referencedColumns: ["per_id"]
+          },
+        ]
+      }
       seg_otp_correo: {
         Row: {
           otp_codigo_hash: string
@@ -488,6 +543,45 @@ export type Database = {
             referencedColumns: ["usu_id"]
           },
         ]
+      }
+      seg_perfil: {
+        Row: {
+          per_activo: boolean
+          per_actualizado_en: string
+          per_asignable: boolean
+          per_clave: string
+          per_creado_en: string
+          per_detalle_perfil: Json
+          per_id: string
+          per_nivel: number
+          per_nombre: string
+          per_secuencial: number
+        }
+        Insert: {
+          per_activo?: boolean
+          per_actualizado_en?: string
+          per_asignable?: boolean
+          per_clave: string
+          per_creado_en?: string
+          per_detalle_perfil?: Json
+          per_id?: string
+          per_nivel: number
+          per_nombre: string
+          per_secuencial?: never
+        }
+        Update: {
+          per_activo?: boolean
+          per_actualizado_en?: string
+          per_asignable?: boolean
+          per_clave?: string
+          per_creado_en?: string
+          per_detalle_perfil?: Json
+          per_id?: string
+          per_nivel?: number
+          per_nombre?: string
+          per_secuencial?: never
+        }
+        Relationships: []
       }
       seg_recuperacion_correo: {
         Row: {
@@ -634,93 +728,6 @@ export type Database = {
         }
         Relationships: []
       }
-      seg_perfil: {
-        Row: {
-          per_activo: boolean
-          per_actualizado_en: string
-          per_asignable: boolean
-          per_clave: string
-          per_creado_en: string
-          per_detalle_perfil: Json
-          per_id: string
-          per_nivel: number
-          per_nombre: string
-          per_secuencial: number
-        }
-        Insert: {
-          per_activo?: boolean
-          per_actualizado_en?: string
-          per_asignable?: boolean
-          per_clave: string
-          per_creado_en?: string
-          per_detalle_perfil?: Json
-          per_id?: string
-          per_nivel: number
-          per_nombre: string
-          per_secuencial?: never
-        }
-        Update: {
-          per_activo?: boolean
-          per_actualizado_en?: string
-          per_asignable?: boolean
-          per_clave?: string
-          per_creado_en?: string
-          per_detalle_perfil?: Json
-          per_id?: string
-          per_nivel?: number
-          per_nombre?: string
-          per_secuencial?: never
-        }
-        Relationships: []
-      }
-      seg_membresia_perfil: {
-        Row: {
-          mpe_actualizado_en: string
-          mpe_asignado_por: string | null
-          mpe_creado_en: string
-          mpe_detalle_membresia_perfil: Json
-          mpe_id: string
-          mpe_membresia_id: string
-          mpe_perfil_id: string
-          mpe_secuencial: number
-        }
-        Insert: {
-          mpe_actualizado_en?: string
-          mpe_asignado_por?: string | null
-          mpe_creado_en?: string
-          mpe_detalle_membresia_perfil?: Json
-          mpe_id?: string
-          mpe_membresia_id: string
-          mpe_perfil_id: string
-          mpe_secuencial?: never
-        }
-        Update: {
-          mpe_actualizado_en?: string
-          mpe_asignado_por?: string | null
-          mpe_creado_en?: string
-          mpe_detalle_membresia_perfil?: Json
-          mpe_id?: string
-          mpe_membresia_id?: string
-          mpe_perfil_id?: string
-          mpe_secuencial?: never
-        }
-        Relationships: [
-          {
-            foreignKeyName: "seg_membresia_perfil_mpe_membresia_id_fkey"
-            columns: ["mpe_membresia_id"]
-            isOneToOne: false
-            referencedRelation: "seg_membresia"
-            referencedColumns: ["mem_id"]
-          },
-          {
-            foreignKeyName: "seg_membresia_perfil_mpe_perfil_id_fkey"
-            columns: ["mpe_perfil_id"]
-            isOneToOne: false
-            referencedRelation: "seg_perfil"
-            referencedColumns: ["per_id"]
-          },
-        ]
-      }
       seg_widget: {
         Row: {
           wdg_activo: boolean
@@ -762,20 +769,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      seg_fn_asegurar_membresia_cliente: { Args: { p_negocio: string }; Returns: undefined }
+      seg_fn_asegurar_membresia_cliente: {
+        Args: { p_negocio: string }
+        Returns: undefined
+      }
       seg_fn_asignar_perfil: {
         Args: { p_negocio: string; p_perfil: string; p_usuario_id: string }
         Returns: undefined
       }
-      seg_fn_quitar_perfil: {
-        Args: { p_negocio: string; p_perfil: string; p_usuario_id: string }
-        Returns: undefined
-      }
-      seg_fn_perfiles: { Args: { p_negocio: string }; Returns: string[] }
-      seg_fn_perfiles_de: { Args: { p_negocio: string; p_usuario_id: string }; Returns: string[] }
-      seg_fn_tiene_perfil: { Args: { p_clave: string; p_negocio: string }; Returns: boolean }
-      seg_fn_nivel_maximo: { Args: { p_negocio: string }; Returns: number }
-      seg_fn_es_superadmin: { Args: never; Returns: boolean }
       seg_fn_asignar_rol: {
         Args: { p_negocio: string; p_rol: string; p_usuario_id: string }
         Returns: {
@@ -799,10 +800,37 @@ export type Database = {
       }
       seg_fn_eliminar_cuenta: { Args: never; Returns: string }
       seg_fn_es_admin_negocio: { Args: { p_negocio: string }; Returns: boolean }
+      seg_fn_es_operador_o_admin_negocio: {
+        Args: { p_negocio: string }
+        Returns: boolean
+      }
+      seg_fn_es_superadmin: { Args: never; Returns: boolean }
       seg_fn_generar_otp_registro: { Args: never; Returns: string }
+      seg_fn_nivel_maximo: { Args: { p_negocio: string }; Returns: number }
+      seg_fn_perfiles: { Args: { p_negocio: string }; Returns: string[] }
+      seg_fn_perfiles_de: {
+        Args: { p_negocio: string; p_usuario_id: string }
+        Returns: string[]
+      }
+      seg_fn_quitar_perfil: {
+        Args: { p_negocio: string; p_perfil: string; p_usuario_id: string }
+        Returns: undefined
+      }
       seg_fn_solicitar_recuperacion: {
         Args: { p_correo: string }
         Returns: string
+      }
+      seg_fn_superadmin_eliminar_usuario: {
+        Args: { p_target_usu_id?: string; p_target_usuario_id?: string }
+        Returns: string
+      }
+      seg_fn_superadmin_resetear_sistema: {
+        Args: { p_negocio?: string }
+        Returns: string
+      }
+      seg_fn_tiene_perfil: {
+        Args: { p_clave: string; p_negocio: string }
+        Returns: boolean
       }
       seg_fn_verificar_otp_registro: {
         Args: { p_codigo: string }
@@ -856,6 +884,248 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "trq_solicitud_socio"
             referencedColumns: ["ssc_id"]
+          },
+        ]
+      }
+      trq_caso_judicial: {
+        Row: {
+          cas_abierto_en: string
+          cas_abogado_id: string | null
+          cas_actualizado_en: string
+          cas_cerrado_en: string | null
+          cas_cliente_id: string
+          cas_creado_en: string
+          cas_descripcion: string | null
+          cas_detalle_caso: Json
+          cas_eliminado_en: string | null
+          cas_estado: string
+          cas_id: string
+          cas_materia_id: string | null
+          cas_numero_proceso: string | null
+          cas_prioridad: string
+          cas_provincia_id: string | null
+          cas_secuencial: number
+          cas_titulo: string
+        }
+        Insert: {
+          cas_abierto_en?: string
+          cas_abogado_id?: string | null
+          cas_actualizado_en?: string
+          cas_cerrado_en?: string | null
+          cas_cliente_id: string
+          cas_creado_en?: string
+          cas_descripcion?: string | null
+          cas_detalle_caso?: Json
+          cas_eliminado_en?: string | null
+          cas_estado?: string
+          cas_id?: string
+          cas_materia_id?: string | null
+          cas_numero_proceso?: string | null
+          cas_prioridad?: string
+          cas_provincia_id?: string | null
+          cas_secuencial?: never
+          cas_titulo: string
+        }
+        Update: {
+          cas_abierto_en?: string
+          cas_abogado_id?: string | null
+          cas_actualizado_en?: string
+          cas_cerrado_en?: string | null
+          cas_cliente_id?: string
+          cas_creado_en?: string
+          cas_descripcion?: string | null
+          cas_detalle_caso?: Json
+          cas_eliminado_en?: string | null
+          cas_estado?: string
+          cas_id?: string
+          cas_materia_id?: string | null
+          cas_numero_proceso?: string | null
+          cas_prioridad?: string
+          cas_provincia_id?: string | null
+          cas_secuencial?: never
+          cas_titulo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trq_caso_judicial_cas_abogado_id_fkey"
+            columns: ["cas_abogado_id"]
+            isOneToOne: false
+            referencedRelation: "trq_abogado"
+            referencedColumns: ["abg_id"]
+          },
+          {
+            foreignKeyName: "trq_caso_judicial_cas_materia_id_fkey"
+            columns: ["cas_materia_id"]
+            isOneToOne: false
+            referencedRelation: "trq_materia"
+            referencedColumns: ["mat_id"]
+          },
+        ]
+      }
+      trq_cita: {
+        Row: {
+          cit_abogado_id: string | null
+          cit_actualizado_en: string
+          cit_caso_id: string | null
+          cit_cliente_id: string
+          cit_creado_en: string
+          cit_eliminado_en: string | null
+          cit_enlace: string | null
+          cit_estado: string
+          cit_fin_en: string | null
+          cit_id: string
+          cit_inicio_en: string
+          cit_lugar: string | null
+          cit_modalidad: string
+          cit_motivo: string | null
+          cit_notas: string | null
+          cit_secuencial: number
+        }
+        Insert: {
+          cit_abogado_id?: string | null
+          cit_actualizado_en?: string
+          cit_caso_id?: string | null
+          cit_cliente_id: string
+          cit_creado_en?: string
+          cit_eliminado_en?: string | null
+          cit_enlace?: string | null
+          cit_estado?: string
+          cit_fin_en?: string | null
+          cit_id?: string
+          cit_inicio_en: string
+          cit_lugar?: string | null
+          cit_modalidad?: string
+          cit_motivo?: string | null
+          cit_notas?: string | null
+          cit_secuencial?: never
+        }
+        Update: {
+          cit_abogado_id?: string | null
+          cit_actualizado_en?: string
+          cit_caso_id?: string | null
+          cit_cliente_id?: string
+          cit_creado_en?: string
+          cit_eliminado_en?: string | null
+          cit_enlace?: string | null
+          cit_estado?: string
+          cit_fin_en?: string | null
+          cit_id?: string
+          cit_inicio_en?: string
+          cit_lugar?: string | null
+          cit_modalidad?: string
+          cit_motivo?: string | null
+          cit_notas?: string | null
+          cit_secuencial?: never
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trq_cita_cit_abogado_id_fkey"
+            columns: ["cit_abogado_id"]
+            isOneToOne: false
+            referencedRelation: "trq_abogado"
+            referencedColumns: ["abg_id"]
+          },
+          {
+            foreignKeyName: "trq_cita_cit_caso_id_fkey"
+            columns: ["cit_caso_id"]
+            isOneToOne: false
+            referencedRelation: "trq_caso_judicial"
+            referencedColumns: ["cas_id"]
+          },
+        ]
+      }
+      trq_conversacion: {
+        Row: {
+          cnv_actualizado_en: string
+          cnv_agente_slug: string | null
+          cnv_creado_en: string
+          cnv_eliminado_en: string | null
+          cnv_id: string
+          cnv_rol: string
+          cnv_titulo: string | null
+          cnv_ultimo_mensaje_en: string
+          cnv_usuario_id: string
+        }
+        Insert: {
+          cnv_actualizado_en?: string
+          cnv_agente_slug?: string | null
+          cnv_creado_en?: string
+          cnv_eliminado_en?: string | null
+          cnv_id?: string
+          cnv_rol: string
+          cnv_titulo?: string | null
+          cnv_ultimo_mensaje_en?: string
+          cnv_usuario_id: string
+        }
+        Update: {
+          cnv_actualizado_en?: string
+          cnv_agente_slug?: string | null
+          cnv_creado_en?: string
+          cnv_eliminado_en?: string | null
+          cnv_id?: string
+          cnv_rol?: string
+          cnv_titulo?: string | null
+          cnv_ultimo_mensaje_en?: string
+          cnv_usuario_id?: string
+        }
+        Relationships: []
+      }
+      trq_documento_caso: {
+        Row: {
+          dcc_actualizado_en: string
+          dcc_caso_id: string
+          dcc_creado_en: string
+          dcc_dictamen: Json
+          dcc_dictaminado_en: string | null
+          dcc_eliminado_en: string | null
+          dcc_estado_revision: string
+          dcc_id: string
+          dcc_mime: string | null
+          dcc_nombre_archivo: string | null
+          dcc_ruta_storage: string
+          dcc_subido_por: string | null
+          dcc_tamano_bytes: number | null
+          dcc_tipo: string
+        }
+        Insert: {
+          dcc_actualizado_en?: string
+          dcc_caso_id: string
+          dcc_creado_en?: string
+          dcc_dictamen?: Json
+          dcc_dictaminado_en?: string | null
+          dcc_eliminado_en?: string | null
+          dcc_estado_revision?: string
+          dcc_id?: string
+          dcc_mime?: string | null
+          dcc_nombre_archivo?: string | null
+          dcc_ruta_storage: string
+          dcc_subido_por?: string | null
+          dcc_tamano_bytes?: number | null
+          dcc_tipo?: string
+        }
+        Update: {
+          dcc_actualizado_en?: string
+          dcc_caso_id?: string
+          dcc_creado_en?: string
+          dcc_dictamen?: Json
+          dcc_dictaminado_en?: string | null
+          dcc_eliminado_en?: string | null
+          dcc_estado_revision?: string
+          dcc_id?: string
+          dcc_mime?: string | null
+          dcc_nombre_archivo?: string | null
+          dcc_ruta_storage?: string
+          dcc_subido_por?: string | null
+          dcc_tamano_bytes?: number | null
+          dcc_tipo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trq_documento_caso_dcc_caso_id_fkey"
+            columns: ["dcc_caso_id"]
+            isOneToOne: false
+            referencedRelation: "trq_caso_judicial"
+            referencedColumns: ["cas_id"]
           },
         ]
       }
@@ -941,6 +1211,69 @@ export type Database = {
           },
         ]
       }
+      trq_honorario: {
+        Row: {
+          hon_abogado_id: string
+          hon_actualizado_en: string
+          hon_caso_id: string | null
+          hon_concepto: string
+          hon_creado_en: string
+          hon_eliminado_en: string | null
+          hon_estado: string
+          hon_id: string
+          hon_liquidado_en: string | null
+          hon_moneda: string
+          hon_monto: number
+          hon_periodo: string
+          hon_secuencial: number
+        }
+        Insert: {
+          hon_abogado_id: string
+          hon_actualizado_en?: string
+          hon_caso_id?: string | null
+          hon_concepto: string
+          hon_creado_en?: string
+          hon_eliminado_en?: string | null
+          hon_estado?: string
+          hon_id?: string
+          hon_liquidado_en?: string | null
+          hon_moneda?: string
+          hon_monto: number
+          hon_periodo: string
+          hon_secuencial?: never
+        }
+        Update: {
+          hon_abogado_id?: string
+          hon_actualizado_en?: string
+          hon_caso_id?: string | null
+          hon_concepto?: string
+          hon_creado_en?: string
+          hon_eliminado_en?: string | null
+          hon_estado?: string
+          hon_id?: string
+          hon_liquidado_en?: string | null
+          hon_moneda?: string
+          hon_monto?: number
+          hon_periodo?: string
+          hon_secuencial?: never
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trq_honorario_hon_abogado_id_fkey"
+            columns: ["hon_abogado_id"]
+            isOneToOne: false
+            referencedRelation: "trq_abogado"
+            referencedColumns: ["abg_id"]
+          },
+          {
+            foreignKeyName: "trq_honorario_hon_caso_id_fkey"
+            columns: ["hon_caso_id"]
+            isOneToOne: false
+            referencedRelation: "trq_caso_judicial"
+            referencedColumns: ["cas_id"]
+          },
+        ]
+      }
       trq_materia: {
         Row: {
           mat_activa: boolean
@@ -961,6 +1294,41 @@ export type Database = {
           mat_nombre?: string
         }
         Relationships: []
+      }
+      trq_mensaje: {
+        Row: {
+          msg_autor: string
+          msg_contenido: string
+          msg_conversacion_id: string
+          msg_creado_en: string
+          msg_id: string
+          msg_run_id: string | null
+        }
+        Insert: {
+          msg_autor: string
+          msg_contenido: string
+          msg_conversacion_id: string
+          msg_creado_en?: string
+          msg_id?: string
+          msg_run_id?: string | null
+        }
+        Update: {
+          msg_autor?: string
+          msg_contenido?: string
+          msg_conversacion_id?: string
+          msg_creado_en?: string
+          msg_id?: string
+          msg_run_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trq_mensaje_msg_conversacion_id_fkey"
+            columns: ["msg_conversacion_id"]
+            isOneToOne: false
+            referencedRelation: "trq_conversacion"
+            referencedColumns: ["cnv_id"]
+          },
+        ]
       }
       trq_revision_solicitud: {
         Row: {
@@ -1062,6 +1430,8 @@ export type Database = {
           ssc_anio_graduacion: number
           ssc_anos_experiencia: number
           ssc_cedula: string
+          ssc_contrato_confirmado_en: string | null
+          ssc_contrato_confirmado_por: string | null
           ssc_creado_en: string
           ssc_eliminado_en: string | null
           ssc_enlace_foro_verificado: boolean
@@ -1081,6 +1451,8 @@ export type Database = {
           ssc_anio_graduacion: number
           ssc_anos_experiencia?: number
           ssc_cedula: string
+          ssc_contrato_confirmado_en?: string | null
+          ssc_contrato_confirmado_por?: string | null
           ssc_creado_en?: string
           ssc_eliminado_en?: string | null
           ssc_enlace_foro_verificado?: boolean
@@ -1100,6 +1472,8 @@ export type Database = {
           ssc_anio_graduacion?: number
           ssc_anos_experiencia?: number
           ssc_cedula?: string
+          ssc_contrato_confirmado_en?: string | null
+          ssc_contrato_confirmado_por?: string | null
           ssc_creado_en?: string
           ssc_eliminado_en?: string | null
           ssc_enlace_foro_verificado?: boolean
@@ -1121,6 +1495,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      trq_fn_abogado_actual: { Args: never; Returns: string }
       trq_fn_decidir_solicitud: {
         Args: {
           p_comentario?: string
@@ -1132,6 +1507,8 @@ export type Database = {
           ssc_anio_graduacion: number
           ssc_anos_experiencia: number
           ssc_cedula: string
+          ssc_contrato_confirmado_en: string | null
+          ssc_contrato_confirmado_por: string | null
           ssc_creado_en: string
           ssc_eliminado_en: string | null
           ssc_enlace_foro_verificado: boolean
