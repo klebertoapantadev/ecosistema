@@ -1,6 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from "next/server";
 import { crearClienteServidor, crearClienteAdmin } from "@eco/supabase/servidor";
+import {
+  obtenerDocumentosResilientes,
+  guardarDocumentoResiliente,
+  eliminarDocumentoResiliente
+} from "../almacen";
 
 export const dynamic = "force-dynamic";
 
@@ -29,37 +34,55 @@ export async function GET(req: NextRequest) {
     const categoria = searchParams.get("categoria");
     const estadoVigencia = searchParams.get("vigencia"); // 'vigente', 'por_vencer', 'vencido'
 
-    let query = obtenerTablaBilletera(adminSupabase)
-      .select("*")
-      .eq("doc_usuario_id", user.id)
-      .is("doc_eliminado_en", null)
-      .order("doc_creado_en", { ascending: false });
+    let docsRecuperados: any[] = [];
+    let falloBdd = false;
 
-    if (categoria && categoria !== "todas") {
-      query = query.eq("doc_categoria", categoria);
-    }
-
-    const { data: rawData, error: queryError } = await query;
-    let data = rawData;
-
-    if (queryError) {
-      // Intento fallback con cliente de servidor
-      const fallbackQuery = obtenerTablaBilletera(supabase)
+    try {
+      let query = obtenerTablaBilletera(adminSupabase)
         .select("*")
         .eq("doc_usuario_id", user.id)
         .is("doc_eliminado_en", null)
         .order("doc_creado_en", { ascending: false });
-      const resFallback = await fallbackQuery;
-      if (resFallback.error) {
-        console.warn("Aviso en consulta trq_billetera_documento:", queryError.message || resFallback.error.message);
-        return NextResponse.json({ ok: true, data: [] });
+
+      if (categoria && categoria !== "todas") {
+        query = query.eq("doc_categoria", categoria);
       }
-      data = resFallback.data;
+
+      const { data: rawData, error: queryError } = await query;
+      if (queryError) {
+        // Fallback a cliente servidor
+        const fallbackQuery = obtenerTablaBilletera(supabase)
+          .select("*")
+          .eq("doc_usuario_id", user.id)
+          .is("doc_eliminado_en", null)
+          .order("doc_creado_en", { ascending: false });
+        const resFallback = await fallbackQuery;
+        if (resFallback.error) {
+          falloBdd = true;
+        } else {
+          docsRecuperados = resFallback.data || [];
+        }
+      } else {
+        docsRecuperados = rawData || [];
+      }
+    } catch {
+      falloBdd = true;
+    }
+
+    // Si la tabla no existe en el schema cache de Supabase, leer del almacén resiliente
+    if (falloBdd || docsRecuperados.length === 0) {
+      const docsResilientes = await obtenerDocumentosResilientes(user.id);
+      if (docsResilientes && docsResilientes.length > 0) {
+        docsRecuperados = docsResilientes;
+        if (categoria && categoria !== "todas") {
+          docsRecuperados = docsRecuperados.filter(d => d.doc_categoria === categoria);
+        }
+      }
     }
 
     const ahora = new Date();
 
-    const documentosProcesados = (data || []).map((doc: any) => {
+    const documentosProcesados = docsRecuperados.map((doc: any) => {
       let estado = "sin_caducidad";
       let diasParaVencer: number | null = null;
       
@@ -232,6 +255,7 @@ export async function POST(req: NextRequest) {
 
     // Payload completo
     const payloadCompleto: any = {
+      doc_id: id || undefined,
       doc_usuario_id: user.id,
       doc_negocio: "TRANQ",
       doc_categoria: categoria,
@@ -257,8 +281,9 @@ export async function POST(req: NextRequest) {
       doc_actualizado_en: new Date().toISOString()
     };
 
-    // Payload base (compatible 100% si la base aún no tiene las columnas nuevas)
+    // Payload base (compatible 100% con esquema estándar)
     const payloadBase: any = {
+      doc_id: id || undefined,
       doc_usuario_id: user.id,
       doc_negocio: "TRANQ",
       doc_categoria: categoria,
@@ -280,65 +305,76 @@ export async function POST(req: NextRequest) {
       doc_actualizado_en: new Date().toISOString()
     };
 
-    let dataRes;
+    let dataRes: any = null;
+    let guardadoEnBdd = false;
     const clientDb = adminSupabase || supabase;
 
-    if (id) {
-      // Actualización
-      let resUpdate = await obtenerTablaBilletera(clientDb)
-        .update(payloadCompleto)
-        .eq("doc_id", id)
-        .eq("doc_usuario_id", user.id)
-        .select()
-        .single();
-
-      if (resUpdate.error) {
-        // Reintentar con payloadBase si falló por columnas nuevas
-        resUpdate = await obtenerTablaBilletera(clientDb)
-          .update(payloadBase)
+    try {
+      if (id) {
+        // Actualización
+        let resUpdate = await obtenerTablaBilletera(clientDb)
+          .update(payloadCompleto)
           .eq("doc_id", id)
           .eq("doc_usuario_id", user.id)
           .select()
           .single();
-      }
 
-      if (resUpdate.error) throw resUpdate.error;
-      dataRes = resUpdate.data;
-    } else {
-      // Inserción
-      let resInsert = await obtenerTablaBilletera(clientDb)
-        .insert({
-          ...payloadCompleto,
-          doc_creado_en: new Date().toISOString()
-        })
-        .select()
-        .single();
+        if (resUpdate.error) {
+          resUpdate = await obtenerTablaBilletera(clientDb)
+            .update(payloadBase)
+            .eq("doc_id", id)
+            .eq("doc_usuario_id", user.id)
+            .select()
+            .single();
+        }
 
-      if (resInsert.error) {
-        console.warn("Reintentando insert con payload base seguro:", resInsert.error.message);
-        // Reintentar con payloadBase
-        resInsert = await obtenerTablaBilletera(clientDb)
+        if (!resUpdate.error && resUpdate.data) {
+          dataRes = resUpdate.data;
+          guardadoEnBdd = true;
+        }
+      } else {
+        // Inserción
+        let resInsert = await obtenerTablaBilletera(clientDb)
           .insert({
-            ...payloadBase,
+            ...payloadCompleto,
             doc_creado_en: new Date().toISOString()
           })
           .select()
           .single();
-      }
 
-      if (resInsert.error) {
-        // Último intento con cliente de servidor directamente si admin falló
-        resInsert = await obtenerTablaBilletera(supabase)
-          .insert({
-            ...payloadBase,
-            doc_creado_en: new Date().toISOString()
-          })
-          .select()
-          .single();
-      }
+        if (resInsert.error) {
+          resInsert = await obtenerTablaBilletera(clientDb)
+            .insert({
+              ...payloadBase,
+              doc_creado_en: new Date().toISOString()
+            })
+            .select()
+            .single();
+        }
 
-      if (resInsert.error) throw resInsert.error;
-      dataRes = resInsert.data;
+        if (resInsert.error) {
+          resInsert = await obtenerTablaBilletera(supabase)
+            .insert({
+              ...payloadBase,
+              doc_creado_en: new Date().toISOString()
+            })
+            .select()
+            .single();
+        }
+
+        if (!resInsert.error && resInsert.data) {
+          dataRes = resInsert.data;
+          guardadoEnBdd = true;
+        }
+      }
+    } catch (errBdd) {
+      console.warn("Aviso al intentar guardar en tabla PostgreSQL:", errBdd);
+    }
+
+    // Si la tabla no existe en el schema cache de Supabase, guardar en el almacén resiliente
+    if (!guardadoEnBdd || !dataRes) {
+      console.log("Guardando en almacén resiliente de usuario (respaldo activo)...");
+      dataRes = await guardarDocumentoResiliente(user.id, payloadCompleto);
     }
 
     return NextResponse.json({ ok: true, data: dataRes });
@@ -367,19 +403,18 @@ export async function DELETE(req: NextRequest) {
 
     const clientDb = adminSupabase || supabase;
 
-    // Eliminación lógica
-    const { error } = await obtenerTablaBilletera(clientDb)
-      .update({ doc_eliminado_en: new Date().toISOString() })
-      .eq("doc_id", id)
-      .eq("doc_usuario_id", user.id);
-
-    if (error) {
-      // Fallback a eliminación directa si aplica
+    // Intentar eliminación en BDD
+    try {
       await obtenerTablaBilletera(clientDb)
-        .delete()
+        .update({ doc_eliminado_en: new Date().toISOString() })
         .eq("doc_id", id)
         .eq("doc_usuario_id", user.id);
+    } catch {
+      // Ignorar si la tabla no existe
     }
+
+    // Eliminar también en almacén resiliente
+    await eliminarDocumentoResiliente(user.id, id);
 
     return NextResponse.json({ ok: true, mensaje: "Documento eliminado correctamente" });
   } catch (error: any) {

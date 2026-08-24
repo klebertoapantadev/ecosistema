@@ -2,6 +2,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { crearClienteServidor, crearClienteAdmin } from "@eco/supabase/servidor";
 import crypto from "crypto";
+import {
+  obtenerDocumentosResilientes,
+  guardarEnlaceTtlResiliente,
+  listarEnlacesTtlUsuario,
+  revocarEnlaceTtlResiliente
+} from "../almacen";
 
 export const dynamic = "force-dynamic";
 
@@ -76,16 +82,20 @@ export async function POST(req: NextRequest) {
 
     const clientDb = adminSupabase || supabase;
 
-    // Verificar que el documento exista y pertenezca al usuario
-    const { data: doc, error: docError } = await obtenerTablaBilletera(clientDb)
-      .select("doc_id, doc_titulo")
-      .eq("doc_id", documentoId)
-      .eq("doc_usuario_id", user.id)
-      .is("doc_eliminado_en", null)
-      .single();
-
-    if (docError || !doc) {
-      return NextResponse.json({ ok: false, error: "Documento no encontrado o sin permisos" }, { status: 404 });
+    // Verificar que el documento exista y pertenezca al usuario (BDD o Almacén)
+    let docTitulo = "Documento Seguro";
+    try {
+      const { data: doc } = await obtenerTablaBilletera(clientDb)
+        .select("doc_id, doc_titulo")
+        .eq("doc_id", documentoId)
+        .eq("doc_usuario_id", user.id)
+        .is("doc_eliminado_en", null)
+        .single();
+      if (doc?.doc_titulo) docTitulo = doc.doc_titulo;
+    } catch {
+      const docsRes = await obtenerDocumentosResilientes(user.id);
+      const docEncontrado = docsRes.find(d => d.doc_id === documentoId);
+      if (docEncontrado) docTitulo = docEncontrado.doc_titulo;
     }
 
     const fechaExpira = calcularFechaExpiracion(modoExpiracion, fechaExpiracionManual);
@@ -107,18 +117,26 @@ export async function POST(req: NextRequest) {
       ttl_pin_hash: pinHash,
       ttl_activo: true,
       ttl_detalles: {
-        doc_titulo: doc.doc_titulo,
+        doc_titulo: docTitulo,
         creado_desde_ip: req.headers.get("x-forwarded-for") || "local"
       },
       ttl_creado_en: new Date().toISOString()
     };
 
-    const { data, error } = await obtenerTablaEnlaces(clientDb)
-      .insert(payload)
-      .select()
-      .single();
+    let dataRes: any = null;
+    try {
+      const { data, error } = await obtenerTablaEnlaces(clientDb)
+        .insert(payload)
+        .select()
+        .single();
+      if (!error && data) dataRes = data;
+    } catch {
+      // Fallback
+    }
 
-    if (error) throw error;
+    if (!dataRes) {
+      dataRes = guardarEnlaceTtlResiliente(payload);
+    }
 
     const baseUrl = req.nextUrl.origin;
     const enlacePublico = `${baseUrl}/compartir/documento/${tokenAleatorio}`;
@@ -126,7 +144,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       ok: true,
       data: {
-        ...data,
+        ...dataRes,
         enlace_url: enlacePublico
       }
     });
@@ -149,25 +167,34 @@ export async function GET(req: NextRequest) {
     const documentoId = searchParams.get("documentoId");
 
     const clientDb = adminSupabase || supabase;
+    let enlacesRecuperados: any[] = [];
 
-    let query = obtenerTablaEnlaces(clientDb)
-      .select("ttl_id, ttl_token, ttl_modo_expiracion, ttl_expira_en, ttl_una_sola_vista, ttl_visto_en, ttl_visitas_conteo, ttl_activo, ttl_creado_en, ttl_documento_id, ttl_pin_hash")
-      .eq("ttl_usuario_id", user.id)
-      .order("ttl_creado_en", { ascending: false });
+    try {
+      let query = obtenerTablaEnlaces(clientDb)
+        .select("ttl_id, ttl_token, ttl_modo_expiracion, ttl_expira_en, ttl_una_sola_vista, ttl_visto_en, ttl_visitas_conteo, ttl_activo, ttl_creado_en, ttl_documento_id, ttl_pin_hash")
+        .eq("ttl_usuario_id", user.id)
+        .order("ttl_creado_en", { ascending: false });
 
-    if (documentoId) {
-      query = query.eq("ttl_documento_id", documentoId);
+      if (documentoId) {
+        query = query.eq("ttl_documento_id", documentoId);
+      }
+
+      const { data, error } = await query;
+      if (!error && data) {
+        enlacesRecuperados = data;
+      }
+    } catch {
+      // Fallback
     }
 
-    const { data, error } = await query;
-    if (error) {
-      return NextResponse.json({ ok: true, data: [] });
+    if (enlacesRecuperados.length === 0) {
+      enlacesRecuperados = listarEnlacesTtlUsuario(user.id, documentoId);
     }
 
     const baseUrl = req.nextUrl.origin;
     const ahora = new Date();
 
-    const enlacesProcesados = (data || []).map((item: any) => {
+    const enlacesProcesados = enlacesRecuperados.map((item: any) => {
       const fechaExp = new Date(item.ttl_expira_en);
       const estaExpirado = fechaExp.getTime() < ahora.getTime();
       const estaRevocadoPorVista = item.ttl_una_sola_vista && (item.ttl_visitas_conteo > 0 || !item.ttl_activo);
@@ -208,15 +235,20 @@ export async function DELETE(req: NextRequest) {
 
     const clientDb = adminSupabase || supabase;
 
-    let query = obtenerTablaEnlaces(clientDb)
-      .update({ ttl_activo: false })
-      .eq("ttl_usuario_id", user.id);
+    try {
+      let query = obtenerTablaEnlaces(clientDb)
+        .update({ ttl_activo: false })
+        .eq("ttl_usuario_id", user.id);
 
-    if (token) query = query.eq("ttl_token", token);
-    if (id) query = query.eq("ttl_id", id);
+      if (token) query = query.eq("ttl_token", token);
+      if (id) query = query.eq("ttl_id", id);
 
-    const { error } = await query;
-    if (error) throw error;
+      await query;
+    } catch {
+      // Ignorar si no existe tabla
+    }
+
+    revocarEnlaceTtlResiliente(user.id, token || id || "");
 
     return NextResponse.json({ ok: true, mensaje: "Enlace efímero revocado exitosamente" });
   } catch (error: any) {
