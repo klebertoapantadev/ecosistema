@@ -54,11 +54,22 @@ export async function GET() {
         const perfilesTRANQ = await obtenerPerfiles("TRANQ");
         const perfiles = Array.from(new Set([...perfilesTranqi, ...perfilesTRANQ]));
         const correo = (perfil.usu_correo || "").toLowerCase().trim();
-        const esSuperAdminEmail = correo === "kleber.toapanta.ch@gmail.com" || correo === "jesus251296@gmail.com";
-        const esAutorizado = esSuperAdminEmail || Boolean(perfil?.usu_superadmin_plataforma) || perfiles.includes("ADMINISTRADOR") || perfiles.includes("OPERADOR") || perfiles.includes("SUPERADMIN");
+        const esSuperAdminEmail = correo === "kleber.toapanta.ch@gmail.com" || correo === "jesus251296@gmail.com" || correo === "satcomla.ti@gmail.com";
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const client: any = crearClienteAdmin() || await crearClienteServidor();
+
+        // Consultar membresía directa para asegurar que rol OPERADOR/ADMINISTRADOR esté siempre detectado
+        const { data: memUser } = await client
+          .schema("comun_seguridad")
+          .from("seg_membresia")
+          .select("mem_rol, mem_estado")
+          .eq("mem_usuario_id", perfil.usu_id)
+          .eq("mem_estado", "ACTIVO");
+
+        const rolesMembresia = ((memUser || []) as Array<{ mem_rol?: string | null }>).map(m => (m.mem_rol || "").toUpperCase());
+        const esStaffMembresia = rolesMembresia.includes("OPERADOR") || rolesMembresia.includes("ADMINISTRADOR") || rolesMembresia.includes("SUPERADMIN") || rolesMembresia.includes("AUXILIAR");
+        const esAutorizado = esSuperAdminEmail || Boolean(perfil?.usu_superadmin_plataforma) || perfiles.includes("ADMINISTRADOR") || perfiles.includes("OPERADOR") || perfiles.includes("SUPERADMIN") || esStaffMembresia;
 
         let query = client
           .schema("comun_notificacion")
@@ -144,10 +155,48 @@ export async function GET() {
           }
         }
 
-        // Si el usuario es administrador u operador, sintetizar alertas para contratos firmados recibidos y postulaciones pendientes
+        // Si el usuario es administrador u operador, sintetizar alertas para nuevas postulaciones, propuestas y contratos pendientes
         if (esAutorizado) {
           try {
-            const { data: solicitudesConContrato } = await client
+            // 1. Nuevas postulaciones de socio abogado recibidas y pendientes de evaluación
+            const { data: solicitudesPendientes } = await client
+              .schema("tranqui_legal")
+              .from("trq_solicitud_socio")
+              .select("ssc_id, ssc_usuario_id, ssc_estado, ssc_actualizado_en, ssc_creado_en")
+              .in("ssc_estado", ["enviada", "pendiente", "revision"])
+              .is("ssc_eliminado_en", null)
+              .order("ssc_creado_en", { ascending: false });
+
+            if (solicitudesPendientes && Array.isArray(solicitudesPendientes)) {
+              for (const sol of solicitudesPendientes) {
+                const { data: uPost } = await client
+                  .schema("comun_seguridad")
+                  .from("seg_usuario")
+                  .select("usu_nombres, usu_apellidos, usu_correo")
+                  .eq("usu_id", sol.ssc_usuario_id)
+                  .maybeSingle();
+
+                const nombrePost = [uPost?.usu_nombres, uPost?.usu_apellidos].filter(Boolean).join(" ") || uPost?.usu_correo || "Postulante";
+                const titulo = `📢 Nueva Postulación de Socio Abogado: ${nombrePost}`;
+                const synthSolId = `postulacion-${sol.ssc_id}`;
+                const yaExiste = notificaciones.some(n => n.not_id === synthSolId || n.not_titulo.includes(nombrePost));
+                if (!yaExiste) {
+                  notificaciones.unshift({
+                    not_id: synthSolId,
+                    not_titulo: titulo,
+                    not_contenido_html: `<p>El profesional <strong>${nombrePost}</strong> (<code>${uPost?.usu_correo || ""}</code>) ha registrado una postulación como Socio Abogado en tranqi. Haz clic en <a href="/panel/socios/${sol.ssc_id}" style="color: #5000BA; font-weight: 700;">Evaluar Solicitud de Socio</a> para revisar su matrícula y registro SENESCYT.</p>`,
+                    not_url_accion: `/panel/socios/${sol.ssc_id}`,
+                    not_leido_en: null,
+                    not_creado_en: sol.ssc_actualizado_en || sol.ssc_creado_en || new Date().toISOString(),
+                    not_canal: "IN_APP",
+                    not_eliminada: false
+                  });
+                }
+              }
+            }
+
+            // 2. Alertas para contratos firmados recibidos y propuestas de modificación
+            const { data: solicitudesConDocs } = await client
               .schema("tranqui_legal")
               .from("trq_solicitud_socio")
               .select(`
@@ -160,11 +209,13 @@ export async function GET() {
               .is("ssc_eliminado_en", null)
               .order("ssc_actualizado_en", { ascending: false });
 
-            if (solicitudesConContrato && Array.isArray(solicitudesConContrato)) {
-              for (const sol of solicitudesConContrato) {
+            if (solicitudesConDocs && Array.isArray(solicitudesConDocs)) {
+              for (const sol of solicitudesConDocs) {
                 const docs = (sol.trq_documento_socio || []) as Array<{ dcs_tipo: string; dcs_comentario?: string; dcs_creado_en: string }>;
                 const tieneContrato = docs.some(d => d.dcs_tipo === "contrato_socio" || d.dcs_comentario?.includes("[tipo:contrato_socio]"));
-                if (tieneContrato) {
+                const tienePropuesta = docs.some(d => d.dcs_comentario?.includes("[PROPUESTA_MODIFICACION_CONTRATO]"));
+
+                if (tieneContrato || tienePropuesta) {
                   const { data: uPost } = await client
                     .schema("comun_seguridad")
                     .from("seg_usuario")
@@ -173,20 +224,41 @@ export async function GET() {
                     .maybeSingle();
 
                   const nombrePost = [uPost?.usu_nombres, uPost?.usu_apellidos].filter(Boolean).join(" ") || uPost?.usu_correo || "Postulante";
-                  const titulo = `📝 Contrato Firmado Recibido — Postulante: ${nombrePost}`;
-                  const synthContratoId = `contrato-${sol.ssc_id}`;
-                  const yaExiste = notificaciones.some(n => n.not_id === synthContratoId || n.not_titulo.includes(nombrePost));
-                  if (!yaExiste) {
-                    notificaciones.unshift({
-                      not_id: synthContratoId,
-                      not_titulo: titulo,
-                      not_contenido_html: `<p>El postulante <strong>${nombrePost}</strong> ha subido su contrato firmado. Haz clic en <a href="/panel/socios/${sol.ssc_id}" style="color: #05876E; font-weight: 700;">Verificar Contrato y Activar Socio</a> para completar su incorporación.</p>`,
-                      not_url_accion: `/panel/socios/${sol.ssc_id}`,
-                      not_leido_en: null,
-                      not_creado_en: sol.ssc_actualizado_en || new Date().toISOString(),
-                      not_canal: "IN_APP",
-                      not_eliminada: false
-                    });
+
+                  if (tieneContrato) {
+                    const tituloContrato = `📝 Contrato Firmado Recibido — Postulante: ${nombrePost}`;
+                    const synthContratoId = `contrato-${sol.ssc_id}`;
+                    const yaExiste = notificaciones.some(n => n.not_id === synthContratoId);
+                    if (!yaExiste) {
+                      notificaciones.unshift({
+                        not_id: synthContratoId,
+                        not_titulo: tituloContrato,
+                        not_contenido_html: `<p>El postulante <strong>${nombrePost}</strong> ha subido su contrato firmado. Haz clic en <a href="/panel/socios/${sol.ssc_id}" style="color: #05876E; font-weight: 700;">Verificar Contrato y Activar Socio</a> para completar su incorporación.</p>`,
+                        not_url_accion: `/panel/socios/${sol.ssc_id}`,
+                        not_leido_en: null,
+                        not_creado_en: sol.ssc_actualizado_en || new Date().toISOString(),
+                        not_canal: "IN_APP",
+                        not_eliminada: false
+                      });
+                    }
+                  }
+
+                  if (tienePropuesta) {
+                    const tituloPropuesta = `📝 Propuesta de Modificación al Contrato — Postulante: ${nombrePost}`;
+                    const synthPropuestaId = `propuesta-${sol.ssc_id}`;
+                    const yaExiste = notificaciones.some(n => n.not_id === synthPropuestaId);
+                    if (!yaExiste) {
+                      notificaciones.unshift({
+                        not_id: synthPropuestaId,
+                        not_titulo: tituloPropuesta,
+                        not_contenido_html: `<p>El postulante <strong>${nombrePost}</strong> ha enviado una propuesta de cambios al contrato en formato Word. Haz clic en <a href="/panel/socios/${sol.ssc_id}" style="color: #D97706; font-weight: 700;">Revisar Propuesta</a>.</p>`,
+                        not_url_accion: `/panel/socios/${sol.ssc_id}`,
+                        not_leido_en: null,
+                        not_creado_en: sol.ssc_actualizado_en || new Date().toISOString(),
+                        not_canal: "IN_APP",
+                        not_eliminada: false
+                      });
+                    }
                   }
                 }
               }

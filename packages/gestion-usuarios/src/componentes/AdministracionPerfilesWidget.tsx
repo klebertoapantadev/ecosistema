@@ -8,7 +8,7 @@ import {
   Palette, UserCheck, X, Sparkles, Trash2, Star, Move, Copy, Package, GripVertical,
   Home, User, Settings, Shield, Folder, Wrench, Building, Briefcase, Bell, Database,
   Activity, Globe, Lock, KeyRound, CheckSquare, Terminal, Zap, Pencil, LogOut, LogIn,
-  Forward, Inbox, FileText, Download, Printer, Share2, type LucideIcon
+  Forward, Inbox, FileText, Download, Printer, Share2, RotateCcw, type LucideIcon
 } from "lucide-react";
 import { guardarPerfil, guardarWidget, guardarAsignacionWidget, obtenerDatosGestionUsuariosAction } from "../acciones";
 import type { UsuarioConMembresia } from "../consultas";
@@ -221,7 +221,7 @@ const PERFILES_INICIALES: PerfilDef[] = [
     widgetsAsignadosPorPanel: {
       panel_inicio: ["favoritos"],
       panel_cuenta: ["ver_como", "mi_cuenta"],
-      panel_herramientas: ["firma_documentos_pdf"],
+      panel_herramientas: ["firma_documentos_pdf", "billetera_documentos"],
       panel_configuracion: ["notificaciones"]
     },
     activo: true
@@ -236,7 +236,7 @@ const PERFILES_INICIALES: PerfilDef[] = [
     widgetsAsignadosPorPanel: {
       panel_inicio: ["favoritos"],
       panel_cuenta: ["ver_como", "mi_cuenta"],
-      panel_herramientas: ["firma_documentos_pdf", "emision_notificaciones"],
+      panel_herramientas: ["firma_documentos_pdf", "billetera_documentos", "emision_notificaciones"],
       panel_configuracion: ["notificaciones"],
       panel_administrar: ["socios", "configuracion_contrato_abogado", "gestion_terminos_consentimientos"]
     },
@@ -252,7 +252,7 @@ const PERFILES_INICIALES: PerfilDef[] = [
     widgetsAsignadosPorPanel: {
       panel_inicio: ["favoritos"],
       panel_cuenta: ["ver_como", "mi_cuenta"],
-      panel_herramientas: ["firma_documentos_pdf"],
+      panel_herramientas: ["firma_documentos_pdf", "billetera_documentos"],
       panel_configuracion: ["notificaciones"]
     },
     activo: true
@@ -267,7 +267,7 @@ const PERFILES_INICIALES: PerfilDef[] = [
     widgetsAsignadosPorPanel: {
       panel_inicio: ["favoritos"],
       panel_cuenta: ["ver_como", "mi_cuenta"],
-      panel_herramientas: ["firma_documentos_pdf", "emision_notificaciones"],
+      panel_herramientas: ["firma_documentos_pdf", "billetera_documentos", "emision_notificaciones"],
       panel_configuracion: ["configuracion_negocio", "configuracion_correo", "perfiles", "notificaciones"],
       panel_administrar: ["gestion_usuarios", "socios", "solicitud_socio", "emision_notificaciones", "gestion_terminos_consentimientos", "configuracion_contrato_abogado", "auditoria"]
     },
@@ -283,7 +283,7 @@ const PERFILES_INICIALES: PerfilDef[] = [
     widgetsAsignadosPorPanel: {
       panel_inicio: ["favoritos"],
       panel_cuenta: ["ver_como", "mi_cuenta", "historial_accesos"],
-      panel_herramientas: ["firma_documentos_pdf", "emision_notificaciones"],
+      panel_herramientas: ["firma_documentos_pdf", "billetera_documentos", "emision_notificaciones"],
       panel_configuracion: ["configuracion_negocio", "configuracion_correo", "perfiles", "notificaciones"],
       panel_administrar: ["gestion_usuarios", "socios", "solicitud_socio", "emision_notificaciones", "auditoria"]
     },
@@ -512,12 +512,38 @@ const WIDGETS_INVENTARIO_INICIALES: WidgetInventarioDef[] = [
     panelId: "panel_herramientas",
     activo: true,
     creadoEn: "2026-08-19"
+  },
+  {
+    clave: "billetera_documentos",
+    nombre: "Billetera Digital de Documentos Seguros",
+    descripcion: "Bóveda digital de documentos personales, vehiculares, contratos y profesionales con extracción OCR y enlaces efímeros (TTL).",
+    categoria: "Herramientas Digitales",
+    ruta: "/panel/billetera-documentos",
+    rutaFisica: "/billetera-documentos/componentes/WidgetBilleteraDocumentos.tsx",
+    panelId: "panel_herramientas",
+    activo: true,
+    creadoEn: "2026-08-23"
   }
 ];
 
 // COMPONENTE PARA RENDERIZAR LA INTERFAZ REAL INTERACTIVA EN EL MODAL DE PREVISUALIZACIÓN
 function RenderizadorWidgetReal({ clave, negocio }: { clave: string; negocio: string }) {
   switch (clave) {
+    case "billetera_documentos":
+      return (
+        <div style={{ background: "#ffffff", padding: "18px", borderRadius: "12px", border: "1.5px solid var(--violeta, #5000BA)", boxShadow: "0 4px 12px rgba(80,0,186,0.08)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 800, fontSize: "0.95rem", color: "var(--violeta, #5000BA)", marginBottom: "10px" }}>
+            <Folder size={18} /> Billetera Digital de Documentos Seguros (OCR / TTL)
+          </div>
+          <p style={{ fontSize: "0.82rem", color: "#64748B", marginBottom: "12px" }}>
+            Bóveda cifrada para almacenamiento y gestión inteligente de cédulas, matrículas, licencias, contratos y certificados con extracción OCR y enlaces efímeros protegidos.
+          </p>
+          <div style={{ padding: "12px", background: "#F8FAFC", borderRadius: "8px", border: "1px dashed #CBD5E1", textAlign: "center", fontSize: "0.82rem", color: "#334155", fontWeight: 700 }}>
+            📁 Categorías Inteligentes ➔ 🔍 Extracción OCR ➔ ⏳ Enlaces TTL Efímeros
+          </div>
+        </div>
+      );
+
     case "firma_documentos_pdf":
       return (
         <div style={{ background: "#ffffff", padding: "18px", borderRadius: "12px", border: "1.5px solid var(--violeta, #5000BA)", boxShadow: "0 4px 12px rgba(80,0,186,0.08)" }}>
@@ -809,6 +835,55 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
     document.body.removeChild(link);
   };
 
+  // FUNCIÓN PARA FORZAR SINCRONIZACIÓN INMEDIATA DEL CATÁLOGO MAESTRO (WIDGETS, PANELES Y PERFILES)
+  const sincronizarCatalogoMaestro = () => {
+    try {
+      const clavesActuales = new Set(inventarioWidgets.map(w => w.clave));
+      const faltantesInventario = WIDGETS_INVENTARIO_INICIALES.filter(w => !clavesActuales.has(w.clave));
+      const inventarioActualizado = [
+        ...inventarioWidgets.map(w => {
+          const original = WIDGETS_INVENTARIO_INICIALES.find(o => o.clave === w.clave);
+          return original ? { ...w, ...original, nombre: w.nombre || original.nombre } : w;
+        }),
+        ...faltantesInventario
+      ];
+      setInventarioWidgets(inventarioActualizado);
+      localStorage.setItem(`tranqi_inventario_widgets_${negocio}`, JSON.stringify(inventarioActualizado));
+
+      const perfilesActualizados = perfiles.map(p => {
+        const base = PERFILES_INICIALES.find(b => b.clave === p.clave);
+        if (!base) return p;
+        const panelesMerged = Array.from(new Set([...(p.panelesAsignados || []), ...base.panelesAsignados]));
+        const widgetsMerged: Record<string, string[]> = { ...(p.widgetsAsignadosPorPanel || {}) };
+        Object.entries(base.widgetsAsignadosPorPanel || {}).forEach(([panelKey, listBase]) => {
+          const currentList = widgetsMerged[panelKey] || [];
+          widgetsMerged[panelKey] = Array.from(new Set([...currentList, ...listBase]));
+        });
+        return {
+          ...p,
+          panelesAsignados: panelesMerged,
+          widgetsAsignadosPorPanel: widgetsMerged
+        };
+      });
+      setPerfiles(perfilesActualizados);
+      localStorage.setItem(`tranqi_perfiles_${negocio}`, JSON.stringify(perfilesActualizados));
+
+      const idsPaneles = new Set(panelesSidebar.map(p => p.id));
+      const faltantesPaneles = PANELES_SIDEBAR_INICIALES.filter(p => !idsPaneles.has(p.id));
+      const panelesActualizados = [...panelesSidebar, ...faltantesPaneles];
+      setPanelesSidebar(panelesActualizados);
+      localStorage.setItem(`tranqi_paneles_sidebar_${negocio}`, JSON.stringify(panelesActualizados));
+
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new Event("storage"));
+      }
+
+      alert(`✅ Catálogo Maestro Sincronizado: ${inventarioActualizado.length} widgets del sistema disponibles para asignar.`);
+    } catch (err) {
+      console.error("Error al sincronizar catálogo:", err);
+    }
+  };
+
   // CLAVES LOCALSTORAGE PERSISTENCIA POR NEGOCIO
   const KEY_PANELES = `tranqi_paneles_sidebar_${negocio}`;
   const KEY_PERFILES = `tranqi_perfiles_${negocio}`;
@@ -846,7 +921,11 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
             const base = PERFILES_INICIALES.find(b => b.clave === p.clave);
             if (!base) return p;
             const panelesMerged = Array.from(new Set([...(p.panelesAsignados || []), ...base.panelesAsignados]));
-            const widgetsMerged = { ...(base.widgetsAsignadosPorPanel || {}), ...(p.widgetsAsignadosPorPanel || {}) };
+            const widgetsMerged: Record<string, string[]> = { ...(p.widgetsAsignadosPorPanel || {}) };
+            Object.entries(base.widgetsAsignadosPorPanel || {}).forEach(([panelKey, listBase]) => {
+              const currentList = widgetsMerged[panelKey] || [];
+              widgetsMerged[panelKey] = Array.from(new Set([...currentList, ...listBase]));
+            });
             return {
               ...p,
               panelesAsignados: panelesMerged,
@@ -1518,25 +1597,49 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
               </p>
             </div>
 
-            <button
-              type="button"
-              onClick={() => setMostrarModalPanel(true)}
-              style={{
-                background: "var(--violeta, #5000BA)",
-                color: "#ffffff",
-                border: "none",
-                borderRadius: "8px",
-                padding: "9px 16px",
-                fontSize: "0.82rem",
-                fontWeight: 700,
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                gap: "6px"
-              }}
-            >
-              <Plus size={16} /> + Crear Nuevo Panel
-            </button>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <button
+                type="button"
+                onClick={sincronizarCatalogoMaestro}
+                title="Sincroniza todos los widgets y perfiles registrados en el código con el inventario del navegador"
+                style={{
+                  background: "#F5F3FF",
+                  color: "var(--violeta, #5000BA)",
+                  border: "1px solid #DDD6FE",
+                  borderRadius: "8px",
+                  padding: "9px 14px",
+                  fontSize: "0.82rem",
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  transition: "all 0.15s ease"
+                }}
+              >
+                <RotateCcw size={15} /> Sincronizar Catálogo Maestro
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setMostrarModalPanel(true)}
+                style={{
+                  background: "var(--violeta, #5000BA)",
+                  color: "#ffffff",
+                  border: "none",
+                  borderRadius: "8px",
+                  padding: "9px 16px",
+                  fontSize: "0.82rem",
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px"
+                }}
+              >
+                <Plus size={16} /> + Crear Nuevo Panel
+              </button>
+            </div>
           </div>
 
           {/* LISTADO LIMPIO DE PANELES CON SUS WIDGETS AUTORIZADOS POR PANEL */}
@@ -1977,6 +2080,26 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                         <option value="directorio">Directorio Real</option>
                       </select>
                     </div>
+                    <button
+                      type="button"
+                      onClick={sincronizarCatalogoMaestro}
+                      title="Sincronizar inventario con el catálogo maestro de código"
+                      style={{
+                        fontSize: "0.74rem",
+                        fontWeight: 700,
+                        background: "#ffffff",
+                        color: "#5000BA",
+                        border: "1px solid #DDD6FE",
+                        borderRadius: "6px",
+                        padding: "4px 8px",
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "4px"
+                      }}
+                    >
+                      <RotateCcw size={12} /> Sincronizar
+                    </button>
                     <span style={{ fontSize: "0.78rem", fontWeight: 800, background: "#F3E8FF", color: "#5000BA", padding: "4px 12px", borderRadius: "999px" }}>
                       {widgetsDisponiblesSinAsignar.length} Disponibles
                     </span>

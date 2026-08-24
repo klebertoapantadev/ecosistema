@@ -148,38 +148,39 @@ END $$;
 --------------------------------------------------------------------------------
 DO $$
 DECLARE
-  v_widget_id UUID;
-  v_perfil_rec RECORD;
+  v_negocio text;
+  v_negocios text[] := ARRAY['tranqi', 'fastfix', 'tinkay', 'margaritas'];
 BEGIN
-  -- Insertar widget en el catálogo general
-  INSERT INTO comun_seguridad.seg_widget (
-    wid_clave, wid_nombre, wid_descripcion, wid_categoria, wid_icono, wid_orden
-  ) VALUES (
-    'billetera_documentos',
-    'Billetera Digital de Documentos Seguros',
-    'Bóveda digital de documentos personales, vehiculares, contratos y profesionales con extracción OCR y enlaces efímeros (TTL)',
-    'Herramientas Digitales',
-    'Folder',
-    15
-  )
-  ON CONFLICT (wid_clave) DO UPDATE SET
-    wid_nombre = EXCLUDED.wid_nombre,
-    wid_descripcion = EXCLUDED.wid_descripcion,
-    wid_categoria = EXCLUDED.wid_categoria
-  RETURNING wid_id INTO v_widget_id;
+  FOREACH v_negocio IN ARRAY v_negocios
+  LOOP
+    INSERT INTO comun_seguridad.seg_widget (
+      wdg_negocio, wdg_clave, wdg_nombre, wdg_activo, wdg_detalle_widget, wdg_creado_en
+    ) VALUES (
+      v_negocio,
+      'billetera_documentos',
+      'Billetera Digital de Documentos Seguros',
+      true,
+      jsonb_build_object(
+        'descripcion', 'Bóveda digital de documentos personales, vehiculares, contratos y profesionales con OCR y TTL',
+        'categoria', 'Herramientas Digitales',
+        'ruta', '/panel/billetera-documentos',
+        'panel_defecto', 'panel_herramientas',
+        'icono', 'Folder'
+      ),
+      NOW()
+    )
+    ON CONFLICT (wdg_negocio, wdg_clave) DO UPDATE
+    SET wdg_nombre = EXCLUDED.wdg_nombre, wdg_activo = true, wdg_detalle_widget = EXCLUDED.wdg_detalle_widget;
 
-  IF v_widget_id IS NULL THEN
-    SELECT wid_id INTO v_widget_id FROM comun_seguridad.seg_widget WHERE wid_clave = 'billetera_documentos';
-  END IF;
-
-  -- Asignar a todos los perfiles de Tranqi
-  FOR v_perfil_rec IN (
-    SELECT per_id FROM comun_seguridad.seg_perfil 
-    WHERE per_clave IN ('CLIENTE', 'ABOGADO', 'OPERADOR', 'ADMINISTRADOR', 'SUPERADMIN')
-  ) LOOP
-    INSERT INTO comun_seguridad.seg_rol_widget (row_perfil_id, row_widget_id)
-    VALUES (v_perfil_rec.per_id, v_widget_id)
-    ON CONFLICT (row_perfil_id, row_widget_id) DO NOTHING;
+    INSERT INTO comun_seguridad.seg_rol_widget (rlw_negocio, rlw_rol, rlw_widget_id, rlw_visible)
+    SELECT v_negocio, rol_nombre, wdg_id, true
+    FROM comun_seguridad.seg_widget
+    CROSS JOIN (
+      VALUES ('CLIENTE'), ('ABOGADO'), ('OPERADOR'), ('AUXILIAR'), ('TECNICO'), ('ADMINISTRADOR'), ('SUPERADMIN')
+    ) AS roles(rol_nombre)
+    WHERE wdg_clave = 'billetera_documentos'
+      AND wdg_negocio = v_negocio
+    ON CONFLICT (rlw_negocio, rlw_rol, rlw_widget_id) DO NOTHING;
   END LOOP;
 END $$;
 

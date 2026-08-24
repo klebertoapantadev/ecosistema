@@ -48,46 +48,32 @@ async function obtenerDestinatariosStaffTranqi(
     console.warn("Aviso RPC seg_fn_obtener_staff_negocio:", errRpcEx);
   }
 
-  // 2. Fallback de consulta directa
+  // 2. Fallback de consulta directa robusta a seg_membresia y seg_usuario
   try {
+    const { data: membresias } = await clientSupabase
+      .schema("comun_seguridad")
+      .from("seg_membresia")
+      .select("mem_usuario_id, mem_rol, mem_estado, mem_negocio")
+      .in("mem_rol", ["OPERADOR", "ADMINISTRADOR", "SUPERADMIN", "AUXILIAR"])
+      .eq("mem_estado", "ACTIVO");
+
+    const idsStaff = new Set<string>((membresias || []).map((m: any) => m.mem_usuario_id));
+
     const { data: usuarios } = await clientSupabase
       .schema("comun_seguridad")
       .from("seg_usuario")
       .select("usu_id, usu_correo, usu_superadmin_plataforma");
 
     if (Array.isArray(usuarios) && usuarios.length > 0) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const ids = usuarios.map((u: any) => u.usu_id);
-
-      const { data: membresias } = await clientSupabase
-        .schema("comun_seguridad")
-        .from("seg_membresia")
-        .select("mem_usuario_id, mem_estado, mem_negocio, seg_membresia_perfil(seg_perfil(per_clave))")
-        .in("mem_usuario_id", ids);
-
-      const mapaStaff = new Map<string, boolean>();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (membresias || []).forEach((m: any) => {
-        const negocioUpper = (m.mem_negocio || "").toUpperCase();
-        if (negocioUpper === "TRANQ" || negocioUpper === "TRANQI") {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const perfiles = (m.seg_membresia_perfil || [])
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            .map((mp: any) => (mp.seg_perfil?.per_clave || "").toUpperCase());
-          if (perfiles.includes("OPERADOR") || perfiles.includes("ADMINISTRADOR") || perfiles.includes("SUPERADMIN") || perfiles.includes("AUXILIAR")) {
-            mapaStaff.set(m.mem_usuario_id, true);
-          }
-        }
-      });
-
       for (const u of usuarios) {
         const correo = (u.usu_correo || "").toLowerCase().trim();
         const esSuperAdmin = Boolean(
           u.usu_superadmin_plataforma ||
           correo === "kleber.toapanta.ch@gmail.com" ||
-          correo === "jesus251296@gmail.com"
+          correo === "jesus251296@gmail.com" ||
+          correo === "satcomla.ti@gmail.com"
         );
-        const esStaff = esSuperAdmin || mapaStaff.has(u.usu_id);
+        const esStaff = esSuperAdmin || idsStaff.has(u.usu_id);
 
         if (esStaff && u.usu_id !== excluirUsuarioId && correo && !correosVistos.has(correo)) {
           correosVistos.add(correo);
@@ -475,9 +461,11 @@ export async function enviarSolicitudSocio(
     }
 
     // Despachar notificación automática (In-App, Push y Email) a todos los Administradores y Operadores de Tranqi
-    notificarSolicitudEnviada(usuarioId, solicitudId, esActualizacion).catch((errNot) => {
+    try {
+      await notificarSolicitudEnviada(usuarioId, solicitudId, esActualizacion);
+    } catch (errNot) {
       console.warn("Aviso en despacho de notificación automática:", errNot);
-    });
+    }
 
     try {
       revalidatePath("/panel/solicitud-socio");
