@@ -1,9 +1,11 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Link from "next/link";
 import {
   LayoutGrid, Wrench, Shield, Users, Bell, UserCog, ClipboardList, FileText,
-  Settings, X, ChevronRight, CircleUser, KeyRound, FileCheck, Folder, type LucideIcon
+  Settings, X, ChevronRight, CircleUser, KeyRound, FileCheck, Folder, type LucideIcon,
+  Bot
 } from "lucide-react";
 import { AdministracionPerfilesWidget } from "@eco/gestion-usuarios/componentes/AdministracionPerfilesWidget";
 import { ConsultaUsuariosPerfilesWidget } from "@eco/gestion-usuarios/componentes/ConsultaUsuariosPerfilesWidget";
@@ -36,7 +38,34 @@ export interface WidgetInventarioDef {
   colorIcono?: string;
 }
 
+function EnlaceConsolaAgentes() {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: "12px", alignItems: "flex-start" }}>
+      <p style={{ fontSize: "0.88rem", color: "#444", margin: 0, maxWidth: "60ch" }}>
+        Los asistentes de IA se configuran en su propia consola, que exige verificación en dos
+        pasos: editar el prompt de un agente cambia lo que se le responde a todos los afiliados.
+      </p>
+      <Link
+        href="/panel/agentes"
+        style={{
+          background: "var(--violeta, #5000BA)", color: "#fff", textDecoration: "none",
+          padding: "10px 16px", borderRadius: "10px", fontWeight: 700, fontSize: "0.85rem"
+        }}
+      >
+        Abrir la consola de agentes
+      </Link>
+    </div>
+  );
+}
+
 const INVENTARIO_GLOBAL_WIDGETS: Record<string, { titulo: string; subtitulo: string; icono: LucideIcon; colorIcono: string; categoria: string }> = {
+  agentes_ia: {
+    titulo: "Agentes de IA",
+    subtitulo: "Configuración de los asistentes Aria de tranqi: prompts, modelo y herramientas",
+    icono: Bot,
+    colorIcono: "#5000BA",
+    categoria: "Configuración"
+  },
   firma_documentos_pdf: {
     titulo: "Firma Electrónica de Documentos PDF",
     subtitulo: "Firmado digital con certificado .p12 / .pfx, estampa visual y código QR",
@@ -260,7 +289,7 @@ function obtenerWidgetsInicialesDinamicos(panelId: string, slugStr: string): str
     if (panelId === "panel_herramientas" || slugStr === "herramientas") return ["firma_documentos_pdf", "billetera_documentos", "emision_notificaciones"];
     if (panelId === "panel_seguridad" || slugStr === "seguridad") return ["mfa_seguridad", "auditoria", "solicitud_socio"];
     if (panelId === "panel_administrar" || slugStr === "administrar") return ["gestion_usuarios", "socios", "firma_documentos_pdf", "solicitud_socio", "emision_notificaciones", "auditoria"];
-    if (panelId === "panel_configuracion" || slugStr === "configuracion") return ["configuracion_negocio", "configuracion_correo", "perfiles", "notificaciones"];
+    if (panelId === "panel_configuracion" || slugStr === "configuracion") return ["configuracion_negocio", "configuracion_correo", "perfiles", "notificaciones", "agentes_ia"];
     if (panelId === "panel_cuenta" || slugStr === "cuenta") return ["ver_como", "mi_cuenta", "historial_accesos"];
   } else {
     // ROL CLIENTE / ABOGADO
@@ -373,6 +402,12 @@ export function PanelDinamicoModular({ slug, negocio }: Props) {
 
   const renderWidgetComponente = (wClave: string) => {
     switch (wClave) {
+      case "agentes_ia":
+        // La consola de agentes es una pantalla propia (/panel/agentes) y no un
+        // widget en linea: necesita un layout con gate aal2 y hace lecturas a
+        // ARIA del lado servidor. Aqui solo se enlaza, para que la tarjeta del
+        // panel no quede muerta.
+        return <EnlaceConsolaAgentes />;
       case "firma_documentos_pdf":
       case "firma_documentos":
       case "firma_pdf":

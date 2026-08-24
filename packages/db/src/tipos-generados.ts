@@ -3,6 +3,21 @@
 // Regenerar en el mismo PR que cualquier migracion nueva que toque columnas
 // (no hace falta si la migracion solo reescribe el cuerpo de una funcion).
 // Pendientes de incluir cuando se migren: comun_facturacion, comun_agentes, comun_comercio.
+//
+// OJO (TRQ-009): este fichero NO es una regeneracion limpia. Es la version
+// anterior mas los bloques de las 6 tablas nuevas de tranqui_legal.
+//
+// Motivo: regenerar entero con el CLI (probado con 2.101 y 2.115) devuelve
+// `p_host: string` para comun_configuracion.cfg_fn_guardar_smtp, mientras que
+// lo commiteado dice `p_host: string | null`. Con la firma estricta,
+// packages/configuracion-negocio/src/acciones-smtp.ts deja de compilar en 4
+// lineas que pasan null a proposito ("null = no cambies la contrasena"). En
+// la base, esos parametros son `text` a secas y aceptan NULL, asi que la firma
+// estricta es del generador, no de Postgres.
+//
+// Se conservo la firma commiteada para no romper codigo ajeno con un cambio
+// de tipos. Antes de la proxima regeneracion completa hay que decidir si se
+// ajusta acciones-smtp.ts o si se documenta la excepcion.
 export type Json =
   | string
   | number
@@ -268,13 +283,13 @@ export type Database = {
       cfg_fn_guardar_smtp: {
         Args: {
           p_activo: boolean
-          p_contrasena?: string
-          p_host: string
+          p_contrasena?: string | null
+          p_host: string | null
           p_negocio: string
           p_puerto: number
-          p_remitente_nombre: string
+          p_remitente_nombre: string | null
           p_seguro: boolean
-          p_usuario: string
+          p_usuario: string | null
         }
         Returns: undefined
       }
@@ -448,61 +463,6 @@ export type Database = {
           },
         ]
       }
-      seg_membresia_perfil: {
-        Row: {
-          mpe_actualizado_en: string
-          mpe_asignado_por: string | null
-          mpe_creado_en: string
-          mpe_detalle_membresia_perfil: Json
-          mpe_id: string
-          mpe_membresia_id: string
-          mpe_perfil_id: string
-          mpe_secuencial: number
-        }
-        Insert: {
-          mpe_actualizado_en?: string
-          mpe_asignado_por?: string | null
-          mpe_creado_en?: string
-          mpe_detalle_membresia_perfil?: Json
-          mpe_id?: string
-          mpe_membresia_id: string
-          mpe_perfil_id: string
-          mpe_secuencial?: never
-        }
-        Update: {
-          mpe_actualizado_en?: string
-          mpe_asignado_por?: string | null
-          mpe_creado_en?: string
-          mpe_detalle_membresia_perfil?: Json
-          mpe_id?: string
-          mpe_membresia_id?: string
-          mpe_perfil_id?: string
-          mpe_secuencial?: never
-        }
-        Relationships: [
-          {
-            foreignKeyName: "seg_membresia_perfil_mpe_asignado_por_fkey"
-            columns: ["mpe_asignado_por"]
-            isOneToOne: false
-            referencedRelation: "seg_usuario"
-            referencedColumns: ["usu_id"]
-          },
-          {
-            foreignKeyName: "seg_membresia_perfil_mpe_membresia_id_fkey"
-            columns: ["mpe_membresia_id"]
-            isOneToOne: false
-            referencedRelation: "seg_membresia"
-            referencedColumns: ["mem_id"]
-          },
-          {
-            foreignKeyName: "seg_membresia_perfil_mpe_perfil_id_fkey"
-            columns: ["mpe_perfil_id"]
-            isOneToOne: false
-            referencedRelation: "seg_perfil"
-            referencedColumns: ["per_id"]
-          },
-        ]
-      }
       seg_otp_correo: {
         Row: {
           otp_codigo_hash: string
@@ -543,45 +503,6 @@ export type Database = {
             referencedColumns: ["usu_id"]
           },
         ]
-      }
-      seg_perfil: {
-        Row: {
-          per_activo: boolean
-          per_actualizado_en: string
-          per_asignable: boolean
-          per_clave: string
-          per_creado_en: string
-          per_detalle_perfil: Json
-          per_id: string
-          per_nivel: number
-          per_nombre: string
-          per_secuencial: number
-        }
-        Insert: {
-          per_activo?: boolean
-          per_actualizado_en?: string
-          per_asignable?: boolean
-          per_clave: string
-          per_creado_en?: string
-          per_detalle_perfil?: Json
-          per_id?: string
-          per_nivel: number
-          per_nombre: string
-          per_secuencial?: never
-        }
-        Update: {
-          per_activo?: boolean
-          per_actualizado_en?: string
-          per_asignable?: boolean
-          per_clave?: string
-          per_creado_en?: string
-          per_detalle_perfil?: Json
-          per_id?: string
-          per_nivel?: number
-          per_nombre?: string
-          per_secuencial?: never
-        }
-        Relationships: []
       }
       seg_recuperacion_correo: {
         Row: {
@@ -728,6 +649,93 @@ export type Database = {
         }
         Relationships: []
       }
+      seg_perfil: {
+        Row: {
+          per_activo: boolean
+          per_actualizado_en: string
+          per_asignable: boolean
+          per_clave: string
+          per_creado_en: string
+          per_detalle_perfil: Json
+          per_id: string
+          per_nivel: number
+          per_nombre: string
+          per_secuencial: number
+        }
+        Insert: {
+          per_activo?: boolean
+          per_actualizado_en?: string
+          per_asignable?: boolean
+          per_clave: string
+          per_creado_en?: string
+          per_detalle_perfil?: Json
+          per_id?: string
+          per_nivel: number
+          per_nombre: string
+          per_secuencial?: never
+        }
+        Update: {
+          per_activo?: boolean
+          per_actualizado_en?: string
+          per_asignable?: boolean
+          per_clave?: string
+          per_creado_en?: string
+          per_detalle_perfil?: Json
+          per_id?: string
+          per_nivel?: number
+          per_nombre?: string
+          per_secuencial?: never
+        }
+        Relationships: []
+      }
+      seg_membresia_perfil: {
+        Row: {
+          mpe_actualizado_en: string
+          mpe_asignado_por: string | null
+          mpe_creado_en: string
+          mpe_detalle_membresia_perfil: Json
+          mpe_id: string
+          mpe_membresia_id: string
+          mpe_perfil_id: string
+          mpe_secuencial: number
+        }
+        Insert: {
+          mpe_actualizado_en?: string
+          mpe_asignado_por?: string | null
+          mpe_creado_en?: string
+          mpe_detalle_membresia_perfil?: Json
+          mpe_id?: string
+          mpe_membresia_id: string
+          mpe_perfil_id: string
+          mpe_secuencial?: never
+        }
+        Update: {
+          mpe_actualizado_en?: string
+          mpe_asignado_por?: string | null
+          mpe_creado_en?: string
+          mpe_detalle_membresia_perfil?: Json
+          mpe_id?: string
+          mpe_membresia_id?: string
+          mpe_perfil_id?: string
+          mpe_secuencial?: never
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seg_membresia_perfil_mpe_membresia_id_fkey"
+            columns: ["mpe_membresia_id"]
+            isOneToOne: false
+            referencedRelation: "seg_membresia"
+            referencedColumns: ["mem_id"]
+          },
+          {
+            foreignKeyName: "seg_membresia_perfil_mpe_perfil_id_fkey"
+            columns: ["mpe_perfil_id"]
+            isOneToOne: false
+            referencedRelation: "seg_perfil"
+            referencedColumns: ["per_id"]
+          },
+        ]
+      }
       seg_widget: {
         Row: {
           wdg_activo: boolean
@@ -769,14 +777,20 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      seg_fn_asegurar_membresia_cliente: {
-        Args: { p_negocio: string }
-        Returns: undefined
-      }
+      seg_fn_asegurar_membresia_cliente: { Args: { p_negocio: string }; Returns: undefined }
       seg_fn_asignar_perfil: {
         Args: { p_negocio: string; p_perfil: string; p_usuario_id: string }
         Returns: undefined
       }
+      seg_fn_quitar_perfil: {
+        Args: { p_negocio: string; p_perfil: string; p_usuario_id: string }
+        Returns: undefined
+      }
+      seg_fn_perfiles: { Args: { p_negocio: string }; Returns: string[] }
+      seg_fn_perfiles_de: { Args: { p_negocio: string; p_usuario_id: string }; Returns: string[] }
+      seg_fn_tiene_perfil: { Args: { p_clave: string; p_negocio: string }; Returns: boolean }
+      seg_fn_nivel_maximo: { Args: { p_negocio: string }; Returns: number }
+      seg_fn_es_superadmin: { Args: never; Returns: boolean }
       seg_fn_asignar_rol: {
         Args: { p_negocio: string; p_rol: string; p_usuario_id: string }
         Returns: {
@@ -800,37 +814,10 @@ export type Database = {
       }
       seg_fn_eliminar_cuenta: { Args: never; Returns: string }
       seg_fn_es_admin_negocio: { Args: { p_negocio: string }; Returns: boolean }
-      seg_fn_es_operador_o_admin_negocio: {
-        Args: { p_negocio: string }
-        Returns: boolean
-      }
-      seg_fn_es_superadmin: { Args: never; Returns: boolean }
       seg_fn_generar_otp_registro: { Args: never; Returns: string }
-      seg_fn_nivel_maximo: { Args: { p_negocio: string }; Returns: number }
-      seg_fn_perfiles: { Args: { p_negocio: string }; Returns: string[] }
-      seg_fn_perfiles_de: {
-        Args: { p_negocio: string; p_usuario_id: string }
-        Returns: string[]
-      }
-      seg_fn_quitar_perfil: {
-        Args: { p_negocio: string; p_perfil: string; p_usuario_id: string }
-        Returns: undefined
-      }
       seg_fn_solicitar_recuperacion: {
         Args: { p_correo: string }
         Returns: string
-      }
-      seg_fn_superadmin_eliminar_usuario: {
-        Args: { p_target_usu_id?: string; p_target_usuario_id?: string }
-        Returns: string
-      }
-      seg_fn_superadmin_resetear_sistema: {
-        Args: { p_negocio?: string }
-        Returns: string
-      }
-      seg_fn_tiene_perfil: {
-        Args: { p_clave: string; p_negocio: string }
-        Returns: boolean
       }
       seg_fn_verificar_otp_registro: {
         Args: { p_codigo: string }
@@ -1430,8 +1417,6 @@ export type Database = {
           ssc_anio_graduacion: number
           ssc_anos_experiencia: number
           ssc_cedula: string
-          ssc_contrato_confirmado_en: string | null
-          ssc_contrato_confirmado_por: string | null
           ssc_creado_en: string
           ssc_eliminado_en: string | null
           ssc_enlace_foro_verificado: boolean
@@ -1451,8 +1436,6 @@ export type Database = {
           ssc_anio_graduacion: number
           ssc_anos_experiencia?: number
           ssc_cedula: string
-          ssc_contrato_confirmado_en?: string | null
-          ssc_contrato_confirmado_por?: string | null
           ssc_creado_en?: string
           ssc_eliminado_en?: string | null
           ssc_enlace_foro_verificado?: boolean
@@ -1472,8 +1455,6 @@ export type Database = {
           ssc_anio_graduacion?: number
           ssc_anos_experiencia?: number
           ssc_cedula?: string
-          ssc_contrato_confirmado_en?: string | null
-          ssc_contrato_confirmado_por?: string | null
           ssc_creado_en?: string
           ssc_eliminado_en?: string | null
           ssc_enlace_foro_verificado?: boolean
@@ -1495,7 +1476,6 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      trq_fn_abogado_actual: { Args: never; Returns: string }
       trq_fn_decidir_solicitud: {
         Args: {
           p_comentario?: string
@@ -1507,8 +1487,6 @@ export type Database = {
           ssc_anio_graduacion: number
           ssc_anos_experiencia: number
           ssc_cedula: string
-          ssc_contrato_confirmado_en: string | null
-          ssc_contrato_confirmado_por: string | null
           ssc_creado_en: string
           ssc_eliminado_en: string | null
           ssc_enlace_foro_verificado: boolean
