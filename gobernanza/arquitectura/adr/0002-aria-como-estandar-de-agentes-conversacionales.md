@@ -59,3 +59,22 @@ Esta tabla se crea junto con el resto de esquemas comunes en las migraciones de 
 - Todo Route Handler `/api/chat` de cualquier app importa `packages/agentes-ia`, no reimplementa el proxy.
 - Cuando se cree el catálogo `comun_agentes`, la función de resolución de agente en `packages/agentes-ia` cambia de "leer env var fija" a "consultar producto+rol en la tabla, luego leer la env var que la tabla indica" — un solo punto de cambio, no N apps.
 - `aria-mcp` queda versionado en `tools/aria-mcp/`, disponible para el equipo, pero no es una app desplegable de Vercel.
+
+
+## Nota de seguimiento (2026-08-23, TRQ-009)
+
+La decisión 3 se cumple y se amplía: `packages/agentes-ia` ya no solo hace de proxy hacia ARIA,
+también contiene el servidor MCP con el que las apps le dan herramientas a sus agentes
+(`mcp-servidor.ts`), la cápsula de identidad (`capsula.ts`) y el cliente de administración por
+tenant (`consola.ts`).
+
+La decisión 4 sigue pendiente en su forma final: Tranqi resuelve hoy "qué agente usar" por
+`producto + rol` server-side, pero contra variables de entorno (`TRQ_CLIENTE_*`, `TRQ_ABOGADO_*`) y
+no contra `comun_agentes`, que sigue sin migrarse. `resolverAgenteDesdeEntorno` está escrita para
+que ese cambio no toque ningún Route Handler.
+
+**ARIA fue modificada** para que la identidad del usuario final pueda llegar a las herramientas sin
+pasar por el prompt (`tool_context` en `InvokeRequest`, plantillas `{{clave}}` en los headers de
+http-tools y MCP). El cambio es retrocompatible. El razonamiento completo, y por qué la alternativa
+de pasar el identificador como argumento de herramienta se descartó, están en
+[ADR-0005](0005-frontera-de-identidad-en-herramientas-de-ia.md).
