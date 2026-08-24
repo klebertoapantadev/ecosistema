@@ -5,7 +5,7 @@ import {
   Folder, Shield, Upload, Share2, Clock, CheckCircle2, AlertTriangle, XCircle,
   FileText, Search, Eye, Trash2, KeyRound, ExternalLink, Copy, Check, Sparkles,
   Lock, Flame, FileCheck, RefreshCw, Filter, Calendar, Tag, ChevronRight, User,
-  Plus, X, Image as ImageIcon, Bell, BellRing, Info
+  Plus, X, Image as ImageIcon, Bell, BellRing, Info, Edit3, Layers
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -17,6 +17,12 @@ export interface ArchivoAdjunto {
   mimetype: string;
   url?: string | null;
   base64?: string | null;
+}
+
+export interface MetadatoDinamico {
+  id: string;
+  clave: string;
+  valor: string;
 }
 
 export interface DocumentoBilletera {
@@ -40,6 +46,10 @@ export interface DocumentoBilletera {
   doc_titular_nombre?: string | null;
   doc_titular_identificacion?: string | null;
   doc_metadatos_ocr?: Record<string, any>;
+  doc_detalles?: {
+    metadatos_dinamicos?: Array<{ clave: string; valor: string }>;
+    [key: string]: any;
+  };
   doc_creado_en: string;
   estado_calculado?: "vigente" | "por_vencer" | "vencido" | "sin_caducidad";
   dias_para_vencer?: number | null;
@@ -96,7 +106,7 @@ export function WidgetBilleteraDocumentos({ negocio = "TRANQ", onCerrar }: Props
   const [indiceArchivoVer, setIndiceArchivoVer] = useState<number>(0);
   const [docParaEliminar, setDocParaEliminar] = useState<DocumentoBilletera | null>(null);
 
-  // Estados de Formulario de Subida Multi-Archivo & Aria IA
+  // Estados de Formulario de Subida Multi-Archivo
   const [archivosSeleccionados, setArchivosSeleccionados] = useState<Array<{
     id: string;
     nombre: string;
@@ -104,19 +114,21 @@ export function WidgetBilleteraDocumentos({ negocio = "TRANQ", onCerrar }: Props
     mimetype: string;
     base64: string;
   }>>([]);
+  
+  // Campos Base
   const [nuevoTitulo, setNuevoTitulo] = useState<string>("");
   const [nuevaCategoria, setNuevaCategoria] = useState<string>("identidad");
-  const [nuevoTipo, setNuevoTipo] = useState<string>("cedula");
-  const [nuevoTitular, setNuevoTitular] = useState<string>("");
-  const [nuevaIdentificacion, setNuevaIdentificacion] = useState<string>("");
-  const [nuevaFechaNacimiento, setNuevaFechaNacimiento] = useState<string>("");
-  const [nuevoEmisor, setNuevoEmisor] = useState<string>("");
-  const [nuevoNumeroDoc, setNuevoNumeroDoc] = useState<string>("");
-  const [nuevaFechaEmision, setNuevaFechaEmision] = useState<string>("");
-  const [nuevaFechaCaducidad, setNuevaFechaCaducidad] = useState<string>("");
+  const [nuevoTipo, setNuevoTipo] = useState<string>("Cédula de Identidad");
+  
+  // Alerta de Caducidad (Seleccionada por defecto)
   const [alertarCaducidad, setAlertarCaducidad] = useState<boolean>(true);
+  const [nuevaFechaCaducidad, setNuevaFechaCaducidad] = useState<string>("");
   const [mesesAnticipacionAlerta, setMesesAnticipacionAlerta] = useState<number>(3);
   
+  // Metadatos Dinámicos (Clave / Valor editables)
+  const [metadatosDinamicos, setMetadatosDinamicos] = useState<MetadatoDinamico[]>([]);
+
+  // Estados de Asistente Aria & Envío
   const [analizandoConAria, setAnalizandoConAria] = useState<boolean>(false);
   const [resumenAria, setResumenAria] = useState<string | null>(null);
   const [guardandoDoc, setGuardandoDoc] = useState<boolean>(false);
@@ -183,17 +195,28 @@ export function WidgetBilleteraDocumentos({ negocio = "TRANQ", onCerrar }: Props
         const a = json.analisis;
         if (a.tituloSugerido && !nuevoTitulo) setNuevoTitulo(a.tituloSugerido);
         if (a.categoriaSugerida) setNuevaCategoria(a.categoriaSugerida);
-        if (a.tipoSugerido) setNuevoTipo(a.tipoSugerido);
-        if (a.titularNombre && !nuevoTitular) setNuevoTitular(a.titularNombre);
-        if (a.titularIdentificacion && !nuevaIdentificacion) setNuevaIdentificacion(a.titularIdentificacion);
-        if (a.fechaNacimiento && !nuevaFechaNacimiento) setNuevaFechaNacimiento(a.fechaNacimiento);
-        if (a.entidadEmisora && !nuevoEmisor) setNuevoEmisor(a.entidadEmisora);
-        if (a.numeroDocumento && !nuevoNumeroDoc) setNuevoNumeroDoc(a.numeroDocumento);
-        if (a.fechaEmision && !nuevaFechaEmision) setNuevaFechaEmision(a.fechaEmision);
+        if (a.tipoSugerido) {
+          const tipoFormateado = a.tipoSugerido.replace(/_/g, " ");
+          setNuevoTipo(tipoFormateado.charAt(0).toUpperCase() + tipoFormateado.slice(1));
+        }
         if (a.fechaCaducidad && !nuevaFechaCaducidad) setNuevaFechaCaducidad(a.fechaCaducidad);
 
-        setResumenAria(a.resumenOcr || "✨ Análisis de Aria completado. Metadatos listos.");
-        mostrarToast("✨ Aria analizó los documentos y autocompletó los metadatos.", "info");
+        // Crear lista de metadatos dinámicos sugeridos por Aria
+        const listaSugerida: MetadatoDinamico[] = [];
+        if (a.titularNombre) listaSugerida.push({ id: "meta-1", clave: "Nombre del Titular", valor: a.titularNombre });
+        if (a.titularIdentificacion) listaSugerida.push({ id: "meta-2", clave: "Cédula / RUC", valor: a.titularIdentificacion });
+        if (a.entidadEmisora) listaSugerida.push({ id: "meta-3", clave: "Entidad Emisora", valor: a.entidadEmisora });
+        if (a.numeroDocumento) listaSugerida.push({ id: "meta-4", clave: "Número / Matrícula", valor: a.numeroDocumento });
+        if (a.fechaEmision) listaSugerida.push({ id: "meta-5", clave: "Fecha de Emisión", valor: a.fechaEmision });
+        if (a.fechaNacimiento) listaSugerida.push({ id: "meta-6", clave: "Fecha de Nacimiento", valor: a.fechaNacimiento });
+
+        // Si ya había metadatos, conservar los no duplicados
+        if (metadatosDinamicos.length === 0) {
+          setMetadatosDinamicos(listaSugerida);
+        }
+
+        setResumenAria(a.resumenOcr || "✨ Aria identificó parámetros clave. Puedes editarlos, eliminarlos o agregar más.");
+        mostrarToast("✨ Parámetros analizados por Aria con éxito.", "info");
       }
     } catch (err) {
       console.warn("Aviso en análisis Aria:", err);
@@ -279,6 +302,22 @@ export function WidgetBilleteraDocumentos({ negocio = "TRANQ", onCerrar }: Props
     }
   };
 
+  // Funciones para gestión de metadatos dinámicos
+  const agregarCampoMetadato = (clavePrevia = "", valorPrevio = "") => {
+    const nuevoId = `meta-${Date.now()}-${Math.random().toString(36).slice(2, 5)}`;
+    setMetadatosDinamicos([...metadatosDinamicos, { id: nuevoId, clave: clavePrevia, valor: valorPrevio }]);
+  };
+
+  const actualizarCampoMetadato = (id: string, campo: "clave" | "valor", texto: string) => {
+    setMetadatosDinamicos(
+      metadatosDinamicos.map(m => (m.id === id ? { ...m, [campo]: texto } : m))
+    );
+  };
+
+  const eliminarCampoMetadato = (id: string) => {
+    setMetadatosDinamicos(metadatosDinamicos.filter(m => m.id !== id));
+  };
+
   const guardarDocumento = async (e: React.FormEvent) => {
     e.preventDefault();
     if (archivosSeleccionados.length === 0) {
@@ -290,10 +329,15 @@ export function WidgetBilleteraDocumentos({ negocio = "TRANQ", onCerrar }: Props
       setGuardandoDoc(true);
       const tituloFinal = nuevoTitulo.trim() || archivosSeleccionados[0]?.nombre.replace(/\.[^/.]+$/, "") || "Documento Seguro";
 
+      // Filtrar metadatos vacíos
+      const metadatosLimpios = metadatosDinamicos
+        .filter(m => m.clave.trim() || m.valor.trim())
+        .map(m => ({ clave: m.clave.trim() || "Campo", valor: m.valor.trim() }));
+
       const payload = {
         titulo: tituloFinal,
         categoria: nuevaCategoria,
-        tipo: nuevoTipo,
+        tipo: nuevoTipo.trim() || "Documento General",
         archivos: archivosSeleccionados.map(a => ({
           id: a.id,
           nombre: a.nombre,
@@ -305,18 +349,14 @@ export function WidgetBilleteraDocumentos({ negocio = "TRANQ", onCerrar }: Props
         archivoTamano: archivosSeleccionados[0]?.tamano,
         archivoMimetype: archivosSeleccionados[0]?.mimetype,
         archivoBase64: archivosSeleccionados[0]?.base64,
-        entidadEmisora: nuevoEmisor.trim() || null,
-        numeroDocumento: nuevoNumeroDoc.trim() || null,
-        fechaEmision: nuevaFechaEmision || null,
         fechaCaducidad: nuevaFechaCaducidad || null,
-        fechaNacimiento: nuevaFechaNacimiento || null,
         alertarCaducidad: alertarCaducidad,
         mesesAnticipacionAlerta: mesesAnticipacionAlerta,
-        titularNombre: nuevoTitular.trim() || null,
-        titularIdentificacion: nuevaIdentificacion.trim() || null,
+        metadatosDinamicos: metadatosLimpios,
         metadatosOcr: {
-          analizado_por: "Aria IA",
+          analizado_por: "Aria IA / Dinámico",
           total_archivos: archivosSeleccionados.length,
+          metadatos_dinamicos: metadatosLimpios,
           analizado_en: new Date().toISOString()
         }
       };
@@ -329,7 +369,7 @@ export function WidgetBilleteraDocumentos({ negocio = "TRANQ", onCerrar }: Props
       const json = await res.json();
 
       if (json.ok) {
-        mostrarToast("✅ Documento y sus partes resguardados exitosamente.");
+        mostrarToast("✅ Documento y metadatos dinámicos resguardados exitosamente.");
         setModalSubirAbierto(false);
         limpiarFormularioSubida();
         cargarDocumentos();
@@ -347,16 +387,11 @@ export function WidgetBilleteraDocumentos({ negocio = "TRANQ", onCerrar }: Props
     setArchivosSeleccionados([]);
     setNuevoTitulo("");
     setNuevaCategoria("identidad");
-    setNuevoTipo("cedula");
-    setNuevoTitular("");
-    setNuevaIdentificacion("");
-    setNuevaFechaNacimiento("");
-    setNuevoEmisor("");
-    setNuevoNumeroDoc("");
-    setNuevaFechaEmision("");
+    setNuevoTipo("Cédula de Identidad");
     setNuevaFechaCaducidad("");
     setAlertarCaducidad(true);
     setMesesAnticipacionAlerta(3);
+    setMetadatosDinamicos([]);
     setResumenAria(null);
   };
 
@@ -463,7 +498,14 @@ export function WidgetBilleteraDocumentos({ negocio = "TRANQ", onCerrar }: Props
       const matchId = (d.doc_titular_identificacion || "").toLowerCase().includes(q);
       const matchEmisor = (d.doc_entidad_emisora || "").toLowerCase().includes(q);
       const matchArchivo = (d.doc_archivo_nombre || "").toLowerCase().includes(q);
-      if (!matchTitulo && !matchTitular && !matchId && !matchEmisor && !matchArchivo) return false;
+      
+      // Búsqueda en metadatos dinámicos
+      const metaDinamicos = d.doc_detalles?.metadatos_dinamicos || d.doc_metadatos_ocr?.metadatos_dinamicos || [];
+      const matchDinamico = metaDinamicos.some((m: any) => 
+        (m.clave || "").toLowerCase().includes(q) || (m.valor || "").toLowerCase().includes(q)
+      );
+
+      if (!matchTitulo && !matchTitular && !matchId && !matchEmisor && !matchArchivo && !matchDinamico) return false;
     }
     return true;
   });
@@ -516,13 +558,13 @@ export function WidgetBilleteraDocumentos({ negocio = "TRANQ", onCerrar }: Props
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "16px", position: "relative", zIndex: 2 }}>
           <div>
             <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", background: "rgba(255,255,255,0.15)", padding: "4px 12px", borderRadius: "999px", fontSize: "0.75rem", fontWeight: 800, marginBottom: "10px", textTransform: "uppercase", letterSpacing: "0.5px" }}>
-              <Shield size={13} /> Bóveda Digital Cifrada • Agente Aria IA
+              <Shield size={13} /> Bóveda Digital Cifrada • Metadatos Dinámicos
             </div>
             <h1 style={{ fontSize: "1.6rem", fontWeight: 900, margin: "0 0 8px 0", letterSpacing: "-0.5px" }}>
               Billetera Digital de Documentos Seguros
             </h1>
             <p style={{ fontSize: "0.88rem", opacity: 0.9, margin: 0, maxWidth: "680px", lineHeight: 1.45 }}>
-              Custodia tus cédulas (anverso y reverso), matrículas, contratos, certificados y títulos. Extracción inteligente de metadatos con <strong>Aria IA</strong>, alertas automáticas de caducidad (3 meses) y enlaces efímeros protegidos (TTL).
+              Custodia tus cédulas (anverso y reverso), matrículas, contratos, certificados y títulos. Parámetros dinámicos y editables, alertas automáticas de caducidad (3 meses) y enlaces efímeros protegidos (TTL).
             </p>
           </div>
 
@@ -642,7 +684,7 @@ export function WidgetBilleteraDocumentos({ negocio = "TRANQ", onCerrar }: Props
             type="text"
             value={busqueda}
             onChange={(e) => setBusqueda(e.target.value)}
-            placeholder="Buscar por título, titular, cédula o entidad emisora..."
+            placeholder="Buscar por título, tipo, titular, número o cualquier metadato..."
             style={{
               width: "100%",
               padding: "10px 14px 10px 38px",
@@ -741,6 +783,7 @@ export function WidgetBilleteraDocumentos({ negocio = "TRANQ", onCerrar }: Props
 
             const totalPartes = listaAdjuntos.length;
             const mesesAlerta = doc.doc_meses_anticipacion_alerta ?? 3;
+            const metaDinamicos = doc.doc_detalles?.metadatos_dinamicos || doc.doc_metadatos_ocr?.metadatos_dinamicos || [];
 
             return (
               <div
@@ -774,7 +817,7 @@ export function WidgetBilleteraDocumentos({ negocio = "TRANQ", onCerrar }: Props
                             borderRadius: "6px"
                           }}
                         >
-                          {doc.doc_tipo.replace(/_/g, " ")}
+                          {doc.doc_tipo || "Documento"}
                         </span>
                         {totalPartes > 1 && (
                           <span
@@ -815,33 +858,55 @@ export function WidgetBilleteraDocumentos({ negocio = "TRANQ", onCerrar }: Props
                     {doc.doc_titulo}
                   </h3>
 
-                  {/* METADATOS EXTRACTOS */}
+                  {/* METADATOS EXTRACTOS & DINÁMICOS */}
                   <div style={{ fontSize: "0.78rem", color: "#4B5563", display: "flex", flexDirection: "column", gap: "4px", marginBottom: "14px" }}>
+                    {doc.doc_fecha_caducidad && (
+                      <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                        <Calendar size={13} color="#DC2626" />
+                        <span>Caduca: <strong>{new Date(doc.doc_fecha_caducidad).toLocaleDateString()}</strong></span>
+                        {doc.doc_alertar_caducidad !== false && (
+                          <span style={{ fontSize: "0.68rem", color: "#5000BA", background: "#F3E8FF", padding: "1px 6px", borderRadius: "4px", fontWeight: 700 }}>
+                            🔔 {mesesAlerta}m
+                          </span>
+                        )}
+                      </div>
+                    )}
+
                     {doc.doc_titular_nombre && (
                       <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                         <User size={13} color="#6B7280" />
                         <span>Titular: <strong>{doc.doc_titular_nombre}</strong></span>
                       </div>
                     )}
+
                     {doc.doc_titular_identificacion && (
                       <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                         <Tag size={13} color="#6B7280" />
-                        <span>Cédula/RUC: <code>{doc.doc_titular_identificacion}</code></span>
+                        <span>Identificación: <code>{doc.doc_titular_identificacion}</code></span>
                       </div>
                     )}
-                    {doc.doc_entidad_emisora && (
-                      <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                        <Shield size={13} color="#6B7280" />
-                        <span>Emisor: {doc.doc_entidad_emisora}</span>
-                      </div>
-                    )}
-                    {doc.doc_fecha_caducidad && (
-                      <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                        <Calendar size={13} color="#6B7280" />
-                        <span>Caduca: {new Date(doc.doc_fecha_caducidad).toLocaleDateString()}</span>
-                        {doc.doc_alertar_caducidad !== false && (
-                          <span style={{ fontSize: "0.68rem", color: "#5000BA", background: "#F3E8FF", padding: "1px 6px", borderRadius: "4px", fontWeight: 700 }}>
-                            🔔 {mesesAlerta}m
+
+                    {/* Chips de metadatos dinámicos adicionales */}
+                    {metaDinamicos.length > 0 && (
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: "4px", marginTop: "4px" }}>
+                        {metaDinamicos.slice(0, 3).map((m: any, idx: number) => (
+                          <span
+                            key={idx}
+                            style={{
+                              fontSize: "0.7rem",
+                              background: "#F3F4F6",
+                              color: "#374151",
+                              padding: "2px 6px",
+                              borderRadius: "4px",
+                              border: "1px solid #E5E7EB"
+                            }}
+                          >
+                            <strong>{m.clave}:</strong> {m.valor}
+                          </span>
+                        ))}
+                        {metaDinamicos.length > 3 && (
+                          <span style={{ fontSize: "0.7rem", color: "#6B7280", alignSelf: "center" }}>
+                            +{metaDinamicos.length - 3} más
                           </span>
                         )}
                       </div>
@@ -868,7 +933,7 @@ export function WidgetBilleteraDocumentos({ negocio = "TRANQ", onCerrar }: Props
                         alignItems: "center",
                         gap: "4px"
                       }}
-                      title="Ver archivos y metadatos"
+                      title="Ver archivos y metadatos dinámicos"
                     >
                       <Eye size={13} /> Ver ({totalPartes})
                     </button>
@@ -918,7 +983,7 @@ export function WidgetBilleteraDocumentos({ negocio = "TRANQ", onCerrar }: Props
       )}
 
       {/* ========================================================================= */}
-      {/* MODAL 1: SUBIR NUEVO DOCUMENTO (MULTI-ARCHIVO CON AGENTE ARIA)            */}
+      {/* MODAL 1: SUBIR NUEVO DOCUMENTO (METADATOS DINÁMICOS & ALERTA POR DEFECTO) */}
       {/* ========================================================================= */}
       {modalSubirAbierto && (
         <div
@@ -952,7 +1017,7 @@ export function WidgetBilleteraDocumentos({ negocio = "TRANQ", onCerrar }: Props
                   <Upload size={20} color="#5000BA" /> Resguardar Documento en Billetera
                 </h2>
                 <p style={{ fontSize: "0.8rem", color: "#6B7280", margin: 0 }}>
-                  Formatos PDF o Imágenes (PNG, JPG, WebP). Puedes adjuntar varias partes (ej. anverso y reverso).
+                  Formatos PDF o Imágenes (PNG, JPG, WebP). Sube una o varias partes (ej. anverso y reverso).
                 </p>
               </div>
               <button
@@ -1031,7 +1096,7 @@ export function WidgetBilleteraDocumentos({ negocio = "TRANQ", onCerrar }: Props
                     </button>
                   </div>
 
-                  <div style={{ display: "flex", flexDirection: "column", gap: "6px", maxHeight: "150px", overflowY: "auto" }}>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "6px", maxHeight: "140px", overflowY: "auto" }}>
                     {archivosSeleccionados.map((arch, idx) => {
                       const esImg = arch.mimetype.includes("image");
                       return (
@@ -1078,14 +1143,11 @@ export function WidgetBilleteraDocumentos({ negocio = "TRANQ", onCerrar }: Props
                   <Sparkles size={16} style={{ flexShrink: 0, marginTop: "2px" }} />
                   <div>
                     <strong>Agente Aria IA:</strong> {resumenAria}
-                    <div style={{ fontSize: "0.72rem", color: "#6B7280", marginTop: "2px" }}>
-                      Los campos fueron completados de manera asistida. Puedes modificarlos libremente (ningún dato es obligatorio).
-                    </div>
                   </div>
                 </div>
               )}
 
-              {/* CAMPOS RECONOCIDOS & EDITABLES */}
+              {/* CAMPOS BASE DEL DOCUMENTO */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "12px" }}>
                 <div>
                   <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, color: "#374151", marginBottom: "4px" }}>
@@ -1118,90 +1180,21 @@ export function WidgetBilleteraDocumentos({ negocio = "TRANQ", onCerrar }: Props
                 </div>
               </div>
 
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "12px" }}>
-                <div>
-                  <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, color: "#374151", marginBottom: "4px" }}>
-                    Nombre del Titular
-                  </label>
-                  <input
-                    type="text"
-                    value={nuevoTitular}
-                    onChange={(e) => setNuevoTitular(e.target.value)}
-                    placeholder="Nombres y Apellidos"
-                    style={{ width: "100%", padding: "8px 12px", borderRadius: "8px", border: "1px solid #D1D5DB", fontSize: "0.85rem" }}
-                  />
-                </div>
-
-                <div>
-                  <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, color: "#374151", marginBottom: "4px" }}>
-                    Cédula / RUC / Pasaporte
-                  </label>
-                  <input
-                    type="text"
-                    value={nuevaIdentificacion}
-                    onChange={(e) => setNuevaIdentificacion(e.target.value)}
-                    placeholder="1715000000"
-                    style={{ width: "100%", padding: "8px 12px", borderRadius: "8px", border: "1px solid #D1D5DB", fontSize: "0.85rem" }}
-                  />
-                </div>
+              <div style={{ marginBottom: "16px" }}>
+                <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, color: "#374151", marginBottom: "4px" }}>
+                  Tipo de Documento
+                </label>
+                <input
+                  type="text"
+                  value={nuevoTipo}
+                  onChange={(e) => setNuevoTipo(e.target.value)}
+                  placeholder="Ej. Cédula de Identidad, Matrícula Vehicular, Contrato, etc."
+                  style={{ width: "100%", padding: "8px 12px", borderRadius: "8px", border: "1px solid #D1D5DB", fontSize: "0.85rem" }}
+                />
               </div>
 
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "12px" }}>
-                <div>
-                  <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, color: "#374151", marginBottom: "4px" }}>
-                    Entidad Emisora
-                  </label>
-                  <input
-                    type="text"
-                    value={nuevoEmisor}
-                    onChange={(e) => setNuevoEmisor(e.target.value)}
-                    placeholder="Ej. Registro Civil, ANT, SRI, Notaría"
-                    style={{ width: "100%", padding: "8px 12px", borderRadius: "8px", border: "1px solid #D1D5DB", fontSize: "0.85rem" }}
-                  />
-                </div>
-
-                <div>
-                  <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, color: "#374151", marginBottom: "4px" }}>
-                    Número / Matrícula
-                  </label>
-                  <input
-                    type="text"
-                    value={nuevoNumeroDoc}
-                    onChange={(e) => setNuevoNumeroDoc(e.target.value)}
-                    placeholder="Ej. MAT-2026-99"
-                    style={{ width: "100%", padding: "8px 12px", borderRadius: "8px", border: "1px solid #D1D5DB", fontSize: "0.85rem" }}
-                  />
-                </div>
-              </div>
-
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "14px" }}>
-                <div>
-                  <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, color: "#374151", marginBottom: "4px" }}>
-                    Fecha de Emisión
-                  </label>
-                  <input
-                    type="date"
-                    value={nuevaFechaEmision}
-                    onChange={(e) => setNuevaFechaEmision(e.target.value)}
-                    style={{ width: "100%", padding: "8px 12px", borderRadius: "8px", border: "1px solid #D1D5DB", fontSize: "0.85rem" }}
-                  />
-                </div>
-
-                <div>
-                  <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, color: "#374151", marginBottom: "4px" }}>
-                    Fecha de Nacimiento (Opcional)
-                  </label>
-                  <input
-                    type="date"
-                    value={nuevaFechaNacimiento}
-                    onChange={(e) => setNuevaFechaNacimiento(e.target.value)}
-                    style={{ width: "100%", padding: "8px 12px", borderRadius: "8px", border: "1px solid #D1D5DB", fontSize: "0.85rem" }}
-                  />
-                </div>
-              </div>
-
-              {/* SECCIÓN DE ALERTAS DE CADUCIDAD CONFIGURABLE */}
-              <div style={{ background: "#F8FAFC", border: "1px solid #E2E8F0", borderRadius: "12px", padding: "14px", marginBottom: "20px" }}>
+              {/* SECCIÓN DE ALERTAS DE CADUCIDAD (SELECCIONADA POR DEFECTO) */}
+              <div style={{ background: "#F8FAFC", border: "1px solid #E2E8F0", borderRadius: "12px", padding: "14px", marginBottom: "18px" }}>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: alertarCaducidad ? "12px" : "0" }}>
                   <label style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "0.82rem", fontWeight: 800, color: "#1E293B", cursor: "pointer" }}>
                     <input
@@ -1221,7 +1214,7 @@ export function WidgetBilleteraDocumentos({ negocio = "TRANQ", onCerrar }: Props
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", paddingTop: "8px", borderTop: "1px solid #E2E8F0" }}>
                     <div>
                       <label style={{ display: "block", fontSize: "0.76rem", fontWeight: 700, color: "#DC2626", marginBottom: "4px" }}>
-                        Fecha de Caducidad / Expiración
+                        Fecha de Expiración / Caducidad
                       </label>
                       <input
                         type="date"
@@ -1247,6 +1240,145 @@ export function WidgetBilleteraDocumentos({ negocio = "TRANQ", onCerrar }: Props
                         ))}
                       </select>
                     </div>
+                  </div>
+                )}
+              </div>
+
+              {/* SECCIÓN DE METADATOS DINÁMICOS (EDITABLES, ELIMINABLES, AGREGABLES) */}
+              <div style={{ border: "1px solid #E5E7EB", borderRadius: "12px", padding: "14px", marginBottom: "20px", background: "#FAFAFA" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
+                  <div>
+                    <span style={{ fontSize: "0.82rem", fontWeight: 800, color: "#111827", display: "flex", alignItems: "center", gap: "6px" }}>
+                      <Layers size={15} color="#5000BA" /> Metadatos Dinámicos del Documento
+                    </span>
+                    <p style={{ fontSize: "0.72rem", color: "#6B7280", margin: "2px 0 0 0" }}>
+                      Campos leídos automáticamente o agregados manualmente (editables y eliminables).
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => agregarCampoMetadato("", "")}
+                    style={{
+                      background: "#EDE9FE",
+                      color: "#5000BA",
+                      border: "1px solid #DDD6FE",
+                      borderRadius: "8px",
+                      padding: "5px 12px",
+                      fontSize: "0.74rem",
+                      fontWeight: 800,
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "4px"
+                    }}
+                  >
+                    <Plus size={13} /> Agregar Campo
+                  </button>
+                </div>
+
+                {/* LISTADO DE METADATOS DINÁMICOS */}
+                {metadatosDinamicos.length === 0 ? (
+                  <div style={{ padding: "14px", textAlign: "center", background: "#ffffff", borderRadius: "8px", border: "1px dashed #D1D5DB" }}>
+                    <p style={{ fontSize: "0.76rem", color: "#6B7280", margin: "0 0 8px 0" }}>
+                      No hay metadatos adicionales registrados.
+                    </p>
+                    <div style={{ display: "flex", gap: "6px", justifyContent: "center", flexWrap: "wrap" }}>
+                      <button
+                        type="button"
+                        onClick={() => agregarCampoMetadato("Nombre del Titular", "")}
+                        style={{ background: "#F3F4F6", border: "1px solid #E5E7EB", borderRadius: "6px", padding: "3px 8px", fontSize: "0.7rem", color: "#374151", cursor: "pointer" }}
+                      >
+                        + Titular
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => agregarCampoMetadato("Cédula / RUC", "")}
+                        style={{ background: "#F3F4F6", border: "1px solid #E5E7EB", borderRadius: "6px", padding: "3px 8px", fontSize: "0.7rem", color: "#374151", cursor: "pointer" }}
+                      >
+                        + Identificación
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => agregarCampoMetadato("Entidad Emisora", "")}
+                        style={{ background: "#F3F4F6", border: "1px solid #E5E7EB", borderRadius: "6px", padding: "3px 8px", fontSize: "0.7rem", color: "#374151", cursor: "pointer" }}
+                      >
+                        + Entidad Emisora
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => agregarCampoMetadato("Número / Matrícula", "")}
+                        style={{ background: "#F3F4F6", border: "1px solid #E5E7EB", borderRadius: "6px", padding: "3px 8px", fontSize: "0.7rem", color: "#374151", cursor: "pointer" }}
+                      >
+                        + N° Documento
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                    {metadatosDinamicos.map((meta) => (
+                      <div
+                        key={meta.id}
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns: "1fr 1.2fr 34px",
+                          gap: "8px",
+                          alignItems: "center",
+                          background: "#ffffff",
+                          padding: "6px 8px",
+                          borderRadius: "8px",
+                          border: "1px solid #E5E7EB"
+                        }}
+                      >
+                        <input
+                          type="text"
+                          value={meta.clave}
+                          onChange={(e) => actualizarCampoMetadato(meta.id, "clave", e.target.value)}
+                          placeholder="Nombre del Campo (ej. Titular)"
+                          style={{
+                            padding: "6px 8px",
+                            borderRadius: "6px",
+                            border: "1px solid #D1D5DB",
+                            fontSize: "0.78rem",
+                            fontWeight: 700,
+                            color: "#1F2937"
+                          }}
+                        />
+
+                        <input
+                          type="text"
+                          value={meta.valor}
+                          onChange={(e) => actualizarCampoMetadato(meta.id, "valor", e.target.value)}
+                          placeholder="Valor del Campo (ej. Kleber Toapanta)"
+                          style={{
+                            padding: "6px 8px",
+                            borderRadius: "6px",
+                            border: "1px solid #D1D5DB",
+                            fontSize: "0.78rem",
+                            color: "#374151"
+                          }}
+                        />
+
+                        <button
+                          type="button"
+                          onClick={() => eliminarCampoMetadato(meta.id)}
+                          style={{
+                            background: "#FEE2E2",
+                            border: "none",
+                            color: "#DC2626",
+                            borderRadius: "6px",
+                            height: "30px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            cursor: "pointer"
+                          }}
+                          title="Eliminar este campo"
+                        >
+                          <X size={14} />
+                        </button>
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>
@@ -1494,7 +1626,7 @@ export function WidgetBilleteraDocumentos({ negocio = "TRANQ", onCerrar }: Props
       )}
 
       {/* ========================================================================= */}
-      {/* MODAL 3: VISOR DETALLADO DEL DOCUMENTO (SOPORTE MULTI-ARCHIVO)             */}
+      {/* MODAL 3: VISOR DETALLADO DEL DOCUMENTO (METADATOS DINÁMICOS)              */}
       {/* ========================================================================= */}
       {docParaVer && (() => {
         const archivosVisor = docParaVer.doc_archivos || (docParaVer.doc_archivo_nombre ? [{
@@ -1513,6 +1645,7 @@ export function WidgetBilleteraDocumentos({ negocio = "TRANQ", onCerrar }: Props
         };
 
         const esImg = archivoActual?.mimetype?.includes("image");
+        const metaDinamicos = docParaVer.doc_detalles?.metadatos_dinamicos || docParaVer.doc_metadatos_ocr?.metadatos_dinamicos || [];
 
         return (
           <div
@@ -1546,7 +1679,7 @@ export function WidgetBilleteraDocumentos({ negocio = "TRANQ", onCerrar }: Props
                     {docParaVer.doc_titulo}
                   </h2>
                   <p style={{ fontSize: "0.8rem", color: "#6B7280", margin: 0 }}>
-                    Categoría: {docParaVer.doc_categoria} • {archivosVisor.length} archivo(s) adjunto(s)
+                    Categoría: {docParaVer.doc_categoria} • Tipo: {docParaVer.doc_tipo} • {archivosVisor.length} archivo(s)
                   </p>
                 </div>
                 <button
@@ -1612,24 +1745,72 @@ export function WidgetBilleteraDocumentos({ negocio = "TRANQ", onCerrar }: Props
                 )}
               </div>
 
-              {/* METADATOS TÉCNICOS */}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", background: "#F8FAFC", padding: "14px", borderRadius: "12px", fontSize: "0.8rem", marginBottom: "18px" }}>
-                <div><strong>Titular:</strong> {docParaVer.doc_titular_nombre || "No especificado"}</div>
-                <div><strong>Identificación:</strong> {docParaVer.doc_titular_identificacion || "No especificada"}</div>
-                {docParaVer.doc_fecha_nacimiento && (
-                  <div><strong>Fecha Nacimiento:</strong> {new Date(docParaVer.doc_fecha_nacimiento).toLocaleDateString()}</div>
-                )}
-                <div><strong>Entidad Emisora:</strong> {docParaVer.doc_entidad_emisora || "No especificada"}</div>
-                <div><strong>Número/Matrícula:</strong> {docParaVer.doc_numero_documento || "No especificado"}</div>
-                <div><strong>Fecha Emisión:</strong> {docParaVer.doc_fecha_emision ? new Date(docParaVer.doc_fecha_emision).toLocaleDateString() : "No registrada"}</div>
+              {/* SECCIÓN DE VIGENCIA Y EXPIRACIÓN */}
+              <div style={{ background: "#F8FAFC", padding: "12px 16px", borderRadius: "10px", border: "1px solid #E2E8F0", marginBottom: "14px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "8px" }}>
                 <div>
-                  <strong>Fecha Caducidad:</strong> {docParaVer.doc_fecha_caducidad ? new Date(docParaVer.doc_fecha_caducidad).toLocaleDateString() : "Indefinida"}
-                  {docParaVer.doc_alertar_caducidad !== false && docParaVer.doc_fecha_caducidad && (
-                    <span style={{ marginLeft: "6px", fontSize: "0.7rem", color: "#5000BA", background: "#F3E8FF", padding: "1px 6px", borderRadius: "4px", fontWeight: 700 }}>
-                      🔔 Alerta a {docParaVer.doc_meses_anticipacion_alerta ?? 3}m
-                    </span>
-                  )}
+                  <span style={{ fontSize: "0.76rem", color: "#64748B", display: "block" }}>Fecha de Caducidad / Expiración:</span>
+                  <span style={{ fontSize: "0.92rem", fontWeight: 800, color: docParaVer.doc_fecha_caducidad ? "#1E293B" : "#94A3B8" }}>
+                    {docParaVer.doc_fecha_caducidad ? new Date(docParaVer.doc_fecha_caducidad).toLocaleDateString() : "Indefinida / Sin Expiración"}
+                  </span>
                 </div>
+
+                {docParaVer.doc_alertar_caducidad !== false && docParaVer.doc_fecha_caducidad && (
+                  <div style={{ background: "#F5F3FF", border: "1px solid #DDD6FE", padding: "4px 10px", borderRadius: "8px", fontSize: "0.76rem", color: "#5000BA", fontWeight: 700, display: "flex", alignItems: "center", gap: "6px" }}>
+                    <BellRing size={14} /> Alerta activa ({docParaVer.doc_meses_anticipacion_alerta ?? 3} meses de anticipación)
+                  </div>
+                )}
+              </div>
+
+              {/* TABLA DE METADATOS DINÁMICOS */}
+              <div style={{ background: "#FFFFFF", border: "1px solid #E5E7EB", borderRadius: "12px", padding: "14px", marginBottom: "18px" }}>
+                <h4 style={{ fontSize: "0.82rem", fontWeight: 800, color: "#111827", margin: "0 0 10px 0", display: "flex", alignItems: "center", gap: "6px" }}>
+                  <Layers size={14} color="#5000BA" /> Metadatos y Parámetros del Documento
+                </h4>
+
+                {metaDinamicos.length > 0 ? (
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
+                    {metaDinamicos.map((m: any, idx: number) => (
+                      <div key={idx} style={{ background: "#F9FAFB", padding: "8px 12px", borderRadius: "8px", border: "1px solid #F3F4F6", fontSize: "0.78rem" }}>
+                        <span style={{ color: "#6B7280", display: "block", fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase" }}>
+                          {m.clave}
+                        </span>
+                        <strong style={{ color: "#111827" }}>{m.valor}</strong>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", fontSize: "0.78rem" }}>
+                    {docParaVer.doc_titular_nombre && (
+                      <div style={{ background: "#F9FAFB", padding: "8px 12px", borderRadius: "8px" }}>
+                        <span style={{ color: "#6B7280", display: "block", fontSize: "0.7rem" }}>Titular:</span>
+                        <strong>{docParaVer.doc_titular_nombre}</strong>
+                      </div>
+                    )}
+                    {docParaVer.doc_titular_identificacion && (
+                      <div style={{ background: "#F9FAFB", padding: "8px 12px", borderRadius: "8px" }}>
+                        <span style={{ color: "#6B7280", display: "block", fontSize: "0.7rem" }}>Identificación:</span>
+                        <strong>{docParaVer.doc_titular_identificacion}</strong>
+                      </div>
+                    )}
+                    {docParaVer.doc_entidad_emisora && (
+                      <div style={{ background: "#F9FAFB", padding: "8px 12px", borderRadius: "8px" }}>
+                        <span style={{ color: "#6B7280", display: "block", fontSize: "0.7rem" }}>Emisor:</span>
+                        <strong>{docParaVer.doc_entidad_emisora}</strong>
+                      </div>
+                    )}
+                    {docParaVer.doc_numero_documento && (
+                      <div style={{ background: "#F9FAFB", padding: "8px 12px", borderRadius: "8px" }}>
+                        <span style={{ color: "#6B7280", display: "block", fontSize: "0.7rem" }}>N° Documento:</span>
+                        <strong>{docParaVer.doc_numero_documento}</strong>
+                      </div>
+                    )}
+                    {!docParaVer.doc_titular_nombre && !docParaVer.doc_titular_identificacion && (
+                      <div style={{ color: "#9CA3AF", fontSize: "0.78rem", gridColumn: "1 / -1" }}>
+                        Sin metadatos dinámicos adicionales registrados.
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
               <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px" }}>

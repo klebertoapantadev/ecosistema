@@ -67,11 +67,13 @@ Bóveda digital de documentos personales, familiares y profesionales donde cada 
    - *Vehiculares:* Matrícula vehicular, SOAT, Póliza de Seguro.
    - *Contratos y Servicios:* Contratos de arrendamiento, servicios residenciales (Internet, luz, agua), pólizas médicas.
    - *Profesionales / Corporativos:* Títulos universitarios, certificados de matrícula, nombramientos, RUC/RIMPE.
-3. **Extracción Inteligente Asistida con el Agente de IA "Aria":**
-   - Lectura y análisis contextual asistido por **Aria IA** para sugerir y autocompletar metadatos: Nombres del Titular, Cédula/RUC/Pasaporte, Fecha de Nacimiento, Entidad Emisora, Número/Matrícula, Fecha de Emisión y Fecha de Caducidad.
-   - *Flexibilidad Cero Fricción:* Ningún metadato es obligatorio; todos los campos son editables y opcionales.
+3. **Extracción y Metadatos Dinámicos Editables:**
+   - Estructura de metadatos 100% dinámica (`clave: valor`) almacenada en JSONB (`doc_detalles.metadatos_dinamicos` y `doc_metadatos_ocr`).
+   - El usuario puede editar la etiqueta del campo, editar el valor, eliminar campos existentes o añadir nuevos campos personalizados con `[+ Agregar Campo]`.
+   - Asistido por **Aria IA** para sugerir y precargar parámetros automáticamente al analizar los archivos cargados.
+   - *Flexibilidad Cero Fricción:* Ningún metadato es obligatorio; todos los campos son editables y opcionales. El formulario base solo requiere el título, tipo y categoría, con alerta de expiración activada por defecto.
 4. **Motor de Alertas Proactivas de Caducidad Configurable:**
-   - Conmutador opcional para activar o desactivar alertas de vencimiento por documento (`doc_alertar_caducidad`).
+   - Conmutador para activar o desactivar alertas de vencimiento por documento (`doc_alertar_caducidad`, activo por defecto).
    - Tiempo de anticipación configurable: por defecto **3 meses antes (90 días)**, con opciones de 1 mes, 2 meses, 6 meses o 1 año.
    - Notificaciones multicanal (**In-App**, **Push** y **Email**) previas a la fecha de expiración.
 5. **Compartición Externa mediante Enlaces Efímeros (TTL - Time-To-Live):**

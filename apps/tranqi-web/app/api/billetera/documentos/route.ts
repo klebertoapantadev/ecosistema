@@ -116,6 +116,7 @@ export async function POST(req: NextRequest) {
       mesesAnticipacionAlerta,
       titularNombre,
       titularIdentificacion,
+      metadatosDinamicos,
       metadatosOcr,
       detalles
     } = body;
@@ -163,6 +164,24 @@ export async function POST(req: NextRequest) {
 
     const primerArchivo = listaArchivos[0];
 
+    // Extraer campos conocidos desde metadatosDinamicos si no vinieron explícitos
+    let titularExtraido = titularNombre || null;
+    let idExtraida = titularIdentificacion || null;
+    let emisorExtraido = entidadEmisora || null;
+    let numDocExtraido = numeroDocumento || null;
+
+    if (Array.isArray(metadatosDinamicos)) {
+      for (const item of metadatosDinamicos) {
+        const k = (item.clave || "").toLowerCase();
+        const v = (item.valor || "").trim();
+        if (!v) continue;
+        if (!titularExtraido && (k.includes("titular") || k.includes("nombre"))) titularExtraido = v;
+        if (!idExtraida && (k.includes("cedula") || k.includes("cédula") || k.includes("ruc") || k.includes("pasaporte") || k.includes("identificacion"))) idExtraida = v;
+        if (!emisorExtraido && (k.includes("emisor") || k.includes("entidad") || k.includes("institucion"))) emisorExtraido = v;
+        if (!numDocExtraido && (k.includes("numero") || k.includes("número") || k.includes("matricula") || k.includes("placa"))) numDocExtraido = v;
+      }
+    }
+
     const payload: any = {
       doc_usuario_id: user.id,
       doc_negocio: "TRANQ",
@@ -175,17 +194,23 @@ export async function POST(req: NextRequest) {
       doc_archivo_tamano: primerArchivo?.tamano || archivoTamano || 0,
       doc_archivo_mimetype: primerArchivo?.mimetype || archivoMimetype || "application/pdf",
       doc_archivo_base64: primerArchivo?.base64 || archivoBase64 || null,
-      doc_entidad_emisora: entidadEmisora || null,
-      doc_numero_documento: numeroDocumento || null,
+      doc_entidad_emisora: emisorExtraido,
+      doc_numero_documento: numDocExtraido,
       doc_fecha_emision: fechaEmision ? new Date(fechaEmision).toISOString() : null,
       doc_fecha_caducidad: fechaCaducidad ? new Date(fechaCaducidad).toISOString() : null,
       doc_fecha_nacimiento: fechaNacimiento ? new Date(fechaNacimiento).toISOString() : null,
       doc_alertar_caducidad: alertarCaducidad !== undefined ? Boolean(alertarCaducidad) : true,
       doc_meses_anticipacion_alerta: Number(mesesAnticipacionAlerta) || 3,
-      doc_titular_nombre: titularNombre || null,
-      doc_titular_identificacion: titularIdentificacion || null,
-      doc_metadatos_ocr: metadatosOcr || {},
-      doc_detalles: detalles || {},
+      doc_titular_nombre: titularExtraido,
+      doc_titular_identificacion: idExtraida,
+      doc_metadatos_ocr: {
+        ...(metadatosOcr || {}),
+        metadatos_dinamicos: metadatosDinamicos || []
+      },
+      doc_detalles: {
+        ...(detalles || {}),
+        metadatos_dinamicos: metadatosDinamicos || []
+      },
       doc_actualizado_en: new Date().toISOString()
     };
 
