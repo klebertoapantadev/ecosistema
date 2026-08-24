@@ -118,7 +118,6 @@ export function WidgetBilleteraDocumentos({ negocio = "TRANQ", onCerrar }: Props
   // Campos Base
   const [nuevoTitulo, setNuevoTitulo] = useState<string>("");
   const [nuevaCategoria, setNuevaCategoria] = useState<string>("identidad");
-  const [nuevoTipo, setNuevoTipo] = useState<string>("Cédula de Identidad");
   
   // Alerta de Caducidad (Seleccionada por defecto)
   const [alertarCaducidad, setAlertarCaducidad] = useState<boolean>(true);
@@ -195,10 +194,6 @@ export function WidgetBilleteraDocumentos({ negocio = "TRANQ", onCerrar }: Props
         const a = json.analisis;
         if (a.tituloSugerido && !nuevoTitulo) setNuevoTitulo(a.tituloSugerido);
         if (a.categoriaSugerida) setNuevaCategoria(a.categoriaSugerida);
-        if (a.tipoSugerido) {
-          const tipoFormateado = a.tipoSugerido.replace(/_/g, " ");
-          setNuevoTipo(tipoFormateado.charAt(0).toUpperCase() + tipoFormateado.slice(1));
-        }
         if (a.fechaCaducidad && !nuevaFechaCaducidad) setNuevaFechaCaducidad(a.fechaCaducidad);
 
         // Crear lista de metadatos dinámicos sugeridos por Aria
@@ -337,7 +332,7 @@ export function WidgetBilleteraDocumentos({ negocio = "TRANQ", onCerrar }: Props
       const payload = {
         titulo: tituloFinal,
         categoria: nuevaCategoria,
-        tipo: nuevoTipo.trim() || "Documento General",
+        tipo: nuevaCategoria,
         archivos: archivosSeleccionados.map(a => ({
           id: a.id,
           nombre: a.nombre,
@@ -387,7 +382,6 @@ export function WidgetBilleteraDocumentos({ negocio = "TRANQ", onCerrar }: Props
     setArchivosSeleccionados([]);
     setNuevoTitulo("");
     setNuevaCategoria("identidad");
-    setNuevoTipo("Cédula de Identidad");
     setNuevaFechaCaducidad("");
     setAlertarCaducidad(true);
     setMesesAnticipacionAlerta(3);
@@ -817,7 +811,7 @@ export function WidgetBilleteraDocumentos({ negocio = "TRANQ", onCerrar }: Props
                             borderRadius: "6px"
                           }}
                         >
-                          {doc.doc_tipo || "Documento"}
+                          {catConfig.label}
                         </span>
                         {totalPartes > 1 && (
                           <span
@@ -1148,7 +1142,7 @@ export function WidgetBilleteraDocumentos({ negocio = "TRANQ", onCerrar }: Props
               )}
 
               {/* CAMPOS BASE DEL DOCUMENTO */}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "12px" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "16px" }}>
                 <div>
                   <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, color: "#374151", marginBottom: "4px" }}>
                     Título del Documento
@@ -1178,19 +1172,6 @@ export function WidgetBilleteraDocumentos({ negocio = "TRANQ", onCerrar }: Props
                     <option value="otros">📎 Otros Documentos</option>
                   </select>
                 </div>
-              </div>
-
-              <div style={{ marginBottom: "16px" }}>
-                <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, color: "#374151", marginBottom: "4px" }}>
-                  Tipo de Documento
-                </label>
-                <input
-                  type="text"
-                  value={nuevoTipo}
-                  onChange={(e) => setNuevoTipo(e.target.value)}
-                  placeholder="Ej. Cédula de Identidad, Matrícula Vehicular, Contrato, etc."
-                  style={{ width: "100%", padding: "8px 12px", borderRadius: "8px", border: "1px solid #D1D5DB", fontSize: "0.85rem" }}
-                />
               </div>
 
               {/* SECCIÓN DE ALERTAS DE CADUCIDAD (SELECCIONADA POR DEFECTO) */}
@@ -1679,7 +1660,7 @@ export function WidgetBilleteraDocumentos({ negocio = "TRANQ", onCerrar }: Props
                     {docParaVer.doc_titulo}
                   </h2>
                   <p style={{ fontSize: "0.8rem", color: "#6B7280", margin: 0 }}>
-                    Categoría: {docParaVer.doc_categoria} • Tipo: {docParaVer.doc_tipo} • {archivosVisor.length} archivo(s)
+                    Categoría: {CATEGORIAS_CONFIG[docParaVer.doc_categoria]?.label || docParaVer.doc_categoria} • {archivosVisor.length} archivo(s)
                   </p>
                 </div>
                 <button
