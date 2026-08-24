@@ -7,6 +7,7 @@ import { obtenerPerfilActual, asegurarMembresiaCliente, obtenerPerfiles } from "
 import { CampanaNotificaciones } from "@eco/notificaciones";
 import { NavegacionSidebar } from "./NavegacionSidebar";
 import { CapaPerfilRail } from "./CapaPerfilRail";
+import { BarraAsistente } from "./asistente/BarraAsistente";
 import { crearClienteServidor } from "@eco/supabase/servidor";
 import type { ModoRol } from "./SelectorRolActivo";
 
@@ -82,7 +83,39 @@ export default async function LayoutPanel({ children }: { children: React.ReactN
           </div>
         </aside>
         <main className="panel-contenido">{children}</main>
+
+        {/* PLT-004. Tercera columna, no burbuja flotante: el asistente convive
+            con la pantalla en vez de taparla.
+
+            Se decide por `modoActivo`, que es lo que resuelve el servidor. Ojo:
+            CapaPerfilRail puede recolorear el rail en cliente con `?modo=`, y
+            eso NO mueve esta condicion -- el color es apariencia, pero que
+            aparezca un asistente con herramientas es una capacidad, y esa se
+            decide en el servidor a partir de la cookie y los perfiles reales.
+
+            Solo cliente y abogado: son los dos perfiles con agente propio en
+            ARIA. Operador, tecnico, admin y superadmin no tienen todavia el
+            suyo (TRQ-ADM-002), y darles el de cliente seria ofrecerles una
+            herramienta que no responde a su trabajo. */}
+        {(modoActivo === "cliente" || modoActivo === "abogado") && (
+          <BarraAsistente
+            nombre="tranqi"
+            descripcion={
+              modoActivo === "abogado" ? "tu copiloto de trabajo" : "el amigo que estudió derecho"
+            }
+            saludo={saludoDe(modoActivo, perfil.usu_nombres)}
+          />
+        )}
       </CapaPerfilRail>
     </Suspense>
   );
+}
+
+/** Primer mensaje de la barra. Dice lo que el asistente SABE hacer, para que
+ *  nadie tenga que adivinar qué preguntarle -- y para no prometer de más. */
+function saludoDe(modoActivo: string, nombres: string | null): string {
+  const saludo = nombres ? `Hola, ${nombres.split(" ")[0]}.` : "Hola.";
+  return modoActivo === "abogado"
+    ? `${saludo} Puedo darte tu agenda del día, tus casos asignados, los documentos de un expediente o cómo van tus honorarios.`
+    : `${saludo} Puedo contarte cómo va tu caso, agendarte una cita o decirte qué documentos te faltan.`;
 }
