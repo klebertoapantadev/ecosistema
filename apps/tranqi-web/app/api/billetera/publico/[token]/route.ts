@@ -5,6 +5,28 @@ import crypto from "crypto";
 
 export const dynamic = "force-dynamic";
 
+function obtenerTablaEnlaces(client: any) {
+  try {
+    if (typeof client?.schema === "function") {
+      return client.schema("tranqui_legal").from("trq_enlace_compartido_ttl");
+    }
+  } catch {
+    // fallback
+  }
+  return client.from("trq_enlace_compartido_ttl");
+}
+
+function obtenerTablaBilletera(client: any) {
+  try {
+    if (typeof client?.schema === "function") {
+      return client.schema("tranqui_legal").from("trq_billetera_documento");
+    }
+  } catch {
+    // fallback
+  }
+  return client.from("trq_billetera_documento");
+}
+
 // GET: Información pública del enlace (sin entregar el archivo directamente si requiere PIN)
 export async function GET(
   req: NextRequest,
@@ -22,8 +44,7 @@ export async function GET(
       return NextResponse.json({ ok: false, error: "Servicio no disponible" }, { status: 500 });
     }
 
-    const { data: enlace, error } = await admin
-      .from("trq_enlace_compartido_ttl")
+    const { data: enlace, error } = await obtenerTablaEnlaces(admin)
       .select("ttl_id, ttl_token, ttl_modo_expiracion, ttl_expira_en, ttl_una_sola_vista, ttl_visitas_conteo, ttl_activo, ttl_pin_hash, ttl_documento_id, ttl_detalles")
       .eq("ttl_token", token)
       .single();
@@ -55,9 +76,8 @@ export async function GET(
     const requierePin = !!enlaceData.ttl_pin_hash;
 
     // Obtener metadatos básicos del documento
-    const { data: doc } = await admin
-      .from("trq_billetera_documento")
-      .select("doc_titulo, doc_categoria, doc_tipo, doc_archivo_nombre, doc_archivo_tamano, doc_archivo_mimetype, doc_fecha_emision, doc_fecha_caducidad, doc_entidad_emisora, doc_titular_nombre")
+    const { data: doc } = await obtenerTablaBilletera(admin)
+      .select("doc_titulo, doc_categoria, doc_tipo, doc_archivo_nombre, doc_archivo_tamano, doc_archivo_mimetype, doc_fecha_emision, doc_fecha_caducidad, doc_entidad_emisora, doc_titular_nombre, doc_detalles, doc_archivos")
       .eq("doc_id", enlaceData.ttl_documento_id)
       .is("doc_eliminado_en", null)
       .single();
@@ -78,7 +98,7 @@ export async function GET(
         archivo_tamano: docData.doc_archivo_tamano,
         archivo_mimetype: docData.doc_archivo_mimetype,
         fecha_emision: docData.doc_fecha_emision,
-        fecha_caducidad: docData.doc_fecha_caducidad,
+        fecha_caducidad: docData.doc_fecha_caducidad || docData.doc_detalles?.fecha_caducidad,
         entidad_emisora: docData.doc_entidad_emisora,
         titular_nombre: docData.doc_titular_nombre,
         expira_en: enlaceData.ttl_expira_en,
@@ -107,8 +127,7 @@ export async function POST(
       return NextResponse.json({ ok: false, error: "Servicio no disponible" }, { status: 500 });
     }
 
-    const { data: enlace, error } = await admin
-      .from("trq_enlace_compartido_ttl")
+    const { data: enlace, error } = await obtenerTablaEnlaces(admin)
       .select("*")
       .eq("ttl_token", token)
       .single();
@@ -141,8 +160,7 @@ export async function POST(
     }
 
     // Obtener documento con contenido
-    const { data: doc, error: docError } = await admin
-      .from("trq_billetera_documento")
+    const { data: doc, error: docError } = await obtenerTablaBilletera(admin)
       .select("*")
       .eq("doc_id", enlaceData.ttl_documento_id)
       .is("doc_eliminado_en", null)
@@ -157,8 +175,7 @@ export async function POST(
     const nuevasVisitas = (enlaceData.ttl_visitas_conteo || 0) + 1;
     const nuevoActivo = enlaceData.ttl_una_sola_vista ? false : true;
 
-    await admin
-      .from("trq_enlace_compartido_ttl")
+    await obtenerTablaEnlaces(admin)
       .update({
         ttl_visitas_conteo: nuevasVisitas,
         ttl_visto_en: ahora.toISOString(),
@@ -166,12 +183,22 @@ export async function POST(
       })
       .eq("ttl_id", enlaceData.ttl_id);
 
+    const archivosFinales = docData.doc_archivos || docData.doc_detalles?.archivos || [{
+      id: "p1",
+      nombre: docData.doc_archivo_nombre,
+      mimetype: docData.doc_archivo_mimetype,
+      tamano: docData.doc_archivo_tamano,
+      base64: docData.doc_archivo_base64,
+      url: docData.doc_archivo_url
+    }];
+
     return NextResponse.json({
       ok: true,
       data: {
         titulo: docData.doc_titulo,
         categoria: docData.doc_categoria,
         tipo: docData.doc_tipo,
+        archivos: archivosFinales,
         archivo_nombre: docData.doc_archivo_nombre,
         archivo_mimetype: docData.doc_archivo_mimetype,
         archivo_tamano: docData.doc_archivo_tamano,
@@ -181,7 +208,7 @@ export async function POST(
         titular_identificacion: docData.doc_titular_identificacion,
         entidad_emisora: docData.doc_entidad_emisora,
         fecha_emision: docData.doc_fecha_emision,
-        fecha_caducidad: docData.doc_fecha_caducidad,
+        fecha_caducidad: docData.doc_fecha_caducidad || docData.doc_detalles?.fecha_caducidad,
         fue_destruido: enlaceData.ttl_una_sola_vista
       }
     });

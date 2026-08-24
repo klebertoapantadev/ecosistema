@@ -1,9 +1,31 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from "next/server";
-import { crearClienteServidor } from "@eco/supabase/servidor";
+import { crearClienteServidor, crearClienteAdmin } from "@eco/supabase/servidor";
 import crypto from "crypto";
 
 export const dynamic = "force-dynamic";
+
+function obtenerTablaEnlaces(client: any) {
+  try {
+    if (typeof client?.schema === "function") {
+      return client.schema("tranqui_legal").from("trq_enlace_compartido_ttl");
+    }
+  } catch {
+    // fallback
+  }
+  return client.from("trq_enlace_compartido_ttl");
+}
+
+function obtenerTablaBilletera(client: any) {
+  try {
+    if (typeof client?.schema === "function") {
+      return client.schema("tranqui_legal").from("trq_billetera_documento");
+    }
+  } catch {
+    // fallback
+  }
+  return client.from("trq_billetera_documento");
+}
 
 function calcularFechaExpiracion(modo: string, fechaManual?: string): Date {
   const ahora = new Date();
@@ -38,6 +60,7 @@ function calcularFechaExpiracion(modo: string, fechaManual?: string): Date {
 export async function POST(req: NextRequest) {
   try {
     const supabase = (await crearClienteServidor()) as any;
+    const adminSupabase = (crearClienteAdmin() || supabase) as any;
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
     if (authError || !user) {
@@ -51,9 +74,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: false, error: "Documento ID requerido" }, { status: 400 });
     }
 
+    const clientDb = adminSupabase || supabase;
+
     // Verificar que el documento exista y pertenezca al usuario
-    const { data: doc, error: docError } = await supabase
-      .from("trq_billetera_documento")
+    const { data: doc, error: docError } = await obtenerTablaBilletera(clientDb)
       .select("doc_id, doc_titulo")
       .eq("doc_id", documentoId)
       .eq("doc_usuario_id", user.id)
@@ -89,8 +113,7 @@ export async function POST(req: NextRequest) {
       ttl_creado_en: new Date().toISOString()
     };
 
-    const { data, error } = await supabase
-      .from("trq_enlace_compartido_ttl")
+    const { data, error } = await obtenerTablaEnlaces(clientDb)
       .insert(payload)
       .select()
       .single();
@@ -115,6 +138,7 @@ export async function POST(req: NextRequest) {
 export async function GET(req: NextRequest) {
   try {
     const supabase = (await crearClienteServidor()) as any;
+    const adminSupabase = (crearClienteAdmin() || supabase) as any;
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
     if (authError || !user) {
@@ -124,8 +148,9 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const documentoId = searchParams.get("documentoId");
 
-    let query = supabase
-      .from("trq_enlace_compartido_ttl")
+    const clientDb = adminSupabase || supabase;
+
+    let query = obtenerTablaEnlaces(clientDb)
       .select("ttl_id, ttl_token, ttl_modo_expiracion, ttl_expira_en, ttl_una_sola_vista, ttl_visto_en, ttl_visitas_conteo, ttl_activo, ttl_creado_en, ttl_documento_id, ttl_pin_hash")
       .eq("ttl_usuario_id", user.id)
       .order("ttl_creado_en", { ascending: false });
@@ -166,6 +191,7 @@ export async function GET(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   try {
     const supabase = (await crearClienteServidor()) as any;
+    const adminSupabase = (crearClienteAdmin() || supabase) as any;
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
     if (authError || !user) {
@@ -180,8 +206,9 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ ok: false, error: "Token o ID requerido" }, { status: 400 });
     }
 
-    let query = supabase
-      .from("trq_enlace_compartido_ttl")
+    const clientDb = adminSupabase || supabase;
+
+    let query = obtenerTablaEnlaces(clientDb)
       .update({ ttl_activo: false })
       .eq("ttl_usuario_id", user.id);
 
