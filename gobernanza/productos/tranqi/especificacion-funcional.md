@@ -56,21 +56,24 @@ Tranqi adopta las mejores prácticas y estándares internacionales de **Law Prac
 **Responsable:** Kleber Toapanta | **Estado:** ✅ Implementado (100%)
 
 #### Descripción
-Bóveda digital de documentos personales, familiares y profesionales donde cada usuario (cliente, socio abogado u operador) custodia archivos digitales de uso cotidiano con reconocimiento OCR de parámetros clave y generación de enlaces temporales protegidos.
+Bóveda digital de documentos personales, familiares y profesionales donde cada usuario (cliente, socio abogado u operador) custodia archivos digitales de uso cotidiano con soporte multi-archivo (anverso/reverso/anexos), reconocimiento y extracción inteligente con el agente de IA **Aria**, gestión de alertas de caducidad configurables y generación de enlaces temporales protegidos (TTL).
 
 #### Reglas de Negocio
-1. **Tipología de Documentos:**
+1. **Composición Multi-Archivo por Documento (Formatos Restringidos):**
+   - Un solo documento puede estar integrado por 1 o múltiples archivos adjuntos (ej. Anverso + Reverso de Cédula, Cédula + Certificado de Votación, Contrato + Anexos).
+   - **Formatos permitidos estrictamente:** Únicamente **Imágenes (PNG, JPG, JPEG, WEBP)** o archivos **PDF** (hasta 25MB por archivo).
+2. **Tipología y Categorías:**
    - *Personales / Familiares:* Cédulas de identidad (titular, cónyuge, cargas familiares/hijos), Licencia de Conducir, Pasaporte, Certificado de Votación.
    - *Vehiculares:* Matrícula vehicular, SOAT, Póliza de Seguro.
-   - *Contratos y Servicios:* Contratos de arrendamiento, contratos de servicios residenciales (Internet, luz, agua), pólizas médicas.
+   - *Contratos y Servicios:* Contratos de arrendamiento, servicios residenciales (Internet, luz, agua), pólizas médicas.
    - *Profesionales / Corporativos:* Títulos universitarios, certificados de matrícula, nombramientos, RUC/RIMPE.
-2. **Almacenamiento Estructurado y Cifrado:**
-   - Ubicación: `comun-privado/TRANQ/{usuario_id}/billetera-documentos/{categoria}/{doc_id}-{nombre_sanitizado}`.
-   - Acceso restringido por RLS y cifrado de metadatos sensibles.
-3. **Extracción Inteligente de Parámetros (OCR):**
-   - Lectura automática de: Nombres completos, Cédula/RUC, Fecha de Emisión, Fecha de Caducidad/Expiración y Entidad Emisora.
-4. **Motor de Alertas Proactivas de Caducidad:**
-   - Notificaciones automáticas multicanal (**In-App**, **Push** y **Email**) a los **30 días, 15 días y 7 días previos** al vencimiento de licencias, pólizas, matrículas o contratos.
+3. **Extracción Inteligente Asistida con el Agente de IA "Aria":**
+   - Lectura y análisis contextual asistido por **Aria IA** para sugerir y autocompletar metadatos: Nombres del Titular, Cédula/RUC/Pasaporte, Fecha de Nacimiento, Entidad Emisora, Número/Matrícula, Fecha de Emisión y Fecha de Caducidad.
+   - *Flexibilidad Cero Fricción:* Ningún metadato es obligatorio; todos los campos son editables y opcionales.
+4. **Motor de Alertas Proactivas de Caducidad Configurable:**
+   - Conmutador opcional para activar o desactivar alertas de vencimiento por documento (`doc_alertar_caducidad`).
+   - Tiempo de anticipación configurable: por defecto **3 meses antes (90 días)**, con opciones de 1 mes, 2 meses, 6 meses o 1 año.
+   - Notificaciones multicanal (**In-App**, **Push** y **Email**) previas a la fecha de expiración.
 5. **Compartición Externa mediante Enlaces Efímeros (TTL - Time-To-Live):**
    - El usuario puede compartir cualquier documento con terceros mediante URL temporal protegida por token criptográfico.
    - *Opciones de Expiración:* 1h, 3h, 6h, 12h, 24h, 3 días, 7 días, 30 días, *Una Sola Vista ("Burn on Read")* o fecha personalizada con clave PIN opcional.
