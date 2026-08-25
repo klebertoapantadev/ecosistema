@@ -1132,11 +1132,11 @@ p { line-height: 1.55; }
   max-width: 88%; padding: 9px 12px; border-radius: 14px;
   font-size: 0.86rem; line-height: 1.45; white-space: pre-wrap; overflow-wrap: anywhere;
 }
-.asistente-msg.asistente {
+.asistente-msg.de-asistente {
   background: var(--blanco); border: 1px solid var(--panel-linea);
   align-self: flex-start; border-bottom-left-radius: 5px;
 }
-.asistente-msg.usuario {
+.asistente-msg.de-usuario {
   background: var(--asistente-accion); color: var(--blanco);
   align-self: flex-end; border-bottom-right-radius: 5px;
 }

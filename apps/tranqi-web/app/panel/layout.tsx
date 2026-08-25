@@ -98,13 +98,7 @@ export default async function LayoutPanel({ children }: { children: React.ReactN
             suyo (TRQ-ADM-002), y darles el de cliente seria ofrecerles una
             herramienta que no responde a su trabajo. */}
         {(modoActivo === "cliente" || modoActivo === "abogado") && (
-          <BarraAsistente
-            nombre="tranqi"
-            descripcion={
-              modoActivo === "abogado" ? "tu copiloto de trabajo" : "el amigo que estudió derecho"
-            }
-            saludo={saludoDe(modoActivo, perfil.usu_nombres)}
-          />
+          <BarraAsistente nombre="tranqi" saludo={saludoDe(modoActivo, perfil.usu_nombres)} />
         )}
       </CapaPerfilRail>
     </Suspense>

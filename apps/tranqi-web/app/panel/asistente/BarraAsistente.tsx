@@ -23,28 +23,41 @@ interface Mensaje {
 interface Props {
   nombre: string;
   saludo: string;
-  descripcion: string;
 }
 
 const ANCHO_COLAPSO = 1080;
+const CLAVE_PREFERENCIA = "tranqi_asistente_abierto";
 
-export function BarraAsistente({ nombre, saludo, descripcion }: Props) {
+export function BarraAsistente({ nombre, saludo }: Props) {
   const [mensajes, setMensajes] = useState<Mensaje[]>([
     { autor: "asistente", texto: saludo },
   ]);
   const [texto, setTexto] = useState("");
   const [ocupado, setOcupado] = useState(false);
-  // Abierta por defecto en escritorio; en pantallas estrechas arranca cerrada
-  // para no robarle sitio al contenido. Se decide en el cliente tras montar
-  // porque en el servidor no hay viewport que medir.
-  const [abierta, setAbierta] = useState(true);
+  // Arranca CERRADA y se decide al montar. Dos motivos: en el servidor no hay
+  // viewport que medir ni localStorage que leer, y abrir por defecto para luego
+  // cerrar produce un salto de 360px en el layout que se ve feo.
+  const [abierta, setAbierta] = useState(false);
   const conversacionId = useRef<string | null>(null);
   const registro = useRef<HTMLDivElement>(null);
   const ojos = useRef<HTMLDivElement>(null);
 
+  // Manda lo que el usuario eligio la ultima vez; si nunca eligio, se abre en
+  // escritorio y se queda plegada en pantallas estrechas, donde tres columnas
+  // no caben. Guardar la preferencia importa: sin ella, cada navegacion dentro
+  // del panel reabre una barra que el usuario acaba de cerrar.
   useEffect(() => {
-    const estrecha = window.matchMedia(`(max-width: ${ANCHO_COLAPSO}px)`);
-    setAbierta(!estrecha.matches);
+    const guardado = localStorage.getItem(CLAVE_PREFERENCIA);
+    if (guardado === "abierta" || guardado === "plegada") {
+      setAbierta(guardado === "abierta");
+      return;
+    }
+    setAbierta(!window.matchMedia(`(max-width: ${ANCHO_COLAPSO}px)`).matches);
+  }, []);
+
+  const cambiarVisibilidad = useCallback((valor: boolean) => {
+    setAbierta(valor);
+    localStorage.setItem(CLAVE_PREFERENCIA, valor ? "abierta" : "plegada");
   }, []);
 
   // El scroll sigue al ultimo mensaje.
@@ -116,7 +129,7 @@ export function BarraAsistente({ nombre, saludo, descripcion }: Props) {
       <button
         type="button"
         className="asistente-pestana"
-        onClick={() => setAbierta(true)}
+        onClick={() => cambiarVisibilidad(true)}
         aria-expanded={false}
         aria-label={`Abrir ${nombre}`}
       >
@@ -132,13 +145,13 @@ export function BarraAsistente({ nombre, saludo, descripcion }: Props) {
         <Ojos referencia={ojos} />
         <div className="asistente-titulo">
           <b>{nombre}</b>
-          <small>{descripcion}</small>
         </div>
         <button
           type="button"
           className="asistente-plegar"
-          onClick={() => setAbierta(false)}
-          aria-label="Ocultar el asistente"
+          onClick={() => cambiarVisibilidad(false)}
+          aria-label="Plegar el asistente"
+          title="Plegar"
         >
           ×
         </button>
@@ -146,7 +159,7 @@ export function BarraAsistente({ nombre, saludo, descripcion }: Props) {
 
       <div className="asistente-registro" ref={registro} aria-live="polite">
         {mensajes.map((mensaje, indice) => (
-          <div key={indice} className={`asistente-msg ${mensaje.autor}`}>
+          <div key={indice} className={`asistente-msg de-${mensaje.autor}`}>
             {mensaje.pensando ? (
               <span className="asistente-puntos" aria-label="escribiendo">
                 <i />
