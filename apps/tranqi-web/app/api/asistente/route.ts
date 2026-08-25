@@ -17,6 +17,9 @@ import { crearClienteServidor } from "@eco/supabase/servidor";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+// Esta ruta encadena varias consultas a Supabase y un turno completo del
+// modelo. El limite por defecto del plan es demasiado justo para eso.
+export const maxDuration = 60;
 
 /** Prefijo de variables de entorno del agente que corresponde a cada rol. */
 const PREFIJO_AGENTE: Record<RolAsistente, string> = {
@@ -35,10 +38,10 @@ function rolDe(esSuperadmin: boolean, memRol: string | null | undefined): RolAsi
   return "CLIENTE";
 }
 
-export async function POST(req: NextRequest) {
+async function atender(req: NextRequest) {
   const perfil = await obtenerPerfilActual();
   if (!perfil) {
-    return NextResponse.json({ error: "Sin sesion" }, { status: 401 });
+    return NextResponse.json({ error: "Sin sesion", codigo: "sin_sesion" }, { status: 401 });
   }
 
   const secretoCapsula = process.env.ASISTENTE_CAPSULA_SECRETO;
@@ -46,7 +49,7 @@ export async function POST(req: NextRequest) {
     // Sin capsula el agente hablaria sin poder consultar nada. Se corta aqui en
     // vez de dejarlo responder de memoria sobre datos que no ha leido.
     return NextResponse.json(
-      { error: "Falta ASISTENTE_CAPSULA_SECRETO" },
+      { error: "Falta ASISTENTE_CAPSULA_SECRETO", codigo: "sin_capsula" },
       { status: 503 },
     );
   }
@@ -57,7 +60,7 @@ export async function POST(req: NextRequest) {
   const config = resolverAgenteDesdeEntorno(PREFIJO_AGENTE[rol]);
   if (!config) {
     return NextResponse.json(
-      { error: `Sin credenciales del agente (${PREFIJO_AGENTE[rol]}_BASE/_AGENT_ID/_AGENT_KEY)` },
+      { error: `Sin credenciales del agente (${PREFIJO_AGENTE[rol]})`, codigo: "sin_agente" },
       { status: 503 },
     );
   }
@@ -71,7 +74,10 @@ export async function POST(req: NextRequest) {
       typeof cuerpo?.conversacion_id === "string" ? cuerpo.conversacion_id : undefined;
     if (!prompt) throw new Error("prompt vacio");
   } catch (e) {
-    return NextResponse.json({ error: String((e as Error).message ?? e) }, { status: 400 });
+    return NextResponse.json(
+      { error: String((e as Error).message ?? e), codigo: "peticion_invalida" },
+      { status: 400 },
+    );
   }
 
   const supabase = await crearClienteServidor();
@@ -109,17 +115,20 @@ export async function POST(req: NextRequest) {
       .single();
     if (error || !data) {
       return NextResponse.json(
-        { error: `No se pudo abrir la conversacion: ${error?.message ?? "sin datos"}` },
+        { error: `No se pudo abrir la conversacion: ${error?.message ?? "sin datos"}`, codigo: "conversacion" },
         { status: 500 },
       );
     }
     conversacionId = data.cnv_id;
   }
 
-  await supabase
+  const { error: errorPregunta } = await supabase
     .schema("tranqui_legal")
     .from("trq_mensaje")
     .insert({ msg_conversacion_id: conversacionId, msg_autor: "usuario", msg_contenido: prompt });
+  // No corta el turno —el usuario merece su respuesta aunque el historial
+  // falle— pero deja de perderse en silencio.
+  if (errorPregunta) console.error("[asistente] no se guardo la pregunta:", errorPregunta.message);
 
   const capsula = await firmarCapsula(
     { usuarioId: perfil.usu_id, rol, conversacionId },
@@ -155,8 +164,30 @@ export async function POST(req: NextRequest) {
     });
   } catch (e) {
     return NextResponse.json(
-      { error: String((e as Error).message ?? e), conversacion_id: conversacionId },
+      { error: String((e as Error).message ?? e), codigo: "aria", conversacion_id: conversacionId },
       { status: 502 },
+    );
+  }
+}
+
+/**
+ * Envoltura que garantiza una respuesta JSON con `codigo` pase lo que pase.
+ *
+ * Sin esto, cualquier excepcion no prevista sale como un 500 opaco de Next; el
+ * cliente falla al parsear el cuerpo y el usuario ve "se me cruzaron los
+ * cables" para TODO — sesion caducada, variable ausente, permiso de tabla o
+ * ARIA caido dan exactamente el mismo mensaje, y en produccion eso es
+ * indiagnosticable. El `codigo` es un slug estable, sin datos internos: dice
+ * en que paso se rompio sin contarle a nadie como esta hecho por dentro.
+ */
+export async function POST(req: NextRequest) {
+  try {
+    return await atender(req);
+  } catch (e) {
+    console.error("[asistente] excepcion no prevista:", e);
+    return NextResponse.json(
+      { error: "Error inesperado en el asistente", codigo: "inesperado" },
+      { status: 500 },
     );
   }
 }

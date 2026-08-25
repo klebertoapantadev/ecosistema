@@ -18,6 +18,8 @@ interface Mensaje {
   texto: string;
   /** Marca el turno en vuelo, para pintar los puntos suspensivos. */
   pensando?: boolean;
+  /** Slug del fallo, si lo hubo. Se muestra pequeño bajo el mensaje. */
+  codigo?: string;
 }
 
 interface Props {
@@ -27,6 +29,17 @@ interface Props {
 
 const ANCHO_COLAPSO = 1080;
 const CLAVE_PREFERENCIA = "tranqi_asistente_abierto";
+
+/** Qué se le dice al usuario según dónde se rompió. Cada uno sugiere la
+ *  salida real; "reintenta" no sirve cuando falta una variable de entorno. */
+const MENSAJE_ERROR: Record<string, string> = {
+  sin_sesion: "Tu sesión caducó. Vuelve a entrar y seguimos.",
+  sin_capsula: "El asistente no está configurado del todo todavía. Avisa al equipo de tranqi.",
+  sin_agente: "El asistente no está configurado del todo todavía. Avisa al equipo de tranqi.",
+  conversacion: "No pude abrir la conversación. Avisa al equipo de tranqi.",
+  aria: "No consigo hablar con el asistente ahora mismo. Inténtalo en un momento.",
+  inesperado: "Algo se rompió por dentro. Avisa al equipo de tranqi.",
+};
 
 export function BarraAsistente({ nombre, saludo }: Props) {
   const [mensajes, setMensajes] = useState<Mensaje[]>([
@@ -102,21 +115,27 @@ export function BarraAsistente({ nombre, saludo }: Props) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ prompt: pregunta, conversacion_id: conversacionId.current }),
       });
-      const datos = await respuesta.json();
-      if (!respuesta.ok || datos.error) throw new Error(datos.error ?? `Error ${respuesta.status}`);
+      const datos = await respuesta.json().catch(() => null);
+      if (!respuesta.ok || !datos || datos.error) {
+        throw new Error(datos?.codigo ?? `http_${respuesta.status}`);
+      }
       conversacionId.current = datos.conversacion_id ?? conversacionId.current;
       setMensajes((previos) => [
         ...previos.slice(0, -1),
         { autor: "asistente", texto: datos.response },
       ]);
-    } catch {
-      // Sin detalle tecnico: el mensaje de error de una API no es algo que
-      // haya que ponerle delante a alguien que viene con un problema legal.
+    } catch (e) {
+      // El texto sigue siendo humano: quien viene con un problema legal no
+      // necesita leer un stack trace. Pero el codigo va debajo, pequeño, porque
+      // un chat que dice siempre lo mismo pase lo que pase es indiagnosticable
+      // en produccion: sesion caducada y ARIA caido se veian igual.
+      const codigo = (e as Error).message || "desconocido";
       setMensajes((previos) => [
         ...previos.slice(0, -1),
         {
           autor: "asistente",
-          texto: "Se me cruzaron los cables un momento. ¿Me lo repites?",
+          texto: MENSAJE_ERROR[codigo] ?? "Se me cruzaron los cables un momento. ¿Me lo repites?",
+          codigo,
         },
       ]);
     } finally {
@@ -167,7 +186,10 @@ export function BarraAsistente({ nombre, saludo }: Props) {
                 <i />
               </span>
             ) : (
-              mensaje.texto
+              <>
+                {mensaje.texto}
+                {mensaje.codigo && <small className="asistente-codigo">{mensaje.codigo}</small>}
+              </>
             )}
           </div>
         ))}
