@@ -172,7 +172,7 @@ export default async function PaginaDetalleSocio({ params }: { params: Promise<{
                   />
                 ) : (
                   <p style={{ marginTop: "8px", fontSize: "0.82rem", color: "#DC2626", fontWeight: 600 }}>
-                    ⏳ El postulante aún no ha cargado el contrato firmado.
+                    El postulante aún no ha cargado el contrato firmado.
                   </p>
                 )}
               </div>

@@ -1444,7 +1444,7 @@ export function WidgetBilleteraDocumentos({ negocio = "TRANQ", onCerrar }: Props
             {/* GENERADOR DE ENLACE */}
             <div style={{ background: "#F8FAFC", borderRadius: "14px", padding: "18px", border: "1px solid #E2E8F0", marginBottom: "18px" }}>
               <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 800, color: "#1E293B", marginBottom: "8px" }}>
-                ⏱Tiempo de Expiración (TTL)
+                Tiempo de Expiración (TTL)
               </label>
               <div className="rejilla-auto" style={{ "--min": "130px", "--hueco": "8px", marginBottom: "14px" } as React.CSSProperties}>
                 {[

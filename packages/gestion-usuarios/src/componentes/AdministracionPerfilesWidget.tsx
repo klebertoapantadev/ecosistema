@@ -539,7 +539,7 @@ function RenderizadorWidgetReal({ clave, negocio }: { clave: string; negocio: st
             Bóveda cifrada para almacenamiento y gestión inteligente de cédulas, matrículas, licencias, contratos y certificados con extracción OCR y enlaces efímeros protegidos.
           </p>
           <div style={{ padding: "12px", background: "#F8FAFC", borderRadius: "8px", border: "1px dashed #CBD5E1", textAlign: "center", fontSize: "0.82rem", color: "#334155", fontWeight: 700 }}>
-            Categorías Inteligentes Extracción OCR ⏳ Enlaces TTL Efímeros
+            Categorías Inteligentes Extracción OCR Enlaces TTL Efímeros
           </div>
         </div>
       );

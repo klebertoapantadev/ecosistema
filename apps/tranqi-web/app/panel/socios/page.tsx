@@ -187,7 +187,7 @@ export default async function PaginaSocios() {
                         fontSize: "0.76rem",
                         fontWeight: 700,
                       }}>
-                        ⏳ Postulación Inicial
+                        Postulación Inicial
                       </span>
                     ) : (
                       <span style={{ fontSize: "0.78rem", color: "#9CA3AF" }}>—</span>

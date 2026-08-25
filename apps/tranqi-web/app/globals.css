@@ -571,14 +571,23 @@ p { line-height: 1.55; }
   display: inline-block; background: var(--amarillo); color: var(--negro);
   font-weight: 800; font-size: 0.68rem; padding: 3px 8px; border-radius: 999px; width: fit-content;
 }
-/* El tope de lectura NO va aquí. `.panel-layout` es flex, así que un
-   `max-width` en esta columna deja el sobrante al final del eje: con rail 236 +
-   contenido 1280 + asistente 360 = 1876px de tope, en un monitor de 1920
-   sobraban ~44px y en uno de 2560 sobran ~680px, todos a la derecha de la barra
-   del asistente, que dejaba de tocar el borde de la pantalla. La columna crece;
-   el ancho de lectura lo pone `.contenedor-panel`, centrado dentro de ella. */
+/* El tope de lectura NO va en la COLUMNA, va en sus HIJOS. `.panel-layout` es
+   flex, así que un `max-width` en esta columna deja el sobrante al final del
+   eje: con rail 236 + contenido 1280 + asistente 360 = 1876px de tope, en un
+   monitor de 1920 sobraban ~44px y en uno de 2560 sobran ~680px, todos a la
+   derecha de la barra del asistente, que dejaba de tocar el borde.
+
+   Se topan los hijos y no la columna, y se topan TODOS -- no una clase que
+   cada pantalla tenga que acordarse de poner. La primera versión de este
+   arreglo movió el tope a `.contenedor-panel`, que solo usan 2 de las 19
+   pantallas del panel: las otras 17 se quedaron sin límite de lectura en
+   monitores anchos. Lo cazó auditar quién usaba la clase, no el compilador.
+
+   Sin `margin-inline: auto` a propósito: el contenido sigue alineado a la
+   izquierda contra el rail, como antes de tocar nada. Lo que cambia es solo
+   que el hueco sobrante deja de quedar a la derecha del asistente.           */
 .panel-contenido { flex: 1; min-width: 0; padding: 36px clamp(20px, 4vw, 48px); }
-.contenedor-panel { max-width: 1280px; margin-inline: auto; }
+.panel-contenido > * { max-width: 1280px; }
 
 /* ── Composición adaptable (TRQ-010) ─────────────────────────────────
    Estas cuatro clases existen para poder RETIRAR los `style={{}}` inline de los

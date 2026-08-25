@@ -153,7 +153,7 @@ export function PreferenciasNotificacionWidget({ negocio }: Props) {
               cursor: "pointer"
             }}
           >
-            ⏱Silenciar Hoy
+            Silenciar Hoy
           </button>
           <button
             type="button"

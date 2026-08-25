@@ -271,7 +271,7 @@ function SociosWidget() {
                         fontSize: "0.76rem",
                         fontWeight: 700,
                       }}>
-                        ⏳ Postulación Inicial
+                        Postulación Inicial
                       </span>
                     ) : s.nivelUrgencia === "esperando_abogado" ? (
                       <span style={{

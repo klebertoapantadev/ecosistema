@@ -258,7 +258,7 @@ export function MonitoreoNotificacionesUsuariosWidget({ negocio = "TRANQ" }: Pro
             cursor: "pointer"
           }}
         >
-          <span style={{ fontSize: "0.72rem", color: "#b45309", fontWeight: 800, textTransform: "uppercase" }}>⏳ Pospuestas</span>
+          <span style={{ fontSize: "0.72rem", color: "#b45309", fontWeight: 800, textTransform: "uppercase" }}>Pospuestas</span>
           <div style={{ fontSize: "1.4rem", fontWeight: 900, color: "#b45309", marginTop: "2px" }}>{countPospuestas}</div>
         </div>
 
@@ -319,7 +319,7 @@ export function MonitoreoNotificacionesUsuariosWidget({ negocio = "TRANQ" }: Pro
             <option value="TODOS">Todos los Estados</option>
             <option value="PENDIENTE">Pendientes</option>
             <option value="LEIDA">Confirmadas (Leídas)</option>
-            <option value="POSPUESTA">⏳ Pospuestas</option>
+            <option value="POSPUESTA">Pospuestas</option>
             <option value="ELIMINADA">Eliminadas</option>
           </select>
         </div>
@@ -412,7 +412,7 @@ export function MonitoreoNotificacionesUsuariosWidget({ negocio = "TRANQ" }: Pro
                         </div>
                       ) : (
                         <span style={{ color: "#2563eb", fontWeight: 700, fontSize: "0.74rem" }}>
-                          ⏳ Pendiente
+                          Pendiente
                         </span>
                       )}
                     </td>
@@ -606,7 +606,7 @@ export function MonitoreoNotificacionesUsuariosWidget({ negocio = "TRANQ" }: Pro
                   <strong style={{ display: "block", color: notifSeleccionada.not_leido_en ? "#15803d" : "#2563eb", fontSize: "0.82rem", marginTop: "2px" }}>
                     {notifSeleccionada.not_leido_en
                       ? `Confirmada el ${new Date(notifSeleccionada.not_leido_en).toLocaleString("es-EC", { timeZone: "America/Guayaquil" })}`
-                      : "⏳ No confirmada / Pendiente"}
+                      : "No confirmada / Pendiente"}
                   </strong>
                   {notifSeleccionada.confirmada_por && (
                     <div style={{ fontSize: "0.74rem", color: "#15803d", marginTop: "4px", background: "#f0fdf4", padding: "4px 8px", borderRadius: "6px" }}>
@@ -620,7 +620,7 @@ export function MonitoreoNotificacionesUsuariosWidget({ negocio = "TRANQ" }: Pro
                   <span style={{ fontSize: "0.7rem", color: "#64748b", fontWeight: 700 }}>Tiempo Pospuesto:</span>
                   <strong style={{ display: "block", color: notifSeleccionada.not_pospuesta_hasta ? "#b45309" : "#64748b", fontSize: "0.82rem", marginTop: "2px" }}>
                     {notifSeleccionada.not_pospuesta_hasta
-                      ? `⏰ Pospuesta hasta: ${new Date(notifSeleccionada.not_pospuesta_hasta).toLocaleString("es-EC", { timeZone: "America/Guayaquil" })}`
+                      ? `Pospuesta hasta: ${new Date(notifSeleccionada.not_pospuesta_hasta).toLocaleString("es-EC", { timeZone: "America/Guayaquil" })}`
                       : "Sin posponer"}
                   </strong>
                   {notifSeleccionada.pospuesta_por && (
