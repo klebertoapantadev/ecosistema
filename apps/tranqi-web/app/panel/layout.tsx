@@ -8,6 +8,7 @@ import { CampanaNotificaciones } from "@eco/notificaciones";
 import { NavegacionSidebar } from "./NavegacionSidebar";
 import { CapaPerfilRail } from "./CapaPerfilRail";
 import { BarraAsistente } from "./asistente/BarraAsistente";
+import { rolConAsistente } from "../../modulos/asistente/rol";
 import { crearClienteServidor } from "@eco/supabase/servidor";
 import type { ModoRol } from "./SelectorRolActivo";
 
@@ -97,7 +98,7 @@ export default async function LayoutPanel({ children }: { children: React.ReactN
             ARIA. Operador, tecnico, admin y superadmin no tienen todavia el
             suyo (TRQ-ADM-002), y darles el de cliente seria ofrecerles una
             herramienta que no responde a su trabajo. */}
-        {(modoActivo === "cliente" || modoActivo === "abogado") && (
+        {rolConAsistente(modoActivo) && (
           <BarraAsistente nombre="tranqi" saludo={saludoDe(modoActivo, perfil.usu_nombres)} />
         )}
       </CapaPerfilRail>
