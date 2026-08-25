@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import {
   Bell, Settings, CheckCircle2, Volume2, X, Clock, Trash2, Check,
-  ChevronDown, History, RotateCcw, Info
+  ChevronDown, RotateCcw, Info
 } from "lucide-react";
 
 export interface NotificacionItem {
@@ -283,7 +283,7 @@ export function WidgetNotificacionesCliente({ negocio = "tranqi", esAdmin = fals
             <div style={{ flex: 1 }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
                 <span style={{ fontSize: "0.72rem", color: "#38bdf8", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.5px" }}>
-                  🔔 ALERTA EN VIVO
+                  Alerta en vivo
                 </span>
                 <span style={{ fontSize: "0.7rem", color: "#94a3b8" }}>Ahora</span>
               </div>
@@ -399,7 +399,7 @@ export function WidgetNotificacionesCliente({ negocio = "tranqi", esAdmin = fals
                       onMouseEnter={e => (e.currentTarget.style.background = "rgba(255,255,255,0.1)")}
                       onMouseLeave={e => (e.currentTarget.style.background = "none")}
                     >
-                      ⏳ {h} horas
+                      {h} horas
                     </button>
                   ))}
                 </div>
@@ -431,261 +431,147 @@ export function WidgetNotificacionesCliente({ negocio = "tranqi", esAdmin = fals
         </div>
       )}
 
-      {/* SECCIÓN LATERAL DEL PANEL */}
-      <section className="tarjeta-seccion" aria-labelledby="t-notificaciones-eco" style={{ borderLeft: "4px solid #1f6feb" }}>
-        <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <h2 id="t-notificaciones-eco" style={{ display: "flex", alignItems: "center", gap: "8px", color: "#0f172a", margin: 0, fontSize: "1rem", fontWeight: 800 }}>
-            <Bell style={{ width: 20, height: 20, color: "#1f6feb" }} /> Notificaciones & Alertas
-          </h2>
-          <span className="chip-registrado" style={{ background: noLeidasCount > 0 ? "#1f6feb" : "#64748b", color: "#ffffff", fontWeight: 800, padding: "3px 10px", borderRadius: "12px", fontSize: "0.75rem" }}>
-            🔔 {noLeidasCount} {noLeidasCount === 1 ? "Pendiente" : "Pendientes"}
-          </span>
+      {/* SECCIÓN LATERAL DEL PANEL
+          TRQ-010: se va el filo azul de 4px de la izquierda. Era un color ajeno
+          al sistema de marca (#1f6feb no está en la paleta) y el mismo recurso
+          aparecía en tres sitios con tres colores distintos, así que ya no
+          significaba nada. La tarjeta se distingue como todas las demás del
+          panel: superficie blanca y línea de 1px. */}
+      <section className="tarjeta-seccion" aria-labelledby="t-notificaciones-eco">
+        <header>
+          <h2 id="t-notificaciones-eco">Notificaciones</h2>
+          {/* El contador solo aparece cuando hay algo pendiente: un chip que
+              dice "0 Pendientes" ocupa sitio para no informar de nada. Fondo
+              diluido y no pleno, como manda §6 del sistema visual. */}
+          {noLeidasCount > 0 && (
+            <span className="chip-pendientes">
+              {noLeidasCount} {noLeidasCount === 1 ? "pendiente" : "pendientes"}
+            </span>
+          )}
         </header>
 
-        {/* Pestañas: Pendientes vs Historial vs Eliminadas */}
-        <div style={{ display: "flex", gap: "4px", marginTop: "12px", background: "#f1f5f9", padding: "4px", borderRadius: "8px" }}>
+        {/* Pestañas: Pendientes vs Historial vs Eliminadas.
+            Sin iconos: la campana, el reloj y la papelera repetían en dibujo lo
+            que la palabra de al lado ya decía, en tres pestañas de 90px. */}
+        <div className="pestanas-notif" role="tablist">
           <button
-            type="button"
+            type="button" role="tab"
+            aria-selected={tabActiva === "pendientes"}
+            className={`pestana-notif${tabActiva === "pendientes" ? " es-activa" : ""}`}
             onClick={() => setTabActiva("pendientes")}
-            style={{
-              flex: 1,
-              padding: "6px 8px",
-              borderRadius: "6px",
-              border: "none",
-              background: tabActiva === "pendientes" ? "#ffffff" : "transparent",
-              color: tabActiva === "pendientes" ? "#0f172a" : "#64748b",
-              fontWeight: tabActiva === "pendientes" ? 800 : 600,
-              fontSize: "0.76rem",
-              cursor: "pointer",
-              boxShadow: tabActiva === "pendientes" ? "0 1px 3px rgba(0,0,0,0.1)" : "none",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: "4px"
-            }}
           >
-            <Bell size={13} /> Pendientes ({pendientes.length})
+            Pendientes ({pendientes.length})
           </button>
           <button
-            type="button"
+            type="button" role="tab"
+            aria-selected={tabActiva === "historial"}
+            className={`pestana-notif${tabActiva === "historial" ? " es-activa" : ""}`}
             onClick={() => setTabActiva("historial")}
-            style={{
-              flex: 1,
-              padding: "6px 8px",
-              borderRadius: "6px",
-              border: "none",
-              background: tabActiva === "historial" ? "#ffffff" : "transparent",
-              color: tabActiva === "historial" ? "#0f172a" : "#64748b",
-              fontWeight: tabActiva === "historial" ? 800 : 600,
-              fontSize: "0.76rem",
-              cursor: "pointer",
-              boxShadow: tabActiva === "historial" ? "0 1px 3px rgba(0,0,0,0.1)" : "none",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: "4px"
-            }}
           >
-            <History size={13} /> Historial ({historial.length})
+            Historial ({historial.length})
           </button>
           <button
-            type="button"
+            type="button" role="tab"
+            aria-selected={tabActiva === "eliminadas"}
+            className={`pestana-notif${tabActiva === "eliminadas" ? " es-activa" : ""}`}
             onClick={() => setTabActiva("eliminadas")}
-            style={{
-              flex: 1,
-              padding: "6px 8px",
-              borderRadius: "6px",
-              border: "none",
-              background: tabActiva === "eliminadas" ? "#ffffff" : "transparent",
-              color: tabActiva === "eliminadas" ? "#ef4444" : "#64748b",
-              fontWeight: tabActiva === "eliminadas" ? 800 : 600,
-              fontSize: "0.76rem",
-              cursor: "pointer",
-              boxShadow: tabActiva === "eliminadas" ? "0 1px 3px rgba(0,0,0,0.1)" : "none",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: "4px"
-            }}
           >
-            <Trash2 size={13} /> Eliminadas ({eliminadas.length})
+            Eliminadas ({eliminadas.length})
           </button>
         </div>
 
-        {/* Botón para activar permisos Web Push */}
+        {/* Aviso para activar permisos Web Push */}
         {permisoPush !== "granted" && (
-          <div style={{ marginTop: "10px", background: "#f0f9ff", border: "1px solid #bae6fd", borderRadius: "8px", padding: "8px 10px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "8px" }}>
-            <span style={{ fontSize: "0.74rem", color: "#0369a1", fontWeight: 600 }}>
-              Activa notificaciones del navegador para recibir comunicados.
-            </span>
-            <button
-              type="button"
-              onClick={solicitarPermisoPush}
-              style={{ background: "#0284c7", color: "#ffffff", border: "none", borderRadius: "6px", padding: "4px 8px", fontSize: "0.72rem", fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap" }}
-            >
+          <div className="aviso-push">
+            <span>Activa los avisos del navegador para enterarte al momento.</span>
+            <button type="button" className="accion-menor es-discreta" onClick={solicitarPermisoPush}>
               Activar
             </button>
           </div>
         )}
 
         {/* Lista de Notificaciones según pestaña activa */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: "12px" }}>
+        <div className="lista-notif">
           {tabActiva === "pendientes" && (
             pendientes.length === 0 ? (
-              <div style={{ padding: "16px", background: "#f8fafc", borderRadius: "8px", border: "1px solid #e2e8f0", textAlign: "center", color: "#64748b", fontSize: "0.82rem" }}>
-                <CheckCircle2 size={24} color="#16a34a" style={{ margin: "0 auto 6px auto", display: "block" }} />
-                No tienes notificaciones pendientes en este momento.
+              <div className="vacio-notif">
+                <CheckCircle2 size={22} aria-hidden="true" />
+                <span>No tienes notificaciones pendientes.</span>
               </div>
             ) : (
               pendientes.map(item => (
-                <div
-                  key={item.not_id}
-                  style={{
-                    padding: "12px 14px",
-                    background: "#f0f7ff",
-                    borderRadius: "10px",
-                    border: "1.5px solid #3b82f6",
-                    boxShadow: "0 2px 8px rgba(37,99,235,0.12)",
-                    position: "relative"
-                  }}
-                >
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "8px" }}>
-                    <span style={{ fontSize: "0.85rem", fontWeight: 800, color: "#0f172a" }}>
-                      {item.not_titulo}
-                    </span>
-                    <span style={{ fontSize: "0.7rem", color: "#64748b", whiteSpace: "nowrap" }}>
+                /* TRQ-010: la tarjeta era azul sobre azul con borde azul de
+                   1.5px y sombra azul. Ahora es blanca como el resto del panel
+                   y lo pendiente lo dice el punto del título, no el envase. */
+                <article key={item.not_id} className="notif">
+                  <div className="notif-cabeza">
+                    <span className="notif-titulo">{item.not_titulo}</span>
+                    <time className="notif-hora">
                       {new Date(item.not_creado_en).toLocaleTimeString("es-EC", { hour: "2-digit", minute: "2-digit", timeZone: "America/Guayaquil" })}
-                    </span>
+                    </time>
                   </div>
                   <div
-                    style={{ fontSize: "0.82rem", color: "#334155", marginTop: "6px", lineHeight: 1.5 }}
+                    className="notif-cuerpo"
                     dangerouslySetInnerHTML={{ __html: item.not_contenido_html }}
                   />
 
-                  {/* Barra de 3 Acciones: Aceptar, Posponer, Eliminar */}
-                  <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "6px", marginTop: "10px", borderTop: "1px solid #dbeafe", paddingTop: "8px" }}>
+                  {/* Barra de 3 acciones: Aceptar, Posponer, Eliminar.
+                      Antes eran verde pleno, blanca con borde y roja: un
+                      semáforo entero dentro de una tarjeta de 440px. Ahora solo
+                      "Aceptar" lleva relleno -- es la única que el usuario
+                      quiere pulsar; las otras dos existen por si acaso. */}
+                  <div className="fila-acciones notif-acciones">
                     <button
                       type="button"
+                      className="accion-menor es-principal"
                       onClick={() => aceptarNotificacion(item)}
-                      style={{
-                        background: "#10b981",
-                        color: "#ffffff",
-                        border: "none",
-                        borderRadius: "6px",
-                        padding: "5px 10px",
-                        fontSize: "0.75rem",
-                        fontWeight: 700,
-                        cursor: "pointer",
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: "4px"
-                      }}
                       title="Confirmar lectura y pasar al historial"
                     >
-                      <Check size={13} /> Aceptar
+                      <Check size={14} aria-hidden="true" /> Aceptar
                     </button>
 
-                    <div style={{ position: "relative" }}>
+                    <div className="envoltura-posponer">
                       <button
                         type="button"
+                        className="accion-menor es-discreta"
                         onClick={() => {
                           setDropdownPosponerId(dropdownPosponerId === item.not_id ? null : item.not_id);
                           setMostrarInputPersonalizado(null);
                         }}
-                        style={{
-                          background: "#ffffff",
-                          color: "#1e293b",
-                          border: "1px solid #cbd5e1",
-                          borderRadius: "6px",
-                          padding: "5px 10px",
-                          fontSize: "0.75rem",
-                          fontWeight: 600,
-                          cursor: "pointer",
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: "4px"
-                        }}
                       >
-                        <Clock size={13} /> Posponer <ChevronDown size={12} />
+                        <Clock size={14} aria-hidden="true" /> Posponer <ChevronDown size={12} aria-hidden="true" />
                       </button>
 
                       {dropdownPosponerId === item.not_id && (
-                        <div
-                          style={{
-                            position: "absolute",
-                            bottom: "100%",
-                            left: 0,
-                            marginBottom: "6px",
-                            background: "#ffffff",
-                            border: "1.5px solid #e2e8f0",
-                            borderRadius: "8px",
-                            boxShadow: "0 10px 25px rgba(0,0,0,0.15)",
-                            zIndex: 100,
-                            minWidth: "180px",
-                            padding: "6px",
-                            display: "flex",
-                            flexDirection: "column",
-                            gap: "4px"
-                          }}
-                        >
-                          <div style={{ fontSize: "0.7rem", fontWeight: 800, color: "#64748b", padding: "4px 8px", textTransform: "uppercase" }}>
-                            Ocultar alerta por:
-                          </div>
+                        <div className="menu-posponer">
+                          <div className="menu-posponer-titulo">Ocultar por</div>
                           {[3, 6, 12, 24].map(h => (
                             <button
                               key={h}
                               type="button"
+                              className="opcion-posponer"
                               onClick={() => posponerNotificacion(item, h)}
-                              style={{
-                                background: "none",
-                                border: "none",
-                                textAlign: "left",
-                                padding: "6px 8px",
-                                fontSize: "0.78rem",
-                                color: "#1e293b",
-                                borderRadius: "4px",
-                                cursor: "pointer",
-                                fontWeight: 600
-                              }}
-                              onMouseEnter={e => (e.currentTarget.style.background = "#f1f5f9")}
-                              onMouseLeave={e => (e.currentTarget.style.background = "none")}
                             >
-                              ⏳ {h} horas
+                              {h} horas
                             </button>
                           ))}
 
-                          <div style={{ borderTop: "1px solid #e2e8f0", marginTop: "4px", paddingTop: "4px" }}>
+                          <div className="menu-posponer-pie">
                             {mostrarInputPersonalizado === item.not_id ? (
-                              <div style={{ display: "flex", alignItems: "center", gap: "4px", padding: "4px" }}>
+                              <div className="posponer-personalizado">
                                 <input
                                   type="number"
                                   min="1"
                                   max="720"
                                   value={horasPersonalizadas}
                                   onChange={e => setHorasPersonalizadas(e.target.value)}
-                                  style={{
-                                    width: "50px",
-                                    padding: "4px",
-                                    fontSize: "0.78rem",
-                                    border: "1px solid #cbd5e1",
-                                    borderRadius: "4px",
-                                    textAlign: "center"
-                                  }}
+                                  aria-label="Horas para posponer"
                                 />
-                                <span style={{ fontSize: "0.72rem", color: "#64748b" }}>hrs</span>
+                                <span>hrs</span>
                                 <button
                                   type="button"
+                                  className="accion-menor es-principal"
                                   onClick={() => posponerNotificacion(item, Number(horasPersonalizadas) || 4)}
-                                  style={{
-                                    background: "#0284c7",
-                                    color: "#ffffff",
-                                    border: "none",
-                                    borderRadius: "4px",
-                                    padding: "4px 8px",
-                                    fontSize: "0.72rem",
-                                    fontWeight: 700,
-                                    cursor: "pointer"
-                                  }}
                                 >
                                   OK
                                 </button>
@@ -693,21 +579,10 @@ export function WidgetNotificacionesCliente({ negocio = "tranqi", esAdmin = fals
                             ) : (
                               <button
                                 type="button"
+                                className="opcion-posponer es-enlace"
                                 onClick={() => setMostrarInputPersonalizado(item.not_id)}
-                                style={{
-                                  background: "none",
-                                  border: "none",
-                                  textAlign: "left",
-                                  padding: "6px 8px",
-                                  fontSize: "0.78rem",
-                                  color: "#0284c7",
-                                  borderRadius: "4px",
-                                  cursor: "pointer",
-                                  fontWeight: 700,
-                                  width: "100%"
-                                }}
                               >
-                                ✏️ Personalizado...
+                                Otro plazo…
                               </button>
                             )}
                           </div>
@@ -717,146 +592,91 @@ export function WidgetNotificacionesCliente({ negocio = "tranqi", esAdmin = fals
 
                     <button
                       type="button"
+                      className="accion-menor es-peligro notif-eliminar"
                       onClick={() => eliminarNotificacion(item)}
-                      style={{
-                        background: "transparent",
-                        color: "#ef4444",
-                        border: "none",
-                        borderRadius: "6px",
-                        padding: "5px 8px",
-                        fontSize: "0.75rem",
-                        fontWeight: 600,
-                        cursor: "pointer",
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: "4px",
-                        marginLeft: "auto"
-                      }}
                       title="Eliminar lógicamente (se guarda en la pestaña Eliminadas)"
                     >
-                      <Trash2 size={13} /> Eliminar
+                      <Trash2 size={14} aria-hidden="true" />
+                      <span className="texto-accion">Eliminar</span>
                     </button>
                   </div>
-                </div>
+                </article>
               ))
             )
           )}
 
           {tabActiva === "historial" && (
             historial.length === 0 ? (
-              <div style={{ padding: "16px", background: "#f8fafc", borderRadius: "8px", border: "1px solid #e2e8f0", textAlign: "center", color: "#64748b", fontSize: "0.82rem" }}>
-                No tienes notificaciones registradas en tu historial.
+              <div className="vacio-notif">
+                <span>Tu historial está vacío.</span>
               </div>
             ) : (
               historial.map(item => (
-                <div
-                  key={item.not_id}
-                  style={{
-                    padding: "10px 12px",
-                    background: "#ffffff",
-                    borderRadius: "8px",
-                    border: "1px solid #e2e8f0",
-                    opacity: 0.95
-                  }}
-                >
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "8px" }}>
-                    <span style={{ fontSize: "0.82rem", fontWeight: 700, color: "#334155" }}>
-                      {item.not_titulo}
-                    </span>
-                    <span style={{ fontSize: "0.68rem", color: "#94a3b8", whiteSpace: "nowrap" }}>
+                <article key={item.not_id} className="notif es-pasada">
+                  <div className="notif-cabeza">
+                    <span className="notif-titulo">{item.not_titulo}</span>
+                    <time className="notif-hora">
                       {new Date(item.not_creado_en).toLocaleDateString("es-EC", { day: "2-digit", month: "2-digit" })}
-                    </span>
+                    </time>
                   </div>
                   <div
-                    style={{ fontSize: "0.78rem", color: "#64748b", marginTop: "4px", lineHeight: 1.4 }}
+                    className="notif-cuerpo"
                     dangerouslySetInnerHTML={{ __html: item.not_contenido_html }}
                   />
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "8px", borderTop: "1px dashed #f1f5f9", paddingTop: "6px" }}>
-                    <span style={{ fontSize: "0.7rem", color: "#10b981", fontWeight: 700 }}>
-                      ✓ Leída / Confirmada
+                  <div className="fila-acciones notif-acciones">
+                    <span className="marca-leida">
+                      <Check size={13} aria-hidden="true" /> Leída
                     </span>
                     <button
                       type="button"
+                      className="accion-menor es-peligro notif-eliminar"
                       onClick={() => eliminarNotificacion(item)}
-                      style={{
-                        background: "transparent",
-                        color: "#94a3b8",
-                        border: "none",
-                        fontSize: "0.72rem",
-                        cursor: "pointer",
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: "3px"
-                      }}
                     >
-                      <Trash2 size={12} /> Mover a eliminadas
+                      <Trash2 size={13} aria-hidden="true" />
+                      <span className="texto-accion">Eliminar</span>
                     </button>
                   </div>
-                </div>
+                </article>
               ))
             )
           )}
 
           {tabActiva === "eliminadas" && (
-            <div>
-              <div style={{ padding: "8px 12px", background: "#fef2f2", border: "1px solid #fee2e2", borderRadius: "8px", color: "#991b1b", fontSize: "0.74rem", display: "flex", alignItems: "center", gap: "6px", marginBottom: "10px" }}>
-                <Info size={14} /> Eliminación lógica auditable. Puedes restaurar cualquier notificación en cualquier momento.
-              </div>
+            <div className="lista-eliminadas">
+              <p className="nota-eliminadas">
+                <Info size={14} aria-hidden="true" /> Nada se borra del todo: puedes restaurar cualquier notificación cuando quieras.
+              </p>
 
               {eliminadas.length === 0 ? (
-                <div style={{ padding: "16px", background: "#f8fafc", borderRadius: "8px", border: "1px solid #e2e8f0", textAlign: "center", color: "#64748b", fontSize: "0.82rem" }}>
-                  No tienes notificaciones eliminadas.
+                <div className="vacio-notif">
+                  <span>No tienes notificaciones eliminadas.</span>
                 </div>
               ) : (
                 eliminadas.map(item => (
-                  <div
-                    key={item.not_id}
-                    style={{
-                      padding: "10px 12px",
-                      background: "#fefefe",
-                      borderRadius: "8px",
-                      border: "1px dashed #fca5a5",
-                      marginBottom: "8px",
-                      opacity: 0.9
-                    }}
-                  >
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "8px" }}>
-                      <span style={{ fontSize: "0.82rem", fontWeight: 700, color: "#475569" }}>
-                        {item.not_titulo}
-                      </span>
-                      <span style={{ fontSize: "0.68rem", color: "#ef4444", fontWeight: 700, whiteSpace: "nowrap" }}>
-                        Eliminada
-                      </span>
+                  <article key={item.not_id} className="notif es-pasada es-eliminada">
+                    <div className="notif-cabeza">
+                      <span className="notif-titulo">{item.not_titulo}</span>
+                      <time className="notif-hora">
+                        {item.not_eliminada_en
+                          ? new Date(item.not_eliminada_en).toLocaleDateString("es-EC", { day: "2-digit", month: "2-digit" })
+                          : "—"}
+                      </time>
                     </div>
                     <div
-                      style={{ fontSize: "0.78rem", color: "#64748b", marginTop: "4px", lineHeight: 1.4 }}
+                      className="notif-cuerpo"
                       dangerouslySetInnerHTML={{ __html: item.not_contenido_html }}
                     />
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "8px", borderTop: "1px dashed #fee2e2", paddingTop: "6px" }}>
-                      <span style={{ fontSize: "0.68rem", color: "#94a3b8" }}>
-                        {item.not_eliminada_en ? `Eliminada el ${new Date(item.not_eliminada_en).toLocaleString("es-EC", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit", timeZone: "America/Guayaquil" })}` : "Eliminada lógicamente"}
-                      </span>
+                    <div className="fila-acciones notif-acciones">
+                      <span className="marca-eliminada">Eliminada</span>
                       <button
                         type="button"
+                        className="accion-menor es-discreta notif-eliminar"
                         onClick={() => restaurarNotificacion(item)}
-                        style={{
-                          background: "#eff6ff",
-                          border: "1px solid #bfdbfe",
-                          color: "#1d4ed8",
-                          borderRadius: "6px",
-                          padding: "4px 8px",
-                          fontSize: "0.72rem",
-                          fontWeight: 700,
-                          cursor: "pointer",
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: "4px"
-                        }}
                       >
-                        <RotateCcw size={12} /> Restaurar
+                        <RotateCcw size={13} aria-hidden="true" /> Restaurar
                       </button>
                     </div>
-                  </div>
+                  </article>
                 ))
               )}
             </div>
@@ -864,44 +684,14 @@ export function WidgetNotificacionesCliente({ negocio = "tranqi", esAdmin = fals
         </div>
 
         {/* Acceso a Preferencias */}
-        <div style={{ display: "flex", gap: "10px", marginTop: "16px", flexWrap: "wrap" }}>
-          <a
-            href="/panel/configuracion"
-            style={{
-              fontSize: "0.78rem",
-              color: "#334155",
-              background: "#f1f5f9",
-              border: "1px solid #cbd5e1",
-              borderRadius: "6px",
-              padding: "6px 12px",
-              textDecoration: "none",
-              fontWeight: 600,
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "6px"
-            }}
-          >
-            <Settings size={14} /> Preferencias & Configuración
+        <div className="pie-notif">
+          <a href="/panel/configuracion" className="accion-menor es-discreta">
+            <Settings size={14} aria-hidden="true" /> Preferencias
           </a>
 
           {esAdmin && (
-            <a
-              href="/panel/emision-notificaciones"
-              style={{
-                fontSize: "0.78rem",
-                color: "#ffffff",
-                background: "#2563eb",
-                border: "none",
-                borderRadius: "6px",
-                padding: "6px 12px",
-                textDecoration: "none",
-                fontWeight: 700,
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "6px"
-              }}
-            >
-              <Bell size={14} /> Consola de Emisión Multicanal
+            <a href="/panel/emision-notificaciones" className="accion-menor es-discreta">
+              <Bell size={14} aria-hidden="true" /> Emitir notificación
             </a>
           )}
         </div>
