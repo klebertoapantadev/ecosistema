@@ -62,6 +62,51 @@ existe en el repo ni en su historial de git). Diseño completo, decisiones de al
 documentos) y máquina de estados: ver
 [`apps/tranqi-web/modulos/socios/README.md`](../../../apps/tranqi-web/modulos/socios/README.md).
 
+## Tablas (TRQ-009, operación y asistente)
+
+Migración `20260823000001_tranqui_legal_casos_y_asistente.sql`.
+
+| Tabla | Prefijo col. | Notas |
+| :--- | :--- | :--- |
+| `trq_caso_judicial` | `cas_` | Nombre y prefijo fijados como ejemplo canónico en el estándar de nomenclatura §3. `cas_abogado_id` es nullable: un caso entra sin asignar y la asignación es TRQ-ADM-002 |
+| `trq_cita` | `cit_` | `cit_caso_id` nullable — la primera consulta ocurre antes de que haya expediente |
+| `trq_documento_caso` | `dcc_` | Solo metadatos; el binario va al bucket privado. `dcc_dictamen` (jsonb) es donde escriben TRQ-CLI-002 y TRQ-ABG-005 |
+| `trq_honorario` | `hon_` | `numeric(12,2)`, nunca float. El abogado **lee**; no inserta ni aprueba |
+| `trq_conversacion` | `cnv_` | `cnv_id` **es** el `conversation_id` que se le pasa a ARIA — un solo identificador, sin tabla de correspondencia |
+| `trq_mensaje` | `msg_` | `msg_run_id` guarda el run de ARIA para poder abrir su traza desde `/panel/agentes` |
+
+**Función:** `tranqui_legal.trq_fn_abogado_actual()` — resuelve el `abg_id` del usuario en sesión.
+`STABLE SECURITY DEFINER` porque necesita leer `trq_abogado` saltándose su propio RLS, que depende
+de esta misma pregunta. **Lleva `grant execute ... to authenticated`**: una expresión de RLS se
+evalúa con los privilegios de quien consulta, no con los del dueño de la tabla — es la misma
+familia de olvido que los dos bugs de `GRANT USAGE` de más abajo.
+
+**RLS.** El cliente ve sus casos, el abogado los que tiene asignados, el administrador de tranqi
+todo. `trq_documento_caso` y `trq_mensaje` heredan la visibilidad de su padre con un `EXISTS`
+contra una tabla que ya tiene RLS, de modo que hay un solo sitio donde equivocarse.
+**`trq_conversacion` es la excepción: solo el dueño**, ni siquiera el administrador.
+
+Estas políticas no son defensa en profundidad, son **la** defensa: los asistentes consultan por
+PostgREST con un JWT de usuario acuñado, sin `service_role`. Ver
+[ADR-0005](../../arquitectura/adr/0005-frontera-de-identidad-en-herramientas-de-ia.md).
+
+**Widget:** `agentes_ia` → `/panel/agentes`, solo `ADMINISTRADOR` (`20260823000002_widget_agentes_ia.sql`).
+
+## Servidores MCP de los asistentes
+
+| Endpoint | Agente | Herramientas |
+| :--- | :--- | :--- |
+| `POST /api/mcp/cliente` | Tranqi Asistente Cliente | `mis_casos`, `detalle_caso`, `mis_citas`, `agendar_cita`, `documentos_pendientes`, `mi_perfil` |
+| `POST /api/mcp/abogado` | Tranqi Asistente Abogado | `casos_asignados`, `agenda_del_dia`, `documentos_del_caso`, `plazos_proximos`, `mis_honorarios`, `mi_ficha` |
+
+Protocolo MCP sobre HTTP (`streamable_http`), implementado en `packages/agentes-ia/src/mcp-servidor.ts`
+sin dependencias. Cada endpoint acepta **solo** cápsulas de su rol, comprobado en el servidor además
+de en la configuración del agente.
+
+ARIA los alcanza por el dominio público de `tranqi-web`. Como el proyecto de Vercel tiene
+`ssoProtection` activo y sin dominio propio asignado, hace falta el secreto de **Protection Bypass
+for Automation** como header estático del servidor MCP, o asignar un dominio propio.
+
 ## Dependencias de esquemas comunes
 
 - `comun_seguridad.seg_usuario` / `seg_membresia` — identidad y rol. ✅ Migrado y en uso (registro, bienvenida, gestión de usuarios, consentimiento de términos, baja de cuenta) — ver [`especificacion-tecnica.md` de Plataforma](../plataforma/especificacion-tecnica.md) §1 y §1.3.

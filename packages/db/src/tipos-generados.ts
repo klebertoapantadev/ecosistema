@@ -3,6 +3,21 @@
 // Regenerar en el mismo PR que cualquier migracion nueva que toque columnas
 // (no hace falta si la migracion solo reescribe el cuerpo de una funcion).
 // Pendientes de incluir cuando se migren: comun_facturacion, comun_agentes, comun_comercio.
+//
+// OJO (TRQ-009): este fichero NO es una regeneracion limpia. Es la version
+// anterior mas los bloques de las 6 tablas nuevas de tranqui_legal.
+//
+// Motivo: regenerar entero con el CLI (probado con 2.101 y 2.115) devuelve
+// `p_host: string` para comun_configuracion.cfg_fn_guardar_smtp, mientras que
+// lo commiteado dice `p_host: string | null`. Con la firma estricta,
+// packages/configuracion-negocio/src/acciones-smtp.ts deja de compilar en 4
+// lineas que pasan null a proposito ("null = no cambies la contrasena"). En
+// la base, esos parametros son `text` a secas y aceptan NULL, asi que la firma
+// estricta es del generador, no de Postgres.
+//
+// Se conservo la firma commiteada para no romper codigo ajeno con un cambio
+// de tipos. Antes de la proxima regeneracion completa hay que decidir si se
+// ajusta acciones-smtp.ts o si se documenta la excepcion.
 export type Json =
   | string
   | number
@@ -859,6 +874,248 @@ export type Database = {
           },
         ]
       }
+      trq_caso_judicial: {
+        Row: {
+          cas_abierto_en: string
+          cas_abogado_id: string | null
+          cas_actualizado_en: string
+          cas_cerrado_en: string | null
+          cas_cliente_id: string
+          cas_creado_en: string
+          cas_descripcion: string | null
+          cas_detalle_caso: Json
+          cas_eliminado_en: string | null
+          cas_estado: string
+          cas_id: string
+          cas_materia_id: string | null
+          cas_numero_proceso: string | null
+          cas_prioridad: string
+          cas_provincia_id: string | null
+          cas_secuencial: number
+          cas_titulo: string
+        }
+        Insert: {
+          cas_abierto_en?: string
+          cas_abogado_id?: string | null
+          cas_actualizado_en?: string
+          cas_cerrado_en?: string | null
+          cas_cliente_id: string
+          cas_creado_en?: string
+          cas_descripcion?: string | null
+          cas_detalle_caso?: Json
+          cas_eliminado_en?: string | null
+          cas_estado?: string
+          cas_id?: string
+          cas_materia_id?: string | null
+          cas_numero_proceso?: string | null
+          cas_prioridad?: string
+          cas_provincia_id?: string | null
+          cas_secuencial?: never
+          cas_titulo: string
+        }
+        Update: {
+          cas_abierto_en?: string
+          cas_abogado_id?: string | null
+          cas_actualizado_en?: string
+          cas_cerrado_en?: string | null
+          cas_cliente_id?: string
+          cas_creado_en?: string
+          cas_descripcion?: string | null
+          cas_detalle_caso?: Json
+          cas_eliminado_en?: string | null
+          cas_estado?: string
+          cas_id?: string
+          cas_materia_id?: string | null
+          cas_numero_proceso?: string | null
+          cas_prioridad?: string
+          cas_provincia_id?: string | null
+          cas_secuencial?: never
+          cas_titulo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trq_caso_judicial_cas_abogado_id_fkey"
+            columns: ["cas_abogado_id"]
+            isOneToOne: false
+            referencedRelation: "trq_abogado"
+            referencedColumns: ["abg_id"]
+          },
+          {
+            foreignKeyName: "trq_caso_judicial_cas_materia_id_fkey"
+            columns: ["cas_materia_id"]
+            isOneToOne: false
+            referencedRelation: "trq_materia"
+            referencedColumns: ["mat_id"]
+          },
+        ]
+      }
+      trq_cita: {
+        Row: {
+          cit_abogado_id: string | null
+          cit_actualizado_en: string
+          cit_caso_id: string | null
+          cit_cliente_id: string
+          cit_creado_en: string
+          cit_eliminado_en: string | null
+          cit_enlace: string | null
+          cit_estado: string
+          cit_fin_en: string | null
+          cit_id: string
+          cit_inicio_en: string
+          cit_lugar: string | null
+          cit_modalidad: string
+          cit_motivo: string | null
+          cit_notas: string | null
+          cit_secuencial: number
+        }
+        Insert: {
+          cit_abogado_id?: string | null
+          cit_actualizado_en?: string
+          cit_caso_id?: string | null
+          cit_cliente_id: string
+          cit_creado_en?: string
+          cit_eliminado_en?: string | null
+          cit_enlace?: string | null
+          cit_estado?: string
+          cit_fin_en?: string | null
+          cit_id?: string
+          cit_inicio_en: string
+          cit_lugar?: string | null
+          cit_modalidad?: string
+          cit_motivo?: string | null
+          cit_notas?: string | null
+          cit_secuencial?: never
+        }
+        Update: {
+          cit_abogado_id?: string | null
+          cit_actualizado_en?: string
+          cit_caso_id?: string | null
+          cit_cliente_id?: string
+          cit_creado_en?: string
+          cit_eliminado_en?: string | null
+          cit_enlace?: string | null
+          cit_estado?: string
+          cit_fin_en?: string | null
+          cit_id?: string
+          cit_inicio_en?: string
+          cit_lugar?: string | null
+          cit_modalidad?: string
+          cit_motivo?: string | null
+          cit_notas?: string | null
+          cit_secuencial?: never
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trq_cita_cit_abogado_id_fkey"
+            columns: ["cit_abogado_id"]
+            isOneToOne: false
+            referencedRelation: "trq_abogado"
+            referencedColumns: ["abg_id"]
+          },
+          {
+            foreignKeyName: "trq_cita_cit_caso_id_fkey"
+            columns: ["cit_caso_id"]
+            isOneToOne: false
+            referencedRelation: "trq_caso_judicial"
+            referencedColumns: ["cas_id"]
+          },
+        ]
+      }
+      trq_conversacion: {
+        Row: {
+          cnv_actualizado_en: string
+          cnv_agente_slug: string | null
+          cnv_creado_en: string
+          cnv_eliminado_en: string | null
+          cnv_id: string
+          cnv_rol: string
+          cnv_titulo: string | null
+          cnv_ultimo_mensaje_en: string
+          cnv_usuario_id: string
+        }
+        Insert: {
+          cnv_actualizado_en?: string
+          cnv_agente_slug?: string | null
+          cnv_creado_en?: string
+          cnv_eliminado_en?: string | null
+          cnv_id?: string
+          cnv_rol: string
+          cnv_titulo?: string | null
+          cnv_ultimo_mensaje_en?: string
+          cnv_usuario_id: string
+        }
+        Update: {
+          cnv_actualizado_en?: string
+          cnv_agente_slug?: string | null
+          cnv_creado_en?: string
+          cnv_eliminado_en?: string | null
+          cnv_id?: string
+          cnv_rol?: string
+          cnv_titulo?: string | null
+          cnv_ultimo_mensaje_en?: string
+          cnv_usuario_id?: string
+        }
+        Relationships: []
+      }
+      trq_documento_caso: {
+        Row: {
+          dcc_actualizado_en: string
+          dcc_caso_id: string
+          dcc_creado_en: string
+          dcc_dictamen: Json
+          dcc_dictaminado_en: string | null
+          dcc_eliminado_en: string | null
+          dcc_estado_revision: string
+          dcc_id: string
+          dcc_mime: string | null
+          dcc_nombre_archivo: string | null
+          dcc_ruta_storage: string
+          dcc_subido_por: string | null
+          dcc_tamano_bytes: number | null
+          dcc_tipo: string
+        }
+        Insert: {
+          dcc_actualizado_en?: string
+          dcc_caso_id: string
+          dcc_creado_en?: string
+          dcc_dictamen?: Json
+          dcc_dictaminado_en?: string | null
+          dcc_eliminado_en?: string | null
+          dcc_estado_revision?: string
+          dcc_id?: string
+          dcc_mime?: string | null
+          dcc_nombre_archivo?: string | null
+          dcc_ruta_storage: string
+          dcc_subido_por?: string | null
+          dcc_tamano_bytes?: number | null
+          dcc_tipo?: string
+        }
+        Update: {
+          dcc_actualizado_en?: string
+          dcc_caso_id?: string
+          dcc_creado_en?: string
+          dcc_dictamen?: Json
+          dcc_dictaminado_en?: string | null
+          dcc_eliminado_en?: string | null
+          dcc_estado_revision?: string
+          dcc_id?: string
+          dcc_mime?: string | null
+          dcc_nombre_archivo?: string | null
+          dcc_ruta_storage?: string
+          dcc_subido_por?: string | null
+          dcc_tamano_bytes?: number | null
+          dcc_tipo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trq_documento_caso_dcc_caso_id_fkey"
+            columns: ["dcc_caso_id"]
+            isOneToOne: false
+            referencedRelation: "trq_caso_judicial"
+            referencedColumns: ["cas_id"]
+          },
+        ]
+      }
       trq_documento_socio: {
         Row: {
           dcs_comentario: string | null
@@ -941,6 +1198,69 @@ export type Database = {
           },
         ]
       }
+      trq_honorario: {
+        Row: {
+          hon_abogado_id: string
+          hon_actualizado_en: string
+          hon_caso_id: string | null
+          hon_concepto: string
+          hon_creado_en: string
+          hon_eliminado_en: string | null
+          hon_estado: string
+          hon_id: string
+          hon_liquidado_en: string | null
+          hon_moneda: string
+          hon_monto: number
+          hon_periodo: string
+          hon_secuencial: number
+        }
+        Insert: {
+          hon_abogado_id: string
+          hon_actualizado_en?: string
+          hon_caso_id?: string | null
+          hon_concepto: string
+          hon_creado_en?: string
+          hon_eliminado_en?: string | null
+          hon_estado?: string
+          hon_id?: string
+          hon_liquidado_en?: string | null
+          hon_moneda?: string
+          hon_monto: number
+          hon_periodo: string
+          hon_secuencial?: never
+        }
+        Update: {
+          hon_abogado_id?: string
+          hon_actualizado_en?: string
+          hon_caso_id?: string | null
+          hon_concepto?: string
+          hon_creado_en?: string
+          hon_eliminado_en?: string | null
+          hon_estado?: string
+          hon_id?: string
+          hon_liquidado_en?: string | null
+          hon_moneda?: string
+          hon_monto?: number
+          hon_periodo?: string
+          hon_secuencial?: never
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trq_honorario_hon_abogado_id_fkey"
+            columns: ["hon_abogado_id"]
+            isOneToOne: false
+            referencedRelation: "trq_abogado"
+            referencedColumns: ["abg_id"]
+          },
+          {
+            foreignKeyName: "trq_honorario_hon_caso_id_fkey"
+            columns: ["hon_caso_id"]
+            isOneToOne: false
+            referencedRelation: "trq_caso_judicial"
+            referencedColumns: ["cas_id"]
+          },
+        ]
+      }
       trq_materia: {
         Row: {
           mat_activa: boolean
@@ -961,6 +1281,41 @@ export type Database = {
           mat_nombre?: string
         }
         Relationships: []
+      }
+      trq_mensaje: {
+        Row: {
+          msg_autor: string
+          msg_contenido: string
+          msg_conversacion_id: string
+          msg_creado_en: string
+          msg_id: string
+          msg_run_id: string | null
+        }
+        Insert: {
+          msg_autor: string
+          msg_contenido: string
+          msg_conversacion_id: string
+          msg_creado_en?: string
+          msg_id?: string
+          msg_run_id?: string | null
+        }
+        Update: {
+          msg_autor?: string
+          msg_contenido?: string
+          msg_conversacion_id?: string
+          msg_creado_en?: string
+          msg_id?: string
+          msg_run_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trq_mensaje_msg_conversacion_id_fkey"
+            columns: ["msg_conversacion_id"]
+            isOneToOne: false
+            referencedRelation: "trq_conversacion"
+            referencedColumns: ["cnv_id"]
+          },
+        ]
       }
       trq_revision_solicitud: {
         Row: {

@@ -11,6 +11,8 @@ export interface ConfiguracionAgente {
 export interface RespuestaAgente {
   response: string;
   usage?: unknown;
+  /** Run de ARIA. Se guarda en trq_mensaje para poder abrir su traza despues. */
+  runId?: string;
 }
 
 /**
@@ -34,6 +36,13 @@ export async function invocarAgente(
   config: ConfiguracionAgente,
   prompt: string,
   conversationId?: string,
+  /**
+   * Valores para las plantillas `{{clave}}` de los headers de las herramientas
+   * del agente en ARIA. Es la via por la que la identidad del usuario llega a
+   * un MCP sin pasar por el prompt: el modelo no lo ve ni lo puede alterar.
+   * Ver `capsula.ts` y `runtime_tools.render_contexto` en el backend de ARIA.
+   */
+  toolContext?: Record<string, string>,
 ): Promise<RespuestaAgente> {
   const r = await fetch(`${config.baseUrl}/v1/agents/${config.agentId}/invoke`, {
     method: "POST",
@@ -41,12 +50,40 @@ export async function invocarAgente(
       "Content-Type": "application/json",
       Authorization: `Bearer ${config.apiKey}`,
     },
-    body: JSON.stringify({ prompt, conversation_id: conversationId }),
+    body: JSON.stringify({
+      prompt,
+      conversation_id: conversationId,
+      tool_context: toolContext,
+    }),
     signal: AbortSignal.timeout(120000),
   });
   const data = await r.json();
   if (!r.ok) {
     throw new Error(data?.detail ?? data?.error ?? `ARIA respondio ${r.status}`);
   }
-  return { response: data.response ?? data.detail ?? "…", usage: data.usage };
+  return {
+    response: data.response ?? data.detail ?? "…",
+    usage: data.usage,
+    runId: data.run_id,
+  };
 }
+
+export { firmarJwtHs256, verificarJwtHs256 } from "./jwt";
+export {
+  firmarCapsula,
+  verificarCapsula,
+  acunarTokenSupabase,
+  type RolAsistente,
+  type SesionAsistente,
+} from "./capsula";
+export {
+  crearManejadorMcp,
+  type Herramienta,
+  type OpcionesServidorMcp,
+} from "./mcp-servidor";
+export {
+  llamarConsola,
+  resolverConsolaDesdeEntorno,
+  type ConfiguracionConsola,
+  type RespuestaConsola,
+} from "./consola";

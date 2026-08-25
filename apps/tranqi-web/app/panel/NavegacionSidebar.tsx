@@ -137,7 +137,7 @@ export function NavegacionSidebar({
         } else if (rolKey === "ADMINISTRADOR") {
           widgetsPorPanel = {
             ...widgetsPorPanel,
-            panel_configuracion: ["configuracion_negocio", "configuracion_correo", "perfiles", "notificaciones"],
+            panel_configuracion: ["configuracion_negocio", "configuracion_correo", "perfiles", "notificaciones", "agentes_ia"],
             panel_administrar: ["gestion_usuarios", "socios", "solicitud_socio", "emision_notificaciones", "auditoria"],
             panel_herramientas: ["firma_documentos_pdf", "billetera_documentos", "emision_notificaciones"],
             panel_seguridad: ["auditoria"]

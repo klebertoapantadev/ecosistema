@@ -121,6 +121,43 @@ graph TD
 
 ---
 
+### PLT-004 — Buddie Conversacional en el panel (asistentes Aria por perfil)
+**Responsable:** **Jesus Navarrete (IA)** | **Estado:** ✅ Implementado (base)
+
+#### Descripción
+El requerimiento vive en la [especificación de Plataforma](../plataforma/especificacion-funcional.md);
+aquí se registra cómo lo concreta Tranqi. Hasta ahora el único agente era el buddie
+de venta de la landing pública, que no sabe quién lo lee. Ahora el panel autenticado
+tiene un asistente que sí lo sabe, y es la base sobre la que operan **TRQ-CLI-002**,
+**TRQ-ABG-005** y **TRQ-ADM-002**.
+
+#### Reglas de Negocio
+1. **Barra lateral, no burbuja flotante.** Tercera columna del panel, a la derecha del
+   contenido, para que el usuario pueda leer su expediente mientras pregunta por él.
+   Colapsa a pestaña por debajo de 1080 px. Toma el color del perfil de las mismas
+   variables que el rail.
+2. **Un agente por perfil.** `cliente` y `abogado` tienen agentes distintos en Aria, con
+   herramientas distintas. Operador, técnico, administración y superadmin no tienen barra
+   todavía: su asistente es TRQ-ADM-002.
+3. **Historial persistido** en `trq_conversacion` / `trq_mensaje` (regla 3 de PLT-004). Un
+   administrador **no** lee esas conversaciones: son consultas legales personales, y la
+   visibilidad de oficio sería un problema de privacidad, no una comodidad de soporte.
+4. **Las herramientas son servidores MCP** servidos por la propia `tranqi-web` y consumidos
+   por Aria. La identidad del usuario viaja en una cápsula firmada, fuera del alcance del
+   modelo, y toda consulta va bajo RLS — nunca `service_role`. Ver
+   [ADR-0005](../../arquitectura/adr/0005-frontera-de-identidad-en-herramientas-de-ia.md).
+5. **Consola de agentes** en `/panel/agentes`, solo `ADMINISTRADOR` y con MFA `aal2`: editar
+   el prompt de un agente cambia lo que se le responde a todos los afiliados. Usa una key de
+   *tenant* de Aria, que por diseño del backend no alcanza a ningún otro tenant.
+
+#### Modelo de datos que aporta
+`trq_caso_judicial`, `trq_cita`, `trq_documento_caso`, `trq_honorario`, `trq_conversacion`
+y `trq_mensaje` (migración `20260823…_tranqui_legal_casos_y_asistente`). Son el cimiento
+operativo que TRQ-CLI-002, TRQ-ABG-005 y TRQ-ADM-002 consultan; ver
+[`especificacion-tecnica.md`](especificacion-tecnica.md).
+
+---
+
 ## 2. Módulos para el Rol Cliente
 
 ### TRQ-CLI-001 — Portal de Casos y Patrocinio Judicial
