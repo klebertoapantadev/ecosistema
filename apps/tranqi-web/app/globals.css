@@ -266,6 +266,11 @@ p { line-height: 1.55; }
 .typing i:nth-child(2) { animation-delay: 0.18s; }
 .typing i:nth-child(3) { animation-delay: 0.36s; }
 @keyframes tp { 0%, 60%, 100% { transform: none; opacity: 0.4; } 30% { transform: translateY(-4px); opacity: 1; } }
+/* §8: los puntos del buddie tambien paran con movimiento reducido. Estaban
+   fuera desde que se escribio la landing. */
+@media (prefers-reduced-motion: reduce) {
+  .typing i { animation: none; opacity: 0.7; }
+}
 
 /* panel de chat */
 #chat {
@@ -398,6 +403,18 @@ p { line-height: 1.55; }
      solo admite UNA superficie de color pleno por pantalla, y esa ya es la
      tarjeta de protección. La diferencia la hace el tono, no la marca. */
   --panel-hondo: #EBEBE9;
+
+  /* Curvas del movimiento (TRQ-010). Una sola familia para todo el panel: si
+     cada componente elige la suya, la interfaz se mueve como si la hubieran
+     hecho cinco personas distintas.
+     --curva-entrada sale rapido y frena largo: es la de algo que LLEGA.
+     --curva-salida arranca suave y acelera: la de algo que SE VA, y se hace
+     mas corta a proposito -- esperar a que algo desaparezca molesta. */
+  --curva-entrada: cubic-bezier(0.22, 1, 0.36, 1);
+  --curva-salida: cubic-bezier(0.55, 0, 1, 0.45);
+  --curva-suave: cubic-bezier(0.32, 0.72, 0.3, 1);
+  --t-entrada: 420ms;
+  --t-salida: 260ms;
 
   /* Superficies oscuras de los rails de cliente y abogado (§4 del sistema
      visual). No son colores de marca: son fondos sobre los que va tipografía
@@ -1327,10 +1344,123 @@ div.tarjeta-acceso-icono { display: grid; place-items: center; padding: 0; }
   border: 0; border-radius: 999px 0 0 999px; cursor: pointer;
   font: inherit; font-size: 0.82rem; font-weight: 700;
   box-shadow: 0 6px 20px rgba(17,17,17,0.18);
+  /* Propiedades LISTADAS, nunca `all`: con `all` entran en la transicion
+     cosas que no queremos (el color al pasar el raton, el foco) y el navegador
+     vigila cada propiedad calculada. */
+  transition: transform var(--t-entrada) var(--curva-entrada),
+              opacity 200ms var(--curva-suave);
+}
+.asistente-pestana:hover { transform: translateX(-3px); }
+/* La pestana no desaparece: se va hacia la derecha, por donde entra el panel.
+   Es la misma pieza contando una sola historia, no dos elementos que se
+   relevan. */
+.asistente-pestana.es-oculta {
+  transform: translateX(105%); opacity: 0;
+  transition: transform var(--t-salida) var(--curva-salida),
+              opacity 140ms linear;
+}
+
+/* ── El despliegue ───────────────────────────────────────────────────
+   Dos animaciones distintas porque son dos comportamientos distintos, no por
+   capricho: en escritorio el asistente es UNA COLUMNA y tiene que abrir hueco
+   empujando el contenido, asi que lo que cambia es el ancho. Por debajo de
+   1080px es una CAPA encima del contenido, y ahi lo que se mueve es un
+   `transform`, que va en el compositor y no cuesta nada.
+
+   El ancho es propiedad de maquetacion y las guias de interfaz piden ceñirse a
+   transform/opacity. Se hace igual, con dos salvedades: es UN solo elemento y
+   sus hijos llevan `min-width` fijo, asi que dentro no hay reflujo; y el
+   movimiento que el ojo sigue no es el ancho sino el `translateX` de los
+   hijos, que si es de compositor. El ancho solo abre el hueco.               */
+.asistente { --ancho-asistente: 360px; overflow: hidden; }
+.asistente.es-abierta { width: var(--ancho-asistente); }
+/* El borde entra en el plegado: sin el, la columna se queda en 1px y deja una
+   raya vertical flotando contra el contenido. Medido en el banco de pruebas. */
+.asistente.es-plegada { width: 0; box-shadow: none; border-left-width: 0; }
+.asistente {
+  transition: width var(--t-entrada) var(--curva-entrada),
+              border-left-width var(--t-entrada) var(--curva-entrada),
+              box-shadow var(--t-entrada) var(--curva-suave);
+}
+.asistente.es-plegada {
+  transition: width var(--t-salida) var(--curva-salida),
+              box-shadow var(--t-salida) linear;
+}
+/* Los hijos no encogen con la columna: se deslizan dentro de ella. Sin este
+   min-width el texto se re-partiria en cada fotograma y el panel "hierve". */
+.asistente-cabecera,
+.asistente-registro,
+.asistente-redactor { min-width: var(--ancho-asistente); }
+
+/* La cascada: cabecera, conversacion y redactor no llegan a la vez. 60ms de
+   separacion basta para que se lea como una secuencia sin hacerse lento. */
+.asistente.es-abierta .asistente-cabecera,
+.asistente.es-abierta .asistente-registro,
+.asistente.es-abierta .asistente-redactor {
+  animation: asistente-entra var(--t-entrada) var(--curva-entrada) both;
+}
+.asistente.es-abierta .asistente-registro { animation-delay: 60ms; }
+.asistente.es-abierta .asistente-redactor { animation-delay: 120ms; }
+@keyframes asistente-entra {
+  from { opacity: 0; transform: translateX(34px); }
+  to   { opacity: 1; transform: none; }
+}
+.asistente.es-plegada .asistente-cabecera,
+.asistente.es-plegada .asistente-registro,
+.asistente.es-plegada .asistente-redactor {
+  opacity: 0; transform: translateX(24px);
+  transition: opacity 130ms linear, transform var(--t-salida) var(--curva-salida);
+}
+
+/* El avatar entra despues que su propia cabecera y con un rebote corto: es la
+   cara de la marca y es lo que uno mira primero. */
+.asistente.es-abierta .asistente-avatar {
+  animation: asistente-flota 4s ease-in-out infinite,
+             asistente-aparece 520ms var(--curva-entrada) 100ms both;
+}
+@keyframes asistente-aparece {
+  0%   { opacity: 0; transform: scale(0.4) rotate(-14deg); }
+  62%  { opacity: 1; transform: scale(1.12) rotate(4deg); }
+  100% { opacity: 1; transform: scale(1) rotate(0); }
+}
+
+/* Cada mensaje entra por su lado: el del asistente desde la izquierda, el tuyo
+   desde la derecha, que es de donde vienen en la conversacion. `--orden` lo
+   pone el componente y escalona la primera pintada. */
+.asistente-msg {
+  animation: msg-entra 300ms var(--curva-entrada) both;
+  animation-delay: calc(var(--orden, 0) * 55ms);
+}
+.asistente-msg.de-usuario { animation-name: msg-entra-derecha; }
+@keyframes msg-entra {
+  from { opacity: 0; transform: translate3d(-12px, 6px, 0) scale(0.96); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes msg-entra-derecha {
+  from { opacity: 0; transform: translate3d(12px, 6px, 0) scale(0.96); }
+  to   { opacity: 1; transform: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .asistente-avatar, .asistente-ojos span, .asistente-puntos i { animation: none; }
+  /* §8 del sistema visual: quien pide menos movimiento no recibe una version
+     descafeinada, recibe CERO. El panel sigue abriendo y cerrando -- lo que se
+     va es el recorrido, no la funcion. */
+  .asistente,
+  .asistente.es-plegada,
+  .asistente-pestana,
+  .asistente-pestana.es-oculta { transition-duration: 1ms; }
+  .asistente.es-abierta .asistente-cabecera,
+  .asistente.es-abierta .asistente-registro,
+  .asistente.es-abierta .asistente-redactor,
+  .asistente.es-abierta .asistente-avatar,
+  /* la variante de usuario se nombra aparte: `.asistente-msg.de-usuario`
+     tiene mas especificidad y volvia a fijar su animation-name */
+  .asistente-msg,
+  .asistente-msg.de-usuario { animation: none; }
+  .asistente.es-plegada .asistente-cabecera,
+  .asistente.es-plegada .asistente-registro,
+  .asistente.es-plegada .asistente-redactor { transition-duration: 1ms; }
 }
 
 /* ── Consola de agentes ──────────────────────────────────────────────
@@ -1426,6 +1556,33 @@ div.tarjeta-acceso-icono { display: grid; place-items: center; padding: 0; }
     width: min(360px, 92vw);
     box-shadow: -12px 0 32px rgba(17,17,17,0.16);
   }
+  /* Aqui el asistente es una CAPA, no una columna: no tiene hueco que abrir,
+     asi que entra deslizandose. Es ademas la version barata -- `transform` va
+     en el compositor y no toca la maquetacion-- y en un telefono eso importa.
+     Se anula el ancho animado del escritorio, que aqui no pinta nada. */
+  .asistente.es-abierta,
+  .asistente.es-plegada { width: min(360px, 92vw); }
+  .asistente.es-abierta { transform: translateX(0); }
+  .asistente.es-plegada { transform: translateX(100%); }
+  .asistente {
+    transition: transform var(--t-entrada) var(--curva-entrada),
+                box-shadow var(--t-entrada) var(--curva-suave);
+  }
+  .asistente.es-plegada {
+    transition: transform var(--t-salida) var(--curva-salida);
+  }
+  /* Los hijos ya viajan con la capa: repetir el desplazamiento los haria
+     moverse el doble. Se quedan solo con la cascada de opacidad. */
+  .asistente.es-abierta .asistente-cabecera,
+  .asistente.es-abierta .asistente-registro,
+  .asistente.es-abierta .asistente-redactor { animation-name: asistente-aclara; }
+  .asistente.es-plegada .asistente-cabecera,
+  .asistente.es-plegada .asistente-registro,
+  .asistente.es-plegada .asistente-redactor { opacity: 1; transform: none; }
+}
+@keyframes asistente-aclara {
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 
 /* ═══════════ Responsive del panel (movil) ═══════════
@@ -1529,7 +1686,8 @@ div.tarjeta-acceso-icono { display: grid; place-items: center; padding: 0; }
   background: #ffffff;
   color: var(--panel-gris, #737373);
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: background 0.15s ease, color 0.15s ease,
+              border-color 0.15s ease, box-shadow 0.15s ease;
 }
 .btn-rol:hover {
   background: var(--panel-linea-suave, #FAFAF9);
@@ -1609,7 +1767,8 @@ div.tarjeta-acceso-icono { display: grid; place-items: center; padding: 0; }
 .tarjeta-widget-admin {
   background: var(--blanco); border: 1px solid var(--panel-linea); border-radius: 16px;
   padding: 20px; display: flex; flex-direction: column; gap: 8px;
-  transition: all 0.15s ease; position: relative; overflow: hidden;
+  transition: border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+  position: relative; overflow: hidden;
 }
 .tarjeta-widget-admin:hover { border-color: var(--violeta); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04); }
 .tarjeta-widget-admin.destacado { border-left: 4px solid var(--esmeralda); }
@@ -1890,7 +2049,8 @@ div.tarjeta-acceso-icono { display: grid; place-items: center; padding: 0; }
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: background 0.2s var(--curva-suave), color 0.2s var(--curva-suave),
+              transform 0.2s var(--curva-suave);
   padding: 0;
   flex-shrink: 0;
 }
@@ -2211,6 +2371,77 @@ div.tarjeta-acceso-icono { display: grid; place-items: center; padding: 0; }
   padding: 0 20px 18px;
 }
 .pie-notif .accion-menor { text-decoration: none; }
+
+/* ═══════════════════════════════════════════════════════════════════
+   TRQ-010 · MOVIMIENTO DE LA PANTALLA DE INICIO
+   Una sola coreografia al cargar vale mas que veinte micro-efectos sueltos.
+   Todo lo de aqui usa SOLO transform y opacity, que son las dos propiedades
+   que el navegador puede animar sin recalcular la maquetacion.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* La rejilla de accesos se pinta en cascada, no de golpe. El retardo lo lleva
+   cada tarjeta por su posicion (`nth-child`) y no un atributo en el marcado:
+   asi funciona igual si manana se añaden tarjetas favoritas por delante. */
+@keyframes tarjeta-entra {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: none; }
+}
+.accesos-cliente > * {
+  animation: tarjeta-entra 380ms var(--curva-entrada) both;
+}
+.accesos-cliente > *:nth-child(1) { animation-delay: 20ms; }
+.accesos-cliente > *:nth-child(2) { animation-delay: 55ms; }
+.accesos-cliente > *:nth-child(3) { animation-delay: 90ms; }
+.accesos-cliente > *:nth-child(4) { animation-delay: 125ms; }
+.accesos-cliente > *:nth-child(5) { animation-delay: 160ms; }
+.accesos-cliente > *:nth-child(6) { animation-delay: 195ms; }
+/* A partir de la septima no se escalona mas: el ojo ya no lo lee como cascada
+   y solo retrasa la pantalla. */
+.accesos-cliente > *:nth-child(n+7) { animation-delay: 220ms; }
+
+/* La tarjeta de proteccion es la pieza principal: entra antes y desde mas
+   lejos, y la cinta de marca se dibuja detras. */
+.tarjeta-proteccion { animation: tarjeta-entra 520ms var(--curva-entrada) both; }
+.cinta-proteccion path {
+  /* pathLength normaliza el trazo a 1 pase lo que pase con el viewBox */
+  stroke-dasharray: 1; stroke-dashoffset: 1;
+  animation: cinta-dibuja 1.4s var(--curva-suave) 260ms forwards;
+}
+@keyframes cinta-dibuja { to { stroke-dashoffset: 0; } }
+
+/* Las notificaciones entran una detras de otra cuando llega la lista. */
+.lista-notif > * { animation: tarjeta-entra 340ms var(--curva-entrada) both; }
+.lista-notif > *:nth-child(2) { animation-delay: 50ms; }
+.lista-notif > *:nth-child(3) { animation-delay: 100ms; }
+.lista-notif > *:nth-child(n+4) { animation-delay: 140ms; }
+
+/* Pulsar tiene que devolver algo. 60ms y un 2% de escala: por debajo no se
+   siente, por encima parece que la interfaz va lenta. */
+.accion-menor:active { transform: scale(0.98); }
+.tarjeta-acceso:active { transform: translateY(-1px) scale(0.995); }
+.pestana-notif { transition: background 0.15s, color 0.15s, transform 0.15s; }
+.pestana-notif:active { transform: scale(0.97); }
+
+/* Foco visible en todo lo pulsable. No es adorno: sin esto, quien navega con
+   teclado no sabe donde esta (§8, y es la primera regla de las guias de
+   interfaz). Va con `:focus-visible` para no molestar al que usa raton. */
+.accion-menor:focus-visible,
+.pestana-notif:focus-visible,
+.tarjeta-acceso:focus-visible,
+.asistente-pestana:focus-visible {
+  outline: 2px solid var(--panel-accion, var(--violeta));
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .accesos-cliente > *,
+  .tarjeta-proteccion,
+  .lista-notif > * { animation: none; }
+  .cinta-proteccion path { animation: none; stroke-dashoffset: 0; }
+  .accion-menor:active,
+  .tarjeta-acceso:active,
+  .pestana-notif:active { transform: none; }
+}
 
 /* Fila de metadato de la billetera: clave / valor / borrar. A 375px la rejilla
    fija de "1fr 1.2fr 34px" daba 135 + 162 + 34px y no se podia escribir en
