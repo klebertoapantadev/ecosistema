@@ -15,7 +15,7 @@
   "dependencies": {
     "@eco/db": "workspace:*",
     "@supabase/ssr": "0.12.3",
-    "@supabase/supabase-js": "2.110.8"
+    "@supabase/supabase-js": "2.112.3"
   },
   "devDependencies": {
     "@eco/config": "workspace:*",
