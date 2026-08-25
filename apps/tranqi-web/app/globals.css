@@ -1141,6 +1141,14 @@ p { line-height: 1.55; }
   align-self: flex-end; border-bottom-right-radius: 5px;
 }
 
+/* El codigo del fallo: presente para quien lo necesita, discreto para quien
+   no. Sin el, todos los errores se veian identicos en produccion. */
+.asistente-codigo {
+  display: block; margin-top: 5px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.68rem; color: var(--panel-gris);
+}
+
 .asistente-puntos { display: inline-flex; gap: 4px; align-items: center; height: 1.45em; }
 .asistente-puntos i {
   width: 5px; height: 5px; border-radius: 50%; background: var(--panel-gris);
