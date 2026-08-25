@@ -419,13 +419,15 @@ export function WidgetBilleteraDocumentos({ negocio = "TRANQ", onCerrar }: Props
           documentoId: docParaCompartir.doc_id,
           modoExpiracion: modoTtl,
           pin: pinTtl || null,
+          pinSeguridad: pinTtl || null,
           unaSolaVista: modoTtl === "una_vista"
         })
       });
       const json = await res.json();
 
       if (json.ok && json.data) {
-        setEnlaceGenerado(json.data.enlaceCompleto);
+        const urlFinal = json.data.enlace_url || json.data.enlaceCompleto || "";
+        setEnlaceGenerado(urlFinal);
         mostrarToast("🔗 Enlace efímero generado.");
         abrirCompartir(docParaCompartir);
       } else {

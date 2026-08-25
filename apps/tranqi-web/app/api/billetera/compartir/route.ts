@@ -74,11 +74,14 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { documentoId, modoExpiracion = "24h", fechaExpiracionManual, pinSeguridad } = body;
+    const { documentoId, modoExpiracion = "24h", fechaExpiracionManual, pinSeguridad, pin, unaSolaVista } = body;
 
     if (!documentoId) {
       return NextResponse.json({ ok: false, error: "Documento ID requerido" }, { status: 400 });
     }
+
+    const pinTexto = (pinSeguridad || pin || "").trim();
+    const esUnaSolaVista = modoExpiracion === "una_vista" || Boolean(unaSolaVista);
 
     const clientDb = adminSupabase || supabase;
 
@@ -99,12 +102,11 @@ export async function POST(req: NextRequest) {
     }
 
     const fechaExpira = calcularFechaExpiracion(modoExpiracion, fechaExpiracionManual);
-    const unaSolaVista = modoExpiracion === "una_vista";
     const tokenAleatorio = crypto.randomBytes(24).toString("base64url");
 
     let pinHash: string | null = null;
-    if (pinSeguridad && pinSeguridad.trim().length > 0) {
-      pinHash = crypto.createHash("sha256").update(pinSeguridad.trim()).digest("hex");
+    if (pinTexto.length > 0) {
+      pinHash = crypto.createHash("sha256").update(pinTexto).digest("hex");
     }
 
     const payload = {
@@ -113,7 +115,7 @@ export async function POST(req: NextRequest) {
       ttl_token: tokenAleatorio,
       ttl_modo_expiracion: modoExpiracion,
       ttl_expira_en: fechaExpira.toISOString(),
-      ttl_una_sola_vista: unaSolaVista,
+      ttl_una_sola_vista: esUnaSolaVista,
       ttl_pin_hash: pinHash,
       ttl_activo: true,
       ttl_detalles: {
@@ -145,7 +147,8 @@ export async function POST(req: NextRequest) {
       ok: true,
       data: {
         ...dataRes,
-        enlace_url: enlacePublico
+        enlace_url: enlacePublico,
+        enlaceCompleto: enlacePublico
       }
     });
   } catch (error: any) {

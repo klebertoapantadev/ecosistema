@@ -85,7 +85,7 @@ export async function GET(
       }, { status: 410 });
     }
 
-    const requierePin = !!enlaceData.ttl_pin_hash;
+    const requierePin = Boolean(enlaceData.ttl_pin_hash && enlaceData.ttl_pin_hash.trim().length > 0);
 
     // Obtener metadatos básicos del documento
     let docData: any = null;
@@ -118,6 +118,17 @@ export async function GET(
       };
     }
 
+    const listaArchivos = Array.isArray(docData.doc_archivos) && docData.doc_archivos.length > 0
+      ? docData.doc_archivos
+      : (Array.isArray(docData.doc_detalles?.archivos) && docData.doc_detalles.archivos.length > 0
+          ? docData.doc_detalles.archivos
+          : [{
+              id: "archivo-1",
+              nombre: docData.doc_archivo_nombre || "documento.pdf",
+              tamano: docData.doc_archivo_tamano || 0,
+              mimetype: docData.doc_archivo_mimetype || "application/pdf"
+            }]);
+
     return NextResponse.json({
       ok: true,
       data: {
@@ -125,15 +136,22 @@ export async function GET(
         titulo: docData.doc_titulo,
         categoria: docData.doc_categoria,
         tipo: docData.doc_tipo,
-        archivo_nombre: docData.doc_archivo_nombre,
-        archivo_tamano: docData.doc_archivo_tamano,
-        archivo_mimetype: docData.doc_archivo_mimetype,
+        archivo_nombre: docData.doc_archivo_nombre || listaArchivos[0]?.nombre || "documento.pdf",
+        archivo_tamano: docData.doc_archivo_tamano || listaArchivos[0]?.tamano || 0,
+        archivo_mimetype: docData.doc_archivo_mimetype || listaArchivos[0]?.mimetype || "application/pdf",
+        archivos_conteo: listaArchivos.length,
+        archivos_resumen: listaArchivos.map((a: any) => ({
+          id: a.id || a.nombre,
+          nombre: a.nombre,
+          tamano: a.tamano || 0,
+          mimetype: a.mimetype || "application/pdf"
+        })),
         fecha_emision: docData.doc_fecha_emision,
         fecha_caducidad: docData.doc_fecha_caducidad || docData.doc_detalles?.fecha_caducidad,
         entidad_emisora: docData.doc_entidad_emisora,
         titular_nombre: docData.doc_titular_nombre,
         expira_en: enlaceData.ttl_expira_en,
-        una_sola_vista: enlaceData.ttl_una_sola_vista,
+        una_sola_vista: Boolean(enlaceData.ttl_una_sola_vista),
         requiere_pin: requierePin,
         tiempo_restante_ms: Math.max(0, expiraEn.getTime() - ahora.getTime())
       }
@@ -188,7 +206,7 @@ export async function POST(
     }
 
     // Validar PIN si está configurado
-    if (enlaceData.ttl_pin_hash) {
+    if (enlaceData.ttl_pin_hash && enlaceData.ttl_pin_hash.trim().length > 0) {
       if (!pin) {
         return NextResponse.json({ ok: false, error: "Se requiere PIN de seguridad para acceder" }, { status: 403 });
       }
@@ -243,14 +261,20 @@ export async function POST(
     enlaceData.ttl_visitas_conteo = nuevasVisitas;
     enlaceData.ttl_activo = nuevoActivo;
 
-    const archivosFinales = docData.doc_archivos || docData.doc_detalles?.archivos || [{
-      id: "p1",
-      nombre: docData.doc_archivo_nombre,
-      mimetype: docData.doc_archivo_mimetype,
-      tamano: docData.doc_archivo_tamano,
-      base64: docData.doc_archivo_base64,
-      url: docData.doc_archivo_url
-    }];
+    const listaArchivosCompletos = Array.isArray(docData.doc_archivos) && docData.doc_archivos.length > 0
+      ? docData.doc_archivos
+      : (Array.isArray(docData.doc_detalles?.archivos) && docData.doc_detalles.archivos.length > 0
+          ? docData.doc_detalles.archivos
+          : [{
+              id: "p1",
+              nombre: docData.doc_archivo_nombre || "documento.pdf",
+              mimetype: docData.doc_archivo_mimetype || "application/pdf",
+              tamano: docData.doc_archivo_tamano || 0,
+              base64: docData.doc_archivo_base64,
+              url: docData.doc_archivo_url
+            }]);
+
+    const primerArchivo = listaArchivosCompletos[0] || {};
 
     return NextResponse.json({
       ok: true,
@@ -258,18 +282,19 @@ export async function POST(
         titulo: docData.doc_titulo,
         categoria: docData.doc_categoria,
         tipo: docData.doc_tipo,
-        archivos: archivosFinales,
-        archivo_nombre: docData.doc_archivo_nombre,
-        archivo_mimetype: docData.doc_archivo_mimetype,
-        archivo_tamano: docData.doc_archivo_tamano,
-        archivo_url: docData.doc_archivo_url,
-        archivo_base64: docData.doc_archivo_base64,
+        archivos: listaArchivosCompletos,
+        archivo_nombre: primerArchivo.nombre || docData.doc_archivo_nombre || "documento.pdf",
+        archivo_mimetype: primerArchivo.mimetype || docData.doc_archivo_mimetype || "application/pdf",
+        archivo_tamano: primerArchivo.tamano || docData.doc_archivo_tamano || 0,
+        archivo_url: primerArchivo.url || docData.doc_archivo_url,
+        archivo_base64: primerArchivo.base64 || docData.doc_archivo_base64,
         titular_nombre: docData.doc_titular_nombre,
         titular_identificacion: docData.doc_titular_identificacion,
         entidad_emisora: docData.doc_entidad_emisora,
         fecha_emision: docData.doc_fecha_emision,
         fecha_caducidad: docData.doc_fecha_caducidad || docData.doc_detalles?.fecha_caducidad,
-        fue_destruido: enlaceData.ttl_una_sola_vista
+        metadatos_dinamicos: docData.doc_detalles?.metadatos_dinamicos || [],
+        fue_destruido: Boolean(enlaceData.ttl_una_sola_vista)
       }
     });
   } catch (error: any) {
