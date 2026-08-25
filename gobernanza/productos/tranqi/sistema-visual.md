@@ -196,7 +196,56 @@ scroll) — ver `.rail` en ambas maquetas y su equivalente `.panel-nav` en
 `app/globals.css`. Antes de esto el panel no era usable en móvil (el rail
 fijo de 240px no colapsaba, empujando el contenido fuera de pantalla).
 
-## 10. Responsive — regla de orden de cascada
+## 10. Composición adaptable — clases, no estilos inline
+
+Regla que TRQ-010 tuvo que hacer explícita: **la apariencia de un widget se
+escribe en `globals.css`, no en un `style={{}}` dentro del componente.** No es
+preferencia de estilo. Un objeto de estilo inline **no admite media queries**,
+así que un widget pintado inline no se puede adaptar a un teléfono desde la hoja
+de estilos — por muchos quiebres que tenga §11. Cuando se auditó el panel había
+2.479 bloques inline entre `app/`, `modulos/` y `packages/`, y el CSS
+responsive no gobernaba casi nada de lo que se veía.
+
+Esto vale también —sobre todo— para los componentes de `packages/*`: el paquete
+aporta comportamiento, la app aporta apariencia
+([`01-convenciones-codificacion.md`](../../estandares/01-convenciones-codificacion.md) §1).
+El CSS de un widget compartido vive en el `globals.css` del producto.
+
+Vocabulario base disponible, para no reinventarlo en cada widget:
+
+| Clase | Para qué | Se ajusta con |
+| :--- | :--- | :--- |
+| `.rejilla-auto` | Rejilla que colapsa sola | `--min` (ancho mínimo de columna), `--hueco` |
+| `.fila-acciones` | Botones en fila que se apilan al no caber | — |
+| `.accion-menor` | Acción dentro de tarjeta o fila | `.es-principal`, `.es-discreta`, `.es-peligro` |
+| `.contenedor-panel` | Ancho de lectura centrado | — |
+
+Dos detalles que costaron encontrar y conviene no revertir:
+
+- **`minmax(min(var(--min), 100%), 1fr)`**, no `minmax(var(--min), 1fr)`. Sin el
+  `min()`, una columna de mínimo 260px sigue midiendo 260px en un viewport de
+  240 y desborda la página en horizontal.
+- **El ancho de lectura no se topa en la columna de contenido.** `.panel-layout`
+  es flex: un `max-width` en `.panel-contenido` deja el sobrante al final del
+  eje, y la barra del asistente deja de tocar el borde derecho (~680px de hueco
+  en un monitor de 2560). El tope va en `.contenedor-panel`, centrado dentro de
+  una columna que sí crece.
+
+## 11. Objetivo táctil
+
+Mínimo **44 px** de alto para cualquier control. Se decide por
+`@media (pointer: coarse)`, **no por ancho de pantalla**: una tablet ancha se
+toca igual que un teléfono, y un portátil estrecho se sigue usando con ratón.
+Los botones de `padding: 4px 8px` con letra de 0.75rem que había en los widgets
+medían 26-30 px.
+
+En `≤860px` el rail es barra inferior fija, así que reserva la zona segura con
+`env(safe-area-inset-bottom)` — sin ella el indicador de inicio del iPhone tapa
+media barra. Por el mismo motivo el asistente usa `100dvh` y no `100vh`: en
+Safari y Chrome de móvil `100vh` cuenta la barra de direcciones y el campo de
+escribir queda fuera de la pantalla.
+
+## 12. Responsive — regla de orden de cascada
 
 Un bug real encontrado al implementar el punto anterior: varias reglas base
 (`.correo-usuario-activo`, `.fila-dos-columnas`, etc.) están definidas *sin*

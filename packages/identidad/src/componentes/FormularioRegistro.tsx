@@ -92,7 +92,7 @@ export function FormularioRegistro({ negocio, intencion = "", destino = "" }: Fo
       {esAbogado && (
         <div style={{ marginBottom: "16px", padding: "12px", borderRadius: "10px", background: "rgba(80,0,186,0.08)", border: "1px solid rgba(80,0,186,0.2)", textAlign: "center" }}>
           <span style={{ fontSize: "0.78rem", fontWeight: 800, color: "#5000BA", textTransform: "uppercase", letterSpacing: "0.05em", display: "block" }}>
-            ⚖️ Registro de Equipo Jurídico — Abogados
+            Registro de Equipo Jurídico — Abogados
           </span>
           <strong style={{ fontSize: "0.88rem", color: "#111111", display: "block", marginTop: "4px" }}>
             Únete a la Red de Abogados Verificados
@@ -181,7 +181,7 @@ export function FormularioRegistro({ negocio, intencion = "", destino = "" }: Fo
 
           {!aceptaTerminos && (
             <p style={{ fontSize: "0.76rem", color: "#DC2626", fontWeight: 700, margin: "6px 0 0 26px" }}>
-              ⚠️ Para habilitar el botón debes leer los Términos hasta el final.
+              Para habilitar el botón debes leer los Términos hasta el final.
             </p>
           )}
         </div>
@@ -216,7 +216,7 @@ export function FormularioRegistro({ negocio, intencion = "", destino = "" }: Fo
             gap: "8px",
           }}
         >
-          {cargando ? "Registrando..." : esAbogado ? "⚖️ Registrarme como Abogado" : "Registrarme"}
+          {cargando ? "Registrando..." : esAbogado ? "Registrarme como Abogado" : "Registrarme"}
         </button>
       </form>
 

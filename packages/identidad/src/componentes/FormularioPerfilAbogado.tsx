@@ -64,7 +64,7 @@ export function FormularioPerfilAbogado({ inicial, onGuardarExito, children }: P
 
     // Verificación exitosa del TOTP en servidor
     setMfaVerificado(true);
-    setMensaje({ tipo: "exito", texto: "🔓 MFA Autenticado correctamente. Acceso concedido a edición de perfil legal." });
+    setMensaje({ tipo: "exito", texto: "MFA Autenticado correctamente. Acceso concedido a edición de perfil legal." });
     setTimeout(() => setMensaje(null), 3500);
   };
 
@@ -91,7 +91,7 @@ export function FormularioPerfilAbogado({ inicial, onGuardarExito, children }: P
 
     setGuardando(false);
     if (res.ok) {
-      setMensaje({ tipo: "exito", texto: "✅ Perfil profesional de abogado actualizado y guardado correctamente." });
+      setMensaje({ tipo: "exito", texto: "Perfil profesional de abogado actualizado y guardado correctamente." });
       if (onGuardarExito) onGuardarExito();
       setTimeout(() => setMensaje(null), 4000);
     } else {
@@ -147,7 +147,7 @@ export function FormularioPerfilAbogado({ inicial, onGuardarExito, children }: P
             color: mfaVerificado ? "#FFF" : "#444"
           }}
         >
-          {mfaVerificado ? "MFA VERIFICADO ✅" : "MFA REQUERIDO 🔒"}
+          {mfaVerificado ? "MFA VERIFICADO " : "MFA REQUERIDO "}
         </div>
       </div>
 

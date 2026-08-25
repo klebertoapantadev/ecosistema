@@ -10,7 +10,6 @@ interface WidgetFavInfo {
   titulo: string;
   subtitulo: string;
   icono: LucideIcon;
-  colorIcono: string;
   href: string;
   origen: "Mi cuenta" | "Configurar";
   esPeligro?: boolean;
@@ -22,7 +21,6 @@ const CATALOGO_FAVORITOS: Record<string, WidgetFavInfo> = {
     titulo: "Perfil & Datos de Contacto",
     subtitulo: "Nombres, apellidos, correo verificado, correos adicionales y WhatsApp",
     icono: User,
-    colorIcono: "var(--violeta, #5000BA)",
     href: "/panel/cuenta?widget=mi_cuenta",
     origen: "Mi cuenta"
   },
@@ -31,7 +29,6 @@ const CATALOGO_FAVORITOS: Record<string, WidgetFavInfo> = {
     titulo: "Datos de Facturación & Comprobantes",
     subtitulo: "Razón social, RUC/Cédula, dirección fiscal y correo electrónico de facturación",
     icono: Receipt,
-    colorIcono: "var(--esmeralda, #05876E)",
     href: "/panel/cuenta?widget=datos_facturacion",
     origen: "Mi cuenta"
   },
@@ -40,7 +37,6 @@ const CATALOGO_FAVORITOS: Record<string, WidgetFavInfo> = {
     titulo: "Historial de Accesos",
     subtitulo: "Seguridad de inicio de sesión, IP y dispositivos",
     icono: History,
-    colorIcono: "var(--violeta, #5000BA)",
     href: "/panel/cuenta?widget=historial_accesos",
     origen: "Mi cuenta"
   },
@@ -49,7 +45,6 @@ const CATALOGO_FAVORITOS: Record<string, WidgetFavInfo> = {
     titulo: "Sesión & Claves de Seguridad",
     subtitulo: "Gestión de sesión activa y cierre de sesión",
     icono: KeyRound,
-    colorIcono: "var(--violeta, #5000BA)",
     href: "/panel/cuenta?widget=mfa_seguridad",
     origen: "Mi cuenta"
   },
@@ -58,7 +53,6 @@ const CATALOGO_FAVORITOS: Record<string, WidgetFavInfo> = {
     titulo: "Ver Como",
     subtitulo: "Alternar la vista previa del portal entre Cliente, Socio Abogado y Administrador",
     icono: ShieldCheck,
-    colorIcono: "var(--violeta, #5000BA)",
     href: "/panel/cuenta?widget=ver_como",
     origen: "Mi cuenta"
   },
@@ -67,7 +61,6 @@ const CATALOGO_FAVORITOS: Record<string, WidgetFavInfo> = {
     titulo: "Baja de Cuenta",
     subtitulo: "Eliminación permanente conforme a Ley LOPDP",
     icono: ShieldAlert,
-    colorIcono: "#B00020",
     href: "/panel/cuenta?widget=baja_cuenta",
     origen: "Mi cuenta",
     esPeligro: true
@@ -77,7 +70,6 @@ const CATALOGO_FAVORITOS: Record<string, WidgetFavInfo> = {
     titulo: "Configuración del Negocio",
     subtitulo: "Identidad legal, términos, locales, WhatsApp y redes sociales",
     icono: Settings,
-    colorIcono: "var(--violeta, #5000BA)",
     href: "/panel/configuracion?widget=negocio",
     origen: "Configurar"
   },
@@ -86,7 +78,6 @@ const CATALOGO_FAVORITOS: Record<string, WidgetFavInfo> = {
     titulo: "Servidor SMTP & Plantillas Vault",
     subtitulo: "Credenciales cifradas, puerto TLS y plantilla HTML",
     icono: Mail,
-    colorIcono: "var(--esmeralda, #05876E)",
     href: "/panel/configuracion?widget=correo",
     origen: "Configurar"
   },
@@ -95,7 +86,6 @@ const CATALOGO_FAVORITOS: Record<string, WidgetFavInfo> = {
     titulo: "Preferencias de Alertas",
     subtitulo: "Canales de contacto, WhatsApp y avisos legales",
     icono: Bell,
-    colorIcono: "var(--violeta, #5000BA)",
     href: "/panel/configuracion?widget=notificaciones",
     origen: "Configurar"
   },
@@ -104,7 +94,6 @@ const CATALOGO_FAVORITOS: Record<string, WidgetFavInfo> = {
     titulo: "Gestión de Usuarios & Membresías",
     subtitulo: "Administración de miembros, asignación de perfiles y techo jerárquico",
     icono: Sliders,
-    colorIcono: "var(--violeta, #5000BA)",
     href: "/panel/configuracion?widget=perfiles",
     origen: "Configurar"
   },
@@ -113,7 +102,6 @@ const CATALOGO_FAVORITOS: Record<string, WidgetFavInfo> = {
     titulo: "Configuración de Contrato de Socios",
     subtitulo: "Administración de la plantilla del contrato de sociedad de abogados (.MD/HTML)",
     icono: FileText,
-    colorIcono: "#5000BA",
     href: "/panel/administrar?widget=configuracion_contrato_abogado",
     origen: "Configurar"
   },
@@ -122,7 +110,6 @@ const CATALOGO_FAVORITOS: Record<string, WidgetFavInfo> = {
     titulo: "Términos, Consentimientos & LOPDP",
     subtitulo: "Configuración de cláusulas LOPDP, notificaciones, WhatsApp y protección de datos",
     icono: FileText,
-    colorIcono: "#5000BA",
     href: "/panel/administrar?widget=gestion_terminos_consentimientos",
     origen: "Configurar"
   },
@@ -131,7 +118,6 @@ const CATALOGO_FAVORITOS: Record<string, WidgetFavInfo> = {
     titulo: "Bitácora & Historial de Notificaciones",
     subtitulo: "Consulta auditada e historial en tiempo real de notificaciones emitidas",
     icono: BarChart2,
-    colorIcono: "#2563EB",
     href: "/panel/administrar?widget=bitacora_notificaciones",
     origen: "Configurar"
   },
@@ -140,7 +126,6 @@ const CATALOGO_FAVORITOS: Record<string, WidgetFavInfo> = {
     titulo: "Firma Electrónica de Documentos PDF",
     subtitulo: "Firmado digital avanzado con certificado .p12 / .pfx y código QR oficial",
     icono: FileCheck,
-    colorIcono: "#5000BA",
     href: "/panel/firma-documentos",
     origen: "Configurar"
   },
@@ -149,7 +134,6 @@ const CATALOGO_FAVORITOS: Record<string, WidgetFavInfo> = {
     titulo: "Billetera Digital de Documentos",
     subtitulo: "Bóveda segura de documentos personales, vehiculares y contratos con OCR y TTL",
     icono: Folder,
-    colorIcono: "#5000BA",
     href: "/panel/billetera-documentos",
     origen: "Configurar"
   }
@@ -188,86 +172,38 @@ export function SeccionFavoritosInicio() {
           <Link
             key={`fav-${item.id}`}
             href={item.href}
-            className="tarjeta-acceso"
-            style={{
-              border: "1px solid var(--panel-linea, #E4E4E4)",
-              textDecoration: "none",
-              color: "inherit",
-              display: "flex",
-              flexDirection: "column",
-              position: "relative"
-            }}
+            className={`tarjeta-acceso es-favorita${item.esPeligro ? " es-peligro" : ""}`}
           >
-            {/* Estrella de Favorito en la esquina superior derecha */}
-            <div
-              style={{
-                position: "absolute",
-                top: "10px",
-                right: "10px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center"
-              }}
-            >
-              <Star size={16} fill="#FEE300" color="#D97706" />
+            {/* La estrella dice "esto lo fijaste tú". Va en el amarillo de marca,
+                sin contorno ámbar propio: era un tercer color en una tarjeta que
+                ya tiene el suyo. */}
+            <Star className="marca-favorito" size={16} aria-label="Fijado en el inicio" />
+
+            {/* Sin `color` inline: el icono lo hereda de `.tarjeta-acceso-icono`,
+                que ya define el tratamiento único de la rejilla (neutro en
+                reposo, menta al pasar por encima). Antes cada módulo traía su
+                propio hex y la rejilla quedaba de siete colores. */}
+            <div className="tarjeta-acceso-icono">
+              <IconoComponente size={20} aria-hidden="true" />
             </div>
 
-            <div className="tarjeta-acceso-icono" style={{ margin: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <IconoComponente size={20} color={item.esPeligro ? "#B00020" : item.colorIcono} />
-            </div>
-
-            <div style={{ minWidth: 0, marginTop: "6px" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "4px", flexWrap: "wrap", marginBottom: "4px" }}>
-                <span
-                  style={{
-                    fontSize: "0.58rem",
-                    fontWeight: 800,
-                    color: item.origen === "Mi cuenta" ? "#034D3F" : "#5000BA",
-                    background: item.origen === "Mi cuenta" ? "var(--esmeralda-suave, #E6F4F1)" : "var(--violeta-suave, #F3E8FF)",
-                    padding: "1px 6px",
-                    borderRadius: "999px",
-                    letterSpacing: "0.04em"
-                  }}
-                >
-                  {item.origen.toUpperCase()}
+            <div className="tarjeta-acceso-cabeza">
+              <div className="fila-chips">
+                <span className={`chip-origen${item.origen === "Mi cuenta" ? " es-cuenta" : ""}`}>
+                  {item.origen}
                 </span>
                 {infoCustom.requiereMfa && (
-                  <span
-                    style={{
-                      fontSize: "0.58rem",
-                      fontWeight: 800,
-                      color: "var(--violeta, #5000BA)",
-                      background: "var(--violeta-suave, #F3E8FF)",
-                      padding: "1px 6px",
-                      borderRadius: "999px",
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: "3px"
-                    }}
-                  >
-                    <Lock size={10} /> MFA
+                  <span className="chip-origen es-mfa">
+                    <Lock size={10} aria-hidden="true" /> MFA
                   </span>
                 )}
               </div>
-              <strong style={{ display: "block", color: item.esPeligro ? "#B00020" : undefined, lineHeight: 1.25 }}>
-                {infoCustom.titulo}
-              </strong>
+              <strong>{infoCustom.titulo}</strong>
             </div>
 
-            <p style={{ margin: "4px 0 0 0" }}>{infoCustom.subtitulo}</p>
+            <p>{infoCustom.subtitulo}</p>
 
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "flex-end",
-                marginTop: "auto",
-                paddingTop: "10px",
-                color: "var(--violeta, #5000BA)"
-              }}
-            >
-              <ChevronRight size={16} />
-            </div>
+            <ChevronRight className="flecha-acceso" size={16} aria-hidden="true" />
           </Link>
         );
       })}

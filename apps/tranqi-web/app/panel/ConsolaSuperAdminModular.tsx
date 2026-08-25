@@ -74,7 +74,7 @@ export function ConsolaSuperAdminModular() {
     setModalPush({
       abierto: true,
       tipo: "advertencia",
-      titulo: "⚠️ Reset Master del Sistema (Tranqi)",
+      titulo: "Reset Master del Sistema (Tranqi)",
       mensaje: "Esta acción eliminará TODOS los usuarios de prueba, perfiles y solicitudes configuradas en Tranqi (conservando únicamente la cuenta SuperAdmin). ¿Deseas ejecutar la purga?",
       mostrarConfirmacion: true,
       alAceptar: async () => {
@@ -86,7 +86,7 @@ export function ConsolaSuperAdminModular() {
             setModalPush({
               abierto: true,
               tipo: "push",
-              titulo: "💥 Reset Completado Exitosamente",
+              titulo: "Reset Completado Exitosamente",
               mensaje: "El sistema para el negocio Tranqi ha sido reseteado. Se han eliminado todas sus cuentas y perfiles de prueba preservando los demás negocios.",
               alAceptar: () => window.location.reload(),
             });
@@ -94,7 +94,7 @@ export function ConsolaSuperAdminModular() {
             setModalPush({
               abierto: true,
               tipo: "error",
-              titulo: "❌ Error al Resetear el Sistema",
+              titulo: "Error al Resetear el Sistema",
               mensaje: res.error || "No se pudo resetear el sistema",
             });
           }
@@ -103,7 +103,7 @@ export function ConsolaSuperAdminModular() {
           setModalPush({
             abierto: true,
             tipo: "error",
-            titulo: "❌ Error al Resetear el Sistema",
+            titulo: "Error al Resetear el Sistema",
             mensaje: msg,
           });
         } finally {
@@ -148,7 +148,7 @@ export function ConsolaSuperAdminModular() {
     <>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "6px", flexWrap: "wrap", gap: "12px" }}>
         <h1 style={{ fontSize: "1.6rem", fontWeight: 900, color: "#111", margin: 0 }}>
-          ⚡ Consola Master Control — SuperAdmin Plataforma
+          Consola Master Control — SuperAdmin Plataforma
         </h1>
         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
           <button
@@ -203,14 +203,14 @@ export function ConsolaSuperAdminModular() {
           Catálogo Único de Herramientas del Ecosistema
         </h2>
         <p style={{ fontSize: "0.88rem", opacity: 0.9, margin: 0, maxWidth: "720px", lineHeight: 1.5 }}>
-          Haz clic en cualquier módulo para abrir la herramienta directamente o presiona ✏️ Editar para personalizar títulos e íconos en tiempo real.
+          Haz clic en cualquier módulo para abrir la herramienta directamente o presiona Editar para personalizar títulos e íconos en tiempo real.
         </p>
       </section>
 
       {/* SECCIÓN ACCESOS FAVORITOS */}
       <div style={{ marginBottom: "28px" }}>
         <h3 style={{ fontSize: "0.92rem", fontWeight: 800, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "12px" }}>
-          ⭐ Accesos Rápidos Marcados
+          Accesos Rápidos Marcados
         </h3>
         <TarjetasFavoritasGrid />
       </div>

@@ -238,7 +238,7 @@ export function GestionTerminosConsentimientosWidget({ negocio = "tranqi", onGua
     if (res.ok) {
       setMensaje({
         tipo: "exito",
-        texto: res.data.mensaje || `✅ '${catActualDef.nombre}' guardado y actualizado para todo el ecosistema.`,
+        texto: res.data.mensaje || `'${catActualDef.nombre}' guardado y actualizado para todo el ecosistema.`,
       });
       if (onGuardarExito) onGuardarExito();
       setTimeout(() => setMensaje(null), 4000);
@@ -360,7 +360,7 @@ export function GestionTerminosConsentimientosWidget({ negocio = "tranqi", onGua
               boxShadow: filtroTipo === "terminos" ? "0 1px 3px rgba(0,0,0,0.08)" : "none",
             }}
           >
-            📜 Términos & LOPDP
+            Términos & LOPDP
           </button>
           <button
             type="button"
@@ -381,7 +381,7 @@ export function GestionTerminosConsentimientosWidget({ negocio = "tranqi", onGua
               boxShadow: filtroTipo === "beneficios" ? "0 1px 3px rgba(0,0,0,0.08)" : "none",
             }}
           >
-            🤝 Beneficios de Red
+            Beneficios de Red
           </button>
           <button
             type="button"
@@ -402,7 +402,7 @@ export function GestionTerminosConsentimientosWidget({ negocio = "tranqi", onGua
               boxShadow: filtroTipo === "contratos" ? "0 1px 3px rgba(0,0,0,0.08)" : "none",
             }}
           >
-            ⚖️ Contratos
+            Contratos
           </button>
         </div>
       </div>

@@ -230,7 +230,7 @@ export function MonitoreoNotificacionesUsuariosWidget({ negocio = "TRANQ" }: Pro
             cursor: "pointer"
           }}
         >
-          <span style={{ fontSize: "0.72rem", color: "#2563eb", fontWeight: 800, textTransform: "uppercase" }}>🔔 Pendientes</span>
+          <span style={{ fontSize: "0.72rem", color: "#2563eb", fontWeight: 800, textTransform: "uppercase" }}>Pendientes</span>
           <div style={{ fontSize: "1.4rem", fontWeight: 900, color: "#1d4ed8", marginTop: "2px" }}>{countPendientes}</div>
         </div>
 
@@ -244,7 +244,7 @@ export function MonitoreoNotificacionesUsuariosWidget({ negocio = "TRANQ" }: Pro
             cursor: "pointer"
           }}
         >
-          <span style={{ fontSize: "0.72rem", color: "#15803d", fontWeight: 800, textTransform: "uppercase" }}>✓ Confirmadas / Leídas</span>
+          <span style={{ fontSize: "0.72rem", color: "#15803d", fontWeight: 800, textTransform: "uppercase" }}>Confirmadas / Leídas</span>
           <div style={{ fontSize: "1.4rem", fontWeight: 900, color: "#15803d", marginTop: "2px" }}>{countLeidas}</div>
         </div>
 
@@ -258,7 +258,7 @@ export function MonitoreoNotificacionesUsuariosWidget({ negocio = "TRANQ" }: Pro
             cursor: "pointer"
           }}
         >
-          <span style={{ fontSize: "0.72rem", color: "#b45309", fontWeight: 800, textTransform: "uppercase" }}>⏳ Pospuestas</span>
+          <span style={{ fontSize: "0.72rem", color: "#b45309", fontWeight: 800, textTransform: "uppercase" }}>Pospuestas</span>
           <div style={{ fontSize: "1.4rem", fontWeight: 900, color: "#b45309", marginTop: "2px" }}>{countPospuestas}</div>
         </div>
 
@@ -272,7 +272,7 @@ export function MonitoreoNotificacionesUsuariosWidget({ negocio = "TRANQ" }: Pro
             cursor: "pointer"
           }}
         >
-          <span style={{ fontSize: "0.72rem", color: "#b91c1c", fontWeight: 800, textTransform: "uppercase" }}>🗑️ Eliminadas (Lógicas)</span>
+          <span style={{ fontSize: "0.72rem", color: "#b91c1c", fontWeight: 800, textTransform: "uppercase" }}>Eliminadas (Lógicas)</span>
           <div style={{ fontSize: "1.4rem", fontWeight: 900, color: "#b91c1c", marginTop: "2px" }}>{countEliminadas}</div>
         </div>
       </div>
@@ -317,10 +317,10 @@ export function MonitoreoNotificacionesUsuariosWidget({ negocio = "TRANQ" }: Pro
             style={{ padding: "8px 12px", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "0.84rem", fontWeight: 600, background: "#ffffff", color: "#334155" }}
           >
             <option value="TODOS">Todos los Estados</option>
-            <option value="PENDIENTE">🔔 Pendientes</option>
-            <option value="LEIDA">✓ Confirmadas (Leídas)</option>
-            <option value="POSPUESTA">⏳ Pospuestas</option>
-            <option value="ELIMINADA">🗑️ Eliminadas</option>
+            <option value="PENDIENTE">Pendientes</option>
+            <option value="LEIDA">Confirmadas (Leídas)</option>
+            <option value="POSPUESTA">Pospuestas</option>
+            <option value="ELIMINADA">Eliminadas</option>
           </select>
         </div>
 
@@ -412,7 +412,7 @@ export function MonitoreoNotificacionesUsuariosWidget({ negocio = "TRANQ" }: Pro
                         </div>
                       ) : (
                         <span style={{ color: "#2563eb", fontWeight: 700, fontSize: "0.74rem" }}>
-                          ⏳ Pendiente
+                          Pendiente
                         </span>
                       )}
                     </td>
@@ -450,7 +450,7 @@ export function MonitoreoNotificacionesUsuariosWidget({ negocio = "TRANQ" }: Pro
                         </div>
                       ) : (
                         <span style={{ color: "#16a34a", fontWeight: 700, fontSize: "0.74rem" }}>
-                          ✓ Activa
+                          Activa
                         </span>
                       )}
                     </td>
@@ -588,7 +588,7 @@ export function MonitoreoNotificacionesUsuariosWidget({ negocio = "TRANQ" }: Pro
               </div>
 
               {/* Matriz de Estados y Auditoría de Acciones */}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", background: "#f8fafc", padding: "12px", borderRadius: "10px" }}>
+              <div className="rejilla-auto" style={{ "--min": "200px", "--hueco": "10px", background: "var(--panel-linea-suave, #F1F1F1)", padding: "12px", borderRadius: "10px" } as React.CSSProperties}>
                 <div>
                   <span style={{ fontSize: "0.7rem", color: "#64748b", fontWeight: 700 }}>Canal:</span>
                   <strong style={{ display: "block", color: "#1e293b", fontSize: "0.82rem" }}>{notifSeleccionada.not_canal}</strong>
@@ -605,12 +605,12 @@ export function MonitoreoNotificacionesUsuariosWidget({ negocio = "TRANQ" }: Pro
                   <span style={{ fontSize: "0.7rem", color: "#64748b", fontWeight: 700 }}>Confirmación (Leída / Aceptada):</span>
                   <strong style={{ display: "block", color: notifSeleccionada.not_leido_en ? "#15803d" : "#2563eb", fontSize: "0.82rem", marginTop: "2px" }}>
                     {notifSeleccionada.not_leido_en
-                      ? `✓ Confirmada el ${new Date(notifSeleccionada.not_leido_en).toLocaleString("es-EC", { timeZone: "America/Guayaquil" })}`
-                      : "⏳ No confirmada / Pendiente"}
+                      ? `Confirmada el ${new Date(notifSeleccionada.not_leido_en).toLocaleString("es-EC", { timeZone: "America/Guayaquil" })}`
+                      : "No confirmada / Pendiente"}
                   </strong>
                   {notifSeleccionada.confirmada_por && (
                     <div style={{ fontSize: "0.74rem", color: "#15803d", marginTop: "4px", background: "#f0fdf4", padding: "4px 8px", borderRadius: "6px" }}>
-                      👤 Acción realizada por: <strong>{notifSeleccionada.confirmada_por.usuario_nombre}</strong> ({notifSeleccionada.confirmada_por.usuario_correo || notifSeleccionada.confirmada_por.usuario_id})
+                      Acción realizada por: <strong>{notifSeleccionada.confirmada_por.usuario_nombre}</strong> ({notifSeleccionada.confirmada_por.usuario_correo || notifSeleccionada.confirmada_por.usuario_id})
                     </div>
                   )}
                 </div>
@@ -620,12 +620,12 @@ export function MonitoreoNotificacionesUsuariosWidget({ negocio = "TRANQ" }: Pro
                   <span style={{ fontSize: "0.7rem", color: "#64748b", fontWeight: 700 }}>Tiempo Pospuesto:</span>
                   <strong style={{ display: "block", color: notifSeleccionada.not_pospuesta_hasta ? "#b45309" : "#64748b", fontSize: "0.82rem", marginTop: "2px" }}>
                     {notifSeleccionada.not_pospuesta_hasta
-                      ? `⏰ Pospuesta hasta: ${new Date(notifSeleccionada.not_pospuesta_hasta).toLocaleString("es-EC", { timeZone: "America/Guayaquil" })}`
+                      ? `Pospuesta hasta: ${new Date(notifSeleccionada.not_pospuesta_hasta).toLocaleString("es-EC", { timeZone: "America/Guayaquil" })}`
                       : "Sin posponer"}
                   </strong>
                   {notifSeleccionada.pospuesta_por && (
                     <div style={{ fontSize: "0.74rem", color: "#b45309", marginTop: "4px", background: "#fffbeb", padding: "4px 8px", borderRadius: "6px" }}>
-                      👤 Pospuesta por: <strong>{notifSeleccionada.pospuesta_por.usuario_nombre}</strong> ({notifSeleccionada.pospuesta_por.usuario_correo || notifSeleccionada.pospuesta_por.usuario_id}) • +{notifSeleccionada.pospuesta_por.horas || notifSeleccionada.not_pospuesta_horas || 3} horas
+                      Pospuesta por: <strong>{notifSeleccionada.pospuesta_por.usuario_nombre}</strong> ({notifSeleccionada.pospuesta_por.usuario_correo || notifSeleccionada.pospuesta_por.usuario_id}) • +{notifSeleccionada.pospuesta_por.horas || notifSeleccionada.not_pospuesta_horas || 3} horas
                     </div>
                   )}
                 </div>
@@ -635,17 +635,17 @@ export function MonitoreoNotificacionesUsuariosWidget({ negocio = "TRANQ" }: Pro
                   <span style={{ fontSize: "0.7rem", color: "#64748b", fontWeight: 700 }}>Estado de Eliminación:</span>
                   <strong style={{ display: "block", color: notifSeleccionada.not_eliminada ? "#b91c1c" : "#16a34a", fontSize: "0.82rem", marginTop: "2px" }}>
                     {notifSeleccionada.not_eliminada
-                      ? `🗑️ Eliminada (${notifSeleccionada.not_eliminada_en ? new Date(notifSeleccionada.not_eliminada_en).toLocaleString("es-EC", { timeZone: "America/Guayaquil" }) : "Lógica"})`
-                      : "✓ Activa en bandeja"}
+                      ? `Eliminada (${notifSeleccionada.not_eliminada_en ? new Date(notifSeleccionada.not_eliminada_en).toLocaleString("es-EC", { timeZone: "America/Guayaquil" }) : "Lógica"})`
+                      : "Activa en bandeja"}
                   </strong>
                   {notifSeleccionada.eliminada_por && notifSeleccionada.not_eliminada && (
                     <div style={{ fontSize: "0.74rem", color: "#b91c1c", marginTop: "4px", background: "#fef2f2", padding: "4px 8px", borderRadius: "6px" }}>
-                      👤 Eliminada por: <strong>{notifSeleccionada.eliminada_por.usuario_nombre}</strong> ({notifSeleccionada.eliminada_por.usuario_correo || notifSeleccionada.eliminada_por.usuario_id})
+                      Eliminada por: <strong>{notifSeleccionada.eliminada_por.usuario_nombre}</strong> ({notifSeleccionada.eliminada_por.usuario_correo || notifSeleccionada.eliminada_por.usuario_id})
                     </div>
                   )}
                   {notifSeleccionada.restaurada_por && !notifSeleccionada.not_eliminada && (
                     <div style={{ fontSize: "0.74rem", color: "#15803d", marginTop: "4px", background: "#f0fdf4", padding: "4px 8px", borderRadius: "6px" }}>
-                      🔄 Restaurada por: <strong>{notifSeleccionada.restaurada_por.usuario_nombre}</strong> ({notifSeleccionada.restaurada_por.usuario_correo || notifSeleccionada.restaurada_por.usuario_id})
+                      Restaurada por: <strong>{notifSeleccionada.restaurada_por.usuario_nombre}</strong> ({notifSeleccionada.restaurada_por.usuario_correo || notifSeleccionada.restaurada_por.usuario_id})
                     </div>
                   )}
                 </div>

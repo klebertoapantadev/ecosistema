@@ -19,9 +19,17 @@ export const metadata: Metadata = { title: "Panel — tranqi" };
 
 const NEGOCIO = "tranqi";
 
+/* TRQ-010 · La etiqueta de una tarjeta no explica la pantalla que hay detrás.
+   El detalle técnico (.p12, el QR, "log inmutable PostgreSQL", "multicanal
+   In-App/Push/Email/WhatsApp") se lee DENTRO de cada pantalla, donde sirve para
+   trabajar; en la portada solo era ruido -- ocho tarjetas con ocho párrafos.
+   El `detalle` se queda en 3-5 palabras y solo cuando AÑADE algo al nombre.
+
+   Y va en mayúscula de frase, no de título: "Firmar Documento PDF" es
+   capitalización inglesa, y en español delata texto generado. */
 const ACCESOS_CLIENTE: { icono: LucideIcon; nombre: string; detalle: string; href?: string }[] = [
-  { icono: FileCheck, nombre: "Firmar Documento PDF", detalle: "Firmado digital con certificado .p12 y código QR", href: "/panel/firma-documentos" },
-  { icono: Briefcase, nombre: "Registro de Abogados", detalle: "Postúlate a la red oficial de socios profesionales", href: "/panel/solicitud-socio" },
+  { icono: FileCheck, nombre: "Firmar un documento", detalle: "Con tu certificado digital", href: "/panel/firma-documentos" },
+  { icono: Briefcase, nombre: "Ser abogado socio", detalle: "Postula a la red", href: "/panel/solicitud-socio" },
   { icono: Calendar, nombre: "Agendar cita", detalle: "Presencial o por video", href: "/panel/agendar" },
   { icono: Upload, nombre: "Subir documento", detalle: "Contratos, cédulas, actas", href: "/panel/cuenta" },
   { icono: Coins, nombre: "Financiamiento", detalle: "Cuotas para tu caso", href: "/panel" },
@@ -29,19 +37,19 @@ const ACCESOS_CLIENTE: { icono: LucideIcon; nombre: string; detalle: string; hre
 ];
 
 const ACCESOS_ABOGADO: { icono: LucideIcon; nombre: string; detalle: string; href?: string }[] = [
-  { icono: FileCheck, nombre: "Firmar Documento PDF", detalle: "Firmado digital con certificado .p12 y código QR", href: "/panel/firma-documentos" },
-  { icono: Briefcase, nombre: "Nuevas Solicitudes", detalle: "3 casos en espera de patrocinio" },
-  { icono: Calendar, nombre: "Citas de hoy", detalle: "2 videollamadas agendadas" },
-  { icono: FileText, nombre: "Cargar Expediente", detalle: "Subir demandas y providencias" },
-  { icono: Coins, nombre: "Mis Honorarios", detalle: "Resumen de cobros y facturación" },
+  { icono: FileCheck, nombre: "Firmar un documento", detalle: "Con tu certificado digital", href: "/panel/firma-documentos" },
+  { icono: Briefcase, nombre: "Nuevas solicitudes", detalle: "3 casos en espera" },
+  { icono: Calendar, nombre: "Citas de hoy", detalle: "2 videollamadas" },
+  { icono: FileText, nombre: "Cargar expediente", detalle: "Demandas y providencias" },
+  { icono: Coins, nombre: "Mis honorarios", detalle: "Cobros y facturación" },
 ];
 
 const WIDGETS_ADMIN: { clave: string; icono: LucideIcon; nombre: string; detalle: string; ruta: string; estado: "registrado" | "proximamente" }[] = [
-  { clave: "gestion_usuarios", icono: Users, nombre: "Gestión de Usuarios", detalle: "Membresías, asignación de perfiles y jerarquía", ruta: "/panel/usuarios", estado: "registrado" },
-  { clave: "socios", icono: UserCheck, nombre: "Aprobación de Socios", detalle: "Verificación de cédula, título y matrícula", ruta: "/panel/socios", estado: "registrado" },
-  { clave: "configuracion_negocio", icono: Settings, nombre: "Configuración Negocio", detalle: "Términos, locales, redes sociales y canales", ruta: "/panel/configuracion", estado: "registrado" },
-  { clave: "auditoria", icono: ShieldCheck, nombre: "Auditoría de Cambios", detalle: "Log inmutable PostgreSQL de operaciones BDD", ruta: "/panel/auditoria", estado: "registrado" },
-  { clave: "emision_notificaciones", icono: Bell, nombre: "Emisión Notificaciones", detalle: "Despacho masivo multicanal In-App, Push, Email, WhatsApp", ruta: "/panel/emision-notificaciones", estado: "registrado" },
+  { clave: "gestion_usuarios", icono: Users, nombre: "Gestión de usuarios", detalle: "Membresías y perfiles", ruta: "/panel/usuarios", estado: "registrado" },
+  { clave: "socios", icono: UserCheck, nombre: "Aprobación de socios", detalle: "Cédula, título y matrícula", ruta: "/panel/socios", estado: "registrado" },
+  { clave: "configuracion_negocio", icono: Settings, nombre: "Configuración del negocio", detalle: "Términos, locales y canales", ruta: "/panel/configuracion", estado: "registrado" },
+  { clave: "auditoria", icono: ShieldCheck, nombre: "Auditoría de cambios", detalle: "Registro inalterable", ruta: "/panel/auditoria", estado: "registrado" },
+  { clave: "emision_notificaciones", icono: Bell, nombre: "Emisión de notificaciones", detalle: "Despacho masivo", ruta: "/panel/emision-notificaciones", estado: "registrado" },
 ];
 
 interface Props {
@@ -167,15 +175,15 @@ function PanelCliente({ saludo, nombre }: { saludo: string | null; nombre: strin
                 <div className="eyebrow-cliente" id="t-proteccion">Protección Activa</div>
                 <div className="tarjeta-proteccion-plan">Plan Familiar Cobertura Total</div>
                 <div className="tarjeta-proteccion-meta">
-                  Protección jurídica 24/7 en Ecuador. Consultas e ilimitadas vía chat.
+                  Protección jurídica 24/7 en Ecuador, con consultas ilimitadas por chat.
                 </div>
               </div>
-              <span className="badge-activo">✓ Activo</span>
+              <span className="badge-activo">Activo</span>
             </div>
             <div className="tarjeta-proteccion-chips">
-              <span className="chip-proteccion">2 Abogados asignados</span>
-              <span className="chip-proteccion">4 Miembros cubiertos</span>
-              <span className="chip-proteccion">SOS 24/7 Habilitado</span>
+              <span className="chip-proteccion">2 abogados asignados</span>
+              <span className="chip-proteccion">4 miembros cubiertos</span>
+              <span className="chip-proteccion">SOS 24/7 habilitado</span>
             </div>
           </section>
 
@@ -188,7 +196,6 @@ function PanelCliente({ saludo, nombre }: { saludo: string | null; nombre: strin
                   key={i}
                   href={acc.href}
                   className="tarjeta-acceso"
-                  style={{ textDecoration: "none", color: "inherit" }}
                 >
                   <acc.icono className="tarjeta-acceso-icono" aria-hidden="true" strokeWidth={1.6} />
                   <strong>{acc.nombre}</strong>
@@ -252,7 +259,7 @@ function PanelAbogado({ nombreCompleto }: { nombreCompleto: string }) {
                   Habilitado para atención de patrocinio en materia Civil, Penal, Laboral y Familia.
                 </div>
               </div>
-              <span className="badge-socio">✓ Socio Activo</span>
+              <span className="badge-socio">Socio Activo</span>
             </div>
             <div className="tarjeta-proteccion-chips">
               <span className="chip-proteccion">Matrícula Verificada</span>
@@ -319,7 +326,7 @@ function PanelAdministrador({ esSuperadmin, esAdminGlobal }: { esSuperadmin: boo
                   Gestión centralizada de miembros, aprobación de socios abogados, configuración SMTP en Vault y auditoría BDD.
                 </div>
               </div>
-              <span className="badge-rol">✓ Operativo</span>
+              <span className="badge-rol">Operativo</span>
             </div>
           </section>
 
@@ -331,7 +338,6 @@ function PanelAdministrador({ esSuperadmin, esAdminGlobal }: { esSuperadmin: boo
                 key={w.clave}
                 href={w.ruta}
                 className="tarjeta-acceso"
-                style={{ textDecoration: "none", color: "inherit" }}
               >
                 <w.icono className="tarjeta-acceso-icono" aria-hidden="true" strokeWidth={1.6} />
                 <strong>{w.nombre}</strong>

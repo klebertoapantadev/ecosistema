@@ -26,7 +26,7 @@ export default async function EmisionNotificacionesPage() {
           </p>
           <div style={{ background: "#161b22", border: "1px solid #30363d", borderRadius: "8px", padding: "14px", marginBottom: "24px", fontSize: "0.8rem", color: "#8b949e", textAlign: "left" }}>
             <span style={{ color: "#388bfd", fontWeight: 700, display: "block", marginBottom: "4px" }}>
-              ℹ️ Política de Seguridad de Notificaciones:
+              ℹPolítica de Seguridad de Notificaciones:
             </span>
             La emisión masiva y despacho multicanal (In-App, Push, Email y WhatsApp) está estrictamente restringida a <strong>SuperAdministradores</strong> y <strong>Administradores del Negocio</strong>. Los clientes únicamente tienen acceso a consultar y gestionar sus notificaciones recibidas.
           </div>

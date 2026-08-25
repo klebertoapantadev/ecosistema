@@ -539,7 +539,7 @@ function RenderizadorWidgetReal({ clave, negocio }: { clave: string; negocio: st
             Bóveda cifrada para almacenamiento y gestión inteligente de cédulas, matrículas, licencias, contratos y certificados con extracción OCR y enlaces efímeros protegidos.
           </p>
           <div style={{ padding: "12px", background: "#F8FAFC", borderRadius: "8px", border: "1px dashed #CBD5E1", textAlign: "center", fontSize: "0.82rem", color: "#334155", fontWeight: 700 }}>
-            📁 Categorías Inteligentes ➔ 🔍 Extracción OCR ➔ ⏳ Enlaces TTL Efímeros
+            Categorías Inteligentes Extracción OCR Enlaces TTL Efímeros
           </div>
         </div>
       );
@@ -554,7 +554,7 @@ function RenderizadorWidgetReal({ clave, negocio }: { clave: string; negocio: st
             Herramienta criptográfica PAdES con procesamiento Zero-Custody en memoria local para firmado de contratos, actas e informes en PDF.
           </p>
           <div style={{ padding: "12px", background: "#F8FAFC", borderRadius: "8px", border: "1px dashed #CBD5E1", textAlign: "center", fontSize: "0.82rem", color: "#334155", fontWeight: 700 }}>
-            📄 Subir Archivo PDF ➔ 🔑 Cargar Firma .p12 ➔ 📍 Ubicar QR ➔ 📥 Descargar PDF Firmado
+            Subir Archivo PDF Cargar Firma .p12 Ubicar QR Descargar PDF Firmado
           </div>
         </div>
       );
@@ -569,10 +569,10 @@ function RenderizadorWidgetReal({ clave, negocio }: { clave: string; negocio: st
             Selecciona el rol con el que deseas navegar la plataforma para simular permisos y vistas:
           </p>
           <select style={{ width: "100%", padding: "10px 14px", borderRadius: "8px", border: "2px solid var(--violeta, #5000BA)", fontSize: "0.88rem", fontWeight: 800, background: "#F5F3FF", color: "#4C1D95", cursor: "pointer" }}>
-            <option>👤 Cliente (Jerarquía Base) - Nivel 1</option>
-            <option>⚖️ Socio Abogado / Profesional - Nivel 50</option>
-            <option>🏢 Administrador del Negocio - Nivel 80</option>
-            <option>🛡️ SuperAdmin de Plataforma - Nivel 100</option>
+            <option>Cliente (Jerarquía Base) - Nivel 1</option>
+            <option>Socio Abogado / Profesional - Nivel 50</option>
+            <option>Administrador del Negocio - Nivel 80</option>
+            <option>SuperAdmin de Plataforma - Nivel 100</option>
           </select>
         </div>
       );
@@ -581,7 +581,7 @@ function RenderizadorWidgetReal({ clave, negocio }: { clave: string; negocio: st
       return (
         <div style={{ background: "#ffffff", padding: "18px", borderRadius: "12px", border: "1.5px solid #0284C7", boxShadow: "0 4px 12px rgba(2,132,199,0.08)" }}>
           <div style={{ fontWeight: 800, fontSize: "0.95rem", color: "#0369A1", marginBottom: "10px" }}>
-            🔔 Preferencias de Alertas & Notificaciones Multicanal
+            Preferencias de Alertas & Notificaciones Multicanal
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: "8px", fontSize: "0.84rem" }}>
             <label style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 700, cursor: "pointer" }}>
@@ -601,7 +601,7 @@ function RenderizadorWidgetReal({ clave, negocio }: { clave: string; negocio: st
       return (
         <div style={{ background: "#ffffff", padding: "18px", borderRadius: "12px", border: "1.5px solid #D97706" }}>
           <div style={{ fontWeight: 800, fontSize: "0.95rem", color: "#92400E", marginBottom: "10px" }}>
-            🏢 Datos del Negocio ({negocio.toUpperCase()})
+            Datos del Negocio ({negocio.toUpperCase()})
           </div>
           <div style={{ display: "grid", gap: "10px" }}>
             <div>
@@ -620,7 +620,7 @@ function RenderizadorWidgetReal({ clave, negocio }: { clave: string; negocio: st
       return (
         <div style={{ background: "#ffffff", padding: "18px", borderRadius: "12px", border: "1.5px solid #374151" }}>
           <div style={{ fontWeight: 800, fontSize: "0.95rem", color: "#111827", marginBottom: "10px" }}>
-            📧 Servidor SMTP de Correo Transaccional (Credenciales Vault)
+            Servidor SMTP de Correo Transaccional (Credenciales Vault)
           </div>
           <div style={{ display: "grid", gap: "10px" }}>
             <div>
@@ -639,9 +639,11 @@ function RenderizadorWidgetReal({ clave, negocio }: { clave: string; negocio: st
       return (
         <div style={{ background: "#ffffff", padding: "18px", borderRadius: "12px", border: "1.5px solid #05876E" }}>
           <div style={{ fontWeight: 800, fontSize: "0.95rem", color: "#065F46", marginBottom: "10px" }}>
-            👥 Administración de Usuarios & Membresías
+            Administración de Usuarios & Membresías
           </div>
-          <table style={{ width: "100%", fontSize: "0.78rem", borderCollapse: "collapse" }}>
+          {/* envoltura con scroll: sin ella la tabla desbordaba en movil */}
+          <div style={{ overflowX: "auto" }}>
+          <table style={{ width: "100%", minWidth: "320px", fontSize: "0.78rem", borderCollapse: "collapse" }}>
             <thead>
               <tr style={{ background: "#ECFDF5", borderBottom: "1px solid #A7F3D0" }}>
                 <th style={{ textAlign: "left", padding: "6px 10px" }}>Usuario</th>
@@ -653,10 +655,11 @@ function RenderizadorWidgetReal({ clave, negocio }: { clave: string; negocio: st
               <tr>
                 <td style={{ padding: "6px 10px", fontWeight: 700 }}>Kleber Toapanta</td>
                 <td style={{ padding: "6px 10px" }}>SuperAdmin (Nivel 100)</td>
-                <td style={{ padding: "6px 10px", textAlign: "center", color: "#05876e", fontWeight: 800 }}>✓ Activo</td>
+                <td style={{ padding: "6px 10px", textAlign: "center", color: "#05876e", fontWeight: 800 }}>Activo</td>
               </tr>
             </tbody>
           </table>
+          </div>
         </div>
       );
 
@@ -664,7 +667,7 @@ function RenderizadorWidgetReal({ clave, negocio }: { clave: string; negocio: st
       return (
         <div style={{ background: "#ffffff", padding: "18px", borderRadius: "12px", border: "1.5px solid var(--violeta, #5000BA)" }}>
           <div style={{ fontWeight: 800, fontSize: "0.95rem", color: "var(--violeta, #5000BA)", marginBottom: "8px" }}>
-            ⚡ Componente Real: {clave.toUpperCase()}
+            Componente Real: {clave.toUpperCase()}
           </div>
           <p style={{ fontSize: "0.82rem", color: "var(--panel-gris, #737373)", margin: 0 }}>
             Widget autosuficiente desacoplado. Puede asignarse a cualquier panel del sistema.
@@ -718,13 +721,13 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
     const perfilesFiltrados = filtroPerfilReporte === "TODOS" ? perfiles : perfiles.filter(p => p.clave === filtroPerfilReporte);
 
     perfilesFiltrados.forEach(p => {
-      md += `## 🛡️ PERFIL: ${p.nombre.toUpperCase()} (Nivel ${p.nivel})\n`;
+      md += `## PERFIL: ${p.nombre.toUpperCase()} (Nivel ${p.nivel})\n`;
       md += `- **Clave:** \`${p.clave}\`\n`;
       md += `- **Ámbito:** ${p.ambito}\n`;
       md += `- **Descripción:** ${p.descripcion || "Sin descripción"}\n\n`;
 
       // Paneles y Widgets
-      md += `### 📑 Paneles y Widgets Asignados:\n`;
+      md += `### Paneles y Widgets Asignados:\n`;
       const panelesDelPerfil = panelesSidebar.filter(pan => p.panelesAsignados.includes(pan.id));
       if (panelesDelPerfil.length === 0) {
         md += `*Sin paneles asignados.*\n\n`;
@@ -734,10 +737,10 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
             const wObj = inventarioWidgets.find(w => w.clave === wClave);
             return wObj ? `${wObj.nombre} (\`${wObj.clave}\` - ${wObj.categoria})` : `\`${wClave}\``;
           });
-          md += `- **Panel:** **${pan.nombre}** (\`${pan.ruta}\`) ${pan.requiereMfa ? "🔒 [MFA Requerido]" : ""}\n`;
+          md += `- **Panel:** **${pan.nombre}** (\`${pan.ruta}\`) ${pan.requiereMfa ? "[MFA Requerido]" : ""}\n`;
           if (widgetsDelPanel.length > 0) {
             widgetsDelPanel.forEach(w => {
-              md += `  - 🧩 ${w}\n`;
+              md += `  - ${w}\n`;
             });
           } else {
             md += `  - *(Sin widgets asignados)*\n`;
@@ -752,7 +755,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
         return u.perfiles.map(x => x.toUpperCase()).includes(p.clave.toUpperCase());
       });
 
-      md += `### 👥 Usuarios Asignados (${usuariosDelPerfil.length}):\n`;
+      md += `### Usuarios Asignados (${usuariosDelPerfil.length}):\n`;
       if (usuariosDelPerfil.length === 0) {
         md += `*No hay usuarios con este perfil asignado.*\n\n`;
       } else {
@@ -767,7 +770,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
 
     if (navigator?.clipboard) {
       navigator.clipboard.writeText(md);
-      setMensajeExito("📋 Reporte copiado al portapapeles en formato Markdown.");
+      setMensajeExito("Reporte copiado al portapapeles en formato Markdown.");
       setTimeout(() => setMensajeExito(null), 4000);
     }
   };
@@ -878,7 +881,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
         window.dispatchEvent(new Event("storage"));
       }
 
-      alert(`✅ Catálogo Maestro Sincronizado: ${inventarioActualizado.length} widgets del sistema disponibles para asignar.`);
+      alert(`Catálogo Maestro Sincronizado: ${inventarioActualizado.length} widgets del sistema disponibles para asignar.`);
     } catch (err) {
       console.error("Error al sincronizar catálogo:", err);
     }
@@ -1393,7 +1396,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
         <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "6px" }}>
           <Sliders size={20} color="var(--violeta, #5000BA)" />
           <h3 style={{ fontSize: "0.98rem", fontWeight: 800, margin: 0 }}>
-            Arquitectura de Gobernanza: Perfil ➔ Paneles (Sidebar) ➔ Widgets
+            Arquitectura de Gobernanza: Perfil Paneles (Sidebar) Widgets
           </h3>
         </div>
         <div style={{ fontSize: "0.82rem", color: "var(--panel-gris, #737373)", display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap", marginTop: "8px" }}>
@@ -1458,7 +1461,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
             gap: "8px"
           }}
         >
-          <PanelLeft size={18} /> 1. Matriz Perfil ➔ Paneles (Sidebar)
+          <PanelLeft size={18} /> 1. Matriz Perfil Paneles (Sidebar)
         </button>
 
         <button
@@ -1521,7 +1524,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
             gap: "8px"
           }}
         >
-          <FileText size={18} /> 📊 Reporte Integral de Gobernanza
+          <FileText size={18} /> Reporte Integral de Gobernanza
         </button>
       </div>
 
@@ -1778,7 +1781,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                         }}
                       >
                         <IconoPanelDinamico nombreIcono={panel.icono} size={14} color="var(--violeta, #5000BA)" />
-                        <span>⚙️ Ícono & Visibilidad</span>
+                        <span>Ícono & Visibilidad</span>
                       </button>
 
                       <button
@@ -1799,7 +1802,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                           gap: "4px"
                         }}
                       >
-                        {panel.requiereMfa ? "🔒 MFA Requerido" : "🔓 MFA Opcional"}
+                        {panel.requiereMfa ? "MFA Requerido" : "MFA Opcional"}
                       </button>
 
                       <button
@@ -2219,7 +2222,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                   </div>
                 ) : (
                   <div style={{ textAlign: "center", padding: "14px", fontSize: "0.8rem", color: "#05876E", fontWeight: 700 }}>
-                    ✅ ¡Excelente! Todos los widgets del inventario están asignados a algún panel de navegación para este perfil.
+                    ¡Excelente! Todos los widgets del inventario están asignados a algún panel de navegación para este perfil.
                   </div>
                 )}
               </div>
@@ -2350,7 +2353,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
       {tabActiva === "matriz_paneles" && (
         <div>
           <div style={{ background: "var(--panel-linea-suave, #FAFAF9)", padding: "14px 18px", borderRadius: "10px", border: "1px solid var(--panel-linea, #E4E4E4)", marginBottom: "20px", fontSize: "0.82rem", color: "var(--panel-gris, #737373)" }}>
-            <span style={{ fontWeight: 800, color: "var(--negro, #111111)" }}>💡 Paso 1: Configurar Opciones del Menú Lateral (Sidebar) por Perfil</span>
+            <span style={{ fontWeight: 800, color: "var(--negro, #111111)" }}>Paso 1: Configurar Opciones del Menú Lateral (Sidebar) por Perfil</span>
             <br />
             Marca qué <strong>Paneles / Opciones</strong> aparecerán visibles en el Sidebar izquierdo para cada perfil de usuario.
           </div>
@@ -2624,7 +2627,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                   <ShieldCheck size={14} /> GOBERNANZA TRANSVERSAL ({negocio.toUpperCase()})
                 </div>
                 <h2 style={{ fontSize: "1.3rem", fontWeight: 900, margin: "0 0 6px 0", color: "#ffffff" }}>
-                  📊 Reporte de Perfiles, Paneles, Widgets y Usuarios Asignados
+                  Reporte de Perfiles, Paneles, Widgets y Usuarios Asignados
                 </h2>
                 <p style={{ fontSize: "0.85rem", color: "#c7d2fe", margin: 0, maxWidth: "680px", lineHeight: 1.5 }}>
                   Consolidado integral de la matriz de seguridad, jerarquías de perfiles (1-100), rutas de paneles, módulos widget activos y lista de usuarios con membresía vinculada.
@@ -2905,7 +2908,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                                     </div>
                                     {pan.requiereMfa && (
                                       <span style={{ fontSize: "0.68rem", fontWeight: 800, color: "#dc2626", background: "#fef2f2", padding: "2px 8px", borderRadius: "999px", border: "1px solid #fecaca" }}>
-                                        🔒 MFA TOTP
+                                        MFA TOTP
                                       </span>
                                     )}
                                   </div>
@@ -3291,14 +3294,14 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                 <div>
                   <span style={{ fontSize: "0.75rem", fontWeight: 800, color: "#4B5563", textTransform: "uppercase" }}>
-                    ⚡ Ruta de Navegación (Generada Automáticamente):
+                    Ruta de Navegación (Generada Automáticamente):
                   </span>
                   <div style={{ fontSize: "0.88rem", fontWeight: 800, color: "#5000BA", fontFamily: "monospace", marginTop: "2px" }}>
                     {nuevoPanel.ruta || `/panel/${nuevoPanel.nombre.toLowerCase().trim().replace(/[^a-z0-9]/g, "_") || "nuevo"}`}
                   </div>
                 </div>
                 <span style={{ fontSize: "0.72rem", fontWeight: 700, color: "#05876E", background: "#D1FAE5", padding: "4px 8px", borderRadius: "6px" }}>
-                  ✓ Automática
+                  Automática
                 </span>
               </div>
               <p style={{ fontSize: "0.74rem", color: "#6B7280", margin: "4px 0 0 0" }}>
@@ -3361,7 +3364,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                   onChange={e => setNuevoPanel({ ...nuevoPanel, requiereMfa: e.target.checked })}
                   style={{ width: "18px", height: "18px", accentColor: "#DC2626" }}
                 />
-                🔒 Requerir Autenticación Multifactor MFA (TOTP) al ingresar (PLT-002)
+                Requerir Autenticación Multifactor MFA (TOTP) al ingresar (PLT-002)
               </label>
             </div>
 
@@ -3454,14 +3457,14 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                 <div>
                   <span style={{ fontSize: "0.75rem", fontWeight: 800, color: "#4B5563", textTransform: "uppercase" }}>
-                    ⚡ Ruta de Navegación (Generada Automáticamente):
+                    Ruta de Navegación (Generada Automáticamente):
                   </span>
                   <div style={{ fontSize: "0.88rem", fontWeight: 800, color: "#5000BA", fontFamily: "monospace", marginTop: "2px" }}>
                     {panelEditarModal.ruta}
                   </div>
                 </div>
                 <span style={{ fontSize: "0.72rem", fontWeight: 700, color: "#05876E", background: "#D1FAE5", padding: "4px 8px", borderRadius: "6px" }}>
-                  ✓ Automática
+                  Automática
                 </span>
               </div>
               <p style={{ fontSize: "0.74rem", color: "#6B7280", margin: "4px 0 0 0" }}>
@@ -3488,7 +3491,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                   onChange={e => setPanelEditarModal({ ...panelEditarModal, mostrarSinWidgets: e.target.checked })}
                   style={{ width: "16px", height: "16px", accentColor: "#5000BA" }}
                 />
-                👁️ Mostrar este panel en el sidebar aunque no tenga widgets asignados (como 'Próximamente')
+                Mostrar este panel en el sidebar aunque no tenga widgets asignados (como 'Próximamente')
               </label>
             </div>
 
@@ -3501,7 +3504,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                   onChange={e => setPanelEditarModal({ ...panelEditarModal, requiereMfa: e.target.checked })}
                   style={{ width: "16px", height: "16px", accentColor: "#DC2626" }}
                 />
-                🔒 Requerir MFA TOTP al ingresar a este panel
+                Requerir MFA TOTP al ingresar a este panel
               </label>
             </div>
 
@@ -3601,7 +3604,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                       onChange={() => setAccionTransferir("duplicar")}
                     />
                     <div>
-                      <span>📋 Duplicar Widget</span>
+                      <span>Duplicar Widget</span>
                       <span style={{ display: "block", fontSize: "0.74rem", fontWeight: 500, color: "#737373" }}>
                         Conserva el widget en el panel origen y lo añade también al panel destino.
                       </span>
@@ -3670,7 +3673,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                     cursor: "pointer"
                   }}
                 >
-                  {accionTransferir === "mover" ? "⇄ Mover Widget" : "📋 Duplicar Widget"}
+                  {accionTransferir === "mover" ? "⇄ Mover Widget" : "Duplicar Widget"}
                 </button>
               </div>
             </form>

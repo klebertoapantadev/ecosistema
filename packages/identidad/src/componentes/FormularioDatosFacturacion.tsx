@@ -94,7 +94,7 @@ export function FormularioDatosFacturacion({
     setGuardando(false);
 
     if (res.ok) {
-      setMensaje({ tipo: "exito", texto: "✅ Datos de facturación guardados correctamente." });
+      setMensaje({ tipo: "exito", texto: "Datos de facturación guardados correctamente." });
       setTimeout(() => setMensaje(null), 4000);
     } else {
       setMensaje({ tipo: "error", texto: res.error || "No se pudieron guardar los datos de facturación." });

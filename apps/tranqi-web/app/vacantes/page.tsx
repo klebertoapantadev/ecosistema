@@ -235,7 +235,7 @@ export default function PaginaBolsaEmpleo() {
               </div>
 
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: "16px", borderTop: "1px solid #21262d", marginTop: "16px" }}>
-                <span style={{ fontSize: "0.8rem", color: "#8b949e" }}>📍 {vac.ubicacion} ({vac.modalidad})</span>
+                <span style={{ fontSize: "0.8rem", color: "#8b949e" }}>{vac.ubicacion} ({vac.modalidad})</span>
                 <button
                   onClick={() => abrirModalPostulacion(vac)}
                   style={{ background: "#238636", color: "#ffffff", border: "none", padding: "8px 16px", borderRadius: "6px", fontSize: "0.85rem", fontWeight: 700, cursor: "pointer" }}
@@ -267,7 +267,7 @@ export default function PaginaBolsaEmpleo() {
             )}
 
             <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+              <div className="rejilla-auto" style={{ "--min": "200px", "--hueco": "12px" } as React.CSSProperties}>
                 <div>
                   <label style={{ display: "block", fontSize: "0.8rem", color: "#c9d1d9", marginBottom: "4px" }}>Nombres *</label>
                   <input type="text" value={nombres} onChange={(e) => setNombres(e.target.value)} required style={{ width: "100%", background: "#0d1117", border: "1px solid #30363d", borderRadius: "6px", padding: "8px 12px", color: "#ffffff", fontSize: "0.85rem" }} />
@@ -278,7 +278,7 @@ export default function PaginaBolsaEmpleo() {
                 </div>
               </div>
 
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+              <div className="rejilla-auto" style={{ "--min": "200px", "--hueco": "12px" } as React.CSSProperties}>
                 <div>
                   <label style={{ display: "block", fontSize: "0.8rem", color: "#c9d1d9", marginBottom: "4px" }}>Correo Electrónico *</label>
                   <input type="email" value={correo} onChange={(e) => setCorreo(e.target.value)} required style={{ width: "100%", background: "#0d1117", border: "1px solid #30363d", borderRadius: "6px", padding: "8px 12px", color: "#ffffff", fontSize: "0.85rem" }} />

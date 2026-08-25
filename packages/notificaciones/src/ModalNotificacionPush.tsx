@@ -51,7 +51,7 @@ export function ModalNotificacionPush({
       colorFondoIcono: "#ECFDF5",
       colorBoton: "linear-gradient(135deg, #059669 0%, #047857 100%)",
       sombraBoton: "0 4px 14px rgba(5, 150, 105, 0.3)",
-      etiqueta: "✅ NOTIFICACIÓN PUSH RECIBIDA",
+      etiqueta: "NOTIFICACIÓN PUSH RECIBIDA",
       Icono: CheckCircle2,
     },
     push: {
@@ -59,7 +59,7 @@ export function ModalNotificacionPush({
       colorFondoIcono: "#0284C7",
       colorBoton: "linear-gradient(135deg, #0284C7 0%, #0369A1 100%)",
       sombraBoton: "0 4px 14px rgba(2, 132, 199, 0.3)",
-      etiqueta: "🔔 NOTIFICACIÓN PUSH EN VIVO",
+      etiqueta: "NOTIFICACIÓN PUSH EN VIVO",
       Icono: Volume2,
     },
     advertencia: {
@@ -67,7 +67,7 @@ export function ModalNotificacionPush({
       colorFondoIcono: "#FFFBEB",
       colorBoton: "linear-gradient(135deg, #D97706 0%, #B45309 100%)",
       sombraBoton: "0 4px 14px rgba(217, 119, 6, 0.3)",
-      etiqueta: "⚠️ ALERTA DE SEGURIDAD PUSH",
+      etiqueta: "ALERTA DE SEGURIDAD PUSH",
       Icono: AlertTriangle,
     },
     error: {
@@ -75,7 +75,7 @@ export function ModalNotificacionPush({
       colorFondoIcono: "#FEF2F2",
       colorBoton: "linear-gradient(135deg, #DC2626 0%, #B91C1C 100%)",
       sombraBoton: "0 4px 14px rgba(220, 38, 38, 0.3)",
-      etiqueta: "❌ ERROR DEL SISTEMA",
+      etiqueta: "ERROR DEL SISTEMA",
       Icono: AlertCircle,
     },
     info: {
@@ -83,7 +83,7 @@ export function ModalNotificacionPush({
       colorFondoIcono: "#F3E8FF",
       colorBoton: "linear-gradient(135deg, #5000BA 0%, #3B0088 100%)",
       sombraBoton: "0 4px 14px rgba(80, 0, 186, 0.3)",
-      etiqueta: "📢 NOTIFICACIÓN IN-APP",
+      etiqueta: "NOTIFICACIÓN IN-APP",
       Icono: Bell,
     },
   }[tipo];

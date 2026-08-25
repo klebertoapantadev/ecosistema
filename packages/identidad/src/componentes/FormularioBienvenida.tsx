@@ -150,7 +150,7 @@ export function FormularioBienvenida({ nombresIniciales, apellidosIniciales, int
 
           {!aceptaTerminosWhatsapp && (
             <p style={{ fontSize: "0.76rem", color: "#DC2626", fontWeight: 700, margin: 0 }}>
-              ⚠️ Debes autorizar la cláusula LOPDP para guardar tu teléfono de WhatsApp.
+              Debes autorizar la cláusula LOPDP para guardar tu teléfono de WhatsApp.
             </p>
           )}
         </div>
@@ -187,7 +187,7 @@ export function FormularioBienvenida({ nombresIniciales, apellidosIniciales, int
           gap: "8px",
         }}
       >
-        {cargando ? "Guardando..." : esAbogado ? "Continuar al Registro de Abogado ➔" : "Continuar"}
+        {cargando ? "Guardando..." : esAbogado ? "Continuar al Registro de Abogado " : "Continuar"}
       </button>
 
       <ModalTerminosWhatsapp

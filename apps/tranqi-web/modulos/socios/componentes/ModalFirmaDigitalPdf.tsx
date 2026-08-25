@@ -555,7 +555,7 @@ export function ModalFirmaDigitalPdf({
             Validar Certificado (.p12)
           </div>
 
-          <div style={{ color: "#CBD5E1" }}>➔</div>
+          <ChevronRight size={16} aria-hidden="true" style={{ color: "var(--panel-linea, #E4E4E4)" }} />
 
           <div
             style={{
@@ -583,7 +583,7 @@ export function ModalFirmaDigitalPdf({
             Ubicar Firma con QR en Documento
           </div>
 
-          <div style={{ color: "#CBD5E1" }}>➔</div>
+          <ChevronRight size={16} aria-hidden="true" style={{ color: "var(--panel-linea, #E4E4E4)" }} />
 
           <div
             style={{
@@ -908,7 +908,7 @@ export function ModalFirmaDigitalPdf({
                       justifyContent: "space-between",
                     }}
                   >
-                    <span>📌 Columna Derecha (Firma del Abogado)</span>
+                    <span>Columna Derecha (Firma del Abogado)</span>
                     {posicionXPorcentaje > 50 && <Check size={14} color="#16A34A" />}
                   </button>
 
@@ -934,7 +934,7 @@ export function ModalFirmaDigitalPdf({
                       justifyContent: "space-between",
                     }}
                   >
-                    <span>📌 Columna Izquierda (Firma Tranqi)</span>
+                    <span>Columna Izquierda (Firma Tranqi)</span>
                     {posicionXPorcentaje <= 50 && <Check size={14} color="#7C3AED" />}
                   </button>
                 </div>
@@ -951,7 +951,7 @@ export function ModalFirmaDigitalPdf({
                   <div style={{ fontSize: "0.72rem", fontWeight: 700, color: "#64748B", marginBottom: "6px" }}>
                     Ajuste de posición ({posicionXPorcentaje}%, {posicionYPorcentaje}%):
                   </div>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px" }}>
+                  <div className="rejilla-auto" style={{ "--min": "180px", "--hueco": "6px" } as React.CSSProperties}>
                     <button
                       type="button"
                       onClick={() => setPosicionYPorcentaje((y) => Math.max(5, y - 4))}
@@ -1313,7 +1313,7 @@ export function ModalFirmaDigitalPdf({
                       marginLeft: "6px",
                     }}
                   >
-                    🏁 Ir a Firmas (Pág. {totalPaginas})
+                    Ir a Firmas (Pág. {totalPaginas})
                   </button>
                 )}
               </div>

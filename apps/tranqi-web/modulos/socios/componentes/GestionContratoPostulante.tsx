@@ -88,7 +88,7 @@ export function GestionContratoPostulante({ solicitud }: Props) {
       if (!res.ok) throw new Error(res.error);
 
       setModalFirmaAbierto(false);
-      setExito("🎉 ¡Contrato firmado digitalmente y enviado con éxito! El equipo de tranqi verificará y contra-firmará el documento para la activación definitiva.");
+      setExito("¡Contrato firmado digitalmente y enviado con éxito! El equipo de tranqi verificará y contra-firmará el documento para la activación definitiva.");
       router.refresh();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Error al guardar el contrato firmado");
@@ -169,7 +169,7 @@ export function GestionContratoPostulante({ solicitud }: Props) {
         throw new Error(res.error);
       }
 
-      setExito("💬 ¡Tus observaciones han sido enviadas al equipo de operaciones de tranqi! Un operador revisará tu solicitud y emitirá una nueva versión ajustada.");
+      setExito("¡Tus observaciones han sido enviadas al equipo de operaciones de tranqi! Un operador revisará tu solicitud y emitirá una nueva versión ajustada.");
       setTextoObservacion("");
       router.refresh();
     } catch (err: unknown) {

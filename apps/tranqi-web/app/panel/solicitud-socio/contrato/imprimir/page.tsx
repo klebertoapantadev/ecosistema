@@ -92,6 +92,10 @@ export default async function PaginaImprimirContrato({ searchParams }: Props) {
         />
 
         {/* Firmas al final */}
+        {/* Rejilla FIJA a proposito, y la unica que queda en el repo: esto es
+            una hoja de impresion en A4, no una pantalla. Las dos firmas van
+            una al lado de otra en el papel; colapsarlas a una columna en
+            movil no significa nada porque el destino es la impresora. */}
         <div style={{ marginTop: "80px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "60px", pageBreakInside: "avoid" }}>
           <div style={{ textAlign: "center" }}>
             <div style={{ borderTop: "1px solid #000", width: "80%", margin: "0 auto 8px" }}></div>

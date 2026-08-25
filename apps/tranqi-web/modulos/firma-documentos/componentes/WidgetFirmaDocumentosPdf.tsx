@@ -683,7 +683,7 @@ export function WidgetFirmaDocumentosPdf({
             1. Subir PDF
           </div>
 
-          <span style={{ color: "#CBD5E1" }}>➔</span>
+          <ChevronRight size={16} aria-hidden="true" style={{ color: "var(--panel-linea, #E4E4E4)" }} />
 
           <div
             style={{
@@ -713,7 +713,7 @@ export function WidgetFirmaDocumentosPdf({
             2. Validar Firma (.p12)
           </div>
 
-          <span style={{ color: "#CBD5E1" }}>➔</span>
+          <ChevronRight size={16} aria-hidden="true" style={{ color: "var(--panel-linea, #E4E4E4)" }} />
 
           <div
             style={{
@@ -743,7 +743,7 @@ export function WidgetFirmaDocumentosPdf({
             3. Posicionar y Estampar
           </div>
 
-          <span style={{ color: "#CBD5E1" }}>➔</span>
+          <ChevronRight size={16} aria-hidden="true" style={{ color: "var(--panel-linea, #E4E4E4)" }} />
 
           <div
             style={{
@@ -878,7 +878,7 @@ export function WidgetFirmaDocumentosPdf({
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "16px" }}>
-            <span style={{ fontSize: "1.4rem" }}>🔑</span>
+            <KeyRound size={22} aria-hidden="true" />
             <div>
               <h2 style={{ margin: 0, fontSize: "1.15rem", fontWeight: 800, color: "#1E293B" }}>
                 Cargar Firma Electrónica (.p12 / .pfx)
@@ -1071,7 +1071,7 @@ export function WidgetFirmaDocumentosPdf({
               <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, color: "#475569", marginBottom: "6px" }}>
                 Alineaciones Rápidas:
               </label>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
+              <div className="rejilla-auto" style={{ "--min": "180px", "--hueco": "8px" } as React.CSSProperties}>
                 <button
                   type="button"
                   onClick={() => { setPosicionXPorcentaje(58.0); setPosicionYPorcentaje(82.0); }}
@@ -1144,7 +1144,7 @@ export function WidgetFirmaDocumentosPdf({
               <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, color: "#475569", marginBottom: "6px" }}>
                 Micro-Ajustes ({posicionXPorcentaje}%, {posicionYPorcentaje}%):
               </label>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px" }}>
+              <div className="rejilla-auto" style={{ "--min": "180px", "--hueco": "6px" } as React.CSSProperties}>
                 <button
                   type="button"
                   onClick={() => setPosicionYPorcentaje((y) => Math.max(2, Number((y - 2).toFixed(1))))}

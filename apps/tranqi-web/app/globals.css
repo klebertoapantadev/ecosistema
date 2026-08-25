@@ -391,6 +391,13 @@ p { line-height: 1.55; }
   --panel-linea-suave: #F1F1F1;
   --panel-gris: #737373;
   --panel-negro-alto: #1E1E1E;
+  /* Un paso MÁS HONDO que el papel, para la columna del asistente. El registro
+     de mensajes usaba --panel-papel, es decir el mismo fondo exacto que la
+     página: separados solo por una línea de 1px, panel y contenido se leían
+     como una sola superficie. Es neutro a propósito -- §3 del sistema visual
+     solo admite UNA superficie de color pleno por pantalla, y esa ya es la
+     tarjeta de protección. La diferencia la hace el tono, no la marca. */
+  --panel-hondo: #EBEBE9;
 
   /* Superficies oscuras de los rails de cliente y abogado (§4 del sistema
      visual). No son colores de marca: son fondos sobre los que va tipografía
@@ -564,7 +571,81 @@ p { line-height: 1.55; }
   display: inline-block; background: var(--amarillo); color: var(--negro);
   font-weight: 800; font-size: 0.68rem; padding: 3px 8px; border-radius: 999px; width: fit-content;
 }
-.panel-contenido { flex: 1; min-width: 0; padding: 36px clamp(20px, 4vw, 48px); max-width: 1280px; }
+/* El tope de lectura NO va en la COLUMNA, va en sus HIJOS. `.panel-layout` es
+   flex, así que un `max-width` en esta columna deja el sobrante al final del
+   eje: con rail 236 + contenido 1280 + asistente 360 = 1876px de tope, en un
+   monitor de 1920 sobraban ~44px y en uno de 2560 sobran ~680px, todos a la
+   derecha de la barra del asistente, que dejaba de tocar el borde.
+
+   Se topan los hijos y no la columna, y se topan TODOS -- no una clase que
+   cada pantalla tenga que acordarse de poner. La primera versión de este
+   arreglo movió el tope a `.contenedor-panel`, que solo usan 2 de las 19
+   pantallas del panel: las otras 17 se quedaron sin límite de lectura en
+   monitores anchos. Lo cazó auditar quién usaba la clase, no el compilador.
+
+   Sin `margin-inline: auto` a propósito: el contenido sigue alineado a la
+   izquierda contra el rail, como antes de tocar nada. Lo que cambia es solo
+   que el hueco sobrante deja de quedar a la derecha del asistente.           */
+.panel-contenido { flex: 1; min-width: 0; padding: 36px clamp(20px, 4vw, 48px); }
+.panel-contenido > * { max-width: 1280px; }
+
+/* ── Composición adaptable (TRQ-010) ─────────────────────────────────
+   Estas cuatro clases existen para poder RETIRAR los `style={{}}` inline de los
+   widgets. El motivo no es de gusto: un objeto de estilo inline NO admite
+   media queries, así que mientras un widget se pinte inline no hay forma de
+   adaptarlo a un teléfono desde la hoja de estilos. Con 2.479 bloques inline
+   en `app/` + `modulos/` + `packages/`, el CSS responsive del panel no
+   gobernaba casi nada.
+
+   Se dimensionan con variables para que UNA clase sirva a varios anchos: quien
+   la usa escribe `style={{ "--min": "260px" }}` y nada más. Eso sigue siendo un
+   estilo inline, pero de UN dato, no de una maqueta entera — y ese dato sí es
+   propio del sitio donde se usa.                                            */
+
+/* Rejilla que colapsa sola. Sustituye a los `gridTemplateColumns: "1fr 1fr"` y
+   `"repeat(3, 1fr)"` inline, que nunca colapsan: cuatro columnas rígidas en un
+   teléfono son cuatro columnas de 70px.
+   `min(var(--min), 100%)` es lo que evita el desbordamiento horizontal cuando
+   la pantalla es más estrecha que el propio mínimo -- sin ese `min()`,
+   `minmax(260px, 1fr)` fuerza 260px aunque el viewport tenga 240. */
+.rejilla-auto {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(var(--min, 220px), 100%), 1fr));
+  gap: var(--hueco, 14px);
+}
+
+/* Fila de acciones: en fila mientras quepan, apiladas cuando no. El apilado
+   real va en el bloque @media del final del archivo (§10 del sistema visual). */
+.fila-acciones { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+
+/* Acción menor dentro de una tarjeta o una fila de tabla. Reemplaza a los
+   botones inline de `padding: "4px 8px"` con letra de 0.75rem, que medían
+   26-30px de alto: por debajo del objetivo táctil cómodo. Aquí la altura
+   mínima la fija el puntero, no el diseño -- ver el bloque final. */
+.accion-menor {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 7px 12px; border-radius: 8px; border: 1px solid transparent;
+  font: inherit; font-size: 0.8rem; font-weight: 700; line-height: 1.2;
+  cursor: pointer; white-space: nowrap;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+.accion-menor:disabled { opacity: 0.45; cursor: default; }
+/* La principal toma el acento del perfil activo, no un color escrito a mano:
+   así una misma tarjeta dice "cliente" en violeta y "abogado" en esmeralda sin
+   duplicar la regla (§4, regla 2 del sistema visual). */
+.accion-menor.es-principal { background: var(--panel-accion, var(--violeta)); color: var(--blanco); }
+.accion-menor.es-discreta {
+  background: var(--blanco); color: var(--negro); border-color: var(--panel-linea);
+}
+.accion-menor.es-discreta:hover { background: var(--panel-linea-suave); }
+/* Destructiva: texto, no relleno. Un botón rojo pleno junto a uno de acción
+   convierte la fila en un semáforo y ninguna de las dos gana (§3, regla 1). */
+.accion-menor.es-peligro { background: transparent; color: #B00020; }
+.accion-menor.es-peligro:hover { background: #FEF2F2; }
+
+/* Texto que se esconde cuando no cabe, dejando solo el icono del botón. El
+   `title` del botón sigue diciendo qué hace. */
+.texto-accion { display: inline; }
 .panel-contenido h1 { font-size: 1.5rem; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 6px; }
 /* el aire bajo el título lo pone el elemento siguiente, no el título: así la
    portada (que lleva subtítulo) y las páginas que no lo llevan respiran igual */
@@ -791,6 +872,11 @@ p { line-height: 1.55; }
   background: var(--blanco); border: 1px solid var(--panel-linea); border-radius: 16px;
   padding: 18px; display: flex; flex-direction: column; gap: 4px;
   transition: border-color 0.15s, transform 0.15s;
+  /* casi todas son <Link>: lo de anular subrayado y color venía repetido inline
+     en cada sitio de uso (TRQ-010) */
+  text-decoration: none; color: inherit;
+  /* posiciona la estrella de favorito */
+  position: relative;
 }
 /* filo violeta + leve elevacion al pasar el mouse -- sin sombra, la
    jerarquia la da el borde y el movimiento, no un blur (sistema-visual §5) */
@@ -805,8 +891,45 @@ p { line-height: 1.55; }
    acento tiene que decirte en qué perfil estás. Además la menta no es fondo de
    texto oscuro pequeño (§8), y --menta-honda es su par legible. */
 .tarjeta-acceso:hover .tarjeta-acceso-icono { background: var(--menta); color: var(--menta-honda); }
-.tarjeta-acceso strong { font-size: 0.95rem; }
-.tarjeta-acceso p { font-size: 0.8rem; color: var(--panel-gris); line-height: 1.4; }
+.tarjeta-acceso strong { font-size: 0.95rem; line-height: 1.25; }
+.tarjeta-acceso p { font-size: 0.8rem; color: var(--panel-gris); line-height: 1.4; margin: 4px 0 0; }
+
+/* ── Tarjeta de acceso fijada al inicio (TRQ-010) ────────────────────
+   Antes traía toda su maqueta en `style={{}}` inline, con un `colorIcono`
+   propio por módulo: la rejilla acababa con siete colores de icono y ninguno
+   significaba nada. Ahora el icono hereda el tratamiento único de arriba y lo
+   único que distingue a una favorita es la estrella. */
+div.tarjeta-acceso-icono { display: grid; place-items: center; padding: 0; }
+.tarjeta-acceso.es-favorita { padding-right: 34px; }
+.marca-favorito {
+  position: absolute; top: 12px; right: 12px;
+  fill: var(--amarillo); color: var(--amarillo);
+}
+/* Peligro: la tinta la lleva el título, no el icono ni el borde. Una tarjeta
+   entera en rojo entre cinco neutras grita antes de que la leas. */
+.tarjeta-acceso.es-peligro strong { color: #B00020; }
+.tarjeta-acceso.es-peligro:hover { border-color: #B00020; }
+.tarjeta-acceso.es-peligro:hover .tarjeta-acceso-icono { background: #FEF2F2; color: #B00020; }
+
+.tarjeta-acceso-cabeza { min-width: 0; margin-top: 6px; display: grid; gap: 4px; }
+.fila-chips { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+/* Chip de procedencia. Versalita y fondo diluido, como manda §6 del sistema
+   visual -- nunca el color pleno. */
+.chip-origen {
+  display: inline-flex; align-items: center; gap: 3px;
+  font-size: 0.58rem; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase;
+  padding: 2px 7px; border-radius: 999px;
+  background: rgba(80,0,186,0.08); color: var(--violeta);
+}
+.chip-origen.es-cuenta { background: rgba(5,135,110,0.10); color: #034D3F; }
+
+/* La flecha marca dónde termina la tarjeta. Gris en reposo: en el acento de
+   marca competía con el icono, que es lo que identifica la tarjeta. */
+.flecha-acceso {
+  align-self: flex-end; margin-top: auto; padding-top: 10px;
+  color: var(--panel-gris); transition: color 0.15s, transform 0.15s;
+}
+.tarjeta-acceso:hover .flecha-acceso { color: var(--violeta); transform: translateX(2px); }
 .chip-proximamente {
   align-self: flex-start; margin-top: 8px;
   font-size: 0.64rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase;
@@ -1069,18 +1192,30 @@ p { line-height: 1.55; }
    bloque de tokens. La unica que falta es el color de ACCION: --rail-acento es
    menta y lima, pensados para ir sobre el rail oscuro, y sobre papel claro no
    contrastan. Se declara aqui, junto a lo que lo usa.                        */
-.panel-layout { --asistente-accion: var(--lavanda); }
-.panel-layout.perfil-cliente { --asistente-accion: var(--violeta); }
-.panel-layout.perfil-abogado { --asistente-accion: var(--esmeralda); }
+/* TRQ-010: el color de acción resultó no ser solo del asistente -- lo necesita
+   cualquier botón del panel que antes traía su hex escrito a mano. Se renombra
+   a `--panel-accion` y `--asistente-accion` queda como alias para no tocar las
+   reglas del asistente que ya lo usaban. */
+.panel-layout { --panel-accion: var(--lavanda); --asistente-accion: var(--panel-accion); }
+.panel-layout.perfil-cliente { --panel-accion: var(--violeta); }
+.panel-layout.perfil-abogado { --panel-accion: var(--esmeralda); }
 
 .asistente {
   width: 360px; flex: none;
   display: flex; flex-direction: column;
-  background: var(--blanco);
+  background: var(--panel-hondo);
+  /* La columna tiene que leerse como OTRO plano, no como el margen derecho de
+     la página. Una línea de 1px no bastaba: se refuerza con una sombra corta
+     hacia el contenido, que es lo que da el escalón sin recurrir al color. */
   border-left: 1px solid var(--panel-linea);
-  /* sticky + 100vh: la barra acompaña el scroll del contenido sin arrastrar
-     su propia altura. El registro de mensajes es lo unico que scrollea. */
-  position: sticky; top: 0; height: 100vh;
+  box-shadow: -6px 0 18px -12px rgba(17,17,17,0.28);
+  /* sticky + altura de viewport: la barra acompaña el scroll del contenido sin
+     arrastrar su propia altura. El registro de mensajes es lo unico que
+     scrollea. `dvh` y no `vh`: en Safari y Chrome de movil `100vh` cuenta la
+     barra de direcciones, asi que el redactor quedaba por debajo del borde
+     visible y no se podia escribir. `vh` queda de reserva para navegadores
+     sin `dvh`. */
+  position: sticky; top: 0; height: 100vh; height: 100dvh;
 }
 
 .asistente-cabecera {
@@ -1126,7 +1261,10 @@ p { line-height: 1.55; }
 .asistente-registro {
   flex: 1; min-height: 0; overflow-y: auto;
   padding: 16px 14px; display: flex; flex-direction: column; gap: 10px;
-  background: var(--panel-papel);
+  /* hereda --panel-hondo de la columna: el globo blanco del asistente destaca
+     contra el, cosa que no ocurria cuando el fondo era el mismo --panel-papel
+     de la pagina y el globo tenia que apoyarse solo en su borde de 1px */
+  background: transparent;
 }
 .asistente-msg {
   max-width: 88%; padding: 9px 12px; border-radius: 14px;
@@ -1937,3 +2075,201 @@ p { line-height: 1.55; }
   }
 }
 
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   TRQ-010 · NOTIFICACIONES DEL CLIENTE
+   La apariencia de un widget de `packages/*` vive AQUI, no en el paquete:
+   §1 de las convenciones de codificacion dice que se comparte comportamiento,
+   no color ni layout. Antes venia toda en `style={{}}` dentro del componente,
+   con su propia paleta (#1f6feb, #3b82f6, #10b981, #ef4444, #0284c7) y sin
+   forma de adaptarse a un telefono.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* Contador de pendientes: fondo diluido, no relleno pleno (§6). */
+.chip-pendientes {
+  font-size: 0.7rem; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase;
+  padding: 3px 9px; border-radius: 999px;
+  background: rgba(254,88,0,0.10); color: #C33F00; white-space: nowrap;
+}
+
+/* Pestanas. El indicador activo es una superficie blanca elevada dentro de un
+   carril gris -- el mismo recurso que ya usa el panel, sin color de marca. */
+.pestanas-notif {
+  display: flex; gap: 3px; margin: 12px 20px 0;
+  background: var(--panel-linea-suave); padding: 3px; border-radius: 9px;
+}
+.pestana-notif {
+  flex: 1; min-width: 0; padding: 7px 8px; border: 0; border-radius: 7px;
+  background: transparent; color: var(--panel-gris);
+  font: inherit; font-size: 0.76rem; font-weight: 600; cursor: pointer;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  transition: background 0.15s, color 0.15s;
+}
+.pestana-notif:hover { color: var(--negro); }
+.pestana-notif.es-activa {
+  background: var(--blanco); color: var(--negro); font-weight: 800;
+  box-shadow: 0 1px 2px rgba(17,17,17,0.10);
+}
+
+/* Aviso de permisos del navegador. Es informativo, no una alerta: linea de 1px
+   y tinta gris, no un recuadro azul con boton azul. */
+.aviso-push {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  flex-wrap: wrap;
+  margin: 12px 20px 0; padding: 10px 12px;
+  border: 1px solid var(--panel-linea); border-radius: 10px;
+  background: var(--panel-linea-suave);
+  font-size: 0.76rem; color: var(--panel-gris);
+}
+
+.lista-notif { display: flex; flex-direction: column; gap: 10px; padding: 12px 20px 20px; }
+
+.vacio-notif {
+  display: grid; justify-items: center; gap: 6px; text-align: center;
+  padding: 22px 16px; border: 1px dashed var(--panel-linea); border-radius: 12px;
+  color: var(--panel-gris); font-size: 0.84rem;
+}
+.vacio-notif svg { color: var(--esmeralda); }
+
+/* La notificacion. Blanca como cualquier tarjeta del panel: lo pendiente lo
+   marca el punto naranja del titulo, no el envase entero. El naranja esta
+   reservado a lo que exige accion (§3, regla 3) y esto lo es. */
+.notif {
+  padding: 12px 14px; border-radius: 12px;
+  background: var(--blanco); border: 1px solid var(--panel-linea);
+}
+.notif-cabeza { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.notif-titulo { font-size: 0.86rem; font-weight: 700; line-height: 1.3; }
+.notif-titulo::before {
+  content: ""; display: inline-block; vertical-align: 0.1em;
+  width: 6px; height: 6px; margin-right: 7px; border-radius: 50%;
+  background: var(--naranja);
+}
+.notif-hora { font-size: 0.7rem; color: var(--panel-gris); white-space: nowrap; flex: none; }
+.notif-cuerpo { font-size: 0.82rem; color: var(--panel-gris); margin-top: 6px; line-height: 1.5; }
+.notif-cuerpo a { color: var(--violeta); }
+.notif-acciones { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--panel-linea-suave); }
+.notif-eliminar { margin-left: auto; }
+
+/* Menu de posponer */
+.envoltura-posponer { position: relative; }
+.menu-posponer {
+  position: absolute; bottom: 100%; left: 0; margin-bottom: 6px; z-index: 100;
+  min-width: 176px; padding: 6px;
+  display: flex; flex-direction: column; gap: 2px;
+  background: var(--blanco); border: 1px solid var(--panel-linea);
+  border-radius: 10px; box-shadow: 0 10px 24px rgba(17,17,17,0.14);
+}
+.menu-posponer-titulo {
+  font-size: 0.64rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--panel-gris); padding: 5px 8px;
+}
+.opcion-posponer {
+  text-align: left; padding: 7px 8px; border: 0; border-radius: 6px;
+  background: none; color: var(--negro); font: inherit; font-size: 0.78rem;
+  font-weight: 600; cursor: pointer; width: 100%;
+  transition: background 0.12s;
+}
+.opcion-posponer:hover { background: var(--panel-linea-suave); }
+.opcion-posponer.es-enlace { color: var(--violeta); font-weight: 700; }
+.menu-posponer-pie { border-top: 1px solid var(--panel-linea-suave); margin-top: 4px; padding-top: 4px; }
+.posponer-personalizado { display: flex; align-items: center; gap: 6px; padding: 4px; }
+.posponer-personalizado input {
+  width: 56px; padding: 6px; font: inherit; font-size: 0.78rem; text-align: center;
+  border: 1px solid var(--panel-linea); border-radius: 6px;
+}
+.posponer-personalizado span { font-size: 0.72rem; color: var(--panel-gris); }
+
+/* Historial y eliminadas: la misma tarjeta, un paso atras. No cambian de color
+   -- se apagan. El rojo punteado que llevaban las eliminadas las hacia lo mas
+   llamativo de la pantalla, justo al reves de lo que son. */
+.notif.es-pasada { background: transparent; border-style: solid; }
+.notif.es-pasada .notif-titulo { font-weight: 600; color: var(--panel-gris); }
+/* sin punto naranja: ya no exigen nada */
+.notif.es-pasada .notif-titulo::before { display: none; }
+.notif.es-eliminada { border-style: dashed; }
+
+.marca-leida {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 0.7rem; font-weight: 700; color: var(--esmeralda);
+}
+.marca-eliminada {
+  font-size: 0.68rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--panel-gris);
+}
+
+.lista-eliminadas { display: flex; flex-direction: column; gap: 8px; }
+.nota-eliminadas {
+  display: flex; align-items: flex-start; gap: 7px; margin: 0 0 4px;
+  font-size: 0.74rem; color: var(--panel-gris); line-height: 1.45;
+}
+.nota-eliminadas svg { flex: none; margin-top: 2px; }
+
+.pie-notif {
+  display: flex; gap: 8px; flex-wrap: wrap;
+  padding: 0 20px 18px;
+}
+.pie-notif .accion-menor { text-decoration: none; }
+
+/* Fila de metadato de la billetera: clave / valor / borrar. A 375px la rejilla
+   fija de "1fr 1.2fr 34px" daba 135 + 162 + 34px y no se podia escribir en
+   ninguno de los dos campos. El apilado va en el @media del final. */
+.fila-metadato {
+  display: grid; grid-template-columns: 1fr 1.2fr 34px;
+  gap: 8px; align-items: center;
+  background: var(--blanco); padding: 6px 8px;
+  border-radius: 8px; border: 1px solid var(--panel-linea);
+}
+/* ═══════════════════════════════════════════════════════════════════
+   TRQ-010 · AJUSTES DE PUNTERO Y PANTALLA PEQUEÑA
+   Va al FINAL del archivo por la regla §10 del sistema visual: un @media
+   intercalado, con la misma especificidad que una regla base declarada más
+   abajo en el texto, pierde la cascada sin importar el viewport. Estar al
+   final es lo que hace innecesario el `!important` que arrastran los bloques
+   responsive anteriores.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* Puntero grueso = dedo. No es cuestión de ancho de pantalla: una tablet
+   ancha se toca igual que un teléfono, y un portátil estrecho se sigue usando
+   con ratón. Por eso el objetivo táctil lo decide `pointer: coarse` y no un
+   breakpoint de píxeles. 44px es el mínimo cómodo para el pulgar. */
+@media (pointer: coarse) {
+  .accion-menor { min-height: 44px; padding-inline: 14px; }
+  .panel-nav-links a { min-height: 44px; }
+  .asistente-redactor button { min-height: 44px; }
+  .asistente-plegar { min-width: 44px; min-height: 44px; }
+}
+
+@media (max-width: 860px) {
+  /* El rail es barra inferior fija a este ancho. En iPhone el indicador de
+     inicio se come la franja de abajo y tapaba media barra: la zona segura la
+     reserva el propio padding. `env()` vale 0 en cualquier navegador que no la
+     tenga, así que no hace falta condicionarlo. */
+  .panel-nav { padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px)); }
+  .panel-layout { padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px)); }
+  /* El asistente es una capa superpuesta a este ancho (ver el bloque de
+     1080px): también tiene que respetar la zona segura, o el campo de escribir
+     queda debajo del indicador. */
+  .asistente-redactor { padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px)); }
+}
+
+/* Teléfono estrecho: las acciones dejan de convivir en una fila. Se apilan a
+   ancho completo, que es lo que se acierta con el pulgar sin apuntar. */
+@media (max-width: 480px) {
+  .fila-acciones { gap: 6px; }
+  /* `.envoltura-posponer` entra en la lista porque el hijo del flex es ELLA, no
+     el botón que lleva dentro: sin esto "Posponer" se quedaba a 86px entre dos
+     botones a ancho completo. Medido en el banco de pruebas a 375px. */
+  .fila-acciones > .accion-menor,
+  .fila-acciones > .envoltura-posponer { flex: 1 1 100%; }
+  .envoltura-posponer > .accion-menor { width: 100%; }
+  /* el menú se ancla a los dos bordes, que ahora son los de la fila entera */
+  .menu-posponer { left: 0; right: 0; min-width: 0; }
+  /* La rejilla adaptable baja su mínimo: a 360px de pantalla, un mínimo de
+     220px deja dos columnas imposibles antes de colapsar a una. */
+  .rejilla-auto { --min: 100%; }
+  /* clave y valor a lo ancho; el boton de borrar se queda en su esquina */
+  .fila-metadato { grid-template-columns: 1fr 34px; }
+  .fila-metadato > *:nth-child(2) { grid-column: 1 / -1; }
+}

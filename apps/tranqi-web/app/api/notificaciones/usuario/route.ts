@@ -132,8 +132,8 @@ export async function GET() {
             const ultimaRev = revs[0];
             const esAprobada = ultimaRev.rev_decision === "aceptada";
             const titulo = esAprobada
-              ? "🎉 ¡Tu Acreditación como Socio Abogado fue APROBADA!"
-              : "⚠️ Observación en tu Solicitud de Socio Abogado";
+              ? "¡Tu Acreditación como Socio Abogado fue APROBADA!"
+              : "Observación en tu Solicitud de Socio Abogado";
             const cuerpo = esAprobada
               ? `<p>Tu postulación ha sido aprobada. Por favor <a href="/panel/solicitud-socio" style="color: #5000BA; font-weight: 700; text-decoration: underline;">descarga tu contrato pre-llenado y súbelo firmado</a> para activar tu cuenta de Abogado.</p>`
               : `<p>${ultimaRev.rev_comentario || "Se identificaron observaciones en tu solicitud. Por favor revisa y actualiza los documentos."}</p>`;
@@ -177,7 +177,7 @@ export async function GET() {
                   .maybeSingle();
 
                 const nombrePost = [uPost?.usu_nombres, uPost?.usu_apellidos].filter(Boolean).join(" ") || uPost?.usu_correo || "Postulante";
-                const titulo = `📢 Nueva Postulación de Socio Abogado: ${nombrePost}`;
+                const titulo = `Nueva Postulación de Socio Abogado: ${nombrePost}`;
                 const synthSolId = `postulacion-${sol.ssc_id}`;
                 const yaExiste = notificaciones.some(n => n.not_id === synthSolId || n.not_titulo.includes(nombrePost));
                 if (!yaExiste) {
@@ -226,7 +226,7 @@ export async function GET() {
                   const nombrePost = [uPost?.usu_nombres, uPost?.usu_apellidos].filter(Boolean).join(" ") || uPost?.usu_correo || "Postulante";
 
                   if (tieneContrato) {
-                    const tituloContrato = `📝 Contrato Firmado Recibido — Postulante: ${nombrePost}`;
+                    const tituloContrato = `Contrato Firmado Recibido — Postulante: ${nombrePost}`;
                     const synthContratoId = `contrato-${sol.ssc_id}`;
                     const yaExiste = notificaciones.some(n => n.not_id === synthContratoId);
                     if (!yaExiste) {
@@ -244,7 +244,7 @@ export async function GET() {
                   }
 
                   if (tienePropuesta) {
-                    const tituloPropuesta = `📝 Propuesta de Modificación al Contrato — Postulante: ${nombrePost}`;
+                    const tituloPropuesta = `Propuesta de Modificación al Contrato — Postulante: ${nombrePost}`;
                     const synthPropuestaId = `propuesta-${sol.ssc_id}`;
                     const yaExiste = notificaciones.some(n => n.not_id === synthPropuestaId);
                     if (!yaExiste) {

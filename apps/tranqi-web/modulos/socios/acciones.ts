@@ -150,8 +150,8 @@ async function notificarSolicitudEnviada(
 
     if (destinatariosAdmin.length > 0) {
       const tituloAdmin = esActualizacion
-        ? `🔄 Actualización de Solicitud de Socio: ${nombreUsuario}`
-        : `📢 Nueva Postulación de Socio Abogado: ${nombreUsuario}`;
+        ? `Actualización de Solicitud de Socio: ${nombreUsuario}`
+        : `Nueva Postulación de Socio Abogado: ${nombreUsuario}`;
 
       const contenidoAdmin = `
         <div style="font-family: sans-serif; padding: 18px; color: #111; max-width: 600px; border: 1px solid #eee; border-radius: 8px;">
@@ -660,13 +660,13 @@ export async function enviarPropuestaModificacionContratoAction(datos: {
     const nombrePostulante = [uPostulante?.usu_nombres, uPostulante?.usu_apellidos].filter(Boolean).join(" ") || uPostulante?.usu_correo || "Postulante";
     const correoPostulante = uPostulante?.usu_correo || "postulante@tranqi24.com";
     const urlRevision = `https://www.tranqi24.com/panel/socios/${datos.solicitudId}`;
-    const tituloAdmin = `📝 Propuesta de Modificación al Contrato — Postulante: ${nombrePostulante}`;
+    const tituloAdmin = `Propuesta de Modificación al Contrato — Postulante: ${nombrePostulante}`;
 
     const contenidoHTMLAdmin = `
       <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; padding: 22px; color: #111; max-width: 600px; margin: 0 auto; background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 12px;">
         <div style="text-align: center; margin-bottom: 16px;">
           <span style="display: inline-block; background: #FEF3C7; color: #92400E; padding: 6px 14px; border-radius: 999px; font-weight: 800; font-size: 0.82rem; border: 1px solid #F59E0B;">
-            📝 PROPUESTA DE CAMBIOS AL CONTRATO
+            PROPUESTA DE CAMBIOS AL CONTRATO
           </span>
         </div>
         <h2 style="color: #5000BA; margin-top: 0; font-size: 1.3rem; text-align: center;">Comentarios a las Cláusulas del Contrato</h2>
@@ -869,13 +869,13 @@ export async function registrarDocumentoSocio(
       const nombrePostulante = [uPostulante?.usu_nombres, uPostulante?.usu_apellidos].filter(Boolean).join(" ") || uPostulante?.usu_correo || "Postulante";
       const correoPostulante = uPostulante?.usu_correo || "postulante@tranqi24.com";
       const urlRevision = `https://www.tranqi24.com/panel/socios/${solicitudId}`;
-      const tituloAdmin = `📝 Contrato Firmado Recibido — Postulante: ${nombrePostulante}`;
+      const tituloAdmin = `Contrato Firmado Recibido — Postulante: ${nombrePostulante}`;
 
       const contenidoHTMLAdmin = `
         <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; padding: 22px; color: #111; max-width: 600px; margin: 0 auto; background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 12px;">
           <div style="text-align: center; margin-bottom: 16px;">
             <span style="display: inline-block; background: #ECFDF5; color: #065F46; padding: 6px 14px; border-radius: 999px; font-weight: 800; font-size: 0.82rem; border: 1px solid #10B981;">
-              📝 CONTRATO FIRMADO CARGADO
+              CONTRATO FIRMADO CARGADO
             </span>
           </div>
           <h2 style="color: #05876E; margin-top: 0; font-size: 1.3rem; text-align: center;">Contrato de Sociedad Listo para Verificación</h2>
@@ -1072,8 +1072,8 @@ export async function decidirSolicitudSocio(datos: {
       if (uApplicant) {
         const nombrePostulante = [uApplicant.usu_nombres, uApplicant.usu_apellidos].filter(Boolean).join(" ") || uApplicant.usu_correo;
         const tituloNotif = decision === "aceptada"
-          ? "📋 ¡Credenciales Validadas! — Descarga y Firma tu Contrato de Sociedad"
-          : "⚠️ Observaciones sobre tu Solicitud de Socio Abogado";
+          ? "¡Credenciales Validadas! — Descarga y Firma tu Contrato de Sociedad"
+          : "Observaciones sobre tu Solicitud de Socio Abogado";
 
         const cuerpoHTML = decision === "aceptada" ? `
           <div style="font-family: sans-serif; padding: 20px; color: #111;">
@@ -1213,13 +1213,13 @@ export async function reenviarNotificacionAceptacionAction(solicitudId: string):
   }
 
   const nombrePostulante = [uApplicant.usu_nombres, uApplicant.usu_apellidos].filter(Boolean).join(" ") || uApplicant.usu_correo;
-  const tituloNotif = "🎉 ¡Tu Acreditación como Socio Abogado fue APROBADA! — Descarga y Firma tu Contrato";
+  const tituloNotif = "¡Tu Acreditación como Socio Abogado fue APROBADA! — Descarga y Firma tu Contrato";
 
   const cuerpoHTML = `
     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; padding: 24px; color: #111; max-width: 600px; margin: 0 auto; background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 12px;">
       <div style="text-align: center; margin-bottom: 20px;">
         <span style="display: inline-block; background: #ECFDF5; color: #065F46; padding: 6px 16px; border-radius: 999px; font-weight: 800; font-size: 0.85rem; border: 1px solid #10B981;">
-          🟢 ACREDITACIÓN PROFESIONAL APROBADA
+          ACREDITACIÓN PROFESIONAL APROBADA
         </span>
       </div>
       <h2 style="color: #059669; margin-top: 0; font-size: 1.4rem; text-align: center;">¡Felicitaciones, ${nombrePostulante}!</h2>
@@ -1235,7 +1235,7 @@ export async function reenviarNotificacionAceptacionAction(solicitudId: string):
           <li style="margin-bottom: 10px;">
             <strong>Descarga tu contrato pre-llenado</strong>:<br/>
             <a href="https://www.tranqi24.com/api/solicitud-socio/contrato/descargar?solicitudId=${solicitudId}" style="display: inline-block; margin-top: 4px; color: #5000BA; font-weight: 700; text-decoration: underline;">
-              📥 Descargar Plantilla Oficial de Contrato (.docx)
+              Descargar Plantilla Oficial de Contrato (.docx)
             </a>
           </li>
           <li style="margin-bottom: 10px;">
@@ -1244,7 +1244,7 @@ export async function reenviarNotificacionAceptacionAction(solicitudId: string):
           <li style="margin-bottom: 0;">
             <strong>Sube el contrato firmado</strong> en la plataforma:<br/>
             <a href="https://www.tranqi24.com/panel/solicitud-socio" style="display: inline-block; margin-top: 6px; background: #05876E; color: #FFFFFF; padding: 8px 16px; border-radius: 8px; font-weight: 700; text-decoration: none; font-size: 0.88rem;">
-              📝 Subir Contrato Firmado en mi Panel →
+              Subir Contrato Firmado en mi Panel →
             </a>
           </li>
         </ol>
@@ -1704,12 +1704,12 @@ export async function confirmarContratoSocio(
 
     if (uApplicant) {
       const nombrePostulante = [uApplicant.usu_nombres, uApplicant.usu_apellidos].filter(Boolean).join(" ") || uApplicant.usu_correo;
-      const tituloNotif = "🎉 ¡Bienvenido a tranqi! Contrato Bi-firmado y Cuenta de Socio Abogado Activada";
+      const tituloNotif = "¡Bienvenido a tranqi! Contrato Bi-firmado y Cuenta de Socio Abogado Activada";
       const cuerpoHTML = `
         <div style="font-family: sans-serif; padding: 22px; color: #111; max-width: 600px; margin: 0 auto; background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 12px;">
           <div style="text-align: center; margin-bottom: 16px;">
             <span style="display: inline-block; background: #ECFDF5; color: #065F46; padding: 6px 14px; border-radius: 999px; font-weight: 800; font-size: 0.82rem; border: 1px solid #10B981;">
-              ✨ SOCIO ABOGADO ACREDITADO
+              SOCIO ABOGADO ACREDITADO
             </span>
           </div>
           <h2 style="color: #059669; margin-top: 0; text-align: center;">¡Felicitaciones, Abogado ${nombrePostulante}!</h2>
@@ -1718,9 +1718,9 @@ export async function confirmarContratoSocio(
           </p>
           <div style="background: #F0FDF4; border: 1.5px solid #10B981; border-radius: 8px; padding: 16px; margin: 16px 0;">
             <p style="margin: 0; font-size: 0.88rem; color: #065F46; line-height: 1.5;">
-              ✓ Contrato bi-firmado por ambas partes disponible en tu expediente.<br/>
-              ✓ Rol de <strong>Socio Abogado</strong> activo con acceso completo a casos y agenda.<br/>
-              ✓ Perfil publicado en la red legal de tranqi.
+              Contrato bi-firmado por ambas partes disponible en tu expediente.<br/>
+              Rol de <strong>Socio Abogado</strong> activo con acceso completo a casos y agenda.<br/>
+              Perfil publicado en la red legal de tranqi.
             </p>
           </div>
           <div style="text-align: center; margin: 24px 0;">
@@ -1931,7 +1931,7 @@ export async function guardarYEnviarVersionContratoAction(
 
     if (usuarioDest?.usu_correo) {
       const ahoraIso = new Date().toISOString();
-      const tituloNotif = `📋 Contrato de Sociedad (Versión ${nuevaVersion}) Emitido — Revisa y Firma`;
+      const tituloNotif = `Contrato de Sociedad (Versión ${nuevaVersion}) Emitido — Revisa y Firma`;
       const mensajeNotif = comentarioOperador?.trim()
         ? `El equipo de tranqi ha emitido la versión ${nuevaVersion} de tu contrato con las siguientes observaciones: "${comentarioOperador.trim()}". Ingresa para revisar y firmar.`
         : `El equipo de tranqi ha preparado la versión ${nuevaVersion} de tu contrato de sociedad. Ingresa a tu panel para revisarlo y firmarlo digitalmente.`;
@@ -2047,7 +2047,7 @@ export async function enviarObservacionesContratoAction(
     const destinatariosStaff = await obtenerDestinatariosStaffTranqi(adminSupabase, perfil.usu_id);
     const ahoraIso = new Date().toISOString();
     const nombreSocio = [perfil.usu_nombres, perfil.usu_apellidos].filter(Boolean).join(" ") || perfil.usu_correo;
-    const tituloStaff = `💬 Observaciones al Contrato (v${versionNum}) — Postulante: ${nombreSocio}`;
+    const tituloStaff = `Observaciones al Contrato (v${versionNum}) — Postulante: ${nombreSocio}`;
     const mensajeStaff = `${nombreSocio} ha enviado observaciones sobre el contrato v${versionNum}: "${comentarios.trim()}". Ingresa al detalle de la solicitud para revisar o ajustar las cláusulas.`;
 
     for (const staff of destinatariosStaff) {
