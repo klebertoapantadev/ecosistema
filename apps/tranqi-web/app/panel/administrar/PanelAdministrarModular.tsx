@@ -240,7 +240,7 @@ function SociosWidget() {
                         fontWeight: 800,
                         boxShadow: "0 1px 3px rgba(245, 158, 11, 0.2)",
                       }}>
-                        📝 Propuesta Word ({s.propuestasPendientesCount})
+                        Propuesta Word ({s.propuestasPendientesCount})
                       </span>
                     ) : esUrgenteContrato ? (
                       <span style={{
@@ -256,7 +256,7 @@ function SociosWidget() {
                         fontWeight: 800,
                         boxShadow: "0 1px 3px rgba(16, 185, 129, 0.2)",
                       }}>
-                        📄 Contrato Firmado (Por Confirmar)
+                        Contrato Firmado (Por Confirmar)
                       </span>
                     ) : s.nivelUrgencia === "pendiente_revision" ? (
                       <span style={{
@@ -286,7 +286,7 @@ function SociosWidget() {
                         fontSize: "0.76rem",
                         fontWeight: 600,
                       }}>
-                        ✍️ Esperando Firma Abogado
+                        Esperando Firma Abogado
                       </span>
                     ) : (
                       <span style={{ fontSize: "0.78rem", color: "#9CA3AF" }}>—</span>
@@ -446,7 +446,7 @@ export function PanelAdministrarModular({ negocio = "TRANQ", esSuperAdmin = fals
     setModalPush({
       abierto: true,
       tipo: "advertencia",
-      titulo: "⚠️ Reset Master del Sistema (Tranqi)",
+      titulo: "Reset Master del Sistema (Tranqi)",
       mensaje: "Esta acción eliminará TODOS los usuarios de prueba, perfiles y solicitudes configuradas en Tranqi (conservando únicamente la cuenta SuperAdmin). ¿Deseas ejecutar la purga?",
       mostrarConfirmacion: true,
       alAceptar: async () => {
@@ -458,7 +458,7 @@ export function PanelAdministrarModular({ negocio = "TRANQ", esSuperAdmin = fals
             setModalPush({
               abierto: true,
               tipo: "push",
-              titulo: "💥 Reset Completado Exitosamente",
+              titulo: "Reset Completado Exitosamente",
               mensaje: "El sistema para el negocio Tranqi ha sido reseteado. Se han eliminado todas sus cuentas y perfiles de prueba preservando los demás negocios.",
               alAceptar: () => window.location.reload(),
             });
@@ -466,7 +466,7 @@ export function PanelAdministrarModular({ negocio = "TRANQ", esSuperAdmin = fals
             setModalPush({
               abierto: true,
               tipo: "error",
-              titulo: "❌ Error al Resetear el Sistema",
+              titulo: "Error al Resetear el Sistema",
               mensaje: res.error || "No se pudo resetear el sistema",
             });
           }
@@ -475,7 +475,7 @@ export function PanelAdministrarModular({ negocio = "TRANQ", esSuperAdmin = fals
           setModalPush({
             abierto: true,
             tipo: "error",
-            titulo: "❌ Error al Resetear el Sistema",
+            titulo: "Error al Resetear el Sistema",
             mensaje: msg,
           });
         } finally {
@@ -710,7 +710,7 @@ export function PanelAdministrarModular({ negocio = "TRANQ", esSuperAdmin = fals
                   </h2>
                   {favoritos.includes(widgetActivo) && (
                     <span className="pildora-estado" style={{ background: "var(--amarillo)", color: "var(--negro)", fontSize: "0.65rem" }}>
-                      ⭐ Destacado
+                      Destacado
                     </span>
                   )}
                   {moduloInfoActual.requiereMfa && (
@@ -873,7 +873,7 @@ export function PanelAdministrarModular({ negocio = "TRANQ", esSuperAdmin = fals
             Módulos de Administración Asignados
           </h3>
           <span style={{ fontSize: "0.82rem", color: "var(--panel-gris, #737373)", fontWeight: 600 }}>
-            ⭐ {favoritos.length} Destacados
+            {favoritos.length} Destacados
           </span>
         </div>
 
@@ -1011,7 +1011,7 @@ export function PanelAdministrarModular({ negocio = "TRANQ", esSuperAdmin = fals
                           boxShadow: conteoPropuestasUrgentes > 0 ? "0 2px 6px rgba(220, 38, 38, 0.4)" : "0 2px 6px rgba(217, 119, 6, 0.3)",
                         }}
                       >
-                        {conteoPropuestasUrgentes > 0 ? `🚨 ${conteoPropuestasUrgentes} PROPUESTA${conteoPropuestasUrgentes > 1 ? "S" : ""} WORD` : `🔔 ${conteoPendientesSocios} PENDIENTE${conteoPendientesSocios > 1 ? "S" : ""}`}
+                        {conteoPropuestasUrgentes > 0 ? `${conteoPropuestasUrgentes} PROPUESTA${conteoPropuestasUrgentes > 1 ? "S" : ""} WORD` : `${conteoPendientesSocios} PENDIENTE${conteoPendientesSocios > 1 ? "S" : ""}`}
                       </span>
                     )}
                   </div>

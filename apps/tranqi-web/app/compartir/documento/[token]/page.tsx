@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect } from "react";
 import {
-  Shield, Flame, Clock, Download, XCircle, FileText, KeyRound, CheckCircle2, Layers
+  Shield, Flame, Clock, Download, XCircle, FileText, KeyRound, CheckCircle2, Layers, Image as IconoImagen
 } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
@@ -227,7 +227,7 @@ export default function PaginaDocumentoCompartidoTTL() {
                 {infoEnlace.archivos_resumen && infoEnlace.archivos_resumen.length > 1 ? (
                   <div style={{ background: "#F8FAFC", padding: "12px", borderRadius: "12px", border: "1px solid #E2E8F0" }}>
                     <div style={{ fontSize: "0.78rem", fontWeight: 800, color: "#475569", marginBottom: "6px" }}>
-                      📁 Archivos adjuntos en este documento ({infoEnlace.archivos_resumen.length}):
+                      Archivos adjuntos en este documento ({infoEnlace.archivos_resumen.length}):
                     </div>
                     <ul style={{ margin: 0, paddingLeft: "20px", fontSize: "0.82rem", color: "#64748B" }}>
                       {infoEnlace.archivos_resumen.map((a: any, i: number) => (
@@ -329,7 +329,7 @@ export default function PaginaDocumentoCompartidoTTL() {
 
                     {errorPin && (
                       <div style={{ color: "#DC2626", fontSize: "0.8rem", fontWeight: 700, marginTop: "8px" }}>
-                        ⚠️ {errorPin}
+                        {errorPin}
                       </div>
                     )}
                   </div>
@@ -364,7 +364,7 @@ export default function PaginaDocumentoCompartidoTTL() {
               <div>
                 {documentoDescargado.fue_destruido && (
                   <div style={{ background: "#FEF2F2", border: "1px solid #FCA5A5", borderRadius: "10px", padding: "10px 14px", color: "#991B1B", fontSize: "0.8rem", fontWeight: 700, marginBottom: "16px" }}>
-                    🔥 Este enlace ya ha sido revocado ("Burn on Read"). Guarda tus archivos locales de inmediato.
+                    Este enlace ya ha sido revocado ("Burn on Read"). Guarda tus archivos locales de inmediato.
                   </div>
                 )}
 
@@ -397,7 +397,7 @@ export default function PaginaDocumentoCompartidoTTL() {
                               cursor: "pointer"
                             }}
                           >
-                            <span>{esImg ? "🖼️" : "📄"}</span>
+                            <span>{esImg ? <IconoImagen size={15} aria-label="Imagen" /> : <FileText size={15} aria-label="Documento" />}</span>
                             <span>Parte {idx + 1}: {a.nombre}</span>
                             {esActivo && <CheckCircle2 size={14} color="#5000BA" />}
                           </button>
@@ -435,7 +435,7 @@ export default function PaginaDocumentoCompartidoTTL() {
                 {/* METADATOS TÉCNICOS Y DINÁMICOS */}
                 <div style={{ background: "#F8FAFC", padding: "16px", borderRadius: "14px", fontSize: "0.82rem", marginBottom: "20px", border: "1px solid #E2E8F0" }}>
                   <div style={{ fontWeight: 800, color: "#1E293B", marginBottom: "10px", fontSize: "0.85rem" }}>
-                    📋 Información del Documento:
+                    Información del Documento:
                   </div>
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "10px" }}>
                     {documentoDescargado.titular_nombre && (

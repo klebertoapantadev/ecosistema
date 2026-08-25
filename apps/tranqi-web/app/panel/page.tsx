@@ -178,7 +178,7 @@ function PanelCliente({ saludo, nombre }: { saludo: string | null; nombre: strin
                   Protección jurídica 24/7 en Ecuador, con consultas ilimitadas por chat.
                 </div>
               </div>
-              <span className="badge-activo">✓ Activo</span>
+              <span className="badge-activo">Activo</span>
             </div>
             <div className="tarjeta-proteccion-chips">
               <span className="chip-proteccion">2 abogados asignados</span>
@@ -259,7 +259,7 @@ function PanelAbogado({ nombreCompleto }: { nombreCompleto: string }) {
                   Habilitado para atención de patrocinio en materia Civil, Penal, Laboral y Familia.
                 </div>
               </div>
-              <span className="badge-socio">✓ Socio Activo</span>
+              <span className="badge-socio">Socio Activo</span>
             </div>
             <div className="tarjeta-proteccion-chips">
               <span className="chip-proteccion">Matrícula Verificada</span>
@@ -326,7 +326,7 @@ function PanelAdministrador({ esSuperadmin, esAdminGlobal }: { esSuperadmin: boo
                   Gestión centralizada de miembros, aprobación de socios abogados, configuración SMTP en Vault y auditoría BDD.
                 </div>
               </div>
-              <span className="badge-rol">✓ Operativo</span>
+              <span className="badge-rol">Operativo</span>
             </div>
           </section>
 

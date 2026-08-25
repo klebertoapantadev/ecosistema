@@ -65,7 +65,7 @@ export function EmisionNotificacionesWidget({ negocio }: Props) {
     setToastMsg(null);
 
     if (!asunto.trim()) {
-      setToastMsg({ tipo: "error", texto: "⚠️ El asunto es obligatorio para emitir la notificación." });
+      setToastMsg({ tipo: "error", texto: "El asunto es obligatorio para emitir la notificación." });
       return;
     }
 
@@ -97,7 +97,7 @@ export function EmisionNotificacionesWidget({ negocio }: Props) {
 
       setToastMsg({
         tipo: "exito",
-        texto: `🎉 ${data.mensaje || "Notificación emitida con éxito a los destinatarios."}`
+        texto: `${data.mensaje || "Notificación emitida con éxito a los destinatarios."}`
       });
 
       // Disparar Web Push Notification nativa en el navegador
@@ -117,7 +117,7 @@ export function EmisionNotificacionesWidget({ negocio }: Props) {
 
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Error al conectar con la API de notificaciones.";
-      setToastMsg({ tipo: "error", texto: `❌ ${msg}` });
+      setToastMsg({ tipo: "error", texto: `${msg}` });
     } finally {
       setEnviando(false);
     }
@@ -133,7 +133,7 @@ export function EmisionNotificacionesWidget({ negocio }: Props) {
               CONSOLA TRANSVERSAL DE GOBERNANZA
             </span>
             <h2 style={{ fontSize: "1.2rem", fontWeight: 900, margin: "4px 0", color: "#ffffff" }}>
-              ✈️ Redacción & Despacho de Notificaciones Multicanal ({negocio})
+              Redacción & Despacho de Notificaciones Multicanal ({negocio})
             </h2>
             <p style={{ fontSize: "0.82rem", color: "#c7d2fe", margin: 0 }}>
               Emisión de notificaciones multicanal (In-App, Push, Email y WhatsApp) con editor WYSIWYG / Markdown.
@@ -418,7 +418,7 @@ export function EmisionNotificacionesWidget({ negocio }: Props) {
               )}
 
               <div style={{ marginTop: "12px", fontSize: "0.75rem", color: "#64748b" }}>
-                💡 Variables interpolables disponibles: <code>{"{{nombre_usuario}}"}</code>, <code>{"{{correo}}"}</code>, <code>{"{{negocio}}"}</code>, <code>{"{{fecha}}"}</code>.
+                Variables interpolables disponibles: <code>{"{{nombre_usuario}}"}</code>, <code>{"{{correo}}"}</code>, <code>{"{{negocio}}"}</code>, <code>{"{{fecha}}"}</code>.
               </div>
             </section>
           </div>

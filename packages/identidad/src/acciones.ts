@@ -498,7 +498,7 @@ export async function solicitarCodigoRescateMfa(negocio: string = "tranqi"): Pro
   // Enviar correo de notificación con la Edge Function
   const htmlCorreo = `
     <div style="font-family: Arial, sans-serif; max-width: 520px; margin: 0 auto; border: 1px solid #E4E4E4; border-radius: 12px; padding: 24px; background: #FFFFFF;">
-      <h2 style="color: #5000BA; margin-top: 0;">🔒 Reseteo de Autenticador MFA (PLT-002)</h2>
+      <h2 style="color: #5000BA; margin-top: 0;">Reseteo de Autenticador MFA (PLT-002)</h2>
       <p style="color: #333333; line-height: 1.5;">Has solicitado restablecer tu aplicación autenticadora MFA debido a pérdida de dispositivo o reconfiguración.</p>
       <div style="background: #F3E8FF; border: 1.5px solid #5000BA; border-radius: 10px; padding: 16px; text-align: center; margin: 20px 0;">
         <span style="display: block; font-size: 0.85rem; font-weight: bold; color: #5000BA; text-transform: uppercase; letter-spacing: 0.1em;">Código de Seguridad de Rescate</span>
@@ -513,7 +513,7 @@ export async function solicitarCodigoRescateMfa(negocio: string = "tranqi"): Pro
   await enviarCorreo({
     negocio,
     para: correoUsuario,
-    asunto: "🔒 Código de Rescate para Resetear tu Autenticador MFA",
+    asunto: "Código de Rescate para Resetear tu Autenticador MFA",
     html: htmlCorreo,
   });
 
@@ -858,7 +858,7 @@ export async function guardarConfiguracionTerminos(datos: {
 
   return {
     ok: true,
-    data: { mensaje: `✅ Términos y consentimientos de '${datos.categoria}' guardados correctamente.` },
+    data: { mensaje: `Términos y consentimientos de '${datos.categoria}' guardados correctamente.` },
   };
 }
 

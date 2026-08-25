@@ -223,7 +223,7 @@ export function ModalTerminosWhatsapp({
           }}
         >
           <h4 style={{ fontSize: "1rem", color: "#065F46", marginTop: 0 }}>
-            💬 Cláusula de Consentimiento Expreso para Contacto por WhatsApp
+            Cláusula de Consentimiento Expreso para Contacto por WhatsApp
           </h4>
           <p>
             Al marcar la opción de contacto por WhatsApp en la Plataforma <strong>{negocioNombre}</strong>, autorizas de forma libre, voluntaria, explícita e informada la vinculación de tu número telefónico registrado para la recepción de mensajes automáticos e interactivos de WhatsApp.
@@ -262,7 +262,7 @@ export function ModalTerminosWhatsapp({
               color: "#047857",
             }}
           >
-            🏁 fin de la cláusula de autorización de whatsapp 🏁
+            fin de la cláusula de autorización de whatsapp 
           </div>
         </div>
 

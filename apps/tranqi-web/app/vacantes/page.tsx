@@ -235,7 +235,7 @@ export default function PaginaBolsaEmpleo() {
               </div>
 
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: "16px", borderTop: "1px solid #21262d", marginTop: "16px" }}>
-                <span style={{ fontSize: "0.8rem", color: "#8b949e" }}>📍 {vac.ubicacion} ({vac.modalidad})</span>
+                <span style={{ fontSize: "0.8rem", color: "#8b949e" }}>{vac.ubicacion} ({vac.modalidad})</span>
                 <button
                   onClick={() => abrirModalPostulacion(vac)}
                   style={{ background: "#238636", color: "#ffffff", border: "none", padding: "8px 16px", borderRadius: "6px", fontSize: "0.85rem", fontWeight: 700, cursor: "pointer" }}

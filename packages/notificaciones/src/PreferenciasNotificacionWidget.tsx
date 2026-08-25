@@ -59,7 +59,7 @@ export function PreferenciasNotificacionWidget({ negocio }: Props) {
 
       {guardadoMsg && (
         <div style={{ padding: "12px 16px", borderRadius: "8px", background: "rgba(46, 160, 67, 0.15)", border: "1px solid #2ea043", color: "#3fb950", fontSize: "0.85rem", fontWeight: 600, marginBottom: "20px" }}>
-          ✅ Preferencias de notificación guardadas correctamente.
+          Preferencias de notificación guardadas correctamente.
         </div>
       )}
 
@@ -137,7 +137,7 @@ export function PreferenciasNotificacionWidget({ negocio }: Props) {
               cursor: "pointer"
             }}
           >
-            🔔 Activo (Sin Mute)
+            Activo (Sin Mute)
           </button>
           <button
             type="button"
@@ -153,7 +153,7 @@ export function PreferenciasNotificacionWidget({ negocio }: Props) {
               cursor: "pointer"
             }}
           >
-            ⏱️ Silenciar Hoy
+            ⏱Silenciar Hoy
           </button>
           <button
             type="button"
@@ -169,7 +169,7 @@ export function PreferenciasNotificacionWidget({ negocio }: Props) {
               cursor: "pointer"
             }}
           >
-            📅 Esta Semana
+            Esta Semana
           </button>
           <button
             type="button"
@@ -185,7 +185,7 @@ export function PreferenciasNotificacionWidget({ negocio }: Props) {
               cursor: "pointer"
             }}
           >
-            🗓️ Este Mes
+            Este Mes
           </button>
         </div>
 

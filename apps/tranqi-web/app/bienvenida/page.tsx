@@ -35,7 +35,7 @@ export default async function PaginaBienvenida({ searchParams }: PageProps) {
         {esAbogado ? (
           <>
             <div style={{ background: "rgba(80,0,186,0.1)", border: "1px solid rgba(80,0,186,0.25)", color: "#5000BA", borderRadius: "8px", padding: "6px 12px", fontSize: "0.75rem", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "12px", display: "inline-block" }}>
-              ⚖️ Incorporación al Equipo Jurídico
+              Incorporación al Equipo Jurídico
             </div>
             <div className="saludo-bienvenida">¡Bienvenido(a), Doctor(a)!</div>
             <p style={{ marginTop: "8px", marginBottom: "16px", fontSize: "0.88rem", color: "#555" }}>

@@ -398,7 +398,7 @@ function RecortadorFotoPerfil({
           </div>
 
           <span style={{ fontSize: "0.68rem", color: "#00D09C", fontWeight: 700, marginBottom: "4px" }}>
-            🖐️ Arrastrar para mover
+            Arrastrar para mover
           </span>
 
           <strong style={{ fontSize: "0.92rem", fontWeight: 800, textAlign: "center", color: "#ffffff" }}>
@@ -411,7 +411,7 @@ function RecortadorFotoPerfil({
         <div style={{ flex: 1, minWidth: "240px", display: "flex", flexDirection: "column", gap: "10px" }}>
           <div>
             <label style={{ fontSize: "0.78rem", fontWeight: 700, display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
-              <span>🔍 Zoom ({zoom.toFixed(2)}x)</span>
+              <span>Zoom ({zoom.toFixed(2)}x)</span>
             </label>
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
               <button type="button" onClick={() => setZoom((z) => Math.max(0.5, z - 0.1))} style={btnPillStyle}>
@@ -434,7 +434,7 @@ function RecortadorFotoPerfil({
 
           <div>
             <label style={{ fontSize: "0.78rem", fontWeight: 700, display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
-              <span>↔️ Mover Horizontal (X: {offsetX}px)</span>
+              <span>↔Mover Horizontal (X: {offsetX}px)</span>
             </label>
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
               <button type="button" onClick={() => setOffsetX((x) => x - 5)} style={btnPillStyle}>
@@ -457,7 +457,7 @@ function RecortadorFotoPerfil({
 
           <div>
             <label style={{ fontSize: "0.78rem", fontWeight: 700, display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
-              <span>↕️ Mover Vertical (Y: {offsetY}px)</span>
+              <span>↕Mover Vertical (Y: {offsetY}px)</span>
             </label>
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
               <button type="button" onClick={() => setOffsetY((y) => y - 5)} style={btnPillStyle}>
@@ -643,7 +643,7 @@ function CampoSubidaArchivo({
         </div>
       </div>
 
-      {errorLocal && <p style={{ fontSize: "0.78rem", color: "#DC2626", fontWeight: 700, margin: 0 }}>⚠️ {errorLocal}</p>}
+      {errorLocal && <p style={{ fontSize: "0.78rem", color: "#DC2626", fontWeight: 700, margin: 0 }}>{errorLocal}</p>}
 
       {/* Lista de archivos adjuntados con vista previa */}
       {archivos.length > 0 && (
@@ -835,7 +835,7 @@ function EditorHtmlResumen({ valor, onChange }: { valor: string; onChange: (val:
       const dataUrl = event.target?.result as string;
       if (dataUrl) {
         insertarHtmlEnCursor(
-          `<a href="${dataUrl}" download="${file.name}" target="_blank" rel="noopener noreferrer" style="display:inline-flex; align-items:center; gap:6px; padding:6px 12px; background:#F3E8FF; color:#5000BA; border-radius:8px; text-decoration:none; font-weight:700; font-size:0.82rem; margin:4px 0;">📎 ${file.name} (${formatoTamanoArchivo(file.size)})</a>`
+          `<a href="${dataUrl}" download="${file.name}" target="_blank" rel="noopener noreferrer" style="display:inline-flex; align-items:center; gap:6px; padding:6px 12px; background:#F3E8FF; color:#5000BA; border-radius:8px; text-decoration:none; font-weight:700; font-size:0.82rem; margin:4px 0;">${file.name} (${formatoTamanoArchivo(file.size)})</a>`
         );
       }
     };
@@ -911,7 +911,7 @@ function EditorHtmlResumen({ valor, onChange }: { valor: string; onChange: (val:
 
         <div style={{ width: "1px", height: "18px", background: "#E4E4E4", margin: "0 4px" }} />
         <div style={{ display: "inline-flex", alignItems: "center", gap: "3px", background: "rgba(80,0,186,0.06)", padding: "2px 6px", borderRadius: "6px" }}>
-          <span style={{ fontSize: "0.7rem", fontWeight: 700, color: "var(--violeta, #5000BA)" }}>📐 Tamaño Imagen:</span>
+          <span style={{ fontSize: "0.7rem", fontWeight: 700, color: "var(--violeta, #5000BA)" }}>Tamaño Imagen:</span>
           <button type="button" title="Reducir a 25%" onClick={() => cambiarTamanoImagen("25%")} style={{ ...btnToolStyle, fontSize: "0.7rem", padding: "2px 6px" }}>25%</button>
           <button type="button" title="Reducir a 50%" onClick={() => cambiarTamanoImagen("50%")} style={{ ...btnToolStyle, fontSize: "0.7rem", padding: "2px 6px" }}>50%</button>
           <button type="button" title="Reducir a 75%" onClick={() => cambiarTamanoImagen("75%")} style={{ ...btnToolStyle, fontSize: "0.7rem", padding: "2px 6px" }}>75%</button>
@@ -1347,7 +1347,7 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
         const img = new Image();
         img.onload = () => {
           if (img.width < 700 || img.height < 500) {
-            setAvisoLegibilidadIdentificacion("⚠️ La imagen tiene una resolución moderada. Asegúrate de que los números y nombres sean completamente legibles.");
+            setAvisoLegibilidadIdentificacion("La imagen tiene una resolución moderada. Asegúrate de que los números y nombres sean completamente legibles.");
           } else {
             setAvisoLegibilidadIdentificacion(null);
           }
@@ -1878,7 +1878,7 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
               marginBottom: "12px",
             }}
           >
-            🟡 Solicitud Recibida — En Proceso de Acreditación
+            Solicitud Recibida — En Proceso de Acreditación
           </span>
 
           <h2 style={{ fontSize: "1.5rem", fontWeight: 900, color: "#111111", margin: "0 0 10px 0" }}>
@@ -2217,11 +2217,11 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
 
         {/* Checklist de Criterios de Calidad y Legibilidad */}
         <div style={{ background: "rgba(5, 135, 110, 0.04)", border: "1px solid rgba(5, 135, 110, 0.2)", borderRadius: "10px", padding: "10px 14px", marginTop: "8px", fontSize: "0.78rem", color: "#065F46" }}>
-          <strong style={{ display: "block", marginBottom: "4px", color: "#05876E" }}>📋 Requisitos de Legibilidad para Acreditación:</strong>
+          <strong style={{ display: "block", marginBottom: "4px", color: "#05876E" }}>Requisitos de Legibilidad para Acreditación:</strong>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "6px" }}>
-            <span>✓ Anverso y reverso visibles y sin cortes de bordes.</span>
-            <span>✓ Nombres, apellidos y número de cédula 100% nítidos.</span>
-            <span>✓ Sin reflejos de flash sobre el texto ni sombras oscuras.</span>
+            <span>Anverso y reverso visibles y sin cortes de bordes.</span>
+            <span>Nombres, apellidos y número de cédula 100% nítidos.</span>
+            <span>Sin reflejos de flash sobre el texto ni sombras oscuras.</span>
           </div>
         </div>
 
@@ -2315,8 +2315,8 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
         opciones={opcionesMaterias}
         seleccionados={materiaIds}
         onCambiar={setMateriaIds}
-        placeholderBusqueda="🔍 Buscar especialidades..."
-        labelOtros="✨ Añadir otra especialidad (Personalizado)"
+        placeholderBusqueda="Buscar especialidades..."
+        labelOtros="Añadir otra especialidad (Personalizado)"
       />
 
       <h2 style={{ marginTop: "24px" }}>Cobertura geográfica</h2>
@@ -2337,8 +2337,8 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
             setProvinciaIds(nuevasProvincias);
           }
         }}
-        placeholderBusqueda="🔍 Buscar provincias o cobertura..."
-        labelOtros="✨ Añadir otra provincia o ubicación..."
+        placeholderBusqueda="Buscar provincias o cobertura..."
+        labelOtros="Añadir otra provincia o ubicación..."
       />
 
       <h2 style={{ marginTop: "24px" }}>Experiencia laboral</h2>
@@ -2527,7 +2527,7 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
           {enviando
             ? "Guardando..."
             : !declaracion
-            ? "🔒 Acepta los Términos LOPDP para Enviar Solicitud"
+            ? "Acepta los Términos LOPDP para Enviar Solicitud"
             : solicitudExistente
             ? "Guardar Cambios y Enviar Actualización"
             : "Enviar Solicitud de Socio Abogado"}
@@ -2678,7 +2678,7 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
             onClick={(e) => e.stopPropagation()}
           >
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 20px", borderBottom: "1px solid #E5E7EB" }}>
-              <strong style={{ fontSize: "0.95rem", color: "#111111" }}>🔍 {modalInspeccionDoc.titulo}</strong>
+              <strong style={{ fontSize: "0.95rem", color: "#111111" }}>{modalInspeccionDoc.titulo}</strong>
               <button
                 type="button"
                 onClick={() => setModalInspeccionDoc(null)}

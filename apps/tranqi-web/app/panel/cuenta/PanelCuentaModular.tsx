@@ -401,7 +401,7 @@ export function PanelCuentaModular({ perfil, historial, puedeConmutar = true, ro
                   </h2>
                   {favoritos.includes(widgetActivo) && (
                     <span className="pildora-estado" style={{ background: "var(--amarillo)", color: "var(--negro)", fontSize: "0.65rem" }}>
-                      ⭐ Favorito
+                      Favorito
                     </span>
                   )}
                   {widgetInfoActual.requiereMfa && (
@@ -582,7 +582,7 @@ export function PanelCuentaModular({ perfil, historial, puedeConmutar = true, ro
             Widgets de Mi Cuenta
           </h3>
           <span style={{ fontSize: "0.82rem", color: "var(--panel-gris, #737373)", fontWeight: 600 }}>
-            ⭐ {favoritos.length} Favoritos
+            {favoritos.length} Favoritos
           </span>
         </div>
 

@@ -71,7 +71,7 @@ export function BitacoraNotificacionesWidget({ negocio = "TRANQ" }: Props) {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px", marginBottom: "16px", borderBottom: "1px solid #F1F5F9", paddingBottom: "16px" }}>
         <div>
           <h2 style={{ fontSize: "1.2rem", fontWeight: 900, margin: 0, color: "#0F172A", display: "flex", alignItems: "center", gap: "8px" }}>
-            <BarChart2 size={22} color="#2563EB" /> 📊 Bitácora & Historial de Notificaciones Emitidas ({negocio})
+            <BarChart2 size={22} color="#2563EB" /> Bitácora & Historial de Notificaciones Emitidas ({negocio})
           </h2>
           <p style={{ fontSize: "0.82rem", color: "#64748B", margin: "2px 0 0 0" }}>
             Consulta auditada en tiempo real para Operadores y Administradores. Detalle completo de notificaciones y destinatarios.
@@ -261,7 +261,7 @@ export function BitacoraNotificacionesWidget({ negocio = "TRANQ" }: Props) {
           >
             <div style={{ padding: "20px 24px", background: "#0F172A", color: "#ffffff", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <h3 style={{ margin: 0, fontSize: "1.05rem", fontWeight: 800 }}>
-                📋 Registro Auditado de Notificación
+                Registro Auditado de Notificación
               </h3>
               <button
                 type="button"

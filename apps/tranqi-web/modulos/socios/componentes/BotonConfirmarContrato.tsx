@@ -59,7 +59,7 @@ export function BotonConfirmarContrato({
       }
 
       setModalFirmaTranqiAbierto(false);
-      setExito("🎉 ¡Contrato contra-firmado digitalmente por tranqi! La cuenta de Socio Abogado ha sido formalmente activada.");
+      setExito("¡Contrato contra-firmado digitalmente por tranqi! La cuenta de Socio Abogado ha sido formalmente activada.");
       router.refresh();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Error al procesar la contra-firma");

@@ -240,7 +240,7 @@ export function ModalTerminosServicio({
               color: leidoFinal ? "#047857" : "#6B7280",
             }}
           >
-            🏁 fin del documento de términos y condiciones de servicio 🏁
+            fin del documento de términos y condiciones de servicio 
           </div>
         </div>
 

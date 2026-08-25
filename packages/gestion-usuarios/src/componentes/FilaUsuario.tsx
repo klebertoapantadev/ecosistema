@@ -56,7 +56,7 @@ export function FilaUsuario({
     setModalPush({
       abierto: true,
       tipo: "advertencia",
-      titulo: "⚠️ Eliminar Cuenta de Usuario",
+      titulo: "Eliminar Cuenta de Usuario",
       mensaje: `¿Estás seguro de ELIMINAR la cuenta de "${usuario.usu_correo}"?\n\nSe borrarán todas sus solicitudes, perfiles y datos.`,
       mostrarConfirmacion: true,
       alAceptar: async () => {
@@ -67,7 +67,7 @@ export function FilaUsuario({
           setModalPush({
             abierto: true,
             tipo: "exito",
-            titulo: "✅ Usuario Eliminado",
+            titulo: "Usuario Eliminado",
             mensaje: "El usuario ha sido eliminado exitosamente del sistema.",
             alAceptar: () => window.location.reload(),
           });
@@ -75,7 +75,7 @@ export function FilaUsuario({
           setModalPush({
             abierto: true,
             tipo: "error",
-            titulo: "❌ Error al Eliminar",
+            titulo: "Error al Eliminar",
             mensaje: res.error || "No se pudo eliminar el usuario",
           });
           setEliminando(false);

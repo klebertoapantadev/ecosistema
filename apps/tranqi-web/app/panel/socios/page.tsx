@@ -126,7 +126,7 @@ export default async function PaginaSocios() {
                         fontSize: "0.76rem",
                         fontWeight: 800,
                       }}>
-                        🎉 Contrato Bi-firmado
+                        Contrato Bi-firmado
                       </span>
                     ) : esUrgenteContrato ? (
                       <span style={{
@@ -142,7 +142,7 @@ export default async function PaginaSocios() {
                         fontWeight: 800,
                         boxShadow: "0 1px 3px rgba(99, 102, 241, 0.2)",
                       }}>
-                        📄 Contrato Listo para Contra-firma
+                        Contrato Listo para Contra-firma
                       </span>
                     ) : esUrgentePropuesta ? (
                       <span style={{
@@ -157,7 +157,7 @@ export default async function PaginaSocios() {
                         fontSize: "0.76rem",
                         fontWeight: 800,
                       }}>
-                        📝 Propuesta Word ({s.propuestasPendientesCount})
+                        Propuesta Word ({s.propuestasPendientesCount})
                       </span>
                     ) : s.nivelUrgencia === "esperando_abogado" ? (
                       <span style={{
@@ -172,7 +172,7 @@ export default async function PaginaSocios() {
                         fontSize: "0.76rem",
                         fontWeight: 600,
                       }}>
-                        ✍️ Esperando Firma del Abogado
+                        Esperando Firma del Abogado
                       </span>
                     ) : s.nivelUrgencia === "pendiente_revision" ? (
                       <span style={{

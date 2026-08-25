@@ -15,12 +15,12 @@ export async function notificarNuevoUsuarioRegistrado(params: ParametrosNuevoUsu
     const nombreCompleto = [params.nombres, params.apellidos].filter(Boolean).join(" ") || params.correo;
     const negocioSlug = params.negocio || "tranqi";
     const negocioUpper = (negocioSlug === "tranqi" || negocioSlug === "TRANQI") ? "TRANQ" : negocioSlug.toUpperCase();
-    const titulo = `👤 Nuevo Usuario Registrado: ${nombreCompleto}`;
+    const titulo = `Nuevo Usuario Registrado: ${nombreCompleto}`;
     const urlAccion = `/panel/usuarios?buscar=${encodeURIComponent(params.correo)}`;
 
     const contenidoHTML = `
       <div style="font-family: sans-serif; padding: 16px; color: #111;">
-        <h3 style="color: #5000BA; margin-top: 0;">👤 Nuevo Usuario Registrado</h3>
+        <h3 style="color: #5000BA; margin-top: 0;">Nuevo Usuario Registrado</h3>
         <p>El usuario <strong>${nombreCompleto}</strong> (<code>${params.correo}</code>) se ha registrado exitosamente en la plataforma <strong>${negocioUpper}</strong>.</p>
         <p><a href="${urlAccion}" style="display: inline-block; padding: 10px 18px; background: #5000BA; color: #fff; text-decoration: none; border-radius: 8px; font-weight: 700;">Ver Datos del Usuario</a></p>
       </div>

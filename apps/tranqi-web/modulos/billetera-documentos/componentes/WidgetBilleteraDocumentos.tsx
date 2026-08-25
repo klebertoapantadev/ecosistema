@@ -5,7 +5,8 @@ import {
   Folder, Shield, Upload, Share2, Clock, CheckCircle2, AlertTriangle, XCircle,
   FileText, Search, Eye, Trash2, KeyRound, ExternalLink, Copy, Check, Sparkles,
   Lock, Flame, FileCheck, RefreshCw, Filter, Calendar, Tag, ChevronRight, User,
-  Plus, X, Image as ImageIcon, Bell, BellRing, Info, Edit3, Layers
+  Plus, X, Image as ImageIcon, Bell, BellRing, Info, Edit3, Layers,
+  IdCard, Car, Scroll, GraduationCap, Paperclip, type LucideIcon
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -69,13 +70,18 @@ export interface EnlaceTTL {
   enlace_url: string;
 }
 
-const CATEGORIAS_CONFIG: Record<string, { label: string; icono: string; color: string; desc: string }> = {
-  todas: { label: "Todos los Documentos", icono: "📁", color: "#5000BA", desc: "Bóveda completa de documentos personales y profesionales" },
-  identidad: { label: "Identidad & Personal", icono: "🪪", color: "#2563EB", desc: "Cédulas, licencias de conducir, pasaportes y votación" },
-  vehicular: { label: "Vehicular & Seguros", icono: "🚗", color: "#05876E", desc: "Matrículas vehiculares, SOAT y pólizas de auto" },
-  contratos: { label: "Contratos & Servicios", icono: "📜", color: "#D97706", desc: "Arrendamientos, servicios residenciales y seguros médicos" },
-  profesional: { label: "Profesional & RUC", icono: "🎓", color: "#7C3AED", desc: "Títulos universitarios, Foro de Abogados, RUC y nombramientos" },
-  otros: { label: "Otros Documentos", icono: "📎", color: "#6B7280", desc: "Garantías, certificaciones y comprobantes varios" }
+/* TRQ-010: el catalogo guarda el COMPONENTE del icono, no un carácter.
+   §5 del sistema visual: un emoji renderiza distinto por SO/navegador y no se
+   puede afinar (grosor de trazo, tamaño exacto, color); un icono de trazo si.
+   Se va tambien el `color` por categoria -- seis colores ajenos a la paleta
+   para seis carpetas que no compiten entre si (§3, regla 1). */
+const CATEGORIAS_CONFIG: Record<string, { label: string; Icono: LucideIcon; desc: string }> = {
+  todas:       { label: "Todos los documentos",   Icono: Folder,        desc: "Tu bóveda completa" },
+  identidad:   { label: "Identidad",              Icono: IdCard,        desc: "Cédula, licencia, pasaporte y votación" },
+  vehicular:   { label: "Vehículos y seguros",    Icono: Car,           desc: "Matrícula, SOAT y pólizas de auto" },
+  contratos:   { label: "Contratos y servicios",  Icono: Scroll,        desc: "Arriendo, servicios y seguros médicos" },
+  profesional: { label: "Profesional y RUC",      Icono: GraduationCap, desc: "Títulos, Foro de Abogados y RUC" },
+  otros:       { label: "Otros",                  Icono: Paperclip,     desc: "Garantías y comprobantes varios" }
 };
 
 const OPCIONES_ANTICIPACION_ALERTA = [
@@ -210,8 +216,8 @@ export function WidgetBilleteraDocumentos({ negocio = "TRANQ", onCerrar }: Props
           setMetadatosDinamicos(listaSugerida);
         }
 
-        setResumenAria(a.resumenOcr || "✨ Aria identificó parámetros clave. Puedes editarlos, eliminarlos o agregar más.");
-        mostrarToast("✨ Parámetros analizados por Aria con éxito.", "info");
+        setResumenAria(a.resumenOcr || "Aria identificó parámetros clave. Puedes editarlos, eliminarlos o agregar más.");
+        mostrarToast("Parámetros analizados por Aria con éxito.", "info");
       }
     } catch (err) {
       console.warn("Aviso en análisis Aria:", err);
@@ -364,7 +370,7 @@ export function WidgetBilleteraDocumentos({ negocio = "TRANQ", onCerrar }: Props
       const json = await res.json();
 
       if (json.ok) {
-        mostrarToast("✅ Documento y metadatos dinámicos resguardados exitosamente.");
+        mostrarToast("Documento y metadatos dinámicos resguardados exitosamente.");
         setModalSubirAbierto(false);
         limpiarFormularioSubida();
         cargarDocumentos();
@@ -428,7 +434,7 @@ export function WidgetBilleteraDocumentos({ negocio = "TRANQ", onCerrar }: Props
       if (json.ok && json.data) {
         const urlFinal = json.data.enlace_url || json.data.enlaceCompleto || "";
         setEnlaceGenerado(urlFinal);
-        mostrarToast("🔗 Enlace efímero generado.");
+        mostrarToast("Enlace efímero generado.");
         abrirCompartir(docParaCompartir);
       } else {
         mostrarToast(json.error || "Error al generar enlace", "error");
@@ -443,7 +449,7 @@ export function WidgetBilleteraDocumentos({ negocio = "TRANQ", onCerrar }: Props
   const copiarEnlace = (url: string) => {
     navigator.clipboard.writeText(url);
     setCopiado(true);
-    mostrarToast("📋 Enlace copiado al portapapeles");
+    mostrarToast("Enlace copiado al portapapeles");
     setTimeout(() => setCopiado(false), 2500);
   };
 
@@ -452,7 +458,7 @@ export function WidgetBilleteraDocumentos({ negocio = "TRANQ", onCerrar }: Props
       const res = await fetch(`/api/billetera/compartir?token=${token}`, { method: "DELETE" });
       const json = await res.json();
       if (json.ok) {
-        mostrarToast("🗑️ Enlace revocado.");
+        mostrarToast("Enlace revocado.");
         if (docParaCompartir) abrirCompartir(docParaCompartir);
       }
     } catch (e: any) {
@@ -467,7 +473,7 @@ export function WidgetBilleteraDocumentos({ negocio = "TRANQ", onCerrar }: Props
       const res = await fetch(`/api/billetera/documentos?id=${docParaEliminar.doc_id}`, { method: "DELETE" });
       const json = await res.json();
       if (json.ok) {
-        mostrarToast("🗑️ Documento eliminado de la billetera.");
+        mostrarToast("Documento eliminado de la billetera.");
         setDocParaEliminar(null);
         cargarDocumentos();
       } else {
@@ -640,7 +646,7 @@ export function WidgetBilleteraDocumentos({ negocio = "TRANQ", onCerrar }: Props
                 transition: "all 0.15s ease"
               }}
             >
-              <span>{cfg.icono}</span>
+              <cfg.Icono size={16} aria-hidden="true" />
               <span>{cfg.label}</span>
               <span
                 style={{
@@ -705,9 +711,9 @@ export function WidgetBilleteraDocumentos({ negocio = "TRANQ", onCerrar }: Props
             }}
           >
             <option value="todos">Todos los Estados</option>
-            <option value="vigente">🟢 Solo Vigentes</option>
-            <option value="por_vencer">🟡 Por Vencer (Alerta Activa)</option>
-            <option value="vencido">🔴 Caducados</option>
+            <option value="vigente">Solo Vigentes</option>
+            <option value="por_vencer">Por Vencer (Alerta Activa)</option>
+            <option value="vencido">Caducados</option>
           </select>
 
           <button
@@ -768,7 +774,7 @@ export function WidgetBilleteraDocumentos({ negocio = "TRANQ", onCerrar }: Props
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: "16px" }}>
           {documentosFiltrados.map((doc) => {
             const catConfig = CATEGORIAS_CONFIG[doc.doc_categoria] || CATEGORIAS_CONFIG["otros"] || {
-              label: "Otros", icono: "📎", color: "#6B7280", desc: ""
+              label: "Otros", Icono: Paperclip, desc: ""
             };
             const listaAdjuntos = doc.doc_archivos || (doc.doc_archivo_nombre ? [{
               id: "p1",
@@ -800,19 +806,13 @@ export function WidgetBilleteraDocumentos({ negocio = "TRANQ", onCerrar }: Props
                   {/* CABECERA TARJETA */}
                   <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: "10px" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                      <span style={{ fontSize: "1.3rem" }}>{catConfig.icono}</span>
-                      <div style={{ display: "flex", gap: "4px", flexWrap: "wrap" }}>
-                        <span
-                          style={{
-                            fontSize: "0.68rem",
-                            fontWeight: 800,
-                            textTransform: "uppercase",
-                            color: catConfig.color,
-                            background: `${catConfig.color}15`,
-                            padding: "2px 8px",
-                            borderRadius: "6px"
-                          }}
-                        >
+                      <catConfig.Icono size={20} aria-hidden="true" />
+                      <div className="fila-chips">
+                        {/* TRQ-010: la categoría ya la dicen el icono de al lado y la
+                            palabra de dentro. Con un color propio por categoría, seis
+                            carpetas que no compiten entre sí producían seis acentos
+                            distintos en la misma rejilla (§3, regla 1). */}
+                        <span className="chip-origen">
                           {catConfig.label}
                         </span>
                         {totalPartes > 1 && (
@@ -826,7 +826,7 @@ export function WidgetBilleteraDocumentos({ negocio = "TRANQ", onCerrar }: Props
                               borderRadius: "6px"
                             }}
                           >
-                            🗂️ {totalPartes} partes
+                            {totalPartes} partes
                           </span>
                         )}
                       </div>
@@ -862,7 +862,7 @@ export function WidgetBilleteraDocumentos({ negocio = "TRANQ", onCerrar }: Props
                         <span>Caduca: <strong>{new Date(doc.doc_fecha_caducidad).toLocaleDateString()}</strong></span>
                         {doc.doc_alertar_caducidad !== false && (
                           <span style={{ fontSize: "0.68rem", color: "#5000BA", background: "#F3E8FF", padding: "1px 6px", borderRadius: "4px", fontWeight: 700 }}>
-                            🔔 {mesesAlerta}m
+                            {mesesAlerta}m
                           </span>
                         )}
                       </div>
@@ -1067,7 +1067,7 @@ export function WidgetBilleteraDocumentos({ negocio = "TRANQ", onCerrar }: Props
                 <div style={{ marginBottom: "16px" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
                     <span style={{ fontSize: "0.78rem", fontWeight: 800, color: "#374151" }}>
-                      📁 Archivos Adjuntos ({archivosSeleccionados.length}):
+                      Archivos Adjuntos ({archivosSeleccionados.length}):
                     </span>
                     <button
                       type="button"
@@ -1088,7 +1088,7 @@ export function WidgetBilleteraDocumentos({ negocio = "TRANQ", onCerrar }: Props
                       }}
                     >
                       <Sparkles size={13} className={analizandoConAria ? "anim-girar" : ""} />
-                      {analizandoConAria ? "Aria Analizando..." : "✨ Re-analizar con Aria (IA)"}
+                      {analizandoConAria ? "Aria Analizando..." : "Re-analizar con Aria (IA)"}
                     </button>
                   </div>
 
@@ -1167,11 +1167,11 @@ export function WidgetBilleteraDocumentos({ negocio = "TRANQ", onCerrar }: Props
                     onChange={(e) => setNuevaCategoria(e.target.value)}
                     style={{ width: "100%", padding: "8px 12px", borderRadius: "8px", border: "1px solid #D1D5DB", fontSize: "0.85rem" }}
                   >
-                    <option value="identidad">🪪 Identidad & Personal</option>
-                    <option value="vehicular">🚗 Vehicular & Seguros</option>
-                    <option value="contratos">📜 Contratos & Servicios</option>
-                    <option value="profesional">🎓 Profesional & RUC</option>
-                    <option value="otros">📎 Otros Documentos</option>
+                    <option value="identidad">Identidad & Personal</option>
+                    <option value="vehicular">Vehicular & Seguros</option>
+                    <option value="contratos">Contratos & Servicios</option>
+                    <option value="profesional">Profesional & RUC</option>
+                    <option value="otros">Otros Documentos</option>
                   </select>
                 </div>
               </div>
@@ -1453,7 +1453,7 @@ export function WidgetBilleteraDocumentos({ negocio = "TRANQ", onCerrar }: Props
             {/* GENERADOR DE ENLACE */}
             <div style={{ background: "#F8FAFC", borderRadius: "14px", padding: "18px", border: "1px solid #E2E8F0", marginBottom: "18px" }}>
               <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 800, color: "#1E293B", marginBottom: "8px" }}>
-                ⏱️ Tiempo de Expiración (TTL)
+                ⏱Tiempo de Expiración (TTL)
               </label>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "8px", marginBottom: "14px" }}>
                 {[
@@ -1462,7 +1462,7 @@ export function WidgetBilleteraDocumentos({ negocio = "TRANQ", onCerrar }: Props
                   { id: "6h", label: "6 Horas" },
                   { id: "24h", label: "24 Horas" },
                   { id: "7d", label: "7 Días" },
-                  { id: "una_vista", label: "🔥 1 Sola Vista" }
+                  { id: "una_vista", label: "1 Sola Vista" }
                 ].map(op => (
                   <button
                     key={op.id}
@@ -1492,7 +1492,7 @@ export function WidgetBilleteraDocumentos({ negocio = "TRANQ", onCerrar }: Props
 
               <div style={{ marginBottom: "14px" }}>
                 <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, color: "#334155", marginBottom: "4px" }}>
-                  🔒 PIN de Seguridad (Opcional, 4 dígitos)
+                  PIN de Seguridad (Opcional, 4 dígitos)
                 </label>
                 <input
                   type="password"
@@ -1527,7 +1527,7 @@ export function WidgetBilleteraDocumentos({ negocio = "TRANQ", onCerrar }: Props
             {enlaceGenerado && (
               <div style={{ background: "#ECFDF5", border: "1.5px solid #A7F3D0", borderRadius: "14px", padding: "16px", marginBottom: "18px" }}>
                 <div style={{ fontSize: "0.8rem", fontWeight: 800, color: "#065F46", marginBottom: "6px" }}>
-                  ✅ Enlace Efímero Generado:
+                  Enlace Efímero Generado:
                 </div>
                 <div style={{ display: "flex", gap: "8px" }}>
                   <input
@@ -1572,7 +1572,7 @@ export function WidgetBilleteraDocumentos({ negocio = "TRANQ", onCerrar }: Props
                     >
                       <div>
                         <div style={{ fontWeight: 700, color: enl.esta_vigente ? "#111827" : "#9CA3AF" }}>
-                          Modo: {enl.ttl_modo_expiracion} {enl.ttl_una_sola_vista && "🔥 (1 vista)"} {enl.requiere_pin && "🔒 (PIN)"}
+                          Modo: {enl.ttl_modo_expiracion} {enl.ttl_una_sola_vista && "(1 vista)"} {enl.requiere_pin && "(PIN)"}
                         </div>
                         <div style={{ color: "#6B7280", fontSize: "0.72rem" }}>
                           {enl.esta_vigente ? `Expira: ${new Date(enl.ttl_expira_en).toLocaleString()}` : "Inactivo / Expirado"} • Vistas: {enl.ttl_visitas_conteo}

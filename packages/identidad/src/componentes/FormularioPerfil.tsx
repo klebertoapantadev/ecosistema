@@ -142,7 +142,7 @@ export function FormularioPerfil({ inicial }: Props) {
 
     setGuardando(false);
     if (res.ok) {
-      setMensaje({ tipo: "exito", texto: "✅ Perfil, WhatsApp y correos de notificación guardados correctamente." });
+      setMensaje({ tipo: "exito", texto: "Perfil, WhatsApp y correos de notificación guardados correctamente." });
       setTimeout(() => setMensaje(null), 4000);
     } else {
       setMensaje({ tipo: "error", texto: res.error || "No se pudo actualizar el perfil." });

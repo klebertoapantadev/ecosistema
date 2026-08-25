@@ -219,7 +219,7 @@ export function ModalEditarWidget({
               }}
             >
               <FolderCode size={14} color="var(--violeta, #5000BA)" />
-              📁 Ruta Física del Componente Fuente (.tsx)
+              Ruta Física del Componente Fuente (.tsx)
             </label>
             <code
               style={{

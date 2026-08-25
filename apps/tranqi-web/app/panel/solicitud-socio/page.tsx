@@ -111,7 +111,7 @@ export default async function PaginaSolicitudSocio() {
       {solicitud && (
         <div style={{ background: "var(--violeta-suave, #F3E8FF)", border: "1px solid var(--violeta, #5000BA)", padding: "14px 18px", borderRadius: "12px", marginBottom: "20px" }}>
           <p style={{ margin: 0, fontWeight: 700, color: "var(--violeta, #5000BA)", fontSize: "0.88rem" }}>
-            ℹ️ Tienes una solicitud registrada enviada el {new Date(solicitud.ssc_enviada_en || solicitud.ssc_creado_en).toLocaleDateString("es-EC")}. Puedes modificar tus datos o adjuntar nuevos archivos a continuación y enviar una actualización.
+            ℹTienes una solicitud registrada enviada el {new Date(solicitud.ssc_enviada_en || solicitud.ssc_creado_en).toLocaleDateString("es-EC")}. Puedes modificar tus datos o adjuntar nuevos archivos a continuación y enviar una actualización.
           </p>
         </div>
       )}

@@ -43,7 +43,7 @@ export function BotonImpresionAutomatica() {
       </button>
 
       <span style={{ fontSize: "0.85rem", color: "#4B5563", fontWeight: 700 }}>
-        📄 Presiona Ctrl+P o haz clic en Imprimir para Guardar como PDF
+        Presiona Ctrl+P o haz clic en Imprimir para Guardar como PDF
       </span>
 
       <button

@@ -91,7 +91,7 @@ export function WidgetConfiguracionMfa({ negocio = "tranqi", correoUsuario = "",
     setModo("configurar"); // Transición automática al código QR
     setMensaje({
       tipo: "exito",
-      texto: "🔓 MFA anterior desvinculado con éxito. Escanea el nuevo código QR para vincular tu nueva app.",
+      texto: "MFA anterior desvinculado con éxito. Escanea el nuevo código QR para vincular tu nueva app.",
     });
   };
 
@@ -116,7 +116,7 @@ export function WidgetConfiguracionMfa({ negocio = "tranqi", correoUsuario = "",
 
     setMfaActivo(true);
     setModo("estado");
-    setMensaje({ tipo: "exito", texto: "✅ ¡Autenticador MFA activado y configurado correctamente!" });
+    setMensaje({ tipo: "exito", texto: "¡Autenticador MFA activado y configurado correctamente!" });
     if (onExitoAccion) onExitoAccion();
   };
 
@@ -207,7 +207,7 @@ export function WidgetConfiguracionMfa({ negocio = "tranqi", correoUsuario = "",
                 color: mfaActivo ? "#FFF" : "#444",
               }}
             >
-              {mfaActivo ? "MFA ACTIVADO ✅" : "INACTIVO 🔒"}
+              {mfaActivo ? "MFA ACTIVADO " : "INACTIVO "}
             </span>
           </div>
 

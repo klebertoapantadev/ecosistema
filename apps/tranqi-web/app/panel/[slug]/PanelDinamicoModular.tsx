@@ -458,7 +458,7 @@ export function PanelDinamicoModular({ slug, negocio }: Props) {
         return (
           <div style={{ padding: "30px", background: "#ffffff", borderRadius: "12px", border: "1px solid #E4E4E4" }}>
             <h4 style={{ fontSize: "1rem", fontWeight: 800, color: "var(--violeta, #5000BA)", marginBottom: "8px" }}>
-              ⚡ Módulo Operativo: {wClave.toUpperCase()}
+              Módulo Operativo: {wClave.toUpperCase()}
             </h4>
             <p style={{ fontSize: "0.85rem", color: "#666" }}>
               Módulo dinámico activo y vinculado a este panel.

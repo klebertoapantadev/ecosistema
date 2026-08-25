@@ -132,7 +132,7 @@ export function EditorContratoOperador({
         throw new Error(res.error);
       }
 
-      setExito(`🎉 ¡Contrato Versión ${res.data.numeroVersion} emitido y enviado al postulante exitosamente!`);
+      setExito(`¡Contrato Versión ${res.data.numeroVersion} emitido y enviado al postulante exitosamente!`);
       setComentarioOperador("");
       router.refresh();
     } catch (err: unknown) {
@@ -249,7 +249,7 @@ export function EditorContratoOperador({
               boxShadow: modo === "EDITAR" ? "0 2px 4px rgba(0,0,0,0.08)" : "none",
             }}
           >
-            ✏️ Editor Markdown
+            Editor Markdown
           </button>
 
           <button
@@ -272,7 +272,7 @@ export function EditorContratoOperador({
             }}
           >
             {cargandoPreview ? <Loader2 size={14} className="animate-spin" /> : <Eye size={14} />}
-            👁️ Vista Previa PDF
+            Vista Previa PDF
           </button>
         </div>
       </div>
@@ -521,7 +521,7 @@ export function EditorContratoOperador({
                   >
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
                       <span style={{ fontWeight: 800, color: esObservacion ? "#92400E" : "#1E293B" }}>
-                        {esObservacion ? "💬 Observación del Solicitante" : `Versión ${v.vcs_numero_version} (${v.vcs_rol_creador})`}
+                        {esObservacion ? "Observación del Solicitante" : `Versión ${v.vcs_numero_version} (${v.vcs_rol_creador})`}
                       </span>
                       <span style={{ fontSize: "0.72rem", color: "#64748B" }}>
                         {new Date(v.vcs_creado_en).toLocaleString("es-EC")}

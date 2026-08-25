@@ -134,7 +134,7 @@ export function ConsultaUsuariosPerfilesWidget({ negocio = "TRANQ" }: Props) {
     setModalPush({
       abierto: true,
       tipo: "advertencia",
-      titulo: "⚠️ Resetear Sistema",
+      titulo: "Resetear Sistema",
       mensaje: `Esta acción eliminará TODOS los usuarios de prueba, perfiles y solicitudes configuradas en la base de datos (conservando únicamente la cuenta SuperAdmin). ¿Deseas continuar?`,
       mostrarConfirmacion: true,
       alAceptar: async () => {
@@ -146,7 +146,7 @@ export function ConsultaUsuariosPerfilesWidget({ negocio = "TRANQ" }: Props) {
             setModalPush({
               abierto: true,
               tipo: "push",
-              titulo: "💥 Sistema reseteado",
+              titulo: "Sistema reseteado",
               mensaje: `El sistema para el negocio "${negocio}" ha sido reseteado.`,
               alAceptar: () => window.location.reload(),
             });
@@ -154,7 +154,7 @@ export function ConsultaUsuariosPerfilesWidget({ negocio = "TRANQ" }: Props) {
             setModalPush({
               abierto: true,
               tipo: "error",
-              titulo: "❌ Error al resetear",
+              titulo: "Error al resetear",
               mensaje: res.error || "No se pudo resetear el sistema",
             });
           }
@@ -162,7 +162,7 @@ export function ConsultaUsuariosPerfilesWidget({ negocio = "TRANQ" }: Props) {
           setModalPush({
             abierto: true,
             tipo: "error",
-            titulo: "❌ Error al resetear",
+            titulo: "Error al resetear",
             mensaje: err?.message || "Ocurrió un error inesperado",
           });
         } finally {
@@ -197,7 +197,7 @@ export function ConsultaUsuariosPerfilesWidget({ negocio = "TRANQ" }: Props) {
           </div>
           <div>
             <h2 style={{ fontSize: "1.2rem", fontWeight: 800, margin: 0, color: "#111111" }}>
-              👥 Gestión de Usuarios, Membresías & Asignación de Roles
+              Gestión de Usuarios, Membresías & Asignación de Roles
             </h2>
             <p style={{ fontSize: "0.84rem", color: "#666666", margin: "2px 0 0 0" }}>
               Directorio unificado de miembros, asignación/revocación de perfiles en tiempo real y eliminación.
@@ -372,7 +372,7 @@ export function ConsultaUsuariosPerfilesWidget({ negocio = "TRANQ" }: Props) {
         <div>
           <div style={{ background: "#F9FAFB", border: "1px solid #E5E7EB", borderRadius: "12px", padding: "16px", marginBottom: "20px" }}>
             <h3 style={{ fontSize: "0.95rem", fontWeight: 800, margin: "0 0 8px 0", color: "var(--violeta, #5000BA)" }}>
-              🔒 Matriz de Jerarquía de Permisos & Gobernanza BDD (1–100)
+              Matriz de Jerarquía de Permisos & Gobernanza BDD (1–100)
             </h3>
             <p style={{ fontSize: "0.82rem", color: "#4B5563", margin: 0, lineHeight: 1.5 }}>
               Selecciona un perfil para consultar sus capacidades operativas, techo de nivel jerárquico y widgets accesibles en cada panel del ecosistema.
@@ -417,7 +417,7 @@ export function ConsultaUsuariosPerfilesWidget({ negocio = "TRANQ" }: Props) {
             <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginBottom: "16px" }}>
               {perfilObjConsulta.paneles.map((pan) => (
                 <span key={pan} style={{ background: "#EEF2FF", border: "1px solid #C7D2FE", color: "#3730A3", padding: "4px 12px", borderRadius: "12px", fontWeight: 700, fontSize: "0.78rem" }}>
-                  📁 {pan}
+                  {pan}
                 </span>
               ))}
             </div>

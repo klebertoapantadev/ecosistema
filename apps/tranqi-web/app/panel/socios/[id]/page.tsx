@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { CheckCircle2, XCircle, ExternalLink, Download, FileText, X } from "lucide-react";
+import { CheckCircle2, XCircle, ExternalLink, Download, FileText, X, Scale, PenLine } from "lucide-react";
 import {
   obtenerSolicitudDetalle,
   obtenerAbogadoPorSolicitud,
@@ -74,7 +74,7 @@ export default async function PaginaDetalleSocio({ params }: { params: Promise<{
       {/* Cabecera con Botón Circular de Cierre (X) unificado */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          <span style={{ fontSize: "1.3rem" }}>⚖️</span>
+          <Scale size={20} aria-hidden="true" />
           <div>
             <h1 style={{ margin: 0, fontSize: "1.25rem", fontWeight: 800, color: "#111827" }}>
               Revisión y Gestión de Socio Abogado
@@ -132,7 +132,7 @@ export default async function PaginaDetalleSocio({ params }: { params: Promise<{
 
       <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "20px" }}>
         <span className={`chip-estado-solicitud chip-${solicitud.ssc_estado}`} style={{ fontSize: "0.85rem", fontWeight: 800 }}>
-          {esReingreso ? "🟡 Reingreso / Actualizada (Pendiente)" : (ETIQUETA_ESTADO[solicitud.ssc_estado] || solicitud.ssc_estado)}
+          {esReingreso ? "Reingreso / Actualizada (Pendiente)" : (ETIQUETA_ESTADO[solicitud.ssc_estado] || solicitud.ssc_estado)}
         </span>
         {revisiones.length > 0 && (
           <span style={{ fontSize: "0.78rem", fontWeight: 700, color: "#6B7280", background: "#F3F4F6", padding: "4px 10px", borderRadius: "12px" }}>
@@ -236,7 +236,7 @@ export default async function PaginaDetalleSocio({ params }: { params: Promise<{
             boxShadow: "0 4px 12px rgba(245, 158, 11, 0.12)",
           }}>
             <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "8px" }}>
-              <span style={{ fontSize: "1.3rem" }}>📝</span>
+              <PenLine size={20} aria-hidden="true" />
               <div>
                 <h2 style={{ margin: 0, fontSize: "1.05rem", color: "#92400E", fontWeight: 800 }}>
                   Propuestas de Modificación al Contrato ({propuestasContrato.length})
@@ -316,7 +316,7 @@ export default async function PaginaDetalleSocio({ params }: { params: Promise<{
       {revisiones.length > 0 && (
         <div className="tarjeta-panel detalle-solicitud" style={{ border: "1.5px solid #E5E7EB", borderRadius: "14px", background: "#FFFFFF", marginBottom: "20px" }}>
           <h2 style={{ display: "flex", alignItems: "center", gap: "8px", color: "#111827", fontSize: "1.1rem", marginTop: 0 }}>
-            📋 Historial de Revisiones, Acciones y Observaciones
+            Historial de Revisiones, Acciones y Observaciones
           </h2>
           <p style={{ fontSize: "0.82rem", color: "#6B7280", marginTop: "-4px", marginBottom: "16px" }}>
             Bitácora cronológica de decisiones, observaciones de admisibilidad y reingresos del postulante.
@@ -352,7 +352,7 @@ export default async function PaginaDetalleSocio({ params }: { params: Promise<{
                           color: "#FFFFFF",
                         }}
                       >
-                        {esReingresoItem ? "🔄 Reingreso / Actualización" : esRechazo ? "🔴 No Aceptada / Observada" : esAprobado ? "🟢 Aprobada" : "🔵 En Revisión"}
+                        {esReingresoItem ? "Reingreso / Actualización" : esRechazo ? "No Aceptada / Observada" : esAprobado ? "Aprobada" : "En Revisión"}
                       </span>
                       <span style={{ fontSize: "0.82rem", fontWeight: 700, color: "#374151" }}>
                         {revisorTxt}

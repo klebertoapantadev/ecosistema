@@ -24,9 +24,9 @@ export function TarjetaEstadoSolicitudHome({ solicitud }: Props) {
 
   const CONFIG: Record<string, { titulo: string; desc: string; chip: string; bg: string; border: string; color: string }> = {
     aceptada: {
-      titulo: "🎉 ¡Solicitud Aprobada! — Descarga y Firma tu Contrato de Sociedad",
+      titulo: "¡Solicitud Aprobada! — Descarga y Firma tu Contrato de Sociedad",
       desc: "Tu postulación ha sido APROBADA. Para culminar tu acreditación, descarga tu contrato pre-llenado, fírmalo y súbelo para activar tus credenciales de Abogado.",
-      chip: "🟢 Solicitud Aprobada (Firma de Contrato Requerida)",
+      chip: "Solicitud Aprobada (Firma de Contrato Requerida)",
       bg: "rgba(16, 185, 129, 0.08)",
       border: "#10B981",
       color: "#065F46",
@@ -34,7 +34,7 @@ export function TarjetaEstadoSolicitudHome({ solicitud }: Props) {
     enviada: {
       titulo: "Solicitud de Socio Abogado — Actualizada / En Proceso",
       desc: "Tu postulación ha sido enviada o actualizada exitosamente. Nuestro equipo de acreditación profesional está revisando tu expediente y documentos.",
-      chip: "🟡 Solicitud Recibida / Actualizada (Pendiente de Revisión)",
+      chip: "Solicitud Recibida / Actualizada (Pendiente de Revisión)",
       bg: "rgba(245, 158, 11, 0.08)",
       border: "#F59E0B",
       color: "#B45309",
@@ -42,7 +42,7 @@ export function TarjetaEstadoSolicitudHome({ solicitud }: Props) {
     en_revision: {
       titulo: "Solicitud de Socio Abogado — En Revisión Legal",
       desc: "Estamos validando tus credenciales en los portales oficiales de la SENESCYT y Consejo de la Judicatura.",
-      chip: "🔵 En Revisión Legal",
+      chip: "En Revisión Legal",
       bg: "rgba(59, 130, 246, 0.08)",
       border: "#3B82F6",
       color: "#1D4ED8",
@@ -50,7 +50,7 @@ export function TarjetaEstadoSolicitudHome({ solicitud }: Props) {
     rechazada: {
       titulo: "Solicitud de Socio Abogado — Requiere Corrección / Actualización",
       desc: "Se identificaron observaciones en la documentación o datos ingresados. Por favor actualiza la información y vuelve a enviar.",
-      chip: "🔴 Requiere Corrección / Actualización",
+      chip: "Requiere Corrección / Actualización",
       bg: "rgba(239, 68, 68, 0.08)",
       border: "#EF4444",
       color: "#B91C1C",
@@ -60,7 +60,7 @@ export function TarjetaEstadoSolicitudHome({ solicitud }: Props) {
   const info = CONFIG[estado] ?? {
     titulo: "Solicitud de Socio Abogado — En Curso (Incompleta)",
     desc: "Tienes un proceso de registro como socio abogado iniciado. Puedes completarlo, reiniciarlo o eliminarlo en cualquier momento.",
-    chip: "🟠 En Curso (Incompleta)",
+    chip: "En Curso (Incompleta)",
     bg: "rgba(249, 115, 22, 0.08)",
     border: "#F97316",
     color: "#C2410C",
