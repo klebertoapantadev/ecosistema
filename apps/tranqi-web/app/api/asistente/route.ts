@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
+import { firmarCapsula, invocarAgente, resolverAgenteDesdeEntorno } from "@eco/agentes-ia";
+import { obtenerPerfilActual } from "@eco/identidad";
 import {
-  firmarCapsula,
-  invocarAgente,
-  resolverAgenteDesdeEntorno,
-  type RolAsistente,
-} from "@eco/agentes-ia";
-import { obtenerMembresia, obtenerPerfilActual } from "@eco/identidad";
+  modoActivoDelPanel,
+  rolConAsistente,
+  type RolConAsistente,
+} from "../../../modulos/asistente/rol";
 import { crearClienteServidor } from "@eco/supabase/servidor";
 
 // PLT-004 dentro del panel autenticado. Distinto de /api/chat, que sigue
@@ -22,21 +22,10 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
 /** Prefijo de variables de entorno del agente que corresponde a cada rol. */
-const PREFIJO_AGENTE: Record<RolAsistente, string> = {
+const PREFIJO_AGENTE: Record<RolConAsistente, string> = {
   CLIENTE: "TRQ_CLIENTE",
   ABOGADO: "TRQ_ABOGADO",
-  ADMINISTRADOR: "TRQ_CLIENTE",
 };
-
-function rolDe(esSuperadmin: boolean, memRol: string | null | undefined): RolAsistente {
-  // Mismo criterio que clasePerfilVisual() en app/panel/layout.tsx: el flag de
-  // plataforma manda sobre la membresia. Un superadmin cuya membresia en tranqi
-  // es CLIENTE (caso real, lo crea asegurarMembresiaCliente) habla con el
-  // asistente de cliente, que es lo coherente con lo que ve en pantalla.
-  if (memRol === "ABOGADO") return "ABOGADO";
-  if (esSuperadmin || memRol === "ADMINISTRADOR") return "ADMINISTRADOR";
-  return "CLIENTE";
-}
 
 async function atender(req: NextRequest) {
   const perfil = await obtenerPerfilActual();
@@ -54,8 +43,16 @@ async function atender(req: NextRequest) {
     );
   }
 
-  const membresia = await obtenerMembresia(perfil.usu_id, "tranqi");
-  const rol = rolDe(perfil.usu_superadmin_plataforma, membresia?.mem_rol);
+  // El MISMO criterio con el que el layout decide si dibuja la barra. Si aqui
+  // se firmara otro rol, el MCP del agente rechazaria la capsula con 401 y el
+  // turno se caeria — que es exactamente lo que pasaba con los superadmin.
+  const rol = rolConAsistente(await modoActivoDelPanel("tranqi"));
+  if (!rol) {
+    return NextResponse.json(
+      { error: "Este perfil no tiene asistente todavia", codigo: "rol_sin_asistente" },
+      { status: 403 },
+    );
+  }
 
   const config = resolverAgenteDesdeEntorno(PREFIJO_AGENTE[rol]);
   if (!config) {
