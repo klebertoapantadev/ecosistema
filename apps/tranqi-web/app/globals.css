@@ -2239,7 +2239,14 @@ div.tarjeta-acceso-icono { display: grid; place-items: center; padding: 0; }
    ancho completo, que es lo que se acierta con el pulgar sin apuntar. */
 @media (max-width: 480px) {
   .fila-acciones { gap: 6px; }
-  .fila-acciones > .accion-menor { flex: 1 1 100%; }
+  /* `.envoltura-posponer` entra en la lista porque el hijo del flex es ELLA, no
+     el botón que lleva dentro: sin esto "Posponer" se quedaba a 86px entre dos
+     botones a ancho completo. Medido en el banco de pruebas a 375px. */
+  .fila-acciones > .accion-menor,
+  .fila-acciones > .envoltura-posponer { flex: 1 1 100%; }
+  .envoltura-posponer > .accion-menor { width: 100%; }
+  /* el menú se ancla a los dos bordes, que ahora son los de la fila entera */
+  .menu-posponer { left: 0; right: 0; min-width: 0; }
   /* La rejilla adaptable baja su mínimo: a 360px de pantalla, un mínimo de
      220px deja dos columnas imposibles antes de colapsar a una. */
   .rejilla-auto { --min: 100%; }
