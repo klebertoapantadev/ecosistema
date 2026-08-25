@@ -1144,7 +1144,7 @@ export function WidgetBilleteraDocumentos({ negocio = "TRANQ", onCerrar }: Props
               )}
 
               {/* CAMPOS BASE DEL DOCUMENTO */}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "16px" }}>
+              <div className="rejilla-auto" style={{ "--min": "200px", "--hueco": "12px", marginBottom: "16px" } as React.CSSProperties}>
                 <div>
                   <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, color: "#374151", marginBottom: "4px" }}>
                     Título del Documento
@@ -1194,7 +1194,7 @@ export function WidgetBilleteraDocumentos({ negocio = "TRANQ", onCerrar }: Props
                 </div>
 
                 {alertarCaducidad && (
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", paddingTop: "8px", borderTop: "1px solid #E2E8F0" }}>
+                  <div className="rejilla-auto" style={{ "--min": "200px", "--hueco": "12px", paddingTop: "8px", borderTop: "1px solid var(--panel-linea, #E4E4E4)" } as React.CSSProperties}>
                     <div>
                       <label style={{ display: "block", fontSize: "0.76rem", fontWeight: 700, color: "#DC2626", marginBottom: "4px" }}>
                         Fecha de Expiración / Caducidad
@@ -1302,16 +1302,7 @@ export function WidgetBilleteraDocumentos({ negocio = "TRANQ", onCerrar }: Props
                     {metadatosDinamicos.map((meta) => (
                       <div
                         key={meta.id}
-                        style={{
-                          display: "grid",
-                          gridTemplateColumns: "1fr 1.2fr 34px",
-                          gap: "8px",
-                          alignItems: "center",
-                          background: "#ffffff",
-                          padding: "6px 8px",
-                          borderRadius: "8px",
-                          border: "1px solid #E5E7EB"
-                        }}
+                        className="fila-metadato"
                       >
                         <input
                           type="text"
@@ -1455,7 +1446,7 @@ export function WidgetBilleteraDocumentos({ negocio = "TRANQ", onCerrar }: Props
               <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 800, color: "#1E293B", marginBottom: "8px" }}>
                 ⏱Tiempo de Expiración (TTL)
               </label>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "8px", marginBottom: "14px" }}>
+              <div className="rejilla-auto" style={{ "--min": "130px", "--hueco": "8px", marginBottom: "14px" } as React.CSSProperties}>
                 {[
                   { id: "1h", label: "1 Hora" },
                   { id: "3h", label: "3 Horas" },
@@ -1751,7 +1742,7 @@ export function WidgetBilleteraDocumentos({ negocio = "TRANQ", onCerrar }: Props
                 </h4>
 
                 {metaDinamicos.length > 0 ? (
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
+                  <div className="rejilla-auto" style={{ "--min": "180px", "--hueco": "8px" } as React.CSSProperties}>
                     {metaDinamicos.map((m: any, idx: number) => (
                       <div key={idx} style={{ background: "#F9FAFB", padding: "8px 12px", borderRadius: "8px", border: "1px solid #F3F4F6", fontSize: "0.78rem" }}>
                         <span style={{ color: "#6B7280", display: "block", fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase" }}>
@@ -1762,7 +1753,7 @@ export function WidgetBilleteraDocumentos({ negocio = "TRANQ", onCerrar }: Props
                     ))}
                   </div>
                 ) : (
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", fontSize: "0.78rem" }}>
+                  <div className="rejilla-auto" style={{ "--min": "180px", "--hueco": "8px", fontSize: "0.78rem" } as React.CSSProperties}>
                     {docParaVer.doc_titular_nombre && (
                       <div style={{ background: "#F9FAFB", padding: "8px 12px", borderRadius: "8px" }}>
                         <span style={{ color: "#6B7280", display: "block", fontSize: "0.7rem" }}>Titular:</span>

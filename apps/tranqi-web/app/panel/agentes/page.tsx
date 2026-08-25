@@ -86,6 +86,8 @@ export default async function PaginaAgentes() {
           runs.datos.length === 0 ? (
             <p className="agentes-vacio">Todavía no hay conversaciones registradas.</p>
           ) : (
+            /* envoltura con scroll: sin ella la tabla desbordaba la pantalla en movil */
+            <div className="tabla-panel-envoltura">
             <table className="tabla-runs">
               <thead>
                 <tr>
@@ -112,6 +114,7 @@ export default async function PaginaAgentes() {
                 ))}
               </tbody>
             </table>
+            </div>
           )
         ) : (
           <Aviso motivo={runs.motivo} />

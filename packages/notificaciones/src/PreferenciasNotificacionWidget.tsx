@@ -122,7 +122,7 @@ export function PreferenciasNotificacionWidget({ negocio }: Props) {
           Pausa temporalmente los avisos no críticos. El despacho se reanudará automáticamente al vencer la vigencia.
         </p>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: "10px", marginBottom: "16px" }}>
+        <div className="rejilla-auto" style={{ "--min": "130px", "--hueco": "10px", marginBottom: "16px" } as React.CSSProperties}>
           <button
             type="button"
             onClick={() => setMuteOpcion("DESACTIVADO")}

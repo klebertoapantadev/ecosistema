@@ -588,7 +588,7 @@ export function MonitoreoNotificacionesUsuariosWidget({ negocio = "TRANQ" }: Pro
               </div>
 
               {/* Matriz de Estados y Auditoría de Acciones */}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", background: "#f8fafc", padding: "12px", borderRadius: "10px" }}>
+              <div className="rejilla-auto" style={{ "--min": "200px", "--hueco": "10px", background: "var(--panel-linea-suave, #F1F1F1)", padding: "12px", borderRadius: "10px" } as React.CSSProperties}>
                 <div>
                   <span style={{ fontSize: "0.7rem", color: "#64748b", fontWeight: 700 }}>Canal:</span>
                   <strong style={{ display: "block", color: "#1e293b", fontSize: "0.82rem" }}>{notifSeleccionada.not_canal}</strong>

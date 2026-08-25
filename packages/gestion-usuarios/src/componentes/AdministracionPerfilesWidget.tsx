@@ -641,7 +641,9 @@ function RenderizadorWidgetReal({ clave, negocio }: { clave: string; negocio: st
           <div style={{ fontWeight: 800, fontSize: "0.95rem", color: "#065F46", marginBottom: "10px" }}>
             Administración de Usuarios & Membresías
           </div>
-          <table style={{ width: "100%", fontSize: "0.78rem", borderCollapse: "collapse" }}>
+          {/* envoltura con scroll: sin ella la tabla desbordaba en movil */}
+          <div style={{ overflowX: "auto" }}>
+          <table style={{ width: "100%", minWidth: "320px", fontSize: "0.78rem", borderCollapse: "collapse" }}>
             <thead>
               <tr style={{ background: "#ECFDF5", borderBottom: "1px solid #A7F3D0" }}>
                 <th style={{ textAlign: "left", padding: "6px 10px" }}>Usuario</th>
@@ -657,6 +659,7 @@ function RenderizadorWidgetReal({ clave, negocio }: { clave: string; negocio: st
               </tr>
             </tbody>
           </table>
+          </div>
         </div>
       );
 

@@ -278,7 +278,7 @@ export function BitacoraNotificacionesWidget({ negocio = "TRANQ" }: Props) {
                 <h4 style={{ margin: "4px 0 0 0", color: "#0F172A", fontSize: "1.1rem" }}>{campanaSeleccionada.asunto}</h4>
               </div>
 
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", background: "#F8FAFC", padding: "14px", borderRadius: "12px", marginBottom: "16px" }}>
+              <div className="rejilla-auto" style={{ "--min": "200px", "--hueco": "12px", background: "var(--panel-linea-suave, #F1F1F1)", padding: "14px", borderRadius: "12px", marginBottom: "16px" } as React.CSSProperties}>
                 <div>
                   <span style={{ fontSize: "0.72rem", color: "#64748B", fontWeight: 700 }}>Emisor:</span>
                   <strong style={{ display: "block", color: "#1E293B" }}>{campanaSeleccionada.emisorNombre}</strong>

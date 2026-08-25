@@ -1071,7 +1071,7 @@ export function WidgetFirmaDocumentosPdf({
               <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, color: "#475569", marginBottom: "6px" }}>
                 Alineaciones Rápidas:
               </label>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
+              <div className="rejilla-auto" style={{ "--min": "180px", "--hueco": "8px" } as React.CSSProperties}>
                 <button
                   type="button"
                   onClick={() => { setPosicionXPorcentaje(58.0); setPosicionYPorcentaje(82.0); }}
@@ -1144,7 +1144,7 @@ export function WidgetFirmaDocumentosPdf({
               <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, color: "#475569", marginBottom: "6px" }}>
                 Micro-Ajustes ({posicionXPorcentaje}%, {posicionYPorcentaje}%):
               </label>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px" }}>
+              <div className="rejilla-auto" style={{ "--min": "180px", "--hueco": "6px" } as React.CSSProperties}>
                 <button
                   type="button"
                   onClick={() => setPosicionYPorcentaje((y) => Math.max(2, Number((y - 2).toFixed(1))))}

@@ -2202,6 +2202,16 @@ div.tarjeta-acceso-icono { display: grid; place-items: center; padding: 0; }
   padding: 0 20px 18px;
 }
 .pie-notif .accion-menor { text-decoration: none; }
+
+/* Fila de metadato de la billetera: clave / valor / borrar. A 375px la rejilla
+   fija de "1fr 1.2fr 34px" daba 135 + 162 + 34px y no se podia escribir en
+   ninguno de los dos campos. El apilado va en el @media del final. */
+.fila-metadato {
+  display: grid; grid-template-columns: 1fr 1.2fr 34px;
+  gap: 8px; align-items: center;
+  background: var(--blanco); padding: 6px 8px;
+  border-radius: 8px; border: 1px solid var(--panel-linea);
+}
 /* ═══════════════════════════════════════════════════════════════════
    TRQ-010 · AJUSTES DE PUNTERO Y PANTALLA PEQUEÑA
    Va al FINAL del archivo por la regla §10 del sistema visual: un @media
@@ -2250,4 +2260,7 @@ div.tarjeta-acceso-icono { display: grid; place-items: center; padding: 0; }
   /* La rejilla adaptable baja su mínimo: a 360px de pantalla, un mínimo de
      220px deja dos columnas imposibles antes de colapsar a una. */
   .rejilla-auto { --min: 100%; }
+  /* clave y valor a lo ancho; el boton de borrar se queda en su esquina */
+  .fila-metadato { grid-template-columns: 1fr 34px; }
+  .fila-metadato > *:nth-child(2) { grid-column: 1 / -1; }
 }

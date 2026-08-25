@@ -267,7 +267,7 @@ export default function PaginaBolsaEmpleo() {
             )}
 
             <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+              <div className="rejilla-auto" style={{ "--min": "200px", "--hueco": "12px" } as React.CSSProperties}>
                 <div>
                   <label style={{ display: "block", fontSize: "0.8rem", color: "#c9d1d9", marginBottom: "4px" }}>Nombres *</label>
                   <input type="text" value={nombres} onChange={(e) => setNombres(e.target.value)} required style={{ width: "100%", background: "#0d1117", border: "1px solid #30363d", borderRadius: "6px", padding: "8px 12px", color: "#ffffff", fontSize: "0.85rem" }} />
@@ -278,7 +278,7 @@ export default function PaginaBolsaEmpleo() {
                 </div>
               </div>
 
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+              <div className="rejilla-auto" style={{ "--min": "200px", "--hueco": "12px" } as React.CSSProperties}>
                 <div>
                   <label style={{ display: "block", fontSize: "0.8rem", color: "#c9d1d9", marginBottom: "4px" }}>Correo Electrónico *</label>
                   <input type="email" value={correo} onChange={(e) => setCorreo(e.target.value)} required style={{ width: "100%", background: "#0d1117", border: "1px solid #30363d", borderRadius: "6px", padding: "8px 12px", color: "#ffffff", fontSize: "0.85rem" }} />

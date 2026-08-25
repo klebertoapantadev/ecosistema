@@ -174,7 +174,7 @@ export function EmisionNotificacionesWidget({ negocio }: Props) {
                 <Users size={18} color="#4f46e5" /> 1. Segmentación de Audiencia ({negocio})
               </h3>
 
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "8px", marginBottom: "12px" }}>
+              <div className="rejilla-auto" style={{ "--min": "130px", "--hueco": "8px", marginBottom: "12px" } as React.CSSProperties}>
                 <button
                   type="button"
                   onClick={() => setTipoAudiencia("TODOS")}
@@ -263,7 +263,7 @@ export function EmisionNotificacionesWidget({ negocio }: Props) {
                 <Bell size={18} color="#2563eb" /> 2. Canales de Despacho
               </h3>
 
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "8px" }}>
+              <div className="rejilla-auto" style={{ "--min": "180px", "--hueco": "8px" } as React.CSSProperties}>
                 <label style={{ display: "flex", alignItems: "center", gap: "8px", padding: "8px", background: "#ffffff", borderRadius: "6px", border: "1px solid #cbd5e1", cursor: "pointer" }}>
                   <input type="checkbox" checked={canales.inApp} onChange={() => toggleCanal("inApp")} />
                   <Bell size={16} color="#2563eb" />

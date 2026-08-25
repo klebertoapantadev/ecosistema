@@ -951,7 +951,7 @@ export function ModalFirmaDigitalPdf({
                   <div style={{ fontSize: "0.72rem", fontWeight: 700, color: "#64748B", marginBottom: "6px" }}>
                     Ajuste de posición ({posicionXPorcentaje}%, {posicionYPorcentaje}%):
                   </div>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px" }}>
+                  <div className="rejilla-auto" style={{ "--min": "180px", "--hueco": "6px" } as React.CSSProperties}>
                     <button
                       type="button"
                       onClick={() => setPosicionYPorcentaje((y) => Math.max(5, y - 4))}
