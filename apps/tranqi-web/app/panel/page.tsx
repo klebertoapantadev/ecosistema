@@ -167,8 +167,12 @@ function PanelCliente({ saludo, nombre }: { saludo: string | null; nombre: strin
         <div className="columna-cliente">
           {/* 1) HERO CARD */}
           <section className="tarjeta-proteccion" aria-labelledby="t-proteccion">
+            {/* pathLength="1" normaliza el largo del trazo a 1, pase lo que pase
+                con el viewBox: es lo que permite dibujarlo con dashoffset sin
+                calcular la longitud real. Misma tecnica que la cinta de la
+                landing (.ribbon en globals.css). */}
             <svg className="cinta-proteccion" viewBox="0 0 800 300" preserveAspectRatio="none" aria-hidden="true">
-              <path d="M 540 -60 C 760 40 840 190 700 300 C 620 362 470 340 430 420" />
+              <path pathLength="1" d="M 540 -60 C 760 40 840 190 700 300 C 620 362 470 340 430 420" />
             </svg>
             <div className="tarjeta-proteccion-fila">
               <div>

@@ -143,23 +143,33 @@ export function BarraAsistente({ nombre, saludo }: Props) {
     }
   }, [texto, ocupado]);
 
-  if (!abierta) {
-    return (
+  // Los DOS elementos se renderizan siempre; lo que cambia es una clase. Antes
+  // esto era un `return` temprano que devolvia un <button> EN VEZ del <aside>:
+  // React montaba y desmontaba, asi que no habia nada sobre lo que correr una
+  // transicion y el panel aparecia de golpe. Con ambos en el DOM la animacion
+  // es CSS puro y, sobre todo, INTERRUMPIBLE: si cierras a mitad de la apertura
+  // vuelve desde donde iba en vez de saltar al final.
+  return (
+    <>
       <button
         type="button"
-        className="asistente-pestana"
+        className={`asistente-pestana${abierta ? " es-oculta" : ""}`}
         onClick={() => cambiarVisibilidad(true)}
-        aria-expanded={false}
+        aria-expanded={abierta}
         aria-label={`Abrir ${nombre}`}
+        // Sigue en el DOM mientras se desvanece, pero deja de ser un destino
+        // real: sin esto el tabulador caia en un boton invisible.
+        inert={abierta || undefined}
       >
         <Ojos referencia={null} />
         <span>{nombre}</span>
       </button>
-    );
-  }
 
-  return (
-    <aside className="asistente" aria-label={nombre}>
+    <aside
+      className={`asistente ${abierta ? "es-abierta" : "es-plegada"}`}
+      aria-label={nombre}
+      inert={!abierta || undefined}
+    >
       <header className="asistente-cabecera">
         <Ojos referencia={ojos} />
         <div className="asistente-titulo">
@@ -178,7 +188,13 @@ export function BarraAsistente({ nombre, saludo }: Props) {
 
       <div className="asistente-registro" ref={registro} aria-live="polite">
         {mensajes.map((mensaje, indice) => (
-          <div key={indice} className={`asistente-msg de-${mensaje.autor}`}>
+          // El indice alimenta el retardo en cascada de la apertura. Se topa a
+          // 6 para que una conversacion larga no tarde dos segundos en pintarse.
+          <div
+            key={indice}
+            className={`asistente-msg de-${mensaje.autor}`}
+            style={{ "--orden": Math.min(indice, 6) } as React.CSSProperties}
+          >
             {mensaje.pensando ? (
               <span className="asistente-puntos" aria-label="escribiendo">
                 <i />
@@ -215,6 +231,7 @@ export function BarraAsistente({ nombre, saludo }: Props) {
         </button>
       </form>
     </aside>
+    </>
   );
 }
 
