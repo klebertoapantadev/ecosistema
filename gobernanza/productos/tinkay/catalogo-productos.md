@@ -7,15 +7,56 @@
 
 ---
 
-## 1. Categorías de Navegación (`com_categoria`)
+## 1. Categorías de Navegación Multidimensional (`com_categoria` y `com_producto_categoria`)
 
-| Código Categ. | Nombre Visible | Descripción | Orden |
-| :--- | :--- | :--- | :--- |
-| `CAT_FLOREROS` | **Para Florero** | Ramos de tallos largos diseñados para colocar en agua directamente. | 1 |
-| `CAT_COREANOS` | **Estilo Coreano** | Arreglos modernos envueltos en papeles traslúcidos y satinados. | 2 |
-| `CAT_ESPECIALES`| **Especiales y Mix** | Combinaciones exóticas de flores de temporada y follaje especial. | 3 |
-| `CAT_DETALLES`  | **Detalles y Regalos** | Adicionales para enriquecer el arreglo (chocolates, globos, mariposas). | 4 |
-| `CAT_EVENTOS`   | **Decoración & Altares** | Diseños integrales para bodas, aniversarios y eventos sociales. | 5 |
+En Tinkay, los clientes buscan por **intención u ocasión** tanto como por **formato físico**. Por ello, el catálogo no es un árbol estático 1:N, sino una **taxonomía multidimensional (N:M)** donde un mismo arreglo pertenece a múltiples facetas simultáneamente a través de `com_producto_categoria`.
+
+### A. Taxonomía por Tipo de Faceta (`ctg_tipo`)
+
+| Código Categ. | Tipo (`ctg_tipo`) | Nombre Visible | Descripción | Orden |
+| :--- | :--- | :--- | :--- | :--- |
+| `CAT_FLOREROS`   | `FORMATO`   | **Para Florero** | Ramos de tallos largos diseñados para colocar en agua directamente. | 1 |
+| `CAT_COREANOS`   | `COLECCION` | **Estilo Coreano** | Arreglos modernos envueltos en papeles traslúcidos, plisados y satinados. | 2 |
+| `CAT_ESPECIALES` | `FORMATO`   | **Especiales y Mix** | Combinaciones exóticas de flores de temporada y follaje especial. | 3 |
+| `CAT_ABANICOS`   | `FORMATO`   | **Abanicos & Pedestales** | Diseños monumentales en abanico sobre base o atril para espacios solemnes. | 4 |
+| `CAT_DETALLES`   | `COMPLEMENTO` | **Detalles y Regalos** | Adicionales para enriquecer el arreglo (chocolates, globos, mariposas). | 5 |
+| `CAT_EVENTOS`    | `EVENTO`    | **Decoración & Altares** | Diseños integrales para iglesias, bodas, aniversarios y eventos sociales. | 6 |
+| `CAT_OCAS_AMOR`  | `OCASION`   | **Amor & Pedida de Mano** | Diseños exuberantes y románticos para parejas y compromisos. | 7 |
+| `CAT_OCAS_ANIV`  | `OCASION`   | **Aniversario** | Bouquets sofisticados para celebraciones de fechas clave. | 8 |
+| `CAT_OCAS_CUMPLE`| `OCASION`   | **Cumpleaños** | Ramos alegres y festivos con empaques vibrantes. | 9 |
+| `CAT_OCAS_CONDOL`| `OCASION`   | **Condolencias & Funerarios** | Arreglos solemnes y respetuosos (activa el modo visual sobrio sin rosa/dorado). | 10 |
+
+---
+
+### B. Mapeo Muchos a Muchos (`com_producto_categoria`)
+
+Cada producto se asocia a una o más categorías mediante `com_producto_categoria`, definiendo `pct_es_principal = true` para la categoría canónica (utilizada para SEO y breadcrumbs principales):
+
+* **Bouquet Clásico de 100 Rosas (`tinkay-bouq-florero`):**
+  * `CAT_FLOREROS` (`pct_es_principal = true`)
+  * `CAT_OCAS_AMOR` (Aparece en filtro *"Pedida de Mano / Enamorados"*)
+  * `CAT_OCAS_ANIV` (Aparece en filtro *"Aniversarios"*)
+* **Arreglo Abanico Grande (`tinkay-abanico-monumental`):**
+  * `CAT_ABANICOS` (`pct_es_principal = true`)
+  * `CAT_OCAS_CONDOL` (Aparece en catálogo de *"Condolencias / Velaciones"*)
+  * `CAT_EVENTOS` (Aparece en catálogo de *"Decoración de Iglesia / Altares"*)
+* **Bouquet Diseño Coreano VIP (`tinkay-bouq-coreano`):**
+  * `CAT_COREANOS` (`pct_es_principal = true`)
+  * `CAT_OCAS_CUMPLE` (Aparece en catálogo de *"Cumpleaños"*)
+  * `CAT_OCAS_AMOR` (Aparece en catálogo de *"Romance"*)
+
+---
+
+### C. Contexto Dinámico en UI según Categoría de Entrada
+
+La interfaz de usuario (`tinkay-web`) adopta el contexto de la categoría desde la cual navegó el cliente:
+1. **Modo Condolencias (`CAT_OCAS_CONDOL`):**
+   * Aplica la regla del [Sistema Visual](sistema-visual.md) §4: paleta sobria (`--verde`, `--crema`, `--tinta`), sin rosa festivo ni dorado expansivo.
+   * Cross-selling sugerido: *Cinta luctuosa membretada*, *Atril de soporte*, *Tarjeta solemne de pésame*.
+2. **Modo Eventos / Iglesia (`CAT_EVENTOS`):**
+   * Muestra opciones de servicio logístico: *Instalación en sitio*, *Desmontaje*, *Cotización de proforma*.
+3. **Modo Amor / Aniversario (`CAT_OCAS_AMOR` / `CAT_OCAS_ANIV`):**
+   * Cross-selling sugerido: *Caja Ferrero Rocher*, *Globo burbuja helio personalizado*, *Set mariposas 3D*.
 
 ---
 
@@ -143,9 +184,13 @@ $$\text{Base Comisionable Neta} = \text{Venta Total} - \text{Descuento Cupones} 
 * **Gasto de Delivery:** Se deduce $\max(\text{Delivery Base Incluido (\$3.00)}, \text{Delivery Real Pagado})$.
 * **Gasto de Instalación / Montaje:** Deducible en decoraciones de eventos, altares o montajes florales en sitio.
 * **Fee de Plataforma:** Tarifa o porcentaje de infraestructura operativa de la plataforma.
-* **Comisión de Tarjeta de Crédito (TC):**
-  * **6.00%** sobre el total de la orden si el cliente pagó con Tarjeta de Crédito / Débito (pasarela bancaria).
+* **Comisión de Tarjeta de Crédito (TC) / Pasarela en Línea:**
+  * **6.00%** (o valor configurado en `com_pasarela_configuracion.psc_comision_porcentaje`) sobre el total de la orden si el cliente pagó mediante pasarela en línea (**Payphone** con Cajita de Pagos, o subsecuentemente **Paymentez**).
   * **$0.00** si el cliente pagó en Efectivo o Transferencia bancaria directa.
+* **Integración y Activación de Pasarelas en Tinkay (`com_pasarela_configuracion`):**
+  * Tinkay dispone de su propio registro independiente en `com_pasarela_configuracion`, donde la administración parametriza su `storeId` y credenciales de Payphone Business.
+  * La Cajita de Pagos de Payphone se activa y despliega en `tinkay-web` únicamente si los parámetros están completos y `psc_activo = true`.
+  * La confirmación server-to-server se ejecuta en < 5 minutos vía Server Action contra `/api/confirm` de Payphone, registrando la transacción en `com_transaccion_pago` y pasando la orden a preparación en el taller.
 * **Porcentaje Individual por Vendedora:**
   * Cada vendedora posee su propio porcentaje de comisión configurado en su perfil de membresía (`seg_membresia.mem_detalle_membresia->>'porcentaje_comision'`, ej. 8%, 10%, 12%).
   * $$\text{Comisión Neta a Pagar} = \max(0, \text{Base Comisionable Neta}) \times \%\,\text{Comisión Asignada}$$

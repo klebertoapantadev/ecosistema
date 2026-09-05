@@ -27,7 +27,7 @@ Este documento describe el **comportamiento compartido por los 4 productos** (Tr
 | **`PLT-006`** | Datos de Facturación SRI y Comprobantes | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`PLT-007`** | Catálogo Geográfico (Ecuador 24 Provincias) | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`PLT-008`** | Configuración de Negocio & SMTP en Vault | ✅ Implementado | **100%** | Kleber Toapanta |
-| **`PLT-009`** | Catálogo Comercial Unificado (Productos/Planes/Despachos) | 🟡 En Desarrollo | **70%** | Kleber Toapanta |
+| **`PLT-009`** | Catálogo Comercial Unificado (Productos/Planes/Despachos) | 🟡 En Desarrollo | **85%** | Kleber Toapanta |
 | **`PLT-010`** | Integración Omnicanal (WhatsApp & Meta Feed) | ⏳ Pendiente | **0%** | **Jesus Navarrete** |
 | **`PLT-011`** | Sistema de Widgets por Rol & DataGrids 2 Capas | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`PLT-012`** | **Baja de Cuenta y Derecho al Olvido** | ✅ Implementado | **100%** | Kleber Toapanta |
@@ -412,6 +412,16 @@ Motor centralizado de gestión de bienes, servicios, recetas (BOM), inventarios,
 10. **Aislamiento multitenant:** cada negocio opera sobre su propio subconjunto de `comun_comercio`, identificado por negocio dueño — el catálogo de un negocio nunca es visible como editable para otro.
 11. **Desacoplamiento fiscal:** la variante almacena la **Base Imponible** para comprobantes del SRI (`PLT-006`), mientras la tienda web y WhatsApp calculan y muestran precios finales claros al consumidor.
 12. **Catálogo publicado es de lectura pública:** un producto/variante activo se puede consultar sin autenticación — la edición queda restringida al `ADMINISTRADOR` u `OPERADOR` del negocio dueño.
+13. **Pasarelas de Pago en Línea Multitenant y Autónomas por Negocio (`com_pasarela_configuracion` y `com_transaccion_pago`):**
+    - **Configuración Autónoma por Negocio:** La infraestructura de pagos es transversal a los 4 negocios (Tranqi, FastFix, Tinkay, Margaritas), pero cada negocio configura sus parámetros de manera 100% independiente como cliente autónomo ante las entidades procesadoras.
+    - **Pasarelas Soportadas:** Integración inicial con **Payphone (Cajita de Pagos v2.0)** para cobros con tarjetas de crédito/débito nacionales e internacionales y saldo Payphone; arquitectura desacoplada mediante interfaz de adaptador para incorporar subsecuentemente **Paymentez (Nuvei)**, Transferencia Bancaria Directa y Deuna.
+    - **Condición de Disponibilidad en Checkout:** Una pasarela solo se habilita y despliega ante los compradores en la tienda web de un negocio si:
+      1. Cuenta con sus parámetros y credenciales obligatorias configurados (ej. `storeId`, modo de entorno).
+      2. Su interruptor de estado se encuentra explícitamente activo (`psc_activo = true`).
+      Si una pasarela no está configurada o se encuentra inactiva, el checkout no la expone como método de pago.
+    - **Seguridad Criptográfica y Aislamiento de Credenciales:** Las credenciales privadas (`token` Bearer para confirmar pagos) se almacenan en servidor y nunca se transmiten al navegador web (`psc_credenciales_privadas`). La consulta pública para renderizar el checkout se efectúa mediante la función RPC `com_fn_obtener_pasarelas_activas(negocio)` que retorna exclusivamente datos públicos y metadatos visuales.
+    - **Confirmación Obligatoria Server-to-Server:** En Payphone, el servidor ejecuta una solicitud `POST /api/confirm` dentro de los primeros 5 minutos tras el retorno del usuario para verificar la autenticidad y prevenir el reverso automático del dinero.
+    - **Trazabilidad Transaccional:** Cada intento o confirmación de pago se registra en `com_transaccion_pago` vinculando cliente, referencia de pedido, montos, desglose impositivo (IVA 15%), código de autorización bancario, marca y últimos dígitos de tarjeta, y payload técnico raw para auditoría financiera.
 
 **Implementación técnica:** ver [`especificacion-tecnica.md`](especificacion-tecnica.md) §7 (`comun_comercio`).
 

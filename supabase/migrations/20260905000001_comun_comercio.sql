@@ -20,6 +20,7 @@ create table comun_comercio.com_categoria (
   ctg_slug text not null,
   ctg_descripcion text,
   ctg_padre_id uuid references comun_comercio.com_categoria(ctg_id) on delete cascade,
+  ctg_tipo text not null default 'FORMATO', -- 'FORMATO' | 'OCASION' | 'EVENTO' | 'COLECCION'
   ctg_orden int not null default 0,
   ctg_activo boolean not null default true,
   ctg_detalle_categoria jsonb not null default '{}'::jsonb,
@@ -29,13 +30,14 @@ create table comun_comercio.com_categoria (
 );
 
 create index idx_com_categoria_negocio on comun_comercio.com_categoria(ctg_negocio, ctg_activo);
+create index idx_com_categoria_tipo on comun_comercio.com_categoria(ctg_negocio, ctg_tipo, ctg_activo);
 
 -- Productos o Servicios Maestros
 create table comun_comercio.com_producto (
   pro_id uuid primary key default gen_random_uuid(),
   pro_secuencial bigint generated always as identity,
   pro_negocio text not null,
-  pro_categoria_id uuid references comun_comercio.com_categoria(ctg_id) on delete set null,
+  pro_categoria_principal_id uuid references comun_comercio.com_categoria(ctg_id) on delete set null,
   pro_nombre text not null,
   pro_slug text not null,
   pro_descripcion text,
@@ -49,6 +51,24 @@ create table comun_comercio.com_producto (
 );
 
 create index idx_com_producto_negocio on comun_comercio.com_producto(pro_negocio, pro_activo);
+
+-- Categorización Múltiple de Productos (Relación N:M para Ocasiones, Eventos, Formatos)
+create table comun_comercio.com_producto_categoria (
+  pct_id uuid primary key default gen_random_uuid(),
+  pct_secuencial bigint generated always as identity,
+  pct_negocio text not null,               -- 'tranqi' | 'fastfix' | 'tinkay' | 'margaritas'
+  pct_producto_id uuid not null references comun_comercio.com_producto(pro_id) on delete cascade,
+  pct_categoria_id uuid not null references comun_comercio.com_categoria(ctg_id) on delete cascade,
+  pct_es_principal boolean not null default false, -- Para URL canónica SEO y breadcrumb primario
+  pct_orden int not null default 0,
+  pct_detalle_asociacion jsonb not null default '{}'::jsonb,
+  pct_creado_en timestamptz not null default now(),
+  unique(pct_producto_id, pct_categoria_id)
+);
+
+create index idx_com_pct_producto on comun_comercio.com_producto_categoria(pct_producto_id);
+create index idx_com_pct_categoria on comun_comercio.com_producto_categoria(pct_categoria_id);
+create index idx_com_pct_negocio on comun_comercio.com_producto_categoria(pct_negocio);
 
 -- Variantes Comerciales / SKUs
 create table comun_comercio.com_variante (
@@ -240,6 +260,93 @@ create table comun_comercio.com_proforma_item (
 );
 
 -- ------------------------------------------------------------------------------
+-- 3.5. CAPA DE PASARELAS DE PAGO Y TRANSACCIONES EN LÍNEA (PAYPHONE, PAYMENTEZ)
+-- ------------------------------------------------------------------------------
+
+-- Configuración de Pasarelas de Pago por Negocio (Independiente por tenant)
+create table comun_comercio.com_pasarela_configuracion (
+  psc_id uuid primary key default gen_random_uuid(),
+  psc_secuencial bigint generated always as identity,
+  psc_negocio text not null,              -- 'tranqi' | 'fastfix' | 'tinkay' | 'margaritas'
+  psc_pasarela text not null,             -- 'PAYPHONE' | 'PAYMENTEZ' | 'DEUNA' | 'TRANSFERENCIA'
+  psc_nombre_visible text not null,       -- ej. "Payphone (Tarjeta de Crédito / Débito)"
+  psc_ambiente text not null default 'PRUEBAS', -- 'PRUEBAS' | 'PRODUCCION'
+  psc_activo boolean not null default false,    -- Solo se habilita si está configurado y el admin lo activa
+  psc_credenciales_publicas jsonb not null default '{}'::jsonb, -- storeId, clientId, etc. (seguro para frontend)
+  psc_credenciales_privadas jsonb not null default '{}'::jsonb, -- token Bearer, clientSecret, etc. (solo accesible en servidor)
+  psc_comision_porcentaje numeric(5,2) not null default 0.00,  -- Comisión cobrada por pasarela (ej: 6.00%)
+  psc_comision_fija numeric(12,4) not null default 0.0000,
+  psc_orden_visual int not null default 0,
+  psc_detalle_pasarela jsonb not null default '{}'::jsonb,
+  psc_creado_en timestamptz not null default now(),
+  psc_actualizado_en timestamptz not null default now(),
+  unique(psc_negocio, psc_pasarela)
+);
+
+create index idx_com_pasarela_negocio on comun_comercio.com_pasarela_configuracion(psc_negocio, psc_activo);
+
+-- Registro de Transacciones de Pago (Payphone, Paymentez, etc.)
+create table comun_comercio.com_transaccion_pago (
+  pag_id uuid primary key default gen_random_uuid(),
+  pag_secuencial bigint generated always as identity,
+  pag_negocio text not null,               -- 'tranqi' | 'fastfix' | 'tinkay' | 'margaritas'
+  pag_cliente_id uuid references comun_seguridad.seg_usuario(usu_id),
+  pag_referencia_id uuid,                  -- ID de proforma, pedido, suscripción o carrito
+  pag_pasarela text not null,              -- 'PAYPHONE' | 'PAYMENTEZ' | 'DEUNA' | 'TRANSFERENCIA'
+  pag_identificador_cliente text not null, -- clientTransactionId enviado a la pasarela (máx 50 caracteres)
+  pag_transaccion_pasarela_id text,        -- ID devuelto por Payphone tras confirmar
+  pag_autorizacion_codigo text,            -- Código de autorización bancario
+  pag_estado text not null default 'PENDIENTE', -- 'PENDIENTE' | 'APROBADO' | 'RECHAZADO' | 'CANCELADO' | 'REVERSADO'
+  pag_monto_total numeric(12,4) not null,
+  pag_monto_con_iva numeric(12,4) not null default 0.0000,
+  pag_monto_sin_iva numeric(12,4) not null default 0.0000,
+  pag_monto_iva numeric(12,4) not null default 0.0000,
+  pag_moneda text not null default 'USD',
+  pag_tarjeta_tipo text,                   -- 'CREDITO' | 'DEBITO'
+  pag_tarjeta_marca text,                  -- 'VISA' | 'MASTERCARD' | 'DINERS' | 'DISCOVER'
+  pag_tarjeta_ultimos_digitos text,        -- ej. 'XX17'
+  pag_titular_email text,
+  pag_titular_telefono text,
+  pag_titular_identificacion text,
+  pag_es_diferido boolean not null default false,
+  pag_meses_diferido int,
+  pag_confirmado_en timestamptz,
+  pag_detalle_transaccion jsonb not null default '{}'::jsonb, -- Payload JSON raw completo de la pasarela
+  pag_creado_en timestamptz not null default now(),
+  pag_actualizado_en timestamptz not null default now(),
+  unique(pag_negocio, pag_identificador_cliente)
+);
+
+create index idx_com_pago_negocio on comun_comercio.com_transaccion_pago(pag_negocio, pag_estado);
+create index idx_com_pago_cliente on comun_comercio.com_transaccion_pago(pag_cliente_id);
+create index idx_com_pago_referencia on comun_comercio.com_transaccion_pago(pag_referencia_id);
+
+-- Función RPC para exponer pasarelas activas al checkout (sin exponer credenciales privadas)
+create or replace function comun_comercio.com_fn_obtener_pasarelas_activas(p_negocio text)
+returns table (
+  pasarela text,
+  nombre_visible text,
+  ambiente text,
+  credenciales_publicas jsonb,
+  comision_porcentaje numeric,
+  orden_visual int
+) language sql stable security definer as $$
+  select 
+    psc_pasarela,
+    psc_nombre_visible,
+    psc_ambiente,
+    psc_credenciales_publicas,
+    psc_comision_porcentaje,
+    psc_orden_visual
+  from comun_comercio.com_pasarela_configuracion
+  where psc_negocio = p_negocio
+    and psc_activo = true
+    and psc_credenciales_publicas is not null
+    and psc_credenciales_publicas <> '{}'::jsonb
+  order by psc_orden_visual asc;
+$$;
+
+-- ------------------------------------------------------------------------------
 -- 4. CAPA DE SUSCRIPCIONES ACTIVAS
 -- ------------------------------------------------------------------------------
 
@@ -419,6 +526,7 @@ create index idx_com_despacho_orden on comun_comercio.com_despacho_asignacion(ds
 
 alter table comun_comercio.com_categoria enable row level security;
 alter table comun_comercio.com_producto enable row level security;
+alter table comun_comercio.com_producto_categoria enable row level security;
 alter table comun_comercio.com_variante enable row level security;
 alter table comun_comercio.com_media enable row level security;
 alter table comun_comercio.com_personalizacion_campo enable row level security;
@@ -430,6 +538,8 @@ alter table comun_comercio.com_kardex enable row level security;
 alter table comun_comercio.com_merma enable row level security;
 alter table comun_comercio.com_proforma enable row level security;
 alter table comun_comercio.com_proforma_item enable row level security;
+alter table comun_comercio.com_pasarela_configuracion enable row level security;
+alter table comun_comercio.com_transaccion_pago enable row level security;
 alter table comun_comercio.com_suscripcion enable row level security;
 alter table comun_comercio.com_convenio_empresa enable row level security;
 alter table comun_comercio.com_beneficiario_empresa enable row level security;
@@ -461,6 +571,9 @@ create policy com_personalizacion_lectura_publica on comun_comercio.com_personal
   for select using (true);
 
 create policy com_producto_relacionado_lectura_publica on comun_comercio.com_producto_relacionado
+  for select using (true);
+
+create policy com_producto_categoria_lectura_publica on comun_comercio.com_producto_categoria
   for select using (true);
 
 create policy com_cupon_lectura_publica on comun_comercio.com_cupon
@@ -495,6 +608,9 @@ create policy com_proforma_item_cliente_select on comun_comercio.com_proforma_it
     )
   );
 
+create policy com_pago_cliente_select on comun_comercio.com_transaccion_pago
+  for select using (pag_cliente_id = auth.uid());
+
 -- Personal Administrativo y Operativo (seg_fn_es_operador_o_admin_negocio)
 create policy com_categoria_staff on comun_comercio.com_categoria
   for all using (comun_seguridad.seg_fn_es_operador_o_admin_negocio(ctg_negocio));
@@ -513,6 +629,9 @@ create policy com_personalizacion_staff on comun_comercio.com_personalizacion_ca
 
 create policy com_producto_relacionado_staff on comun_comercio.com_producto_relacionado
   for all using (comun_seguridad.seg_fn_es_operador_o_admin_negocio(prl_negocio));
+
+create policy com_producto_categoria_staff on comun_comercio.com_producto_categoria
+  for all using (comun_seguridad.seg_fn_es_operador_o_admin_negocio(pct_negocio));
 
 create policy com_insumo_staff on comun_comercio.com_insumo
   for all using (comun_seguridad.seg_fn_es_operador_o_admin_negocio(ins_negocio));
@@ -534,6 +653,12 @@ create policy com_proforma_staff on comun_comercio.com_proforma
 
 create policy com_proforma_item_staff on comun_comercio.com_proforma_item
   for all using (comun_seguridad.seg_fn_es_operador_o_admin_negocio(pfi_negocio));
+
+create policy com_pasarela_staff on comun_comercio.com_pasarela_configuracion
+  for all using (comun_seguridad.seg_fn_es_operador_o_admin_negocio(psc_negocio));
+
+create policy com_pago_staff on comun_comercio.com_transaccion_pago
+  for all using (comun_seguridad.seg_fn_es_operador_o_admin_negocio(pag_negocio));
 
 create policy com_suscripcion_staff on comun_comercio.com_suscripcion
   for all using (comun_seguridad.seg_fn_es_operador_o_admin_negocio(sub_negocio));
@@ -568,6 +693,7 @@ create policy com_despacho_staff on comun_comercio.com_despacho_asignacion
 
 create trigger trg_auditoria_com_categoria after insert or update or delete on comun_comercio.com_categoria for each row execute function comun_auditoria.aud_fn_auditar_tabla();
 create trigger trg_auditoria_com_producto after insert or update or delete on comun_comercio.com_producto for each row execute function comun_auditoria.aud_fn_auditar_tabla();
+create trigger trg_auditoria_com_producto_categoria after insert or update or delete on comun_comercio.com_producto_categoria for each row execute function comun_auditoria.aud_fn_auditar_tabla();
 create trigger trg_auditoria_com_variante after insert or update or delete on comun_comercio.com_variante for each row execute function comun_auditoria.aud_fn_auditar_tabla();
 create trigger trg_auditoria_com_media after insert or update or delete on comun_comercio.com_media for each row execute function comun_auditoria.aud_fn_auditar_tabla();
 create trigger trg_auditoria_com_personalizacion_campo after insert or update or delete on comun_comercio.com_personalizacion_campo for each row execute function comun_auditoria.aud_fn_auditar_tabla();
@@ -579,6 +705,8 @@ create trigger trg_auditoria_com_kardex after insert or update or delete on comu
 create trigger trg_auditoria_com_merma after insert or update or delete on comun_comercio.com_merma for each row execute function comun_auditoria.aud_fn_auditar_tabla();
 create trigger trg_auditoria_com_proforma after insert or update or delete on comun_comercio.com_proforma for each row execute function comun_auditoria.aud_fn_auditar_tabla();
 create trigger trg_auditoria_com_proforma_item after insert or update or delete on comun_comercio.com_proforma_item for each row execute function comun_auditoria.aud_fn_auditar_tabla();
+create trigger trg_auditoria_com_pasarela_configuracion after insert or update or delete on comun_comercio.com_pasarela_configuracion for each row execute function comun_auditoria.aud_fn_auditar_tabla();
+create trigger trg_auditoria_com_transaccion_pago after insert or update or delete on comun_comercio.com_transaccion_pago for each row execute function comun_auditoria.aud_fn_auditar_tabla();
 create trigger trg_auditoria_com_suscripcion after insert or update or delete on comun_comercio.com_suscripcion for each row execute function comun_auditoria.aud_fn_auditar_tabla();
 create trigger trg_auditoria_com_convenio_empresa after insert or update or delete on comun_comercio.com_convenio_empresa for each row execute function comun_auditoria.aud_fn_auditar_tabla();
 create trigger trg_auditoria_com_beneficiario_empresa after insert or update or delete on comun_comercio.com_beneficiario_empresa for each row execute function comun_auditoria.aud_fn_auditar_tabla();
@@ -597,12 +725,15 @@ grant usage on schema comun_comercio to anon, authenticated, service_role;
 
 -- Lectura para anon y authenticated en entidades públicas
 grant select on comun_comercio.com_categoria, comun_comercio.com_producto,
-                comun_comercio.com_variante, comun_comercio.com_media,
-                comun_comercio.com_personalizacion_campo, comun_comercio.com_producto_relacionado,
-                comun_comercio.com_cupon to anon, authenticated;
+                comun_comercio.com_producto_categoria, comun_comercio.com_variante,
+                comun_comercio.com_media, comun_comercio.com_personalizacion_campo,
+                comun_comercio.com_producto_relacionado, comun_comercio.com_cupon to anon, authenticated;
 
 -- Permisos completos para authenticated (filtrado y protegido por RLS)
 grant select, insert, update, delete on all tables in schema comun_comercio to authenticated;
 
 -- Permisos de secuencias
 grant usage, select on all sequences in schema comun_comercio to authenticated;
+
+-- Permiso de ejecución RPC para consulta de pasarelas activas
+grant execute on function comun_comercio.com_fn_obtener_pasarelas_activas(text) to anon, authenticated;

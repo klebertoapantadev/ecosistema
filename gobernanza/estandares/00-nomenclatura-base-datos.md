@@ -33,6 +33,8 @@ Todo proyecto del ecosistema comparte una única instancia PostgreSQL (Supabase)
 - **Relaciones N:M usan tabla de unión explícita**, nunca arrays de IDs. Ejemplo: `trq_solicitud_materia`, no un array `materias_ids` en `trq_solicitud_socio`.
 - **Catálogos compartidos entre proyectos van en un esquema `comun_*`**, no se duplican por negocio. Ejemplo: `comun_catalogo.cat_provincia`.
 - **Nada de abreviaturas ambiguas.** `cas_` es claro para "caso"; evitar prefijos que colisionen en significado entre entidades del mismo esquema.
+- **Columnas de moneda y valores financieros:** montos totales, pagos y saldos usan `numeric(12,2)` o `bigint` (si se almacenan en centavos enteros con sufijo `_centavos`). Costos unitarios de insumos/recetas (BOM) usan `numeric(12,4)` para precisión de costeo SRI. Prohibido usar `float` o `double precision` para dinero. Ver [`05-manejo-monetario-y-valores.md`](05-manejo-monetario-y-valores.md).
+
 
 ## 3. Ejemplo de tabla completa
 

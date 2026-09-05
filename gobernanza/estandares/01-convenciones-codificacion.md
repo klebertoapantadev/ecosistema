@@ -83,3 +83,13 @@ Ver [`04-pruebas.md`](04-pruebas.md) para la herramienta (Vitest), qué se prueb
 `packages/primitivas` y `packages/core` no pueden importar nada de `next/*`. Se valida con una regla de ESLint (`no-restricted-imports`) en [`packages/config/eslint.base.mjs`](../../packages/config/eslint.base.mjs), la configuración plana (ESLint 9) que comparten las 4 apps vía `eslint.config.mjs`. Si un paquete compartido depende de Next.js, deja de ser usable en las apps nativas Capacitor.
 
 `packages/primitivas` ya tiene código (`SelloCompilacion`), su script `lint` y su `eslint.config.mjs`, así que la regla se ejecuta de verdad sobre él. `packages/core` sigue siendo un placeholder: al darle código hay que añadirle lo mismo.
+
+## 9. Manejo de moneda y valores financieros (Regla de Centavos Enteros)
+
+Todo valor monetario en la lógica de negocio, cálculos de carrito, checkouts, APIs y pasarelas de pago (Payphone, Paymentez) se representa, transporta y calcula obligatoriamente como un **número ENTERO en CENTAVOS de USD**. 
+
+- **Prohibido:** operar números de punto flotante sueltos para dinero (ej. `precio * 0.15`).
+- **Nomenclatura:** variables con sufijo explicativo (ej. `totalCentavos`, `subtotalCentavos`, `ivaCentavos`).
+- **Librería canónica obligatoria:** importar utilidades de `@eco/primitivas` (`aCentavos`, `aDolares`, `formatearUSD`, `desglosarIvaDesdePvp`, `parsearInputMoneda`).
+- Ver detalle exhaustivo y ejemplos en [`05-manejo-monetario-y-valores.md`](05-manejo-monetario-y-valores.md).
+
