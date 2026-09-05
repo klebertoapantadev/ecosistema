@@ -104,6 +104,9 @@ Este glosario explica de forma sencilla, directa y con ejemplos reales del ecosi
 | **Paymentez / Nuvei** | Tranqi | Pasarela de procesamiento de pagos con soporte de tokenización de tarjetas, suscripciones recurrentes y protocolo de seguridad 3D Secure en Ecuador. |
 | **OCR Multimodal ARIA** | Plataforma (IA) | Capacidad de visión artificial y extracción documental de ARIA para leer capturas de transferencias, comprobantes de pago, cédulas y expedientes en PDF. |
 | **Anti-Duplicación de Comprobantes** | Ecosistema | Control automático que audita la referencia bancaria de transferencias y pagos Deuna para evitar fraudes por reutilización de un mismo comprobante en múltiples órdenes. |
+| **Human-in-the-Loop (HITL)** | Plataforma (IA) | Modelo de supervisión activa donde el agente conversacional ARIA atiende de forma autónoma pero permite a la asesora o coordinadora humana intervenir, editar datos o tomar el control manual del chat en cualquier momento. |
+| **Conversational Intake** | Tinkay / Plataforma | *Toma de Pedido Conversacional*: Flujo en el que ARIA recopila todos los datos de la reserva (producto, dedicatoria, fecha, franja, dirección y comprobante) directamente dentro del chat de WhatsApp sin forzar al cliente a salir a una web. |
+| **Álbumes Google Photos en Catálogo** | Tinkay / Margaritas | Enlaces a álbumes seleccionados de Google Photos (`photos.app.goo.gl/...`) asociados a categorías de producto, permitiendo compartir fotos reales de taller de alta resolución en WhatsApp sin consumir almacenamiento local. |
 
 ---
 

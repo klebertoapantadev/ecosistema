@@ -162,4 +162,24 @@ $$\text{Base Comisionable Neta} = \text{Venta Total} - \text{Descuento Cupones} 
 3. **Liquidación Automatizada Quincenal:**
    * La administración accede al widget de comisiones en el panel administrativo de Tinkay, filtra por fecha y obtiene la liquidación consolidada lista para pago bancario, eliminando errores de cálculo manual.
 
+---
+
+### C. Flujo Conversacional Primario en WhatsApp, Álbumes Google Photos y Supervisión Humana Dual (*Human-in-the-Loop*)
+
+1. **Canal Primario de Venta por WhatsApp:**
+   * La mayoría de las ventas de Tinkay se originan y cierran directamente por WhatsApp. El cliente busca cercanía, calidez y agilidad sin pasar por carritos web tradicionales.
+2. **Catálogos Visuales en Álbumes Compartidos de Google Photos:**
+   * Cada categoría y producto maestro en el catálogo (`com_categoria` / `com_producto`) enlaza a un **Álbum Público de Google Photos** con fotografías reales de arreglos armados en el taller (`photos.app.goo.gl/...`).
+   * ARIA comparte en el chat los enlaces a los álbumes según el estilo o presupuesto solicitado por el cliente (ej. *Álbum Coreano*, *Álbum Ramos de Florero*, *Álbum Eventos*), permitiendo una inspección visual de alta resolución inmediata.
+3. **Toma de Pedido Conversacional (*Conversational Intake*):**
+   * ARIA recopila en el chat todos los parámetros de la reserva:
+     - Arreglo elegido y dedicatoria para la tarjeta impresa.
+     - Fecha de entrega y franja horaria (o solicitud de Horario Exacto con recargo de $10.00).
+     - Datos del destinatario y dirección (incluyendo ubicación compartida o pin de WhatsApp).
+     - Método de cobro (Link Payphone, QR Deuna o datos bancarios).
+4. **Supervisión Humana Dual (Copiloto Activo):**
+   * **La Asesora que Comisiona:** Supervisa el chat en tiempo real en su panel; puede conmutar a modo manual para asesorar pedidos especiales y personalizar el trato. La venta y la comisión neta quedan amarradas a su usuario.
+   * **La Coordinadora de Taller (Responsable de Entrega):** En cuanto el pago es validado (por OCR de ARIA o pasarela), la orden ingresa al panel del taller para corte de tallos, armado floral y asignación del repartidor en el Directorio de Delivery.
+
+
 

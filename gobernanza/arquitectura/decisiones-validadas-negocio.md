@@ -70,6 +70,13 @@
 16. **Diagnóstico Técnico Visual (FastFix):**
     * ARIA analiza fotografías de averías enviadas por clientes (calefones, plomería, tableros eléctricos), categorizando el equipo y pre-elaborando borradores de proforma CPQ.
 
+### H. Flujo Conversacional WhatsApp, Álbumes Google Photos y Supervisión Dual (*Human-in-the-Loop*)
+17. **Canal Primario de Venta por WhatsApp y Álbumes de Google Photos:**
+    * El flujo comercial principal en Tinkay se procesa vía WhatsApp. El catálogo enlaza álbumes de fotos reales de Google Photos (`photos.app.goo.gl/...`), compartidos por ARIA en el chat según estilo y presupuesto.
+18. **Supervisión Humana Dual (Copiloto):**
+    * **Asesora que comisiona:** Supervisa la conversación de ARIA en vivo, puede tomar el control manual para pedidos a medida y retiene la atribución de la orden para el cálculo automático de su comisión.
+    * **Coordinadora de taller:** Recibe la orden estructurada con dedicatoria, fecha, franja y dirección, gestiona el armado y asigna el repartidor en el Directorio de Delivery.
+
 ---
 
 ## 2. Foco Crítico: Tranqi (LegalTech)
