@@ -38,6 +38,7 @@ Este documento describe el **comportamiento compartido por los 4 productos** (Tr
 | **`PLT-017`** | Gestión de Sesiones y Revocación Remota | 🟡 Parcial | **40%** | Kleber Toapanta |
 | **`PLT-018`** | Historial de Accesos y Saludo Personalizado | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`PLT-019`** | **Reclutamiento, Bolsa de Empleo y "Únete al Equipo"** | ✅ Implementado | **100%** | Kleber Toapanta |
+| **`PLT-020`** | **Agenda, Disponibilidad, Citas y Consulta Telemática** | 🟡 En Desarrollo | **30%** | Kleber Toapanta |
 
 ---
 
@@ -961,6 +962,94 @@ Proporciona la infraestructura unificada para exhibir al equipo de trabajo verif
   * **Dado que** el Administrador accede al widget `gestion_postulaciones` en FastFix.
   * **Cuando** revisa el expediente de un postulante a Técnico, descarga su CV y presiona "Aprobar Postulante".
   * **Entonces** el sistema actualiza el estado a `APROBADO`, habilita su perfil en la empresa (`PLT-003`) y notifica al usuario del resultado favorable.
+
+---
+
+## PLT-020 — Agenda, Disponibilidad, Citas y Consulta Telemática
+
+**Responsable:** Kleber Toapanta  
+
+### Descripción
+Motor centralizado y transversal de disponibilidad horaria, franjas recurrentes, excepciones/bloqueos, anti-solape criptográfico/relacional (`btree_gist`), reserva de encuentros y videoconsultas seguras. Aplica a profesionales y técnicos de todos los negocios del ecosistema: Abogados en Tranqi (`TRQ-ABG-004`, `TRQ-CLI-001`), Técnicos e inspectores en FastFix Home (`FFH-TEC-004`) y consultores especializados.
+
+### Reglas de Negocio
+
+1. **Separación Arquitectónica de 2 Capas (Plataforma vs. Negocio):**
+   - **Capa Transversal de Plataforma (`comun_agenda`):** Aloja la disponibilidad abstracta (`age_profesional`, `age_franja`, `age_bloqueo`, `age_tipo_cita` y `age_reserva`). Expone únicamente huecos libres calculados mediante RPC (`age_fn_huecos_disponibles`), **sin revelar jamás la agenda privada, nombres de clientes ni motivos de otros encuentros**.
+   - **Capa Especializada de Negocio (`tranqui_legal.trq_cita`, `fastfix_mantenimiento.ffh_visita_tecnica`):** Aloja los datos de dominio específicos: motivo legal, materia, expediente/caso judicial, dictamen, informe de reparación y enlace a la sala de videoconsulta. El vínculo se realiza mediante clave foránea hacia `age_reserva.res_id`.
+
+2. **Garantía Estricta de Anti-Solape en Base de Datos (`btree_gist`):**
+   - Para prevenir colisiones por concurrencia y citas duplicadas, la tabla `comun_agenda.age_reserva` implementa una restricción de exclusión física inalterable:
+     ```sql
+     alter table comun_agenda.age_reserva add constraint age_reserva_sin_solape
+       exclude using gist (
+         res_profesional_id with =,
+         tstzrange(res_inicio_en, res_fin_en) with &&
+       ) where (res_eliminado_en is null and res_estado in ('propuesta', 'confirmada'));
+     ```
+   - La base de datos es la única fuente de verdad; ninguna condición de carrera en el frontend o asistente puede provocar solapamiento de horarios.
+
+3. **Articulación Comercial Obligatoria con `comun_comercio` (PLT-009 / PLT-014):**
+   - **Cita como Producto Facturable:** Toda cita formal es un producto de tipo `SERVICIO` en el catálogo unificado (`com_producto` / `com_variante`), con Base Imponible, tarifa de IVA (15%) y PVP expresado en **centavos enteros de USD** (`05-manejo-monetario-y-valores.md`).
+   - **Exoneración por Plan Activo (Suscripción):** Si el cliente posee una suscripción activa (`com_suscripcion.sub_estado = 'ACTIVA'`) en el negocio que incluya consultas (ej. *Plan Jurídico Mensual Tranqi*), el costo es **$0.00** (`cit_modalidad_cobro = 'CUBIERTO_POR_PLAN'`) y la cita se confirma de forma inmediata sin solicitar tarjeta de crédito ni pasar por pasarela.
+   - **Cupones de Descuento o Consulta Gratuita (`com_cupon` / `com_cupon_uso`):**
+     * Si el usuario aplica un cupón del 100% de descuento (ej. `CONSULTA_GRATIS`, `PRIMERA_CITA`), el saldo es **$0.00** (`cit_modalidad_cobro = 'CUPON_GRATIS'`), consumiendo el cupón y confirmando la reserva.
+     * Si el cupón es de descuento parcial (porcentual o monto fijo), se deduce en centavos de la Base Imponible y se cobra únicamente el saldo restante.
+   - **Convenios y Billetera B2B2C (`com_convenio_empresa` / `com_billetera`):** Permite subsidios corporativos o copago mediante saldo de billetera virtual.
+   - **Pasarela en Línea (Payphone / Paymentez):** Si el monto final liquidado es superior a $0.00, se abre la Cajita de Pagos de Payphone (`com_pasarela_configuracion`). La reserva se mantiene temporalmente como `'propuesta'` por 15 minutos; al validarse la confirmación server-to-server (`/api/confirm`), la Server Action registra el pago en `com_transaccion_pago` y conmuta la cita a `'confirmada'`.
+
+4. **Consulta Rápida con ARIA y Escalado Asistido:**
+   - ARIA atiende consultas preliminares y orientación general sin costo (`trq_consulta_rapida`).
+   - **Límite Ético y Legal:** El prompt del agente estipula que ARIA orienta pero **no patrocina ni emite dictámenes vinculantes**.
+   - **Escalado Asistido:** Cuando la consulta requiere análisis documental, plazos o patrocinio judicial, ARIA clasifica la materia, identifica profesionales habilitados y emite un bloque estructurado de opciones en el chat (`tranqi:opciones`) con tarjetas interactivas de horarios disponibles para agendamiento directo.
+
+5. **Videoconsulta Telemática Segura (Jitsi Meet):**
+   - Para citas virtuales, el sistema genera automáticamente un identificador de sala criptográficamente impredecible (`gen_random_uuid()`).
+   - No se almacenan URLs públicas en base de datos. El enlace dinámico se compone y entrega exclusivamente a los usuarios autorizados (cliente y profesional asignado) dentro de la ventana de acceso: desde **10 minutos antes** de la hora de inicio hasta **30 minutos después** de la hora de fin.
+
+6. **Despachador Universal de Alertas e Independencia de Infraestructura (Portabilidad Linux / Vercel):**
+   - Los recordatorios automáticos de cita (notificaciones a **24 horas** y a **1 hora** previas al encuentro) se diseñan para operar de forma idéntica en cualquier entorno de despliegue, **garantizando portabilidad total si el ecosistema migra de Vercel a servidores Linux propios**:
+     - **Idempotencia Transaccional en Base de Datos:** Cada cita posee los campos de control `cit_recordatorio_24h_enviado` y `cit_recordatorio_1h_enviado` (timestamptz). El despachador solo procesa citas con flag nulo en su respectiva ventana temporal y marca el timestamp en la misma transacción. Si el proceso se invoca varias veces seguidas, jamás duplica una alerta.
+     - **Lógica de Despacho Desacoplada:** El núcleo del despachador reside en una función de servicio en `packages/notificaciones` y se expone a través de un endpoint HTTP seguro `POST /api/cron/despachador-alertas` protegido con cabecera `Authorization: Bearer CRON_SECRET` (o como script CLI `node scripts/despachar-alertas.mjs`).
+     - **Mecanismos de Ejecución Soportados sin Modificar Código:**
+       1. *En Vercel (PaaS actual):* Tarea programada en `vercel.json` que dispara una petición HTTP periódica (cada 15 minutos) hacia `/api/cron/despachador-alertas`.
+       2. *En Servidor Linux Propio (VPS, Ubuntu/Debian, Docker, Kubernetes):* 
+          - Tarea programada en `cron` de Linux (`/etc/cron.d/despachador-alertas`):
+            `*/15 * * * * curl -s -X POST -H "Authorization: Bearer $CRON_SECRET" https://app.dominio.com/api/cron/despachador-alertas`
+          - Proceso en segundo plano gestionado con `PM2` o contenedor Docker con temporizador interno (`node-cron`).
+          - O temporizador nativo `systemd` (`despachador-alertas.timer`).
+       3. *En Supabase Nativo:* Tarea periódica con extensión `pg_cron` invocando Edge Function o webhook HTTP vía `pg_net`.
+     - **Cero Dependencia de Vendor:** Abandonar Vercel y desplegar en Linux propio requiere únicamente activar la línea de `curl` en el crontab del servidor Linux, sin alterar una sola línea de código fuente del ecosistema.
+
+7. **Widget Universal en Panel Profesional (`citas_programadas`):**
+   - Registrado en `seg_widget` bajo la categoría `PANEL_PROFESIONAL` (`PLT-011` regla 8) y sembrado para los roles profesionales de todos los negocios (`ABOGADO` en Tranqi, `TECNICO` en FastFix).
+
+### Criterios de Aceptación (Gherkin)
+
+* **Escenario:** Cliente con Plan Activo agenda cita gratuita
+  * **Dado que** un cliente autenticado posee una suscripción activa a un Plan en Tranqi.
+  * **Cuando** selecciona un horario disponible con un abogado especialista.
+  * **Entonces** el sistema liquida el valor en $0.00 (`CUBIERTO_POR_PLAN`), confirma la reserva inmediatamente en `comun_agenda`, crea la sala de videoconsulta y notifica al abogado sin solicitar pago con tarjeta.
+
+* **Escenario:** Cliente sin plan aplica cupón del 100% de descuento
+  * **Dado que** un cliente sin suscripción activa selecciona una consulta de $35.00 e ingresa el cupón `PRIMERA_CONSULTA`.
+  * **Cuando** valida el cupón en el checkout.
+  * **Entonces** el sistema descuenta los 3500 centavos, registra el uso del cupón en `com_cupon_uso`, aprueba la cita sin pasarela y genera la cita confirmada.
+
+* **Escenario:** Cobro de cita mediante pasarela Payphone
+  * **Dado que** un cliente sin plan ni cupón agenda una cita de $35.00 (3500 centavos).
+  * **Cuando** se despliega la Cajita de Pagos de Payphone y completa la transacción.
+  * **Entonces** el servidor ejecuta la confirmación `/api/confirm` en < 5 minutos, guarda el pago en `com_transaccion_pago`, conmuta la cita a `confirmada` y bloquea definitivamente la franja en `age_reserva`.
+
+* **Escenario:** Prevención de colisión horaria por concurrencia
+  * **Dado que** dos clientes intentan reservar exactamente la misma franja de un abogado simultáneamente.
+  * **Cuando** ambas peticiones llegan a la base de datos.
+  * **Entonces** la primera reserva es aceptada y la segunda es rechazada inmediatamente por la restricción física `age_reserva_sin_solape` (`btree_gist`), impidiendo solapamientos.
+
+* **Escenario:** Ejecución del despachador de alertas en infraestructura Linux propia
+  * **Dado que** el ecosistema está desplegado en un servidor Linux independiente sin servicios de Vercel.
+  * **Cuando** el `cron` del sistema operativo Linux ejecuta `curl` contra el endpoint `/api/cron/despachador-alertas` con el `CRON_SECRET`.
+  * **Entonces** el sistema procesa todas las citas entre 23h y 24h, despacha notificaciones Push/Email a ambas partes, actualiza `cit_recordatorio_24h_enviado = now()` y garantiza que una segunda ejecución no reenvíe las alertas.
 
 ---
 
