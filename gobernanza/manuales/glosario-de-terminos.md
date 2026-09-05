@@ -96,9 +96,13 @@ Este glosario explica de forma sencilla, directa y con ejemplos reales del ecosi
 | **POD** | Tinkay / FastFix / Tranqi | *Proof of Delivery / Recepción Conforme*: Evidencia digital obligatoria al finalizar una entrega o servicio (fotografía geolocalizada de las flores entregadas, firma del cliente en pantalla o acuse de recibo de documentos notariales). |
 | **Courier de Documentos** | Tranqi (Legal) | Servicio de mensajería motorizada para retiro, diligencias notariales, recolección de firmas físicas y entrega de expedientes o escrituras certificadas a domicilio. |
 | **Directorio de Delivery** | Tinkay / Margaritas | Registro centralizado de transportistas de confianza (Uber, Cabify, taxis convencionales, repartidores independientes) que la coordinadora de taller asigna a cada orden, registrando contacto, placa y link de rastreo. |
+| **Base Comisionable Neta** | Tinkay / Plataforma | *Net Commissionable Base*: Valor residual de la venta sobre el cual se calcula la comisión del vendedor, tras descontar cupones, flete real, costos de instalación, comisión de plataforma y recargos de pasarela de pago (TC 6%). |
+| **Gastos Deducibles de Venta** | Ecosistema | Costos operativos directos que se restan del valor de la venta antes de liquidar honorarios o comisiones a asesores y socios (evitando pagar comisiones sobre fletes o tarifas bancarias). |
+| **Atribución ARIA** | Plataforma (IA) | *Conversational Lead Attribution*: Mecanismo por el cual el agente conversacional ARIA vincula una conversación y orden a un vendedor específico mediante links de referidos (`?asesora=paola`) o turnos rotativos. |
 
 ---
 
 > 📌 **Regla de Actualización Obligatoria:**  
 > Cada vez que en una conversación, especificación o decisión técnica se utilice una sigla o concepto nuevo (ej. `Webhook`, `JWT`, `OTP`, `OAuth`, `MFA`, `TTL`), el agente actualizará este archivo de inmediato para mantener la enciclopedia completa del ecosistema.
+
 

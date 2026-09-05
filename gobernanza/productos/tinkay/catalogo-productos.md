@@ -128,3 +128,38 @@ Tinkay opera bajo un modelo de despacho híbrido gestionado activamente por la *
      - **Costo Real de Flete:** Valor pagado al transportista para auditar márgenes reales de entrega.
      - **POD (*Proof of Delivery*):** Fotografía obligatoria del destinatario o conserjería recibiendo el arreglo.
 
+---
+
+## 6. Modelo de Comisiones de Vendedoras y Automatización con ARIA
+
+Tinkay sustituye el proceso manual de cuadre de comisiones y la gestión de chats en ManyChat mediante la integración nativa del agente conversacional **ARIA (`packages/agentes-ia`)**:
+
+### A. Fórmula Universal de Base Comisionable Neta
+La comisión de la vendedora se calcula sobre la **utilidad bruta operativa real** de cada pedido, deduciendo todos los gastos directos del producto/servicio:
+
+$$\text{Base Comisionable Neta} = \text{Venta Total} - \text{Descuento Cupones} - \text{Gasto Delivery} - \text{Gasto Instalación} - \text{Fee Plataforma} - \text{Comisión TC}$$
+
+* **Descuento por Cupones:** Si el cliente aplicó un cupón promocional (ej. -$5.00), el descuento reduce la base de venta.
+* **Gasto de Delivery:** Se deduce $\max(\text{Delivery Base Incluido (\$3.00)}, \text{Delivery Real Pagado})$.
+* **Gasto de Instalación / Montaje:** Deducible en decoraciones de eventos, altares o montajes florales en sitio.
+* **Fee de Plataforma:** Tarifa o porcentaje de infraestructura operativa de la plataforma.
+* **Comisión de Tarjeta de Crédito (TC):**
+  * **6.00%** sobre el total de la orden si el cliente pagó con Tarjeta de Crédito / Débito (pasarela bancaria).
+  * **$0.00** si el cliente pagó en Efectivo o Transferencia bancaria directa.
+* **Porcentaje Individual por Vendedora:**
+  * Cada vendedora posee su propio porcentaje de comisión configurado en su perfil de membresía (`seg_membresia.mem_detalle_membresia->>'porcentaje_comision'`, ej. 8%, 10%, 12%).
+  * $$\text{Comisión Neta a Pagar} = \max(0, \text{Base Comisionable Neta}) \times \%\,\text{Comisión Asignada}$$
+
+---
+
+### B. Transición de ManyChat hacia ARIA (`packages/agentes-ia`)
+1. **Reemplazo Integral de ManyChat:**
+   * ARIA atiende las conversaciones en WhatsApp e Instagram Direct, guiando al cliente en la selección del arreglo, recolección de dedicatoria, fecha, franja y dirección exacta.
+2. **Atribución de Ventas a la Asesora:**
+   * **Enlace de Contacto con Ref:** Cada asesora cuenta con enlaces y códigos QR propios para campañas y estados (ej. `tinkay.com/chat?asesora=paola` o WhatsApp con texto predefinido). ARIA asocia la conversación a esa vendedora.
+   * **Asignación Equitativa en Turnos:** Conversaciones orgánicas que ingresan a la línea general se distribuyen por turno rotativo entre las vendedoras activas.
+   * **Reasignación Manual:** La coordinadora puede modificar o reasignar la vendedora en el panel de control antes de cerrar la liquidación.
+3. **Liquidación Automatizada Quincenal:**
+   * La administración accede al widget de comisiones en el panel administrativo de Tinkay, filtra por fecha y obtiene la liquidación consolidada lista para pago bancario, eliminando errores de cálculo manual.
+
+

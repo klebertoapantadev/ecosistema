@@ -37,6 +37,15 @@
    * **Planificador de Compras (Explosión de Insumos BOM):** El sistema calcula automáticamente la consolidación de materias primas necesarias por fecha de despacho (ej. *"Para el 13 de febrero se requieren 500 rosas rojas y 120 papeles coreanos"*).
    * Al pasar la orden a estado *"En Elaboración"* o *"Despacho"*, el sistema regulariza el consumo en el Kardex automáticamente sin trabar el flujo operativo.
 
+### E. Motor Universal de Liquidación de Comisiones y Gastos Operativos Deducibles
+8. **Fórmula de Base Comisionable Neta:**
+   * La comisión de los asesores/vendedores se calcula sobre la utilidad operativa real del pedido, deduciendo los gastos específicos de cada producto/servicio antes de aplicar el porcentaje:
+     $$\text{Base Comisionable Neta} = \text{Venta Bruta} - \text{Descuento Cupones} - \text{Delivery} - \text{Instalación/Montaje} - \text{Fee Plataforma} - \text{Comisión TC (6\%)}$$
+9. **Porcentajes Individuales por Asesor (`seg_membresia`):**
+   * El porcentaje de comisión no es uniforme; cada vendedora o asesor cuenta con su tasa configurada individualmente en su perfil de membresía (ej. 8%, 10%, 12%).
+10. **Atribución Omnicanal ARIA (`packages/agentes-ia`):**
+    * ARIA reemplaza herramientas externas (como ManyChat) gestionando conversaciones en WhatsApp/Instagram, atribuyendo la venta al asesor mediante links con identificador (`?asesora=paola`) o turnos rotativos, y calculando automáticamente la liquidación en tiempo real.
+
 ---
 
 ## 2. Foco Crítico: Tranqi (LegalTech)
