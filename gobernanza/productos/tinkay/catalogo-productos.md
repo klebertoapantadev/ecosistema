@@ -226,5 +226,7 @@ $$\text{Base Comisionable Neta} = \text{Venta Total} - \text{Descuento Cupones} 
    * **La Asesora que Comisiona:** Supervisa el chat en tiempo real en su panel; puede conmutar a modo manual para asesorar pedidos especiales y personalizar el trato. La venta y la comisión neta quedan amarradas a su usuario.
    * **La Coordinadora de Taller (Responsable de Entrega):** En cuanto el pago es validado (por OCR de ARIA o pasarela), la orden ingresa al panel del taller para corte de tallos, armado floral y asignación del repartidor en el Directorio de Delivery.
 
-
+> [!IMPORTANT]
+> **Especificación Completa de ARIA, Prompts, YCloud y Consola de Supervisión:**  
+> Ver el documento canónico de arquitectura e implementación: [`agente-aria-whatsapp-ycloud.md`](agente-aria-whatsapp-ycloud.md) (`TNK-004`).
 

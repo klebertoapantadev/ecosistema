@@ -28,7 +28,7 @@ Este documento describe el **comportamiento compartido por los 4 productos** (Tr
 | **`PLT-007`** | Catálogo Geográfico (Ecuador 24 Provincias) | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`PLT-008`** | Configuración de Negocio & SMTP en Vault | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`PLT-009`** | Catálogo Comercial Unificado (Productos/Planes/Despachos) | 🟡 En Desarrollo | **85%** | Kleber Toapanta |
-| **`PLT-010`** | Integración Omnicanal (WhatsApp & Meta Feed) | ⏳ Pendiente | **0%** | **Jesus Navarrete** |
+| **`PLT-010`** | **Integración Omnicanal (WhatsApp YCloud, ARIA y Supervisión Humana HITL)** | 🟡 En Desarrollo | **45%** | Kleber Toapanta / Jesus Navarrete |
 | **`PLT-011`** | Sistema de Widgets por Rol & DataGrids 2 Capas | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`PLT-012`** | **Baja de Cuenta y Derecho al Olvido** | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`PLT-013`** | Notificaciones Multicanal (Push/Email/In-App) | ✅ Implementado | **100%** | Kleber Toapanta |
@@ -428,19 +428,38 @@ Motor centralizado de gestión de bienes, servicios, recetas (BOM), inventarios,
 
 ---
 
-## PLT-010 — Integración Omnicanal (WhatsApp Business y Meta Commerce Manager)
+## PLT-010 — Integración Omnicanal (WhatsApp Business YCloud, ARIA y Consola Humana HITL)
 
-**Responsable:** **Jesus Navarrete**  
+**Responsables:** Kleber Toapanta / Jesus Navarrete  
 
 ### Descripción
-Distribución del catálogo (`PLT-009`) hacia canales sociales sin carga manual duplicada.
+Ecosistema integral de atención conversacional y distribución comercial omnicanal. Conecta el catálogo unificado (`PLT-009`) y los agentes conversacionales de ARIA (`PLT-004`) con **WhatsApp Business Cloud API** (mediante el proveedor oficial **YCloud**), integrando una **Consola de Supervisión Humana (*Human-in-the-Loop* - HITL)** para asistencia en vivo, toma de control por operadores humanos y atribución de comisiones de venta.
 
 ### Reglas de Negocio
-1. **Feed automatizado para Meta Commerce Manager:** cada negocio expone un feed de catálogo que Meta consulta periódicamente para sincronizar el Catálogo de WhatsApp Business, Facebook e Instagram — títulos, precios, variantes y portada se actualizan solos, sin carga manual en la app de Meta.
-2. **Botón "Comprar por WhatsApp":** en la tienda web, genera un enlace estructurado con producto, variante (SKU), precio final calculado (incluida personalización/adicionales), imagen de referencia y datos de entrega ingresados por el cliente.
-3. **Endpoints de consulta para el Buddie (`PLT-004`):** el asistente conversacional puede responder en chat con tarjetas de producto, foto de portada y precio actualizado, reutilizando el mismo catálogo — no un feed aparte.
+1. **Conector Oficial WhatsApp Cloud API vía YCloud:**
+   - Cada negocio del ecosistema puede asociar su línea oficial de WhatsApp Business configurando sus credenciales de YCloud (`YCLOUD_API_KEY`, webhook URL) en `comun_seguridad.cfg_negocio`.
+   - El webhook entrante `/api/webhooks/ycloud` valida obligatoriamente la firma de seguridad `X-YCloud-Signature` antes de procesar cualquier evento.
+2. **Persistencia Unificada y Modelo de Chats (`comun_agentes`):**
+   - Toda conversación multicanal se persiste en `comun_agentes.agc_conversacion` y `comun_agentes.agc_mensaje`.
+   - El identificador `cnv_id` (UUID) se comparte con ARIA como `conversation_id`, asegurando trazabilidad exacta entre la memoria del modelo y la vista del operador.
+   - Las tablas implementan **Supabase Realtime** para actualización instantánea en la consola de operadores sin recargas ni polling.
+3. **Máquina de Estados de Atención y Despacho:**
+   - **`BOT_ACTIVO`:** ARIA atiende de forma autónoma. Razona con sus prompts de negocio y herramientas MCP (ej. consulta de catálogo, generación de cotizaciones, enlaces a fotos).
+   - **`ESCALADO_HUMANO`:** Se activa si ARIA detecta que no puede resolver la duda, el cliente solicita un asesor humano, o hay un reclamo/pedido especial. Se emite notificación prioritaria sonora y visual a la consola de operadores.
+   - **`EN_ATENCION_ASESORA`:** Un operador humano tomó el control. El bot ARIA se silencia inmediatamente para ese hilo. El operador responde directamente a WhatsApp desde la consola web mediante YCloud API.
+   - **`CERRADO`:** Conversación finalizada o venta concretada.
+4. **Consola de Supervisión Humana (*Human-in-the-Loop* - HITL) en Widgets (`PLT-011`):**
+   - Construida bajo el patrón unificado de widgets (`consola_chat` / `atencion_whatsapp`).
+   - Dispone de 3 paneles:
+     - **Bandeja de Entrada:** Filtros rápidos (*Requiere Atención / Escalados*, *Mis Chats*, *Bot Activo*, *Cerrados*), badges de no leídos y tiempo de espera.
+     - **Visor de Conversación en Vivo:** Historial cronológico diferenciando burbujas del cliente, del bot ARIA y del operador humano; botones de acción rápida **[ Tomar Control ]** y **[ Reactivar Bot ]**; input para despacho de mensajes a WhatsApp; selector de respuestas rápidas (plantillas).
+     - **Ficha de Pedido y Operador:** Panel lateral con datos del contacto, asignación de asesora para comisiones netas, generación directa de link de pago (Payphone/Paymentez) y pase a operaciones/taller.
+5. **Feed Automatizado para Meta Commerce Manager:**
+   - Cada negocio expone un feed estructurado (XML/JSON) que Meta consulta periódicamente para sincronizar el catálogo de productos con WhatsApp Business, Facebook e Instagram.
+6. **Botón "Comprar por WhatsApp":**
+   - En las tiendas web del ecosistema, el botón genera un enlace profundo con texto estructurado (producto, SKU, PVP en dólares, extras y dirección), enrutándolo al agente ARIA o a la asesora con el tag correspondiente.
 
-**Implementación técnica:** ver [`especificacion-tecnica.md`](especificacion-tecnica.md) §7.1.
+**Especificación específica de producto:** Ver [`agente-aria-whatsapp-ycloud.md`](../tinkay/agente-aria-whatsapp-ycloud.md) para el caso de Tinkay Floristería ("Mía").
 
 ---
 
