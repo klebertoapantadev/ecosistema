@@ -88,11 +88,16 @@ Para casos donde una empresa (ej. *Banco del Pichincha*) contrata el plan corpor
   * Se registra el movimiento auditable en `com_billetera_movimiento` (`tipo: 'BONO_CONVENIO'`, monto: `+$100.00`, referencia al convenio del Municipio).
 * **Recargas con Tarjeta de Crédito:**
   * El usuario puede recargar saldo prepagado en cualquier momento desde la app o web (`wlt_saldo_recarga`), pagando con TC/TD.
-* **Pago Mixto (*Split Payment*):**
-  * Al pagar la Notarización con descuento ($127.50):
-    1. El sistema utiliza primero los **$100.00 del bono** de su billetera.
-    2. El saldo restante (**$27.50**) lo debita del saldo de recarga propio del usuario o le solicita pagarlo con tarjeta en el mismo checkout.
+* **Pago Mixto (*Split Payment*) y Selección Activa de Saldo:**
+  * En el checkout, el cliente **elige activamente qué saldo desea utilizar** (saldo de recarga en dinero real vs. saldo de bono promocional).
+  * Si utiliza el bono de $100.00:
+    1. El sistema descuenta los **$100.00 del bono** seleccionado.
+    2. El saldo restante (**$27.50**) lo paga con su saldo de recarga o directamente con tarjeta en el checkout.
   * La factura electrónica del SRI se emite por el valor total legal con las formas de pago debidamente desglosadas.
+* **Política de Reembolso Asimétrico:**
+  * Si la orden o cita es cancelada dentro del tiempo permitido, el valor cubierto por el bono regresa a la billetera como saldo de bono (manteniendo su vencimiento original), y el dinero real regresa a la tarjeta o saldo de recarga.
+* **Vigencia Configurable:**
+  * La vigencia de cupones (ej. cupón de lanzamiento 'Primera Consulta Gratis') y bonos de billetera se define de forma personalizada por campaña (`cup_valido_hasta` / `wlm_expira_en`).
 
 ---
 
@@ -102,10 +107,36 @@ Aunque Tranqi es una plataforma LegalTech digital, trámites sensibles exigen mo
 
 1. **Directorio de Couriers y Mensajería Legal:**
    - Registro en `com_proveedor_servicio` de motorizados de confianza, mensajerías judiciales y empresas de encomienda autorizadas.
-2. **Asignación Vinculada al Trámite (`com_despacho_asignacion`):**
+2. **Cobertura Urbana Base + Recargo Geográfico:**
+   - El servicio de mensajería motorizada para retiro y entrega está **incluido en el precio del trámite dentro del perímetro urbano base** (ej. Quito Urbano).
+   - Para zonas periféricas o valles (Cumbayá, Tumbaco, Los Chillos), el sistema calcula y añade un **adicional logístico** según tarifario.
+3. **Asignación Vinculada al Trámite (`com_despacho_asignacion`):**
    - El abogado u operador despacha un retiro/entrega indicando origen, destino (ej. *Notaría 16 de Quito* / *Domicilio del Cliente*) e instrucciones especiales de confidencialidad.
-3. **Control y Evidencia de Recepción (POD):**
-   - Registro de número de guía, teléfono del motorizado y carga obligatoria del **Acuse de Recibo Firmado** o comprobante de entrega notarial.
+4. **Control y Evidencia de Recepción (POD):**
+   - Registro de número de guía, teléfono del motorizado y carga obligatoria del **Acuse de Recibo Firmado** o acta notarial digitalizada.
+
+---
+
+## 6. Agendamiento de Consultas Jurídicas y Citas Virtuales
+
+1. **Asignación Híbrida de Abogados (Algorítmica + Manual + Contingencia):**
+   - **Asignación Inicial:** El sistema asigna automáticamente al abogado disponible por turno rotativo (*Round-Robin*) según la materia jurídica solicitada.
+   - **Reasignación Manual por Operador:** El administrador u operador de Tranqi puede reasignar el caso del Abogado 1 al Abogado 2 en cualquier momento desde su panel de control si la complejidad del trámite lo amerita.
+   - **Contingencia por Cancelación:** Si el abogado asignado cancela la cita, el sistema genera una alerta prioritaria en la consola del operador para que reasigne a otro abogado disponible de inmediato, evitando cancelar la cita del cliente.
+2. **Generación Automática de Google Meet:**
+   - Para citas virtuales, la plataforma invoca la Google Calendar API generando automáticamente la sala de **Google Meet**.
+   - El enlace queda sincronizado en el calendario corporativo/personal del abogado y disponible en la tarjeta de la cita del portal web del cliente.
+
+---
+
+## 7. Esquema Flexible de Liquidación a Socios Abogados
+
+Tranqi implementa un **Motor de Liquidación Multi-Esquema** según el perfil o contrato del socio:
+* **Modalidad A — Tarifa Plana Estándar:** Valor fijo general por servicio o consulta.
+* **Modalidad B — Tarifa por Hora de Asesoría:** Para casos complejos o litigios prolongados según bitácora de tiempo.
+* **Modalidad C — Tarifa Fija por Tipo de Trámite:** Acuerdos específicos por trámite (ej. Notarización $60, Divorcio por mutuo acuerdo $200).
+* **Modalidad D — Comisión Porcentual por Caso:** Porcentaje pactado sobre el cobro facturado (ej. 75% abogado / 25% plataforma Tranqi).
+
 
 
 
