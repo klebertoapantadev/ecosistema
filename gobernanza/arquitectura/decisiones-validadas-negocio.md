@@ -46,6 +46,30 @@
 10. **Atribución Omnicanal ARIA (`packages/agentes-ia`):**
     * ARIA reemplaza herramientas externas (como ManyChat) gestionando conversaciones en WhatsApp/Instagram, atribuyendo la venta al asesor mediante links con identificador (`?asesora=paola`) o turnos rotativos, y calculando automáticamente la liquidación en tiempo real.
 
+### F. Pasarelas de Pago Híbridas y Multi-Pasarela por Negocio (`comun_facturacion`)
+11. **Estrategia Multi-Pasarela por Tenant:**
+    * Cada negocio opera con su pasarela de cobro preferida según su giro comercial:
+      * **Tranqi:** Paymentez / Nuvei (tokenización y recurrencia de tarjetas de crédito/débito).
+      * **Tinkay & Margaritas:** Payphone API (enlaces de cobro y botón Payphone).
+      * **FastFix:** Payphone o Paymentez.
+12. **Métodos de Pago Directos en Todos los Negocios:**
+    * **Deuna (Banco Pichincha):** Despliegue de Código QR o número celular para transferencias instantáneas directas.
+    * **Transferencia Bancaria Directa:** Presentación de cuentas bancarias oficiales (Pichincha, Guayaquil, Produbanco) con carga de captura del comprobante.
+    * **Incentivo en Comisiones:** Los pagos por Deuna o Transferencia directa registran **0% de recargo de pasarela**, incrementando la base comisionable de las asesoras de venta.
+13. **Seguridad en Supabase Vault:** Las credenciales y claves API de cada pasarela (Payphone, Paymentez) residen cifradas en Supabase Vault por tenant (`PLT-008`).
+
+### G. ARIA como Agente Multimodal de Operaciones (`packages/agentes-ia`)
+14. **Auditoría Inteligente de Comprobantes de Pago:**
+    * ARIA procesa mediante visión artificial (OCR multimodal) las capturas de transferencias bancarias y comprobantes de Deuna recibidos por WhatsApp, Telegram o la Web.
+    * Extrae en tiempo real: monto transferido, número de referencia/comprobante, banco emisor, cuenta de destino y fecha/hora.
+    * Ejecuta validación cruzada antifraude contra `comun_comercio`: si el comprobante ya fue usado en otra orden, emite una alerta prioritaria de intento de fraude.
+    * Pre-valida la orden en el widget `conciliacion_pagos` facilitando la aprobación en un solo clic a la administración.
+15. **Auditoría Documental Legal y Ficha Resumen (Tranqi):**
+    * ARIA inspecciona documentos PDF escaneados cargados por clientes (cédulas, contratos, escrituras, partidas notariales).
+    * Extrae partes intervinientes, cuantías, fechas y números de notaría, generando una Ficha Ejecutiva para el abogado asignado.
+16. **Diagnóstico Técnico Visual (FastFix):**
+    * ARIA analiza fotografías de averías enviadas por clientes (calefones, plomería, tableros eléctricos), categorizando el equipo y pre-elaborando borradores de proforma CPQ.
+
 ---
 
 ## 2. Foco Crítico: Tranqi (LegalTech)

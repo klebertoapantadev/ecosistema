@@ -22,7 +22,7 @@ Este documento describe el **comportamiento compartido por los 4 productos** (Tr
 | **`PLT-001`** | Identidad Única, Registro Cero Fricción y Auth | ✅ Implementado | **85%** | Kleber Toapanta |
 | **`PLT-002`** | Autenticación Multifactor (MFA TOTP) & Expiración por Inactividad | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`PLT-003`** | Membresías, Jerarquía & Active Role Switcher | ✅ Implementado | **100%** | Kleber Toapanta / Jesus Navarrete |
-| **`PLT-004`** | **Buddie Conversacional (Chat IA ARIA)** | 🟡 En Desarrollo | **40%** | **Jesus Navarrete** |
+| **`PLT-004`** | **Buddie Conversacional (Chat IA ARIA & OCR Multimodal)** | 🟡 En Desarrollo | **60%** | **Jesus Navarrete** |
 | **`PLT-005`** | Auditoría por Triggers y Widget Común | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`PLT-006`** | Datos de Facturación SRI y Comprobantes | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`PLT-007`** | Catálogo Geográfico (Ecuador 24 Provincias) | ✅ Implementado | **100%** | Kleber Toapanta |
@@ -308,7 +308,16 @@ Unifica el procesamiento de pagos y la emisión de comprobantes electrónicos au
    - Antes de procesar el cobro, el sistema solicita al cliente confirmar si requiere la factura a nombre de **Consumidor Final** o con **Datos Personalizados (RUC/Cédula, Razón Social, Dirección, Correo)**.
    - Si el cliente elige emitir con datos y no los ha registrado previamente en su perfil, el sistema exige su ingreso antes de habilitar la pasarela de pago.
    - **Widget Autocontenido de Datos de Facturación en Mi Cuenta:** Accesible desde `/panel/cuenta`, permite configurar y respaldar de forma permanente: *Nombre Completo / Razón Social*, *Tipo de Documento (Cédula, RUC, Pasaporte)*, *Número de Identificación*, *Teléfono de Contacto*, *Dirección Fiscal* y *Correo Electrónico de Facturación* (diferenciado de los correos de notificación). Incluye la opción de autocompletar *"Usar Nombres del Registro"*.
-4. **Abstracción de Pasarela:** El flujo de cobro utiliza una interfaz unificada que soporta pasarelas locales (Payphone, Kushki, Placetopay) de forma transparente para el cliente.
+4. **Arquitectura Multi-Pasarela y Métodos de Pago Directos:**
+   - **Adaptador de Pasarelas por Tenant (*Strategy Pattern*):**
+     - **Tranqi:** Paymentez / Nuvei (tokenización de tarjetas, suscripciones y 3DSecure).
+     - **Tinkay & Margaritas:** Payphone API (enlaces de cobro, app-to-app y botón Payphone).
+     - **FastFix:** Payphone o Paymentez.
+   - **Métodos Directos Sin Pasarela (0% Recargo Bancario):**
+     - **Deuna (Banco Pichincha):** Código QR o número de celular oficial para transferencias instantáneas.
+     - **Transferencia Bancaria Directa:** Presentación de cuentas bancarias oficiales del negocio con carga de foto de comprobante.
+   - **Auditoría y Conciliación con ARIA Multimodal:**
+     - Las capturas de transferencias y pagos Deuna son procesadas por el OCR multimodal de ARIA (`PLT-004`) extrayendo monto, referencia y fecha, detectando comprobantes duplicados y pre-validando la transacción para aprobación en 1 clic en el widget `conciliacion_pagos`.
 
 ---
 

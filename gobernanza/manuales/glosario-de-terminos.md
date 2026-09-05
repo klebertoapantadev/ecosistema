@@ -99,6 +99,11 @@ Este glosario explica de forma sencilla, directa y con ejemplos reales del ecosi
 | **Base Comisionable Neta** | Tinkay / Plataforma | *Net Commissionable Base*: Valor residual de la venta sobre el cual se calcula la comisión del vendedor, tras descontar cupones, flete real, costos de instalación, comisión de plataforma y recargos de pasarela de pago (TC 6%). |
 | **Gastos Deducibles de Venta** | Ecosistema | Costos operativos directos que se restan del valor de la venta antes de liquidar honorarios o comisiones a asesores y socios (evitando pagar comisiones sobre fletes o tarifas bancarias). |
 | **Atribución ARIA** | Plataforma (IA) | *Conversational Lead Attribution*: Mecanismo por el cual el agente conversacional ARIA vincula una conversación y orden a un vendedor específico mediante links de referidos (`?asesora=paola`) o turnos rotativos. |
+| **Deuna** | Plataforma / SRI | Billetera digital y pasarela de cobro inmediato del Banco Pichincha en Ecuador que opera mediante códigos QR o número de celular sin comisión bancaria para pagos directos. |
+| **Payphone** | Tinkay / Margaritas | Pasarela de pagos ecuatoriana que permite cobros con tarjeta de crédito/débito nacional e internacional, links de pago y transferencias app-to-app. |
+| **Paymentez / Nuvei** | Tranqi | Pasarela de procesamiento de pagos con soporte de tokenización de tarjetas, suscripciones recurrentes y protocolo de seguridad 3D Secure en Ecuador. |
+| **OCR Multimodal ARIA** | Plataforma (IA) | Capacidad de visión artificial y extracción documental de ARIA para leer capturas de transferencias, comprobantes de pago, cédulas y expedientes en PDF. |
+| **Anti-Duplicación de Comprobantes** | Ecosistema | Control automático que audita la referencia bancaria de transferencias y pagos Deuna para evitar fraudes por reutilización de un mismo comprobante en múltiples órdenes. |
 
 ---
 
