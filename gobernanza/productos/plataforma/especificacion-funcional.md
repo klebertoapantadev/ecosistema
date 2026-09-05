@@ -994,21 +994,37 @@ Motor centralizado y transversal de disponibilidad horaria, franjas recurrentes,
 ### Reglas de Negocio
 
 1. **Separación Arquitectónica de 2 Capas (Plataforma vs. Negocio):**
-   - **Capa Transversal de Plataforma (`comun_agenda`):** Aloja la disponibilidad abstracta (`age_profesional`, `age_franja`, `age_bloqueo`, `age_tipo_cita` y `age_reserva`). Expone únicamente huecos libres calculados mediante RPC (`age_fn_huecos_disponibles`), **sin revelar jamás la agenda privada, nombres de clientes ni motivos de otros encuentros**.
-   - **Capa Especializada de Negocio (`tranqui_legal.trq_cita`, `fastfix_mantenimiento.ffh_visita_tecnica`):** Aloja los datos de dominio específicos: motivo legal, materia, expediente/caso judicial, dictamen, informe de reparación y enlace a la sala de videoconsulta. El vínculo se realiza mediante clave foránea hacia `age_reserva.res_id`.
+   - **Capa Transversal de Plataforma (`comun_agenda`):** Aloja la disponibilidad abstracta y el motor de huecos compartible entre abogados (`tranqi`), técnicos (`fastfix`) o consultores.
+     - `age_profesional`: 1 fila por `(agp_usuario_id, agp_negocio)`. Almacena parámetros operativos: `agp_zona_horaria` (IANA string, default `'America/Guayaquil'`, previniendo descalces con Galápagos UTC-6), `agp_duracion_min` (15..240), `agp_holgura_min`, `agp_antelacion_minima_horas`, `agp_horizonte_dias`, `agp_modalidades` (`text[]`), `agp_acepta_derivacion` (boolean para pool de escalado), `agp_configurada_en` (timestamp de onboarding, si es null el profesional no figura disponible: falla cerrado).
+     - `age_franja`: Horas operativas recurrentes por día de la semana (`fra_dia_semana` 0..6 donde 0 es Domingo). `fra_hora_inicio` y `fra_hora_fin` se almacenan en `time` local a propósito: "martes de 09:00 a 13:00" es una regla del despacho que sobrevive a husos horarios; la conversión a instantes `timestamptz` se realiza al proyectar los huecos.
+     - `age_bloqueo`: Excepciones puntuales (`blq_inicio_en`, `blq_fin_en` en timestamptz, motivo, origen `'manual' | 'audiencia' | 'sincronizado'`).
+     - `age_tipo_cita`: Catálogo de tipos de encuentro por negocio (`tci_codigo`, `tci_nombre`, `tci_duracion_min`, `tci_modalidad_permitida`, `tci_producto_id` vinculado a `comun_comercio`, `tci_activo`).
+     - `age_reserva`: Ocupación abstracta de un profesional en un rango (`res_inicio_en`, `res_fin_en` NOT NULL, `res_estado` in `'propuesta', 'confirmada', 'cancelada', 'realizada', 'no_asistio'`).
+   - **Aislamiento y Privacidad en RLS:** Ningún usuario `authenticated` puede hacer `SELECT` sobre `age_reserva` o `age_bloqueo` ajenos. La disponibilidad de un profesional solo se expone a través de la función RPC `age_fn_huecos_disponibles()`, la cual retorna únicamente franjas libres desprovistas de motivos, nombres de clientes o identificadores de casos.
+   - **Capa Especializada de Negocio (`tranqui_legal.trq_cita`, `fastfix_mantenimiento.ffh_visita_tecnica`):** Aloja los datos de dominio específicos: motivo legal, materia, expediente/caso judicial, dictamen, informe de reparación y enlace a la sala de videoconsulta. El vínculo se realiza mediante clave foránea `cit_reserva_id -> age_reserva(res_id)`.
 
 2. **Garantía Estricta de Anti-Solape en Base de Datos (`btree_gist`):**
    - Para prevenir colisiones por concurrencia y citas duplicadas, la tabla `comun_agenda.age_reserva` implementa una restricción de exclusión física inalterable:
      ```sql
+     create extension if not exists btree_gist;
      alter table comun_agenda.age_reserva add constraint age_reserva_sin_solape
        exclude using gist (
          res_profesional_id with =,
          tstzrange(res_inicio_en, res_fin_en) with &&
        ) where (res_eliminado_en is null and res_estado in ('propuesta', 'confirmada'));
      ```
-   - La base de datos es la única fuente de verdad; ninguna condición de carrera en el frontend o asistente puede provocar solapamiento de horarios.
+   - La base de datos es la única fuente de verdad; ninguna condición de carrera en el frontend o asistente puede provocar solapamiento de horarios. `res_fin_en` es `NOT NULL` obligatorio desde su origen.
 
-3. **Articulación Comercial Obligatoria con `comun_comercio` (PLT-009 / PLT-014):**
+3. **Funciones RPC Transaccionales del Motor de Agenda (`comun_agenda`):**
+   - `age_fn_huecos_disponibles(profesional_id, desde, hasta, tipo_cita_id)`: Genera los slots disponibles proyectando franjas según `agp_zona_horaria`, restando reservas activas (`propuesta`/`confirmada`), bloqueos y holguras; descartando huecos fuera de la antelación mínima u horizonte máximo. Falla cerrado si `agp_configurada_en` es nulo.
+   - `age_fn_configurar_agenda(config jsonb, franjas jsonb)`: Reemplaza atómicamente la configuración del profesional en sesión y sus franjas horarias.
+   - `age_fn_bloquear(inicio, fin, motivo)`: Registra bloqueos puntuales en el calendario.
+
+4. **Paquete Compartido de Dominio (`packages/agenda` — `@eco/agenda`):**
+   - Concentra el motor de cálculo de huecos, esquemas Zod y validaciones de dominio.
+   - Libre de dependencias de `next/*` y de estilos visuales específicos, garantizando portabilidad hacia web, backend y apps nativas Capacitor.
+
+5. **Articulación Comercial Obligatoria con `comun_comercio` (PLT-009 / PLT-014):**
    - **Cita como Producto Facturable:** Toda cita formal es un producto de tipo `SERVICIO` en el catálogo unificado (`com_producto` / `com_variante`), con Base Imponible, tarifa de IVA (15%) y PVP expresado en **centavos enteros de USD** (`05-manejo-monetario-y-valores.md`).
    - **Exoneración por Plan Activo (Suscripción):** Si el cliente posee una suscripción activa (`com_suscripcion.sub_estado = 'ACTIVA'`) en el negocio que incluya consultas (ej. *Plan Jurídico Mensual Tranqi*), el costo es **$0.00** (`cit_modalidad_cobro = 'CUBIERTO_POR_PLAN'`) y la cita se confirma de forma inmediata sin solicitar tarjeta de crédito ni pasar por pasarela.
    - **Cupones de Descuento o Consulta Gratuita (`com_cupon` / `com_cupon_uso`):**
@@ -1017,16 +1033,16 @@ Motor centralizado y transversal de disponibilidad horaria, franjas recurrentes,
    - **Convenios y Billetera B2B2C (`com_convenio_empresa` / `com_billetera`):** Permite subsidios corporativos o copago mediante saldo de billetera virtual.
    - **Pasarela en Línea (Payphone / Paymentez):** Si el monto final liquidado es superior a $0.00, se abre la Cajita de Pagos de Payphone (`com_pasarela_configuracion`). La reserva se mantiene temporalmente como `'propuesta'` por 15 minutos; al validarse la confirmación server-to-server (`/api/confirm`), la Server Action registra el pago en `com_transaccion_pago` y conmuta la cita a `'confirmada'`.
 
-4. **Consulta Rápida con ARIA y Escalado Asistido:**
+6. **Consulta Rápida con ARIA y Escalado Asistido:**
    - ARIA atiende consultas preliminares y orientación general sin costo (`trq_consulta_rapida`).
    - **Límite Ético y Legal:** El prompt del agente estipula que ARIA orienta pero **no patrocina ni emite dictámenes vinculantes**.
    - **Escalado Asistido:** Cuando la consulta requiere análisis documental, plazos o patrocinio judicial, ARIA clasifica la materia, identifica profesionales habilitados y emite un bloque estructurado de opciones en el chat (`tranqi:opciones`) con tarjetas interactivas de horarios disponibles para agendamiento directo.
 
-5. **Videoconsulta Telemática Segura (Jitsi Meet):**
+7. **Videoconsulta Telemática Segura (Jitsi Meet):**
    - Para citas virtuales, el sistema genera automáticamente un identificador de sala criptográficamente impredecible (`gen_random_uuid()`).
    - No se almacenan URLs públicas en base de datos. El enlace dinámico se compone y entrega exclusivamente a los usuarios autorizados (cliente y profesional asignado) dentro de la ventana de acceso: desde **10 minutos antes** de la hora de inicio hasta **30 minutos después** de la hora de fin.
 
-6. **Despachador Universal de Alertas e Independencia de Infraestructura (Portabilidad Linux / Vercel):**
+8. **Despachador Universal de Alertas e Independencia de Infraestructura (Portabilidad Linux / Vercel):**
    - Los recordatorios automáticos de cita (notificaciones a **24 horas** y a **1 hora** previas al encuentro) se diseñan para operar de forma idéntica en cualquier entorno de despliegue, **garantizando portabilidad total si el ecosistema migra de Vercel a servidores Linux propios**:
      - **Idempotencia Transaccional en Base de Datos:** Cada cita posee los campos de control `cit_recordatorio_24h_enviado` y `cit_recordatorio_1h_enviado` (timestamptz). El despachador solo procesa citas con flag nulo en su respectiva ventana temporal y marca el timestamp en la misma transacción. Si el proceso se invoca varias veces seguidas, jamás duplica una alerta.
      - **Lógica de Despacho Desacoplada:** El núcleo del despachador reside en una función de servicio en `packages/notificaciones` y se expone a través de un endpoint HTTP seguro `POST /api/cron/despachador-alertas` protegido con cabecera `Authorization: Bearer CRON_SECRET` (o como script CLI `node scripts/despachar-alertas.mjs`).
@@ -1040,7 +1056,7 @@ Motor centralizado y transversal de disponibilidad horaria, franjas recurrentes,
        3. *En Supabase Nativo:* Tarea periódica con extensión `pg_cron` invocando Edge Function o webhook HTTP vía `pg_net`.
      - **Cero Dependencia de Vendor:** Abandonar Vercel y desplegar en Linux propio requiere únicamente activar la línea de `curl` en el crontab del servidor Linux, sin alterar una sola línea de código fuente del ecosistema.
 
-7. **Widget Universal en Panel Profesional (`citas_programadas`):**
+9. **Widget Universal en Panel Profesional (`citas_programadas`):**
    - Registrado en `seg_widget` bajo la categoría `PANEL_PROFESIONAL` (`PLT-011` regla 8) y sembrado para los roles profesionales de todos los negocios (`ABOGADO` en Tranqi, `TECNICO` en FastFix).
 
 ### Criterios de Aceptación (Gherkin)

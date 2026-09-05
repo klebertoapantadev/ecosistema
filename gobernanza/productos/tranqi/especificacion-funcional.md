@@ -35,14 +35,14 @@ Tranqi adopta las mejores prácticas y estándares internacionales de **Law Prac
 | **`TRQ-COM-001`** | **Común (Todos)** | **Billetera Digital de Documentos Seguros, Extracción OCR y Enlaces TTL** | ✅ Implementado | **100%** | Jesus Navarrete |
 | **`TRQ-COM-002`** | **Común (Todos)** | **Compartición de Documentos a Tranqi (Revisión de Contratos & Vinculación a Casos)** | 🟡 Especificado | **25%** | Kleber Toapanta |
 | **`TRQ-COM-003`** | **Común (Todos)** | **Herramienta Universal de Firma Digital de Documentos PDF (.p12 / QR / PAdES)** | ✅ Implementado | **100%** | Kleber Toapanta |
-| **`TRQ-CLI-001`** | **Cliente** | **Portal de Casos, Solicitud de Patrocinio y Consultas Telemáticas** | ⏳ Pendiente | **0%** | Jesus Navarrete |
+| **`TRQ-CLI-001`** | **Cliente** | **Portal de Casos, Solicitud de Patrocinio y Consultas Telemáticas** | 🟡 Parcial | **25%** | Jesus Navarrete / Kleber Toapanta |
 | **`TRQ-CLI-002`** | **Cliente** | **Módulo Express de Revisión y Dictamen Legal de Contratos/Minutas (IA)** | ⏳ Pendiente | **0%** | **Jesus Navarrete (IA)** |
 | **`TRQ-CLI-003`** | **Cliente** | **Directorio Público y Selección Geolocalizada de Abogados** | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`TRQ-CLI-004`** | **Cliente** | **Calculadora de Honorarios, Pensiones (MIES) e Indemnizaciones Laborales** | ⏳ Pendiente | **0%** | Jesus Navarrete |
 | **`TRQ-ABG-001`** | **Abogado** | **Acreditación, Contratación Dual (Firma Digital .p12 / Manual) y Onboarding** | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`TRQ-ABG-002`** | **Abogado** | **Despacho Virtual: Bandeja de Casos, Expediente Digital y Actuaciones SATJE** | ⏳ Pendiente | **0%** | Kleber Toapanta / Jesus Navarrete |
 | **`TRQ-ABG-003`** | **Abogado** | **Firma Electrónica Avanzada PAdES en Navegador (Zero-Custody `.p12`/`.pfx`)** | ✅ Implementado | **100%** | Kleber Toapanta |
-| **`TRQ-ABG-004`** | **Abogado** | **Agenda Profesional, Citas Presenciales y Sala de Videoconsulta Segura** | ⏳ Pendiente | **0%** | Jesus Navarrete |
+| **`TRQ-ABG-004`** | **Abogado** | **Agenda Profesional, Citas Presenciales y Sala de Videoconsulta Segura** | 🟡 En Desarrollo | **35%** | Kleber Toapanta / Jesus Navarrete |
 | **`TRQ-ABG-005`** | **Abogado** | **Verificación Inteligente de Identidad y Documentos con Aria (IA) en Registro de Abogados** | 🟡 Especificado | **25%** | **Jesus Navarrete (IA)** |
 | **`TRQ-ADM-001`** | **Operador/Admin** | **Mesa de Control de Acreditación, Contra-Firma Tranqi y Activación de Socios** | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`TRQ-ADM-002`** | **Operador/Admin** | **Asignación Inteligente de Casos (IA), Liquidación de Honorarios y Comisiones** | ⏳ Pendiente | **0%** | **Jesus Navarrete (IA)** / Kleber Toapanta |
@@ -160,10 +160,10 @@ operativo que TRQ-CLI-002, TRQ-ABG-005 y TRQ-ADM-002 consultan; ver
 
 ## 2. Módulos para el Rol Cliente
 
-### TRQ-CLI-001 — Portal de Casos y Patrocinio Judicial
-**Responsable:** Jesus Navarrete | **Estado:** ⏳ Pendiente (0%)
-- Solicitud de patrocinio legal por materias (Civil, Penal, Laboral, Familia, Tránsito, Societario).
-- Visualización de la línea de tiempo procesal del caso, abogados asignados, próximas audiencias y actuaciones procesales del SATJE.
+### TRQ-CLI-001 — Portal de Casos, Solicitud de Patrocinio y Consultas Telemáticas
+**Responsables:** Jesus Navarrete / Kleber Toapanta | **Estado:** 🟡 Parcial (25%)
+- **Orientación y Consulta Telemática:** Atención de consultas preliminares asistidas por ARIA (`trq_consulta_rapida`), escalamiento a reserva de citas profesionales (`PLT-020` / `TRQ-ABG-004`) y acceso a salas de videoconsulta telemática segura.
+- **Portal de Casos y Patrocinio Judicial (Pendiente):** Solicitud de patrocinio legal por materias, visualización de la línea de tiempo procesal del caso, abogados asignados, próximas audiencias y actuaciones procesales sincronizadas desde el SATJE.
 
 ### TRQ-CLI-002 — Módulo Express de Revisión de Contratos y Minutas
 **Responsable:** Jesus Navarrete | **Estado:** ⏳ Pendiente (0%)
@@ -241,9 +241,73 @@ graph TD
 
 ---
 
-### TRQ-ABG-004 — Agenda Profesional y Videoconsultas
-**Responsable:** Jesus Navarrete | **Estado:** ⏳ Pendiente (0%)
-- Calendario sincronizado de citas presenciales en despacho y salas de consulta telemática segura.
+### TRQ-ABG-004 — Agenda Profesional, Citas Presenciales y Sala de Videoconsulta Segura
+**Responsables:** Kleber Toapanta / Jesus Navarrete | **Estado:** 🟡 En Desarrollo (35%)  
+**Estándar de Plataforma:** [`PLT-020`](../plataforma/especificacion-funcional.md#plt-020--agenda-disponibilidad-citas-y-consulta-telemática) (Motor Común `comun_agenda` y `@eco/agenda`)
+
+#### 1. Diagnóstico y Corrección de Vulnerabilidad Funcional en Producción
+- **Falla detectada:** La herramienta actual del cliente `agendar_cita` (`apps/tranqi-web/modulos/asistente/herramientas-cliente.ts:180`) inserta registros en `tranqui_legal.trq_cita` omitiendo `cit_abogado_id` y `cit_fin_en`. Como la política RLS del abogado (`trq_cita_abogado_select`) filtra por su propio `cit_abogado_id`, **toda cita creada de este modo queda huérfana e invisible para cualquier abogado**.
+- **Solución:** Se retira `agendar_cita` y se reemplaza por la herramienta transaccional `reservar_cita` apoyada en la función RPC `tranqui_legal.trq_fn_reservar_cita()`.
+- **Blindaje RLS:** Se elimina la política `trq_cita_cliente_insert` que permitía al cliente insertar directamente por cliente Supabase sin validar franjas horarias ni anti-solape. Toda creación de cita exige invocar la función RPC transaccional.
+
+#### 2. Modelo de Datos Especializado en `tranqui_legal`
+Para articular con `comun_agenda` (PLT-020) y desacoplar la especialidad de la solicitud de acreditación original, se incorporan las siguientes entidades:
+
+1. **Especialidades y Cobertura Territorial (N:M independientes):**
+   - `trq_abogado_materia`: `amt_abogado_id` (FK `trq_abogado`), `amt_materia_id` (FK `trq_materia`).
+   - `trq_abogado_provincia`: `apr_abogado_id` (FK `trq_abogado`), `apr_provincia_id` (FK `cat_provincia`).
+   - *Backfill automático:* Se migran inicialmente desde `trq_solicitud_materia` y `trq_solicitud_provincia` de las solicitudes aprobadas, permitiendo al abogado actualizar su catálogo sin alterar la solicitud histórica.
+2. **Ampliación Aditiva de `tranqui_legal.trq_cita`:**
+   - `cit_reserva_id uuid references comun_agenda.age_reserva(res_id)`: Enlace al motor de ocupación y anti-solape (`btree_gist`).
+   - `cit_tipo_cita_id uuid references comun_agenda.age_tipo_cita(tci_id)`: Enlace al tipo de consulta.
+   - `cit_origen text check (cit_origen in ('panel', 'asistente', 'operador', 'escalado_rapida'))`.
+   - `cit_sala_nombre text`, `cit_sala_expira_en timestamptz`: Parámetros de la sala de videoconsulta.
+   - `cit_confirmada_en timestamptz`.
+   - `cit_cancelada_por uuid references comun_seguridad.seg_usuario(usu_id)`.
+   - `cit_modalidad_cobro text check (cit_modalidad_cobro in ('no_aplica', 'cubierto_por_plan', 'cupon_gratis', 'pagada_pasarela'))`.
+   - `cit_recordatorio_24h_enviado timestamptz`, `cit_recordatorio_1h_enviado timestamptz`: Control idempotente para el despachador de alertas agnóstico (Vercel / Linux propio).
+3. **Tipos de Cita en Tranqi (`age_tipo_cita`):**
+   - En lugar de desvirtuar el catálogo canónico de 12 materias del Código Orgánico de la Función Judicial (Civil, Penal, Familia y Niñez, Laboral, etc.) con términos coloquiales como "Divorcio" o "Conciliación" (que corresponden a figuras jurídicas o métodos MASC transversales), se parametrizan como tipos de cita de Tranqi vinculados a su materia rectora:
+     * `divorcio_mutuo_acuerdo` (Materia: Familia y Niñez, 45 min).
+     * `conciliacion_extrajudicial` (Materia: Civil / Familia, 60 min).
+     * `accidente_transito` (Materia: Tránsito, 45 min).
+     * `orientacion_15` (Orientación inicial breve, 15 min).
+     * `especialista_45` (Consulta de patrocinio formal, 45 min).
+
+#### 3. Consulta Rápida con ARIA y Escalado (`trq_consulta_rapida`)
+- Tabla `trq_consulta_rapida`:
+  - `crp_id uuid primary key default gen_random_uuid()`.
+  - `crp_usuario_id uuid references comun_seguridad.seg_usuario(usu_id)`.
+  - `crp_conversacion_id uuid references tranqui_legal.trq_conversacion(cnv_id)`.
+  - `crp_pregunta text not null`, `crp_materia_sugerida_id uuid`, `crp_tipo_cita_sugerido_id uuid`.
+  - `crp_resuelta boolean default false`.
+  - `crp_escalada_en timestamptz`, `crp_cita_id uuid references tranqui_legal.trq_cita(cit_id)`.
+- **Frontera Ética en el Prompt de ARIA:** ARIA orienta al ciudadano en lenguaje simple y pedagógico, pero **no patrocina ni asegura resultados judiciales**. Cuando el asunto implica plazos de prescripción, revisión de pruebas o demanda formal, ARIA emite el bloque interactivo `tranqi:opciones` en la barra del chat para que el cliente escoja un especialista y reserve una cita.
+
+#### 4. Opciones Estructuradas en Chat (`BarraAsistente.tsx`)
+El asistente no solo responde texto plano, sino que puede emitir bloques interactivos estructurados:
+````
+```tranqi:opciones
+{
+  "pregunta": "¿Cuál horario prefieres para tu consulta?",
+  "opciones": [
+    { "id": "slot_uuid_1", "titulo": "Dra. Paula Andrade", "detalle": "Familia · Martes 10:00 · Virtual" },
+    { "id": "slot_uuid_2", "titulo": "Dr. Fernando Mora", "detalle": "Familia · Martes 15:30 · Virtual" }
+  ],
+  "permite_texto_libre": true
+}
+```
+````
+La barra renderiza tarjetas seleccionables que inyectan la respuesta del cliente de forma fluida y transparente para el LLM.
+
+#### 5. Onboarding Conversacional de Disponibilidad del Abogado
+- Cuando un abogado accede a su panel y su agenda no está configurada (`agp_configurada_en is null`), ARIA inicia un diálogo de onboarding guiado:
+  * Pregunta días laborales, franjas horarias, duración estimada y modalidad (virtual / presencial en despacho).
+  * Solicita confirmación explícita con un resumen claro antes de invocar `age_fn_configurar_agenda()`. Nunca escribe disponibilidad sin la confirmación del profesional.
+
+#### 6. Videoconsulta Telemática Segura (Jitsi Meet)
+- El sistema genera un identificador de sala único e impredecible (`gen_random_uuid()`) que no revela identificadores de caso ni nombres de las partes.
+- La URL oficial solo se suministra a usuarios autorizados por RLS en la ventana temporal activa: **desde 10 minutos antes hasta 30 minutos después** de la cita.
 
 ---
 
