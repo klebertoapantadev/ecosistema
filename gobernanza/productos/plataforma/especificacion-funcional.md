@@ -1059,6 +1059,20 @@ Motor centralizado y transversal de disponibilidad horaria, franjas recurrentes,
 9. **Widget Universal en Panel Profesional (`citas_programadas`):**
    - Registrado en `seg_widget` bajo la categoría `PANEL_PROFESIONAL` (`PLT-011` regla 8) y sembrado para los roles profesionales de todos los negocios (`ABOGADO` en Tranqi, `TECNICO` en FastFix).
 
+10. **Políticas de Cancelación, Reagendamiento y Reembolsos:**
+    - Marco contractual formalizado en [`politica-cancelacion-reagendamiento-citas.md`](../../politicas/politica-cancelacion-reagendamiento-citas.md).
+    - **Reagendamiento Parametrizable ($N$):** Cada negocio configura el límite de reprogramaciones por cita (por defecto **1**, controlado con `cit_reagendamientos_restantes`).
+    - **Regla Estricta para Consultas Gratuitas o Cupones:** Las citas de cortesía o cubiertas al 100% por cupones promocionales (`CUPON_GRATIS`) **NO TIENEN DERECHO A REAGENDAMIENTO**. Si el cliente cancela o no asiste, el beneficio se considera consumido y el cupón expira.
+    - **Antelación Mínima y Reembolsos Porcentuales ($X$ horas / $X\%$):**
+      * Cancelación oportuna ($\ge X$ horas antes de la cita, por defecto 12h o 24h): Otorga derecho a reembolso de un **$X\%$ del valor pagado** (por defecto 80% o configurable en `cfg_negocio`), acreditable en saldo a favor en Billetera virtual o reversión de pasarela. El porcentaje retenido compensa gastos operativos y reserva del profesional.
+      * Cancelación tardía (< $X$ horas) o inasistencia (*No-Show* tras 15 minutos de tolerancia): **0% de reembolso**.
+    - **Consentimiento Obligatorio del Cliente:** Previo a la confirmación (web, pasarela o bot ARIA), el cliente debe aceptar explícitamente estas condiciones, registrando `cit_politica_aceptada_en` (timestamp) y `cit_politica_version` inmutablemente.
+
+11. **Agendamiento y Modificación Manual por Operadores del Negocio:**
+    - Se habilita la facultad de gestión manual asistida para roles `OPERADOR`, `ADMINISTRADOR` y `SUPERADMIN` en el widget de Citas:
+      * **Agendamiento Manual:** Selector de Cliente/Usuario (`seg_usuario`) + Selector de Socio Profesional (`age_profesional`) + Selección de Horario/Modalidad, marcando `cit_origen = 'operador'`.
+      * **Modificación Manual de Cita:** Permite reubicar fecha/hora, cambiar modalidad o reasignar profesional ante fuerza mayor, operando con independencia del límite $N$ del cliente y auditando la acción en `comun_auditoria.aud_registro`.
+
 ### Criterios de Aceptación (Gherkin)
 
 * **Escenario:** Cliente con Plan Activo agenda cita gratuita

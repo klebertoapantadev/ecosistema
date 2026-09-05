@@ -309,6 +309,27 @@ La barra renderiza tarjetas seleccionables que inyectan la respuesta del cliente
 - El sistema genera un identificador de sala único e impredecible (`gen_random_uuid()`) que no revela identificadores de caso ni nombres de las partes.
 - La URL oficial solo se suministra a usuarios autorizados por RLS en la ventana temporal activa: **desde 10 minutos antes hasta 30 minutos después** de la cita.
 
+#### 7. Agendamiento y Modificación Manual por Operadores de Tranqi
+Para brindar soporte integral a clientes corporativos, personas de la tercera edad o casos asistidos por la Mesa de Control:
+- **Agendamiento Manual Asistido:** Los roles `OPERADOR`, `ADMINISTRADOR` y `SUPERADMIN` disponen de una acción en su panel para agendar citas directamente:
+  * Buscador interactivo de clientes (`seg_usuario`) por cédula/RUC, correo o nombres.
+  * Selector de socio abogado habilitado (`trq_abogado`), con visualización de materias y disponibilidad.
+  * Definición de fecha, hora, modalidad y motivo, registrándose con `cit_origen = 'operador'`.
+- **Modificación Manual de Citas:**
+  * El operador puede reprogramar la fecha/hora o reasignar el abogado titular ante contingencias médicas o audiencias sobrevenidas del profesional.
+  * Esta acción opera con independencia del cupo de reagendamientos del cliente, requiriendo motivo justificado en `comun_auditoria.aud_registro` y notificando en tiempo real a cliente y abogado.
+
+#### 8. Política de Cancelaciones, Reagendamientos y Aceptación Obligatoria
+Implementación estricta de la [`politica-cancelacion-reagendamiento-citas.md`](../../politicas/politica-cancelacion-reagendamiento-citas.md):
+- **Parámetros Operativos de Tranqi:**
+  * **Límite de Reagendamientos ($N$):** Máximo **1 reagendamiento** por cita (`cit_reagendamientos_restantes = 1` por defecto).
+  * **REGLA ESTRICTA DE GRATUIDAD / CUPONES:** Toda consulta gratuita, de cortesía o cubierta al 100% por cupón promocional (`CUPON_GRATIS`, `PRIMERA_CITA`) **NO ADMITE REAGENDAMIENTO**. Si el cliente cancela o no asiste, el beneficio se considera consumido y el cupón expira.
+  * **Antelación Mínima ($X$ horas):** Mínimo **12 horas** antes de la hora pactada para cancelar o reagendar con derecho a reembolso.
+  * **Porcentaje de Reembolso Oportuno ($X\%$):** **80% de reembolso** acreditado a Billetera o pasarela Payphone (el 20% cubre costos de pasarela y reserva de agenda). Cancelaciones con menos de 12 horas o inasistencia (*No-Show* tras 15 minutos de espera): **0% de reembolso**.
+- **Aceptación Contractual Obligatoria del Cliente:**
+  * Previo a confirmar el pago en la web o acordar la cita con ARIA, el cliente debe marcar la casilla obligatoria: *"Acepto la Política de Cancelación y Reagendamiento (Máx. 1 cambio con 12h de antelación; citas gratuitas no admiten cambio)"*.
+  * La base de datos almacena inmutablemente `cit_politica_aceptada_en` (timestamp) y `cit_politica_version` (ej. `'v1.0-2026-09'`).
+
 ---
 
 ### TRQ-ABG-005 — Verificación Inteligente de Identidad y Documentos con Aria (IA) en Registro de Abogados
