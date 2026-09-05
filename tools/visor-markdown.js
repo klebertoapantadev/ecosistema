@@ -733,6 +733,9 @@ function generarHTML(contenidoInicial, rutaInicial) {
 
     marked.setOptions({
       highlight: function(code, lang) {
+        if (lang === 'mermaid') {
+          return code;
+        }
         if (lang && hljs.getLanguage(lang)) {
           return hljs.highlight(code, { language: lang }).value;
         }
@@ -957,14 +960,23 @@ function generarHTML(contenidoInicial, rutaInicial) {
         tocNav.innerHTML = '<p style="padding: 12px; color: #8b949e;">Sin secciones principales</p>';
       }
 
-      document.querySelectorAll('.language-mermaid').forEach((block) => {
-        const code = block.textContent;
+      const mermaidBlocks = document.querySelectorAll('pre code.language-mermaid, pre code.mermaid, .language-mermaid');
+      mermaidBlocks.forEach((block, idx) => {
+        const rawCode = block.textContent;
         const div = document.createElement('div');
         div.className = 'mermaid';
-        div.textContent = code;
-        block.parentNode.replaceWith(div);
+        div.id = 'mermaid-diagram-' + idx + '-' + Math.floor(Math.random() * 10000);
+        div.textContent = rawCode;
+        const container = block.closest('pre') || block;
+        container.parentNode.replaceChild(div, container);
       });
-      mermaid.run();
+      if (window.mermaid) {
+        try {
+          mermaid.run({ querySelector: '.mermaid' });
+        } catch (e) {
+          console.warn('Error inicializando mermaid:', e);
+        }
+      }
 
       cargarComentarios();
     }
