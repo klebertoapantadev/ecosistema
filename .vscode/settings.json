@@ -1,5 +1,32 @@
 {
   "workbench.editorAssociations": {
     "*.md": "vscode.markdown.preview.editor"
+  },
+  "peacock.color": "#7e57c2",
+  "workbench.colorCustomizations": {
+    "activityBar.activeBackground": "#9b7cd0",
+    "activityBar.background": "#9b7cd0",
+    "activityBar.foreground": "#15202b",
+    "activityBar.inactiveForeground": "#15202b99",
+    "activityBarBadge.background": "#e6c9b9",
+    "activityBarBadge.foreground": "#15202b",
+    "commandCenter.border": "#e7e7e799",
+    "statusBar.background": "#7e57c2",
+    "statusBar.foreground": "#e7e7e7",
+    "statusBarItem.hoverBackground": "#9b7cd0",
+    "statusBarItem.remoteBackground": "#d5a58a",
+    "statusBarItem.remoteForeground": "#e7e7e7",
+    "titleBar.activeBackground": "#7e57c2",
+    "titleBar.activeForeground": "#e7e7e7",
+    "titleBar.inactiveBackground": "#7e57c299",
+    "titleBar.inactiveForeground": "#e7e7e799",
+    "activityBarTop.activeBackground": "#9b7cd0",
+    "activityBarTop.background": "#9b7cd0",
+    "activityBarTop.foreground": "#15202b",
+    "activityBarTop.inactiveForeground": "#15202b99",
+    "commandCenter.foreground": "#e7e7e7",
+    "sash.hoverBorder": "#9b7cd0",
+    "statusBar.debuggingBackground": "#7e57c2",
+    "statusBar.debuggingForeground": "#e7e7e7"
   }
 }

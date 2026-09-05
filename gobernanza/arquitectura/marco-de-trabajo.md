@@ -95,3 +95,19 @@ Objetivo: un producto nuevo desplegado y autenticando en menos de un día, sin d
 3. Back-office de administración/revisión.
 4. Endurecimiento de RLS con pruebas negativas por rol.
 5. Apps nativas, si aplica, sobre el modelo ya validado en web.
+
+## 11. Principio de Extensibilidad Agnóstica del Core y No Regresión Multinegocio
+
+Cualquier funcionalidad, columna o regla que nazca por la necesidad de un negocio específico (ej. recetas para floristería, proformas compuestas para FastFix, tramos B2B para Tranqi o unidades fraccionadas para cafetería) **debe incorporarse al Core de plataforma bajo 4 garantías inquebrantables**:
+
+1. **Lógica Agnóstica (Cero `if/else` por nombre de negocio en el Core):**
+   * Queda terminantemente prohibido escribir condicionales como `if (negocio === 'tinkay')` en `packages/*` o en esquemas comunes (`comun_*`).
+   * Toda funcionalidad se modela como una **capacidad genérica y configurable** (Strategy Pattern / Feature Flags por negocio en `cfg_negocio`).
+2. **Cambios Aditivos y Retrocompatibles (Non-Breaking Schema Changes):**
+   * Nuevos requerimientos se incorporan como columnas opcionales (`NULL` o con valor `DEFAULT`), tablas relacionales opcionales o metadatos JSONB.
+   * Modificar el Core para un negocio **nunca** altera, invalida ni rompe el funcionamiento o los contratos de los demás negocios.
+3. **Activación Selectiva (Opt-In por Tenant):**
+   * Si un negocio no utiliza una capacidad (ej. Tranqi no usa recetas BOM ni Kardex de insumos), la plataforma opera de forma transparente: las tablas simplemente no contienen filas para ese negocio y la interfaz de usuario de esa app no renderiza esos módulos.
+4. **Capacidad de Expansión Inmediata a Nuevos Negocios:**
+   * Al agregar un 5.º o 6.º negocio (ej. cafetería, panadería, retail), este hereda inmediatamente todo el catálogo de capacidades existentes (recetas, inventario, proformas, suscripciones, facturación SRI) activando únicamente los flags pertinentes en su configuración.
+

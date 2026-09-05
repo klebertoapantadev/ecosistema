@@ -27,12 +27,12 @@ Este documento describe el **comportamiento compartido por los 4 productos** (Tr
 | **`PLT-006`** | Datos de Facturación SRI y Comprobantes | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`PLT-007`** | Catálogo Geográfico (Ecuador 24 Provincias) | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`PLT-008`** | Configuración de Negocio & SMTP en Vault | ✅ Implementado | **100%** | Kleber Toapanta |
-| **`PLT-009`** | Catálogo Comercial Unificado (Productos/Planes) | 🟡 Especificado | **25%** | Kleber Toapanta |
+| **`PLT-009`** | Catálogo Comercial Unificado (Productos/Planes/Despachos) | 🟡 En Desarrollo | **70%** | Kleber Toapanta |
 | **`PLT-010`** | Integración Omnicanal (WhatsApp & Meta Feed) | ⏳ Pendiente | **0%** | **Jesus Navarrete** |
 | **`PLT-011`** | Sistema de Widgets por Rol & DataGrids 2 Capas | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`PLT-012`** | **Baja de Cuenta y Derecho al Olvido** | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`PLT-013`** | Notificaciones Multicanal (Push/Email/In-App) | ✅ Implementado | **100%** | Kleber Toapanta |
-| **`PLT-014`** | Motor de Cupones y Promociones | ⏳ Pendiente | **0%** | **Jesus Navarrete** |
+| **`PLT-014`** | Motor de Cupones y Promociones | 🟡 En Desarrollo | **60%** | **Jesus Navarrete** |
 | **`PLT-015`** | Calificaciones, Reseñas y Reputación | ⏳ Pendiente | **0%** | **Jesus Navarrete** |
 | **`PLT-016`** | Storage Standard (Buckets Privado/Público) | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`PLT-017`** | Gestión de Sesiones y Revocación Remota | 🟡 Parcial | **40%** | Kleber Toapanta |
@@ -378,27 +378,31 @@ Proporciona una consola de configuración para que el Administrador de cada nego
 
 ---
 
-## PLT-009 — Catálogo Comercial Unificado (Productos, Servicios y Suscripciones)
+## PLT-009 — Catálogo Comercial Unificado (Productos, Servicios, Suscripciones y Logística)
 
 **Responsable:** Kleber Toapanta  
 
 ### Descripción
-Motor centralizado de gestión de bienes, servicios y suscripciones para todo negocio que venda algo (Tinkay, Margaritas Floristería, planes de Tranqi, servicios de FastFix). Un solo modelo de datos (`comun_comercio`), aislado por negocio, en vez de que cada producto reimplemente su propio catálogo. Ver [ADR-0003](../../arquitectura/adr/0003-catalogo-comercial-unificado.md) para la decisión completa y el esquema.
+Motor centralizado de gestión de bienes, servicios, recetas (BOM), inventarios, suscripciones, proformas CPQ, billeteras digitales y logística de despachos para todo negocio del ecosistema (Tinkay, Margaritas Floristería, planes/trámites de Tranqi, servicios técnicos de FastFix). Un solo modelo de datos (`comun_comercio`), aislado por tenant/negocio. Ver [ADR-0003](../../arquitectura/adr/0003-catalogo-comercial-unificado.md) para la arquitectura de 8 capas completa.
 
 ### Reglas de Negocio
-1. **Jerarquía de tres niveles:** Categoría (navegación) → Producto/Servicio Master (concepto abstracto) → Variante/SKU (unidad facturable concreta, con precio, impuestos y códigos SRI propios).
+1. **Jerarquía de tres niveles:** Categoría (navegación) → Producto/Servicio Master (concepto abstracto) → Variante/SKU (unidad facturable concreta, con precio base imponible, impuestos y códigos SRI propios).
 2. **Cuatro tipos de oferta por variante:** Producto Físico, Servicio Puntual, Suscripción/Plan Recurrente (con frecuencia, días de prueba y reglas de reintento de cobro) y Producto Digital.
 3. **Matriz de variantes:** un producto master puede tener N variantes con atributos propios (tamaño, cantidad, color, accesorios) y precio/impuesto independiente por variante.
 4. **Formularios de personalización por producto/variante:** campos de captura configurables (mensaje de dedicatoria, fecha/rango de entrega, remitente/destinatario) y adicionales de cross-sell sugeridos que incrementan el valor final.
-5. **Gestión de medios — dos orígenes, no tres:**
-   - **Carga de archivo local:** subida directa a Supabase Storage (bucket público de catálogo — a diferencia del resto del ecosistema, este contenido es de vitrina, no privado).
-   - **URL externa:** enlace público directo.
-   - **Prioridad de portada:** una imagen puede marcarse manualmente como portada global sin importar su origen.
-   - **Descartado:** sincronización de álbum de Google Photos filtrando por "favorito/estrella". No es viable desde marzo de 2025 — la Google Photos Library API ya no permite leer álbumes existentes del usuario, solo contenido creado por la propia app. Carga local + URL cubren el caso de uso.
-   - **Resiliencia:** si una URL externa deja de responder, se mantiene en caché la última versión válida o se muestra la imagen de respaldo por defecto del negocio.
-6. **Aislamiento multitenant:** cada negocio opera sobre su propio subconjunto de `comun_comercio`, identificado por negocio dueño — el catálogo de un negocio nunca es visible como editable para otro.
-7. **Desacoplamiento fiscal:** la variante contiene los códigos e impuestos SRI necesarios para facturación (`PLT-006`), pero la tienda web y WhatsApp solo muestran precios finales al cliente.
-8. **Catálogo publicado es de lectura pública:** a diferencia de la postura "privado por defecto" del resto del ecosistema, un producto/variante activo se puede leer sin autenticación (es contenido de vitrina) — la escritura sigue restringida al `ADMINISTRADOR`/`OPERADOR` del negocio dueño.
+5. **Lista de Materiales y Recetas (BOM):** Deducción automática de insumos (rosas, papel, cinta, repuestos de gasfitería, café en grano) al pasar la orden al estado operativo de elaboración o despacho.
+6. **Inventario, Kardex y Mermas:** Registro auditado de entradas, consumos por órdenes, mermas por caducidad/marchitamiento y ajustes de almacén.
+7. **Proformas y Cotizaciones (CPQ):** Generación de cotizaciones para servicios complejos (FastFix, eventos Tinkay, causas judiciales Tranqi) con vigencia, desglose de ítems libres y token de aprobación en línea.
+8. **Billetera Digital y Convenios Corporativos B2B2C:**
+   - Cada usuario posee una billetera virtual por negocio (`wlt_saldo_total = wlt_saldo_recarga + wlt_saldo_bono`).
+   - Empresas e instituciones patrocinan convenios (ej. Banco Pichincha, Municipio de Quito, Condominios en FastFix) otorgando bonos con caducidad para redención en trámites y mano de obra.
+   - Soporte de pagos divididos (*Split Payment*): liquidación combinando saldo de billetera con pasarela de tarjeta de crédito.
+9. **Directorio de Proveedores, Couriers y Despachos Híbridos:**
+   - Directorio unificado de transportistas y contratistas: vehículos propios de taller, mensajería de documentos físicos (Tranqi), aplicaciones de movilidad (Uber / Cabify / taxis convencionales para Tinkay) y técnicos subcontratados con respaldo de marca (FastFix Managed Marketplace).
+   - Asignación por orden con registro de conductor, teléfono, enlace de seguimiento en vivo (*tracking URL*), costo real incurrido y evidencia fotográfica o firma digital (*Proof of Delivery / POD*).
+10. **Aislamiento multitenant:** cada negocio opera sobre su propio subconjunto de `comun_comercio`, identificado por negocio dueño — el catálogo de un negocio nunca es visible como editable para otro.
+11. **Desacoplamiento fiscal:** la variante almacena la **Base Imponible** para comprobantes del SRI (`PLT-006`), mientras la tienda web y WhatsApp calculan y muestran precios finales claros al consumidor.
+12. **Catálogo publicado es de lectura pública:** un producto/variante activo se puede consultar sin autenticación — la edición queda restringida al `ADMINISTRADOR` u `OPERADOR` del negocio dueño.
 
 **Implementación técnica:** ver [`especificacion-tecnica.md`](especificacion-tecnica.md) §7 (`comun_comercio`).
 
