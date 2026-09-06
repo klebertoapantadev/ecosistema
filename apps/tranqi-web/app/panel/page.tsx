@@ -37,6 +37,7 @@ const ACCESOS_CLIENTE: { icono: LucideIcon; nombre: string; detalle: string; hre
 ];
 
 const ACCESOS_ABOGADO: { icono: LucideIcon; nombre: string; detalle: string; href?: string }[] = [
+  { icono: Users, nombre: "CRM & Clientes", detalle: "Directorio y expedientes", href: "/panel/clientes" },
   { icono: FileCheck, nombre: "Firmar un documento", detalle: "Con tu certificado digital", href: "/panel/firma-documentos" },
   { icono: Briefcase, nombre: "Nuevas solicitudes", detalle: "3 casos en espera" },
   { icono: Calendar, nombre: "Citas de hoy", detalle: "2 videollamadas" },
@@ -45,6 +46,7 @@ const ACCESOS_ABOGADO: { icono: LucideIcon; nombre: string; detalle: string; hre
 ];
 
 const WIDGETS_ADMIN: { clave: string; icono: LucideIcon; nombre: string; detalle: string; ruta: string; estado: "registrado" | "proximamente" }[] = [
+  { clave: "crm_clientes", icono: Users, nombre: "CRM Jurídico & Clientes", detalle: "Expedientes y conflict check", ruta: "/panel/clientes", estado: "registrado" },
   { clave: "gestion_usuarios", icono: Users, nombre: "Gestión de usuarios", detalle: "Membresías y perfiles", ruta: "/panel/usuarios", estado: "registrado" },
   { clave: "socios", icono: UserCheck, nombre: "Aprobación de socios", detalle: "Cédula, título y matrícula", ruta: "/panel/socios", estado: "registrado" },
   { clave: "configuracion_negocio", icono: Settings, nombre: "Configuración del negocio", detalle: "Términos, locales y canales", ruta: "/panel/configuracion", estado: "registrado" },

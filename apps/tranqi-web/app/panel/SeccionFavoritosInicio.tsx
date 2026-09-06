@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { User, History, KeyRound, ShieldAlert, Settings, Mail, Bell, Star, ChevronRight, ShieldCheck, Sliders, Receipt, Lock, FileText, BarChart2, FileCheck, Folder, type LucideIcon } from "lucide-react";
+import { User, Users, UserCheck, History, KeyRound, ShieldAlert, Settings, Mail, Bell, Star, ChevronRight, ShieldCheck, Sliders, Receipt, Lock, FileText, BarChart2, FileCheck, Folder, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { useCustomWidgets } from "./gestorTitulosWidgets";
 
@@ -135,6 +135,22 @@ const CATALOGO_FAVORITOS: Record<string, WidgetFavInfo> = {
     subtitulo: "Bóveda segura de documentos personales, vehiculares y contratos con OCR y TTL",
     icono: Folder,
     href: "/panel/billetera-documentos",
+    origen: "Configurar"
+  },
+  crm_clientes: {
+    id: "crm_clientes",
+    titulo: "CRM Jurídico & Clientes",
+    subtitulo: "Directorio 360°, KPIs, expedientes y conflict check en vivo",
+    icono: Users,
+    href: "/panel/clientes",
+    origen: "Configurar"
+  },
+  alta_cliente_crm: {
+    id: "alta_cliente_crm",
+    titulo: "Alta Asistida & Recepción Multicanal",
+    subtitulo: "Registro asistido de clientes con OCR ARIA de cédula/nombramiento y verificación de conflictos",
+    icono: UserCheck,
+    href: "/panel/clientes?accion=alta",
     origen: "Configurar"
   }
 };

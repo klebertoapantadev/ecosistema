@@ -130,7 +130,7 @@ export function NavegacionSidebar({
         if (rolKey === "OPERADOR" || rolKey === "AUXILIAR" || rolKey === "TECNICO") {
           widgetsPorPanel = {
             ...widgetsPorPanel,
-            panel_administrar: ["socios"],
+            panel_administrar: ["crm_clientes", "socios"],
             panel_herramientas: ["firma_documentos_pdf", "billetera_documentos", "emision_notificaciones"],
             panel_seguridad: ["auditoria", "solicitud_socio"]
           };
@@ -138,7 +138,7 @@ export function NavegacionSidebar({
           widgetsPorPanel = {
             ...widgetsPorPanel,
             panel_configuracion: ["configuracion_negocio", "configuracion_correo", "perfiles", "notificaciones", "agentes_ia"],
-            panel_administrar: ["gestion_usuarios", "socios", "solicitud_socio", "emision_notificaciones", "auditoria"],
+            panel_administrar: ["crm_clientes", "gestion_usuarios", "socios", "solicitud_socio", "emision_notificaciones", "auditoria"],
             panel_herramientas: ["firma_documentos_pdf", "billetera_documentos", "emision_notificaciones"],
             panel_seguridad: ["auditoria"]
           };

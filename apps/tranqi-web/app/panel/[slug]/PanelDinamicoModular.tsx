@@ -20,6 +20,9 @@ import { TablaAuditoria } from "../auditoria/TablaAuditoria";
 import { useCustomWidgets } from "../gestorTitulosWidgets";
 import { WidgetFirmaDocumentosPdf } from "@/modulos/firma-documentos/componentes/WidgetFirmaDocumentosPdf";
 import { WidgetBilleteraDocumentos } from "@/modulos/billetera-documentos";
+import { BandejaClientesCRM } from "@/modulos/crm-clientes/componentes/BandejaClientesCRM";
+import { ModalAltaClienteAsistida } from "@/modulos/crm-clientes/componentes/ModalAltaClienteAsistida";
+import { UserCheck } from "lucide-react";
 
 import { obtenerConfiguracionNavegacionRolAction } from "@eco/gestion-usuarios/acciones";
 
@@ -59,6 +62,27 @@ function EnlaceConsolaAgentes() {
 }
 
 const INVENTARIO_GLOBAL_WIDGETS: Record<string, { titulo: string; subtitulo: string; icono: LucideIcon; colorIcono: string; categoria: string }> = {
+  crm_clientes: {
+    titulo: "CRM Jurídico & Clientes",
+    subtitulo: "Directorio 360°, KPIs, expedientes y conflict check en vivo",
+    icono: Users,
+    colorIcono: "#5000BA",
+    categoria: "Gestión Legal"
+  },
+  clientes_crm: {
+    titulo: "CRM Jurídico & Clientes",
+    subtitulo: "Directorio 360°, KPIs, expedientes y conflict check en vivo",
+    icono: Users,
+    colorIcono: "#5000BA",
+    categoria: "Gestión Legal"
+  },
+  alta_cliente_crm: {
+    titulo: "Alta Asistida & Recepción Multicanal",
+    subtitulo: "Registro asistido de clientes con OCR ARIA de cédula/nombramiento y verificación de conflictos",
+    icono: UserCheck,
+    colorIcono: "#05876E",
+    categoria: "Gestión Legal"
+  },
   agentes_ia: {
     titulo: "Agentes de IA",
     subtitulo: "Configuración de los asistentes Aria de tranqi: prompts, modelo y herramientas",
@@ -402,6 +426,13 @@ export function PanelDinamicoModular({ slug, negocio }: Props) {
 
   const renderWidgetComponente = (wClave: string) => {
     switch (wClave) {
+      case "crm_clientes":
+      case "clientes_crm":
+      case "clientes":
+        return <BandejaClientesCRM />;
+      case "alta_cliente_crm":
+      case "alta_cliente":
+        return <ModalAltaClienteAsistida abierto={true} alCerrar={() => setWidgetActivo(null)} alGuardarExitoso={() => setWidgetActivo(null)} />;
       case "agentes_ia":
         // La consola de agentes es una pantalla propia (/panel/agentes) y no un
         // widget en linea: necesita un layout con gate aal2 y hace lecturas a

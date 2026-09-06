@@ -69,6 +69,10 @@ const MAPA_RUTAS_FISICAS_WIDGETS: Record<string, string> = {
   "seccion-favoritos": "apps/tranqi-web/app/panel/SeccionFavoritosInicio.tsx",
   "selector-rol": "apps/tranqi-web/app/panel/SelectorRolActivo.tsx",
   "selector-rol-activo": "apps/tranqi-web/app/panel/SelectorRolActivo.tsx",
+  "crm_clientes": "apps/tranqi-web/modulos/crm-clientes/componentes/BandejaClientesCRM.tsx",
+  "crm-clientes": "apps/tranqi-web/modulos/crm-clientes/componentes/BandejaClientesCRM.tsx",
+  "alta_cliente_crm": "apps/tranqi-web/modulos/crm-clientes/componentes/ModalAltaClienteAsistida.tsx",
+  "alta-cliente-crm": "apps/tranqi-web/modulos/crm-clientes/componentes/ModalAltaClienteAsistida.tsx",
 };
 
 export function ModalEditarWidget({
