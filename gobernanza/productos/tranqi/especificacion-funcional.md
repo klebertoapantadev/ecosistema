@@ -1,8 +1,8 @@
 ---
 tipo: esp_funcional
 estado: vigente
-version: 1.1
-fecha: 2026-08-17
+version: 1.2
+fecha: 2026-09-06
 responsables: Kleber Toapanta / Jesus Navarrete
 ---
 
@@ -18,13 +18,15 @@ responsables: Kleber Toapanta / Jesus Navarrete
 
 ### Estándar de Referencia: Modelo Law Practice Management (LPMS) & Legal Marketplace
 
-Tranqi adopta las mejores prácticas y estándares internacionales de **Law Practice Management Software (LPMS)** (referencias líderes de la industria como *Clio*, *MyCase*, *Smokeball* y *Lawmatics*), combinadas con un modelo marketplace digital (estilo *Uber para servicios legales* y *LegalZoom*), tropicalizadas al marco jurídico de la República del Ecuador (Código Orgánico de la Función Judicial, COGEP, SATJE, Ley de Comercio Electrónico y LOPDP).
+Tranqi adopta las mejores prácticas y estándares internacionales de **Law Practice Management Software (LPMS)** (referencias líderes de la industria como *Clio*, *MyCase*, *Smokeball*, *Lawmatics* y *CaseTracking*), combinadas con un modelo marketplace digital (estilo *Uber para servicios legales* y *LegalZoom*), tropicalizadas al marco jurídico de la República del Ecuador (Código Orgánico de la Función Judicial, COGEP, SATJE, Ley Notarial, Ley de Compañías, Ley de Comercio Electrónico y LOPDP).
 
 #### Pilares de la Arquitectura Funcional:
 1. **Billetera de Documentos Unificada (Universal Wallet):** Todo usuario (cliente, abogado, operador) dispone de una bóveda digital segura para gestionar documentos recurrentes, con capacidad de compartirlos a Tranqi para revisión puntual o vincularlos a expedientes de casos específicos.
 2. **Expediente Digital Unificado (Matters & Cases):** Contenedor central que agrupa cliente, abogados asignados, escritos, documentos probatorios, etapas procesales y pagos.
-3. **Despacho Jurídico Telemático para el Abogado:** Panel profesional con gestión de agenda, revisión de documentos compartidos por clientes, emisión de dictámenes y firma electrónica PAdES.
-4. **Mesa de Control y Operaciones:** Supervisión de acreditaciones, asignación inteligente de causas y control de comisiones.
+3. **CRM Legal & Intake Asistido:** Gestión integral de clientes (Personas Naturales y Jurídicas), registro manual por abogados/operadores, auto-registro web y verificación de conflicto de intereses (*Conflict Check*).
+4. **Sistema de Gestión Documental Legal (DMS) y Firma PAdES:** Organización por carpetas procesales, versionamiento de minutas/escritos y firma electrónica Zero-Custody `.p12`.
+5. **Digitalización del Archivo Físico Histórico:** Ingesta masiva de expedientes en papel, OCR multimodal e indexación semántica como base de conocimiento de precedentes del estudio.
+6. **Agentes de IA ARIA Especializados:** Co-piloto de redacción, triaje 24/7, ingestor de expedientes escaneados y auditor de términos procesales perentorios.
 
 ---
 
@@ -35,12 +37,18 @@ Tranqi adopta las mejores prácticas y estándares internacionales de **Law Prac
 | **`TRQ-COM-001`** | **Común (Todos)** | **Billetera Digital de Documentos Seguros, Extracción OCR y Enlaces TTL** | ✅ Implementado | **100%** | Jesus Navarrete |
 | **`TRQ-COM-002`** | **Común (Todos)** | **Compartición de Documentos a Tranqi (Revisión de Contratos & Vinculación a Casos)** | 🟡 Especificado | **25%** | Kleber Toapanta |
 | **`TRQ-COM-003`** | **Común (Todos)** | **Herramienta Universal de Firma Digital de Documentos PDF (.p12 / QR / PAdES)** | ✅ Implementado | **100%** | Kleber Toapanta |
+| **`TRQ-CRM-001`** | **CRM Jurídico** | **Gestión de Clientes (Naturales/Jurídicas), Registro Manual y Conflict Check** | 🟡 Especificado | **30%** | Kleber Toapanta |
+| **`TRQ-CAS-001`** | **Expediente** | **Gestión de Trámites Judiciales y Extrajudiciales (Expediente Digital Unificado)** | 🟡 Especificado | **30%** | Kleber Toapanta / Jesus Navarrete |
+| **`TRQ-CAS-002`** | **Equipo Legal** | **Asignación Multirrol de Abogados (Titular / Co-patrocinadores / Mesa de Control)** | 🟡 Especificado | **25%** | Kleber Toapanta |
+| **`TRQ-DOC-001`** | **Gestión Documental** | **Gestor Documental por Etapas Procesales, Billetera y Versionamiento vN** | 🟡 Especificado | **30%** | Kleber Toapanta |
+| **`TRQ-CAS-003`** | **Actuaciones** | **Bitácora Procesal, Plazos COGEP y Notas Internas vs. Públicas** | 🟡 Especificado | **25%** | Kleber Toapanta / Jesus Navarrete |
+| **`TRQ-DIG-001`** | **Digitalización** | **Ingesta de Archivo Físico Histórico, OCR Masivo y Cerebro de Precedentes** | 🟡 Especificado | **25%** | Jesus Navarrete (IA) / Kleber Toapanta |
 | **`TRQ-CLI-001`** | **Cliente** | **Portal de Casos, Solicitud de Patrocinio y Consultas Telemáticas** | 🟡 Parcial | **25%** | Jesus Navarrete / Kleber Toapanta |
 | **`TRQ-CLI-002`** | **Cliente** | **Módulo Express de Revisión y Dictamen Legal de Contratos/Minutas (IA)** | ⏳ Pendiente | **0%** | **Jesus Navarrete (IA)** |
 | **`TRQ-CLI-003`** | **Cliente** | **Directorio Público y Selección Geolocalizada de Abogados** | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`TRQ-CLI-004`** | **Cliente** | **Calculadora de Honorarios, Pensiones (MIES) e Indemnizaciones Laborales** | ⏳ Pendiente | **0%** | Jesus Navarrete |
 | **`TRQ-ABG-001`** | **Abogado** | **Acreditación, Contratación Dual (Firma Digital .p12 / Manual) y Onboarding** | ✅ Implementado | **100%** | Kleber Toapanta |
-| **`TRQ-ABG-002`** | **Abogado** | **Despacho Virtual: Bandeja de Casos, Expediente Digital y Actuaciones SATJE** | ⏳ Pendiente | **0%** | Kleber Toapanta / Jesus Navarrete |
+| **`TRQ-ABG-002`** | **Abogado** | **Despacho Virtual: Bandeja de Casos, Expediente Digital y Actuaciones SATJE** | 🟡 En Desarrollo | **25%** | Kleber Toapanta / Jesus Navarrete |
 | **`TRQ-ABG-003`** | **Abogado** | **Firma Electrónica Avanzada PAdES en Navegador (Zero-Custody `.p12`/`.pfx`)** | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`TRQ-ABG-004`** | **Abogado** | **Agenda Profesional, Citas Presenciales y Sala de Videoconsulta Segura** | 🟡 En Desarrollo | **35%** | Kleber Toapanta / Jesus Navarrete |
 | **`TRQ-ABG-005`** | **Abogado** | **Verificación Inteligente de Identidad y Documentos con Aria (IA) en Registro de Abogados** | 🟡 Especificado | **25%** | **Jesus Navarrete (IA)** |
@@ -425,3 +433,183 @@ Escenario: Mesa de Control con Dictamen de Aria para el Operador
 ### TRQ-ADM-003 — Auditoría Transversal BDD y Telemetría
 **Responsable:** Kleber Toapanta | **Estado:** ✅ Implementado (100%)
 - Tablero DataGrid de auditoría en `/panel/auditoria` con trazabilidad Antes/Después por triggers en `comun_auditoria.aud_registro`.
+
+---
+
+## 5. Módulo Core de Consultorio Jurídico (LPMS), Archivo Digital y Agentes IA
+
+---
+
+### TRQ-CRM-001 — CRM Jurídico: Gestión de Clientes, Registro Manual Asistido, Validación ARIA y Conflict Check
+**Responsable:** Kleber Toapanta | **Estado:** 🟡 Especificado (35%)
+
+#### 1. Descripción
+Módulo central de administración y ciclo de vida de clientes (Personas Naturales y Jurídicas) que permite su captación e ingesta multicanal: auto-registro web, captura conversacional WhatsApp con ARIA y **alta manual asistida** ejecutada por operadores, recepcionistas o abogados desde el panel.
+
+#### 2. Tipología y Estructura del Cliente
+1. **Persona Natural:**
+   - Cédula ecuatoriana (validación estricta de algoritmo Módulo 10) / Pasaporte.
+   - Nombres, Apellidos, Estado Civil, Profesión/Ocupación, Teléfonos, Correo electrónico, Domicilio y Casillero Judicial electrónico.
+2. **Persona Jurídica (Empresas / Instituciones / S.A.S.):**
+   - RUC de 13 dígitos (validación de Módulo 11 para sociedades privadas/públicas), Razón Social, Nombre Comercial, Objeto Social, Dirección Matriz y Casillero Judicial.
+   - **Registro Progresivo del Representante Legal con ARIA OCR:**
+     * El registro inicial de la empresa es flexible (RUC y Razón Social), permitiendo asociar el Representante Legal de inmediato o en etapas posteriores.
+     * Al vincular al Representante Legal, el sistema solicita la carga de su **Cédula de Identidad** y el **Nombramiento de Representante Legal inscrito en el Registro Mercantil**.
+     * **Inspección con ARIA OCR:** ARIA analiza el documento PDF/imagen del nombramiento, extrae el nombre del titular, la fecha de inscripción mercantil, el período estatutario de vigencia (ej. 2 años) y emite el distintivo: *"✨ Nombramiento Vigente validado por ARIA (Vence: Oct 2027)"*.
+
+#### 3. Reglas de Negocio Validadas
+
+1. **Flujo de Continuidad Post-Alta Manual:**
+   - Al completar el formulario de alta manual en el despacho, el sistema ofrece 3 acciones inmediatas para máxima agilidad operativa:
+     * `[Guardar Cliente]`: Almacena el perfil en el CRM y permanece en la bandeja.
+     * `[Guardar y Radicar Expediente]`: Guarda al cliente e inmediatamente abre el asistente de creación de expediente (`TRQ-MAT-YYYY-XXXXX`).
+     * `[Guardar y Agendar Cita]`: Guarda al cliente y despliega el modal de agendamiento en `comun_agenda` (`PLT-020`).
+2. **Detección Automática de Duplicados:**
+   - Búsqueda en tiempo real por número de identificación (Cédula/RUC) o correo electrónico en `comun_seguridad.seg_usuario` y `tranqui_legal.trq_cliente_perfil` para evitar cuentas duplicadas.
+3. **Verificación de Conflicto de Intereses (*Conflict Check*) con Alerta en Ámbar:**
+   - Al registrar un cliente o ingresar su contraparte procesal, la función `trq_fn_verificar_conflicto_intereses()` busca coincidencias en litigios activos.
+   - **Comportamiento Validado:** Si se detecta que la contraparte ya es cliente activo en la red, el sistema despliega un banner de advertencia en ámbar: *"⚠️ Advertencia de Conflicto: La contraparte figura en el caso TRQ-MAT-2026-00012 (Dra. Paula Andrade)"*.
+   - **No bloquea la radicación:** Permite continuar el registro, pero deja constancia inmutable en `comun_auditoria.aud_registro` y notifica a la Mesa de Control para supervisión ética.
+4. **Visibilidad Segmentada por Privacidad (RLS):**
+   - **Operadores y Administradores:** Acceso global a la base 360° de clientes de la red Tranqi.
+   - **Socios Abogados:** Visibilidad restringida por RLS exclusivamente a los clientes que tienen causas asignadas a su equipo o citas confirmadas con su despacho.
+5. **Ficha Integral 360° del Cliente:** Pestaña unificada con: Datos Generales, Representante Legal validado por ARIA, Expedientes vinculados, Billetera de Documentos (`TRQ-COM-001`), Citas agendadas y Balance de Honorarios.
+
+---
+
+### TRQ-CAS-001 — Expediente Digital Unificado: Trámites Judiciales y Extrajudiciales (Matter Management)
+**Responsables:** Kleber Toapanta / Jesus Navarrete | **Estado:** 🟡 Especificado (30%)
+
+#### 1. Descripción
+Contenedor nuclear (*Matter*) del consultorio jurídico. Centraliza la información fáctica, procesal, documental y económica de cada causa judicial o trámite extrajudicial.
+
+#### 2. Tipología Dual de Trámites
+1. **Trámites Judiciales (Contenciosos y Voluntarios):**
+   - Sujetos al COGEP / COIP y al sistema SATJE de la Función Judicial.
+   - Campos clave: Número de Proceso Judicial (código SATJE de 16 o 21 dígitos), Judicatura / Unidad Judicial, Sala, Juez ponente, Materia rectora y Tipo de Acción.
+2. **Trámites Extrajudiciales / Administrativos:**
+   - *Notariales:* Minutas de compraventa, poderes generales/especiales, posesiones efectivas, capitulaciones matrimoniales.
+   - *Societarios:* Constitución de compañías SAS/Cía. Ltda./S.A. en la Superintendencia de Compañías, aumentos de capital, reformas de estatutos y nombramientos.
+   - *Propiedad Intelectual:* Registro de marcas y patentes en el SENADI.
+   - *MASC / Mediación:* Solicitudes de mediación y actas transaccionales en centros de arbitraje.
+
+#### 3. Estados y Ciclo de Vida del Expediente
+```
+[NUEVO / INTAKE] ➔ [ASIGNADO] ➔ [EN PREPARACIÓN] ➔ [EN TRÁMITE / AUDIENCIA] ➔ [EN RESOLUCIÓN] ➔ [CERRADO / GANADO / ARCHIVADO]
+```
+- Código identificador amigable: `TRQ-MAT-{AÑO}-{SECUENCIAL}` (ej. `TRQ-MAT-2026-00045`).
+
+---
+
+### TRQ-CAS-002 — Asignación Multirrol de Abogados y Trabajo Colaborativo
+**Responsable:** Kleber Toapanta | **Estado:** 🟡 Especificado (25%)
+
+#### 1. Descripción
+Modelo de conformación de equipos jurídicos por expediente, permitiendo la colaboración estructurada entre socios profesionales, asistentes y la Mesa de Control.
+
+#### 2. Roles en el Expediente
+1. **Abogado Titular / Responsable (*Lead Attorney*):** Patrocinador principal, suscribe escritos, comparece a audiencias y lidera la estrategia jurídica.
+2. **Abogado Co-patrocinador / Colaborador (*Associate Attorney*):** Apoya en la revisión de pruebas, redacción de minutas y diligencias judiciales.
+3. **Paralegal / Asistente:** Carga de documentos, seguimiento de providencias y transcripciones.
+4. **Mesa de Control / Operador:** Supervisión de calidad, asignación y auditoría de plazos.
+
+#### 3. Reglas de Negocio
+- **Aislamiento RLS Estricto:** Un socio abogado solo tiene acceso de lectura/escritura a los expedientes donde figura en el equipo asignado (`trq_caso_abogado_equipo`).
+- **Reasignación por Contingencia:** La Mesa de Control puede reasignar el abogado titular ante imprevistos médicos o audiencias superpuestas, con registro inmutable en auditoría.
+
+---
+
+### TRQ-DOC-001 — Sistema de Gestión Documental Legal (DMS), Carpetas Procesales y Versionamiento vN
+**Responsable:** Kleber Toapanta | **Estado:** 🟡 Especificado (30%)
+
+#### 1. Descripción
+Gestor documental especializado para la práctica jurídica que estructura las piezas procesales en carpetas estandarizadas, integra la Billetera Digital Universal y ofrece versionamiento inmutable de minutas.
+
+#### 2. Estructura de Carpetas Procesales Estándar
+```
+📁 Expediente TRQ-MAT-2026-00045
+  ├── 📂 01. Identificación y Poderes (Cédulas, RUC, Poderes Notariales, Nombramientos)
+  ├── 📂 02. Pruebas y Evidencias (Contratos, Facturas, Informes Periciales, Chats)
+  ├── 📂 03. Escritos y Minutas (Demandas, Contestaciones, Alegatos - Versiones v1, v2...)
+  ├── 📂 04. Providencias y Notificaciones (Autos de calificación, Citaciones, Sentencias SATJE)
+  └── 📂 05. Comprobantes y Facturación (Tasas judiciales, Honorarios, Retenciones)
+```
+
+#### 3. Reglas de Negocio
+1. **Importación Directa desde la Billetera (`TRQ-COM-001`):** Permite vincular documentos preexistentes del cliente en Storage sin duplicar archivos.
+2. **Versionamiento Inmutable de Minutas (`v1`, `v2`, `v3`...):** Cada cambio en una minuta o borrador genera una versión sucesiva inmutable.
+3. **Firma Electrónica PAdES Integrada (`TRQ-COM-003`):** Botón directo para estampar la firma electrónica `.p12` Zero-Custody sobre cualquier escrito PDF del expediente.
+
+---
+
+### TRQ-CAS-003 — Bitácora Procesal, Plazos COGEP y Notas Internas vs. Públicas
+**Responsables:** Kleber Toapanta / Jesus Navarrete | **Estado:** 🟡 Especificado (25%)
+
+#### 1. Descripción
+Línea de tiempo cronológica (*Timeline*) de actuaciones procesales con control de términos legales perentorios del COGEP y separación de notas internas del despacho.
+
+#### 2. Reglas de Negocio
+1. **Doble Capa de Visibilidad:**
+   - 🔒 **Nota Interna / Estrategia:** Confidencial, accesible exclusivamente por los abogados asignados al caso y operadores.
+   - 🌐 **Hito Procesal Informativo:** Redactado en lenguaje ciudadano, visible para el cliente en su portal web/móvil.
+2. **Gestión de Términos y Plazos COGEP:**
+   - Configuración de plazos en días hábiles (ej. 3 días para recurso de hecho/apelación, 30 días para contestación a la demanda ordinaria).
+   - Generación de alertas preventivas en la agenda (`comun_agenda`) y notificaciones multicanal.
+
+---
+
+### TRQ-DIG-001 — Ingesta y Digitalización Masiva del Archivo Físico Histórico
+**Responsables:** Jesus Navarrete (IA) / Kleber Toapanta | **Estado:** 🟡 Especificado (25%)
+
+#### 1. Descripción & Retorno de Inversión (ROI)
+Módulo para migrar el archivo histórico en papel (carpetas y archivadores de años anteriores) al expediente digital nativo de Tranqi, transformando el archivo pasivo en un **Cerebro de Conocimiento y Precedentes Jurídicos** consultable por abogados y agentes de IA.
+
+#### 2. Metodología de Ingesta y Triaje
+1. **Digitalización de Expedientes Vivos / Activos (Prioridad P0):** Se escanean y cargan como casos activos (`cas_estado = 'en_curso'`), asignando equipo y fechas límite inmediatas.
+2. **Digitalización de Expedientes Históricos / Cerrados (Prioridad P1):** Se cargan como expedientes históricos archivados (`cas_estado = 'cerrado' / 'archivado'`), sirviendo como base de precedentes y modelos contractuales.
+
+#### 3. Flujo Técnico de Digitalización Asistida por ARIA
+1. **Carga Masiva por Lotes (`trq_archivo_digitalizacion_lote`):** Carga de tomos escaneados en PDF de alto volumen.
+2. **Segmentación Inteligente:** ARIA detecta saltos de cuerpo procesal (sellos notariales, firmas, encabezados judiciales) y desglosa el tomo en piezas documentales individuales clasificadas en las carpetas procesales estándar.
+3. **Extracción Automática de Metadatos:** ARIA extrae partes procesales, número de juicio SATJE, juzgado, cuantía y genera una **Ficha Sinóptica Ejecutiva** (resumen de 1 página del estado del caso).
+
+---
+
+### ARIA Legal — Arquitectura de Agentes de IA en Procesos Jurídicos
+
+Tranqi implementa 4 agentes especializados basados en el estándar unificado `packages/agentes-ia`:
+
+```mermaid
+graph TD
+    subgraph ARIA_INTAKE["1. ARIA Front (Triaje 24/7)"]
+        A1["WhatsApp Business / Chat Web"] --> A2["Orientación y Filtro de Viabilidad"]
+        A2 --> A3["Pre-registro y Agendamiento (PLT-020)"]
+    end
+
+    subgraph ARIA_INGESTOR["2. ARIA Ingestor (Archivo & OCR)"]
+        B1["PDFs Escaneados del Archivo"] --> B2["OCR Multimodal y Extracción de Partes"]
+        B2 --> B3["Ficha Sinóptica y Auto-clasificación"]
+    end
+
+    subgraph ARIA_COPILOT["3. ARIA Co-Pilot (Despacho Abogado)"]
+        C1["Redactor de Demandas y Minutas"]
+        C2["Cotejo de Pruebas vs. Hechos Alegados"]
+        C3["Dictamen de Riesgo Contractual (TRQ-CLI-002)"]
+    end
+
+    subgraph ARIA_SUPERVISOR["4. ARIA Supervisor (Auditoría)"]
+        D1["Control de Plazos Perentorios COGEP"]
+        D2["Detección de Expedientes Inactivos"]
+        D3["Cálculo de Liquidaciones y Comisiones"]
+    end
+
+    ARIA_INTAKE --> ARIA_INGESTOR
+    ARIA_INGESTOR --> ARIA_COPILOT
+    ARIA_COPILOT --> ARIA_SUPERVISOR
+```
+
+1. **ARIA Front (Triaje y Calificación 24/7):** Atención multicanal que evalúa la materia jurídica y recopila los hechos preliminares sin emitir promesas de resultado judicial.
+2. **ARIA Ingestor (Digitalización de Expedientes):** Procesa expedientes escaneados en lote y extrae metadatos para poblar automáticamente el expediente digital.
+3. **ARIA Co-Pilot (Asistente del Abogado):** Asiste en la redacción de escritos, cotejo de pruebas contra versiones testimoniales y detección de cláusulas lesivas en contratos.
+4. **ARIA Supervisor (Mesa de Control & Plazos):** Audita diariamente los expedientes activos, alertando sobre plazos COGEP críticos y causas sin movimiento procesal reciente.
+

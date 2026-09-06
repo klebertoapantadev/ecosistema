@@ -102,6 +102,16 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
     colorIcono: "#05876E"
   },
   {
+    clave: "crm_clientes",
+    nombre: "CRM Jurídico y Recepción de Clientes",
+    detalle: "Administración 360° de clientes, personas naturales/jurídicas, validación ARIA y Conflict Check",
+    ruta: "/panel/clientes",
+    categoria: "Operación Legal",
+    minNivel: 50,
+    icono: UserCog,
+    colorIcono: "#0284C7"
+  },
+  {
     clave: "solicitud_socio",
     nombre: "Solicitudes de Socios & Postulaciones",
     detalle: "Procesamiento de postulaciones y formularios de nuevos socios",
