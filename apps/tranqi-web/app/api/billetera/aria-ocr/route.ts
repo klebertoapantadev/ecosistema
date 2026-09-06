@@ -1,180 +1,161 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { NextRequest, NextResponse } from "next/server";
-import { crearClienteServidor } from "@eco/supabase/servidor";
+import { NextResponse, type NextRequest } from "next/server";
+import { randomUUID } from "node:crypto";
+import { crearClienteServidor, crearClienteAdmin } from "@eco/supabase/servidor";
+import { extraerDocumento } from "../../../../modulos/socios/servicios/verificacionIdentidadAria";
 
+export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-interface ArchivoInput {
-  nombre: string;
-  tamano: number;
-  mimetype: string;
+// TRQ-COM-001 — extracción de datos de un documento de la billetera.
+//
+// REESCRITO EL 2026-09-06. La versión anterior decía llamarse «Aria (Legal AI
+// Agent)» y no llamaba a Aria: clasificaba el documento por palabras clave del
+// NOMBRE DEL FICHERO, buscaba la cédula con un regex sobre ese mismo nombre, y
+// para una cédula rellenaba la fecha de caducidad con «hoy + 5 años», la de
+// emisión con «hoy − 5 años» y la de nacimiento con «hoy − 30 años, 12 de
+// mayo». Todo eso volvía bajo un `resumenOcr` que afirmaba «Aria analizó N
+// archivo(s)»: el usuario veía fechas inventadas presentadas como extraídas de
+// su propio documento.
+//
+// (Además consultaba `seg_usuario.usu_identificacion` y `usu_detalles`, dos
+// columnas que no existen, así que esa parte fallaba en silencio.)
+//
+// Ahora el documento se lee de verdad. Lo que no se pueda leer vuelve vacío y
+// lo rellena el usuario: un campo en blanco es honesto, uno inventado no.
+
+interface ArchivoEntrada {
+  nombre?: string;
+  tamano?: number;
+  mimetype?: string;
   base64?: string;
   url?: string;
 }
 
+const CARPETA_TEMPORAL = "analisis-temporal";
+const VIGENCIA_URL_SEGUNDOS = 300;
+const MIMES_ANALIZABLES = ["image/png", "image/jpeg", "image/jpg", "image/webp"];
+
+/** Traduce lo que detecta Aria al vocabulario de categorías de la billetera. */
+function categoriaDe(tipo: string | null): "identidad" | "vehicular" | "contratos" | "profesional" | "otros" {
+  switch (tipo) {
+    case "cedula":
+    case "pasaporte":
+      return "identidad";
+    case "titulo_universitario":
+    case "matricula_abogado":
+    case "ruc":
+      return "profesional";
+    default:
+      return "otros";
+  }
+}
+
 export async function POST(req: NextRequest) {
+  const supabase = await crearClienteServidor();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return NextResponse.json({ ok: false, error: "No autenticado" }, { status: 401 });
+  }
+
+  let cuerpo: { archivos?: ArchivoEntrada[] };
   try {
-    const supabase = (await crearClienteServidor()) as any;
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    cuerpo = (await req.json()) as { archivos?: ArchivoEntrada[] };
+  } catch {
+    return NextResponse.json({ ok: false, error: "Cuerpo inválido" }, { status: 400 });
+  }
 
-    if (authError || !user) {
-      return NextResponse.json({ ok: false, error: "No autenticado" }, { status: 401 });
-    }
+  const archivos = cuerpo.archivos ?? [];
+  if (archivos.length === 0) {
+    return NextResponse.json({ ok: false, error: "No se proporcionaron archivos" }, { status: 400 });
+  }
 
-    const body = await req.json();
-    const archivos: ArchivoInput[] = body.archivos || [];
-    const nombreContexto: string = body.nombreContexto || "";
+  // Se analiza la primera imagen. Un PDF no lo lee el modelo de visión, y
+  // decirlo es mejor que devolver un análisis vacío sin explicar por qué.
+  const archivo = archivos.find((a) => MIMES_ANALIZABLES.includes((a.mimetype ?? "").toLowerCase()));
+  if (!archivo) {
+    return NextResponse.json({
+      ok: true,
+      analizado: false,
+      motivo:
+        "Por ahora solo se pueden leer imágenes (PNG, JPG o WEBP). Sube una foto del documento o completa los campos a mano.",
+      analisis: null,
+    });
+  }
 
-    if (!archivos || archivos.length === 0) {
-      return NextResponse.json({ ok: false, error: "No se proporcionaron archivos para análisis" }, { status: 400 });
-    }
+  const admin = crearClienteAdmin();
+  if (!admin) {
+    return NextResponse.json({ ok: false, error: "Almacenamiento no disponible" }, { status: 500 });
+  }
 
-    // Nombres consolidados para contexto
-    const nombresArchivos = archivos.map(a => a.nombre.toLowerCase()).join(" ");
-    const textoCompleto = `${nombreContexto} ${nombresArchivos}`;
+  // Aria descarga la imagen por HTTP, así que hace falta una URL alcanzable. El
+  // fichero se sube a una carpeta temporal y se borra en cuanto termina el
+  // análisis: vive segundos y nunca se mezcla con los documentos del usuario.
+  let ruta: string | null = null;
+  try {
+    let urlParaAria = archivo.url ?? null;
 
-    // Estructura de metadatos extraídos por Aria
-    let titularNombre: string | null = null;
-    let titularIdentificacion: string | null = null;
-    let fechaNacimiento: string | null = null;
-    let entidadEmisora: string | null = null;
-    let numeroDocumento: string | null = null;
-    let fechaEmision: string | null = null;
-    let fechaCaducidad: string | null = null;
-    let categoriaSugerida: "identidad" | "vehicular" | "contratos" | "profesional" | "otros" = "identidad";
-    let tipoSugerido = "documento_general";
-
-    // 1. Detección Inteligente de Tipo y Entidad
-    if (textoCompleto.includes("cedula") || textoCompleto.includes("cédula") || textoCompleto.includes("identidad") || textoCompleto.includes("dni")) {
-      categoriaSugerida = "identidad";
-      tipoSugerido = "cedula";
-      entidadEmisora = "Registro Civil del Ecuador";
-    } else if (textoCompleto.includes("votacion") || textoCompleto.includes("votación") || textoCompleto.includes("electoral")) {
-      categoriaSugerida = "identidad";
-      tipoSugerido = "certificado_votacion";
-      entidadEmisora = "Consejo Nacional Electoral (CNE)";
-    } else if (textoCompleto.includes("licencia") || textoCompleto.includes("conducir")) {
-      categoriaSugerida = "identidad";
-      tipoSugerido = "licencia_conducir";
-      entidadEmisora = "Agencia Nacional de Tránsito (ANT)";
-    } else if (textoCompleto.includes("pasaporte") || textoCompleto.includes("passport")) {
-      categoriaSugerida = "identidad";
-      tipoSugerido = "pasaporte";
-      entidadEmisora = "Ministerio de Relaciones Exteriores y Movilidad Humana";
-    } else if (textoCompleto.includes("matricula") || textoCompleto.includes("matrícula") || textoCompleto.includes("vehicular") || textoCompleto.includes("auto") || textoCompleto.includes("carro") || textoCompleto.includes("placa")) {
-      categoriaSugerida = "vehicular";
-      tipoSugerido = "matricula_vehicular";
-      entidadEmisora = "Agencia Metropolitana de Tránsito (AMT / ANT)";
-    } else if (textoCompleto.includes("soat") || textoCompleto.includes("seguro_auto") || textoCompleto.includes("poliza")) {
-      categoriaSugerida = "vehicular";
-      tipoSugerido = "poliza_seguro";
-      entidadEmisora = "Compañía Aseguradora";
-    } else if (textoCompleto.includes("contrato") || textoCompleto.includes("arriendo") || textoCompleto.includes("arrendamiento") || textoCompleto.includes("alquiler")) {
-      categoriaSugerida = "contratos";
-      tipoSugerido = "contrato_arrendamiento";
-      entidadEmisora = "Notaría Pública / Arrendador";
-    } else if (textoCompleto.includes("servicio") || textoCompleto.includes("luz") || textoCompleto.includes("agua") || textoCompleto.includes("internet") || textoCompleto.includes("planilla")) {
-      categoriaSugerida = "contratos";
-      tipoSugerido = "servicio_basico";
-      entidadEmisora = "Empresa Eléctrica / Empresa de Agua / CNT";
-    } else if (textoCompleto.includes("titulo") || textoCompleto.includes("título") || textoCompleto.includes("senescyt") || textoCompleto.includes("universidad") || textoCompleto.includes("grado")) {
-      categoriaSugerida = "profesional";
-      tipoSugerido = "titulo_profesional";
-      entidadEmisora = "SENESCYT / Universidad";
-    } else if (textoCompleto.includes("ruc") || textoCompleto.includes("rimpe") || textoCompleto.includes("sri")) {
-      categoriaSugerida = "profesional";
-      tipoSugerido = "registro_ruc";
-      entidadEmisora = "Servicio de Rentas Internas (SRI)";
-    } else if (textoCompleto.includes("foro") || textoCompleto.includes("abogado") || textoCompleto.includes("judicatura") || textoCompleto.includes("carnet")) {
-      categoriaSugerida = "profesional";
-      tipoSugerido = "matricula_abogado";
-      entidadEmisora = "Consejo de la Judicatura / Foro de Abogados";
-    }
-
-    // 2. Búsqueda de Cédula o RUC en el nombre o metadatos (10 a 13 dígitos)
-    const matchId = textoCompleto.match(/\b(17\d{8}|09\d{8}|01\d{8}|08\d{8}|10\d{8}|11\d{8}|18\d{8}|13\d{8}|\d{10}(?:001)?)\b/);
-    if (matchId) {
-      titularIdentificacion = matchId[1] || null;
-    }
-
-    // 3. Búsqueda de Número de Matrícula o Placa
-    const matchPlaca = textoCompleto.match(/\b([A-Z]{3}-?\d{3,4})\b/i);
-    if (matchPlaca && matchPlaca[1]) {
-      numeroDocumento = matchPlaca[1].toUpperCase();
-    }
-
-    // 4. Extracción de Nombre del Usuario si aplica
-    const { data: perfilUsuario } = await supabase
-      .schema("comun_seguridad")
-      .from("seg_usuario")
-      .select("usu_nombres, usu_apellidos, usu_identificacion, usu_detalles")
-      .eq("usu_id", user.id)
-      .maybeSingle();
-
-    if (perfilUsuario) {
-      const nombreCompleto = [perfilUsuario.usu_nombres, perfilUsuario.usu_apellidos].filter(Boolean).join(" ");
-      if (nombreCompleto) {
-        titularNombre = nombreCompleto;
+    if (!urlParaAria) {
+      if (!archivo.base64) {
+        return NextResponse.json({ ok: false, error: "El archivo no trae contenido" }, { status: 400 });
       }
-      if (!titularIdentificacion && perfilUsuario.usu_identificacion) {
-        titularIdentificacion = perfilUsuario.usu_identificacion;
+      const limpio = archivo.base64.includes(",") ? archivo.base64.split(",")[1]! : archivo.base64;
+      const bytes = Buffer.from(limpio, "base64");
+      ruta = `${CARPETA_TEMPORAL}/${user.id}/${randomUUID()}`;
+
+      const { error: errorSubida } = await admin.storage
+        .from("socios-documentos")
+        .upload(ruta, bytes, { contentType: archivo.mimetype ?? "image/jpeg", upsert: true });
+      if (errorSubida) {
+        return NextResponse.json({ ok: false, error: "No se pudo preparar el documento" }, { status: 500 });
       }
-      const detallesObj = perfilUsuario.usu_detalles as Record<string, unknown> | null;
-      if (detallesObj?.fecha_nacimiento) {
-        fechaNacimiento = String(detallesObj.fecha_nacimiento);
-      }
+
+      const { data: firmada } = await admin.storage
+        .from("socios-documentos")
+        .createSignedUrl(ruta, VIGENCIA_URL_SEGUNDOS);
+      urlParaAria = firmada?.signedUrl ?? null;
     }
 
-    // 5. Sugerencia de Fechas contextuales
-    const hoy = new Date();
-    const anoActual = hoy.getFullYear();
-
-    if (tipoSugerido === "cedula") {
-      // Vigencia típica de cédula: 10 años
-      const fechaExp = new Date(hoy);
-      fechaExp.setFullYear(anoActual + 5);
-      fechaCaducidad = fechaExp.toISOString().split("T")[0] || null;
-      fechaEmision = new Date(anoActual - 5, 0, 15).toISOString().split("T")[0] || null;
-      if (!fechaNacimiento) {
-        fechaNacimiento = new Date(anoActual - 30, 4, 12).toISOString().split("T")[0] || null;
-      }
-    } else if (tipoSugerido === "licencia_conducir") {
-      // Vigencia típica de licencia: 5 años
-      const fechaExp = new Date(hoy);
-      fechaExp.setFullYear(anoActual + 3);
-      fechaCaducidad = fechaExp.toISOString().split("T")[0] || null;
-      fechaEmision = new Date(anoActual - 2, 5, 20).toISOString().split("T")[0] || null;
-    } else if (tipoSugerido === "matricula_vehicular") {
-      // Matrícula anual
-      const fechaExp = new Date(hoy);
-      fechaExp.setFullYear(anoActual + 1);
-      fechaCaducidad = fechaExp.toISOString().split("T")[0] || null;
-      fechaEmision = new Date(anoActual, 0, 10).toISOString().split("T")[0] || null;
+    if (!urlParaAria) {
+      return NextResponse.json({ ok: false, error: "No se pudo preparar el documento" }, { status: 500 });
     }
 
-    // Título limpio sugerido
-    const nombreBase = archivos[0]?.nombre.replace(/\.[^/.]+$/, "").replace(/[-_]/g, " ") || "Documento";
-    const tituloSugerido = nombreBase.charAt(0).toUpperCase() + nombreBase.slice(1);
+    const { extraccion } = await extraerDocumento(urlParaAria);
 
     return NextResponse.json({
       ok: true,
-      agente: "Aria (Legal AI Agent)",
+      analizado: true,
+      agente: "Aria",
       analisis: {
-        tituloSugerido,
-        categoriaSugerida,
-        tipoSugerido,
-        titularNombre,
-        titularIdentificacion,
-        fechaNacimiento,
-        entidadEmisora,
-        numeroDocumento,
-        fechaEmision,
-        fechaCaducidad,
-        totalArchivos: archivos.length,
-        resumenOcr: `Aria analizó ${archivos.length} archivo(s) adjunto(s). Detectado: ${categoriaSugerida.toUpperCase()} — ${entidadEmisora || "Documento Personal"}`
-      }
+        // Nada de esto se rellena si no está en el documento.
+        tituloSugerido: extraccion.tipo_detectado
+          ? extraccion.tipo_detectado.replaceAll("_", " ").replace(/^\w/, (c) => c.toUpperCase())
+          : null,
+        categoriaSugerida: categoriaDe(extraccion.tipo_detectado),
+        tipoSugerido: extraccion.tipo_detectado,
+        titularNombre: extraccion.titular,
+        titularIdentificacion: extraccion.identificacion,
+        entidadEmisora: extraccion.emisor,
+        fechaEmision: extraccion.fecha_emision,
+        fechaCaducidad: extraccion.fecha_caducidad,
+        legible: extraccion.legible,
+        observaciones: extraccion.observaciones,
+        resumenOcr: extraccion.legible
+          ? "Datos leídos del documento. Revísalos y corrige lo que haga falta antes de guardar."
+          : "El documento no se lee con claridad. Súbelo de nuevo con mejor luz, o completa los campos a mano.",
+      },
     });
-  } catch (error: any) {
-    return NextResponse.json({ ok: false, error: error.message || "Error al analizar con Aria" }, { status: 500 });
+  } catch (e) {
+    const motivo = e instanceof Error ? e.message : "Error desconocido";
+    return NextResponse.json(
+      { ok: false, analizado: false, error: `No se pudo analizar el documento (${motivo}).` },
+      { status: 503 },
+    );
+  } finally {
+    // El temporal se borra pase lo que pase, también si el análisis falló.
+    if (ruta) {
+      await admin.storage.from("socios-documentos").remove([ruta]);
+    }
   }
 }

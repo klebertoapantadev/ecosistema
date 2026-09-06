@@ -32,7 +32,7 @@ Tranqi adopta las mejores prácticas y estándares internacionales de **Law Prac
 
 | Código | Rol / Ámbito | Funcionalidad / Requerimiento | Estado | Avance (%) | Responsable Asignado |
 | :--- | :---: | :--- | :---: | :---: | :--- |
-| **`TRQ-COM-001`** | **Común (Todos)** | **Billetera Digital de Documentos Seguros, Extracción OCR y Enlaces TTL** | ✅ Implementado | **100%** | Jesus Navarrete |
+| **`TRQ-COM-001`** | **Común (Todos)** | **Billetera Digital de Documentos Seguros, Extracción OCR y Enlaces TTL** | 🟡 En Desarrollo | **85%** | Jesus Navarrete |
 | **`TRQ-COM-002`** | **Común (Todos)** | **Compartición de Documentos a Tranqi (Revisión de Contratos & Vinculación a Casos)** | 🟡 Especificado | **25%** | Kleber Toapanta |
 | **`TRQ-COM-003`** | **Común (Todos)** | **Herramienta Universal de Firma Digital de Documentos PDF (.p12 / QR / PAdES)** | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`TRQ-CLI-001`** | **Cliente** | **Portal de Casos, Solicitud de Patrocinio y Consultas Telemáticas** | 🟡 En Desarrollo | **30%** | Jesus Navarrete |
@@ -43,7 +43,7 @@ Tranqi adopta las mejores prácticas y estándares internacionales de **Law Prac
 | **`TRQ-ABG-002`** | **Abogado** | **Despacho Virtual: Bandeja de Casos, Expediente Digital y Actuaciones SATJE** | ⏳ Pendiente | **0%** | Kleber Toapanta / Jesus Navarrete |
 | **`TRQ-ABG-003`** | **Abogado** | **Firma Electrónica Avanzada PAdES en Navegador (Zero-Custody `.p12`/`.pfx`)** | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`TRQ-ABG-004`** | **Abogado** | **Agenda Profesional, Citas Presenciales y Sala de Videoconsulta Segura** | 🟡 En Desarrollo | **75%** | Jesus Navarrete |
-| **`TRQ-ABG-005`** | **Abogado** | **Verificación Inteligente de Identidad y Documentos con Aria (IA) en Registro de Abogados** | 🟡 Especificado | **25%** | **Jesus Navarrete (IA)** |
+| **`TRQ-ABG-005`** | **Abogado** | **Verificación Inteligente de Identidad y Documentos con Aria (IA) en Registro de Abogados** | 🟡 En Desarrollo | **65%** | **Jesus Navarrete (IA)** |
 | **`TRQ-ADM-001`** | **Operador/Admin** | **Mesa de Control de Acreditación, Contra-Firma Tranqi y Activación de Socios** | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`TRQ-ADM-002`** | **Operador/Admin** | **Asignación Inteligente de Casos (IA), Liquidación de Honorarios y Comisiones** | ⏳ Pendiente | **0%** | **Jesus Navarrete (IA)** / Kleber Toapanta |
 | **`TRQ-ADM-003`** | **Operador/Admin** | **Auditoría Transversal BDD, Telemetría API y Bitácora de Campañas** | ✅ Implementado | **100%** | Kleber Toapanta |
@@ -338,8 +338,37 @@ Escenario: Mesa de Control con Dictamen de Aria para el Operador
 
 #### 5. Contrato de API & Integración Técnica:
 - **Endpoint:** `POST /api/agentes/aria-verificacion-identidad`
-- **Request:** `{ usuarioId, tipoDocumento, archivoBase64, archivoNombre, datosReferencia: { nombres, apellidos, cedula } }`
+- **Request:** `{ solicitudId, documentoId, tipoDocumento, datosReferencia: { nombres, apellidos, cedula } }`
 - **Response:** `{ ok: true, data: { resultado: "APROBADO" | "OBSERVACION" | "RECHAZADO", scoreConfianza: number, datosExtraidos, concordancia, observaciones } }`
+
+> **Corregido el 2026-09-06 respecto a la versión anterior de este contrato**, que
+> era `{ usuarioId, tipoDocumento, archivoBase64, archivoNombre, datosReferencia }`:
+>
+> - **Fuera `usuarioId`.** Un identificador de usuario en el cuerpo de la petición
+>   lo elige quien llama, así que cualquiera podría analizar y firmar el dictamen
+>   de la solicitud de otro. La identidad sale de la cookie de sesión. Es la misma
+>   frontera que fija el [ADR-0005](../../arquitectura/adr/0005-frontera-de-identidad-en-herramientas-de-ia.md)
+>   para las herramientas de IA, y aplica igual a un endpoint de la app.
+> - **Fuera `archivoBase64`.** El documento ya está en el bucket privado; a Aria
+>   se le pasa una URL firmada de 5 minutos (`image_urls` de ARIA descarga la
+>   imagen del lado servidor). Mandar el fichero en el cuerpo obligaría a
+>   reenviarlo entero al proveedor del modelo en cada reintento.
+
+#### 6. Estado de implementación (2026-09-06)
+
+| Pieza | Estado |
+| :--- | :--- |
+| Validación de cédula por módulo 10, sin IA | ✅ 15 pruebas |
+| Comparación de nombres tolerante a orden, tildes y segundos nombres | ✅ |
+| Extracción real del documento con Aria (visión) | ✅ verificada contra ARIA |
+| Cotejo cruzado de titularidad y semáforo 🟢🟡🔴 | ✅ |
+| Persistencia (`ssc_detalles.aria_validacion`, `dcs_analisis`) y RPC | ✅ verificado bajo RLS |
+| Interfaz en `/panel/solicitud-socio` | ⏳ pendiente |
+| Tarjeta «Inspección de Identidad Aria» en la mesa de control | ⏳ pendiente |
+
+**El dictamen global es el mínimo de los documentos analizados, no la media.** Basta
+que uno pertenezca a otra persona para que el expediente no quede verificado;
+promediar dejaría pasar una suplantación con un 60 %.
 
 ---
 

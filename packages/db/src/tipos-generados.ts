@@ -2,7 +2,7 @@
 //   --schema public,comun_seguridad,comun_auditoria,comun_configuracion,comun_catalogo,comun_notificaciones,
 //            comun_notificacion,comun_reclutamiento,comun_comercio,comun_agenda,tranqui_legal
 // Regenerar en el mismo PR que cualquier migracion nueva que toque columnas
-// Regenerado 2026-09-06 tras desplegar las 36 migraciones atrasadas.
+// Regenerado 2026-09-06 tras TRQ-ABG-005.
 export type Json =
   | string
   | number
@@ -3723,6 +3723,7 @@ export type Database = {
       }
       trq_documento_socio: {
         Row: {
+          dcs_analisis: Json
           dcs_comentario: string | null
           dcs_creado_en: string
           dcs_id: string
@@ -3733,6 +3734,7 @@ export type Database = {
           dcs_url: string
         }
         Insert: {
+          dcs_analisis?: Json
           dcs_comentario?: string | null
           dcs_creado_en?: string
           dcs_id?: string
@@ -3743,6 +3745,7 @@ export type Database = {
           dcs_url: string
         }
         Update: {
+          dcs_analisis?: Json
           dcs_comentario?: string | null
           dcs_creado_en?: string
           dcs_id?: string
@@ -4100,6 +4103,7 @@ export type Database = {
           ssc_contrato_confirmado_en: string | null
           ssc_contrato_confirmado_por: string | null
           ssc_creado_en: string
+          ssc_detalles: Json
           ssc_eliminado_en: string | null
           ssc_enlace_foro_verificado: boolean
           ssc_enlace_senescyt_verificado: boolean
@@ -4121,6 +4125,7 @@ export type Database = {
           ssc_contrato_confirmado_en?: string | null
           ssc_contrato_confirmado_por?: string | null
           ssc_creado_en?: string
+          ssc_detalles?: Json
           ssc_eliminado_en?: string | null
           ssc_enlace_foro_verificado?: boolean
           ssc_enlace_senescyt_verificado?: boolean
@@ -4142,6 +4147,7 @@ export type Database = {
           ssc_contrato_confirmado_en?: string | null
           ssc_contrato_confirmado_por?: string | null
           ssc_creado_en?: string
+          ssc_detalles?: Json
           ssc_eliminado_en?: string | null
           ssc_enlace_foro_verificado?: boolean
           ssc_enlace_senescyt_verificado?: boolean
@@ -4230,6 +4236,7 @@ export type Database = {
           ssc_contrato_confirmado_en: string | null
           ssc_contrato_confirmado_por: string | null
           ssc_creado_en: string
+          ssc_detalles: Json
           ssc_eliminado_en: string | null
           ssc_enlace_foro_verificado: boolean
           ssc_enlace_senescyt_verificado: boolean
@@ -4273,6 +4280,7 @@ export type Database = {
           ssc_contrato_confirmado_en: string | null
           ssc_contrato_confirmado_por: string | null
           ssc_creado_en: string
+          ssc_detalles: Json
           ssc_eliminado_en: string | null
           ssc_enlace_foro_verificado: boolean
           ssc_enlace_senescyt_verificado: boolean
@@ -4298,6 +4306,15 @@ export type Database = {
         Returns: boolean
       }
       trq_fn_es_admin_mfa_verificado: { Args: never; Returns: boolean }
+      trq_fn_guardar_dictamen_aria: {
+        Args: {
+          p_analisis_documento: Json
+          p_dictamen_global: Json
+          p_documento_id: string
+          p_solicitud_id: string
+        }
+        Returns: undefined
+      }
       trq_fn_horarios_materia: {
         Args: {
           p_desde: string
@@ -4323,6 +4340,7 @@ export type Database = {
           ssc_contrato_confirmado_en: string | null
           ssc_contrato_confirmado_por: string | null
           ssc_creado_en: string
+          ssc_detalles: Json
           ssc_eliminado_en: string | null
           ssc_enlace_foro_verificado: boolean
           ssc_enlace_senescyt_verificado: boolean

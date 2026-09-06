@@ -43,6 +43,16 @@ export async function invocarAgente(
    * Ver `capsula.ts` y `runtime_tools.render_contexto` en el backend de ARIA.
    */
   toolContext?: Record<string, string>,
+  /**
+   * URLs de imágenes que el agente debe VER (visión). ARIA las descarga él
+   * mismo y se las pasa al modelo como contenido multimodal, así que tienen que
+   * ser alcanzables por HTTP desde el servidor de ARIA — para un documento
+   * privado, una URL firmada de corta vida.
+   *
+   * No se mandan en base64 a propósito: el prompt viaja entero al proveedor y
+   * en cada reintento, y una cédula escaneada son cientos de kilobytes.
+   */
+  imageUrls?: string[],
 ): Promise<RespuestaAgente> {
   const r = await fetch(`${config.baseUrl}/v1/agents/${config.agentId}/invoke`, {
     method: "POST",
@@ -54,6 +64,7 @@ export async function invocarAgente(
       prompt,
       conversation_id: conversationId,
       tool_context: toolContext,
+      image_urls: imageUrls,
     }),
     signal: AbortSignal.timeout(120000),
   });
