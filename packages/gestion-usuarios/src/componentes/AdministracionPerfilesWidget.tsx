@@ -221,7 +221,7 @@ const PERFILES_INICIALES: PerfilDef[] = [
     widgetsAsignadosPorPanel: {
       panel_inicio: ["favoritos"],
       panel_cuenta: ["ver_como", "mi_cuenta"],
-      panel_herramientas: ["firma_documentos_pdf", "billetera_documentos"],
+      panel_herramientas: ["agendar_cita", "mis_citas", "firma_documentos_pdf", "billetera_documentos"],
       panel_configuracion: ["notificaciones"]
     },
     activo: true
@@ -238,7 +238,7 @@ const PERFILES_INICIALES: PerfilDef[] = [
       panel_cuenta: ["ver_como", "mi_cuenta"],
       panel_herramientas: ["firma_documentos_pdf", "billetera_documentos", "emision_notificaciones"],
       panel_configuracion: ["notificaciones"],
-      panel_administrar: ["socios", "configuracion_contrato_abogado", "gestion_terminos_consentimientos"]
+      panel_administrar: ["socios", "asignaciones_agenda", "configuracion_contrato_abogado", "gestion_terminos_consentimientos"]
     },
     activo: true
   },
@@ -252,7 +252,7 @@ const PERFILES_INICIALES: PerfilDef[] = [
     widgetsAsignadosPorPanel: {
       panel_inicio: ["favoritos"],
       panel_cuenta: ["ver_como", "mi_cuenta"],
-      panel_herramientas: ["firma_documentos_pdf", "billetera_documentos"],
+      panel_herramientas: ["citas_programadas", "disponibilidad", "firma_documentos_pdf", "billetera_documentos"],
       panel_configuracion: ["notificaciones"]
     },
     activo: true
@@ -269,7 +269,7 @@ const PERFILES_INICIALES: PerfilDef[] = [
       panel_cuenta: ["ver_como", "mi_cuenta"],
       panel_herramientas: ["firma_documentos_pdf", "billetera_documentos", "emision_notificaciones"],
       panel_configuracion: ["configuracion_negocio", "configuracion_correo", "perfiles", "notificaciones"],
-      panel_administrar: ["gestion_usuarios", "socios", "solicitud_socio", "emision_notificaciones", "gestion_terminos_consentimientos", "configuracion_contrato_abogado", "auditoria"]
+      panel_administrar: ["gestion_usuarios", "socios", "solicitud_socio", "asignaciones_agenda", "emision_notificaciones", "gestion_terminos_consentimientos", "configuracion_contrato_abogado", "auditoria"]
     },
     activo: true
   },
@@ -285,7 +285,7 @@ const PERFILES_INICIALES: PerfilDef[] = [
       panel_cuenta: ["ver_como", "mi_cuenta", "historial_accesos"],
       panel_herramientas: ["firma_documentos_pdf", "billetera_documentos", "emision_notificaciones"],
       panel_configuracion: ["configuracion_negocio", "configuracion_correo", "perfiles", "notificaciones"],
-      panel_administrar: ["gestion_usuarios", "socios", "solicitud_socio", "emision_notificaciones", "auditoria"]
+      panel_administrar: ["gestion_usuarios", "socios", "solicitud_socio", "asignaciones_agenda", "emision_notificaciones", "auditoria"]
     },
     activo: true,
     esSuperAdmin: true
@@ -523,6 +523,61 @@ const WIDGETS_INVENTARIO_INICIALES: WidgetInventarioDef[] = [
     panelId: "panel_herramientas",
     activo: true,
     creadoEn: "2026-08-23"
+  },
+  {
+    clave: "agendar_cita",
+    nombre: "Agendar una Consulta",
+    descripcion: "Elección de materia, servicio y hora libre. El abogado se asigna por turno rotativo, no lo elige el afiliado.",
+    categoria: "Agenda",
+    ruta: "/panel/agendar",
+    rutaFisica: "/agenda/componentes/FormularioAgendar.tsx",
+    panelId: "panel_herramientas",
+    activo: true,
+    creadoEn: "2026-09-05"
+  },
+  {
+    clave: "mis_citas",
+    nombre: "Mis Citas",
+    descripcion: "Próximas consultas del afiliado, enlace de videollamada dentro de su ventana y cancelación.",
+    categoria: "Agenda",
+    ruta: "/panel/mis-citas",
+    rutaFisica: "/agenda/componentes/ListaCitasCliente.tsx",
+    panelId: "panel_herramientas",
+    activo: true,
+    creadoEn: "2026-09-05"
+  },
+  {
+    clave: "citas_programadas",
+    nombre: "Citas Programadas",
+    descripcion: "Agenda del profesional: confirmar, reagendar, cerrar. Widget de plataforma compartido por ABOGADO y TECNICO (PLT-011 regla 8).",
+    categoria: "Agenda",
+    ruta: "/panel/agenda",
+    rutaFisica: "/agenda/componentes/BandejaCitasAbogado.tsx",
+    panelId: "panel_herramientas",
+    activo: true,
+    creadoEn: "2026-09-05"
+  },
+  {
+    clave: "disponibilidad",
+    nombre: "Mi Disponibilidad",
+    descripcion: "Horas operativas, duración de cita, antelación mínima y bloqueos por audiencia. Sin franjas activas el profesional no aparece disponible.",
+    categoria: "Agenda",
+    ruta: "/panel/agenda/disponibilidad",
+    rutaFisica: "/agenda/componentes/EditorDisponibilidad.tsx",
+    panelId: "panel_herramientas",
+    activo: true,
+    creadoEn: "2026-09-05"
+  },
+  {
+    clave: "asignaciones_agenda",
+    nombre: "Asignaciones y Contingencia",
+    descripcion: "Citas que se quedaron sin abogado porque el asignado canceló. La cita del afiliado sigue viva y hay que reasignarla antes de la hora.",
+    categoria: "Agenda",
+    ruta: "/panel/agenda/asignaciones",
+    rutaFisica: "/agenda/componentes/MesaAsignaciones.tsx",
+    panelId: "panel_administrar",
+    activo: true,
+    creadoEn: "2026-09-05"
   }
 ];
 

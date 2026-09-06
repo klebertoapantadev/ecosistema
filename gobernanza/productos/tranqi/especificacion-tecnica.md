@@ -92,12 +92,69 @@ PostgREST con un JWT de usuario acuñado, sin `service_role`. Ver
 
 **Widget:** `agentes_ia` → `/panel/agentes`, solo `ADMINISTRADOR` (`20260823000002_widget_agentes_ia.sql`).
 
+## Tablas (PLT-020 / TRQ-ABG-004, agenda)
+
+Migraciones `20260905000004` (`comun_agenda`), `20260905000005` (derechos de consumo),
+`20260905000006` (parte de Tranqi) y `20260905000007` (seed del catálogo).
+
+**El motor no es de Tranqi.** `comun_agenda` es esquema transversal de Plataforma: el mismo widget
+«Citas Programadas» lo comparten `ABOGADO` (Tranqi) y `TECNICO` (FastFix) según `PLT-011` regla 8.
+La división es la de [ADR-0003](../../arquitectura/adr/0003-catalogo-comercial-unificado.md):
+`comun_agenda` sabe **quién está ocupado y cuándo**; `tranqui_legal` sabe **qué pasa** en ese
+encuentro. `trq_cita` no se movió — tiene RLS, auditoría y dos herramientas MCP encima, y las apps
+Capacitor la consultan directo.
+
+| Tabla | Esquema | Prefijo col. | Notas |
+| :--- | :--- | :--- | :--- |
+| `age_profesional` | `comun_agenda` | `agp_` | 1 fila por (usuario, negocio). `agp_configurada_en` en null = no aparece disponible ni recibe turnos |
+| `age_franja` | `comun_agenda` | `fra_` | Hora **local** (`time`), no instante: «los martes de 09:00 a 13:00» sobrevive a cualquier cambio de huso |
+| `age_bloqueo` | `comun_agenda` | `blq_` | Audiencias, ausencias y (previsto) eventos importados de Google Calendar |
+| `age_reserva` | `comun_agenda` | `res_` | La ocupación. Aquí vive el anti-solape |
+| `com_derecho_consumo` | `comun_comercio` | `der_` | Lo que incluye un plan y cuánto lleva consumido el periodo |
+| `trq_abogado_materia` | `tranqui_legal` | `amt_` | N:M. Sin esto el turno rotativo no puede rutear por materia |
+| `trq_abogado_provincia` | `tranqui_legal` | `apr_` | N:M de cobertura territorial |
+| `trq_consulta_rapida` | `tranqui_legal` | `crp_` | La duda que atiende ARIA y su escalado. **Solo la lee su dueño**, como `trq_conversacion` |
+
+**El anti-solape es por PERSONA, no por profesional.** `age_reserva.res_usuario_id` está
+desnormalizado y lo rellena un trigger: quien sea abogado en Tranqi y técnico en FastFix tiene dos
+filas en `age_profesional` pero una sola línea temporal. Con el `EXCLUDE` sobre `agp_id` podría
+estar en dos sitios a la vez.
+
+**`res_fin_en` es `NOT NULL` por obligación técnica, no por gusto:** `EXCLUDE USING gist` solo
+admite expresiones `IMMUTABLE`, y `timestamptz + interval` no lo es (`timestamptz_pl_interval` es
+`STABLE`). Con la columna persistida el rango es inmutable y Postgres acepta la restricción.
+
+**No hay catálogo propio de tipos de cita.** Lo agendable es una variante de `comun_comercio`; de
+`var_detalle_variante` salen `duracion_min`, `concepto_derecho` y `materia_codigo`. «Divorcio» y
+«Conciliación» son variantes, no materias: el primero cae en Familia y Niñez y el segundo es un
+método (MASC) transversal.
+
+**RPC.** `age_fn_huecos_disponibles` y `age_fn_huecos_del_pool` devuelven **solo huecos libres**,
+nunca el detalle de lo ocupado: la agenda de un profesional es dato de un tercero.
+`age_fn_siguiente_en_turno` resuelve el turno rotativo con un `UPDATE … RETURNING` que marca y
+bloquea en la misma sentencia — leer y luego escribir haría que dos reservas simultáneas cayeran en
+el mismo abogado. `trq_fn_reservar_cita` encadena turno, cobertura y reserva en una transacción;
+`trq_fn_decidir_cita` mueve cita y reserva juntas, y distingue la cancelación del abogado (pasa a
+contingencia) de la del cliente. `age_fn_siguiente_en_turno`, `com_fn_consumir_derecho` y
+`com_fn_devolver_derecho` **no** se conceden a `authenticated`: solo se invocan desde dentro de
+otros RPC.
+
+**RLS rectificada.** Se eliminó `trq_cita_cliente_insert`: mientras existió, un cliente podía
+insertar una cita a las 3 de la mañana sobre un abogado que no la ofrece, saltándose franjas, turno,
+cupo y solape con un POST a PostgREST. Queda `trq_cita_cliente_cancela`, acotada a cancelar.
+
+**Deuda conocida:** `packages/db/src/tipos-generados.ts` no incluye `comun_agenda` ni
+`comun_comercio` porque esas migraciones no están aplicadas en la base de la que se generan los
+tipos. `apps/tranqi-web/modulos/agenda/puente-tipos.ts` documenta cómo se retira ese puente.
+
 ## Servidores MCP de los asistentes
 
 | Endpoint | Agente | Herramientas |
 | :--- | :--- | :--- |
-| `POST /api/mcp/cliente` | Tranqi Asistente Cliente | `mis_casos`, `detalle_caso`, `mis_citas`, `agendar_cita`, `documentos_pendientes`, `mi_perfil` |
-| `POST /api/mcp/abogado` | Tranqi Asistente Abogado | `casos_asignados`, `agenda_del_dia`, `documentos_del_caso`, `plazos_proximos`, `mis_honorarios`, `mi_ficha` |
+| `POST /api/mcp/cliente` | Tranqi Asistente Cliente | `mis_casos`, `detalle_caso`, `mis_citas`, `documentos_pendientes`, `mi_perfil`, y de agenda: `buscar_horarios`, `mi_cobertura`, `reservar_cita`, `cancelar_cita`, `registrar_consulta_rapida` |
+| `POST /api/mcp/abogado` | Tranqi Asistente Abogado | `casos_asignados`, `agenda_del_dia`, `documentos_del_caso`, `plazos_proximos`, `mis_honorarios`, `mi_ficha`, y de agenda: `mi_disponibilidad`, `configurar_disponibilidad`, `bloquear_agenda`, `citas_pendientes_de_confirmar`, `decidir_cita` |
+
+`agendar_cita` **se retiró** (2026-09-05): insertaba en `trq_cita` sin `cit_abogado_id`, así que la cita no la veía ningún abogado. La sustituyen `buscar_horarios` + `reservar_cita`.
 
 Protocolo MCP sobre HTTP (`streamable_http`), implementado en `packages/agentes-ia/src/mcp-servidor.ts`
 sin dependencias. Cada endpoint acepta **solo** cápsulas de su rol, comprobado en el servidor además

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { User, History, KeyRound, ShieldAlert, Settings, Mail, Bell, Star, ChevronRight, ShieldCheck, Sliders, Receipt, Lock, FileText, BarChart2, FileCheck, Folder, type LucideIcon } from "lucide-react";
+import { User, History, KeyRound, ShieldAlert, Settings, Mail, Bell, Star, ChevronRight, ShieldCheck, Sliders, Receipt, Lock, FileText, BarChart2, FileCheck, Folder, type LucideIcon, CalendarPlus, CalendarCheck, CalendarClock, Shuffle } from "lucide-react";
 import Link from "next/link";
 import { useCustomWidgets } from "./gestorTitulosWidgets";
 
@@ -11,7 +11,7 @@ interface WidgetFavInfo {
   subtitulo: string;
   icono: LucideIcon;
   href: string;
-  origen: "Mi cuenta" | "Configurar";
+  origen: "Mi cuenta" | "Configurar" | "Herramientas" | "Administrar";
   esPeligro?: boolean;
 }
 
@@ -136,6 +136,46 @@ const CATALOGO_FAVORITOS: Record<string, WidgetFavInfo> = {
     icono: Folder,
     href: "/panel/billetera-documentos",
     origen: "Configurar"
+  },
+  agendar_cita: {
+    id: "agendar_cita",
+    titulo: "Agendar una consulta",
+    subtitulo: "Elige materia y hora; te asignamos al abogado de turno de esa especialidad",
+    icono: CalendarPlus,
+    href: "/panel/agendar",
+    origen: "Herramientas"
+  },
+  mis_citas: {
+    id: "mis_citas",
+    titulo: "Mis citas",
+    subtitulo: "Tus próximas consultas, el enlace de la videollamada y la opción de cancelar",
+    icono: CalendarCheck,
+    href: "/panel/mis-citas",
+    origen: "Herramientas"
+  },
+  citas_programadas: {
+    id: "citas_programadas",
+    titulo: "Citas programadas",
+    subtitulo: "Las citas que te asignaron, para confirmarlas, moverlas o cerrarlas",
+    icono: CalendarClock,
+    href: "/panel/agenda",
+    origen: "Herramientas"
+  },
+  disponibilidad: {
+    id: "disponibilidad",
+    titulo: "Mi disponibilidad",
+    subtitulo: "Tus días y horas de atención. Sin franjas activas no recibes citas ni turnos",
+    icono: CalendarClock,
+    href: "/panel/agenda/disponibilidad",
+    origen: "Herramientas"
+  },
+  asignaciones_agenda: {
+    id: "asignaciones_agenda",
+    titulo: "Asignaciones y contingencia",
+    subtitulo: "Citas sin abogado porque el asignado canceló. Hay que reasignarlas antes de la hora",
+    icono: Shuffle,
+    href: "/panel/agenda/asignaciones",
+    origen: "Administrar"
   }
 };
 

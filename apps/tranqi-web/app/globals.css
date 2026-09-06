@@ -2504,3 +2504,187 @@ div.tarjeta-acceso-icono { display: grid; place-items: center; padding: 0; }
   .fila-metadato { grid-template-columns: 1fr 34px; }
   .fila-metadato > *:nth-child(2) { grid-column: 1 / -1; }
 }
+
+/* ═══════════ Agenda y citas (PLT-020 / TRQ-ABG-004) ═══════════ */
+/* Reutiliza los tokens del panel: violeta para la acción del cliente, naranja
+   solo para lo urgente — que aquí es una cita sin abogado, no una decoración. */
+
+.agenda-formulario,
+.agenda-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  max-width: 46rem;
+}
+
+.agenda-formulario select,
+.agenda-formulario textarea,
+.agenda-editor input,
+.agenda-editor select {
+  padding: 0.6rem 0.7rem;
+  border: 1px solid #d9d4e6;
+  border-radius: 10px;
+  font: inherit;
+  background: #fff;
+}
+
+.agenda-modalidad {
+  border: 0;
+  padding: 0;
+  display: flex;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.agenda-cobertura-ok,
+.agenda-cobertura-pago {
+  margin: 0;
+  padding: 0.6rem 0.8rem;
+  border-radius: 10px;
+  font-size: 0.92rem;
+}
+.agenda-cobertura-ok {
+  background: var(--menta, #b1fbe3);
+  color: #05402f;
+}
+.agenda-cobertura-pago {
+  background: #f5f3ff;
+  color: #3d2a63;
+}
+
+.agenda-lista-huecos {
+  list-style: none;
+  padding: 0;
+  margin: 0.5rem 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.agenda-hueco {
+  padding: 0.55rem 0.85rem;
+  border: 1px solid #d9d4e6;
+  border-radius: 999px;
+  background: #fff;
+  cursor: pointer;
+  font: inherit;
+  text-transform: capitalize;
+}
+.agenda-hueco:hover {
+  border-color: var(--violeta, #5000ba);
+}
+.agenda-hueco-elegido {
+  background: var(--violeta, #5000ba);
+  border-color: var(--violeta, #5000ba);
+  color: #fff;
+}
+
+.agenda-confirmar {
+  padding: 1rem;
+  border: 1px solid #d9d4e6;
+  border-radius: 12px;
+  background: #fbfaff;
+}
+.agenda-confirmar p {
+  margin-top: 0;
+}
+
+.agenda-nota {
+  font-size: 0.9rem;
+  color: #6b6580;
+  margin: 0.25rem 0;
+}
+
+.agenda-aviso {
+  padding: 0.7rem 0.9rem;
+  border-left: 3px solid var(--naranja, #fe5800);
+  background: #fff6f1;
+  border-radius: 0 10px 10px 0;
+  font-size: 0.93rem;
+}
+
+.agenda-lista-citas {
+  list-style: none;
+  padding: 0;
+  margin: 0.75rem 0;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.agenda-cita {
+  padding: 0.9rem 1rem;
+  border: 1px solid #e6e2ef;
+  border-radius: 12px;
+  background: #fff;
+}
+.agenda-cita-urgente {
+  border-color: var(--naranja, #fe5800);
+}
+
+.agenda-cita-cabeza {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  text-transform: capitalize;
+}
+
+.agenda-cita-meta {
+  font-size: 0.9rem;
+  color: #6b6580;
+  margin: 0.35rem 0;
+}
+.agenda-cita-motivo {
+  margin: 0.35rem 0;
+}
+
+.agenda-cancelar,
+.agenda-reagendar,
+.agenda-reasignar {
+  margin-top: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.agenda-franjas {
+  list-style: none;
+  padding: 0;
+  margin: 0.5rem 0;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.agenda-franja {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.agenda-parametros {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  gap: 0.75rem;
+}
+.agenda-parametros label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.9rem;
+}
+
+.agenda-resumen {
+  padding: 0.75rem 0.9rem;
+  background: #f5f3ff;
+  border-radius: 10px;
+  font-size: 0.93rem;
+}
+
+@media (max-width: 640px) {
+  .agenda-franja {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+}

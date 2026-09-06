@@ -130,7 +130,7 @@ export function NavegacionSidebar({
         if (rolKey === "OPERADOR" || rolKey === "AUXILIAR" || rolKey === "TECNICO") {
           widgetsPorPanel = {
             ...widgetsPorPanel,
-            panel_administrar: ["socios"],
+            panel_administrar: ["socios", "asignaciones_agenda"],
             panel_herramientas: ["firma_documentos_pdf", "billetera_documentos", "emision_notificaciones"],
             panel_seguridad: ["auditoria", "solicitud_socio"]
           };
@@ -138,14 +138,22 @@ export function NavegacionSidebar({
           widgetsPorPanel = {
             ...widgetsPorPanel,
             panel_configuracion: ["configuracion_negocio", "configuracion_correo", "perfiles", "notificaciones", "agentes_ia"],
-            panel_administrar: ["gestion_usuarios", "socios", "solicitud_socio", "emision_notificaciones", "auditoria"],
+            panel_administrar: ["gestion_usuarios", "socios", "solicitud_socio", "asignaciones_agenda", "emision_notificaciones", "auditoria"],
             panel_herramientas: ["firma_documentos_pdf", "billetera_documentos", "emision_notificaciones"],
             panel_seguridad: ["auditoria"]
           };
-        } else if (rolKey === "CLIENTE" || rolKey === "ABOGADO") {
+        } else if (rolKey === "ABOGADO") {
           widgetsPorPanel = {
             ...widgetsPorPanel,
-            panel_herramientas: ["firma_documentos_pdf", "billetera_documentos"]
+            // PLT-020: la agenda del profesional. `disponibilidad` va aparte de
+            // `citas_programadas` porque son dos trabajos distintos: uno se
+            // hace una vez y el otro todos los dias.
+            panel_herramientas: ["citas_programadas", "disponibilidad", "firma_documentos_pdf", "billetera_documentos"]
+          };
+        } else if (rolKey === "CLIENTE") {
+          widgetsPorPanel = {
+            ...widgetsPorPanel,
+            panel_herramientas: ["agendar_cita", "mis_citas", "firma_documentos_pdf", "billetera_documentos"]
           };
         }
 

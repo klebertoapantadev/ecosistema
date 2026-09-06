@@ -5,7 +5,8 @@ import Link from "next/link";
 import {
   Sparkles, Shield, LayoutGrid, Pencil, Users, UserCheck, Eye,
   Settings, Mail, ShieldCheck, Bell, CircleUser, KeyRound, Sliders, Briefcase,
-  Receipt, History, RotateCcw, FileCheck, Folder, type LucideIcon
+  Receipt, History, RotateCcw, FileCheck, Folder, CalendarClock, CalendarPlus, CalendarCheck,
+  Shuffle, type LucideIcon
 } from "lucide-react";
 import { resetearSistemaSuperAdminAction } from "@eco/gestion-usuarios/acciones";
 import { ModalNotificacionPush } from "@eco/notificaciones";
@@ -30,6 +31,11 @@ export interface CategoriaSuperAdminGroup {
 }
 
 export const CATALOGO_SUPERADMIN_TODOS: ModuloSuperAdminDef[] = [
+  { clave: "agendar_cita", nombre: "Agendar una Consulta", detalle: "Elegir materia, servicio y hora libre; el abogado se asigna por turno rotativo", ruta: "/panel/agendar", icono: CalendarPlus, iconoKey: "CalendarPlus", color: "#5000BA", rutaFisica: "modulos/agenda/componentes/FormularioAgendar.tsx" },
+  { clave: "mis_citas", nombre: "Mis Citas", detalle: "Próximas consultas, enlace de videollamada y cancelación", ruta: "/panel/mis-citas", icono: CalendarCheck, iconoKey: "CalendarCheck", color: "#5000BA", rutaFisica: "modulos/agenda/componentes/ListaCitasCliente.tsx" },
+  { clave: "citas_programadas", nombre: "Citas Programadas", detalle: "Agenda del profesional: confirmar, reagendar y cerrar sus consultas", ruta: "/panel/agenda", icono: CalendarClock, iconoKey: "CalendarClock", color: "#05876E", rutaFisica: "modulos/agenda/componentes/BandejaCitasAbogado.tsx" },
+  { clave: "disponibilidad", nombre: "Mi Disponibilidad", detalle: "Horas operativas, duración de cita, antelación y bloqueos por audiencia", ruta: "/panel/agenda/disponibilidad", icono: CalendarClock, iconoKey: "CalendarClock", color: "#05876E", rutaFisica: "modulos/agenda/componentes/EditorDisponibilidad.tsx" },
+  { clave: "asignaciones_agenda", nombre: "Asignaciones y Contingencia", detalle: "Citas que se quedaron sin abogado porque el asignado canceló", ruta: "/panel/agenda/asignaciones", icono: Shuffle, iconoKey: "Shuffle", color: "#FE5800", rutaFisica: "modulos/agenda/componentes/MesaAsignaciones.tsx" },
   { clave: "firma_documentos_pdf", nombre: "Firma Electrónica de Documentos PDF", detalle: "Firmado digital con certificado .p12 / .pfx, estampa visual y código QR oficial", ruta: "/panel/firma-documentos", icono: FileCheck, iconoKey: "FileCheck", color: "#5000BA", rutaFisica: "modulos/firma-documentos/componentes/WidgetFirmaDocumentosPdf.tsx" },
   { clave: "billetera_documentos", nombre: "Billetera Digital de Documentos Seguros", detalle: "Bóveda digital de documentos personales, vehiculares, contratos y profesionales con OCR y TTL", ruta: "/panel/billetera-documentos", icono: Folder, iconoKey: "Folder", color: "#5000BA", rutaFisica: "modulos/billetera-documentos/componentes/WidgetBilleteraDocumentos.tsx" },
   { clave: "gestion_usuarios", nombre: "Gestión de Usuarios & Membresías", detalle: "Asignación de perfiles, roles y techo jerárquico", ruta: "/panel/usuarios", icono: Users, iconoKey: "Users", color: "var(--violeta, #5000BA)", rutaFisica: "packages/gestion-usuarios/src/componentes/ConsultaUsuariosPerfilesWidget.tsx" },

@@ -3,8 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import {
   Search, X, UserCog, UserCheck, Settings, Mail, Bell, Shield, ShieldCheck,
-  CircleUser, ChevronRight, Sliders, Briefcase, FileText, BarChart2, FileCheck, Folder
-} from "lucide-react";
+  CircleUser, ChevronRight, Sliders, Briefcase, FileText, BarChart2, FileCheck, Folder, CalendarClock, CalendarPlus, CalendarCheck, Shuffle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCustomWidgets } from "./gestorTitulosWidgets";
 
@@ -21,6 +20,56 @@ export interface ModuloInfoDef {
 }
 
 const CATALOGO_MODULOS: ModuloInfoDef[] = [
+  {
+    clave: "agendar_cita",
+    nombre: "Agendar una Consulta",
+    detalle: "Elegir materia, servicio y hora libre; el abogado se asigna por turno rotativo",
+    ruta: "/panel/agendar",
+    categoria: "Agenda",
+    minNivel: 1,
+    icono: CalendarPlus,
+    colorIcono: "#5000BA"
+  },
+  {
+    clave: "mis_citas",
+    nombre: "Mis Citas",
+    detalle: "Próximas consultas, enlace de videollamada y cancelación",
+    ruta: "/panel/mis-citas",
+    categoria: "Agenda",
+    minNivel: 1,
+    icono: CalendarCheck,
+    colorIcono: "#5000BA"
+  },
+  {
+    clave: "citas_programadas",
+    nombre: "Citas Programadas",
+    detalle: "Agenda del profesional: confirmar, reagendar y cerrar sus consultas",
+    ruta: "/panel/agenda",
+    categoria: "Agenda",
+    minNivel: 1,
+    icono: CalendarClock,
+    colorIcono: "#05876E"
+  },
+  {
+    clave: "disponibilidad",
+    nombre: "Mi Disponibilidad",
+    detalle: "Horas operativas, duración de cita, antelación y bloqueos por audiencia",
+    ruta: "/panel/agenda/disponibilidad",
+    categoria: "Agenda",
+    minNivel: 1,
+    icono: CalendarClock,
+    colorIcono: "#05876E"
+  },
+  {
+    clave: "asignaciones_agenda",
+    nombre: "Asignaciones y Contingencia",
+    detalle: "Citas que se quedaron sin abogado porque el asignado canceló",
+    ruta: "/panel/agenda/asignaciones",
+    categoria: "Agenda",
+    minNivel: 30,
+    icono: Shuffle,
+    colorIcono: "#FE5800"
+  },
   {
     clave: "firma_documentos_pdf",
     nombre: "Firma Electrónica de Documentos PDF",

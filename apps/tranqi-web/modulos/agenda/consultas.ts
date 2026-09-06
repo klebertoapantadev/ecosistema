@@ -186,13 +186,23 @@ export async function listarCitasEnContingencia(): Promise<CitaResumen[]> {
   return (data ?? []) as CitaResumen[];
 }
 
-/** Abogados verificados de una materia, para que el operador reasigne. */
-export async function listarAbogadosDeMateria(materiaId: string) {
+/**
+ * Abogados verificados con agenda configurada, para la mesa de reasignación.
+ * Solo lo ve el staff: RLS de trq_abogado ya restringe la lectura a admins.
+ */
+export async function listarAbogadosAsignables() {
   const supabase = await crearClienteServidor();
   const { data } = await esquemaPendiente(supabase, "tranqui_legal")
-    .from("trq_abogado_materia")
-    .select("amt_abogado_id, trq_abogado!inner(abg_id, abg_estado, abg_usuario_id)")
-    .eq("amt_materia_id", materiaId)
-    .is("amt_eliminado_en", null);
-  return (data ?? []) as Array<{ amt_abogado_id: string }>;
+    .from("trq_abogado")
+    .select("abg_id, abg_usuario_id, seg_usuario:abg_usuario_id (usu_nombres, usu_apellidos)")
+    .eq("abg_estado", "verificado");
+
+  return ((data ?? []) as Array<{
+    abg_id: string;
+    seg_usuario: { usu_nombres: string | null; usu_apellidos: string | null } | null;
+  }>).map((a) => ({
+    abg_id: a.abg_id,
+    nombre:
+      [a.seg_usuario?.usu_nombres, a.seg_usuario?.usu_apellidos].filter(Boolean).join(" ") || "Abogado sin nombre",
+  }));
 }

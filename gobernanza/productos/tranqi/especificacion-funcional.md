@@ -35,14 +35,14 @@ Tranqi adopta las mejores prácticas y estándares internacionales de **Law Prac
 | **`TRQ-COM-001`** | **Común (Todos)** | **Billetera Digital de Documentos Seguros, Extracción OCR y Enlaces TTL** | ✅ Implementado | **100%** | Jesus Navarrete |
 | **`TRQ-COM-002`** | **Común (Todos)** | **Compartición de Documentos a Tranqi (Revisión de Contratos & Vinculación a Casos)** | 🟡 Especificado | **25%** | Kleber Toapanta |
 | **`TRQ-COM-003`** | **Común (Todos)** | **Herramienta Universal de Firma Digital de Documentos PDF (.p12 / QR / PAdES)** | ✅ Implementado | **100%** | Kleber Toapanta |
-| **`TRQ-CLI-001`** | **Cliente** | **Portal de Casos, Solicitud de Patrocinio y Consultas Telemáticas** | ⏳ Pendiente | **0%** | Jesus Navarrete |
+| **`TRQ-CLI-001`** | **Cliente** | **Portal de Casos, Solicitud de Patrocinio y Consultas Telemáticas** | 🟡 En Desarrollo | **30%** | Jesus Navarrete |
 | **`TRQ-CLI-002`** | **Cliente** | **Módulo Express de Revisión y Dictamen Legal de Contratos/Minutas (IA)** | ⏳ Pendiente | **0%** | **Jesus Navarrete (IA)** |
 | **`TRQ-CLI-003`** | **Cliente** | **Directorio Público y Selección Geolocalizada de Abogados** | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`TRQ-CLI-004`** | **Cliente** | **Calculadora de Honorarios, Pensiones (MIES) e Indemnizaciones Laborales** | ⏳ Pendiente | **0%** | Jesus Navarrete |
 | **`TRQ-ABG-001`** | **Abogado** | **Acreditación, Contratación Dual (Firma Digital .p12 / Manual) y Onboarding** | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`TRQ-ABG-002`** | **Abogado** | **Despacho Virtual: Bandeja de Casos, Expediente Digital y Actuaciones SATJE** | ⏳ Pendiente | **0%** | Kleber Toapanta / Jesus Navarrete |
 | **`TRQ-ABG-003`** | **Abogado** | **Firma Electrónica Avanzada PAdES en Navegador (Zero-Custody `.p12`/`.pfx`)** | ✅ Implementado | **100%** | Kleber Toapanta |
-| **`TRQ-ABG-004`** | **Abogado** | **Agenda Profesional, Citas Presenciales y Sala de Videoconsulta Segura** | ⏳ Pendiente | **0%** | Jesus Navarrete |
+| **`TRQ-ABG-004`** | **Abogado** | **Agenda Profesional, Citas Presenciales y Sala de Videoconsulta Segura** | 🟡 En Desarrollo | **75%** | Jesus Navarrete |
 | **`TRQ-ABG-005`** | **Abogado** | **Verificación Inteligente de Identidad y Documentos con Aria (IA) en Registro de Abogados** | 🟡 Especificado | **25%** | **Jesus Navarrete (IA)** |
 | **`TRQ-ADM-001`** | **Operador/Admin** | **Mesa de Control de Acreditación, Contra-Firma Tranqi y Activación de Socios** | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`TRQ-ADM-002`** | **Operador/Admin** | **Asignación Inteligente de Casos (IA), Liquidación de Honorarios y Comisiones** | ⏳ Pendiente | **0%** | **Jesus Navarrete (IA)** / Kleber Toapanta |
@@ -161,9 +161,12 @@ operativo que TRQ-CLI-002, TRQ-ABG-005 y TRQ-ADM-002 consultan; ver
 ## 2. Módulos para el Rol Cliente
 
 ### TRQ-CLI-001 — Portal de Casos y Patrocinio Judicial
-**Responsable:** Jesus Navarrete | **Estado:** ⏳ Pendiente (0%)
-- Solicitud de patrocinio legal por materias (Civil, Penal, Laboral, Familia, Tránsito, Societario).
-- Visualización de la línea de tiempo procesal del caso, abogados asignados, próximas audiencias y actuaciones procesales del SATJE.
+**Responsable:** Jesus Navarrete | **Estado:** 🟡 En Desarrollo (30%)
+- **✅ Consultas telemáticas (2026-09-05):** el afiliado agenda en `/panel/agendar` eligiendo materia,
+  servicio y hora libre, y sigue sus citas en `/panel/mis-citas`. No elige abogado: la asignación es
+  por turno rotativo (`PLT-020`). Puede hacerlo también por chat con su asistente.
+- ⏳ Solicitud de patrocinio legal por materias (Civil, Penal, Laboral, Familia, Tránsito, Societario).
+- ⏳ Visualización de la línea de tiempo procesal del caso, abogados asignados, próximas audiencias y actuaciones procesales del SATJE.
 
 ### TRQ-CLI-002 — Módulo Express de Revisión de Contratos y Minutas
 **Responsable:** Jesus Navarrete | **Estado:** ⏳ Pendiente (0%)
@@ -242,8 +245,35 @@ graph TD
 ---
 
 ### TRQ-ABG-004 — Agenda Profesional y Videoconsultas
-**Responsable:** Jesus Navarrete | **Estado:** ⏳ Pendiente (0%)
-- Calendario sincronizado de citas presenciales en despacho y salas de consulta telemática segura.
+**Responsable:** Jesus Navarrete | **Estado:** 🟡 En Desarrollo (75%)
+
+Concreta en Tranqi el motor transversal de [`PLT-020`](../plataforma/especificacion-funcional.md),
+que vive en `comun_agenda` porque el mismo widget «Citas Programadas» lo comparten el abogado de
+Tranqi y el técnico de FastFix (`PLT-011` regla 8). Lo que es de Tranqi es el contenido del
+encuentro (`trq_cita`), no la ocupación.
+
+#### Lo implementado
+- **Horas operativas configurables** por el propio abogado en `/panel/agenda/disponibilidad`, o
+  conversando con su asistente, que las levanta preguntando y solo escribe tras repetir el resumen
+  y recibir un sí explícito.
+- **Reserva sin solapamiento garantizada por la base de datos** (restricción `EXCLUDE` sobre
+  `comun_agenda.age_reserva`, por persona y no por registro de profesional).
+- **Asignación por turno rotativo** entre los abogados de la materia, con reasignación manual del
+  operador y **cola de contingencia**: si el abogado cancela, la cita del afiliado no se cancela.
+- **Cobertura antes de cobrar**: la cita consume el cupo del plan del afiliado
+  (`com_derecho_consumo`) si lo tiene, y solo si no, se cobra.
+- **Herramientas del asistente** para ambos roles: `buscar_horarios`, `mi_cobertura`,
+  `reservar_cita`, `cancelar_cita` del lado cliente; `mi_disponibilidad`,
+  `configurar_disponibilidad`, `bloquear_agenda`, `citas_pendientes_de_confirmar` y `decidir_cita`
+  del lado abogado.
+
+#### Lo que falta para el 100%
+- **Sala de Google Meet** generada por la API de Google Calendar (`PLT-020` regla 7): la columna
+  `cit_google_evento_id` y la ventana de acceso al enlace están, la Edge Function que crea el
+  evento no.
+- **Recordatorios**: los cinco momentos de notificación están definidos, pero el ecosistema no
+  tiene todavía despachador de tareas programadas — ver la nota de `PLT-013`.
+- **Sincronización inversa** del calendario del abogado hacia `age_bloqueo`.
 
 ---
 

@@ -38,6 +38,28 @@ export interface WidgetInventarioDef {
   colorIcono?: string;
 }
 
+// PLT-020: las pantallas de agenda son rutas propias, no widgets en linea --
+// necesitan Server Components que consulten bajo RLS. Aqui solo se enlazan,
+// para que la tarjeta del panel no quede muerta.
+function EnlacePantalla({ texto, descripcion, ruta, color = "var(--violeta, #5000BA)" }: {
+  texto: string; descripcion: string; ruta: string; color?: string;
+}) {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: "12px", alignItems: "flex-start" }}>
+      <p style={{ fontSize: "0.88rem", color: "#444", margin: 0, maxWidth: "60ch" }}>{descripcion}</p>
+      <Link
+        href={ruta}
+        style={{
+          background: color, color: "#fff", textDecoration: "none",
+          padding: "10px 16px", borderRadius: "10px", fontWeight: 700, fontSize: "0.85rem"
+        }}
+      >
+        {texto}
+      </Link>
+    </div>
+  );
+}
+
 function EnlaceConsolaAgentes() {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "12px", alignItems: "flex-start" }}>
@@ -402,6 +424,49 @@ export function PanelDinamicoModular({ slug, negocio }: Props) {
 
   const renderWidgetComponente = (wClave: string) => {
     switch (wClave) {
+      case "agendar_cita":
+        return (
+          <EnlacePantalla
+            texto="Agendar una consulta"
+            descripcion="Elige la materia y la hora; te asignamos al abogado de turno especializado en ella."
+            ruta="/panel/agendar"
+          />
+        );
+      case "mis_citas":
+        return (
+          <EnlacePantalla
+            texto="Ver mis citas"
+            descripcion="Tus próximas consultas, el enlace de la videollamada y la opción de cancelar."
+            ruta="/panel/mis-citas"
+          />
+        );
+      case "citas_programadas":
+        return (
+          <EnlacePantalla
+            texto="Abrir mi agenda"
+            descripcion="Las citas que te han asignado, para confirmarlas, moverlas o cerrarlas."
+            ruta="/panel/agenda"
+            color="#05876E"
+          />
+        );
+      case "disponibilidad":
+        return (
+          <EnlacePantalla
+            texto="Configurar mi disponibilidad"
+            descripcion="Tus días y horas de atención. Sin franjas activas no apareces disponible ni recibes turnos."
+            ruta="/panel/agenda/disponibilidad"
+            color="#05876E"
+          />
+        );
+      case "asignaciones_agenda":
+        return (
+          <EnlacePantalla
+            texto="Abrir la mesa de asignaciones"
+            descripcion="Citas que se quedaron sin abogado porque el asignado canceló. Hay que reasignarlas antes de la hora."
+            ruta="/panel/agenda/asignaciones"
+            color="#FE5800"
+          />
+        );
       case "agentes_ia":
         // La consola de agentes es una pantalla propia (/panel/agentes) y no un
         // widget en linea: necesita un layout con gate aal2 y hace lecturas a
