@@ -27,7 +27,7 @@ Este documento describe el **comportamiento compartido por los 4 productos** (Tr
 | **`PLT-006`** | Datos de Facturación SRI y Comprobantes | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`PLT-007`** | Catálogo Geográfico (Ecuador 24 Provincias) | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`PLT-008`** | Configuración de Negocio & SMTP en Vault | ✅ Implementado | **100%** | Kleber Toapanta |
-| **`PLT-009`** | Catálogo Comercial Unificado (Productos/Planes/Despachos) | 🟡 En Desarrollo | **85%** | Kleber Toapanta |
+| **`PLT-009`** | Catálogo Comercial Unificado (Productos/Planes/Despachos y Pasarela Payphone) | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`PLT-010`** | **Integración Omnicanal (WhatsApp YCloud, ARIA y Supervisión Humana HITL)** | 🟡 En Desarrollo | **45%** | Kleber Toapanta / Jesus Navarrete |
 | **`PLT-011`** | Sistema de Widgets por Rol & DataGrids 2 Capas | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`PLT-012`** | **Baja de Cuenta y Derecho al Olvido** | ✅ Implementado | **100%** | Kleber Toapanta |

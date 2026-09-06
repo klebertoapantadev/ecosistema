@@ -5,7 +5,7 @@ import Link from "next/link";
 import {
   Sparkles, Shield, LayoutGrid, Pencil, Users, UserCheck, Eye,
   Settings, Mail, ShieldCheck, Bell, CircleUser, KeyRound, Sliders, Briefcase,
-  Receipt, History, RotateCcw, FileCheck, Folder, type LucideIcon
+  Receipt, History, RotateCcw, FileCheck, Folder, ShoppingBag, CreditCard, type LucideIcon
 } from "lucide-react";
 import { resetearSistemaSuperAdminAction } from "@eco/gestion-usuarios/acciones";
 import { ModalNotificacionPush } from "@eco/notificaciones";
@@ -30,6 +30,9 @@ export interface CategoriaSuperAdminGroup {
 }
 
 export const CATALOGO_SUPERADMIN_TODOS: ModuloSuperAdminDef[] = [
+  { clave: "catalogo_productos", nombre: "Catálogo Comercial & Honorarios", detalle: "Catálogo unificado de servicios, liquidación de honorarios y suscripciones legales con cálculo de IVA 15%", ruta: "/panel/catalogo-productos", icono: ShoppingBag, iconoKey: "ShoppingBag", color: "#0284C7", rutaFisica: "modulos/comercio/componentes/CatalogoProductosComercio.tsx" },
+  { clave: "pasarela_payphone", nombre: "Pasarela Payphone (Botón de Pago)", detalle: "Configuración del Botón de Pago Payphone, credenciales API, StoreID y simulador de cobro", ruta: "/panel/configuracion?widget=pasarela_payphone", icono: CreditCard, iconoKey: "CreditCard", color: "#D97706", rutaFisica: "modulos/comercio/componentes/ConfiguracionPasarelaPayphone.tsx" },
+  { clave: "historial_pagos", nombre: "Historial de Transacciones & Pagos", detalle: "Auditoría de cobros bancarios, autorizaciones Payphone y registro contable inmutable", ruta: "/panel/administrar?widget=historial_pagos", icono: Receipt, iconoKey: "Receipt", color: "#05876E", rutaFisica: "modulos/comercio/componentes/HistorialTransaccionesPago.tsx" },
   { clave: "crm_clientes", nombre: "CRM Jurídico & Gestión de Clientes", detalle: "Directorio 360°, KPIs, alta asistida multicanal, validación cédula/RUC y conflict check en vivo", ruta: "/panel/clientes", icono: Users, iconoKey: "Users", color: "#5000BA", rutaFisica: "modulos/crm-clientes/componentes/BandejaClientesCRM.tsx" },
   { clave: "alta_cliente_crm", nombre: "Alta Asistida & Recepción Multicanal", detalle: "Registro asistido de clientes con OCR ARIA de cédula/nombramiento y verificación de conflictos", ruta: "/panel/clientes?accion=alta", icono: UserCheck, iconoKey: "UserCheck", color: "#05876E", rutaFisica: "modulos/crm-clientes/componentes/ModalAltaClienteAsistida.tsx" },
   { clave: "firma_documentos_pdf", nombre: "Firma Electrónica de Documentos PDF", detalle: "Firmado digital con certificado .p12 / .pfx, estampa visual y código QR oficial", ruta: "/panel/firma-documentos", icono: FileCheck, iconoKey: "FileCheck", color: "#5000BA", rutaFisica: "modulos/firma-documentos/componentes/WidgetFirmaDocumentosPdf.tsx" },

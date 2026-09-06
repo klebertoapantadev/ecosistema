@@ -3,7 +3,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import {
   Search, X, UserCog, UserCheck, Settings, Mail, Bell, Shield, ShieldCheck,
-  CircleUser, ChevronRight, Sliders, Briefcase, FileText, BarChart2, FileCheck, Folder
+  CircleUser, ChevronRight, Sliders, Briefcase, FileText, BarChart2, FileCheck, Folder,
+  ShoppingBag, CreditCard
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCustomWidgets } from "./gestorTitulosWidgets";
@@ -21,6 +22,26 @@ export interface ModuloInfoDef {
 }
 
 const CATALOGO_MODULOS: ModuloInfoDef[] = [
+  {
+    clave: "catalogo_productos",
+    nombre: "Catálogo Comercial & Honorarios Profesionales",
+    detalle: "Catálogo de servicios, tarifario de honorarios y suscripciones legales con cálculo de IVA 15%",
+    ruta: "/panel/catalogo-productos",
+    categoria: "Comercio & Pagos",
+    minNivel: 1,
+    icono: ShoppingBag,
+    colorIcono: "#0284C7"
+  },
+  {
+    clave: "pasarela_payphone",
+    nombre: "Pasarela Payphone (Botón de Pago)",
+    detalle: "Configuración de credenciales API, StoreID y simulador de cobro de honorarios con tarjetas",
+    ruta: "/panel/configuracion?widget=pasarela_payphone",
+    categoria: "Comercio & Pagos",
+    minNivel: 50,
+    icono: CreditCard,
+    colorIcono: "#D97706"
+  },
   {
     clave: "firma_documentos_pdf",
     nombre: "Firma Electrónica de Documentos PDF",

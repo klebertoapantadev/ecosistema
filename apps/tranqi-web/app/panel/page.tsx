@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import {
   Calendar, Upload, Coins, MessageCircle, FileText,
   Briefcase, UserCheck, Users, Settings, ShieldCheck, Bell, FileCheck,
+  ShoppingBag, CreditCard,
   type LucideIcon
 } from "lucide-react";
 import { obtenerPerfilActual, obtenerSaludo, obtenerPerfiles, obtenerNivelMaximo } from "@eco/identidad";
@@ -28,6 +29,7 @@ const NEGOCIO = "tranqi";
    Y va en mayúscula de frase, no de título: "Firmar Documento PDF" es
    capitalización inglesa, y en español delata texto generado. */
 const ACCESOS_CLIENTE: { icono: LucideIcon; nombre: string; detalle: string; href?: string }[] = [
+  { icono: ShoppingBag, nombre: "Catálogo & Servicios", detalle: "Honorarios y planes legales", href: "/panel/catalogo-productos" },
   { icono: FileCheck, nombre: "Firmar un documento", detalle: "Con tu certificado digital", href: "/panel/firma-documentos" },
   { icono: Briefcase, nombre: "Ser abogado socio", detalle: "Postula a la red", href: "/panel/solicitud-socio" },
   { icono: Calendar, nombre: "Agendar cita", detalle: "Presencial o por video", href: "/panel/agendar" },
@@ -38,14 +40,16 @@ const ACCESOS_CLIENTE: { icono: LucideIcon; nombre: string; detalle: string; hre
 
 const ACCESOS_ABOGADO: { icono: LucideIcon; nombre: string; detalle: string; href?: string }[] = [
   { icono: Users, nombre: "CRM & Clientes", detalle: "Directorio y expedientes", href: "/panel/clientes" },
+  { icono: Coins, nombre: "Mis honorarios", detalle: "Tarifario y liquidación", href: "/panel/catalogo-productos" },
   { icono: FileCheck, nombre: "Firmar un documento", detalle: "Con tu certificado digital", href: "/panel/firma-documentos" },
   { icono: Briefcase, nombre: "Nuevas solicitudes", detalle: "3 casos en espera" },
   { icono: Calendar, nombre: "Citas de hoy", detalle: "2 videollamadas" },
   { icono: FileText, nombre: "Cargar expediente", detalle: "Demandas y providencias" },
-  { icono: Coins, nombre: "Mis honorarios", detalle: "Cobros y facturación" },
 ];
 
 const WIDGETS_ADMIN: { clave: string; icono: LucideIcon; nombre: string; detalle: string; ruta: string; estado: "registrado" | "proximamente" }[] = [
+  { clave: "catalogo_productos", icono: ShoppingBag, nombre: "Catálogo & Honorarios", detalle: "Servicios y precios con IVA", ruta: "/panel/catalogo-productos", estado: "registrado" },
+  { clave: "pasarela_payphone", icono: CreditCard, nombre: "Pasarela Payphone", detalle: "Botón de pago y simulador", ruta: "/panel/configuracion?widget=pasarela_payphone", estado: "registrado" },
   { clave: "crm_clientes", icono: Users, nombre: "CRM Jurídico & Clientes", detalle: "Expedientes y conflict check", ruta: "/panel/clientes", estado: "registrado" },
   { clave: "gestion_usuarios", icono: Users, nombre: "Gestión de usuarios", detalle: "Membresías y perfiles", ruta: "/panel/usuarios", estado: "registrado" },
   { clave: "socios", icono: UserCheck, nombre: "Aprobación de socios", detalle: "Cédula, título y matrícula", ruta: "/panel/socios", estado: "registrado" },

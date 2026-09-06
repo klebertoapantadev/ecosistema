@@ -1,12 +1,13 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Settings, Mail, Bell, Star, X, ChevronRight, ShieldCheck, Sliders, Pencil, Lock, type LucideIcon } from "lucide-react";
+import { Settings, Mail, Bell, Star, X, ChevronRight, ShieldCheck, Sliders, Pencil, Lock, CreditCard, ShoppingBag, type LucideIcon } from "lucide-react";
 import { FormularioConfiguracionNegocio } from "@eco/configuracion-negocio/componentes/FormularioConfiguracionNegocio";
 import { FormularioSmtp } from "@eco/configuracion-negocio/componentes/FormularioSmtp";
 import { PreferenciasNotificacionWidget } from "@eco/notificaciones";
 import { AdministracionPerfilesWidget } from "@eco/gestion-usuarios/componentes/AdministracionPerfilesWidget";
 import { GestionTerminosConsentimientosWidget } from "@eco/identidad/componentes/GestionTerminosConsentimientosWidget";
+import { ConfiguracionPasarelaPayphone, CatalogoProductosComercio } from "@/modulos/comercio";
 import { useCustomWidgets } from "../gestorTitulosWidgets";
 import { ModalEditarWidget } from "../ModalEditarWidget";
 import { ModalVerificarMFAWidget } from "../ModalVerificarMFAWidget";
@@ -32,6 +33,24 @@ export interface WidgetConfigDef {
 }
 
 const TODOS_WIDGETS_CONFIG: WidgetConfigDef[] = [
+  {
+    id: "pasarela_payphone",
+    titulo: "Pasarela Payphone (Botón de Pago)",
+    subtitulo: "Configuración de credenciales API, StoreID y simulador de cobro de honorarios",
+    icono: CreditCard,
+    colorIcono: "#D97706",
+    categoria: "Servicios de Despacho",
+    soloAdmin: true
+  },
+  {
+    id: "catalogo_productos",
+    titulo: "Catálogo Comercial & Honorarios",
+    subtitulo: "Tarifario de servicios legales, planes y precios con desglose de IVA",
+    icono: ShoppingBag,
+    colorIcono: "#0284C7",
+    categoria: "Parámetros del Negocio",
+    soloAdmin: true
+  },
   {
     id: "negocio",
     titulo: "Configuración del Negocio",
@@ -137,6 +156,12 @@ export function PanelConfiguracionModular({ esAdmin, esSuperadmin = false, confi
           preferencias_notificacion: "notificaciones",
           terminos: "gestion_terminos_consentimientos",
           gestion_terminos_consentimientos: "gestion_terminos_consentimientos",
+          pasarela_payphone: "pasarela_payphone",
+          payphone: "pasarela_payphone",
+          pasarela: "pasarela_payphone",
+          catalogo_productos: "catalogo_productos",
+          catalogo: "catalogo_productos",
+          honorarios: "catalogo_productos",
         };
         const targetId = mapaAlias[paramWidget] || paramWidget;
         setWidgetActivo(targetId);
@@ -309,6 +334,20 @@ export function PanelConfiguracionModular({ esAdmin, esSuperadmin = false, confi
             {widgetActivo === "gestion_terminos_consentimientos" && (
               <div style={{ width: "100%" }}>
                 <GestionTerminosConsentimientosWidget negocio={negocio} />
+              </div>
+            )}
+
+            {/* 6. PASARELA PAYPHONE */}
+            {widgetActivo === "pasarela_payphone" && (
+              <div style={{ width: "100%" }}>
+                <ConfiguracionPasarelaPayphone negocio={negocio} />
+              </div>
+            )}
+
+            {/* 7. CATÁLOGO COMERCIAL & HONORARIOS */}
+            {widgetActivo === "catalogo_productos" && (
+              <div style={{ width: "100%" }}>
+                <CatalogoProductosComercio negocio={negocio} />
               </div>
             )}
           </div>
