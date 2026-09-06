@@ -15,7 +15,7 @@ export default async function PaginaCuenta() {
 
   const [perfilesAsignables, perfilesUsuario, materias, provincias, solicitudExistente] = await Promise.all([
     obtenerPerfilesAsignables(),
-    obtenerPerfiles("TRANQ"),
+    obtenerPerfiles("tranqi"),
     listarMaterias(),
     listarProvincias(),
     perfil ? obtenerSolicitudPropia(perfil.usu_id) : Promise.resolve(null),
@@ -38,12 +38,15 @@ export default async function PaginaCuenta() {
     }
   }
 
+  const puedeConmutar = Boolean(perfil?.usu_superadmin_plataforma || rolesFinales.length > 1);
+
   return (
     <div style={{ width: "100%" }}>
       {/* Componente Modular con Galería de Accesos, Hero Card condicional y Roles Dinámicos */}
       <PanelCuentaModular
         perfil={perfil}
         historial={historial}
+        puedeConmutar={puedeConmutar}
         rolesDisponibles={rolesFinales}
         materias={materias}
         provincias={provincias}

@@ -110,7 +110,12 @@ export default async function PagePanel({ searchParams }: Props) {
       <div className="barra-superior-panel">
         <BuscadorModulosGlobal nivelUsuario={nivelMaximo} esSuperadmin={puedeConmutar} />
 
-        <div className="usuario-barra">
+        <Link
+          href={puedeConmutar ? "/panel/cuenta?widget=ver_como" : "/panel/cuenta"}
+          className="usuario-barra"
+          style={{ textDecoration: "none", color: "inherit", cursor: "pointer" }}
+          title={puedeConmutar ? "Tienes múltiples roles asignados. Haz clic para cambiar de rol activo" : "Ver mi perfil"}
+        >
           <div className="usuario-barra-foto" style={{ overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}>
             {typeof (perfil?.usu_detalle_usuario as Record<string, unknown>)?.foto_url === "string" ? (
               // eslint-disable-next-line @next/next/no-img-element
@@ -123,9 +128,10 @@ export default async function PagePanel({ searchParams }: Props) {
             <b>{nombreCompleto}</b>
             <span>
               {modo === "abogado" ? "Socio Abogado" : modo === "admin" ? "Administrador" : modo === "superadmin" ? "SuperAdmin Plataforma" : modo === "operador" ? "Operador / Auxiliar" : modo.charAt(0).toUpperCase() + modo.slice(1)}
+              {puedeConmutar && " ▾"}
             </span>
           </div>
-        </div>
+        </Link>
       </div>
 
       {/* POSICIÓN #1 EN PANEL HOME: Si existe una solicitud en proceso o pendiente de firma, aparece al inicio absoluto */}
