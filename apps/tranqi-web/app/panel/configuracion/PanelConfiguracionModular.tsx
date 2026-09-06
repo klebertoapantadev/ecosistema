@@ -6,6 +6,7 @@ import { FormularioConfiguracionNegocio } from "@eco/configuracion-negocio/compo
 import { FormularioSmtp } from "@eco/configuracion-negocio/componentes/FormularioSmtp";
 import { PreferenciasNotificacionWidget } from "@eco/notificaciones";
 import { AdministracionPerfilesWidget } from "@eco/gestion-usuarios/componentes/AdministracionPerfilesWidget";
+import { GestionTerminosConsentimientosWidget } from "@eco/identidad/componentes/GestionTerminosConsentimientosWidget";
 import { useCustomWidgets } from "../gestorTitulosWidgets";
 import { ModalEditarWidget } from "../ModalEditarWidget";
 import { ModalVerificarMFAWidget } from "../ModalVerificarMFAWidget";
@@ -62,6 +63,15 @@ const TODOS_WIDGETS_CONFIG: WidgetConfigDef[] = [
     titulo: "Gestión de Usuarios & Membresías",
     subtitulo: "Administración de miembros, asignación de perfiles y techo jerárquico",
     icono: Sliders,
+    colorIcono: "var(--violeta, #5000BA)",
+    categoria: "Gobernanza",
+    soloAdmin: true
+  },
+  {
+    id: "gestion_terminos_consentimientos",
+    titulo: "Términos, Consentimientos & LOPDP",
+    subtitulo: "Configuración de cláusulas LOPDP, consentimientos, WhatsApp y avisos legales",
+    icono: ShieldCheck,
     colorIcono: "var(--violeta, #5000BA)",
     categoria: "Gobernanza",
     soloAdmin: true
@@ -125,7 +135,8 @@ export function PanelConfiguracionModular({ esAdmin, esSuperadmin = false, confi
           configuracion_negocio: "negocio",
           configuracion_correo: "correo",
           preferencias_notificacion: "notificaciones",
-          terminos: "notificaciones"
+          terminos: "gestion_terminos_consentimientos",
+          gestion_terminos_consentimientos: "gestion_terminos_consentimientos",
         };
         const targetId = mapaAlias[paramWidget] || paramWidget;
         setWidgetActivo(targetId);
@@ -291,6 +302,13 @@ export function PanelConfiguracionModular({ esAdmin, esSuperadmin = false, confi
             {widgetActivo === "perfiles" && (
               <div style={{ width: "100%" }}>
                 <AdministracionPerfilesWidget esAdmin={esAdminOSuper} negocio={negocio} />
+              </div>
+            )}
+
+            {/* 5. GESTIÓN DE TÉRMINOS, CONSENTIMIENTOS Y LOPDP */}
+            {widgetActivo === "gestion_terminos_consentimientos" && (
+              <div style={{ width: "100%" }}>
+                <GestionTerminosConsentimientosWidget negocio={negocio} />
               </div>
             )}
           </div>
