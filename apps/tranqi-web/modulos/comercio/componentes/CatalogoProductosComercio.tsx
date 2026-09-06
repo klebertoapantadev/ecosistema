@@ -18,6 +18,7 @@ import {
   Plus,
   FolderPlus,
   Layers,
+  Pencil,
 } from "lucide-react";
 import {
   ProductoCatalogo,
@@ -30,6 +31,7 @@ import {
 import { ModalCheckoutPayphone } from "./ModalCheckoutPayphone";
 import { ModalCrearProducto } from "./ModalCrearProducto";
 import { ModalCrearCategoria } from "./ModalCrearCategoria";
+import { ModalEditarProducto } from "./ModalEditarProducto";
 
 interface Props {
   negocio?: string;
@@ -50,6 +52,8 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
 
   const [modalProdAbierto, setModalProdAbierto] = useState(false);
   const [modalCatAbierto, setModalCatAbierto] = useState(false);
+  const [productoAEditar, setProductoAEditar] = useState<ProductoCatalogo | null>(null);
+  const [modalEditarAbierto, setModalEditarAbierto] = useState(false);
 
   // Mapa de variantes seleccionadas por producto
   const [varianteSeleccionadaPorProducto, setVarianteSeleccionadaPorProducto] = useState<
@@ -453,29 +457,67 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                   position: "relative",
                 }}
               >
-                {/* Badge Superior */}
-                {p.pro_destacado && (
-                  <div
+                {/* Barra Superior de la Tarjeta: Destacado + Botón Editar */}
+                <div
+                  style={{
+                    position: "absolute",
+                    top: "12px",
+                    right: "12px",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    zIndex: 2,
+                  }}
+                >
+                  {p.pro_destacado && (
+                    <div
+                      style={{
+                        background: "linear-gradient(135deg, #F59E0B, #D97706)",
+                        color: "#FFFFFF",
+                        padding: "2px 8px",
+                        borderRadius: "12px",
+                        fontSize: "0.7rem",
+                        fontWeight: 800,
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "4px",
+                        boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+                      }}
+                    >
+                      <Sparkles size={10} />
+                      DESTACADO
+                    </div>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setProductoAEditar(p);
+                      setModalEditarAbierto(true);
+                    }}
+                    className="btn-responsive-accion"
+                    title="Editar datos y tarifas de este producto"
+                    aria-label="Editar datos y tarifas de este producto"
                     style={{
-                      position: "absolute",
-                      top: "12px",
-                      right: "12px",
-                      background: "linear-gradient(135deg, #F59E0B, #D97706)",
-                      color: "#FFFFFF",
-                      padding: "2px 8px",
-                      borderRadius: "12px",
-                      fontSize: "0.7rem",
-                      fontWeight: 800,
-                      display: "flex",
+                      background: "#FFFFFF",
+                      border: "1px solid #CBD5E1",
+                      color: "#334155",
+                      padding: "4px 8px",
+                      borderRadius: "8px",
+                      fontSize: "0.75rem",
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      display: "inline-flex",
                       alignItems: "center",
                       gap: "4px",
-                      boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+                      boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
                     }}
                   >
-                    <Sparkles size={10} />
-                    DESTACADO
-                  </div>
-                )}
+                    <Pencil size={12} color="#0284C7" />
+                    <span className="btn-texto-responsive">Editar</span>
+                  </button>
+                </div>
 
                 <div style={{ padding: "20px", display: "flex", flexDirection: "column", flex: 1 }}>
                   {/* Icono y Categoría */}
@@ -675,6 +717,26 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
         onCategoriaCreada={(nueva) => {
           setCategoriasLista((prev) => [...prev, nueva]);
         }}
+        negocio={negocio}
+      />
+
+      {/* Modal Editar Producto / Honorario */}
+      <ModalEditarProducto
+        abierto={modalEditarAbierto}
+        producto={productoAEditar}
+        onCerrar={() => {
+          setModalEditarAbierto(false);
+          setProductoAEditar(null);
+        }}
+        onProductoEditado={(editado) => {
+          setProductos((prev) =>
+            prev.map((item) => (item.pro_id === editado.pro_id ? editado : item))
+          );
+        }}
+        onProductoEliminado={(proId) => {
+          setProductos((prev) => prev.filter((item) => item.pro_id !== proId));
+        }}
+        categorias={categoriasLista}
         negocio={negocio}
       />
     </div>

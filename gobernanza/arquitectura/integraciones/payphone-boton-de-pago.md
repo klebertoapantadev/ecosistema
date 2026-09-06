@@ -207,7 +207,13 @@ Para registrar nuevos productos, honorarios profesionales o categorías en el ca
    - Seleccionar la categoría y el tipo comercial (Servicio, Suscripción, Digital, Físico).
    - Definir el **Precio Base Imponible** ($ USD) y la tarifa de **IVA SRI** (15% o 0%). El formulario calcula en vivo el total facturable con Payphone.
    - Guardar y el producto queda disponible de inmediato para cobro.
-4. **Carga Rápida de Semillas:**
+4. **Editar Honorario o Producto:**
+   - En la esquina superior derecha de cualquier tarjeta de producto, hacer clic en el botón **`Editar`** (ícono de lápiz).
+   - Permite actualizar el nombre, alcance, categoría, tarifa impositiva de IVA SRI (15% o 0%), precio base imponible y estado destacado.
+   - Cuenta con cálculo instantáneo en vivo de los totales a liquidar con Payphone.
+5. **Eliminar o Desactivar:**
+   - Dentro del modal de edición, el botón **`Eliminar`** solicita confirmación en dos pasos para retirar el honorario del catálogo comercial de forma segura.
+6. **Carga Rápida de Semillas:**
    - Si el catálogo está vacío, hacer clic en **`Cargar Catálogo Inicial`** para sembrar automáticamente los honorarios de consulta, patrocinio en juicio, plan familiar y dictamen express de Tranqi.
 
 ### 5.2 Opción B: Mediante Base de Datos / Migraciones SQL

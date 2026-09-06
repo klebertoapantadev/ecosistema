@@ -485,15 +485,19 @@ export async function obtenerCatalogoProductosAction(negocio = "tranqi"): Promis
     listaFinal = negocio === "tranqi" ? [...PRODUCTOS_SEMILLA_TRANQI] : [];
   }
 
-  // Incorporar productos creados dinámicamente en memoria
+  // Incorporar productos creados o editados dinámicamente en memoria
   const customs = storeCustomProductos.get(negocio) || [];
   customs.forEach((p) => {
-    if (!listaFinal.some((item) => item.pro_id === p.pro_id || item.pro_slug === p.pro_slug)) {
+    const idx = listaFinal.findIndex((item) => item.pro_id === p.pro_id || item.pro_slug === p.pro_slug);
+    if (idx >= 0) {
+      listaFinal[idx] = p; // Reemplaza con la versión editada
+    } else {
       listaFinal.unshift(p);
     }
   });
 
-  return listaFinal;
+  // Filtrar productos inactivos o eliminados
+  return listaFinal.filter((p: any) => p.pro_activo !== false);
 }
 
 // ==============================================================================
@@ -758,6 +762,225 @@ export async function restaurarCatalogoEjemploAction(negocio = "tranqi"): Promis
   }
   revalidatePath("/panel/catalogo-productos");
   return { ok: true, total: PRODUCTOS_SEMILLA_TRANQI.length };
+}
+
+/**
+ * Edita un producto u honorario profesional existente
+ */
+export async function editarProductoAction(datos: {
+  pro_id: string;
+  nombre: string;
+  descripcion: string;
+  categoriaId?: string;
+  tipo: "FISICO" | "SERVICIO" | "SUSCRIPCION" | "DIGITAL";
+  destacado?: boolean;
+  precioBase: number;
+  tarifaIva?: number; // 15 o 0
+  sku?: string;
+  icono?: "Scale" | "ShieldCheck" | "FileCheck" | "CreditCard";
+  modalidadPago?: string;
+  varianteId?: string;
+  negocio?: string;
+}): Promise<{ ok: boolean; producto?: ProductoCatalogo; error?: string }> {
+  try {
+    const negocio = datos.negocio || "tranqi";
+    const nombre = datos.nombre.trim();
+    if (!nombre) {
+      return { ok: false, error: "El nombre del producto u honorario es obligatorio." };
+    }
+    if (datos.precioBase <= 0) {
+      return { ok: false, error: "El precio base debe ser mayor a cero." };
+    }
+
+    const base = Number(datos.precioBase.toFixed(2));
+    const tarifaIva = datos.tarifaIva ?? 15;
+    const montoIva = Number(((base * tarifaIva) / 100).toFixed(2));
+    const total = Number((base + montoIva).toFixed(2));
+
+    const cats = await obtenerCategoriasAction(negocio);
+    const cat = cats.find((c) => c.ctg_id === datos.categoriaId) || null;
+
+    // Buscar producto actual
+    const prods = await obtenerCatalogoProductosAction(negocio);
+    const prodActual = prods.find((p) => p.pro_id === datos.pro_id);
+    if (!prodActual) {
+      return { ok: false, error: "Producto no encontrado para editar." };
+    }
+
+    // Actualizar variantes (modificar la variante seleccionada o la primera)
+    const variantesActualizadas: VarianteCatalogo[] = prodActual.variantes.map((v, idx) => {
+      const esTarget = datos.varianteId ? v.var_id === datos.varianteId : idx === 0;
+      if (!esTarget) return v;
+
+      return {
+        ...v,
+        var_nombre: `${nombre} (Tarifa Estándar)`,
+        var_sku: datos.sku?.trim() || v.var_sku,
+        var_precio: base,
+        var_tarifa_iva_porcentaje: tarifaIva,
+        var_codigo_impuesto_sri: tarifaIva > 0 ? "IVA_15" : "IVA_0",
+        var_detalle_variante: {
+          ...v.var_detalle_variante,
+          modalidad_pago: datos.modalidadPago || v.var_detalle_variante?.modalidad_pago,
+        },
+        monto_iva: montoIva,
+        precio_total: total,
+      };
+    });
+
+    if (variantesActualizadas.length === 0) {
+      variantesActualizadas.push({
+        var_id: `var-${Date.now()}`,
+        var_producto_id: datos.pro_id,
+        var_sku: datos.sku?.trim() || `TRQ-VAR-${Date.now()}`,
+        var_nombre: `${nombre} (Tarifa Estándar)`,
+        var_precio: base,
+        var_codigo_impuesto_sri: tarifaIva > 0 ? "IVA_15" : "IVA_0",
+        var_tarifa_iva_porcentaje: tarifaIva,
+        var_tipo_oferta: "REGULAR",
+        var_activo: true,
+        var_detalle_variante: { modalidad_pago: datos.modalidadPago },
+        monto_iva: montoIva,
+        precio_total: total,
+      });
+    }
+
+    const prodEditado: ProductoCatalogo = {
+      ...prodActual,
+      pro_nombre: nombre,
+      pro_descripcion: datos.descripcion.trim(),
+      pro_tipo: datos.tipo,
+      pro_destacado: Boolean(datos.destacado),
+      pro_categoria_principal_id: cat?.ctg_id || prodActual.pro_categoria_principal_id,
+      pro_detalle_producto: {
+        ...prodActual.pro_detalle_producto,
+        icono: datos.icono || prodActual.pro_detalle_producto?.icono || "Scale",
+        modalidad_pago: datos.modalidadPago || prodActual.pro_detalle_producto?.modalidad_pago,
+        editado_en: new Date().toISOString(),
+      },
+      categoria: cat
+        ? {
+            ctg_id: cat.ctg_id,
+            ctg_nombre: cat.ctg_nombre,
+            ctg_slug: cat.ctg_slug,
+          }
+        : prodActual.categoria,
+      variantes: variantesActualizadas,
+    };
+
+    // 1. Intentar actualizar en Supabase
+    const admin: any = crearClienteAdmin();
+    const supabase: any = await crearClienteServidor();
+    const clienteActivo = admin || supabase;
+
+    if (clienteActivo) {
+      try {
+        await clienteActivo
+          .schema("comun_comercio")
+          .from("com_producto")
+          .update({
+            pro_nombre: nombre,
+            pro_descripcion: datos.descripcion.trim(),
+            pro_tipo: datos.tipo,
+            pro_destacado: Boolean(datos.destacado),
+            pro_categoria_principal_id: cat?.ctg_id || null,
+            pro_detalle_producto: prodEditado.pro_detalle_producto,
+          })
+          .eq("pro_id", datos.pro_id);
+
+        const varTarget = variantesActualizadas[0];
+        if (varTarget) {
+          await clienteActivo
+            .schema("comun_comercio")
+            .from("com_variante")
+            .update({
+              var_nombre: varTarget.var_nombre,
+              var_precio: base,
+              var_tarifa_iva_porcentaje: tarifaIva,
+              var_codigo_impuesto_sri: varTarget.var_codigo_impuesto_sri,
+              var_sku: varTarget.var_sku,
+            })
+            .eq("var_id", varTarget.var_id);
+        }
+      } catch {
+        try {
+          await clienteActivo
+            .from("com_producto")
+            .update({
+              pro_nombre: nombre,
+              pro_descripcion: datos.descripcion.trim(),
+              pro_tipo: datos.tipo,
+              pro_destacado: Boolean(datos.destacado),
+              pro_categoria_principal_id: cat?.ctg_id || null,
+              pro_detalle_producto: prodEditado.pro_detalle_producto,
+            })
+            .eq("pro_id", datos.pro_id);
+        } catch {
+          // Continuar
+        }
+      }
+    }
+
+    // 2. Guardar en almacén local
+    const actuales = storeCustomProductos.get(negocio) || [];
+    const idx = actuales.findIndex((p) => p.pro_id === datos.pro_id);
+    if (idx >= 0) {
+      actuales[idx] = prodEditado;
+    } else {
+      actuales.push(prodEditado);
+    }
+    storeCustomProductos.set(negocio, actuales);
+
+    revalidatePath("/panel/catalogo-productos");
+    return { ok: true, producto: prodEditado };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Error al actualizar el producto." };
+  }
+}
+
+/**
+ * Elimina o desactiva un producto del catálogo
+ */
+export async function eliminarProductoAction(
+  pro_id: string,
+  negocio = "tranqi"
+): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const admin: any = crearClienteAdmin();
+    const supabase: any = await crearClienteServidor();
+    const clienteActivo = admin || supabase;
+
+    if (clienteActivo) {
+      try {
+        await clienteActivo
+          .schema("comun_comercio")
+          .from("com_producto")
+          .update({ pro_activo: false })
+          .eq("pro_id", pro_id);
+      } catch {
+        try {
+          await clienteActivo
+            .from("com_producto")
+            .update({ pro_activo: false })
+            .eq("pro_id", pro_id);
+        } catch {
+          // Continuar
+        }
+      }
+    }
+
+    // Almacén en memoria: marcar como inactivo (tombstone)
+    const actuales = storeCustomProductos.get(negocio) || [];
+    const filtrados = actuales.filter((p) => p.pro_id !== pro_id);
+    const tombstone: any = { pro_id, pro_activo: false };
+    filtrados.push(tombstone);
+    storeCustomProductos.set(negocio, filtrados);
+
+    revalidatePath("/panel/catalogo-productos");
+    return { ok: true };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Error al eliminar el producto." };
+  }
 }
 
 // ==============================================================================
