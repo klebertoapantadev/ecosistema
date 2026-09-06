@@ -1,10 +1,64 @@
 -- Migración: 20260802000001_comun_notificacion.sql
 -- Descripción: Módulo común de Notificaciones y Alertas Multicanal (PLT-013)
 -- Esquema: comun_notificacion y tablas complementarias en comun_seguridad
+--
+-- CORREGIDA EL 2026-09-06. Tal y como estaba escrita no podía aplicarse, y por
+-- eso este esquema nunca llegó a existir en la base pese a figurar PLT-013 como
+-- implementado. Todo lo posterior al 2 de agosto quedó atascado detrás. Tres
+-- errores, todos de nombre:
+--
+--   1. Referenciaba `comun_seguridad.seg_usuario(seg_id)` cuatro veces. Esa
+--      columna nunca ha existido: la clave es `usu_id` (ver 20260727000002).
+--   2. Invocaba `comun_seguridad.seg_fn_es_miembro_negocio(...)` en tres
+--      políticas y en el RPC de campañas. Esa función no existía: falta la
+--      migración que debería haberla creado. Se crea aquí abajo.
+--   3. Filtraba por `m.mem_perfil`, columna que tampoco existe. Tras PLT-003
+--      los perfiles son múltiples y viven en `seg_membresia_perfil` +
+--      `seg_perfil`; el filtro POR_ROL se reescribió para mirarlos de verdad,
+--      que es lo que hace el resto del sistema.
+--
+-- No se corrige con una migración posterior porque esta nunca se aplicó en
+-- ninguna base: no hay nada desplegado que reparar, solo un fichero que arreglar.
 
 CREATE SCHEMA IF NOT EXISTS comun_notificacion;
 
 GRANT USAGE ON SCHEMA comun_notificacion TO authenticated, service_role, anon;
+
+--------------------------------------------------------------------------------
+-- 0. La función que faltaba: ¿es miembro activo de este negocio?
+--------------------------------------------------------------------------------
+-- Replica la normalización de nombre de negocio de `seg_fn_es_admin_negocio`
+-- (20260812000001): en la base conviven 'TRANQ', 'TRANQI' y 'LEGAL' para el
+-- mismo negocio, y compararlos crudos deja fuera a usuarios legítimos.
+-- A diferencia de las otras, esta NO exige perfil de staff: pregunta solo si la
+-- persona pertenece al negocio, que es lo que necesita una notificación.
+CREATE OR REPLACE FUNCTION comun_seguridad.seg_fn_es_miembro_negocio(
+  p_usuario UUID,
+  p_negocio TEXT
+) RETURNS BOOLEAN
+LANGUAGE sql
+STABLE SECURITY DEFINER
+SET search_path = ''
+AS $$
+  select exists (
+    select 1 from comun_seguridad.seg_usuario u
+    where u.usu_id = p_usuario and u.usu_superadmin_plataforma
+  ) or exists (
+    select 1
+    from comun_seguridad.seg_membresia m
+    where m.mem_usuario_id = p_usuario
+      and (
+        upper(m.mem_negocio) = upper(p_negocio)
+        or (upper(p_negocio) in ('TRANQ', 'TRANQI', 'LEGAL') and upper(m.mem_negocio) in ('TRANQ', 'TRANQI', 'LEGAL'))
+        or (upper(p_negocio) in ('FFH', 'FASTFIX') and upper(m.mem_negocio) in ('FFH', 'FASTFIX'))
+        or (upper(p_negocio) in ('TNK', 'TINKAY') and upper(m.mem_negocio) in ('TNK', 'TINKAY'))
+        or (upper(p_negocio) in ('MRG', 'MARGARITAS') and upper(m.mem_negocio) in ('MRG', 'MARGARITAS'))
+      )
+      and m.mem_estado = 'ACTIVO'
+  );
+$$;
+
+GRANT EXECUTE ON FUNCTION comun_seguridad.seg_fn_es_miembro_negocio(UUID, TEXT) TO authenticated;
 
 --------------------------------------------------------------------------------
 -- 1. TABLA: comun_notificacion.not_campana (cmp_)
@@ -14,7 +68,7 @@ CREATE TABLE IF NOT EXISTS comun_notificacion.not_campana (
   cmp_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   cmp_secuencial BIGINT GENERATED ALWAYS AS IDENTITY,
   cmp_negocio VARCHAR(10) NOT NULL,
-  cmp_emisor_id UUID NOT NULL REFERENCES comun_seguridad.seg_usuario(seg_id) ON DELETE CASCADE,
+  cmp_emisor_id UUID NOT NULL REFERENCES comun_seguridad.seg_usuario(usu_id) ON DELETE CASCADE,
   cmp_tipo_audiencia VARCHAR(20) NOT NULL CHECK (cmp_tipo_audiencia IN ('TODOS', 'POR_ROL', 'POR_USUARIOS')),
   cmp_roles_jsonb JSONB DEFAULT '[]'::jsonb,
   cmp_usuarios_jsonb JSONB DEFAULT '[]'::jsonb,
@@ -49,7 +103,7 @@ CREATE TABLE IF NOT EXISTS comun_notificacion.not_registro (
   not_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   not_secuencial BIGINT GENERATED ALWAYS AS IDENTITY,
   not_campana_id UUID REFERENCES comun_notificacion.not_campana(cmp_id) ON DELETE SET NULL,
-  not_usuario_id UUID NOT NULL REFERENCES comun_seguridad.seg_usuario(seg_id) ON DELETE CASCADE,
+  not_usuario_id UUID NOT NULL REFERENCES comun_seguridad.seg_usuario(usu_id) ON DELETE CASCADE,
   not_negocio VARCHAR(10) NOT NULL,
   not_canal VARCHAR(20) NOT NULL CHECK (not_canal IN ('IN_APP', 'PUSH', 'EMAIL', 'WHATSAPP_PROPUESTA')),
   not_titulo TEXT NOT NULL,
@@ -89,7 +143,7 @@ CREATE POLICY not_registro_insert_admin ON comun_notificacion.not_registro
 CREATE TABLE IF NOT EXISTS comun_seguridad.seg_dispositivo_push (
   dsp_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   dsp_secuencial BIGINT GENERATED ALWAYS AS IDENTITY,
-  dsp_usuario_id UUID NOT NULL REFERENCES comun_seguridad.seg_usuario(seg_id) ON DELETE CASCADE,
+  dsp_usuario_id UUID NOT NULL REFERENCES comun_seguridad.seg_usuario(usu_id) ON DELETE CASCADE,
   dsp_token_push TEXT NOT NULL,
   dsp_plataforma VARCHAR(20) NOT NULL CHECK (dsp_plataforma IN ('WEB', 'ANDROID', 'IOS')),
   dsp_activo BOOLEAN NOT NULL DEFAULT TRUE,
@@ -111,7 +165,7 @@ CREATE POLICY seg_dispositivo_push_propio ON comun_seguridad.seg_dispositivo_pus
 CREATE TABLE IF NOT EXISTS comun_seguridad.seg_preferencia_notificacion (
   pfn_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   pfn_secuencial BIGINT GENERATED ALWAYS AS IDENTITY,
-  pfn_usuario_id UUID NOT NULL REFERENCES comun_seguridad.seg_usuario(seg_id) ON DELETE CASCADE,
+  pfn_usuario_id UUID NOT NULL REFERENCES comun_seguridad.seg_usuario(usu_id) ON DELETE CASCADE,
   pfn_negocio VARCHAR(10) NOT NULL,
   pfn_canal_email BOOLEAN NOT NULL DEFAULT TRUE,
   pfn_canal_push BOOLEAN NOT NULL DEFAULT TRUE,
@@ -214,7 +268,15 @@ BEGIN
       AND m.mem_estado = 'ACTIVO'
       AND (
         p_tipo_audiencia = 'TODOS'
-        OR (p_tipo_audiencia = 'POR_ROL' AND m.mem_perfil = ANY(ARRAY(SELECT jsonb_array_elements_text(p_roles_jsonb))))
+        -- POR_ROL mira los perfiles reales de la membresía (PLT-003: son
+        -- múltiples). El `mem_perfil` original no existe como columna.
+        OR (p_tipo_audiencia = 'POR_ROL' AND EXISTS (
+              SELECT 1
+              FROM comun_seguridad.seg_membresia_perfil mp
+              JOIN comun_seguridad.seg_perfil pf ON pf.per_id = mp.mpe_perfil_id
+              WHERE mp.mpe_membresia_id = m.mem_id
+                AND upper(pf.per_clave) = ANY(ARRAY(
+                      SELECT upper(x) FROM jsonb_array_elements_text(p_roles_jsonb) AS x))))
         OR (p_tipo_audiencia = 'POR_USUARIOS' AND m.mem_usuario_id::text = ANY(ARRAY(SELECT jsonb_array_elements_text(p_usuarios_jsonb))))
       )
   LOOP

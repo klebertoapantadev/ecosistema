@@ -1,6 +1,13 @@
 -- Migración: 20260805000001_comun_reclutamiento.sql
 -- Descripción: Módulo común de Reclutamiento, Bolsa de Empleo y Únete al Equipo (PLT-019)
 -- Esquema: comun_reclutamiento y tablas asociadas (rec_vacante, rec_postulacion)
+--
+-- CORREGIDA EL 2026-09-06, por el mismo motivo que 20260802000001: tal y como
+-- estaba no podía aplicarse, y este esquema nunca existió pese a figurar PLT-019
+-- como implementado. Referenciaba `comun_seguridad.seg_usuario(seg_id)`, columna
+-- que no existe (la clave es `usu_id`, ver 20260727000002). Las cinco llamadas a
+-- `seg_fn_es_miembro_negocio` sí quedan resueltas: esa función la crea ahora
+-- 20260802000001, que se aplica antes.
 
 CREATE SCHEMA IF NOT EXISTS comun_reclutamiento;
 
@@ -54,7 +61,7 @@ CREATE TABLE IF NOT EXISTS comun_reclutamiento.rec_postulacion (
   pos_secuencial BIGINT GENERATED ALWAYS AS IDENTITY,
   pos_negocio VARCHAR(10) NOT NULL CHECK (pos_negocio IN ('TRANQ', 'FFH', 'TNK', 'MRG')),
   pos_vacante_id UUID REFERENCES comun_reclutamiento.rec_vacante(vac_id) ON DELETE SET NULL,
-  pos_usuario_id UUID NOT NULL REFERENCES comun_seguridad.seg_usuario(seg_id) ON DELETE CASCADE,
+  pos_usuario_id UUID NOT NULL REFERENCES comun_seguridad.seg_usuario(usu_id) ON DELETE CASCADE,
   pos_estado VARCHAR(30) NOT NULL DEFAULT 'NUEVO' CHECK (pos_estado IN ('NUEVO', 'EN_REVISION', 'ENTREVISTADO', 'APROBADO', 'RECHAZADO')),
   pos_cv_url TEXT NOT NULL,
   pos_documentos_urls JSONB NOT NULL DEFAULT '[]'::jsonb,

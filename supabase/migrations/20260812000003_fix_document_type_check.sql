@@ -21,8 +21,12 @@ drop policy if exists trq_solicitud_materia_delete on tranqui_legal.trq_solicitu
 create policy trq_solicitud_materia_delete on tranqui_legal.trq_solicitud_materia
   for delete using (
     exists (
+      -- Corregido 2026-09-06: decía `s.sma_solicitud_id = ssc_id`, con el join
+      -- del revés. `s` es la solicitud (ssc_), y `sma_solicitud_id` es la
+      -- columna de esta tabla. Las otras tres políticas de este mismo fichero
+      -- ya lo tenían bien; estas dos se copiaron mal.
       select 1 from tranqui_legal.trq_solicitud_socio s
-      where s.sma_solicitud_id = ssc_id
+      where s.ssc_id = sma_solicitud_id
         and (s.ssc_usuario_id = auth.uid() or comun_seguridad.seg_fn_es_operador_o_admin_negocio('TRANQ'))
     )
   );
@@ -33,7 +37,7 @@ create policy trq_solicitud_provincia_delete on tranqui_legal.trq_solicitud_prov
   for delete using (
     exists (
       select 1 from tranqui_legal.trq_solicitud_socio s
-      where s.spr_solicitud_id = ssc_id
+      where s.ssc_id = spr_solicitud_id   -- corregido 2026-09-06, join invertido
         and (s.ssc_usuario_id = auth.uid() or comun_seguridad.seg_fn_es_operador_o_admin_negocio('TRANQ'))
     )
   );
