@@ -13,6 +13,7 @@ import { BotonConfirmarContrato } from "../../../../modulos/socios/componentes/B
 import { BotonReenviarNotificacionAceptacion } from "../../../../modulos/socios/componentes/BotonReenviarNotificacionAceptacion";
 import { SubirDocumentoRevision } from "../../../../modulos/socios/componentes/SubirDocumentoRevision";
 import { EditorContratoOperador } from "../../../../modulos/socios/componentes/EditorContratoOperador";
+import InspeccionIdentidadAria, { type DictamenAria } from "../../../../modulos/socios/componentes/InspeccionIdentidadAria";
 import { ENLACES_VERIFICACION } from "../../../../modulos/socios/esquema";
 
 export const metadata: Metadata = { title: "Detalle de socio — tranqi" };
@@ -139,6 +140,19 @@ export default async function PaginaDetalleSocio({ params }: { params: Promise<{
             {revisiones.length} {revisiones.length === 1 ? "revisión registrada" : "revisiones / actualizaciones"}
           </span>
         )}
+      </div>
+
+      {/* TRQ-ABG-005: lo que Aria vio en los documentos. Va ARRIBA, antes de la
+          ficha y de las acciones, porque es lo primero que el operador necesita
+          saber antes de decidir: si un título está a nombre de otra persona,
+          leer el resto del expediente es perder el tiempo. */}
+      <div className="tarjeta-panel detalle-solicitud" style={{ marginBottom: "20px" }}>
+        <InspeccionIdentidadAria
+          dictamen={
+            ((solicitud as { ssc_detalles?: { aria_validacion?: DictamenAria } }).ssc_detalles
+              ?.aria_validacion ?? null) as DictamenAria | null
+          }
+        />
       </div>
 
       {/* 1. Panel Principal: Estado del Socio y Formalización de Contrato */}

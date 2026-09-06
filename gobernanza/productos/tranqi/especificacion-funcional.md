@@ -43,7 +43,7 @@ Tranqi adopta las mejores prácticas y estándares internacionales de **Law Prac
 | **`TRQ-ABG-002`** | **Abogado** | **Despacho Virtual: Bandeja de Casos, Expediente Digital y Actuaciones SATJE** | ⏳ Pendiente | **0%** | Kleber Toapanta / Jesus Navarrete |
 | **`TRQ-ABG-003`** | **Abogado** | **Firma Electrónica Avanzada PAdES en Navegador (Zero-Custody `.p12`/`.pfx`)** | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`TRQ-ABG-004`** | **Abogado** | **Agenda Profesional, Citas Presenciales y Sala de Videoconsulta Segura** | 🟡 En Desarrollo | **75%** | Jesus Navarrete |
-| **`TRQ-ABG-005`** | **Abogado** | **Verificación Inteligente de Identidad y Documentos con Aria (IA) en Registro de Abogados** | 🟡 En Desarrollo | **65%** | **Jesus Navarrete (IA)** |
+| **`TRQ-ABG-005`** | **Abogado** | **Verificación Inteligente de Identidad y Documentos con Aria (IA) en Registro de Abogados** | 🟡 En Desarrollo | **90%** | **Jesus Navarrete (IA)** |
 | **`TRQ-ADM-001`** | **Operador/Admin** | **Mesa de Control de Acreditación, Contra-Firma Tranqi y Activación de Socios** | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`TRQ-ADM-002`** | **Operador/Admin** | **Asignación Inteligente de Casos (IA), Liquidación de Honorarios y Comisiones** | ⏳ Pendiente | **0%** | **Jesus Navarrete (IA)** / Kleber Toapanta |
 | **`TRQ-ADM-003`** | **Operador/Admin** | **Auditoría Transversal BDD, Telemetría API y Bitácora de Campañas** | ✅ Implementado | **100%** | Kleber Toapanta |
@@ -363,8 +363,8 @@ Escenario: Mesa de Control con Dictamen de Aria para el Operador
 | Extracción real del documento con Aria (visión) | ✅ verificada contra ARIA |
 | Cotejo cruzado de titularidad y semáforo 🟢🟡🔴 | ✅ |
 | Persistencia (`ssc_detalles.aria_validacion`, `dcs_analisis`) y RPC | ✅ verificado bajo RLS |
-| Interfaz en `/panel/solicitud-socio` | ⏳ pendiente |
-| Tarjeta «Inspección de Identidad Aria» en la mesa de control | ⏳ pendiente |
+| Interfaz en `/panel/solicitud-socio` | ✅ el postulante lanza la verificación de sus documentos |
+| Tarjeta de inspección en `/panel/socios/[id]` | ✅ arriba del expediente, antes de las acciones |
 
 **El dictamen global es el mínimo de los documentos analizados, no la media.** Basta
 que uno pertenezca a otra persona para que el expediente no quede verificado;

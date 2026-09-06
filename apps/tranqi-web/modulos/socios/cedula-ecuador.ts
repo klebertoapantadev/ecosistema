@@ -67,6 +67,38 @@ export function validarCedulaEcuatoriana(entrada: string): ResultadoCedula {
 }
 
 /**
+ * La misma validación, pero con el contrato que necesita un formulario mientras
+ * el usuario teclea: un campo vacío no es un error todavía, y un RUC de 13
+ * dígitos es una identificación legítima aunque no sea una cédula.
+ *
+ * Existe para que el formulario y el servidor compartan algoritmo. Antes había
+ * dos implementaciones del módulo 10 —una aquí y otra dentro de
+ * `FormularioSolicitudSocio.tsx`— y dos copias de la misma regla acaban
+ * divergiendo justo cuando importa.
+ */
+export function validarIdentificacion(valor: string): { esValida: boolean; advertencia?: string } {
+  const c = (valor ?? "").trim();
+
+  // Mientras no haya escrito nada no hay nada que reprochar.
+  if (!c) return { esValida: true };
+  if (!/^\d+$/.test(c)) return { esValida: false, advertencia: "La cédula solo debe contener dígitos numéricos." };
+  if (c.length < 10) {
+    return { esValida: false, advertencia: `Faltan ${10 - c.length} dígitos para completar la cédula (10 dígitos).` };
+  }
+  // RUC: los 10 primeros dígitos son la cédula y los tres últimos el
+  // establecimiento. Se valida la parte que se puede validar.
+  if (c.length > 10) {
+    const base = validarCedulaEcuatoriana(c.slice(0, 10));
+    return base.valida
+      ? { esValida: true }
+      : { esValida: false, advertencia: base.motivo };
+  }
+
+  const r = validarCedulaEcuatoriana(c);
+  return r.valida ? { esValida: true } : { esValida: false, advertencia: r.motivo };
+}
+
+/**
  * Compara dos nombres de persona y devuelve cuánto se parecen, de 0 a 1.
  *
  * Nombres compuestos, tildes, orden de apellidos y segundos nombres omitidos

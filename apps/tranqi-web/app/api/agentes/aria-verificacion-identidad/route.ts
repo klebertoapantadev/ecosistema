@@ -32,7 +32,8 @@ interface Cuerpo {
   solicitudId?: string;
   documentoId?: string;
   tipoDocumento?: "cedula" | "titulo" | "matricula" | "ruc" | "otro";
-  datosReferencia?: { nombres?: string; apellidos?: string; cedula?: string };
+  /** Solo la cédula declarada: los nombres se leen del perfil, no de aquí. */
+  datosReferencia?: { cedula?: string };
 }
 
 const VIGENCIA_URL_SEGUNDOS = 300;
@@ -81,6 +82,16 @@ export async function POST(req: NextRequest) {
   if (!documento || documento.dcs_solicitud_id !== solicitudId || !documento.dcs_url) {
     return NextResponse.json({ ok: false, error: "Documento no encontrado en esa solicitud" }, { status: 404 });
   }
+
+  // El nombre contra el que se coteja sale del PERFIL, no del cuerpo de la
+  // petición. Si lo pusiera quien llama, bastaría con mandar el nombre que
+  // aparece en el documento para que todo cuadrara siempre.
+  const { data: perfil } = await supabase
+    .schema("comun_seguridad")
+    .from("seg_usuario")
+    .select("usu_nombres, usu_apellidos")
+    .eq("usu_id", solicitud.ssc_usuario_id)
+    .maybeSingle();
 
   // Comprobación barata antes de gastar una llamada al modelo: si la cédula
   // declarada no pasa el módulo 10, no hace falta leer nada.
@@ -137,8 +148,8 @@ export async function POST(req: NextRequest) {
   const evaluacion =
     tipoDocumento === "cedula" || !identidadBase
       ? evaluarIdentidadBase(extraccion, {
-          nombres: datosReferencia?.nombres ?? "",
-          apellidos: datosReferencia?.apellidos ?? "",
+          nombres: perfil?.usu_nombres ?? "",
+          apellidos: perfil?.usu_apellidos ?? "",
           cedula: cedulaDeclarada,
         })
       : cotejarConIdentidadBase(extraccion, identidadBase);

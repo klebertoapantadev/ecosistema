@@ -2688,3 +2688,108 @@ div.tarjeta-acceso-icono { display: grid; place-items: center; padding: 0; }
     grid-template-columns: 1fr 1fr;
   }
 }
+
+/* ═══════════ Inspección de identidad con Aria (TRQ-ABG-005) ═══════════ */
+/* Semáforo 🟢🟡🔴: menta para lo verificado, ámbar para lo dudoso y el naranja
+   de urgencia solo para lo que de verdad bloquea. */
+
+.aria-inspeccion {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.aria-inspeccion-cabeza {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+.aria-inspeccion-cabeza h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.aria-nivel {
+  padding: 0.25rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+.aria-nivel-verde {
+  background: var(--menta, #b1fbe3);
+  color: #05402f;
+}
+.aria-nivel-ambar {
+  background: #fff4d6;
+  color: #7a5200;
+}
+.aria-nivel-rojo {
+  background: #ffe3d6;
+  color: #8a2c00;
+}
+
+.aria-identidad-base {
+  margin: 0;
+  font-size: 0.88rem;
+  color: #4b4560;
+}
+
+.aria-documentos {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.4rem;
+}
+
+.aria-documento {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.5rem 0.7rem;
+  border: 1px solid #e6e2ef;
+  border-radius: 10px;
+  background: #fff;
+  font-size: 0.88rem;
+  flex-wrap: wrap;
+}
+.aria-documento .aria-nivel {
+  width: 1.6rem;
+  text-align: center;
+  padding: 0.15rem 0;
+}
+.aria-documento-tipo {
+  font-weight: 700;
+}
+.aria-documento-titular {
+  color: #6b6580;
+}
+.aria-documento-score {
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+  color: #6b6580;
+}
+
+.aria-observaciones {
+  margin: 0;
+  padding-left: 1.1rem;
+  font-size: 0.87rem;
+  color: #8a2c00;
+  display: grid;
+  gap: 0.25rem;
+}
+
+.aria-nota {
+  margin: 0;
+  font-size: 0.83rem;
+  color: #6b6580;
+}
+
+.aria-acciones {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}

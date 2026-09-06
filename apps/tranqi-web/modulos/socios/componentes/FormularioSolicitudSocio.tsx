@@ -46,6 +46,8 @@ import {
 import { crearClienteNavegador } from "@eco/supabase";
 import { ModalNotificacionPush } from "@eco/notificaciones";
 import { BarraVariablesDinamicas } from "@eco/identidad/componentes/BarraVariablesDinamicas";
+import { validarIdentificacion } from "../cedula-ecuador";
+import InspeccionIdentidadAria, { type DictamenAria } from "./InspeccionIdentidadAria";
 import {
   enviarSolicitudSocio,
   registrarDocumentoSocio,
@@ -132,39 +134,11 @@ function renderizarMarkdownHTML(texto: string): string {
   return htmlOut.join("");
 }
 
-function validarCedulaEcuador(val: string): { esValida: boolean; advertencia?: string } {
-  const c = val.trim();
-  if (!c) return { esValida: true };
-  if (!/^\d+$/.test(c)) return { esValida: false, advertencia: "La cédula solo debe contener dígitos numéricos." };
-  if (c.length < 10) return { esValida: false, advertencia: `Faltan ${10 - c.length} dígitos para completar la cédula (10 dígitos).` };
-  if (c.length > 10) return { esValida: true }; // Permite RUC de 13 dígitos
-
-  const prov = parseInt(c.substring(0, 2), 10);
-  if ((prov < 1 || prov > 24) && prov !== 30) {
-    return { esValida: false, advertencia: "Código de provincia no válido (primeros 2 dígitos entre 01 y 24)." };
-  }
-
-  const tercerDigito = parseInt(c.substring(2, 3), 10);
-  if (tercerDigito >= 6) {
-    return { esValida: false, advertencia: "El tercer dígito de cédula de persona natural debe ser menor a 6." };
-  }
-
-  const coeficientes = [2, 1, 2, 1, 2, 1, 2, 1, 2];
-  let suma = 0;
-  for (let i = 0; i < 9; i++) {
-    const digito = parseInt(c.charAt(i), 10);
-    const coef = coeficientes[i] ?? 1;
-    let valor = digito * coef;
-    if (valor >= 10) valor -= 9;
-    suma += valor;
-  }
-  const digitoVerificador = (10 - (suma % 10)) % 10;
-  if (digitoVerificador !== parseInt(c.charAt(9), 10)) {
-    return { esValida: false, advertencia: "El número no supera la validación del dígito verificador (Módulo 10). Revisa que esté bien escrito." };
-  }
-
-  return { esValida: true };
-}
+// La validación vive en `../cedula-ecuador`, compartida con el servidor: el
+// endpoint de verificación aplica exactamente el mismo módulo 10 antes de
+// gastar una llamada al modelo. Tener dos copias del algoritmo era pedir que
+// divergieran.
+const validarCedulaEcuador = validarIdentificacion;
 
 async function subirDocumento(
   solicitudId: string,
@@ -2261,6 +2235,27 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
               <ExternalLink size={14} /> Ver archivo
             </a>
           </div>
+        )}
+
+        {/* TRQ-ABG-005. Solo aparece cuando el documento ya está subido: la
+            verificación necesita el fichero en el bucket para poder pasarle a
+            Aria una URL firmada, y un documento aún sin enviar no lo está. */}
+        {solicitudExistente?.ssc_id && identificacionExistente && (
+          <InspeccionIdentidadAria
+            dictamen={
+              ((solicitudExistente as { ssc_detalles?: { aria_validacion?: DictamenAria } }).ssc_detalles
+                ?.aria_validacion ?? null) as DictamenAria | null
+            }
+            solicitudId={solicitudExistente.ssc_id as string}
+            datosReferencia={{ cedula }}
+            puedeVerificar
+            documentos={[
+              { id: identificacionExistente.dcs_id as string, tipo: "cedula", etiqueta: "mi identificación" },
+              ...(tituloExistente
+                ? [{ id: tituloExistente.dcs_id as string, tipo: "titulo" as const, etiqueta: "mi título" }]
+                : []),
+            ]}
+          />
         )}
       </div>
 
