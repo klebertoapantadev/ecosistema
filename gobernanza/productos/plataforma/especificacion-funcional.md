@@ -38,6 +38,7 @@ Este documento describe el **comportamiento compartido por los 4 productos** (Tr
 | **`PLT-017`** | Gestión de Sesiones y Revocación Remota | 🟡 Parcial | **40%** | Kleber Toapanta |
 | **`PLT-018`** | Historial de Accesos y Saludo Personalizado | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`PLT-019`** | **Reclutamiento, Bolsa de Empleo y "Únete al Equipo"** | ✅ Implementado | **100%** | Kleber Toapanta |
+| **`PLT-020`** | **Agenda, Disponibilidad y Citas (Profesionales y Técnicos)** | 🟡 En Desarrollo | **20%** | **Jesus Navarrete** |
 
 ---
 
@@ -654,7 +655,7 @@ Todo usuario registrado puede solicitar, por auto-servicio y sin intervención d
 2. **Decisión según historial transaccional (regla central):**
    - **Sin compras ni transacciones registradas:** la cuenta y todos sus datos personales se eliminan de forma **permanente e inmediata** (hard delete) — incluye `auth.users`, `seg_usuario` y `seg_membresia` en cascada.
    - **Con compras o transacciones registradas:** el hard delete **no procede**. El sistema debe **anonimizar** los datos personales identificables (nombre, correo, WhatsApp) y conservar únicamente lo exigido por la normativa contable/tributaria del SRI, desvinculado de la identidad real del usuario.
-3. **Fallar cerrado, no silenciosamente mal:** mientras la verificación real de historial transaccional no esté implementada (porque el esquema `comun_facturacion` todavía no existe — ver `PLT-006`), el sistema debe **rechazar explícitamente** la baja con un mensaje claro, nunca ejecutar un hard delete "optimista" que asuma que no hay historial. Ver nota de diseño en la implementación técnica.
+3. **Fallar cerrado, no silenciosamente mal:** el sistema consulta el historial transaccional real del usuario en `comun_comercio` (`com_transaccion_pago` aprobada o `com_suscripcion` activa) y, si existe, **anonimiza en vez de borrar**, conservando el vínculo contable exigido por el SRI. Nunca ejecuta un hard delete "optimista" que asuma que no hay historial, ni deja que el borrado se lleve por delante la billetera del usuario. Ver nota de diseño en la implementación técnica.
 4. **Sin retención oculta más allá de lo legal:** ninguna otra tabla o proceso puede quedarse con datos personales identificables de un usuario dado de baja fuera de lo que esta regla permite conservar.
 
 ### Criterios de Aceptación (Gherkin)
@@ -662,7 +663,7 @@ Todo usuario registrado puede solicitar, por auto-servicio y sin intervención d
   * **Dado que** un usuario registrado en Tranqi nunca ha realizado un pago.
   * **Cuando** confirma "Eliminar mi cuenta" desde su panel.
   * **Entonces** su cuenta y todos sus datos personales se eliminan de forma permanente y pierde el acceso de inmediato.
-* **Escenario:** Baja de cuenta con historial de compras (una vez exista `comun_facturacion`)
+* **Escenario:** Baja de cuenta con historial de compras
   * **Dado que** un usuario ya realizó al menos un pago registrado.
   * **Cuando** solicita eliminar su cuenta.
   * **Entonces** el sistema anonimiza sus datos personales y conserva el registro transaccional exigido por el SRI, sin vincularlo a su identidad real.
@@ -961,6 +962,113 @@ Proporciona la infraestructura unificada para exhibir al equipo de trabajo verif
   * **Dado que** el Administrador accede al widget `gestion_postulaciones` en FastFix.
   * **Cuando** revisa el expediente de un postulante a Técnico, descarga su CV y presiona "Aprobar Postulante".
   * **Entonces** el sistema actualiza el estado a `APROBADO`, habilita su perfil en la empresa (`PLT-003`) y notifica al usuario del resultado favorable.
+
+---
+
+## PLT-020 — Agenda, Disponibilidad y Citas de Profesionales
+
+**Responsable:** **Jesus Navarrete**
+
+### Descripción
+Motor transversal de agendamiento para todo negocio que atienda mediante profesionales con horario
+propio: abogados de Tranqi (`trq_abogado`), técnicos de FastFix (`ffh_tecnico`) y cualquier rol
+`SOCIO`/`PROFESIONAL` futuro. Resuelve las horas operativas que cada profesional configura, el
+cálculo de huecos libres, la asignación por turno rotativo, la reserva sin solapamiento y la sala de
+videoconsulta. Un solo modelo de datos (`comun_agenda`), aislado por negocio, en vez de que cada
+producto reimplemente su propio calendario. Sustenta el widget **Citas Programadas** del Panel
+Profesional (`PLT-011` regla 8) y se concreta en Tranqi como `TRQ-ABG-004` y `TRQ-CLI-001`.
+
+### Reglas de Negocio
+
+1. **Separación entre ocupación y encuentro:**
+   - `comun_agenda` modela **quién está ocupado y cuándo** (`age_reserva`). El contenido del
+     encuentro —motivo legal, caso judicial, orden de trabajo— pertenece al negocio
+     (`tranqui_legal.trq_cita`, y las tablas equivalentes de cada producto).
+   - Es el mismo criterio de [ADR-0003](../../arquitectura/adr/0003-catalogo-comercial-unificado.md):
+     el catálogo es común y el pedido es del negocio.
+   - **No existe catálogo de tipos de cita propio.** Lo agendable es una variante de
+     `comun_comercio` (`com_variante`), de donde salen duración, precio e impuestos.
+
+2. **Horas operativas configuradas por el propio profesional:**
+   - Franjas recurrentes por día de la semana en **hora local del despacho** (`age_franja`), no en
+     instantes: «los martes de 09:00 a 13:00» es una regla que debe sobrevivir a cualquier cambio de
+     huso horario.
+   - Parámetros por profesional: zona horaria IANA, duración por defecto, holgura entre citas,
+     antelación mínima para reservar, horizonte máximo del calendario y modalidades que acepta.
+   - **Un profesional sin agenda configurada no aparece disponible** — el sistema falla cerrado, no
+     muestra huecos por omisión.
+   - Excepciones puntuales (audiencia, vacaciones, feriado) en `age_bloqueo`.
+
+3. **La ausencia de solapamiento la garantiza la base de datos.** Una restricción de exclusión sobre
+   el rango temporal impide dos reservas simultáneas del mismo profesional aunque dos clientes pidan
+   el mismo hueco en el mismo instante. La validación en la aplicación es comodidad de interfaz, no
+   la garantía.
+
+4. **Asignación híbrida (algorítmica + manual + contingencia):**
+   - **Turno rotativo:** entre los profesionales habilitados para la materia o especialidad
+     solicitada que estén libres en ese rango, el sistema asigna al que lleva más tiempo sin recibir
+     turno. El reparto es determinista y auditable, no aleatorio.
+   - **Reasignación del operador:** el `OPERADOR` o `ADMINISTRADOR` del negocio puede cambiar el
+     profesional asignado en cualquier momento desde su consola, dejando rastro del origen.
+   - **Contingencia:** si el profesional asignado cancela, **la cita del cliente no se cancela**:
+     entra en una cola de contingencia con alerta prioritaria al operador para reasignarla.
+
+5. **Cobertura antes de cobrar.** Al reservar, el sistema resuelve en este orden: derecho de consumo
+   incluido en la suscripción vigente del cliente (`com_derecho_consumo`) → cupón aplicable
+   (`PLT-014`) → cobro por pasarela (`PLT-006`). El consumo del cupo del plan es **atómico**: dos
+   sesiones simultáneas nunca gastan la misma consulta del periodo.
+
+6. **Privacidad de la agenda ajena.** La disponibilidad de un profesional se expone únicamente como
+   **huecos libres**, nunca como el detalle de lo ocupado. Ningún cliente puede leer las reservas de
+   un profesional ni deducir con quién se reúne.
+
+7. **Sala de videoconsulta.** Para citas virtuales, la plataforma genera el enlace de **Google Meet**
+   mediante la API de Google Calendar sobre el calendario del profesional. Las credenciales viven
+   cifradas en Supabase Vault por profesional (`PLT-008`), nunca en tabla. **Si el proveedor externo
+   falla o el profesional no ha conectado su calendario, la cita se agenda igual** y el enlace queda
+   pendiente: la agenda no depende de un tercero para funcionar. El enlace se entrega solo a las
+   partes de la cita y solo dentro de la ventana de la sesión.
+
+8. **Configuración asistida por ARIA (`PLT-004`).** El asistente del profesional detecta que no tiene
+   agenda configurada y la levanta conversando: días, horario, duración, modalidad y antelación. Al
+   terminar **repite el resumen y exige confirmación explícita** antes de escribir. Ninguna
+   herramienta de IA escribe agenda ni reserva citas sin ese consentimiento en el hilo.
+
+9. **Notificaciones (`PLT-013`).** Eventos que despachan alerta multicanal: propuesta recibida
+   (→profesional), cita confirmada (→cliente), recordatorio previo (→ambos), cancelación (→la otra
+   parte) y contingencia por cancelación del profesional (→operador).
+
+10. **Aislamiento multitenant.** Cada negocio opera sobre su propio subconjunto de `comun_agenda`
+    identificado por negocio dueño. Una persona que sea profesional en dos negocios tiene una
+    configuración por negocio, pero **una sola línea temporal de ocupación**: no puede duplicarse.
+
+### Criterios de Aceptación (Gherkin)
+
+* **Escenario:** Dos clientes piden el mismo hueco a la vez
+  * **Dado que** un abogado tiene libre el martes a las 10:00 y ningún otro hueco a esa hora.
+  * **Cuando** dos clientes confirman la reserva de ese hueco en el mismo instante.
+  * **Entonces** el sistema acepta exactamente una reserva y ofrece al otro cliente los huecos
+    siguientes, sin crear dos citas solapadas.
+
+* **Escenario:** Consulta incluida en el plan del cliente
+  * **Dado que** el cliente tiene una suscripción activa con 1 consulta telemática mensual y no ha
+    usado ninguna este mes.
+  * **Cuando** reserva una consulta.
+  * **Entonces** el sistema descuenta el cupo del plan, no solicita pago, e informa al cliente de que
+    le quedan 0 consultas incluidas hasta el próximo periodo.
+
+* **Escenario:** El profesional asignado cancela la cita
+  * **Dado que** una cita confirmada tiene asignado al Abogado 1.
+  * **Cuando** el Abogado 1 la cancela.
+  * **Entonces** la cita del cliente permanece viva en estado de contingencia, el operador recibe una
+    alerta prioritaria y puede reasignarla al Abogado 2 conservando fecha, hora y enlace.
+
+* **Escenario:** Profesional sin agenda configurada
+  * **Dado que** un abogado recién activado no ha definido sus horas operativas.
+  * **Cuando** un cliente busca disponibilidad en su materia.
+  * **Entonces** ese abogado no aparece como disponible ni recibe turnos, y su asistente le propone
+    configurar la agenda.
+
 
 ---
 

@@ -18,7 +18,7 @@
 3. **Vigencia Configurable por Promoción / Cupón:**
    * La caducidad de los bonos promocionales no es rígida ni fija: cada cupón o convenio define individualmente sus fechas de inicio y caducidad (`cup_valido_hasta`, `wlm_expira_en`), otorgando máxima flexibilidad comercial a cada campaña.
 
-### B. Emisión Tributaria SRI y Multi-Tenant Legal (`comun_facturacion`)
+### B. Emisión Tributaria SRI y Multi-Tenant Legal (`comun_facturacion`, pendiente de crear)
 4. **Independencia de RUC por Negocio:**
    * Cada negocio del ecosistema posee su propia **Razón Social, RUC, Certificado de Firma Electrónica (.p12) y Secuenciales de Emisión propios** ante el SRI.
    * La plataforma gestiona las credenciales de forma aislada y segura en el Vault de configuración por tenant (`PLT-008`).
@@ -46,7 +46,7 @@
 10. **Atribución Omnicanal ARIA (`packages/agentes-ia`):**
     * ARIA reemplaza herramientas externas (como ManyChat) gestionando conversaciones en WhatsApp/Instagram, atribuyendo la venta al asesor mediante links con identificador (`?asesora=paola`) o turnos rotativos, y calculando automáticamente la liquidación en tiempo real.
 
-### F. Pasarelas de Pago Híbridas y Multi-Pasarela por Negocio (`comun_facturacion`)
+### F. Pasarelas de Pago Híbridas y Multi-Pasarela por Negocio (`comun_comercio`)
 11. **Estrategia Multi-Pasarela por Tenant:**
     * Cada negocio opera con su pasarela de cobro preferida según su giro comercial:
       * **Tranqi:** Paymentez / Nuvei (tokenización y recurrencia de tarjetas de crédito/débito).

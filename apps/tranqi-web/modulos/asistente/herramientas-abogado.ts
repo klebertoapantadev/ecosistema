@@ -1,5 +1,6 @@
 import type { Herramienta } from "@eco/agentes-ia";
 import type { ContextoAsistente } from "./contexto";
+import { HERRAMIENTAS_ABOGADO_AGENDA } from "./herramientas-abogado-agenda";
 import { campos, dinero, fechaEcuador, fechaHoraEcuador, lista } from "./formato";
 
 // Herramientas del copiloto del ABOGADO (agente "Tranqi Asistente Abogado").
@@ -307,6 +308,9 @@ const miFicha: HerramientaAbogado = {
 };
 
 export const HERRAMIENTAS_ABOGADO: Record<string, HerramientaAbogado> = {
+  // Agenda (PLT-020): configurar horas operativas, bloquear, confirmar y
+  // reagendar. Se declaran primero para que el spread no pise nada de aqui.
+  ...HERRAMIENTAS_ABOGADO_AGENDA,
   casos_asignados: casosAsignados,
   agenda_del_dia: agendaDelDia,
   documentos_del_caso: documentosDelCaso,

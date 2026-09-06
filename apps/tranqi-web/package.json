@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@eco/agenda": "workspace:*",
     "@eco/agentes-ia": "workspace:*",
     "@eco/auditoria": "workspace:*",
     "@eco/configuracion-negocio": "workspace:*",

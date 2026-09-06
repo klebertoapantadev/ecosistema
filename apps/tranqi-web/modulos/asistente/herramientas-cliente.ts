@@ -1,6 +1,7 @@
 import type { Herramienta } from "@eco/agentes-ia";
 import type { ContextoAsistente } from "./contexto";
 import { campos, fechaHoraEcuador, lista } from "./formato";
+import { HERRAMIENTAS_CLIENTE_AGENDA } from "./herramientas-cliente-agenda";
 
 // Herramientas del asistente del AFILIADO (TRQ_CLIENTE, agente
 // "Tranqi Asistente Cliente").
@@ -177,73 +178,6 @@ const misCitas: HerramientaCliente = {
   },
 };
 
-const agendarCita: HerramientaCliente = {
-  descripcion:
-    "Crea una cita PROPUESTA a nombre del afiliado. Antes de llamarla, resume al " +
-    "afiliado fecha, hora y modalidad y espera su confirmacion explicita — nunca " +
-    "la ejecutes a partir de una intencion ambigua. La cita queda en estado " +
-    "'propuesta' hasta que el abogado la confirme; diselo al afiliado.",
-  esquema: {
-    type: "object",
-    properties: {
-      inicio_en: {
-        type: "string",
-        description:
-          "Fecha y hora de inicio en ISO-8601 CON zona horaria, p. ej. 2026-09-04T10:00:00-05:00 " +
-          "(-05:00 es Ecuador continental). Usa el contexto temporal para resolver 'mañana' o 'el jueves'.",
-      },
-      modalidad: { type: "string", enum: ["presencial", "virtual"] },
-      motivo: { type: "string", description: "Una frase con el motivo, en palabras del afiliado." },
-      caso_id: {
-        type: "string",
-        description: "cas_id si la cita es sobre un caso existente. Omitelo si es una consulta nueva.",
-      },
-    },
-    required: ["inicio_en", "modalidad", "motivo"],
-  },
-  async ejecutar(argumentos, { supabase, sesion }) {
-    const { inicio_en: inicioEn, modalidad, motivo, caso_id: casoId } = argumentos;
-    if (typeof inicioEn !== "string") throw new Error("Falta inicio_en.");
-    if (modalidad !== "presencial" && modalidad !== "virtual") {
-      throw new Error("modalidad debe ser 'presencial' o 'virtual'.");
-    }
-
-    const inicio = new Date(inicioEn);
-    if (Number.isNaN(inicio.getTime())) {
-      throw new Error(`No entiendo la fecha '${inicioEn}'. Usa ISO-8601 con zona horaria.`);
-    }
-    // Una cita en el pasado siempre es un error de interpretacion del modelo
-    // (tipico al resolver "el jueves" con la semana equivocada). Mejor
-    // devolverselo que crear basura en la agenda del abogado.
-    if (inicio.getTime() < Date.now()) {
-      throw new Error(
-        `Esa fecha ya paso (${inicioEn}). Confirma con el afiliado el dia exacto antes de reintentar.`,
-      );
-    }
-
-    const { data, error } = await supabase
-      .schema("tranqui_legal")
-      .from("trq_cita")
-      .insert({
-        cit_cliente_id: sesion.usuarioId, // del contexto, JAMAS de los argumentos
-        cit_caso_id: typeof casoId === "string" ? casoId : null,
-        cit_inicio_en: inicio.toISOString(),
-        cit_modalidad: modalidad,
-        cit_estado: "propuesta",
-        cit_motivo: typeof motivo === "string" ? motivo : null,
-      })
-      .select("cit_id, cit_inicio_en, cit_modalidad")
-      .single();
-    if (error) throw new Error(error.message);
-
-    return (
-      `Cita propuesta correctamente para el ${fechaHoraEcuador(data.cit_inicio_en)} ` +
-      `(${data.cit_modalidad}). Queda pendiente de que el abogado la confirme; ` +
-      `el afiliado recibira el aviso. Identificador: ${data.cit_id}`
-    );
-  },
-};
-
 const documentosPendientes: HerramientaCliente = {
   descripcion:
     "Lista los documentos del afiliado que siguen pendientes de revision o fueron " +
@@ -318,7 +252,11 @@ export const HERRAMIENTAS_CLIENTE: Record<string, HerramientaCliente> = {
   mis_casos: misCasos,
   detalle_caso: detalleCaso,
   mis_citas: misCitas,
-  agendar_cita: agendarCita,
   documentos_pendientes: documentosPendientes,
   mi_perfil: miPerfil,
+  // Agenda (PLT-020). `agendar_cita` vivia aqui y se retiro: insertaba en
+  // trq_cita sin cit_abogado_id, de modo que la cita no la veia ningun
+  // abogado. La sustituyen buscar_horarios + reservar_cita, que pasan por el
+  // RPC transaccional donde se resuelven turno, cobertura y solape.
+  ...HERRAMIENTAS_CLIENTE_AGENDA,
 };
