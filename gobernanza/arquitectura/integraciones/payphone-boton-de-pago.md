@@ -189,3 +189,31 @@ Para facilitar el aseguramiento de calidad y las pruebas operativas sin necesida
      * `[Simular Pago Aprobado]` → Confirma la transacción con código de autorización bancario simulado (ej. `AUTH-SIM-XXXXXX`) y guarda el registro con estado `APROBADO`.
      * `[Simular Pago Rechazado]` → Registra el evento con estado `RECHAZADO` para probar manejo de excepciones de fondos insuficientes.
    - Ambos caminos registran la auditoría en `com_transaccion_pago` y emiten el comprobante para que el comprador verifique el resultado.
+
+---
+
+## 5. Gestión y Creación de Productos y Categorías (Catálogo Unificado ADR-0003)
+
+Para registrar nuevos productos, honorarios profesionales o categorías en el catálogo comercial:
+
+### 5.1 Opción A: Desde la Interfaz Web (Panel de Administración)
+1. Ingresar a `/panel/catalogo-productos`.
+2. **Crear Categoría:**
+   - Clic en el botón **`Nueva Categoría`**.
+   - Ingresar el nombre (ej. "Honorarios de Litigio y Patrocinio"), descripción y tipo.
+   - El sistema genera el slug y la almacena en el catálogo.
+3. **Crear Honorario o Producto:**
+   - Clic en el botón **`Nuevo Honorario`**.
+   - Seleccionar la categoría y el tipo comercial (Servicio, Suscripción, Digital, Físico).
+   - Definir el **Precio Base Imponible** ($ USD) y la tarifa de **IVA SRI** (15% o 0%). El formulario calcula en vivo el total facturable con Payphone.
+   - Guardar y el producto queda disponible de inmediato para cobro.
+4. **Carga Rápida de Semillas:**
+   - Si el catálogo está vacío, hacer clic en **`Cargar Catálogo Inicial`** para sembrar automáticamente los honorarios de consulta, patrocinio en juicio, plan familiar y dictamen express de Tranqi.
+
+### 5.2 Opción B: Mediante Base de Datos / Migraciones SQL
+Los productos se estructuran en `comun_comercio`:
+- `comun_comercio.com_categoria`: Clasificación comercial (`ctg_negocio`, `ctg_nombre`, `ctg_slug`, `ctg_tipo`).
+- `comun_comercio.com_producto`: Producto maestro (`pro_negocio`, `pro_nombre`, `pro_slug`, `pro_tipo`, `pro_destacado`, `pro_detalle_producto`).
+- `comun_comercio.com_variante`: Precios e impuestos (`var_precio`, `var_tarifa_iva_porcentaje`, `var_sku`, `var_codigo_impuesto_sri`).
+- Vistas de compatibilidad en esquema `public`: `public.com_producto`, `public.com_categoria`, `public.com_variante`.
+

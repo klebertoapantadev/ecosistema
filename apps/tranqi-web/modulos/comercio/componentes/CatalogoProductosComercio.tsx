@@ -15,13 +15,21 @@ import {
   Clock,
   ChevronRight,
   RefreshCw,
+  Plus,
+  FolderPlus,
+  Layers,
 } from "lucide-react";
 import {
   ProductoCatalogo,
   VarianteCatalogo,
+  CategoriaCatalogo,
   obtenerCatalogoProductosAction,
+  obtenerCategoriasAction,
+  restaurarCatalogoEjemploAction,
 } from "../acciones";
 import { ModalCheckoutPayphone } from "./ModalCheckoutPayphone";
+import { ModalCrearProducto } from "./ModalCrearProducto";
+import { ModalCrearCategoria } from "./ModalCrearCategoria";
 
 interface Props {
   negocio?: string;
@@ -29,25 +37,34 @@ interface Props {
 
 export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
   const [productos, setProductos] = useState<ProductoCatalogo[]>([]);
+  const [categoriasLista, setCategoriasLista] = useState<CategoriaCatalogo[]>([]);
   const [cargando, setCargando] = useState(true);
+  const [cargandoSemillas, setCargandoSemillas] = useState(false);
   const [busqueda, setBusqueda] = useState("");
   const [categoriaSeleccionada, setCategoriaSeleccionada] = useState<string>("todas");
 
-  // Estado del modal de checkout
+  // Estado de modales
   const [checkoutAbierto, setCheckoutAbierto] = useState(false);
   const [productoCheckout, setProductoCheckout] = useState<ProductoCatalogo | null>(null);
   const [varianteCheckout, setVarianteCheckout] = useState<VarianteCatalogo | null>(null);
+
+  const [modalProdAbierto, setModalProdAbierto] = useState(false);
+  const [modalCatAbierto, setModalCatAbierto] = useState(false);
 
   // Mapa de variantes seleccionadas por producto
   const [varianteSeleccionadaPorProducto, setVarianteSeleccionadaPorProducto] = useState<
     Record<string, string>
   >({});
 
-  const cargarCatalogo = async () => {
+  const cargarDatos = async () => {
     setCargando(true);
     try {
-      const prods = await obtenerCatalogoProductosAction(negocio);
+      const [prods, cats] = await Promise.all([
+        obtenerCatalogoProductosAction(negocio),
+        obtenerCategoriasAction(negocio),
+      ]);
       setProductos(prods);
+      setCategoriasLista(cats);
 
       // Preseleccionar primera variante por defecto para cada producto
       const iniciales: Record<string, string> = {};
@@ -58,15 +75,28 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
       });
       setVarianteSeleccionadaPorProducto(iniciales);
     } catch (err) {
-      console.error("Error al cargar catálogo:", err);
+      console.error("Error al cargar catálogo comercial:", err);
     } finally {
       setCargando(false);
     }
   };
 
   useEffect(() => {
-    cargarCatalogo();
+    cargarDatos();
   }, [negocio]);
+
+  // Carga rápida de catálogo inicial / semillas
+  const handleCargarSemillas = async () => {
+    setCargandoSemillas(true);
+    try {
+      await restaurarCatalogoEjemploAction(negocio);
+      await cargarDatos();
+    } catch (err) {
+      console.error("Error al restaurar catálogo inicial:", err);
+    } finally {
+      setCargandoSemillas(false);
+    }
+  };
 
   // Filtrado
   const productosFiltrados = productos.filter((p) => {
@@ -82,16 +112,6 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
     return cumpleBusqueda && cumpleCategoria;
   });
 
-  // Categorías únicas
-  const categorias = Array.from(
-    new Set(
-      productos
-        .map((p) => p.categoria)
-        .filter(Boolean)
-        .map((c) => JSON.stringify(c))
-    )
-  ).map((s) => JSON.parse(s));
-
   // Abrir checkout para variante específica
   const abrirCheckout = (prod: ProductoCatalogo, varId?: string) => {
     const selectedVarId = varId || varianteSeleccionadaPorProducto[prod.pro_id];
@@ -103,16 +123,23 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
     setCheckoutAbierto(true);
   };
 
-  const getIconoProducto = (slug: string) => {
-    if (slug.includes("honorarios") || slug.includes("patrocinio")) return <Scale size={24} color="#0284C7" />;
-    if (slug.includes("plan") || slug.includes("proteccion")) return <ShieldCheck size={24} color="#059669" />;
-    if (slug.includes("dictamen") || slug.includes("contrato")) return <FileCheck size={24} color="#7E22CE" />;
-    return <ShoppingBag size={24} color="#D97706" />;
+  const getIconoProducto = (p: ProductoCatalogo) => {
+    const iconoTipo = p.pro_detalle_producto?.icono;
+    if (iconoTipo === "Scale" || p.pro_slug.includes("honorarios") || p.pro_slug.includes("patrocinio")) {
+      return <Scale size={24} color="#0284C7" />;
+    }
+    if (iconoTipo === "ShieldCheck" || p.pro_slug.includes("plan") || p.pro_slug.includes("proteccion")) {
+      return <ShieldCheck size={24} color="#059669" />;
+    }
+    if (iconoTipo === "FileCheck" || p.pro_slug.includes("dictamen") || p.pro_slug.includes("contrato")) {
+      return <FileCheck size={24} color="#7E22CE" />;
+    }
+    return <CreditCard size={24} color="#D97706" />;
   };
 
   return (
     <div style={{ padding: "8px 0" }}>
-      {/* Cabecera del Catálogo */}
+      {/* Cabecera del Catálogo y Barra de Acciones */}
       <div
         style={{
           display: "flex",
@@ -166,26 +193,81 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={cargarCatalogo}
-          style={{
-            background: "#F1F5F9",
-            color: "#334155",
-            border: "1px solid #CBD5E1",
-            padding: "8px 14px",
-            borderRadius: "8px",
-            fontSize: "0.85rem",
-            fontWeight: 600,
-            cursor: "pointer",
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "6px",
-          }}
-        >
-          <RefreshCw size={14} className={cargando ? "animate-spin" : ""} />
-          Actualizar Catálogo
-        </button>
+        {/* Botones de Gestión de Catálogo para Administrador */}
+        <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
+          <button
+            type="button"
+            onClick={() => setModalProdAbierto(true)}
+            className="btn-responsive-accion"
+            title="Crear Nuevo Honorario o Servicio"
+            aria-label="Crear Nuevo Honorario o Servicio"
+            style={{
+              background: "#0F172A",
+              color: "#FFFFFF",
+              border: "none",
+              padding: "8px 14px",
+              borderRadius: "8px",
+              fontSize: "0.85rem",
+              fontWeight: 700,
+              cursor: "pointer",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+              boxShadow: "0 1px 3px rgba(0,0,0,0.15)",
+            }}
+          >
+            <Plus size={15} />
+            <span className="btn-texto-responsive">Nuevo Honorario</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setModalCatAbierto(true)}
+            className="btn-responsive-accion"
+            title="Crear Nueva Categoría"
+            aria-label="Crear Nueva Categoría"
+            style={{
+              background: "#FFFFFF",
+              color: "#334155",
+              border: "1px solid #CBD5E1",
+              padding: "8px 14px",
+              borderRadius: "8px",
+              fontSize: "0.85rem",
+              fontWeight: 600,
+              cursor: "pointer",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+            }}
+          >
+            <FolderPlus size={15} />
+            <span className="btn-texto-responsive">Nueva Categoría</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={cargarDatos}
+            className="btn-responsive-accion"
+            title="Actualizar Catálogo"
+            aria-label="Actualizar Catálogo"
+            style={{
+              background: "#F1F5F9",
+              color: "#334155",
+              border: "1px solid #CBD5E1",
+              padding: "8px 14px",
+              borderRadius: "8px",
+              fontSize: "0.85rem",
+              fontWeight: 600,
+              cursor: "pointer",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+            }}
+          >
+            <RefreshCw size={14} className={cargando ? "animate-spin" : ""} />
+            <span className="btn-texto-responsive">Actualizar</span>
+          </button>
+        </div>
       </div>
 
       {/* Barra de Búsqueda y Filtros de Categoría */}
@@ -221,7 +303,7 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
           />
         </div>
 
-        <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+        <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
           <button
             type="button"
             onClick={() => setCategoriaSeleccionada("todas")}
@@ -236,9 +318,9 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
               color: categoriaSeleccionada === "todas" ? "#FFFFFF" : "#475569",
             }}
           >
-            Todas las Categorías
+            Todas ({productos.length})
           </button>
-          {categorias.map((c: any) => (
+          {categoriasLista.map((c) => (
             <button
               key={c.ctg_id}
               type="button"
@@ -263,8 +345,8 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
       {/* Grid de Productos */}
       {cargando ? (
         <div style={{ padding: "60px 20px", textAlign: "center", color: "#64748B" }}>
-          <RefreshCw size={32} className="animate-spin" style={{ margin: "0 auto 12px" }} />
-          <div>Cargando catálogo comercial unificado...</div>
+          <RefreshCw size={32} className="animate-spin" style={{ margin: "0 auto 12px", color: "#0284C7" }} />
+          <div style={{ fontWeight: 600 }}>Cargando catálogo comercial unificado...</div>
         </div>
       ) : productosFiltrados.length === 0 ? (
         <div
@@ -272,17 +354,74 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
             background: "#FFFFFF",
             border: "1px dashed #CBD5E1",
             borderRadius: "16px",
-            padding: "50px 20px",
+            padding: "50px 24px",
             textAlign: "center",
           }}
         >
-          <ShoppingBag size={40} color="#94A3B8" style={{ margin: "0 auto 12px" }} />
-          <h3 style={{ margin: "0 0 6px", fontSize: "1rem", color: "#0F172A" }}>
+          <div
+            style={{
+              width: "56px",
+              height: "56px",
+              borderRadius: "16px",
+              background: "#F1F5F9",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              margin: "0 auto 16px",
+              color: "#64748B",
+            }}
+          >
+            <ShoppingBag size={28} />
+          </div>
+          <h3 style={{ margin: "0 0 6px", fontSize: "1.1rem", fontWeight: 700, color: "#0F172A" }}>
             No se encontraron productos o servicios
           </h3>
-          <p style={{ margin: 0, fontSize: "0.85rem", color: "#64748B" }}>
-            Prueba ajustando los términos de búsqueda o cambiando la categoría seleccionada.
+          <p style={{ margin: "0 auto 20px", fontSize: "0.85rem", color: "#64748B", maxWidth: "420px" }}>
+            Puedes crear un nuevo honorario profesional o cargar inmediatamente el catálogo de ejemplo con tarifas y planes preconfigurados.
           </p>
+          <div style={{ display: "flex", gap: "10px", justifyContent: "center", flexWrap: "wrap" }}>
+            <button
+              type="button"
+              onClick={() => setModalProdAbierto(true)}
+              style={{
+                background: "#0F172A",
+                color: "#FFFFFF",
+                border: "none",
+                padding: "9px 18px",
+                borderRadius: "8px",
+                fontSize: "0.85rem",
+                fontWeight: 700,
+                cursor: "pointer",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+              }}
+            >
+              <Plus size={16} />
+              Crear Honorario
+            </button>
+            <button
+              type="button"
+              onClick={handleCargarSemillas}
+              disabled={cargandoSemillas}
+              style={{
+                background: "#0284C7",
+                color: "#FFFFFF",
+                border: "none",
+                padding: "9px 18px",
+                borderRadius: "8px",
+                fontSize: "0.85rem",
+                fontWeight: 700,
+                cursor: cargandoSemillas ? "not-allowed" : "pointer",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+              }}
+            >
+              <Sparkles size={16} />
+              {cargandoSemillas ? "Cargando..." : "Cargar Catálogo Inicial"}
+            </button>
+          </div>
         </div>
       ) : (
         <div
@@ -295,7 +434,7 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
           {productosFiltrados.map((p) => {
             const currentVarId = varianteSeleccionadaPorProducto[p.pro_id] || p.variantes[0]?.var_id;
             const currentVar = p.variantes.find((v) => v.var_id === currentVarId) || p.variantes[0];
-            const esHonorario = p.pro_slug === "honorarios-profesionales-juridicos";
+            const esHonorario = p.pro_tipo === "SERVICIO" || p.pro_slug.includes("honorarios");
 
             return (
               <div
@@ -308,92 +447,105 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                   display: "flex",
                   flexDirection: "column",
                   boxShadow: esHonorario
-                    ? "0 4px 15px -3px rgba(2, 132, 199, 0.15)"
-                    : "0 1px 3px rgba(0,0,0,0.05)",
-                  position: "relative",
+                    ? "0 4px 12px rgba(2, 132, 199, 0.1)"
+                    : "0 2px 6px rgba(0,0,0,0.04)",
                   transition: "transform 0.15s ease, box-shadow 0.15s ease",
+                  position: "relative",
                 }}
               >
-                {/* Badge de Destacado / Honorario Especial */}
-                {esHonorario && (
+                {/* Badge Superior */}
+                {p.pro_destacado && (
                   <div
                     style={{
-                      background: "#0284C7",
+                      position: "absolute",
+                      top: "12px",
+                      right: "12px",
+                      background: "linear-gradient(135deg, #F59E0B, #D97706)",
                       color: "#FFFFFF",
-                      padding: "4px 12px",
+                      padding: "2px 8px",
+                      borderRadius: "12px",
                       fontSize: "0.7rem",
                       fontWeight: 800,
-                      letterSpacing: "0.05em",
-                      textTransform: "uppercase",
                       display: "flex",
                       alignItems: "center",
                       gap: "4px",
+                      boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
                     }}
                   >
-                    <Scale size={12} />
-                    ★ Principal: Liquidación de Honorarios Abogados
+                    <Sparkles size={10} />
+                    DESTACADO
                   </div>
                 )}
 
-                <div style={{ padding: "20px", flex: 1, display: "flex", flexDirection: "column" }}>
-                  {/* Categoría y Tipo */}
-                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "12px" }}>
-                    <span
-                      style={{
-                        fontSize: "0.75rem",
-                        fontWeight: 600,
-                        color: "#0284C7",
-                        background: "#F0F9FF",
-                        padding: "2px 8px",
-                        borderRadius: "6px",
-                      }}
-                    >
-                      {p.categoria?.ctg_nombre || "Servicio General"}
-                    </span>
-                    <span
-                      style={{
-                        fontSize: "0.7rem",
-                        fontWeight: 600,
-                        color: "#64748B",
-                        textTransform: "uppercase",
-                      }}
-                    >
-                      {p.pro_tipo}
-                    </span>
-                  </div>
-
-                  {/* Icono y Título */}
-                  <div style={{ display: "flex", gap: "12px", alignItems: "flex-start", marginBottom: "12px" }}>
+                <div style={{ padding: "20px", display: "flex", flexDirection: "column", flex: 1 }}>
+                  {/* Icono y Categoría */}
+                  <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "12px" }}>
                     <div
                       style={{
-                        width: "44px",
-                        height: "44px",
+                        width: "46px",
+                        height: "46px",
                         borderRadius: "12px",
                         background: "#F8FAFC",
                         border: "1px solid #E2E8F0",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
-                        flexShrink: 0,
                       }}
                     >
-                      {getIconoProducto(p.pro_slug)}
+                      {getIconoProducto(p)}
                     </div>
                     <div>
-                      <h3 style={{ margin: "0 0 4px", fontSize: "1.05rem", fontWeight: 700, color: "#0F172A" }}>
+                      <span
+                        style={{
+                          fontSize: "0.75rem",
+                          fontWeight: 700,
+                          color: "#64748B",
+                          textTransform: "uppercase",
+                          letterSpacing: "0.5px",
+                        }}
+                      >
+                        {p.categoria?.ctg_nombre || "Servicio Jurídico"}
+                      </span>
+                      <h3
+                        style={{
+                          margin: "2px 0 0",
+                          fontSize: "1.05rem",
+                          fontWeight: 800,
+                          color: "#0F172A",
+                          lineHeight: 1.3,
+                        }}
+                      >
                         {p.pro_nombre}
                       </h3>
-                      <p style={{ margin: 0, fontSize: "0.8rem", color: "#64748B", lineHeight: 1.4 }}>
-                        {p.pro_descripcion}
-                      </p>
                     </div>
                   </div>
 
-                  {/* Selector de Variantes (si tiene más de 1) */}
+                  {/* Descripción */}
+                  <p
+                    style={{
+                      margin: "0 0 16px",
+                      fontSize: "0.82rem",
+                      color: "#475569",
+                      lineHeight: 1.45,
+                      flex: 1,
+                    }}
+                  >
+                    {p.pro_descripcion}
+                  </p>
+
+                  {/* Selector de Variantes / Tarifas */}
                   {p.variantes.length > 1 && (
-                    <div style={{ marginBottom: "16px", marginTop: "8px" }}>
-                      <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#475569", marginBottom: "6px" }}>
-                        Selecciona el Alcance / Variante:
+                    <div style={{ marginBottom: "16px" }}>
+                      <label
+                        style={{
+                          display: "block",
+                          fontSize: "0.75rem",
+                          fontWeight: 700,
+                          color: "#334155",
+                          marginBottom: "6px",
+                        }}
+                      >
+                        Selecciona la modalidad de tarifa:
                       </label>
                       <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
                         {p.variantes.map((v) => {
@@ -450,7 +602,7 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                             Base Imponible: ${currentVar.var_precio.toFixed(2)}
                           </div>
                           <div style={{ fontSize: "0.7rem", color: "#94A3B8" }}>
-                            + IVA (15%): ${currentVar.monto_iva.toFixed(2)}
+                            + IVA ({currentVar.var_tarifa_iva_porcentaje}%): ${currentVar.monto_iva.toFixed(2)}
                           </div>
                         </div>
                         <div style={{ textAlign: "right" }}>
@@ -496,12 +648,33 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
         </div>
       )}
 
-      {/* Modal de Checkout */}
+      {/* Modal de Checkout Payphone */}
       <ModalCheckoutPayphone
         abierto={checkoutAbierto}
         alCerrar={() => setCheckoutAbierto(false)}
         productoNombre={productoCheckout?.pro_nombre || ""}
         variante={varianteCheckout}
+        negocio={negocio}
+      />
+
+      {/* Modal Crear Producto / Honorario */}
+      <ModalCrearProducto
+        abierto={modalProdAbierto}
+        onCerrar={() => setModalProdAbierto(false)}
+        onProductoCreado={(nuevo) => {
+          setProductos((prev) => [nuevo, ...prev]);
+        }}
+        categorias={categoriasLista}
+        negocio={negocio}
+      />
+
+      {/* Modal Crear Categoría */}
+      <ModalCrearCategoria
+        abierto={modalCatAbierto}
+        onCerrar={() => setModalCatAbierto(false)}
+        onCategoriaCreada={(nueva) => {
+          setCategoriasLista((prev) => [...prev, nueva]);
+        }}
         negocio={negocio}
       />
     </div>
