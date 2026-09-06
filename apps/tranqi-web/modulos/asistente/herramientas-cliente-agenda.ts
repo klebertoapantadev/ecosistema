@@ -1,7 +1,6 @@
 import type { Herramienta } from "@eco/agentes-ia";
 import type { ContextoAsistente } from "./contexto";
 import { fechaHoraEcuador, lista } from "./formato";
-import { esquemaPendiente } from "../agenda/puente-tipos";
 
 // Herramientas de AGENDA del asistente del afiliado (TRQ-ABG-004 / PLT-020).
 //
@@ -25,7 +24,7 @@ async function resolverMateria(
   supabase: ContextoAsistente["supabase"],
   texto: string,
 ): Promise<{ id: string; nombre: string }> {
-  const { data, error } = await esquemaPendiente(supabase, "tranqui_legal")
+  const { data, error } = await supabase.schema("tranqui_legal")
     .from("trq_materia")
     .select("mat_id, mat_nombre, mat_codigo")
     .eq("mat_activa", true);
@@ -97,24 +96,24 @@ const buscarHorarios: HerramientaCliente = {
     const ventana = typeof dias === "number" && dias > 0 && dias <= 90 ? dias : 14;
     const fin = new Date(inicio.getTime() + ventana * 24 * 60 * 60 * 1000);
 
-    let varianteId: string | null = null;
+    let varianteId: string | undefined;
     if (typeof sku === "string") {
-      const { data } = await esquemaPendiente(supabase, "comun_comercio")
+      const { data } = await supabase.schema("comun_comercio")
         .from("com_variante")
         .select("var_id")
         .eq("var_negocio", NEGOCIO)
         .eq("var_sku", sku)
         .maybeSingle();
-      varianteId = data?.var_id ?? null;
+      varianteId = data?.var_id;
     }
 
-    const { data, error } = await esquemaPendiente(supabase, "tranqui_legal").rpc("trq_fn_horarios_materia", {
+    const { data, error } = await supabase.schema("tranqui_legal").rpc("trq_fn_horarios_materia", {
       p_materia_id: m.id,
       p_desde: inicio.toISOString(),
       p_hasta: fin.toISOString(),
       p_variante_id: varianteId,
-      p_modalidad: typeof modalidad === "string" ? modalidad : null,
-      p_provincia_id: null,
+      p_modalidad: typeof modalidad === "string" ? modalidad : undefined,
+      p_provincia_id: undefined,
     });
     if (error) throw new Error(error.message);
 
@@ -149,7 +148,7 @@ const miCobertura: HerramientaCliente = {
     "Usala ANTES de reservar para poder decirle si la cita entra en su plan o tiene costo.",
   esquema: { type: "object", properties: {} },
   async ejecutar(_argumentos, { supabase }) {
-    const { data, error } = await esquemaPendiente(supabase, "comun_comercio")
+    const { data, error } = await supabase.schema("comun_comercio")
       .rpc("com_fn_cobertura_usuario", { p_negocio: NEGOCIO });
     if (error) throw new Error(error.message);
 
@@ -161,7 +160,7 @@ const miCobertura: HerramientaCliente = {
     }
 
     return lista(
-      `Cobertura vigente (${data[0].plan_nombre})`,
+      `Cobertura vigente (${data[0]?.plan_nombre ?? "tu plan"})`,
       data as Array<{ concepto: string; incluidos: number | null; restantes: number | null }>,
       "Sin cobertura activa.",
       (d) =>
@@ -212,32 +211,32 @@ const reservarCita: HerramientaCliente = {
 
     const m = await resolverMateria(supabase, materia);
 
-    let varianteId: string | null = null;
+    let varianteId: string | undefined;
     if (typeof sku === "string") {
-      const { data } = await esquemaPendiente(supabase, "comun_comercio")
+      const { data } = await supabase.schema("comun_comercio")
         .from("com_variante")
         .select("var_id")
         .eq("var_negocio", NEGOCIO)
         .eq("var_sku", sku)
         .maybeSingle();
-      varianteId = data?.var_id ?? null;
+      varianteId = data?.var_id;
     }
 
-    const { data: citaId, error } = await esquemaPendiente(supabase, "tranqui_legal").rpc("trq_fn_reservar_cita", {
+    const { data: citaId, error } = await supabase.schema("tranqui_legal").rpc("trq_fn_reservar_cita", {
       p_materia_id: m.id,
       p_inicio_en: inicio.toISOString(),
       p_variante_id: varianteId,
       p_modalidad: modalidad,
-      p_motivo: typeof motivo === "string" ? motivo : null,
-      p_caso_id: typeof casoId === "string" ? casoId : null,
-      p_provincia_id: null,
+      p_motivo: typeof motivo === "string" ? motivo : undefined,
+      p_caso_id: typeof casoId === "string" ? casoId : undefined,
+      p_provincia_id: undefined,
       p_origen: "asistente",
     });
     // El RPC devuelve mensajes escritos para que los leas y actues: si dice que
     // el horario acaba de ocuparse, vuelve a consultar y ofrece otros.
     if (error) throw new Error(error.message);
 
-    const { data: cita } = await esquemaPendiente(supabase, "tranqui_legal")
+    const { data: cita } = await supabase.schema("tranqui_legal")
       .from("trq_cita")
       .select("cit_inicio_en, cit_modalidad, cit_cobertura")
       .eq("cit_id", citaId)
@@ -276,11 +275,11 @@ const cancelarCita: HerramientaCliente = {
     const { cita_id: citaId, motivo } = argumentos;
     if (typeof citaId !== "string") throw new Error("Falta cita_id.");
 
-    const { data, error } = await esquemaPendiente(supabase, "tranqui_legal").rpc("trq_fn_decidir_cita", {
+    const { data, error } = await supabase.schema("tranqui_legal").rpc("trq_fn_decidir_cita", {
       p_cita_id: citaId,
       p_decision: "cancelar",
-      p_nuevo_inicio: null,
-      p_motivo: typeof motivo === "string" ? motivo : null,
+      p_nuevo_inicio: undefined,
+      p_motivo: typeof motivo === "string" ? motivo : undefined,
     });
     if (error) throw new Error(error.message);
     return `Cita cancelada (${data}). Si estaba cubierta por el plan y se cancelo con mas de 24 horas, la consulta vuelve a su cupo.`;
@@ -317,7 +316,7 @@ const registrarConsultaRapida: HerramientaCliente = {
       }
     }
 
-    const { error } = await esquemaPendiente(supabase, "tranqui_legal")
+    const { error } = await supabase.schema("tranqui_legal")
       .from("trq_consulta_rapida")
       .insert({
         crp_usuario_id: sesion.usuarioId, // del contexto, JAMAS de los argumentos

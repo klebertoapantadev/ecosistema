@@ -21,8 +21,8 @@ interface Servicio {
   var_id: string;
   var_sku: string;
   var_nombre: string;
-  var_precio: string;
-  var_tarifa_iva_porcentaje: string;
+  var_precio: number;
+  var_tarifa_iva_porcentaje: number;
   var_detalle_variante: Record<string, unknown> | null;
 }
 
@@ -55,10 +55,9 @@ const FORMATO_HORA = new Intl.DateTimeFormat("es-EC", {
   timeZone: "America/Guayaquil",
 });
 
-function formatearUSD(baseImponible: string, ivaPorcentaje: string): string {
+function formatearUSD(baseImponible: number, ivaPorcentaje: number): string {
   // El catálogo guarda base imponible; al afiliado se le enseña lo que paga.
-  const base = Number(baseImponible);
-  const total = Math.round(base * (1 + Number(ivaPorcentaje) / 100) * 100) / 100;
+  const total = Math.round(baseImponible * (1 + ivaPorcentaje / 100) * 100) / 100;
   return new Intl.NumberFormat("es-EC", { style: "currency", currency: "USD" }).format(total);
 }
 

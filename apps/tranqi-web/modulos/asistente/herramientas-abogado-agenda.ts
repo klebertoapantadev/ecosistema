@@ -2,7 +2,6 @@ import type { Herramienta } from "@eco/agentes-ia";
 import { DIAS_SEMANA, describirAgenda, esquemaAgendaCompleta } from "@eco/agenda";
 import type { ContextoAsistente } from "./contexto";
 import { campos, fechaHoraEcuador, lista } from "./formato";
-import { esquemaPendiente } from "../agenda/puente-tipos";
 
 // Herramientas de AGENDA del asistente del abogado (TRQ-ABG-004 / PLT-020).
 //
@@ -25,12 +24,10 @@ const miDisponibilidad: HerramientaAbogado = {
     "resumen y espera su confirmacion antes de llamar a configurar_disponibilidad.",
   esquema: SIN_PROPIEDADES,
   async ejecutar(_argumentos, { supabase }) {
-    const { data: prof, error } = await esquemaPendiente(supabase, "comun_agenda")
+    const { data: prof, error } = await supabase.schema("comun_agenda")
       .from("age_profesional")
       .select(
-        "agp_id, agp_zona_horaria, agp_duracion_cita_min, agp_holgura_min, agp_antelacion_minima_horas, " +
-          "agp_horizonte_dias, agp_modalidades, agp_acepta_turno, agp_direccion, agp_configurada_en, " +
-          "agp_google_calendar_id",
+        "agp_id, agp_zona_horaria, agp_duracion_cita_min, agp_holgura_min, agp_antelacion_minima_horas, agp_horizonte_dias, agp_modalidades, agp_acepta_turno, agp_direccion, agp_configurada_en, agp_google_calendar_id",
       )
       .eq("agp_negocio", NEGOCIO)
       .is("agp_eliminado_en", null)
@@ -47,7 +44,7 @@ const miDisponibilidad: HerramientaAbogado = {
       );
     }
 
-    const { data: franjas } = await esquemaPendiente(supabase, "comun_agenda")
+    const { data: franjas } = await supabase.schema("comun_agenda")
       .from("age_franja")
       .select("fra_dia_semana, fra_hora_inicio, fra_hora_fin, fra_modalidad")
       .eq("fra_profesional_id", prof.agp_id)
@@ -137,7 +134,7 @@ const configurarDisponibilidad: HerramientaAbogado = {
     }
 
     const { configuracion, franjas } = validado.data;
-    const { error } = await esquemaPendiente(supabase, "comun_agenda").rpc("age_fn_configurar_agenda", {
+    const { error } = await supabase.schema("comun_agenda").rpc("age_fn_configurar_agenda", {
       p_negocio: NEGOCIO,
       p_config: configuracion,
       p_franjas: franjas,
@@ -174,11 +171,11 @@ const bloquearAgenda: HerramientaAbogado = {
     }
     if (fin <= inicio) throw new Error("El bloqueo termina antes de empezar. Confirma las fechas.");
 
-    const { error } = await esquemaPendiente(supabase, "comun_agenda").rpc("age_fn_bloquear", {
+    const { error } = await supabase.schema("comun_agenda").rpc("age_fn_bloquear", {
       p_negocio: NEGOCIO,
       p_inicio: inicio.toISOString(),
       p_fin: fin.toISOString(),
-      p_motivo: typeof motivo === "string" ? motivo : null,
+      p_motivo: typeof motivo === "string" ? motivo : undefined,
       p_origen: esAudiencia === true ? "audiencia" : "manual",
     });
     if (error) throw new Error(error.message);
@@ -193,7 +190,7 @@ const citasPendientes: HerramientaAbogado = {
     "que tiene pendiente o que le llego.",
   esquema: SIN_PROPIEDADES,
   async ejecutar(_argumentos, { supabase }) {
-    const { data, error } = await esquemaPendiente(supabase, "tranqui_legal")
+    const { data, error } = await supabase.schema("tranqui_legal")
       .from("trq_cita")
       .select("cit_id, cit_inicio_en, cit_modalidad, cit_motivo, cit_cobertura")
       .eq("cit_estado", "propuesta")
@@ -239,11 +236,11 @@ const decidirCita: HerramientaAbogado = {
       throw new Error("Para reagendar necesito nuevo_inicio. Preguntale al abogado a que hora la mueve.");
     }
 
-    const { data, error } = await esquemaPendiente(supabase, "tranqui_legal").rpc("trq_fn_decidir_cita", {
+    const { data, error } = await supabase.schema("tranqui_legal").rpc("trq_fn_decidir_cita", {
       p_cita_id: citaId,
       p_decision: decision,
-      p_nuevo_inicio: typeof nuevoInicio === "string" ? new Date(nuevoInicio).toISOString() : null,
-      p_motivo: typeof motivo === "string" ? motivo : null,
+      p_nuevo_inicio: typeof nuevoInicio === "string" ? new Date(nuevoInicio).toISOString() : undefined,
+      p_motivo: typeof motivo === "string" ? motivo : undefined,
     });
     if (error) throw new Error(error.message);
 

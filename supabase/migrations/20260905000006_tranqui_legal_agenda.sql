@@ -567,7 +567,7 @@ grant select, insert, update on tranqui_legal.trq_abogado_provincia to authentic
 grant select, insert, update on tranqui_legal.trq_consulta_rapida   to authenticated;
 
 grant execute on function tranqui_legal.trq_fn_candidatos_materia(uuid, uuid) to authenticated;
-grant execute on function tranqui_legal.trq_fn_horarios_materia(uuid, timestamptz, timestamptz, uuid, text, text, uuid) to authenticated;
+grant execute on function tranqui_legal.trq_fn_horarios_materia(uuid, timestamptz, timestamptz, uuid, text, uuid) to authenticated;
 grant execute on function tranqui_legal.trq_fn_reservar_cita(uuid, timestamptz, uuid, text, text, uuid, uuid, text) to authenticated;
 grant execute on function tranqui_legal.trq_fn_decidir_cita(uuid, text, timestamptz, text) to authenticated;
 grant execute on function tranqui_legal.trq_fn_reasignar_cita(uuid, uuid, text) to authenticated;

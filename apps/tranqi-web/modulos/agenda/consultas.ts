@@ -1,5 +1,4 @@
 import { crearClienteServidor } from "@eco/supabase/servidor";
-import { esquemaPendiente } from "./puente-tipos";
 
 // Server-only. No importar desde un client component.
 //
@@ -44,7 +43,7 @@ export async function listarMateriasAgendables() {
 /** Servicios del catálogo que se pueden agendar: los que declaran duración. */
 export async function listarServiciosAgendables() {
   const supabase = await crearClienteServidor();
-  const { data } = await esquemaPendiente(supabase, "comun_comercio")
+  const { data } = await supabase.schema("comun_comercio")
     .from("com_variante")
     .select("var_id, var_sku, var_nombre, var_precio, var_tarifa_iva_porcentaje, var_detalle_variante")
     .eq("var_negocio", NEGOCIO)
@@ -57,8 +56,8 @@ export async function listarServiciosAgendables() {
     var_id: string;
     var_sku: string;
     var_nombre: string;
-    var_precio: string;
-    var_tarifa_iva_porcentaje: string;
+    var_precio: number;
+    var_tarifa_iva_porcentaje: number;
     var_detalle_variante: Record<string, unknown> | null;
   }>).filter((v) => typeof v.var_detalle_variante?.duracion_min === "number");
 }
@@ -71,13 +70,13 @@ export async function obtenerHuecosDeMateria(
   modalidad?: string | null,
 ): Promise<HuecoDisponible[]> {
   const supabase = await crearClienteServidor();
-  const { data, error } = await esquemaPendiente(supabase, "tranqui_legal").rpc("trq_fn_horarios_materia", {
+  const { data, error } = await supabase.schema("tranqui_legal").rpc("trq_fn_horarios_materia", {
     p_materia_id: materiaId,
     p_desde: desde.toISOString(),
     p_hasta: hasta.toISOString(),
-    p_variante_id: varianteId ?? null,
-    p_modalidad: modalidad ?? null,
-    p_provincia_id: null,
+    p_variante_id: varianteId ?? undefined,
+    p_modalidad: modalidad ?? undefined,
+    p_provincia_id: undefined,
   });
   if (error) return [];
   return (data ?? []) as HuecoDisponible[];
@@ -86,7 +85,7 @@ export async function obtenerHuecosDeMateria(
 /** Qué le cubre el plan al usuario en sesión este periodo. */
 export async function obtenerCobertura() {
   const supabase = await crearClienteServidor();
-  const { data } = await esquemaPendiente(supabase, "comun_comercio").rpc("com_fn_cobertura_usuario", {
+  const { data } = await supabase.schema("comun_comercio").rpc("com_fn_cobertura_usuario", {
     p_negocio: NEGOCIO,
   });
   return (data ?? []) as Array<{
@@ -101,11 +100,10 @@ export async function obtenerCobertura() {
 
 export async function listarCitasDelCliente(soloFuturas = false): Promise<CitaResumen[]> {
   const supabase = await crearClienteServidor();
-  let consulta = esquemaPendiente(supabase, "tranqui_legal")
+  let consulta = supabase.schema("tranqui_legal")
     .from("trq_cita")
     .select(
-      "cit_id, cit_inicio_en, cit_fin_en, cit_modalidad, cit_estado, cit_motivo, " +
-        "cit_enlace, cit_lugar, cit_cobertura, cit_asignacion, cit_abogado_id",
+      "cit_id, cit_inicio_en, cit_fin_en, cit_modalidad, cit_estado, cit_motivo, cit_enlace, cit_lugar, cit_cobertura, cit_asignacion, cit_abogado_id",
     )
     .is("cit_eliminado_en", null)
     .order("cit_inicio_en", { ascending: false })
@@ -122,11 +120,10 @@ export async function listarCitasDelCliente(soloFuturas = false): Promise<CitaRe
  */
 export async function listarAgendaDelAbogado(desde: Date, hasta: Date): Promise<CitaResumen[]> {
   const supabase = await crearClienteServidor();
-  const { data } = await esquemaPendiente(supabase, "tranqui_legal")
+  const { data } = await supabase.schema("tranqui_legal")
     .from("trq_cita")
     .select(
-      "cit_id, cit_inicio_en, cit_fin_en, cit_modalidad, cit_estado, cit_motivo, " +
-        "cit_enlace, cit_lugar, cit_cobertura, cit_asignacion, cit_abogado_id",
+      "cit_id, cit_inicio_en, cit_fin_en, cit_modalidad, cit_estado, cit_motivo, cit_enlace, cit_lugar, cit_cobertura, cit_asignacion, cit_abogado_id",
     )
     .is("cit_eliminado_en", null)
     .gte("cit_inicio_en", desde.toISOString())
@@ -139,7 +136,7 @@ export async function listarAgendaDelAbogado(desde: Date, hasta: Date): Promise<
 /** Configuración de agenda del profesional en sesión, o null si no la ha creado. */
 export async function obtenerMiAgenda() {
   const supabase = await crearClienteServidor();
-  const { data: prof } = await esquemaPendiente(supabase, "comun_agenda")
+  const { data: prof } = await supabase.schema("comun_agenda")
     .from("age_profesional")
     .select("*")
     .eq("agp_negocio", NEGOCIO)
@@ -147,7 +144,7 @@ export async function obtenerMiAgenda() {
     .maybeSingle();
   if (!prof) return null;
 
-  const { data: franjas } = await esquemaPendiente(supabase, "comun_agenda")
+  const { data: franjas } = await supabase.schema("comun_agenda")
     .from("age_franja")
     .select("fra_id, fra_dia_semana, fra_hora_inicio, fra_hora_fin, fra_modalidad")
     .eq("fra_profesional_id", prof.agp_id)
@@ -155,7 +152,7 @@ export async function obtenerMiAgenda() {
     .order("fra_dia_semana")
     .order("fra_hora_inicio");
 
-  const { data: bloqueos } = await esquemaPendiente(supabase, "comun_agenda")
+  const { data: bloqueos } = await supabase.schema("comun_agenda")
     .from("age_bloqueo")
     .select("blq_id, blq_inicio_en, blq_fin_en, blq_motivo, blq_origen")
     .eq("blq_profesional_id", prof.agp_id)
@@ -173,11 +170,10 @@ export async function obtenerMiAgenda() {
  */
 export async function listarCitasEnContingencia(): Promise<CitaResumen[]> {
   const supabase = await crearClienteServidor();
-  const { data } = await esquemaPendiente(supabase, "tranqui_legal")
+  const { data } = await supabase.schema("tranqui_legal")
     .from("trq_cita")
     .select(
-      "cit_id, cit_inicio_en, cit_fin_en, cit_modalidad, cit_estado, cit_motivo, " +
-        "cit_enlace, cit_lugar, cit_cobertura, cit_asignacion, cit_abogado_id",
+      "cit_id, cit_inicio_en, cit_fin_en, cit_modalidad, cit_estado, cit_motivo, cit_enlace, cit_lugar, cit_cobertura, cit_asignacion, cit_abogado_id",
     )
     .eq("cit_asignacion", "contingencia")
     .is("cit_eliminado_en", null)
@@ -187,22 +183,38 @@ export async function listarCitasEnContingencia(): Promise<CitaResumen[]> {
 }
 
 /**
- * Abogados verificados con agenda configurada, para la mesa de reasignación.
- * Solo lo ve el staff: RLS de trq_abogado ya restringe la lectura a admins.
+ * Abogados verificados, para la mesa de reasignación. Solo lo ve el staff: la
+ * RLS de trq_abogado ya restringe la lectura a administradores del negocio.
+ *
+ * Dos consultas en vez de un join anidado: PostgREST no resuelve la relación
+ * trq_abogado -> seg_usuario por sí solo (abg_usuario_id no está declarada como
+ * FK con nombre que pueda seguir), y forzarla con un alias es más frágil que
+ * cruzar dos listas de una docena de filas.
  */
 export async function listarAbogadosAsignables() {
   const supabase = await crearClienteServidor();
-  const { data } = await esquemaPendiente(supabase, "tranqui_legal")
+  const { data: abogados } = await supabase
+    .schema("tranqui_legal")
     .from("trq_abogado")
-    .select("abg_id, abg_usuario_id, seg_usuario:abg_usuario_id (usu_nombres, usu_apellidos)")
+    .select("abg_id, abg_usuario_id")
     .eq("abg_estado", "verificado");
+  if (!abogados || abogados.length === 0) return [];
 
-  return ((data ?? []) as Array<{
-    abg_id: string;
-    seg_usuario: { usu_nombres: string | null; usu_apellidos: string | null } | null;
-  }>).map((a) => ({
-    abg_id: a.abg_id,
-    nombre:
-      [a.seg_usuario?.usu_nombres, a.seg_usuario?.usu_apellidos].filter(Boolean).join(" ") || "Abogado sin nombre",
-  }));
+  const { data: usuarios } = await supabase
+    .schema("comun_seguridad")
+    .from("seg_usuario")
+    .select("usu_id, usu_nombres, usu_apellidos")
+    .in(
+      "usu_id",
+      abogados.map((a) => a.abg_usuario_id),
+    );
+
+  const porId = new Map((usuarios ?? []).map((u) => [u.usu_id, u]));
+  return abogados.map((a) => {
+    const u = porId.get(a.abg_usuario_id);
+    return {
+      abg_id: a.abg_id,
+      nombre: [u?.usu_nombres, u?.usu_apellidos].filter(Boolean).join(" ") || "Abogado sin nombre",
+    };
+  });
 }

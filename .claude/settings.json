@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx --yes supabase@latest db push:*)",
+      "Bash(npx supabase@latest db push:*)",
+      "Bash(npx supabase db push:*)",
+      "Bash(npx --yes supabase@latest migration list:*)",
+      "Bash(npx supabase@latest migration list:*)",
+      "Bash(npx --yes supabase@latest migration repair:*)",
+      "Bash(npx --yes supabase@latest gen types:*)",
+      "Bash(npx supabase@latest gen types:*)"
+    ]
+  }
+}

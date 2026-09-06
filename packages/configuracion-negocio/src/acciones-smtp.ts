@@ -24,15 +24,27 @@ export async function guardarSmtp(datos: DatosSmtp, negocio: string): Promise<Re
   const falta = faltaParaActivar(parseo.data, filaActual?.smt_secreto_id != null);
   if (falta) return { ok: false, error: falta };
 
+  // `cfg_fn_guardar_smtp` declara estos parámetros como `text`, que en SQL
+  // admite NULL — y pasar NULL es justamente cómo se borra un valor guardado.
+  // El generador de tipos de Supabase no puede saberlo y los marca como `string`
+  // a secas, así que el cast reconcilia el tipo con la firma real de la función
+  // (2026-09-06, al regenerar `packages/db` con una versión más reciente de la
+  // CLI). No se cambia el comportamiento: `undefined` no sirve, porque salvo
+  // `p_contrasena` ninguno tiene DEFAULT y PostgREST rechazaría la llamada.
+  // `nulo()` marca los campos donde NULL es un valor legítimo: así se borra un
+  // dato guardado. El generador de tipos no distingue un `text` que acepta NULL
+  // de uno que no, y los marca todos como `string`.
+  const nulo = (v: string | undefined) => (v || null) as unknown as string;
+
   const { error } = await supabase.schema("comun_configuracion").rpc("cfg_fn_guardar_smtp", {
     p_negocio: negocio,
-    p_host: parseo.data.host || null,
+    p_host: nulo(parseo.data.host),
     p_puerto: parseo.data.puerto,
     p_seguro: parseo.data.seguro,
-    p_usuario: parseo.data.usuario || null,
-    p_remitente_nombre: parseo.data.remitenteNombre || null,
+    p_usuario: nulo(parseo.data.usuario),
+    p_remitente_nombre: nulo(parseo.data.remitenteNombre),
     p_activo: parseo.data.activo,
-    p_contrasena: parseo.data.contrasena || null,
+    p_contrasena: parseo.data.contrasena || undefined,
   });
 
   if (error) return { ok: false, error: error.message };

@@ -42,11 +42,16 @@ create policy trq_version_contrato_socio_select on tranqui_legal.trq_version_con
         s.ssc_usuario_id = auth.uid()
         or comun_seguridad.seg_fn_es_admin_negocio('tranqi')
         or exists (
+          -- Corregido 2026-09-06: el prefijo de seg_membresia_perfil es `mpe_`,
+          -- no `mep_`, y el perfil no vive en la tabla de unión sino en
+          -- seg_perfil (mpe_perfil_id -> per_clave), como hace
+          -- seg_fn_es_admin_negocio.
           select 1 from comun_seguridad.seg_membresia_perfil mp
-          join comun_seguridad.seg_membresia m on m.mem_id = mp.mep_membresia_id
+          join comun_seguridad.seg_membresia m on m.mem_id = mp.mpe_membresia_id
+          join comun_seguridad.seg_perfil pf on pf.per_id = mp.mpe_perfil_id
           where m.mem_usuario_id = auth.uid()
           and m.mem_negocio = 'TRANQ'
-          and mp.mep_perfil in ('ADMINISTRADOR', 'SUPERADMIN', 'OPERADOR')
+          and upper(pf.per_clave) in ('ADMINISTRADOR', 'SUPERADMIN', 'OPERADOR')
         )
       )
     )
@@ -62,11 +67,16 @@ create policy trq_version_contrato_socio_insert on tranqui_legal.trq_version_con
         s.ssc_usuario_id = auth.uid()
         or comun_seguridad.seg_fn_es_admin_negocio('tranqi')
         or exists (
+          -- Corregido 2026-09-06: el prefijo de seg_membresia_perfil es `mpe_`,
+          -- no `mep_`, y el perfil no vive en la tabla de unión sino en
+          -- seg_perfil (mpe_perfil_id -> per_clave), como hace
+          -- seg_fn_es_admin_negocio.
           select 1 from comun_seguridad.seg_membresia_perfil mp
-          join comun_seguridad.seg_membresia m on m.mem_id = mp.mep_membresia_id
+          join comun_seguridad.seg_membresia m on m.mem_id = mp.mpe_membresia_id
+          join comun_seguridad.seg_perfil pf on pf.per_id = mp.mpe_perfil_id
           where m.mem_usuario_id = auth.uid()
           and m.mem_negocio = 'TRANQ'
-          and mp.mep_perfil in ('ADMINISTRADOR', 'SUPERADMIN', 'OPERADOR')
+          and upper(pf.per_clave) in ('ADMINISTRADOR', 'SUPERADMIN', 'OPERADOR')
         )
       )
     )

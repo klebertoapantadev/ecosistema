@@ -2,7 +2,6 @@
 
 import { revalidatePath } from "next/cache";
 import { crearClienteServidor } from "@eco/supabase/servidor";
-import { esquemaPendiente } from "./puente-tipos";
 import {
   esquemaAgendaCompleta,
   esquemaBloqueo,
@@ -38,14 +37,14 @@ export async function reservarCitaAction(entrada: unknown): Promise<Resultado<{ 
   const d = validado.data;
 
   const supabase = await crearClienteServidor();
-  const { data, error } = await esquemaPendiente(supabase, "tranqui_legal").rpc("trq_fn_reservar_cita", {
+  const { data, error } = await supabase.schema("tranqui_legal").rpc("trq_fn_reservar_cita", {
     p_materia_id: d.materia_id,
     p_inicio_en: d.inicio_en,
-    p_variante_id: d.variante_id ?? null,
+    p_variante_id: d.variante_id ?? undefined,
     p_modalidad: d.modalidad,
     p_motivo: d.motivo,
-    p_caso_id: d.caso_id ?? null,
-    p_provincia_id: null,
+    p_caso_id: d.caso_id ?? undefined,
+    p_provincia_id: undefined,
     p_origen: "panel",
   });
   if (error) return { ok: false, error: comoError(error.message) };
@@ -66,11 +65,11 @@ export async function decidirCitaAction(entrada: unknown): Promise<Resultado<{ r
   }
 
   const supabase = await crearClienteServidor();
-  const { data, error } = await esquemaPendiente(supabase, "tranqui_legal").rpc("trq_fn_decidir_cita", {
+  const { data, error } = await supabase.schema("tranqui_legal").rpc("trq_fn_decidir_cita", {
     p_cita_id: d.cita_id,
     p_decision: d.decision,
-    p_nuevo_inicio: d.nuevo_inicio ?? null,
-    p_motivo: d.motivo ?? null,
+    p_nuevo_inicio: d.nuevo_inicio ?? undefined,
+    p_motivo: d.motivo ?? undefined,
   });
   if (error) return { ok: false, error: comoError(error.message) };
 
@@ -88,10 +87,10 @@ export async function reasignarCitaAction(entrada: unknown): Promise<Resultado> 
   const d = validado.data;
 
   const supabase = await crearClienteServidor();
-  const { error } = await esquemaPendiente(supabase, "tranqui_legal").rpc("trq_fn_reasignar_cita", {
+  const { error } = await supabase.schema("tranqui_legal").rpc("trq_fn_reasignar_cita", {
     p_cita_id: d.cita_id,
     p_abogado_destino: d.abogado_destino,
-    p_motivo: d.motivo ?? null,
+    p_motivo: d.motivo ?? undefined,
   });
   if (error) return { ok: false, error: comoError(error.message) };
 
@@ -109,7 +108,7 @@ export async function guardarDisponibilidadAction(entrada: unknown): Promise<Res
   const { configuracion, franjas } = validado.data;
 
   const supabase = await crearClienteServidor();
-  const { error } = await esquemaPendiente(supabase, "comun_agenda").rpc("age_fn_configurar_agenda", {
+  const { error } = await supabase.schema("comun_agenda").rpc("age_fn_configurar_agenda", {
     p_negocio: NEGOCIO,
     p_config: configuracion,
     p_franjas: franjas,
@@ -129,11 +128,11 @@ export async function bloquearAgendaAction(entrada: unknown): Promise<Resultado>
   const d = validado.data;
 
   const supabase = await crearClienteServidor();
-  const { error } = await esquemaPendiente(supabase, "comun_agenda").rpc("age_fn_bloquear", {
+  const { error } = await supabase.schema("comun_agenda").rpc("age_fn_bloquear", {
     p_negocio: NEGOCIO,
     p_inicio: d.inicio_en,
     p_fin: d.fin_en,
-    p_motivo: d.motivo ?? null,
+    p_motivo: d.motivo ?? undefined,
     p_origen: d.es_audiencia ? "audiencia" : "manual",
   });
   if (error) return { ok: false, error: comoError(error.message) };
@@ -151,7 +150,7 @@ export async function quitarBloqueoAction(bloqueoId: string): Promise<Resultado>
   if (!/^[0-9a-f-]{36}$/i.test(bloqueoId)) return { ok: false, error: "Bloqueo no válido" };
 
   const supabase = await crearClienteServidor();
-  const { error } = await esquemaPendiente(supabase, "comun_agenda")
+  const { error } = await supabase.schema("comun_agenda")
     .from("age_bloqueo")
     .update({ blq_eliminado_en: new Date().toISOString(), blq_actualizado_en: new Date().toISOString() })
     .eq("blq_id", bloqueoId);
