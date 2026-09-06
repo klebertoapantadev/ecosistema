@@ -3,9 +3,9 @@
 import React, { useState, useEffect } from "react";
 import {
   Users, UserPlus, Search, Building2, User, Scale, Calendar,
-  Folder, Eye, Plus, CheckCircle2, Shield, Sparkles, Filter, ChevronRight
+  Folder, Eye, Plus, CheckCircle2, Shield, Sparkles, Filter, ChevronRight, RefreshCw
 } from "lucide-react";
-import { obtenerClientesCRM } from "../acciones";
+import { obtenerClientesCRM, sincronizarUsuariosAProspectosCRMAction } from "../acciones";
 import { ModalAltaClienteAsistida } from "./ModalAltaClienteAsistida";
 import { FichaClienteDetalleModal } from "./FichaClienteDetalleModal";
 
@@ -16,6 +16,7 @@ interface Props {
 export function BandejaClientesCRM({ negocio = "TRANQ" }: Props) {
   const [clientes, setClientes] = useState<any[]>([]);
   const [cargando, setCargando] = useState(true);
+  const [sincronizando, setSincronizando] = useState(false);
   const [busqueda, setBusqueda] = useState("");
   const [filtroTipo, setFiltroTipo] = useState<"todas" | "natural" | "juridica">("todas");
 
@@ -43,6 +44,24 @@ export function BandejaClientesCRM({ negocio = "TRANQ" }: Props) {
     cargarClientes();
   };
 
+  const manejarSincronizarLeads = async () => {
+    setSincronizando(true);
+    try {
+      const res = await sincronizarUsuariosAProspectosCRMAction();
+      if (res.ok) {
+        setToastExito(`⚡ Sincronización exitosa: ${res.count} usuario(s) registrados incorporados como prospectos.`);
+        setTimeout(() => setToastExito(null), 5000);
+        cargarClientes();
+      } else {
+        alert("Error al sincronizar: " + (res.mensaje || "Desconocido"));
+      }
+    } catch (err: any) {
+      alert("Error al sincronizar: " + err?.message);
+    } finally {
+      setSincronizando(false);
+    }
+  };
+
   const manejarAltaExito = (res: {
     clienteId: string;
     nombreCompleto: string;
@@ -61,26 +80,22 @@ export function BandejaClientesCRM({ negocio = "TRANQ" }: Props) {
       setTimeout(() => setToastExito(null), 4000);
     } else if (res.accionContinuidad === "agendar_cita") {
       setClienteSeleccionadoId(res.clienteId);
-      setToastExito(`✅ Cliente guardado. Abriendo agenda de citas...`);
+      setToastExito(`✅ Cliente guardado. Apertura de agenda...`);
       setTimeout(() => setToastExito(null), 4000);
     }
   };
 
-  const totalNaturales = clientes.filter((c) => c.clp_tipo_personeria === "natural").length;
-  const totalJuridicas = clientes.filter((c) => c.clp_tipo_personeria === "juridica").length;
-
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "20px", width: "100%" }}>
-      {/* Toast Informativo */}
+    <div style={{ width: "100%", maxWidth: "1280px", margin: "0 auto", display: "flex", flexDirection: "column", gap: "20px" }}>
+      {/* Toast Notificación */}
       {toastExito && (
         <div
           style={{
-            background: "#F0FDF4",
-            border: "1px solid #86EFAC",
-            color: "#166534",
-            padding: "12px 18px",
+            background: "#05876E",
+            color: "#FFFFFF",
+            padding: "12px 20px",
             borderRadius: "10px",
-            fontSize: "0.9rem",
+            fontSize: "0.88rem",
             fontWeight: 600,
             display: "flex",
             alignItems: "center",
@@ -118,28 +133,55 @@ export function BandejaClientesCRM({ negocio = "TRANQ" }: Props) {
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={() => setModalAltaAbierto(true)}
-          style={{
-            background: "#0284C7",
-            color: "#FFFFFF",
-            border: "none",
-            padding: "10px 20px",
-            borderRadius: "10px",
-            fontSize: "0.9rem",
-            fontWeight: 700,
-            cursor: "pointer",
-            display: "flex",
-            alignItems: "center",
-            gap: "8px",
-            boxShadow: "0 4px 6px -1px rgba(2, 132, 199, 0.25)",
-            transition: "all 0.15s ease",
-          }}
-        >
-          <UserPlus size={18} />
-          + Registrar Cliente
-        </button>
+        <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+          <button
+            type="button"
+            onClick={manejarSincronizarLeads}
+            disabled={sincronizando}
+            style={{
+              background: "#F8FAFC",
+              color: "#334155",
+              border: "1px solid #CBD5E1",
+              padding: "10px 16px",
+              borderRadius: "10px",
+              fontSize: "0.85rem",
+              fontWeight: 700,
+              cursor: sincronizando ? "wait" : "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
+              transition: "all 0.15s ease",
+            }}
+            title="Importa todos los usuarios registrados en la web y los incorpora como prospectos en el CRM"
+          >
+            <RefreshCw size={16} className={sincronizando ? "animate-spin" : ""} />
+            {sincronizando ? "Sincronizando..." : "Sincronizar Leads Web"}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setModalAltaAbierto(true)}
+            style={{
+              background: "#0284C7",
+              color: "#FFFFFF",
+              border: "none",
+              padding: "10px 20px",
+              borderRadius: "10px",
+              fontSize: "0.9rem",
+              fontWeight: 700,
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              boxShadow: "0 4px 6px -1px rgba(2, 132, 199, 0.25)",
+              transition: "all 0.15s ease",
+            }}
+          >
+            <UserPlus size={18} />
+            + Registrar Cliente
+          </button>
+        </div>
       </div>
 
       {/* Barra de Búsqueda y Filtros */}
@@ -275,22 +317,45 @@ export function BandejaClientesCRM({ negocio = "TRANQ" }: Props) {
             <p style={{ margin: "0 0 16px", fontSize: "0.85rem", color: "#64748B" }}>
               Utiliza el botón "+ Registrar Cliente" para dar de alta al primer cliente desde el mostrador.
             </p>
-            <button
-              type="button"
-              onClick={() => setModalAltaAbierto(true)}
-              style={{
-                background: "#0284C7",
-                color: "#FFFFFF",
-                border: "none",
-                padding: "8px 16px",
-                borderRadius: "8px",
-                fontSize: "0.85rem",
-                fontWeight: 600,
-                cursor: "pointer",
-              }}
-            >
-              + Registrar Primer Cliente
-            </button>
+            <div style={{ display: "flex", gap: "10px", justifyContent: "center", flexWrap: "wrap" }}>
+              <button
+                type="button"
+                onClick={manejarSincronizarLeads}
+                disabled={sincronizando}
+                style={{
+                  background: "#F1F5F9",
+                  color: "#334155",
+                  border: "1px solid #CBD5E1",
+                  padding: "8px 16px",
+                  borderRadius: "8px",
+                  fontSize: "0.85rem",
+                  fontWeight: 600,
+                  cursor: sincronizando ? "not-allowed" : "pointer",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px",
+                }}
+              >
+                <RefreshCw size={14} className={sincronizando ? "animate-spin" : ""} />
+                {sincronizando ? "Sincronizando..." : "Sincronizar Leads Web"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setModalAltaAbierto(true)}
+                style={{
+                  background: "#0284C7",
+                  color: "#FFFFFF",
+                  border: "none",
+                  padding: "8px 16px",
+                  borderRadius: "8px",
+                  fontSize: "0.85rem",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                }}
+              >
+                + Registrar Primer Cliente
+              </button>
+            </div>
           </div>
         ) : (
           <div style={{ overflowX: "auto" }}>
@@ -301,6 +366,7 @@ export function BandejaClientesCRM({ negocio = "TRANQ" }: Props) {
                   <th style={{ padding: "12px 16px", fontWeight: 700 }}>Cliente / Razón Social</th>
                   <th style={{ padding: "12px 16px", fontWeight: 700 }}>Personería</th>
                   <th style={{ padding: "12px 16px", fontWeight: 700 }}>Contacto</th>
+                  <th style={{ padding: "12px 16px", fontWeight: 700 }}>Estado CRM</th>
                   <th style={{ padding: "12px 16px", fontWeight: 700 }}>Origen</th>
                   <th style={{ padding: "12px 16px", fontWeight: 700, textAlign: "right" }}>Acciones</th>
                 </tr>
@@ -349,6 +415,45 @@ export function BandejaClientesCRM({ negocio = "TRANQ" }: Props) {
                       <td style={{ padding: "14px 16px", color: "#475569" }}>
                         <div>{c.clp_correo || "—"}</div>
                         <div style={{ fontSize: "0.75rem", color: "#64748B" }}>{c.clp_celular || c.clp_telefono || "—"}</div>
+                      </td>
+                      <td style={{ padding: "14px 16px" }}>
+                        {c.clp_detalle_cliente?.estado_crm === "PROSPECTO" ? (
+                          <span
+                            style={{
+                              padding: "3px 10px",
+                              borderRadius: "12px",
+                              fontSize: "0.75rem",
+                              fontWeight: 700,
+                              background: "#FEF3C7",
+                              color: "#92400E",
+                              border: "1px solid #FCD34D",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "4px",
+                            }}
+                          >
+                            <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#D97706" }} />
+                            Prospecto
+                          </span>
+                        ) : (
+                          <span
+                            style={{
+                              padding: "3px 10px",
+                              borderRadius: "12px",
+                              fontSize: "0.75rem",
+                              fontWeight: 700,
+                              background: "#D1FAE5",
+                              color: "#065F46",
+                              border: "1px solid #A7F3D0",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "4px",
+                            }}
+                          >
+                            <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#10B981" }} />
+                            Activo
+                          </span>
+                        )}
                       </td>
                       <td style={{ padding: "14px 16px" }}>
                         <span style={{ fontSize: "0.75rem", color: "#64748B", textTransform: "capitalize" }}>

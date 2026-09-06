@@ -481,7 +481,123 @@ export async function obtenerClientesCRM(filtros?: {
     return [];
   }
 
+  // AUTO-SYNC: Si la tabla de clientes está vacía y no hay búsqueda activa, sincronizar automáticamente los usuarios web
+  if ((!data || data.length === 0) && (!filtros?.busqueda || filtros.busqueda.trim() === "") && (!filtros?.tipoPersoneria || filtros.tipoPersoneria === "todas")) {
+    const syncRes = await sincronizarUsuariosAProspectosCRMAction();
+    if (syncRes.ok && syncRes.count > 0) {
+      const { data: recargados } = await supabase
+        .from("trq_cliente_perfil")
+        .select(`
+          clp_id,
+          clp_secuencial,
+          clp_tipo_personeria,
+          clp_tipo_identificacion,
+          clp_identificacion,
+          clp_nombres,
+          clp_apellidos,
+          clp_razon_social,
+          clp_nombre_comercial,
+          clp_correo,
+          clp_celular,
+          clp_casillero_judicial,
+          clp_origen_registro,
+          clp_activo,
+          clp_creado_en,
+          clp_detalle_cliente
+        `)
+        .is("clp_eliminado_en", null)
+        .order("clp_creado_en", { ascending: false });
+
+      if (recargados && recargados.length > 0) {
+        return recargados;
+      }
+    }
+  }
+
   return data || [];
+}
+
+/**
+ * Sincroniza usuarios registrados de la plataforma con el CRM como PROSPECTOS
+ */
+export async function sincronizarUsuariosAProspectosCRMAction(): Promise<{ ok: boolean; count: number; mensaje?: string }> {
+  try {
+    const supabaseAdmin: any = await crearClienteAdmin();
+
+    // 1. Ejecutar función RPC si ya fue aplicada en la base de datos
+    try {
+      const { data: rpcData, error: errRpc } = await supabaseAdmin.rpc("trq_fn_sincronizar_leads_crm");
+      if (!errRpc && rpcData && Array.isArray(rpcData) && rpcData.length > 0) {
+        revalidatePath("/panel/clientes");
+        return { ok: true, count: rpcData[0]?.total_sincronizados || 0 };
+      }
+    } catch {
+      // Continuar con fallback en TypeScript
+    }
+
+    // 2. Fallback de sincronización directa
+    const { data: usuarios, error: errUsu } = await supabaseAdmin
+      .schema("comun_seguridad")
+      .from("seg_usuario")
+      .select("usu_id, usu_nombres, usu_apellidos, usu_correo, usu_whatsapp, usu_cedula, usu_creado_en");
+
+    if (errUsu || !usuarios || usuarios.length === 0) {
+      return { ok: true, count: 0 };
+    }
+
+    const { data: existentes } = await supabaseAdmin
+      .from("trq_cliente_perfil")
+      .select("clp_usuario_id, clp_identificacion");
+
+    const idsExistentes = new Set((existentes || []).map((e: any) => e.clp_usuario_id));
+    const identExistentes = new Set((existentes || []).map((e: any) => e.clp_identificacion));
+
+    const aInsertar: any[] = [];
+    for (const u of usuarios) {
+      if (idsExistentes.has(u.usu_id)) continue;
+
+      let ident = (u.usu_cedula || "").trim();
+      if (!ident || identExistentes.has(ident)) {
+        ident = `WEB-${u.usu_id.substring(0, 8).toUpperCase()}`;
+      }
+      identExistentes.add(ident);
+
+      aInsertar.push({
+        clp_usuario_id: u.usu_id,
+        clp_tipo_personeria: "natural",
+        clp_tipo_identificacion: "cedula",
+        clp_identificacion: ident,
+        clp_nombres: u.usu_nombres || u.usu_correo.split("@")[0],
+        clp_apellidos: u.usu_apellidos || "",
+        clp_correo: u.usu_correo,
+        clp_celular: u.usu_whatsapp || null,
+        clp_origen_registro: "web",
+        clp_activo: true,
+        clp_detalle_cliente: {
+          estado_crm: "PROSPECTO",
+          auto_lead_web: true,
+          fecha_prospecto: new Date().toISOString()
+        }
+      });
+    }
+
+    if (aInsertar.length > 0) {
+      const { error: errInsert } = await supabaseAdmin
+        .from("trq_cliente_perfil")
+        .insert(aInsertar);
+
+      if (errInsert) {
+        console.error("Error al insertar prospectos:", errInsert);
+        return { ok: false, count: 0, mensaje: errInsert.message };
+      }
+    }
+
+    revalidatePath("/panel/clientes");
+    return { ok: true, count: aInsertar.length };
+  } catch (error: any) {
+    console.error("Error en sincronizarUsuariosAProspectosCRMAction:", error);
+    return { ok: false, count: 0, mensaje: error?.message || "Error inesperado" };
+  }
 }
 
 /**

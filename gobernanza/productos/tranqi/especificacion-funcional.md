@@ -37,7 +37,7 @@ Tranqi adopta las mejores prácticas y estándares internacionales de **Law Prac
 | **`TRQ-COM-001`** | **Común (Todos)** | **Billetera Digital de Documentos Seguros, Extracción OCR y Enlaces TTL** | ✅ Implementado | **100%** | Jesus Navarrete |
 | **`TRQ-COM-002`** | **Común (Todos)** | **Compartición de Documentos a Tranqi (Revisión de Contratos & Vinculación a Casos)** | 🟡 Especificado | **25%** | Kleber Toapanta |
 | **`TRQ-COM-003`** | **Común (Todos)** | **Herramienta Universal de Firma Digital de Documentos PDF (.p12 / QR / PAdES)** | ✅ Implementado | **100%** | Kleber Toapanta |
-| **`TRQ-CRM-001`** | **CRM Jurídico** | **Gestión de Clientes (Naturales/Jurídicas), Registro Manual y Conflict Check** | 🟡 Especificado | **30%** | Kleber Toapanta |
+| **`TRQ-CRM-001`** | **CRM Jurídico** | **Gestión de Clientes (Naturales/Jurídicas), Registro Manual, Auto-Lead Web (Prospecto) y Conflict Check** | 🟡 En Desarrollo | **80%** | Kleber Toapanta |
 | **`TRQ-CAS-001`** | **Expediente** | **Gestión de Trámites Judiciales y Extrajudiciales (Expediente Digital Unificado)** | 🟡 Especificado | **30%** | Kleber Toapanta / Jesus Navarrete |
 | **`TRQ-CAS-002`** | **Equipo Legal** | **Asignación Multirrol de Abogados (Titular / Co-patrocinadores / Mesa de Control)** | 🟡 Especificado | **25%** | Kleber Toapanta |
 | **`TRQ-DOC-001`** | **Gestión Documental** | **Gestor Documental por Etapas Procesales, Billetera y Versionamiento vN** | 🟡 Especificado | **30%** | Kleber Toapanta |
@@ -441,7 +441,7 @@ Escenario: Mesa de Control con Dictamen de Aria para el Operador
 ---
 
 ### TRQ-CRM-001 — CRM Jurídico: Gestión de Clientes, Registro Manual Asistido, Validación ARIA y Conflict Check
-**Responsable:** Kleber Toapanta | **Estado:** 🟡 Especificado (35%)
+**Responsable:** Kleber Toapanta | **Estado:** 🟡 En Desarrollo (80%)
 
 #### 1. Descripción
 Módulo central de administración y ciclo de vida de clientes (Personas Naturales y Jurídicas) que permite su captación e ingesta multicanal: auto-registro web, captura conversacional WhatsApp con ARIA y **alta manual asistida** ejecutada por operadores, recepcionistas o abogados desde el panel.
@@ -474,6 +474,11 @@ Módulo central de administración y ciclo de vida de clientes (Personas Natural
    - **Operadores y Administradores:** Acceso global a la base 360° de clientes de la red Tranqi.
    - **Socios Abogados:** Visibilidad restringida por RLS exclusivamente a los clientes que tienen causas asignadas a su equipo o citas confirmadas con su despacho.
 5. **Ficha Integral 360° del Cliente:** Pestaña unificada con: Datos Generales, Representante Legal validado por ARIA, Expedientes vinculados, Billetera de Documentos (`TRQ-COM-001`), Citas agendadas y Balance de Honorarios.
+6. **Auto-Sincronización de Usuarios Web a Prospectos en el CRM:**
+   - Todo usuario que se registra en la web (Google OAuth o correo/contraseña) genera de manera reactiva e inmediata su ficha en `trq_cliente_perfil` con estado `PROSPECTO` (`clp_detalle_cliente->>'estado_crm' = 'PROSPECTO'`).
+   - Se le asigna un identificador provisional único `WEB-{UUID}` si aún no ha ingresado su cédula formal.
+   - La bandeja de CRM incluye botón de sincronización masiva en tiempo real y auto-hidratación al cargar la vista.
+
 
 ---
 
