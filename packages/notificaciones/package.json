@@ -7,10 +7,12 @@
   "exports": {
     ".": "./src/index.ts",
     "./enviar-correo": "./src/enviar-correo.ts",
-    "./notificar-usuario": "./src/notificar-usuario.ts"
+    "./notificar-usuario": "./src/notificar-usuario.ts",
+    "./despachador": "./src/despachador.ts"
   },
   "scripts": {
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
   },
   "dependencies": {
     "@eco/supabase": "workspace:*",
@@ -24,6 +26,7 @@
     "next": "15.5.22",
     "react": "19.2.8",
     "react-dom": "19.2.8",
-    "typescript": "^5.7.0"
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0"
   }
 }

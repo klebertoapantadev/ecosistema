@@ -1174,6 +1174,15 @@ Lo que estaba prometido y no ocurría:
    llegar hasta 15 minutos pronto, lo que sigue sirviendo; afinar más
    multiplicaría las ejecuciones sin mejorar el resultado.
 
+7. **Disparadores configurados hoy.** El principal es la tarea de
+   `apps/tranqi-web/vercel.json` contra el endpoint cada 15 minutos. `pg_cron`
+   se mantiene como red de seguridad, invocando el mismo despacho dentro de la
+   base: es el único camino que sigue vivo mientras la aplicación web está
+   caída o desplegando. Repetir una pasada no cuesta nada —las tareas son
+   idempotentes y las notificaciones llevan clave única—, y la bitácora
+   registra en `tar_detalle.origen` quién disparó cada una, para poder
+   distinguirlos. Para un Linux propio existe `scripts/despachar-alertas.mjs`.
+
 ### Criterios de Aceptación (Gherkin)
 
 * **Escenario:** Recordatorio de cita con el despachador caído
@@ -1196,6 +1205,13 @@ Lo que estaba prometido y no ocurría:
     enviado, de forma que lo recibirá cuando levante el silencio si aún hay
     tiempo.
 
+* **Escenario:** Disparo del despachador sin secreto
+  * **Dado que** el endpoint `/api/cron/despachador-alertas` está publicado.
+  * **Cuando** alguien lo invoca sin la cabecera `Authorization: Bearer
+    CRON_SECRET`, o con un secreto equivocado.
+  * **Entonces** responde `401` sin ejecutar ninguna tarea y sin revelar si el
+    fallo fue por secreto incorrecto o por secreto no configurado.
+
 ---
 
 ## Cómo Referenciar desde la Especificación de un Producto
@@ -1215,4 +1231,3 @@ Ver PLT-004. Agente asignado en ARIA: "Asistente Legal Tranqi".
 ## Facturación y Pagos
 Ver PLT-006. Emisión de factura SRI automática al aprobar la solicitud.
 ```
-

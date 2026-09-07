@@ -1,9 +1,9 @@
 // Generado con: npx supabase gen types typescript --project-id oaybbpdxhlxjbpwnoymy
 //   --schema public,comun_seguridad,comun_auditoria,comun_configuracion,comun_catalogo,comun_notificaciones,
-//            comun_notificacion,comun_reclutamiento,comun_comercio,comun_agenda,tranqui_legal
+//            comun_notificacion,comun_reclutamiento,comun_comercio,comun_agenda,comun_tareas,tranqui_legal
 // Regenerar en el mismo PR que cualquier migracion nueva que toque columnas
-// Regenerado 2026-09-06 tras TRQ-ABG-005.
-export type Json =
+// Regenerado 2026-09-06 tras el despachador portable (PLT-021).
+﻿export type Json =
   | string
   | number
   | boolean
@@ -3149,6 +3149,98 @@ export type Database = {
       [_ in never]: never
     }
   }
+  comun_tareas: {
+    Tables: {
+      tar_ejecucion: {
+        Row: {
+          tar_actualizado_en: string
+          tar_creado_en: string
+          tar_detalle: Json
+          tar_eliminado_en: string | null
+          tar_error: string | null
+          tar_estado: string
+          tar_filas: number
+          tar_fin_en: string | null
+          tar_id: string
+          tar_inicio_en: string
+          tar_secuencial: number
+          tar_tarea: string
+        }
+        Insert: {
+          tar_actualizado_en?: string
+          tar_creado_en?: string
+          tar_detalle?: Json
+          tar_eliminado_en?: string | null
+          tar_error?: string | null
+          tar_estado?: string
+          tar_filas?: number
+          tar_fin_en?: string | null
+          tar_id?: string
+          tar_inicio_en?: string
+          tar_secuencial?: never
+          tar_tarea: string
+        }
+        Update: {
+          tar_actualizado_en?: string
+          tar_creado_en?: string
+          tar_detalle?: Json
+          tar_eliminado_en?: string | null
+          tar_error?: string | null
+          tar_estado?: string
+          tar_filas?: number
+          tar_fin_en?: string | null
+          tar_id?: string
+          tar_inicio_en?: string
+          tar_secuencial?: never
+          tar_tarea?: string
+        }
+        Relationships: []
+      }
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      tar_fn_alertas_caducidad_documento: { Args: never; Returns: number }
+      tar_fn_despachar: { Args: { p_origen?: string }; Returns: Json }
+      tar_fn_expirar_bonos: { Args: never; Returns: number }
+      tar_fn_notificar:
+        | {
+            Args: {
+              p_contenido_html: string
+              p_detalles?: Json
+              p_negocio: string
+              p_plantilla_correo?: string
+              p_titulo: string
+              p_url_accion?: string
+              p_usuario_id: string
+            }
+            Returns: boolean
+          }
+        | {
+            Args: {
+              p_clave_unica?: string
+              p_contenido_html: string
+              p_detalles?: Json
+              p_negocio: string
+              p_plantilla_correo?: string
+              p_titulo: string
+              p_url_accion?: string
+              p_usuario_id: string
+            }
+            Returns: boolean
+          }
+      tar_fn_podar_bitacora: { Args: never; Returns: number }
+      tar_fn_reactivar_pospuestas: { Args: never; Returns: number }
+      tar_fn_recordatorios_cita: { Args: never; Returns: number }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
   public: {
     Tables: {
       [_ in never]: never
@@ -3289,6 +3381,7 @@ export type Database = {
       trq_billetera_documento: {
         Row: {
           doc_actualizado_en: string
+          doc_alertado_caducidad_en: string | null
           doc_alertar_caducidad: boolean
           doc_archivo_base64: string | null
           doc_archivo_mimetype: string
@@ -3318,6 +3411,7 @@ export type Database = {
         }
         Insert: {
           doc_actualizado_en?: string
+          doc_alertado_caducidad_en?: string | null
           doc_alertar_caducidad?: boolean
           doc_archivo_base64?: string | null
           doc_archivo_mimetype?: string
@@ -3347,6 +3441,7 @@ export type Database = {
         }
         Update: {
           doc_actualizado_en?: string
+          doc_alertado_caducidad_en?: string | null
           doc_alertar_caducidad?: boolean
           doc_archivo_base64?: string | null
           doc_archivo_mimetype?: string
@@ -3477,6 +3572,8 @@ export type Database = {
           cit_origen: string
           cit_pago_id: string | null
           cit_reasignada_de: string | null
+          cit_recordado_1h_en: string | null
+          cit_recordado_24h_en: string | null
           cit_reserva_id: string | null
           cit_secuencial: number
           cit_variante_id: string | null
@@ -3506,6 +3603,8 @@ export type Database = {
           cit_origen?: string
           cit_pago_id?: string | null
           cit_reasignada_de?: string | null
+          cit_recordado_1h_en?: string | null
+          cit_recordado_24h_en?: string | null
           cit_reserva_id?: string | null
           cit_secuencial?: never
           cit_variante_id?: string | null
@@ -3535,6 +3634,8 @@ export type Database = {
           cit_origen?: string
           cit_pago_id?: string | null
           cit_reasignada_de?: string | null
+          cit_recordado_1h_en?: string | null
+          cit_recordado_24h_en?: string | null
           cit_reserva_id?: string | null
           cit_secuencial?: never
           cit_variante_id?: string | null
@@ -4535,6 +4636,9 @@ export const Constants = {
     Enums: {},
   },
   comun_seguridad: {
+    Enums: {},
+  },
+  comun_tareas: {
     Enums: {},
   },
   public: {
