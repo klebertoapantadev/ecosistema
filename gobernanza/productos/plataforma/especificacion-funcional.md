@@ -38,7 +38,8 @@ Este documento describe el **comportamiento compartido por los 4 productos** (Tr
 | **`PLT-017`** | Gestión de Sesiones y Revocación Remota | 🟡 Parcial | **40%** | Kleber Toapanta |
 | **`PLT-018`** | Historial de Accesos y Saludo Personalizado | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`PLT-019`** | **Reclutamiento, Bolsa de Empleo y "Únete al Equipo"** | ✅ Implementado | **100%** | Kleber Toapanta |
-| **`PLT-020`** | **Agenda, Disponibilidad y Citas (Profesionales y Técnicos)** | 🟡 En Desarrollo | **20%** | **Jesus Navarrete** |
+| **`PLT-020`** | **Agenda, Disponibilidad y Citas (Profesionales y Técnicos)** | 🟡 En Desarrollo | **35%** | **Jesus Navarrete** |
+| **`PLT-021`** | **Despachador de Tareas Programadas (recordatorios, caducidades, cobros)** | 🟡 En Desarrollo | **70%** | **Jesus Navarrete** |
 
 ---
 
@@ -1069,6 +1070,75 @@ Profesional (`PLT-011` regla 8) y se concreta en Tranqi como `TRQ-ABG-004` y `TR
   * **Entonces** ese abogado no aparece como disponible ni recibe turnos, y su asistente le propone
     configurar la agenda.
 
+
+---
+
+## PLT-021 — Despachador de Tareas Programadas
+
+**Responsable:** **Jesus Navarrete**
+
+### Descripción
+Ejecutor periódico de todo lo que la plataforma promete que «ocurre solo». Hasta
+el 2026-09-06 no existía: varias funciones daban por hecho un proceso que
+nadie había escrito, y por eso guardaban fechas que no disparaban nada.
+
+Lo que estaba prometido y no ocurría:
+
+| Promesa | Dónde | Qué pasaba |
+| :--- | :--- | :--- |
+| Recordatorios de cita | `PLT-020` regla 9, `TRQ-ABG-004` | Nunca se enviaban |
+| «Posponer alerta» | `PLT-013` regla 5 | Se guardaba `pospuesta_hasta` y la notificación no volvía jamás |
+| Alertas de caducidad de documentos | `TRQ-COM-001` regla 4 | Las columnas de configuración existían desde agosto; el disparador, no |
+| Caducidad de bonos de convenio | `PLT-009` regla 8 | El saldo caducado seguía visible como gastable |
+| Campañas `PROGRAMADA` | `PLT-013` regla 3 | El estado se admite y nada lo despacha |
+
+### Reglas de Negocio
+
+1. **Corre dentro de la base (`pg_cron`), no en un servicio externo.** Todas
+   estas tareas son operaciones sobre datos que ya están en PostgreSQL. Sacarlas
+   fuera obligaría a exponer un endpoint, autenticarlo y vigilarlo para acabar
+   ejecutando el mismo `UPDATE`. Lo único que sale fuera es el correo, que ya
+   tiene su camino: se encola en `not_cola_correo`.
+2. **Toda tarea es idempotente y recuperable.** No se pregunta «¿falta
+   exactamente un día?», sino «¿queda menos de un día y todavía no avisé?». Una
+   ventana estrecha convierte cualquier caída del cron en silencio permanente;
+   así, al volver, se manda lo pendiente. Cada envío deja su marca, de modo que
+   una segunda pasada no duplica nada.
+3. **Cada ejecución deja rastro** en `comun_tareas.tar_ejecucion`, con filas
+   afectadas y error. Un cron sin bitácora que falla es indistinguible de uno
+   que no tenía trabajo. Los fallos se conservan siempre; el resto se poda a los
+   30 días.
+4. **Una tarea que falla no arrastra a las demás:** se ejecutan aisladas y el
+   fallo queda registrado.
+5. **Se respetan las preferencias del usuario** (`PLT-013` regla 7): canales
+   elegidos y silencio temporal. Si el usuario tiene el silencio activo, la
+   tarea **no marca el aviso como enviado**, para que vuelva a intentarlo cuando
+   el silencio expire en vez de perderse.
+6. **Frecuencia:** cada 15 minutos. El recordatorio de «una hora antes» puede
+   llegar hasta 15 minutos pronto, lo que sigue sirviendo; afinar más
+   multiplicaría las ejecuciones sin mejorar el resultado.
+
+### Criterios de Aceptación (Gherkin)
+
+* **Escenario:** Recordatorio de cita con el despachador caído
+  * **Dado que** una cita confirmada empieza dentro de 20 horas y el despachador
+    lleva 3 horas sin ejecutarse.
+  * **Cuando** vuelve a ejecutarse.
+  * **Entonces** envía el recordatorio pendiente en esa misma pasada, en lugar
+    de darlo por perdido porque «ya no faltan 24 horas exactas».
+
+* **Escenario:** El despachador se ejecuta dos veces seguidas
+  * **Dado que** un recordatorio ya se envió y quedó marcado.
+  * **Cuando** el despachador vuelve a pasar.
+  * **Entonces** no se envía ninguna notificación duplicada.
+
+* **Escenario:** Usuario con silencio temporal activo
+  * **Dado que** un afiliado silenció sus notificaciones hasta mañana y tiene una
+    cita dentro de 20 horas.
+  * **Cuando** el despachador procesa los recordatorios.
+  * **Entonces** no se le envía nada y el aviso **no** queda marcado como
+    enviado, de forma que lo recibirá cuando levante el silencio si aún hay
+    tiempo.
 
 ---
 
