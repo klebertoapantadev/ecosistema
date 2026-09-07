@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ShoppingBag, Users, Settings, Mail, ArrowRight, Sparkles } from "lucide-react";
+import { ShoppingBag, Users, Settings, Mail, ArrowRight, Sparkles, type LucideIcon } from "lucide-react";
 import { obtenerPerfilActual, obtenerWidgetsVisibles, obtenerSaludo } from "@eco/identidad";
 
 export const metadata: Metadata = { title: "Panel de Control — Tinkay Floristería" };
@@ -12,7 +12,7 @@ interface WidgetInfo {
   nombre: string;
   descripcion: string;
   ruta: string;
-  icono: any;
+  icono: LucideIcon;
   etiqueta?: string;
   color: string;
 }

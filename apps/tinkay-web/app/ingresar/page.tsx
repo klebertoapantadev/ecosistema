@@ -4,14 +4,21 @@ import { FormularioIngreso } from "@eco/identidad";
 
 export const metadata: Metadata = { title: "Ingresar — tinkay" };
 
-export default function PaginaIngreso() {
+interface PageProps {
+  searchParams: Promise<{ destino?: string; next?: string }>;
+}
+
+export default async function PaginaIngreso({ searchParams }: PageProps) {
+  const params = await searchParams;
+  const destino = params.destino || params.next || "";
+
   return (
     <div className="pagina-auth">
       <Link href="/" className="logo-auth">tinkay</Link>
       <h1>Ingresa a tu cuenta</h1>
-      <FormularioIngreso negocio="tinkay" />
+      <FormularioIngreso negocio="tinkay" destino={destino} />
       <p className="enlace-auth">
-        ¿No tienes cuenta? <Link href="/registro">Regístrate</Link>
+        ¿No tienes cuenta? <Link href={`/registro${destino ? `?destino=${encodeURIComponent(destino)}` : ""}`}>Regístrate</Link>
       </p>
     </div>
   );

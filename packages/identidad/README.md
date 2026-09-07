@@ -69,4 +69,16 @@ La función usa `to_regclass('comun_facturacion.fac_transaccion_pago')` como vá
 
 - **✅ Hecho (2026-07-27):** `configuracion-negocio` y `gestion-usuarios` también se extrajeron a paquetes compartidos (`@eco/configuracion-negocio`, `@eco/gestion-usuarios`), mismo patrón que este, y ya están montados en las 4 apps.
 - **✅ Desplegado (2026-07-27):** `fastfix-web`, `tinkay-web` y `margaritas-web` ya tienen proyecto Vercel propio (`{app}.vercel.app`) con las variables de Supabase configuradas, registro/login verificados en vivo. Falta decidir dominio propio de cada negocio (hoy solo `tranqi-web` tiene `tranqi24.com`).
-- **⚠️ Pendiente, bloqueante para Google OAuth en las 3 apps nuevas:** sus URLs `/auth/callback` (`https://{app}.vercel.app/auth/callback`) todavía no están en la lista de Redirect URLs de Supabase (Authentication → URL Configuration) — mientras tanto, `signInWithOAuth()` cae de vuelta al Site URL (`tranqi24.com`), igual que el bug original documentado más arriba con `localhost`. Paso manual del dashboard, sin herramienta MCP para Auth Provider config.
+- **Configuración requerida en Supabase Dashboard (Authentication → URL Configuration):**
+  - **Site URL**: `https://www.tranqi24.com`
+  - **Redirect URLs**:
+    - `https://*.vercel.app/**` (Cubre automáticamente todas las apps y previews en Vercel)
+    - `https://tinkay-web.vercel.app/**`
+    - `https://fastfix-web.vercel.app/**`
+    - `https://margaritas-web.vercel.app/**`
+    - `https://tranqi-web.vercel.app/**`
+    - `https://www.tranqi24.com/**`
+    - `https://tranqi24.com/**`
+    - `http://localhost:*/**`
+  *Sin estos patrones en la lista blanca de Supabase, cualquier intento de OAuth en otra app es rechazado por seguridad en Supabase Auth y redirige por defecto al Site URL (`tranqi24.com/?code=...`).*
+

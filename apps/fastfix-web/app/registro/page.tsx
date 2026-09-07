@@ -4,14 +4,21 @@ import { FormularioRegistro } from "@eco/identidad";
 
 export const metadata: Metadata = { title: "Crear cuenta — FastFix Home" };
 
-export default function PaginaRegistro() {
+interface PageProps {
+  searchParams: Promise<{ destino?: string; next?: string }>;
+}
+
+export default async function PaginaRegistro({ searchParams }: PageProps) {
+  const params = await searchParams;
+  const destino = params.destino || params.next || "";
+
   return (
     <div className="pagina-auth">
       <Link href="/" className="logo-auth">FastFix Home</Link>
       <h1>Crea tu cuenta</h1>
-      <FormularioRegistro negocio="fastfix" />
+      <FormularioRegistro negocio="fastfix" destino={destino} />
       <p className="enlace-auth">
-        ¿Ya tienes cuenta? <Link href="/ingresar">Ingresa aquí</Link>
+        ¿Ya tienes cuenta? <Link href={`/ingresar${destino ? `?destino=${encodeURIComponent(destino)}` : ""}`}>Ingresa aquí</Link>
       </p>
     </div>
   );

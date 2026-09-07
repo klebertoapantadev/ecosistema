@@ -69,6 +69,17 @@ export default function TranqiLanding() {
   };
 
   useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const code = params.get("code");
+      if (code) {
+        const next = params.get("next") || "/panel";
+        window.location.href = `/auth/callback?code=${encodeURIComponent(code)}&next=${encodeURIComponent(next)}`;
+      }
+    }
+  }, []);
+
+  useEffect(() => {
     async function cargarAbogadosRegistrados() {
       try {
         const res = await fetch("/api/abogados-publicos");
