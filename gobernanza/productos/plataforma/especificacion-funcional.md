@@ -1174,14 +1174,20 @@ Lo que estaba prometido y no ocurría:
    llegar hasta 15 minutos pronto, lo que sigue sirviendo; afinar más
    multiplicaría las ejecuciones sin mejorar el resultado.
 
-7. **Disparadores configurados hoy.** El principal es la tarea de
-   `apps/tranqi-web/vercel.json` contra el endpoint cada 15 minutos. `pg_cron`
-   se mantiene como red de seguridad, invocando el mismo despacho dentro de la
-   base: es el único camino que sigue vivo mientras la aplicación web está
-   caída o desplegando. Repetir una pasada no cuesta nada —las tareas son
-   idempotentes y las notificaciones llevan clave única—, y la bitácora
-   registra en `tar_detalle.origen` quién disparó cada una, para poder
-   distinguirlos. Para un Linux propio existe `scripts/despachar-alertas.mjs`.
+7. **Disparadores configurados hoy, y por qué son dos.** La cuenta de
+   despliegue está en plan **Hobby**, donde Vercel solo ejecuta tareas
+   programadas **una vez al día** —y una expresión más frecuente no se
+   degrada, hace fallar el despliegue—. Un recordatorio de «una hora antes»
+   evaluado una vez al día no sirve, así que **quien sostiene el servicio es
+   `pg_cron`, cada 15 minutos**. La tarea diaria de `vercel.json` (09:20 UTC)
+   queda como red y, sobre todo, **ejercita el camino portable** para que no se
+   pudra sin que nadie lo note. Repetir una pasada no cuesta nada: las tareas
+   son idempotentes y las notificaciones llevan clave única. La bitácora
+   registra en `tar_detalle.origen` quién disparó cada una; si durante días
+   solo aparece `pg_cron`, el camino portable está roto aunque el servicio
+   funcione. Al pasar a Pro basta subir la cadencia en `vercel.json`; para un
+   Linux propio existe `scripts/despachar-alertas.mjs`. Detalle operativo en
+   `apps/tranqi-web/CRON.md`.
 
 ### Criterios de Aceptación (Gherkin)
 
