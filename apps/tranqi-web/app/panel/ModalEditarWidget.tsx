@@ -69,6 +69,20 @@ const MAPA_RUTAS_FISICAS_WIDGETS: Record<string, string> = {
   "seccion-favoritos": "apps/tranqi-web/app/panel/SeccionFavoritosInicio.tsx",
   "selector-rol": "apps/tranqi-web/app/panel/SelectorRolActivo.tsx",
   "selector-rol-activo": "apps/tranqi-web/app/panel/SelectorRolActivo.tsx",
+  "crm_clientes": "apps/tranqi-web/modulos/crm-clientes/componentes/BandejaClientesCRM.tsx",
+  "crm-clientes": "apps/tranqi-web/modulos/crm-clientes/componentes/BandejaClientesCRM.tsx",
+  "alta_cliente_crm": "apps/tranqi-web/modulos/crm-clientes/componentes/ModalAltaClienteAsistida.tsx",
+  "alta-cliente-crm": "apps/tranqi-web/modulos/crm-clientes/componentes/ModalAltaClienteAsistida.tsx",
+  "catalogo_productos": "apps/tranqi-web/modulos/comercio/componentes/CatalogoProductosComercio.tsx",
+  "catalogo-productos": "apps/tranqi-web/modulos/comercio/componentes/CatalogoProductosComercio.tsx",
+  "catalogo": "apps/tranqi-web/modulos/comercio/componentes/CatalogoProductosComercio.tsx",
+  "honorarios": "apps/tranqi-web/modulos/comercio/componentes/CatalogoProductosComercio.tsx",
+  "pasarela_payphone": "apps/tranqi-web/modulos/comercio/componentes/ConfiguracionPasarelaPayphone.tsx",
+  "pasarela-payphone": "apps/tranqi-web/modulos/comercio/componentes/ConfiguracionPasarelaPayphone.tsx",
+  "payphone": "apps/tranqi-web/modulos/comercio/componentes/ConfiguracionPasarelaPayphone.tsx",
+  "historial_pagos": "apps/tranqi-web/modulos/comercio/componentes/HistorialTransaccionesPago.tsx",
+  "historial-pagos": "apps/tranqi-web/modulos/comercio/componentes/HistorialTransaccionesPago.tsx",
+  "pagos": "apps/tranqi-web/modulos/comercio/componentes/HistorialTransaccionesPago.tsx",
 };
 
 export function ModalEditarWidget({

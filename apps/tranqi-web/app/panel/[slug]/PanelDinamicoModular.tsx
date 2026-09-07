@@ -5,7 +5,7 @@ import Link from "next/link";
 import {
   LayoutGrid, Wrench, Shield, Users, Bell, UserCog, ClipboardList, FileText,
   Settings, X, ChevronRight, CircleUser, KeyRound, FileCheck, Folder, type LucideIcon,
-  Bot
+  Bot, ShoppingBag, CreditCard, Receipt, UserCheck
 } from "lucide-react";
 import { AdministracionPerfilesWidget } from "@eco/gestion-usuarios/componentes/AdministracionPerfilesWidget";
 import { ConsultaUsuariosPerfilesWidget } from "@eco/gestion-usuarios/componentes/ConsultaUsuariosPerfilesWidget";
@@ -20,6 +20,13 @@ import { TablaAuditoria } from "../auditoria/TablaAuditoria";
 import { useCustomWidgets } from "../gestorTitulosWidgets";
 import { WidgetFirmaDocumentosPdf } from "@/modulos/firma-documentos/componentes/WidgetFirmaDocumentosPdf";
 import { WidgetBilleteraDocumentos } from "@/modulos/billetera-documentos";
+import { BandejaClientesCRM } from "@/modulos/crm-clientes/componentes/BandejaClientesCRM";
+import { ModalAltaClienteAsistida } from "@/modulos/crm-clientes/componentes/ModalAltaClienteAsistida";
+import {
+  CatalogoProductosComercio,
+  ConfiguracionPasarelaPayphone,
+  HistorialTransaccionesPago,
+} from "@/modulos/comercio";
 
 import { obtenerConfiguracionNavegacionRolAction } from "@eco/gestion-usuarios/acciones";
 
@@ -81,6 +88,48 @@ function EnlaceConsolaAgentes() {
 }
 
 const INVENTARIO_GLOBAL_WIDGETS: Record<string, { titulo: string; subtitulo: string; icono: LucideIcon; colorIcono: string; categoria: string }> = {
+  catalogo_productos: {
+    titulo: "Catálogo Comercial & Honorarios",
+    subtitulo: "Servicios jurídicos, tarifario de honorarios y suscripciones con IVA 15%",
+    icono: ShoppingBag,
+    colorIcono: "#0284C7",
+    categoria: "Comercio y Pagos"
+  },
+  pasarela_payphone: {
+    titulo: "Pasarela Payphone (Botón de Pago)",
+    subtitulo: "Configuración del Botón de Pago Payphone, credenciales y simulador de cobro",
+    icono: CreditCard,
+    colorIcono: "#D97706",
+    categoria: "Comercio y Pagos"
+  },
+  historial_pagos: {
+    titulo: "Historial de Transacciones & Pagos",
+    subtitulo: "Auditoría contable y registro de pagos Payphone en vivo y simulados",
+    icono: Receipt,
+    colorIcono: "#05876E",
+    categoria: "Comercio y Pagos"
+  },
+  crm_clientes: {
+    titulo: "CRM Jurídico & Clientes",
+    subtitulo: "Directorio 360°, KPIs, expedientes y conflict check en vivo",
+    icono: Users,
+    colorIcono: "#5000BA",
+    categoria: "Gestión Legal"
+  },
+  clientes_crm: {
+    titulo: "CRM Jurídico & Clientes",
+    subtitulo: "Directorio 360°, KPIs, expedientes y conflict check en vivo",
+    icono: Users,
+    colorIcono: "#5000BA",
+    categoria: "Gestión Legal"
+  },
+  alta_cliente_crm: {
+    titulo: "Alta Asistida & Recepción Multicanal",
+    subtitulo: "Registro asistido de clientes con OCR ARIA de cédula/nombramiento y verificación de conflictos",
+    icono: UserCheck,
+    colorIcono: "#05876E",
+    categoria: "Gestión Legal"
+  },
   agentes_ia: {
     titulo: "Agentes de IA",
     subtitulo: "Configuración de los asistentes Aria de tranqi: prompts, modelo y herramientas",
@@ -467,6 +516,25 @@ export function PanelDinamicoModular({ slug, negocio }: Props) {
             color="#FE5800"
           />
         );
+      case "catalogo_productos":
+      case "catalogo":
+      case "honorarios":
+        return <CatalogoProductosComercio negocio={negocio} />;
+      case "pasarela_payphone":
+      case "payphone":
+      case "pasarela":
+        return <ConfiguracionPasarelaPayphone negocio={negocio} />;
+      case "historial_pagos":
+      case "transacciones":
+      case "pagos":
+        return <HistorialTransaccionesPago negocio={negocio} />;
+      case "crm_clientes":
+      case "clientes_crm":
+      case "clientes":
+        return <BandejaClientesCRM />;
+      case "alta_cliente_crm":
+      case "alta_cliente":
+        return <ModalAltaClienteAsistida abierto={true} alCerrar={() => setWidgetActivo(null)} alGuardarExitoso={() => setWidgetActivo(null)} />;
       case "agentes_ia":
         // La consola de agentes es una pantalla propia (/panel/agentes) y no un
         // widget en linea: necesita un layout con gate aal2 y hace lecturas a

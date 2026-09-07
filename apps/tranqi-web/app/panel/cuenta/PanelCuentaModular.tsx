@@ -126,9 +126,12 @@ const WIDGETS_BASE: WidgetDef[] = [
   }
 ];
 
-function obtenerWidgetsInicialesCuenta(): WidgetDef[] {
+function obtenerWidgetsInicialesCuenta(tieneMultiplesRoles: boolean): WidgetDef[] {
   if (typeof document === "undefined") {
-    return WIDGETS_BASE.filter(m => m.id === "mi_cuenta" || m.id === "perfil" || m.id === "ver_como" || m.id === "rol_activo");
+    return WIDGETS_BASE.filter(m => {
+      if (m.id === "rol_activo" || m.id === "ver_como") return tieneMultiplesRoles;
+      return true;
+    });
   }
   const cookieStore = document.cookie || "";
   let rolActivo = "CLIENTE";
@@ -146,20 +149,29 @@ function obtenerWidgetsInicialesCuenta(): WidgetDef[] {
     ids = ["ver_como", "mi_cuenta", "datos_facturacion", "historial_accesos", "mfa_seguridad", "baja_cuenta"];
   }
 
+  // REGLA: Si el usuario tiene más de 1 rol o es SuperAdmin, siempre asegurar "ver_como" en la portada
+  if (tieneMultiplesRoles && !ids.includes("ver_como")) {
+    ids.unshift("ver_como");
+  } else if (!tieneMultiplesRoles) {
+    ids = ids.filter(id => id !== "ver_como" && id !== "rol_activo");
+  }
+
   return WIDGETS_BASE.filter(m =>
-    ids.includes(m.id) ||
+    (ids.includes(m.id) ||
     (ids.includes("mi_cuenta") && m.id === "perfil") ||
     (ids.includes("ver_como") && m.id === "rol_activo") ||
     (ids.includes("datos_facturacion") && m.id === "facturacion") ||
     (ids.includes("baja_cuenta") && m.id === "peligro") ||
     (ids.includes("seguridad_mfa") && m.id === "mfa_seguridad") ||
-    (ids.includes("sesion_claves") && m.id === "sesion")
+    (ids.includes("sesion_claves") && m.id === "sesion")) &&
+    (m.id !== "rol_activo" || tieneMultiplesRoles)
   );
 }
 
 export function PanelCuentaModular({ perfil, historial, puedeConmutar = true, rolesDisponibles, materias = [], provincias = [], solicitudExistente }: Props) {
+  const tieneMultiplesRoles = Boolean(perfil?.usu_superadmin_plataforma || puedeConmutar || (rolesDisponibles && rolesDisponibles.length > 1));
   const [favoritos, setFavoritos] = useState<string[]>([]);
-  const [widgetsFiltradosCuenta, setWidgetsFiltradosCuenta] = useState<WidgetDef[]>(obtenerWidgetsInicialesCuenta);
+  const [widgetsFiltradosCuenta, setWidgetsFiltradosCuenta] = useState<WidgetDef[]>(() => obtenerWidgetsInicialesCuenta(tieneMultiplesRoles));
   const [widgetActivo, setWidgetActivo] = useState<string | null>(null);
   const [widgetEditar, setWidgetEditar] = useState<{
     id: string;
@@ -189,7 +201,9 @@ export function PanelCuentaModular({ perfil, historial, puedeConmutar = true, ro
           facturacion: "datos_facturacion",
           mfa: "mfa_seguridad",
           baja_cuenta: "peligro",
-          eliminar_cuenta: "peligro"
+          eliminar_cuenta: "peligro",
+          ver_como: "rol_activo",
+          rol_activo: "rol_activo"
         };
         const targetId = mapaAlias[paramWidget] || paramWidget;
         setWidgetActivo(targetId);
@@ -248,7 +262,14 @@ export function PanelCuentaModular({ perfil, historial, puedeConmutar = true, ro
           }
         }
 
-        // 4. Mapear y filtrar WIDGETS_BASE
+        // 4. Aplicar regla estricta: Si tiene > 1 rol (o SuperAdmin), incluir "ver_como"; si tiene solo 1 rol, excluirlo
+        if (tieneMultiplesRoles) {
+          if (!idsAsignados.includes("ver_como")) idsAsignados.unshift("ver_como");
+        } else {
+          idsAsignados = idsAsignados.filter(id => id !== "ver_como" && id !== "rol_activo");
+        }
+
+        // 5. Mapear y filtrar WIDGETS_BASE
         const filtrados: WidgetDef[] = [];
         for (const id of idsAsignados) {
           const enInventario = WIDGETS_BASE.find(m =>
@@ -261,9 +282,19 @@ export function PanelCuentaModular({ perfil, historial, puedeConmutar = true, ro
             (id === "sesion_claves" && m.id === "sesion")
           );
           if (enInventario && !filtrados.some(f => f.id === enInventario.id)) {
+            if (enInventario.id === "rol_activo" && !tieneMultiplesRoles) {
+              continue;
+            }
             filtrados.push(enInventario);
           }
         }
+
+        // Asegurar que si tiene múltiples roles, 'rol_activo' esté en la lista
+        if (tieneMultiplesRoles && !filtrados.some(f => f.id === "rol_activo")) {
+          const wVerComo = WIDGETS_BASE.find(m => m.id === "rol_activo");
+          if (wVerComo) filtrados.unshift(wVerComo);
+        }
+
         if (filtrados.length > 0) {
           setWidgetsFiltradosCuenta(filtrados);
           return;
@@ -271,15 +302,20 @@ export function PanelCuentaModular({ perfil, historial, puedeConmutar = true, ro
       } catch (err) {
         console.error("Error al cargar widgets asignados a panel_cuenta:", err);
       }
-      setWidgetsFiltradosCuenta(puedeConmutar ? WIDGETS_BASE : WIDGETS_BASE.filter(w => w.id !== "rol_activo"));
+      setWidgetsFiltradosCuenta(tieneMultiplesRoles ? WIDGETS_BASE : WIDGETS_BASE.filter(w => w.id !== "rol_activo"));
     }
 
     cargarConfiguracionPanelCuenta();
     window.addEventListener("storage", cargarConfiguracionPanelCuenta);
     return () => window.removeEventListener("storage", cargarConfiguracionPanelCuenta);
-  }, [puedeConmutar]);
+  }, [tieneMultiplesRoles]);
 
-  const widgetsDisponibles = widgetsFiltradosCuenta;
+  const widgetsDisponibles = widgetsFiltradosCuenta.filter(w => {
+    if (w.id === "rol_activo" || w.id === "ver_como") {
+      return tieneMultiplesRoles;
+    }
+    return true;
+  });
 
   // Cargar favoritos de localStorage
   useEffect(() => {

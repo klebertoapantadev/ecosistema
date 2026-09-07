@@ -5,7 +5,7 @@ import {
   Home, CircleUser, Settings, ShieldCheck, ClipboardList, Wrench, CreditCard,
   PanelLeft, Sliders, Folder, Activity, FileText, UserCog,
   CheckSquare, Globe, Building, Sparkles, Phone, Lock, KeyRound, Terminal, Zap,
-  Eye, Search, Pencil, LogOut, LogIn, type LucideIcon
+  Eye, Search, Pencil, LogOut, LogIn, ShoppingBag, type LucideIcon
 } from "lucide-react";
 import { EnlacePanel } from "./EnlacePanel";
 import { BotonCerrarSesion } from "./BotonCerrarSesion";
@@ -31,6 +31,7 @@ const MAPA_ICONOS_NAV: Record<string, LucideIcon> = {
   Wrench,
   ClipboardList,
   CreditCard,
+  ShoppingBag,
   Sliders,
   Folder,
   Activity,
@@ -130,7 +131,7 @@ export function NavegacionSidebar({
         if (rolKey === "OPERADOR" || rolKey === "AUXILIAR" || rolKey === "TECNICO") {
           widgetsPorPanel = {
             ...widgetsPorPanel,
-            panel_administrar: ["socios", "asignaciones_agenda"],
+            panel_administrar: ["crm_clientes", "socios", "asignaciones_agenda"],
             panel_herramientas: ["firma_documentos_pdf", "billetera_documentos", "emision_notificaciones"],
             panel_seguridad: ["auditoria", "solicitud_socio"]
           };
@@ -138,7 +139,7 @@ export function NavegacionSidebar({
           widgetsPorPanel = {
             ...widgetsPorPanel,
             panel_configuracion: ["configuracion_negocio", "configuracion_correo", "perfiles", "notificaciones", "agentes_ia"],
-            panel_administrar: ["gestion_usuarios", "socios", "solicitud_socio", "asignaciones_agenda", "emision_notificaciones", "auditoria"],
+            panel_administrar: ["crm_clientes", "gestion_usuarios", "socios", "solicitud_socio", "asignaciones_agenda", "emision_notificaciones", "auditoria"],
             panel_herramientas: ["firma_documentos_pdf", "billetera_documentos", "emision_notificaciones"],
             panel_seguridad: ["auditoria"]
           };

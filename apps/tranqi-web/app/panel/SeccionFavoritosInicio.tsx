@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { User, History, KeyRound, ShieldAlert, Settings, Mail, Bell, Star, ChevronRight, ShieldCheck, Sliders, Receipt, Lock, FileText, BarChart2, FileCheck, Folder, type LucideIcon, CalendarPlus, CalendarCheck, CalendarClock, Shuffle } from "lucide-react";
+import { User, Users, UserCheck, History, KeyRound, ShieldAlert, Settings, Mail, Bell, Star, ChevronRight, ShieldCheck, Sliders, Receipt, Lock, FileText, BarChart2, FileCheck, Folder, ShoppingBag, CreditCard, CalendarPlus, CalendarCheck, CalendarClock, Shuffle, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { useCustomWidgets } from "./gestorTitulosWidgets";
 
@@ -16,6 +16,22 @@ interface WidgetFavInfo {
 }
 
 const CATALOGO_FAVORITOS: Record<string, WidgetFavInfo> = {
+  catalogo_productos: {
+    id: "catalogo_productos",
+    titulo: "Catálogo & Honorarios",
+    subtitulo: "Servicios legales, liquidación de honorarios y planes con Payphone",
+    icono: ShoppingBag,
+    href: "/panel/catalogo-productos",
+    origen: "Configurar"
+  },
+  pasarela_payphone: {
+    id: "pasarela_payphone",
+    titulo: "Pasarela Payphone",
+    subtitulo: "Configuración del Botón de Pago Payphone y simulación de transacciones",
+    icono: CreditCard,
+    href: "/panel/configuracion?widget=pasarela_payphone",
+    origen: "Configurar"
+  },
   perfil: {
     id: "perfil",
     titulo: "Perfil & Datos de Contacto",
@@ -176,6 +192,22 @@ const CATALOGO_FAVORITOS: Record<string, WidgetFavInfo> = {
     icono: Shuffle,
     href: "/panel/agenda/asignaciones",
     origen: "Administrar"
+  },
+  crm_clientes: {
+    id: "crm_clientes",
+    titulo: "CRM Jurídico & Clientes",
+    subtitulo: "Directorio 360°, KPIs, expedientes y conflict check en vivo",
+    icono: Users,
+    href: "/panel/clientes",
+    origen: "Configurar"
+  },
+  alta_cliente_crm: {
+    id: "alta_cliente_crm",
+    titulo: "Alta Asistida & Recepción Multicanal",
+    subtitulo: "Registro asistido de clientes con OCR ARIA de cédula/nombramiento y verificación de conflictos",
+    icono: UserCheck,
+    href: "/panel/clientes?accion=alta",
+    origen: "Configurar"
   }
 };
 

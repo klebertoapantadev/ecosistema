@@ -27,8 +27,8 @@ Este documento describe el **comportamiento compartido por los 4 productos** (Tr
 | **`PLT-006`** | Datos de Facturación SRI y Comprobantes | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`PLT-007`** | Catálogo Geográfico (Ecuador 24 Provincias) | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`PLT-008`** | Configuración de Negocio & SMTP en Vault | ✅ Implementado | **100%** | Kleber Toapanta |
-| **`PLT-009`** | Catálogo Comercial Unificado (Productos/Planes/Despachos) | 🟡 En Desarrollo | **85%** | Kleber Toapanta |
-| **`PLT-010`** | Integración Omnicanal (WhatsApp & Meta Feed) | ⏳ Pendiente | **0%** | **Jesus Navarrete** |
+| **`PLT-009`** | Catálogo Comercial Unificado (Productos/Planes/Despachos y Pasarela Payphone) | ✅ Implementado | **100%** | Kleber Toapanta |
+| **`PLT-010`** | **Integración Omnicanal (WhatsApp YCloud, ARIA y Supervisión Humana HITL)** | 🟡 En Desarrollo | **45%** | Kleber Toapanta / Jesus Navarrete |
 | **`PLT-011`** | Sistema de Widgets por Rol & DataGrids 2 Capas | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`PLT-012`** | **Baja de Cuenta y Derecho al Olvido** | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`PLT-013`** | Notificaciones Multicanal (Push/Email/In-App) | ✅ Implementado | **100%** | Kleber Toapanta |
@@ -38,7 +38,7 @@ Este documento describe el **comportamiento compartido por los 4 productos** (Tr
 | **`PLT-017`** | Gestión de Sesiones y Revocación Remota | 🟡 Parcial | **40%** | Kleber Toapanta |
 | **`PLT-018`** | Historial de Accesos y Saludo Personalizado | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`PLT-019`** | **Reclutamiento, Bolsa de Empleo y "Únete al Equipo"** | ✅ Implementado | **100%** | Kleber Toapanta |
-| **`PLT-020`** | **Agenda, Disponibilidad y Citas (Profesionales y Técnicos)** | 🟡 En Desarrollo | **35%** | **Jesus Navarrete** |
+| **`PLT-020`** | **Agenda, Disponibilidad, Citas y Consulta Telemática** | 🟡 En Desarrollo | **75%** | Kleber Toapanta |
 | **`PLT-021`** | **Despachador de Tareas Programadas (recordatorios, caducidades, cobros)** | 🟡 En Desarrollo | **70%** | **Jesus Navarrete** |
 
 ---
@@ -429,19 +429,38 @@ Motor centralizado de gestión de bienes, servicios, recetas (BOM), inventarios,
 
 ---
 
-## PLT-010 — Integración Omnicanal (WhatsApp Business y Meta Commerce Manager)
+## PLT-010 — Integración Omnicanal (WhatsApp Business YCloud, ARIA y Consola Humana HITL)
 
-**Responsable:** **Jesus Navarrete**  
+**Responsables:** Kleber Toapanta / Jesus Navarrete  
 
 ### Descripción
-Distribución del catálogo (`PLT-009`) hacia canales sociales sin carga manual duplicada.
+Ecosistema integral de atención conversacional y distribución comercial omnicanal. Conecta el catálogo unificado (`PLT-009`) y los agentes conversacionales de ARIA (`PLT-004`) con **WhatsApp Business Cloud API** (mediante el proveedor oficial **YCloud**), integrando una **Consola de Supervisión Humana (*Human-in-the-Loop* - HITL)** para asistencia en vivo, toma de control por operadores humanos y atribución de comisiones de venta.
 
 ### Reglas de Negocio
-1. **Feed automatizado para Meta Commerce Manager:** cada negocio expone un feed de catálogo que Meta consulta periódicamente para sincronizar el Catálogo de WhatsApp Business, Facebook e Instagram — títulos, precios, variantes y portada se actualizan solos, sin carga manual en la app de Meta.
-2. **Botón "Comprar por WhatsApp":** en la tienda web, genera un enlace estructurado con producto, variante (SKU), precio final calculado (incluida personalización/adicionales), imagen de referencia y datos de entrega ingresados por el cliente.
-3. **Endpoints de consulta para el Buddie (`PLT-004`):** el asistente conversacional puede responder en chat con tarjetas de producto, foto de portada y precio actualizado, reutilizando el mismo catálogo — no un feed aparte.
+1. **Conector Oficial WhatsApp Cloud API vía YCloud:**
+   - Cada negocio del ecosistema puede asociar su línea oficial de WhatsApp Business configurando sus credenciales de YCloud (`YCLOUD_API_KEY`, webhook URL) en `comun_seguridad.cfg_negocio`.
+   - El webhook entrante `/api/webhooks/ycloud` valida obligatoriamente la firma de seguridad `X-YCloud-Signature` antes de procesar cualquier evento.
+2. **Persistencia Unificada y Modelo de Chats (`comun_agentes`):**
+   - Toda conversación multicanal se persiste en `comun_agentes.agc_conversacion` y `comun_agentes.agc_mensaje`.
+   - El identificador `cnv_id` (UUID) se comparte con ARIA como `conversation_id`, asegurando trazabilidad exacta entre la memoria del modelo y la vista del operador.
+   - Las tablas implementan **Supabase Realtime** para actualización instantánea en la consola de operadores sin recargas ni polling.
+3. **Máquina de Estados de Atención y Despacho:**
+   - **`BOT_ACTIVO`:** ARIA atiende de forma autónoma. Razona con sus prompts de negocio y herramientas MCP (ej. consulta de catálogo, generación de cotizaciones, enlaces a fotos).
+   - **`ESCALADO_HUMANO`:** Se activa si ARIA detecta que no puede resolver la duda, el cliente solicita un asesor humano, o hay un reclamo/pedido especial. Se emite notificación prioritaria sonora y visual a la consola de operadores.
+   - **`EN_ATENCION_ASESORA`:** Un operador humano tomó el control. El bot ARIA se silencia inmediatamente para ese hilo. El operador responde directamente a WhatsApp desde la consola web mediante YCloud API.
+   - **`CERRADO`:** Conversación finalizada o venta concretada.
+4. **Consola de Supervisión Humana (*Human-in-the-Loop* - HITL) en Widgets (`PLT-011`):**
+   - Construida bajo el patrón unificado de widgets (`consola_chat` / `atencion_whatsapp`).
+   - Dispone de 3 paneles:
+     - **Bandeja de Entrada:** Filtros rápidos (*Requiere Atención / Escalados*, *Mis Chats*, *Bot Activo*, *Cerrados*), badges de no leídos y tiempo de espera.
+     - **Visor de Conversación en Vivo:** Historial cronológico diferenciando burbujas del cliente, del bot ARIA y del operador humano; botones de acción rápida **[ Tomar Control ]** y **[ Reactivar Bot ]**; input para despacho de mensajes a WhatsApp; selector de respuestas rápidas (plantillas).
+     - **Ficha de Pedido y Operador:** Panel lateral con datos del contacto, asignación de asesora para comisiones netas, generación directa de link de pago (Payphone/Paymentez) y pase a operaciones/taller.
+5. **Feed Automatizado para Meta Commerce Manager:**
+   - Cada negocio expone un feed estructurado (XML/JSON) que Meta consulta periódicamente para sincronizar el catálogo de productos con WhatsApp Business, Facebook e Instagram.
+6. **Botón "Comprar por WhatsApp":**
+   - En las tiendas web del ecosistema, el botón genera un enlace profundo con texto estructurado (producto, SKU, PVP en dólares, extras y dirección), enrutándolo al agente ARIA o a la asesora con el tag correspondiente.
 
-**Implementación técnica:** ver [`especificacion-tecnica.md`](especificacion-tecnica.md) §7.1.
+**Especificación específica de producto:** Ver [`agente-aria-whatsapp-ycloud.md`](../tinkay/agente-aria-whatsapp-ycloud.md) para el caso de Tinkay Floristería ("Mía").
 
 ---
 
@@ -966,97 +985,130 @@ Proporciona la infraestructura unificada para exhibir al equipo de trabajo verif
 
 ---
 
-## PLT-020 — Agenda, Disponibilidad y Citas de Profesionales
+## PLT-020 — Agenda, Disponibilidad, Citas y Consulta Telemática
 
-**Responsable:** **Jesus Navarrete**
+**Responsable:** Kleber Toapanta  
 
 ### Descripción
-Motor transversal de agendamiento para todo negocio que atienda mediante profesionales con horario
-propio: abogados de Tranqi (`trq_abogado`), técnicos de FastFix (`ffh_tecnico`) y cualquier rol
-`SOCIO`/`PROFESIONAL` futuro. Resuelve las horas operativas que cada profesional configura, el
-cálculo de huecos libres, la asignación por turno rotativo, la reserva sin solapamiento y la sala de
-videoconsulta. Un solo modelo de datos (`comun_agenda`), aislado por negocio, en vez de que cada
-producto reimplemente su propio calendario. Sustenta el widget **Citas Programadas** del Panel
-Profesional (`PLT-011` regla 8) y se concreta en Tranqi como `TRQ-ABG-004` y `TRQ-CLI-001`.
+Motor centralizado y transversal de disponibilidad horaria, franjas recurrentes, excepciones/bloqueos, anti-solape criptográfico/relacional (`btree_gist`), reserva de encuentros y videoconsultas seguras. Aplica a profesionales y técnicos de todos los negocios del ecosistema: Abogados en Tranqi (`TRQ-ABG-004`, `TRQ-CLI-001`), Técnicos e inspectores en FastFix Home (`FFH-TEC-004`) y consultores especializados.
 
 ### Reglas de Negocio
 
-1. **Separación entre ocupación y encuentro:**
-   - `comun_agenda` modela **quién está ocupado y cuándo** (`age_reserva`). El contenido del
-     encuentro —motivo legal, caso judicial, orden de trabajo— pertenece al negocio
-     (`tranqui_legal.trq_cita`, y las tablas equivalentes de cada producto).
-   - Es el mismo criterio de [ADR-0003](../../arquitectura/adr/0003-catalogo-comercial-unificado.md):
-     el catálogo es común y el pedido es del negocio.
-   - **No existe catálogo de tipos de cita propio.** Lo agendable es una variante de
-     `comun_comercio` (`com_variante`), de donde salen duración, precio e impuestos.
+1. **Separación Arquitectónica de 2 Capas (Plataforma vs. Negocio):**
+   - **Capa Transversal de Plataforma (`comun_agenda`):** Aloja la disponibilidad abstracta y el motor de huecos compartible entre abogados (`tranqi`), técnicos (`fastfix`) o consultores.
+     - `age_profesional`: 1 fila por `(agp_usuario_id, agp_negocio)`. Almacena parámetros operativos: `agp_zona_horaria` (IANA string, default `'America/Guayaquil'`, previniendo descalces con Galápagos UTC-6), `agp_duracion_min` (15..240), `agp_holgura_min`, `agp_antelacion_minima_horas`, `agp_horizonte_dias`, `agp_modalidades` (`text[]`), `agp_acepta_derivacion` (boolean para pool de escalado), `agp_configurada_en` (timestamp de onboarding, si es null el profesional no figura disponible: falla cerrado).
+     - `age_franja`: Horas operativas recurrentes por día de la semana (`fra_dia_semana` 0..6 donde 0 es Domingo). `fra_hora_inicio` y `fra_hora_fin` se almacenan en `time` local a propósito: "martes de 09:00 a 13:00" es una regla del despacho que sobrevive a husos horarios; la conversión a instantes `timestamptz` se realiza al proyectar los huecos.
+     - `age_bloqueo`: Excepciones puntuales (`blq_inicio_en`, `blq_fin_en` en timestamptz, motivo, origen `'manual' | 'audiencia' | 'sincronizado'`).
+     - `age_tipo_cita`: Catálogo de tipos de encuentro por negocio (`tci_codigo`, `tci_nombre`, `tci_duracion_min`, `tci_modalidad_permitida`, `tci_producto_id` vinculado a `comun_comercio`, `tci_activo`).
+     - `age_reserva`: Ocupación abstracta de un profesional en un rango (`res_inicio_en`, `res_fin_en` NOT NULL, `res_estado` in `'propuesta', 'confirmada', 'cancelada', 'realizada', 'no_asistio'`).
+   - **Aislamiento y Privacidad en RLS:** Ningún usuario `authenticated` puede hacer `SELECT` sobre `age_reserva` o `age_bloqueo` ajenos. La disponibilidad de un profesional solo se expone a través de la función RPC `age_fn_huecos_disponibles()`, la cual retorna únicamente franjas libres desprovistas de motivos, nombres de clientes o identificadores de casos.
+   - **Capa Especializada de Negocio (`tranqui_legal.trq_cita`, `fastfix_mantenimiento.ffh_visita_tecnica`):** Aloja los datos de dominio específicos: motivo legal, materia, expediente/caso judicial, dictamen, informe de reparación y enlace a la sala de videoconsulta. El vínculo se realiza mediante clave foránea `cit_reserva_id -> age_reserva(res_id)`.
 
-2. **Horas operativas configuradas por el propio profesional:**
-   - Franjas recurrentes por día de la semana en **hora local del despacho** (`age_franja`), no en
-     instantes: «los martes de 09:00 a 13:00» es una regla que debe sobrevivir a cualquier cambio de
-     huso horario.
-   - Parámetros por profesional: zona horaria IANA, duración por defecto, holgura entre citas,
-     antelación mínima para reservar, horizonte máximo del calendario y modalidades que acepta.
-   - **Un profesional sin agenda configurada no aparece disponible** — el sistema falla cerrado, no
-     muestra huecos por omisión.
-   - Excepciones puntuales (audiencia, vacaciones, feriado) en `age_bloqueo`.
+2. **Garantía Estricta de Anti-Solape en Base de Datos (`btree_gist`):**
+   - Para prevenir colisiones por concurrencia y citas duplicadas, la tabla `comun_agenda.age_reserva` implementa una restricción de exclusión física inalterable:
+     ```sql
+     create extension if not exists btree_gist;
+     alter table comun_agenda.age_reserva add constraint age_reserva_sin_solape
+       exclude using gist (
+         res_profesional_id with =,
+         tstzrange(res_inicio_en, res_fin_en) with &&
+       ) where (res_eliminado_en is null and res_estado in ('propuesta', 'confirmada'));
+     ```
+   - La base de datos es la única fuente de verdad; ninguna condición de carrera en el frontend o asistente puede provocar solapamiento de horarios. `res_fin_en` es `NOT NULL` obligatorio desde su origen.
 
-3. **La ausencia de solapamiento la garantiza la base de datos.** Una restricción de exclusión sobre
-   el rango temporal impide dos reservas simultáneas del mismo profesional aunque dos clientes pidan
-   el mismo hueco en el mismo instante. La validación en la aplicación es comodidad de interfaz, no
-   la garantía.
+3. **Funciones RPC Transaccionales del Motor de Agenda (`comun_agenda`):**
+   - `age_fn_huecos_disponibles(profesional_id, desde, hasta, tipo_cita_id)`: Genera los slots disponibles proyectando franjas según `agp_zona_horaria`, restando reservas activas (`propuesta`/`confirmada`), bloqueos y holguras; descartando huecos fuera de la antelación mínima u horizonte máximo. Falla cerrado si `agp_configurada_en` es nulo.
+   - `age_fn_configurar_agenda(config jsonb, franjas jsonb)`: Reemplaza atómicamente la configuración del profesional en sesión y sus franjas horarias.
+   - `age_fn_bloquear(inicio, fin, motivo)`: Registra bloqueos puntuales en el calendario.
 
-4. **Asignación híbrida (algorítmica + manual + contingencia):**
-   - **Turno rotativo:** entre los profesionales habilitados para la materia o especialidad
-     solicitada que estén libres en ese rango, el sistema asigna al que lleva más tiempo sin recibir
-     turno. El reparto es determinista y auditable, no aleatorio.
-   - **Reasignación del operador:** el `OPERADOR` o `ADMINISTRADOR` del negocio puede cambiar el
-     profesional asignado en cualquier momento desde su consola, dejando rastro del origen.
-   - **Contingencia:** si el profesional asignado cancela, **la cita del cliente no se cancela**:
-     entra en una cola de contingencia con alerta prioritaria al operador para reasignarla.
+4. **Paquete Compartido de Dominio (`packages/agenda` — `@eco/agenda`):**
+   - Concentra el motor de cálculo de huecos, esquemas Zod y validaciones de dominio.
+   - Libre de dependencias de `next/*` y de estilos visuales específicos, garantizando portabilidad hacia web, backend y apps nativas Capacitor.
 
-5. **Cobertura antes de cobrar.** Al reservar, el sistema resuelve en este orden: derecho de consumo
-   incluido en la suscripción vigente del cliente (`com_derecho_consumo`) → cupón aplicable
-   (`PLT-014`) → cobro por pasarela (`PLT-006`). El consumo del cupo del plan es **atómico**: dos
-   sesiones simultáneas nunca gastan la misma consulta del periodo.
+5. **Articulación Comercial Obligatoria con `comun_comercio` (PLT-009 / PLT-014):**
+   - **Cita como Producto Facturable:** Toda cita formal es un producto de tipo `SERVICIO` en el catálogo unificado (`com_producto` / `com_variante`), con Base Imponible, tarifa de IVA (15%) y PVP expresado en **centavos enteros de USD** (`05-manejo-monetario-y-valores.md`).
+   - **Exoneración por Plan Activo (Suscripción):** Si el cliente posee una suscripción activa (`com_suscripcion.sub_estado = 'ACTIVA'`) en el negocio que incluya consultas (ej. *Plan Jurídico Mensual Tranqi*), el costo es **$0.00** (`cit_modalidad_cobro = 'CUBIERTO_POR_PLAN'`) y la cita se confirma de forma inmediata sin solicitar tarjeta de crédito ni pasar por pasarela.
+   - **Cupones de Descuento o Consulta Gratuita (`com_cupon` / `com_cupon_uso`):**
+     * Si el usuario aplica un cupón del 100% de descuento (ej. `CONSULTA_GRATIS`, `PRIMERA_CITA`), el saldo es **$0.00** (`cit_modalidad_cobro = 'CUPON_GRATIS'`), consumiendo el cupón y confirmando la reserva.
+     * Si el cupón es de descuento parcial (porcentual o monto fijo), se deduce en centavos de la Base Imponible y se cobra únicamente el saldo restante.
+   - **Convenios y Billetera B2B2C (`com_convenio_empresa` / `com_billetera`):** Permite subsidios corporativos o copago mediante saldo de billetera virtual.
+   - **Pasarela en Línea (Payphone / Paymentez):** Si el monto final liquidado es superior a $0.00, se abre la Cajita de Pagos de Payphone (`com_pasarela_configuracion`). La reserva se mantiene temporalmente como `'propuesta'` por 15 minutos; al validarse la confirmación server-to-server (`/api/confirm`), la Server Action registra el pago en `com_transaccion_pago` y conmuta la cita a `'confirmada'`.
 
-6. **Privacidad de la agenda ajena.** La disponibilidad de un profesional se expone únicamente como
-   **huecos libres**, nunca como el detalle de lo ocupado. Ningún cliente puede leer las reservas de
-   un profesional ni deducir con quién se reúne.
+6. **Consulta Rápida con ARIA y Escalado Asistido:**
+   - ARIA atiende consultas preliminares y orientación general sin costo (`trq_consulta_rapida`).
+   - **Límite Ético y Legal:** El prompt del agente estipula que ARIA orienta pero **no patrocina ni emite dictámenes vinculantes**.
+   - **Escalado Asistido:** Cuando la consulta requiere análisis documental, plazos o patrocinio judicial, ARIA clasifica la materia, identifica profesionales habilitados y emite un bloque estructurado de opciones en el chat (`tranqi:opciones`) con tarjetas interactivas de horarios disponibles para agendamiento directo.
 
-7. **Sala de videoconsulta.** Para citas virtuales, la plataforma genera el enlace de **Google Meet**
-   mediante la API de Google Calendar sobre el calendario del profesional. Las credenciales viven
-   cifradas en Supabase Vault por profesional (`PLT-008`), nunca en tabla. **Si el proveedor externo
-   falla o el profesional no ha conectado su calendario, la cita se agenda igual** y el enlace queda
-   pendiente: la agenda no depende de un tercero para funcionar. El enlace se entrega solo a las
-   partes de la cita y solo dentro de la ventana de la sesión.
+7. **Videoconsulta Telemática Segura (Google Meet):**
+   - Para citas virtuales, la plataforma genera el enlace de **Google Meet** mediante la API de Google Calendar sobre el calendario del profesional, conforme a la decisión de negocio validada (`decisiones-validadas-negocio.md` §2.A.9). Las credenciales viven cifradas en Supabase Vault por profesional (`PLT-008`), nunca en tabla: un refresh token da acceso al calendario entero.
+   - **La agenda no depende de un tercero para funcionar.** Si Google falla o el profesional aún no ha conectado su calendario, la cita se agenda igual y el enlace queda pendiente hasta que conecte o el operador lo pegue.
+   - No se almacenan URLs públicas sin protección de RLS. El enlace se entrega exclusivamente a las partes de la cita (cliente y profesional asignado) dentro de la ventana de acceso: desde **10 minutos antes** de la hora de inicio hasta **30 minutos después** de la hora de fin.
 
-8. **Configuración asistida por ARIA (`PLT-004`).** El asistente del profesional detecta que no tiene
-   agenda configurada y la levanta conversando: días, horario, duración, modalidad y antelación. Al
-   terminar **repite el resumen y exige confirmación explícita** antes de escribir. Ninguna
-   herramienta de IA escribe agenda ni reserva citas sin ese consentimiento en el hilo.
 
-9. **Notificaciones (`PLT-013`).** Eventos que despachan alerta multicanal: propuesta recibida
-   (→profesional), cita confirmada (→cliente), recordatorio previo (→ambos), cancelación (→la otra
-   parte) y contingencia por cancelación del profesional (→operador).
+8. **Despachador Universal de Alertas e Independencia de Infraestructura (Portabilidad Linux / Vercel):**
+   - Los recordatorios automáticos de cita (notificaciones a **24 horas** y a **1 hora** previas al encuentro) se diseñan para operar de forma idéntica en cualquier entorno de despliegue, **garantizando portabilidad total si el ecosistema migra de Vercel a servidores Linux propios**:
+     - **Idempotencia Transaccional en Base de Datos:** Cada cita posee los campos de control `cit_recordado_24h_en` y `cit_recordado_1h_en` (timestamptz). El despachador solo procesa citas con flag nulo en su respectiva ventana temporal y marca el timestamp en la misma transacción. Si el proceso se invoca varias veces seguidas, jamás duplica una alerta.
+     - **Lógica de Despacho Desacoplada:** El núcleo del despachador reside en una función de servicio en `packages/notificaciones` y se expone a través de un endpoint HTTP seguro `POST /api/cron/despachador-alertas` protegido con cabecera `Authorization: Bearer CRON_SECRET` (o como script CLI `node scripts/despachar-alertas.mjs`).
+     - **Mecanismos de Ejecución Soportados sin Modificar Código:**
+       1. *En Vercel (PaaS actual):* Tarea programada en `vercel.json` que dispara una petición HTTP periódica (cada 15 minutos) hacia `/api/cron/despachador-alertas`.
+       2. *En Servidor Linux Propio (VPS, Ubuntu/Debian, Docker, Kubernetes):* 
+          - Tarea programada en `cron` de Linux (`/etc/cron.d/despachador-alertas`):
+            `*/15 * * * * curl -s -X POST -H "Authorization: Bearer $CRON_SECRET" https://app.dominio.com/api/cron/despachador-alertas`
+          - Proceso en segundo plano gestionado con `PM2` o contenedor Docker con temporizador interno (`node-cron`).
+          - O temporizador nativo `systemd` (`despachador-alertas.timer`).
+       3. *En Supabase Nativo:* Tarea periódica con extensión `pg_cron` invocando Edge Function o webhook HTTP vía `pg_net`.
+     - **Cero Dependencia de Vendor:** Abandonar Vercel y desplegar en Linux propio requiere únicamente activar la línea de `curl` en el crontab del servidor Linux, sin alterar una sola línea de código fuente del ecosistema.
 
-10. **Aislamiento multitenant.** Cada negocio opera sobre su propio subconjunto de `comun_agenda`
-    identificado por negocio dueño. Una persona que sea profesional en dos negocios tiene una
-    configuración por negocio, pero **una sola línea temporal de ocupación**: no puede duplicarse.
+9. **Widget Universal en Panel Profesional (`citas_programadas`):**
+   - Registrado en `seg_widget` bajo la categoría `PANEL_PROFESIONAL` (`PLT-011` regla 8) y sembrado para los roles profesionales de todos los negocios (`ABOGADO` en Tranqi, `TECNICO` en FastFix).
+
+10. **Políticas de Cancelación, Reagendamiento y Reembolsos:**
+    - Marco contractual formalizado en [`politica-cancelacion-reagendamiento-citas.md`](../../politicas/politica-cancelacion-reagendamiento-citas.md).
+    - **Reagendamiento Parametrizable ($N$):** Cada negocio configura el límite de reprogramaciones por cita (por defecto **1**, controlado con `cit_reagendamientos_restantes`).
+    - **Regla Estricta para Consultas Gratuitas o Cupones:** Las citas de cortesía o cubiertas al 100% por cupones promocionales (`CUPON_GRATIS`) **NO TIENEN DERECHO A REAGENDAMIENTO**. Si el cliente cancela o no asiste, el beneficio se considera consumido y el cupón expira.
+    - **Antelación Mínima y Reembolsos Porcentuales ($X$ horas / $X\%$):**
+      * Cancelación oportuna ($\ge X$ horas antes de la cita, por defecto 12h o 24h): Otorga derecho a reembolso de un **$X\%$ del valor pagado** (por defecto 80% o configurable en `cfg_negocio`), acreditable en saldo a favor en Billetera virtual o reversión de pasarela. El porcentaje retenido compensa gastos operativos y reserva del profesional.
+      * Cancelación tardía (< $X$ horas) o inasistencia (*No-Show* tras 15 minutos de tolerancia): **0% de reembolso**.
+    - **Consentimiento Obligatorio del Cliente:** Previo a la confirmación (web, pasarela o bot ARIA), el cliente debe aceptar explícitamente estas condiciones, registrando `cit_politica_aceptada_en` (timestamp) y `cit_politica_version` inmutablemente.
+
+11. **Agendamiento y Modificación Manual por Operadores del Negocio:**
+    - Se habilita la facultad de gestión manual asistida para roles `OPERADOR`, `ADMINISTRADOR` y `SUPERADMIN` en el widget de Citas:
+      * **Agendamiento Manual:** Selector de Cliente/Usuario (`seg_usuario`) + Selector de Socio Profesional (`age_profesional`) + Selección de Horario/Modalidad, marcando `cit_origen = 'operador'`.
+      * **Modificación Manual de Cita:** Permite reubicar fecha/hora, cambiar modalidad o reasignar profesional ante fuerza mayor, operando con independencia del límite $N$ del cliente y auditando la acción en `comun_auditoria.aud_registro`.
+
+
+12. **Privacidad de la agenda ajena.** La disponibilidad de un profesional se expone únicamente como **huecos libres**, nunca como el detalle de lo ocupado. Ningún cliente puede leer las reservas de un profesional ni deducir con quién se reúne.
+
+13. **Configuración asistida por ARIA (`PLT-004`).** El asistente del profesional detecta que no tiene agenda configurada y la levanta conversando: días, horario, duración, modalidad y antelación. Al terminar **repite el resumen y exige confirmación explícita** antes de escribir. Ninguna herramienta de IA escribe agenda ni reserva citas sin ese consentimiento en el hilo.
+
+14. **Aislamiento multitenant.** Cada negocio opera sobre su propio subconjunto de `comun_agenda` identificado por negocio dueño. Una persona que sea profesional en dos negocios tiene una configuración por negocio, pero **una sola línea temporal de ocupación**: no puede duplicarse.
 
 ### Criterios de Aceptación (Gherkin)
 
-* **Escenario:** Dos clientes piden el mismo hueco a la vez
-  * **Dado que** un abogado tiene libre el martes a las 10:00 y ningún otro hueco a esa hora.
-  * **Cuando** dos clientes confirman la reserva de ese hueco en el mismo instante.
-  * **Entonces** el sistema acepta exactamente una reserva y ofrece al otro cliente los huecos
-    siguientes, sin crear dos citas solapadas.
+* **Escenario:** Cliente con Plan Activo agenda cita gratuita
+  * **Dado que** un cliente autenticado posee una suscripción activa a un Plan en Tranqi.
+  * **Cuando** selecciona un horario disponible con un abogado especialista.
+  * **Entonces** el sistema liquida el valor en $0.00 (`CUBIERTO_POR_PLAN`), confirma la reserva inmediatamente en `comun_agenda`, crea la sala de videoconsulta y notifica al abogado sin solicitar pago con tarjeta.
 
-* **Escenario:** Consulta incluida en el plan del cliente
-  * **Dado que** el cliente tiene una suscripción activa con 1 consulta telemática mensual y no ha
-    usado ninguna este mes.
-  * **Cuando** reserva una consulta.
-  * **Entonces** el sistema descuenta el cupo del plan, no solicita pago, e informa al cliente de que
-    le quedan 0 consultas incluidas hasta el próximo periodo.
+* **Escenario:** Cliente sin plan aplica cupón del 100% de descuento
+  * **Dado que** un cliente sin suscripción activa selecciona una consulta de $35.00 e ingresa el cupón `PRIMERA_CONSULTA`.
+  * **Cuando** valida el cupón en el checkout.
+  * **Entonces** el sistema descuenta los 3500 centavos, registra el uso del cupón en `com_cupon_uso`, aprueba la cita sin pasarela y genera la cita confirmada.
+
+* **Escenario:** Cobro de cita mediante pasarela Payphone
+  * **Dado que** un cliente sin plan ni cupón agenda una cita de $35.00 (3500 centavos).
+  * **Cuando** se despliega la Cajita de Pagos de Payphone y completa la transacción.
+  * **Entonces** el servidor ejecuta la confirmación `/api/confirm` en < 5 minutos, guarda el pago en `com_transaccion_pago`, conmuta la cita a `confirmada` y bloquea definitivamente la franja en `age_reserva`.
+
+* **Escenario:** Prevención de colisión horaria por concurrencia
+  * **Dado que** dos clientes intentan reservar exactamente la misma franja de un abogado simultáneamente.
+  * **Cuando** ambas peticiones llegan a la base de datos.
+  * **Entonces** la primera reserva es aceptada y la segunda es rechazada inmediatamente por la restricción física `age_reserva_sin_solape` (`btree_gist`), impidiendo solapamientos.
+
+* **Escenario:** Ejecución del despachador de alertas en infraestructura Linux propia
+  * **Dado que** el ecosistema está desplegado en un servidor Linux independiente sin servicios de Vercel.
+  * **Cuando** el `cron` del sistema operativo Linux ejecuta `curl` contra el endpoint `/api/cron/despachador-alertas` con el `CRON_SECRET`.
+  * **Entonces** el sistema procesa todas las citas entre 23h y 24h, despacha notificaciones Push/Email a ambas partes, actualiza `cit_recordatorio_24h_enviado = now()` y garantiza que una segunda ejecución no reenvíe las alertas.
 
 * **Escenario:** El profesional asignado cancela la cita
   * **Dado que** una cita confirmada tiene asignado al Abogado 1.
@@ -1069,7 +1121,6 @@ Profesional (`PLT-011` regla 8) y se concreta en Tranqi como `TRQ-ABG-004` y `TR
   * **Cuando** un cliente busca disponibilidad en su materia.
   * **Entonces** ese abogado no aparece como disponible ni recibe turnos, y su asistente le propone
     configurar la agenda.
-
 
 ---
 
@@ -1094,11 +1145,16 @@ Lo que estaba prometido y no ocurría:
 
 ### Reglas de Negocio
 
-1. **Corre dentro de la base (`pg_cron`), no en un servicio externo.** Todas
-   estas tareas son operaciones sobre datos que ya están en PostgreSQL. Sacarlas
-   fuera obligaría a exponer un endpoint, autenticarlo y vigilarlo para acabar
-   ejecutando el mismo `UPDATE`. Lo único que sale fuera es el correo, que ya
-   tiene su camino: se encola en `not_cola_correo`.
+1. **Lógica portable, disparo intercambiable (`PLT-020` regla 8).** El núcleo del
+   despachador vive en `packages/notificaciones` y se expone en el endpoint
+   `POST /api/cron/despachador-alertas`, protegido con la cabecera
+   `Authorization: Bearer CRON_SECRET`. Quién lo dispara es intercambiable y no
+   obliga a tocar una línea de código: tarea de `vercel.json` en Vercel,
+   `crontab` o `systemd` en un Linux propio, o `pg_cron` invocándolo por
+   `pg_net` en Supabase. Las funciones de `comun_tareas` siguen siendo la capa de
+   datos, porque el trabajo transaccional pertenece a la base; lo que **no**
+   puede quedar atado al proveedor es el despacho.
+
 2. **Toda tarea es idempotente y recuperable.** No se pregunta «¿falta
    exactamente un día?», sino «¿queda menos de un día y todavía no avisé?». Una
    ventana estrecha convierte cualquier caída del cron en silencio permanente;
