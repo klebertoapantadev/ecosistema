@@ -144,41 +144,49 @@ export async function guardarAsignacionWidget(
   panelId?: string
 ): Promise<Resultado> {
   const supabase = await crearClienteServidor();
+  const negocioNorm = (negocio || "tranqi").toLowerCase().trim();
+
+  // Resolver el UUID del widget si se pasó la clave textual
+  let widgetUuid = widgetClave;
+  const esUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(widgetClave);
+  if (!esUuid) {
+    const { data: wRow } = await supabase
+      .schema("comun_seguridad")
+      .from("seg_widget")
+      .select("wdg_id")
+      .eq("wdg_clave", widgetClave.toLowerCase().trim())
+      .eq("wdg_negocio", negocioNorm)
+      .maybeSingle();
+
+    if (wRow?.wdg_id) {
+      widgetUuid = wRow.wdg_id;
+    }
+  }
 
   if (asignar) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const payload: any = {
-      rlw_rol: perfilClave,
-      rlw_widget_id: widgetClave,
-      rlw_negocio: negocio,
+      rlw_rol: perfilClave.toUpperCase().trim(),
+      rlw_widget_id: widgetUuid,
+      rlw_negocio: negocioNorm,
       rlw_visible: true
     };
-
-    if (panelId) {
-      payload.rlw_panel_id = panelId;
-    }
 
     const { error } = await supabase
       .schema("comun_seguridad")
       .from("seg_rol_widget")
-      .upsert(payload, { onConflict: "rlw_rol, rlw_widget_id, rlw_negocio, rlw_panel_id" });
+      .upsert(payload, { onConflict: "rlw_negocio, rlw_rol, rlw_widget_id" });
 
     if (error) return { ok: false, error: error.message };
   } else {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let query: any = supabase
+    const { error } = await supabase
       .schema("comun_seguridad")
       .from("seg_rol_widget")
       .delete()
-      .eq("rlw_rol", perfilClave)
-      .eq("rlw_widget_id", widgetClave)
-      .eq("rlw_negocio", negocio);
-
-    if (panelId) {
-      query = query.eq("rlw_panel_id", panelId);
-    }
-
-    const { error } = await query;
+      .eq("rlw_rol", perfilClave.toUpperCase().trim())
+      .eq("rlw_widget_id", widgetUuid)
+      .eq("rlw_negocio", negocioNorm);
 
     if (error) return { ok: false, error: error.message };
   }
@@ -194,13 +202,15 @@ export async function obtenerConfiguracionNavegacionRolAction(
   negocio: string
 ): Promise<Resultado<{ widgetsPorPanel: Record<string, string[]>; panelesAsignados: string[] }>> {
   const supabase = await crearClienteServidor();
+  const negocioNorm = (negocio || "tranqi").toLowerCase().trim();
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data, error } = await (supabase
     .schema("comun_seguridad")
     .from("seg_rol_widget")
-    .select("*") as any)
-    .eq("rlw_rol", perfilClave.toUpperCase())
-    .eq("rlw_negocio", negocio)
+    .select("rlw_widget_id, seg_widget(wdg_clave, wdg_detalle_widget)") as any)
+    .eq("rlw_rol", perfilClave.toUpperCase().trim())
+    .eq("rlw_negocio", negocioNorm)
     .eq("rlw_visible", true);
 
   if (error) return { ok: false, error: error.message };
@@ -211,10 +221,13 @@ export async function obtenerConfiguracionNavegacionRolAction(
   if (data && Array.isArray(data) && data.length > 0) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     for (const r of data as any[]) {
-      const panelId = r.rlw_panel_id || "panel_configuracion";
+      const widgetClave = r.seg_widget?.wdg_clave || r.rlw_widget_id;
+      const detalle = (r.seg_widget?.wdg_detalle_widget as Record<string, unknown>) || {};
+      const panelId = (detalle.panel_defecto as string) || "panel_configuracion";
+
       if (!widgetsPorPanel[panelId]) widgetsPorPanel[panelId] = [];
-      if (r.rlw_widget_id && !widgetsPorPanel[panelId].includes(r.rlw_widget_id)) {
-        widgetsPorPanel[panelId].push(r.rlw_widget_id);
+      if (widgetClave && !widgetsPorPanel[panelId].includes(widgetClave)) {
+        widgetsPorPanel[panelId].push(widgetClave);
       }
       panelesSet.add(panelId);
     }

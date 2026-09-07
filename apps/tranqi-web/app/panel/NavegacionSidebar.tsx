@@ -124,37 +124,57 @@ export function NavegacionSidebar({
 
         let widgetsPorPanel: Record<string, string[]> = {
           panel_inicio: ["favoritos"],
-          panel_cuenta: ["ver_como", "mi_cuenta"],
-          panel_herramientas: ["firma_documentos_pdf", "billetera_documentos"]
+          panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos"],
+          panel_herramientas: ["agendar_cita", "mis_citas", "catalogo_productos", "firma_documentos_pdf", "billetera_documentos", "solicitud_socio"],
+          panel_configuracion: ["notificaciones"]
         };
 
         if (rolKey === "OPERADOR" || rolKey === "AUXILIAR" || rolKey === "TECNICO") {
           widgetsPorPanel = {
             ...widgetsPorPanel,
-            panel_administrar: ["crm_clientes", "socios", "asignaciones_agenda"],
-            panel_herramientas: ["firma_documentos_pdf", "billetera_documentos", "emision_notificaciones"],
-            panel_seguridad: ["auditoria", "solicitud_socio"]
-          };
-        } else if (rolKey === "ADMINISTRADOR") {
-          widgetsPorPanel = {
-            ...widgetsPorPanel,
-            panel_configuracion: ["configuracion_negocio", "configuracion_correo", "perfiles", "notificaciones", "agentes_ia"],
-            panel_administrar: ["crm_clientes", "gestion_usuarios", "socios", "solicitud_socio", "asignaciones_agenda", "emision_notificaciones", "auditoria"],
-            panel_herramientas: ["firma_documentos_pdf", "billetera_documentos", "emision_notificaciones"],
+            panel_herramientas: ["catalogo_productos", "firma_documentos_pdf", "billetera_documentos", "emision_notificaciones"],
+            panel_administrar: ["asignaciones_agenda", 
+              "crm_clientes",
+              "alta_cliente_crm",
+              "socios",
+              "solicitud_socio",
+              "historial_pagos",
+              "emision_notificaciones",
+              "bitacora_notificaciones",
+              "monitoreo_notificaciones_usuarios",
+              "gestion_terminos_consentimientos",
+              "configuracion_contrato_abogado",
+              "consulta_usuarios_perfiles"
+            ],
             panel_seguridad: ["auditoria"]
           };
         } else if (rolKey === "ABOGADO") {
           widgetsPorPanel = {
             ...widgetsPorPanel,
-            // PLT-020: la agenda del profesional. `disponibilidad` va aparte de
-            // `citas_programadas` porque son dos trabajos distintos: uno se
-            // hace una vez y el otro todos los dias.
-            panel_herramientas: ["citas_programadas", "disponibilidad", "firma_documentos_pdf", "billetera_documentos"]
+            panel_herramientas: ["citas_programadas", "disponibilidad", "crm_clientes", "catalogo_productos", "firma_documentos_pdf", "billetera_documentos"],
+            panel_administrar: ["crm_clientes"]
           };
-        } else if (rolKey === "CLIENTE") {
+        } else if (rolKey === "ADMINISTRADOR") {
           widgetsPorPanel = {
             ...widgetsPorPanel,
-            panel_herramientas: ["agendar_cita", "mis_citas", "firma_documentos_pdf", "billetera_documentos"]
+            panel_herramientas: ["catalogo_productos", "firma_documentos_pdf", "billetera_documentos", "emision_notificaciones"],
+            panel_configuracion: ["configuracion_negocio", "configuracion_correo", "pasarela_payphone", "perfiles", "agentes_ia", "notificaciones"],
+            panel_administrar: ["asignaciones_agenda", 
+              "crm_clientes",
+              "alta_cliente_crm",
+              "gestion_usuarios",
+              "consulta_usuarios_perfiles",
+              "socios",
+              "solicitud_socio",
+              "historial_pagos",
+              "emision_notificaciones",
+              "bitacora_notificaciones",
+              "monitoreo_notificaciones_usuarios",
+              "gestion_terminos_consentimientos",
+              "configuracion_contrato_abogado",
+              "auditoria"
+            ],
+            panel_seguridad: ["auditoria"]
           };
         }
 

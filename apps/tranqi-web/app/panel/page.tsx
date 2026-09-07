@@ -4,7 +4,7 @@ import { cookies } from "next/headers";
 import {
   Calendar, Upload, Coins, MessageCircle, FileText,
   Briefcase, UserCheck, Users, Settings, ShieldCheck, Bell, FileCheck,
-  ShoppingBag, CreditCard,
+  ShoppingBag, CreditCard, Folder, Receipt,
   type LucideIcon
 } from "lucide-react";
 import { obtenerPerfilActual, obtenerSaludo, obtenerPerfiles, obtenerNivelMaximo } from "@eco/identidad";
@@ -20,16 +20,9 @@ export const metadata: Metadata = { title: "Panel — tranqi" };
 
 const NEGOCIO = "tranqi";
 
-/* TRQ-010 · La etiqueta de una tarjeta no explica la pantalla que hay detrás.
-   El detalle técnico (.p12, el QR, "log inmutable PostgreSQL", "multicanal
-   In-App/Push/Email/WhatsApp") se lee DENTRO de cada pantalla, donde sirve para
-   trabajar; en la portada solo era ruido -- ocho tarjetas con ocho párrafos.
-   El `detalle` se queda en 3-5 palabras y solo cuando AÑADE algo al nombre.
-
-   Y va en mayúscula de frase, no de título: "Firmar Documento PDF" es
-   capitalización inglesa, y en español delata texto generado. */
 const ACCESOS_CLIENTE: { icono: LucideIcon; nombre: string; detalle: string; href?: string }[] = [
   { icono: ShoppingBag, nombre: "Catálogo & Servicios", detalle: "Honorarios y planes legales", href: "/panel/catalogo-productos" },
+  { icono: Folder, nombre: "Billetera digital", detalle: "Documentos con OCR y TTL", href: "/panel/billetera-documentos" },
   { icono: FileCheck, nombre: "Firmar un documento", detalle: "Con tu certificado digital", href: "/panel/firma-documentos" },
   { icono: Briefcase, nombre: "Ser abogado socio", detalle: "Postula a la red", href: "/panel/solicitud-socio" },
   { icono: Calendar, nombre: "Agendar cita", detalle: "Presencial o por video", href: "/panel/agendar" },
@@ -41,16 +34,30 @@ const ACCESOS_CLIENTE: { icono: LucideIcon; nombre: string; detalle: string; hre
 const ACCESOS_ABOGADO: { icono: LucideIcon; nombre: string; detalle: string; href?: string }[] = [
   { icono: Users, nombre: "CRM & Clientes", detalle: "Directorio y expedientes", href: "/panel/clientes" },
   { icono: Coins, nombre: "Mis honorarios", detalle: "Tarifario y liquidación", href: "/panel/catalogo-productos" },
+  { icono: Folder, nombre: "Billetera digital", detalle: "Documentos y expedientes", href: "/panel/billetera-documentos" },
   { icono: FileCheck, nombre: "Firmar un documento", detalle: "Con tu certificado digital", href: "/panel/firma-documentos" },
   { icono: Briefcase, nombre: "Nuevas solicitudes", detalle: "3 casos en espera" },
   { icono: Calendar, nombre: "Citas de hoy", detalle: "2 videollamadas" },
   { icono: FileText, nombre: "Cargar expediente", detalle: "Demandas y providencias" },
 ];
 
+const WIDGETS_OPERADOR: { clave: string; icono: LucideIcon; nombre: string; detalle: string; ruta: string }[] = [
+  { clave: "crm_clientes", icono: Users, nombre: "CRM & Clientes", detalle: "Directorio y expedientes", ruta: "/panel/clientes" },
+  { clave: "alta_cliente_crm", icono: UserCheck, nombre: "Alta Asistida", detalle: "Recepción con OCR", ruta: "/panel/clientes?accion=alta" },
+  { clave: "socios", icono: UserCheck, nombre: "Aprobación de socios", detalle: "Cédula, título y matrícula", ruta: "/panel/socios" },
+  { clave: "solicitud_socio", icono: Briefcase, nombre: "Solicitudes de socios", detalle: "Postulaciones en revisión", ruta: "/panel/administrar?widget=solicitud_socio" },
+  { clave: "historial_pagos", icono: Receipt, nombre: "Historial de pagos", detalle: "Auditoría de cobros", ruta: "/panel/administrar?widget=historial_pagos" },
+  { clave: "catalogo_productos", icono: ShoppingBag, nombre: "Catálogo & Precios", detalle: "Servicios con IVA", ruta: "/panel/catalogo-productos" },
+  { clave: "billetera_documentos", icono: Folder, nombre: "Billetera digital", detalle: "Bóveda con OCR y TTL", ruta: "/panel/billetera-documentos" },
+  { clave: "firma_documentos_pdf", icono: FileCheck, nombre: "Firmar documentos", detalle: "Firma digital .p12 y QR", ruta: "/panel/firma-documentos" },
+  { clave: "emision_notificaciones", icono: Bell, nombre: "Emisión de avisos", detalle: "Despacho multicanal", ruta: "/panel/emision-notificaciones" },
+];
+
 const WIDGETS_ADMIN: { clave: string; icono: LucideIcon; nombre: string; detalle: string; ruta: string; estado: "registrado" | "proximamente" }[] = [
   { clave: "catalogo_productos", icono: ShoppingBag, nombre: "Catálogo & Honorarios", detalle: "Servicios y precios con IVA", ruta: "/panel/catalogo-productos", estado: "registrado" },
   { clave: "pasarela_payphone", icono: CreditCard, nombre: "Pasarela Payphone", detalle: "Botón de pago y simulador", ruta: "/panel/configuracion?widget=pasarela_payphone", estado: "registrado" },
   { clave: "crm_clientes", icono: Users, nombre: "CRM Jurídico & Clientes", detalle: "Expedientes y conflict check", ruta: "/panel/clientes", estado: "registrado" },
+  { clave: "billetera_documentos", icono: Folder, nombre: "Billetera digital", detalle: "Bóveda segura OCR/TTL", ruta: "/panel/billetera-documentos", estado: "registrado" },
   { clave: "gestion_usuarios", icono: Users, nombre: "Gestión de usuarios", detalle: "Membresías y perfiles", ruta: "/panel/usuarios", estado: "registrado" },
   { clave: "socios", icono: UserCheck, nombre: "Aprobación de socios", detalle: "Cédula, título y matrícula", ruta: "/panel/socios", estado: "registrado" },
   { clave: "configuracion_negocio", icono: Settings, nombre: "Configuración del negocio", detalle: "Términos, locales y canales", ruta: "/panel/configuracion", estado: "registrado" },
@@ -151,6 +158,8 @@ export default async function PagePanel({ searchParams }: Props) {
         <PanelAbogado nombreCompleto={nombreCompleto} />
       ) : modo === "admin" ? (
         <PanelAdministrador esSuperadmin={puedeConmutar} esAdminGlobal={esAdminGlobal} />
+      ) : modo === "operador" ? (
+        <PanelOperador nombreCompleto={nombreCompleto} />
       ) : (
         <PanelCliente saludo={saludo} nombre={nombre} />
       )}
@@ -313,6 +322,67 @@ function PanelAbogado({ nombreCompleto }: { nombreCompleto: string }) {
             <div className="vacio-seccion">
               <b>Calendario Profesional</b>
               <span>Sincronizado con Google Calendar.</span>
+            </div>
+          </section>
+        </aside>
+      </div>
+    </>
+  );
+}
+
+/* ──────────────── 2.5 PANEL MODO OPERADOR / AUXILIAR ──────────────── */
+function PanelOperador({ nombreCompleto }: { nombreCompleto: string }) {
+  return (
+    <>
+      <h1>Portal Operativo & Atención — tranqi</h1>
+      <p className="inicio-cliente-sub">Bienvenido(a) {nombreCompleto}. Bandeja de recepción, CRM, socios y trámites.</p>
+
+      <div className="rejilla-cliente">
+        <div className="columna-cliente">
+          <section className="tarjeta-proteccion" style={{ background: "linear-gradient(135deg, #0369A1 0%, #0284C7 100%)", color: "#ffffff" }}>
+            <div className="tarjeta-proteccion-fila">
+              <div>
+                <div className="eyebrow-cliente" style={{ color: "#E0F2FE" }}>Operaciones Ecosistema</div>
+                <div className="tarjeta-proteccion-plan" style={{ color: "#ffffff" }}>Bandeja de Operador & Auxiliar</div>
+                <div className="tarjeta-proteccion-meta" style={{ color: "rgba(255,255,255,0.9)" }}>
+                  Gestión integral de clientes, verificación de postulaciones, cobros y despacho de notificaciones.
+                </div>
+              </div>
+              <span className="badge-activo" style={{ background: "#BAE6FD", color: "#075985" }}>Operativo</span>
+            </div>
+          </section>
+
+          <div className="accesos-cliente">
+            <TarjetasFavoritasGrid />
+            {WIDGETS_OPERADOR.map((w) => (
+              <Link
+                key={w.clave}
+                href={w.ruta}
+                className="tarjeta-acceso"
+              >
+                <w.icono className="tarjeta-acceso-icono" aria-hidden="true" strokeWidth={1.6} />
+                <strong>{w.nombre}</strong>
+                <p>{w.detalle}</p>
+              </Link>
+            ))}
+          </div>
+
+          <section className="tarjeta-seccion">
+            <header><h2>Trámites & Solicitudes Entrantes</h2></header>
+            <div className="vacio-seccion">
+              <b>Monitoreo en Tiempo Real</b>
+              <span>Las solicitudes de socios y expedientes de clientes se sincronizan automáticamente.</span>
+            </div>
+          </section>
+        </div>
+
+        <aside className="columna-cliente">
+          <SeccionNotificacionesEcosistema esAdmin={false} />
+          <section className="tarjeta-seccion">
+            <header><h2>Soporte & Turnos Operativos</h2></header>
+            <div className="vacio-seccion">
+              <b>Canal de Atención Activo</b>
+              <span>Recepción y derivación multicanal WhatsApp / In-App.</span>
             </div>
           </section>
         </aside>

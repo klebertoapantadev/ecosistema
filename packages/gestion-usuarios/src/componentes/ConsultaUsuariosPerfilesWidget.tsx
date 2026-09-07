@@ -134,8 +134,8 @@ export function ConsultaUsuariosPerfilesWidget({ negocio = "TRANQ" }: Props) {
     setModalPush({
       abierto: true,
       tipo: "advertencia",
-      titulo: "Resetear Sistema",
-      mensaje: `Esta acción eliminará TODOS los usuarios de prueba, perfiles y solicitudes configuradas en la base de datos (conservando únicamente la cuenta SuperAdmin). ¿Deseas continuar?`,
+      titulo: `Reset del Sistema (${negocio.toUpperCase()})`,
+      mensaje: `Esta acción purgará únicamente los usuarios de prueba, sus datos operativos y los perfiles asignados en ${negocio.toUpperCase()} (conservando la cuenta SuperAdmin y todas las configuraciones del negocio, SMTP, términos, catálogos comerciales y perfiles maestros, sin afectar a otros negocios). ¿Deseas continuar?`,
       mostrarConfirmacion: true,
       alAceptar: async () => {
         setModalPush((prev) => ({ ...prev, abierto: false }));
@@ -146,8 +146,8 @@ export function ConsultaUsuariosPerfilesWidget({ negocio = "TRANQ" }: Props) {
             setModalPush({
               abierto: true,
               tipo: "push",
-              titulo: "Sistema reseteado",
-              mensaje: `El sistema para el negocio "${negocio}" ha sido reseteado.`,
+              titulo: "Reset Completado",
+              mensaje: `Se han purgado los usuarios de prueba y sus datos operativos en "${negocio.toUpperCase()}". Todas las configuraciones han sido preservadas.`,
               alAceptar: () => window.location.reload(),
             });
           } else {
@@ -209,6 +209,7 @@ export function ConsultaUsuariosPerfilesWidget({ negocio = "TRANQ" }: Props) {
           <button
             type="button"
             onClick={() => cargarDirectorio(filtroTexto)}
+            className="btn-responsive-accion"
             style={{
               background: "#F1F5F9",
               border: "1px solid #CBD5E1",
@@ -218,17 +219,21 @@ export function ConsultaUsuariosPerfilesWidget({ negocio = "TRANQ" }: Props) {
               fontSize: "0.78rem",
               fontWeight: 700,
               cursor: "pointer",
-              display: "flex",
+              display: "inline-flex",
               alignItems: "center",
               gap: "6px",
             }}
+            title="Actualizar directorio"
+            aria-label="Actualizar directorio"
           >
-            <RefreshCw size={14} /> Actualizar
+            <RefreshCw size={14} />
+            <span className="btn-texto-responsive">Actualizar</span>
           </button>
           <button
             type="button"
             onClick={handleResetearSistema}
             disabled={procesandoAccion !== null}
+            className="btn-responsive-accion"
             style={{
               fontSize: "0.78rem",
               fontWeight: 800,
@@ -237,15 +242,17 @@ export function ConsultaUsuariosPerfilesWidget({ negocio = "TRANQ" }: Props) {
               padding: "7px 14px",
               borderRadius: "20px",
               border: "1px solid #FCA5A5",
-              display: "flex",
+              display: "inline-flex",
               alignItems: "center",
               gap: "6px",
               cursor: "pointer",
               boxShadow: "0 1px 2px rgba(220,38,38,0.1)",
             }}
-            title="Borrar todos los usuarios de prueba, perfiles y solicitudes para iniciar desde cero"
+            title="Resetear usuarios de prueba y datos operativos (Solo SuperAdmin)"
+            aria-label="Resetear usuarios de prueba y datos operativos"
           >
-            <RotateCcw size={14} /> Resetear Sistema (Prueba desde Cero)
+            <RotateCcw size={14} />
+            <span className="btn-texto-responsive">Reset Pruebas</span>
           </button>
         </div>
       </div>
@@ -339,7 +346,7 @@ export function ConsultaUsuariosPerfilesWidget({ negocio = "TRANQ" }: Props) {
               No se encontraron usuarios registrados con el criterio de búsqueda.
             </div>
           ) : (
-            <div className="tabla-panel-envoltura">
+            <div className="tabla-panel-envoltura" style={{ WebkitOverflowScrolling: "touch" }}>
               <table className="tabla-panel" style={{ width: "100%", fontSize: "0.84rem" }}>
                 <thead>
                   <tr>
@@ -347,7 +354,7 @@ export function ConsultaUsuariosPerfilesWidget({ negocio = "TRANQ" }: Props) {
                     <th>Correo</th>
                     <th>Estado</th>
                     <th>Perfiles (Asignación de Roles)</th>
-                    <th>Acción</th>
+                    <th style={{ position: "sticky", right: 0, background: "#FAFAF9", zIndex: 2, boxShadow: "-2px 0 6px rgba(0,0,0,0.05)", textAlign: "center" }}>Acción</th>
                   </tr>
                 </thead>
                 <tbody>

@@ -102,7 +102,8 @@ En `app/panel/ConsolaSuperAdminModular.tsx`, agregar la entrada en `CATALOGO_SUP
 ---
 
 ## Criterio de Aceptación Obligatorio
-Ningún módulo o widget se considera finalizado si un administrador no puede:
+Ningún módulo o widget se considera finalizado si un administrador o usuario no puede:
 1. Ver el widget en el catálogo de inventario de `/panel/configuracion?widget=perfiles` (pestaña *Inventario de Widgets*).
 2. Asignar o retirar el widget a cualquier perfil/rol (pestaña *Módulos por Panel & Perfil*).
 3. Abrir el widget en modo previsualización en vivo.
+4. **Acceder al widget de inmediato por defecto:** El usuario con el rol correspondiente debe poder ingresar al módulo sin requerir configuración manual previa, habiendo sido pre-configurado en la migración SQL (`seg_rol_widget`), en `PERFILES_INICIALES`, en `NavegacionSidebar.tsx` y en `PanelDinamicoModular.tsx`.

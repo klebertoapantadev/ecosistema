@@ -37,7 +37,7 @@ Tranqi adopta las mejores prácticas y estándares internacionales de **Law Prac
 | **`TRQ-COM-001`** | **Común (Todos)** | **Billetera Digital de Documentos Seguros, Extracción OCR y Enlaces TTL** | 🟡 En Desarrollo | **85%** | Jesus Navarrete |
 | **`TRQ-COM-002`** | **Común (Todos)** | **Compartición de Documentos a Tranqi (Revisión de Contratos & Vinculación a Casos)** | 🟡 Especificado | **25%** | Kleber Toapanta |
 | **`TRQ-COM-003`** | **Común (Todos)** | **Herramienta Universal de Firma Digital de Documentos PDF (.p12 / QR / PAdES)** | ✅ Implementado | **100%** | Kleber Toapanta |
-| **`TRQ-CRM-001`** | **CRM Jurídico** | **Gestión de Clientes (Naturales/Jurídicas), Registro Manual, Auto-Lead Web (Prospecto) y Conflict Check** | 🟡 En Desarrollo | **80%** | Kleber Toapanta |
+| **`TRQ-CRM-001`** | **CRM Jurídico** | **Gestión de Clientes (Naturales/Jurídicas), Registro Manual, Auto-Lead Web (Prospecto) y Conflict Check** | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`TRQ-CAS-001`** | **Expediente** | **Gestión de Trámites Judiciales y Extrajudiciales (Expediente Digital Unificado)** | 🟡 Especificado | **30%** | Kleber Toapanta / Jesus Navarrete |
 | **`TRQ-CAS-002`** | **Equipo Legal** | **Asignación Multirrol de Abogados (Titular / Co-patrocinadores / Mesa de Control)** | 🟡 Especificado | **25%** | Kleber Toapanta |
 | **`TRQ-DOC-001`** | **Gestión Documental** | **Gestor Documental por Etapas Procesales, Billetera y Versionamiento vN** | 🟡 Especificado | **30%** | Kleber Toapanta |
@@ -55,6 +55,7 @@ Tranqi adopta las mejores prácticas y estándares internacionales de **Law Prac
 | **`TRQ-ADM-001`** | **Operador/Admin** | **Mesa de Control de Acreditación, Contra-Firma Tranqi y Activación de Socios** | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`TRQ-ADM-002`** | **Operador/Admin** | **Asignación Inteligente de Casos (IA), Liquidación de Honorarios y Comisiones** | ⏳ Pendiente | **0%** | **Jesus Navarrete (IA)** / Kleber Toapanta |
 | **`TRQ-ADM-003`** | **Operador/Admin** | **Auditoría Transversal BDD, Telemetría API y Bitácora de Campañas** | ✅ Implementado | **100%** | Kleber Toapanta |
+| **`TRQ-ADM-004`** | **Operador/Admin** | **Catálogo Comercial, Tarifario de Honorarios, Pasarela Payphone e Historial** | ✅ Implementado | **100%** | Kleber Toapanta |
 
 ---
 

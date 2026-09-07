@@ -8,7 +8,7 @@ import {
   Palette, UserCheck, X, Sparkles, Trash2, Star, Move, Copy, Package, GripVertical,
   Home, User, Settings, Shield, Folder, Wrench, Building, Briefcase, Bell, Database,
   Activity, Globe, Lock, KeyRound, CheckSquare, Terminal, Zap, Pencil, LogOut, LogIn,
-  Forward, Inbox, FileText, Download, Printer, Share2, RotateCcw, type LucideIcon
+  Forward, Inbox, FileText, Download, Printer, Share2, RotateCcw, Loader2, type LucideIcon
 } from "lucide-react";
 import { guardarPerfil, guardarWidget, guardarAsignacionWidget, obtenerDatosGestionUsuariosAction } from "../acciones";
 import type { UsuarioConMembresia } from "../consultas";
@@ -220,8 +220,8 @@ const PERFILES_INICIALES: PerfilDef[] = [
     panelesAsignados: ["panel_inicio", "panel_cuenta", "panel_herramientas", "panel_configuracion"],
     widgetsAsignadosPorPanel: {
       panel_inicio: ["favoritos"],
-      panel_cuenta: ["ver_como", "mi_cuenta"],
-      panel_herramientas: ["agendar_cita", "mis_citas", "firma_documentos_pdf", "billetera_documentos"],
+      panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos", "historial_pagos"],
+      panel_herramientas: ["agendar_cita", "mis_citas", "catalogo_productos", "firma_documentos_pdf", "billetera_documentos", "solicitud_socio"],
       panel_configuracion: ["notificaciones"]
     },
     activo: true
@@ -235,10 +235,22 @@ const PERFILES_INICIALES: PerfilDef[] = [
     panelesAsignados: ["panel_inicio", "panel_cuenta", "panel_herramientas", "panel_configuracion", "panel_administrar"],
     widgetsAsignadosPorPanel: {
       panel_inicio: ["favoritos"],
-      panel_cuenta: ["ver_como", "mi_cuenta"],
-      panel_herramientas: ["firma_documentos_pdf", "billetera_documentos", "emision_notificaciones"],
-      panel_configuracion: ["notificaciones"],
-      panel_administrar: ["socios", "asignaciones_agenda", "configuracion_contrato_abogado", "gestion_terminos_consentimientos"]
+      panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos"],
+      panel_herramientas: ["catalogo_productos", "firma_documentos_pdf", "billetera_documentos", "emision_notificaciones"],
+      panel_configuracion: ["notificaciones", "agentes_ia"],
+      panel_administrar: ["asignaciones_agenda", 
+        "crm_clientes",
+        "alta_cliente_crm",
+        "socios",
+        "solicitud_socio",
+        "historial_pagos",
+        "emision_notificaciones",
+        "bitacora_notificaciones",
+        "monitoreo_notificaciones_usuarios",
+        "gestion_terminos_consentimientos",
+        "configuracion_contrato_abogado",
+        "consulta_usuarios_perfiles"
+      ]
     },
     activo: true
   },
@@ -248,12 +260,13 @@ const PERFILES_INICIALES: PerfilDef[] = [
     nivel: 50,
     ambito: "Empresa",
     descripcion: "Perfil profesional para atención legal de causas y expedientes.",
-    panelesAsignados: ["panel_inicio", "panel_cuenta", "panel_herramientas", "panel_configuracion"],
+    panelesAsignados: ["panel_inicio", "panel_cuenta", "panel_herramientas", "panel_configuracion", "panel_administrar"],
     widgetsAsignadosPorPanel: {
       panel_inicio: ["favoritos"],
-      panel_cuenta: ["ver_como", "mi_cuenta"],
-      panel_herramientas: ["citas_programadas", "disponibilidad", "firma_documentos_pdf", "billetera_documentos"],
-      panel_configuracion: ["notificaciones"]
+      panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos", "historial_pagos"],
+      panel_herramientas: ["citas_programadas", "disponibilidad", "crm_clientes", "catalogo_productos", "firma_documentos_pdf", "billetera_documentos", "solicitud_socio"],
+      panel_configuracion: ["notificaciones", "agentes_ia"],
+      panel_administrar: ["crm_clientes", "alta_cliente_crm", "historial_pagos"]
     },
     activo: true
   },
@@ -266,10 +279,24 @@ const PERFILES_INICIALES: PerfilDef[] = [
     panelesAsignados: ["panel_inicio", "panel_cuenta", "panel_herramientas", "panel_configuracion", "panel_administrar"],
     widgetsAsignadosPorPanel: {
       panel_inicio: ["favoritos"],
-      panel_cuenta: ["ver_como", "mi_cuenta"],
-      panel_herramientas: ["firma_documentos_pdf", "billetera_documentos", "emision_notificaciones"],
-      panel_configuracion: ["configuracion_negocio", "configuracion_correo", "perfiles", "notificaciones"],
-      panel_administrar: ["gestion_usuarios", "socios", "solicitud_socio", "asignaciones_agenda", "emision_notificaciones", "gestion_terminos_consentimientos", "configuracion_contrato_abogado", "auditoria"]
+      panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos"],
+      panel_herramientas: ["catalogo_productos", "firma_documentos_pdf", "billetera_documentos", "emision_notificaciones"],
+      panel_configuracion: ["configuracion_negocio", "configuracion_correo", "pasarela_payphone", "perfiles", "agentes_ia", "notificaciones"],
+      panel_administrar: ["asignaciones_agenda", 
+        "crm_clientes",
+        "alta_cliente_crm",
+        "gestion_usuarios",
+        "consulta_usuarios_perfiles",
+        "socios",
+        "solicitud_socio",
+        "historial_pagos",
+        "emision_notificaciones",
+        "bitacora_notificaciones",
+        "monitoreo_notificaciones_usuarios",
+        "gestion_terminos_consentimientos",
+        "configuracion_contrato_abogado",
+        "auditoria"
+      ]
     },
     activo: true
   },
@@ -282,15 +309,123 @@ const PERFILES_INICIALES: PerfilDef[] = [
     panelesAsignados: ["panel_inicio", "panel_cuenta", "panel_herramientas", "panel_configuracion", "panel_administrar"],
     widgetsAsignadosPorPanel: {
       panel_inicio: ["favoritos"],
-      panel_cuenta: ["ver_como", "mi_cuenta", "historial_accesos"],
-      panel_herramientas: ["firma_documentos_pdf", "billetera_documentos", "emision_notificaciones"],
-      panel_configuracion: ["configuracion_negocio", "configuracion_correo", "perfiles", "notificaciones"],
-      panel_administrar: ["gestion_usuarios", "socios", "solicitud_socio", "asignaciones_agenda", "emision_notificaciones", "auditoria"]
+      panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos"],
+      panel_herramientas: ["catalogo_productos", "firma_documentos_pdf", "billetera_documentos", "emision_notificaciones"],
+      panel_configuracion: ["configuracion_negocio", "configuracion_correo", "pasarela_payphone", "perfiles", "agentes_ia", "notificaciones"],
+      panel_administrar: ["asignaciones_agenda", 
+        "crm_clientes",
+        "alta_cliente_crm",
+        "gestion_usuarios",
+        "consulta_usuarios_perfiles",
+        "socios",
+        "solicitud_socio",
+        "historial_pagos",
+        "emision_notificaciones",
+        "bitacora_notificaciones",
+        "monitoreo_notificaciones_usuarios",
+        "gestion_terminos_consentimientos",
+        "configuracion_contrato_abogado",
+        "auditoria"
+      ]
     },
     activo: true,
     esSuperAdmin: true
   }
 ];
+
+// MATRIZ CANÓNICA DE ASIGNACIÓN ESTRICTA POR ROL Y PANEL FUNCIONAL
+// Regla de Oro: Cada uno de los 28 módulos está asignado al menos a un perfil operativo/administrativo DIFERENTE de SuperAdmin.
+export const MATRIZ_FUNCIONAL_ROLES: Record<string, { paneles: string[]; widgetsPorPanel: Record<string, string[]> }> = {
+  CLIENTE: {
+    paneles: ["panel_inicio", "panel_cuenta", "panel_herramientas", "panel_configuracion"],
+    widgetsPorPanel: {
+      panel_inicio: ["favoritos"],
+      panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos", "historial_pagos"],
+      panel_herramientas: ["catalogo_productos", "firma_documentos_pdf", "billetera_documentos", "solicitud_socio"],
+      panel_configuracion: ["notificaciones"]
+    }
+  },
+  ABOGADO: {
+    paneles: ["panel_inicio", "panel_cuenta", "panel_herramientas", "panel_configuracion", "panel_administrar"],
+    widgetsPorPanel: {
+      panel_inicio: ["favoritos"],
+      panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos", "historial_pagos"],
+      panel_herramientas: ["crm_clientes", "catalogo_productos", "firma_documentos_pdf", "billetera_documentos", "solicitud_socio"],
+      panel_configuracion: ["notificaciones", "agentes_ia"],
+      panel_administrar: ["crm_clientes", "alta_cliente_crm", "historial_pagos"]
+    }
+  },
+  OPERADOR: {
+    paneles: ["panel_inicio", "panel_cuenta", "panel_herramientas", "panel_configuracion", "panel_administrar"],
+    widgetsPorPanel: {
+      panel_inicio: ["favoritos"],
+      panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos"],
+      panel_herramientas: ["catalogo_productos", "firma_documentos_pdf", "billetera_documentos", "emision_notificaciones"],
+      panel_configuracion: ["notificaciones", "agentes_ia"],
+      panel_administrar: [
+        "crm_clientes",
+        "alta_cliente_crm",
+        "socios",
+        "solicitud_socio",
+        "historial_pagos",
+        "emision_notificaciones",
+        "bitacora_notificaciones",
+        "monitoreo_notificaciones_usuarios",
+        "gestion_terminos_consentimientos",
+        "configuracion_contrato_abogado",
+        "consulta_usuarios_perfiles"
+      ]
+    }
+  },
+  ADMINISTRADOR: {
+    paneles: ["panel_inicio", "panel_cuenta", "panel_herramientas", "panel_configuracion", "panel_administrar"],
+    widgetsPorPanel: {
+      panel_inicio: ["favoritos"],
+      panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos"],
+      panel_herramientas: ["catalogo_productos", "firma_documentos_pdf", "billetera_documentos", "emision_notificaciones"],
+      panel_configuracion: ["configuracion_negocio", "configuracion_correo", "pasarela_payphone", "perfiles", "agentes_ia", "notificaciones"],
+      panel_administrar: [
+        "crm_clientes",
+        "alta_cliente_crm",
+        "gestion_usuarios",
+        "consulta_usuarios_perfiles",
+        "socios",
+        "solicitud_socio",
+        "historial_pagos",
+        "emision_notificaciones",
+        "bitacora_notificaciones",
+        "monitoreo_notificaciones_usuarios",
+        "gestion_terminos_consentimientos",
+        "configuracion_contrato_abogado",
+        "auditoria"
+      ]
+    }
+  },
+  SUPERADMIN: {
+    paneles: ["panel_inicio", "panel_cuenta", "panel_herramientas", "panel_configuracion", "panel_administrar"],
+    widgetsPorPanel: {
+      panel_inicio: ["favoritos"],
+      panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos"],
+      panel_herramientas: ["catalogo_productos", "firma_documentos_pdf", "billetera_documentos", "emision_notificaciones"],
+      panel_configuracion: ["configuracion_negocio", "configuracion_correo", "pasarela_payphone", "perfiles", "agentes_ia", "notificaciones"],
+      panel_administrar: [
+        "crm_clientes",
+        "alta_cliente_crm",
+        "gestion_usuarios",
+        "consulta_usuarios_perfiles",
+        "socios",
+        "solicitud_socio",
+        "historial_pagos",
+        "emision_notificaciones",
+        "bitacora_notificaciones",
+        "monitoreo_notificaciones_usuarios",
+        "gestion_terminos_consentimientos",
+        "configuracion_contrato_abogado",
+        "auditoria"
+      ]
+    }
+  }
+};
 
 const WIDGETS_INVENTARIO_INICIALES: WidgetInventarioDef[] = [
   {
@@ -358,6 +493,83 @@ const WIDGETS_INVENTARIO_INICIALES: WidgetInventarioDef[] = [
     panelId: "panel_cuenta",
     activo: true,
     creadoEn: "2026-07-27"
+  },
+  {
+    clave: "catalogo_productos",
+    nombre: "Catálogo Comercial & Honorarios",
+    descripcion: "Catálogo unificado de servicios, liquidación de honorarios y suscripciones legales con cálculo de IVA 15%.",
+    categoria: "Comercio y Pagos",
+    ruta: "/panel/catalogo-productos",
+    rutaFisica: "/comercio/componentes/CatalogoProductosComercio.tsx",
+    panelId: "panel_herramientas",
+    activo: true,
+    creadoEn: "2026-08-20"
+  },
+  {
+    clave: "pasarela_payphone",
+    nombre: "Pasarela Payphone (Botón de Pago)",
+    descripcion: "Configuración del Botón de Pago Payphone, credenciales API, StoreID y simulador de cobro.",
+    categoria: "Comercio y Pagos",
+    ruta: "/panel/configuracion?widget=pasarela_payphone",
+    rutaFisica: "/comercio/componentes/ConfiguracionPasarelaPayphone.tsx",
+    panelId: "panel_configuracion",
+    activo: true,
+    creadoEn: "2026-08-20"
+  },
+  {
+    clave: "historial_pagos",
+    nombre: "Historial de Transacciones & Pagos",
+    descripcion: "Auditoría contable inmutable de cobros bancarios y transacciones autorizadas Payphone.",
+    categoria: "Comercio y Pagos",
+    ruta: "/panel/administrar?widget=historial_pagos",
+    rutaFisica: "/comercio/componentes/HistorialTransaccionesPago.tsx",
+    panelId: "panel_administrar",
+    activo: true,
+    creadoEn: "2026-08-21"
+  },
+  {
+    clave: "crm_clientes",
+    nombre: "CRM Jurídico & Gestión de Clientes",
+    descripcion: "Directorio 360°, KPIs, expedientes y verificación de conflictos (conflict check) en vivo.",
+    categoria: "Gestión Legal",
+    ruta: "/panel/clientes",
+    rutaFisica: "/crm-clientes/componentes/BandejaClientesCRM.tsx",
+    panelId: "panel_administrar",
+    activo: true,
+    creadoEn: "2026-08-22"
+  },
+  {
+    clave: "alta_cliente_crm",
+    nombre: "Alta Asistida & Recepción Multicanal",
+    descripcion: "Registro asistido de clientes con OCR ARIA de cédula/nombramiento y verificación de conflictos.",
+    categoria: "Gestión Legal",
+    ruta: "/panel/clientes?accion=alta",
+    rutaFisica: "/crm-clientes/componentes/ModalAltaClienteAsistida.tsx",
+    panelId: "panel_administrar",
+    activo: true,
+    creadoEn: "2026-08-22"
+  },
+  {
+    clave: "monitoreo_notificaciones_usuarios",
+    nombre: "Monitoreo de Notificaciones por Usuario",
+    descripcion: "Auditoría en tiempo real de notificaciones, fechas de confirmación, tiempo de pospuesto y eliminados.",
+    categoria: "Comunicación",
+    ruta: "/panel/administrar?widget=monitoreo_notificaciones_usuarios",
+    rutaFisica: "/notificaciones/MonitoreoNotificacionesUsuariosWidget.tsx",
+    panelId: "panel_administrar",
+    activo: true,
+    creadoEn: "2026-08-23"
+  },
+  {
+    clave: "agentes_ia",
+    nombre: "Agentes de Inteligencia Artificial (Aria)",
+    descripcion: "Configuración y gobernanza de asistentes Aria: prompts, modelo y herramientas conectadas.",
+    categoria: "Configuración",
+    ruta: "/panel/agentes",
+    rutaFisica: "/agentes/page.tsx",
+    panelId: "panel_configuracion",
+    activo: true,
+    creadoEn: "2026-08-23"
   },
   {
     clave: "gestion_usuarios",
@@ -584,6 +796,111 @@ const WIDGETS_INVENTARIO_INICIALES: WidgetInventarioDef[] = [
 // COMPONENTE PARA RENDERIZAR LA INTERFAZ REAL INTERACTIVA EN EL MODAL DE PREVISUALIZACIÓN
 function RenderizadorWidgetReal({ clave, negocio }: { clave: string; negocio: string }) {
   switch (clave) {
+    case "catalogo_productos":
+      return (
+        <div style={{ background: "#ffffff", padding: "18px", borderRadius: "12px", border: "1.5px solid #0284C7", boxShadow: "0 4px 12px rgba(2,132,199,0.08)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 800, fontSize: "0.95rem", color: "#0284C7", marginBottom: "10px" }}>
+            <Briefcase size={18} /> Catálogo Comercial & Honorarios
+          </div>
+          <p style={{ fontSize: "0.82rem", color: "#64748B", marginBottom: "12px" }}>
+            Servicios jurídicos, tarifario de honorarios, suscripciones y cálculo automático de IVA 15%.
+          </p>
+          <div style={{ padding: "12px", background: "#F0F9FF", borderRadius: "8px", border: "1px dashed #BAE6FD", textAlign: "center", fontSize: "0.82rem", color: "#0369A1", fontWeight: 700 }}>
+            Servicios Disponibles · Planes de Suscripción · Tarifario Oficial
+          </div>
+        </div>
+      );
+
+    case "pasarela_payphone":
+      return (
+        <div style={{ background: "#ffffff", padding: "18px", borderRadius: "12px", border: "1.5px solid #D97706", boxShadow: "0 4px 12px rgba(217,119,6,0.08)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 800, fontSize: "0.95rem", color: "#D97706", marginBottom: "10px" }}>
+            <KeyRound size={18} /> Pasarela Payphone (Botón de Pago)
+          </div>
+          <p style={{ fontSize: "0.82rem", color: "#64748B", marginBottom: "12px" }}>
+            Configuración de credenciales de cobro Payphone, Token Bearer y simulador de cobro con tarjeta de crédito/débito.
+          </p>
+          <div style={{ padding: "12px", background: "#FFFBEB", borderRadius: "8px", border: "1px dashed #FDE68A", textAlign: "center", fontSize: "0.82rem", color: "#92400E", fontWeight: 700 }}>
+            Credenciales API · Modo Producción / Sandbox · Simulador en Vivo
+          </div>
+        </div>
+      );
+
+    case "historial_pagos":
+      return (
+        <div style={{ background: "#ffffff", padding: "18px", borderRadius: "12px", border: "1.5px solid #05876E", boxShadow: "0 4px 12px rgba(5,135,110,0.08)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 800, fontSize: "0.95rem", color: "#05876E", marginBottom: "10px" }}>
+            <FileText size={18} /> Historial de Transacciones & Pagos
+          </div>
+          <p style={{ fontSize: "0.82rem", color: "#64748B", marginBottom: "12px" }}>
+            Registro inmutable de cobros autorizados por Payphone, estados de conciliación bancaria y auditoría contable.
+          </p>
+          <div style={{ padding: "12px", background: "#ECFDF5", borderRadius: "8px", border: "1px dashed #A7F3D0", textAlign: "center", fontSize: "0.82rem", color: "#065F46", fontWeight: 700 }}>
+            Transacciones Aprobadas · Comprobantes Digitales · Conciliación Bancaria
+          </div>
+        </div>
+      );
+
+    case "crm_clientes":
+      return (
+        <div style={{ background: "#ffffff", padding: "18px", borderRadius: "12px", border: "1.5px solid var(--violeta, #5000BA)", boxShadow: "0 4px 12px rgba(80,0,186,0.08)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 800, fontSize: "0.95rem", color: "var(--violeta, #5000BA)", marginBottom: "10px" }}>
+            <Users size={18} /> CRM Jurídico & Gestión de Clientes
+          </div>
+          <p style={{ fontSize: "0.82rem", color: "#64748B", marginBottom: "12px" }}>
+            Directorio 360° de clientes, verificación de conflictos en vivo (conflict check) y seguimiento de expedientes.
+          </p>
+          <div style={{ padding: "12px", background: "#F5F3FF", borderRadius: "8px", border: "1px dashed #DDD6FE", textAlign: "center", fontSize: "0.82rem", color: "#4C1D95", fontWeight: 700 }}>
+            Bandeja 360° · Detección de Conflictos · Historial de Causas
+          </div>
+        </div>
+      );
+
+    case "alta_cliente_crm":
+      return (
+        <div style={{ background: "#ffffff", padding: "18px", borderRadius: "12px", border: "1.5px solid #05876E", boxShadow: "0 4px 12px rgba(5,135,110,0.08)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 800, fontSize: "0.95rem", color: "#05876E", marginBottom: "10px" }}>
+            <UserCheck size={18} /> Alta Asistida & Recepción Multicanal
+          </div>
+          <p style={{ fontSize: "0.82rem", color: "#64748B", marginBottom: "12px" }}>
+            Captura ágil de nuevos clientes con extracción OCR ARIA de documentos de identidad y comprobación automática de antecedentes.
+          </p>
+          <div style={{ padding: "12px", background: "#ECFDF5", borderRadius: "8px", border: "1px dashed #A7F3D0", textAlign: "center", fontSize: "0.82rem", color: "#065F46", fontWeight: 700 }}>
+            OCR Cédula / Nombramiento · Validación RUC SRI · Conflict Check Inmediato
+          </div>
+        </div>
+      );
+
+    case "monitoreo_notificaciones_usuarios":
+      return (
+        <div style={{ background: "#ffffff", padding: "18px", borderRadius: "12px", border: "1.5px solid #1F6FEB", boxShadow: "0 4px 12px rgba(31,111,235,0.08)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 800, fontSize: "0.95rem", color: "#1F6FEB", marginBottom: "10px" }}>
+            <Bell size={18} /> Monitoreo de Notificaciones por Usuario
+          </div>
+          <p style={{ fontSize: "0.82rem", color: "#64748B", marginBottom: "12px" }}>
+            Auditoría en tiempo real de apertura, lectura, confirmación, posposición y descarte de notificaciones.
+          </p>
+          <div style={{ padding: "12px", background: "#EFF6FF", borderRadius: "8px", border: "1px dashed #BFDBFE", textAlign: "center", fontSize: "0.82rem", color: "#1E40AF", fontWeight: 700 }}>
+            Telemetría In-App · Estados de Lectura · Tiempos de Respuesta
+          </div>
+        </div>
+      );
+
+    case "agentes_ia":
+      return (
+        <div style={{ background: "#ffffff", padding: "18px", borderRadius: "12px", border: "1.5px solid var(--violeta, #5000BA)", boxShadow: "0 4px 12px rgba(80,0,186,0.08)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 800, fontSize: "0.95rem", color: "var(--violeta, #5000BA)", marginBottom: "10px" }}>
+            <Sparkles size={18} /> Agentes de Inteligencia Artificial (Aria)
+          </div>
+          <p style={{ fontSize: "0.82rem", color: "#64748B", marginBottom: "12px" }}>
+            Gestión de prompts maestros, temperatura, herramientas conectadas y memoria contextual de Aria para {negocio.toUpperCase()}.
+          </p>
+          <div style={{ padding: "12px", background: "#F5F3FF", borderRadius: "8px", border: "1px dashed #DDD6FE", textAlign: "center", fontSize: "0.82rem", color: "#4C1D95", fontWeight: 700 }}>
+            Aria Buddie · Integración WhatsApp YCloud · Memoria Conversacional
+          </div>
+        </div>
+      );
+
     case "billetera_documentos":
       return (
         <div style={{ background: "#ffffff", padding: "18px", borderRadius: "12px", border: "1.5px solid var(--violeta, #5000BA)", boxShadow: "0 4px 12px rgba(80,0,186,0.08)" }}>
@@ -594,7 +911,7 @@ function RenderizadorWidgetReal({ clave, negocio }: { clave: string; negocio: st
             Bóveda cifrada para almacenamiento y gestión inteligente de cédulas, matrículas, licencias, contratos y certificados con extracción OCR y enlaces efímeros protegidos.
           </p>
           <div style={{ padding: "12px", background: "#F8FAFC", borderRadius: "8px", border: "1px dashed #CBD5E1", textAlign: "center", fontSize: "0.82rem", color: "#334155", fontWeight: 700 }}>
-            Categorías Inteligentes Extracción OCR Enlaces TTL Efímeros
+            Categorías Inteligentes · Extracción OCR · Enlaces TTL Efímeros
           </div>
         </div>
       );
@@ -609,7 +926,7 @@ function RenderizadorWidgetReal({ clave, negocio }: { clave: string; negocio: st
             Herramienta criptográfica PAdES con procesamiento Zero-Custody en memoria local para firmado de contratos, actas e informes en PDF.
           </p>
           <div style={{ padding: "12px", background: "#F8FAFC", borderRadius: "8px", border: "1px dashed #CBD5E1", textAlign: "center", fontSize: "0.82rem", color: "#334155", fontWeight: 700 }}>
-            Subir Archivo PDF Cargar Firma .p12 Ubicar QR Descargar PDF Firmado
+            Subir Archivo PDF · Cargar Firma .p12 · Ubicar QR · Descargar PDF Firmado
           </div>
         </div>
       );
@@ -625,6 +942,7 @@ function RenderizadorWidgetReal({ clave, negocio }: { clave: string; negocio: st
           </p>
           <select style={{ width: "100%", padding: "10px 14px", borderRadius: "8px", border: "2px solid var(--violeta, #5000BA)", fontSize: "0.88rem", fontWeight: 800, background: "#F5F3FF", color: "#4C1D95", cursor: "pointer" }}>
             <option>Cliente (Jerarquía Base) - Nivel 1</option>
+            <option>Operador / Auxiliar - Nivel 30</option>
             <option>Socio Abogado / Profesional - Nivel 50</option>
             <option>Administrador del Negocio - Nivel 80</option>
             <option>SuperAdmin de Plataforma - Nivel 100</option>
@@ -696,7 +1014,6 @@ function RenderizadorWidgetReal({ clave, negocio }: { clave: string; negocio: st
           <div style={{ fontWeight: 800, fontSize: "0.95rem", color: "#065F46", marginBottom: "10px" }}>
             Administración de Usuarios & Membresías
           </div>
-          {/* envoltura con scroll: sin ella la tabla desbordaba en movil */}
           <div style={{ overflowX: "auto" }}>
           <table style={{ width: "100%", minWidth: "320px", fontSize: "0.78rem", borderCollapse: "collapse" }}>
             <thead>
@@ -1229,6 +1546,8 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
   const [mostrarModalWidget, setMostrarModalWidget] = useState(false);
   const [mensajeExito, setMensajeExito] = useState<string | null>(null);
 
+  const [isAsignando, setIsAsignando] = useState(false);
+
   // Formulario Perfil
   const [nuevoPerfil, setNuevoPerfil] = useState({
     clave: "",
@@ -1278,14 +1597,215 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
       ...perfil.widgetsAsignadosPorPanel,
       [panelId]: nuevosAsignados
     };
+    const panelesActualizados = perfil.panelesAsignados.includes(panelId)
+      ? perfil.panelesAsignados
+      : [...perfil.panelesAsignados, panelId];
 
-    setPerfiles(perfiles.map(p => p.clave === perfilClave ? { ...p, widgetsAsignadosPorPanel: mapaActualizado } : p));
+    setPerfiles(perfiles.map(p => p.clave === perfilClave ? { ...p, panelesAsignados: panelesActualizados, widgetsAsignadosPorPanel: mapaActualizado } : p));
 
     await guardarAsignacionWidget(perfilClave, widgetClave, negocio, true, panelId);
 
     const nombrePanel = panelesSidebar.find(p => p.id === panelId)?.nombre || panelId;
     setMensajeExito(`Widget '${widgetClave}' asignado exitosamente a '${nombrePanel}' para '${perfilClave}'.`);
     setTimeout(() => setMensajeExito(null), 3500);
+  };
+
+  // RESTAURAR CONFIGURACIÓN ÓPTIMA Y ESTRICTA SEGÚN EL ROL (REPARA ASIGNACIONES ERRÓNEAS)
+  const restaurarConfiguracionOptimaPerfil = async (perfilClave: string) => {
+    const matriz = MATRIZ_FUNCIONAL_ROLES[perfilClave];
+    if (!matriz) {
+      alert(`No existe una matriz canónica predefinida para el perfil '${perfilClave}'.`);
+      return;
+    }
+
+    setIsAsignando(true);
+    try {
+      const perfilActual = perfiles.find(p => p.clave === perfilClave);
+      if (!perfilActual) return;
+
+      // Desasignar en BD los widgets que estaban asignados pero no pertenecen al rol
+      const panelesActuales = Object.keys(perfilActual.widgetsAsignadosPorPanel || {});
+      for (const pId of panelesActuales) {
+        const actuales = perfilActual.widgetsAsignadosPorPanel[pId] || [];
+        const autorizados = matriz.widgetsPorPanel[pId] || [];
+        const sobrantes = actuales.filter(w => !autorizados.includes(w));
+        for (const wSob of sobrantes) {
+          await guardarAsignacionWidget(perfilClave, wSob, negocio, false, pId);
+        }
+      }
+
+      // Asignar en BD los widgets autorizados
+      for (const [pId, listW] of Object.entries(matriz.widgetsPorPanel)) {
+        for (const wClave of listW) {
+          await guardarAsignacionWidget(perfilClave, wClave, negocio, true, pId);
+        }
+      }
+
+      const nuevosPerfiles = perfiles.map(p =>
+        p.clave === perfilClave
+          ? {
+              ...p,
+              panelesAsignados: [...matriz.paneles],
+              widgetsAsignadosPorPanel: { ...matriz.widgetsPorPanel }
+            }
+          : p
+      );
+
+      setPerfiles(nuevosPerfiles);
+      localStorage.setItem(`tranqi_perfiles_${negocio}`, JSON.stringify(nuevosPerfiles));
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new Event("storage"));
+      }
+
+      const nombrePerfil = perfilActual.nombre;
+      setMensajeExito(`⚡ Perfil '${nombrePerfil}' restaurado a su configuración funcional óptima según rol.`);
+      setTimeout(() => setMensajeExito(null), 4500);
+    } catch (err) {
+      console.error("Error restaurando configuración del perfil:", err);
+    } finally {
+      setIsAsignando(false);
+    }
+  };
+
+  // AUTO-ASIGNAR WIDGETS AUTORIZADOS SEGÚN EL ROL
+  const autoAsignarWidgetsPorFuncionalidad = async (perfilClave: string, widgetsClaves?: string[]) => {
+    const perfil = perfiles.find(p => p.clave === perfilClave);
+    if (!perfil) return;
+
+    setIsAsignando(true);
+    try {
+      const matrizRol = MATRIZ_FUNCIONAL_ROLES[perfilClave];
+
+      // Si se especifica un widget individual
+      if (widgetsClaves && widgetsClaves.length === 1) {
+        const wClave = widgetsClaves[0];
+        if (!wClave) return;
+        const wObj = inventarioWidgets.find(w => w.clave === wClave);
+        if (!wObj) return;
+
+        // Comprobar si el widget es compatible con este rol
+        const esPermitido = matrizRol
+          ? Object.values(matrizRol.widgetsPorPanel).flat().includes(wClave)
+          : true;
+
+        if (!esPermitido && ["CLIENTE", "ABOGADO"].includes(perfilClave)) {
+          const confirmar = confirm(
+            `El módulo '${wObj.nombre}' está diseñado para roles de gestión u operación y no forma parte del perfil '${perfil.nombre}'. ¿Deseas asignarlo de todas formas?`
+          );
+          if (!confirmar) {
+            setIsAsignando(false);
+            return;
+          }
+        }
+
+        let targetPanel = wObj.panelId;
+        if (!panelesSidebar.some(p => p.id === targetPanel)) {
+          targetPanel = "panel_herramientas";
+        }
+        await agregarWidgetAPanel(perfilClave, wClave, targetPanel);
+        setIsAsignando(false);
+        return;
+      }
+
+      // Si es asignación para el perfil activo:
+      // Solo asignar aquellos widgets que SÍ corresponden funcionalmente a este rol según su matriz
+      if (!matrizRol) {
+        const todasAsignadas = new Set(Object.values(perfil.widgetsAsignadosPorPanel || {}).flat());
+        const huerfanos = inventarioWidgets.filter(w => !todasAsignadas.has(w.clave));
+        for (const w of huerfanos) {
+          const panelTarget = panelesSidebar.some(p => p.id === w.panelId) ? w.panelId : "panel_configuracion";
+          await agregarWidgetAPanel(perfilClave, w.clave, panelTarget);
+        }
+        setIsAsignando(false);
+        return;
+      }
+
+      // Para perfiles del sistema: asegurar que todos sus widgets autorizados estén asignados
+      let countAsignados = 0;
+      const mapaActualizado = { ...perfil.widgetsAsignadosPorPanel };
+      const panelesNuevos = new Set(perfil.panelesAsignados || []);
+
+      for (const [panelId, widgetsAutorizados] of Object.entries(matrizRol.widgetsPorPanel)) {
+        const actuales = mapaActualizado[panelId] || [];
+        const faltantes = widgetsAutorizados.filter(w => !actuales.includes(w));
+        if (faltantes.length > 0) {
+          mapaActualizado[panelId] = [...actuales, ...faltantes];
+          panelesNuevos.add(panelId);
+          for (const wClave of faltantes) {
+            await guardarAsignacionWidget(perfilClave, wClave, negocio, true, panelId);
+            countAsignados++;
+          }
+        }
+      }
+
+      const nuevosPerfiles = perfiles.map(p =>
+        p.clave === perfilClave
+          ? {
+              ...p,
+              panelesAsignados: Array.from(panelesNuevos),
+              widgetsAsignadosPorPanel: mapaActualizado
+            }
+          : p
+      );
+
+      setPerfiles(nuevosPerfiles);
+      localStorage.setItem(`tranqi_perfiles_${negocio}`, JSON.stringify(nuevosPerfiles));
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new Event("storage"));
+      }
+
+      if (countAsignados > 0) {
+        setMensajeExito(`⚡ Se auto-asignaron ${countAsignados} widgets autorizados para '${perfil.nombre}'.`);
+      } else {
+        setMensajeExito(`El perfil '${perfil.nombre}' ya cuenta con todos sus widgets funcionales autorizados asignados.`);
+      }
+      setTimeout(() => setMensajeExito(null), 4000);
+    } catch (err) {
+      console.error("Error en auto-asignación por rol:", err);
+    } finally {
+      setIsAsignando(false);
+    }
+  };
+
+  // AUTO-ASIGNAR TODOS LOS PERFILES DEL ECOSISTEMA SEGÚN SU MATRIZ FUNCIONAL
+  // Garantiza que cada uno de los 28 módulos esté asignado al menos a un perfil diferente de SuperAdmin
+  const autoAsignarTodosLosPerfiles = async () => {
+    setIsAsignando(true);
+    try {
+      let totalAsignados = 0;
+      const perfilesActualizados = perfiles.map(p => {
+        const matriz = MATRIZ_FUNCIONAL_ROLES[p.clave];
+        if (!matriz) return p;
+        return {
+          ...p,
+          panelesAsignados: [...matriz.paneles],
+          widgetsAsignadosPorPanel: { ...matriz.widgetsPorPanel }
+        };
+      });
+
+      // Sincronizar en base de datos para cada perfil del sistema
+      for (const [rolClave, matriz] of Object.entries(MATRIZ_FUNCIONAL_ROLES)) {
+        for (const [panelId, widgets] of Object.entries(matriz.widgetsPorPanel)) {
+          for (const wClave of widgets) {
+            await guardarAsignacionWidget(rolClave, wClave, negocio, true, panelId);
+            totalAsignados++;
+          }
+        }
+      }
+
+      setPerfiles(perfilesActualizados);
+      localStorage.setItem(`tranqi_perfiles_${negocio}`, JSON.stringify(perfilesActualizados));
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new Event("storage"));
+      }
+
+      setMensajeExito(`⚡ Ecosistema alineado: 28 módulos funcionales asignados a sus perfiles operativos correspondientes.`);
+      setTimeout(() => setMensajeExito(null), 5000);
+    } catch (err) {
+      console.error("Error en asignación global:", err);
+    } finally {
+      setIsAsignando(false);
+    }
   };
 
   // RETIRAR WIDGET DE UN PANEL ESPECÍFICO DE UN PERFIL
@@ -1344,6 +1864,28 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
     });
 
     setMensajeExito(`Perfil '${claveUpper}' creado exitosamente.`);
+    setTimeout(() => setMensajeExito(null), 4000);
+  };
+
+  // Eliminar Perfil Personalizado
+  const handleEliminarPerfil = async (clave: string) => {
+    const esBase = ["CLIENTE", "OPERADOR", "ABOGADO", "ADMINISTRADOR", "SUPERADMIN"].includes(clave.toUpperCase());
+    if (esBase) {
+      alert(`El perfil base "${clave}" es un rol protegido del sistema y no puede eliminarse.`);
+      return;
+    }
+    if (!confirm(`¿Estás seguro de eliminar el perfil personalizado "${clave}"? Se retirarán sus accesos y asignaciones.`)) {
+      return;
+    }
+
+    const actualizados = perfiles.filter(p => p.clave.toUpperCase() !== clave.toUpperCase());
+    setPerfiles(actualizados);
+    try {
+      localStorage.setItem(`tranqi_perfiles_${negocio}`, JSON.stringify(actualizados));
+    } catch (e) {
+      console.error("Error guardando perfiles en localStorage:", e);
+    }
+    setMensajeExito(`Perfil '${clave}' eliminado exitosamente.`);
     setTimeout(() => setMensajeExito(null), 4000);
   };
 
@@ -1637,9 +2179,36 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
               </select>
             </div>
 
-        <div style={{ flex: 1, minWidth: "240px" }}>
-              <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", background: temaPerfilActivo.badgeBg, color: temaPerfilActivo.badgeTexto, padding: "4px 12px", borderRadius: "999px", fontWeight: 800, fontSize: "0.78rem", marginBottom: "6px" }}>
-                <UserCheck size={14} /> MODO CONFIGURACIÓN: {perfilActualObj?.nombre.toUpperCase()} (NIVEL {perfilActualObj?.nivel})
+            <div style={{ flex: 1, minWidth: "240px" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "8px", marginBottom: "6px" }}>
+                <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", background: temaPerfilActivo.badgeBg, color: temaPerfilActivo.badgeTexto, padding: "4px 12px", borderRadius: "999px", fontWeight: 800, fontSize: "0.78rem" }}>
+                  <UserCheck size={14} /> MODO CONFIGURACIÓN: {perfilActualObj?.nombre.toUpperCase()} (NIVEL {perfilActualObj?.nivel})
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => restaurarConfiguracionOptimaPerfil(perfilSeleccionado)}
+                  disabled={isAsignando}
+                  title={`Restaura exactamente los módulos autorizados para el perfil ${perfilActualObj?.nombre}, retirando asignaciones indebidas`}
+                  style={{
+                    fontSize: "0.74rem",
+                    fontWeight: 800,
+                    background: "#ffffff",
+                    color: temaPerfilActivo.colorTexto,
+                    border: `1.5px solid ${temaPerfilActivo.colorBorde}`,
+                    borderRadius: "6px",
+                    padding: "4px 10px",
+                    cursor: isAsignando ? "not-allowed" : "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "5px",
+                    opacity: isAsignando ? 0.6 : 1,
+                    transition: "all 0.15s ease"
+                  }}
+                >
+                  {isAsignando ? <Loader2 size={13} style={{ animation: "spin 1s linear infinite" }} /> : <RotateCcw size={13} />}
+                  {isAsignando ? "Restaurando..." : "Restaurar Configuración Óptima"}
+                </button>
               </div>
               <p style={{ fontSize: "0.82rem", color: temaPerfilActivo.colorTexto, margin: 0, lineHeight: 1.4, opacity: 0.9 }}>
                 Mostrando únicamente los widgets asignados para <strong>{perfilActualObj?.nombre}</strong>. En el tablero principal, <strong>Favoritos</strong> se ubica siempre en <strong>Posición #1</strong>.
@@ -1655,7 +2224,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
               </p>
             </div>
 
-            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
               <button
                 type="button"
                 onClick={sincronizarCatalogoMaestro}
@@ -1676,6 +2245,32 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                 }}
               >
                 <RotateCcw size={15} /> Sincronizar Catálogo Maestro
+              </button>
+
+              <button
+                type="button"
+                onClick={autoAsignarTodosLosPerfiles}
+                disabled={isAsignando}
+                title="Alinea la matriz completa: 28 módulos asignados a sus perfiles operativos correspondientes (diferentes de SuperAdmin)"
+                style={{
+                  background: "linear-gradient(135deg, #05876E, #047857)",
+                  color: "#ffffff",
+                  border: "none",
+                  borderRadius: "8px",
+                  padding: "9px 14px",
+                  fontSize: "0.82rem",
+                  fontWeight: 700,
+                  cursor: isAsignando ? "not-allowed" : "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  boxShadow: "0 2px 6px rgba(5,135,110,0.25)",
+                  opacity: isAsignando ? 0.7 : 1,
+                  transition: "all 0.15s ease"
+                }}
+              >
+                {isAsignando ? <Loader2 size={15} style={{ animation: "spin 1s linear infinite" }} /> : <Zap size={15} />}
+                {isAsignando ? "Alineando Ecosistema..." : "Auto-Asignar Todo el Ecosistema"}
               </button>
 
               <button
@@ -1926,25 +2521,25 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                               transition: "all 0.15s ease"
                             }}
                           >
-                            <div style={{ flex: 1, display: "flex", alignItems: "flex-start", gap: "6px" }}>
-                              <span title="Arrastrar para mover entre paneles" style={{ display: "inline-flex", cursor: "grab" }}>
+                            <div style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "flex-start", gap: "6px" }}>
+                              <span title="Arrastrar para mover entre paneles" style={{ display: "inline-flex", cursor: "grab", flexShrink: 0 }}>
                                 <GripVertical size={16} color="var(--panel-gris, #737373)" style={{ marginTop: "2px", opacity: 0.6, flexShrink: 0 }} />
                               </span>
-                              <div>
-                                <div style={{ fontWeight: 800, fontSize: "0.85rem", color: temaPerfilActivo.colorTexto, display: "flex", alignItems: "center", gap: "6px" }}>
-                                  {esFavoritos && <Star size={14} fill={temaPerfilActivo.colorPrimario} color={temaPerfilActivo.colorPrimario} />}
-                                  {w.nombre}
+                              <div style={{ minWidth: 0, flex: 1 }}>
+                                <div style={{ fontWeight: 800, fontSize: "0.85rem", color: temaPerfilActivo.colorTexto, display: "flex", alignItems: "center", gap: "6px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                  {esFavoritos && <Star size={14} fill={temaPerfilActivo.colorPrimario} color={temaPerfilActivo.colorPrimario} style={{ flexShrink: 0 }} />}
+                                  <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{w.nombre}</span>
                                 </div>
                                 <div style={{ fontSize: "0.68rem", color: temaPerfilActivo.colorPrimario, fontWeight: 700, opacity: 0.85, marginTop: "2px", display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
                                   <span>Posición #{idx + 1} • {w.clave}</span>
-                                  <code style={{ fontSize: "0.66rem", color: "var(--panel-gris, #737373)", background: "rgba(0,0,0,0.05)", padding: "1px 6px", borderRadius: "4px", fontWeight: 600 }}>
+                                  <code style={{ fontSize: "0.66rem", color: "var(--panel-gris, #737373)", background: "rgba(0,0,0,0.05)", padding: "1px 6px", borderRadius: "4px", fontWeight: 600, maxWidth: "160px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", display: "inline-block" }}>
                                     {w.rutaFisica || `/plataforma/${w.clave}.tsx`}
                                   </code>
                                 </div>
                               </div>
                             </div>
 
-                             <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                             <div style={{ display: "flex", alignItems: "center", gap: "4px", flexShrink: 0 }}>
                               {/* Reordenamiento Interno: Mover a la Izquierda / Subir Posición */}
                               <button
                                 type="button"
@@ -2011,26 +2606,30 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                                 <Move size={14} />
                               </button>
 
-                              {/* Retirar de este Panel */}
+                              {/* Retirar / Eliminar de este Panel */}
                               <button
                                 type="button"
-                                title="Retirar de este panel"
+                                title={`Retirar ${w.nombre} de ${panel.nombre}`}
+                                aria-label={`Retirar ${w.nombre} de ${panel.nombre}`}
                                 onClick={() => retirarWidgetDePanel(perfilSeleccionado, w.clave, panel.id)}
+                                className="btn-responsive-accion"
                                 style={{
-                                  background: "#ffffff",
-                                  border: `1px solid ${temaPerfilActivo.colorBorde}66`,
+                                  background: "#FEF2F2",
+                                  border: "1px solid #FCA5A5",
                                   color: "#DC2626",
                                   borderRadius: "6px",
                                   padding: "5px 8px",
                                   cursor: "pointer",
                                   fontSize: "0.72rem",
                                   fontWeight: 800,
-                                  display: "flex",
+                                  display: "inline-flex",
                                   alignItems: "center",
-                                  gap: "3px"
+                                  gap: "3px",
+                                  flexShrink: 0
                                 }}
                               >
-                                <Trash2 size={13} /> <span className="txt-btn-movil">Retirar</span>
+                                <Trash2 size={13} />
+                                <span className="btn-texto-responsive">Retirar</span>
                               </button>
                             </div>
                           </div>
@@ -2158,6 +2757,59 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                     >
                       <RotateCcw size={12} /> Sincronizar
                     </button>
+
+                    <button
+                      type="button"
+                      onClick={() => restaurarConfiguracionOptimaPerfil(perfilSeleccionado)}
+                      disabled={isAsignando}
+                      title={`Restaura exactamente la configuración canónica autorizada para ${perfilActualObj?.nombre}`}
+                      style={{
+                        fontSize: "0.74rem",
+                        fontWeight: 700,
+                        background: "#ffffff",
+                        color: "#05876E",
+                        border: "1px solid #A7F3D0",
+                        borderRadius: "6px",
+                        padding: "4px 8px",
+                        cursor: isAsignando ? "not-allowed" : "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "4px",
+                        opacity: isAsignando ? 0.6 : 1
+                      }}
+                    >
+                      {isAsignando ? <Loader2 size={12} style={{ animation: "spin 1s linear infinite" }} /> : <RotateCcw size={12} />}
+                      Restaurar Perfil Óptimo
+                    </button>
+
+                    {widgetsDisponiblesSinAsignar.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => autoAsignarWidgetsPorFuncionalidad(perfilSeleccionado)}
+                        disabled={isAsignando}
+                        title="Asigna únicamente los módulos que corresponden funcionalmente a este rol según su especificación"
+                        style={{
+                          fontSize: "0.74rem",
+                          fontWeight: 800,
+                          background: "linear-gradient(135deg, #5000BA, #7C3AED)",
+                          color: "#ffffff",
+                          border: "none",
+                          borderRadius: "6px",
+                          padding: "5px 12px",
+                          cursor: isAsignando ? "not-allowed" : "pointer",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "5px",
+                          boxShadow: "0 2px 6px rgba(80,0,186,0.25)",
+                          opacity: isAsignando ? 0.7 : 1,
+                          transition: "all 0.15s ease"
+                        }}
+                      >
+                        {isAsignando ? <Loader2 size={13} style={{ animation: "spin 1s linear infinite" }} /> : <Zap size={13} />}
+                        {isAsignando ? "Asignando..." : `Auto-Asignar según Rol (${widgetsDisponiblesSinAsignar.length})`}
+                      </button>
+                    )}
+
                     <span style={{ fontSize: "0.78rem", fontWeight: 800, background: "#F3E8FF", color: "#5000BA", padding: "4px 12px", borderRadius: "999px" }}>
                       {widgetsDisponiblesSinAsignar.length} Disponibles
                     </span>
@@ -2243,7 +2895,35 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                             </div>
                           </div>
 
-                          <div style={{ display: "flex", gap: "6px", alignItems: "center", marginTop: "auto", paddingTop: "8px", borderTop: "1px solid #E4E4E4" }}>
+                          <div style={{ display: "flex", gap: "6px", alignItems: "center", marginTop: "auto", paddingTop: "8px", borderTop: "1px solid #E4E4E4", flexWrap: "wrap" }}>
+                            {(() => {
+                              const panelSugerido = panelesSidebar.find(p => p.id === w.panelId) || panelesSidebar[0];
+                              const etiquetaPanel = panelSugerido?.nombre?.split(" ")[0] || "Panel";
+                              return (
+                                <button
+                                  type="button"
+                                  onClick={() => autoAsignarWidgetsPorFuncionalidad(perfilSeleccionado, [w.clave])}
+                                  title={`Asignar inmediatamente a su panel funcional: ${panelSugerido?.nombre || w.panelId}`}
+                                  style={{
+                                    padding: "6px 10px",
+                                    borderRadius: "6px",
+                                    border: "1px solid #DDD6FE",
+                                    background: "#F5F3FF",
+                                    color: "#5000BA",
+                                    fontSize: "0.73rem",
+                                    fontWeight: 800,
+                                    cursor: "pointer",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: "4px",
+                                    whiteSpace: "nowrap"
+                                  }}
+                                >
+                                  <Zap size={12} /> {etiquetaPanel}
+                                </button>
+                              );
+                            })()}
+
                             <select
                               defaultValue=""
                               onChange={(e) => {
@@ -2254,6 +2934,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                               }}
                               style={{
                                 flex: 1,
+                                minWidth: "130px",
                                 padding: "6px 8px",
                                 borderRadius: "6px",
                                 border: "1px solid #E4E4E4",
@@ -2653,6 +3334,44 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                             <Check size={12} style={{ marginRight: 4, color: t.colorPrimario }} /> {wKey}
                           </span>
                         ))}
+                      </div>
+
+                      {/* Pie con Estado del Perfil y Botón Eliminar para Perfiles Personalizados */}
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: "1px solid #F3F4F6", paddingTop: "12px", flexWrap: "wrap", gap: "8px" }}>
+                        <span style={{ fontSize: "0.74rem", color: "#6B7280", fontWeight: 600 }}>
+                          {["CLIENTE", "OPERADOR", "ABOGADO", "ADMINISTRADOR", "SUPERADMIN"].includes(p.clave.toUpperCase())
+                            ? "Perfil base nativo del sistema (Protegido)."
+                            : "Perfil personalizado configurable."}
+                        </span>
+
+                        {!["CLIENTE", "OPERADOR", "ABOGADO", "ADMINISTRADOR", "SUPERADMIN"].includes(p.clave.toUpperCase()) && (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleEliminarPerfil(p.clave);
+                            }}
+                            className="btn-responsive-accion"
+                            style={{
+                              background: "#FEF2F2",
+                              border: "1px solid #FCA5A5",
+                              color: "#DC2626",
+                              borderRadius: "8px",
+                              padding: "6px 12px",
+                              fontSize: "0.75rem",
+                              fontWeight: 800,
+                              cursor: "pointer",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "4px"
+                            }}
+                            title={`Eliminar perfil personalizado ${p.nombre}`}
+                            aria-label={`Eliminar perfil personalizado ${p.nombre}`}
+                          >
+                            <Trash2 size={13} />
+                            <span className="btn-texto-responsive">Eliminar Perfil</span>
+                          </button>
+                        )}
                       </div>
                     </div>
                   )}
