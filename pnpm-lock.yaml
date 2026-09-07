@@ -137,6 +137,9 @@ importers:
 
   apps/tinkay-web:
     dependencies:
+      '@eco/comercio':
+        specifier: workspace:*
+        version: link:../../packages/comercio
       '@eco/configuracion-negocio':
         specifier: workspace:*
         version: link:../../packages/configuracion-negocio
@@ -161,6 +164,9 @@ importers:
       '@supabase/supabase-js':
         specifier: 2.110.8
         version: 2.110.8
+      lucide-react:
+        specifier: 1.27.0
+        version: 1.27.0(react@19.2.8)
       next:
         specifier: 15.5.22
         version: 15.5.22(@types/node@22.20.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
@@ -204,6 +210,9 @@ importers:
       '@eco/auditoria':
         specifier: workspace:*
         version: link:../../packages/auditoria
+      '@eco/comercio':
+        specifier: workspace:*
+        version: link:../../packages/comercio
       '@eco/configuracion-negocio':
         specifier: workspace:*
         version: link:../../packages/configuracion-negocio
@@ -339,6 +348,40 @@ importers:
       '@types/node':
         specifier: ^22.10.0
         version: 22.20.1
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
+
+  packages/comercio:
+    dependencies:
+      '@eco/db':
+        specifier: workspace:*
+        version: link:../db
+      '@eco/supabase':
+        specifier: workspace:*
+        version: link:../supabase
+      lucide-react:
+        specifier: 1.27.0
+        version: 1.27.0(react@19.2.8)
+    devDependencies:
+      '@eco/config':
+        specifier: workspace:*
+        version: link:../config
+      '@types/node':
+        specifier: ^22.10.0
+        version: 22.20.1
+      '@types/react':
+        specifier: ^19.0.0
+        version: 19.2.17
+      '@types/react-dom':
+        specifier: ^19.0.0
+        version: 19.2.3(@types/react@19.2.17)
+      next:
+        specifier: 15.5.22
+        version: 15.5.22(@types/node@22.20.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      react:
+        specifier: 19.2.8
+        version: 19.2.8
       typescript:
         specifier: ^5.7.0
         version: 5.9.3
@@ -1552,7 +1595,6 @@ packages:
   eslint@9.39.5:
     resolution: {integrity: sha512-DgZS62aPLXKlnxILS/AYCoRvHaZeXceIzlXPkkGGzJWSow1aEk0lbTlxUSlyjC8jcaKxAdOnTDz+o1JFSBsyjw==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
-    deprecated: This version is no longer supported. Please see https://eslint.org/version-support for other options.
     hasBin: true
     peerDependencies:
       jiti: '*'

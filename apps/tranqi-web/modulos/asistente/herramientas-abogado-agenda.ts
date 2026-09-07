@@ -128,7 +128,7 @@ const configurarDisponibilidad: HerramientaAbogado = {
       // El texto lo lee el modelo: se le devuelve el motivo concreto para que
       // lo aclare con el abogado, no un volcado de Zod.
       throw new Error(
-        `No puedo guardar esa agenda: ${validado.error.issues.map((i) => i.message).join("; ")}. ` +
+        `No puedo guardar esa agenda: ${validado.error.issues.map((i: { message: string }) => i.message).join("; ")}. ` +
           `Aclaralo con el abogado y vuelve a intentarlo.`,
       );
     }

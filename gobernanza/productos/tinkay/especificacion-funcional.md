@@ -19,10 +19,10 @@ responsable: Kleber Toapanta
 
 | Código | Funcionalidad / Requerimiento | Estado | Avance (%) | Responsable Asignado |
 | :--- | :--- | :---: | :---: | :--- |
-| **`TNK-001`** | **Catálogo y Portafolio Multidimensional de Arreglos** | 🟡 En Desarrollo | **80%** | Kleber Toapanta |
+| **`TNK-001`** | **Catálogo y Portafolio Multidimensional de Arreglos** | 🟡 En Desarrollo | **95%** | Kleber Toapanta |
 | **`TNK-002`** | **E-Commerce Web, Carrito y Pasarela Payphone** | 🟡 En Desarrollo | **50%** | Kleber Toapanta |
 | **`TNK-003`** | **Vendedoras, Enlaces Ref y Comisiones Netas** | 🟡 En Desarrollo | **60%** | Kleber Toapanta |
-| **`TNK-004`** | **Agente ARIA WhatsApp (YCloud) y Consola Humana (HITL)** | 🟡 En Desarrollo | **45%** | Kleber Toapanta |
+| **`TNK-004`** | **Agente ARIA WhatsApp (YCloud) y Consola Humana (HITL)** | 🟡 En Desarrollo | **55%** | Kleber Toapanta |
 | **`TNK-005`** | **Taller de Armado Floral, Hoja de Ruta y Despacho Delivery** | ⏳ Pendiente | **0%** | Kleber Toapanta |
 
 ---
@@ -42,13 +42,14 @@ Tinkay se apoya plenamente en la arquitectura de Plataforma común:
 
 ### TNK-001 — Catálogo y Portafolio Multidimensional de Arreglos Florales
 - **Definición completa:** [`catalogo-productos.md`](catalogo-productos.md).
+- **Semillas y Datos en BD:** Migración [`20260907000003_tinkay_catalogo_productos_semilla_y_aria.sql`](file:///c:/@Antigravity/ecosistema/supabase/migrations/20260907000003_tinkay_catalogo_productos_semilla_y_aria.sql).
 - **Taxonomía N:M:** Un mismo arreglo pertenece simultáneamente a múltiples categorías (`com_producto_categoria`) según Formato (`CAT_FLOREROS`, `CAT_COREANOS`, `CAT_ABANICOS`) y Ocasión (`CAT_OCAS_AMOR`, `CAT_OCAS_ANIV`, `CAT_OCAS_CUMPLE`, `CAT_OCAS_CONDOL`, `CAT_EVENTOS`).
-- **Álbumes Públicos de Google Photos:** Cada producto y categoría enlaza a su álbum de fotos reales del taller en alta resolución para inspección inmediata del cliente.
-- **Manejo Monetario:** Precios almacenados en centavos enteros (`05-manejo-monetario-y-valores.md`) y convertidos mediante `@eco/primitivas`.
+- **Álbumes Públicos de Google Photos:** Cada producto y categoría enlaza a su álbum de fotos reales del taller en alta resolución (`photos.app.goo.gl/...`) para inspección inmediata del cliente.
+- **Manejo Monetario:** Precios almacenados en base imponible sin IVA con 4 decimales (`var_precio = PVP / 1.15`), tarifa del 15% (`var_tarifa_iva_porcentaje`) y PVP nominal precalculado.
 
 ### TNK-002 — E-Commerce Web, Carrito y Pasarela Payphone
 - **Vitrina Web:** `apps/tinkay-web` con diseño editorial botánico según [`sistema-visual.md`](sistema-visual.md).
-- **Cajita de Pagos Payphone:** Integración cliente-servidor para cobro en línea con tarjeta de crédito/débito nacional e internacional (comisión 6% calculada según [`catalogo-productos.md`](catalogo-productos.md) §6.A).
+- **Cajita de Pagos Payphone:** Configuración de pasarela registrada en `comun_comercio.com_pasarela_configuracion` (modo pruebas / simulado habilitado).
 - **Parámetros de Entrega:** Selección de dedicatoria impresa, fecha y franja horaria (Mañana / Tarde / Horario Exacto +$10.00).
 
 ### TNK-003 — Gestión de Vendedoras y Liquidación Automatizada de Comisiones
@@ -60,6 +61,7 @@ Tinkay se apoya plenamente en la arquitectura de Plataforma común:
 - **Definición completa:** [`agente-aria-whatsapp-ycloud.md`](agente-aria-whatsapp-ycloud.md).
 - **Sustitución de ManyChat:** Transición integral hacia **YCloud** (WhatsApp Cloud API) orquestado por el agente conversacional **ARIA** (`packages/agentes-ia`).
 - **Agente "Mía":** Asesora floral botánica con prompt especializado, tono refinado, manejo solemne de condolencias y búsqueda de catálogo vía MCP tool `consultar_catalogo_tinkay`.
+- **Suministro de Catálogo Conversacional (RPC):** Implementada la función `tinkay_floristeria.tnk_fn_buscar_catalogo_conversacional()` con filtrado multidimensional por ocasión, formato, presupuesto en USD y términos de búsqueda, retornando variantes con PVP y links de Google Photos.
 - **Almacenamiento de Chats:** Persistencia en `comun_agentes.agc_conversacion` y `comun_agentes.agc_mensaje` con Supabase Realtime para la consola de monitoreo.
 - **Consola de Supervisión Humana (HITL):** Widget donde las vendedoras monitorean los chats en vivo, conmutan a modo manual con el botón **[ Tomar Control ]** (silenciando a ARIA) y pueden **[ Reactivar Bot ]** tras resolver la consulta puntual.
 

@@ -14,6 +14,7 @@
     "@eco/agenda": "workspace:*",
     "@eco/agentes-ia": "workspace:*",
     "@eco/auditoria": "workspace:*",
+    "@eco/comercio": "workspace:*",
     "@eco/configuracion-negocio": "workspace:*",
     "@eco/datagrid": "workspace:*",
     "@eco/db": "workspace:*",

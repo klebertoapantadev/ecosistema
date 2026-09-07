@@ -96,7 +96,7 @@ export default function EditorDisponibilidad({ configuracionInicial, franjasInic
                   value={f.dia_semana}
                   onChange={(e) => actualizarFranja(i, { dia_semana: Number(e.target.value) })}
                 >
-                  {DIAS_SEMANA.map((d, n) => (
+                  {DIAS_SEMANA.map((d: string, n: number) => (
                     <option key={n} value={n}>
                       {d}
                     </option>
