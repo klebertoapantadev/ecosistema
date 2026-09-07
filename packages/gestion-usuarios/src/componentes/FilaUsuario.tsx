@@ -130,18 +130,21 @@ export function FilaUsuario({
         </div>
         {mensaje && <p className="error-auth mensaje-fila">{mensaje}</p>}
       </td>
-      <td>
+      <td style={{ position: "sticky", right: 0, background: "#ffffff", zIndex: 1, boxShadow: "-2px 0 6px rgba(0,0,0,0.04)", textAlign: "center" }}>
         {usuario.usu_correo !== "kleber.toapanta.ch@gmail.com" ? (
           <button
             type="button"
             onClick={handleEliminar}
             disabled={eliminando}
+            className="btn-responsive-accion"
+            title={`Eliminar usuario ${usuario.usu_correo}`}
+            aria-label={`Eliminar usuario ${usuario.usu_correo}`}
             style={{
               background: "#FEF2F2",
               border: "1px solid #FCA5A5",
               color: "#DC2626",
               borderRadius: "8px",
-              padding: "4px 8px",
+              padding: "6px 10px",
               fontSize: "0.75rem",
               fontWeight: 700,
               cursor: "pointer",
@@ -150,10 +153,11 @@ export function FilaUsuario({
               gap: "4px"
             }}
           >
-            <Trash2 size={13} /> {eliminando ? "Eliminando..." : "Eliminar"}
+            <Trash2 size={14} />
+            <span className="btn-texto-responsive">{eliminando ? "..." : "Eliminar"}</span>
           </button>
         ) : (
-          <span style={{ fontSize: "0.72rem", color: "#9CA3AF" }}>Protegido</span>
+          <span style={{ fontSize: "0.72rem", color: "#9CA3AF", fontWeight: 700 }}>Protegido</span>
         )}
         <ModalNotificacionPush
           abierto={modalPush.abierto}

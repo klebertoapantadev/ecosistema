@@ -330,20 +330,26 @@ function obtenerWidgetsInicialesDinamicos(panelId: string, slugStr: string): str
   else if (matchFav && matchFav[1]) rolActivo = matchFav[1].toUpperCase();
 
   if (rolActivo === "OPERADOR" || rolActivo === "AUXILIAR" || rolActivo === "TECNICO") {
-    if (panelId === "panel_herramientas" || slugStr === "herramientas") return ["firma_documentos_pdf", "billetera_documentos", "emision_notificaciones"];
-    if (panelId === "panel_seguridad" || slugStr === "seguridad") return ["mfa_seguridad", "auditoria", "solicitud_socio"];
-    if (panelId === "panel_administrar" || slugStr === "administrar") return ["socios", "firma_documentos_pdf"];
-    if (panelId === "panel_cuenta" || slugStr === "cuenta") return ["ver_como", "mi_cuenta"];
+    if (panelId === "panel_herramientas" || slugStr === "herramientas") return ["catalogo_productos", "firma_documentos_pdf", "billetera_documentos", "emision_notificaciones"];
+    if (panelId === "panel_seguridad" || slugStr === "seguridad") return ["mfa_seguridad", "auditoria"];
+    if (panelId === "panel_administrar" || slugStr === "administrar") return ["crm_clientes", "alta_cliente_crm", "socios", "solicitud_socio", "historial_pagos", "emision_notificaciones", "bitacora_notificaciones", "monitoreo_notificaciones_usuarios", "gestion_terminos_consentimientos", "configuracion_contrato_abogado", "consulta_usuarios_perfiles"];
+    if (panelId === "panel_cuenta" || slugStr === "cuenta") return ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos"];
   } else if (rolActivo === "ADMINISTRADOR" || rolActivo === "SUPERADMIN") {
-    if (panelId === "panel_herramientas" || slugStr === "herramientas") return ["firma_documentos_pdf", "billetera_documentos", "emision_notificaciones"];
-    if (panelId === "panel_seguridad" || slugStr === "seguridad") return ["mfa_seguridad", "auditoria", "solicitud_socio"];
-    if (panelId === "panel_administrar" || slugStr === "administrar") return ["gestion_usuarios", "socios", "firma_documentos_pdf", "solicitud_socio", "emision_notificaciones", "auditoria"];
-    if (panelId === "panel_configuracion" || slugStr === "configuracion") return ["configuracion_negocio", "configuracion_correo", "perfiles", "notificaciones", "agentes_ia"];
-    if (panelId === "panel_cuenta" || slugStr === "cuenta") return ["ver_como", "mi_cuenta", "historial_accesos"];
+    if (panelId === "panel_herramientas" || slugStr === "herramientas") return ["catalogo_productos", "firma_documentos_pdf", "billetera_documentos", "emision_notificaciones"];
+    if (panelId === "panel_seguridad" || slugStr === "seguridad") return ["mfa_seguridad", "auditoria"];
+    if (panelId === "panel_administrar" || slugStr === "administrar") return ["crm_clientes", "alta_cliente_crm", "gestion_usuarios", "consulta_usuarios_perfiles", "socios", "solicitud_socio", "historial_pagos", "emision_notificaciones", "bitacora_notificaciones", "monitoreo_notificaciones_usuarios", "gestion_terminos_consentimientos", "configuracion_contrato_abogado", "auditoria"];
+    if (panelId === "panel_configuracion" || slugStr === "configuracion") return ["configuracion_negocio", "configuracion_correo", "pasarela_payphone", "perfiles", "agentes_ia", "notificaciones"];
+    if (panelId === "panel_cuenta" || slugStr === "cuenta") return ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos"];
+  } else if (rolActivo === "ABOGADO") {
+    if (panelId === "panel_herramientas" || slugStr === "herramientas") return ["crm_clientes", "catalogo_productos", "firma_documentos_pdf", "billetera_documentos"];
+    if (panelId === "panel_administrar" || slugStr === "administrar") return ["crm_clientes"];
+    if (panelId === "panel_cuenta" || slugStr === "cuenta") return ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos"];
+    if (panelId === "panel_configuracion" || slugStr === "configuracion") return ["notificaciones"];
   } else {
-    // ROL CLIENTE / ABOGADO
-    if (panelId === "panel_herramientas" || slugStr === "herramientas") return ["firma_documentos_pdf", "billetera_documentos"];
-    if (panelId === "panel_cuenta" || slugStr === "cuenta") return ["mi_cuenta"];
+    // ROL CLIENTE
+    if (panelId === "panel_herramientas" || slugStr === "herramientas") return ["catalogo_productos", "firma_documentos_pdf", "billetera_documentos", "solicitud_socio"];
+    if (panelId === "panel_cuenta" || slugStr === "cuenta") return ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos"];
+    if (panelId === "panel_configuracion" || slugStr === "configuracion") return ["notificaciones"];
   }
   return [];
 }
@@ -393,20 +399,26 @@ export function PanelDinamicoModular({ slug, negocio }: Props) {
         // 1. Presets de asignación por rol y por panel
         let listW: string[] = [];
         if (rolActivo === "OPERADOR" || rolActivo === "AUXILIAR" || rolActivo === "TECNICO") {
-          if (panelIdBuscado === "panel_herramientas" || slug === "herramientas") listW = ["firma_documentos_pdf", "billetera_documentos", "emision_notificaciones"];
-          else if (panelIdBuscado === "panel_seguridad" || slug === "seguridad") listW = ["mfa_seguridad", "auditoria", "solicitud_socio"];
-          else if (panelIdBuscado === "panel_administrar" || slug === "administrar") listW = ["socios", "firma_documentos_pdf"];
-          else if (panelIdBuscado === "panel_cuenta" || slug === "cuenta") listW = ["ver_como", "mi_cuenta"];
+          if (panelIdBuscado === "panel_herramientas" || slug === "herramientas") listW = ["catalogo_productos", "firma_documentos_pdf", "billetera_documentos", "emision_notificaciones"];
+          else if (panelIdBuscado === "panel_seguridad" || slug === "seguridad") listW = ["mfa_seguridad", "auditoria"];
+          else if (panelIdBuscado === "panel_administrar" || slug === "administrar") listW = ["crm_clientes", "alta_cliente_crm", "socios", "solicitud_socio", "historial_pagos", "emision_notificaciones", "bitacora_notificaciones", "monitoreo_notificaciones_usuarios", "gestion_terminos_consentimientos", "configuracion_contrato_abogado", "consulta_usuarios_perfiles"];
+          else if (panelIdBuscado === "panel_cuenta" || slug === "cuenta") listW = ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos"];
         } else if (rolActivo === "ADMINISTRADOR" || rolActivo === "SUPERADMIN") {
-          if (panelIdBuscado === "panel_herramientas" || slug === "herramientas") listW = ["firma_documentos_pdf", "billetera_documentos", "emision_notificaciones"];
-          else if (panelIdBuscado === "panel_seguridad" || slug === "seguridad") listW = ["mfa_seguridad", "auditoria", "solicitud_socio"];
-          else if (panelIdBuscado === "panel_administrar" || slug === "administrar") listW = ["gestion_usuarios", "socios", "solicitud_socio", "emision_notificaciones", "auditoria"];
-          else if (panelIdBuscado === "panel_configuracion" || slug === "configuracion") listW = ["configuracion_negocio", "configuracion_correo", "perfiles", "notificaciones"];
-          else if (panelIdBuscado === "panel_cuenta" || slug === "cuenta") listW = ["ver_como", "mi_cuenta", "historial_accesos"];
+          if (panelIdBuscado === "panel_herramientas" || slug === "herramientas") listW = ["catalogo_productos", "firma_documentos_pdf", "billetera_documentos", "emision_notificaciones"];
+          else if (panelIdBuscado === "panel_seguridad" || slug === "seguridad") listW = ["mfa_seguridad", "auditoria"];
+          else if (panelIdBuscado === "panel_administrar" || slug === "administrar") listW = ["crm_clientes", "alta_cliente_crm", "gestion_usuarios", "consulta_usuarios_perfiles", "socios", "solicitud_socio", "historial_pagos", "emision_notificaciones", "bitacora_notificaciones", "monitoreo_notificaciones_usuarios", "gestion_terminos_consentimientos", "configuracion_contrato_abogado", "auditoria"];
+          else if (panelIdBuscado === "panel_configuracion" || slug === "configuracion") listW = ["configuracion_negocio", "configuracion_correo", "pasarela_payphone", "perfiles", "agentes_ia", "notificaciones"];
+          else if (panelIdBuscado === "panel_cuenta" || slug === "cuenta") listW = ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos"];
+        } else if (rolActivo === "ABOGADO") {
+          if (panelIdBuscado === "panel_herramientas" || slug === "herramientas") listW = ["crm_clientes", "catalogo_productos", "firma_documentos_pdf", "billetera_documentos"];
+          else if (panelIdBuscado === "panel_administrar" || slug === "administrar") listW = ["crm_clientes"];
+          else if (panelIdBuscado === "panel_cuenta" || slug === "cuenta") listW = ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos"];
+          else if (panelIdBuscado === "panel_configuracion" || slug === "configuracion") listW = ["notificaciones"];
         } else {
-          // ROL CLIENTE / ABOGADO
-          if (panelIdBuscado === "panel_herramientas" || slug === "herramientas") listW = ["firma_documentos_pdf", "billetera_documentos"];
-          else if (panelIdBuscado === "panel_cuenta" || slug === "cuenta") listW = ["mi_cuenta"];
+          // ROL CLIENTE
+          if (panelIdBuscado === "panel_herramientas" || slug === "herramientas") listW = ["catalogo_productos", "firma_documentos_pdf", "billetera_documentos", "solicitud_socio"];
+          else if (panelIdBuscado === "panel_cuenta" || slug === "cuenta") listW = ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos"];
+          else if (panelIdBuscado === "panel_configuracion" || slug === "configuracion") listW = ["notificaciones"];
         }
 
         // 2. Consultar servidor (PostgreSQL comun_seguridad.seg_rol_widget)

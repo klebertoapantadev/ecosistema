@@ -124,29 +124,57 @@ export function NavegacionSidebar({
 
         let widgetsPorPanel: Record<string, string[]> = {
           panel_inicio: ["favoritos"],
-          panel_cuenta: ["ver_como", "mi_cuenta"],
-          panel_herramientas: ["firma_documentos_pdf", "billetera_documentos"]
+          panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos"],
+          panel_herramientas: ["catalogo_productos", "firma_documentos_pdf", "billetera_documentos", "solicitud_socio"],
+          panel_configuracion: ["notificaciones"]
         };
 
         if (rolKey === "OPERADOR" || rolKey === "AUXILIAR" || rolKey === "TECNICO") {
           widgetsPorPanel = {
             ...widgetsPorPanel,
-            panel_administrar: ["crm_clientes", "socios"],
-            panel_herramientas: ["firma_documentos_pdf", "billetera_documentos", "emision_notificaciones"],
-            panel_seguridad: ["auditoria", "solicitud_socio"]
+            panel_herramientas: ["catalogo_productos", "firma_documentos_pdf", "billetera_documentos", "emision_notificaciones"],
+            panel_administrar: [
+              "crm_clientes",
+              "alta_cliente_crm",
+              "socios",
+              "solicitud_socio",
+              "historial_pagos",
+              "emision_notificaciones",
+              "bitacora_notificaciones",
+              "monitoreo_notificaciones_usuarios",
+              "gestion_terminos_consentimientos",
+              "configuracion_contrato_abogado",
+              "consulta_usuarios_perfiles"
+            ],
+            panel_seguridad: ["auditoria"]
+          };
+        } else if (rolKey === "ABOGADO") {
+          widgetsPorPanel = {
+            ...widgetsPorPanel,
+            panel_herramientas: ["crm_clientes", "catalogo_productos", "firma_documentos_pdf", "billetera_documentos"],
+            panel_administrar: ["crm_clientes"]
           };
         } else if (rolKey === "ADMINISTRADOR") {
           widgetsPorPanel = {
             ...widgetsPorPanel,
-            panel_configuracion: ["configuracion_negocio", "configuracion_correo", "perfiles", "notificaciones", "agentes_ia"],
-            panel_administrar: ["crm_clientes", "gestion_usuarios", "socios", "solicitud_socio", "emision_notificaciones", "auditoria"],
-            panel_herramientas: ["firma_documentos_pdf", "billetera_documentos", "emision_notificaciones"],
+            panel_herramientas: ["catalogo_productos", "firma_documentos_pdf", "billetera_documentos", "emision_notificaciones"],
+            panel_configuracion: ["configuracion_negocio", "configuracion_correo", "pasarela_payphone", "perfiles", "agentes_ia", "notificaciones"],
+            panel_administrar: [
+              "crm_clientes",
+              "alta_cliente_crm",
+              "gestion_usuarios",
+              "consulta_usuarios_perfiles",
+              "socios",
+              "solicitud_socio",
+              "historial_pagos",
+              "emision_notificaciones",
+              "bitacora_notificaciones",
+              "monitoreo_notificaciones_usuarios",
+              "gestion_terminos_consentimientos",
+              "configuracion_contrato_abogado",
+              "auditoria"
+            ],
             panel_seguridad: ["auditoria"]
-          };
-        } else if (rolKey === "CLIENTE" || rolKey === "ABOGADO") {
-          widgetsPorPanel = {
-            ...widgetsPorPanel,
-            panel_herramientas: ["firma_documentos_pdf", "billetera_documentos"]
           };
         }
 

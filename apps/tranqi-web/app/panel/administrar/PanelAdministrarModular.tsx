@@ -446,8 +446,8 @@ export function PanelAdministrarModular({ negocio = "TRANQ", esSuperAdmin = fals
     setModalPush({
       abierto: true,
       tipo: "advertencia",
-      titulo: "Reset Master del Sistema (Tranqi)",
-      mensaje: "Esta acción eliminará TODOS los usuarios de prueba, perfiles y solicitudes configuradas en Tranqi (conservando únicamente la cuenta SuperAdmin). ¿Deseas ejecutar la purga?",
+      titulo: "Reset del Sistema (Tranqi)",
+      mensaje: "Esta acción purgará únicamente los usuarios de prueba, sus datos operativos y los perfiles asignados en Tranqi (conservando la cuenta SuperAdmin y todas las configuraciones del negocio, SMTP, términos, catálogos comerciales y perfiles maestros, sin afectar a otros negocios). ¿Deseas continuar?",
       mostrarConfirmacion: true,
       alAceptar: async () => {
         setModalPush(prev => ({ ...prev, abierto: false }));
@@ -458,15 +458,15 @@ export function PanelAdministrarModular({ negocio = "TRANQ", esSuperAdmin = fals
             setModalPush({
               abierto: true,
               tipo: "push",
-              titulo: "Reset Completado Exitosamente",
-              mensaje: "El sistema para el negocio Tranqi ha sido reseteado. Se han eliminado todas sus cuentas y perfiles de prueba preservando los demás negocios.",
+              titulo: "Reset Completado",
+              mensaje: "Se han purgado los usuarios de prueba y sus datos operativos en Tranqi. Todas las configuraciones y perfiles maestros han sido preservados.",
               alAceptar: () => window.location.reload(),
             });
           } else {
             setModalPush({
               abierto: true,
               tipo: "error",
-              titulo: "Error al Resetear el Sistema",
+              titulo: "Error al Resetear",
               mensaje: res.error || "No se pudo resetear el sistema",
             });
           }
@@ -848,20 +848,23 @@ export function PanelAdministrarModular({ negocio = "TRANQ", esSuperAdmin = fals
                   padding: "7px 16px",
                   borderRadius: "20px",
                   border: "1.5px solid #FCA5A5",
-                  display: "flex",
+                  display: "inline-flex",
                   alignItems: "center",
                   gap: "6px",
                   cursor: "pointer",
                   boxShadow: "0 2px 4px rgba(220,38,38,0.1)"
                 }}
-                title="Borrar todos los usuarios de prueba, perfiles y solicitudes para iniciar desde cero (Solo SuperAdmin)"
+                className="btn-responsive-accion"
+                title="Resetear usuarios de prueba y datos de Tranqi"
+                aria-label="Resetear usuarios de prueba y datos de Tranqi"
               >
-                <RotateCcw size={15} /> {reseteando ? "Reseteando..." : "Reset Master del Sistema (Pruebas desde Cero)"}
+                <RotateCcw size={15} />
+                <span className="btn-texto-responsive">{reseteando ? "Reseteando..." : "Reset Pruebas"}</span>
               </button>
             )}
-            <span className="badge-rol" style={{ background: "rgba(220, 38, 38, 0.25)", color: "#FEE2E2", border: "1px solid rgba(239, 68, 68, 0.4)" }}>
+            <span className="badge-rol btn-responsive-accion" style={{ background: "rgba(220, 38, 38, 0.25)", color: "#FEE2E2", border: "1px solid rgba(239, 68, 68, 0.4)" }}>
               <Lock style={{ width: 14, height: 14, marginRight: 4 }} />
-              MFA Protegido (TOTP)
+              <span className="btn-texto-responsive">MFA Protegido</span>
             </span>
           </div>
         </div>
