@@ -535,11 +535,13 @@ Pantalla de configuración del negocio (identidad legal + datos de `PLT-008`) y 
       - *Acción:* `⇄ Mover (Quitar de Origen)` (opción **por defecto**) vs `📋 Duplicar (Mantener en Origen)`.
       - *Panel Destino:* Selector desplegable de paneles receptores autorizados.
     - **Reordenamiento Posicional Interno (`Posición #1, #2...`):** Cada tarjeta dispone de controles direccionales rápidos (`[←]` / `[→]`) para desplazar la posición ordinal del widget dentro del mismo panel.
-    - **Bloque Destacado "📦 Widgets Disponibles Sin Asignar" y Auto-Asignación Funcional:**
-      - Agrupa todos los widgets del inventario maestro que **no están asignados a ningún panel** para el perfil activo.
-      - **Botón `[⚡ Auto-Asignar según Funcionalidad]`:** Permite al administrador vincular con un solo clic todos los módulos huérfanos a sus paneles nativos predeterminados según su propósito funcional (`panel_defecto`), activando automáticamente el panel en el sidebar si no estaba visible y persistiendo la asignación en PostgreSQL (`guardarAsignacionWidget`) y `localStorage`.
-      - **Botón Rápido Directo por Tarjeta `[⚡ {Panel}]`:** Cada tarjeta de widget disponible cuenta con un botón de acción rápida que lo vincula de inmediato a su panel funcional sin requerir abrir el desplegable.
-      - **Botón `[⚡ Auto-Asignar Todo el Ecosistema]`:** Permite aplicar la matriz funcional completa a todos los perfiles registrados simultáneamente.
+    - **Bloque Destacado "📦 Widgets Disponibles Sin Asignar", Auto-Asignación Estricta por Rol y Cobertura Total:**
+      - **Principio de Rol Estricto:** Cada rol recibe exclusivamente los módulos que le corresponden según su función (ej. el perfil `CLIENTE` recibe herramientas y cuenta, pero nunca herramientas de gestión como aprobación de socios, revisión de términos o auditoría interna).
+      - **Regla de Cobertura Total (Diferente de SuperAdmin):** El 100% de los 28 módulos del ecosistema debe estar cubierto y asignado en al menos un rol operativo o administrativo (`CLIENTE`, `ABOGADO`, `OPERADOR` o `ADMINISTRADOR`), asegurando que ninguna funcionalidad quede huérfana ni dependa de SuperAdmin para ser utilizada en el negocio.
+      - **Botón `[⚡ Auto-Asignar según Rol]`:** Asigna únicamente los módulos autorizados para el perfil activo con indicador visual interactivo de carga (`Loader2`).
+      - **Botón `[🔄 Restaurar Configuración Óptima]`: ** Restablece de inmediato el perfil seleccionado a su matriz canónica autorizada, retirando cualquier módulo indebido que haya sido asignado por error.
+      - **Botón Rápido Directo por Tarjeta `[⚡ {Panel}]`:** Permite vincular un módulo específico con un solo clic hacia su panel predeterminado.
+      - **Botón `[⚡ Auto-Asignar Todo el Ecosistema]`:** Aplica en masa la alineación de la matriz canónica para todos los perfiles de la plataforma simultáneamente.
 15. **Persistencia Dinámica en `localStorage` & Supabase por Negocio (`tranqi_paneles_sidebar_${negocio}`):**
     - **Guardado Inmediato de Estado:** Toda creación de nuevos paneles (ej. *"Herramientas"*), reordenamiento o transferencia de widgets se guarda de forma persistente en `localStorage` y en la base de datos Supabase por negocio.
     - **Restauración al Refrescar (F5):** Garantiza que al recargar la ventana del navegador (`F5`), los paneles personalizados creados por administradores y la distribución de widgets permanezcan intactos.
