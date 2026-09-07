@@ -220,9 +220,9 @@ const PERFILES_INICIALES: PerfilDef[] = [
     panelesAsignados: ["panel_inicio", "panel_cuenta", "panel_herramientas", "panel_configuracion"],
     widgetsAsignadosPorPanel: {
       panel_inicio: ["favoritos"],
-      panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos"],
+      panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos", "historial_pagos"],
       panel_herramientas: ["catalogo_productos", "firma_documentos_pdf", "billetera_documentos", "solicitud_socio"],
-      panel_configuracion: ["notificaciones"]
+      panel_configuracion: ["notificaciones", "agentes_ia"]
     },
     activo: true
   },
@@ -237,7 +237,7 @@ const PERFILES_INICIALES: PerfilDef[] = [
       panel_inicio: ["favoritos"],
       panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos"],
       panel_herramientas: ["catalogo_productos", "firma_documentos_pdf", "billetera_documentos", "emision_notificaciones"],
-      panel_configuracion: ["notificaciones"],
+      panel_configuracion: ["notificaciones", "agentes_ia"],
       panel_administrar: [
         "crm_clientes",
         "alta_cliente_crm",
@@ -263,10 +263,10 @@ const PERFILES_INICIALES: PerfilDef[] = [
     panelesAsignados: ["panel_inicio", "panel_cuenta", "panel_herramientas", "panel_configuracion", "panel_administrar"],
     widgetsAsignadosPorPanel: {
       panel_inicio: ["favoritos"],
-      panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos"],
-      panel_herramientas: ["crm_clientes", "catalogo_productos", "firma_documentos_pdf", "billetera_documentos"],
-      panel_configuracion: ["notificaciones"],
-      panel_administrar: ["crm_clientes"]
+      panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos", "historial_pagos"],
+      panel_herramientas: ["crm_clientes", "catalogo_productos", "firma_documentos_pdf", "billetera_documentos", "solicitud_socio"],
+      panel_configuracion: ["notificaciones", "agentes_ia"],
+      panel_administrar: ["crm_clientes", "alta_cliente_crm", "historial_pagos"]
     },
     activo: true
   },
@@ -1446,14 +1446,136 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
       ...perfil.widgetsAsignadosPorPanel,
       [panelId]: nuevosAsignados
     };
+    const panelesActualizados = perfil.panelesAsignados.includes(panelId)
+      ? perfil.panelesAsignados
+      : [...perfil.panelesAsignados, panelId];
 
-    setPerfiles(perfiles.map(p => p.clave === perfilClave ? { ...p, widgetsAsignadosPorPanel: mapaActualizado } : p));
+    setPerfiles(perfiles.map(p => p.clave === perfilClave ? { ...p, panelesAsignados: panelesActualizados, widgetsAsignadosPorPanel: mapaActualizado } : p));
 
     await guardarAsignacionWidget(perfilClave, widgetClave, negocio, true, panelId);
 
     const nombrePanel = panelesSidebar.find(p => p.id === panelId)?.nombre || panelId;
     setMensajeExito(`Widget '${widgetClave}' asignado exitosamente a '${nombrePanel}' para '${perfilClave}'.`);
     setTimeout(() => setMensajeExito(null), 3500);
+  };
+
+  // AUTO-ASIGNAR WIDGETS A SUS PANELES CORRESPONDIENTES SEGÚN SU FUNCIONALIDAD
+  const autoAsignarWidgetsPorFuncionalidad = async (perfilClave: string, widgetsClaves?: string[]) => {
+    const perfil = perfiles.find(p => p.clave === perfilClave);
+    if (!perfil) return;
+
+    const todasLasClavesAsignadas = new Set(
+      Object.values(perfil.widgetsAsignadosPorPanel || {}).flat()
+    );
+    const widgetsObjetivo = widgetsClaves
+      ? inventarioWidgets.filter(w => widgetsClaves.includes(w.clave))
+      : inventarioWidgets.filter(w => !todasLasClavesAsignadas.has(w.clave));
+
+    if (widgetsObjetivo.length === 0) {
+      setMensajeExito(`No hay widgets pendientes de asignación para '${perfil.nombre}'.`);
+      setTimeout(() => setMensajeExito(null), 3000);
+      return;
+    }
+
+    const mapaActualizado = { ...perfil.widgetsAsignadosPorPanel };
+    const panelesNuevos = new Set(perfil.panelesAsignados || []);
+    let countAsignados = 0;
+
+    for (const w of widgetsObjetivo) {
+      let targetPanelId = w.panelId;
+      if (!panelesSidebar.some(p => p.id === targetPanelId)) {
+        if (w.categoria.includes("Inicio")) targetPanelId = "panel_inicio";
+        else if (w.categoria.includes("Identidad") || w.categoria.includes("Facturación") || w.categoria.includes("Seguridad")) targetPanelId = "panel_cuenta";
+        else if (w.categoria.includes("Herramientas") || w.categoria.includes("Comercio")) targetPanelId = "panel_herramientas";
+        else if (w.categoria.includes("Configuración") || w.categoria.includes("Gobernanza") || w.categoria.includes("Infraestructura")) targetPanelId = "panel_configuracion";
+        else targetPanelId = "panel_administrar";
+      }
+
+      const listaActual = mapaActualizado[targetPanelId] || [];
+      if (!listaActual.includes(w.clave)) {
+        mapaActualizado[targetPanelId] = [...listaActual, w.clave];
+        panelesNuevos.add(targetPanelId);
+        countAsignados++;
+
+        await guardarAsignacionWidget(perfilClave, w.clave, negocio, true, targetPanelId);
+      }
+    }
+
+    const nuevosPerfiles = perfiles.map(p =>
+      p.clave === perfilClave
+        ? {
+            ...p,
+            panelesAsignados: Array.from(panelesNuevos),
+            widgetsAsignadosPorPanel: mapaActualizado
+          }
+        : p
+    );
+
+    setPerfiles(nuevosPerfiles);
+    try {
+      localStorage.setItem(`tranqi_perfiles_${negocio}`, JSON.stringify(nuevosPerfiles));
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new Event("storage"));
+      }
+    } catch (e) {}
+
+    setMensajeExito(`⚡ Se auto-asignaron ${countAsignados} widgets según funcionalidad a '${perfil.nombre}'.`);
+    setTimeout(() => setMensajeExito(null), 4500);
+  };
+
+  // AUTO-ASIGNAR TODOS LOS PERFILES DEL ECOSISTEMA SEGÚN SU FUNCIONALIDAD
+  const autoAsignarTodosLosPerfiles = async () => {
+    let totalAsignados = 0;
+    const perfilesActualizados = [...perfiles];
+
+    for (let i = 0; i < perfilesActualizados.length; i++) {
+      const p = perfilesActualizados[i];
+      if (!p) continue;
+      const todasLasClavesAsignadas = new Set(
+        Object.values(p.widgetsAsignadosPorPanel || {}).flat()
+      );
+      const widgetsFaltantes = inventarioWidgets.filter(w => !todasLasClavesAsignadas.has(w.clave));
+      if (widgetsFaltantes.length === 0) continue;
+
+      const mapaActualizado = { ...p.widgetsAsignadosPorPanel };
+      const panelesNuevos = new Set(p.panelesAsignados || []);
+
+      for (const w of widgetsFaltantes) {
+        let targetPanelId = w.panelId;
+        if (!panelesSidebar.some(pan => pan.id === targetPanelId)) {
+          if (w.categoria.includes("Inicio")) targetPanelId = "panel_inicio";
+          else if (w.categoria.includes("Identidad") || w.categoria.includes("Facturación") || w.categoria.includes("Seguridad")) targetPanelId = "panel_cuenta";
+          else if (w.categoria.includes("Herramientas") || w.categoria.includes("Comercio")) targetPanelId = "panel_herramientas";
+          else if (w.categoria.includes("Configuración") || w.categoria.includes("Gobernanza") || w.categoria.includes("Infraestructura")) targetPanelId = "panel_configuracion";
+          else targetPanelId = "panel_administrar";
+        }
+
+        const listaActual = mapaActualizado[targetPanelId] || [];
+        if (!listaActual.includes(w.clave)) {
+          mapaActualizado[targetPanelId] = [...listaActual, w.clave];
+          panelesNuevos.add(targetPanelId);
+          totalAsignados++;
+          await guardarAsignacionWidget(p.clave, w.clave, negocio, true, targetPanelId);
+        }
+      }
+
+      perfilesActualizados[i] = {
+        ...p,
+        panelesAsignados: Array.from(panelesNuevos),
+        widgetsAsignadosPorPanel: mapaActualizado
+      };
+    }
+
+    setPerfiles(perfilesActualizados);
+    try {
+      localStorage.setItem(`tranqi_perfiles_${negocio}`, JSON.stringify(perfilesActualizados));
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new Event("storage"));
+      }
+    } catch (e) {}
+
+    setMensajeExito(`⚡ Asignación funcional global completada: ${totalAsignados} vinculaciones aplicadas en todos los perfiles.`);
+    setTimeout(() => setMensajeExito(null), 5000);
   };
 
   // RETIRAR WIDGET DE UN PANEL ESPECÍFICO DE UN PERFIL
@@ -1845,7 +1967,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
               </p>
             </div>
 
-            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
               <button
                 type="button"
                 onClick={sincronizarCatalogoMaestro}
@@ -1866,6 +1988,29 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                 }}
               >
                 <RotateCcw size={15} /> Sincronizar Catálogo Maestro
+              </button>
+
+              <button
+                type="button"
+                onClick={autoAsignarTodosLosPerfiles}
+                title="Asigna todos los widgets del inventario a sus paneles según su funcionalidad en todos los perfiles"
+                style={{
+                  background: "linear-gradient(135deg, #05876E, #047857)",
+                  color: "#ffffff",
+                  border: "none",
+                  borderRadius: "8px",
+                  padding: "9px 14px",
+                  fontSize: "0.82rem",
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  boxShadow: "0 2px 6px rgba(5,135,110,0.25)",
+                  transition: "all 0.15s ease"
+                }}
+              >
+                <Zap size={15} /> Auto-Asignar Todo el Ecosistema
               </button>
 
               <button
@@ -2352,6 +2497,32 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                     >
                       <RotateCcw size={12} /> Sincronizar
                     </button>
+
+                    {widgetsDisponiblesSinAsignar.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => autoAsignarWidgetsPorFuncionalidad(perfilSeleccionado)}
+                        title="Asigna automáticamente todos los widgets disponibles de este perfil a sus paneles según su funcionalidad"
+                        style={{
+                          fontSize: "0.74rem",
+                          fontWeight: 800,
+                          background: "linear-gradient(135deg, #5000BA, #7C3AED)",
+                          color: "#ffffff",
+                          border: "none",
+                          borderRadius: "6px",
+                          padding: "5px 12px",
+                          cursor: "pointer",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "5px",
+                          boxShadow: "0 2px 6px rgba(80,0,186,0.25)",
+                          transition: "all 0.15s ease"
+                        }}
+                      >
+                        <Zap size={13} /> Auto-Asignar según Funcionalidad ({widgetsDisponiblesSinAsignar.length})
+                      </button>
+                    )}
+
                     <span style={{ fontSize: "0.78rem", fontWeight: 800, background: "#F3E8FF", color: "#5000BA", padding: "4px 12px", borderRadius: "999px" }}>
                       {widgetsDisponiblesSinAsignar.length} Disponibles
                     </span>
@@ -2437,7 +2608,35 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                             </div>
                           </div>
 
-                          <div style={{ display: "flex", gap: "6px", alignItems: "center", marginTop: "auto", paddingTop: "8px", borderTop: "1px solid #E4E4E4" }}>
+                          <div style={{ display: "flex", gap: "6px", alignItems: "center", marginTop: "auto", paddingTop: "8px", borderTop: "1px solid #E4E4E4", flexWrap: "wrap" }}>
+                            {(() => {
+                              const panelSugerido = panelesSidebar.find(p => p.id === w.panelId) || panelesSidebar[0];
+                              const etiquetaPanel = panelSugerido?.nombre?.split(" ")[0] || "Panel";
+                              return (
+                                <button
+                                  type="button"
+                                  onClick={() => autoAsignarWidgetsPorFuncionalidad(perfilSeleccionado, [w.clave])}
+                                  title={`Asignar inmediatamente a su panel funcional: ${panelSugerido?.nombre || w.panelId}`}
+                                  style={{
+                                    padding: "6px 10px",
+                                    borderRadius: "6px",
+                                    border: "1px solid #DDD6FE",
+                                    background: "#F5F3FF",
+                                    color: "#5000BA",
+                                    fontSize: "0.73rem",
+                                    fontWeight: 800,
+                                    cursor: "pointer",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: "4px",
+                                    whiteSpace: "nowrap"
+                                  }}
+                                >
+                                  <Zap size={12} /> {etiquetaPanel}
+                                </button>
+                              );
+                            })()}
+
                             <select
                               defaultValue=""
                               onChange={(e) => {
@@ -2448,6 +2647,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                               }}
                               style={{
                                 flex: 1,
+                                minWidth: "130px",
                                 padding: "6px 8px",
                                 borderRadius: "6px",
                                 border: "1px solid #E4E4E4",
