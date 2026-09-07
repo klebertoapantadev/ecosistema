@@ -4,7 +4,7 @@
   "private": true,
   "dependencies": {
     "@eslint/js": "9.39.5",
-    "@next/eslint-plugin-next": "15.5.22",
+    "@next/eslint-plugin-next": "16.2.12",
     "eslint-plugin-react-hooks": "5.2.0",
     "globals": "15.15.0",
     "typescript-eslint": "8.65.0"
