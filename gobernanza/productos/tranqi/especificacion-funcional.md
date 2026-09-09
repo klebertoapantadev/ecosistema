@@ -34,7 +34,7 @@ Tranqi adopta las mejores prácticas y estándares internacionales de **Law Prac
 
 | Código | Rol / Ámbito | Funcionalidad / Requerimiento | Estado | Avance (%) | Responsable Asignado |
 | :--- | :---: | :--- | :---: | :---: | :--- |
-| **`TRQ-COM-001`** | **Común (Todos)** | **Billetera Digital de Documentos Seguros, Extracción OCR y Enlaces TTL** | 🟡 En Desarrollo | **85%** | Jesus Navarrete |
+| **`TRQ-COM-001`** | **Común (Todos)** | **Billetera Digital de Documentos Seguros, Extracción OCR y Enlaces TTL** | ✅ Implementado | **100%** | Jesus Navarrete / Kleber Toapanta |
 | **`TRQ-COM-002`** | **Común (Todos)** | **Compartición de Documentos a Tranqi (Revisión de Contratos & Vinculación a Casos)** | 🟡 Especificado | **25%** | Kleber Toapanta |
 | **`TRQ-COM-003`** | **Común (Todos)** | **Herramienta Universal de Firma Digital de Documentos PDF (.p12 / QR / PAdES)** | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`TRQ-CRM-001`** | **CRM Jurídico** | **Gestión de Clientes (Naturales/Jurídicas), Registro Manual, Auto-Lead Web (Prospecto) y Conflict Check** | ✅ Implementado | **100%** | Kleber Toapanta |
@@ -356,7 +356,7 @@ Implementación estricta de la [`politica-cancelacion-reagendamiento-citas.md`](
 ---
 
 ### TRQ-ABG-005 — Verificación Inteligente de Identidad y Documentos con Aria (IA) en Registro de Abogados
-**Responsable:** **Jesus Navarrete (IA)** | **Estado:** 🟡 Especificado (25%)
+**Responsable:** **Jesus Navarrete (IA) / Kleber Toapanta** | **Estado:** ✅ Implementado (100%)
 
 #### 1. Descripción & Objetivos de Negocio
 Integración del agente de IA multimodal **Aria** (`packages/agentes-ia`) en el flujo de postulación y registro de socios abogados (`/panel/solicitud-socio`). Aria valida en tiempo real la legibilidad y coherencia de la Cédula de Identidad/Pasaporte y ejecuta un **cotejo cruzado inmutable (Cross-Document Verification)** para certificar que el 100% de los documentos adjuntos (Título Universitario SENESCYT, Carnet del Foro de Abogados, RUC, Certificados) pertenezcan legítimamente a la misma persona registrada, previniendo suplantaciones y reduciendo la carga de auditoría humana en la Mesa de Control.

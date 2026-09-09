@@ -136,6 +136,17 @@ export function WidgetBilleteraDocumentos({ negocio = "TRANQ", onCerrar }: Props
   // Estados de Asistente Aria & Envío
   const [analizandoConAria, setAnalizandoConAria] = useState<boolean>(false);
   const [resumenAria, setResumenAria] = useState<string | null>(null);
+  const [analisisDetectado, setAnalisisDetectado] = useState<{
+    queEs?: string | null;
+    titularNombre?: string | null;
+    titularIdentificacion?: string | null;
+    lugarNacimiento?: string | null;
+    fechaNacimiento?: string | null;
+    fechaEmision?: string | null;
+    fechaCaducidad?: string | null;
+    requiereCaducidad?: boolean;
+    resumenOcr?: string | null;
+  } | null>(null);
   const [guardandoDoc, setGuardandoDoc] = useState<boolean>(false);
 
   // Estados de Compartir TTL
@@ -180,6 +191,7 @@ export function WidgetBilleteraDocumentos({ negocio = "TRANQ", onCerrar }: Props
     try {
       setAnalizandoConAria(true);
       setResumenAria(null);
+      setAnalisisDetectado(null);
 
       const res = await fetch("/api/billetera/aria-ocr", {
         method: "POST",
@@ -198,29 +210,69 @@ export function WidgetBilleteraDocumentos({ negocio = "TRANQ", onCerrar }: Props
       const json = await res.json();
       if (json.ok && json.analisis) {
         const a = json.analisis;
-        if (a.tituloSugerido && !nuevoTitulo) setNuevoTitulo(a.tituloSugerido);
+        setAnalisisDetectado(a);
+        if (a.tituloSugerido) setNuevoTitulo(a.tituloSugerido);
         if (a.categoriaSugerida) setNuevaCategoria(a.categoriaSugerida);
-        if (a.fechaCaducidad && !nuevaFechaCaducidad) setNuevaFechaCaducidad(a.fechaCaducidad);
 
-        // Crear lista de metadatos dinámicos sugeridos por Aria
-        const listaSugerida: MetadatoDinamico[] = [];
-        if (a.titularNombre) listaSugerida.push({ id: "meta-1", clave: "Nombre del Titular", valor: a.titularNombre });
-        if (a.titularIdentificacion) listaSugerida.push({ id: "meta-2", clave: "Cédula / RUC", valor: a.titularIdentificacion });
-        if (a.entidadEmisora) listaSugerida.push({ id: "meta-3", clave: "Entidad Emisora", valor: a.entidadEmisora });
-        if (a.numeroDocumento) listaSugerida.push({ id: "meta-4", clave: "Número / Matrícula", valor: a.numeroDocumento });
-        if (a.fechaEmision) listaSugerida.push({ id: "meta-5", clave: "Fecha de Emisión", valor: a.fechaEmision });
-        if (a.fechaNacimiento) listaSugerida.push({ id: "meta-6", clave: "Fecha de Nacimiento", valor: a.fechaNacimiento });
-
-        // Si ya había metadatos, conservar los no duplicados
-        if (metadatosDinamicos.length === 0) {
-          setMetadatosDinamicos(listaSugerida);
+        // Control inteligente de caducidad: Si NO requiere o no tiene fecha -> Desmarcar
+        if (a.requiereCaducidad === false || !a.fechaCaducidad) {
+          setAlertarCaducidad(false);
+          setNuevaFechaCaducidad("");
+        } else {
+          setAlertarCaducidad(true);
+          setNuevaFechaCaducidad(a.fechaCaducidad);
         }
 
-        setResumenAria(a.resumenOcr || "Aria identificó parámetros clave. Puedes editarlos, eliminarlos o agregar más.");
-        mostrarToast("Parámetros analizados por Aria con éxito.", "info");
+        // Crear lista de metadatos dinámicos sugeridos por Aria / OCR
+        const listaSugerida: MetadatoDinamico[] = [];
+        if (a.queEs) {
+          listaSugerida.push({ id: `meta-${Date.now()}-0`, clave: "Tipo de Documento", valor: a.queEs });
+        }
+        if (a.titularNombre) {
+          listaSugerida.push({ id: `meta-${Date.now()}-1`, clave: "A quién pertenece / Titular", valor: a.titularNombre });
+        }
+        if (a.titularIdentificacion) {
+          listaSugerida.push({ id: `meta-${Date.now()}-2`, clave: "ID / Cédula / RUC / NIT", valor: a.titularIdentificacion });
+        }
+        if (a.lugarNacimiento) {
+          listaSugerida.push({ id: `meta-${Date.now()}-3`, clave: "Lugar de Nacimiento / Emisión", valor: a.lugarNacimiento });
+        }
+        if (a.fechaNacimiento) {
+          listaSugerida.push({ id: `meta-${Date.now()}-4`, clave: "Fecha de Nacimiento", valor: a.fechaNacimiento });
+        }
+        if (a.fechaEmision) {
+          listaSugerida.push({ id: `meta-${Date.now()}-5`, clave: "Fecha de Emisión", valor: a.fechaEmision });
+        }
+        if (a.entidadEmisora) {
+          listaSugerida.push({ id: `meta-${Date.now()}-6`, clave: "Entidad Emisora", valor: a.entidadEmisora });
+        }
+        if (a.numeroDocumento) {
+          listaSugerida.push({ id: `meta-${Date.now()}-7`, clave: "N° Documento / Matrícula", valor: a.numeroDocumento });
+        }
+        if (a.fechaCaducidad && a.requiereCaducidad) {
+          listaSugerida.push({ id: `meta-${Date.now()}-8`, clave: "Fecha de Caducidad / Vencimiento", valor: a.fechaCaducidad });
+        }
+        listaSugerida.push({
+          id: `meta-${Date.now()}-9`,
+          clave: "Validación de Caducidad",
+          valor: a.requiereCaducidad ? `Requerida (Vence el ${a.fechaCaducidad || "indicado"})` : "No requerida (Documento permanente/informativo)"
+        });
+
+        // Conservar metadatos adicionales manuales no duplicados
+        const clavesSugeridas = new Set(listaSugerida.map(m => m.clave.toLowerCase()));
+        const manualesConservados = metadatosDinamicos.filter(m => !clavesSugeridas.has(m.clave.toLowerCase()));
+        setMetadatosDinamicos([...listaSugerida, ...manualesConservados]);
+
+        const resumenFinal = a.resumenOcr || `Aria analizó el documento exitosamente.${a.requiereCaducidad && a.fechaCaducidad ? ` Fecha de vencimiento detectada: ${a.fechaCaducidad}.` : " No requiere control de caducidad."} Metadatos dinámicos cargados.`;
+        setResumenAria(resumenFinal);
+        mostrarToast("Análisis completado. Metadatos dinámicos cargados.", "exito");
+      } else if (json.motivo) {
+        setResumenAria(json.motivo);
+        mostrarToast(json.motivo, "info");
       }
     } catch (err) {
       console.warn("Aviso en análisis Aria:", err);
+      mostrarToast("No se pudo completar el análisis automático. Puedes ingresar los datos manualmente.", "info");
     } finally {
       setAnalizandoConAria(false);
     }
@@ -300,6 +352,7 @@ export function WidgetBilleteraDocumentos({ negocio = "TRANQ", onCerrar }: Props
       ejecutarAnalisisAria(filtrados);
     } else {
       setResumenAria(null);
+      setAnalisisDetectado(null);
     }
   };
 
@@ -335,6 +388,26 @@ export function WidgetBilleteraDocumentos({ negocio = "TRANQ", onCerrar }: Props
         .filter(m => m.clave.trim() || m.valor.trim())
         .map(m => ({ clave: m.clave.trim() || "Campo", valor: m.valor.trim() }));
 
+      // Extraer campos conocidos desde metadatos dinámicos
+      let titularFinal = "";
+      let idFinal = "";
+      let emisorFinal = "";
+      let numDocFinal = "";
+      let lugarNacFinal = "";
+      let fechaNacFinal = "";
+      let fechaEmisFinal = "";
+
+      for (const m of metadatosLimpios) {
+        const k = m.clave.toLowerCase();
+        if (!titularFinal && (k.includes("titular") || k.includes("pertenece") || k.includes("nombre"))) titularFinal = m.valor;
+        if (!idFinal && (k.includes("cedula") || k.includes("cédula") || k.includes("ruc") || k.includes("pasaporte") || k.includes("identificacion") || k.includes("id") || k.includes("nit"))) idFinal = m.valor;
+        if (!emisorFinal && (k.includes("emisor") || k.includes("entidad") || k.includes("institucion"))) emisorFinal = m.valor;
+        if (!numDocFinal && (k.includes("numero") || k.includes("número") || k.includes("matricula") || k.includes("placa"))) numDocFinal = m.valor;
+        if (!lugarNacFinal && (k.includes("lugar") || k.includes("origen") || k.includes("residencia") || k.includes("ciudad"))) lugarNacFinal = m.valor;
+        if (!fechaNacFinal && (k.includes("nacimiento") && k.includes("fecha"))) fechaNacFinal = m.valor;
+        if (!fechaEmisFinal && (k.includes("emision") || k.includes("emisión"))) fechaEmisFinal = m.valor;
+      }
+
       const payload = {
         titulo: tituloFinal,
         categoria: nuevaCategoria,
@@ -350,13 +423,22 @@ export function WidgetBilleteraDocumentos({ negocio = "TRANQ", onCerrar }: Props
         archivoTamano: archivosSeleccionados[0]?.tamano,
         archivoMimetype: archivosSeleccionados[0]?.mimetype,
         archivoBase64: archivosSeleccionados[0]?.base64,
-        fechaCaducidad: nuevaFechaCaducidad || null,
+        fechaCaducidad: alertarCaducidad && nuevaFechaCaducidad ? nuevaFechaCaducidad : null,
+        fechaNacimiento: fechaNacFinal || null,
+        fechaEmision: fechaEmisFinal || null,
         alertarCaducidad: alertarCaducidad,
         mesesAnticipacionAlerta: mesesAnticipacionAlerta,
+        titularNombre: titularFinal || null,
+        titularIdentificacion: idFinal || null,
+        entidadEmisora: emisorFinal || null,
+        numeroDocumento: numDocFinal || null,
         metadatosDinamicos: metadatosLimpios,
         metadatosOcr: {
-          analizado_por: "Aria IA / Dinámico",
+          analizado_por: "Aria IA / Multimodal",
           total_archivos: archivosSeleccionados.length,
+          resumen: resumenAria || null,
+          lugar_nacimiento: lugarNacFinal || null,
+          fecha_caducidad: alertarCaducidad && nuevaFechaCaducidad ? nuevaFechaCaducidad : null,
           metadatos_dinamicos: metadatosLimpios,
           analizado_en: new Date().toISOString()
         }
@@ -393,6 +475,7 @@ export function WidgetBilleteraDocumentos({ negocio = "TRANQ", onCerrar }: Props
     setMesesAnticipacionAlerta(3);
     setMetadatosDinamicos([]);
     setResumenAria(null);
+    setAnalisisDetectado(null);
   };
 
   const abrirCompartir = async (doc: DocumentoBilletera) => {
@@ -1133,13 +1216,77 @@ export function WidgetBilleteraDocumentos({ negocio = "TRANQ", onCerrar }: Props
                 </div>
               )}
 
-              {/* BANNER INFORMATIVO DE ARIA IA */}
-              {resumenAria && (
-                <div style={{ background: "#F5F3FF", border: "1px solid #DDD6FE", padding: "10px 14px", borderRadius: "10px", marginBottom: "14px", display: "flex", alignItems: "flex-start", gap: "8px", fontSize: "0.78rem", color: "#5000BA" }}>
-                  <Sparkles size={16} style={{ flexShrink: 0, marginTop: "2px" }} />
-                  <div>
-                    <strong>Agente Aria IA:</strong> {resumenAria}
+              {/* BANNER INFORMATIVO / ESTADO DE ARIA IA */}
+              {analizandoConAria && (
+                <div style={{ background: "rgba(80,0,186,0.06)", border: "1.5px dashed #5000BA", padding: "12px 16px", borderRadius: "10px", marginBottom: "14px", display: "flex", alignItems: "center", gap: "10px", fontSize: "0.82rem", color: "#5000BA", fontWeight: 700 }}>
+                  <Sparkles size={18} />
+                  <span>✨ Aria está analizando el documento para extraer tipo, titular, ID, lugar/nacimiento y verificar si requiere caducidad...</span>
+                </div>
+              )}
+
+              {/* BANNER DE DETECCIÓN INTELIGENTE / ADVERTENCIA DE VALORES OBTENIDOS */}
+              {analisisDetectado && !analizandoConAria && (
+                <div
+                  style={{
+                    background: "#F8FAFC",
+                    border: "1.5px solid #DDD6FE",
+                    borderRadius: "14px",
+                    padding: "14px 16px",
+                    marginBottom: "16px",
+                    boxShadow: "0 2px 8px rgba(80,0,186,0.04)"
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "10px", flexWrap: "wrap", gap: "6px" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 800, color: "#5000BA", fontSize: "0.86rem" }}>
+                      <Sparkles size={16} /> Datos Clave Detectados por Aria (IA)
+                    </div>
+                    {analisisDetectado.requiereCaducidad ? (
+                      <span style={{ fontSize: "0.72rem", fontWeight: 700, color: "#DC2626", background: "#FEF2F2", border: "1px solid #FCA5A5", padding: "2px 8px", borderRadius: "8px", display: "flex", alignItems: "center", gap: "4px" }}>
+                        <BellRing size={12} /> Requiere Caducidad ({analisisDetectado.fechaCaducidad || "Programada"})
+                      </span>
+                    ) : (
+                      <span style={{ fontSize: "0.72rem", fontWeight: 700, color: "#05876E", background: "#ECFDF5", border: "1px solid #A7F3D0", padding: "2px 8px", borderRadius: "8px", display: "flex", alignItems: "center", gap: "4px" }}>
+                        <CheckCircle2 size={12} /> Sin Caducidad Requerida (Desmarcada)
+                      </span>
+                    )}
                   </div>
+
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "8px", fontSize: "0.78rem", marginBottom: "10px" }}>
+                    <div style={{ background: "#ffffff", padding: "8px 10px", borderRadius: "8px", border: "1px solid #E2E8F0" }}>
+                      <span style={{ color: "#64748B", display: "block", fontSize: "0.7rem", fontWeight: 600 }}>Tipo de Documento</span>
+                      <strong style={{ color: "#1E293B" }}>{analisisDetectado.queEs || "Documento"}</strong>
+                    </div>
+
+                    <div style={{ background: "#ffffff", padding: "8px 10px", borderRadius: "8px", border: "1px solid #E2E8F0" }}>
+                      <span style={{ color: "#64748B", display: "block", fontSize: "0.7rem", fontWeight: 600 }}>A quién pertenece</span>
+                      <strong style={{ color: "#1E293B" }}>{analisisDetectado.titularNombre || "No especificado"}</strong>
+                    </div>
+
+                    <div style={{ background: "#ffffff", padding: "8px 10px", borderRadius: "8px", border: "1px solid #E2E8F0" }}>
+                      <span style={{ color: "#64748B", display: "block", fontSize: "0.7rem", fontWeight: 600 }}>Identificación / ID</span>
+                      <strong style={{ color: "#1E293B" }}>{analisisDetectado.titularIdentificacion || "No visible"}</strong>
+                    </div>
+
+                    <div style={{ background: "#ffffff", padding: "8px 10px", borderRadius: "8px", border: "1px solid #E2E8F0" }}>
+                      <span style={{ color: "#64748B", display: "block", fontSize: "0.7rem", fontWeight: 600 }}>Lugar / Nacimiento</span>
+                      <strong style={{ color: "#1E293B" }}>
+                        {analisisDetectado.lugarNacimiento || "—"} {analisisDetectado.fechaNacimiento ? `(${analisisDetectado.fechaNacimiento})` : ""}
+                      </strong>
+                    </div>
+                  </div>
+
+                  <p style={{ margin: 0, fontSize: "0.74rem", color: "#4B5563", lineHeight: 1.4 }}>
+                    {resumenAria || "Los datos se han asignado automáticamente como metadatos dinámicos editables abajo."}
+                  </p>
+                </div>
+              )}
+
+              {resumenAria && !analisisDetectado && !analizandoConAria && (
+                <div style={{ background: "#F0FDF4", border: "1.5px solid #05876E", padding: "12px 16px", borderRadius: "12px", marginBottom: "14px", fontSize: "0.82rem", color: "#065F46" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 800, color: "#05876E", marginBottom: "4px" }}>
+                    <CheckCircle2 size={16} /> Resumen de Análisis — Agente Aria IA
+                  </div>
+                  <div>{resumenAria}</div>
                 </div>
               )}
 

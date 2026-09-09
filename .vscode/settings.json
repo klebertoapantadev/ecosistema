@@ -27,6 +27,8 @@
     "commandCenter.foreground": "#e7e7e7",
     "sash.hoverBorder": "#9b7cd0",
     "statusBar.debuggingBackground": "#7e57c2",
-    "statusBar.debuggingForeground": "#e7e7e7"
+    "statusBar.debuggingForeground": "#e7e7e7",
+    "activityBar.activeBorder": "#15202b",
+    "activityBarTop.activeBorder": "#15202b"
   }
 }

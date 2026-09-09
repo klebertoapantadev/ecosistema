@@ -7,7 +7,7 @@ import { FormularioSmtp } from "@eco/configuracion-negocio/componentes/Formulari
 import { PreferenciasNotificacionWidget } from "@eco/notificaciones";
 import { AdministracionPerfilesWidget } from "@eco/gestion-usuarios/componentes/AdministracionPerfilesWidget";
 import { GestionTerminosConsentimientosWidget } from "@eco/identidad/componentes/GestionTerminosConsentimientosWidget";
-import { ConfiguracionPasarelaPayphone, CatalogoProductosComercio } from "@/modulos/comercio";
+import { ConfiguracionPasarelaPayphone, ConsolaGestionCatalogo, CatalogoProductosComercio } from "@/modulos/comercio";
 import { useCustomWidgets } from "../gestorTitulosWidgets";
 import { ModalEditarWidget } from "../ModalEditarWidget";
 import { ModalVerificarMFAWidget } from "../ModalVerificarMFAWidget";
@@ -344,10 +344,10 @@ export function PanelConfiguracionModular({ esAdmin, esSuperadmin = false, confi
               </div>
             )}
 
-            {/* 7. CATÁLOGO COMERCIAL & HONORARIOS */}
-            {widgetActivo === "catalogo_productos" && (
+            {/* 7. CATÁLOGO COMERCIAL & HONORARIOS (GESTIÓN) */}
+            {(widgetActivo === "gestion_catalogo" || widgetActivo === "catalogo_productos") && (
               <div style={{ width: "100%" }}>
-                <CatalogoProductosComercio negocio={negocio} />
+                <ConsolaGestionCatalogo negocio={negocio} />
               </div>
             )}
           </div>

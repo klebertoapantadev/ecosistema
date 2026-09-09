@@ -495,13 +495,35 @@ const WIDGETS_INVENTARIO_INICIALES: WidgetInventarioDef[] = [
     creadoEn: "2026-07-27"
   },
   {
+    clave: "vitrina_comercial",
+    nombre: "Oferta de Servicios & Tarifario",
+    descripcion: "Vitrina visual de servicios y planes con imágenes, videos y botón Payphone para clientes.",
+    categoria: "Comercio y Pagos",
+    ruta: "/panel/catalogo-productos",
+    rutaFisica: "/comercio/componentes/VitrinaComercialVisual.tsx",
+    panelId: "panel_herramientas",
+    activo: true,
+    creadoEn: "2026-09-07"
+  },
+  {
+    clave: "gestion_catalogo",
+    nombre: "Gestión del Catálogo Comercial",
+    descripcion: "Consola de administración de honorarios, tarifas SRI IVA 15%, variantes y recursos digitales.",
+    categoria: "Comercio y Pagos",
+    ruta: "/panel/configuracion?widget=gestion_catalogo",
+    rutaFisica: "/comercio/componentes/ConsolaGestionCatalogo.tsx",
+    panelId: "panel_configuracion",
+    activo: true,
+    creadoEn: "2026-09-07"
+  },
+  {
     clave: "catalogo_productos",
     nombre: "Catálogo Comercial & Honorarios",
     descripcion: "Catálogo unificado de servicios, liquidación de honorarios y suscripciones legales con cálculo de IVA 15%.",
     categoria: "Comercio y Pagos",
-    ruta: "/panel/catalogo-productos",
-    rutaFisica: "/comercio/componentes/CatalogoProductosComercio.tsx",
-    panelId: "panel_herramientas",
+    ruta: "/panel/configuracion?widget=gestion_catalogo",
+    rutaFisica: "/comercio/componentes/ConsolaGestionCatalogo.tsx",
+    panelId: "panel_configuracion",
     activo: true,
     creadoEn: "2026-08-20"
   },

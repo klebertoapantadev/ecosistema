@@ -348,11 +348,18 @@ export async function enviarSolicitudSocio(
         console.warn("Aviso al registrar revisión de reingreso:", errRevIns);
       }
 
-      if (esAceptada && d.telefonoContacto) {
+      // Actualizar datos oficiales en seg_usuario (nombres completos extraídos, cédula y whatsapp)
+      const updateUsuario: Record<string, any> = {};
+      if (d.cedula) updateUsuario.usu_cedula = d.cedula;
+      if (d.nombres) updateUsuario.usu_nombres = d.nombres;
+      if (d.apellidos) updateUsuario.usu_apellidos = d.apellidos;
+      if (d.telefonoContacto) updateUsuario.usu_whatsapp = d.telefonoContacto;
+
+      if (Object.keys(updateUsuario).length > 0) {
         await adminSupabase
           .schema("comun_seguridad")
           .from("seg_usuario")
-          .update({ usu_whatsapp: d.telefonoContacto })
+          .update(updateUsuario)
           .eq("usu_id", usuarioId);
       }
 
@@ -385,6 +392,21 @@ export async function enviarSolicitudSocio(
 
       if (error) return { ok: false, error: error.message };
       solicitudId = solicitud.ssc_id;
+
+      // Actualizar datos oficiales en seg_usuario (nombres completos extraídos, cédula y whatsapp)
+      const updateUsuarioNuevo: Record<string, any> = {};
+      if (d.cedula) updateUsuarioNuevo.usu_cedula = d.cedula;
+      if (d.nombres) updateUsuarioNuevo.usu_nombres = d.nombres;
+      if (d.apellidos) updateUsuarioNuevo.usu_apellidos = d.apellidos;
+      if (d.telefonoContacto) updateUsuarioNuevo.usu_whatsapp = d.telefonoContacto;
+
+      if (Object.keys(updateUsuarioNuevo).length > 0) {
+        await adminSupabase
+          .schema("comun_seguridad")
+          .from("seg_usuario")
+          .update(updateUsuarioNuevo)
+          .eq("usu_id", usuarioId);
+      }
     }
 
     // Insertar/upsert experiencias, materias y provincias con IDs DEDUPLICADOS

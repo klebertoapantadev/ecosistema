@@ -424,6 +424,9 @@ Motor centralizado de gestión de bienes, servicios, recetas (BOM), inventarios,
     - **Seguridad Criptográfica y Aislamiento de Credenciales:** Las credenciales privadas (`token` Bearer para confirmar pagos) se almacenan en servidor y nunca se transmiten al navegador web (`psc_credenciales_privadas`). La consulta pública para renderizar el checkout se efectúa mediante la función RPC `com_fn_obtener_pasarelas_activas(negocio)` que retorna exclusivamente datos públicos y metadatos visuales.
     - **Confirmación Obligatoria Server-to-Server:** En Payphone, el servidor ejecuta una solicitud `POST /api/confirm` dentro de los primeros 5 minutos tras el retorno del usuario para verificar la autenticidad y prevenir el reverso automático del dinero.
     - **Trazabilidad Transaccional:** Cada intento o confirmación de pago se registra en `com_transaccion_pago` vinculando cliente, referencia de pedido, montos, desglose impositivo (IVA 15%), código de autorización bancario, marca y últimos dígitos de tarjeta, y payload técnico raw para auditoría financiera.
+14. **Separación de Widgets y Experiencias: Vitrina Visual (Storefront) vs Consola de Gestión:**
+    - **Vitrina Comercial (`vitrina_comercial`):** Experiencia orientada al cliente final alojada en `panel_herramientas` o catálogo público. Exhibe recursos multimedia HD (imágenes, portadas, videos demostrativos / tutoriales en YouTube o MP4), beneficios ("¿Qué incluye?"), requisitos, tiempos de entrega y checkout directo con Payphone sin elementos de distracción administrativa.
+    - **Consola de Gestión (`gestion_catalogo`):** Exclusiva para operadores y administradores en `panel_configuracion` y consola de gestión. Permite el CRUD completo de servicios, honorarios, suscripciones, tarifas impositivas SRI (IVA 15%), variantes y la vinculación de recursos digitales multimedia.
 
 **Implementación técnica:** ver [`especificacion-tecnica.md`](especificacion-tecnica.md) §7 (`comun_comercio`).
 

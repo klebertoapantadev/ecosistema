@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { X } from "lucide-react";
-import { obtenerPerfilActual } from "@eco/identidad";
+import { obtenerPerfilActual, obtenerPerfiles } from "@eco/identidad";
 import { obtenerSolicitudPropia, listarMaterias, listarProvincias } from "../../../modulos/socios/consultas";
 import { FormularioSolicitudSocio } from "../../../modulos/socios/componentes/FormularioSolicitudSocio";
 import { GestionContratoPostulante } from "../../../modulos/socios/componentes/GestionContratoPostulante";
@@ -18,6 +18,13 @@ const ETIQUETA_ESTADO: Record<string, string> = {
 export default async function PaginaSolicitudSocio() {
   const perfil = await obtenerPerfilActual();
   if (!perfil) return null;
+
+  const perfiles = await obtenerPerfiles("tranqi");
+  const esAdmin = Boolean(
+    perfil.usu_superadmin_plataforma ||
+    perfiles.includes("SUPERADMIN") ||
+    perfiles.includes("ADMINISTRADOR")
+  );
 
   const solicitud = await obtenerSolicitudPropia(perfil.usu_id);
 
@@ -116,7 +123,14 @@ export default async function PaginaSolicitudSocio() {
         </div>
       )}
 
-      <FormularioSolicitudSocioConDatos usuarioId={perfil.usu_id} correoInicial={perfil.usu_correo} solicitudExistente={solicitud} />
+      <FormularioSolicitudSocioConDatos
+        usuarioId={perfil.usu_id}
+        correoInicial={perfil.usu_correo}
+        nombresIniciales={perfil.usu_nombres}
+        apellidosIniciales={perfil.usu_apellidos}
+        solicitudExistente={solicitud}
+        esAdmin={esAdmin}
+      />
     </div>
   );
 }
@@ -124,11 +138,17 @@ export default async function PaginaSolicitudSocio() {
 async function FormularioSolicitudSocioConDatos({
   usuarioId,
   correoInicial,
+  nombresIniciales,
+  apellidosIniciales,
   solicitudExistente,
+  esAdmin,
 }: {
   usuarioId: string;
   correoInicial: string | null;
+  nombresIniciales?: string | null;
+  apellidosIniciales?: string | null;
   solicitudExistente?: Record<string, unknown> | null;
+  esAdmin?: boolean;
 }) {
   const [materias, provincias] = await Promise.all([listarMaterias(), listarProvincias()]);
   return (
@@ -137,7 +157,10 @@ async function FormularioSolicitudSocioConDatos({
       materias={materias}
       provincias={provincias}
       correoInicial={correoInicial}
+      nombresIniciales={nombresIniciales}
+      apellidosIniciales={apellidosIniciales}
       solicitudExistente={solicitudExistente}
+      esAdmin={esAdmin}
     />
   );
 }

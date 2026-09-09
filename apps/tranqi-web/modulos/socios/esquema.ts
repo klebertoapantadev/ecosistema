@@ -20,6 +20,8 @@ const ANIO_ACTUAL = new Date().getFullYear();
 // TRQ-001: solicitud de registro de socio abogado.
 export const esquemaSolicitudSocio = z.object({
   cedula: z.string().trim().min(10, "Cédula inválida").max(13, "Cédula inválida"),
+  nombres: z.string().trim().optional(),
+  apellidos: z.string().trim().optional(),
   matriculaProfesional: z.string().trim().min(1, "Requerido"),
   universidad: z.string().trim().min(1, "Requerido"),
   anioGraduacion: z.coerce.number().int().min(1960, "Año inválido").max(ANIO_ACTUAL, "Año inválido"),

@@ -68,7 +68,10 @@ interface Props {
   materias: { mat_id: string; mat_nombre: string }[];
   provincias: { cat_id: string; cat_nombre: string }[];
   correoInicial?: string | null;
+  nombresIniciales?: string | null;
+  apellidosIniciales?: string | null;
   solicitudExistente?: Record<string, unknown> | null;
+  esAdmin?: boolean;
 }
 
 interface OpcionItem {
@@ -1250,7 +1253,16 @@ function SelectorMultiSeleccion({
   );
 }
 
-export function FormularioSolicitudSocio({ usuarioId, materias, provincias, solicitudExistente }: Props) {
+export function FormularioSolicitudSocio({
+  usuarioId,
+  materias,
+  provincias,
+  correoInicial,
+  nombresIniciales,
+  apellidosIniciales,
+  solicitudExistente,
+  esAdmin = false,
+}: Props) {
   const router = useRouter();
 
   // Paso del flujo: "beneficios" (intro informativa) | "formulario" (captura) | "bienvenida" (post-envío / estatus)
@@ -1278,6 +1290,20 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
 - **Capacitación Continua:** Acceso a actualizaciones normativas, jurisprudencia y talleres especializados.`);
   const [editandoBeneficios, setEditandoBeneficios] = useState(false);
   const [textoBeneficiosTemp, setTextoBeneficiosTemp] = useState("");
+
+  const [nombres, setNombres] = useState<string>(nombresIniciales ?? "");
+  const [apellidos, setApellidos] = useState<string>(apellidosIniciales ?? "");
+  const [analizandoIdentidadAria, setAnalizandoIdentidadAria] = useState(false);
+  const [dictamenAriaExtraccion, setDictamenAriaExtraccion] = useState<{
+    titular?: string | null;
+    identificacion?: string | null;
+    tipo_detectado?: string | null;
+    fecha_emision?: string | null;
+    fecha_caducidad?: string | null;
+    legible?: boolean;
+    observaciones?: string[];
+    nombre_archivo?: string;
+  } | null>(null);
 
   const [cedula, setCedula] = useState<string>((solicitudExistente?.ssc_cedula as string) ?? "");
   const [matriculaProfesional, setMatriculaProfesional] = useState<string>((solicitudExistente?.ssc_matricula_profesional as string) ?? "");
@@ -1310,6 +1336,45 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
   const [tituloArchivos, setTituloArchivos] = useState<File[]>([]);
   const [cvYCertificados, setCvYCertificados] = useState<File[]>([]);
   const [cvYCertificadosComentarios, setCvYCertificadosComentarios] = useState<string[]>([]);
+
+  const manejarCambioIdentificacion = async (archivos: File[]) => {
+    setIdentificacionArchivos(archivos);
+    if (archivos.length === 0 || !archivos[0]) return;
+
+    const arch = archivos[0];
+    setAnalizandoIdentidadAria(true);
+    setError(null);
+
+    try {
+      const formData = new FormData();
+      formData.append("archivo", arch);
+
+      const resp = await fetch("/api/agentes/aria-extraer-identidad", {
+        method: "POST",
+        body: formData,
+      });
+
+      const res = await resp.json();
+      if (res.ok && res.datos) {
+        setDictamenAriaExtraccion(res.datos);
+        if (res.datos.identificacion) {
+          setCedula(res.datos.identificacion);
+        }
+        if (res.datos.nombres) {
+          setNombres(res.datos.nombres);
+        }
+        if (res.datos.apellidos) {
+          setApellidos(res.datos.apellidos);
+        } else if (res.datos.titular && !res.datos.nombres) {
+          setNombres(res.datos.titular);
+        }
+      }
+    } catch (err) {
+      console.warn("Aviso al analizar documento con ARIA:", err);
+    } finally {
+      setAnalizandoIdentidadAria(false);
+    }
+  };
 
   useEffect(() => {
     if (identificacionArchivos.length > 0 && identificacionArchivos[0]) {
@@ -1531,6 +1596,8 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
       const resultado = await enviarSolicitudSocio(
         {
           cedula,
+          nombres,
+          apellidos,
           matriculaProfesional,
           universidad,
           anioGraduacion: Number(anioGraduacion),
@@ -1695,35 +1762,37 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
             <span style={{ fontSize: "0.86rem", fontWeight: 800, color: "#5000BA", display: "flex", alignItems: "center", gap: "6px" }}>
               <Briefcase size={16} /> Condiciones de Participación y Beneficios del Equipo
             </span>
-            <button
-              type="button"
-              onClick={() => {
-                if (editandoBeneficios) {
-                  setEditandoBeneficios(false);
-                } else {
-                  setTextoBeneficiosTemp(textoBeneficios);
-                  setEditandoBeneficios(true);
-                }
-              }}
-              style={{
-                background: "rgba(80, 0, 186, 0.06)",
-                border: "1px solid rgba(80, 0, 186, 0.2)",
-                borderRadius: "8px",
-                padding: "4px 10px",
-                fontSize: "0.76rem",
-                fontWeight: 700,
-                color: "#5000BA",
-                cursor: "pointer",
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "4px",
-              }}
-            >
-              <Edit3 size={13} /> {editandoBeneficios ? "Cancelar Edición" : "Editar Texto"}
-            </button>
+            {esAdmin && (
+              <button
+                type="button"
+                onClick={() => {
+                  if (editandoBeneficios) {
+                    setEditandoBeneficios(false);
+                  } else {
+                    setTextoBeneficiosTemp(textoBeneficios);
+                    setEditandoBeneficios(true);
+                  }
+                }}
+                style={{
+                  background: "rgba(80, 0, 186, 0.06)",
+                  border: "1px solid rgba(80, 0, 186, 0.2)",
+                  borderRadius: "8px",
+                  padding: "4px 10px",
+                  fontSize: "0.76rem",
+                  fontWeight: 700,
+                  color: "#5000BA",
+                  cursor: "pointer",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "4px",
+                }}
+              >
+                <Edit3 size={13} /> {editandoBeneficios ? "Cancelar Edición" : "Editar Texto"}
+              </button>
+            )}
           </div>
 
-          {editandoBeneficios ? (
+          {esAdmin && editandoBeneficios ? (
             <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
               <BarraVariablesDinamicas onInsertarVariable={insertarVariableBeneficios} negocio="tranqi" />
 
@@ -2145,49 +2214,40 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
         </div>
       )}
 
-      <label style={{ marginTop: "16px" }}>
-        Cédula de Identidad / RUC
-        <input
-          value={cedula}
-          onChange={(e) => setCedula(e.target.value)}
-          required
-          maxLength={13}
-          placeholder="ej. 1714898226"
-        />
-      </label>
-
-      {/* Validación en tiempo real de algoritmo de Cédula Ecuatoriana (Módulo 10) */}
-      {(() => {
-        const val = validarCedulaEcuador(cedula);
-        if (!cedula) return null;
-        if (!val.esValida && val.advertencia) {
-          return (
-            <div style={{ marginTop: "-6px", marginBottom: "10px", padding: "6px 12px", background: "rgba(245, 158, 11, 0.08)", border: "1px solid #F59E0B", borderRadius: "8px", fontSize: "0.76rem", color: "#B45309", display: "flex", alignItems: "center", gap: "6px" }}>
-              <AlertTriangle size={14} /> {val.advertencia}
-            </div>
-          );
-        }
-        if (val.esValida && cedula.length === 10) {
-          return (
-            <div style={{ marginTop: "-6px", marginBottom: "10px", padding: "6px 12px", background: "rgba(5, 135, 110, 0.08)", border: "1px solid #05876E", borderRadius: "8px", fontSize: "0.76rem", color: "#05876E", display: "flex", alignItems: "center", gap: "6px" }}>
-              <CheckCircle2 size={14} /> Cédula válida (Módulo 10 del Registro Civil verificado)
-            </div>
-          );
-        }
-        return null;
-      })()}
-
-      {/* Campo Obligatorio: Cédula de Identidad / Pasaporte */}
-      <div style={{ marginTop: "12px", marginBottom: "18px" }}>
+      {/* Campo Obligatorio: Cédula de Identidad / Pasaporte con Extracción ARIA */}
+      <div style={{ marginTop: "16px", marginBottom: "18px" }}>
         <CampoSubidaArchivo
           etiqueta="Documento de Identificación Oficial (Obligatorio • Cédula / Pasaporte) • [Repositorio: Identidad]"
-          subtitulo="Copia digital clara o fotografía legible de tu Cédula de Identidad (anverso y reverso) o Pasaporte vigente (PDF o Imagen JPG/PNG, máx 10 MB)"
+          subtitulo="Adjunta tu Cédula (anverso y reverso) o Pasaporte. ARIA leerá automáticamente tus nombres completos y número de identificación desde el documento."
           aceptar={TIPOS_ACEPTADOS}
           multiple={false}
           archivos={identificacionArchivos}
-          onCambiar={setIdentificacionArchivos}
+          onCambiar={manejarCambioIdentificacion}
           icono={FileText}
         />
+
+        {/* Indicador de Análisis con ARIA */}
+        {analizandoIdentidadAria && (
+          <div style={{ padding: "12px 16px", background: "rgba(80, 0, 186, 0.06)", border: "1.5px dashed #5000BA", borderRadius: "10px", marginTop: "10px", display: "flex", alignItems: "center", gap: "10px", fontSize: "0.84rem", color: "#5000BA", fontWeight: 700 }}>
+            <Sparkles size={18} color="#5000BA" />
+            <span>✨ ARIA está procesando y leyendo tu documento de identidad para extraer tus datos oficiales...</span>
+          </div>
+        )}
+
+        {/* Banner de Datos Oficiales Extraídos por ARIA */}
+        {dictamenAriaExtraccion && (
+          <div style={{ padding: "14px 18px", background: "rgba(5, 135, 110, 0.05)", border: "1.5px solid #05876E", borderRadius: "12px", marginTop: "10px", fontSize: "0.84rem", color: "#065F46" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 800, color: "#05876E", marginBottom: "8px" }}>
+              <CheckCircle2 size={18} /> Datos Oficiales Extraídos por ARIA desde tu Documento
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "8px" }}>
+              <div><strong>Titular Oficial:</strong> {dictamenAriaExtraccion.titular || `${nombres} ${apellidos}`}</div>
+              <div><strong>Identificación:</strong> {dictamenAriaExtraccion.identificacion || cedula}</div>
+              <div><strong>Tipo Detectado:</strong> {dictamenAriaExtraccion.tipo_detectado || "Cédula de Identidad"}</div>
+              {dictamenAriaExtraccion.fecha_caducidad && <div><strong>Vencimiento:</strong> {dictamenAriaExtraccion.fecha_caducidad}</div>}
+            </div>
+          </div>
+        )}
 
         {/* Checklist de Criterios de Calidad y Legibilidad */}
         <div style={{ background: "rgba(5, 135, 110, 0.04)", border: "1px solid rgba(5, 135, 110, 0.2)", borderRadius: "10px", padding: "10px 14px", marginTop: "8px", fontSize: "0.78rem", color: "#065F46" }}>
@@ -2236,6 +2296,79 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
             </a>
           </div>
         )}
+      </div>
+
+      {/* Identidad Oficial: Nombres Completos y Cédula (Leídos desde el documento) */}
+      <div style={{ background: "rgba(80, 0, 186, 0.03)", border: "1px solid rgba(80, 0, 186, 0.15)", borderRadius: "14px", padding: "18px", marginBottom: "20px" }}>
+        <span style={{ fontSize: "0.88rem", fontWeight: 800, color: "#5000BA", display: "flex", alignItems: "center", gap: "6px", marginBottom: "12px" }}>
+          <ShieldCheck size={16} /> Identidad Oficial del Titular (Extraída por ARIA desde tu Documento)
+        </span>
+
+        <div className="fila-dos-columnas">
+          <label>
+            Nombres Oficiales (según documento)
+            <input
+              value={nombres}
+              onChange={(e) => setNombres(e.target.value)}
+              placeholder="ej. Kleber Geovanny"
+              required
+            />
+          </label>
+          <label>
+            Apellidos Oficiales (según documento)
+            <input
+              value={apellidos}
+              onChange={(e) => setApellidos(e.target.value)}
+              placeholder="ej. Toapanta Chinchin"
+              required
+            />
+          </label>
+        </div>
+
+        <div className="fila-dos-columnas" style={{ marginTop: "10px" }}>
+          <label>
+            Cédula de Identidad / RUC / Pasaporte
+            <input
+              value={cedula}
+              onChange={(e) => setCedula(e.target.value)}
+              required
+              maxLength={13}
+              placeholder="ej. 1714898226"
+            />
+          </label>
+          {correoInicial && (
+            <label>
+              Cuenta de Usuario (Google / Correo)
+              <input
+                value={correoInicial}
+                disabled
+                style={{ background: "#F3F4F6", color: "#6B7280", cursor: "not-allowed" }}
+              />
+            </label>
+          )}
+        </div>
+
+        {/* Validación en tiempo real de algoritmo de Cédula Ecuatoriana (Módulo 10) */}
+        {(() => {
+          const val = validarCedulaEcuador(cedula);
+          if (!cedula) return null;
+          if (!val.esValida && val.advertencia) {
+            return (
+              <div style={{ marginTop: "10px", padding: "6px 12px", background: "rgba(245, 158, 11, 0.08)", border: "1px solid #F59E0B", borderRadius: "8px", fontSize: "0.76rem", color: "#B45309", display: "flex", alignItems: "center", gap: "6px" }}>
+                <AlertTriangle size={14} /> {val.advertencia}
+              </div>
+            );
+          }
+          if (val.esValida && cedula.length === 10) {
+            return (
+              <div style={{ marginTop: "10px", padding: "6px 12px", background: "rgba(5, 135, 110, 0.08)", border: "1px solid #05876E", borderRadius: "8px", fontSize: "0.76rem", color: "#05876E", display: "flex", alignItems: "center", gap: "6px" }}>
+                <CheckCircle2 size={14} /> Cédula válida (Módulo 10 del Registro Civil verificado)
+              </div>
+            );
+          }
+          return null;
+        })()}
+      </div>
 
         {/* TRQ-ABG-005. Solo aparece cuando el documento ya está subido: la
             verificación necesita el fichero en el bucket para poder pasarle a
@@ -2257,7 +2390,6 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
             ]}
           />
         )}
-      </div>
 
       <label>
         Matrícula profesional (Foro de Abogados)

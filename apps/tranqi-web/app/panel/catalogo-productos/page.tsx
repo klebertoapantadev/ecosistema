@@ -1,11 +1,11 @@
 import { redirect } from "next/navigation";
 import { obtenerPerfilActual } from "@eco/identidad";
-import { CatalogoProductosComercio } from "@/modulos/comercio";
+import { VitrinaComercialVisual } from "@/modulos/comercio";
 import Link from "next/link";
 import { X } from "lucide-react";
 
 export const metadata = {
-  title: "Catálogo Comercial y Honorarios Profesionales · Tranqi",
+  title: "Oferta de Servicios & Planes · Tranqi",
   description: "Servicios legales, liquidación de honorarios y suscripciones con botón de pago Payphone",
 };
 
@@ -42,7 +42,7 @@ export default async function PaginaCatalogoProductos() {
         </Link>
       </div>
 
-      <CatalogoProductosComercio negocio="tranqi" />
+      <VitrinaComercialVisual negocio="tranqi" />
     </div>
   );
 }

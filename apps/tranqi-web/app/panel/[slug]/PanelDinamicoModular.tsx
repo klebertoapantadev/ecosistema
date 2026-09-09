@@ -23,6 +23,8 @@ import { WidgetBilleteraDocumentos } from "@/modulos/billetera-documentos";
 import { BandejaClientesCRM } from "@/modulos/crm-clientes/componentes/BandejaClientesCRM";
 import { ModalAltaClienteAsistida } from "@/modulos/crm-clientes/componentes/ModalAltaClienteAsistida";
 import {
+  VitrinaComercialVisual,
+  ConsolaGestionCatalogo,
   CatalogoProductosComercio,
   ConfiguracionPasarelaPayphone,
   HistorialTransaccionesPago,
@@ -528,10 +530,15 @@ export function PanelDinamicoModular({ slug, negocio }: Props) {
             color="#FE5800"
           />
         );
+      case "vitrina_comercial":
+      case "vitrina":
+      case "servicios":
+        return <VitrinaComercialVisual negocio={negocio} />;
+      case "gestion_catalogo":
       case "catalogo_productos":
       case "catalogo":
       case "honorarios":
-        return <CatalogoProductosComercio negocio={negocio} />;
+        return <ConsolaGestionCatalogo negocio={negocio} />;
       case "pasarela_payphone":
       case "payphone":
       case "pasarela":

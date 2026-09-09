@@ -100,21 +100,62 @@ export function FormularioRegistro({ negocio, intencion = "", destino = "" }: Fo
         </div>
       )}
 
+      {/* Bloque de Consentimiento y Términos de Servicio (Ubicado en la parte superior) */}
+      <div
+        style={{
+          marginBottom: "16px",
+          padding: "12px 14px",
+          borderRadius: "10px",
+          background: aceptaTerminos ? "rgba(5, 135, 110, 0.05)" : "rgba(80, 0, 186, 0.04)",
+          border: `1.5px solid ${aceptaTerminos ? "#05876E" : "rgba(80, 0, 186, 0.2)"}`,
+          transition: "all 0.2s ease",
+        }}
+      >
+        <label
+          className="campo-check"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "10px",
+            cursor: "pointer",
+            fontSize: "0.85rem",
+            fontWeight: 600,
+            color: "#1F2937",
+          }}
+          onClick={(e) => {
+            e.preventDefault();
+            setModalTerminosAbierto(true);
+          }}
+        >
+          <input
+            type="checkbox"
+            checked={aceptaTerminos}
+            readOnly
+            style={{ width: "18px", height: "18px", cursor: "pointer", accentColor: "#5000BA" }}
+          />
+          <span>
+            Acepto los{" "}
+            <span style={{ color: "#5000BA", fontWeight: 800, textDecoration: "underline" }}>
+              Términos de Servicio
+            </span>
+          </span>
+        </label>
+
+        {!aceptaTerminos ? (
+          <p style={{ fontSize: "0.75rem", color: "#DC2626", fontWeight: 700, margin: "6px 0 0 28px", lineHeight: "1.3" }}>
+            Para habilitar el botón debes leer los Términos hasta el final.
+          </p>
+        ) : (
+          <p style={{ fontSize: "0.75rem", color: "#05876E", fontWeight: 700, margin: "6px 0 0 28px", lineHeight: "1.3" }}>
+            ✓ Términos de servicio aceptados. Registro habilitado.
+          </p>
+        )}
+      </div>
+
       <button type="button" className="btn-google" onClick={conGoogle} disabled={cargando || !aceptaTerminos} style={{ opacity: aceptaTerminos ? 1 : 0.6, cursor: aceptaTerminos ? "pointer" : "not-allowed" }}>
         <IconoGoogle />
         Continuar con Google
       </button>
-      <p className="aviso-terminos">
-        Al continuar, aceptas los{" "}
-        <button
-          type="button"
-          onClick={() => setModalTerminosAbierto(true)}
-          style={{ background: "none", border: "none", color: "#5000BA", textDecoration: "underline", fontWeight: 700, cursor: "pointer", padding: 0 }}
-        >
-          Términos de Servicio
-        </button>
-        .
-      </p>
       <div className="separador">o con correo</div>
       <form onSubmit={alEnviar} className="form-auth">
         <input
@@ -147,44 +188,6 @@ export function FormularioRegistro({ negocio, intencion = "", destino = "" }: Fo
           autoComplete="new-password"
           required
         />
-
-        <div style={{ margin: "14px 0" }}>
-          <label
-            className="campo-check"
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "8px",
-              cursor: "pointer",
-              fontSize: "0.85rem",
-              fontWeight: 600,
-              color: "#374151",
-            }}
-            onClick={(e) => {
-              e.preventDefault();
-              setModalTerminosAbierto(true);
-            }}
-          >
-            <input
-              type="checkbox"
-              checked={aceptaTerminos}
-              readOnly
-              style={{ width: "18px", height: "18px", cursor: "pointer", accentColor: "#5000BA" }}
-            />
-            <span>
-              Acepto los{" "}
-              <span style={{ color: "#5000BA", fontWeight: 800, textDecoration: "underline" }}>
-                Términos de Servicio
-              </span>
-            </span>
-          </label>
-
-          {!aceptaTerminos && (
-            <p style={{ fontSize: "0.76rem", color: "#DC2626", fontWeight: 700, margin: "6px 0 0 26px" }}>
-              Para habilitar el botón debes leer los Términos hasta el final.
-            </p>
-          )}
-        </div>
 
         {error && (
           <p className="error-auth" role="alert">
