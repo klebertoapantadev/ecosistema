@@ -427,6 +427,20 @@ Motor centralizado de gestión de bienes, servicios, recetas (BOM), inventarios,
 14. **Separación de Widgets y Experiencias: Vitrina Visual (Storefront) vs Consola de Gestión:**
     - **Vitrina Comercial (`vitrina_comercial`):** Experiencia orientada al cliente final alojada en `panel_herramientas` o catálogo público. Exhibe recursos multimedia HD (imágenes, portadas, videos demostrativos / tutoriales en YouTube o MP4), beneficios ("¿Qué incluye?"), requisitos, tiempos de entrega y checkout directo con Payphone sin elementos de distracción administrativa.
     - **Consola de Gestión (`gestion_catalogo`):** Exclusiva para operadores y administradores en `panel_configuracion` y consola de gestión. Permite el CRUD completo de servicios, honorarios, suscripciones, tarifas impositivas SRI (IVA 15%), variantes y la vinculación de recursos digitales multimedia.
+15. **Gestor Dinámico de Multivariantes y Recursos Digitales (`ModalEditarProducto.tsx` & `ModalCrearProducto.tsx`):**
+    - **Edición Granular e Independiente por Variante:** Permite modificar o agregar N variantes (ej. tamaños: *Pequeño, Mediano, Grande, Gigante VIP*; o niveles de servicio: *Básico, Integral, Corporativo*) con su propia base imponible, cálculo automático de IVA 15% SRI y total facturable.
+    - **Recursos Digitales Enriquecidos:** Cada producto almacena en `pro_recursos_digitales` enlaces a:
+      - *Imagen de Portada Principal:* URL de portada optimizada en WebP.
+      - *Álbum de Google Photos / Galería de Ejemplos:* Enlace a álbum de muestras reales con clientes para facilitar la elección.
+      - *Video o GIF Demostrativo:* URL para previsualizar animaciones, arreglos en movimiento o explicaciones del servicio.
+      - *Galería de Imágenes:* Arreglo de URLs con fotos desde distintos ángulos.
+    - **Tiempos de Entrega y Modos de Despacho Comercial:** Configuración rápida mediante botones de presets comerciales adaptados al negocio (`⚡ Entrega Inmediata 45-90 min`, `🌸 Pide hoy, recibe hoy`, `📅 Agenda programada`).
+16. **Tablero de Disponibilidad Operativa en Vivo (Taller / Despacho / Horas de Atención):**
+    - **Control Diario en 30 Segundos (`TableroDisponibilidadOperativa.tsx`):** Módulo ágil con contadores `[ - ] / [ + ]` y botones de estado (`🟢 Disponible`, `🟡 Pocas unidades`, `🔴 Agotado`):
+      - *Floristerías (Tinkay, Margaritas):* Conteo en taller de **bonches de rosas** (25 tallos c/u) por variedad/color formal (*Explorer Rojo, Mondial Blanco, Kahala Durazno, Pink Floyd Fucsia, Cherry O Fucsia, Movie Star Bicolor, Hermosa Rosa Suave, High & Magic Amarillo/Rojo, Playa Blanca*) y colores de papel decorativo (*Blanco, Negro, Rosa, Azul, Verde*).
+      - *Servicios Jurídicos (Tranqi):* Disponibilidad de horas de consulta legal por seniority de abogado (*Junior, Senior, Socio Líder*) y tipo de cliente.
+      - *Mantenimiento (FastFix):* Disponibilidad de cuadrillas técnicas y cobertura por zonas (Norte, Sur, Valles) con despacho express de emergencia.
+    - **Integración con Agentes Conversacionales (ARIA MCP):** Expone la disponibilidad operativa en tiempo real a través de endpoints MCP (`consultar_disponibilidad_operativa`), permitiendo a ARIA en WhatsApp o Web confirmar existencias y colores disponibles antes de comprometer pedidos.
 
 **Implementación técnica:** ver [`especificacion-tecnica.md`](especificacion-tecnica.md) §7 (`comun_comercio`).
 

@@ -33,7 +33,8 @@ import { ModalCrearProducto } from "./ModalCrearProducto";
 import { ModalCrearCategoria } from "./ModalCrearCategoria";
 import { ModalEditarProducto } from "./ModalEditarProducto";
 import { ManualConfiguracionCatalogoModal } from "./ManualConfiguracionCatalogoModal";
-import { BookOpen, Flower2, Wrench } from "lucide-react";
+import { TableroDisponibilidadOperativa } from "./TableroDisponibilidadOperativa";
+import { BookOpen, Flower2, Wrench, Activity, LayoutGrid } from "lucide-react";
 
 interface Props {
   negocio?: string;
@@ -42,6 +43,8 @@ interface Props {
 export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
   const esFloristeria = negocio === "tinkay" || negocio === "margaritas";
   const esMantenimiento = negocio === "fastfix";
+
+  const [pestanaActiva, setPestanaActiva] = useState<"catalogo" | "disponibilidad">("catalogo");
 
   const [productos, setProductos] = useState<ProductoCatalogo[]>([]);
   const [categoriasLista, setCategoriasLista] = useState<CategoriaCatalogo[]>([]);
@@ -314,14 +317,79 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
         </div>
       </div>
 
-      {/* Barra de Búsqueda y Filtros de Categoría */}
+      {/* Selector de Pestaña: Catálogo vs Disponibilidad Operativa */}
       <div
         style={{
-          background: "#FFFFFF",
-          border: "1px solid #E2E8F0",
-          borderRadius: "16px",
-          padding: "16px",
-          marginBottom: "24px",
+          display: "flex",
+          gap: "8px",
+          borderBottom: "1px solid #E2E8F0",
+          marginBottom: "20px",
+          paddingBottom: "8px",
+        }}
+      >
+        <button
+          type="button"
+          onClick={() => setPestanaActiva("catalogo")}
+          style={{
+            background: pestanaActiva === "catalogo" ? (esFloristeria ? "#E11D48" : "#0284C7") : "transparent",
+            color: pestanaActiva === "catalogo" ? "#FFFFFF" : "#64748B",
+            border: "none",
+            padding: "8px 16px",
+            borderRadius: "8px",
+            fontSize: "0.85rem",
+            fontWeight: 700,
+            cursor: "pointer",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "6px",
+            transition: "all 0.15s ease",
+          }}
+        >
+          <LayoutGrid size={15} />
+          <span>{esFloristeria ? "Catálogo y Diseños" : esMantenimiento ? "Servicios y Tarifas" : "Honorarios y Planes"}</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setPestanaActiva("disponibilidad")}
+          style={{
+            background: pestanaActiva === "disponibilidad" ? (esFloristeria ? "#E11D48" : "#0284C7") : "transparent",
+            color: pestanaActiva === "disponibilidad" ? "#FFFFFF" : "#64748B",
+            border: "none",
+            padding: "8px 16px",
+            borderRadius: "8px",
+            fontSize: "0.85rem",
+            fontWeight: 700,
+            cursor: "pointer",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "6px",
+            transition: "all 0.15s ease",
+          }}
+        >
+          <Activity size={15} />
+          <span>
+            {esFloristeria
+              ? "Disponibilidad Taller (Rosas y Papel)"
+              : esMantenimiento
+              ? "Cuadrillas y Zonas en Vivo"
+              : "Disponibilidad de Abogados"}
+          </span>
+        </button>
+      </div>
+
+      {pestanaActiva === "disponibilidad" ? (
+        <TableroDisponibilidadOperativa negocio={negocio} />
+      ) : (
+        <>
+          {/* Barra de Búsqueda y Filtros de Categoría */}
+          <div
+            style={{
+              background: "#FFFFFF",
+              border: "1px solid #E2E8F0",
+              borderRadius: "16px",
+              padding: "16px",
+              marginBottom: "24px",
           display: "flex",
           flexWrap: "wrap",
           alignItems: "center",
@@ -728,6 +796,8 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
             );
           })}
         </div>
+      )}
+      </>
       )}
 
       {/* Modal de Checkout Payphone */}

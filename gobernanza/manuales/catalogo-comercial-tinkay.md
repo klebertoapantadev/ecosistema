@@ -68,3 +68,42 @@ Seleccionar siempre el preset comercial que mejor represente el tiempo de atenci
 
 * El botón *"Contratar y Pagar con Payphone"* calcula automáticamente el desglose tributario ecuatoriano.
 * En el checkout se registra el pago con estado `APROBADO` o `PENDIENTE` en `comun_comercio.com_pago` y se genera el recibo con desglose de Base Imponible + IVA 15%.
+
+---
+
+## 6. Catálogo de Variedades de Rosas de Exportación (Floraroma SA)
+
+Para mantener una comunicación profesional con fincas y clientes, se utiliza la correspondencia entre **Nombre Formal de Variedad** y **Color Comercial Simple**:
+
+| Variedad Formal (Finca / Floraroma) | Color Comercial Simple | Características Visuales & Ocasión |
+| :--- | :--- | :--- |
+| **Explorer** | 🔴 Rojo Clásico Pasión | Botón grande, pétalos aterciopelados, sin espinas duras. Amor y aniversarios. |
+| **Mondial / Playa Blanca** | ⚪ Blanco Puro / Crema | Apertura simétrica y elegante. Bodas, aniversarios y condolencias solemnes. |
+| **Kahala** | 🍑 Durazno / Salmón Champagne | Tono pastel degradado vintage muy cotizado para ramos coreanos modernos. |
+| **Pink Floyd** | 🌸 Fucsia Neón Intenso | Botón extragrande y color muy vibrante. Cumpleaños y felicitaciones. |
+| **Cherry O** | 🌺 Fucsia Cereza Profundo | Tono cálido juvenil de larga duración en florero. |
+| **Movie Star** | 🌷 Rosado Suave Bicolor | Degradado blanco con bordes rosáceos delicados. |
+| **Hermosa / Sweet Unique** | 💗 Rosa Pastel Suave | Tono romántico delicado de alta demanda para quinceañeras y novias. |
+| **High & Magic** | 🟡🔴 Bicolor Amarillo con Borde Rojo | Enérgico, alegre y de gran contraste para agradecimientos. |
+
+---
+
+## 7. Diferencia entre Variantes de Producto vs. Opciones de Personalización
+
+1. **Variantes (SKU con Precio Diferente):**
+   - Corresponden estrictamente al **Tamaño / Cantidad de Tallos** (*Pequeño 12 rosas $25*, *Mediano 24 rosas $35*, *Grande 36 rosas $45*, *Gigante VIP 50 rosas $60*).
+2. **Opciones de Personalización (Sin costo adicional o con extras fijos):**
+   - **Colores de Rosas:** Selección de hasta 2 variedades de rosas según la **Disponibilidad en Vivo del Taller** (ej. *12 Explorer Rojo + 12 Mondial Blanco*).
+   - **Papel Decorativo Coreano Impermeable:** Selección del color de envoltura (*Blanco Nieve, Negro Elegance, Rosado Pastel, Azul Celeste, Verde Olivo*).
+
+---
+
+## 8. Tablero de Disponibilidad Diaria y Conteo en Taller (Rutina de 30 Segundos)
+
+Cada mañana o al recibir el flete de la finca en paquetes de **25 tallos (1 bonche)**:
+
+1. El florista abre el **Tablero de Disponibilidad en Vivo** en `/panel/comercio` (o catálogo).
+2. Mira los baldes de agua en taller y cuenta los paquetes:
+   - Con los botones `[ - ]` y `[ + ]`, sube o baja los bonches disponibles (ej. `Explorer: 10 bonches`, `Kahala: 3 bonches`, `Mondial: 5 bonches`).
+3. Si un color de papel o rosa se termina, presiona el botón rojo `🔴 Agotado`.
+4. Al instante, **ARIA en WhatsApp** y la **tienda web** actualizan su inventario para no ofrecer rosas agotadas.

@@ -32,3 +32,20 @@ En FastFix Home el catálogo administra **visitas técnicas de diagnóstico, rep
 * **Categoría:** `Planes Preventivos`
 * **Tipo de Oferta:** `Suscripción / Plan Periódico` (`SUSCRIPCION`)
 * **Tarifa Semestral:** Base $52.1739 + IVA 15% ($7.83) = **$60.00 / semestre**.
+
+---
+
+## 3. Cuadrillas Técnicas y Cobertura Territorial por Zonas
+
+Para asegurar los tiempos de respuesta de emergencia (45 a 60 min), los servicios se distribuyen por cuadrillas asignadas a zonas estratégicas:
+* **Quito Norte:** Cumbayá, Tumbaco, Monteserrín, Ponceano, El Condado.
+* **Quito Centro / Sur:** La Floresta, González Suárez, Villaflora, Chimbacalle, Quitumbe.
+* **Valles de Los Chillos & Tumbaco:** San Rafael, Conocoto, Sangolquí, Puembo.
+
+---
+
+## 4. Tablero de Disponibilidad de Cuadrillas en Vivo (ARIA MCP)
+
+Los despachadores de FastFix controlan en tiempo real:
+* **Cuadrillas Activas y Libres:** Ajuste ágil con `[ - ] / [ + ]` de técnicos disponibles en calle.
+* **Bot ARIA / WhatsApp de Emergencias:** Consulta el tablero de cuadrillas antes de comprometer una visita de emergencia inmediata de gasfitería, cerrajería o electricidad.

@@ -51,6 +51,22 @@ export interface VarianteCatalogo {
   precio_total: number;
 }
 
+export interface ItemDisponibilidadOperativa {
+  id: string;
+  negocio: string;
+  codigo: string;
+  nombre: string;
+  nombre_secundario?: string;
+  categoria_tipo: "ROSAS" | "ENVOLTORIO" | "HORAS_PROFESIONAL" | "CUADRILLA_TECNICA" | "INSUMO_GENERAL";
+  unidad: "BONCHE" | "TALLO" | "PLIEGO" | "HORA" | "CUADRILLA" | "UNIDAD";
+  cantidad_disponible: number;
+  estado: "DISPONIBLE" | "BAJO" | "AGOTADO";
+  color_hex?: string;
+  color_nombre?: string;
+  imagen_url?: string;
+  detalle?: any;
+}
+
 export interface ConfiguracionPasarela {
   psc_id?: string;
   psc_negocio: string;
@@ -2556,5 +2572,361 @@ export async function obtenerHistorialTransaccionesAction(negocio = "tranqi"): P
     return dPub || [];
   } catch {
     return [];
+  }
+}
+
+// ==============================================================================
+// 7. GESTIÓN DE DISPONIBILIDAD OPERATIVA MULTINEGOCIO (INVENTARIO & CAPACIDAD)
+// ==============================================================================
+
+const DISPONIBILIDAD_SEMILLA_TINKAY: ItemDisponibilidadOperativa[] = [
+  {
+    id: "disp-tnk-rojo",
+    negocio: "tinkay",
+    codigo: "ROSA-ROJO-EXPLORER",
+    nombre: "Rojo Pasión (Explorer)",
+    nombre_secundario: "Explorer / Freedom (Floraroma)",
+    categoria_tipo: "ROSAS",
+    unidad: "BONCHE",
+    cantidad_disponible: 12,
+    estado: "DISPONIBLE",
+    color_hex: "#DC2626",
+    color_nombre: "Rojo Pasión",
+    imagen_url: "https://photos.app.goo.gl/tinkay-bouq-coreano",
+    detalle: { tallos_por_bonche: 25 },
+  },
+  {
+    id: "disp-tnk-blanco",
+    negocio: "tinkay",
+    codigo: "ROSA-BLANCO-MONDIAL",
+    nombre: "Blanco Puro (Mondial)",
+    nombre_secundario: "Mondial / Playa Blanca",
+    categoria_tipo: "ROSAS",
+    unidad: "BONCHE",
+    cantidad_disponible: 8,
+    estado: "DISPONIBLE",
+    color_hex: "#F8FAFC",
+    color_nombre: "Blanco Puro",
+    imagen_url: "https://photos.app.goo.gl/tinkay-bouq-florero",
+    detalle: { tallos_por_bonche: 25 },
+  },
+  {
+    id: "disp-tnk-rosa",
+    negocio: "tinkay",
+    codigo: "ROSA-ROSA-HERMOSA",
+    nombre: "Rosado Pastel (Hermosa)",
+    nombre_secundario: "Sweet Unique / Hermosa",
+    categoria_tipo: "ROSAS",
+    unidad: "BONCHE",
+    cantidad_disponible: 9,
+    estado: "DISPONIBLE",
+    color_hex: "#F472B6",
+    color_nombre: "Rosado Pastel",
+    detalle: { tallos_por_bonche: 25 },
+  },
+  {
+    id: "disp-tnk-fucsia",
+    negocio: "tinkay",
+    codigo: "ROSA-FUCSIA-PINKFLOYD",
+    nombre: "Fucsia Vibrante (Pink Floyd)",
+    nombre_secundario: "Pink Floyd / Lola",
+    categoria_tipo: "ROSAS",
+    unidad: "BONCHE",
+    cantidad_disponible: 5,
+    estado: "DISPONIBLE",
+    color_hex: "#DB2777",
+    color_nombre: "Fucsia Vibrante",
+    detalle: { tallos_por_bonche: 25 },
+  },
+  {
+    id: "disp-tnk-durazno",
+    negocio: "tinkay",
+    codigo: "ROSA-DURAZNO-KAHALA",
+    nombre: "Durazno / Salmón (Kahala)",
+    nombre_secundario: "Kahala / Free Spirit",
+    categoria_tipo: "ROSAS",
+    unidad: "BONCHE",
+    cantidad_disponible: 2,
+    estado: "BAJO",
+    color_hex: "#FB923C",
+    color_nombre: "Durazno Vintage",
+    detalle: { tallos_por_bonche: 25 },
+  },
+  {
+    id: "disp-tnk-amarillo",
+    negocio: "tinkay",
+    codigo: "ROSA-AMARILLO-BRIGHTON",
+    nombre: "Amarillo Sol (Brighton)",
+    nombre_secundario: "Brighton / Bumblebee",
+    categoria_tipo: "ROSAS",
+    unidad: "BONCHE",
+    cantidad_disponible: 3,
+    estado: "BAJO",
+    color_hex: "#FACC15",
+    color_nombre: "Amarillo Sol",
+    detalle: { tallos_por_bonche: 25 },
+  },
+  {
+    id: "disp-tnk-lila",
+    negocio: "tinkay",
+    codigo: "ROSA-LILA-COOLWATER",
+    nombre: "Lavanda / Lila (Cool Water)",
+    nombre_secundario: "Cool Water / Ocean Song",
+    categoria_tipo: "ROSAS",
+    unidad: "BONCHE",
+    cantidad_disponible: 0,
+    estado: "AGOTADO",
+    color_hex: "#C084FC",
+    color_nombre: "Lavanda Elegance",
+    detalle: { tallos_por_bonche: 25 },
+  },
+  // Envoltorios Coreanos
+  {
+    id: "disp-tnk-papel-negro",
+    negocio: "tinkay",
+    codigo: "PAPEL-NEGRO-ELEGANCE",
+    nombre: "Envoltorio Negro Elegance",
+    categoria_tipo: "ENVOLTORIO",
+    unidad: "PLIEGO",
+    cantidad_disponible: 50,
+    estado: "DISPONIBLE",
+    color_hex: "#1E293B",
+    color_nombre: "Negro Elegance",
+  },
+  {
+    id: "disp-tnk-papel-blanco",
+    negocio: "tinkay",
+    codigo: "PAPEL-BLANCO-NIEVE",
+    nombre: "Envoltorio Blanco Nieve",
+    categoria_tipo: "ENVOLTORIO",
+    unidad: "PLIEGO",
+    cantidad_disponible: 45,
+    estado: "DISPONIBLE",
+    color_hex: "#FFFFFF",
+    color_nombre: "Blanco Nieve",
+  },
+  {
+    id: "disp-tnk-papel-rosa",
+    negocio: "tinkay",
+    codigo: "PAPEL-ROSA-BLUSH",
+    nombre: "Envoltorio Tonos Rosados / Blush",
+    categoria_tipo: "ENVOLTORIO",
+    unidad: "PLIEGO",
+    cantidad_disponible: 40,
+    estado: "DISPONIBLE",
+    color_hex: "#FBCFE8",
+    color_nombre: "Rosa Blush",
+  },
+  {
+    id: "disp-tnk-papel-azul",
+    negocio: "tinkay",
+    codigo: "PAPEL-AZUL-NOCHE",
+    nombre: "Envoltorio Azul Noche",
+    categoria_tipo: "ENVOLTORIO",
+    unidad: "PLIEGO",
+    cantidad_disponible: 20,
+    estado: "DISPONIBLE",
+    color_hex: "#1E40AF",
+    color_nombre: "Azul Noche",
+  },
+  {
+    id: "disp-tnk-papel-verde",
+    negocio: "tinkay",
+    codigo: "PAPEL-VERDE-BOTANICO",
+    nombre: "Envoltorio Verde Botánico",
+    categoria_tipo: "ENVOLTORIO",
+    unidad: "PLIEGO",
+    cantidad_disponible: 30,
+    estado: "DISPONIBLE",
+    color_hex: "#16A34A",
+    color_nombre: "Verde Botánico",
+  },
+];
+
+const DISPONIBILIDAD_SEMILLA_TRANQI: ItemDisponibilidadOperativa[] = [
+  {
+    id: "disp-trq-senior-corp",
+    negocio: "tranqi",
+    codigo: "ABG-SENIOR-CORP",
+    nombre: "Abogado Senior (Derecho Societario & PYMEs)",
+    categoria_tipo: "HORAS_PROFESIONAL",
+    unidad: "HORA",
+    cantidad_disponible: 8,
+    estado: "DISPONIBLE",
+    detalle: { tarifa_hora: 80.0, especialidad: "Societario" },
+  },
+  {
+    id: "disp-trq-esp-familia",
+    negocio: "tranqi",
+    codigo: "ABG-ESP-FAMILIA",
+    nombre: "Abogada Especialista (Familia, Divorcios, Niñez)",
+    categoria_tipo: "HORAS_PROFESIONAL",
+    unidad: "HORA",
+    cantidad_disponible: 6,
+    estado: "DISPONIBLE",
+    detalle: { tarifa_hora: 60.0, especialidad: "Familia" },
+  },
+  {
+    id: "disp-trq-socio-litigio",
+    negocio: "tranqi",
+    codigo: "ABG-SOCIO-LITIGIO",
+    nombre: "Socio Director (Litigios Complejos & Casación)",
+    categoria_tipo: "HORAS_PROFESIONAL",
+    unidad: "HORA",
+    cantidad_disponible: 2,
+    estado: "BAJO",
+    detalle: { tarifa_hora: 150.0, especialidad: "Litigios" },
+  },
+  {
+    id: "disp-trq-junior-minutas",
+    negocio: "tranqi",
+    codigo: "ABG-JUN-MINUTAS",
+    nombre: "Abogado Junior (Redacción de Minutas & Contratos)",
+    categoria_tipo: "HORAS_PROFESIONAL",
+    unidad: "HORA",
+    cantidad_disponible: 14,
+    estado: "DISPONIBLE",
+    detalle: { tarifa_hora: 35.0, especialidad: "Contractual" },
+  },
+];
+
+const DISPONIBILIDAD_SEMILLA_FASTFIX: ItemDisponibilidadOperativa[] = [
+  {
+    id: "disp-ffh-plomeria-norte",
+    negocio: "fastfix",
+    codigo: "TEC-PLOM-NORTE",
+    nombre: "Cuadrilla Plomería & Fugas (Quito Norte)",
+    categoria_tipo: "CUADRILLA_TECNICA",
+    unidad: "CUADRILLA",
+    cantidad_disponible: 3,
+    estado: "DISPONIBLE",
+    detalle: { tiempo_llegada: "45-60 min", zona: "Quito Norte" },
+  },
+  {
+    id: "disp-ffh-elec-valles",
+    negocio: "fastfix",
+    codigo: "TEC-ELEC-VALLES",
+    nombre: "Cuadrilla Electricidad & Tableros (Cumbayá & Tumbaco)",
+    categoria_tipo: "CUADRILLA_TECNICA",
+    unidad: "CUADRILLA",
+    cantidad_disponible: 2,
+    estado: "DISPONIBLE",
+    detalle: { tiempo_llegada: "45 min", zona: "Valles" },
+  },
+  {
+    id: "disp-ffh-urgencia-247",
+    negocio: "fastfix",
+    codigo: "TEC-URG-247",
+    nombre: "Cuadrilla de Emergencias 24/7 (Quito Centro & Sur)",
+    categoria_tipo: "CUADRILLA_TECNICA",
+    unidad: "CUADRILLA",
+    cantidad_disponible: 1,
+    estado: "BAJO",
+    detalle: { tiempo_llegada: "60 min", zona: "Centro/Sur" },
+  },
+];
+
+const storeDisponibilidad = new Map<string, ItemDisponibilidadOperativa[]>();
+
+/**
+ * Obtiene la lista de disponibilidad operativa e inventario del negocio
+ */
+export async function obtenerDisponibilidadOperativaAction(
+  negocio = "tranqi"
+): Promise<ItemDisponibilidadOperativa[]> {
+  const admin: any = crearClienteAdmin();
+  const supabase: any = await crearClienteServidor();
+  const clienteActivo = admin || supabase;
+
+  let dbItems: any[] = [];
+  if (clienteActivo) {
+    try {
+      const { data } = await clienteActivo
+        .schema("comun_comercio")
+        .from("com_inventario")
+        .select("*, com_insumo(*)")
+        .eq("inv_negocio", negocio);
+
+      if (data && data.length > 0) {
+        dbItems = data.map((d: any) => ({
+          id: d.inv_id,
+          negocio: d.inv_negocio,
+          codigo: d.com_insumo?.ins_codigo || d.inv_insumo_id,
+          nombre: d.com_insumo?.ins_nombre || "Insumo",
+          categoria_tipo: d.com_insumo?.ins_detalle_insumo?.categoria_tipo || "INSUMO_GENERAL",
+          unidad: d.com_insumo?.ins_unidad_medida || "UNIDAD",
+          cantidad_disponible: Number(d.inv_stock_actual || 0),
+          estado:
+            Number(d.inv_stock_actual || 0) <= 0
+              ? "AGOTADO"
+              : Number(d.inv_stock_actual || 0) <= 3
+              ? "BAJO"
+              : "DISPONIBLE",
+          color_hex: d.com_insumo?.ins_detalle_insumo?.color_hex,
+          color_nombre: d.com_insumo?.ins_detalle_insumo?.color_nombre,
+          detalle: d.com_insumo?.ins_detalle_insumo,
+        }));
+      }
+    } catch {
+      // Fallback
+    }
+  }
+
+  const semillas =
+    negocio === "tinkay"
+      ? DISPONIBILIDAD_SEMILLA_TINKAY
+      : negocio === "tranqi"
+      ? DISPONIBILIDAD_SEMILLA_TRANQI
+      : negocio === "fastfix"
+      ? DISPONIBILIDAD_SEMILLA_FASTFIX
+      : DISPONIBILIDAD_SEMILLA_TINKAY;
+
+  const base = dbItems.length > 0 ? dbItems : semillas;
+  const enMemoria = storeDisponibilidad.get(negocio);
+
+  return enMemoria || base;
+}
+
+/**
+ * Actualiza la cantidad o estado de un ítem de disponibilidad en taller/despacho
+ */
+export async function actualizarDisponibilidadOperativaAction(
+  negocio: string,
+  itemsActualizados: ItemDisponibilidadOperativa[]
+): Promise<{ ok: boolean; items?: ItemDisponibilidadOperativa[]; error?: string }> {
+  try {
+    storeDisponibilidad.set(negocio, itemsActualizados);
+
+    const admin: any = crearClienteAdmin();
+    const supabase: any = await crearClienteServidor();
+    const clienteActivo = admin || supabase;
+
+    if (clienteActivo) {
+      for (const it of itemsActualizados) {
+        try {
+          // Intentar persistir en Supabase
+          await clienteActivo
+            .schema("comun_comercio")
+            .from("com_inventario")
+            .upsert(
+              {
+                inv_negocio: negocio,
+                inv_local_codigo: "MATRIZ",
+                inv_stock_actual: it.cantidad_disponible,
+                inv_actualizado_en: new Date().toISOString(),
+              },
+              { onConflict: "inv_negocio, inv_insumo_id, inv_local_codigo" }
+            );
+        } catch {
+          // Continuar
+        }
+      }
+    }
+
+    revalidatePath("/panel");
+    revalidatePath("/panel/catalogo-productos");
+    return { ok: true, items: itemsActualizados };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Error al actualizar disponibilidad." };
   }
 }

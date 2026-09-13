@@ -40,3 +40,23 @@ En Tranqi el catálogo comercial administra la **oferta de servicios jurídicos,
 En Tranqi es mandatorio registrar:
 * **Requisitos del Cliente:** Documentación habilitante obligatoria (cédulas, poderes, minutas previas).
 * **Beneficios / Alcance:** Asignación de abogado especialista acreditado, revisión preliminar y constancia con firma electrónica.
+
+---
+
+## 4. Estructura de Tarifas por Seniority Profesional y Segmentación de Clientes
+
+En servicios de consultoría y patrocinio judicial, las variantes se configuran por el **Nivel de Seniority del Abogado** o por el **Segmento de Cliente**:
+
+| Nivel de Abogado / Tarifa | Base Imponible ($) | IVA 15% ($) | PVP Total ($) | Alcance del Servicio |
+| :--- | :--- | :--- | :--- | :--- |
+| **Abogado Junior / Asociado** | $39.1304 | $5.87 | **$45.00 / hora** | Revisión documental, minutas simples y consultas generales. |
+| **Abogado Senior Especialista** | $65.2174 | $9.78 | **$75.00 / hora** | Audiencias, dictámenes periciales y contratos complejos. |
+| **Socio Líder / Director de Firma** | $104.3478 | $15.65 | **$120.00 / hora** | Estrategia de litigio de alto impacto y arbitraje corporativo. |
+
+---
+
+## 5. Tablero de Disponibilidad de Horas de Consulta (ARIA MCP)
+
+Los abogados y coordinadores jurídicos gestionan la disponibilidad diaria de slots de consulta en `/panel/comercio`:
+* Conteo de **Horas Libres Disponibles Hoy** por especialidad (Civil, Laboral, Corporativo, Penal).
+* El bot **ARIA Legal** consulta estos cupos en vivo para agendar citas telemáticas o presenciales sin traslapes.

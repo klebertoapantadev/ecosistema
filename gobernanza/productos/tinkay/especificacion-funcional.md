@@ -23,7 +23,7 @@ responsable: Kleber Toapanta
 | **`TNK-002`** | **E-Commerce Web, Carrito y Pasarela Payphone** | 🟡 En Desarrollo | **50%** | Kleber Toapanta |
 | **`TNK-003`** | **Vendedoras, Enlaces Ref y Comisiones Netas** | 🟡 En Desarrollo | **60%** | Kleber Toapanta |
 | **`TNK-004`** | **Agente ARIA WhatsApp (YCloud) y Consola Humana (HITL)** | 🟡 En Desarrollo | **55%** | Kleber Toapanta |
-| **`TNK-005`** | **Taller de Armado Floral, Hoja de Ruta y Despacho Delivery** | ⏳ Pendiente | **0%** | Kleber Toapanta |
+| **`TNK-005`** | **Taller de Armado Floral, Inventario de Bonches y Despacho Delivery** | 🟡 En Desarrollo | **75%** | Kleber Toapanta |
 
 ---
 
@@ -44,13 +44,13 @@ Tinkay se apoya plenamente en la arquitectura de Plataforma común:
 - **Definición completa:** [`catalogo-productos.md`](catalogo-productos.md).
 - **Semillas y Datos en BD:** Migración [`20260907000003_tinkay_catalogo_productos_semilla_y_aria.sql`](file:///c:/@Antigravity/ecosistema/supabase/migrations/20260907000003_tinkay_catalogo_productos_semilla_y_aria.sql).
 - **Taxonomía N:M:** Un mismo arreglo pertenece simultáneamente a múltiples categorías (`com_producto_categoria`) según Formato (`CAT_FLOREROS`, `CAT_COREANOS`, `CAT_ABANICOS`) y Ocasión (`CAT_OCAS_AMOR`, `CAT_OCAS_ANIV`, `CAT_OCAS_CUMPLE`, `CAT_OCAS_CONDOL`, `CAT_EVENTOS`).
-- **Álbumes Públicos de Google Photos:** Cada producto y categoría enlaza a su álbum de fotos reales del taller en alta resolución (`photos.app.goo.gl/...`) para inspección inmediata del cliente.
+- **Álbumes Públicos de Google Photos & Multimedia:** Cada producto y categoría enlaza a su álbum de fotos reales del taller en alta resolución (`photos.app.goo.gl/...`), video demostrativo/GIF y galería desde distintos ángulos para inspección inmediata del cliente.
 - **Manejo Monetario:** Precios almacenados en base imponible sin IVA con 4 decimales (`var_precio = PVP / 1.15`), tarifa del 15% (`var_tarifa_iva_porcentaje`) y PVP nominal precalculado.
 
 ### TNK-002 — E-Commerce Web, Carrito y Pasarela Payphone
 - **Vitrina Web:** `apps/tinkay-web` con diseño editorial botánico según [`sistema-visual.md`](sistema-visual.md).
 - **Cajita de Pagos Payphone:** Configuración de pasarela registrada en `comun_comercio.com_pasarela_configuracion` (modo pruebas / simulado habilitado).
-- **Parámetros de Entrega:** Selección de dedicatoria impresa, fecha y franja horaria (Mañana / Tarde / Horario Exacto +$10.00).
+- **Parámetros de Entrega:** Selección de dedicatoria impresa, fecha y franja horaria (⚡ Entrega Express 45-90 min / 🌸 Pide hoy, recibe hoy / 📅 Agenda programada).
 
 ### TNK-003 — Gestión de Vendedoras y Liquidación Automatizada de Comisiones
 - **Enlaces con Atribución:** Cada asesora cuenta con enlaces y QR únicos (`tinkay.com/chat?asesora=paola`) para atribución de la conversación y venta.
@@ -60,12 +60,16 @@ Tinkay se apoya plenamente en la arquitectura de Plataforma común:
 ### TNK-004 — Agente ARIA WhatsApp (YCloud) y Consola de Supervisión Humana (*Human-in-the-Loop*)
 - **Definición completa:** [`agente-aria-whatsapp-ycloud.md`](agente-aria-whatsapp-ycloud.md).
 - **Sustitución de ManyChat:** Transición integral hacia **YCloud** (WhatsApp Cloud API) orquestado por el agente conversacional **ARIA** (`packages/agentes-ia`).
-- **Agente "Mía":** Asesora floral botánica con prompt especializado, tono refinado, manejo solemne de condolencias y búsqueda de catálogo vía MCP tool `consultar_catalogo_tinkay`.
+- **Agente "Mía":** Asesora floral botánica con prompt especializado, tono refinado, manejo solemne de condolencias, consulta de catálogo vía MCP tool `consultar_catalogo_tinkay` y consulta de existencias en vivo de rosas y papel decorativo.
 - **Suministro de Catálogo Conversacional (RPC):** Implementada la función `tinkay_floristeria.tnk_fn_buscar_catalogo_conversacional()` con filtrado multidimensional por ocasión, formato, presupuesto en USD y términos de búsqueda, retornando variantes con PVP y links de Google Photos.
 - **Almacenamiento de Chats:** Persistencia en `comun_agentes.agc_conversacion` y `comun_agentes.agc_mensaje` con Supabase Realtime para la consola de monitoreo.
 - **Consola de Supervisión Humana (HITL):** Widget donde las vendedoras monitorean los chats en vivo, conmutan a modo manual con el botón **[ Tomar Control ]** (silenciando a ARIA) y pueden **[ Reactivar Bot ]** tras resolver la consulta puntual.
 
-### TNK-005 — Taller de Armado Floral, Hoja de Ruta y Despacho Delivery
-- **Pantalla de Taller:** Al confirmarse el pago (vía Payphone o transferencia validada), el pedido ingresa a la cola de armado del taller floral con su receta botánica (BOM) y dedicatoria.
+### TNK-005 — Taller de Armado Floral, Inventario de Bonches y Despacho Delivery
+- **Tablero de Disponibilidad Diaria en 30 Segundos (`TableroDisponibilidadOperativa.tsx`):**
+  - Conteo directo de paquetes/bonches de 25 tallos por variedad formal de rosas (*Explorer Rojo, Mondial Blanco, Kahala Durazno, Pink Floyd Fucsia, Cherry O Fucsia, Movie Star Bicolor, Hermosa Rosa Suave, High & Magic, Playa Blanca*) y colores de papel decorativo (*Blanco, Negro, Rosa, Azul, Verde*).
+  - Botones rápidos `[ - ] / [ + ]` y toggles de estado (`🟢 Disponible`, `🟡 Pocas unidades`, `🔴 Agotado`) para que el florista en taller actualice la vitrina en 30 segundos sin planillas complejas.
+  - Sincronización instantánea con el agente ARIA en WhatsApp para ofrecer únicamente combinaciones disponibles en taller.
+- **Pantalla de Taller y Receta (BOM):** Al confirmarse el pago (vía Payphone o transferencia validada), el pedido ingresa a la cola de armado del taller floral con su receta botánica (BOM) y dedicatoria.
 - **Directorio de Delivery:** Asignación de repartidor según zona de Quito / Valles.
 - **Proof of Delivery (POD):** Registro obligatorio de fotografía de entrega al destinatario para cierre de orden y notificación al comprador.
