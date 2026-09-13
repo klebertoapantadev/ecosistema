@@ -12,6 +12,7 @@ export interface CategoriaCatalogo {
   ctg_tipo: string;
   ctg_orden: number;
   ctg_activo: boolean;
+  ctg_detalle_categoria?: any;
 }
 
 export interface ProductoCatalogo {
@@ -1382,6 +1383,9 @@ export async function crearCategoriaAction(datos: {
   descripcion?: string;
   tipo?: string;
   orden?: number;
+  imagenUrl?: string;
+  albumFotosUrl?: string;
+  icono?: string;
   negocio?: string;
 }): Promise<{ ok: boolean; categoria?: CategoriaCatalogo; error?: string }> {
   try {
@@ -1393,6 +1397,11 @@ export async function crearCategoriaAction(datos: {
 
     const slug = datos.slug?.trim() || generarSlug(nombre);
     const catId = `cat-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
+    const detalle = {
+      imagen_url: datos.imagenUrl?.trim() || null,
+      album_fotos_url: datos.albumFotosUrl?.trim() || null,
+      icono: datos.icono?.trim() || null,
+    };
 
     const nuevaCat: CategoriaCatalogo = {
       ctg_id: catId,
@@ -1403,6 +1412,7 @@ export async function crearCategoriaAction(datos: {
       ctg_tipo: datos.tipo || "FORMATO",
       ctg_orden: datos.orden || 10,
       ctg_activo: true,
+      ctg_detalle_categoria: detalle,
     };
 
     // 1. Intentar persistir en Supabase
@@ -1424,6 +1434,7 @@ export async function crearCategoriaAction(datos: {
               ctg_tipo: datos.tipo || "FORMATO",
               ctg_orden: datos.orden || 10,
               ctg_activo: true,
+              ctg_detalle_categoria: detalle,
             },
             { onConflict: "ctg_negocio, ctg_slug" }
           );
@@ -1438,11 +1449,12 @@ export async function crearCategoriaAction(datos: {
               ctg_tipo: datos.tipo || "FORMATO",
               ctg_orden: datos.orden || 10,
               ctg_activo: true,
+              ctg_detalle_categoria: detalle,
             },
             { onConflict: "ctg_negocio, ctg_slug" }
           );
         } catch {
-          // Guardar en memoria
+          // Continuar
         }
       }
     }
@@ -1632,7 +1644,7 @@ export async function crearProductoAction(datos: {
 }
 
 /**
- * Edita un producto u honorario profesional existente
+ * Edita un producto u honorario profesional existente con soporte para edición multivariante
  */
 export async function editarProductoAction(datos: {
   pro_id: string;
@@ -1641,33 +1653,38 @@ export async function editarProductoAction(datos: {
   categoriaId?: string;
   tipo: "FISICO" | "SERVICIO" | "SUSCRIPCION" | "DIGITAL";
   destacado?: boolean;
-  precioBase: number;
+  precioBase?: number;
   tarifaIva?: number; // 15 o 0
   sku?: string;
-  icono?: "Scale" | "ShieldCheck" | "FileCheck" | "CreditCard";
+  icono?: string;
   imagenUrl?: string;
+  albumFotosUrl?: string;
   videoUrl?: string;
+  galeriaUrls?: string[];
   beneficios?: string[];
   tiempoEntrega?: string;
   requisitos?: string[];
   modalidadPago?: string;
   varianteId?: string;
+  variantes?: Array<{
+    var_id?: string;
+    var_sku?: string;
+    var_nombre: string;
+    var_precio: number;
+    var_precio_comparacion?: number | null;
+    var_tarifa_iva_porcentaje?: number;
+    var_codigo_impuesto_sri?: string;
+    var_detalle_variante?: any;
+    var_activo?: boolean;
+  }>;
   negocio?: string;
 }): Promise<{ ok: boolean; producto?: ProductoCatalogo; error?: string }> {
   try {
     const negocio = datos.negocio || "tranqi";
     const nombre = datos.nombre.trim();
     if (!nombre) {
-      return { ok: false, error: "El nombre del producto u honorario es obligatorio." };
+      return { ok: false, error: "El nombre del producto es obligatorio." };
     }
-    if (datos.precioBase <= 0) {
-      return { ok: false, error: "El precio base debe ser mayor a cero." };
-    }
-
-    const base = Number(datos.precioBase.toFixed(2));
-    const tarifaIva = datos.tarifaIva ?? 15;
-    const montoIva = Number(((base * tarifaIva) / 100).toFixed(2));
-    const total = Number((base + montoIva).toFixed(2));
 
     const cats = await obtenerCategoriasAction(negocio);
     const cat = cats.find((c) => c.ctg_id === datos.categoriaId) || null;
@@ -1679,41 +1696,82 @@ export async function editarProductoAction(datos: {
       return { ok: false, error: "Producto no encontrado para editar." };
     }
 
-    // Actualizar variantes (modificar la variante seleccionada o la primera)
-    const variantesActualizadas: VarianteCatalogo[] = prodActual.variantes.map((v, idx) => {
-      const esTarget = datos.varianteId ? v.var_id === datos.varianteId : idx === 0;
-      if (!esTarget) return v;
+    let variantesActualizadas: VarianteCatalogo[] = [];
 
-      return {
-        ...v,
-        var_nombre: `${nombre} (Tarifa Estándar)`,
-        var_sku: datos.sku?.trim() || v.var_sku,
-        var_precio: base,
-        var_tarifa_iva_porcentaje: tarifaIva,
-        var_codigo_impuesto_sri: tarifaIva > 0 ? "IVA_15" : "IVA_0",
-        var_detalle_variante: {
-          ...v.var_detalle_variante,
-          modalidad_pago: datos.modalidadPago || v.var_detalle_variante?.modalidad_pago,
-        },
-        monto_iva: montoIva,
-        precio_total: total,
-      };
-    });
+    if (datos.variantes && datos.variantes.length > 0) {
+      // 1. Caso: Se envió la lista completa de variantes desde el editor multivariante
+      variantesActualizadas = datos.variantes.map((v, idx) => {
+        const base = Number(Number(v.var_precio || 0).toFixed(4));
+        const ivaPorc = v.var_tarifa_iva_porcentaje ?? 15;
+        const montoIva = Number(((base * ivaPorc) / 100).toFixed(2));
+        const total = Number((base + montoIva).toFixed(2));
+
+        return {
+          var_id: v.var_id || `var-${Date.now()}-${idx}`,
+          var_producto_id: datos.pro_id,
+          var_sku: v.var_sku?.trim() || `${negocio.toUpperCase().substring(0, 3)}-VAR-${Date.now()}-${idx}`,
+          var_nombre: v.var_nombre.trim() || `${nombre} - Opción ${idx + 1}`,
+          var_precio: base,
+          var_precio_comparacion: v.var_precio_comparacion ? Number(v.var_precio_comparacion) : null,
+          var_codigo_impuesto_sri: ivaPorc > 0 ? "IVA_15" : "IVA_0",
+          var_tarifa_iva_porcentaje: ivaPorc,
+          var_tipo_oferta: "REGULAR",
+          var_frecuencia_recurrencia: datos.tipo === "SUSCRIPCION" ? "MENSUAL" : null,
+          var_activo: v.var_activo !== false,
+          var_detalle_variante: {
+            ...(v.var_detalle_variante || {}),
+            modalidad_pago: datos.modalidadPago || v.var_detalle_variante?.modalidad_pago,
+          },
+          monto_iva: montoIva,
+          precio_total: total,
+        };
+      });
+    } else if (datos.precioBase !== undefined && datos.precioBase > 0) {
+      // 2. Caso clásico: Se editó una tarifa base o una variante puntual
+      const base = Number(datos.precioBase.toFixed(4));
+      const tarifaIva = datos.tarifaIva ?? 15;
+      const montoIva = Number(((base * tarifaIva) / 100).toFixed(2));
+      const total = Number((base + montoIva).toFixed(2));
+
+      variantesActualizadas = prodActual.variantes.map((v, idx) => {
+        const esTarget = datos.varianteId ? v.var_id === datos.varianteId : idx === 0;
+        if (!esTarget) return v;
+
+        return {
+          ...v,
+          var_sku: datos.sku?.trim() || v.var_sku,
+          var_precio: base,
+          var_tarifa_iva_porcentaje: tarifaIva,
+          var_codigo_impuesto_sri: tarifaIva > 0 ? "IVA_15" : "IVA_0",
+          var_detalle_variante: {
+            ...v.var_detalle_variante,
+            modalidad_pago: datos.modalidadPago || v.var_detalle_variante?.modalidad_pago,
+          },
+          monto_iva: montoIva,
+          precio_total: total,
+        };
+      });
+    } else {
+      variantesActualizadas = [...prodActual.variantes];
+    }
 
     if (variantesActualizadas.length === 0) {
+      const base = 10;
+      const tarifaIva = 15;
+      const montoIva = 1.5;
       variantesActualizadas.push({
         var_id: `var-${Date.now()}`,
         var_producto_id: datos.pro_id,
-        var_sku: datos.sku?.trim() || `TRQ-VAR-${Date.now()}`,
-        var_nombre: `${nombre} (Tarifa Estándar)`,
+        var_sku: datos.sku?.trim() || `${negocio.toUpperCase().substring(0, 3)}-VAR-${Date.now()}`,
+        var_nombre: `${nombre} (Estándar)`,
         var_precio: base,
-        var_codigo_impuesto_sri: tarifaIva > 0 ? "IVA_15" : "IVA_0",
+        var_codigo_impuesto_sri: "IVA_15",
         var_tarifa_iva_porcentaje: tarifaIva,
         var_tipo_oferta: "REGULAR",
         var_activo: true,
         var_detalle_variante: { modalidad_pago: datos.modalidadPago },
         monto_iva: montoIva,
-        precio_total: total,
+        precio_total: base + montoIva,
       });
     }
 
@@ -1726,9 +1784,11 @@ export async function editarProductoAction(datos: {
       pro_categoria_principal_id: cat?.ctg_id || prodActual.pro_categoria_principal_id,
       pro_detalle_producto: {
         ...prodActual.pro_detalle_producto,
-        icono: datos.icono || prodActual.pro_detalle_producto?.icono || "Scale",
+        icono: datos.icono || prodActual.pro_detalle_producto?.icono || "Sparkles",
         imagen_url: datos.imagenUrl !== undefined ? datos.imagenUrl.trim() : prodActual.pro_detalle_producto?.imagen_url,
+        album_fotos_url: datos.albumFotosUrl !== undefined ? datos.albumFotosUrl.trim() : prodActual.pro_detalle_producto?.album_fotos_url,
         video_url: datos.videoUrl !== undefined ? datos.videoUrl.trim() : prodActual.pro_detalle_producto?.video_url,
+        galeria_urls: datos.galeriaUrls !== undefined ? datos.galeriaUrls : prodActual.pro_detalle_producto?.galeria_urls,
         beneficios: datos.beneficios !== undefined ? datos.beneficios : prodActual.pro_detalle_producto?.beneficios,
         tiempo_entrega: datos.tiempoEntrega !== undefined ? datos.tiempoEntrega.trim() : prodActual.pro_detalle_producto?.tiempo_entrega,
         requisitos: datos.requisitos !== undefined ? datos.requisitos : prodActual.pro_detalle_producto?.requisitos,
@@ -1765,19 +1825,45 @@ export async function editarProductoAction(datos: {
           })
           .eq("pro_id", datos.pro_id);
 
-        const varTarget = variantesActualizadas[0];
-        if (varTarget) {
-          await clienteActivo
-            .schema("comun_comercio")
-            .from("com_variante")
-            .update({
-              var_nombre: varTarget.var_nombre,
-              var_precio: base,
-              var_tarifa_iva_porcentaje: tarifaIva,
-              var_codigo_impuesto_sri: varTarget.var_codigo_impuesto_sri,
-              var_sku: varTarget.var_sku,
-            })
-            .eq("var_id", varTarget.var_id);
+        // Actualizar o crear variantes en base de datos
+        for (const v of variantesActualizadas) {
+          try {
+            await clienteActivo
+              .schema("comun_comercio")
+              .from("com_variante")
+              .upsert(
+                {
+                  var_id: v.var_id,
+                  var_producto_id: datos.pro_id,
+                  var_negocio: negocio,
+                  var_sku: v.var_sku,
+                  var_nombre: v.var_nombre,
+                  var_precio: v.var_precio,
+                  var_precio_comparacion: v.var_precio_comparacion,
+                  var_tarifa_iva_porcentaje: v.var_tarifa_iva_porcentaje,
+                  var_codigo_impuesto_sri: v.var_codigo_impuesto_sri,
+                  var_tipo_oferta: v.var_tipo_oferta || "REGULAR",
+                  var_activo: v.var_activo !== false,
+                  var_detalle_variante: v.var_detalle_variante || {},
+                },
+                { onConflict: "var_id" }
+              );
+          } catch {
+            // Reintento por sku
+            try {
+              await clienteActivo
+                .schema("comun_comercio")
+                .from("com_variante")
+                .update({
+                  var_nombre: v.var_nombre,
+                  var_precio: v.var_precio,
+                  var_tarifa_iva_porcentaje: v.var_tarifa_iva_porcentaje,
+                  var_codigo_impuesto_sri: v.var_codigo_impuesto_sri,
+                  var_detalle_variante: v.var_detalle_variante || {},
+                })
+                .eq("var_id", v.var_id);
+            } catch {}
+          }
         }
       } catch {
         try {

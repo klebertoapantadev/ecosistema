@@ -4,23 +4,28 @@ import React, { useState, useEffect } from "react";
 import {
   X,
   FileEdit,
+  Sparkles,
+  Flower2,
   Scale,
-  ShieldCheck,
-  FileCheck,
-  CreditCard,
-  CheckCircle2,
-  AlertCircle,
-  Trash2,
+  Wrench,
   Image as ImageIcon,
   Video,
   Clock,
-  ListPlus,
+  Plus,
+  Trash2,
+  CheckCircle2,
+  AlertCircle,
+  ExternalLink,
+  Layers,
+  HelpCircle,
+  BookOpen,
 } from "lucide-react";
 import {
   editarProductoAction,
   eliminarProductoAction,
   CategoriaCatalogo,
   ProductoCatalogo,
+  VarianteCatalogo,
 } from "../acciones";
 
 interface Props {
@@ -31,6 +36,7 @@ interface Props {
   onProductoEliminado: (proId: string) => void;
   categorias: CategoriaCatalogo[];
   negocio?: string;
+  onAbrirManual?: () => void;
 }
 
 export function ModalEditarProducto({
@@ -41,80 +47,198 @@ export function ModalEditarProducto({
   onProductoEliminado,
   categorias,
   negocio = "tranqi",
+  onAbrirManual,
 }: Props) {
+  const esFloristeria = negocio === "tinkay" || negocio === "margaritas";
+  const esLegal = negocio === "tranqi";
+  const esMantenimiento = negocio === "fastfix";
+
   const [nombre, setNombre] = useState("");
   const [descripcion, setDescripcion] = useState("");
   const [categoriaId, setCategoriaId] = useState("");
-  const [tipo, setTipo] = useState<"SERVICIO" | "SUSCRIPCION" | "FISICO" | "DIGITAL">("SERVICIO");
-  const [precioBase, setPrecioBase] = useState<number | "">("");
-  const [tarifaIva, setTarifaIva] = useState<number>(15);
-  const [sku, setSku] = useState("");
+  const [tipo, setTipo] = useState<"SERVICIO" | "SUSCRIPCION" | "FISICO" | "DIGITAL">("FISICO");
   const [destacado, setDestacado] = useState(false);
-  const [icono, setIcono] = useState<"Scale" | "ShieldCheck" | "FileCheck" | "CreditCard">("Scale");
-  const [modalidadPago, setModalidadPago] = useState("Botón Payphone / Tarjeta / Diferido");
+  const [icono, setIcono] = useState<string>("Sparkles");
+  const [modalidadPago, setModalidadPago] = useState("Botón Payphone / Tarjeta / Saldo");
 
-  // Recursos Multimedia
+  // Recursos Multimedia y Digitales
   const [imagenUrl, setImagenUrl] = useState("");
+  const [albumFotosUrl, setAlbumFotosUrl] = useState("");
   const [videoUrl, setVideoUrl] = useState("");
+  const [galeriaTexto, setGaleriaTexto] = useState("");
   const [tiempoEntrega, setTiempoEntrega] = useState("");
   const [beneficiosTexto, setBeneficiosTexto] = useState("");
   const [requisitosTexto, setRequisitosTexto] = useState("");
+
+  // Editor Multivariante (Tamaños / Modalidades)
+  const [variantesLocales, setVariantesLocales] = useState<VarianteCatalogo[]>([]);
+  const [varianteActivaIndex, setVarianteActivaIndex] = useState<number>(0);
 
   const [guardando, setGuardando] = useState(false);
   const [eliminando, setEliminando] = useState(false);
   const [confirmarEliminar, setConfirmarEliminar] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Presets de tiempo de entrega según industria
+  const presetsEntrega = esFloristeria
+    ? [
+        { label: "⚡ Entrega Inmediata (45-90 min)", val: "⚡ Entrega Inmediata Express (45 - 90 min)" },
+        { label: "🌸 Pide hoy, recibe hoy (Mismo Día)", val: "🌸 Pide hoy, recibe hoy (Mismo Día)" },
+        { label: "✨ Elaboración Especial (24h)", val: "✨ Elaboración Especial en Taller (24 horas)" },
+        { label: "📅 Entrega Programada / Fecha Especial", val: "📅 Entrega Programada / Fecha Especial" },
+      ]
+    : esLegal
+    ? [
+        { label: "⚡ Asesoría Inmediata (Mismo Día)", val: "⚡ Asesoría Inmediata (Mismo Día)" },
+        { label: "📄 24 a 48 horas hábiles", val: "24 a 48 horas hábiles" },
+        { label: "⚖️ 3 a 5 días hábiles", val: "3 a 5 días hábiles" },
+      ]
+    : [
+        { label: "⚡ Emergencia Técnica (45-60 min)", val: "⚡ Emergencia Técnica (45 - 60 min)" },
+        { label: "🔧 Turno Mismo Día", val: "🔧 Mismo Día / Turno Tarde" },
+        { label: "📅 Visita Programada", val: "📅 Visita Programada" },
+      ];
+
   useEffect(() => {
     if (producto) {
       setNombre(producto.pro_nombre || "");
       setDescripcion(producto.pro_descripcion || "");
       setCategoriaId(producto.pro_categoria_principal_id || categorias[0]?.ctg_id || "");
-      setTipo(producto.pro_tipo || "SERVICIO");
+      setTipo(producto.pro_tipo || (esFloristeria ? "FISICO" : "SERVICIO"));
       setDestacado(Boolean(producto.pro_destacado));
-      setIcono((producto.pro_detalle_producto?.icono as any) || "Scale");
-      setModalidadPago(producto.pro_detalle_producto?.modalidad_pago || "Botón Payphone / Tarjeta / Diferido");
+      setIcono(producto.pro_detalle_producto?.icono || (esFloristeria ? "Sparkles" : "Scale"));
+      setModalidadPago(producto.pro_detalle_producto?.modalidad_pago || "Botón Payphone / Tarjeta / Saldo");
 
       const det = producto.pro_detalle_producto || {};
       setImagenUrl(det.imagen_url || "");
+      setAlbumFotosUrl(det.album_fotos_url || "");
       setVideoUrl(det.video_url || "");
-      setTiempoEntrega(det.tiempo_entrega || "24 a 48 horas hábiles");
+      setGaleriaTexto(Array.isArray(det.galeria_urls) ? det.galeria_urls.join("\n") : "");
+      setTiempoEntrega(
+        det.tiempo_entrega ||
+          (esFloristeria ? "🌸 Pide hoy, recibe hoy (Mismo Día)" : "24 a 48 horas hábiles")
+      );
       setBeneficiosTexto(Array.isArray(det.beneficios) ? det.beneficios.join("\n") : "");
       setRequisitosTexto(Array.isArray(det.requisitos) ? det.requisitos.join("\n") : "");
 
-      const varPrincipal = producto.variantes[0];
-      if (varPrincipal) {
-        setPrecioBase(varPrincipal.var_precio);
-        setTarifaIva(varPrincipal.var_tarifa_iva_porcentaje || 15);
-        setSku(varPrincipal.var_sku || "");
-      } else {
-        setPrecioBase("");
-        setTarifaIva(15);
-        setSku("");
-      }
+      // Clonar variantes
+      const vars = producto.variantes && producto.variantes.length > 0
+        ? producto.variantes.map((v) => ({ ...v }))
+        : [
+            {
+              var_id: `var-${Date.now()}`,
+              var_producto_id: producto.pro_id,
+              var_sku: `${negocio.toUpperCase().substring(0, 3)}-EST`,
+              var_nombre: "Estándar",
+              var_precio: 20,
+              var_precio_comparacion: null,
+              var_codigo_impuesto_sri: "IVA_15",
+              var_tarifa_iva_porcentaje: 15,
+              var_tipo_oferta: "REGULAR",
+              var_activo: true,
+              var_detalle_variante: {},
+              monto_iva: 3,
+              precio_total: 23,
+            },
+          ];
+
+      setVariantesLocales(vars);
+      setVarianteActivaIndex(0);
       setConfirmarEliminar(false);
       setError(null);
     }
-  }, [producto, categorias]);
+  }, [producto, categorias, negocio, esFloristeria, esLegal]);
 
   if (!abierto || !producto) return null;
 
-  // Cálculos en vivo
-  const baseNum = typeof precioBase === "number" ? precioBase : 0;
-  const montoIvaCalc = Number(((baseNum * tarifaIva) / 100).toFixed(2));
-  const totalCalc = Number((baseNum + montoIvaCalc).toFixed(2));
+  const varianteActual = variantesLocales[varianteActivaIndex] || variantesLocales[0];
+
+  const actualizarVarianteActual = (campo: keyof VarianteCatalogo, valor: any) => {
+    setVariantesLocales((prev) => {
+      const nuevas = [...prev];
+      const target = { ...nuevas[varianteActivaIndex] } as any;
+
+      if (campo === "var_precio") {
+        const base = typeof valor === "number" ? valor : parseFloat(valor) || 0;
+        target.var_precio = base;
+        const ivaPorc = target.var_tarifa_iva_porcentaje || 15;
+        target.monto_iva = Number(((base * ivaPorc) / 100).toFixed(2));
+        target.precio_total = Number((base + target.monto_iva).toFixed(2));
+      } else if (campo === "var_tarifa_iva_porcentaje") {
+        const ivaPorc = Number(valor);
+        target.var_tarifa_iva_porcentaje = ivaPorc;
+        target.var_codigo_impuesto_sri = ivaPorc > 0 ? "IVA_15" : "IVA_0";
+        const base = target.var_precio || 0;
+        target.monto_iva = Number(((base * ivaPorc) / 100).toFixed(2));
+        target.precio_total = Number((base + target.monto_iva).toFixed(2));
+      } else {
+        target[campo] = valor;
+      }
+
+      nuevas[varianteActivaIndex] = target;
+      return nuevas;
+    });
+  };
+
+  const agregarNuevaVariante = () => {
+    const base = 25;
+    const ivaPorc = 15;
+    const montoIva = Number(((base * ivaPorc) / 100).toFixed(2));
+    const nueva: VarianteCatalogo = {
+      var_id: `var-new-${Date.now()}`,
+      var_producto_id: producto.pro_id,
+      var_sku: `${negocio.toUpperCase().substring(0, 3)}-VAR-${variantesLocales.length + 1}`,
+      var_nombre: esFloristeria
+        ? `Tamaño Especial (${variantesLocales.length + 1})`
+        : `Opción ${variantesLocales.length + 1}`,
+      var_precio: base,
+      var_precio_comparacion: null,
+      var_codigo_impuesto_sri: "IVA_15",
+      var_tarifa_iva_porcentaje: ivaPorc,
+      var_tipo_oferta: "REGULAR",
+      var_activo: true,
+      var_detalle_variante: {},
+      monto_iva: montoIva,
+      precio_total: Number((base + montoIva).toFixed(2)),
+    };
+
+    setVariantesLocales([...variantesLocales, nueva]);
+    setVarianteActivaIndex(variantesLocales.length);
+  };
+
+  const eliminarVarianteActual = () => {
+    if (variantesLocales.length <= 1) {
+      setError("El producto debe tener al menos una modalidad de tarifa.");
+      return;
+    }
+    const filtradas = variantesLocales.filter((_, idx) => idx !== varianteActivaIndex);
+    setVariantesLocales(filtradas);
+    setVarianteActivaIndex(0);
+  };
 
   const handleGuardar = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
     if (!nombre.trim()) {
-      setError("Ingresa el nombre del producto u honorario.");
+      setError("Ingresa el nombre del producto.");
       return;
     }
-    if (!precioBase || Number(precioBase) <= 0) {
-      setError("El precio base debe ser mayor a 0.");
+
+    if (variantesLocales.length === 0) {
+      setError("Debes definir al menos una variante de precio.");
       return;
+    }
+
+    for (const v of variantesLocales) {
+      if (!v.var_nombre.trim()) {
+        setError("Todas las modalidades deben tener un nombre (ej. Pequeño, Mediano, Grande).");
+        return;
+      }
+      if (v.var_precio <= 0) {
+        setError(`El precio de "${v.var_nombre}" debe ser mayor a cero.`);
+        return;
+      }
     }
 
     const beneficios = beneficiosTexto
@@ -127,6 +251,11 @@ export function ModalEditarProducto({
       .map((r) => r.trim())
       .filter((r) => r.length > 0);
 
+    const galeriaUrls = galeriaTexto
+      .split("\n")
+      .map((g) => g.trim())
+      .filter((g) => g.length > 0);
+
     setGuardando(true);
     try {
       const res = await editarProductoAction({
@@ -135,18 +264,17 @@ export function ModalEditarProducto({
         descripcion: descripcion.trim(),
         categoriaId: categoriaId || categorias[0]?.ctg_id,
         tipo,
-        precioBase: Number(precioBase),
-        tarifaIva,
-        sku: sku.trim(),
         destacado,
         icono,
         imagenUrl: imagenUrl.trim() || undefined,
+        albumFotosUrl: albumFotosUrl.trim() || undefined,
         videoUrl: videoUrl.trim() || undefined,
+        galeriaUrls: galeriaUrls.length > 0 ? galeriaUrls : undefined,
         tiempoEntrega: tiempoEntrega.trim() || undefined,
         beneficios,
         requisitos,
         modalidadPago,
-        varianteId: producto.variantes[0]?.var_id,
+        variantes: variantesLocales,
         negocio,
       });
 
@@ -179,7 +307,7 @@ export function ModalEditarProducto({
         setError(res.error || "No se pudo eliminar el producto.");
       }
     } catch (err: any) {
-      setError(err.message || "Error al eliminar.");
+      setError(err.message || "Error al eliminar el producto.");
     } finally {
       setEliminando(false);
     }
@@ -190,8 +318,8 @@ export function ModalEditarProducto({
       style={{
         position: "fixed",
         inset: 0,
-        backgroundColor: "rgba(15, 23, 42, 0.65)",
-        backdropFilter: "blur(4px)",
+        backgroundColor: "rgba(15, 23, 42, 0.75)",
+        backdropFilter: "blur(5px)",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -204,23 +332,23 @@ export function ModalEditarProducto({
           background: "#FFFFFF",
           borderRadius: "16px",
           width: "100%",
-          maxWidth: "620px",
+          maxWidth: "680px",
           maxHeight: "92vh",
+          boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
           display: "flex",
           flexDirection: "column",
-          boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.2)",
           overflow: "hidden",
         }}
       >
         {/* Cabecera */}
         <div
           style={{
-            padding: "18px 24px",
+            padding: "16px 20px",
             borderBottom: "1px solid #E2E8F0",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            background: "#F8FAFC",
+            background: esFloristeria ? "#FFFDF8" : "#F8FAFC",
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
@@ -229,407 +357,566 @@ export function ModalEditarProducto({
                 width: "36px",
                 height: "36px",
                 borderRadius: "10px",
-                background: "#E0F2FE",
-                color: "#0284C7",
+                background: esFloristeria ? "#FEF2F2" : "#E0F2FE",
+                color: esFloristeria ? "#E11D48" : "#0284C7",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
               }}
             >
-              <FileEdit size={20} />
+              {esFloristeria ? <Flower2 size={20} /> : esMantenimiento ? <Wrench size={20} /> : <FileEdit size={20} />}
             </div>
             <div>
-              <h3 style={{ margin: 0, fontSize: "1.1rem", fontWeight: 700, color: "#0F172A" }}>
-                Editar Servicio / Honorario Profesional
-              </h3>
-              <p style={{ margin: 0, fontSize: "0.8rem", color: "#64748B" }}>
-                Modifica tarifas, recursos multimedia de portada y alcance del servicio.
-              </p>
+              <h2 style={{ margin: 0, fontSize: "1.1rem", fontWeight: 800, color: "#0F172A" }}>
+                {esFloristeria
+                  ? "Editar Arreglo / Diseño Floral"
+                  : esMantenimiento
+                  ? "Editar Servicio de Mantenimiento"
+                  : "Editar Servicio / Honorario Profesional"}
+              </h2>
+              <span style={{ fontSize: "0.75rem", color: "#64748B" }}>
+                Configura tarifas multivariante, recursos multimedia y promesa de entrega
+              </span>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={onCerrar}
-            style={{
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-              color: "#94A3B8",
-              padding: "4px",
-              display: "flex",
-            }}
-          >
-            <X size={20} />
-          </button>
+
+          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+            {onAbrirManual && (
+              <button
+                type="button"
+                onClick={onAbrirManual}
+                title="Ver Manual de Configuración Floral"
+                style={{
+                  background: "#F1F5F9",
+                  border: "1px solid #CBD5E1",
+                  color: "#334155",
+                  padding: "5px 10px",
+                  borderRadius: "6px",
+                  fontSize: "0.75rem",
+                  fontWeight: 700,
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "4px",
+                  cursor: "pointer",
+                }}
+              >
+                <BookOpen size={13} />
+                <span>Manual</span>
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={onCerrar}
+              style={{
+                background: "transparent",
+                border: "none",
+                cursor: "pointer",
+                color: "#64748B",
+                padding: "6px",
+                borderRadius: "8px",
+              }}
+            >
+              <X size={20} />
+            </button>
+          </div>
         </div>
 
         {/* Formulario */}
-        <form onSubmit={handleGuardar} style={{ display: "flex", flexDirection: "column", flex: 1, overflow: "hidden" }}>
-          <div style={{ padding: "20px 24px", overflowY: "auto", flex: 1 }}>
-            {error && (
-              <div
-                style={{
-                  background: "#FEF2F2",
-                  border: "1px solid #FCA5A5",
-                  borderRadius: "8px",
-                  padding: "10px 14px",
-                  color: "#991B1B",
-                  fontSize: "0.85rem",
-                  marginBottom: "16px",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "8px",
-                }}
-              >
-                <AlertCircle size={16} />
-                <span>{error}</span>
-              </div>
-            )}
+        <form onSubmit={handleGuardar} style={{ padding: "18px 22px", overflowY: "auto", flex: 1 }}>
+          {error && (
+            <div
+              style={{
+                background: "#FEF2F2",
+                border: "1px solid #FCA5A5",
+                color: "#991B1B",
+                padding: "10px 14px",
+                borderRadius: "8px",
+                marginBottom: "14px",
+                fontSize: "0.82rem",
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+              }}
+            >
+              <AlertCircle size={16} />
+              <span>{error}</span>
+            </div>
+          )}
 
-            {/* Nombre y Categoría */}
-            <div style={{ marginBottom: "14px" }}>
-              <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 600, color: "#334155", marginBottom: "4px" }}>
-                Nombre del Honorario / Servicio *
+          {/* 1. DATOS PRINCIPALES */}
+          <div style={{ marginBottom: "14px" }}>
+            <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 700, color: "#1E293B", marginBottom: "4px" }}>
+              Nombre del {esFloristeria ? "Arreglo / Producto Floral" : "Servicio"} *
+            </label>
+            <input
+              type="text"
+              required
+              placeholder={esFloristeria ? "Ej. Bouquet Diseño Estilo Coreano" : "Ej. Elaboración de Contrato"}
+              value={nombre}
+              onChange={(e) => setNombre(e.target.value)}
+              style={{
+                width: "100%",
+                padding: "9px 12px",
+                borderRadius: "8px",
+                border: "1px solid #CBD5E1",
+                fontSize: "0.9rem",
+                boxSizing: "border-box",
+                fontWeight: 600,
+              }}
+            />
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "14px" }}>
+            <div>
+              <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 600, color: "#334155", marginBottom: "4px" }}>
+                Categoría / Colección *
               </label>
-              <input
-                type="text"
-                required
-                placeholder="Ej. Poder Especial, Notarización..."
-                value={nombre}
-                onChange={(e) => setNombre(e.target.value)}
+              <select
+                value={categoriaId}
+                onChange={(e) => setCategoriaId(e.target.value)}
                 style={{
                   width: "100%",
                   padding: "9px 12px",
                   borderRadius: "8px",
                   border: "1px solid #CBD5E1",
-                  fontSize: "0.9rem",
+                  fontSize: "0.85rem",
                   boxSizing: "border-box",
-                }}
-              />
-            </div>
-
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "14px" }}>
-              <div>
-                <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 600, color: "#334155", marginBottom: "4px" }}>
-                  Categoría Comercial *
-                </label>
-                <select
-                  value={categoriaId}
-                  onChange={(e) => setCategoriaId(e.target.value)}
-                  style={{
-                    width: "100%",
-                    padding: "9px 12px",
-                    borderRadius: "8px",
-                    border: "1px solid #CBD5E1",
-                    fontSize: "0.85rem",
-                    boxSizing: "border-box",
-                    background: "#FFFFFF",
-                  }}
-                >
-                  {categorias.map((c) => (
-                    <option key={c.ctg_id} value={c.ctg_id}>
-                      {c.ctg_nombre}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 600, color: "#334155", marginBottom: "4px" }}>
-                  Tipo de Oferta
-                </label>
-                <select
-                  value={tipo}
-                  onChange={(e) => setTipo(e.target.value as any)}
-                  style={{
-                    width: "100%",
-                    padding: "9px 12px",
-                    borderRadius: "8px",
-                    border: "1px solid #CBD5E1",
-                    fontSize: "0.85rem",
-                    boxSizing: "border-box",
-                    background: "#FFFFFF",
-                  }}
-                >
-                  <option value="SERVICIO">Servicio / Trámite Puntual</option>
-                  <option value="SUSCRIPCION">Suscripción / Plan Periódico</option>
-                  <option value="DIGITAL">Producto Digital / Formato</option>
-                  <option value="FISICO">Físico / Entrega Notarial</option>
-                </select>
-              </div>
-            </div>
-
-            {/* Tarifario SRI */}
-            <div
-              style={{
-                background: "#F8FAFC",
-                border: "1px solid #E2E8F0",
-                borderRadius: "10px",
-                padding: "14px",
-                marginBottom: "16px",
-              }}
-            >
-              <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "#475569", textTransform: "uppercase" }}>
-                Tarifa y Desglose SRI (Ecuador)
-              </span>
-
-              <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: "12px", marginTop: "10px" }}>
-                <div>
-                  <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 600, color: "#334155", marginBottom: "4px" }}>
-                    Precio Base Imponible ($ USD) *
-                  </label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0.01"
-                    required
-                    placeholder="0.00"
-                    value={precioBase}
-                    onChange={(e) => setPrecioBase(e.target.value === "" ? "" : parseFloat(e.target.value))}
-                    style={{
-                      width: "100%",
-                      padding: "8px 12px",
-                      borderRadius: "8px",
-                      border: "1px solid #CBD5E1",
-                      fontSize: "0.9rem",
-                      fontWeight: 700,
-                      boxSizing: "border-box",
-                      color: "#0F172A",
-                    }}
-                  />
-                </div>
-
-                <div>
-                  <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 600, color: "#334155", marginBottom: "4px" }}>
-                    Tarifa IVA SRI
-                  </label>
-                  <select
-                    value={tarifaIva}
-                    onChange={(e) => setTarifaIva(Number(e.target.value))}
-                    style={{
-                      width: "100%",
-                      padding: "8px 12px",
-                      borderRadius: "8px",
-                      border: "1px solid #CBD5E1",
-                      fontSize: "0.85rem",
-                      boxSizing: "border-box",
-                      background: "#FFFFFF",
-                    }}
-                  >
-                    <option value={15}>IVA 15% (Estándar)</option>
-                    <option value={0}>IVA 0% (Exento SRI)</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Resumen en Vivo */}
-              <div
-                style={{
-                  marginTop: "12px",
-                  padding: "10px 14px",
                   background: "#FFFFFF",
-                  border: "1px dashed #CBD5E1",
-                  borderRadius: "8px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  fontSize: "0.82rem",
                 }}
               >
-                <div>
-                  <span style={{ color: "#64748B" }}>Subtotal: </span>
-                  <strong style={{ color: "#0F172A" }}>${baseNum.toFixed(2)}</strong>
-                  <span style={{ margin: "0 8px", color: "#CBD5E1" }}>|</span>
-                  <span style={{ color: "#64748B" }}>IVA ({tarifaIva}%): </span>
-                  <strong style={{ color: "#0F172A" }}>${montoIvaCalc.toFixed(2)}</strong>
-                </div>
-                <div>
-                  <span style={{ color: "#64748B", marginRight: "6px" }}>Total Payphone:</span>
-                  <strong style={{ color: "#059669", fontSize: "1.05rem", fontWeight: 800 }}>
-                    ${totalCalc.toFixed(2)}
-                  </strong>
-                </div>
-              </div>
+                {categorias.map((c) => (
+                  <option key={c.ctg_id} value={c.ctg_id}>
+                    {c.ctg_nombre}
+                  </option>
+                ))}
+              </select>
             </div>
 
-            {/* SECCIÓN MULTIMEDIA Y RECURSOS DIGITALES */}
-            <div
-              style={{
-                background: "#F0FDF4",
-                border: "1px solid #BBF7D0",
-                borderRadius: "10px",
-                padding: "14px",
-                marginBottom: "16px",
-              }}
-            >
-              <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "10px" }}>
-                <ImageIcon size={16} color="#15803D" />
-                <span style={{ fontSize: "0.78rem", fontWeight: 700, color: "#15803D", textTransform: "uppercase" }}>
-                  Recursos Digitales (Imagen & Video para la Vitrina)
+            <div>
+              <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 600, color: "#334155", marginBottom: "4px" }}>
+                Tipo de Oferta Comercial
+              </label>
+              <select
+                value={tipo}
+                onChange={(e) => setTipo(e.target.value as any)}
+                style={{
+                  width: "100%",
+                  padding: "9px 12px",
+                  borderRadius: "8px",
+                  border: "1px solid #CBD5E1",
+                  fontSize: "0.85rem",
+                  boxSizing: "border-box",
+                  background: "#FFFFFF",
+                }}
+              >
+                <option value="FISICO">
+                  {esFloristeria
+                    ? "Producto Físico / Entrega Floral a Domicilio"
+                    : esMantenimiento
+                    ? "Producto Físico / Repuesto"
+                    : "Físico / Entrega Notarial"}
+                </option>
+                <option value="SERVICIO">
+                  {esFloristeria
+                    ? "Servicio de Decoración / Eventos"
+                    : esMantenimiento
+                    ? "Servicio Técnico / Reparación"
+                    : "Servicio / Trámite Puntual"}
+                </option>
+                <option value="SUSCRIPCION">
+                  {esFloristeria
+                    ? "Suscripción Floral (Semanal / Mensual)"
+                    : "Suscripción / Plan Periódico"}
+                </option>
+                <option value="DIGITAL">
+                  {esFloristeria
+                    ? "Tarjeta Dedicatoria Digital / Gift Card"
+                    : "Producto Digital / Formato"}
+                </option>
+              </select>
+            </div>
+          </div>
+
+          {/* 2. EDITOR MULTIVARIANTE (TAMAÑOS, ROSAS, PRECIOS) */}
+          <div
+            style={{
+              background: "#F8FAFC",
+              border: "1.5px solid #E2E8F0",
+              borderRadius: "12px",
+              padding: "14px",
+              marginBottom: "16px",
+            }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                <Layers size={16} color="#0284C7" />
+                <span style={{ fontSize: "0.82rem", fontWeight: 800, color: "#0F172A", textTransform: "uppercase" }}>
+                  Modalidades de Tarifa / Tamaños ({variantesLocales.length})
                 </span>
               </div>
+              <button
+                type="button"
+                onClick={agregarNuevaVariante}
+                style={{
+                  background: "#0284C7",
+                  color: "#FFFFFF",
+                  border: "none",
+                  borderRadius: "6px",
+                  padding: "4px 10px",
+                  fontSize: "0.75rem",
+                  fontWeight: 700,
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "4px",
+                  cursor: "pointer",
+                }}
+              >
+                <Plus size={13} />
+                <span>Agregar Modalidad</span>
+              </button>
+            </div>
 
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "10px" }}>
-                <div>
-                  <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 600, color: "#334155", marginBottom: "4px" }}>
-                    URL Imagen / Portada
-                  </label>
-                  <input
-                    type="url"
-                    placeholder="https://images.unsplash.com/..."
-                    value={imagenUrl}
-                    onChange={(e) => setImagenUrl(e.target.value)}
+            {/* Pestañas de Variantes */}
+            <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginBottom: "12px" }}>
+              {variantesLocales.map((v, idx) => {
+                const activa = idx === varianteActivaIndex;
+                const pvpCalculado = (Number(v.var_precio || 0) * (1 + (v.var_tarifa_iva_porcentaje ?? 15) / 100));
+                return (
+                  <button
+                    key={v.var_id || idx}
+                    type="button"
+                    onClick={() => setVarianteActivaIndex(idx)}
                     style={{
-                      width: "100%",
-                      padding: "8px 10px",
+                      padding: "6px 12px",
                       borderRadius: "8px",
-                      border: "1px solid #CBD5E1",
-                      fontSize: "0.82rem",
-                      boxSizing: "border-box",
+                      border: activa ? "1.5px solid #0284C7" : "1px solid #CBD5E1",
+                      background: activa ? "#E0F2FE" : "#FFFFFF",
+                      color: activa ? "#0369A1" : "#475569",
+                      fontWeight: activa ? 800 : 500,
+                      fontSize: "0.78rem",
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "6px",
                     }}
-                  />
+                  >
+                    <span>{v.var_nombre}</span>
+                    <span style={{ fontWeight: 800, color: activa ? "#0F172A" : "#64748B" }}>
+                      ${(v.precio_total || pvpCalculado).toFixed(2)}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Formulario de la Variante Seleccionada */}
+            {varianteActual && (
+              <div
+                style={{
+                  background: "#FFFFFF",
+                  borderRadius: "10px",
+                  padding: "12px",
+                  border: "1px solid #CBD5E1",
+                }}
+              >
+                <div style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr", gap: "10px", marginBottom: "10px" }}>
+                  <div>
+                    <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#334155", marginBottom: "2px" }}>
+                      Nombre de la Modalidad / Tamaño *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder={esFloristeria ? "Ej. Pequeño (12 Rosas) o Mediano (24 Rosas)" : "Ej. Opción Estándar"}
+                      value={varianteActual.var_nombre}
+                      onChange={(e) => actualizarVarianteActual("var_nombre", e.target.value)}
+                      style={{
+                        width: "100%",
+                        padding: "7px 10px",
+                        borderRadius: "6px",
+                        border: "1px solid #CBD5E1",
+                        fontSize: "0.82rem",
+                        boxSizing: "border-box",
+                        fontWeight: 600,
+                      }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#334155", marginBottom: "2px" }}>
+                      Código SKU / Referencia
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Ej. TNK-COR-MED"
+                      value={varianteActual.var_sku || ""}
+                      onChange={(e) => actualizarVarianteActual("var_sku", e.target.value)}
+                      style={{
+                        width: "100%",
+                        padding: "7px 10px",
+                        borderRadius: "6px",
+                        border: "1px solid #CBD5E1",
+                        fontSize: "0.82rem",
+                        boxSizing: "border-box",
+                      }}
+                    />
+                  </div>
                 </div>
 
-                <div>
-                  <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 600, color: "#334155", marginBottom: "4px" }}>
-                    URL Video (YouTube / MP4 / GIF)
-                  </label>
-                  <input
-                    type="url"
-                    placeholder="https://www.youtube.com/watch?v=..."
-                    value={videoUrl}
-                    onChange={(e) => setVideoUrl(e.target.value)}
-                    style={{
-                      width: "100%",
-                      padding: "8px 10px",
-                      borderRadius: "8px",
-                      border: "1px solid #CBD5E1",
-                      fontSize: "0.82rem",
-                      boxSizing: "border-box",
-                    }}
-                  />
+                <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: "10px" }}>
+                  <div>
+                    <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#334155", marginBottom: "2px" }}>
+                      Precio Base Imponible ($ USD) *
+                    </label>
+                    <input
+                      type="number"
+                      step="0.0001"
+                      min="0.01"
+                      required
+                      placeholder="0.00"
+                      value={varianteActual.var_precio}
+                      onChange={(e) => actualizarVarianteActual("var_precio", e.target.value)}
+                      style={{
+                        width: "100%",
+                        padding: "7px 10px",
+                        borderRadius: "6px",
+                        border: "1px solid #CBD5E1",
+                        fontSize: "0.88rem",
+                        fontWeight: 800,
+                        boxSizing: "border-box",
+                        color: "#0F172A",
+                      }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#334155", marginBottom: "2px" }}>
+                      Tarifa IVA SRI (Ecuador)
+                    </label>
+                    <select
+                      value={varianteActual.var_tarifa_iva_porcentaje ?? 15}
+                      onChange={(e) => actualizarVarianteActual("var_tarifa_iva_porcentaje", e.target.value)}
+                      style={{
+                        width: "100%",
+                        padding: "7px 10px",
+                        borderRadius: "6px",
+                        border: "1px solid #CBD5E1",
+                        fontSize: "0.82rem",
+                        boxSizing: "border-box",
+                        background: "#FFFFFF",
+                      }}
+                    >
+                      <option value={15}>IVA 15% (Estándar)</option>
+                      <option value={0}>IVA 0% (Exento SRI)</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Resumen en vivo de la variante */}
+                <div
+                  style={{
+                    marginTop: "10px",
+                    padding: "8px 12px",
+                    background: "#F8FAFC",
+                    border: "1px dashed #CBD5E1",
+                    borderRadius: "6px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    fontSize: "0.78rem",
+                  }}
+                >
+                  <div>
+                    <span style={{ color: "#64748B" }}>Base: </span>
+                    <strong style={{ color: "#0F172A" }}>${Number(varianteActual.var_precio || 0).toFixed(2)}</strong>
+                    <span style={{ margin: "0 6px", color: "#CBD5E1" }}>|</span>
+                    <span style={{ color: "#64748B" }}>IVA ({varianteActual.var_tarifa_iva_porcentaje ?? 15}%): </span>
+                    <strong style={{ color: "#0F172A" }}>
+                      ${(Number(varianteActual.var_precio || 0) * (varianteActual.var_tarifa_iva_porcentaje ?? 15) / 100).toFixed(2)}
+                    </strong>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    <span style={{ color: "#64748B" }}>PVP Total:</span>
+                    <strong style={{ color: "#059669", fontSize: "0.95rem", fontWeight: 800 }}>
+                      ${(Number(varianteActual.var_precio || 0) * (1 + (varianteActual.var_tarifa_iva_porcentaje ?? 15) / 100)).toFixed(2)}
+                    </strong>
+                    {variantesLocales.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={eliminarVarianteActual}
+                        title="Eliminar esta modalidad"
+                        style={{
+                          background: "transparent",
+                          border: "none",
+                          color: "#EF4444",
+                          cursor: "pointer",
+                          padding: "2px",
+                          marginLeft: "6px",
+                        }}
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
+            )}
+          </div>
 
-              {/* Previsualización en vivo si hay imagen */}
-              {imagenUrl && (
-                <div style={{ marginBottom: "10px", borderRadius: "8px", overflow: "hidden", height: "100px", border: "1px solid #CBD5E1" }}>
-                  <img src={imagenUrl} alt="Preview" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                </div>
-              )}
+          {/* 3. RECURSOS DIGITALES Y MULTIMEDIA */}
+          <div
+            style={{
+              background: "#F0FDF4",
+              border: "1px solid #BBF7D0",
+              borderRadius: "10px",
+              padding: "14px",
+              marginBottom: "14px",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "10px" }}>
+              <ImageIcon size={16} color="#15803D" />
+              <span style={{ fontSize: "0.78rem", fontWeight: 800, color: "#15803D", textTransform: "uppercase" }}>
+                Recursos Digitales (Fotos Reales, Álbum y Video/GIF)
+              </span>
+            </div>
 
-              <div style={{ marginBottom: "10px" }}>
-                <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 600, color: "#334155", marginBottom: "4px" }}>
-                  Tiempo Estimado de Entrega o Atención
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "10px" }}>
+              <div>
+                <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#334155", marginBottom: "2px" }}>
+                  URL Imagen de Portada *
                 </label>
                 <input
-                  type="text"
-                  placeholder="Ej. 24 a 48 horas hábiles, Mismo día..."
-                  value={tiempoEntrega}
-                  onChange={(e) => setTiempoEntrega(e.target.value)}
+                  type="url"
+                  placeholder="https://images.unsplash.com/... o CDN"
+                  value={imagenUrl}
+                  onChange={(e) => setImagenUrl(e.target.value)}
                   style={{
                     width: "100%",
-                    padding: "8px 10px",
-                    borderRadius: "8px",
+                    padding: "7px 10px",
+                    borderRadius: "6px",
                     border: "1px solid #CBD5E1",
-                    fontSize: "0.82rem",
-                    boxSizing: "border-box",
-                  }}
-                />
-              </div>
-
-              <div style={{ marginBottom: "10px" }}>
-                <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 600, color: "#334155", marginBottom: "4px" }}>
-                  Beneficios / ¿Qué incluye? (Una viñeta por línea)
-                </label>
-                <textarea
-                  rows={3}
-                  value={beneficiosTexto}
-                  onChange={(e) => setBeneficiosTexto(e.target.value)}
-                  style={{
-                    width: "100%",
-                    padding: "8px 10px",
-                    borderRadius: "8px",
-                    border: "1px solid #CBD5E1",
-                    fontSize: "0.82rem",
+                    fontSize: "0.8rem",
                     boxSizing: "border-box",
                   }}
                 />
               </div>
 
               <div>
-                <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 600, color: "#334155", marginBottom: "4px" }}>
-                  Requisitos del Cliente (Una viñeta por línea)
+                <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#334155", marginBottom: "2px" }}>
+                  URL Álbum de Ejemplos / Muestras (Google Photos / Instagram)
+                </label>
+                <input
+                  type="url"
+                  placeholder="https://photos.app.goo.gl/... o drive"
+                  value={albumFotosUrl}
+                  onChange={(e) => setAlbumFotosUrl(e.target.value)}
+                  style={{
+                    width: "100%",
+                    padding: "7px 10px",
+                    borderRadius: "6px",
+                    border: "1px solid #CBD5E1",
+                    fontSize: "0.8rem",
+                    boxSizing: "border-box",
+                  }}
+                />
+              </div>
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+              <div>
+                <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#334155", marginBottom: "2px" }}>
+                  URL Video / GIF Demostrativo (YouTube, MP4)
+                </label>
+                <input
+                  type="url"
+                  placeholder="https://www.youtube.com/watch?v=... o .mp4 / .gif"
+                  value={videoUrl}
+                  onChange={(e) => setVideoUrl(e.target.value)}
+                  style={{
+                    width: "100%",
+                    padding: "7px 10px",
+                    borderRadius: "6px",
+                    border: "1px solid #CBD5E1",
+                    fontSize: "0.8rem",
+                    boxSizing: "border-box",
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#334155", marginBottom: "2px" }}>
+                  Galería Adicional (URLs por salto de línea)
                 </label>
                 <textarea
                   rows={2}
-                  value={requisitosTexto}
-                  onChange={(e) => setRequisitosTexto(e.target.value)}
+                  placeholder="https://...foto1.jpg&#10;https://...foto2.jpg"
+                  value={galeriaTexto}
+                  onChange={(e) => setGaleriaTexto(e.target.value)}
                   style={{
                     width: "100%",
-                    padding: "8px 10px",
-                    borderRadius: "8px",
+                    padding: "6px 10px",
+                    borderRadius: "6px",
                     border: "1px solid #CBD5E1",
-                    fontSize: "0.82rem",
+                    fontSize: "0.78rem",
                     boxSizing: "border-box",
                   }}
                 />
               </div>
             </div>
+          </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "14px" }}>
-              <div>
-                <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 600, color: "#334155", marginBottom: "4px" }}>
-                  Código SKU / Referencia
-                </label>
-                <input
-                  type="text"
-                  placeholder="TRQ-HON-..."
-                  value={sku}
-                  onChange={(e) => setSku(e.target.value)}
+          {/* 4. TIEMPO DE ENTREGA COMERCIAL (PRESETS INTELIGENTES) */}
+          <div style={{ marginBottom: "14px" }}>
+            <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, color: "#1E293B", marginBottom: "4px" }}>
+              Promesa y Tiempo de Entrega al Cliente *
+            </label>
+            <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginBottom: "6px" }}>
+              {presetsEntrega.map((pr) => (
+                <button
+                  key={pr.val}
+                  type="button"
+                  onClick={() => setTiempoEntrega(pr.val)}
                   style={{
-                    width: "100%",
-                    padding: "8px 12px",
-                    borderRadius: "8px",
-                    border: "1px solid #CBD5E1",
-                    fontSize: "0.85rem",
-                    boxSizing: "border-box",
-                  }}
-                />
-              </div>
-
-              <div>
-                <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 600, color: "#334155", marginBottom: "4px" }}>
-                  Ícono Representativo
-                </label>
-                <select
-                  value={icono}
-                  onChange={(e) => setIcono(e.target.value as any)}
-                  style={{
-                    width: "100%",
-                    padding: "8px 12px",
-                    borderRadius: "8px",
-                    border: "1px solid #CBD5E1",
-                    fontSize: "0.85rem",
-                    boxSizing: "border-box",
-                    background: "#FFFFFF",
+                    padding: "4px 8px",
+                    borderRadius: "6px",
+                    fontSize: "0.72rem",
+                    fontWeight: 700,
+                    border: tiempoEntrega === pr.val ? "1.5px solid #16A34A" : "1px solid #CBD5E1",
+                    background: tiempoEntrega === pr.val ? "#DCFCE7" : "#FFFFFF",
+                    color: tiempoEntrega === pr.val ? "#15803D" : "#475569",
+                    cursor: "pointer",
                   }}
                 >
-                  <option value="Scale">⚖️ Balanza (Patrocinio / Litigio)</option>
-                  <option value="ShieldCheck">🛡️ Escudo (Protección / Plan)</option>
-                  <option value="FileCheck">📄 Documento (Contrato / Minuta)</option>
-                  <option value="CreditCard">💳 Tarjeta (Asesoría / Consulta)</option>
-                </select>
-              </div>
+                  {pr.label}
+                </button>
+              ))}
             </div>
+            <input
+              type="text"
+              required
+              placeholder="Ej. 🌸 Pide hoy, recibe hoy (Mismo Día)"
+              value={tiempoEntrega}
+              onChange={(e) => setTiempoEntrega(e.target.value)}
+              style={{
+                width: "100%",
+                padding: "8px 12px",
+                borderRadius: "8px",
+                border: "1px solid #CBD5E1",
+                fontSize: "0.85rem",
+                boxSizing: "border-box",
+              }}
+            />
+          </div>
 
-            <div style={{ marginBottom: "14px" }}>
-              <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 600, color: "#334155", marginBottom: "4px" }}>
-                Descripción y Alcance Jurídico
+          {/* 5. BENEFICIOS Y DESCRIPCIÓN */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "14px" }}>
+            <div>
+              <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 600, color: "#334155", marginBottom: "4px" }}>
+                Descripción Detallada
               </label>
               <textarea
-                rows={2}
-                placeholder="Detalla qué incluye el honorario..."
+                rows={3}
+                placeholder={esFloristeria ? "Arreglo exclusivo de vanguardia..." : "Alcance del servicio..."}
                 value={descripcion}
                 onChange={(e) => setDescripcion(e.target.value)}
                 style={{
@@ -637,76 +924,80 @@ export function ModalEditarProducto({
                   padding: "8px 12px",
                   borderRadius: "8px",
                   border: "1px solid #CBD5E1",
-                  fontSize: "0.85rem",
+                  fontSize: "0.82rem",
                   boxSizing: "border-box",
                 }}
               />
             </div>
 
-            <div style={{ marginBottom: "18px", display: "flex", alignItems: "center", gap: "8px" }}>
-              <input
-                type="checkbox"
-                id="destacado-edit"
-                checked={destacado}
-                onChange={(e) => setDestacado(e.target.checked)}
-                style={{ width: "16px", height: "16px", cursor: "pointer" }}
-              />
-              <label htmlFor="destacado-edit" style={{ fontSize: "0.85rem", fontWeight: 600, color: "#1E293B", cursor: "pointer" }}>
-                Marcar como servicio DESTACADO en vitrina
+            <div>
+              <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 600, color: "#334155", marginBottom: "4px" }}>
+                Beneficios / ¿Qué incluye? (Una viñeta por línea)
               </label>
+              <textarea
+                rows={3}
+                placeholder={
+                  esFloristeria
+                    ? "Rosas de exportación de tallo largo\nPapel coreano plisado y cintas de seda\nTarjeta dedicatoria personalizada gratis"
+                    : "Asesoría jurídica continua\nRevisión y firma digital"
+                }
+                value={beneficiosTexto}
+                onChange={(e) => setBeneficiosTexto(e.target.value)}
+                style={{
+                  width: "100%",
+                  padding: "8px 12px",
+                  borderRadius: "8px",
+                  border: "1px solid #CBD5E1",
+                  fontSize: "0.82rem",
+                  boxSizing: "border-box",
+                }}
+              />
             </div>
           </div>
 
-          {/* Footer del Modal */}
+          {/* Botones de Acción */}
           <div
             style={{
-              padding: "16px 24px",
-              borderTop: "1px solid #E2E8F0",
-              background: "#F8FAFC",
               display: "flex",
               justifyContent: "space-between",
               alignItems: "center",
-              gap: "10px",
+              paddingTop: "14px",
+              borderTop: "1px solid #E2E8F0",
+              marginTop: "8px",
             }}
           >
-            <div>
-              <button
-                type="button"
-                onClick={handleEliminar}
-                disabled={eliminando}
-                style={{
-                  padding: "8px 14px",
-                  borderRadius: "8px",
-                  border: "1px solid #FECDD3",
-                  background: confirmarEliminar ? "#E11D48" : "#FFF1F2",
-                  color: confirmarEliminar ? "#FFFFFF" : "#E11D48",
-                  fontSize: "0.82rem",
-                  fontWeight: 600,
-                  cursor: "pointer",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "6px",
-                }}
-              >
-                <Trash2 size={14} />
-                {eliminando
-                  ? "Desactivando..."
-                  : confirmarEliminar
-                  ? "¿Confirmar Desactivación?"
-                  : "Desactivar"}
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={handleEliminar}
+              disabled={eliminando}
+              style={{
+                background: confirmarEliminar ? "#DC2626" : "transparent",
+                color: confirmarEliminar ? "#FFFFFF" : "#EF4444",
+                border: confirmarEliminar ? "none" : "1px solid #FCA5A5",
+                padding: "8px 14px",
+                borderRadius: "8px",
+                fontSize: "0.82rem",
+                fontWeight: 700,
+                cursor: "pointer",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+              }}
+            >
+              <Trash2 size={14} />
+              <span>{confirmarEliminar ? "Confirmar Desactivación" : "Desactivar"}</span>
+            </button>
 
-            <div style={{ display: "flex", gap: "10px" }}>
+            <div style={{ display: "flex", gap: "8px" }}>
               <button
                 type="button"
                 onClick={onCerrar}
-                disabled={guardando || eliminando}
                 style={{
-                  padding: "8px 16px",
+                  background: "#F1F5F9",
+                  color: "#475569",
+                  border: "none",
+                  padding: "9px 16px",
                   borderRadius: "8px",
-                  border: "1px solid #CBD5E1",
-                  background: "#FFFFFF",
                   fontSize: "0.85rem",
                   fontWeight: 600,
                   cursor: "pointer",
@@ -714,25 +1005,27 @@ export function ModalEditarProducto({
               >
                 Cancelar
               </button>
+
               <button
                 type="submit"
-                disabled={guardando || eliminando}
+                disabled={guardando}
                 style={{
-                  padding: "8px 18px",
-                  borderRadius: "8px",
-                  border: "none",
-                  background: "#0284C7",
+                  background: esFloristeria ? "#E11D48" : "#0284C7",
                   color: "#FFFFFF",
+                  border: "none",
+                  padding: "9px 20px",
+                  borderRadius: "8px",
                   fontSize: "0.85rem",
                   fontWeight: 700,
-                  cursor: guardando ? "not-allowed" : "pointer",
+                  cursor: "pointer",
                   display: "inline-flex",
                   alignItems: "center",
                   gap: "6px",
+                  boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
                 }}
               >
                 <CheckCircle2 size={16} />
-                {guardando ? "Guardando..." : "Actualizar Honorario"}
+                <span>{guardando ? "Guardando..." : "Actualizar Catálogo"}</span>
               </button>
             </div>
           </div>

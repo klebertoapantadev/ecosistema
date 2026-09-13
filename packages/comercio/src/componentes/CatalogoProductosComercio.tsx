@@ -32,12 +32,17 @@ import { ModalCheckoutPayphone } from "./ModalCheckoutPayphone";
 import { ModalCrearProducto } from "./ModalCrearProducto";
 import { ModalCrearCategoria } from "./ModalCrearCategoria";
 import { ModalEditarProducto } from "./ModalEditarProducto";
+import { ManualConfiguracionCatalogoModal } from "./ManualConfiguracionCatalogoModal";
+import { BookOpen, Flower2, Wrench } from "lucide-react";
 
 interface Props {
   negocio?: string;
 }
 
 export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
+  const esFloristeria = negocio === "tinkay" || negocio === "margaritas";
+  const esMantenimiento = negocio === "fastfix";
+
   const [productos, setProductos] = useState<ProductoCatalogo[]>([]);
   const [categoriasLista, setCategoriasLista] = useState<CategoriaCatalogo[]>([]);
   const [cargando, setCargando] = useState(true);
@@ -54,6 +59,7 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
   const [modalCatAbierto, setModalCatAbierto] = useState(false);
   const [productoAEditar, setProductoAEditar] = useState<ProductoCatalogo | null>(null);
   const [modalEditarAbierto, setModalEditarAbierto] = useState(false);
+  const [modalManualAbierto, setModalManualAbierto] = useState(false);
 
   // Mapa de variantes seleccionadas por producto
   const [varianteSeleccionadaPorProducto, setVarianteSeleccionadaPorProducto] = useState<
@@ -190,10 +196,18 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
             </span>
           </div>
           <h1 style={{ margin: 0, fontSize: "1.45rem", fontWeight: 800, color: "#0F172A" }}>
-            Catálogo Comercial y Honorarios Profesionales
+            {esFloristeria
+              ? "Catálogo Comercial y Diseños Florales"
+              : esMantenimiento
+              ? "Catálogo de Servicios y Mantenimiento"
+              : "Catálogo Comercial y Honorarios Profesionales"}
           </h1>
           <p style={{ margin: "4px 0 0", fontSize: "0.85rem", color: "#64748B" }}>
-            Contrata servicios jurídicos, liquida honorarios profesionales o activa planes legales con Payphone en modo simulado o real.
+            {esFloristeria
+              ? "Arreglos florales, bouquets estilo coreano, complementos y suscripciones con entrega express y Payphone."
+              : esMantenimiento
+              ? "Servicios de mantenimiento, visitas de diagnóstico y reparaciones residenciales con cobro Payphone."
+              : "Contrata servicios jurídicos, liquida honorarios profesionales o activa planes legales con Payphone en modo simulado o real."}
           </p>
         </div>
 
@@ -201,12 +215,36 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
         <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
           <button
             type="button"
+            onClick={() => setModalManualAbierto(true)}
+            className="btn-responsive-accion"
+            title="Ver Manual de Configuración"
+            aria-label="Ver Manual de Configuración"
+            style={{
+              background: "#F8FAFC",
+              color: "#334155",
+              border: "1.5px solid #CBD5E1",
+              padding: "8px 14px",
+              borderRadius: "8px",
+              fontSize: "0.85rem",
+              fontWeight: 700,
+              cursor: "pointer",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+            }}
+          >
+            <BookOpen size={15} color={esFloristeria ? "#E11D48" : "#0284C7"} />
+            <span className="btn-texto-responsive">Manual de Uso</span>
+          </button>
+
+          <button
+            type="button"
             onClick={() => setModalProdAbierto(true)}
             className="btn-responsive-accion"
-            title="Crear Nuevo Honorario o Servicio"
-            aria-label="Crear Nuevo Honorario o Servicio"
+            title={esFloristeria ? "Crear Nuevo Arreglo Floral" : "Crear Nuevo Producto"}
+            aria-label={esFloristeria ? "Crear Nuevo Arreglo Floral" : "Crear Nuevo Producto"}
             style={{
-              background: "#0F172A",
+              background: esFloristeria ? "#E11D48" : "#0F172A",
               color: "#FFFFFF",
               border: "none",
               padding: "8px 14px",
@@ -221,7 +259,9 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
             }}
           >
             <Plus size={15} />
-            <span className="btn-texto-responsive">Nuevo Honorario</span>
+            <span className="btn-texto-responsive">
+              {esFloristeria ? "Nuevo Arreglo" : esMantenimiento ? "Nuevo Servicio" : "Nuevo Honorario"}
+            </span>
           </button>
 
           <button
@@ -245,7 +285,7 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
             }}
           >
             <FolderPlus size={15} />
-            <span className="btn-texto-responsive">Nueva Categoría</span>
+            <span className="btn-texto-responsive">{esFloristeria ? "Nueva Colección" : "Nueva Categoría"}</span>
           </button>
 
           <button
@@ -737,6 +777,14 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
           setProductos((prev) => prev.filter((item) => item.pro_id !== proId));
         }}
         categorias={categoriasLista}
+        negocio={negocio}
+        onAbrirManual={() => setModalManualAbierto(true)}
+      />
+
+      {/* Manual Interactivo de Configuración Comercial por Negocio */}
+      <ManualConfiguracionCatalogoModal
+        abierto={modalManualAbierto}
+        onCerrar={() => setModalManualAbierto(false)}
         negocio={negocio}
       />
     </div>

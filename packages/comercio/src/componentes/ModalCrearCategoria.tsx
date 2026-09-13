@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { X, FolderPlus, CheckCircle2, AlertCircle } from "lucide-react";
+import { X, FolderPlus, Flower2, Scale, Wrench, CheckCircle2, AlertCircle, Image as ImageIcon } from "lucide-react";
 import { crearCategoriaAction, CategoriaCatalogo } from "../acciones";
 
 interface Props {
@@ -12,11 +12,16 @@ interface Props {
 }
 
 export function ModalCrearCategoria({ abierto, onCerrar, onCategoriaCreada, negocio = "tranqi" }: Props) {
+  const esFloristeria = negocio === "tinkay" || negocio === "margaritas";
+  const esMantenimiento = negocio === "fastfix";
+
   const [nombre, setNombre] = useState("");
   const [slug, setSlug] = useState("");
   const [descripcion, setDescripcion] = useState("");
-  const [tipo, setTipo] = useState("FORMATO");
+  const [tipo, setTipo] = useState(esFloristeria ? "COLECCION" : "FORMATO");
   const [orden, setOrden] = useState(1);
+  const [imagenUrl, setImagenUrl] = useState("");
+  const [albumFotosUrl, setAlbumFotosUrl] = useState("");
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -24,7 +29,6 @@ export function ModalCrearCategoria({ abierto, onCerrar, onCategoriaCreada, nego
 
   const handleNombreChange = (val: string) => {
     setNombre(val);
-    // Auto-generar slug si no se editó a mano
     const s = val
       .toLowerCase()
       .normalize("NFD")
@@ -38,7 +42,7 @@ export function ModalCrearCategoria({ abierto, onCerrar, onCategoriaCreada, nego
     e.preventDefault();
     setError(null);
     if (!nombre.trim()) {
-      setError("Ingresa el nombre de la categoría.");
+      setError(esFloristeria ? "Ingresa el nombre de la colección floral." : "Ingresa el nombre de la categoría.");
       return;
     }
 
@@ -50,6 +54,8 @@ export function ModalCrearCategoria({ abierto, onCerrar, onCategoriaCreada, nego
         descripcion: descripcion.trim(),
         tipo,
         orden: Number(orden) || 1,
+        imagenUrl: imagenUrl.trim() || undefined,
+        albumFotosUrl: albumFotosUrl.trim() || undefined,
         negocio,
       });
 
@@ -59,6 +65,8 @@ export function ModalCrearCategoria({ abierto, onCerrar, onCategoriaCreada, nego
         setNombre("");
         setSlug("");
         setDescripcion("");
+        setImagenUrl("");
+        setAlbumFotosUrl("");
       } else {
         setError(res.error || "No se pudo crear la categoría.");
       }
@@ -88,7 +96,7 @@ export function ModalCrearCategoria({ abierto, onCerrar, onCategoriaCreada, nego
           background: "#FFFFFF",
           borderRadius: "16px",
           width: "100%",
-          maxWidth: "480px",
+          maxWidth: "520px",
           boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.2)",
           overflow: "hidden",
         }}
@@ -96,12 +104,12 @@ export function ModalCrearCategoria({ abierto, onCerrar, onCategoriaCreada, nego
         {/* Cabecera */}
         <div
           style={{
-            padding: "18px 24px",
+            padding: "16px 20px",
             borderBottom: "1px solid #E2E8F0",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            background: "#F8FAFC",
+            background: esFloristeria ? "#FFFDF8" : "#F8FAFC",
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
@@ -110,34 +118,34 @@ export function ModalCrearCategoria({ abierto, onCerrar, onCategoriaCreada, nego
                 width: "36px",
                 height: "36px",
                 borderRadius: "10px",
-                background: "#EEF2FF",
+                background: esFloristeria ? "#FEF2F2" : "#E0F2FE",
+                color: esFloristeria ? "#E11D48" : "#0284C7",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                color: "#4338CA",
               }}
             >
-              <FolderPlus size={20} />
+              {esFloristeria ? <Flower2 size={20} /> : <FolderPlus size={20} />}
             </div>
             <div>
-              <h3 style={{ margin: 0, fontSize: "1.05rem", fontWeight: 700, color: "#0F172A" }}>
-                Nueva Categoría
-              </h3>
-              <p style={{ margin: 0, fontSize: "0.75rem", color: "#64748B" }}>
-                Clasificación para servicios y honorarios
-              </p>
+              <h2 style={{ margin: 0, fontSize: "1.05rem", fontWeight: 800, color: "#0F172A" }}>
+                {esFloristeria ? "Nueva Colección / Ocasión Floral" : "Nueva Categoría Comercial"}
+              </h2>
+              <span style={{ fontSize: "0.75rem", color: "#64748B" }}>
+                Organiza productos y vitrinas visuales en el catálogo
+              </span>
             </div>
           </div>
+
           <button
             type="button"
             onClick={onCerrar}
             style={{
-              background: "none",
+              background: "transparent",
               border: "none",
               cursor: "pointer",
               color: "#64748B",
               padding: "6px",
-              borderRadius: "8px",
             }}
           >
             <X size={18} />
@@ -145,40 +153,40 @@ export function ModalCrearCategoria({ abierto, onCerrar, onCategoriaCreada, nego
         </div>
 
         {/* Formulario */}
-        <form onSubmit={handleGuardar} style={{ padding: "24px" }}>
+        <form onSubmit={handleGuardar} style={{ padding: "18px 22px" }}>
           {error && (
             <div
               style={{
-                marginBottom: "16px",
-                padding: "10px 14px",
                 background: "#FEF2F2",
                 border: "1px solid #FCA5A5",
-                borderRadius: "8px",
                 color: "#991B1B",
+                padding: "8px 12px",
+                borderRadius: "8px",
+                marginBottom: "12px",
                 fontSize: "0.8rem",
                 display: "flex",
                 alignItems: "center",
                 gap: "8px",
               }}
             >
-              <AlertCircle size={16} />
+              <AlertCircle size={15} />
               <span>{error}</span>
             </div>
           )}
 
-          <div style={{ marginBottom: "16px" }}>
-            <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 600, color: "#334155", marginBottom: "6px" }}>
-              Nombre de la Categoría *
+          <div style={{ marginBottom: "12px" }}>
+            <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, color: "#334155", marginBottom: "4px" }}>
+              Nombre de la {esFloristeria ? "Colección" : "Categoría"} *
             </label>
             <input
               type="text"
               required
-              placeholder="Ej. Litigio y Defensa Penal"
+              placeholder={esFloristeria ? "Ej. Bouquets Estilo Coreano o Ramos para Florero" : "Ej. Trámites Notariales"}
               value={nombre}
               onChange={(e) => handleNombreChange(e.target.value)}
               style={{
                 width: "100%",
-                padding: "9px 12px",
+                padding: "8px 12px",
                 borderRadius: "8px",
                 border: "1px solid #CBD5E1",
                 fontSize: "0.85rem",
@@ -187,105 +195,139 @@ export function ModalCrearCategoria({ abierto, onCerrar, onCategoriaCreada, nego
             />
           </div>
 
-          <div style={{ marginBottom: "16px" }}>
-            <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 600, color: "#334155", marginBottom: "6px" }}>
-              Identificador (Slug)
-            </label>
-            <input
-              type="text"
-              placeholder="litigio-defensa-penal"
-              value={slug}
-              onChange={(e) => setSlug(e.target.value)}
-              style={{
-                width: "100%",
-                padding: "9px 12px",
-                borderRadius: "8px",
-                border: "1px solid #CBD5E1",
-                fontSize: "0.85rem",
-                boxSizing: "border-box",
-                backgroundColor: "#F8FAFC",
-              }}
-            />
-          </div>
-
-          <div style={{ marginBottom: "16px" }}>
-            <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 600, color: "#334155", marginBottom: "6px" }}>
-              Descripción
-            </label>
-            <textarea
-              rows={2}
-              placeholder="Breve descripción del alcance de esta categoría..."
-              value={descripcion}
-              onChange={(e) => setDescripcion(e.target.value)}
-              style={{
-                width: "100%",
-                padding: "9px 12px",
-                borderRadius: "8px",
-                border: "1px solid #CBD5E1",
-                fontSize: "0.85rem",
-                boxSizing: "border-box",
-              }}
-            />
-          </div>
-
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "20px" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: "10px", marginBottom: "12px" }}>
             <div>
-              <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 600, color: "#334155", marginBottom: "6px" }}>
-                Tipo de Agrupación
+              <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 600, color: "#475569", marginBottom: "4px" }}>
+                Identificador Slug
               </label>
-              <select
-                value={tipo}
-                onChange={(e) => setTipo(e.target.value)}
+              <input
+                type="text"
+                placeholder="ej. cat-coreanos"
+                value={slug}
+                onChange={(e) => setSlug(e.target.value)}
                 style={{
                   width: "100%",
-                  padding: "9px 12px",
-                  borderRadius: "8px",
+                  padding: "7px 10px",
+                  borderRadius: "6px",
                   border: "1px solid #CBD5E1",
-                  fontSize: "0.85rem",
+                  fontSize: "0.8rem",
                   boxSizing: "border-box",
-                  background: "#FFFFFF",
                 }}
-              >
-                <option value="FORMATO">Formato de Servicio</option>
-                <option value="COLECCION">Colección / Planes</option>
-                <option value="ESTACIONAL">Estacional / Temporal</option>
-                <option value="LINEA">Línea de Negocio</option>
-              </select>
+              />
             </div>
 
             <div>
-              <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 600, color: "#334155", marginBottom: "6px" }}>
-                Orden de Despliegue
+              <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 600, color: "#475569", marginBottom: "4px" }}>
+                Posición / Orden
               </label>
               <input
                 type="number"
                 min="1"
                 value={orden}
-                onChange={(e) => setOrden(parseInt(e.target.value, 10) || 1)}
+                onChange={(e) => setOrden(parseInt(e.target.value) || 1)}
                 style={{
                   width: "100%",
-                  padding: "9px 12px",
-                  borderRadius: "8px",
+                  padding: "7px 10px",
+                  borderRadius: "6px",
                   border: "1px solid #CBD5E1",
-                  fontSize: "0.85rem",
+                  fontSize: "0.8rem",
                   boxSizing: "border-box",
                 }}
               />
             </div>
           </div>
 
-          {/* Botones */}
-          <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px" }}>
+          {/* Recursos Digitales de la Categoría */}
+          <div
+            style={{
+              background: "#F0FDF4",
+              border: "1px solid #BBF7D0",
+              borderRadius: "8px",
+              padding: "10px 12px",
+              marginBottom: "12px",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "8px" }}>
+              <ImageIcon size={14} color="#15803D" />
+              <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "#15803D", textTransform: "uppercase" }}>
+                Recursos Digitales de la Colección
+              </span>
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
+              <div>
+                <label style={{ display: "block", fontSize: "0.7rem", fontWeight: 600, color: "#334155", marginBottom: "2px" }}>
+                  URL Portada / Banner
+                </label>
+                <input
+                  type="url"
+                  placeholder="https://images.unsplash.com/..."
+                  value={imagenUrl}
+                  onChange={(e) => setImagenUrl(e.target.value)}
+                  style={{
+                    width: "100%",
+                    padding: "6px 8px",
+                    borderRadius: "6px",
+                    border: "1px solid #CBD5E1",
+                    fontSize: "0.75rem",
+                    boxSizing: "border-box",
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: "block", fontSize: "0.7rem", fontWeight: 600, color: "#334155", marginBottom: "2px" }}>
+                  URL Álbum de Muestras
+                </label>
+                <input
+                  type="url"
+                  placeholder="https://photos.app.goo.gl/..."
+                  value={albumFotosUrl}
+                  onChange={(e) => setAlbumFotosUrl(e.target.value)}
+                  style={{
+                    width: "100%",
+                    padding: "6px 8px",
+                    borderRadius: "6px",
+                    border: "1px solid #CBD5E1",
+                    fontSize: "0.75rem",
+                    boxSizing: "border-box",
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+
+          <div style={{ marginBottom: "16px" }}>
+            <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 600, color: "#475569", marginBottom: "4px" }}>
+              Descripción / Alcance
+            </label>
+            <textarea
+              rows={2}
+              placeholder={esFloristeria ? "Arreglos florales de exportación envueltos en papel coreano..." : "Breve resumen de la categoría..."}
+              value={descripcion}
+              onChange={(e) => setDescripcion(e.target.value)}
+              style={{
+                width: "100%",
+                padding: "8px 12px",
+                borderRadius: "8px",
+                border: "1px solid #CBD5E1",
+                fontSize: "0.82rem",
+                boxSizing: "border-box",
+              }}
+            />
+          </div>
+
+          <div style={{ display: "flex", justifyContent: "flex-end", gap: "8px" }}>
             <button
               type="button"
               onClick={onCerrar}
               style={{
-                padding: "9px 16px",
-                borderRadius: "8px",
-                border: "1px solid #CBD5E1",
-                background: "#FFFFFF",
+                background: "#F1F5F9",
                 color: "#475569",
-                fontSize: "0.85rem",
+                border: "none",
+                padding: "8px 14px",
+                borderRadius: "8px",
+                fontSize: "0.82rem",
                 fontWeight: 600,
                 cursor: "pointer",
               }}
@@ -296,21 +338,21 @@ export function ModalCrearCategoria({ abierto, onCerrar, onCategoriaCreada, nego
               type="submit"
               disabled={guardando}
               style={{
-                padding: "9px 18px",
-                borderRadius: "8px",
-                border: "none",
-                background: "#0F172A",
+                background: esFloristeria ? "#E11D48" : "#0284C7",
                 color: "#FFFFFF",
-                fontSize: "0.85rem",
+                border: "none",
+                padding: "8px 18px",
+                borderRadius: "8px",
+                fontSize: "0.82rem",
                 fontWeight: 700,
-                cursor: guardando ? "not-allowed" : "pointer",
+                cursor: "pointer",
                 display: "inline-flex",
                 alignItems: "center",
                 gap: "6px",
               }}
             >
-              <CheckCircle2 size={16} />
-              {guardando ? "Guardando..." : "Crear Categoría"}
+              <CheckCircle2 size={15} />
+              <span>{guardando ? "Creando..." : "Crear Colección"}</span>
             </button>
           </div>
         </form>

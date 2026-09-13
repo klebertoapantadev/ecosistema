@@ -82,7 +82,7 @@ Actualizado en cada PR que toque este requerimiento. `Parcial` significa que exi
 
 | Regla / Ítem | Estado | Dónde vive / Detalle de lo que falta |
 | :--- | :---: | :--- |
-| 1 · Registro Ultra-Fluido (Google OAuth + Correo) | ✅ Implementado | `packages/identidad` (`FormularioRegistro.tsx`, `auth.tranqi24.com`) |
+| 1 · Registro Ultra-Fluido (Google OAuth + Correo) | ✅ Implementado | `packages/identidad` (`FormularioRegistro.tsx`, `oaybbpdxhlxjbpwnoymy.supabase.co`) |
 | 2 · WhatsApp Opcional Post-Registro | ✅ Implementado | `autorizacion_contacto_whatsapp` en `seg_usuario`, no frena el registro |
 | 3 · Ubicación y Alcance Local | ✅ Implementado | Expuesto en onboarding y footer según catálogo `PLT-008` |
 | 4 · Identidad Base y Membresías Independientes | ✅ Implementado | `comun_seguridad.seg_usuario` y `comun_seguridad.seg_membresia` |

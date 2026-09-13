@@ -23,27 +23,14 @@ El ecosistema usa un **proyecto Supabase dedicado**, separado de cualquier otro 
 | Postgres | 17.6.1 |
 | Creado | 2026-07-27 |
 
-## Dominio propio de Auth (2026-07-29)
+## Dominio y URL del Backend de Supabase
 
-`NEXT_PUBLIC_SUPABASE_URL` en las 4 apps (tranqi-web, fastfix-web, tinkay-web, margaritas-web) apunta a
-`https://auth.tranqi24.com`, no al dominio crudo `oaybbpdxhlxjbpwnoymy.supabase.co`. Motivo: con el login
-de Google, la pantalla nativa de Google ("Selecciona una cuenta") mostraba "Ir a
-oaybbpdxhlxjbpwnoymy.supabase.co" — confuso y con pinta de phishing para el usuario final. Como las 4
-apps comparten un único proyecto/autenticación, se usó un nombre neutro (`auth.tranqi24.com`, no
-`auth.<negocio>.com` de ninguna app en particular) y "Acceso Ecosistema" como nombre de marca en el
-consentimiento de Google (Google Cloud Console → Auth Platform → Información de la marca).
+`NEXT_PUBLIC_SUPABASE_URL` en las 4 apps (`tranqi-web`, `fastfix-web`, `tinkay-web`, `margaritas-web`) apunta directamente al dominio oficial del proyecto:
+`https://oaybbpdxhlxjbpwnoymy.supabase.co`
 
-- **Add-on pagado**: Custom Domain de Supabase, facturado por hora activa, **no** cubierto por el spend
-  cap (confirmado ~$10/mes al momento de activarlo). Se activa en
-  `Dashboard del proyecto → Settings → Add-ons → Custom domain`.
-- El add-on sirve **todo el proyecto** (REST/Storage/Realtime/Auth), no solo Auth — por eso cambiar
-  `NEXT_PUBLIC_SUPABASE_URL` a `auth.tranqi24.com` no rompe nada más, es un alias del mismo backend.
-- DNS en Vercel (`tranqi24.com` usa nameservers de Vercel): `CNAME auth → oaybbpdxhlxjbpwnoymy.supabase.co.`
-  más el `TXT _acme-challenge.auth` que pide Supabase para emitir el certificado — ambos agregados vía
-  `vercel dns add`, no a mano en un panel de DNS externo.
-- Cliente OAuth de Google (`Clientes → Tranqi-WEB` en Google Auth Platform) necesita
-  `https://auth.tranqi24.com/auth/v1/callback` agregado a "URIs de redireccionamiento autorizados" — se
-  dejó también la URI vieja (`oaybbpdxhlxjbpwnoymy.supabase.co/.../callback`) como respaldo, no se borró.
+- Proporciona conectividad SSL/TLS gestionada nativamente por Supabase sin depender de certificados o subdominios externos.
+- Cliente OAuth de Google (`Google Auth Platform`) incluye `https://oaybbpdxhlxjbpwnoymy.supabase.co/auth/v1/callback` en "URIs de redireccionamiento autorizados".
+- Cada app frontend maneja su propio dominio de retorno (ej. `https://tinkay-web.vercel.app/auth/callback`, `https://tranqi-web.vercel.app/auth/callback`, etc.).
 
 ## Proyecto descartado — NO usar, NO tocar
 

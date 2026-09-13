@@ -19,7 +19,7 @@ responsable: Kleber Toapanta
 
 | Código | Funcionalidad / Requerimiento | Estado | Avance (%) | Responsable Asignado |
 | :--- | :--- | :---: | :---: | :--- |
-| **`TNK-001`** | **Catálogo y Portafolio Multidimensional de Arreglos** | 🟡 En Desarrollo | **95%** | Kleber Toapanta |
+| **`TNK-001`** | **Catálogo y Portafolio Multidimensional de Arreglos** | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`TNK-002`** | **E-Commerce Web, Carrito y Pasarela Payphone** | 🟡 En Desarrollo | **50%** | Kleber Toapanta |
 | **`TNK-003`** | **Vendedoras, Enlaces Ref y Comisiones Netas** | 🟡 En Desarrollo | **60%** | Kleber Toapanta |
 | **`TNK-004`** | **Agente ARIA WhatsApp (YCloud) y Consola Humana (HITL)** | 🟡 En Desarrollo | **55%** | Kleber Toapanta |
