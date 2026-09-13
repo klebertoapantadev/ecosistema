@@ -31,6 +31,7 @@ import {
 interface Props {
   abierto: boolean;
   producto: ProductoCatalogo | null;
+  varianteInicialId?: string;
   onCerrar: () => void;
   onProductoEditado: (prod: ProductoCatalogo) => void;
   onProductoEliminado: (proId: string) => void;
@@ -42,6 +43,7 @@ interface Props {
 export function ModalEditarProducto({
   abierto,
   producto,
+  varianteInicialId,
   onCerrar,
   onProductoEditado,
   onProductoEliminado,
@@ -143,11 +145,12 @@ export function ModalEditarProducto({
           ];
 
       setVariantesLocales(vars);
-      setVarianteActivaIndex(0);
+      const targetIdx = varianteInicialId ? vars.findIndex((v) => v.var_id === varianteInicialId) : 0;
+      setVarianteActivaIndex(targetIdx >= 0 ? targetIdx : 0);
       setConfirmarEliminar(false);
       setError(null);
     }
-  }, [producto, categorias, negocio, esFloristeria, esLegal]);
+  }, [producto, varianteInicialId, categorias, negocio, esFloristeria, esLegal]);
 
   if (!abierto || !producto) return null;
 

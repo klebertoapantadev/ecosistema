@@ -20,10 +20,21 @@ Tinkay es una floristería digital de alta gama con modelo de entrega **On-Deman
 
 ---
 
-## 2. Configuración de Productos Maestros y Variantes
+## 2. Arquitectura de 3 Capas y Configuración de Productos
+
+```
+[ CAPA 1: CATEGORÍA / COLECCIÓN ]  ➔  "Estilo Coreano", "Floreros", "Condolencias"
+                                        (Agrupa decenas de productos distintos)
+              │
+[ CAPA 2: PRODUCTO MASTER ]        ➔  "Bouquet Diseño Estilo Coreano"
+                                        (El arreglo específico con recursos comunes)
+              │
+[ CAPA 3: VARIANTES / SKUs ]       ➔  "Pequeño 12 rosas ($25)", "Gigante VIP ($60)"
+                                        (Opciones de compra con precio, foto o extras)
+```
 
 ### Regla de Oro
-**No crear productos duplicados para cada tamaño.** Se crea un solo producto maestro y dentro de él se administran sus modalidades de tarifa.
+**No crear productos duplicados para cada tamaño.** Se crea un solo producto maestro y dentro de él se administran sus variantes.
 
 ### Ejemplo Real de Configuración: *Bouquet Diseño Estilo Coreano*
 

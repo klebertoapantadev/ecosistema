@@ -205,6 +205,32 @@ export function ManualConfiguracionCatalogoModal({ abierto, onCerrar, negocio = 
 
         {/* Contenido del Manual */}
         <div style={{ padding: "20px 24px", overflowY: "auto", flex: 1, fontSize: "0.88rem", color: "#334155", lineHeight: 1.5 }}>
+          {/* Guía Conceptual: Arquitectura de 3 Capas de Catálogo */}
+          <div
+            style={{
+              background: "#0F172A",
+              color: "#F8FAFC",
+              borderRadius: "10px",
+              padding: "14px 18px",
+              marginBottom: "18px",
+              fontFamily: "monospace",
+              fontSize: "0.78rem",
+              lineHeight: 1.45,
+            }}
+          >
+            <div style={{ color: "#38BDF8", fontWeight: 700, marginBottom: "6px", fontFamily: "sans-serif" }}>
+              📐 ARQUITECTURA DE CATÁLOGO UNIFICADO (3 CAPAS ESTÁNDAR)
+            </div>
+            <div>[ CAPA 1: CATEGORÍA / COLECCIÓN ]  ➔  "Estilo Coreano", "Floreros", "Condolencias"</div>
+            <div style={{ color: "#94A3B8" }}>                                        (Agrupa decenas de productos distintos)</div>
+            <div style={{ color: "#38BDF8" }}>              │</div>
+            <div>[ CAPA 2: PRODUCTO MASTER ]        ➔  "Bouquet Diseño Estilo Coreano"</div>
+            <div style={{ color: "#94A3B8" }}>                                        (El arreglo/servicio con recursos comunes)</div>
+            <div style={{ color: "#38BDF8" }}>              │</div>
+            <div>[ CAPA 3: VARIANTES / SKUs ]       ➔  "Pequeño $25", "Gigante VIP $60"</div>
+            <div style={{ color: "#94A3B8" }}>                                        (Opciones con precio, foto o extras propios)</div>
+          </div>
+
           {tabActiva === "tinkay" && (
             <div>
               <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px" }}>

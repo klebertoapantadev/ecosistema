@@ -61,6 +61,7 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
   const [modalProdAbierto, setModalProdAbierto] = useState(false);
   const [modalCatAbierto, setModalCatAbierto] = useState(false);
   const [productoAEditar, setProductoAEditar] = useState<ProductoCatalogo | null>(null);
+  const [varianteAEditarId, setVarianteAEditarId] = useState<string | undefined>(undefined);
   const [modalEditarAbierto, setModalEditarAbierto] = useState(false);
   const [modalManualAbierto, setModalManualAbierto] = useState(false);
 
@@ -667,6 +668,7 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                     onClick={(e) => {
                       e.stopPropagation();
                       setProductoAEditar(p);
+                      setVarianteAEditarId(currentVarId);
                       setModalEditarAbierto(true);
                     }}
                     className="btn-responsive-accion"
@@ -902,9 +904,11 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
       <ModalEditarProducto
         abierto={modalEditarAbierto}
         producto={productoAEditar}
+        varianteInicialId={varianteAEditarId}
         onCerrar={() => {
           setModalEditarAbierto(false);
           setProductoAEditar(null);
+          setVarianteAEditarId(undefined);
         }}
         onProductoEditado={(editado) => {
           setProductos((prev) =>

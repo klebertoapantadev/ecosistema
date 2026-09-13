@@ -14,9 +14,20 @@ responsable: Coordinador de Diseño Floral & Eventos
 
 En Margaritas Floristería el catálogo administra **diseños florales boutique, ramos para ocasiones sociales, centros de mesa y planes de suscripción semanal para residencias y oficinas corporativas**.
 
----
+## 2. Arquitectura de 3 Capas del Catálogo
 
-## 2. Configuración de Diseños Florales y Suscripciones
+```text
+[ CAPA 1: CATEGORÍA / COLECCIÓN ]  ➔  "Suscripciones Corporativas", "Eventos Sociales", "Diseños Boutique"
+                                        (Agrupa decenas de productos o paquetes distintos)
+              │
+[ CAPA 2: PRODUCTO MASTER ]        ➔  "Suscripción Floral Semanal Corporativa"
+                                        (El producto base con textos, recursos y configuración general)
+              │
+[ CAPA 3: VARIANTES / SKUs ]       ➔  "Plan Standard (2 Arreglos) ($80/mes)", "Plan Premium (4 Arreglos) ($150/mes)"
+                                        (Las modalidades y opciones de compra de ESE producto específico)
+```
+
+## 3. Configuración de Diseños Florales y Suscripciones
 
 ### Ejemplo Real: *Suscripción Floral Semanal para Oficina*
 * **Nombre:** `Suscripción Floral Semanal Corporativa`

@@ -16,7 +16,18 @@ En FastFix Home el catálogo administra **visitas técnicas de diagnóstico, rep
 
 ---
 
-## 2. Configuración de Servicios Técnicos y Visitas
+## 2. Arquitectura de 3 Capas y Configuración de Servicios
+
+```
+[ CAPA 1: CATEGORÍA / ESPECIALIDAD ] ➔ "Electricidad", "Plomería", "Cerrajería"
+                                        (Agrupa las familias de mantenimiento)
+              │
+[ CAPA 2: SERVICIO MASTER ]          ➔ "Inspección y Diagnóstico Eléctrico"
+                                        (El servicio técnico con alcance común)
+              │
+[ CAPA 3: VARIANTES / TARIFAS ]      ➔ "Visita Básica $25", "Emergencia 24/7 $40"
+                                        (Opciones por horario o complejidad)
+```
 
 ### Ejemplo Real: *Visita Técnica de Diagnóstico e Inspección Eléctrica*
 * **Nombre:** `Inspección y Diagnóstico Eléctrico Domiciliario`

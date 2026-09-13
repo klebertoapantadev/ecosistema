@@ -16,7 +16,18 @@ En Tranqi el catálogo comercial administra la **oferta de servicios jurídicos,
 
 ---
 
-## 2. Configuración de Honorarios y Servicios Jurídicos
+## 2. Arquitectura de 3 Capas y Configuración de Honorarios
+
+```
+[ CAPA 1: CATEGORÍA / RAMA LEGAL ] ➔  "Familia & Civil", "Laboral", "Corporativo"
+                                        (Agrupa los distintos campos del derecho)
+              │
+[ CAPA 2: PRODUCTO / SERVICIO MASTER] ➔ "Divorcio por Mutuo Consentimiento"
+                                        (El trámite con alcance y requisitos comunes)
+              │
+[ CAPA 3: VARIANTES / TARIFAS ]    ➔  "Tarifa Notarial $150", "Con Sociedad $300"
+                                        (Opciones por complejidad o seniority)
+```
 
 ### Ejemplo Real: *Divorcio por Mutuo Consentimiento*
 * **Nombre:** `Trámite de Divorcio por Mutuo Consentimiento`
