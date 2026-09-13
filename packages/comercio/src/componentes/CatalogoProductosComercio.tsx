@@ -13,6 +13,7 @@ import {
   CheckCircle,
   HelpCircle,
   Clock,
+  ChevronLeft,
   ChevronRight,
   RefreshCw,
   Plus,
@@ -36,7 +37,7 @@ import {
 import { ModalCheckoutPayphone } from "./ModalCheckoutPayphone";
 import { ModalCrearProducto } from "./ModalCrearProducto";
 import { ModalCrearCategoria } from "./ModalCrearCategoria";
-import { ModalEditarProducto } from "./ModalEditarProducto";
+import { ModalEditarProducto, PALETA_COLORES_VARIANTES } from "./ModalEditarProducto";
 import { ManualConfiguracionCatalogoModal } from "./ManualConfiguracionCatalogoModal";
 import { TableroDisponibilidadOperativa } from "./TableroDisponibilidadOperativa";
 import { BookOpen, Flower2, Wrench, Activity, LayoutGrid } from "lucide-react";
@@ -75,6 +76,11 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
   // Mapa de variantes seleccionadas por producto
   const [varianteSeleccionadaPorProducto, setVarianteSeleccionadaPorProducto] = useState<
     Record<string, string>
+  >({});
+
+  // Índice de foto activa en el carrusel de cada producto
+  const [fotoCarouselIndexPorProducto, setFotoCarouselIndexPorProducto] = useState<
+    Record<string, number>
   >({});
 
   const cargarDatos = async () => {
@@ -719,8 +725,55 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
             const currentVar = p.variantes.find((v) => v.var_id === currentVarId) || p.variantes[0];
             const esHonorario = p.pro_tipo === "SERVICIO" || p.pro_slug.includes("honorarios");
 
-            // Herencia dinámica de foto, tiempo de entrega, video y álbum para la variante activa
-            const fotoMostrar = currentVar?.var_detalle_variante?.portada_url || p.pro_detalle_producto?.imagen_url;
+            // Recolección de fotos de cada variante y del master para el carrusel
+            const fotosDisponibles: Array<{
+              url: string;
+              origen: "master" | "variante" | "galeria";
+              etiqueta: string;
+              varianteId?: string;
+              col?: any;
+            }> = [];
+
+            if (p.pro_detalle_producto?.imagen_url) {
+              fotosDisponibles.push({
+                url: p.pro_detalle_producto.imagen_url,
+                origen: "master",
+                etiqueta: "Foto Master",
+              });
+            }
+
+            p.variantes.forEach((v, idx) => {
+              if (v.var_detalle_variante?.portada_url && !fotosDisponibles.some((f) => f.url === v.var_detalle_variante.portada_url)) {
+                const col = PALETA_COLORES_VARIANTES[idx % PALETA_COLORES_VARIANTES.length] || PALETA_COLORES_VARIANTES[0]!;
+                fotosDisponibles.push({
+                  url: v.var_detalle_variante.portada_url,
+                  origen: "variante",
+                  etiqueta: v.var_nombre,
+                  varianteId: v.var_id,
+                  col,
+                });
+              }
+            });
+
+            if (Array.isArray(p.pro_detalle_producto?.galeria_urls)) {
+              p.pro_detalle_producto.galeria_urls.forEach((url: string, idx: number) => {
+                if (url && !fotosDisponibles.some((f) => f.url === url)) {
+                  fotosDisponibles.push({
+                    url,
+                    origen: "galeria",
+                    etiqueta: `Muestra ${idx + 1}`,
+                  });
+                }
+              });
+            }
+
+            const activeCarouselIdx = Math.min(
+              fotoCarouselIndexPorProducto[p.pro_id] || 0,
+              Math.max(0, fotosDisponibles.length - 1)
+            );
+            const fotoActual = fotosDisponibles[activeCarouselIdx];
+            const fotoMostrar = fotoActual?.url || currentVar?.var_detalle_variante?.portada_url || p.pro_detalle_producto?.imagen_url;
+
             const videoMostrar = currentVar?.var_detalle_variante?.video_url || p.pro_detalle_producto?.video_url;
             const tiempoMostrar = currentVar?.var_detalle_variante?.tiempo_entrega || p.pro_detalle_producto?.tiempo_entrega;
             const albumUrl = currentVar?.var_detalle_variante?.album_url || p.pro_detalle_producto?.album_fotos_url;
@@ -742,9 +795,9 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                   position: "relative",
                 }}
               >
-                {/* Portada de Imagen si existe */}
+                {/* Carrusel de Imágenes: Portada Master + Fotos de Variantes */}
                 {fotoMostrar && (
-                  <div style={{ position: "relative", width: "100%", height: "180px", background: "#F1F5F9", overflow: "hidden" }}>
+                  <div style={{ position: "relative", width: "100%", height: "190px", background: "#0F172A", overflow: "hidden" }}>
                     <img
                       src={fotoMostrar}
                       alt={p.pro_nombre}
@@ -752,7 +805,7 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                         width: "100%",
                         height: "100%",
                         objectFit: "cover",
-                        transition: "transform 0.3s ease",
+                        transition: "all 0.3s ease",
                       }}
                     />
 
@@ -772,21 +825,167 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                           backdropFilter: "blur(4px)",
                           color: "#FFFFFF",
                           border: "1px solid rgba(56, 189, 248, 0.4)",
-                          padding: "4px 9px",
+                          padding: "4px 8px",
                           borderRadius: "8px",
-                          fontSize: "0.7rem",
+                          fontSize: "0.68rem",
                           fontWeight: 700,
                           cursor: "pointer",
                           display: "flex",
                           alignItems: "center",
-                          gap: "5px",
-                          zIndex: 2,
+                          gap: "4px",
+                          zIndex: 3,
                           boxShadow: "0 2px 5px rgba(0,0,0,0.25)",
                         }}
                       >
-                        <Play size={11} color="#38BDF8" fill="#38BDF8" />
+                        <Play size={10} color="#38BDF8" fill="#38BDF8" />
                         <span>Video Reel</span>
                       </button>
+                    )}
+
+                    {/* Etiqueta de la foto actual del carrusel */}
+                    {fotoActual && (
+                      <div
+                        style={{
+                          position: "absolute",
+                          top: "8px",
+                          left: videoMostrar ? "105px" : "8px",
+                          background: fotoActual.col ? fotoActual.col.bg : "rgba(15, 23, 42, 0.85)",
+                          color: fotoActual.col ? fotoActual.col.text : "#FFFFFF",
+                          border: fotoActual.col ? `1.5px solid ${fotoActual.col.border}` : "1px solid rgba(255,255,255,0.3)",
+                          backdropFilter: "blur(4px)",
+                          padding: "3px 8px",
+                          borderRadius: "6px",
+                          fontSize: "0.68rem",
+                          fontWeight: 800,
+                          zIndex: 2,
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "4px",
+                          boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
+                        }}
+                      >
+                        {fotoActual.col && (
+                          <div style={{ width: "6px", height: "6px", borderRadius: "50%", background: fotoActual.col.dot }} />
+                        )}
+                        <span>{fotoActual.etiqueta}</span>
+                      </div>
+                    )}
+
+                    {/* Flechas de Navegación del Carrusel si hay más de 1 imagen */}
+                    {fotosDisponibles.length > 1 && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const prevIdx = (activeCarouselIdx - 1 + fotosDisponibles.length) % fotosDisponibles.length;
+                            setFotoCarouselIndexPorProducto((prev) => ({ ...prev, [p.pro_id]: prevIdx }));
+                            const targetFoto = fotosDisponibles[prevIdx];
+                            if (targetFoto?.varianteId) {
+                              setVarianteSeleccionadaPorProducto((prev) => ({ ...prev, [p.pro_id]: targetFoto.varianteId! }));
+                            }
+                          }}
+                          title="Foto anterior"
+                          aria-label="Foto anterior"
+                          style={{
+                            position: "absolute",
+                            top: "50%",
+                            left: "8px",
+                            transform: "translateY(-50%)",
+                            background: "rgba(255, 255, 255, 0.9)",
+                            border: "none",
+                            borderRadius: "50%",
+                            width: "28px",
+                            height: "28px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            cursor: "pointer",
+                            boxShadow: "0 2px 6px rgba(0,0,0,0.25)",
+                            zIndex: 3,
+                          }}
+                        >
+                          <ChevronLeft size={16} color="#0F172A" />
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const nextIdx = (activeCarouselIdx + 1) % fotosDisponibles.length;
+                            setFotoCarouselIndexPorProducto((prev) => ({ ...prev, [p.pro_id]: nextIdx }));
+                            const targetFoto = fotosDisponibles[nextIdx];
+                            if (targetFoto?.varianteId) {
+                              setVarianteSeleccionadaPorProducto((prev) => ({ ...prev, [p.pro_id]: targetFoto.varianteId! }));
+                            }
+                          }}
+                          title="Foto siguiente"
+                          aria-label="Foto siguiente"
+                          style={{
+                            position: "absolute",
+                            top: "50%",
+                            right: "8px",
+                            transform: "translateY(-50%)",
+                            background: "rgba(255, 255, 255, 0.9)",
+                            border: "none",
+                            borderRadius: "50%",
+                            width: "28px",
+                            height: "28px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            cursor: "pointer",
+                            boxShadow: "0 2px 6px rgba(0,0,0,0.25)",
+                            zIndex: 3,
+                          }}
+                        >
+                          <ChevronRight size={16} color="#0F172A" />
+                        </button>
+
+                        {/* Indicadores de bolitas del carrusel */}
+                        <div
+                          style={{
+                            position: "absolute",
+                            bottom: "8px",
+                            left: "50%",
+                            transform: "translateX(-50%)",
+                            display: "flex",
+                            gap: "5px",
+                            background: "rgba(15, 23, 42, 0.65)",
+                            padding: "3px 8px",
+                            borderRadius: "12px",
+                            backdropFilter: "blur(4px)",
+                            zIndex: 3,
+                          }}
+                        >
+                          {fotosDisponibles.map((f, fIdx) => {
+                            const isDotActive = fIdx === activeCarouselIdx;
+                            return (
+                              <button
+                                key={fIdx}
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setFotoCarouselIndexPorProducto((prev) => ({ ...prev, [p.pro_id]: fIdx }));
+                                  if (f.varianteId) {
+                                    setVarianteSeleccionadaPorProducto((prev) => ({ ...prev, [p.pro_id]: f.varianteId! }));
+                                  }
+                                }}
+                                style={{
+                                  width: isDotActive ? "16px" : "6px",
+                                  height: "6px",
+                                  borderRadius: "3px",
+                                  border: "none",
+                                  background: isDotActive ? (f.col ? f.col.border : "#38BDF8") : "rgba(255, 255, 255, 0.5)",
+                                  cursor: "pointer",
+                                  padding: 0,
+                                  transition: "all 0.2s ease",
+                                }}
+                              />
+                            );
+                          })}
+                        </div>
+                      </>
                     )}
 
                     {tiempoMostrar && (
@@ -795,16 +994,17 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                           position: "absolute",
                           bottom: "8px",
                           left: "8px",
-                          background: "rgba(15, 23, 42, 0.8)",
+                          background: "rgba(15, 23, 42, 0.85)",
                           backdropFilter: "blur(4px)",
                           color: "#FFFFFF",
                           padding: "3px 8px",
                           borderRadius: "6px",
-                          fontSize: "0.7rem",
+                          fontSize: "0.68rem",
                           fontWeight: 700,
                           display: "flex",
                           alignItems: "center",
                           gap: "4px",
+                          zIndex: 2,
                         }}
                       >
                         <Clock size={11} color="#38BDF8" />
@@ -828,6 +1028,7 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                           fontWeight: 700,
                           textDecoration: "none",
                           boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
+                          zIndex: 2,
                         }}
                       >
                         📸 Muestras Reales
@@ -836,7 +1037,7 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                   </div>
                 )}
 
-                {/* Barra Superior de la Tarjeta: Destacado + Botón Editar Master (Solo en Modo Admin) */}
+                {/* Barra Superior de la Tarjeta: Destacado + Botón Editar Master */}
                 <div
                   style={{
                     position: "absolute",
@@ -845,7 +1046,7 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                     display: "flex",
                     alignItems: "center",
                     gap: "6px",
-                    zIndex: 2,
+                    zIndex: 4,
                   }}
                 >
                   {p.pro_destacado && (
@@ -881,9 +1082,9 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                       title="Editar datos generales del producto master"
                       aria-label="Editar datos generales del producto master"
                       style={{
-                        background: "rgba(255, 255, 255, 0.95)",
-                        border: "1.5px solid #CBD5E1",
-                        color: "#1E293B",
+                        background: "rgba(15, 23, 42, 0.9)",
+                        border: "1.5px solid rgba(56, 189, 248, 0.4)",
+                        color: "#FFFFFF",
                         padding: "5px 10px",
                         borderRadius: "8px",
                         fontSize: "0.75rem",
@@ -892,10 +1093,10 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                         display: "inline-flex",
                         alignItems: "center",
                         gap: "5px",
-                        boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+                        boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
                       }}
                     >
-                      <Pencil size={12} color="#0284C7" />
+                      <Pencil size={12} color="#38BDF8" />
                       <span className="btn-texto-responsive">Editar Master</span>
                     </button>
                   )}
@@ -959,7 +1160,7 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                     {p.pro_descripcion}
                   </p>
 
-                  {/* Selector de Variantes / Tamaños con Edición Individual */}
+                  {/* Selector de Variantes / Tamaños con Colores Individuales */}
                   {p.variantes.length > 1 && (
                     <div style={{ marginBottom: "14px" }}>
                       <label
@@ -974,55 +1175,66 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                         {esFloristeria ? "Selecciona el tamaño / cantidad de rosas:" : "Selecciona la variante / opción:"}
                       </label>
                       <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-                        {p.variantes.map((v) => {
+                        {p.variantes.map((v, vIdx) => {
                           const activa = currentVarId === v.var_id;
+                          const colVar = PALETA_COLORES_VARIANTES[vIdx % PALETA_COLORES_VARIANTES.length] || PALETA_COLORES_VARIANTES[0]!;
+
                           return (
                             <div
                               key={v.var_id}
-                              onClick={() =>
+                              onClick={() => {
                                 setVarianteSeleccionadaPorProducto((prev) => ({
                                   ...prev,
                                   [p.pro_id]: v.var_id,
-                                }))
-                              }
+                                }));
+                                // Sincronizar carrusel si la variante tiene su foto
+                                const fotoVarIdx = fotosDisponibles.findIndex((f) => f.varianteId === v.var_id);
+                                if (fotoVarIdx >= 0) {
+                                  setFotoCarouselIndexPorProducto((prev) => ({ ...prev, [p.pro_id]: fotoVarIdx }));
+                                } else {
+                                  setFotoCarouselIndexPorProducto((prev) => ({ ...prev, [p.pro_id]: 0 }));
+                                }
+                              }}
                               style={{
                                 textAlign: "left",
                                 padding: "8px 12px",
                                 borderRadius: "8px",
                                 border: activa
-                                  ? (esFloristeria ? "1.5px solid #E11D48" : "1.5px solid #0284C7")
-                                  : "1px solid #E2E8F0",
+                                  ? `2px solid ${colVar.border}`
+                                  : `1.5px solid ${colVar.border}44`,
                                 background: activa
-                                  ? (esFloristeria ? "#FFF1F2" : "#F0F9FF")
+                                  ? colVar.bg
                                   : "#FFFFFF",
                                 cursor: "pointer",
                                 display: "flex",
                                 justifyContent: "space-between",
                                 alignItems: "center",
-                                transition: "all 0.1s ease",
+                                transition: "all 0.15s ease",
+                                boxShadow: activa ? `0 2px 6px ${colVar.border}22` : "none",
                               }}
                             >
-                              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                                <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: colVar.dot, flexShrink: 0 }} />
                                 <div
                                   style={{
                                     fontSize: "0.8rem",
-                                    fontWeight: activa ? 800 : 500,
+                                    fontWeight: activa ? 800 : 600,
                                     color: activa
-                                      ? (esFloristeria ? "#BE123C" : "#0284C7")
+                                      ? colVar.text
                                       : "#334155",
                                   }}
                                 >
                                   {v.var_nombre}
                                 </div>
                                 {v.var_detalle_variante?.portada_url && (
-                                  <span style={{ fontSize: "0.65rem", background: "rgba(0,0,0,0.06)", padding: "1px 5px", borderRadius: "4px", color: "#64748B" }}>
+                                  <span style={{ fontSize: "0.62rem", background: colVar.badge, color: colVar.text, padding: "1px 5px", borderRadius: "4px", fontWeight: 700 }}>
                                     📸 Foto
                                   </span>
                                 )}
                               </div>
 
                               <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                                <div style={{ fontSize: "0.82rem", fontWeight: 800, color: "#0F172A" }}>
+                                <div style={{ fontSize: "0.85rem", fontWeight: 800, color: activa ? colVar.text : "#0F172A" }}>
                                   ${v.precio_total.toFixed(2)}
                                 </div>
 
@@ -1038,17 +1250,17 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                                     title={`Editar variante ${v.var_nombre}`}
                                     aria-label={`Editar variante ${v.var_nombre}`}
                                     style={{
-                                      background: activa ? "rgba(2, 132, 199, 0.15)" : "#F1F5F9",
-                                      border: "1px solid #CBD5E1",
+                                      background: colVar.badge,
+                                      border: `1px solid ${colVar.border}`,
                                       borderRadius: "6px",
-                                      padding: "3px 6px",
+                                      padding: "3px 7px",
                                       cursor: "pointer",
                                       display: "inline-flex",
                                       alignItems: "center",
                                       gap: "3px",
                                       fontSize: "0.7rem",
-                                      color: "#0284C7",
-                                      fontWeight: 700,
+                                      color: colVar.text,
+                                      fontWeight: 800,
                                     }}
                                   >
                                     <Pencil size={11} />

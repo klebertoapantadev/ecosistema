@@ -28,6 +28,15 @@ import {
   VarianteCatalogo,
 } from "../acciones";
 
+export const PALETA_COLORES_VARIANTES = [
+  { nombre: "Verde Esmeralda", bg: "#ECFDF5", border: "#10B981", text: "#065F46", badge: "#D1FAE5", dot: "#10B981" },
+  { nombre: "Ámbar Cálido", bg: "#FFFBEB", border: "#F59E0B", text: "#92400E", badge: "#FEF3C7", dot: "#F59E0B" },
+  { nombre: "Púrpura Imperial", bg: "#F5F3FF", border: "#8B5CF6", text: "#5B21B6", badge: "#EDE9FE", dot: "#8B5CF6" },
+  { nombre: "Rosa Coral", bg: "#FFF1F2", border: "#F43F5E", text: "#9F1239", badge: "#FFE4E6", dot: "#F43F5E" },
+  { nombre: "Azul Cielo", bg: "#F0F9FF", border: "#0EA5E9", text: "#075985", badge: "#E0F2FE", dot: "#0EA5E9" },
+  { nombre: "Índigo Profundo", bg: "#EEF2FF", border: "#6366F1", text: "#3730A3", badge: "#E0E7FF", dot: "#6366F1" },
+];
+
 interface Props {
   abierto: boolean;
   producto: ProductoCatalogo | null;
@@ -155,6 +164,7 @@ export function ModalEditarProducto({
   if (!abierto || !producto) return null;
 
   const varianteActual = variantesLocales[varianteActivaIndex] || variantesLocales[0];
+  const colActiva = PALETA_COLORES_VARIANTES[varianteActivaIndex % PALETA_COLORES_VARIANTES.length] || PALETA_COLORES_VARIANTES[0]!;
 
   const actualizarVarianteActual = (campo: keyof VarianteCatalogo, valor: any) => {
     setVariantesLocales((prev) => {
@@ -343,43 +353,57 @@ export function ModalEditarProducto({
           overflow: "hidden",
         }}
       >
-        {/* Cabecera */}
+        {/* Cabecera con Identidad Visual de Producto Master */}
         <div
           style={{
             padding: "16px 20px",
-            borderBottom: "1px solid #E2E8F0",
+            borderBottom: "1px solid #334155",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            background: esFloristeria ? "#FFFDF8" : "#F8FAFC",
+            background: "linear-gradient(135deg, #0F172A 0%, #1E293B 100%)",
+            color: "#FFFFFF",
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
             <div
               style={{
-                width: "36px",
-                height: "36px",
+                width: "38px",
+                height: "38px",
                 borderRadius: "10px",
-                background: esFloristeria ? "#FEF2F2" : "#E0F2FE",
-                color: esFloristeria ? "#E11D48" : "#0284C7",
+                background: "rgba(56, 189, 248, 0.15)",
+                color: "#38BDF8",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
+                border: "1px solid rgba(56, 189, 248, 0.3)",
               }}
             >
               {esFloristeria ? <Flower2 size={20} /> : esMantenimiento ? <Wrench size={20} /> : <FileEdit size={20} />}
             </div>
             <div>
-              <h2 style={{ margin: 0, fontSize: "1.1rem", fontWeight: 800, color: "#0F172A" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                <span
+                  style={{
+                    background: "rgba(56, 189, 248, 0.2)",
+                    color: "#38BDF8",
+                    fontSize: "0.68rem",
+                    fontWeight: 800,
+                    padding: "2px 6px",
+                    borderRadius: "4px",
+                    border: "1px solid rgba(56, 189, 248, 0.4)",
+                  }}
+                >
+                  📦 CAPA 2: PRODUCTO MASTER
+                </span>
+              </div>
+              <h2 style={{ margin: "2px 0 0", fontSize: "1.05rem", fontWeight: 800, color: "#FFFFFF" }}>
                 {esFloristeria
-                  ? "Editar Arreglo / Diseño Floral"
+                  ? "Editar Arreglo / Diseño Floral Master"
                   : esMantenimiento
-                  ? "Editar Servicio de Mantenimiento"
-                  : "Editar Servicio / Honorario Profesional"}
+                  ? "Editar Servicio de Mantenimiento Master"
+                  : "Editar Servicio / Honorario Profesional Master"}
               </h2>
-              <span style={{ fontSize: "0.75rem", color: "#64748B" }}>
-                Configura tarifas multivariante, recursos multimedia y promesa de entrega
-              </span>
             </div>
           </div>
 
@@ -776,10 +800,11 @@ export function ModalEditarProducto({
               </button>
             </div>
 
-            {/* Pestañas de Variantes */}
-            <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginBottom: "12px" }}>
+            {/* Pestañas de Variantes con Código de Color Individual */}
+            <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginBottom: "14px" }}>
               {variantesLocales.map((v, idx) => {
                 const activa = idx === varianteActivaIndex;
+                const col = PALETA_COLORES_VARIANTES[idx % PALETA_COLORES_VARIANTES.length] || PALETA_COLORES_VARIANTES[0]!;
                 const pvpCalculado = (Number(v.var_precio || 0) * (1 + (v.var_tarifa_iva_porcentaje ?? 15) / 100));
                 const tieneOverrides = Boolean(
                   v.var_detalle_variante?.portada_url ||
@@ -795,49 +820,75 @@ export function ModalEditarProducto({
                     style={{
                       padding: "7px 12px",
                       borderRadius: "8px",
-                      border: activa ? "2px solid #0284C7" : "1px solid #CBD5E1",
-                      background: activa ? "#E0F2FE" : "#FFFFFF",
-                      color: activa ? "#0369A1" : "#475569",
-                      fontWeight: activa ? 800 : 500,
+                      border: activa ? `2px solid ${col.border}` : `1.5px solid ${col.border}66`,
+                      background: activa ? col.bg : "#FFFFFF",
+                      color: activa ? col.text : "#475569",
+                      fontWeight: activa ? 800 : 600,
                       fontSize: "0.78rem",
                       cursor: "pointer",
                       display: "flex",
                       alignItems: "center",
                       gap: "6px",
                       transition: "all 0.15s ease",
+                      boxShadow: activa ? `0 2px 8px ${col.border}33` : "none",
                     }}
                   >
+                    <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: col.dot, flexShrink: 0 }} />
                     <span>{v.var_nombre}</span>
-                    <span style={{ fontWeight: 800, color: activa ? "#0F172A" : "#64748B" }}>
+                    <span style={{ fontWeight: 800, color: activa ? col.text : "#0F172A" }}>
                       ${(v.precio_total || pvpCalculado).toFixed(2)}
                     </span>
                     {tieneOverrides && (
                       <span
-                        title="Esta variante tiene personalizaciones propias (foto/entrega/beneficios)"
+                        title="Variante con foto o SLA propio"
                         style={{
-                          width: "7px",
-                          height: "7px",
-                          borderRadius: "50%",
-                          background: "#F59E0B",
-                          display: "inline-block",
+                          fontSize: "0.62rem",
+                          background: col.badge,
+                          color: col.text,
+                          padding: "1px 5px",
+                          borderRadius: "4px",
+                          fontWeight: 800,
                         }}
-                      />
+                      >
+                        📸 Foto
+                      </span>
                     )}
                   </button>
                 );
               })}
             </div>
 
-            {/* Formulario de la Variante Seleccionada */}
+            {/* Formulario de la Variante Seleccionada con Indicador de Color */}
             {varianteActual && (
               <div
                 style={{
                   background: "#FFFFFF",
                   borderRadius: "10px",
                   padding: "14px",
-                  border: "1px solid #CBD5E1",
+                  border: `2px solid ${colActiva.border}`,
+                  boxShadow: `0 3px 10px ${colActiva.border}22`,
                 }}
               >
+                  {/* Banner de Variante Activa */}
+                  <div
+                    style={{
+                      background: colActiva.bg,
+                      borderRadius: "6px",
+                      padding: "6px 10px",
+                      marginBottom: "12px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                    }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", gap: "6px", color: colActiva.text, fontWeight: 800, fontSize: "0.75rem" }}>
+                      <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: colActiva.dot }} />
+                      <span>🏷️ EDITANDO: {varianteActual.var_nombre || "Nueva Variante"} (Variante #{varianteActivaIndex + 1})</span>
+                    </div>
+                    <span style={{ fontSize: "0.7rem", color: colActiva.text, fontWeight: 700 }}>
+                      PVP: ${(varianteActual.precio_total || 0).toFixed(2)}
+                    </span>
+                  </div>
                 {/* 1. Datos básicos de la variante */}
                 <div style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr", gap: "10px", marginBottom: "10px" }}>
                   <div>
