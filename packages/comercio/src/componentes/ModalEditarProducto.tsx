@@ -19,10 +19,13 @@ import {
   Layers,
   HelpCircle,
   BookOpen,
+  Loader2,
+  Wand2,
 } from "lucide-react";
 import {
   editarProductoAction,
   eliminarProductoAction,
+  resolverUrlImagenDirectaAction,
   CategoriaCatalogo,
   ProductoCatalogo,
   VarianteCatalogo,
@@ -89,6 +92,11 @@ export function ModalEditarProducto({
   const [tiempoEntrega, setTiempoEntrega] = useState("");
   const [beneficiosTexto, setBeneficiosTexto] = useState("");
   const [requisitosTexto, setRequisitosTexto] = useState("");
+
+  // Auto-Conversión de imágenes
+  const [resolviendoImagen, setResolviendoImagen] = useState(false);
+  const [resolviendoVarianteImg, setResolviendoVarianteImg] = useState(false);
+  const [exitoAutoConvertir, setExitoAutoConvertir] = useState<string | null>(null);
 
   // Editor Multivariante (Tamaños / Modalidades)
   const [modoEdicion, setModoEdicion] = useState<"master" | "variante">("master");
@@ -248,6 +256,47 @@ export function ModalEditarProducto({
     setVarianteActivaIndex(0);
   };
 
+  const handleConvertirImagenGlobal = async (urlAConvertir?: string) => {
+    const target = urlAConvertir !== undefined ? urlAConvertir : imagenUrl;
+    if (!target.trim()) return;
+    setResolviendoImagen(true);
+    setExitoAutoConvertir(null);
+    setError(null);
+    try {
+      const res = await resolverUrlImagenDirectaAction(target);
+      if (res.ok && res.urlDirecta) {
+        setImagenUrl(res.urlDirecta);
+        setExitoAutoConvertir("¡Enlace de Google Fotos convertido con éxito a imagen directa de alta resolución!");
+      } else {
+        setError(res.error || "No se pudo convertir automáticamente la URL de Google Fotos.");
+      }
+    } catch (e: any) {
+      setError(`Error al convertir: ${e.message || e}`);
+    } finally {
+      setResolviendoImagen(false);
+    }
+  };
+
+  const handleConvertirImagenVariante = async (urlAConvertir?: string) => {
+    const target = urlAConvertir !== undefined ? urlAConvertir : (varianteActual?.var_detalle_variante?.portada_url || "");
+    if (!target.trim()) return;
+    setResolviendoVarianteImg(true);
+    setError(null);
+    try {
+      const res = await resolverUrlImagenDirectaAction(target);
+      if (res.ok && res.urlDirecta) {
+        const det = { ...(varianteActual?.var_detalle_variante || {}), portada_url: res.urlDirecta };
+        actualizarVarianteActual("var_detalle_variante", det);
+      } else {
+        setError(res.error || "No se pudo convertir automáticamente la URL de Google Fotos de esta variante.");
+      }
+    } catch (e: any) {
+      setError(`Error al convertir: ${e.message || e}`);
+    } finally {
+      setResolviendoVarianteImg(false);
+    }
+  };
+
   const handleGuardar = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -273,6 +322,50 @@ export function ModalEditarProducto({
       }
     }
 
+    setGuardando(true);
+
+    // 1. Validación previa y auto-conversión de portada global si es un visor web de Google Fotos
+    let imagenUrlFinal = imagenUrl.trim();
+    if (
+      imagenUrlFinal.includes("photos.google.com") ||
+      imagenUrlFinal.includes("photos.app.goo.gl")
+    ) {
+      const resImg = await resolverUrlImagenDirectaAction(imagenUrlFinal);
+      if (resImg.ok && resImg.urlDirecta) {
+        imagenUrlFinal = resImg.urlDirecta;
+        setImagenUrl(imagenUrlFinal);
+      } else {
+        setGuardando(false);
+        setError(
+          `⚠️ Advertencia de Imagen: La URL de portada principal es un visor web de Google Fotos que no pudo ser resuelto automáticamente (${resImg.error}). Copia la dirección de la imagen con clic derecho sobre la foto ('Copiar dirección de la imagen') o muévela al campo 'Álbum de Muestras'.`
+        );
+        return;
+      }
+    }
+
+    // 2. Validación y auto-conversión de portadas de variantes
+    const variantesParaGuardar = await Promise.all(
+      variantesLocales.map(async (v) => {
+        const port = v.var_detalle_variante?.portada_url;
+        if (
+          port &&
+          (port.includes("photos.google.com") || port.includes("photos.app.goo.gl"))
+        ) {
+          const resV = await resolverUrlImagenDirectaAction(port);
+          if (resV.ok && resV.urlDirecta) {
+            return {
+              ...v,
+              var_detalle_variante: {
+                ...(v.var_detalle_variante || {}),
+                portada_url: resV.urlDirecta,
+              },
+            };
+          }
+        }
+        return v;
+      })
+    );
+
     const beneficios = beneficiosTexto
       .split("\n")
       .map((b) => b.trim())
@@ -288,7 +381,6 @@ export function ModalEditarProducto({
       .map((g) => g.trim())
       .filter((g) => g.length > 0);
 
-    setGuardando(true);
     try {
       const res = await editarProductoAction({
         pro_id: producto.pro_id,
@@ -298,7 +390,7 @@ export function ModalEditarProducto({
         tipo,
         destacado,
         icono,
-        imagenUrl: imagenUrl.trim() || undefined,
+        imagenUrl: imagenUrlFinal || undefined,
         albumFotosUrl: albumFotosUrl.trim() || undefined,
         videoUrl: videoUrl.trim() || undefined,
         galeriaUrls: galeriaUrls.length > 0 ? galeriaUrls : undefined,
@@ -306,7 +398,7 @@ export function ModalEditarProducto({
         beneficios,
         requisitos,
         modalidadPago,
-        variantes: variantesLocales,
+        variantes: variantesParaGuardar,
         negocio,
       });
 
@@ -666,21 +758,34 @@ export function ModalEditarProducto({
 
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "10px" }}>
               <div>
-                <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#334155", marginBottom: "2px" }}>
-                  URL Imagen de Portada Principal (Global) *
-                </label>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "2px" }}>
+                  <label style={{ fontSize: "0.72rem", fontWeight: 700, color: "#334155" }}>
+                    URL Imagen de Portada Principal (Global) *
+                  </label>
+                  {(imagenUrl.includes("photos.google.com") || imagenUrl.includes("photos.app.goo.gl")) && (
+                    <span style={{ fontSize: "0.68rem", color: "#D97706", fontWeight: 700, display: "flex", alignItems: "center", gap: "3px" }}>
+                      <AlertCircle size={12} /> Requiere Extracción
+                    </span>
+                  )}
+                  {imagenUrl.includes("lh3.googleusercontent.com") && (
+                    <span style={{ fontSize: "0.68rem", color: "#16A34A", fontWeight: 700, display: "flex", alignItems: "center", gap: "3px" }}>
+                      <CheckCircle2 size={12} /> Imagen Directa Lista
+                    </span>
+                  )}
+                </div>
                 <input
                   type="url"
-                  placeholder="https://images.unsplash.com/... o https://lh3.googleusercontent.com/..."
+                  placeholder="https://photos.google.com/share/... o https://lh3.googleusercontent.com/..."
                   value={imagenUrl}
                   onChange={(e) => {
                     const raw = e.target.value;
                     const driveMatch = raw.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/) || raw.match(/drive\.google\.com\/(?:open|uc)\?(?:.*&)?id=([a-zA-Z0-9_-]+)/);
                     if (driveMatch && driveMatch[1]) {
-                      setImagenUrl(`https://lh3.googleusercontent.com/d/${driveMatch[1]}=w1000`);
+                      setImagenUrl(`https://lh3.googleusercontent.com/d/${driveMatch[1]}=w1200`);
                     } else {
                       setImagenUrl(raw);
                     }
+                    setExitoAutoConvertir(null);
                   }}
                   style={{
                     width: "100%",
@@ -691,11 +796,49 @@ export function ModalEditarProducto({
                     boxSizing: "border-box",
                   }}
                 />
+
+                {exitoAutoConvertir && (
+                  <div style={{ marginTop: "4px", fontSize: "0.7rem", color: "#15803D", background: "#DCFCE7", padding: "4px 8px", borderRadius: "4px", border: "1px solid #BBF7D0", display: "flex", alignItems: "center", gap: "4px" }}>
+                    <CheckCircle2 size={13} /> {exitoAutoConvertir}
+                  </div>
+                )}
+
                 {(imagenUrl.includes("photos.google.com") || imagenUrl.includes("photos.app.goo.gl") || imagenUrl.includes("drive.google.com/drive")) && (
                   <div style={{ marginTop: "6px", fontSize: "0.7rem", color: "#92400E", background: "#FEF3C7", padding: "8px 10px", borderRadius: "6px", border: "1px solid #FDE68A", lineHeight: 1.4 }}>
-                    <div style={{ fontWeight: 800, marginBottom: "3px" }}>⚠️ Enlace de Álbum Web Detectado</div>
+                    <div style={{ fontWeight: 800, marginBottom: "3px", display: "flex", alignItems: "center", gap: "4px" }}>
+                      <AlertCircle size={13} color="#D97706" /> Enlace de Álbum Web Detectado
+                    </div>
                     <div>Este enlace abre el visor web de Google Fotos, no un archivo de imagen directo (.jpg).</div>
-                    <div style={{ marginTop: "5px", display: "flex", gap: "6px", flexWrap: "wrap", alignItems: "center" }}>
+                    <div style={{ marginTop: "6px", display: "flex", gap: "6px", flexWrap: "wrap", alignItems: "center" }}>
+                      <button
+                        type="button"
+                        disabled={resolviendoImagen}
+                        onClick={() => handleConvertirImagenGlobal()}
+                        style={{
+                          background: "#0284C7",
+                          color: "#FFFFFF",
+                          border: "none",
+                          padding: "4px 9px",
+                          borderRadius: "4px",
+                          fontSize: "0.68rem",
+                          fontWeight: 700,
+                          cursor: resolviendoImagen ? "wait" : "pointer",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "4px",
+                        }}
+                      >
+                        {resolviendoImagen ? (
+                          <>
+                            <Loader2 size={12} className="animate-spin" /> Extrayendo Directa...
+                          </>
+                        ) : (
+                          <>
+                            <Wand2 size={12} /> 🪄 Auto-Convertir Foto
+                          </>
+                        )}
+                      </button>
+
                       <button
                         type="button"
                         onClick={() => {
@@ -706,18 +849,15 @@ export function ModalEditarProducto({
                           background: "#B45309",
                           color: "#FFFFFF",
                           border: "none",
-                          padding: "3px 8px",
+                          padding: "4px 8px",
                           borderRadius: "4px",
                           fontSize: "0.68rem",
                           fontWeight: 700,
                           cursor: "pointer",
                         }}
                       >
-                        Mover a "Álbum de Muestras" ➔
+                        📁 Mover a "Álbum de Muestras"
                       </button>
-                      <span style={{ fontSize: "0.65rem", color: "#78350F" }}>
-                        O haz clic derecho en la foto &gt; "Copiar dirección de la imagen" (lh3.googleusercontent.com)
-                      </span>
                     </div>
                   </div>
                 )}
@@ -1194,7 +1334,7 @@ export function ModalEditarProducto({
                       onChange={(e) => {
                         const raw = e.target.value.trim();
                         const driveMatch = raw.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/) || raw.match(/drive\.google\.com\/(?:open|uc)\?(?:.*&)?id=([a-zA-Z0-9_-]+)/);
-                        const valFinal = driveMatch && driveMatch[1] ? `https://lh3.googleusercontent.com/d/${driveMatch[1]}=w1000` : raw;
+                        const valFinal = driveMatch && driveMatch[1] ? `https://lh3.googleusercontent.com/d/${driveMatch[1]}=w1200` : raw;
                         const det = { ...(varianteActual.var_detalle_variante || {}), portada_url: valFinal || null };
                         actualizarVarianteActual("var_detalle_variante", det);
                       }}
@@ -1212,8 +1352,40 @@ export function ModalEditarProducto({
                       varianteActual.var_detalle_variante?.portada_url?.includes("photos.app.goo.gl") ||
                       varianteActual.var_detalle_variante?.portada_url?.includes("photos.google.com")
                     ) && (
-                      <div style={{ marginTop: "4px", fontSize: "0.68rem", color: "#B45309", background: "#FEF3C7", padding: "4px 8px", borderRadius: "4px", border: "1px solid #FDE68A", lineHeight: 1.35 }}>
-                        ⚠️ <strong>Aviso:</strong> Este es un enlace de álbum web interactivo de Google Fotos. Para foto directa de este tamaño: abre el link, haz <em>clic derecho en la foto &gt; Copiar dirección de la imagen</em> (URL directa <code>https://lh3.googleusercontent.com/...</code>) y pega esa dirección aquí.
+                      <div style={{ marginTop: "4px", fontSize: "0.68rem", color: "#B45309", background: "#FEF3C7", padding: "6px 8px", borderRadius: "5px", border: "1px solid #FDE68A", lineHeight: 1.35 }}>
+                        <div style={{ fontWeight: 800, marginBottom: "3px", display: "flex", alignItems: "center", gap: "4px" }}>
+                          <AlertCircle size={12} color="#D97706" /> Enlace de Álbum Web Detectado
+                        </div>
+                        <div style={{ display: "flex", gap: "6px", alignItems: "center", marginTop: "4px" }}>
+                          <button
+                            type="button"
+                            disabled={resolviendoVarianteImg}
+                            onClick={() => handleConvertirImagenVariante()}
+                            style={{
+                              background: "#0284C7",
+                              color: "#FFFFFF",
+                              border: "none",
+                              padding: "3px 8px",
+                              borderRadius: "4px",
+                              fontSize: "0.68rem",
+                              fontWeight: 700,
+                              cursor: resolviendoVarianteImg ? "wait" : "pointer",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "4px",
+                            }}
+                          >
+                            {resolviendoVarianteImg ? (
+                              <>
+                                <Loader2 size={11} className="animate-spin" /> Extrayendo...
+                              </>
+                            ) : (
+                              <>
+                                <Wand2 size={11} /> 🪄 Auto-Convertir Foto de Tamaño
+                              </>
+                            )}
+                          </button>
+                        </div>
                       </div>
                     )}
                   </div>

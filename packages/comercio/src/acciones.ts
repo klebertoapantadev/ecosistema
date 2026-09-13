@@ -1490,6 +1490,116 @@ export async function crearCategoriaAction(datos: {
 }
 
 /**
+ * Resuelve y transforma URLs de visores web de Google Fotos (photos.google.com / photos.app.goo.gl)
+ * y enlaces de Google Drive en URLs de imagen binaria directa (lh3.googleusercontent.com)
+ */
+export async function resolverUrlImagenDirectaAction(
+  rawUrl: string
+): Promise<{ ok: boolean; urlDirecta?: string; error?: string; origen?: string }> {
+  if (!rawUrl || typeof rawUrl !== "string") {
+    return { ok: true, urlDirecta: "" };
+  }
+  const trimmed = rawUrl.trim();
+  if (!trimmed) {
+    return { ok: true, urlDirecta: "" };
+  }
+
+  // 1. Detección y conversión instantánea de Google Drive
+  const driveMatch =
+    trimmed.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/) ||
+    trimmed.match(/drive\.google\.com\/(?:open|uc)\?(?:.*&)?id=([a-zA-Z0-9_-]+)/);
+  if (driveMatch && driveMatch[1]) {
+    return {
+      ok: true,
+      urlDirecta: `https://lh3.googleusercontent.com/d/${driveMatch[1]}=w1200`,
+      origen: "google_drive",
+    };
+  }
+
+  // 2. Detección y extracción profunda de Google Photos
+  if (
+    trimmed.includes("photos.google.com") ||
+    trimmed.includes("photos.app.goo.gl")
+  ) {
+    try {
+      const res = await fetch(trimmed, {
+        headers: {
+          "User-Agent":
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+          Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+        },
+        redirect: "follow",
+        cache: "no-store",
+      });
+
+      if (!res.ok) {
+        return {
+          ok: false,
+          error: `Google Fotos respondió con estado HTTP ${res.status}. Verifica que el enlace sea un álbum compartido público.`,
+        };
+      }
+
+      const html = await res.text();
+
+      // Prioridad 1: Coincidencias de fotos de álbum público /pw/
+      const matchesPw = [
+        ...html.matchAll(/https:\/\/lh3\.googleusercontent\.com\/pw\/[a-zA-Z0-9_\-]+/g),
+      ].map((m) => m[0]);
+
+      if (matchesPw.length > 0 && matchesPw[0]) {
+        // Limpiar sufijos previos y fijar resolución óptima w1200
+        const limpia = matchesPw[0].split("=")[0] || matchesPw[0];
+        return {
+          ok: true,
+          urlDirecta: `${limpia}=w1200`,
+          origen: "google_photos",
+        };
+      }
+
+      // Prioridad 2: Coincidencias de tokens largos de googleusercontent (excluyendo fotos de perfil /a/)
+      const matchesGen = [
+        ...html.matchAll(/https:\/\/[a-z0-9]+\.googleusercontent\.com\/[a-zA-Z0-9_\-]+/g),
+      ]
+        .map((m) => m[0])
+        .filter(
+          (u) =>
+            u.length > 45 &&
+            !u.includes("/a/") &&
+            !u.includes("/photo.jpg") &&
+            !u.includes("favicon")
+        );
+
+      if (matchesGen.length > 0 && matchesGen[0]) {
+        const limpia = matchesGen[0].split("=")[0] || matchesGen[0];
+        return {
+          ok: true,
+          urlDirecta: `${limpia}=w1200`,
+          origen: "google_photos",
+        };
+      }
+
+      return {
+        ok: false,
+        error:
+          "No se pudo extraer la imagen directa del visor de Google Fotos. Copia la dirección directa con clic derecho sobre la foto ('Copiar dirección de la imagen').",
+      };
+    } catch (err: any) {
+      return {
+        ok: false,
+        error: `Error al procesar el enlace de Google Fotos: ${err.message || err}`,
+      };
+    }
+  }
+
+  // 3. Enlace directo u otro CDN
+  return {
+    ok: true,
+    urlDirecta: trimmed,
+    origen: "directo",
+  };
+}
+
+/**
  * Crea un nuevo producto u honorario profesional con su variante de cobro
  */
 export async function crearProductoAction(datos: {
@@ -1555,6 +1665,15 @@ export async function crearProductoAction(datos: {
       precio_total: total,
     };
 
+    // Resolver URLs de fotos si son enlaces de Google Fotos / Drive
+    let resolvedImg = datos.imagenUrl?.trim() || null;
+    if (resolvedImg) {
+      const resImg = await resolverUrlImagenDirectaAction(resolvedImg);
+      if (resImg.ok && resImg.urlDirecta) {
+        resolvedImg = resImg.urlDirecta;
+      }
+    }
+
     const nuevoProducto: ProductoCatalogo = {
       pro_id: prodId,
       pro_negocio: negocio,
@@ -1566,7 +1685,7 @@ export async function crearProductoAction(datos: {
       pro_categoria_principal_id: cat?.ctg_id || null,
       pro_detalle_producto: {
         icono: datos.icono || "Scale",
-        imagen_url: datos.imagenUrl?.trim() || null,
+        imagen_url: resolvedImg,
         video_url: datos.videoUrl?.trim() || null,
         beneficios: datos.beneficios || [],
         tiempo_entrega: datos.tiempoEntrega?.trim() || null,
@@ -1714,36 +1833,66 @@ export async function editarProductoAction(datos: {
       return { ok: false, error: "Producto no encontrado para editar." };
     }
 
+    // 0. Resolver URLs de portada global, galería y variantes si vienen enlaces de Google Fotos / Drive
+    let resolvedImagenUrl = datos.imagenUrl !== undefined ? datos.imagenUrl.trim() : prodActual.pro_detalle_producto?.imagen_url;
+    if (resolvedImagenUrl) {
+      const resImg = await resolverUrlImagenDirectaAction(resolvedImagenUrl);
+      if (resImg.ok && resImg.urlDirecta) {
+        resolvedImagenUrl = resImg.urlDirecta;
+      }
+    }
+
+    let resolvedGaleria = datos.galeriaUrls !== undefined ? datos.galeriaUrls : prodActual.pro_detalle_producto?.galeria_urls;
+    if (Array.isArray(resolvedGaleria) && resolvedGaleria.length > 0) {
+      resolvedGaleria = await Promise.all(
+        resolvedGaleria.map(async (u) => {
+          const resG = await resolverUrlImagenDirectaAction(u);
+          return resG.ok && resG.urlDirecta ? resG.urlDirecta : u;
+        })
+      );
+    }
+
     let variantesActualizadas: VarianteCatalogo[] = [];
 
     if (datos.variantes && datos.variantes.length > 0) {
       // 1. Caso: Se envió la lista completa de variantes desde el editor multivariante
-      variantesActualizadas = datos.variantes.map((v, idx) => {
-        const base = Number(Number(v.var_precio || 0).toFixed(4));
-        const ivaPorc = v.var_tarifa_iva_porcentaje ?? 15;
-        const montoIva = Number(((base * ivaPorc) / 100).toFixed(2));
-        const total = Number((base + montoIva).toFixed(2));
+      variantesActualizadas = await Promise.all(
+        datos.variantes.map(async (v, idx) => {
+          const base = Number(Number(v.var_precio || 0).toFixed(4));
+          const ivaPorc = v.var_tarifa_iva_porcentaje ?? 15;
+          const montoIva = Number(((base * ivaPorc) / 100).toFixed(2));
+          const total = Number((base + montoIva).toFixed(2));
 
-        return {
-          var_id: v.var_id || `var-${Date.now()}-${idx}`,
-          var_producto_id: datos.pro_id,
-          var_sku: v.var_sku?.trim() || `${negocio.toUpperCase().substring(0, 3)}-VAR-${Date.now()}-${idx}`,
-          var_nombre: v.var_nombre.trim() || `${nombre} - Opción ${idx + 1}`,
-          var_precio: base,
-          var_precio_comparacion: v.var_precio_comparacion ? Number(v.var_precio_comparacion) : null,
-          var_codigo_impuesto_sri: ivaPorc > 0 ? "IVA_15" : "IVA_0",
-          var_tarifa_iva_porcentaje: ivaPorc,
-          var_tipo_oferta: "REGULAR",
-          var_frecuencia_recurrencia: datos.tipo === "SUSCRIPCION" ? "MENSUAL" : null,
-          var_activo: v.var_activo !== false,
-          var_detalle_variante: {
-            ...(v.var_detalle_variante || {}),
-            modalidad_pago: datos.modalidadPago || v.var_detalle_variante?.modalidad_pago,
-          },
-          monto_iva: montoIva,
-          precio_total: total,
-        };
-      });
+          let varPortada = v.var_detalle_variante?.portada_url;
+          if (varPortada && typeof varPortada === "string") {
+            const resVarImg = await resolverUrlImagenDirectaAction(varPortada);
+            if (resVarImg.ok && resVarImg.urlDirecta) {
+              varPortada = resVarImg.urlDirecta;
+            }
+          }
+
+          return {
+            var_id: v.var_id || `var-${Date.now()}-${idx}`,
+            var_producto_id: datos.pro_id,
+            var_sku: v.var_sku?.trim() || `${negocio.toUpperCase().substring(0, 3)}-VAR-${Date.now()}-${idx}`,
+            var_nombre: v.var_nombre.trim() || `${nombre} - Opción ${idx + 1}`,
+            var_precio: base,
+            var_precio_comparacion: v.var_precio_comparacion ? Number(v.var_precio_comparacion) : null,
+            var_codigo_impuesto_sri: ivaPorc > 0 ? "IVA_15" : "IVA_0",
+            var_tarifa_iva_porcentaje: ivaPorc,
+            var_tipo_oferta: "REGULAR",
+            var_frecuencia_recurrencia: datos.tipo === "SUSCRIPCION" ? "MENSUAL" : null,
+            var_activo: v.var_activo !== false,
+            var_detalle_variante: {
+              ...(v.var_detalle_variante || {}),
+              portada_url: varPortada || null,
+              modalidad_pago: datos.modalidadPago || v.var_detalle_variante?.modalidad_pago,
+            },
+            monto_iva: montoIva,
+            precio_total: total,
+          };
+        })
+      );
     } else if (datos.precioBase !== undefined && datos.precioBase > 0) {
       // 2. Caso clásico: Se editó una tarifa base o una variante puntual
       const base = Number(datos.precioBase.toFixed(4));
@@ -1803,10 +1952,10 @@ export async function editarProductoAction(datos: {
       pro_detalle_producto: {
         ...prodActual.pro_detalle_producto,
         icono: datos.icono || prodActual.pro_detalle_producto?.icono || "Sparkles",
-        imagen_url: datos.imagenUrl !== undefined ? datos.imagenUrl.trim() : prodActual.pro_detalle_producto?.imagen_url,
+        imagen_url: resolvedImagenUrl,
         album_fotos_url: datos.albumFotosUrl !== undefined ? datos.albumFotosUrl.trim() : prodActual.pro_detalle_producto?.album_fotos_url,
         video_url: datos.videoUrl !== undefined ? datos.videoUrl.trim() : prodActual.pro_detalle_producto?.video_url,
-        galeria_urls: datos.galeriaUrls !== undefined ? datos.galeriaUrls : prodActual.pro_detalle_producto?.galeria_urls,
+        galeria_urls: resolvedGaleria,
         beneficios: datos.beneficios !== undefined ? datos.beneficios : prodActual.pro_detalle_producto?.beneficios,
         tiempo_entrega: datos.tiempoEntrega !== undefined ? datos.tiempoEntrega.trim() : prodActual.pro_detalle_producto?.tiempo_entrega,
         requisitos: datos.requisitos !== undefined ? datos.requisitos : prodActual.pro_detalle_producto?.requisitos,
