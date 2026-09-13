@@ -79,7 +79,7 @@ Bóveda digital de documentos personales, familiares y profesionales donde cada 
 3. **Extracción y Metadatos Dinámicos Editables:**
    - Estructura de metadatos 100% dinámica (`clave: valor`) almacenada en JSONB (`doc_detalles.metadatos_dinamicos` y `doc_metadatos_ocr`).
    - El usuario puede editar la etiqueta del campo, editar el valor, eliminar campos existentes o añadir nuevos campos personalizados con `[+ Agregar Campo]`.
-   - Asistido por **Aria IA** para sugerir y precargar parámetros automáticamente al analizar los archivos cargados.
+   - Asistido por **Aria IA** para sugerir y precargar parámetros automáticamente al analizar los archivos cargados. Un PDF va a ARIA como `document_urls` (2026-09-12): con capa de texto se transcribe; escaneado, se rasteriza y lo lee el modelo de visión. Antes se mandaba como imagen y la extracción caía siempre al motor heurístico local.
    - *Flexibilidad Cero Fricción:* Ningún metadato es obligatorio; todos los campos son editables y opcionales. El formulario base solo requiere el título, tipo y categoría, con alerta de expiración activada por defecto.
 4. **Motor de Alertas Proactivas de Caducidad Configurable:**
    - Conmutador para activar o desactivar alertas de vencimiento por documento (`doc_alertar_caducidad`, activo por defecto).
@@ -158,6 +158,16 @@ tiene un asistente que sí lo sabe, y es la base sobre la que operan **TRQ-CLI-0
 5. **Consola de agentes** en `/panel/agentes`, solo `ADMINISTRADOR` y con MFA `aal2`: editar
    el prompt de un agente cambia lo que se le responde a todos los afiliados. Usa una key de
    *tenant* de Aria, que por diseño del backend no alcanza a ningún otro tenant.
+6. **Los asistentes leen documentos, no solo los listan (2026-09-12).** Ambos roles tienen
+   `mis_documentos` (la billetera propia, TRQ-COM-001) y `leer_documento`, que entrega el
+   contenido de un documento de la billetera o del expediente (`detalle_caso` /
+   `documentos_del_caso` devuelven el id). La herramienta no devuelve el contenido: devuelve
+   un enlace firmado de cinco minutos ligado al usuario, y es ARIA quien lo descarga,
+   transcribe el PDF o rasteriza uno escaneado, y lo lee en el mismo turno. El endpoint que
+   sirve los bytes vuelve a resolver la fila bajo RLS con esa identidad. Detalle en la adenda
+   del [ADR-0005](../../arquitectura/adr/0005-frontera-de-identidad-en-herramientas-de-ia.md).
+   El cliente puede pedir *qué dice* un documento suyo (datos, fechas, a nombre de quién);
+   *qué hacer con él* sigue siendo asesoría y sigue prohibido en su prompt.
 
 #### Modelo de datos que aporta
 `trq_caso_judicial`, `trq_cita`, `trq_documento_caso`, `trq_honorario`, `trq_conversacion`

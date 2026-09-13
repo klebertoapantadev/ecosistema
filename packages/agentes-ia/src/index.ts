@@ -53,6 +53,15 @@ export async function invocarAgente(
    * en cada reintento, y una cédula escaneada son cientos de kilobytes.
    */
   imageUrls?: string[],
+  /**
+   * URLs de documentos que el agente debe LEER: PDF, DOCX, texto o imagen.
+   * ARIA los descarga, extrae el texto y lo antepone al prompt; un PDF sin
+   * capa de texto (escaneado) lo rasteriza y lo pasa como imágenes. Mismas
+   * condiciones que `imageUrls`: alcanzables desde ARIA, firmadas y de corta
+   * vida. Es la vía correcta para un PDF: mandado como `imageUrls`, ARIA lo
+   * descarga como si fuera un JPEG y el modelo no ve nada.
+   */
+  documentUrls?: string[],
 ): Promise<RespuestaAgente> {
   const r = await fetch(`${config.baseUrl}/v1/agents/${config.agentId}/invoke`, {
     method: "POST",
@@ -65,6 +74,7 @@ export async function invocarAgente(
       conversation_id: conversationId,
       tool_context: toolContext,
       image_urls: imageUrls,
+      document_urls: documentUrls,
     }),
     signal: AbortSignal.timeout(120000),
   });
@@ -89,8 +99,11 @@ export {
 } from "./capsula";
 export {
   crearManejadorMcp,
+  conDocumentos,
+  type DocumentoAdjunto,
   type Herramienta,
   type OpcionesServidorMcp,
+  type ResultadoConDocumentos,
 } from "./mcp-servidor";
 export {
   llamarConsola,

@@ -2,6 +2,7 @@ import type { Herramienta } from "@eco/agentes-ia";
 import type { ContextoAsistente } from "./contexto";
 import { campos, fechaHoraEcuador, lista } from "./formato";
 import { HERRAMIENTAS_CLIENTE_AGENDA } from "./herramientas-cliente-agenda";
+import { HERRAMIENTAS_DOCUMENTOS } from "./documentos";
 
 // Herramientas del asistente del AFILIADO (TRQ_CLIENTE, agente
 // "Tranqi Asistente Cliente").
@@ -69,7 +70,8 @@ const misCasos: HerramientaCliente = {
 const detalleCaso: HerramientaCliente = {
   descripcion:
     "Devuelve el detalle completo de UN caso del afiliado: descripcion, estado, " +
-    "abogado asignado y documentos. Pasa el cas_id que devolvio mis_casos.",
+    "abogado asignado y la lista de documentos del expediente con su id. Pasa el " +
+    "cas_id que devolvio mis_casos. Para leer un documento, pasa su id a leer_documento.",
   esquema: {
     type: "object",
     properties: {
@@ -103,7 +105,7 @@ const detalleCaso: HerramientaCliente = {
     const { data: documentos } = await supabase
       .schema("tranqui_legal")
       .from("trq_documento_caso")
-      .select("dcc_tipo, dcc_nombre_archivo, dcc_estado_revision")
+      .select("dcc_id, dcc_tipo, dcc_nombre_archivo, dcc_estado_revision")
       .eq("dcc_caso_id", casoId)
       .is("dcc_eliminado_en", null);
 
@@ -125,7 +127,7 @@ const detalleCaso: HerramientaCliente = {
       documentos,
       "\nNo hay documentos cargados en este expediente.",
       (d: Record<string, unknown>) =>
-        `- ${d.dcc_nombre_archivo ?? d.dcc_tipo} (${d.dcc_tipo}) — revision: ${d.dcc_estado_revision}`,
+        `- [${d.dcc_id}] ${d.dcc_nombre_archivo ?? d.dcc_tipo} (${d.dcc_tipo}) — revision: ${d.dcc_estado_revision}`,
     );
 
     return `${cabecera}\n${bloqueDocs}`;
@@ -254,6 +256,8 @@ export const HERRAMIENTAS_CLIENTE: Record<string, HerramientaCliente> = {
   mis_citas: misCitas,
   documentos_pendientes: documentosPendientes,
   mi_perfil: miPerfil,
+  // Billetera y lectura de documentos: mis_documentos y leer_documento.
+  ...HERRAMIENTAS_DOCUMENTOS,
   // Agenda (PLT-020). `agendar_cita` vivia aqui y se retiro: insertaba en
   // trq_cita sin cit_abogado_id, de modo que la cita no la veia ningun
   // abogado. La sustituyen buscar_horarios + reservar_cita, que pasan por el
