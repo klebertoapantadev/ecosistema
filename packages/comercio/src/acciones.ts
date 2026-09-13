@@ -1400,6 +1400,7 @@ export async function crearCategoriaAction(datos: {
   tipo?: string;
   orden?: number;
   imagenUrl?: string;
+  videoUrl?: string;
   albumFotosUrl?: string;
   icono?: string;
   negocio?: string;
@@ -1415,6 +1416,7 @@ export async function crearCategoriaAction(datos: {
     const catId = `cat-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
     const detalle = {
       imagen_url: datos.imagenUrl?.trim() || null,
+      video_url: datos.videoUrl?.trim() || null,
       album_fotos_url: datos.albumFotosUrl?.trim() || null,
       icono: datos.icono?.trim() || null,
     };

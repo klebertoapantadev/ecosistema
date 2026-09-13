@@ -21,6 +21,7 @@ export function ModalCrearCategoria({ abierto, onCerrar, onCategoriaCreada, nego
   const [tipo, setTipo] = useState(esFloristeria ? "COLECCION" : "FORMATO");
   const [orden, setOrden] = useState(1);
   const [imagenUrl, setImagenUrl] = useState("");
+  const [videoUrl, setVideoUrl] = useState("");
   const [albumFotosUrl, setAlbumFotosUrl] = useState("");
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -55,6 +56,7 @@ export function ModalCrearCategoria({ abierto, onCerrar, onCategoriaCreada, nego
         tipo,
         orden: Number(orden) || 1,
         imagenUrl: imagenUrl.trim() || undefined,
+        videoUrl: videoUrl.trim() || undefined,
         albumFotosUrl: albumFotosUrl.trim() || undefined,
         negocio,
       });
@@ -66,6 +68,7 @@ export function ModalCrearCategoria({ abierto, onCerrar, onCategoriaCreada, nego
         setSlug("");
         setDescripcion("");
         setImagenUrl("");
+        setVideoUrl("");
         setAlbumFotosUrl("");
       } else {
         setError(res.error || "No se pudo crear la categoría.");
@@ -254,7 +257,7 @@ export function ModalCrearCategoria({ abierto, onCerrar, onCategoriaCreada, nego
               </span>
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", marginBottom: "8px" }}>
               <div>
                 <label style={{ display: "block", fontSize: "0.7rem", fontWeight: 600, color: "#334155", marginBottom: "2px" }}>
                   URL Portada / Banner
@@ -277,13 +280,13 @@ export function ModalCrearCategoria({ abierto, onCerrar, onCategoriaCreada, nego
 
               <div>
                 <label style={{ display: "block", fontSize: "0.7rem", fontWeight: 600, color: "#334155", marginBottom: "2px" }}>
-                  URL Álbum de Muestras
+                  URL Video Reel / Spot (MP4 / YouTube)
                 </label>
                 <input
                   type="url"
-                  placeholder="https://photos.app.goo.gl/..."
-                  value={albumFotosUrl}
-                  onChange={(e) => setAlbumFotosUrl(e.target.value)}
+                  placeholder="https://youtube.com/shorts/... o MP4"
+                  value={videoUrl}
+                  onChange={(e) => setVideoUrl(e.target.value)}
                   style={{
                     width: "100%",
                     padding: "6px 8px",
@@ -294,6 +297,26 @@ export function ModalCrearCategoria({ abierto, onCerrar, onCategoriaCreada, nego
                   }}
                 />
               </div>
+            </div>
+
+            <div>
+              <label style={{ display: "block", fontSize: "0.7rem", fontWeight: 600, color: "#334155", marginBottom: "2px" }}>
+                URL Álbum de Muestras / Galería (Drive / iCloud)
+              </label>
+              <input
+                type="url"
+                placeholder="https://photos.app.goo.gl/..."
+                value={albumFotosUrl}
+                onChange={(e) => setAlbumFotosUrl(e.target.value)}
+                style={{
+                  width: "100%",
+                  padding: "6px 8px",
+                  borderRadius: "6px",
+                  border: "1px solid #CBD5E1",
+                  fontSize: "0.75rem",
+                  boxSizing: "border-box",
+                }}
+              />
             </div>
           </div>
 

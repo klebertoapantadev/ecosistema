@@ -208,27 +208,70 @@ export function ManualConfiguracionCatalogoModal({ abierto, onCerrar, negocio = 
           {/* Guía Conceptual: Arquitectura de 3 Capas de Catálogo */}
           <div
             style={{
-              background: "#0F172A",
+              background: "linear-gradient(135deg, #0F172A 0%, #1E293B 100%)",
               color: "#F8FAFC",
-              borderRadius: "10px",
-              padding: "14px 18px",
-              marginBottom: "18px",
-              fontFamily: "monospace",
-              fontSize: "0.78rem",
-              lineHeight: 1.45,
+              borderRadius: "14px",
+              padding: "18px 20px",
+              marginBottom: "20px",
+              boxShadow: "0 4px 12px rgba(15, 23, 42, 0.15)",
             }}
           >
-            <div style={{ color: "#38BDF8", fontWeight: 700, marginBottom: "6px", fontFamily: "sans-serif" }}>
-              📐 ARQUITECTURA DE CATÁLOGO UNIFICADO (3 CAPAS ESTÁNDAR)
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#38BDF8", fontWeight: 800, fontSize: "0.95rem", marginBottom: "10px" }}>
+              <Layers size={18} />
+              <span>MODELO MENTAL & ARQUITECTURA EN 3 CAPAS (ESTÁNDAR DEL ECOSISTEMA)</span>
             </div>
-            <div>[ CAPA 1: CATEGORÍA / COLECCIÓN ]  ➔  "Estilo Coreano", "Floreros", "Condolencias"</div>
-            <div style={{ color: "#94A3B8" }}>                                        (Agrupa decenas de productos distintos)</div>
-            <div style={{ color: "#38BDF8" }}>              │</div>
-            <div>[ CAPA 2: PRODUCTO MASTER ]        ➔  "Bouquet Diseño Estilo Coreano"</div>
-            <div style={{ color: "#94A3B8" }}>                                        (El arreglo/servicio con recursos comunes)</div>
-            <div style={{ color: "#38BDF8" }}>              │</div>
-            <div>[ CAPA 3: VARIANTES / SKUs ]       ➔  "Pequeño $25", "Gigante VIP $60"</div>
-            <div style={{ color: "#94A3B8" }}>                                        (Opciones con precio, foto o extras propios)</div>
+
+            <div
+              style={{
+                fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+                fontSize: "0.82rem",
+                background: "rgba(0, 0, 0, 0.35)",
+                padding: "12px 14px",
+                borderRadius: "8px",
+                border: "1px solid rgba(56, 189, 248, 0.2)",
+                lineHeight: 1.5,
+                marginBottom: "14px",
+              }}
+            >
+              <div style={{ color: "#E2E8F0" }}>[ <strong style={{ color: "#38BDF8" }}>CAPA 1: CATEGORÍA / COLECCIÓN</strong> ]  ➔  "Estilo Coreano", "Floreros", "Condolencias", "Honorarios"</div>
+              <div style={{ color: "#94A3B8" }}>                                        (Agrupa decenas de productos, banners, videos y galerías)</div>
+              <div style={{ color: "#38BDF8" }}>              │</div>
+              <div style={{ color: "#E2E8F0" }}>[ <strong style={{ color: "#38BDF8" }}>CAPA 2: PRODUCTO MASTER</strong> ]        ➔  "Bouquet Diseño Estilo Coreano", "Constitución SAS"</div>
+              <div style={{ color: "#94A3B8" }}>                                        (El producto o servicio base con fotos y textos comunes)</div>
+              <div style={{ color: "#38BDF8" }}>              │</div>
+              <div style={{ color: "#E2E8F0" }}>[ <strong style={{ color: "#38BDF8" }}>CAPA 3: VARIANTES / SKUs</strong> ]       ➔  "Pequeño 12 rosas ($25)", "Gigante VIP ($60)"</div>
+              <div style={{ color: "#94A3B8" }}>                                        (Opciones de compra con precio, foto propia y promesa de entrega)</div>
+            </div>
+
+            {/* Paso a paso de configuración */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "10px" }}>
+              <div style={{ background: "rgba(255,255,255,0.06)", borderRadius: "8px", padding: "10px 12px", border: "1px solid rgba(255,255,255,0.1)" }}>
+                <div style={{ color: "#38BDF8", fontWeight: 700, fontSize: "0.78rem", marginBottom: "3px" }}>
+                  1️⃣ Paso 1: Colección
+                </div>
+                <div style={{ fontSize: "0.74rem", color: "#CBD5E1", lineHeight: 1.4 }}>
+                  Crea la categoría agrupando la línea. Agrega portada/banner o video promocional si aplica.
+                </div>
+              </div>
+
+              <div style={{ background: "rgba(255,255,255,0.06)", borderRadius: "8px", padding: "10px 12px", border: "1px solid rgba(255,255,255,0.1)" }}>
+                <div style={{ color: "#38BDF8", fontWeight: 700, fontSize: "0.78rem", marginBottom: "3px" }}>
+                  2️⃣ Paso 2: Producto Master
+                </div>
+                <div style={{ fontSize: "0.74rem", color: "#CBD5E1", lineHeight: 1.4 }}>
+                  Registra el diseño/servicio. Define el nombre oficial, descripción general y portada base.
+                </div>
+              </div>
+
+              <div style={{ background: "rgba(255,255,255,0.06)", borderRadius: "8px", padding: "10px 12px", border: "1px solid rgba(255,255,255,0.1)" }}>
+                <div style={{ color: "#38BDF8", fontWeight: 700, fontSize: "0.78rem", marginBottom: "3px" }}>
+                  3️⃣ Paso 3: Variantes / SKUs
+                </div>
+                <div style={{ fontSize: "0.74rem", color: "#CBD5E1", lineHeight: 1.4 }}>
+                  Configura precios finales PVP (calcula base imponible e IVA 15%). Asigna fotos o SLAs puntuales si difieren.
+                </div>
+              </div>
+            </div>
           </div>
 
           {tabActiva === "tinkay" && (
