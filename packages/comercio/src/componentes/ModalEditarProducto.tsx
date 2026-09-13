@@ -347,17 +347,19 @@ export function ModalEditarProducto({
           width: "100%",
           maxWidth: "680px",
           maxHeight: "92vh",
-          boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
+          boxShadow: `0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 3px ${colActiva.border}55`,
+          border: `2.5px solid ${colActiva.border}`,
           display: "flex",
           flexDirection: "column",
           overflow: "hidden",
+          transition: "border-color 0.2s ease, box-shadow 0.2s ease",
         }}
       >
         {/* Cabecera con Identidad Visual de Producto Master */}
         <div
           style={{
-            padding: "16px 20px",
-            borderBottom: "1px solid #334155",
+            padding: "14px 20px",
+            borderBottom: `2px solid ${colActiva.border}`,
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
@@ -382,7 +384,7 @@ export function ModalEditarProducto({
               {esFloristeria ? <Flower2 size={20} /> : esMantenimiento ? <Wrench size={20} /> : <FileEdit size={20} />}
             </div>
             <div>
-              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
                 <span
                   style={{
                     background: "rgba(56, 189, 248, 0.2)",
@@ -396,8 +398,27 @@ export function ModalEditarProducto({
                 >
                   📦 CAPA 2: PRODUCTO MASTER
                 </span>
+                {varianteActual && (
+                  <span
+                    style={{
+                      background: colActiva.bg,
+                      color: colActiva.text,
+                      fontSize: "0.68rem",
+                      fontWeight: 800,
+                      padding: "2px 7px",
+                      borderRadius: "4px",
+                      border: `1px solid ${colActiva.border}`,
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "4px",
+                    }}
+                  >
+                    <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: colActiva.dot }} />
+                    Editando: {varianteActual.var_nombre}
+                  </span>
+                )}
               </div>
-              <h2 style={{ margin: "2px 0 0", fontSize: "1.05rem", fontWeight: 800, color: "#FFFFFF" }}>
+              <h2 style={{ margin: "2px 0 0", fontSize: "1.02rem", fontWeight: 800, color: "#FFFFFF" }}>
                 {esFloristeria
                   ? "Editar Arreglo / Diseño Floral Master"
                   : esMantenimiento
@@ -567,8 +588,8 @@ export function ModalEditarProducto({
           {/* 2. RECURSOS DIGITALES Y MULTIMEDIA GLOBALES (MASTER) */}
           <div
             style={{
-              background: "#F0FDF4",
-              border: "1px solid #BBF7D0",
+              background: "#F8FAFC",
+              border: "1px solid #E2E8F0",
               borderRadius: "10px",
               padding: "14px",
               marginBottom: "14px",
@@ -576,12 +597,12 @@ export function ModalEditarProducto({
           >
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                <ImageIcon size={16} color="#15803D" />
-                <span style={{ fontSize: "0.78rem", fontWeight: 800, color: "#15803D", textTransform: "uppercase" }}>
+                <ImageIcon size={16} color="#475569" />
+                <span style={{ fontSize: "0.78rem", fontWeight: 800, color: "#334155", textTransform: "uppercase" }}>
                   Recursos Digitales Globales (Comunes para todas las Variantes)
                 </span>
               </div>
-              <span style={{ fontSize: "0.7rem", color: "#166534", fontWeight: 600 }}>
+              <span style={{ fontSize: "0.7rem", color: "#64748B", fontWeight: 600 }}>
                 Las variantes heredarán estos enlaces salvo que se personalicen
               </span>
             </div>
@@ -677,25 +698,28 @@ export function ModalEditarProducto({
               Promesa y Tiempo de Entrega Global * (Heredado por defecto)
             </label>
             <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginBottom: "6px" }}>
-              {presetsEntrega.map((pr) => (
-                <button
-                  key={pr.val}
-                  type="button"
-                  onClick={() => setTiempoEntrega(pr.val)}
-                  style={{
-                    padding: "4px 8px",
-                    borderRadius: "6px",
-                    fontSize: "0.72rem",
-                    fontWeight: 700,
-                    border: tiempoEntrega === pr.val ? "1.5px solid #16A34A" : "1px solid #CBD5E1",
-                    background: tiempoEntrega === pr.val ? "#DCFCE7" : "#FFFFFF",
-                    color: tiempoEntrega === pr.val ? "#15803D" : "#475569",
-                    cursor: "pointer",
-                  }}
-                >
-                  {pr.label}
-                </button>
-              ))}
+              {presetsEntrega.map((pr) => {
+                const sel = tiempoEntrega === pr.val;
+                return (
+                  <button
+                    key={pr.val}
+                    type="button"
+                    onClick={() => setTiempoEntrega(pr.val)}
+                    style={{
+                      padding: "4px 8px",
+                      borderRadius: "6px",
+                      fontSize: "0.72rem",
+                      fontWeight: 700,
+                      border: sel ? "1.5px solid #0F172A" : "1px solid #CBD5E1",
+                      background: sel ? "#0F172A" : "#FFFFFF",
+                      color: sel ? "#FFFFFF" : "#475569",
+                      cursor: "pointer",
+                    }}
+                  >
+                    {pr.label}
+                  </button>
+                );
+              })}
             </div>
             <input
               type="text"
@@ -772,7 +796,7 @@ export function ModalEditarProducto({
           >
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                <Layers size={17} color="#0284C7" />
+                <Layers size={17} color="#0F172A" />
                 <span style={{ fontSize: "0.85rem", fontWeight: 800, color: "#0F172A", textTransform: "uppercase" }}>
                   Variantes de Producto / Tamaños ({variantesLocales.length})
                 </span>
@@ -781,7 +805,7 @@ export function ModalEditarProducto({
                 type="button"
                 onClick={agregarNuevaVariante}
                 style={{
-                  background: "#0284C7",
+                  background: "#0F172A",
                   color: "#FFFFFF",
                   border: "none",
                   borderRadius: "6px",
@@ -1035,17 +1059,18 @@ export function ModalEditarProducto({
                 <div
                   style={{
                     marginTop: "12px",
-                    borderTop: "1.5px solid #F1F5F9",
+                    borderTop: `1.5px solid ${colActiva.border}44`,
                     paddingTop: "12px",
-                    background: "#FAFAFA",
+                    background: colActiva.bg,
                     borderRadius: "8px",
                     padding: "10px",
+                    border: `1px solid ${colActiva.border}66`,
                   }}
                 >
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                      <Sparkles size={14} color="#D97706" />
-                      <span style={{ fontSize: "0.75rem", fontWeight: 800, color: "#92400E", textTransform: "uppercase" }}>
+                      <Sparkles size={14} color={colActiva.dot} />
+                      <span style={{ fontSize: "0.75rem", fontWeight: 800, color: colActiva.text, textTransform: "uppercase" }}>
                         Personalización Exclusiva de esta Variante (Opcional)
                       </span>
                     </div>
@@ -1060,8 +1085,8 @@ export function ModalEditarProducto({
                       <label style={{ fontSize: "0.72rem", fontWeight: 700, color: "#334155" }}>
                         Foto / Portada Específica de este Tamaño:
                       </label>
-                      <span style={{ fontSize: "0.68rem", color: varianteActual.var_detalle_variante?.portada_url ? "#059669" : "#64748B", fontWeight: 600 }}>
-                        {varianteActual.var_detalle_variante?.portada_url ? "🟢 Portada Propia Activa" : "🟢 Hereda Portada Global"}
+                      <span style={{ fontSize: "0.68rem", color: varianteActual.var_detalle_variante?.portada_url ? colActiva.text : "#64748B", fontWeight: 700 }}>
+                        {varianteActual.var_detalle_variante?.portada_url ? "🟢 Portada Propia Activa" : "⚪ Hereda Portada Global"}
                       </span>
                     </div>
                     <input
@@ -1091,8 +1116,8 @@ export function ModalEditarProducto({
                       <label style={{ fontSize: "0.72rem", fontWeight: 700, color: "#334155" }}>
                         Tiempo de Entrega para este Tamaño:
                       </label>
-                      <span style={{ fontSize: "0.68rem", color: varianteActual.var_detalle_variante?.tiempo_entrega ? "#059669" : "#64748B", fontWeight: 600 }}>
-                        {varianteActual.var_detalle_variante?.tiempo_entrega ? "🟢 Tiempo Específico Activo" : `🟢 Hereda Global (${tiempoEntrega})`}
+                      <span style={{ fontSize: "0.68rem", color: varianteActual.var_detalle_variante?.tiempo_entrega ? colActiva.text : "#64748B", fontWeight: 700 }}>
+                        {varianteActual.var_detalle_variante?.tiempo_entrega ? "🟢 Tiempo Específico Activo" : `⚪ Hereda Global (${tiempoEntrega})`}
                       </span>
                     </div>
                     <div style={{ display: "flex", gap: "4px", flexWrap: "wrap", marginBottom: "4px" }}>
@@ -1107,36 +1132,39 @@ export function ModalEditarProducto({
                           borderRadius: "5px",
                           fontSize: "0.68rem",
                           fontWeight: 700,
-                          border: !varianteActual.var_detalle_variante?.tiempo_entrega ? "1.5px solid #0284C7" : "1px solid #CBD5E1",
-                          background: !varianteActual.var_detalle_variante?.tiempo_entrega ? "#E0F2FE" : "#FFFFFF",
-                          color: !varianteActual.var_detalle_variante?.tiempo_entrega ? "#0369A1" : "#475569",
+                          border: !varianteActual.var_detalle_variante?.tiempo_entrega ? `1.5px solid ${colActiva.border}` : "1px solid #CBD5E1",
+                          background: !varianteActual.var_detalle_variante?.tiempo_entrega ? colActiva.badge : "#FFFFFF",
+                          color: !varianteActual.var_detalle_variante?.tiempo_entrega ? colActiva.text : "#475569",
                           cursor: "pointer",
                         }}
                       >
                         Heredar Global
                       </button>
-                      {presetsEntrega.map((pr) => (
-                        <button
-                          key={pr.val}
-                          type="button"
-                          onClick={() => {
-                            const det = { ...(varianteActual.var_detalle_variante || {}), tiempo_entrega: pr.val };
-                            actualizarVarianteActual("var_detalle_variante", det);
-                          }}
-                          style={{
-                            padding: "3px 7px",
-                            borderRadius: "5px",
-                            fontSize: "0.68rem",
-                            fontWeight: 700,
-                            border: varianteActual.var_detalle_variante?.tiempo_entrega === pr.val ? "1.5px solid #16A34A" : "1px solid #CBD5E1",
-                            background: varianteActual.var_detalle_variante?.tiempo_entrega === pr.val ? "#DCFCE7" : "#FFFFFF",
-                            color: varianteActual.var_detalle_variante?.tiempo_entrega === pr.val ? "#15803D" : "#475569",
-                            cursor: "pointer",
-                          }}
-                        >
-                          {pr.label}
-                        </button>
-                      ))}
+                      {presetsEntrega.map((pr) => {
+                        const sel = varianteActual.var_detalle_variante?.tiempo_entrega === pr.val;
+                        return (
+                          <button
+                            key={pr.val}
+                            type="button"
+                            onClick={() => {
+                              const det = { ...(varianteActual.var_detalle_variante || {}), tiempo_entrega: pr.val };
+                              actualizarVarianteActual("var_detalle_variante", det);
+                            }}
+                            style={{
+                              padding: "3px 7px",
+                              borderRadius: "5px",
+                              fontSize: "0.68rem",
+                              fontWeight: 700,
+                              border: sel ? `1.5px solid ${colActiva.border}` : "1px solid #CBD5E1",
+                              background: sel ? colActiva.badge : "#FFFFFF",
+                              color: sel ? colActiva.text : "#475569",
+                              cursor: "pointer",
+                            }}
+                          >
+                            {pr.label}
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
 
@@ -1164,13 +1192,13 @@ export function ModalEditarProducto({
                                 fontSize: "0.65rem",
                                 fontWeight: 700,
                                 textTransform: "capitalize",
-                                border: activo ? "1.5px solid #0284C7" : "1px solid #CBD5E1",
-                                background: activo ? "#0284C7" : "#FFFFFF",
-                                color: activo ? "#FFFFFF" : "#475569",
+                                border: activo ? `1.5px solid ${colActiva.border}` : "1px solid #CBD5E1",
+                                background: activo ? colActiva.badge : "#FFFFFF",
+                                color: activo ? colActiva.text : "#475569",
                                 cursor: "pointer",
                               }}
                             >
-                              {modo === "heredar" ? "🟢 Heredar" : modo === "anexar" ? "🟡 Anexar Extras" : "🔵 Reemplazar"}
+                              {modo === "heredar" ? "Heredar" : modo === "anexar" ? "Anexar Extras" : "Reemplazar"}
                             </button>
                           );
                         })}
