@@ -874,29 +874,29 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                       onClick={(e) => {
                         e.stopPropagation();
                         setProductoAEditar(p);
-                        setVarianteAEditarId(currentVarId);
+                        setVarianteAEditarId(undefined); // Abre pestaña del Producto Master
                         setModalEditarAbierto(true);
                       }}
                       className="btn-responsive-accion"
-                      title="Editar datos y tarifas del producto master"
-                      aria-label="Editar datos y tarifas del producto master"
+                      title="Editar datos generales del producto master"
+                      aria-label="Editar datos generales del producto master"
                       style={{
                         background: "rgba(255, 255, 255, 0.95)",
-                        border: "1px solid #CBD5E1",
-                        color: "#334155",
-                        padding: "4px 8px",
+                        border: "1.5px solid #CBD5E1",
+                        color: "#1E293B",
+                        padding: "5px 10px",
                         borderRadius: "8px",
                         fontSize: "0.75rem",
-                        fontWeight: 600,
+                        fontWeight: 700,
                         cursor: "pointer",
                         display: "inline-flex",
                         alignItems: "center",
-                        gap: "4px",
+                        gap: "5px",
                         boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
                       }}
                     >
                       <Pencil size={12} color="#0284C7" />
-                      <span className="btn-texto-responsive">Editar</span>
+                      <span className="btn-texto-responsive">Editar Master</span>
                     </button>
                   )}
                 </div>
