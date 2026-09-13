@@ -369,6 +369,7 @@ export function VitrinaComercialVisual({ negocio = "tranqi" }: Props) {
 
             const detalle = p.pro_detalle_producto || {};
             const imagenUrl =
+              currentVar?.var_detalle_variante?.portada_url ||
               detalle.imagen_url ||
               "https://images.unsplash.com/photo-1450133064473-71024230f91b?auto=format&fit=crop&w=1000&q=80";
             const videoUrl = detalle.video_url;

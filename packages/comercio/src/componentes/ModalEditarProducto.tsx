@@ -8,6 +8,7 @@ import {
   Flower2,
   Scale,
   Wrench,
+  PackagePlus,
   Image as ImageIcon,
   Video,
   Clock,
@@ -618,6 +619,81 @@ export function ModalEditarProducto({
           </div>
         </div>
 
+        {/* BARRA DE NAVEGACIÓN ENTRE CAPA MASTER Y CAPA VARIANTES */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            background: "#F8FAFC",
+            padding: "8px 18px",
+            borderBottom: "1px solid #E2E8F0",
+            flexWrap: "wrap",
+            gap: "8px",
+          }}
+        >
+          <div style={{ display: "flex", gap: "6px" }}>
+            <button
+              type="button"
+              onClick={() => setModoEdicion("master")}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+                padding: "6px 14px",
+                borderRadius: "8px",
+                fontSize: "0.8rem",
+                fontWeight: esModoMaster ? 800 : 600,
+                border: esModoMaster ? "1.5px solid #0284C7" : "1px solid #CBD5E1",
+                background: esModoMaster ? "#0284C7" : "#FFFFFF",
+                color: esModoMaster ? "#FFFFFF" : "#475569",
+                cursor: "pointer",
+                boxShadow: esModoMaster ? "0 2px 4px rgba(2, 132, 199, 0.25)" : "none",
+                transition: "all 0.15s ease",
+              }}
+            >
+              <PackagePlus size={14} />
+              <span>🌐 1. Producto Master (Global)</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setModoEdicion("variante");
+                if (varianteActivaIndex >= variantesLocales.length) setVarianteActivaIndex(0);
+              }}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+                padding: "6px 14px",
+                borderRadius: "8px",
+                fontSize: "0.8rem",
+                fontWeight: !esModoMaster ? 800 : 600,
+                border: !esModoMaster ? `1.5px solid ${colVariante.border}` : "1px solid #CBD5E1",
+                background: !esModoMaster ? colVariante.bg : "#FFFFFF",
+                color: !esModoMaster ? colVariante.text : "#475569",
+                cursor: "pointer",
+                boxShadow: !esModoMaster ? `0 2px 4px ${colVariante.border}33` : "none",
+                transition: "all 0.15s ease",
+              }}
+            >
+              <Layers size={14} />
+              <span>🏷️ 2. Tamaños y Variantes ({variantesLocales.length})</span>
+            </button>
+          </div>
+
+          <div style={{ fontSize: "0.72rem", color: "#64748B" }}>
+            {esModoMaster ? (
+              <span>Modificando portada y atributos base globales</span>
+            ) : (
+              <span>
+                Editando variante: <strong style={{ color: colVariante.text }}>{varianteActual?.var_nombre}</strong>
+              </span>
+            )}
+          </div>
+        </div>
+
         {/* Formulario */}
         <form onSubmit={handleGuardar} style={{ padding: "18px 22px", overflowY: "auto", flex: 1 }}>
           {error && (
@@ -640,497 +716,580 @@ export function ModalEditarProducto({
             </div>
           )}
 
-          {/* 1. DATOS PRINCIPALES DEL PRODUCTO MASTER */}
-          <div style={{ marginBottom: "14px" }}>
-            <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 700, color: "#1E293B", marginBottom: "4px" }}>
-              Nombre del {esFloristeria ? "Arreglo / Producto Floral" : "Servicio Master"} *
-            </label>
-            <input
-              type="text"
-              required
-              placeholder={esFloristeria ? "Ej. Bouquet Diseño Estilo Coreano" : "Ej. Elaboración de Contrato"}
-              value={nombre}
-              onChange={(e) => setNombre(e.target.value)}
-              style={{
-                width: "100%",
-                padding: "9px 12px",
-                borderRadius: "8px",
-                border: "1px solid #CBD5E1",
-                fontSize: "0.9rem",
-                boxSizing: "border-box",
-                fontWeight: 600,
-              }}
-            />
-          </div>
-
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "14px" }}>
+          {/* ========================================================================= */}
+          {/* MODO 1: CONFIGURACIÓN GENERAL DEL PRODUCTO MASTER (GLOBAL)                */}
+          {/* ========================================================================= */}
+          {esModoMaster && (
             <div>
-              <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 600, color: "#334155", marginBottom: "4px" }}>
-                Categoría / Colección *
-              </label>
-              <select
-                value={categoriaId}
-                onChange={(e) => setCategoriaId(e.target.value)}
-                style={{
-                  width: "100%",
-                  padding: "9px 12px",
-                  borderRadius: "8px",
-                  border: "1px solid #CBD5E1",
-                  fontSize: "0.85rem",
-                  boxSizing: "border-box",
-                  background: "#FFFFFF",
-                }}
-              >
-                {categorias.map((c) => (
-                  <option key={c.ctg_id} value={c.ctg_id}>
-                    {c.ctg_nombre}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 600, color: "#334155", marginBottom: "4px" }}>
-                Tipo de Oferta Comercial
-              </label>
-              <select
-                value={tipo}
-                onChange={(e) => setTipo(e.target.value as any)}
-                style={{
-                  width: "100%",
-                  padding: "9px 12px",
-                  borderRadius: "8px",
-                  border: "1px solid #CBD5E1",
-                  fontSize: "0.85rem",
-                  boxSizing: "border-box",
-                  background: "#FFFFFF",
-                }}
-              >
-                <option value="FISICO">
-                  {esFloristeria
-                    ? "Producto Físico / Entrega Floral a Domicilio"
-                    : esMantenimiento
-                    ? "Producto Físico / Repuesto"
-                    : "Físico / Entrega Notarial"}
-                </option>
-                <option value="SERVICIO">
-                  {esFloristeria
-                    ? "Servicio de Decoración / Eventos"
-                    : esMantenimiento
-                    ? "Servicio Técnico / Reparación"
-                    : "Servicio / Trámite Puntual"}
-                </option>
-                <option value="SUSCRIPCION">
-                  {esFloristeria
-                    ? "Suscripción Floral (Semanal / Mensual)"
-                    : "Suscripción / Plan Periódico"}
-                </option>
-                <option value="DIGITAL">
-                  {esFloristeria
-                    ? "Tarjeta Dedicatoria Digital / Gift Card"
-                    : "Producto Digital / Formato"}
-                </option>
-              </select>
-            </div>
-          </div>
-
-          {/* 2. RECURSOS DIGITALES Y MULTIMEDIA GLOBALES (MASTER) */}
-          <div
-            style={{
-              background: "#F8FAFC",
-              border: "1px solid #E2E8F0",
-              borderRadius: "10px",
-              padding: "14px",
-              marginBottom: "14px",
-            }}
-          >
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                <ImageIcon size={16} color="#475569" />
-                <span style={{ fontSize: "0.78rem", fontWeight: 800, color: "#334155", textTransform: "uppercase" }}>
-                  Recursos Digitales Globales (Comunes para todas las Variantes)
-                </span>
-              </div>
-              <span style={{ fontSize: "0.7rem", color: "#64748B", fontWeight: 600 }}>
-                Las variantes heredarán estos enlaces salvo que se personalicen
-              </span>
-            </div>
-
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "10px" }}>
-              <div>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "2px" }}>
-                  <label style={{ fontSize: "0.72rem", fontWeight: 700, color: "#334155" }}>
-                    URL Imagen de Portada Principal (Global) *
-                  </label>
-                  {(imagenUrl.includes("photos.google.com") || imagenUrl.includes("photos.app.goo.gl")) && (
-                    <span style={{ fontSize: "0.68rem", color: "#D97706", fontWeight: 700, display: "flex", alignItems: "center", gap: "3px" }}>
-                      <AlertCircle size={12} /> Requiere Extracción
-                    </span>
-                  )}
-                  {imagenUrl.includes("lh3.googleusercontent.com") && (
-                    <span style={{ fontSize: "0.68rem", color: "#16A34A", fontWeight: 700, display: "flex", alignItems: "center", gap: "3px" }}>
-                      <CheckCircle2 size={12} /> Imagen Directa Lista
-                    </span>
-                  )}
-                </div>
+              {/* 1. DATOS PRINCIPALES DEL PRODUCTO MASTER */}
+              <div style={{ marginBottom: "14px" }}>
+                <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 700, color: "#1E293B", marginBottom: "4px" }}>
+                  Nombre del {esFloristeria ? "Arreglo / Producto Floral" : "Servicio Master"} *
+                </label>
                 <input
-                  type="url"
-                  placeholder="https://photos.google.com/share/... o https://lh3.googleusercontent.com/..."
-                  value={imagenUrl}
-                  onChange={(e) => {
-                    const raw = e.target.value;
-                    const driveMatch = raw.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/) || raw.match(/drive\.google\.com\/(?:open|uc)\?(?:.*&)?id=([a-zA-Z0-9_-]+)/);
-                    if (driveMatch && driveMatch[1]) {
-                      setImagenUrl(`https://lh3.googleusercontent.com/d/${driveMatch[1]}=w1200`);
-                    } else {
-                      setImagenUrl(raw);
-                    }
-                    setExitoAutoConvertir(null);
-                  }}
+                  type="text"
+                  required
+                  placeholder={esFloristeria ? "Ej. Bouquet Diseño Estilo Coreano" : "Ej. Elaboración de Contrato"}
+                  value={nombre}
+                  onChange={(e) => setNombre(e.target.value)}
                   style={{
                     width: "100%",
-                    padding: "7px 10px",
-                    borderRadius: "6px",
-                    border: (imagenUrl.includes("photos.google.com") || imagenUrl.includes("photos.app.goo.gl")) ? "1.5px solid #F59E0B" : "1px solid #CBD5E1",
-                    fontSize: "0.8rem",
+                    padding: "9px 12px",
+                    borderRadius: "8px",
+                    border: "1px solid #CBD5E1",
+                    fontSize: "0.9rem",
                     boxSizing: "border-box",
+                    fontWeight: 600,
                   }}
                 />
+              </div>
 
-                {exitoAutoConvertir && (
-                  <div style={{ marginTop: "4px", fontSize: "0.7rem", color: "#15803D", background: "#DCFCE7", padding: "4px 8px", borderRadius: "4px", border: "1px solid #BBF7D0", display: "flex", alignItems: "center", gap: "4px" }}>
-                    <CheckCircle2 size={13} /> {exitoAutoConvertir}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "14px" }}>
+                <div>
+                  <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 600, color: "#334155", marginBottom: "4px" }}>
+                    Categoría / Colección *
+                  </label>
+                  <select
+                    value={categoriaId}
+                    onChange={(e) => setCategoriaId(e.target.value)}
+                    style={{
+                      width: "100%",
+                      padding: "9px 12px",
+                      borderRadius: "8px",
+                      border: "1px solid #CBD5E1",
+                      fontSize: "0.85rem",
+                      boxSizing: "border-box",
+                      background: "#FFFFFF",
+                    }}
+                  >
+                    {categorias.map((c) => (
+                      <option key={c.ctg_id} value={c.ctg_id}>
+                        {c.ctg_nombre}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 600, color: "#334155", marginBottom: "4px" }}>
+                    Tipo de Oferta Comercial
+                  </label>
+                  <select
+                    value={tipo}
+                    onChange={(e) => setTipo(e.target.value as any)}
+                    style={{
+                      width: "100%",
+                      padding: "9px 12px",
+                      borderRadius: "8px",
+                      border: "1px solid #CBD5E1",
+                      fontSize: "0.85rem",
+                      boxSizing: "border-box",
+                      background: "#FFFFFF",
+                    }}
+                  >
+                    <option value="FISICO">
+                      {esFloristeria
+                        ? "Producto Físico / Entrega Floral a Domicilio"
+                        : esMantenimiento
+                        ? "Producto Físico / Repuesto"
+                        : "Físico / Entrega Notarial"}
+                    </option>
+                    <option value="SERVICIO">
+                      {esFloristeria
+                        ? "Servicio de Decoración / Eventos"
+                        : esMantenimiento
+                        ? "Servicio Técnico / Reparación"
+                        : "Servicio / Trámite Puntual"}
+                    </option>
+                    <option value="SUSCRIPCION">
+                      {esFloristeria
+                        ? "Suscripción Floral (Semanal / Mensual)"
+                        : "Suscripción / Plan Periódico"}
+                    </option>
+                    <option value="DIGITAL">
+                      {esFloristeria
+                        ? "Tarjeta Dedicatoria Digital / Gift Card"
+                        : "Producto Digital / Formato"}
+                    </option>
+                  </select>
+                </div>
+              </div>
+
+              {/* 2. RECURSOS DIGITALES Y MULTIMEDIA GLOBALES (MASTER) */}
+              <div
+                style={{
+                  background: "#F8FAFC",
+                  border: "1px solid #E2E8F0",
+                  borderRadius: "10px",
+                  padding: "14px",
+                  marginBottom: "14px",
+                }}
+              >
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                    <ImageIcon size={16} color="#475569" />
+                    <span style={{ fontSize: "0.78rem", fontWeight: 800, color: "#334155", textTransform: "uppercase" }}>
+                      Recursos Digitales Globales (Foto Principal Master)
+                    </span>
                   </div>
-                )}
+                  <span style={{ fontSize: "0.7rem", color: "#64748B", fontWeight: 600 }}>
+                    Las variantes heredarán esta foto salvo que tengan una propia
+                  </span>
+                </div>
 
-                {(imagenUrl.includes("photos.google.com") || imagenUrl.includes("photos.app.goo.gl") || imagenUrl.includes("drive.google.com/drive")) && (
-                  <div style={{ marginTop: "6px", fontSize: "0.7rem", color: "#92400E", background: "#FEF3C7", padding: "8px 10px", borderRadius: "6px", border: "1px solid #FDE68A", lineHeight: 1.4 }}>
-                    <div style={{ fontWeight: 800, marginBottom: "3px", display: "flex", alignItems: "center", gap: "4px" }}>
-                      <AlertCircle size={13} color="#D97706" /> Enlace de Álbum Web Detectado
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "10px" }}>
+                  <div>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "2px" }}>
+                      <label style={{ fontSize: "0.72rem", fontWeight: 700, color: "#334155" }}>
+                        URL Imagen de Portada Principal (Global) *
+                      </label>
+                      {(imagenUrl.includes("photos.google.com") || imagenUrl.includes("photos.app.goo.gl")) && (
+                        <span style={{ fontSize: "0.68rem", color: "#D97706", fontWeight: 700, display: "flex", alignItems: "center", gap: "3px" }}>
+                          <AlertCircle size={12} /> Requiere Extracción
+                        </span>
+                      )}
+                      {imagenUrl.includes("lh3.googleusercontent.com") && (
+                        <span style={{ fontSize: "0.68rem", color: "#16A34A", fontWeight: 700, display: "flex", alignItems: "center", gap: "3px" }}>
+                          <CheckCircle2 size={12} /> Imagen Directa Lista
+                        </span>
+                      )}
                     </div>
-                    <div>Este enlace abre el visor web de Google Fotos, no un archivo de imagen directo (.jpg).</div>
-                    <div style={{ marginTop: "6px", display: "flex", gap: "6px", flexWrap: "wrap", alignItems: "center" }}>
-                      <button
-                        type="button"
-                        disabled={resolviendoImagen}
-                        onClick={() => handleConvertirImagenGlobal()}
-                        style={{
-                          background: "#0284C7",
-                          color: "#FFFFFF",
-                          border: "none",
-                          padding: "4px 9px",
-                          borderRadius: "4px",
-                          fontSize: "0.68rem",
-                          fontWeight: 700,
-                          cursor: resolviendoImagen ? "wait" : "pointer",
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: "4px",
-                        }}
-                      >
-                        {resolviendoImagen ? (
-                          <>
-                            <Loader2 size={12} className="animate-spin" /> Extrayendo Directa...
-                          </>
-                        ) : (
-                          <>
-                            <Wand2 size={12} /> 🪄 Auto-Convertir Foto
-                          </>
-                        )}
-                      </button>
+                    <input
+                      type="url"
+                      placeholder="https://photos.google.com/share/... o https://lh3.googleusercontent.com/..."
+                      value={imagenUrl}
+                      onChange={(e) => {
+                        const raw = e.target.value;
+                        const driveMatch = raw.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/) || raw.match(/drive\.google\.com\/(?:open|uc)\?(?:.*&)?id=([a-zA-Z0-9_-]+)/);
+                        if (driveMatch && driveMatch[1]) {
+                          setImagenUrl(`https://lh3.googleusercontent.com/d/${driveMatch[1]}=w1200`);
+                        } else {
+                          setImagenUrl(raw);
+                        }
+                        setExitoAutoConvertir(null);
+                      }}
+                      style={{
+                        width: "100%",
+                        padding: "7px 10px",
+                        borderRadius: "6px",
+                        border: (imagenUrl.includes("photos.google.com") || imagenUrl.includes("photos.app.goo.gl")) ? "1.5px solid #F59E0B" : "1px solid #CBD5E1",
+                        fontSize: "0.8rem",
+                        boxSizing: "border-box",
+                      }}
+                    />
 
+                    {exitoAutoConvertir && (
+                      <div style={{ marginTop: "4px", fontSize: "0.7rem", color: "#15803D", background: "#DCFCE7", padding: "4px 8px", borderRadius: "4px", border: "1px solid #BBF7D0", display: "flex", alignItems: "center", gap: "4px" }}>
+                        <CheckCircle2 size={13} /> {exitoAutoConvertir}
+                      </div>
+                    )}
+
+                    {(imagenUrl.includes("photos.google.com") || imagenUrl.includes("photos.app.goo.gl") || imagenUrl.includes("drive.google.com/drive")) && (
+                      <div style={{ marginTop: "6px", fontSize: "0.7rem", color: "#92400E", background: "#FEF3C7", padding: "8px 10px", borderRadius: "6px", border: "1px solid #FDE68A", lineHeight: 1.4 }}>
+                        <div style={{ fontWeight: 800, marginBottom: "3px", display: "flex", alignItems: "center", gap: "4px" }}>
+                          <AlertCircle size={13} color="#D97706" /> Enlace de Álbum Web Detectado
+                        </div>
+                        <div>Este enlace abre el visor web de Google Fotos, no un archivo de imagen directo (.jpg).</div>
+                        <div style={{ marginTop: "6px", display: "flex", gap: "6px", flexWrap: "wrap", alignItems: "center" }}>
+                          <button
+                            type="button"
+                            disabled={resolviendoImagen}
+                            onClick={() => handleConvertirImagenGlobal()}
+                            style={{
+                              background: "#0284C7",
+                              color: "#FFFFFF",
+                              border: "none",
+                              padding: "4px 9px",
+                              borderRadius: "4px",
+                              fontSize: "0.68rem",
+                              fontWeight: 700,
+                              cursor: resolviendoImagen ? "wait" : "pointer",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "4px",
+                            }}
+                          >
+                            {resolviendoImagen ? (
+                              <>
+                                <Loader2 size={12} className="animate-spin" /> Extrayendo Directa...
+                              </>
+                            ) : (
+                              <>
+                                <Wand2 size={12} /> 🪄 Auto-Convertir Foto
+                              </>
+                            )}
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setAlbumFotosUrl(imagenUrl);
+                              setImagenUrl("");
+                            }}
+                            style={{
+                              background: "#B45309",
+                              color: "#FFFFFF",
+                              border: "none",
+                              padding: "4px 8px",
+                              borderRadius: "4px",
+                              fontSize: "0.68rem",
+                              fontWeight: 700,
+                              cursor: "pointer",
+                            }}
+                          >
+                            📁 Mover a "Álbum de Muestras"
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Preview de Portada Master */}
+                    {imagenUrl && (
+                      <div style={{ marginTop: "6px", display: "flex", alignItems: "center", gap: "8px", background: "#F1F5F9", padding: "6px 8px", borderRadius: "6px", border: "1px solid #E2E8F0" }}>
+                        <div style={{ width: "42px", height: "42px", borderRadius: "4px", overflow: "hidden", background: "#0F172A", flexShrink: 0 }}>
+                          <img
+                            src={imagenUrl}
+                            alt="Portada Master"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1561181286-d3fee7d55364?w=600&auto=format&fit=crop&q=80";
+                            }}
+                            style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                          />
+                        </div>
+                        <div style={{ fontSize: "0.7rem", color: "#334155", overflow: "hidden" }}>
+                          <div style={{ fontWeight: 700, color: "#0F172A" }}>Vista Previa Master</div>
+                          <div style={{ fontSize: "0.65rem", color: "#64748B", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap" }}>
+                            {imagenUrl.startsWith("https://lh3.googleusercontent.com") ? "Google Fotos (Enlace Directo OK)" : imagenUrl}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <div>
+                    <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#334155", marginBottom: "2px" }}>
+                      URL Álbum de Muestras Reales (Google Photos / Instagram)
+                    </label>
+                    <input
+                      type="url"
+                      placeholder="https://photos.app.goo.gl/... o https://photos.google.com/share/..."
+                      value={albumFotosUrl}
+                      onChange={(e) => setAlbumFotosUrl(e.target.value)}
+                      style={{
+                        width: "100%",
+                        padding: "7px 10px",
+                        borderRadius: "6px",
+                        border: "1px solid #CBD5E1",
+                        fontSize: "0.8rem",
+                        boxSizing: "border-box",
+                      }}
+                    />
+                  </div>
+                </div>
+
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+                  <div>
+                    <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#334155", marginBottom: "2px" }}>
+                      URL Video / GIF Demostrativo (YouTube, MP4)
+                    </label>
+                    <input
+                      type="url"
+                      placeholder="https://www.youtube.com/watch?v=... o .mp4 / .webm"
+                      value={videoUrl}
+                      onChange={(e) => setVideoUrl(e.target.value)}
+                      style={{
+                        width: "100%",
+                        padding: "6px 10px",
+                        borderRadius: "6px",
+                        border: "1px solid #CBD5E1",
+                        fontSize: "0.78rem",
+                        boxSizing: "border-box",
+                      }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#334155", marginBottom: "2px" }}>
+                      Galería Adicional (URLs por salto de línea)
+                    </label>
+                    <textarea
+                      rows={2}
+                      placeholder="https://...foto1.jpg&#10;https://...foto2.jpg"
+                      value={galeriaTexto}
+                      onChange={(e) => setGaleriaTexto(e.target.value)}
+                      style={{
+                        width: "100%",
+                        padding: "6px 10px",
+                        borderRadius: "6px",
+                        border: "1px solid #CBD5E1",
+                        fontSize: "0.78rem",
+                        boxSizing: "border-box",
+                      }}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* 3. TIEMPO DE ENTREGA GLOBAL & DESCRIPCIÓN BASE */}
+              <div style={{ marginBottom: "14px" }}>
+                <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, color: "#1E293B", marginBottom: "4px" }}>
+                  Promesa y Tiempo de Entrega Global * (Heredado por defecto)
+                </label>
+                <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginBottom: "6px" }}>
+                  {presetsEntrega.map((pr) => {
+                    const sel = tiempoEntrega === pr.val;
+                    return (
                       <button
+                        key={pr.val}
                         type="button"
-                        onClick={() => {
-                          setAlbumFotosUrl(imagenUrl);
-                          setImagenUrl("");
-                        }}
+                        onClick={() => setTiempoEntrega(pr.val)}
                         style={{
-                          background: "#B45309",
-                          color: "#FFFFFF",
-                          border: "none",
                           padding: "4px 8px",
-                          borderRadius: "4px",
-                          fontSize: "0.68rem",
+                          borderRadius: "6px",
+                          fontSize: "0.72rem",
                           fontWeight: 700,
+                          border: sel ? "1.5px solid #0F172A" : "1px solid #CBD5E1",
+                          background: sel ? "#0F172A" : "#FFFFFF",
+                          color: sel ? "#FFFFFF" : "#475569",
                           cursor: "pointer",
                         }}
                       >
-                        📁 Mover a "Álbum de Muestras"
+                        {pr.label}
                       </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              <div>
-                <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#334155", marginBottom: "2px" }}>
-                  URL Álbum de Muestras Reales (Google Photos / Instagram)
-                </label>
+                    );
+                  })}
+                </div>
                 <input
-                  type="url"
-                  placeholder="https://photos.app.goo.gl/... o https://photos.google.com/share/..."
-                  value={albumFotosUrl}
-                  onChange={(e) => setAlbumFotosUrl(e.target.value)}
+                  type="text"
+                  required
+                  placeholder="Ej. 🌸 Pide hoy, recibe hoy (Mismo Día)"
+                  value={tiempoEntrega}
+                  onChange={(e) => setTiempoEntrega(e.target.value)}
                   style={{
                     width: "100%",
-                    padding: "7px 10px",
-                    borderRadius: "6px",
+                    padding: "8px 12px",
+                    borderRadius: "8px",
                     border: "1px solid #CBD5E1",
-                    fontSize: "0.8rem",
-                    boxSizing: "border-box",
-                  }}
-                />
-              </div>
-            </div>
-
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
-              <div>
-                <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#334155", marginBottom: "2px" }}>
-                  URL Video / GIF Demostrativo (YouTube, MP4)
-                </label>
-                <input
-                  type="url"
-                  placeholder="https://www.youtube.com/watch?v=... o .mp4 / .gif"
-                  value={videoUrl}
-                  onChange={(e) => setVideoUrl(e.target.value)}
-                  style={{
-                    width: "100%",
-                    padding: "7px 10px",
-                    borderRadius: "6px",
-                    border: "1px solid #CBD5E1",
-                    fontSize: "0.8rem",
+                    fontSize: "0.85rem",
                     boxSizing: "border-box",
                   }}
                 />
               </div>
 
-              <div>
-                <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#334155", marginBottom: "2px" }}>
-                  Galería Adicional (URLs por salto de línea)
-                </label>
-                <textarea
-                  rows={2}
-                  placeholder="https://...foto1.jpg&#10;https://...foto2.jpg"
-                  value={galeriaTexto}
-                  onChange={(e) => setGaleriaTexto(e.target.value)}
-                  style={{
-                    width: "100%",
-                    padding: "6px 10px",
-                    borderRadius: "6px",
-                    border: "1px solid #CBD5E1",
-                    fontSize: "0.78rem",
-                    boxSizing: "border-box",
-                  }}
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* 3. TIEMPO DE ENTREGA GLOBAL & DESCRIPCIÓN BASE */}
-          <div style={{ marginBottom: "14px" }}>
-            <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, color: "#1E293B", marginBottom: "4px" }}>
-              Promesa y Tiempo de Entrega Global * (Heredado por defecto)
-            </label>
-            <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginBottom: "6px" }}>
-              {presetsEntrega.map((pr) => {
-                const sel = tiempoEntrega === pr.val;
-                return (
-                  <button
-                    key={pr.val}
-                    type="button"
-                    onClick={() => setTiempoEntrega(pr.val)}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "16px" }}>
+                <div>
+                  <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 600, color: "#334155", marginBottom: "4px" }}>
+                    Descripción Detallada Base (Global)
+                  </label>
+                  <textarea
+                    rows={3}
+                    placeholder={esFloristeria ? "Arreglo exclusivo de vanguardia envuelto en finos papeles coreanos..." : "Alcance del servicio..."}
+                    value={descripcion}
+                    onChange={(e) => setDescripcion(e.target.value)}
                     style={{
-                      padding: "4px 8px",
-                      borderRadius: "6px",
-                      fontSize: "0.72rem",
-                      fontWeight: 700,
-                      border: sel ? "1.5px solid #0F172A" : "1px solid #CBD5E1",
-                      background: sel ? "#0F172A" : "#FFFFFF",
-                      color: sel ? "#FFFFFF" : "#475569",
-                      cursor: "pointer",
-                    }}
-                  >
-                    {pr.label}
-                  </button>
-                );
-              })}
-            </div>
-            <input
-              type="text"
-              required
-              placeholder="Ej. 🌸 Pide hoy, recibe hoy (Mismo Día)"
-              value={tiempoEntrega}
-              onChange={(e) => setTiempoEntrega(e.target.value)}
-              style={{
-                width: "100%",
-                padding: "8px 12px",
-                borderRadius: "8px",
-                border: "1px solid #CBD5E1",
-                fontSize: "0.85rem",
-                boxSizing: "border-box",
-              }}
-            />
-          </div>
-
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "16px" }}>
-            <div>
-              <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 600, color: "#334155", marginBottom: "4px" }}>
-                Descripción Detallada Base (Global)
-              </label>
-              <textarea
-                rows={3}
-                placeholder={esFloristeria ? "Arreglo exclusivo de vanguardia envuelto en finos papeles coreanos..." : "Alcance del servicio..."}
-                value={descripcion}
-                onChange={(e) => setDescripcion(e.target.value)}
-                style={{
-                  width: "100%",
-                  padding: "8px 12px",
-                  borderRadius: "8px",
-                  border: "1px solid #CBD5E1",
-                  fontSize: "0.82rem",
-                  boxSizing: "border-box",
-                }}
-              />
-            </div>
-
-            <div>
-              <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 600, color: "#334155", marginBottom: "4px" }}>
-                Beneficios / ¿Qué incluye? Base (Una viñeta por línea)
-              </label>
-              <textarea
-                rows={3}
-                placeholder={
-                  esFloristeria
-                    ? "Rosas de exportación seleccionadas de tallo largo\nPapel coreano plisado y cintas de seda satinada\nTarjeta dedicatoria personalizada gratis"
-                    : "Asesoría jurídica continua\nRevisión y dictamen formal avalado"
-                }
-                value={beneficiosTexto}
-                onChange={(e) => setBeneficiosTexto(e.target.value)}
-                style={{
-                  width: "100%",
-                  padding: "8px 12px",
-                  borderRadius: "8px",
-                  border: "1px solid #CBD5E1",
-                  fontSize: "0.82rem",
-                  boxSizing: "border-box",
-                }}
-              />
-            </div>
-          </div>
-
-          {/* 4. EDITOR DE VARIANTES CON HERENCIA Y SOBRESCRITURA INDIVIDUAL */}
-          <div
-            style={{
-              background: "#F8FAFC",
-              border: "1.5px solid #CBD5E1",
-              borderRadius: "12px",
-              padding: "16px",
-              marginBottom: "16px",
-            }}
-          >
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                <Layers size={17} color="#0F172A" />
-                <span style={{ fontSize: "0.85rem", fontWeight: 800, color: "#0F172A", textTransform: "uppercase" }}>
-                  Variantes de Producto / Tamaños ({variantesLocales.length})
-                </span>
-              </div>
-              <button
-                type="button"
-                onClick={agregarNuevaVariante}
-                style={{
-                  background: "#0F172A",
-                  color: "#FFFFFF",
-                  border: "none",
-                  borderRadius: "6px",
-                  padding: "5px 12px",
-                  fontSize: "0.75rem",
-                  fontWeight: 700,
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "4px",
-                  cursor: "pointer",
-                  boxShadow: "0 1px 2px rgba(0,0,0,0.1)",
-                }}
-              >
-                <Plus size={13} />
-                <span>+ Agregar Variante</span>
-              </button>
-            </div>
-
-            {/* Pestañas de Variantes con Código de Color Individual */}
-            <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginBottom: "14px" }}>
-              {variantesLocales.map((v, idx) => {
-                const activa = idx === varianteActivaIndex;
-                const col = PALETA_COLORES_VARIANTES[idx % PALETA_COLORES_VARIANTES.length] || PALETA_COLORES_VARIANTES[0]!;
-                const pvpCalculado = (Number(v.var_precio || 0) * (1 + (v.var_tarifa_iva_porcentaje ?? 15) / 100));
-                const tieneOverrides = Boolean(
-                  v.var_detalle_variante?.portada_url ||
-                  v.var_detalle_variante?.tiempo_entrega ||
-                  (v.var_detalle_variante?.beneficios_modo && v.var_detalle_variante?.beneficios_modo !== "heredar")
-                );
-
-                return (
-                  <button
-                    key={v.var_id || idx}
-                    type="button"
-                    onClick={() => {
-                      setVarianteActivaIndex(idx);
-                      setModoEdicion("variante");
-                    }}
-                    style={{
-                      padding: "7px 12px",
+                      width: "100%",
+                      padding: "8px 12px",
                       borderRadius: "8px",
-                      border: activa ? `2px solid ${col.border}` : `1.5px solid ${col.border}66`,
-                      background: activa ? col.bg : "#FFFFFF",
-                      color: activa ? col.text : "#475569",
-                      fontWeight: activa ? 800 : 600,
-                      fontSize: "0.78rem",
-                      cursor: "pointer",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "6px",
-                      transition: "all 0.15s ease",
-                      boxShadow: activa ? `0 2px 8px ${col.border}33` : "none",
+                      border: "1px solid #CBD5E1",
+                      fontSize: "0.82rem",
+                      boxSizing: "border-box",
                     }}
-                  >
-                    <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: col.dot, flexShrink: 0 }} />
-                    <span>{v.var_nombre}</span>
-                    <span style={{ fontWeight: 800, color: activa ? col.text : "#0F172A" }}>
-                      ${(v.precio_total || pvpCalculado).toFixed(2)}
-                    </span>
-                    {tieneOverrides && (
-                      <span
-                        title="Variante con foto o SLA propio"
-                        style={{
-                          fontSize: "0.62rem",
-                          background: col.badge,
-                          color: col.text,
-                          padding: "1px 5px",
-                          borderRadius: "4px",
-                          fontWeight: 800,
-                        }}
-                      >
-                        📸 Foto
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
+                  />
+                </div>
 
-            {/* Formulario de la Variante Seleccionada con Indicador de Color */}
-            {varianteActual && (
+                <div>
+                  <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 600, color: "#334155", marginBottom: "4px" }}>
+                    Beneficios / ¿Qué incluye? Base (Una viñeta por línea)
+                  </label>
+                  <textarea
+                    rows={3}
+                    placeholder={
+                      esFloristeria
+                        ? "Rosas de exportación seleccionadas de tallo largo\nPapel coreano plisado y cintas de seda satinada\nTarjeta dedicatoria personalizada gratis"
+                        : "Asesoría jurídica continua\nRevisión y dictamen formal avalado"
+                    }
+                    value={beneficiosTexto}
+                    onChange={(e) => setBeneficiosTexto(e.target.value)}
+                    style={{
+                      width: "100%",
+                      padding: "8px 12px",
+                      borderRadius: "8px",
+                      border: "1px solid #CBD5E1",
+                      fontSize: "0.82rem",
+                      boxSizing: "border-box",
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Banner resumen que invita a configurar tamaños */}
               <div
                 style={{
-                  background: "#FFFFFF",
+                  background: "#F0F9FF",
+                  border: "1.5px dashed #38BDF8",
                   borderRadius: "10px",
-                  padding: "14px",
-                  border: `2px solid ${colActiva.border}`,
-                  boxShadow: `0 3px 10px ${colActiva.border}22`,
+                  padding: "12px 16px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  marginBottom: "14px",
                 }}
               >
+                <div>
+                  <div style={{ fontSize: "0.82rem", fontWeight: 800, color: "#0369A1" }}>
+                    🏷️ Variantes / Tamaños configurados: {variantesLocales.length}
+                  </div>
+                  <div style={{ fontSize: "0.72rem", color: "#0284C7" }}>
+                    Puedes personalizar fotos individuales y precios para cada tamaño en la pestaña de variantes.
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setModoEdicion("variante");
+                    setVarianteActivaIndex(0);
+                  }}
+                  style={{
+                    background: "#0284C7",
+                    color: "#FFFFFF",
+                    border: "none",
+                    padding: "6px 12px",
+                    borderRadius: "6px",
+                    fontSize: "0.75rem",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                  }}
+                >
+                  Configurar Tamaños ➔
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* ========================================================================= */}
+          {/* MODO 2: EDITOR DE VARIANTES Y TAMAÑOS CON HERENCIA Y FOTO INDIVIDUAL      */}
+          {/* ========================================================================= */}
+          {!esModoMaster && (
+            <div
+              style={{
+                background: "#F8FAFC",
+                border: "1.5px solid #CBD5E1",
+                borderRadius: "12px",
+                padding: "16px",
+                marginBottom: "16px",
+              }}
+            >
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                  <Layers size={17} color="#0F172A" />
+                  <span style={{ fontSize: "0.85rem", fontWeight: 800, color: "#0F172A", textTransform: "uppercase" }}>
+                    Selecciona el Tamaño / Variante para Personalizar ({variantesLocales.length})
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={agregarNuevaVariante}
+                  style={{
+                    background: "#0F172A",
+                    color: "#FFFFFF",
+                    border: "none",
+                    borderRadius: "6px",
+                    padding: "5px 12px",
+                    fontSize: "0.75rem",
+                    fontWeight: 700,
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "4px",
+                    cursor: "pointer",
+                    boxShadow: "0 1px 2px rgba(0,0,0,0.1)",
+                  }}
+                >
+                  <Plus size={13} />
+                  <span>+ Agregar Variante</span>
+                </button>
+              </div>
+
+              {/* Pestañas de Variantes con Código de Color Individual */}
+              <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginBottom: "14px" }}>
+                {variantesLocales.map((v, idx) => {
+                  const activa = idx === varianteActivaIndex;
+                  const col = PALETA_COLORES_VARIANTES[idx % PALETA_COLORES_VARIANTES.length] || PALETA_COLORES_VARIANTES[0]!;
+                  const pvpCalculado = (Number(v.var_precio || 0) * (1 + (v.var_tarifa_iva_porcentaje ?? 15) / 100));
+                  const tieneFotoPropia = Boolean(v.var_detalle_variante?.portada_url);
+
+                  return (
+                    <button
+                      key={v.var_id || idx}
+                      type="button"
+                      onClick={() => {
+                        setVarianteActivaIndex(idx);
+                      }}
+                      style={{
+                        padding: "7px 12px",
+                        borderRadius: "8px",
+                        border: activa ? `2px solid ${col.border}` : `1.5px solid ${col.border}66`,
+                        background: activa ? col.bg : "#FFFFFF",
+                        color: activa ? col.text : "#475569",
+                        fontWeight: activa ? 800 : 600,
+                        fontSize: "0.78rem",
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "6px",
+                        transition: "all 0.15s ease",
+                        boxShadow: activa ? `0 2px 8px ${col.border}33` : "none",
+                      }}
+                    >
+                      <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: col.dot, flexShrink: 0 }} />
+                      <span>{v.var_nombre}</span>
+                      <span style={{ fontWeight: 800, color: activa ? col.text : "#0F172A" }}>
+                        ${(v.precio_total || pvpCalculado).toFixed(2)}
+                      </span>
+                      {tieneFotoPropia ? (
+                        <span
+                          title="Tiene Foto Propia Exclusiva"
+                          style={{
+                            fontSize: "0.62rem",
+                            background: "#0284C7",
+                            color: "#FFFFFF",
+                            padding: "1px 5px",
+                            borderRadius: "4px",
+                            fontWeight: 800,
+                          }}
+                        >
+                          📸 Foto Propia
+                        </span>
+                      ) : (
+                        <span
+                          title="Hereda la Foto Global"
+                          style={{
+                            fontSize: "0.62rem",
+                            background: "#F1F5F9",
+                            color: "#64748B",
+                            padding: "1px 5px",
+                            borderRadius: "4px",
+                            fontWeight: 600,
+                          }}
+                        >
+                          ⚪ Heredada
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Formulario de la Variante Seleccionada con Indicador de Color */}
+              {varianteActual && (
+                <div
+                  style={{
+                    background: "#FFFFFF",
+                    borderRadius: "10px",
+                    padding: "14px",
+                    border: `2px solid ${colActiva.border}`,
+                    boxShadow: `0 3px 10px ${colActiva.border}22`,
+                  }}
+                >
                   {/* Banner de Variante Activa */}
                   <div
                     style={{
@@ -1145,218 +1304,100 @@ export function ModalEditarProducto({
                   >
                     <div style={{ display: "flex", alignItems: "center", gap: "6px", color: colActiva.text, fontWeight: 800, fontSize: "0.75rem" }}>
                       <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: colActiva.dot }} />
-                      <span>🏷️ EDITANDO: {varianteActual.var_nombre || "Nueva Variante"} (Variante #{varianteActivaIndex + 1})</span>
+                      <span>🏷️ EDITANDO: {varianteActual.var_nombre || "Nueva Variante"} (Tamaño #{varianteActivaIndex + 1})</span>
                     </div>
                     <span style={{ fontSize: "0.7rem", color: colActiva.text, fontWeight: 700 }}>
                       PVP: ${(varianteActual.precio_total || 0).toFixed(2)}
                     </span>
                   </div>
-                {/* 1. Datos básicos de la variante */}
-                <div style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr", gap: "10px", marginBottom: "10px" }}>
-                  <div>
-                    <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#334155", marginBottom: "2px" }}>
-                      Nombre de la Variante / Tamaño *
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      placeholder={esFloristeria ? "Ej. Pequeño (12 Rosas) o Gigante VIP (50 Rosas + Corona)" : "Ej. Opción Estándar"}
-                      value={varianteActual.var_nombre}
-                      onChange={(e) => actualizarVarianteActual("var_nombre", e.target.value)}
-                      style={{
-                        width: "100%",
-                        padding: "7px 10px",
-                        borderRadius: "6px",
-                        border: "1px solid #CBD5E1",
-                        fontSize: "0.82rem",
-                        boxSizing: "border-box",
-                        fontWeight: 600,
-                      }}
-                    />
-                  </div>
 
-                  <div>
-                    <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#334155", marginBottom: "2px" }}>
-                      Código SKU / Referencia
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="Ej. TNK-COR-MED"
-                      value={varianteActual.var_sku || ""}
-                      onChange={(e) => actualizarVarianteActual("var_sku", e.target.value)}
-                      style={{
-                        width: "100%",
-                        padding: "7px 10px",
-                        borderRadius: "6px",
-                        border: "1px solid #CBD5E1",
-                        fontSize: "0.82rem",
-                        boxSizing: "border-box",
-                      }}
-                    />
-                  </div>
-                </div>
+                  {/* 1. SECCIÓN DE FOTO DE PORTADA PARA ESTE TAMAÑO (HERENCIA VS SOBREESCRITURA) */}
+                  <div
+                    style={{
+                      background: "#F8FAFC",
+                      border: "1px solid #E2E8F0",
+                      borderRadius: "8px",
+                      padding: "12px",
+                      marginBottom: "12px",
+                    }}
+                  >
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                        <ImageIcon size={15} color={colActiva.dot} />
+                        <label style={{ fontSize: "0.75rem", fontWeight: 800, color: "#1E293B" }}>
+                          Foto de Portada para "{varianteActual.var_nombre}"
+                        </label>
+                      </div>
 
-                <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: "10px" }}>
-                  <div>
-                    <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#334155", marginBottom: "2px" }}>
-                      Precio Base Imponible ($ USD) *
-                    </label>
-                    <input
-                      type="number"
-                      step="0.0001"
-                      min="0.01"
-                      required
-                      placeholder="0.00"
-                      value={varianteActual.var_precio}
-                      onChange={(e) => actualizarVarianteActual("var_precio", e.target.value)}
-                      style={{
-                        width: "100%",
-                        padding: "7px 10px",
-                        borderRadius: "6px",
-                        border: "1px solid #CBD5E1",
-                        fontSize: "0.88rem",
-                        fontWeight: 800,
-                        boxSizing: "border-box",
-                        color: "#0F172A",
-                      }}
-                    />
-                  </div>
-
-                  <div>
-                    <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#334155", marginBottom: "2px" }}>
-                      Tarifa IVA SRI (Ecuador)
-                    </label>
-                    <select
-                      value={varianteActual.var_tarifa_iva_porcentaje ?? 15}
-                      onChange={(e) => actualizarVarianteActual("var_tarifa_iva_porcentaje", e.target.value)}
-                      style={{
-                        width: "100%",
-                        padding: "7px 10px",
-                        borderRadius: "6px",
-                        border: "1px solid #CBD5E1",
-                        fontSize: "0.82rem",
-                        boxSizing: "border-box",
-                        background: "#FFFFFF",
-                      }}
-                    >
-                      <option value={15}>IVA 15% (Estándar)</option>
-                      <option value={0}>IVA 0% (Exento SRI)</option>
-                    </select>
-                  </div>
-                </div>
-
-                {/* Resumen de PVP en vivo */}
-                <div
-                  style={{
-                    margin: "12px 0",
-                    padding: "8px 12px",
-                    background: "#F8FAFC",
-                    border: "1px dashed #CBD5E1",
-                    borderRadius: "6px",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    fontSize: "0.78rem",
-                  }}
-                >
-                  <div>
-                    <span style={{ color: "#64748B" }}>Base: </span>
-                    <strong style={{ color: "#0F172A" }}>${Number(varianteActual.var_precio || 0).toFixed(2)}</strong>
-                    <span style={{ margin: "0 6px", color: "#CBD5E1" }}>|</span>
-                    <span style={{ color: "#64748B" }}>IVA ({varianteActual.var_tarifa_iva_porcentaje ?? 15}%): </span>
-                    <strong style={{ color: "#0F172A" }}>
-                      ${(Number(varianteActual.var_precio || 0) * (varianteActual.var_tarifa_iva_porcentaje ?? 15) / 100).toFixed(2)}
-                    </strong>
-                  </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                    <span style={{ color: "#64748B" }}>PVP Total:</span>
-                    <strong style={{ color: "#059669", fontSize: "0.95rem", fontWeight: 800 }}>
-                      ${(Number(varianteActual.var_precio || 0) * (1 + (varianteActual.var_tarifa_iva_porcentaje ?? 15) / 100)).toFixed(2)}
-                    </strong>
-                    {variantesLocales.length > 1 && (
-                      <button
-                        type="button"
-                        onClick={eliminarVarianteActual}
-                        title="Eliminar esta variante"
-                        style={{
-                          background: "transparent",
-                          border: "none",
-                          color: "#EF4444",
-                          cursor: "pointer",
-                          padding: "2px",
-                          marginLeft: "6px",
-                        }}
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    )}
-                  </div>
-                </div>
-
-                {/* 2. SUB-SECCIÓN: PERSONALIZACIÓN & SOBRESCRITURA DE ESTA VARIANTE */}
-                <div
-                  style={{
-                    marginTop: "12px",
-                    borderTop: `1.5px solid ${colActiva.border}44`,
-                    paddingTop: "12px",
-                    background: colActiva.bg,
-                    borderRadius: "8px",
-                    padding: "10px",
-                    border: `1px solid ${colActiva.border}66`,
-                  }}
-                >
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                      <Sparkles size={14} color={colActiva.dot} />
-                      <span style={{ fontSize: "0.75rem", fontWeight: 800, color: colActiva.text, textTransform: "uppercase" }}>
-                        Personalización Exclusiva de esta Variante (Opcional)
-                      </span>
+                      {/* Selector de Herencia vs Personalizado */}
+                      <div style={{ display: "flex", gap: "4px" }}>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const det = { ...(varianteActual.var_detalle_variante || {}), portada_url: null };
+                            actualizarVarianteActual("var_detalle_variante", det);
+                          }}
+                          style={{
+                            padding: "3px 8px",
+                            borderRadius: "4px",
+                            fontSize: "0.68rem",
+                            fontWeight: 700,
+                            border: !varianteActual.var_detalle_variante?.portada_url ? "1.5px solid #0F172A" : "1px solid #CBD5E1",
+                            background: !varianteActual.var_detalle_variante?.portada_url ? "#0F172A" : "#FFFFFF",
+                            color: !varianteActual.var_detalle_variante?.portada_url ? "#FFFFFF" : "#64748B",
+                            cursor: "pointer",
+                          }}
+                        >
+                          ⚪ Usar Foto Global (Heredada)
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (!varianteActual.var_detalle_variante?.portada_url) {
+                              const det = { ...(varianteActual.var_detalle_variante || {}), portada_url: imagenUrl || "" };
+                              actualizarVarianteActual("var_detalle_variante", det);
+                            }
+                          }}
+                          style={{
+                            padding: "3px 8px",
+                            borderRadius: "4px",
+                            fontSize: "0.68rem",
+                            fontWeight: 700,
+                            border: Boolean(varianteActual.var_detalle_variante?.portada_url) ? `1.5px solid ${colActiva.border}` : "1px solid #CBD5E1",
+                            background: Boolean(varianteActual.var_detalle_variante?.portada_url) ? colActiva.bg : "#FFFFFF",
+                            color: Boolean(varianteActual.var_detalle_variante?.portada_url) ? colActiva.text : "#64748B",
+                            cursor: "pointer",
+                          }}
+                        >
+                          📸 Foto Propia de este Tamaño
+                        </button>
+                      </div>
                     </div>
-                    <span style={{ fontSize: "0.68rem", color: "#64748B" }}>
-                      Si se deja vacío, hereda automáticamente los valores globales
-                    </span>
-                  </div>
 
-                  {/* Foto de Portada Específica para este tamaño */}
-                  <div style={{ marginBottom: "8px" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "2px" }}>
-                      <label style={{ fontSize: "0.72rem", fontWeight: 700, color: "#334155" }}>
-                        Foto / Portada Específica de este Tamaño:
-                      </label>
-                      <span style={{ fontSize: "0.68rem", color: varianteActual.var_detalle_variante?.portada_url ? colActiva.text : "#64748B", fontWeight: 700 }}>
-                        {varianteActual.var_detalle_variante?.portada_url ? "🟢 Portada Propia Activa" : "⚪ Hereda Portada Global"}
-                      </span>
-                    </div>
-                    <input
-                      type="url"
-                      placeholder="Dejar vacío para heredar la foto global, o pegar URL directa (lh3.googleusercontent.com o Drive)"
-                      value={varianteActual.var_detalle_variante?.portada_url || ""}
-                      onChange={(e) => {
-                        const raw = e.target.value.trim();
-                        const driveMatch = raw.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/) || raw.match(/drive\.google\.com\/(?:open|uc)\?(?:.*&)?id=([a-zA-Z0-9_-]+)/);
-                        const valFinal = driveMatch && driveMatch[1] ? `https://lh3.googleusercontent.com/d/${driveMatch[1]}=w1200` : raw;
-                        const det = { ...(varianteActual.var_detalle_variante || {}), portada_url: valFinal || null };
-                        actualizarVarianteActual("var_detalle_variante", det);
-                      }}
-                      style={{
-                        width: "100%",
-                        padding: "6px 10px",
-                        borderRadius: "6px",
-                        border: "1px solid #CBD5E1",
-                        fontSize: "0.78rem",
-                        boxSizing: "border-box",
-                        background: "#FFFFFF",
-                      }}
-                    />
-                    {Boolean(
-                      varianteActual.var_detalle_variante?.portada_url?.includes("photos.app.goo.gl") ||
-                      varianteActual.var_detalle_variante?.portada_url?.includes("photos.google.com")
-                    ) && (
-                      <div style={{ marginTop: "4px", fontSize: "0.68rem", color: "#B45309", background: "#FEF3C7", padding: "6px 8px", borderRadius: "5px", border: "1px solid #FDE68A", lineHeight: 1.35 }}>
-                        <div style={{ fontWeight: 800, marginBottom: "3px", display: "flex", alignItems: "center", gap: "4px" }}>
-                          <AlertCircle size={12} color="#D97706" /> Enlace de Álbum Web Detectado
-                        </div>
-                        <div style={{ display: "flex", gap: "6px", alignItems: "center", marginTop: "4px" }}>
+                    {varianteActual.var_detalle_variante?.portada_url ? (
+                      <div>
+                        <div style={{ display: "flex", gap: "8px", alignItems: "center", marginBottom: "6px" }}>
+                          <input
+                            type="url"
+                            placeholder="Pega URL de Google Fotos, Drive o CDN para este tamaño..."
+                            value={varianteActual.var_detalle_variante.portada_url}
+                            onChange={(e) => {
+                              const raw = e.target.value.trim();
+                              const driveMatch = raw.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/) || raw.match(/drive\.google\.com\/(?:open|uc)\?(?:.*&)?id=([a-zA-Z0-9_-]+)/);
+                              const valFinal = driveMatch && driveMatch[1] ? `https://lh3.googleusercontent.com/d/${driveMatch[1]}=w1200` : raw;
+                              const det = { ...(varianteActual.var_detalle_variante || {}), portada_url: valFinal || null };
+                              actualizarVarianteActual("var_detalle_variante", det);
+                            }}
+                            style={{
+                              flex: 1,
+                              padding: "7px 10px",
+                              borderRadius: "6px",
+                              border: "1px solid #CBD5E1",
+                              fontSize: "0.8rem",
+                              boxSizing: "border-box",
+                              background: "#FFFFFF",
+                            }}
+                          />
                           <button
                             type="button"
                             disabled={resolviendoVarianteImg}
@@ -1365,166 +1406,422 @@ export function ModalEditarProducto({
                               background: "#0284C7",
                               color: "#FFFFFF",
                               border: "none",
-                              padding: "3px 8px",
-                              borderRadius: "4px",
-                              fontSize: "0.68rem",
+                              padding: "7px 12px",
+                              borderRadius: "6px",
+                              fontSize: "0.72rem",
                               fontWeight: 700,
                               cursor: resolviendoVarianteImg ? "wait" : "pointer",
                               display: "inline-flex",
                               alignItems: "center",
                               gap: "4px",
+                              whiteSpace: "nowrap",
                             }}
                           >
                             {resolviendoVarianteImg ? (
                               <>
-                                <Loader2 size={11} className="animate-spin" /> Extrayendo...
+                                <Loader2 size={12} className="animate-spin" /> Extrayendo...
                               </>
                             ) : (
                               <>
-                                <Wand2 size={11} /> 🪄 Auto-Convertir Foto de Tamaño
+                                <Wand2 size={12} /> 🪄 Auto-Convertir
                               </>
                             )}
                           </button>
                         </div>
+
+                        {/* Vista previa en vivo de la foto de la variante */}
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px", background: "#FFFFFF", padding: "6px 8px", borderRadius: "6px", border: `1px solid ${colActiva.border}` }}>
+                          <div style={{ width: "42px", height: "42px", borderRadius: "4px", overflow: "hidden", background: "#0F172A", flexShrink: 0 }}>
+                            <img
+                              src={varianteActual.var_detalle_variante.portada_url}
+                              alt={varianteActual.var_nombre}
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1561181286-d3fee7d55364?w=600&auto=format&fit=crop&q=80";
+                              }}
+                              style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                            />
+                          </div>
+                          <div style={{ fontSize: "0.7rem", color: "#334155", overflow: "hidden" }}>
+                            <div style={{ fontWeight: 800, color: colActiva.text }}>📸 Foto Personalizada de "{varianteActual.var_nombre}"</div>
+                            <div style={{ fontSize: "0.65rem", color: "#64748B", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap" }}>
+                              {varianteActual.var_detalle_variante.portada_url}
+                            </div>
+                          </div>
+                        </div>
+
+                        {Boolean(
+                          varianteActual.var_detalle_variante.portada_url.includes("photos.app.goo.gl") ||
+                          varianteActual.var_detalle_variante.portada_url.includes("photos.google.com")
+                        ) && (
+                          <div style={{ marginTop: "6px", fontSize: "0.68rem", color: "#B45309", background: "#FEF3C7", padding: "4px 8px", borderRadius: "4px", border: "1px solid #FDE68A", lineHeight: 1.35 }}>
+                            ⚠️ Haz clic en <strong>🪄 Auto-Convertir</strong> para extraer la foto directa de Google Fotos para este tamaño.
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          background: "#FFFFFF",
+                          border: "1px dashed #CBD5E1",
+                          borderRadius: "6px",
+                          padding: "8px 12px",
+                        }}
+                      >
+                        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                          {imagenUrl ? (
+                            <div style={{ width: "36px", height: "36px", borderRadius: "4px", overflow: "hidden", background: "#0F172A", flexShrink: 0 }}>
+                              <img
+                                src={imagenUrl}
+                                alt="Master Heredada"
+                                onError={(e) => {
+                                  (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1561181286-d3fee7d55364?w=600&auto=format&fit=crop&q=80";
+                                }}
+                                style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                              />
+                            </div>
+                          ) : (
+                            <div style={{ width: "36px", height: "36px", borderRadius: "4px", background: "#E2E8F0", display: "flex", alignItems: "center", justifyContent: "center", color: "#94A3B8" }}>
+                              <ImageIcon size={16} />
+                            </div>
+                          )}
+                          <div>
+                            <div style={{ fontSize: "0.75rem", color: "#1E293B", fontWeight: 700 }}>
+                              ⚪ <strong>Foto Heredada del Master</strong>
+                            </div>
+                            <div style={{ fontSize: "0.68rem", color: "#64748B" }}>
+                              Este tamaño muestra la imagen de portada global en la vitrina.
+                            </div>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const det = { ...(varianteActual.var_detalle_variante || {}), portada_url: imagenUrl || "https://" };
+                            actualizarVarianteActual("var_detalle_variante", det);
+                          }}
+                          style={{
+                            background: colActiva.badge,
+                            color: colActiva.text,
+                            border: `1px solid ${colActiva.border}`,
+                            padding: "4px 9px",
+                            borderRadius: "4px",
+                            fontSize: "0.7rem",
+                            fontWeight: 700,
+                            cursor: "pointer",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          + Personalizar Foto Propia
+                        </button>
                       </div>
                     )}
                   </div>
 
-                  {/* Tiempo de Entrega Específico de esta variante */}
-                  <div style={{ marginBottom: "8px" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "2px" }}>
-                      <label style={{ fontSize: "0.72rem", fontWeight: 700, color: "#334155" }}>
-                        Tiempo de Entrega para este Tamaño:
+                  {/* 2. Datos básicos de la variante (Nombre y SKU) */}
+                  <div style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr", gap: "10px", marginBottom: "10px" }}>
+                    <div>
+                      <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#334155", marginBottom: "2px" }}>
+                        Nombre de la Variante / Tamaño *
                       </label>
-                      <span style={{ fontSize: "0.68rem", color: varianteActual.var_detalle_variante?.tiempo_entrega ? colActiva.text : "#64748B", fontWeight: 700 }}>
-                        {varianteActual.var_detalle_variante?.tiempo_entrega ? "🟢 Tiempo Específico Activo" : `⚪ Hereda Global (${tiempoEntrega})`}
-                      </span>
-                    </div>
-                    <div style={{ display: "flex", gap: "4px", flexWrap: "wrap", marginBottom: "4px" }}>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const det = { ...(varianteActual.var_detalle_variante || {}), tiempo_entrega: null };
-                          actualizarVarianteActual("var_detalle_variante", det);
-                        }}
+                      <input
+                        type="text"
+                        required
+                        placeholder={esFloristeria ? "Ej. Pequeño (12 Rosas) o Gigante VIP (50 Rosas + Corona)" : "Ej. Opción Estándar"}
+                        value={varianteActual.var_nombre}
+                        onChange={(e) => actualizarVarianteActual("var_nombre", e.target.value)}
                         style={{
-                          padding: "3px 7px",
-                          borderRadius: "5px",
-                          fontSize: "0.68rem",
-                          fontWeight: 700,
-                          border: !varianteActual.var_detalle_variante?.tiempo_entrega ? `1.5px solid ${colActiva.border}` : "1px solid #CBD5E1",
-                          background: !varianteActual.var_detalle_variante?.tiempo_entrega ? colActiva.badge : "#FFFFFF",
-                          color: !varianteActual.var_detalle_variante?.tiempo_entrega ? colActiva.text : "#475569",
-                          cursor: "pointer",
+                          width: "100%",
+                          padding: "7px 10px",
+                          borderRadius: "6px",
+                          border: "1px solid #CBD5E1",
+                          fontSize: "0.82rem",
+                          boxSizing: "border-box",
+                          fontWeight: 600,
                         }}
-                      >
-                        Heredar Global
-                      </button>
-                      {presetsEntrega.map((pr) => {
-                        const sel = varianteActual.var_detalle_variante?.tiempo_entrega === pr.val;
-                        return (
-                          <button
-                            key={pr.val}
-                            type="button"
-                            onClick={() => {
-                              const det = { ...(varianteActual.var_detalle_variante || {}), tiempo_entrega: pr.val };
-                              actualizarVarianteActual("var_detalle_variante", det);
-                            }}
-                            style={{
-                              padding: "3px 7px",
-                              borderRadius: "5px",
-                              fontSize: "0.68rem",
-                              fontWeight: 700,
-                              border: sel ? `1.5px solid ${colActiva.border}` : "1px solid #CBD5E1",
-                              background: sel ? colActiva.badge : "#FFFFFF",
-                              color: sel ? colActiva.text : "#475569",
-                              cursor: "pointer",
-                            }}
-                          >
-                            {pr.label}
-                          </button>
-                        );
-                      })}
+                      />
+                    </div>
+
+                    <div>
+                      <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#334155", marginBottom: "2px" }}>
+                        Código SKU / Referencia
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="Ej. TNK-COR-MED"
+                        value={varianteActual.var_sku || ""}
+                        onChange={(e) => actualizarVarianteActual("var_sku", e.target.value)}
+                        style={{
+                          width: "100%",
+                          padding: "7px 10px",
+                          borderRadius: "6px",
+                          border: "1px solid #CBD5E1",
+                          fontSize: "0.82rem",
+                          boxSizing: "border-box",
+                        }}
+                      />
                     </div>
                   </div>
 
-                  {/* Beneficios / ¿Qué incluye? con Selector de Modo (Heredar / Anexar / Reemplazar) */}
-                  <div>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
-                      <label style={{ fontSize: "0.72rem", fontWeight: 700, color: "#334155" }}>
-                        Beneficios & Contenido de este Tamaño:
+                  <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: "10px" }}>
+                    <div>
+                      <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#334155", marginBottom: "2px" }}>
+                        Precio Base Imponible ($ USD) *
                       </label>
-                      <div style={{ display: "flex", gap: "4px" }}>
-                        {(["heredar", "anexar", "reemplazar"] as const).map((modo) => {
-                          const actualModo = varianteActual.var_detalle_variante?.beneficios_modo || "heredar";
-                          const activo = actualModo === modo;
+                      <input
+                        type="number"
+                        step="0.0001"
+                        min="0.01"
+                        required
+                        placeholder="0.00"
+                        value={varianteActual.var_precio}
+                        onChange={(e) => actualizarVarianteActual("var_precio", e.target.value)}
+                        style={{
+                          width: "100%",
+                          padding: "7px 10px",
+                          borderRadius: "6px",
+                          border: "1px solid #CBD5E1",
+                          fontSize: "0.88rem",
+                          fontWeight: 800,
+                          boxSizing: "border-box",
+                          color: "#0F172A",
+                        }}
+                      />
+                    </div>
+
+                    <div>
+                      <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#334155", marginBottom: "2px" }}>
+                        Tarifa IVA SRI (Ecuador)
+                      </label>
+                      <select
+                        value={varianteActual.var_tarifa_iva_porcentaje ?? 15}
+                        onChange={(e) => actualizarVarianteActual("var_tarifa_iva_porcentaje", e.target.value)}
+                        style={{
+                          width: "100%",
+                          padding: "7px 10px",
+                          borderRadius: "6px",
+                          border: "1px solid #CBD5E1",
+                          fontSize: "0.82rem",
+                          boxSizing: "border-box",
+                          background: "#FFFFFF",
+                        }}
+                      >
+                        <option value={15}>IVA 15% (Estándar)</option>
+                        <option value={0}>IVA 0% (Exento SRI)</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Resumen de PVP en vivo */}
+                  <div
+                    style={{
+                      margin: "12px 0",
+                      padding: "8px 12px",
+                      background: "#F8FAFC",
+                      border: "1px dashed #CBD5E1",
+                      borderRadius: "6px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      fontSize: "0.78rem",
+                    }}
+                  >
+                    <div>
+                      <span style={{ color: "#64748B" }}>Base: </span>
+                      <strong style={{ color: "#0F172A" }}>${Number(varianteActual.var_precio || 0).toFixed(2)}</strong>
+                      <span style={{ margin: "0 6px", color: "#CBD5E1" }}>|</span>
+                      <span style={{ color: "#64748B" }}>IVA ({varianteActual.var_tarifa_iva_porcentaje ?? 15}%): </span>
+                      <strong style={{ color: "#0F172A" }}>
+                        ${(Number(varianteActual.var_precio || 0) * (varianteActual.var_tarifa_iva_porcentaje ?? 15) / 100).toFixed(2)}
+                      </strong>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                      <span style={{ color: "#64748B" }}>PVP Total:</span>
+                      <strong style={{ color: "#059669", fontSize: "0.95rem", fontWeight: 800 }}>
+                        ${(Number(varianteActual.var_precio || 0) * (1 + (varianteActual.var_tarifa_iva_porcentaje ?? 15) / 100)).toFixed(2)}
+                      </strong>
+                      {variantesLocales.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={eliminarVarianteActual}
+                          title="Eliminar esta variante"
+                          style={{
+                            background: "transparent",
+                            border: "none",
+                            color: "#EF4444",
+                            cursor: "pointer",
+                            padding: "2px",
+                            marginLeft: "6px",
+                          }}
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* 3. SUB-SECCIÓN: PERSONALIZACIÓN & SOBRESCRITURA DE ESTA VARIANTE */}
+                  <div
+                    style={{
+                      marginTop: "12px",
+                      borderTop: `1.5px solid ${colActiva.border}44`,
+                      paddingTop: "12px",
+                      background: colActiva.bg,
+                      borderRadius: "8px",
+                      padding: "10px",
+                      border: `1px solid ${colActiva.border}66`,
+                    }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                        <Sparkles size={14} color={colActiva.dot} />
+                        <span style={{ fontSize: "0.75rem", fontWeight: 800, color: colActiva.text, textTransform: "uppercase" }}>
+                          Tiempo de Entrega & Beneficios de este Tamaño
+                        </span>
+                      </div>
+                      <span style={{ fontSize: "0.68rem", color: "#64748B" }}>
+                        Si se deja vacío, hereda automáticamente los valores globales
+                      </span>
+                    </div>
+
+                    {/* Tiempo de Entrega Específico de esta variante */}
+                    <div style={{ marginBottom: "8px" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "2px" }}>
+                        <label style={{ fontSize: "0.72rem", fontWeight: 700, color: "#334155" }}>
+                          Tiempo de Entrega para este Tamaño:
+                        </label>
+                        <span style={{ fontSize: "0.68rem", color: varianteActual.var_detalle_variante?.tiempo_entrega ? colActiva.text : "#64748B", fontWeight: 700 }}>
+                          {varianteActual.var_detalle_variante?.tiempo_entrega ? "🟢 Tiempo Específico Activo" : `⚪ Hereda Global (${tiempoEntrega})`}
+                        </span>
+                      </div>
+                      <div style={{ display: "flex", gap: "4px", flexWrap: "wrap", marginBottom: "4px" }}>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const det = { ...(varianteActual.var_detalle_variante || {}), tiempo_entrega: null };
+                            actualizarVarianteActual("var_detalle_variante", det);
+                          }}
+                          style={{
+                            padding: "3px 7px",
+                            borderRadius: "5px",
+                            fontSize: "0.68rem",
+                            fontWeight: 700,
+                            border: !varianteActual.var_detalle_variante?.tiempo_entrega ? `1.5px solid ${colActiva.border}` : "1px solid #CBD5E1",
+                            background: !varianteActual.var_detalle_variante?.tiempo_entrega ? colActiva.badge : "#FFFFFF",
+                            color: !varianteActual.var_detalle_variante?.tiempo_entrega ? colActiva.text : "#475569",
+                            cursor: "pointer",
+                          }}
+                        >
+                          Heredar Global
+                        </button>
+                        {presetsEntrega.map((pr) => {
+                          const sel = varianteActual.var_detalle_variante?.tiempo_entrega === pr.val;
                           return (
                             <button
-                              key={modo}
+                              key={pr.val}
                               type="button"
                               onClick={() => {
-                                const det = { ...(varianteActual.var_detalle_variante || {}), beneficios_modo: modo };
+                                const det = { ...(varianteActual.var_detalle_variante || {}), tiempo_entrega: pr.val };
                                 actualizarVarianteActual("var_detalle_variante", det);
                               }}
                               style={{
-                                padding: "2px 6px",
-                                borderRadius: "4px",
-                                fontSize: "0.65rem",
+                                padding: "3px 7px",
+                                borderRadius: "5px",
+                                fontSize: "0.68rem",
                                 fontWeight: 700,
-                                textTransform: "capitalize",
-                                border: activo ? `1.5px solid ${colActiva.border}` : "1px solid #CBD5E1",
-                                background: activo ? colActiva.badge : "#FFFFFF",
-                                color: activo ? colActiva.text : "#475569",
+                                border: sel ? `1.5px solid ${colActiva.border}` : "1px solid #CBD5E1",
+                                background: sel ? colActiva.badge : "#FFFFFF",
+                                color: sel ? colActiva.text : "#475569",
                                 cursor: "pointer",
                               }}
                             >
-                              {modo === "heredar" ? "Heredar" : modo === "anexar" ? "Anexar Extras" : "Reemplazar"}
+                              {pr.label}
                             </button>
                           );
                         })}
                       </div>
                     </div>
 
-                    {(!varianteActual.var_detalle_variante?.beneficios_modo || varianteActual.var_detalle_variante?.beneficios_modo === "heredar") ? (
-                      <div style={{ fontSize: "0.7rem", color: "#64748B", background: "#FFFFFF", padding: "6px 10px", borderRadius: "6px", border: "1px solid #E2E8F0" }}>
-                        <em>Hereda los beneficios generales definidos en el producto master.</em>
+                    {/* Beneficios / ¿Qué incluye? con Selector de Modo (Heredar / Anexar / Reemplazar) */}
+                    <div>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
+                        <label style={{ fontSize: "0.72rem", fontWeight: 700, color: "#334155" }}>
+                          Beneficios & Contenido de este Tamaño:
+                        </label>
+                        <div style={{ display: "flex", gap: "4px" }}>
+                          {(["heredar", "anexar", "reemplazar"] as const).map((modo) => {
+                            const actualModo = varianteActual.var_detalle_variante?.beneficios_modo || "heredar";
+                            const activo = actualModo === modo;
+                            return (
+                              <button
+                                key={modo}
+                                type="button"
+                                onClick={() => {
+                                  const det = { ...(varianteActual.var_detalle_variante || {}), beneficios_modo: modo };
+                                  actualizarVarianteActual("var_detalle_variante", det);
+                                }}
+                                style={{
+                                  padding: "2px 6px",
+                                  borderRadius: "4px",
+                                  fontSize: "0.65rem",
+                                  fontWeight: 700,
+                                  textTransform: "capitalize",
+                                  border: activo ? `1.5px solid ${colActiva.border}` : "1px solid #CBD5E1",
+                                  background: activo ? colActiva.badge : "#FFFFFF",
+                                  color: activo ? colActiva.text : "#475569",
+                                  cursor: "pointer",
+                                }}
+                              >
+                                {modo === "heredar" ? "Heredar" : modo === "anexar" ? "Anexar Extras" : "Reemplazar"}
+                              </button>
+                            );
+                          })}
+                        </div>
                       </div>
-                    ) : (
-                      <div>
-                        <textarea
-                          rows={2}
-                          placeholder={
-                            varianteActual.var_detalle_variante?.beneficios_modo === "anexar"
-                              ? "Escribe los extras exclusivos de este tamaño (ej. + Corona dorada de reina\n+ Mariposas 3D translúcidas)"
-                              : "Escribe la lista completa de beneficios que sustituye a la global..."
-                          }
-                          value={
-                            Array.isArray(varianteActual.var_detalle_variante?.beneficios_custom)
-                              ? varianteActual.var_detalle_variante.beneficios_custom.join("\n")
-                              : (varianteActual.var_detalle_variante?.beneficios_custom || "")
-                          }
-                          onChange={(e) => {
-                            const lineas = e.target.value.split("\n").filter((l) => l.trim().length > 0);
-                            const det = { ...(varianteActual.var_detalle_variante || {}), beneficios_custom: lineas };
-                            actualizarVarianteActual("var_detalle_variante", det);
-                          }}
-                          style={{
-                            width: "100%",
-                            padding: "6px 10px",
-                            borderRadius: "6px",
-                            border: "1px solid #CBD5E1",
-                            fontSize: "0.75rem",
-                            boxSizing: "border-box",
-                            background: "#FFFFFF",
-                          }}
-                        />
-                      </div>
-                    )}
+
+                      {(!varianteActual.var_detalle_variante?.beneficios_modo || varianteActual.var_detalle_variante?.beneficios_modo === "heredar") ? (
+                        <div style={{ fontSize: "0.7rem", color: "#64748B", background: "#FFFFFF", padding: "6px 10px", borderRadius: "6px", border: "1px solid #E2E8F0" }}>
+                          <em>Hereda los beneficios generales definidos en el producto master.</em>
+                        </div>
+                      ) : (
+                        <div>
+                          <textarea
+                            rows={2}
+                            placeholder={
+                              varianteActual.var_detalle_variante?.beneficios_modo === "anexar"
+                                ? "Escribe los extras exclusivos de este tamaño (ej. + Corona dorada de reina\n+ Mariposas 3D translúcidas)"
+                                : "Escribe la lista completa de beneficios que sustituye a la global..."
+                            }
+                            value={
+                              Array.isArray(varianteActual.var_detalle_variante?.beneficios_custom)
+                                ? varianteActual.var_detalle_variante.beneficios_custom.join("\n")
+                                : (varianteActual.var_detalle_variante?.beneficios_custom || "")
+                            }
+                            onChange={(e) => {
+                              const lineas = e.target.value.split("\n").filter((l) => l.trim().length > 0);
+                              const det = { ...(varianteActual.var_detalle_variante || {}), beneficios_custom: lineas };
+                              actualizarVarianteActual("var_detalle_variante", det);
+                            }}
+                            style={{
+                              width: "100%",
+                              padding: "6px 10px",
+                              borderRadius: "6px",
+                              border: "1px solid #CBD5E1",
+                              fontSize: "0.75rem",
+                              boxSizing: "border-box",
+                              background: "#FFFFFF",
+                            }}
+                          />
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
-          </div>
+              )}
+            </div>
+          )}
 
           {/* Botones de Acción */}
           <div

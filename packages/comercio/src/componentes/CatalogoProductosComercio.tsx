@@ -1191,8 +1191,10 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                                   ...prev,
                                   [p.pro_id]: v.var_id,
                                 }));
-                                // Sincronizar carrusel si la variante tiene su foto
-                                const fotoVarIdx = fotosDisponibles.findIndex((f) => f.varianteId === v.var_id);
+                                // Sincronizar carrusel si la variante tiene su propia foto
+                                const fotoVarIdx = fotosDisponibles.findIndex(
+                                  (f) => f.varianteId === v.var_id || (v.var_detalle_variante?.portada_url && f.url === v.var_detalle_variante.portada_url)
+                                );
                                 if (fotoVarIdx >= 0) {
                                   setFotoCarouselIndexPorProducto((prev) => ({ ...prev, [p.pro_id]: fotoVarIdx }));
                                 } else {
