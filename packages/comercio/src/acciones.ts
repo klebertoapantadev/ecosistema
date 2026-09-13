@@ -2035,6 +2035,7 @@ export async function editarProductoAction(datos: {
         // Actualizar o crear variantes en base de datos
         if (dbProdId) {
           for (const v of variantesActualizadas) {
+            const varDetalle = v.var_detalle_variante || {};
             const varPayload: any = {
               var_producto_id: dbProdId,
               var_negocio: negocio,
@@ -2046,18 +2047,34 @@ export async function editarProductoAction(datos: {
               var_codigo_impuesto_sri: v.var_codigo_impuesto_sri,
               var_tipo_oferta: v.var_tipo_oferta || "REGULAR",
               var_activo: v.var_activo !== false,
-              var_detalle_variante: v.var_detalle_variante || {},
+              var_detalle_variante: varDetalle,
+              var_actualizado_en: new Date().toISOString(),
             };
 
             const varEsUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v.var_id);
+            let guardadoOk = false;
+
             if (varEsUuid) {
-              varPayload.var_id = v.var_id;
+              // 1. Intentar actualizar directamente por clave primaria (var_id)
+              const { data: updVar, error: errUpdVar } = await clienteActivo
+                .schema("comun_comercio")
+                .from("com_variante")
+                .update(varPayload)
+                .eq("var_id", v.var_id)
+                .select("var_id");
+
+              if (!errUpdVar && updVar && updVar.length > 0) {
+                guardadoOk = true;
+              }
             }
 
-            await clienteActivo
-              .schema("comun_comercio")
-              .from("com_variante")
-              .upsert(varPayload, { onConflict: "var_negocio, var_sku" });
+            // 2. Si no existía por var_id o es nueva, upsert por (var_negocio, var_sku) sin forzar var_id
+            if (!guardadoOk) {
+              await clienteActivo
+                .schema("comun_comercio")
+                .from("com_variante")
+                .upsert(varPayload, { onConflict: "var_negocio, var_sku" });
+            }
           }
         }
       } catch (errDb) {
