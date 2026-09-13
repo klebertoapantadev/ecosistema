@@ -441,6 +441,17 @@ Motor centralizado de gestión de bienes, servicios, recetas (BOM), inventarios,
       - *Servicios Jurídicos (Tranqi):* Disponibilidad de horas de consulta legal por seniority de abogado (*Junior, Senior, Socio Líder*) y tipo de cliente.
       - *Mantenimiento (FastFix):* Disponibilidad de cuadrillas técnicas y cobertura por zonas (Norte, Sur, Valles) con despacho express de emergencia.
     - **Integración con Agentes Conversacionales (ARIA MCP):** Expone la disponibilidad operativa en tiempo real a través de endpoints MCP (`consultar_disponibilidad_operativa`), permitiendo a ARIA en WhatsApp o Web confirmar existencias y colores disponibles antes de comprometer pedidos.
+17. **Patrón de Herencia y Sobrescritura de Atributos por Variante (*Parent-Child Attribute Inheritance & Override*):**
+    - **Atributos Globales del Producto Master:** El producto master define los recursos y textos base en `com_producto.pro_detalle_producto` (imagen de portada principal, álbum de muestras en Google Photos, video demostrativo, promesa de entrega general, descripción base y lista de beneficios "¿Qué incluye?").
+    - **Herencia por Defecto en Variantes:** Toda variante (`com_variante`) hereda automáticamente los recursos y textos globales del producto master sin requerir duplicación manual de datos.
+    - **Sobrescritura Granular en Variante (`com_variante.var_detalle_variante`):** Cada variante puede personalizar de forma opcional e independiente:
+      - *Foto / Portada Específica:* Si se asigna una URL en `portada_url`, la vitrina y checkout muestran la foto del tamaño específico (ej. arreglo pequeño vs arreglo gigante VIP con corona). Si se deja vacía, hereda la portada global.
+      - *Tiempo de Entrega Específico:* Permite fijar un SLA particular para esa variante (ej. *Pequeño: Entrega Inmediata 45-90 min* vs *Gigante VIP: Elaboración 24h*).
+      - *Modo de Beneficios (`beneficios_modo`):*
+        - `heredar` (por defecto): Utiliza la lista base del producto master.
+        - `anexar`: Conserva los beneficios del master y adiciona viñetas exclusivas de ese tamaño (`beneficios_custom`, ej: *+ Corona dorada de reina + Mariposas 3D translúcidas*).
+        - `reemplazar`: Sustituye 100% los beneficios del master por una lista exclusiva para esa variante.
+      - *Modo de Descripción (`descripcion_modo`):* `heredar` | `anexar` | `reemplazar`.
 
 **Implementación técnica:** ver [`especificacion-tecnica.md`](especificacion-tecnica.md) §7 (`comun_comercio`).
 

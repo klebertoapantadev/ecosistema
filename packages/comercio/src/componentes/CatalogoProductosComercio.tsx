@@ -548,6 +548,11 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
             const currentVar = p.variantes.find((v) => v.var_id === currentVarId) || p.variantes[0];
             const esHonorario = p.pro_tipo === "SERVICIO" || p.pro_slug.includes("honorarios");
 
+            // Herencia dinámica de foto, tiempo de entrega y álbum para la variante activa
+            const fotoMostrar = currentVar?.var_detalle_variante?.portada_url || p.pro_detalle_producto?.imagen_url;
+            const tiempoMostrar = currentVar?.var_detalle_variante?.tiempo_entrega || p.pro_detalle_producto?.tiempo_entrega;
+            const albumUrl = currentVar?.var_detalle_variante?.album_url || p.pro_detalle_producto?.album_fotos_url;
+
             return (
               <div
                 key={p.pro_id}
@@ -565,6 +570,66 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                   position: "relative",
                 }}
               >
+                {/* Portada de Imagen si existe */}
+                {fotoMostrar && (
+                  <div style={{ position: "relative", width: "100%", height: "180px", background: "#F1F5F9", overflow: "hidden" }}>
+                    <img
+                      src={fotoMostrar}
+                      alt={p.pro_nombre}
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "cover",
+                        transition: "transform 0.3s ease",
+                      }}
+                    />
+                    {tiempoMostrar && (
+                      <div
+                        style={{
+                          position: "absolute",
+                          bottom: "8px",
+                          left: "8px",
+                          background: "rgba(15, 23, 42, 0.8)",
+                          backdropFilter: "blur(4px)",
+                          color: "#FFFFFF",
+                          padding: "3px 8px",
+                          borderRadius: "6px",
+                          fontSize: "0.7rem",
+                          fontWeight: 700,
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "4px",
+                        }}
+                      >
+                        <Clock size={11} color="#38BDF8" />
+                        <span>{tiempoMostrar}</span>
+                      </div>
+                    )}
+                    {albumUrl && (
+                      <a
+                        href={albumUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        style={{
+                          position: "absolute",
+                          bottom: "8px",
+                          right: "8px",
+                          background: "rgba(255, 255, 255, 0.9)",
+                          color: "#0F172A",
+                          padding: "3px 8px",
+                          borderRadius: "6px",
+                          fontSize: "0.68rem",
+                          fontWeight: 700,
+                          textDecoration: "none",
+                          boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
+                        }}
+                      >
+                        📸 Muestras Reales
+                      </a>
+                    )}
+                  </div>
+                )}
+
                 {/* Barra Superior de la Tarjeta: Destacado + Botón Editar */}
                 <div
                   style={{
@@ -589,7 +654,7 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                         display: "flex",
                         alignItems: "center",
                         gap: "4px",
-                        boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+                        boxShadow: "0 2px 4px rgba(0,0,0,0.15)",
                       }}
                     >
                       <Sparkles size={10} />
@@ -608,7 +673,7 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                     title="Editar datos y tarifas de este producto"
                     aria-label="Editar datos y tarifas de este producto"
                     style={{
-                      background: "#FFFFFF",
+                      background: "rgba(255, 255, 255, 0.95)",
                       border: "1px solid #CBD5E1",
                       color: "#334155",
                       padding: "4px 8px",
@@ -619,7 +684,7 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                       display: "inline-flex",
                       alignItems: "center",
                       gap: "4px",
-                      boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
+                      boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
                     }}
                   >
                     <Pencil size={12} color="#0284C7" />
@@ -627,34 +692,36 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                   </button>
                 </div>
 
-                <div style={{ padding: "20px", display: "flex", flexDirection: "column", flex: 1 }}>
+                <div style={{ padding: "18px 20px", display: "flex", flexDirection: "column", flex: 1 }}>
                   {/* Icono y Categoría */}
-                  <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "12px" }}>
-                    <div
-                      style={{
-                        width: "46px",
-                        height: "46px",
-                        borderRadius: "12px",
-                        background: "#F8FAFC",
-                        border: "1px solid #E2E8F0",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                      }}
-                    >
-                      {getIconoProducto(p)}
-                    </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "10px" }}>
+                    {!fotoMostrar && (
+                      <div
+                        style={{
+                          width: "44px",
+                          height: "44px",
+                          borderRadius: "12px",
+                          background: "#F8FAFC",
+                          border: "1px solid #E2E8F0",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        {getIconoProducto(p)}
+                      </div>
+                    )}
                     <div>
                       <span
                         style={{
-                          fontSize: "0.75rem",
+                          fontSize: "0.72rem",
                           fontWeight: 700,
                           color: "#64748B",
                           textTransform: "uppercase",
                           letterSpacing: "0.5px",
                         }}
                       >
-                        {p.categoria?.ctg_nombre || "Servicio Jurídico"}
+                        {p.categoria?.ctg_nombre || "Catálogo"}
                       </span>
                       <h3
                         style={{
@@ -673,7 +740,7 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                   {/* Descripción */}
                   <p
                     style={{
-                      margin: "0 0 16px",
+                      margin: "0 0 14px",
                       fontSize: "0.82rem",
                       color: "#475569",
                       lineHeight: 1.45,
@@ -683,19 +750,19 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                     {p.pro_descripcion}
                   </p>
 
-                  {/* Selector de Variantes / Tarifas */}
+                  {/* Selector de Variantes / Tamaños */}
                   {p.variantes.length > 1 && (
-                    <div style={{ marginBottom: "16px" }}>
+                    <div style={{ marginBottom: "14px" }}>
                       <label
                         style={{
                           display: "block",
-                          fontSize: "0.75rem",
+                          fontSize: "0.73rem",
                           fontWeight: 700,
                           color: "#334155",
                           marginBottom: "6px",
                         }}
                       >
-                        Selecciona la modalidad de tarifa:
+                        {esFloristeria ? "Selecciona el tamaño / cantidad de rosas:" : "Selecciona la variante / opción:"}
                       </label>
                       <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
                         {p.variantes.map((v) => {
@@ -714,18 +781,19 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                                 textAlign: "left",
                                 padding: "8px 12px",
                                 borderRadius: "8px",
-                                border: activa ? "1.5px solid #0284C7" : "1px solid #E2E8F0",
-                                background: activa ? "#F0F9FF" : "#FFFFFF",
+                                border: activa ? (esFloristeria ? "1.5px solid #E11D48" : "1.5px solid #0284C7") : "1px solid #E2E8F0",
+                                background: activa ? (esFloristeria ? "#FFF1F2" : "#F0F9FF") : "#FFFFFF",
                                 cursor: "pointer",
                                 display: "flex",
                                 justifyContent: "space-between",
                                 alignItems: "center",
+                                transition: "all 0.1s ease",
                               }}
                             >
-                              <div style={{ fontSize: "0.8rem", fontWeight: activa ? 700 : 500, color: activa ? "#0284C7" : "#334155" }}>
+                              <div style={{ fontSize: "0.8rem", fontWeight: activa ? 800 : 500, color: activa ? (esFloristeria ? "#BE123C" : "#0284C7") : "#334155" }}>
                                 {v.var_nombre}
                               </div>
-                              <div style={{ fontSize: "0.8rem", fontWeight: 700, color: "#0F172A" }}>
+                              <div style={{ fontSize: "0.82rem", fontWeight: 800, color: "#0F172A" }}>
                                 ${v.precio_total.toFixed(2)}
                               </div>
                             </button>

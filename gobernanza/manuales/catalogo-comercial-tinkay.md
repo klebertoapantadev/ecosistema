@@ -107,3 +107,25 @@ Cada mañana o al recibir el flete de la finca en paquetes de **25 tallos (1 bon
    - Con los botones `[ - ]` y `[ + ]`, sube o baja los bonches disponibles (ej. `Explorer: 10 bonches`, `Kahala: 3 bonches`, `Mondial: 5 bonches`).
 3. Si un color de papel o rosa se termina, presiona el botón rojo `🔴 Agotado`.
 4. Al instante, **ARIA en WhatsApp** y la **tienda web** actualizan su inventario para no ofrecer rosas agotadas.
+
+---
+
+## 9. Herencia de Atributos y Sobrescritura por Variante (Ejemplo Real)
+
+Para evitar duplicar textos y fotos innecesariamente:
+
+1. **Nivel Producto Master (Común / Global):**
+   - **Foto de Portada:** Fotografía principal del ramo coreano.
+   - **Álbum Google Photos:** `https://photos.app.goo.gl/...` con fotos generales de entregas reales.
+   - **Promesa de Entrega:** `🌸 Pide hoy, recibe hoy (Mismo Día)`.
+   - **Beneficios Base:** *Rosas de exportación seleccionadas*, *Papel coreano impermeable plisado*, *Tarjeta dedicatoria gratis*.
+
+2. **Nivel Variante Individual (Sobrescrituras):**
+   - **Pequeño ($25) & Mediano ($35):** Heredan el 100% de los atributos globales sin cambios.
+   - **Gigante VIP ($60):**
+     - *Foto de Portada propia:* Se sube la foto específica donde el arreglo lleva la corona y mariposas.
+     - *Tiempo de entrega:* Se cambia a `✨ Elaboración Especial en Taller (24 horas)` debido al tiempo de confección de la estructura.
+     - *Modo de Beneficios (Anexar):* Mantiene los beneficios base y agrega:
+       - `+ Corona dorada de reina metálica`
+       - `+ Set de mariposas 3D translúcidas con glitter`
+       - `+ Cinta de seda satinada de 5 cm de ancho con texto personalizado`
