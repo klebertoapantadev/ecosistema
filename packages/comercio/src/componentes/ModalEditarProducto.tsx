@@ -683,6 +683,11 @@ export function ModalEditarProducto({
                     boxSizing: "border-box",
                   }}
                 />
+                {(imagenUrl.includes("photos.app.goo.gl") || imagenUrl.includes("drive.google.com/drive")) && (
+                  <div style={{ marginTop: "4px", fontSize: "0.68rem", color: "#B45309", background: "#FEF3C7", padding: "5px 8px", borderRadius: "5px", border: "1px solid #FDE68A", lineHeight: 1.35 }}>
+                    ⚠️ <strong>Enlace de álbum web:</strong> <code>photos.app.goo.gl</code> es una página web de visor, no un archivo de imagen directo (.jpg/.png). Para foto de portada: abre el link, haz <em>clic derecho en la foto &gt; Copiar dirección de la imagen</em> (inicia con <code>https://lh3.googleusercontent.com/...</code>), o muévelo al campo de la derecha <strong>"URL Álbum de Muestras Reales"</strong>.
+                  </div>
+                )}
               </div>
 
               <div>
@@ -1168,6 +1173,11 @@ export function ModalEditarProducto({
                         background: "#FFFFFF",
                       }}
                     />
+                    {Boolean(varianteActual.var_detalle_variante?.portada_url?.includes("photos.app.goo.gl")) && (
+                      <div style={{ marginTop: "4px", fontSize: "0.68rem", color: "#B45309", background: "#FEF3C7", padding: "4px 8px", borderRadius: "4px", border: "1px solid #FDE68A", lineHeight: 1.35 }}>
+                        ⚠️ <strong>Aviso:</strong> <code>photos.app.goo.gl</code> es un enlace de álbum web interactivo. Para foto directa: abre el link en tu navegador, haz <em>clic derecho en la foto &gt; Copiar dirección de la imagen</em> (URL directa <code>https://lh3.googleusercontent.com/...</code>) y pega esa dirección aquí.
+                      </div>
+                    )}
                   </div>
 
                   {/* Tiempo de Entrega Específico de esta variante */}
