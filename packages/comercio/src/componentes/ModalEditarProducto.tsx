@@ -28,6 +28,15 @@ import {
   VarianteCatalogo,
 } from "../acciones";
 
+export const COLOR_PRODUCTO_MASTER = {
+  nombre: "Master Slate / Sky",
+  bg: "#0F172A",
+  border: "#38BDF8",
+  text: "#38BDF8",
+  badge: "rgba(56, 189, 248, 0.2)",
+  dot: "#38BDF8",
+};
+
 export const PALETA_COLORES_VARIANTES = [
   { nombre: "Verde Esmeralda", bg: "#ECFDF5", border: "#10B981", text: "#065F46", badge: "#D1FAE5", dot: "#10B981" },
   { nombre: "Ámbar Cálido", bg: "#FFFBEB", border: "#F59E0B", text: "#92400E", badge: "#FEF3C7", dot: "#F59E0B" },
@@ -82,6 +91,7 @@ export function ModalEditarProducto({
   const [requisitosTexto, setRequisitosTexto] = useState("");
 
   // Editor Multivariante (Tamaños / Modalidades)
+  const [modoEdicion, setModoEdicion] = useState<"master" | "variante">("master");
   const [variantesLocales, setVariantesLocales] = useState<VarianteCatalogo[]>([]);
   const [varianteActivaIndex, setVarianteActivaIndex] = useState<number>(0);
 
@@ -154,8 +164,14 @@ export function ModalEditarProducto({
           ];
 
       setVariantesLocales(vars);
-      const targetIdx = varianteInicialId ? vars.findIndex((v) => v.var_id === varianteInicialId) : 0;
-      setVarianteActivaIndex(targetIdx >= 0 ? targetIdx : 0);
+      if (varianteInicialId) {
+        const targetIdx = vars.findIndex((v) => v.var_id === varianteInicialId);
+        setVarianteActivaIndex(targetIdx >= 0 ? targetIdx : 0);
+        setModoEdicion("variante");
+      } else {
+        setVarianteActivaIndex(0);
+        setModoEdicion("master");
+      }
       setConfirmarEliminar(false);
       setError(null);
     }
@@ -163,8 +179,10 @@ export function ModalEditarProducto({
 
   if (!abierto || !producto) return null;
 
+  const esModoMaster = modoEdicion === "master";
   const varianteActual = variantesLocales[varianteActivaIndex] || variantesLocales[0];
-  const colActiva = PALETA_COLORES_VARIANTES[varianteActivaIndex % PALETA_COLORES_VARIANTES.length] || PALETA_COLORES_VARIANTES[0]!;
+  const colVariante = PALETA_COLORES_VARIANTES[varianteActivaIndex % PALETA_COLORES_VARIANTES.length] || PALETA_COLORES_VARIANTES[0]!;
+  const colActiva = esModoMaster ? COLOR_PRODUCTO_MASTER : colVariante;
 
   const actualizarVarianteActual = (campo: keyof VarianteCatalogo, valor: any) => {
     setVariantesLocales((prev) => {
@@ -217,6 +235,7 @@ export function ModalEditarProducto({
 
     setVariantesLocales([...variantesLocales, nueva]);
     setVarianteActivaIndex(variantesLocales.length);
+    setModoEdicion("variante");
   };
 
   const eliminarVarianteActual = () => {
@@ -398,32 +417,70 @@ export function ModalEditarProducto({
                 >
                   📦 CAPA 2: PRODUCTO MASTER
                 </span>
-                {varianteActual && (
+                {esModoMaster ? (
                   <span
                     style={{
-                      background: colActiva.bg,
-                      color: colActiva.text,
+                      background: "rgba(56, 189, 248, 0.12)",
+                      color: "#38BDF8",
                       fontSize: "0.68rem",
-                      fontWeight: 800,
+                      fontWeight: 700,
                       padding: "2px 7px",
                       borderRadius: "4px",
-                      border: `1px solid ${colActiva.border}`,
+                      border: "1px solid rgba(56, 189, 248, 0.3)",
                       display: "inline-flex",
                       alignItems: "center",
                       gap: "4px",
                     }}
                   >
-                    <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: colActiva.dot }} />
-                    Editando: {varianteActual.var_nombre}
+                    🌐 Modo: Configuración Global Master
                   </span>
+                ) : (
+                  <>
+                    <span
+                      style={{
+                        background: colVariante.bg,
+                        color: colVariante.text,
+                        fontSize: "0.68rem",
+                        fontWeight: 800,
+                        padding: "2px 7px",
+                        borderRadius: "4px",
+                        border: `1.5px solid ${colVariante.border}`,
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "4px",
+                      }}
+                    >
+                      <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: colVariante.dot }} />
+                      Editando: {varianteActual?.var_nombre || "Variante"}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setModoEdicion("master")}
+                      title="Volver al modo de configuración master"
+                      style={{
+                        background: "rgba(255, 255, 255, 0.15)",
+                        border: "1px solid rgba(255, 255, 255, 0.25)",
+                        color: "#FFFFFF",
+                        fontSize: "0.65rem",
+                        fontWeight: 700,
+                        padding: "2px 6px",
+                        borderRadius: "4px",
+                        cursor: "pointer",
+                      }}
+                    >
+                      ⬅ Configurar Master
+                    </button>
+                  </>
                 )}
               </div>
               <h2 style={{ margin: "2px 0 0", fontSize: "1.02rem", fontWeight: 800, color: "#FFFFFF" }}>
-                {esFloristeria
-                  ? "Editar Arreglo / Diseño Floral Master"
-                  : esMantenimiento
-                  ? "Editar Servicio de Mantenimiento Master"
-                  : "Editar Servicio / Honorario Profesional Master"}
+                {esModoMaster
+                  ? (esFloristeria
+                    ? "Configuración General del Arreglo Floral Master"
+                    : esMantenimiento
+                    ? "Configuración General del Servicio de Mantenimiento Master"
+                    : "Configuración General del Servicio Profesional Master")
+                  : `Editar Tarifa y Variación: ${varianteActual?.var_nombre || ""}`}
               </h2>
             </div>
           </div>
@@ -840,7 +897,10 @@ export function ModalEditarProducto({
                   <button
                     key={v.var_id || idx}
                     type="button"
-                    onClick={() => setVarianteActivaIndex(idx)}
+                    onClick={() => {
+                      setVarianteActivaIndex(idx);
+                      setModoEdicion("variante");
+                    }}
                     style={{
                       padding: "7px 12px",
                       borderRadius: "8px",
