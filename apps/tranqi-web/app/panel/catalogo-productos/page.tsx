@@ -4,6 +4,9 @@ import { VitrinaComercialVisual } from "@/modulos/comercio";
 import Link from "next/link";
 import { X } from "lucide-react";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export const metadata = {
   title: "Oferta de Servicios & Planes · Tranqi",
   description: "Servicios legales, liquidación de honorarios y suscripciones con botón de pago Payphone",

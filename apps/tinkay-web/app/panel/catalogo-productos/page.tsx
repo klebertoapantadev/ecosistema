@@ -4,6 +4,9 @@ import { CatalogoProductosComercio } from "@eco/comercio";
 import Link from "next/link";
 import { X } from "lucide-react";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export const metadata = {
   title: "Catálogo Comercial y Portafolio · Tinkay Floristería",
   description: "Arreglos florales, bouquets coreanos, variantes y cross-selling con IVA 15% desglozado",

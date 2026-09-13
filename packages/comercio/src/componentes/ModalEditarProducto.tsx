@@ -671,21 +671,54 @@ export function ModalEditarProducto({
                 </label>
                 <input
                   type="url"
-                  placeholder="https://images.unsplash.com/... o CDN"
+                  placeholder="https://images.unsplash.com/... o https://lh3.googleusercontent.com/..."
                   value={imagenUrl}
-                  onChange={(e) => setImagenUrl(e.target.value)}
+                  onChange={(e) => {
+                    const raw = e.target.value;
+                    const driveMatch = raw.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/) || raw.match(/drive\.google\.com\/(?:open|uc)\?(?:.*&)?id=([a-zA-Z0-9_-]+)/);
+                    if (driveMatch && driveMatch[1]) {
+                      setImagenUrl(`https://lh3.googleusercontent.com/d/${driveMatch[1]}=w1000`);
+                    } else {
+                      setImagenUrl(raw);
+                    }
+                  }}
                   style={{
                     width: "100%",
                     padding: "7px 10px",
                     borderRadius: "6px",
-                    border: "1px solid #CBD5E1",
+                    border: (imagenUrl.includes("photos.google.com") || imagenUrl.includes("photos.app.goo.gl")) ? "1.5px solid #F59E0B" : "1px solid #CBD5E1",
                     fontSize: "0.8rem",
                     boxSizing: "border-box",
                   }}
                 />
-                {(imagenUrl.includes("photos.app.goo.gl") || imagenUrl.includes("drive.google.com/drive")) && (
-                  <div style={{ marginTop: "4px", fontSize: "0.68rem", color: "#B45309", background: "#FEF3C7", padding: "5px 8px", borderRadius: "5px", border: "1px solid #FDE68A", lineHeight: 1.35 }}>
-                    ⚠️ <strong>Enlace de álbum web:</strong> <code>photos.app.goo.gl</code> es una página web de visor, no un archivo de imagen directo (.jpg/.png). Para foto de portada: abre el link, haz <em>clic derecho en la foto &gt; Copiar dirección de la imagen</em> (inicia con <code>https://lh3.googleusercontent.com/...</code>), o muévelo al campo de la derecha <strong>"URL Álbum de Muestras Reales"</strong>.
+                {(imagenUrl.includes("photos.google.com") || imagenUrl.includes("photos.app.goo.gl") || imagenUrl.includes("drive.google.com/drive")) && (
+                  <div style={{ marginTop: "6px", fontSize: "0.7rem", color: "#92400E", background: "#FEF3C7", padding: "8px 10px", borderRadius: "6px", border: "1px solid #FDE68A", lineHeight: 1.4 }}>
+                    <div style={{ fontWeight: 800, marginBottom: "3px" }}>⚠️ Enlace de Álbum Web Detectado</div>
+                    <div>Este enlace abre el visor web de Google Fotos, no un archivo de imagen directo (.jpg).</div>
+                    <div style={{ marginTop: "5px", display: "flex", gap: "6px", flexWrap: "wrap", alignItems: "center" }}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setAlbumFotosUrl(imagenUrl);
+                          setImagenUrl("");
+                        }}
+                        style={{
+                          background: "#B45309",
+                          color: "#FFFFFF",
+                          border: "none",
+                          padding: "3px 8px",
+                          borderRadius: "4px",
+                          fontSize: "0.68rem",
+                          fontWeight: 700,
+                          cursor: "pointer",
+                        }}
+                      >
+                        Mover a "Álbum de Muestras" ➔
+                      </button>
+                      <span style={{ fontSize: "0.65rem", color: "#78350F" }}>
+                        O haz clic derecho en la foto &gt; "Copiar dirección de la imagen" (lh3.googleusercontent.com)
+                      </span>
+                    </div>
                   </div>
                 )}
               </div>
@@ -696,7 +729,7 @@ export function ModalEditarProducto({
                 </label>
                 <input
                   type="url"
-                  placeholder="https://photos.app.goo.gl/... o drive"
+                  placeholder="https://photos.app.goo.gl/... o https://photos.google.com/share/..."
                   value={albumFotosUrl}
                   onChange={(e) => setAlbumFotosUrl(e.target.value)}
                   style={{
@@ -1156,11 +1189,13 @@ export function ModalEditarProducto({
                     </div>
                     <input
                       type="url"
-                      placeholder="Dejar vacío para heredar la foto global, o pegar URL específica de este tamaño"
+                      placeholder="Dejar vacío para heredar la foto global, o pegar URL directa (lh3.googleusercontent.com o Drive)"
                       value={varianteActual.var_detalle_variante?.portada_url || ""}
                       onChange={(e) => {
-                        const val = e.target.value.trim();
-                        const det = { ...(varianteActual.var_detalle_variante || {}), portada_url: val || null };
+                        const raw = e.target.value.trim();
+                        const driveMatch = raw.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/) || raw.match(/drive\.google\.com\/(?:open|uc)\?(?:.*&)?id=([a-zA-Z0-9_-]+)/);
+                        const valFinal = driveMatch && driveMatch[1] ? `https://lh3.googleusercontent.com/d/${driveMatch[1]}=w1000` : raw;
+                        const det = { ...(varianteActual.var_detalle_variante || {}), portada_url: valFinal || null };
                         actualizarVarianteActual("var_detalle_variante", det);
                       }}
                       style={{
@@ -1173,9 +1208,12 @@ export function ModalEditarProducto({
                         background: "#FFFFFF",
                       }}
                     />
-                    {Boolean(varianteActual.var_detalle_variante?.portada_url?.includes("photos.app.goo.gl")) && (
+                    {Boolean(
+                      varianteActual.var_detalle_variante?.portada_url?.includes("photos.app.goo.gl") ||
+                      varianteActual.var_detalle_variante?.portada_url?.includes("photos.google.com")
+                    ) && (
                       <div style={{ marginTop: "4px", fontSize: "0.68rem", color: "#B45309", background: "#FEF3C7", padding: "4px 8px", borderRadius: "4px", border: "1px solid #FDE68A", lineHeight: 1.35 }}>
-                        ⚠️ <strong>Aviso:</strong> <code>photos.app.goo.gl</code> es un enlace de álbum web interactivo. Para foto directa: abre el link en tu navegador, haz <em>clic derecho en la foto &gt; Copiar dirección de la imagen</em> (URL directa <code>https://lh3.googleusercontent.com/...</code>) y pega esa dirección aquí.
+                        ⚠️ <strong>Aviso:</strong> Este es un enlace de álbum web interactivo de Google Fotos. Para foto directa de este tamaño: abre el link, haz <em>clic derecho en la foto &gt; Copiar dirección de la imagen</em> (URL directa <code>https://lh3.googleusercontent.com/...</code>) y pega esa dirección aquí.
                       </div>
                     )}
                   </div>

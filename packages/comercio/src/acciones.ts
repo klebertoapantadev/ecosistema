@@ -834,31 +834,31 @@ const PRODUCTOS_SEMILLA_TINKAY: ProductoCatalogo[] = [
         var_id: "var-tinkay-cor-peq",
         var_producto_id: "prod-tinkay-coreano",
         var_sku: "TNK-COR-PEQ",
-        var_nombre: "Pequeño (12 Rosas)",
-        var_precio: 21.7391,
-        var_precio_comparacion: 25.0,
-        var_codigo_impuesto_sri: "IVA_15",
-        var_tarifa_iva_porcentaje: 15,
+        var_nombre: "Pequeño (24 Rosas)",
+        var_precio: 26.0,
+        var_precio_comparacion: 26.0,
+        var_codigo_impuesto_sri: "IVA_0",
+        var_tarifa_iva_porcentaje: 0,
         var_tipo_oferta: "REGULAR",
         var_activo: true,
-        var_detalle_variante: { pvp_nominal: 25.0, tamano: "Pequeño" },
-        monto_iva: 3.2609,
-        precio_total: 25.0,
+        var_detalle_variante: { pvp_nominal: 26.0, tamano: "Pequeño (24 Rosas)" },
+        monto_iva: 0.0,
+        precio_total: 26.0,
       },
       {
         var_id: "var-tinkay-cor-med",
         var_producto_id: "prod-tinkay-coreano",
         var_sku: "TNK-COR-MED",
-        var_nombre: "Mediano (24 Rosas)",
-        var_precio: 30.4348,
-        var_precio_comparacion: 35.0,
-        var_codigo_impuesto_sri: "IVA_15",
-        var_tarifa_iva_porcentaje: 15,
+        var_nombre: "Mediano (40 Rosas)",
+        var_precio: 28.0,
+        var_precio_comparacion: 28.0,
+        var_codigo_impuesto_sri: "IVA_0",
+        var_tarifa_iva_porcentaje: 0,
         var_tipo_oferta: "REGULAR",
         var_activo: true,
-        var_detalle_variante: { pvp_nominal: 35.0, tamano: "Mediano" },
-        monto_iva: 4.5652,
-        precio_total: 35.0,
+        var_detalle_variante: { pvp_nominal: 28.0, tamano: "Mediano (40 Rosas)" },
+        monto_iva: 0.0,
+        precio_total: 28.0,
       },
       {
         var_id: "var-tinkay-cor-gra",
@@ -1830,62 +1830,13 @@ export async function editarProductoAction(datos: {
 
     if (clienteActivo) {
       try {
-        await clienteActivo
-          .schema("comun_comercio")
-          .from("com_producto")
-          .update({
-            pro_nombre: nombre,
-            pro_descripcion: datos.descripcion.trim(),
-            pro_tipo: datos.tipo,
-            pro_destacado: Boolean(datos.destacado),
-            pro_categoria_principal_id: cat?.ctg_id || null,
-            pro_detalle_producto: prodEditado.pro_detalle_producto,
-          })
-          .eq("pro_id", datos.pro_id);
+        const esUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(datos.pro_id);
+        let dbProdId: string | null = null;
 
-        // Actualizar o crear variantes en base de datos
-        for (const v of variantesActualizadas) {
-          try {
-            await clienteActivo
-              .schema("comun_comercio")
-              .from("com_variante")
-              .upsert(
-                {
-                  var_id: v.var_id,
-                  var_producto_id: datos.pro_id,
-                  var_negocio: negocio,
-                  var_sku: v.var_sku,
-                  var_nombre: v.var_nombre,
-                  var_precio: v.var_precio,
-                  var_precio_comparacion: v.var_precio_comparacion,
-                  var_tarifa_iva_porcentaje: v.var_tarifa_iva_porcentaje,
-                  var_codigo_impuesto_sri: v.var_codigo_impuesto_sri,
-                  var_tipo_oferta: v.var_tipo_oferta || "REGULAR",
-                  var_activo: v.var_activo !== false,
-                  var_detalle_variante: v.var_detalle_variante || {},
-                },
-                { onConflict: "var_id" }
-              );
-          } catch {
-            // Reintento por sku
-            try {
-              await clienteActivo
-                .schema("comun_comercio")
-                .from("com_variante")
-                .update({
-                  var_nombre: v.var_nombre,
-                  var_precio: v.var_precio,
-                  var_tarifa_iva_porcentaje: v.var_tarifa_iva_porcentaje,
-                  var_codigo_impuesto_sri: v.var_codigo_impuesto_sri,
-                  var_detalle_variante: v.var_detalle_variante || {},
-                })
-                .eq("var_id", v.var_id);
-            } catch {}
-          }
-        }
-      } catch {
-        try {
-          await clienteActivo
+        // Intentar actualizar com_producto
+        if (esUuid) {
+          const { data: updData } = await clienteActivo
+            .schema("comun_comercio")
             .from("com_producto")
             .update({
               pro_nombre: nombre,
@@ -1895,10 +1846,73 @@ export async function editarProductoAction(datos: {
               pro_categoria_principal_id: cat?.ctg_id || null,
               pro_detalle_producto: prodEditado.pro_detalle_producto,
             })
-            .eq("pro_id", datos.pro_id);
-        } catch {
-          // Continuar
+            .eq("pro_id", datos.pro_id)
+            .select("pro_id")
+            .single();
+
+          if (updData?.pro_id) {
+            dbProdId = updData.pro_id;
+          }
         }
+
+        // Si no se actualizó por UUID, buscar/upsert por slug del producto
+        if (!dbProdId) {
+          const slug = prodActual.pro_slug || generarSlug(nombre);
+          const { data: upsertData } = await clienteActivo
+            .schema("comun_comercio")
+            .from("com_producto")
+            .upsert(
+              {
+                pro_negocio: negocio,
+                pro_nombre: nombre,
+                pro_slug: slug,
+                pro_descripcion: datos.descripcion.trim(),
+                pro_tipo: datos.tipo,
+                pro_destacado: Boolean(datos.destacado),
+                pro_categoria_principal_id: cat?.ctg_id || null,
+                pro_activo: true,
+                pro_detalle_producto: prodEditado.pro_detalle_producto,
+              },
+              { onConflict: "pro_negocio, pro_slug" }
+            )
+            .select("pro_id")
+            .single();
+
+          if (upsertData?.pro_id) {
+            dbProdId = upsertData.pro_id;
+          }
+        }
+
+        // Actualizar o crear variantes en base de datos
+        if (dbProdId) {
+          for (const v of variantesActualizadas) {
+            const varPayload: any = {
+              var_producto_id: dbProdId,
+              var_negocio: negocio,
+              var_sku: v.var_sku,
+              var_nombre: v.var_nombre,
+              var_precio: v.var_precio,
+              var_precio_comparacion: v.var_precio_comparacion,
+              var_tarifa_iva_porcentaje: v.var_tarifa_iva_porcentaje,
+              var_codigo_impuesto_sri: v.var_codigo_impuesto_sri,
+              var_tipo_oferta: v.var_tipo_oferta || "REGULAR",
+              var_activo: v.var_activo !== false,
+              var_detalle_variante: v.var_detalle_variante || {},
+            };
+
+            const varEsUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v.var_id);
+            if (varEsUuid) {
+              varPayload.var_id = v.var_id;
+            }
+
+            await clienteActivo
+              .schema("comun_comercio")
+              .from("com_variante")
+              .upsert(varPayload, { onConflict: "var_negocio, var_sku" });
+          }
+        }
+      } catch (errDb) {
+        console.error("Error al persistir edición de producto en Supabase:", errDb);
       }
     }
 
