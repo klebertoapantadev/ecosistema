@@ -3395,55 +3395,33 @@ export async function obtenerCoberturaUsuarioAction(
     }
   }
 
-  // 2. Fallback a memoria
+  // 2. Fallback a memoria (si compró durante la sesión)
   const enMemoria = storeCoberturaCliente.get(negocio);
   if (enMemoria) return enMemoria;
 
-  // 3. Fallback demostración predeterminado con Plan Amparo Familiar
-  const fechaRenovacion = new Date();
-  fechaRenovacion.setDate(fechaRenovacion.getDate() + 30);
-
+  // 3. Si no tiene plan activo, retornar sin cobertura activa (oculta simulación por defecto)
   return {
-    tienePlanActivo: true,
-    suscripcionId: "sub-demo-amparo-fam",
-    planNombre: "Plan Amparo Familiar",
-    planSku: "TRQ-PLAN-AMPARO-FAM",
+    tienePlanActivo: false,
+    suscripcionId: null,
+    planNombre: "",
+    planSku: "",
     frecuencia: "MENSUAL",
-    estado: "ACTIVA",
-    fechaRenovacion: fechaRenovacion.toLocaleDateString("es-EC", { day: "numeric", month: "long", year: "numeric" }),
-    miembrosCubiertos: 4,
-    derechos: [
-      {
-        concepto: "CONSULTA_TELEMATICA",
-        nombre: "Citas Telemáticas Especializadas",
-        incluidos: 4,
-        consumidos: 1,
-        restantes: 3,
-      },
-      {
-        concepto: "REVISION_CONTRATO",
-        nombre: "Revisiones y Dictámenes de Contratos",
-        incluidos: 2,
-        consumidos: 0,
-        restantes: 2,
-      },
-      {
-        concepto: "CONSULTA_ARIA_IA",
-        nombre: "Consultas Ilimitadas Asistente ARIA IA 24/7",
-        incluidos: null,
-        consumidos: 14,
-        restantes: null,
-      },
-      {
-        concepto: "DESCUENTO_NOTARIAL",
-        nombre: "Descuento en Trámites Notariales & Juicios",
-        incluidos: null,
-        consumidos: 0,
-        restantes: null,
-        porcentaje: 35,
-      },
-    ],
+    estado: "INACTIVA",
+    fechaRenovacion: "",
+    miembrosCubiertos: 0,
+    derechos: [],
   };
+}
+
+export async function obtenerProductosDestacadosClienteAction(negocio: string): Promise<ProductoCatalogo[]> {
+  const todos = await obtenerCatalogoProductosAction(negocio);
+  // Filtra únicamente productos activos marcados como destacados (pro_destacado === true)
+  const destacados = todos.filter(
+    (p) => p.pro_destacado && p.variantes && p.variantes.length > 0 && p.variantes.some((v) => v.var_activo)
+  );
+  if (destacados.length > 0) return destacados;
+  // Respaldo ordenado: los primeros 4 productos con variantes activas
+  return todos.filter((p) => p.variantes?.some((v) => v.var_activo)).slice(0, 4);
 }
 
 export async function consumirDerechoUsuarioAction(datos: {

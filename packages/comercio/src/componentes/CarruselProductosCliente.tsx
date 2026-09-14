@@ -13,7 +13,7 @@ import {
   CreditCard,
 } from "lucide-react";
 import {
-  obtenerCatalogoProductosAction,
+  obtenerProductosDestacadosClienteAction,
   ProductoCatalogo,
   VarianteCatalogo,
 } from "../acciones";
@@ -40,7 +40,7 @@ export function CarruselProductosCliente({
 
   const cargarProductos = async () => {
     try {
-      const data = await obtenerCatalogoProductosAction(negocio);
+      const data = await obtenerProductosDestacadosClienteAction(negocio);
       setProductos(data);
     } catch {
       // Fallback
@@ -55,7 +55,7 @@ export function CarruselProductosCliente({
 
   const scroll = (direccion: "izq" | "der") => {
     if (contenedorRef.current) {
-      const cantidad = 340;
+      const cantidad = 280;
       contenedorRef.current.scrollBy({
         left: direccion === "der" ? cantidad : -cantidad,
         behavior: "smooth",
@@ -75,63 +75,68 @@ export function CarruselProductosCliente({
   return (
     <section
       style={{
-        marginBottom: "32px",
-        position: "relative",
+        width: "100%",
+        maxWidth: "100%",
+        boxSizing: "border-box",
+        marginBottom: "24px",
+        overflow: "hidden",
       }}
       aria-labelledby="t-carrusel-productos"
     >
+      {/* CABECERA DEL CARRUSEL */}
       <div
         style={{
           display: "flex",
           justifyContent: "space-between",
-          alignItems: "flex-end",
-          marginBottom: "16px",
-          flexWrap: "wrap",
-          gap: "12px",
+          alignItems: "center",
+          marginBottom: "12px",
+          gap: "8px",
+          width: "100%",
+          boxSizing: "border-box",
         }}
       >
-        <div>
+        <div style={{ minWidth: 0 }}>
           <div
             style={{
               display: "inline-flex",
               alignItems: "center",
-              gap: "6px",
-              color: "#6366F1",
-              fontSize: "0.75rem",
+              gap: "4px",
+              color: "#4F46E5",
+              fontSize: "0.7rem",
               fontWeight: 800,
               textTransform: "uppercase",
-              letterSpacing: "0.06em",
-              marginBottom: "4px",
+              letterSpacing: "0.05em",
+              marginBottom: "2px",
             }}
           >
-            <Sparkles size={14} /> Oferta & Planes Disponibles
+            <Sparkles size={13} /> Recomendados para Ti
           </div>
           <h2
             id="t-carrusel-productos"
             style={{
               margin: 0,
-              fontSize: "1.35rem",
+              fontSize: "1.15rem",
               fontWeight: 800,
               color: "#0F172A",
-              letterSpacing: "-0.02em",
+              letterSpacing: "-0.01em",
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
             }}
           >
-            Servicios Legales & Suscripciones para Ti
+            Servicios & Planes Legales
           </h2>
-          <p style={{ margin: "4px 0 0", fontSize: "0.85rem", color: "#64748B" }}>
-            Adquiere servicios puntuales o contrata planes de cobertura continua con activación inmediata.
-          </p>
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "6px", flexShrink: 0 }}>
           <button
             type="button"
             onClick={() => scroll("izq")}
-            aria-label="Ver productos anteriores"
+            aria-label="Anterior"
             style={{
-              width: "36px",
-              height: "36px",
-              borderRadius: "10px",
+              width: "32px",
+              height: "32px",
+              borderRadius: "8px",
               border: "1px solid #E2E8F0",
               background: "#FFFFFF",
               color: "#334155",
@@ -139,20 +144,18 @@ export function CarruselProductosCliente({
               alignItems: "center",
               justifyContent: "center",
               cursor: "pointer",
-              boxShadow: "0 2px 4px rgba(0,0,0,0.04)",
-              transition: "all 0.15s ease",
             }}
           >
-            <ChevronLeft size={18} />
+            <ChevronLeft size={16} />
           </button>
           <button
             type="button"
             onClick={() => scroll("der")}
-            aria-label="Ver productos siguientes"
+            aria-label="Siguiente"
             style={{
-              width: "36px",
-              height: "36px",
-              borderRadius: "10px",
+              width: "32px",
+              height: "32px",
+              borderRadius: "8px",
               border: "1px solid #E2E8F0",
               background: "#FFFFFF",
               color: "#334155",
@@ -160,41 +163,40 @@ export function CarruselProductosCliente({
               alignItems: "center",
               justifyContent: "center",
               cursor: "pointer",
-              boxShadow: "0 2px 4px rgba(0,0,0,0.04)",
-              transition: "all 0.15s ease",
             }}
           >
-            <ChevronRight size={18} />
+            <ChevronRight size={16} />
           </button>
           <Link
             href="/panel/catalogo-productos"
             style={{
-              fontSize: "0.82rem",
+              fontSize: "0.78rem",
               fontWeight: 700,
               color: "#4F46E5",
               textDecoration: "none",
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "4px",
-              marginLeft: "6px",
+              marginLeft: "4px",
+              whiteSpace: "nowrap",
             }}
           >
-            Ver catálogo completo <ArrowRight size={14} />
+            Ver todos →
           </Link>
         </div>
       </div>
 
-      {/* CONTENEDOR DESPLAZABLE */}
+      {/* TRACK HORIZONTAL CON SNAP TÁCTIL */}
       <div
         ref={contenedorRef}
         style={{
           display: "flex",
-          gap: "18px",
+          gap: "14px",
           overflowX: "auto",
           scrollSnapType: "x mandatory",
-          paddingBottom: "12px",
+          WebkitOverflowScrolling: "touch",
+          paddingBottom: "8px",
           scrollbarWidth: "none",
           msOverflowStyle: "none",
+          width: "100%",
+          boxSizing: "border-box",
         }}
       >
         {productos.map((prod) => {
@@ -209,28 +211,29 @@ export function CarruselProductosCliente({
             <div
               key={prod.pro_id}
               style={{
-                flex: "0 0 310px",
+                flex: "0 0 260px",
+                width: "260px",
+                maxWidth: "80vw",
                 scrollSnapAlign: "start",
                 background: "#FFFFFF",
-                borderRadius: "20px",
+                borderRadius: "16px",
                 border: esSuscripcion ? "2px solid #818CF8" : "1px solid #E2E8F0",
                 boxShadow: esSuscripcion
-                  ? "0 10px 25px -5px rgba(99, 102, 241, 0.18)"
-                  : "0 4px 12px rgba(15, 23, 42, 0.05)",
+                  ? "0 4px 14px rgba(99, 102, 241, 0.15)"
+                  : "0 2px 8px rgba(15, 23, 42, 0.04)",
                 overflow: "hidden",
                 display: "flex",
                 flexDirection: "column",
                 justifyContent: "space-between",
-                position: "relative",
-                transition: "transform 0.2s ease, box-shadow 0.2s ease",
+                boxSizing: "border-box",
               }}
             >
-              {/* IMAGEN DE CABECERA */}
+              {/* IMAGEN DE PORTADA */}
               <div
                 style={{
                   position: "relative",
                   width: "100%",
-                  height: "145px",
+                  height: "120px",
                   background: "#1E293B",
                   overflow: "hidden",
                 }}
@@ -242,14 +245,14 @@ export function CarruselProductosCliente({
                     width: "100%",
                     height: "100%",
                     objectFit: "cover",
-                    transition: "transform 0.3s ease",
+                    display: "block",
                   }}
                 />
                 <div
                   style={{
                     position: "absolute",
                     inset: 0,
-                    background: "linear-gradient(to top, rgba(15, 23, 42, 0.75) 0%, transparent 60%)",
+                    background: "linear-gradient(to top, rgba(15, 23, 42, 0.7) 0%, transparent 60%)",
                   }}
                 />
 
@@ -257,50 +260,29 @@ export function CarruselProductosCliente({
                 <div
                   style={{
                     position: "absolute",
-                    top: "12px",
-                    left: "12px",
-                    background: esSuscripcion ? "rgba(99, 102, 241, 0.9)" : "rgba(15, 23, 42, 0.8)",
-                    backdropFilter: "blur(6px)",
+                    top: "8px",
+                    left: "8px",
+                    background: esSuscripcion ? "rgba(79, 70, 229, 0.9)" : "rgba(15, 23, 42, 0.8)",
                     color: "#FFFFFF",
-                    fontSize: "0.68rem",
+                    fontSize: "0.65rem",
                     fontWeight: 800,
-                    padding: "3px 10px",
-                    borderRadius: "12px",
-                    letterSpacing: "0.04em",
+                    padding: "2px 8px",
+                    borderRadius: "8px",
                     textTransform: "uppercase",
                     display: "inline-flex",
                     alignItems: "center",
                     gap: "4px",
                   }}
                 >
-                  {esSuscripcion ? <ShieldCheck size={12} /> : <FileCheck size={12} />}
-                  {esSuscripcion ? "Plan Suscripción" : "Servicio Legal"}
+                  {esSuscripcion ? <ShieldCheck size={11} /> : <FileCheck size={11} />}
+                  {esSuscripcion ? "Plan" : "Servicio"}
                 </div>
-
-                {prod.pro_destacado && (
-                  <div
-                    style={{
-                      position: "absolute",
-                      top: "12px",
-                      right: "12px",
-                      background: "rgba(245, 158, 11, 0.95)",
-                      color: "#FFFFFF",
-                      fontSize: "0.65rem",
-                      fontWeight: 800,
-                      padding: "3px 8px",
-                      borderRadius: "10px",
-                      textTransform: "uppercase",
-                    }}
-                  >
-                    ★ Destacado
-                  </div>
-                )}
               </div>
 
-              {/* CONTENIDO DEL CUERPO */}
+              {/* CUERPO DE LA TARJETA */}
               <div
                 style={{
-                  padding: "18px",
+                  padding: "12px 14px",
                   display: "flex",
                   flexDirection: "column",
                   flex: 1,
@@ -310,75 +292,68 @@ export function CarruselProductosCliente({
                 <div>
                   <h3
                     style={{
-                      margin: "0 0 6px",
-                      fontSize: "1.05rem",
+                      margin: "0 0 4px",
+                      fontSize: "0.95rem",
                       fontWeight: 800,
                       color: "#0F172A",
                       lineHeight: 1.3,
-                    }}
-                  >
-                    {prod.pro_nombre}
-                  </h3>
-                  <p
-                    style={{
-                      margin: "0 0 14px",
-                      fontSize: "0.8rem",
-                      color: "#64748B",
-                      lineHeight: 1.45,
                       display: "-webkit-box",
                       WebkitLineClamp: 2,
                       WebkitBoxOrient: "vertical",
                       overflow: "hidden",
+                      minHeight: "2.4em",
                     }}
                   >
-                    {prod.pro_descripcion}
-                  </p>
+                    {prod.pro_nombre}
+                  </h3>
 
-                  {/* BENEFICIOS RESUMIDOS */}
                   {beneficios.length > 0 && (
-                    <div style={{ marginBottom: "16px", display: "flex", flexDirection: "column", gap: "6px" }}>
+                    <div style={{ marginBottom: "10px", display: "flex", flexDirection: "column", gap: "4px" }}>
                       {beneficios.slice(0, 2).map((ben: string, bIdx: number) => (
                         <div
                           key={bIdx}
                           style={{
-                            fontSize: "0.75rem",
-                            color: "#334155",
+                            fontSize: "0.72rem",
+                            color: "#475569",
                             display: "flex",
                             alignItems: "flex-start",
-                            gap: "6px",
-                            lineHeight: 1.3,
+                            gap: "5px",
+                            lineHeight: 1.25,
                           }}
                         >
-                          <CheckCircle2 size={13} color="#10B981" style={{ flexShrink: 0, marginTop: "2px" }} />
-                          <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{ben}</span>
+                          <CheckCircle2 size={12} color="#10B981" style={{ flexShrink: 0, marginTop: "2px" }} />
+                          <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                            {ben}
+                          </span>
                         </div>
                       ))}
                     </div>
                   )}
                 </div>
 
-                {/* PRECIO & BOTÓN DE COMPRA */}
+                {/* PRECIO Y BOTÓN DE COMPRA */}
                 <div
                   style={{
                     borderTop: "1px solid #F1F5F9",
-                    paddingTop: "14px",
+                    paddingTop: "10px",
+                    marginTop: "6px",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "space-between",
-                    gap: "10px",
+                    gap: "8px",
                   }}
                 >
                   <div>
-                    <div style={{ display: "flex", alignItems: "baseline", gap: "4px" }}>
-                      <span style={{ fontSize: "1.25rem", fontWeight: 900, color: "#0F172A" }}>
+                    <div style={{ display: "flex", alignItems: "baseline", gap: "2px" }}>
+                      <span style={{ fontSize: "1.1rem", fontWeight: 900, color: "#0F172A" }}>
                         ${varPrincipal.precio_total.toFixed(2)}
                       </span>
-                      <span style={{ fontSize: "0.7rem", fontWeight: 700, color: "#64748B" }}>
-                        {esSuscripcion ? "/mes" : "total"}
+                      <span style={{ fontSize: "0.68rem", fontWeight: 700, color: "#64748B" }}>
+                        {esSuscripcion ? "/mes" : ""}
                       </span>
                     </div>
-                    <span style={{ fontSize: "0.68rem", color: "#94A3B8", fontWeight: 600 }}>
-                      IVA 15% incluido
+                    <span style={{ fontSize: "0.65rem", color: "#94A3B8", fontWeight: 600 }}>
+                      IVA 15% incl.
                     </span>
                   </div>
 
@@ -391,21 +366,18 @@ export function CarruselProductosCliente({
                         : "#0F172A",
                       color: "#FFFFFF",
                       border: "none",
-                      padding: "10px 14px",
-                      borderRadius: "12px",
+                      padding: "8px 12px",
+                      borderRadius: "10px",
                       fontWeight: 800,
-                      fontSize: "0.78rem",
+                      fontSize: "0.75rem",
                       cursor: "pointer",
                       display: "inline-flex",
                       alignItems: "center",
-                      gap: "6px",
-                      boxShadow: esSuscripcion
-                        ? "0 4px 12px rgba(79, 70, 229, 0.35)"
-                        : "0 2px 6px rgba(15, 23, 42, 0.15)",
-                      transition: "all 0.15s ease",
+                      gap: "4px",
+                      whiteSpace: "nowrap",
                     }}
                   >
-                    <CreditCard size={14} />
+                    <CreditCard size={13} />
                     {esSuscripcion ? "Contratar" : "Adquirir"}
                   </button>
                 </div>
@@ -415,7 +387,7 @@ export function CarruselProductosCliente({
         })}
       </div>
 
-      {/* MODAL DE CHECKOUT PAYPHONE CON TARJETA INTERACTIVA */}
+      {/* MODAL DE CHECKOUT PAYPHONE */}
       {modalPagoAbierto && productoSeleccionado && (
         <ModalCheckoutPayphone
           abierto={modalPagoAbierto}

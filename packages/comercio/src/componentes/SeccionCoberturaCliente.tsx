@@ -86,91 +86,29 @@ export function SeccionCoberturaCliente({
   };
 
   if (cargando) {
-    return (
-      <div
-        style={{
-          background: "linear-gradient(135deg, #1E1B4B 0%, #312E81 100%)",
-          borderRadius: "20px",
-          padding: "28px",
-          color: "#FFFFFF",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          minHeight: "160px",
-          marginBottom: "24px",
-        }}
-      >
-        <RefreshCw size={24} className="animate-spin" style={{ marginRight: "12px" }} />
-        <span>Sincronizando cobertura legal y cupos disponibles...</span>
-      </div>
-    );
+    return null;
   }
 
-  if (!cobertura || !cobertura.tienePlanActivo) {
-    return (
-      <section
-        style={{
-          background: "linear-gradient(135deg, #0F172A 0%, #1E293B 100%)",
-          borderRadius: "20px",
-          padding: "28px",
-          color: "#FFFFFF",
-          position: "relative",
-          overflow: "hidden",
-          border: "1px solid rgba(255, 255, 255, 0.1)",
-          boxShadow: "0 10px 25px -5px rgba(15, 23, 42, 0.3)",
-          marginBottom: "24px",
-        }}
-      >
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "16px" }}>
-          <div>
-            <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", background: "rgba(234, 179, 8, 0.15)", border: "1px solid rgba(234, 179, 8, 0.3)", borderRadius: "20px", padding: "4px 12px", fontSize: "0.75rem", fontWeight: 700, color: "#FDE047", marginBottom: "12px" }}>
-              <Zap size={14} /> Membresía Legal Recomendada
-            </div>
-            <h2 style={{ margin: "0 0 8px", fontSize: "1.4rem", fontWeight: 800, color: "#FFFFFF" }}>
-              Activa tu Plan de Amparo & Cobertura Legal
-            </h2>
-            <p style={{ margin: 0, fontSize: "0.9rem", color: "#94A3B8", maxWidth: "560px", lineHeight: 1.5 }}>
-              Obtén citas telemáticas ilimitadas, dictámenes de contratos en 24h, consultas ARIA IA y hasta 35% de descuento en notarías y juicios para ti y tu familia.
-            </p>
-          </div>
-
-          <Link
-            href="/panel/catalogo-productos"
-            onClick={onAbrirCatalogo}
-            style={{
-              background: "linear-gradient(135deg, #6366F1 0%, #4F46E5 100%)",
-              color: "#FFFFFF",
-              padding: "12px 24px",
-              borderRadius: "12px",
-              fontWeight: 700,
-              fontSize: "0.9rem",
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "8px",
-              textDecoration: "none",
-              boxShadow: "0 4px 14px rgba(79, 70, 229, 0.4)",
-              transition: "transform 0.15s ease",
-            }}
-          >
-            <ShoppingBag size={18} /> Ver Planes & Contratar
-          </Link>
-        </div>
-      </section>
-    );
+  // Si no tiene plan activo o es una simulación demo, permanecer oculto (dejar pantalla limpia)
+  if (!cobertura || !cobertura.tienePlanActivo || cobertura.suscripcionId?.startsWith("sub-demo")) {
+    return null;
   }
 
   return (
     <section
       style={{
         background: "linear-gradient(135deg, #1E1B4B 0%, #312E81 50%, #4338CA 100%)",
-        borderRadius: "24px",
-        padding: "28px",
+        borderRadius: "20px",
+        padding: "20px",
         color: "#FFFFFF",
         position: "relative",
         overflow: "hidden",
+        width: "100%",
+        maxWidth: "100%",
+        boxSizing: "border-box",
         border: "1px solid rgba(255, 255, 255, 0.15)",
-        boxShadow: "0 20px 35px -10px rgba(49, 46, 129, 0.45)",
-        marginBottom: "28px",
+        boxShadow: "0 10px 25px -5px rgba(49, 46, 129, 0.3)",
+        marginBottom: "24px",
       }}
       aria-labelledby="t-cobertura-activa"
     >
