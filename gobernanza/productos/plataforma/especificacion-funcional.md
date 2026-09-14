@@ -452,6 +452,18 @@ Motor centralizado de gestión de bienes, servicios, recetas (BOM), inventarios,
         - `anexar`: Conserva los beneficios del master y adiciona viñetas exclusivas de ese tamaño (`beneficios_custom`, ej: *+ Corona dorada de reina + Mariposas 3D translúcidas*).
         - `reemplazar`: Sustituye 100% los beneficios del master por una lista exclusiva para esa variante.
       - *Modo de Descripción (`descripcion_modo`):* `heredar` | `anexar` | `reemplazar`.
+18. **Bolsa Unificada de Derechos de Consumo y Descarga Atómica (`com_derecho_consumo` & `com_fn_consumir_derecho`):**
+    - **Modelado de Bundles por Periodo:** Las suscripciones recurrentes en los distintos negocios del ecosistema (*Tranqi Amparo Familiar*, *Tinkay Club Floral*, *FastFix Hogar Seguro*) no facturan dinero por uso puntual, sino que acreditan una **Bolsa Periódica de Derechos de Consumo** (`CONSULTA_TELEMATICA`, `REVISION_CONTRATO`, `ENTREGA_FLORAL`, `VISITA_TECNICA`).
+    - **Liquidación Atómica:** Al agendar una cita o programar un despacho floral, el sistema ejecuta `comun_comercio.com_fn_consumir_derecho()`, verificando en una sola transacción que existan cupos disponibles (`der_consumidos < der_incluidos` o `der_incluidos is null`) y descontando a $0.00.
+    - **Política de Restitución:** Si el usuario cancela una cita o entrega con la antelación reglamentaria, la función `comun_comercio.com_fn_devolver_derecho()` reintegra el cupo sin permitir saldos negativos.
+19. **Trazabilidad Universal de Consumo y Evidencias Multimedia / Proof of Delivery (`com_derecho_consumo_historial`):**
+    - **Registro Obligatorio de Auditoría:** Cada consumo realizado con cargo a una suscripción (`PLAN_SUSCRIPCION`), bono promocional (`CUPON_BIENVENIDA`) o convenio institucional (`CONVENIO_B2B`) persiste una fila inmutable en `comun_comercio.com_derecho_consumo_historial`.
+    - **Vínculo Operativo Multi-Dominio:** Relaciona el consumo con la entidad real del negocio (ID de Cita en `trq_cita`, ID de Caso/Expediente en `trq_caso`, ID de Visita Técnica en `ffh_visita_tecnica` o Guía de Despacho en `com_orden`).
+    - **Evidencia Multimedia / Proof of Delivery (POD):**
+      - *Floristería (Tinkay, Margaritas):* Fotografía obligatoria de entrega en destino (puerta/destinatario), nombre de quien recibe y hora exacta de entrega por el repartidor.
+      - *LegalTech (Tranqi):* Enlace al dictamen formal con semáforo de riesgos en PDF o acta de consulta telemática.
+      - *Mantenimiento (FastFix):* Fotografía de antes/después de la reparación y reporte técnico firmado.
+    - **Consola de Auditoría del Cliente (`ModalHistorialUsoPlan.tsx`):** El cliente consulta en vivo el estado de su membresía, próxima facturación, tarjeta emisora asociada, beneficiarios registrados y la línea de tiempo completa de sus beneficios utilizados con acceso a sus respectivas evidencias.
 
 **Implementación técnica:** ver [`especificacion-tecnica.md`](especificacion-tecnica.md) §7 (`comun_comercio`).
 

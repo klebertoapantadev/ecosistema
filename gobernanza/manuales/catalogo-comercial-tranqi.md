@@ -71,3 +71,34 @@ En servicios de consultoría y patrocinio judicial, las variantes se configuran 
 Los abogados y coordinadores jurídicos gestionan la disponibilidad diaria de slots de consulta en `/panel/comercio`:
 * Conteo de **Horas Libres Disponibles Hoy** por especialidad (Civil, Laboral, Corporativo, Penal).
 * El bot **ARIA Legal** consulta estos cupos en vivo para agendar citas telemáticas o presenciales sin traslapes.
+
+---
+
+## 6. Planes Legales Familiares y Corporativos (Bundles de Derechos)
+
+Los planes de suscripción en Tranqi acreditan una **bolsa mensual de derechos de consumo** que se descuentan automáticamente a **$0.00** al ser utilizados por el cliente:
+
+1. **Plan Cobertura SOS Individual ($19.00 / mes):**
+   * 1 Cita telemática mensual con abogado.
+   * 1 Revisión de contrato semestral con semáforo de riesgos.
+   * Consultas ilimitadas con ARIA IA Legal 24/7.
+   * Botón SOS 24/7 en flagrancia y accidentes de tránsito.
+2. **Plan Amparo Familiar ($34.50 / mes):**
+   * 4 Citas telemáticas especializadas al mes (Familia, Civil, Inquilinato, Tránsito).
+   * 2 Revisiones y dictámenes express de contratos.
+   * Consultas ilimitadas con ARIA IA Legal 24/7.
+   * 35% de descuento en trámites notariales y litigios judiciales.
+   * Cobertura para hasta 4 miembros del núcleo familiar.
+3. **Plan Blindaje PYME ($89.00 / mes):**
+   * 6 Citas corporativas y laborales al mes.
+   * 4 Revisiones/redacciones de contratos comerciales.
+   * 1 Diagnóstico preventivo trimestral SRI/Laboral.
+   * Consultas ilimitadas ARIA IA 24/7.
+
+---
+
+## 7. Trazabilidad de Cobertura y Evidencias para el Cliente
+
+El cliente no administra el catálogo comercial, pero tiene acceso pleno a su **Consola de Auditoría y Trazabilidad (`ModalHistorialUsoPlan.tsx`)**:
+* **Estado del Contrato:** Próxima fecha de facturación, tarjeta emisora asociada y beneficiarios registrados.
+* **Línea de Tiempo de Consumos:** Registro de cada cita o revisión ejecutada con fecha, abogado responsable y enlace directo al **Acta de Consulta o Dictamen Legal en PDF**.

@@ -22,6 +22,7 @@ import {
   consumirDerechoUsuarioAction,
   EstadoCoberturaCliente,
 } from "../acciones";
+import { ModalHistorialUsoPlan } from "./ModalHistorialUsoPlan";
 
 interface Props {
   negocio?: string;
@@ -36,6 +37,7 @@ export function SeccionCoberturaCliente({
   const [cargando, setCargando] = useState(true);
   const [consumiendo, setConsumiendo] = useState<string | null>(null);
   const [mensajeConsumo, setMensajeConsumo] = useState<{ tipo: "exito" | "error"; texto: string } | null>(null);
+  const [modalHistorialAbierto, setModalHistorialAbierto] = useState(false);
 
   const cargarCobertura = async () => {
     try {
@@ -246,11 +248,12 @@ export function SeccionCoberturaCliente({
         </div>
 
         <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
-          <Link
-            href="/panel/catalogo-productos"
+          <button
+            type="button"
+            onClick={() => setModalHistorialAbierto(true)}
             style={{
-              background: "rgba(255, 255, 255, 0.12)",
-              border: "1px solid rgba(255, 255, 255, 0.2)",
+              background: "rgba(255, 255, 255, 0.15)",
+              border: "1px solid rgba(255, 255, 255, 0.25)",
               color: "#FFFFFF",
               borderRadius: "10px",
               padding: "8px 14px",
@@ -259,13 +262,13 @@ export function SeccionCoberturaCliente({
               display: "inline-flex",
               alignItems: "center",
               gap: "6px",
-              textDecoration: "none",
+              cursor: "pointer",
               backdropFilter: "blur(4px)",
               transition: "background 0.15s ease",
             }}
           >
-            Administrar Plan <ExternalLink size={14} />
-          </Link>
+            Mi Plan & Historial <ExternalLink size={14} />
+          </button>
         </div>
       </div>
 
@@ -516,6 +519,15 @@ export function SeccionCoberturaCliente({
           );
         })}
       </div>
+
+      {/* MODAL DE HISTORIAL Y AUDITORÍA DE USO */}
+      <ModalHistorialUsoPlan
+        abierto={modalHistorialAbierto}
+        alCerrar={() => setModalHistorialAbierto(false)}
+        cobertura={cobertura}
+        negocio={negocio}
+      />
     </section>
   );
 }
+

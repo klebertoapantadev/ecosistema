@@ -140,3 +140,17 @@ Para evitar duplicar textos y fotos innecesariamente:
        - `+ Corona dorada de reina metálica`
        - `+ Set de mariposas 3D translúcidas con glitter`
        - `+ Cinta de seda satinada de 5 cm de ancho con texto personalizado`
+
+---
+
+## 10. Club Floral (Suscripciones Semanales/Quincenales) y Proof of Delivery (POD)
+
+Tinkay opera un modelo de suscripción recurrente para hogares, consultorios y empresas que desean flores frescas de forma continua:
+
+1. **Planes de Club Floral:**
+   * **Plan Hogar Semanal ($60.00 / mes):** 4 despachos de ramos de 25 rosas de exportación con florero de cristal incluido en la primera entrega.
+   * **Plan Quincenal Frescura ($35.00 / mes):** 2 despachos de ramos por mes.
+   * **Plan Corporativo Recepciones ($110.00 / mes):** 4 montajes semanales en oficinas/recepciones con recambio de follaje e hidratación.
+2. **Registro de Proof of Delivery (POD):**
+   * Al completarse cada entrega semanal/quincenal, el repartidor motorizado registra obligatoriamente la **fotografía del arreglo entregado en el domicilio/oficina** con nombre y firma de quien recibió.
+   * Esta evidencia se guarda en `comun_comercio.com_derecho_consumo_historial` y se muestra automáticamente en el historial del cliente (`ModalHistorialUsoPlan.tsx`) para plena transparencia del servicio.
