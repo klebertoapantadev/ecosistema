@@ -394,13 +394,14 @@ export function CarruselProductosCliente({
           alCerrar={() => {
             setModalPagoAbierto(false);
             setProductoSeleccionado(null);
+            if (onCompraCompletada) {
+              onCompraCompletada();
+            }
           }}
           negocio={negocio}
           productoNombre={productoSeleccionado.producto.pro_nombre}
           variante={productoSeleccionado.variante}
           alPagoExitoso={() => {
-            setModalPagoAbierto(false);
-            setProductoSeleccionado(null);
             if (onCompraCompletada) {
               onCompraCompletada();
             }

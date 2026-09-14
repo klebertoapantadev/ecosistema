@@ -1135,6 +1135,27 @@ export function ModalCheckoutPayphone({
                     </div>
                   </div>
 
+                  <div
+                    style={{
+                      background: "#EFF6FF",
+                      border: "1px solid #BFDBFE",
+                      borderRadius: "10px",
+                      padding: "10px 14px",
+                      marginBottom: "18px",
+                      fontSize: "0.8rem",
+                      color: "#1E40AF",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                      textAlign: "left",
+                    }}
+                  >
+                    <CheckCircle2 size={16} color="#2563EB" style={{ flexShrink: 0 }} />
+                    <span>
+                      Se ha emitido tu comprobante electrónico con desglose SRI (IVA 15%) y enviado una confirmación a tu bandeja de notificaciones.
+                    </span>
+                  </div>
+
                   <button
                     type="button"
                     onClick={reiniciarYCerrar}
@@ -1153,7 +1174,7 @@ export function ModalCheckoutPayphone({
                     }}
                   >
                     <FileText size={16} />
-                    Finalizar y Ver Ficha
+                    Finalizar y Continuar
                   </button>
                 </>
               ) : (

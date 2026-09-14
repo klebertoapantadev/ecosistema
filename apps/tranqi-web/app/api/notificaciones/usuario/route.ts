@@ -120,20 +120,21 @@ export async function GET() {
           });
         }
 
-        // Si no hay registros explícitos en not_registro para el usuario, sintetizar la notificación activa más reciente de su postulación
+        // Si no hay registros explícitos en not_registro para el usuario, sintetizar la notificación activa si la postulación está activa y no cancelada
         const { data: miSol } = await client
           .schema("tranqui_legal")
           .from("trq_solicitud_socio")
           .select("ssc_id, ssc_estado, ssc_actualizado_en, ssc_creado_en, trq_revision_solicitud(*)")
           .eq("ssc_usuario_id", perfil.usu_id)
           .is("ssc_eliminado_en", null)
+          .not("ssc_estado", "in", '("cancelada","rechazada","inactiva")')
           .maybeSingle();
 
-        if (miSol) {
+        if (miSol && miSol.ssc_estado !== "cancelada" && miSol.ssc_estado !== "rechazada") {
           const revs = (miSol.trq_revision_solicitud ?? []) as Array<{ rev_id: string; rev_decision: string; rev_comentario?: string | null; rev_creado_en: string }>;
           revs.sort((a, b) => new Date(b.rev_creado_en).getTime() - new Date(a.rev_creado_en).getTime());
 
-          if (revs.length > 0 && revs[0]) {
+          if (revs.length > 0 && revs[0] && miSol.ssc_estado === "aceptada") {
             const ultimaRev = revs[0];
             const esAprobada = ultimaRev.rev_decision === "aceptada";
             const titulo = esAprobada

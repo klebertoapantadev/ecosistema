@@ -21,6 +21,7 @@ export function TarjetaEstadoSolicitudHome({ solicitud }: Props) {
   const [procesando, setProcesando] = useState(false);
   const [mensajeExito, setMensajeExito] = useState<string | null>(null);
   const [errorAccion, setErrorAccion] = useState<string | null>(null);
+  const [eliminada, setEliminada] = useState(false);
 
   const CONFIG: Record<string, { titulo: string; desc: string; chip: string; bg: string; border: string; color: string }> = {
     aceptada: {
@@ -66,7 +67,9 @@ export function TarjetaEstadoSolicitudHome({ solicitud }: Props) {
     color: "#C2410C",
   };
 
-  const [eliminada, setEliminada] = useState(false);
+  if (estado === "cancelada" || estado === "inactiva" || estado === "eliminada" || eliminada) {
+    return null;
+  }
 
   const manejarEliminar = async () => {
     setProcesando(true);

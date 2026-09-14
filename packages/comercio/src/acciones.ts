@@ -2764,6 +2764,7 @@ export async function confirmarPagoPayphoneAction(datos: {
   varianteId?: string;
   productoNombre?: string;
   clienteEmail?: string;
+  montoTotal?: number;
 }) {
   const negocio = datos.negocio || "tranqi";
   const admin: any = crearClienteAdmin();
@@ -2806,15 +2807,57 @@ export async function confirmarPagoPayphoneAction(datos: {
       }
     }
 
+    let varEncontrada: any = null;
     if (aprobado && datos.varianteId) {
       try {
-        await activarSuscripcionTrasPagoAction({
-          negocio,
-          varianteId: datos.varianteId,
-          productoNombre: datos.productoNombre || "Plan Jurídico",
-          clienteEmail: datos.clienteEmail || "cliente@tranqi24.com",
-          clienteNombre: datos.titularNombre || "Cliente",
-        });
+        const prods = await obtenerCatalogoProductosAction(negocio);
+        let prodEncontrado: any = null;
+        for (const p of prods) {
+          const v = p.variantes?.find((vi: any) => vi.var_id === datos.varianteId);
+          if (v) {
+            prodEncontrado = p;
+            varEncontrada = v;
+            break;
+          }
+        }
+
+        const esSuscripcion = prodEncontrado?.pro_tipo === "SUSCRIPCION" || varEncontrada?.var_tipo_oferta === "RECURRENTE";
+
+        if (esSuscripcion) {
+          await activarSuscripcionTrasPagoAction({
+            negocio,
+            varianteId: datos.varianteId,
+            productoNombre: datos.productoNombre || "Plan Jurídico",
+            clienteEmail: datos.clienteEmail || "cliente@tranqi24.com",
+            clienteNombre: datos.titularNombre || "Cliente",
+          });
+        } else {
+          // Si es un servicio puntual, asegurarse de no activar una suscripción falsa
+          storeCoberturaCliente.delete(negocio);
+        }
+      } catch {
+        // Continuar
+      }
+    }
+
+    if (aprobado && clienteDb) {
+      try {
+        const { data: userData } = await supabase.auth.getUser().catch(() => ({ data: { user: null } }));
+        const usuarioId = userData?.user?.id;
+        const montoFormateado = Number(datos.montoTotal ?? varEncontrada?.precio_total ?? 0).toFixed(2);
+        if (usuarioId) {
+          await clienteDb
+            .schema("comun_notificaciones")
+            .from("not_registro")
+            .insert({
+              not_usuario_id: usuarioId,
+              not_negocio: negocio,
+              not_titulo: `🧾 ¡Pago Confirmado! ${datos.productoNombre || "Servicio"}`,
+              not_contenido_html: `<p>Tu pago por <strong>${datos.productoNombre || "Servicio Legal"}</strong> por un valor de <strong>$${montoFormateado}</strong> (IVA 15% incluido) ha sido procesado exitosamente.</p><p><strong>Código de Autorización:</strong> <code>${authCode}</code><br/><strong>Método:</strong> ${marca} •••• ${ultimosDigitos}</p>`,
+              not_url_accion: "/panel",
+              not_canal: "IN_APP",
+            });
+        }
       } catch {
         // Continuar
       }
