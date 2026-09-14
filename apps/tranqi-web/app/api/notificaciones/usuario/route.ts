@@ -86,6 +86,8 @@ export async function GET() {
 
         const { data: registros } = await query;
 
+        const registrosClavesVistas = new Set<string>();
+
         if (registros && Array.isArray(registros)) {
           (registros as unknown as Array<{
             not_id: string;
@@ -98,9 +100,12 @@ export async function GET() {
             not_detalles?: { eliminada?: boolean; eliminada_en?: string; pospuesta_hasta?: string; pospuesta_horas?: number; clave_original?: string } | null;
           }>).forEach(r => {
             const detalles = r.not_detalles ?? {};
+            const claveOrig = (detalles.clave_original as string) || r.not_id;
+            registrosClavesVistas.add(claveOrig);
+            registrosClavesVistas.add(r.not_id);
 
             notificaciones.push({
-              not_id: r.not_id,
+              not_id: claveOrig,
               not_titulo: interpolarParaPerfil(r.not_titulo, perfil),
               not_contenido_html: interpolarParaPerfil(r.not_contenido_html, perfil),
               not_url_accion: r.not_url_accion || "/panel",
@@ -139,7 +144,7 @@ export async function GET() {
               : `<p>${ultimaRev.rev_comentario || "Se identificaron observaciones en tu solicitud. Por favor revisa y actualiza los documentos."}</p>`;
 
             const synthId = ultimaRev.rev_id || `sol-rev-${miSol.ssc_id}`;
-            const yaExiste = notificaciones.some(n => n.not_id === synthId || n.not_titulo.includes(titulo));
+            const yaExiste = registrosClavesVistas.has(synthId) || notificaciones.some(n => n.not_id === synthId || n.not_titulo.includes(titulo));
             if (!yaExiste) {
               notificaciones.unshift({
                 not_id: synthId,
@@ -179,7 +184,7 @@ export async function GET() {
                 const nombrePost = [uPost?.usu_nombres, uPost?.usu_apellidos].filter(Boolean).join(" ") || uPost?.usu_correo || "Postulante";
                 const titulo = `Nueva Postulación de Socio Abogado: ${nombrePost}`;
                 const synthSolId = `postulacion-${sol.ssc_id}`;
-                const yaExiste = notificaciones.some(n => n.not_id === synthSolId || n.not_titulo.includes(nombrePost));
+                const yaExiste = registrosClavesVistas.has(synthSolId) || notificaciones.some(n => n.not_id === synthSolId || n.not_titulo.includes(nombrePost));
                 if (!yaExiste) {
                   notificaciones.unshift({
                     not_id: synthSolId,
@@ -228,7 +233,7 @@ export async function GET() {
                   if (tieneContrato) {
                     const tituloContrato = `Contrato Firmado Recibido — Postulante: ${nombrePost}`;
                     const synthContratoId = `contrato-${sol.ssc_id}`;
-                    const yaExiste = notificaciones.some(n => n.not_id === synthContratoId);
+                    const yaExiste = registrosClavesVistas.has(synthContratoId) || notificaciones.some(n => n.not_id === synthContratoId);
                     if (!yaExiste) {
                       notificaciones.unshift({
                         not_id: synthContratoId,
@@ -246,7 +251,7 @@ export async function GET() {
                   if (tienePropuesta) {
                     const tituloPropuesta = `Propuesta de Modificación al Contrato — Postulante: ${nombrePost}`;
                     const synthPropuestaId = `propuesta-${sol.ssc_id}`;
-                    const yaExiste = notificaciones.some(n => n.not_id === synthPropuestaId);
+                    const yaExiste = registrosClavesVistas.has(synthPropuestaId) || notificaciones.some(n => n.not_id === synthPropuestaId);
                     if (!yaExiste) {
                       notificaciones.unshift({
                         not_id: synthPropuestaId,
@@ -322,13 +327,21 @@ export async function POST(request: Request) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const client: any = crearClienteAdmin() || await crearClienteServidor();
 
+    const esUUIDValido = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(not_id);
+
     // 1. Verificar si el registro existe en comun_notificacion.not_registro
-    const { data: registroExistente } = await client
+    let queryExistente = client
       .schema("comun_notificacion")
       .from("not_registro")
-      .select("not_id, not_detalles, not_leido_en")
-      .eq("not_id", not_id)
-      .maybeSingle();
+      .select("not_id, not_detalles, not_leido_en");
+
+    if (esUUIDValido) {
+      queryExistente = queryExistente.eq("not_id", not_id);
+    } else {
+      queryExistente = queryExistente.contains("not_detalles", { clave_original: not_id });
+    }
+
+    const { data: registroExistente } = await queryExistente.maybeSingle();
 
     const ahora = new Date().toISOString();
     const detallesActuales = (registroExistente?.not_detalles as Record<string, unknown>) || {};
@@ -386,7 +399,7 @@ export async function POST(request: Request) {
           not_leido_en: nuevoLeidoEn,
           not_detalles: nuevosDetalles
         })
-        .eq("not_id", not_id);
+        .eq("not_id", registroExistente.not_id);
 
     } else {
       let detallesInsertar: Record<string, unknown> = {};
