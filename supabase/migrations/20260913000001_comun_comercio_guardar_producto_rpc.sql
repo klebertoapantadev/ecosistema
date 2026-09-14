@@ -174,5 +174,16 @@ begin
 end;
 $$;
 
--- Permisos de ejecución para la función RPC
+-- Permisos de ejecución para la función RPC en esquema comun_comercio
 grant execute on function comun_comercio.com_fn_guardar_producto_catalogo(jsonb) to anon, authenticated, service_role;
+
+-- Exponer wrapper en esquema public para acceso PostgREST directo
+create or replace function public.com_fn_guardar_producto_catalogo(p_datos jsonb)
+returns jsonb
+language sql
+security definer
+as $$
+  select comun_comercio.com_fn_guardar_producto_catalogo(p_datos);
+$$;
+
+grant execute on function public.com_fn_guardar_producto_catalogo(jsonb) to anon, authenticated, service_role;

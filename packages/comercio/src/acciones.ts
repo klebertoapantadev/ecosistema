@@ -2006,15 +2006,28 @@ export async function editarProductoAction(datos: {
         // 1. Intentar persistencia atómica vía RPC (Segura contra RLS)
         let rpcExitoso = false;
         try {
-          const { data: rpcRes, error: errRpc } = await clienteActivo.rpc(
-            "com_fn_guardar_producto_catalogo",
-            { p_datos: payloadRpc }
-          );
+          const { data: rpcRes, error: errRpc } = await clienteActivo
+            .schema("comun_comercio")
+            .rpc("com_fn_guardar_producto_catalogo", { p_datos: payloadRpc });
           if (!errRpc && rpcRes?.ok) {
             rpcExitoso = true;
           }
         } catch {
           rpcExitoso = false;
+        }
+
+        if (!rpcExitoso) {
+          try {
+            const { data: rpcResPub, error: errRpcPub } = await clienteActivo.rpc(
+              "com_fn_guardar_producto_catalogo",
+              { p_datos: payloadRpc }
+            );
+            if (!errRpcPub && rpcResPub?.ok) {
+              rpcExitoso = true;
+            }
+          } catch {
+            rpcExitoso = false;
+          }
         }
 
         // 2. Fallback a consultas directas si el RPC no está instalado
