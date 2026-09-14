@@ -22,6 +22,8 @@ import {
   BookOpen,
   Loader2,
   Wand2,
+  Truck,
+  Percent,
 } from "lucide-react";
 import {
   editarProductoAction,
@@ -339,6 +341,13 @@ export function ModalEditarProducto({
   const [resolviendoVarianteImg, setResolviendoVarianteImg] = useState(false);
   const [exitoAutoConvertir, setExitoAutoConvertir] = useState<string | null>(null);
 
+  // Configuración Impositiva Global & Logística (Transporte / Delivery)
+  const [tarifaIvaMaster, setTarifaIvaMaster] = useState<number>(15);
+  const [deliveryIncluido, setDeliveryIncluido] = useState<boolean>(true);
+  const [modalidadTransporte, setModalidadTransporte] = useState<string>("INCLUIDO_GRATIS");
+  const [etiquetaTransporte, setEtiquetaTransporte] = useState<string>("🚚 Envío a Domicilio Incluido");
+  const [coberturaTransporte, setCoberturaTransporte] = useState<string>("Quito Urbano y Valles");
+
   // Editor Multivariante (Tamaños / Modalidades)
   const [modoEdicion, setModoEdicion] = useState<"master" | "variante">("master");
   const [variantesLocales, setVariantesLocales] = useState<VarianteCatalogo[]>([]);
@@ -369,6 +378,24 @@ export function ModalEditarProducto({
         { label: "📅 Visita Programada", val: "📅 Visita Programada" },
       ];
 
+  // Propagación de IVA Master a todas las variantes
+  const aplicarIvaMasterATodos = (nuevaTarifa: number) => {
+    setTarifaIvaMaster(nuevaTarifa);
+    setVariantesLocales((prev) =>
+      prev.map((v) => {
+        const base = v.var_precio || 0;
+        const montoIva = Number(((base * nuevaTarifa) / 100).toFixed(2));
+        return {
+          ...v,
+          var_tarifa_iva_porcentaje: nuevaTarifa,
+          var_codigo_impuesto_sri: nuevaTarifa > 0 ? "IVA_15" : "IVA_0",
+          monto_iva: montoIva,
+          precio_total: Number((base + montoIva).toFixed(2)),
+        };
+      })
+    );
+  };
+
   useEffect(() => {
     if (producto) {
       setNombre(producto.pro_nombre || "");
@@ -393,6 +420,13 @@ export function ModalEditarProducto({
       );
       setBeneficiosTexto(Array.isArray(det.beneficios) ? det.beneficios.join("\n") : "");
       setRequisitosTexto(Array.isArray(det.requisitos) ? det.requisitos.join("\n") : "");
+
+      // IVA Master y Logística
+      setTarifaIvaMaster(det.tarifa_iva_predeterminada !== undefined ? Number(det.tarifa_iva_predeterminada) : 15);
+      setDeliveryIncluido(det.logistica?.delivery_incluido !== undefined ? Boolean(det.logistica.delivery_incluido) : true);
+      setModalidadTransporte(det.logistica?.modalidad_transporte || "INCLUIDO_GRATIS");
+      setEtiquetaTransporte(det.logistica?.etiqueta_transporte || "🚚 Envío a Domicilio Incluido");
+      setCoberturaTransporte(det.logistica?.cobertura_texto || "Quito Urbano y Valles");
 
       // Clonar variantes
       const vars = producto.variantes && producto.variantes.length > 0
@@ -645,6 +679,14 @@ export function ModalEditarProducto({
         beneficios,
         requisitos,
         modalidadPago,
+        tarifaIvaPredeterminada: tarifaIvaMaster,
+        codigoImpuestoSri: tarifaIvaMaster > 0 ? "IVA_15" : "IVA_0",
+        logistica: {
+          delivery_incluido: deliveryIncluido,
+          modalidad_transporte: modalidadTransporte,
+          etiqueta_transporte: etiquetaTransporte,
+          cobertura_texto: coberturaTransporte,
+        },
         variantes: variantesParaGuardar,
         negocio,
       });
@@ -925,7 +967,7 @@ export function ModalEditarProducto({
               }}
             >
               <Layers size={14} />
-              <span>🏷️ 2. Tamaños y Variantes ({variantesLocales.length})</span>
+              <span>{esFloristeria ? `🌸 2. Tamaños (${variantesLocales.length})` : `🏷️ 2. Variantes y Planes (${variantesLocales.length})`}</span>
             </button>
           </div>
 
@@ -1358,6 +1400,225 @@ export function ModalEditarProducto({
                       boxSizing: "border-box",
                     }}
                   />
+                </div>
+              </div>
+
+              {/* 4. CONFIGURACIÓN GLOBAL DE IVA SRI (ECUADOR) */}
+              <div
+                style={{
+                  background: "#F8FAFC",
+                  border: "1px solid #E2E8F0",
+                  borderRadius: "10px",
+                  padding: "12px 14px",
+                  marginBottom: "14px",
+                }}
+              >
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px", flexWrap: "wrap", gap: "6px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                    <Percent size={16} color="#0284C7" />
+                    <label style={{ fontSize: "0.8rem", fontWeight: 800, color: "#1E293B" }}>
+                      Tarifa IVA SRI Predeterminada (Global para este Producto)
+                    </label>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => aplicarIvaMasterATodos(tarifaIvaMaster)}
+                    style={{
+                      background: "#E0F2FE",
+                      border: "1px solid #7DD3FC",
+                      color: "#0369A1",
+                      padding: "3px 8px",
+                      borderRadius: "6px",
+                      fontSize: "0.7rem",
+                      fontWeight: 700,
+                      cursor: "pointer",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "4px",
+                    }}
+                    title="Aplica esta tarifa a todas las variantes existentes"
+                  >
+                    <span>⚡ Aplicar a todos los tamaños ({variantesLocales.length})</span>
+                  </button>
+                </div>
+
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
+                  <button
+                    type="button"
+                    onClick={() => setTarifaIvaMaster(15)}
+                    style={{
+                      padding: "8px 12px",
+                      borderRadius: "8px",
+                      fontSize: "0.78rem",
+                      fontWeight: 700,
+                      border: tarifaIvaMaster === 15 ? "1.5px solid #0284C7" : "1px solid #CBD5E1",
+                      background: tarifaIvaMaster === 15 ? "#F0F9FF" : "#FFFFFF",
+                      color: tarifaIvaMaster === 15 ? "#0284C7" : "#475569",
+                      cursor: "pointer",
+                      textAlign: "left",
+                      display: "flex",
+                      flexDirection: "column",
+                    }}
+                  >
+                    <span>🇪🇨 IVA 15% (Tarifa General SRI)</span>
+                    <span style={{ fontSize: "0.68rem", fontWeight: 500, color: "#64748B" }}>
+                      Calcula IVA 15% sobre la base imponible
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setTarifaIvaMaster(0)}
+                    style={{
+                      padding: "8px 12px",
+                      borderRadius: "8px",
+                      fontSize: "0.78rem",
+                      fontWeight: 700,
+                      border: tarifaIvaMaster === 0 ? "1.5px solid #10B981" : "1px solid #CBD5E1",
+                      background: tarifaIvaMaster === 0 ? "#ECFDF5" : "#FFFFFF",
+                      color: tarifaIvaMaster === 0 ? "#059669" : "#475569",
+                      cursor: "pointer",
+                      textAlign: "left",
+                      display: "flex",
+                      flexDirection: "column",
+                    }}
+                  >
+                    <span>🌿 IVA 0% (Exento SRI / Tarifa Cero)</span>
+                    <span style={{ fontSize: "0.68rem", fontWeight: 500, color: "#64748B" }}>
+                      Servicios médicos, canasta básica o exentos
+                    </span>
+                  </button>
+                </div>
+              </div>
+
+              {/* 5. LOGÍSTICA & TRANSPORTE A DOMICILIO (DELIVERY) */}
+              <div
+                style={{
+                  background: deliveryIncluido ? "#F0FDF4" : "#F8FAFC",
+                  border: deliveryIncluido ? "1.5px solid #86EFAC" : "1px solid #E2E8F0",
+                  borderRadius: "10px",
+                  padding: "12px 14px",
+                  marginBottom: "16px",
+                  transition: "all 0.2s ease",
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "8px" }}>
+                  <Truck size={16} color={deliveryIncluido ? "#16A34A" : "#64748B"} />
+                  <label style={{ fontSize: "0.8rem", fontWeight: 800, color: deliveryIncluido ? "#166534" : "#1E293B" }}>
+                    Logística & Entrega a Domicilio (Transporte)
+                  </label>
+                </div>
+
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "6px", marginBottom: "10px" }}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDeliveryIncluido(true);
+                      setModalidadTransporte("INCLUIDO_GRATIS");
+                      setEtiquetaTransporte("🚚 Envío a Domicilio Incluido");
+                    }}
+                    style={{
+                      padding: "8px 10px",
+                      borderRadius: "6px",
+                      fontSize: "0.72rem",
+                      fontWeight: 700,
+                      border: deliveryIncluido && modalidadTransporte === "INCLUIDO_GRATIS" ? "1.5px solid #16A34A" : "1px solid #CBD5E1",
+                      background: deliveryIncluido && modalidadTransporte === "INCLUIDO_GRATIS" ? "#DCFCE7" : "#FFFFFF",
+                      color: deliveryIncluido && modalidadTransporte === "INCLUIDO_GRATIS" ? "#166534" : "#475569",
+                      cursor: "pointer",
+                      textAlign: "center",
+                    }}
+                  >
+                    🚚 Envío Incluido (Gratis)
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDeliveryIncluido(false);
+                      setModalidadTransporte("COSTO_ADICIONAL");
+                      setEtiquetaTransporte("📦 Delivery con Costo Adicional");
+                    }}
+                    style={{
+                      padding: "8px 10px",
+                      borderRadius: "6px",
+                      fontSize: "0.72rem",
+                      fontWeight: 700,
+                      border: !deliveryIncluido && modalidadTransporte === "COSTO_ADICIONAL" ? "1.5px solid #F59E0B" : "1px solid #CBD5E1",
+                      background: !deliveryIncluido && modalidadTransporte === "COSTO_ADICIONAL" ? "#FEF3C7" : "#FFFFFF",
+                      color: !deliveryIncluido && modalidadTransporte === "COSTO_ADICIONAL" ? "#92400E" : "#475569",
+                      cursor: "pointer",
+                      textAlign: "center",
+                    }}
+                  >
+                    📦 Costo Adicional en Checkout
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDeliveryIncluido(false);
+                      setModalidadTransporte("SOLO_RETIRO");
+                      setEtiquetaTransporte("🏪 Solo Retiro en Local");
+                    }}
+                    style={{
+                      padding: "8px 10px",
+                      borderRadius: "6px",
+                      fontSize: "0.72rem",
+                      fontWeight: 700,
+                      border: !deliveryIncluido && modalidadTransporte === "SOLO_RETIRO" ? "1.5px solid #64748B" : "1px solid #CBD5E1",
+                      background: !deliveryIncluido && modalidadTransporte === "SOLO_RETIRO" ? "#F1F5F9" : "#FFFFFF",
+                      color: !deliveryIncluido && modalidadTransporte === "SOLO_RETIRO" ? "#1E293B" : "#475569",
+                      cursor: "pointer",
+                      textAlign: "center",
+                    }}
+                  >
+                    🏪 Solo Retiro en Local
+                  </button>
+                </div>
+
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+                  <div>
+                    <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#334155", marginBottom: "2px" }}>
+                      Etiqueta Visible de Transporte
+                    </label>
+                    <input
+                      type="text"
+                      value={etiquetaTransporte}
+                      onChange={(e) => setEtiquetaTransporte(e.target.value)}
+                      placeholder="Ej. 🚚 Envío a Domicilio Incluido"
+                      style={{
+                        width: "100%",
+                        padding: "6px 10px",
+                        borderRadius: "6px",
+                        border: "1px solid #CBD5E1",
+                        fontSize: "0.78rem",
+                        boxSizing: "border-box",
+                        background: "#FFFFFF",
+                      }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#334155", marginBottom: "2px" }}>
+                      Zona o Sector de Cobertura
+                    </label>
+                    <input
+                      type="text"
+                      value={coberturaTransporte}
+                      onChange={(e) => setCoberturaTransporte(e.target.value)}
+                      placeholder="Ej. Quito Urbano y Valles"
+                      style={{
+                        width: "100%",
+                        padding: "6px 10px",
+                        borderRadius: "6px",
+                        border: "1px solid #CBD5E1",
+                        fontSize: "0.78rem",
+                        boxSizing: "border-box",
+                        background: "#FFFFFF",
+                      }}
+                    />
+                  </div>
                 </div>
               </div>
 

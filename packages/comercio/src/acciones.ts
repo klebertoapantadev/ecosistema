@@ -1872,6 +1872,14 @@ export async function editarProductoAction(datos: {
   tiempoEntrega?: string;
   requisitos?: string[];
   modalidadPago?: string;
+  tarifaIvaPredeterminada?: number;
+  codigoImpuestoSri?: string;
+  logistica?: {
+    delivery_incluido: boolean;
+    modalidad_transporte: string;
+    etiqueta_transporte: string;
+    cobertura_texto: string;
+  };
   varianteId?: string;
   variantes?: Array<{
     var_id?: string;
@@ -2033,6 +2041,9 @@ export async function editarProductoAction(datos: {
         tiempo_entrega: datos.tiempoEntrega !== undefined ? datos.tiempoEntrega.trim() : prodActual.pro_detalle_producto?.tiempo_entrega,
         requisitos: datos.requisitos !== undefined ? datos.requisitos : prodActual.pro_detalle_producto?.requisitos,
         modalidad_pago: datos.modalidadPago || prodActual.pro_detalle_producto?.modalidad_pago,
+        tarifa_iva_predeterminada: datos.tarifaIvaPredeterminada !== undefined ? datos.tarifaIvaPredeterminada : (prodActual.pro_detalle_producto?.tarifa_iva_predeterminada ?? 15),
+        codigo_impuesto_sri: datos.codigoImpuestoSri !== undefined ? datos.codigoImpuestoSri : (prodActual.pro_detalle_producto?.codigo_impuesto_sri || "IVA_15"),
+        logistica: datos.logistica !== undefined ? datos.logistica : prodActual.pro_detalle_producto?.logistica,
         editado_en: new Date().toISOString(),
       },
       categoria: cat

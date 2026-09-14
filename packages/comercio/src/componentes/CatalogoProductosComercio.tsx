@@ -25,6 +25,7 @@ import {
   Eye,
   X,
   ExternalLink,
+  Truck,
 } from "lucide-react";
 import {
   ProductoCatalogo,
@@ -1201,6 +1202,35 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                   >
                     {p.pro_descripcion}
                   </p>
+
+                  {/* Badge de Logística / Entrega a Domicilio */}
+                  {Boolean(p.pro_detalle_producto?.logistica?.delivery_incluido) && (
+                    <div
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "6px",
+                        background: "linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%)",
+                        border: "1px solid #10B981",
+                        color: "#065F46",
+                        padding: "4px 10px",
+                        borderRadius: "8px",
+                        fontSize: "0.72rem",
+                        fontWeight: 800,
+                        marginBottom: "12px",
+                        boxShadow: "0 1px 2px rgba(16, 185, 129, 0.1)",
+                        alignSelf: "flex-start",
+                      }}
+                    >
+                      <Truck size={13} color="#059669" />
+                      <span>{p.pro_detalle_producto?.logistica?.etiqueta_transporte || "🚚 Envío a Domicilio Incluido"}</span>
+                      {p.pro_detalle_producto?.logistica?.cobertura_texto && (
+                        <span style={{ fontSize: "0.68rem", fontWeight: 600, color: "#047857", marginLeft: "2px" }}>
+                          • {p.pro_detalle_producto.logistica.cobertura_texto}
+                        </span>
+                      )}
+                    </div>
+                  )}
 
                   {/* Selector de Variantes / Tamaños con Colores Individuales */}
                   {p.variantes.length > 1 && (
