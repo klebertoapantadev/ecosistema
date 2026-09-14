@@ -825,7 +825,7 @@ const PRODUCTOS_SEMILLA_TINKAY: ProductoCatalogo[] = [
     pro_detalle_producto: {
       icono: "Sparkles",
       imagen_url: "https://lh3.googleusercontent.com/pw/AP1GczOZEFibMGGeADW_BlMVDWuifn-a-CTi0efgjdil0ThfsclKkkMNC6cPbMNf54SmJDtME9HRHe6CwCEmCA4uGM60Mith_GOkuJ2pDaRSrmQgP5DaN68_=w1200",
-      album_fotos_url: "https://photos.app.goo.gl/tinkay-bouq-coreano",
+      album_fotos_url: "https://photos.app.goo.gl/RhTxny2frDaV1XTv5",
       descripcion_corta: "Bouquet moderno envuelto en papel coreano plisado y cintas satinadas.",
       etiquetas: ["coreano", "vanguardia", "cumpleanos", "vip"],
       tiempo_entrega: "🌸 Pide hoy, recibe hoy (Mismo Día)",
@@ -2907,7 +2907,7 @@ const DISPONIBILIDAD_SEMILLA_TINKAY: ItemDisponibilidadOperativa[] = [
     estado: "DISPONIBLE",
     color_hex: "#DC2626",
     color_nombre: "Rojo Pasión",
-    imagen_url: "https://photos.app.goo.gl/tinkay-bouq-coreano",
+    imagen_url: "https://photos.app.goo.gl/RhTxny2frDaV1XTv5",
     detalle: { tallos_por_bonche: 25 },
   },
   {

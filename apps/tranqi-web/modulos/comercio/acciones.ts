@@ -807,7 +807,7 @@ const PRODUCTOS_SEMILLA_TINKAY: ProductoCatalogo[] = [
     pro_categoria_principal_id: "cat-tinkay-002",
     pro_detalle_producto: {
       icono: "Sparkles",
-      album_fotos_url: "https://photos.app.goo.gl/tinkay-bouq-coreano",
+      album_fotos_url: "https://photos.app.goo.gl/RhTxny2frDaV1XTv5",
       descripcion_corta: "Bouquet moderno envuelto en papel coreano plisado y cintas satinadas.",
       etiquetas: ["coreano", "vanguardia", "cumpleanos", "vip"],
     },
