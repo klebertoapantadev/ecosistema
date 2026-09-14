@@ -28,7 +28,7 @@ import {
   CatalogoProductosComercio,
   ConfiguracionPasarelaPayphone,
   HistorialTransaccionesPago,
-} from "@/modulos/comercio";
+} from "@eco/comercio";
 
 import { obtenerConfiguracionNavegacionRolAction } from "@eco/gestion-usuarios/acciones";
 
@@ -538,7 +538,7 @@ export function PanelDinamicoModular({ slug, negocio }: Props) {
       case "catalogo_productos":
       case "catalogo":
       case "honorarios":
-        return <ConsolaGestionCatalogo negocio={negocio} />;
+        return <CatalogoProductosComercio negocio={negocio} />;
       case "pasarela_payphone":
       case "payphone":
       case "pasarela":
