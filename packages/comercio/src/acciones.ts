@@ -176,7 +176,7 @@ const PRODUCTOS_SEMILLA_TRANQI: ProductoCatalogo[] = [
       ambito: "Trámite Notarial",
       icono: "FileCheck",
       codigo_gobernanza: "TRQ-NOT-DOC",
-      imagen_url: "https://images.unsplash.com/photo-1450133064473-71024230f91b?auto=format&fit=crop&w=1000&q=80",
+      imagen_url: "/imagenes/catalogo/notarizacion.jpg",
       video_url: "https://www.youtube.com/watch?v=kXYiU_JCYtU",
       tiempo_entrega: "24 a 48 horas hábiles",
       beneficios: [
@@ -227,7 +227,7 @@ const PRODUCTOS_SEMILLA_TRANQI: ProductoCatalogo[] = [
       ambito: "Familia y Notarial",
       icono: "FileCheck",
       codigo_gobernanza: "TRQ-SAL-PAI",
-      imagen_url: "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=1000&q=80",
+      imagen_url: "/imagenes/catalogo/permiso-salida.jpg",
       video_url: "https://www.youtube.com/watch?v=kXYiU_JCYtU",
       tiempo_entrega: "24 horas hábiles",
       beneficios: [
@@ -277,7 +277,7 @@ const PRODUCTOS_SEMILLA_TRANQI: ProductoCatalogo[] = [
       ambito: "Revisión Preventiva",
       icono: "FileCheck",
       codigo_gobernanza: "TRQ-REV-CON",
-      imagen_url: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=1000&q=80",
+      imagen_url: "/imagenes/catalogo/revision-contratos.jpg",
       video_url: "https://www.youtube.com/watch?v=kXYiU_JCYtU",
       tiempo_entrega: "Menos de 24 horas",
       beneficios: [
@@ -326,7 +326,7 @@ const PRODUCTOS_SEMILLA_TRANQI: ProductoCatalogo[] = [
       ambito: "Asesoría Legal 1 a 1",
       icono: "Scale",
       codigo_gobernanza: "TRQ-CON-ESP",
-      imagen_url: "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=1000&q=80",
+      imagen_url: "/imagenes/catalogo/consultas.jpg",
       video_url: "https://www.youtube.com/watch?v=kXYiU_JCYtU",
       tiempo_entrega: "Agendamiento inmediato / Mismo día",
       beneficios: [
@@ -420,7 +420,7 @@ const PRODUCTOS_SEMILLA_TRANQI: ProductoCatalogo[] = [
       ambito: "Familia y Civil",
       icono: "Scale",
       codigo_gobernanza: "TRQ-DIV-MUT",
-      imagen_url: "https://images.unsplash.com/photo-1521791136064-7986c2920216?auto=format&fit=crop&w=1000&q=80",
+      imagen_url: "/imagenes/catalogo/divorcio.jpg",
       video_url: "https://www.youtube.com/watch?v=kXYiU_JCYtU",
       tiempo_entrega: "7 a 15 días hábiles",
       beneficios: [
@@ -470,7 +470,7 @@ const PRODUCTOS_SEMILLA_TRANQI: ProductoCatalogo[] = [
       ambito: "Membresía Continua",
       icono: "ShieldCheck",
       codigo_gobernanza: "TRQ-PLAN-FAM",
-      imagen_url: "https://images.unsplash.com/photo-1551836022-d5d88e9218df?auto=format&fit=crop&w=1000&q=80",
+      imagen_url: "/imagenes/catalogo/planes-b2c.jpg",
       video_url: "https://www.youtube.com/watch?v=kXYiU_JCYtU",
       tiempo_entrega: "Activación inmediata tras suscripción",
       beneficios: [
@@ -564,7 +564,7 @@ const PRODUCTOS_SEMILLA_TRANQI: ProductoCatalogo[] = [
       ambito: "Blindaje Empresarial",
       icono: "ShieldCheck",
       codigo_gobernanza: "TRQ-PLAN-CORP",
-      imagen_url: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1000&q=80",
+      imagen_url: "/imagenes/catalogo/planes-b2b.jpg",
       video_url: "https://www.youtube.com/watch?v=kXYiU_JCYtU",
       tiempo_entrega: "Activación y onboarding corporativo en 24 horas",
       beneficios: [
