@@ -50,6 +50,242 @@ export const PALETA_COLORES_VARIANTES = [
   { nombre: "Índigo Profundo", bg: "#EEF2FF", border: "#6366F1", text: "#3730A3", badge: "#E0E7FF", dot: "#6366F1" },
 ];
 
+/**
+ * Selector interactivo de encuadre, posición y ajuste de imagen para catálogo cuadrado
+ */
+function SelectorEncuadreFoto({
+  imagenUrl,
+  posicion = "center center",
+  ajuste = "cover",
+  zoom = 100,
+  onCambiarPosicion,
+  onCambiarAjuste,
+  onCambiarZoom,
+  titulo = "Encuadre & Posición en Catálogo (Cuadrado 1:1)",
+  colorTema = "#0284C7",
+}: {
+  imagenUrl: string;
+  posicion?: string;
+  ajuste?: "cover" | "contain";
+  zoom?: number;
+  onCambiarPosicion: (pos: string) => void;
+  onCambiarAjuste: (ajuste: "cover" | "contain") => void;
+  onCambiarZoom: (zoom: number) => void;
+  titulo?: string;
+  colorTema?: string;
+}) {
+  if (!imagenUrl) return null;
+
+  const scaleVal = zoom && zoom !== 100 ? zoom / 100 : 1;
+
+  const presetsPosicion = [
+    { label: "⬆️ Superior (Rostros / Flores Altas)", val: "center 15%" },
+    { label: "⏹️ Centro Equilibrado", val: "center center" },
+    { label: "⬇️ Inferior (Base / Florero)", val: "center 85%" },
+  ];
+
+  return (
+    <div
+      style={{
+        marginTop: "10px",
+        background: "#F8FAFC",
+        border: "1.5px dashed #CBD5E1",
+        borderRadius: "10px",
+        padding: "12px",
+      }}
+    >
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+          <Sparkles size={14} color={colorTema} />
+          <span style={{ fontSize: "0.74rem", fontWeight: 800, color: "#1E293B" }}>
+            {titulo}
+          </span>
+        </div>
+        <span style={{ fontSize: "0.68rem", color: "#64748B", fontWeight: 600 }}>
+          Proporción Cuadrada 1:1
+        </span>
+      </div>
+
+      <div style={{ display: "flex", gap: "14px", alignItems: "center", flexWrap: "wrap" }}>
+        {/* Vista previa cuadrada interactiva */}
+        <div
+          style={{
+            position: "relative",
+            width: "105px",
+            height: "105px",
+            borderRadius: "10px",
+            overflow: "hidden",
+            background: "#0F172A",
+            border: `2px solid ${colorTema}`,
+            flexShrink: 0,
+            boxShadow: "0 3px 8px rgba(0,0,0,0.15)",
+          }}
+        >
+          {ajuste === "contain" && (
+            <img
+              src={imagenUrl}
+              alt=""
+              aria-hidden="true"
+              style={{
+                position: "absolute",
+                inset: 0,
+                width: "100%",
+                height: "100%",
+                objectFit: "cover",
+                filter: "blur(12px) brightness(0.6)",
+                transform: "scale(1.2)",
+                pointerEvents: "none",
+              }}
+            />
+          )}
+          <img
+            src={imagenUrl}
+            alt="Preview Encuadre"
+            onError={(e) => {
+              (e.target as HTMLImageElement).src =
+                "https://images.unsplash.com/photo-1561181286-d3fee7d55364?w=600&auto=format&fit=crop&q=80";
+            }}
+            style={{
+              position: "relative",
+              width: "100%",
+              height: "100%",
+              objectFit: ajuste,
+              objectPosition: posicion,
+              transform: scaleVal !== 1 ? `scale(${scaleVal})` : undefined,
+              transformOrigin: posicion,
+              transition: "all 0.2s ease",
+            }}
+          />
+          <div
+            style={{
+              position: "absolute",
+              bottom: "4px",
+              left: "4px",
+              background: "rgba(0,0,0,0.7)",
+              color: "#FFF",
+              fontSize: "0.58rem",
+              fontWeight: 700,
+              padding: "1px 5px",
+              borderRadius: "4px",
+              backdropFilter: "blur(3px)",
+            }}
+          >
+            Vista Carrusel
+          </div>
+        </div>
+
+        {/* Controles de Encuadre */}
+        <div style={{ flex: 1, minWidth: "220px", display: "flex", flexDirection: "column", gap: "8px" }}>
+          {/* Posición / Enfoque */}
+          <div>
+            <div style={{ fontSize: "0.7rem", fontWeight: 700, color: "#475569", marginBottom: "4px" }}>
+              Enfoque Vertical (¿Qué parte mostrar?):
+            </div>
+            <div style={{ display: "flex", gap: "4px", flexWrap: "wrap" }}>
+              {presetsPosicion.map((pr) => {
+                const activo = posicion === pr.val;
+                return (
+                  <button
+                    key={pr.val}
+                    type="button"
+                    onClick={() => onCambiarPosicion(pr.val)}
+                    style={{
+                      padding: "4px 8px",
+                      borderRadius: "6px",
+                      fontSize: "0.68rem",
+                      fontWeight: activo ? 800 : 600,
+                      border: activo ? `1.5px solid ${colorTema}` : "1px solid #CBD5E1",
+                      background: activo ? "#FFFFFF" : "#F1F5F9",
+                      color: activo ? colorTema : "#475569",
+                      cursor: "pointer",
+                      boxShadow: activo ? `0 1px 3px ${colorTema}33` : "none",
+                    }}
+                  >
+                    {pr.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Modo de Ajuste: Cover vs Contain */}
+          <div style={{ display: "flex", gap: "12px", alignItems: "center", flexWrap: "wrap" }}>
+            <div>
+              <div style={{ fontSize: "0.7rem", fontWeight: 700, color: "#475569", marginBottom: "4px" }}>
+                Ajuste:
+              </div>
+              <div style={{ display: "flex", gap: "4px" }}>
+                <button
+                  type="button"
+                  onClick={() => onCambiarAjuste("cover")}
+                  style={{
+                    padding: "4px 8px",
+                    borderRadius: "6px",
+                    fontSize: "0.68rem",
+                    fontWeight: ajuste === "cover" ? 800 : 600,
+                    border: ajuste === "cover" ? `1.5px solid ${colorTema}` : "1px solid #CBD5E1",
+                    background: ajuste === "cover" ? "#FFFFFF" : "#F1F5F9",
+                    color: ajuste === "cover" ? colorTema : "#475569",
+                    cursor: "pointer",
+                  }}
+                >
+                  🔲 Llenar (Cover)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onCambiarAjuste("contain")}
+                  style={{
+                    padding: "4px 8px",
+                    borderRadius: "6px",
+                    fontSize: "0.68rem",
+                    fontWeight: ajuste === "contain" ? 800 : 600,
+                    border: ajuste === "contain" ? `1.5px solid ${colorTema}` : "1px solid #CBD5E1",
+                    background: ajuste === "contain" ? "#FFFFFF" : "#F1F5F9",
+                    color: ajuste === "contain" ? colorTema : "#475569",
+                    cursor: "pointer",
+                  }}
+                >
+                  🖼️ Completa (Contain)
+                </button>
+              </div>
+            </div>
+
+            {/* Escala / Zoom */}
+            {ajuste === "cover" && (
+              <div>
+                <div style={{ fontSize: "0.7rem", fontWeight: 700, color: "#475569", marginBottom: "4px" }}>
+                  Escala: {zoom}%
+                </div>
+                <div style={{ display: "flex", gap: "3px" }}>
+                  {[100, 115, 130].map((z) => (
+                    <button
+                      key={z}
+                      type="button"
+                      onClick={() => onCambiarZoom(z)}
+                      style={{
+                        padding: "3px 6px",
+                        borderRadius: "4px",
+                        fontSize: "0.65rem",
+                        fontWeight: zoom === z ? 800 : 600,
+                        border: zoom === z ? `1.5px solid ${colorTema}` : "1px solid #CBD5E1",
+                        background: zoom === z ? "#FFFFFF" : "#F1F5F9",
+                        color: zoom === z ? colorTema : "#475569",
+                        cursor: "pointer",
+                      }}
+                    >
+                      {z === 100 ? "1x" : `${z}%`}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 interface Props {
   abierto: boolean;
   producto: ProductoCatalogo | null;
@@ -87,6 +323,10 @@ export function ModalEditarProducto({
 
   // Recursos Multimedia y Digitales
   const [imagenUrl, setImagenUrl] = useState("");
+  const [fotoPosicionMaster, setFotoPosicionMaster] = useState("center center");
+  const [fotoAjusteMaster, setFotoAjusteMaster] = useState<"cover" | "contain">("cover");
+  const [fotoZoomMaster, setFotoZoomMaster] = useState<number>(100);
+
   const [albumFotosUrl, setAlbumFotosUrl] = useState("");
   const [videoUrl, setVideoUrl] = useState("");
   const [galeriaTexto, setGaleriaTexto] = useState("");
@@ -141,6 +381,9 @@ export function ModalEditarProducto({
 
       const det = producto.pro_detalle_producto || {};
       setImagenUrl(det.imagen_url || "");
+      setFotoPosicionMaster(det.foto_posicion || "center center");
+      setFotoAjusteMaster(det.foto_ajuste || "cover");
+      setFotoZoomMaster(Number(det.foto_zoom) || 100);
       setAlbumFotosUrl(det.album_fotos_url || "");
       setVideoUrl(det.video_url || "");
       setGaleriaTexto(Array.isArray(det.galeria_urls) ? det.galeria_urls.join("\n") : "");
@@ -392,6 +635,9 @@ export function ModalEditarProducto({
         destacado,
         icono,
         imagenUrl: imagenUrlFinal || undefined,
+        fotoPosicion: fotoPosicionMaster,
+        fotoAjuste: fotoAjusteMaster,
+        fotoZoom: fotoZoomMaster,
         albumFotosUrl: albumFotosUrl.trim() || undefined,
         videoUrl: videoUrl.trim() || undefined,
         galeriaUrls: galeriaUrls.length > 0 ? galeriaUrls : undefined,
@@ -943,26 +1189,19 @@ export function ModalEditarProducto({
                       </div>
                     )}
 
-                    {/* Preview de Portada Master */}
+                    {/* Selector de Encuadre & Posición en Carrusel Cuadrado para Master */}
                     {imagenUrl && (
-                      <div style={{ marginTop: "6px", display: "flex", alignItems: "center", gap: "8px", background: "#F1F5F9", padding: "6px 8px", borderRadius: "6px", border: "1px solid #E2E8F0" }}>
-                        <div style={{ width: "42px", height: "42px", borderRadius: "4px", overflow: "hidden", background: "#0F172A", flexShrink: 0 }}>
-                          <img
-                            src={imagenUrl}
-                            alt="Portada Master"
-                            onError={(e) => {
-                              (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1561181286-d3fee7d55364?w=600&auto=format&fit=crop&q=80";
-                            }}
-                            style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                          />
-                        </div>
-                        <div style={{ fontSize: "0.7rem", color: "#334155", overflow: "hidden" }}>
-                          <div style={{ fontWeight: 700, color: "#0F172A" }}>Vista Previa Master</div>
-                          <div style={{ fontSize: "0.65rem", color: "#64748B", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap" }}>
-                            {imagenUrl.startsWith("https://lh3.googleusercontent.com") ? "Google Fotos (Enlace Directo OK)" : imagenUrl}
-                          </div>
-                        </div>
-                      </div>
+                      <SelectorEncuadreFoto
+                        imagenUrl={imagenUrl}
+                        posicion={fotoPosicionMaster}
+                        ajuste={fotoAjusteMaster}
+                        zoom={fotoZoomMaster}
+                        onCambiarPosicion={(pos) => setFotoPosicionMaster(pos)}
+                        onCambiarAjuste={(aj) => setFotoAjusteMaster(aj)}
+                        onCambiarZoom={(zm) => setFotoZoomMaster(zm)}
+                        titulo="Encuadre & Posición en Carrusel Cuadrado (Portada Master)"
+                        colorTema="#0284C7"
+                      />
                     )}
                   </div>
 
@@ -1429,25 +1668,27 @@ export function ModalEditarProducto({
                           </button>
                         </div>
 
-                        {/* Vista previa en vivo de la foto de la variante */}
-                        <div style={{ display: "flex", alignItems: "center", gap: "8px", background: "#FFFFFF", padding: "6px 8px", borderRadius: "6px", border: `1px solid ${colActiva.border}` }}>
-                          <div style={{ width: "42px", height: "42px", borderRadius: "4px", overflow: "hidden", background: "#0F172A", flexShrink: 0 }}>
-                            <img
-                              src={varianteActual.var_detalle_variante.portada_url}
-                              alt={varianteActual.var_nombre}
-                              onError={(e) => {
-                                (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1561181286-d3fee7d55364?w=600&auto=format&fit=crop&q=80";
-                              }}
-                              style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                            />
-                          </div>
-                          <div style={{ fontSize: "0.7rem", color: "#334155", overflow: "hidden" }}>
-                            <div style={{ fontWeight: 800, color: colActiva.text }}>📸 Foto Personalizada de "{varianteActual.var_nombre}"</div>
-                            <div style={{ fontSize: "0.65rem", color: "#64748B", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap" }}>
-                              {varianteActual.var_detalle_variante.portada_url}
-                            </div>
-                          </div>
-                        </div>
+                        {/* Selector de encuadre específico para esta variante */}
+                        <SelectorEncuadreFoto
+                          imagenUrl={varianteActual.var_detalle_variante.portada_url}
+                          posicion={varianteActual.var_detalle_variante.foto_posicion || fotoPosicionMaster || "center center"}
+                          ajuste={varianteActual.var_detalle_variante.foto_ajuste || fotoAjusteMaster || "cover"}
+                          zoom={Number(varianteActual.var_detalle_variante.foto_zoom) || fotoZoomMaster || 100}
+                          onCambiarPosicion={(pos) => {
+                            const det = { ...(varianteActual.var_detalle_variante || {}), foto_posicion: pos };
+                            actualizarVarianteActual("var_detalle_variante", det);
+                          }}
+                          onCambiarAjuste={(aj) => {
+                            const det = { ...(varianteActual.var_detalle_variante || {}), foto_ajuste: aj };
+                            actualizarVarianteActual("var_detalle_variante", det);
+                          }}
+                          onCambiarZoom={(zm) => {
+                            const det = { ...(varianteActual.var_detalle_variante || {}), foto_zoom: zm };
+                            actualizarVarianteActual("var_detalle_variante", det);
+                          }}
+                          titulo={`Encuadre & Posición ("${varianteActual.var_nombre}")`}
+                          colorTema={colActiva.border}
+                        />
 
                         {Boolean(
                           varianteActual.var_detalle_variante.portada_url.includes("photos.app.goo.gl") ||

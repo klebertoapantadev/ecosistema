@@ -732,6 +732,9 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
               etiqueta: string;
               varianteId?: string;
               col?: any;
+              posicion?: string;
+              ajuste?: string;
+              zoom?: number;
             }> = [];
 
             if (p.pro_detalle_producto?.imagen_url) {
@@ -739,6 +742,9 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                 url: p.pro_detalle_producto.imagen_url,
                 origen: "master",
                 etiqueta: "Foto Master",
+                posicion: p.pro_detalle_producto.foto_posicion || "center center",
+                ajuste: p.pro_detalle_producto.foto_ajuste || "cover",
+                zoom: p.pro_detalle_producto.foto_zoom || 100,
               });
             }
 
@@ -751,6 +757,9 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                   etiqueta: v.var_nombre,
                   varianteId: v.var_id,
                   col,
+                  posicion: v.var_detalle_variante.foto_posicion || p.pro_detalle_producto?.foto_posicion || "center center",
+                  ajuste: v.var_detalle_variante.foto_ajuste || p.pro_detalle_producto?.foto_ajuste || "cover",
+                  zoom: v.var_detalle_variante.foto_zoom || p.pro_detalle_producto?.foto_zoom || 100,
                 });
               }
             });
@@ -762,6 +771,9 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                     url,
                     origen: "galeria",
                     etiqueta: `Muestra ${idx + 1}`,
+                    posicion: p.pro_detalle_producto?.foto_posicion || "center center",
+                    ajuste: p.pro_detalle_producto?.foto_ajuste || "cover",
+                    zoom: p.pro_detalle_producto?.foto_zoom || 100,
                   });
                 }
               });
@@ -773,6 +785,10 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
             );
             const fotoActual = fotosDisponibles[activeCarouselIdx];
             const fotoMostrar = fotoActual?.url || currentVar?.var_detalle_variante?.portada_url || p.pro_detalle_producto?.imagen_url;
+            const posicionActual = fotoActual?.posicion || currentVar?.var_detalle_variante?.foto_posicion || p.pro_detalle_producto?.foto_posicion || "center center";
+            const ajusteActual = fotoActual?.ajuste || currentVar?.var_detalle_variante?.foto_ajuste || p.pro_detalle_producto?.foto_ajuste || "cover";
+            const zoomActual = Number(fotoActual?.zoom || currentVar?.var_detalle_variante?.foto_zoom || p.pro_detalle_producto?.foto_zoom || 100);
+            const scaleFactor = zoomActual && zoomActual !== 100 ? zoomActual / 100 : 1;
 
             const videoMostrar = currentVar?.var_detalle_variante?.video_url || p.pro_detalle_producto?.video_url;
             const tiempoMostrar = currentVar?.var_detalle_variante?.tiempo_entrega || p.pro_detalle_producto?.tiempo_entrega;
@@ -797,7 +813,25 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
               >
                 {/* Carrusel de Imágenes: Portada Master + Fotos de Variantes */}
                 {fotoMostrar && (
-                  <div style={{ position: "relative", width: "100%", height: "190px", background: "#0F172A", overflow: "hidden" }}>
+                  <div style={{ position: "relative", width: "100%", aspectRatio: "1 / 1", background: "#0F172A", overflow: "hidden" }}>
+                    {/* Fondo difuminado si el ajuste es contain */}
+                    {ajusteActual === "contain" && (
+                      <img
+                        src={fotoMostrar}
+                        alt=""
+                        aria-hidden="true"
+                        style={{
+                          position: "absolute",
+                          inset: 0,
+                          width: "100%",
+                          height: "100%",
+                          objectFit: "cover",
+                          filter: "blur(20px) brightness(0.6)",
+                          transform: "scale(1.2)",
+                          pointerEvents: "none",
+                        }}
+                      />
+                    )}
                     <img
                       src={fotoMostrar}
                       alt={p.pro_nombre}
@@ -806,9 +840,13 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                         (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1561181286-d3fee7d55364?w=600&auto=format&fit=crop&q=80";
                       }}
                       style={{
+                        position: "relative",
                         width: "100%",
                         height: "100%",
-                        objectFit: "cover",
+                        objectFit: ajusteActual as any,
+                        objectPosition: posicionActual,
+                        transform: scaleFactor !== 1 ? `scale(${scaleFactor})` : undefined,
+                        transformOrigin: posicionActual,
                         transition: "all 0.3s ease",
                       }}
                     />

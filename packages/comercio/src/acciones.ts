@@ -1795,6 +1795,9 @@ export async function editarProductoAction(datos: {
   sku?: string;
   icono?: string;
   imagenUrl?: string;
+  fotoPosicion?: string;
+  fotoAjuste?: string;
+  fotoZoom?: number;
   albumFotosUrl?: string;
   videoUrl?: string;
   galeriaUrls?: string[];
@@ -1953,6 +1956,9 @@ export async function editarProductoAction(datos: {
         ...prodActual.pro_detalle_producto,
         icono: datos.icono || prodActual.pro_detalle_producto?.icono || "Sparkles",
         imagen_url: resolvedImagenUrl,
+        foto_posicion: datos.fotoPosicion !== undefined ? datos.fotoPosicion : (prodActual.pro_detalle_producto?.foto_posicion || "center center"),
+        foto_ajuste: datos.fotoAjuste !== undefined ? datos.fotoAjuste : (prodActual.pro_detalle_producto?.foto_ajuste || "cover"),
+        foto_zoom: datos.fotoZoom !== undefined ? datos.fotoZoom : (prodActual.pro_detalle_producto?.foto_zoom || 100),
         album_fotos_url: datos.albumFotosUrl !== undefined ? datos.albumFotosUrl.trim() : prodActual.pro_detalle_producto?.album_fotos_url,
         video_url: datos.videoUrl !== undefined ? datos.videoUrl.trim() : prodActual.pro_detalle_producto?.video_url,
         galeria_urls: resolvedGaleria,
