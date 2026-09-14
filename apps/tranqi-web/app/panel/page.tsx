@@ -15,7 +15,7 @@ import { WidgetNotificacionesCliente } from "@eco/notificaciones";
 import { obtenerSolicitudPropia } from "../../modulos/socios/consultas";
 import { ConsolaSuperAdminModular } from "./ConsolaSuperAdminModular";
 import { TarjetaEstadoSolicitudHome } from "./TarjetaEstadoSolicitudHome";
-import { SeccionCoberturaCliente } from "@eco/comercio";
+import { SeccionCoberturaCliente, CarruselProductosCliente } from "@eco/comercio";
 
 export const metadata: Metadata = { title: "Panel — tranqi" };
 
@@ -189,6 +189,9 @@ function PanelCliente({ saludo, nombre }: { saludo: string | null; nombre: strin
         <div className="columna-cliente">
           {/* 1) COBERTURA & PLAN ACTIVO DINÁMICO (PLT-009 / PLT-020) */}
           <SeccionCoberturaCliente negocio="tranqi" />
+
+          {/* 1.1) CARRUSEL DE PRODUCTOS & PLANES DISPONIBLES */}
+          <CarruselProductosCliente negocio="tranqi" />
 
           {/* 2) ACCESS GRID (Favoritos primero + Accesos predeterminados) */}
           <div className="accesos-cliente">

@@ -16,13 +16,17 @@ import {
   Zap,
   ShoppingBag,
   ExternalLink,
+  CreditCard,
+  AlertTriangle,
 } from "lucide-react";
 import {
   obtenerCoberturaUsuarioAction,
   consumirDerechoUsuarioAction,
   EstadoCoberturaCliente,
+  VarianteCatalogo,
 } from "../acciones";
 import { ModalHistorialUsoPlan } from "./ModalHistorialUsoPlan";
+import { ModalCheckoutPayphone } from "./ModalCheckoutPayphone";
 
 interface Props {
   negocio?: string;
@@ -38,6 +42,7 @@ export function SeccionCoberturaCliente({
   const [consumiendo, setConsumiendo] = useState<string | null>(null);
   const [mensajeConsumo, setMensajeConsumo] = useState<{ tipo: "exito" | "error"; texto: string } | null>(null);
   const [modalHistorialAbierto, setModalHistorialAbierto] = useState(false);
+  const [modalCheckoutAbierto, setModalCheckoutAbierto] = useState(false);
 
   const cargarCobertura = async () => {
     try {
@@ -53,6 +58,8 @@ export function SeccionCoberturaCliente({
   useEffect(() => {
     cargarCobertura();
   }, [negocio]);
+
+  const esDemo = Boolean(cobertura?.suscripcionId?.startsWith("sub-demo"));
 
   const manejarConsumirDerecho = async (concepto: string, nombre: string) => {
     if (!cobertura?.suscripcionId) return;
@@ -186,27 +193,48 @@ export function SeccionCoberturaCliente({
       </svg>
 
       {/* HEADER DE LA TARJETA */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "16px", marginBottom: "22px", position: "relative", zIndex: 1 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "16px", marginBottom: "18px", position: "relative", zIndex: 1 }}>
         <div>
-          <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
-            <span
-              style={{
-                background: "rgba(16, 185, 129, 0.2)",
-                border: "1px solid rgba(52, 211, 153, 0.4)",
-                color: "#6EE7B7",
-                borderRadius: "20px",
-                padding: "3px 10px",
-                fontSize: "0.72rem",
-                fontWeight: 800,
-                textTransform: "uppercase",
-                letterSpacing: "0.05em",
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "5px",
-              }}
-            >
-              <CheckCircle2 size={12} /> Protección Activa
-            </span>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px", flexWrap: "wrap" }}>
+            {esDemo ? (
+              <span
+                style={{
+                  background: "rgba(245, 158, 11, 0.25)",
+                  border: "1px solid rgba(251, 191, 36, 0.5)",
+                  color: "#FDE047",
+                  borderRadius: "20px",
+                  padding: "3px 10px",
+                  fontSize: "0.72rem",
+                  fontWeight: 800,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.05em",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "5px",
+                }}
+              >
+                <Zap size={12} /> Modo Simulación / Vista Previa
+              </span>
+            ) : (
+              <span
+                style={{
+                  background: "rgba(16, 185, 129, 0.2)",
+                  border: "1px solid rgba(52, 211, 153, 0.4)",
+                  color: "#6EE7B7",
+                  borderRadius: "20px",
+                  padding: "3px 10px",
+                  fontSize: "0.72rem",
+                  fontWeight: 800,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.05em",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "5px",
+                }}
+              >
+                <CheckCircle2 size={12} /> Protección Activa en BDD
+              </span>
+            )}
             <span
               style={{
                 background: "rgba(255, 255, 255, 0.1)",
@@ -247,7 +275,31 @@ export function SeccionCoberturaCliente({
           </p>
         </div>
 
-        <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+        <div style={{ display: "flex", gap: "10px", alignItems: "center", flexWrap: "wrap" }}>
+          {esDemo && (
+            <button
+              type="button"
+              onClick={() => setModalCheckoutAbierto(true)}
+              style={{
+                background: "linear-gradient(135deg, #10B981 0%, #059669 100%)",
+                border: "none",
+                color: "#FFFFFF",
+                borderRadius: "10px",
+                padding: "8px 16px",
+                fontSize: "0.8rem",
+                fontWeight: 800,
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+                cursor: "pointer",
+                boxShadow: "0 4px 14px rgba(16, 185, 129, 0.35)",
+                transition: "transform 0.15s ease",
+              }}
+            >
+              <CreditCard size={14} /> Contratar Plan Real (Payphone)
+            </button>
+          )}
+
           <button
             type="button"
             onClick={() => setModalHistorialAbierto(true)}
@@ -271,6 +323,52 @@ export function SeccionCoberturaCliente({
           </button>
         </div>
       </div>
+
+      {/* BANNER INFORMATIVO SI ESTÁ EN MODO DEMO */}
+      {esDemo && (
+        <div
+          style={{
+            background: "rgba(245, 158, 11, 0.15)",
+            border: "1px solid rgba(245, 158, 11, 0.35)",
+            borderRadius: "14px",
+            padding: "10px 16px",
+            fontSize: "0.82rem",
+            color: "#FEF08A",
+            marginBottom: "18px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            flexWrap: "wrap",
+            gap: "10px",
+            position: "relative",
+            zIndex: 1,
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <AlertTriangle size={16} color="#FBBF24" style={{ flexShrink: 0 }} />
+            <span>
+              <strong>Modo Demostración Activo:</strong> Estás visualizando los derechos simulados del Plan Amparo Familiar. Puedes probar consumos de prueba o presionar en <strong>"Contratar Plan Real"</strong> para procesar el pago con el simulador Payphone y activar tu plan real en BDD.
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setModalCheckoutAbierto(true)}
+            style={{
+              background: "#F59E0B",
+              color: "#0F172A",
+              border: "none",
+              padding: "6px 12px",
+              borderRadius: "8px",
+              fontWeight: 800,
+              fontSize: "0.75rem",
+              cursor: "pointer",
+              whiteSpace: "nowrap",
+            }}
+          >
+            Probar Compra de Plan →
+          </button>
+        </div>
+      )}
 
       {/* FEEDBACK DE CONSUMO */}
       {mensajeConsumo && (
@@ -526,7 +624,49 @@ export function SeccionCoberturaCliente({
         alCerrar={() => setModalHistorialAbierto(false)}
         cobertura={cobertura}
         negocio={negocio}
+        onContratarPlan={() => {
+          setModalHistorialAbierto(false);
+          setModalCheckoutAbierto(true);
+        }}
       />
+
+      {/* MODAL DE CHECKOUT DIRECTO PARA CONTRATAR PLAN */}
+      {modalCheckoutAbierto && (
+        <ModalCheckoutPayphone
+          abierto={modalCheckoutAbierto}
+          alCerrar={() => setModalCheckoutAbierto(false)}
+          negocio={negocio}
+          productoNombre="Plan Amparo Familiar"
+          variante={{
+            var_id: "var-trq-plan-fam-mensual",
+            var_producto_id: "prod-trq-plan-familiar",
+            var_sku: "TRQ-PLAN-AMPARO-FAM",
+            var_nombre: "Plan Amparo Familiar Mensual",
+            var_precio: 49.99,
+            var_precio_comparacion: 75.0,
+            var_codigo_impuesto_sri: "IVA_15",
+            var_tarifa_iva_porcentaje: 15,
+            var_tipo_oferta: "RECURRENTE",
+            var_frecuencia_recurrencia: "MENSUAL",
+            var_activo: true,
+            var_detalle_variante: {
+              miembros_cubiertos: 4,
+              derechos: [
+                { concepto: "CONSULTA_TELEMATICA", nombre: "Citas Telemáticas Especializadas", incluidos: 4 },
+                { concepto: "REVISION_CONTRATO", nombre: "Revisiones y Dictámenes de Contratos", incluidos: 2 },
+                { concepto: "CONSULTA_ARIA_IA", nombre: "Consultas Ilimitadas Asistente ARIA IA 24/7", incluidos: null },
+                { concepto: "DESCUENTO_NOTARIAL", nombre: "Descuento en Trámites Notariales", incluidos: null, porcentaje: 35 },
+              ],
+            },
+            monto_iva: 7.50,
+            precio_total: 57.49,
+          }}
+          alPagoExitoso={async () => {
+            setModalCheckoutAbierto(false);
+            await cargarCobertura();
+          }}
+        />
+      )}
     </section>
   );
 }

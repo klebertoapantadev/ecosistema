@@ -48,6 +48,7 @@ interface Props {
   alCerrar: () => void;
   cobertura: EstadoCoberturaCliente | null;
   negocio?: string;
+  onContratarPlan?: () => void;
 }
 
 const HISTORIAL_SEMILLA_TRANQI: ItemHistorialConsumo[] = [
@@ -142,11 +143,13 @@ export function ModalHistorialUsoPlan({
   alCerrar,
   cobertura,
   negocio = "tranqi",
+  onContratarPlan,
 }: Props) {
   const [evidenciaModalUrl, setEvidenciaModalUrl] = useState<string | null>(null);
 
   if (!abierto) return null;
 
+  const esDemo = Boolean(cobertura?.suscripcionId?.startsWith("sub-demo"));
   const historial =
     negocio === "tinkay" ? HISTORIAL_SEMILLA_TINKAY : HISTORIAL_SEMILLA_TRANQI;
 
@@ -253,30 +256,70 @@ export function ModalHistorialUsoPlan({
           >
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "12px", flexWrap: "wrap", gap: "10px" }}>
               <div>
-                <span
-                  style={{
-                    background: "#DCFCE7",
-                    color: "#166534",
-                    fontSize: "0.72rem",
-                    fontWeight: 800,
-                    padding: "3px 10px",
-                    borderRadius: "12px",
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "4px",
-                    marginBottom: "6px",
-                  }}
-                >
-                  <CheckCircle2 size={12} /> MEMBRESÍA ACTIVA
-                </span>
+                {esDemo ? (
+                  <span
+                    style={{
+                      background: "#FEF3C7",
+                      color: "#92400E",
+                      fontSize: "0.72rem",
+                      fontWeight: 800,
+                      padding: "3px 10px",
+                      borderRadius: "12px",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "4px",
+                      marginBottom: "6px",
+                      border: "1px solid #FDE68A",
+                    }}
+                  >
+                    <Sparkles size={12} /> SIMULACIÓN / MODO DEMO
+                  </span>
+                ) : (
+                  <span
+                    style={{
+                      background: "#DCFCE7",
+                      color: "#166534",
+                      fontSize: "0.72rem",
+                      fontWeight: 800,
+                      padding: "3px 10px",
+                      borderRadius: "12px",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "4px",
+                      marginBottom: "6px",
+                    }}
+                  >
+                    <CheckCircle2 size={12} /> MEMBRESÍA ACTIVA (BDD)
+                  </span>
+                )}
                 <h4 style={{ margin: 0, fontSize: "1.15rem", fontWeight: 800, color: "#0F172A" }}>
                   {cobertura?.planNombre || "Plan Amparo Familiar"}
                 </h4>
               </div>
 
-              <span style={{ fontSize: "0.82rem", color: "#64748B" }}>
-                ID: <code style={{ fontWeight: 700 }}>{cobertura?.suscripcionId || "sub-activo"}</code>
-              </span>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <span style={{ fontSize: "0.82rem", color: "#64748B" }}>
+                  ID: <code style={{ fontWeight: 700 }}>{cobertura?.suscripcionId || "sub-activo"}</code>
+                </span>
+                {esDemo && onContratarPlan && (
+                  <button
+                    type="button"
+                    onClick={onContratarPlan}
+                    style={{
+                      background: "#10B981",
+                      color: "#FFFFFF",
+                      border: "none",
+                      padding: "4px 10px",
+                      borderRadius: "8px",
+                      fontSize: "0.75rem",
+                      fontWeight: 800,
+                      cursor: "pointer",
+                    }}
+                  >
+                    Contratar Real
+                  </button>
+                )}
+              </div>
             </div>
 
             <div
@@ -452,27 +495,53 @@ export function ModalHistorialUsoPlan({
             justifyContent: "space-between",
             alignItems: "center",
             background: "#F8FAFC",
+            flexWrap: "wrap",
+            gap: "10px",
           }}
         >
           <span style={{ fontSize: "0.75rem", color: "#64748B" }}>
-            Tus derechos se reinician automáticamente al inicio de cada ciclo de facturación.
+            {esDemo ? "Vista preliminar con datos simulados." : "Tus derechos se reinician automáticamente al inicio de cada ciclo de facturación."}
           </span>
-          <button
-            type="button"
-            onClick={alCerrar}
-            style={{
-              background: "#0F172A",
-              color: "#FFFFFF",
-              border: "none",
-              padding: "8px 18px",
-              borderRadius: "8px",
-              fontSize: "0.85rem",
-              fontWeight: 700,
-              cursor: "pointer",
-            }}
-          >
-            Cerrar
-          </button>
+          <div style={{ display: "flex", gap: "8px" }}>
+            {esDemo && onContratarPlan && (
+              <button
+                type="button"
+                onClick={onContratarPlan}
+                style={{
+                  background: "linear-gradient(135deg, #10B981 0%, #059669 100%)",
+                  color: "#FFFFFF",
+                  border: "none",
+                  padding: "8px 18px",
+                  borderRadius: "8px",
+                  fontSize: "0.85rem",
+                  fontWeight: 800,
+                  cursor: "pointer",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  boxShadow: "0 2px 8px rgba(16, 185, 129, 0.3)",
+                }}
+              >
+                <CreditCard size={15} /> Contratar Plan Real (Payphone)
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={alCerrar}
+              style={{
+                background: "#0F172A",
+                color: "#FFFFFF",
+                border: "none",
+                padding: "8px 18px",
+                borderRadius: "8px",
+                fontSize: "0.85rem",
+                fontWeight: 700,
+                cursor: "pointer",
+              }}
+            >
+              Cerrar
+            </button>
+          </div>
         </div>
       </div>
 
