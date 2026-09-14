@@ -1979,101 +1979,137 @@ export async function editarProductoAction(datos: {
 
     if (clienteActivo) {
       try {
-        const esUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(datos.pro_id);
-        let dbProdId: string | null = null;
+        const payloadRpc = {
+          pro_id: datos.pro_id,
+          negocio,
+          nombre,
+          slug: prodActual.pro_slug || generarSlug(nombre),
+          descripcion: datos.descripcion.trim(),
+          categoria_id: cat?.ctg_id || null,
+          tipo: datos.tipo,
+          destacado: Boolean(datos.destacado),
+          detalle_producto: prodEditado.pro_detalle_producto,
+          variantes: variantesActualizadas.map((v) => ({
+            var_id: v.var_id,
+            var_sku: v.var_sku,
+            var_nombre: v.var_nombre,
+            var_precio: v.var_precio,
+            var_precio_comparacion: v.var_precio_comparacion,
+            var_tarifa_iva_porcentaje: v.var_tarifa_iva_porcentaje,
+            var_codigo_impuesto_sri: v.var_codigo_impuesto_sri,
+            var_tipo_oferta: v.var_tipo_oferta || "REGULAR",
+            var_activo: v.var_activo !== false,
+            var_detalle_variante: v.var_detalle_variante || {},
+          })),
+        };
 
-        // Intentar actualizar com_producto
-        if (esUuid) {
-          const { data: updData } = await clienteActivo
-            .schema("comun_comercio")
-            .from("com_producto")
-            .update({
-              pro_nombre: nombre,
-              pro_descripcion: datos.descripcion.trim(),
-              pro_tipo: datos.tipo,
-              pro_destacado: Boolean(datos.destacado),
-              pro_categoria_principal_id: cat?.ctg_id || null,
-              pro_detalle_producto: prodEditado.pro_detalle_producto,
-            })
-            .eq("pro_id", datos.pro_id)
-            .select("pro_id")
-            .single();
-
-          if (updData?.pro_id) {
-            dbProdId = updData.pro_id;
+        // 1. Intentar persistencia atómica vía RPC (Segura contra RLS)
+        let rpcExitoso = false;
+        try {
+          const { data: rpcRes, error: errRpc } = await clienteActivo.rpc(
+            "com_fn_guardar_producto_catalogo",
+            { p_datos: payloadRpc }
+          );
+          if (!errRpc && rpcRes?.ok) {
+            rpcExitoso = true;
           }
+        } catch {
+          rpcExitoso = false;
         }
 
-        // Si no se actualizó por UUID, buscar/upsert por slug del producto
-        if (!dbProdId) {
-          const slug = prodActual.pro_slug || generarSlug(nombre);
-          const { data: upsertData } = await clienteActivo
-            .schema("comun_comercio")
-            .from("com_producto")
-            .upsert(
-              {
-                pro_negocio: negocio,
+        // 2. Fallback a consultas directas si el RPC no está instalado
+        if (!rpcExitoso) {
+          const esUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(datos.pro_id);
+          let dbProdId: string | null = null;
+
+          if (esUuid) {
+            const { data: updData } = await clienteActivo
+              .schema("comun_comercio")
+              .from("com_producto")
+              .update({
                 pro_nombre: nombre,
-                pro_slug: slug,
                 pro_descripcion: datos.descripcion.trim(),
                 pro_tipo: datos.tipo,
                 pro_destacado: Boolean(datos.destacado),
                 pro_categoria_principal_id: cat?.ctg_id || null,
-                pro_activo: true,
                 pro_detalle_producto: prodEditado.pro_detalle_producto,
-              },
-              { onConflict: "pro_negocio, pro_slug" }
-            )
-            .select("pro_id")
-            .single();
+              })
+              .eq("pro_id", datos.pro_id)
+              .select("pro_id")
+              .single();
 
-          if (upsertData?.pro_id) {
-            dbProdId = upsertData.pro_id;
-          }
-        }
-
-        // Actualizar o crear variantes en base de datos
-        if (dbProdId) {
-          for (const v of variantesActualizadas) {
-            const varDetalle = v.var_detalle_variante || {};
-            const varPayload: any = {
-              var_producto_id: dbProdId,
-              var_negocio: negocio,
-              var_sku: v.var_sku,
-              var_nombre: v.var_nombre,
-              var_precio: v.var_precio,
-              var_precio_comparacion: v.var_precio_comparacion,
-              var_tarifa_iva_porcentaje: v.var_tarifa_iva_porcentaje,
-              var_codigo_impuesto_sri: v.var_codigo_impuesto_sri,
-              var_tipo_oferta: v.var_tipo_oferta || "REGULAR",
-              var_activo: v.var_activo !== false,
-              var_detalle_variante: varDetalle,
-              var_actualizado_en: new Date().toISOString(),
-            };
-
-            const varEsUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v.var_id);
-            let guardadoOk = false;
-
-            if (varEsUuid) {
-              // 1. Intentar actualizar directamente por clave primaria (var_id)
-              const { data: updVar, error: errUpdVar } = await clienteActivo
-                .schema("comun_comercio")
-                .from("com_variante")
-                .update(varPayload)
-                .eq("var_id", v.var_id)
-                .select("var_id");
-
-              if (!errUpdVar && updVar && updVar.length > 0) {
-                guardadoOk = true;
-              }
+            if (updData?.pro_id) {
+              dbProdId = updData.pro_id;
             }
+          }
 
-            // 2. Si no existía por var_id o es nueva, upsert por (var_negocio, var_sku) sin forzar var_id
-            if (!guardadoOk) {
-              await clienteActivo
-                .schema("comun_comercio")
-                .from("com_variante")
-                .upsert(varPayload, { onConflict: "var_negocio, var_sku" });
+          if (!dbProdId) {
+            const slug = prodActual.pro_slug || generarSlug(nombre);
+            const { data: upsertData } = await clienteActivo
+              .schema("comun_comercio")
+              .from("com_producto")
+              .upsert(
+                {
+                  pro_negocio: negocio,
+                  pro_nombre: nombre,
+                  pro_slug: slug,
+                  pro_descripcion: datos.descripcion.trim(),
+                  pro_tipo: datos.tipo,
+                  pro_destacado: Boolean(datos.destacado),
+                  pro_categoria_principal_id: cat?.ctg_id || null,
+                  pro_activo: true,
+                  pro_detalle_producto: prodEditado.pro_detalle_producto,
+                },
+                { onConflict: "pro_negocio, pro_slug" }
+              )
+              .select("pro_id")
+              .single();
+
+            if (upsertData?.pro_id) {
+              dbProdId = upsertData.pro_id;
+            }
+          }
+
+          if (dbProdId) {
+            for (const v of variantesActualizadas) {
+              const varDetalle = v.var_detalle_variante || {};
+              const varPayload: any = {
+                var_producto_id: dbProdId,
+                var_negocio: negocio,
+                var_sku: v.var_sku,
+                var_nombre: v.var_nombre,
+                var_precio: v.var_precio,
+                var_precio_comparacion: v.var_precio_comparacion,
+                var_tarifa_iva_porcentaje: v.var_tarifa_iva_porcentaje,
+                var_codigo_impuesto_sri: v.var_codigo_impuesto_sri,
+                var_tipo_oferta: v.var_tipo_oferta || "REGULAR",
+                var_activo: v.var_activo !== false,
+                var_detalle_variante: varDetalle,
+                var_actualizado_en: new Date().toISOString(),
+              };
+
+              const varEsUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v.var_id);
+              let guardadoOk = false;
+
+              if (varEsUuid) {
+                const { data: updVar, error: errUpdVar } = await clienteActivo
+                  .schema("comun_comercio")
+                  .from("com_variante")
+                  .update(varPayload)
+                  .eq("var_id", v.var_id)
+                  .select("var_id");
+
+                if (!errUpdVar && updVar && updVar.length > 0) {
+                  guardadoOk = true;
+                }
+              }
+
+              if (!guardadoOk) {
+                await clienteActivo
+                  .schema("comun_comercio")
+                  .from("com_variante")
+                  .upsert(varPayload, { onConflict: "var_negocio, var_sku" });
+              }
             }
           }
         }
