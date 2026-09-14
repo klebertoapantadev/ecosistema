@@ -814,7 +814,7 @@ const PRODUCTOS_SEMILLA_TINKAY: ProductoCatalogo[] = [
     ],
   },
   {
-    pro_id: "prod-tinkay-coreano",
+    pro_id: "3af6aff5-ddd0-4746-b282-c760e4b42214",
     pro_negocio: "tinkay",
     pro_nombre: "Bouquet Diseño Estilo Coreano",
     pro_slug: "tinkay-bouq-coreano",
@@ -824,45 +824,63 @@ const PRODUCTOS_SEMILLA_TINKAY: ProductoCatalogo[] = [
     pro_categoria_principal_id: "cat-tinkay-002",
     pro_detalle_producto: {
       icono: "Sparkles",
+      imagen_url: "https://lh3.googleusercontent.com/pw/AP1GczOZEFibMGGeADW_BlMVDWuifn-a-CTi0efgjdil0ThfsclKkkMNC6cPbMNf54SmJDtME9HRHe6CwCEmCA4uGM60Mith_GOkuJ2pDaRSrmQgP5DaN68_=w1200",
       album_fotos_url: "https://photos.app.goo.gl/tinkay-bouq-coreano",
       descripcion_corta: "Bouquet moderno envuelto en papel coreano plisado y cintas satinadas.",
       etiquetas: ["coreano", "vanguardia", "cumpleanos", "vip"],
+      tiempo_entrega: "🌸 Pide hoy, recibe hoy (Mismo Día)",
+      logistica: {
+        delivery_incluido: true,
+        modalidad_transporte: "INCLUIDO_GRATIS",
+        etiqueta_transporte: "🚚 Envío a Domicilio Incluido",
+        cobertura_texto: "Quito Urbano y Valles"
+      }
     },
     categoria: { ctg_id: "cat-tinkay-002", ctg_nombre: "Estilo Coreano", ctg_slug: "cat-coreanos" },
     variantes: [
       {
         var_id: "var-tinkay-cor-peq",
-        var_producto_id: "prod-tinkay-coreano",
+        var_producto_id: "3af6aff5-ddd0-4746-b282-c760e4b42214",
         var_sku: "TNK-COR-PEQ",
         var_nombre: "Pequeño (24 Rosas)",
-        var_precio: 26.0,
+        var_precio: 22.6087,
         var_precio_comparacion: 26.0,
-        var_codigo_impuesto_sri: "IVA_0",
-        var_tarifa_iva_porcentaje: 0,
+        var_codigo_impuesto_sri: "IVA_15",
+        var_tarifa_iva_porcentaje: 15,
         var_tipo_oferta: "REGULAR",
         var_activo: true,
-        var_detalle_variante: { pvp_nominal: 26.0, tamano: "Pequeño (24 Rosas)" },
-        monto_iva: 0.0,
+        var_detalle_variante: {
+          tamano: "Pequeño (24 Rosas)",
+          portada_url: "https://lh3.googleusercontent.com/pw/AP1GczP9RID-AQeQ6oU3zqa7gBVW2ZvAZCW3KSvFvfUIRTvD4vK8N4UNmKNi9rVahSW4eIY3xiDvdQxm-FS2S1qGU_L767WWZt7FLODsvNy15bkHq0GWpkdm=w1200",
+          pvp_nominal: 26.0,
+          modalidad_pago: "Botón Payphone / Tarjeta / Saldo"
+        },
+        monto_iva: 3.3913,
         precio_total: 26.0,
       },
       {
         var_id: "var-tinkay-cor-med",
-        var_producto_id: "prod-tinkay-coreano",
+        var_producto_id: "3af6aff5-ddd0-4746-b282-c760e4b42214",
         var_sku: "TNK-COR-MED",
         var_nombre: "Mediano (40 Rosas)",
-        var_precio: 28.0,
+        var_precio: 24.3478,
         var_precio_comparacion: 28.0,
-        var_codigo_impuesto_sri: "IVA_0",
-        var_tarifa_iva_porcentaje: 0,
+        var_codigo_impuesto_sri: "IVA_15",
+        var_tarifa_iva_porcentaje: 15,
         var_tipo_oferta: "REGULAR",
         var_activo: true,
-        var_detalle_variante: { pvp_nominal: 28.0, tamano: "Mediano (40 Rosas)" },
-        monto_iva: 0.0,
+        var_detalle_variante: {
+          tamano: "Mediano (40 Rosas)",
+          portada_url: "https://lh3.googleusercontent.com/pw/AP1GczNzLNcUnBLT4DfAuiOz8_c7pcicI4GFwu6mCKv2NUIoDqn5H0NWqOuORRHBmYDrdD0hbPUcnjdknOmzhBDFvwqCeOSSB3Q74LBIpykkCfFpGe3wipb6=w1200",
+          pvp_nominal: 28.0,
+          modalidad_pago: "Botón Payphone / Tarjeta / Saldo"
+        },
+        monto_iva: 3.6522,
         precio_total: 28.0,
       },
       {
         var_id: "var-tinkay-cor-gra",
-        var_producto_id: "prod-tinkay-coreano",
+        var_producto_id: "3af6aff5-ddd0-4746-b282-c760e4b42214",
         var_sku: "TNK-COR-GRA",
         var_nombre: "Grande (36 Rosas)",
         var_precio: 39.1304,
@@ -871,13 +889,18 @@ const PRODUCTOS_SEMILLA_TINKAY: ProductoCatalogo[] = [
         var_tarifa_iva_porcentaje: 15,
         var_tipo_oferta: "REGULAR",
         var_activo: true,
-        var_detalle_variante: { pvp_nominal: 45.0, tamano: "Grande" },
+        var_detalle_variante: {
+          tamano: "Grande",
+          portada_url: "https://lh3.googleusercontent.com/pw/AP1GczP8-SWS6YF2iOsXEa1A7Ij26_J2C0CMLX6jMb5aqvkd5Hd2BQP9azHW4ZJR9wsZfg47ujPytVktmhNLiMBYQzV2fVGalU5znPN3oqjB2GoulGh0eyN5=w1200",
+          pvp_nominal: 45.0,
+          modalidad_pago: "Botón Payphone / Tarjeta / Saldo"
+        },
         monto_iva: 5.8696,
         precio_total: 45.0,
       },
       {
         var_id: "var-tinkay-cor-gig",
-        var_producto_id: "prod-tinkay-coreano",
+        var_producto_id: "3af6aff5-ddd0-4746-b282-c760e4b42214",
         var_sku: "TNK-COR-GIG",
         var_nombre: "Gigante VIP (50 Rosas + Corona + Mariposas)",
         var_precio: 52.1739,
@@ -886,7 +909,12 @@ const PRODUCTOS_SEMILLA_TINKAY: ProductoCatalogo[] = [
         var_tarifa_iva_porcentaje: 15,
         var_tipo_oferta: "REGULAR",
         var_activo: true,
-        var_detalle_variante: { pvp_nominal: 60.0, tamano: "Gigante VIP" },
+        var_detalle_variante: {
+          tamano: "Gigante VIP",
+          portada_url: "https://lh3.googleusercontent.com/pw/AP1GczNhxYIB2tPlUrod5q4ovLTZ8VeWkcLU1bxVREGSwMh9m0TS7DwgjezCYG8O8CCM6wn3p97mBth4B_dVLT7MmDiD_WBTr1Xl4H0PH1VQcgXskqLHS0GO=w1200",
+          pvp_nominal: 60.0,
+          modalidad_pago: "Botón Payphone / Tarjeta / Saldo"
+        },
         monto_iva: 7.8261,
         precio_total: 60.0,
       },
@@ -1235,7 +1263,7 @@ export async function obtenerCategoriasAction(negocio = "tranqi"): Promise<Categ
   let categoriasDb: any[] = [];
   if (clienteActivo) {
     try {
-      const { data: catCom, error: errCom } = await clienteActivo
+      let { data: catCom, error: errCom } = await clienteActivo
         .schema("comun_comercio")
         .from("com_categoria")
         .select("*")
@@ -1243,7 +1271,17 @@ export async function obtenerCategoriasAction(negocio = "tranqi"): Promise<Categ
         .eq("ctg_activo", true)
         .order("ctg_orden", { ascending: true });
 
-      if (!errCom && catCom && catCom.length > 0) {
+      if (errCom || !catCom || catCom.length === 0) {
+        const { data: catPub } = await clienteActivo
+          .from("com_categoria")
+          .select("*")
+          .eq("ctg_negocio", negocio)
+          .eq("ctg_activo", true)
+          .order("ctg_orden", { ascending: true });
+        catCom = catPub;
+      }
+
+      if (catCom && catCom.length > 0) {
         categoriasDb = catCom;
       }
     } catch {
@@ -1281,16 +1319,25 @@ export async function obtenerCatalogoProductosAction(negocio = "tranqi"): Promis
   if (clienteActivo) {
     try {
       // 1. Categorías para resolución exacta
-      const { data: cData } = await clienteActivo
+      let { data: cData, error: errC } = await clienteActivo
         .schema("comun_comercio")
         .from("com_categoria")
         .select("ctg_id, ctg_nombre, ctg_slug, ctg_negocio, ctg_activo")
         .eq("ctg_negocio", negocio)
         .eq("ctg_activo", true);
+      
+      if (errC || !cData || cData.length === 0) {
+        const { data: cDataPub } = await clienteActivo
+          .from("com_categoria")
+          .select("ctg_id, ctg_nombre, ctg_slug, ctg_negocio, ctg_activo")
+          .eq("ctg_negocio", negocio)
+          .eq("ctg_activo", true);
+        cData = cDataPub;
+      }
       catsDb = cData || [];
 
       // 2. Productos
-      const { data: pCom, error: errPCom } = await clienteActivo
+      let { data: pCom, error: errPCom } = await clienteActivo
         .schema("comun_comercio")
         .from("com_producto")
         .select("*")
@@ -1298,15 +1345,35 @@ export async function obtenerCatalogoProductosAction(negocio = "tranqi"): Promis
         .eq("pro_activo", true)
         .order("pro_destacado", { ascending: false });
 
-      if (!errPCom && pCom && pCom.length > 0) {
+      if (errPCom || !pCom || pCom.length === 0) {
+        const { data: pPub } = await clienteActivo
+          .from("com_producto")
+          .select("*")
+          .eq("pro_negocio", negocio)
+          .eq("pro_activo", true)
+          .order("pro_destacado", { ascending: false });
+        pCom = pPub;
+      }
+
+      if (pCom && pCom.length > 0) {
         prodsDb = pCom;
-        const { data: vCom } = await clienteActivo
+        let { data: vCom, error: errVCom } = await clienteActivo
           .schema("comun_comercio")
           .from("com_variante")
           .select("*")
           .eq("var_negocio", negocio)
           .eq("var_activo", true)
           .order("var_precio", { ascending: true });
+
+        if (errVCom || !vCom || vCom.length === 0) {
+          const { data: vPub } = await clienteActivo
+            .from("com_variante")
+            .select("*")
+            .eq("var_negocio", negocio)
+            .eq("var_activo", true)
+            .order("var_precio", { ascending: true });
+          vCom = vPub;
+        }
         varsDb = vCom || [];
       }
     } catch {
