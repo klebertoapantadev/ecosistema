@@ -24,7 +24,6 @@ import { BandejaClientesCRM } from "@/modulos/crm-clientes/componentes/BandejaCl
 import { ModalAltaClienteAsistida } from "@/modulos/crm-clientes/componentes/ModalAltaClienteAsistida";
 import {
   VitrinaComercialVisual,
-  ConsolaGestionCatalogo,
   CatalogoProductosComercio,
   ConfiguracionPasarelaPayphone,
   HistorialTransaccionesPago,

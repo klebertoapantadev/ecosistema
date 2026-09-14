@@ -6,7 +6,7 @@ import {
   Sparkles, Shield, LayoutGrid, Pencil, Users, UserCheck, Eye,
   Settings, Mail, ShieldCheck, Bell, CircleUser, KeyRound, Sliders, Briefcase,
   Receipt, History, RotateCcw, FileCheck, Folder, ShoppingBag, CreditCard,
-  CalendarClock, CalendarPlus, CalendarCheck, Shuffle, type LucideIcon
+  CalendarClock, CalendarPlus, CalendarCheck, type LucideIcon
 } from "lucide-react";
 import { resetearSistemaSuperAdminAction } from "@eco/gestion-usuarios/acciones";
 import { ModalNotificacionPush } from "@eco/notificaciones";

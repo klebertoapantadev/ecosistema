@@ -7,7 +7,7 @@ import { FormularioSmtp } from "@eco/configuracion-negocio/componentes/Formulari
 import { PreferenciasNotificacionWidget } from "@eco/notificaciones";
 import { AdministracionPerfilesWidget } from "@eco/gestion-usuarios/componentes/AdministracionPerfilesWidget";
 import { GestionTerminosConsentimientosWidget } from "@eco/identidad/componentes/GestionTerminosConsentimientosWidget";
-import { ConfiguracionPasarelaPayphone, ConsolaGestionCatalogo, CatalogoProductosComercio } from "@eco/comercio";
+import { ConfiguracionPasarelaPayphone, CatalogoProductosComercio } from "@eco/comercio";
 import { useCustomWidgets } from "../gestorTitulosWidgets";
 import { ModalEditarWidget } from "../ModalEditarWidget";
 import { ModalVerificarMFAWidget } from "../ModalVerificarMFAWidget";

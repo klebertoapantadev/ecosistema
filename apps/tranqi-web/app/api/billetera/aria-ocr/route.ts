@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { randomUUID } from "node:crypto";
 import zlib from "node:zlib";
 import { crearClienteServidor, crearClienteAdmin } from "@eco/supabase/servidor";
-import { extraerDocumento } from "../../../../modulos/socios/servicios/verificacionIdentidadAria";
+import { extraerDocumento, type ExtraccionDocumento } from "../../../../modulos/socios/servicios/verificacionIdentidadAria";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -243,7 +243,7 @@ function analizarContenidoDocumento(texto: string, nombreArchivo: string, nombre
   // 2. A quién pertenece / Titular
   let titularNombre: string | null = null;
   const matchTitular = fullText.match(
-    /(?:Nombre[s]?|Titular|Postulante|Propietario|A nombre de|Lic[.]?|Ing[.]?|Abg[.]?|Dr[.]?)\s*[:\-]?\s*([A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(?:\s+[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+){1,4})/i
+    /(?:Nombre[s]?|Titular|Postulante|Propietario|A nombre de|Lic[.]?|Ing[.]?|Abg[.]?|Dr[.]?)\s*[:-]?\s*([A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(?:\s+[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+){1,4})/i
   );
   if (matchTitular && matchTitular[1]) {
     titularNombre = matchTitular[1].trim();
@@ -259,7 +259,7 @@ function analizarContenidoDocumento(texto: string, nombreArchivo: string, nombre
   let titularIdentificacion: string | null = null;
   const matchRuc = fullText.match(/\b(\d{10}001)\b/);
   const matchCedula = fullText.match(/\b(\d{10})\b/);
-  const matchNit = fullText.match(/(?:NIT|ID|C\.?I\.?|Cédula|RUC|Pasaporte|Doc\.?)\s*[:#\-]?\s*([A-Z0-9\-]{6,15})/i);
+  const matchNit = fullText.match(/(?:NIT|ID|C\.?I\.?|Cédula|RUC|Pasaporte|Doc\.?)\s*[:#-]?\s*([A-Z0-9-]{6,15})/i);
 
   if (matchRuc) {
     titularIdentificacion = matchRuc[1]!;
@@ -271,7 +271,7 @@ function analizarContenidoDocumento(texto: string, nombreArchivo: string, nombre
 
   // 4. Lugar de Nacimiento o Emisión
   let lugarNacimiento: string | null = null;
-  const matchLugar = fullText.match(/(?:Lugar de Nacimiento|Nacido en|Nacimiento en|Ciudad|Provincia|Domicilio|Residencia|Nacionalidad|Lugar de Emisión)\s*[:\-]?\s*([A-Za-zÁÉÍÓÚáéíóúñÑ\s,]{3,35})/i);
+  const matchLugar = fullText.match(/(?:Lugar de Nacimiento|Nacido en|Nacimiento en|Ciudad|Provincia|Domicilio|Residencia|Nacionalidad|Lugar de Emisión)\s*[:-]?\s*([A-Za-zÁÉÍÓÚáéíóúñÑ\s,]{3,35})/i);
   if (matchLugar && matchLugar[1]) {
     lugarNacimiento = matchLugar[1].trim().replace(/[\r\n]+/g, " ");
   } else {
@@ -290,13 +290,13 @@ function analizarContenidoDocumento(texto: string, nombreArchivo: string, nombre
   let fechaEmision: string | null = null;
   let fechaCaducidad: string | null = null;
 
-  const matchFnac = fullText.match(/(?:Fecha de Nacimiento|F\.? Nacimiento|Nacido el|F\.? Nac\.?)\s*[:\-]?\s*(\d{1,4}[-/.]\d{1,2}[-/.]\d{1,4})/i);
+  const matchFnac = fullText.match(/(?:Fecha de Nacimiento|F\.? Nacimiento|Nacido el|F\.? Nac\.?)\s*[:-]?\s*(\d{1,4}[-/.]\d{1,2}[-/.]\d{1,4})/i);
   if (matchFnac && matchFnac[1]) fechaNacimiento = normalizarFecha(matchFnac[1]);
 
-  const matchFemis = fullText.match(/(?:Fecha de Emisión|Emitido el|Emisión|Expedición|F\.? Emisión)\s*[:\-]?\s*(\d{1,4}[-/.]\d{1,2}[-/.]\d{1,4})/i);
+  const matchFemis = fullText.match(/(?:Fecha de Emisión|Emitido el|Emisión|Expedición|F\.? Emisión)\s*[:-]?\s*(\d{1,4}[-/.]\d{1,2}[-/.]\d{1,4})/i);
   if (matchFemis && matchFemis[1]) fechaEmision = normalizarFecha(matchFemis[1]);
 
-  const matchFcad = fullText.match(/(?:Fecha de Caducidad|Fecha de Vencimiento|Caduca|Vence|Vencimiento|Expiración|Validez hasta|Válido hasta)\s*[:\-]?\s*(\d{1,4}[-/.]\d{1,4}[-/.]\d{1,4})/i);
+  const matchFcad = fullText.match(/(?:Fecha de Caducidad|Fecha de Vencimiento|Caduca|Vence|Vencimiento|Expiración|Validez hasta|Válido hasta)\s*[:-]?\s*(\d{1,4}[-/.]\d{1,4}[-/.]\d{1,4})/i);
   if (matchFcad && matchFcad[1]) {
     fechaCaducidad = normalizarFecha(matchFcad[1]);
     requiereCaducidad = true;
@@ -404,7 +404,7 @@ export async function POST(req: NextRequest) {
 
   // 2. Intentar llamar a Aria si hay almacenamiento y credenciales
   const admin = crearClienteAdmin();
-  let analisisAria: any = null;
+  let analisisAria: ExtraccionDocumento | null = null;
   let rutaTemporal: string | null = null;
 
   if (admin && bufferArchivo) {
