@@ -48,6 +48,15 @@ export function ModalCheckoutPayphone({
   const [email, setEmail] = useState("");
   const [telefono, setTelefono] = useState("");
 
+  // Estado del simulador de tarjeta interactivo
+  const [tarjetaNumero, setTarjetaNumero] = useState("4500 8912 3456 7890");
+  const [tarjetaTitular, setTarjetaTitular] = useState("");
+  const [tarjetaExp, setTarjetaExp] = useState("08/29");
+  const [tarjetaCvv, setTarjetaCvv] = useState("456");
+  const [tarjetaMarca, setTarjetaMarca] = useState("Visa");
+  const [enDesafioOTP, setEnDesafioOTP] = useState(false);
+  const [codigoOTP, setCodigoOTP] = useState("");
+
   // Estado del proceso
   const [paso, setPaso] = useState<"formulario" | "simulando" | "real_abierto" | "resultado">("formulario");
   const [modoSimulado, setModoSimulado] = useState(true);
@@ -67,6 +76,32 @@ export function ModalCheckoutPayphone({
 
   if (!abierto || !variante) return null;
 
+  // Detectar marca según primeros dígitos
+  const detectarMarca = (num: string) => {
+    const limpio = num.replace(/\s+/g, "");
+    if (limpio.startsWith("4")) return "Visa";
+    if (/^5[1-5]/.test(limpio) || /^2[2-7]/.test(limpio)) return "Mastercard";
+    if (/^3[47]/.test(limpio)) return "American Express";
+    if (/^3(?:0[0-5]|[68])/.test(limpio)) return "Diners Club";
+    return "Visa";
+  };
+
+  const aplicarPresetTarjeta = (preset: {
+    numero: string;
+    exp: string;
+    cvv: string;
+    marca: string;
+    otp?: boolean;
+  }) => {
+    setTarjetaNumero(preset.numero);
+    setTarjetaExp(preset.exp);
+    setTarjetaCvv(preset.cvv);
+    setTarjetaMarca(preset.marca);
+    if (!tarjetaTitular) {
+      setTarjetaTitular(`${nombres.trim() || "MARTIN"} ${apellidos.trim() || "TOAPANTA"}`.toUpperCase());
+    }
+  };
+
   // 1. Manejar envío para preparar transacción
   const manejarPrepararPago = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -77,6 +112,7 @@ export function ModalCheckoutPayphone({
       return;
     }
 
+    setTarjetaTitular(`${nombres.trim()} ${apellidos.trim() || "CLIENTE"}`.toUpperCase());
     setProcesando(true);
     try {
       const res = await prepararPagoPayphoneAction({
@@ -125,11 +161,28 @@ export function ModalCheckoutPayphone({
     }
   };
 
-  // 2. Manejar simulación de respuesta (Aprobar o Rechazar)
-  const manejarConfirmarSimulacion = async (resultado: "APROBADO" | "RECHAZADO") => {
+  // 2. Manejar simulación interactiva completa de tarjeta
+  const manejarProcesarSimulacionTarjeta = async (resultadoForzado?: "APROBADO" | "RECHAZADO") => {
     if (!prepData) return;
+
+    if (!tarjetaNumero || tarjetaNumero.replace(/\s+/g, "").length < 14) {
+      setErrorMsg("Ingresa un número de tarjeta válido (16 dígitos).");
+      return;
+    }
+    if (!tarjetaExp || !tarjetaExp.includes("/")) {
+      setErrorMsg("Ingresa la fecha de expiración en formato MM/AA.");
+      return;
+    }
+    if (!tarjetaCvv || tarjetaCvv.length < 3) {
+      setErrorMsg("Ingresa el código de seguridad CVV (3-4 dígitos).");
+      return;
+    }
+
     setProcesando(true);
     setErrorMsg(null);
+
+    const ultimos4 = tarjetaNumero.replace(/\s+/g, "").slice(-4);
+    const resultado = resultadoForzado || (tarjetaNumero.includes("3612") ? "RECHAZADO" : "APROBADO");
 
     try {
       const res = await confirmarPagoPayphoneAction({
@@ -138,7 +191,12 @@ export function ModalCheckoutPayphone({
         clientTxId: prepData.clientTransactionId,
         esSimulado: true,
         resultadoSimulacion: resultado,
-        marcaTarjetaSimulada: "Visa",
+        marcaTarjetaSimulada: tarjetaMarca,
+        ultimosDigitos: ultimos4,
+        titularNombre: tarjetaTitular || `${nombres} ${apellidos}`,
+        varianteId: variante.var_id,
+        productoNombre,
+        clienteEmail: email,
       });
 
       if (!res.ok) {
@@ -544,102 +602,369 @@ export function ModalCheckoutPayphone({
             </form>
           )}
 
-          {/* PASO 2: SIMULADOR INTERACTIVO */}
+          {/* PASO 2: SIMULADOR INTERACTIVO DE TARJETA BANCARIA */}
           {paso === "simulando" && prepData && (
-            <div style={{ textAlign: "center", padding: "10px 0" }}>
+            <div style={{ padding: "8px 0" }}>
+              {/* TARJETA VISUAL DINÁMICA */}
               <div
                 style={{
-                  width: "60px",
-                  height: "60px",
-                  borderRadius: "50%",
-                  background: "#FEF3C7",
-                  color: "#D97706",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  margin: "0 auto 16px",
+                  background:
+                    tarjetaMarca === "Mastercard"
+                      ? "linear-gradient(135deg, #1E293B 0%, #0F172A 100%)"
+                      : tarjetaMarca === "Diners Club"
+                      ? "linear-gradient(135deg, #0284C7 0%, #0369A1 100%)"
+                      : tarjetaMarca === "American Express"
+                      ? "linear-gradient(135deg, #047857 0%, #065F46 100%)"
+                      : "linear-gradient(135deg, #312E81 0%, #4338CA 50%, #6366F1 100%)",
+                  borderRadius: "20px",
+                  padding: "24px",
+                  color: "#FFFFFF",
+                  position: "relative",
+                  overflow: "hidden",
+                  boxShadow: "0 12px 28px -6px rgba(0, 0, 0, 0.35)",
+                  marginBottom: "20px",
+                  border: "1px solid rgba(255, 255, 255, 0.18)",
                 }}
               >
-                <Sparkles size={30} />
+                {/* Micro-chip y Logo */}
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                    <div
+                      style={{
+                        width: "42px",
+                        height: "30px",
+                        background: "linear-gradient(135deg, #FDE047 0%, #CA8A04 100%)",
+                        borderRadius: "6px",
+                        border: "1px solid #EAB308",
+                        position: "relative",
+                        overflow: "hidden",
+                      }}
+                    >
+                      <div style={{ position: "absolute", inset: "3px", border: "1px solid rgba(0,0,0,0.15)", borderRadius: "3px" }} />
+                    </div>
+                    <span style={{ fontSize: "0.75rem", letterSpacing: "1px", opacity: 0.8, fontWeight: 700 }}>
+                      BANCO EMISOR EC
+                    </span>
+                  </div>
+
+                  <span
+                    style={{
+                      fontSize: "1.1rem",
+                      fontWeight: 900,
+                      letterSpacing: "1px",
+                      textTransform: "uppercase",
+                      background: "rgba(255, 255, 255, 0.15)",
+                      padding: "4px 12px",
+                      borderRadius: "8px",
+                      border: "1px solid rgba(255, 255, 255, 0.2)",
+                    }}
+                  >
+                    {tarjetaMarca}
+                  </span>
+                </div>
+
+                {/* Número de Tarjeta */}
+                <div
+                  style={{
+                    fontFamily: "monospace",
+                    fontSize: "1.3rem",
+                    letterSpacing: "3px",
+                    fontWeight: 700,
+                    marginBottom: "20px",
+                    textShadow: "0 2px 4px rgba(0,0,0,0.4)",
+                  }}
+                >
+                  {tarjetaNumero || "•••• •••• •••• ••••"}
+                </div>
+
+                {/* Titular y Expiración */}
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
+                  <div>
+                    <div style={{ fontSize: "0.65rem", textTransform: "uppercase", opacity: 0.7, letterSpacing: "1px" }}>
+                      Titular de la Tarjeta
+                    </div>
+                    <div style={{ fontSize: "0.95rem", fontWeight: 700, letterSpacing: "1px", textTransform: "uppercase" }}>
+                      {tarjetaTitular || `${nombres} ${apellidos}`.toUpperCase() || "TITULAR AUTORIZADO"}
+                    </div>
+                  </div>
+
+                  <div style={{ textAlign: "right" }}>
+                    <div style={{ fontSize: "0.65rem", textTransform: "uppercase", opacity: 0.7, letterSpacing: "1px" }}>
+                      Vence
+                    </div>
+                    <div style={{ fontSize: "0.95rem", fontWeight: 700, fontFamily: "monospace" }}>
+                      {tarjetaExp || "MM/AA"}
+                    </div>
+                  </div>
+                </div>
               </div>
 
-              <h3 style={{ margin: "0 0 8px", fontSize: "1.2rem", color: "#0F172A", fontWeight: 700 }}>
-                Simulador de Pasarela Payphone
-              </h3>
-              <p style={{ margin: "0 0 20px", fontSize: "0.85rem", color: "#64748B" }}>
-                La transacción ha sido preparada con ID: <code style={{ fontWeight: 700 }}>{prepData.clientTransactionId}</code>.
-                Elige el resultado bancario a simular para probar el sistema:
-              </p>
+              {/* PRESETS RÁPIDOS DE PRUEBA */}
+              <div style={{ marginBottom: "18px" }}>
+                <div style={{ fontSize: "0.78rem", fontWeight: 700, color: "#475569", marginBottom: "8px", display: "flex", alignItems: "center", gap: "6px" }}>
+                  <Sparkles size={14} color="#D97706" /> Presets de Prueba Rápida (1 Clic):
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "8px" }}>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      aplicarPresetTarjeta({
+                        numero: "4500 8912 3456 7890",
+                        exp: "08/29",
+                        cvv: "456",
+                        marca: "Visa",
+                      })
+                    }
+                    style={{
+                      background: "#F0FDF4",
+                      border: "1px solid #86EFAC",
+                      color: "#166534",
+                      borderRadius: "8px",
+                      padding: "8px",
+                      fontSize: "0.75rem",
+                      fontWeight: 700,
+                      cursor: "pointer",
+                      textAlign: "left",
+                    }}
+                  >
+                    🟢 Visa Pichincha (Aprobada)
+                  </button>
 
+                  <button
+                    type="button"
+                    onClick={() =>
+                      aplicarPresetTarjeta({
+                        numero: "5412 7534 8901 2345",
+                        exp: "11/28",
+                        cvv: "123",
+                        marca: "Mastercard",
+                      })
+                    }
+                    style={{
+                      background: "#F0FDF4",
+                      border: "1px solid #86EFAC",
+                      color: "#166534",
+                      borderRadius: "8px",
+                      padding: "8px",
+                      fontSize: "0.75rem",
+                      fontWeight: 700,
+                      cursor: "pointer",
+                      textAlign: "left",
+                    }}
+                  >
+                    🟢 Mastercard Guayaquil (Aprobada)
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      aplicarPresetTarjeta({
+                        numero: "3612 3456 7890 12",
+                        exp: "04/27",
+                        cvv: "890",
+                        marca: "Diners Club",
+                      })
+                    }
+                    style={{
+                      background: "#FEF2F2",
+                      border: "1px solid #FECACA",
+                      color: "#991B1B",
+                      borderRadius: "8px",
+                      padding: "8px",
+                      fontSize: "0.75rem",
+                      fontWeight: 700,
+                      cursor: "pointer",
+                      textAlign: "left",
+                    }}
+                  >
+                    🔴 Diners (Sin Fondos / Rechazo)
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      aplicarPresetTarjeta({
+                        numero: "4111 2222 3333 4444",
+                        exp: "12/30",
+                        cvv: "777",
+                        marca: "Visa",
+                      })
+                    }
+                    style={{
+                      background: "#EFF6FF",
+                      border: "1px solid #BFDBFE",
+                      color: "#1E40AF",
+                      borderRadius: "8px",
+                      padding: "8px",
+                      fontSize: "0.75rem",
+                      fontWeight: 700,
+                      cursor: "pointer",
+                      textAlign: "left",
+                    }}
+                  >
+                    🟡 Produbanco (Aprobación Rápida)
+                  </button>
+                </div>
+              </div>
+
+              {/* INPUTS DE TARJETA INTERACTIVOS */}
               <div
                 style={{
                   background: "#F8FAFC",
                   border: "1px solid #E2E8F0",
-                  borderRadius: "12px",
+                  borderRadius: "14px",
                   padding: "16px",
-                  marginBottom: "24px",
+                  marginBottom: "20px",
                   textAlign: "left",
-                  fontSize: "0.8rem",
-                  color: "#334155",
                 }}
               >
-                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
-                  <span>Total a Cobrar:</span>
-                  <span style={{ fontWeight: 700 }}>${variante.precio_total.toFixed(2)} USD</span>
+                <div style={{ marginBottom: "12px" }}>
+                  <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, color: "#334155", marginBottom: "4px" }}>
+                    Número de Tarjeta (16 Dígitos)
+                  </label>
+                  <input
+                    type="text"
+                    value={tarjetaNumero}
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/\D/g, "").slice(0, 16);
+                      const fmt = val.match(/.{1,4}/g)?.join(" ") || val;
+                      setTarjetaNumero(fmt);
+                      setTarjetaMarca(detectarMarca(val));
+                    }}
+                    placeholder="4500 0000 0000 0000"
+                    style={{
+                      width: "100%",
+                      padding: "10px 12px",
+                      borderRadius: "8px",
+                      border: "1px solid #CBD5E1",
+                      fontSize: "0.95rem",
+                      fontFamily: "monospace",
+                      fontWeight: 700,
+                      boxSizing: "border-box",
+                    }}
+                  />
                 </div>
-                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
-                  <span>Cliente Facturación:</span>
-                  <span>{nombres} {apellidos} ({identificacion})</span>
+
+                <div style={{ marginBottom: "12px" }}>
+                  <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, color: "#334155", marginBottom: "4px" }}>
+                    Nombre del Titular (en la Tarjeta)
+                  </label>
+                  <input
+                    type="text"
+                    value={tarjetaTitular}
+                    onChange={(e) => setTarjetaTitular(e.target.value.toUpperCase())}
+                    placeholder="NOMBRE APELLIDO"
+                    style={{
+                      width: "100%",
+                      padding: "10px 12px",
+                      borderRadius: "8px",
+                      border: "1px solid #CBD5E1",
+                      fontSize: "0.88rem",
+                      fontWeight: 700,
+                      textTransform: "uppercase",
+                      boxSizing: "border-box",
+                    }}
+                  />
                 </div>
-                <div style={{ display: "flex", justifyContent: "space-between" }}>
-                  <span>Correo Comprobante:</span>
-                  <span>{email}</span>
+
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+                  <div>
+                    <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, color: "#334155", marginBottom: "4px" }}>
+                      Vencimiento (MM/AA)
+                    </label>
+                    <input
+                      type="text"
+                      value={tarjetaExp}
+                      onChange={(e) => {
+                        let val = e.target.value.replace(/\D/g, "").slice(0, 4);
+                        if (val.length >= 3) {
+                          val = `${val.slice(0, 2)}/${val.slice(2)}`;
+                        }
+                        setTarjetaExp(val);
+                      }}
+                      placeholder="MM/AA"
+                      style={{
+                        width: "100%",
+                        padding: "10px 12px",
+                        borderRadius: "8px",
+                        border: "1px solid #CBD5E1",
+                        fontSize: "0.9rem",
+                        fontFamily: "monospace",
+                        fontWeight: 700,
+                        boxSizing: "border-box",
+                      }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, color: "#334155", marginBottom: "4px" }}>
+                      Código de Seguridad (CVV)
+                    </label>
+                    <input
+                      type="password"
+                      maxLength={4}
+                      value={tarjetaCvv}
+                      onChange={(e) => setTarjetaCvv(e.target.value.replace(/\D/g, "").slice(0, 4))}
+                      placeholder="•••"
+                      style={{
+                        width: "100%",
+                        padding: "10px 12px",
+                        borderRadius: "8px",
+                        border: "1px solid #CBD5E1",
+                        fontSize: "0.9rem",
+                        fontFamily: "monospace",
+                        fontWeight: 700,
+                        boxSizing: "border-box",
+                      }}
+                    />
+                  </div>
                 </div>
               </div>
 
-              <div style={{ display: "flex", gap: "12px", justifyContent: "center" }}>
+              {/* BOTONES DE ACCIÓN DE SIMULACIÓN */}
+              <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end" }}>
                 <button
                   type="button"
                   disabled={procesando}
-                  onClick={() => manejarConfirmarSimulacion("RECHAZADO")}
+                  onClick={() => manejarProcesarSimulacionTarjeta("RECHAZADO")}
                   style={{
                     background: "#FEE2E2",
                     color: "#991B1B",
                     border: "1px solid #FCA5A5",
-                    padding: "10px 18px",
+                    padding: "10px 16px",
                     borderRadius: "8px",
                     fontSize: "0.85rem",
                     fontWeight: 700,
                     cursor: procesando ? "not-allowed" : "pointer",
                     display: "inline-flex",
                     alignItems: "center",
-                    gap: "8px",
+                    gap: "6px",
                   }}
                 >
-                  <XCircle size={16} />
-                  Simular Rechazo (Sin Fondos)
+                  <XCircle size={16} /> Simular Rechazo
                 </button>
 
                 <button
                   type="button"
                   disabled={procesando}
-                  onClick={() => manejarConfirmarSimulacion("APROBADO")}
+                  onClick={() => manejarProcesarSimulacionTarjeta("APROBADO")}
                   style={{
-                    background: "#059669",
+                    background: "linear-gradient(135deg, #059669 0%, #047857 100%)",
                     color: "#FFFFFF",
                     border: "none",
-                    padding: "10px 22px",
+                    padding: "11px 24px",
                     borderRadius: "8px",
-                    fontSize: "0.85rem",
-                    fontWeight: 700,
+                    fontSize: "0.9rem",
+                    fontWeight: 800,
                     cursor: procesando ? "not-allowed" : "pointer",
                     display: "inline-flex",
                     alignItems: "center",
                     gap: "8px",
+                    boxShadow: "0 4px 14px rgba(5, 150, 105, 0.35)",
                   }}
                 >
-                  {procesando ? <RefreshCw size={16} className="animate-spin" /> : <CheckCircle2 size={16} />}
-                  Simular Pago Aprobado
+                  {procesando ? <RefreshCw size={16} className="animate-spin" /> : <Lock size={16} />}
+                  Pagar ${variante.precio_total.toFixed(2)} USD (Simulación)
                 </button>
               </div>
             </div>

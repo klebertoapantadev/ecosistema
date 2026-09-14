@@ -460,9 +460,9 @@ const PRODUCTOS_SEMILLA_TRANQI: ProductoCatalogo[] = [
   {
     pro_id: "prod-trq-plan-proteccion",
     pro_negocio: "tranqi",
-    pro_nombre: "Plan Familiar de Protección Jurídica",
+    pro_nombre: "Planes de Cobertura & Amparo Jurídico",
     pro_slug: "plan-proteccion",
-    pro_descripcion: "Suscripción con consultas y trámites incluidos para ti y tu familia con cobertura continua 24/7.",
+    pro_descripcion: "Suscripción legal continua con bolsa mensual de citas telemáticas, revisión de contratos y asistencia ARIA IA 24/7.",
     pro_tipo: "SUSCRIPCION",
     pro_destacado: true,
     pro_categoria_principal_id: "cat-trq-planes",
@@ -474,10 +474,11 @@ const PRODUCTOS_SEMILLA_TRANQI: ProductoCatalogo[] = [
       video_url: "https://www.youtube.com/watch?v=kXYiU_JCYtU",
       tiempo_entrega: "Activación inmediata tras suscripción",
       beneficios: [
-        "Consultas legales telemáticas mensuales incluidas sin costo adicional",
-        "Revisión ilimitada de contratos civiles y de arrendamiento",
-        "Hasta 40% de descuento en juicios, defensas y trámites notariales",
-        "Asistencia legal de urgencia 24/7 con ARIA y abogados de turno",
+        "Bolsa mensual de citas telemáticas con abogados especialistas",
+        "Revisiones y dictámenes express de contratos con semáforo de riesgos",
+        "Consultas ilimitadas 24/7 con asistente ARIA IA Legal",
+        "Hasta 35% de descuento en trámites notariales y litigios",
+        "Cobertura para titulares y núcleo familiar registrado",
       ],
       requisitos: [
         "Registro de titular y beneficiarios del núcleo familiar",
@@ -490,12 +491,12 @@ const PRODUCTOS_SEMILLA_TRANQI: ProductoCatalogo[] = [
     },
     variantes: [
       {
-        var_id: "var-trq-plan-bas",
+        var_id: "var-trq-plan-sos",
         var_producto_id: "prod-trq-plan-proteccion",
-        var_sku: "TRQ-PLAN-BAS",
-        var_nombre: "Plan Básico Individual (1 Consulta/mes)",
-        var_precio: 20.0,
-        var_precio_comparacion: 25.0,
+        var_sku: "TRQ-PLAN-SOS",
+        var_nombre: "Plan Cobertura SOS Individual (1 Cita/mes + ARIA 24/7)",
+        var_precio: 16.52,
+        var_precio_comparacion: 22.0,
         var_codigo_impuesto_sri: "IVA_15",
         var_tarifa_iva_porcentaje: 15,
         var_tipo_oferta: "RECURRENTE_MENSUAL",
@@ -503,28 +504,42 @@ const PRODUCTOS_SEMILLA_TRANQI: ProductoCatalogo[] = [
         var_activo: true,
         var_detalle_variante: {
           cupo_consultas_mes: 1,
+          miembros_cubiertos: 1,
           descuento_tramites_pct: 20,
           modalidades: ["virtual"],
+          derechos: [
+            { concepto: "CONSULTA_TELEMATICA", nombre: "Citas Telemáticas", incluidos: 1 },
+            { concepto: "REVISION_CONTRATO", nombre: "Revisión de Contrato Semestral", incluidos: 1 },
+            { concepto: "CONSULTA_ARIA_IA", nombre: "Consultas Ilimitadas ARIA 24/7", incluidos: null },
+            { concepto: "BOTON_SOS", nombre: "Asistencia SOS Flagrancia & Tránsito", incluidos: null },
+          ],
         },
-        monto_iva: 3.0,
-        precio_total: 23.0,
+        monto_iva: 2.48,
+        precio_total: 19.0,
       },
       {
-        var_id: "var-trq-plan-fam-med",
+        var_id: "var-trq-plan-amparo-fam",
         var_producto_id: "prod-trq-plan-proteccion",
-        var_sku: "TRQ-PLAN-FAM-MED",
-        var_nombre: "Plan Familiar Medio (3 Consultas/mes)",
+        var_sku: "TRQ-PLAN-AMPARO-FAM",
+        var_nombre: "Plan Amparo Familiar (4 Citas + 2 Contratos + ARIA 24/7)",
         var_precio: 30.0,
-        var_precio_comparacion: 40.0,
+        var_precio_comparacion: 45.0,
         var_codigo_impuesto_sri: "IVA_15",
         var_tarifa_iva_porcentaje: 15,
         var_tipo_oferta: "RECURRENTE_MENSUAL",
         var_frecuencia_recurrencia: "MENSUAL",
         var_activo: true,
         var_detalle_variante: {
-          cupo_consultas_mes: 3,
-          descuento_tramites_pct: 30,
+          cupo_consultas_mes: 4,
+          miembros_cubiertos: 4,
+          descuento_tramites_pct: 35,
           modalidades: ["virtual", "presencial"],
+          derechos: [
+            { concepto: "CONSULTA_TELEMATICA", nombre: "Citas Telemáticas Especializadas", incluidos: 4 },
+            { concepto: "REVISION_CONTRATO", nombre: "Revisiones y Dictámenes de Contratos", incluidos: 2 },
+            { concepto: "CONSULTA_ARIA_IA", nombre: "Consultas Ilimitadas ARIA 24/7", incluidos: null },
+            { concepto: "DESCUENTO_NOTARIAL", nombre: "35% Descuento en Trámites Notariales", incluidos: null, porcentaje: 35 },
+          ],
         },
         monto_iva: 4.5,
         precio_total: 34.5,
@@ -533,21 +548,28 @@ const PRODUCTOS_SEMILLA_TRANQI: ProductoCatalogo[] = [
         var_id: "var-trq-plan-fam-plus",
         var_producto_id: "prod-trq-plan-proteccion",
         var_sku: "TRQ-PLAN-FAM-PLUS",
-        var_nombre: "Plan Integral Familiar Plus (Ilimitadas)",
-        var_precio: 50.0,
-        var_precio_comparacion: 70.0,
+        var_nombre: "Plan Integral Familiar Anual (12 Meses con 2 Meses Gratis)",
+        var_precio: 300.0,
+        var_precio_comparacion: 414.0,
         var_codigo_impuesto_sri: "IVA_15",
         var_tarifa_iva_porcentaje: 15,
-        var_tipo_oferta: "RECURRENTE_MENSUAL",
-        var_frecuencia_recurrencia: "MENSUAL",
+        var_tipo_oferta: "RECURRENTE_ANUAL",
+        var_frecuencia_recurrencia: "ANUAL",
         var_activo: true,
         var_detalle_variante: {
-          cupo_consultas_mes: 99,
+          cupo_consultas_mes: 48,
+          miembros_cubiertos: 6,
           descuento_tramites_pct: 40,
           modalidades: ["virtual", "presencial"],
+          derechos: [
+            { concepto: "CONSULTA_TELEMATICA", nombre: "Citas Telemáticas Anuales", incluidos: 48 },
+            { concepto: "REVISION_CONTRATO", nombre: "Revisiones de Contratos Anuales", incluidos: 24 },
+            { concepto: "CONSULTA_ARIA_IA", nombre: "Consultas Ilimitadas ARIA 24/7", incluidos: null },
+            { concepto: "DESCUENTO_NOTARIAL", nombre: "40% Descuento Notarial & Litigios", incluidos: null, porcentaje: 40 },
+          ],
         },
-        monto_iva: 7.5,
-        precio_total: 57.5,
+        monto_iva: 45.0,
+        precio_total: 345.0,
       },
     ],
   },
@@ -2737,6 +2759,11 @@ export async function confirmarPagoPayphoneAction(datos: {
   esSimulado?: boolean;
   resultadoSimulacion?: "APROBADO" | "RECHAZADO";
   marcaTarjetaSimulada?: string;
+  ultimosDigitos?: string;
+  titularNombre?: string;
+  varianteId?: string;
+  productoNombre?: string;
+  clienteEmail?: string;
 }) {
   const negocio = datos.negocio || "tranqi";
   const admin: any = crearClienteAdmin();
@@ -2751,6 +2778,8 @@ export async function confirmarPagoPayphoneAction(datos: {
     const aprobado = datos.resultadoSimulacion !== "RECHAZADO";
     const authCode = aprobado ? `AUTH-SIM-${Math.floor(100000 + Math.random() * 900000)}` : null;
     const estadoFinal = aprobado ? "APROBADO" : "RECHAZADO";
+    const marca = datos.marcaTarjetaSimulada || "Visa";
+    const ultimosDigitos = datos.ultimosDigitos || "4321";
 
     if (clienteDb) {
       try {
@@ -2761,16 +2790,31 @@ export async function confirmarPagoPayphoneAction(datos: {
             pag_estado: estadoFinal,
             pag_autorizacion_codigo: authCode,
             pag_tarjeta_tipo: "Crédito (Simulado)",
-            pag_tarjeta_marca: "Visa / Diners Club",
-            pag_tarjeta_ultimos_digitos: "4321",
+            pag_tarjeta_marca: marca,
+            pag_tarjeta_ultimos_digitos: ultimosDigitos,
             pag_confirmado_en: new Date().toISOString(),
             pag_detalle_transaccion: {
               simulacion: true,
               fecha_confirmacion: new Date().toISOString(),
               resultado: estadoFinal,
+              titular: datos.titularNombre,
             },
           })
           .eq("pag_identificador_cliente", datos.clientTxId);
+      } catch {
+        // Continuar
+      }
+    }
+
+    if (aprobado && datos.varianteId) {
+      try {
+        await activarSuscripcionTrasPagoAction({
+          negocio,
+          varianteId: datos.varianteId,
+          productoNombre: datos.productoNombre || "Plan Jurídico",
+          clienteEmail: datos.clienteEmail || "cliente@tranqi24.com",
+          clienteNombre: datos.titularNombre || "Cliente",
+        });
       } catch {
         // Continuar
       }
@@ -2783,7 +2827,7 @@ export async function confirmarPagoPayphoneAction(datos: {
       mensaje: aprobado
         ? "¡Pago Aprobado con Éxito (Simulación Payphone)!"
         : "Transacción rechazada por el emisor simulado.",
-      tarjeta: "Visa •••• 4321",
+      tarjeta: `${marca} •••• ${ultimosDigitos}`,
       fecha: new Date().toISOString(),
     };
   }
@@ -3245,3 +3289,266 @@ export async function actualizarDisponibilidadOperativaAction(
     return { ok: false, error: err.message || "Error al actualizar disponibilidad." };
   }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CAPA DE SUSCRIPCIONES, COBERTURA Y CONSUMO DE CUPOS LEGALES (PLT-009 / PLT-020)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface DerechoCobertura {
+  concepto: string;
+  nombre: string;
+  incluidos: number | null; // null = ilimitado
+  consumidos: number;
+  restantes: number | null; // null = ilimitado
+  porcentaje?: number;
+}
+
+export interface EstadoCoberturaCliente {
+  tienePlanActivo: boolean;
+  suscripcionId: string | null;
+  planNombre: string | null;
+  planSku: string | null;
+  frecuencia: string;
+  estado: string;
+  fechaRenovacion: string | null;
+  miembrosCubiertos: number;
+  derechos: DerechoCobertura[];
+}
+
+const storeCoberturaCliente = new Map<string, EstadoCoberturaCliente>();
+
+export async function obtenerCoberturaUsuarioAction(
+  negocio = "tranqi"
+): Promise<EstadoCoberturaCliente> {
+  const admin: any = crearClienteAdmin();
+  const supabase: any = await crearClienteServidor();
+  const clienteActivo = admin || supabase;
+
+  // 1. Intentar consultar en Supabase
+  if (clienteActivo) {
+    try {
+      const { data: usuarioAuth } = await supabase?.auth?.getUser?.() || {};
+      const userId = usuarioAuth?.user?.id;
+
+      if (userId) {
+        const { data: subs } = await clienteActivo
+          .schema("comun_comercio")
+          .from("com_suscripcion")
+          .select("*, com_variante(*)")
+          .eq("sub_cliente_id", userId)
+          .eq("sub_negocio", negocio)
+          .eq("sub_estado", "ACTIVA")
+          .order("sub_creado_en", { ascending: false })
+          .limit(1);
+
+        if (subs && subs.length > 0) {
+          const sub = subs[0];
+          const varDetalle = sub.com_variante?.var_detalle_variante || {};
+          const derechosDef: any[] = varDetalle.derechos || [];
+
+          const primerDiaMes = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split("T")[0];
+          const { data: consumos } = await clienteActivo
+            .schema("comun_comercio")
+            .from("com_derecho_consumo")
+            .select("*")
+            .eq("der_suscripcion_id", sub.sub_id)
+            .eq("der_periodo", primerDiaMes);
+
+          const mapaConsumos = new Map<string, number>();
+          consumos?.forEach((c: any) => {
+            mapaConsumos.set(c.der_concepto, c.der_consumidos || 0);
+          });
+
+          const derechos: DerechoCobertura[] = derechosDef.map((d: any) => {
+            const consumidos = mapaConsumos.get(d.concepto) || 0;
+            const restantes = d.incluidos !== null && d.incluidos !== undefined
+              ? Math.max(0, d.incluidos - consumidos)
+              : null;
+            return {
+              concepto: d.concepto,
+              nombre: d.nombre || d.concepto,
+              incluidos: d.incluidos ?? null,
+              consumidos,
+              restantes,
+              porcentaje: d.porcentaje,
+            };
+          });
+
+          const fechaRenovacion = new Date();
+          fechaRenovacion.setMonth(fechaRenovacion.getMonth() + 1);
+
+          return {
+            tienePlanActivo: true,
+            suscripcionId: sub.sub_id,
+            planNombre: sub.com_variante?.var_nombre || "Plan de Cobertura Jurídica",
+            planSku: sub.com_variante?.var_sku || "TRQ-PLAN",
+            frecuencia: sub.sub_frecuencia || "MENSUAL",
+            estado: sub.sub_estado,
+            fechaRenovacion: fechaRenovacion.toLocaleDateString("es-EC", { day: "numeric", month: "long", year: "numeric" }),
+            miembrosCubiertos: varDetalle.miembros_cubiertos || 4,
+            derechos,
+          };
+        }
+      }
+    } catch {
+      // Fallback
+    }
+  }
+
+  // 2. Fallback a memoria
+  const enMemoria = storeCoberturaCliente.get(negocio);
+  if (enMemoria) return enMemoria;
+
+  // 3. Fallback demostración predeterminado con Plan Amparo Familiar
+  const fechaRenovacion = new Date();
+  fechaRenovacion.setDate(fechaRenovacion.getDate() + 30);
+
+  return {
+    tienePlanActivo: true,
+    suscripcionId: "sub-demo-amparo-fam",
+    planNombre: "Plan Amparo Familiar",
+    planSku: "TRQ-PLAN-AMPARO-FAM",
+    frecuencia: "MENSUAL",
+    estado: "ACTIVA",
+    fechaRenovacion: fechaRenovacion.toLocaleDateString("es-EC", { day: "numeric", month: "long", year: "numeric" }),
+    miembrosCubiertos: 4,
+    derechos: [
+      {
+        concepto: "CONSULTA_TELEMATICA",
+        nombre: "Citas Telemáticas Especializadas",
+        incluidos: 4,
+        consumidos: 1,
+        restantes: 3,
+      },
+      {
+        concepto: "REVISION_CONTRATO",
+        nombre: "Revisiones y Dictámenes de Contratos",
+        incluidos: 2,
+        consumidos: 0,
+        restantes: 2,
+      },
+      {
+        concepto: "CONSULTA_ARIA_IA",
+        nombre: "Consultas Ilimitadas Asistente ARIA IA 24/7",
+        incluidos: null,
+        consumidos: 14,
+        restantes: null,
+      },
+      {
+        concepto: "DESCUENTO_NOTARIAL",
+        nombre: "Descuento en Trámites Notariales & Juicios",
+        incluidos: null,
+        consumidos: 0,
+        restantes: null,
+        porcentaje: 35,
+      },
+    ],
+  };
+}
+
+export async function consumirDerechoUsuarioAction(datos: {
+  concepto: string;
+  negocio?: string;
+  suscripcionId?: string;
+}): Promise<{ ok: boolean; restante?: number | null; mensaje: string }> {
+  const negocio = datos.negocio || "tranqi";
+  const cobertura = await obtenerCoberturaUsuarioAction(negocio);
+
+  if (!cobertura.tienePlanActivo) {
+    return { ok: false, mensaje: "No dispones de un plan activo con cobertura." };
+  }
+
+  const der = cobertura.derechos.find((d) => d.concepto === datos.concepto);
+  if (!der) {
+    return { ok: false, mensaje: `El concepto ${datos.concepto} no está incluido en tu plan.` };
+  }
+
+  if (der.incluidos !== null && (der.restantes ?? 0) <= 0) {
+    return { ok: false, mensaje: `Has agotado tus cupos de ${der.nombre} para este periodo.` };
+  }
+
+  // Actualizar consumos
+  der.consumidos += 1;
+  if (der.incluidos !== null) {
+    der.restantes = Math.max(0, der.incluidos - der.consumidos);
+  }
+
+  storeCoberturaCliente.set(negocio, { ...cobertura });
+
+  // Intentar persistir en Supabase RPC
+  const admin: any = crearClienteAdmin();
+  const supabase: any = await crearClienteServidor();
+  const clienteActivo = admin || supabase;
+  if (clienteActivo && cobertura.suscripcionId && !cobertura.suscripcionId.startsWith("sub-demo")) {
+    try {
+      await clienteActivo.schema("comun_comercio").rpc("com_fn_consumir_derecho", {
+        p_suscripcion_id: cobertura.suscripcionId,
+        p_concepto: datos.concepto,
+      });
+    } catch {
+      // Continuar
+    }
+  }
+
+  revalidatePath("/panel");
+  return {
+    ok: true,
+    restante: der.restantes,
+    mensaje: `Cupo de ${der.nombre} consumido exitosamente. Te quedan ${der.restantes ?? "ilimitadas"}.`,
+  };
+}
+
+export async function activarSuscripcionTrasPagoAction(datos: {
+  negocio: string;
+  varianteId: string;
+  productoNombre: string;
+  clienteEmail: string;
+  clienteNombre: string;
+}) {
+  const prods = await obtenerCatalogoProductosAction(datos.negocio);
+  let varianteEncontrada: any = null;
+  for (const p of prods) {
+    const v = p.variantes?.find((varItem: any) => varItem.var_id === datos.varianteId);
+    if (v) {
+      varianteEncontrada = v;
+      break;
+    }
+  }
+
+  const varDetalle = varianteEncontrada?.var_detalle_variante || {};
+  const derechosDef = varDetalle.derechos || [
+    { concepto: "CONSULTA_TELEMATICA", nombre: "Citas Telemáticas Especializadas", incluidos: 4 },
+    { concepto: "REVISION_CONTRATO", nombre: "Revisiones y Dictámenes de Contratos", incluidos: 2 },
+    { concepto: "CONSULTA_ARIA_IA", nombre: "Consultas Ilimitadas Asistente ARIA IA 24/7", incluidos: null },
+    { concepto: "DESCUENTO_NOTARIAL", nombre: "Descuento en Trámites Notariales", incluidos: null, porcentaje: 35 },
+  ];
+
+  const derechos: DerechoCobertura[] = derechosDef.map((d: any) => ({
+    concepto: d.concepto,
+    nombre: d.nombre || d.concepto,
+    incluidos: d.incluidos ?? null,
+    consumidos: 0,
+    restantes: d.incluidos ?? null,
+    porcentaje: d.porcentaje,
+  }));
+
+  const fechaRenovacion = new Date();
+  fechaRenovacion.setDate(fechaRenovacion.getDate() + 30);
+
+  const nuevaCobertura: EstadoCoberturaCliente = {
+    tienePlanActivo: true,
+    suscripcionId: `sub-${Date.now()}`,
+    planNombre: varianteEncontrada?.var_nombre || datos.productoNombre,
+    planSku: varianteEncontrada?.var_sku || "TRQ-PLAN",
+    frecuencia: varianteEncontrada?.var_frecuencia_recurrencia || "MENSUAL",
+    estado: "ACTIVA",
+    fechaRenovacion: fechaRenovacion.toLocaleDateString("es-EC", { day: "numeric", month: "long", year: "numeric" }),
+    miembrosCubiertos: varDetalle.miembros_cubiertos || 4,
+    derechos,
+  };
+
+  storeCoberturaCliente.set(datos.negocio, nuevaCobertura);
+  revalidatePath("/panel");
+  return nuevaCobertura;
+}
+

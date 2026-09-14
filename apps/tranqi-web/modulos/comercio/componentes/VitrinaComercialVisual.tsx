@@ -17,6 +17,7 @@ import {
   ExternalLink,
   ChevronRight,
   Layers,
+  Truck,
 } from "lucide-react";
 import {
   ProductoCatalogo,
@@ -369,8 +370,13 @@ export function VitrinaComercialVisual({ negocio = "tranqi" }: Props) {
 
             const detalle = p.pro_detalle_producto || {};
             const imagenUrl =
+              currentVar?.var_detalle_variante?.portada_url ||
               detalle.imagen_url ||
               "https://images.unsplash.com/photo-1450133064473-71024230f91b?auto=format&fit=crop&w=1000&q=80";
+            const fotoPosicion = currentVar?.var_detalle_variante?.foto_posicion || detalle.foto_posicion || "center center";
+            const fotoAjuste = currentVar?.var_detalle_variante?.foto_ajuste || detalle.foto_ajuste || "cover";
+            const fotoZoom = Number(currentVar?.var_detalle_variante?.foto_zoom || detalle.foto_zoom || 100);
+            const scaleFactor = fotoZoom && fotoZoom !== 100 ? fotoZoom / 100 : 1;
             const videoUrl = detalle.video_url;
             const beneficios: string[] = Array.isArray(detalle.beneficios) ? detalle.beneficios.slice(0, 2) : [];
 
@@ -396,19 +402,42 @@ export function VitrinaComercialVisual({ negocio = "tranqi" }: Props) {
                   style={{
                     position: "relative",
                     width: "100%",
-                    height: "170px",
+                    aspectRatio: "1 / 1",
                     background: "#0F172A",
                     cursor: "pointer",
+                    overflow: "hidden",
                   }}
                   onClick={() => abrirDetalles(p)}
                 >
+                  {fotoAjuste === "contain" && (
+                    <img
+                      src={imagenUrl}
+                      alt=""
+                      aria-hidden="true"
+                      style={{
+                        position: "absolute",
+                        inset: 0,
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "cover",
+                        filter: "blur(20px) brightness(0.6)",
+                        transform: "scale(1.2)",
+                        pointerEvents: "none",
+                      }}
+                    />
+                  )}
                   <img
                     src={imagenUrl}
                     alt={p.pro_nombre}
                     style={{
+                      position: "relative",
                       width: "100%",
                       height: "100%",
-                      objectFit: "cover",
+                      objectFit: fotoAjuste as any,
+                      objectPosition: fotoPosicion,
+                      transform: scaleFactor !== 1 ? `scale(${scaleFactor})` : undefined,
+                      transformOrigin: fotoPosicion,
+                      transition: "all 0.3s ease",
                     }}
                   />
                   <div
@@ -416,6 +445,7 @@ export function VitrinaComercialVisual({ negocio = "tranqi" }: Props) {
                       position: "absolute",
                       inset: 0,
                       background: "linear-gradient(to top, rgba(15, 23, 42, 0.8) 0%, rgba(15, 23, 42, 0.1) 60%, transparent 100%)",
+                      pointerEvents: "none",
                     }}
                   />
 
@@ -508,6 +538,34 @@ export function VitrinaComercialVisual({ negocio = "tranqi" }: Props) {
                   >
                     {p.pro_descripcion}
                   </p>
+
+                  {/* Badge de Logística / Entrega a Domicilio */}
+                  {Boolean(p.pro_detalle_producto?.logistica?.delivery_incluido) && (
+                    <div
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "5px",
+                        background: "#ECFDF5",
+                        border: "1px solid #10B981",
+                        color: "#065F46",
+                        padding: "3px 8px",
+                        borderRadius: "6px",
+                        fontSize: "0.72rem",
+                        fontWeight: 800,
+                        marginBottom: "12px",
+                        alignSelf: "flex-start",
+                      }}
+                    >
+                      <Truck size={12} color="#059669" />
+                      <span>{p.pro_detalle_producto?.logistica?.etiqueta_transporte || "🚚 Envío a Domicilio Incluido"}</span>
+                      {p.pro_detalle_producto?.logistica?.cobertura_texto && (
+                        <span style={{ fontSize: "0.68rem", fontWeight: 600, color: "#047857" }}>
+                          • {p.pro_detalle_producto.logistica.cobertura_texto}
+                        </span>
+                      )}
+                    </div>
+                  )}
 
                   {/* Beneficios Clave */}
                   {beneficios.length > 0 && (

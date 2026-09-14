@@ -9,3 +9,6 @@ export * from "./componentes/HistorialTransaccionesPago";
 export * from "./componentes/ModalCrearProducto";
 export * from "./componentes/ModalCrearCategoria";
 export * from "./componentes/ModalEditarProducto";
+export * from "./componentes/ManualConfiguracionCatalogoModal";
+export * from "./componentes/TableroDisponibilidadOperativa";
+export * from "./componentes/SeccionCoberturaCliente";

@@ -12,6 +12,7 @@ export interface CategoriaCatalogo {
   ctg_tipo: string;
   ctg_orden: number;
   ctg_activo: boolean;
+  ctg_detalle_categoria?: any;
 }
 
 export interface ProductoCatalogo {
@@ -48,6 +49,22 @@ export interface VarianteCatalogo {
   // Calculados
   monto_iva: number;
   precio_total: number;
+}
+
+export interface ItemDisponibilidadOperativa {
+  id: string;
+  negocio: string;
+  codigo: string;
+  nombre: string;
+  nombre_secundario?: string;
+  categoria_tipo: "ROSAS" | "ENVOLTORIO" | "HORAS_PROFESIONAL" | "CUADRILLA_TECNICA" | "INSUMO_GENERAL";
+  unidad: "BONCHE" | "TALLO" | "PLIEGO" | "HORA" | "CUADRILLA" | "UNIDAD";
+  cantidad_disponible: number;
+  estado: "DISPONIBLE" | "BAJO" | "AGOTADO";
+  color_hex?: string;
+  color_nombre?: string;
+  imagen_url?: string;
+  detalle?: any;
 }
 
 export interface ConfiguracionPasarela {
@@ -159,7 +176,7 @@ const PRODUCTOS_SEMILLA_TRANQI: ProductoCatalogo[] = [
       ambito: "Trámite Notarial",
       icono: "FileCheck",
       codigo_gobernanza: "TRQ-NOT-DOC",
-      imagen_url: "https://images.unsplash.com/photo-1450133064473-71024230f91b?auto=format&fit=crop&w=1000&q=80",
+      imagen_url: "/imagenes/catalogo/notarizacion.jpg",
       video_url: "https://www.youtube.com/watch?v=kXYiU_JCYtU",
       tiempo_entrega: "24 a 48 horas hábiles",
       beneficios: [
@@ -210,7 +227,7 @@ const PRODUCTOS_SEMILLA_TRANQI: ProductoCatalogo[] = [
       ambito: "Familia y Notarial",
       icono: "FileCheck",
       codigo_gobernanza: "TRQ-SAL-PAI",
-      imagen_url: "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=1000&q=80",
+      imagen_url: "/imagenes/catalogo/permiso-salida.jpg",
       video_url: "https://www.youtube.com/watch?v=kXYiU_JCYtU",
       tiempo_entrega: "24 horas hábiles",
       beneficios: [
@@ -260,7 +277,7 @@ const PRODUCTOS_SEMILLA_TRANQI: ProductoCatalogo[] = [
       ambito: "Revisión Preventiva",
       icono: "FileCheck",
       codigo_gobernanza: "TRQ-REV-CON",
-      imagen_url: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=1000&q=80",
+      imagen_url: "/imagenes/catalogo/revision-contratos.jpg",
       video_url: "https://www.youtube.com/watch?v=kXYiU_JCYtU",
       tiempo_entrega: "Menos de 24 horas",
       beneficios: [
@@ -309,7 +326,7 @@ const PRODUCTOS_SEMILLA_TRANQI: ProductoCatalogo[] = [
       ambito: "Asesoría Legal 1 a 1",
       icono: "Scale",
       codigo_gobernanza: "TRQ-CON-ESP",
-      imagen_url: "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=1000&q=80",
+      imagen_url: "/imagenes/catalogo/consultas.jpg",
       video_url: "https://www.youtube.com/watch?v=kXYiU_JCYtU",
       tiempo_entrega: "Agendamiento inmediato / Mismo día",
       beneficios: [
@@ -403,7 +420,7 @@ const PRODUCTOS_SEMILLA_TRANQI: ProductoCatalogo[] = [
       ambito: "Familia y Civil",
       icono: "Scale",
       codigo_gobernanza: "TRQ-DIV-MUT",
-      imagen_url: "https://images.unsplash.com/photo-1521791136064-7986c2920216?auto=format&fit=crop&w=1000&q=80",
+      imagen_url: "/imagenes/catalogo/divorcio.jpg",
       video_url: "https://www.youtube.com/watch?v=kXYiU_JCYtU",
       tiempo_entrega: "7 a 15 días hábiles",
       beneficios: [
@@ -443,9 +460,9 @@ const PRODUCTOS_SEMILLA_TRANQI: ProductoCatalogo[] = [
   {
     pro_id: "prod-trq-plan-proteccion",
     pro_negocio: "tranqi",
-    pro_nombre: "Plan Familiar de Protección Jurídica",
+    pro_nombre: "Planes de Cobertura & Amparo Jurídico",
     pro_slug: "plan-proteccion",
-    pro_descripcion: "Suscripción con consultas y trámites incluidos para ti y tu familia con cobertura continua 24/7.",
+    pro_descripcion: "Suscripción legal continua con bolsa mensual de citas telemáticas, revisión de contratos y asistencia ARIA IA 24/7.",
     pro_tipo: "SUSCRIPCION",
     pro_destacado: true,
     pro_categoria_principal_id: "cat-trq-planes",
@@ -453,14 +470,15 @@ const PRODUCTOS_SEMILLA_TRANQI: ProductoCatalogo[] = [
       ambito: "Membresía Continua",
       icono: "ShieldCheck",
       codigo_gobernanza: "TRQ-PLAN-FAM",
-      imagen_url: "https://images.unsplash.com/photo-1551836022-d5d88e9218df?auto=format&fit=crop&w=1000&q=80",
+      imagen_url: "/imagenes/catalogo/planes-b2c.jpg",
       video_url: "https://www.youtube.com/watch?v=kXYiU_JCYtU",
       tiempo_entrega: "Activación inmediata tras suscripción",
       beneficios: [
-        "Consultas legales telemáticas mensuales incluidas sin costo adicional",
-        "Revisión ilimitada de contratos civiles y de arrendamiento",
-        "Hasta 40% de descuento en juicios, defensas y trámites notariales",
-        "Asistencia legal de urgencia 24/7 con ARIA y abogados de turno",
+        "Bolsa mensual de citas telemáticas con abogados especialistas",
+        "Revisiones y dictámenes express de contratos con semáforo de riesgos",
+        "Consultas ilimitadas 24/7 con asistente ARIA IA Legal",
+        "Hasta 35% de descuento en trámites notariales y litigios",
+        "Cobertura para titulares y núcleo familiar registrado",
       ],
       requisitos: [
         "Registro de titular y beneficiarios del núcleo familiar",
@@ -473,12 +491,12 @@ const PRODUCTOS_SEMILLA_TRANQI: ProductoCatalogo[] = [
     },
     variantes: [
       {
-        var_id: "var-trq-plan-bas",
+        var_id: "var-trq-plan-sos",
         var_producto_id: "prod-trq-plan-proteccion",
-        var_sku: "TRQ-PLAN-BAS",
-        var_nombre: "Plan Básico Individual (1 Consulta/mes)",
-        var_precio: 20.0,
-        var_precio_comparacion: 25.0,
+        var_sku: "TRQ-PLAN-SOS",
+        var_nombre: "Plan Cobertura SOS Individual (1 Cita/mes + ARIA 24/7)",
+        var_precio: 16.52,
+        var_precio_comparacion: 22.0,
         var_codigo_impuesto_sri: "IVA_15",
         var_tarifa_iva_porcentaje: 15,
         var_tipo_oferta: "RECURRENTE_MENSUAL",
@@ -486,28 +504,42 @@ const PRODUCTOS_SEMILLA_TRANQI: ProductoCatalogo[] = [
         var_activo: true,
         var_detalle_variante: {
           cupo_consultas_mes: 1,
+          miembros_cubiertos: 1,
           descuento_tramites_pct: 20,
           modalidades: ["virtual"],
+          derechos: [
+            { concepto: "CONSULTA_TELEMATICA", nombre: "Citas Telemáticas", incluidos: 1 },
+            { concepto: "REVISION_CONTRATO", nombre: "Revisión de Contrato Semestral", incluidos: 1 },
+            { concepto: "CONSULTA_ARIA_IA", nombre: "Consultas Ilimitadas ARIA 24/7", incluidos: null },
+            { concepto: "BOTON_SOS", nombre: "Asistencia SOS Flagrancia & Tránsito", incluidos: null },
+          ],
         },
-        monto_iva: 3.0,
-        precio_total: 23.0,
+        monto_iva: 2.48,
+        precio_total: 19.0,
       },
       {
-        var_id: "var-trq-plan-fam-med",
+        var_id: "var-trq-plan-amparo-fam",
         var_producto_id: "prod-trq-plan-proteccion",
-        var_sku: "TRQ-PLAN-FAM-MED",
-        var_nombre: "Plan Familiar Medio (3 Consultas/mes)",
+        var_sku: "TRQ-PLAN-AMPARO-FAM",
+        var_nombre: "Plan Amparo Familiar (4 Citas + 2 Contratos + ARIA 24/7)",
         var_precio: 30.0,
-        var_precio_comparacion: 40.0,
+        var_precio_comparacion: 45.0,
         var_codigo_impuesto_sri: "IVA_15",
         var_tarifa_iva_porcentaje: 15,
         var_tipo_oferta: "RECURRENTE_MENSUAL",
         var_frecuencia_recurrencia: "MENSUAL",
         var_activo: true,
         var_detalle_variante: {
-          cupo_consultas_mes: 3,
-          descuento_tramites_pct: 30,
+          cupo_consultas_mes: 4,
+          miembros_cubiertos: 4,
+          descuento_tramites_pct: 35,
           modalidades: ["virtual", "presencial"],
+          derechos: [
+            { concepto: "CONSULTA_TELEMATICA", nombre: "Citas Telemáticas Especializadas", incluidos: 4 },
+            { concepto: "REVISION_CONTRATO", nombre: "Revisiones y Dictámenes de Contratos", incluidos: 2 },
+            { concepto: "CONSULTA_ARIA_IA", nombre: "Consultas Ilimitadas ARIA 24/7", incluidos: null },
+            { concepto: "DESCUENTO_NOTARIAL", nombre: "35% Descuento en Trámites Notariales", incluidos: null, porcentaje: 35 },
+          ],
         },
         monto_iva: 4.5,
         precio_total: 34.5,
@@ -516,21 +548,28 @@ const PRODUCTOS_SEMILLA_TRANQI: ProductoCatalogo[] = [
         var_id: "var-trq-plan-fam-plus",
         var_producto_id: "prod-trq-plan-proteccion",
         var_sku: "TRQ-PLAN-FAM-PLUS",
-        var_nombre: "Plan Integral Familiar Plus (Ilimitadas)",
-        var_precio: 50.0,
-        var_precio_comparacion: 70.0,
+        var_nombre: "Plan Integral Familiar Anual (12 Meses con 2 Meses Gratis)",
+        var_precio: 300.0,
+        var_precio_comparacion: 414.0,
         var_codigo_impuesto_sri: "IVA_15",
         var_tarifa_iva_porcentaje: 15,
-        var_tipo_oferta: "RECURRENTE_MENSUAL",
-        var_frecuencia_recurrencia: "MENSUAL",
+        var_tipo_oferta: "RECURRENTE_ANUAL",
+        var_frecuencia_recurrencia: "ANUAL",
         var_activo: true,
         var_detalle_variante: {
-          cupo_consultas_mes: 99,
+          cupo_consultas_mes: 48,
+          miembros_cubiertos: 6,
           descuento_tramites_pct: 40,
           modalidades: ["virtual", "presencial"],
+          derechos: [
+            { concepto: "CONSULTA_TELEMATICA", nombre: "Citas Telemáticas Anuales", incluidos: 48 },
+            { concepto: "REVISION_CONTRATO", nombre: "Revisiones de Contratos Anuales", incluidos: 24 },
+            { concepto: "CONSULTA_ARIA_IA", nombre: "Consultas Ilimitadas ARIA 24/7", incluidos: null },
+            { concepto: "DESCUENTO_NOTARIAL", nombre: "40% Descuento Notarial & Litigios", incluidos: null, porcentaje: 40 },
+          ],
         },
-        monto_iva: 7.5,
-        precio_total: 57.5,
+        monto_iva: 45.0,
+        precio_total: 345.0,
       },
     ],
   },
@@ -547,7 +586,7 @@ const PRODUCTOS_SEMILLA_TRANQI: ProductoCatalogo[] = [
       ambito: "Blindaje Empresarial",
       icono: "ShieldCheck",
       codigo_gobernanza: "TRQ-PLAN-CORP",
-      imagen_url: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1000&q=80",
+      imagen_url: "/imagenes/catalogo/planes-b2b.jpg",
       video_url: "https://www.youtube.com/watch?v=kXYiU_JCYtU",
       tiempo_entrega: "Activación y onboarding corporativo en 24 horas",
       beneficios: [
@@ -797,7 +836,7 @@ const PRODUCTOS_SEMILLA_TINKAY: ProductoCatalogo[] = [
     ],
   },
   {
-    pro_id: "prod-tinkay-coreano",
+    pro_id: "3af6aff5-ddd0-4746-b282-c760e4b42214",
     pro_negocio: "tinkay",
     pro_nombre: "Bouquet Diseño Estilo Coreano",
     pro_slug: "tinkay-bouq-coreano",
@@ -807,45 +846,63 @@ const PRODUCTOS_SEMILLA_TINKAY: ProductoCatalogo[] = [
     pro_categoria_principal_id: "cat-tinkay-002",
     pro_detalle_producto: {
       icono: "Sparkles",
+      imagen_url: "https://lh3.googleusercontent.com/pw/AP1GczOZEFibMGGeADW_BlMVDWuifn-a-CTi0efgjdil0ThfsclKkkMNC6cPbMNf54SmJDtME9HRHe6CwCEmCA4uGM60Mith_GOkuJ2pDaRSrmQgP5DaN68_=w1200",
       album_fotos_url: "https://photos.app.goo.gl/RhTxny2frDaV1XTv5",
       descripcion_corta: "Bouquet moderno envuelto en papel coreano plisado y cintas satinadas.",
       etiquetas: ["coreano", "vanguardia", "cumpleanos", "vip"],
+      tiempo_entrega: "🌸 Pide hoy, recibe hoy (Mismo Día)",
+      logistica: {
+        delivery_incluido: true,
+        modalidad_transporte: "INCLUIDO_GRATIS",
+        etiqueta_transporte: "🚚 Envío a Domicilio Incluido",
+        cobertura_texto: "Quito Urbano y Valles"
+      }
     },
     categoria: { ctg_id: "cat-tinkay-002", ctg_nombre: "Estilo Coreano", ctg_slug: "cat-coreanos" },
     variantes: [
       {
         var_id: "var-tinkay-cor-peq",
-        var_producto_id: "prod-tinkay-coreano",
+        var_producto_id: "3af6aff5-ddd0-4746-b282-c760e4b42214",
         var_sku: "TNK-COR-PEQ",
-        var_nombre: "Pequeño (12 Rosas)",
-        var_precio: 21.7391,
-        var_precio_comparacion: 25.0,
+        var_nombre: "Pequeño (24 Rosas)",
+        var_precio: 22.6087,
+        var_precio_comparacion: 26.0,
         var_codigo_impuesto_sri: "IVA_15",
         var_tarifa_iva_porcentaje: 15,
         var_tipo_oferta: "REGULAR",
         var_activo: true,
-        var_detalle_variante: { pvp_nominal: 25.0, tamano: "Pequeño" },
-        monto_iva: 3.2609,
-        precio_total: 25.0,
+        var_detalle_variante: {
+          tamano: "Pequeño (24 Rosas)",
+          portada_url: "https://lh3.googleusercontent.com/pw/AP1GczP9RID-AQeQ6oU3zqa7gBVW2ZvAZCW3KSvFvfUIRTvD4vK8N4UNmKNi9rVahSW4eIY3xiDvdQxm-FS2S1qGU_L767WWZt7FLODsvNy15bkHq0GWpkdm=w1200",
+          pvp_nominal: 26.0,
+          modalidad_pago: "Botón Payphone / Tarjeta / Saldo"
+        },
+        monto_iva: 3.3913,
+        precio_total: 26.0,
       },
       {
         var_id: "var-tinkay-cor-med",
-        var_producto_id: "prod-tinkay-coreano",
+        var_producto_id: "3af6aff5-ddd0-4746-b282-c760e4b42214",
         var_sku: "TNK-COR-MED",
-        var_nombre: "Mediano (24 Rosas)",
-        var_precio: 30.4348,
-        var_precio_comparacion: 35.0,
+        var_nombre: "Mediano (40 Rosas)",
+        var_precio: 24.3478,
+        var_precio_comparacion: 28.0,
         var_codigo_impuesto_sri: "IVA_15",
         var_tarifa_iva_porcentaje: 15,
         var_tipo_oferta: "REGULAR",
         var_activo: true,
-        var_detalle_variante: { pvp_nominal: 35.0, tamano: "Mediano" },
-        monto_iva: 4.5652,
-        precio_total: 35.0,
+        var_detalle_variante: {
+          tamano: "Mediano (40 Rosas)",
+          portada_url: "https://lh3.googleusercontent.com/pw/AP1GczNzLNcUnBLT4DfAuiOz8_c7pcicI4GFwu6mCKv2NUIoDqn5H0NWqOuORRHBmYDrdD0hbPUcnjdknOmzhBDFvwqCeOSSB3Q74LBIpykkCfFpGe3wipb6=w1200",
+          pvp_nominal: 28.0,
+          modalidad_pago: "Botón Payphone / Tarjeta / Saldo"
+        },
+        monto_iva: 3.6522,
+        precio_total: 28.0,
       },
       {
         var_id: "var-tinkay-cor-gra",
-        var_producto_id: "prod-tinkay-coreano",
+        var_producto_id: "3af6aff5-ddd0-4746-b282-c760e4b42214",
         var_sku: "TNK-COR-GRA",
         var_nombre: "Grande (36 Rosas)",
         var_precio: 39.1304,
@@ -854,13 +911,18 @@ const PRODUCTOS_SEMILLA_TINKAY: ProductoCatalogo[] = [
         var_tarifa_iva_porcentaje: 15,
         var_tipo_oferta: "REGULAR",
         var_activo: true,
-        var_detalle_variante: { pvp_nominal: 45.0, tamano: "Grande" },
+        var_detalle_variante: {
+          tamano: "Grande",
+          portada_url: "https://lh3.googleusercontent.com/pw/AP1GczP8-SWS6YF2iOsXEa1A7Ij26_J2C0CMLX6jMb5aqvkd5Hd2BQP9azHW4ZJR9wsZfg47ujPytVktmhNLiMBYQzV2fVGalU5znPN3oqjB2GoulGh0eyN5=w1200",
+          pvp_nominal: 45.0,
+          modalidad_pago: "Botón Payphone / Tarjeta / Saldo"
+        },
         monto_iva: 5.8696,
         precio_total: 45.0,
       },
       {
         var_id: "var-tinkay-cor-gig",
-        var_producto_id: "prod-tinkay-coreano",
+        var_producto_id: "3af6aff5-ddd0-4746-b282-c760e4b42214",
         var_sku: "TNK-COR-GIG",
         var_nombre: "Gigante VIP (50 Rosas + Corona + Mariposas)",
         var_precio: 52.1739,
@@ -869,7 +931,12 @@ const PRODUCTOS_SEMILLA_TINKAY: ProductoCatalogo[] = [
         var_tarifa_iva_porcentaje: 15,
         var_tipo_oferta: "REGULAR",
         var_activo: true,
-        var_detalle_variante: { pvp_nominal: 60.0, tamano: "Gigante VIP" },
+        var_detalle_variante: {
+          tamano: "Gigante VIP",
+          portada_url: "https://lh3.googleusercontent.com/pw/AP1GczNhxYIB2tPlUrod5q4ovLTZ8VeWkcLU1bxVREGSwMh9m0TS7DwgjezCYG8O8CCM6wn3p97mBth4B_dVLT7MmDiD_WBTr1Xl4H0PH1VQcgXskqLHS0GO=w1200",
+          pvp_nominal: 60.0,
+          modalidad_pago: "Botón Payphone / Tarjeta / Saldo"
+        },
         monto_iva: 7.8261,
         precio_total: 60.0,
       },
@@ -1218,7 +1285,7 @@ export async function obtenerCategoriasAction(negocio = "tranqi"): Promise<Categ
   let categoriasDb: any[] = [];
   if (clienteActivo) {
     try {
-      const { data: catCom, error: errCom } = await clienteActivo
+      let { data: catCom, error: errCom } = await clienteActivo
         .schema("comun_comercio")
         .from("com_categoria")
         .select("*")
@@ -1226,7 +1293,17 @@ export async function obtenerCategoriasAction(negocio = "tranqi"): Promise<Categ
         .eq("ctg_activo", true)
         .order("ctg_orden", { ascending: true });
 
-      if (!errCom && catCom && catCom.length > 0) {
+      if (errCom || !catCom || catCom.length === 0) {
+        const { data: catPub } = await clienteActivo
+          .from("com_categoria")
+          .select("*")
+          .eq("ctg_negocio", negocio)
+          .eq("ctg_activo", true)
+          .order("ctg_orden", { ascending: true });
+        catCom = catPub;
+      }
+
+      if (catCom && catCom.length > 0) {
         categoriasDb = catCom;
       }
     } catch {
@@ -1264,16 +1341,25 @@ export async function obtenerCatalogoProductosAction(negocio = "tranqi"): Promis
   if (clienteActivo) {
     try {
       // 1. Categorías para resolución exacta
-      const { data: cData } = await clienteActivo
+      let { data: cData, error: errC } = await clienteActivo
         .schema("comun_comercio")
         .from("com_categoria")
         .select("ctg_id, ctg_nombre, ctg_slug, ctg_negocio, ctg_activo")
         .eq("ctg_negocio", negocio)
         .eq("ctg_activo", true);
+      
+      if (errC || !cData || cData.length === 0) {
+        const { data: cDataPub } = await clienteActivo
+          .from("com_categoria")
+          .select("ctg_id, ctg_nombre, ctg_slug, ctg_negocio, ctg_activo")
+          .eq("ctg_negocio", negocio)
+          .eq("ctg_activo", true);
+        cData = cDataPub;
+      }
       catsDb = cData || [];
 
       // 2. Productos
-      const { data: pCom, error: errPCom } = await clienteActivo
+      let { data: pCom, error: errPCom } = await clienteActivo
         .schema("comun_comercio")
         .from("com_producto")
         .select("*")
@@ -1281,15 +1367,35 @@ export async function obtenerCatalogoProductosAction(negocio = "tranqi"): Promis
         .eq("pro_activo", true)
         .order("pro_destacado", { ascending: false });
 
-      if (!errPCom && pCom && pCom.length > 0) {
+      if (errPCom || !pCom || pCom.length === 0) {
+        const { data: pPub } = await clienteActivo
+          .from("com_producto")
+          .select("*")
+          .eq("pro_negocio", negocio)
+          .eq("pro_activo", true)
+          .order("pro_destacado", { ascending: false });
+        pCom = pPub;
+      }
+
+      if (pCom && pCom.length > 0) {
         prodsDb = pCom;
-        const { data: vCom } = await clienteActivo
+        let { data: vCom, error: errVCom } = await clienteActivo
           .schema("comun_comercio")
           .from("com_variante")
           .select("*")
           .eq("var_negocio", negocio)
           .eq("var_activo", true)
           .order("var_precio", { ascending: true });
+
+        if (errVCom || !vCom || vCom.length === 0) {
+          const { data: vPub } = await clienteActivo
+            .from("com_variante")
+            .select("*")
+            .eq("var_negocio", negocio)
+            .eq("var_activo", true)
+            .order("var_precio", { ascending: true });
+          vCom = vPub;
+        }
         varsDb = vCom || [];
       }
     } catch {
@@ -1382,6 +1488,10 @@ export async function crearCategoriaAction(datos: {
   descripcion?: string;
   tipo?: string;
   orden?: number;
+  imagenUrl?: string;
+  videoUrl?: string;
+  albumFotosUrl?: string;
+  icono?: string;
   negocio?: string;
 }): Promise<{ ok: boolean; categoria?: CategoriaCatalogo; error?: string }> {
   try {
@@ -1393,6 +1503,12 @@ export async function crearCategoriaAction(datos: {
 
     const slug = datos.slug?.trim() || generarSlug(nombre);
     const catId = `cat-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
+    const detalle = {
+      imagen_url: datos.imagenUrl?.trim() || null,
+      video_url: datos.videoUrl?.trim() || null,
+      album_fotos_url: datos.albumFotosUrl?.trim() || null,
+      icono: datos.icono?.trim() || null,
+    };
 
     const nuevaCat: CategoriaCatalogo = {
       ctg_id: catId,
@@ -1403,6 +1519,7 @@ export async function crearCategoriaAction(datos: {
       ctg_tipo: datos.tipo || "FORMATO",
       ctg_orden: datos.orden || 10,
       ctg_activo: true,
+      ctg_detalle_categoria: detalle,
     };
 
     // 1. Intentar persistir en Supabase
@@ -1424,6 +1541,7 @@ export async function crearCategoriaAction(datos: {
               ctg_tipo: datos.tipo || "FORMATO",
               ctg_orden: datos.orden || 10,
               ctg_activo: true,
+              ctg_detalle_categoria: detalle,
             },
             { onConflict: "ctg_negocio, ctg_slug" }
           );
@@ -1438,11 +1556,12 @@ export async function crearCategoriaAction(datos: {
               ctg_tipo: datos.tipo || "FORMATO",
               ctg_orden: datos.orden || 10,
               ctg_activo: true,
+              ctg_detalle_categoria: detalle,
             },
             { onConflict: "ctg_negocio, ctg_slug" }
           );
         } catch {
-          // Guardar en memoria
+          // Continuar
         }
       }
     }
@@ -1457,6 +1576,116 @@ export async function crearCategoriaAction(datos: {
   } catch (err: any) {
     return { ok: false, error: err.message || "Error al crear la categoría." };
   }
+}
+
+/**
+ * Resuelve y transforma URLs de visores web de Google Fotos (photos.google.com / photos.app.goo.gl)
+ * y enlaces de Google Drive en URLs de imagen binaria directa (lh3.googleusercontent.com)
+ */
+export async function resolverUrlImagenDirectaAction(
+  rawUrl: string
+): Promise<{ ok: boolean; urlDirecta?: string; error?: string; origen?: string }> {
+  if (!rawUrl || typeof rawUrl !== "string") {
+    return { ok: true, urlDirecta: "" };
+  }
+  const trimmed = rawUrl.trim();
+  if (!trimmed) {
+    return { ok: true, urlDirecta: "" };
+  }
+
+  // 1. Detección y conversión instantánea de Google Drive
+  const driveMatch =
+    trimmed.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/) ||
+    trimmed.match(/drive\.google\.com\/(?:open|uc)\?(?:.*&)?id=([a-zA-Z0-9_-]+)/);
+  if (driveMatch && driveMatch[1]) {
+    return {
+      ok: true,
+      urlDirecta: `https://lh3.googleusercontent.com/d/${driveMatch[1]}=w1200`,
+      origen: "google_drive",
+    };
+  }
+
+  // 2. Detección y extracción profunda de Google Photos
+  if (
+    trimmed.includes("photos.google.com") ||
+    trimmed.includes("photos.app.goo.gl")
+  ) {
+    try {
+      const res = await fetch(trimmed, {
+        headers: {
+          "User-Agent":
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+          Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+        },
+        redirect: "follow",
+        cache: "no-store",
+      });
+
+      if (!res.ok) {
+        return {
+          ok: false,
+          error: `Google Fotos respondió con estado HTTP ${res.status}. Verifica que el enlace sea un álbum compartido público.`,
+        };
+      }
+
+      const html = await res.text();
+
+      // Prioridad 1: Coincidencias de fotos de álbum público /pw/
+      const matchesPw = [
+        ...html.matchAll(/https:\/\/lh3\.googleusercontent\.com\/pw\/[a-zA-Z0-9_\-]+/g),
+      ].map((m) => m[0]);
+
+      if (matchesPw.length > 0 && matchesPw[0]) {
+        // Limpiar sufijos previos y fijar resolución óptima w1200
+        const limpia = matchesPw[0].split("=")[0] || matchesPw[0];
+        return {
+          ok: true,
+          urlDirecta: `${limpia}=w1200`,
+          origen: "google_photos",
+        };
+      }
+
+      // Prioridad 2: Coincidencias de tokens largos de googleusercontent (excluyendo fotos de perfil /a/)
+      const matchesGen = [
+        ...html.matchAll(/https:\/\/[a-z0-9]+\.googleusercontent\.com\/[a-zA-Z0-9_\-]+/g),
+      ]
+        .map((m) => m[0])
+        .filter(
+          (u) =>
+            u.length > 45 &&
+            !u.includes("/a/") &&
+            !u.includes("/photo.jpg") &&
+            !u.includes("favicon")
+        );
+
+      if (matchesGen.length > 0 && matchesGen[0]) {
+        const limpia = matchesGen[0].split("=")[0] || matchesGen[0];
+        return {
+          ok: true,
+          urlDirecta: `${limpia}=w1200`,
+          origen: "google_photos",
+        };
+      }
+
+      return {
+        ok: false,
+        error:
+          "No se pudo extraer la imagen directa del visor de Google Fotos. Copia la dirección directa con clic derecho sobre la foto ('Copiar dirección de la imagen').",
+      };
+    } catch (err: any) {
+      return {
+        ok: false,
+        error: `Error al procesar el enlace de Google Fotos: ${err.message || err}`,
+      };
+    }
+  }
+
+  // 3. Enlace directo u otro CDN
+  return {
+    ok: true,
+    urlDirecta: trimmed,
+    origen: "directo",
+  };
 }
 
 /**
@@ -1525,6 +1754,15 @@ export async function crearProductoAction(datos: {
       precio_total: total,
     };
 
+    // Resolver URLs de fotos si son enlaces de Google Fotos / Drive
+    let resolvedImg = datos.imagenUrl?.trim() || null;
+    if (resolvedImg) {
+      const resImg = await resolverUrlImagenDirectaAction(resolvedImg);
+      if (resImg.ok && resImg.urlDirecta) {
+        resolvedImg = resImg.urlDirecta;
+      }
+    }
+
     const nuevoProducto: ProductoCatalogo = {
       pro_id: prodId,
       pro_negocio: negocio,
@@ -1536,7 +1774,7 @@ export async function crearProductoAction(datos: {
       pro_categoria_principal_id: cat?.ctg_id || null,
       pro_detalle_producto: {
         icono: datos.icono || "Scale",
-        imagen_url: datos.imagenUrl?.trim() || null,
+        imagen_url: resolvedImg,
         video_url: datos.videoUrl?.trim() || null,
         beneficios: datos.beneficios || [],
         tiempo_entrega: datos.tiempoEntrega?.trim() || null,
@@ -1632,7 +1870,7 @@ export async function crearProductoAction(datos: {
 }
 
 /**
- * Edita un producto u honorario profesional existente
+ * Edita un producto u honorario profesional existente con soporte para edición multivariante
  */
 export async function editarProductoAction(datos: {
   pro_id: string;
@@ -1641,33 +1879,49 @@ export async function editarProductoAction(datos: {
   categoriaId?: string;
   tipo: "FISICO" | "SERVICIO" | "SUSCRIPCION" | "DIGITAL";
   destacado?: boolean;
-  precioBase: number;
+  precioBase?: number;
   tarifaIva?: number; // 15 o 0
   sku?: string;
-  icono?: "Scale" | "ShieldCheck" | "FileCheck" | "CreditCard";
+  icono?: string;
   imagenUrl?: string;
+  fotoPosicion?: string;
+  fotoAjuste?: string;
+  fotoZoom?: number;
+  albumFotosUrl?: string;
   videoUrl?: string;
+  galeriaUrls?: string[];
   beneficios?: string[];
   tiempoEntrega?: string;
   requisitos?: string[];
   modalidadPago?: string;
+  tarifaIvaPredeterminada?: number;
+  codigoImpuestoSri?: string;
+  logistica?: {
+    delivery_incluido: boolean;
+    modalidad_transporte: string;
+    etiqueta_transporte: string;
+    cobertura_texto: string;
+  };
   varianteId?: string;
+  variantes?: Array<{
+    var_id?: string;
+    var_sku?: string;
+    var_nombre: string;
+    var_precio: number;
+    var_precio_comparacion?: number | null;
+    var_tarifa_iva_porcentaje?: number;
+    var_codigo_impuesto_sri?: string;
+    var_detalle_variante?: any;
+    var_activo?: boolean;
+  }>;
   negocio?: string;
 }): Promise<{ ok: boolean; producto?: ProductoCatalogo; error?: string }> {
   try {
     const negocio = datos.negocio || "tranqi";
     const nombre = datos.nombre.trim();
     if (!nombre) {
-      return { ok: false, error: "El nombre del producto u honorario es obligatorio." };
+      return { ok: false, error: "El nombre del producto es obligatorio." };
     }
-    if (datos.precioBase <= 0) {
-      return { ok: false, error: "El precio base debe ser mayor a cero." };
-    }
-
-    const base = Number(datos.precioBase.toFixed(2));
-    const tarifaIva = datos.tarifaIva ?? 15;
-    const montoIva = Number(((base * tarifaIva) / 100).toFixed(2));
-    const total = Number((base + montoIva).toFixed(2));
 
     const cats = await obtenerCategoriasAction(negocio);
     const cat = cats.find((c) => c.ctg_id === datos.categoriaId) || null;
@@ -1679,41 +1933,112 @@ export async function editarProductoAction(datos: {
       return { ok: false, error: "Producto no encontrado para editar." };
     }
 
-    // Actualizar variantes (modificar la variante seleccionada o la primera)
-    const variantesActualizadas: VarianteCatalogo[] = prodActual.variantes.map((v, idx) => {
-      const esTarget = datos.varianteId ? v.var_id === datos.varianteId : idx === 0;
-      if (!esTarget) return v;
+    // 0. Resolver URLs de portada global, galería y variantes si vienen enlaces de Google Fotos / Drive
+    let resolvedImagenUrl = datos.imagenUrl !== undefined ? datos.imagenUrl.trim() : prodActual.pro_detalle_producto?.imagen_url;
+    if (resolvedImagenUrl) {
+      const resImg = await resolverUrlImagenDirectaAction(resolvedImagenUrl);
+      if (resImg.ok && resImg.urlDirecta) {
+        resolvedImagenUrl = resImg.urlDirecta;
+      }
+    }
 
-      return {
-        ...v,
-        var_nombre: `${nombre} (Tarifa Estándar)`,
-        var_sku: datos.sku?.trim() || v.var_sku,
-        var_precio: base,
-        var_tarifa_iva_porcentaje: tarifaIva,
-        var_codigo_impuesto_sri: tarifaIva > 0 ? "IVA_15" : "IVA_0",
-        var_detalle_variante: {
-          ...v.var_detalle_variante,
-          modalidad_pago: datos.modalidadPago || v.var_detalle_variante?.modalidad_pago,
-        },
-        monto_iva: montoIva,
-        precio_total: total,
-      };
-    });
+    let resolvedGaleria = datos.galeriaUrls !== undefined ? datos.galeriaUrls : prodActual.pro_detalle_producto?.galeria_urls;
+    if (Array.isArray(resolvedGaleria) && resolvedGaleria.length > 0) {
+      resolvedGaleria = await Promise.all(
+        resolvedGaleria.map(async (u) => {
+          const resG = await resolverUrlImagenDirectaAction(u);
+          return resG.ok && resG.urlDirecta ? resG.urlDirecta : u;
+        })
+      );
+    }
+
+    let variantesActualizadas: VarianteCatalogo[] = [];
+
+    if (datos.variantes && datos.variantes.length > 0) {
+      // 1. Caso: Se envió la lista completa de variantes desde el editor multivariante
+      variantesActualizadas = await Promise.all(
+        datos.variantes.map(async (v, idx) => {
+          const base = Number(Number(v.var_precio || 0).toFixed(4));
+          const ivaPorc = v.var_tarifa_iva_porcentaje ?? 15;
+          const montoIva = Number(((base * ivaPorc) / 100).toFixed(2));
+          const total = Number((base + montoIva).toFixed(2));
+
+          let varPortada = v.var_detalle_variante?.portada_url;
+          if (varPortada && typeof varPortada === "string") {
+            const resVarImg = await resolverUrlImagenDirectaAction(varPortada);
+            if (resVarImg.ok && resVarImg.urlDirecta) {
+              varPortada = resVarImg.urlDirecta;
+            }
+          }
+
+          return {
+            var_id: v.var_id || `var-${Date.now()}-${idx}`,
+            var_producto_id: datos.pro_id,
+            var_sku: v.var_sku?.trim() || `${negocio.toUpperCase().substring(0, 3)}-VAR-${Date.now()}-${idx}`,
+            var_nombre: v.var_nombre.trim() || `${nombre} - Opción ${idx + 1}`,
+            var_precio: base,
+            var_precio_comparacion: v.var_precio_comparacion ? Number(v.var_precio_comparacion) : null,
+            var_codigo_impuesto_sri: ivaPorc > 0 ? "IVA_15" : "IVA_0",
+            var_tarifa_iva_porcentaje: ivaPorc,
+            var_tipo_oferta: "REGULAR",
+            var_frecuencia_recurrencia: datos.tipo === "SUSCRIPCION" ? "MENSUAL" : null,
+            var_activo: v.var_activo !== false,
+            var_detalle_variante: {
+              ...(v.var_detalle_variante || {}),
+              portada_url: varPortada || null,
+              modalidad_pago: datos.modalidadPago || v.var_detalle_variante?.modalidad_pago,
+            },
+            monto_iva: montoIva,
+            precio_total: total,
+          };
+        })
+      );
+    } else if (datos.precioBase !== undefined && datos.precioBase > 0) {
+      // 2. Caso clásico: Se editó una tarifa base o una variante puntual
+      const base = Number(datos.precioBase.toFixed(4));
+      const tarifaIva = datos.tarifaIva ?? 15;
+      const montoIva = Number(((base * tarifaIva) / 100).toFixed(2));
+      const total = Number((base + montoIva).toFixed(2));
+
+      variantesActualizadas = prodActual.variantes.map((v, idx) => {
+        const esTarget = datos.varianteId ? v.var_id === datos.varianteId : idx === 0;
+        if (!esTarget) return v;
+
+        return {
+          ...v,
+          var_sku: datos.sku?.trim() || v.var_sku,
+          var_precio: base,
+          var_tarifa_iva_porcentaje: tarifaIva,
+          var_codigo_impuesto_sri: tarifaIva > 0 ? "IVA_15" : "IVA_0",
+          var_detalle_variante: {
+            ...v.var_detalle_variante,
+            modalidad_pago: datos.modalidadPago || v.var_detalle_variante?.modalidad_pago,
+          },
+          monto_iva: montoIva,
+          precio_total: total,
+        };
+      });
+    } else {
+      variantesActualizadas = [...prodActual.variantes];
+    }
 
     if (variantesActualizadas.length === 0) {
+      const base = 10;
+      const tarifaIva = 15;
+      const montoIva = 1.5;
       variantesActualizadas.push({
         var_id: `var-${Date.now()}`,
         var_producto_id: datos.pro_id,
-        var_sku: datos.sku?.trim() || `TRQ-VAR-${Date.now()}`,
-        var_nombre: `${nombre} (Tarifa Estándar)`,
+        var_sku: datos.sku?.trim() || `${negocio.toUpperCase().substring(0, 3)}-VAR-${Date.now()}`,
+        var_nombre: `${nombre} (Estándar)`,
         var_precio: base,
-        var_codigo_impuesto_sri: tarifaIva > 0 ? "IVA_15" : "IVA_0",
+        var_codigo_impuesto_sri: "IVA_15",
         var_tarifa_iva_porcentaje: tarifaIva,
         var_tipo_oferta: "REGULAR",
         var_activo: true,
         var_detalle_variante: { modalidad_pago: datos.modalidadPago },
         monto_iva: montoIva,
-        precio_total: total,
+        precio_total: base + montoIva,
       });
     }
 
@@ -1726,13 +2051,21 @@ export async function editarProductoAction(datos: {
       pro_categoria_principal_id: cat?.ctg_id || prodActual.pro_categoria_principal_id,
       pro_detalle_producto: {
         ...prodActual.pro_detalle_producto,
-        icono: datos.icono || prodActual.pro_detalle_producto?.icono || "Scale",
-        imagen_url: datos.imagenUrl !== undefined ? datos.imagenUrl.trim() : prodActual.pro_detalle_producto?.imagen_url,
+        icono: datos.icono || prodActual.pro_detalle_producto?.icono || "Sparkles",
+        imagen_url: resolvedImagenUrl,
+        foto_posicion: datos.fotoPosicion !== undefined ? datos.fotoPosicion : (prodActual.pro_detalle_producto?.foto_posicion || "center center"),
+        foto_ajuste: datos.fotoAjuste !== undefined ? datos.fotoAjuste : (prodActual.pro_detalle_producto?.foto_ajuste || "cover"),
+        foto_zoom: datos.fotoZoom !== undefined ? datos.fotoZoom : (prodActual.pro_detalle_producto?.foto_zoom || 100),
+        album_fotos_url: datos.albumFotosUrl !== undefined ? datos.albumFotosUrl.trim() : prodActual.pro_detalle_producto?.album_fotos_url,
         video_url: datos.videoUrl !== undefined ? datos.videoUrl.trim() : prodActual.pro_detalle_producto?.video_url,
+        galeria_urls: resolvedGaleria,
         beneficios: datos.beneficios !== undefined ? datos.beneficios : prodActual.pro_detalle_producto?.beneficios,
         tiempo_entrega: datos.tiempoEntrega !== undefined ? datos.tiempoEntrega.trim() : prodActual.pro_detalle_producto?.tiempo_entrega,
         requisitos: datos.requisitos !== undefined ? datos.requisitos : prodActual.pro_detalle_producto?.requisitos,
         modalidad_pago: datos.modalidadPago || prodActual.pro_detalle_producto?.modalidad_pago,
+        tarifa_iva_predeterminada: datos.tarifaIvaPredeterminada !== undefined ? datos.tarifaIvaPredeterminada : (prodActual.pro_detalle_producto?.tarifa_iva_predeterminada ?? 15),
+        codigo_impuesto_sri: datos.codigoImpuestoSri !== undefined ? datos.codigoImpuestoSri : (prodActual.pro_detalle_producto?.codigo_impuesto_sri || "IVA_15"),
+        logistica: datos.logistica !== undefined ? datos.logistica : prodActual.pro_detalle_producto?.logistica,
         editado_en: new Date().toISOString(),
       },
       categoria: cat
@@ -1752,49 +2085,155 @@ export async function editarProductoAction(datos: {
 
     if (clienteActivo) {
       try {
-        await clienteActivo
-          .schema("comun_comercio")
-          .from("com_producto")
-          .update({
-            pro_nombre: nombre,
-            pro_descripcion: datos.descripcion.trim(),
-            pro_tipo: datos.tipo,
-            pro_destacado: Boolean(datos.destacado),
-            pro_categoria_principal_id: cat?.ctg_id || null,
-            pro_detalle_producto: prodEditado.pro_detalle_producto,
-          })
-          .eq("pro_id", datos.pro_id);
+        const payloadRpc = {
+          pro_id: datos.pro_id,
+          negocio,
+          nombre,
+          slug: prodActual.pro_slug || generarSlug(nombre),
+          descripcion: datos.descripcion.trim(),
+          categoria_id: cat?.ctg_id || null,
+          tipo: datos.tipo,
+          destacado: Boolean(datos.destacado),
+          detalle_producto: prodEditado.pro_detalle_producto,
+          variantes: variantesActualizadas.map((v) => ({
+            var_id: v.var_id,
+            var_sku: v.var_sku,
+            var_nombre: v.var_nombre,
+            var_precio: v.var_precio,
+            var_precio_comparacion: v.var_precio_comparacion,
+            var_tarifa_iva_porcentaje: v.var_tarifa_iva_porcentaje,
+            var_codigo_impuesto_sri: v.var_codigo_impuesto_sri,
+            var_tipo_oferta: v.var_tipo_oferta || "REGULAR",
+            var_activo: v.var_activo !== false,
+            var_detalle_variante: v.var_detalle_variante || {},
+          })),
+        };
 
-        const varTarget = variantesActualizadas[0];
-        if (varTarget) {
-          await clienteActivo
-            .schema("comun_comercio")
-            .from("com_variante")
-            .update({
-              var_nombre: varTarget.var_nombre,
-              var_precio: base,
-              var_tarifa_iva_porcentaje: tarifaIva,
-              var_codigo_impuesto_sri: varTarget.var_codigo_impuesto_sri,
-              var_sku: varTarget.var_sku,
-            })
-            .eq("var_id", varTarget.var_id);
-        }
-      } catch {
+        // 1. Intentar persistencia atómica vía RPC (Segura contra RLS)
+        let rpcExitoso = false;
         try {
-          await clienteActivo
-            .from("com_producto")
-            .update({
-              pro_nombre: nombre,
-              pro_descripcion: datos.descripcion.trim(),
-              pro_tipo: datos.tipo,
-              pro_destacado: Boolean(datos.destacado),
-              pro_categoria_principal_id: cat?.ctg_id || null,
-              pro_detalle_producto: prodEditado.pro_detalle_producto,
-            })
-            .eq("pro_id", datos.pro_id);
+          const { data: rpcRes, error: errRpc } = await clienteActivo
+            .schema("comun_comercio")
+            .rpc("com_fn_guardar_producto_catalogo", { p_datos: payloadRpc });
+          if (!errRpc && rpcRes?.ok) {
+            rpcExitoso = true;
+          }
         } catch {
-          // Continuar
+          rpcExitoso = false;
         }
+
+        if (!rpcExitoso) {
+          try {
+            const { data: rpcResPub, error: errRpcPub } = await clienteActivo.rpc(
+              "com_fn_guardar_producto_catalogo",
+              { p_datos: payloadRpc }
+            );
+            if (!errRpcPub && rpcResPub?.ok) {
+              rpcExitoso = true;
+            }
+          } catch {
+            rpcExitoso = false;
+          }
+        }
+
+        // 2. Fallback a consultas directas si el RPC no está instalado
+        if (!rpcExitoso) {
+          const esUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(datos.pro_id);
+          let dbProdId: string | null = null;
+
+          if (esUuid) {
+            const { data: updData } = await clienteActivo
+              .schema("comun_comercio")
+              .from("com_producto")
+              .update({
+                pro_nombre: nombre,
+                pro_descripcion: datos.descripcion.trim(),
+                pro_tipo: datos.tipo,
+                pro_destacado: Boolean(datos.destacado),
+                pro_categoria_principal_id: cat?.ctg_id || null,
+                pro_detalle_producto: prodEditado.pro_detalle_producto,
+              })
+              .eq("pro_id", datos.pro_id)
+              .select("pro_id")
+              .single();
+
+            if (updData?.pro_id) {
+              dbProdId = updData.pro_id;
+            }
+          }
+
+          if (!dbProdId) {
+            const slug = prodActual.pro_slug || generarSlug(nombre);
+            const { data: upsertData } = await clienteActivo
+              .schema("comun_comercio")
+              .from("com_producto")
+              .upsert(
+                {
+                  pro_negocio: negocio,
+                  pro_nombre: nombre,
+                  pro_slug: slug,
+                  pro_descripcion: datos.descripcion.trim(),
+                  pro_tipo: datos.tipo,
+                  pro_destacado: Boolean(datos.destacado),
+                  pro_categoria_principal_id: cat?.ctg_id || null,
+                  pro_activo: true,
+                  pro_detalle_producto: prodEditado.pro_detalle_producto,
+                },
+                { onConflict: "pro_negocio, pro_slug" }
+              )
+              .select("pro_id")
+              .single();
+
+            if (upsertData?.pro_id) {
+              dbProdId = upsertData.pro_id;
+            }
+          }
+
+          if (dbProdId) {
+            for (const v of variantesActualizadas) {
+              const varDetalle = v.var_detalle_variante || {};
+              const varPayload: any = {
+                var_producto_id: dbProdId,
+                var_negocio: negocio,
+                var_sku: v.var_sku,
+                var_nombre: v.var_nombre,
+                var_precio: v.var_precio,
+                var_precio_comparacion: v.var_precio_comparacion,
+                var_tarifa_iva_porcentaje: v.var_tarifa_iva_porcentaje,
+                var_codigo_impuesto_sri: v.var_codigo_impuesto_sri,
+                var_tipo_oferta: v.var_tipo_oferta || "REGULAR",
+                var_activo: v.var_activo !== false,
+                var_detalle_variante: varDetalle,
+                var_actualizado_en: new Date().toISOString(),
+              };
+
+              const varEsUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v.var_id);
+              let guardadoOk = false;
+
+              if (varEsUuid) {
+                const { data: updVar, error: errUpdVar } = await clienteActivo
+                  .schema("comun_comercio")
+                  .from("com_variante")
+                  .update(varPayload)
+                  .eq("var_id", v.var_id)
+                  .select("var_id");
+
+                if (!errUpdVar && updVar && updVar.length > 0) {
+                  guardadoOk = true;
+                }
+              }
+
+              if (!guardadoOk) {
+                await clienteActivo
+                  .schema("comun_comercio")
+                  .from("com_variante")
+                  .upsert(varPayload, { onConflict: "var_negocio, var_sku" });
+              }
+            }
+          }
+        }
+      } catch (errDb) {
+        console.error("Error al persistir edición de producto en Supabase:", errDb);
       }
     }
 
@@ -2320,6 +2759,11 @@ export async function confirmarPagoPayphoneAction(datos: {
   esSimulado?: boolean;
   resultadoSimulacion?: "APROBADO" | "RECHAZADO";
   marcaTarjetaSimulada?: string;
+  ultimosDigitos?: string;
+  titularNombre?: string;
+  varianteId?: string;
+  productoNombre?: string;
+  clienteEmail?: string;
 }) {
   const negocio = datos.negocio || "tranqi";
   const admin: any = crearClienteAdmin();
@@ -2334,6 +2778,8 @@ export async function confirmarPagoPayphoneAction(datos: {
     const aprobado = datos.resultadoSimulacion !== "RECHAZADO";
     const authCode = aprobado ? `AUTH-SIM-${Math.floor(100000 + Math.random() * 900000)}` : null;
     const estadoFinal = aprobado ? "APROBADO" : "RECHAZADO";
+    const marca = datos.marcaTarjetaSimulada || "Visa";
+    const ultimosDigitos = datos.ultimosDigitos || "4321";
 
     if (clienteDb) {
       try {
@@ -2344,16 +2790,31 @@ export async function confirmarPagoPayphoneAction(datos: {
             pag_estado: estadoFinal,
             pag_autorizacion_codigo: authCode,
             pag_tarjeta_tipo: "Crédito (Simulado)",
-            pag_tarjeta_marca: "Visa / Diners Club",
-            pag_tarjeta_ultimos_digitos: "4321",
+            pag_tarjeta_marca: marca,
+            pag_tarjeta_ultimos_digitos: ultimosDigitos,
             pag_confirmado_en: new Date().toISOString(),
             pag_detalle_transaccion: {
               simulacion: true,
               fecha_confirmacion: new Date().toISOString(),
               resultado: estadoFinal,
+              titular: datos.titularNombre,
             },
           })
           .eq("pag_identificador_cliente", datos.clientTxId);
+      } catch {
+        // Continuar
+      }
+    }
+
+    if (aprobado && datos.varianteId) {
+      try {
+        await activarSuscripcionTrasPagoAction({
+          negocio,
+          varianteId: datos.varianteId,
+          productoNombre: datos.productoNombre || "Plan Jurídico",
+          clienteEmail: datos.clienteEmail || "cliente@tranqi24.com",
+          clienteNombre: datos.titularNombre || "Cliente",
+        });
       } catch {
         // Continuar
       }
@@ -2366,7 +2827,7 @@ export async function confirmarPagoPayphoneAction(datos: {
       mensaje: aprobado
         ? "¡Pago Aprobado con Éxito (Simulación Payphone)!"
         : "Transacción rechazada por el emisor simulado.",
-      tarjeta: "Visa •••• 4321",
+      tarjeta: `${marca} •••• ${ultimosDigitos}`,
       fecha: new Date().toISOString(),
     };
   }
@@ -2472,3 +2933,622 @@ export async function obtenerHistorialTransaccionesAction(negocio = "tranqi"): P
     return [];
   }
 }
+
+// ==============================================================================
+// 7. GESTIÓN DE DISPONIBILIDAD OPERATIVA MULTINEGOCIO (INVENTARIO & CAPACIDAD)
+// ==============================================================================
+
+const DISPONIBILIDAD_SEMILLA_TINKAY: ItemDisponibilidadOperativa[] = [
+  {
+    id: "disp-tnk-rojo",
+    negocio: "tinkay",
+    codigo: "ROSA-ROJO-EXPLORER",
+    nombre: "Rojo Pasión (Explorer)",
+    nombre_secundario: "Explorer / Freedom (Floraroma)",
+    categoria_tipo: "ROSAS",
+    unidad: "BONCHE",
+    cantidad_disponible: 12,
+    estado: "DISPONIBLE",
+    color_hex: "#DC2626",
+    color_nombre: "Rojo Pasión",
+    imagen_url: "https://photos.app.goo.gl/RhTxny2frDaV1XTv5",
+    detalle: { tallos_por_bonche: 25 },
+  },
+  {
+    id: "disp-tnk-blanco",
+    negocio: "tinkay",
+    codigo: "ROSA-BLANCO-MONDIAL",
+    nombre: "Blanco Puro (Mondial)",
+    nombre_secundario: "Mondial / Playa Blanca",
+    categoria_tipo: "ROSAS",
+    unidad: "BONCHE",
+    cantidad_disponible: 8,
+    estado: "DISPONIBLE",
+    color_hex: "#F8FAFC",
+    color_nombre: "Blanco Puro",
+    imagen_url: "https://photos.app.goo.gl/tinkay-bouq-florero",
+    detalle: { tallos_por_bonche: 25 },
+  },
+  {
+    id: "disp-tnk-rosa",
+    negocio: "tinkay",
+    codigo: "ROSA-ROSA-HERMOSA",
+    nombre: "Rosado Pastel (Hermosa)",
+    nombre_secundario: "Sweet Unique / Hermosa",
+    categoria_tipo: "ROSAS",
+    unidad: "BONCHE",
+    cantidad_disponible: 9,
+    estado: "DISPONIBLE",
+    color_hex: "#F472B6",
+    color_nombre: "Rosado Pastel",
+    detalle: { tallos_por_bonche: 25 },
+  },
+  {
+    id: "disp-tnk-fucsia",
+    negocio: "tinkay",
+    codigo: "ROSA-FUCSIA-PINKFLOYD",
+    nombre: "Fucsia Vibrante (Pink Floyd)",
+    nombre_secundario: "Pink Floyd / Lola",
+    categoria_tipo: "ROSAS",
+    unidad: "BONCHE",
+    cantidad_disponible: 5,
+    estado: "DISPONIBLE",
+    color_hex: "#DB2777",
+    color_nombre: "Fucsia Vibrante",
+    detalle: { tallos_por_bonche: 25 },
+  },
+  {
+    id: "disp-tnk-durazno",
+    negocio: "tinkay",
+    codigo: "ROSA-DURAZNO-KAHALA",
+    nombre: "Durazno / Salmón (Kahala)",
+    nombre_secundario: "Kahala / Free Spirit",
+    categoria_tipo: "ROSAS",
+    unidad: "BONCHE",
+    cantidad_disponible: 2,
+    estado: "BAJO",
+    color_hex: "#FB923C",
+    color_nombre: "Durazno Vintage",
+    detalle: { tallos_por_bonche: 25 },
+  },
+  {
+    id: "disp-tnk-amarillo",
+    negocio: "tinkay",
+    codigo: "ROSA-AMARILLO-BRIGHTON",
+    nombre: "Amarillo Sol (Brighton)",
+    nombre_secundario: "Brighton / Bumblebee",
+    categoria_tipo: "ROSAS",
+    unidad: "BONCHE",
+    cantidad_disponible: 3,
+    estado: "BAJO",
+    color_hex: "#FACC15",
+    color_nombre: "Amarillo Sol",
+    detalle: { tallos_por_bonche: 25 },
+  },
+  {
+    id: "disp-tnk-lila",
+    negocio: "tinkay",
+    codigo: "ROSA-LILA-COOLWATER",
+    nombre: "Lavanda / Lila (Cool Water)",
+    nombre_secundario: "Cool Water / Ocean Song",
+    categoria_tipo: "ROSAS",
+    unidad: "BONCHE",
+    cantidad_disponible: 0,
+    estado: "AGOTADO",
+    color_hex: "#C084FC",
+    color_nombre: "Lavanda Elegance",
+    detalle: { tallos_por_bonche: 25 },
+  },
+  // Envoltorios Coreanos
+  {
+    id: "disp-tnk-papel-negro",
+    negocio: "tinkay",
+    codigo: "PAPEL-NEGRO-ELEGANCE",
+    nombre: "Envoltorio Negro Elegance",
+    categoria_tipo: "ENVOLTORIO",
+    unidad: "PLIEGO",
+    cantidad_disponible: 50,
+    estado: "DISPONIBLE",
+    color_hex: "#1E293B",
+    color_nombre: "Negro Elegance",
+  },
+  {
+    id: "disp-tnk-papel-blanco",
+    negocio: "tinkay",
+    codigo: "PAPEL-BLANCO-NIEVE",
+    nombre: "Envoltorio Blanco Nieve",
+    categoria_tipo: "ENVOLTORIO",
+    unidad: "PLIEGO",
+    cantidad_disponible: 45,
+    estado: "DISPONIBLE",
+    color_hex: "#FFFFFF",
+    color_nombre: "Blanco Nieve",
+  },
+  {
+    id: "disp-tnk-papel-rosa",
+    negocio: "tinkay",
+    codigo: "PAPEL-ROSA-BLUSH",
+    nombre: "Envoltorio Tonos Rosados / Blush",
+    categoria_tipo: "ENVOLTORIO",
+    unidad: "PLIEGO",
+    cantidad_disponible: 40,
+    estado: "DISPONIBLE",
+    color_hex: "#FBCFE8",
+    color_nombre: "Rosa Blush",
+  },
+  {
+    id: "disp-tnk-papel-azul",
+    negocio: "tinkay",
+    codigo: "PAPEL-AZUL-NOCHE",
+    nombre: "Envoltorio Azul Noche",
+    categoria_tipo: "ENVOLTORIO",
+    unidad: "PLIEGO",
+    cantidad_disponible: 20,
+    estado: "DISPONIBLE",
+    color_hex: "#1E40AF",
+    color_nombre: "Azul Noche",
+  },
+  {
+    id: "disp-tnk-papel-verde",
+    negocio: "tinkay",
+    codigo: "PAPEL-VERDE-BOTANICO",
+    nombre: "Envoltorio Verde Botánico",
+    categoria_tipo: "ENVOLTORIO",
+    unidad: "PLIEGO",
+    cantidad_disponible: 30,
+    estado: "DISPONIBLE",
+    color_hex: "#16A34A",
+    color_nombre: "Verde Botánico",
+  },
+];
+
+const DISPONIBILIDAD_SEMILLA_TRANQI: ItemDisponibilidadOperativa[] = [
+  {
+    id: "disp-trq-senior-corp",
+    negocio: "tranqi",
+    codigo: "ABG-SENIOR-CORP",
+    nombre: "Abogado Senior (Derecho Societario & PYMEs)",
+    categoria_tipo: "HORAS_PROFESIONAL",
+    unidad: "HORA",
+    cantidad_disponible: 8,
+    estado: "DISPONIBLE",
+    detalle: { tarifa_hora: 80.0, especialidad: "Societario" },
+  },
+  {
+    id: "disp-trq-esp-familia",
+    negocio: "tranqi",
+    codigo: "ABG-ESP-FAMILIA",
+    nombre: "Abogada Especialista (Familia, Divorcios, Niñez)",
+    categoria_tipo: "HORAS_PROFESIONAL",
+    unidad: "HORA",
+    cantidad_disponible: 6,
+    estado: "DISPONIBLE",
+    detalle: { tarifa_hora: 60.0, especialidad: "Familia" },
+  },
+  {
+    id: "disp-trq-socio-litigio",
+    negocio: "tranqi",
+    codigo: "ABG-SOCIO-LITIGIO",
+    nombre: "Socio Director (Litigios Complejos & Casación)",
+    categoria_tipo: "HORAS_PROFESIONAL",
+    unidad: "HORA",
+    cantidad_disponible: 2,
+    estado: "BAJO",
+    detalle: { tarifa_hora: 150.0, especialidad: "Litigios" },
+  },
+  {
+    id: "disp-trq-junior-minutas",
+    negocio: "tranqi",
+    codigo: "ABG-JUN-MINUTAS",
+    nombre: "Abogado Junior (Redacción de Minutas & Contratos)",
+    categoria_tipo: "HORAS_PROFESIONAL",
+    unidad: "HORA",
+    cantidad_disponible: 14,
+    estado: "DISPONIBLE",
+    detalle: { tarifa_hora: 35.0, especialidad: "Contractual" },
+  },
+];
+
+const DISPONIBILIDAD_SEMILLA_FASTFIX: ItemDisponibilidadOperativa[] = [
+  {
+    id: "disp-ffh-plomeria-norte",
+    negocio: "fastfix",
+    codigo: "TEC-PLOM-NORTE",
+    nombre: "Cuadrilla Plomería & Fugas (Quito Norte)",
+    categoria_tipo: "CUADRILLA_TECNICA",
+    unidad: "CUADRILLA",
+    cantidad_disponible: 3,
+    estado: "DISPONIBLE",
+    detalle: { tiempo_llegada: "45-60 min", zona: "Quito Norte" },
+  },
+  {
+    id: "disp-ffh-elec-valles",
+    negocio: "fastfix",
+    codigo: "TEC-ELEC-VALLES",
+    nombre: "Cuadrilla Electricidad & Tableros (Cumbayá & Tumbaco)",
+    categoria_tipo: "CUADRILLA_TECNICA",
+    unidad: "CUADRILLA",
+    cantidad_disponible: 2,
+    estado: "DISPONIBLE",
+    detalle: { tiempo_llegada: "45 min", zona: "Valles" },
+  },
+  {
+    id: "disp-ffh-urgencia-247",
+    negocio: "fastfix",
+    codigo: "TEC-URG-247",
+    nombre: "Cuadrilla de Emergencias 24/7 (Quito Centro & Sur)",
+    categoria_tipo: "CUADRILLA_TECNICA",
+    unidad: "CUADRILLA",
+    cantidad_disponible: 1,
+    estado: "BAJO",
+    detalle: { tiempo_llegada: "60 min", zona: "Centro/Sur" },
+  },
+];
+
+const storeDisponibilidad = new Map<string, ItemDisponibilidadOperativa[]>();
+
+/**
+ * Obtiene la lista de disponibilidad operativa e inventario del negocio
+ */
+export async function obtenerDisponibilidadOperativaAction(
+  negocio = "tranqi"
+): Promise<ItemDisponibilidadOperativa[]> {
+  const admin: any = crearClienteAdmin();
+  const supabase: any = await crearClienteServidor();
+  const clienteActivo = admin || supabase;
+
+  let dbItems: any[] = [];
+  if (clienteActivo) {
+    try {
+      const { data } = await clienteActivo
+        .schema("comun_comercio")
+        .from("com_inventario")
+        .select("*, com_insumo(*)")
+        .eq("inv_negocio", negocio);
+
+      if (data && data.length > 0) {
+        dbItems = data.map((d: any) => ({
+          id: d.inv_id,
+          negocio: d.inv_negocio,
+          codigo: d.com_insumo?.ins_codigo || d.inv_insumo_id,
+          nombre: d.com_insumo?.ins_nombre || "Insumo",
+          categoria_tipo: d.com_insumo?.ins_detalle_insumo?.categoria_tipo || "INSUMO_GENERAL",
+          unidad: d.com_insumo?.ins_unidad_medida || "UNIDAD",
+          cantidad_disponible: Number(d.inv_stock_actual || 0),
+          estado:
+            Number(d.inv_stock_actual || 0) <= 0
+              ? "AGOTADO"
+              : Number(d.inv_stock_actual || 0) <= 3
+              ? "BAJO"
+              : "DISPONIBLE",
+          color_hex: d.com_insumo?.ins_detalle_insumo?.color_hex,
+          color_nombre: d.com_insumo?.ins_detalle_insumo?.color_nombre,
+          detalle: d.com_insumo?.ins_detalle_insumo,
+        }));
+      }
+    } catch {
+      // Fallback
+    }
+  }
+
+  const semillas =
+    negocio === "tinkay"
+      ? DISPONIBILIDAD_SEMILLA_TINKAY
+      : negocio === "tranqi"
+      ? DISPONIBILIDAD_SEMILLA_TRANQI
+      : negocio === "fastfix"
+      ? DISPONIBILIDAD_SEMILLA_FASTFIX
+      : DISPONIBILIDAD_SEMILLA_TINKAY;
+
+  const base = dbItems.length > 0 ? dbItems : semillas;
+  const enMemoria = storeDisponibilidad.get(negocio);
+
+  return enMemoria || base;
+}
+
+/**
+ * Actualiza la cantidad o estado de un ítem de disponibilidad en taller/despacho
+ */
+export async function actualizarDisponibilidadOperativaAction(
+  negocio: string,
+  itemsActualizados: ItemDisponibilidadOperativa[]
+): Promise<{ ok: boolean; items?: ItemDisponibilidadOperativa[]; error?: string }> {
+  try {
+    storeDisponibilidad.set(negocio, itemsActualizados);
+
+    const admin: any = crearClienteAdmin();
+    const supabase: any = await crearClienteServidor();
+    const clienteActivo = admin || supabase;
+
+    if (clienteActivo) {
+      for (const it of itemsActualizados) {
+        try {
+          // Intentar persistir en Supabase
+          await clienteActivo
+            .schema("comun_comercio")
+            .from("com_inventario")
+            .upsert(
+              {
+                inv_negocio: negocio,
+                inv_local_codigo: "MATRIZ",
+                inv_stock_actual: it.cantidad_disponible,
+                inv_actualizado_en: new Date().toISOString(),
+              },
+              { onConflict: "inv_negocio, inv_insumo_id, inv_local_codigo" }
+            );
+        } catch {
+          // Continuar
+        }
+      }
+    }
+
+    revalidatePath("/panel");
+    revalidatePath("/panel/catalogo-productos");
+    return { ok: true, items: itemsActualizados };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Error al actualizar disponibilidad." };
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CAPA DE SUSCRIPCIONES, COBERTURA Y CONSUMO DE CUPOS LEGALES (PLT-009 / PLT-020)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface DerechoCobertura {
+  concepto: string;
+  nombre: string;
+  incluidos: number | null; // null = ilimitado
+  consumidos: number;
+  restantes: number | null; // null = ilimitado
+  porcentaje?: number;
+}
+
+export interface EstadoCoberturaCliente {
+  tienePlanActivo: boolean;
+  suscripcionId: string | null;
+  planNombre: string | null;
+  planSku: string | null;
+  frecuencia: string;
+  estado: string;
+  fechaRenovacion: string | null;
+  miembrosCubiertos: number;
+  derechos: DerechoCobertura[];
+}
+
+const storeCoberturaCliente = new Map<string, EstadoCoberturaCliente>();
+
+export async function obtenerCoberturaUsuarioAction(
+  negocio = "tranqi"
+): Promise<EstadoCoberturaCliente> {
+  const admin: any = crearClienteAdmin();
+  const supabase: any = await crearClienteServidor();
+  const clienteActivo = admin || supabase;
+
+  // 1. Intentar consultar en Supabase
+  if (clienteActivo) {
+    try {
+      const { data: usuarioAuth } = await supabase?.auth?.getUser?.() || {};
+      const userId = usuarioAuth?.user?.id;
+
+      if (userId) {
+        const { data: subs } = await clienteActivo
+          .schema("comun_comercio")
+          .from("com_suscripcion")
+          .select("*, com_variante(*)")
+          .eq("sub_cliente_id", userId)
+          .eq("sub_negocio", negocio)
+          .eq("sub_estado", "ACTIVA")
+          .order("sub_creado_en", { ascending: false })
+          .limit(1);
+
+        if (subs && subs.length > 0) {
+          const sub = subs[0];
+          const varDetalle = sub.com_variante?.var_detalle_variante || {};
+          const derechosDef: any[] = varDetalle.derechos || [];
+
+          const primerDiaMes = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split("T")[0];
+          const { data: consumos } = await clienteActivo
+            .schema("comun_comercio")
+            .from("com_derecho_consumo")
+            .select("*")
+            .eq("der_suscripcion_id", sub.sub_id)
+            .eq("der_periodo", primerDiaMes);
+
+          const mapaConsumos = new Map<string, number>();
+          consumos?.forEach((c: any) => {
+            mapaConsumos.set(c.der_concepto, c.der_consumidos || 0);
+          });
+
+          const derechos: DerechoCobertura[] = derechosDef.map((d: any) => {
+            const consumidos = mapaConsumos.get(d.concepto) || 0;
+            const restantes = d.incluidos !== null && d.incluidos !== undefined
+              ? Math.max(0, d.incluidos - consumidos)
+              : null;
+            return {
+              concepto: d.concepto,
+              nombre: d.nombre || d.concepto,
+              incluidos: d.incluidos ?? null,
+              consumidos,
+              restantes,
+              porcentaje: d.porcentaje,
+            };
+          });
+
+          const fechaRenovacion = new Date();
+          fechaRenovacion.setMonth(fechaRenovacion.getMonth() + 1);
+
+          return {
+            tienePlanActivo: true,
+            suscripcionId: sub.sub_id,
+            planNombre: sub.com_variante?.var_nombre || "Plan de Cobertura Jurídica",
+            planSku: sub.com_variante?.var_sku || "TRQ-PLAN",
+            frecuencia: sub.sub_frecuencia || "MENSUAL",
+            estado: sub.sub_estado,
+            fechaRenovacion: fechaRenovacion.toLocaleDateString("es-EC", { day: "numeric", month: "long", year: "numeric" }),
+            miembrosCubiertos: varDetalle.miembros_cubiertos || 4,
+            derechos,
+          };
+        }
+      }
+    } catch {
+      // Fallback
+    }
+  }
+
+  // 2. Fallback a memoria
+  const enMemoria = storeCoberturaCliente.get(negocio);
+  if (enMemoria) return enMemoria;
+
+  // 3. Fallback demostración predeterminado con Plan Amparo Familiar
+  const fechaRenovacion = new Date();
+  fechaRenovacion.setDate(fechaRenovacion.getDate() + 30);
+
+  return {
+    tienePlanActivo: true,
+    suscripcionId: "sub-demo-amparo-fam",
+    planNombre: "Plan Amparo Familiar",
+    planSku: "TRQ-PLAN-AMPARO-FAM",
+    frecuencia: "MENSUAL",
+    estado: "ACTIVA",
+    fechaRenovacion: fechaRenovacion.toLocaleDateString("es-EC", { day: "numeric", month: "long", year: "numeric" }),
+    miembrosCubiertos: 4,
+    derechos: [
+      {
+        concepto: "CONSULTA_TELEMATICA",
+        nombre: "Citas Telemáticas Especializadas",
+        incluidos: 4,
+        consumidos: 1,
+        restantes: 3,
+      },
+      {
+        concepto: "REVISION_CONTRATO",
+        nombre: "Revisiones y Dictámenes de Contratos",
+        incluidos: 2,
+        consumidos: 0,
+        restantes: 2,
+      },
+      {
+        concepto: "CONSULTA_ARIA_IA",
+        nombre: "Consultas Ilimitadas Asistente ARIA IA 24/7",
+        incluidos: null,
+        consumidos: 14,
+        restantes: null,
+      },
+      {
+        concepto: "DESCUENTO_NOTARIAL",
+        nombre: "Descuento en Trámites Notariales & Juicios",
+        incluidos: null,
+        consumidos: 0,
+        restantes: null,
+        porcentaje: 35,
+      },
+    ],
+  };
+}
+
+export async function consumirDerechoUsuarioAction(datos: {
+  concepto: string;
+  negocio?: string;
+  suscripcionId?: string;
+}): Promise<{ ok: boolean; restante?: number | null; mensaje: string }> {
+  const negocio = datos.negocio || "tranqi";
+  const cobertura = await obtenerCoberturaUsuarioAction(negocio);
+
+  if (!cobertura.tienePlanActivo) {
+    return { ok: false, mensaje: "No dispones de un plan activo con cobertura." };
+  }
+
+  const der = cobertura.derechos.find((d) => d.concepto === datos.concepto);
+  if (!der) {
+    return { ok: false, mensaje: `El concepto ${datos.concepto} no está incluido en tu plan.` };
+  }
+
+  if (der.incluidos !== null && (der.restantes ?? 0) <= 0) {
+    return { ok: false, mensaje: `Has agotado tus cupos de ${der.nombre} para este periodo.` };
+  }
+
+  // Actualizar consumos
+  der.consumidos += 1;
+  if (der.incluidos !== null) {
+    der.restantes = Math.max(0, der.incluidos - der.consumidos);
+  }
+
+  storeCoberturaCliente.set(negocio, { ...cobertura });
+
+  // Intentar persistir en Supabase RPC
+  const admin: any = crearClienteAdmin();
+  const supabase: any = await crearClienteServidor();
+  const clienteActivo = admin || supabase;
+  if (clienteActivo && cobertura.suscripcionId && !cobertura.suscripcionId.startsWith("sub-demo")) {
+    try {
+      await clienteActivo.schema("comun_comercio").rpc("com_fn_consumir_derecho", {
+        p_suscripcion_id: cobertura.suscripcionId,
+        p_concepto: datos.concepto,
+      });
+    } catch {
+      // Continuar
+    }
+  }
+
+  revalidatePath("/panel");
+  return {
+    ok: true,
+    restante: der.restantes,
+    mensaje: `Cupo de ${der.nombre} consumido exitosamente. Te quedan ${der.restantes ?? "ilimitadas"}.`,
+  };
+}
+
+export async function activarSuscripcionTrasPagoAction(datos: {
+  negocio: string;
+  varianteId: string;
+  productoNombre: string;
+  clienteEmail: string;
+  clienteNombre: string;
+}) {
+  const prods = await obtenerCatalogoProductosAction(datos.negocio);
+  let varianteEncontrada: any = null;
+  for (const p of prods) {
+    const v = p.variantes?.find((varItem: any) => varItem.var_id === datos.varianteId);
+    if (v) {
+      varianteEncontrada = v;
+      break;
+    }
+  }
+
+  const varDetalle = varianteEncontrada?.var_detalle_variante || {};
+  const derechosDef = varDetalle.derechos || [
+    { concepto: "CONSULTA_TELEMATICA", nombre: "Citas Telemáticas Especializadas", incluidos: 4 },
+    { concepto: "REVISION_CONTRATO", nombre: "Revisiones y Dictámenes de Contratos", incluidos: 2 },
+    { concepto: "CONSULTA_ARIA_IA", nombre: "Consultas Ilimitadas Asistente ARIA IA 24/7", incluidos: null },
+    { concepto: "DESCUENTO_NOTARIAL", nombre: "Descuento en Trámites Notariales", incluidos: null, porcentaje: 35 },
+  ];
+
+  const derechos: DerechoCobertura[] = derechosDef.map((d: any) => ({
+    concepto: d.concepto,
+    nombre: d.nombre || d.concepto,
+    incluidos: d.incluidos ?? null,
+    consumidos: 0,
+    restantes: d.incluidos ?? null,
+    porcentaje: d.porcentaje,
+  }));
+
+  const fechaRenovacion = new Date();
+  fechaRenovacion.setDate(fechaRenovacion.getDate() + 30);
+
+  const nuevaCobertura: EstadoCoberturaCliente = {
+    tienePlanActivo: true,
+    suscripcionId: `sub-${Date.now()}`,
+    planNombre: varianteEncontrada?.var_nombre || datos.productoNombre,
+    planSku: varianteEncontrada?.var_sku || "TRQ-PLAN",
+    frecuencia: varianteEncontrada?.var_frecuencia_recurrencia || "MENSUAL",
+    estado: "ACTIVA",
+    fechaRenovacion: fechaRenovacion.toLocaleDateString("es-EC", { day: "numeric", month: "long", year: "numeric" }),
+    miembrosCubiertos: varDetalle.miembros_cubiertos || 4,
+    derechos,
+  };
+
+  storeCoberturaCliente.set(datos.negocio, nuevaCobertura);
+  revalidatePath("/panel");
+  return nuevaCobertura;
+}
+

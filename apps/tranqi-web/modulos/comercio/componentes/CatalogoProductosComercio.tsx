@@ -13,12 +13,19 @@ import {
   CheckCircle,
   HelpCircle,
   Clock,
+  ChevronLeft,
   ChevronRight,
   RefreshCw,
   Plus,
   FolderPlus,
   Layers,
   Pencil,
+  Play,
+  Video,
+  Eye,
+  X,
+  ExternalLink,
+  Truck,
 } from "lucide-react";
 import {
   ProductoCatalogo,
@@ -31,13 +38,23 @@ import {
 import { ModalCheckoutPayphone } from "./ModalCheckoutPayphone";
 import { ModalCrearProducto } from "./ModalCrearProducto";
 import { ModalCrearCategoria } from "./ModalCrearCategoria";
-import { ModalEditarProducto } from "./ModalEditarProducto";
+import { ModalEditarProducto, PALETA_COLORES_VARIANTES } from "./ModalEditarProducto";
+import { ManualConfiguracionCatalogoModal } from "./ManualConfiguracionCatalogoModal";
+import { TableroDisponibilidadOperativa } from "./TableroDisponibilidadOperativa";
+import { BookOpen, Flower2, Wrench, Activity, LayoutGrid } from "lucide-react";
 
 interface Props {
   negocio?: string;
 }
 
 export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
+  const esFloristeria = negocio === "tinkay" || negocio === "margaritas";
+  const esMantenimiento = negocio === "fastfix";
+
+  const [pestanaActiva, setPestanaActiva] = useState<"catalogo" | "disponibilidad">("catalogo");
+  const [modoVista, setModoVista] = useState<"admin" | "cliente">("admin");
+  const [videoModalUrl, setVideoModalUrl] = useState<string | null>(null);
+
   const [productos, setProductos] = useState<ProductoCatalogo[]>([]);
   const [categoriasLista, setCategoriasLista] = useState<CategoriaCatalogo[]>([]);
   const [cargando, setCargando] = useState(true);
@@ -53,11 +70,18 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
   const [modalProdAbierto, setModalProdAbierto] = useState(false);
   const [modalCatAbierto, setModalCatAbierto] = useState(false);
   const [productoAEditar, setProductoAEditar] = useState<ProductoCatalogo | null>(null);
+  const [varianteAEditarId, setVarianteAEditarId] = useState<string | undefined>(undefined);
   const [modalEditarAbierto, setModalEditarAbierto] = useState(false);
+  const [modalManualAbierto, setModalManualAbierto] = useState(false);
 
   // Mapa de variantes seleccionadas por producto
   const [varianteSeleccionadaPorProducto, setVarianteSeleccionadaPorProducto] = useState<
     Record<string, string>
+  >({});
+
+  // Índice de foto activa en el carrusel de cada producto
+  const [fotoCarouselIndexPorProducto, setFotoCarouselIndexPorProducto] = useState<
+    Record<string, number>
   >({});
 
   const cargarDatos = async () => {
@@ -190,25 +214,90 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
             </span>
           </div>
           <h1 style={{ margin: 0, fontSize: "1.45rem", fontWeight: 800, color: "#0F172A" }}>
-            Catálogo Comercial y Honorarios Profesionales
+            {esFloristeria
+              ? "Catálogo Comercial y Diseños Florales"
+              : esMantenimiento
+              ? "Catálogo de Servicios y Mantenimiento"
+              : "Catálogo Comercial y Honorarios Profesionales"}
           </h1>
           <p style={{ margin: "4px 0 0", fontSize: "0.85rem", color: "#64748B" }}>
-            Contrata servicios jurídicos, liquida honorarios profesionales o activa planes legales con Payphone en modo simulado o real.
+            {esFloristeria
+              ? "Arreglos florales, bouquets estilo coreano, complementos y suscripciones con entrega express y Payphone."
+              : esMantenimiento
+              ? "Servicios de mantenimiento, visitas de diagnóstico y reparaciones residenciales con cobro Payphone."
+              : "Contrata servicios jurídicos, liquida honorarios profesionales o activa planes legales con Payphone en modo simulado o real."}
           </p>
         </div>
 
-        {/* Botones de Gestión de Catálogo para Administrador */}
+        {/* Selector de Modo: Administrador vs Vista Cliente */}
         <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
+          <div
+            style={{
+              display: "inline-flex",
+              background: "#F1F5F9",
+              padding: "3px",
+              borderRadius: "10px",
+              border: "1px solid #CBD5E1",
+              marginRight: "4px",
+            }}
+          >
+            <button
+              type="button"
+              onClick={() => setModoVista("admin")}
+              title="Modo Configuración (Crear y editar productos)"
+              style={{
+                padding: "6px 12px",
+                borderRadius: "7px",
+                border: "none",
+                background: modoVista === "admin" ? "#0F172A" : "transparent",
+                color: modoVista === "admin" ? "#FFFFFF" : "#475569",
+                fontSize: "0.78rem",
+                fontWeight: 700,
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                gap: "5px",
+                transition: "all 0.15s ease",
+              }}
+            >
+              <Pencil size={13} />
+              <span>Configuración</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setModoVista("cliente")}
+              title="Vista de Cliente (Simulación de catálogo para comprador)"
+              style={{
+                padding: "6px 12px",
+                borderRadius: "7px",
+                border: "none",
+                background: modoVista === "cliente" ? (esFloristeria ? "#E11D48" : "#0284C7") : "transparent",
+                color: modoVista === "cliente" ? "#FFFFFF" : "#475569",
+                fontSize: "0.78rem",
+                fontWeight: 700,
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                gap: "5px",
+                transition: "all 0.15s ease",
+              }}
+            >
+              <Eye size={13} />
+              <span>Vista Cliente</span>
+            </button>
+          </div>
+
           <button
             type="button"
-            onClick={() => setModalProdAbierto(true)}
+            onClick={() => setModalManualAbierto(true)}
             className="btn-responsive-accion"
-            title="Crear Nuevo Honorario o Servicio"
-            aria-label="Crear Nuevo Honorario o Servicio"
+            title="Ver Manual de Configuración"
+            aria-label="Ver Manual de Configuración"
             style={{
-              background: "#0F172A",
-              color: "#FFFFFF",
-              border: "none",
+              background: "#F8FAFC",
+              color: "#334155",
+              border: "1.5px solid #CBD5E1",
               padding: "8px 14px",
               borderRadius: "8px",
               fontSize: "0.85rem",
@@ -217,36 +306,66 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
               display: "inline-flex",
               alignItems: "center",
               gap: "6px",
-              boxShadow: "0 1px 3px rgba(0,0,0,0.15)",
             }}
           >
-            <Plus size={15} />
-            <span className="btn-texto-responsive">Nuevo Honorario</span>
+            <BookOpen size={15} color={esFloristeria ? "#E11D48" : "#0284C7"} />
+            <span className="btn-texto-responsive">Manual de Uso</span>
           </button>
 
-          <button
-            type="button"
-            onClick={() => setModalCatAbierto(true)}
-            className="btn-responsive-accion"
-            title="Crear Nueva Categoría"
-            aria-label="Crear Nueva Categoría"
-            style={{
-              background: "#FFFFFF",
-              color: "#334155",
-              border: "1px solid #CBD5E1",
-              padding: "8px 14px",
-              borderRadius: "8px",
-              fontSize: "0.85rem",
-              fontWeight: 600,
-              cursor: "pointer",
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "6px",
-            }}
-          >
-            <FolderPlus size={15} />
-            <span className="btn-texto-responsive">Nueva Categoría</span>
-          </button>
+          {modoVista === "admin" && (
+            <>
+              <button
+                type="button"
+                onClick={() => setModalProdAbierto(true)}
+                className="btn-responsive-accion"
+                title={esFloristeria ? "Crear Nuevo Arreglo Floral" : "Crear Nuevo Producto"}
+                aria-label={esFloristeria ? "Crear Nuevo Arreglo Floral" : "Crear Nuevo Producto"}
+                style={{
+                  background: esFloristeria ? "#E11D48" : "#0F172A",
+                  color: "#FFFFFF",
+                  border: "none",
+                  padding: "8px 14px",
+                  borderRadius: "8px",
+                  fontSize: "0.85rem",
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  boxShadow: "0 1px 3px rgba(0,0,0,0.15)",
+                }}
+              >
+                <Plus size={15} />
+                <span className="btn-texto-responsive">
+                  {esFloristeria ? "Nuevo Arreglo" : esMantenimiento ? "Nuevo Servicio" : "Nuevo Honorario"}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setModalCatAbierto(true)}
+                className="btn-responsive-accion"
+                title="Crear Nueva Categoría"
+                aria-label="Crear Nueva Categoría"
+                style={{
+                  background: "#FFFFFF",
+                  color: "#334155",
+                  border: "1px solid #CBD5E1",
+                  padding: "8px 14px",
+                  borderRadius: "8px",
+                  fontSize: "0.85rem",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px",
+                }}
+              >
+                <FolderPlus size={15} />
+                <span className="btn-texto-responsive">{esFloristeria ? "Nueva Colección" : "Nueva Categoría"}</span>
+              </button>
+            </>
+          )}
 
           <button
             type="button"
@@ -274,14 +393,79 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
         </div>
       </div>
 
-      {/* Barra de Búsqueda y Filtros de Categoría */}
+      {/* Selector de Pestaña: Catálogo vs Disponibilidad Operativa */}
       <div
         style={{
-          background: "#FFFFFF",
-          border: "1px solid #E2E8F0",
-          borderRadius: "16px",
-          padding: "16px",
-          marginBottom: "24px",
+          display: "flex",
+          gap: "8px",
+          borderBottom: "1px solid #E2E8F0",
+          marginBottom: "20px",
+          paddingBottom: "8px",
+        }}
+      >
+        <button
+          type="button"
+          onClick={() => setPestanaActiva("catalogo")}
+          style={{
+            background: pestanaActiva === "catalogo" ? (esFloristeria ? "#E11D48" : "#0284C7") : "transparent",
+            color: pestanaActiva === "catalogo" ? "#FFFFFF" : "#64748B",
+            border: "none",
+            padding: "8px 16px",
+            borderRadius: "8px",
+            fontSize: "0.85rem",
+            fontWeight: 700,
+            cursor: "pointer",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "6px",
+            transition: "all 0.15s ease",
+          }}
+        >
+          <LayoutGrid size={15} />
+          <span>{esFloristeria ? "Catálogo y Diseños" : esMantenimiento ? "Servicios y Tarifas" : "Honorarios y Planes"}</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setPestanaActiva("disponibilidad")}
+          style={{
+            background: pestanaActiva === "disponibilidad" ? (esFloristeria ? "#E11D48" : "#0284C7") : "transparent",
+            color: pestanaActiva === "disponibilidad" ? "#FFFFFF" : "#64748B",
+            border: "none",
+            padding: "8px 16px",
+            borderRadius: "8px",
+            fontSize: "0.85rem",
+            fontWeight: 700,
+            cursor: "pointer",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "6px",
+            transition: "all 0.15s ease",
+          }}
+        >
+          <Activity size={15} />
+          <span>
+            {esFloristeria
+              ? "Disponibilidad Taller (Rosas y Papel)"
+              : esMantenimiento
+              ? "Cuadrillas y Zonas en Vivo"
+              : "Disponibilidad de Abogados"}
+          </span>
+        </button>
+      </div>
+
+      {pestanaActiva === "disponibilidad" ? (
+        <TableroDisponibilidadOperativa negocio={negocio} />
+      ) : (
+        <>
+          {/* Barra de Búsqueda y Filtros de Categoría */}
+          <div
+            style={{
+              background: "#FFFFFF",
+              border: "1px solid #E2E8F0",
+              borderRadius: "16px",
+              padding: "16px",
+              marginBottom: "24px",
           display: "flex",
           flexWrap: "wrap",
           alignItems: "center",
@@ -336,7 +520,7 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                 fontWeight: 600,
                 cursor: "pointer",
                 border: "none",
-                background: categoriaSeleccionada === c.ctg_slug ? "#0284C7" : "#F1F5F9",
+                background: categoriaSeleccionada === c.ctg_slug ? (esFloristeria ? "#E11D48" : "#0284C7") : "#F1F5F9",
                 color: categoriaSeleccionada === c.ctg_slug ? "#FFFFFF" : "#475569",
               }}
             >
@@ -345,6 +529,106 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
           ))}
         </div>
       </div>
+
+      {/* Banner de Colección / Categoría con Recursos Digitales */}
+      {categoriaSeleccionada !== "todas" && (() => {
+        const catActiva = categoriasLista.find((c) => c.ctg_slug === categoriaSeleccionada);
+        if (!catActiva) return null;
+        const detalleCat = catActiva.ctg_detalle_categoria || {};
+        const videoCat = detalleCat.video_url;
+        const albumCat = detalleCat.album_fotos_url;
+
+        return (
+          <div
+            style={{
+              background: "linear-gradient(135deg, #0F172A 0%, #1E293B 100%)",
+              borderRadius: "14px",
+              padding: "16px 20px",
+              color: "#FFFFFF",
+              marginBottom: "20px",
+              display: "flex",
+              flexWrap: "wrap",
+              justifyContent: "space-between",
+              alignItems: "center",
+              gap: "14px",
+              boxShadow: "0 4px 15px rgba(15, 23, 42, 0.12)",
+            }}
+          >
+            <div style={{ maxWidth: "560px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
+                <span
+                  style={{
+                    background: esFloristeria ? "#E11D48" : "#0284C7",
+                    color: "#FFFFFF",
+                    padding: "2px 8px",
+                    borderRadius: "12px",
+                    fontSize: "0.7rem",
+                    fontWeight: 800,
+                    textTransform: "uppercase",
+                  }}
+                >
+                  {esFloristeria ? "Colección Floral" : "Categoría Comercial"}
+                </span>
+                <h2 style={{ margin: 0, fontSize: "1.18rem", fontWeight: 800 }}>{catActiva.ctg_nombre}</h2>
+              </div>
+              {catActiva.ctg_descripcion && (
+                <p style={{ margin: "4px 0 0", fontSize: "0.83rem", color: "#CBD5E1", lineHeight: 1.4 }}>
+                  {catActiva.ctg_descripcion}
+                </p>
+              )}
+            </div>
+
+            {/* Acciones de Recursos Digitales de la Categoría */}
+            <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+              {videoCat && (
+                <button
+                  type="button"
+                  onClick={() => setVideoModalUrl(videoCat)}
+                  style={{
+                    background: "rgba(255, 255, 255, 0.15)",
+                    backdropFilter: "blur(4px)",
+                    color: "#FFFFFF",
+                    border: "1px solid rgba(255, 255, 255, 0.3)",
+                    padding: "6px 12px",
+                    borderRadius: "8px",
+                    fontSize: "0.78rem",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "6px",
+                  }}
+                >
+                  <Play size={13} color="#38BDF8" />
+                  <span>Ver Reel / Video</span>
+                </button>
+              )}
+              {albumCat && (
+                <a
+                  href={albumCat}
+                  target="_blank"
+                  rel="noreferrer"
+                  style={{
+                    background: "rgba(255, 255, 255, 0.95)",
+                    color: "#0F172A",
+                    padding: "6px 12px",
+                    borderRadius: "8px",
+                    fontSize: "0.78rem",
+                    fontWeight: 700,
+                    textDecoration: "none",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "6px",
+                  }}
+                >
+                  <span>📸 Galería de Muestras</span>
+                  <ExternalLink size={12} />
+                </a>
+              )}
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Grid de Productos */}
       {cargando ? (
@@ -384,26 +668,28 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
             Puedes crear un nuevo honorario profesional o cargar inmediatamente el catálogo de ejemplo con tarifas y planes preconfigurados.
           </p>
           <div style={{ display: "flex", gap: "10px", justifyContent: "center", flexWrap: "wrap" }}>
-            <button
-              type="button"
-              onClick={() => setModalProdAbierto(true)}
-              style={{
-                background: "#0F172A",
-                color: "#FFFFFF",
-                border: "none",
-                padding: "9px 18px",
-                borderRadius: "8px",
-                fontSize: "0.85rem",
-                fontWeight: 700,
-                cursor: "pointer",
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "6px",
-              }}
-            >
-              <Plus size={16} />
-              Crear Honorario
-            </button>
+            {modoVista === "admin" && (
+              <button
+                type="button"
+                onClick={() => setModalProdAbierto(true)}
+                style={{
+                  background: "#0F172A",
+                  color: "#FFFFFF",
+                  border: "none",
+                  padding: "9px 18px",
+                  borderRadius: "8px",
+                  fontSize: "0.85rem",
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px",
+                }}
+              >
+                <Plus size={16} />
+                Crear Honorario
+              </button>
+            )}
             <button
               type="button"
               onClick={handleCargarSemillas}
@@ -440,6 +726,75 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
             const currentVar = p.variantes.find((v) => v.var_id === currentVarId) || p.variantes[0];
             const esHonorario = p.pro_tipo === "SERVICIO" || p.pro_slug.includes("honorarios");
 
+            // Recolección de fotos de cada variante y del master para el carrusel
+            const fotosDisponibles: Array<{
+              url: string;
+              origen: "master" | "variante" | "galeria";
+              etiqueta: string;
+              varianteId?: string;
+              col?: any;
+              posicion?: string;
+              ajuste?: string;
+              zoom?: number;
+            }> = [];
+
+            if (p.pro_detalle_producto?.imagen_url) {
+              fotosDisponibles.push({
+                url: p.pro_detalle_producto.imagen_url,
+                origen: "master",
+                etiqueta: "Foto Master",
+                posicion: p.pro_detalle_producto.foto_posicion || "center center",
+                ajuste: p.pro_detalle_producto.foto_ajuste || "cover",
+                zoom: p.pro_detalle_producto.foto_zoom || 100,
+              });
+            }
+
+            p.variantes.forEach((v, idx) => {
+              if (v.var_detalle_variante?.portada_url && !fotosDisponibles.some((f) => f.url === v.var_detalle_variante.portada_url)) {
+                const col = PALETA_COLORES_VARIANTES[idx % PALETA_COLORES_VARIANTES.length] || PALETA_COLORES_VARIANTES[0]!;
+                fotosDisponibles.push({
+                  url: v.var_detalle_variante.portada_url,
+                  origen: "variante",
+                  etiqueta: v.var_nombre,
+                  varianteId: v.var_id,
+                  col,
+                  posicion: v.var_detalle_variante.foto_posicion || p.pro_detalle_producto?.foto_posicion || "center center",
+                  ajuste: v.var_detalle_variante.foto_ajuste || p.pro_detalle_producto?.foto_ajuste || "cover",
+                  zoom: v.var_detalle_variante.foto_zoom || p.pro_detalle_producto?.foto_zoom || 100,
+                });
+              }
+            });
+
+            if (Array.isArray(p.pro_detalle_producto?.galeria_urls)) {
+              p.pro_detalle_producto.galeria_urls.forEach((url: string, idx: number) => {
+                if (url && !fotosDisponibles.some((f) => f.url === url)) {
+                  fotosDisponibles.push({
+                    url,
+                    origen: "galeria",
+                    etiqueta: `Muestra ${idx + 1}`,
+                    posicion: p.pro_detalle_producto?.foto_posicion || "center center",
+                    ajuste: p.pro_detalle_producto?.foto_ajuste || "cover",
+                    zoom: p.pro_detalle_producto?.foto_zoom || 100,
+                  });
+                }
+              });
+            }
+
+            const activeCarouselIdx = Math.min(
+              fotoCarouselIndexPorProducto[p.pro_id] || 0,
+              Math.max(0, fotosDisponibles.length - 1)
+            );
+            const fotoActual = fotosDisponibles[activeCarouselIdx];
+            const fotoMostrar = fotoActual?.url || currentVar?.var_detalle_variante?.portada_url || p.pro_detalle_producto?.imagen_url;
+            const posicionActual = fotoActual?.posicion || currentVar?.var_detalle_variante?.foto_posicion || p.pro_detalle_producto?.foto_posicion || "center center";
+            const ajusteActual = fotoActual?.ajuste || currentVar?.var_detalle_variante?.foto_ajuste || p.pro_detalle_producto?.foto_ajuste || "cover";
+            const zoomActual = Number(fotoActual?.zoom || currentVar?.var_detalle_variante?.foto_zoom || p.pro_detalle_producto?.foto_zoom || 100);
+            const scaleFactor = zoomActual && zoomActual !== 100 ? zoomActual / 100 : 1;
+
+            const videoMostrar = currentVar?.var_detalle_variante?.video_url || p.pro_detalle_producto?.video_url;
+            const tiempoMostrar = currentVar?.var_detalle_variante?.tiempo_entrega || p.pro_detalle_producto?.tiempo_entrega;
+            const albumUrl = currentVar?.var_detalle_variante?.album_url || p.pro_detalle_producto?.album_fotos_url;
+
             return (
               <div
                 key={p.pro_id}
@@ -457,7 +812,275 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                   position: "relative",
                 }}
               >
-                {/* Barra Superior de la Tarjeta: Destacado + Botón Editar */}
+                {/* Carrusel de Imágenes: Portada Master + Fotos de Variantes */}
+                {fotoMostrar && (
+                  <div style={{ position: "relative", width: "100%", aspectRatio: "1 / 1", background: "#0F172A", overflow: "hidden" }}>
+                    {/* Fondo difuminado si el ajuste es contain */}
+                    {ajusteActual === "contain" && (
+                      <img
+                        src={fotoMostrar}
+                        alt=""
+                        aria-hidden="true"
+                        style={{
+                          position: "absolute",
+                          inset: 0,
+                          width: "100%",
+                          height: "100%",
+                          objectFit: "cover",
+                          filter: "blur(20px) brightness(0.6)",
+                          transform: "scale(1.2)",
+                          pointerEvents: "none",
+                        }}
+                      />
+                    )}
+                    <img
+                      src={fotoMostrar}
+                      alt={p.pro_nombre}
+                      onError={(e) => {
+                        // Si la URL falla (ej. página web o link caducado), fallback a placeholder floral estilizado
+                        (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1561181286-d3fee7d55364?w=600&auto=format&fit=crop&q=80";
+                      }}
+                      style={{
+                        position: "relative",
+                        width: "100%",
+                        height: "100%",
+                        objectFit: ajusteActual as any,
+                        objectPosition: posicionActual,
+                        transform: scaleFactor !== 1 ? `scale(${scaleFactor})` : undefined,
+                        transformOrigin: posicionActual,
+                        transition: "all 0.3s ease",
+                      }}
+                    />
+
+                    {/* Botón de Video Demo si existe */}
+                    {videoMostrar && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setVideoModalUrl(videoMostrar);
+                        }}
+                        style={{
+                          position: "absolute",
+                          top: "8px",
+                          left: "8px",
+                          background: "rgba(15, 23, 42, 0.85)",
+                          backdropFilter: "blur(4px)",
+                          color: "#FFFFFF",
+                          border: "1px solid rgba(56, 189, 248, 0.4)",
+                          padding: "4px 8px",
+                          borderRadius: "8px",
+                          fontSize: "0.68rem",
+                          fontWeight: 700,
+                          cursor: "pointer",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "4px",
+                          zIndex: 3,
+                          boxShadow: "0 2px 5px rgba(0,0,0,0.25)",
+                        }}
+                      >
+                        <Play size={10} color="#38BDF8" fill="#38BDF8" />
+                        <span>Video Reel</span>
+                      </button>
+                    )}
+
+                    {/* Etiqueta de la foto actual del carrusel */}
+                    {fotoActual && (
+                      <div
+                        style={{
+                          position: "absolute",
+                          top: "8px",
+                          left: videoMostrar ? "105px" : "8px",
+                          background: fotoActual.col ? fotoActual.col.bg : "rgba(15, 23, 42, 0.85)",
+                          color: fotoActual.col ? fotoActual.col.text : "#FFFFFF",
+                          border: fotoActual.col ? `1.5px solid ${fotoActual.col.border}` : "1px solid rgba(255,255,255,0.3)",
+                          backdropFilter: "blur(4px)",
+                          padding: "3px 8px",
+                          borderRadius: "6px",
+                          fontSize: "0.68rem",
+                          fontWeight: 800,
+                          zIndex: 2,
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "4px",
+                          boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
+                        }}
+                      >
+                        {fotoActual.col && (
+                          <div style={{ width: "6px", height: "6px", borderRadius: "50%", background: fotoActual.col.dot }} />
+                        )}
+                        <span>{fotoActual.etiqueta}</span>
+                      </div>
+                    )}
+
+                    {/* Flechas de Navegación del Carrusel si hay más de 1 imagen */}
+                    {fotosDisponibles.length > 1 && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const prevIdx = (activeCarouselIdx - 1 + fotosDisponibles.length) % fotosDisponibles.length;
+                            setFotoCarouselIndexPorProducto((prev) => ({ ...prev, [p.pro_id]: prevIdx }));
+                            const targetFoto = fotosDisponibles[prevIdx];
+                            if (targetFoto?.varianteId) {
+                              setVarianteSeleccionadaPorProducto((prev) => ({ ...prev, [p.pro_id]: targetFoto.varianteId! }));
+                            }
+                          }}
+                          title="Foto anterior"
+                          aria-label="Foto anterior"
+                          style={{
+                            position: "absolute",
+                            top: "50%",
+                            left: "8px",
+                            transform: "translateY(-50%)",
+                            background: "rgba(255, 255, 255, 0.9)",
+                            border: "none",
+                            borderRadius: "50%",
+                            width: "28px",
+                            height: "28px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            cursor: "pointer",
+                            boxShadow: "0 2px 6px rgba(0,0,0,0.25)",
+                            zIndex: 3,
+                          }}
+                        >
+                          <ChevronLeft size={16} color="#0F172A" />
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const nextIdx = (activeCarouselIdx + 1) % fotosDisponibles.length;
+                            setFotoCarouselIndexPorProducto((prev) => ({ ...prev, [p.pro_id]: nextIdx }));
+                            const targetFoto = fotosDisponibles[nextIdx];
+                            if (targetFoto?.varianteId) {
+                              setVarianteSeleccionadaPorProducto((prev) => ({ ...prev, [p.pro_id]: targetFoto.varianteId! }));
+                            }
+                          }}
+                          title="Foto siguiente"
+                          aria-label="Foto siguiente"
+                          style={{
+                            position: "absolute",
+                            top: "50%",
+                            right: "8px",
+                            transform: "translateY(-50%)",
+                            background: "rgba(255, 255, 255, 0.9)",
+                            border: "none",
+                            borderRadius: "50%",
+                            width: "28px",
+                            height: "28px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            cursor: "pointer",
+                            boxShadow: "0 2px 6px rgba(0,0,0,0.25)",
+                            zIndex: 3,
+                          }}
+                        >
+                          <ChevronRight size={16} color="#0F172A" />
+                        </button>
+
+                        {/* Indicadores de bolitas del carrusel */}
+                        <div
+                          style={{
+                            position: "absolute",
+                            bottom: "8px",
+                            left: "50%",
+                            transform: "translateX(-50%)",
+                            display: "flex",
+                            gap: "5px",
+                            background: "rgba(15, 23, 42, 0.65)",
+                            padding: "3px 8px",
+                            borderRadius: "12px",
+                            backdropFilter: "blur(4px)",
+                            zIndex: 3,
+                          }}
+                        >
+                          {fotosDisponibles.map((f, fIdx) => {
+                            const isDotActive = fIdx === activeCarouselIdx;
+                            return (
+                              <button
+                                key={fIdx}
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setFotoCarouselIndexPorProducto((prev) => ({ ...prev, [p.pro_id]: fIdx }));
+                                  if (f.varianteId) {
+                                    setVarianteSeleccionadaPorProducto((prev) => ({ ...prev, [p.pro_id]: f.varianteId! }));
+                                  }
+                                }}
+                                style={{
+                                  width: isDotActive ? "16px" : "6px",
+                                  height: "6px",
+                                  borderRadius: "3px",
+                                  border: "none",
+                                  background: isDotActive ? (f.col ? f.col.border : "#38BDF8") : "rgba(255, 255, 255, 0.5)",
+                                  cursor: "pointer",
+                                  padding: 0,
+                                  transition: "all 0.2s ease",
+                                }}
+                              />
+                            );
+                          })}
+                        </div>
+                      </>
+                    )}
+
+                    {tiempoMostrar && (
+                      <div
+                        style={{
+                          position: "absolute",
+                          bottom: "8px",
+                          left: "8px",
+                          background: "rgba(15, 23, 42, 0.85)",
+                          backdropFilter: "blur(4px)",
+                          color: "#FFFFFF",
+                          padding: "3px 8px",
+                          borderRadius: "6px",
+                          fontSize: "0.68rem",
+                          fontWeight: 700,
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "4px",
+                          zIndex: 2,
+                        }}
+                      >
+                        <Clock size={11} color="#38BDF8" />
+                        <span>{tiempoMostrar}</span>
+                      </div>
+                    )}
+                    {albumUrl && (
+                      <a
+                        href={albumUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        style={{
+                          position: "absolute",
+                          bottom: "8px",
+                          right: "8px",
+                          background: "rgba(255, 255, 255, 0.9)",
+                          color: "#0F172A",
+                          padding: "3px 8px",
+                          borderRadius: "6px",
+                          fontSize: "0.68rem",
+                          fontWeight: 700,
+                          textDecoration: "none",
+                          boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
+                          zIndex: 2,
+                        }}
+                      >
+                        📸 Muestras Reales
+                      </a>
+                    )}
+                  </div>
+                )}
+
+                {/* Barra Superior de la Tarjeta: Destacado + Botón Editar Master */}
                 <div
                   style={{
                     position: "absolute",
@@ -466,7 +1089,7 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                     display: "flex",
                     alignItems: "center",
                     gap: "6px",
-                    zIndex: 2,
+                    zIndex: 4,
                   }}
                 >
                   {p.pro_destacado && (
@@ -481,7 +1104,7 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                         display: "flex",
                         alignItems: "center",
                         gap: "4px",
-                        boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+                        boxShadow: "0 2px 4px rgba(0,0,0,0.15)",
                       }}
                     >
                       <Sparkles size={10} />
@@ -489,64 +1112,69 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                     </div>
                   )}
 
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setProductoAEditar(p);
-                      setModalEditarAbierto(true);
-                    }}
-                    className="btn-responsive-accion"
-                    title="Editar datos y tarifas de este producto"
-                    aria-label="Editar datos y tarifas de este producto"
-                    style={{
-                      background: "#FFFFFF",
-                      border: "1px solid #CBD5E1",
-                      color: "#334155",
-                      padding: "4px 8px",
-                      borderRadius: "8px",
-                      fontSize: "0.75rem",
-                      fontWeight: 600,
-                      cursor: "pointer",
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: "4px",
-                      boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
-                    }}
-                  >
-                    <Pencil size={12} color="#0284C7" />
-                    <span className="btn-texto-responsive">Editar</span>
-                  </button>
-                </div>
-
-                <div style={{ padding: "20px", display: "flex", flexDirection: "column", flex: 1 }}>
-                  {/* Icono y Categoría */}
-                  <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "12px" }}>
-                    <div
+                  {modoVista === "admin" && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setProductoAEditar(p);
+                        setVarianteAEditarId(undefined); // Abre pestaña del Producto Master
+                        setModalEditarAbierto(true);
+                      }}
+                      className="btn-responsive-accion"
+                      title="Editar datos generales del producto master"
+                      aria-label="Editar datos generales del producto master"
                       style={{
-                        width: "46px",
-                        height: "46px",
-                        borderRadius: "12px",
-                        background: "#F8FAFC",
-                        border: "1px solid #E2E8F0",
-                        display: "flex",
+                        background: "rgba(15, 23, 42, 0.9)",
+                        border: "1.5px solid rgba(56, 189, 248, 0.4)",
+                        color: "#FFFFFF",
+                        padding: "5px 10px",
+                        borderRadius: "8px",
+                        fontSize: "0.75rem",
+                        fontWeight: 700,
+                        cursor: "pointer",
+                        display: "inline-flex",
                         alignItems: "center",
-                        justifyContent: "center",
+                        gap: "5px",
+                        boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
                       }}
                     >
-                      {getIconoProducto(p)}
-                    </div>
+                      <Pencil size={12} color="#38BDF8" />
+                      <span className="btn-texto-responsive">Editar Master</span>
+                    </button>
+                  )}
+                </div>
+
+                <div style={{ padding: "18px 20px", display: "flex", flexDirection: "column", flex: 1 }}>
+                  {/* Icono y Categoría */}
+                  <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "10px" }}>
+                    {!fotoMostrar && (
+                      <div
+                        style={{
+                          width: "44px",
+                          height: "44px",
+                          borderRadius: "12px",
+                          background: "#F8FAFC",
+                          border: "1px solid #E2E8F0",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        {getIconoProducto(p)}
+                      </div>
+                    )}
                     <div>
                       <span
                         style={{
-                          fontSize: "0.75rem",
+                          fontSize: "0.72rem",
                           fontWeight: 700,
                           color: "#64748B",
                           textTransform: "uppercase",
                           letterSpacing: "0.5px",
                         }}
                       >
-                        {p.categoria?.ctg_nombre || "Servicio Jurídico"}
+                        {p.categoria?.ctg_nombre || "Catálogo"}
                       </span>
                       <h3
                         style={{
@@ -565,7 +1193,7 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                   {/* Descripción */}
                   <p
                     style={{
-                      margin: "0 0 16px",
+                      margin: "0 0 14px",
                       fontSize: "0.82rem",
                       color: "#475569",
                       lineHeight: 1.45,
@@ -575,52 +1203,146 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                     {p.pro_descripcion}
                   </p>
 
-                  {/* Selector de Variantes / Tarifas */}
+                  {/* Badge de Logística / Entrega a Domicilio */}
+                  {Boolean(p.pro_detalle_producto?.logistica?.delivery_incluido) && (
+                    <div
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "6px",
+                        background: "linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%)",
+                        border: "1px solid #10B981",
+                        color: "#065F46",
+                        padding: "4px 10px",
+                        borderRadius: "8px",
+                        fontSize: "0.72rem",
+                        fontWeight: 800,
+                        marginBottom: "12px",
+                        boxShadow: "0 1px 2px rgba(16, 185, 129, 0.1)",
+                        alignSelf: "flex-start",
+                      }}
+                    >
+                      <Truck size={13} color="#059669" />
+                      <span>{p.pro_detalle_producto?.logistica?.etiqueta_transporte || "🚚 Envío a Domicilio Incluido"}</span>
+                      {p.pro_detalle_producto?.logistica?.cobertura_texto && (
+                        <span style={{ fontSize: "0.68rem", fontWeight: 600, color: "#047857", marginLeft: "2px" }}>
+                          • {p.pro_detalle_producto.logistica.cobertura_texto}
+                        </span>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Selector de Variantes / Tamaños con Colores Individuales */}
                   {p.variantes.length > 1 && (
-                    <div style={{ marginBottom: "16px" }}>
+                    <div style={{ marginBottom: "14px" }}>
                       <label
                         style={{
                           display: "block",
-                          fontSize: "0.75rem",
+                          fontSize: "0.73rem",
                           fontWeight: 700,
                           color: "#334155",
                           marginBottom: "6px",
                         }}
                       >
-                        Selecciona la modalidad de tarifa:
+                        {esFloristeria ? "Selecciona el tamaño / cantidad de rosas:" : "Selecciona la variante / opción:"}
                       </label>
                       <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-                        {p.variantes.map((v) => {
+                        {p.variantes.map((v, vIdx) => {
                           const activa = currentVarId === v.var_id;
+                          const colVar = PALETA_COLORES_VARIANTES[vIdx % PALETA_COLORES_VARIANTES.length] || PALETA_COLORES_VARIANTES[0]!;
+
                           return (
-                            <button
+                            <div
                               key={v.var_id}
-                              type="button"
-                              onClick={() =>
+                              onClick={() => {
                                 setVarianteSeleccionadaPorProducto((prev) => ({
                                   ...prev,
                                   [p.pro_id]: v.var_id,
-                                }))
-                              }
+                                }));
+                                // Sincronizar carrusel si la variante tiene su propia foto
+                                const fotoVarIdx = fotosDisponibles.findIndex(
+                                  (f) => f.varianteId === v.var_id || (v.var_detalle_variante?.portada_url && f.url === v.var_detalle_variante.portada_url)
+                                );
+                                if (fotoVarIdx >= 0) {
+                                  setFotoCarouselIndexPorProducto((prev) => ({ ...prev, [p.pro_id]: fotoVarIdx }));
+                                } else {
+                                  setFotoCarouselIndexPorProducto((prev) => ({ ...prev, [p.pro_id]: 0 }));
+                                }
+                              }}
                               style={{
                                 textAlign: "left",
                                 padding: "8px 12px",
                                 borderRadius: "8px",
-                                border: activa ? "1.5px solid #0284C7" : "1px solid #E2E8F0",
-                                background: activa ? "#F0F9FF" : "#FFFFFF",
+                                border: activa
+                                  ? `2px solid ${colVar.border}`
+                                  : `1.5px solid ${colVar.border}44`,
+                                background: activa
+                                  ? colVar.bg
+                                  : "#FFFFFF",
                                 cursor: "pointer",
                                 display: "flex",
                                 justifyContent: "space-between",
                                 alignItems: "center",
+                                transition: "all 0.15s ease",
+                                boxShadow: activa ? `0 2px 6px ${colVar.border}22` : "none",
                               }}
                             >
-                              <div style={{ fontSize: "0.8rem", fontWeight: activa ? 700 : 500, color: activa ? "#0284C7" : "#334155" }}>
-                                {v.var_nombre}
+                              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                                <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: colVar.dot, flexShrink: 0 }} />
+                                <div
+                                  style={{
+                                    fontSize: "0.8rem",
+                                    fontWeight: activa ? 800 : 600,
+                                    color: activa
+                                      ? colVar.text
+                                      : "#334155",
+                                  }}
+                                >
+                                  {v.var_nombre}
+                                </div>
+                                {v.var_detalle_variante?.portada_url && (
+                                  <span style={{ fontSize: "0.62rem", background: colVar.badge, color: colVar.text, padding: "1px 5px", borderRadius: "4px", fontWeight: 700 }}>
+                                    📸 Foto
+                                  </span>
+                                )}
                               </div>
-                              <div style={{ fontSize: "0.8rem", fontWeight: 700, color: "#0F172A" }}>
-                                ${v.precio_total.toFixed(2)}
+
+                              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                                <div style={{ fontSize: "0.85rem", fontWeight: 800, color: activa ? colVar.text : "#0F172A" }}>
+                                  ${v.precio_total.toFixed(2)}
+                                </div>
+
+                                {modoVista === "admin" && (
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setProductoAEditar(p);
+                                      setVarianteAEditarId(v.var_id);
+                                      setModalEditarAbierto(true);
+                                    }}
+                                    title={`Editar variante ${v.var_nombre}`}
+                                    aria-label={`Editar variante ${v.var_nombre}`}
+                                    style={{
+                                      background: colVar.badge,
+                                      border: `1px solid ${colVar.border}`,
+                                      borderRadius: "6px",
+                                      padding: "3px 7px",
+                                      cursor: "pointer",
+                                      display: "inline-flex",
+                                      alignItems: "center",
+                                      gap: "3px",
+                                      fontSize: "0.7rem",
+                                      color: colVar.text,
+                                      fontWeight: 800,
+                                    }}
+                                  >
+                                    <Pencil size={11} />
+                                    <span className="btn-texto-responsive">Editar</span>
+                                  </button>
+                                )}
                               </div>
-                            </button>
+                            </div>
                           );
                         })}
                       </div>
@@ -665,7 +1387,7 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                     onClick={() => abrirCheckout(p, currentVar?.var_id)}
                     style={{
                       marginTop: "16px",
-                      background: "#0284C7",
+                      background: esFloristeria ? "#E11D48" : "#0284C7",
                       color: "#FFFFFF",
                       border: "none",
                       padding: "10px 16px",
@@ -677,17 +1399,21 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                       alignItems: "center",
                       justifyContent: "center",
                       gap: "8px",
-                      boxShadow: "0 2px 6px rgba(2, 132, 199, 0.25)",
+                      boxShadow: esFloristeria
+                        ? "0 2px 6px rgba(225, 29, 72, 0.25)"
+                        : "0 2px 6px rgba(2, 132, 199, 0.25)",
                     }}
                   >
                     <CreditCard size={16} />
-                    Contratar y Pagar con Payphone
+                    {esFloristeria ? "Comprar Arreglo con Payphone" : "Contratar y Pagar con Payphone"}
                   </button>
                 </div>
               </div>
             );
           })}
         </div>
+      )}
+      </>
       )}
 
       {/* Modal de Checkout Payphone */}
@@ -724,9 +1450,11 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
       <ModalEditarProducto
         abierto={modalEditarAbierto}
         producto={productoAEditar}
+        varianteInicialId={varianteAEditarId}
         onCerrar={() => {
           setModalEditarAbierto(false);
           setProductoAEditar(null);
+          setVarianteAEditarId(undefined);
         }}
         onProductoEditado={(editado) => {
           setProductos((prev) =>
@@ -738,7 +1466,92 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
         }}
         categorias={categoriasLista}
         negocio={negocio}
+        onAbrirManual={() => setModalManualAbierto(true)}
       />
+
+      {/* Manual Interactivo de Configuración Comercial por Negocio */}
+      <ManualConfiguracionCatalogoModal
+        abierto={modalManualAbierto}
+        onCerrar={() => setModalManualAbierto(false)}
+        negocio={negocio}
+      />
+
+      {/* Reproductor de Video / Reels en Modal */}
+      {videoModalUrl && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            backgroundColor: "rgba(15, 23, 42, 0.85)",
+            backdropFilter: "blur(6px)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 10001,
+            padding: "16px",
+          }}
+          onClick={() => setVideoModalUrl(null)}
+        >
+          <div
+            style={{
+              background: "#0F172A",
+              borderRadius: "16px",
+              width: "100%",
+              maxWidth: "760px",
+              overflow: "hidden",
+              position: "relative",
+              boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5)",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div
+              style={{
+                padding: "12px 18px",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                borderBottom: "1px solid #334155",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#38BDF8", fontWeight: 700, fontSize: "0.88rem" }}>
+                <Video size={17} />
+                <span>Demostración en Video / Reel</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setVideoModalUrl(null)}
+                style={{
+                  background: "transparent",
+                  border: "none",
+                  color: "#94A3B8",
+                  cursor: "pointer",
+                  padding: "4px",
+                }}
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <div style={{ position: "relative", width: "100%", paddingTop: "56.25%", background: "#000000" }}>
+              {videoModalUrl.includes("youtube.com") || videoModalUrl.includes("youtu.be") || videoModalUrl.includes("vimeo.com") ? (
+                <iframe
+                  src={videoModalUrl.replace("watch?v=", "embed/").replace("youtu.be/", "youtube.com/embed/")}
+                  title="Video de Demostración"
+                  style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", border: "none" }}
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                />
+              ) : (
+                <video
+                  src={videoModalUrl}
+                  controls
+                  autoPlay
+                  style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", objectFit: "contain" }}
+                />
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

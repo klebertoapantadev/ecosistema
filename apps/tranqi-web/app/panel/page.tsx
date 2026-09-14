@@ -15,6 +15,7 @@ import { WidgetNotificacionesCliente } from "@eco/notificaciones";
 import { obtenerSolicitudPropia } from "../../modulos/socios/consultas";
 import { ConsolaSuperAdminModular } from "./ConsolaSuperAdminModular";
 import { TarjetaEstadoSolicitudHome } from "./TarjetaEstadoSolicitudHome";
+import { SeccionCoberturaCliente } from "@eco/comercio";
 
 export const metadata: Metadata = { title: "Panel — tranqi" };
 
@@ -186,31 +187,8 @@ function PanelCliente({ saludo, nombre }: { saludo: string | null; nombre: strin
 
       <div className="rejilla-cliente">
         <div className="columna-cliente">
-          {/* 1) HERO CARD */}
-          <section className="tarjeta-proteccion" aria-labelledby="t-proteccion">
-            {/* pathLength="1" normaliza el largo del trazo a 1, pase lo que pase
-                con el viewBox: es lo que permite dibujarlo con dashoffset sin
-                calcular la longitud real. Misma tecnica que la cinta de la
-                landing (.ribbon en globals.css). */}
-            <svg className="cinta-proteccion" viewBox="0 0 800 300" preserveAspectRatio="none" aria-hidden="true">
-              <path pathLength="1" d="M 540 -60 C 760 40 840 190 700 300 C 620 362 470 340 430 420" />
-            </svg>
-            <div className="tarjeta-proteccion-fila">
-              <div>
-                <div className="eyebrow-cliente" id="t-proteccion">Protección Activa</div>
-                <div className="tarjeta-proteccion-plan">Plan Familiar Cobertura Total</div>
-                <div className="tarjeta-proteccion-meta">
-                  Protección jurídica 24/7 en Ecuador, con consultas ilimitadas por chat.
-                </div>
-              </div>
-              <span className="badge-activo">Activo</span>
-            </div>
-            <div className="tarjeta-proteccion-chips">
-              <span className="chip-proteccion">2 abogados asignados</span>
-              <span className="chip-proteccion">4 miembros cubiertos</span>
-              <span className="chip-proteccion">SOS 24/7 habilitado</span>
-            </div>
-          </section>
+          {/* 1) COBERTURA & PLAN ACTIVO DINÁMICO (PLT-009 / PLT-020) */}
+          <SeccionCoberturaCliente negocio="tranqi" />
 
           {/* 2) ACCESS GRID (Favoritos primero + Accesos predeterminados) */}
           <div className="accesos-cliente">
