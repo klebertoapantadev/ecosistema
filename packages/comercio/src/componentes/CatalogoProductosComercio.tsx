@@ -527,6 +527,30 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
               {c.ctg_nombre}
             </button>
           ))}
+
+          {modoVista === "admin" && (
+            <button
+              type="button"
+              onClick={() => setModalCatAbierto(true)}
+              style={{
+                padding: "5px 12px",
+                borderRadius: "8px",
+                fontSize: "0.78rem",
+                fontWeight: 700,
+                cursor: "pointer",
+                border: "1.5px dashed #CBD5E1",
+                background: "#FFFFFF",
+                color: esFloristeria ? "#E11D48" : "#0284C7",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "4px",
+              }}
+              title={esFloristeria ? "Crear nueva colección floral" : "Crear nueva categoría"}
+            >
+              <FolderPlus size={13} />
+              <span>{esFloristeria ? "+ Colección" : "+ Categoría"}</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -1432,6 +1456,9 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
         onProductoCreado={(nuevo) => {
           setProductos((prev) => [nuevo, ...prev]);
         }}
+        onCategoriaCreada={(nueva) => {
+          setCategoriasLista((prev) => [...prev, nueva]);
+        }}
         categorias={categoriasLista}
         negocio={negocio}
       />
@@ -1463,6 +1490,9 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
         }}
         onProductoEliminado={(proId) => {
           setProductos((prev) => prev.filter((item) => item.pro_id !== proId));
+        }}
+        onCategoriaCreada={(nueva) => {
+          setCategoriasLista((prev) => [...prev, nueva]);
         }}
         categorias={categoriasLista}
         negocio={negocio}

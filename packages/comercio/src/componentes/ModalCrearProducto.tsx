@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   X,
   PackagePlus,
@@ -16,6 +16,7 @@ import {
   BookOpen,
   Loader2,
   Wand2,
+  FolderPlus,
 } from "lucide-react";
 import {
   crearProductoAction,
@@ -23,11 +24,13 @@ import {
   CategoriaCatalogo,
   ProductoCatalogo,
 } from "../acciones";
+import { ModalCrearCategoria } from "./ModalCrearCategoria";
 
 interface Props {
   abierto: boolean;
   onCerrar: () => void;
   onProductoCreado: (prod: ProductoCatalogo) => void;
+  onCategoriaCreada?: (cat: CategoriaCatalogo) => void;
   categorias: CategoriaCatalogo[];
   negocio?: string;
 }
@@ -36,12 +39,22 @@ export function ModalCrearProducto({
   abierto,
   onCerrar,
   onProductoCreado,
+  onCategoriaCreada,
   categorias,
   negocio = "tranqi",
 }: Props) {
   const esFloristeria = negocio === "tinkay" || negocio === "margaritas";
   const esLegal = negocio === "tranqi";
   const esMantenimiento = negocio === "fastfix";
+
+  const [categoriasLocales, setCategoriasLocales] = useState<CategoriaCatalogo[]>(categorias || []);
+  const [modalCatAbierto, setModalCatAbierto] = useState(false);
+
+  useEffect(() => {
+    if (categorias && categorias.length > 0) {
+      setCategoriasLocales(categorias);
+    }
+  }, [categorias]);
 
   const [nombre, setNombre] = useState("");
   const [descripcion, setDescripcion] = useState("");
@@ -347,9 +360,32 @@ export function ModalCrearProducto({
           {/* Categoría y Tipo */}
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "14px" }}>
             <div>
-              <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 600, color: "#334155", marginBottom: "4px" }}>
-                Categoría / Colección *
-              </label>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
+                <label style={{ fontSize: "0.78rem", fontWeight: 600, color: "#334155" }}>
+                  Categoría / Colección *
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setModalCatAbierto(true)}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    color: esFloristeria ? "#E11D48" : "#0284C7",
+                    fontSize: "0.74rem",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                    padding: "2px 6px",
+                    borderRadius: "4px",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "4px",
+                  }}
+                  title={esFloristeria ? "Crear nueva colección floral" : "Crear nueva categoría"}
+                >
+                  <FolderPlus size={13} />
+                  <span>+ Nueva</span>
+                </button>
+              </div>
               <select
                 value={categoriaId}
                 onChange={(e) => setCategoriaId(e.target.value)}
@@ -363,7 +399,7 @@ export function ModalCrearProducto({
                   background: "#FFFFFF",
                 }}
               >
-                {categorias.map((c) => (
+                {categoriasLocales.map((c) => (
                   <option key={c.ctg_id} value={c.ctg_id}>
                     {c.ctg_nombre}
                   </option>
@@ -765,6 +801,20 @@ export function ModalCrearProducto({
           </div>
         </form>
       </div>
+
+      {/* Modal para Crear Nueva Categoría / Colección en línea */}
+      <ModalCrearCategoria
+        abierto={modalCatAbierto}
+        onCerrar={() => setModalCatAbierto(false)}
+        onCategoriaCreada={(nueva) => {
+          setCategoriasLocales((prev) => [...prev, nueva]);
+          setCategoriaId(nueva.ctg_id);
+          if (onCategoriaCreada) {
+            onCategoriaCreada(nueva);
+          }
+        }}
+        negocio={negocio}
+      />
     </div>
   );
 }
