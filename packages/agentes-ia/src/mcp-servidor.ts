@@ -20,6 +20,51 @@ export interface Herramienta<Contexto> {
   ): Promise<unknown>;
 }
 
+/**
+ * Un documento que la herramienta entrega al modelo para que lo LEA, no solo
+ * para que sepa que existe. Sale como bloque `resource_link` del resultado; el
+ * engine de ARIA lo descarga, extrae el texto (o rasteriza un PDF escaneado) y
+ * lo mete en la conversacion dentro del mismo turno (ver `_mcp_documentos` y
+ * `attachments.py` en el backend de ARIA).
+ *
+ * La URL tiene que ser alcanzable desde ARIA y de corta vida: es un documento
+ * privado y el enlace queda en la traza del run.
+ */
+export interface DocumentoAdjunto {
+  url: string;
+  nombre: string;
+  mime?: string;
+}
+
+/** Resultado de herramienta con texto y documentos adjuntos. Ver `conDocumentos`. */
+export interface ResultadoConDocumentos {
+  texto: string;
+  documentos: DocumentoAdjunto[];
+}
+
+const MARCA_DOCUMENTOS = Symbol.for("eco.agentes-ia.resultado-con-documentos");
+
+/**
+ * Construye el resultado de una herramienta que, ademas de texto, entrega
+ * documentos para leer. Se marca con un simbolo para que un objeto cualquiera
+ * con las mismas claves —una fila de base de datos, por ejemplo— no se
+ * convierta por accidente en enlaces que ARIA saldria a descargar.
+ */
+export function conDocumentos(
+  texto: string,
+  documentos: DocumentoAdjunto[],
+): ResultadoConDocumentos {
+  return Object.assign(Object.create(null), { texto, documentos, [MARCA_DOCUMENTOS]: true });
+}
+
+function esResultadoConDocumentos(valor: unknown): valor is ResultadoConDocumentos {
+  return (
+    typeof valor === "object" &&
+    valor !== null &&
+    (valor as Record<symbol, unknown>)[MARCA_DOCUMENTOS] === true
+  );
+}
+
 export interface OpcionesServidorMcp<Contexto> {
   nombre: string;
   version?: string;
@@ -117,14 +162,25 @@ export function crearManejadorMcp<Contexto>(
         const argumentos = (params?.arguments ?? {}) as Record<string, unknown>;
         try {
           const resultado = await herramienta.ejecutar(argumentos, contexto);
-          let texto = comoTexto(resultado);
+          const documentos = esResultadoConDocumentos(resultado) ? resultado.documentos : [];
+          let texto = comoTexto(esResultadoConDocumentos(resultado) ? resultado.texto : resultado);
           if (texto.length > MAX_CARACTERES_RESULTADO) {
             texto =
               texto.slice(0, MAX_CARACTERES_RESULTADO) +
               "\n\n[…resultado recortado por tamaño. Acota la consulta —por fecha, " +
               "por caso o con un limite mas bajo— para verlo completo.]";
           }
-          return respuestaOk(id, { content: [{ type: "text", text: texto }] });
+          return respuestaOk(id, {
+            content: [
+              { type: "text", text: texto },
+              ...documentos.map((d) => ({
+                type: "resource_link",
+                uri: d.url,
+                name: d.nombre,
+                ...(d.mime ? { mimeType: d.mime } : {}),
+              })),
+            ],
+          });
         } catch (error) {
           // Un fallo de herramienta NO es un error de protocolo: se devuelve
           // como resultado con isError para que el modelo lo lea y se lo pueda

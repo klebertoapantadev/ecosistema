@@ -48,3 +48,32 @@ Los prompts de los asistentes ya intentaban tapar el hueco con instrucciones —
 - **Que el MCP use `service_role` y filtre por usuario en el código.** Se salta RLS entero; la corrección de cada consulta pasaría a depender de que nadie olvide un `where`. Además `service_role` ni siquiera tiene `USAGE` sobre `tranqui_legal` hoy.
 - **Enviar a ARIA el access token real del usuario.** Habría funcionado sin acuñar nada, pero entrega a un sistema externo una sesión completa de una hora. La cápsula viaja igual pero solo sirve para hablar con nuestros MCP, y dura cinco minutos.
 - **Que la app ejecute el bucle de herramientas y use ARIA solo como modelo.** Rompe ADR-0002: el catálogo de agentes, el RAG, la memoria y las trazas viven en ARIA, y duplicarlos en cada app es justo lo que ese ADR evita.
+
+## Adenda (2026-09-12): documentos que el modelo tiene que leer
+
+La misma frontera vale para el contenido de un documento, con un problema
+añadido: el resultado de una herramienta MCP es texto, y un Route Handler
+serverless no tiene tiempo de extraer y leer un PDF de veinte páginas dentro de
+la llamada. Se resolvió así:
+
+1. **La herramienta entrega un enlace, no el contenido.** `leer_documento`
+   resuelve la fila bajo RLS y devuelve, junto al texto, un bloque MCP
+   `resource_link` (`conDocumentos` en `packages/agentes-ia`). El engine de ARIA
+   (`_mcp_documentos` + `app/attachments.py`) descarga el enlace, extrae el
+   texto —o rasteriza un PDF escaneado y lo pasa como imágenes— y lo mete en la
+   conversación dentro del mismo turno. Ninguna segunda invocación.
+2. **El enlace lleva la identidad firmada, no un permiso.** Es un JWT HS256 de
+   cinco minutos con `{usuario, origen, documento, archivo}` y el claim
+   `pro: "documento"`, firmado con `ASISTENTE_CAPSULA_SECRETO`. El endpoint que
+   sirve los bytes (`/api/asistente/documento/[token]`) no confía en el token
+   para autorizar: con el usuario que declara **acuña otro token de Supabase y
+   vuelve a resolver la fila bajo RLS**. Un enlace de un documento ajeno, aunque
+   estuviera bien firmado, devuelve 404 igual que uno caducado o inexistente.
+3. **Una cápsula no es un enlace ni al revés.** Comparten secreto, pero el claim
+   `pro` los separa: `verificarEnlaceDocumento` rechaza una cápsula y
+   `verificarCapsula` rechaza un enlace.
+4. **`document_urls` en `/invoke` de ARIA** cubre el caso en que es la app, y no
+   una herramienta, quien pide leer un fichero (verificación de identidad,
+   botón *Aria* de la billetera). Un PDF mandado como `image_urls` se
+   descargaba etiquetado como JPEG y el modelo no veía nada.
+
