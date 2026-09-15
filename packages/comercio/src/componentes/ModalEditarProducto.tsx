@@ -25,6 +25,10 @@ import {
   Truck,
   Percent,
   FolderPlus,
+  ChevronLeft,
+  ChevronRight,
+  ArrowLeft,
+  ArrowRight,
 } from "lucide-react";
 import {
   editarProductoAction,
@@ -545,6 +549,18 @@ export function ModalEditarProducto({
     const filtradas = variantesLocales.filter((_, idx) => idx !== varianteActivaIndex);
     setVariantesLocales(filtradas);
     setVarianteActivaIndex(0);
+  };
+
+  const moverVariante = (idx: number, direccion: "arriba" | "abajo", e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    const targetIdx = direccion === "arriba" ? idx - 1 : idx + 1;
+    if (targetIdx < 0 || targetIdx >= variantesLocales.length) return;
+    const nuevas = [...variantesLocales];
+    const temp = nuevas[idx]!;
+    nuevas[idx] = nuevas[targetIdx]!;
+    nuevas[targetIdx] = temp;
+    setVariantesLocales(nuevas);
+    setVarianteActivaIndex(targetIdx);
   };
 
   const handleConvertirImagenGlobal = async (urlAConvertir?: string) => {
@@ -1745,7 +1761,7 @@ export function ModalEditarProducto({
                 </button>
               </div>
 
-              {/* Pestañas de Variantes con Código de Color Individual */}
+              {/* Pestañas de Variantes con Código de Color Individual y Reordenamiento */}
               <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginBottom: "14px" }}>
                 {variantesLocales.map((v, idx) => {
                   const activa = idx === varianteActivaIndex;
@@ -1754,14 +1770,13 @@ export function ModalEditarProducto({
                   const tieneFotoPropia = Boolean(v.var_detalle_variante?.portada_url);
 
                   return (
-                    <button
+                    <div
                       key={v.var_id || idx}
-                      type="button"
                       onClick={() => {
                         setVarianteActivaIndex(idx);
                       }}
                       style={{
-                        padding: "7px 12px",
+                        padding: "6px 10px",
                         borderRadius: "8px",
                         border: activa ? `2px solid ${col.border}` : `1.5px solid ${col.border}66`,
                         background: activa ? col.bg : "#FFFFFF",
@@ -1769,7 +1784,7 @@ export function ModalEditarProducto({
                         fontWeight: activa ? 800 : 600,
                         fontSize: "0.78rem",
                         cursor: "pointer",
-                        display: "flex",
+                        display: "inline-flex",
                         alignItems: "center",
                         gap: "6px",
                         transition: "all 0.15s ease",
@@ -1810,7 +1825,52 @@ export function ModalEditarProducto({
                           ⚪ Heredada
                         </span>
                       )}
-                    </button>
+
+                      {/* Botones rápidos de reordenamiento en la pestaña */}
+                      {variantesLocales.length > 1 && (
+                        <div
+                          style={{ display: "inline-flex", gap: "2px", marginLeft: "4px" }}
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <button
+                            type="button"
+                            disabled={idx === 0}
+                            onClick={(e) => moverVariante(idx, "arriba", e)}
+                            title="Mover antes / izquierda"
+                            style={{
+                              background: activa ? "rgba(0,0,0,0.08)" : "#F1F5F9",
+                              border: "none",
+                              borderRadius: "3px",
+                              padding: "2px 4px",
+                              cursor: idx === 0 ? "not-allowed" : "pointer",
+                              opacity: idx === 0 ? 0.25 : 1,
+                              display: "flex",
+                              alignItems: "center",
+                            }}
+                          >
+                            <ChevronLeft size={11} color={activa ? col.text : "#334155"} />
+                          </button>
+                          <button
+                            type="button"
+                            disabled={idx === variantesLocales.length - 1}
+                            onClick={(e) => moverVariante(idx, "abajo", e)}
+                            title="Mover después / derecha"
+                            style={{
+                              background: activa ? "rgba(0,0,0,0.08)" : "#F1F5F9",
+                              border: "none",
+                              borderRadius: "3px",
+                              padding: "2px 4px",
+                              cursor: idx === variantesLocales.length - 1 ? "not-allowed" : "pointer",
+                              opacity: idx === variantesLocales.length - 1 ? 0.25 : 1,
+                              display: "flex",
+                              alignItems: "center",
+                            }}
+                          >
+                            <ChevronRight size={11} color={activa ? col.text : "#334155"} />
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   );
                 })}
               </div>
@@ -1826,25 +1886,83 @@ export function ModalEditarProducto({
                     boxShadow: `0 3px 10px ${colActiva.border}22`,
                   }}
                 >
-                  {/* Banner de Variante Activa */}
+                  {/* Banner de Variante Activa con Reordenamiento */}
                   <div
                     style={{
                       background: colActiva.bg,
                       borderRadius: "6px",
-                      padding: "6px 10px",
+                      padding: "8px 12px",
                       marginBottom: "12px",
                       display: "flex",
+                      flexWrap: "wrap",
                       alignItems: "center",
                       justifyContent: "space-between",
+                      gap: "8px",
                     }}
                   >
-                    <div style={{ display: "flex", alignItems: "center", gap: "6px", color: colActiva.text, fontWeight: 800, fontSize: "0.75rem" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "6px", color: colActiva.text, fontWeight: 800, fontSize: "0.78rem" }}>
                       <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: colActiva.dot }} />
-                      <span>🏷️ EDITANDO: {varianteActual.var_nombre || "Nueva Variante"} (Tamaño #{varianteActivaIndex + 1})</span>
+                      <span>🏷️ EDITANDO: {varianteActual.var_nombre || "Nueva Variante"} (Posición #{varianteActivaIndex + 1} de {variantesLocales.length})</span>
                     </div>
-                    <span style={{ fontSize: "0.7rem", color: colActiva.text, fontWeight: 700 }}>
-                      PVP: ${(varianteActual.precio_total || 0).toFixed(2)}
-                    </span>
+
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                      {/* Botones de Reordenamiento en Banner */}
+                      {variantesLocales.length > 1 && (
+                        <div style={{ display: "inline-flex", gap: "4px" }}>
+                          <button
+                            type="button"
+                            disabled={varianteActivaIndex === 0}
+                            onClick={(e) => moverVariante(varianteActivaIndex, "arriba", e)}
+                            title="Mover esta variante hacia arriba / antes"
+                            style={{
+                              background: "#FFFFFF",
+                              border: `1px solid ${colActiva.border}`,
+                              color: colActiva.text,
+                              borderRadius: "4px",
+                              padding: "3px 8px",
+                              fontSize: "0.7rem",
+                              fontWeight: 800,
+                              cursor: varianteActivaIndex === 0 ? "not-allowed" : "pointer",
+                              opacity: varianteActivaIndex === 0 ? 0.4 : 1,
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "3px",
+                            }}
+                          >
+                            <ChevronLeft size={12} />
+                            <span>Mover antes</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            disabled={varianteActivaIndex === variantesLocales.length - 1}
+                            onClick={(e) => moverVariante(varianteActivaIndex, "abajo", e)}
+                            title="Mover esta variante hacia abajo / después"
+                            style={{
+                              background: "#FFFFFF",
+                              border: `1px solid ${colActiva.border}`,
+                              color: colActiva.text,
+                              borderRadius: "4px",
+                              padding: "3px 8px",
+                              fontSize: "0.7rem",
+                              fontWeight: 800,
+                              cursor: varianteActivaIndex === variantesLocales.length - 1 ? "not-allowed" : "pointer",
+                              opacity: varianteActivaIndex === variantesLocales.length - 1 ? 0.4 : 1,
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "3px",
+                            }}
+                          >
+                            <span>Mover después</span>
+                            <ChevronRight size={12} />
+                          </button>
+                        </div>
+                      )}
+
+                      <span style={{ fontSize: "0.75rem", color: colActiva.text, fontWeight: 800 }}>
+                        PVP: ${(varianteActual.precio_total || 0).toFixed(2)}
+                      </span>
+                    </div>
                   </div>
 
                   {/* 1. SECCIÓN DE FOTO DE PORTADA PARA ESTE TAMAÑO (HERENCIA VS SOBREESCRITURA) */}

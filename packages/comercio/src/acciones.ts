@@ -1453,7 +1453,12 @@ export async function obtenerCatalogoProductosAction(negocio = "tranqi"): Promis
       pro_categoria_principal_id: p.pro_categoria_principal_id,
       pro_detalle_producto: p.pro_detalle_producto || {},
       categoria: mapaCategorias[p.pro_categoria_principal_id] || null,
-      variantes: mapaVariantes[p.pro_id] || [],
+      variantes: (mapaVariantes[p.pro_id] || []).sort((a, b) => {
+        const ordenA = typeof a.var_detalle_variante?.orden === "number" ? a.var_detalle_variante.orden : 999;
+        const ordenB = typeof b.var_detalle_variante?.orden === "number" ? b.var_detalle_variante.orden : 999;
+        if (ordenA !== ordenB) return ordenA - ordenB;
+        return (a.var_precio || 0) - (b.var_precio || 0);
+      }),
     }));
   } else {
     // Si no hay productos en la BD, cargamos las semillas preconfiguradas
@@ -1985,6 +1990,7 @@ export async function editarProductoAction(datos: {
             var_activo: v.var_activo !== false,
             var_detalle_variante: {
               ...(v.var_detalle_variante || {}),
+              orden: idx + 1,
               portada_url: varPortada || null,
               modalidad_pago: datos.modalidadPago || v.var_detalle_variante?.modalidad_pago,
             },

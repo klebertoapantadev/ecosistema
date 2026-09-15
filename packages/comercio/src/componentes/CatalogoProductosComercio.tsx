@@ -15,6 +15,8 @@ import {
   Clock,
   ChevronLeft,
   ChevronRight,
+  ChevronUp,
+  ChevronDown,
   RefreshCw,
   Plus,
   FolderPlus,
@@ -34,6 +36,7 @@ import {
   obtenerCatalogoProductosAction,
   obtenerCategoriasAction,
   restaurarCatalogoEjemploAction,
+  editarProductoAction,
 } from "../acciones";
 import { ModalCheckoutPayphone } from "./ModalCheckoutPayphone";
 import { ModalCrearProducto } from "./ModalCrearProducto";
@@ -1337,33 +1340,131 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                                 </div>
 
                                 {modoVista === "admin" && (
-                                  <button
-                                    type="button"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setProductoAEditar(p);
-                                      setVarianteAEditarId(v.var_id);
-                                      setModalEditarAbierto(true);
-                                    }}
-                                    title={`Editar variante ${v.var_nombre}`}
-                                    aria-label={`Editar variante ${v.var_nombre}`}
-                                    style={{
-                                      background: colVar.badge,
-                                      border: `1px solid ${colVar.border}`,
-                                      borderRadius: "6px",
-                                      padding: "3px 7px",
-                                      cursor: "pointer",
-                                      display: "inline-flex",
-                                      alignItems: "center",
-                                      gap: "3px",
-                                      fontSize: "0.7rem",
-                                      color: colVar.text,
-                                      fontWeight: 800,
-                                    }}
-                                  >
-                                    <Pencil size={11} />
-                                    <span className="btn-texto-responsive">Editar</span>
-                                  </button>
+                                  <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                                    {p.variantes.length > 1 && (
+                                      <div style={{ display: "flex", flexDirection: "column", gap: "1px" }}>
+                                        <button
+                                          type="button"
+                                          disabled={vIdx === 0}
+                                          onClick={async (e) => {
+                                            e.stopPropagation();
+                                            const targetIdx = vIdx - 1;
+                                            if (targetIdx < 0) return;
+                                            const nuevas = [...p.variantes];
+                                            const temp = nuevas[vIdx]!;
+                                            nuevas[vIdx] = nuevas[targetIdx]!;
+                                            nuevas[targetIdx] = temp;
+
+                                            setProductos((prev) =>
+                                              prev.map((item) =>
+                                                item.pro_id === p.pro_id ? { ...item, variantes: nuevas } : item
+                                              )
+                                            );
+
+                                            await editarProductoAction({
+                                              pro_id: p.pro_id,
+                                              nombre: p.pro_nombre,
+                                              descripcion: p.pro_descripcion || "",
+                                              categoriaId: p.pro_categoria_principal_id || undefined,
+                                              tipo: p.pro_tipo,
+                                              destacado: p.pro_destacado,
+                                              variantes: nuevas,
+                                              negocio,
+                                            });
+                                          }}
+                                          title="Mover variante arriba"
+                                          aria-label="Mover variante arriba"
+                                          style={{
+                                            background: colVar.badge,
+                                            border: `1px solid ${colVar.border}`,
+                                            borderRadius: "3px",
+                                            padding: "1px 4px",
+                                            cursor: vIdx === 0 ? "not-allowed" : "pointer",
+                                            opacity: vIdx === 0 ? 0.3 : 1,
+                                            display: "flex",
+                                            alignItems: "center",
+                                            justifyContent: "center",
+                                          }}
+                                        >
+                                          <ChevronUp size={10} color={colVar.text} />
+                                        </button>
+
+                                        <button
+                                          type="button"
+                                          disabled={vIdx === p.variantes.length - 1}
+                                          onClick={async (e) => {
+                                            e.stopPropagation();
+                                            const targetIdx = vIdx + 1;
+                                            if (targetIdx >= p.variantes.length) return;
+                                            const nuevas = [...p.variantes];
+                                            const temp = nuevas[vIdx]!;
+                                            nuevas[vIdx] = nuevas[targetIdx]!;
+                                            nuevas[targetIdx] = temp;
+
+                                            setProductos((prev) =>
+                                              prev.map((item) =>
+                                                item.pro_id === p.pro_id ? { ...item, variantes: nuevas } : item
+                                              )
+                                            );
+
+                                            await editarProductoAction({
+                                              pro_id: p.pro_id,
+                                              nombre: p.pro_nombre,
+                                              descripcion: p.pro_descripcion || "",
+                                              categoriaId: p.pro_categoria_principal_id || undefined,
+                                              tipo: p.pro_tipo,
+                                              destacado: p.pro_destacado,
+                                              variantes: nuevas,
+                                              negocio,
+                                            });
+                                          }}
+                                          title="Mover variante abajo"
+                                          aria-label="Mover variante abajo"
+                                          style={{
+                                            background: colVar.badge,
+                                            border: `1px solid ${colVar.border}`,
+                                            borderRadius: "3px",
+                                            padding: "1px 4px",
+                                            cursor: vIdx === p.variantes.length - 1 ? "not-allowed" : "pointer",
+                                            opacity: vIdx === p.variantes.length - 1 ? 0.3 : 1,
+                                            display: "flex",
+                                            alignItems: "center",
+                                            justifyContent: "center",
+                                          }}
+                                        >
+                                          <ChevronDown size={10} color={colVar.text} />
+                                        </button>
+                                      </div>
+                                    )}
+
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setProductoAEditar(p);
+                                        setVarianteAEditarId(v.var_id);
+                                        setModalEditarAbierto(true);
+                                      }}
+                                      title={`Editar variante ${v.var_nombre}`}
+                                      aria-label={`Editar variante ${v.var_nombre}`}
+                                      style={{
+                                        background: colVar.badge,
+                                        border: `1px solid ${colVar.border}`,
+                                        borderRadius: "6px",
+                                        padding: "3px 7px",
+                                        cursor: "pointer",
+                                        display: "inline-flex",
+                                        alignItems: "center",
+                                        gap: "3px",
+                                        fontSize: "0.7rem",
+                                        color: colVar.text,
+                                        fontWeight: 800,
+                                      }}
+                                    >
+                                      <Pencil size={11} />
+                                      <span className="btn-texto-responsive">Editar</span>
+                                    </button>
+                                  </div>
                                 )}
                               </div>
                             </div>
