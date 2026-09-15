@@ -12,6 +12,7 @@ export {
   restablecerContrasena,
   actualizarPerfilUsuario,
   actualizarDatosFacturacion,
+  obtenerDatosFacturacionUsuario,
   completarBienvenida,
   eliminarCuenta,
   cerrarSesion,

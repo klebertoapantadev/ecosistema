@@ -223,3 +223,15 @@ Los productos se estructuran en `comun_comercio`:
 - `comun_comercio.com_variante`: Precios e impuestos (`var_precio`, `var_tarifa_iva_porcentaje`, `var_sku`, `var_codigo_impuesto_sri`).
 - Vistas de compatibilidad en esquema `public`: `public.com_producto`, `public.com_categoria`, `public.com_variante`.
 
+---
+
+## 6. Gestión Dinámica y Snapshot Inmutable de Datos de Facturación (PLT-006)
+
+El flujo de pago implementa el principio de **desacoplamiento entre datos de facturación por defecto y datos de facturación por compra**:
+
+1. **Carga Automática:** Al abrir el checkout, el sistema precarga los datos configurados en el perfil del cliente (`seg_usuario.usu_detalle_usuario.datos_facturacion`).
+2. **Facturación Flexible:** El comprador puede modificar libremente cualquier dato (Cédula/RUC, Razón Social, Correo, Dirección) para emitir la factura a nombre de otra persona o empresa en una compra puntual.
+3. **Persistencia Opcional de Perfil:** Si el cliente marca la casilla *"Actualizar también mis datos de facturación guardados en mi cuenta"*, sus nuevos datos se sincronizan con `seg_usuario` como su nuevo default. Si no la marca, sus datos principales permanecen intactos.
+4. **Snapshot Inmutable por Transacción:** Cada registro en `com_transaccion_pago` congela en `pag_detalle_transaccion.datos_facturacion` los datos exactos utilizados para esa compra particular, garantizando trazabilidad fiscal histórica ante el SRI.
+
+

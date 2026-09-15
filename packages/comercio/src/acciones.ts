@@ -2549,7 +2549,88 @@ export async function guardarConfiguracionPasarelaAction(datos: {
 // ==============================================================================
 
 /**
+ * Consulta los datos de facturación configurados del usuario autenticado (para precarga en checkout)
+ */
+export async function obtenerDatosFacturacionAction(): Promise<{
+  ok: boolean;
+  tienePerfilFacturacion: boolean;
+  razonSocial: string;
+  tipoIdentificacion: string;
+  identificacion: string;
+  telefono: string;
+  direccion: string;
+  correoFacturacion: string;
+  error?: string;
+}> {
+  const supabase: any = await crearClienteServidor();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return {
+      ok: false,
+      tienePerfilFacturacion: false,
+      razonSocial: "",
+      tipoIdentificacion: "cedula",
+      identificacion: "",
+      telefono: "",
+      direccion: "",
+      correoFacturacion: "",
+      error: "Sin sesión activa",
+    };
+  }
+
+  const { data: usuario } = await supabase
+    .schema("comun_seguridad")
+    .from("seg_usuario")
+    .select("usu_nombres, usu_apellidos, usu_correo, usu_whatsapp, usu_detalle_usuario")
+    .eq("usu_id", user.id)
+    .maybeSingle();
+
+  if (!usuario) {
+    return {
+      ok: false,
+      tienePerfilFacturacion: false,
+      razonSocial: "",
+      tipoIdentificacion: "cedula",
+      identificacion: "",
+      telefono: "",
+      direccion: "",
+      correoFacturacion: "",
+      error: "Usuario no encontrado",
+    };
+  }
+
+  const detalle = (usuario.usu_detalle_usuario as Record<string, any>) || {};
+  const datosFact = detalle.datos_facturacion;
+
+  if (datosFact && (datosFact.razon_social || datosFact.identificacion)) {
+    return {
+      ok: true,
+      tienePerfilFacturacion: true,
+      razonSocial: datosFact.razon_social || "",
+      tipoIdentificacion: datosFact.tipo_identificacion || "cedula",
+      identificacion: datosFact.identificacion || "",
+      telefono: datosFact.telefono || usuario.usu_whatsapp || "",
+      direccion: datosFact.direccion || "",
+      correoFacturacion: datosFact.correo_facturacion || usuario.usu_correo || "",
+    };
+  }
+
+  const nombreCompleto = [usuario.usu_nombres, usuario.usu_apellidos].filter(Boolean).join(" ");
+  return {
+    ok: true,
+    tienePerfilFacturacion: false,
+    razonSocial: nombreCompleto || "",
+    tipoIdentificacion: "cedula",
+    identificacion: "",
+    telefono: usuario.usu_whatsapp || "",
+    direccion: "",
+    correoFacturacion: usuario.usu_correo || "",
+  };
+}
+
+/**
  * Fase 1: Prepara la transacción de pago con Payphone (API /api/button/Prepare) o inicia simulación
+ * Almacena el snapshot inmutable de datos de facturación por compra/producto y actualiza el perfil si se solicita.
  */
 export async function prepararPagoPayphoneAction(datos: {
   negocio?: string;
@@ -2564,6 +2645,10 @@ export async function prepararPagoPayphoneAction(datos: {
     identificacion: string;
     email: string;
     telefono: string;
+    tipoIdentificacion?: string;
+    razonSocial?: string;
+    direccion?: string;
+    guardarEnPerfil?: boolean;
   };
   esSimulado?: boolean;
 }) {
@@ -2588,6 +2673,57 @@ export async function prepararPagoPayphoneAction(datos: {
     // Sin sesión
   }
 
+  // Snapshot inmutable de datos de facturación para este producto / compra puntual
+  const razonSocialFinal =
+    datos.pagador.razonSocial?.trim() ||
+    `${datos.pagador.nombres.trim()} ${datos.pagador.apellidos.trim()}`.trim();
+
+  const snapshotFacturacion = {
+    razon_social: razonSocialFinal,
+    tipo_identificacion: datos.pagador.tipoIdentificacion || "cedula",
+    identificacion: datos.pagador.identificacion.trim(),
+    correo_facturacion: datos.pagador.email.trim(),
+    telefono: datos.pagador.telefono.trim(),
+    direccion: datos.pagador.direccion?.trim() || "",
+    guardado_en_perfil: Boolean(datos.pagador.guardarEnPerfil),
+    fecha_emision: new Date().toISOString(),
+  };
+
+  // Si el cliente solicitó guardar o actualizar sus datos de facturación por defecto:
+  if (datos.pagador.guardarEnPerfil && clienteId && clienteDb) {
+    try {
+      const { data: usrRow } = await clienteDb
+        .schema("comun_seguridad")
+        .from("seg_usuario")
+        .select("usu_detalle_usuario")
+        .eq("usu_id", clienteId)
+        .maybeSingle();
+
+      const detUsr = (usrRow?.usu_detalle_usuario as Record<string, any>) || {};
+      await clienteDb
+        .schema("comun_seguridad")
+        .from("seg_usuario")
+        .update({
+          usu_detalle_usuario: {
+            ...detUsr,
+            datos_facturacion: {
+              razon_social: snapshotFacturacion.razon_social,
+              tipo_identificacion: snapshotFacturacion.tipo_identificacion,
+              identificacion: snapshotFacturacion.identificacion,
+              telefono: snapshotFacturacion.telefono,
+              direccion: snapshotFacturacion.direccion,
+              correo_facturacion: snapshotFacturacion.correo_facturacion,
+              actualizado_en: new Date().toISOString(),
+            },
+          },
+          usu_actualizado_en: new Date().toISOString(),
+        })
+        .eq("usu_id", clienteId);
+    } catch (errPerfil) {
+      console.warn("No se pudo actualizar datos_facturacion en perfil:", errPerfil);
+    }
+  }
+
   // Montos en centavos para cumplir normativa Payphone (entero x 100)
   const amountTotalCentavos = Math.round(datos.montoTotal * 100);
   const amountWithTaxCentavos = Math.round(datos.montoBase * 100);
@@ -2597,7 +2733,7 @@ export async function prepararPagoPayphoneAction(datos: {
   if (usarSimulacion) {
     const paymentIdSimulado = `SIM-PAY-${Date.now()}-${randomSuffix}`;
 
-    // Registrar en com_transaccion_pago como PENDIENTE
+    // Registrar en com_transaccion_pago como PENDIENTE con el snapshot inmutable
     if (clienteDb) {
       try {
         await clienteDb
@@ -2624,6 +2760,7 @@ export async function prepararPagoPayphoneAction(datos: {
               variante_id: datos.varianteId,
               fecha_preparacion: new Date().toISOString(),
               pagador: datos.pagador,
+              datos_facturacion: snapshotFacturacion,
             },
           });
       } catch {
@@ -2706,7 +2843,7 @@ export async function prepararPagoPayphoneAction(datos: {
     const payphoneData = await res.json();
     // payphoneData contiene: { paymentId, payWithPayPhone, payWithCard }
 
-    // Registrar en com_transaccion_pago como PENDIENTE
+    // Registrar en com_transaccion_pago como PENDIENTE con snapshot de facturación
     if (clienteDb) {
       try {
         await clienteDb
@@ -2732,6 +2869,7 @@ export async function prepararPagoPayphoneAction(datos: {
               nombre_servicio: datos.nombreServicio,
               variante_id: datos.varianteId,
               payphone_prepare: payphoneData,
+              datos_facturacion: snapshotFacturacion,
             },
           });
       } catch {
@@ -2790,6 +2928,15 @@ export async function confirmarPagoPayphoneAction(datos: {
 
     if (clienteDb) {
       try {
+        const { data: pagoExistente } = await clienteDb
+          .schema("comun_comercio")
+          .from("com_transaccion_pago")
+          .select("pag_detalle_transaccion")
+          .eq("pag_identificador_cliente", datos.clientTxId)
+          .maybeSingle();
+
+        const detPrevio = (pagoExistente?.pag_detalle_transaccion as Record<string, any>) || {};
+
         await clienteDb
           .schema("comun_comercio")
           .from("com_transaccion_pago")
@@ -2801,6 +2948,7 @@ export async function confirmarPagoPayphoneAction(datos: {
             pag_tarjeta_ultimos_digitos: ultimosDigitos,
             pag_confirmado_en: new Date().toISOString(),
             pag_detalle_transaccion: {
+              ...detPrevio,
               simulacion: true,
               fecha_confirmacion: new Date().toISOString(),
               resultado: estadoFinal,
@@ -2917,6 +3065,15 @@ export async function confirmarPagoPayphoneAction(datos: {
 
     if (clienteDb) {
       try {
+        const { data: pagoExistente } = await clienteDb
+          .schema("comun_comercio")
+          .from("com_transaccion_pago")
+          .select("pag_detalle_transaccion")
+          .eq("pag_identificador_cliente", datos.clientTxId)
+          .maybeSingle();
+
+        const detPrevio = (pagoExistente?.pag_detalle_transaccion as Record<string, any>) || {};
+
         await clienteDb
           .schema("comun_comercio")
           .from("com_transaccion_pago")
@@ -2928,7 +3085,9 @@ export async function confirmarPagoPayphoneAction(datos: {
             pag_tarjeta_ultimos_digitos: confirmData.lastDigits || null,
             pag_confirmado_en: new Date().toISOString(),
             pag_detalle_transaccion: {
+              ...detPrevio,
               payphone_confirm: confirmData,
+              fecha_confirmacion: new Date().toISOString(),
             },
           })
           .eq("pag_identificador_cliente", datos.clientTxId);

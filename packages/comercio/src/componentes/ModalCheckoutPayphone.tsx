@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   CreditCard,
   ShieldCheck,
@@ -17,11 +17,16 @@ import {
   Hash,
   Sparkles,
   Lock,
+  Receipt,
+  MapPin,
+  Building,
+  Save,
 } from "lucide-react";
 import {
   VarianteCatalogo,
   prepararPagoPayphoneAction,
   confirmarPagoPayphoneAction,
+  obtenerDatosFacturacionAction,
 } from "../acciones";
 
 interface Props {
@@ -41,12 +46,18 @@ export function ModalCheckoutPayphone({
   negocio = "tranqi",
   alPagoExitoso,
 }: Props) {
-  // Estado del formulario del pagador
-  const [nombres, setNombres] = useState("");
-  const [apellidos, setApellidos] = useState("");
+  // Estado del formulario de facturación del pagador
+  const [razonSocial, setRazonSocial] = useState("");
+  const [tipoIdentificacion, setTipoIdentificacion] = useState("cedula");
   const [identificacion, setIdentificacion] = useState("");
   const [email, setEmail] = useState("");
   const [telefono, setTelefono] = useState("");
+  const [direccion, setDireccion] = useState("");
+
+  // Control de perfil guardado vs ad-hoc
+  const [tienePerfilFacturacion, setTienePerfilFacturacion] = useState(false);
+  const [guardarEnPerfil, setGuardarEnPerfil] = useState(false);
+  const [cargandoPerfil, setCargandoPerfil] = useState(false);
 
   // Estado del simulador de tarjeta interactivo
   const [tarjetaNumero, setTarjetaNumero] = useState("4500 8912 3456 7890");
@@ -74,6 +85,65 @@ export function ModalCheckoutPayphone({
   // Resultado de confirmación
   const [resultadoPago, setResultadoPago] = useState<any | null>(null);
 
+  // Cargar datos de facturación existentes al abrir el modal
+  useEffect(() => {
+    if (!abierto) return;
+
+    let cancelado = false;
+    setCargandoPerfil(true);
+
+    obtenerDatosFacturacionAction()
+      .then((res) => {
+        if (cancelado) return;
+        if (res.ok && res.tienePerfilFacturacion) {
+          setTienePerfilFacturacion(true);
+          setRazonSocial(res.razonSocial || "");
+          setTipoIdentificacion(res.tipoIdentificacion || "cedula");
+          setIdentificacion(res.identificacion || "");
+          setEmail(res.correoFacturacion || "");
+          setTelefono(res.telefono || "");
+          setDireccion(res.direccion || "");
+          setGuardarEnPerfil(false);
+        } else if (res.ok && !res.tienePerfilFacturacion) {
+          // Si no tiene perfil configurado en BDD, verificar respaldo en localStorage o datos de registro
+          let localDatos: any = null;
+          try {
+            const guardadoLocal = localStorage.getItem("tranqi_datos_facturacion");
+            if (guardadoLocal) localDatos = JSON.parse(guardadoLocal);
+          } catch { /* Ignorar */ }
+
+          if (localDatos?.identificacion || localDatos?.razonSocial) {
+            setTienePerfilFacturacion(true);
+            setRazonSocial(localDatos.razonSocial || res.razonSocial || "");
+            setTipoIdentificacion(localDatos.tipoIdentificacion || "cedula");
+            setIdentificacion(localDatos.identificacion || "");
+            setEmail(localDatos.correoFacturacion || res.correoFacturacion || "");
+            setTelefono(localDatos.telefono || res.telefono || "");
+            setDireccion(localDatos.direccion || "");
+            setGuardarEnPerfil(false);
+          } else {
+            setTienePerfilFacturacion(false);
+            setRazonSocial(res.razonSocial || "");
+            setEmail(res.correoFacturacion || "");
+            setTelefono(res.telefono || "");
+            setGuardarEnPerfil(true); // Pre-marcado para invitar a guardar sus datos
+          }
+        }
+      })
+      .catch(() => {
+        if (cancelado) return;
+        setTienePerfilFacturacion(false);
+        setGuardarEnPerfil(true);
+      })
+      .finally(() => {
+        if (!cancelado) setCargandoPerfil(false);
+      });
+
+    return () => {
+      cancelado = true;
+    };
+  }, [abierto]);
+
   if (!abierto || !variante) return null;
 
   // Detectar marca según primeros dígitos
@@ -98,7 +168,7 @@ export function ModalCheckoutPayphone({
     setTarjetaCvv(preset.cvv);
     setTarjetaMarca(preset.marca);
     if (!tarjetaTitular) {
-      setTarjetaTitular(`${nombres.trim() || "MARTIN"} ${apellidos.trim() || "TOAPANTA"}`.toUpperCase());
+      setTarjetaTitular(`${razonSocial.trim() || "CLIENTE"}`.toUpperCase());
     }
   };
 
@@ -107,12 +177,12 @@ export function ModalCheckoutPayphone({
     e.preventDefault();
     setErrorMsg(null);
 
-    if (!identificacion.trim() || !email.trim() || !nombres.trim() || !telefono.trim()) {
-      setErrorMsg("Por favor completa todos los campos de facturación obligatorios.");
+    if (!identificacion.trim() || !email.trim() || !razonSocial.trim() || !telefono.trim()) {
+      setErrorMsg("Por favor completa todos los campos de facturación obligatorios (*).");
       return;
     }
 
-    setTarjetaTitular(`${nombres.trim()} ${apellidos.trim() || "CLIENTE"}`.toUpperCase());
+    setTarjetaTitular(razonSocial.trim().toUpperCase());
     setProcesando(true);
     try {
       const res = await prepararPagoPayphoneAction({
@@ -123,11 +193,15 @@ export function ModalCheckoutPayphone({
         montoIva: variante.monto_iva,
         montoTotal: variante.precio_total,
         pagador: {
-          nombres: nombres.trim(),
-          apellidos: apellidos.trim() || "Cliente",
+          nombres: razonSocial.trim(),
+          apellidos: "",
           identificacion: identificacion.trim(),
           email: email.trim(),
           telefono: telefono.trim(),
+          tipoIdentificacion,
+          razonSocial: razonSocial.trim(),
+          direccion: direccion.trim(),
+          guardarEnPerfil,
         },
         esSimulado: modoSimulado,
       });
@@ -193,7 +267,7 @@ export function ModalCheckoutPayphone({
         resultadoSimulacion: resultado,
         marcaTarjetaSimulada: tarjetaMarca,
         ultimosDigitos: ultimos4,
-        titularNombre: tarjetaTitular || `${nombres} ${apellidos}`,
+        titularNombre: tarjetaTitular || razonSocial || "CLIENTE",
         varianteId: variante.var_id,
         productoNombre,
         clienteEmail: email,
@@ -437,23 +511,125 @@ export function ModalCheckoutPayphone({
                 </label>
               </div>
 
-              <h4 style={{ margin: "0 0 12px", fontSize: "0.9rem", color: "#334155", fontWeight: 700 }}>
-                Datos de Facturación del Cliente
-              </h4>
+              {/* Banner Informativo de Perfil de Facturación */}
+              {tienePerfilFacturacion ? (
+                <div
+                  style={{
+                    background: "#F0FDF4",
+                    border: "1px solid #86EFAC",
+                    borderRadius: "12px",
+                    padding: "12px 16px",
+                    marginBottom: "16px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: "10px",
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                    <div
+                      style={{
+                        padding: "6px",
+                        borderRadius: "8px",
+                        background: "#DCFCE7",
+                        color: "#166534",
+                        display: "flex",
+                      }}
+                    >
+                      <Receipt size={18} />
+                    </div>
+                    <div>
+                      <div style={{ fontSize: "0.84rem", fontWeight: 700, color: "#166534" }}>
+                        Datos de Facturación del Perfil Cargados
+                      </div>
+                      <div style={{ fontSize: "0.74rem", color: "#15803D" }}>
+                        Se emitirá la factura con estos datos. Puedes modificarlos si deseas facturar a otra persona o empresa.
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div
+                  style={{
+                    background: "#EFF6FF",
+                    border: "1px solid #BFDBFE",
+                    borderRadius: "12px",
+                    padding: "12px 16px",
+                    marginBottom: "16px",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "10px",
+                  }}
+                >
+                  <div
+                    style={{
+                      padding: "6px",
+                      borderRadius: "8px",
+                      background: "#DBEAFE",
+                      color: "#1E40AF",
+                      display: "flex",
+                    }}
+                  >
+                    <FileText size={18} />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: "0.84rem", fontWeight: 700, color: "#1E40AF" }}>
+                      Datos para Comprobante Electrónico SRI
+                    </div>
+                    <div style={{ fontSize: "0.74rem", color: "#2563EB" }}>
+                      Completa los datos fiscales para emitir tu factura electrónica.
+                    </div>
+                  </div>
+                </div>
+              )}
 
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
+                <h4 style={{ margin: 0, fontSize: "0.9rem", color: "#334155", fontWeight: 700 }}>
+                  Datos de Facturación del Cliente
+                </h4>
+                <span style={{ fontSize: "0.72rem", color: "#64748B" }}>
+                  * Campos obligatorios para el SRI
+                </span>
+              </div>
+
+              {/* Fila 1: Tipo de Documento y Número de Identificación */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "12px" }}>
                 <div>
                   <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 600, color: "#475569", marginBottom: "4px" }}>
-                    Nombres *
+                    Tipo de Documento *
+                  </label>
+                  <select
+                    value={tipoIdentificacion}
+                    onChange={(e) => setTipoIdentificacion(e.target.value)}
+                    style={{
+                      width: "100%",
+                      padding: "8px 12px",
+                      fontSize: "0.85rem",
+                      borderRadius: "8px",
+                      border: "1px solid #CBD5E1",
+                      boxSizing: "border-box",
+                      background: "#FFFFFF",
+                      fontWeight: 500,
+                    }}
+                  >
+                    <option value="cedula">Cédula de Identidad</option>
+                    <option value="ruc">RUC (Empresa o Persona Natural)</option>
+                    <option value="pasaporte">Pasaporte / Extranjero</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 600, color: "#475569", marginBottom: "4px" }}>
+                    Cédula / RUC / Pasaporte *
                   </label>
                   <div style={{ position: "relative" }}>
-                    <User size={14} color="#94A3B8" style={{ position: "absolute", left: "10px", top: "10px" }} />
+                    <Hash size={14} color="#94A3B8" style={{ position: "absolute", left: "10px", top: "10px" }} />
                     <input
                       type="text"
                       required
-                      placeholder="Ej. Kleber"
-                      value={nombres}
-                      onChange={(e) => setNombres(e.target.value)}
+                      placeholder="Ej. 1718192021 o 1790012345001"
+                      value={identificacion}
+                      onChange={(e) => setIdentificacion(e.target.value)}
                       style={{
                         width: "100%",
                         padding: "8px 12px 8px 32px",
@@ -465,19 +641,24 @@ export function ModalCheckoutPayphone({
                     />
                   </div>
                 </div>
+              </div>
 
-                <div>
-                  <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 600, color: "#475569", marginBottom: "4px" }}>
-                    Apellidos
-                  </label>
+              {/* Fila 2: Razón Social / Nombre Completo */}
+              <div style={{ marginBottom: "12px" }}>
+                <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 600, color: "#475569", marginBottom: "4px" }}>
+                  Nombre Completo / Razón Social para la Factura *
+                </label>
+                <div style={{ position: "relative" }}>
+                  <Building size={14} color="#94A3B8" style={{ position: "absolute", left: "10px", top: "10px" }} />
                   <input
                     type="text"
-                    placeholder="Ej. Toapanta"
-                    value={apellidos}
-                    onChange={(e) => setApellidos(e.target.value)}
+                    required
+                    placeholder="Ej. Kleber Toapanta o Mi Empresa S.A.S."
+                    value={razonSocial}
+                    onChange={(e) => setRazonSocial(e.target.value)}
                     style={{
                       width: "100%",
-                      padding: "8px 12px",
+                      padding: "8px 12px 8px 32px",
                       fontSize: "0.85rem",
                       borderRadius: "8px",
                       border: "1px solid #CBD5E1",
@@ -487,19 +668,20 @@ export function ModalCheckoutPayphone({
                 </div>
               </div>
 
+              {/* Fila 3: Correo Electrónico y Teléfono Celular */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "12px" }}>
                 <div>
                   <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 600, color: "#475569", marginBottom: "4px" }}>
-                    Cédula / RUC *
+                    Correo de Facturación (Envío XML/PDF) *
                   </label>
                   <div style={{ position: "relative" }}>
-                    <Hash size={14} color="#94A3B8" style={{ position: "absolute", left: "10px", top: "10px" }} />
+                    <Mail size={14} color="#94A3B8" style={{ position: "absolute", left: "10px", top: "10px" }} />
                     <input
-                      type="text"
+                      type="email"
                       required
-                      placeholder="Ej. 1718192021"
-                      value={identificacion}
-                      onChange={(e) => setIdentificacion(e.target.value)}
+                      placeholder="facturacion@ejemplo.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
                       style={{
                         width: "100%",
                         padding: "8px 12px 8px 32px",
@@ -537,18 +719,18 @@ export function ModalCheckoutPayphone({
                 </div>
               </div>
 
-              <div style={{ marginBottom: "20px" }}>
+              {/* Fila 4: Dirección Domiciliaria / Fiscal */}
+              <div style={{ marginBottom: "16px" }}>
                 <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 600, color: "#475569", marginBottom: "4px" }}>
-                  Correo Electrónico (Para envío del comprobante) *
+                  Dirección Domiciliaria / Fiscal
                 </label>
                 <div style={{ position: "relative" }}>
-                  <Mail size={14} color="#94A3B8" style={{ position: "absolute", left: "10px", top: "10px" }} />
+                  <MapPin size={14} color="#94A3B8" style={{ position: "absolute", left: "10px", top: "10px" }} />
                   <input
-                    type="email"
-                    required
-                    placeholder="cliente@ejemplo.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    type="text"
+                    placeholder="Ej. Av. 6 de Diciembre y Orellana, Edif. Torre 1"
+                    value={direccion}
+                    onChange={(e) => setDireccion(e.target.value)}
                     style={{
                       width: "100%",
                       padding: "8px 12px 8px 32px",
@@ -559,6 +741,38 @@ export function ModalCheckoutPayphone({
                     }}
                   />
                 </div>
+              </div>
+
+              {/* Opción de Guardar / Actualizar como Datos por Defecto */}
+              <div
+                style={{
+                  background: "#F8FAFC",
+                  border: "1px dashed #CBD5E1",
+                  borderRadius: "10px",
+                  padding: "10px 14px",
+                  marginBottom: "20px",
+                }}
+              >
+                <label style={{ display: "flex", alignItems: "flex-start", gap: "10px", cursor: "pointer" }}>
+                  <input
+                    type="checkbox"
+                    checked={guardarEnPerfil}
+                    onChange={(e) => setGuardarEnPerfil(e.target.checked)}
+                    style={{ width: "16px", height: "16px", marginTop: "2px", cursor: "pointer" }}
+                  />
+                  <div>
+                    <span style={{ fontSize: "0.82rem", fontWeight: 700, color: "#1E293B", display: "block" }}>
+                      {tienePerfilFacturacion
+                        ? "Actualizar también mis datos de facturación guardados en mi cuenta"
+                        : "Guardar como mis datos de facturación predeterminados para futuras compras"}
+                    </span>
+                    <span style={{ fontSize: "0.74rem", color: "#64748B" }}>
+                      {tienePerfilFacturacion
+                        ? "Si no marcas esta opción, estos cambios solo se aplicarán a esta compra particular sin alterar tus datos de cuenta."
+                        : "Se guardarán en tu perfil de cuenta para que no tengas que escribirlos de nuevo en tus próximas compras."}
+                    </span>
+                  </div>
+                </label>
               </div>
 
               <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
@@ -684,7 +898,7 @@ export function ModalCheckoutPayphone({
                       Titular de la Tarjeta
                     </div>
                     <div style={{ fontSize: "0.95rem", fontWeight: 700, letterSpacing: "1px", textTransform: "uppercase" }}>
-                      {tarjetaTitular || `${nombres} ${apellidos}`.toUpperCase() || "TITULAR AUTORIZADO"}
+                      {tarjetaTitular || (razonSocial ? razonSocial.toUpperCase() : "TITULAR AUTORIZADO")}
                     </div>
                   </div>
 
@@ -1124,8 +1338,8 @@ export function ModalCheckoutPayphone({
                       <span>{resultadoPago.marcaTarjeta || "Tarjeta"} •••• {resultadoPago.ultimosDigitos || "4242"}</span>
                     </div>
                     <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px" }}>
-                      <span style={{ color: "#64748B" }}>Titular / Cédula:</span>
-                      <span>{nombres} {apellidos} ({identificacion})</span>
+                      <span style={{ color: "#64748B" }}>Titular / Cédula / RUC:</span>
+                      <span>{razonSocial} ({identificacion})</span>
                     </div>
                     <div style={{ display: "flex", justifyContent: "space-between", paddingTop: "8px", borderTop: "1px solid #E2E8F0" }}>
                       <span style={{ fontWeight: 700, color: "#0F172A" }}>Monto Total Liquidado:</span>

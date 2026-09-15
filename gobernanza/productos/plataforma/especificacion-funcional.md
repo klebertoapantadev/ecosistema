@@ -306,13 +306,36 @@ Unifica el procesamiento de pagos y la emisión de comprobantes electrónicos au
 ### Reglas de Negocio
 1. **Pasarela de Pagos como Proceso Crítico Común:** El flujo de cobro es la acción crítica común transversal a todas las aplicaciones que activa las garantías de seguridad y MFA TOTP de `PLT-002`.
 2. **Emisión de Facturas Electrónicas:** Todo pago completado exitosamente genera la factura electrónica SRI.
-3. **Confirmación de Datos de Facturación y Widget Autocontenido (`FormularioDatosFacturacion.tsx`):**
-   - Antes de procesar el cobro, el sistema solicita al cliente confirmar si requiere la factura a nombre de **Consumidor Final** o con **Datos Personalizados (RUC/Cédula, Razón Social, Dirección, Correo)**.
-   - Si el cliente elige emitir con datos y no los ha registrado previamente en su perfil, el sistema exige su ingreso antes de habilitar la pasarela de pago.
-   - **Widget Autocontenido de Datos de Facturación en Mi Cuenta:** Accesible desde `/panel/cuenta`, permite configurar y respaldar de forma permanente: *Nombre Completo / Razón Social*, *Tipo de Documento (Cédula, RUC, Pasaporte)*, *Número de Identificación*, *Teléfono de Contacto*, *Dirección Fiscal* y *Correo Electrónico de Facturación* (diferenciado de los correos de notificación). Incluye la opción de autocompletar *"Usar Nombres del Registro"*.
-4. **Arquitectura Multi-Pasarela y Métodos de Pago Directos:**
+3. **Datos de Facturación por Defecto vs. Datos de Facturación por Compra / Checkout:**
+   - **Datos por Defecto en Cuenta (`seg_usuario.usu_detalle_usuario.datos_facturacion`):** Los datos configurados en `Mi Cuenta -> Datos de Facturación` (`FormularioDatosFacturacion.tsx`) actúan como los datos predeterminados para cualquier proceso de compra en cualquiera de los 4 negocios.
+   - **Precarga Automática en Checkout:** Al abrir cualquier checkout o pasarela de pago (`ModalCheckoutPayphone.tsx`), el sistema consulta y precarga automáticamente los datos de facturación existentes (*Tipo de Documento, Cédula/RUC/Pasaporte, Razón Social, Correo de Facturación, Teléfono Celular y Dirección Fiscal*).
+   - **Si NO existen datos de facturación guardados:** El checkout permite ingresarlos y presenta una casilla destacada (*"Guardar como mis datos de facturación predeterminados para futuras compras"*), pre-marcada por defecto para facilitar el registro de su perfil fiscal.
+   - **Libertad de Facturación Ad-Hoc / Diferente:** El cliente **siempre puede modificar los datos de facturación en el checkout** para emitir la factura a nombre de una persona o empresa totalmente distinta a los datos de su cuenta para esa compra específica.
+   - **Opción de Actualización de Perfil:**
+     - Si el cliente tiene datos guardados y los altera en el checkout:
+       - Si **NO** marca la casilla *"Actualizar también mis datos de facturación guardados"*, la compra se procesa y factura con los nuevos datos suministrados, manteniendo intacto su perfil de facturación por defecto.
+       - Si **SÍ** marca la casilla, la transacción actualiza automáticamente su perfil fiscal en `seg_usuario` para que sirva de nuevo default en futuras compras.
+4. **Almacenamiento y Snapshot Inmutable de Datos de Facturación por Producto / Transacción:**
+   - Cada transacción de compra (`comun_comercio.com_transaccion_pago`), orden o suscripción almacena un **snapshot congelado e inmutable** con la totalidad de los datos de facturación utilizados en esa compra específica dentro de `pag_detalle_transaccion.datos_facturacion`:
+     ```json
+     {
+       "datos_facturacion": {
+         "razon_social": "Organización Ejemplo S.A.S.",
+         "tipo_identificacion": "ruc",
+         "identificacion": "1790012345001",
+         "correo_facturacion": "facturas@empresa.com",
+         "telefono": "0996438873",
+         "direccion": "Av. 6 de Diciembre y Orellana, Edif. Torre 1",
+         "guardado_en_perfil": true,
+         "fecha_emision": "2026-09-15T09:15:00.000Z"
+       }
+     }
+     ```
+   - Este snapshot garantiza el cumplimiento contable y tributario ante el SRI: la factura emitida para un producto conserva inalterables sus datos de emisión históricos, incluso si el usuario modifica posteriormente su perfil fiscal en el panel.
+5. **Widget Autocontenido de Datos de Facturación en Mi Cuenta:** Accesible desde `/panel/cuenta`, permite configurar y respaldar de forma permanente: *Nombre Completo / Razón Social*, *Tipo de Documento (Cédula, RUC, Pasaporte)*, *Número de Identificación*, *Teléfono de Contacto*, *Dirección Fiscal* y *Correo Electrónico de Facturación* (diferenciado de los correos de notificación). Incluye la opción de autocompletar *"Usar Nombres del Registro"*.
+6. **Arquitectura Multi-Pasarela y Métodos de Pago Directos:**
    - **Adaptador de Pasarelas por Tenant (*Strategy Pattern*):**
-     - **Tranqi:** Paymentez / Nuvei (tokenización de tarjetas, suscripciones y 3DSecure).
+     - **Tranqi:** Paymentez / Nuvei (tokenización de tarjetas, suscripciones y 3DSecure) & Payphone API.
      - **Tinkay & Margaritas:** Payphone API (enlaces de cobro, app-to-app y botón Payphone).
      - **FastFix:** Payphone o Paymentez.
    - **Métodos Directos Sin Pasarela (0% Recargo Bancario):**

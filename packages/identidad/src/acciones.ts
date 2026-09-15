@@ -344,6 +344,68 @@ export async function actualizarDatosFacturacion(datos: {
   return { ok: true, data: undefined };
 }
 
+// PLT-006: Consulta de datos de facturación electrónica del usuario autenticado
+export async function obtenerDatosFacturacionUsuario(): Promise<Resultado<{
+  tienePerfilFacturacion: boolean;
+  razonSocial: string;
+  tipoIdentificacion: string;
+  identificacion: string;
+  telefono: string;
+  direccion: string;
+  correoFacturacion: string;
+}>> {
+  const supabase = await crearClienteServidor();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "Sesión no encontrada" };
+
+  const { data: usuario } = await supabase
+    .schema("comun_seguridad")
+    .from("seg_usuario")
+    .select("usu_nombres, usu_apellidos, usu_correo, usu_whatsapp, usu_detalle_usuario")
+    .eq("usu_id", user.id)
+    .maybeSingle();
+
+  if (!usuario) {
+    return { ok: false, error: "Usuario no encontrado" };
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const detalle = (usuario.usu_detalle_usuario as Record<string, any>) || {};
+  const datosFact = detalle.datos_facturacion;
+
+  if (datosFact && (datosFact.razon_social || datosFact.identificacion)) {
+    return {
+      ok: true,
+      data: {
+        tienePerfilFacturacion: true,
+        razonSocial: datosFact.razon_social || "",
+        tipoIdentificacion: datosFact.tipo_identificacion || "cedula",
+        identificacion: datosFact.identificacion || "",
+        telefono: datosFact.telefono || usuario.usu_whatsapp || "",
+        direccion: datosFact.direccion || "",
+        correoFacturacion: datosFact.correo_facturacion || usuario.usu_correo || "",
+      },
+    };
+  }
+
+  // Fallback con datos de registro si aún no tiene perfil de facturación configurado
+  const nombreCompleto = [usuario.usu_nombres, usuario.usu_apellidos].filter(Boolean).join(" ");
+  return {
+    ok: true,
+    data: {
+      tienePerfilFacturacion: false,
+      razonSocial: nombreCompleto || "",
+      tipoIdentificacion: "cedula",
+      identificacion: "",
+      telefono: usuario.usu_whatsapp || "",
+      direccion: "",
+      correoFacturacion: usuario.usu_correo || "",
+    },
+  };
+}
+
 // PLT-001 regla 2: confirma identidad (Google no siempre da un nombre claro)
 // y guarda la autorizacion de WhatsApp -- opt-in real, nunca se asume.
 // Marca usu_onboarding_completo para no repetir esta pantalla. A nivel de
