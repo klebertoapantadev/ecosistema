@@ -38,10 +38,12 @@ import {
   obtenerCategoriasAction,
   restaurarCatalogoEjemploAction,
   editarProductoAction,
+} from "../acciones";
+import {
   CANALES_CATALOGO_OFICIALES,
   CANALES_POR_DEFECTO,
   CanalVisibilidad,
-} from "../acciones";
+} from "../canales";
 import { ModalCheckoutPayphone } from "./ModalCheckoutPayphone";
 import { ModalCrearProducto } from "./ModalCrearProducto";
 import { ModalCrearCategoria } from "./ModalCrearCategoria";

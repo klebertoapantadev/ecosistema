@@ -1,4 +1,5 @@
 export * from "./acciones";
+export * from "./canales";
 export * from "./componentes/VitrinaComercialVisual";
 export * from "./componentes/ConsolaGestionCatalogo";
 export * from "./componentes/ModalDetalleServicioVisual";

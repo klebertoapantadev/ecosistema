@@ -38,10 +38,12 @@ import {
   CategoriaCatalogo,
   ProductoCatalogo,
   VarianteCatalogo,
+} from "../acciones";
+import {
   CANALES_CATALOGO_OFICIALES,
   CANALES_POR_DEFECTO,
   CanalVisibilidad,
-} from "../acciones";
+} from "../canales";
 import { ModalCrearCategoria } from "./ModalCrearCategoria";
 
 export const COLOR_PRODUCTO_MASTER = {
