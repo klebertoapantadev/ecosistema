@@ -334,6 +334,65 @@ as $$
   select comun_seguridad.seg_fn_validar_token_mcp(p_token_texto, p_alcance_requerido);
 $$;
 
+create or replace function public.tnk_fn_buscar_catalogo_conversacional(
+  p_ocasion text default null,
+  p_formato text default null,
+  p_presupuesto_max_usd numeric default null,
+  p_termino text default null
+)
+returns jsonb
+language plpgsql
+security definer
+set search_path = comun_comercio, public
+as $$
+declare
+  v_resultado jsonb;
+  v_presupuesto_centavos integer;
+begin
+  if p_presupuesto_max_usd is not null then
+    v_presupuesto_centavos := round(p_presupuesto_max_usd * 100);
+  end if;
+
+  select coalesce(jsonb_agg(
+    jsonb_build_object(
+      'producto_id', p.pro_id,
+      'nombre', p.pro_nombre,
+      'slug', p.pro_slug,
+      'descripcion', coalesce(p.pro_detalle_producto->>'descripcion_corta', p.pro_descripcion),
+      'album_fotos_url', coalesce(
+        p.pro_detalle_producto->>'album_fotos_url',
+        'https://photos.app.goo.gl/tinkay-catalogo-oficial'
+      ),
+      'icono', p.pro_detalle_producto->>'icono',
+      'variantes', (
+        select jsonb_agg(
+          jsonb_build_object(
+            'variante_id', v.var_id,
+            'nombre', v.var_nombre,
+            'precio_usd', round((v.var_precio_centavos / 100.0)::numeric, 2),
+            'iva_tarifa', 0.15
+          )
+        )
+        from comun_comercio.com_variante_precio v
+        where v.var_producto_id = p.pro_id
+          and (v_presupuesto_centavos is null or v.var_precio_centavos <= v_presupuesto_centavos)
+      )
+    )
+  ), '[]'::jsonb)
+  into v_resultado
+  from comun_comercio.com_producto_servicio p
+  where p.pro_negocio = 'tinkay'
+    and p.pro_activo = true
+    and (
+      p_termino is null
+      or p.pro_nombre ilike '%' || trim(p_termino) || '%'
+      or p.pro_descripcion ilike '%' || trim(p_termino) || '%'
+    );
+
+  return v_resultado;
+end;
+$$;
+
 create or replace function public.seg_fn_listar_tokens_mcp(
   p_negocio_id text
 )
