@@ -778,15 +778,25 @@ const PRODUCTOS_SEMILLA_TINKAY: ProductoCatalogo[] = [
     pro_negocio: "tinkay",
     pro_nombre: "Bouquet Clásico para Florero",
     pro_slug: "tinkay-bouq-florero",
-    pro_descripcion: "Ramos de rosas de exportación seleccionadas de tallo largo, preparadas con follaje fino e hidratación prolongada.",
+    pro_descripcion: "Ramos de rosas de exportación seleccionadas de tallo largo, preparadas con follaje fino e hidratación prolongada para lucir en florero.",
     pro_tipo: "FISICO",
     pro_destacado: true,
     pro_categoria_principal_id: "cat-tinkay-001",
+    canales_visibilidad: [...CANALES_POR_DEFECTO],
     pro_detalle_producto: {
       icono: "Flower2",
       album_fotos_url: "https://photos.app.goo.gl/tinkay-bouq-florero",
       descripcion_corta: "Rosas de exportación de tallo largo con follaje de hidratación prolongada.",
       etiquetas: ["rosas", "florero", "25 rosas", "50 rosas", "100 rosas"],
+      tarifa_iva_predeterminada: 0,
+      codigo_impuesto_sri: "IVA_0",
+      canales_visibilidad: [...CANALES_POR_DEFECTO],
+      logistica: {
+        delivery_incluido: true,
+        modalidad_transporte: "INCLUIDO_GRATIS",
+        etiqueta_transporte: "🚚 Envío a Domicilio Incluido",
+        cobertura_texto: "Quito Urbano y Valles",
+      },
     },
     categoria: { ctg_id: "cat-tinkay-001", ctg_nombre: "Para Florero", ctg_slug: "cat-floreros" },
     variantes: [
@@ -795,14 +805,14 @@ const PRODUCTOS_SEMILLA_TINKAY: ProductoCatalogo[] = [
         var_producto_id: "prod-tinkay-florero",
         var_sku: "TNK-FLOR-25",
         var_nombre: "25 Tallos de Rosas",
-        var_precio: 17.3913,
-        var_precio_comparacion: 20.0,
-        var_codigo_impuesto_sri: "IVA_15",
-        var_tarifa_iva_porcentaje: 15,
+        var_precio: 20.0,
+        var_precio_comparacion: 25.0,
+        var_codigo_impuesto_sri: "IVA_0",
+        var_tarifa_iva_porcentaje: 0,
         var_tipo_oferta: "REGULAR",
         var_activo: true,
-        var_detalle_variante: { pvp_nominal: 20.0, tallos: 25 },
-        monto_iva: 2.6087,
+        var_detalle_variante: { orden: 1, pvp_nominal: 20.0, tallos: 25 },
+        monto_iva: 0.0,
         precio_total: 20.0,
       },
       {
@@ -810,14 +820,14 @@ const PRODUCTOS_SEMILLA_TINKAY: ProductoCatalogo[] = [
         var_producto_id: "prod-tinkay-florero",
         var_sku: "TNK-FLOR-50",
         var_nombre: "50 Tallos de Rosas",
-        var_precio: 21.7391,
-        var_precio_comparacion: 25.0,
-        var_codigo_impuesto_sri: "IVA_15",
-        var_tarifa_iva_porcentaje: 15,
+        var_precio: 25.0,
+        var_precio_comparacion: 30.0,
+        var_codigo_impuesto_sri: "IVA_0",
+        var_tarifa_iva_porcentaje: 0,
         var_tipo_oferta: "REGULAR",
         var_activo: true,
-        var_detalle_variante: { pvp_nominal: 25.0, tallos: 50 },
-        monto_iva: 3.2609,
+        var_detalle_variante: { orden: 2, pvp_nominal: 25.0, tallos: 50 },
+        monto_iva: 0.0,
         precio_total: 25.0,
       },
       {
@@ -825,14 +835,14 @@ const PRODUCTOS_SEMILLA_TINKAY: ProductoCatalogo[] = [
         var_producto_id: "prod-tinkay-florero",
         var_sku: "TNK-FLOR-100",
         var_nombre: "100 Tallos de Rosas (Gran Impacto)",
-        var_precio: 39.1304,
-        var_precio_comparacion: 45.0,
-        var_codigo_impuesto_sri: "IVA_15",
-        var_tarifa_iva_porcentaje: 15,
+        var_precio: 45.0,
+        var_precio_comparacion: 55.0,
+        var_codigo_impuesto_sri: "IVA_0",
+        var_tarifa_iva_porcentaje: 0,
         var_tipo_oferta: "REGULAR",
         var_activo: true,
-        var_detalle_variante: { pvp_nominal: 45.0, tallos: 100 },
-        monto_iva: 5.8696,
+        var_detalle_variante: { orden: 3, pvp_nominal: 45.0, tallos: 100 },
+        monto_iva: 0.0,
         precio_total: 45.0,
       },
     ],
@@ -846,6 +856,7 @@ const PRODUCTOS_SEMILLA_TINKAY: ProductoCatalogo[] = [
     pro_tipo: "FISICO",
     pro_destacado: true,
     pro_categoria_principal_id: "cat-tinkay-002",
+    canales_visibilidad: [...CANALES_POR_DEFECTO],
     pro_detalle_producto: {
       icono: "Sparkles",
       imagen_url: "https://lh3.googleusercontent.com/pw/AP1GczOZEFibMGGeADW_BlMVDWuifn-a-CTi0efgjdil0ThfsclKkkMNC6cPbMNf54SmJDtME9HRHe6CwCEmCA4uGM60Mith_GOkuJ2pDaRSrmQgP5DaN68_=w1200",
@@ -853,12 +864,21 @@ const PRODUCTOS_SEMILLA_TINKAY: ProductoCatalogo[] = [
       descripcion_corta: "Bouquet moderno envuelto en papel coreano plisado y cintas satinadas.",
       etiquetas: ["coreano", "vanguardia", "cumpleanos", "vip"],
       tiempo_entrega: "🌸 Pide hoy, recibe hoy (Mismo Día)",
+      tarifa_iva_predeterminada: 0,
+      codigo_impuesto_sri: "IVA_0",
+      canales_visibilidad: [...CANALES_POR_DEFECTO],
       logistica: {
         delivery_incluido: true,
         modalidad_transporte: "INCLUIDO_GRATIS",
         etiqueta_transporte: "🚚 Envío a Domicilio Incluido",
-        cobertura_texto: "Quito Urbano y Valles"
-      }
+        cobertura_texto: "Quito Urbano y Valles",
+      },
+      beneficios: [
+        "Rosas de exportación seleccionadas de tallo largo",
+        "Papel coreano plisado y cintas de seda satinada",
+        "Tarjeta dedicatoria personalizada gratis",
+        "Envío a domicilio sin costo en Quito urbano y valles",
+      ],
     },
     categoria: { ctg_id: "cat-tinkay-002", ctg_nombre: "Estilo Coreano", ctg_slug: "cat-coreanos" },
     variantes: [
@@ -867,80 +887,165 @@ const PRODUCTOS_SEMILLA_TINKAY: ProductoCatalogo[] = [
         var_producto_id: "3af6aff5-ddd0-4746-b282-c760e4b42214",
         var_sku: "TNK-COR-PEQ",
         var_nombre: "Pequeño (24 Rosas)",
-        var_precio: 22.6087,
-        var_precio_comparacion: 26.0,
-        var_codigo_impuesto_sri: "IVA_15",
-        var_tarifa_iva_porcentaje: 15,
+        var_precio: 24.0,
+        var_precio_comparacion: 28.0,
+        var_codigo_impuesto_sri: "IVA_0",
+        var_tarifa_iva_porcentaje: 0,
         var_tipo_oferta: "REGULAR",
         var_activo: true,
         var_detalle_variante: {
+          orden: 1,
           tamano: "Pequeño (24 Rosas)",
           portada_url: "https://lh3.googleusercontent.com/pw/AP1GczP9RID-AQeQ6oU3zqa7gBVW2ZvAZCW3KSvFvfUIRTvD4vK8N4UNmKNi9rVahSW4eIY3xiDvdQxm-FS2S1qGU_L767WWZt7FLODsvNy15bkHq0GWpkdm=w1200",
-          pvp_nominal: 26.0,
-          modalidad_pago: "Botón Payphone / Tarjeta / Saldo"
+          pvp_nominal: 24.0,
+          modalidad_pago: "Botón Payphone / Tarjeta / Saldo",
         },
-        monto_iva: 3.3913,
-        precio_total: 26.0,
+        monto_iva: 0.0,
+        precio_total: 24.0,
       },
       {
         var_id: "var-tinkay-cor-med",
         var_producto_id: "3af6aff5-ddd0-4746-b282-c760e4b42214",
         var_sku: "TNK-COR-MED",
-        var_nombre: "Mediano (40 Rosas)",
-        var_precio: 24.3478,
-        var_precio_comparacion: 28.0,
-        var_codigo_impuesto_sri: "IVA_15",
-        var_tarifa_iva_porcentaje: 15,
+        var_nombre: "Mediano (60 Rosas)",
+        var_precio: 30.0,
+        var_precio_comparacion: 35.0,
+        var_codigo_impuesto_sri: "IVA_0",
+        var_tarifa_iva_porcentaje: 0,
         var_tipo_oferta: "REGULAR",
         var_activo: true,
         var_detalle_variante: {
-          tamano: "Mediano (40 Rosas)",
+          orden: 2,
+          tamano: "Mediano (60 Rosas)",
           portada_url: "https://lh3.googleusercontent.com/pw/AP1GczNzLNcUnBLT4DfAuiOz8_c7pcicI4GFwu6mCKv2NUIoDqn5H0NWqOuORRHBmYDrdD0hbPUcnjdknOmzhBDFvwqCeOSSB3Q74LBIpykkCfFpGe3wipb6=w1200",
-          pvp_nominal: 28.0,
-          modalidad_pago: "Botón Payphone / Tarjeta / Saldo"
+          pvp_nominal: 30.0,
+          modalidad_pago: "Botón Payphone / Tarjeta / Saldo",
         },
-        monto_iva: 3.6522,
-        precio_total: 28.0,
+        monto_iva: 0.0,
+        precio_total: 30.0,
       },
       {
         var_id: "var-tinkay-cor-gra",
         var_producto_id: "3af6aff5-ddd0-4746-b282-c760e4b42214",
         var_sku: "TNK-COR-GRA",
-        var_nombre: "Grande (36 Rosas)",
-        var_precio: 39.1304,
-        var_precio_comparacion: 45.0,
-        var_codigo_impuesto_sri: "IVA_15",
-        var_tarifa_iva_porcentaje: 15,
+        var_nombre: "Grande (100 Rosas)",
+        var_precio: 45.0,
+        var_precio_comparacion: 55.0,
+        var_codigo_impuesto_sri: "IVA_0",
+        var_tarifa_iva_porcentaje: 0,
         var_tipo_oferta: "REGULAR",
         var_activo: true,
         var_detalle_variante: {
-          tamano: "Grande",
+          orden: 3,
+          tamano: "Grande (100 Rosas)",
           portada_url: "https://lh3.googleusercontent.com/pw/AP1GczP8-SWS6YF2iOsXEa1A7Ij26_J2C0CMLX6jMb5aqvkd5Hd2BQP9azHW4ZJR9wsZfg47ujPytVktmhNLiMBYQzV2fVGalU5znPN3oqjB2GoulGh0eyN5=w1200",
           pvp_nominal: 45.0,
-          modalidad_pago: "Botón Payphone / Tarjeta / Saldo"
+          modalidad_pago: "Botón Payphone / Tarjeta / Saldo",
         },
-        monto_iva: 5.8696,
+        monto_iva: 0.0,
         precio_total: 45.0,
       },
       {
         var_id: "var-tinkay-cor-gig",
         var_producto_id: "3af6aff5-ddd0-4746-b282-c760e4b42214",
         var_sku: "TNK-COR-GIG",
-        var_nombre: "Gigante VIP (50 Rosas + Corona + Mariposas)",
-        var_precio: 52.1739,
-        var_precio_comparacion: 60.0,
-        var_codigo_impuesto_sri: "IVA_15",
-        var_tarifa_iva_porcentaje: 15,
+        var_nombre: "Gigante VIP (180 Rosas + Corona + Mariposas)",
+        var_precio: 90.0,
+        var_precio_comparacion: 110.0,
+        var_codigo_impuesto_sri: "IVA_0",
+        var_tarifa_iva_porcentaje: 0,
         var_tipo_oferta: "REGULAR",
         var_activo: true,
         var_detalle_variante: {
-          tamano: "Gigante VIP",
+          orden: 4,
+          tamano: "Gigante VIP (180 Rosas)",
           portada_url: "https://lh3.googleusercontent.com/pw/AP1GczNhxYIB2tPlUrod5q4ovLTZ8VeWkcLU1bxVREGSwMh9m0TS7DwgjezCYG8O8CCM6wn3p97mBth4B_dVLT7MmDiD_WBTr1Xl4H0PH1VQcgXskqLHS0GO=w1200",
-          pvp_nominal: 60.0,
-          modalidad_pago: "Botón Payphone / Tarjeta / Saldo"
+          pvp_nominal: 90.0,
+          modalidad_pago: "Botón Payphone / Tarjeta / Saldo",
         },
-        monto_iva: 7.8261,
-        precio_total: 60.0,
+        monto_iva: 0.0,
+        precio_total: 90.0,
+      },
+    ],
+  },
+  {
+    pro_id: "4bf7b886-eee1-4857-c393-d871fb5e3325",
+    pro_negocio: "tinkay",
+    pro_nombre: "Combo Aniversario Romántico",
+    pro_slug: "tinkay-combo-aniversario",
+    pro_descripcion: "Experiencia completa para celebrar hitos y aniversarios inolvidables: Bouquet floral de impacto + Caja de bombones Ferrero Rocher + Globo personalizado con helio.",
+    pro_tipo: "FISICO",
+    pro_destacado: true,
+    pro_categoria_principal_id: "cat-tinkay-008",
+    canales_visibilidad: [...CANALES_POR_DEFECTO],
+    pro_detalle_producto: {
+      icono: "Heart",
+      imagen_url: "https://lh3.googleusercontent.com/pw/AP1GczNzLNcUnBLT4DfAuiOz8_c7pcicI4GFwu6mCKv2NUIoDqn5H0NWqOuORRHBmYDrdD0hbPUcnjdknOmzhBDFvwqCeOSSB3Q74LBIpykkCfFpGe3wipb6=w1200",
+      album_fotos_url: "https://photos.app.goo.gl/tinkay-aniversario",
+      tiempo_entrega: "🌸 Pide hoy, recibe hoy (Mismo Día)",
+      tarifa_iva_predeterminada: 0,
+      codigo_impuesto_sri: "IVA_0",
+      canales_visibilidad: [...CANALES_POR_DEFECTO],
+      logistica: {
+        delivery_incluido: true,
+        modalidad_transporte: "INCLUIDO_GRATIS",
+        etiqueta_transporte: "🚚 Envío a Domicilio Incluido",
+        cobertura_texto: "Quito Urbano y Valles",
+      },
+      beneficios: [
+        "Bouquet de rosas frescas seleccionadas",
+        "Caja de bombones Ferrero Rocher",
+        "Globo burbuja inflado con helio",
+        "Tarjeta con dedicatoria personalizada",
+        "Envío a domicilio sin costo",
+      ],
+    },
+    categoria: { ctg_id: "cat-tinkay-008", ctg_nombre: "Aniversario", ctg_slug: "cat-ocas-aniv" },
+    variantes: [
+      {
+        var_id: "var-tinkay-combo-bas",
+        var_producto_id: "4bf7b886-eee1-4857-c393-d871fb5e3325",
+        var_sku: "TNK-COMBO-BAS",
+        var_nombre: "Combo Aniversario Básico (60 Rosas + Ferrero)",
+        var_precio: 38.0,
+        var_precio_comparacion: 45.0,
+        var_codigo_impuesto_sri: "IVA_0",
+        var_tarifa_iva_porcentaje: 0,
+        var_tipo_oferta: "REGULAR",
+        var_activo: true,
+        var_detalle_variante: { orden: 1, pvp_nominal: 38.0 },
+        monto_iva: 0.0,
+        precio_total: 38.0,
+      },
+      {
+        var_id: "var-tinkay-combo-vip",
+        var_producto_id: "4bf7b886-eee1-4857-c393-d871fb5e3325",
+        var_sku: "TNK-COMBO-VIP",
+        var_nombre: "Combo Aniversario VIP (100 Rosas + Ferrero + Globo)",
+        var_precio: 55.0,
+        var_precio_comparacion: 65.0,
+        var_codigo_impuesto_sri: "IVA_0",
+        var_tarifa_iva_porcentaje: 0,
+        var_tipo_oferta: "REGULAR",
+        var_activo: true,
+        var_detalle_variante: { orden: 2, pvp_nominal: 55.0 },
+        monto_iva: 0.0,
+        precio_total: 55.0,
+      },
+      {
+        var_id: "var-tinkay-combo-mon",
+        var_producto_id: "4bf7b886-eee1-4857-c393-d871fb5e3325",
+        var_sku: "TNK-COMBO-MON",
+        var_nombre: "Combo Monumental 180 Rosas VIP (180 Rosas + Corona + Ferrero + Globo)",
+        var_precio: 99.0,
+        var_precio_comparacion: 120.0,
+        var_codigo_impuesto_sri: "IVA_0",
+        var_tarifa_iva_porcentaje: 0,
+        var_tipo_oferta: "REGULAR",
+        var_activo: true,
+        var_detalle_variante: { orden: 3, pvp_nominal: 99.0 },
+        monto_iva: 0.0,
+        precio_total: 99.0,
       },
     ],
   },
@@ -953,11 +1058,15 @@ const PRODUCTOS_SEMILLA_TINKAY: ProductoCatalogo[] = [
     pro_tipo: "FISICO",
     pro_destacado: true,
     pro_categoria_principal_id: "cat-tinkay-003",
+    canales_visibilidad: [...CANALES_POR_DEFECTO],
     pro_detalle_producto: {
       icono: "Palmtree",
       album_fotos_url: "https://photos.app.goo.gl/tinkay-bouq-mix",
       descripcion_corta: "Armonía silvestre y exótica con flores de temporada.",
       etiquetas: ["mix", "exotico", "temporada", "multicolor"],
+      tarifa_iva_predeterminada: 0,
+      codigo_impuesto_sri: "IVA_0",
+      canales_visibilidad: [...CANALES_POR_DEFECTO],
     },
     categoria: { ctg_id: "cat-tinkay-003", ctg_nombre: "Especiales y Mix", ctg_slug: "cat-especiales" },
     variantes: [
@@ -966,14 +1075,14 @@ const PRODUCTOS_SEMILLA_TINKAY: ProductoCatalogo[] = [
         var_producto_id: "prod-tinkay-mix",
         var_sku: "TNK-MIX-PEQ",
         var_nombre: "Mix Pequeño de Temporada",
-        var_precio: 30.4348,
-        var_precio_comparacion: 35.0,
-        var_codigo_impuesto_sri: "IVA_15",
-        var_tarifa_iva_porcentaje: 15,
+        var_precio: 35.0,
+        var_precio_comparacion: 40.0,
+        var_codigo_impuesto_sri: "IVA_0",
+        var_tarifa_iva_porcentaje: 0,
         var_tipo_oferta: "REGULAR",
         var_activo: true,
-        var_detalle_variante: { pvp_nominal: 35.0 },
-        monto_iva: 4.5652,
+        var_detalle_variante: { orden: 1, pvp_nominal: 35.0 },
+        monto_iva: 0.0,
         precio_total: 35.0,
       },
       {
@@ -981,14 +1090,14 @@ const PRODUCTOS_SEMILLA_TINKAY: ProductoCatalogo[] = [
         var_producto_id: "prod-tinkay-mix",
         var_sku: "TNK-MIX-GRA",
         var_nombre: "Mix Grande de Temporada",
-        var_precio: 39.1304,
-        var_precio_comparacion: 45.0,
-        var_codigo_impuesto_sri: "IVA_15",
-        var_tarifa_iva_porcentaje: 15,
+        var_precio: 45.0,
+        var_precio_comparacion: 55.0,
+        var_codigo_impuesto_sri: "IVA_0",
+        var_tarifa_iva_porcentaje: 0,
         var_tipo_oferta: "REGULAR",
         var_activo: true,
-        var_detalle_variante: { pvp_nominal: 45.0 },
-        monto_iva: 5.8696,
+        var_detalle_variante: { orden: 2, pvp_nominal: 45.0 },
+        monto_iva: 0.0,
         precio_total: 45.0,
       },
     ],
@@ -1002,11 +1111,15 @@ const PRODUCTOS_SEMILLA_TINKAY: ProductoCatalogo[] = [
     pro_tipo: "FISICO",
     pro_destacado: false,
     pro_categoria_principal_id: "cat-tinkay-004",
+    canales_visibilidad: [...CANALES_POR_DEFECTO],
     pro_detalle_producto: {
       icono: "Maximize2",
       album_fotos_url: "https://photos.app.goo.gl/tinkay-abanico-monumental",
       descripcion_corta: "Imponente arreglo sobre pedestal para velaciones y homenajes solemnes.",
       etiquetas: ["abanico", "pedestal", "condolencias", "solemne"],
+      tarifa_iva_predeterminada: 0,
+      codigo_impuesto_sri: "IVA_0",
+      canales_visibilidad: [...CANALES_POR_DEFECTO],
     },
     categoria: { ctg_id: "cat-tinkay-004", ctg_nombre: "Abanicos & Pedestales", ctg_slug: "cat-abanicos" },
     variantes: [
@@ -1015,14 +1128,14 @@ const PRODUCTOS_SEMILLA_TINKAY: ProductoCatalogo[] = [
         var_producto_id: "prod-tinkay-abanico",
         var_sku: "TNK-ABA-MONU",
         var_nombre: "Abanico Monumental con Pedestal y Cinta",
-        var_precio: 69.5652,
-        var_precio_comparacion: 80.0,
-        var_codigo_impuesto_sri: "IVA_15",
-        var_tarifa_iva_porcentaje: 15,
+        var_precio: 80.0,
+        var_precio_comparacion: 95.0,
+        var_codigo_impuesto_sri: "IVA_0",
+        var_tarifa_iva_porcentaje: 0,
         var_tipo_oferta: "REGULAR",
         var_activo: true,
-        var_detalle_variante: { pvp_nominal: 80.0 },
-        monto_iva: 10.4348,
+        var_detalle_variante: { orden: 1, pvp_nominal: 80.0 },
+        monto_iva: 0.0,
         precio_total: 80.0,
       },
     ],
@@ -1036,11 +1149,15 @@ const PRODUCTOS_SEMILLA_TINKAY: ProductoCatalogo[] = [
     pro_tipo: "FISICO",
     pro_destacado: false,
     pro_categoria_principal_id: "cat-tinkay-005",
+    canales_visibilidad: [...CANALES_POR_DEFECTO],
     pro_detalle_producto: {
       icono: "Gift",
       album_fotos_url: "https://photos.app.goo.gl/tinkay-detalles",
       descripcion_corta: "Bombones de avellana y chocolate con leche.",
       etiquetas: ["chocolates", "ferrero", "dulce"],
+      tarifa_iva_predeterminada: 0,
+      codigo_impuesto_sri: "IVA_0",
+      canales_visibilidad: [...CANALES_POR_DEFECTO],
     },
     categoria: { ctg_id: "cat-tinkay-005", ctg_nombre: "Detalles y Regalos", ctg_slug: "cat-detalles" },
     variantes: [
@@ -1049,14 +1166,14 @@ const PRODUCTOS_SEMILLA_TINKAY: ProductoCatalogo[] = [
         var_producto_id: "prod-tinkay-ferrero",
         var_sku: "TNK-CHOC-4",
         var_nombre: "Caja x4 Unidades",
-        var_precio: 4.3478,
-        var_precio_comparacion: 5.0,
-        var_codigo_impuesto_sri: "IVA_15",
-        var_tarifa_iva_porcentaje: 15,
+        var_precio: 5.0,
+        var_precio_comparacion: 6.0,
+        var_codigo_impuesto_sri: "IVA_0",
+        var_tarifa_iva_porcentaje: 0,
         var_tipo_oferta: "REGULAR",
         var_activo: true,
-        var_detalle_variante: { pvp_nominal: 5.0, unidades: 4 },
-        monto_iva: 0.6522,
+        var_detalle_variante: { orden: 1, pvp_nominal: 5.0, unidades: 4 },
+        monto_iva: 0.0,
         precio_total: 5.0,
       },
       {
@@ -1064,14 +1181,14 @@ const PRODUCTOS_SEMILLA_TINKAY: ProductoCatalogo[] = [
         var_producto_id: "prod-tinkay-ferrero",
         var_sku: "TNK-CHOC-8",
         var_nombre: "Caja x8 Unidades",
-        var_precio: 7.8261,
-        var_precio_comparacion: 9.0,
-        var_codigo_impuesto_sri: "IVA_15",
-        var_tarifa_iva_porcentaje: 15,
+        var_precio: 9.0,
+        var_precio_comparacion: 11.0,
+        var_codigo_impuesto_sri: "IVA_0",
+        var_tarifa_iva_porcentaje: 0,
         var_tipo_oferta: "REGULAR",
         var_activo: true,
-        var_detalle_variante: { pvp_nominal: 9.0, unidades: 8 },
-        monto_iva: 1.1739,
+        var_detalle_variante: { orden: 2, pvp_nominal: 9.0, unidades: 8 },
+        monto_iva: 0.0,
         precio_total: 9.0,
       },
     ],
@@ -1085,11 +1202,15 @@ const PRODUCTOS_SEMILLA_TINKAY: ProductoCatalogo[] = [
     pro_tipo: "FISICO",
     pro_destacado: false,
     pro_categoria_principal_id: "cat-tinkay-005",
+    canales_visibilidad: [...CANALES_POR_DEFECTO],
     pro_detalle_producto: {
       icono: "Gift",
       album_fotos_url: "https://photos.app.goo.gl/tinkay-detalles",
       descripcion_corta: "Globo con helio y mensaje caligráfico en vinil metalizado.",
       etiquetas: ["globo", "helio", "personalizado"],
+      tarifa_iva_predeterminada: 0,
+      codigo_impuesto_sri: "IVA_0",
+      canales_visibilidad: [...CANALES_POR_DEFECTO],
     },
     categoria: { ctg_id: "cat-tinkay-005", ctg_nombre: "Detalles y Regalos", ctg_slug: "cat-detalles" },
     variantes: [
@@ -1098,14 +1219,14 @@ const PRODUCTOS_SEMILLA_TINKAY: ProductoCatalogo[] = [
         var_producto_id: "prod-tinkay-globo",
         var_sku: "TNK-GLO-BUR",
         var_nombre: "Globo Burbuja Helio Personalizado",
-        var_precio: 4.3478,
-        var_precio_comparacion: 5.0,
-        var_codigo_impuesto_sri: "IVA_15",
-        var_tarifa_iva_porcentaje: 15,
+        var_precio: 5.0,
+        var_precio_comparacion: 7.0,
+        var_codigo_impuesto_sri: "IVA_0",
+        var_tarifa_iva_porcentaje: 0,
         var_tipo_oferta: "REGULAR",
         var_activo: true,
-        var_detalle_variante: { pvp_nominal: 5.0 },
-        monto_iva: 0.6522,
+        var_detalle_variante: { orden: 1, pvp_nominal: 5.0 },
+        monto_iva: 0.0,
         precio_total: 5.0,
       },
     ],
@@ -1119,11 +1240,15 @@ const PRODUCTOS_SEMILLA_TINKAY: ProductoCatalogo[] = [
     pro_tipo: "FISICO",
     pro_destacado: false,
     pro_categoria_principal_id: "cat-tinkay-005",
+    canales_visibilidad: [...CANALES_POR_DEFECTO],
     pro_detalle_producto: {
       icono: "Sparkles",
       album_fotos_url: "https://photos.app.goo.gl/tinkay-detalles",
       descripcion_corta: "Set de 3 mariposas 3D decorativas.",
       etiquetas: ["mariposas", "3d", "adorno"],
+      tarifa_iva_predeterminada: 0,
+      codigo_impuesto_sri: "IVA_0",
+      canales_visibilidad: [...CANALES_POR_DEFECTO],
     },
     categoria: { ctg_id: "cat-tinkay-005", ctg_nombre: "Detalles y Regalos", ctg_slug: "cat-detalles" },
     variantes: [
@@ -1132,14 +1257,14 @@ const PRODUCTOS_SEMILLA_TINKAY: ProductoCatalogo[] = [
         var_producto_id: "prod-tinkay-mariposas",
         var_sku: "TNK-MAR-SET",
         var_nombre: "Set x3 Mariposas 3D",
-        var_precio: 1.7391,
-        var_precio_comparacion: 2.0,
-        var_codigo_impuesto_sri: "IVA_15",
-        var_tarifa_iva_porcentaje: 15,
+        var_precio: 2.0,
+        var_precio_comparacion: 3.0,
+        var_codigo_impuesto_sri: "IVA_0",
+        var_tarifa_iva_porcentaje: 0,
         var_tipo_oferta: "REGULAR",
         var_activo: true,
-        var_detalle_variante: { pvp_nominal: 2.0, unidades: 3 },
-        monto_iva: 0.2609,
+        var_detalle_variante: { orden: 1, pvp_nominal: 2.0, unidades: 3 },
+        monto_iva: 0.0,
         precio_total: 2.0,
       },
     ],
@@ -1153,11 +1278,15 @@ const PRODUCTOS_SEMILLA_TINKAY: ProductoCatalogo[] = [
     pro_tipo: "SERVICIO",
     pro_destacado: false,
     pro_categoria_principal_id: "cat-tinkay-006",
+    canales_visibilidad: [...CANALES_POR_DEFECTO],
     pro_detalle_producto: {
       icono: "Church",
       album_fotos_url: "https://photos.app.goo.gl/tinkay-eventos",
       descripcion_corta: "Decoración botánica para ceremonias matrimoniales y altares.",
       etiquetas: ["arco", "altar", "boda", "evento"],
+      tarifa_iva_predeterminada: 0,
+      codigo_impuesto_sri: "IVA_0",
+      canales_visibilidad: [...CANALES_POR_DEFECTO],
     },
     categoria: { ctg_id: "cat-tinkay-006", ctg_nombre: "Decoración & Altares", ctg_slug: "cat-eventos" },
     variantes: [
@@ -1166,14 +1295,14 @@ const PRODUCTOS_SEMILLA_TINKAY: ProductoCatalogo[] = [
         var_producto_id: "prod-tinkay-altar",
         var_sku: "TNK-ALT-BAS",
         var_nombre: "Opción 1: Altar Básico",
-        var_precio: 86.9565,
-        var_precio_comparacion: 100.0,
-        var_codigo_impuesto_sri: "IVA_15",
-        var_tarifa_iva_porcentaje: 15,
+        var_precio: 100.0,
+        var_precio_comparacion: 120.0,
+        var_codigo_impuesto_sri: "IVA_0",
+        var_tarifa_iva_porcentaje: 0,
         var_tipo_oferta: "REGULAR",
         var_activo: true,
-        var_detalle_variante: { pvp_nominal: 100.0 },
-        monto_iva: 13.0435,
+        var_detalle_variante: { orden: 1, pvp_nominal: 100.0 },
+        monto_iva: 0.0,
         precio_total: 100.0,
       },
       {
@@ -1181,14 +1310,14 @@ const PRODUCTOS_SEMILLA_TINKAY: ProductoCatalogo[] = [
         var_producto_id: "prod-tinkay-altar",
         var_sku: "TNK-ALT-MED",
         var_nombre: "Opción 2: Altar Medio",
-        var_precio: 130.4348,
-        var_precio_comparacion: 150.0,
-        var_codigo_impuesto_sri: "IVA_15",
-        var_tarifa_iva_porcentaje: 15,
+        var_precio: 150.0,
+        var_precio_comparacion: 180.0,
+        var_codigo_impuesto_sri: "IVA_0",
+        var_tarifa_iva_porcentaje: 0,
         var_tipo_oferta: "REGULAR",
         var_activo: true,
-        var_detalle_variante: { pvp_nominal: 150.0 },
-        monto_iva: 19.5652,
+        var_detalle_variante: { orden: 2, pvp_nominal: 150.0 },
+        monto_iva: 0.0,
         precio_total: 150.0,
       },
       {
@@ -1196,14 +1325,14 @@ const PRODUCTOS_SEMILLA_TINKAY: ProductoCatalogo[] = [
         var_producto_id: "prod-tinkay-altar",
         var_sku: "TNK-ALT-PRO",
         var_nombre: "Opción 3: Full Floral / Pro",
-        var_precio: 173.913,
-        var_precio_comparacion: 200.0,
-        var_codigo_impuesto_sri: "IVA_15",
-        var_tarifa_iva_porcentaje: 15,
+        var_precio: 200.0,
+        var_precio_comparacion: 250.0,
+        var_codigo_impuesto_sri: "IVA_0",
+        var_tarifa_iva_porcentaje: 0,
         var_tipo_oferta: "REGULAR",
         var_activo: true,
-        var_detalle_variante: { pvp_nominal: 200.0 },
-        monto_iva: 26.087,
+        var_detalle_variante: { orden: 3, pvp_nominal: 200.0 },
+        monto_iva: 0.0,
         precio_total: 200.0,
       },
     ],
@@ -1217,10 +1346,14 @@ const PRODUCTOS_SEMILLA_TINKAY: ProductoCatalogo[] = [
     pro_tipo: "SERVICIO",
     pro_destacado: false,
     pro_categoria_principal_id: "cat-tinkay-006",
+    canales_visibilidad: [...CANALES_POR_DEFECTO],
     pro_detalle_producto: {
       icono: "Truck",
       descripcion_corta: "Servicios de montaje, logística e itinerario exclusivo programado.",
       etiquetas: ["montaje", "flete", "horario exacto", "logistica"],
+      tarifa_iva_predeterminada: 0,
+      codigo_impuesto_sri: "IVA_0",
+      canales_visibilidad: [...CANALES_POR_DEFECTO],
     },
     categoria: { ctg_id: "cat-tinkay-006", ctg_nombre: "Decoración & Altares", ctg_slug: "cat-eventos" },
     variantes: [
@@ -1229,14 +1362,14 @@ const PRODUCTOS_SEMILLA_TINKAY: ProductoCatalogo[] = [
         var_producto_id: "prod-tinkay-logistica",
         var_sku: "TNK-LOG-HORA-EXACTA",
         var_nombre: "Recargo por Entrega en Horario Exacto / Madrugador",
-        var_precio: 8.6957,
-        var_precio_comparacion: 10.0,
-        var_codigo_impuesto_sri: "IVA_15",
-        var_tarifa_iva_porcentaje: 15,
+        var_precio: 10.0,
+        var_precio_comparacion: 12.0,
+        var_codigo_impuesto_sri: "IVA_0",
+        var_tarifa_iva_porcentaje: 0,
         var_tipo_oferta: "REGULAR",
         var_activo: true,
-        var_detalle_variante: { pvp_nominal: 10.0 },
-        monto_iva: 1.3043,
+        var_detalle_variante: { orden: 1, pvp_nominal: 10.0 },
+        monto_iva: 0.0,
         precio_total: 10.0,
       },
       {
@@ -1244,14 +1377,14 @@ const PRODUCTOS_SEMILLA_TINKAY: ProductoCatalogo[] = [
         var_producto_id: "prod-tinkay-logistica",
         var_sku: "TNK-SRV-INST",
         var_nombre: "Servicio de Montaje e Instalación en Sitio",
-        var_precio: 26.087,
-        var_precio_comparacion: 30.0,
-        var_codigo_impuesto_sri: "IVA_15",
-        var_tarifa_iva_porcentaje: 15,
+        var_precio: 30.0,
+        var_precio_comparacion: 35.0,
+        var_codigo_impuesto_sri: "IVA_0",
+        var_tarifa_iva_porcentaje: 0,
         var_tipo_oferta: "TIEMPO_MANO_OBRA",
         var_activo: true,
-        var_detalle_variante: { pvp_nominal: 30.0 },
-        monto_iva: 3.913,
+        var_detalle_variante: { orden: 2, pvp_nominal: 30.0 },
+        monto_iva: 0.0,
         precio_total: 30.0,
       },
     ],
@@ -1280,12 +1413,30 @@ function generarSlug(texto: string): string {
  * Obtiene todas las categorías disponibles para el negocio
  */
 export async function obtenerCategoriasAction(negocio = "tranqi"): Promise<CategoriaCatalogo[]> {
-  const admin: any = crearClienteAdmin();
-  const supabase: any = await crearClienteServidor();
+  let admin: any = null;
+  let supabase: any = null;
+  try {
+    admin = crearClienteAdmin();
+  } catch {}
+  try {
+    supabase = await crearClienteServidor();
+  } catch {}
   const clienteActivo = admin || supabase;
 
   let categoriasDb: any[] = [];
   if (clienteActivo) {
+    try {
+      // 0. Intentar RPC
+      const { data: catRpc, error: errRpc } = await clienteActivo.rpc("com_fn_obtener_categorias_catalogo", {
+        p_negocio: negocio,
+      });
+      if (!errRpc && Array.isArray(catRpc) && catRpc.length > 0) {
+        return catRpc as CategoriaCatalogo[];
+      }
+    } catch {
+      // Fallback
+    }
+
     try {
       let { data: catCom, error: errCom } = await clienteActivo
         .schema("comun_comercio")
@@ -1329,7 +1480,7 @@ export async function obtenerCategoriasAction(negocio = "tranqi"): Promise<Categ
 }
 
 /**
- * Obtiene el catálogo de productos y variantes activas agrupadas con cálculo impositivo ecuatoriano (IVA 15%)
+ * Obtiene el catálogo de productos y variantes activas agrupadas con cálculo impositivo ecuatoriano
  * Permite filtrar opcionalmente por canal de visibilidad (ej. 'ECOMMERCE_WEB', 'CHATBOT_WHATSAPP')
  */
 export async function obtenerCatalogoProductosAction(
@@ -1352,6 +1503,73 @@ export async function obtenerCatalogoProductosAction(
   let catsDb: any[] = [];
 
   if (clienteActivo) {
+    // 0. Intentar RPC com_fn_obtener_catalogo_productos
+    try {
+      const { data: prodsRpc, error: errRpc } = await clienteActivo.rpc(
+        "com_fn_obtener_catalogo_productos",
+        {
+          p_negocio: negocio,
+          p_canal: canal && canal !== "TODOS" && canal !== "todos" ? canal.toUpperCase().trim() : null,
+        }
+      );
+
+      if (!errRpc && Array.isArray(prodsRpc) && prodsRpc.length > 0) {
+        const prodsList: ProductoCatalogo[] = prodsRpc.map((p: any) => ({
+          pro_id: p.pro_id || p.id,
+          pro_negocio: p.pro_negocio || negocio,
+          pro_nombre: p.pro_nombre || p.nombre,
+          pro_slug: p.pro_slug || p.slug,
+          pro_descripcion: p.pro_descripcion || p.descripcion,
+          pro_tipo: p.pro_tipo || p.tipo || "FISICO",
+          pro_destacado: p.pro_destacado ?? false,
+          pro_categoria_principal_id: p.pro_categoria_principal_id || p.categoria?.ctg_id || null,
+          pro_detalle_producto: p.pro_detalle_producto || {},
+          canales_visibilidad: Array.isArray(p.canales_visibilidad)
+            ? p.canales_visibilidad
+            : Array.isArray(p.pro_detalle_producto?.canales_visibilidad)
+            ? p.pro_detalle_producto.canales_visibilidad
+            : [...CANALES_POR_DEFECTO],
+          categoria: p.categoria || null,
+          variantes: (p.variantes || []).map((v: any) => {
+            const base = Number(v.var_precio ?? v.precio ?? 0);
+            const tarifaIva = Number(v.var_tarifa_iva_porcentaje ?? v.tarifa_iva ?? 0);
+            const montoIva = Number(v.monto_iva ?? ((base * tarifaIva) / 100));
+            const precioTotal = Number(v.precio_total ?? (base + montoIva));
+            return {
+              var_id: v.var_id || v.id,
+              var_producto_id: v.var_producto_id || p.pro_id,
+              var_sku: v.var_sku || v.sku,
+              var_nombre: v.var_nombre || v.nombre,
+              var_precio: base,
+              var_precio_comparacion: v.var_precio_comparacion ? Number(v.var_precio_comparacion) : null,
+              var_codigo_impuesto_sri: v.var_codigo_impuesto_sri || (tarifaIva === 0 ? "IVA_0" : "IVA_15"),
+              var_tarifa_iva_porcentaje: tarifaIva,
+              var_tipo_oferta: v.var_tipo_oferta || "REGULAR",
+              var_frecuencia_recurrencia: v.var_frecuencia_recurrencia,
+              var_activo: v.var_activo !== false,
+              var_detalle_variante: v.var_detalle_variante || {},
+              monto_iva: Number(montoIva.toFixed(2)),
+              precio_total: Number(precioTotal.toFixed(2)),
+            };
+          }),
+        }));
+
+        const customs = storeCustomProductos.get(negocio) || [];
+        customs.forEach((p) => {
+          const idx = prodsList.findIndex((item) => item.pro_id === p.pro_id || item.pro_slug === p.pro_slug);
+          if (idx >= 0) {
+            prodsList[idx] = p;
+          } else {
+            prodsList.unshift(p);
+          }
+        });
+
+        return prodsList;
+      }
+    } catch {
+      // Fallback a consultas de tabla
+    }
+
     try {
       // 1. Categorías para resolución exacta
       let { data: cData, error: errC } = await clienteActivo

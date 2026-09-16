@@ -39,7 +39,7 @@ export function crearServidorMcpCatalogo(opciones: OpcionesServidorMcpCatalogo) 
     return { url, key };
   }
 
-  async function obtenerListaProductos(negocioId: string): Promise<any[]> {
+  async function obtenerListaProductos(negocioId: string, canal?: string): Promise<any[]> {
     if (typeof opciones.consultarProductos === "function") {
       try {
         const prods = await opciones.consultarProductos(negocioId);
@@ -52,6 +52,34 @@ export function crearServidorMcpCatalogo(opciones: OpcionesServidorMcpCatalogo) 
     }
 
     const { url, key } = obtenerSupabaseConfig();
+
+    // 1. Intentar primero RPC de base de datos directa
+    try {
+      const resRpc = await fetch(`${url}/rest/v1/rpc/com_fn_obtener_catalogo_productos`, {
+        method: "POST",
+        headers: {
+          apikey: key,
+          Authorization: `Bearer ${key}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          p_negocio: negocioId,
+          p_canal: canal && canal !== "todos" && canal !== "TODOS" ? canal.toUpperCase().trim() : null,
+        }),
+        signal: AbortSignal.timeout(8000),
+      });
+
+      if (resRpc.ok) {
+        const data = await resRpc.json();
+        if (Array.isArray(data) && data.length > 0) {
+          return data;
+        }
+      }
+    } catch {
+      // Fallback
+    }
+
+    // 2. Consulta directa REST a com_producto
     try {
       const res = await fetch(
         `${url}/rest/v1/com_producto?pro_negocio=eq.${negocioId}&pro_activo=eq.true&select=pro_id,pro_nombre,pro_slug,pro_descripcion,pro_detalle_producto,com_variante(*)&order=pro_destacado.desc`,
@@ -103,7 +131,8 @@ export function crearServidorMcpCatalogo(opciones: OpcionesServidorMcpCatalogo) 
         },
       },
       async ejecutar(args, ctx) {
-        const prods = await obtenerListaProductos(ctx.negocioId);
+        const canalParam = typeof args.canal === "string" ? args.canal : undefined;
+        const prods = await obtenerListaProductos(ctx.negocioId, canalParam);
         if (!prods || prods.length === 0) {
           return { error: "No se encontraron productos disponibles en el catálogo para este negocio." };
         }
@@ -161,7 +190,7 @@ export function crearServidorMcpCatalogo(opciones: OpcionesServidorMcpCatalogo) 
           filtrados = filtrados.filter((p) => {
             const variantes = Array.isArray(p.variantes) ? p.variantes : [];
             if (variantes.length === 0) return true;
-            const minPrecio = Math.min(...variantes.map((v: any) => Number(v.precio_total ?? v.var_precio ?? 0)));
+            const minPrecio = Math.min(...variantes.map((v: any) => Number(v.precio_total ?? v.pvp_total_usd ?? v.var_precio ?? v.precio ?? 0)));
             return minPrecio <= max;
           });
         }
@@ -170,16 +199,16 @@ export function crearServidorMcpCatalogo(opciones: OpcionesServidorMcpCatalogo) 
           total_encontrados: filtrados.length,
           negocio: ctx.negocioId,
           productos: filtrados.map((p) => ({
-            id: p.pro_id || p.id,
+            id: p.pro_id || p.id || p.producto_id,
             nombre: p.pro_nombre || p.nombre,
             slug: p.pro_slug || p.slug,
             descripcion: p.pro_descripcion || p.descripcion,
             tipo: p.pro_tipo || p.tipo,
             destacado: p.pro_destacado ?? false,
-            categoria: p.categoria?.ctg_nombre || p.categoria?.nombre || null,
-            album_fotos_url: p.pro_detalle_producto?.album_fotos_url || null,
-            portada_url: p.pro_detalle_producto?.imagen_url || null,
-            delivery_incluido: p.pro_detalle_producto?.logistica?.delivery_incluido ?? false,
+            categoria: p.categoria?.ctg_nombre || p.categoria?.nombre || p.categoria_nombre || null,
+            album_fotos_url: p.pro_detalle_producto?.album_fotos_url || p.album_fotos_url || null,
+            portada_url: p.pro_detalle_producto?.imagen_url || p.portada_url || null,
+            delivery_incluido: p.pro_detalle_producto?.logistica?.delivery_incluido ?? p.delivery_incluido ?? false,
             canales_visibilidad:
               p.canales_visibilidad ||
               p.pro_detalle_producto?.canales_visibilidad || [
@@ -190,16 +219,28 @@ export function crearServidorMcpCatalogo(opciones: OpcionesServidorMcpCatalogo) 
                 "CHATBOT_WHATSAPP",
                 "OTROS_API",
               ],
-            variantes: (p.variantes || []).map((v: any) => ({
-              id: v.var_id || v.id,
-              sku: v.var_sku || v.sku,
-              nombre: v.var_nombre || v.nombre,
-              base_imponible_usd: Number(v.var_precio || v.precio || 0),
-              tarifa_iva: Number(v.var_tarifa_iva_porcentaje || 15),
-              monto_iva_usd: Number(v.monto_iva || 0),
-              pvp_total_usd: Number(v.precio_total || v.var_precio || 0),
-              foto_variante_url: v.var_detalle_variante?.portada_url || null,
-            })),
+            variantes: (p.variantes || []).map((v: any) => {
+              const base = Number(v.var_precio ?? v.precio ?? v.precio_base_usd ?? 0);
+              const tarifaIva = Number(
+                v.var_tarifa_iva_porcentaje ??
+                v.tarifa_iva ??
+                p.pro_detalle_producto?.tarifa_iva_predeterminada ??
+                0
+              );
+              const montoIva = Number(v.monto_iva ?? v.monto_iva_usd ?? ((base * tarifaIva) / 100));
+              const pvpTotal = Number(v.precio_total ?? v.pvp_total_usd ?? (base + montoIva));
+
+              return {
+                id: v.var_id || v.id || v.variante_id,
+                sku: v.var_sku || v.sku,
+                nombre: v.var_nombre || v.nombre,
+                base_imponible_usd: base,
+                tarifa_iva: tarifaIva,
+                monto_iva_usd: Number(montoIva.toFixed(2)),
+                pvp_total_usd: Number(pvpTotal.toFixed(2)),
+                foto_variante_url: v.var_detalle_variante?.portada_url || v.foto_variante_url || null,
+              };
+            }),
           })),
         };
       },
@@ -225,20 +266,20 @@ export function crearServidorMcpCatalogo(opciones: OpcionesServidorMcpCatalogo) 
 
         const prods = await obtenerListaProductos(ctx.negocioId);
         const encontrado = prods.find((p) => {
-          const id = String(p.pro_id || p.id || "").toLowerCase();
+          const id = String(p.pro_id || p.id || p.producto_id || "").toLowerCase();
           const slug = String(p.pro_slug || p.slug || "").toLowerCase();
           return id === slugOId || slug === slugOId;
         });
 
         if (encontrado) {
           return {
-            id: encontrado.pro_id || encontrado.id,
+            id: encontrado.pro_id || encontrado.id || encontrado.producto_id,
             nombre: encontrado.pro_nombre || encontrado.nombre,
             slug: encontrado.pro_slug || encontrado.slug,
             descripcion: encontrado.pro_descripcion || encontrado.descripcion,
             tipo: encontrado.pro_tipo || encontrado.tipo,
             destacado: encontrado.pro_destacado ?? false,
-            categoria: encontrado.categoria || null,
+            categoria: encontrado.categoria?.ctg_nombre || encontrado.categoria?.nombre || encontrado.categoria_nombre || null,
             canales_visibilidad:
               encontrado.canales_visibilidad ||
               encontrado.pro_detalle_producto?.canales_visibilidad || [
@@ -250,16 +291,28 @@ export function crearServidorMcpCatalogo(opciones: OpcionesServidorMcpCatalogo) 
                 "OTROS_API",
               ],
             detalle_producto: encontrado.pro_detalle_producto || {},
-            variantes: (encontrado.variantes || []).map((v: any) => ({
-              id: v.var_id || v.id,
-              sku: v.var_sku || v.sku,
-              nombre: v.var_nombre || v.nombre,
-              base_imponible_usd: Number(v.var_precio || v.precio || 0),
-              tarifa_iva: Number(v.var_tarifa_iva_porcentaje || 15),
-              monto_iva_usd: Number(v.monto_iva || 0),
-              pvp_total_usd: Number(v.precio_total || v.var_precio || 0),
-              detalle_variante: v.var_detalle_variante || {},
-            })),
+            variantes: (encontrado.variantes || []).map((v: any) => {
+              const base = Number(v.var_precio ?? v.precio ?? v.precio_base_usd ?? 0);
+              const tarifaIva = Number(
+                v.var_tarifa_iva_porcentaje ??
+                v.tarifa_iva ??
+                encontrado.pro_detalle_producto?.tarifa_iva_predeterminada ??
+                0
+              );
+              const montoIva = Number(v.monto_iva ?? v.monto_iva_usd ?? ((base * tarifaIva) / 100));
+              const pvpTotal = Number(v.precio_total ?? v.pvp_total_usd ?? (base + montoIva));
+
+              return {
+                id: v.var_id || v.id || v.variante_id,
+                sku: v.var_sku || v.sku,
+                nombre: v.var_nombre || v.nombre,
+                base_imponible_usd: base,
+                tarifa_iva: tarifaIva,
+                monto_iva_usd: Number(montoIva.toFixed(2)),
+                pvp_total_usd: Number(pvpTotal.toFixed(2)),
+                detalle_variante: v.var_detalle_variante || {},
+              };
+            }),
           };
         }
 
