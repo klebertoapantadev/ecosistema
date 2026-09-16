@@ -120,9 +120,13 @@ export function crearServidorMcpCatalogo(opciones: OpcionesServidorMcpCatalogo) 
             type: "number",
             description: "Presupuesto máximo del cliente en dólares (USD)",
           },
+          uso: {
+            type: "string",
+            description: "Uso, aplicación o escenario recomendado (ej. 'cumpleanos', 'aniversario', 'amor', 'pedida_mano', 'recuperate', 'condolencias', 'creacion_empresa', 'fuga_agua')",
+          },
           ocasion: {
             type: "string",
-            description: "Ocasión especial (ej. 'aniversario', 'condolencias', 'grado', 'cumpleanos')",
+            description: "Alias de 'uso' para floristería (ej. 'aniversario', 'condolencias', 'grado', 'cumpleanos')",
           },
           canal: {
             type: "string",
@@ -165,23 +169,37 @@ export function crearServidorMcpCatalogo(opciones: OpcionesServidorMcpCatalogo) 
             const tags = Array.isArray(p.pro_detalle_producto?.etiquetas)
               ? p.pro_detalle_producto.etiquetas.join(" ").toLowerCase()
               : "";
+            const usos = Array.isArray(p.pro_detalle_producto?.usos)
+              ? p.pro_detalle_producto.usos.join(" ").toLowerCase()
+              : Array.isArray(p.pro_detalle_producto?.ocasiones)
+              ? p.pro_detalle_producto.ocasiones.join(" ").toLowerCase()
+              : "";
             const vars = Array.isArray(p.variantes)
               ? p.variantes.map((v: any) => String(v.var_nombre || v.nombre || "")).join(" ").toLowerCase()
               : "";
-            return nombre.includes(t) || slug.includes(t) || desc.includes(t) || tags.includes(t) || vars.includes(t);
+            return nombre.includes(t) || slug.includes(t) || desc.includes(t) || tags.includes(t) || usos.includes(t) || vars.includes(t);
           });
         }
 
-        if (args.categoria || args.ocasion) {
-          const cat = String(args.categoria || args.ocasion || "").toLowerCase().trim();
+        const criterioUso = String(args.uso || args.ocasion || args.categoria || "").toLowerCase().trim();
+        if (criterioUso) {
           filtrados = filtrados.filter((p) => {
             const slugCat = String(p.categoria?.ctg_slug || p.categoria?.slug || "").toLowerCase();
             const nomCat = String(p.categoria?.ctg_nombre || p.categoria?.nombre || "").toLowerCase();
             const tags = Array.isArray(p.pro_detalle_producto?.etiquetas)
-              ? p.pro_detalle_producto.etiquetas.join(" ").toLowerCase()
-              : "";
+              ? p.pro_detalle_producto.etiquetas.map((t: string) => String(t).toLowerCase())
+              : [];
+            const usos = Array.isArray(p.pro_detalle_producto?.usos)
+              ? p.pro_detalle_producto.usos.map((u: string) => String(u).toLowerCase())
+              : Array.isArray(p.pro_detalle_producto?.ocasiones)
+              ? p.pro_detalle_producto.ocasiones.map((u: string) => String(u).toLowerCase())
+              : [];
             const desc = String(p.pro_descripcion || "").toLowerCase();
-            return slugCat.includes(cat) || nomCat.includes(cat) || tags.includes(cat) || desc.includes(cat);
+
+            const matchUso = usos.some((u: string) => u.includes(criterioUso) || criterioUso.includes(u));
+            const matchTag = tags.some((t: string) => t.includes(criterioUso) || criterioUso.includes(t));
+
+            return matchUso || matchTag || slugCat.includes(criterioUso) || nomCat.includes(criterioUso) || desc.includes(criterioUso);
           });
         }
 
@@ -209,6 +227,8 @@ export function crearServidorMcpCatalogo(opciones: OpcionesServidorMcpCatalogo) 
             album_fotos_url: p.pro_detalle_producto?.album_fotos_url || p.album_fotos_url || null,
             portada_url: p.pro_detalle_producto?.imagen_url || p.portada_url || null,
             delivery_incluido: p.pro_detalle_producto?.logistica?.delivery_incluido ?? p.delivery_incluido ?? false,
+            usos: p.pro_detalle_producto?.usos || p.pro_detalle_producto?.ocasiones || [],
+            etiquetas: p.pro_detalle_producto?.etiquetas || [],
             canales_visibilidad:
               p.canales_visibilidad ||
               p.pro_detalle_producto?.canales_visibilidad || [

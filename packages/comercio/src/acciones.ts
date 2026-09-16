@@ -1801,57 +1801,95 @@ export async function crearCategoriaAction(datos: {
       ctg_detalle_categoria: detalle,
     };
 
-    // 1. Intentar persistir en Supabase
+    // 1. Intentar persistir en Supabase vía RPC atómico (Security Definer)
     const admin: any = crearClienteAdmin();
     const supabase: any = await crearClienteServidor();
     const clienteActivo = admin || supabase;
 
+    let categoriaGuardada: CategoriaCatalogo = nuevaCat;
+
     if (clienteActivo) {
+      const payloadRpc = {
+        negocio,
+        nombre,
+        slug,
+        descripcion: datos.descripcion?.trim() || null,
+        tipo: datos.tipo || "FORMATO",
+        orden: datos.orden || 10,
+        detalle_categoria: detalle,
+      };
+
+      let rpcExitoso = false;
       try {
-        await clienteActivo
+        const { data: rpcRes, error: errRpc } = await clienteActivo
           .schema("comun_comercio")
-          .from("com_categoria")
-          .upsert(
-            {
-              ctg_negocio: negocio,
-              ctg_nombre: nombre,
-              ctg_slug: slug,
-              ctg_descripcion: datos.descripcion?.trim() || null,
-              ctg_tipo: datos.tipo || "FORMATO",
-              ctg_orden: datos.orden || 10,
-              ctg_activo: true,
-              ctg_detalle_categoria: detalle,
-            },
-            { onConflict: "ctg_negocio, ctg_slug" }
-          );
+          .rpc("com_fn_guardar_categoria_catalogo", { p_datos: payloadRpc });
+        if (!errRpc && rpcRes?.ok && rpcRes.categoria) {
+          categoriaGuardada = rpcRes.categoria;
+          rpcExitoso = true;
+        }
       } catch {
+        rpcExitoso = false;
+      }
+
+      if (!rpcExitoso) {
         try {
-          await clienteActivo.from("com_categoria").upsert(
-            {
-              ctg_negocio: negocio,
-              ctg_nombre: nombre,
-              ctg_slug: slug,
-              ctg_descripcion: datos.descripcion?.trim() || null,
-              ctg_tipo: datos.tipo || "FORMATO",
-              ctg_orden: datos.orden || 10,
-              ctg_activo: true,
-              ctg_detalle_categoria: detalle,
-            },
-            { onConflict: "ctg_negocio, ctg_slug" }
+          const { data: rpcResPub, error: errRpcPub } = await clienteActivo.rpc(
+            "com_fn_guardar_categoria_catalogo",
+            { p_datos: payloadRpc }
           );
+          if (!errRpcPub && rpcResPub?.ok && rpcResPub.categoria) {
+            categoriaGuardada = rpcResPub.categoria;
+            rpcExitoso = true;
+          }
         } catch {
-          // Continuar
+          rpcExitoso = false;
+        }
+      }
+
+      // Fallback a inserción directa si el RPC aún no está creado
+      if (!rpcExitoso) {
+        try {
+          const { data: catData, error: errDirect } = await clienteActivo
+            .schema("comun_comercio")
+            .from("com_categoria")
+            .upsert(
+              {
+                ctg_negocio: negocio,
+                ctg_nombre: nombre,
+                ctg_slug: slug,
+                ctg_descripcion: datos.descripcion?.trim() || null,
+                ctg_tipo: datos.tipo || "FORMATO",
+                ctg_orden: datos.orden || 10,
+                ctg_activo: true,
+                ctg_detalle_categoria: detalle,
+              },
+              { onConflict: "ctg_negocio, ctg_slug" }
+            )
+            .select("*")
+            .single();
+
+          if (!errDirect && catData) {
+            categoriaGuardada = catData as CategoriaCatalogo;
+          }
+        } catch {
+          // Si falla, usar la versión en memoria
         }
       }
     }
 
     // 2. Guardar en almacén local
     const actuales = storeCustomCategorias.get(negocio) || [];
-    actuales.push(nuevaCat);
+    const idx = actuales.findIndex((c) => c.ctg_id === categoriaGuardada.ctg_id || c.ctg_slug === categoriaGuardada.ctg_slug);
+    if (idx >= 0) {
+      actuales[idx] = categoriaGuardada;
+    } else {
+      actuales.push(categoriaGuardada);
+    }
     storeCustomCategorias.set(negocio, actuales);
 
     revalidatePath("/panel/catalogo-productos");
-    return { ok: true, categoria: nuevaCat };
+    return { ok: true, categoria: categoriaGuardada };
   } catch (err: any) {
     return { ok: false, error: err.message || "Error al crear la categoría." };
   }
@@ -1988,6 +2026,8 @@ export async function crearProductoAction(datos: {
   tiempoEntrega?: string;
   requisitos?: string[];
   modalidadPago?: string;
+  usos?: string[];
+  etiquetas?: string[];
   canales_visibilidad?: CanalVisibilidad[];
   negocio?: string;
 }): Promise<{ ok: boolean; producto?: ProductoCatalogo; error?: string }> {
@@ -2067,6 +2107,8 @@ export async function crearProductoAction(datos: {
         tiempo_entrega: datos.tiempoEntrega?.trim() || null,
         requisitos: datos.requisitos || [],
         modalidad_pago: datos.modalidadPago || "Botón Payphone / Tarjeta / Saldo",
+        usos: datos.usos || [],
+        etiquetas: datos.etiquetas || [],
         canales_visibilidad: canales,
         creado_desde_panel: true,
       },
@@ -2196,6 +2238,8 @@ export async function editarProductoAction(datos: {
     etiqueta_transporte: string;
     cobertura_texto: string;
   };
+  usos?: string[];
+  etiquetas?: string[];
   canales_visibilidad?: CanalVisibilidad[];
   varianteId?: string;
   variantes?: Array<{
@@ -2367,6 +2411,8 @@ export async function editarProductoAction(datos: {
         tarifa_iva_predeterminada: datos.tarifaIvaPredeterminada !== undefined ? datos.tarifaIvaPredeterminada : (prodActual.pro_detalle_producto?.tarifa_iva_predeterminada ?? 15),
         codigo_impuesto_sri: datos.codigoImpuestoSri !== undefined ? datos.codigoImpuestoSri : (prodActual.pro_detalle_producto?.codigo_impuesto_sri || "IVA_15"),
         logistica: datos.logistica !== undefined ? datos.logistica : prodActual.pro_detalle_producto?.logistica,
+        usos: datos.usos !== undefined ? datos.usos : (prodActual.pro_detalle_producto?.usos || prodActual.pro_detalle_producto?.ocasiones || []),
+        etiquetas: datos.etiquetas !== undefined ? datos.etiquetas : (prodActual.pro_detalle_producto?.etiquetas || []),
         canales_visibilidad: canales,
         editado_en: new Date().toISOString(),
       },

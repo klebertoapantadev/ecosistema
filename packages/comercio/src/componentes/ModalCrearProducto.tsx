@@ -18,6 +18,9 @@ import {
   Wand2,
   FolderPlus,
   Share2,
+  Target,
+  Tag,
+  Hash,
 } from "lucide-react";
 import {
   crearProductoAction,
@@ -98,6 +101,93 @@ export function ModalCrearProducto({
   const [resolviendoImagen, setResolviendoImagen] = useState(false);
   const [exitoAutoConvertir, setExitoAutoConvertir] = useState<string | null>(null);
   const [canalesSeleccionados, setCanalesSeleccionados] = useState<CanalVisibilidad[]>([...CANALES_POR_DEFECTO]);
+
+  // Presets de Usos / Casos de Aplicación contextuales por industria
+  const PRESETS_USOS_FLORISTERIA = [
+    { clave: "cumpleanos", label: "🎂 Cumpleaños" },
+    { clave: "aniversario", label: "💍 Aniversario" },
+    { clave: "amor_romance", label: "❤️ Amor y Romance" },
+    { clave: "pedida_mano", label: "💍 Pedida de Mano" },
+    { clave: "recuperate", label: "🏥 Recupérate Pronto" },
+    { clave: "agradecimiento", label: "💐 Agradecimiento" },
+    { clave: "graduacion", label: "🎓 Graduación" },
+    { clave: "condolencias", label: "🕊️ Condolencias / Duelo" },
+    { clave: "corporativo", label: "🏢 Corporativo / Eventos" },
+    { clave: "nacimiento_bebe", label: "🍼 Nacimiento / Baby" },
+    { clave: "dia_madre_mujer", label: "🌸 Día Madre / Mujer" },
+    { clave: "sorpresa_diaria", label: "✨ Sorpresa / Detalle" },
+  ];
+
+  const PRESETS_USOS_LEGAL = [
+    { clave: "creacion_empresa", label: "🏢 Creación Empresa / SAS" },
+    { clave: "disputa_laboral", label: "⚖️ Asuntos Laborales" },
+    { clave: "divorcio_familia", label: "💔 Divorcio y Familia" },
+    { clave: "compraventa_inmueble", label: "🏠 Compraventa Inmueble" },
+    { clave: "herencia_posesion", label: "📜 Herencias y Testamentos" },
+    { clave: "redaccion_contratos", label: "📄 Redacción de Contratos" },
+    { clave: "cobro_deudas", label: "💳 Cobranza y Cartera" },
+    { clave: "tramite_notarial", label: "🏛️ Trámites Notariales" },
+    { clave: "propiedad_intelectual", label: "💡 Registro Marcas / Patentes" },
+    { clave: "defensa_penal", label: "🛡️ Asistencia Penal" },
+  ];
+
+  const PRESETS_USOS_MANTENIMIENTO = [
+    { clave: "fuga_agua", label: "🚰 Fuga de Agua / Grifería" },
+    { clave: "cortocircuito_electrico", label: "⚡ Red Eléctrica / Luces" },
+    { clave: "calefon_calentador", label: "🔥 Calefones y Gas" },
+    { clave: "mantenimiento_preventivo", label: "🛠️ Mantenimiento Preventivo" },
+    { clave: "remodelacion_hogar", label: "🧱 Remodelación / Pintura" },
+    { clave: "cerrajeria_seguridad", label: "🚪 Cerrajería y Puertas" },
+    { clave: "climatizacion_ac", label: "❄️ Aires y Clima" },
+    { clave: "destape_tuberias", label: "🚽 Destape de Cañerías" },
+    { clave: "inspeccion_diagnostico", label: "🔍 Diagnóstico Técnico" },
+  ];
+
+  const presetsUsosActivos = esFloristeria
+    ? PRESETS_USOS_FLORISTERIA
+    : esLegal
+    ? PRESETS_USOS_LEGAL
+    : PRESETS_USOS_MANTENIMIENTO;
+
+  // Estado de Usos y Etiquetas Semánticas
+  const [usosSeleccionados, setUsosSeleccionados] = useState<string[]>([]);
+  const [nuevoUsoTexto, setNuevoUsoTexto] = useState("");
+  const [etiquetasSeleccionadas, setEtiquetasSeleccionadas] = useState<string[]>([]);
+  const [nuevaEtiquetaTexto, setNuevaEtiquetaTexto] = useState("");
+
+  const toggleUso = (clave: string) => {
+    const normalizada = clave.toLowerCase().trim();
+    setUsosSeleccionados((prev) =>
+      prev.includes(normalizada)
+        ? prev.filter((u) => u !== normalizada)
+        : [...prev, normalizada]
+    );
+  };
+
+  const handleAgregarUsoPersonalizado = () => {
+    const limpio = nuevoUsoTexto.trim().toLowerCase().replace(/\s+/g, "_");
+    if (limpio && !usosSeleccionados.includes(limpio)) {
+      setUsosSeleccionados((prev) => [...prev, limpio]);
+      setNuevoUsoTexto("");
+    }
+  };
+
+  const handleEliminarUso = (usoAEliminar: string) => {
+    setUsosSeleccionados((prev) => prev.filter((u) => u !== usoAEliminar));
+  };
+
+  const handleAgregarEtiqueta = () => {
+    const limpia = nuevaEtiquetaTexto.trim();
+    if (limpia && !etiquetasSeleccionadas.includes(limpia)) {
+      setEtiquetasSeleccionadas((prev) => [...prev, limpia]);
+      setNuevaEtiquetaTexto("");
+    }
+  };
+
+  const handleEliminarEtiqueta = (tagAEliminar: string) => {
+    setEtiquetasSeleccionadas((prev) => prev.filter((t) => t !== tagAEliminar));
+  };
+
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -228,6 +318,8 @@ export function ModalCrearProducto({
         tiempoEntrega: tiempoEntrega.trim() || undefined,
         requisitos,
         modalidadPago,
+        usos: usosSeleccionados,
+        etiquetas: etiquetasSeleccionadas,
         canales_visibilidad: canalesSeleccionados,
         negocio,
       });
@@ -830,6 +922,252 @@ export function ModalCrearProducto({
                   </button>
                 );
               })}
+            </div>
+          </div>
+
+          {/* Usos y Aplicaciones Recomendadas */}
+          <div
+            style={{
+              background: "#F8FAFC",
+              border: "1.5px solid #E2E8F0",
+              borderRadius: "10px",
+              padding: "14px",
+              marginBottom: "14px",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "6px", flexWrap: "wrap", gap: "6px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                <Target size={16} color="#0284C7" />
+                <span style={{ fontSize: "0.8rem", fontWeight: 800, color: "#1E293B", textTransform: "uppercase" }}>
+                  {esFloristeria ? "Usos y Ocasiones Recomendadas (IA & Filtros)" : "Usos y Casos de Aplicación (IA & Filtros)"}
+                </span>
+              </div>
+              <span style={{ fontSize: "0.74rem", color: "#0369A1", fontWeight: 700, background: "#E0F2FE", padding: "2px 8px", borderRadius: "12px" }}>
+                {usosSeleccionados.length} usos activos
+              </span>
+            </div>
+            <p style={{ fontSize: "0.73rem", color: "#64748B", margin: "0 0 10px 0", lineHeight: 1.4 }}>
+              Marca los escenarios donde los agentes de IA (como ARIA) deben recomendar este ítem:
+            </p>
+
+            {/* Grid de Presets */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(165px, 1fr))", gap: "6px", marginBottom: "10px" }}>
+              {presetsUsosActivos.map((u) => {
+                const activo = usosSeleccionados.includes(u.clave);
+                return (
+                  <button
+                    key={u.clave}
+                    type="button"
+                    onClick={() => toggleUso(u.clave)}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      padding: "6px 10px",
+                      borderRadius: "6px",
+                      fontSize: "0.75rem",
+                      fontWeight: activo ? 700 : 500,
+                      border: activo ? "1.5px solid #0284C7" : "1px solid #CBD5E1",
+                      background: activo ? "#F0F9FF" : "#FFFFFF",
+                      color: activo ? "#0369A1" : "#475569",
+                      cursor: "pointer",
+                      textAlign: "left",
+                    }}
+                  >
+                    <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                      {u.label}
+                    </span>
+                    <span
+                      style={{
+                        width: "8px",
+                        height: "8px",
+                        borderRadius: "50%",
+                        background: activo ? "#0284C7" : "#CBD5E1",
+                        flexShrink: 0,
+                        marginLeft: "6px",
+                      }}
+                    />
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Usos Personalizados */}
+            {usosSeleccionados.filter((u) => !presetsUsosActivos.some((p) => p.clave === u)).length > 0 && (
+              <div style={{ marginBottom: "10px", display: "flex", gap: "6px", flexWrap: "wrap", alignItems: "center" }}>
+                <span style={{ fontSize: "0.7rem", color: "#64748B", fontWeight: 600 }}>Personalizados:</span>
+                {usosSeleccionados
+                  .filter((u) => !presetsUsosActivos.some((p) => p.clave === u))
+                  .map((u) => (
+                    <span
+                      key={u}
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "4px",
+                        background: "#EFF6FF",
+                        color: "#1D4ED8",
+                        border: "1px solid #BFDBFE",
+                        borderRadius: "12px",
+                        padding: "2px 8px",
+                        fontSize: "0.72rem",
+                        fontWeight: 700,
+                      }}
+                    >
+                      🏷️ {u.replace(/_/g, " ")}
+                      <button
+                        type="button"
+                        onClick={() => handleEliminarUso(u)}
+                        style={{ background: "none", border: "none", color: "#93C5FD", cursor: "pointer", padding: 0 }}
+                      >
+                        <X size={12} />
+                      </button>
+                    </span>
+                  ))}
+              </div>
+            )}
+
+            {/* Input para agregar uso libre */}
+            <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
+              <input
+                type="text"
+                placeholder="Escribir otro uso personalizado..."
+                value={nuevoUsoTexto}
+                onChange={(e) => setNuevoUsoTexto(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleAgregarUsoPersonalizado();
+                  }
+                }}
+                style={{
+                  flex: 1,
+                  padding: "6px 10px",
+                  borderRadius: "6px",
+                  border: "1px solid #CBD5E1",
+                  fontSize: "0.76rem",
+                  background: "#FFFFFF",
+                }}
+              />
+              <button
+                type="button"
+                onClick={handleAgregarUsoPersonalizado}
+                style={{
+                  background: "#0F172A",
+                  color: "#FFFFFF",
+                  border: "none",
+                  padding: "6px 12px",
+                  borderRadius: "6px",
+                  fontSize: "0.74rem",
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                + Agregar Uso
+              </button>
+            </div>
+          </div>
+
+          {/* Etiquetas Semánticas */}
+          <div
+            style={{
+              background: "#F8FAFC",
+              border: "1.5px solid #E2E8F0",
+              borderRadius: "10px",
+              padding: "14px",
+              marginBottom: "14px",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "6px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                <Tag size={16} color="#0284C7" />
+                <span style={{ fontSize: "0.8rem", fontWeight: 800, color: "#1E293B", textTransform: "uppercase" }}>
+                  Etiquetas Semánticas de Búsqueda (Keywords IA)
+                </span>
+              </div>
+              <span style={{ fontSize: "0.74rem", color: "#64748B", fontWeight: 600 }}>
+                {etiquetasSeleccionadas.length} etiquetas
+              </span>
+            </div>
+            <p style={{ fontSize: "0.73rem", color: "#64748B", margin: "0 0 10px 0" }}>
+              Palabras clave adicionales para búsqueda por texto y lenguaje natural (ej. <em>coreano</em>, <em>rosas rojas</em>):
+            </p>
+
+            <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginBottom: "10px", minHeight: "26px", alignItems: "center" }}>
+              {etiquetasSeleccionadas.length === 0 ? (
+                <span style={{ fontSize: "0.72rem", color: "#94A3B8", fontStyle: "italic" }}>
+                  Sin etiquetas asignadas.
+                </span>
+              ) : (
+                etiquetasSeleccionadas.map((tag) => (
+                  <span
+                    key={tag}
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "4px",
+                      background: "#F1F5F9",
+                      color: "#334155",
+                      border: "1px solid #CBD5E1",
+                      borderRadius: "6px",
+                      padding: "3px 8px",
+                      fontSize: "0.74rem",
+                      fontWeight: 600,
+                    }}
+                  >
+                    <Hash size={12} color="#64748B" />
+                    <span>{tag}</span>
+                    <button
+                      type="button"
+                      onClick={() => handleEliminarEtiqueta(tag)}
+                      style={{ background: "none", border: "none", color: "#94A3B8", cursor: "pointer", padding: 0 }}
+                    >
+                      <X size={12} />
+                    </button>
+                  </span>
+                ))
+              )}
+            </div>
+
+            <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
+              <input
+                type="text"
+                placeholder="Escribir etiqueta y presionar Enter..."
+                value={nuevaEtiquetaTexto}
+                onChange={(e) => setNuevaEtiquetaTexto(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleAgregarEtiqueta();
+                  }
+                }}
+                style={{
+                  flex: 1,
+                  padding: "6px 10px",
+                  borderRadius: "6px",
+                  border: "1px solid #CBD5E1",
+                  fontSize: "0.76rem",
+                  background: "#FFFFFF",
+                }}
+              />
+              <button
+                type="button"
+                onClick={handleAgregarEtiqueta}
+                style={{
+                  background: "#0284C7",
+                  color: "#FFFFFF",
+                  border: "none",
+                  padding: "6px 12px",
+                  borderRadius: "6px",
+                  fontSize: "0.74rem",
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                + Añadir Tag
+              </button>
             </div>
           </div>
 
