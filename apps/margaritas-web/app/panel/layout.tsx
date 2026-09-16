@@ -56,6 +56,7 @@ function rutaDeWidget(clave: string) {
   if (clave === "gestion_usuarios") return "usuarios";
   if (clave === "configuracion_negocio") return "configuracion";
   if (clave === "configuracion_correo") return "correo";
+  if (clave === "tokens_mcp") return "tokens-mcp";
   return "";
 }
 

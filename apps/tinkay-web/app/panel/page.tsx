@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ShoppingBag, Users, Settings, Mail, ArrowRight, Sparkles, type LucideIcon } from "lucide-react";
+import { ShoppingBag, Users, Settings, Mail, ArrowRight, Sparkles, KeyRound, type LucideIcon } from "lucide-react";
 import { obtenerPerfilActual, obtenerWidgetsVisibles, obtenerSaludo } from "@eco/identidad";
 
 export const metadata: Metadata = { title: "Panel de Control — Tinkay Floristería" };
@@ -34,6 +34,15 @@ const MODULOS_TINKAY: Record<string, WidgetInfo> = {
     ruta: "/panel/usuarios",
     icono: Users,
     color: "#2563EB",
+  },
+  tokens_mcp: {
+    clave: "tokens_mcp",
+    nombre: "Tokens & Servidor MCP",
+    descripcion: "Emisión de credenciales API y tokens para conectar el catálogo con bots de WhatsApp y n8n.",
+    ruta: "/panel/tokens-mcp",
+    icono: KeyRound,
+    etiqueta: "Nuevo / IA",
+    color: "#5000BA",
   },
   configuracion_negocio: {
     clave: "configuracion_negocio",
