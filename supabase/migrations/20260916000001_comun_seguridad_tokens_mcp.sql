@@ -29,6 +29,7 @@ create index if not exists seg_token_mcp_negocio_idx on comun_seguridad.seg_toke
 -- RLS y Auditoría
 alter table comun_seguridad.seg_token_mcp enable row level security;
 
+drop trigger if exists trg_auditoria_seg_token_mcp on comun_seguridad.seg_token_mcp;
 create trigger trg_auditoria_seg_token_mcp
   after insert or update or delete on comun_seguridad.seg_token_mcp
   for each row execute function comun_auditoria.aud_fn_auditar_tabla();
