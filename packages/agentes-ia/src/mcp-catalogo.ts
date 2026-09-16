@@ -26,12 +26,12 @@ export function crearServidorMcpCatalogo(opciones: {
     ).replace(/\/$/, "");
 
     const key =
-      opciones.supabaseAnonKey ||
+      (opciones.supabaseAnonKey && opciones.supabaseAnonKey.trim().length > 0 ? opciones.supabaseAnonKey : "") ||
       process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
       process.env.SUPABASE_ANON_KEY ||
       process.env.SUPABASE_SERVICE_ROLE_KEY ||
-      "";
+      "sb_publishable_vC-t-FcOQ2Q5_XkTCcPKdQ_bveIh5YS";
 
     return { url, key };
   }

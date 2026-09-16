@@ -2,8 +2,11 @@ import { crearServidorMcpCatalogo } from "@eco/agentes-ia";
 
 const manejarMcp = crearServidorMcpCatalogo({
   negocioPorDefecto: "margaritas",
-  supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL ?? "",
-  supabaseAnonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "",
+  supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL,
+  supabaseAnonKey:
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+    "sb_publishable_vC-t-FcOQ2Q5_XkTCcPKdQ_bveIh5YS",
 });
 
 export const runtime = "nodejs";

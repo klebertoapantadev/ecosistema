@@ -75,12 +75,12 @@ export async function validarTokenMcpConRpc(
   ).replace(/\/$/, "");
 
   const apiKey =
-    supabaseAnonKey ||
+    (supabaseAnonKey && supabaseAnonKey.trim().length > 0 ? supabaseAnonKey : "") ||
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
     process.env.SUPABASE_ANON_KEY ||
     process.env.SUPABASE_SERVICE_ROLE_KEY ||
-    "";
+    "sb_publishable_vC-t-FcOQ2Q5_XkTCcPKdQ_bveIh5YS";
 
   const url = `${urlBase}/rest/v1/rpc/seg_fn_validar_token_mcp`;
 
