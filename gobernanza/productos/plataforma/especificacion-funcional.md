@@ -488,6 +488,20 @@ Motor centralizado de gestión de bienes, servicios, recetas (BOM), inventarios,
       - *LegalTech (Tranqi):* Enlace al dictamen formal con semáforo de riesgos en PDF o acta de consulta telemática.
       - *Mantenimiento (FastFix):* Fotografía de antes/después de la reparación y reporte técnico firmado.
     - **Consola de Auditoría del Cliente (`ModalHistorialUsoPlan.tsx`):** El cliente consulta en vivo el estado de su membresía, próxima facturación, tarjeta emisora asociada, beneficiarios registrados y la línea de tiempo completa de sus beneficios utilizados con acceso a sus respectivas evidencias.
+20. **Canales de Visibilidad Omnicanal de Productos Master (`canales_visibilidad`):**
+    - **Definición de Canales Oficiales:** Cada producto master (`com_producto`) define en qué puntos de contacto, aplicaciones y canales de atención es visible y comercializable:
+      1. `ECOMMERCE_WEB`: Portal web y tienda online del negocio (Tinkay, Tranqi, FastFix, Margaritas).
+      2. `APP_CLIENTES`: Aplicaciones móviles nativas para clientes (iOS / Android / Capacitor).
+      3. `CHATBOT_WEB`: Asistente conversacional ARIA embebido en la plataforma web.
+      4. `CHATBOT_APP`: Asistente conversacional dentro de la App móvil de clientes.
+      5. `CHATBOT_WHATSAPP`: Chatbots y agentes de mensajería externa (WhatsApp Business Cloud API vía YCloud / n8n).
+      6. `OTROS_API`: Servidores agénticos MCP (Model Context Protocol), APIs B2B y socios comerciales.
+    - **Política de Cobertura por Defecto:** Todo producto nuevo y existente tiene activos los 6 canales por defecto (`CANALES_POR_DEFECTO`).
+    - **Persistencia en JSONB:** Se almacena en la columna estructurada `pro_detalle_producto.canales_visibilidad` dentro del esquema `comun_comercio`, garantizando compatibilidad y extensibilidad sin migraciones destructivas.
+    - **Filtrado y Exposición en Consola, Vitrinas y Servidor MCP:**
+      - La consola de gestión (`CatalogoProductosComercio.tsx`) permite filtrar por canal activo y exhibe los badges de canales en cada tarjeta.
+      - Los formularios de creación (`ModalCrearProducto.tsx`) y edición master (`ModalEditarProducto.tsx`) proveen selectores interactivos multiselección conmutables.
+      - Las consultas de servidor (`obtenerCatalogoProductosAction`) y los endpoints MCP (`consultar_catalogo`, `detalle_producto` en `@eco/agentes-ia`) aceptan el parámetro opcional `canal` para retornar únicamente los productos autorizados para dicho medio.
 
 **Implementación técnica:** ver [`especificacion-tecnica.md`](especificacion-tecnica.md) §7 (`comun_comercio`).
 

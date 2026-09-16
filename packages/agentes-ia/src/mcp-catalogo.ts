@@ -96,6 +96,10 @@ export function crearServidorMcpCatalogo(opciones: OpcionesServidorMcpCatalogo) 
             type: "string",
             description: "Ocasión especial (ej. 'aniversario', 'condolencias', 'grado', 'cumpleanos')",
           },
+          canal: {
+            type: "string",
+            description: "Canal de visibilidad para filtrar productos: 'ECOMMERCE_WEB', 'APP_CLIENTES', 'CHATBOT_WEB', 'CHATBOT_APP', 'CHATBOT_WHATSAPP', 'OTROS_API' o 'todos'",
+          },
         },
       },
       async ejecutar(args, ctx) {
@@ -105,6 +109,23 @@ export function crearServidorMcpCatalogo(opciones: OpcionesServidorMcpCatalogo) 
         }
 
         let filtrados = [...prods];
+
+        if (args.canal && typeof args.canal === "string" && args.canal.toLowerCase() !== "todos") {
+          const canalBuscado = args.canal.toUpperCase().trim();
+          filtrados = filtrados.filter((p) => {
+            const canales: string[] =
+              p.canales_visibilidad ||
+              p.pro_detalle_producto?.canales_visibilidad || [
+                "ECOMMERCE_WEB",
+                "APP_CLIENTES",
+                "CHATBOT_WEB",
+                "CHATBOT_APP",
+                "CHATBOT_WHATSAPP",
+                "OTROS_API",
+              ];
+            return canales.includes(canalBuscado);
+          });
+        }
 
         if (args.termino && typeof args.termino === "string" && args.termino.trim().length > 0) {
           const t = args.termino.toLowerCase().trim();
@@ -159,6 +180,16 @@ export function crearServidorMcpCatalogo(opciones: OpcionesServidorMcpCatalogo) 
             album_fotos_url: p.pro_detalle_producto?.album_fotos_url || null,
             portada_url: p.pro_detalle_producto?.imagen_url || null,
             delivery_incluido: p.pro_detalle_producto?.logistica?.delivery_incluido ?? false,
+            canales_visibilidad:
+              p.canales_visibilidad ||
+              p.pro_detalle_producto?.canales_visibilidad || [
+                "ECOMMERCE_WEB",
+                "APP_CLIENTES",
+                "CHATBOT_WEB",
+                "CHATBOT_APP",
+                "CHATBOT_WHATSAPP",
+                "OTROS_API",
+              ],
             variantes: (p.variantes || []).map((v: any) => ({
               id: v.var_id || v.id,
               sku: v.var_sku || v.sku,
@@ -208,6 +239,16 @@ export function crearServidorMcpCatalogo(opciones: OpcionesServidorMcpCatalogo) 
             tipo: encontrado.pro_tipo || encontrado.tipo,
             destacado: encontrado.pro_destacado ?? false,
             categoria: encontrado.categoria || null,
+            canales_visibilidad:
+              encontrado.canales_visibilidad ||
+              encontrado.pro_detalle_producto?.canales_visibilidad || [
+                "ECOMMERCE_WEB",
+                "APP_CLIENTES",
+                "CHATBOT_WEB",
+                "CHATBOT_APP",
+                "CHATBOT_WHATSAPP",
+                "OTROS_API",
+              ],
             detalle_producto: encontrado.pro_detalle_producto || {},
             variantes: (encontrado.variantes || []).map((v: any) => ({
               id: v.var_id || v.id,

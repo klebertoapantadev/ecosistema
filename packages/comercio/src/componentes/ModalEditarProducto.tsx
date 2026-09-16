@@ -29,6 +29,7 @@ import {
   ChevronRight,
   ArrowLeft,
   ArrowRight,
+  Share2,
 } from "lucide-react";
 import {
   editarProductoAction,
@@ -37,6 +38,9 @@ import {
   CategoriaCatalogo,
   ProductoCatalogo,
   VarianteCatalogo,
+  CANALES_CATALOGO_OFICIALES,
+  CANALES_POR_DEFECTO,
+  CanalVisibilidad,
 } from "../acciones";
 import { ModalCrearCategoria } from "./ModalCrearCategoria";
 
@@ -364,6 +368,13 @@ export function ModalEditarProducto({
   const [modalidadTransporte, setModalidadTransporte] = useState<string>("INCLUIDO_GRATIS");
   const [etiquetaTransporte, setEtiquetaTransporte] = useState<string>("🚚 Envío a Domicilio Incluido");
   const [coberturaTransporte, setCoberturaTransporte] = useState<string>("Quito Urbano y Valles");
+  const [canalesSeleccionados, setCanalesSeleccionados] = useState<CanalVisibilidad[]>([...CANALES_POR_DEFECTO]);
+
+  const toggleCanal = (clave: CanalVisibilidad) => {
+    setCanalesSeleccionados((prev) =>
+      prev.includes(clave) ? prev.filter((c) => c !== clave) : [...prev, clave]
+    );
+  };
 
   // Editor Multivariante (Tamaños / Modalidades)
   const [modoEdicion, setModoEdicion] = useState<"master" | "variante">("master");
@@ -437,6 +448,15 @@ export function ModalEditarProducto({
       );
       setBeneficiosTexto(Array.isArray(det.beneficios) ? det.beneficios.join("\n") : "");
       setRequisitosTexto(Array.isArray(det.requisitos) ? det.requisitos.join("\n") : "");
+
+      // Canales de visibilidad
+      if (producto.canales_visibilidad && Array.isArray(producto.canales_visibilidad)) {
+        setCanalesSeleccionados(producto.canales_visibilidad);
+      } else if (det.canales_visibilidad && Array.isArray(det.canales_visibilidad)) {
+        setCanalesSeleccionados(det.canales_visibilidad);
+      } else {
+        setCanalesSeleccionados([...CANALES_POR_DEFECTO]);
+      }
 
       // IVA Master y Logística
       setTarifaIvaMaster(det.tarifa_iva_predeterminada !== undefined ? Number(det.tarifa_iva_predeterminada) : 15);
@@ -716,6 +736,7 @@ export function ModalEditarProducto({
           etiqueta_transporte: etiquetaTransporte,
           cobertura_texto: coberturaTransporte,
         },
+        canales_visibilidad: canalesSeleccionados,
         variantes: variantesParaGuardar,
         negocio,
       });
@@ -1671,6 +1692,74 @@ export function ModalEditarProducto({
                       }}
                     />
                   </div>
+                </div>
+              </div>
+
+              {/* 6. CANALES DE VISIBILIDAD Y DISTRIBUCIÓN */}
+              <div
+                style={{
+                  background: "#F8FAFC",
+                  border: "1.5px solid #E2E8F0",
+                  borderRadius: "10px",
+                  padding: "14px",
+                  marginBottom: "16px",
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                    <Share2 size={16} color="#0284C7" />
+                    <label style={{ fontSize: "0.8rem", fontWeight: 800, color: "#1E293B", textTransform: "uppercase" }}>
+                      Canales de Visibilidad y Distribución
+                    </label>
+                  </div>
+                  <span style={{ fontSize: "0.75rem", color: "#64748B", fontWeight: 600 }}>
+                    {canalesSeleccionados.length} de {CANALES_CATALOGO_OFICIALES.length} activos
+                  </span>
+                </div>
+                <p style={{ fontSize: "0.75rem", color: "#64748B", margin: "0 0 10px 0" }}>
+                  Indica en qué plataformas, aplicaciones y agentes de IA estará disponible este producto:
+                </p>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: "8px" }}>
+                  {CANALES_CATALOGO_OFICIALES.map((c) => {
+                    const activo = canalesSeleccionados.includes(c.clave);
+                    return (
+                      <button
+                        key={c.clave}
+                        type="button"
+                        onClick={() => toggleCanal(c.clave)}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "8px",
+                          padding: "8px 10px",
+                          borderRadius: "8px",
+                          border: `1.5px solid ${activo ? c.color : "#E2E8F0"}`,
+                          background: activo ? `${c.color}12` : "#FFFFFF",
+                          color: activo ? "#0F172A" : "#64748B",
+                          cursor: "pointer",
+                          fontSize: "0.78rem",
+                          fontWeight: activo ? 700 : 500,
+                          textAlign: "left",
+                          transition: "all 0.15s ease",
+                        }}
+                      >
+                        <span
+                          style={{
+                            width: "8px",
+                            height: "8px",
+                            borderRadius: "50%",
+                            background: activo ? c.color : "#CBD5E1",
+                            flexShrink: 0,
+                          }}
+                        />
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                            {c.nombre}
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 

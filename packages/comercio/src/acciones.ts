@@ -15,6 +15,76 @@ export interface CategoriaCatalogo {
   ctg_detalle_categoria?: any;
 }
 
+export type CanalVisibilidad =
+  | "ECOMMERCE_WEB"
+  | "APP_CLIENTES"
+  | "CHATBOT_WEB"
+  | "CHATBOT_APP"
+  | "CHATBOT_WHATSAPP"
+  | "OTROS_API";
+
+export interface InfoCanalVisibilidad {
+  clave: CanalVisibilidad;
+  nombre: string;
+  descripcion: string;
+  icono: string;
+  color: string;
+}
+
+export const CANALES_CATALOGO_OFICIALES: InfoCanalVisibilidad[] = [
+  {
+    clave: "ECOMMERCE_WEB",
+    nombre: "E-Commerce Web",
+    descripcion: "Catálogo público en la web del negocio",
+    icono: "Globe",
+    color: "#0284C7",
+  },
+  {
+    clave: "APP_CLIENTES",
+    nombre: "App Clientes",
+    descripcion: "Aplicación móvil nativa para clientes",
+    icono: "Smartphone",
+    color: "#7C3AED",
+  },
+  {
+    clave: "CHATBOT_WEB",
+    nombre: "Chatbot Web (ARIA)",
+    descripcion: "Asistente conversacional en portal web",
+    icono: "Bot",
+    color: "#059669",
+  },
+  {
+    clave: "CHATBOT_APP",
+    nombre: "Chatbot App",
+    descripcion: "Asistente conversacional en App móvil",
+    icono: "MessageSquare",
+    color: "#2563EB",
+  },
+  {
+    clave: "CHATBOT_WHATSAPP",
+    nombre: "Chatbot WhatsApp",
+    descripcion: "Agente ARIA por WhatsApp (YCloud / n8n)",
+    icono: "MessageCircle",
+    color: "#16A34A",
+  },
+  {
+    clave: "OTROS_API",
+    nombre: "Otros / MCP / B2B",
+    descripcion: "Servidores MCP externos y convenios API",
+    icono: "Cpu",
+    color: "#EA580C",
+  },
+];
+
+export const CANALES_POR_DEFECTO: CanalVisibilidad[] = [
+  "ECOMMERCE_WEB",
+  "APP_CLIENTES",
+  "CHATBOT_WEB",
+  "CHATBOT_APP",
+  "CHATBOT_WHATSAPP",
+  "OTROS_API",
+];
+
 export interface ProductoCatalogo {
   pro_id: string;
   pro_negocio: string;
@@ -25,6 +95,7 @@ export interface ProductoCatalogo {
   pro_destacado: boolean;
   pro_categoria_principal_id: string | null;
   pro_detalle_producto: any;
+  canales_visibilidad?: CanalVisibilidad[];
   categoria?: {
     ctg_id: string;
     ctg_nombre: string;
@@ -1328,8 +1399,12 @@ export async function obtenerCategoriasAction(negocio = "tranqi"): Promise<Categ
 
 /**
  * Obtiene el catálogo de productos y variantes activas agrupadas con cálculo impositivo ecuatoriano (IVA 15%)
+ * Permite filtrar opcionalmente por canal de visibilidad (ej. 'ECOMMERCE_WEB', 'CHATBOT_WHATSAPP')
  */
-export async function obtenerCatalogoProductosAction(negocio = "tranqi"): Promise<ProductoCatalogo[]> {
+export async function obtenerCatalogoProductosAction(
+  negocio = "tranqi",
+  canal?: string
+): Promise<ProductoCatalogo[]> {
   let admin: any = null;
   let supabase: any = null;
   try {
@@ -1459,6 +1534,9 @@ export async function obtenerCatalogoProductosAction(negocio = "tranqi"): Promis
       pro_destacado: p.pro_destacado,
       pro_categoria_principal_id: p.pro_categoria_principal_id,
       pro_detalle_producto: p.pro_detalle_producto || {},
+      canales_visibilidad: Array.isArray(p.pro_detalle_producto?.canales_visibilidad)
+        ? p.pro_detalle_producto.canales_visibilidad
+        : [...CANALES_POR_DEFECTO],
       categoria: mapaCategorias[p.pro_categoria_principal_id] || null,
       variantes: (mapaVariantes[p.pro_id] || []).sort((a, b) => {
         const ordenA = typeof a.var_detalle_variante?.orden === "number" ? a.var_detalle_variante.orden : 999;
@@ -1483,8 +1561,27 @@ export async function obtenerCatalogoProductosAction(negocio = "tranqi"): Promis
     }
   });
 
+  // Asegurar que todo producto tenga canales_visibilidad
+  listaFinal.forEach((p) => {
+    if (!p.canales_visibilidad || !Array.isArray(p.canales_visibilidad)) {
+      p.canales_visibilidad = Array.isArray(p.pro_detalle_producto?.canales_visibilidad)
+        ? p.pro_detalle_producto.canales_visibilidad
+        : [...CANALES_POR_DEFECTO];
+    }
+  });
+
   // Filtrar productos inactivos o eliminados
-  return listaFinal.filter((p: any) => p.pro_activo !== false);
+  let productosActivos = listaFinal.filter((p: any) => p.pro_activo !== false);
+
+  // Filtrar por canal si fue solicitado
+  if (canal && typeof canal === "string" && canal.trim().length > 0 && canal !== "todos") {
+    const canalUpper = canal.trim().toUpperCase();
+    productosActivos = productosActivos.filter((p) =>
+      p.canales_visibilidad?.includes(canalUpper as CanalVisibilidad)
+    );
+  }
+
+  return productosActivos;
 }
 
 // ==============================================================================
@@ -1713,13 +1810,15 @@ export async function crearProductoAction(datos: {
   precioBase: number;
   tarifaIva?: number; // 15 o 0
   sku?: string;
-  icono?: "Scale" | "ShieldCheck" | "FileCheck" | "CreditCard";
+  icono?: "Scale" | "ShieldCheck" | "FileCheck" | "CreditCard" | string;
   imagenUrl?: string;
+  albumFotosUrl?: string;
   videoUrl?: string;
   beneficios?: string[];
   tiempoEntrega?: string;
   requisitos?: string[];
   modalidadPago?: string;
+  canales_visibilidad?: CanalVisibilidad[];
   negocio?: string;
 }): Promise<{ ok: boolean; producto?: ProductoCatalogo; error?: string }> {
   try {
@@ -1741,6 +1840,10 @@ export async function crearProductoAction(datos: {
     const base = Number(datos.precioBase.toFixed(2));
     const montoIva = Number(((base * tarifaIva) / 100).toFixed(2));
     const total = Number((base + montoIva).toFixed(2));
+
+    const canales = Array.isArray(datos.canales_visibilidad) && datos.canales_visibilidad.length > 0
+      ? datos.canales_visibilidad
+      : [...CANALES_POR_DEFECTO];
 
     // Obtener categoría asociada
     const cats = await obtenerCategoriasAction(negocio);
@@ -1784,14 +1887,17 @@ export async function crearProductoAction(datos: {
       pro_tipo: datos.tipo,
       pro_destacado: Boolean(datos.destacado),
       pro_categoria_principal_id: cat?.ctg_id || null,
+      canales_visibilidad: canales,
       pro_detalle_producto: {
         icono: datos.icono || "Scale",
         imagen_url: resolvedImg,
+        album_fotos_url: datos.albumFotosUrl?.trim() || null,
         video_url: datos.videoUrl?.trim() || null,
         beneficios: datos.beneficios || [],
         tiempo_entrega: datos.tiempoEntrega?.trim() || null,
         requisitos: datos.requisitos || [],
         modalidad_pago: datos.modalidadPago || "Botón Payphone / Tarjeta / Saldo",
+        canales_visibilidad: canales,
         creado_desde_panel: true,
       },
       categoria: cat
@@ -1805,8 +1911,14 @@ export async function crearProductoAction(datos: {
     };
 
     // 1. Intentar persistir en Supabase
-    const admin: any = crearClienteAdmin();
-    const supabase: any = await crearClienteServidor();
+    let admin: any = null;
+    let supabase: any = null;
+    try {
+      admin = crearClienteAdmin();
+    } catch {}
+    try {
+      supabase = await crearClienteServidor();
+    } catch {}
     const clienteActivo = admin || supabase;
 
     if (clienteActivo) {
@@ -1914,6 +2026,7 @@ export async function editarProductoAction(datos: {
     etiqueta_transporte: string;
     cobertura_texto: string;
   };
+  canales_visibilidad?: CanalVisibilidad[];
   varianteId?: string;
   variantes?: Array<{
     var_id?: string;
@@ -1944,6 +2057,10 @@ export async function editarProductoAction(datos: {
     if (!prodActual) {
       return { ok: false, error: "Producto no encontrado para editar." };
     }
+
+    const canales = datos.canales_visibilidad !== undefined
+      ? datos.canales_visibilidad
+      : (prodActual.canales_visibilidad || prodActual.pro_detalle_producto?.canales_visibilidad || [...CANALES_POR_DEFECTO]);
 
     // 0. Resolver URLs de portada global, galería y variantes si vienen enlaces de Google Fotos / Drive
     let resolvedImagenUrl = datos.imagenUrl !== undefined ? datos.imagenUrl.trim() : prodActual.pro_detalle_producto?.imagen_url;
@@ -2062,6 +2179,7 @@ export async function editarProductoAction(datos: {
       pro_tipo: datos.tipo,
       pro_destacado: Boolean(datos.destacado),
       pro_categoria_principal_id: cat?.ctg_id || prodActual.pro_categoria_principal_id,
+      canales_visibilidad: canales,
       pro_detalle_producto: {
         ...prodActual.pro_detalle_producto,
         icono: datos.icono || prodActual.pro_detalle_producto?.icono || "Sparkles",
@@ -2079,8 +2197,10 @@ export async function editarProductoAction(datos: {
         tarifa_iva_predeterminada: datos.tarifaIvaPredeterminada !== undefined ? datos.tarifaIvaPredeterminada : (prodActual.pro_detalle_producto?.tarifa_iva_predeterminada ?? 15),
         codigo_impuesto_sri: datos.codigoImpuestoSri !== undefined ? datos.codigoImpuestoSri : (prodActual.pro_detalle_producto?.codigo_impuesto_sri || "IVA_15"),
         logistica: datos.logistica !== undefined ? datos.logistica : prodActual.pro_detalle_producto?.logistica,
+        canales_visibilidad: canales,
         editado_en: new Date().toISOString(),
       },
+
       categoria: cat
         ? {
             ctg_id: cat.ctg_id,

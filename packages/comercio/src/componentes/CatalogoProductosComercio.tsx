@@ -28,6 +28,7 @@ import {
   X,
   ExternalLink,
   Truck,
+  Share2,
 } from "lucide-react";
 import {
   ProductoCatalogo,
@@ -37,6 +38,9 @@ import {
   obtenerCategoriasAction,
   restaurarCatalogoEjemploAction,
   editarProductoAction,
+  CANALES_CATALOGO_OFICIALES,
+  CANALES_POR_DEFECTO,
+  CanalVisibilidad,
 } from "../acciones";
 import { ModalCheckoutPayphone } from "./ModalCheckoutPayphone";
 import { ModalCrearProducto } from "./ModalCrearProducto";
@@ -64,6 +68,7 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
   const [cargandoSemillas, setCargandoSemillas] = useState(false);
   const [busqueda, setBusqueda] = useState("");
   const [categoriaSeleccionada, setCategoriaSeleccionada] = useState<string>("todas");
+  const [canalSeleccionado, setCanalSeleccionado] = useState<string>("todos");
 
   // Estado de modales
   const [checkoutAbierto, setCheckoutAbierto] = useState(false);
@@ -140,7 +145,12 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
       categoriaSeleccionada === "todas" ||
       (p.categoria && p.categoria.ctg_slug === categoriaSeleccionada);
 
-    return cumpleBusqueda && cumpleCategoria;
+    const canales = p.canales_visibilidad || CANALES_POR_DEFECTO;
+    const cumpleCanal =
+      canalSeleccionado === "todos" ||
+      canales.includes(canalSeleccionado as CanalVisibilidad);
+
+    return cumpleBusqueda && cumpleCategoria && cumpleCanal;
   });
 
   // Abrir checkout para variante específica
@@ -492,6 +502,37 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
               boxSizing: "border-box",
             }}
           />
+        </div>
+
+        {/* Filtro por Canal de Visibilidad */}
+        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+          <select
+            value={canalSeleccionado}
+            onChange={(e) => setCanalSeleccionado(e.target.value)}
+            aria-label="Filtrar por canal de visibilidad"
+            style={{
+              padding: "7px 12px",
+              borderRadius: "8px",
+              border: "1px solid #CBD5E1",
+              fontSize: "0.8rem",
+              fontWeight: 600,
+              background: "#F8FAFC",
+              color: "#0F172A",
+              cursor: "pointer",
+            }}
+          >
+            <option value="todos">🌐 Todos los canales ({productos.length})</option>
+            {CANALES_CATALOGO_OFICIALES.map((c) => {
+              const count = productos.filter((p) =>
+                (p.canales_visibilidad || CANALES_POR_DEFECTO).includes(c.clave)
+              ).length;
+              return (
+                <option key={c.clave} value={c.clave}>
+                  {c.nombre} ({count})
+                </option>
+              );
+            })}
+          </select>
         </div>
 
         <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
@@ -1244,7 +1285,7 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                         borderRadius: "8px",
                         fontSize: "0.72rem",
                         fontWeight: 800,
-                        marginBottom: "12px",
+                        marginBottom: "10px",
                         boxShadow: "0 1px 2px rgba(16, 185, 129, 0.1)",
                         alignSelf: "flex-start",
                       }}
@@ -1258,6 +1299,34 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                       )}
                     </div>
                   )}
+
+                  {/* Canales de Visibilidad Activos */}
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: "4px", marginBottom: "12px" }}>
+                    {(p.canales_visibilidad || CANALES_POR_DEFECTO).map((cid) => {
+                      const infoCanal = CANALES_CATALOGO_OFICIALES.find((c) => c.clave === cid);
+                      if (!infoCanal) return null;
+                      return (
+                        <span
+                          key={cid}
+                          title={`Visible en canal: ${infoCanal.nombre}`}
+                          style={{
+                            fontSize: "0.66rem",
+                            fontWeight: 700,
+                            background: "#F1F5F9",
+                            color: "#475569",
+                            border: "1px solid #E2E8F0",
+                            borderRadius: "6px",
+                            padding: "2px 6px",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "3px",
+                          }}
+                        >
+                          <span>{infoCanal.nombre}</span>
+                        </span>
+                      );
+                    })}
+                  </div>
 
                   {/* Selector de Variantes / Tamaños con Colores Individuales */}
                   {p.variantes.length > 1 && (
