@@ -528,6 +528,17 @@ const WIDGETS_INVENTARIO_INICIALES: WidgetInventarioDef[] = [
     creadoEn: "2026-08-20"
   },
   {
+    clave: "tokens_mcp",
+    nombre: "Tokens & APIs MCP",
+    descripcion: "Gestión y emisión de tokens de acceso (API Keys) para integrar herramientas MCP con agentes externos y bots.",
+    categoria: "Seguridad & Integraciones",
+    ruta: "/panel/configuracion?widget=tokens_mcp",
+    rutaFisica: "/configuracion-negocio/componentes/GestionTokensMcpWidget.tsx",
+    panelId: "panel_configuracion",
+    activo: true,
+    creadoEn: "2026-09-16"
+  },
+  {
     clave: "pasarela_payphone",
     nombre: "Pasarela Payphone (Botón de Pago)",
     descripcion: "Configuración del Botón de Pago Payphone, credenciales API, StoreID y simulador de cobro.",
@@ -829,6 +840,21 @@ function RenderizadorWidgetReal({ clave, negocio }: { clave: string; negocio: st
           </p>
           <div style={{ padding: "12px", background: "#F0F9FF", borderRadius: "8px", border: "1px dashed #BAE6FD", textAlign: "center", fontSize: "0.82rem", color: "#0369A1", fontWeight: 700 }}>
             Servicios Disponibles · Planes de Suscripción · Tarifario Oficial
+          </div>
+        </div>
+      );
+
+    case "tokens_mcp":
+      return (
+        <div style={{ background: "#ffffff", padding: "18px", borderRadius: "12px", border: "1.5px solid #5000BA", boxShadow: "0 4px 12px rgba(80,0,186,0.08)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 800, fontSize: "0.95rem", color: "#5000BA", marginBottom: "10px" }}>
+            <KeyRound size={18} /> Tokens & APIs MCP
+          </div>
+          <p style={{ fontSize: "0.82rem", color: "#64748B", marginBottom: "12px" }}>
+            Gestión y emisión de tokens de acceso (API Keys) para integrar herramientas MCP con agentes externos y bots.
+          </p>
+          <div style={{ padding: "12px", background: "#F5F3FF", borderRadius: "8px", border: "1px dashed #DDD6FE", textAlign: "center", fontSize: "0.82rem", color: "#5B21B6", fontWeight: 700 }}>
+            Tokens de Negocio · Validación SHA-256 · Endpoint POST /api/mcp/catalogo
           </div>
         </div>
       );

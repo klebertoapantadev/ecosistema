@@ -40,6 +40,7 @@ Este documento describe el **comportamiento compartido por los 4 productos** (Tr
 | **`PLT-019`** | **Reclutamiento, Bolsa de Empleo y "Únete al Equipo"** | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`PLT-020`** | **Agenda, Disponibilidad, Citas y Consulta Telemática** | 🟡 En Desarrollo | **75%** | Kleber Toapanta |
 | **`PLT-021`** | **Despachador de Tareas Programadas (recordatorios, caducidades, cobros)** | 🟡 En Desarrollo | **70%** | **Jesus Navarrete** |
+| **`PLT-022`** | **Tokens de Acceso MCP e Integraciones Agénticas por Negocio** | ✅ Implementado | **100%** | Kleber Toapanta |
 
 ---
 
@@ -1294,6 +1295,34 @@ Lo que estaba prometido y no ocurría:
     CRON_SECRET`, o con un secreto equivocado.
   * **Entonces** responde `401` sin ejecutar ninguna tarea y sin revelar si el
     fallo fue por secreto incorrecto o por secreto no configurado.
+
+---
+
+## PLT-022 — Tokens de Acceso MCP e Integraciones Agénticas por Negocio
+
+**Responsable:** Kleber Toapanta  
+**Estado:** ✅ Implementado (100%)  
+
+### Descripción
+Permite a cada negocio (`tinkay`, `fastfix`, `tranqi`, `margaritas`) generar, gestionar, monitorear y revocar de forma autónoma sus propios **Tokens de Acceso MCP (API Keys)** para conectar herramientas agénticas (como el catálogo comercial de `comun_comercio`) con clientes externos (agentes de WhatsApp sobre YCloud, n8n, Claude Desktop, Cursor, etc.).
+
+### Reglas de Negocio
+1. **Seguridad Criptográfica (Hash SHA-256):**
+   - El token se genera con 256 bits de entropía en formato `eco_live_<64_hex_chars>`.
+   - La base de datos (`comun_seguridad.seg_token_mcp`) almacena únicamente el hash SHA-256 (`tkn_hash_secreto`), nunca la clave en texto plano.
+   - El valor secreto se visualiza en la UI **una sola vez** tras su creación, exigiendo al administrador copiarlo de inmediato.
+2. **Aislamiento Multinegocio y RLS:**
+   - Cada token está estrictamente asociado a un `tkn_negocio_id`.
+   - Las políticas RLS restringen la visualización y revocación exclusivamente a los administradores con membresía activa en dicho negocio (`seg_fn_es_admin_negocio`).
+3. **Control de Alcances (*Scopes*) y Caducidad:**
+   - Soporte para limitar los permisos concedidos al cliente de IA (`catalogo:leer`, `pedidos:crear`, etc.).
+   - Configuración de vigencia opcional (permanente, 30, 90 o 365 días).
+4. **Revocación Instantánea:**
+   - La revocación marca `tkn_revocado_en` en milisegundos, cortando el acceso sin reiniciar servidores ni afectar a otros negocios.
+5. **Autenticación Dual en Servidor MCP:**
+   - Los endpoints HTTP `/api/mcp/catalogo` aceptan tanto la cápsula JWT de sesión de usuario como el encabezado `Authorization: Bearer eco_live_...`.
+6. **Widget Preconfigurado (`tokens_mcp`):**
+   - Pre-asignado a los roles `ADMINISTRADOR` y `SUPERADMIN` en `panel_configuracion` bajo el catálogo maestro de widgets (`@eco/configuracion-negocio`).
 
 ---
 

@@ -13,6 +13,7 @@ import { EmisionNotificacionesWidget, PreferenciasNotificacionWidget, BitacoraNo
 import { GestionTerminosConsentimientosWidget } from "@eco/identidad/componentes/GestionTerminosConsentimientosWidget";
 import { FormularioConfiguracionNegocio } from "@eco/configuracion-negocio/componentes/FormularioConfiguracionNegocio";
 import { FormularioSmtp } from "@eco/configuracion-negocio/componentes/FormularioSmtp";
+import { GestionTokensMcpWidget } from "@eco/configuracion-negocio";
 import { FormularioPerfil } from "@eco/identidad/componentes/FormularioPerfil";
 import { WidgetConfiguracionMfa } from "@eco/identidad/componentes/WidgetConfiguracionMfa";
 import { SelectorRolActivo } from "../SelectorRolActivo";
@@ -193,6 +194,13 @@ const INVENTARIO_GLOBAL_WIDGETS: Record<string, { titulo: string; subtitulo: str
     icono: KeyRound,
     colorIcono: "#D97706",
     categoria: "Seguridad"
+  },
+  tokens_mcp: {
+    titulo: "Tokens & APIs MCP",
+    subtitulo: "Gestión y emisión de tokens de acceso para conectar herramientas MCP con bots y agentes externos",
+    icono: KeyRound,
+    colorIcono: "#5000BA",
+    categoria: "Seguridad & Integraciones"
   },
   seguridad_mfa: {
     titulo: "Seguridad MFA & Autenticador",
@@ -572,6 +580,10 @@ export function PanelDinamicoModular({ slug, negocio }: Props) {
       case "mfa":
       case "seguridad_mfa":
         return <WidgetConfiguracionMfa negocio={negocio} />;
+      case "tokens_mcp":
+      case "tokens":
+      case "mcp_tokens":
+        return <GestionTokensMcpWidget negocio={negocio} />;
       case "emision_notificaciones":
         return <EmisionNotificacionesWidget negocio={negocio} />;
       case "monitoreo_notificaciones_usuarios":

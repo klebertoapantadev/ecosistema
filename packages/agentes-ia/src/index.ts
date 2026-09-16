@@ -98,3 +98,17 @@ export {
   type ConfiguracionConsola,
   type RespuestaConsola,
 } from "./consola";
+export {
+  extraerBearerToken,
+  validarTokenMcpConRpc,
+  type ContextoTokenMcp,
+  type TokenMcpItem,
+  type RespuestaGenerarTokenMcp,
+} from "./tokens-mcp";
+export {
+  crearServidorMcpCatalogo,
+  type ContextoMcpCatalogo,
+} from "./mcp-catalogo";
+
+
+

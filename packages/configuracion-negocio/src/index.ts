@@ -7,3 +7,10 @@ export { actualizarConfiguracionNegocio } from "./acciones";
 export { guardarSmtp, borrarContrasenaSmtp } from "./acciones-smtp";
 export { FormularioConfiguracionNegocio } from "./componentes/FormularioConfiguracionNegocio";
 export { FormularioSmtp } from "./componentes/FormularioSmtp";
+export { GestionTokensMcpWidget } from "./componentes/GestionTokensMcpWidget";
+export {
+  listarTokensMcpAction,
+  generarTokenMcpAction,
+  revocarTokenMcpAction,
+} from "./acciones-tokens-mcp";
+

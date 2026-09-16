@@ -9,14 +9,17 @@
     "./componentes/*": "./src/componentes/*.tsx",
     "./consultas": "./src/consultas.ts",
     "./acciones": "./src/acciones.ts",
-    "./acciones-smtp": "./src/acciones-smtp.ts"
+    "./acciones-smtp": "./src/acciones-smtp.ts",
+    "./acciones-tokens-mcp": "./src/acciones-tokens-mcp.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@eco/agentes-ia": "workspace:*",
     "@eco/db": "workspace:*",
     "@eco/supabase": "workspace:*",
+    "lucide-react": "1.27.0",
     "zod": "4.4.3"
   },
   "devDependencies": {

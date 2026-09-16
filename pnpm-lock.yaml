@@ -21,6 +21,9 @@ importers:
 
   apps/fastfix-web:
     dependencies:
+      '@eco/agentes-ia':
+        specifier: workspace:*
+        version: link:../../packages/agentes-ia
       '@eco/configuracion-negocio':
         specifier: workspace:*
         version: link:../../packages/configuracion-negocio
@@ -79,6 +82,9 @@ importers:
 
   apps/margaritas-web:
     dependencies:
+      '@eco/agentes-ia':
+        specifier: workspace:*
+        version: link:../../packages/agentes-ia
       '@eco/configuracion-negocio':
         specifier: workspace:*
         version: link:../../packages/configuracion-negocio
@@ -137,6 +143,9 @@ importers:
 
   apps/tinkay-web:
     dependencies:
+      '@eco/agentes-ia':
+        specifier: workspace:*
+        version: link:../../packages/agentes-ia
       '@eco/comercio':
         specifier: workspace:*
         version: link:../../packages/comercio
@@ -406,12 +415,18 @@ importers:
 
   packages/configuracion-negocio:
     dependencies:
+      '@eco/agentes-ia':
+        specifier: workspace:*
+        version: link:../agentes-ia
       '@eco/db':
         specifier: workspace:*
         version: link:../db
       '@eco/supabase':
         specifier: workspace:*
         version: link:../supabase
+      lucide-react:
+        specifier: 1.27.0
+        version: 1.27.0(react@19.2.8)
       zod:
         specifier: 4.4.3
         version: 4.4.3
