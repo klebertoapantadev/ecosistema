@@ -354,14 +354,15 @@ on conflict (pro_negocio, pro_slug) do update set
   pro_activo = true,
   pro_detalle_producto = excluded.pro_detalle_producto;
 
--- Variantes Bouquet Coreano
+-- Variantes Bouquet Coreano (5 Variantes Reales de Base de Datos)
 insert into comun_comercio.com_variante (
   var_id, var_producto_id, var_negocio, var_sku, var_nombre, var_precio, var_tarifa_iva_porcentaje, var_codigo_impuesto_sri, var_activo, var_detalle_variante
 ) values
-  ('var-tinkay-cor-peq', '3af6aff5-ddd0-4746-b282-c760e4b42214', 'tinkay', 'TNK-COR-PEQ', 'Pequeño (24 Rosas)', 24.00, 0, 'IVA_0', true, jsonb_build_object('orden', 1, 'pvp_nominal', 24.0, 'portada_url', 'https://lh3.googleusercontent.com/pw/AP1GczP9RID-AQeQ6oU3zqa7gBVW2ZvAZCW3KSvFvfUIRTvD4vK8N4UNmKNi9rVahSW4eIY3xiDvdQxm-FS2S1qGU_L767WWZt7FLODsvNy15bkHq0GWpkdm=w1200')),
-  ('var-tinkay-cor-med', '3af6aff5-ddd0-4746-b282-c760e4b42214', 'tinkay', 'TNK-COR-MED', 'Mediano (60 Rosas)', 30.00, 0, 'IVA_0', true, jsonb_build_object('orden', 2, 'pvp_nominal', 30.0, 'portada_url', 'https://lh3.googleusercontent.com/pw/AP1GczNzLNcUnBLT4DfAuiOz8_c7pcicI4GFwu6mCKv2NUIoDqn5H0NWqOuORRHBmYDrdD0hbPUcnjdknOmzhBDFvwqCeOSSB3Q74LBIpykkCfFpGe3wipb6=w1200')),
-  ('var-tinkay-cor-gra', '3af6aff5-ddd0-4746-b282-c760e4b42214', 'tinkay', 'TNK-COR-GRA', 'Grande (100 Rosas)', 45.00, 0, 'IVA_0', true, jsonb_build_object('orden', 3, 'pvp_nominal', 45.0, 'portada_url', 'https://lh3.googleusercontent.com/pw/AP1GczP8-SWS6YF2iOsXEa1A7Ij26_J2C0CMLX6jMb5aqvkd5Hd2BQP9azHW4ZJR9wsZfg47ujPytVktmhNLiMBYQzV2fVGalU5znPN3oqjB2GoulGh0eyN5=w1200')),
-  ('var-tinkay-cor-gig', '3af6aff5-ddd0-4746-b282-c760e4b42214', 'tinkay', 'TNK-COR-GIG', 'Gigante VIP (180 Rosas + Corona + Mariposas)', 90.00, 0, 'IVA_0', true, jsonb_build_object('orden', 4, 'pvp_nominal', 90.0, 'portada_url', 'https://lh3.googleusercontent.com/pw/AP1GczNhxYIB2tPlUrod5q4ovLTZ8VeWkcLU1bxVREGSwMh9m0TS7DwgjezCYG8O8CCM6wn3p97mBth4B_dVLT7MmDiD_WBTr1Xl4H0PH1VQcgXskqLHS0GO=w1200'))
+  ('var-tinkay-cor-peq', '3af6aff5-ddd0-4746-b282-c760e4b42214', 'tinkay', 'TNK-COR-PEQ', 'Pequeño (24 Rosas)', 26.00, 0, 'IVA_0', true, jsonb_build_object('orden', 1, 'tamano', 'Pequeño (24 Rosas)', 'pvp_nominal', 26.0, 'portada_url', 'https://lh3.googleusercontent.com/pw/AP1GczP9RID-AQeQ6oU3zqa7gBVW2ZvAZCW3KSvFvfUIRTvD4vK8N4UNmKNi9rVahSW4eIY3xiDvdQxm-FS2S1qGU_L767WWZt7FLODsvNy15bkHq0GWpkdm=w1200')),
+  ('var-tinkay-cor-med', '3af6aff5-ddd0-4746-b282-c760e4b42214', 'tinkay', 'TNK-COR-MED', 'Mediano (40 Rosas)', 30.00, 0, 'IVA_0', true, jsonb_build_object('orden', 2, 'tamano', 'Mediano (40 Rosas)', 'pvp_nominal', 30.0, 'portada_url', 'https://lh3.googleusercontent.com/pw/AP1GczNzLNcUnBLT4DfAuiOz8_c7pcicI4GFwu6mCKv2NUIoDqn5H0NWqOuORRHBmYDrdD0hbPUcnjdknOmzhBDFvwqCeOSSB3Q74LBIpykkCfFpGe3wipb6=w1200')),
+  ('var-tinkay-cor-gra', '3af6aff5-ddd0-4746-b282-c760e4b42214', 'tinkay', 'TNK-COR-GRA', 'Grande (60 Rosas)', 45.00, 0, 'IVA_0', true, jsonb_build_object('orden', 3, 'tamano', 'Grande', 'pvp_nominal', 45.0, 'portada_url', 'https://lh3.googleusercontent.com/pw/AP1GczP8-SWS6YF2iOsXEa1A7Ij26_J2C0CMLX6jMb5aqvkd5Hd2BQP9azHW4ZJR9wsZfg47ujPytVktmhNLiMBYQzV2fVGalU5znPN3oqjB2GoulGh0eyN5=w1200')),
+  ('var-tinkay-cor-gig', '3af6aff5-ddd0-4746-b282-c760e4b42214', 'tinkay', 'TNK-COR-GIG', 'Gigante (90 Rosas)', 60.00, 0, 'IVA_0', true, jsonb_build_object('orden', 4, 'tamano', 'Gigante VIP', 'pvp_nominal', 60.0, 'portada_url', 'https://lh3.googleusercontent.com/pw/AP1GczNhxYIB2tPlUrod5q4ovLTZ8VeWkcLU1bxVREGSwMh9m0TS7DwgjezCYG8O8CCM6wn3p97mBth4B_dVLT7MmDiD_WBTr1Xl4H0PH1VQcgXskqLHS0GO=w1200')),
+  ('var-tinkay-cor-vip180', '3af6aff5-ddd0-4746-b282-c760e4b42214', 'tinkay', 'TIN-VAR-5', 'Gigante VIP (180 Rosas)', 90.00, 0, 'IVA_0', true, jsonb_build_object('orden', 5, 'tamano', 'Gigante VIP (180 Rosas)', 'pvp_nominal', 90.0, 'portada_url', 'https://lh3.googleusercontent.com/pw/AP1GczNhxYIB2tPlUrod5q4ovLTZ8VeWkcLU1bxVREGSwMh9m0TS7DwgjezCYG8O8CCM6wn3p97mBth4B_dVLT7MmDiD_WBTr1Xl4H0PH1VQcgXskqLHS0GO=w1200'))
 on conflict (var_negocio, var_sku) do update set
   var_nombre = excluded.var_nombre,
   var_precio = excluded.var_precio,
