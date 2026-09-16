@@ -12,10 +12,29 @@ export interface ContextoMcpCatalogo {
 
 export function crearServidorMcpCatalogo(opciones: {
   negocioPorDefecto: string;
-  supabaseUrl: string;
-  supabaseAnonKey: string;
+  supabaseUrl?: string;
+  supabaseAnonKey?: string;
 }) {
-  const { negocioPorDefecto, supabaseUrl, supabaseAnonKey } = opciones;
+  const { negocioPorDefecto } = opciones;
+
+  function obtenerSupabaseConfig() {
+    const url = (
+      opciones.supabaseUrl ||
+      process.env.NEXT_PUBLIC_SUPABASE_URL ||
+      process.env.SUPABASE_URL ||
+      "https://oaybbpdxhlxjbpwnoymy.supabase.co"
+    ).replace(/\/$/, "");
+
+    const key =
+      opciones.supabaseAnonKey ||
+      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+      process.env.SUPABASE_ANON_KEY ||
+      process.env.SUPABASE_SERVICE_ROLE_KEY ||
+      "";
+
+    return { url, key };
+  }
 
   const herramientas: Record<string, Herramienta<ContextoMcpCatalogo>> = {
     consultar_catalogo: {
@@ -43,14 +62,15 @@ export function crearServidorMcpCatalogo(opciones: {
         },
       },
       async ejecutar(args, ctx) {
-        const url = `${supabaseUrl.replace(/\/$/, "")}/rest/v1/rpc/tnk_fn_buscar_catalogo_conversacional`;
+        const { url, key } = obtenerSupabaseConfig();
+        const endpointRpc = `${url}/rest/v1/rpc/tnk_fn_buscar_catalogo_conversacional`;
         try {
-          const res = await fetch(url, {
+          const res = await fetch(endpointRpc, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              apikey: supabaseAnonKey,
-              Authorization: `Bearer ${supabaseAnonKey}`,
+              apikey: key,
+              Authorization: `Bearer ${key}`,
             },
             body: JSON.stringify({
               p_termino: args.termino ?? null,
@@ -63,11 +83,11 @@ export function crearServidorMcpCatalogo(opciones: {
           if (!res.ok) {
             // Fallback directo a consulta de productos en comun_comercio
             const resDirecta = await fetch(
-              `${supabaseUrl.replace(/\/$/, "")}/rest/v1/com_producto_servicio?pro_negocio=eq.${ctx.negocioId}&pro_activo=eq.true&select=pro_id,pro_nombre,pro_slug,pro_descripcion,pro_detalle_producto,com_variante_precio(*)&limit=15`,
+              `${url}/rest/v1/com_producto_servicio?pro_negocio=eq.${ctx.negocioId}&pro_activo=eq.true&select=pro_id,pro_nombre,pro_slug,pro_descripcion,pro_detalle_producto,com_variante_precio(*)&limit=15`,
               {
                 headers: {
-                  apikey: supabaseAnonKey,
-                  Authorization: `Bearer ${supabaseAnonKey}`,
+                  apikey: key,
+                  Authorization: `Bearer ${key}`,
                 },
               }
             );
@@ -97,17 +117,18 @@ export function crearServidorMcpCatalogo(opciones: {
         required: ["slug_o_id"],
       },
       async ejecutar(args, ctx) {
+        const { url, key } = obtenerSupabaseConfig();
         const slugOId = String(args.slug_o_id ?? "").trim();
         const esUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(slugOId);
 
         const filtro = esUuid ? `pro_id=eq.${slugOId}` : `pro_slug=eq.${slugOId}`;
-        const url = `${supabaseUrl.replace(/\/$/, "")}/rest/v1/com_producto_servicio?${filtro}&pro_negocio=eq.${ctx.negocioId}&select=pro_id,pro_nombre,pro_slug,pro_descripcion,pro_detalle_producto,com_variante_precio(*)&limit=1`;
+        const endpoint = `${url}/rest/v1/com_producto_servicio?${filtro}&pro_negocio=eq.${ctx.negocioId}&select=pro_id,pro_nombre,pro_slug,pro_descripcion,pro_detalle_producto,com_variante_precio(*)&limit=1`;
 
         try {
-          const res = await fetch(url, {
+          const res = await fetch(endpoint, {
             headers: {
-              apikey: supabaseAnonKey,
-              Authorization: `Bearer ${supabaseAnonKey}`,
+              apikey: key,
+              Authorization: `Bearer ${key}`,
             },
           });
           const datos = await res.json();
@@ -130,10 +151,11 @@ export function crearServidorMcpCatalogo(opciones: {
       const token = extraerBearerToken(peticion);
       if (!token) return null;
 
+      const { url, key } = obtenerSupabaseConfig();
       const validacion = await validarTokenMcpConRpc(
         token,
-        supabaseUrl,
-        supabaseAnonKey,
+        url,
+        key,
         "catalogo:leer"
       );
 

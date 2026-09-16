@@ -59,23 +59,38 @@ export function extraerBearerToken(peticion: Request): string | null {
  */
 export async function validarTokenMcpConRpc(
   tokenTexto: string,
-  supabaseUrl: string,
-  supabaseAnonKey: string,
+  supabaseUrl?: string,
+  supabaseAnonKey?: string,
   alcanceRequerido?: string
 ): Promise<ContextoTokenMcp | null> {
   if (!tokenTexto || !tokenTexto.startsWith("eco_live_")) {
     return null;
   }
 
-  const url = `${supabaseUrl.replace(/\/$/, "")}/rest/v1/rpc/seg_fn_validar_token_mcp`;
+  const urlBase = (
+    supabaseUrl ||
+    process.env.NEXT_PUBLIC_SUPABASE_URL ||
+    process.env.SUPABASE_URL ||
+    "https://oaybbpdxhlxjbpwnoymy.supabase.co"
+  ).replace(/\/$/, "");
+
+  const apiKey =
+    supabaseAnonKey ||
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+    process.env.SUPABASE_ANON_KEY ||
+    process.env.SUPABASE_SERVICE_ROLE_KEY ||
+    "";
+
+  const url = `${urlBase}/rest/v1/rpc/seg_fn_validar_token_mcp`;
 
   try {
     let respuesta = await fetch(url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        apikey: supabaseAnonKey,
-        Authorization: `Bearer ${supabaseAnonKey}`,
+        apikey: apiKey,
+        Authorization: `Bearer ${apiKey}`,
         "Accept-Profile": "comun_seguridad",
       },
       body: JSON.stringify({
@@ -91,8 +106,8 @@ export async function validarTokenMcpConRpc(
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          apikey: supabaseAnonKey,
-          Authorization: `Bearer ${supabaseAnonKey}`,
+          apikey: apiKey,
+          Authorization: `Bearer ${apiKey}`,
         },
         body: JSON.stringify({
           p_token_texto: tokenTexto,
