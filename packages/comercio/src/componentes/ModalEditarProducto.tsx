@@ -366,6 +366,8 @@ export function ModalEditarProducto({
 
   // Configuración Impositiva Global & Logística (Transporte / Delivery)
   const [tarifaIvaMaster, setTarifaIvaMaster] = useState<number>(15);
+  const [autoAplicarIvaVariantes, setAutoAplicarIvaVariantes] = useState<boolean>(true);
+  const [mensajeFeedbackIva, setMensajeFeedbackIva] = useState<string | null>(null);
   const [deliveryIncluido, setDeliveryIncluido] = useState<boolean>(true);
   const [modalidadTransporte, setModalidadTransporte] = useState<string>("INCLUIDO_GRATIS");
   const [etiquetaTransporte, setEtiquetaTransporte] = useState<string>("🚚 Envío a Domicilio Incluido");
@@ -424,6 +426,10 @@ export function ModalEditarProducto({
         };
       })
     );
+    setMensajeFeedbackIva(`✓ Tarifa IVA ${nuevaTarifa}% aplicada a todas las variantes (${variantesLocales.length})`);
+    setTimeout(() => {
+      setMensajeFeedbackIva(null);
+    }, 3500);
   };
 
   useEffect(() => {
@@ -1502,14 +1508,15 @@ export function ModalEditarProducto({
                       background: "#E0F2FE",
                       border: "1px solid #7DD3FC",
                       color: "#0369A1",
-                      padding: "3px 8px",
+                      padding: "4px 10px",
                       borderRadius: "6px",
-                      fontSize: "0.7rem",
-                      fontWeight: 700,
+                      fontSize: "0.72rem",
+                      fontWeight: 800,
                       cursor: "pointer",
                       display: "inline-flex",
                       alignItems: "center",
                       gap: "4px",
+                      boxShadow: "0 1px 2px rgba(2, 132, 199, 0.1)",
                     }}
                     title="Aplica esta tarifa a todas las variantes existentes"
                   >
@@ -1520,19 +1527,26 @@ export function ModalEditarProducto({
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
                   <button
                     type="button"
-                    onClick={() => setTarifaIvaMaster(15)}
+                    onClick={() => {
+                      if (autoAplicarIvaVariantes) {
+                        aplicarIvaMasterATodos(15);
+                      } else {
+                        setTarifaIvaMaster(15);
+                      }
+                    }}
                     style={{
                       padding: "8px 12px",
                       borderRadius: "8px",
                       fontSize: "0.78rem",
                       fontWeight: 700,
-                      border: tarifaIvaMaster === 15 ? "1.5px solid #0284C7" : "1px solid #CBD5E1",
+                      border: tarifaIvaMaster === 15 ? "2px solid #0284C7" : "1px solid #CBD5E1",
                       background: tarifaIvaMaster === 15 ? "#F0F9FF" : "#FFFFFF",
                       color: tarifaIvaMaster === 15 ? "#0284C7" : "#475569",
                       cursor: "pointer",
                       textAlign: "left",
                       display: "flex",
                       flexDirection: "column",
+                      boxShadow: tarifaIvaMaster === 15 ? "0 2px 4px rgba(2, 132, 199, 0.15)" : "none",
                     }}
                   >
                     <span>🇪🇨 IVA 15% (Tarifa General SRI)</span>
@@ -1543,19 +1557,26 @@ export function ModalEditarProducto({
 
                   <button
                     type="button"
-                    onClick={() => setTarifaIvaMaster(0)}
+                    onClick={() => {
+                      if (autoAplicarIvaVariantes) {
+                        aplicarIvaMasterATodos(0);
+                      } else {
+                        setTarifaIvaMaster(0);
+                      }
+                    }}
                     style={{
                       padding: "8px 12px",
                       borderRadius: "8px",
                       fontSize: "0.78rem",
                       fontWeight: 700,
-                      border: tarifaIvaMaster === 0 ? "1.5px solid #10B981" : "1px solid #CBD5E1",
+                      border: tarifaIvaMaster === 0 ? "2px solid #10B981" : "1px solid #CBD5E1",
                       background: tarifaIvaMaster === 0 ? "#ECFDF5" : "#FFFFFF",
                       color: tarifaIvaMaster === 0 ? "#059669" : "#475569",
                       cursor: "pointer",
                       textAlign: "left",
                       display: "flex",
                       flexDirection: "column",
+                      boxShadow: tarifaIvaMaster === 0 ? "0 2px 4px rgba(16, 185, 129, 0.15)" : "none",
                     }}
                   >
                     <span>🌿 IVA 0% (Exento SRI / Tarifa Cero)</span>
@@ -1563,6 +1584,24 @@ export function ModalEditarProducto({
                       Servicios médicos, canasta básica o exentos
                     </span>
                   </button>
+                </div>
+
+                {/* Opción de sincronización automática y feedback */}
+                <div style={{ marginTop: "10px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "6px" }}>
+                  <label style={{ display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "0.74rem", color: "#334155", cursor: "pointer", fontWeight: 700 }}>
+                    <input
+                      type="checkbox"
+                      checked={autoAplicarIvaVariantes}
+                      onChange={(e) => setAutoAplicarIvaVariantes(e.target.checked)}
+                      style={{ accentColor: "#0284C7", width: "14px", height: "14px", cursor: "pointer" }}
+                    />
+                    <span>Sincronizar y aplicar automáticamente a todas las variantes / tamaños ({variantesLocales.length}) al hacer clic</span>
+                  </label>
+                  {mensajeFeedbackIva && (
+                    <span style={{ fontSize: "0.72rem", color: "#047857", fontWeight: 800, background: "#ECFDF5", border: "1px solid #10B981", borderRadius: "6px", padding: "3px 8px" }}>
+                      {mensajeFeedbackIva}
+                    </span>
+                  )}
                 </div>
               </div>
 
