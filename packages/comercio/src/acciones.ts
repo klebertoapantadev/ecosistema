@@ -1330,8 +1330,15 @@ export async function obtenerCategoriasAction(negocio = "tranqi"): Promise<Categ
  * Obtiene el catálogo de productos y variantes activas agrupadas con cálculo impositivo ecuatoriano (IVA 15%)
  */
 export async function obtenerCatalogoProductosAction(negocio = "tranqi"): Promise<ProductoCatalogo[]> {
-  const admin: any = crearClienteAdmin();
-  const supabase: any = await crearClienteServidor();
+  let admin: any = null;
+  let supabase: any = null;
+  try {
+    admin = crearClienteAdmin();
+  } catch {}
+  try {
+    supabase = await crearClienteServidor();
+  } catch {}
+
   const clienteActivo = admin || supabase;
 
   let prodsDb: any[] = [];
