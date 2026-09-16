@@ -70,21 +70,40 @@ export async function validarTokenMcpConRpc(
   const url = `${supabaseUrl.replace(/\/$/, "")}/rest/v1/rpc/seg_fn_validar_token_mcp`;
 
   try {
-    const respuesta = await fetch(url, {
+    let respuesta = await fetch(url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         apikey: supabaseAnonKey,
         Authorization: `Bearer ${supabaseAnonKey}`,
+        "Accept-Profile": "comun_seguridad",
       },
       body: JSON.stringify({
         p_token_texto: tokenTexto,
         p_alcance_requerido: alcanceRequerido ?? null,
       }),
-      signal: AbortSignal.timeout(5000),
+      signal: AbortSignal.timeout(6000),
     });
 
     if (!respuesta.ok) {
+      // Reintentar sin Accept-Profile (en caso de wrapper público)
+      respuesta = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          apikey: supabaseAnonKey,
+          Authorization: `Bearer ${supabaseAnonKey}`,
+        },
+        body: JSON.stringify({
+          p_token_texto: tokenTexto,
+          p_alcance_requerido: alcanceRequerido ?? null,
+        }),
+        signal: AbortSignal.timeout(6000),
+      });
+    }
+
+    if (!respuesta.ok) {
+      console.error("[@eco/agentes-ia] Error HTTP validando token:", respuesta.status, await respuesta.text());
       return null;
     }
 

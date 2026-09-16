@@ -319,3 +319,55 @@ BEGIN
 
   END LOOP;
 END $$;
+
+-- 5. WRAPPERS EN ESQUEMA PUBLIC PARA COMPATIBILIDAD POSTGREST TRANSPARENTE
+-- ====================================================================
+create or replace function public.seg_fn_validar_token_mcp(
+  p_token_texto text,
+  p_alcance_requerido text default null
+)
+returns jsonb
+language sql
+security definer
+as $$
+  select comun_seguridad.seg_fn_validar_token_mcp(p_token_texto, p_alcance_requerido);
+$$;
+
+create or replace function public.seg_fn_listar_tokens_mcp(
+  p_negocio_id text
+)
+returns jsonb
+language sql
+security definer
+as $$
+  select comun_seguridad.seg_fn_listar_tokens_mcp(p_negocio_id);
+$$;
+
+create or replace function public.seg_fn_generar_token_mcp(
+  p_negocio_id text,
+  p_nombre text,
+  p_alcances jsonb default '["catalogo:leer"]'::jsonb,
+  p_expira_en timestamptz default null
+)
+returns jsonb
+language sql
+security definer
+as $$
+  select comun_seguridad.seg_fn_generar_token_mcp(p_negocio_id, p_nombre, p_alcances, p_expira_en);
+$$;
+
+create or replace function public.seg_fn_revocar_token_mcp(
+  p_token_id uuid
+)
+returns boolean
+language sql
+security definer
+as $$
+  select comun_seguridad.seg_fn_revocar_token_mcp(p_token_id);
+$$;
+
+grant execute on function public.seg_fn_validar_token_mcp to anon, authenticated, service_role;
+grant execute on function public.seg_fn_listar_tokens_mcp to authenticated, service_role;
+grant execute on function public.seg_fn_generar_token_mcp to authenticated, service_role;
+grant execute on function public.seg_fn_revocar_token_mcp to authenticated, service_role;
+
