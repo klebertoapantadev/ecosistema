@@ -10,11 +10,14 @@ export interface ContextoMcpCatalogo {
   alcances: string[];
 }
 
-export function crearServidorMcpCatalogo(opciones: {
+export interface OpcionesServidorMcpCatalogo {
   negocioPorDefecto: string;
   supabaseUrl?: string;
   supabaseAnonKey?: string;
-}) {
+  consultarProductos?: (negocioId: string) => Promise<any[]>;
+}
+
+export function crearServidorMcpCatalogo(opciones: OpcionesServidorMcpCatalogo) {
   const { negocioPorDefecto } = opciones;
 
   function obtenerSupabaseConfig() {
@@ -36,6 +39,40 @@ export function crearServidorMcpCatalogo(opciones: {
     return { url, key };
   }
 
+  async function obtenerListaProductos(negocioId: string): Promise<any[]> {
+    if (typeof opciones.consultarProductos === "function") {
+      try {
+        const prods = await opciones.consultarProductos(negocioId);
+        if (Array.isArray(prods) && prods.length > 0) {
+          return prods;
+        }
+      } catch (err) {
+        console.error("[@eco/agentes-ia] Error en consultarProductos inyectado:", err);
+      }
+    }
+
+    const { url, key } = obtenerSupabaseConfig();
+    try {
+      const res = await fetch(
+        `${url}/rest/v1/com_producto?pro_negocio=eq.${negocioId}&pro_activo=eq.true&select=pro_id,pro_nombre,pro_slug,pro_descripcion,pro_detalle_producto,com_variante(*)&order=pro_destacado.desc`,
+        {
+          headers: {
+            apikey: key,
+            Authorization: `Bearer ${key}`,
+            "Accept-Profile": "comun_comercio",
+          },
+          signal: AbortSignal.timeout(8000),
+        }
+      );
+      if (res.ok) {
+        return await res.json();
+      }
+    } catch {
+      // Fallback
+    }
+    return [];
+  }
+
   const herramientas: Record<string, Herramienta<ContextoMcpCatalogo>> = {
     consultar_catalogo: {
       descripcion:
@@ -45,7 +82,7 @@ export function crearServidorMcpCatalogo(opciones: {
         properties: {
           termino: {
             type: "string",
-            description: "Texto de búsqueda o palabra clave (ej. 'rosas rojas', 'divorcio', 'plomería')",
+            description: "Texto de búsqueda o palabra clave (ej. 'rosas rojas', 'coreano', 'flores', 'divorcio', 'plomería')",
           },
           categoria: {
             type: "string",
@@ -57,50 +94,83 @@ export function crearServidorMcpCatalogo(opciones: {
           },
           ocasion: {
             type: "string",
-            description: "Ocasión especial (ej. 'aniversario', 'condolencias', 'grado')",
+            description: "Ocasión especial (ej. 'aniversario', 'condolencias', 'grado', 'cumpleanos')",
           },
         },
       },
       async ejecutar(args, ctx) {
-        const { url, key } = obtenerSupabaseConfig();
-        const endpointRpc = `${url}/rest/v1/rpc/tnk_fn_buscar_catalogo_conversacional`;
-        try {
-          const res = await fetch(endpointRpc, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              apikey: key,
-              Authorization: `Bearer ${key}`,
-            },
-            body: JSON.stringify({
-              p_termino: args.termino ?? null,
-              p_ocasion: args.ocasion ?? args.categoria ?? null,
-              p_presupuesto_max_usd: args.presupuesto_max_usd ?? null,
-            }),
-            signal: AbortSignal.timeout(10000),
-          });
-
-          if (!res.ok) {
-            // Fallback directo a consulta de productos en comun_comercio
-            const resDirecta = await fetch(
-              `${url}/rest/v1/com_producto_servicio?pro_negocio=eq.${ctx.negocioId}&pro_activo=eq.true&select=pro_id,pro_nombre,pro_slug,pro_descripcion,pro_detalle_producto,com_variante_precio(*)&limit=15`,
-              {
-                headers: {
-                  apikey: key,
-                  Authorization: `Bearer ${key}`,
-                },
-              }
-            );
-            if (resDirecta.ok) {
-              return await resDirecta.json();
-            }
-            return { error: "No se pudo consultar el catálogo en este momento." };
-          }
-
-          return await res.json();
-        } catch (err) {
-          return { error: "Error de conexión consultando el catálogo comercial." };
+        const prods = await obtenerListaProductos(ctx.negocioId);
+        if (!prods || prods.length === 0) {
+          return { error: "No se encontraron productos disponibles en el catálogo para este negocio." };
         }
+
+        let filtrados = [...prods];
+
+        if (args.termino && typeof args.termino === "string" && args.termino.trim().length > 0) {
+          const t = args.termino.toLowerCase().trim();
+          filtrados = filtrados.filter((p) => {
+            const nombre = String(p.pro_nombre || p.nombre || "").toLowerCase();
+            const slug = String(p.pro_slug || p.slug || "").toLowerCase();
+            const desc = String(p.pro_descripcion || p.descripcion || "").toLowerCase();
+            const tags = Array.isArray(p.pro_detalle_producto?.etiquetas)
+              ? p.pro_detalle_producto.etiquetas.join(" ").toLowerCase()
+              : "";
+            const vars = Array.isArray(p.variantes)
+              ? p.variantes.map((v: any) => String(v.var_nombre || v.nombre || "")).join(" ").toLowerCase()
+              : "";
+            return nombre.includes(t) || slug.includes(t) || desc.includes(t) || tags.includes(t) || vars.includes(t);
+          });
+        }
+
+        if (args.categoria || args.ocasion) {
+          const cat = String(args.categoria || args.ocasion || "").toLowerCase().trim();
+          filtrados = filtrados.filter((p) => {
+            const slugCat = String(p.categoria?.ctg_slug || p.categoria?.slug || "").toLowerCase();
+            const nomCat = String(p.categoria?.ctg_nombre || p.categoria?.nombre || "").toLowerCase();
+            const tags = Array.isArray(p.pro_detalle_producto?.etiquetas)
+              ? p.pro_detalle_producto.etiquetas.join(" ").toLowerCase()
+              : "";
+            const desc = String(p.pro_descripcion || "").toLowerCase();
+            return slugCat.includes(cat) || nomCat.includes(cat) || tags.includes(cat) || desc.includes(cat);
+          });
+        }
+
+        if (typeof args.presupuesto_max_usd === "number" && args.presupuesto_max_usd > 0) {
+          const max = args.presupuesto_max_usd;
+          filtrados = filtrados.filter((p) => {
+            const variantes = Array.isArray(p.variantes) ? p.variantes : [];
+            if (variantes.length === 0) return true;
+            const minPrecio = Math.min(...variantes.map((v: any) => Number(v.precio_total ?? v.var_precio ?? 0)));
+            return minPrecio <= max;
+          });
+        }
+
+        return {
+          total_encontrados: filtrados.length,
+          negocio: ctx.negocioId,
+          productos: filtrados.map((p) => ({
+            id: p.pro_id || p.id,
+            nombre: p.pro_nombre || p.nombre,
+            slug: p.pro_slug || p.slug,
+            descripcion: p.pro_descripcion || p.descripcion,
+            tipo: p.pro_tipo || p.tipo,
+            destacado: p.pro_destacado ?? false,
+            categoria: p.categoria?.ctg_nombre || p.categoria?.nombre || null,
+            album_fotos_url: p.pro_detalle_producto?.album_fotos_url || null,
+            portada_url: p.pro_detalle_producto?.imagen_url || null,
+            delivery_incluido: p.pro_detalle_producto?.logistica?.delivery_incluido ?? false,
+            variantes: (p.variantes || []).map((v: any) => ({
+              id: v.var_id || v.id,
+              sku: v.var_sku || v.sku,
+              nombre: v.var_nombre || v.nombre,
+              base_imponible_usd: Number(v.var_precio || v.precio || 0),
+              tarifa_iva: Number(v.var_tarifa_iva_porcentaje || 15),
+              monto_iva_usd: Number(v.monto_iva || 0),
+              pvp_total_usd: Number(v.precio_total || v.var_precio || 0),
+              foto_variante_url: v.var_detalle_variante?.portada_url || null,
+            })),
+          })),
+        };
       },
     },
 
@@ -111,34 +181,48 @@ export function crearServidorMcpCatalogo(opciones: {
         properties: {
           slug_o_id: {
             type: "string",
-            description: "Slug o UUID del producto/servicio",
+            description: "Slug o UUID del producto/servicio (ej. 'tinkay-bouq-coreano' o '3af6aff5-ddd0-4746-b282-c760e4b42214')",
           },
         },
         required: ["slug_o_id"],
       },
       async ejecutar(args, ctx) {
-        const { url, key } = obtenerSupabaseConfig();
-        const slugOId = String(args.slug_o_id ?? "").trim();
-        const esUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(slugOId);
-
-        const filtro = esUuid ? `pro_id=eq.${slugOId}` : `pro_slug=eq.${slugOId}`;
-        const endpoint = `${url}/rest/v1/com_producto_servicio?${filtro}&pro_negocio=eq.${ctx.negocioId}&select=pro_id,pro_nombre,pro_slug,pro_descripcion,pro_detalle_producto,com_variante_precio(*)&limit=1`;
-
-        try {
-          const res = await fetch(endpoint, {
-            headers: {
-              apikey: key,
-              Authorization: `Bearer ${key}`,
-            },
-          });
-          const datos = await res.json();
-          if (Array.isArray(datos) && datos.length > 0) {
-            return datos[0];
-          }
-          return { error: `Producto no encontrado para '${slugOId}'` };
-        } catch {
-          return { error: "Error de conexión al obtener detalle del producto." };
+        const slugOId = String(args.slug_o_id ?? "").trim().toLowerCase();
+        if (!slugOId) {
+          return { error: "El parámetro slug_o_id es obligatorio." };
         }
+
+        const prods = await obtenerListaProductos(ctx.negocioId);
+        const encontrado = prods.find((p) => {
+          const id = String(p.pro_id || p.id || "").toLowerCase();
+          const slug = String(p.pro_slug || p.slug || "").toLowerCase();
+          return id === slugOId || slug === slugOId;
+        });
+
+        if (encontrado) {
+          return {
+            id: encontrado.pro_id || encontrado.id,
+            nombre: encontrado.pro_nombre || encontrado.nombre,
+            slug: encontrado.pro_slug || encontrado.slug,
+            descripcion: encontrado.pro_descripcion || encontrado.descripcion,
+            tipo: encontrado.pro_tipo || encontrado.tipo,
+            destacado: encontrado.pro_destacado ?? false,
+            categoria: encontrado.categoria || null,
+            detalle_producto: encontrado.pro_detalle_producto || {},
+            variantes: (encontrado.variantes || []).map((v: any) => ({
+              id: v.var_id || v.id,
+              sku: v.var_sku || v.sku,
+              nombre: v.var_nombre || v.nombre,
+              base_imponible_usd: Number(v.var_precio || v.precio || 0),
+              tarifa_iva: Number(v.var_tarifa_iva_porcentaje || 15),
+              monto_iva_usd: Number(v.monto_iva || 0),
+              pvp_total_usd: Number(v.precio_total || v.var_precio || 0),
+              detalle_variante: v.var_detalle_variante || {},
+            })),
+          };
+        }
+
+        return { error: `Producto no encontrado para '${args.slug_o_id}'` };
       },
     },
   };
@@ -171,3 +255,4 @@ export function crearServidorMcpCatalogo(opciones: {
     },
   });
 }
+

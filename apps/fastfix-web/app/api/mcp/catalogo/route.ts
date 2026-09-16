@@ -1,4 +1,5 @@
 import { crearServidorMcpCatalogo } from "@eco/agentes-ia";
+import { obtenerCatalogoProductosAction } from "@eco/comercio";
 
 const manejarMcp = crearServidorMcpCatalogo({
   negocioPorDefecto: "fastfix",
@@ -7,6 +8,9 @@ const manejarMcp = crearServidorMcpCatalogo({
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
     "sb_publishable_vC-t-FcOQ2Q5_XkTCcPKdQ_bveIh5YS",
+  consultarProductos: async (negocioId) => {
+    return await obtenerCatalogoProductosAction(negocioId);
+  },
 });
 
 export const runtime = "nodejs";

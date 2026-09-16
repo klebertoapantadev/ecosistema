@@ -24,6 +24,9 @@ importers:
       '@eco/agentes-ia':
         specifier: workspace:*
         version: link:../../packages/agentes-ia
+      '@eco/comercio':
+        specifier: workspace:*
+        version: link:../../packages/comercio
       '@eco/configuracion-negocio':
         specifier: workspace:*
         version: link:../../packages/configuracion-negocio
@@ -85,6 +88,9 @@ importers:
       '@eco/agentes-ia':
         specifier: workspace:*
         version: link:../../packages/agentes-ia
+      '@eco/comercio':
+        specifier: workspace:*
+        version: link:../../packages/comercio
       '@eco/configuracion-negocio':
         specifier: workspace:*
         version: link:../../packages/configuracion-negocio
