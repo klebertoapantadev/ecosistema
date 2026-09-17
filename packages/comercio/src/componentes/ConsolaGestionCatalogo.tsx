@@ -18,6 +18,7 @@ import {
   Scale,
   FileCheck,
   CheckCircle2,
+  Share2,
 } from "lucide-react";
 import {
   ProductoCatalogo,
@@ -42,12 +43,29 @@ export function ConsolaGestionCatalogo({ negocio = "tranqi" }: Props) {
   const [cargandoSemillas, setCargandoSemillas] = useState(false);
   const [busqueda, setBusqueda] = useState("");
   const [categoriaSeleccionada, setCategoriaSeleccionada] = useState<string>("todas");
+  const [copiadoConsulta, setCopiadoConsulta] = useState(false);
 
   // Modales
   const [modalProdAbierto, setModalProdAbierto] = useState(false);
   const [modalCatAbierto, setModalCatAbierto] = useState(false);
   const [productoAEditar, setProductoAEditar] = useState<ProductoCatalogo | null>(null);
   const [modalEditarAbierto, setModalEditarAbierto] = useState(false);
+
+  // 1. Inicializar parámetros desde URL (Deep Linking & Compartir)
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const urlQ = params.get("q") || params.get("busqueda");
+      const urlCat = params.get("categoria");
+
+      if (urlQ) {
+        setBusqueda(urlQ);
+      }
+      if (urlCat) {
+        setCategoriaSeleccionada(urlCat);
+      }
+    }
+  }, []);
 
   const cargarDatos = async () => {
     setCargando(true);
@@ -68,6 +86,38 @@ export function ConsolaGestionCatalogo({ negocio = "tranqi" }: Props) {
   useEffect(() => {
     cargarDatos();
   }, [negocio]);
+
+  // Compartir parámetros de consulta mediante URL
+  const handleCompartirConsulta = () => {
+    if (typeof window === "undefined") return;
+    const url = new URL(window.location.href);
+    if (busqueda.trim()) {
+      url.searchParams.set("q", busqueda.trim());
+    } else {
+      url.searchParams.delete("q");
+      url.searchParams.delete("busqueda");
+    }
+    if (categoriaSeleccionada && categoriaSeleccionada !== "todas") {
+      url.searchParams.set("categoria", categoriaSeleccionada);
+    } else {
+      url.searchParams.delete("categoria");
+    }
+
+    // Actualizar historial del navegador sin recargar
+    window.history.replaceState({}, "", url.toString());
+
+    // Copiar al portapapeles
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(url.toString()).then(() => {
+        setCopiadoConsulta(true);
+        setTimeout(() => setCopiadoConsulta(false), 2500);
+      }).catch(() => {
+        prompt("Copia este enlace para compartir la consulta:", url.toString());
+      });
+    } else {
+      prompt("Copia este enlace para compartir la consulta:", url.toString());
+    }
+  };
 
   const handleCargarSemillas = async () => {
     setCargandoSemillas(true);
@@ -157,7 +207,33 @@ export function ConsolaGestionCatalogo({ negocio = "tranqi" }: Props) {
         </div>
 
         {/* Botones de Acción Operativa */}
-        <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+        <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
+          {/* Botón Compartir Parámetros de Consulta */}
+          <button
+            type="button"
+            onClick={handleCompartirConsulta}
+            className="btn-responsive-accion"
+            title="Copiar enlace con los parámetros de consulta"
+            aria-label="Compartir parámetros de consulta"
+            style={{
+              background: copiadoConsulta ? "#ECFDF5" : "#F8FAFC",
+              color: copiadoConsulta ? "#047857" : "#334155",
+              border: copiadoConsulta ? "1px solid #10B981" : "1px solid #CBD5E1",
+              padding: "8px 14px",
+              borderRadius: "8px",
+              fontSize: "0.82rem",
+              fontWeight: 700,
+              cursor: "pointer",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+              transition: "all 0.2s ease",
+            }}
+          >
+            {copiadoConsulta ? <CheckCircle2 size={15} color="#10B981" /> : <Share2 size={15} color="#0284C7" />}
+            <span className="btn-texto-responsive">{copiadoConsulta ? "¡Copiado!" : "Compartir"}</span>
+          </button>
+
           <button
             type="button"
             onClick={() => setModalProdAbierto(true)}

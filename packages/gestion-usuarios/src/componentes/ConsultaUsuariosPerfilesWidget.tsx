@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Users, Search, ShieldCheck, Eye, RefreshCw, RotateCcw, Filter, UserCheck } from "lucide-react";
+import { Users, Search, ShieldCheck, Eye, RefreshCw, RotateCcw, Filter, UserCheck, Share2, CheckCircle2 } from "lucide-react";
 import { ModalNotificacionPush } from "../../../notificaciones/src/ModalNotificacionPush";
 import { obtenerDatosGestionUsuariosAction, resetearSistemaSuperAdminAction } from "../acciones";
 import { FilaUsuario } from "./FilaUsuario";
@@ -95,6 +95,7 @@ export function ConsultaUsuariosPerfilesWidget({ negocio = "TRANQ" }: Props) {
   const [filtroRol, setFiltroRol] = useState<string>("TODOS");
   const [perfilSeleccionado, setPerfilSeleccionado] = useState<string>("OPERADOR");
   const [procesandoAccion, setProcesandoAccion] = useState<string | null>(null);
+  const [copiadoConsulta, setCopiadoConsulta] = useState(false);
   const [modalPush, setModalPush] = useState<{
     abierto: boolean;
     titulo: string;
@@ -109,6 +110,30 @@ export function ConsultaUsuariosPerfilesWidget({ negocio = "TRANQ" }: Props) {
     mensaje: "",
     tipo: "exito",
   });
+
+  // 1. Cargar parámetros iniciales desde la URL (Deep Linking & Compartir)
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const urlTab = params.get("tab");
+      const urlQ = params.get("q") || params.get("busqueda");
+      const urlRol = params.get("rol");
+      const urlPerfil = params.get("perfil");
+
+      if (urlTab === "usuarios" || urlTab === "matriz") {
+        setTabActiva(urlTab);
+      }
+      if (urlQ) {
+        setFiltroTexto(urlQ);
+      }
+      if (urlRol) {
+        setFiltroRol(urlRol);
+      }
+      if (urlPerfil) {
+        setPerfilSeleccionado(urlPerfil);
+      }
+    }
+  }, []);
 
   const cargarDirectorio = async (q: string = "") => {
     try {
@@ -129,6 +154,44 @@ export function ConsultaUsuariosPerfilesWidget({ negocio = "TRANQ" }: Props) {
   useEffect(() => {
     cargarDirectorio();
   }, [negocio]);
+
+  // Compartir parámetros de consulta mediante URL
+  const handleCompartirConsulta = () => {
+    if (typeof window === "undefined") return;
+    const url = new URL(window.location.href);
+    if (tabActiva) url.searchParams.set("tab", tabActiva);
+    if (filtroTexto.trim()) {
+      url.searchParams.set("q", filtroTexto.trim());
+    } else {
+      url.searchParams.delete("q");
+      url.searchParams.delete("busqueda");
+    }
+    if (filtroRol && filtroRol !== "TODOS") {
+      url.searchParams.set("rol", filtroRol);
+    } else {
+      url.searchParams.delete("rol");
+    }
+    if (perfilSeleccionado && tabActiva === "matriz") {
+      url.searchParams.set("perfil", perfilSeleccionado);
+    } else {
+      url.searchParams.delete("perfil");
+    }
+
+    // Actualizar historial del navegador sin recargar
+    window.history.replaceState({}, "", url.toString());
+
+    // Copiar al portapapeles
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(url.toString()).then(() => {
+        setCopiadoConsulta(true);
+        setTimeout(() => setCopiadoConsulta(false), 2500);
+      }).catch(() => {
+        prompt("Copia este enlace para compartir la consulta:", url.toString());
+      });
+    } else {
+      prompt("Copia este enlace para compartir la consulta:", url.toString());
+    }
+  };
 
   async function handleResetearSistema() {
     setModalPush({
@@ -206,6 +269,32 @@ export function ConsultaUsuariosPerfilesWidget({ negocio = "TRANQ" }: Props) {
         </div>
 
         <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
+          {/* Botón Compartir Parámetros de Consulta (URL) */}
+          <button
+            type="button"
+            onClick={handleCompartirConsulta}
+            className="btn-responsive-accion"
+            style={{
+              background: copiadoConsulta ? "#ECFDF5" : "#F8FAFC",
+              border: copiadoConsulta ? "1px solid #10B981" : "1px solid #CBD5E1",
+              color: copiadoConsulta ? "#047857" : "#334155",
+              padding: "7px 14px",
+              borderRadius: "20px",
+              fontSize: "0.78rem",
+              fontWeight: 700,
+              cursor: "pointer",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+              transition: "all 0.2s ease",
+            }}
+            title="Copiar enlace con los parámetros actuales de consulta"
+            aria-label="Compartir parámetros de consulta"
+          >
+            {copiadoConsulta ? <CheckCircle2 size={14} color="#10B981" /> : <Share2 size={14} />}
+            <span className="btn-texto-responsive">{copiadoConsulta ? "¡Copiado!" : "Compartir"}</span>
+          </button>
+
           <button
             type="button"
             onClick={() => cargarDirectorio(filtroTexto)}

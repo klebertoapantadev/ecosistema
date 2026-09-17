@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import {
   Users, UserPlus, Search, Building2, User, Scale, Calendar,
-  Folder, Eye, Plus, CheckCircle2, Shield, Sparkles, Filter, ChevronRight, RefreshCw
+  Folder, Eye, Plus, CheckCircle2, Shield, Sparkles, Filter, ChevronRight, RefreshCw, Share2
 } from "lucide-react";
 import { obtenerClientesCRM, sincronizarUsuariosAProspectosCRMAction } from "../acciones";
 import { ModalAltaClienteAsistida } from "./ModalAltaClienteAsistida";
@@ -19,6 +19,7 @@ export function BandejaClientesCRM({ negocio = "TRANQ" }: Props) {
   const [sincronizando, setSincronizando] = useState(false);
   const [busqueda, setBusqueda] = useState("");
   const [filtroTipo, setFiltroTipo] = useState<"todas" | "natural" | "juridica">("todas");
+  const [copiadoConsulta, setCopiadoConsulta] = useState(false);
 
   // Modales
   const [modalAltaAbierto, setModalAltaAbierto] = useState(false);
@@ -26,6 +27,22 @@ export function BandejaClientesCRM({ negocio = "TRANQ" }: Props) {
 
   // Mensaje de éxito temporal
   const [toastExito, setToastExito] = useState<string | null>(null);
+
+  // 1. Inicializar parámetros desde URL (Deep Linking & Compartir)
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const urlQ = params.get("q") || params.get("busqueda");
+      const urlTipo = params.get("tipo") as "todas" | "natural" | "juridica" | null;
+
+      if (urlQ) {
+        setBusqueda(urlQ);
+      }
+      if (urlTipo && ["todas", "natural", "juridica"].includes(urlTipo)) {
+        setFiltroTipo(urlTipo);
+      }
+    }
+  }, []);
 
   const cargarClientes = () => {
     setCargando(true);
@@ -38,6 +55,38 @@ export function BandejaClientesCRM({ negocio = "TRANQ" }: Props) {
   useEffect(() => {
     cargarClientes();
   }, [filtroTipo]);
+
+  // Compartir parámetros de consulta mediante URL
+  const handleCompartirConsulta = () => {
+    if (typeof window === "undefined") return;
+    const url = new URL(window.location.href);
+    if (busqueda.trim()) {
+      url.searchParams.set("q", busqueda.trim());
+    } else {
+      url.searchParams.delete("q");
+      url.searchParams.delete("busqueda");
+    }
+    if (filtroTipo && filtroTipo !== "todas") {
+      url.searchParams.set("tipo", filtroTipo);
+    } else {
+      url.searchParams.delete("tipo");
+    }
+
+    // Actualizar historial del navegador sin recargar
+    window.history.replaceState({}, "", url.toString());
+
+    // Copiar al portapapeles
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(url.toString()).then(() => {
+        setCopiadoConsulta(true);
+        setTimeout(() => setCopiadoConsulta(false), 2500);
+      }).catch(() => {
+        prompt("Copia este enlace para compartir la consulta de clientes:", url.toString());
+      });
+    } else {
+      prompt("Copia este enlace para compartir la consulta de clientes:", url.toString());
+    }
+  };
 
   const manejarBusquedaSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -133,7 +182,34 @@ export function BandejaClientesCRM({ negocio = "TRANQ" }: Props) {
           </p>
         </div>
 
-        <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+        <div style={{ display: "flex", gap: "10px", alignItems: "center", flexWrap: "wrap" }}>
+          {/* Botón Compartir Parámetros de Consulta (URL) */}
+          <button
+            type="button"
+            onClick={handleCompartirConsulta}
+            className="btn-responsive-accion"
+            style={{
+              background: copiadoConsulta ? "#ECFDF5" : "#F8FAFC",
+              color: copiadoConsulta ? "#047857" : "#334155",
+              border: copiadoConsulta ? "1px solid #10B981" : "1px solid #CBD5E1",
+              padding: "10px 16px",
+              borderRadius: "10px",
+              fontSize: "0.85rem",
+              fontWeight: 700,
+              cursor: "pointer",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "8px",
+              boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
+              transition: "all 0.15s ease",
+            }}
+            title="Copiar enlace con los parámetros de búsqueda y filtros actuales"
+            aria-label="Compartir parámetros de consulta"
+          >
+            {copiadoConsulta ? <CheckCircle2 size={16} color="#10B981" /> : <Share2 size={16} color="#0284C7" />}
+            <span className="btn-texto-responsive">{copiadoConsulta ? "¡Copiado!" : "Compartir"}</span>
+          </button>
+
           <button
             type="button"
             onClick={manejarSincronizarLeads}

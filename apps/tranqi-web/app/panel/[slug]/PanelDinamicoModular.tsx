@@ -5,7 +5,7 @@ import Link from "next/link";
 import {
   LayoutGrid, Wrench, Shield, Users, Bell, UserCog, ClipboardList, FileText,
   Settings, X, ChevronRight, CircleUser, KeyRound, FileCheck, Folder, type LucideIcon,
-  Bot, ShoppingBag, CreditCard, Receipt, UserCheck
+  Bot, ShoppingBag, CreditCard, Receipt, UserCheck, Share2, CheckCircle2
 } from "lucide-react";
 import { AdministracionPerfilesWidget } from "@eco/gestion-usuarios/componentes/AdministracionPerfilesWidget";
 import { ConsultaUsuariosPerfilesWidget } from "@eco/gestion-usuarios/componentes/ConsultaUsuariosPerfilesWidget";
@@ -13,7 +13,7 @@ import { EmisionNotificacionesWidget, PreferenciasNotificacionWidget, BitacoraNo
 import { GestionTerminosConsentimientosWidget } from "@eco/identidad/componentes/GestionTerminosConsentimientosWidget";
 import { FormularioConfiguracionNegocio } from "@eco/configuracion-negocio/componentes/FormularioConfiguracionNegocio";
 import { FormularioSmtp } from "@eco/configuracion-negocio/componentes/FormularioSmtp";
-import { GestionTokensMcpWidget } from "@eco/configuracion-negocio";
+import { GestionTokensMcpWidget } from "@eco/configuracion-negocio/componentes/GestionTokensMcpWidget";
 import { FormularioPerfil } from "@eco/identidad/componentes/FormularioPerfil";
 import { WidgetConfiguracionMfa } from "@eco/identidad/componentes/WidgetConfiguracionMfa";
 import { SelectorRolActivo } from "../SelectorRolActivo";
@@ -396,7 +396,60 @@ export function PanelDinamicoModular({ slug, negocio }: Props) {
 
   const [widgetsAsignados, setWidgetsAsignados] = useState<string[]>(() => obtenerWidgetsInicialesDinamicos(panelIdBuscado, slug));
   const [widgetActivo, setWidgetActivo] = useState<string | null>(null);
+  const [copiadoModulo, setCopiadoModulo] = useState(false);
   const { getWidgetInfo } = useCustomWidgets();
+
+  // Inicializar widget activo desde la URL si existe (?modulo= o ?widget=)
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const mod = params.get("modulo") || params.get("widget");
+      if (mod) {
+        setWidgetActivo(mod);
+      }
+    }
+  }, []);
+
+  // Función para abrir un módulo y sincronizar la URL sin recargar
+  const abrirModulo = (wClave: string | null) => {
+    setWidgetActivo(wClave);
+    if (typeof window !== "undefined") {
+      const url = new URL(window.location.href);
+      if (wClave) {
+        url.searchParams.set("modulo", wClave);
+      } else {
+        url.searchParams.delete("modulo");
+        url.searchParams.delete("widget");
+      }
+      window.history.replaceState({}, "", url.toString());
+    }
+  };
+
+  // Compartir URL con el módulo y panel activo
+  const handleCompartirModulo = (wClave?: string | null) => {
+    if (typeof window === "undefined") return;
+    const url = new URL(window.location.href);
+    const targetW = wClave !== undefined ? wClave : widgetActivo;
+    if (targetW) {
+      url.searchParams.set("modulo", targetW);
+    } else {
+      url.searchParams.delete("modulo");
+      url.searchParams.delete("widget");
+    }
+
+    window.history.replaceState({}, "", url.toString());
+
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(url.toString()).then(() => {
+        setCopiadoModulo(true);
+        setTimeout(() => setCopiadoModulo(false), 2500);
+      }).catch(() => {
+        prompt("Copia este enlace para compartir el acceso a este módulo:", url.toString());
+      });
+    } else {
+      prompt("Copia este enlace para compartir el acceso a este módulo:", url.toString());
+    }
+  };
 
   // Cargar configuración de panel y widgets asignados (BDD + Presets de Rol + LocalStorage)
   useEffect(() => {
@@ -637,11 +690,11 @@ export function PanelDinamicoModular({ slug, negocio }: Props) {
     return (
       <div style={{ width: "100%", animation: "fadeIn 0.15s ease" }}>
         <section className="tarjeta-seccion" style={{ background: "#ffffff", borderRadius: "16px", overflow: "hidden", width: "100%", border: "1px solid #E4E4E4" }}>
-          <header style={{ padding: "16px 20px", background: "#F7F6FA", borderBottom: "1px solid #E4E4E4", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <header style={{ padding: "16px 20px", background: "#F7F6FA", borderBottom: "1px solid #E4E4E4", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "12px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
               <button
                 type="button"
-                onClick={() => setWidgetActivo(null)}
+                onClick={() => abrirModulo(null)}
                 style={{ background: "#ffffff", border: "1px solid #E4E4E4", borderRadius: "50%", width: "36px", height: "36px", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}
                 title="Cerrar y volver al panel"
               >
@@ -655,6 +708,34 @@ export function PanelDinamicoModular({ slug, negocio }: Props) {
                   {widgetActivoDef?.subtitulo || `Panel ${panelInfo.nombre}`}
                 </p>
               </div>
+            </div>
+
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              {/* Botón Compartir Módulo y Parámetros URL */}
+              <button
+                type="button"
+                onClick={() => handleCompartirModulo(widgetActivo)}
+                className="btn-responsive-accion"
+                style={{
+                  background: copiadoModulo ? "#ECFDF5" : "#ffffff",
+                  border: copiadoModulo ? "1px solid #10B981" : "1px solid #CBD5E1",
+                  color: copiadoModulo ? "#047857" : "#334155",
+                  padding: "7px 14px",
+                  borderRadius: "20px",
+                  fontSize: "0.78rem",
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  transition: "all 0.2s ease",
+                }}
+                title="Copiar enlace directo con los parámetros de este módulo"
+                aria-label="Compartir enlace directo a este módulo"
+              >
+                {copiadoModulo ? <CheckCircle2 size={14} color="#10B981" /> : <Share2 size={14} />}
+                <span className="btn-texto-responsive">{copiadoModulo ? "¡Copiado!" : "Compartir Módulo"}</span>
+              </button>
             </div>
           </header>
           <div style={{ padding: "24px" }}>
@@ -674,21 +755,56 @@ export function PanelDinamicoModular({ slug, negocio }: Props) {
           borderRadius: "20px",
           padding: "28px 32px",
           color: "#ffffff",
-          boxShadow: "0 10px 25px rgba(80, 0, 186, 0.18)"
+          boxShadow: "0 10px 25px rgba(80, 0, 186, 0.18)",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "flex-start",
+          flexWrap: "wrap",
+          gap: "16px",
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "8px" }}>
-          <LayoutGrid size={24} color="#F59E0B" />
-          <span style={{ fontSize: "0.75rem", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.08em", background: "rgba(255,255,255,0.15)", padding: "4px 10px", borderRadius: "20px" }}>
-            CONSOLA OPERATIVA DINÁMICA
-          </span>
+        <div>
+          <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "8px" }}>
+            <LayoutGrid size={24} color="#F59E0B" />
+            <span style={{ fontSize: "0.75rem", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.08em", background: "rgba(255,255,255,0.15)", padding: "4px 10px", borderRadius: "20px" }}>
+              CONSOLA OPERATIVA DINÁMICA
+            </span>
+          </div>
+          <h1 style={{ fontSize: "1.6rem", fontWeight: 900, margin: "0 0 6px 0", letterSpacing: "-0.02em" }}>
+            {panelInfo.nombre}
+          </h1>
+          <p style={{ fontSize: "0.88rem", opacity: 0.9, margin: 0, maxWidth: "680px" }}>
+            {panelInfo.descripcion}
+          </p>
         </div>
-        <h1 style={{ fontSize: "1.6rem", fontWeight: 900, margin: "0 0 6px 0", letterSpacing: "-0.02em" }}>
-          {panelInfo.nombre}
-        </h1>
-        <p style={{ fontSize: "0.88rem", opacity: 0.9, margin: 0, maxWidth: "680px" }}>
-          {panelInfo.descripcion}
-        </p>
+
+        <div>
+          <button
+            type="button"
+            onClick={() => handleCompartirModulo(null)}
+            className="btn-responsive-accion"
+            style={{
+              background: copiadoModulo ? "#10B981" : "rgba(255,255,255,0.2)",
+              border: "1px solid rgba(255,255,255,0.3)",
+              color: "#ffffff",
+              padding: "8px 16px",
+              borderRadius: "20px",
+              fontSize: "0.82rem",
+              fontWeight: 700,
+              cursor: "pointer",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+              backdropFilter: "blur(8px)",
+              transition: "all 0.2s ease",
+            }}
+            title="Compartir enlace de este panel"
+            aria-label="Compartir enlace del panel"
+          >
+            {copiadoModulo ? <CheckCircle2 size={15} /> : <Share2 size={15} />}
+            <span className="btn-texto-responsive">{copiadoModulo ? "¡Copiado!" : "Compartir Panel"}</span>
+          </button>
+        </div>
       </section>
 
       {/* SECCIÓN WIDGETS ASIGNADOS AL PANEL */}
@@ -728,7 +844,7 @@ export function PanelDinamicoModular({ slug, negocio }: Props) {
               return (
                 <div
                   key={wClave}
-                  onClick={() => setWidgetActivo(wClave)}
+                  onClick={() => abrirModulo(wClave)}
                   style={{
                     background: "#ffffff",
                     borderRadius: "16px",

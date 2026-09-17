@@ -94,6 +94,37 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
     Record<string, number>
   >({});
 
+  // Estado de feedback al copiar URL de consulta
+  const [copiadoConsulta, setCopiadoConsulta] = useState(false);
+
+  // Inicializar parámetros de consulta desde URL (Deep Linking & Compartir)
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const urlPestana = params.get("pestana");
+      const urlModo = params.get("vista") || params.get("modo");
+      const urlQ = params.get("q") || params.get("busqueda");
+      const urlCat = params.get("categoria");
+      const urlCanal = params.get("canal");
+
+      if (urlPestana === "catalogo" || urlPestana === "disponibilidad") {
+        setPestanaActiva(urlPestana);
+      }
+      if (urlModo === "admin" || urlModo === "cliente") {
+        setModoVista(urlModo);
+      }
+      if (urlQ) {
+        setBusqueda(urlQ);
+      }
+      if (urlCat) {
+        setCategoriaSeleccionada(urlCat);
+      }
+      if (urlCanal) {
+        setCanalSeleccionado(urlCanal);
+      }
+    }
+  }, []);
+
   const cargarDatos = async () => {
     setCargando(true);
     try {
@@ -122,6 +153,45 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
   useEffect(() => {
     cargarDatos();
   }, [negocio]);
+
+  // Compartir parámetros de consulta mediante URL
+  const handleCompartirConsulta = () => {
+    if (typeof window === "undefined") return;
+    const url = new URL(window.location.href);
+    if (pestanaActiva) url.searchParams.set("pestana", pestanaActiva);
+    if (modoVista) url.searchParams.set("vista", modoVista);
+    if (busqueda.trim()) {
+      url.searchParams.set("q", busqueda.trim());
+    } else {
+      url.searchParams.delete("q");
+      url.searchParams.delete("busqueda");
+    }
+    if (categoriaSeleccionada && categoriaSeleccionada !== "todas") {
+      url.searchParams.set("categoria", categoriaSeleccionada);
+    } else {
+      url.searchParams.delete("categoria");
+    }
+    if (canalSeleccionado && canalSeleccionado !== "todos") {
+      url.searchParams.set("canal", canalSeleccionado);
+    } else {
+      url.searchParams.delete("canal");
+    }
+
+    // Actualizar historial del navegador sin recargar
+    window.history.replaceState({}, "", url.toString());
+
+    // Copiar al portapapeles
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(url.toString()).then(() => {
+        setCopiadoConsulta(true);
+        setTimeout(() => setCopiadoConsulta(false), 2500);
+      }).catch(() => {
+        prompt("Copia este enlace para compartir la consulta del catálogo:", url.toString());
+      });
+    } else {
+      prompt("Copia este enlace para compartir la consulta del catálogo:", url.toString());
+    }
+  };
 
   // Carga rápida de catálogo inicial / semillas
   const handleCargarSemillas = async () => {
@@ -381,6 +451,32 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
               </button>
             </>
           )}
+
+          {/* Botón Compartir Parámetros de Consulta (URL) */}
+          <button
+            type="button"
+            onClick={handleCompartirConsulta}
+            className="btn-responsive-accion"
+            title="Copiar enlace con los filtros y parámetros de consulta del catálogo"
+            aria-label="Compartir parámetros de consulta"
+            style={{
+              background: copiadoConsulta ? "#ECFDF5" : "#F8FAFC",
+              color: copiadoConsulta ? "#047857" : "#334155",
+              border: copiadoConsulta ? "1.5px solid #10B981" : "1.5px solid #CBD5E1",
+              padding: "8px 14px",
+              borderRadius: "8px",
+              fontSize: "0.85rem",
+              fontWeight: 700,
+              cursor: "pointer",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+              transition: "all 0.2s ease",
+            }}
+          >
+            {copiadoConsulta ? <CheckCircle size={15} color="#10B981" /> : <Share2 size={15} color="#0284C7" />}
+            <span className="btn-texto-responsive">{copiadoConsulta ? "¡Copiado!" : "Compartir"}</span>
+          </button>
 
           <button
             type="button"
