@@ -97,6 +97,11 @@ function comoLista(v: unknown): string[] {
 /**
  * Pide a Aria que lea un documento. `urlFirmada` debe ser alcanzable por HTTP
  * desde el servidor de ARIA y vivir lo justo: es un documento de identidad.
+ *
+ * Va como `document_urls`, no como `image_urls`: ARIA decide por el contenido
+ * qué hacer —una imagen va al modelo tal cual; un PDF con texto se transcribe
+ * y un PDF escaneado se rasteriza—. Como `image_urls`, un PDF se descargaba
+ * etiquetado como JPEG y el modelo no veía nada.
  */
 export async function extraerDocumento(urlFirmada: string): Promise<{
   extraccion: ExtraccionDocumento;
@@ -105,7 +110,9 @@ export async function extraerDocumento(urlFirmada: string): Promise<{
   const config = resolverAgenteDesdeEntorno("TRQ_CLIENTE") || resolverAgenteDesdeEntorno("ARIA");
   if (!config) throw new Error("Falta la configuración del agente de Aria (TRQ_CLIENTE_* o ARIA_*).");
 
-  const respuesta = await invocarAgente(config, PROMPT_EXTRACCION, undefined, undefined, [urlFirmada]);
+  const respuesta = await invocarAgente(config, PROMPT_EXTRACCION, undefined, undefined, undefined, [
+    urlFirmada,
+  ]);
   const json = extraerJson(respuesta.response);
 
   if (!json) {
