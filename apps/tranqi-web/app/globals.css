@@ -14,11 +14,13 @@
 }
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
-/* Scroll PAGINADO: una sección = una página */
-html {
-  scroll-behavior: smooth;
-  scroll-snap-type: y mandatory;
-}
+/* Scroll PAGINADO: una sección = una página -- SOLO en la landing.
+   Estaba en `html` a secas y lo heredaba todo el sitio: en /vacantes el único
+   <section> quedaba como único punto de anclaje obligatorio y el navegador
+   devolvía ahí cada intento de bajar (TRQ-012). La landing es la única página
+   con `.nav-landing`, así que el anclaje se condiciona a ella. */
+html { scroll-behavior: smooth; }
+html:has(.nav-landing) { scroll-snap-type: y mandatory; }
 body { color: var(--negro); background: var(--violeta); }
 ::selection { background: var(--amarillo); color: var(--negro); }
 img { max-width: 100%; display: block; }
@@ -111,7 +113,11 @@ p { line-height: 1.55; }
 #hola .saludo { font-size: clamp(3.2rem, 7.5vw, 5.8rem); font-weight: 800; }
 #hola .somos { display: flex; align-items: baseline; gap: 18px; margin-top: 22px; flex-wrap: wrap; }
 #hola .somos span { font-size: clamp(1.5rem, 2.8vw, 2.1rem); font-weight: 400; }
-#hola .somos img { height: clamp(36px, 4.6vw, 52px); width: auto; transform: translateY(6px); }
+/* En flex con baseline, la línea base de un <img> es su borde inferior, que en
+   el logo es el final de la cola de la "q": las letras quedaban por encima de
+   "somos". La cola mide el 22 % del alto del logo; bajarlo esa proporción (no
+   6px fijos) alinea las bases en los tres tamaños del clamp. */
+#hola .somos img { height: clamp(36px, 4.6vw, 52px); width: auto; transform: translateY(22%); }
 #hola .desc { margin-top: 36px; font-size: clamp(1.1rem, 1.9vw, 1.4rem); max-width: 700px; font-weight: 500; }
 #hola .tres { margin-top: 32px; display: flex; flex-direction: column; gap: 4px; }
 #hola .tres b { font-size: clamp(1.4rem, 2.6vw, 2rem); font-weight: 800; }
@@ -175,6 +181,11 @@ p { line-height: 1.55; }
 #planes { background: var(--amarillo); }
 #planes h2 { font-size: clamp(1.8rem, 3.4vw, 2.7rem); }
 #planes .precio { font-size: clamp(3.6rem, 9vw, 7.4rem); font-weight: 900; letter-spacing: -0.04em; line-height: 1; margin-top: 14px; }
+/* letter-spacing se hereda YA CALCULADO en px: los -0.04em del precio son
+   -4,7px a 7.4rem, y aplicados a "al año" (0.35em) se comían el espacio y se
+   leía "alaño". El periodo declara su propio espaciado, que sí se mide contra
+   su tamaño. */
+#planes .precio .periodo { font-size: 0.35em; font-weight: 800; letter-spacing: -0.01em; }
 #planes .sub { margin-top: 22px; font-weight: 700; font-size: clamp(1.1rem, 1.9vw, 1.35rem); max-width: 560px; }
 #planes .nota { margin-top: 12px; font-size: 1.02rem; max-width: 520px; }
 #planes .btn { margin-top: 32px; }
@@ -207,7 +218,7 @@ p { line-height: 1.55; }
   #red .beneficios { columns: 1; }
   #problema .items { margin-left: 0; }
   section { min-height: auto; padding: 110px 0 70px; scroll-snap-align: none; }
-  html { scroll-snap-type: none; }
+  html:has(.nav-landing) { scroll-snap-type: none; }
 
   /* La sección se encogía a 344px: la frase ya no cabía abajo, subía sobre
      la zona clara de la foto y el velo (pensado para el tercio inferior) no
@@ -383,6 +394,118 @@ p { line-height: 1.55; }
 
 .enlace-auth { font-size: 0.9rem; }
 .enlace-auth a { color: var(--violeta); font-weight: 700; }
+
+/* ═══════════ Bolsa de empleo (/vacantes, TRQ-012) ═══════════
+   Página pública: arriba el registro expresivo de la landing (violeta pleno,
+   píldoras), abajo el sobrio de las pantallas de trabajo (papel, tarjetas
+   blancas con línea de 1 px). Antes llevaba la paleta oscura de GitHub en 55
+   estilos inline y `font-family: sans-serif`, que tapaba a Archivo. */
+.vacantes { min-height: 100vh; background: var(--papel-cliente); color: var(--negro); }
+
+.vacantes-nav {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 24px;
+  padding: 16px clamp(20px, 4vw, 48px); background: var(--violeta);
+}
+.vacantes-marca { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+.vacantes-marca img { height: 30px; width: auto; }
+.vacantes-marca span {
+  font-size: 0.69rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--menta); box-shadow: inset 0 0 0 1px currentColor; padding: 4px 10px; border-radius: 999px;
+}
+.vacantes-enlaces { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 24px; }
+.vacantes-enlaces a { color: var(--blanco); text-decoration: none; font-size: 0.94rem; font-weight: 500; }
+.vacantes-enlaces a:hover { color: var(--menta); }
+/* la lima es el acento del lado abogado (§2 del sistema visual) */
+.vacantes-enlaces a.es-abogado { color: var(--lima); font-weight: 700; }
+
+.vacantes-portada {
+  background: var(--violeta); color: var(--blanco); text-align: center;
+  padding: clamp(48px, 8vw, 88px) clamp(20px, 4vw, 48px) clamp(40px, 6vw, 64px);
+}
+.vacantes-portada h1 { font-size: clamp(1.9rem, 4vw, 3rem); max-width: 760px; margin: 0 auto; color: var(--blanco); }
+.vacantes-portada p { max-width: 640px; margin: 16px auto 0; font-size: 1.05rem; color: rgba(255, 255, 255, 0.85); }
+.vacantes-filtros { display: flex; justify-content: center; flex-wrap: wrap; gap: 10px; margin-top: 32px; }
+.vacantes-filtros button {
+  font: inherit; font-size: 0.9rem; font-weight: 700; cursor: pointer;
+  padding: 9px 18px; border: none; border-radius: 999px;
+  background: transparent; color: var(--blanco); box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, 0.55);
+  transition: background 0.15s, color 0.15s, box-shadow 0.15s;
+}
+.vacantes-filtros button:hover { box-shadow: inset 0 0 0 1.5px var(--blanco); }
+.vacantes-filtros button[aria-pressed="true"] { background: var(--blanco); color: var(--violeta); box-shadow: none; }
+
+.vacantes-lista { max-width: 1120px; margin: 0 auto; padding: 40px clamp(20px, 4vw, 48px) 72px; }
+.vacantes-lista .rejilla-auto { --min: 420px; --hueco: 24px; }
+.vacante {
+  display: flex; flex-direction: column; gap: 14px;
+  background: var(--blanco); border: 1px solid rgba(17, 17, 17, 0.1); border-radius: 16px; padding: 24px;
+}
+.vacante-cabecera { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.vacante-cabecera h2 { font-size: 1.3rem; margin-top: 10px; }
+/* etiquetas: versalita 11 px, peso 800, fondo diluido (§6) */
+.vacante-area, .vacante-contrato {
+  display: inline-block; font-size: 0.69rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase;
+  padding: 4px 10px; border-radius: 999px;
+}
+.vacante-area { color: var(--violeta); background: rgba(80, 0, 186, 0.08); }
+.vacante-contrato { flex: none; color: rgba(17, 17, 17, 0.7); background: rgba(17, 17, 17, 0.06); }
+.vacante-desc { font-size: 0.95rem; color: rgba(17, 17, 17, 0.75); }
+.vacante-requisitos b { display: block; font-size: 0.85rem; font-weight: 800; margin-bottom: 6px; }
+.vacante-requisitos ul { padding-left: 18px; font-size: 0.9rem; line-height: 1.55; color: rgba(17, 17, 17, 0.75); }
+.vacante-pie {
+  margin-top: auto; padding-top: 16px; border-top: 1px solid rgba(17, 17, 17, 0.1);
+  display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px;
+}
+.vacante-pie span { font-size: 0.85rem; color: rgba(17, 17, 17, 0.65); }
+
+.vacantes-accion {
+  font: inherit; font-size: 0.92rem; font-weight: 700; cursor: pointer;
+  border: none; border-radius: 999px; padding: 10px 20px; transition: background 0.15s;
+}
+.vacantes-accion.es-principal { background: var(--violeta); color: var(--blanco); }
+.vacantes-accion.es-principal:hover { background: var(--violeta-oscuro); }
+.vacantes-accion.es-discreta { background: transparent; color: var(--negro); box-shadow: inset 0 0 0 1px rgba(17, 17, 17, 0.2); }
+.vacantes-accion.es-discreta:hover { background: rgba(17, 17, 17, 0.05); }
+.vacantes-accion:disabled { opacity: 0.6; cursor: default; }
+
+.vacantes-velo {
+  position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center; padding: 16px;
+  background: rgba(30, 0, 70, 0.6); backdrop-filter: blur(4px);
+}
+.vacantes-modal {
+  width: 100%; max-width: 620px; max-height: 90vh; overflow-y: auto;
+  background: var(--blanco); border-radius: 16px; padding: 28px;
+}
+.vacantes-modal-cabecera {
+  display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;
+  padding-bottom: 14px; margin-bottom: 18px; border-bottom: 1px solid rgba(17, 17, 17, 0.1);
+}
+.vacantes-modal-cabecera h3 { font-size: 1.2rem; font-weight: 800; }
+.vacantes-modal-cabecera p { font-size: 0.85rem; font-weight: 600; color: var(--violeta); margin-top: 2px; }
+.vacantes-cerrar {
+  flex: none; width: 36px; height: 36px; border: none; border-radius: 8px; cursor: pointer;
+  background: none; color: rgba(17, 17, 17, 0.55); font-size: 1.5rem; line-height: 1;
+}
+.vacantes-cerrar:hover { background: rgba(17, 17, 17, 0.06); color: var(--negro); }
+/* error con los tonos de "urgente" (§6); éxito con la menta, que no es fondo
+   de texto pequeño y por eso lleva encima la tinta honda (§8) */
+.vacantes-aviso { padding: 10px 14px; border-radius: 8px; font-size: 0.88rem; margin-bottom: 16px; }
+.vacantes-aviso.es-error { background: #FFE9DE; color: #C33F00; }
+.vacantes-aviso.es-exito { background: rgba(177, 251, 227, 0.55); color: var(--menta-honda); }
+.vacantes-form { display: flex; flex-direction: column; gap: 14px; }
+.vacantes-form .rejilla-auto { --min: 200px; --hueco: 12px; }
+.vacantes-campo label { display: block; font-size: 0.82rem; font-weight: 600; margin-bottom: 5px; }
+.vacantes-campo label small { font-size: 0.78rem; font-weight: 700; color: var(--violeta); margin-left: 8px; }
+.vacantes-campo input {
+  width: 100%; font: inherit; font-size: 0.92rem; color: var(--negro); background: var(--blanco);
+  border: 1px solid rgba(17, 17, 17, 0.18); border-radius: 8px; padding: 9px 12px;
+}
+.vacantes-campo input[type="file"] { padding: 7px 10px; font-size: 0.85rem; color: rgba(17, 17, 17, 0.7); }
+.vacantes-campo input:focus-visible { outline: 2px solid var(--violeta); outline-offset: 1px; }
+.vacantes-consentimiento { display: flex; gap: 10px; align-items: flex-start; margin-top: 6px; }
+.vacantes-consentimiento input { margin-top: 3px; accent-color: var(--violeta); }
+.vacantes-consentimiento label { font-size: 0.82rem; line-height: 1.45; color: rgba(17, 17, 17, 0.7); }
+.vacantes-botones { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; margin-top: 10px; }
 
 /* ═══════════ Panel administrativo ═══════════
    Sistema visual sobrio: ver gobernanza/productos/tranqi/sistema-visual.md.
@@ -1070,6 +1193,19 @@ a.cifra-tarjeta:hover { border-color: var(--panel-gris); transform: translateY(-
   grid-template-columns: repeat(auto-fit, minmax(min(var(--min, 220px), 100%), 1fr));
   gap: var(--hueco, 14px);
 }
+
+/* Volver de una subvista del panel a la vista que la abrió (TRQ-012). Control,
+   no píldora: radio de 8 px (§5). En ≤640px `.btn-responsive-accion` lo deja en
+   solo icono. */
+.boton-volver-widget {
+  display: inline-flex; align-items: center; gap: 6px; flex: none;
+  font: inherit; font-size: 0.85rem; font-weight: 700; cursor: pointer;
+  padding: 8px 14px 8px 10px; border-radius: 8px;
+  background: var(--blanco); color: var(--negro);
+  border: 1px solid var(--panel-linea, #E4E4E4);
+  transition: background 0.15s, border-color 0.15s;
+}
+.boton-volver-widget:hover { background: var(--panel-linea-suave, #FAFAF9); border-color: var(--negro); }
 
 /* Fila de acciones: en fila mientras quepan, apiladas cuando no. El apilado
    real va en el bloque @media del final del archivo (§10 del sistema visual). */
@@ -2458,12 +2594,19 @@ div.tarjeta-acceso-icono { display: grid; place-items: center; padding: 0; }
   border-top: 1px solid rgba(216, 255, 179, 0.16);
 }
 
+/* La cinta sale por x=174, justo bajo esta línea, y no hay alto para pasarla
+   por debajo. Con fondo propio (la tinta de la sección) el texto pequeño se lee
+   igual pase o no la cinta: blanco al 80 % sobre #052A23 da 10:1; sin él, sobre
+   la esmeralda, bajaba a 2,8:1 (TRQ-012). */
 #equipo .confianza-equipo {
   display: flex;
   align-items: center;
   gap: 10px;
   font-size: 0.84rem;
-  color: rgba(255, 255, 255, 0.65);
+  color: rgba(255, 255, 255, 0.8);
+  background: var(--esmeralda-tinta);
+  padding: 6px 14px 6px 10px;
+  border-radius: 999px;
 }
 #equipo .confianza-equipo svg {
   width: 18px;
@@ -3260,4 +3403,10 @@ div.tarjeta-acceso-icono { display: grid; place-items: center; padding: 0; }
   display: flex;
   gap: 0.5rem;
   flex-wrap: wrap;
+}
+
+/* TRQ-012 · objetivo táctil de la bolsa de empleo y del botón Volver (§11) */
+@media (pointer: coarse) {
+  .vacantes-filtros button, .vacantes-accion, .boton-volver-widget { min-height: 44px; }
+  .vacantes-cerrar { width: 44px; height: 44px; }
 }

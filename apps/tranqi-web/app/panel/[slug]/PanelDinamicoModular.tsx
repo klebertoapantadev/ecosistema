@@ -4,9 +4,11 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   LayoutGrid, Wrench, Shield, Users, Bell, UserCog, ClipboardList, FileText,
-  Settings, X, ChevronRight, CircleUser, KeyRound, FileCheck, Folder, type LucideIcon,
+  Settings, ChevronRight, CircleUser, KeyRound, FileCheck, Folder, type LucideIcon,
   Bot, ShoppingBag, CreditCard, Receipt, UserCheck, Share2, CheckCircle2
 } from "lucide-react";
+import { useWidgetEnUrl } from "../useWidgetEnUrl";
+import { BotonVolverWidget } from "../BotonVolverWidget";
 import { AdministracionPerfilesWidget } from "@eco/gestion-usuarios/componentes/AdministracionPerfilesWidget";
 import { ConsultaUsuariosPerfilesWidget } from "@eco/gestion-usuarios/componentes/ConsultaUsuariosPerfilesWidget";
 import { EmisionNotificacionesWidget, PreferenciasNotificacionWidget, BitacoraNotificacionesWidget, MonitoreoNotificacionesUsuariosWidget } from "@eco/notificaciones";
@@ -395,35 +397,9 @@ export function PanelDinamicoModular({ slug, negocio }: Props) {
   });
 
   const [widgetsAsignados, setWidgetsAsignados] = useState<string[]>(() => obtenerWidgetsInicialesDinamicos(panelIdBuscado, slug));
-  const [widgetActivo, setWidgetActivo] = useState<string | null>(null);
+  const { widgetActivo, abrir, cerrar } = useWidgetEnUrl();
   const [copiadoModulo, setCopiadoModulo] = useState(false);
   const { getWidgetInfo } = useCustomWidgets();
-
-  // Inicializar widget activo desde la URL si existe (?modulo= o ?widget=)
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const params = new URLSearchParams(window.location.search);
-      const mod = params.get("modulo") || params.get("widget");
-      if (mod) {
-        setWidgetActivo(mod);
-      }
-    }
-  }, []);
-
-  // Función para abrir un módulo y sincronizar la URL sin recargar
-  const abrirModulo = (wClave: string | null) => {
-    setWidgetActivo(wClave);
-    if (typeof window !== "undefined") {
-      const url = new URL(window.location.href);
-      if (wClave) {
-        url.searchParams.set("modulo", wClave);
-      } else {
-        url.searchParams.delete("modulo");
-        url.searchParams.delete("widget");
-      }
-      window.history.replaceState({}, "", url.toString());
-    }
-  };
 
   // Compartir URL con el módulo y panel activo
   const handleCompartirModulo = (wClave?: string | null) => {
@@ -613,7 +589,7 @@ export function PanelDinamicoModular({ slug, negocio }: Props) {
         return <BandejaClientesCRM />;
       case "alta_cliente_crm":
       case "alta_cliente":
-        return <ModalAltaClienteAsistida abierto={true} alCerrar={() => setWidgetActivo(null)} alGuardarExitoso={() => setWidgetActivo(null)} />;
+        return <ModalAltaClienteAsistida abierto={true} alCerrar={cerrar} alGuardarExitoso={cerrar} />;
       case "agentes_ia":
         // La consola de agentes es una pantalla propia (/panel/agentes) y no un
         // widget en linea: necesita un layout con gate aal2 y hace lecturas a
@@ -624,11 +600,11 @@ export function PanelDinamicoModular({ slug, negocio }: Props) {
       case "firma_documentos":
       case "firma_pdf":
       case "firma":
-        return <WidgetFirmaDocumentosPdf negocio={negocio} onCerrar={() => setWidgetActivo(null)} mostrarBotonCerrar={false} />;
+        return <WidgetFirmaDocumentosPdf negocio={negocio} onCerrar={cerrar} mostrarBotonCerrar={false} />;
       case "billetera_documentos":
       case "billetera":
       case "documentos":
-        return <WidgetBilleteraDocumentos negocio={negocio} onCerrar={() => setWidgetActivo(null)} />;
+        return <WidgetBilleteraDocumentos negocio={negocio} onCerrar={cerrar} />;
       case "mfa_seguridad":
       case "mfa":
       case "seguridad_mfa":
@@ -692,14 +668,7 @@ export function PanelDinamicoModular({ slug, negocio }: Props) {
         <section className="tarjeta-seccion" style={{ background: "#ffffff", borderRadius: "16px", overflow: "hidden", width: "100%", border: "1px solid #E4E4E4" }}>
           <header style={{ padding: "16px 20px", background: "#F7F6FA", borderBottom: "1px solid #E4E4E4", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "12px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-              <button
-                type="button"
-                onClick={() => abrirModulo(null)}
-                style={{ background: "#ffffff", border: "1px solid #E4E4E4", borderRadius: "50%", width: "36px", height: "36px", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}
-                title="Cerrar y volver al panel"
-              >
-                <X size={18} color="#111" />
-              </button>
+              <BotonVolverWidget onClick={cerrar} destino={panelInfo.nombre || "el panel"} />
               <div>
                 <h2 style={{ fontSize: "1.1rem", fontWeight: 800, margin: 0, color: "#111" }}>
                   {widgetActivoDef?.titulo || widgetActivo.toUpperCase()}
@@ -844,7 +813,7 @@ export function PanelDinamicoModular({ slug, negocio }: Props) {
               return (
                 <div
                   key={wClave}
-                  onClick={() => abrirModulo(wClave)}
+                  onClick={() => abrir(wClave)}
                   style={{
                     background: "#ffffff",
                     borderRadius: "16px",

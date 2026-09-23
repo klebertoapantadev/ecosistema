@@ -240,7 +240,7 @@ export function ConsultaUsuariosPerfilesWidget({ negocio = "TRANQ" }: Props) {
 
   const usuariosFiltrados = usuarios.filter((u) => {
     const nombreCompleto = [u.usu_nombres, u.usu_apellidos].filter(Boolean).join(" ").toLowerCase();
-    const correo = u.usu_correo.toLowerCase();
+    const correo = (u.usu_correo || "").toLowerCase();
     const texto = filtroTexto.toLowerCase();
 
     const coincideTexto = !texto || nombreCompleto.includes(texto) || correo.includes(texto);

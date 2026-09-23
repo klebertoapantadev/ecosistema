@@ -3603,7 +3603,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                 const coincideWidget = Object.values(p.widgetsAsignadosPorPanel).flat().some(w => w.toLowerCase().includes(txt));
                 const coincideUsuario = usuariosReporte.some(u => {
                   const tieneP = p.clave === "SUPERADMIN" ? u.perfiles.includes("SUPERADMIN") : u.perfiles.map(x => x.toUpperCase()).includes(p.clave.toUpperCase());
-                  return tieneP && (u.usu_correo.toLowerCase().includes(txt) || (u.usu_nombres || "").toLowerCase().includes(txt) || (u.usu_apellidos || "").toLowerCase().includes(txt));
+                  return tieneP && ((u.usu_correo || "").toLowerCase().includes(txt) || (u.usu_nombres || "").toLowerCase().includes(txt) || (u.usu_apellidos || "").toLowerCase().includes(txt));
                 });
                 return coincidePerfil || coincideWidget || coincideUsuario;
               })
@@ -3787,7 +3787,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                           <div style={{ display: "flex", flexDirection: "column", gap: "8px", maxHeight: "380px", overflowY: "auto", paddingRight: "4px" }}>
                             {usuariosDelPerfil.map((u, idx) => {
                               const nombreCompleto = [u.usu_nombres, u.usu_apellidos].filter(Boolean).join(" ") || "Usuario Registrado";
-                              const iniciales = (u.usu_nombres?.[0] || u.usu_correo[0] || "U").toUpperCase();
+                              const iniciales = (u.usu_nombres?.[0] || u.usu_correo?.[0] || "U").toUpperCase();
 
                               return (
                                 <div

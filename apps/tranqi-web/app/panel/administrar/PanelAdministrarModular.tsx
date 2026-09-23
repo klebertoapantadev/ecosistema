@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { UserCog, Users, ClipboardList, Bell, Shield, ChevronRight, Star, Lock, X, Eye, Pencil, FileText, Sliders, RotateCcw, BarChart2, type LucideIcon } from "lucide-react";
+import { UserCog, Users, ClipboardList, Bell, Shield, ChevronRight, Star, Lock, Eye, Pencil, FileText, Sliders, RotateCcw, BarChart2, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { crearClienteNavegador } from "@eco/supabase";
 import { ConsultaUsuariosPerfilesWidget } from "@eco/gestion-usuarios/componentes/ConsultaUsuariosPerfilesWidget";
@@ -14,6 +14,8 @@ import type { RegistroAuditoria } from "@eco/auditoria";
 import { useCustomWidgets } from "../gestorTitulosWidgets";
 import { ModalEditarWidget } from "../ModalEditarWidget";
 import { ModalVerificarMFAWidget } from "../ModalVerificarMFAWidget";
+import { useWidgetEnUrl } from "../useWidgetEnUrl";
+import { BotonVolverWidget } from "../BotonVolverWidget";
 
 import { obtenerListaSolicitudesSociosAction } from "../../../modulos/socios/acciones";
 import { obtenerConfiguracionNavegacionRolAction, resetearSistemaSuperAdminAction } from "@eco/gestion-usuarios/acciones";
@@ -410,7 +412,7 @@ export function PanelAdministrarModular({ negocio = "TRANQ", esSuperAdmin = fals
   const [rolActivo, setRolActivo] = useState<string>("ADMINISTRADOR");
   const [favoritos, setFavoritos] = useState<string[]>(["gestion_usuarios", "socios"]);
   const [modulosAsignados, setModulosAsignados] = useState<ModuloAdminDef[]>(obtenerModulosInicialesAdmin);
-  const [widgetActivo, setWidgetActivo] = useState<string | null>(null);
+  const { widgetActivo, abrir, cerrar } = useWidgetEnUrl();
   const [widgetEditar, setWidgetEditar] = useState<{
     id: string;
     titulo: string;
@@ -514,17 +516,6 @@ export function PanelAdministrarModular({ negocio = "TRANQ", esSuperAdmin = fals
     return () => clearInterval(interval);
   }, []);
 
-  // Apertura directa por parametro ?widget= en URL
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const params = new URLSearchParams(window.location.search);
-      const paramWidget = params.get("widget");
-      if (paramWidget) {
-        setWidgetActivo(paramWidget);
-      }
-    }
-  }, []);
-
   // Cargar widgets dinámicamente desde la matriz de permisos para el perfil activo
   useEffect(() => {
     async function cargarConfiguracionPanel() {
@@ -609,7 +600,7 @@ export function PanelAdministrarModular({ negocio = "TRANQ", esSuperAdmin = fals
       const urlParams = new URLSearchParams(window.location.search);
       const modQuery = urlParams.get("modulo") || urlParams.get("w");
       if (modQuery && MODULOS_ADMIN.some(m => m.id === modQuery)) {
-        setWidgetActivo(modQuery);
+        abrir(modQuery);
       }
 
       const guardados = localStorage.getItem("tranqi_favoritos_administrar");
@@ -617,7 +608,7 @@ export function PanelAdministrarModular({ negocio = "TRANQ", esSuperAdmin = fals
         setFavoritos(JSON.parse(guardados));
       }
     } catch { /* Ignorar */ }
-  }, []);
+  }, [abrir]);
 
   const toggleFavorito = (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
@@ -651,7 +642,7 @@ export function PanelAdministrarModular({ negocio = "TRANQ", esSuperAdmin = fals
         return;
       }
     }
-    setWidgetActivo(id);
+    abrir(id);
   };
 
   const handleConfirmarMfaExitoso = () => {
@@ -659,7 +650,7 @@ export function PanelAdministrarModular({ negocio = "TRANQ", esSuperAdmin = fals
       try {
         localStorage.setItem(`tranqi_mfa_widget_ts_${widgetMfaPendiente.id}`, Date.now().toString());
       } catch { /* Ignorar */ }
-      setWidgetActivo(widgetMfaPendiente.id);
+      abrir(widgetMfaPendiente.id);
       setWidgetMfaPendiente(null);
     }
   };
@@ -725,29 +716,7 @@ export function PanelAdministrarModular({ negocio = "TRANQ", esSuperAdmin = fals
               </div>
             </div>
 
-            {/* Botón Circular de Cerrar (X) */}
-            <button
-              type="button"
-              onClick={() => setWidgetActivo(null)}
-              title="Cerrar módulo y volver a Administrar"
-              style={{
-                background: "var(--blanco, #ffffff)",
-                border: "1.5px solid var(--panel-linea, #E4E4E4)",
-                color: "var(--negro, #111111)",
-                borderRadius: "50%",
-                width: "36px",
-                height: "36px",
-                flexShrink: 0,
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
-                transition: "all 0.15s ease"
-              }}
-            >
-              <X size={18} />
-            </button>
+            <BotonVolverWidget onClick={cerrar} destino="Administrar" />
           </header>
 
           {/* Cuerpo del Módulo Activo - NATIVO SIN IFRAME */}
