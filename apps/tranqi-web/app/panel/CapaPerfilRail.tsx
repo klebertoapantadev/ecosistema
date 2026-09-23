@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { createContext, useCallback, useContext, useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 
 const MAPA_CLASES_PERFIL: Record<string, string> = {
@@ -15,16 +15,45 @@ const MAPA_CLASES_PERFIL: Record<string, string> = {
   superadmin: "perfil-superadmin"
 };
 
+/** Cookie y no localStorage: el layout la lee en el servidor y pinta el rail
+ *  ya plegado. Con localStorage el primer HTML salía abierto y se cerraba
+ *  después de hidratar, un salto visible en cada navegación completa. */
+export const COOKIE_RAIL_PLEGADO = "tranqi_rail_plegado";
+
+interface ContextoRail {
+  plegado: boolean;
+  alternar: () => void;
+}
+
+const RailContexto = createContext<ContextoRail>({ plegado: false, alternar: () => {} });
+
+/** Estado del rail (TRQ-013). Lo consumen el botón de plegar y la
+ *  navegación, que solo muestra tooltips cuando las etiquetas no se ven. */
+export function useRail(): ContextoRail {
+  return useContext(RailContexto);
+}
+
 export function CapaPerfilRail({
   claseBase,
+  railPlegadoInicial = false,
   children,
 }: {
   claseBase: string;
+  railPlegadoInicial?: boolean;
   puedeConmutar?: boolean;
   children: React.ReactNode;
 }) {
   const searchParams = useSearchParams();
   const [clasePerfil, setClasePerfil] = useState<string>(claseBase);
+  const [plegado, setPlegado] = useState<boolean>(railPlegadoInicial);
+
+  const alternar = useCallback(() => {
+    setPlegado((antes) => {
+      const ahora = !antes;
+      document.cookie = `${COOKIE_RAIL_PLEGADO}=${ahora ? "1" : "0"}; path=/; max-age=31536000; samesite=lax`;
+      return ahora;
+    });
+  }, []);
 
   useEffect(() => {
     // 1. Parámetro de URL `?modo=...` tiene máxima prioridad
@@ -62,5 +91,9 @@ export function CapaPerfilRail({
     setClasePerfil(claseBase);
   }, [searchParams, claseBase]);
 
-  return <div className={`panel-layout ${clasePerfil}`}>{children}</div>;
+  return (
+    <RailContexto.Provider value={{ plegado, alternar }}>
+      <div className={`panel-layout ${clasePerfil}${plegado ? " rail-plegado" : ""}`}>{children}</div>
+    </RailContexto.Provider>
+  );
 }

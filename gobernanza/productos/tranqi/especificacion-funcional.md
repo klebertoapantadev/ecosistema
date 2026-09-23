@@ -43,7 +43,7 @@ Tranqi adopta las mejores prácticas y estándares internacionales de **Law Prac
 | **`TRQ-DOC-001`** | **Gestión Documental** | **Gestor Documental por Etapas Procesales, Billetera y Versionamiento vN** | 🟡 Especificado | **30%** | Kleber Toapanta |
 | **`TRQ-CAS-003`** | **Actuaciones** | **Bitácora Procesal, Plazos COGEP y Notas Internas vs. Públicas** | 🟡 Especificado | **25%** | Kleber Toapanta / Jesus Navarrete |
 | **`TRQ-DIG-001`** | **Digitalización** | **Ingesta de Archivo Físico Histórico, OCR Masivo y Cerebro de Precedentes** | 🟡 Especificado | **25%** | Jesus Navarrete (IA) / Kleber Toapanta |
-| **`TRQ-CLI-001`** | **Cliente** | **Portal de Casos, Solicitud de Patrocinio y Consultas Telemáticas** | 🟡 En Desarrollo | **30%** | Jesus Navarrete / Kleber Toapanta |
+| **`TRQ-CLI-001`** | **Cliente** | **Portal de Casos, Solicitud de Patrocinio y Consultas Telemáticas** | 🟡 En Desarrollo | **40%** | Jesus Navarrete / Kleber Toapanta |
 | **`TRQ-CLI-002`** | **Cliente** | **Módulo Express de Revisión y Dictamen Legal de Contratos/Minutas (IA)** | ⏳ Pendiente | **0%** | **Jesus Navarrete (IA)** |
 | **`TRQ-CLI-003`** | **Cliente** | **Directorio Público y Selección Geolocalizada de Abogados** | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`TRQ-CLI-004`** | **Cliente** | **Calculadora de Honorarios, Pensiones (MIES) e Indemnizaciones Laborales** | ⏳ Pendiente | **0%** | Jesus Navarrete |
@@ -170,10 +170,11 @@ operativo que TRQ-CLI-002, TRQ-ABG-005 y TRQ-ADM-002 consultan; ver
 ## 2. Módulos para el Rol Cliente
 
 ### TRQ-CLI-001 — Portal de Casos, Solicitud de Patrocinio y Consultas Telemáticas
-**Responsables:** Jesus Navarrete / Kleber Toapanta | **Estado:** 🟡 En Desarrollo (30%)
-- **✅ Consultas telemáticas (2026-09-05):** el afiliado agenda en `/panel/agendar` eligiendo materia, servicio y hora libre, y sigue sus citas en `/panel/mis-citas`. No elige abogado: la asignación es por turno rotativo (`PLT-020`). Puede hacerlo también por chat con su asistente.
+**Responsables:** Jesus Navarrete / Kleber Toapanta | **Estado:** 🟡 En Desarrollo (40%)
+- **✅ Consultas telemáticas (2026-09-05):** el afiliado agenda en `/panel/agendar` eligiendo materia, servicio y hora libre, y sigue sus citas en `/panel/mis-citas`. No elige abogado: la asignación es por turno rotativo (`PLT-020`). Puede hacerlo también por chat con su asistente. Desde 2026-09-22 (`TRQ-013`) la reserva es un asistente de cuatro pasos (materia, atención, horario, confirmación) que no deja avanzar sin elegir; la lógica de cobertura y reserva no cambia.
+- **✅ Inicio del cliente con datos reales (2026-09-22, `TRQ-013`):** `/panel` muestra los trámites abiertos, las consultas respondidas, la billetera (con lo vencido o por vencer) y la próxima cita, contados desde `trq_caso_judicial`, `trq_consulta_rapida`, `trq_billetera_documento` y `trq_cita`; y el caso abierto más reciente con su etapa, sus documentos y sus citas. Solo lectura, filtrado por el propio cliente además de RLS. Sin datos inventados: si no hay caso, estado vacío con acceso a agendar. Ver `apps/tranqi-web/modulos/inicio-cliente/README.md`.
 - **Orientación y Consulta Telemática:** Atención de consultas preliminares asistidas por ARIA (`trq_consulta_rapida`), escalamiento a reserva de citas profesionales (`PLT-020` / `TRQ-ABG-004`) y acceso a salas de videoconsulta telemática segura.
-- **Portal de Casos y Patrocinio Judicial (Pendiente):** Solicitud de patrocinio legal por materias, visualización de la línea de tiempo procesal del caso, abogados asignados, próximas audiencias y actuaciones procesales sincronizadas desde el SATJE.
+- **Portal de Casos y Patrocinio Judicial (Parcial: el inicio ya muestra el caso abierto más reciente; el resto pendiente):** Solicitud de patrocinio legal por materias, visualización de la línea de tiempo procesal del caso, abogados asignados, próximas audiencias y actuaciones procesales sincronizadas desde el SATJE.
 
 ### TRQ-CLI-002 — Módulo Express de Revisión de Contratos y Minutas
 **Responsable:** Jesus Navarrete | **Estado:** ⏳ Pendiente (0%)

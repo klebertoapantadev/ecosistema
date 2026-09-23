@@ -15,7 +15,13 @@ import { WidgetNotificacionesCliente } from "@eco/notificaciones";
 import { obtenerSolicitudPropia } from "../../modulos/socios/consultas";
 import { ConsolaSuperAdminModular } from "./ConsolaSuperAdminModular";
 import { TarjetaEstadoSolicitudHome } from "./TarjetaEstadoSolicitudHome";
-import { SeccionCoberturaCliente, CarruselProductosCliente } from "@eco/comercio";
+import { SeccionCoberturaCliente } from "@eco/comercio";
+import { MenuCuenta } from "./MenuCuenta";
+import { obtenerResumenInicioCliente, type DocumentoBilletera } from "../../modulos/inicio-cliente/consultas";
+import { CifraQueCuenta } from "../../modulos/inicio-cliente/componentes/CifraQueCuenta";
+import { TarjetaCaso } from "../../modulos/inicio-cliente/componentes/TarjetaCaso";
+import { RejillaPlanes } from "../../modulos/inicio-cliente/componentes/RejillaPlanes";
+import { BilleteraVacia } from "../../modulos/inicio-cliente/componentes/BilleteraVacia";
 
 export const metadata: Metadata = { title: "Panel — tranqi" };
 
@@ -92,6 +98,19 @@ function iniciales(nombres?: string | null, apellidos?: string | null, correo?: 
   return ((partes[0]?.[0] ?? "?") + (partes[1]?.[0] ?? "?")).toUpperCase();
 }
 
+function fotoDe(detalle: unknown): string | null {
+  const foto = (detalle as Record<string, unknown> | null | undefined)?.foto_url;
+  return typeof foto === "string" ? foto : null;
+}
+
+function textoRol(modo: ModoRol): string {
+  if (modo === "abogado") return "Socio Abogado";
+  if (modo === "admin") return "Administrador";
+  if (modo === "superadmin") return "SuperAdmin Plataforma";
+  if (modo === "operador") return "Operador / Auxiliar";
+  return modo.charAt(0).toUpperCase() + modo.slice(1);
+}
+
 export default async function PagePanel({ searchParams }: Props) {
   const perfil = await obtenerPerfilActual();
   const perfiles = await obtenerPerfiles(NEGOCIO);
@@ -124,28 +143,16 @@ export default async function PagePanel({ searchParams }: Props) {
       <div className="barra-superior-panel">
         <BuscadorModulosGlobal nivelUsuario={nivelMaximo} esSuperadmin={puedeConmutar} />
 
-        <Link
-          href={puedeConmutar ? "/panel/cuenta?widget=ver_como" : "/panel/cuenta"}
-          className="usuario-barra"
-          style={{ textDecoration: "none", color: "inherit", cursor: "pointer" }}
-          title={puedeConmutar ? "Tienes múltiples roles asignados. Haz clic para cambiar de rol activo" : "Ver mi perfil"}
-        >
-          <div className="usuario-barra-foto" style={{ overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            {typeof (perfil?.usu_detalle_usuario as Record<string, unknown>)?.foto_url === "string" ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={String((perfil?.usu_detalle_usuario as Record<string, unknown>).foto_url)} alt={nombreCompleto} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-            ) : (
-              iniciales(perfil?.usu_nombres, perfil?.usu_apellidos, perfil?.usu_correo)
-            )}
-          </div>
-          <div className="usuario-barra-txt">
-            <b>{nombreCompleto}</b>
-            <span>
-              {modo === "abogado" ? "Socio Abogado" : modo === "admin" ? "Administrador" : modo === "superadmin" ? "SuperAdmin Plataforma" : modo === "operador" ? "Operador / Auxiliar" : modo.charAt(0).toUpperCase() + modo.slice(1)}
-              {puedeConmutar && " ▾"}
-            </span>
-          </div>
-        </Link>
+        {/* TRQ-013 (5A): menú de cuenta en vez del enlace suelto a /panel/cuenta. */}
+        <MenuCuenta
+          nombreCompleto={nombreCompleto}
+          correo={perfil?.usu_correo ?? null}
+          fotoUrl={fotoDe(perfil?.usu_detalle_usuario)}
+          iniciales={iniciales(perfil?.usu_nombres, perfil?.usu_apellidos, perfil?.usu_correo)}
+          rolTexto={textoRol(modo)}
+          puedeConmutar={puedeConmutar}
+          modoActual={modo}
+        />
       </div>
 
       {/* POSICIÓN #1 EN PANEL HOME: Si existe una solicitud en proceso o pendiente de firma, aparece al inicio absoluto */}
@@ -162,7 +169,7 @@ export default async function PagePanel({ searchParams }: Props) {
       ) : modo === "operador" ? (
         <PanelOperador nombreCompleto={nombreCompleto} />
       ) : (
-        <PanelCliente saludo={saludo} nombre={nombre} />
+        <PanelCliente saludo={saludo} nombre={nombre} usuarioId={perfil?.usu_id ?? null} />
       )}
 
       <footer className="pie-panel">
@@ -178,20 +185,112 @@ function SeccionNotificacionesEcosistema({ esAdmin }: { esAdmin: boolean }) {
   return <WidgetNotificacionesCliente negocio="tranqi" esAdmin={esAdmin} />;
 }
 
-/* ──────────────── 1. PANEL MODO CLIENTE ──────────────── */
-function PanelCliente({ saludo, nombre }: { saludo: string | null; nombre: string }) {
+/* ──────────────── 1. PANEL MODO CLIENTE ────────────────
+   TRQ-013: rediseño con la maqueta v2 (demo/cliente-v2.html del taller).
+   Todo lo que se ve sale de la base de datos del propio cliente; donde no
+   hay dato, estado vacío (ver modulos/inicio-cliente/README.md). */
+const FECHA_CORTA = new Intl.DateTimeFormat("es-EC", { weekday: "short", day: "numeric", month: "short", timeZone: "America/Guayaquil" });
+const HORA = new Intl.DateTimeFormat("es-EC", { hour: "2-digit", minute: "2-digit", timeZone: "America/Guayaquil" });
+const DIA_MES = new Intl.DateTimeFormat("es-EC", { day: "numeric", timeZone: "America/Guayaquil" });
+const MES_CORTO = new Intl.DateTimeFormat("es-EC", { month: "short", timeZone: "America/Guayaquil" });
+
+function vigenciaDocumento(d: DocumentoBilletera): { detalle: string; pildora: { texto: string; clase: string } | null } {
+  if (d.estado === "vencido") return { detalle: `Venció hace ${Math.abs(d.diasParaVencer ?? 0)} días`, pildora: { texto: "Vencido", clase: "estado-pill es-urgente" } };
+  if (d.estado === "por_vencer") return { detalle: `Vence en ${d.diasParaVencer} días`, pildora: { texto: "Por vencer", clase: "estado-pill es-urgente" } };
+  if (d.estado === "vigente") return { detalle: "Vigente", pildora: { texto: "Vigente", clase: "estado-pill es-ok" } };
+  return { detalle: "Sin fecha de caducidad", pildora: null };
+}
+
+async function PanelCliente({ saludo, nombre, usuarioId }: { saludo: string | null; nombre: string; usuarioId: string | null }) {
+  const resumen = usuarioId ? await obtenerResumenInicioCliente(usuarioId) : null;
+  const tramites = resumen?.tramitesAbiertos ?? null;
+  const consultas = resumen?.consultasResueltas ?? null;
+  const caso = resumen?.casoReciente ?? null;
+  const billetera = resumen?.billetera ?? null;
+  const cita = resumen?.proximaCita ?? null;
+  const urgentesBilletera = billetera ? billetera.vencidos + billetera.porVencer : 0;
+
+  const subtitulo = tramites
+    ? `Tienes ${tramites === 1 ? "1 trámite" : `${tramites} trámites`} en marcha${cita ? ` y una cita el ${FECHA_CORTA.format(new Date(cita.inicio))}` : ""}.`
+    : "¿Qué necesitas resolver hoy?";
+
   return (
     <>
-      <h1>{saludo ?? `Hola de nuevo, ${nombre}`}. Estás <i>tranqi</i>.</h1>
-      <p className="inicio-cliente-sub">¿Qué necesitas resolver hoy?</p>
+      <div className="saludo-inicio">
+        <div>
+          <h1>{saludo ?? `Hola de nuevo, ${nombre}`}. Estás <i>tranqi</i>.</h1>
+          <p className="inicio-cliente-sub">{subtitulo}</p>
+        </div>
+        <Link href="/panel/agendar" className="btn btn-primario btn-agendar">
+          <Calendar size={16} aria-hidden="true" />
+          Agendar cita
+        </Link>
+      </div>
 
       <div className="rejilla-cliente">
         <div className="columna-cliente">
+          {/* 2B + 10A: cifras que cuentan. Solo las que se pudieron leer. */}
+          {resumen && (
+            <div className="cifras-inicio">
+              {tramites !== null && (
+                <div className="cifra-tarjeta">
+                  <span className="cifra-cabecera"><span className="cifra-icono"><FileText size={15} aria-hidden="true" /></span>Mis trámites</span>
+                  <b className="cifra-valor"><CifraQueCuenta valor={tramites} /><small>{tramites === 1 ? "abierto" : "abiertos"}</small></b>
+                  <span className="cifra-pie">{tramites ? "Casos sin cerrar" : "Ninguno en curso"}</span>
+                </div>
+              )}
+              {consultas !== null && (
+                <div className="cifra-tarjeta">
+                  <span className="cifra-cabecera"><span className="cifra-icono"><MessageCircle size={15} aria-hidden="true" /></span>Consultas</span>
+                  <b className="cifra-valor"><CifraQueCuenta valor={consultas} /><small>{consultas === 1 ? "respondida" : "respondidas"}</small></b>
+                  <span className="cifra-pie">Por tranqi y tu abogado</span>
+                </div>
+              )}
+              {billetera && (
+                <Link href="/panel/billetera-documentos" className={`cifra-tarjeta${urgentesBilletera ? " es-urgente" : ""}`}>
+                  <span className="cifra-cabecera"><span className="cifra-icono"><Folder size={15} aria-hidden="true" /></span>Billetera</span>
+                  <b className="cifra-valor"><CifraQueCuenta valor={billetera.total} /><small>{billetera.total === 1 ? "documento" : "documentos"}</small></b>
+                  <span className="cifra-pie">
+                    {urgentesBilletera ? <span className="punto-urgente" aria-hidden="true" /> : null}
+                    {billetera.vencidos
+                      ? `${billetera.vencidos} vencido${billetera.vencidos === 1 ? "" : "s"}`
+                      : billetera.porVencer
+                        ? `${billetera.porVencer} por vencer`
+                        : billetera.total ? "Todo vigente" : "Aún vacía"}
+                  </span>
+                </Link>
+              )}
+              <Link href={cita ? "/panel/mis-citas" : "/panel/agendar"} className="cifra-tarjeta">
+                <span className="cifra-cabecera"><span className="cifra-icono"><Calendar size={15} aria-hidden="true" /></span>Próxima cita</span>
+                {cita ? (
+                  <b className="cifra-valor es-fecha">{FECHA_CORTA.format(new Date(cita.inicio))}<small>{HORA.format(new Date(cita.inicio))}</small></b>
+                ) : (
+                  <b className="cifra-valor es-fecha">Sin citas</b>
+                )}
+                <span className="cifra-pie">{cita ? (cita.modalidad === "presencial" ? "En el despacho" : "Por videollamada") : "Agenda una"}</span>
+              </Link>
+            </div>
+          )}
+
+          {/* 6B + 4A: el caso abierto más reciente, o el estado vacío. */}
+          {caso ? (
+            <TarjetaCaso caso={caso} />
+          ) : (
+            <section className="tarjeta-seccion vacio-caso" aria-labelledby="t-vacio-caso">
+              <div className="vacio-caso-cuerpo">
+                <span className="vacio-caso-icono" aria-hidden="true"><Briefcase size={24} strokeWidth={1.6} /></span>
+                <h2 id="t-vacio-caso">Aún no tienes casos abiertos</h2>
+                <p>Agenda una cita y te asignamos al abogado que más sabe de tu tema.</p>
+                <Link href="/panel/agendar" className="btn btn-primario">Agendar cita</Link>
+              </div>
+            </section>
+          )}
+
           {/* 1) COBERTURA & PLAN ACTIVO DINÁMICO (PLT-009 / PLT-020) */}
           <SeccionCoberturaCliente negocio="tranqi" />
 
-          {/* 1.1) CARRUSEL DE PRODUCTOS & PLANES DISPONIBLES */}
-          <CarruselProductosCliente negocio="tranqi" />
+          {/* 3B: planes y servicios en rejilla con selector (sustituye al carrusel). */}
+          <RejillaPlanes negocio="tranqi" />
 
           {/* 2) ACCESS GRID (Favoritos primero + Accesos predeterminados) */}
           <div className="accesos-cliente">
@@ -217,29 +316,77 @@ function PanelCliente({ saludo, nombre }: { saludo: string | null; nombre: strin
             ))}
           </div>
 
-          {/* 3) SUMMARY / STATUS SECTION */}
-          <section className="tarjeta-seccion" aria-labelledby="t-actividad">
-            <header>
-              <h2 id="t-actividad">Tus Casos & Consultas Activas</h2>
-            </header>
-            <div className="vacio-seccion">
-              <b>No tienes trámites abiertos en este momento</b>
-              <span>Si necesitas asesoría legal, presiona en agendar cita o chatea con tranqi.</span>
-            </div>
-          </section>
         </div>
 
-        {/* COLUMNA DERECHA */}
+        {/* COLUMNA DERECHA. Salen "Tus casos" y "Tus abogados asignados",
+            que eran texto fijo: el primero lo cubre ahora la tarjeta del caso
+            y el segundo no tenía dato detrás. */}
         <aside className="columna-cliente">
-          <SeccionNotificacionesEcosistema esAdmin={false} />
+          {cita && (
+            <section className="tarjeta-seccion tarjeta-cita" aria-labelledby="t-cita">
+              <header>
+                <h2 id="t-cita">Próxima cita</h2>
+                <Link href="/panel/mis-citas" className="enlace-accion">Ver agenda</Link>
+              </header>
+              <div className="cita-cuerpo">
+                <span className="cita-fecha" aria-hidden="true">
+                  <b>{DIA_MES.format(new Date(cita.inicio))}</b>
+                  {MES_CORTO.format(new Date(cita.inicio)).replace(".", "")}
+                </span>
+                <div className="cita-texto">
+                  <b>{cita.motivo || "Consulta legal"}</b>
+                  <small>
+                    {FECHA_CORTA.format(new Date(cita.inicio))} · {HORA.format(new Date(cita.inicio))} ·{" "}
+                    {cita.modalidad === "presencial" ? (cita.lugar ?? "en el despacho") : "por videollamada"}
+                  </small>
+                </div>
+              </div>
+              {cita.modalidad !== "presencial" && cita.enlace && (
+                <div className="cita-acciones">
+                  <a href={cita.enlace} target="_blank" rel="noopener noreferrer" className="btn btn-primario btn-pequeno">Unirme</a>
+                </div>
+              )}
+            </section>
+          )}
 
-          <section className="tarjeta-seccion" aria-labelledby="t-contactos">
-            <header><h2 id="t-contactos">Tus Abogados Asignados</h2></header>
-            <div className="vacio-seccion">
-              <b>Equipo Legal tranqi</b>
-              <span>Abogados acreditados ante el Consejo de la Judicatura listos para atenderte.</span>
-            </div>
-          </section>
+          {billetera && (
+            <section className="tarjeta-seccion tarjeta-billetera" aria-labelledby="t-billetera">
+              <header>
+                <h2 id="t-billetera">Billetera digital</h2>
+                {billetera.total > 0 && (
+                  <Link href="/panel/billetera-documentos" className="enlace-accion">
+                    {billetera.total > 3 ? `Ver los ${billetera.total}` : "Abrir"}
+                  </Link>
+                )}
+              </header>
+              {billetera.total === 0 ? (
+                <BilleteraVacia />
+              ) : (
+                <>
+                  <ul className="documentos-inicio">
+                    {billetera.recientes.map((d) => {
+                      const v = vigenciaDocumento(d);
+                      return (
+                        <li key={d.id}>
+                          <span className="documento-icono" aria-hidden="true"><FileText size={16} /></span>
+                          <span className="documento-texto"><b>{d.titulo}</b><small>{v.detalle}</small></span>
+                          {v.pildora && <span className={v.pildora.clase}>{v.pildora.texto}</span>}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                  <div className="documentos-pie">
+                    <Link href="/panel/billetera-documentos" className="btn btn-neutro btn-pequeno">
+                      <Upload size={16} aria-hidden="true" />
+                      Subir documento
+                    </Link>
+                  </div>
+                </>
+              )}
+            </section>
+          )}
+
+          <SeccionNotificacionesEcosistema esAdmin={false} />
         </aside>
       </div>
     </>
