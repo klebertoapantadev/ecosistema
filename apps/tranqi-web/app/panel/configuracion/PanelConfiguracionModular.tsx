@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Settings, Mail, Bell, Star, X, ChevronRight, ShieldCheck, Sliders, Pencil, Lock, CreditCard, ShoppingBag, type LucideIcon } from "lucide-react";
+import { Settings, Mail, Bell, Star, ChevronRight, ShieldCheck, Sliders, Pencil, Lock, CreditCard, ShoppingBag, type LucideIcon } from "lucide-react";
 import { FormularioConfiguracionNegocio } from "@eco/configuracion-negocio/componentes/FormularioConfiguracionNegocio";
 import { FormularioSmtp } from "@eco/configuracion-negocio/componentes/FormularioSmtp";
 import { PreferenciasNotificacionWidget } from "@eco/notificaciones";
@@ -11,6 +11,8 @@ import { ConfiguracionPasarelaPayphone, CatalogoProductosComercio } from "@eco/c
 import { useCustomWidgets } from "../gestorTitulosWidgets";
 import { ModalEditarWidget } from "../ModalEditarWidget";
 import { ModalVerificarMFAWidget } from "../ModalVerificarMFAWidget";
+import { useWidgetEnUrl } from "../useWidgetEnUrl";
+import { BotonVolverWidget } from "../BotonVolverWidget";
 
 interface Props {
   esAdmin: boolean;
@@ -97,9 +99,23 @@ const TODOS_WIDGETS_CONFIG: WidgetConfigDef[] = [
   }
 ];
 
+const ALIAS_WIDGET: Record<string, string> = {
+  configuracion_negocio: "negocio",
+  configuracion_correo: "correo",
+  preferencias_notificacion: "notificaciones",
+  terminos: "gestion_terminos_consentimientos",
+  gestion_terminos_consentimientos: "gestion_terminos_consentimientos",
+  pasarela_payphone: "pasarela_payphone",
+  payphone: "pasarela_payphone",
+  pasarela: "pasarela_payphone",
+  catalogo_productos: "catalogo_productos",
+  catalogo: "catalogo_productos",
+  honorarios: "catalogo_productos",
+};
+
 export function PanelConfiguracionModular({ esAdmin, esSuperadmin = false, configuracion, smtp, negocio }: Props) {
   const [favoritos, setFavoritos] = useState<string[]>([]);
-  const [widgetActivo, setWidgetActivo] = useState<string | null>(null);
+  const { widgetActivo, abrir, cerrar } = useWidgetEnUrl(ALIAS_WIDGET);
   const [widgetEditar, setWidgetEditar] = useState<{
     id: string;
     titulo: string;
@@ -144,31 +160,6 @@ export function PanelConfiguracionModular({ esAdmin, esSuperadmin = false, confi
     }
   }, [esAdmin, esSuperadmin]);
 
-  // Apertura directa por parametro ?widget= en URL
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const params = new URLSearchParams(window.location.search);
-      const paramWidget = params.get("widget");
-      if (paramWidget) {
-        const mapaAlias: Record<string, string> = {
-          configuracion_negocio: "negocio",
-          configuracion_correo: "correo",
-          preferencias_notificacion: "notificaciones",
-          terminos: "gestion_terminos_consentimientos",
-          gestion_terminos_consentimientos: "gestion_terminos_consentimientos",
-          pasarela_payphone: "pasarela_payphone",
-          payphone: "pasarela_payphone",
-          pasarela: "pasarela_payphone",
-          catalogo_productos: "catalogo_productos",
-          catalogo: "catalogo_productos",
-          honorarios: "catalogo_productos",
-        };
-        const targetId = mapaAlias[paramWidget] || paramWidget;
-        setWidgetActivo(targetId);
-      }
-    }
-  }, []);
-
   // Alternar estado de favorito
   const toggleFavorito = (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
@@ -200,7 +191,7 @@ export function PanelConfiguracionModular({ esAdmin, esSuperadmin = false, confi
         return;
       }
     }
-    setWidgetActivo(id);
+    abrir(id);
   };
 
   const handleConfirmarMfaExitoso = () => {
@@ -208,7 +199,7 @@ export function PanelConfiguracionModular({ esAdmin, esSuperadmin = false, confi
       try {
         localStorage.setItem(`tranqi_mfa_widget_ts_${widgetMfaPendiente.id}`, Date.now().toString());
       } catch { /* Ignorar */ }
-      setWidgetActivo(widgetMfaPendiente.id);
+      abrir(widgetMfaPendiente.id);
       setWidgetMfaPendiente(null);
     }
   };
@@ -275,29 +266,7 @@ export function PanelConfiguracionModular({ esAdmin, esSuperadmin = false, confi
               </div>
             </div>
 
-            {/* Botón Circular de Cerrar (X) */}
-            <button
-              type="button"
-              onClick={() => setWidgetActivo(null)}
-              title="Cerrar módulo y volver a Configuración"
-              style={{
-                background: "var(--blanco, #ffffff)",
-                border: "1.5px solid var(--panel-linea, #E4E4E4)",
-                color: "var(--negro, #111111)",
-                borderRadius: "50%",
-                width: "36px",
-                height: "36px",
-                flexShrink: 0,
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
-                transition: "all 0.15s ease"
-              }}
-            >
-              <X size={18} />
-            </button>
+            <BotonVolverWidget onClick={cerrar} destino="Configurar" />
           </header>
 
           {/* Cuerpo del Módulo Activo - NATIVO SIN IFRAME */}

@@ -107,7 +107,7 @@ export default function PaginaBolsaEmpleo() {
     if (!files) return;
     const seleccionados = Array.from(files);
     if (seleccionados.length > 3) {
-      setMensajeEstado({ texto: "Límite estricto: Puedes adjuntar máximo 3 documentos adicionales.", error: true });
+      setMensajeEstado({ texto: "Límite: puedes adjuntar máximo 3 documentos adicionales.", error: true });
       return;
     }
     const tamanoTotal = seleccionados.reduce((acc, f) => acc + f.size, 0);
@@ -151,96 +151,77 @@ export default function PaginaBolsaEmpleo() {
   };
 
   return (
-    <div style={{ backgroundColor: "#0d1117", minHeight: "100vh", color: "#c9d1d9", fontFamily: "sans-serif" }}>
-      {/* HEADER */}
-      <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "18px 32px", borderBottom: "1px solid #21262d", backgroundColor: "#161b22" }}>
-        <Link href="/" style={{ fontSize: "1.5rem", fontWeight: 800, color: "#ffffff", textDecoration: "none" }}>
-          tranqi <span style={{ fontSize: "0.75rem", color: "#58a6ff", fontWeight: 600, border: "1px solid #1f6feb", padding: "2px 8px", borderRadius: "12px", marginLeft: "6px" }}>Bolsa de Empleo</span>
+    <div className="vacantes">
+      {/* Cabecera */}
+      <header className="vacantes-nav">
+        <Link href="/" className="vacantes-marca">
+          <img src="/assets/tranqi-white.svg" alt="tranqi" />
+          <span>Bolsa de empleo</span>
         </Link>
-        <div style={{ display: "flex", gap: "16px", alignItems: "center" }}>
-          <Link href="/registro?intencion=abogado&destino=/panel/solicitud-socio" style={{ color: "#D8FFB3", textDecoration: "none", fontSize: "0.88rem", fontWeight: 700 }}>
-            ¿Eres Abogado? Únete a la Red
+        <nav className="vacantes-enlaces">
+          <Link href="/registro?intencion=abogado&destino=/panel/solicitud-socio" className="es-abogado">
+            ¿Eres abogado? Únete a la red
           </Link>
-          <Link href="/ingresar" style={{ color: "#8b949e", textDecoration: "none", fontSize: "0.88rem" }}>
+          <Link href="/ingresar">
             Ingresar
           </Link>
-        </div>
+        </nav>
       </header>
 
-      {/* HERO BANNER */}
-      <section style={{ padding: "56px 24px", textAlign: "center", background: "linear-gradient(180deg, #161b22 0%, #0d1117 100%)", borderBottom: "1px solid #21262d" }}>
-        <h1 style={{ fontSize: "2.4rem", fontWeight: 800, color: "#ffffff", marginBottom: "12px" }}>
-          Bolsa de Empleo & Oportunidades Laborales
-        </h1>
-        <p style={{ fontSize: "1.05rem", color: "#8b949e", maxWidth: "640px", margin: "0 auto 24px" }}>
+      {/* Portada */}
+      <header className="vacantes-portada">
+        <h1>Bolsa de empleo y oportunidades laborales</h1>
+        <p>
           Sé parte del equipo que democratiza el acceso a la justicia. Explora nuestras vacantes abiertas en administración, soporte, asistencia legal y operaciones.
         </p>
 
-        {/* CATEGORÍAS */}
-        <div style={{ display: "flex", justifyContent: "center", gap: "10px", flexWrap: "wrap", marginTop: "24px" }}>
+        {/* Filtros */}
+        <div className="vacantes-filtros" role="group" aria-label="Filtrar por área">
           {["TODAS", "Legal", "Administración", "Atención", "Operaciones"].map((cat) => (
             <button
               key={cat}
+              type="button"
+              aria-pressed={categoriaFiltro === cat}
               onClick={() => setCategoriaFiltro(cat)}
-              style={{
-                background: categoriaFiltro === cat ? "#1f6feb" : "#21262d",
-                color: categoriaFiltro === cat ? "#ffffff" : "#8b949e",
-                border: "1px solid",
-                borderColor: categoriaFiltro === cat ? "#388bfd" : "#30363d",
-                padding: "8px 16px",
-                borderRadius: "20px",
-                fontSize: "0.85rem",
-                fontWeight: 600,
-                cursor: "pointer"
-              }}
             >
-              {cat === "TODAS" ? "Todas las Convocatorias" : cat}
+              {cat === "TODAS" ? "Todas" : cat}
             </button>
           ))}
         </div>
-      </section>
+      </header>
 
-      {/* VACANTES LISTA */}
-      <main style={{ maxWidth: "1040px", margin: "0 auto", padding: "40px 20px" }}>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(460px, 1fr))", gap: "24px" }}>
+      {/* Lista */}
+      <main className="vacantes-lista">
+        <div className="rejilla-auto">
           {filtradas.map((vac) => (
-            <article key={vac.id} style={{ background: "#161b22", border: "1px solid #30363d", borderRadius: "12px", padding: "24px", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
-              <div>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "12px" }}>
-                  <div>
-                    <span style={{ fontSize: "0.76rem", fontWeight: 700, color: "#58a6ff", backgroundColor: "rgba(56, 139, 253, 0.12)", padding: "4px 10px", borderRadius: "12px" }}>
-                      {vac.departamento}
-                    </span>
-                    <h2 style={{ fontSize: "1.3rem", fontWeight: 700, color: "#ffffff", marginTop: "8px" }}>
-                      {vac.titulo}
-                    </h2>
-                  </div>
-                  <span style={{ fontSize: "0.78rem", color: "#3fb950", border: "1px solid #2ea043", padding: "2px 8px", borderRadius: "4px" }}>
-                    {vac.tipoContrato}
-                  </span>
+            <article key={vac.id} className="vacante">
+              <div className="vacante-cabecera">
+                <div>
+                  <span className="vacante-area">{vac.departamento}</span>
+                  <h2>{vac.titulo}</h2>
                 </div>
-
-                <p style={{ fontSize: "0.88rem", color: "#8b949e", margin: "12px 0 16px", lineHeight: "1.5" }}>
-                  {vac.descripcion}
-                </p>
-
-                <div style={{ margin: "16px 0" }}>
-                  <p style={{ fontSize: "0.82rem", fontWeight: 700, color: "#c9d1d9", marginBottom: "6px" }}>Requisitos clave:</p>
-                  <ul style={{ paddingLeft: "18px", fontSize: "0.82rem", color: "#8b949e", lineHeight: "1.6" }}>
-                    {vac.requisitos.map((req, i) => (
-                      <li key={i}>{req}</li>
-                    ))}
-                  </ul>
-                </div>
+                <span className="vacante-contrato">{vac.tipoContrato}</span>
               </div>
 
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: "16px", borderTop: "1px solid #21262d", marginTop: "16px" }}>
-                <span style={{ fontSize: "0.8rem", color: "#8b949e" }}>{vac.ubicacion} ({vac.modalidad})</span>
+              <p className="vacante-desc">{vac.descripcion}</p>
+
+              <div className="vacante-requisitos">
+                <b>Requisitos clave</b>
+                <ul>
+                  {vac.requisitos.map((req, i) => (
+                    <li key={i}>{req}</li>
+                  ))}
+                </ul>
+              </div>
+
+              <div className="vacante-pie">
+                <span>{vac.ubicacion} · {vac.modalidad}</span>
                 <button
+                  type="button"
+                  className="vacantes-accion es-principal"
                   onClick={() => abrirModalPostulacion(vac)}
-                  style={{ background: "#238636", color: "#ffffff", border: "none", padding: "8px 16px", borderRadius: "6px", fontSize: "0.85rem", fontWeight: 700, cursor: "pointer" }}
                 >
-                  Postular Ahora →
+                  Postular
                 </button>
               </div>
             </article>
@@ -248,73 +229,133 @@ export default function PaginaBolsaEmpleo() {
         </div>
       </main>
 
-      {/* MODAL POSTULACIÓN */}
+      {/* Modal postulación */}
       {modalAbierto && vacanteSeleccionada && (
-        <div style={{ position: "fixed", inset: 0, backgroundColor: "rgba(0,0,0,0.8)", backdropFilter: "blur(4px)", display: "grid", placeItems: "center", zIndex: 1000, padding: "16px" }}>
-          <div style={{ background: "#161b22", border: "1px solid #30363d", borderRadius: "12px", width: "100%", maxWidth: "620px", padding: "28px", maxHeight: "90vh", overflowY: "auto" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", borderBottom: "1px solid #21262d", paddingBottom: "12px" }}>
+        <div className="vacantes-velo">
+          <div className="vacantes-modal" role="dialog" aria-modal="true" aria-labelledby="titulo-postulacion">
+            <div className="vacantes-modal-cabecera">
               <div>
-                <h3 style={{ fontSize: "1.2rem", color: "#ffffff", fontWeight: 700 }}>Postulación: {vacanteSeleccionada.titulo}</h3>
-                <p style={{ fontSize: "0.8rem", color: "#58a6ff" }}>{vacanteSeleccionada.departamento} · {vacanteSeleccionada.ubicacion}</p>
+                <h3 id="titulo-postulacion">Postulación: {vacanteSeleccionada.titulo}</h3>
+                <p>{vacanteSeleccionada.departamento} · {vacanteSeleccionada.ubicacion}</p>
               </div>
-              <button onClick={() => setModalAbierto(false)} style={{ background: "none", border: "none", color: "#8b949e", fontSize: "1.5rem", cursor: "pointer" }}>×</button>
+              <button
+                type="button"
+                className="vacantes-cerrar"
+                onClick={() => setModalAbierto(false)}
+                aria-label="Cerrar"
+                title="Cerrar"
+              >
+                ×
+              </button>
             </div>
 
             {mensajeEstado && (
-              <div style={{ backgroundColor: mensajeEstado.error ? "rgba(248, 81, 73, 0.15)" : "rgba(46, 160, 67, 0.15)", border: `1px solid ${mensajeEstado.error ? "#f85149" : "#3fb950"}`, color: mensajeEstado.error ? "#ff7b72" : "#56d364", padding: "10px 14px", borderRadius: "6px", fontSize: "0.85rem", marginBottom: "16px" }}>
+              <div
+                className={`vacantes-aviso ${mensajeEstado.error ? "es-error" : "es-exito"}`}
+                role="status"
+              >
                 {mensajeEstado.texto}
               </div>
             )}
 
-            <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
-              <div className="rejilla-auto" style={{ "--min": "200px", "--hueco": "12px" } as React.CSSProperties}>
-                <div>
-                  <label style={{ display: "block", fontSize: "0.8rem", color: "#c9d1d9", marginBottom: "4px" }}>Nombres *</label>
-                  <input type="text" value={nombres} onChange={(e) => setNombres(e.target.value)} required style={{ width: "100%", background: "#0d1117", border: "1px solid #30363d", borderRadius: "6px", padding: "8px 12px", color: "#ffffff", fontSize: "0.85rem" }} />
+            <form onSubmit={handleSubmit} className="vacantes-form">
+              <div className="rejilla-auto">
+                <div className="vacantes-campo">
+                  <label htmlFor="vac-nombres">Nombres *</label>
+                  <input
+                    id="vac-nombres"
+                    type="text"
+                    value={nombres}
+                    onChange={(e) => setNombres(e.target.value)}
+                    required
+                  />
                 </div>
-                <div>
-                  <label style={{ display: "block", fontSize: "0.8rem", color: "#c9d1d9", marginBottom: "4px" }}>Apellidos *</label>
-                  <input type="text" value={apellidos} onChange={(e) => setApellidos(e.target.value)} required style={{ width: "100%", background: "#0d1117", border: "1px solid #30363d", borderRadius: "6px", padding: "8px 12px", color: "#ffffff", fontSize: "0.85rem" }} />
+                <div className="vacantes-campo">
+                  <label htmlFor="vac-apellidos">Apellidos *</label>
+                  <input
+                    id="vac-apellidos"
+                    type="text"
+                    value={apellidos}
+                    onChange={(e) => setApellidos(e.target.value)}
+                    required
+                  />
                 </div>
               </div>
 
-              <div className="rejilla-auto" style={{ "--min": "200px", "--hueco": "12px" } as React.CSSProperties}>
-                <div>
-                  <label style={{ display: "block", fontSize: "0.8rem", color: "#c9d1d9", marginBottom: "4px" }}>Correo Electrónico *</label>
-                  <input type="email" value={correo} onChange={(e) => setCorreo(e.target.value)} required style={{ width: "100%", background: "#0d1117", border: "1px solid #30363d", borderRadius: "6px", padding: "8px 12px", color: "#ffffff", fontSize: "0.85rem" }} />
+              <div className="rejilla-auto">
+                <div className="vacantes-campo">
+                  <label htmlFor="vac-correo">Correo electrónico *</label>
+                  <input
+                    id="vac-correo"
+                    type="email"
+                    value={correo}
+                    onChange={(e) => setCorreo(e.target.value)}
+                    required
+                  />
                 </div>
-                <div>
-                  <label style={{ display: "block", fontSize: "0.8rem", color: "#c9d1d9", marginBottom: "4px" }}>WhatsApp / Teléfono</label>
-                  <input type="tel" value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} placeholder="+593 99 123 4567" style={{ width: "100%", background: "#0d1117", border: "1px solid #30363d", borderRadius: "6px", padding: "8px 12px", color: "#ffffff", fontSize: "0.85rem" }} />
+                <div className="vacantes-campo">
+                  <label htmlFor="vac-whatsapp">WhatsApp / teléfono</label>
+                  <input
+                    id="vac-whatsapp"
+                    type="tel"
+                    value={whatsapp}
+                    onChange={(e) => setWhatsapp(e.target.value)}
+                    placeholder="+593 99 123 4567"
+                  />
                 </div>
               </div>
 
-              <div>
-                <label style={{ display: "block", fontSize: "0.8rem", color: "#c9d1d9", marginBottom: "4px" }}>Hoja de Vida / CV (PDF o Word, máx 10 MB) *</label>
-                <input type="file" accept=".pdf,.doc,.docx" onChange={(e) => setCvArchivo(e.target.files?.[0] || null)} required style={{ width: "100%", background: "#0d1117", border: "1px solid #30363d", borderRadius: "6px", padding: "6px 10px", color: "#8b949e", fontSize: "0.82rem" }} />
+              <div className="vacantes-campo">
+                <label htmlFor="vac-cv">Hoja de vida (PDF o Word, máx. 10 MB) *</label>
+                <input
+                  id="vac-cv"
+                  type="file"
+                  accept=".pdf,.doc,.docx"
+                  onChange={(e) => setCvArchivo(e.target.files?.[0] || null)}
+                  required
+                />
               </div>
 
-              <div>
-                <label style={{ display: "block", fontSize: "0.8rem", color: "#c9d1d9", marginBottom: "4px" }}>
-                  Documentos Adjuntos (Certificados, títulos, máx 3 archivos / 10 MB)
-                  {adjuntos.length > 0 && <span style={{ fontSize: "0.76rem", color: "#58a6ff", marginLeft: "8px" }}>({adjuntos.length} seleccionado/s)</span>}
+              <div className="vacantes-campo">
+                <label htmlFor="vac-adjuntos">
+                  Documentos adjuntos (certificados, títulos; máx. 3 archivos / 10 MB)
+                  {adjuntos.length > 0 && <small>({adjuntos.length} seleccionado/s)</small>}
                 </label>
-                <input type="file" multiple accept=".pdf,.png,.jpg,.jpeg,.docx" onChange={(e) => handleAdjuntos(e.target.files)} style={{ width: "100%", background: "#0d1117", border: "1px solid #30363d", borderRadius: "6px", padding: "6px 10px", color: "#8b949e", fontSize: "0.82rem" }} />
+                <input
+                  id="vac-adjuntos"
+                  type="file"
+                  multiple
+                  accept=".pdf,.png,.jpg,.jpeg,.docx"
+                  onChange={(e) => handleAdjuntos(e.target.files)}
+                />
               </div>
 
-              <div style={{ display: "flex", gap: "10px", alignItems: "flex-start", marginTop: "8px" }}>
-                <input type="checkbox" id="lopdpCheck" checked={aceptaLopdp} onChange={(e) => setAceptaLopdp(e.target.checked)} style={{ marginTop: "3px" }} />
-                <label htmlFor="lopdpCheck" style={{ fontSize: "0.78rem", color: "#8b949e", lineHeight: "1.4" }}>
-                  Autorizo el tratamiento de mis datos personales y almacenamiento de mi Hoja de Vida para esta convocatoria según la LOPDP (Ecuador).
+              <div className="vacantes-consentimiento">
+                <input
+                  type="checkbox"
+                  id="lopdpCheck"
+                  checked={aceptaLopdp}
+                  onChange={(e) => setAceptaLopdp(e.target.checked)}
+                />
+                <label htmlFor="lopdpCheck">
+                  Autorizo el tratamiento de mis datos personales y almacenamiento de mi hoja de vida para esta convocatoria según la LOPDP (Ecuador).
                 </label>
               </div>
 
-              <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "12px" }}>
-                <button type="button" onClick={() => setModalAbierto(false)} style={{ background: "#21262d", color: "#c9d1d9", border: "1px solid #30363d", padding: "8px 16px", borderRadius: "6px", fontSize: "0.85rem", cursor: "pointer" }}>
+              <div className="vacantes-botones">
+                <button
+                  type="button"
+                  className="vacantes-accion es-discreta"
+                  onClick={() => setModalAbierto(false)}
+                >
                   Cancelar
                 </button>
-                <button type="submit" disabled={enviando} style={{ background: "#238636", color: "#ffffff", border: "none", padding: "8px 20px", borderRadius: "6px", fontSize: "0.85rem", fontWeight: 700, cursor: "pointer", opacity: enviando ? 0.6 : 1 }}>
-                  {enviando ? "Enviando..." : "Enviar Postulación"}
+                <button
+                  type="submit"
+                  className="vacantes-accion es-principal"
+                  disabled={enviando}
+                >
+                  {enviando ? "Enviando…" : "Enviar postulación"}
                 </button>
               </div>
             </form>

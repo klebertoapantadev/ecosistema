@@ -23,7 +23,10 @@ componentes visuales.
 El sistema sale del brochure de marca. La landing pública lo usa en su forma
 más expresiva —color pleno por sección y una cinta continua que recorre la
 página—; las pantallas de trabajo lo usan en su forma sobria. Es el mismo
-sistema en dos registros, no dos sistemas.
+sistema en dos registros, no dos sistemas. La bolsa de empleo (`/vacantes`)
+combina los dos: portada en violeta pleno con filtros en píldora, y vacantes en
+tarjetas blancas sobre `--papel-cliente` (TRQ-012; antes llevaba la paleta
+oscura de GitHub en estilos inline).
 
 ## 2. Paleta
 
@@ -168,6 +171,22 @@ Detalle de implementación: el SVG va posicionado contra un ancestro con
 —por ejemplo un rail que deja de ser `sticky` en móvil— el trazo se posiciona
 contra el `body`, escapa del `overflow: hidden` y cubre la página.
 
+**En la landing, la cinta pasa por detrás del texto, nunca a través de él**
+(TRQ-012). Con hasta 122 px de trazo, lavanda bajo texto negro fino deja de
+leerse aunque el z-index sea correcto. Cada tramo rodea el bloque de texto de su
+sección —por la columna libre y por debajo— y, sobre una foto, evita la cara.
+Los puntos de empalme entre secciones (la x de salida de una = la x de entrada de
+la siguiente) no se mueven al redibujar un tramo. Lo que no se puede esquivar,
+como el pie de «Nuestro equipo» justo sobre la salida x=174, lleva fondo propio.
+
+El color de cada tramo es un token a **opacidad plena**. La lima al 55 % sobre
+la tinta verde de «Nuestro equipo» daba un salvia `#7A9F73` que no está en la
+paleta y dejaba el titular blanco a 3:1; ahora ese tramo es `--esmeralda`.
+
+El anclaje de scroll (una sección = una página) es **solo de la landing**:
+`html:has(.nav-landing)`. En `html` a secas lo heredaba todo el sitio, y en
+`/vacantes` el único `<section>` atrapaba el scroll.
+
 ## 8. Accesibilidad
 
 - Contraste mínimo AA (4.5:1) en texto sobre color. La menta y la lima **no son
@@ -257,3 +276,27 @@ Regla a seguir: todo bloque `@media` de ajuste móvil va **al final** de
 `globals.css`, nunca intercalado entre secciones — así siempre gana por orden
 de cascada contra cualquier regla base ya existente, sin depender de subir
 especificidad artificialmente.
+
+## 13. Mayúsculas
+
+Títulos, menú, botones y etiquetas llevan mayúscula **solo en la primera
+palabra**, como manda la norma del español (no *Title Case*): «El problema»,
+«Bolsa de empleo y oportunidades laborales», «Enviar postulación». Las pruebas
+del 16-sep marcaron el menú y los titulares de la landing escritos enteros en
+minúscula («hola», «el problema»); se corrigió en TRQ-012.
+
+El logotipo sigue en minúscula, porque es imagen. El nombre dentro de una frase
+se escribe «tranqi» («vivir tranqi»); cuando abre oración o hace de título,
+«Tranqi». **Pendiente de confirmar por negocio:** si el nombre pasa a «Tranqi»
+también dentro de la frase.
+
+## 14. Subvistas del panel: en la URL y con «Volver»
+
+Abrir un widget a pantalla completa dentro de un panel (Mi cuenta, Administrar,
+Configurar, paneles dinámicos) escribe `?widget=<id>` en la URL con una entrada
+de historial propia (`app/panel/useWidgetEnUrl.ts`). Así el botón Atrás del
+navegador y el gesto de volver del móvil regresan a la vista anterior en vez de
+sacar del panel, y el enlace a una subvista se puede compartir. La salida
+visible es `BotonVolverWidget` («← Volver»; en ≤640px, solo icono con
+`aria-label`), no una X: la X se lee como «descartar», y lo que se pedía era
+retroceder (TRQ-012).

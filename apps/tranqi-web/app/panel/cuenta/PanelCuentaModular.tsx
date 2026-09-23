@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { User, History, KeyRound, ShieldAlert, Star, X, CheckCircle2, ChevronRight, ShieldCheck, Briefcase, Pencil, Receipt, Lock, QrCode, type LucideIcon } from "lucide-react";
+import { User, History, KeyRound, ShieldAlert, Star, CheckCircle2, ChevronRight, ShieldCheck, Briefcase, Pencil, Receipt, Lock, QrCode, type LucideIcon } from "lucide-react";
 import { FormularioPerfil } from "@eco/identidad/componentes/FormularioPerfil";
 import { FormularioPerfilAbogado } from "@eco/identidad/componentes/FormularioPerfilAbogado";
 import { FormularioDatosFacturacion } from "@eco/identidad/componentes/FormularioDatosFacturacion";
@@ -14,6 +14,8 @@ import { SelectorRolActivo, type RolOpcionDef } from "../SelectorRolActivo";
 import { useCustomWidgets } from "../gestorTitulosWidgets";
 import { ModalEditarWidget } from "../ModalEditarWidget";
 import { ModalVerificarMFAWidget } from "../ModalVerificarMFAWidget";
+import { useWidgetEnUrl } from "../useWidgetEnUrl";
+import { BotonVolverWidget } from "../BotonVolverWidget";
 
 import { obtenerConfiguracionNavegacionRolAction } from "@eco/gestion-usuarios/acciones";
 
@@ -168,11 +170,20 @@ function obtenerWidgetsInicialesCuenta(tieneMultiplesRoles: boolean): WidgetDef[
   );
 }
 
+const ALIAS_WIDGET: Record<string, string> = {
+  facturacion: "datos_facturacion",
+  mfa: "mfa_seguridad",
+  baja_cuenta: "peligro",
+  eliminar_cuenta: "peligro",
+  ver_como: "rol_activo",
+  rol_activo: "rol_activo",
+};
+
 export function PanelCuentaModular({ perfil, historial, puedeConmutar = true, rolesDisponibles, materias = [], provincias = [], solicitudExistente }: Props) {
   const tieneMultiplesRoles = Boolean(perfil?.usu_superadmin_plataforma || puedeConmutar || (rolesDisponibles && rolesDisponibles.length > 1));
   const [favoritos, setFavoritos] = useState<string[]>([]);
   const [widgetsFiltradosCuenta, setWidgetsFiltradosCuenta] = useState<WidgetDef[]>(() => obtenerWidgetsInicialesCuenta(tieneMultiplesRoles));
-  const [widgetActivo, setWidgetActivo] = useState<string | null>(null);
+  const { widgetActivo, abrir, cerrar } = useWidgetEnUrl(ALIAS_WIDGET);
   const [widgetEditar, setWidgetEditar] = useState<{
     id: string;
     titulo: string;
@@ -190,26 +201,6 @@ export function PanelCuentaModular({ perfil, historial, puedeConmutar = true, ro
 
   const { getWidgetInfo, guardarWidget, obtenerIconoComponente } = useCustomWidgets();
   const esAdminOSuper = Boolean(puedeConmutar || perfil?.usu_superadmin_plataforma);
-
-  // Apertura directa por parametro ?widget= en URL
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const params = new URLSearchParams(window.location.search);
-      const paramWidget = params.get("widget");
-      if (paramWidget) {
-        const mapaAlias: Record<string, string> = {
-          facturacion: "datos_facturacion",
-          mfa: "mfa_seguridad",
-          baja_cuenta: "peligro",
-          eliminar_cuenta: "peligro",
-          ver_como: "rol_activo",
-          rol_activo: "rol_activo"
-        };
-        const targetId = mapaAlias[paramWidget] || paramWidget;
-        setWidgetActivo(targetId);
-      }
-    }
-  }, []);
 
   useEffect(() => {
     async function cargarConfiguracionPanelCuenta() {
@@ -364,7 +355,7 @@ export function PanelCuentaModular({ perfil, historial, puedeConmutar = true, ro
         return;
       }
     }
-    setWidgetActivo(id);
+    abrir(id);
   };
 
   const handleConfirmarMfaExitoso = () => {
@@ -372,7 +363,7 @@ export function PanelCuentaModular({ perfil, historial, puedeConmutar = true, ro
       try {
         localStorage.setItem(`tranqi_mfa_widget_ts_${widgetMfaPendiente.id}`, Date.now().toString());
       } catch { /* Ignorar */ }
-      setWidgetActivo(widgetMfaPendiente.id);
+      abrir(widgetMfaPendiente.id);
       setWidgetMfaPendiente(null);
     }
   };
@@ -452,29 +443,7 @@ export function PanelCuentaModular({ perfil, historial, puedeConmutar = true, ro
               </div>
             </div>
 
-            {/* Botón Circular de Cerrar (X) */}
-            <button
-              type="button"
-              onClick={() => setWidgetActivo(null)}
-              title="Cerrar widget y volver a Mi Cuenta"
-              style={{
-                background: "var(--blanco, #ffffff)",
-                border: "1.5px solid var(--panel-linea, #E4E4E4)",
-                color: "var(--negro, #111111)",
-                borderRadius: "50%",
-                width: "36px",
-                height: "36px",
-                flexShrink: 0,
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
-                transition: "all 0.15s ease"
-              }}
-            >
-              <X size={18} />
-            </button>
+            <BotonVolverWidget onClick={cerrar} destino="Mi cuenta" />
           </header>
 
           {/* Cuerpo a 100% de Ancho */}
@@ -539,7 +508,7 @@ export function PanelCuentaModular({ perfil, historial, puedeConmutar = true, ro
               <div style={{ width: "100%", maxWidth: "680px" }}>
                 <WidgetConfiguracionMfa
                   correoUsuario={perfil?.usu_correo || ""}
-                  onExitoAccion={() => setWidgetActivo(null)}
+                  onExitoAccion={cerrar}
                 />
               </div>
             )}

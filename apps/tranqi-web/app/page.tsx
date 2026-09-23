@@ -358,7 +358,7 @@ export default function TranqiLanding() {
     // ── arranque ────────────────────────────────────────────────────────
     const arranque = setTimeout(() => {
       seen.add("hero");
-      decirGlobo(esc(PRESENTACION) + '<span class="pista">clic para chatear conmigo →</span>', 14000);
+      decirGlobo(esc(PRESENTACION) + '<span class="pista">Clic para chatear conmigo →</span>', 14000);
       addMsg(PRESENTACION, "bot");
     }, 1400);
 
@@ -392,13 +392,13 @@ export default function TranqiLanding() {
       <nav className="nav-landing">
         <a className="logo" href="#hero"><img src="/assets/tranqi-white.svg" alt="tranqi" /></a>
         <div className="links">
-          <a href="#hola">hola</a>
-          <a href="#problema">el problema</a>
-          <a href="#app">la app</a>
-          <a href="#planes">planes</a>
-          <a href="#red">abogados</a>
-          <a href="#equipo">equipo</a>
-          <a href="/vacantes">vacantes</a>
+          <a href="#hola">Hola</a>
+          <a href="#problema">El problema</a>
+          <a href="#app">La app</a>
+          <a href="#planes">Planes</a>
+          <a href="#red">Abogados</a>
+          <a href="#equipo">Equipo</a>
+          <a href="/vacantes">Vacantes</a>
           <a href="/ingresar" className="link-ingresar">Ingresar</a>
           <a href="/registro" className="cta">Únete</a>
         </div>
@@ -420,13 +420,16 @@ export default function TranqiLanding() {
         </div>
       </section>
 
-      {/* HOLA · entra 1016 · sale 252 */}
+      {/* HOLA · entra 1016 · sale 252
+          El texto ocupa la columna izquierda (hasta x≈930 en cualquier ancho de
+          escritorio): la cinta baja por la derecha y cruza POR DEBAJO de la
+          lista, no a través de ella (antes tapaba párrafo y lista, TRQ-012). */}
       <section id="hola" data-buddie="hola">
         <div className="ribbon"><svg viewBox="0 0 1440 900" preserveAspectRatio="none">
-          <path pathLength={1} stroke="#7866FF" d="M 1016 0 C 1016 90 940 210 700 240 C 430 274 300 400 362 540 C 410 650 252 760 252 900" />
+          <path pathLength={1} stroke="#7866FF" d="M 1016 0 C 1016 150 1290 250 1290 480 C 1290 700 1000 845 640 850 C 400 853 252 830 252 900" />
         </svg></div>
         <div className="wrap">
-          <div className="saludo reveal">hola,</div>
+          <div className="saludo reveal">Hola,</div>
           <div className="somos reveal"><span>somos</span> <img src="/assets/tranqi-black.svg" alt="tranqi" /></div>
           <p className="desc reveal">Una estructura digital de Protección Jurídica que combina tres componentes clave para facilitar el acceso a la justicia:</p>
           <div className="tres reveal">
@@ -455,13 +458,16 @@ export default function TranqiLanding() {
         </div>
       </section>
 
-      {/* MANIFIESTO · entra 430 · sale 1180 */}
+      {/* MANIFIESTO · entra 430 · sale 1180
+          La cara de la foto queda en el centro-arriba: la cinta cruza pegada al
+          borde superior (medio oculta bajo la barra fija) y baja por la
+          estantería de la derecha. Antes pasaba por la frente (TRQ-012). */}
       <section id="manifiesto" data-buddie="manifiesto">
         <div className="ribbon"><svg viewBox="0 0 1440 900" preserveAspectRatio="none">
-          <path pathLength={1} stroke="#7866FF" opacity={0.92} d="M 430 0 C 430 120 900 115 1120 215 C 1290 292 1180 620 1180 900" />
+          <path pathLength={1} stroke="#7866FF" opacity={0.92} d="M 430 0 C 430 32 520 32 760 32 C 1000 32 1250 38 1250 300 C 1250 560 1180 700 1180 900" />
         </svg></div>
         <div className="wrap">
-          <p className="frase">tranqi es el amigo que estudió derecho, te entiende y te aconseja sin hacerte sentir perdido.</p>
+          <p className="frase">Tranqi es el amigo que estudió derecho, te entiende y te aconseja sin hacerte sentir perdido.</p>
         </div>
         <p className="credito">Foto: <a href="https://unsplash.com/@silverkblack" target="_blank" rel="noopener">Vitaly Gariev</a> · Unsplash</p>
       </section>
@@ -505,7 +511,7 @@ export default function TranqiLanding() {
         </svg></div>
         <div className="wrap">
           <h2 className="reveal">Protección jurídica accesible</h2>
-          <div className="precio reveal">USD 20 <span style={{ fontSize: "0.35em", fontWeight: 800 }}>al año</span></div>
+          <div className="precio reveal">USD 20 <span className="periodo">al año</span></div>
           <p className="sub reveal">Un sistema diseñado para que cualquier persona pueda contar con respaldo legal permanente.</p>
           <p className="nota reveal">Sé parte de un futuro donde la justicia es rápida, eficiente y accesible.</p>
           <a className="btn btn-negro reveal" href="/registro">Unirme ahora</a>
@@ -544,10 +550,14 @@ export default function TranqiLanding() {
         </div>
       </section>
 
-      {/* NUESTRO EQUIPO · entra 174 · sale 174 (TRQ-002 / PLT-019) */}
+      {/* NUESTRO EQUIPO · entra 174 · sale 174 (TRQ-002 / PLT-019)
+          Esmeralda plena, el acento del lado abogado. Era lima al 55 % sobre la
+          tinta verde, que daba un salvia (#7A9F73) ajeno a la paleta y dejaba el
+          titular blanco a 3,0:1 y la lima a 2,7:1; sobre esmeralda suben a 4,5:1
+          y 4,0:1, por encima del 3:1 que AA pide al texto grande (TRQ-012). */}
       <section id="equipo" data-buddie="equipo">
         <div className="ribbon"><svg viewBox="0 0 1440 1400" preserveAspectRatio="none">
-          <path pathLength={1} stroke="#D8FFB3" strokeWidth="1" opacity={0.55} d="M 174 0 C 174 360 1200 480 1100 800 C 1000 1120 174 1050 174 1400" />
+          <path pathLength={1} stroke="#05876E" d="M 174 0 C 174 360 1200 480 1100 800 C 1000 1120 174 1050 174 1400" />
         </svg></div>
         <div className="lienzo-equipo">
           <div className="cabecera-equipo reveal">
@@ -662,7 +672,7 @@ export default function TranqiLanding() {
       <div id="chat">
         <div className="chat-head">
           <div className="mini" />
-          <div><b>tranqi</b><small>el amigo que estudió derecho</small></div>
+          <div><b>Tranqi</b><small>El amigo que estudió derecho</small></div>
           <button className="x" id="chatClose" aria-label="Cerrar">×</button>
         </div>
         <div className="chat-log" id="chatLog" />
