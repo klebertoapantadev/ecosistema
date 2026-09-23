@@ -1,7 +1,146 @@
 "use server";
 
 import { crearClienteServidor, crearClienteAdmin } from "@eco/supabase/servidor";
+import type { Json, Tables, TablesInsert } from "@eco/db";
 import { revalidatePath } from "next/cache";
+
+export interface DetalleCategoriaCatalogo {
+  imagen_url?: string | null;
+  video_url?: string | null;
+  album_fotos_url?: string | null;
+  icono?: string | null;
+  [key: string]: unknown;
+}
+
+export interface DetalleProductoCatalogo {
+  ambito?: string;
+  icono?: string;
+  codigo_gobernanza?: string;
+  imagen_url?: string | null;
+  foto_posicion?: string;
+  foto_ajuste?: "cover" | "contain";
+  foto_zoom?: number;
+  album_fotos_url?: string | null;
+  video_url?: string | null;
+  galeria_urls?: string[];
+  beneficios?: string[];
+  tiempo_entrega?: string | null;
+  requisitos?: string[];
+  modalidad_pago?: string;
+  tarifa_iva_predeterminada?: number;
+  codigo_impuesto_sri?: string;
+  logistica?: {
+    delivery_incluido?: boolean;
+    modalidad_transporte?: string;
+    etiqueta_transporte?: string;
+    cobertura_texto?: string;
+  };
+  creado_desde_panel?: boolean;
+  editado_en?: string;
+  [key: string]: unknown;
+}
+
+export interface DetalleVarianteCatalogo {
+  tipo_honorario?: string;
+  modalidad_pago?: string;
+  portada_url?: string | null;
+  foto_posicion?: string;
+  foto_ajuste?: "cover" | "contain";
+  foto_zoom?: number;
+  video_url?: string;
+  tiempo_entrega?: string;
+  album_url?: string;
+  beneficios_modo?: "anexar" | "sustituir" | string;
+  beneficios_custom?: string[] | string;
+  derechos?: Array<{
+    concepto: string;
+    nombre?: string;
+    incluidos?: number | null;
+    consumidos?: number;
+    restantes?: number | null;
+    porcentaje?: number;
+  }>;
+  miembros_cubiertos?: number;
+  [key: string]: unknown;
+}
+
+export interface DetalleTransaccionPago {
+  modo_simulado?: boolean;
+  nombre_servicio?: string;
+  variante_id?: string;
+  fecha_preparacion?: string;
+  fecha_confirmacion?: string;
+  simulacion?: boolean;
+  resultado?: string;
+  titular?: string;
+  pagador?: Record<string, unknown>;
+  datos_facturacion?: Record<string, unknown>;
+  payphone_prepare?: Record<string, unknown>;
+  payphone_confirm?: Record<string, unknown>;
+  [key: string]: unknown;
+}
+
+interface DatosFacturacionUsuario {
+  razon_social?: string;
+  tipo_identificacion?: string;
+  identificacion?: string;
+  telefono?: string;
+  direccion?: string;
+  correo_facturacion?: string;
+  [key: string]: unknown;
+}
+
+interface DetalleUsuarioSeguridad {
+  datos_facturacion?: DatosFacturacionUsuario;
+  [key: string]: unknown;
+}
+
+interface InsumoConDetalle {
+  ins_id?: string;
+  ins_codigo?: string;
+  ins_nombre?: string;
+  ins_unidad_medida?: "BONCHE" | "TALLO" | "PLIEGO" | "HORA" | "CUADRILLA" | "UNIDAD";
+  ins_detalle_insumo?: {
+    categoria_tipo?: ItemDisponibilidadOperativa["categoria_tipo"];
+    color_hex?: string;
+    color_nombre?: string;
+    [key: string]: unknown;
+  } | null;
+}
+
+interface InventarioConInsumo {
+  inv_id: string;
+  inv_negocio: string;
+  inv_insumo_id: string;
+  inv_stock_actual?: number | null;
+  com_insumo?: InsumoConDetalle | null;
+}
+
+interface ConsultaQueryBuilderUntyped {
+  select: (cols: string) => ConsultaQueryBuilderUntyped;
+  eq: (col: string, val: unknown) => ConsultaQueryBuilderUntyped;
+  order: (col: string, opts: { ascending: boolean }) => ConsultaQueryBuilderUntyped;
+  limit: (n: number) => Promise<{ data: unknown[] | null; error: unknown }>;
+  maybeSingle: () => Promise<{ data: unknown | null; error: unknown }>;
+  single: () => Promise<{ data: unknown | null; error: unknown }>;
+  upsert: (valores: unknown, opts?: { onConflict?: string }) => ConsultaQueryBuilderUntyped;
+  update: (valores: unknown) => ConsultaQueryBuilderUntyped;
+  then: <TResult1 = { data: unknown[] | null; error: unknown }, TResult2 = never>(
+    onfulfilled?: ((value: { data: unknown[] | null; error: unknown }) => TResult1 | PromiseLike<TResult1>) | null,
+    onrejected?: ((reason: unknown) => TResult2 | PromiseLike<TResult2>) | null
+  ) => Promise<TResult1 | TResult2>;
+}
+
+interface ClienteSupabaseUntyped {
+  from: (tabla: string) => ConsultaQueryBuilderUntyped;
+  schema: (esquema: string) => ClienteSupabaseUntyped;
+  rpc: (fn: string, params?: Record<string, unknown>) => Promise<{ data: unknown; error: unknown }>;
+}
+
+type FilaCategoria = Tables<{ schema: "comun_comercio" }, "com_categoria">;
+type FilaProducto = Tables<{ schema: "comun_comercio" }, "com_producto">;
+type FilaVariante = Tables<{ schema: "comun_comercio" }, "com_variante">;
+type CategoriaResumida = Pick<FilaCategoria, "ctg_id" | "ctg_nombre" | "ctg_slug" | "ctg_negocio" | "ctg_activo">;
 
 export interface CategoriaCatalogo {
   ctg_id: string;
@@ -12,7 +151,7 @@ export interface CategoriaCatalogo {
   ctg_tipo: string;
   ctg_orden: number;
   ctg_activo: boolean;
-  ctg_detalle_categoria?: any;
+  ctg_detalle_categoria?: DetalleCategoriaCatalogo;
 }
 
 export interface ProductoCatalogo {
@@ -24,13 +163,14 @@ export interface ProductoCatalogo {
   pro_tipo: "FISICO" | "SERVICIO" | "SUSCRIPCION" | "DIGITAL";
   pro_destacado: boolean;
   pro_categoria_principal_id: string | null;
-  pro_detalle_producto: any;
+  pro_detalle_producto: DetalleProductoCatalogo;
   categoria?: {
     ctg_id: string;
     ctg_nombre: string;
     ctg_slug: string;
   } | null;
   variantes: VarianteCatalogo[];
+  pro_activo?: boolean;
 }
 
 export interface VarianteCatalogo {
@@ -45,7 +185,7 @@ export interface VarianteCatalogo {
   var_tipo_oferta: string;
   var_frecuencia_recurrencia?: string | null;
   var_activo: boolean;
-  var_detalle_variante: any;
+  var_detalle_variante: DetalleVarianteCatalogo;
   // Calculados
   monto_iva: number;
   precio_total: number;
@@ -64,7 +204,7 @@ export interface ItemDisponibilidadOperativa {
   color_hex?: string;
   color_nombre?: string;
   imagen_url?: string;
-  detalle?: any;
+  detalle?: Record<string, unknown> | Json;
 }
 
 export interface ConfiguracionPasarela {
@@ -78,7 +218,7 @@ export interface ConfiguracionPasarela {
   modoSimulado: boolean;
   token?: string;
   comisionPorcentaje: number;
-  detalle?: any;
+  detalle?: Record<string, unknown> | Json;
 }
 
 export interface TransaccionPagoCRM {
@@ -102,7 +242,7 @@ export interface TransaccionPagoCRM {
   pag_tarjeta_ultimos_digitos: string | null;
   pag_confirmado_en: string | null;
   pag_creado_en: string;
-  pag_detalle_transaccion: any;
+  pag_detalle_transaccion: DetalleTransaccionPago;
 }
 
 // ==============================================================================
@@ -1278,14 +1418,14 @@ function generarSlug(texto: string): string {
  * Obtiene todas las categorías disponibles para el negocio
  */
 export async function obtenerCategoriasAction(negocio = "tranqi"): Promise<CategoriaCatalogo[]> {
-  const admin: any = crearClienteAdmin();
-  const supabase: any = await crearClienteServidor();
+  const admin = crearClienteAdmin();
+  const supabase = await crearClienteServidor();
   const clienteActivo = admin || supabase;
 
-  let categoriasDb: any[] = [];
+  let categoriasDb: CategoriaCatalogo[] = [];
   if (clienteActivo) {
     try {
-      let { data: catCom, error: errCom } = await clienteActivo
+      const { data: catCom, error: errCom } = await clienteActivo
         .schema("comun_comercio")
         .from("com_categoria")
         .select("*")
@@ -1293,18 +1433,19 @@ export async function obtenerCategoriasAction(negocio = "tranqi"): Promise<Categ
         .eq("ctg_activo", true)
         .order("ctg_orden", { ascending: true });
 
-      if (errCom || !catCom || catCom.length === 0) {
-        const { data: catPub } = await clienteActivo
+      let datosCat = catCom;
+      if (errCom || !datosCat || datosCat.length === 0) {
+        const { data: catPub } = await (clienteActivo as unknown as ClienteSupabaseUntyped)
           .from("com_categoria")
           .select("*")
           .eq("ctg_negocio", negocio)
           .eq("ctg_activo", true)
           .order("ctg_orden", { ascending: true });
-        catCom = catPub;
+        datosCat = catPub as unknown as Tables<{ schema: "comun_comercio" }, "com_categoria">[] | null;
       }
 
-      if (catCom && catCom.length > 0) {
-        categoriasDb = catCom;
+      if (datosCat && datosCat.length > 0) {
+        categoriasDb = datosCat as unknown as CategoriaCatalogo[];
       }
     } catch {
       // Fallback silencioso
@@ -1330,36 +1471,37 @@ export async function obtenerCategoriasAction(negocio = "tranqi"): Promise<Categ
  * Obtiene el catálogo de productos y variantes activas agrupadas con cálculo impositivo ecuatoriano (IVA 15%)
  */
 export async function obtenerCatalogoProductosAction(negocio = "tranqi"): Promise<ProductoCatalogo[]> {
-  const admin: any = crearClienteAdmin();
-  const supabase: any = await crearClienteServidor();
+  const admin = crearClienteAdmin();
+  const supabase = await crearClienteServidor();
   const clienteActivo = admin || supabase;
 
-  let prodsDb: any[] = [];
-  let varsDb: any[] = [];
-  let catsDb: any[] = [];
+  let prodsDb: FilaProducto[] = [];
+  let varsDb: FilaVariante[] = [];
+  let catsDb: CategoriaResumida[] = [];
 
   if (clienteActivo) {
     try {
       // 1. Categorías para resolución exacta
-      let { data: cData, error: errC } = await clienteActivo
+      const { data: cData, error: errC } = await clienteActivo
         .schema("comun_comercio")
         .from("com_categoria")
         .select("ctg_id, ctg_nombre, ctg_slug, ctg_negocio, ctg_activo")
         .eq("ctg_negocio", negocio)
         .eq("ctg_activo", true);
       
-      if (errC || !cData || cData.length === 0) {
-        const { data: cDataPub } = await clienteActivo
+      let resCats = cData;
+      if (errC || !resCats || resCats.length === 0) {
+        const { data: cDataPub } = await (clienteActivo as unknown as ClienteSupabaseUntyped)
           .from("com_categoria")
           .select("ctg_id, ctg_nombre, ctg_slug, ctg_negocio, ctg_activo")
           .eq("ctg_negocio", negocio)
           .eq("ctg_activo", true);
-        cData = cDataPub;
+        resCats = cDataPub as CategoriaResumida[] | null;
       }
-      catsDb = cData || [];
+      catsDb = (resCats as CategoriaResumida[]) || [];
 
       // 2. Productos
-      let { data: pCom, error: errPCom } = await clienteActivo
+      const { data: pCom, error: errPCom } = await clienteActivo
         .schema("comun_comercio")
         .from("com_producto")
         .select("*")
@@ -1367,19 +1509,20 @@ export async function obtenerCatalogoProductosAction(negocio = "tranqi"): Promis
         .eq("pro_activo", true)
         .order("pro_destacado", { ascending: false });
 
-      if (errPCom || !pCom || pCom.length === 0) {
-        const { data: pPub } = await clienteActivo
+      let resProds = pCom;
+      if (errPCom || !resProds || resProds.length === 0) {
+        const { data: pPub } = await (clienteActivo as unknown as ClienteSupabaseUntyped)
           .from("com_producto")
           .select("*")
           .eq("pro_negocio", negocio)
           .eq("pro_activo", true)
           .order("pro_destacado", { ascending: false });
-        pCom = pPub;
+        resProds = pPub as FilaProducto[] | null;
       }
 
-      if (pCom && pCom.length > 0) {
-        prodsDb = pCom;
-        let { data: vCom, error: errVCom } = await clienteActivo
+      if (resProds && resProds.length > 0) {
+        prodsDb = resProds as FilaProducto[];
+        const { data: vCom, error: errVCom } = await clienteActivo
           .schema("comun_comercio")
           .from("com_variante")
           .select("*")
@@ -1387,16 +1530,17 @@ export async function obtenerCatalogoProductosAction(negocio = "tranqi"): Promis
           .eq("var_activo", true)
           .order("var_precio", { ascending: true });
 
-        if (errVCom || !vCom || vCom.length === 0) {
-          const { data: vPub } = await clienteActivo
+        let resVars = vCom;
+        if (errVCom || !resVars || resVars.length === 0) {
+          const { data: vPub } = await (clienteActivo as unknown as ClienteSupabaseUntyped)
             .from("com_variante")
             .select("*")
             .eq("var_negocio", negocio)
             .eq("var_activo", true)
             .order("var_precio", { ascending: true });
-          vCom = vPub;
+          resVars = vPub as FilaVariante[] | null;
         }
-        varsDb = vCom || [];
+        varsDb = (resVars as FilaVariante[]) || [];
       }
     } catch {
       // Fallback silencioso a semillas
@@ -1406,12 +1550,12 @@ export async function obtenerCatalogoProductosAction(negocio = "tranqi"): Promis
   let listaFinal: ProductoCatalogo[] = [];
 
   if (prodsDb.length > 0) {
-    const mapaCategorias = (catsDb || []).reduce((acc: any, c: any) => {
+    const mapaCategorias = (catsDb || []).reduce<Record<string, { ctg_id: string; ctg_nombre: string; ctg_slug: string }>>((acc, c) => {
       acc[c.ctg_id] = { ctg_id: c.ctg_id, ctg_nombre: c.ctg_nombre, ctg_slug: c.ctg_slug };
       return acc;
     }, {});
 
-    const mapaVariantes = (varsDb || []).reduce((acc: Record<string, VarianteCatalogo[]>, v: any) => {
+    const mapaVariantes = (varsDb || []).reduce((acc: Record<string, VarianteCatalogo[]>, v: FilaVariante) => {
       const base = Number(v.var_precio) || 0;
       const tarifaIva = Number(v.var_tarifa_iva_porcentaje) || 15;
       const iva = Number(((base * tarifaIva) / 100).toFixed(4));
@@ -1429,7 +1573,7 @@ export async function obtenerCatalogoProductosAction(negocio = "tranqi"): Promis
         var_tipo_oferta: v.var_tipo_oferta,
         var_frecuencia_recurrencia: v.var_frecuencia_recurrencia,
         var_activo: v.var_activo,
-        var_detalle_variante: v.var_detalle_variante || {},
+        var_detalle_variante: (v.var_detalle_variante as unknown as DetalleVarianteCatalogo) || {},
         monto_iva: iva,
         precio_total: total,
       };
@@ -1442,17 +1586,17 @@ export async function obtenerCatalogoProductosAction(negocio = "tranqi"): Promis
       return acc;
     }, {});
 
-    listaFinal = prodsDb.map((p: any) => ({
+    listaFinal = prodsDb.map((p: FilaProducto) => ({
       pro_id: p.pro_id,
       pro_negocio: p.pro_negocio,
       pro_nombre: p.pro_nombre,
       pro_slug: p.pro_slug,
       pro_descripcion: p.pro_descripcion,
-      pro_tipo: p.pro_tipo,
+      pro_tipo: p.pro_tipo as ProductoCatalogo["pro_tipo"],
       pro_destacado: p.pro_destacado,
       pro_categoria_principal_id: p.pro_categoria_principal_id,
-      pro_detalle_producto: p.pro_detalle_producto || {},
-      categoria: mapaCategorias[p.pro_categoria_principal_id] || null,
+      pro_detalle_producto: (p.pro_detalle_producto as unknown as DetalleProductoCatalogo) || {},
+      categoria: p.pro_categoria_principal_id ? (mapaCategorias[p.pro_categoria_principal_id] || null) : null,
       variantes: mapaVariantes[p.pro_id] || [],
     }));
   } else {
@@ -1472,7 +1616,7 @@ export async function obtenerCatalogoProductosAction(negocio = "tranqi"): Promis
   });
 
   // Filtrar productos inactivos o eliminados
-  return listaFinal.filter((p: any) => p.pro_activo !== false);
+  return listaFinal.filter((p) => p.pro_activo !== false);
 }
 
 // ==============================================================================
@@ -1503,7 +1647,7 @@ export async function crearCategoriaAction(datos: {
 
     const slug = datos.slug?.trim() || generarSlug(nombre);
     const catId = `cat-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
-    const detalle = {
+    const detalle: DetalleCategoriaCatalogo = {
       imagen_url: datos.imagenUrl?.trim() || null,
       video_url: datos.videoUrl?.trim() || null,
       album_fotos_url: datos.albumFotosUrl?.trim() || null,
@@ -1523,8 +1667,8 @@ export async function crearCategoriaAction(datos: {
     };
 
     // 1. Intentar persistir en Supabase vía RPC atómico (Security Definer)
-    const admin: any = crearClienteAdmin();
-    const supabase: any = await crearClienteServidor();
+    const admin = crearClienteAdmin();
+    const supabase = await crearClienteServidor();
     const clienteActivo = admin || supabase;
 
     let categoriaGuardada: CategoriaCatalogo = nuevaCat;
@@ -1542,9 +1686,10 @@ export async function crearCategoriaAction(datos: {
 
       let rpcExitoso = false;
       try {
-        const { data: rpcRes, error: errRpc } = await clienteActivo
+        const { data: rpcResData, error: errRpc } = await (clienteActivo as unknown as ClienteSupabaseUntyped)
           .schema("comun_comercio")
           .rpc("com_fn_guardar_categoria_catalogo", { p_datos: payloadRpc });
+        const rpcRes = rpcResData as { ok?: boolean; categoria?: CategoriaCatalogo } | null;
         if (!errRpc && rpcRes?.ok && rpcRes.categoria) {
           categoriaGuardada = rpcRes.categoria;
           rpcExitoso = true;
@@ -1555,10 +1700,11 @@ export async function crearCategoriaAction(datos: {
 
       if (!rpcExitoso) {
         try {
-          const { data: rpcResPub, error: errRpcPub } = await clienteActivo.rpc(
+          const { data: rpcResPubData, error: errRpcPub } = await (clienteActivo as unknown as ClienteSupabaseUntyped).rpc(
             "com_fn_guardar_categoria_catalogo",
             { p_datos: payloadRpc }
           );
+          const rpcResPub = rpcResPubData as { ok?: boolean; categoria?: CategoriaCatalogo } | null;
           if (!errRpcPub && rpcResPub?.ok && rpcResPub.categoria) {
             categoriaGuardada = rpcResPub.categoria;
             rpcExitoso = true;
@@ -1583,7 +1729,7 @@ export async function crearCategoriaAction(datos: {
                 ctg_tipo: datos.tipo || "FORMATO",
                 ctg_orden: datos.orden || 10,
                 ctg_activo: true,
-                ctg_detalle_categoria: detalle,
+                ctg_detalle_categoria: detalle as unknown as Json,
               },
               { onConflict: "ctg_negocio, ctg_slug" }
             )
@@ -1591,7 +1737,7 @@ export async function crearCategoriaAction(datos: {
             .single();
 
           if (!errDirect && catData) {
-            categoriaGuardada = catData as CategoriaCatalogo;
+            categoriaGuardada = catData as unknown as CategoriaCatalogo;
           }
         } catch {
           // Si falla, usar la versión en memoria
@@ -1611,8 +1757,8 @@ export async function crearCategoriaAction(datos: {
 
     revalidatePath("/panel/catalogo-productos");
     return { ok: true, categoria: categoriaGuardada };
-  } catch (err: any) {
-    return { ok: false, error: err.message || "Error al crear la categoría." };
+  } catch (err) {
+    return { ok: false, error: (err as Error).message || "Error al crear la categoría." };
   }
 }
 
@@ -1670,7 +1816,7 @@ export async function resolverUrlImagenDirectaAction(
 
       // Prioridad 1: Coincidencias de fotos de álbum público /pw/
       const matchesPw = [
-        ...html.matchAll(/https:\/\/lh3\.googleusercontent\.com\/pw\/[a-zA-Z0-9_\-]+/g),
+        ...html.matchAll(/https:\/\/lh3\.googleusercontent\.com\/pw\/[a-zA-Z0-9_-]+/g),
       ].map((m) => m[0]);
 
       if (matchesPw.length > 0 && matchesPw[0]) {
@@ -1685,7 +1831,7 @@ export async function resolverUrlImagenDirectaAction(
 
       // Prioridad 2: Coincidencias de tokens largos de googleusercontent (excluyendo fotos de perfil /a/)
       const matchesGen = [
-        ...html.matchAll(/https:\/\/[a-z0-9]+\.googleusercontent\.com\/[a-zA-Z0-9_\-]+/g),
+        ...html.matchAll(/https:\/\/[a-z0-9]+\.googleusercontent\.com\/[a-zA-Z0-9_-]+/g),
       ]
         .map((m) => m[0])
         .filter(
@@ -1710,10 +1856,10 @@ export async function resolverUrlImagenDirectaAction(
         error:
           "No se pudo extraer la imagen directa del visor de Google Fotos. Copia la dirección directa con clic derecho sobre la foto ('Copiar dirección de la imagen').",
       };
-    } catch (err: any) {
+    } catch (err) {
       return {
         ok: false,
-        error: `Error al procesar el enlace de Google Fotos: ${err.message || err}`,
+        error: `Error al procesar el enlace de Google Fotos: ${(err as Error).message || String(err)}`,
       };
     }
   }
@@ -1831,8 +1977,8 @@ export async function crearProductoAction(datos: {
     };
 
     // 1. Intentar persistir en Supabase
-    const admin: any = crearClienteAdmin();
-    const supabase: any = await crearClienteServidor();
+    const admin = crearClienteAdmin();
+    const supabase = await crearClienteServidor();
     const clienteActivo = admin || supabase;
 
     if (clienteActivo) {
@@ -1850,7 +1996,7 @@ export async function crearProductoAction(datos: {
               pro_destacado: Boolean(datos.destacado),
               pro_categoria_principal_id: cat?.ctg_id || null,
               pro_activo: true,
-              pro_detalle_producto: nuevoProducto.pro_detalle_producto,
+              pro_detalle_producto: nuevoProducto.pro_detalle_producto as unknown as Json,
             },
             { onConflict: "pro_negocio, pro_slug" }
           );
@@ -1868,14 +2014,14 @@ export async function crearProductoAction(datos: {
               var_tarifa_iva_porcentaje: tarifaIva,
               var_tipo_oferta: "REGULAR",
               var_activo: true,
-              var_detalle_variante: nuevaVariante.var_detalle_variante,
-            },
+              var_detalle_variante: nuevaVariante.var_detalle_variante as unknown as Json,
+            } as unknown as TablesInsert<{ schema: "comun_comercio" }, "com_variante">,
             { onConflict: "var_negocio, var_sku" }
           );
       } catch {
         // Fallback en public
         try {
-          await clienteActivo.from("com_producto").upsert(
+          await (clienteActivo as unknown as ClienteSupabaseUntyped).from("com_producto").upsert(
             {
               pro_negocio: negocio,
               pro_nombre: nombre,
@@ -1902,8 +2048,8 @@ export async function crearProductoAction(datos: {
 
     revalidatePath("/panel/catalogo-productos");
     return { ok: true, producto: nuevoProducto };
-  } catch (err: any) {
-    return { ok: false, error: err.message || "Error al registrar el producto." };
+  } catch (err) {
+    return { ok: false, error: (err as Error).message || "Error al registrar el producto." };
   }
 }
 
@@ -1949,7 +2095,7 @@ export async function editarProductoAction(datos: {
     var_precio_comparacion?: number | null;
     var_tarifa_iva_porcentaje?: number;
     var_codigo_impuesto_sri?: string;
-    var_detalle_variante?: any;
+    var_detalle_variante?: DetalleVarianteCatalogo | Json;
     var_activo?: boolean;
   }>;
   negocio?: string;
@@ -2001,7 +2147,7 @@ export async function editarProductoAction(datos: {
           const montoIva = Number(((base * ivaPorc) / 100).toFixed(2));
           const total = Number((base + montoIva).toFixed(2));
 
-          let varPortada = v.var_detalle_variante?.portada_url;
+          let varPortada = (v.var_detalle_variante as DetalleVarianteCatalogo)?.portada_url;
           if (varPortada && typeof varPortada === "string") {
             const resVarImg = await resolverUrlImagenDirectaAction(varPortada);
             if (resVarImg.ok && resVarImg.urlDirecta) {
@@ -2022,9 +2168,9 @@ export async function editarProductoAction(datos: {
             var_frecuencia_recurrencia: datos.tipo === "SUSCRIPCION" ? "MENSUAL" : null,
             var_activo: v.var_activo !== false,
             var_detalle_variante: {
-              ...(v.var_detalle_variante || {}),
+              ...((v.var_detalle_variante as DetalleVarianteCatalogo) || {}),
               portada_url: varPortada || null,
-              modalidad_pago: datos.modalidadPago || v.var_detalle_variante?.modalidad_pago,
+              modalidad_pago: datos.modalidadPago || (v.var_detalle_variante as DetalleVarianteCatalogo)?.modalidad_pago,
             },
             monto_iva: montoIva,
             precio_total: total,
@@ -2092,7 +2238,7 @@ export async function editarProductoAction(datos: {
         icono: datos.icono || prodActual.pro_detalle_producto?.icono || "Sparkles",
         imagen_url: resolvedImagenUrl,
         foto_posicion: datos.fotoPosicion !== undefined ? datos.fotoPosicion : (prodActual.pro_detalle_producto?.foto_posicion || "center center"),
-        foto_ajuste: datos.fotoAjuste !== undefined ? datos.fotoAjuste : (prodActual.pro_detalle_producto?.foto_ajuste || "cover"),
+        foto_ajuste: (datos.fotoAjuste as "cover" | "contain") !== undefined ? (datos.fotoAjuste as "cover" | "contain") : (prodActual.pro_detalle_producto?.foto_ajuste || "cover"),
         foto_zoom: datos.fotoZoom !== undefined ? datos.fotoZoom : (prodActual.pro_detalle_producto?.foto_zoom || 100),
         album_fotos_url: datos.albumFotosUrl !== undefined ? datos.albumFotosUrl.trim() : prodActual.pro_detalle_producto?.album_fotos_url,
         video_url: datos.videoUrl !== undefined ? datos.videoUrl.trim() : prodActual.pro_detalle_producto?.video_url,
@@ -2117,8 +2263,8 @@ export async function editarProductoAction(datos: {
     };
 
     // 1. Intentar actualizar en Supabase
-    const admin: any = crearClienteAdmin();
-    const supabase: any = await crearClienteServidor();
+    const admin = crearClienteAdmin();
+    const supabase = await crearClienteServidor();
     const clienteActivo = admin || supabase;
 
     if (clienteActivo) {
@@ -2150,9 +2296,10 @@ export async function editarProductoAction(datos: {
         // 1. Intentar persistencia atómica vía RPC (Segura contra RLS)
         let rpcExitoso = false;
         try {
-          const { data: rpcRes, error: errRpc } = await clienteActivo
+          const { data: rpcResData, error: errRpc } = await (clienteActivo as unknown as ClienteSupabaseUntyped)
             .schema("comun_comercio")
             .rpc("com_fn_guardar_producto_catalogo", { p_datos: payloadRpc });
+          const rpcRes = rpcResData as { ok?: boolean } | null;
           if (!errRpc && rpcRes?.ok) {
             rpcExitoso = true;
           }
@@ -2162,10 +2309,11 @@ export async function editarProductoAction(datos: {
 
         if (!rpcExitoso) {
           try {
-            const { data: rpcResPub, error: errRpcPub } = await clienteActivo.rpc(
+            const { data: rpcResPubData, error: errRpcPub } = await (clienteActivo as unknown as ClienteSupabaseUntyped).rpc(
               "com_fn_guardar_producto_catalogo",
               { p_datos: payloadRpc }
             );
+            const rpcResPub = rpcResPubData as { ok?: boolean } | null;
             if (!errRpcPub && rpcResPub?.ok) {
               rpcExitoso = true;
             }
@@ -2189,7 +2337,7 @@ export async function editarProductoAction(datos: {
                 pro_tipo: datos.tipo,
                 pro_destacado: Boolean(datos.destacado),
                 pro_categoria_principal_id: cat?.ctg_id || null,
-                pro_detalle_producto: prodEditado.pro_detalle_producto,
+                pro_detalle_producto: prodEditado.pro_detalle_producto as unknown as Json,
               })
               .eq("pro_id", datos.pro_id)
               .select("pro_id")
@@ -2215,7 +2363,7 @@ export async function editarProductoAction(datos: {
                   pro_destacado: Boolean(datos.destacado),
                   pro_categoria_principal_id: cat?.ctg_id || null,
                   pro_activo: true,
-                  pro_detalle_producto: prodEditado.pro_detalle_producto,
+                  pro_detalle_producto: prodEditado.pro_detalle_producto as unknown as Json,
                 },
                 { onConflict: "pro_negocio, pro_slug" }
               )
@@ -2230,7 +2378,7 @@ export async function editarProductoAction(datos: {
           if (dbProdId) {
             for (const v of variantesActualizadas) {
               const varDetalle = v.var_detalle_variante || {};
-              const varPayload: any = {
+              const varPayload: TablesInsert<{ schema: "comun_comercio" }, "com_variante"> = {
                 var_producto_id: dbProdId,
                 var_negocio: negocio,
                 var_sku: v.var_sku,
@@ -2241,7 +2389,7 @@ export async function editarProductoAction(datos: {
                 var_codigo_impuesto_sri: v.var_codigo_impuesto_sri,
                 var_tipo_oferta: v.var_tipo_oferta || "REGULAR",
                 var_activo: v.var_activo !== false,
-                var_detalle_variante: varDetalle,
+                var_detalle_variante: varDetalle as unknown as Json,
                 var_actualizado_en: new Date().toISOString(),
               };
 
@@ -2287,8 +2435,8 @@ export async function editarProductoAction(datos: {
 
     revalidatePath("/panel/catalogo-productos");
     return { ok: true, producto: prodEditado };
-  } catch (err: any) {
-    return { ok: false, error: err.message || "Error al actualizar el producto." };
+  } catch (err) {
+    return { ok: false, error: (err as Error).message || "Error al actualizar el producto." };
   }
 }
 
@@ -2300,8 +2448,8 @@ export async function eliminarProductoAction(
   negocio = "tranqi"
 ): Promise<{ ok: boolean; error?: string }> {
   try {
-    const admin: any = crearClienteAdmin();
-    const supabase: any = await crearClienteServidor();
+    const admin = crearClienteAdmin();
+    const supabase = await crearClienteServidor();
     const clienteActivo = admin || supabase;
 
     if (clienteActivo) {
@@ -2313,7 +2461,7 @@ export async function eliminarProductoAction(
           .eq("pro_id", pro_id);
       } catch {
         try {
-          await clienteActivo
+          await (clienteActivo as unknown as ClienteSupabaseUntyped)
             .from("com_producto")
             .update({ pro_activo: false })
             .eq("pro_id", pro_id);
@@ -2326,14 +2474,15 @@ export async function eliminarProductoAction(
     // Almacén en memoria: marcar como inactivo (tombstone)
     const actuales = storeCustomProductos.get(negocio) || [];
     const filtrados = actuales.filter((p) => p.pro_id !== pro_id);
-    const tombstone: any = { pro_id, pro_activo: false };
+    // Tombstone parcial a propósito: el almacén en memoria solo consulta pro_id y pro_activo.
+    const tombstone = { pro_id, pro_activo: false } as ProductoCatalogo;
     filtrados.push(tombstone);
     storeCustomProductos.set(negocio, filtrados);
 
     revalidatePath("/panel/catalogo-productos");
     return { ok: true };
-  } catch (err: any) {
-    return { ok: false, error: err.message || "Error al eliminar el producto." };
+  } catch (err) {
+    return { ok: false, error: (err as Error).message || "Error al eliminar el producto." };
   }
 }
 
@@ -2344,8 +2493,8 @@ export async function restaurarCatalogoEjemploAction(
   negocio = "tranqi"
 ): Promise<{ ok: boolean; mensaje?: string; error?: string; cantidad?: number }> {
   try {
-    const admin: any = crearClienteAdmin();
-    const supabase: any = await crearClienteServidor();
+    const admin = crearClienteAdmin();
+    const supabase = await crearClienteServidor();
     const clienteActivo = admin || supabase;
 
     const categorias = negocio === "tinkay" ? CATEGORIAS_SEMILLA_TINKAY : (negocio === "tranqi" ? CATEGORIAS_SEMILLA_TRANQI : []);
@@ -2388,7 +2537,7 @@ export async function restaurarCatalogoEjemploAction(
               pro_tipo: prod.pro_tipo,
               pro_destacado: prod.pro_destacado,
               pro_categoria_principal_id: prod.pro_categoria_principal_id,
-              pro_detalle_producto: prod.pro_detalle_producto,
+              pro_detalle_producto: prod.pro_detalle_producto as unknown as Json,
               pro_activo: true,
             }, { onConflict: "pro_id" });
 
@@ -2409,7 +2558,7 @@ export async function restaurarCatalogoEjemploAction(
                 var_tipo_oferta: v.var_tipo_oferta,
                 var_frecuencia_recurrencia: v.var_frecuencia_recurrencia || null,
                 var_activo: true,
-                var_detalle_variante: v.var_detalle_variante || {},
+                var_detalle_variante: (v.var_detalle_variante || {}) as unknown as Json,
               }, { onConflict: "var_id" });
           }
         } catch {
@@ -2430,8 +2579,8 @@ export async function restaurarCatalogoEjemploAction(
       mensaje: `Catálogo de ${negocio.toUpperCase()} restaurado con éxito (${productos.length} productos y ${categorias.length} categorías).`,
       cantidad: productos.length,
     };
-  } catch (err: any) {
-    return { ok: false, error: err.message || "Error al restaurar catálogo inicial." };
+  } catch (err) {
+    return { ok: false, error: (err as Error).message || "Error al restaurar catálogo inicial." };
   }
 }
 
@@ -2446,9 +2595,9 @@ export async function obtenerConfiguracionPasarelaAction(
   negocio = "tranqi",
   pasarela = "PAYPHONE"
 ): Promise<ConfiguracionPasarela> {
-  const supabase: any = await crearClienteServidor();
+  const supabase = await crearClienteServidor();
 
-  let data: any = null;
+  let data: Tables<{ schema: "comun_comercio" }, "com_pasarela_configuracion"> | null = null;
   try {
     const { data: dCom } = await supabase
       .schema("comun_comercio")
@@ -2460,13 +2609,13 @@ export async function obtenerConfiguracionPasarelaAction(
     data = dCom;
 
     if (!data) {
-      const { data: dPub } = await supabase
+      const { data: dPub } = await (supabase as unknown as ClienteSupabaseUntyped)
         .from("com_pasarela_configuracion")
         .select("*")
         .eq("psc_negocio", negocio)
         .eq("psc_pasarela", pasarela)
         .maybeSingle();
-      data = dPub;
+      data = dPub as Tables<{ schema: "comun_comercio" }, "com_pasarela_configuracion"> | null;
     }
   } catch {
     // Modo simulado por defecto
@@ -2485,19 +2634,19 @@ export async function obtenerConfiguracionPasarelaAction(
     };
   }
 
-  const pub = data.psc_credenciales_publicas || {};
-  const priv = data.psc_credenciales_privadas || {};
+  const pub = (data.psc_credenciales_publicas as Record<string, unknown>) || {};
+  const priv = (data.psc_credenciales_privadas as Record<string, unknown>) || {};
 
   return {
     psc_id: data.psc_id,
     psc_negocio: data.psc_negocio,
     psc_pasarela: data.psc_pasarela,
     psc_nombre_visible: data.psc_nombre_visible,
-    psc_ambiente: data.psc_ambiente || "PRUEBAS",
+    psc_ambiente: (data.psc_ambiente as "PRUEBAS" | "PRODUCCION") || "PRUEBAS",
     psc_activo: data.psc_activo ?? true,
-    storeId: pub.storeId || "STORE-DEMO-TRANQI-001",
-    modoSimulado: pub.modoSimulado ?? priv.modoSimulado ?? true,
-    token: priv.token || "",
+    storeId: (pub.storeId as string) || "STORE-DEMO-TRANQI-001",
+    modoSimulado: (pub.modoSimulado as boolean | undefined) ?? (priv.modoSimulado as boolean | undefined) ?? true,
+    token: (priv.token as string) || "",
     comisionPorcentaje: Number(data.psc_comision_porcentaje) || 6.0,
     detalle: data.psc_detalle_pasarela || {},
   };
@@ -2515,8 +2664,8 @@ export async function guardarConfiguracionPasarelaAction(datos: {
   activo: boolean;
 }): Promise<{ ok: boolean; error?: string }> {
   const negocio = datos.negocio || "tranqi";
-  const admin: any = crearClienteAdmin();
-  const supabase: any = await crearClienteServidor();
+  const admin = crearClienteAdmin();
+  const supabase = await crearClienteServidor();
   const clienteActivo = admin || supabase;
 
   const pub = {
@@ -2526,7 +2675,7 @@ export async function guardarConfiguracionPasarelaAction(datos: {
     pais: "EC",
   };
 
-  const privPayload: Record<string, any> = {
+  const privPayload: Record<string, unknown> = {
     modoSimulado: datos.modoSimulado,
   };
   if (datos.token && datos.token.trim().length > 0) {
@@ -2546,14 +2695,14 @@ export async function guardarConfiguracionPasarelaAction(datos: {
             psc_ambiente: datos.ambiente,
             psc_activo: datos.activo,
             psc_credenciales_publicas: pub,
-            psc_credenciales_privadas: privPayload,
+            psc_credenciales_privadas: privPayload as unknown as Json,
             psc_actualizado_en: new Date().toISOString(),
           },
           { onConflict: "psc_negocio, psc_pasarela" }
         );
     } catch {
       try {
-        await clienteActivo.from("com_pasarela_configuracion").upsert(
+        await (clienteActivo as unknown as ClienteSupabaseUntyped).from("com_pasarela_configuracion").upsert(
           {
             psc_negocio: negocio,
             psc_pasarela: "PAYPHONE",
@@ -2561,12 +2710,12 @@ export async function guardarConfiguracionPasarelaAction(datos: {
             psc_ambiente: datos.ambiente,
             psc_activo: datos.activo,
             psc_credenciales_publicas: pub,
-            psc_credenciales_privadas: privPayload,
+            psc_credenciales_privadas: privPayload as unknown as Json,
             psc_actualizado_en: new Date().toISOString(),
           },
           { onConflict: "psc_negocio, psc_pasarela" }
         );
-      } catch (err: any) {
+      } catch (err) {
         console.error("Error al guardar pasarela:", err);
       }
     }
@@ -2590,7 +2739,7 @@ export async function obtenerDatosFacturacionAction(): Promise<{
   correoFacturacion: string;
   error?: string;
 }> {
-  const supabase: any = await crearClienteServidor();
+  const supabase = await crearClienteServidor();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
     return {
@@ -2627,7 +2776,7 @@ export async function obtenerDatosFacturacionAction(): Promise<{
     };
   }
 
-  const detalle = (usuario.usu_detalle_usuario as Record<string, any>) || {};
+  const detalle = (usuario.usu_detalle_usuario as unknown as DetalleUsuarioSeguridad) || {};
   const datosFact = detalle.datos_facturacion;
 
   if (datosFact && (datosFact.razon_social || datosFact.identificacion)) {
@@ -2685,8 +2834,8 @@ export async function prepararPagoPayphoneAction(datos: {
   esSimulado?: boolean;
 }) {
   const negocio = datos.negocio || "tranqi";
-  const supabase: any = await crearClienteServidor();
-  const admin: any = crearClienteAdmin();
+  const supabase = await crearClienteServidor();
+  const admin = crearClienteAdmin();
   const clienteDb = admin || supabase;
 
   const cfg = await obtenerConfiguracionPasarelaAction(negocio, "PAYPHONE");
@@ -2731,7 +2880,7 @@ export async function prepararPagoPayphoneAction(datos: {
         .eq("usu_id", clienteId)
         .maybeSingle();
 
-      const detUsr = (usrRow?.usu_detalle_usuario as Record<string, any>) || {};
+      const detUsr = (usrRow?.usu_detalle_usuario as unknown as DetalleUsuarioSeguridad) || {};
       await clienteDb
         .schema("comun_seguridad")
         .from("seg_usuario")
@@ -2917,10 +3066,10 @@ export async function prepararPagoPayphoneAction(datos: {
       payWithPayPhone: payphoneData.payWithPayPhone,
       payWithCard: payphoneData.payWithCard,
     };
-  } catch (error: any) {
+  } catch (error) {
     return {
       ok: false,
-      error: `Error de conexión con Payphone: ${error?.message || "Error de red"}`,
+      error: `Error de conexión con Payphone: ${(error as Error)?.message || "Error de red"}`,
     };
   }
 }
@@ -2943,8 +3092,8 @@ export async function confirmarPagoPayphoneAction(datos: {
   montoTotal?: number;
 }) {
   const negocio = datos.negocio || "tranqi";
-  const admin: any = crearClienteAdmin();
-  const supabase: any = await crearClienteServidor();
+  const admin = crearClienteAdmin();
+  const supabase = await crearClienteServidor();
   const clienteDb = admin || supabase;
 
   const cfg = await obtenerConfiguracionPasarelaAction(negocio, "PAYPHONE");
@@ -2967,7 +3116,7 @@ export async function confirmarPagoPayphoneAction(datos: {
           .eq("pag_identificador_cliente", datos.clientTxId)
           .maybeSingle();
 
-        const detPrevio = (pagoExistente?.pag_detalle_transaccion as Record<string, any>) || {};
+        const detPrevio = (pagoExistente?.pag_detalle_transaccion as Record<string, unknown>) || {};
 
         await clienteDb
           .schema("comun_comercio")
@@ -3083,10 +3232,10 @@ export async function confirmarPagoPayphoneAction(datos: {
       tarjeta: `${confirmData.cardBrand || "Tarjeta"} •••• ${confirmData.lastDigits || ""}`,
       fecha: new Date().toISOString(),
     };
-  } catch (error: any) {
+  } catch (error) {
     return {
       ok: false,
-      error: `Error al confirmar transacción: ${error?.message || "Error desconocido"}`,
+      error: `Error al confirmar transacción: ${(error as Error)?.message || "Error desconocido"}`,
     };
   }
 }
@@ -3095,7 +3244,7 @@ export async function confirmarPagoPayphoneAction(datos: {
  * Obtiene el historial de transacciones de pago
  */
 export async function obtenerHistorialTransaccionesAction(negocio = "tranqi"): Promise<TransaccionPagoCRM[]> {
-  const supabase: any = await crearClienteServidor();
+  const supabase = await crearClienteServidor();
 
   try {
     const { data: dCom } = await supabase
@@ -3106,16 +3255,16 @@ export async function obtenerHistorialTransaccionesAction(negocio = "tranqi"): P
       .order("pag_creado_en", { ascending: false })
       .limit(50);
 
-    if (dCom && dCom.length > 0) return dCom;
+    if (dCom && dCom.length > 0) return dCom as unknown as TransaccionPagoCRM[];
 
-    const { data: dPub } = await supabase
+    const { data: dPub } = await (supabase as unknown as ClienteSupabaseUntyped)
       .from("com_transaccion_pago")
       .select("*")
       .eq("pag_negocio", negocio)
       .order("pag_creado_en", { ascending: false })
       .limit(50);
 
-    return dPub || [];
+    return (dPub || []) as unknown as TransaccionPagoCRM[];
   } catch {
     return [];
   }
@@ -3380,11 +3529,11 @@ const storeDisponibilidad = new Map<string, ItemDisponibilidadOperativa[]>();
 export async function obtenerDisponibilidadOperativaAction(
   negocio = "tranqi"
 ): Promise<ItemDisponibilidadOperativa[]> {
-  const admin: any = crearClienteAdmin();
-  const supabase: any = await crearClienteServidor();
+  const admin = crearClienteAdmin();
+  const supabase = await crearClienteServidor();
   const clienteActivo = admin || supabase;
 
-  let dbItems: any[] = [];
+  let dbItems: ItemDisponibilidadOperativa[] = [];
   if (clienteActivo) {
     try {
       const { data } = await clienteActivo
@@ -3394,13 +3543,13 @@ export async function obtenerDisponibilidadOperativaAction(
         .eq("inv_negocio", negocio);
 
       if (data && data.length > 0) {
-        dbItems = data.map((d: any) => ({
+        dbItems = (data as unknown as InventarioConInsumo[]).map((d) => ({
           id: d.inv_id,
           negocio: d.inv_negocio,
           codigo: d.com_insumo?.ins_codigo || d.inv_insumo_id,
           nombre: d.com_insumo?.ins_nombre || "Insumo",
-          categoria_tipo: d.com_insumo?.ins_detalle_insumo?.categoria_tipo || "INSUMO_GENERAL",
-          unidad: d.com_insumo?.ins_unidad_medida || "UNIDAD",
+          categoria_tipo: (d.com_insumo?.ins_detalle_insumo?.categoria_tipo as ItemDisponibilidadOperativa["categoria_tipo"]) || "INSUMO_GENERAL",
+          unidad: (d.com_insumo?.ins_unidad_medida as ItemDisponibilidadOperativa["unidad"]) || "UNIDAD",
           cantidad_disponible: Number(d.inv_stock_actual || 0),
           estado:
             Number(d.inv_stock_actual || 0) <= 0
@@ -3443,8 +3592,8 @@ export async function actualizarDisponibilidadOperativaAction(
   try {
     storeDisponibilidad.set(negocio, itemsActualizados);
 
-    const admin: any = crearClienteAdmin();
-    const supabase: any = await crearClienteServidor();
+    const admin = crearClienteAdmin();
+    const supabase = await crearClienteServidor();
     const clienteActivo = admin || supabase;
 
     if (clienteActivo) {
@@ -3460,7 +3609,7 @@ export async function actualizarDisponibilidadOperativaAction(
                 inv_local_codigo: "MATRIZ",
                 inv_stock_actual: it.cantidad_disponible,
                 inv_actualizado_en: new Date().toISOString(),
-              },
+              } as unknown as TablesInsert<{ schema: "comun_comercio" }, "com_inventario">,
               { onConflict: "inv_negocio, inv_insumo_id, inv_local_codigo" }
             );
         } catch {
@@ -3472,8 +3621,8 @@ export async function actualizarDisponibilidadOperativaAction(
     revalidatePath("/panel");
     revalidatePath("/panel/catalogo-productos");
     return { ok: true, items: itemsActualizados };
-  } catch (err: any) {
-    return { ok: false, error: err.message || "Error al actualizar disponibilidad." };
+  } catch (err) {
+    return { ok: false, error: (err as Error).message || "Error al actualizar disponibilidad." };
   }
 }
 
@@ -3507,8 +3656,8 @@ const storeCoberturaCliente = new Map<string, EstadoCoberturaCliente>();
 export async function obtenerCoberturaUsuarioAction(
   negocio = "tranqi"
 ): Promise<EstadoCoberturaCliente> {
-  const admin: any = crearClienteAdmin();
-  const supabase: any = await crearClienteServidor();
+  const admin = crearClienteAdmin();
+  const supabase = await crearClienteServidor();
   const clienteActivo = admin || supabase;
 
   // 1. Intentar consultar en Supabase
@@ -3528,12 +3677,12 @@ export async function obtenerCoberturaUsuarioAction(
           .order("sub_creado_en", { ascending: false })
           .limit(1);
 
-        if (subs && subs.length > 0) {
+        if (subs && subs.length > 0 && subs[0]) {
           const sub = subs[0];
-          const varDetalle = sub.com_variante?.var_detalle_variante || {};
-          const derechosDef: any[] = varDetalle.derechos || [];
+          const varDetalle = (sub.com_variante?.var_detalle_variante as unknown as DetalleVarianteCatalogo) || {};
+          const derechosDef = varDetalle.derechos || [];
 
-          const primerDiaMes = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split("T")[0];
+          const primerDiaMes = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split("T")[0] || "";
           const { data: consumos } = await clienteActivo
             .schema("comun_comercio")
             .from("com_derecho_consumo")
@@ -3542,11 +3691,11 @@ export async function obtenerCoberturaUsuarioAction(
             .eq("der_periodo", primerDiaMes);
 
           const mapaConsumos = new Map<string, number>();
-          consumos?.forEach((c: any) => {
+          consumos?.forEach((c: Tables<{ schema: "comun_comercio" }, "com_derecho_consumo">) => {
             mapaConsumos.set(c.der_concepto, c.der_consumidos || 0);
           });
 
-          const derechos: DerechoCobertura[] = derechosDef.map((d: any) => {
+          const derechos: DerechoCobertura[] = derechosDef.map((d) => {
             const consumidos = mapaConsumos.get(d.concepto) || 0;
             const restantes = d.incluidos !== null && d.incluidos !== undefined
               ? Math.max(0, d.incluidos - consumidos)
@@ -3663,8 +3812,8 @@ export async function consumirDerechoUsuarioAction(datos: {
   storeCoberturaCliente.set(negocio, { ...cobertura });
 
   // Intentar persistir en Supabase RPC
-  const admin: any = crearClienteAdmin();
-  const supabase: any = await crearClienteServidor();
+  const admin = crearClienteAdmin();
+  const supabase = await crearClienteServidor();
   const clienteActivo = admin || supabase;
   if (clienteActivo && cobertura.suscripcionId && !cobertura.suscripcionId.startsWith("sub-demo")) {
     try {
@@ -3693,16 +3842,16 @@ export async function activarSuscripcionTrasPagoAction(datos: {
   clienteNombre: string;
 }) {
   const prods = await obtenerCatalogoProductosAction(datos.negocio);
-  let varianteEncontrada: any = null;
+  let varianteEncontrada: VarianteCatalogo | null = null;
   for (const p of prods) {
-    const v = p.variantes?.find((varItem: any) => varItem.var_id === datos.varianteId);
+    const v = p.variantes?.find((varItem) => varItem.var_id === datos.varianteId);
     if (v) {
       varianteEncontrada = v;
       break;
     }
   }
 
-  const varDetalle = varianteEncontrada?.var_detalle_variante || {};
+  const varDetalle = (varianteEncontrada?.var_detalle_variante as DetalleVarianteCatalogo) || {};
   const derechosDef = varDetalle.derechos || [
     { concepto: "CONSULTA_TELEMATICA", nombre: "Citas Telemáticas Especializadas", incluidos: 4 },
     { concepto: "REVISION_CONTRATO", nombre: "Revisiones y Dictámenes de Contratos", incluidos: 2 },
@@ -3710,7 +3859,7 @@ export async function activarSuscripcionTrasPagoAction(datos: {
     { concepto: "DESCUENTO_NOTARIAL", nombre: "Descuento en Trámites Notariales", incluidos: null, porcentaje: 35 },
   ];
 
-  const derechos: DerechoCobertura[] = derechosDef.map((d: any) => ({
+  const derechos: DerechoCobertura[] = derechosDef.map((d) => ({
     concepto: d.concepto,
     nombre: d.nombre || d.concepto,
     incluidos: d.incluidos ?? null,

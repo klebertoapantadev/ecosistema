@@ -16,10 +16,7 @@ import {
   Clock,
   ExternalLink,
   Receipt,
-  Download,
   Image as ImageIcon,
-  MapPin,
-  AlertCircle,
 } from "lucide-react";
 import { EstadoCoberturaCliente } from "../acciones";
 

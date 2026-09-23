@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { FileText, Save, Eye, Edit, AlertCircle, RefreshCw } from "lucide-react";
+import { Save, Eye, Edit, AlertCircle, RefreshCw } from "lucide-react";
 import { obtenerPlantillaContrato, guardarPlantillaContrato } from "../acciones";
 import { BarraVariablesDinamicas } from "@eco/identidad/componentes/BarraVariablesDinamicas";
 

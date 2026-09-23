@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   FileEdit,
@@ -11,10 +11,6 @@ import {
   CheckCircle2,
   AlertTriangle,
   History,
-  Sparkles,
-  MessageSquare,
-  User,
-  ShieldAlert,
   ChevronDown,
   ChevronUp,
 } from "lucide-react";
@@ -36,7 +32,7 @@ export function EditorContratoOperador({
   solicitudId,
   nombrePostulante,
   cedulaPostulante,
-  versionInicial,
+  versionInicial: _versionInicial,
   tituloInicial,
   contenidoInicial,
   historialVersiones,

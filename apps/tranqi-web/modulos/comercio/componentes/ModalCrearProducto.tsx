@@ -5,15 +5,10 @@ import {
   X,
   PackagePlus,
   Flower2,
-  Scale,
   Wrench,
-  Sparkles,
   CheckCircle2,
   AlertCircle,
   Image as ImageIcon,
-  Video,
-  Clock,
-  BookOpen,
   Loader2,
   Wand2,
 } from "lucide-react";
@@ -44,7 +39,7 @@ export function ModalCrearProducto({
   const esMantenimiento = negocio === "fastfix";
 
   const [nombre, setNombre] = useState("");
-  const [descripcion, setDescripcion] = useState("");
+  const [descripcion] = useState("");
   const [categoriaId, setCategoriaId] = useState(categorias[0]?.ctg_id || "");
   const [tipo, setTipo] = useState<"SERVICIO" | "SUSCRIPCION" | "FISICO" | "DIGITAL">(
     esFloristeria ? "FISICO" : "SERVICIO"
@@ -52,9 +47,9 @@ export function ModalCrearProducto({
   const [precioBase, setPrecioBase] = useState<number | "">("");
   const [tarifaIva, setTarifaIva] = useState<number>(15);
   const [sku, setSku] = useState("");
-  const [destacado, setDestacado] = useState(false);
-  const [icono, setIcono] = useState<string>(esFloristeria ? "Sparkles" : "Scale");
-  const [modalidadPago, setModalidadPago] = useState("Botón Payphone / Tarjeta / Saldo");
+  const [destacado] = useState(false);
+  const [icono] = useState<string>(esFloristeria ? "Sparkles" : "Scale");
+  const [modalidadPago] = useState("Botón Payphone / Tarjeta / Saldo");
 
   // Recursos Digitales y Multimedia
   const [imagenUrl, setImagenUrl] = useState("");
@@ -63,14 +58,14 @@ export function ModalCrearProducto({
   const [tiempoEntrega, setTiempoEntrega] = useState(
     esFloristeria ? "🌸 Pide hoy, recibe hoy (Mismo Día)" : "24 a 48 horas hábiles"
   );
-  const [beneficiosTexto, setBeneficiosTexto] = useState(
+  const [beneficiosTexto] = useState(
     esFloristeria
       ? "Rosas de exportación seleccionadas de tallo largo\nEnvoltura en fino papel coreano plisado\nTarjeta dedicatoria y preservante floral gratis"
       : esLegal
       ? "Asignación de abogado especialista acreditado\nRevisión jurídica previa y asesoría continua\nConstancia digital con validez legal"
       : "Diagnóstico técnico en sitio\nGarantía de servicio por 90 días"
   );
-  const [requisitosTexto, setRequisitosTexto] = useState(
+  const [requisitosTexto] = useState(
     esFloristeria
       ? "Dirección exacta y número de contacto del destinatario\nMensaje para la tarjeta dedicatoria"
       : "Cédula de ciudadanía o pasaporte vigente\nDocumentación básica de soporte"
@@ -133,8 +128,8 @@ export function ModalCrearProducto({
       } else {
         setError(res.error || "No se pudo convertir automáticamente la URL de Google Fotos.");
       }
-    } catch (e: any) {
-      setError(`Error al convertir: ${e.message || e}`);
+    } catch (e) {
+      setError(`Error al convertir: ${(e as Error).message || String(e)}`);
     } finally {
       setResolviendoImagen(false);
     }
@@ -194,7 +189,7 @@ export function ModalCrearProducto({
         tarifaIva,
         sku: sku.trim() || undefined,
         destacado,
-        icono: icono as any,
+        icono: icono as "Scale" | "ShieldCheck" | "FileCheck" | "CreditCard",
         imagenUrl: imagenUrlFinal || undefined,
         videoUrl: videoUrl.trim() || undefined,
         beneficios,
@@ -210,8 +205,8 @@ export function ModalCrearProducto({
       } else {
         setError(res.error || "No se pudo registrar el producto.");
       }
-    } catch (err: any) {
-      setError(err.message || "Error al procesar la creación.");
+    } catch (err) {
+      setError((err as Error).message || "Error al procesar la creación.");
     } finally {
       setGuardando(false);
     }
@@ -377,7 +372,7 @@ export function ModalCrearProducto({
               </label>
               <select
                 value={tipo}
-                onChange={(e) => setTipo(e.target.value as any)}
+                onChange={(e) => setTipo(e.target.value as "SERVICIO" | "SUSCRIPCION" | "FISICO" | "DIGITAL")}
                 style={{
                   width: "100%",
                   padding: "9px 12px",

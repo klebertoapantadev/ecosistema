@@ -1,4 +1,9 @@
 import { crearClienteServidor, crearClienteAdmin } from "@eco/supabase/servidor";
+import type { Tables } from "@eco/db";
+
+type DocumentoSocioFila = Tables<{ schema: "tranqui_legal" }, "trq_documento_socio">;
+type SolicitudSocioFila = Tables<{ schema: "tranqui_legal" }, "trq_solicitud_socio">;
+type VersionContratoSocioFila = Tables<{ schema: "tranqui_legal" }, "trq_version_contrato_socio">;
 
 // Server-only. No importar desde un client component.
 
@@ -102,7 +107,7 @@ export async function obtenerSolicitudPropia(usuarioId: string) {
 
     if (ultRev?.rev_decision === "aceptada" && data.ssc_estado !== "aceptada") {
       data.ssc_estado = "aceptada";
-      await (adminSupabase as any)
+      await adminSupabase
         .schema("tranqui_legal")
         .from("trq_solicitud_socio")
         .update({ ssc_estado: "aceptada", ssc_actualizado_en: new Date().toISOString() })
@@ -119,9 +124,8 @@ export async function obtenerSolicitudPropia(usuarioId: string) {
   // Firmar URLs de documentos existentes para el solicitante y normalizar tipos
   const docs = data.trq_documento_socio;
   if (Array.isArray(docs) && docs.length > 0) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const docsFirmados = await Promise.all(
-      docs.map(async (d: any) => {
+      docs.map(async (d: DocumentoSocioFila) => {
         const tipoNormalizado = normalizarTipoDocumento(d);
         if (!d.dcs_url) return { ...d, dcs_tipo: tipoNormalizado, url: null };
         if (d.dcs_url.startsWith("data:") || d.dcs_url.startsWith("http")) {
@@ -172,6 +176,18 @@ async function adjuntarUsuarios<T extends { usuarioId: string }>(
   return filas.map((f) => ({ ...f, usuario: mapa.get(f.usuarioId) ?? null }));
 }
 
+interface SolicitudParaAdminFila extends SolicitudSocioFila {
+  trq_revision_solicitud?: Array<{ rev_decision: string; rev_creado_en: string }> | null;
+  trq_documento_socio?: Array<{
+    dcs_id: string;
+    dcs_tipo: string;
+    dcs_nombre_archivo?: string | null;
+    dcs_comentario?: string | null;
+    dcs_url?: string | null;
+    dcs_creado_en?: string | null;
+  }> | null;
+}
+
 export async function listarSolicitudesParaAdmin(estado?: string) {
   const supabase = await crearClienteServidor();
   const adminSupabase = crearClienteAdmin() || supabase;
@@ -190,7 +206,7 @@ export async function listarSolicitudesParaAdmin(estado?: string) {
   const { data, error } = await query;
   if (error) throw new Error(error.message);
 
-  const rawList = (data ?? []).map((s: any) => {
+  const rawList = ((data ?? []) as unknown as SolicitudParaAdminFila[]).map((s) => {
     let estadoReal = s.ssc_estado;
     const revs = (s.trq_revision_solicitud || []) as Array<{ rev_decision: string; rev_creado_en: string }>;
     if (revs.length > 0) {
@@ -320,7 +336,7 @@ export async function obtenerDetalleSolicitudParaAdmin(solicitudId: string) {
   if (ultDecision === "aceptada" && solicitud.ssc_estado !== "aceptada") {
     solicitud.ssc_estado = "aceptada";
     try {
-      await (adminSupabase as any)
+      await adminSupabase
         .schema("tranqui_legal")
         .from("trq_solicitud_socio")
         .update({ ssc_estado: "aceptada", ssc_actualizado_en: new Date().toISOString() })
@@ -428,7 +444,7 @@ export interface VersionContratoSocio {
 
 export async function obtenerVersionesContratoSocio(solicitudId: string): Promise<VersionContratoSocio[]> {
   const supabase = await crearClienteServidor();
-  const adminSupabase = (crearClienteAdmin() || supabase) as any;
+  const adminSupabase = crearClienteAdmin() || supabase;
 
   const { data, error } = await adminSupabase
     .schema("tranqui_legal")
@@ -443,12 +459,18 @@ export async function obtenerVersionesContratoSocio(solicitudId: string): Promis
 
   if (error || !data) return [];
 
-  return (data as any[]).map((v: any) => {
+  interface FilaVersionConCreador extends VersionContratoSocioFila {
+    creador?: { usu_nombres: string | null; usu_apellidos: string | null; usu_correo: string } | null;
+  }
+
+  return (data as unknown as FilaVersionConCreador[]).map((v) => {
     const creadorNom = v.creador
       ? [v.creador.usu_nombres, v.creador.usu_apellidos].filter(Boolean).join(" ") || v.creador.usu_correo
       : "Sistema";
     return {
       ...v,
+      vcs_rol_creador: v.vcs_rol_creador as VersionContratoSocio["vcs_rol_creador"],
+      vcs_tipo_evento: v.vcs_tipo_evento as VersionContratoSocio["vcs_tipo_evento"],
       creador_nombre: creadorNom,
     };
   });
@@ -456,7 +478,7 @@ export async function obtenerVersionesContratoSocio(solicitudId: string): Promis
 
 export async function obtenerUltimaVersionContratoSocio(solicitudId: string) {
   const supabase = await crearClienteServidor();
-  const adminSupabase = (crearClienteAdmin() || supabase) as any;
+  const adminSupabase = crearClienteAdmin() || supabase;
 
   // 1. Buscar si hay una versión personalizada emitida para esta solicitud
   const { data } = await adminSupabase
@@ -472,12 +494,12 @@ export async function obtenerUltimaVersionContratoSocio(solicitudId: string) {
   if (data) {
     return {
       existeVersionPersonalizada: true,
-      version: (data as any).vcs_numero_version as number,
-      titulo: (data as any).vcs_titulo as string,
-      contenido: (data as any).vcs_contenido_md as string,
-      comentarios: (data as any).vcs_comentarios as string | null,
-      tipoEvento: (data as any).vcs_tipo_evento as string,
-      creadoEn: (data as any).vcs_creado_en as string,
+      version: data.vcs_numero_version,
+      titulo: data.vcs_titulo,
+      contenido: data.vcs_contenido_md,
+      comentarios: data.vcs_comentarios,
+      tipoEvento: data.vcs_tipo_evento,
+      creadoEn: data.vcs_creado_en,
     };
   }
 
@@ -493,8 +515,8 @@ export async function obtenerUltimaVersionContratoSocio(solicitudId: string) {
   return {
     existeVersionPersonalizada: false,
     version: 1,
-    titulo: (plantilla as any)?.pct_titulo || "CONTRATO DE PRESTACIÓN DE SERVICIOS Y ASOCIACIÓN LEGAL",
-    contenido: (plantilla as any)?.pct_contenido || "",
+    titulo: plantilla?.pct_titulo || "CONTRATO DE PRESTACIÓN DE SERVICIOS Y ASOCIACIÓN LEGAL",
+    contenido: plantilla?.pct_contenido || "",
     comentarios: null,
     tipoEvento: "BORRADOR_INICIAL",
     creadoEn: new Date().toISOString(),

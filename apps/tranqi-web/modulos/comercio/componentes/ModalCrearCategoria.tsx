@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { X, FolderPlus, Flower2, Scale, Wrench, CheckCircle2, AlertCircle, Image as ImageIcon } from "lucide-react";
+import { X, FolderPlus, Flower2, CheckCircle2, AlertCircle, Image as ImageIcon } from "lucide-react";
 import { crearCategoriaAction, CategoriaCatalogo } from "../acciones";
 
 interface Props {
@@ -13,12 +13,11 @@ interface Props {
 
 export function ModalCrearCategoria({ abierto, onCerrar, onCategoriaCreada, negocio = "tranqi" }: Props) {
   const esFloristeria = negocio === "tinkay" || negocio === "margaritas";
-  const esMantenimiento = negocio === "fastfix";
 
   const [nombre, setNombre] = useState("");
   const [slug, setSlug] = useState("");
   const [descripcion, setDescripcion] = useState("");
-  const [tipo, setTipo] = useState(esFloristeria ? "COLECCION" : "FORMATO");
+  const [tipo] = useState(esFloristeria ? "COLECCION" : "FORMATO");
   const [orden, setOrden] = useState(1);
   const [imagenUrl, setImagenUrl] = useState("");
   const [videoUrl, setVideoUrl] = useState("");
@@ -73,8 +72,8 @@ export function ModalCrearCategoria({ abierto, onCerrar, onCategoriaCreada, nego
       } else {
         setError(res.error || "No se pudo crear la categoría.");
       }
-    } catch (err: any) {
-      setError(err.message || "Error al procesar la solicitud.");
+    } catch (err) {
+      setError((err as Error).message || "Error al procesar la solicitud.");
     } finally {
       setGuardando(false);
     }

@@ -9,16 +9,12 @@ import {
   CreditCard,
   Search,
   Sparkles,
-  Tag,
-  CheckCircle,
-  HelpCircle,
   Clock,
   ChevronLeft,
   ChevronRight,
   RefreshCw,
   Plus,
   FolderPlus,
-  Layers,
   Pencil,
   Play,
   Video,
@@ -41,7 +37,7 @@ import { ModalCrearCategoria } from "./ModalCrearCategoria";
 import { ModalEditarProducto, PALETA_COLORES_VARIANTES } from "./ModalEditarProducto";
 import { ManualConfiguracionCatalogoModal } from "./ManualConfiguracionCatalogoModal";
 import { TableroDisponibilidadOperativa } from "./TableroDisponibilidadOperativa";
-import { BookOpen, Flower2, Wrench, Activity, LayoutGrid } from "lucide-react";
+import { BookOpen, Activity, LayoutGrid } from "lucide-react";
 
 interface Props {
   negocio?: string;
@@ -732,7 +728,7 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
               origen: "master" | "variante" | "galeria";
               etiqueta: string;
               varianteId?: string;
-              col?: any;
+              col?: (typeof PALETA_COLORES_VARIANTES)[number];
               posicion?: string;
               ajuste?: string;
               zoom?: number;
@@ -844,7 +840,7 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                         position: "relative",
                         width: "100%",
                         height: "100%",
-                        objectFit: ajusteActual as any,
+                        objectFit: ajusteActual as React.CSSProperties["objectFit"],
                         objectPosition: posicionActual,
                         transform: scaleFactor !== 1 ? `scale(${scaleFactor})` : undefined,
                         transformOrigin: posicionActual,

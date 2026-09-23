@@ -8,9 +8,6 @@ import {
   Clock,
   Search,
   RefreshCw,
-  FileText,
-  ShieldCheck,
-  AlertTriangle,
 } from "lucide-react";
 import {
   TransaccionPagoCRM,

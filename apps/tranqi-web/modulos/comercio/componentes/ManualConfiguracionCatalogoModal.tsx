@@ -10,11 +10,6 @@ import {
   Layers,
   Image as ImageIcon,
   Clock,
-  CreditCard,
-  Sparkles,
-  CheckCircle,
-  HelpCircle,
-  ChevronRight,
   Calculator,
 } from "lucide-react";
 

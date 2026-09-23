@@ -21,13 +21,11 @@ import {
   QrCode,
   FileCheck,
   Sparkles,
-  Lock,
   X
 } from "lucide-react";
 import forge from "node-forge";
 import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
 import QRCode from "qrcode";
-import Link from "next/link";
 
 interface InfoCertificado {
   nombreTitular: string;
@@ -45,7 +43,7 @@ interface Props {
 }
 
 export function WidgetFirmaDocumentosPdf({
-  negocio = "TRANQ",
+  negocio: _negocio = "TRANQ",
   onCerrar,
   mostrarBotonCerrar = false
 }: Props) {
@@ -63,7 +61,7 @@ export function WidgetFirmaDocumentosPdf({
   const [paginaActual, setPaginaActual] = useState<number>(1);
 
   // Estado del Certificado .p12 / .pfx
-  const [archivoP12, setArchivoP12] = useState<File | null>(null);
+  const [, setArchivoP12] = useState<File | null>(null);
   const [bufferP12, setBufferP12] = useState<ArrayBuffer | null>(null);
   const [claveP12, setClaveP12] = useState<string>("");
   const [mostrarClave, setMostrarClave] = useState<boolean>(false);

@@ -27,7 +27,7 @@ export function ModalDetalleServicioVisual({
   producto,
   onCerrar,
   onContratar,
-  negocio = "tranqi",
+  negocio: _negocio = "tranqi",
 }: Props) {
   const [varianteSeleccionadaId, setVarianteSeleccionadaId] = useState<string>("");
   const [reproduciendoVideo, setReproduciendoVideo] = useState(false);

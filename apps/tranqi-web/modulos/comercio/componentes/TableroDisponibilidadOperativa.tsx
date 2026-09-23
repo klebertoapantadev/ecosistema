@@ -2,20 +2,16 @@
 
 import React, { useState, useEffect } from "react";
 import {
-  Sparkles,
   Flower2,
   Scale,
   Wrench,
   CheckCircle2,
   AlertCircle,
-  Clock,
   RefreshCw,
-  Layers,
   Save,
   Plus,
   Minus,
   Bot,
-  Info,
 } from "lucide-react";
 import {
   ItemDisponibilidadOperativa,
@@ -32,11 +28,10 @@ interface Props {
 export function TableroDisponibilidadOperativa({
   negocio = "tinkay",
   enModal = false,
-  onCerrar,
+  onCerrar: _onCerrar,
 }: Props) {
   const esFloristeria = negocio === "tinkay" || negocio === "margaritas";
   const esLegal = negocio === "tranqi";
-  const esMantenimiento = negocio === "fastfix";
 
   const [items, setItems] = useState<ItemDisponibilidadOperativa[]>([]);
   const [filtroCategoria, setFiltroCategoria] = useState<string>("TODAS");
@@ -50,8 +45,8 @@ export function TableroDisponibilidadOperativa({
     try {
       const res = await obtenerDisponibilidadOperativaAction(negocio);
       setItems(res);
-    } catch (err: any) {
-      setError(err.message || "Error al cargar disponibilidad");
+    } catch (err) {
+      setError((err as Error).message || "Error al cargar disponibilidad");
     } finally {
       setCargando(false);
     }
@@ -110,8 +105,8 @@ export function TableroDisponibilidadOperativa({
       } else {
         setError(res.error || "No se pudo guardar la disponibilidad");
       }
-    } catch (err: any) {
-      setError(err.message || "Error al sincronizar");
+    } catch (err) {
+      setError((err as Error).message || "Error al sincronizar");
     } finally {
       setGuardando(false);
     }
