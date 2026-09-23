@@ -110,7 +110,31 @@ export default function TranqiLanding() {
     const chat = $("chat"), log = $("chatLog"), input = $<HTMLInputElement>("chatInput"), send = $<HTMLButtonElement>("chatSend");
 
     // ── La cinta se traza cuando su sección entra en pantalla ──────────
-    document.querySelectorAll(".ribbon path").forEach((p) => p.setAttribute("pathLength", "1"));
+    // pathLength no puede ser "1" a secas: con non-scaling-stroke el guion se
+    // pinta en píxeles, pero el navegador lo escala con el largo en unidades
+    // del viewBox, y preserveAspectRatio="none" separa ambos al estirar. En un
+    // monitor de 1880 px el guion cubría el 86 % y la cinta no llegaba abajo.
+    // Se calibra con el largo real en pantalla, y otra vez si la sección cambia
+    // de tamaño (resize, fuentes, contenido).
+    const calibrarCinta = (svg: SVGSVGElement, ancho: number, alto: number) => {
+      const vb = svg.viewBox.baseVal;
+      if (!ancho || !alto || !vb.width || !vb.height) return;
+      const sx = ancho / vb.width, sy = alto / vb.height;
+      svg.querySelectorAll("path").forEach((p) => {
+        const largo = p.getTotalLength();
+        let enPantalla = 0, previo = p.getPointAtLength(0);
+        for (let i = 1; i <= 200; i++) {
+          const q = p.getPointAtLength((largo * i) / 200);
+          enPantalla += Math.hypot((q.x - previo.x) * sx, (q.y - previo.y) * sy);
+          previo = q;
+        }
+        if (enPantalla > 0) p.setAttribute("pathLength", String(largo / enPantalla));
+      });
+    };
+    const cintas = new ResizeObserver((es) => {
+      for (const e of es) calibrarCinta(e.target as SVGSVGElement, e.contentRect.width, e.contentRect.height);
+    });
+    document.querySelectorAll(".ribbon svg").forEach((svg) => cintas.observe(svg));
 
     const trazo = new IntersectionObserver((es) => {
       for (const e of es) {
@@ -357,6 +381,7 @@ export default function TranqiLanding() {
       send.removeEventListener("click", onSendClick);
       input.removeEventListener("keydown", onInputKeydown);
       trazo.disconnect();
+      cintas.disconnect();
       obs.disconnect();
       rev.disconnect();
     };
