@@ -6,7 +6,9 @@ import { SelloCompilacion } from "@eco/primitivas";
 import { obtenerPerfilActual, asegurarMembresiaCliente, obtenerPerfiles } from "@eco/identidad";
 import { CampanaNotificaciones } from "@eco/notificaciones";
 import { NavegacionSidebar } from "./NavegacionSidebar";
-import { CapaPerfilRail } from "./CapaPerfilRail";
+import { CapaPerfilRail, COOKIE_RAIL_PLEGADO } from "./CapaPerfilRail";
+import { BotonPlegarRail } from "./BotonPlegarRail";
+import { ProveedorAvisos } from "./AvisosPanel";
 import { BarraAsistente } from "./asistente/BarraAsistente";
 import { rolConAsistente } from "../../modulos/asistente/rol";
 import { crearClienteServidor } from "@eco/supabase/servidor";
@@ -56,36 +58,47 @@ export default async function LayoutPanel({ children }: { children: React.ReactN
   const modoActivo: ModoRol = modoCookie ? modoCookie : modoDePerfiles(perfiles);
 
   const clasePerfil = MAPA_CLASES_PERFIL[modoActivo.toLowerCase()] || `perfil-${modoActivo.toLowerCase()}`;
+  const railPlegado = cookieStore.get(COOKIE_RAIL_PLEGADO)?.value === "1";
 
   return (
-    <Suspense fallback={<div className={`panel-layout ${clasePerfil}`}>{children}</div>}>
-      <CapaPerfilRail claseBase={clasePerfil}>
+    <Suspense fallback={<div className={`panel-layout ${clasePerfil}${railPlegado ? " rail-plegado" : ""}`}>{children}</div>}>
+      <CapaPerfilRail claseBase={clasePerfil} railPlegadoInicial={railPlegado}>
+        {/* TRQ-013: avisos flotantes (9A) para cualquier pantalla del panel.
+            Su contenedor es `position: fixed`, no ocupa sitio en el flex. */}
+        <ProveedorAvisos>
         <aside className="panel-nav">
           <svg className="cinta-rail" viewBox="0 0 236 900" preserveAspectRatio="none" aria-hidden="true">
             <path d="M 200 -40 C 200 160 40 240 60 430 C 78 610 210 660 200 900" />
           </svg>
 
-          <div className="panel-marca" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingRight: "12px" }}>
-            <Link href="/panel" style={{ display: "flex", alignItems: "center", textDecoration: "none" }} title="Ir al tablero principal (Inicio)">
-              <img src="/assets/tranqi-white.svg" alt="tranqi" style={{ cursor: "pointer" }} />
+          <div className="panel-marca">
+            <Link href="/panel" className="panel-marca-logo" title="Ir al tablero principal (Inicio)">
+              <img src="/assets/tranqi-white.svg" alt="tranqi" />
             </Link>
             <CampanaNotificaciones negocio={NEGOCIO} usuarioId={perfil.usu_id} />
+            <BotonPlegarRail />
           </div>
 
           <NavegacionSidebar modoActivo={modoActivo} negocio={NEGOCIO} />
 
+          {/* TRQ-013: la etiqueta amarilla "Rol Activo" sale del rail; el
+              cambio de rol vive en el menú de cuenta del inicio y en Mi cuenta
+              (widget ver_como), y el color del rail ya dice el perfil. Se
+              queda solo para el superadmin: le recuerda que está viendo la
+              plataforma con el rol de otro, y eso es un aviso, no decoración. */}
           <div className="panel-usuario">
             <span className="nombre-usuario-activo">{[perfil.usu_nombres, perfil.usu_apellidos].filter(Boolean).join(" ")}</span>
             <span className="correo-usuario-activo">{perfil.usu_correo}</span>
             <SelloCompilacion className="sello-compilacion" />
-            <Link
-              href="/panel/cuenta?widget=ver_como"
-              className="etiqueta-superadmin"
-              style={{ textDecoration: "none", cursor: "pointer", display: "inline-block" }}
-              title="Haz clic para conmutar tu perfil o rol de visualización"
-            >
-              {perfil.usu_superadmin_plataforma ? `SuperAdmin (${modoActivo}) ▾` : `Rol Activo (${modoActivo}) ▾`}
-            </Link>
+            {perfil.usu_superadmin_plataforma && (
+              <Link
+                href="/panel/cuenta?widget=ver_como"
+                className="etiqueta-superadmin"
+                title="Cambiar el rol con el que ves la plataforma"
+              >
+                {`SuperAdmin (${modoActivo}) ▾`}
+              </Link>
+            )}
           </div>
         </aside>
         <main className="panel-contenido">{children}</main>
@@ -106,6 +119,7 @@ export default async function LayoutPanel({ children }: { children: React.ReactN
         {rolConAsistente(modoActivo) && (
           <BarraAsistente nombre="tranqi" saludo={saludoDe(modoActivo, perfil.usu_nombres)} />
         )}
+        </ProveedorAvisos>
       </CapaPerfilRail>
     </Suspense>
   );

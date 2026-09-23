@@ -63,12 +63,29 @@ Ancho 240 px, superficie oscura, tipografía blanca al 66–72 % de opacidad.
 | Perfil | Superficie | Acento | Clase |
 | :--- | :--- | :--- | :--- |
 | Administración | `--negro` | `--lavanda` | `.perfil-admin` |
-| Cliente | `--violeta-oscuro` `#33007A` | `--menta` | `.perfil-cliente` |
+| Cliente | `--violeta-tinta` `#1E0046` (activo `#371C5A`) | `--menta` | `.perfil-cliente` |
 | Abogado | `--esmeralda-tinta` `#052A23` | `--lima` | `.perfil-abogado` |
 
 La opción activa se marca con un **filo de 2 px** en el color de acento más un
 fondo apenas más claro, no con un relleno saturado: el color entra por el borde
 y la superficie oscura no se ensucia.
+
+El cliente volvió en `TRQ-013` al `#1E0046` de la maqueta aprobada. `#33007A`
+(`--violeta-oscuro`) es el violeta de la acción oscurecido y, como superficie,
+competía con los botones violeta del contenido.
+
+**Plegable (`TRQ-013`).** El rail se pliega a **72 px** de solo iconos con el
+botón de su cabecera, para todos los perfiles. Plegado:
+
+- las etiquetas siguen en el DOM para el lector de pantalla y salen como
+  tooltip propio al pasar el ratón o recibir el foco;
+- el estado se guarda en la cookie `tranqi_rail_plegado`, que el layout lee en
+  el servidor para pintarlo ya plegado sin salto;
+- la opción activa no se pinta en el enlace, sino en un indicador que se
+  desliza de una a otra. Sigue siendo el filo de 2 px sobre la superficie
+  alta: se mueve en vez de saltar.
+
+En ≤860 px no aplica, porque allí el rail ya es la barra inferior.
 
 El rail **no tiene color propio**: lo toma de tres variables
 (`--rail-superficie`, `--rail-alta`, `--rail-acento`) que define la clase de
@@ -182,6 +199,22 @@ navegador. Son material de decisión, no código a copiar: al implementar se
 reescribe siguiendo la estructura de módulo obligatoria.
 
 - `maqueta-cliente.html` — pantalla principal del cliente.
+- `maqueta-cliente-v2.html` — inicio del cliente del panel web (`TRQ-013`),
+  aprobado el 2026-09-22. Reúne las variantes elegidas en el muestrario de
+  componentes del taller:
+  - 1A rail plegable;
+  - 2B + 10A cifras que cuentan;
+  - 3B planes en rejilla con selector;
+  - 4A pestañas con indicador deslizante;
+  - 5A menú de cuenta;
+  - 6B etapas del caso;
+  - 7A confirmación de compra con desglose de IVA;
+  - 8B tarjetas de opción;
+  - 9A avisos flotantes abajo a la izquierda;
+  - 10C asistente de agendar por pasos;
+  - 10E billetera vacía.
+
+  Es la única de estas maquetas que ya está trasladada al panel web.
 - `maqueta-abogado.html` — escritorio del abogado.
 - `maqueta-equipo.html` — sección "Nuestro equipo" de la landing pública (TRQ-002), con acento
   esmeralda/lima del lado abogado. A diferencia de las dos anteriores, esta sí es la landing web
@@ -229,7 +262,11 @@ Dos detalles que costaron encontrar y conviene no revertir:
   es flex: un `max-width` en `.panel-contenido` deja el sobrante al final del
   eje, y la barra del asistente deja de tocar el borde derecho (~680px de hueco
   en un monitor de 2560). El tope va en `.contenedor-panel`, centrado dentro de
-  una columna que sí crece.
+  una columna que sí crece. Hasta `TRQ-013` el código lo dejaba alineado a la
+  izquierda: con el asistente plegado quedaban unos 290 px vacíos a la
+  derecha del inicio, y la columna lateral parecía descuadrada. Ahora el tope
+  es de 1680 px y va centrado; el resto de pantallas del panel mantiene los
+  1280 px.
 
 ## 11. Objetivo táctil
 

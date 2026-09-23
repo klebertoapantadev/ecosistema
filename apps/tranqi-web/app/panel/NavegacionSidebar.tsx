@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useLayoutEffect, useRef } from "react";
+import { usePathname } from "next/navigation";
 import {
   Home, CircleUser, Settings, ShieldCheck, ClipboardList, Wrench, CreditCard,
   PanelLeft, Sliders, Folder, Activity, FileText, UserCog,
@@ -10,6 +11,7 @@ import {
 import { EnlacePanel } from "./EnlacePanel";
 import { BotonCerrarSesion } from "./BotonCerrarSesion";
 import type { ModoRol } from "./SelectorRolActivo";
+import { useRail } from "./CapaPerfilRail";
 import { obtenerConfiguracionNavegacionRolAction } from "@eco/gestion-usuarios/acciones";
 
 interface PanelDefNav {
@@ -216,8 +218,69 @@ export function NavegacionSidebar({
     return () => window.removeEventListener("storage", actualizarNavegacion);
   }, [modoActivo, negocio]);
 
+  const ruta = usePathname();
+  const { plegado } = useRail();
+  const contenedor = useRef<HTMLDivElement>(null);
+  const indicador = useRef<HTMLSpanElement>(null);
+  const tooltip = useRef<HTMLSpanElement>(null);
+
+  // El indicador de la opción activa se desliza en vez de saltar (TRQ-013).
+  // Se mide después de pintar los enlaces: cambian con la ruta, con los paneles
+  // que llegan de la BDD y con el plegado, que cambia su alto.
+  useLayoutEffect(() => {
+    const caja = contenedor.current;
+    const barra = indicador.current;
+    if (!caja || !barra) return;
+    const activo = caja.querySelector<HTMLElement>('a[aria-current="page"]');
+    if (!activo) {
+      barra.style.opacity = "0";
+      return;
+    }
+    barra.style.opacity = "1";
+    barra.style.height = `${activo.offsetHeight}px`;
+    barra.style.transform = `translateY(${activo.offsetTop}px)`;
+    // La primera colocación va sin transición (si no, entra deslizándose
+    // desde arriba al cargar); a partir de ahí, `data-listo` la activa.
+    if (!barra.dataset.listo) requestAnimationFrame(() => { barra.dataset.listo = "1"; });
+  }, [ruta, panelesVisibles, plegado]);
+
+  // Plegado, las etiquetas no se ven: el nombre sale en un tooltip propio.
+  // Es `position: fixed` para escapar del `overflow: hidden` del rail (lo
+  // necesita la cinta). La x es el ancho plegado fijo y no se mide: si el
+  // ratón llega mientras el rail aún se está cerrando, mediría el ancho abierto.
+  useEffect(() => {
+    const caja = contenedor.current;
+    const tip = tooltip.current;
+    if (!caja || !tip) return;
+    const ocultar = () => tip.classList.remove("es-visible");
+    if (!plegado) {
+      ocultar();
+      return;
+    }
+    const mostrar = (evento: Event) => {
+      const destino = (evento.target as HTMLElement).closest<HTMLElement>("[data-tip]");
+      if (!destino || !caja.contains(destino)) return;
+      const r = destino.getBoundingClientRect();
+      tip.textContent = destino.dataset.tip ?? "";
+      tip.style.top = `${r.top + r.height / 2}px`;
+      tip.classList.add("es-visible");
+    };
+    caja.addEventListener("mouseover", mostrar);
+    caja.addEventListener("focusin", mostrar);
+    caja.addEventListener("mouseleave", ocultar);
+    caja.addEventListener("focusout", ocultar);
+    return () => {
+      caja.removeEventListener("mouseover", mostrar);
+      caja.removeEventListener("focusin", mostrar);
+      caja.removeEventListener("mouseleave", ocultar);
+      caja.removeEventListener("focusout", ocultar);
+    };
+  }, [plegado]);
+
   return (
-    <div className="panel-nav-links">
+    <div className="panel-nav-links" ref={contenedor}>
+      <span className="indicador-nav" ref={indicador} aria-hidden="true" />
+      <span className="tooltip-rail" ref={tooltip} aria-hidden="true" />
       {panelesVisibles.map((p) => {
         const IconoComp = MAPA_ICONOS_NAV[p.icono || ""] || MAPA_ICONOS_NAV[p.id] || PanelLeft;
         return (

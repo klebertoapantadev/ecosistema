@@ -1,0 +1,1542 @@
+<!DOCTYPE html>
+<html lang="es" data-perfil="cliente" data-estado="historial">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>tranqi · Inicio del cliente (v2)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<script>
+  // Antes de pintar: perfil, estado y rail guardados, para que la página no
+  // aparezca un instante con los valores por defecto y luego salte.
+  (function () {
+    var r = document.documentElement;
+    try {
+      var p = localStorage.getItem('v2-perfil'), e = localStorage.getItem('v2-estado');
+      if (p === 'cliente' || p === 'abogado' || p === 'admin') r.dataset.perfil = p;
+      if (e === 'historial' || e === 'nueva') r.dataset.estado = e;
+      if (localStorage.getItem('v2-plegado') === '1') r.classList.add('rail-plegado');
+    } catch (err) {}
+  })();
+</script>
+<style>
+  /* ═══════════════════════════════════════════════════════════════════
+     tranqi · INICIO DEL CLIENTE — v2
+     Las 12 variantes elegidas en demo/componentes.html, juntas en una sola
+     pantalla: 1A rail plegable · 2B+10A cifras que cuentan · 3B planes con
+     selector · 4A pestañas · 5A menú de cuenta · 6B progreso del caso ·
+     7A confirmación de compra · 8B tarjetas de opción · 9A avisos ·
+     10C asistente para agendar · 10E billetera vacía.
+
+     El rail es el MISMO componente para todos los perfiles; su color sale de
+     los tokens --rail-* por perfil. Abogado y admin usan los valores de
+     globals.css del monorepo; el cliente, el #1E0046 de la maqueta aprobada.
+     «Ver como» en el menú de cuenta lo demuestra.
+     ═══════════════════════════════════════════════════════════════════ */
+  :root {
+    --accion: #5000BA;
+    --accion-honda: #33007A;
+    /* Rail de la maqueta aprobada (cliente.html), no el #33007A que usa hoy
+       globals.css. --rail-alta es su activo: blanco al 11 % sobre #1E0046. */
+    --rail: #1E0046;
+    --rail-alta: #371C5A;
+    --rail-acento: #B1FBE3;
+    --ok: #B1FBE3;
+    --ok-honda: #056B57;
+    --tenue: #F1EBFC;
+    --foco: rgba(80, 0, 186, 0.22);
+
+    --tinta: #141019;
+    --gris-70: #4B4556;
+    --gris-50: #736C81;
+    --gris-30: #A9A3B4;
+    --linea: #E6E2ED;
+    --linea-suave: #F0EDF5;
+    --papel: #F7F6FA;
+
+    --naranja: #FE5800;
+    --naranja-tenue: #FFF0E7;
+    --naranja-texto: #B23D00;
+    --blanco: #FFFFFF;
+
+    --r-sm: 8px;
+    --r-md: 12px;
+    --r-lg: 16px;
+    --curva: cubic-bezier(0.2, 0.8, 0.2, 1);
+    --ancho-rail: 236px;
+  }
+  html[data-perfil="abogado"] {
+    --accion: #05876E;
+    --accion-honda: #04604E;
+    --rail: #052A23;
+    --rail-alta: #0B3B31;
+    --rail-acento: #D8FFB3;
+    --ok: #D8FFB3;
+    --ok-honda: #3C5C1A;
+    --tenue: #DEF0EB;
+    --foco: rgba(5, 135, 110, 0.24);
+    --tinta: #101512;
+    --gris-70: #3F4A44;
+    --gris-50: #66736B;
+    --gris-30: #A3ADA7;
+    --linea: #E1E7E3;
+    --linea-suave: #EFF3F0;
+    --papel: #F6F8F6;
+  }
+  html[data-perfil="admin"] {
+    --accion: #6450F0;
+    --accion-honda: #4B39D4;
+    --rail: #111111;
+    --rail-alta: #1F1F2E;
+    --rail-acento: #7866FF;
+    --tenue: #EEECFF;
+    --foco: rgba(120, 102, 255, 0.26);
+    --tinta: #111111;
+    --gris-70: #454552;
+    --gris-50: #6B6B78;
+    --gris-30: #A6A6B2;
+    --linea: #E4E4EC;
+    --linea-suave: #F0F0F5;
+    --papel: #F8FAFC;
+  }
+  html.rail-plegado { --ancho-rail: 72px; }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    font-family: "Archivo", system-ui, sans-serif;
+    background: var(--papel); color: var(--tinta);
+    font-size: 15px; line-height: 1.5; -webkit-font-smoothing: antialiased;
+    transition: background-color 0.35s, color 0.35s;
+  }
+  ::selection { background: var(--ok); color: var(--tinta); }
+  img, svg { display: block; }
+  button, input { font: inherit; color: inherit; }
+  button { cursor: pointer; background: none; border: 0; }
+  a { color: inherit; text-decoration: none; }
+  :focus-visible { outline: 2px solid var(--accion); outline-offset: 2px; }
+  h1, h2, h3, h4 { letter-spacing: -0.02em; line-height: 1.2; }
+  .num { font-variant-numeric: tabular-nums; }
+  [hidden] { display: none !important; }
+  .sr { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+  html[data-estado="historial"] .solo-nueva,
+  html[data-estado="nueva"] .solo-historial { display: none !important; }
+
+  .ico { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+  .eyebrow { font-size: 0.688rem; font-weight: 700; letter-spacing: 0.13em; text-transform: uppercase; color: var(--gris-50); }
+  .nota { font-size: 0.813rem; color: var(--gris-50); }
+
+  /* ── Botones, píldoras, fotos ────────────────────────────────────── */
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    border: 1px solid transparent; border-radius: var(--r-sm);
+    padding: 10px 16px; font-size: 0.875rem; font-weight: 600; white-space: nowrap;
+    transition: background-color 0.15s, border-color 0.15s, color 0.15s, transform 0.15s;
+  }
+  .btn .ico { width: 16px; height: 16px; stroke-width: 1.9; }
+  .btn:active { transform: translateY(1px); }
+  .btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+  .btn-sm { padding: 7px 12px; font-size: 0.813rem; }
+  .btn-primario { background: var(--accion); color: var(--blanco); }
+  .btn-primario:hover:not(:disabled) { background: var(--accion-honda); }
+  .btn-neutro { background: var(--blanco); border-color: var(--linea); color: var(--tinta); }
+  .btn-neutro:hover:not(:disabled) { border-color: var(--gris-30); }
+  .btn-ok { background: var(--ok); color: var(--ok-honda); }
+  .btn-ok:hover { filter: brightness(0.96); }
+  .btn-urgente { background: var(--naranja); color: var(--blanco); }
+  .btn-fantasma { color: var(--accion); font-weight: 600; font-size: 0.844rem; padding: 4px 2px; }
+  .btn-fantasma:hover { text-decoration: underline; }
+  .icono-btn {
+    width: 38px; height: 38px; flex: none; display: grid; place-items: center; position: relative;
+    background: var(--blanco); border: 1px solid var(--linea); border-radius: var(--r-sm); color: var(--gris-70);
+    transition: border-color 0.15s, color 0.15s;
+  }
+  .icono-btn:hover { border-color: var(--gris-30); color: var(--tinta); }
+  .icono-btn .punto { position: absolute; top: 8px; right: 9px; width: 7px; height: 7px; border-radius: 50%; background: var(--naranja); box-shadow: 0 0 0 2px var(--blanco); }
+  .pill {
+    display: inline-flex; align-items: center; gap: 6px; flex: none;
+    font-size: 0.656rem; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase;
+    padding: 4px 10px; border-radius: 999px; white-space: nowrap;
+  }
+  .pill::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+  .pill-ok { background: var(--ok); color: var(--ok-honda); }
+  .pill-urgente { background: var(--naranja-tenue); color: var(--naranja-texto); }
+  .pill-urgente::before { background: var(--naranja); }
+  .pill-neutro { background: var(--linea-suave); color: var(--gris-50); }
+  .pill-accion { background: var(--tenue); color: var(--accion); }
+  .foto {
+    width: 32px; height: 32px; flex: none; border-radius: 50%; display: grid; place-items: center;
+    background: var(--accion); color: var(--blanco); font-size: 0.75rem; font-weight: 800;
+    transition: background-color 0.35s;
+  }
+  .icono-caja { display: grid; place-items: center; flex: none; background: var(--tenue); color: var(--accion); transition: background-color 0.3s, color 0.3s; }
+
+  /* ═════ 1A · RAIL PLEGABLE ════════════════════════════════════════ */
+  .shell {
+    display: grid; grid-template-columns: var(--ancho-rail) minmax(0, 1fr); min-height: 100vh;
+    transition: grid-template-columns 0.45s var(--curva);
+  }
+  .rail {
+    position: sticky; top: 0; height: 100vh; height: 100dvh; overflow: hidden;
+    background: var(--rail); color: var(--blanco);
+    display: flex; flex-direction: column; padding: 22px 12px 14px;
+    transition: background-color 0.35s;
+  }
+  .cinta { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0.09; pointer-events: none; }
+  html[data-perfil="admin"] .cinta { opacity: 0.14; }
+  .cinta path { fill: none; stroke: var(--rail-acento); stroke-width: 44; stroke-linecap: round; transition: stroke 0.35s; }
+  .rail > :not(.cinta) { position: relative; }
+  .rail-cab { display: flex; align-items: center; justify-content: space-between; height: 32px; padding-left: 8px; margin-bottom: 26px; }
+  .rail-logo { height: 22px; width: auto; transition: opacity 0.2s; }
+  .rail-plegado .rail-logo { opacity: 0; position: absolute; pointer-events: none; }
+  .rail-plegado .rail-cab { justify-content: center; padding-left: 0; }
+  .rail-plegar { width: 32px; height: 32px; flex: none; display: grid; place-items: center; border-radius: 8px; color: rgba(255,255,255,0.7); }
+  .rail-plegar:hover { background: var(--rail-alta); color: var(--blanco); }
+  .rail-plegar .ico { transition: transform 0.45s var(--curva); }
+  .rail-plegado .rail-plegar .ico { transform: scaleX(-1); }
+  .rail-nav { position: relative; display: flex; flex-direction: column; gap: 2px; }
+  .rail-nav a {
+    position: relative; z-index: 1; display: flex; align-items: center; gap: 12px;
+    padding: 10px 15px; border-radius: 8px; white-space: nowrap;
+    font-size: 0.906rem; font-weight: 500; color: rgba(255,255,255,0.7);
+    transition: color 0.2s, background-color 0.2s;
+  }
+  .rail-nav a:hover { color: var(--blanco); background: color-mix(in srgb, var(--rail-alta) 70%, transparent); }
+  .rail-nav a[aria-current="page"] { color: var(--blanco); font-weight: 600; background: transparent; }
+  .rail-nav .et, .rail-nav .pin { transition: opacity 0.2s; }
+  .rail-plegado .rail-nav .et, .rail-plegado .rail-nav .pin { opacity: 0; }
+  .pin { margin-left: auto; background: var(--rail-acento); color: var(--rail); font-size: 0.688rem; font-weight: 800; padding: 1px 7px; border-radius: 999px; }
+  .rail-plegado .rail-nav a[data-pin]::after { content: ""; position: absolute; top: 8px; left: 31px; width: 7px; height: 7px; border-radius: 50%; background: var(--rail-acento); }
+  html[data-estado="nueva"] .rail-nav a[data-pin]::after { display: none; }
+  /* Activo: superficie un paso por encima y filo de 2px en el acento (sistema
+     visual §4), igual que el rail actual. Lo nuevo es que se desliza. */
+  .rail-indicador {
+    position: absolute; left: 0; right: 0; top: 0; height: 42px; border-radius: 8px;
+    background: var(--rail-alta); transition: transform 0.4s var(--curva), height 0.4s var(--curva), background-color 0.35s;
+  }
+  .rail-indicador::before { content: ""; position: absolute; left: 0; top: 9px; bottom: 9px; width: 2px; border-radius: 2px; background: var(--rail-acento); }
+  .rail-pie { margin-top: auto; }
+  .rail-abogada { display: flex; align-items: center; gap: 10px; padding: 12px 8px 2px; border-top: 1px solid rgba(255,255,255,0.14); white-space: nowrap; }
+  .rail-abogada .foto { background: var(--rail-acento); color: var(--rail); }
+  .rail-abogada .txt { display: grid; line-height: 1.25; transition: opacity 0.2s; }
+  .rail-abogada .rol { font-size: 0.625rem; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(255,255,255,0.5); }
+  .rail-abogada b { font-size: 0.844rem; }
+  .rail-abogada:hover b { text-decoration: underline; }
+  .rail-plegado .rail-abogada .txt { opacity: 0; }
+  html:not([data-perfil="cliente"]) .rail-abogada { display: none; }
+  .tip {
+    position: fixed; z-index: 60; pointer-events: none;
+    background: var(--tinta); color: var(--blanco); font-size: 0.75rem; font-weight: 600;
+    padding: 5px 9px; border-radius: 6px; white-space: nowrap;
+    opacity: 0; transform: translate(-4px, -50%); transition: opacity 0.15s, transform 0.2s var(--curva);
+  }
+  .tip::before { content: ""; position: absolute; left: -4px; top: 50%; width: 8px; height: 8px; background: inherit; transform: translateY(-50%) rotate(45deg); border-radius: 1px; }
+  .tip.ver { opacity: 1; transform: translate(0, -50%); }
+
+  /* ═════ CABECERA · 5A menú de cuenta ══════════════════════════════ */
+  .principal { min-width: 0; }
+  .topbar {
+    position: sticky; top: 0; z-index: 20; display: flex; align-items: center; gap: 14px;
+    padding: 12px clamp(20px, 3vw, 40px);
+    background: color-mix(in srgb, var(--papel) 88%, transparent);
+    backdrop-filter: saturate(1.4) blur(10px); -webkit-backdrop-filter: saturate(1.4) blur(10px);
+    border-bottom: 1px solid var(--linea);
+  }
+  .buscador { flex: 1; max-width: 440px; position: relative; }
+  .buscador .ico { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; color: var(--gris-50); }
+  .buscador input {
+    width: 100%; border: 1px solid var(--linea); background: var(--blanco); border-radius: var(--r-sm);
+    padding: 9px 12px 9px 36px; font-size: 0.875rem; outline: none; transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .buscador input::placeholder { color: var(--gris-30); }
+  .buscador input:focus { border-color: var(--accion); box-shadow: 0 0 0 3px var(--foco); }
+  .topbar .acciones { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+  .menu-ancla { position: relative; }
+  .chip-usuario { display: flex; align-items: center; gap: 9px; padding: 3px 8px 3px 3px; border-radius: 999px; border: 1px solid transparent; transition: background-color 0.2s, border-color 0.2s; }
+  .chip-usuario:hover, .chip-usuario[aria-expanded="true"] { background: var(--blanco); border-color: var(--linea); }
+  .chip-usuario .txt { display: grid; line-height: 1.2; text-align: left; }
+  .chip-usuario .txt b { font-size: 0.844rem; }
+  .chip-usuario .txt span { font-size: 0.75rem; color: var(--gris-50); }
+  .chip-usuario > .ico { width: 15px; height: 15px; color: var(--gris-50); transition: transform 0.3s var(--curva); }
+  .chip-usuario[aria-expanded="true"] > .ico { transform: rotate(180deg); }
+  .menu {
+    position: absolute; z-index: 30; right: 0; top: calc(100% + 8px); width: 260px;
+    background: var(--blanco); border: 1px solid var(--linea); border-radius: 14px; padding: 6px;
+    box-shadow: 0 24px 48px -20px rgba(20,16,25,0.35), 0 2px 6px rgba(20,16,25,0.05);
+    transform-origin: top right; opacity: 0; visibility: hidden; transform: scale(0.96) translateY(-4px);
+    transition: opacity 0.18s, transform 0.25s var(--curva), visibility 0s linear 0.25s;
+  }
+  .menu.abierto { opacity: 1; visibility: visible; transform: none; transition: opacity 0.18s, transform 0.3s var(--curva), visibility 0s; }
+  .menu-yo { display: flex; align-items: center; gap: 10px; padding: 10px 10px 12px; }
+  .menu-yo .foto { width: 38px; height: 38px; }
+  .menu-yo div { display: grid; line-height: 1.3; min-width: 0; }
+  .menu-yo b { font-size: 0.875rem; }
+  .menu-yo span { font-size: 0.75rem; color: var(--gris-50); overflow: hidden; text-overflow: ellipsis; }
+  .menu [role^="menuitem"] {
+    width: 100%; display: flex; align-items: center; gap: 10px; text-align: left;
+    padding: 9px 10px; border-radius: 8px; font-size: 0.875rem; font-weight: 500; color: var(--gris-70);
+    transition: background-color 0.15s, color 0.15s;
+  }
+  .menu [role^="menuitem"] .ico { width: 17px; height: 17px; color: var(--gris-50); }
+  .menu [role^="menuitem"]:hover, .menu [role^="menuitem"]:focus { outline: none; background: var(--tenue); color: var(--accion); }
+  .menu [role^="menuitem"]:hover .ico, .menu [role^="menuitem"]:focus .ico { color: var(--accion); }
+  .menu [role="menuitemradio"] .ico { visibility: hidden; }
+  .menu [role="menuitemradio"][aria-checked="true"] { color: var(--tinta); font-weight: 700; }
+  .menu [role="menuitemradio"][aria-checked="true"] .ico { visibility: visible; color: var(--accion); stroke-width: 2.3; }
+  .menu-sep { height: 1px; background: var(--linea-suave); margin: 6px 4px; }
+  .menu-et { display: block; padding: 6px 10px 2px; font-size: 0.625rem; font-weight: 800; letter-spacing: 0.13em; text-transform: uppercase; color: var(--gris-30); }
+
+  /* ═════ CONTENIDO ═════════════════════════════════════════════════
+     El tope va en el contenedor y CENTRADO. Con el tope pegado a la
+     izquierda, en monitores anchos sobraba una franja a la derecha: el
+     «descuadre» que abrió todo esto. Centrado, lo que sobre se reparte.   */
+  .contenido { max-width: 1680px; margin-inline: auto; padding: clamp(22px, 3vw, 34px) clamp(20px, 3vw, 40px) 110px; }
+  .maqueta-ctrl {
+    display: flex; align-items: center; gap: 10px 16px; flex-wrap: wrap;
+    padding: 8px 10px 8px 14px; margin-bottom: 22px;
+    border: 1.5px dashed var(--gris-30); border-radius: 12px; font-size: 0.781rem; color: var(--gris-50);
+  }
+  .maqueta-ctrl b { color: var(--tinta); font-weight: 700; }
+  .maqueta-ctrl .derecha { margin-left: auto; }
+  .saludo { display: flex; align-items: flex-end; justify-content: space-between; gap: 18px; flex-wrap: wrap; margin-bottom: 24px; }
+  .saludo h1 { font-size: clamp(1.5rem, 2.6vw, 1.94rem); font-weight: 800; }
+  .saludo h1 i { font-style: normal; color: var(--accion); transition: color 0.35s; }
+  .saludo p { color: var(--gris-50); margin-top: 4px; font-size: 0.938rem; }
+  .rejilla { display: grid; grid-template-columns: minmax(0, 1.62fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+  .col { display: grid; gap: 20px; align-content: start; min-width: 0; }
+  .tarjeta { background: var(--blanco); border: 1px solid var(--linea); border-radius: var(--r-lg); overflow: hidden; }
+  .tarjeta > header { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 15px 20px; border-bottom: 1px solid var(--linea-suave); flex-wrap: wrap; }
+  .tarjeta > header h2 { font-size: 1rem; font-weight: 800; }
+  .cuerpo { padding: 18px 20px; }
+  .pie-pagina { margin-top: 40px; padding-top: 18px; border-top: 1px solid var(--linea); display: flex; gap: 18px; font-size: 0.781rem; color: var(--gris-50); }
+  .js .aparece { animation: sube 0.6s var(--curva) both; }
+  .tarjeta { transition: box-shadow 0.4s; }
+  .tarjeta.resaltado { box-shadow: 0 0 0 4px var(--foco); }
+  @keyframes sube { from { opacity: 0; transform: translateY(12px); } }
+
+  /* ── Control segmentado ──────────────────────────────────────────── */
+  .segmentado { position: relative; display: inline-flex; padding: 3px; isolation: isolate; border-radius: 999px; background: var(--linea-suave); border: 1px solid var(--linea); }
+  .segmentado button { position: relative; z-index: 1; padding: 5px 13px; border-radius: 999px; font-size: 0.781rem; font-weight: 600; color: var(--gris-50); white-space: nowrap; transition: color 0.25s; }
+  .segmentado button:hover, .segmentado button[aria-pressed="true"] { color: var(--tinta); }
+  .segmentado .pulgar { position: absolute; z-index: 0; top: 3px; bottom: 3px; left: 0; width: 0; border-radius: 999px; background: var(--blanco); box-shadow: 0 1px 2px rgba(20,16,25,0.08), 0 3px 10px -2px rgba(20,16,25,0.1); transition: transform 0.4s var(--curva), width 0.4s var(--curva); }
+  .segmentado:not(.listo) .pulgar { transition: none; }
+
+  /* ═════ 2B + 10A · CIFRAS QUE CUENTAN ═════════════════════════════ */
+  /* Cuatro en fila o dos por dos, nunca 3+1: una tarjeta huérfana abajo se lee
+     como un error de maquetación. Se mide la columna, no la ventana, porque
+     su ancho depende también de si el rail está plegado. */
+  .col { container-type: inline-size; }
+  .datos { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+  @container (max-width: 640px) { .datos { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .dato {
+    display: flex; flex-direction: column; gap: 10px; min-height: 150px;
+    background: var(--blanco); border: 1px solid var(--linea); border-radius: var(--r-lg); padding: 15px;
+    transition: border-color 0.2s, transform 0.3s var(--curva);
+  }
+  .dato:hover { border-color: var(--gris-30); transform: translateY(-2px); }
+  .dato-cab { display: flex; align-items: center; gap: 8px; font-size: 0.75rem; font-weight: 700; color: var(--gris-50); }
+  .dato-cab .icono-caja { width: 28px; height: 28px; border-radius: 8px; }
+  .dato-cab .ico { width: 15px; height: 15px; }
+  .dato-cifra { font-size: 1.75rem; font-weight: 800; letter-spacing: -0.03em; line-height: 1; display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; }
+  .dato-cifra small { font-size: 0.781rem; font-weight: 600; color: var(--gris-50); letter-spacing: 0; }
+  .dato-barra { height: 5px; border-radius: 999px; background: var(--linea-suave); overflow: hidden; }
+  .dato-barra span { display: block; height: 100%; width: calc(var(--p) * 100%); background: var(--accion); border-radius: inherit; transform-origin: left; animation: llena 1.1s var(--curva) 0.3s both; }
+  @keyframes llena { from { transform: scaleX(0); } }
+  .dato-pie { margin-top: auto; font-size: 0.75rem; color: var(--gris-50); display: flex; align-items: center; gap: 6px; }
+  .dato-urgente { border-color: color-mix(in srgb, var(--naranja) 35%, var(--linea)); }
+  .dato-urgente .dato-pie { color: var(--naranja-texto); font-weight: 600; }
+  .punto-urgente { width: 8px; height: 8px; border-radius: 50%; background: var(--naranja); flex: none; animation: late 2s ease-in-out infinite; }
+  @keyframes late { 50% { box-shadow: 0 0 0 5px rgba(254, 88, 0, 0.15); } }
+
+  /* ═════ 6B + 4A · TU CASO ═════════════════════════════════════════ */
+  .caso-cab { display: flex; align-items: center; gap: 12px; padding: 18px 20px 6px; }
+  .caso-cab .icono-caja { width: 40px; height: 40px; border-radius: 12px; }
+  .caso-cab h2 { font-size: 1.063rem; font-weight: 800; }
+  .caso-cab .pill { margin-left: auto; }
+  .caso-progreso { padding: 16px 20px 18px; display: grid; gap: 16px; }
+  .pasos { list-style: none; position: relative; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); --avance: 0.5; }
+  .pasos::before, .pasos::after { content: ""; position: absolute; top: 13px; left: 10%; height: 2px; border-radius: 2px; }
+  .pasos::before { right: 10%; background: var(--linea); }
+  .pasos::after { width: calc(80% * var(--avance)); background: var(--accion); animation: avanza 1.1s var(--curva) 0.3s both; transition: background-color 0.35s; }
+  @keyframes avanza { from { width: 0; } }
+  .pasos li { position: relative; z-index: 1; display: grid; justify-items: center; gap: 7px; text-align: center; font-size: 0.719rem; font-weight: 600; color: var(--gris-50); line-height: 1.25; }
+  .paso-punto { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; background: var(--blanco); border: 2px solid var(--linea); color: transparent; transition: background-color 0.35s, border-color 0.35s; }
+  .paso-punto .ico { width: 14px; height: 14px; stroke-width: 2.6; }
+  .pasos li.hecho .paso-punto { background: var(--accion); border-color: var(--accion); color: var(--blanco); }
+  .pasos li.actual { color: var(--tinta); font-weight: 800; }
+  .pasos li.actual .paso-punto { border-color: var(--accion); transform: scale(1.1); animation: pulso 2s ease-in-out infinite; }
+  .pasos li.actual .paso-punto::after { content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--accion); }
+  .pasos li.actual .paso-punto .ico { display: none; }
+  @keyframes pulso { 50% { box-shadow: 0 0 0 6px var(--foco); } }
+  .pc-siguiente { display: flex; align-items: center; gap: 12px; padding: 11px 14px; border-radius: 12px; background: var(--tenue); transition: background-color 0.35s; }
+  .pc-siguiente > .ico { color: var(--accion); }
+  .pc-siguiente div { flex: 1; display: grid; line-height: 1.35; min-width: 0; }
+  .pc-siguiente b { font-size: 0.875rem; }
+  .pc-siguiente small { font-size: 0.781rem; color: var(--gris-70); }
+  .pestanas { position: relative; display: flex; gap: 2px; padding: 0 12px; border-top: 1px solid var(--linea-suave); border-bottom: 1px solid var(--linea); overflow-x: auto; scrollbar-width: none; }
+  .pestanas [role="tab"] { display: flex; align-items: center; gap: 6px; padding: 12px 10px; font-size: 0.875rem; font-weight: 600; color: var(--gris-50); white-space: nowrap; transition: color 0.2s; }
+  .pestanas [role="tab"]:hover, .pestanas [role="tab"][aria-selected="true"] { color: var(--tinta); }
+  .pestanas [role="tab"]:focus-visible { outline-offset: -2px; }
+  .cuenta { font-size: 0.656rem; font-weight: 800; background: var(--tenue); color: var(--accion); padding: 1px 6px; border-radius: 999px; }
+  .pestanas-linea { position: absolute; left: 0; bottom: 0; height: 2px; width: 0; background: var(--accion); border-radius: 2px 2px 0 0; transition: transform 0.4s var(--curva), width 0.4s var(--curva), background-color 0.35s; }
+  .paneles { overflow: hidden; transition: height 0.4s var(--curva); }
+  .paneles-pista { display: flex; align-items: flex-start; transition: transform 0.5s var(--curva); }
+  .paneles-pista > [role="tabpanel"] { flex: 0 0 100%; min-width: 0; padding: 16px 20px 20px; }
+  .ficha { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 14px 20px; }
+  .ficha dt { font-size: 0.688rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--gris-50); }
+  .ficha dd { font-size: 0.906rem; font-weight: 600; margin-top: 2px; }
+  .filas { list-style: none; display: grid; }
+  .filas li { display: flex; align-items: center; gap: 10px; padding: 9px 0; font-size: 0.875rem; }
+  .filas li + li { border-top: 1px solid var(--linea-suave); }
+  .filas li > span:first-of-type { flex: 1; min-width: 0; }
+  .filas .ico { color: var(--gris-50); width: 16px; height: 16px; }
+  .burbuja { background: var(--papel); border-radius: 12px 12px 12px 4px; padding: 10px 12px; font-size: 0.875rem; max-width: 86%; }
+  .burbuja + .burbuja { margin-top: 8px; }
+  .burbuja small { display: block; color: var(--gris-50); font-size: 0.719rem; margin-top: 3px; }
+  .burbuja.mia { background: var(--tenue); margin-left: auto; border-radius: 12px 12px 4px 12px; }
+  .caso-pie { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 20px; border-top: 1px solid var(--linea-suave); font-size: 0.813rem; color: var(--gris-50); }
+
+  .vacio-caso .vacio-cuerpo { display: grid; justify-items: center; text-align: center; gap: 8px; padding: 34px 24px 30px; }
+  .vacio-caso .icono-caja { width: 52px; height: 52px; border-radius: 16px; margin-bottom: 6px; }
+  .vacio-caso .icono-caja .ico { width: 24px; height: 24px; }
+  .vacio-caso h2 { font-size: 1.125rem; font-weight: 800; }
+  .vacio-caso p { max-width: 46ch; color: var(--gris-70); font-size: 0.906rem; }
+  .vacio-caso .acc { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-top: 8px; }
+
+  /* ═════ 3B · PLANES CON SELECTOR ══════════════════════════════════ */
+  .planes-rejilla { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; padding: 18px 20px 20px; }
+  .plan {
+    position: relative; overflow: hidden; display: flex; flex-direction: column; gap: 4px;
+    background: var(--blanco); border: 1px solid var(--linea); border-radius: var(--r-lg); padding: 16px;
+    transition: transform 0.3s var(--curva), box-shadow 0.3s;
+  }
+  .plan:hover { transform: translateY(-3px); box-shadow: 0 16px 30px -20px rgba(20,16,25,0.4); }
+  .plan > :not(.hilo) { position: relative; }
+  .plan-cab { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .plan-cab .icono-caja { width: 36px; height: 36px; border-radius: 11px; }
+  .plan h3 { font-size: 1rem; font-weight: 800; }
+  .plan-lista { list-style: none; display: grid; gap: 5px; margin: 8px 0 14px; font-size: 0.813rem; color: var(--gris-70); }
+  .plan-lista li { display: flex; gap: 7px; align-items: flex-start; line-height: 1.35; }
+  .plan-lista .ico { width: 15px; height: 15px; stroke-width: 2.2; color: var(--ok-honda); margin-top: 1px; }
+  .plan-pie { margin-top: auto; display: flex; align-items: flex-end; justify-content: space-between; gap: 10px; padding-top: 12px; border-top: 1px solid var(--linea-suave); }
+  .precio b { display: block; font-size: 1.188rem; font-weight: 800; letter-spacing: -0.02em; line-height: 1.1; font-variant-numeric: tabular-nums; }
+  .precio small { font-size: 0.656rem; color: var(--gris-50); font-weight: 600; }
+  .plan-chip { font-size: 0.625rem; font-weight: 800; letter-spacing: 0.09em; text-transform: uppercase; background: var(--ok); color: var(--ok-honda); padding: 4px 9px; border-radius: 999px; }
+  .plan-destacado { background: var(--accion); color: var(--blanco); border-color: transparent; transition: background-color 0.35s, transform 0.3s var(--curva), box-shadow 0.3s; }
+  .hilo { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; opacity: 0.16; }
+  .hilo path { fill: none; stroke: var(--ok); stroke-width: 38; stroke-linecap: round; }
+  .plan-destacado .eyebrow { color: rgba(255,255,255,0.65); }
+  .plan-destacado .icono-caja { background: rgba(255,255,255,0.14); color: var(--ok); }
+  .plan-destacado .plan-lista { color: rgba(255,255,255,0.86); }
+  .plan-destacado .plan-lista .ico { color: var(--ok); }
+  .plan-destacado .plan-pie { border-top-color: rgba(255,255,255,0.18); }
+  .plan-destacado .precio small { color: rgba(255,255,255,0.7); }
+  .entra { animation: entra 0.45s var(--curva) both; }
+  @keyframes entra { from { opacity: 0; transform: translateY(10px) scale(0.98); } }
+
+  /* ═════ COLUMNA LATERAL ═══════════════════════════════════════════ */
+  .cita-cuerpo { display: flex; align-items: center; gap: 14px; }
+  .fecha { width: 52px; flex: none; display: grid; justify-items: center; line-height: 1; padding: 8px 0; border-radius: 12px; background: var(--tenue); color: var(--accion); font-size: 0.656rem; font-weight: 800; letter-spacing: 0.08em; transition: background-color 0.35s, color 0.35s; }
+  .fecha b { font-size: 1.375rem; letter-spacing: -0.02em; margin-bottom: 3px; }
+  .cita-txt { display: grid; line-height: 1.35; min-width: 0; }
+  .cita-txt b { font-size: 0.938rem; }
+  .cita-txt small { font-size: 0.813rem; color: var(--gris-50); }
+  .cita-acc { display: flex; gap: 8px; padding: 0 20px 18px; }
+
+  .docs { list-style: none; }
+  .docs li { display: flex; align-items: center; gap: 12px; padding: 11px 20px; }
+  .docs li + li { border-top: 1px solid var(--linea-suave); }
+  .docs .icono-caja { width: 34px; height: 34px; border-radius: 10px; }
+  .docs .icono-caja .ico { width: 16px; height: 16px; }
+  .doc-txt { flex: 1; min-width: 0; display: grid; line-height: 1.3; }
+  .doc-txt b { font-size: 0.844rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .doc-txt small { font-size: 0.75rem; color: var(--gris-50); }
+  .docs-pie { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 12px 20px 16px; border-top: 1px solid var(--linea-suave); }
+
+  /* 10E · la billetera vacía */
+  .billetera-vacia { display: grid; justify-items: center; text-align: center; gap: 6px; padding: 8px 20px 24px; }
+  .billetera-vacia > b { font-size: 1rem; margin-top: 4px; }
+  .billetera-vacia > p { font-size: 0.844rem; color: var(--gris-70); max-width: 34ch; margin-bottom: 8px; }
+  .carpeta { position: relative; display: block; width: 124px; height: 94px; margin: 38px auto 12px; transition: transform 0.35s var(--curva); }
+  .carpeta:hover, .carpeta.abierta { transform: translateY(-4px); }
+  .carpeta-fondo { position: absolute; inset: 0; background: var(--accion-honda); border-radius: 0 12px 12px 12px; transition: background-color 0.35s; }
+  .carpeta-fondo::before { content: ""; position: absolute; bottom: calc(100% - 1px); left: 0; width: 48px; height: 12px; background: inherit; border-radius: 8px 8px 0 0; }
+  .papel {
+    --mx: 0; --my: 0;
+    position: absolute; left: 15%; bottom: 10%; width: 70%; height: 72%;
+    display: grid; place-items: center; background: var(--blanco); color: var(--accion);
+    border-radius: 8px; box-shadow: 0 2px 8px rgba(20,16,25,0.18);
+    translate: calc(var(--mx) * 1px) calc(var(--my) * 1px);
+    transition: transform 0.5s var(--curva), translate 0.2s ease-out;
+  }
+  .papel .ico { width: 19px; height: 19px; }
+  .carpeta-frente { position: absolute; bottom: 0; width: 50%; height: 84%; background: var(--accion); transform-origin: bottom; transition: transform 0.5s var(--curva), background-color 0.35s; }
+  .carpeta-frente.izq { left: 0; border-radius: 10px 0 12px 12px; }
+  .carpeta-frente.der { right: 0; border-radius: 0 10px 12px 0; }
+  .carpeta:hover .carpeta-frente.izq, .carpeta.abierta .carpeta-frente.izq { transform: skewX(14deg) scaleY(0.62); }
+  .carpeta:hover .carpeta-frente.der, .carpeta.abierta .carpeta-frente.der { transform: skewX(-14deg) scaleY(0.62); }
+  .carpeta:hover .p1, .carpeta.abierta .p1 { transform: translate(-44%, -62%) rotate(-12deg); }
+  .carpeta:hover .p2, .carpeta.abierta .p2 { transform: translate(44%, -62%) rotate(12deg); }
+  .carpeta:hover .p3, .carpeta.abierta .p3 { transform: translate(0, -82%); }
+
+  /* 8B · tarjetas de opción (también en la compra y en el asistente) */
+  .opciones { border: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
+  .opciones legend { font-size: 0.781rem; font-weight: 700; color: var(--gris-70); margin-bottom: 8px; }
+  .opcion { position: relative; display: block; cursor: pointer; }
+  .opcion input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+  .opcion-cuerpo {
+    position: relative; display: grid; gap: 1px; height: 100%; padding: 12px 13px;
+    border: 1.5px solid var(--linea); border-radius: 12px; background: var(--blanco);
+    transition: border-color 0.2s, background-color 0.2s;
+  }
+  .opcion-cuerpo .ico { color: var(--gris-50); margin-bottom: 6px; transition: color 0.2s; }
+  .opcion-cuerpo b { font-size: 0.844rem; }
+  .opcion-cuerpo small { font-size: 0.75rem; color: var(--gris-50); }
+  .opcion-cuerpo::after { content: ""; position: absolute; top: 11px; right: 11px; width: 16px; height: 16px; border-radius: 50%; border: 1.5px solid var(--gris-30); background: var(--blanco); transition: border-color 0.2s, box-shadow 0.2s; }
+  .opcion:hover .opcion-cuerpo { border-color: var(--gris-30); }
+  .opcion input:checked + .opcion-cuerpo { border-color: var(--accion); background: var(--tenue); }
+  .opcion input:checked + .opcion-cuerpo .ico { color: var(--accion); }
+  .opcion input:checked + .opcion-cuerpo::after { border-color: var(--accion); box-shadow: inset 0 0 0 3.5px var(--blanco), inset 0 0 0 8px var(--accion); }
+  .opcion input:focus-visible + .opcion-cuerpo { outline: 2px solid var(--accion); outline-offset: 2px; }
+  .contacto .opciones { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .contacto .opcion-cuerpo { justify-items: start; }
+  .horario { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+  .horario > span { font-size: 0.781rem; font-weight: 700; color: var(--gris-70); }
+
+  /* ═════ 7A y 10C · DIÁLOGOS ═══════════════════════════════════════ */
+  .dialogo {
+    margin: auto; border: 0; padding: 0; border-radius: 20px;
+    width: min(440px, calc(100% - 32px)); max-height: calc(100dvh - 32px);
+    background: var(--blanco); color: var(--tinta); box-shadow: 0 40px 90px -30px rgba(20,16,25,0.55);
+  }
+  .dialogo.ancho { width: min(540px, calc(100% - 32px)); }
+  .dialogo::backdrop { background: rgba(20, 16, 25, 0.45); backdrop-filter: blur(3px); }
+  .dialogo[open] { animation: dlg-entra 0.4s var(--curva); }
+  .dialogo[open]::backdrop { animation: fundido 0.3s ease; }
+  .dialogo.cerrando { animation: dlg-sale 0.2s ease forwards; }
+  .dialogo.cerrando::backdrop { animation: fundido-sale 0.2s ease forwards; }
+  @keyframes dlg-entra { from { opacity: 0; transform: translateY(16px) scale(0.97); } }
+  @keyframes dlg-sale { to { opacity: 0; transform: translateY(8px) scale(0.98); } }
+  @keyframes fundido { from { opacity: 0; } }
+  @keyframes fundido-sale { to { opacity: 0; } }
+  .dlg-cuerpo { position: relative; padding: 26px 24px 22px; display: grid; gap: 16px; }
+  .dlg-cerrar { position: absolute; top: 14px; right: 14px; z-index: 2; width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; color: var(--gris-50); transition: background-color 0.15s, color 0.15s; }
+  .dlg-cerrar:hover { background: var(--linea-suave); color: var(--tinta); }
+  .dlg-ico { width: 48px; height: 48px; border-radius: 14px; display: grid; place-items: center; background: var(--tenue); color: var(--accion); }
+  .dlg-ico .ico { width: 22px; height: 22px; }
+  .dialogo h2 { font-size: 1.25rem; font-weight: 800; }
+  .dlg-sub { font-size: 0.906rem; color: var(--gris-70); margin-top: -10px; }
+  .desglose { display: grid; gap: 6px; padding: 14px; border-radius: 12px; background: var(--papel); font-size: 0.875rem; }
+  .desglose div { display: flex; justify-content: space-between; }
+  .desglose dt { color: var(--gris-50); }
+  .desglose dd { font-weight: 600; font-variant-numeric: tabular-nums; }
+  .desglose .total { border-top: 1px dashed var(--linea); padding-top: 8px; margin-top: 2px; }
+  .desglose .total dt { color: var(--tinta); font-weight: 700; }
+  .desglose .total dd { font-size: 1.125rem; font-weight: 800; }
+  .dlg-pie { display: flex; gap: 10px; flex-wrap: wrap; }
+  .dlg-pie .btn { flex: 1; }
+  .dlg-nota { font-size: 0.719rem; color: var(--gris-50); text-align: center; margin-top: -6px; }
+
+  .dlg-cab { padding: 22px 24px 0; }
+  .dlg-cab h2 { font-size: 1.125rem; }
+  .stp-indicadores { list-style: none; display: flex; align-items: center; padding: 16px 24px 4px; }
+  .stp-ind { display: flex; align-items: center; flex: 1; }
+  .stp-ind:last-child { flex: none; }
+  .stp-ind button { width: 32px; height: 32px; flex: none; border-radius: 50%; display: grid; place-items: center; font-size: 0.813rem; font-weight: 800; background: var(--linea-suave); color: var(--gris-50); transition: background-color 0.3s, color 0.3s, box-shadow 0.3s, transform 0.3s var(--curva); }
+  .stp-ind button:not(:disabled):hover { transform: scale(1.08); }
+  .stp-ind button:disabled { cursor: default; }
+  .stp-ind button .ico { display: none; width: 15px; height: 15px; stroke-width: 2.6; }
+  .stp-ind.hecho button, .stp-ind.actual button { background: var(--accion); color: var(--blanco); }
+  .stp-ind.actual button { box-shadow: 0 0 0 4px var(--foco); }
+  .stp-ind.hecho button .num-paso { display: none; }
+  .stp-ind.hecho button .ico { display: block; }
+  .stp-conector { flex: 1; height: 2px; margin: 0 8px; border-radius: 2px; background: var(--linea); position: relative; overflow: hidden; }
+  .stp-conector::after { content: ""; position: absolute; inset: 0; background: var(--accion); transform: scaleX(0); transform-origin: left; transition: transform 0.5s var(--curva); }
+  .stp-ind.hecho .stp-conector::after { transform: scaleX(1); }
+  .stp-marco { overflow: hidden; transition: height 0.4s var(--curva); }
+  .stp-paso { padding: 14px 24px 20px; }
+  .stp-paso h3 { font-size: 1rem; font-weight: 800; }
+  .stp-paso h3:focus { outline: none; }
+  .stp-paso > .nota { margin: 2px 0 12px; }
+  .entra-der { animation: stp-der 0.45s var(--curva) both; }
+  .entra-izq { animation: stp-izq 0.45s var(--curva) both; }
+  @keyframes stp-der { from { opacity: 0; transform: translateX(44px); } }
+  @keyframes stp-izq { from { opacity: 0; transform: translateX(-44px); } }
+  .stp-et { font-size: 0.688rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--gris-50); margin: 12px 0 7px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip { position: relative; cursor: pointer; }
+  .chip input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+  .chip span { display: inline-block; padding: 7px 13px; border-radius: 999px; border: 1.5px solid var(--linea); background: var(--blanco); font-size: 0.813rem; font-weight: 600; font-variant-numeric: tabular-nums; transition: background-color 0.2s, border-color 0.2s, color 0.2s; }
+  .chip:hover span { border-color: var(--gris-30); }
+  .chip input:checked + span { background: var(--accion); border-color: var(--accion); color: var(--blanco); }
+  .chip input:focus-visible + span { outline: 2px solid var(--accion); outline-offset: 2px; }
+  .chip input:disabled + span { opacity: 0.45; text-decoration: line-through; cursor: not-allowed; }
+  .resumen { margin-top: 12px; border: 1px solid var(--linea-suave); border-radius: 12px; overflow: hidden; }
+  .resumen div { display: flex; justify-content: space-between; gap: 12px; padding: 9px 12px; font-size: 0.844rem; }
+  .resumen div + div { border-top: 1px solid var(--linea-suave); }
+  .resumen dt { color: var(--gris-50); }
+  .resumen dd { font-weight: 600; text-align: right; }
+  .stp-fin { text-align: center; display: grid; justify-items: center; gap: 8px; padding: 26px 24px 30px; }
+  .stp-fin p { font-size: 0.875rem; color: var(--gris-70); max-width: 36ch; }
+  .fin-check { width: 56px; height: 56px; border-radius: 50%; display: grid; place-items: center; background: var(--ok); color: var(--ok-honda); animation: pop 0.55s var(--curva) both; }
+  .fin-check .ico { width: 26px; height: 26px; stroke-width: 2.4; }
+  @keyframes pop { from { opacity: 0; transform: scale(0.4); } 60% { transform: scale(1.12); } }
+  .stp-pie { display: flex; justify-content: space-between; gap: 10px; padding: 14px 24px 20px; border-top: 1px solid var(--linea-suave); }
+
+  /* ═════ 9A · AVISOS ═══════════════════════════════════════════════
+     Abajo a la izquierda, pegados al rail: a la derecha vive el asistente. */
+  .avisos { position: fixed; z-index: 100; left: calc(var(--ancho-rail) + 24px); bottom: 24px; display: grid; gap: 10px; width: min(370px, calc(100vw - var(--ancho-rail) - 48px)); transition: left 0.45s var(--curva); }
+  .aviso { position: relative; overflow: hidden; display: flex; align-items: flex-start; gap: 12px; padding: 14px 12px 16px 14px; border-radius: 14px; background: var(--rail); color: var(--blanco); box-shadow: 0 20px 40px -18px rgba(20,16,25,0.6); animation: aviso-entra 0.45s var(--curva); }
+  .aviso.sale { animation: aviso-sale 0.3s ease forwards; }
+  @keyframes aviso-entra { from { opacity: 0; transform: translateX(-24px) scale(0.97); } }
+  @keyframes aviso-sale { to { opacity: 0; transform: translateX(-24px); } }
+  .aviso-ico { width: 30px; height: 30px; border-radius: 50%; flex: none; display: grid; place-items: center; background: var(--rail-acento); color: var(--rail); }
+  .aviso-ico .ico { width: 16px; height: 16px; stroke-width: 2.2; }
+  .aviso-info .aviso-ico { background: rgba(255,255,255,0.14); color: var(--blanco); }
+  .aviso-urgente { background: var(--blanco); color: var(--tinta); border: 1px solid var(--linea); border-left: 4px solid var(--naranja); }
+  .aviso-urgente .aviso-ico { background: var(--naranja-tenue); color: var(--naranja); }
+  .aviso-txt { flex: 1; min-width: 0; }
+  .aviso-txt b { display: block; font-size: 0.875rem; }
+  .aviso-txt p { font-size: 0.813rem; opacity: 0.8; margin-top: 1px; }
+  .aviso-x { width: 28px; height: 28px; flex: none; border-radius: 8px; display: grid; place-items: center; color: inherit; opacity: 0.6; }
+  .aviso-x:hover { opacity: 1; background: rgba(127,127,127,0.15); }
+  .aviso-x .ico { width: 15px; height: 15px; }
+  .aviso-tiempo { position: absolute; left: 0; right: 0; bottom: 0; height: 3px; background: var(--rail-acento); transform-origin: left; animation: tiempo 5s linear forwards; }
+  .aviso-info .aviso-tiempo { background: rgba(255,255,255,0.5); }
+  .aviso:hover .aviso-tiempo { animation-play-state: paused; }
+  @keyframes tiempo { to { transform: scaleX(0); } }
+
+  /* La pestaña del asistente, plegado (PLT-004 vive en otra maqueta). */
+  .asistente-pestana { position: fixed; right: 0; bottom: 28px; z-index: 40; display: flex; align-items: center; gap: 8px; padding: 7px 14px 7px 7px; background: var(--rail); color: var(--blanco); border-radius: 999px 0 0 999px; font-size: 0.82rem; font-weight: 700; box-shadow: 0 10px 24px -10px rgba(0,0,0,0.5); transition: transform 0.25s var(--curva), background-color 0.35s; }
+  .asistente-pestana:hover { transform: translateX(-3px); }
+  .ojos { width: 30px; height: 30px; border-radius: 50%; background: var(--rail-acento); display: flex; align-items: center; justify-content: center; gap: 5px; }
+  .ojos span { width: 5px; height: 9px; border-radius: 3px; background: var(--rail); animation: parpadeo 4s infinite; }
+  @keyframes parpadeo { 0%, 92%, 100% { transform: scaleY(1); } 95% { transform: scaleY(0.1); } }
+
+  /* ═════ Adaptación ════════════════════════════════════════════════ */
+  @media (max-width: 1080px) { .rejilla { grid-template-columns: 1fr; } }
+  @media (max-width: 860px) {
+    /* En móvil el rail se vuelve barra inferior, como el panel actual. */
+    html, html.rail-plegado { --ancho-rail: 0px; }
+    .shell { grid-template-columns: minmax(0, 1fr); }
+    .rail { position: fixed; top: auto; bottom: 0; left: 0; right: 0; height: 64px; z-index: 50; flex-direction: row; padding: 6px 6px calc(6px + env(safe-area-inset-bottom, 0px)); }
+    .rail-cab, .rail-pie, .cinta, .rail-indicador { display: none; }
+    .rail-nav { flex-direction: row; flex: 1; gap: 0; }
+    .rail-nav a { flex: 1; min-width: 0; flex-direction: column; gap: 3px; padding: 6px 2px; font-size: 0.625rem; justify-content: center; }
+    .rail-nav a .et { opacity: 1 !important; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+    .rail-nav a[aria-current="page"] { color: var(--rail-acento); }
+    .rail-nav .pin { position: absolute; top: 2px; left: calc(50% + 4px); margin: 0; opacity: 1 !important; font-size: 0.563rem; padding: 0 5px; }
+    .rail-nav a[data-pin]::after { display: none; }
+    .avisos { left: 12px; bottom: 76px; width: calc(100vw - 24px); }
+    .asistente-pestana { bottom: 84px; }
+    .chip-usuario .txt { display: none; }
+    .contacto .opcion-cuerpo small { display: none; }
+  }
+  @media (max-width: 520px) {
+    .pasos li { font-size: 0.625rem; }
+    .caso-cab { flex-wrap: wrap; }
+    .maqueta-ctrl .derecha { margin-left: 0; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 1ms !important; animation-iteration-count: 1 !important; transition-duration: 1ms !important; scroll-behavior: auto !important; }
+    .aviso .aviso-tiempo { animation-duration: 6s !important; }
+  }
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <symbol id="i-casa" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></symbol>
+  <symbol id="i-doc" viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></symbol>
+  <symbol id="i-firma" viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 14.5l2 2 4-4"/></symbol>
+  <symbol id="i-cal" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 11h18"/></symbol>
+  <symbol id="i-chat" viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></symbol>
+  <symbol id="i-carpeta" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></symbol>
+  <symbol id="i-maletin" viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2M3 13h18"/></symbol>
+  <symbol id="i-subir" viewBox="0 0 24 24"><path d="M12 16V4M7 9l5-5 5 5M4 20h16"/></symbol>
+  <symbol id="i-moneda" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M14.8 9.2c-.5-.8-1.5-1.2-2.8-1.2-1.6 0-2.8.8-2.8 1.9 0 1.2 1.2 1.6 2.8 1.9 1.6.3 2.8.8 2.8 2 0 1.1-1.2 2-2.8 2-1.3 0-2.4-.5-2.9-1.3M12 6.5V8M12 16v1.5"/></symbol>
+  <symbol id="i-usuario" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></symbol>
+  <symbol id="i-bolsa" viewBox="0 0 24 24"><path d="M5 8h14l-1 12a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1z"/><path d="M9 8V7a3 3 0 0 1 6 0v1"/></symbol>
+  <symbol id="i-campana" viewBox="0 0 24 24"><path d="M6 16v-5a6 6 0 1 1 12 0v5l2 2H4z"/><path d="M10 21h4"/></symbol>
+  <symbol id="i-ajustes" viewBox="0 0 24 24"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></symbol>
+  <symbol id="i-salir" viewBox="0 0 24 24"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 17l-5-5 5-5M5 12h11"/></symbol>
+  <symbol id="i-abajo" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+  <symbol id="i-escudo" viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6z"/><path d="M9 12l2 2 4-4"/></symbol>
+  <symbol id="i-lupa" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></symbol>
+  <symbol id="i-alerta" viewBox="0 0 24 24"><path d="M10.3 4.2 2.6 18a2 2 0 0 0 1.7 3h15.4a2 2 0 0 0 1.7-3L13.7 4.2a2 2 0 0 0-3.4 0z"/><path d="M12 10v4M12 17.5v.01"/></symbol>
+  <symbol id="i-plegar" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16M16 10l-2 2 2 2"/></symbol>
+  <symbol id="i-reloj" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+  <symbol id="i-tarjeta" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18M7 15h4"/></symbol>
+  <symbol id="i-video" viewBox="0 0 24 24"><rect x="3" y="6" width="13" height="12" rx="2"/><path d="M16 10.5l5-3v9l-5-3z"/></symbol>
+  <symbol id="i-balanza" viewBox="0 0 24 24"><path d="M12 4v16M8 20h8M5 8h14M5 8l-3 6a3 3 0 0 0 6 0zM19 8l-3 6a3 3 0 0 0 6 0z"/></symbol>
+  <symbol id="i-telefono" viewBox="0 0 24 24"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z"/></symbol>
+  <symbol id="i-correo" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></symbol>
+</svg>
+
+<div class="shell">
+
+  <!-- ═════ 1A · RAIL PLEGABLE ════════════════════════════════════════ -->
+  <aside class="rail" id="rail">
+    <svg class="cinta" viewBox="0 0 236 900" preserveAspectRatio="none" aria-hidden="true"><path d="M 200 -40 C 200 160 40 240 60 430 C 78 610 210 660 200 900" /></svg>
+    <div class="rail-cab">
+      <img class="rail-logo" src="../../../../apps/tranqi-web/public/assets/tranqi-white.svg" alt="tranqi" />
+      <button type="button" class="rail-plegar" id="rail-plegar" aria-expanded="true" aria-controls="rail-nav" aria-label="Plegar menú"><svg class="ico"><use href="#i-plegar"/></svg></button>
+    </div>
+    <nav class="rail-nav" id="rail-nav" aria-label="Principal"></nav>
+    <div class="rail-pie">
+      <a class="rail-abogada" href="#" data-tip="Tu abogada · Dra. Paula Andrade">
+        <span class="foto">PA</span>
+        <span class="txt"><span class="rol">Tu abogada</span><b>Dra. Paula Andrade</b></span>
+      </a>
+    </div>
+  </aside>
+
+  <div class="principal">
+    <!-- ═════ CABECERA · 5A ══════════════════════════════════════════ -->
+    <header class="topbar">
+      <div class="buscador"><svg class="ico"><use href="#i-lupa"/></svg><input type="search" placeholder="Buscar trámites, documentos, citas…" aria-label="Buscar" /></div>
+      <div class="acciones">
+        <button type="button" class="icono-btn" id="btn-campana" aria-label="Avisos, 2 sin leer"><svg class="ico"><use href="#i-campana"/></svg><span class="punto solo-historial"></span></button>
+        <div class="menu-ancla">
+          <button type="button" class="chip-usuario" aria-haspopup="menu" aria-expanded="false" aria-controls="menu-cuenta">
+            <span class="foto">CT</span>
+            <span class="txt"><b>Camila Torres</b><span data-rol-texto>Cliente</span></span>
+            <svg class="ico"><use href="#i-abajo"/></svg>
+          </button>
+          <div class="menu" id="menu-cuenta" role="menu" aria-label="Cuenta">
+            <div class="menu-yo"><span class="foto">CT</span><div><b>Camila Torres</b><span>camila@ejemplo.ec</span></div></div>
+            <div class="menu-sep"></div>
+            <button type="button" role="menuitem" tabindex="-1" data-accion="perfil"><svg class="ico"><use href="#i-usuario"/></svg>Mi perfil</button>
+            <button type="button" role="menuitem" tabindex="-1" data-accion="preferencias"><svg class="ico"><use href="#i-ajustes"/></svg>Preferencias</button>
+            <div class="menu-sep"></div>
+            <span class="menu-et">Ver como</span>
+            <button type="button" role="menuitemradio" tabindex="-1" aria-checked="true" data-perfil="cliente"><svg class="ico"><use href="#i-check"/></svg>Cliente</button>
+            <button type="button" role="menuitemradio" tabindex="-1" aria-checked="false" data-perfil="abogado"><svg class="ico"><use href="#i-check"/></svg>Socio abogado</button>
+            <button type="button" role="menuitemradio" tabindex="-1" aria-checked="false" data-perfil="admin"><svg class="ico"><use href="#i-check"/></svg>Administrador</button>
+            <div class="menu-sep"></div>
+            <button type="button" role="menuitem" tabindex="-1" data-accion="salir"><svg class="ico"><use href="#i-salir"/></svg>Cerrar sesión</button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <div class="contenido">
+      <!-- Solo de la maqueta: no forma parte de la pantalla. -->
+      <div class="maqueta-ctrl">
+        <span><b>Maqueta</b> · estado de la cuenta</span>
+        <div class="segmentado" id="seg-estado" role="group" aria-label="Estado de la cuenta (maqueta)">
+          <span class="pulgar" aria-hidden="true"></span>
+          <button type="button" aria-pressed="true" data-valor="historial">Con historial</button>
+          <button type="button" aria-pressed="false" data-valor="nueva">Cuenta nueva</button>
+        </div>
+        <span class="derecha">«Ver como» está en el menú de tu nombre, arriba a la derecha.</span>
+      </div>
+
+      <div class="saludo aparece">
+        <div>
+          <h1>Hola de nuevo, Camila. Estás <i>tranqi</i>.</h1>
+          <p class="solo-historial">Tienes 3 trámites en marcha y una cita el jueves.</p>
+          <p class="solo-nueva">Tu cuenta está lista. ¿Qué necesitas resolver hoy?</p>
+        </div>
+        <button type="button" class="btn btn-primario" data-abrir-cita><svg class="ico"><use href="#i-cal"/></svg>Agendar cita</button>
+      </div>
+
+      <div class="rejilla">
+        <!-- ═════ COLUMNA PRINCIPAL ═════════════════════════════════ -->
+        <div class="col">
+
+          <!-- 2B + 10A -->
+          <div class="datos solo-historial aparece" id="datos">
+            <a class="dato" href="#">
+              <span class="dato-cab"><span class="icono-caja"><svg class="ico"><use href="#i-doc"/></svg></span>Mis trámites</span>
+              <b class="dato-cifra"><span class="num" data-contar="3">3</span><small>abiertos</small></b>
+              <span class="dato-barra" style="--p:.66"><span></span></span>
+              <span class="dato-pie">2 avanzaron esta semana</span>
+            </a>
+            <a class="dato" href="#">
+              <span class="dato-cab"><span class="icono-caja"><svg class="ico"><use href="#i-chat"/></svg></span>Consultas</span>
+              <b class="dato-cifra"><span class="num" data-contar="27">27</span><small>respondidas</small></b>
+              <span class="dato-pie">Respuesta media: 1 h 40 min</span>
+            </a>
+            <a class="dato dato-urgente" href="#">
+              <span class="dato-cab"><span class="icono-caja"><svg class="ico"><use href="#i-carpeta"/></svg></span>Billetera</span>
+              <b class="dato-cifra"><span class="num" data-contar="12">12</span><small>documentos</small></b>
+              <span class="dato-pie"><span class="punto-urgente"></span>2 por vencer</span>
+            </a>
+            <a class="dato" href="#">
+              <span class="dato-cab"><span class="icono-caja"><svg class="ico"><use href="#i-moneda"/></svg></span>Ahorro con tu plan</span>
+              <b class="dato-cifra"><span class="num" data-contar="1184.5" data-decimales="2" data-prefijo="$">$1,184.50</span></b>
+              <span class="dato-pie">Frente a pagar cada servicio suelto</span>
+            </a>
+          </div>
+
+          <!-- 6B + 4A -->
+          <section class="tarjeta caso solo-historial aparece" aria-labelledby="t-caso">
+            <div class="caso-cab">
+              <span class="icono-caja"><svg class="ico"><use href="#i-balanza"/></svg></span>
+              <div><span class="eyebrow">Caso TQ-2026-0148 · Dra. Paula Andrade</span><h2 id="t-caso">Arrendamiento de local comercial</h2></div>
+              <span class="pill pill-ok">En curso</span>
+            </div>
+            <div class="caso-progreso">
+              <ol class="pasos" aria-label="Etapas del caso">
+                <li class="hecho"><span class="paso-punto"><svg class="ico"><use href="#i-check"/></svg></span>Recibido</li>
+                <li class="hecho"><span class="paso-punto"><svg class="ico"><use href="#i-check"/></svg></span>Documentos</li>
+                <li class="actual" aria-current="step"><span class="paso-punto"><svg class="ico"><use href="#i-check"/></svg></span>Revisión</li>
+                <li><span class="paso-punto"><svg class="ico"><use href="#i-check"/></svg></span>Firma</li>
+                <li><span class="paso-punto"><svg class="ico"><use href="#i-check"/></svg></span>Cerrado</li>
+              </ol>
+              <div class="pc-siguiente">
+                <svg class="ico"><use href="#i-reloj"/></svg>
+                <div><b>Siguiente: firma del contrato</b><small>Jueves 25 · 10:00 · por videollamada</small></div>
+              </div>
+            </div>
+            <div class="pestanas" role="tablist" aria-label="Detalle del caso">
+              <button type="button" role="tab" id="tab-res" aria-controls="pan-res" aria-selected="true">Resumen</button>
+              <button type="button" role="tab" id="tab-doc" aria-controls="pan-doc" aria-selected="false" tabindex="-1">Documentos <span class="cuenta">3</span></button>
+              <button type="button" role="tab" id="tab-pag" aria-controls="pan-pag" aria-selected="false" tabindex="-1">Pagos</button>
+              <button type="button" role="tab" id="tab-men" aria-controls="pan-men" aria-selected="false" tabindex="-1">Mensajes <span class="cuenta">2</span></button>
+              <span class="pestanas-linea" aria-hidden="true"></span>
+            </div>
+            <div class="paneles">
+              <div class="paneles-pista">
+                <div role="tabpanel" id="pan-res" aria-labelledby="tab-res">
+                  <dl class="ficha">
+                    <div><dt>Materia</dt><dd>Civil · Arrendamiento</dd></div>
+                    <div><dt>Abierto</dt><dd>18 de septiembre</dd></div>
+                    <div><dt>Próximo paso</dt><dd>Firmar el contrato</dd></div>
+                    <div><dt>Actualizado</dt><dd>Hoy, 09:12</dd></div>
+                  </dl>
+                </div>
+                <div role="tabpanel" id="pan-doc" aria-labelledby="tab-doc">
+                  <ul class="filas">
+                    <li><svg class="ico"><use href="#i-doc"/></svg><span>Borrador del contrato.pdf</span><span class="pill pill-accion">Por firmar</span></li>
+                    <li><svg class="ico"><use href="#i-doc"/></svg><span>Escrituras del local.pdf</span><span class="pill pill-ok">Revisado</span></li>
+                    <li><svg class="ico"><use href="#i-doc"/></svg><span>Cédula del arrendador.jpg</span><span class="pill pill-ok">Revisado</span></li>
+                  </ul>
+                </div>
+                <div role="tabpanel" id="pan-pag" aria-labelledby="tab-pag">
+                  <ul class="filas">
+                    <li><svg class="ico"><use href="#i-moneda"/></svg><span>Honorarios · cuota 1 de 2</span><b class="num">$57.50</b><span class="pill pill-ok">Pagado</span></li>
+                    <li><svg class="ico"><use href="#i-moneda"/></svg><span>Honorarios · cuota 2 de 2</span><b class="num">$57.50</b><span class="pill pill-neutro">1 oct</span></li>
+                  </ul>
+                </div>
+                <div role="tabpanel" id="pan-men" aria-labelledby="tab-men">
+                  <p class="burbuja">Te envío el borrador. Revisa la cláusula 7, la de la garantía.<small>Dra. Andrade · 09:12</small></p>
+                  <p class="burbuja">Si te parece bien, lo firmamos el jueves.<small>Dra. Andrade · 09:13</small></p>
+                  <p class="burbuja mia">¡Perfecto! Lo leo esta tarde.<small>Tú · 09:40</small></p>
+                </div>
+              </div>
+            </div>
+            <div class="caso-pie"><span>1 de 3 trámites abiertos</span><a class="btn-fantasma" href="#">Ver todos mis trámites</a></div>
+          </section>
+
+          <!-- Cuenta nueva: sin casos -->
+          <section class="tarjeta vacio-caso solo-nueva aparece" aria-labelledby="t-vacio">
+            <div class="vacio-cuerpo">
+              <span class="icono-caja"><svg class="ico"><use href="#i-balanza"/></svg></span>
+              <h2 id="t-vacio">Aún no tienes casos</h2>
+              <p>Cuéntanos qué necesitas y te asignamos a la abogada que más sabe de eso. Te escribe en menos de 2 horas.</p>
+              <div class="acc">
+                <button type="button" class="btn btn-primario" data-abrir-cita><svg class="ico"><use href="#i-cal"/></svg>Agendar mi primera cita</button>
+                <button type="button" class="btn btn-neutro" data-asistente><svg class="ico"><use href="#i-chat"/></svg>Preguntar a tranqi</button>
+              </div>
+            </div>
+          </section>
+
+          <!-- 3B -->
+          <section class="tarjeta aparece" aria-labelledby="t-planes">
+            <header>
+              <h2 id="t-planes">Planes y servicios</h2>
+              <div class="segmentado" id="seg-planes" role="group" aria-label="Filtrar planes y servicios">
+                <span class="pulgar" aria-hidden="true"></span>
+                <button type="button" aria-pressed="true" data-valor="todos">Todos</button>
+                <button type="button" aria-pressed="false" data-valor="plan">Planes</button>
+                <button type="button" aria-pressed="false" data-valor="puntual">Servicios</button>
+              </div>
+            </header>
+            <div class="planes-rejilla" id="planes">
+              <article class="plan plan-destacado" data-tipo="plan">
+                <svg class="hilo" viewBox="0 0 260 360" preserveAspectRatio="none" aria-hidden="true"><path d="M 230 -20 C 230 90 30 120 60 220 C 80 290 220 300 210 380" /></svg>
+                <div class="plan-cab"><span class="icono-caja"><svg class="ico"><use href="#i-escudo"/></svg></span><span class="plan-chip solo-historial">Tu plan</span><span class="plan-chip solo-nueva">Recomendado</span></div>
+                <span class="eyebrow">Suscripción anual</span>
+                <h3>Protección total</h3>
+                <ul class="plan-lista">
+                  <li><svg class="ico"><use href="#i-check"/></svg>Consultas ilimitadas</li>
+                  <li><svg class="ico"><use href="#i-check"/></svg>6 revisiones de contrato al año</li>
+                  <li><svg class="ico"><use href="#i-check"/></svg>Abogada asignada</li>
+                </ul>
+                <div class="plan-pie">
+                  <div class="precio"><b>$322.00</b><small>al año · IVA 15 % incl.</small></div>
+                  <span class="pill pill-ok solo-historial">Activo</span>
+                  <button type="button" class="btn btn-ok btn-sm solo-nueva" data-adquirir data-nombre="Protección total" data-precio="322">Adquirir</button>
+                </div>
+              </article>
+              <article class="plan" data-tipo="plan">
+                <div class="plan-cab"><span class="icono-caja"><svg class="ico"><use href="#i-usuario"/></svg></span></div>
+                <span class="eyebrow">Suscripción anual</span>
+                <h3>Plan familia</h3>
+                <ul class="plan-lista">
+                  <li><svg class="ico"><use href="#i-check"/></svg>Hasta 4 personas</li>
+                  <li><svg class="ico"><use href="#i-check"/></svg>12 consultas al año</li>
+                </ul>
+                <div class="plan-pie">
+                  <div class="precio"><b>$184.00</b><small>al año · IVA 15 % incl.</small></div>
+                  <button type="button" class="btn btn-primario btn-sm" data-adquirir data-nombre="Plan familia" data-precio="184">Adquirir</button>
+                </div>
+              </article>
+              <article class="plan" data-tipo="puntual">
+                <div class="plan-cab"><span class="icono-caja"><svg class="ico"><use href="#i-chat"/></svg></span></div>
+                <span class="eyebrow">Servicio puntual</span>
+                <h3>Consulta legal express</h3>
+                <ul class="plan-lista">
+                  <li><svg class="ico"><use href="#i-check"/></svg>30 min por videollamada</li>
+                  <li><svg class="ico"><use href="#i-check"/></svg>Respuesta por escrito</li>
+                </ul>
+                <div class="plan-pie">
+                  <div class="precio"><b>$28.75</b><small>IVA 15 % incl.</small></div>
+                  <button type="button" class="btn btn-primario btn-sm" data-adquirir data-nombre="Consulta legal express" data-precio="28.75">Adquirir</button>
+                </div>
+              </article>
+              <article class="plan" data-tipo="puntual">
+                <div class="plan-cab"><span class="icono-caja"><svg class="ico"><use href="#i-doc"/></svg></span></div>
+                <span class="eyebrow">Servicio puntual</span>
+                <h3>Revisión de contrato</h3>
+                <ul class="plan-lista">
+                  <li><svg class="ico"><use href="#i-check"/></svg>Hasta 10 páginas</li>
+                  <li><svg class="ico"><use href="#i-check"/></svg>Observaciones en 48 h</li>
+                </ul>
+                <div class="plan-pie">
+                  <div class="precio"><b>$57.50</b><small>IVA 15 % incl.</small></div>
+                  <button type="button" class="btn btn-primario btn-sm" data-adquirir data-nombre="Revisión de contrato" data-precio="57.5">Adquirir</button>
+                </div>
+              </article>
+              <article class="plan" data-tipo="puntual">
+                <div class="plan-cab"><span class="icono-caja"><svg class="ico"><use href="#i-firma"/></svg></span></div>
+                <span class="eyebrow">Servicio puntual</span>
+                <h3>Declaración juramentada</h3>
+                <ul class="plan-lista">
+                  <li><svg class="ico"><use href="#i-check"/></svg>Redacción y notaría</li>
+                  <li><svg class="ico"><use href="#i-check"/></svg>Lista en 3 días</li>
+                </ul>
+                <div class="plan-pie">
+                  <div class="precio"><b>$115.00</b><small>IVA 15 % incl.</small></div>
+                  <button type="button" class="btn btn-primario btn-sm" data-adquirir data-nombre="Declaración juramentada" data-precio="115">Adquirir</button>
+                </div>
+              </article>
+              <article class="plan" data-tipo="puntual">
+                <div class="plan-cab"><span class="icono-caja"><svg class="ico"><use href="#i-balanza"/></svg></span></div>
+                <span class="eyebrow">Servicio puntual</span>
+                <h3>Divorcio por mutuo acuerdo</h3>
+                <ul class="plan-lista">
+                  <li><svg class="ico"><use href="#i-check"/></svg>Demanda y audiencia</li>
+                  <li><svg class="ico"><use href="#i-check"/></svg>Pago en 3 cuotas</li>
+                </ul>
+                <div class="plan-pie">
+                  <div class="precio"><b>$552.00</b><small>IVA 15 % incl.</small></div>
+                  <button type="button" class="btn btn-primario btn-sm" data-adquirir data-nombre="Divorcio por mutuo acuerdo" data-precio="552">Adquirir</button>
+                </div>
+              </article>
+            </div>
+          </section>
+        </div>
+
+        <!-- ═════ COLUMNA LATERAL ═══════════════════════════════════ -->
+        <aside class="col">
+          <section class="tarjeta solo-historial aparece" aria-labelledby="t-cita">
+            <header><h2 id="t-cita">Próxima cita</h2><a class="btn-fantasma" href="#">Ver agenda</a></header>
+            <div class="cuerpo cita-cuerpo">
+              <span class="fecha"><b id="cita-dia">25</b><span id="cita-mes">SEP</span></span>
+              <div class="cita-txt"><b id="cita-titulo">Firma del contrato</b><small id="cita-meta">Jueves · 10:00 · videollamada con la Dra. Andrade</small></div>
+            </div>
+            <div class="cita-acc">
+              <button type="button" class="btn btn-primario btn-sm"><svg class="ico"><use href="#i-video"/></svg>Unirme</button>
+              <button type="button" class="btn btn-neutro btn-sm" data-abrir-cita>Cambiar fecha</button>
+            </div>
+          </section>
+
+          <section class="tarjeta aparece" aria-labelledby="t-billetera">
+            <header><h2 id="t-billetera">Billetera digital</h2><a class="btn-fantasma solo-historial" href="#">Ver los 12</a></header>
+            <ul class="docs solo-historial">
+              <li><span class="icono-caja"><svg class="ico"><use href="#i-usuario"/></svg></span><span class="doc-txt"><b>Cédula de identidad</b><small>Vence el 28 de septiembre</small></span><span class="pill pill-urgente">Por vencer</span></li>
+              <li><span class="icono-caja"><svg class="ico"><use href="#i-doc"/></svg></span><span class="doc-txt"><b>Borrador del contrato.pdf</b><small>Subido hoy</small></span><span class="pill pill-accion">Por firmar</span></li>
+              <li><span class="icono-caja"><svg class="ico"><use href="#i-firma"/></svg></span><span class="doc-txt"><b>Poder especial.pdf</b><small>Firmado el 12 sep</small></span><span class="pill pill-ok">Firmado</span></li>
+            </ul>
+            <div class="docs-pie solo-historial">
+              <button type="button" class="btn btn-neutro btn-sm" data-subir><svg class="ico"><use href="#i-subir"/></svg>Subir documento</button>
+            </div>
+            <!-- 10E -->
+            <div class="billetera-vacia solo-nueva">
+              <button type="button" class="carpeta" aria-expanded="false" aria-label="Abrir la billetera">
+                <span class="carpeta-fondo"></span>
+                <span class="papel p1"><svg class="ico"><use href="#i-usuario"/></svg></span>
+                <span class="papel p2"><svg class="ico"><use href="#i-doc"/></svg></span>
+                <span class="papel p3"><svg class="ico"><use href="#i-firma"/></svg></span>
+                <span class="carpeta-frente izq"></span>
+                <span class="carpeta-frente der"></span>
+              </button>
+              <b>Tu billetera está vacía</b>
+              <p>Guarda aquí tu cédula, tus contratos y tus escrituras. Te avisamos antes de que venzan.</p>
+              <button type="button" class="btn btn-primario btn-sm" data-subir><svg class="ico"><use href="#i-subir"/></svg>Subir el primero</button>
+            </div>
+          </section>
+
+          <!-- 8B -->
+          <section class="tarjeta contacto aparece" id="contacto" aria-labelledby="t-contacto">
+            <header><h2 id="t-contacto">Cómo te contactamos</h2></header>
+            <div class="cuerpo">
+              <fieldset class="opciones">
+                <legend class="sr">Canal preferido</legend>
+                <label class="opcion"><input type="radio" name="contacto" value="WhatsApp" checked /><span class="opcion-cuerpo"><svg class="ico"><use href="#i-chat"/></svg><b>WhatsApp</b><small>Lo más rápido</small></span></label>
+                <label class="opcion"><input type="radio" name="contacto" value="llamada" /><span class="opcion-cuerpo"><svg class="ico"><use href="#i-telefono"/></svg><b>Llamada</b><small>En horario</small></span></label>
+                <label class="opcion"><input type="radio" name="contacto" value="correo" /><span class="opcion-cuerpo"><svg class="ico"><use href="#i-correo"/></svg><b>Correo</b><small>Con copia</small></span></label>
+              </fieldset>
+              <div class="horario">
+                <span>Mejor horario</span>
+                <div class="segmentado" id="seg-horario" role="group" aria-label="Mejor horario">
+                  <span class="pulgar" aria-hidden="true"></span>
+                  <button type="button" aria-pressed="false" data-valor="por la mañana">Mañana</button>
+                  <button type="button" aria-pressed="true" data-valor="por la tarde">Tarde</button>
+                  <button type="button" aria-pressed="false" data-valor="a cualquier hora">Cualquiera</button>
+                </div>
+              </div>
+            </div>
+          </section>
+        </aside>
+      </div>
+
+      <footer class="pie-pagina"><span>© tranqi® 2026</span><a href="#">Términos</a><span>Maqueta v2 · taller TRANQUI</span></footer>
+    </div>
+  </div>
+
+  <!-- 9A: los avisos viven dentro de .shell para heredar --ancho-rail -->
+  <div class="avisos" id="avisos"></div>
+</div>
+
+<button type="button" class="asistente-pestana" data-asistente aria-label="Abrir el asistente tranqi"><span class="ojos" aria-hidden="true"><span></span><span></span></span>tranqi</button>
+<span class="tip" id="tip" aria-hidden="true"></span>
+
+<!-- ═════ 7A · CONFIRMAR COMPRA (con 8B para la forma de pago) ═══════ -->
+<dialog class="dialogo" id="dlg-compra" aria-labelledby="dlg-compra-t">
+  <div class="dlg-cuerpo">
+    <button type="button" class="dlg-cerrar" data-cerrar aria-label="Cerrar"><svg class="ico"><use href="#i-x"/></svg></button>
+    <span class="dlg-ico"><svg class="ico"><use href="#i-tarjeta"/></svg></span>
+    <h2 id="dlg-compra-t">Confirmar adquisición</h2>
+    <p class="dlg-sub">Vas a adquirir <b data-campo="nombre">—</b>.</p>
+    <dl class="desglose">
+      <div><dt>Subtotal</dt><dd data-campo="subtotal">—</dd></div>
+      <div><dt>IVA 15 %</dt><dd data-campo="iva">—</dd></div>
+      <div class="total"><dt>Total</dt><dd data-campo="total">—</dd></div>
+    </dl>
+    <fieldset class="opciones">
+      <legend>Forma de pago</legend>
+      <label class="opcion"><input type="radio" name="pago" value="tarjeta" checked /><span class="opcion-cuerpo"><svg class="ico"><use href="#i-tarjeta"/></svg><b>Tarjeta</b><small>Débito o crédito</small></span></label>
+      <label class="opcion"><input type="radio" name="pago" value="transferencia" /><span class="opcion-cuerpo"><svg class="ico"><use href="#i-moneda"/></svg><b>Transferencia</b><small>La validamos en 24 h</small></span></label>
+    </fieldset>
+    <div class="dlg-pie">
+      <button type="button" class="btn btn-neutro" data-cerrar>Cancelar</button>
+      <button type="button" class="btn btn-primario" id="pagar" data-campo="boton">Pagar</button>
+    </div>
+    <p class="dlg-nota">Maqueta: no se cobra nada.</p>
+  </div>
+</dialog>
+
+<!-- ═════ 10C · AGENDAR CITA ════════════════════════════════════════ -->
+<dialog class="dialogo ancho" id="dlg-cita" aria-labelledby="dlg-cita-t">
+  <form id="stepper">
+    <button type="button" class="dlg-cerrar" data-cerrar aria-label="Cerrar"><svg class="ico"><use href="#i-x"/></svg></button>
+    <div class="dlg-cab"><span class="eyebrow">Nueva cita</span><h2 id="dlg-cita-t">Agendar una cita</h2></div>
+    <ol class="stp-indicadores">
+      <li class="stp-ind"><button type="button" aria-label="Paso 1: tipo de consulta"><span class="num-paso">1</span><svg class="ico"><use href="#i-check"/></svg></button><span class="stp-conector"></span></li>
+      <li class="stp-ind"><button type="button" aria-label="Paso 2: modalidad"><span class="num-paso">2</span><svg class="ico"><use href="#i-check"/></svg></button><span class="stp-conector"></span></li>
+      <li class="stp-ind"><button type="button" aria-label="Paso 3: fecha y hora"><span class="num-paso">3</span><svg class="ico"><use href="#i-check"/></svg></button><span class="stp-conector"></span></li>
+      <li class="stp-ind"><button type="button" aria-label="Paso 4: confirmar"><span class="num-paso">4</span><svg class="ico"><use href="#i-check"/></svg></button></li>
+    </ol>
+    <div class="stp-marco">
+      <div class="stp-paso">
+        <h3 tabindex="-1">¿Qué necesitas?</h3>
+        <p class="nota">Elige el área y te asignamos a quien más sabe de eso.</p>
+        <fieldset class="opciones">
+          <legend class="sr">Tipo de consulta</legend>
+          <label class="opcion"><input type="radio" name="stp-tipo" value="civil" data-texto="Civil" /><span class="opcion-cuerpo"><svg class="ico"><use href="#i-balanza"/></svg><b>Civil</b><small>Contratos, arriendos, deudas</small></span></label>
+          <label class="opcion"><input type="radio" name="stp-tipo" value="familia" data-texto="Familia" /><span class="opcion-cuerpo"><svg class="ico"><use href="#i-usuario"/></svg><b>Familia</b><small>Pensiones, divorcios</small></span></label>
+          <label class="opcion"><input type="radio" name="stp-tipo" value="laboral" data-texto="Laboral" /><span class="opcion-cuerpo"><svg class="ico"><use href="#i-maletin"/></svg><b>Laboral</b><small>Despidos, liquidaciones</small></span></label>
+          <label class="opcion"><input type="radio" name="stp-tipo" value="penal" data-texto="Penal" /><span class="opcion-cuerpo"><svg class="ico"><use href="#i-escudo"/></svg><b>Penal</b><small>Denuncias y defensa</small></span></label>
+        </fieldset>
+      </div>
+      <div class="stp-paso" hidden>
+        <h3 tabindex="-1">¿Cómo prefieres reunirte?</h3>
+        <p class="nota">Las dos cuestan lo mismo.</p>
+        <fieldset class="opciones">
+          <legend class="sr">Modalidad</legend>
+          <label class="opcion"><input type="radio" name="stp-modo" value="video" data-texto="Videollamada" /><span class="opcion-cuerpo"><svg class="ico"><use href="#i-video"/></svg><b>Videollamada</b><small>Desde donde estés</small></span></label>
+          <label class="opcion"><input type="radio" name="stp-modo" value="presencial" data-texto="Presencial" /><span class="opcion-cuerpo"><svg class="ico"><use href="#i-casa"/></svg><b>Presencial</b><small>Oficina de Quito</small></span></label>
+        </fieldset>
+      </div>
+      <div class="stp-paso" hidden>
+        <h3 tabindex="-1">¿Cuándo te viene bien?</h3>
+        <p class="stp-et" id="stp-et-dia">Día</p>
+        <div class="chips" role="radiogroup" aria-labelledby="stp-et-dia">
+          <label class="chip"><input type="radio" name="stp-dia" value="25" data-texto="Jueves 25" data-dia="25" data-semana="Jueves" /><span>Jue 25</span></label>
+          <label class="chip"><input type="radio" name="stp-dia" value="26" data-texto="Viernes 26" data-dia="26" data-semana="Viernes" /><span>Vie 26</span></label>
+          <label class="chip"><input type="radio" name="stp-dia" value="29" data-texto="Lunes 29" data-dia="29" data-semana="Lunes" /><span>Lun 29</span></label>
+          <label class="chip"><input type="radio" name="stp-dia" value="30" data-texto="Martes 30" data-dia="30" data-semana="Martes" /><span>Mar 30</span></label>
+        </div>
+        <p class="stp-et" id="stp-et-hora">Hora</p>
+        <div class="chips" role="radiogroup" aria-labelledby="stp-et-hora">
+          <label class="chip"><input type="radio" name="stp-hora" value="0900" data-texto="09:00" /><span>09:00</span></label>
+          <label class="chip"><input type="radio" name="stp-hora" value="1030" data-texto="10:30" /><span>10:30</span></label>
+          <label class="chip"><input type="radio" name="stp-hora" value="1200" data-texto="12:00" disabled /><span>12:00</span></label>
+          <label class="chip"><input type="radio" name="stp-hora" value="1500" data-texto="15:00" /><span>15:00</span></label>
+          <label class="chip"><input type="radio" name="stp-hora" value="1630" data-texto="16:30" /><span>16:30</span></label>
+        </div>
+      </div>
+      <div class="stp-paso" hidden>
+        <h3 tabindex="-1">Revisa y confirma</h3>
+        <dl class="resumen">
+          <div><dt>Consulta</dt><dd id="res-tipo">—</dd></div>
+          <div><dt>Modalidad</dt><dd id="res-modo">—</dd></div>
+          <div><dt>Cuándo</dt><dd id="res-cuando">—</dd></div>
+          <div><dt>Con</dt><dd id="res-quien">—</dd></div>
+          <div><dt>Costo</dt><dd><span class="pill pill-ok solo-historial">Incluida en tu plan</span><span class="solo-nueva">$28.75</span></dd></div>
+        </dl>
+      </div>
+      <div class="stp-paso stp-fin" hidden>
+        <span class="fin-check"><svg class="ico"><use href="#i-check"/></svg></span>
+        <h3 tabindex="-1">Cita agendada</h3>
+        <p id="fin-txt">Te enviamos la confirmación por WhatsApp.</p>
+        <button type="button" class="btn btn-primario btn-sm" data-cerrar>Listo</button>
+      </div>
+    </div>
+    <div class="stp-pie">
+      <button type="button" class="btn btn-neutro" id="stp-atras">Atrás</button>
+      <button type="button" class="btn btn-primario" id="stp-seguir">Continuar</button>
+    </div>
+    <p class="sr" aria-live="polite" id="stp-vivo"></p>
+  </form>
+</dialog>
+
+<script>
+(() => {
+  const d = document, raiz = d.documentElement;
+  raiz.classList.add('js');
+  const reducido = matchMedia('(prefers-reduced-motion: reduce)');
+  const movil = matchMedia('(max-width: 860px)');
+  const $ = (s, c = d) => c.querySelector(s);
+  const $$ = (s, c = d) => [...c.querySelectorAll(s)];
+  const guardar = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
+  const moneda = n => '$' + n.toFixed(2);
+  const suave = () => (reducido.matches ? 'auto' : 'smooth');
+
+  const recolocables = [];
+  const recolocar = () => recolocables.forEach(f => f());
+  addEventListener('resize', recolocar);
+  if (d.fonts) d.fonts.ready.then(recolocar);
+  d.addEventListener('click', e => { if (e.target.closest('a[href="#"]')) e.preventDefault(); });
+
+  /* ── 9A Avisos ────────────────────────────────────────────────── */
+  const contAvisos = $('#avisos');
+  const ICONO = { ok: 'i-check', info: 'i-chat', urgente: 'i-alerta' };
+  function avisar(tipo, titulo, texto) {
+    const el = d.createElement('div');
+    el.className = 'aviso aviso-' + tipo;
+    el.setAttribute('role', tipo === 'urgente' ? 'alert' : 'status');
+    el.innerHTML = '<span class="aviso-ico"><svg class="ico"><use href="#' + ICONO[tipo] + '"/></svg></span>' +
+      '<div class="aviso-txt"><b></b><p></p></div>' +
+      '<button type="button" class="aviso-x" aria-label="Cerrar aviso"><svg class="ico"><use href="#i-x"/></svg></button>' +
+      '<span class="aviso-tiempo"></span>';
+    $('b', el).textContent = titulo;
+    $('p', el).textContent = texto;
+    const cerrar = () => {
+      if (el.classList.contains('sale')) return;
+      el.classList.add('sale');
+      if (reducido.matches) { el.remove(); return; }
+      el.addEventListener('animationend', e => { if (e.target === el) el.remove(); });
+      setTimeout(() => el.remove(), 450);
+    };
+    $('.aviso-x', el).addEventListener('click', cerrar);
+    const tiempo = $('.aviso-tiempo', el);
+    if (tipo === 'urgente') tiempo.remove();
+    else tiempo.addEventListener('animationend', e => { e.stopPropagation(); cerrar(); });
+    contAvisos.append(el);
+    while (contAvisos.children.length > 3) contAvisos.firstElementChild.remove();
+  }
+
+  /* ── Control segmentado ───────────────────────────────────────── */
+  function segmentado(el, alCambiar) {
+    const botones = $$('button', el), pulgar = $('.pulgar', el);
+    const activo = () => botones.find(b => b.getAttribute('aria-pressed') === 'true') || botones[0];
+    const mover = () => {
+      const b = activo();
+      pulgar.style.width = b.offsetWidth + 'px';
+      pulgar.style.transform = 'translateX(' + b.offsetLeft + 'px)';
+    };
+    const seleccionar = (valor, notificar) => {
+      botones.forEach(b => b.setAttribute('aria-pressed', String(b.dataset.valor === valor)));
+      mover();
+      if (notificar && alCambiar) alCambiar(valor);
+    };
+    botones.forEach(b => b.addEventListener('click', () => seleccionar(b.dataset.valor, true)));
+    recolocables.push(mover);
+    mover();
+    requestAnimationFrame(() => el.classList.add('listo'));
+    return { seleccionar };
+  }
+  const reanimar = (el, clase) => { el.classList.remove(clase); void el.offsetWidth; el.classList.add(clase); };
+
+  /* ── 1A Rail: mismo componente, menú según perfil ─────────────── */
+  const MENUS = {
+    cliente: [['i-casa', 'Inicio'], ['i-doc', 'Mis trámites', 3], ['i-cal', 'Citas'], ['i-carpeta', 'Billetera'], ['i-firma', 'Firmar'], ['i-moneda', 'Pagos']],
+    abogado: [['i-casa', 'Inicio'], ['i-balanza', 'Mis casos', 5], ['i-cal', 'Agenda'], ['i-usuario', 'Clientes'], ['i-moneda', 'Honorarios']],
+    admin: [['i-casa', 'Inicio'], ['i-usuario', 'Usuarios'], ['i-maletin', 'Socios', 2], ['i-bolsa', 'Catálogo'], ['i-escudo', 'Auditoría'], ['i-ajustes', 'Configuración']]
+  };
+  const ROL = { cliente: 'Cliente', abogado: 'Socio abogado', admin: 'Administrador' };
+  const railNav = $('#rail-nav'), tip = $('#tip'), plegar = $('#rail-plegar');
+  let indicador;
+  const colocarIndicador = () => {
+    const a = $('a[aria-current="page"]', railNav);
+    if (!a || !indicador) return;
+    indicador.style.height = a.offsetHeight + 'px';
+    indicador.style.transform = 'translateY(' + a.offsetTop + 'px)';
+  };
+  const ocultarTip = () => tip.classList.remove('ver');
+  const verTip = el => {
+    if (!raiz.classList.contains('rail-plegado') || movil.matches) return;
+    const r = el.getBoundingClientRect();
+    tip.textContent = el.dataset.tip;
+    tip.style.top = (r.top + r.height / 2) + 'px';
+    tip.style.left = '82px';   // ancho plegado + 10: no se mide, por si el rail aún se está cerrando
+    tip.classList.add('ver');
+  };
+  const conTip = el => {
+    el.addEventListener('mouseenter', () => verTip(el));
+    el.addEventListener('focus', () => verTip(el));
+    el.addEventListener('mouseleave', ocultarTip);
+    el.addEventListener('blur', ocultarTip);
+  };
+  function pintarRail(perfil) {
+    railNav.innerHTML = '<span class="rail-indicador" aria-hidden="true"></span>' + MENUS[perfil].map(([ico, et, pin], k) =>
+      '<a href="#"' + (k === 0 ? ' aria-current="page"' : '') + ' data-tip="' + et + (pin ? ' · ' + pin : '') + '"' + (pin ? ' data-pin' : '') + '>' +
+      '<svg class="ico"><use href="#' + ico + '"/></svg><span class="et">' + et + '</span>' +
+      (pin ? '<span class="pin num solo-historial">' + pin + '</span>' : '') + '</a>').join('');
+    indicador = $('.rail-indicador', railNav);
+    $$('a', railNav).forEach(a => {
+      a.addEventListener('click', () => {
+        $$('a', railNav).forEach(x => x.removeAttribute('aria-current'));
+        a.setAttribute('aria-current', 'page');
+        colocarIndicador();
+      });
+      conTip(a);
+    });
+    colocarIndicador();
+  }
+  conTip($('.rail-abogada'));
+  const ponerPlegado = plegado => {
+    raiz.classList.toggle('rail-plegado', plegado);
+    plegar.setAttribute('aria-expanded', String(!plegado));
+    plegar.setAttribute('aria-label', plegado ? 'Desplegar menú' : 'Plegar menú');
+    guardar('v2-plegado', plegado ? '1' : '0');
+    ocultarTip();
+    // Lo que se coloca midiendo (pestañas, pulgares) cambia de ancho con el
+    // contenido: se recoloca al terminar la transición del rail.
+    setTimeout(recolocar, 480);
+  };
+  plegar.addEventListener('click', () => ponerPlegado(!raiz.classList.contains('rail-plegado')));
+  ponerPlegado(raiz.classList.contains('rail-plegado'));
+  recolocables.push(colocarIndicador);
+
+  /* ── Perfil («Ver como») ──────────────────────────────────────── */
+  function ponerPerfil(p, avisarCambio) {
+    raiz.dataset.perfil = p;
+    pintarRail(p);
+    $$('[data-perfil]', $('#menu-cuenta')).forEach(b => b.setAttribute('aria-checked', String(b.dataset.perfil === p)));
+    $$('[data-rol-texto]').forEach(el => { el.textContent = ROL[p]; });
+    guardar('v2-perfil', p);
+    if (avisarCambio) {
+      if (p === 'cliente') avisar('info', 'Vista de cliente', 'El rail y el color de acción vuelven a los del cliente.');
+      else avisar('info', 'Rail de ' + ROL[p].toLowerCase(), 'Mismo componente, otro color y otro menú. El contenido sigue siendo el del cliente: sus pantallas son otras maquetas.');
+    }
+  }
+  ponerPerfil(raiz.dataset.perfil in MENUS ? raiz.dataset.perfil : 'cliente', false);
+
+  /* ── 5A Menú de cuenta ────────────────────────────────────────── */
+  $$('[aria-haspopup="menu"]').forEach(boton => {
+    const menu = d.getElementById(boton.getAttribute('aria-controls'));
+    const items = () => $$('[role^="menuitem"]', menu);
+    const cerrar = volver => {
+      menu.classList.remove('abierto');
+      boton.setAttribute('aria-expanded', 'false');
+      if (volver === true) boton.focus();
+    };
+    const abrir = () => {
+      menu.classList.add('abierto');
+      boton.setAttribute('aria-expanded', 'true');
+      (items().find(it => it.getAttribute('aria-checked') === 'true') || items()[0]).focus();
+    };
+    boton.addEventListener('click', e => { e.stopPropagation(); menu.classList.contains('abierto') ? cerrar() : abrir(); });
+    boton.addEventListener('keydown', e => { if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); abrir(); } });
+    menu.addEventListener('keydown', e => {
+      const lista = items(), k = lista.indexOf(d.activeElement);
+      const mapa = { ArrowDown: k + 1, ArrowUp: k - 1, Home: 0, End: lista.length - 1 };
+      if (e.key in mapa) { e.preventDefault(); lista[(mapa[e.key] + lista.length) % lista.length].focus(); }
+      else if (e.key === 'Escape') { e.preventDefault(); cerrar(true); }
+      else if (e.key === 'Tab') cerrar();
+    });
+    menu.addEventListener('click', e => {
+      e.stopPropagation();
+      const it = e.target.closest('[role^="menuitem"]');
+      if (!it) return;
+      cerrar(true);
+      if (it.dataset.perfil) ponerPerfil(it.dataset.perfil, true);
+      else if (it.dataset.accion === 'preferencias') {
+        const c = $('#contacto');
+        c.scrollIntoView({ behavior: suave(), block: 'center' });
+        c.classList.add('resaltado');
+        setTimeout(() => c.classList.remove('resaltado'), 1600);
+      } else avisar('info', it.textContent.trim(), 'En la app real esto abriría su pantalla.');
+    });
+    d.addEventListener('click', () => { if (menu.classList.contains('abierto')) cerrar(); });
+  });
+
+  /* ── Estado de la cuenta (control de la maqueta) ──────────────── */
+  const contadores = $$('[data-contar]');
+  const formatoDe = el => {
+    const dec = +(el.dataset.decimales || 0), pre = el.dataset.prefijo || '';
+    return v => pre + v.toLocaleString('en-US', { minimumFractionDigits: dec, maximumFractionDigits: dec });
+  };
+  contadores.forEach(el => {
+    const fin = parseFloat(el.dataset.contar), fmt = formatoDe(el);
+    el.setAttribute('aria-hidden', 'true');
+    const sr = d.createElement('span');
+    sr.className = 'sr';
+    sr.textContent = fmt(fin);
+    el.after(sr);
+  });
+  /* 10A CountUp: sin librerías. Sale rápido y frena al llegar. */
+  function contar() {
+    contadores.forEach((el, i) => {
+      const fin = parseFloat(el.dataset.contar), fmt = formatoDe(el);
+      if (reducido.matches) { el.textContent = fmt(fin); return; }
+      el.textContent = fmt(0);
+      const dur = 1500, t0 = performance.now() + i * 110;
+      const paso = t => {
+        const p = Math.max(0, Math.min(1, (t - t0) / dur));
+        el.textContent = fmt(p === 1 ? fin : fin * (1 - Math.pow(2, -10 * p)));
+        if (p < 1) requestAnimationFrame(paso);
+      };
+      requestAnimationFrame(paso);
+    });
+  }
+  // Las tarjetas que aparecen al cambiar de estado vuelven a animarse solas:
+  // pasar de display:none a visible reinicia su animación CSS.
+  function ponerEstado(e) {
+    raiz.dataset.estado = e;
+    guardar('v2-estado', e);
+    if (e === 'historial') contar();
+    requestAnimationFrame(recolocar);
+  }
+  const segEstado = segmentado($('#seg-estado'), ponerEstado);
+  segEstado.seleccionar(raiz.dataset.estado);
+  ponerEstado(raiz.dataset.estado);
+
+  /* ── 4A Pestañas del caso ─────────────────────────────────────── */
+  $$('.caso').forEach(caso => {
+    const tabs = $$('[role="tab"]', caso), linea = $('.pestanas-linea', caso);
+    const paneles = $('.paneles', caso), pista = $('.paneles-pista', caso), pans = $$('[role="tabpanel"]', caso);
+    let i = 0;
+    const colocar = () => {
+      if (!caso.offsetParent) return;   // oculta en «cuenta nueva»: no hay nada que medir
+      const t = tabs[i];
+      linea.style.width = t.offsetWidth + 'px';
+      linea.style.transform = 'translateX(' + t.offsetLeft + 'px)';
+      paneles.style.height = pans[i].offsetHeight + 'px';
+    };
+    const ir = (n, foco) => {
+      i = (n + tabs.length) % tabs.length;
+      tabs.forEach((t, k) => { t.setAttribute('aria-selected', String(k === i)); t.tabIndex = k === i ? 0 : -1; });
+      pans.forEach((p, k) => { p.inert = k !== i; });
+      pista.style.transform = 'translateX(' + (-100 * i) + '%)';
+      colocar();
+      if (foco) tabs[i].focus();
+    };
+    tabs.forEach((t, k) => {
+      t.addEventListener('click', () => ir(k));
+      t.addEventListener('keydown', e => {
+        const mapa = { ArrowRight: i + 1, ArrowLeft: i - 1, Home: 0, End: tabs.length - 1 };
+        if (e.key in mapa) { e.preventDefault(); ir(mapa[e.key], true); }
+      });
+    });
+    recolocables.push(colocar);
+    ir(0);
+  });
+
+  /* ── 3B Planes con selector ───────────────────────────────────── */
+  segmentado($('#seg-planes'), v => {
+    $$('#planes .plan').forEach(p => {
+      const ver = v === 'todos' || p.dataset.tipo === v;
+      p.hidden = !ver;
+      if (ver) reanimar(p, 'entra');
+    });
+  });
+
+  /* ── 8B Contacto ──────────────────────────────────────────────── */
+  let horario = 'por la tarde';
+  const canal = () => $('input[name="contacto"]:checked').value;
+  const guardado = () => avisar('ok', 'Preferencia guardada', 'Te contactaremos por ' + canal() + ', ' + horario + '.');
+  $$('input[name="contacto"]').forEach(r => r.addEventListener('change', guardado));
+  segmentado($('#seg-horario'), v => { horario = v; guardado(); });
+
+  /* ── Diálogos (7A y 10C) ──────────────────────────────────────── */
+  function cerrarDialogo(dlg) {
+    if (!dlg.open || dlg.classList.contains('cerrando')) return;
+    if (reducido.matches) { dlg.close(); return; }
+    dlg.classList.add('cerrando');
+    let hecho = false;
+    const fin = e => {
+      if (hecho || (e && e.target !== dlg)) return;
+      hecho = true;
+      dlg.removeEventListener('animationend', fin);
+      dlg.classList.remove('cerrando');
+      dlg.close();
+    };
+    dlg.addEventListener('animationend', fin);
+    setTimeout(fin, 400);
+  }
+  $$('dialog').forEach(dlg => {
+    dlg.addEventListener('cancel', e => { e.preventDefault(); cerrarDialogo(dlg); });
+    dlg.addEventListener('click', e => { if (e.target === dlg) cerrarDialogo(dlg); });
+    $$('[data-cerrar]', dlg).forEach(b => b.addEventListener('click', () => cerrarDialogo(dlg)));
+  });
+
+  const dlgCompra = $('#dlg-compra');
+  const campo = n => $('[data-campo="' + n + '"]', dlgCompra);
+  d.addEventListener('click', e => {
+    const b = e.target.closest('[data-adquirir]');
+    if (!b) return;
+    const total = parseFloat(b.dataset.precio), sub = total / 1.15;
+    campo('nombre').textContent = b.dataset.nombre;
+    campo('subtotal').textContent = moneda(sub);
+    campo('iva').textContent = moneda(total - sub);
+    campo('total').textContent = moneda(total);
+    campo('boton').textContent = 'Pagar ' + moneda(total);
+    dlgCompra.showModal();
+  });
+  $('#pagar').addEventListener('click', () => {
+    const nombre = campo('nombre').textContent;
+    cerrarDialogo(dlgCompra);
+    avisar('ok', 'Pago recibido', nombre + ' ya está activo. Te enviamos el comprobante por correo.');
+  });
+
+  /* ── 10C Agendar cita ─────────────────────────────────────────── */
+  const dlgCita = $('#dlg-cita'), stp = $('#stepper');
+  const marco = $('.stp-marco', stp), pasosStp = $$('.stp-paso', stp), inds = $$('.stp-ind', stp);
+  const atras = $('#stp-atras'), seguir = $('#stp-seguir'), vivo = $('#stp-vivo'), pieStp = $('.stp-pie', stp);
+  const TITULOS = ['Tipo de consulta', 'Modalidad', 'Fecha y hora', 'Confirmar'];
+  const ULTIMO = TITULOS.length - 1;
+  let actual = 0, alcanzado = 0;
+  const marcado = n => $('input[name="' + n + '"]:checked', stp);
+  const texto = n => { const r = marcado(n); return r ? r.dataset.texto : '—'; };
+  const completo = k => [() => marcado('stp-tipo'), () => marcado('stp-modo'), () => marcado('stp-dia') && marcado('stp-hora'), () => true][k]();
+  const quien = () => (texto('stp-tipo') === 'Familia' ? 'Ab. Diego Mena' : 'Dra. Paula Andrade');
+  const ajustarAlto = () => { if (dlgCita.open) marco.style.height = pasosStp[actual].offsetHeight + 'px'; };
+  function pintarStp() {
+    const terminado = actual > ULTIMO;
+    inds.forEach((ind, k) => {
+      ind.classList.toggle('hecho', k < actual);
+      ind.classList.toggle('actual', k === actual);
+      const b = $('button', ind);
+      b.disabled = terminado || k > alcanzado || k === actual;
+      if (k === actual) b.setAttribute('aria-current', 'step'); else b.removeAttribute('aria-current');
+    });
+    pieStp.hidden = terminado;
+    atras.disabled = actual === 0;
+    seguir.textContent = actual === ULTIMO ? 'Confirmar cita' : 'Continuar';
+    seguir.disabled = !terminado && !completo(actual);
+    if (actual === ULTIMO) {
+      $('#res-tipo').textContent = texto('stp-tipo');
+      $('#res-modo').textContent = texto('stp-modo');
+      $('#res-cuando').textContent = texto('stp-dia') + ' · ' + texto('stp-hora');
+      $('#res-quien').textContent = quien();
+    }
+  }
+  function irStp(n, animar) {
+    const dir = n > actual ? 'der' : 'izq', antes = marco.offsetHeight;
+    pasosStp[actual].hidden = true;
+    actual = n;
+    alcanzado = Math.max(alcanzado, Math.min(n, ULTIMO));
+    const p = pasosStp[actual];
+    p.hidden = false;
+    pintarStp();
+    if (!animar) { ajustarAlto(); return; }
+    marco.style.height = antes + 'px';
+    void marco.offsetHeight;
+    ajustarAlto();
+    reanimar(p, 'entra-' + dir);
+    p.classList.remove(dir === 'der' ? 'entra-izq' : 'entra-der');
+    vivo.textContent = actual > ULTIMO ? 'Cita agendada' : 'Paso ' + (actual + 1) + ' de ' + TITULOS.length + ': ' + TITULOS[actual];
+    $('h3', p).focus({ preventScroll: true });
+  }
+  stp.addEventListener('submit', e => e.preventDefault());
+  stp.addEventListener('change', pintarStp);
+  inds.forEach((ind, k) => $('button', ind).addEventListener('click', () => irStp(k, true)));
+  atras.addEventListener('click', () => irStp(actual - 1, true));
+  seguir.addEventListener('click', () => {
+    if (actual < ULTIMO) { irStp(actual + 1, true); return; }
+    const dia = marcado('stp-dia'), hora = texto('stp-hora'), modo = texto('stp-modo').toLowerCase();
+    $('#fin-txt').textContent = texto('stp-dia') + ' a las ' + hora + ', ' + modo + ' con ' + quien() + '. Te enviamos la confirmación por WhatsApp.';
+    // La cita nueva pasa a ser «Próxima cita» en la columna lateral.
+    $('#cita-dia').textContent = dia.dataset.dia;
+    $('#cita-titulo').textContent = 'Consulta ' + texto('stp-tipo').toLowerCase();
+    $('#cita-meta').textContent = dia.dataset.semana + ' · ' + hora + ' · ' + modo + ' con ' + quien();
+    irStp(ULTIMO + 1, true);
+    avisar('ok', 'Cita agendada', texto('stp-dia') + ' · ' + hora + ' con ' + quien() + '.');
+  });
+  // Cada vez que se abre, empieza de cero.
+  $$('[data-abrir-cita]').forEach(b => b.addEventListener('click', () => {
+    stp.reset();
+    alcanzado = 0;
+    pasosStp.forEach((p, k) => { p.hidden = k !== 0; p.classList.remove('entra-der', 'entra-izq'); });
+    actual = 0;
+    dlgCita.showModal();
+    pintarStp();
+    ajustarAlto();
+  }));
+  recolocables.push(ajustarAlto);
+
+  /* ── 10E Carpeta ──────────────────────────────────────────────── */
+  $$('.carpeta').forEach(c => {
+    const papeles = $$('.papel', c);
+    const imantar = (mx, my) => papeles.forEach(p => { p.style.setProperty('--mx', mx); p.style.setProperty('--my', my); });
+    c.addEventListener('click', () => {
+      const abierta = c.classList.toggle('abierta');
+      c.setAttribute('aria-expanded', String(abierta));
+      c.setAttribute('aria-label', abierta ? 'Cerrar la billetera' : 'Abrir la billetera');
+    });
+    c.addEventListener('pointermove', e => {
+      if (e.pointerType !== 'mouse') return;
+      const r = c.getBoundingClientRect();
+      imantar((e.clientX - r.left - r.width / 2) * 0.15, (e.clientY - r.top - r.height / 2) * 0.15);
+    });
+    c.addEventListener('pointerleave', () => imantar(0, 0));
+  });
+
+  /* ── Resto de botones de la maqueta ───────────────────────────── */
+  $$('[data-asistente]').forEach(b => b.addEventListener('click', () =>
+    avisar('info', 'Asistente tranqi', 'Se abre como columna a la derecha (PLT-004). Está en su propia maqueta.')));
+  $$('[data-subir]').forEach(b => b.addEventListener('click', () =>
+    avisar('info', 'Subir documento', 'Aquí se abriría el selector de archivos con lectura OCR.')));
+  $('#btn-campana').addEventListener('click', () => {
+    if (raiz.dataset.estado === 'nueva') { avisar('info', 'Sin avisos', 'Cuando pase algo en tus casos, te avisamos aquí.'); return; }
+    avisar('urgente', 'Tu cédula vence en 6 días', 'La necesitamos vigente para el caso de pensión alimenticia.');
+  });
+
+  // Un aviso al entrar, para ver 9A sin buscarlo.
+  setTimeout(() => {
+    if (raiz.dataset.estado === 'historial') avisar('info', 'Tu abogada respondió', 'Nuevo mensaje en «Arrendamiento de local comercial».');
+  }, 1600);
+})();
+</script>
+</body>
+</html>

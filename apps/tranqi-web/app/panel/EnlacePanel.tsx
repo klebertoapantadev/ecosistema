@@ -19,7 +19,11 @@ import { usePathname } from "next/navigation";
  *  En móvil (`app/globals.css`, ≤600px) la etiqueta de texto se oculta
  *  visualmente y solo queda el icono -- el rail horizontal no soportaba bien
  *  6 enlaces con texto (scroll largo). El texto sigue en el DOM (accesible
- *  a lector de pantalla) y como `title` (tooltip en desktop). */
+ *  a lector de pantalla).
+ *
+ *  `data-tip` y no `title`: con el rail plegado (TRQ-013) la navegación
+ *  pinta su propio tooltip a partir de este atributo. Con `title` además
+ *  salía el del navegador encima, con retraso y sin estilo. */
 export function EnlacePanel({
   href,
   icono,
@@ -34,7 +38,7 @@ export function EnlacePanel({
   const activo = ruta === href || (href !== "/panel" && ruta.startsWith(`${href}/`));
 
   return (
-    <Link href={href} aria-current={activo ? "page" : undefined} title={typeof children === "string" ? children : undefined}>
+    <Link href={href} aria-current={activo ? "page" : undefined} data-tip={typeof children === "string" ? children : undefined}>
       {icono}
       <span className="etiqueta-nav">{children}</span>
     </Link>
