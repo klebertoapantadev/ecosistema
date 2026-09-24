@@ -13,12 +13,8 @@ import {
   MessageSquare,
   Send,
   ShieldCheck,
-  HelpCircle,
   KeyRound,
   FileCheck2,
-  Lock,
-  ChevronRight,
-  AlertTriangle,
 } from "lucide-react";
 import { crearClienteNavegador } from "@eco/supabase";
 import {

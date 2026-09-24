@@ -3,6 +3,35 @@
 import { crearClienteServidor, crearClienteAdmin } from "@eco/supabase/servidor";
 import { revalidatePath } from "next/cache";
 
+type DynamicResult<T> = Promise<{ data: T | null; error: { message: string } | null }>;
+
+interface DynamicQueryBuilder<T = Record<string, unknown>>
+  extends PromiseLike<{ data: T[] | null; error: { message: string } | null }> {
+  select: (columns?: string) => DynamicQueryBuilder<T>;
+  insert: (values: unknown) => DynamicQueryBuilder<T>;
+  update: (values: unknown) => DynamicQueryBuilder<T>;
+  delete: () => DynamicQueryBuilder<T>;
+  eq: (column: string, value: unknown) => DynamicQueryBuilder<T>;
+  is: (column: string, value: unknown) => DynamicQueryBuilder<T>;
+  or: (filters: string) => DynamicQueryBuilder<T>;
+  order: (column: string, options?: { ascending?: boolean }) => DynamicQueryBuilder<T>;
+  limit: (count: number) => DynamicQueryBuilder<T>;
+  single: () => DynamicResult<T>;
+  maybeSingle: () => DynamicResult<T>;
+}
+
+interface DynamicSupabaseClient {
+  auth: {
+    getUser: () => Promise<{ data: { user: { id: string; email?: string } | null } | null }>;
+  };
+  from: <T = Record<string, unknown>>(table: string) => DynamicQueryBuilder<T>;
+  schema: (schema: string) => DynamicSupabaseClient;
+  rpc: <T = unknown>(
+    fn: string,
+    args?: Record<string, unknown>
+  ) => Promise<{ data: T | null; error: { message: string } | null }>;
+}
+
 // ==============================================================================
 // 1. VALIDADORES ALGORÍTMICOS ECUATORIANOS
 // ==============================================================================
@@ -158,8 +187,8 @@ export async function analizarIdentificacionConAria(
       confianza: 96,
       mensaje: "Documento de identificación procesado exitosamente por ARIA.",
     };
-  } catch (error: any) {
-    return { ok: false, confianza: 0, mensaje: error?.message || "Error al procesar con ARIA OCR." };
+  } catch (error) {
+    return { ok: false, confianza: 0, mensaje: (error as Error)?.message || "Error al procesar con ARIA OCR." };
   }
 }
 
@@ -183,7 +212,7 @@ export interface ResultadoAriaNombramiento {
  */
 export async function analizarNombramientoConAria(
   archivoBase64: string,
-  archivoNombre: string
+  _archivoNombre: string
 ): Promise<ResultadoAriaNombramiento> {
   try {
     if (!archivoBase64) {
@@ -204,8 +233,8 @@ export async function analizarNombramientoConAria(
       confianza: 98,
       mensaje: "Nombramiento inscrito en el Registro Mercantil certificado por ARIA.",
     };
-  } catch (error: any) {
-    return { ok: false, confianza: 0, mensaje: error?.message || "Error al procesar el nombramiento." };
+  } catch (error) {
+    return { ok: false, confianza: 0, mensaje: (error as Error)?.message || "Error al procesar el nombramiento." };
   }
 }
 
@@ -217,11 +246,21 @@ export async function analizarNombramientoConAria(
  * Verifica si la identificación o correo ya existen en el sistema
  */
 export async function verificarDuplicado(identificacion: string, correo?: string) {
-  const supabase: any = await crearClienteServidor();
+  const supabase = (await crearClienteServidor()) as unknown as DynamicSupabaseClient;
   const idLimrio = identificacion.trim();
 
+  interface ClienteDuplicado {
+    clp_id: string;
+    clp_nombres: string | null;
+    clp_apellidos: string | null;
+    clp_razon_social: string | null;
+    clp_identificacion: string;
+    clp_correo: string | null;
+    clp_telefono: string | null;
+  }
+
   const { data: clienteExistente } = await supabase
-    .from("trq_cliente_perfil")
+    .from<ClienteDuplicado>("trq_cliente_perfil")
     .select("clp_id, clp_nombres, clp_apellidos, clp_razon_social, clp_identificacion, clp_correo, clp_telefono")
     .eq("clp_identificacion", idLimrio)
     .is("clp_eliminado_en", null)
@@ -232,13 +271,19 @@ export async function verificarDuplicado(identificacion: string, correo?: string
       existe: true,
       tipo: "cliente_perfil",
       cliente: clienteExistente,
-      mensaje: `Cliente ya registrado: ${(clienteExistente as any).clp_razon_social || `${(clienteExistente as any).clp_nombres} ${(clienteExistente as any).clp_apellidos}`}`,
+      mensaje: `Cliente ya registrado: ${clienteExistente.clp_razon_social || `${clienteExistente.clp_nombres} ${clienteExistente.clp_apellidos}`}`,
     };
   }
 
   if (correo && correo.trim().length > 3) {
+    interface UsuarioCorreo {
+      usu_id: string;
+      usu_nombre_completo: string | null;
+      usu_correo: string;
+    }
+
     const { data: usuarioCorreo } = await supabase
-      .from("seg_usuario" as any)
+      .from<UsuarioCorreo>("seg_usuario")
       .select("usu_id, usu_nombre_completo, usu_correo")
       .eq("usu_correo", correo.trim().toLowerCase())
       .is("usu_eliminado_en", null)
@@ -261,9 +306,9 @@ export async function verificarDuplicado(identificacion: string, correo?: string
  * Ejecuta el Conflict of Interest Check contra litigios activos
  */
 export async function verificarConflictoIntereses(identificacion: string, nombres?: string) {
-  const supabase: any = await crearClienteServidor();
+  const supabase = (await crearClienteServidor()) as unknown as DynamicSupabaseClient;
 
-  const { data, error } = await supabase.rpc("trq_fn_verificar_conflicto_intereses", {
+  const { data, error } = await supabase.rpc<Array<Record<string, unknown>>>("trq_fn_verificar_conflicto_intereses", {
     p_identificacion: identificacion.trim(),
     p_nombres: nombres ? nombres.trim() : null,
   });
@@ -316,8 +361,8 @@ export interface DatosCreacionCliente {
  * Crea un cliente de forma manual asistida en el CRM
  */
 export async function crearClienteManual(datos: DatosCreacionCliente) {
-  const supabase: any = await crearClienteServidor();
-  const adminClient: any = crearClienteAdmin();
+  const supabase = (await crearClienteServidor()) as unknown as DynamicSupabaseClient;
+  const adminClient = crearClienteAdmin() as unknown as DynamicSupabaseClient;
 
   const { data: authUser } = await supabase.auth.getUser();
   if (!authUser?.user) {
@@ -346,16 +391,16 @@ export async function crearClienteManual(datos: DatosCreacionCliente) {
   let usuarioId: string;
 
   const { data: usuarioExistente } = await adminClient
-    .from("seg_usuario")
+    .from<{ usu_id: string }>("seg_usuario")
     .select("usu_id")
     .or(`usu_correo.eq.${emailFinal},usu_identificacion.eq.${idLimpio}`)
     .maybeSingle();
 
   if (usuarioExistente) {
-    usuarioId = (usuarioExistente as any).usu_id;
+    usuarioId = usuarioExistente.usu_id;
   } else {
     const { data: nuevoUsuario, error: errUsu } = await adminClient
-      .from("seg_usuario")
+      .from<{ usu_id: string }>("seg_usuario")
       .insert({
         usu_correo: emailFinal,
         usu_nombre_completo: nombreCompleto,
@@ -368,12 +413,12 @@ export async function crearClienteManual(datos: DatosCreacionCliente) {
     if (errUsu || !nuevoUsuario) {
       throw new Error(`Error al crear usuario base: ${errUsu?.message || "Desconocido"}`);
     }
-    usuarioId = (nuevoUsuario as any).usu_id;
+    usuarioId = nuevoUsuario.usu_id;
   }
 
   // 3. Insertar perfil en tranqui_legal.trq_cliente_perfil
   const { data: nuevoPerfil, error: errPerfil } = await supabase
-    .from("trq_cliente_perfil")
+    .from<{ clp_id: string; clp_secuencial: number }>("trq_cliente_perfil")
     .insert({
       clp_usuario_id: usuarioId,
       clp_tipo_personeria: datos.tipoPersoneria,
@@ -407,7 +452,7 @@ export async function crearClienteManual(datos: DatosCreacionCliente) {
 
   // 4. Registrar evento de auditoría de creación
   await registrarEventoAuditoriaCliente(
-    (nuevoPerfil as any).clp_id,
+    nuevoPerfil.clp_id,
     "creacion_cliente",
     `Cliente creado manualmente por ${authUser.user.email} (Canal: Mostrador Despacho).`
   );
@@ -416,7 +461,7 @@ export async function crearClienteManual(datos: DatosCreacionCliente) {
 
   return {
     ok: true,
-    clienteId: (nuevoPerfil as any).clp_id,
+    clienteId: nuevoPerfil.clp_id,
     usuarioId,
     nombreCompleto,
     identificacion: idLimpio,
@@ -432,7 +477,7 @@ export async function obtenerClientesCRM(filtros?: {
   tipoPersoneria?: "todas" | "natural" | "juridica";
   limite?: number;
 }) {
-  const supabase: any = await crearClienteServidor();
+  const supabase = (await crearClienteServidor()) as unknown as DynamicSupabaseClient;
 
   let query = supabase
     .from("trq_cliente_perfil")
@@ -522,11 +567,11 @@ export async function obtenerClientesCRM(filtros?: {
  */
 export async function sincronizarUsuariosAProspectosCRMAction(): Promise<{ ok: boolean; count: number; mensaje?: string }> {
   try {
-    const supabaseAdmin: any = await crearClienteAdmin();
+    const supabaseAdmin = (await crearClienteAdmin()) as unknown as DynamicSupabaseClient;
 
     // 1. Ejecutar función RPC si ya fue aplicada en la base de datos
     try {
-      const { data: rpcData, error: errRpc } = await supabaseAdmin.rpc("trq_fn_sincronizar_leads_crm");
+      const { data: rpcData, error: errRpc } = await supabaseAdmin.rpc<Array<{ total_sincronizados?: number }>>("trq_fn_sincronizar_leads_crm");
       if (!errRpc && rpcData && Array.isArray(rpcData) && rpcData.length > 0) {
         revalidatePath("/panel/clientes");
         return { ok: true, count: rpcData[0]?.total_sincronizados || 0 };
@@ -536,23 +581,56 @@ export async function sincronizarUsuariosAProspectosCRMAction(): Promise<{ ok: b
     }
 
     // 2. Fallback de sincronización directa
+    interface UsuarioSeguridad {
+      usu_id: string;
+      usu_nombres: string | null;
+      usu_apellidos: string | null;
+      usu_correo: string;
+      usu_whatsapp: string | null;
+      usu_cedula: string | null;
+      usu_creado_en: string;
+    }
+
     const { data: usuarios, error: errUsu } = await supabaseAdmin
       .schema("comun_seguridad")
-      .from("seg_usuario")
+      .from<UsuarioSeguridad>("seg_usuario")
       .select("usu_id, usu_nombres, usu_apellidos, usu_correo, usu_whatsapp, usu_cedula, usu_creado_en");
 
     if (errUsu || !usuarios || usuarios.length === 0) {
       return { ok: true, count: 0 };
     }
 
+    interface ClienteExistenteSimple {
+      clp_usuario_id: string;
+      clp_identificacion: string;
+    }
+
     const { data: existentes } = await supabaseAdmin
-      .from("trq_cliente_perfil")
+      .from<ClienteExistenteSimple>("trq_cliente_perfil")
       .select("clp_usuario_id, clp_identificacion");
 
-    const idsExistentes = new Set((existentes || []).map((e: any) => e.clp_usuario_id));
-    const identExistentes = new Set((existentes || []).map((e: any) => e.clp_identificacion));
+    const idsExistentes = new Set((existentes || []).map((e) => e.clp_usuario_id));
+    const identExistentes = new Set((existentes || []).map((e) => e.clp_identificacion));
 
-    const aInsertar: any[] = [];
+    interface ProspectoInsert {
+      clp_usuario_id: string;
+      clp_tipo_personeria: string;
+      clp_tipo_identificacion: string;
+      clp_identificacion: string;
+      clp_nombres: string;
+      clp_apellidos: string;
+      clp_correo: string;
+      clp_celular: string | null;
+      clp_origen_registro: string;
+      clp_activo: boolean;
+      clp_detalle_cliente: {
+        estado_crm: string;
+        auto_lead_web: boolean;
+        fecha_prospecto: string;
+      };
+    }
+
+    const aInsertar: ProspectoInsert[] = [];
     for (const u of usuarios) {
       if (idsExistentes.has(u.usu_id)) continue;
 
@@ -567,7 +645,7 @@ export async function sincronizarUsuariosAProspectosCRMAction(): Promise<{ ok: b
         clp_tipo_personeria: "natural",
         clp_tipo_identificacion: "cedula",
         clp_identificacion: ident,
-        clp_nombres: u.usu_nombres || u.usu_correo.split("@")[0],
+        clp_nombres: u.usu_nombres || u.usu_correo.split("@")[0] || "",
         clp_apellidos: u.usu_apellidos || "",
         clp_correo: u.usu_correo,
         clp_celular: u.usu_whatsapp || null,
@@ -594,9 +672,9 @@ export async function sincronizarUsuariosAProspectosCRMAction(): Promise<{ ok: b
 
     revalidatePath("/panel/clientes");
     return { ok: true, count: aInsertar.length };
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error en sincronizarUsuariosAProspectosCRMAction:", error);
-    return { ok: false, count: 0, mensaje: error?.message || "Error inesperado" };
+    return { ok: false, count: 0, mensaje: (error as Error)?.message || "Error inesperado" };
   }
 }
 
@@ -604,10 +682,16 @@ export async function sincronizarUsuariosAProspectosCRMAction(): Promise<{ ok: b
  * Obtiene la información 360° del cliente (Expedientes, Billetera, Citas, Tracking)
  */
 export async function obtenerDetalleCliente360(clienteId: string) {
-  const supabase: any = await crearClienteServidor();
+  const supabase = (await crearClienteServidor()) as unknown as DynamicSupabaseClient;
+
+  interface PerfilCliente360 {
+    clp_id: string;
+    clp_usuario_id: string;
+    [key: string]: unknown;
+  }
 
   const { data: perfil, error: errPerfil } = await supabase
-    .from("trq_cliente_perfil")
+    .from<PerfilCliente360>("trq_cliente_perfil")
     .select("*")
     .eq("clp_id", clienteId)
     .is("clp_eliminado_en", null)
@@ -617,7 +701,7 @@ export async function obtenerDetalleCliente360(clienteId: string) {
     throw new Error("Cliente no encontrado.");
   }
 
-  const usuarioId = (perfil as any).clp_usuario_id;
+  const usuarioId = perfil.clp_usuario_id;
 
   // 1. Obtener Expedientes del cliente
   const { data: expedientes } = await supabase
@@ -662,7 +746,7 @@ export async function registrarEventoAuditoriaCliente(
   detalle: string
 ) {
   try {
-    const supabase: any = await crearClienteServidor();
+    const supabase = (await crearClienteServidor()) as unknown as DynamicSupabaseClient;
     const { data: authUser } = await supabase.auth.getUser();
 
     await supabase.from("aud_registro").insert({
@@ -686,7 +770,7 @@ export async function registrarEventoAuditoriaCliente(
  * Obtiene el historial cronológico de auditoría y accesos al cliente
  */
 export async function obtenerHistorialAuditoriaCliente(clienteId: string) {
-  const supabase: any = await crearClienteServidor();
+  const supabase = (await crearClienteServidor()) as unknown as DynamicSupabaseClient;
 
   const { data, error } = await supabase
     .from("aud_registro")

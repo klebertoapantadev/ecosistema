@@ -2,12 +2,10 @@
 
 import React, { useState, useTransition } from "react";
 import {
-  X, User, Building2, ShieldCheck, AlertTriangle, Sparkles, Upload,
-  FileText, CheckCircle2, ArrowRight, Calendar, Scale, Info, Check, Eye
+  X, User, Building2, AlertTriangle, Sparkles, Upload,
+  CheckCircle2, Calendar, Scale, Info
 } from "lucide-react";
 import {
-  validarCedulaEcuador,
-  validarRucEcuador,
   analizarIdentificacionConAria,
   analizarNombramientoConAria,
   verificarDuplicado,
@@ -42,14 +40,14 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, alGuardarExitoso }
   const [nombres, setNombres] = useState("");
   const [apellidos, setApellidos] = useState("");
   const [razonSocial, setRazonSocial] = useState("");
-  const [nombreComercial, setNombreComercial] = useState("");
+  const [nombreComercial] = useState("");
 
   // Contacto y Domicilio
   const [correo, setCorreo] = useState("");
   const [celular, setCelular] = useState("");
-  const [telefono, setTelefono] = useState("");
-  const [direccion, setDireccion] = useState("");
-  const [casilleroJudicial, setCasilleroJudicial] = useState("");
+  const [telefono] = useState("");
+  const [direccion] = useState("");
+  const [casilleroJudicial] = useState("");
   const [casilleroElectronico, setCasilleroElectronico] = useState("");
 
   // Representante Legal (Persona Jurídica)
@@ -203,8 +201,8 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, alGuardarExitoso }
           identificacion: res.identificacion,
           accionContinuidad,
         });
-      } catch (err: any) {
-        setErrorValidacion(err?.message || "Error al registrar cliente.");
+      } catch (err) {
+        setErrorValidacion((err as Error)?.message || "Error al registrar cliente.");
       }
     });
   };
@@ -395,7 +393,7 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, alGuardarExitoso }
               </label>
               <select
                 value={tipoIdentificacion}
-                onChange={(e) => setTipoIdentificacion(e.target.value as any)}
+                onChange={(e) => setTipoIdentificacion(e.target.value as "cedula" | "ruc" | "pasaporte")}
                 style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid #CBD5E1", fontSize: "0.85rem" }}
               >
                 <option value="cedula">Cédula de Identidad</option>

@@ -24,7 +24,6 @@ import {
   Image as ImageIcon,
   ZoomIn,
   ZoomOut,
-  Move,
   RotateCcw,
   Crop,
   Sliders,
@@ -32,7 +31,6 @@ import {
   Sparkles,
   Award,
   ArrowRight,
-  Clock,
   Briefcase,
   GraduationCap,
   Scale,
@@ -41,24 +39,19 @@ import {
   Save,
   FolderTree,
   AlertTriangle,
-  Eye,
 } from "lucide-react";
-import { crearClienteNavegador } from "@eco/supabase";
 import { ModalNotificacionPush } from "@eco/notificaciones";
 import { BarraVariablesDinamicas } from "@eco/identidad/componentes/BarraVariablesDinamicas";
 import { validarIdentificacion } from "../cedula-ecuador";
 import InspeccionIdentidadAria, { type DictamenAria } from "./InspeccionIdentidadAria";
 import {
   enviarSolicitudSocio,
-  registrarDocumentoSocio,
-  subirDocumentoSocioAction,
   eliminarSolicitudSocioPropiaAction,
   reiniciarSolicitudSocioPropiaAction,
 } from "../acciones";
 import {
   ENLACES_VERIFICACION,
   sanearNombreArchivo,
-  generarRutaRepositorioComun,
   CONCEPTOS_REPOSITORIO,
   type DatosExperienciaLaboral,
 } from "../esquema";

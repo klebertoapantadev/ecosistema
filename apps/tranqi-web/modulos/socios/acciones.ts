@@ -4,23 +4,32 @@ import { revalidatePath } from "next/cache";
 import { crearClienteServidor, crearClienteAdmin } from "@eco/supabase/servidor";
 import { obtenerPerfiles, obtenerPerfilActual } from "@eco/identidad";
 import nodemailer from "nodemailer";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database, Tables } from "@eco/db";
 import { agregarCampanaServidor } from "../../app/api/notificaciones/almacen";
 import {
   esquemaSolicitudSocio,
   esquemaDecisionSolicitud,
   type DatosSolicitudSocio,
   generarRutaRepositorioComun,
-  sanearNombreArchivo,
   CONCEPTOS_REPOSITORIO,
 } from "./esquema";
+
+// Cliente sin tipar SOLO para las llamadas cuyos nombres (RPC, columnas o esquema) no coinciden con
+// packages/db/src/tipos-generados.ts. Se conserva a propósito el comportamiento de master: corregir
+// esos nombres es un cambio funcional y va en un PR aparte (ver PR [TRQ-014]).
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- justificado en el comentario anterior
+type ClienteSinTipar = any;
+
+type NotRegistroInsert = Database["comun_notificacion"]["Tables"]["not_registro"]["Insert"];
+type SolicitudSocioFila = Tables<{ schema: "tranqui_legal" }, "trq_solicitud_socio">;
 
 type Resultado<T = undefined> = { ok: true; data: T } | { ok: false; error: string };
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 async function obtenerDestinatariosStaffTranqi(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  clientSupabase: any,
+  clientSupabase: SupabaseClient<Database>,
   excluirUsuarioId?: string
 ): Promise<{ id: string; correo: string }[]> {
   const destinatariosAdmin: { id: string; correo: string }[] = [];
@@ -57,7 +66,7 @@ async function obtenerDestinatariosStaffTranqi(
       .in("mem_rol", ["OPERADOR", "ADMINISTRADOR", "SUPERADMIN", "AUXILIAR"])
       .eq("mem_estado", "ACTIVO");
 
-    const idsStaff = new Set<string>((membresias || []).map((m: any) => m.mem_usuario_id));
+    const idsStaff = new Set<string>((membresias || []).map((m) => m.mem_usuario_id));
 
     const { data: usuarios } = await clientSupabase
       .schema("comun_seguridad")
@@ -131,8 +140,7 @@ async function notificarSolicitudEnviada(
     `;
 
     // 2. Insertar notificación in-app para el usuario postulante
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (adminSupabase as any).schema("comun_notificacion").from("not_registro").insert([
+    await adminSupabase.schema("comun_notificacion").from("not_registro").insert([
       {
         not_usuario_id: u.usu_id,
         not_negocio: "TRANQ",
@@ -146,7 +154,7 @@ async function notificarSolicitudEnviada(
     // 2.b. Notificar multicanal (In-App, Push y Email) a Operadores, Administradores y SuperAdmins
     const urlRevision = `/panel/socios/${solicitudId}`;
     const destinatariosAdmin = await obtenerDestinatariosStaffTranqi(adminSupabase, u.usu_id);
-    let correosAdmins: string[] = destinatariosAdmin.map((adm) => adm.correo);
+    const correosAdmins: string[] = destinatariosAdmin.map((adm) => adm.correo);
 
     if (destinatariosAdmin.length > 0) {
       const tituloAdmin = esActualizacion
@@ -165,7 +173,7 @@ async function notificarSolicitudEnviada(
         </div>
       `;
 
-      const notifsAdmins: any[] = [];
+      const notifsAdmins: NotRegistroInsert[] = [];
       for (const adm of destinatariosAdmin) {
         notifsAdmins.push({
           not_usuario_id: adm.id,
@@ -189,8 +197,7 @@ async function notificarSolicitudEnviada(
 
       if (notifsAdmins.length > 0) {
         try {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          await (adminSupabase as any).schema("comun_notificacion").from("not_registro").insert(notifsAdmins);
+          await adminSupabase.schema("comun_notificacion").from("not_registro").insert(notifsAdmins);
         } catch (errNotInsert) {
           console.warn("Aviso al insertar notificaciones para staff:", errNotInsert);
         }
@@ -198,8 +205,7 @@ async function notificarSolicitudEnviada(
 
       // Invocar RPC SECURITY DEFINER para asegurar la inserción de notificaciones sin bloqueo de RLS
       try {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await (adminSupabase as any).schema("comun_notificacion").rpc("not_fn_notificar_staff", {
+        await adminSupabase.schema("comun_notificacion").rpc("not_fn_notificar_staff", {
           p_negocio: "TRANQ",
           p_titulo: tituloAdmin,
           p_contenido_html: contenidoAdmin,
@@ -295,7 +301,7 @@ export async function enviarSolicitudSocio(
     const d = parseo.data;
 
     const supabase = await crearClienteServidor();
-    const adminSupabase = (crearClienteAdmin() || supabase) as any;
+    const adminSupabase = crearClienteAdmin() || supabase;
 
     // Verificar si ya existe una solicitud para este usuario con adminSupabase
     const { data: existente } = await adminSupabase
@@ -349,7 +355,12 @@ export async function enviarSolicitudSocio(
       }
 
       // Actualizar datos oficiales en seg_usuario (nombres completos extraídos, cédula y whatsapp)
-      const updateUsuario: Record<string, any> = {};
+      const updateUsuario: {
+        usu_cedula?: string;
+        usu_nombres?: string;
+        usu_apellidos?: string;
+        usu_whatsapp?: string;
+      } = {};
       if (d.cedula) updateUsuario.usu_cedula = d.cedula;
       if (d.nombres) updateUsuario.usu_nombres = d.nombres;
       if (d.apellidos) updateUsuario.usu_apellidos = d.apellidos;
@@ -394,7 +405,12 @@ export async function enviarSolicitudSocio(
       solicitudId = solicitud.ssc_id;
 
       // Actualizar datos oficiales en seg_usuario (nombres completos extraídos, cédula y whatsapp)
-      const updateUsuarioNuevo: Record<string, any> = {};
+      const updateUsuarioNuevo: {
+        usu_cedula?: string;
+        usu_nombres?: string;
+        usu_apellidos?: string;
+        usu_whatsapp?: string;
+      } = {};
       if (d.cedula) updateUsuarioNuevo.usu_cedula = d.cedula;
       if (d.nombres) updateUsuarioNuevo.usu_nombres = d.nombres;
       if (d.apellidos) updateUsuarioNuevo.usu_apellidos = d.apellidos;
@@ -464,7 +480,7 @@ export async function enviarSolicitudSocio(
           .from("cat_provincia")
           .select("cat_id");
         if (provsCat && Array.isArray(provsCat)) {
-          provinciaUuids = provsCat.map((p: any) => p.cat_id).filter((id: string) => UUID_REGEX.test(id));
+          provinciaUuids = provsCat.map((p: { cat_id: string }) => p.cat_id).filter((id: string) => UUID_REGEX.test(id));
         }
       } catch (errCat) {
         console.warn("Aviso al consultar catálogo de provincias:", errCat);
@@ -497,9 +513,9 @@ export async function enviarSolicitudSocio(
     } catch { /* Ignorar en caso de Server Component */ }
 
     return { ok: true, data: { solicitudId } };
-  } catch (err: any) {
+  } catch (err) {
     console.error("Error crítico en enviarSolicitudSocio:", err);
-    return { ok: false, error: err?.message || "Ocurrió un error inesperado al procesar tu solicitud. Por favor intenta nuevamente." };
+    return { ok: false, error: (err as Error)?.message || "Ocurrió un error inesperado al procesar tu solicitud. Por favor intenta nuevamente." };
   }
 }
 
@@ -596,8 +612,7 @@ export async function subirDocumentoSocioAction(formData: FormData): Promise<Res
             .eq("usu_id", targetUsuId)
             .maybeSingle();
 
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const detalleActual = (uExistente?.usu_detalle_usuario as Record<string, any>) || {};
+          const detalleActual = (uExistente?.usu_detalle_usuario as Record<string, unknown>) || {};
           await adminSupabase
             .schema("comun_seguridad")
             .from("seg_usuario")
@@ -713,7 +728,7 @@ export async function enviarPropuestaModificacionContratoAction(datos: {
 
     const destinatariosAdmin = await obtenerDestinatariosStaffTranqi(adminSupabase, user.id);
 
-    const notifsAdmins: any[] = [];
+    const notifsAdmins: NotRegistroInsert[] = [];
     for (const adm of destinatariosAdmin) {
       notifsAdmins.push({
         not_usuario_id: adm.id,
@@ -737,7 +752,7 @@ export async function enviarPropuestaModificacionContratoAction(datos: {
 
     if (notifsAdmins.length > 0) {
       try {
-        await (adminSupabase as any).schema("comun_notificacion").from("not_registro").insert(notifsAdmins);
+        await adminSupabase.schema("comun_notificacion").from("not_registro").insert(notifsAdmins);
       } catch (errNotInsertProp) {
         console.warn("Aviso al insertar notificaciones de propuesta:", errNotInsertProp);
       }
@@ -745,7 +760,7 @@ export async function enviarPropuestaModificacionContratoAction(datos: {
 
     // Invocar RPC SECURITY DEFINER para asegurar inserción de notificación a staff
     try {
-      await (adminSupabase as any).schema("comun_notificacion").rpc("not_fn_notificar_staff", {
+      await adminSupabase.schema("comun_notificacion").rpc("not_fn_notificar_staff", {
         p_negocio: "TRANQ",
         p_titulo: tituloAdmin,
         p_contenido_html: contenidoHTMLAdmin,
@@ -779,7 +794,9 @@ export async function enviarPropuestaModificacionContratoAction(datos: {
             subject: tituloAdmin,
             html: contenidoHTMLAdmin,
           });
-        } catch (errSmtp) {}
+        } catch {
+          // Ignorar fallo de envío SMTP individual a administrador
+        }
       }
     }
 
@@ -921,7 +938,7 @@ export async function registrarDocumentoSocio(
       // 2. Buscar administradores y operadores
       const destinatariosAdmin = await obtenerDestinatariosStaffTranqi(adminSupabase, user.id);
 
-      const notifsAdmins: any[] = [];
+      const notifsAdmins: NotRegistroInsert[] = [];
       for (const adm of destinatariosAdmin) {
         notifsAdmins.push({
           not_usuario_id: adm.id,
@@ -945,7 +962,7 @@ export async function registrarDocumentoSocio(
 
       if (notifsAdmins.length > 0) {
         try {
-          await (adminSupabase as any).schema("comun_notificacion").from("not_registro").insert(notifsAdmins);
+          await adminSupabase.schema("comun_notificacion").from("not_registro").insert(notifsAdmins);
         } catch (errNotInsertDoc) {
           console.warn("Aviso al insertar notificaciones de contrato subido:", errNotInsertDoc);
         }
@@ -953,7 +970,7 @@ export async function registrarDocumentoSocio(
 
       // Invocar RPC SECURITY DEFINER para asegurar inserción de notificación a staff
       try {
-        await (adminSupabase as any).schema("comun_notificacion").rpc("not_fn_notificar_staff", {
+        await adminSupabase.schema("comun_notificacion").rpc("not_fn_notificar_staff", {
           p_negocio: "TRANQ",
           p_titulo: tituloAdmin,
           p_contenido_html: contenidoHTMLAdmin,
@@ -1126,8 +1143,7 @@ export async function decidirSolicitudSocio(datos: {
         `;
 
         // 1. Guardar notificaciones en base de datos (In-App y Push)
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await (adminSupabase as any).schema("comun_notificacion").from("not_registro").insert([
+        await adminSupabase.schema("comun_notificacion").from("not_registro").insert([
           {
             not_usuario_id: uApplicant.usu_id,
             not_negocio: "TRANQ",
@@ -1211,7 +1227,7 @@ export async function reenviarNotificacionAceptacionAction(solicitudId: string):
   const { data: { user } } = await supabase.auth.getUser();
 
   // 1. Obtener la solicitud
-  const { data: solData, error: solErr } = await (adminSupabase as any)
+  const { data: solData, error: solErr } = await adminSupabase
     .schema("tranqui_legal")
     .from("trq_solicitud_socio")
     .select("ssc_id, ssc_usuario_id, ssc_estado")
@@ -1280,7 +1296,7 @@ export async function reenviarNotificacionAceptacionAction(solicitudId: string):
 
   // 1. Guardar notificaciones in-app y push
   try {
-    await (adminSupabase as any).schema("comun_notificacion").from("not_registro").insert([
+    await adminSupabase.schema("comun_notificacion").from("not_registro").insert([
       {
         not_usuario_id: uApplicant.usu_id,
         not_negocio: "TRANQ",
@@ -1371,7 +1387,31 @@ export async function reenviarNotificacionAceptacionAction(solicitudId: string):
   return { ok: true, data: { correo: uApplicant.usu_correo } };
 }
 
-export async function obtenerListaSolicitudesSociosAction(): Promise<Resultado<any[]>> {
+export interface SolicitudSocioListaItem extends SolicitudSocioFila {
+  trq_revision_solicitud?: Array<{ rev_id: string; rev_decision: string; rev_comentario: string | null; rev_creado_en: string }> | null;
+  trq_documento_socio?: Array<{
+    dcs_id: string;
+    dcs_tipo: string;
+    dcs_nombre_archivo?: string | null;
+    dcs_comentario?: string | null;
+    dcs_url?: string | null;
+    dcs_creado_en?: string | null;
+  }> | null;
+  propuestas?: Array<{ dcs_id: string; dcs_tipo: string; dcs_nombre_archivo?: string | null; dcs_comentario?: string | null; dcs_creado_en?: string | null }>;
+  propuestasPendientesCount?: number;
+  tieneContratoFirmado?: boolean;
+  nivelUrgencia?: "urgente_propuesta" | "urgente_contrato" | "pendiente_revision" | "esperando_abogado" | "observada" | "normal";
+  etiquetaUrgencia?: string;
+  usuario?: {
+    usu_id: string;
+    usu_nombres: string | null;
+    usu_apellidos: string | null;
+    usu_correo: string;
+    usu_whatsapp?: string | null;
+  } | null;
+}
+
+export async function obtenerListaSolicitudesSociosAction(): Promise<Resultado<SolicitudSocioListaItem[]>> {
   const supabase = await crearClienteServidor();
   const adminSupabase = crearClienteAdmin() || supabase;
 
@@ -1405,7 +1445,7 @@ export async function obtenerListaSolicitudesSociosAction(): Promise<Resultado<a
   if (sErr) return { ok: false, error: sErr.message };
   if (!sData || sData.length === 0) return { ok: true, data: [] };
 
-  const sDataSincronizadas = (sData || []).map((s: any) => {
+  const sDataSincronizadas = ((sData || []) as unknown as SolicitudSocioListaItem[]).map((s) => {
     let estadoReal = s.ssc_estado;
     const revs = (s.trq_revision_solicitud || []) as Array<{ rev_decision: string; rev_creado_en: string }>;
     if (revs.length > 0) {
@@ -1487,7 +1527,7 @@ export async function obtenerListaSolicitudesSociosAction(): Promise<Resultado<a
 
 export async function obtenerPlantillaContrato(): Promise<Resultado<{ pct_titulo: string; pct_contenido: string }>> {
   const supabase = await crearClienteServidor();
-  const { data, error } = await (supabase as any)
+  const { data, error } = await supabase
     .schema("tranqui_legal")
     .from("trq_plantilla_contrato")
     .select("pct_titulo, pct_contenido")
@@ -1560,7 +1600,7 @@ export async function guardarPlantillaContrato(titulo: string, contenido: string
   const esAdmin = Array.isArray(perfiles) && (perfiles.includes("ADMINISTRADOR") || perfiles.includes("SUPERADMIN") || perfiles.includes("OPERADOR"));
   if (!esAdmin) return { ok: false, error: "No autorizado para configurar plantillas de contrato" };
 
-  const { data: existente } = await (supabase as any)
+  const { data: existente } = await supabase
     .schema("tranqui_legal")
     .from("trq_plantilla_contrato")
     .select("pct_id")
@@ -1569,14 +1609,14 @@ export async function guardarPlantillaContrato(titulo: string, contenido: string
 
   let error;
   if (existente?.pct_id) {
-    const res = await (supabase as any)
+    const res = await supabase
       .schema("tranqui_legal")
       .from("trq_plantilla_contrato")
       .update({ pct_titulo: titulo, pct_contenido: contenido, pct_actualizado_en: new Date().toISOString() })
       .eq("pct_id", existente.pct_id);
     error = res.error;
   } else {
-    const res = await (supabase as any)
+    const res = await supabase
       .schema("tranqui_legal")
       .from("trq_plantilla_contrato")
       .insert({ pct_titulo: titulo, pct_contenido: contenido });
@@ -1598,7 +1638,7 @@ export async function confirmarContratoSocio(
   const { data: { user } } = await supabase.auth.getUser();
 
   // 1. Obtener la solicitud
-  const { data: solData, error: solErr } = await (adminSupabase as any)
+  const { data: solData, error: solErr } = await adminSupabase
     .schema("tranqui_legal")
     .from("trq_solicitud_socio")
     .select("ssc_id, ssc_usuario_id, ssc_estado, ssc_contrato_confirmado_en")
@@ -1632,12 +1672,13 @@ export async function confirmarContratoSocio(
   }
 
   // 3. Intentar ejecutar el RPC de PostgreSQL o actualización directa con adminSupabase
-  const { error: rpcError } = await (supabase as any)
+  // Sin tipar: el tipo generado no admite `null` en p_comentario y master envía null explícito.
+  const { error: rpcError } = await (supabase as ClienteSinTipar)
     .schema("tranqui_legal")
     .rpc("trq_fn_confirmar_contrato_socio", { p_solicitud_id: solicitudId, p_comentario: comentario || null });
 
   // Actualizar directamente con adminSupabase para asegurar consistencia
-  const { error: updErr } = await (adminSupabase as any)
+  const { error: updErr } = await adminSupabase
     .schema("tranqui_legal")
     .from("trq_solicitud_socio")
     .update({
@@ -1651,7 +1692,7 @@ export async function confirmarContratoSocio(
   if (updErr && rpcError) return { ok: false, error: updErr.message };
 
   // Activar en trq_abogado
-  await (adminSupabase as any)
+  await adminSupabase
     .schema("tranqui_legal")
     .from("trq_abogado")
     .upsert({
@@ -1674,7 +1715,8 @@ export async function confirmarContratoSocio(
 
   // Asignar perfil ABOGADO en comun_seguridad
   try {
-    await (adminSupabase as any)
+    // Sin tipar: los argumentos no coinciden con los tipos generados (p_usuario_id / p_perfil).
+    await (adminSupabase as ClienteSinTipar)
       .schema("comun_seguridad")
       .rpc("seg_fn_asignar_perfil", {
         p_target_usuario_id: targetUsuId,
@@ -1684,7 +1726,7 @@ export async function confirmarContratoSocio(
   } catch {
     // Fallback de asignación directa
     try {
-      const { data: mem } = await (adminSupabase as any)
+      const { data: mem } = await adminSupabase
         .schema("comun_seguridad")
         .from("seg_membresia")
         .select("mem_id")
@@ -1693,7 +1735,7 @@ export async function confirmarContratoSocio(
         .maybeSingle();
 
       if (mem?.mem_id) {
-        const { data: perfAbg } = await (adminSupabase as any)
+        const { data: perfAbg } = await adminSupabase
           .schema("comun_seguridad")
           .from("seg_perfil")
           .select("per_id")
@@ -1701,7 +1743,8 @@ export async function confirmarContratoSocio(
           .maybeSingle();
 
         if (perfAbg?.per_id) {
-          await (adminSupabase as any)
+          // Sin tipar: las columnas reales son mpe_*, no mep_* (ver tipos generados).
+          await (adminSupabase as ClienteSinTipar)
             .schema("comun_seguridad")
             .from("seg_membresia_perfil")
             .upsert({
@@ -1753,7 +1796,7 @@ export async function confirmarContratoSocio(
         </div>
       `;
 
-      await (adminSupabase as any).schema("comun_notificacion").from("not_registro").insert([
+      await adminSupabase.schema("comun_notificacion").from("not_registro").insert([
         {
           not_usuario_id: uApplicant.usu_id,
           not_negocio: "TRANQ",
@@ -1904,7 +1947,8 @@ export async function guardarYEnviarVersionContratoAction(
     }
 
     // 2. Obtener el número de versión anterior
-    const { data: ultVersion } = await (adminSupabase.schema("tranqui_legal") as any)
+    const { data: ultVersion } = await adminSupabase
+      .schema("tranqui_legal")
       .from("trq_version_contrato_socio")
       .select("vcs_numero_version")
       .eq("vcs_solicitud_id", solicitudId)
@@ -1917,7 +1961,8 @@ export async function guardarYEnviarVersionContratoAction(
     const rolCreador = perfiles.includes("ADMINISTRADOR") || perfil.usu_superadmin_plataforma ? "ADMINISTRADOR" : "OPERADOR";
 
     // 3. Insertar nueva versión inmutable
-    const { error: insErr } = await (adminSupabase.schema("tranqui_legal") as any)
+    const { error: insErr } = await adminSupabase
+      .schema("tranqui_legal")
       .from("trq_version_contrato_socio")
       .insert({
         vcs_solicitud_id: solicitudId,
@@ -1959,7 +2004,8 @@ export async function guardarYEnviarVersionContratoAction(
         : `El equipo de tranqi ha preparado la versión ${nuevaVersion} de tu contrato de sociedad. Ingresa a tu panel para revisarlo y firmarlo digitalmente.`;
 
       // In-App
-      await (adminSupabase.schema("comun_notificaciones") as any).from("not_notificacion").insert([
+      // Sin tipar: comun_notificaciones.not_notificacion no existe en los tipos generados.
+      await (adminSupabase as ClienteSinTipar).schema("comun_notificaciones").from("not_notificacion").insert([
         {
           not_usuario_id: usuarioDest.usu_id,
           not_negocio: "TRANQ",
@@ -2035,7 +2081,8 @@ export async function enviarObservacionesContratoAction(
     }
 
     // 2. Obtener la última versión activa
-    const { data: ultVersion } = await (adminSupabase.schema("tranqui_legal") as any)
+    const { data: ultVersion } = await adminSupabase
+      .schema("tranqui_legal")
       .from("trq_version_contrato_socio")
       .select("*")
       .eq("vcs_solicitud_id", solicitudId)
@@ -2048,7 +2095,8 @@ export async function enviarObservacionesContratoAction(
     const contenido = ultVersion ? ultVersion.vcs_contenido_md : "";
 
     // 3. Registrar la observación inmutable en la tabla de versiones
-    const { error: insErr } = await (adminSupabase.schema("tranqui_legal") as any)
+    const { error: insErr } = await adminSupabase
+      .schema("tranqui_legal")
       .from("trq_version_contrato_socio")
       .insert({
         vcs_solicitud_id: solicitudId,
@@ -2073,7 +2121,8 @@ export async function enviarObservacionesContratoAction(
     const mensajeStaff = `${nombreSocio} ha enviado observaciones sobre el contrato v${versionNum}: "${comentarios.trim()}". Ingresa al detalle de la solicitud para revisar o ajustar las cláusulas.`;
 
     for (const staff of destinatariosStaff) {
-      await (adminSupabase.schema("comun_notificaciones") as any).from("not_notificacion").insert([
+      // Sin tipar: comun_notificaciones.not_notificacion no existe en los tipos generados.
+      await (adminSupabase as ClienteSinTipar).schema("comun_notificaciones").from("not_notificacion").insert([
         {
           not_usuario_id: staff.id,
           not_negocio: "TRANQ",

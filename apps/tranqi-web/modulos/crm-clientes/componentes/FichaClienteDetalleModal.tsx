@@ -1,16 +1,79 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Link from "next/link";
 import {
-  X, User, Building2, Scale, Calendar, Folder, Clock, Printer,
-  Shield, CheckCircle2, FileText, Phone, Mail, MapPin, ExternalLink,
-  Plus, AlertCircle, History, Eye
+  X, User, Building2, Scale, Calendar, Folder, Printer,
+  Phone, Mail, Plus, History
 } from "lucide-react";
 import {
   obtenerDetalleCliente360,
   obtenerHistorialAuditoriaCliente,
   registrarEventoAuditoriaCliente
 } from "../acciones";
+
+export interface ExpedienteCliente {
+  cas_id: string;
+  cas_codigo_expediente?: string | null;
+  cas_titulo?: string | null;
+  cas_estado: string;
+  cas_etapa_procesal?: string | null;
+  cas_tipo_tramite?: string | null;
+  cas_abierto_en?: string | null;
+  cas_abogado_id?: string | null;
+}
+
+export interface CitaCliente {
+  cit_id: string;
+  cit_inicio_en: string;
+  cit_fin_en?: string | null;
+  cit_modalidad?: string | null;
+  cit_estado: string;
+  cit_motivo?: string | null;
+}
+
+export interface PerfilClienteDetalle {
+  clp_id?: string;
+  clp_tipo_identificacion?: string | null;
+  clp_identificacion?: string | null;
+  clp_tipo_personeria?: "natural" | "juridica" | string | null;
+  clp_nombres?: string | null;
+  clp_apellidos?: string | null;
+  clp_razon_social?: string | null;
+  clp_correo?: string | null;
+  clp_celular?: string | null;
+  clp_telefono?: string | null;
+  clp_casillero_judicial?: string | null;
+  clp_casillero_electronico?: string | null;
+  clp_detalle_cliente?: {
+    representante_legal?: {
+      nombres?: string;
+      cedula?: string;
+      cargo?: string;
+      nombramientoVence?: string;
+    } | null;
+    [key: string]: unknown;
+  } | null;
+  [key: string]: unknown;
+}
+
+export interface DetalleCliente360 {
+  perfil: PerfilClienteDetalle;
+  expedientes: ExpedienteCliente[];
+  citas: CitaCliente[];
+}
+
+export interface EventoAuditoria {
+  reg_id: string;
+  reg_operacion: string;
+  reg_usuario_id?: string | null;
+  reg_creado_en: string;
+  reg_datos_nuevos?: {
+    detalle?: string;
+    usuario_email?: string;
+    [key: string]: unknown;
+  } | null;
+}
 
 interface Props {
   clienteId: string | null;
@@ -22,8 +85,8 @@ interface Props {
 export function FichaClienteDetalleModal({ clienteId, alCerrar, alRadicarExpediente, alAgendarCita }: Props) {
   const [tabActiva, setTabActiva] = useState<"general" | "expedientes" | "billetera" | "citas" | "auditoria">("general");
   const [cargando, setCargando] = useState(true);
-  const [detalle, setDetalle] = useState<any>(null);
-  const [auditoriaEventos, setAuditoriaEventos] = useState<any[]>([]);
+  const [detalle, setDetalle] = useState<DetalleCliente360 | null>(null);
+  const [auditoriaEventos, setAuditoriaEventos] = useState<EventoAuditoria[]>([]);
 
   useEffect(() => {
     if (!clienteId) return;
@@ -31,11 +94,11 @@ export function FichaClienteDetalleModal({ clienteId, alCerrar, alRadicarExpedie
     setCargando(true);
     obtenerDetalleCliente360(clienteId)
       .then((res) => {
-        setDetalle(res);
+        setDetalle(res as unknown as DetalleCliente360);
         return obtenerHistorialAuditoriaCliente(clienteId);
       })
       .then((aud) => {
-        setAuditoriaEventos(aud);
+        setAuditoriaEventos(aud as unknown as EventoAuditoria[]);
       })
       .catch((err) => {
         console.error("Error al cargar detalle 360:", err);
@@ -164,16 +227,16 @@ export function FichaClienteDetalleModal({ clienteId, alCerrar, alRadicarExpedie
 
         {/* Barra de Pestañas (Tabs) */}
         <div style={{ display: "flex", borderBottom: "1px solid #E2E8F0", padding: "0 24px", background: "#FFFFFF" }}>
-          {[
+          {([
             { id: "general", label: "📋 Datos Generales", icon: User },
             { id: "expedientes", label: `📁 Expedientes (${detalle?.expedientes?.length || 0})`, icon: Scale },
             { id: "citas", label: `📅 Citas & Agenda (${detalle?.citas?.length || 0})`, icon: Calendar },
             { id: "billetera", label: "📂 Billetera Documental", icon: Folder },
             { id: "auditoria", label: `🕒 Tracking & Auditoría (${auditoriaEventos.length})`, icon: History },
-          ].map((tab) => (
+          ] as const).map((tab) => (
             <button
               key={tab.id}
-              onClick={() => setTabActiva(tab.id as any)}
+              onClick={() => setTabActiva(tab.id)}
               style={{
                 padding: "12px 16px",
                 border: "none",
@@ -288,7 +351,7 @@ export function FichaClienteDetalleModal({ clienteId, alCerrar, alRadicarExpedie
                       El cliente aún no tiene expedientes radicados.
                     </div>
                   ) : (
-                    detalle?.expedientes?.map((exp: any) => (
+                    detalle?.expedientes?.map((exp) => (
                       <div
                         key={exp.cas_id}
                         style={{
@@ -359,7 +422,7 @@ export function FichaClienteDetalleModal({ clienteId, alCerrar, alRadicarExpedie
                       No registra citas agendadas en plataforma.
                     </div>
                   ) : (
-                    detalle?.citas?.map((cit: any) => (
+                    detalle?.citas?.map((cit) => (
                       <div key={cit.cit_id} style={{ background: "#FFFFFF", border: "1px solid #E2E8F0", borderRadius: "8px", padding: "12px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                         <div>
                           <p style={{ margin: 0, fontSize: "0.88rem", fontWeight: 600, color: "#0F172A" }}>
@@ -388,7 +451,7 @@ export function FichaClienteDetalleModal({ clienteId, alCerrar, alRadicarExpedie
                   <p style={{ margin: "0 auto 16px", maxWidth: "420px", fontSize: "0.82rem", color: "#64748B" }}>
                     Documentos custodiados del cliente (Cédulas, Títulos, Nombramientos y Poderes) vinculables a expedientes sin duplicar archivos.
                   </p>
-                  <a
+                  <Link
                     href="/panel/billetera-documentos"
                     style={{
                       background: "#0284C7",
@@ -404,7 +467,7 @@ export function FichaClienteDetalleModal({ clienteId, alCerrar, alRadicarExpedie
                     }}
                   >
                     Abrir Billetera de Documentos
-                  </a>
+                  </Link>
                 </div>
               )}
 

@@ -6,19 +6,14 @@ import {
   FileEdit,
   Sparkles,
   Flower2,
-  Scale,
   Wrench,
   PackagePlus,
   Image as ImageIcon,
-  Video,
-  Clock,
   Plus,
   Trash2,
   CheckCircle2,
   AlertCircle,
-  ExternalLink,
   Layers,
-  HelpCircle,
   BookOpen,
   Loader2,
   Wand2,
@@ -470,13 +465,13 @@ export function ModalEditarProducto({
   const colVariante = PALETA_COLORES_VARIANTES[varianteActivaIndex % PALETA_COLORES_VARIANTES.length] || PALETA_COLORES_VARIANTES[0]!;
   const colActiva = esModoMaster ? COLOR_PRODUCTO_MASTER : colVariante;
 
-  const actualizarVarianteActual = (campo: keyof VarianteCatalogo, valor: any) => {
+  const actualizarVarianteActual = (campo: keyof VarianteCatalogo, valor: unknown) => {
     setVariantesLocales((prev) => {
       const nuevas = [...prev];
-      const target = { ...nuevas[varianteActivaIndex] } as any;
+      const target: VarianteCatalogo = { ...nuevas[varianteActivaIndex]! };
 
       if (campo === "var_precio") {
-        const base = typeof valor === "number" ? valor : parseFloat(valor) || 0;
+        const base = typeof valor === "number" ? valor : parseFloat(String(valor)) || 0;
         target.var_precio = base;
         const ivaPorc = target.var_tarifa_iva_porcentaje || 15;
         target.monto_iva = Number(((base * ivaPorc) / 100).toFixed(2));
@@ -489,7 +484,7 @@ export function ModalEditarProducto({
         target.monto_iva = Number(((base * ivaPorc) / 100).toFixed(2));
         target.precio_total = Number((base + target.monto_iva).toFixed(2));
       } else {
-        target[campo] = valor;
+        (target as Record<keyof VarianteCatalogo, unknown>)[campo] = valor;
       }
 
       nuevas[varianteActivaIndex] = target;
@@ -548,8 +543,8 @@ export function ModalEditarProducto({
       } else {
         setError(res.error || "No se pudo convertir automáticamente la URL de Google Fotos.");
       }
-    } catch (e: any) {
-      setError(`Error al convertir: ${e.message || e}`);
+    } catch (e) {
+      setError(`Error al convertir: ${(e as Error).message || String(e)}`);
     } finally {
       setResolviendoImagen(false);
     }
@@ -568,8 +563,8 @@ export function ModalEditarProducto({
       } else {
         setError(res.error || "No se pudo convertir automáticamente la URL de Google Fotos de esta variante.");
       }
-    } catch (e: any) {
-      setError(`Error al convertir: ${e.message || e}`);
+    } catch (e) {
+      setError(`Error al convertir: ${(e as Error).message || String(e)}`);
     } finally {
       setResolviendoVarianteImg(false);
     }
@@ -697,8 +692,8 @@ export function ModalEditarProducto({
       } else {
         setError(res.error || "No se pudo actualizar el producto.");
       }
-    } catch (err: any) {
-      setError(err.message || "Error al procesar la actualización.");
+    } catch (err) {
+      setError((err as Error).message || "Error al procesar la actualización.");
     } finally {
       setGuardando(false);
     }
@@ -719,8 +714,8 @@ export function ModalEditarProducto({
       } else {
         setError(res.error || "No se pudo eliminar el producto.");
       }
-    } catch (err: any) {
-      setError(err.message || "Error al eliminar el producto.");
+    } catch (err) {
+      setError((err as Error).message || "Error al eliminar el producto.");
     } finally {
       setEliminando(false);
     }
@@ -1064,7 +1059,7 @@ export function ModalEditarProducto({
                   </label>
                   <select
                     value={tipo}
-                    onChange={(e) => setTipo(e.target.value as any)}
+                    onChange={(e) => setTipo(e.target.value as "SERVICIO" | "SUSCRIPCION" | "FISICO" | "DIGITAL")}
                     style={{
                       width: "100%",
                       padding: "9px 12px",
@@ -1863,9 +1858,9 @@ export function ModalEditarProducto({
                             borderRadius: "4px",
                             fontSize: "0.68rem",
                             fontWeight: 700,
-                            border: Boolean(varianteActual.var_detalle_variante?.portada_url) ? `1.5px solid ${colActiva.border}` : "1px solid #CBD5E1",
-                            background: Boolean(varianteActual.var_detalle_variante?.portada_url) ? colActiva.bg : "#FFFFFF",
-                            color: Boolean(varianteActual.var_detalle_variante?.portada_url) ? colActiva.text : "#64748B",
+                            border: varianteActual.var_detalle_variante?.portada_url ? `1.5px solid ${colActiva.border}` : "1px solid #CBD5E1",
+                            background: varianteActual.var_detalle_variante?.portada_url ? colActiva.bg : "#FFFFFF",
+                            color: varianteActual.var_detalle_variante?.portada_url ? colActiva.text : "#64748B",
                             cursor: "pointer",
                           }}
                         >

@@ -54,7 +54,7 @@ export function SeccionCoberturaCliente({
     cargarCobertura();
   }, [negocio]);
 
-  const manejarConsumirDerecho = async (concepto: string, nombre: string) => {
+  const manejarConsumirDerecho = async (concepto: string, _nombre: string) => {
     if (!cobertura?.suscripcionId) return;
     setConsumiendo(concepto);
     setMensajeConsumo(null);
@@ -71,8 +71,8 @@ export function SeccionCoberturaCliente({
       } else {
         setMensajeConsumo({ tipo: "error", texto: res.mensaje });
       }
-    } catch (err: any) {
-      setMensajeConsumo({ tipo: "error", texto: err.message || "Error al consumir cupo." });
+    } catch (err) {
+      setMensajeConsumo({ tipo: "error", texto: (err as Error).message || "Error al consumir cupo." });
     } finally {
       setConsumiendo(null);
     }

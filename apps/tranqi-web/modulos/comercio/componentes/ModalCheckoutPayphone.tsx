@@ -11,7 +11,6 @@ import {
   RefreshCw,
   X,
   FileText,
-  User,
   Mail,
   Phone,
   Hash,
@@ -20,7 +19,6 @@ import {
   Receipt,
   MapPin,
   Building,
-  Save,
 } from "lucide-react";
 import {
   VarianteCatalogo,
@@ -29,13 +27,34 @@ import {
   obtenerDatosFacturacionAction,
 } from "../acciones";
 
+export interface ResultadoConfirmacionPayphone {
+  ok: boolean;
+  estado?: string;
+  error?: string;
+  mensaje?: string;
+  autorizacionCodigo?: string | null;
+  clientTransactionId?: string;
+  marcaTarjeta?: string;
+  ultimosDigitos?: string;
+  [key: string]: unknown;
+}
+
+interface DatosFacturacionLocal {
+  identificacion?: string;
+  razonSocial?: string;
+  tipoIdentificacion?: string;
+  correoFacturacion?: string;
+  telefono?: string;
+  direccion?: string;
+}
+
 interface Props {
   abierto: boolean;
   alCerrar: () => void;
   productoNombre: string;
   variante: VarianteCatalogo | null;
   negocio?: string;
-  alPagoExitoso?: (transaccion: any) => void;
+  alPagoExitoso?: (transaccion: ResultadoConfirmacionPayphone) => void;
 }
 
 export function ModalCheckoutPayphone({
@@ -57,7 +76,7 @@ export function ModalCheckoutPayphone({
   // Control de perfil guardado vs ad-hoc
   const [tienePerfilFacturacion, setTienePerfilFacturacion] = useState(false);
   const [guardarEnPerfil, setGuardarEnPerfil] = useState(false);
-  const [cargandoPerfil, setCargandoPerfil] = useState(false);
+  const [, setCargandoPerfil] = useState(false);
 
   // Estado del simulador de tarjeta interactivo
   const [tarjetaNumero, setTarjetaNumero] = useState("4500 8912 3456 7890");
@@ -65,8 +84,6 @@ export function ModalCheckoutPayphone({
   const [tarjetaExp, setTarjetaExp] = useState("08/29");
   const [tarjetaCvv, setTarjetaCvv] = useState("456");
   const [tarjetaMarca, setTarjetaMarca] = useState("Visa");
-  const [enDesafioOTP, setEnDesafioOTP] = useState(false);
-  const [codigoOTP, setCodigoOTP] = useState("");
 
   // Estado del proceso
   const [paso, setPaso] = useState<"formulario" | "simulando" | "real_abierto" | "resultado">("formulario");
@@ -83,7 +100,7 @@ export function ModalCheckoutPayphone({
   } | null>(null);
 
   // Resultado de confirmación
-  const [resultadoPago, setResultadoPago] = useState<any | null>(null);
+  const [resultadoPago, setResultadoPago] = useState<ResultadoConfirmacionPayphone | null>(null);
 
   // Cargar datos de facturación existentes al abrir el modal
   useEffect(() => {
@@ -106,10 +123,10 @@ export function ModalCheckoutPayphone({
           setGuardarEnPerfil(false);
         } else if (res.ok && !res.tienePerfilFacturacion) {
           // Si no tiene perfil configurado en BDD, verificar respaldo en localStorage o datos de registro
-          let localDatos: any = null;
+          let localDatos: DatosFacturacionLocal | null = null;
           try {
             const guardadoLocal = localStorage.getItem("tranqi_datos_facturacion");
-            if (guardadoLocal) localDatos = JSON.parse(guardadoLocal);
+            if (guardadoLocal) localDatos = JSON.parse(guardadoLocal) as DatosFacturacionLocal;
           } catch { /* Ignorar */ }
 
           if (localDatos?.identificacion || localDatos?.razonSocial) {
@@ -228,8 +245,8 @@ export function ModalCheckoutPayphone({
           window.open(res.payWithCard, "_blank", "noopener,noreferrer");
         }
       }
-    } catch (err: any) {
-      setErrorMsg(err.message || "Error inesperado al conectar con la pasarela.");
+    } catch (err) {
+      setErrorMsg((err as Error).message || "Error inesperado al conectar con la pasarela.");
     } finally {
       setProcesando(false);
     }
@@ -284,8 +301,8 @@ export function ModalCheckoutPayphone({
       if (resultado === "APROBADO" && alPagoExitoso) {
         alPagoExitoso(res);
       }
-    } catch (err: any) {
-      setErrorMsg(err.message || "Error al confirmar simulación.");
+    } catch (err) {
+      setErrorMsg((err as Error).message || "Error al confirmar simulación.");
     } finally {
       setProcesando(false);
     }
@@ -316,8 +333,8 @@ export function ModalCheckoutPayphone({
       if (res.estado === "APROBADO" && alPagoExitoso) {
         alPagoExitoso(res);
       }
-    } catch (err: any) {
-      setErrorMsg(err.message || "Error al consultar estado en Payphone.");
+    } catch (err) {
+      setErrorMsg((err as Error).message || "Error al consultar estado en Payphone.");
     } finally {
       setProcesando(false);
     }

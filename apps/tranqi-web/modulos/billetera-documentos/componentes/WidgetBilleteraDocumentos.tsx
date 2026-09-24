@@ -2,14 +2,12 @@
 
 import React, { useState, useEffect } from "react";
 import {
-  Folder, Shield, Upload, Share2, Clock, CheckCircle2, AlertTriangle, XCircle,
-  FileText, Search, Eye, Trash2, KeyRound, ExternalLink, Copy, Check, Sparkles,
-  Lock, Flame, FileCheck, RefreshCw, Filter, Calendar, Tag, ChevronRight, User,
-  Plus, X, Image as ImageIcon, Bell, BellRing, Info, Edit3, Layers,
+  Folder, Shield, Upload, Share2, CheckCircle2, AlertTriangle, XCircle,
+  FileText, Search, Eye, Trash2, Copy, Check, Sparkles,
+  Flame, RefreshCw, Calendar, Tag, User,
+  Plus, X, Image as ImageIcon, BellRing, Layers,
   IdCard, Car, Scroll, GraduationCap, Paperclip, type LucideIcon
 } from "lucide-react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
 
 export interface ArchivoAdjunto {
   id: string;
@@ -46,10 +44,13 @@ export interface DocumentoBilletera {
   doc_meses_anticipacion_alerta?: number;
   doc_titular_nombre?: string | null;
   doc_titular_identificacion?: string | null;
-  doc_metadatos_ocr?: Record<string, any>;
+  doc_metadatos_ocr?: {
+    metadatos_dinamicos?: Array<{ clave: string; valor: string }>;
+    [key: string]: unknown;
+  };
   doc_detalles?: {
     metadatos_dinamicos?: Array<{ clave: string; valor: string }>;
-    [key: string]: any;
+    [key: string]: unknown;
   };
   doc_creado_en: string;
   estado_calculado?: "vigente" | "por_vencer" | "vencido" | "sin_caducidad";
@@ -97,8 +98,7 @@ interface Props {
   onCerrar?: () => void;
 }
 
-export function WidgetBilleteraDocumentos({ negocio = "TRANQ", onCerrar }: Props) {
-  const router = useRouter();
+export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerrar }: Props) {
   const [documentos, setDocumentos] = useState<DocumentoBilletera[]>([]);
   const [cargando, setCargando] = useState<boolean>(true);
   const [categoriaActiva, setCategoriaActiva] = useState<string>("todas");
@@ -459,8 +459,8 @@ export function WidgetBilleteraDocumentos({ negocio = "TRANQ", onCerrar }: Props
       } else {
         mostrarToast(json.error || "Error al guardar documento", "error");
       }
-    } catch (e: any) {
-      mostrarToast(e.message || "Error de red", "error");
+    } catch (e) {
+      mostrarToast((e as Error).message || "Error de red", "error");
     } finally {
       setGuardandoDoc(false);
     }
@@ -522,8 +522,8 @@ export function WidgetBilleteraDocumentos({ negocio = "TRANQ", onCerrar }: Props
       } else {
         mostrarToast(json.error || "Error al generar enlace", "error");
       }
-    } catch (e: any) {
-      mostrarToast(e.message || "Error de red", "error");
+    } catch (e) {
+      mostrarToast((e as Error).message || "Error de red", "error");
     } finally {
       setGenerandoTtl(false);
     }
@@ -544,7 +544,7 @@ export function WidgetBilleteraDocumentos({ negocio = "TRANQ", onCerrar }: Props
         mostrarToast("Enlace revocado.");
         if (docParaCompartir) abrirCompartir(docParaCompartir);
       }
-    } catch (e: any) {
+    } catch {
       mostrarToast("Error al revocar enlace", "error");
     }
   };
@@ -562,8 +562,8 @@ export function WidgetBilleteraDocumentos({ negocio = "TRANQ", onCerrar }: Props
       } else {
         mostrarToast(json.error || "Error al eliminar", "error");
       }
-    } catch (e: any) {
-      mostrarToast(e.message || "Error de red", "error");
+    } catch (e) {
+      mostrarToast((e as Error).message || "Error de red", "error");
     }
   };
 
@@ -586,7 +586,7 @@ export function WidgetBilleteraDocumentos({ negocio = "TRANQ", onCerrar }: Props
       
       // Búsqueda en metadatos dinámicos
       const metaDinamicos = d.doc_detalles?.metadatos_dinamicos || d.doc_metadatos_ocr?.metadatos_dinamicos || [];
-      const matchDinamico = metaDinamicos.some((m: any) => 
+      const matchDinamico = metaDinamicos.some((m) => 
         (m.clave || "").toLowerCase().includes(q) || (m.valor || "").toLowerCase().includes(q)
       );
 
@@ -968,7 +968,7 @@ export function WidgetBilleteraDocumentos({ negocio = "TRANQ", onCerrar }: Props
                     {/* Chips de metadatos dinámicos adicionales */}
                     {metaDinamicos.length > 0 && (
                       <div style={{ display: "flex", flexWrap: "wrap", gap: "4px", marginTop: "4px" }}>
-                        {metaDinamicos.slice(0, 3).map((m: any, idx: number) => (
+                        {metaDinamicos.slice(0, 3).map((m, idx: number) => (
                           <span
                             key={idx}
                             style={{
@@ -1890,7 +1890,7 @@ export function WidgetBilleteraDocumentos({ negocio = "TRANQ", onCerrar }: Props
 
                 {metaDinamicos.length > 0 ? (
                   <div className="rejilla-auto" style={{ "--min": "180px", "--hueco": "8px" } as React.CSSProperties}>
-                    {metaDinamicos.map((m: any, idx: number) => (
+                    {metaDinamicos.map((m, idx: number) => (
                       <div key={idx} style={{ background: "#F9FAFB", padding: "8px 12px", borderRadius: "8px", border: "1px solid #F3F4F6", fontSize: "0.78rem" }}>
                         <span style={{ color: "#6B7280", display: "block", fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase" }}>
                           {m.clave}

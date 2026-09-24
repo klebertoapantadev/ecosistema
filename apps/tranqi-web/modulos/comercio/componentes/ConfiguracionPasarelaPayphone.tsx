@@ -4,18 +4,15 @@ import React, { useEffect, useState } from "react";
 import {
   CreditCard,
   Key,
-  ShieldCheck,
   CheckCircle2,
   AlertCircle,
   ExternalLink,
   RefreshCw,
   Sparkles,
-  Info,
   Save,
   Lock,
 } from "lucide-react";
 import {
-  ConfiguracionPasarela,
   obtenerConfiguracionPasarelaAction,
   guardarConfiguracionPasarelaAction,
 } from "../acciones";
@@ -25,7 +22,6 @@ interface Props {
 }
 
 export function ConfiguracionPasarelaPayphone({ negocio = "tranqi" }: Props) {
-  const [config, setConfig] = useState<ConfiguracionPasarela | null>(null);
   const [cargando, setCargando] = useState(true);
   const [guardando, setGuardando] = useState(false);
   const [mensajeExito, setMensajeExito] = useState<string | null>(null);
@@ -42,14 +38,13 @@ export function ConfiguracionPasarelaPayphone({ negocio = "tranqi" }: Props) {
     setCargando(true);
     try {
       const c = await obtenerConfiguracionPasarelaAction(negocio, "PAYPHONE");
-      setConfig(c);
       setStoreId(c.storeId);
       setToken(c.token || "");
       setAmbiente(c.psc_ambiente);
       setModoSimulado(c.modoSimulado);
       setActivo(c.psc_activo);
-    } catch (err: any) {
-      setErrorMsg(err.message || "Error al cargar configuración de Payphone.");
+    } catch (err) {
+      setErrorMsg((err as Error).message || "Error al cargar configuración de Payphone.");
     } finally {
       setCargando(false);
     }
@@ -81,8 +76,8 @@ export function ConfiguracionPasarelaPayphone({ negocio = "tranqi" }: Props) {
         setMensajeExito("¡Parámetros de Payphone guardados exitosamente!");
         setTimeout(() => setMensajeExito(null), 4000);
       }
-    } catch (err: any) {
-      setErrorMsg(err.message || "Error al guardar parámetros.");
+    } catch (err) {
+      setErrorMsg((err as Error).message || "Error al guardar parámetros.");
     } finally {
       setGuardando(false);
     }
@@ -310,7 +305,7 @@ export function ConfiguracionPasarelaPayphone({ negocio = "tranqi" }: Props) {
               </label>
               <select
                 value={ambiente}
-                onChange={(e) => setAmbiente(e.target.value as any)}
+                onChange={(e) => setAmbiente(e.target.value as "PRUEBAS" | "PRODUCCION")}
                 style={{
                   width: "100%",
                   padding: "10px 14px",

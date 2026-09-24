@@ -2,7 +2,6 @@
 
 import React, { useEffect, useState } from "react";
 import {
-  ShoppingBag,
   Plus,
   FolderPlus,
   RefreshCw,
@@ -10,14 +9,8 @@ import {
   Pencil,
   Trash2,
   Sparkles,
-  Layers,
-  Image as ImageIcon,
   Video,
-  ShieldCheck,
-  CreditCard,
   Scale,
-  FileCheck,
-  CheckCircle2,
 } from "lucide-react";
 import {
   ProductoCatalogo,
@@ -434,7 +427,7 @@ export function ConsolaGestionCatalogo({ negocio = "tranqi" }: Props) {
                   >
                     {tieneImagen ? (
                       <img
-                        src={p.pro_detalle_producto.imagen_url}
+                        src={p.pro_detalle_producto?.imagen_url || undefined}
                         alt=""
                         style={{ width: "100%", height: "100%", objectFit: "cover" }}
                       />

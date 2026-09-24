@@ -2,19 +2,42 @@
 
 import React, { useState, useEffect } from "react";
 import {
-  Users, UserPlus, Search, Building2, User, Scale, Calendar,
-  Folder, Eye, Plus, CheckCircle2, Shield, Sparkles, Filter, ChevronRight, RefreshCw, Share2
+  Users, UserPlus, Search, Building2, User,
+  Eye, CheckCircle2, RefreshCw, Share2
 } from "lucide-react";
 import { obtenerClientesCRM, sincronizarUsuariosAProspectosCRMAction } from "../acciones";
 import { ModalAltaClienteAsistida } from "./ModalAltaClienteAsistida";
 import { FichaClienteDetalleModal } from "./FichaClienteDetalleModal";
 
+export interface ClienteCRM {
+  clp_id: string;
+  clp_secuencial?: number;
+  clp_tipo_personeria?: "natural" | "juridica" | string;
+  clp_tipo_identificacion?: string;
+  clp_identificacion?: string;
+  clp_nombres?: string | null;
+  clp_apellidos?: string | null;
+  clp_razon_social?: string | null;
+  clp_nombre_comercial?: string | null;
+  clp_correo?: string | null;
+  clp_telefono?: string | null;
+  clp_celular?: string | null;
+  clp_casillero_judicial?: string | null;
+  clp_origen_registro?: string;
+  clp_activo?: boolean;
+  clp_creado_en?: string;
+  clp_detalle_cliente?: {
+    estado_crm?: string;
+    [key: string]: unknown;
+  } | null;
+}
+
 interface Props {
   negocio?: string;
 }
 
-export function BandejaClientesCRM({ negocio = "TRANQ" }: Props) {
-  const [clientes, setClientes] = useState<any[]>([]);
+export function BandejaClientesCRM({ negocio: _negocio = "TRANQ" }: Props) {
+  const [clientes, setClientes] = useState<ClienteCRM[]>([]);
   const [cargando, setCargando] = useState(true);
   const [sincronizando, setSincronizando] = useState(false);
   const [busqueda, setBusqueda] = useState("");
@@ -47,7 +70,7 @@ export function BandejaClientesCRM({ negocio = "TRANQ" }: Props) {
   const cargarClientes = () => {
     setCargando(true);
     obtenerClientesCRM({ busqueda, tipoPersoneria: filtroTipo })
-      .then((data) => setClientes(data))
+      .then((data) => setClientes(data as unknown as ClienteCRM[]))
       .catch((err) => console.error("Error al cargar clientes:", err))
       .finally(() => setCargando(false));
   };
@@ -104,8 +127,8 @@ export function BandejaClientesCRM({ negocio = "TRANQ" }: Props) {
       } else {
         alert("Error al sincronizar: " + (res.mensaje || "Desconocido"));
       }
-    } catch (err: any) {
-      alert("Error al sincronizar: " + err?.message);
+    } catch (err) {
+      alert("Error al sincronizar: " + (err as Error)?.message);
     } finally {
       setSincronizando(false);
     }
