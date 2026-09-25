@@ -243,11 +243,11 @@ export function ModalCrearProducto({
         <div
           style={{
             padding: "16px 20px",
-            borderBottom: "1px solid var(--linea)",
+            borderBottom: "1px solid #E2E8F0",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            background: esFloristeria ? "#FFFDF8" : "var(--fondo-suave)",
+            background: esFloristeria ? "#FFFDF8" : "#F8FAFC",
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
@@ -256,8 +256,8 @@ export function ModalCrearProducto({
                 width: "36px",
                 height: "36px",
                 borderRadius: "10px",
-                background: esFloristeria ? "var(--error-diluido)" : "var(--acento-diluido)",
-                color: esFloristeria ? "var(--error)" : "var(--acento)",
+                background: esFloristeria ? "#FEF2F2" : "#E0F2FE",
+                color: esFloristeria ? "#E11D48" : "#0284C7",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -266,14 +266,14 @@ export function ModalCrearProducto({
               {esFloristeria ? <Flower2 size={20} /> : esMantenimiento ? <Wrench size={20} /> : <PackagePlus size={20} />}
             </div>
             <div>
-              <h2 style={{ margin: 0, fontSize: "1.1rem", fontWeight: 800, color: "var(--texto)" }}>
+              <h2 style={{ margin: 0, fontSize: "1.1rem", fontWeight: 800, color: "#0F172A" }}>
                 {esFloristeria
                   ? "Nuevo Arreglo / Producto Floral"
                   : esMantenimiento
                   ? "Nuevo Servicio de Mantenimiento"
                   : "Nuevo Servicio / Honorario Profesional"}
               </h2>
-              <span style={{ fontSize: "0.75rem", color: "var(--texto-suave)" }}>
+              <span style={{ fontSize: "0.75rem", color: "#64748B" }}>
                 Registra tarifas, fotos de muestra, promesa de entrega y botón Payphone
               </span>
             </div>
@@ -286,7 +286,7 @@ export function ModalCrearProducto({
               background: "transparent",
               border: "none",
               cursor: "pointer",
-              color: "var(--texto-suave)",
+              color: "#64748B",
               padding: "6px",
             }}
           >
@@ -299,9 +299,9 @@ export function ModalCrearProducto({
           {error && (
             <div
               style={{
-                background: "var(--error-diluido)",
-                border: "1px solid var(--error-linea)",
-                color: "var(--error-texto)",
+                background: "#FEF2F2",
+                border: "1px solid #FCA5A5",
+                color: "#991B1B",
                 padding: "10px 14px",
                 borderRadius: "8px",
                 marginBottom: "14px",
@@ -318,7 +318,7 @@ export function ModalCrearProducto({
 
           {/* Nombre */}
           <div style={{ marginBottom: "14px" }}>
-            <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 700, color: "var(--texto)", marginBottom: "4px" }}>
+            <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 700, color: "#1E293B", marginBottom: "4px" }}>
               Nombre del {esFloristeria ? "Arreglo / Producto Floral" : "Servicio"} *
             </label>
             <input
@@ -331,7 +331,7 @@ export function ModalCrearProducto({
                 width: "100%",
                 padding: "9px 12px",
                 borderRadius: "8px",
-                border: "1px solid var(--linea-fuerte)",
+                border: "1px solid #CBD5E1",
                 fontSize: "0.9rem",
                 boxSizing: "border-box",
                 fontWeight: 600,
@@ -342,7 +342,7 @@ export function ModalCrearProducto({
           {/* Categoría y Tipo */}
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "14px" }}>
             <div>
-              <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 600, color: "var(--texto-2)", marginBottom: "4px" }}>
+              <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 600, color: "#334155", marginBottom: "4px" }}>
                 Categoría / Colección *
               </label>
               <select
@@ -352,7 +352,7 @@ export function ModalCrearProducto({
                   width: "100%",
                   padding: "9px 12px",
                   borderRadius: "8px",
-                  border: "1px solid var(--linea-fuerte)",
+                  border: "1px solid #CBD5E1",
                   fontSize: "0.85rem",
                   boxSizing: "border-box",
                   background: "#FFFFFF",
@@ -367,7 +367,7 @@ export function ModalCrearProducto({
             </div>
 
             <div>
-              <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 600, color: "var(--texto-2)", marginBottom: "4px" }}>
+              <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 600, color: "#334155", marginBottom: "4px" }}>
                 Tipo de Oferta Comercial
               </label>
               <select
@@ -377,7 +377,7 @@ export function ModalCrearProducto({
                   width: "100%",
                   padding: "9px 12px",
                   borderRadius: "8px",
-                  border: "1px solid var(--linea-fuerte)",
+                  border: "1px solid #CBD5E1",
                   fontSize: "0.85rem",
                   boxSizing: "border-box",
                   background: "#FFFFFF",
@@ -414,8 +414,8 @@ export function ModalCrearProducto({
           {/* Tarifa Base e IVA */}
           <div
             style={{
-              background: "var(--fondo-suave)",
-              border: "1px solid var(--linea)",
+              background: "#F8FAFC",
+              border: "1px solid #E2E8F0",
               borderRadius: "10px",
               padding: "14px",
               marginBottom: "14px",
@@ -423,7 +423,7 @@ export function ModalCrearProducto({
           >
             <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: "12px" }}>
               <div>
-                <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "var(--texto-2)", marginBottom: "4px" }}>
+                <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#334155", marginBottom: "4px" }}>
                   Precio Base Imponible ($ USD) *
                 </label>
                 <input
@@ -438,17 +438,17 @@ export function ModalCrearProducto({
                     width: "100%",
                     padding: "8px 12px",
                     borderRadius: "8px",
-                    border: "1px solid var(--linea-fuerte)",
+                    border: "1px solid #CBD5E1",
                     fontSize: "0.95rem",
                     fontWeight: 800,
                     boxSizing: "border-box",
-                    color: "var(--texto)",
+                    color: "#0F172A",
                   }}
                 />
               </div>
 
               <div>
-                <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "var(--texto-2)", marginBottom: "4px" }}>
+                <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#334155", marginBottom: "4px" }}>
                   Tarifa IVA SRI (Ecuador)
                 </label>
                 <select
@@ -458,7 +458,7 @@ export function ModalCrearProducto({
                     width: "100%",
                     padding: "8px 12px",
                     borderRadius: "8px",
-                    border: "1px solid var(--linea-fuerte)",
+                    border: "1px solid #CBD5E1",
                     fontSize: "0.85rem",
                     boxSizing: "border-box",
                     background: "#FFFFFF",
@@ -476,7 +476,7 @@ export function ModalCrearProducto({
                 marginTop: "10px",
                 padding: "8px 12px",
                 background: "#FFFFFF",
-                border: "1px dashed var(--linea-fuerte)",
+                border: "1px dashed #CBD5E1",
                 borderRadius: "6px",
                 display: "flex",
                 alignItems: "center",
@@ -485,15 +485,15 @@ export function ModalCrearProducto({
               }}
             >
               <div>
-                <span style={{ color: "var(--texto-suave)" }}>Base: </span>
-                <strong style={{ color: "var(--texto)" }}>${baseNum.toFixed(2)}</strong>
-                <span style={{ margin: "0 6px", color: "var(--linea-fuerte)" }}>|</span>
-                <span style={{ color: "var(--texto-suave)" }}>IVA ({tarifaIva}%): </span>
-                <strong style={{ color: "var(--texto)" }}>${montoIvaCalc.toFixed(2)}</strong>
+                <span style={{ color: "#64748B" }}>Base: </span>
+                <strong style={{ color: "#0F172A" }}>${baseNum.toFixed(2)}</strong>
+                <span style={{ margin: "0 6px", color: "#CBD5E1" }}>|</span>
+                <span style={{ color: "#64748B" }}>IVA ({tarifaIva}%): </span>
+                <strong style={{ color: "#0F172A" }}>${montoIvaCalc.toFixed(2)}</strong>
               </div>
               <div>
-                <span style={{ color: "var(--texto-suave)", marginRight: "6px" }}>Total Payphone:</span>
-                <strong style={{ color: "var(--exito)", fontSize: "1.05rem", fontWeight: 800 }}>
+                <span style={{ color: "#64748B", marginRight: "6px" }}>Total Payphone:</span>
+                <strong style={{ color: "#059669", fontSize: "1.05rem", fontWeight: 800 }}>
                   ${totalCalc.toFixed(2)}
                 </strong>
               </div>
@@ -503,16 +503,16 @@ export function ModalCrearProducto({
           {/* Recursos Digitales */}
           <div
             style={{
-              background: "var(--exito-diluido)",
-              border: "1px solid var(--exito-linea)",
+              background: "#F0FDF4",
+              border: "1px solid #BBF7D0",
               borderRadius: "10px",
               padding: "14px",
               marginBottom: "14px",
             }}
           >
             <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "10px" }}>
-              <ImageIcon size={16} color="var(--exito-texto)" />
-              <span style={{ fontSize: "0.78rem", fontWeight: 800, color: "var(--exito-texto)", textTransform: "uppercase" }}>
+              <ImageIcon size={16} color="#15803D" />
+              <span style={{ fontSize: "0.78rem", fontWeight: 800, color: "#15803D", textTransform: "uppercase" }}>
                 Recursos Digitales (Fotos Reales, Álbum y Video/GIF)
               </span>
             </div>
@@ -520,16 +520,16 @@ export function ModalCrearProducto({
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "10px" }}>
               <div>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "2px" }}>
-                  <label style={{ fontSize: "0.72rem", fontWeight: 700, color: "var(--texto-2)" }}>
+                  <label style={{ fontSize: "0.72rem", fontWeight: 700, color: "#334155" }}>
                     URL Imagen de Portada Principal *
                   </label>
                   {(imagenUrl.includes("photos.google.com") || imagenUrl.includes("photos.app.goo.gl")) && (
-                    <span style={{ fontSize: "0.68rem", color: "var(--aviso)", fontWeight: 700, display: "flex", alignItems: "center", gap: "3px" }}>
+                    <span style={{ fontSize: "0.68rem", color: "#D97706", fontWeight: 700, display: "flex", alignItems: "center", gap: "3px" }}>
                       <AlertCircle size={12} /> Requiere Extracción
                     </span>
                   )}
                   {imagenUrl.includes("lh3.googleusercontent.com") && (
-                    <span style={{ fontSize: "0.68rem", color: "var(--exito)", fontWeight: 700, display: "flex", alignItems: "center", gap: "3px" }}>
+                    <span style={{ fontSize: "0.68rem", color: "#16A34A", fontWeight: 700, display: "flex", alignItems: "center", gap: "3px" }}>
                       <CheckCircle2 size={12} /> Imagen Directa
                     </span>
                   )}
@@ -552,22 +552,22 @@ export function ModalCrearProducto({
                     width: "100%",
                     padding: "7px 10px",
                     borderRadius: "6px",
-                    border: (imagenUrl.includes("photos.google.com") || imagenUrl.includes("photos.app.goo.gl")) ? "1.5px solid var(--aviso)" : "1px solid var(--linea-fuerte)",
+                    border: (imagenUrl.includes("photos.google.com") || imagenUrl.includes("photos.app.goo.gl")) ? "1.5px solid #F59E0B" : "1px solid #CBD5E1",
                     fontSize: "0.8rem",
                     boxSizing: "border-box",
                   }}
                 />
 
                 {exitoAutoConvertir && (
-                  <div style={{ marginTop: "4px", fontSize: "0.7rem", color: "var(--exito-texto)", background: "var(--exito-diluido)", padding: "4px 8px", borderRadius: "4px", border: "1px solid var(--exito-linea)", display: "flex", alignItems: "center", gap: "4px" }}>
+                  <div style={{ marginTop: "4px", fontSize: "0.7rem", color: "#15803D", background: "#DCFCE7", padding: "4px 8px", borderRadius: "4px", border: "1px solid #BBF7D0", display: "flex", alignItems: "center", gap: "4px" }}>
                     <CheckCircle2 size={13} /> {exitoAutoConvertir}
                   </div>
                 )}
 
                 {(imagenUrl.includes("photos.google.com") || imagenUrl.includes("photos.app.goo.gl") || imagenUrl.includes("drive.google.com/drive")) && (
-                  <div style={{ marginTop: "6px", fontSize: "0.7rem", color: "var(--aviso-texto)", background: "var(--aviso-diluido)", padding: "8px 10px", borderRadius: "6px", border: "1px solid var(--aviso-linea)", lineHeight: 1.4 }}>
+                  <div style={{ marginTop: "6px", fontSize: "0.7rem", color: "#92400E", background: "#FEF3C7", padding: "8px 10px", borderRadius: "6px", border: "1px solid #FDE68A", lineHeight: 1.4 }}>
                     <div style={{ fontWeight: 800, marginBottom: "3px", display: "flex", alignItems: "center", gap: "4px" }}>
-                      <AlertCircle size={13} color="var(--aviso)" /> Enlace de Álbum Web Detectado
+                      <AlertCircle size={13} color="#D97706" /> Enlace de Álbum Web Detectado
                     </div>
                     <div>Este enlace abre el visor web de Google Fotos, no un archivo de imagen directo (.jpg).</div>
                     <div style={{ marginTop: "6px", display: "flex", gap: "6px", flexWrap: "wrap", alignItems: "center" }}>
@@ -576,7 +576,7 @@ export function ModalCrearProducto({
                         disabled={resolviendoImagen}
                         onClick={() => handleConvertirImagenGlobal()}
                         style={{
-                          background: "var(--acento)",
+                          background: "#0284C7",
                           color: "#FFFFFF",
                           border: "none",
                           padding: "4px 9px",
@@ -607,7 +607,7 @@ export function ModalCrearProducto({
                           setImagenUrl("");
                         }}
                         style={{
-                          background: "var(--aviso-texto)",
+                          background: "#B45309",
                           color: "#FFFFFF",
                           border: "none",
                           padding: "4px 8px",
@@ -625,7 +625,7 @@ export function ModalCrearProducto({
               </div>
 
               <div>
-                <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "var(--texto-2)", marginBottom: "2px" }}>
+                <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#334155", marginBottom: "2px" }}>
                   URL Álbum de Fotos / Muestras (Google Photos)
                 </label>
                 <input
@@ -637,7 +637,7 @@ export function ModalCrearProducto({
                     width: "100%",
                     padding: "7px 10px",
                     borderRadius: "6px",
-                    border: "1px solid var(--linea-fuerte)",
+                    border: "1px solid #CBD5E1",
                     fontSize: "0.8rem",
                     boxSizing: "border-box",
                   }}
@@ -646,7 +646,7 @@ export function ModalCrearProducto({
             </div>
 
             <div>
-              <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "var(--texto-2)", marginBottom: "2px" }}>
+              <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#334155", marginBottom: "2px" }}>
                 URL Video / GIF Demostrativo (YouTube / MP4)
               </label>
               <input
@@ -658,7 +658,7 @@ export function ModalCrearProducto({
                   width: "100%",
                   padding: "7px 10px",
                   borderRadius: "6px",
-                  border: "1px solid var(--linea-fuerte)",
+                  border: "1px solid #CBD5E1",
                   fontSize: "0.8rem",
                   boxSizing: "border-box",
                 }}
@@ -668,7 +668,7 @@ export function ModalCrearProducto({
 
           {/* Tiempo de Entrega */}
           <div style={{ marginBottom: "14px" }}>
-            <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, color: "var(--texto)", marginBottom: "4px" }}>
+            <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, color: "#1E293B", marginBottom: "4px" }}>
               Promesa y Tiempo de Entrega al Cliente *
             </label>
             <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginBottom: "6px" }}>
@@ -682,9 +682,9 @@ export function ModalCrearProducto({
                     borderRadius: "6px",
                     fontSize: "0.72rem",
                     fontWeight: 700,
-                    border: tiempoEntrega === pr.val ? "1.5px solid var(--exito)" : "1px solid var(--linea-fuerte)",
-                    background: tiempoEntrega === pr.val ? "var(--exito-diluido)" : "#FFFFFF",
-                    color: tiempoEntrega === pr.val ? "var(--exito-texto)" : "var(--texto-2)",
+                    border: tiempoEntrega === pr.val ? "1.5px solid #16A34A" : "1px solid #CBD5E1",
+                    background: tiempoEntrega === pr.val ? "#DCFCE7" : "#FFFFFF",
+                    color: tiempoEntrega === pr.val ? "#15803D" : "#475569",
                     cursor: "pointer",
                   }}
                 >
@@ -702,7 +702,7 @@ export function ModalCrearProducto({
                 width: "100%",
                 padding: "8px 12px",
                 borderRadius: "8px",
-                border: "1px solid var(--linea-fuerte)",
+                border: "1px solid #CBD5E1",
                 fontSize: "0.85rem",
                 boxSizing: "border-box",
               }}
@@ -716,15 +716,15 @@ export function ModalCrearProducto({
               justifyContent: "flex-end",
               gap: "8px",
               paddingTop: "14px",
-              borderTop: "1px solid var(--linea)",
+              borderTop: "1px solid #E2E8F0",
             }}
           >
             <button
               type="button"
               onClick={onCerrar}
               style={{
-                background: "var(--fondo-hundido)",
-                color: "var(--texto-2)",
+                background: "#F1F5F9",
+                color: "#475569",
                 border: "none",
                 padding: "9px 16px",
                 borderRadius: "8px",
@@ -740,7 +740,7 @@ export function ModalCrearProducto({
               type="submit"
               disabled={guardando}
               style={{
-                background: esFloristeria ? "var(--error)" : "var(--acento)",
+                background: esFloristeria ? "#E11D48" : "#0284C7",
                 color: "#FFFFFF",
                 border: "none",
                 padding: "9px 20px",

@@ -82,7 +82,7 @@ export function SeccionCoberturaCliente({
     return (
       <div
         style={{
-          background: "linear-gradient(135deg, #1E1B4B 0%, var(--acento-hondo) 100%)",
+          background: "linear-gradient(135deg, #1E1B4B 0%, #312E81 100%)",
           borderRadius: "20px",
           padding: "28px",
           color: "#FFFFFF",
@@ -103,7 +103,7 @@ export function SeccionCoberturaCliente({
     return (
       <section
         style={{
-          background: "linear-gradient(135deg, var(--texto) 0%, var(--texto) 100%)",
+          background: "linear-gradient(135deg, #0F172A 0%, #1E293B 100%)",
           borderRadius: "20px",
           padding: "28px",
           color: "#FFFFFF",
@@ -116,13 +116,13 @@ export function SeccionCoberturaCliente({
       >
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "16px" }}>
           <div>
-            <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", background: "rgba(234, 179, 8, 0.15)", border: "1px solid rgba(234, 179, 8, 0.3)", borderRadius: "20px", padding: "4px 12px", fontSize: "0.75rem", fontWeight: 700, color: "var(--aviso-linea)", marginBottom: "12px" }}>
+            <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", background: "rgba(234, 179, 8, 0.15)", border: "1px solid rgba(234, 179, 8, 0.3)", borderRadius: "20px", padding: "4px 12px", fontSize: "0.75rem", fontWeight: 700, color: "#FDE047", marginBottom: "12px" }}>
               <Zap size={14} /> Membresía Legal Recomendada
             </div>
             <h2 style={{ margin: "0 0 8px", fontSize: "1.4rem", fontWeight: 800, color: "#FFFFFF" }}>
               Activa tu Plan de Amparo & Cobertura Legal
             </h2>
-            <p style={{ margin: 0, fontSize: "0.9rem", color: "var(--texto-tenue)", maxWidth: "560px", lineHeight: 1.5 }}>
+            <p style={{ margin: 0, fontSize: "0.9rem", color: "#94A3B8", maxWidth: "560px", lineHeight: 1.5 }}>
               Obtén citas telemáticas ilimitadas, dictámenes de contratos en 24h, consultas Tranqi IA y hasta 35% de descuento en notarías y juicios para ti y tu familia.
             </p>
           </div>
@@ -131,7 +131,7 @@ export function SeccionCoberturaCliente({
             href="/panel/catalogo-productos"
             onClick={onAbrirCatalogo}
             style={{
-              background: "linear-gradient(135deg, var(--acento) 0%, var(--acento) 100%)",
+              background: "linear-gradient(135deg, #6366F1 0%, #4F46E5 100%)",
               color: "#FFFFFF",
               padding: "12px 24px",
               borderRadius: "12px",
@@ -155,7 +155,7 @@ export function SeccionCoberturaCliente({
   return (
     <section
       style={{
-        background: "linear-gradient(135deg, #1E1B4B 0%, var(--acento-hondo) 50%, var(--acento-hondo) 100%)",
+        background: "linear-gradient(135deg, #1E1B4B 0%, #312E81 50%, #4338CA 100%)",
         borderRadius: "24px",
         padding: "28px",
         color: "#FFFFFF",
@@ -182,7 +182,7 @@ export function SeccionCoberturaCliente({
         fill="none"
       >
         <circle cx="400" cy="300" r="300" stroke="#FFFFFF" strokeWidth="2" strokeDasharray="10 15" />
-        <circle cx="400" cy="300" r="200" stroke="var(--acento-linea)" strokeWidth="3" />
+        <circle cx="400" cy="300" r="200" stroke="#A5B4FC" strokeWidth="3" />
       </svg>
 
       {/* HEADER DE LA TARJETA */}
@@ -193,7 +193,7 @@ export function SeccionCoberturaCliente({
               style={{
                 background: "rgba(16, 185, 129, 0.2)",
                 border: "1px solid rgba(52, 211, 153, 0.4)",
-                color: "var(--exito-linea)",
+                color: "#6EE7B7",
                 borderRadius: "20px",
                 padding: "3px 10px",
                 fontSize: "0.72rem",
@@ -210,7 +210,7 @@ export function SeccionCoberturaCliente({
             <span
               style={{
                 background: "rgba(255, 255, 255, 0.1)",
-                color: "var(--acento-diluido)",
+                color: "#E0E7FF",
                 borderRadius: "20px",
                 padding: "3px 10px",
                 fontSize: "0.72rem",
@@ -237,11 +237,11 @@ export function SeccionCoberturaCliente({
               gap: "10px",
             }}
           >
-            <ShieldCheck size={26} color="var(--acento-linea)" />
+            <ShieldCheck size={26} color="#A5B4FC" />
             {cobertura.planNombre}
           </h2>
 
-          <p style={{ margin: "4px 0 0", fontSize: "0.85rem", color: "var(--acento-linea)", display: "flex", alignItems: "center", gap: "6px" }}>
+          <p style={{ margin: "4px 0 0", fontSize: "0.85rem", color: "#C7D2FE", display: "flex", alignItems: "center", gap: "6px" }}>
             <Calendar size={14} />
             Próxima renovación de cupos: <strong>{cobertura.fechaRenovacion || "Fin de mes"}</strong> (Facturación {cobertura.frecuencia.toLowerCase()})
           </p>
@@ -315,8 +315,8 @@ export function SeccionCoberturaCliente({
 
           const obtenerIcono = () => {
             if (der.concepto === "CONSULTA_TELEMATICA") return <Video size={18} color="#60A5FA" />;
-            if (der.concepto === "REVISION_CONTRATO") return <FileCheck size={18} color="var(--exito)" />;
-            if (der.concepto === "CONSULTA_ARIA_IA") return <Sparkles size={18} color="var(--aviso-linea)" />;
+            if (der.concepto === "REVISION_CONTRATO") return <FileCheck size={18} color="#34D399" />;
+            if (der.concepto === "CONSULTA_ARIA_IA") return <Sparkles size={18} color="#FBBF24" />;
             return <Percent size={18} color="#F472B6" />;
           };
 
@@ -355,14 +355,14 @@ export function SeccionCoberturaCliente({
                   </div>
 
                   {esIlimitado ? (
-                    <span style={{ background: "rgba(251, 191, 36, 0.2)", color: "var(--aviso-linea)", fontSize: "0.72rem", fontWeight: 800, padding: "2px 8px", borderRadius: "10px" }}>
+                    <span style={{ background: "rgba(251, 191, 36, 0.2)", color: "#FDE047", fontSize: "0.72rem", fontWeight: 800, padding: "2px 8px", borderRadius: "10px" }}>
                       ILIMITADO
                     </span>
                   ) : (
                     <span
                       style={{
                         background: estaAgotado ? "rgba(239, 68, 68, 0.2)" : "rgba(52, 211, 153, 0.2)",
-                        color: estaAgotado ? "var(--error-linea)" : "var(--exito-linea)",
+                        color: estaAgotado ? "#FCA5A5" : "#6EE7B7",
                         fontSize: "0.72rem",
                         fontWeight: 800,
                         padding: "2px 8px",
@@ -377,7 +377,7 @@ export function SeccionCoberturaCliente({
                 {/* Barra de progreso si tiene cupo numérico */}
                 {!esIlimitado && (
                   <div style={{ marginBottom: "12px" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.75rem", color: "var(--texto-tenue)", marginBottom: "4px" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.75rem", color: "#94A3B8", marginBottom: "4px" }}>
                       <span>Usadas: {der.consumidos} de {der.incluidos}</span>
                       <span>{Math.round((der.restantes! / der.incluidos!) * 100)}% restante</span>
                     </div>
@@ -386,7 +386,7 @@ export function SeccionCoberturaCliente({
                         style={{
                           height: "100%",
                           width: `${Math.max(10, 100 - porcentajeUso)}%`,
-                          background: estaAgotado ? "var(--error)" : "linear-gradient(90deg, var(--exito), var(--exito))",
+                          background: estaAgotado ? "#EF4444" : "linear-gradient(90deg, #34D399, #10B981)",
                           borderRadius: "3px",
                           transition: "width 0.3s ease",
                         }}
@@ -396,13 +396,13 @@ export function SeccionCoberturaCliente({
                 )}
 
                 {esIlimitado && der.concepto === "CONSULTA_ARIA_IA" && (
-                  <p style={{ margin: "0 0 12px", fontSize: "0.78rem", color: "var(--linea-fuerte)" }}>
+                  <p style={{ margin: "0 0 12px", fontSize: "0.78rem", color: "#CBD5E1" }}>
                     {der.consumidos} consultas realizadas este mes con respuestas legales inmediatas.
                   </p>
                 )}
 
                 {der.porcentaje && (
-                  <p style={{ margin: "0 0 12px", fontSize: "0.78rem", color: "var(--linea-fuerte)" }}>
+                  <p style={{ margin: "0 0 12px", fontSize: "0.78rem", color: "#CBD5E1" }}>
                     Aplica automáticamente en la tarifa base de trámites notariales y litigios.
                   </p>
                 )}
@@ -417,8 +417,8 @@ export function SeccionCoberturaCliente({
                     onClick={() => manejarConsumirDerecho(der.concepto, der.nombre)}
                     style={{
                       width: "100%",
-                      background: estaAgotado ? "rgba(255, 255, 255, 0.08)" : "linear-gradient(135deg, var(--acento) 0%, var(--acento) 100%)",
-                      color: estaAgotado ? "var(--texto-tenue)" : "#FFFFFF",
+                      background: estaAgotado ? "rgba(255, 255, 255, 0.08)" : "linear-gradient(135deg, #3B82F6 0%, #2563EB 100%)",
+                      color: estaAgotado ? "#94A3B8" : "#FFFFFF",
                       border: "none",
                       padding: "8px 12px",
                       borderRadius: "10px",
@@ -447,8 +447,8 @@ export function SeccionCoberturaCliente({
                     onClick={() => manejarConsumirDerecho(der.concepto, der.nombre)}
                     style={{
                       width: "100%",
-                      background: estaAgotado ? "rgba(255, 255, 255, 0.08)" : "linear-gradient(135deg, var(--exito) 0%, var(--exito) 100%)",
-                      color: estaAgotado ? "var(--texto-tenue)" : "#FFFFFF",
+                      background: estaAgotado ? "rgba(255, 255, 255, 0.08)" : "linear-gradient(135deg, #10B981 0%, #059669 100%)",
+                      color: estaAgotado ? "#94A3B8" : "#FFFFFF",
                       border: "none",
                       padding: "8px 12px",
                       borderRadius: "10px",
@@ -476,7 +476,7 @@ export function SeccionCoberturaCliente({
                       width: "100%",
                       background: "rgba(251, 191, 36, 0.15)",
                       border: "1px solid rgba(251, 191, 36, 0.3)",
-                      color: "var(--aviso-linea)",
+                      color: "#FDE047",
                       padding: "8px 12px",
                       borderRadius: "10px",
                       fontSize: "0.8rem",

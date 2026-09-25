@@ -11,6 +11,7 @@
  */
 
 import { useEffect } from "react";
+import { Sparkles } from "lucide-react";
 
 const PRESENTACION =
   "¡Hola! Soy tranqi, tu respaldo legal de confianza. Te acompaño mientras exploras — y si algo te da curiosidad, haz clic en mí y hablamos.";
@@ -249,7 +250,7 @@ export function BuddieLanding() {
           <div className="globo" id="globo" />
           <div className="avatar" id="avatar" title="Habla conmigo">
             <div className="ojos"><div className="ojo" /><div className="ojo" /></div>
-            <div className="chispa" id="chispa">✦</div>
+            <div className="chispa" id="chispa"><Sparkles size={14} strokeWidth={1.8} /></div>
           </div>
         </div>
       </div>

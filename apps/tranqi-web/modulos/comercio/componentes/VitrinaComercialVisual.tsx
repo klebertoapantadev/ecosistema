@@ -125,7 +125,7 @@ export function VitrinaComercialVisual({ negocio = "tranqi" }: Props) {
       {/* Hero Banner Visual de la Vitrina */}
       <div
         style={{
-          background: "linear-gradient(135deg, var(--texto) 0%, var(--texto) 50%, var(--acento-hondo) 100%)",
+          background: "linear-gradient(135deg, #0F172A 0%, #1E293B 50%, #0369A1 100%)",
           borderRadius: "20px",
           padding: "32px 28px",
           color: "#FFFFFF",
@@ -151,7 +151,7 @@ export function VitrinaComercialVisual({ negocio = "tranqi" }: Props) {
               marginBottom: "12px",
             }}
           >
-            <Sparkles size={14} color="var(--acento)" />
+            <Sparkles size={14} color="#38BDF8" />
             Servicios Jurídicos & Protección Legal
           </div>
           <h1
@@ -169,7 +169,7 @@ export function VitrinaComercialVisual({ negocio = "tranqi" }: Props) {
             style={{
               margin: 0,
               fontSize: "0.95rem",
-              color: "var(--linea)",
+              color: "#E2E8F0",
               lineHeight: 1.5,
             }}
           >
@@ -196,7 +196,7 @@ export function VitrinaComercialVisual({ negocio = "tranqi" }: Props) {
       <div
         style={{
           background: "#FFFFFF",
-          border: "1px solid var(--linea)",
+          border: "1px solid #E2E8F0",
           borderRadius: "16px",
           padding: "16px 20px",
           display: "flex",
@@ -214,7 +214,7 @@ export function VitrinaComercialVisual({ negocio = "tranqi" }: Props) {
               left: "14px",
               top: "50%",
               transform: "translateY(-50%)",
-              color: "var(--texto-tenue)",
+              color: "#94A3B8",
             }}
           />
           <input
@@ -226,10 +226,10 @@ export function VitrinaComercialVisual({ negocio = "tranqi" }: Props) {
               width: "100%",
               padding: "10px 14px 10px 42px",
               borderRadius: "10px",
-              border: "1px solid var(--linea-fuerte)",
+              border: "1px solid #CBD5E1",
               fontSize: "0.9rem",
               outline: "none",
-              background: "var(--fondo-suave)",
+              background: "#F8FAFC",
             }}
           />
         </div>
@@ -254,8 +254,8 @@ export function VitrinaComercialVisual({ negocio = "tranqi" }: Props) {
               fontWeight: 700,
               cursor: "pointer",
               border: "none",
-              background: categoriaSeleccionada === "todas" ? "var(--acento)" : "var(--fondo-hundido)",
-              color: categoriaSeleccionada === "todas" ? "#FFFFFF" : "var(--texto-2)",
+              background: categoriaSeleccionada === "todas" ? "#0284C7" : "#F1F5F9",
+              color: categoriaSeleccionada === "todas" ? "#FFFFFF" : "#475569",
               whiteSpace: "nowrap",
               transition: "all 0.15s ease",
             }}
@@ -277,8 +277,8 @@ export function VitrinaComercialVisual({ negocio = "tranqi" }: Props) {
                   fontWeight: 700,
                   cursor: "pointer",
                   border: "none",
-                  background: activa ? "var(--acento)" : "var(--fondo-hundido)",
-                  color: activa ? "#FFFFFF" : "var(--texto-2)",
+                  background: activa ? "#0284C7" : "#F1F5F9",
+                  color: activa ? "#FFFFFF" : "#475569",
                   whiteSpace: "nowrap",
                   transition: "all 0.15s ease",
                 }}
@@ -292,15 +292,15 @@ export function VitrinaComercialVisual({ negocio = "tranqi" }: Props) {
 
       {/* Rejilla de Tarjetas Visuales de Servicios */}
       {cargando ? (
-        <div style={{ padding: "60px 20px", textAlign: "center", color: "var(--texto-suave)" }}>
-          <RefreshCw size={32} className="animate-spin" style={{ margin: "0 auto 12px", color: "var(--acento)" }} />
+        <div style={{ padding: "60px 20px", textAlign: "center", color: "#64748B" }}>
+          <RefreshCw size={32} className="animate-spin" style={{ margin: "0 auto 12px", color: "#0284C7" }} />
           <div style={{ fontWeight: 600 }}>Cargando catálogo de servicios jurídicos...</div>
         </div>
       ) : productosFiltrados.length === 0 ? (
         <div
           style={{
             background: "#FFFFFF",
-            border: "1px dashed var(--linea-fuerte)",
+            border: "1px dashed #CBD5E1",
             borderRadius: "16px",
             padding: "50px 24px",
             textAlign: "center",
@@ -311,20 +311,20 @@ export function VitrinaComercialVisual({ negocio = "tranqi" }: Props) {
               width: "56px",
               height: "56px",
               borderRadius: "16px",
-              background: "var(--fondo-hundido)",
+              background: "#F1F5F9",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               margin: "0 auto 16px",
-              color: "var(--texto-suave)",
+              color: "#64748B",
             }}
           >
             <ShoppingBag size={28} />
           </div>
-          <h3 style={{ margin: "0 0 6px", fontSize: "1.1rem", fontWeight: 700, color: "var(--texto)" }}>
+          <h3 style={{ margin: "0 0 6px", fontSize: "1.1rem", fontWeight: 700, color: "#0F172A" }}>
             No se encontraron productos o servicios disponibles
           </h3>
-          <p style={{ margin: "0 auto 20px", fontSize: "0.85rem", color: "var(--texto-suave)", maxWidth: "420px" }}>
+          <p style={{ margin: "0 auto 20px", fontSize: "0.85rem", color: "#64748B", maxWidth: "420px" }}>
             Puedes recargar el catálogo oficial de servicios y planes con tarifas preconfiguradas.
           </p>
           <button
@@ -332,7 +332,7 @@ export function VitrinaComercialVisual({ negocio = "tranqi" }: Props) {
             onClick={handleCargarSemillas}
             disabled={cargandoSemillas}
             style={{
-              background: "var(--acento)",
+              background: "#0284C7",
               color: "#FFFFFF",
               border: "none",
               padding: "10px 20px",
@@ -378,7 +378,7 @@ export function VitrinaComercialVisual({ negocio = "tranqi" }: Props) {
                 key={p.pro_id}
                 style={{
                   background: "#FFFFFF",
-                  border: p.pro_destacado ? "2px solid var(--acento)" : "1px solid var(--linea)",
+                  border: p.pro_destacado ? "2px solid #0284C7" : "1px solid #E2E8F0",
                   borderRadius: "18px",
                   overflow: "hidden",
                   display: "flex",
@@ -396,7 +396,7 @@ export function VitrinaComercialVisual({ negocio = "tranqi" }: Props) {
                     position: "relative",
                     width: "100%",
                     aspectRatio: "1 / 1",
-                    background: "var(--texto)",
+                    background: "#0F172A",
                     cursor: "pointer",
                     overflow: "hidden",
                   }}
@@ -461,7 +461,7 @@ export function VitrinaComercialVisual({ negocio = "tranqi" }: Props) {
                     {p.pro_destacado && (
                       <span
                         style={{
-                          background: "linear-gradient(135deg, var(--aviso), var(--aviso))",
+                          background: "linear-gradient(135deg, #F59E0B, #D97706)",
                           color: "#FFFFFF",
                           padding: "3px 8px",
                           borderRadius: "12px",
@@ -508,7 +508,7 @@ export function VitrinaComercialVisual({ negocio = "tranqi" }: Props) {
                       margin: "0 0 6px",
                       fontSize: "1.05rem",
                       fontWeight: 800,
-                      color: "var(--texto)",
+                      color: "#0F172A",
                       lineHeight: 1.3,
                       cursor: "pointer",
                     }}
@@ -521,7 +521,7 @@ export function VitrinaComercialVisual({ negocio = "tranqi" }: Props) {
                     style={{
                       margin: "0 0 14px",
                       fontSize: "0.82rem",
-                      color: "var(--texto-2)",
+                      color: "#475569",
                       lineHeight: 1.45,
                       display: "-webkit-box",
                       WebkitLineClamp: 2,
@@ -539,9 +539,9 @@ export function VitrinaComercialVisual({ negocio = "tranqi" }: Props) {
                         display: "inline-flex",
                         alignItems: "center",
                         gap: "5px",
-                        background: "var(--exito-diluido)",
-                        border: "1px solid var(--exito)",
-                        color: "var(--exito-texto)",
+                        background: "#ECFDF5",
+                        border: "1px solid #10B981",
+                        color: "#065F46",
                         padding: "3px 8px",
                         borderRadius: "6px",
                         fontSize: "0.72rem",
@@ -550,10 +550,10 @@ export function VitrinaComercialVisual({ negocio = "tranqi" }: Props) {
                         alignSelf: "flex-start",
                       }}
                     >
-                      <Truck size={12} color="var(--exito)" />
+                      <Truck size={12} color="#059669" />
                       <span>{p.pro_detalle_producto?.logistica?.etiqueta_transporte || "🚚 Envío a Domicilio Incluido"}</span>
                       {p.pro_detalle_producto?.logistica?.cobertura_texto && (
-                        <span style={{ fontSize: "0.68rem", fontWeight: 600, color: "var(--exito-texto)" }}>
+                        <span style={{ fontSize: "0.68rem", fontWeight: 600, color: "#047857" }}>
                           • {p.pro_detalle_producto.logistica.cobertura_texto}
                         </span>
                       )}
@@ -571,10 +571,10 @@ export function VitrinaComercialVisual({ negocio = "tranqi" }: Props) {
                             alignItems: "center",
                             gap: "6px",
                             fontSize: "0.78rem",
-                            color: "var(--texto-2)",
+                            color: "#334155",
                           }}
                         >
-                          <CheckCircle2 size={13} color="var(--exito)" style={{ flexShrink: 0 }} />
+                          <CheckCircle2 size={13} color="#059669" style={{ flexShrink: 0 }} />
                           <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                             {b}
                           </span>
@@ -598,11 +598,11 @@ export function VitrinaComercialVisual({ negocio = "tranqi" }: Props) {
                           width: "100%",
                           padding: "7px 10px",
                           borderRadius: "8px",
-                          border: "1px solid var(--linea-fuerte)",
+                          border: "1px solid #CBD5E1",
                           fontSize: "0.8rem",
                           fontWeight: 600,
-                          background: "var(--fondo-suave)",
-                          color: "var(--texto)",
+                          background: "#F8FAFC",
+                          color: "#1E293B",
                           outline: "none",
                         }}
                       >
@@ -615,15 +615,15 @@ export function VitrinaComercialVisual({ negocio = "tranqi" }: Props) {
                     </div>
                   )}
 
-                  <div style={{ marginTop: "auto", paddingTop: "12px", borderTop: "1px solid var(--fondo-hundido)" }}>
+                  <div style={{ marginTop: "auto", paddingTop: "12px", borderTop: "1px solid #F1F5F9" }}>
                     <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: "12px" }}>
                       <div>
-                        <span style={{ fontSize: "0.7rem", color: "var(--texto-suave)", display: "block" }}>
+                        <span style={{ fontSize: "0.7rem", color: "#64748B", display: "block" }}>
                           Total facturable (IVA 15% incl.)
                         </span>
-                        <div style={{ fontSize: "1.3rem", fontWeight: 800, color: "var(--texto)" }}>
+                        <div style={{ fontSize: "1.3rem", fontWeight: 800, color: "#0F172A" }}>
                           ${currentVar?.precio_total.toFixed(2)}{" "}
-                          <span style={{ fontSize: "0.75rem", fontWeight: 600, color: "var(--texto-suave)" }}>USD</span>
+                          <span style={{ fontSize: "0.75rem", fontWeight: 600, color: "#64748B" }}>USD</span>
                         </div>
                       </div>
 
@@ -633,7 +633,7 @@ export function VitrinaComercialVisual({ negocio = "tranqi" }: Props) {
                         style={{
                           background: "transparent",
                           border: "none",
-                          color: "var(--acento)",
+                          color: "#0284C7",
                           fontSize: "0.8rem",
                           fontWeight: 700,
                           cursor: "pointer",
@@ -655,7 +655,7 @@ export function VitrinaComercialVisual({ negocio = "tranqi" }: Props) {
                       aria-label="Contratar servicio con Payphone"
                       style={{
                         width: "100%",
-                        background: "var(--acento)",
+                        background: "#0284C7",
                         color: "#FFFFFF",
                         border: "none",
                         padding: "10px 14px",

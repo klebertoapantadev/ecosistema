@@ -85,7 +85,7 @@ export function ConfiguracionPasarelaPayphone({ negocio = "tranqi" }: Props) {
 
   if (cargando) {
     return (
-      <div style={{ padding: "60px 20px", textAlign: "center", color: "var(--texto-suave)" }}>
+      <div style={{ padding: "60px 20px", textAlign: "center", color: "#64748B" }}>
         <RefreshCw size={28} className="animate-spin" style={{ margin: "0 auto 12px" }} />
         <div>Cargando parámetros de pasarela Payphone...</div>
       </div>
@@ -109,8 +109,8 @@ export function ConfiguracionPasarelaPayphone({ negocio = "tranqi" }: Props) {
           <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
             <span
               style={{
-                background: "var(--aviso-diluido)",
-                color: "var(--aviso-texto)",
+                background: "#FEF3C7",
+                color: "#92400E",
                 padding: "3px 10px",
                 borderRadius: "12px",
                 fontSize: "0.75rem",
@@ -125,8 +125,8 @@ export function ConfiguracionPasarelaPayphone({ negocio = "tranqi" }: Props) {
             </span>
             <span
               style={{
-                background: activo ? "var(--exito-diluido)" : "var(--error-diluido)",
-                color: activo ? "var(--exito-texto)" : "var(--error-texto)",
+                background: activo ? "#D1FAE5" : "#FEE2E2",
+                color: activo ? "#065F46" : "#991B1B",
                 padding: "3px 10px",
                 borderRadius: "12px",
                 fontSize: "0.75rem",
@@ -136,10 +136,10 @@ export function ConfiguracionPasarelaPayphone({ negocio = "tranqi" }: Props) {
               {activo ? "● HABILITADA" : "○ INACTIVA"}
             </span>
           </div>
-          <h1 style={{ margin: 0, fontSize: "1.45rem", fontWeight: 800, color: "var(--texto)" }}>
+          <h1 style={{ margin: 0, fontSize: "1.45rem", fontWeight: 800, color: "#0F172A" }}>
             Configuración de Pasarela Payphone
           </h1>
-          <p style={{ margin: "4px 0 0", fontSize: "0.85rem", color: "var(--texto-suave)" }}>
+          <p style={{ margin: "4px 0 0", fontSize: "0.85rem", color: "#64748B" }}>
             Administra las credenciales API, StoreID, entorno y el simulador de cobro de honorarios.
           </p>
         </div>
@@ -149,9 +149,9 @@ export function ConfiguracionPasarelaPayphone({ negocio = "tranqi" }: Props) {
           target="_blank"
           rel="noreferrer"
           style={{
-            background: "var(--fondo-suave)",
-            color: "var(--acento)",
-            border: "1px solid var(--acento-linea)",
+            background: "#F8FAFC",
+            color: "#0284C7",
+            border: "1px solid #BAE6FD",
             padding: "8px 14px",
             borderRadius: "8px",
             fontSize: "0.8rem",
@@ -171,9 +171,9 @@ export function ConfiguracionPasarelaPayphone({ negocio = "tranqi" }: Props) {
       {mensajeExito && (
         <div
           style={{
-            background: "var(--exito-diluido)",
-            border: "1px solid var(--exito-linea)",
-            color: "var(--exito-texto)",
+            background: "#ECFDF5",
+            border: "1px solid #A7F3D0",
+            color: "#065F46",
             padding: "12px 16px",
             borderRadius: "10px",
             marginBottom: "20px",
@@ -191,9 +191,9 @@ export function ConfiguracionPasarelaPayphone({ negocio = "tranqi" }: Props) {
       {errorMsg && (
         <div
           style={{
-            background: "var(--error-diluido)",
-            border: "1px solid var(--error-linea)",
-            color: "var(--error-texto)",
+            background: "#FEF2F2",
+            border: "1px solid #FECACA",
+            color: "#991B1B",
             padding: "12px 16px",
             borderRadius: "10px",
             marginBottom: "20px",
@@ -212,7 +212,7 @@ export function ConfiguracionPasarelaPayphone({ negocio = "tranqi" }: Props) {
       <div
         style={{
           background: "#FFFFFF",
-          border: "1px solid var(--linea)",
+          border: "1px solid #E2E8F0",
           borderRadius: "16px",
           padding: "24px",
           boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
@@ -222,8 +222,8 @@ export function ConfiguracionPasarelaPayphone({ negocio = "tranqi" }: Props) {
           {/* Banner de Modo Simulado */}
           <div
             style={{
-              background: modoSimulado ? "var(--aviso-diluido)" : "var(--fondo-hundido)",
-              border: modoSimulado ? "1.5px solid var(--aviso-linea)" : "1px solid var(--linea)",
+              background: modoSimulado ? "#FEF3C7" : "#F1F5F9",
+              border: modoSimulado ? "1.5px solid #FCD34D" : "1px solid #E2E8F0",
               borderRadius: "12px",
               padding: "16px",
               marginBottom: "24px",
@@ -239,7 +239,7 @@ export function ConfiguracionPasarelaPayphone({ negocio = "tranqi" }: Props) {
                   width: "36px",
                   height: "36px",
                   borderRadius: "8px",
-                  background: modoSimulado ? "var(--aviso)" : "var(--texto-suave)",
+                  background: modoSimulado ? "#D97706" : "#64748B",
                   color: "#FFFFFF",
                   display: "flex",
                   alignItems: "center",
@@ -250,10 +250,10 @@ export function ConfiguracionPasarelaPayphone({ negocio = "tranqi" }: Props) {
                 <Sparkles size={20} />
               </div>
               <div>
-                <div style={{ fontSize: "0.95rem", fontWeight: 700, color: modoSimulado ? "var(--aviso-texto)" : "var(--texto)" }}>
+                <div style={{ fontSize: "0.95rem", fontWeight: 700, color: modoSimulado ? "#92400E" : "#1E293B" }}>
                   Modo de Respuesta Simulada (Sandbox de Pruebas)
                 </div>
-                <div style={{ fontSize: "0.8rem", color: modoSimulado ? "var(--aviso-texto)" : "var(--texto-suave)", marginTop: "2px" }}>
+                <div style={{ fontSize: "0.8rem", color: modoSimulado ? "#B45309" : "#64748B", marginTop: "2px" }}>
                   Al estar activado, el checkout simula el pago de honorarios y genera códigos de autorización bancarios sin debitar tarjetas reales.
                 </div>
               </div>
@@ -266,7 +266,7 @@ export function ConfiguracionPasarelaPayphone({ negocio = "tranqi" }: Props) {
                 onChange={(e) => setModoSimulado(e.target.checked)}
                 style={{ width: "20px", height: "20px", cursor: "pointer" }}
               />
-              <span style={{ fontSize: "0.85rem", fontWeight: 700, color: "var(--texto)" }}>
+              <span style={{ fontSize: "0.85rem", fontWeight: 700, color: "#1E293B" }}>
                 {modoSimulado ? "Activo" : "Inactivo"}
               </span>
             </label>
@@ -275,7 +275,7 @@ export function ConfiguracionPasarelaPayphone({ negocio = "tranqi" }: Props) {
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px", marginBottom: "20px" }}>
             {/* Store ID */}
             <div>
-              <label style={{ display: "block", fontSize: "0.85rem", fontWeight: 700, color: "var(--texto-2)", marginBottom: "6px" }}>
+              <label style={{ display: "block", fontSize: "0.85rem", fontWeight: 700, color: "#334155", marginBottom: "6px" }}>
                 Payphone Store ID *
               </label>
               <input
@@ -289,18 +289,18 @@ export function ConfiguracionPasarelaPayphone({ negocio = "tranqi" }: Props) {
                   padding: "10px 14px",
                   fontSize: "0.9rem",
                   borderRadius: "8px",
-                  border: "1px solid var(--linea-fuerte)",
+                  border: "1px solid #CBD5E1",
                   boxSizing: "border-box",
                 }}
               />
-              <p style={{ margin: "4px 0 0", fontSize: "0.75rem", color: "var(--texto-suave)" }}>
+              <p style={{ margin: "4px 0 0", fontSize: "0.75rem", color: "#64748B" }}>
                 Identificador de la sucursal proporcionado en Payphone Developer.
               </p>
             </div>
 
             {/* Ambiente */}
             <div>
-              <label style={{ display: "block", fontSize: "0.85rem", fontWeight: 700, color: "var(--texto-2)", marginBottom: "6px" }}>
+              <label style={{ display: "block", fontSize: "0.85rem", fontWeight: 700, color: "#334155", marginBottom: "6px" }}>
                 Ambiente de Ejecución
               </label>
               <select
@@ -311,7 +311,7 @@ export function ConfiguracionPasarelaPayphone({ negocio = "tranqi" }: Props) {
                   padding: "10px 14px",
                   fontSize: "0.9rem",
                   borderRadius: "8px",
-                  border: "1px solid var(--linea-fuerte)",
+                  border: "1px solid #CBD5E1",
                   background: "#FFFFFF",
                   boxSizing: "border-box",
                 }}
@@ -319,7 +319,7 @@ export function ConfiguracionPasarelaPayphone({ negocio = "tranqi" }: Props) {
                 <option value="PRUEBAS">Pruebas / Staging</option>
                 <option value="PRODUCCION">Producción en Vivo</option>
               </select>
-              <p style={{ margin: "4px 0 0", fontSize: "0.75rem", color: "var(--texto-suave)" }}>
+              <p style={{ margin: "4px 0 0", fontSize: "0.75rem", color: "#64748B" }}>
                 Define la URL base de validación bancaria.
               </p>
             </div>
@@ -328,16 +328,16 @@ export function ConfiguracionPasarelaPayphone({ negocio = "tranqi" }: Props) {
           {/* Token Bearer (Privado) */}
           <div style={{ marginBottom: "24px" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
-              <label style={{ fontSize: "0.85rem", fontWeight: 700, color: "var(--texto-2)" }}>
+              <label style={{ fontSize: "0.85rem", fontWeight: 700, color: "#334155" }}>
                 Token de Autenticación de Aplicación (Bearer Token)
               </label>
-              <span style={{ fontSize: "0.7rem", color: "var(--acento)", display: "inline-flex", alignItems: "center", gap: "3px" }}>
+              <span style={{ fontSize: "0.7rem", color: "#0284C7", display: "inline-flex", alignItems: "center", gap: "3px" }}>
                 <Lock size={12} />
                 Almacenamiento Cifrado en Servidor (Nunca expuesto al cliente)
               </span>
             </div>
             <div style={{ position: "relative" }}>
-              <Key size={16} color="var(--texto-tenue)" style={{ position: "absolute", left: "12px", top: "12px" }} />
+              <Key size={16} color="#94A3B8" style={{ position: "absolute", left: "12px", top: "12px" }} />
               <input
                 type="password"
                 placeholder={modoSimulado ? "No requerido en modo simulado (dejar en blanco para pruebas)" : "Pega tu Bearer Token de Payphone aquí"}
@@ -348,7 +348,7 @@ export function ConfiguracionPasarelaPayphone({ negocio = "tranqi" }: Props) {
                   padding: "10px 14px 10px 38px",
                   fontSize: "0.9rem",
                   borderRadius: "8px",
-                  border: "1px solid var(--linea-fuerte)",
+                  border: "1px solid #CBD5E1",
                   boxSizing: "border-box",
                   fontFamily: "monospace",
                 }}
@@ -360,9 +360,9 @@ export function ConfiguracionPasarelaPayphone({ negocio = "tranqi" }: Props) {
           <div
             style={{
               padding: "16px",
-              background: "var(--fondo-suave)",
+              background: "#F8FAFC",
               borderRadius: "10px",
-              border: "1px solid var(--linea)",
+              border: "1px solid #E2E8F0",
               marginBottom: "24px",
               display: "flex",
               alignItems: "center",
@@ -370,10 +370,10 @@ export function ConfiguracionPasarelaPayphone({ negocio = "tranqi" }: Props) {
             }}
           >
             <div>
-              <div style={{ fontSize: "0.85rem", fontWeight: 700, color: "var(--texto)" }}>
+              <div style={{ fontSize: "0.85rem", fontWeight: 700, color: "#1E293B" }}>
                 Habilitar Botón de Pago en la Tienda / Checkout
               </div>
-              <div style={{ fontSize: "0.75rem", color: "var(--texto-suave)" }}>
+              <div style={{ fontSize: "0.75rem", color: "#64748B" }}>
                 Si está desactivado, Payphone no aparecerá como opción de pago ante los clientes.
               </div>
             </div>
@@ -385,7 +385,7 @@ export function ConfiguracionPasarelaPayphone({ negocio = "tranqi" }: Props) {
                 onChange={(e) => setActivo(e.target.checked)}
                 style={{ width: "20px", height: "20px", cursor: "pointer" }}
               />
-              <span style={{ fontSize: "0.85rem", fontWeight: 600, color: activo ? "var(--exito)" : "var(--texto-suave)" }}>
+              <span style={{ fontSize: "0.85rem", fontWeight: 600, color: activo ? "#059669" : "#64748B" }}>
                 {activo ? "Habilitado" : "Deshabilitado"}
               </span>
             </label>
@@ -397,7 +397,7 @@ export function ConfiguracionPasarelaPayphone({ negocio = "tranqi" }: Props) {
               type="submit"
               disabled={guardando}
               style={{
-                background: "var(--acento)",
+                background: "#0284C7",
                 color: "#FFFFFF",
                 border: "none",
                 padding: "10px 24px",

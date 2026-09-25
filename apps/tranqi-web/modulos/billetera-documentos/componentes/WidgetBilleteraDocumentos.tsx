@@ -1167,9 +1167,10 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
               <button
                 type="button"
                 onClick={() => setModalSubirAbierto(false)}
-                style={{ background: "var(--fondo-hundido)", border: "none", borderRadius: "50%", width: "32px", height: "32px", cursor: "pointer" }}
+                style={{ background: "var(--fondo-hundido)", border: "none", borderRadius: "50%", width: "32px", height: "32px", cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center" }}
+                aria-label="Cerrar modal"
               >
-                ✕
+                <X size={16} strokeWidth={1.8} />
               </button>
             </div>
 
@@ -1890,9 +1891,10 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
               <button
                 type="button"
                 onClick={() => setDocParaCompartir(null)}
-                style={{ background: "var(--fondo-hundido)", border: "none", borderRadius: "50%", width: "32px", height: "32px", cursor: "pointer" }}
+                style={{ background: "var(--fondo-hundido)", border: "none", borderRadius: "50%", width: "32px", height: "32px", cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center" }}
+                aria-label="Cerrar modal"
               >
-                ✕
+                <X size={16} strokeWidth={1.8} />
               </button>
             </div>
 
@@ -2114,9 +2116,10 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
                 <button
                   type="button"
                   onClick={() => setDocParaVer(null)}
-                  style={{ background: "var(--fondo-hundido)", border: "none", borderRadius: "50%", width: "32px", height: "32px", cursor: "pointer" }}
+                  style={{ background: "var(--fondo-hundido)", border: "none", borderRadius: "50%", width: "32px", height: "32px", cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center" }}
+                  aria-label="Cerrar visor"
                 >
-                  ✕
+                  <X size={16} strokeWidth={1.8} />
                 </button>
               </div>
 

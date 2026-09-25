@@ -2162,7 +2162,7 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
             <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
               <div style={{ display: "flex", alignItems: "flex-start", gap: "10px" }}>
                 <span style={{ background: "#05876E", color: "#fff", borderRadius: "50%", width: "22px", height: "22px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.72rem", fontWeight: 800, flexShrink: 0 }}>
-                  ✓
+                  <Check size={14} strokeWidth={2.5} />
                 </span>
                 <div>
                   <strong style={{ fontSize: "0.84rem", color: "#111111", display: "block" }}>1. Registro y Carga de Expediente</strong>
@@ -2491,7 +2491,7 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
         {analizandoCarnetAria && (
           <div style={{ padding: "12px 16px", background: "rgba(80, 0, 186, 0.06)", border: "1.5px dashed #5000BA", borderRadius: "10px", marginTop: "10px", display: "flex", alignItems: "center", gap: "10px", fontSize: "0.84rem", color: "#5000BA", fontWeight: 700 }}>
             <Sparkles size={18} color="#5000BA" />
-            <span>✨ Tranqi está procesando y leyendo tu Carnet Profesional para autocompletar tus datos oficiales...</span>
+            <span>Tranqi está procesando y leyendo tu Carnet Profesional para autocompletar tus datos oficiales...</span>
           </div>
         )}
 

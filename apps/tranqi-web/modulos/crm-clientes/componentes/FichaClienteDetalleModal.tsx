@@ -232,11 +232,11 @@ export function FichaClienteDetalleModal({ clienteId, alCerrar, alEditarCliente,
         {/* Barra de Pestañas (Tabs) */}
         <div style={{ display: "flex", borderBottom: "1px solid var(--linea)", padding: "0 24px", background: "#FFFFFF" }}>
           {[
-            { id: "general", label: "📋 Datos Generales", icon: User },
-            { id: "expedientes", label: `📁 Expedientes (${detalle?.expedientes?.length || 0})`, icon: Scale },
-            { id: "citas", label: `📅 Citas & Agenda (${detalle?.citas?.length || 0})`, icon: Calendar },
-            { id: "billetera", label: "📂 Billetera Documental", icon: Folder },
-            { id: "auditoria", label: `🕒 Tracking & Auditoría (${auditoriaEventos.length})`, icon: History },
+            { id: "general", label: "Datos Generales", icon: User },
+            { id: "expedientes", label: `Expedientes (${detalle?.expedientes?.length || 0})`, icon: Scale },
+            { id: "citas", label: `Citas & Agenda (${detalle?.citas?.length || 0})`, icon: Calendar },
+            { id: "billetera", label: "Billetera Documental", icon: Folder },
+            { id: "auditoria", label: `Tracking & Auditoría (${auditoriaEventos.length})`, icon: History },
           ].map((tab) => (
             <button
               key={tab.id}

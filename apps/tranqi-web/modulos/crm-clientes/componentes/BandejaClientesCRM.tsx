@@ -144,7 +144,7 @@ export function BandejaClientesCRM({ negocio: _negocio = "TRANQ", tipoPersoneria
     try {
       const res = await sincronizarUsuariosAProspectosCRMAction();
       if (res.ok) {
-        setToastExito(`⚡ Sincronización exitosa: ${res.count} usuario(s) registrados incorporados como prospectos.`);
+        setToastExito(`Sincronización exitosa: ${res.count} usuario(s) registrados incorporados como prospectos.`);
         setTimeout(() => setToastExito(null), 5000);
         cargarClientes();
       } else {
@@ -224,15 +224,15 @@ export function BandejaClientesCRM({ negocio: _negocio = "TRANQ", tipoPersoneria
     cargarClientes();
 
     if (res.accionContinuidad === "solo_guardar") {
-      setToastExito(`✅ Cliente ${res.nombreCompleto} guardado exitosamente.`);
+      setToastExito(`Cliente ${res.nombreCompleto} guardado exitosamente.`);
       setTimeout(() => setToastExito(null), 4000);
     } else if (res.accionContinuidad === "radicar_expediente") {
       setClienteSeleccionadoId(res.clienteId);
-      setToastExito(`✅ Cliente guardado. Abriendo expediente...`);
+      setToastExito(`Cliente guardado. Abriendo expediente...`);
       setTimeout(() => setToastExito(null), 4000);
     } else if (res.accionContinuidad === "agendar_cita") {
       setClienteSeleccionadoId(res.clienteId);
-      setToastExito(`✅ Cliente guardado. Apertura de agenda...`);
+      setToastExito(`Cliente guardado. Apertura de agenda...`);
       setTimeout(() => setToastExito(null), 4000);
     }
   };

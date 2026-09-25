@@ -63,8 +63,8 @@ export function HistorialTransaccionesPago({ negocio = "tranqi" }: Props) {
               borderRadius: "12px",
               fontSize: "0.75rem",
               fontWeight: 700,
-              background: "var(--exito-diluido)",
-              color: "var(--exito-texto)",
+              background: "#D1FAE5",
+              color: "#065F46",
               display: "inline-flex",
               alignItems: "center",
               gap: "4px",
@@ -82,8 +82,8 @@ export function HistorialTransaccionesPago({ negocio = "tranqi" }: Props) {
               borderRadius: "12px",
               fontSize: "0.75rem",
               fontWeight: 700,
-              background: "var(--error-diluido)",
-              color: "var(--error-texto)",
+              background: "#FEE2E2",
+              color: "#991B1B",
               display: "inline-flex",
               alignItems: "center",
               gap: "4px",
@@ -101,8 +101,8 @@ export function HistorialTransaccionesPago({ negocio = "tranqi" }: Props) {
               borderRadius: "12px",
               fontSize: "0.75rem",
               fontWeight: 700,
-              background: "var(--aviso-diluido)",
-              color: "var(--aviso-texto)",
+              background: "#FEF3C7",
+              color: "#92400E",
               display: "inline-flex",
               alignItems: "center",
               gap: "4px",
@@ -120,8 +120,8 @@ export function HistorialTransaccionesPago({ negocio = "tranqi" }: Props) {
               borderRadius: "12px",
               fontSize: "0.75rem",
               fontWeight: 700,
-              background: "var(--fondo-hundido)",
-              color: "var(--texto-2)",
+              background: "#F1F5F9",
+              color: "#475569",
             }}
           >
             {estado}
@@ -147,8 +147,8 @@ export function HistorialTransaccionesPago({ negocio = "tranqi" }: Props) {
           <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
             <span
               style={{
-                background: "var(--acento-diluido)",
-                color: "var(--acento)",
+                background: "#E0F2FE",
+                color: "#0284C7",
                 padding: "3px 10px",
                 borderRadius: "12px",
                 fontSize: "0.75rem",
@@ -158,10 +158,10 @@ export function HistorialTransaccionesPago({ negocio = "tranqi" }: Props) {
               Auditoría y Liquidación
             </span>
           </div>
-          <h1 style={{ margin: 0, fontSize: "1.45rem", fontWeight: 800, color: "var(--texto)" }}>
+          <h1 style={{ margin: 0, fontSize: "1.45rem", fontWeight: 800, color: "#0F172A" }}>
             Historial de Transacciones y Pagos
           </h1>
-          <p style={{ margin: "4px 0 0", fontSize: "0.85rem", color: "var(--texto-suave)" }}>
+          <p style={{ margin: "4px 0 0", fontSize: "0.85rem", color: "#64748B" }}>
             Registro inmutable de transacciones procesadas vía Payphone (en vivo y simuladas).
           </p>
         </div>
@@ -170,9 +170,9 @@ export function HistorialTransaccionesPago({ negocio = "tranqi" }: Props) {
           type="button"
           onClick={cargarTransacciones}
           style={{
-            background: "var(--fondo-hundido)",
-            color: "var(--texto-2)",
-            border: "1px solid var(--linea-fuerte)",
+            background: "#F1F5F9",
+            color: "#334155",
+            border: "1px solid #CBD5E1",
             padding: "8px 14px",
             borderRadius: "8px",
             fontSize: "0.85rem",
@@ -192,7 +192,7 @@ export function HistorialTransaccionesPago({ negocio = "tranqi" }: Props) {
       <div
         style={{
           background: "#FFFFFF",
-          border: "1px solid var(--linea)",
+          border: "1px solid #E2E8F0",
           borderRadius: "16px",
           padding: "16px",
           marginBottom: "20px",
@@ -204,7 +204,7 @@ export function HistorialTransaccionesPago({ negocio = "tranqi" }: Props) {
         }}
       >
         <div style={{ flex: 1, minWidth: "240px", position: "relative" }}>
-          <Search size={16} color="var(--texto-tenue)" style={{ position: "absolute", left: "12px", top: "11px" }} />
+          <Search size={16} color="#94A3B8" style={{ position: "absolute", left: "12px", top: "11px" }} />
           <input
             type="text"
             placeholder="Buscar por ID transacción, código de autorización, email o cédula..."
@@ -214,7 +214,7 @@ export function HistorialTransaccionesPago({ negocio = "tranqi" }: Props) {
               width: "100%",
               padding: "8px 12px 8px 36px",
               borderRadius: "8px",
-              border: "1px solid var(--linea-fuerte)",
+              border: "1px solid #CBD5E1",
               fontSize: "0.85rem",
               boxSizing: "border-box",
             }}
@@ -234,8 +234,8 @@ export function HistorialTransaccionesPago({ negocio = "tranqi" }: Props) {
                 fontWeight: 600,
                 cursor: "pointer",
                 border: "none",
-                background: filtroEstado === est ? "var(--texto)" : "var(--fondo-hundido)",
-                color: filtroEstado === est ? "#FFFFFF" : "var(--texto-2)",
+                background: filtroEstado === est ? "#0F172A" : "#F1F5F9",
+                color: filtroEstado === est ? "#FFFFFF" : "#475569",
               }}
             >
               {est === "todos" ? "Todos" : est}
@@ -248,24 +248,24 @@ export function HistorialTransaccionesPago({ negocio = "tranqi" }: Props) {
       <div
         style={{
           background: "#FFFFFF",
-          border: "1px solid var(--linea)",
+          border: "1px solid #E2E8F0",
           borderRadius: "16px",
           overflow: "hidden",
           boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
         }}
       >
         {cargando ? (
-          <div style={{ padding: "50px 20px", textAlign: "center", color: "var(--texto-suave)" }}>
+          <div style={{ padding: "50px 20px", textAlign: "center", color: "#64748B" }}>
             <RefreshCw size={28} className="animate-spin" style={{ margin: "0 auto 12px" }} />
             <div>Cargando transacciones contables...</div>
           </div>
         ) : filtradas.length === 0 ? (
           <div style={{ padding: "50px 20px", textAlign: "center" }}>
-            <CreditCard size={40} color="var(--texto-tenue)" style={{ margin: "0 auto 12px" }} />
-            <h3 style={{ margin: "0 0 6px", fontSize: "1rem", color: "var(--texto)" }}>
+            <CreditCard size={40} color="#94A3B8" style={{ margin: "0 auto 12px" }} />
+            <h3 style={{ margin: "0 0 6px", fontSize: "1rem", color: "#0F172A" }}>
               No se registran transacciones
             </h3>
-            <p style={{ margin: 0, fontSize: "0.85rem", color: "var(--texto-suave)" }}>
+            <p style={{ margin: 0, fontSize: "0.85rem", color: "#64748B" }}>
               Aún no se han ejecutado cobros ni pruebas de botón de pago.
             </p>
           </div>
@@ -273,7 +273,7 @@ export function HistorialTransaccionesPago({ negocio = "tranqi" }: Props) {
           <div style={{ overflowX: "auto" }}>
             <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left", fontSize: "0.85rem" }}>
               <thead>
-                <tr style={{ background: "var(--fondo-suave)", borderBottom: "1px solid var(--linea)", color: "var(--texto-2)" }}>
+                <tr style={{ background: "#F8FAFC", borderBottom: "1px solid #E2E8F0", color: "#475569" }}>
                   <th style={{ padding: "12px 16px", fontWeight: 700 }}>ID Transacción</th>
                   <th style={{ padding: "12px 16px", fontWeight: 700 }}>Fecha / Hora</th>
                   <th style={{ padding: "12px 16px", fontWeight: 700 }}>Pagador</th>
@@ -287,18 +287,18 @@ export function HistorialTransaccionesPago({ negocio = "tranqi" }: Props) {
                 {filtradas.map((t) => (
                   <tr
                     key={t.pag_id}
-                    style={{ borderBottom: "1px solid var(--fondo-hundido)", transition: "background 0.1s ease" }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = "var(--fondo-suave)")}
+                    style={{ borderBottom: "1px solid #F1F5F9", transition: "background 0.1s ease" }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = "#F8FAFC")}
                     onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
                   >
-                    <td style={{ padding: "14px 16px", fontFamily: "monospace", fontWeight: 700, color: "var(--texto)" }}>
+                    <td style={{ padding: "14px 16px", fontFamily: "monospace", fontWeight: 700, color: "#0F172A" }}>
                       {t.pag_identificador_cliente}
                       {t.pag_detalle_transaccion?.modo_simulado && (
                         <span
                           style={{
                             marginLeft: "6px",
-                            background: "var(--aviso-diluido)",
-                            color: "var(--aviso-texto)",
+                            background: "#FEF3C7",
+                            color: "#92400E",
                             fontSize: "0.65rem",
                             padding: "2px 6px",
                             borderRadius: "4px",
@@ -308,7 +308,7 @@ export function HistorialTransaccionesPago({ negocio = "tranqi" }: Props) {
                         </span>
                       )}
                     </td>
-                    <td style={{ padding: "14px 16px", color: "var(--texto-suave)" }}>
+                    <td style={{ padding: "14px 16px", color: "#64748B" }}>
                       {new Date(t.pag_creado_en).toLocaleString("es-EC", {
                         day: "2-digit",
                         month: "2-digit",
@@ -318,24 +318,24 @@ export function HistorialTransaccionesPago({ negocio = "tranqi" }: Props) {
                       })}
                     </td>
                     <td style={{ padding: "14px 16px" }}>
-                      <div style={{ fontWeight: 600, color: "var(--texto)" }}>{t.pag_titular_email || "—"}</div>
-                      <div style={{ fontSize: "0.75rem", color: "var(--texto-suave)" }}>
+                      <div style={{ fontWeight: 600, color: "#0F172A" }}>{t.pag_titular_email || "—"}</div>
+                      <div style={{ fontSize: "0.75rem", color: "#64748B" }}>
                         C.I: {t.pag_titular_identificacion || "—"}
                       </div>
                     </td>
                     <td style={{ padding: "14px 16px" }}>
-                      <span style={{ fontWeight: 600, color: "var(--acento)" }}>{t.pag_pasarela}</span>
+                      <span style={{ fontWeight: 600, color: "#0284C7" }}>{t.pag_pasarela}</span>
                       {t.pag_tarjeta_marca && (
-                        <div style={{ fontSize: "0.75rem", color: "var(--texto-suave)" }}>
+                        <div style={{ fontSize: "0.75rem", color: "#64748B" }}>
                           {t.pag_tarjeta_marca} •••• {t.pag_tarjeta_ultimos_digitos}
                         </div>
                       )}
                     </td>
-                    <td style={{ padding: "14px 16px", fontWeight: 800, color: "var(--texto)" }}>
+                    <td style={{ padding: "14px 16px", fontWeight: 800, color: "#0F172A" }}>
                       ${Number(t.pag_monto_total).toFixed(2)} USD
                     </td>
                     <td style={{ padding: "14px 16px" }}>{getBadgeEstado(t.pag_estado)}</td>
-                    <td style={{ padding: "14px 16px", fontFamily: "monospace", color: "var(--texto-2)" }}>
+                    <td style={{ padding: "14px 16px", fontFamily: "monospace", color: "#334155" }}>
                       {t.pag_autorizacion_codigo || "—"}
                     </td>
                   </tr>

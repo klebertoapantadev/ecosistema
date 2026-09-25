@@ -1180,12 +1180,12 @@ export function ConsolaSuperAdminModular() {
                   fontWeight: 800,
                 }}
               >
-                ✓ 0 Duplicados Funcionales
+                0 Duplicados Funcionales
               </span>
             </div>
 
             <h3 style={{ margin: 0, fontSize: "1.15rem", fontWeight: 800, color: "var(--negro, #111111)" }}>
-              📋 Inventario Maestro & Validación de Componentes Fuente (.tsx)
+              Inventario Maestro & Validación de Componentes Fuente (.tsx)
             </h3>
             <p style={{ margin: "4px 0 0 0", fontSize: "0.84rem", color: "var(--panel-gris, var(--texto-suave))" }}>
               Reporte técnico de widgets del ecosistema: ruta física del componente, perfiles autorizados y verificación de unicidad sin duplicados.
@@ -1333,7 +1333,7 @@ export function ConsolaSuperAdminModular() {
                     fontSize: "0.72rem",
                   }}
                 >
-                  ✓ Canónico / Único
+                  Canónico / Único
                 </span>
               ),
             },
@@ -1390,7 +1390,7 @@ export function ConsolaSuperAdminModular() {
             >
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <strong style={{ color: "var(--texto)", fontSize: "0.88rem" }}>
-                  🔎 Ficha Técnica y Gobernanza: {r.nombre} ({r.clave})
+                  Ficha Técnica y Gobernanza: {r.nombre} ({r.clave})
                 </strong>
                 <Link
                   href={r.ruta}

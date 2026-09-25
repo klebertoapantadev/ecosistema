@@ -55,11 +55,11 @@ export function ManualConfiguracionCatalogoModal({ abierto, onCerrar, negocio = 
         <div
           style={{
             padding: "16px 20px",
-            borderBottom: "1px solid var(--linea)",
+            borderBottom: "1px solid #E2E8F0",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            background: "var(--texto)",
+            background: "#0F172A",
             color: "#FFFFFF",
           }}
         >
@@ -73,7 +73,7 @@ export function ManualConfiguracionCatalogoModal({ abierto, onCerrar, negocio = 
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                color: "var(--acento)",
+                color: "#38BDF8",
               }}
             >
               <BookOpen size={20} />
@@ -82,7 +82,7 @@ export function ManualConfiguracionCatalogoModal({ abierto, onCerrar, negocio = 
               <h2 style={{ margin: 0, fontSize: "1.1rem", fontWeight: 800 }}>
                 Manual de Configuración de Catálogo Comercial (PLT-009)
               </h2>
-              <span style={{ fontSize: "0.75rem", color: "var(--texto-tenue)" }}>
+              <span style={{ fontSize: "0.75rem", color: "#94A3B8" }}>
                 Guía oficial de administración, recursos digitales, multivariantes e impuestos SRI
               </span>
             </div>
@@ -94,7 +94,7 @@ export function ManualConfiguracionCatalogoModal({ abierto, onCerrar, negocio = 
             style={{
               background: "transparent",
               border: "none",
-              color: "var(--texto-tenue)",
+              color: "#94A3B8",
               cursor: "pointer",
               padding: "6px",
             }}
@@ -107,8 +107,8 @@ export function ManualConfiguracionCatalogoModal({ abierto, onCerrar, negocio = 
         <div
           style={{
             display: "flex",
-            background: "var(--fondo-suave)",
-            borderBottom: "1px solid var(--linea)",
+            background: "#F8FAFC",
+            borderBottom: "1px solid #E2E8F0",
             padding: "8px 16px",
             gap: "8px",
           }}
@@ -119,9 +119,9 @@ export function ManualConfiguracionCatalogoModal({ abierto, onCerrar, negocio = 
             style={{
               padding: "7px 14px",
               borderRadius: "8px",
-              border: tabActiva === "tinkay" ? "1.5px solid var(--error)" : "1px solid var(--linea-fuerte)",
-              background: tabActiva === "tinkay" ? "var(--error-diluido)" : "#FFFFFF",
-              color: tabActiva === "tinkay" ? "var(--error-texto)" : "var(--texto-2)",
+              border: tabActiva === "tinkay" ? "1.5px solid #E11D48" : "1px solid #CBD5E1",
+              background: tabActiva === "tinkay" ? "#FFF1F2" : "#FFFFFF",
+              color: tabActiva === "tinkay" ? "#BE123C" : "#475569",
               fontWeight: 700,
               fontSize: "0.82rem",
               cursor: "pointer",
@@ -140,9 +140,9 @@ export function ManualConfiguracionCatalogoModal({ abierto, onCerrar, negocio = 
             style={{
               padding: "7px 14px",
               borderRadius: "8px",
-              border: tabActiva === "tranqi" ? "1.5px solid #5000BA" : "1px solid var(--linea-fuerte)",
-              background: tabActiva === "tranqi" ? "var(--acento-diluido)" : "#FFFFFF",
-              color: tabActiva === "tranqi" ? "#5000BA" : "var(--texto-2)",
+              border: tabActiva === "tranqi" ? "1.5px solid #5000BA" : "1px solid #CBD5E1",
+              background: tabActiva === "tranqi" ? "#F5F3FF" : "#FFFFFF",
+              color: tabActiva === "tranqi" ? "#5000BA" : "#475569",
               fontWeight: 700,
               fontSize: "0.82rem",
               cursor: "pointer",
@@ -161,9 +161,9 @@ export function ManualConfiguracionCatalogoModal({ abierto, onCerrar, negocio = 
             style={{
               padding: "7px 14px",
               borderRadius: "8px",
-              border: tabActiva === "fastfix" ? "1.5px solid var(--acento)" : "1px solid var(--linea-fuerte)",
-              background: tabActiva === "fastfix" ? "var(--acento-diluido)" : "#FFFFFF",
-              color: tabActiva === "fastfix" ? "var(--acento-hondo)" : "var(--texto-2)",
+              border: tabActiva === "fastfix" ? "1.5px solid #0284C7" : "1px solid #CBD5E1",
+              background: tabActiva === "fastfix" ? "#F0F9FF" : "#FFFFFF",
+              color: tabActiva === "fastfix" ? "#0369A1" : "#475569",
               fontWeight: 700,
               fontSize: "0.82rem",
               cursor: "pointer",
@@ -182,9 +182,9 @@ export function ManualConfiguracionCatalogoModal({ abierto, onCerrar, negocio = 
             style={{
               padding: "7px 14px",
               borderRadius: "8px",
-              border: tabActiva === "margaritas" ? "1.5px solid var(--aviso)" : "1px solid var(--linea-fuerte)",
-              background: tabActiva === "margaritas" ? "var(--aviso-diluido)" : "#FFFFFF",
-              color: tabActiva === "margaritas" ? "var(--aviso-texto)" : "var(--texto-2)",
+              border: tabActiva === "margaritas" ? "1.5px solid #D97706" : "1px solid #CBD5E1",
+              background: tabActiva === "margaritas" ? "#FEF3C7" : "#FFFFFF",
+              color: tabActiva === "margaritas" ? "#B45309" : "#475569",
               fontWeight: 700,
               fontSize: "0.82rem",
               cursor: "pointer",
@@ -199,19 +199,19 @@ export function ManualConfiguracionCatalogoModal({ abierto, onCerrar, negocio = 
         </div>
 
         {/* Contenido del Manual */}
-        <div style={{ padding: "20px 24px", overflowY: "auto", flex: 1, fontSize: "0.88rem", color: "var(--texto-2)", lineHeight: 1.5 }}>
+        <div style={{ padding: "20px 24px", overflowY: "auto", flex: 1, fontSize: "0.88rem", color: "#334155", lineHeight: 1.5 }}>
           {/* Guía Conceptual: Arquitectura de 3 Capas de Catálogo */}
           <div
             style={{
-              background: "linear-gradient(135deg, var(--texto) 0%, var(--texto) 100%)",
-              color: "var(--fondo-suave)",
+              background: "linear-gradient(135deg, #0F172A 0%, #1E293B 100%)",
+              color: "#F8FAFC",
               borderRadius: "14px",
               padding: "18px 20px",
               marginBottom: "20px",
               boxShadow: "0 4px 12px rgba(15, 23, 42, 0.15)",
             }}
           >
-            <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "var(--acento)", fontWeight: 800, fontSize: "0.95rem", marginBottom: "10px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#38BDF8", fontWeight: 800, fontSize: "0.95rem", marginBottom: "10px" }}>
               <Layers size={18} />
               <span>MODELO MENTAL & ARQUITECTURA EN 3 CAPAS (ESTÁNDAR DEL ECOSISTEMA)</span>
             </div>
@@ -228,41 +228,41 @@ export function ManualConfiguracionCatalogoModal({ abierto, onCerrar, negocio = 
                 marginBottom: "14px",
               }}
             >
-              <div style={{ color: "var(--linea)" }}>[ <strong style={{ color: "var(--acento)" }}>CAPA 1: CATEGORÍA / COLECCIÓN</strong> ]  ➔  "Estilo Coreano", "Floreros", "Condolencias", "Honorarios"</div>
-              <div style={{ color: "var(--texto-tenue)" }}>                                        (Agrupa decenas de productos, banners, videos y galerías)</div>
-              <div style={{ color: "var(--acento)" }}>              │</div>
-              <div style={{ color: "var(--linea)" }}>[ <strong style={{ color: "var(--acento)" }}>CAPA 2: PRODUCTO MASTER</strong> ]        ➔  "Bouquet Diseño Estilo Coreano", "Constitución SAS"</div>
-              <div style={{ color: "var(--texto-tenue)" }}>                                        (El producto o servicio base con fotos y textos comunes)</div>
-              <div style={{ color: "var(--acento)" }}>              │</div>
-              <div style={{ color: "var(--linea)" }}>[ <strong style={{ color: "var(--acento)" }}>CAPA 3: VARIANTES / SKUs</strong> ]       ➔  "Pequeño 12 rosas ($25)", "Gigante VIP ($60)"</div>
-              <div style={{ color: "var(--texto-tenue)" }}>                                        (Opciones de compra con precio, foto propia y promesa de entrega)</div>
+              <div style={{ color: "#E2E8F0" }}>[ <strong style={{ color: "#38BDF8" }}>CAPA 1: CATEGORÍA / COLECCIÓN</strong> ]  ➔  "Estilo Coreano", "Floreros", "Condolencias", "Honorarios"</div>
+              <div style={{ color: "#94A3B8" }}>                                        (Agrupa decenas de productos, banners, videos y galerías)</div>
+              <div style={{ color: "#38BDF8" }}>              │</div>
+              <div style={{ color: "#E2E8F0" }}>[ <strong style={{ color: "#38BDF8" }}>CAPA 2: PRODUCTO MASTER</strong> ]        ➔  "Bouquet Diseño Estilo Coreano", "Constitución SAS"</div>
+              <div style={{ color: "#94A3B8" }}>                                        (El producto o servicio base con fotos y textos comunes)</div>
+              <div style={{ color: "#38BDF8" }}>              │</div>
+              <div style={{ color: "#E2E8F0" }}>[ <strong style={{ color: "#38BDF8" }}>CAPA 3: VARIANTES / SKUs</strong> ]       ➔  "Pequeño 12 rosas ($25)", "Gigante VIP ($60)"</div>
+              <div style={{ color: "#94A3B8" }}>                                        (Opciones de compra con precio, foto propia y promesa de entrega)</div>
             </div>
 
             {/* Paso a paso de configuración */}
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "10px" }}>
               <div style={{ background: "rgba(255,255,255,0.06)", borderRadius: "8px", padding: "10px 12px", border: "1px solid rgba(255,255,255,0.1)" }}>
-                <div style={{ color: "var(--acento)", fontWeight: 700, fontSize: "0.78rem", marginBottom: "3px" }}>
+                <div style={{ color: "#38BDF8", fontWeight: 700, fontSize: "0.78rem", marginBottom: "3px" }}>
                   1️⃣ Paso 1: Colección
                 </div>
-                <div style={{ fontSize: "0.74rem", color: "var(--linea-fuerte)", lineHeight: 1.4 }}>
+                <div style={{ fontSize: "0.74rem", color: "#CBD5E1", lineHeight: 1.4 }}>
                   Crea la categoría agrupando la línea. Agrega portada/banner o video promocional si aplica.
                 </div>
               </div>
 
               <div style={{ background: "rgba(255,255,255,0.06)", borderRadius: "8px", padding: "10px 12px", border: "1px solid rgba(255,255,255,0.1)" }}>
-                <div style={{ color: "var(--acento)", fontWeight: 700, fontSize: "0.78rem", marginBottom: "3px" }}>
+                <div style={{ color: "#38BDF8", fontWeight: 700, fontSize: "0.78rem", marginBottom: "3px" }}>
                   2️⃣ Paso 2: Producto Master
                 </div>
-                <div style={{ fontSize: "0.74rem", color: "var(--linea-fuerte)", lineHeight: 1.4 }}>
+                <div style={{ fontSize: "0.74rem", color: "#CBD5E1", lineHeight: 1.4 }}>
                   Registra el diseño/servicio. Define el nombre oficial, descripción general y portada base.
                 </div>
               </div>
 
               <div style={{ background: "rgba(255,255,255,0.06)", borderRadius: "8px", padding: "10px 12px", border: "1px solid rgba(255,255,255,0.1)" }}>
-                <div style={{ color: "var(--acento)", fontWeight: 700, fontSize: "0.78rem", marginBottom: "3px" }}>
+                <div style={{ color: "#38BDF8", fontWeight: 700, fontSize: "0.78rem", marginBottom: "3px" }}>
                   3️⃣ Paso 3: Variantes / SKUs
                 </div>
-                <div style={{ fontSize: "0.74rem", color: "var(--linea-fuerte)", lineHeight: 1.4 }}>
+                <div style={{ fontSize: "0.74rem", color: "#CBD5E1", lineHeight: 1.4 }}>
                   Configura precios finales PVP (calcula base imponible e IVA 15%). Asigna fotos o SLAs puntuales si difieren.
                 </div>
               </div>
@@ -272,15 +272,15 @@ export function ManualConfiguracionCatalogoModal({ abierto, onCerrar, negocio = 
           {tabActiva === "tinkay" && (
             <div>
               <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px" }}>
-                <span style={{ background: "var(--error-diluido)", color: "var(--error)", padding: "3px 10px", borderRadius: "12px", fontSize: "0.75rem", fontWeight: 800 }}>
+                <span style={{ background: "#FFE4E6", color: "#E11D48", padding: "3px 10px", borderRadius: "12px", fontSize: "0.75rem", fontWeight: 800 }}>
                   FLORISTERÍA DE ALTA GAMA & ON-DEMAND
                 </span>
               </div>
 
-              <h3 style={{ margin: "0 0 8px", fontSize: "1.15rem", fontWeight: 800, color: "var(--texto)" }}>
+              <h3 style={{ margin: "0 0 8px", fontSize: "1.15rem", fontWeight: 800, color: "#0F172A" }}>
                 Manual de Catálogo: Tinkay Floristería
               </h3>
-              <p style={{ margin: "0 0 16px", color: "var(--texto-suave)" }}>
+              <p style={{ margin: "0 0 16px", color: "#64748B" }}>
                 En Tinkay el catálogo comercial se estructura en torno al <strong>impacto visual y la inmediatez de entrega</strong>. A continuación se detallan las reglas de configuración:
               </p>
 
@@ -302,8 +302,8 @@ export function ManualConfiguracionCatalogoModal({ abierto, onCerrar, negocio = 
               </div>
 
               {/* Sección 2: Tiempos de Entrega */}
-              <div style={{ background: "var(--exito-diluido)", border: "1px solid var(--exito-linea)", borderRadius: "10px", padding: "14px", marginBottom: "14px" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px", fontWeight: 800, color: "var(--exito-texto)" }}>
+              <div style={{ background: "#F0FDF4", border: "1px solid #BBF7D0", borderRadius: "10px", padding: "14px", marginBottom: "14px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px", fontWeight: 800, color: "#166534" }}>
                   <Clock size={17} />
                   <span>2. Promesas y Tiempos de Entrega (SLAs Florales)</span>
                 </div>
@@ -311,25 +311,25 @@ export function ManualConfiguracionCatalogoModal({ abierto, onCerrar, negocio = 
                   El 80% de las ventas son de entrega urgente o el mismo día. Selecciona siempre el preset correspondiente:
                 </p>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", fontSize: "0.8rem" }}>
-                  <div style={{ background: "#FFFFFF", padding: "8px", borderRadius: "6px", border: "1px solid var(--exito-diluido)" }}>
+                  <div style={{ background: "#FFFFFF", padding: "8px", borderRadius: "6px", border: "1px solid #DCFCE7" }}>
                     <strong>⚡ Entrega Inmediata (45-90 min):</strong> Para ramos de vitrina y floreros con stock diario.
                   </div>
-                  <div style={{ background: "#FFFFFF", padding: "8px", borderRadius: "6px", border: "1px solid var(--exito-diluido)" }}>
+                  <div style={{ background: "#FFFFFF", padding: "8px", borderRadius: "6px", border: "1px solid #DCFCE7" }}>
                     <strong>🌸 Pide Hoy, Recibe Hoy:</strong> Pedidos regulares ingresados antes de las 17:00.
                   </div>
                 </div>
               </div>
 
               {/* Sección 3: Recursos Digitales */}
-              <div style={{ background: "var(--acento-diluido)", border: "1px solid var(--acento-linea)", borderRadius: "10px", padding: "14px" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px", fontWeight: 800, color: "var(--acento-hondo)" }}>
+              <div style={{ background: "#EFF6FF", border: "1px solid #BFDBFE", borderRadius: "10px", padding: "14px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px", fontWeight: 800, color: "#1E40AF" }}>
                   <ImageIcon size={17} />
                   <span>3. Recursos Digitales y Muestras Reales</span>
                 </div>
                 <p style={{ margin: "0 0 8px", fontSize: "0.84rem" }}>
                   Para maximizar la tasa de conversión en la vitrina y en los chats de Tranqi:
                 </p>
-                <ul style={{ margin: 0, paddingLeft: "18px", fontSize: "0.82rem", color: "var(--acento-hondo)" }}>
+                <ul style={{ margin: 0, paddingLeft: "18px", fontSize: "0.82rem", color: "#1E3A8A" }}>
                   <li><strong>URL Imagen / Portada:</strong> Fotografía vertical nítida con buena iluminación (formato 4:5 o 1:1).</li>
                   <li><strong>URL Álbum de Ejemplos:</strong> Enlace a Google Photos o Instagram (ej. <code>https://photos.app.goo.gl/...</code>) con fotos de entregas reales a clientes.</li>
                   <li><strong>Video / GIF Demostrativo:</strong> Enlace a YouTube o archivo MP4/GIF que muestre el brillo de los papeles coreanos o el desempaque.</li>
@@ -341,20 +341,20 @@ export function ManualConfiguracionCatalogoModal({ abierto, onCerrar, negocio = 
           {tabActiva === "tranqi" && (
             <div>
               <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px" }}>
-                <span style={{ background: "var(--acento-diluido)", color: "#5000BA", padding: "3px 10px", borderRadius: "12px", fontSize: "0.75rem", fontWeight: 800 }}>
+                <span style={{ background: "#EDE9FE", color: "#5000BA", padding: "3px 10px", borderRadius: "12px", fontSize: "0.75rem", fontWeight: 800 }}>
                   SERVICIOS LEGALES & HONORARIOS PROFESIONALES
                 </span>
               </div>
 
-              <h3 style={{ margin: "0 0 8px", fontSize: "1.15rem", fontWeight: 800, color: "var(--texto)" }}>
+              <h3 style={{ margin: "0 0 8px", fontSize: "1.15rem", fontWeight: 800, color: "#0F172A" }}>
                 Manual de Catálogo: Tranqi Legal
               </h3>
-              <p style={{ margin: "0 0 16px", color: "var(--texto-suave)" }}>
+              <p style={{ margin: "0 0 16px", color: "#64748B" }}>
                 En Tranqi el catálogo comercial liquida <strong>honorarios profesionales, patrocinios jurídicos y planes de retención legal</strong> con desglose tributario SRI y Payphone.
               </p>
 
-              <div style={{ background: "var(--fondo-suave)", border: "1px solid var(--linea)", borderRadius: "10px", padding: "14px", marginBottom: "14px" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px", fontWeight: 800, color: "var(--texto-2)" }}>
+              <div style={{ background: "#F8FAFC", border: "1px solid #E2E8F0", borderRadius: "10px", padding: "14px", marginBottom: "14px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px", fontWeight: 800, color: "#334155" }}>
                   <Scale size={17} />
                   <span>1. Tipos de Honorarios y Servicios Jurídicos</span>
                 </div>
@@ -365,8 +365,8 @@ export function ManualConfiguracionCatalogoModal({ abierto, onCerrar, negocio = 
                 </ul>
               </div>
 
-              <div style={{ background: "var(--acento-diluido)", border: "1px solid var(--acento-linea)", borderRadius: "10px", padding: "14px" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px", fontWeight: 800, color: "var(--acento-hondo)" }}>
+              <div style={{ background: "#F5F3FF", border: "1px solid #DDD6FE", borderRadius: "10px", padding: "14px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px", fontWeight: 800, color: "#5B21B6" }}>
                   <Calculator size={17} />
                   <span>2. Facturación Electrónica e IVA 15% SRI</span>
                 </div>
@@ -380,20 +380,20 @@ export function ManualConfiguracionCatalogoModal({ abierto, onCerrar, negocio = 
           {tabActiva === "fastfix" && (
             <div>
               <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px" }}>
-                <span style={{ background: "var(--acento-diluido)", color: "var(--acento)", padding: "3px 10px", borderRadius: "12px", fontSize: "0.75rem", fontWeight: 800 }}>
+                <span style={{ background: "#E0F2FE", color: "#0284C7", padding: "3px 10px", borderRadius: "12px", fontSize: "0.75rem", fontWeight: 800 }}>
                   MANTENIMIENTO DEL HOGAR & REPARACIONES
                 </span>
               </div>
 
-              <h3 style={{ margin: "0 0 8px", fontSize: "1.15rem", fontWeight: 800, color: "var(--texto)" }}>
+              <h3 style={{ margin: "0 0 8px", fontSize: "1.15rem", fontWeight: 800, color: "#0F172A" }}>
                 Manual de Catálogo: FastFix Home
               </h3>
-              <p style={{ margin: "0 0 16px", color: "var(--texto-suave)" }}>
+              <p style={{ margin: "0 0 16px", color: "#64748B" }}>
                 En FastFix el catálogo tarifario gestiona <strong>visitas técnicas de diagnóstico, reparaciones por rubro y planes de mantenimiento preventivo</strong>.
               </p>
 
-              <div style={{ background: "var(--acento-diluido)", border: "1px solid var(--acento-linea)", borderRadius: "10px", padding: "14px" }}>
-                <ul style={{ margin: 0, paddingLeft: "18px", fontSize: "0.82rem", color: "var(--acento-hondo)" }}>
+              <div style={{ background: "#F0F9FF", border: "1px solid #BAE6FD", borderRadius: "10px", padding: "14px" }}>
+                <ul style={{ margin: 0, paddingLeft: "18px", fontSize: "0.82rem", color: "#0369A1" }}>
                   <li><strong>Visita de Diagnóstico / Tarifa Básica:</strong> Costo fijo de inspección que se descuenta si el cliente aprueba la reparación.</li>
                   <li><strong>Tiempos de Atención:</strong> Seleccionar <code>⚡ Emergencia Técnica (45-60 min)</code> para fugas de agua o cortes de luz.</li>
                   <li><strong>Planes Preventivos:</strong> Suscripciones semestrales de limpieza de calefones, cisternas y tableros eléctricos.</li>
@@ -405,15 +405,15 @@ export function ManualConfiguracionCatalogoModal({ abierto, onCerrar, negocio = 
           {tabActiva === "margaritas" && (
             <div>
               <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px" }}>
-                <span style={{ background: "var(--aviso-diluido)", color: "var(--aviso-texto)", padding: "3px 10px", borderRadius: "12px", fontSize: "0.75rem", fontWeight: 800 }}>
+                <span style={{ background: "#FEF3C7", color: "#B45309", padding: "3px 10px", borderRadius: "12px", fontSize: "0.75rem", fontWeight: 800 }}>
                   FLORISTERÍA BOUTIQUE & SUSCRIPCIONES
                 </span>
               </div>
 
-              <h3 style={{ margin: "0 0 8px", fontSize: "1.15rem", fontWeight: 800, color: "var(--texto)" }}>
+              <h3 style={{ margin: "0 0 8px", fontSize: "1.15rem", fontWeight: 800, color: "#0F172A" }}>
                 Manual de Catálogo: Margaritas Floristería
               </h3>
-              <p style={{ margin: "0 0 16px", color: "var(--texto-suave)" }}>
+              <p style={{ margin: "0 0 16px", color: "#64748B" }}>
                 Sigue el mismo estándar multivariante y de recursos digitales que Tinkay, enfocado en ramos para ocasiones especiales, centros de mesa y suscripciones florales semanales para oficinas y hogares.
               </p>
             </div>
@@ -424,17 +424,17 @@ export function ManualConfiguracionCatalogoModal({ abierto, onCerrar, negocio = 
         <div
           style={{
             padding: "12px 20px",
-            borderTop: "1px solid var(--linea)",
+            borderTop: "1px solid #E2E8F0",
             display: "flex",
             justifyContent: "flex-end",
-            background: "var(--fondo-suave)",
+            background: "#F8FAFC",
           }}
         >
           <button
             type="button"
             onClick={onCerrar}
             style={{
-              background: "var(--texto)",
+              background: "#0F172A",
               color: "#FFFFFF",
               border: "none",
               padding: "8px 18px",

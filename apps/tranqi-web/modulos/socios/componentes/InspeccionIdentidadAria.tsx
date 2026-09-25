@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Check, X } from "lucide-react";
 
 // TRQ-ABG-005 — el dictamen de Aria, tal y como lo ven las dos partes.
 //
@@ -131,7 +132,7 @@ export default function InspeccionIdentidadAria({
           <ul className="aria-documentos">
             {auditados.map(([tipo, d]) => (
               <li key={tipo} className="aria-documento">
-                <span className={claseNivel(d.nivel)}>{d.nivel === "APROBADO" ? "✓" : d.nivel === "OBSERVACION" ? "!" : "✕"}</span>
+                <span className={claseNivel(d.nivel)}>{d.nivel === "APROBADO" ? <Check size={14} strokeWidth={1.8} /> : d.nivel === "OBSERVACION" ? "!" : <X size={14} strokeWidth={1.8} />}</span>
                 <span className="aria-documento-tipo">{ETIQUETA_TIPO[tipo] ?? tipo}</span>
                 <span className="aria-documento-titular">
                   {d.titular ?? "sin titular legible"}
