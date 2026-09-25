@@ -5,7 +5,7 @@ import Link from "next/link";
 import { X } from "lucide-react";
 
 export const metadata = {
-  title: "Firma Electrónica de Documentos PDF · Tranqi",
+  title: "Firma de documentos PDF — tranqi",
   description: "Herramienta de firmado digital avanzado con certificado .p12 y código QR oficial",
 };
 

@@ -545,95 +545,58 @@ export function WidgetFirmaDocumentosPdf({
       {/* CABECERA DEL WIDGET */}
       <div
         style={{
-          background: "linear-gradient(135deg, #3B0086 0%, #5000BA 100%)",
-          borderRadius: "16px",
-          padding: "22px 26px",
-          color: "#FFFFFF",
           display: "flex",
           justifyContent: "space-between",
-          alignItems: "center",
-          boxShadow: "0 8px 24px rgba(80, 0, 186, 0.18)",
+          alignItems: "flex-start",
+          gap: "16px",
+          flexWrap: "wrap",
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
-          <div
-            style={{
-              background: "rgba(255, 255, 255, 0.18)",
-              padding: "10px",
-              borderRadius: "12px",
-              display: "flex",
-            }}
-          >
-            <FileCheck size={26} color="#FFF" />
-          </div>
-          <div>
-            <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
-              <span
-                style={{
-                  fontSize: "0.72rem",
-                  fontWeight: 800,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.06em",
-                  background: "rgba(255,255,255,0.2)",
-                  padding: "2px 8px",
-                  borderRadius: "6px",
-                }}
-              >
-                Herramienta Criptográfica PAdES
-              </span>
-            </div>
-            <h1 style={{ margin: 0, fontSize: "1.35rem", fontWeight: 800 }}>
-              Firma Electrónica de Documentos PDF
-            </h1>
-            <p style={{ margin: "2px 0 0 0", fontSize: "0.82rem", opacity: 0.9 }}>
-              Firma cualquier archivo PDF con tu certificado digital (.p12 / .pfx) y estampa QR oficial.
-            </p>
-          </div>
+        <div>
+          <h1 style={{ margin: 0, fontSize: "1.5rem", fontWeight: 800, color: "var(--texto)" }}>
+            Firmar un PDF
+          </h1>
+          <p style={{ margin: "4px 0 0 0", fontSize: "0.875rem", color: "var(--texto-suave)" }}>
+            Con tu certificado digital (.p12 o .pfx). Se añade un código QR para verificar la firma.
+          </p>
         </div>
 
         {mostrarBotonCerrar && onCerrar && (
           <button
             type="button"
             onClick={onCerrar}
-            title="Cerrar herramienta"
-            aria-label="Cerrar herramienta"
+            title="Cerrar"
+            aria-label="Cerrar"
             style={{
-              background: "rgba(255, 255, 255, 0.2)",
-              border: "none",
+              background: "#FFFFFF",
+              border: "1px solid var(--linea-fuerte)",
               borderRadius: "50%",
               width: "36px",
               height: "36px",
-              color: "#FFF",
+              color: "var(--texto)",
               cursor: "pointer",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              transition: "background 0.2s ease",
             }}
           >
-            <X size={20} />
+            <X size={18} />
           </button>
         )}
       </div>
 
-      {/* AVISO DE PRIVACIDAD ZERO-CUSTODY */}
+      {/* AVISO DE PRIVACIDAD */}
       <div
         style={{
-          background: "var(--exito-diluido)",
-          border: "1px solid var(--exito-linea)",
-          borderRadius: "12px",
-          padding: "10px 16px",
           display: "flex",
           alignItems: "center",
-          gap: "10px",
-          fontSize: "0.8rem",
-          color: "var(--exito-texto)",
+          gap: "8px",
+          fontSize: "0.84rem",
+          color: "var(--texto-2)",
         }}
       >
-        <ShieldCheck size={18} color="var(--exito)" style={{ flexShrink: 0 }} />
-        <span>
-          <strong>Privacidad Zero-Custody:</strong> Tu certificado `.p12`, contraseña y documentos se procesan exclusivamente en la memoria de tu dispositivo. <strong>Ningún archivo se envía a servidores externos.</strong>
-        </span>
+        <Lock size={16} aria-hidden="true" style={{ flexShrink: 0, color: "var(--texto-suave)" }} />
+        <span>Tu certificado y tu contraseña no salen de este dispositivo.</span>
       </div>
 
       {/* BARRA DE PASOS */}
@@ -656,7 +619,7 @@ export function WidgetFirmaDocumentosPdf({
               display: "flex",
               alignItems: "center",
               gap: "6px",
-              color: paso === "1_CARGAR_PDF" ? "#5000BA" : "var(--texto-suave)",
+              color: paso === "1_CARGAR_PDF" ? "var(--acento)" : "var(--texto-suave)",
               fontWeight: 700,
               fontSize: "0.82rem",
             }}
@@ -666,7 +629,7 @@ export function WidgetFirmaDocumentosPdf({
                 width: "22px",
                 height: "22px",
                 borderRadius: "50%",
-                background: paso === "1_CARGAR_PDF" ? "#5000BA" : "var(--linea)",
+                background: paso === "1_CARGAR_PDF" ? "var(--acento)" : "var(--linea)",
                 color: paso === "1_CARGAR_PDF" ? "#FFF" : "var(--texto-suave)",
                 display: "inline-flex",
                 alignItems: "center",
@@ -676,17 +639,17 @@ export function WidgetFirmaDocumentosPdf({
             >
               1
             </span>
-            1. Subir PDF
+            Subir PDF
           </div>
 
-          <ChevronRight size={16} aria-hidden="true" style={{ color: "var(--panel-linea, var(--linea))" }} />
+          <ChevronRight size={16} aria-hidden="true" style={{ color: "var(--linea)" }} />
 
           <div
             style={{
               display: "flex",
               alignItems: "center",
               gap: "6px",
-              color: paso === "2_CARGAR_CERTIFICADO" ? "#5000BA" : "var(--texto-suave)",
+              color: paso === "2_CARGAR_CERTIFICADO" ? "var(--acento)" : "var(--texto-suave)",
               fontWeight: 700,
               fontSize: "0.82rem",
             }}
@@ -696,7 +659,7 @@ export function WidgetFirmaDocumentosPdf({
                 width: "22px",
                 height: "22px",
                 borderRadius: "50%",
-                background: paso === "2_CARGAR_CERTIFICADO" ? "#5000BA" : "var(--linea)",
+                background: paso === "2_CARGAR_CERTIFICADO" ? "var(--acento)" : "var(--linea)",
                 color: paso === "2_CARGAR_CERTIFICADO" ? "#FFF" : "var(--texto-suave)",
                 display: "inline-flex",
                 alignItems: "center",
@@ -706,17 +669,17 @@ export function WidgetFirmaDocumentosPdf({
             >
               2
             </span>
-            2. Validar Firma (.p12)
+            Certificado
           </div>
 
-          <ChevronRight size={16} aria-hidden="true" style={{ color: "var(--panel-linea, var(--linea))" }} />
+          <ChevronRight size={16} aria-hidden="true" style={{ color: "var(--linea)" }} />
 
           <div
             style={{
               display: "flex",
               alignItems: "center",
               gap: "6px",
-              color: paso === "3_UBICAR_FIRMA" ? "#5000BA" : "var(--texto-suave)",
+              color: paso === "3_UBICAR_FIRMA" ? "var(--acento)" : "var(--texto-suave)",
               fontWeight: 700,
               fontSize: "0.82rem",
             }}
@@ -726,7 +689,7 @@ export function WidgetFirmaDocumentosPdf({
                 width: "22px",
                 height: "22px",
                 borderRadius: "50%",
-                background: paso === "3_UBICAR_FIRMA" ? "#5000BA" : "var(--linea)",
+                background: paso === "3_UBICAR_FIRMA" ? "var(--acento)" : "var(--linea)",
                 color: paso === "3_UBICAR_FIRMA" ? "#FFF" : "var(--texto-suave)",
                 display: "inline-flex",
                 alignItems: "center",
@@ -736,17 +699,17 @@ export function WidgetFirmaDocumentosPdf({
             >
               3
             </span>
-            3. Posicionar y Estampar
+            Colocar la firma
           </div>
 
-          <ChevronRight size={16} aria-hidden="true" style={{ color: "var(--panel-linea, var(--linea))" }} />
+          <ChevronRight size={16} aria-hidden="true" style={{ color: "var(--linea)" }} />
 
           <div
             style={{
               display: "flex",
               alignItems: "center",
               gap: "6px",
-              color: paso === "4_DOCUMENTO_FIRMADO" ? "#05876E" : "var(--texto-suave)",
+              color: paso === "4_DOCUMENTO_FIRMADO" ? "var(--acento)" : "var(--texto-suave)",
               fontWeight: 700,
               fontSize: "0.82rem",
             }}
@@ -756,7 +719,7 @@ export function WidgetFirmaDocumentosPdf({
                 width: "22px",
                 height: "22px",
                 borderRadius: "50%",
-                background: paso === "4_DOCUMENTO_FIRMADO" ? "#05876E" : "var(--linea)",
+                background: paso === "4_DOCUMENTO_FIRMADO" ? "var(--acento)" : "var(--linea)",
                 color: paso === "4_DOCUMENTO_FIRMADO" ? "#FFF" : "var(--texto-suave)",
                 display: "inline-flex",
                 alignItems: "center",
@@ -766,7 +729,7 @@ export function WidgetFirmaDocumentosPdf({
             >
               4
             </span>
-            4. Descargar
+            Descargar
           </div>
         </div>
 
@@ -818,7 +781,7 @@ export function WidgetFirmaDocumentosPdf({
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              color: "#5000BA",
+              color: "var(--acento)",
             }}
           >
             <Upload size={32} />
@@ -826,16 +789,16 @@ export function WidgetFirmaDocumentosPdf({
 
           <div>
             <h2 style={{ margin: "0 0 6px 0", fontSize: "1.2rem", fontWeight: 800, color: "var(--texto)" }}>
-              Selecciona o arrastra el documento PDF a firmar
+              Selecciona o arrastra el PDF
             </h2>
             <p style={{ margin: 0, fontSize: "0.85rem", color: "var(--texto-suave)", maxWidth: "520px" }}>
-              Admite contratos, actas, escritos judiciales, informes o cualquier documento en formato PDF de hasta 25MB.
+              Hasta 25 MB.
             </p>
           </div>
 
           <label
             style={{
-              background: "#5000BA",
+              background: "var(--acento)",
               color: "#FFFFFF",
               padding: "12px 24px",
               borderRadius: "10px",
@@ -845,11 +808,10 @@ export function WidgetFirmaDocumentosPdf({
               display: "inline-flex",
               alignItems: "center",
               gap: "8px",
-              boxShadow: "0 4px 12px rgba(80, 0, 186, 0.25)",
             }}
           >
             <FileText size={18} />
-            Examinar Archivo PDF
+            Elegir archivo
             <input
               type="file"
               accept="application/pdf,.pdf"
@@ -870,14 +832,13 @@ export function WidgetFirmaDocumentosPdf({
             maxWidth: "680px",
             margin: "0 auto",
             width: "100%",
-            boxShadow: "0 4px 16px rgba(0,0,0,0.04)",
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "16px" }}>
-            <KeyRound size={22} aria-hidden="true" />
+            <KeyRound size={22} aria-hidden="true" style={{ color: "var(--acento)" }} />
             <div>
               <h2 style={{ margin: 0, fontSize: "1.15rem", fontWeight: 800, color: "var(--texto)" }}>
-                Cargar Firma Electrónica (.p12 / .pfx)
+                Certificado digital (.p12 o .pfx)
               </h2>
               <p style={{ margin: "2px 0 0 0", fontSize: "0.8rem", color: "var(--texto-suave)" }}>
                 Documento cargado: <strong>{archivoPdf?.name}</strong> ({totalPaginas} {totalPaginas === 1 ? "página" : "páginas"})
@@ -888,7 +849,7 @@ export function WidgetFirmaDocumentosPdf({
           <form onSubmit={handleValidarP12} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
             <div>
               <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 700, color: "var(--texto-2)", marginBottom: "6px" }}>
-                Archivo de Certificado Digital (.p12 o .pfx):
+                Archivo del certificado (.p12 o .pfx):
               </label>
               <input
                 type="file"
@@ -907,14 +868,14 @@ export function WidgetFirmaDocumentosPdf({
 
             <div>
               <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 700, color: "var(--texto-2)", marginBottom: "6px" }}>
-                Contraseña del Certificado:
+                Contraseña del certificado:
               </label>
               <div style={{ position: "relative" }}>
                 <input
                   type={mostrarClave ? "text" : "password"}
                   value={claveP12}
                   onChange={(e) => setClaveP12(e.target.value)}
-                  placeholder="Ingresa la contraseña de tu archivo .p12"
+                  placeholder="Contraseña de tu certificado"
                   style={{
                     width: "100%",
                     padding: "10px 42px 10px 12px",
@@ -946,7 +907,6 @@ export function WidgetFirmaDocumentosPdf({
               <div
                 style={{
                   background: "var(--error-diluido)",
-                  border: "1px solid var(--error-linea)",
                   borderRadius: "8px",
                   padding: "10px 14px",
                   fontSize: "0.82rem",
@@ -965,7 +925,7 @@ export function WidgetFirmaDocumentosPdf({
               type="submit"
               disabled={procesandoP12 || !bufferP12 || !claveP12}
               style={{
-                background: procesandoP12 ? "var(--texto-tenue)" : "#5000BA",
+                background: procesandoP12 ? "var(--texto-tenue)" : "var(--acento)",
                 color: "#FFFFFF",
                 padding: "12px",
                 borderRadius: "8px",
@@ -977,18 +937,17 @@ export function WidgetFirmaDocumentosPdf({
                 alignItems: "center",
                 justifyContent: "center",
                 gap: "8px",
-                boxShadow: "0 4px 12px rgba(80, 0, 186, 0.25)",
               }}
             >
               {procesandoP12 ? (
                 <>
                   <RefreshCw size={16} className="animate-spin" />
-                  Validando Certificado...
+                  Validando certificado…
                 </>
               ) : (
                 <>
                   <KeyRound size={16} />
-                  Validar y Continuar
+                  Validar y continuar
                 </>
               )}
             </button>
@@ -1023,7 +982,7 @@ export function WidgetFirmaDocumentosPdf({
               >
                 <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "4px" }}>
                   <CheckCircle2 size={16} color="var(--exito)" />
-                  <strong style={{ fontSize: "0.84rem", color: "var(--exito-texto)" }}>Firma Verificada</strong>
+                  <strong style={{ fontSize: "0.84rem", color: "var(--exito-texto)" }}>Firma verificada</strong>
                 </div>
                 <p style={{ margin: 0, fontSize: "0.8rem", color: "var(--exito-texto)", fontWeight: 700 }}>
                   {infoCert.nombreTitular}
@@ -1037,7 +996,7 @@ export function WidgetFirmaDocumentosPdf({
             {/* Paginación del Documento */}
             <div>
               <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, color: "var(--texto-2)", marginBottom: "6px" }}>
-                Página donde estampar:
+                Página:
               </label>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "var(--fondo-suave)", padding: "6px 12px", borderRadius: "8px", border: "1px solid var(--linea)" }}>
                 <button
@@ -1065,7 +1024,7 @@ export function WidgetFirmaDocumentosPdf({
             {/* Accesos Rápidos de Alineación */}
             <div>
               <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, color: "var(--texto-2)", marginBottom: "6px" }}>
-                Alineaciones Rápidas:
+                Alineación rápida:
               </label>
               <div className="rejilla-auto" style={{ "--min": "180px", "--hueco": "8px" } as React.CSSProperties}>
                 <button
@@ -1073,8 +1032,8 @@ export function WidgetFirmaDocumentosPdf({
                   onClick={() => { setPosicionXPorcentaje(58.0); setPosicionYPorcentaje(82.0); }}
                   style={{
                     background: posicionXPorcentaje >= 50 && posicionYPorcentaje >= 70 ? "var(--acento-diluido)" : "var(--fondo-suave)",
-                    border: `1px solid ${posicionXPorcentaje >= 50 && posicionYPorcentaje >= 70 ? "#5000BA" : "var(--linea-fuerte)"}`,
-                    color: posicionXPorcentaje >= 50 && posicionYPorcentaje >= 70 ? "#5000BA" : "var(--texto-2)",
+                    border: `1px solid ${posicionXPorcentaje >= 50 && posicionYPorcentaje >= 70 ? "var(--acento)" : "var(--linea-fuerte)"}`,
+                    color: posicionXPorcentaje >= 50 && posicionYPorcentaje >= 70 ? "var(--acento)" : "var(--texto-2)",
                     padding: "8px",
                     borderRadius: "8px",
                     fontSize: "0.76rem",
@@ -1082,15 +1041,15 @@ export function WidgetFirmaDocumentosPdf({
                     cursor: "pointer",
                   }}
                 >
-                  Abajo Derecha
+                  Abajo a la derecha
                 </button>
                 <button
                   type="button"
                   onClick={() => { setPosicionXPorcentaje(8.0); setPosicionYPorcentaje(82.0); }}
                   style={{
                     background: posicionXPorcentaje < 30 && posicionYPorcentaje >= 70 ? "var(--acento-diluido)" : "var(--fondo-suave)",
-                    border: `1px solid ${posicionXPorcentaje < 30 && posicionYPorcentaje >= 70 ? "#5000BA" : "var(--linea-fuerte)"}`,
-                    color: posicionXPorcentaje < 30 && posicionYPorcentaje >= 70 ? "#5000BA" : "var(--texto-2)",
+                    border: `1px solid ${posicionXPorcentaje < 30 && posicionYPorcentaje >= 70 ? "var(--acento)" : "var(--linea-fuerte)"}`,
+                    color: posicionXPorcentaje < 30 && posicionYPorcentaje >= 70 ? "var(--acento)" : "var(--texto-2)",
                     padding: "8px",
                     borderRadius: "8px",
                     fontSize: "0.76rem",
@@ -1098,7 +1057,7 @@ export function WidgetFirmaDocumentosPdf({
                     cursor: "pointer",
                   }}
                 >
-                  Abajo Izquierda
+                  Abajo a la izquierda
                 </button>
                 <button
                   type="button"
@@ -1114,7 +1073,7 @@ export function WidgetFirmaDocumentosPdf({
                     cursor: "pointer",
                   }}
                 >
-                  Centrado Inferior
+                  Centro abajo
                 </button>
                 <button
                   type="button"
@@ -1130,7 +1089,7 @@ export function WidgetFirmaDocumentosPdf({
                     cursor: "pointer",
                   }}
                 >
-                  Margen Superior
+                  Arriba a la derecha
                 </button>
               </div>
             </div>
@@ -1138,7 +1097,7 @@ export function WidgetFirmaDocumentosPdf({
             {/* Micro-Ajustes */}
             <div>
               <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, color: "var(--texto-2)", marginBottom: "6px" }}>
-                Micro-Ajustes ({posicionXPorcentaje}%, {posicionYPorcentaje}%):
+                Microajustes ({posicionXPorcentaje}%, {posicionYPorcentaje}%):
               </label>
               <div className="rejilla-auto" style={{ "--min": "180px", "--hueco": "6px" } as React.CSSProperties}>
                 <button
@@ -1176,7 +1135,6 @@ export function WidgetFirmaDocumentosPdf({
               <div
                 style={{
                   background: "var(--error-diluido)",
-                  border: "1px solid var(--error-linea)",
                   borderRadius: "8px",
                   padding: "8px 12px",
                   fontSize: "0.78rem",
@@ -1196,7 +1154,7 @@ export function WidgetFirmaDocumentosPdf({
               onClick={handleEstamparFirma}
               disabled={estampando}
               style={{
-                background: estampando ? "var(--texto-tenue)" : "#5000BA",
+                background: estampando ? "var(--texto-tenue)" : "var(--acento)",
                 color: "#FFFFFF",
                 padding: "12px",
                 borderRadius: "10px",
@@ -1209,18 +1167,17 @@ export function WidgetFirmaDocumentosPdf({
                 justifyContent: "center",
                 gap: "8px",
                 marginTop: "auto",
-                boxShadow: "0 4px 12px rgba(80, 0, 186, 0.25)",
               }}
             >
               {estampando ? (
                 <>
                   <RefreshCw size={16} className="animate-spin" />
-                  Estampando Firma...
+                  Firmando documento…
                 </>
               ) : (
                 <>
                   <Sparkles size={16} />
-                  Estampar Firma Digital
+                  Firmar documento
                 </>
               )}
             </button>
@@ -1283,7 +1240,7 @@ export function WidgetFirmaDocumentosPdf({
                     width: `${((230 / 595.28) * 100).toFixed(2)}%`,
                     height: `${((72 / 841.89) * 100).toFixed(2)}%`,
                     background: "rgba(255, 255, 255, 0.98)",
-                    border: "1.5px solid #5000BA",
+                    border: "1.5px solid var(--acento)",
                     borderRadius: "3px",
                     padding: "2px 4px",
                     boxSizing: "border-box",
@@ -1320,7 +1277,7 @@ export function WidgetFirmaDocumentosPdf({
                         style={{ width: "100%", height: "100%", objectFit: "contain" }}
                       />
                     ) : (
-                      <QrCode size={24} color="#5000BA" />
+                      <QrCode size={24} color="var(--acento)" />
                     )}
                   </div>
 
@@ -1337,7 +1294,7 @@ export function WidgetFirmaDocumentosPdf({
                       overflow: "hidden",
                     }}
                   >
-                    <span style={{ fontSize: "clamp(0.48rem, 1.1vw, 0.65rem)", fontWeight: 800, color: "#5000BA", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                    <span style={{ fontSize: "clamp(0.48rem, 1.1vw, 0.65rem)", fontWeight: 800, color: "var(--acento)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                       FIRMADO DIGITALMENTE
                     </span>
                     <strong style={{ fontSize: "clamp(0.44rem, 1.0vw, 0.60rem)", fontWeight: 800, color: "var(--texto)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
@@ -1347,7 +1304,7 @@ export function WidgetFirmaDocumentosPdf({
                       {infoCert.entidadEmisora}
                     </span>
                     <span style={{ fontSize: "clamp(0.34rem, 0.75vw, 0.44rem)", color: "var(--texto-suave)", whiteSpace: "nowrap" }}>
-                      PAdES · Validez Legal EC
+                      Validez legal EC
                     </span>
                   </div>
                 </div>
@@ -1400,10 +1357,10 @@ export function WidgetFirmaDocumentosPdf({
               </div>
               <div>
                 <h3 style={{ margin: 0, fontSize: "1.05rem", fontWeight: 800, color: "var(--exito-texto)" }}>
-                  ¡Documento firmado digitalmente con éxito!
+                  ¡Documento firmado con éxito!
                 </h3>
                 <p style={{ margin: "2px 0 0 0", fontSize: "0.82rem", color: "var(--exito-texto)" }}>
-                  El documento contiene la estampa oficial con código QR y metadatos PAdES válidos ante la ley ecuatoriana.
+                  El documento contiene la estampa con código QR y firma con validez legal en Ecuador.
                 </p>
               </div>
             </div>
@@ -1413,7 +1370,7 @@ export function WidgetFirmaDocumentosPdf({
                 type="button"
                 onClick={handleDescargarFirmado}
                 style={{
-                  background: "#05876E",
+                  background: "var(--acento)",
                   color: "#FFFFFF",
                   padding: "10px 18px",
                   borderRadius: "8px",
@@ -1424,7 +1381,6 @@ export function WidgetFirmaDocumentosPdf({
                   display: "inline-flex",
                   alignItems: "center",
                   gap: "6px",
-                  boxShadow: "0 4px 12px rgba(5, 135, 110, 0.25)",
                 }}
               >
                 <Download size={16} /> Descargar PDF
@@ -1435,7 +1391,7 @@ export function WidgetFirmaDocumentosPdf({
                 onClick={handleReiniciar}
                 style={{
                   background: "#FFFFFF",
-                  border: "1.5px solid var(--linea-fuerte)",
+                  border: "1px solid var(--linea-fuerte)",
                   color: "var(--texto-2)",
                   padding: "10px 16px",
                   borderRadius: "8px",
@@ -1447,7 +1403,7 @@ export function WidgetFirmaDocumentosPdf({
                   gap: "6px",
                 }}
               >
-                <RefreshCw size={14} /> Firmar Otro
+                <RefreshCw size={14} /> Firmar otro
               </button>
             </div>
           </div>
@@ -1477,7 +1433,7 @@ export function WidgetFirmaDocumentosPdf({
             >
               <iframe
                 src={urlPdfFirmado ? `${urlPdfFirmado}#page=${paginaActual}&view=Fit&toolbar=0&navpanes=0&scrollbar=0` : ""}
-                title="Visor PDF Firmado"
+                title="Visor de PDF firmado"
                 style={{
                   width: "100%",
                   height: "100%",

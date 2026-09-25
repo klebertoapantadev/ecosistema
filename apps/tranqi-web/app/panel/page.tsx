@@ -56,7 +56,7 @@ const WIDGETS_OPERADOR: { clave: string; icono: LucideIcon; nombre: string; deta
   { clave: "historial_pagos", icono: CreditCard, nombre: "Historial de Pagos", detalle: "Valores generados, pagados y comprobantes SRI", ruta: "/panel/administrar?widget=historial_pagos" },
   { clave: "gestion_red_abogados", icono: UserCheck, nombre: "Red Profesional & Abogados", detalle: "Alta manual, especialidades y horarios", ruta: "/panel/red-profesional?widget=gestion_red_abogados" },
   { clave: "gestion_informativos", icono: Bell, nombre: "Gestión de Informativos", detalle: "Alertas, noticias y beneficios", ruta: "/panel/administrar?widget=gestion_informativos" },
-  { clave: "crm_clientes", icono: Users, nombre: "CRM Jurídico & Clientes", detalle: "Directorio 360°, KPIs y alta asistida", ruta: "/panel/clientes" },
+  { clave: "crm_clientes", icono: Users, nombre: "Clientes", detalle: "Directorio y expedientes", ruta: "/panel/clientes" },
   { clave: "disponibilidad_abogados", icono: Scale, nombre: "Disponibilidad de Abogados", detalle: "Aprobación de horas y turnos", ruta: "/panel/agendamiento?widget=disponibilidad_abogados" },
   { clave: "gestion_convenios_corporativos", icono: Building2, nombre: "Convenios Corporativos & B2B", detalle: "Alianzas y beneficios empresariales", ruta: "/panel/administrar?widget=gestion_convenios_corporativos" },
   { clave: "compliance_score_legal", icono: ShieldCheck, nombre: "Compliance & Score Legal", detalle: "Matriz regulatoria y vigencias Tranqi", ruta: "/panel/administrar?widget=compliance_score_legal" },
@@ -84,7 +84,7 @@ const WIDGETS_ADMIN: { clave: string; icono: LucideIcon; nombre: string; detalle
   { clave: "legal_hr_laboral", icono: Briefcase, nombre: "Legal HR & Finiquitos", detalle: "Contratos de trabajo y actas SUT", ruta: "/panel/administrar?widget=legal_hr_laboral", estado: "registrado" },
   { clave: "pasarela_payphone", icono: CreditCard, nombre: "Pasarela Payphone", detalle: "Botón de pago y simulador", ruta: "/panel/configuracion?widget=pasarela_payphone", estado: "registrado" },
   { clave: "configuracion_facturacion_sri", icono: FileCheck, nombre: "Facturación SRI (.p12)", detalle: "Emisor, firma .p12 y secuenciales", ruta: "/panel/configuracion?widget=configuracion_facturacion_sri", estado: "registrado" },
-  { clave: "crm_clientes", icono: Users, nombre: "CRM Jurídico & Clientes", detalle: "Expedientes y conflict check", ruta: "/panel/clientes", estado: "registrado" },
+  { clave: "crm_clientes", icono: Users, nombre: "Clientes", detalle: "Directorio y expedientes", ruta: "/panel/clientes", estado: "registrado" },
   { clave: "billetera_documentos", icono: Folder, nombre: "Billetera digital", detalle: "Bóveda segura OCR/TTL", ruta: "/panel/billetera-documentos", estado: "registrado" },
   { clave: "gestion_usuarios", icono: Users, nombre: "Gestión de usuarios", detalle: "Membresías y perfiles", ruta: "/panel/usuarios", estado: "registrado" },
   { clave: "socios", icono: UserCheck, nombre: "Aprobación de socios", detalle: "Cédula, título y matrícula", ruta: "/panel/socios", estado: "registrado" },
@@ -95,8 +95,8 @@ const WIDGETS_ADMIN: { clave: string; icono: LucideIcon; nombre: string; detalle
   { clave: "taller_floral", icono: ClipboardList, nombre: "Taller", detalle: "Elaboración, alertas y estado Listo Entrega", ruta: "/panel/administrar?widget=taller_floral", estado: "registrado" },
   { clave: "pedidos_tienda", icono: ClipboardList, nombre: "Pedidos de Tienda", detalle: "Órdenes, ruta GPS y flete interno", ruta: "/panel/pedidos", estado: "registrado" },
   { clave: "configuracion_negocio", icono: Settings, nombre: "Configuración del negocio", detalle: "Términos, locales y canales", ruta: "/panel/configuracion", estado: "registrado" },
-  { clave: "auditoria", icono: ShieldCheck, nombre: "Auditoría de cambios", detalle: "Registro inalterable", ruta: "/panel/auditoria", estado: "registrado" },
-  { clave: "emision_notificaciones", icono: Bell, nombre: "Emisión de notificaciones", detalle: "Despacho masivo", ruta: "/panel/emision-notificaciones", estado: "registrado" },
+  { clave: "auditoria", icono: ShieldCheck, nombre: "Auditoría", detalle: "Registro de actividad y cambios", ruta: "/panel/auditoria", estado: "registrado" },
+  { clave: "emision_notificaciones", icono: Bell, nombre: "Envío de notificaciones", detalle: "Envío de avisos multicanal", ruta: "/panel/emision-notificaciones", estado: "registrado" },
 ];
 
 interface Props {

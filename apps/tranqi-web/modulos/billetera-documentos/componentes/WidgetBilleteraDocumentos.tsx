@@ -77,7 +77,7 @@ export interface EnlaceTTL {
    Se va tambien el `color` por categoria -- seis colores ajenos a la paleta
    para seis carpetas que no compiten entre si (§3, regla 1). */
 const CATEGORIAS_CONFIG: Record<string, { label: string; Icono: LucideIcon; desc: string }> = {
-  todas:       { label: "Todos los documentos",   Icono: Folder,        desc: "Tu bóveda completa" },
+  todas:       { label: "Todos los documentos",   Icono: Folder,        desc: "Todos tus documentos" },
   identidad:   { label: "Identidad",              Icono: IdCard,        desc: "Cédula, licencia, pasaporte y votación" },
   vehicular:   { label: "Vehículos y seguros",    Icono: Car,           desc: "Matrícula, SOAT y pólizas de auto" },
   contratos:   { label: "Contratos y servicios",  Icono: Scroll,        desc: "Arriendo, servicios y seguros médicos" },
@@ -293,9 +293,9 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
         const manualesConservados = metadatosDinamicos.filter(m => !clavesSugeridas.has(m.clave.toLowerCase()));
         setMetadatosDinamicos([...listaSugerida, ...manualesConservados]);
 
-        const resumenFinal = a.resumenOcr || `Tranqi analizó el documento exitosamente.${a.requiereCaducidad && a.fechaCaducidad ? ` Fecha de vencimiento detectada: ${a.fechaCaducidad}.` : " No requiere control de caducidad."} Metadatos dinámicos cargados.`;
+        const resumenFinal = a.resumenOcr || `Tranqi analizó el documento correctamente.${a.requiereCaducidad && a.fechaCaducidad ? ` Fecha de vencimiento: ${a.fechaCaducidad}.` : " No requiere control de caducidad."}`;
         setResumenAria(resumenFinal);
-        mostrarToast("Análisis completado. Metadatos dinámicos cargados.", "exito");
+        mostrarToast("Análisis completado.", "exito");
       } else if (json.motivo) {
         setResumenAria(json.motivo);
         mostrarToast(json.motivo, "info");
@@ -515,7 +515,7 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
       const json = await res.json();
 
       if (json.ok) {
-        mostrarToast("Documento y metadatos dinámicos resguardados exitosamente.");
+        mostrarToast("Documento guardado correctamente.");
         setModalSubirAbierto(false);
         limpiarFormularioSubida();
         cargarDocumentos();
@@ -582,7 +582,7 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
       if (json.ok && json.data) {
         const urlFinal = json.data.enlace_url || json.data.enlaceCompleto || "";
         setEnlaceGenerado(urlFinal);
-        mostrarToast("Enlace efímero generado.");
+        mostrarToast("Enlace temporal generado.");
         abrirCompartir(docParaCompartir);
       } else {
         mostrarToast(json.error || "Error al generar enlace", "error");
@@ -675,7 +675,7 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
             bottom: "24px",
             right: "24px",
             zIndex: 9999,
-            background: toastMensaje.tipo === "exito" ? "#05876E" : toastMensaje.tipo === "error" ? "var(--error)" : "#5000BA",
+            background: toastMensaje.tipo === "exito" ? "var(--exito)" : toastMensaje.tipo === "error" ? "var(--error)" : "var(--acento)",
             color: "#ffffff",
             padding: "12px 20px",
             borderRadius: "12px",
@@ -695,74 +695,65 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
       {/* HEADER HERO */}
       <section
         style={{
-          background: "linear-gradient(135deg, #2A085C 0%, #5000BA 100%)",
-          color: "#ffffff",
-          borderRadius: "20px",
-          padding: "24px 28px",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "flex-start",
+          flexWrap: "wrap",
+          gap: "16px",
           marginBottom: "24px",
-          boxShadow: "0 10px 30px rgba(80, 0, 186, 0.2)",
-          position: "relative",
-          overflow: "hidden"
         }}
       >
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "16px", position: "relative", zIndex: 2 }}>
-          <div>
-            <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", background: "rgba(255,255,255,0.15)", padding: "4px 12px", borderRadius: "999px", fontSize: "0.75rem", fontWeight: 800, marginBottom: "10px", textTransform: "uppercase", letterSpacing: "0.5px" }}>
-              <Shield size={13} /> Bóveda Digital Cifrada • Metadatos Dinámicos
-            </div>
-            <h1 style={{ fontSize: "1.6rem", fontWeight: 900, margin: "0 0 8px 0", letterSpacing: "-0.5px" }}>
-              Billetera Digital de Documentos Seguros
-            </h1>
-            <p style={{ fontSize: "0.88rem", opacity: 0.9, margin: 0, maxWidth: "680px", lineHeight: 1.45 }}>
-              Custodia tus cédulas (anverso y reverso), matrículas, contratos, certificados y títulos. Parámetros dinámicos y editables, alertas automáticas de caducidad (3 meses) y enlaces efímeros protegidos (TTL).
-            </p>
-          </div>
+        <div>
+          <h1 style={{ fontSize: "1.5rem", fontWeight: 800, margin: "0 0 4px 0", color: "var(--texto)" }}>
+            Billetera de documentos
+          </h1>
+          <p style={{ fontSize: "0.875rem", color: "var(--texto-suave)", margin: 0 }}>
+            Cédulas, matrículas, contratos y títulos, con aviso antes de que caduquen.
+          </p>
+        </div>
 
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          <button
+            type="button"
+            onClick={() => setModalSubirAbierto(true)}
+            style={{
+              background: "var(--acento)",
+              color: "#ffffff",
+              border: "none",
+              borderRadius: "10px",
+              padding: "10px 18px",
+              fontSize: "0.86rem",
+              fontWeight: 800,
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+            }}
+          >
+            <Upload size={16} /> Subir documentos
+          </button>
+
+          {onCerrar && (
             <button
               type="button"
-              onClick={() => setModalSubirAbierto(true)}
+              onClick={onCerrar}
               style={{
-                background: "#05876E",
-                color: "#ffffff",
-                border: "none",
-                borderRadius: "12px",
-                padding: "12px 20px",
-                fontSize: "0.88rem",
-                fontWeight: 800,
-                cursor: "pointer",
+                background: "#ffffff",
+                border: "1px solid var(--linea-fuerte)",
+                borderRadius: "50%",
+                width: "36px",
+                height: "36px",
                 display: "flex",
                 alignItems: "center",
-                gap: "8px",
-                boxShadow: "0 4px 14px rgba(5, 135, 110, 0.4)",
-                transition: "transform 0.15s ease"
+                justifyContent: "center",
+                cursor: "pointer",
+                color: "var(--texto)",
               }}
+              title="Cerrar módulo"
             >
-              <Upload size={17} /> Subir Documento (Multi-Archivo)
+              <X size={18} />
             </button>
-
-            {onCerrar && (
-              <button
-                type="button"
-                onClick={onCerrar}
-                style={{
-                  background: "rgba(255,255,255,0.15)",
-                  color: "#ffffff",
-                  border: "none",
-                  borderRadius: "12px",
-                  width: "42px",
-                  height: "42px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  cursor: "pointer"
-                }}
-                title="Cerrar módulo"
-              >
-                <X size={20} />
-              </button>
-            )}
-          </div>
+          )}
         </div>
       </section>
 
@@ -778,11 +769,11 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
               type="button"
               onClick={() => setCategoriaActiva(key)}
               style={{
-                background: esActiva ? "#5000BA" : "#ffffff",
+                background: esActiva ? "var(--acento)" : "#ffffff",
                 color: esActiva ? "#ffffff" : "var(--texto-2)",
-                border: esActiva ? "1px solid #5000BA" : "1px solid var(--linea)",
-                borderRadius: "12px",
-                padding: "10px 16px",
+                border: esActiva ? "1px solid var(--acento)" : "1px solid var(--linea)",
+                borderRadius: "10px",
+                padding: "8px 14px",
                 fontSize: "0.82rem",
                 fontWeight: 700,
                 cursor: "pointer",
@@ -790,7 +781,6 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
                 alignItems: "center",
                 gap: "8px",
                 whiteSpace: "nowrap",
-                boxShadow: esActiva ? "0 4px 12px rgba(80, 0, 186, 0.25)" : "none",
                 transition: "all 0.15s ease"
               }}
             >
@@ -834,7 +824,7 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
             type="text"
             value={busqueda}
             onChange={(e) => setBusqueda(e.target.value)}
-            placeholder="Buscar por título, tipo, titular, número o cualquier metadato..."
+            placeholder="Buscar por título, titular o número"
             style={{
               width: "100%",
               padding: "10px 14px 10px 38px",
@@ -858,9 +848,9 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
               background: "#ffffff"
             }}
           >
-            <option value="todos">Todos los Estados</option>
-            <option value="vigente">Solo Vigentes</option>
-            <option value="por_vencer">Por Vencer (Alerta Activa)</option>
+            <option value="todos">Todos los estados</option>
+            <option value="vigente">Solo vigentes</option>
+            <option value="por_vencer">Por vencer</option>
             <option value="vencido">Caducados</option>
           </select>
 
@@ -868,8 +858,8 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
             type="button"
             onClick={cargarDocumentos}
             style={{
-              background: "var(--fondo-hundido)",
-              border: "1px solid var(--linea)",
+              background: "#ffffff",
+              border: "1px solid var(--linea-fuerte)",
               borderRadius: "10px",
               padding: "10px 14px",
               cursor: "pointer",
@@ -877,7 +867,8 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
               alignItems: "center",
               gap: "6px",
               fontSize: "0.82rem",
-              fontWeight: 700
+              fontWeight: 700,
+              color: "var(--texto)"
             }}
             title="Refrescar lista"
           >
@@ -889,8 +880,8 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
       {/* LISTA GRID DE DOCUMENTOS */}
       {cargando ? (
         <div style={{ padding: "50px", textAlign: "center", background: "#ffffff", borderRadius: "16px", border: "1px solid var(--linea)" }}>
-          <RefreshCw size={28} className="anim-girar" color="#5000BA" style={{ marginBottom: "10px" }} />
-          <p style={{ fontSize: "0.9rem", color: "var(--texto-suave)", margin: 0 }}>Cargando documentos de la bóveda segura...</p>
+          <RefreshCw size={28} className="anim-girar" color="var(--acento)" style={{ marginBottom: "10px" }} />
+          <p style={{ fontSize: "0.9rem", color: "var(--texto-suave)", margin: 0 }}>Cargando documentos…</p>
         </div>
       ) : documentosFiltrados.length === 0 ? (
         <div style={{ padding: "60px 20px", textAlign: "center", background: "#ffffff", borderRadius: "16px", border: "1.5px dashed var(--linea-fuerte)" }}>
@@ -899,13 +890,13 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
             No hay documentos en esta categoría
           </h3>
           <p style={{ fontSize: "0.86rem", color: "var(--texto-suave)", margin: "0 0 16px 0", maxWidth: "480px", marginLeft: "auto", marginRight: "auto" }}>
-            Guarda tus cédulas (anverso y reverso), contratos, matrículas o títulos para mantenerlos protegidos y generar enlaces temporales con PIN.
+            Guarda tus cédulas (anverso y reverso), contratos, matrículas o títulos para mantenerlos organizados y generar enlaces temporales con PIN.
           </p>
           <button
             type="button"
             onClick={() => setModalSubirAbierto(true)}
             style={{
-              background: "#5000BA",
+              background: "var(--acento)",
               color: "#ffffff",
               border: "none",
               borderRadius: "10px",
@@ -915,7 +906,7 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
               cursor: "pointer"
             }}
           >
-            Subir Documento
+            Subir documentos
           </button>
         </div>
       ) : (
@@ -956,10 +947,6 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
                     <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                       <catConfig.Icono size={20} aria-hidden="true" />
                       <div className="fila-chips">
-                        {/* TRQ-010: la categoría ya la dicen el icono de al lado y la
-                            palabra de dentro. Con un color propio por categoría, seis
-                            carpetas que no compiten entre sí producían seis acentos
-                            distintos en la misma rejilla (§3, regla 1). */}
                         <span className="chip-origen">
                           {catConfig.label}
                         </span>
@@ -967,8 +954,8 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
                           <span
                             style={{
                               fontSize: "0.68rem",
-                              fontWeight: 800,
-                              color: "#5000BA",
+                              fontWeight: 700,
+                              color: "var(--acento)",
                               background: "var(--acento-diluido)",
                               padding: "2px 8px",
                               borderRadius: "6px"
@@ -982,17 +969,17 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
 
                     {/* SEMÁFORO DE CADUCIDAD */}
                     {doc.estado_calculado === "vigente" && (
-                      <span style={{ fontSize: "0.72rem", fontWeight: 700, color: "#05876E", background: "var(--exito-diluido)", padding: "3px 8px", borderRadius: "10px", display: "flex", alignItems: "center", gap: "4px" }}>
+                      <span style={{ fontSize: "0.72rem", fontWeight: 700, color: "var(--exito-texto)", background: "var(--exito-diluido)", padding: "3px 8px", borderRadius: "10px", display: "flex", alignItems: "center", gap: "4px" }}>
                         <CheckCircle2 size={12} /> Vigente
                       </span>
                     )}
                     {doc.estado_calculado === "por_vencer" && (
-                      <span style={{ fontSize: "0.72rem", fontWeight: 700, color: "var(--aviso)", background: "var(--aviso-diluido)", padding: "3px 8px", borderRadius: "10px", display: "flex", alignItems: "center", gap: "4px" }} title={`Alerta activa a ${mesesAlerta} meses de caducidad`}>
+                      <span style={{ fontSize: "0.72rem", fontWeight: 700, color: "var(--aviso-texto)", background: "var(--aviso-diluido)", padding: "3px 8px", borderRadius: "10px", display: "flex", alignItems: "center", gap: "4px" }} title={`Aviso activo a ${mesesAlerta} meses de caducidad`}>
                         <AlertTriangle size={12} /> Vence en {doc.dias_para_vencer}d
                       </span>
                     )}
                     {doc.estado_calculado === "vencido" && (
-                      <span style={{ fontSize: "0.72rem", fontWeight: 700, color: "var(--error)", background: "var(--error-diluido)", padding: "3px 8px", borderRadius: "10px", display: "flex", alignItems: "center", gap: "4px" }}>
+                      <span style={{ fontSize: "0.72rem", fontWeight: 700, color: "var(--error-texto)", background: "var(--error-diluido)", padding: "3px 8px", borderRadius: "10px", display: "flex", alignItems: "center", gap: "4px" }}>
                         <XCircle size={12} /> Caducado
                       </span>
                     )}
@@ -1002,14 +989,14 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
                     {doc.doc_titulo}
                   </h3>
 
-                  {/* METADATOS EXTRACTOS & DINÁMICOS */}
+                  {/* METADATOS EXTRACTOS */}
                   <div style={{ fontSize: "0.78rem", color: "var(--texto-2)", display: "flex", flexDirection: "column", gap: "4px", marginBottom: "14px" }}>
                     {doc.doc_fecha_caducidad && (
                       <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                         <Calendar size={13} color="var(--error)" />
                         <span>Caduca: <strong>{new Date(doc.doc_fecha_caducidad).toLocaleDateString()}</strong></span>
                         {doc.doc_alertar_caducidad !== false && (
-                          <span style={{ fontSize: "0.68rem", color: "#5000BA", background: "var(--acento-diluido)", padding: "1px 6px", borderRadius: "4px", fontWeight: 700 }}>
+                          <span style={{ fontSize: "0.68rem", color: "var(--acento)", background: "var(--acento-diluido)", padding: "1px 6px", borderRadius: "4px", fontWeight: 700 }}>
                             {mesesAlerta}m
                           </span>
                         )}
@@ -1030,7 +1017,7 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
                       </div>
                     )}
 
-                    {/* Chips de metadatos dinámicos adicionales */}
+                    {/* Chips de datos adicionales */}
                     {metaDinamicos.length > 0 && (
                       <div style={{ display: "flex", flexWrap: "wrap", gap: "4px", marginTop: "4px" }}>
                         {metaDinamicos.slice(0, 3).map((m, idx: number) => (
@@ -1065,9 +1052,9 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
                       type="button"
                       onClick={() => abrirVisor(doc)}
                       style={{
-                        background: "var(--fondo-hundido)",
+                        background: "#ffffff",
                         color: "var(--texto)",
-                        border: "none",
+                        border: "1px solid var(--linea-fuerte)",
                         borderRadius: "8px",
                         padding: "7px 12px",
                         fontSize: "0.78rem",
@@ -1077,7 +1064,7 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
                         alignItems: "center",
                         gap: "4px"
                       }}
-                      title="Ver archivos y metadatos dinámicos"
+                      title="Ver archivos y datos del documento"
                     >
                       <Eye size={13} /> Ver ({totalPartes})
                     </button>
@@ -1086,9 +1073,9 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
                       type="button"
                       onClick={() => abrirCompartir(doc)}
                       style={{
-                        background: "var(--acento-diluido)",
+                        background: "#ffffff",
                         color: "var(--acento)",
-                        border: "none",
+                        border: "1px solid var(--acento-linea)",
                         borderRadius: "8px",
                         padding: "7px 12px",
                         fontSize: "0.78rem",
@@ -1098,9 +1085,9 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
                         alignItems: "center",
                         gap: "4px"
                       }}
-                      title="Compartir mediante enlace efímero con tiempo de expiración"
+                      title="Compartir mediante enlace temporal"
                     >
-                      <Share2 size={13} /> Compartir TTL
+                      <Share2 size={13} /> Enlace temporal
                     </button>
                   </div>
 
@@ -1158,10 +1145,10 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px" }}>
               <div>
                 <h2 style={{ fontSize: "1.25rem", fontWeight: 800, margin: 0, color: "var(--texto)", display: "flex", alignItems: "center", gap: "8px" }}>
-                  <Upload size={20} color="#5000BA" /> Resguardar Documento en Billetera
+                  <Upload size={20} color="var(--acento)" /> Guardar documento en la billetera
                 </h2>
                 <p style={{ fontSize: "0.8rem", color: "var(--texto-suave)", margin: 0 }}>
-                  Formatos PDF o Imágenes (PNG, JPG, WebP). Sube una o varias partes (ej. anverso y reverso).
+                  Formatos PDF o imágenes (PNG, JPG, WebP). Sube una o varias partes (ej. anverso y reverso).
                 </p>
               </div>
               <button
@@ -1175,7 +1162,7 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
             </div>
 
             <form onSubmit={guardarDocumento}>
-              {/* ZONA DE CARGA MULTI-ARCHIVO */}
+              {/* ZONA DE CARGA */}
               <div
                 style={{
                   border: "2px dashed var(--acento-linea)",
@@ -1202,11 +1189,11 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
                 />
                 <div>
                   <Upload size={32} color="var(--acento)" style={{ margin: "0 auto 6px auto" }} />
-                  <div style={{ fontSize: "0.92rem", fontWeight: 800, color: "#4C1D95" }}>
-                    Haz clic o arrastra 1 o más archivos aquí
+                  <div style={{ fontSize: "0.92rem", fontWeight: 800, color: "var(--acento)" }}>
+                    Selecciona o arrastra 1 o más archivos aquí
                   </div>
                   <div style={{ fontSize: "0.76rem", color: "var(--texto-suave)" }}>
-                    Imágenes (PNG, JPG, WebP) o PDFs (hasta 25MB c/u). Ej. Anverso + Reverso de Cédula.
+                    Imágenes (PNG, JPG, WebP) o PDF (hasta 25 MB c/u). Ej. anverso y reverso de cédula.
                   </div>
                 </div>
               </div>
@@ -1216,7 +1203,7 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
                 <div style={{ marginBottom: "16px" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
                     <span style={{ fontSize: "0.78rem", fontWeight: 800, color: "var(--texto-2)" }}>
-                      Archivos Adjuntos ({archivosSeleccionados.length}):
+                      Archivos adjuntos ({archivosSeleccionados.length}):
                     </span>
                     <button
                       type="button"
@@ -1224,7 +1211,7 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
                       disabled={analizandoConAria}
                       style={{
                         background: "var(--acento-diluido)",
-                        color: "#5000BA",
+                        color: "var(--acento)",
                         border: "1px solid var(--acento-linea)",
                         borderRadius: "8px",
                         padding: "4px 10px",
@@ -1237,7 +1224,7 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
                       }}
                     >
                       <Sparkles size={13} className={analizandoConAria ? "anim-girar" : ""} />
-                      {analizandoConAria ? "Tranqi Analizando..." : "Re-analizar con Tranqi (IA)"}
+                      {analizandoConAria ? "Analizando…" : "Volver a analizar con Tranqi"}
                     </button>
                   </div>
 
@@ -1449,7 +1436,7 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
                 </div>
               )}
 
-              {/* BANNER DE DETECCIÓN INTELIGENTE / ADVERTENCIA DE VALORES OBTENIDOS */}
+              {/* BANNER DE DETECCIÓN INTELIGENTE */}
               {analisisDetectado && !analizandoConAria && (
                 <div
                   style={{
@@ -1463,37 +1450,37 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
                 >
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "10px", flexWrap: "wrap", gap: "6px" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 800, color: "#5000BA", fontSize: "0.86rem" }}>
-                      <Sparkles size={16} /> Datos Clave Detectados por Tranqi (IA)
+                      <Sparkles size={16} /> Datos detectados por Tranqi
                     </div>
                     {analisisDetectado.requiereCaducidad ? (
                       <span style={{ fontSize: "0.72rem", fontWeight: 700, color: "var(--error)", background: "var(--error-diluido)", border: "1px solid var(--error-linea)", padding: "2px 8px", borderRadius: "8px", display: "flex", alignItems: "center", gap: "4px" }}>
-                        <BellRing size={12} /> Requiere Caducidad ({analisisDetectado.fechaCaducidad || "Programada"})
+                        <BellRing size={12} /> Requiere caducidad ({analisisDetectado.fechaCaducidad || "Programada"})
                       </span>
                     ) : (
-                      <span style={{ fontSize: "0.72rem", fontWeight: 700, color: "#05876E", background: "var(--exito-diluido)", border: "1px solid var(--exito-linea)", padding: "2px 8px", borderRadius: "8px", display: "flex", alignItems: "center", gap: "4px" }}>
-                        <CheckCircle2 size={12} /> Sin Caducidad Requerida (Desmarcada)
+                      <span style={{ fontSize: "0.72rem", fontWeight: 700, color: "var(--exito-texto)", background: "var(--exito-diluido)", border: "1px solid var(--exito-linea)", padding: "2px 8px", borderRadius: "8px", display: "flex", alignItems: "center", gap: "4px" }}>
+                        <CheckCircle2 size={12} /> Sin caducidad requerida
                       </span>
                     )}
                   </div>
 
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "8px", fontSize: "0.78rem", marginBottom: "10px" }}>
                     <div style={{ background: "#ffffff", padding: "8px 10px", borderRadius: "8px", border: "1px solid var(--linea)" }}>
-                      <span style={{ color: "var(--texto-suave)", display: "block", fontSize: "0.7rem", fontWeight: 600 }}>Tipo de Documento</span>
+                      <span style={{ color: "var(--texto-suave)", display: "block", fontSize: "0.7rem", fontWeight: 600 }}>Tipo de documento</span>
                       <strong style={{ color: "var(--texto)" }}>{analisisDetectado.queEs || "Documento"}</strong>
                     </div>
 
                     <div style={{ background: "#ffffff", padding: "8px 10px", borderRadius: "8px", border: "1px solid var(--linea)" }}>
-                      <span style={{ color: "var(--texto-suave)", display: "block", fontSize: "0.7rem", fontWeight: 600 }}>A quién pertenece</span>
+                      <span style={{ color: "var(--texto-suave)", display: "block", fontSize: "0.7rem", fontWeight: 600 }}>Titular</span>
                       <strong style={{ color: "var(--texto)" }}>{analisisDetectado.titularNombre || "No especificado"}</strong>
                     </div>
 
                     <div style={{ background: "#ffffff", padding: "8px 10px", borderRadius: "8px", border: "1px solid var(--linea)" }}>
-                      <span style={{ color: "var(--texto-suave)", display: "block", fontSize: "0.7rem", fontWeight: 600 }}>Identificación / ID</span>
+                      <span style={{ color: "var(--texto-suave)", display: "block", fontSize: "0.7rem", fontWeight: 600 }}>Identificación</span>
                       <strong style={{ color: "var(--texto)" }}>{analisisDetectado.titularIdentificacion || "No visible"}</strong>
                     </div>
 
                     <div style={{ background: "#ffffff", padding: "8px 10px", borderRadius: "8px", border: "1px solid var(--linea)" }}>
-                      <span style={{ color: "var(--texto-suave)", display: "block", fontSize: "0.7rem", fontWeight: 600 }}>Lugar / Nacimiento</span>
+                      <span style={{ color: "var(--texto-suave)", display: "block", fontSize: "0.7rem", fontWeight: 600 }}>Lugar y fecha</span>
                       <strong style={{ color: "var(--texto)" }}>
                         {analisisDetectado.lugarNacimiento || "—"} {analisisDetectado.fechaNacimiento ? `(${analisisDetectado.fechaNacimiento})` : ""}
                       </strong>
@@ -1501,7 +1488,7 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
                   </div>
 
                   <p style={{ margin: 0, fontSize: "0.74rem", color: "var(--texto-2)", lineHeight: 1.4 }}>
-                    {resumenAria || "Los datos se han asignado automáticamente como metadatos dinámicos editables abajo."}
+                    {resumenAria || "Los datos se han asignado automáticamente como campos editables abajo."}
                   </p>
                 </div>
               )}
@@ -1522,7 +1509,7 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
               <div className="rejilla-auto" style={{ "--min": "200px", "--hueco": "12px", marginBottom: "16px" } as React.CSSProperties}>
                 <div>
                   <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, color: "var(--texto-2)", marginBottom: "4px" }}>
-                    Título del Documento <span style={{ color: "var(--error)" }}>*</span>
+                    Título del documento <span style={{ color: "var(--error)" }}>*</span>
                   </label>
                   <input
                     type="text"
@@ -1562,16 +1549,16 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
                     onChange={(e) => setNuevaCategoria(e.target.value)}
                     style={{ width: "100%", padding: "8px 12px", borderRadius: "8px", border: "1px solid var(--linea-fuerte)", fontSize: "0.85rem" }}
                   >
-                    <option value="identidad">Identidad & Personal</option>
-                    <option value="vehicular">Vehicular & Seguros</option>
-                    <option value="contratos">Contratos & Servicios</option>
-                    <option value="profesional">Profesional & RUC</option>
-                    <option value="otros">Otros Documentos</option>
+                    <option value="identidad">Identidad y personal</option>
+                    <option value="vehicular">Vehículos y seguros</option>
+                    <option value="contratos">Contratos y servicios</option>
+                    <option value="profesional">Profesional y RUC</option>
+                    <option value="otros">Otros documentos</option>
                   </select>
                 </div>
               </div>
 
-              {/* SECCIÓN DE ALERTAS DE CADUCIDAD (SELECCIONADA POR DEFECTO) */}
+              {/* SECCIÓN DE ALERTAS DE CADUCIDAD */}
               <div style={{ background: "var(--fondo-suave)", border: "1px solid var(--linea)", borderRadius: "12px", padding: "14px", marginBottom: "18px" }}>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: alertarCaducidad ? "12px" : "0" }}>
                   <label style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "0.82rem", fontWeight: 800, color: "var(--texto)", cursor: "pointer" }}>
@@ -1586,10 +1573,10 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
                       }}
                       style={{ width: "16px", height: "16px", accentColor: "#5000BA" }}
                     />
-                    <BellRing size={16} color="#5000BA" /> Alertar Caducidad de este Documento
+                    <BellRing size={16} color="var(--acento)" /> Avisar antes de que caduque
                   </label>
                   <span style={{ fontSize: "0.72rem", color: "var(--texto-suave)" }}>
-                    Notificaciones en campana y correo
+                    Notificaciones en el panel y por correo
                   </span>
                 </div>
 
@@ -1597,7 +1584,7 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
                   <div className="rejilla-auto" style={{ "--min": "200px", "--hueco": "12px", paddingTop: "8px", borderTop: "1px solid var(--panel-linea, var(--linea))" } as React.CSSProperties}>
                     <div>
                       <label style={{ display: "block", fontSize: "0.76rem", fontWeight: 700, color: "var(--error)", marginBottom: "4px" }}>
-                        Fecha de Expiración / Caducidad
+                        Fecha de caducidad
                       </label>
                       <input
                         type="date"
@@ -1628,7 +1615,7 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
 
                     <div>
                       <label style={{ display: "block", fontSize: "0.76rem", fontWeight: 700, color: "var(--texto-2)", marginBottom: "4px" }}>
-                        Anticipación de Alerta
+                        Anticipación del aviso
                       </label>
                       <select
                         value={mesesAnticipacionAlerta}
@@ -1660,10 +1647,10 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
                   <div>
                     <span style={{ fontSize: "0.82rem", fontWeight: 800, color: "var(--texto)", display: "flex", alignItems: "center", gap: "6px" }}>
-                      <Layers size={15} color="#5000BA" /> Metadatos Dinámicos del Documento
+                      <Layers size={15} color="var(--acento)" /> Datos adicionales del documento
                     </span>
                     <p style={{ fontSize: "0.72rem", color: "var(--texto-suave)", margin: "2px 0 0 0" }}>
-                      Campos leídos automáticamente o agregados manualmente (editables y eliminables).
+                      Campos leídos automáticamente o añadidos manualmente (editables y eliminables).
                     </p>
                   </div>
 
@@ -1673,7 +1660,7 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
                     onClick={() => agregarCampoMetadato("", "")}
                     style={{
                       background: analizandoConAria ? "var(--fondo-hundido)" : "var(--acento-diluido)",
-                      color: analizandoConAria ? "var(--texto-tenue)" : "#5000BA",
+                      color: analizandoConAria ? "var(--texto-tenue)" : "var(--acento)",
                       border: "1px solid var(--acento-linea)",
                       borderRadius: "8px",
                       padding: "5px 12px",
@@ -1685,7 +1672,7 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
                       gap: "4px"
                     }}
                   >
-                    <Plus size={13} /> Agregar Campo
+                    <Plus size={13} /> Añadir campo
                   </button>
                 </div>
 
@@ -1699,7 +1686,7 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
                 {metadatosDinamicos.length === 0 ? (
                   <div style={{ padding: "14px", textAlign: "center", background: "#ffffff", borderRadius: "8px", border: "1px dashed var(--linea-fuerte)" }}>
                     <p style={{ fontSize: "0.76rem", color: "var(--texto-suave)", margin: "0 0 8px 0" }}>
-                      No hay metadatos adicionales registrados.
+                      No hay datos adicionales registrados.
                     </p>
                     <div style={{ display: "flex", gap: "6px", justifyContent: "center", flexWrap: "wrap" }}>
                       <button
@@ -1724,7 +1711,7 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
                         onClick={() => agregarCampoMetadato("Entidad Emisora", "")}
                         style={{ background: "var(--fondo-hundido)", border: "1px solid var(--linea)", borderRadius: "6px", padding: "3px 8px", fontSize: "0.7rem", color: analizandoConAria ? "var(--texto-tenue)" : "var(--texto-2)", cursor: analizandoConAria ? "not-allowed" : "pointer" }}
                       >
-                        + Entidad Emisora
+                        + Entidad emisora
                       </button>
                       <button
                         type="button"
@@ -1732,7 +1719,7 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
                         onClick={() => agregarCampoMetadato("Número / Matrícula", "")}
                         style={{ background: "var(--fondo-hundido)", border: "1px solid var(--linea)", borderRadius: "6px", padding: "3px 8px", fontSize: "0.7rem", color: analizandoConAria ? "var(--texto-tenue)" : "var(--texto-2)", cursor: analizandoConAria ? "not-allowed" : "pointer" }}
                       >
-                        + N° Documento
+                        + N° documento
                       </button>
                     </div>
                   </div>
@@ -1749,7 +1736,7 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
                           className={analizandoConAria ? "billetera-aria-esqueleto" : ""}
                           value={meta.clave}
                           onChange={(e) => actualizarCampoMetadato(meta.id, "clave", e.target.value)}
-                          placeholder="Nombre del Campo (ej. Titular)"
+                          placeholder="Nombre del campo (ej. Titular)"
                           style={{
                             padding: "6px 8px",
                             borderRadius: "6px",
@@ -1766,7 +1753,7 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
                           className={analizandoConAria ? "billetera-aria-esqueleto" : ""}
                           value={meta.valor}
                           onChange={(e) => actualizarCampoMetadato(meta.id, "valor", e.target.value)}
-                          placeholder="Valor del Campo (ej. Kleber Toapanta)"
+                          placeholder="Valor del campo"
                           style={{
                             padding: "6px 8px",
                             borderRadius: "6px",
@@ -1806,7 +1793,7 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
                 <button
                   type="button"
                   onClick={() => setModalSubirAbierto(false)}
-                  style={{ background: "var(--fondo-hundido)", border: "none", borderRadius: "10px", padding: "10px 18px", fontSize: "0.85rem", fontWeight: 700, cursor: "pointer" }}
+                  style={{ background: "#ffffff", border: "1px solid var(--linea-fuerte)", color: "var(--texto)", borderRadius: "10px", padding: "10px 18px", fontSize: "0.85rem", fontWeight: 700, cursor: "pointer" }}
                 >
                   Cancelar
                 </button>
@@ -1814,7 +1801,7 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
                   type="submit"
                   disabled={guardandoDoc || analizandoConAria || archivosSeleccionados.length === 0}
                   style={{
-                    background: "#5000BA",
+                    background: "var(--acento)",
                     color: "#ffffff",
                     border: "none",
                     borderRadius: "10px",
@@ -1846,7 +1833,7 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
       )}
 
       {/* ========================================================================= */}
-      {/* MODAL 2: COMPARTIR MEDIANTE ENLACES EFÍMEROS (TTL)                        */}
+      {/* MODAL 2: COMPARTIR MEDIANTE ENLACES TEMPORALES                            */}
       {/* ========================================================================= */}
       {docParaCompartir && (
         <div
@@ -1881,7 +1868,7 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
                 </div>
                 <div>
                   <h2 style={{ fontSize: "1.2rem", fontWeight: 800, margin: 0, color: "var(--texto)" }}>
-                    Compartir Enlace Efímero (TTL)
+                    Compartir enlace temporal
                   </h2>
                   <p style={{ fontSize: "0.82rem", color: "var(--texto-suave)", margin: 0 }}>
                     {docParaCompartir.doc_titulo}
@@ -1901,16 +1888,16 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
             {/* GENERADOR DE ENLACE */}
             <div style={{ background: "var(--fondo-suave)", borderRadius: "14px", padding: "18px", border: "1px solid var(--linea)", marginBottom: "18px" }}>
               <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 800, color: "var(--texto)", marginBottom: "8px" }}>
-                Tiempo de Expiración (TTL)
+                Tiempo de vigencia
               </label>
               <div className="rejilla-auto" style={{ "--min": "130px", "--hueco": "8px", marginBottom: "14px" } as React.CSSProperties}>
                 {[
-                  { id: "1h", label: "1 Hora" },
-                  { id: "3h", label: "3 Horas" },
-                  { id: "6h", label: "6 Horas" },
-                  { id: "24h", label: "24 Horas" },
-                  { id: "7d", label: "7 Días" },
-                  { id: "una_vista", label: "1 Sola Vista" }
+                  { id: "1h", label: "1 hora" },
+                  { id: "3h", label: "3 horas" },
+                  { id: "6h", label: "6 horas" },
+                  { id: "24h", label: "24 horas" },
+                  { id: "7d", label: "7 días" },
+                  { id: "una_vista", label: "1 sola vista" }
                 ].map(op => (
                   <button
                     key={op.id}
@@ -1933,14 +1920,14 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
               </div>
 
               {modoTtl === "una_vista" && (
-                <div style={{ background: "var(--error-diluido)", border: "1px solid var(--error-linea)", padding: "8px 12px", borderRadius: "8px", fontSize: "0.76rem", color: "var(--error-texto)", marginBottom: "12px", display: "flex", alignItems: "center", gap: "6px" }}>
-                  <Flame size={16} /> <strong>Modo Burn-on-Read:</strong> El enlace se destruirá y revocará de inmediato tras la 1ra apertura.
+                <div style={{ background: "var(--aviso-diluido)", border: "1px solid var(--aviso-linea, transparent)", padding: "8px 12px", borderRadius: "8px", fontSize: "0.76rem", color: "var(--aviso-texto)", marginBottom: "12px", display: "flex", alignItems: "center", gap: "6px" }}>
+                  <Flame size={16} /> <strong>Modo de un solo uso:</strong> El enlace dejará de funcionar tras la primera apertura.
                 </div>
               )}
 
               <div style={{ marginBottom: "14px" }}>
                 <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, color: "var(--texto-2)", marginBottom: "4px" }}>
-                  PIN de Seguridad (Opcional, 4 dígitos)
+                  PIN de seguridad (opcional, 4 dígitos)
                 </label>
                 <input
                   type="password"
@@ -1968,14 +1955,14 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
                   cursor: generandoTtl ? "not-allowed" : "pointer"
                 }}
               >
-                {generandoTtl ? "Generando..." : "Generar Enlace Seguro"}
+                {generandoTtl ? "Generando…" : "Generar enlace temporal"}
               </button>
             </div>
 
             {enlaceGenerado && (
               <div style={{ background: "var(--exito-diluido)", border: "1.5px solid var(--exito-linea)", borderRadius: "14px", padding: "16px", marginBottom: "18px" }}>
                 <div style={{ fontSize: "0.8rem", fontWeight: 800, color: "var(--exito-texto)", marginBottom: "6px" }}>
-                  Enlace Efímero Generado:
+                  Enlace temporal generado:
                 </div>
                 <div style={{ display: "flex", gap: "8px" }}>
                   <input
@@ -1987,7 +1974,7 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
                   <button
                     type="button"
                     onClick={() => copiarEnlace(enlaceGenerado)}
-                    style={{ background: "#05876E", color: "#ffffff", border: "none", borderRadius: "8px", padding: "8px 14px", fontSize: "0.78rem", fontWeight: 800, cursor: "pointer" }}
+                    style={{ background: "var(--acento)", color: "#ffffff", border: "none", borderRadius: "8px", padding: "8px 14px", fontSize: "0.78rem", fontWeight: 800, cursor: "pointer" }}
                   >
                     {copiado ? <Check size={14} /> : <Copy size={14} />}
                   </button>
@@ -1998,7 +1985,7 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
             {/* HISTORIAL DE ENLACES ACTIVOS */}
             <div>
               <h4 style={{ fontSize: "0.84rem", fontWeight: 800, color: "var(--texto-2)", margin: "0 0 8px 0" }}>
-                Enlaces Generados para este Documento
+                Enlaces generados para este documento
               </h4>
               {listaEnlacesActivos.length === 0 ? (
                 <div style={{ fontSize: "0.78rem", color: "var(--texto-tenue)" }}>No hay enlaces activos en este momento.</div>
@@ -2020,7 +2007,7 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
                     >
                       <div>
                         <div style={{ fontWeight: 700, color: enl.esta_vigente ? "var(--texto)" : "var(--texto-tenue)" }}>
-                          Modo: {enl.ttl_modo_expiracion} {enl.ttl_una_sola_vista && "(1 vista)"} {enl.requiere_pin && "(PIN)"}
+                          Modo: {enl.ttl_modo_expiracion} {enl.ttl_una_sola_vista && "(1 sola vista)"} {enl.requiere_pin && "(con PIN)"}
                         </div>
                         <div style={{ color: "var(--texto-suave)", fontSize: "0.72rem" }}>
                           {enl.esta_vigente ? `Expira: ${new Date(enl.ttl_expira_en).toLocaleString()}` : "Inactivo / Expirado"} • Vistas: {enl.ttl_visitas_conteo}
@@ -2057,7 +2044,7 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
       )}
 
       {/* ========================================================================= */}
-      {/* MODAL 3: VISOR DETALLADO DEL DOCUMENTO (METADATOS DINÁMICOS)              */}
+      {/* MODAL 3: VISOR DETALLADO DEL DOCUMENTO                                    */}
       {/* ========================================================================= */}
       {docParaVer && (() => {
         const archivosVisor = docParaVer.doc_archivos || (docParaVer.doc_archivo_nombre ? [{
@@ -2132,7 +2119,7 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
                       type="button"
                       onClick={() => setIndiceArchivoVer(idx)}
                       style={{
-                        background: indiceArchivoVer === idx ? "#5000BA" : "var(--fondo-hundido)",
+                        background: indiceArchivoVer === idx ? "var(--acento)" : "var(--fondo-hundido)",
                         color: indiceArchivoVer === idx ? "#ffffff" : "var(--texto-2)",
                         border: "none",
                         borderRadius: "8px",
@@ -2180,23 +2167,23 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
               {/* SECCIÓN DE VIGENCIA Y EXPIRACIÓN */}
               <div style={{ background: "var(--fondo-suave)", padding: "12px 16px", borderRadius: "10px", border: "1px solid var(--linea)", marginBottom: "14px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "8px" }}>
                 <div>
-                  <span style={{ fontSize: "0.76rem", color: "var(--texto-suave)", display: "block" }}>Fecha de Caducidad / Expiración:</span>
+                  <span style={{ fontSize: "0.76rem", color: "var(--texto-suave)", display: "block" }}>Fecha de caducidad:</span>
                   <span style={{ fontSize: "0.92rem", fontWeight: 800, color: docParaVer.doc_fecha_caducidad ? "var(--texto)" : "var(--texto-tenue)" }}>
-                    {docParaVer.doc_fecha_caducidad ? new Date(docParaVer.doc_fecha_caducidad).toLocaleDateString() : "Indefinida / Sin Expiración"}
+                    {docParaVer.doc_fecha_caducidad ? new Date(docParaVer.doc_fecha_caducidad).toLocaleDateString() : "Indefinida / Sin caducidad"}
                   </span>
                 </div>
 
                 {docParaVer.doc_alertar_caducidad !== false && docParaVer.doc_fecha_caducidad && (
-                  <div style={{ background: "var(--acento-diluido)", border: "1px solid var(--acento-linea)", padding: "4px 10px", borderRadius: "8px", fontSize: "0.76rem", color: "#5000BA", fontWeight: 700, display: "flex", alignItems: "center", gap: "6px" }}>
-                    <BellRing size={14} /> Alerta activa ({docParaVer.doc_meses_anticipacion_alerta ?? 3} meses de anticipación)
+                  <div style={{ background: "var(--acento-diluido)", border: "1px solid var(--acento-linea)", padding: "4px 10px", borderRadius: "8px", fontSize: "0.76rem", color: "var(--acento)", fontWeight: 700, display: "flex", alignItems: "center", gap: "6px" }}>
+                    <BellRing size={14} /> Aviso activo ({docParaVer.doc_meses_anticipacion_alerta ?? 3} meses de anticipación)
                   </div>
                 )}
               </div>
 
-              {/* TABLA DE METADATOS DINÁMICOS */}
+              {/* TABLA DE METADATOS */}
               <div style={{ background: "#FFFFFF", border: "1px solid var(--linea)", borderRadius: "12px", padding: "14px", marginBottom: "18px" }}>
                 <h4 style={{ fontSize: "0.82rem", fontWeight: 800, color: "var(--texto)", margin: "0 0 10px 0", display: "flex", alignItems: "center", gap: "6px" }}>
-                  <Layers size={14} color="#5000BA" /> Metadatos y Parámetros del Documento
+                  <Layers size={14} color="var(--acento)" /> Datos y parámetros del documento
                 </h4>
 
                 {metaDinamicos.length > 0 ? (
@@ -2238,7 +2225,7 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
                     )}
                     {!docParaVer.doc_titular_nombre && !docParaVer.doc_titular_identificacion && (
                       <div style={{ color: "var(--texto-tenue)", fontSize: "0.78rem", gridColumn: "1 / -1" }}>
-                        Sin metadatos dinámicos adicionales registrados.
+                        Sin datos adicionales registrados.
                       </div>
                     )}
                   </div>
@@ -2251,7 +2238,7 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
                     href={archivoActual.base64}
                     download={archivoActual.nombre}
                     style={{
-                      background: "#05876E",
+                      background: "var(--acento)",
                       color: "#ffffff",
                       borderRadius: "10px",
                       padding: "9px 18px",
@@ -2263,13 +2250,13 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
                       gap: "6px"
                     }}
                   >
-                    Descargar Parte Actual
+                    Descargar parte actual
                   </a>
                 )}
                 <button
                   type="button"
                   onClick={() => setDocParaVer(null)}
-                  style={{ background: "var(--fondo-hundido)", border: "none", borderRadius: "10px", padding: "9px 18px", fontSize: "0.84rem", fontWeight: 700, cursor: "pointer" }}
+                  style={{ background: "#ffffff", border: "1px solid var(--linea-fuerte)", borderRadius: "10px", padding: "9px 18px", fontSize: "0.84rem", fontWeight: 700, cursor: "pointer", color: "var(--texto)" }}
                 >
                   Cerrar
                 </button>
@@ -2314,22 +2301,22 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
               ¿Eliminar este documento?
             </h3>
             <p style={{ fontSize: "0.84rem", color: "var(--texto-suave)", margin: "0 0 20px 0" }}>
-              Se eliminará <strong>{docParaEliminar.doc_titulo}</strong> y se revocarán todos los enlaces efímeros vinculados.
+              Se eliminará <strong>{docParaEliminar.doc_titulo}</strong> y se revocarán todos los enlaces temporales vinculados.
             </p>
             <div style={{ display: "flex", gap: "10px", justifyContent: "center" }}>
               <button
                 type="button"
                 onClick={() => setDocParaEliminar(null)}
-                style={{ background: "var(--fondo-hundido)", border: "none", borderRadius: "10px", padding: "10px 18px", fontSize: "0.84rem", fontWeight: 700, cursor: "pointer" }}
+                style={{ background: "#ffffff", border: "1px solid var(--linea-fuerte)", borderRadius: "10px", padding: "10px 18px", fontSize: "0.84rem", fontWeight: 700, cursor: "pointer", color: "var(--texto)" }}
               >
                 Cancelar
               </button>
               <button
                 type="button"
                 onClick={confirmarEliminar}
-                style={{ background: "var(--error)", color: "#ffffff", border: "none", borderRadius: "10px", padding: "10px 20px", fontSize: "0.84rem", fontWeight: 800, cursor: "pointer" }}
+                style={{ background: "#ffffff", border: "1px solid var(--error-linea, var(--error))", color: "var(--error)", borderRadius: "10px", padding: "10px 20px", fontSize: "0.84rem", fontWeight: 800, cursor: "pointer" }}
               >
-                Sí, Eliminar
+                Sí, eliminar
               </button>
             </div>
           </div>

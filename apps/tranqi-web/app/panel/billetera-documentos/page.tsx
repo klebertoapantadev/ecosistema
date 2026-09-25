@@ -5,7 +5,7 @@ import Link from "next/link";
 import { X } from "lucide-react";
 
 export const metadata = {
-  title: "Billetera Digital de Documentos Seguros · Tranqi",
+  title: "Billetera de documentos — tranqi",
   description: "Bóveda de documentos personales, vehiculares, contratos y profesionales con extracción OCR y enlaces efímeros (TTL)",
 };
 

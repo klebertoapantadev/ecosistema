@@ -34,8 +34,8 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
   },
   {
     clave: "agendar_cita",
-    nombre: "Agendar una Consulta",
-    detalle: "Elegir materia, servicio y hora libre; el abogado se asigna por turno rotativo",
+    nombre: "Agendar una consulta",
+    detalle: "Elige materia, servicio y horario disponible",
     ruta: "/panel/agendar",
     categoria: "Agenda",
     minNivel: 1,
@@ -44,8 +44,8 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
   },
   {
     clave: "mis_citas",
-    nombre: "Mis Citas",
-    detalle: "Próximas consultas, enlace de videollamada y cancelación",
+    nombre: "Mis citas",
+    detalle: "Próximas consultas, videollamada y cancelación",
     ruta: "/panel/mis-citas",
     categoria: "Agenda",
     minNivel: 1,
@@ -54,8 +54,8 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
   },
   {
     clave: "citas_programadas",
-    nombre: "Citas Programadas",
-    detalle: "Agenda del profesional: confirmar, reagendar y cerrar sus consultas",
+    nombre: "Citas programadas",
+    detalle: "Confirma, reagenda y cierra tus consultas",
     ruta: "/panel/agenda",
     categoria: "Agenda",
     minNivel: 1,
@@ -64,8 +64,8 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
   },
   {
     clave: "disponibilidad",
-    nombre: "Mi Disponibilidad",
-    detalle: "Horas operativas, duración de cita, antelación y bloqueos por audiencia",
+    nombre: "Mi disponibilidad",
+    detalle: "Horarios de atención, duración y bloqueos",
     ruta: "/panel/agenda/disponibilidad",
     categoria: "Agenda",
     minNivel: 1,
@@ -124,20 +124,20 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
   },
   {
     clave: "catalogo_productos",
-    nombre: "Catálogo Comercial & Honorarios Profesionales",
-    detalle: "Catálogo de servicios, tarifario de honorarios y suscripciones legales con cálculo de IVA 15%",
+    nombre: "Catálogo y honorarios",
+    detalle: "Servicios, honorarios y suscripciones con IVA",
     ruta: "/panel/catalogo-productos",
-    categoria: "Comercio & Pagos",
+    categoria: "Comercio",
     minNivel: 1,
     icono: ShoppingBag,
     colorIcono: "var(--acento)"
   },
   {
     clave: "pasarela_payphone",
-    nombre: "Pasarela Payphone (Botón de Pago)",
-    detalle: "Configuración de credenciales API, StoreID y simulador de cobro de honorarios con tarjetas",
+    nombre: "Pagos con Payphone",
+    detalle: "Configuración del botón de pago y cobros",
     ruta: "/panel/configuracion?widget=pasarela_payphone",
-    categoria: "Comercio & Pagos",
+    categoria: "Comercio",
     minNivel: 50,
     icono: CreditCard,
     colorIcono: "var(--aviso)"
@@ -264,28 +264,28 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
   },
   {
     clave: "firma_documentos_pdf",
-    nombre: "Firma Electrónica de Documentos PDF",
-    detalle: "Firmado digital con certificado .p12 / .pfx, estampa visual y código QR oficial",
+    nombre: "Firma de documentos PDF",
+    detalle: "Firma digital con certificado .p12 y código QR",
     ruta: "/panel/firma-documentos",
-    categoria: "Herramientas Digitales",
+    categoria: "Herramientas",
     minNivel: 1,
     icono: FileCheck,
     colorIcono: "#5000BA"
   },
   {
     clave: "billetera_documentos",
-    nombre: "Billetera Digital de Documentos Seguros",
-    detalle: "Bóveda digital de documentos personales, vehiculares, contratos y profesionales con OCR y TTL",
+    nombre: "Billetera de documentos",
+    detalle: "Tus documentos, con aviso antes de que caduquen",
     ruta: "/panel/billetera-documentos",
-    categoria: "Herramientas Digitales",
+    categoria: "Herramientas",
     minNivel: 1,
     icono: Folder,
     colorIcono: "#5000BA"
   },
   {
     clave: "mi_cuenta",
-    nombre: "Datos Personales & Perfil",
-    detalle: "Edición de perfil, correo, WhatsApp y avatar de usuario",
+    nombre: "Perfil y contacto",
+    detalle: "Datos personales, correo y WhatsApp",
     ruta: "/panel/cuenta?widget=mi_cuenta",
     categoria: "Identidad",
     minNivel: 1,
@@ -294,8 +294,8 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
   },
   {
     clave: "ver_como",
-    nombre: "Selector 'Ver Como' (Conmutador de Rol)",
-    detalle: "Alterna la perspectiva activa entre Cliente, Socio y Administrador",
+    nombre: "Ver como otro rol",
+    detalle: "Alterna la vista según los roles asignados",
     ruta: "/panel/cuenta?widget=ver_como",
     categoria: "Identidad",
     minNivel: 1,
@@ -304,8 +304,8 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
   },
   {
     clave: "historial_accesos",
-    nombre: "Historial de Accesos & Sesiones",
-    detalle: "Bitácora de inicios de sesión, navegadores y direcciones IP",
+    nombre: "Historial de accesos",
+    detalle: "Registro de inicios de sesión y dispositivos",
     ruta: "/panel/cuenta?widget=historial_accesos",
     categoria: "Seguridad",
     minNivel: 1,
@@ -314,8 +314,8 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
   },
   {
     clave: "notificaciones",
-    nombre: "Preferencias de Alertas & Notificaciones",
-    detalle: "Canales de recepción Email, Push, WhatsApp y silenciado temporal",
+    nombre: "Preferencias de avisos",
+    detalle: "Canales de notificación y alertas",
     ruta: "/panel/configuracion?widget=notificaciones",
     categoria: "Comunicación",
     minNivel: 1,
@@ -394,8 +394,8 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
   },
   {
     clave: "gestion_usuarios",
-    nombre: "Gestión de Usuarios & Membresías",
-    detalle: "Administración de miembros, asignación de perfiles y techo jerárquico",
+    nombre: "Usuarios y membresías",
+    detalle: "Asignación de perfiles y permisos",
     ruta: "/panel/administrar?widget=gestion_usuarios",
     categoria: "Administración",
     minNivel: 80,
@@ -424,39 +424,39 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
   },
   {
     clave: "socios",
-    nombre: "Aprobación de Socios Abogados",
-    detalle: "Validación de matrículas, acreditación y verificación de abogados",
+    nombre: "Aprobación de socios",
+    detalle: "Validación de matrículas y acreditaciones",
     ruta: "/panel/administrar?widget=socios",
-    categoria: "Operación Legal",
+    categoria: "Operación legal",
     minNivel: 50,
     icono: UserCheck,
     colorIcono: "#05876E"
   },
   {
     clave: "crm_clientes",
-    nombre: "CRM Jurídico y Recepción de Clientes",
-    detalle: "Administración 360° de clientes, personas naturales/jurídicas, validación Tranqi y Conflict Check",
+    nombre: "Clientes",
+    detalle: "Directorio de clientes y expedientes",
     ruta: "/panel/clientes",
-    categoria: "Operación Legal",
+    categoria: "Operación legal",
     minNivel: 50,
     icono: UserCog,
     colorIcono: "var(--acento)"
   },
   {
     clave: "solicitud_socio",
-    nombre: "Solicitudes de Socios & Postulaciones",
-    detalle: "Procesamiento de postulaciones y formularios de nuevos socios",
+    nombre: "Solicitudes de socios",
+    detalle: "Revisión de postulaciones de nuevos socios",
     ruta: "/panel/administrar?widget=solicitud_socio",
-    categoria: "Operación Legal",
+    categoria: "Operación legal",
     minNivel: 50,
     icono: Briefcase,
     colorIcono: "#05876E"
   },
   {
     clave: "panel_administrar",
-    nombre: "Administrar (Consola de Gestión Operativa)",
+    nombre: "Administrar",
     ruta: "/panel/administrar",
-    detalle: "Consola de gestión protegida para usuarios, socios y notificaciones",
+    detalle: "Gestión de usuarios, socios y notificaciones",
     categoria: "Administración",
     minNivel: 80,
     icono: Shield,
@@ -464,8 +464,8 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
   },
   {
     clave: "configuracion_negocio",
-    nombre: "Configuración del Negocio",
-    detalle: "Identidad legal, WhatsApp, redes sociales, marca y locales",
+    nombre: "Configuración del negocio",
+    detalle: "Datos del negocio, RUC y canales de contacto",
     ruta: "/panel/configuracion?widget=negocio",
     categoria: "Configuración",
     minNivel: 80,
@@ -474,18 +474,18 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
   },
   {
     clave: "configuracion_correo",
-    nombre: "Servidor de Correo SMTP",
-    detalle: "Servidor saliente, credenciales Vault y prueba de correo",
+    nombre: "Correo saliente (SMTP)",
+    detalle: "Servidor de correo saliente y credenciales",
     ruta: "/panel/configuracion?widget=correo",
-    categoria: "Infraestructura",
+    categoria: "Configuración",
     minNivel: 80,
     icono: Mail,
     colorIcono: "var(--violeta, #5000BA)"
   },
   {
     clave: "perfiles",
-    nombre: "Administración de Perfiles & Permisos",
-    detalle: "Catálogo de perfiles, jerarquía (1–100) y matriz de gobernanza",
+    nombre: "Perfiles y permisos",
+    detalle: "Catálogo de perfiles y matriz de permisos",
     ruta: "/panel/configuracion?widget=perfiles",
     categoria: "Gobernanza",
     minNivel: 80,
@@ -494,8 +494,8 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
   },
   {
     clave: "emision_notificaciones",
-    nombre: "Emisión de Notificaciones Multicanal",
-    detalle: "Despacho masivo multicanal por WYSIWYG HTML / Markdown",
+    nombre: "Envío de notificaciones",
+    detalle: "Envío de avisos por correo, push y WhatsApp",
     ruta: "/panel/administrar?widget=emision_notificaciones",
     categoria: "Comunicación",
     minNivel: 80,
@@ -504,8 +504,8 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
   },
   {
     clave: "monitoreo_notificaciones_usuarios",
-    nombre: "Monitoreo de Notificaciones por Usuario",
-    detalle: "Auditoría en tiempo real de notificaciones, fechas de confirmación, tiempo de pospuesto y eliminados",
+    nombre: "Notificaciones por usuario",
+    detalle: "Seguimiento de entregas y confirmaciones",
     ruta: "/panel/administrar?widget=monitoreo_notificaciones_usuarios",
     categoria: "Comunicación",
     minNivel: 50,
@@ -514,8 +514,8 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
   },
   {
     clave: "bitacora_notificaciones",
-    nombre: "Bitácora & Historial de Notificaciones",
-    detalle: "Consulta auditada en tiempo real de notificaciones emitidas y destinatarios",
+    nombre: "Historial de notificaciones",
+    detalle: "Registro de avisos enviados y destinatarios",
     ruta: "/panel/administrar?widget=bitacora_notificaciones",
     categoria: "Comunicación",
     minNivel: 50,
@@ -524,43 +524,33 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
   },
   {
     clave: "auditoria",
-    nombre: "Auditoría BDD & Telemetría",
-    detalle: "Consulta de registros inmutables PostgreSQL y telemetría de APIs",
+    nombre: "Auditoría",
+    detalle: "Registro de actividad y cambios en el sistema",
     ruta: "/panel/administrar?widget=auditoria",
-    categoria: "Seguridad & Auditoría",
+    categoria: "Seguridad",
     minNivel: 80,
     icono: ShieldCheck,
     colorIcono: "var(--texto)"
   },
   {
     clave: "configuracion_contrato_abogado",
-    nombre: "Configuración de Contrato de Socios",
-    detalle: "Administración de la plantilla del contrato de sociedad de abogados (.MD/HTML)",
+    nombre: "Contrato de socios",
+    detalle: "Plantilla del contrato de sociedad de abogados",
     ruta: "/panel/administrar?widget=configuracion_contrato_abogado",
-    categoria: "Operación Legal",
+    categoria: "Operación legal",
     minNivel: 50,
     icono: FileText,
     colorIcono: "#5000BA"
   },
   {
     clave: "gestion_terminos_consentimientos",
-    nombre: "Términos, Consentimientos & LOPDP",
-    detalle: "Configuración de cláusulas LOPDP, notificaciones, WhatsApp y protección de datos",
+    nombre: "Términos y consentimientos",
+    detalle: "Cláusulas LOPDP y avisos legales",
     ruta: "/panel/administrar?widget=gestion_terminos_consentimientos",
-    categoria: "Gobernanza & Legales",
+    categoria: "Gobernanza",
     minNivel: 80,
     icono: FileText,
     colorIcono: "#5000BA"
-  },
-  {
-    clave: "bitacora_notificaciones",
-    nombre: "Bitácora & Historial de Notificaciones",
-    detalle: "Consulta auditada e historial en tiempo real de notificaciones emitidas",
-    ruta: "/panel/administrar?widget=bitacora_notificaciones",
-    categoria: "Comunicación",
-    minNivel: 80,
-    icono: BarChart2,
-    colorIcono: "var(--acento)"
   },
   {
     clave: "financiamiento",
@@ -690,8 +680,8 @@ export function BuscadorModulosGlobal({ nivelUsuario, esSuperadmin = false }: Pr
           }}
           onFocus={() => setAbierto(true)}
           onKeyDown={handleKeyDownInput}
-          placeholder="Buscar módulos con permiso (ej. Usuarios, Socios, SMTP)..."
-          aria-label="Buscar módulos con permisos"
+          placeholder="Buscar un módulo (usuarios, socios, correo…)"
+          aria-label="Buscar un módulo"
           style={{
             width: "100%",
             border: "none",
@@ -736,8 +726,8 @@ export function BuscadorModulosGlobal({ nivelUsuario, esSuperadmin = false }: Pr
             overflowY: "auto"
           }}
         >
-          <div style={{ padding: "8px 12px", background: "var(--panel-papel, var(--fondo-suave))", borderBottom: "1px solid var(--panel-linea, var(--linea))", fontSize: "0.72rem", fontWeight: 800, color: "var(--panel-gris, var(--texto-suave))", textTransform: "uppercase", letterSpacing: "0.06em" }}>
-            Módulos Autorizados ({resultados.length})
+          <div style={{ padding: "8px 12px", background: "var(--fondo-suave)", borderBottom: "1px solid var(--linea)", fontSize: "0.75rem", fontWeight: 700, color: "var(--texto-suave)" }}>
+            Módulos · {resultados.length}
           </div>
 
           {resultados.length > 0 ? (
@@ -756,34 +746,34 @@ export function BuscadorModulosGlobal({ nivelUsuario, esSuperadmin = false }: Pr
                     alignItems: "center",
                     gap: "10px",
                     cursor: "pointer",
-                    background: activo ? "var(--panel-linea-suave, var(--acento-diluido))" : "#ffffff",
-                    borderLeft: activo ? "3px solid var(--violeta, #5000BA)" : "3px solid transparent",
+                    background: activo ? "var(--acento-diluido)" : "#ffffff",
+                    borderLeft: activo ? "3px solid var(--acento)" : "3px solid transparent",
                     transition: "all 0.1s ease"
                   }}
                 >
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "30px", height: "30px", borderRadius: "8px", background: "var(--panel-papel, var(--fondo-suave))", flexShrink: 0 }}>
-                    <Icono size={16} color={m.colorIcono || "var(--violeta, #5000BA)"} />
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "30px", height: "30px", borderRadius: "8px", background: "var(--fondo-suave)", flexShrink: 0 }}>
+                    <Icono size={16} color={m.colorIcono || "var(--acento)"} />
                   </div>
 
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontWeight: 700, fontSize: "0.85rem", color: "#111111", display: "flex", alignItems: "center", gap: "6px" }}>
                       <span>{m.nombre}</span>
-                      <span style={{ fontSize: "0.64rem", fontWeight: 800, background: "var(--panel-papel, var(--linea))", color: "var(--panel-gris, var(--texto-2))", padding: "1px 6px", borderRadius: "999px" }}>
+                      <span style={{ fontSize: "0.64rem", fontWeight: 700, background: "var(--fondo-hundido)", color: "var(--texto-suave)", padding: "1px 6px", borderRadius: "999px" }}>
                         {m.categoria}
                       </span>
                     </div>
-                    <div style={{ fontSize: "0.74rem", color: "var(--panel-gris, var(--texto-suave))", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                    <div style={{ fontSize: "0.74rem", color: "var(--texto-suave)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                       {m.detalle}
                     </div>
                   </div>
 
-                  <ChevronRight size={14} style={{ color: "var(--panel-gris, var(--texto-suave))" }} />
+                  <ChevronRight size={14} style={{ color: "var(--texto-suave)" }} />
                 </div>
               );
             })
           ) : (
-            <div style={{ padding: "16px", textAlign: "center", color: "var(--panel-gris, var(--texto-suave))", fontSize: "0.82rem" }}>
-              No se encontraron módulos autorizados para &quot;{consulta}&quot;.
+            <div style={{ padding: "16px", textAlign: "center", color: "var(--texto-suave)", fontSize: "0.82rem" }}>
+              No se encontraron módulos para &quot;{consulta}&quot;.
             </div>
           )}
         </div>
