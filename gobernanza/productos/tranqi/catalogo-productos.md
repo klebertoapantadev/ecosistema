@@ -68,19 +68,23 @@ Para casos donde una empresa (ej. *Banco del Pichincha*) contrata el plan corpor
 3. **Paquete Override por Colaborador (`bnf_beneficios_override`):** Permite asignar beneficios superiores a puestos directivos dentro de la misma nómina corporativa.
 
 ### Flujo de Nómina, Invitaciones Masivas y Descubrimiento del Beneficio:
-1. **Carga de Nómina por la Empresa (Widget `gestion_convenios_corporativos`):** La empresa cliente o el operador de Tranqi carga un archivo Excel/CSV con: `Cédula de Identidad` (validada con Módulo 10), `Correo Corporativo` (`@pichincha.com`), `Nombres` y `Apellidos`.
-2. **Despacho Automático de Invitación y Magic Link:**
+1. **Registro de la Empresa, Carga de Logo y Dominios Autorizados:**
+   * La empresa cliente o el operador de Tranqi configura la empresa en el widget `gestion_convenios_corporativos`: carga su **Logo Oficial** (almacenado en `comun-publico/tranqi/convenios/...`), define el paquete de beneficios y registra los **Dominios de Correo Autorizados** (`@pichincha.com`, `@dinersclub.com.ec`).
+   * Carga masiva de la nómina inicial de colaboradores mediante archivo Excel/CSV con: `Cédula de Identidad` (validada con Módulo 10), `Correo Corporativo`, `Nombres` y `Apellidos`.
+2. **Despacho Automático de Invitación Co-Brandeada y Magic Link:**
    * El sistema genera un token seguro en `com_convenio_invitacion` y encola un correo en `comun_notificaciones.not_cola_correo`.
-   * El trabajador recibe el enlace: `https://tranqi.com/registro?inv_token=[TOKEN]&empresa=[SLUG]`.
-   * Al hacer clic, la pantalla de registro se adapta con el branding de la empresa empleadora, lista sus beneficios precargados y al registrarse (OAuth Google o Contraseña), su cuenta queda asociada de inmediato.
-3. **Detección Automática por Cédula (Onboarding Tranqi sin Link):**
+   * El correo incluye el **Logo Oficial de la Empresa** junto a Tranqi Legal y un Magic Link personalizado: `https://tranqi.com/registro?inv_token=[TOKEN]&empresa=[SLUG]`.
+   * Al hacer clic, la pantalla de registro se adapta con el logotipo de la empresa empleadora, lista sus beneficios precargados y al registrarse (OAuth Google o Contraseña), su cuenta queda asociada de inmediato.
+3. **Auto-Afiliación Directa por Dominio Corporativo Verificado:**
+   * Si un trabajador no fue precargado en la nómina de RRHH pero se registra con su correo corporativo institucional (o ingresa su correo de trabajo en su perfil), el sistema valida que el dominio pertenezca a los dominios autorizados de la empresa, despacha un código OTP de 6 dígitos a su bandeja corporativa y lo afilia de inmediato al plan de beneficios.
+4. **Detección Automática por Cédula (Onboarding Tranqi sin Link):**
    * Si el colaborador entra directamente y se registra con su **correo personal** (ej. `kleber.toapanta@gmail.com` o Google OAuth), al ingresar su cédula en el onboarding obligatorio (`PLT-001`), el sistema hace match con la nómina de Banco Pichincha.
    * La interfaz notifica: *"¡Hola! Identificamos que perteneces a Banco del Pichincha. Tienes activado el Plan Corporativo con 100% de subsidio por tu empresa."*
-4. **Autoservicio vía OTP Corporativo (Reclamo de Beneficio Posterior):**
+5. **Autoservicio vía OTP Corporativo (Reclamo de Beneficio Posterior):**
    * Si el usuario no ingresó cédula o ya tiene cuenta personal creada previamente, en su perfil puede presionar: `[ ¿Tu empresa tiene convenio con Tranqi? Reclamar beneficio ]`.
    * Ingresa su correo de trabajo (`ktoapanta@pichincha.com`). El sistema despacha un OTP de 6 dígitos a su bandeja corporativa.
    * Al validar el código, su cuenta personal queda enlazada al convenio corporativo de forma segura y verificada.
-5. **Consumo y Auditoría de Beneficios:**
+6. **Consumo y Auditoría de Beneficios:**
    * Cada consulta gratuita agendada se deduce de su cupo anual en `com_beneficio_consumo`.
    * Si el usuario cancela o no asiste a una cita de beneficio gratuito, el cupo no admite reagendamiento y se da por consumido.
    * En el checkout de servicios pagos, se aplica automáticamente el descuento porcentual convenido.

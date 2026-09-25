@@ -1413,9 +1413,30 @@ El sistema implementa una resolución de herencia de beneficios en 3 niveles de 
 * **Cuando** el Administrador cambia su estado a `INACTIVO` en el widget de nómina.
 * **Entonces** el sistema inhabilita inmediatamente el consumo de nuevas consultas gratuitas corporativas y el descuento preferencial; el saldo de bono no consumido regresa a la bolsa del convenio o caduca según las cláusulas del contrato, y el usuario conserva su cuenta personal como cliente individual sin pérdida de datos.
 
+#### Escenario 5: Auto-Afiliación Directa por Dominio Corporativo Verificado (Zero Friction)
+* **Dado** que la empresa cliente tiene configurados sus dominios autorizados en `cve_dominios_autorizados` (ej. `['pichincha.com', 'dinersclub.com.ec']`) y `cve_auto_afiliacion_por_dominio = true`.
+* **Cuando** un colaborador no fue cargado previamente en el archivo de nómina de RRHH, pero se registra con su correo corporativo (o desde su perfil personal pulsa *"Reclamar beneficios de mi empresa"* e introduce `usuario@pichincha.com`).
+* **Entonces** el sistema detecta que el dominio pertenece al convenio de Banco Pichincha, envía un OTP de 6 dígitos a su bandeja corporativa, y al ingresarlo con éxito:
+  1. Crea automáticamente el registro en `com_beneficiario_empresa` en estado `VINCULADO`.
+  2. Le asigna el paquete de beneficios correspondiente.
+  3. Muestra el distintivo co-brandeado con el **Logo oficial** de la empresa en su panel.
+
 ### 4. Modelo de Datos Técnico (`comun_comercio`)
 
 ```sql
+-- 0. Extensión en comun_comercio.com_convenio_empresa (Logo y Dominios Corporativos)
+ALTER TABLE comun_comercio.com_convenio_empresa 
+  ADD COLUMN IF NOT EXISTS cve_empresa_logo_url TEXT,
+  ADD COLUMN IF NOT EXISTS cve_dominios_autorizados TEXT[] NOT NULL DEFAULT '{}',
+  ADD COLUMN IF NOT EXISTS cve_auto_afiliacion_por_dominio BOOLEAN NOT NULL DEFAULT true,
+  ADD COLUMN IF NOT EXISTS cve_paquete_beneficios JSONB NOT NULL DEFAULT '{
+    "consultas_gratis_total": 2,
+    "consultas_gratis_periodo": "ANUAL",
+    "descuento_catalogo_pct": 20.0,
+    "saldo_bono_billetera": 50.00,
+    "permite_reagendamiento_gratis": false
+  }'::jsonb;
+
 -- 1. Tokens de invitación y Magic Links Corporativos
 CREATE TABLE IF NOT EXISTS comun_comercio.com_convenio_invitacion (
   inv_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -1462,12 +1483,17 @@ CREATE TRIGGER trg_aud_com_beneficio_consumo AFTER INSERT OR UPDATE OR DELETE ON
    - Detecta duplicados por Cédula y actualiza datos si ya existían en estado pendiente.
    - Emite tokens de invitación y encola notificaciones de correo.
 2. `comun_comercio.com_rpc_validar_token_invitacion(p_token TEXT)`:
-   - Retorna la identidad de la empresa padre (`cve_empresa_nombre`, `cve_empresa_ruc`, logo), el paquete de beneficios aplicable y los datos predefinidos del colaborador (Cédula, Nombres, Correo).
+   - Retorna la identidad de la empresa padre (`cve_empresa_nombre`, `cve_empresa_ruc`, `cve_empresa_logo_url`), el paquete de beneficios aplicable y los datos predefinidos del colaborador (Cédula, Nombres, Correo).
 3. `comun_comercio.com_rpc_canjear_beneficio_colaborador(p_token TEXT, p_usuario_id UUID)`:
    - Valida vigencia del token y no-expiración.
    - Realiza la vinculación atómica en `com_beneficiario_empresa`.
    - Inicializa el saldo bono en `com_billetera` si el paquete lo contempla.
-4. `comun_comercio.com_rpc_consumir_consulta_corporativa(p_usuario_id UUID, p_cita_id UUID)`:
+4. `comun_comercio.com_rpc_solicitar_afiliacion_dominio(p_correo_corporativo TEXT, p_usuario_id UUID)`:
+   - Verifica si el dominio `@empresa.com` está registrado en `cve_dominios_autorizados` de algún convenio activo.
+   - Genera y despacha un código OTP criptográfico a dicho correo corporativo.
+5. `comun_comercio.com_rpc_verificar_afiliacion_dominio(p_correo_corporativo TEXT, p_otp TEXT, p_usuario_id UUID)`:
+   - Valida el OTP, crea/actualiza el registro en `com_beneficiario_empresa` vinculando `p_usuario_id` y activa los beneficios.
+6. `comun_comercio.com_rpc_consumir_consulta_corporativa(p_usuario_id UUID, p_cita_id UUID)`:
    - Valida que el colaborador tenga cupos disponibles de consultas gratuitas en su periodo vigente (`COUNT(cbn_id) < consultas_gratis_total`).
    - Inserta el registro en `com_beneficio_consumo`.
    - Bloquea cualquier intento de sobregiro transaccionalmente mediante bloqueo de fila (`FOR UPDATE`).

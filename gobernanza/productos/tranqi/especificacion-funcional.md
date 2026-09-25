@@ -706,8 +706,11 @@ Widget modular administrativo desarrollado bajo la arquitectura del ecosistema (
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │ 🏢 GESTIÓN DE CONVENIOS Y BENEFICIARIOS CORPORATIVOS                        │
 ├─────────────────────────────────────────────────────────────────────────────┤
-│ Empresa Padre Seleccionada: [ Banco del Pichincha C.A. - RUC 1790010937001 ]│
-│ Convenio Vigente: Plan Corporativo Oro | Vigencia: 2026-01-01 al 2026-12-31  │
+│ [🖼️ Logo Empresa: logo_pichincha.webp] [ Subir Logo ]                      │
+│ Razón Social: Banco del Pichincha C.A.   | RUC: 1790010937001               │
+│ Dominios Autorizados: [ @pichincha.com ✖ ] [ @dinersclub.com.ec ✖ ] [+ Tag] │
+│ Auto-Afiliación por Dominio: [ ON / Activo ]                                │
+│ Convenio Vigente: Plan Corporativo Oro   | Vigencia: 2026-01-01 / 2026-12-31│
 │ Paquete: 3 Consultas Gratis/Año | 20% Descuento Catálogo | $50 Bono Billetera│
 ├─────────────────────────────────────────────────────────────────────────────┤
 │ [ Carga Masiva (CSV/Excel) ]   [ + Agregar Colaborador ]   [ ✉ Enviar Pendientes ]│
@@ -726,22 +729,29 @@ Widget modular administrativo desarrollado bajo la arquitectura del ecosistema (
 ```
 
 #### 3. Reglas de Negocio Técnicas y Validación de Carga Masiva
-1. **Validación de Cédulas Ecuatorianas en Frontend y Backend:**
+1. **Carga y Custodia del Logo Corporativo:**
+   - La empresa cliente u operador sube el archivo de imagen oficial (SVG, PNG, JPG, WebP de hasta 5MB) en `comun-publico/tranqi/convenios/[cve_id]/logo.webp`.
+   - El logo se despliega en el encabezado del widget, en las plantillas de correo co-brandeado y en la vista de onboarding del colaborador.
+2. **Gestión de Dominios Corporativos Autorizados (`cve_dominios_autorizados`):**
+   - Selector reactivo tipo *Tags / Chips* para definir uno o varios dominios (ej. `pichincha.com`, `dinersclub.com.ec`).
+   - Conmutador `cve_auto_afiliacion_por_dominio` (activo por defecto): permite que cualquier colaborador de la empresa que verifique su correo institucional quede enrolado automáticamente al plan corporativo sin necesidad de estar en la nómina precargada.
+3. **Validación de Cédulas Ecuatorianas en Frontend y Backend:**
    - La ingesta masiva evalúa cada fila verificando que la cédula tenga 10 dígitos y cumpla el algoritmo Módulo 10 del Registro Civil. Filas con errores son reportadas en una tabla de discrepancias antes de ejecutar la inserción.
-2. **Generación de Token Criptográfico y Magic Link:**
+4. **Generación de Token Criptográfico y Magic Link:**
    - Para cada colaborador en estado `PENDIENTE` o `INVITADO`, se crea un token aleatorio seguro (NanoID de 24 caracteres o UUIDv4) en `comun_comercio.com_convenio_invitacion`.
    - La URL de invitación contiene los parámetros:
      `https://tranqi.com/registro?inv_token=[TOKEN]&empresa=[SLUG_EMPRESA]`
-3. **Despacho Automático de Correo Co-Brandeado:**
+5. **Despacho Automático de Correo Co-Brandeado:**
    - La inserción encola el mensaje en `comun_notificaciones.not_cola_correo` con la plantilla HTML:
      - Asunto: `Tu empresa [Nombre Empresa] te ha otorgado beneficios legales exclusivos en Tranqi`
      - Remitente oficial: `notificaciones@tranqi.com`
+     - Header: Logotipo de la Empresa cliente junto al isotipo de Tranqi Legal.
      - Cuerpo: Saludo con nombres del colaborador, desglose de beneficios ($N$ consultas gratis, descuentos) y botón destacado `[ Activar mis Beneficios Legales ]`.
-4. **Flujo de Onboarding Asistido (Auto-Match y Reconocimiento de Empresa Padre):**
-   - **Caso 1 (Usuario entra por el Link):** La página de registro lee `inv_token`, llama a `comun_comercio.com_rpc_validar_token_invitacion(p_token)` y dibuja en pantalla: *"Bienvenido colaborador de [Nombre Empresa]. Completa tu registro para activar tus [N] consultas legales gratuitas"*. Al registrarse con Google o correo, queda vinculado atómicamente.
+6. **Flujo de Onboarding Asistido (Auto-Match y Reconocimiento de Empresa Padre):**
+   - **Caso 1 (Usuario entra por el Link):** La página de registro lee `inv_token`, llama a `comun_comercio.com_rpc_validar_token_invitacion(p_token)` y dibuja en pantalla: *"Bienvenido colaborador de [Nombre Empresa] [Logo]". Completa tu registro para activar tus [N] consultas legales gratuitas"*. Al registrarse con Google o correo, queda vinculado atómicamente.
    - **Caso 2 (Usuario ya registrado previamente):** Al iniciar sesión con el token, la interfaz le solicita confirmación en un modal: *"¿Deseas activar los beneficios de [Nombre Empresa] en tu cuenta personal?"*. Al aceptar, se actualiza `bnf_usuario_vinculado_id = auth.uid()` y se acredita el bono en su billetera.
-   - **Caso 3 (Registro orgánico sin link):** Si el trabajador ingresa directamente por el portal público de Tranqi, al digitar su cédula o correo corporativo en el paso de identidad (`PLT-001`), el motor detecta el registro pendiente y le ofrece verificar su correo institucional mediante OTP de 6 dígitos para asociar los beneficios sin fricción.
-5. **Auditoría Transversal y Control de Acceso:**
+   - **Caso 3 (Auto-afiliación por dominio vía OTP):** Si el trabajador ingresa directamente por el portal público de Tranqi, al digitar un correo de los dominios autorizados (ej. `ktoapanta@pichincha.com`), el motor envía un código OTP de 6 dígitos a su correo corporativo; tras validarlo, queda vinculado automáticamente a los beneficios de la empresa.
+7. **Auditoría Transversal y Control de Acceso:**
    - El widget queda registrado en `comun_seguridad.seg_widget` con clave `gestion_convenios_corporativos`.
    - Preconfigurado por defecto en `seg_rol_widget` para los roles `OPERADOR`, `ADMINISTRADOR` y `SUPERADMIN`.
    - Políticas RLS garantizan que el operador de una empresa cliente solo pueda visualizar y gestionar la nómina de su propia empresa (`cve_id`).
