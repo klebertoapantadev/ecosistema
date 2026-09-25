@@ -1402,7 +1402,7 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
                         padding: "7px 10px",
                         borderRadius: "6px",
                         border: camposAria["identificacion"] && !camposModificados["identificacion"]
-                          ? "1.5px solid var(--exito)"
+                          ? "1px solid var(--exito-linea)"
                           : "1px solid var(--linea-fuerte)",
                         background: camposAria["identificacion"] && !camposModificados["identificacion"]
                           ? "var(--exito-diluido)"
@@ -1428,13 +1428,13 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
                         setNombres(e.target.value);
                         marcarCampoModificado("nombres");
                       }}
-                      placeholder="KLEBER MANUEL"
+                      placeholder="Como figuran en la cédula"
                       style={{
                         width: "100%",
                         padding: "7px 10px",
                         borderRadius: "6px",
                         border: camposAria["nombres"] && !camposModificados["nombres"]
-                          ? "1.5px solid var(--exito)"
+                          ? "1px solid var(--exito-linea)"
                           : "1px solid var(--linea-fuerte)",
                         background: camposAria["nombres"] && !camposModificados["nombres"]
                           ? "var(--exito-diluido)"
@@ -1458,13 +1458,13 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
                         setApellidos(e.target.value);
                         marcarCampoModificado("apellidos");
                       }}
-                      placeholder="TOAPANTA CHANCUSI"
+                      placeholder="Como figuran en la cédula"
                       style={{
                         width: "100%",
                         padding: "7px 10px",
                         borderRadius: "6px",
                         border: camposAria["apellidos"] && !camposModificados["apellidos"]
-                          ? "1.5px solid var(--exito)"
+                          ? "1px solid var(--exito-linea)"
                           : "1px solid var(--linea-fuerte)",
                         background: camposAria["apellidos"] && !camposModificados["apellidos"]
                           ? "var(--exito-diluido)"
@@ -1503,7 +1503,7 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
                         width: "100%",
                         padding: "6px 8px",
                         borderRadius: "6px",
-                        border: camposAria["nacionalidad"] && !camposModificados["nacionalidad"] ? "1.5px solid var(--exito)" : "1px solid var(--linea-fuerte)",
+                        border: camposAria["nacionalidad"] && !camposModificados["nacionalidad"] ? "1px solid var(--exito-linea)" : "1px solid var(--linea-fuerte)",
                         background: camposAria["nacionalidad"] && !camposModificados["nacionalidad"] ? "var(--exito-diluido)" : "#FFFFFF",
                         fontSize: "0.8rem"
                       }}
@@ -1529,7 +1529,7 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
                         width: "100%",
                         padding: "6px 8px",
                         borderRadius: "6px",
-                        border: camposAria["fechaNacimiento"] && !camposModificados["fechaNacimiento"] ? "1.5px solid var(--exito)" : "1px solid var(--linea-fuerte)",
+                        border: camposAria["fechaNacimiento"] && !camposModificados["fechaNacimiento"] ? "1px solid var(--exito-linea)" : "1px solid var(--linea-fuerte)",
                         background: camposAria["fechaNacimiento"] && !camposModificados["fechaNacimiento"] ? "var(--exito-diluido)" : "#FFFFFF",
                         fontSize: "0.8rem"
                       }}
@@ -1556,7 +1556,7 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
                         width: "100%",
                         padding: "6px 8px",
                         borderRadius: "6px",
-                        border: camposAria["lugarNacimiento"] && !camposModificados["lugarNacimiento"] ? "1.5px solid var(--exito)" : "1px solid var(--linea-fuerte)",
+                        border: camposAria["lugarNacimiento"] && !camposModificados["lugarNacimiento"] ? "1px solid var(--exito-linea)" : "1px solid var(--linea-fuerte)",
                         background: camposAria["lugarNacimiento"] && !camposModificados["lugarNacimiento"] ? "var(--exito-diluido)" : "#FFFFFF",
                         fontSize: "0.8rem"
                       }}
@@ -1583,7 +1583,7 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
                         width: "100%",
                         padding: "6px 8px",
                         borderRadius: "6px",
-                        border: camposAria["sexo"] && !camposModificados["sexo"] ? "1.5px solid var(--exito)" : "1px solid var(--linea-fuerte)",
+                        border: camposAria["sexo"] && !camposModificados["sexo"] ? "1px solid var(--exito-linea)" : "1px solid var(--linea-fuerte)",
                         background: camposAria["sexo"] && !camposModificados["sexo"] ? "var(--exito-diluido)" : "#FFFFFF",
                         fontSize: "0.8rem"
                       }}
@@ -1612,7 +1612,7 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
                         width: "100%",
                         padding: "6px 8px",
                         borderRadius: "6px",
-                        border: camposAria["estadoCivil"] && !camposModificados["estadoCivil"] ? "1.5px solid var(--exito)" : "1px solid var(--linea-fuerte)",
+                        border: camposAria["estadoCivil"] && !camposModificados["estadoCivil"] ? "1px solid var(--exito-linea)" : "1px solid var(--linea-fuerte)",
                         background: camposAria["estadoCivil"] && !camposModificados["estadoCivil"] ? "var(--exito-diluido)" : "#FFFFFF",
                         fontSize: "0.8rem"
                       }}
@@ -1645,7 +1645,7 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
                         width: "100%",
                         padding: "6px 8px",
                         borderRadius: "6px",
-                        border: camposAria["conyuge"] && !camposModificados["conyuge"] ? "1.5px solid var(--exito)" : "1px solid var(--linea-fuerte)",
+                        border: camposAria["conyuge"] && !camposModificados["conyuge"] ? "1px solid var(--exito-linea)" : "1px solid var(--linea-fuerte)",
                         background: camposAria["conyuge"] && !camposModificados["conyuge"] ? "var(--exito-diluido)" : "#FFFFFF",
                         fontSize: "0.8rem"
                       }}
@@ -1671,7 +1671,7 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
                         width: "100%",
                         padding: "6px 8px",
                         borderRadius: "6px",
-                        border: camposAria["fechaExpiracionDocumento"] && !camposModificados["fechaExpiracionDocumento"] ? "1.5px solid var(--exito)" : "1px solid var(--linea-fuerte)",
+                        border: camposAria["fechaExpiracionDocumento"] && !camposModificados["fechaExpiracionDocumento"] ? "1px solid var(--exito-linea)" : "1px solid var(--linea-fuerte)",
                         background: camposAria["fechaExpiracionDocumento"] && !camposModificados["fechaExpiracionDocumento"] ? "var(--exito-diluido)" : "#FFFFFF",
                         fontSize: "0.8rem"
                       }}
@@ -1682,23 +1682,23 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
 
               {/* Sección Opcional de Apoderado / Representante Legal en Persona Natural */}
               <div style={{ border: "1px solid var(--linea)", borderRadius: "10px", padding: "12px", background: "var(--fondo-suave)" }}>
-                <label style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "0.82rem", fontWeight: 700, color: "var(--texto)", cursor: "pointer" }}>
+                <label style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "0.82rem", fontWeight: 600, color: "var(--texto)", cursor: "pointer" }}>
                   <input
                     type="checkbox"
                     checked={tieneApoderadoNatural}
                     onChange={(e) => setTieneApoderadoNatural(e.target.checked)}
                   />
-                  <span>¿Actúa a través de Apoderado, Tutor o Representante Legal? (Opcional)</span>
+                  <span>Actúa mediante apoderado, tutor o representante legal</span>
                 </label>
                 <p style={{ margin: "2px 0 8px 24px", fontSize: "0.73rem", color: "var(--texto-suave)" }}>
-                  Aplica para ecuatorianos en el exterior con poder especial, menores en juicios de alimentos, tutores o albaceas.
+                  Poder especial desde el exterior, menores en juicios de alimentos, tutores o albaceas.
                 </p>
 
                 {tieneApoderadoNatural && (
                   <div style={{ marginTop: "10px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
                     <div>
                       <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 600, color: "var(--texto-2)", marginBottom: "3px" }}>
-                        Nombres y Apellidos del Apoderado / Tutor
+                        Nombre del apoderado o tutor
                       </label>
                       <input
                         type="text"
@@ -1710,7 +1710,7 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
                     </div>
                     <div>
                       <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 600, color: "var(--texto-2)", marginBottom: "3px" }}>
-                        Cédula / Pasaporte del Apoderado
+                        Cédula o pasaporte
                       </label>
                       <input
                         type="text"
@@ -1722,7 +1722,7 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
                     </div>
                     <div>
                       <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 600, color: "var(--texto-2)", marginBottom: "3px" }}>
-                        Calidad / Tipo de Representación
+                        Tipo de representación
                       </label>
                       <select
                         value={apoCalidadPoder}
@@ -1738,7 +1738,7 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
                     </div>
                     <div>
                       <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 600, color: "var(--texto-2)", marginBottom: "3px" }}>
-                        Notaría / Consulado y Vigencia
+                        Notaría o consulado y vigencia
                       </label>
                       <input
                         type="text"
@@ -1761,7 +1761,7 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
                 <div>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "4px" }}>
                     <label style={{ fontSize: "0.78rem", fontWeight: 600, color: "var(--texto-2)" }}>
-                      Razón Social de la Empresa *
+                      Razón social *
                     </label>
                     <IndicadorOrigenCampo
                       esAria={camposAria["razonSocial"]}
@@ -1775,13 +1775,13 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
                       setRazonSocial(e.target.value);
                       marcarCampoModificado("razonSocial");
                     }}
-                    placeholder="INMOBILIARIA & CONSTRUCTORA ANDINA S.A.S."
+                    placeholder="Como figura en el RUC"
                     style={{
                       width: "100%",
                       padding: "8px 10px",
                       borderRadius: "8px",
                       border: camposAria["razonSocial"] && !camposModificados["razonSocial"]
-                        ? "1.5px solid var(--exito)"
+                        ? "1px solid var(--exito-linea)"
                         : "1px solid var(--linea-fuerte)",
                       background: camposAria["razonSocial"] && !camposModificados["razonSocial"]
                         ? "var(--exito-diluido)"
@@ -1793,7 +1793,7 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
                 <div>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "4px" }}>
                     <label style={{ fontSize: "0.78rem", fontWeight: 600, color: "var(--texto-2)" }}>
-                      Nombre Comercial / Fantasía (Opcional)
+                      Nombre comercial (opcional)
                     </label>
                     <IndicadorOrigenCampo
                       esAria={camposAria["nombreComercial"]}
@@ -1815,13 +1815,13 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
 
               <div>
                 <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 600, color: "var(--texto-2)", marginBottom: "4px" }}>
-                  Actividad Económica / Sector (Opcional)
+                  Actividad económica (opcional)
                 </label>
                 <input
                   type="text"
                   value={actividadEconomica}
                   onChange={(e) => setActividadEconomica(e.target.value)}
-                  placeholder="Ej. Construcción y Promoción Inmobiliaria / Servicios Legales y Corporativos"
+                  placeholder="p. ej. construcción"
                   style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid var(--linea-fuerte)", fontSize: "0.85rem" }}
                 />
               </div>
@@ -1949,13 +1949,13 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
                     <div>
                       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "2px" }}>
                         <label style={{ fontSize: "0.7rem", fontWeight: 600, color: "var(--texto-2)" }}>
-                          Nombres del Representante *
+                          Nombres *
                         </label>
                         <IndicadorOrigenCampo esAria={camposAria["repNombres"]} esModificado={camposModificados["repNombres"]} />
                       </div>
                       <input
                         type="text"
-                        placeholder="Carlos Alberto Pérez Mena"
+                        placeholder="Nombres y apellidos"
                         value={repNombres}
                         onChange={(e) => {
                           setRepNombres(e.target.value);
@@ -1966,7 +1966,7 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
                           padding: "6px 8px",
                           borderRadius: "6px",
                           border: camposAria["repNombres"] && !camposModificados["repNombres"]
-                            ? "1.5px solid var(--exito)"
+                            ? "1px solid var(--exito-linea)"
                             : "1px solid var(--linea-fuerte)",
                           background: camposAria["repNombres"] && !camposModificados["repNombres"]
                             ? "var(--exito-diluido)"
@@ -1995,7 +1995,7 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
                           padding: "6px 8px",
                           borderRadius: "6px",
                           border: camposAria["repCedula"] && !camposModificados["repCedula"]
-                            ? "1.5px solid var(--exito)"
+                            ? "1px solid var(--exito-linea)"
                             : "1px solid var(--linea-fuerte)",
                           background: camposAria["repCedula"] && !camposModificados["repCedula"]
                             ? "var(--exito-diluido)"
@@ -2007,7 +2007,7 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
                     <div>
                       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "2px" }}>
                         <label style={{ fontSize: "0.7rem", fontWeight: 600, color: "var(--texto-2)" }}>
-                          Cargo Estatutario
+                          Cargo
                         </label>
                         <IndicadorOrigenCampo esAria={camposAria["repCargo"]} esModificado={camposModificados["repCargo"]} />
                       </div>
@@ -2041,7 +2041,7 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
                     </div>
                     <div>
                       <label style={{ display: "block", fontSize: "0.7rem", fontWeight: 600, color: "var(--texto-2)", marginBottom: "2px" }}>
-                        Correo Directo Representante (Opcional)
+                        Correo del representante (opcional)
                       </label>
                       <input
                         type="email"
@@ -2061,7 +2061,7 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "12px" }}>
             <div>
               <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 600, color: "var(--texto-2)", marginBottom: "4px" }}>
-                {tipoPersoneria === "juridica" ? "Correo Facturación / Notificaciones *" : "Correo Electrónico *"}
+                {tipoPersoneria === "juridica" ? "Correo de facturación y notificaciones *" : "Correo electrónico *"}
               </label>
               <input
                 type="email"
@@ -2078,7 +2078,7 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
             </div>
             <div>
               <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 600, color: "var(--texto-2)", marginBottom: "4px" }}>
-                Celular / WhatsApp (Contacto)
+                Celular o WhatsApp
               </label>
               <input
                 type="tel"
@@ -2090,27 +2090,30 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
             </div>
             <div>
               <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 600, color: "var(--texto-2)", marginBottom: "4px" }}>
-                Casillero Judicial Electrónico
+                Casillero judicial electrónico
               </label>
               <input
                 type="text"
                 value={casilleroElectronico}
                 onChange={(e) => setCasilleroElectronico(e.target.value)}
-                placeholder="1719103986@funcionjudicial.gob.ec"
+                placeholder="nombre@funcionjudicial.gob.ec"
                 style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid var(--linea-fuerte)", fontSize: "0.85rem" }}
               />
             </div>
           </div>
 
           {/* Sección de Contraparte y Conflict Check */}
-          <div style={{ border: "1px solid var(--linea)", borderRadius: "10px", padding: "12px 14px", background: "var(--fondo-suave)" }}>
-            <span style={{ fontSize: "0.82rem", fontWeight: 700, color: "var(--texto)", display: "block", marginBottom: "6px" }}>
-              Contraparte Preliminar (Verificación de Conflicto de Intereses)
+          <div>
+            <span style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--texto)", display: "block" }}>
+              Contraparte
+            </span>
+            <span style={{ fontSize: "0.75rem", color: "var(--texto-suave)", display: "block", marginBottom: "8px" }}>
+              Opcional. Sirve para comprobar conflictos de intereses antes de aceptar el caso.
             </span>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
               <input
                 type="text"
-                placeholder="Nombres de la Contraparte (Demandado / Cónyuge / Empresa Opositora)"
+                placeholder="Nombre de la contraparte"
                 value={contraparteNombres}
                 onChange={(e) => {
                   setContraparteNombres(e.target.value);
@@ -2120,7 +2123,7 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
               />
               <input
                 type="text"
-                placeholder="Cédula/RUC de la Contraparte"
+                placeholder="Cédula o RUC"
                 value={contraparteIdentificacion}
                 onChange={(e) => {
                   setContraparteIdentificacion(e.target.value);
@@ -2131,8 +2134,8 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
             </div>
 
             {alertaConflicto && (
-              <div style={{ marginTop: "8px", background: "var(--aviso-diluido)", border: "1px solid var(--aviso)", color: "var(--aviso-texto)", padding: "8px 10px", borderRadius: "6px", fontSize: "0.78rem", display: "flex", alignItems: "center", gap: "6px" }}>
-                <AlertTriangle size={16} />
+              <div style={{ marginTop: "8px", background: "var(--aviso-diluido)", color: "var(--aviso-texto)", padding: "8px 10px", borderRadius: "6px", fontSize: "0.78rem", display: "flex", alignItems: "center", gap: "6px" }}>
+                <AlertTriangle size={16} strokeWidth={1.8} />
                 {alertaConflicto}
               </div>
             )}
@@ -2159,7 +2162,7 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
           </div>
 
           {errorValidacion && (
-            <div style={{ background: "var(--error-diluido)", border: "1px solid #F87171", color: "var(--error-texto)", padding: "10px 14px", borderRadius: "8px", fontSize: "0.82rem" }}>
+            <div style={{ background: "var(--error-diluido)", color: "var(--error-texto)", padding: "10px 14px", borderRadius: "8px", fontSize: "0.82rem" }}>
               {errorValidacion}
             </div>
           )}
@@ -2170,7 +2173,6 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
           style={{
             padding: "16px 24px",
             borderTop: "1px solid var(--linea)",
-            background: "var(--fondo-suave)",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
@@ -2239,7 +2241,7 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
                 cursor: "pointer",
               }}
             >
-              {isPending ? "Guardando..." : "Solo Guardar"}
+              {isPending ? "Guardando…" : "Guardar"}
             </button>
 
             <button
@@ -2249,19 +2251,15 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
               style={{
                 padding: "9px 16px",
                 borderRadius: "8px",
-                border: "1px solid var(--acento)",
-                background: "var(--acento-diluido)",
-                color: "var(--acento)",
+                border: "1px solid var(--linea-fuerte)",
+                background: "#FFFFFF",
+                color: "var(--texto)",
                 fontSize: "0.85rem",
                 fontWeight: 600,
                 cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                gap: "6px",
               }}
             >
-              <Calendar size={15} />
-              Guardar y Agendar Cita
+              Guardar y agendar cita
             </button>
 
             <button
@@ -2277,14 +2275,9 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
                 fontSize: "0.85rem",
                 fontWeight: 600,
                 cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                gap: "6px",
-                boxShadow: "0 2px 4px rgba(2, 132, 199, 0.25)",
               }}
             >
-              <Scale size={15} />
-              Guardar y Radicar Expediente
+              Guardar y radicar expediente
             </button>
           </div>
         </div>
