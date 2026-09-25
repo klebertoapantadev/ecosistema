@@ -289,7 +289,7 @@ importers:
         specifier: 19.2.8
         version: 19.2.8(react@19.2.8)
       unpdf:
-        specifier: ^1.8.1
+        specifier: 1.8.1
         version: 1.8.1
       zod:
         specifier: 4.4.3
