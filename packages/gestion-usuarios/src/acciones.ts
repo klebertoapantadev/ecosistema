@@ -89,8 +89,8 @@ export async function asignarPerfil(usuarioId: string, perfil: string, negocio: 
   if (!perfil.trim()) return { ok: false, error: "Selecciona un perfil" };
 
   const nivelGestor = await obtenerNivelMaximoGestor(negocio);
-  if (nivelGestor < 80) {
-    return { ok: false, error: "No tienes permisos de administrador para asignar perfiles." };
+  if (nivelGestor < 30) {
+    return { ok: false, error: "No tienes permisos para asignar perfiles." };
   }
 
   const supabase = await crearClienteServidor();
@@ -121,6 +121,10 @@ export async function asignarPerfil(usuarioId: string, perfil: string, negocio: 
 
     if (!dbPerfil?.per_id) {
       return { ok: false, error: `Perfil no encontrado en catálogo: ${perfilClaveUpper}` };
+    }
+
+    if (dbPerfil.per_nivel > nivelGestor) {
+      return { ok: false, error: `No puedes asignar un perfil de jerarquía superior a la tuya (${dbPerfil.per_nivel} > ${nivelGestor})` };
     }
 
     // Buscar si ya existe membresía para este usuario con cualquier alias del negocio
@@ -229,8 +233,8 @@ export async function asignarPerfil(usuarioId: string, perfil: string, negocio: 
 
 export async function quitarPerfil(usuarioId: string, perfil: string, negocio: string = "TRANQ"): Promise<Resultado> {
   const nivelGestor = await obtenerNivelMaximoGestor(negocio);
-  if (nivelGestor < 80) {
-    return { ok: false, error: "No tienes permisos de administrador para revocar perfiles." };
+  if (nivelGestor < 30) {
+    return { ok: false, error: "No tienes permisos para revocar perfiles." };
   }
 
   const supabase = await crearClienteServidor();
@@ -259,9 +263,13 @@ export async function quitarPerfil(usuarioId: string, perfil: string, negocio: s
     const { data: dbPerfil } = await adminClient
       .schema("comun_seguridad")
       .from("seg_perfil")
-      .select("per_id")
+      .select("per_id, per_nivel")
       .eq("per_clave", perfilClaveUpper)
       .maybeSingle();
+
+    if (dbPerfil?.per_nivel && dbPerfil.per_nivel > nivelGestor) {
+      return { ok: false, error: "No puedes revocar un perfil de jerarquía superior a la tuya" };
+    }
 
     const { data: mems } = await adminClient
       .schema("comun_seguridad")

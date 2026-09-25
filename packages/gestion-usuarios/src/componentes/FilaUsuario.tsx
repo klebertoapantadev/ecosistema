@@ -102,7 +102,8 @@ export function FilaUsuario({
 
   const nombre = [usuario.usu_nombres, usuario.usu_apellidos].filter(Boolean).join(" ") || "—";
 
-  const puedeAsignarRoles = nivelMaximoGestor >= 80;
+  const puedeAsignarRoles = nivelMaximoGestor >= 30;
+  const puedeEliminar = nivelMaximoGestor >= 80;
 
   return (
     <tr>
@@ -123,9 +124,9 @@ export function FilaUsuario({
                 className={`perfil-casilla${tiene ? " perfil-casilla-activa" : ""}`}
                 title={
                   !puedeAsignarRoles
-                    ? "Solo administradores pueden asignar o revocar perfiles (Solo Lectura)"
+                    ? "Solo personal autorizado puede asignar o revocar perfiles (Solo Lectura)"
                     : fueraDeAlcance
-                      ? `Requiere jerarquía ${p.nivel} o superior`
+                      ? `Requiere jerarquía ${p.nivel} o superior (tu nivel: ${nivelMaximoGestor})`
                       : esBase
                         ? "Perfil base, no se puede retirar"
                         : esAbogado
@@ -148,7 +149,7 @@ export function FilaUsuario({
         {mensaje && <p className="error-auth mensaje-fila">{mensaje}</p>}
       </td>
       <td style={{ position: "sticky", right: 0, background: "#ffffff", zIndex: 1, boxShadow: "-2px 0 6px rgba(0,0,0,0.04)", textAlign: "center" }}>
-        {!puedeAsignarRoles ? (
+        {!puedeEliminar ? (
           <span style={{ fontSize: "0.74rem", color: "#94A3B8", fontWeight: 600 }}>Solo Lectura</span>
         ) : usuario.usu_correo !== "kleber.toapanta.ch@gmail.com" ? (
           <button

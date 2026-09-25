@@ -145,7 +145,7 @@ function CeldaPerfilesInteractiva({
     }
   }
 
-  const puedeAsignarRoles = nivelMaximoGestor >= 80;
+  const puedeAsignarRoles = nivelMaximoGestor >= 30;
 
   return (
     <div>
@@ -176,9 +176,9 @@ function CeldaPerfilesInteractiva({
               }}
               title={
                 !puedeAsignarRoles
-                  ? "Solo administradores pueden asignar o revocar perfiles (Solo Lectura)"
+                  ? "Solo usuarios autorizados pueden asignar o revocar perfiles (Solo Lectura)"
                   : fueraDeAlcance
-                    ? `Requiere jerarquía ${p.nivel} o superior`
+                    ? `Requiere jerarquía ${p.nivel} o superior (tu nivel: ${nivelMaximoGestor})`
                     : esBase
                       ? "Perfil base, no se puede retirar"
                       : esAbogado
