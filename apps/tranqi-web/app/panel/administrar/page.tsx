@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 import { obtenerPerfilActual, obtenerPerfiles } from "@eco/identidad";
 import { PanelAdministrarModular } from "./PanelAdministrarModular";
 
@@ -17,5 +18,11 @@ export default async function PaginaPanelAdministrar() {
   const esSuperAdminPlataforma = Boolean(perfil.usu_superadmin_plataforma);
   const esSuperAdmin = esSuperAdminEmail || esSuperAdminPlataforma || perfiles.includes("SUPERADMIN");
 
-  return <PanelAdministrarModular negocio={NEGOCIO} esSuperAdmin={esSuperAdmin} />;
+  const cookieStore = await cookies();
+  const modoCookie = cookieStore.get("tranqi_modo_rol")?.value || cookieStore.get("tranqi_rol_favorito")?.value;
+  const rolActivo = (modoCookie && modoCookie.trim())
+    ? modoCookie.toUpperCase().trim()
+    : (perfiles.includes("SUPERADMIN") ? "SUPERADMIN" : perfiles.includes("ADMINISTRADOR") ? "ADMINISTRADOR" : perfiles.includes("OPERADOR") ? "OPERADOR" : perfiles[0] || "CLIENTE");
+
+  return <PanelAdministrarModular negocio={NEGOCIO} esSuperAdmin={esSuperAdmin} rolInicial={rolActivo} />;
 }

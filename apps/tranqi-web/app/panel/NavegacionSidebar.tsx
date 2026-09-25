@@ -147,7 +147,7 @@ export function NavegacionSidebar({
               "configuracion_contrato_abogado",
               "consulta_usuarios_perfiles"
             ],
-            panel_seguridad: ["auditoria"]
+            panel_seguridad: ["mfa_seguridad"]
           };
         } else if (rolKey === "ABOGADO") {
           widgetsPorPanel = {

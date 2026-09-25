@@ -22,6 +22,7 @@ import { obtenerConfiguracionNavegacionRolAction, resetearSistemaSuperAdminActio
 interface Props {
   negocio?: string;
   esSuperAdmin?: boolean;
+  rolInicial?: string;
 }
 
 export interface ModuloAdminDef {
@@ -365,29 +366,28 @@ function SolicitudSocioWidget() {
   );
 }
 
-function obtenerModulosInicialesAdmin(): ModuloAdminDef[] {
-  if (typeof document === "undefined") {
-    return MODULOS_ADMIN.filter(m => m.id === "socios");
+function obtenerModulosInicialesAdmin(rolForzado?: string): ModuloAdminDef[] {
+  let rolActivo = rolForzado || "ADMINISTRADOR";
+  if (!rolForzado && typeof document !== "undefined") {
+    const cookieStore = document.cookie || "";
+    const matchModo = cookieStore.match(/tranqi_modo_rol=([^;]+)/);
+    const matchFav = cookieStore.match(/tranqi_rol_favorito=([^;]+)/);
+    if (matchModo && matchModo[1]) rolActivo = matchModo[1].toUpperCase();
+    else if (matchFav && matchFav[1]) rolActivo = matchFav[1].toUpperCase();
   }
-  const cookieStore = document.cookie || "";
-  let rolActivo = "ADMINISTRADOR";
-  const matchModo = cookieStore.match(/tranqi_modo_rol=([^;]+)/);
-  const matchFav = cookieStore.match(/tranqi_rol_favorito=([^;]+)/);
-  if (matchModo && matchModo[1]) rolActivo = matchModo[1].toUpperCase();
-  else if (matchFav && matchFav[1]) rolActivo = matchFav[1].toUpperCase();
 
   let ids: string[] = ["gestion_usuarios", "consulta_usuarios", "perfiles", "socios", "solicitud_socio", "emision_notificaciones", "monitoreo_notificaciones_usuarios", "bitacora_notificaciones", "gestion_terminos_consentimientos", "auditoria", "configuracion_contrato_abogado"];
   if (rolActivo === "OPERADOR" || rolActivo === "AUXILIAR" || rolActivo === "TECNICO") {
-    ids = ["socios", "monitoreo_notificaciones_usuarios", "configuracion_contrato_abogado", "gestion_terminos_consentimientos"];
+    ids = ["socios", "solicitud_socio", "monitoreo_notificaciones_usuarios", "bitacora_notificaciones", "configuracion_contrato_abogado", "gestion_terminos_consentimientos", "consulta_usuarios"];
   }
 
   return MODULOS_ADMIN.filter(m => ids.includes(m.id));
 }
 
-export function PanelAdministrarModular({ negocio = "TRANQ", esSuperAdmin = false }: Props) {
-  const [rolActivo, setRolActivo] = useState<string>("ADMINISTRADOR");
+export function PanelAdministrarModular({ negocio = "TRANQ", esSuperAdmin = false, rolInicial }: Props) {
+  const [rolActivo, setRolActivo] = useState<string>(() => rolInicial?.toUpperCase() || "ADMINISTRADOR");
   const [favoritos, setFavoritos] = useState<string[]>(["gestion_usuarios", "socios"]);
-  const [modulosAsignados, setModulosAsignados] = useState<ModuloAdminDef[]>(obtenerModulosInicialesAdmin);
+  const [modulosAsignados, setModulosAsignados] = useState<ModuloAdminDef[]>(() => obtenerModulosInicialesAdmin(rolInicial));
   const { widgetActivo, abrir, cerrar } = useWidgetEnUrl();
   const [widgetEditar, setWidgetEditar] = useState<{
     id: string;
@@ -497,7 +497,7 @@ export function PanelAdministrarModular({ negocio = "TRANQ", esSuperAdmin = fals
     async function cargarConfiguracionPanel() {
       try {
         const cookieStore = typeof document !== "undefined" ? document.cookie : "";
-        let rolEncontrado = "ADMINISTRADOR";
+        let rolEncontrado = rolInicial?.toUpperCase() || "ADMINISTRADOR";
         const matchModo = cookieStore.match(/tranqi_modo_rol=([^;]+)/);
         const matchFav = cookieStore.match(/tranqi_rol_favorito=([^;]+)/);
         if (matchModo && matchModo[1]) rolEncontrado = matchModo[1].toUpperCase();
@@ -505,10 +505,12 @@ export function PanelAdministrarModular({ negocio = "TRANQ", esSuperAdmin = fals
 
         setRolActivo(rolEncontrado);
 
+        const esOperador = rolEncontrado === "OPERADOR" || rolEncontrado === "AUXILIAR" || rolEncontrado === "TECNICO";
+
         // 1. Presets de asignación por rol para panel_administrar
         let idsAsignados: string[] = [];
-        if (rolEncontrado === "OPERADOR" || rolEncontrado === "AUXILIAR" || rolEncontrado === "TECNICO") {
-          idsAsignados = ["socios", "monitoreo_notificaciones_usuarios", "configuracion_contrato_abogado", "gestion_terminos_consentimientos"];
+        if (esOperador) {
+          idsAsignados = ["socios", "solicitud_socio", "monitoreo_notificaciones_usuarios", "bitacora_notificaciones", "configuracion_contrato_abogado", "gestion_terminos_consentimientos", "consulta_usuarios"];
         } else if (rolEncontrado === "ADMINISTRADOR" || rolEncontrado === "SUPERADMIN") {
           idsAsignados = ["gestion_usuarios", "consulta_usuarios", "perfiles", "socios", "solicitud_socio", "emision_notificaciones", "monitoreo_notificaciones_usuarios", "bitacora_notificaciones", "gestion_terminos_consentimientos", "auditoria", "configuracion_contrato_abogado"];
         }
@@ -540,6 +542,12 @@ export function PanelAdministrarModular({ negocio = "TRANQ", esSuperAdmin = fals
               }
             }
           }
+        }
+
+        // Si es Operador, remover tajantemente auditoría, perfiles o gestión de usuarios por seguridad
+        if (esOperador) {
+          const MODULOS_PROHIBIDOS_OPERADOR = new Set(["auditoria", "perfiles", "gestion_usuarios"]);
+          idsAsignados = idsAsignados.filter(id => !MODULOS_PROHIBIDOS_OPERADOR.has(id));
         }
 
         // 4. Mapear y filtrar MODULOS_ADMIN

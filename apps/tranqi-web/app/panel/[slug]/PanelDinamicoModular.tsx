@@ -356,7 +356,7 @@ function obtenerWidgetsInicialesDinamicos(panelId: string, slugStr: string): str
 
   if (rolActivo === "OPERADOR" || rolActivo === "AUXILIAR" || rolActivo === "TECNICO") {
     if (panelId === "panel_herramientas" || slugStr === "herramientas") return ["catalogo_productos", "firma_documentos_pdf", "billetera_documentos", "emision_notificaciones"];
-    if (panelId === "panel_seguridad" || slugStr === "seguridad") return ["mfa_seguridad", "auditoria"];
+    if (panelId === "panel_seguridad" || slugStr === "seguridad") return ["mfa_seguridad"];
     if (panelId === "panel_administrar" || slugStr === "administrar") return ["crm_clientes", "socios", "solicitud_socio", "historial_pagos", "emision_notificaciones", "bitacora_notificaciones", "monitoreo_notificaciones_usuarios", "gestion_terminos_consentimientos", "configuracion_contrato_abogado", "consulta_usuarios_perfiles"];
     if (panelId === "panel_cuenta" || slugStr === "cuenta") return ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos"];
   } else if (rolActivo === "ADMINISTRADOR" || rolActivo === "SUPERADMIN") {

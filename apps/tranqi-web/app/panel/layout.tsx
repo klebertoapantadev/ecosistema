@@ -79,6 +79,10 @@ export default async function LayoutPanel({ children }: { children: React.ReactN
             <BotonPlegarRail />
           </div>
 
+          <div style={{ padding: "0 20px 8px 20px", marginTop: "-6px" }}>
+            <SelloCompilacion className="sello-compilacion" />
+          </div>
+
           <NavegacionSidebar modoActivo={modoActivo} negocio={NEGOCIO} />
 
           {/* TRQ-013: la etiqueta amarilla "Rol Activo" sale del rail; el
@@ -89,7 +93,6 @@ export default async function LayoutPanel({ children }: { children: React.ReactN
           <div className="panel-usuario">
             <span className="nombre-usuario-activo">{[perfil.usu_nombres, perfil.usu_apellidos].filter(Boolean).join(" ")}</span>
             <span className="correo-usuario-activo">{perfil.usu_correo}</span>
-            <SelloCompilacion className="sello-compilacion" />
             {perfil.usu_superadmin_plataforma && (
               <Link
                 href="/panel/cuenta?widget=ver_como"

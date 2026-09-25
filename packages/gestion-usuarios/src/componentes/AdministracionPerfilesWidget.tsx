@@ -1596,6 +1596,96 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
     }
   };
 
+  const descargarExcelWidgets = (soloPerfilActual: boolean = false) => {
+    try {
+      const perfilesAProcesar = soloPerfilActual
+        ? perfiles.filter(p => p.clave === perfilSeleccionado)
+        : perfiles;
+
+      const filas: string[][] = [
+        ["Perfil Clave", "Nombre Perfil", "Nivel", "ID Panel", "Nombre Panel", "Ruta Panel", "Posición", "Clave Widget", "Nombre Widget", "Categoría", "Ruta Física"]
+      ];
+
+      for (const p of perfilesAProcesar) {
+        for (const panel of panelesSidebar) {
+          const widgetsDelPanel = p.widgetsAsignadosPorPanel[panel.id] || [];
+          widgetsDelPanel.forEach((wClave, idx) => {
+            const wObj = inventarioWidgets.find(w => w.clave === wClave);
+            filas.push([
+              p.clave,
+              p.nombre,
+              String(p.nivel),
+              panel.id,
+              panel.nombre,
+              panel.ruta,
+              `#${idx + 1}`,
+              wClave,
+              wObj?.nombre || wClave,
+              wObj?.categoria || "General",
+              wObj?.rutaFisica || `/plataforma/${wClave}.tsx`
+            ]);
+          });
+        }
+      }
+
+      const csvContent = "\uFEFF" + filas.map(f => f.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(",")).join("\r\n");
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      const fecha = new Date().toISOString().slice(0, 10);
+      const sufijo = soloPerfilActual ? `-${perfilSeleccionado.toLowerCase()}` : "-todos-perfiles";
+      link.setAttribute("download", `widgets-perfiles-${negocio.toLowerCase()}${sufijo}-${fecha}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      setMensajeExito(`Archivo Excel descargado con éxito (${filas.length - 1} widgets exportados).`);
+      setTimeout(() => setMensajeExito(null), 3500);
+    } catch (err) {
+      console.error("Error al descargar Excel de widgets:", err);
+    }
+  };
+
+  const copiarTextoWidgets = (soloPerfilActual: boolean = false) => {
+    try {
+      const perfilesAProcesar = soloPerfilActual
+        ? perfiles.filter(p => p.clave === perfilSeleccionado)
+        : perfiles;
+
+      let texto = `=== MATRIZ DE WIDGETS CONFIGURADOS POR PERFIL (${negocio}) ===\n\n`;
+
+      for (const p of perfilesAProcesar) {
+        texto += `## PERFIL: ${p.nombre} (${p.clave}) - Nivel ${p.nivel}\n`;
+        let totalPerfil = 0;
+        for (const panel of panelesSidebar) {
+          const widgetsDelPanel = p.widgetsAsignadosPorPanel[panel.id] || [];
+          if (widgetsDelPanel.length > 0) {
+            totalPerfil += widgetsDelPanel.length;
+            texto += `\n### Panel: ${panel.nombre} (${panel.ruta}) [${widgetsDelPanel.length} widgets]\n`;
+            texto += `| # | Nombre Widget | Clave | Categoría | Ruta Física |\n`;
+            texto += `|---|---------------|-------|-----------|-------------|\n`;
+            widgetsDelPanel.forEach((wClave, idx) => {
+              const wObj = inventarioWidgets.find(w => w.clave === wClave);
+              texto += `| #${idx + 1} | ${wObj?.nombre || wClave} | ${wClave} | ${wObj?.categoria || "General"} | ${wObj?.rutaFisica || `/plataforma/${wClave}.tsx`} |\n`;
+            });
+          }
+        }
+        texto += `\nTotal widgets en perfil ${p.nombre}: ${totalPerfil}\n`;
+        texto += `------------------------------------------------------------\n\n`;
+      }
+
+      if (typeof navigator !== "undefined" && navigator.clipboard) {
+        navigator.clipboard.writeText(texto);
+        setMensajeExito(`Matriz de widgets copiada al portapapeles en formato tabla.`);
+        setTimeout(() => setMensajeExito(null), 3500);
+      }
+    } catch (err) {
+      console.error("Error al copiar texto de widgets:", err);
+    }
+  };
+
   // Formulario Perfil
   const [nuevoPerfil, setNuevoPerfil] = useState({
     clave: "",
@@ -2505,6 +2595,75 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                   <ChevronDown size={13} /> <span>Expandir Todos</span>
                 </button>
               </div>
+
+              {/* Botones de Exportación Excel (CSV) y Copiar Texto */}
+              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                <button
+                  type="button"
+                  onClick={() => descargarExcelWidgets(true)}
+                  title={`Descargar archivo Excel (CSV) con los widgets configurados para ${perfilActualObj?.nombre}`}
+                  style={{
+                    background: "#ECFDF5",
+                    border: "1px solid #A7F3D0",
+                    color: "#047857",
+                    borderRadius: "6px",
+                    padding: "5px 9px",
+                    fontSize: "0.74rem",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "4px",
+                    transition: "all 0.15s ease"
+                  }}
+                >
+                  <Download size={13} /> <span>Excel (Perfil)</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => descargarExcelWidgets(false)}
+                  title="Descargar archivo Excel (CSV) con la matriz completa de todos los perfiles"
+                  style={{
+                    background: "#ECFDF5",
+                    border: "1px solid #A7F3D0",
+                    color: "#047857",
+                    borderRadius: "6px",
+                    padding: "5px 9px",
+                    fontSize: "0.74rem",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "4px",
+                    transition: "all 0.15s ease"
+                  }}
+                >
+                  <Download size={13} /> <span>Excel (Todos)</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => copiarTextoWidgets(true)}
+                  title={`Copiar al portapapeles en formato tabla los widgets configurados para ${perfilActualObj?.nombre}`}
+                  style={{
+                    background: "#EFF6FF",
+                    border: "1px solid #BFDBFE",
+                    color: "#1D4ED8",
+                    borderRadius: "6px",
+                    padding: "5px 9px",
+                    fontSize: "0.74rem",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "4px",
+                    transition: "all 0.15s ease"
+                  }}
+                >
+                  <Copy size={13} /> <span>Copiar Texto</span>
+                </button>
+              </div>
             </div>
           </div>
 
@@ -2846,6 +3005,33 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
 
                                     {/* Botones de acción */}
                                     <div style={{ display: "flex", alignItems: "center", gap: "4px", flexShrink: 0 }}>
+                                      <a
+                                        href={w.clave === "favoritos" ? (panel.ruta || "/panel") : `${panel.ruta || "/panel"}?widget=${w.clave}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        title={`Abrir y probar ${w.nombre} directamente en ${panel.nombre} (Nueva pestaña)`}
+                                        aria-label={`Abrir ${w.nombre} en ${panel.nombre}`}
+                                        className="btn-responsive-accion"
+                                        style={{
+                                          background: "#EFF6FF",
+                                          border: "1px solid #BFDBFE",
+                                          color: "#1D4ED8",
+                                          borderRadius: "6px",
+                                          padding: "5px 8px",
+                                          textDecoration: "none",
+                                          display: "inline-flex",
+                                          alignItems: "center",
+                                          gap: "4px",
+                                          fontSize: "0.72rem",
+                                          fontWeight: 700,
+                                          cursor: "pointer",
+                                          transition: "all 0.15s ease"
+                                        }}
+                                      >
+                                        <ExternalLink size={13} />
+                                        <span className="btn-texto-responsive">Abrir</span>
+                                      </a>
+
                                       <button
                                         type="button"
                                         title="Subir posición"

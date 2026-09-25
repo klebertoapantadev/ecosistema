@@ -27,7 +27,10 @@ export default async function LayoutPanel({ children }: { children: React.ReactN
   return (
     <div className="panel-layout">
       <aside className="panel-nav">
-        <div className="panel-marca">tinkay</div>
+        <div className="panel-marca">
+          tinkay
+          <SelloCompilacion className="sello-compilacion" />
+        </div>
         <div className="panel-nav-links">
           {widgets.map((w) => (
             <Link key={w.wdg_clave} href={`/panel/${rutaDeWidget(w.wdg_clave)}`}>
@@ -39,7 +42,6 @@ export default async function LayoutPanel({ children }: { children: React.ReactN
         <div className="panel-usuario">
           <span className="nombre-usuario-activo">{[perfil.usu_nombres, perfil.usu_apellidos].filter(Boolean).join(" ")}</span>
           <span className="correo-usuario-activo">{perfil.usu_correo}</span>
-          <SelloCompilacion className="sello-compilacion" />
           {perfil.usu_superadmin_plataforma && <span className="etiqueta-superadmin">SuperAdmin</span>}
           <form action={cerrarSesionYRedirigir}>
             <button type="submit" className="btn-mini">Cerrar sesión</button>
