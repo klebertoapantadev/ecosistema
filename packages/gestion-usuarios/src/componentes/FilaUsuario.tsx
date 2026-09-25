@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Trash2 } from "lucide-react";
 import { ModalNotificacionPush } from "../../../notificaciones/src/ModalNotificacionPush";
 import { asignarPerfil, quitarPerfil, eliminarUsuarioSuperAdminAction } from "../acciones";
@@ -21,7 +21,6 @@ export function FilaUsuario({
   const [ocupado, setOcupado] = useState<string | null>(null);
   const [mensaje, setMensaje] = useState<string | null>(null);
   const [eliminando, setEliminando] = useState(false);
-
   const [modalPush, setModalPush] = useState<{
     abierto: boolean;
     titulo: string;
@@ -37,19 +36,33 @@ export function FilaUsuario({
     tipo: "exito",
   });
 
+  useEffect(() => {
+    setAsignados(usuario.perfiles);
+  }, [usuario.perfiles]);
+
   async function alternar(clave: string, marcado: boolean) {
+    const estadoPrevio = [...asignados];
+    setAsignados((actual) =>
+      marcado ? Array.from(new Set([...actual, clave])) : actual.filter((c) => c !== clave)
+    );
     setOcupado(clave);
     setMensaje(null);
-    const resultado = marcado
-      ? await asignarPerfil(usuario.usu_id, clave, negocio)
-      : await quitarPerfil(usuario.usu_id, clave, negocio);
-    setOcupado(null);
 
-    if (!resultado.ok) {
-      setMensaje(resultado.error ?? "Error al procesar la solicitud");
-      return;
+    try {
+      const resultado = marcado
+        ? await asignarPerfil(usuario.usu_id, clave, negocio)
+        : await quitarPerfil(usuario.usu_id, clave, negocio);
+
+      if (!resultado.ok) {
+        setAsignados(estadoPrevio);
+        setMensaje(resultado.error ?? "Error al procesar la solicitud");
+      }
+    } catch (err: any) {
+      setAsignados(estadoPrevio);
+      setMensaje(err?.message || "Error al procesar la solicitud");
+    } finally {
+      setOcupado(null);
     }
-    setAsignados((actual) => (marcado ? [...actual, clave] : actual.filter((c) => c !== clave)));
   }
 
   async function handleEliminar() {

@@ -106,19 +106,36 @@ function CeldaPerfilesInteractiva({
   const [ocupado, setOcupado] = useState<string | null>(null);
   const [mensaje, setMensaje] = useState<string | null>(null);
 
+  // Sincronizar perfiles si el padre actualiza datos
+  useEffect(() => {
+    setAsignados(usuario.perfiles);
+  }, [usuario.perfiles]);
+
   async function alternar(clave: string, marcado: boolean) {
+    const estadoPrevio = [...asignados];
+    // 1. Actualización optimista inmediata en la interfaz para evitar desmarcado
+    setAsignados((actual) =>
+      marcado ? Array.from(new Set([...actual, clave])) : actual.filter((c) => c !== clave)
+    );
     setOcupado(clave);
     setMensaje(null);
-    const resultado = marcado
-      ? await asignarPerfil(usuario.usu_id, clave, negocio)
-      : await quitarPerfil(usuario.usu_id, clave, negocio);
-    setOcupado(null);
 
-    if (!resultado.ok) {
-      setMensaje(resultado.error ?? "Error al procesar la solicitud");
-      return;
+    try {
+      const resultado = marcado
+        ? await asignarPerfil(usuario.usu_id, clave, negocio)
+        : await quitarPerfil(usuario.usu_id, clave, negocio);
+
+      if (!resultado.ok) {
+        // Rollback al estado previo si falla la acción
+        setAsignados(estadoPrevio);
+        setMensaje(resultado.error ?? "Error al procesar la solicitud");
+      }
+    } catch (err: any) {
+      setAsignados(estadoPrevio);
+      setMensaje(err?.message || "Error al procesar la solicitud");
+    } finally {
+      setOcupado(null);
     }
-    setAsignados((actual) => (marcado ? [...actual, clave] : actual.filter((c) => c !== clave)));
   }
 
   return (
@@ -129,6 +146,7 @@ function CeldaPerfilesInteractiva({
           const fueraDeAlcance = p.nivel > nivelMaximoGestor;
           const esBase = p.clave === "CLIENTE";
           const esAbogado = p.clave === "ABOGADO";
+          const estaCargandoEste = ocupado === p.clave;
 
           return (
             <label
@@ -143,8 +161,9 @@ function CeldaPerfilesInteractiva({
                 background: tiene ? "#F3E8FF" : "#F8FAFC",
                 border: tiene ? "1px solid #D8B4FE" : "1px solid #E2E8F0",
                 fontSize: "0.76rem",
-                cursor: fueraDeAlcance || (esBase && tiene) || esAbogado ? "default" : "pointer",
-                opacity: fueraDeAlcance ? 0.5 : 1
+                cursor: fueraDeAlcance || (esBase && tiene) || esAbogado || ocupado !== null ? "default" : "pointer",
+                opacity: fueraDeAlcance ? 0.5 : estaCargandoEste ? 0.7 : 1,
+                transition: "all 0.15s ease"
               }}
               title={
                 fueraDeAlcance

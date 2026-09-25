@@ -36,119 +36,193 @@ export async function obtenerDatosGestionUsuariosAction(consulta: string = "", n
   }
 }
 
-export async function asignarPerfil(usuarioId: string, perfil: string, negocio: string): Promise<Resultado> {
+export async function asignarPerfil(usuarioId: string, perfil: string, negocio: string = "TRANQ"): Promise<Resultado> {
   if (!perfil.trim()) return { ok: false, error: "Selecciona un perfil" };
 
   const supabase = await crearClienteServidor();
+  const perfilClaveUpper = perfil.toUpperCase().trim();
+  const negocioUpper = (negocio || "TRANQ").toUpperCase().trim();
+
+  // 1. Intentar primero con la RPC de base de datos
   const { error } = await supabase
     .schema("comun_seguridad")
-    .rpc("seg_fn_asignar_perfil", { p_usuario_id: usuarioId, p_negocio: negocio, p_perfil: perfil });
+    .rpc("seg_fn_asignar_perfil", { p_usuario_id: usuarioId, p_negocio: negocioUpper, p_perfil: perfilClaveUpper });
 
-  if (error) {
-    // Si la RPC falla por un error de disparador antiguo (ej. mem_perfil), aplicar asignación directa resiliente
-    try {
-      const client = crearClienteAdmin() || supabase;
-      const { data: dbPerfil } = await client
-        .schema("comun_seguridad")
-        .from("seg_perfil")
-        .select("per_id, per_nivel")
-        .eq("per_clave", perfil.toUpperCase().trim())
-        .maybeSingle();
-
-      if (dbPerfil?.per_id) {
-        // 1. Obtener o crear membresía
-        let memId: string | null = null;
-        const { data: memExistente } = await client
-          .schema("comun_seguridad")
-          .from("seg_membresia")
-          .select("mem_id")
-          .eq("mem_usuario_id", usuarioId)
-          .eq("mem_negocio", negocio)
-          .maybeSingle();
-
-        if (memExistente?.mem_id) {
-          memId = memExistente.mem_id;
-        } else {
-          const { data: nuevaMem } = await client
-            .schema("comun_seguridad")
-            .from("seg_membresia")
-            .insert({
-              mem_usuario_id: usuarioId,
-              mem_negocio: negocio,
-              mem_rol: perfil.toUpperCase().trim(),
-              mem_estado: "ACTIVO"
-            })
-            .select("mem_id")
-            .maybeSingle();
-          memId = nuevaMem?.mem_id || null;
-        }
-
-        if (memId) {
-          await client
-            .schema("comun_seguridad")
-            .from("seg_membresia_perfil")
-            .upsert({
-              mpe_membresia_id: memId,
-              mpe_perfil_id: dbPerfil.per_id
-            }, { onConflict: "mpe_membresia_id,mpe_perfil_id" });
-
-          revalidatePath("/panel/usuarios");
-          return { ok: true, data: undefined };
-        }
-      }
-    } catch (errFallback) {
-      console.warn("Aviso en fallback asignarPerfil:", errFallback);
-    }
-    return { ok: false, error: error.message };
+  if (!error) {
+    revalidatePath("/panel/usuarios");
+    revalidatePath("/panel/administrar");
+    revalidatePath("/panel");
+    return { ok: true, data: undefined };
   }
 
-  revalidatePath("/panel/usuarios");
-  return { ok: true, data: undefined };
-}
+  // 2. Fallback resiliente con cliente Admin si la RPC falla por disparadores o permisos intermedios
+  try {
+    const adminClient = crearClienteAdmin() || supabase;
+    const { data: dbPerfil } = await adminClient
+      .schema("comun_seguridad")
+      .from("seg_perfil")
+      .select("per_id, per_nivel, per_activo")
+      .eq("per_clave", perfilClaveUpper)
+      .maybeSingle();
 
-export async function quitarPerfil(usuarioId: string, perfil: string, negocio: string): Promise<Resultado> {
-  const supabase = await crearClienteServidor();
-  const { error } = await supabase
-    .schema("comun_seguridad")
-    .rpc("seg_fn_quitar_perfil", { p_usuario_id: usuarioId, p_negocio: negocio, p_perfil: perfil });
+    if (!dbPerfil?.per_id) {
+      return { ok: false, error: `Perfil no encontrado en catálogo: ${perfilClaveUpper}` };
+    }
 
-  if (error) {
-    try {
-      const client = crearClienteAdmin() || supabase;
-      const { data: dbPerfil } = await client
-        .schema("comun_seguridad")
-        .from("seg_perfil")
-        .select("per_id")
-        .eq("per_clave", perfil.toUpperCase().trim())
-        .maybeSingle();
+    // Buscar si ya existe membresía para este usuario con cualquier alias del negocio
+    const { data: mems } = await adminClient
+      .schema("comun_seguridad")
+      .from("seg_membresia")
+      .select("mem_id, mem_negocio")
+      .eq("mem_usuario_id", usuarioId);
 
-      const { data: mem } = await client
+    const memExistente = (mems || []).find((m) => {
+      const dbNeg = (m.mem_negocio || "").toUpperCase();
+      return (
+        dbNeg === negocioUpper ||
+        (negocioUpper.startsWith("TRANQ") && dbNeg.startsWith("TRANQ")) ||
+        (negocioUpper.startsWith("FFH") && dbNeg.startsWith("FFH")) ||
+        (negocioUpper.startsWith("FASTFIX") && dbNeg.startsWith("FASTFIX")) ||
+        (negocioUpper.startsWith("TNK") && dbNeg.startsWith("TNK")) ||
+        (negocioUpper.startsWith("TINKAY") && dbNeg.startsWith("TINKAY")) ||
+        (negocioUpper.startsWith("MRG") && dbNeg.startsWith("MRG")) ||
+        (negocioUpper.startsWith("MARGARITAS") && dbNeg.startsWith("MARGARITAS"))
+      );
+    });
+
+    let memId = memExistente?.mem_id;
+
+    if (!memId) {
+      const { data: nuevaMem, error: errNuevaMem } = await adminClient
         .schema("comun_seguridad")
         .from("seg_membresia")
+        .insert({
+          mem_usuario_id: usuarioId,
+          mem_negocio: negocioUpper,
+          mem_rol: perfilClaveUpper,
+          mem_estado: "ACTIVO"
+        })
         .select("mem_id")
-        .eq("mem_usuario_id", usuarioId)
-        .eq("mem_negocio", negocio)
         .maybeSingle();
 
-      if (dbPerfil?.per_id && mem?.mem_id) {
-        await client
-          .schema("comun_seguridad")
-          .from("seg_membresia_perfil")
-          .delete()
-          .eq("mpe_membresia_id", mem.mem_id)
-          .eq("mpe_perfil_id", dbPerfil.per_id);
-
-        revalidatePath("/panel/usuarios");
-        return { ok: true, data: undefined };
+      if (errNuevaMem) {
+        return { ok: false, error: `Error al crear membresía: ${errNuevaMem.message}` };
       }
-    } catch (errFallback) {
-      console.warn("Aviso en fallback quitarPerfil:", errFallback);
+      memId = nuevaMem?.mem_id;
+    } else {
+      await adminClient
+        .schema("comun_seguridad")
+        .from("seg_membresia")
+        .update({ mem_estado: "ACTIVO", mem_actualizado_en: new Date().toISOString() })
+        .eq("mem_id", memId);
     }
-    return { ok: false, error: error.message };
+
+    if (memId) {
+      const authUser = (await supabase.auth.getUser()).data?.user;
+      const { error: errMpe } = await adminClient
+        .schema("comun_seguridad")
+        .from("seg_membresia_perfil")
+        .upsert(
+          {
+            mpe_membresia_id: memId,
+            mpe_perfil_id: dbPerfil.per_id,
+            mpe_asignado_por: authUser?.id || null,
+            mpe_actualizado_en: new Date().toISOString()
+          },
+          { onConflict: "mpe_membresia_id,mpe_perfil_id" }
+        );
+
+      if (errMpe) {
+        return { ok: false, error: `Error al vincular perfil: ${errMpe.message}` };
+      }
+
+      revalidatePath("/panel/usuarios");
+      revalidatePath("/panel/administrar");
+      revalidatePath("/panel");
+      return { ok: true, data: undefined };
+    }
+  } catch (errFallback: any) {
+    console.warn("Aviso en fallback asignarPerfil:", errFallback);
+    return { ok: false, error: errFallback?.message || error.message };
   }
 
-  revalidatePath("/panel/usuarios");
-  return { ok: true, data: undefined };
+  return { ok: false, error: error.message };
+}
+
+export async function quitarPerfil(usuarioId: string, perfil: string, negocio: string = "TRANQ"): Promise<Resultado> {
+  const supabase = await crearClienteServidor();
+  const perfilClaveUpper = perfil.toUpperCase().trim();
+  const negocioUpper = (negocio || "TRANQ").toUpperCase().trim();
+
+  if (perfilClaveUpper === "CLIENTE") {
+    return { ok: false, error: "CLIENTE es el perfil base y no se puede retirar (PLT-003 regla 2)" };
+  }
+
+  // 1. Intentar primero con RPC
+  const { error } = await supabase
+    .schema("comun_seguridad")
+    .rpc("seg_fn_quitar_perfil", { p_usuario_id: usuarioId, p_negocio: negocioUpper, p_perfil: perfilClaveUpper });
+
+  if (!error) {
+    revalidatePath("/panel/usuarios");
+    revalidatePath("/panel/administrar");
+    revalidatePath("/panel");
+    return { ok: true, data: undefined };
+  }
+
+  // 2. Fallback resiliente con cliente Admin
+  try {
+    const adminClient = crearClienteAdmin() || supabase;
+    const { data: dbPerfil } = await adminClient
+      .schema("comun_seguridad")
+      .from("seg_perfil")
+      .select("per_id")
+      .eq("per_clave", perfilClaveUpper)
+      .maybeSingle();
+
+    const { data: mems } = await adminClient
+      .schema("comun_seguridad")
+      .from("seg_membresia")
+      .select("mem_id, mem_negocio")
+      .eq("mem_usuario_id", usuarioId);
+
+    const memExistente = (mems || []).find((m) => {
+      const dbNeg = (m.mem_negocio || "").toUpperCase();
+      return (
+        dbNeg === negocioUpper ||
+        (negocioUpper.startsWith("TRANQ") && dbNeg.startsWith("TRANQ")) ||
+        (negocioUpper.startsWith("FFH") && dbNeg.startsWith("FFH")) ||
+        (negocioUpper.startsWith("FASTFIX") && dbNeg.startsWith("FASTFIX")) ||
+        (negocioUpper.startsWith("TNK") && dbNeg.startsWith("TNK")) ||
+        (negocioUpper.startsWith("TINKAY") && dbNeg.startsWith("TINKAY")) ||
+        (negocioUpper.startsWith("MRG") && dbNeg.startsWith("MRG")) ||
+        (negocioUpper.startsWith("MARGARITAS") && dbNeg.startsWith("MARGARITAS"))
+      );
+    });
+
+    if (dbPerfil?.per_id && memExistente?.mem_id) {
+      const { error: errDel } = await adminClient
+        .schema("comun_seguridad")
+        .from("seg_membresia_perfil")
+        .delete()
+        .eq("mpe_membresia_id", memExistente.mem_id)
+        .eq("mpe_perfil_id", dbPerfil.per_id);
+
+      if (errDel) {
+        return { ok: false, error: errDel.message };
+      }
+
+      revalidatePath("/panel/usuarios");
+      revalidatePath("/panel/administrar");
+      revalidatePath("/panel");
+      return { ok: true, data: undefined };
+    }
+  } catch (errFallback: any) {
+    console.warn("Aviso en fallback quitarPerfil:", errFallback);
+    return { ok: false, error: errFallback?.message || error.message };
+  }
+
+  return { ok: false, error: error.message };
 }
 
 export interface GuardarPerfilInput {

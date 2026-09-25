@@ -56,6 +56,8 @@ Tranqi adopta las mejores prácticas y estándares internacionales de **Law Prac
 | **`TRQ-ADM-002`** | **Operador/Admin** | **Asignación Inteligente de Casos (IA), Liquidación de Honorarios y Comisiones** | ⏳ Pendiente | **0%** | **Jesus Navarrete (IA)** / Kleber Toapanta |
 | **`TRQ-ADM-003`** | **Operador/Admin** | **Auditoría Transversal BDD, Telemetría API y Bitácora de Campañas** | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`TRQ-ADM-004`** | **Operador/Admin** | **Catálogo Comercial, Tarifario de Honorarios, Pasarela Payphone e Historial** | ✅ Implementado | **100%** | Kleber Toapanta |
+| **`TRQ-B2B-001`** | **B2B / Empresas** | **Convenios Corporativos: Consultas Jurídicas Gratuitas, Descuento en Servicios y Billetera Legal** | 🟡 Especificado | **30%** | Kleber Toapanta |
+| **`TRQ-B2B-002`** | **B2B / Empresas** | **Widget de Nómina Corporativa, Carga Masiva, Invitaciones por Correo y Link con Empresa Padre** | 🟡 Especificado | **30%** | Kleber Toapanta |
 
 ---
 
@@ -662,4 +664,85 @@ graph TD
 2. **ARIA Ingestor (Digitalización de Expedientes):** Procesa expedientes escaneados en lote y extrae metadatos para poblar automáticamente el expediente digital.
 3. **ARIA Co-Pilot (Asistente del Abogado):** Asiste en la redacción de escritos, cotejo de pruebas contra versiones testimoniales y detección de cláusulas lesivas en contratos.
 4. **ARIA Supervisor (Mesa de Control & Plazos):** Audita diariamente los expedientes activos, alertando sobre plazos COGEP críticos y causas sin movimiento procesal reciente.
+
+---
+
+## 6. Módulo B2B / Convenios Corporativos y Beneficios para Trabajadores
+
+### TRQ-B2B-001 — Convenios Corporativos: Consultas Jurídicas Gratuitas, Descuento en Servicios y Billetera Legal
+**Responsable:** Kleber Toapanta | **Estado:** 🟡 Especificado (30%)  
+**Referencia Plataforma:** Conforme al estándar común transversal [`PLT-023`](../plataforma/especificacion-funcional.md).
+
+#### 1. Descripción
+Tranqi habilita un canal comercial corporativo B2B2C donde empresas (personas jurídicas, cooperativas, colegios profesionales, instituciones públicas) contratan convenios o planes corporativos para entregar una canasta de beneficios legales a sus trabajadores y colaboradores.
+
+#### 2. Canasta de Beneficios Jurídicos Configurables
+1. **⚖️ Consultas Jurídicas Gratuitas ($N$ Consultas al Año/Mes):**
+   - La empresa define un número de consultas telemáticas o presenciales al 100% de subsidio (ej. 2 consultas gratuitas por año para cada colaborador).
+   - **Trazabilidad de Consumo:** Cada cita agendada bajo este beneficio descuenta 1 cupo del balance en `com_beneficio_consumo`.
+   - **Regla Estricta de Gratuidad:** Conforme a la política general de Tranqi, toda cita reservada con beneficio gratuito **NO ADMITE REAGENDAMIENTO**. Si el trabajador cancela o no asiste sin justa causa calificada, el beneficio se marca como consumido y expira.
+2. **🏷️ Porcentaje de Descuento en Servicios y Trámites (% Descuento Preferencial):**
+   - Descuento fijo sobre el tarifario oficial de Tranqi (`com_producto` / `com_variante`) en actos extrajudiciales y patrocinios judiciales (ej. 20% de descuento en minutas de compraventa, divorcios por mutuo acuerdo, revisiones de contratos de arrendamiento).
+   - Se calcula automáticamente en el checkout y se transparenta en la proforma legal.
+3. **💳 Saldo Bono en Billetera Legal (`com_billetera`):**
+   - La empresa puede transferir un fondo prepagado a la billetera digital de cada colaborador (ej. bono de $50 USD) para que cubra trámites específicos o tasas notariales.
+4. **Herencia y Configuración de Paquetes (Default vs. Personalizado):**
+   - **Paquete Base Default de Tranqi:** Si la empresa no define un paquete especial, aplica la plantilla default (1 Consulta Jurídica Gratuita al año + 10% Descuento en catálogo).
+   - **Paquete Custom de la Empresa:** La empresa puede pactar condiciones mejoradas (ej. Banco Pichincha: 3 Consultas Gratuitas + 25% Descuento + $50 Bono).
+   - **Paquete Override por Colaborador:** Soporte para otorgar beneficios VIP a cargos directivos o gerenciales dentro de la misma nómina corporativa.
+
+---
+
+### TRQ-B2B-002 — Widget de Nómina Corporativa, Carga Masiva, Invitaciones por Correo y Link con Empresa Padre
+**Responsable:** Kleber Toapanta | **Estado:** 🟡 Especificado (30%)  
+**Identificador de Widget en BDD:** `gestion_convenios_corporativos`  
+**Ubicación en UI:** `panel_administracion` / `panel_operador` / Consola de Empresa Cliente
+
+#### 1. Descripción
+Widget modular administrativo desarrollado bajo la arquitectura del ecosistema (`packages/gestion-usuarios` / `@eco/gestion-convenios`) que permite registrar empresas cliente, configurar sus paquetes de beneficios, cargar masivamente la nómina de colaboradores, disparar invitaciones oficiales por correo electrónico mediante Magic Links corporativos y auditar el estado de vinculación y uso.
+
+#### 2. Experiencia de Usuario y Componentes del Widget
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ 🏢 GESTIÓN DE CONVENIOS Y BENEFICIARIOS CORPORATIVOS                        │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ Empresa Padre Seleccionada: [ Banco del Pichincha C.A. - RUC 1790010937001 ]│
+│ Convenio Vigente: Plan Corporativo Oro | Vigencia: 2026-01-01 al 2026-12-31  │
+│ Paquete: 3 Consultas Gratis/Año | 20% Descuento Catálogo | $50 Bono Billetera│
+├─────────────────────────────────────────────────────────────────────────────┤
+│ [ Carga Masiva (CSV/Excel) ]   [ + Agregar Colaborador ]   [ ✉ Enviar Pendientes ]│
+├─────────────────────────────────────────────────────────────────────────────┤
+│ 🔍 Buscar por Cédula, Nombre o Correo...   Filtro: [ Todos los Estados ▾ ]  │
+│ ┌───────────────┬──────────────────────────┬──────────────┬───────────────┐ │
+│ │ Cédula        │ Colaborador / Correo     │ Estado       │ Acciones      │ │
+│ ├───────────────┼──────────────────────────┼──────────────┼───────────────┤ │
+│ │ 1712345678    │ Juan Pérez               │ ✅ VINCULADO │ [ Ver Consumos]│
+│ │               │ jperez@pichincha.com     │ (2/3 citas)  │ [ Desactivar ] │ │
+│ │ 1798765432    │ María Loor               │ ✉ INVITADO   │ [ Reenviar ]  │ │
+│ │               │ mloor@pichincha.com      │ (Pendiente)  │ [ Copiar Link]│ │
+│ └───────────────┴──────────────────────────┴──────────────┴───────────────┘ │
+│ Mostrando 1-2 de 240 colaboradores | Exportar: [ Excel ] [ CSV ]             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+#### 3. Reglas de Negocio Técnicas y Validación de Carga Masiva
+1. **Validación de Cédulas Ecuatorianas en Frontend y Backend:**
+   - La ingesta masiva evalúa cada fila verificando que la cédula tenga 10 dígitos y cumpla el algoritmo Módulo 10 del Registro Civil. Filas con errores son reportadas en una tabla de discrepancias antes de ejecutar la inserción.
+2. **Generación de Token Criptográfico y Magic Link:**
+   - Para cada colaborador en estado `PENDIENTE` o `INVITADO`, se crea un token aleatorio seguro (NanoID de 24 caracteres o UUIDv4) en `comun_comercio.com_convenio_invitacion`.
+   - La URL de invitación contiene los parámetros:
+     `https://tranqi.com/registro?inv_token=[TOKEN]&empresa=[SLUG_EMPRESA]`
+3. **Despacho Automático de Correo Co-Brandeado:**
+   - La inserción encola el mensaje en `comun_notificaciones.not_cola_correo` con la plantilla HTML:
+     - Asunto: `Tu empresa [Nombre Empresa] te ha otorgado beneficios legales exclusivos en Tranqi`
+     - Remitente oficial: `notificaciones@tranqi.com`
+     - Cuerpo: Saludo con nombres del colaborador, desglose de beneficios ($N$ consultas gratis, descuentos) y botón destacado `[ Activar mis Beneficios Legales ]`.
+4. **Flujo de Onboarding Asistido (Auto-Match y Reconocimiento de Empresa Padre):**
+   - **Caso 1 (Usuario entra por el Link):** La página de registro lee `inv_token`, llama a `comun_comercio.com_rpc_validar_token_invitacion(p_token)` y dibuja en pantalla: *"Bienvenido colaborador de [Nombre Empresa]. Completa tu registro para activar tus [N] consultas legales gratuitas"*. Al registrarse con Google o correo, queda vinculado atómicamente.
+   - **Caso 2 (Usuario ya registrado previamente):** Al iniciar sesión con el token, la interfaz le solicita confirmación en un modal: *"¿Deseas activar los beneficios de [Nombre Empresa] en tu cuenta personal?"*. Al aceptar, se actualiza `bnf_usuario_vinculado_id = auth.uid()` y se acredita el bono en su billetera.
+   - **Caso 3 (Registro orgánico sin link):** Si el trabajador ingresa directamente por el portal público de Tranqi, al digitar su cédula o correo corporativo en el paso de identidad (`PLT-001`), el motor detecta el registro pendiente y le ofrece verificar su correo institucional mediante OTP de 6 dígitos para asociar los beneficios sin fricción.
+5. **Auditoría Transversal y Control de Acceso:**
+   - El widget queda registrado en `comun_seguridad.seg_widget` con clave `gestion_convenios_corporativos`.
+   - Preconfigurado por defecto en `seg_rol_widget` para los roles `OPERADOR`, `ADMINISTRADOR` y `SUPERADMIN`.
+   - Políticas RLS garantizan que el operador de una empresa cliente solo pueda visualizar y gestionar la nómina de su propia empresa (`cve_id`).
 

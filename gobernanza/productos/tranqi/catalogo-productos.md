@@ -59,18 +59,31 @@
 
 ## 3. Mecanismo B2B2C: Activación y Descubrimiento de Beneficios Corporativos
 
-Para casos donde una empresa (ej. *Banco del Pichincha*) contrata el plan corporativo (ej. **Tramo 3**) como beneficio para sus colaboradores:
+Para casos donde una empresa (ej. *Banco del Pichincha*) contrata el plan corporativo (ej. **Plan Corporativo Oro / Tramo 3**) como beneficio para sus colaboradores:
+*(Referencia transversal: [`PLT-023`](../plataforma/especificacion-funcional.md) y [`TRQ-B2B-001` / `TRQ-B2B-002`](especificacion-funcional.md))*
 
-### Flujo de Nómina y Descubrimiento del Beneficio:
-1. **Carga de Nómina por la Empresa:** La empresa cliente carga un archivo o nómina con: `Cédula de Identidad`, `Correo Corporativo` (`@pichincha.com`) y `Nombres` del personal activo.
-2. **Detección Automática por Cédula (Onboarding Tranqi):**
-   * Aunque el colaborador se registre con su **correo personal** (ej. `kleber.toapanta@gmail.com` o Google OAuth), al ingresar su cédula en el onboarding obligatorio de Tranqi (`PLT-001`), el sistema hace match con la nómina de Banco Pichincha.
-   * La interfaz notifica: *"¡Hola! Identificamos que perteneces a Banco del Pichincha. Tienes activado el Plan Corporativo Tramo 3 con 100% de subsidio por tu empresa."*
-3. **Autoservicio vía OTP Corporativo (Reclamo de Beneficio):**
-   * Si el usuario no ingresó cédula o ya tiene cuenta personal creada, en su perfil puede presionar: `[ ¿Tu empresa tiene convenio con Tranqi? Reclamar beneficio ]`.
+### Canasta de Beneficios y Configuración (Default vs. Custom):
+1. **Paquete Default Tranqi:** 1 Consulta Jurídica Gratuita al año + 10% Descuento en catálogo de trámites.
+2. **Paquete Custom por Empresa (`cve_paquete_beneficios`):** La empresa puede personalizar las condiciones (ej. 3 Consultas Gratuitas/año + 20% Descuento + $50 Bono de Billetera).
+3. **Paquete Override por Colaborador (`bnf_beneficios_override`):** Permite asignar beneficios superiores a puestos directivos dentro de la misma nómina corporativa.
+
+### Flujo de Nómina, Invitaciones Masivas y Descubrimiento del Beneficio:
+1. **Carga de Nómina por la Empresa (Widget `gestion_convenios_corporativos`):** La empresa cliente o el operador de Tranqi carga un archivo Excel/CSV con: `Cédula de Identidad` (validada con Módulo 10), `Correo Corporativo` (`@pichincha.com`), `Nombres` y `Apellidos`.
+2. **Despacho Automático de Invitación y Magic Link:**
+   * El sistema genera un token seguro en `com_convenio_invitacion` y encola un correo en `comun_notificaciones.not_cola_correo`.
+   * El trabajador recibe el enlace: `https://tranqi.com/registro?inv_token=[TOKEN]&empresa=[SLUG]`.
+   * Al hacer clic, la pantalla de registro se adapta con el branding de la empresa empleadora, lista sus beneficios precargados y al registrarse (OAuth Google o Contraseña), su cuenta queda asociada de inmediato.
+3. **Detección Automática por Cédula (Onboarding Tranqi sin Link):**
+   * Si el colaborador entra directamente y se registra con su **correo personal** (ej. `kleber.toapanta@gmail.com` o Google OAuth), al ingresar su cédula en el onboarding obligatorio (`PLT-001`), el sistema hace match con la nómina de Banco Pichincha.
+   * La interfaz notifica: *"¡Hola! Identificamos que perteneces a Banco del Pichincha. Tienes activado el Plan Corporativo con 100% de subsidio por tu empresa."*
+4. **Autoservicio vía OTP Corporativo (Reclamo de Beneficio Posterior):**
+   * Si el usuario no ingresó cédula o ya tiene cuenta personal creada previamente, en su perfil puede presionar: `[ ¿Tu empresa tiene convenio con Tranqi? Reclamar beneficio ]`.
    * Ingresa su correo de trabajo (`ktoapanta@pichincha.com`). El sistema despacha un OTP de 6 dígitos a su bandeja corporativa.
    * Al validar el código, su cuenta personal queda enlazada al convenio corporativo de forma segura y verificada.
-4. **Modelo de Datos Común:** Se implementa mediante las tablas transversales `com_convenio_empresa` y `com_beneficiario_empresa` en `comun_comercio`, reutilizables para convenios corporativos en cualquiera de los negocios del ecosistema.
+5. **Consumo y Auditoría de Beneficios:**
+   * Cada consulta gratuita agendada se deduce de su cupo anual en `com_beneficio_consumo`.
+   * Si el usuario cancela o no asiste a una cita de beneficio gratuito, el cupo no admite reagendamiento y se da por consumido.
+   * En el checkout de servicios pagos, se aplica automáticamente el descuento porcentual convenido.
 
 ---
 

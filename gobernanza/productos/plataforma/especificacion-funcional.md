@@ -1352,6 +1352,128 @@ Permite a cada negocio (`tinkay`, `fastfix`, `tranqi`, `margaritas`) generar, ge
 
 ---
 
+## PLT-023 — Convenios Corporativos B2B2C, Paquetes de Beneficios y Enlace de Afiliación
+
+**Responsables:** Kleber Toapanta / Jesus Navarrete  
+**Estado:** 🟡 Especificado (30%)  
+**Esquema de Base de Datos:** `comun_comercio` · **Prefijo de tablas:** `cve_`, `bnf_`, `inv_`, `cbn_`
+
+### 1. Contexto de Negocio y Dominio Multinegocio
+* **Unidades de Negocio Impactadas:** Todos los negocios del ecosistema con modelos B2B/B2B2C (**Tranqi**, **FastFix Home**, **Tinkay**, **Margaritas Floristería**).
+* **Propósito de Negocio:** Permitir a empresas y organizaciones cliente (personas jurídicas) contratar paquetes corporativos para trasladar beneficios a sus trabajadores o afiliados (consultas gratuitas, descuentos porcentuales de catálogo, saldo bono de bienvenida).
+* **Prioridad:** P1 (Alto Valor Comercial / Expansión Institucional).
+
+### 2. Jerarquía y Resolución en Cascada de Paquetes de Beneficios
+El sistema implementa una resolución de herencia de beneficios en 3 niveles de prioridad descendente:
+
+```
+[ Nivel 1: Override Específico por Colaborador ] (bnf_beneficios_override en com_beneficiario_empresa)
+                      ↓ (si es nulo o vacío)
+[ Nivel 2: Paquete Personalizado por Empresa ] (cve_paquete_beneficios en com_convenio_empresa)
+                      ↓ (si no define el parámetro)
+[ Nivel 3: Paquete por Defecto del Negocio (Default) ] (com_convenio_config_default)
+```
+
+1. **Parámetros Estándar del Paquete (`jsonb`):**
+   ```json
+   {
+     "consultas_gratis_total": 2,
+     "consultas_gratis_periodo": "ANUAL",
+     "descuento_catalogo_pct": 20.0,
+     "saldo_bono_billetera": 50.00,
+     "servicios_excluidos": [],
+     "permite_reagendamiento_gratis": false
+   }
+   ```
+2. **Regla de Inmutabilidad de Consumos Previos:** Si la empresa modifica su paquete a mitad de año, los consumos ya devengados por los colaboradores se respetan íntegramente.
+
+### 3. Escenarios Funcionales y Criterios de Aceptación (Gherkin)
+
+#### Escenario 1: Carga Masiva de Nómina e Invitaciones (Éxito)
+* **Dado** que un Administrador de Empresa u Operador accede al widget `gestion_convenios_corporativos`.
+* **Cuando** carga un archivo `.csv` / `.xlsx` conteniendo 50 trabajadores con Cédula, Nombres, Apellidos y Correo Corporativo.
+* **Entonces** el sistema valida que las cédulas cumplan con el dígito verificador (Módulo 10 ecuatoriano), inserta los registros en `comun_comercio.com_beneficiario_empresa` con estado `PENDIENTE`, genera un token criptográfico único por cada trabajador en `com_convenio_invitacion` y encola las 50 invitaciones por correo en `comun_notificaciones.not_cola_correo` con un Magic Link que referencia la empresa padre.
+
+#### Escenario 2: Onboarding de Colaborador Nuevo mediante Enlace de Invitación
+* **Dado** que el colaborador recibe el correo con el enlace:
+  `https://[app].[negocio].com/registro?inv_token=abc123xyz&empresa=BANCO_PICHINCHA`.
+* **Cuando** hace clic y llega a la pantalla de registro.
+* **Entonces** la UI muestra la insignia oficial de su empresa empleadora, lista los beneficios que recibirá al completar su cuenta, precarga su correo y cédula de identidad, y al finalizar la autenticación (Google OAuth o Contraseña):
+  1. Vincula la membresía al convenio (`bnf_usuario_vinculado_id = usu_id`, `bnf_estado = 'VINCULADO'`).
+  2. Inicializa o actualiza su billetera virtual (`com_billetera`) acreditando el saldo bono.
+  3. Despacha una notificación in-app de bienvenida corporativa.
+
+#### Escenario 3: Colaborador con Cuenta Existente en el Ecosistema
+* **Dado** que un colaborador ya tenía una cuenta personal previa en Tranqi o en el ecosistema (creada con `@gmail.com`).
+* **Cuando** abre el enlace de invitación o pulsa en su perfil *"¿Tu empresa tiene convenio? Reclamar beneficio"*.
+* **Entonces** el sistema solicita confirmación de vinculación; tras verificar el token o validar un código OTP de 6 dígitos despachado a su correo de trabajo, vincula su cuenta existente sin alterar sus expedientes o historiales previos, activando inmediatamente el paquete de beneficios.
+
+#### Escenario 4: Desvinculación Laboral / Baja de Colaborador
+* **Dado** que un trabajador renuncia o es desvinculado de la empresa cliente.
+* **Cuando** el Administrador cambia su estado a `INACTIVO` en el widget de nómina.
+* **Entonces** el sistema inhabilita inmediatamente el consumo de nuevas consultas gratuitas corporativas y el descuento preferencial; el saldo de bono no consumido regresa a la bolsa del convenio o caduca según las cláusulas del contrato, y el usuario conserva su cuenta personal como cliente individual sin pérdida de datos.
+
+### 4. Modelo de Datos Técnico (`comun_comercio`)
+
+```sql
+-- 1. Tokens de invitación y Magic Links Corporativos
+CREATE TABLE IF NOT EXISTS comun_comercio.com_convenio_invitacion (
+  inv_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  inv_secuencial BIGINT GENERATED ALWAYS AS IDENTITY,
+  inv_negocio TEXT NOT NULL,
+  inv_convenio_id UUID NOT NULL REFERENCES comun_comercio.com_convenio_empresa(cve_id) ON DELETE CASCADE,
+  inv_beneficiario_id UUID NOT NULL REFERENCES comun_comercio.com_beneficiario_empresa(bnf_id) ON DELETE CASCADE,
+  inv_token TEXT NOT NULL UNIQUE,
+  inv_correo_destino TEXT NOT NULL,
+  inv_expira_en TIMESTAMPTZ NOT NULL DEFAULT (now() + INTERVAL '30 days'),
+  inv_estado TEXT NOT NULL DEFAULT 'PENDIENTE' CHECK (inv_estado IN ('PENDIENTE', 'ACEPTADO', 'EXPIRADO', 'REVOCADO')),
+  inv_intentos_envio INT NOT NULL DEFAULT 1,
+  inv_ultimo_envio_en TIMESTAMPTZ NOT NULL DEFAULT now(),
+  inv_detalle_invitacion JSONB NOT NULL DEFAULT '{}'::jsonb,
+  inv_creado_en TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- 2. Trazabilidad y Consumo de Beneficios Corporativos (Consultas y Descuentos)
+CREATE TABLE IF NOT EXISTS comun_comercio.com_beneficio_consumo (
+  cbn_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  cbn_secuencial BIGINT GENERATED ALWAYS AS IDENTITY,
+  cbn_negocio TEXT NOT NULL,
+  cbn_convenio_id UUID NOT NULL REFERENCES comun_comercio.com_convenio_empresa(cve_id),
+  cbn_beneficiario_id UUID NOT NULL REFERENCES comun_comercio.com_beneficiario_empresa(bnf_id),
+  cbn_usuario_id UUID NOT NULL REFERENCES comun_seguridad.seg_usuario(usu_id),
+  cbn_tipo_beneficio TEXT NOT NULL CHECK (cbn_tipo_beneficio IN ('CONSULTA_GRATUITA', 'DESCUENTO_CATALOGO', 'SALDO_BONO')),
+  cbn_referencia_id UUID,                 -- ID de cita judicial, orden de servicio o movimiento de billetera
+  cbn_valor_original NUMERIC(12,4) NOT NULL DEFAULT 0.0000,
+  cbn_valor_subsidio NUMERIC(12,4) NOT NULL DEFAULT 0.0000,
+  cbn_detalle_consumo JSONB NOT NULL DEFAULT '{}'::jsonb,
+  cbn_consumido_en TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- RLS y Auditoría Transversal
+ALTER TABLE comun_comercio.com_convenio_invitacion ENABLE ROW LEVEL SECURITY;
+ALTER TABLE comun_comercio.com_beneficio_consumo ENABLE ROW LEVEL SECURITY;
+CREATE TRIGGER trg_aud_com_convenio_invitacion AFTER INSERT OR UPDATE OR DELETE ON comun_comercio.com_convenio_invitacion FOR EACH ROW EXECUTE FUNCTION comun_auditoria.aud_fn_auditar_tabla();
+CREATE TRIGGER trg_aud_com_beneficio_consumo AFTER INSERT OR UPDATE OR DELETE ON comun_comercio.com_beneficio_consumo FOR EACH ROW EXECUTE FUNCTION comun_auditoria.aud_fn_auditar_tabla();
+```
+
+### 5. Contratos de API / RPC Transaccionales
+1. `comun_comercio.com_rpc_cargar_nomina_masiva(p_convenio_id UUID, p_colaboradores JSONB, p_despachar_invitaciones BOOLEAN)`:
+   - Procesa en una única transacción la lista de trabajadores.
+   - Detecta duplicados por Cédula y actualiza datos si ya existían en estado pendiente.
+   - Emite tokens de invitación y encola notificaciones de correo.
+2. `comun_comercio.com_rpc_validar_token_invitacion(p_token TEXT)`:
+   - Retorna la identidad de la empresa padre (`cve_empresa_nombre`, `cve_empresa_ruc`, logo), el paquete de beneficios aplicable y los datos predefinidos del colaborador (Cédula, Nombres, Correo).
+3. `comun_comercio.com_rpc_canjear_beneficio_colaborador(p_token TEXT, p_usuario_id UUID)`:
+   - Valida vigencia del token y no-expiración.
+   - Realiza la vinculación atómica en `com_beneficiario_empresa`.
+   - Inicializa el saldo bono en `com_billetera` si el paquete lo contempla.
+4. `comun_comercio.com_rpc_consumir_consulta_corporativa(p_usuario_id UUID, p_cita_id UUID)`:
+   - Valida que el colaborador tenga cupos disponibles de consultas gratuitas en su periodo vigente (`COUNT(cbn_id) < consultas_gratis_total`).
+   - Inserta el registro en `com_beneficio_consumo`.
+   - Bloquea cualquier intento de sobregiro transaccionalmente mediante bloqueo de fila (`FOR UPDATE`).
+
+---
+
 ## Cómo Referenciar desde la Especificación de un Producto
 
 En la especificación funcional de cualquier producto (`gobernanza/productos/{producto}/especificacion-funcional.md`), se referencian estos requerimientos por su código:
