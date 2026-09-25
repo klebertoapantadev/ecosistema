@@ -13,6 +13,7 @@ import { ModalNotificacionPush } from "@eco/notificaciones";
 import { TarjetasFavoritasGrid } from "./SeccionFavoritosInicio";
 import { useCustomWidgets } from "./gestorTitulosWidgets";
 import { ModalEditarWidget } from "./ModalEditarWidget";
+import { DataGrid, type ColumnaDataGrid } from "@eco/datagrid";
 
 export interface ModuloSuperAdminDef {
   clave: string;
@@ -22,7 +23,12 @@ export interface ModuloSuperAdminDef {
   icono: LucideIcon;
   iconoKey: string;
   color: string;
-  rutaFisica?: string;
+  rutaFisica: string;
+  paquete: string;
+  panelDestino: string;
+  categoria: string;
+  perfilesAsignados: string[];
+  estadoDuplicidad: "CANONICO" | "COMPARTIDO";
 }
 
 export interface CategoriaSuperAdminGroup {
@@ -31,36 +37,456 @@ export interface CategoriaSuperAdminGroup {
 }
 
 export const CATALOGO_SUPERADMIN_TODOS: ModuloSuperAdminDef[] = [
-  { clave: "agendar_cita", nombre: "Agendar una Consulta", detalle: "Elegir materia, servicio y hora libre; el abogado se asigna por turno rotativo", ruta: "/panel/agendar", icono: CalendarPlus, iconoKey: "CalendarPlus", color: "#5000BA", rutaFisica: "modulos/agenda/componentes/FormularioAgendar.tsx" },
-  { clave: "mis_citas", nombre: "Mis Citas", detalle: "Próximas consultas, enlace de videollamada y cancelación", ruta: "/panel/mis-citas", icono: CalendarCheck, iconoKey: "CalendarCheck", color: "#5000BA", rutaFisica: "modulos/agenda/componentes/ListaCitasCliente.tsx" },
-  { clave: "citas_programadas", nombre: "Citas Programadas", detalle: "Agenda del profesional: confirmar, reagendar y cerrar sus consultas", ruta: "/panel/agenda", icono: CalendarClock, iconoKey: "CalendarClock", color: "#05876E", rutaFisica: "modulos/agenda/componentes/BandejaCitasAbogado.tsx" },
-  { clave: "disponibilidad", nombre: "Mi Disponibilidad", detalle: "Horas operativas, duración de cita, antelación y bloqueos por audiencia", ruta: "/panel/agenda/disponibilidad", icono: CalendarClock, iconoKey: "CalendarClock", color: "#05876E", rutaFisica: "modulos/agenda/componentes/EditorDisponibilidad.tsx" },
-  { clave: "vitrina_comercial", nombre: "Oferta de Servicios & Tarifario", detalle: "Vitrina visual de servicios y planes con imágenes, videos y botón Payphone para clientes", ruta: "/panel/catalogo-productos", icono: Sparkles, iconoKey: "Sparkles", color: "#0284C7", rutaFisica: "packages/comercio/src/componentes/VitrinaComercialVisual.tsx" },
-  { clave: "gestion_catalogo", nombre: "Gestión del Catálogo Comercial", detalle: "Consola de administración de honorarios, tarifas SRI IVA 15%, variantes y recursos digitales", ruta: "/panel/configuracion?widget=gestion_catalogo", icono: ShoppingBag, iconoKey: "ShoppingBag", color: "#0284C7", rutaFisica: "packages/comercio/src/componentes/CatalogoProductosComercio.tsx" },
-  { clave: "catalogo_productos", nombre: "Catálogo Comercial & Honorarios", detalle: "Catálogo unificado de servicios, liquidación de honorarios y suscripciones legales con cálculo de IVA 15%", ruta: "/panel/catalogo-productos", icono: ShoppingBag, iconoKey: "ShoppingBag", color: "#0284C7", rutaFisica: "packages/comercio/src/componentes/CatalogoProductosComercio.tsx" },
-  { clave: "pasarela_payphone", nombre: "Pasarela Payphone (Botón de Pago)", detalle: "Configuración del Botón de Pago Payphone, credenciales API, StoreID y simulador de cobro", ruta: "/panel/configuracion?widget=pasarela_payphone", icono: CreditCard, iconoKey: "CreditCard", color: "#D97706", rutaFisica: "packages/comercio/src/componentes/ConfiguracionPasarelaPayphone.tsx" },
-  { clave: "historial_pagos", nombre: "Historial de Transacciones & Pagos", detalle: "Auditoría de cobros bancarios, autorizaciones Payphone y registro contable inmutable", ruta: "/panel/administrar?widget=historial_pagos", icono: Receipt, iconoKey: "Receipt", color: "#05876E", rutaFisica: "packages/comercio/src/componentes/HistorialTransaccionesPago.tsx" },
-  { clave: "crm_clientes", nombre: "CRM Jurídico & Gestión de Clientes", detalle: "Directorio 360°, KPIs, alta asistida multicanal, validación cédula/RUC y conflict check en vivo", ruta: "/panel/clientes", icono: Users, iconoKey: "Users", color: "#5000BA", rutaFisica: "modulos/crm-clientes/componentes/BandejaClientesCRM.tsx" },
-  { clave: "firma_documentos_pdf", nombre: "Firma Electrónica de Documentos PDF", detalle: "Firmado digital con certificado .p12 / .pfx, estampa visual y código QR oficial", ruta: "/panel/firma-documentos", icono: FileCheck, iconoKey: "FileCheck", color: "#5000BA", rutaFisica: "modulos/firma-documentos/componentes/WidgetFirmaDocumentosPdf.tsx" },
-  { clave: "billetera_documentos", nombre: "Billetera Digital de Documentos Seguros", detalle: "Bóveda digital de documentos personales, vehiculares, contratos y profesionales con OCR y TTL", ruta: "/panel/billetera-documentos", icono: Folder, iconoKey: "Folder", color: "#5000BA", rutaFisica: "modulos/billetera-documentos/componentes/WidgetBilleteraDocumentos.tsx" },
-  { clave: "gestion_usuarios", nombre: "Gestión de Usuarios & Membresías", detalle: "Asignación de perfiles, roles y techo jerárquico", ruta: "/panel/usuarios", icono: Users, iconoKey: "Users", color: "var(--violeta, #5000BA)", rutaFisica: "packages/gestion-usuarios/src/componentes/ConsultaUsuariosPerfilesWidget.tsx" },
-  { clave: "perfiles", nombre: "Administración de Perfiles & Permisos", detalle: "Catálogo de perfiles, jerarquía (1–100) y matriz de gobernanza BDD", ruta: "/panel/configuracion?widget=perfiles", icono: Sliders, iconoKey: "Sliders", color: "var(--violeta, #5000BA)", rutaFisica: "packages/gestion-usuarios/src/componentes/AdministracionPerfilesWidget.tsx" },
-  { clave: "socios", nombre: "Aprobación de Socios Abogados", detalle: "Validación de matrículas y acreditación de abogados", ruta: "/panel/administrar?widget=socios", icono: UserCheck, iconoKey: "UserCheck", color: "#05876E", rutaFisica: "modulos/socios/componentes/AprobacionSociosWidget.tsx" },
-  { clave: "solicitud_socio", nombre: "Solicitudes de Socios & Postulaciones", detalle: "Revisión y procesamiento de postulación de socios", ruta: "/panel/administrar?widget=solicitud_socio", icono: Briefcase, iconoKey: "Briefcase", color: "#05876E", rutaFisica: "modulos/socios/componentes/FormularioSolicitudSocio.tsx" },
-  { clave: "consulta_usuarios", nombre: "Consulta de Usuarios & Perfiles", detalle: "Directorio unificado de miembros, asignación de roles y matriz de permisos", ruta: "/panel/usuarios", icono: Eye, iconoKey: "Eye", color: "var(--violeta, #5000BA)", rutaFisica: "packages/gestion-usuarios/src/componentes/ConsultaUsuariosPerfilesWidget.tsx" },
-  { clave: "configuracion_negocio", nombre: "Configuración del Negocio", detalle: "Parámetros del negocio, RUC, redes sociales y contacto", ruta: "/panel/configuracion?widget=negocio", icono: Settings, iconoKey: "Settings", color: "var(--violeta, #5000BA)", rutaFisica: "packages/identidad/src/componentes/ConfiguracionNegocioWidget.tsx" },
-  { clave: "configuracion_correo", nombre: "Servidor SMTP & Correo Cifrado", detalle: "Credenciales cifradas SMTP en Vault y plantillas HTML", ruta: "/panel/configuracion?widget=correo", icono: Mail, iconoKey: "Mail", color: "#05876E", rutaFisica: "packages/configuracion-negocio/src/componentes/FormularioSmtp.tsx" },
-  { clave: "terminos", nombre: "Términos, Consentimientos & LOPDP", detalle: "Configuración de cláusulas LOPDP, consentimientos y avisos legales", ruta: "/panel/administrar?widget=gestion_terminos_consentimientos", icono: ShieldCheck, iconoKey: "ShieldCheck", color: "var(--violeta, #5000BA)", rutaFisica: "packages/identidad/src/componentes/GestionTerminosConsentimientosWidget.tsx" },
-  { clave: "auditoria", nombre: "Auditoría BDD PostgreSQL & Telemetría", detalle: "Registro inmutable de transacciones, diffs JSONB e IP", ruta: "/panel/administrar?widget=auditoria", icono: Shield, iconoKey: "Shield", color: "#111827", rutaFisica: "packages/auditoria/src/componentes/TablaAuditoria.tsx" },
-  { clave: "emision_notificaciones", nombre: "Emisión de Notificaciones Multicanal", detalle: "Redacción y despacho masivo (In-App, Push, Email y WhatsApp)", ruta: "/panel/administrar?widget=emision_notificaciones", icono: Bell, iconoKey: "Bell", color: "#D97706", rutaFisica: "packages/notificaciones/src/EmisionNotificacionesWidget.tsx" },
-  { clave: "monitoreo_notificaciones_usuarios", nombre: "Monitoreo de Notificaciones por Usuario", detalle: "Auditoría en tiempo real de notificaciones, fechas de confirmación, tiempo de pospuesto y eliminados", ruta: "/panel/administrar?widget=monitoreo_notificaciones_usuarios", icono: Bell, iconoKey: "Bell", color: "#1F6FEB", rutaFisica: "packages/notificaciones/src/MonitoreoNotificacionesUsuariosWidget.tsx" },
-  { clave: "bitacora_notificaciones", nombre: "Bitácora & Historial de Notificaciones", detalle: "Consulta auditada en tiempo real de notificaciones emitidas y destinatarios", ruta: "/panel/administrar?widget=bitacora_notificaciones", icono: Bell, iconoKey: "Bell", color: "#2563EB", rutaFisica: "packages/notificaciones/src/BitacoraNotificacionesWidget.tsx" },
-  { clave: "preferencias_notificacion", nombre: "Preferencias de Alertas & Notificaciones", detalle: "Configuración de canales de alerta, WhatsApp y avisos", ruta: "/panel/configuracion?widget=notificaciones", icono: Bell, iconoKey: "Bell", color: "#D97706", rutaFisica: "packages/notificaciones/src/componentes/PreferenciasNotificacionWidget.tsx" },
-  { clave: "mi_cuenta", nombre: "Perfil & Datos de Contacto", detalle: "Nombres, apellidos, correo verificado y WhatsApp", ruta: "/panel/cuenta?widget=mi_cuenta", icono: CircleUser, iconoKey: "CircleUser", color: "var(--violeta, #5000BA)", rutaFisica: "packages/identidad/src/componentes/FormularioPerfil.tsx" },
-  { clave: "facturacion", nombre: "Datos de Facturación SRI", detalle: "Razón Social, RUC/Cédula, dirección fiscal y correo SRI", ruta: "/panel/cuenta?widget=datos_facturacion", icono: Receipt, iconoKey: "Receipt", color: "#05876E", rutaFisica: "packages/identidad/src/componentes/FormularioDatosFacturacion.tsx" },
-  { clave: "mfa", nombre: "Seguridad MFA & Autenticador", detalle: "Configuración TOTP y reseteo estándar vía correo", ruta: "/panel/cuenta?widget=mfa_seguridad", icono: KeyRound, iconoKey: "KeyRound", color: "#D97706", rutaFisica: "packages/identidad/src/componentes/WidgetConfiguracionMfa.tsx" },
-  { clave: "historial_accesos", nombre: "Historial de Accesos & Sesiones", detalle: "Bitácora de inicios de sesión, navegador y dirección IP", ruta: "/panel/cuenta?widget=historial_accesos", icono: History, iconoKey: "History", color: "#111827", rutaFisica: "packages/identidad/src/componentes/HistorialAccesos.tsx" },
-  { clave: "ver_como", nombre: "Selector 'Ver Como' (Conmutador)", detalle: "Alternar la vista previa del portal según roles asignados", ruta: "/panel/cuenta?widget=ver_como", icono: Shield, iconoKey: "Shield", color: "var(--violeta, #5000BA)", rutaFisica: "app/panel/SelectorRolActivo.tsx" }
+  {
+    clave: "agendar_cita",
+    nombre: "Agendar una Consulta",
+    detalle: "Elegir materia, servicio y hora libre; el abogado se asigna por turno rotativo",
+    ruta: "/panel/agendar",
+    icono: CalendarPlus,
+    iconoKey: "CalendarPlus",
+    color: "#5000BA",
+    rutaFisica: "apps/tranqi-web/modulos/agenda/componentes/FormularioAgendar.tsx",
+    paquete: "apps/tranqi-web",
+    panelDestino: "Inicio / Herramientas (/panel/agendar)",
+    categoria: "Agenda & Citas",
+    perfilesAsignados: ["CLIENTE", "OPERADOR", "SUPERADMIN"],
+    estadoDuplicidad: "CANONICO",
+  },
+  {
+    clave: "mis_citas",
+    nombre: "Mis Citas",
+    detalle: "Próximas consultas, enlace de videollamada y cancelación",
+    ruta: "/panel/mis-citas",
+    icono: CalendarCheck,
+    iconoKey: "CalendarCheck",
+    color: "#5000BA",
+    rutaFisica: "apps/tranqi-web/modulos/agenda/componentes/ListaCitasCliente.tsx",
+    paquete: "apps/tranqi-web",
+    panelDestino: "Inicio / Herramientas (/panel/mis-citas)",
+    categoria: "Agenda & Citas",
+    perfilesAsignados: ["CLIENTE", "SUPERADMIN"],
+    estadoDuplicidad: "CANONICO",
+  },
+  {
+    clave: "citas_programadas",
+    nombre: "Citas Programadas",
+    detalle: "Agenda del profesional: confirmar, reagendar y cerrar sus consultas",
+    ruta: "/panel/agenda",
+    icono: CalendarClock,
+    iconoKey: "CalendarClock",
+    color: "#05876E",
+    rutaFisica: "apps/tranqi-web/modulos/agenda/componentes/BandejaCitasAbogado.tsx",
+    paquete: "apps/tranqi-web",
+    panelDestino: "Herramientas (/panel/agenda)",
+    categoria: "Agenda & Citas",
+    perfilesAsignados: ["ABOGADO", "SUPERADMIN"],
+    estadoDuplicidad: "CANONICO",
+  },
+  {
+    clave: "disponibilidad",
+    nombre: "Mi Disponibilidad",
+    detalle: "Horas operativas, duración de cita, antelación y bloqueos por audiencia",
+    ruta: "/panel/agenda/disponibilidad",
+    icono: CalendarClock,
+    iconoKey: "CalendarClock",
+    color: "#05876E",
+    rutaFisica: "apps/tranqi-web/modulos/agenda/componentes/EditorDisponibilidad.tsx",
+    paquete: "apps/tranqi-web",
+    panelDestino: "Herramientas (/panel/agenda/disponibilidad)",
+    categoria: "Agenda & Citas",
+    perfilesAsignados: ["ABOGADO", "SUPERADMIN"],
+    estadoDuplicidad: "CANONICO",
+  },
+  {
+    clave: "vitrina_comercial",
+    nombre: "Oferta de Servicios & Tarifario",
+    detalle: "Vitrina visual de servicios y planes con imágenes, videos y botón Payphone para clientes",
+    ruta: "/panel/catalogo-productos",
+    icono: Sparkles,
+    iconoKey: "Sparkles",
+    color: "#0284C7",
+    rutaFisica: "packages/comercio/src/componentes/VitrinaComercialVisual.tsx",
+    paquete: "@eco/comercio",
+    panelDestino: "Herramientas (/panel/catalogo-productos)",
+    categoria: "Comercio & Catálogo",
+    perfilesAsignados: ["CLIENTE", "SUPERADMIN"],
+    estadoDuplicidad: "CANONICO",
+  },
+  {
+    clave: "gestion_catalogo",
+    nombre: "Gestión del Catálogo Comercial",
+    detalle: "Consola de administración de honorarios, tarifas SRI IVA 15%, variantes y recursos digitales",
+    ruta: "/panel/configuracion?widget=gestion_catalogo",
+    icono: ShoppingBag,
+    iconoKey: "ShoppingBag",
+    color: "#0284C7",
+    rutaFisica: "packages/comercio/src/componentes/CatalogoProductosComercio.tsx",
+    paquete: "@eco/comercio",
+    panelDestino: "Configuración (/panel/configuracion)",
+    categoria: "Comercio & Catálogo",
+    perfilesAsignados: ["ADMINISTRADOR", "SUPERADMIN"],
+    estadoDuplicidad: "CANONICO",
+  },
+  {
+    clave: "catalogo_productos",
+    nombre: "Catálogo Comercial & Honorarios",
+    detalle: "Catálogo unificado de servicios, liquidación de honorarios y suscripciones legales con cálculo de IVA 15%",
+    ruta: "/panel/catalogo-productos",
+    icono: ShoppingBag,
+    iconoKey: "ShoppingBag",
+    color: "#0284C7",
+    rutaFisica: "packages/comercio/src/componentes/CatalogoProductosComercio.tsx",
+    paquete: "@eco/comercio",
+    panelDestino: "Herramientas (/panel/catalogo-productos)",
+    categoria: "Comercio & Catálogo",
+    perfilesAsignados: ["CLIENTE", "ABOGADO", "OPERADOR", "ADMINISTRADOR", "SUPERADMIN"],
+    estadoDuplicidad: "CANONICO",
+  },
+  {
+    clave: "pasarela_payphone",
+    nombre: "Pasarela Payphone (Botón de Pago)",
+    detalle: "Configuración del Botón de Pago Payphone, credenciales API, StoreID y simulador de cobro",
+    ruta: "/panel/configuracion?widget=pasarela_payphone",
+    icono: CreditCard,
+    iconoKey: "CreditCard",
+    color: "#D97706",
+    rutaFisica: "packages/comercio/src/componentes/ConfiguracionPasarelaPayphone.tsx",
+    paquete: "@eco/comercio",
+    panelDestino: "Configuración (/panel/configuracion)",
+    categoria: "Comercio & Pasarela",
+    perfilesAsignados: ["ADMINISTRADOR", "SUPERADMIN"],
+    estadoDuplicidad: "CANONICO",
+  },
+  {
+    clave: "historial_pagos",
+    nombre: "Historial de Transacciones & Pagos",
+    detalle: "Auditoría de cobros bancarios, autorizaciones Payphone y registro contable inmutable",
+    ruta: "/panel/administrar?widget=historial_pagos",
+    icono: Receipt,
+    iconoKey: "Receipt",
+    color: "#05876E",
+    rutaFisica: "packages/comercio/src/componentes/HistorialTransaccionesPago.tsx",
+    paquete: "@eco/comercio",
+    panelDestino: "Administrar / Cuenta (/panel/administrar)",
+    categoria: "Comercio & Transacciones",
+    perfilesAsignados: ["CLIENTE", "ABOGADO", "OPERADOR", "ADMINISTRADOR", "SUPERADMIN"],
+    estadoDuplicidad: "CANONICO",
+  },
+  {
+    clave: "crm_clientes",
+    nombre: "CRM Jurídico & Gestión de Clientes",
+    detalle: "Directorio 360°, KPIs, alta asistida multicanal, validación cédula/RUC y conflict check en vivo",
+    ruta: "/panel/clientes",
+    icono: Users,
+    iconoKey: "Users",
+    color: "#5000BA",
+    rutaFisica: "apps/tranqi-web/modulos/crm-clientes/componentes/BandejaClientesCRM.tsx",
+    paquete: "apps/tranqi-web",
+    panelDestino: "Administrar / Clientes (/panel/clientes)",
+    categoria: "Gestión Legal & CRM",
+    perfilesAsignados: ["ABOGADO", "OPERADOR", "ADMINISTRADOR", "SUPERADMIN"],
+    estadoDuplicidad: "CANONICO",
+  },
+  {
+    clave: "firma_documentos_pdf",
+    nombre: "Firma Electrónica de Documentos PDF",
+    detalle: "Firmado digital con certificado .p12 / .pfx, estampa visual y código QR oficial",
+    ruta: "/panel/firma-documentos",
+    icono: FileCheck,
+    iconoKey: "FileCheck",
+    color: "#5000BA",
+    rutaFisica: "apps/tranqi-web/modulos/firma-documentos/componentes/WidgetFirmaDocumentosPdf.tsx",
+    paquete: "apps/tranqi-web",
+    panelDestino: "Herramientas (/panel/firma-documentos)",
+    categoria: "Seguridad & Firma",
+    perfilesAsignados: ["CLIENTE", "ABOGADO", "OPERADOR", "ADMINISTRADOR", "SUPERADMIN"],
+    estadoDuplicidad: "CANONICO",
+  },
+  {
+    clave: "billetera_documentos",
+    nombre: "Billetera Digital de Documentos Seguros",
+    detalle: "Bóveda digital de documentos personales, vehiculares, contratos y profesionales con OCR y TTL",
+    ruta: "/panel/billetera-documentos",
+    icono: Folder,
+    iconoKey: "Folder",
+    color: "#5000BA",
+    rutaFisica: "apps/tranqi-web/modulos/billetera-documentos/componentes/WidgetBilleteraDocumentos.tsx",
+    paquete: "apps/tranqi-web",
+    panelDestino: "Herramientas (/panel/billetera-documentos)",
+    categoria: "Gestión Documental",
+    perfilesAsignados: ["CLIENTE", "ABOGADO", "OPERADOR", "ADMINISTRADOR", "SUPERADMIN"],
+    estadoDuplicidad: "CANONICO",
+  },
+  {
+    clave: "gestion_usuarios",
+    nombre: "Gestión de Usuarios & Membresías",
+    detalle: "Asignación de perfiles, roles y techo jerárquico",
+    ruta: "/panel/usuarios",
+    icono: Users,
+    iconoKey: "Users",
+    color: "var(--violeta, #5000BA)",
+    rutaFisica: "packages/gestion-usuarios/src/componentes/ConsultaUsuariosPerfilesWidget.tsx",
+    paquete: "@eco/gestion-usuarios",
+    panelDestino: "Administrar (/panel/usuarios)",
+    categoria: "Identidad & Usuarios",
+    perfilesAsignados: ["ADMINISTRADOR", "SUPERADMIN"],
+    estadoDuplicidad: "CANONICO",
+  },
+  {
+    clave: "perfiles",
+    nombre: "Administración de Perfiles & Permisos",
+    detalle: "Catálogo de perfiles, jerarquía (1–100) y matriz de gobernanza BDD",
+    ruta: "/panel/configuracion?widget=perfiles",
+    icono: Sliders,
+    iconoKey: "Sliders",
+    color: "var(--violeta, #5000BA)",
+    rutaFisica: "packages/gestion-usuarios/src/componentes/AdministracionPerfilesWidget.tsx",
+    paquete: "@eco/gestion-usuarios",
+    panelDestino: "Configuración (/panel/configuracion)",
+    categoria: "Seguridad & Roles",
+    perfilesAsignados: ["ADMINISTRADOR", "SUPERADMIN"],
+    estadoDuplicidad: "CANONICO",
+  },
+  {
+    clave: "socios",
+    nombre: "Aprobación de Socios Abogados",
+    detalle: "Validación de matrículas y acreditación de abogados",
+    ruta: "/panel/administrar?widget=socios",
+    icono: UserCheck,
+    iconoKey: "UserCheck",
+    color: "#05876E",
+    rutaFisica: "apps/tranqi-web/modulos/socios/componentes/AprobacionSociosWidget.tsx",
+    paquete: "apps/tranqi-web",
+    panelDestino: "Administrar (/panel/administrar)",
+    categoria: "Gestión de Socios",
+    perfilesAsignados: ["OPERADOR", "ADMINISTRADOR", "SUPERADMIN"],
+    estadoDuplicidad: "CANONICO",
+  },
+  {
+    clave: "solicitud_socio",
+    nombre: "Solicitudes de Socios & Postulaciones",
+    detalle: "Revisión y procesamiento de postulación de socios",
+    ruta: "/panel/administrar?widget=solicitud_socio",
+    icono: Briefcase,
+    iconoKey: "Briefcase",
+    color: "#05876E",
+    rutaFisica: "apps/tranqi-web/modulos/socios/componentes/FormularioSolicitudSocio.tsx",
+    paquete: "apps/tranqi-web",
+    panelDestino: "Administrar / Herramientas (/panel/administrar)",
+    categoria: "Gestión de Socios",
+    perfilesAsignados: ["CLIENTE", "OPERADOR", "ADMINISTRADOR", "SUPERADMIN"],
+    estadoDuplicidad: "CANONICO",
+  },
+  {
+    clave: "consulta_usuarios",
+    nombre: "Consulta de Usuarios & Perfiles",
+    detalle: "Directorio unificado de miembros, asignación de roles y matriz de permisos",
+    ruta: "/panel/usuarios",
+    icono: Eye,
+    iconoKey: "Eye",
+    color: "var(--violeta, #5000BA)",
+    rutaFisica: "packages/gestion-usuarios/src/componentes/ConsultaUsuariosPerfilesWidget.tsx",
+    paquete: "@eco/gestion-usuarios",
+    panelDestino: "Administrar (/panel/usuarios)",
+    categoria: "Identidad & Usuarios",
+    perfilesAsignados: ["OPERADOR", "ADMINISTRADOR", "SUPERADMIN"],
+    estadoDuplicidad: "CANONICO",
+  },
+  {
+    clave: "configuracion_negocio",
+    nombre: "Configuración del Negocio",
+    detalle: "Parámetros del negocio, RUC, redes sociales y contacto",
+    ruta: "/panel/configuracion?widget=negocio",
+    icono: Settings,
+    iconoKey: "Settings",
+    color: "var(--violeta, #5000BA)",
+    rutaFisica: "packages/identidad/src/componentes/ConfiguracionNegocioWidget.tsx",
+    paquete: "@eco/identidad",
+    panelDestino: "Configuración (/panel/configuracion)",
+    categoria: "Parámetros de Negocio",
+    perfilesAsignados: ["ADMINISTRADOR", "SUPERADMIN"],
+    estadoDuplicidad: "CANONICO",
+  },
+  {
+    clave: "configuracion_correo",
+    nombre: "Servidor SMTP & Correo Cifrado",
+    detalle: "Credenciales cifradas SMTP en Vault y plantillas HTML",
+    ruta: "/panel/configuracion?widget=correo",
+    icono: Mail,
+    iconoKey: "Mail",
+    color: "#05876E",
+    rutaFisica: "packages/configuracion-negocio/src/componentes/FormularioSmtp.tsx",
+    paquete: "@eco/configuracion-negocio",
+    panelDestino: "Configuración (/panel/configuracion)",
+    categoria: "Comunicación & Correo",
+    perfilesAsignados: ["ADMINISTRADOR", "SUPERADMIN"],
+    estadoDuplicidad: "CANONICO",
+  },
+  {
+    clave: "terminos",
+    nombre: "Términos, Consentimientos & LOPDP",
+    detalle: "Configuración de cláusulas LOPDP, versionamiento inmutable, consentimientos y avisos legales",
+    ruta: "/panel/administrar?widget=gestion_terminos_consentimientos",
+    icono: ShieldCheck,
+    iconoKey: "ShieldCheck",
+    color: "var(--violeta, #5000BA)",
+    rutaFisica: "packages/identidad/src/componentes/GestionTerminosConsentimientosWidget.tsx",
+    paquete: "@eco/identidad",
+    panelDestino: "Administrar (/panel/administrar)",
+    categoria: "Gobernanza & LOPDP",
+    perfilesAsignados: ["OPERADOR", "ADMINISTRADOR", "SUPERADMIN"],
+    estadoDuplicidad: "CANONICO",
+  },
+  {
+    clave: "auditoria",
+    nombre: "Auditoría BDD PostgreSQL & Telemetría",
+    detalle: "Registro inmutable de transacciones, diffs JSONB e IP",
+    ruta: "/panel/administrar?widget=auditoria",
+    icono: Shield,
+    iconoKey: "Shield",
+    color: "#111827",
+    rutaFisica: "packages/auditoria/src/componentes/TablaAuditoria.tsx",
+    paquete: "@eco/auditoria",
+    panelDestino: "Administrar / Seguridad (/panel/administrar)",
+    categoria: "Seguridad & Auditoría",
+    perfilesAsignados: ["ADMINISTRADOR", "SUPERADMIN"],
+    estadoDuplicidad: "CANONICO",
+  },
+  {
+    clave: "emision_notificaciones",
+    nombre: "Emisión de Notificaciones Multicanal",
+    detalle: "Redacción y despacho masivo (In-App, Push, Email y WhatsApp)",
+    ruta: "/panel/administrar?widget=emision_notificaciones",
+    icono: Bell,
+    iconoKey: "Bell",
+    color: "#D97706",
+    rutaFisica: "packages/notificaciones/src/EmisionNotificacionesWidget.tsx",
+    paquete: "@eco/notificaciones",
+    panelDestino: "Administrar / Herramientas (/panel/administrar)",
+    categoria: "Comunicación & Alertas",
+    perfilesAsignados: ["OPERADOR", "ADMINISTRADOR", "SUPERADMIN"],
+    estadoDuplicidad: "CANONICO",
+  },
+  {
+    clave: "monitoreo_notificaciones_usuarios",
+    nombre: "Monitoreo de Notificaciones por Usuario",
+    detalle: "Auditoría en tiempo real de notificaciones, fechas de confirmación, tiempo de pospuesto y eliminados",
+    ruta: "/panel/administrar?widget=monitoreo_notificaciones_usuarios",
+    icono: Bell,
+    iconoKey: "Bell",
+    color: "#1F6FEB",
+    rutaFisica: "packages/notificaciones/src/MonitoreoNotificacionesUsuariosWidget.tsx",
+    paquete: "@eco/notificaciones",
+    panelDestino: "Administrar (/panel/administrar)",
+    categoria: "Comunicación & Alertas",
+    perfilesAsignados: ["OPERADOR", "ADMINISTRADOR", "SUPERADMIN"],
+    estadoDuplicidad: "CANONICO",
+  },
+  {
+    clave: "bitacora_notificaciones",
+    nombre: "Bitácora & Historial de Notificaciones",
+    detalle: "Consulta auditada en tiempo real de notificaciones emitidas y destinatarios",
+    ruta: "/panel/administrar?widget=bitacora_notificaciones",
+    icono: Bell,
+    iconoKey: "Bell",
+    color: "#2563EB",
+    rutaFisica: "packages/notificaciones/src/BitacoraNotificacionesWidget.tsx",
+    paquete: "@eco/notificaciones",
+    panelDestino: "Administrar (/panel/administrar)",
+    categoria: "Comunicación & Alertas",
+    perfilesAsignados: ["OPERADOR", "ADMINISTRADOR", "SUPERADMIN"],
+    estadoDuplicidad: "CANONICO",
+  },
+  {
+    clave: "preferencias_notificacion",
+    nombre: "Preferencias de Alertas & Notificaciones",
+    detalle: "Configuración de canales de alerta, WhatsApp y avisos",
+    ruta: "/panel/configuracion?widget=notificaciones",
+    icono: Bell,
+    iconoKey: "Bell",
+    color: "#D97706",
+    rutaFisica: "packages/notificaciones/src/componentes/PreferenciasNotificacionWidget.tsx",
+    paquete: "@eco/notificaciones",
+    panelDestino: "Configuración (/panel/configuracion)",
+    categoria: "Comunicación & Alertas",
+    perfilesAsignados: ["CLIENTE", "ABOGADO", "OPERADOR", "ADMINISTRADOR", "SUPERADMIN"],
+    estadoDuplicidad: "CANONICO",
+  },
+  {
+    clave: "mi_cuenta",
+    nombre: "Perfil & Datos de Contacto",
+    detalle: "Nombres, apellidos, correo verificado y WhatsApp",
+    ruta: "/panel/cuenta?widget=mi_cuenta",
+    icono: CircleUser,
+    iconoKey: "CircleUser",
+    color: "var(--violeta, #5000BA)",
+    rutaFisica: "packages/identidad/src/componentes/FormularioPerfil.tsx",
+    paquete: "@eco/identidad",
+    panelDestino: "Mi Cuenta (/panel/cuenta)",
+    categoria: "Cuenta & Perfil",
+    perfilesAsignados: ["CLIENTE", "ABOGADO", "OPERADOR", "ADMINISTRADOR", "SUPERADMIN"],
+    estadoDuplicidad: "CANONICO",
+  },
+  {
+    clave: "facturacion",
+    nombre: "Datos de Facturación SRI",
+    detalle: "Razón Social, RUC/Cédula, dirección fiscal y correo SRI",
+    ruta: "/panel/cuenta?widget=datos_facturacion",
+    icono: Receipt,
+    iconoKey: "Receipt",
+    color: "#05876E",
+    rutaFisica: "packages/identidad/src/componentes/FormularioDatosFacturacion.tsx",
+    paquete: "@eco/identidad",
+    panelDestino: "Mi Cuenta (/panel/cuenta)",
+    categoria: "Cuenta & Facturación",
+    perfilesAsignados: ["CLIENTE", "ABOGADO", "OPERADOR", "ADMINISTRADOR", "SUPERADMIN"],
+    estadoDuplicidad: "CANONICO",
+  },
+  {
+    clave: "mfa",
+    nombre: "Seguridad MFA & Autenticador",
+    detalle: "Configuración TOTP y reseteo estándar vía correo",
+    ruta: "/panel/cuenta?widget=mfa_seguridad",
+    icono: KeyRound,
+    iconoKey: "KeyRound",
+    color: "#D97706",
+    rutaFisica: "packages/identidad/src/componentes/WidgetConfiguracionMfa.tsx",
+    paquete: "@eco/identidad",
+    panelDestino: "Seguridad / Mi Cuenta (/panel/cuenta)",
+    categoria: "Seguridad & Acceso",
+    perfilesAsignados: ["CLIENTE", "ABOGADO", "OPERADOR", "ADMINISTRADOR", "SUPERADMIN"],
+    estadoDuplicidad: "CANONICO",
+  },
+  {
+    clave: "historial_accesos",
+    nombre: "Historial de Accesos & Sesiones",
+    detalle: "Bitácora de inicios de sesión, navegador y dirección IP",
+    ruta: "/panel/cuenta?widget=historial_accesos",
+    icono: History,
+    iconoKey: "History",
+    color: "#111827",
+    rutaFisica: "packages/identidad/src/componentes/HistorialAccesos.tsx",
+    paquete: "@eco/identidad",
+    panelDestino: "Mi Cuenta (/panel/cuenta)",
+    categoria: "Seguridad & Auditoría",
+    perfilesAsignados: ["CLIENTE", "ABOGADO", "OPERADOR", "ADMINISTRADOR", "SUPERADMIN"],
+    estadoDuplicidad: "CANONICO",
+  },
+  {
+    clave: "ver_como",
+    nombre: "Selector 'Ver Como' (Conmutador)",
+    detalle: "Alternar la vista previa del portal según roles asignados",
+    ruta: "/panel/cuenta?widget=ver_como",
+    icono: Shield,
+    iconoKey: "Shield",
+    color: "var(--violeta, #5000BA)",
+    rutaFisica: "apps/tranqi-web/app/panel/SelectorRolActivo.tsx",
+    paquete: "apps/tranqi-web",
+    panelDestino: "Mi Cuenta (/panel/cuenta)",
+    categoria: "Gobernanza & Roles",
+    perfilesAsignados: ["CLIENTE", "ABOGADO", "OPERADOR", "ADMINISTRADOR", "SUPERADMIN"],
+    estadoDuplicidad: "CANONICO",
+  },
 ];
 
 export function ConsolaSuperAdminModular() {
@@ -327,6 +753,275 @@ export function ConsolaSuperAdminModular() {
             );
           })}
         </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════════════ */}
+      {/* SECCIÓN: INVENTARIO CANÓNICO & VALIDACIÓN DE WIDGETS (DATAGRID) */}
+      {/* ═══════════════════════════════════════════════════════════════ */}
+      <section
+        style={{
+          marginTop: "32px",
+          background: "var(--blanco, #ffffff)",
+          borderRadius: "14px",
+          border: "1px solid var(--panel-linea, #E4E4E4)",
+          padding: "24px",
+          display: "flex",
+          flexDirection: "column",
+          gap: "18px",
+          boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
+        }}
+      >
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "12px" }}>
+          <div>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
+              <span
+                style={{
+                  background: "var(--violeta-suave, #F3E8FF)",
+                  color: "var(--violeta, #5000BA)",
+                  padding: "3px 10px",
+                  borderRadius: "6px",
+                  fontSize: "0.72rem",
+                  fontWeight: 800,
+                  letterSpacing: "0.04em",
+                  textTransform: "uppercase",
+                }}
+              >
+                Auditoría & Gobierno Técnico
+              </span>
+              <span
+                style={{
+                  background: "#ECFDF5",
+                  color: "#065F46",
+                  padding: "3px 10px",
+                  borderRadius: "6px",
+                  fontSize: "0.72rem",
+                  fontWeight: 800,
+                }}
+              >
+                ✓ 0 Duplicados Funcionales
+              </span>
+            </div>
+
+            <h3 style={{ margin: 0, fontSize: "1.15rem", fontWeight: 800, color: "var(--negro, #111111)" }}>
+              📋 Inventario Maestro & Validación de Componentes Fuente (.tsx)
+            </h3>
+            <p style={{ margin: "4px 0 0 0", fontSize: "0.84rem", color: "var(--panel-gris, #737373)" }}>
+              Reporte técnico de widgets del ecosistema: ruta física del componente, perfiles autorizados y verificación de unicidad sin duplicados.
+            </p>
+          </div>
+
+          <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+            <div style={{ textAlign: "right" }}>
+              <strong style={{ fontSize: "1.2rem", fontWeight: 900, color: "var(--violeta, #5000BA)", display: "block" }}>
+                {CATALOGO_SUPERADMIN_TODOS.length}
+              </strong>
+              <span style={{ fontSize: "0.72rem", color: "#64748B", fontWeight: 700 }}>Módulos Registrados</span>
+            </div>
+          </div>
+        </div>
+
+        {/* DataGrid Estandarizado @eco/datagrid */}
+        <DataGrid
+          columnas={[
+            {
+              id: "nombre",
+              encabezado: "Módulo / Widget",
+              valor: (r: ModuloSuperAdminDef) => `${r.nombre} ${r.clave}`,
+              render: (r: ModuloSuperAdminDef) => {
+                const IconoR = r.icono;
+                return (
+                  <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                    <div
+                      style={{
+                        width: "32px",
+                        height: "32px",
+                        borderRadius: "8px",
+                        background: `${r.color}15`,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        flexShrink: 0,
+                      }}
+                    >
+                      <IconoR size={18} color={r.color} />
+                    </div>
+                    <div>
+                      <strong style={{ color: "#0F172A", fontSize: "0.85rem", display: "block" }}>{r.nombre}</strong>
+                      <code style={{ fontSize: "0.72rem", color: "#64748B", background: "#F1F5F9", padding: "1px 5px", borderRadius: "4px" }}>
+                        clave: {r.clave}
+                      </code>
+                    </div>
+                  </div>
+                );
+              },
+            },
+            {
+              id: "rutaFisica",
+              encabezado: "Ruta Física del Componente (.tsx)",
+              valor: (r: ModuloSuperAdminDef) => r.rutaFisica,
+              render: (r: ModuloSuperAdminDef) => (
+                <div>
+                  <span style={{ fontSize: "0.74rem", fontFamily: "monospace", color: "#1E293B", fontWeight: 700, display: "block" }}>
+                    {r.rutaFisica}
+                  </span>
+                  <span style={{ fontSize: "0.68rem", color: "#64748B" }}>
+                    Paquete: <strong style={{ color: "var(--violeta, #5000BA)" }}>{r.paquete}</strong>
+                  </span>
+                </div>
+              ),
+            },
+            {
+              id: "categoria",
+              encabezado: "Categoría / Panel Destino",
+              valor: (r: ModuloSuperAdminDef) => `${r.categoria} ${r.panelDestino}`,
+              render: (r: ModuloSuperAdminDef) => (
+                <div>
+                  <span
+                    style={{
+                      padding: "2px 8px",
+                      borderRadius: "6px",
+                      background: "#EDE9FE",
+                      color: "#5B21B6",
+                      fontWeight: 800,
+                      fontSize: "0.72rem",
+                      display: "inline-block",
+                      marginBottom: "2px",
+                    }}
+                  >
+                    {r.categoria}
+                  </span>
+                  <span style={{ display: "block", fontSize: "0.72rem", color: "#475569" }}>
+                    {r.panelDestino}
+                  </span>
+                </div>
+              ),
+            },
+            {
+              id: "perfiles",
+              encabezado: "Perfiles de Uso Autorizados",
+              valor: (r: ModuloSuperAdminDef) => r.perfilesAsignados.join(", "),
+              render: (r: ModuloSuperAdminDef) => (
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "4px" }}>
+                  {r.perfilesAsignados.map((p) => {
+                    const colorBg =
+                      p === "SUPERADMIN" ? "#F3E8FF" :
+                      p === "ADMINISTRADOR" ? "#FEF3C7" :
+                      p === "OPERADOR" ? "#ECFDF5" :
+                      p === "ABOGADO" ? "#EFF6FF" : "#F1F5F9";
+                    const colorTxt =
+                      p === "SUPERADMIN" ? "#6B21A8" :
+                      p === "ADMINISTRADOR" ? "#92400E" :
+                      p === "OPERADOR" ? "#065F46" :
+                      p === "ABOGADO" ? "#1E40AF" : "#475569";
+                    return (
+                      <span
+                        key={p}
+                        style={{
+                          fontSize: "0.66rem",
+                          fontWeight: 800,
+                          padding: "2px 6px",
+                          borderRadius: "4px",
+                          background: colorBg,
+                          color: colorTxt,
+                          letterSpacing: "0.02em",
+                        }}
+                      >
+                        {p}
+                      </span>
+                    );
+                  })}
+                </div>
+              ),
+            },
+            {
+              id: "estado",
+              encabezado: "Validación de Duplicidad",
+              valor: (r: ModuloSuperAdminDef) => r.estadoDuplicidad,
+              render: () => (
+                <span
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "4px",
+                    padding: "3px 8px",
+                    borderRadius: "6px",
+                    background: "#ECFDF5",
+                    color: "#047857",
+                    fontWeight: 800,
+                    fontSize: "0.72rem",
+                  }}
+                >
+                  ✓ Canónico / Único
+                </span>
+              ),
+            },
+            {
+              id: "detalle",
+              encabezado: "Descripción Funcional",
+              valor: (r: ModuloSuperAdminDef) => r.detalle,
+              render: (r: ModuloSuperAdminDef) => (
+                <span style={{ fontSize: "0.78rem", color: "#475569", lineHeight: 1.4 }}>
+                  {r.detalle}
+                </span>
+              ),
+            },
+          ]}
+          filas={CATALOGO_SUPERADMIN_TODOS}
+          idFila={(r: ModuloSuperAdminDef) => r.clave}
+          nombreExportacion="inventario-widgets-ecosistema"
+          contenidoExpandible={(r: ModuloSuperAdminDef) => (
+            <div
+              style={{
+                padding: "14px 18px",
+                background: "#F8FAFC",
+                borderRadius: "8px",
+                fontSize: "0.8rem",
+                border: "1px solid #E2E8F0",
+                display: "flex",
+                flexDirection: "column",
+                gap: "8px",
+              }}
+            >
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <strong style={{ color: "#0F172A", fontSize: "0.88rem" }}>
+                  🔎 Ficha Técnica y Gobernanza: {r.nombre} ({r.clave})
+                </strong>
+                <Link
+                  href={r.ruta}
+                  style={{
+                    fontSize: "0.75rem",
+                    fontWeight: 800,
+                    color: "var(--violeta, #5000BA)",
+                    textDecoration: "none",
+                  }}
+                >
+                  Abrir Módulo en Vivo →
+                </Link>
+              </div>
+
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "10px", marginTop: "4px" }}>
+                <div>
+                  <span style={{ color: "#64748B", display: "block", fontSize: "0.72rem" }}>Ruta Física (.tsx):</span>
+                  <code style={{ fontSize: "0.75rem", color: "#0F172A" }}>{r.rutaFisica}</code>
+                </div>
+                <div>
+                  <span style={{ color: "#64748B", display: "block", fontSize: "0.72rem" }}>Ruta de Enrutamiento / URL:</span>
+                  <code style={{ fontSize: "0.75rem", color: "#0F172A" }}>{r.ruta}</code>
+                </div>
+                <div>
+                  <span style={{ color: "#64748B", display: "block", fontSize: "0.72rem" }}>Paquete Monorepo:</span>
+                  <strong style={{ fontSize: "0.78rem", color: "var(--violeta, #5000BA)" }}>{r.paquete}</strong>
+                </div>
+                <div>
+                  <span style={{ color: "#64748B", display: "block", fontSize: "0.72rem" }}>Regla de Unicidad:</span>
+                  <span style={{ fontSize: "0.75rem", color: "#065F46", fontWeight: 700 }}>
+                    Sin colisiones con otros componentes ni duplicación de vistas.
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+        />
       </section>
 
       {/* MODAL EDITAR WIDGET DE INICIO */}
