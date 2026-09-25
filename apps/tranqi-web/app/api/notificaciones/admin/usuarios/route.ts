@@ -198,30 +198,55 @@ export async function GET(request: Request) {
 
     // 4. Agregar eventos auditables del sistema desde esquemas transaccionales expuestos (tranqui_legal)
     try {
-      const { data: solicitudesSocio } = await client
+      // 4.1 Obtener solicitudes de socio
+      let solicitudesSocio: any[] = [];
+      const { data: dbSols, error: errSols } = await client
         .schema("tranqui_legal")
         .from("trq_solicitud_socio")
-        .select(`
-          ssc_id,
-          ssc_usuario_id,
-          ssc_estado,
-          ssc_creado_en,
-          ssc_actualizado_en,
-          trq_documento_socio (dcs_id, dcs_tipo, dcs_comentario, dcs_creado_en),
-          trq_revision_solicitud (rev_id, rev_usuario_id, rev_decision, rev_comentario, rev_creado_en)
-        `)
+        .select("*")
         .is("ssc_eliminado_en", null)
         .order("ssc_actualizado_en", { ascending: false })
-        .limit(100);
+        .limit(200);
 
-      if (solicitudesSocio && Array.isArray(solicitudesSocio)) {
+      if (!errSols && Array.isArray(dbSols)) {
+        solicitudesSocio = dbSols;
+      }
+
+      if (solicitudesSocio.length > 0) {
+        // 4.2 Obtener documentos de respaldo
+        let todosDocumentos: any[] = [];
+        try {
+          const { data: dbDocs } = await client
+            .schema("tranqui_legal")
+            .from("trq_documento_socio")
+            .select("dcs_id, dcs_solicitud_id, dcs_tipo, dcs_comentario, dcs_creado_en");
+          if (Array.isArray(dbDocs)) todosDocumentos = dbDocs;
+        } catch (errDocs) {
+          console.warn("Aviso al consultar trq_documento_socio:", errDocs);
+        }
+
+        // 4.3 Obtener revisiones de evaluadores
+        let todasRevisiones: any[] = [];
+        try {
+          const { data: dbRevs } = await client
+            .schema("tranqui_legal")
+            .from("trq_revision_solicitud")
+            .select("rev_id, rev_solicitud_id, rev_admin_id, rev_decision, rev_comentario, rev_creado_en");
+          if (Array.isArray(dbRevs)) todasRevisiones = dbRevs;
+        } catch (errRevs) {
+          console.warn("Aviso al consultar trq_revision_solicitud:", errRevs);
+        }
+
         for (const sol of solicitudesSocio) {
           const uPost = mapaUsuarios.get(sol.ssc_usuario_id) || { id: sol.ssc_usuario_id, nombre: "Postulante Abogado", correo: "postulante@tranqi24.com" };
-          const docs = (sol.trq_documento_socio || []) as Array<{ dcs_id: string; dcs_tipo: string; dcs_comentario?: string; dcs_creado_en: string }>;
+          const docs = todosDocumentos.filter(d => d.dcs_solicitud_id === sol.ssc_id);
+          const revs = todasRevisiones.filter(r => r.rev_solicitud_id === sol.ssc_id);
+          revs.sort((a, b) => new Date(b.rev_creado_en).getTime() - new Date(a.rev_creado_en).getTime());
+
           const tieneContrato = docs.some(d => d.dcs_tipo === "contrato_socio" || d.dcs_comentario?.includes("[tipo:contrato_socio]"));
           const tienePropuesta = docs.some(d => d.dcs_comentario?.includes("[PROPUESTA_MODIFICACION_CONTRATO]"));
 
-          // A) Alerta: Contrato firmado recibido
+          // A) Alerta: Contrato firmado subido por el postulante
           if (tieneContrato) {
             const synthContratoId = `contrato-${sol.ssc_id}`;
             if (!idsVistos.has(synthContratoId)) {
@@ -247,7 +272,7 @@ export async function GET(request: Request) {
             }
           }
 
-          // B) Alerta: Propuesta de modificación de contrato
+          // B) Alerta: Propuesta de modificación de contrato enviada por el postulante
           if (tienePropuesta) {
             const synthPropuestaId = `propuesta-${sol.ssc_id}`;
             if (!idsVistos.has(synthPropuestaId)) {
@@ -297,36 +322,61 @@ export async function GET(request: Request) {
             });
           }
 
-          // D) Resoluciones emitidas hacia el postulante
-          const revs = (sol.trq_revision_solicitud || []) as Array<{ rev_id: string; rev_usuario_id: string; rev_decision: string; rev_comentario?: string; rev_creado_en: string }>;
-          for (const rev of revs) {
-            const synthRevId = `rev-${rev.rev_id}`;
-            if (!idsVistos.has(synthRevId)) {
-              idsVistos.add(synthRevId);
-              const uRev = mapaUsuarios.get(rev.rev_usuario_id) || { id: rev.rev_usuario_id, nombre: "Evaluador Tranqi", correo: "evaluador@tranqi24.com" };
-              const esAprobada = rev.rev_decision === "aceptada";
+          // D) Resoluciones emitidas desde la administración hacia el postulante
+          if (revs.length > 0) {
+            for (const rev of revs) {
+              const synthRevId = `rev-${rev.rev_id}`;
+              if (!idsVistos.has(synthRevId)) {
+                idsVistos.add(synthRevId);
+                const uRev = mapaUsuarios.get(rev.rev_admin_id) || { id: rev.rev_admin_id, nombre: "Evaluador Staff Tranqi", correo: "evaluador@tranqi24.com" };
+                const esAprobada = rev.rev_decision === "aceptada";
 
+                lista.push({
+                  not_id: synthRevId,
+                  usuario_id: sol.ssc_usuario_id,
+                  usuario_nombre: uPost.nombre,
+                  usuario_correo: uPost.correo,
+                  emisor_id: rev.rev_admin_id,
+                  emisor_nombre: `${uRev.nombre} (Evaluador Staff)`,
+                  emisor_correo: uRev.correo,
+                  emisor_tipo: "ADMINISTRADOR",
+                  not_negocio: "TRANQ",
+                  not_canal: "IN_APP",
+                  not_titulo: esAprobada
+                    ? "¡Tu Acreditación como Socio Abogado fue APROBADA!"
+                    : "Observación en tu Solicitud de Socio Abogado",
+                  not_contenido_html: esAprobada
+                    ? `<p>Tu postulación ha sido aprobada. Por favor <a href="/panel/solicitud-socio" style="color: #5000BA; font-weight: 700; text-decoration: underline;">descarga tu contrato pre-llenado y súbelo firmado</a> para activar tu cuenta de Abogado.</p>`
+                    : `<p>${rev.rev_comentario || "Se identificaron observaciones en tu solicitud."}</p>`,
+                  not_url_accion: "/panel/solicitud-socio",
+                  not_leido_en: null,
+                  not_eliminada: false,
+                  not_creado_en: rev.rev_creado_en
+                });
+              }
+            }
+          } else if (sol.ssc_estado === "aceptada") {
+            // Notificación sintética de aprobación si la solicitud está aceptada
+            const synthAprobadaId = `aprobacion-${sol.ssc_id}`;
+            if (!idsVistos.has(synthAprobadaId)) {
+              idsVistos.add(synthAprobadaId);
               lista.push({
-                not_id: synthRevId,
+                not_id: synthAprobadaId,
                 usuario_id: sol.ssc_usuario_id,
                 usuario_nombre: uPost.nombre,
                 usuario_correo: uPost.correo,
-                emisor_id: rev.rev_usuario_id,
-                emisor_nombre: `${uRev.nombre} (Evaluador Staff)`,
-                emisor_correo: uRev.correo,
+                emisor_id: null,
+                emisor_nombre: "Staff Evaluador Tranqi",
+                emisor_correo: "staff@tranqi24.com",
                 emisor_tipo: "ADMINISTRADOR",
                 not_negocio: "TRANQ",
                 not_canal: "IN_APP",
-                not_titulo: esAprobada
-                  ? "¡Tu Acreditación como Socio Abogado fue APROBADA!"
-                  : "Observación en tu Solicitud de Socio Abogado",
-                not_contenido_html: esAprobada
-                  ? `<p>Tu postulación ha sido aprobada. Por favor <a href="/panel/solicitud-socio" style="color: #5000BA; font-weight: 700; text-decoration: underline;">descarga tu contrato pre-llenado y súbelo firmado</a> para activar tu cuenta de Abogado.</p>`
-                  : `<p>${rev.rev_comentario || "Se identificaron observaciones en tu solicitud."}</p>`,
+                not_titulo: "¡Tu Acreditación como Socio Abogado fue APROBADA!",
+                not_contenido_html: `<p>Tu postulación ha sido aprobada. Por favor <a href="/panel/solicitud-socio" style="color: #5000BA; font-weight: 700; text-decoration: underline;">descarga tu contrato pre-llenado y súbelo firmado</a> para activar tu cuenta de Abogado.</p>`,
                 not_url_accion: "/panel/solicitud-socio",
                 not_leido_en: null,
                 not_eliminada: false,
-                not_creado_en: rev.rev_creado_en
+                not_creado_en: sol.ssc_actualizado_en || sol.ssc_creado_en
               });
             }
           }
