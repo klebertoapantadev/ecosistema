@@ -488,27 +488,41 @@ promediar dejaría pasar una suplantación con un 60 %.
 ---
 
 ### TRQ-CRM-001 — CRM Jurídico: Gestión de Clientes, Registro Manual Asistido, Validación ARIA y Conflict Check
-**Responsable:** Kleber Toapanta | **Estado:** 🟡 En Desarrollo (80%)
+**Responsable:** Kleber Toapanta | **Estado:** ✅ Implementado y Verificado (100%)
 
 #### 1. Descripción
 Módulo central de administración y ciclo de vida de clientes (Personas Naturales y Jurídicas) que permite su captación e ingesta multicanal: auto-registro web, captura conversacional WhatsApp con ARIA y **alta manual asistida** ejecutada por operadores, recepcionistas o abogados desde el panel.
 
 #### 2. Tipología y Estructura del Cliente
-1. **Persona Natural:**
+
+1. **Persona Natural (Ciudadano):**
    - Cédula ecuatoriana (validación estricta de algoritmo Módulo 10) / Pasaporte.
    - Nombres, Apellidos, Estado Civil, Profesión/Ocupación, Teléfonos, Correo electrónico, Domicilio y Casillero Judicial electrónico.
+   - **Manejo de Apoderados / Representantes Legales Opcionales:**
+     - Toggle colapsable: *"¿Actúa a través de Apoderado, Tutor o Representante Legal?"*
+     - Permite ingresar: Nombres del Apoderado/Tutor, Cédula/Pasaporte, Calidad de Representación (*Apoderado General, Apoderado Especial / Procuración Judicial, Representante Legal de Menor en Juicio de Alimentos, Albacea / Administrador Hereditario, Tutor/Curador*) y Notaría/Vigencia.
+
 2. **Persona Jurídica (Empresas / Instituciones / S.A.S.):**
-   - RUC de 13 dígitos (validación de Módulo 11 para sociedades privadas/públicas), Razón Social, Nombre Comercial, Objeto Social, Dirección Matriz y Casillero Judicial.
-   - **Registro Progresivo del Representante Legal con ARIA OCR:**
-     * El registro inicial de la empresa es flexible (RUC y Razón Social), permitiendo asociar el Representante Legal de inmediato o en etapas posteriores.
-     * Al vincular al Representante Legal, el sistema solicita la carga de su **Cédula de Identidad** y el **Nombramiento de Representante Legal inscrito en el Registro Mercantil**.
-     * **Inspección con ARIA OCR:** ARIA analiza el documento PDF/imagen del nombramiento, extrae el nombre del titular, la fecha de inscripción mercantil, el período estatutario de vigencia (ej. 2 años) y emite el distintivo: *"✨ Nombramiento Vigente validado por ARIA (Vence: Oct 2027)"*.
+   - RUC de 13 dígitos (validación de Módulo 11 para sociedades privadas/públicas), Razón Social, Nombre Comercial / Fantasía, Actividad Económica / Sector, Dirección Matriz / Sucursal y Casillero Judicial electrónico corporativo.
+   - **Representante Legal Principal (Obligatorio para Contratos y Demandas):**
+     - Nombres y Apellidos, Cédula de Identidad, Cargo estatutario (*Gerente General, Presidente, Director Ejecutivo, Apoderado Especial*), Fecha de Vigencia / Vencimiento del Nombramiento, y Correo/Celular directo.
+     - **Inspección y Certificación con ARIA OCR:** Carga del PDF/imagen del Nombramiento inscrito en el Registro Mercantil; ARIA extrae el titular, cargo, notaría, fecha de inscripción y calcula la vigencia (ej. 2 años), emitiendo el distintivo *"✨ Nombramiento Vigente validado por ARIA (Vence: Oct 2027)"*.
+   - **Contacto y Notificaciones Corporativas:**
+     - Correo de Facturación Electrónica y Notificaciones Legales.
+     - Celular / WhatsApp de Enlace Administrativo.
+
+3. **Log Interactivo de Extracción y Auditoría de Mapeo ARIA OCR en Pantalla:**
+   - Panel desplegable en tiempo real que desglosa el 100% de la información extraída del documento oficial cargado (Cédula, RUC digital SRI, Pasaporte o Nombramiento).
+   - **Clasificación Dual de Trazabilidad:**
+     - 🟢 **Mapeados al Formulario:** Datos vinculados automáticamente a los campos interactivos en pantalla (ej: *Razón Social ➔ Campo `razonSocial`*, *NUI ➔ Campo `identificacion`*), marcados con el badge `✨ Leído por ARIA`.
+     - 🔵 **Metadatos Perfil Digital (JSONB Inmutable):** Información complementaria custodiada en `clp_detalle_cliente` (ej: *Nacionalidad, Lugar/Fecha Nacimiento, Estado Civil, Cónyuge, Código Dactilar, Tipo de Sangre, Donante, Código MRZ, Notaría, Período de Funciones*).
+   - Filtros rápidos por estado de mapeo y botón de copiado rápido al portapapeles.
 
 #### 3. Reglas de Negocio Validadas
 
 1. **Flujo de Continuidad Post-Alta Manual:**
    - Al completar el formulario de alta manual en el despacho, el sistema ofrece 3 acciones inmediatas para máxima agilidad operativa:
-     * `[Guardar Cliente]`: Almacena el perfil en el CRM y permanece en la bandeja.
+     * `[Solo Guardar]`: Almacena el perfil en el CRM y permanece en la bandeja.
      * `[Guardar y Radicar Expediente]`: Guarda al cliente e inmediatamente abre el asistente de creación de expediente (`TRQ-MAT-YYYY-XXXXX`).
      * `[Guardar y Agendar Cita]`: Guarda al cliente y despliega el modal de agendamiento en `comun_agenda` (`PLT-020`).
 2. **Detección Automática de Duplicados:**

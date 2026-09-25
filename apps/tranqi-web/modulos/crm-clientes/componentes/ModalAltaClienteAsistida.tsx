@@ -3,7 +3,9 @@
 import React, { useState, useTransition } from "react";
 import {
   X, User, Building2, ShieldCheck, AlertTriangle, Sparkles, Upload,
-  FileText, CheckCircle2, ArrowRight, Calendar, Scale, Info, Check, Eye
+  FileText, CheckCircle2, ArrowRight, Calendar, Scale, Info, Check, Eye,
+  Copy, Layers, FileCheck, HelpCircle, Briefcase, ChevronDown, ChevronUp,
+  UserCheck, Send, CheckSquare, Hash, Award, Building
 } from "lucide-react";
 import {
   validarCedulaEcuador,
@@ -16,6 +18,7 @@ import {
   type DatosCreacionCliente,
   type ResultadoAriaIdentificacion,
   type ResultadoAriaNombramiento,
+  type ItemLogExtraccionAria,
 } from "../acciones";
 
 interface Props {
@@ -34,7 +37,7 @@ function IndicadorOrigenCampo({ esAria, esModificado }: { esAria?: boolean; esMo
   if (esAria && !esModificado) {
     return (
       <span
-        title="Dato extraído automáticamente del documento oficial por ARIA OCR"
+        title="Dato extraído y mapeado automáticamente por ARIA OCR"
         style={{
           background: "#ECFDF5",
           color: "#047857",
@@ -83,12 +86,13 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, alGuardarExitoso }
   const [tipoPersoneria, setTipoPersoneria] = useState<"natural" | "juridica">("natural");
   const [tipoIdentificacion, setTipoIdentificacion] = useState<"cedula" | "ruc" | "pasaporte">("cedula");
 
-  // Formulario de identificación
+  // Formulario de identificación base
   const [identificacion, setIdentificacion] = useState("");
   const [nombres, setNombres] = useState("");
   const [apellidos, setApellidos] = useState("");
   const [razonSocial, setRazonSocial] = useState("");
   const [nombreComercial, setNombreComercial] = useState("");
+  const [actividadEconomica, setActividadEconomica] = useState("");
 
   // Contacto y Domicilio
   const [correo, setCorreo] = useState("");
@@ -103,7 +107,16 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, alGuardarExitoso }
   const [repCedula, setRepCedula] = useState("");
   const [repCargo, setRepCargo] = useState("Gerente General");
   const [repVencimientoNombramiento, setRepVencimientoNombramiento] = useState("");
+  const [repCorreo, setRepCorreo] = useState("");
+  const [repCelular, setRepCelular] = useState("");
   const [nombramientoValidadoAria, setNombramientoValidadoAria] = useState(false);
+
+  // Apoderado / Representante Legal Opcional (Persona Natural)
+  const [tieneApoderadoNatural, setTieneApoderadoNatural] = useState(false);
+  const [apoNombres, setApoNombres] = useState("");
+  const [apoCedula, setApoCedula] = useState("");
+  const [apoCalidadPoder, setApoCalidadPoder] = useState("Apoderado General");
+  const [apoNotariaVigencia, setApoNotariaVigencia] = useState("");
 
   // Contraparte y Conflict Check
   const [contraparteNombres, setContraparteNombres] = useState("");
@@ -114,7 +127,7 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, alGuardarExitoso }
   const [omitirValidacionAlgoritmo, setOmitirValidacionAlgoritmo] = useState(false);
   const [motivoExcepcion, setMotivoExcepcion] = useState("");
 
-  // Estados de IA, Metadatos y Validación
+  // Estados de ARIA OCR, Metadatos y Log de Auditoría
   const [procesandoAriaId, setProcesandoAriaId] = useState(false);
   const [procesandoAriaNom, setProcesandoAriaNom] = useState(false);
   const [badgeAriaId, setBadgeAriaId] = useState<string | null>(null);
@@ -122,7 +135,10 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, alGuardarExitoso }
   const [errorValidacion, setErrorValidacion] = useState<string | null>(null);
   const [avisoDuplicado, setAvisoDuplicado] = useState<string | null>(null);
   const [metadatosAria, setMetadatosAria] = useState<Record<string, unknown> | null>(null);
-  const [mostrarMetadatosDetallados, setMostrarMetadatosDetallados] = useState(false);
+  const [logExtraccionAria, setLogExtraccionAria] = useState<ItemLogExtraccionAria[]>([]);
+  const [mostrarLogDetallado, setMostrarLogDetallado] = useState(false);
+  const [filtroLog, setFiltroLog] = useState<"todos" | "mapeados" | "metadatos">("todos");
+  const [copiadoId, setCopiadoId] = useState<string | null>(null);
 
   // Registro de origen de campos: Leído por ARIA vs Digitado Manualmente
   const [camposAria, setCamposAria] = useState<Record<string, boolean>>({});
@@ -132,9 +148,15 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, alGuardarExitoso }
     setCamposModificados((prev) => ({ ...prev, [campo]: true }));
   };
 
+  const copiarAlPortapapeles = (texto: string, clave: string) => {
+    navigator.clipboard.writeText(texto);
+    setCopiadoId(clave);
+    setTimeout(() => setCopiadoId(null), 2000);
+  };
+
   if (!abierto) return null;
 
-  // Manejo de carga digital con ARIA OCR
+  // Manejo de carga digital con ARIA OCR (Cédula / RUC / Pasaporte)
   const manejarCargaArchivoId = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -151,6 +173,10 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, alGuardarExitoso }
       if (res.ok) {
         const nuevosCamposAria: Record<string, boolean> = {};
 
+        if (res.tipoPersoneria) {
+          setTipoPersoneria(res.tipoPersoneria);
+        }
+
         if (res.nombres) {
           setNombres(res.nombres);
           nuevosCamposAria["nombres"] = true;
@@ -159,14 +185,38 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, alGuardarExitoso }
           setApellidos(res.apellidos);
           nuevosCamposAria["apellidos"] = true;
         }
+        if (res.razonSocial) {
+          setRazonSocial(res.razonSocial);
+          nuevosCamposAria["razonSocial"] = true;
+        }
+        if (res.nombreComercial) {
+          setNombreComercial(res.nombreComercial);
+          nuevosCamposAria["nombreComercial"] = true;
+        }
+        if (res.actividadEconomica) {
+          setActividadEconomica(res.actividadEconomica);
+          nuevosCamposAria["actividadEconomica"] = true;
+        }
+        if (res.representanteNombres) {
+          setRepNombres(res.representanteNombres);
+          nuevosCamposAria["repNombres"] = true;
+        }
+        if (res.representanteCedula) {
+          setRepCedula(res.representanteCedula);
+          nuevosCamposAria["repCedula"] = true;
+        }
         if (res.identificacion) {
           setIdentificacion(res.identificacion);
-          setTipoIdentificacion(res.tipoIdentificacion || "cedula");
+          setTipoIdentificacion(res.tipoIdentificacion || (res.identificacion.length === 13 ? "ruc" : "cedula"));
           nuevosCamposAria["identificacion"] = true;
         }
 
         if (res.metadatosAdicionales) {
           setMetadatosAria(res.metadatosAdicionales);
+        }
+
+        if (res.logExtraccion && res.logExtraccion.length > 0) {
+          setLogExtraccionAria(res.logExtraccion);
         }
 
         setCamposAria((prev) => ({ ...prev, ...nuevosCamposAria }));
@@ -177,8 +227,13 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, alGuardarExitoso }
           return copia;
         });
 
-        const numCampos = (res.camposLeidos?.length || Object.keys(nuevosCamposAria).length);
-        setBadgeAriaId(`✨ Identificación Extraída por ARIA OCR (${numCampos} datos identificados · ${res.confianza}% confianza)`);
+        const numMapeados = res.logExtraccion
+          ? res.logExtraccion.filter(l => l.estado === "mapeado_formulario").length
+          : Object.keys(nuevosCamposAria).length;
+        const total = res.logExtraccion?.length || numMapeados;
+
+        setBadgeAriaId(`✨ ARIA OCR: ${total} datos identificados (${numMapeados} mapeados al formulario · ${res.confianza}% confianza)`);
+        setMostrarLogDetallado(true);
       } else {
         setErrorValidacion(res.mensaje || "No se pudo extraer la identificación.");
       }
@@ -186,6 +241,7 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, alGuardarExitoso }
     reader.readAsDataURL(file);
   };
 
+  // Manejo de carga de Nombramiento de Representante Legal con ARIA OCR
   const manejarCargaNombramiento = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -223,9 +279,14 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, alGuardarExitoso }
           setRepVencimientoNombramiento(res.fechaVencimientoCalculada);
           nuevosCamposAria["repVencimientoNombramiento"] = true;
         }
+        if (res.logExtraccion && res.logExtraccion.length > 0) {
+          setLogExtraccionAria((prev) => [...prev, ...(res.logExtraccion || [])]);
+        }
+
         setNombramientoValidadoAria(true);
         setCamposAria((prev) => ({ ...prev, ...nuevosCamposAria }));
         setBadgeAriaNom(`✨ Nombramiento Mercantil Vigente certificado por ARIA (Vence: ${res.fechaVencimientoCalculada || "2 años"})`);
+        setMostrarLogDetallado(true);
       }
     };
     reader.readAsDataURL(file);
@@ -273,27 +334,37 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, alGuardarExitoso }
           apellidos: apellidos.trim(),
           razonSocial: razonSocial.trim(),
           nombreComercial: nombreComercial.trim(),
+          actividadEconomica: actividadEconomica.trim() || undefined,
           correo: correo.trim(),
           celular: celular.trim(),
           telefono: telefono.trim(),
           direccion: direccion.trim(),
           casilleroJudicial: casilleroJudicial.trim(),
           casilleroElectronico: casilleroElectronico.trim(),
-          representanteLegal: repNombres ? {
-            nombres: repNombres,
-            cedula: repCedula,
-            cargo: repCargo,
-            nombramientoVence: repVencimientoNombramiento,
+          representanteLegal: (tipoPersoneria === "juridica" && repNombres) ? {
+            nombres: repNombres.trim(),
+            cedula: repCedula.trim(),
+            cargo: repCargo.trim(),
+            nombramientoVence: repVencimientoNombramiento.trim() || undefined,
             documentoValidadoAria: nombramientoValidadoAria,
+            correo: repCorreo.trim() || undefined,
+            celular: repCelular.trim() || undefined,
+          } : undefined,
+          apoderadoPersonaNatural: (tipoPersoneria === "natural" && tieneApoderadoNatural && apoNombres) ? {
+            nombres: apoNombres.trim(),
+            cedula: apoCedula.trim(),
+            calidadPoder: apoCalidadPoder.trim(),
+            notariaVigencia: apoNotariaVigencia.trim() || undefined,
           } : undefined,
           contrapartePreliminar: contraparteNombres ? {
-            nombres: contraparteNombres,
-            identificacion: contraparteIdentificacion,
+            nombres: contraparteNombres.trim(),
+            identificacion: contraparteIdentificacion.trim() || undefined,
           } : undefined,
           omitirValidacionAlgoritmo,
           motivoExcepcion: omitirValidacionAlgoritmo ? motivoExcepcion : undefined,
           metadatosAria: metadatosAria || undefined,
           camposAutocompletadosAria: Object.keys(camposAria).filter((k) => camposAria[k]),
+          logExtraccionAria: logExtraccionAria.length > 0 ? logExtraccionAria : undefined,
         };
 
         const res = await crearClienteManual(datos);
@@ -309,6 +380,13 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, alGuardarExitoso }
       }
     });
   };
+
+  // Filtrado de logs para la tabla de auditoría OCR
+  const logsFiltrados = logExtraccionAria.filter((item) => {
+    if (filtroLog === "mapeados") return item.estado === "mapeado_formulario";
+    if (filtroLog === "metadatos") return item.estado === "metadato_perfil_jsonb";
+    return true;
+  });
 
   return (
     <div
@@ -329,7 +407,7 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, alGuardarExitoso }
           background: "#FFFFFF",
           borderRadius: "16px",
           width: "100%",
-          maxWidth: "840px",
+          maxWidth: "880px",
           maxHeight: "92vh",
           display: "flex",
           flexDirection: "column",
@@ -354,7 +432,7 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, alGuardarExitoso }
               Alta Manual Asistida de Cliente · CRM Jurídico
             </h2>
             <p style={{ margin: "2px 0 0", fontSize: "0.82rem", color: "#64748B" }}>
-              Ingreso rápido para mostrador, consultas telefónicas y expedientes telemáticos
+              Ingreso para Personas Naturales, Empresas, Representantes y Litigios Telemáticos
             </p>
           </div>
           <button
@@ -439,6 +517,7 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, alGuardarExitoso }
               alignItems: "center",
               justifyContent: "space-between",
               gap: "12px",
+              flexWrap: "wrap",
             }}
           >
             <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
@@ -447,10 +526,10 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, alGuardarExitoso }
               </div>
               <div>
                 <p style={{ margin: 0, fontSize: "0.85rem", fontWeight: 600, color: "#0F172A" }}>
-                  Autocompletado Inteligente con ARIA (OCR)
+                  Autocompletado Inteligente con ARIA (OCR & Mapeo Automático)
                 </p>
                 <p style={{ margin: "2px 0 0", fontSize: "0.75rem", color: "#64748B" }}>
-                  Carga la fotografía o PDF de la Cédula/RUC y ARIA extraerá los datos al instante
+                  Carga la Cédula, RUC digital SRI, Pasaporte o Nombramiento y ARIA mapeará los campos al instante
                 </p>
               </div>
             </div>
@@ -470,7 +549,7 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, alGuardarExitoso }
               }}
             >
               <Upload size={14} />
-              {procesandoAriaId ? "Analizando..." : "Cargar Identificación"}
+              {procesandoAriaId ? "Analizando..." : "Cargar Identificación / RUC"}
               <input
                 type="file"
                 accept="image/*,application/pdf"
@@ -481,117 +560,169 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, alGuardarExitoso }
             </label>
           </div>
 
-          {badgeAriaId && (
-            <div style={{ background: "#F0FDF4", border: "1px solid #86EFAC", color: "#166534", padding: "10px 14px", borderRadius: "10px", fontSize: "0.82rem", display: "flex", flexDirection: "column", gap: "8px" }}>
+          {/* Log Interactivo de Extracción y Auditoría de Mapeo de ARIA OCR */}
+          {(badgeAriaId || logExtraccionAria.length > 0) && (
+            <div style={{ background: "#F0FDF4", border: "1px solid #86EFAC", color: "#166534", padding: "12px 14px", borderRadius: "10px", fontSize: "0.82rem", display: "flex", flexDirection: "column", gap: "10px" }}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "8px" }}>
                 <span style={{ display: "flex", alignItems: "center", gap: "6px", fontWeight: 700 }}>
                   <CheckCircle2 size={16} color="#16A34A" />
-                  {badgeAriaId}
+                  {badgeAriaId || `✨ Documento extraído con ${logExtraccionAria.length} datos identificados`}
                 </span>
-                {metadatosAria && (
-                  <button
-                    type="button"
-                    onClick={() => setMostrarMetadatosDetallados(!mostrarMetadatosDetallados)}
-                    style={{
-                      background: "#DCFCE7",
-                      border: "1px solid #86EFAC",
-                      color: "#15803D",
-                      padding: "3px 10px",
-                      borderRadius: "6px",
-                      fontSize: "0.74rem",
-                      fontWeight: 700,
-                      cursor: "pointer",
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: "4px"
-                    }}
-                  >
-                    <Eye size={12} />
-                    {mostrarMetadatosDetallados ? "Ocultar Metadatos" : "Ver Ficha de Metadatos Extraídos"}
-                  </button>
-                )}
+                <button
+                  type="button"
+                  onClick={() => setMostrarLogDetallado(!mostrarLogDetallado)}
+                  style={{
+                    background: "#DCFCE7",
+                    border: "1px solid #86EFAC",
+                    color: "#15803D",
+                    padding: "4px 10px",
+                    borderRadius: "6px",
+                    fontSize: "0.74rem",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "4px"
+                  }}
+                >
+                  <Eye size={12} />
+                  {mostrarLogDetallado ? "Ocultar Log de Extracción" : "Ver Log de Extracción y Mapeo ARIA"}
+                  {mostrarLogDetallado ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                </button>
               </div>
 
-              {/* Ficha Desplegable de Metadatos Adicionales Guardados en JSONB */}
-              {mostrarMetadatosDetallados && metadatosAria && (
-                <div style={{ background: "#FFFFFF", border: "1px solid #BBF7D0", borderRadius: "8px", padding: "12px", marginTop: "4px", fontSize: "0.78rem" }}>
-                  <p style={{ margin: "0 0 8px 0", fontWeight: 800, color: "#166534", textTransform: "uppercase", fontSize: "0.72rem", letterSpacing: "0.04em" }}>
-                    📋 Metadatos Registrados en el Perfil Digital (JSONB inmutable)
-                  </p>
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "8px" }}>
-                    {!!metadatosAria.nacionalidad && (
-                      <div style={{ background: "#F8FAFC", padding: "6px 8px", borderRadius: "6px", border: "1px solid #E2E8F0" }}>
-                        <span style={{ color: "#64748B", display: "block", fontSize: "0.68rem" }}>Nacionalidad:</span>
-                        <strong style={{ color: "#0F172A" }}>{String(metadatosAria.nacionalidad)}</strong>
-                      </div>
-                    )}
-                    {!!metadatosAria.fechaNacimiento && (
-                      <div style={{ background: "#F8FAFC", padding: "6px 8px", borderRadius: "6px", border: "1px solid #E2E8F0" }}>
-                        <span style={{ color: "#64748B", display: "block", fontSize: "0.68rem" }}>Fecha Nacimiento:</span>
-                        <strong style={{ color: "#0F172A" }}>{String(metadatosAria.fechaNacimiento)}</strong>
-                      </div>
-                    )}
-                    {!!metadatosAria.lugarNacimiento && (
-                      <div style={{ background: "#F8FAFC", padding: "6px 8px", borderRadius: "6px", border: "1px solid #E2E8F0" }}>
-                        <span style={{ color: "#64748B", display: "block", fontSize: "0.68rem" }}>Lugar Nacimiento:</span>
-                        <strong style={{ color: "#0F172A" }}>{String(metadatosAria.lugarNacimiento)}</strong>
-                      </div>
-                    )}
-                    {!!metadatosAria.sexo && (
-                      <div style={{ background: "#F8FAFC", padding: "6px 8px", borderRadius: "6px", border: "1px solid #E2E8F0" }}>
-                        <span style={{ color: "#64748B", display: "block", fontSize: "0.68rem" }}>Sexo / Género:</span>
-                        <strong style={{ color: "#0F172A" }}>{String(metadatosAria.sexo)}</strong>
-                      </div>
-                    )}
-                    {!!metadatosAria.estadoCivil && (
-                      <div style={{ background: "#F8FAFC", padding: "6px 8px", borderRadius: "6px", border: "1px solid #E2E8F0" }}>
-                        <span style={{ color: "#64748B", display: "block", fontSize: "0.68rem" }}>Estado Civil:</span>
-                        <strong style={{ color: "#0F172A" }}>{String(metadatosAria.estadoCivil)}</strong>
-                      </div>
-                    )}
-                    {!!metadatosAria.conyuge && (
-                      <div style={{ background: "#F8FAFC", padding: "6px 8px", borderRadius: "6px", border: "1px solid #E2E8F0" }}>
-                        <span style={{ color: "#64748B", display: "block", fontSize: "0.68rem" }}>Cónyuge / Conviviente:</span>
-                        <strong style={{ color: "#0F172A" }}>{String(metadatosAria.conyuge)}</strong>
-                      </div>
-                    )}
-                    {!!metadatosAria.codigoDactilar && (
-                      <div style={{ background: "#F8FAFC", padding: "6px 8px", borderRadius: "6px", border: "1px solid #E2E8F0" }}>
-                        <span style={{ color: "#64748B", display: "block", fontSize: "0.68rem" }}>Código Dactilar:</span>
-                        <strong style={{ color: "#0F172A" }}>{String(metadatosAria.codigoDactilar)}</strong>
-                      </div>
-                    )}
-                    {!!metadatosAria.tipoSangre && (
-                      <div style={{ background: "#F8FAFC", padding: "6px 8px", borderRadius: "6px", border: "1px solid #E2E8F0" }}>
-                        <span style={{ color: "#64748B", display: "block", fontSize: "0.68rem" }}>Tipo Sangre:</span>
-                        <strong style={{ color: "#0F172A" }}>{String(metadatosAria.tipoSangre)}</strong>
-                      </div>
-                    )}
-                    {!!metadatosAria.donante && (
-                      <div style={{ background: "#F8FAFC", padding: "6px 8px", borderRadius: "6px", border: "1px solid #E2E8F0" }}>
-                        <span style={{ color: "#64748B", display: "block", fontSize: "0.68rem" }}>Donante:</span>
-                        <strong style={{ color: "#0F172A" }}>{String(metadatosAria.donante)}</strong>
-                      </div>
-                    )}
-                    {!!metadatosAria.fechaExpiracion && (
-                      <div style={{ background: "#F8FAFC", padding: "6px 8px", borderRadius: "6px", border: "1px solid #E2E8F0" }}>
-                        <span style={{ color: "#64748B", display: "block", fontSize: "0.68rem" }}>Vencimiento Cédula:</span>
-                        <strong style={{ color: "#0F172A" }}>{String(metadatosAria.fechaExpiracion)}</strong>
-                      </div>
-                    )}
-                    {!!metadatosAria.mrz && (
-                      <div style={{ background: "#F8FAFC", padding: "6px 8px", borderRadius: "6px", border: "1px solid #E2E8F0", gridColumn: "1 / -1" }}>
-                        <span style={{ color: "#64748B", display: "block", fontSize: "0.68rem" }}>Código MRZ:</span>
-                        <code style={{ fontSize: "0.72rem", color: "#334155" }}>{String(metadatosAria.mrz)}</code>
-                      </div>
-                    )}
+              {/* Panel Desplegable de Log de Extracción y Mapeo */}
+              {mostrarLogDetallado && (
+                <div style={{ background: "#FFFFFF", border: "1px solid #BBF7D0", borderRadius: "8px", padding: "12px", marginTop: "2px" }}>
+                  {/* Filtros de Pestañas del Log */}
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "10px", borderBottom: "1px solid #E2E8F0", paddingBottom: "8px", flexWrap: "wrap", gap: "6px" }}>
+                    <div style={{ display: "flex", gap: "6px" }}>
+                      <button
+                        type="button"
+                        onClick={() => setFiltroLog("todos")}
+                        style={{
+                          background: filtroLog === "todos" ? "#0284C7" : "#F1F5F9",
+                          color: filtroLog === "todos" ? "#FFFFFF" : "#475569",
+                          border: "none",
+                          borderRadius: "4px",
+                          padding: "3px 8px",
+                          fontSize: "0.72rem",
+                          fontWeight: 600,
+                          cursor: "pointer",
+                        }}
+                      >
+                        Todos ({logExtraccionAria.length})
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setFiltroLog("mapeados")}
+                        style={{
+                          background: filtroLog === "mapeados" ? "#059669" : "#F1F5F9",
+                          color: filtroLog === "mapeados" ? "#FFFFFF" : "#475569",
+                          border: "none",
+                          borderRadius: "4px",
+                          padding: "3px 8px",
+                          fontSize: "0.72rem",
+                          fontWeight: 600,
+                          cursor: "pointer",
+                        }}
+                      >
+                        🟢 Mapeados en Pantalla ({logExtraccionAria.filter(i => i.estado === "mapeado_formulario").length})
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setFiltroLog("metadatos")}
+                        style={{
+                          background: filtroLog === "metadatos" ? "#6366F1" : "#F1F5F9",
+                          color: filtroLog === "metadatos" ? "#FFFFFF" : "#475569",
+                          border: "none",
+                          borderRadius: "4px",
+                          padding: "3px 8px",
+                          fontSize: "0.72rem",
+                          fontWeight: 600,
+                          cursor: "pointer",
+                        }}
+                      >
+                        🔵 Perfil Digital JSONB ({logExtraccionAria.filter(i => i.estado === "metadato_perfil_jsonb").length})
+                      </button>
+                    </div>
+                    <span style={{ fontSize: "0.68rem", color: "#64748B" }}>
+                      Trazabilidad Inmutable del Documento Oficial
+                    </span>
                   </div>
+
+                  {/* Tabla / Grid de Log de Datos Extraídos */}
+                  {logsFiltrados.length > 0 ? (
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "8px", maxHeight: "220px", overflowY: "auto", paddingRight: "4px" }}>
+                      {logsFiltrados.map((item, idx) => {
+                        const esMapeado = item.estado === "mapeado_formulario";
+                        const claveUnica = `${item.campoDetectado}_${idx}`;
+                        return (
+                          <div
+                            key={claveUnica}
+                            style={{
+                              background: esMapeado ? "#F0FDF4" : "#F8FAFC",
+                              border: esMapeado ? "1px solid #86EFAC" : "1px solid #E2E8F0",
+                              borderRadius: "6px",
+                              padding: "8px 10px",
+                              display: "flex",
+                              flexDirection: "column",
+                              justifyContent: "space-between",
+                              gap: "4px",
+                            }}
+                          >
+                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "4px" }}>
+                              <span style={{ fontSize: "0.7rem", fontWeight: 700, color: esMapeado ? "#15803D" : "#475569" }}>
+                                {item.campoDetectado}
+                              </span>
+                              <span
+                                style={{
+                                  fontSize: "0.62rem",
+                                  padding: "1px 5px",
+                                  borderRadius: "4px",
+                                  fontWeight: 700,
+                                  background: esMapeado ? "#DCFCE7" : "#E0E7FF",
+                                  color: esMapeado ? "#166534" : "#3730A3",
+                                }}
+                              >
+                                {esMapeado ? `➔ Campo: ${item.campoMapeadoEnFormulario}` : "JSONB"}
+                              </span>
+                            </div>
+
+                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "6px" }}>
+                              <strong style={{ fontSize: "0.78rem", color: "#0F172A", wordBreak: "break-all" }}>
+                                {item.valorOriginal}
+                              </strong>
+                              <button
+                                type="button"
+                                title="Copiar dato"
+                                onClick={() => copiarAlPortapapeles(item.valorOriginal, claveUnica)}
+                                style={{
+                                  background: "transparent",
+                                  border: "none",
+                                  color: copiadoId === claveUnica ? "#10B981" : "#94A3B8",
+                                  cursor: "pointer",
+                                  padding: "2px",
+                                }}
+                              >
+                                {copiadoId === claveUnica ? <Check size={12} /> : <Copy size={12} />}
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <p style={{ margin: "10px 0", fontSize: "0.75rem", color: "#64748B", textAlign: "center" }}>
+                      No hay registros para este filtro.
+                    </p>
+                  )}
                 </div>
               )}
             </div>
           )}
 
-          {/* Datos de Identificación */}
+          {/* Datos de Identificación Base */}
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "12px" }}>
             <div>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "4px" }}>
@@ -608,7 +739,7 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, alGuardarExitoso }
                 style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid #CBD5E1", fontSize: "0.85rem" }}
               >
                 <option value="cedula">Cédula de Identidad</option>
-                <option value="ruc">RUC</option>
+                <option value="ruc">RUC (Registro Único de Contribuyentes)</option>
                 <option value="pasaporte">Pasaporte / ID Extranjero</option>
               </select>
             </div>
@@ -616,7 +747,7 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, alGuardarExitoso }
             <div>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "4px" }}>
                 <label style={{ fontSize: "0.78rem", fontWeight: 600, color: "#334155" }}>
-                  Número de Identificación *
+                  {tipoPersoneria === "juridica" ? "Número de RUC de la Empresa *" : "Número de Identificación *"}
                 </label>
                 <IndicadorOrigenCampo
                   esAria={camposAria["identificacion"]}
@@ -681,112 +812,240 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, alGuardarExitoso }
             )}
           </div>
 
-          {/* Campos Persona Natural vs Jurídica */}
+          {/* ========================================================================= */}
+          {/* TAB 1: FORMULARIO PERSONA NATURAL (CIUDADANO) */}
+          {/* ========================================================================= */}
           {tipoPersoneria === "natural" ? (
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
-              <div>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "4px" }}>
-                  <label style={{ fontSize: "0.78rem", fontWeight: 600, color: "#334155" }}>
-                    Nombres *
-                  </label>
-                  <IndicadorOrigenCampo
-                    esAria={camposAria["nombres"]}
-                    esModificado={camposModificados["nombres"]}
+            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+                <div>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "4px" }}>
+                    <label style={{ fontSize: "0.78rem", fontWeight: 600, color: "#334155" }}>
+                      Nombres *
+                    </label>
+                    <IndicadorOrigenCampo
+                      esAria={camposAria["nombres"]}
+                      esModificado={camposModificados["nombres"]}
+                    />
+                  </div>
+                  <input
+                    type="text"
+                    value={nombres}
+                    onChange={(e) => {
+                      setNombres(e.target.value);
+                      marcarCampoModificado("nombres");
+                    }}
+                    placeholder="KLEBER MANUEL"
+                    style={{
+                      width: "100%",
+                      padding: "8px 10px",
+                      borderRadius: "8px",
+                      border: camposAria["nombres"] && !camposModificados["nombres"]
+                        ? "1.5px solid #10B981"
+                        : "1px solid #CBD5E1",
+                      background: camposAria["nombres"] && !camposModificados["nombres"]
+                        ? "#F0FDF4"
+                        : "#FFFFFF",
+                      fontSize: "0.85rem"
+                    }}
                   />
                 </div>
-                <input
-                  type="text"
-                  value={nombres}
-                  onChange={(e) => {
-                    setNombres(e.target.value);
-                    marcarCampoModificado("nombres");
-                  }}
-                  placeholder="KLEBER MANUEL"
-                  style={{
-                    width: "100%",
-                    padding: "8px 10px",
-                    borderRadius: "8px",
-                    border: camposAria["nombres"] && !camposModificados["nombres"]
-                      ? "1.5px solid #10B981"
-                      : "1px solid #CBD5E1",
-                    background: camposAria["nombres"] && !camposModificados["nombres"]
-                      ? "#F0FDF4"
-                      : "#FFFFFF",
-                    fontSize: "0.85rem"
-                  }}
-                />
+                <div>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "4px" }}>
+                    <label style={{ fontSize: "0.78rem", fontWeight: 600, color: "#334155" }}>
+                      Apellidos *
+                    </label>
+                    <IndicadorOrigenCampo
+                      esAria={camposAria["apellidos"]}
+                      esModificado={camposModificados["apellidos"]}
+                    />
+                  </div>
+                  <input
+                    type="text"
+                    value={apellidos}
+                    onChange={(e) => {
+                      setApellidos(e.target.value);
+                      marcarCampoModificado("apellidos");
+                    }}
+                    placeholder="TOAPANTA CHANCUSI"
+                    style={{
+                      width: "100%",
+                      padding: "8px 10px",
+                      borderRadius: "8px",
+                      border: camposAria["apellidos"] && !camposModificados["apellidos"]
+                        ? "1.5px solid #10B981"
+                        : "1px solid #CBD5E1",
+                      background: camposAria["apellidos"] && !camposModificados["apellidos"]
+                        ? "#F0FDF4"
+                        : "#FFFFFF",
+                      fontSize: "0.85rem"
+                    }}
+                  />
+                </div>
               </div>
-              <div>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "4px" }}>
-                  <label style={{ fontSize: "0.78rem", fontWeight: 600, color: "#334155" }}>
-                    Apellidos *
-                  </label>
-                  <IndicadorOrigenCampo
-                    esAria={camposAria["apellidos"]}
-                    esModificado={camposModificados["apellidos"]}
+
+              {/* Sección Opcional de Apoderado / Representante Legal en Persona Natural */}
+              <div style={{ border: "1px solid #E2E8F0", borderRadius: "10px", padding: "12px", background: "#F8FAFC" }}>
+                <label style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "0.82rem", fontWeight: 700, color: "#0F172A", cursor: "pointer" }}>
+                  <input
+                    type="checkbox"
+                    checked={tieneApoderadoNatural}
+                    onChange={(e) => setTieneApoderadoNatural(e.target.checked)}
                   />
-                </div>
-                <input
-                  type="text"
-                  value={apellidos}
-                  onChange={(e) => {
-                    setApellidos(e.target.value);
-                    marcarCampoModificado("apellidos");
-                  }}
-                  placeholder="TOAPANTA CHANCUSI"
-                  style={{
-                    width: "100%",
-                    padding: "8px 10px",
-                    borderRadius: "8px",
-                    border: camposAria["apellidos"] && !camposModificados["apellidos"]
-                      ? "1.5px solid #10B981"
-                      : "1px solid #CBD5E1",
-                    background: camposAria["apellidos"] && !camposModificados["apellidos"]
-                      ? "#F0FDF4"
-                      : "#FFFFFF",
-                    fontSize: "0.85rem"
-                  }}
-                />
+                  <span>¿Actúa a través de Apoderado, Tutor o Representante Legal? (Opcional)</span>
+                </label>
+                <p style={{ margin: "2px 0 8px 24px", fontSize: "0.73rem", color: "#64748B" }}>
+                  Aplica para ecuatorianos en el exterior con poder especial, menores en juicios de alimentos, tutores o albaceas.
+                </p>
+
+                {tieneApoderadoNatural && (
+                  <div style={{ marginTop: "10px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
+                    <div>
+                      <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 600, color: "#475569", marginBottom: "3px" }}>
+                        Nombres y Apellidos del Apoderado / Tutor
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="Ej. Ab. Carlos Andrade M."
+                        value={apoNombres}
+                        onChange={(e) => setApoNombres(e.target.value)}
+                        style={{ width: "100%", padding: "6px 8px", borderRadius: "6px", border: "1px solid #CBD5E1", fontSize: "0.8rem" }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 600, color: "#475569", marginBottom: "3px" }}>
+                        Cédula / Pasaporte del Apoderado
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="1712345678"
+                        value={apoCedula}
+                        onChange={(e) => setApoCedula(e.target.value)}
+                        style={{ width: "100%", padding: "6px 8px", borderRadius: "6px", border: "1px solid #CBD5E1", fontSize: "0.8rem" }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 600, color: "#475569", marginBottom: "3px" }}>
+                        Calidad / Tipo de Representación
+                      </label>
+                      <select
+                        value={apoCalidadPoder}
+                        onChange={(e) => setApoCalidadPoder(e.target.value)}
+                        style={{ width: "100%", padding: "6px 8px", borderRadius: "6px", border: "1px solid #CBD5E1", fontSize: "0.8rem" }}
+                      >
+                        <option value="Apoderado General">Apoderado General (Poder Amplio)</option>
+                        <option value="Apoderado Especial">Apoderado Especial (Procuración Judicial)</option>
+                        <option value="Representante Legal Menor">Representante Legal (Madre/Padre - Alimentos)</option>
+                        <option value="Albacea Hereditario">Albacea / Administrador Hereditario</option>
+                        <option value="Tutor o Curador">Tutor / Curador Judicial</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 600, color: "#475569", marginBottom: "3px" }}>
+                        Notaría / Consulado y Vigencia
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="Ej. Consulado Ecuador en Madrid / Notaría 5"
+                        value={apoNotariaVigencia}
+                        onChange={(e) => setApoNotariaVigencia(e.target.value)}
+                        style={{ width: "100%", padding: "6px 8px", borderRadius: "6px", border: "1px solid #CBD5E1", fontSize: "0.8rem" }}
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           ) : (
+            /* ========================================================================= */
+            /* TAB 2: FORMULARIO PERSONA JURÍDICA (EMPRESAS / S.A.S.) */
+            /* ========================================================================= */
             <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-              <div>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "4px" }}>
-                  <label style={{ fontSize: "0.78rem", fontWeight: 600, color: "#334155" }}>
-                    Razón Social de la Empresa *
-                  </label>
-                  <IndicadorOrigenCampo
-                    esAria={camposAria["razonSocial"]}
-                    esModificado={camposModificados["razonSocial"]}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+                <div>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "4px" }}>
+                    <label style={{ fontSize: "0.78rem", fontWeight: 600, color: "#334155" }}>
+                      Razón Social de la Empresa *
+                    </label>
+                    <IndicadorOrigenCampo
+                      esAria={camposAria["razonSocial"]}
+                      esModificado={camposModificados["razonSocial"]}
+                    />
+                  </div>
+                  <input
+                    type="text"
+                    value={razonSocial}
+                    onChange={(e) => {
+                      setRazonSocial(e.target.value);
+                      marcarCampoModificado("razonSocial");
+                    }}
+                    placeholder="INMOBILIARIA & CONSTRUCTORA ANDINA S.A.S."
+                    style={{
+                      width: "100%",
+                      padding: "8px 10px",
+                      borderRadius: "8px",
+                      border: camposAria["razonSocial"] && !camposModificados["razonSocial"]
+                        ? "1.5px solid #10B981"
+                        : "1px solid #CBD5E1",
+                      background: camposAria["razonSocial"] && !camposModificados["razonSocial"]
+                        ? "#F0FDF4"
+                        : "#FFFFFF",
+                      fontSize: "0.85rem"
+                    }}
                   />
                 </div>
+                <div>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "4px" }}>
+                    <label style={{ fontSize: "0.78rem", fontWeight: 600, color: "#334155" }}>
+                      Nombre Comercial / Fantasía (Opcional)
+                    </label>
+                    <IndicadorOrigenCampo
+                      esAria={camposAria["nombreComercial"]}
+                      esModificado={camposModificados["nombreComercial"]}
+                    />
+                  </div>
+                  <input
+                    type="text"
+                    value={nombreComercial}
+                    onChange={(e) => {
+                      setNombreComercial(e.target.value);
+                      marcarCampoModificado("nombreComercial");
+                    }}
+                    placeholder="Andina Construcciones"
+                    style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid #CBD5E1", fontSize: "0.85rem" }}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 600, color: "#334155", marginBottom: "4px" }}>
+                  Actividad Económica / Sector (Opcional)
+                </label>
                 <input
                   type="text"
-                  value={razonSocial}
-                  onChange={(e) => {
-                    setRazonSocial(e.target.value);
-                    marcarCampoModificado("razonSocial");
-                  }}
-                  placeholder="INMOBILIARIA & CONSTRUCTORA ANDINA S.A.S."
+                  value={actividadEconomica}
+                  onChange={(e) => setActividadEconomica(e.target.value)}
+                  placeholder="Ej. Construcción y Promoción Inmobiliaria / Servicios Legales y Corporativos"
                   style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid #CBD5E1", fontSize: "0.85rem" }}
                 />
               </div>
 
-              {/* Representante Legal con ARIA OCR */}
-              <div style={{ border: "1px solid #E2E8F0", borderRadius: "10px", padding: "12px", background: "#F8FAFC" }}>
+              {/* Representante Legal Principal con ARIA OCR */}
+              <div style={{ border: "1px solid #BAE6FD", borderRadius: "10px", padding: "12px", background: "#F0F9FF" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
-                  <span style={{ fontSize: "0.82rem", fontWeight: 700, color: "#0F172A" }}>
-                    Representante Legal (Opcional)
+                  <span style={{ fontSize: "0.82rem", fontWeight: 700, color: "#0369A1", display: "flex", alignItems: "center", gap: "6px" }}>
+                    <UserCheck size={16} />
+                    Representante Legal Principal (Obligatorio para Contratos y Demandas)
                   </span>
                   <label style={{ fontSize: "0.75rem", color: "#0284C7", fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: "4px" }}>
                     <Upload size={12} />
-                    {procesandoAriaNom ? "Analizando..." : "Cargar Nombramiento"}
+                    {procesandoAriaNom ? "Analizando Nombramiento..." : "Cargar Nombramiento PDF"}
                     <input
                       type="file"
                       accept="application/pdf,image/*"
                       onChange={manejarCargaNombramiento}
                       style={{ display: "none" }}
+                      disabled={procesandoAriaNom}
                     />
                   </label>
                 </div>
@@ -797,21 +1056,100 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, alGuardarExitoso }
                   </div>
                 )}
 
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
-                  <input
-                    type="text"
-                    placeholder="Nombres del Representante"
-                    value={repNombres}
-                    onChange={(e) => setRepNombres(e.target.value)}
-                    style={{ padding: "6px 8px", borderRadius: "6px", border: "1px solid #CBD5E1", fontSize: "0.8rem" }}
-                  />
-                  <input
-                    type="text"
-                    placeholder="Cédula Representante"
-                    value={repCedula}
-                    onChange={(e) => setRepCedula(e.target.value)}
-                    style={{ padding: "6px 8px", borderRadius: "6px", border: "1px solid #CBD5E1", fontSize: "0.8rem" }}
-                  />
+                <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr 1fr", gap: "8px" }}>
+                  <div>
+                    <label style={{ display: "block", fontSize: "0.7rem", fontWeight: 600, color: "#475569", marginBottom: "2px" }}>
+                      Nombres del Representante
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Carlos Alberto Pérez Mena"
+                      value={repNombres}
+                      onChange={(e) => {
+                        setRepNombres(e.target.value);
+                        marcarCampoModificado("repNombres");
+                      }}
+                      style={{
+                        width: "100%",
+                        padding: "6px 8px",
+                        borderRadius: "6px",
+                        border: camposAria["repNombres"] && !camposModificados["repNombres"]
+                          ? "1.5px solid #10B981"
+                          : "1px solid #CBD5E1",
+                        background: camposAria["repNombres"] && !camposModificados["repNombres"]
+                          ? "#F0FDF4"
+                          : "#FFFFFF",
+                        fontSize: "0.8rem"
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: "block", fontSize: "0.7rem", fontWeight: 600, color: "#475569", marginBottom: "2px" }}>
+                      Cédula / Pasaporte
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="1719103986"
+                      value={repCedula}
+                      onChange={(e) => {
+                        setRepCedula(e.target.value);
+                        marcarCampoModificado("repCedula");
+                      }}
+                      style={{
+                        width: "100%",
+                        padding: "6px 8px",
+                        borderRadius: "6px",
+                        border: camposAria["repCedula"] && !camposModificados["repCedula"]
+                          ? "1.5px solid #10B981"
+                          : "1px solid #CBD5E1",
+                        background: camposAria["repCedula"] && !camposModificados["repCedula"]
+                          ? "#F0FDF4"
+                          : "#FFFFFF",
+                        fontSize: "0.8rem"
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: "block", fontSize: "0.7rem", fontWeight: 600, color: "#475569", marginBottom: "2px" }}>
+                      Cargo Estatutario
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Gerente General"
+                      value={repCargo}
+                      onChange={(e) => {
+                        setRepCargo(e.target.value);
+                        marcarCampoModificado("repCargo");
+                      }}
+                      style={{ width: "100%", padding: "6px 8px", borderRadius: "6px", border: "1px solid #CBD5E1", fontSize: "0.8rem" }}
+                    />
+                  </div>
+                </div>
+
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", marginTop: "8px" }}>
+                  <div>
+                    <label style={{ display: "block", fontSize: "0.7rem", fontWeight: 600, color: "#475569", marginBottom: "2px" }}>
+                      Vigencia Nombramiento / Registro Mercantil
+                    </label>
+                    <input
+                      type="date"
+                      value={repVencimientoNombramiento}
+                      onChange={(e) => setRepVencimientoNombramiento(e.target.value)}
+                      style={{ width: "100%", padding: "6px 8px", borderRadius: "6px", border: "1px solid #CBD5E1", fontSize: "0.8rem" }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: "block", fontSize: "0.7rem", fontWeight: 600, color: "#475569", marginBottom: "2px" }}>
+                      Correo Directo Representante (Opcional)
+                    </label>
+                    <input
+                      type="email"
+                      placeholder="gerencia@empresa.com"
+                      value={repCorreo}
+                      onChange={(e) => setRepCorreo(e.target.value)}
+                      style={{ width: "100%", padding: "6px 8px", borderRadius: "6px", border: "1px solid #CBD5E1", fontSize: "0.8rem" }}
+                    />
+                  </div>
                 </div>
               </div>
             </div>
@@ -821,19 +1159,19 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, alGuardarExitoso }
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "12px" }}>
             <div>
               <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 600, color: "#334155", marginBottom: "4px" }}>
-                Correo Electrónico
+                {tipoPersoneria === "juridica" ? "Correo Facturación / Notificaciones *" : "Correo Electrónico *"}
               </label>
               <input
                 type="email"
                 value={correo}
                 onChange={(e) => setCorreo(e.target.value)}
-                placeholder="cliente@correo.com"
+                placeholder={tipoPersoneria === "juridica" ? "facturacion@empresa.com" : "cliente@correo.com"}
                 style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid #CBD5E1", fontSize: "0.85rem" }}
               />
             </div>
             <div>
               <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 600, color: "#334155", marginBottom: "4px" }}>
-                Celular / WhatsApp
+                Celular / WhatsApp (Contacto)
               </label>
               <input
                 type="tel"
@@ -865,7 +1203,7 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, alGuardarExitoso }
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
               <input
                 type="text"
-                placeholder="Nombres de la Contraparte (Demandado / Cónyuge)"
+                placeholder="Nombres de la Contraparte (Demandado / Cónyuge / Empresa Opositora)"
                 value={contraparteNombres}
                 onChange={(e) => {
                   setContraparteNombres(e.target.value);
