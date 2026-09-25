@@ -55,7 +55,7 @@ export default async function PaginaSolicitudSocio() {
             <X size={20} />
           </Link>
         </div>
-        <div style={{ background: "rgba(16, 185, 129, 0.08)", border: "1px solid var(--exito)", borderRadius: "16px", padding: "24px" }}>
+        <div style={{ background: "color-mix(in srgb, var(--exito) 8%, transparent)", border: "1px solid var(--exito)", borderRadius: "16px", padding: "24px" }}>
           <span className="chip-estado-solicitud chip-aceptada" style={{ fontSize: "0.88rem", fontWeight: 800 }}>
             {ETIQUETA_ESTADO.aceptada}
           </span>

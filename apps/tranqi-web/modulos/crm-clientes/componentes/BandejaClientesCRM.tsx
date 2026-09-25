@@ -298,10 +298,10 @@ export function BandejaClientesCRM({ negocio: _negocio = "TRANQ", tipoPersoneria
         <div>
           <h1 style={{ margin: 0, fontSize: "1.35rem", fontWeight: 800, color: "var(--texto)", display: "flex", alignItems: "center", gap: "10px" }}>
             <Users size={26} color="var(--acento)" />
-            CRM Jurídico y Recepción de Clientes
+            Clientes
           </h1>
           <p style={{ margin: "4px 0 0", fontSize: "0.85rem", color: "var(--texto-suave)" }}>
-            Administración 360° de personas naturales y jurídicas, validación Tranqi y verificación de conflicto de intereses
+            Personas y empresas que atiende el despacho.
           </p>
         </div>
 
@@ -355,7 +355,7 @@ export function BandejaClientesCRM({ negocio: _negocio = "TRANQ", tipoPersoneria
             title="Importa todos los usuarios registrados en la web y los incorpora como prospectos en el CRM"
           >
             <RefreshCw size={16} className={sincronizando ? "animate-spin" : ""} />
-            {sincronizando ? "Sincronizando..." : "Sincronizar Leads Web"}
+            {sincronizando ? "Sincronizando..." : "Importar registros de la web"}
           </button>
 
           <button
@@ -373,12 +373,12 @@ export function BandejaClientesCRM({ negocio: _negocio = "TRANQ", tipoPersoneria
               display: "flex",
               alignItems: "center",
               gap: "8px",
-              boxShadow: "0 4px 6px -1px rgba(2, 132, 199, 0.25)",
+              boxShadow: "0 4px 6px -1px color-mix(in srgb, var(--acento) 25%, transparent)",
               transition: "all 0.15s ease",
             }}
           >
             <UserPlus size={18} />
-            + Registrar Cliente
+            Nuevo cliente
           </button>
         </div>
       </div>
@@ -483,7 +483,7 @@ export function BandejaClientesCRM({ negocio: _negocio = "TRANQ", tipoPersoneria
             }}
           >
             <User size={14} />
-            Personas Naturales
+            Personas naturales
           </button>
           <button
             type="button"
@@ -503,7 +503,7 @@ export function BandejaClientesCRM({ negocio: _negocio = "TRANQ", tipoPersoneria
             }}
           >
             <Building2 size={14} />
-            Empresas (Jurídicas)
+            Empresas
           </button>
         </div>
 
@@ -513,7 +513,7 @@ export function BandejaClientesCRM({ negocio: _negocio = "TRANQ", tipoPersoneria
             <Search size={16} color="var(--texto-tenue)" style={{ position: "absolute", left: "10px", top: "10px" }} />
             <input
               type="text"
-              placeholder="Buscar por Cédula, RUC o Nombre..."
+              placeholder="Buscar por cédula, RUC o nombre"
               value={busqueda}
               onChange={(e) => setBusqueda(e.target.value)}
               style={{
@@ -555,7 +555,7 @@ export function BandejaClientesCRM({ negocio: _negocio = "TRANQ", tipoPersoneria
       >
         {cargando ? (
           <div style={{ padding: "40px", textAlign: "center", color: "var(--texto-suave)" }}>
-            Cargando cartera de clientes...
+            Cargando clientes…
           </div>
         ) : clientes.length === 0 ? (
           <div style={{ padding: "50px 20px", textAlign: "center" }}>
@@ -564,7 +564,7 @@ export function BandejaClientesCRM({ negocio: _negocio = "TRANQ", tipoPersoneria
               No se encontraron clientes registrados
             </h3>
             <p style={{ margin: "0 0 16px", fontSize: "0.85rem", color: "var(--texto-suave)" }}>
-              Utiliza el botón "+ Registrar Cliente" para dar de alta al primer cliente desde el mostrador.
+              Usa «Nuevo cliente» para dar de alta el primero.
             </p>
             <div style={{ display: "flex", gap: "10px", justifyContent: "center", flexWrap: "wrap" }}>
               <button
@@ -586,7 +586,7 @@ export function BandejaClientesCRM({ negocio: _negocio = "TRANQ", tipoPersoneria
                 }}
               >
                 <RefreshCw size={14} className={sincronizando ? "animate-spin" : ""} />
-                {sincronizando ? "Sincronizando..." : "Sincronizar Leads Web"}
+                {sincronizando ? "Sincronizando..." : "Importar registros de la web"}
               </button>
               <button
                 type="button"
@@ -764,10 +764,10 @@ export function BandejaClientesCRM({ negocio: _negocio = "TRANQ", tipoPersoneria
                               alignItems: "center",
                               gap: "4px",
                             }}
-                            title="Ver Ficha 360°, Expedientes, Billetera y Citas"
+                            title="Ficha con expedientes, billetera y citas"
                           >
                             <Eye size={13} />
-                            Ficha 360°
+                            Ver ficha
                           </button>
 
                           <button

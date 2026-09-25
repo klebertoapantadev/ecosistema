@@ -117,7 +117,7 @@ export function AccionesSolicitud({ solicitudId, estadoActual }: { solicitudId: 
             fontSize: "0.9rem",
             fontWeight: 800,
             cursor: enviando ? "wait" : "pointer",
-            boxShadow: "0 2px 6px rgba(220, 38, 38, 0.25)",
+            boxShadow: "0 2px 6px color-mix(in srgb, var(--error) 25%, transparent)",
             transition: "all 0.2s ease",
           }}
         >

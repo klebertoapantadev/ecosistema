@@ -330,7 +330,7 @@ export function GestionContratoPostulante({ solicitud }: Props) {
             alignItems: "center",
             justifyContent: "center",
             gap: "8px",
-            boxShadow: seccionActiva === "OBSERVACIONES" ? "0 4px 12px rgba(217, 119, 6, 0.15)" : "none",
+            boxShadow: seccionActiva === "OBSERVACIONES" ? "0 4px 12px color-mix(in srgb, var(--aviso) 15%, transparent)" : "none",
           }}
         >
           <MessageSquare size={20} color={seccionActiva === "OBSERVACIONES" ? "var(--aviso)" : "var(--texto-tenue)"} />
@@ -513,7 +513,7 @@ export function GestionContratoPostulante({ solicitud }: Props) {
                 display: "flex",
                 alignItems: "center",
                 gap: "8px",
-                boxShadow: "0 4px 12px rgba(217, 119, 6, 0.2)",
+                boxShadow: "0 4px 12px color-mix(in srgb, var(--aviso) 20%, transparent)",
               }}
             >
               {enviandoObs ? (

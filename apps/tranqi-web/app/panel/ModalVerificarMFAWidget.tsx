@@ -151,7 +151,7 @@ export function ModalVerificarMFAWidget({
               style={{
                 padding: "10px 12px",
                 borderRadius: "6px",
-                background: "rgba(176, 0, 32, 0.1)",
+                background: "color-mix(in srgb, var(--error) 10%, transparent)",
                 color: "#B00020",
                 fontSize: "0.82rem",
                 fontWeight: 700,

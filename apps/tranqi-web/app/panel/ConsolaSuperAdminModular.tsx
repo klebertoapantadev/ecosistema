@@ -987,7 +987,7 @@ export function ConsolaSuperAdminModular() {
               alignItems: "center",
               gap: "6px",
               cursor: "pointer",
-              boxShadow: "0 2px 4px rgba(220,38,38,0.1)"
+              boxShadow: "0 2px 4px color-mix(in srgb, var(--error) 10%, transparent)"
             }}
             title="Resetear usuarios de prueba y datos de Tranqi"
             aria-label="Resetear usuarios de prueba y datos de Tranqi"

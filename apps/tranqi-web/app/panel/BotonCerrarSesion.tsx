@@ -64,7 +64,7 @@ export function BotonCerrarSesion({ variante = "nav", className = "" }: BotonCer
             padding: "6px 12px",
             borderRadius: "8px",
             border: "1px solid rgba(255, 255, 255, 0.25)",
-            background: "rgba(220, 38, 38, 0.18)",
+            background: "color-mix(in srgb, var(--error) 18%, transparent)",
             color: "#ffffff",
             fontSize: "0.76rem",
             fontWeight: 800,
@@ -100,7 +100,7 @@ export function BotonCerrarSesion({ variante = "nav", className = "" }: BotonCer
           <div role="dialog" aria-modal="true" aria-labelledby="titulo-cerrar-sesion" style={{ background: "#ffffff", borderRadius: "18px", padding: "24px", maxWidth: "420px", width: "100%", boxShadow: "0 20px 50px rgba(0,0,0,0.4)" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "14px" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                <div style={{ background: "rgba(220, 38, 38, 0.12)", color: "var(--error)", borderRadius: "50%", width: "42px", height: "42px", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <div style={{ background: "color-mix(in srgb, var(--error) 12%, transparent)", color: "var(--error)", borderRadius: "50%", width: "42px", height: "42px", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                   <LogOut size={22} />
                 </div>
                 <div>
@@ -133,7 +133,7 @@ export function BotonCerrarSesion({ variante = "nav", className = "" }: BotonCer
                 type="button"
                 onClick={ejecutarSalida}
                 disabled={cargando}
-                style={{ padding: "9px 18px", borderRadius: "8px", border: "none", background: "var(--error)", color: "#ffffff", fontWeight: 800, fontSize: "0.82rem", cursor: cargando ? "wait" : "pointer", display: "flex", alignItems: "center", gap: "6px", boxShadow: "0 2px 8px rgba(220, 38, 38, 0.3)" }}
+                style={{ padding: "9px 18px", borderRadius: "8px", border: "none", background: "var(--error)", color: "#ffffff", fontWeight: 800, fontSize: "0.82rem", cursor: cargando ? "wait" : "pointer", display: "flex", alignItems: "center", gap: "6px", boxShadow: "0 2px 8px color-mix(in srgb, var(--error) 30%, transparent)" }}
               >
                 {cargando ? <Loader2 className="animate-spin" size={14} /> : <LogOut size={14} />}
                 <span>{cargando ? "Saliendo..." : "Sí, Cerrar Sesión"}</span>

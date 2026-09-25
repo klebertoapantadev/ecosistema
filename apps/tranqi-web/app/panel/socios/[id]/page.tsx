@@ -247,7 +247,7 @@ export default async function PaginaDetalleSocio({ params }: { params: Promise<{
             background: "var(--aviso-diluido)",
             padding: "18px 20px",
             marginBottom: "20px",
-            boxShadow: "0 4px 12px rgba(245, 158, 11, 0.12)",
+            boxShadow: "0 4px 12px color-mix(in srgb, var(--aviso) 12%, transparent)",
           }}>
             <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "8px" }}>
               <PenLine size={20} aria-hidden="true" />

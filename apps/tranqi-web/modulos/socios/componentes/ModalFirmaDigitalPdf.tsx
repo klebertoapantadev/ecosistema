@@ -1065,7 +1065,7 @@ export function ModalFirmaDigitalPdf({
                     alignItems: "center",
                     justifyContent: "center",
                     gap: "8px",
-                    boxShadow: "0 4px 12px rgba(4, 120, 87, 0.25)",
+                    boxShadow: "0 4px 12px color-mix(in srgb, var(--exito) 25%, transparent)",
                   }}
                 >
                   {firmando ? (
@@ -1203,7 +1203,7 @@ export function ModalFirmaDigitalPdf({
                     alignItems: "center",
                     justifyContent: "center",
                     gap: "8px",
-                    boxShadow: "0 4px 14px rgba(4, 120, 87, 0.35)",
+                    boxShadow: "0 4px 14px color-mix(in srgb, var(--exito) 35%, transparent)",
                   }}
                 >
                   {enviandoConfirmacion ? (

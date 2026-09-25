@@ -439,7 +439,7 @@ export function PanelCuentaModular({ perfil, historial, puedeConmutar = true, ro
                   width: "44px",
                   height: "44px",
                   borderRadius: "12px",
-                  background: widgetActualDef.esPeligro ? "rgba(176, 0, 32, 0.1)" : "var(--panel-linea-suave, var(--fondo-suave))",
+                  background: widgetActualDef.esPeligro ? "color-mix(in srgb, var(--error) 10%, transparent)" : "var(--panel-linea-suave, var(--fondo-suave))",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
@@ -564,8 +564,8 @@ export function PanelCuentaModular({ perfil, historial, puedeConmutar = true, ro
                     onClick={() => cerrarSesionYRedirigir()}
                     className="btn-mini"
                     style={{
-                      background: "rgba(176, 0, 32, 0.08)",
-                      border: "1px solid rgba(176, 0, 32, 0.3)",
+                      background: "color-mix(in srgb, var(--error) 8%, transparent)",
+                      border: "1px solid color-mix(in srgb, var(--error) 30%, transparent)",
                       color: "#B00020",
                       padding: "10px 20px",
                       fontWeight: 700
@@ -636,8 +636,8 @@ export function PanelCuentaModular({ perfil, historial, puedeConmutar = true, ro
                 onClick={() => handleIntentarAbrirWidget(w.id, w)}
                 className="tarjeta-acceso"
                 style={{
-                  border: w.esPeligro ? "1px solid rgba(176, 0, 32, 0.3)" : "1px solid var(--panel-linea, var(--linea))",
-                  background: w.esPeligro ? "rgba(176, 0, 32, 0.02)" : undefined,
+                  border: w.esPeligro ? "1px solid color-mix(in srgb, var(--error) 30%, transparent)" : "1px solid var(--panel-linea, var(--linea))",
+                  background: w.esPeligro ? "color-mix(in srgb, var(--error) 2%, transparent)" : undefined,
                   cursor: "pointer",
                   position: "relative",
                   textDecoration: "none",

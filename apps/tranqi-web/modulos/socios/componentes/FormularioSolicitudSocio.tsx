@@ -1070,7 +1070,7 @@ function CampoSubidaArchivo({
                   type="button"
                   onClick={() => eliminarArchivo(idx)}
                   style={{
-                    background: "rgba(220, 38, 38, 0.08)",
+                    background: "color-mix(in srgb, var(--error) 8%, transparent)",
                     color: "var(--error)",
                     border: "none",
                     borderRadius: "6px",
@@ -1968,7 +1968,7 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
           </div>
 
           <div style={{ background: "#ffffff", border: "1px solid var(--linea)", borderRadius: "14px", padding: "18px", boxShadow: "0 2px 8px rgba(0,0,0,0.03)" }}>
-            <div style={{ width: "38px", height: "38px", borderRadius: "10px", background: "rgba(217, 119, 6, 0.08)", color: "var(--aviso)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "10px" }}>
+            <div style={{ width: "38px", height: "38px", borderRadius: "10px", background: "color-mix(in srgb, var(--aviso) 8%, transparent)", color: "var(--aviso)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "10px" }}>
               <Award size={20} />
             </div>
             <strong style={{ display: "block", fontSize: "0.92rem", color: "#111111", marginBottom: "4px" }}>Honorarios Claros</strong>
@@ -2133,9 +2133,9 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
           <span
             style={{
               display: "inline-block",
-              background: "rgba(217, 119, 6, 0.12)",
+              background: "color-mix(in srgb, var(--aviso) 12%, transparent)",
               color: "var(--aviso)",
-              border: "1px solid rgba(217, 119, 6, 0.3)",
+              border: "1px solid color-mix(in srgb, var(--aviso) 30%, transparent)",
               borderRadius: "999px",
               padding: "4px 14px",
               fontSize: "0.8rem",
@@ -2402,7 +2402,7 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
           <button
             type="button"
             onClick={() => setModalConfirmarAccion("eliminar")}
-            style={{ background: "rgba(220,38,38,0.06)", border: "1px solid rgba(220,38,38,0.2)", borderRadius: "8px", padding: "4px 8px", color: "var(--error)", fontSize: "0.76rem", fontWeight: 700, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "4px" }}
+            style={{ background: "color-mix(in srgb, var(--error) 6%, transparent)", border: "1px solid color-mix(in srgb, var(--error) 20%, transparent)", borderRadius: "8px", padding: "4px 8px", color: "var(--error)", fontSize: "0.76rem", fontWeight: 700, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "4px" }}
           >
             <Trash2 size={12} /> Eliminar Solicitud
           </button>
@@ -2763,7 +2763,7 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
           if (!cedula) return null;
           if (!val.esValida && val.advertencia) {
             return (
-              <div style={{ marginTop: "10px", padding: "6px 12px", background: "rgba(245, 158, 11, 0.08)", border: "1px solid var(--aviso)", borderRadius: "8px", fontSize: "0.76rem", color: "var(--aviso-texto)", display: "flex", alignItems: "center", gap: "6px" }}>
+              <div style={{ marginTop: "10px", padding: "6px 12px", background: "color-mix(in srgb, var(--aviso) 8%, transparent)", border: "1px solid var(--aviso)", borderRadius: "8px", fontSize: "0.76rem", color: "var(--aviso-texto)", display: "flex", alignItems: "center", gap: "6px" }}>
                 <AlertTriangle size={14} /> {val.advertencia}
               </div>
             );

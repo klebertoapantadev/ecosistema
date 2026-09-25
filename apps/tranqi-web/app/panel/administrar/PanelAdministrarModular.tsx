@@ -356,7 +356,7 @@ export function SociosWidget() {
             padding: "4px 8px",
             fontSize: "0.76rem",
             fontWeight: 800,
-            boxShadow: "0 1px 3px rgba(245, 158, 11, 0.2)",
+            boxShadow: "0 1px 3px color-mix(in srgb, var(--aviso) 20%, transparent)",
           }}>
             Propuesta Word ({s.propuestasPendientesCount})
           </span>
@@ -372,7 +372,7 @@ export function SociosWidget() {
             padding: "4px 8px",
             fontSize: "0.76rem",
             fontWeight: 800,
-            boxShadow: "0 1px 3px rgba(16, 185, 129, 0.2)",
+            boxShadow: "0 1px 3px color-mix(in srgb, var(--exito) 20%, transparent)",
           }}>
             Contrato Firmado (Por Confirmar)
           </span>
@@ -1031,7 +1031,7 @@ export function PanelAdministrarModular({ negocio = "TRANQ", esSuperAdmin = fals
                   alignItems: "center",
                   gap: "6px",
                   cursor: "pointer",
-                  boxShadow: "0 2px 4px rgba(220,38,38,0.1)"
+                  boxShadow: "0 2px 4px color-mix(in srgb, var(--error) 10%, transparent)"
                 }}
                 className="btn-responsive-accion"
                 title="Resetear usuarios de prueba y datos de Tranqi"
@@ -1041,7 +1041,7 @@ export function PanelAdministrarModular({ negocio = "TRANQ", esSuperAdmin = fals
                 <span className="btn-texto-responsive">{reseteando ? "Reseteando..." : "Reset Pruebas"}</span>
               </button>
             )}
-            <span className="badge-rol btn-responsive-accion" style={{ background: "rgba(220, 38, 38, 0.25)", color: "var(--error-diluido)", border: "1px solid rgba(239, 68, 68, 0.4)" }}>
+            <span className="badge-rol btn-responsive-accion" style={{ background: "color-mix(in srgb, var(--error) 25%, transparent)", color: "var(--error-diluido)", border: "1px solid color-mix(in srgb, var(--error) 40%, transparent)" }}>
               <Lock style={{ width: 14, height: 14, marginRight: 4 }} />
               <span className="btn-texto-responsive">MFA Protegido</span>
             </span>
@@ -1175,7 +1175,7 @@ export function PanelAdministrarModular({ negocio = "TRANQ", esSuperAdmin = fals
                           display: "inline-flex",
                           alignItems: "center",
                           gap: "4px",
-                          boxShadow: conteoPropuestasUrgentes > 0 ? "0 2px 6px rgba(220, 38, 38, 0.4)" : "0 2px 6px rgba(217, 119, 6, 0.3)",
+                          boxShadow: conteoPropuestasUrgentes > 0 ? "0 2px 6px color-mix(in srgb, var(--error) 40%, transparent)" : "0 2px 6px color-mix(in srgb, var(--aviso) 30%, transparent)",
                         }}
                       >
                         {conteoPropuestasUrgentes > 0 ? `${conteoPropuestasUrgentes} PROPUESTA${conteoPropuestasUrgentes > 1 ? "S" : ""} WORD` : `${conteoPendientesSocios} PENDIENTE${conteoPendientesSocios > 1 ? "S" : ""}`}
