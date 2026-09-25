@@ -15,6 +15,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@eco/datagrid": "workspace:*",
     "@eco/supabase": "workspace:*",
     "lucide-react": "1.27.0"
   },

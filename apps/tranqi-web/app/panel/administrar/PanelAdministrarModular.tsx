@@ -3,14 +3,13 @@
 import React, { useState, useEffect } from "react";
 import { UserCog, Users, ClipboardList, Bell, Shield, ChevronRight, Star, Lock, Eye, Pencil, FileText, Sliders, RotateCcw, BarChart2, type LucideIcon } from "lucide-react";
 import Link from "next/link";
-import { crearClienteNavegador } from "@eco/supabase";
 import { ConsultaUsuariosPerfilesWidget } from "@eco/gestion-usuarios/componentes/ConsultaUsuariosPerfilesWidget";
 import { AdministracionPerfilesWidget } from "@eco/gestion-usuarios/componentes/AdministracionPerfilesWidget";
 import { EmisionNotificacionesWidget, BitacoraNotificacionesWidget, MonitoreoNotificacionesUsuariosWidget, ModalNotificacionPush } from "@eco/notificaciones";
 import { GestionTerminosConsentimientosWidget } from "@eco/identidad/componentes/GestionTerminosConsentimientosWidget";
-import { TablaAuditoria } from "../auditoria/TablaAuditoria";
+import { VisorAuditoriaWidget } from "../auditoria/VisorAuditoriaWidget";
 import { ConfiguracionContratoAbogadoWidget } from "../../../modulos/socios/componentes/ConfiguracionContratoAbogadoWidget";
-import type { RegistroAuditoria } from "@eco/auditoria";
+import { DataGrid, type ColumnaDataGrid } from "@eco/datagrid";
 import { useCustomWidgets } from "../gestorTitulosWidgets";
 import { ModalEditarWidget } from "../ModalEditarWidget";
 import { ModalVerificarMFAWidget } from "../ModalVerificarMFAWidget";
@@ -137,7 +136,7 @@ const MODULOS_ADMIN: ModuloAdminDef[] = [
   }
 ];
 
-// Componente Widget Nativo para Aprobación de Socios Abogados (Sin iframe)
+// Componente Widget Nativo para Aprobación de Socios Abogados con DataGrid
 function SociosWidget() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [solicitudes, setSolicitudes] = useState<any[]>([]);
@@ -171,6 +170,150 @@ function SociosWidget() {
     cancelada: "Cancelada",
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const columnasSocios: ColumnaDataGrid<any>[] = [
+    {
+      id: "nombre",
+      encabezado: "Nombre Completo",
+      valor: (s) => [s.usuario?.usu_nombres, s.usuario?.usu_apellidos].filter(Boolean).join(" ") || "—",
+      render: (s) => {
+        const esUrgentePropuesta = s.nivelUrgencia === "urgente_propuesta";
+        return (
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <strong>{[s.usuario?.usu_nombres, s.usuario?.usu_apellidos].filter(Boolean).join(" ") || "—"}</strong>
+            {esUrgentePropuesta && (
+              <span title="Propuesta de modificación al contrato pendiente de revisión" style={{ fontSize: "0.7rem", background: "#DC2626", color: "#FFF", borderRadius: "999px", padding: "1px 7px", fontWeight: 800 }}>
+                URGENTE
+              </span>
+            )}
+          </div>
+        );
+      }
+    },
+    {
+      id: "correo",
+      encabezado: "Correo Electrónico",
+      valor: (s) => s.usuario?.usu_correo || "—",
+      render: (s) => <span style={{ color: "#334155" }}>{s.usuario?.usu_correo || "—"}</span>
+    },
+    {
+      id: "fecha",
+      encabezado: "Fecha Envío",
+      valor: (s) => new Date(s.ssc_enviada_en || s.ssc_creado_en).getTime(),
+      render: (s) => <span>{new Date(s.ssc_enviada_en || s.ssc_creado_en).toLocaleDateString("es-EC")}</span>
+    },
+    {
+      id: "estado",
+      encabezado: "Estado Acreditación",
+      valor: (s) => ETIQUETA_ESTADO[s.ssc_estado] || s.ssc_estado,
+      render: (s) => (
+        <span className={`chip-estado-solicitud chip-${s.ssc_estado}`}>
+          {ETIQUETA_ESTADO[s.ssc_estado] || s.ssc_estado}
+        </span>
+      )
+    },
+    {
+      id: "atencion",
+      encabezado: "Atención / Requerimiento",
+      valor: (s) => s.etiquetaUrgencia || s.nivelUrgencia || "Normal",
+      render: (s) => {
+        const esUrgentePropuesta = s.nivelUrgencia === "urgente_propuesta";
+        const esUrgenteContrato = s.nivelUrgencia === "urgente_contrato";
+        return esUrgentePropuesta ? (
+          <span style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "5px",
+            background: "#FEF3C7",
+            color: "#92400E",
+            border: "1.5px solid #F59E0B",
+            borderRadius: "8px",
+            padding: "4px 8px",
+            fontSize: "0.76rem",
+            fontWeight: 800,
+            boxShadow: "0 1px 3px rgba(245, 158, 11, 0.2)",
+          }}>
+            Propuesta Word ({s.propuestasPendientesCount})
+          </span>
+        ) : esUrgenteContrato ? (
+          <span style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "5px",
+            background: "#ECFDF5",
+            color: "#065F46",
+            border: "1.5px solid #10B981",
+            borderRadius: "8px",
+            padding: "4px 8px",
+            fontSize: "0.76rem",
+            fontWeight: 800,
+            boxShadow: "0 1px 3px rgba(16, 185, 129, 0.2)",
+          }}>
+            Contrato Firmado (Por Confirmar)
+          </span>
+        ) : s.nivelUrgencia === "pendiente_revision" ? (
+          <span style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "5px",
+            background: "#EFF6FF",
+            color: "#1E40AF",
+            border: "1px solid #93C5FD",
+            borderRadius: "8px",
+            padding: "4px 8px",
+            fontSize: "0.76rem",
+            fontWeight: 700,
+          }}>
+            Postulación Inicial
+          </span>
+        ) : s.nivelUrgencia === "esperando_abogado" ? (
+          <span style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "5px",
+            background: "#F3F4F6",
+            color: "#4B5563",
+            border: "1px solid #D1D5DB",
+            borderRadius: "8px",
+            padding: "4px 8px",
+            fontSize: "0.76rem",
+            fontWeight: 600,
+          }}>
+            Esperando Firma Abogado
+          </span>
+        ) : (
+          <span style={{ fontSize: "0.78rem", color: "#9CA3AF" }}>—</span>
+        );
+      }
+    },
+    {
+      id: "acciones",
+      encabezado: "Acción",
+      ordenable: false,
+      valor: () => "",
+      render: (s) => {
+        const esUrgentePropuesta = s.nivelUrgencia === "urgente_propuesta";
+        return (
+          <Link
+            href={`/panel/socios/${s.ssc_id}`}
+            className="btn-mini"
+            style={{
+              textDecoration: "none",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "4px",
+              background: esUrgentePropuesta ? "#5000BA" : undefined,
+              color: esUrgentePropuesta ? "#FFFFFF" : undefined,
+              fontWeight: esUrgentePropuesta ? 800 : undefined,
+            }}
+          >
+            <Eye size={14} /> {esUrgentePropuesta ? "Revisar Propuesta" : "Evaluar"}
+          </Link>
+        );
+      }
+    }
+  ];
+
   if (cargando) {
     return (
       <div style={{ padding: "40px", textAlign: "center", color: "var(--panel-gris, #737373)" }}>
@@ -179,144 +322,29 @@ function SociosWidget() {
     );
   }
 
-  if (solicitudes.length === 0) {
-    return (
-      <div className="estado-vacio" style={{ padding: "40px 20px", textAlign: "center" }}>
-        <Users style={{ width: 40, height: 40, color: "#9CA3AF", margin: "0 auto 12px", display: "block" }} />
-        <p style={{ margin: 0, fontWeight: 600, color: "#6B7280" }}>Todavía no hay solicitudes de socios abogados.</p>
-      </div>
-    );
-  }
-
   return (
     <div style={{ width: "100%" }}>
-      <div className="tabla-panel-envoltura">
-        <table className="tabla-panel">
-          <thead>
-            <tr>
-              <th>Nombre Completo</th>
-              <th>Correo Electrónico</th>
-              <th>Fecha Envío</th>
-              <th>Estado Acreditación</th>
-              <th>Atención / Requerimiento</th>
-              <th>Acción</th>
-            </tr>
-          </thead>
-          <tbody>
-            {solicitudes.map((s) => {
-              const esUrgentePropuesta = s.nivelUrgencia === "urgente_propuesta";
-              const esUrgenteContrato = s.nivelUrgencia === "urgente_contrato";
-              const fondoFila = esUrgentePropuesta ? "rgba(254, 243, 199, 0.35)" : esUrgenteContrato ? "rgba(236, 253, 245, 0.35)" : undefined;
-
-              return (
-                <tr key={s.ssc_id} style={{ background: fondoFila }}>
-                  <td>
-                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                      <strong>{[s.usuario?.usu_nombres, s.usuario?.usu_apellidos].filter(Boolean).join(" ") || "—"}</strong>
-                      {esUrgentePropuesta && (
-                        <span title="Propuesta de modificación al contrato pendiente de revisión" style={{ fontSize: "0.7rem", background: "#DC2626", color: "#FFF", borderRadius: "999px", padding: "1px 7px", fontWeight: 800 }}>
-                          URGENTE
-                        </span>
-                      )}
-                    </div>
-                  </td>
-                  <td>{s.usuario?.usu_correo || "—"}</td>
-                  <td>{new Date(s.ssc_enviada_en || s.ssc_creado_en).toLocaleDateString("es-EC")}</td>
-                  <td>
-                    <span className={`chip-estado-solicitud chip-${s.ssc_estado}`}>
-                      {ETIQUETA_ESTADO[s.ssc_estado] || s.ssc_estado}
-                    </span>
-                  </td>
-                  <td>
-                    {esUrgentePropuesta ? (
-                      <span style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: "5px",
-                        background: "#FEF3C7",
-                        color: "#92400E",
-                        border: "1.5px solid #F59E0B",
-                        borderRadius: "8px",
-                        padding: "4px 8px",
-                        fontSize: "0.76rem",
-                        fontWeight: 800,
-                        boxShadow: "0 1px 3px rgba(245, 158, 11, 0.2)",
-                      }}>
-                        Propuesta Word ({s.propuestasPendientesCount})
-                      </span>
-                    ) : esUrgenteContrato ? (
-                      <span style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: "5px",
-                        background: "#ECFDF5",
-                        color: "#065F46",
-                        border: "1.5px solid #10B981",
-                        borderRadius: "8px",
-                        padding: "4px 8px",
-                        fontSize: "0.76rem",
-                        fontWeight: 800,
-                        boxShadow: "0 1px 3px rgba(16, 185, 129, 0.2)",
-                      }}>
-                        Contrato Firmado (Por Confirmar)
-                      </span>
-                    ) : s.nivelUrgencia === "pendiente_revision" ? (
-                      <span style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: "5px",
-                        background: "#EFF6FF",
-                        color: "#1E40AF",
-                        border: "1px solid #93C5FD",
-                        borderRadius: "8px",
-                        padding: "4px 8px",
-                        fontSize: "0.76rem",
-                        fontWeight: 700,
-                      }}>
-                        Postulación Inicial
-                      </span>
-                    ) : s.nivelUrgencia === "esperando_abogado" ? (
-                      <span style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: "5px",
-                        background: "#F3F4F6",
-                        color: "#4B5563",
-                        border: "1px solid #D1D5DB",
-                        borderRadius: "8px",
-                        padding: "4px 8px",
-                        fontSize: "0.76rem",
-                        fontWeight: 600,
-                      }}>
-                        Esperando Firma Abogado
-                      </span>
-                    ) : (
-                      <span style={{ fontSize: "0.78rem", color: "#9CA3AF" }}>—</span>
-                    )}
-                  </td>
-                  <td>
-                    <Link
-                      href={`/panel/socios/${s.ssc_id}`}
-                      className="btn-mini"
-                      style={{
-                        textDecoration: "none",
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: "4px",
-                        background: esUrgentePropuesta ? "#5000BA" : undefined,
-                        color: esUrgentePropuesta ? "#FFFFFF" : undefined,
-                        fontWeight: esUrgentePropuesta ? 800 : undefined,
-                      }}
-                    >
-                      <Eye size={14} /> {esUrgentePropuesta ? "Revisar Propuesta" : "Evaluar"}
-                    </Link>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+      <DataGrid
+        columnas={columnasSocios}
+        filas={solicitudes}
+        idFila={(s) => s.ssc_id}
+        nombreExportacion="solicitudes-socios-abogados"
+        contenidoExpandible={(s) => (
+          <div style={{ padding: "12px 16px", background: "#f8fafc", borderRadius: "8px", border: "1px solid #e2e8f0", fontSize: "0.82rem" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "10px" }}>
+              <div><strong>Cédula:</strong> {s.ssc_cedula || "—"}</div>
+              <div><strong>Matrícula:</strong> {s.ssc_matricula_profesional || "—"}</div>
+              <div><strong>Universidad:</strong> {s.ssc_universidad || "—"}</div>
+              <div><strong>Años de Experiencia:</strong> {s.ssc_anos_experiencia || "—"}</div>
+            </div>
+            {s.ssc_resumen_profesional && (
+              <p style={{ marginTop: "8px", color: "#475569" }}>
+                <strong>Resumen:</strong> {s.ssc_resumen_profesional}
+              </p>
+            )}
+          </div>
+        )}
+      />
     </div>
   );
 }
@@ -335,58 +363,6 @@ function SolicitudSocioWidget() {
       </Link>
     </div>
   );
-}
-
-// Componente Widget Nativo para Auditoría BDD (Sin iframe)
-function VisorAuditoriaWidget() {
-  const [registros, setRegistros] = useState<RegistroAuditoria[]>([]);
-  const [cargando, setCargando] = useState(true);
-
-  useEffect(() => {
-    async function cargar() {
-      try {
-        const supabase = crearClienteNavegador();
-        const { data } = await supabase
-          .schema("comun_auditoria")
-          .from("aud_registro")
-          .select("*")
-          .order("aud_creado_en", { ascending: false })
-          .limit(100);
-
-        if (data) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const adaptados: RegistroAuditoria[] = data.map((r: any) => ({
-            reg_id: r.aud_id,
-            reg_esquema: r.aud_esquema || "tranqui_legal",
-            reg_tabla: r.aud_tabla || r.aud_tabla_nombre || "trq_solicitud_socio",
-            reg_operacion: r.aud_operacion || "UPDATE",
-            reg_datos_anteriores: r.aud_datos_anteriores || null,
-            reg_datos_nuevos: r.aud_datos_nuevos || null,
-            reg_creado_en: r.aud_creado_en,
-            actor_nombres: r.aud_actor_nombres || null,
-            actor_apellidos: r.aud_actor_apellidos || null,
-            actor_correo: r.aud_actor_correo || null,
-          }));
-          setRegistros(adaptados);
-        }
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setCargando(false);
-      }
-    }
-    cargar();
-  }, []);
-
-  if (cargando) {
-    return (
-      <div style={{ padding: "40px", textAlign: "center", color: "var(--panel-gris, #737373)" }}>
-        Cargando registros de auditoría inmutable...
-      </div>
-    );
-  }
-
-  return <TablaAuditoria registros={registros} />;
 }
 
 function obtenerModulosInicialesAdmin(): ModuloAdminDef[] {

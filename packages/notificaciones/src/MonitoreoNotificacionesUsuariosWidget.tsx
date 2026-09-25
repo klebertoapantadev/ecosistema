@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
-  Bell, Search, Filter, RefreshCw, Eye, CheckCircle2, Clock, Trash2,
+  Bell, Filter, RefreshCw, Eye, CheckCircle2, Clock, Trash2,
   User, Check, RotateCcw, X, ShieldAlert, Send
 } from "lucide-react";
+import { DataGrid, type ColumnaDataGrid } from "@eco/datagrid";
 
 export interface NotificacionUsuarioAdminItem {
   not_id: string;
@@ -47,7 +48,6 @@ export function MonitoreoNotificacionesUsuariosWidget({ negocio = "TRANQ" }: Pro
   const [notificaciones, setNotificaciones] = useState<NotificacionUsuarioAdminItem[]>([]);
   const [usuariosDisponibles, setUsuariosDisponibles] = useState<UsuarioOpcion[]>([]);
   const [cargando, setCargando] = useState(true);
-  const [busqueda, setBusqueda] = useState("");
   const [filtroUsuario, setFiltroUsuario] = useState("TODOS");
   const [filtroEstado, setFiltroEstado] = useState<"TODOS" | "PENDIENTE" | "LEIDA" | "POSPUESTA" | "ELIMINADA">("TODOS");
   const [filtroCanal, setFiltroCanal] = useState("TODOS");
@@ -129,39 +129,224 @@ export function MonitoreoNotificacionesUsuariosWidget({ negocio = "TRANQ" }: Pro
     }
   };
 
-  // Filtrado reactivo en memoria
-  const notificacionesFiltradas = notificaciones.filter(n => {
-    // 1. Búsqueda de texto
-    const q = busqueda.toLowerCase().trim();
-    if (q) {
-      const coincide =
-        n.not_titulo.toLowerCase().includes(q) ||
-        n.usuario_nombre.toLowerCase().includes(q) ||
-        n.usuario_correo.toLowerCase().includes(q) ||
-        (n.emisor_nombre && n.emisor_nombre.toLowerCase().includes(q)) ||
-        (n.emisor_correo && n.emisor_correo.toLowerCase().includes(q)) ||
-        n.not_contenido_html.toLowerCase().includes(q);
-      if (!coincide) return false;
+  // Filtrado reactivo en memoria para estado y canal
+  const notificacionesFiltradas = useMemo(() => {
+    return notificaciones.filter(n => {
+      // 1. Filtro Canal
+      if (filtroCanal !== "TODOS" && n.not_canal !== filtroCanal) {
+        return false;
+      }
+
+      // 2. Filtro Estado
+      const esEliminada = Boolean(n.not_eliminada);
+      const pospuestoHasta = n.not_pospuesta_hasta ? new Date(n.not_pospuesta_hasta).getTime() : 0;
+      const esPospuestaActiva = pospuestoHasta > ahora;
+      const esLeida = Boolean(n.not_leido_en);
+
+      if (filtroEstado === "ELIMINADA") return esEliminada;
+      if (filtroEstado === "POSPUESTA") return esPospuestaActiva && !esEliminada;
+      if (filtroEstado === "LEIDA") return esLeida && !esEliminada;
+      if (filtroEstado === "PENDIENTE") return !esLeida && !esEliminada && !esPospuestaActiva;
+
+      return true;
+    });
+  }, [notificaciones, filtroCanal, filtroEstado, ahora]);
+
+  // Columnas estándar de DataGrid
+  const columnasGrid = useMemo<ColumnaDataGrid<NotificacionUsuarioAdminItem>[]>(() => [
+    {
+      id: "emisor",
+      encabezado: "Remitente (Quién Envía)",
+      valor: (item) => `${item.emisor_tipo || "SISTEMA"} ${item.emisor_nombre || "Sistema"} ${item.emisor_correo || ""}`.trim(),
+      render: (item) => (
+        <div>
+          <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "3px" }}>
+            <span
+              style={{
+                padding: "1px 6px",
+                borderRadius: "4px",
+                fontSize: "0.66rem",
+                fontWeight: 800,
+                textTransform: "uppercase",
+                background: item.emisor_tipo === "POSTULANTE" ? "#f3e8ff" : item.emisor_tipo === "ADMINISTRADOR" ? "#e0f2fe" : "#f1f5f9",
+                color: item.emisor_tipo === "POSTULANTE" ? "#6b21a8" : item.emisor_tipo === "ADMINISTRADOR" ? "#0369a1" : "#475569",
+                border: item.emisor_tipo === "POSTULANTE" ? "1px solid #d8b4fe" : item.emisor_tipo === "ADMINISTRADOR" ? "1px solid #bae6fd" : "1px solid #cbd5e1"
+              }}
+            >
+              {item.emisor_tipo || "SISTEMA"}
+            </span>
+          </div>
+          <strong style={{ display: "block", color: "#0f172a" }}>{item.emisor_nombre || "Sistema"}</strong>
+          <span style={{ fontSize: "0.74rem", color: "#64748b" }}>{item.emisor_correo || "—"}</span>
+        </div>
+      )
+    },
+    {
+      id: "destinatario",
+      encabezado: "Destinatario (Quién Recibe)",
+      valor: (item) => `${item.usuario_nombre} ${item.usuario_correo}`.trim(),
+      render: (item) => (
+        <div>
+          <strong style={{ display: "block", color: "#0f172a" }}>{item.usuario_nombre}</strong>
+          <span style={{ fontSize: "0.74rem", color: "#64748b" }}>{item.usuario_correo}</span>
+        </div>
+      )
+    },
+    {
+      id: "titulo",
+      encabezado: "Asunto / Título",
+      valor: (item) => item.not_titulo,
+      render: (item) => (
+        <strong style={{ display: "block", color: "#1e293b", maxWidth: "240px" }}>
+          {item.not_titulo}
+        </strong>
+      )
+    },
+    {
+      id: "canal",
+      encabezado: "Canal",
+      valor: (item) => item.not_canal,
+      render: (item) => (
+        <span
+          style={{
+            padding: "2px 6px",
+            borderRadius: "4px",
+            fontSize: "0.7rem",
+            fontWeight: 800,
+            background: item.not_canal === "IN_APP" ? "#dbeafe" : item.not_canal === "PUSH" ? "#e0f2fe" : "#fef3c7",
+            color: item.not_canal === "IN_APP" ? "#1e40af" : item.not_canal === "PUSH" ? "#0369a1" : "#92400e"
+          }}
+        >
+          {item.not_canal}
+        </span>
+      )
+    },
+    {
+      id: "confirmacion",
+      encabezado: "Confirmación / Lectura",
+      valor: (item) => item.not_leido_en ? `Confirmada ${new Date(item.not_leido_en).toLocaleString("es-EC")}` : "Pendiente",
+      render: (item) => item.not_leido_en ? (
+        <div>
+          <span style={{ display: "inline-flex", alignItems: "center", gap: "3px", color: "#15803d", fontWeight: 700, fontSize: "0.76rem" }}>
+            <CheckCircle2 size={13} /> Confirmada
+          </span>
+          <span style={{ display: "block", fontSize: "0.7rem", color: "#64748b" }}>
+            {new Date(item.not_leido_en).toLocaleString("es-EC", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit", timeZone: "America/Guayaquil" })}
+          </span>
+        </div>
+      ) : (
+        <span style={{ color: "#2563eb", fontWeight: 700, fontSize: "0.74rem" }}>
+          Pendiente
+        </span>
+      )
+    },
+    {
+      id: "pospuesto",
+      encabezado: "Tiempo Pospuesto",
+      valor: (item) => item.not_pospuesta_hasta ? `Pospuesta hasta ${new Date(item.not_pospuesta_hasta).toLocaleString("es-EC")}` : "Sin posponer",
+      render: (item) => {
+        const pospuestoHasta = item.not_pospuesta_hasta ? new Date(item.not_pospuesta_hasta).getTime() : 0;
+        const esPospuestaActiva = pospuestoHasta > ahora;
+        return esPospuestaActiva ? (
+          <div style={{ background: "#fffbeb", border: "1px solid #fde68a", borderRadius: "6px", padding: "3px 6px" }}>
+            <span style={{ display: "inline-flex", alignItems: "center", gap: "3px", color: "#b45309", fontWeight: 800, fontSize: "0.72rem" }}>
+              <Clock size={12} /> {item.not_pospuesta_horas ? `${item.not_pospuesta_horas}h` : "Pospuesta"}
+            </span>
+            <span style={{ display: "block", fontSize: "0.68rem", color: "#92400e" }}>
+              Hasta: {new Date(item.not_pospuesta_hasta!).toLocaleString("es-EC", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit", timeZone: "America/Guayaquil" })}
+            </span>
+          </div>
+        ) : item.not_pospuesta_hasta ? (
+          <span style={{ fontSize: "0.72rem", color: "#94a3b8" }}>Expiró pospuesto</span>
+        ) : (
+          <span style={{ fontSize: "0.72rem", color: "#94a3b8" }}>—</span>
+        );
+      }
+    },
+    {
+      id: "eliminado",
+      encabezado: "Estado Eliminación",
+      valor: (item) => item.not_eliminada ? "Eliminada" : "Activa",
+      render: (item) => item.not_eliminada ? (
+        <div style={{ background: "#fef2f2", border: "1px solid #fee2e2", borderRadius: "6px", padding: "3px 6px" }}>
+          <span style={{ display: "inline-flex", alignItems: "center", gap: "3px", color: "#b91c1c", fontWeight: 800, fontSize: "0.72rem" }}>
+            <Trash2 size={12} /> Eliminada
+          </span>
+          <span style={{ display: "block", fontSize: "0.68rem", color: "#991b1b" }}>
+            {item.not_eliminada_en ? new Date(item.not_eliminada_en).toLocaleDateString("es-EC", { day: "2-digit", month: "2-digit" }) : "Lógica"}
+          </span>
+        </div>
+      ) : (
+        <span style={{ color: "#16a34a", fontWeight: 700, fontSize: "0.74rem" }}>
+          Activa
+        </span>
+      )
+    },
+    {
+      id: "fecha",
+      encabezado: "Fecha Emisión",
+      valor: (item) => new Date(item.not_creado_en).getTime(),
+      render: (item) => (
+        <span style={{ fontSize: "0.74rem", color: "#64748b" }}>
+          {new Date(item.not_creado_en).toLocaleString("es-EC", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit", timeZone: "America/Guayaquil" })}
+        </span>
+      )
+    },
+    {
+      id: "acciones",
+      encabezado: "Acciones",
+      ordenable: false,
+      valor: () => "",
+      render: (item) => (
+        <div style={{ display: "inline-flex", gap: "4px", alignItems: "center" }}>
+          <button
+            type="button"
+            onClick={() => setNotifSeleccionada(item)}
+            style={{
+              background: "#eff6ff",
+              border: "1px solid #bfdbfe",
+              color: "#1d4ed8",
+              padding: "4px 8px",
+              borderRadius: "6px",
+              fontWeight: 700,
+              fontSize: "0.74rem",
+              cursor: "pointer",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "3px"
+            }}
+            title="Ver detalle completo"
+          >
+            <Eye size={12} /> Ver
+          </button>
+
+          {item.not_eliminada && (
+            <button
+              type="button"
+              disabled={procesandoAccion === item.not_id}
+              onClick={() => handleRestaurar(item.not_id)}
+              style={{
+                background: "#f0fdf4",
+                border: "1px solid #bbf7d0",
+                color: "#15803d",
+                padding: "4px 8px",
+                borderRadius: "6px",
+                fontWeight: 700,
+                fontSize: "0.74rem",
+                cursor: "pointer",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "3px"
+              }}
+              title="Restaurar para el usuario"
+            >
+              <RotateCcw size={12} /> Restaurar
+            </button>
+          )}
+        </div>
+      )
     }
-
-    // 2. Filtro Canal
-    if (filtroCanal !== "TODOS" && n.not_canal !== filtroCanal) {
-      return false;
-    }
-
-    // 3. Filtro Estado
-    const esEliminada = Boolean(n.not_eliminada);
-    const pospuestoHasta = n.not_pospuesta_hasta ? new Date(n.not_pospuesta_hasta).getTime() : 0;
-    const esPospuestaActiva = pospuestoHasta > ahora;
-    const esLeida = Boolean(n.not_leido_en);
-
-    if (filtroEstado === "ELIMINADA") return esEliminada;
-    if (filtroEstado === "POSPUESTA") return esPospuestaActiva && !esEliminada;
-    if (filtroEstado === "LEIDA") return esLeida && !esEliminada;
-    if (filtroEstado === "PENDIENTE") return !esLeida && !esEliminada && !esPospuestaActiva;
-
-    return true;
-  });
+  ], [ahora, procesandoAccion]);
 
   // Métricas
   const totalNotifs = notificaciones.length;
@@ -283,20 +468,8 @@ export function MonitoreoNotificacionesUsuariosWidget({ negocio = "TRANQ" }: Pro
         </div>
       </div>
 
-      {/* BARRA DE FILTROS */}
+      {/* BARRA DE FILTROS ESPECÍFICOS */}
       <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", marginBottom: "16px", alignItems: "center" }}>
-        {/* Buscador de Texto */}
-        <div style={{ flex: 1, minWidth: "220px", display: "flex", alignItems: "center", gap: "8px", background: "#f8fafc", border: "1px solid #cbd5e1", borderRadius: "8px", padding: "8px 12px" }}>
-          <Search size={16} color="#64748b" />
-          <input
-            type="text"
-            value={busqueda}
-            onChange={e => setBusqueda(e.target.value)}
-            placeholder="Buscar por asunto, destinatario o correo..."
-            style={{ width: "100%", border: "none", background: "transparent", outline: "none", fontSize: "0.85rem", color: "#0f172a" }}
-          />
-        </div>
-
         {/* Selector de Usuario */}
         <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
           <User size={15} color="#64748b" />
@@ -349,201 +522,34 @@ export function MonitoreoNotificacionesUsuariosWidget({ negocio = "TRANQ" }: Pro
         <div style={{ padding: "40px", textAlign: "center", color: "#64748b" }}>
           Cargando notificaciones auditadas...
         </div>
-      ) : notificacionesFiltradas.length === 0 ? (
-        <div style={{ padding: "40px", textAlign: "center", background: "#f8fafc", borderRadius: "12px", border: "1px dashed #cbd5e1" }}>
-          <Bell style={{ width: 36, height: 36, color: "#94a3b8", margin: "0 auto 8px", display: "block" }} />
-          <p style={{ margin: 0, fontWeight: 700, color: "#475569" }}>No se encontraron notificaciones con los filtros aplicados.</p>
-        </div>
       ) : (
-        <div className="tabla-panel-envoltura" style={{ overflowX: "auto" }}>
-          <table className="tabla-panel" style={{ width: "100%", fontSize: "0.84rem" }}>
-            <thead>
-              <tr style={{ background: "#f8fafc", textAlign: "left" }}>
-                <th style={{ padding: "10px 12px" }}>Remitente (Quién Envía)</th>
-                <th style={{ padding: "10px 12px" }}>Destinatario (Quién Recibe)</th>
-                <th style={{ padding: "10px 12px" }}>Asunto / Título</th>
-                <th style={{ padding: "10px 12px" }}>Canal</th>
-                <th style={{ padding: "10px 12px" }}>Confirmación / Lectura</th>
-                <th style={{ padding: "10px 12px" }}>Tiempo Pospuesto</th>
-                <th style={{ padding: "10px 12px" }}>Estado Eliminación</th>
-                <th style={{ padding: "10px 12px" }}>Fecha Emisión</th>
-                <th style={{ padding: "10px 12px", textAlign: "right" }}>Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {notificacionesFiltradas.map(item => {
-                const pospuestoHasta = item.not_pospuesta_hasta ? new Date(item.not_pospuesta_hasta).getTime() : 0;
-                const esPospuestaActiva = pospuestoHasta > ahora;
-
-                return (
-                  <tr key={item.not_id} style={{ borderBottom: "1px solid #f1f5f9", background: item.not_eliminada ? "#fffbfb" : undefined }}>
-                    {/* Remitente (Quién Envía) */}
-                    <td style={{ padding: "12px", minWidth: "160px" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "3px" }}>
-                        <span
-                          style={{
-                            padding: "1px 6px",
-                            borderRadius: "4px",
-                            fontSize: "0.66rem",
-                            fontWeight: 800,
-                            textTransform: "uppercase",
-                            background: item.emisor_tipo === "POSTULANTE" ? "#f3e8ff" : item.emisor_tipo === "ADMINISTRADOR" ? "#e0f2fe" : "#f1f5f9",
-                            color: item.emisor_tipo === "POSTULANTE" ? "#6b21a8" : item.emisor_tipo === "ADMINISTRADOR" ? "#0369a1" : "#475569",
-                            border: item.emisor_tipo === "POSTULANTE" ? "1px solid #d8b4fe" : item.emisor_tipo === "ADMINISTRADOR" ? "1px solid #bae6fd" : "1px solid #cbd5e1"
-                          }}
-                        >
-                          {item.emisor_tipo || "SISTEMA"}
-                        </span>
-                      </div>
-                      <strong style={{ display: "block", color: "#0f172a" }}>{item.emisor_nombre || "Sistema"}</strong>
-                      <span style={{ fontSize: "0.74rem", color: "#64748b" }}>{item.emisor_correo || "—"}</span>
-                    </td>
-
-                    {/* Destinatario (Quién Recibe) */}
-                    <td style={{ padding: "12px", minWidth: "160px" }}>
-                      <strong style={{ display: "block", color: "#0f172a" }}>{item.usuario_nombre}</strong>
-                      <span style={{ fontSize: "0.74rem", color: "#64748b" }}>{item.usuario_correo}</span>
-                    </td>
-
-                    {/* Asunto */}
-                    <td style={{ padding: "12px", maxWidth: "240px" }}>
-                      <strong style={{ display: "block", color: "#1e293b", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap" }}>
-                        {item.not_titulo}
-                      </strong>
-                    </td>
-
-                    {/* Canal */}
-                    <td style={{ padding: "12px" }}>
-                      <span
-                        style={{
-                          padding: "2px 6px",
-                          borderRadius: "4px",
-                          fontSize: "0.7rem",
-                          fontWeight: 800,
-                          background: item.not_canal === "IN_APP" ? "#dbeafe" : item.not_canal === "PUSH" ? "#e0f2fe" : "#fef3c7",
-                          color: item.not_canal === "IN_APP" ? "#1e40af" : item.not_canal === "PUSH" ? "#0369a1" : "#92400e"
-                        }}
-                      >
-                        {item.not_canal}
-                      </span>
-                    </td>
-
-                    {/* Confirmación / Lectura */}
-                    <td style={{ padding: "12px" }}>
-                      {item.not_leido_en ? (
-                        <div>
-                          <span style={{ display: "inline-flex", alignItems: "center", gap: "3px", color: "#15803d", fontWeight: 700, fontSize: "0.76rem" }}>
-                            <CheckCircle2 size={13} /> Confirmada
-                          </span>
-                          <span style={{ display: "block", fontSize: "0.7rem", color: "#64748b" }}>
-                            {new Date(item.not_leido_en).toLocaleString("es-EC", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit", timeZone: "America/Guayaquil" })}
-                          </span>
-                        </div>
-                      ) : (
-                        <span style={{ color: "#2563eb", fontWeight: 700, fontSize: "0.74rem" }}>
-                          Pendiente
-                        </span>
-                      )}
-                    </td>
-
-                    {/* Tiempo Pospuesto */}
-                    <td style={{ padding: "12px" }}>
-                      {esPospuestaActiva ? (
-                        <div style={{ background: "#fffbeb", border: "1px solid #fde68a", borderRadius: "6px", padding: "3px 6px" }}>
-                          <span style={{ display: "inline-flex", alignItems: "center", gap: "3px", color: "#b45309", fontWeight: 800, fontSize: "0.72rem" }}>
-                            <Clock size={12} /> {item.not_pospuesta_horas ? `${item.not_pospuesta_horas}h` : "Pospuesta"}
-                          </span>
-                          <span style={{ display: "block", fontSize: "0.68rem", color: "#92400e" }}>
-                            Hasta: {new Date(item.not_pospuesta_hasta!).toLocaleString("es-EC", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit", timeZone: "America/Guayaquil" })}
-                          </span>
-                        </div>
-                      ) : item.not_pospuesta_hasta ? (
-                        <span style={{ fontSize: "0.72rem", color: "#94a3b8" }}>
-                          Expiró pospuesto
-                        </span>
-                      ) : (
-                        <span style={{ fontSize: "0.72rem", color: "#94a3b8" }}>—</span>
-                      )}
-                    </td>
-
-                    {/* Estado Eliminación */}
-                    <td style={{ padding: "12px" }}>
-                      {item.not_eliminada ? (
-                        <div style={{ background: "#fef2f2", border: "1px solid #fee2e2", borderRadius: "6px", padding: "3px 6px" }}>
-                          <span style={{ display: "inline-flex", alignItems: "center", gap: "3px", color: "#b91c1c", fontWeight: 800, fontSize: "0.72rem" }}>
-                            <Trash2 size={12} /> Eliminada
-                          </span>
-                          <span style={{ display: "block", fontSize: "0.68rem", color: "#991b1b" }}>
-                            {item.not_eliminada_en ? new Date(item.not_eliminada_en).toLocaleDateString("es-EC", { day: "2-digit", month: "2-digit" }) : "Lógica"}
-                          </span>
-                        </div>
-                      ) : (
-                        <span style={{ color: "#16a34a", fontWeight: 700, fontSize: "0.74rem" }}>
-                          Activa
-                        </span>
-                      )}
-                    </td>
-
-                    {/* Fecha Creación */}
-                    <td style={{ padding: "12px", fontSize: "0.74rem", color: "#64748b" }}>
-                      {new Date(item.not_creado_en).toLocaleString("es-EC", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit", timeZone: "America/Guayaquil" })}
-                    </td>
-
-                    {/* Acciones */}
-                    <td style={{ padding: "12px", textAlign: "right" }}>
-                      <div style={{ display: "inline-flex", gap: "4px", alignItems: "center" }}>
-                        <button
-                          type="button"
-                          onClick={() => setNotifSeleccionada(item)}
-                          style={{
-                            background: "#eff6ff",
-                            border: "1px solid #bfdbfe",
-                            color: "#1d4ed8",
-                            padding: "4px 8px",
-                            borderRadius: "6px",
-                            fontWeight: 700,
-                            fontSize: "0.74rem",
-                            cursor: "pointer",
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: "3px"
-                          }}
-                          title="Ver detalle completo"
-                        >
-                          <Eye size={12} /> Ver
-                        </button>
-
-                        {item.not_eliminada && (
-                          <button
-                            type="button"
-                            disabled={procesandoAccion === item.not_id}
-                            onClick={() => handleRestaurar(item.not_id)}
-                            style={{
-                              background: "#f0fdf4",
-                              border: "1px solid #bbf7d0",
-                              color: "#15803d",
-                              padding: "4px 8px",
-                              borderRadius: "6px",
-                              fontWeight: 700,
-                              fontSize: "0.74rem",
-                              cursor: "pointer",
-                              display: "inline-flex",
-                              alignItems: "center",
-                              gap: "3px"
-                            }}
-                            title="Restaurar para el usuario"
-                          >
-                            <RotateCcw size={12} /> Restaurar
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+        <DataGrid
+          columnas={columnasGrid}
+          filas={notificacionesFiltradas}
+          idFila={(item) => item.not_id}
+          nombreExportacion={`monitoreo-notificaciones-${negocio.toLowerCase()}`}
+          contenidoExpandible={(item) => (
+            <div style={{ padding: "14px", background: "#f8fafc", borderRadius: "8px", border: "1px solid #e2e8f0", fontSize: "0.82rem" }}>
+              <div style={{ fontWeight: 800, color: "#0f172a", marginBottom: "6px" }}>Cuerpo de la Notificación Despachada:</div>
+              <div style={{ background: "#ffffff", padding: "10px", borderRadius: "6px", border: "1px solid #cbd5e1", lineHeight: 1.5 }} dangerouslySetInnerHTML={{ __html: item.not_contenido_html }} />
+              {item.confirmada_por && (
+                <div style={{ marginTop: "6px", fontSize: "0.76rem", color: "#15803d" }}>
+                  Confirmada por: <strong>{item.confirmada_por.usuario_nombre}</strong> ({item.confirmada_por.usuario_correo || item.confirmada_por.usuario_id}) el {new Date(item.confirmada_por.fecha).toLocaleString("es-EC")}
+                </div>
+              )}
+              {item.pospuesta_por && (
+                <div style={{ marginTop: "4px", fontSize: "0.76rem", color: "#b45309" }}>
+                  Pospuesta por: <strong>{item.pospuesta_por.usuario_nombre}</strong> (+{item.pospuesta_por.horas || 3}h) hasta {new Date(item.not_pospuesta_hasta!).toLocaleString("es-EC")}
+                </div>
+              )}
+              {item.eliminada_por && (
+                <div style={{ marginTop: "4px", fontSize: "0.76rem", color: "#b91c1c" }}>
+                  Eliminada por: <strong>{item.eliminada_por.usuario_nombre}</strong> el {new Date(item.eliminada_por.fecha).toLocaleString("es-EC")}
+                </div>
+              )}
+            </div>
+          )}
+        />
       )}
 
       {/* MODAL DETALLE DE NOTIFICACIÓN DE USUARIO */}

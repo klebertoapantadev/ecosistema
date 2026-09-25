@@ -507,6 +507,9 @@ importers:
 
   packages/gestion-usuarios:
     dependencies:
+      '@eco/datagrid':
+        specifier: workspace:*
+        version: link:../datagrid
       '@eco/db':
         specifier: workspace:*
         version: link:../db
@@ -584,6 +587,9 @@ importers:
 
   packages/notificaciones:
     dependencies:
+      '@eco/datagrid':
+        specifier: workspace:*
+        version: link:../datagrid
       '@eco/supabase':
         specifier: workspace:*
         version: link:../supabase

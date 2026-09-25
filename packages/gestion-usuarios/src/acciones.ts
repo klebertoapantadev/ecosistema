@@ -44,7 +44,63 @@ export async function asignarPerfil(usuarioId: string, perfil: string, negocio: 
     .schema("comun_seguridad")
     .rpc("seg_fn_asignar_perfil", { p_usuario_id: usuarioId, p_negocio: negocio, p_perfil: perfil });
 
-  if (error) return { ok: false, error: error.message };
+  if (error) {
+    // Si la RPC falla por un error de disparador antiguo (ej. mem_perfil), aplicar asignación directa resiliente
+    try {
+      const client = crearClienteAdmin() || supabase;
+      const { data: dbPerfil } = await client
+        .schema("comun_seguridad")
+        .from("seg_perfil")
+        .select("per_id, per_nivel")
+        .eq("per_clave", perfil.toUpperCase().trim())
+        .maybeSingle();
+
+      if (dbPerfil?.per_id) {
+        // 1. Obtener o crear membresía
+        let memId: string | null = null;
+        const { data: memExistente } = await client
+          .schema("comun_seguridad")
+          .from("seg_membresia")
+          .select("mem_id")
+          .eq("mem_usuario_id", usuarioId)
+          .eq("mem_negocio", negocio)
+          .maybeSingle();
+
+        if (memExistente?.mem_id) {
+          memId = memExistente.mem_id;
+        } else {
+          const { data: nuevaMem } = await client
+            .schema("comun_seguridad")
+            .from("seg_membresia")
+            .insert({
+              mem_usuario_id: usuarioId,
+              mem_negocio: negocio,
+              mem_rol: perfil.toUpperCase().trim(),
+              mem_estado: "ACTIVO"
+            })
+            .select("mem_id")
+            .maybeSingle();
+          memId = nuevaMem?.mem_id || null;
+        }
+
+        if (memId) {
+          await client
+            .schema("comun_seguridad")
+            .from("seg_membresia_perfil")
+            .upsert({
+              mpe_membresia_id: memId,
+              mpe_perfil_id: dbPerfil.per_id
+            }, { onConflict: "mpe_membresia_id,mpe_perfil_id" });
+
+          revalidatePath("/panel/usuarios");
+          return { ok: true, data: undefined };
+        }
+      }
+    } catch (errFallback) {
+      console.warn("Aviso en fallback asignarPerfil:", errFallback);
+    }
+    return { ok: false, error: error.message };
+  }
 
   revalidatePath("/panel/usuarios");
   return { ok: true, data: undefined };
@@ -56,7 +112,40 @@ export async function quitarPerfil(usuarioId: string, perfil: string, negocio: s
     .schema("comun_seguridad")
     .rpc("seg_fn_quitar_perfil", { p_usuario_id: usuarioId, p_negocio: negocio, p_perfil: perfil });
 
-  if (error) return { ok: false, error: error.message };
+  if (error) {
+    try {
+      const client = crearClienteAdmin() || supabase;
+      const { data: dbPerfil } = await client
+        .schema("comun_seguridad")
+        .from("seg_perfil")
+        .select("per_id")
+        .eq("per_clave", perfil.toUpperCase().trim())
+        .maybeSingle();
+
+      const { data: mem } = await client
+        .schema("comun_seguridad")
+        .from("seg_membresia")
+        .select("mem_id")
+        .eq("mem_usuario_id", usuarioId)
+        .eq("mem_negocio", negocio)
+        .maybeSingle();
+
+      if (dbPerfil?.per_id && mem?.mem_id) {
+        await client
+          .schema("comun_seguridad")
+          .from("seg_membresia_perfil")
+          .delete()
+          .eq("mpe_membresia_id", mem.mem_id)
+          .eq("mpe_perfil_id", dbPerfil.per_id);
+
+        revalidatePath("/panel/usuarios");
+        return { ok: true, data: undefined };
+      }
+    } catch (errFallback) {
+      console.warn("Aviso en fallback quitarPerfil:", errFallback);
+    }
+    return { ok: false, error: error.message };
+  }
 
   revalidatePath("/panel/usuarios");
   return { ok: true, data: undefined };

@@ -19,7 +19,7 @@ import { GestionTokensMcpWidget } from "@eco/configuracion-negocio/componentes/G
 import { FormularioPerfil } from "@eco/identidad/componentes/FormularioPerfil";
 import { WidgetConfiguracionMfa } from "@eco/identidad/componentes/WidgetConfiguracionMfa";
 import { SelectorRolActivo } from "../SelectorRolActivo";
-import { TablaAuditoria } from "../auditoria/TablaAuditoria";
+import { VisorAuditoriaWidget } from "../auditoria/VisorAuditoriaWidget";
 import { useCustomWidgets } from "../gestorTitulosWidgets";
 import { WidgetFirmaDocumentosPdf } from "@/modulos/firma-documentos/componentes/WidgetFirmaDocumentosPdf";
 import { WidgetBilleteraDocumentos } from "@/modulos/billetera-documentos";
@@ -645,7 +645,7 @@ export function PanelDinamicoModular({ slug, negocio }: Props) {
       case "rol_activo":
         return <SelectorRolActivo />;
       case "auditoria":
-        return <TablaAuditoria registros={[]} />;
+        return <VisorAuditoriaWidget negocio={negocio} />;
       default:
         return (
           <div style={{ padding: "30px", background: "#ffffff", borderRadius: "12px", border: "1px solid #E4E4E4" }}>
