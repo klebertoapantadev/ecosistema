@@ -13,7 +13,7 @@ import { ModalNotificacionPush } from "@eco/notificaciones";
 import { TarjetasFavoritasGrid } from "./SeccionFavoritosInicio";
 import { useCustomWidgets } from "./gestorTitulosWidgets";
 import { ModalEditarWidget } from "./ModalEditarWidget";
-import { DataGrid, type ColumnaDataGrid } from "@eco/datagrid";
+import { DataGrid } from "@eco/datagrid";
 
 export interface ModuloSuperAdminDef {
   clave: string;

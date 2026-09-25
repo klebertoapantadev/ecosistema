@@ -74,38 +74,40 @@ BEGIN
     -- 2. PRE-CONFIGURACIÓN POR DEFECTO EN comun_seguridad.seg_rol_widget
     -- ====================================================================
 
-    -- 2.1 Rol CLIENTE: Acceso a vitrina_comercial en panel_herramientas
-    INSERT INTO comun_seguridad.seg_rol_widget (rlw_negocio, rlw_rol, rlw_widget_clave, rlw_panel, rlw_activo, rlw_orden)
-    VALUES
-      (v_negocio, 'CLIENTE', 'vitrina_comercial', 'panel_herramientas', true, 1)
-    ON CONFLICT (rlw_negocio, rlw_rol, rlw_widget_clave, rlw_panel) DO UPDATE
-    SET rlw_activo = true;
+    -- 2.1 Rol CLIENTE: Acceso a vitrina_comercial
+    INSERT INTO comun_seguridad.seg_rol_widget (rlw_negocio, rlw_rol, rlw_widget_id, rlw_visible)
+    SELECT v_negocio, 'CLIENTE', wdg_id, true
+    FROM comun_seguridad.seg_widget
+    WHERE wdg_negocio = v_negocio AND wdg_clave = 'vitrina_comercial'
+    ON CONFLICT (rlw_negocio, rlw_rol, rlw_widget_id) DO UPDATE SET rlw_visible = true;
 
-    -- 2.2 Rol SOCIO: Acceso a vitrina_comercial en panel_herramientas
-    INSERT INTO comun_seguridad.seg_rol_widget (rlw_negocio, rlw_rol, rlw_widget_clave, rlw_panel, rlw_activo, rlw_orden)
-    VALUES
-      (v_negocio, 'SOCIO', 'vitrina_comercial', 'panel_herramientas', true, 2)
-    ON CONFLICT (rlw_negocio, rlw_rol, rlw_widget_clave, rlw_panel) DO UPDATE
-    SET rlw_activo = true;
+    -- 2.2 Rol SOCIO: Acceso a vitrina_comercial
+    INSERT INTO comun_seguridad.seg_rol_widget (rlw_negocio, rlw_rol, rlw_widget_id, rlw_visible)
+    SELECT v_negocio, 'SOCIO', wdg_id, true
+    FROM comun_seguridad.seg_widget
+    WHERE wdg_negocio = v_negocio AND wdg_clave = 'vitrina_comercial'
+    ON CONFLICT (rlw_negocio, rlw_rol, rlw_widget_id) DO UPDATE SET rlw_visible = true;
 
-    -- 2.3 Rol OPERADOR: Vitrina en herramientas y Gestión en configuración
-    INSERT INTO comun_seguridad.seg_rol_widget (rlw_negocio, rlw_rol, rlw_widget_clave, rlw_panel, rlw_activo, rlw_orden)
-    VALUES
-      (v_negocio, 'OPERADOR', 'vitrina_comercial', 'panel_herramientas', true, 1),
-      (v_negocio, 'OPERADOR', 'gestion_catalogo', 'panel_configuracion', true, 3),
-      (v_negocio, 'OPERADOR', 'catalogo_productos', 'panel_configuracion', true, 4)
-    ON CONFLICT (rlw_negocio, rlw_rol, rlw_widget_clave, rlw_panel) DO UPDATE
-    SET rlw_activo = true;
+    -- 2.3 Rol OPERADOR: Vitrina y Gestión de Catálogo
+    INSERT INTO comun_seguridad.seg_rol_widget (rlw_negocio, rlw_rol, rlw_widget_id, rlw_visible)
+    SELECT v_negocio, 'OPERADOR', wdg_id, true
+    FROM comun_seguridad.seg_widget
+    WHERE wdg_negocio = v_negocio AND wdg_clave IN ('vitrina_comercial', 'gestion_catalogo', 'catalogo_productos')
+    ON CONFLICT (rlw_negocio, rlw_rol, rlw_widget_id) DO UPDATE SET rlw_visible = true;
 
     -- 2.4 Rol ADMINISTRADOR / SUPERADMIN: Acceso pleno
-    INSERT INTO comun_seguridad.seg_rol_widget (rlw_negocio, rlw_rol, rlw_widget_clave, rlw_panel, rlw_activo, rlw_orden)
-    VALUES
-      (v_negocio, 'ADMINISTRADOR', 'vitrina_comercial', 'panel_herramientas', true, 1),
-      (v_negocio, 'ADMINISTRADOR', 'gestion_catalogo', 'panel_configuracion', true, 3),
-      (v_negocio, 'SUPERADMIN', 'vitrina_comercial', 'panel_herramientas', true, 1),
-      (v_negocio, 'SUPERADMIN', 'gestion_catalogo', 'panel_configuracion', true, 3)
-    ON CONFLICT (rlw_negocio, rlw_rol, rlw_widget_clave, rlw_panel) DO UPDATE
-    SET rlw_activo = true;
+    INSERT INTO comun_seguridad.seg_rol_widget (rlw_negocio, rlw_rol, rlw_widget_id, rlw_visible)
+    SELECT v_negocio, 'ADMINISTRADOR', wdg_id, true
+    FROM comun_seguridad.seg_widget
+    WHERE wdg_negocio = v_negocio AND wdg_clave IN ('vitrina_comercial', 'gestion_catalogo', 'catalogo_productos')
+    ON CONFLICT (rlw_negocio, rlw_rol, rlw_widget_id) DO UPDATE SET rlw_visible = true;
+
+    INSERT INTO comun_seguridad.seg_rol_widget (rlw_negocio, rlw_rol, rlw_widget_id, rlw_visible)
+    SELECT v_negocio, 'SUPERADMIN', wdg_id, true
+    FROM comun_seguridad.seg_widget
+    WHERE wdg_negocio = v_negocio AND wdg_clave IN ('vitrina_comercial', 'gestion_catalogo', 'catalogo_productos')
+    ON CONFLICT (rlw_negocio, rlw_rol, rlw_widget_id) DO UPDATE SET rlw_visible = true;
 
   END LOOP;
 END $$;
+

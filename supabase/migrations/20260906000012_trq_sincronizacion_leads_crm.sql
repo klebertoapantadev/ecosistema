@@ -160,5 +160,11 @@ $$;
 -- Otorgar permisos de ejecución para staff y service_role
 grant execute on function tranqui_legal.trq_fn_sincronizar_leads_crm() to authenticated, service_role;
 
--- 4. Ejecutar la sincronización inmediata del estado actual
-select tranqui_legal.trq_fn_sincronizar_leads_crm();
+-- 4. Ejecutar la sincronización inmediata del estado actual si la tabla existe
+DO $$
+BEGIN
+  IF to_regclass('tranqui_legal.trq_cliente_perfil') IS NOT NULL THEN
+    PERFORM tranqui_legal.trq_fn_sincronizar_leads_crm();
+  END IF;
+END $$;
+

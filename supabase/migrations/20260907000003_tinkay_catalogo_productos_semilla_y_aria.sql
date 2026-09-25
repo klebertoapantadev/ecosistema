@@ -894,5 +894,5 @@ $$;
 grant execute on function tinkay_floristeria.tnk_fn_buscar_catalogo_conversacional(text, text, numeric, text) to anon, authenticated, service_role;
 
 -- Comentario descriptivo de auditoría
-comment on function tinkay_floristeria.tnk_fn_buscar_catalogo_conversacional is
+comment on function tinkay_floristeria.tnk_fn_buscar_catalogo_conversacional(text, text, numeric, text) is
   'Suministro oficial de catálogo conversacional para el agente ARIA (WhatsApp/YCloud) y vitrina web de Tinkay Floristería.';

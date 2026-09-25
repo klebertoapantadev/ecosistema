@@ -74,9 +74,10 @@ CREATE POLICY p_ted_manage_admin ON comun_seguridad.seg_termino_documento
   FOR ALL TO authenticated
   USING (
     EXISTS (
-      SELECT 1 FROM comun_seguridad.seg_membresia_perfil mp
-      JOIN comun_seguridad.seg_perfil p ON p.per_id = mp.mep_perfil_id
-      WHERE mp.mep_usuario_id = auth.uid()
+      SELECT 1 FROM comun_seguridad.seg_membresia m
+      JOIN comun_seguridad.seg_membresia_perfil mp ON mp.mpe_membresia_id = m.mem_id
+      JOIN comun_seguridad.seg_perfil p ON p.per_id = mp.mpe_perfil_id
+      WHERE m.mem_usuario_id = auth.uid()
         AND (p.per_clave IN ('ADMINISTRADOR', 'SUPERADMIN', 'OPERADOR') OR p.per_nivel >= 50)
     )
   );
@@ -91,9 +92,10 @@ CREATE POLICY p_thv_manage_admin ON comun_seguridad.seg_termino_historial_versio
   FOR ALL TO authenticated
   USING (
     EXISTS (
-      SELECT 1 FROM comun_seguridad.seg_membresia_perfil mp
-      JOIN comun_seguridad.seg_perfil p ON p.per_id = mp.mep_perfil_id
-      WHERE mp.mep_usuario_id = auth.uid()
+      SELECT 1 FROM comun_seguridad.seg_membresia m
+      JOIN comun_seguridad.seg_membresia_perfil mp ON mp.mpe_membresia_id = m.mem_id
+      JOIN comun_seguridad.seg_perfil p ON p.per_id = mp.mpe_perfil_id
+      WHERE m.mem_usuario_id = auth.uid()
         AND (p.per_clave IN ('ADMINISTRADOR', 'SUPERADMIN', 'OPERADOR') OR p.per_nivel >= 50)
     )
   );
@@ -105,9 +107,10 @@ CREATE POLICY p_usc_select_own ON comun_seguridad.seg_usuario_consentimiento
   USING (
     usc_usuario_id = auth.uid() OR
     EXISTS (
-      SELECT 1 FROM comun_seguridad.seg_membresia_perfil mp
-      JOIN comun_seguridad.seg_perfil p ON p.per_id = mp.mep_perfil_id
-      WHERE mp.mep_usuario_id = auth.uid()
+      SELECT 1 FROM comun_seguridad.seg_membresia m
+      JOIN comun_seguridad.seg_membresia_perfil mp ON mp.mpe_membresia_id = m.mem_id
+      JOIN comun_seguridad.seg_perfil p ON p.per_id = mp.mpe_perfil_id
+      WHERE m.mem_usuario_id = auth.uid()
         AND (p.per_clave IN ('ADMINISTRADOR', 'SUPERADMIN', 'OPERADOR') OR p.per_nivel >= 50)
     )
   );

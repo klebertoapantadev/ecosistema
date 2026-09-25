@@ -5,7 +5,7 @@ import Link from "next/link";
 import {
   LayoutGrid, Wrench, Shield, Users, Bell, UserCog, ClipboardList, FileText,
   Settings, ChevronRight, CircleUser, KeyRound, FileCheck, Folder, type LucideIcon,
-  Bot, ShoppingBag, CreditCard, Receipt, UserCheck, Share2, CheckCircle2
+  Bot, ShoppingBag, CreditCard, Receipt, Share2, CheckCircle2
 } from "lucide-react";
 import { useWidgetEnUrl } from "../useWidgetEnUrl";
 import { BotonVolverWidget } from "../BotonVolverWidget";
@@ -24,7 +24,6 @@ import { useCustomWidgets } from "../gestorTitulosWidgets";
 import { WidgetFirmaDocumentosPdf } from "@/modulos/firma-documentos/componentes/WidgetFirmaDocumentosPdf";
 import { WidgetBilleteraDocumentos } from "@/modulos/billetera-documentos";
 import { BandejaClientesCRM } from "@/modulos/crm-clientes/componentes/BandejaClientesCRM";
-import { ModalAltaClienteAsistida } from "@/modulos/crm-clientes/componentes/ModalAltaClienteAsistida";
 import {
   VitrinaComercialVisual,
   CatalogoProductosComercio,

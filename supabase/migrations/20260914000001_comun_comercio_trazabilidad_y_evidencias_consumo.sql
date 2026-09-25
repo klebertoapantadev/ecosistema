@@ -30,6 +30,15 @@ create table if not exists comun_comercio.com_derecho_consumo_historial (
   dch_creado_en timestamptz not null default now()
 );
 
+alter table comun_comercio.com_derecho_consumo_historial 
+  add column if not exists dch_secuencial bigint generated always as identity,
+  add column if not exists dch_responsable_id uuid references comun_seguridad.seg_usuario(usu_id),
+  add column if not exists dch_responsable_nombre text,
+  add column if not exists dch_titulo text not null default '',
+  add column if not exists dch_descripcion text,
+  add column if not exists dch_evidencia_url text,
+  add column if not exists dch_evidencia_detalle jsonb not null default '{}'::jsonb;
+
 create index if not exists idx_dch_cliente_negocio on comun_comercio.com_derecho_consumo_historial(dch_cliente_id, dch_negocio);
 create index if not exists idx_dch_suscripcion on comun_comercio.com_derecho_consumo_historial(dch_suscripcion_id);
 create index if not exists idx_dch_fecha on comun_comercio.com_derecho_consumo_historial(dch_creado_en desc);

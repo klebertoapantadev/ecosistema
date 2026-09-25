@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { User, Users, UserCheck, History, KeyRound, ShieldAlert, Settings, Mail, Bell, Star, ChevronRight, ShieldCheck, Sliders, Receipt, Lock, FileText, BarChart2, FileCheck, Folder, ShoppingBag, CreditCard, CalendarPlus, CalendarCheck, CalendarClock, Shuffle, type LucideIcon } from "lucide-react";
+import { User, Users, History, KeyRound, ShieldAlert, Settings, Mail, Bell, Star, ChevronRight, ShieldCheck, Sliders, Receipt, Lock, FileText, BarChart2, FileCheck, Folder, ShoppingBag, CreditCard, CalendarPlus, CalendarCheck, CalendarClock, Shuffle, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { useCustomWidgets } from "./gestorTitulosWidgets";
 

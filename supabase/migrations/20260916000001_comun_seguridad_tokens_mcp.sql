@@ -289,23 +289,13 @@ BEGIN
       rlw_negocio,
       rlw_rol,
       rlw_widget_id,
-      rlw_panel_id,
-      rlw_orden,
-      rlw_es_fijo,
-      rlw_visible,
-      rlw_detalle_asignacion,
-      rlw_creado_en
+      rlw_visible
     )
     SELECT
       v_negocio,
       r.rol,
       w.wdg_id,
-      'panel_configuracion',
-      12,
-      false,
-      true,
-      '{"origen": "preconfiguracion_default"}'::jsonb,
-      NOW()
+      true
     FROM comun_seguridad.seg_widget w
     CROSS JOIN (
       SELECT 'ADMINISTRADOR' AS rol
@@ -315,8 +305,7 @@ BEGIN
     WHERE w.wdg_negocio = v_negocio
       AND w.wdg_clave = 'tokens_mcp'
     ON CONFLICT (rlw_negocio, rlw_rol, rlw_widget_id) DO UPDATE
-    SET rlw_visible = true,
-        rlw_panel_id = 'panel_configuracion';
+    SET rlw_visible = true;
 
   END LOOP;
 END $$;
