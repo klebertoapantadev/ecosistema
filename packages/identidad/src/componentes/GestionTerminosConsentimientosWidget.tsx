@@ -265,25 +265,50 @@ export function GestionTerminosConsentimientosWidget({ negocio = "tranqi", onGua
   };
 
   function renderizarPrevisualizacion() {
-    let contenido = markdownText;
-    // Interpolar tags dinámicos estándar
-    contenido = contenido
-      .replace(/\{\{nombre_completo\}\}/g, "**[DRA. CAROLINA COLCHA]**")
-      .replace(/\{\{cedula\}\}/g, "**[1715489623]**")
-      .replace(/\{\{correo\}\}/g, "**[abogada.carolina@gmail.com]**")
-      .replace(/\{\{telefono\}\}/g, "**[0998765432]**")
-      .replace(/\{\{whatsapp\}\}/g, "**[+593 998765432]**")
-      .replace(/\{\{fecha_actual\}\}/g, `**[${new Date().toLocaleDateString("es-EC")}]**`)
-      .replace(/\{\{ciudad\}\}/g, "**[Quito, D.M.]**")
-      .replace(/\{\{matricula_profesional\}\}/g, "**[17-2020-89]**")
-      .replace(/\{\{universidad\}\}/g, "**[Universidad Central del Ecuador]**")
-      .replace(/\{\{titulo_profesional\}\}/g, "**[Abogada de los Tribunales de la República]**")
-      .replace(/\{\{representante_legal\}\}/g, "**[Dr. Kleber Toapanta]**")
-      .replace(/\{\{negocio\}\}/g, `**${negocio.toUpperCase()}**`)
-      // Interpolar cualquier otra variable personalizada {{variable}}
-      .replace(/\{\{([a-zA-Z0-9_]+)\}\}/g, "**[$1]**");
+    let html = markdownText || "";
 
-    return contenido;
+    // Interpolar tags dinámicos estándar con formato destacado
+    html = html
+      .replace(/\{\{nombre_completo\}\}/g, '<strong style="color: #05876E; background: rgba(5,135,110,0.08); padding: 2px 6px; border-radius: 4px; font-weight: 800;">[DRA. CAROLINA COLCHA]</strong>')
+      .replace(/\{\{cedula\}\}/g, '<strong style="color: #05876E; background: rgba(5,135,110,0.08); padding: 2px 6px; border-radius: 4px; font-weight: 800;">[1715489623]</strong>')
+      .replace(/\{\{correo\}\}/g, '<strong style="color: #05876E; background: rgba(5,135,110,0.08); padding: 2px 6px; border-radius: 4px; font-weight: 800;">[abogada.carolina@gmail.com]</strong>')
+      .replace(/\{\{telefono\}\}/g, '<strong style="color: #05876E; background: rgba(5,135,110,0.08); padding: 2px 6px; border-radius: 4px; font-weight: 800;">[0998765432]</strong>')
+      .replace(/\{\{whatsapp\}\}/g, '<strong style="color: #05876E; background: rgba(5,135,110,0.08); padding: 2px 6px; border-radius: 4px; font-weight: 800;">[+593 998765432]</strong>')
+      .replace(/\{\{fecha_actual\}\}/g, `<strong style="color: #5000BA; background: rgba(80,0,186,0.08); padding: 2px 6px; border-radius: 4px; font-weight: 800;">[${new Date().toLocaleDateString("es-EC")}]</strong>`)
+      .replace(/\{\{ciudad\}\}/g, '<strong style="color: #5000BA; background: rgba(80,0,186,0.08); padding: 2px 6px; border-radius: 4px; font-weight: 800;">[Quito, D.M.]</strong>')
+      .replace(/\{\{matricula_profesional\}\}/g, '<strong style="color: #05876E; background: rgba(5,135,110,0.08); padding: 2px 6px; border-radius: 4px; font-weight: 800;">[17-2020-89]</strong>')
+      .replace(/\{\{universidad\}\}/g, '<strong style="color: #05876E; background: rgba(5,135,110,0.08); padding: 2px 6px; border-radius: 4px; font-weight: 800;">[Universidad Central del Ecuador]</strong>')
+      .replace(/\{\{titulo_profesional\}\}/g, '<strong style="color: #05876E; background: rgba(5,135,110,0.08); padding: 2px 6px; border-radius: 4px; font-weight: 800;">[Abogada de los Tribunales de la República]</strong>')
+      .replace(/\{\{representante_legal\}\}/g, '<strong style="color: #5000BA; background: rgba(80,0,186,0.08); padding: 2px 6px; border-radius: 4px; font-weight: 800;">[Dr. Kleber Toapanta]</strong>')
+      .replace(/\{\{negocio\}\}/g, `<strong style="color: #5000BA; background: rgba(80,0,186,0.08); padding: 2px 6px; border-radius: 4px; font-weight: 800;">[${negocio.toUpperCase()}]</strong>`)
+      .replace(/\{\{([a-zA-Z0-9_]+)\}\}/g, '<strong style="color: #6B21A8; background: rgba(107,33,168,0.08); padding: 2px 6px; border-radius: 4px; font-weight: 800;">[$1]</strong>');
+
+    // Parseo enriquecido de Markdown
+    // Títulos H1 (# )
+    html = html.replace(/^# (.*?)$/gm, '<h1 style="font-size: 1.45rem; color: #111827; border-bottom: 2px solid #E5E7EB; padding-bottom: 8px; margin-top: 20px; margin-bottom: 12px; font-weight: 800;">$1</h1>');
+    // Títulos H2 (## )
+    html = html.replace(/^## (.*?)$/gm, '<h2 style="font-size: 1.2rem; color: #1F2937; margin-top: 18px; margin-bottom: 10px; font-weight: 700;">$1</h2>');
+    // Títulos H3 (### )
+    html = html.replace(/^### (.*?)$/gm, '<h3 style="font-size: 1.05rem; color: #374151; margin-top: 16px; margin-bottom: 8px; font-weight: 700;">$1</h3>');
+    // Separador horizontal (---)
+    html = html.replace(/^---$/gm, '<hr style="border: none; border-top: 1px solid #E5E7EB; margin: 16px 0;" />');
+    // Negrita (**text**)
+    html = html.replace(/\*\*(.*?)\*\*/g, '<strong style="font-weight: 700; color: #111827;">$1</strong>');
+    // Cursiva (*text*)
+    html = html.replace(/\*(.*?)\*/g, '<em style="font-style: italic;">$1</em>');
+    // Listas ordenadas (1. 2. 3.)
+    html = html.replace(/^\d+\.\s+(.*?)$/gm, '<li style="margin-left: 20px; margin-bottom: 8px; font-size: 0.9rem; line-height: 1.6; color: #374151;">$1</li>');
+    // Listas con viñetas (- o *)
+    html = html.replace(/^[-*]\s+(.*?)$/gm, '<li style="margin-left: 20px; margin-bottom: 8px; font-size: 0.9rem; line-height: 1.6; color: #374151; list-style-type: disc;">$1</li>');
+    // Saltos de línea dobles como párrafos
+    html = html.split("\n\n").map((p) => {
+      const limpio = p.trim();
+      if (!limpio) return "";
+      if (limpio.startsWith("<h") || limpio.startsWith("<li") || limpio.startsWith("<hr")) return limpio;
+      return `<p style="margin-bottom: 12px; font-size: 0.9rem; line-height: 1.65; color: #374151;">${limpio.replace(/\n/g, "<br/>")}</p>`;
+    }).join("");
+
+    return html;
   }
 
   const IconoCatActual = catActualDef.icono;
@@ -716,12 +741,10 @@ export function GestionTerminosConsentimientosWidget({ negocio = "tranqi", onGua
               fontSize: "0.88rem",
               lineHeight: 1.6,
               color: "#222222",
-              whiteSpace: "pre-wrap",
               boxSizing: "border-box",
             }}
-          >
-            {renderizarPrevisualizacion()}
-          </div>
+            dangerouslySetInnerHTML={{ __html: renderizarPrevisualizacion() }}
+          />
         )}
 
         {/* Botón de Guardado General */}

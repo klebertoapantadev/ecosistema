@@ -1,10 +1,16 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Users, Search, ShieldCheck, Eye, RefreshCw, RotateCcw, Filter, UserCheck, Share2, CheckCircle2 } from "lucide-react";
+import { Users, Search, ShieldCheck, RefreshCw, RotateCcw, Filter, UserCheck, Share2, CheckCircle2, Trash2 } from "lucide-react";
+import { DataGrid, type ColumnaDataGrid } from "@eco/datagrid";
 import { ModalNotificacionPush } from "../../../notificaciones/src/ModalNotificacionPush";
-import { obtenerDatosGestionUsuariosAction, resetearSistemaSuperAdminAction } from "../acciones";
-import { FilaUsuario } from "./FilaUsuario";
+import {
+  obtenerDatosGestionUsuariosAction,
+  resetearSistemaSuperAdminAction,
+  asignarPerfil,
+  quitarPerfil,
+  eliminarUsuarioSuperAdminAction
+} from "../acciones";
 import type { UsuarioConMembresia, PerfilAsignable } from "../consultas";
 
 interface Props {
@@ -84,6 +90,186 @@ const MATRIZ_PERFILES_CONSULTA: PerfilConsultaDef[] = [
     }
   }
 ];
+
+function CeldaPerfilesInteractiva({
+  usuario,
+  negocio,
+  perfiles,
+  nivelMaximoGestor
+}: {
+  usuario: UsuarioConMembresia;
+  negocio: string;
+  perfiles: PerfilAsignable[];
+  nivelMaximoGestor: number;
+}) {
+  const [asignados, setAsignados] = useState<string[]>(usuario.perfiles);
+  const [ocupado, setOcupado] = useState<string | null>(null);
+  const [mensaje, setMensaje] = useState<string | null>(null);
+
+  async function alternar(clave: string, marcado: boolean) {
+    setOcupado(clave);
+    setMensaje(null);
+    const resultado = marcado
+      ? await asignarPerfil(usuario.usu_id, clave, negocio)
+      : await quitarPerfil(usuario.usu_id, clave, negocio);
+    setOcupado(null);
+
+    if (!resultado.ok) {
+      setMensaje(resultado.error ?? "Error al procesar la solicitud");
+      return;
+    }
+    setAsignados((actual) => (marcado ? [...actual, clave] : actual.filter((c) => c !== clave)));
+  }
+
+  return (
+    <div>
+      <div className="perfiles-usuario" style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
+        {perfiles.map((p) => {
+          const tiene = asignados.includes(p.clave);
+          const fueraDeAlcance = p.nivel > nivelMaximoGestor;
+          const esBase = p.clave === "CLIENTE";
+          const esAbogado = p.clave === "ABOGADO";
+
+          return (
+            <label
+              key={p.clave}
+              className={`perfil-casilla${tiene ? " perfil-casilla-activa" : ""}`}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "4px",
+                padding: "3px 8px",
+                borderRadius: "6px",
+                background: tiene ? "#F3E8FF" : "#F8FAFC",
+                border: tiene ? "1px solid #D8B4FE" : "1px solid #E2E8F0",
+                fontSize: "0.76rem",
+                cursor: fueraDeAlcance || (esBase && tiene) || esAbogado ? "default" : "pointer",
+                opacity: fueraDeAlcance ? 0.5 : 1
+              }}
+              title={
+                fueraDeAlcance
+                  ? `Requiere jerarquía ${p.nivel} o superior`
+                  : esBase
+                    ? "Perfil base, no se puede retirar"
+                    : esAbogado
+                      ? "Se asigna automáticamente al confirmar el contrato de socio firmado"
+                      : `Nivel ${p.nivel}`
+              }
+            >
+              <input
+                type="checkbox"
+                checked={tiene}
+                disabled={ocupado !== null || fueraDeAlcance || (esBase && tiene) || esAbogado}
+                onChange={(e) => alternar(p.clave, e.target.checked)}
+              />
+              <span style={{ fontWeight: tiene ? 700 : 500, color: tiene ? "#5000BA" : "#475569" }}>
+                {p.nombre}
+              </span>
+              <span className="perfil-nivel" style={{ fontSize: "0.68rem", color: "#94A3B8" }}>{p.nivel}</span>
+            </label>
+          );
+        })}
+      </div>
+      {mensaje && <p className="error-auth mensaje-fila" style={{ color: "#DC2626", fontSize: "0.75rem", margin: "4px 0 0 0" }}>{mensaje}</p>}
+    </div>
+  );
+}
+
+function CeldaAccionUsuario({ usuario }: { usuario: UsuarioConMembresia }) {
+  const [eliminando, setEliminando] = useState(false);
+  const [modalPush, setModalPush] = useState<{
+    abierto: boolean;
+    titulo: string;
+    mensaje: string;
+    tipo?: "exito" | "error" | "info" | "advertencia" | "push";
+    alAceptar?: () => void;
+    alCancelar?: () => void;
+    mostrarConfirmacion?: boolean;
+  }>({
+    abierto: false,
+    titulo: "",
+    mensaje: "",
+    tipo: "exito",
+  });
+
+  async function handleEliminar() {
+    setModalPush({
+      abierto: true,
+      tipo: "advertencia",
+      titulo: "Eliminar Cuenta de Usuario",
+      mensaje: `¿Estás seguro de ELIMINAR la cuenta de "${usuario.usu_correo}"?\n\nSe borrarán todas sus solicitudes, perfiles y datos.`,
+      mostrarConfirmacion: true,
+      alAceptar: async () => {
+        setModalPush((prev) => ({ ...prev, abierto: false }));
+        setEliminando(true);
+        const res = await eliminarUsuarioSuperAdminAction(usuario.usu_id);
+        if (res.ok) {
+          setModalPush({
+            abierto: true,
+            tipo: "exito",
+            titulo: "Usuario Eliminado",
+            mensaje: "El usuario ha sido eliminado exitosamente del sistema.",
+            alAceptar: () => window.location.reload(),
+          });
+        } else {
+          setModalPush({
+            abierto: true,
+            tipo: "error",
+            titulo: "Error al Eliminar",
+            mensaje: res.error || "No se pudo eliminar el usuario",
+          });
+          setEliminando(false);
+        }
+      },
+      alCancelar: () => {
+        setModalPush((prev) => ({ ...prev, abierto: false }));
+      },
+    });
+  }
+
+  if (usuario.usu_correo === "kleber.toapanta.ch@gmail.com") {
+    return <span style={{ fontSize: "0.72rem", color: "#9CA3AF", fontWeight: 700 }}>Protegido</span>;
+  }
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={handleEliminar}
+        disabled={eliminando}
+        className="btn-responsive-accion"
+        title={`Eliminar usuario ${usuario.usu_correo}`}
+        aria-label={`Eliminar usuario ${usuario.usu_correo}`}
+        style={{
+          background: "#FEF2F2",
+          border: "1px solid #FCA5A5",
+          color: "#DC2626",
+          borderRadius: "8px",
+          padding: "6px 10px",
+          fontSize: "0.75rem",
+          fontWeight: 700,
+          cursor: "pointer",
+          display: "inline-flex",
+          alignItems: "center",
+          gap: "4px"
+        }}
+      >
+        <Trash2 size={14} />
+        <span className="btn-texto-responsive">{eliminando ? "..." : "Eliminar"}</span>
+      </button>
+
+      <ModalNotificacionPush
+        abierto={modalPush.abierto}
+        tipo={modalPush.tipo}
+        titulo={modalPush.titulo}
+        mensaje={modalPush.mensaje}
+        mostrarConfirmacion={modalPush.mostrarConfirmacion}
+        alAceptar={modalPush.alAceptar || (() => setModalPush((prev) => ({ ...prev, abierto: false })))}
+        alCancelar={modalPush.alCancelar || (() => setModalPush((prev) => ({ ...prev, abierto: false })))}
+      />
+    </>
+  );
+}
 
 export function ConsultaUsuariosPerfilesWidget({ negocio = "TRANQ" }: Props) {
   const [tabActiva, setTabActiva] = useState<"usuarios" | "matriz">("usuarios");
@@ -238,15 +424,62 @@ export function ConsultaUsuariosPerfilesWidget({ negocio = "TRANQ" }: Props) {
     });
   }
 
-  const usuariosFiltrados = usuarios.filter((u) => {
-    const nombreCompleto = [u.usu_nombres, u.usu_apellidos].filter(Boolean).join(" ").toLowerCase();
-    const correo = (u.usu_correo || "").toLowerCase();
-    const texto = filtroTexto.toLowerCase();
-
-    const coincideTexto = !texto || nombreCompleto.includes(texto) || correo.includes(texto);
-    const coincideRol = filtroRol === "TODOS" || u.perfiles.some((p) => p.toUpperCase() === filtroRol.toUpperCase());
-    return coincideTexto && coincideRol;
-  });
+  const columnasUsuarios: ColumnaDataGrid<UsuarioConMembresia>[] = [
+    {
+      id: "nombre",
+      encabezado: "Nombre Completo",
+      valor: (u) => [u.usu_nombres, u.usu_apellidos].filter(Boolean).join(" ") || "—",
+      ordenable: true,
+    },
+    {
+      id: "correo",
+      encabezado: "Correo Electrónico",
+      valor: (u) => u.usu_correo || "—",
+      ordenable: true,
+    },
+    {
+      id: "estado",
+      encabezado: "Estado",
+      valor: (u) => u.mem_estado || "ACTIVO",
+      ordenable: true,
+      render: (u) => (
+        <span style={{
+          background: u.mem_estado === "ACTIVO" ? "#ECFDF5" : "#FEF3C7",
+          color: u.mem_estado === "ACTIVO" ? "#047857" : "#B45309",
+          border: `1px solid ${u.mem_estado === "ACTIVO" ? "#A7F3D0" : "#FDE68A"}`,
+          borderRadius: "999px",
+          padding: "2px 10px",
+          fontSize: "0.75rem",
+          fontWeight: 700
+        }}>
+          {u.mem_estado || "ACTIVO"}
+        </span>
+      )
+    },
+    {
+      id: "perfiles",
+      encabezado: "Perfiles (Asignación de Roles)",
+      valor: (u) => u.perfiles.join(", ") || "Cliente",
+      ordenable: false,
+      render: (u) => (
+        <CeldaPerfilesInteractiva
+          usuario={u}
+          negocio={negocio}
+          perfiles={perfiles}
+          nivelMaximoGestor={nivelMaximoGestor}
+        />
+      )
+    },
+    {
+      id: "accion",
+      encabezado: "Acción",
+      valor: (u) => u.usu_correo === "kleber.toapanta.ch@gmail.com" ? "Protegido" : "Eliminar",
+      ordenable: false,
+      render: (u) => (
+        <CeldaAccionUsuario usuario={u} />
+      )
+    }
+  ];
 
   const perfilObjConsulta = MATRIZ_PERFILES_CONSULTA.find((p) => p.clave === perfilSeleccionado) || MATRIZ_PERFILES_CONSULTA[1]!;
 
@@ -389,76 +622,20 @@ export function ConsultaUsuariosPerfilesWidget({ negocio = "TRANQ" }: Props) {
         </button>
       </div>
 
-      {/* TAB 1: DIRECTORIO INTERACTIVO DE USUARIOS */}
+      {/* TAB 1: DIRECTORIO INTERACTIVO DE USUARIOS CON DATAGRID ESTANDARIZADO */}
       {tabActiva === "usuarios" && (
         <div>
-          {/* BARRA DE BÚSQUEDA Y FILTRO */}
-          <div style={{ display: "flex", gap: "12px", marginBottom: "16px", flexWrap: "wrap" }}>
-            <div style={{ position: "relative", flex: 1, minWidth: "240px" }}>
-              <Search size={18} color="#9CA3AF" style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)" }} />
-              <input
-                type="text"
-                placeholder="Buscar por nombre, apellido o correo..."
-                value={filtroTexto}
-                onChange={(e) => setFiltroTexto(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") cargarDirectorio(filtroTexto);
-                }}
-                style={{ width: "100%", padding: "9px 12px 9px 38px", borderRadius: "8px", border: "1px solid #E4E4E4", fontSize: "0.85rem" }}
-              />
-            </div>
-
-            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <Filter size={16} color="#666" />
-              <select
-                value={filtroRol}
-                onChange={(e) => setFiltroRol(e.target.value)}
-                style={{ padding: "9px 12px", borderRadius: "8px", border: "1px solid #E4E4E4", fontSize: "0.85rem", fontWeight: 700, background: "#ffffff" }}
-              >
-                <option value="TODOS">Todos los Roles</option>
-                <option value="CLIENTE">Cliente</option>
-                <option value="OPERADOR">Operador</option>
-                <option value="ABOGADO">Abogado</option>
-                <option value="ADMINISTRADOR">Administrador</option>
-                <option value="SUPERADMIN">SuperAdmin</option>
-              </select>
-            </div>
-          </div>
-
-          {/* TABLA NATIVA UNIFICADA DE USUARIOS */}
           {cargando ? (
-            <div style={{ padding: "30px", textAlign: "center", color: "#666" }}>
+            <div style={{ padding: "40px", textAlign: "center", color: "#666" }}>
               Cargando directorio de usuarios y perfiles...
             </div>
-          ) : usuariosFiltrados.length === 0 ? (
-            <div style={{ padding: "30px", textAlign: "center", color: "#666", background: "#F9FAFB", borderRadius: "8px" }}>
-              No se encontraron usuarios registrados con el criterio de búsqueda.
-            </div>
           ) : (
-            <div className="tabla-panel-envoltura" style={{ WebkitOverflowScrolling: "touch" }}>
-              <table className="tabla-panel" style={{ width: "100%", fontSize: "0.84rem" }}>
-                <thead>
-                  <tr>
-                    <th>Nombre</th>
-                    <th>Correo</th>
-                    <th>Estado</th>
-                    <th>Perfiles (Asignación de Roles)</th>
-                    <th style={{ position: "sticky", right: 0, background: "#FAFAF9", zIndex: 2, boxShadow: "-2px 0 6px rgba(0,0,0,0.05)", textAlign: "center" }}>Acción</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {usuariosFiltrados.map((u) => (
-                    <FilaUsuario
-                      key={u.usu_id}
-                      usuario={u}
-                      negocio={negocio}
-                      perfiles={perfiles}
-                      nivelMaximoGestor={nivelMaximoGestor}
-                    />
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <DataGrid
+              columnas={columnasUsuarios}
+              filas={usuarios}
+              idFila={(u) => u.usu_id}
+              nombreExportacion={`usuarios-${negocio.toLowerCase()}`}
+            />
           )}
         </div>
       )}
