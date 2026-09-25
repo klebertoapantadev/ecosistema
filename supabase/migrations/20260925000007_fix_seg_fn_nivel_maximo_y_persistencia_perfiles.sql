@@ -8,20 +8,20 @@
 -- 1. Sincronizar perfiles históricos desde seg_membresia a seg_membresia_perfil
 -- ============================================================================
 -- Asegurar que todo perfil existente en el catálogo esté disponible
-INSERT INTO comun_seguridad.seg_perfil (per_clave, per_nombre, per_nivel, per_ambito, per_descripcion, per_activo, per_asignable)
+INSERT INTO comun_seguridad.seg_perfil (per_clave, per_nombre, per_nivel, per_asignable, per_activo)
 VALUES 
-  ('CLIENTE', 'Cliente', 10, 'GLOBAL', 'Acceso base al portal de clientes y autoservicio', true, true),
-  ('OPERADOR', 'Operador', 30, 'NEGOCIO', 'Gestión operativa y atención de casos', true, true),
-  ('AUXILIAR', 'Auxiliar', 30, 'NEGOCIO', 'Soporte y asistencia operativa', true, true),
-  ('TECNICO', 'Técnico', 50, 'NEGOCIO', 'Especialista técnico de soporte', true, true),
-  ('ABOGADO', 'Abogado', 50, 'NEGOCIO', 'Socio legal verificado y habilitado', true, true),
-  ('ADMINISTRADOR', 'Administrador', 80, 'NEGOCIO', 'Gestión administrativa y asignación de roles', true, true),
-  ('SUPERADMIN', 'SuperAdmin', 100, 'PLATAFORMA', 'Control total de plataforma multi-inquilino', true, false)
+  ('CLIENTE', 'Cliente', 10, true, true),
+  ('OPERADOR', 'Operador', 30, true, true),
+  ('AUXILIAR', 'Auxiliar', 30, true, true),
+  ('TECNICO', 'Técnico', 50, true, true),
+  ('ABOGADO', 'Abogado', 50, true, true),
+  ('ADMINISTRADOR', 'Administrador', 80, true, true),
+  ('SUPERADMIN', 'SuperAdmin', 100, false, true)
 ON CONFLICT (per_clave) DO UPDATE 
 SET per_nombre = EXCLUDED.per_nombre,
     per_nivel = EXCLUDED.per_nivel,
-    per_activo = true,
-    per_asignable = EXCLUDED.per_asignable;
+    per_asignable = EXCLUDED.per_asignable,
+    per_activo = true;
 
 -- Vincular perfil CLIENTE (nivel 10) a todas las membresías activas que no lo tengan
 INSERT INTO comun_seguridad.seg_membresia_perfil (mpe_membresia_id, mpe_perfil_id)
