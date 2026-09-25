@@ -200,14 +200,6 @@ const CATALOGO_FAVORITOS: Record<string, WidgetFavInfo> = {
     icono: Users,
     href: "/panel/clientes",
     origen: "Configurar"
-  },
-  alta_cliente_crm: {
-    id: "alta_cliente_crm",
-    titulo: "Alta Asistida & Recepción Multicanal",
-    subtitulo: "Registro asistido de clientes con OCR ARIA de cédula/nombramiento y verificación de conflictos",
-    icono: UserCheck,
-    href: "/panel/clientes?accion=alta",
-    origen: "Configurar"
   }
 };
 

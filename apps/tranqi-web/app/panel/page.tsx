@@ -49,8 +49,7 @@ const ACCESOS_ABOGADO: { icono: LucideIcon; nombre: string; detalle: string; hre
 ];
 
 const WIDGETS_OPERADOR: { clave: string; icono: LucideIcon; nombre: string; detalle: string; ruta: string }[] = [
-  { clave: "crm_clientes", icono: Users, nombre: "CRM & Clientes", detalle: "Directorio y expedientes", ruta: "/panel/clientes" },
-  { clave: "alta_cliente_crm", icono: UserCheck, nombre: "Alta Asistida", detalle: "Recepción con OCR", ruta: "/panel/clientes?accion=alta" },
+  { clave: "crm_clientes", icono: Users, nombre: "CRM Jurídico & Clientes", detalle: "Directorio 360°, KPIs y alta asistida", ruta: "/panel/clientes" },
   { clave: "socios", icono: UserCheck, nombre: "Aprobación de socios", detalle: "Cédula, título y matrícula", ruta: "/panel/socios" },
   { clave: "solicitud_socio", icono: Briefcase, nombre: "Solicitudes de socios", detalle: "Postulaciones en revisión", ruta: "/panel/administrar?widget=solicitud_socio" },
   { clave: "historial_pagos", icono: Receipt, nombre: "Historial de pagos", detalle: "Auditoría de cobros", ruta: "/panel/administrar?widget=historial_pagos" },

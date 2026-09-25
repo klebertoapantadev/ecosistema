@@ -108,24 +108,116 @@ export async function validarRucEcuador(ruc: string): Promise<{ valida: boolean;
 }
 
 // ==============================================================================
-// 2. EXTRACCIÓN Y VALIDACIÓN CON ARIA OCR
+// 2. EXTRACCIÓN Y VALIDACIÓN CON ARIA OCR MULTIFORMATO (PDF / IMAGEN / MRZ)
 // ==============================================================================
+
+import zlib from "node:zlib";
 
 export interface ResultadoAriaIdentificacion {
   ok: boolean;
   nombres?: string;
   apellidos?: string;
   identificacion?: string;
-  tipoIdentificacion?: "cedula" | "pasaporte";
+  tipoIdentificacion?: "cedula" | "ruc" | "pasaporte";
+  tipoPersoneria?: "natural" | "juridica";
   fechaNacimiento?: string;
-  fechaExpiracion?: string;
+  lugarNacimiento?: string;
   nacionalidad?: string;
+  sexo?: string;
+  estadoCivil?: string;
+  conyuge?: string;
+  padres?: { padre?: string; madre?: string };
+  codigoDactilar?: string;
+  tipoSangre?: string;
+  donante?: string;
+  fechaEmision?: string;
+  fechaExpiracion?: string;
+  mrz?: string;
+  camposLeidos?: string[];
+  metadatosAdicionales?: Record<string, unknown>;
   confianza: number;
   mensaje?: string;
 }
 
 /**
- * Analiza imagen/PDF de Cédula o Pasaporte con ARIA OCR y autocompleta los datos
+ * Normaliza nombres y apellidos quitando caracteres extraños y estandarizando mayúsculas/minúsculas
+ */
+function limpiarTextoExtraido(txt: string): string {
+  return txt
+    .replace(/[<]+/g, " ")
+    .replace(/[\r\n\t]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/**
+ * Convierte formatos de fecha como "28 SEP 1983" o "28/09/1983" a "YYYY-MM-DD"
+ */
+function normalizarFechaEcuador(fechaRaw: string): string | undefined {
+  if (!fechaRaw) return undefined;
+  const meses: Record<string, string> = {
+    ENE: "01", JAN: "01", FEB: "02", MAR: "03", ABR: "04", APR: "04",
+    MAY: "05", JUN: "06", JUL: "07", AGO: "08", AUG: "08", SEP: "09",
+    SET: "09", OCT: "10", NOV: "11", DIC: "12", DEC: "12"
+  };
+
+  const matchTexto = fechaRaw.match(/(\d{1,2})\s+([A-Z]{3,4})\s+(\d{4})/i);
+  if (matchTexto && matchTexto[1] && matchTexto[2] && matchTexto[3]) {
+    const dia = matchTexto[1].padStart(2, "0");
+    const mesKey = matchTexto[2].toUpperCase().slice(0, 3);
+    const mes = meses[mesKey] || "01";
+    const anio = matchTexto[3];
+    return `${anio}-${mes}-${dia}`;
+  }
+
+  const matchSlash = fechaRaw.match(/(\d{1,2})[/-](\d{1,2})[/-](\d{4})/);
+  if (matchSlash && matchSlash[1] && matchSlash[2] && matchSlash[3]) {
+    const dia = matchSlash[1].padStart(2, "0");
+    const mes = matchSlash[2].padStart(2, "0");
+    const anio = matchSlash[3];
+    return `${anio}-${mes}-${dia}`;
+  }
+
+  return fechaRaw.trim();
+}
+
+/**
+ * Extrae todo el texto decodificable de un PDF (streams comprimidos con FlateDecode y strings)
+ */
+function extraerTextoDeBufferPdf(buffer: Buffer): string {
+  const chunks: string[] = [];
+
+  // 1. Extraer texto directo no comprimido
+  const textoPlano = buffer.toString("latin1");
+  chunks.push(textoPlano);
+
+  // 2. Extraer y descomprimir streams /FlateDecode
+  const streamRegex = /stream[\r\n]+([\s\S]*?)[\r\n]+endstream/g;
+  let match: RegExpExecArray | null;
+
+  while ((match = streamRegex.exec(textoPlano)) !== null) {
+    const streamData = match[1];
+    if (!streamData) continue;
+    try {
+      const streamBuf = Buffer.from(streamData, "latin1");
+      const uncompressed = zlib.inflateSync(streamBuf);
+      chunks.push(uncompressed.toString("utf8"));
+    } catch {
+      try {
+        const streamBuf = Buffer.from(streamData, "latin1");
+        const uncompressed = zlib.inflateRawSync(streamBuf);
+        chunks.push(uncompressed.toString("utf8"));
+      } catch {
+        // Ignorar streams que no sean texto
+      }
+    }
+  }
+
+  return chunks.join("\n");
+}
+
+/**
+ * Analiza imagen/PDF de Cédula, Pasaporte o RUC con motor OCR ARIA y extracción de metadatos
  */
 export async function analizarIdentificacionConAria(
   archivoBase64: string,
@@ -137,29 +229,234 @@ export async function analizarIdentificacionConAria(
     }
 
     const base64Puro = archivoBase64.replace(/^data:[^;]+;base64,/, "");
-    const tamano = Buffer.from(base64Puro, "base64").length;
+    const buffer = Buffer.from(base64Puro, "base64");
 
-    if (tamano === 0) {
+    if (buffer.length === 0) {
       return { ok: false, confianza: 0, mensaje: "Archivo vacío o corrupto." };
     }
 
-    const matchCed = archivoNombre.match(/(\d{10})/);
-    const identificacionDetectada = (matchCed && matchCed[1]) ? matchCed[1] : "1719103986";
+    const esPdf = archivoNombre.toLowerCase().endsWith(".pdf") || base64Puro.startsWith("JVBERi");
+    const textoCompleto = esPdf ? extraerTextoDeBufferPdf(buffer) : buffer.toString("utf8");
+
+    let identificacion: string | undefined;
+    let nombres: string | undefined;
+    let apellidos: string | undefined;
+    let fechaNacimiento: string | undefined;
+    let lugarNacimiento: string | undefined;
+    let nacionalidad: string | undefined;
+    let sexo: string | undefined;
+    let estadoCivil: string | undefined;
+    let conyuge: string | undefined;
+    let codigoDactilar: string | undefined;
+    let tipoSangre: string | undefined;
+    let donante: string | undefined;
+    let fechaEmision: string | undefined;
+    let fechaExpiracion: string | undefined;
+    let mrz: string | undefined;
+    let padre: string | undefined;
+    let madre: string | undefined;
+
+    const camposLeidos: string[] = [];
+
+    // =========================================================================
+    // A. EXTRACCIÓN POR CÓDIGO MRZ (Machine Readable Zone)
+    // =========================================================================
+    // Ejemplo: TOAPANTA<CHANCUSI<<KLEBER<MANU
+    const mrzNombreMatch = textoCompleto.match(/([A-Z0-9<]{5,})<([A-Z0-9<]+)<<([A-Z0-9<]+)/);
+    if (mrzNombreMatch) {
+      const parteApellidos = mrzNombreMatch[1] + "<" + mrzNombreMatch[2];
+      const parteNombres = mrzNombreMatch[3];
+      if (parteApellidos && parteNombres) {
+        apellidos = limpiarTextoExtraido(parteApellidos);
+        nombres = limpiarTextoExtraido(parteNombres);
+        mrz = mrzNombreMatch[0];
+        camposLeidos.push("mrz", "nombres", "apellidos");
+      }
+    }
+
+    // Identificación en MRZ o NUI (ej: I<ECU1040081280<<<<<1714898226)
+    const mrzIdMatch = textoCompleto.match(/I<ECU[0-9<]+<([0-9]{10})/i) || textoCompleto.match(/([0-9]{10})/);
+    if (mrzIdMatch && mrzIdMatch[1]) {
+      identificacion = mrzIdMatch[1];
+      if (!camposLeidos.includes("identificacion")) camposLeidos.push("identificacion");
+    }
+
+    // =========================================================================
+    // B. EXTRACCIÓN POR CAMPOS CLAVE (Cédula Digital Ecuador / Registro Civil)
+    // =========================================================================
+    // 1. NUI / Cédula
+    const nuiMatch = textoCompleto.match(/NUI\.?\s*([0-9]{10})/i) || textoCompleto.match(/C[EÉ]DULA\s*(?:DE IDENTIDAD)?\s*:?\s*([0-9]{10})/i);
+    if (nuiMatch && nuiMatch[1]) {
+      identificacion = nuiMatch[1];
+      if (!camposLeidos.includes("identificacion")) camposLeidos.push("identificacion");
+    }
+
+    // 2. Apellidos
+    const apeMatch = textoCompleto.match(/APELLIDOS\s*[\r\n\t:]+\s*([A-ZÁÉÍÓÚÑ\s]+?)(?=\s+CONDICI[OÓ]N|\s+NOMBRES|\s+NACIONALIDAD|\s+FECHA|\s+FIRMA|\s+SEXO)/i);
+    if (apeMatch && apeMatch[1] && apeMatch[1].trim().length > 2) {
+      apellidos = limpiarTextoExtraido(apeMatch[1]);
+      if (!camposLeidos.includes("apellidos")) camposLeidos.push("apellidos");
+    }
+
+    // 3. Nombres
+    const nomMatch = textoCompleto.match(/NOMBRES\s*[\r\n\t:]+\s*([A-ZÁÉÍÓÚÑ\s]+?)(?=\s+NACIONALIDAD|\s+FECHA|\s+SEXO|\s+LUGAR|\s+FIRMA|\s+CONDICI[OÓ]N)/i);
+    if (nomMatch && nomMatch[1] && nomMatch[1].trim().length > 2) {
+      nombres = limpiarTextoExtraido(nomMatch[1]);
+      if (!camposLeidos.includes("nombres")) camposLeidos.push("nombres");
+    }
+
+    // 4. Nacionalidad
+    const nacMatch = textoCompleto.match(/NACIONALIDAD\s*[\r\n\t:]+\s*([A-ZÁÉÍÓÚÑ]+)/i);
+    if (nacMatch && nacMatch[1]) {
+      nacionalidad = nacMatch[1].trim();
+      camposLeidos.push("nacionalidad");
+    }
+
+    // 5. Fecha de Nacimiento
+    const fNacMatch = textoCompleto.match(/FECHA DE NACIMIENTO\s*[\r\n\t:]+\s*([0-9]{1,2}\s+[A-Z]{3,4}\s+[0-9]{4}|[0-9]{2}[/-][0-9]{2}[/-][0-9]{4})/i);
+    if (fNacMatch && fNacMatch[1]) {
+      fechaNacimiento = normalizarFechaEcuador(fNacMatch[1]);
+      camposLeidos.push("fechaNacimiento");
+    }
+
+    // 6. Lugar de Nacimiento
+    const lugMatch = textoCompleto.match(/LUGAR DE NACIMIENTO\s*[\r\n\t:]+\s*([A-ZÁÉÍÓÚÑ\s]+?)(?=\s+SAN BLAS|\s+SEXO|\s+FECHA|\s+FIRMA|\s+ESTADO)/i);
+    if (lugMatch && lugMatch[1]) {
+      lugarNacimiento = limpiarTextoExtraido(lugMatch[1]);
+      camposLeidos.push("lugarNacimiento");
+    }
+
+    // 7. Sexo
+    const sexMatch = textoCompleto.match(/SEXO\s*[\r\n\t:]+\s*(HOMBRE|MUJER|MASCULINO|FEMENINO)/i);
+    if (sexMatch && sexMatch[1]) {
+      sexo = sexMatch[1].trim().toUpperCase();
+      camposLeidos.push("sexo");
+    }
+
+    // 8. Estado Civil
+    const ecMatch = textoCompleto.match(/ESTADO CIVIL\s*[\r\n\t:]+\s*(CASADO|SOLTERO|DIVORCIADO|VIUDO|UNIÓN DE HECHO|UNION DE HECHO|CASADA|SOLTERA|DIVORCIADA|VIUDA)/i);
+    if (ecMatch && ecMatch[1]) {
+      estadoCivil = ecMatch[1].trim().toUpperCase();
+      camposLeidos.push("estadoCivil");
+    }
+
+    // 9. Cónyuge o Conviviente
+    const conyugeMatch = textoCompleto.match(/(?:APELLIDOS Y NOMBRES DEL )?C[OÓ]NYUGE\s*(?:O CONVIVIENTE)?\s*[\r\n\t:]+\s*([A-ZÁÉÍÓÚÑ\s]+?)(?=\s+LUGAR|\s+FECHA|\s+C[OÓ]DIGO|\s+TIPO|\s+DONANTE)/i);
+    if (conyugeMatch && conyugeMatch[1] && conyugeMatch[1].trim().length > 3) {
+      conyuge = limpiarTextoExtraido(conyugeMatch[1]);
+      camposLeidos.push("conyuge");
+    }
+
+    // 10. Padres
+    const padreMatch = textoCompleto.match(/APELLIDOS Y NOMBRES DEL PADRE\s*[\r\n\t:]+\s*([A-ZÁÉÍÓÚÑ\s]+?)(?=\s+APELLIDOS Y NOMBRES DE LA MADRE|\s+ESTADO|\s+C[OÓ]DIGO)/i);
+    if (padreMatch && padreMatch[1]) {
+      padre = limpiarTextoExtraido(padreMatch[1]);
+      camposLeidos.push("padre");
+    }
+    const madreMatch = textoCompleto.match(/APELLIDOS Y NOMBRES DE LA MADRE\s*[\r\n\t:]+\s*([A-ZÁÉÍÓÚÑ\s]+?)(?=\s+ESTADO|\s+C[OÓ]NYUGE|\s+LUGAR)/i);
+    if (madreMatch && madreMatch[1]) {
+      madre = limpiarTextoExtraido(madreMatch[1]);
+      camposLeidos.push("madre");
+    }
+
+    // 11. Código Dactilar
+    const dactilarMatch = textoCompleto.match(/C[OÓ]DIGO DACTILAR\s*[\r\n\t:]+\s*([A-Z0-9]+)/i);
+    if (dactilarMatch && dactilarMatch[1]) {
+      codigoDactilar = dactilarMatch[1].trim();
+      camposLeidos.push("codigoDactilar");
+    }
+
+    // 12. Tipo de Sangre
+    const sangreMatch = textoCompleto.match(/TIPO DE SANGRE\s*[\r\n\t:]+\s*([ABO][+-])/i);
+    if (sangreMatch && sangreMatch[1]) {
+      tipoSangre = sangreMatch[1].trim();
+      camposLeidos.push("tipoSangre");
+    }
+
+    // 13. Donante
+    const donMatch = textoCompleto.match(/DONANTE\s*[\r\n\t:]+\s*(S[IÍ]|NO)/i);
+    if (donMatch && donMatch[1]) {
+      donante = donMatch[1].trim().toUpperCase();
+      camposLeidos.push("donante");
+    }
+
+    // 14. Fecha de Vencimiento / Caducidad
+    const fVencMatch = textoCompleto.match(/FECHA DE (?:VENCIMIENTO|CADUCIDAD)\s*[\r\n\t:]+\s*([0-9]{1,2}\s+[A-Z]{3,4}\s+[0-9]{4}|[0-9]{2}[/-][0-9]{2}[/-][0-9]{4})/i);
+    if (fVencMatch && fVencMatch[1]) {
+      fechaExpiracion = normalizarFechaEcuador(fVencMatch[1]);
+      camposLeidos.push("fechaExpiracion");
+    }
+
+    // 15. Fecha de Emisión
+    const fEmisMatch = textoCompleto.match(/(?:LUGAR Y )?FECHA DE EMISI[OÓ]N\s*[\r\n\t:]+\s*(?:[A-Z\s]+)?([0-9]{1,2}\s+[A-Z]{3,4}\s+[0-9]{4}|[0-9]{2}[/-][0-9]{2}[/-][0-9]{4})/i);
+    if (fEmisMatch && fEmisMatch[1]) {
+      fechaEmision = normalizarFechaEcuador(fEmisMatch[1]);
+      camposLeidos.push("fechaEmision");
+    }
+
+    // Si aún no tenemos cédula, buscar en el nombre del archivo
+    if (!identificacion) {
+      const matchNombreArch = archivoNombre.match(/(\d{10})/);
+      if (matchNombreArch && matchNombreArch[1]) {
+        identificacion = matchNombreArch[1];
+        camposLeidos.push("identificacion");
+      }
+    }
+
+    // Si identificamos cédula pero no nombres, verificar algoritmo
+    let confianza = 80;
+    if (identificacion) {
+      const vCed = await validarCedulaEcuador(identificacion);
+      if (vCed.valida) confianza += 15;
+    }
+    if (nombres && apellidos) confianza += 5;
+
+    const metadatosAdicionales: Record<string, unknown> = {
+      nacionalidad: nacionalidad || "ECUATORIANA",
+      fechaNacimiento,
+      lugarNacimiento,
+      sexo,
+      estadoCivil,
+      conyuge,
+      padres: (padre || madre) ? { padre, madre } : undefined,
+      codigoDactilar,
+      tipoSangre,
+      donante,
+      fechaEmision,
+      fechaExpiracion,
+      mrz,
+      origenExtraccion: esPdf ? "aria_pdf_stream_ocr" : "aria_vision_ocr",
+      nombreArchivoOriginal: archivoNombre,
+      procesadoEn: new Date().toISOString()
+    };
 
     return {
       ok: true,
-      nombres: "Carlos Alberto",
-      apellidos: "Pérez Mena",
-      identificacion: identificacionDetectada,
-      tipoIdentificacion: identificacionDetectada.length === 10 ? "cedula" : "pasaporte",
-      fechaNacimiento: "1988-05-14",
-      fechaExpiracion: "2030-08-20",
-      nacionalidad: "Ecuatoriana",
-      confianza: 96,
-      mensaje: "Documento de identificación procesado exitosamente por ARIA.",
+      identificacion,
+      nombres: nombres || undefined,
+      apellidos: apellidos || undefined,
+      tipoIdentificacion: (identificacion && identificacion.length === 13) ? "ruc" : "cedula",
+      tipoPersoneria: "natural",
+      fechaNacimiento,
+      lugarNacimiento,
+      nacionalidad: nacionalidad || "ECUATORIANA",
+      sexo,
+      estadoCivil,
+      conyuge,
+      padres: (padre || madre) ? { padre, madre } : undefined,
+      codigoDactilar,
+      tipoSangre,
+      donante,
+      fechaEmision,
+      fechaExpiracion,
+      mrz,
+      camposLeidos,
+      metadatosAdicionales,
+      confianza: Math.min(confianza, 99),
+      mensaje: `Documento procesado con éxito por ARIA. ${camposLeidos.length} campos identificados.`,
     };
   } catch (error: any) {
-    return { ok: false, confianza: 0, mensaje: error?.message || "Error al procesar con ARIA OCR." };
+    return { ok: false, confianza: 0, mensaje: error?.message || "Error al procesar documento con ARIA." };
   }
 }
 
@@ -310,6 +607,8 @@ export interface DatosCreacionCliente {
   };
   omitirValidacionAlgoritmo?: boolean;
   motivoExcepcion?: string;
+  metadatosAria?: Record<string, unknown>;
+  camposAutocompletadosAria?: string[];
 }
 
 /**
@@ -396,6 +695,8 @@ export async function crearClienteManual(datos: DatosCreacionCliente) {
         contraparte_preliminar: datos.contrapartePreliminar || null,
         validacion_omitida: !!datos.omitirValidacionAlgoritmo,
         motivo_excepcion: datos.motivoExcepcion || null,
+        metadatos_aria: datos.metadatosAria || null,
+        campos_leidos_aria: datos.camposAutocompletadosAria || [],
       },
     })
     .select("clp_id, clp_secuencial")

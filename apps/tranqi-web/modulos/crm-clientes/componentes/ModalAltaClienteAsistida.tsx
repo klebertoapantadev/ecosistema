@@ -30,6 +30,52 @@ interface Props {
   }) => void;
 }
 
+function IndicadorOrigenCampo({ esAria, esModificado }: { esAria?: boolean; esModificado?: boolean }) {
+  if (esAria && !esModificado) {
+    return (
+      <span
+        title="Dato extraído automáticamente del documento oficial por ARIA OCR"
+        style={{
+          background: "#ECFDF5",
+          color: "#047857",
+          border: "1px solid #A7F3D0",
+          borderRadius: "4px",
+          padding: "1px 6px",
+          fontSize: "0.68rem",
+          fontWeight: 700,
+          display: "inline-flex",
+          alignItems: "center",
+          gap: "3px"
+        }}
+      >
+        <Sparkles size={10} /> Leído por ARIA
+      </span>
+    );
+  }
+  if (esModificado) {
+    return (
+      <span
+        title="Dato ingresado o modificado manualmente"
+        style={{
+          background: "#F1F5F9",
+          color: "#475569",
+          border: "1px solid #CBD5E1",
+          borderRadius: "4px",
+          padding: "1px 6px",
+          fontSize: "0.68rem",
+          fontWeight: 600,
+          display: "inline-flex",
+          alignItems: "center",
+          gap: "3px"
+        }}
+      >
+        ✍️ Digitado
+      </span>
+    );
+  }
+  return null;
+}
+
 export function ModalAltaClienteAsistida({ abierto, alCerrar, alGuardarExitoso }: Props) {
   const [isPending, startTransition] = useTransition();
 
@@ -68,13 +114,23 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, alGuardarExitoso }
   const [omitirValidacionAlgoritmo, setOmitirValidacionAlgoritmo] = useState(false);
   const [motivoExcepcion, setMotivoExcepcion] = useState("");
 
-  // Estados de IA y validación
+  // Estados de IA, Metadatos y Validación
   const [procesandoAriaId, setProcesandoAriaId] = useState(false);
   const [procesandoAriaNom, setProcesandoAriaNom] = useState(false);
   const [badgeAriaId, setBadgeAriaId] = useState<string | null>(null);
   const [badgeAriaNom, setBadgeAriaNom] = useState<string | null>(null);
   const [errorValidacion, setErrorValidacion] = useState<string | null>(null);
   const [avisoDuplicado, setAvisoDuplicado] = useState<string | null>(null);
+  const [metadatosAria, setMetadatosAria] = useState<Record<string, unknown> | null>(null);
+  const [mostrarMetadatosDetallados, setMostrarMetadatosDetallados] = useState(false);
+
+  // Registro de origen de campos: Leído por ARIA vs Digitado Manualmente
+  const [camposAria, setCamposAria] = useState<Record<string, boolean>>({});
+  const [camposModificados, setCamposModificados] = useState<Record<string, boolean>>({});
+
+  const marcarCampoModificado = (campo: string) => {
+    setCamposModificados((prev) => ({ ...prev, [campo]: true }));
+  };
 
   if (!abierto) return null;
 
@@ -93,13 +149,36 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, alGuardarExitoso }
       setProcesandoAriaId(false);
 
       if (res.ok) {
-        if (res.nombres) setNombres(res.nombres);
-        if (res.apellidos) setApellidos(res.apellidos);
+        const nuevosCamposAria: Record<string, boolean> = {};
+
+        if (res.nombres) {
+          setNombres(res.nombres);
+          nuevosCamposAria["nombres"] = true;
+        }
+        if (res.apellidos) {
+          setApellidos(res.apellidos);
+          nuevosCamposAria["apellidos"] = true;
+        }
         if (res.identificacion) {
           setIdentificacion(res.identificacion);
           setTipoIdentificacion(res.tipoIdentificacion || "cedula");
+          nuevosCamposAria["identificacion"] = true;
         }
-        setBadgeAriaId(`✨ Identificación Validada por ARIA (${res.confianza}% confianza)`);
+
+        if (res.metadatosAdicionales) {
+          setMetadatosAria(res.metadatosAdicionales);
+        }
+
+        setCamposAria((prev) => ({ ...prev, ...nuevosCamposAria }));
+        // Limpiar modificaciones manuales previas para los campos leídos
+        setCamposModificados((prev) => {
+          const copia = { ...prev };
+          Object.keys(nuevosCamposAria).forEach((k) => delete copia[k]);
+          return copia;
+        });
+
+        const numCampos = (res.camposLeidos?.length || Object.keys(nuevosCamposAria).length);
+        setBadgeAriaId(`✨ Identificación Extraída por ARIA OCR (${numCampos} datos identificados · ${res.confianza}% confianza)`);
       } else {
         setErrorValidacion(res.mensaje || "No se pudo extraer la identificación.");
       }
@@ -119,13 +198,33 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, alGuardarExitoso }
       setProcesandoAriaNom(false);
 
       if (res.ok) {
-        if (res.razonSocial && !razonSocial) setRazonSocial(res.razonSocial);
-        if (res.ruc && !identificacion) setIdentificacion(res.ruc);
-        if (res.representanteNombres) setRepNombres(res.representanteNombres);
-        if (res.representanteCedula) setRepCedula(res.representanteCedula);
-        if (res.cargo) setRepCargo(res.cargo);
-        if (res.fechaVencimientoCalculada) setRepVencimientoNombramiento(res.fechaVencimientoCalculada);
+        const nuevosCamposAria: Record<string, boolean> = {};
+        if (res.razonSocial && !razonSocial) {
+          setRazonSocial(res.razonSocial);
+          nuevosCamposAria["razonSocial"] = true;
+        }
+        if (res.ruc && !identificacion) {
+          setIdentificacion(res.ruc);
+          nuevosCamposAria["identificacion"] = true;
+        }
+        if (res.representanteNombres) {
+          setRepNombres(res.representanteNombres);
+          nuevosCamposAria["repNombres"] = true;
+        }
+        if (res.representanteCedula) {
+          setRepCedula(res.representanteCedula);
+          nuevosCamposAria["repCedula"] = true;
+        }
+        if (res.cargo) {
+          setRepCargo(res.cargo);
+          nuevosCamposAria["repCargo"] = true;
+        }
+        if (res.fechaVencimientoCalculada) {
+          setRepVencimientoNombramiento(res.fechaVencimientoCalculada);
+          nuevosCamposAria["repVencimientoNombramiento"] = true;
+        }
         setNombramientoValidadoAria(true);
+        setCamposAria((prev) => ({ ...prev, ...nuevosCamposAria }));
         setBadgeAriaNom(`✨ Nombramiento Mercantil Vigente certificado por ARIA (Vence: ${res.fechaVencimientoCalculada || "2 años"})`);
       }
     };
@@ -193,6 +292,8 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, alGuardarExitoso }
           } : undefined,
           omitirValidacionAlgoritmo,
           motivoExcepcion: omitirValidacionAlgoritmo ? motivoExcepcion : undefined,
+          metadatosAria: metadatosAria || undefined,
+          camposAutocompletadosAria: Object.keys(camposAria).filter((k) => camposAria[k]),
         };
 
         const res = await crearClienteManual(datos);
@@ -381,21 +482,129 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, alGuardarExitoso }
           </div>
 
           {badgeAriaId && (
-            <div style={{ background: "#F0FDF4", border: "1px solid #86EFAC", color: "#166534", padding: "8px 12px", borderRadius: "8px", fontSize: "0.8rem", display: "flex", alignItems: "center", gap: "6px" }}>
-              <CheckCircle2 size={16} />
-              {badgeAriaId}
+            <div style={{ background: "#F0FDF4", border: "1px solid #86EFAC", color: "#166534", padding: "10px 14px", borderRadius: "10px", fontSize: "0.82rem", display: "flex", flexDirection: "column", gap: "8px" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "8px" }}>
+                <span style={{ display: "flex", alignItems: "center", gap: "6px", fontWeight: 700 }}>
+                  <CheckCircle2 size={16} color="#16A34A" />
+                  {badgeAriaId}
+                </span>
+                {metadatosAria && (
+                  <button
+                    type="button"
+                    onClick={() => setMostrarMetadatosDetallados(!mostrarMetadatosDetallados)}
+                    style={{
+                      background: "#DCFCE7",
+                      border: "1px solid #86EFAC",
+                      color: "#15803D",
+                      padding: "3px 10px",
+                      borderRadius: "6px",
+                      fontSize: "0.74rem",
+                      fontWeight: 700,
+                      cursor: "pointer",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "4px"
+                    }}
+                  >
+                    <Eye size={12} />
+                    {mostrarMetadatosDetallados ? "Ocultar Metadatos" : "Ver Ficha de Metadatos Extraídos"}
+                  </button>
+                )}
+              </div>
+
+              {/* Ficha Desplegable de Metadatos Adicionales Guardados en JSONB */}
+              {mostrarMetadatosDetallados && metadatosAria && (
+                <div style={{ background: "#FFFFFF", border: "1px solid #BBF7D0", borderRadius: "8px", padding: "12px", marginTop: "4px", fontSize: "0.78rem" }}>
+                  <p style={{ margin: "0 0 8px 0", fontWeight: 800, color: "#166534", textTransform: "uppercase", fontSize: "0.72rem", letterSpacing: "0.04em" }}>
+                    📋 Metadatos Registrados en el Perfil Digital (JSONB inmutable)
+                  </p>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "8px" }}>
+                    {!!metadatosAria.nacionalidad && (
+                      <div style={{ background: "#F8FAFC", padding: "6px 8px", borderRadius: "6px", border: "1px solid #E2E8F0" }}>
+                        <span style={{ color: "#64748B", display: "block", fontSize: "0.68rem" }}>Nacionalidad:</span>
+                        <strong style={{ color: "#0F172A" }}>{String(metadatosAria.nacionalidad)}</strong>
+                      </div>
+                    )}
+                    {!!metadatosAria.fechaNacimiento && (
+                      <div style={{ background: "#F8FAFC", padding: "6px 8px", borderRadius: "6px", border: "1px solid #E2E8F0" }}>
+                        <span style={{ color: "#64748B", display: "block", fontSize: "0.68rem" }}>Fecha Nacimiento:</span>
+                        <strong style={{ color: "#0F172A" }}>{String(metadatosAria.fechaNacimiento)}</strong>
+                      </div>
+                    )}
+                    {!!metadatosAria.lugarNacimiento && (
+                      <div style={{ background: "#F8FAFC", padding: "6px 8px", borderRadius: "6px", border: "1px solid #E2E8F0" }}>
+                        <span style={{ color: "#64748B", display: "block", fontSize: "0.68rem" }}>Lugar Nacimiento:</span>
+                        <strong style={{ color: "#0F172A" }}>{String(metadatosAria.lugarNacimiento)}</strong>
+                      </div>
+                    )}
+                    {!!metadatosAria.sexo && (
+                      <div style={{ background: "#F8FAFC", padding: "6px 8px", borderRadius: "6px", border: "1px solid #E2E8F0" }}>
+                        <span style={{ color: "#64748B", display: "block", fontSize: "0.68rem" }}>Sexo / Género:</span>
+                        <strong style={{ color: "#0F172A" }}>{String(metadatosAria.sexo)}</strong>
+                      </div>
+                    )}
+                    {!!metadatosAria.estadoCivil && (
+                      <div style={{ background: "#F8FAFC", padding: "6px 8px", borderRadius: "6px", border: "1px solid #E2E8F0" }}>
+                        <span style={{ color: "#64748B", display: "block", fontSize: "0.68rem" }}>Estado Civil:</span>
+                        <strong style={{ color: "#0F172A" }}>{String(metadatosAria.estadoCivil)}</strong>
+                      </div>
+                    )}
+                    {!!metadatosAria.conyuge && (
+                      <div style={{ background: "#F8FAFC", padding: "6px 8px", borderRadius: "6px", border: "1px solid #E2E8F0" }}>
+                        <span style={{ color: "#64748B", display: "block", fontSize: "0.68rem" }}>Cónyuge / Conviviente:</span>
+                        <strong style={{ color: "#0F172A" }}>{String(metadatosAria.conyuge)}</strong>
+                      </div>
+                    )}
+                    {!!metadatosAria.codigoDactilar && (
+                      <div style={{ background: "#F8FAFC", padding: "6px 8px", borderRadius: "6px", border: "1px solid #E2E8F0" }}>
+                        <span style={{ color: "#64748B", display: "block", fontSize: "0.68rem" }}>Código Dactilar:</span>
+                        <strong style={{ color: "#0F172A" }}>{String(metadatosAria.codigoDactilar)}</strong>
+                      </div>
+                    )}
+                    {!!metadatosAria.tipoSangre && (
+                      <div style={{ background: "#F8FAFC", padding: "6px 8px", borderRadius: "6px", border: "1px solid #E2E8F0" }}>
+                        <span style={{ color: "#64748B", display: "block", fontSize: "0.68rem" }}>Tipo Sangre:</span>
+                        <strong style={{ color: "#0F172A" }}>{String(metadatosAria.tipoSangre)}</strong>
+                      </div>
+                    )}
+                    {!!metadatosAria.donante && (
+                      <div style={{ background: "#F8FAFC", padding: "6px 8px", borderRadius: "6px", border: "1px solid #E2E8F0" }}>
+                        <span style={{ color: "#64748B", display: "block", fontSize: "0.68rem" }}>Donante:</span>
+                        <strong style={{ color: "#0F172A" }}>{String(metadatosAria.donante)}</strong>
+                      </div>
+                    )}
+                    {!!metadatosAria.fechaExpiracion && (
+                      <div style={{ background: "#F8FAFC", padding: "6px 8px", borderRadius: "6px", border: "1px solid #E2E8F0" }}>
+                        <span style={{ color: "#64748B", display: "block", fontSize: "0.68rem" }}>Vencimiento Cédula:</span>
+                        <strong style={{ color: "#0F172A" }}>{String(metadatosAria.fechaExpiracion)}</strong>
+                      </div>
+                    )}
+                    {!!metadatosAria.mrz && (
+                      <div style={{ background: "#F8FAFC", padding: "6px 8px", borderRadius: "6px", border: "1px solid #E2E8F0", gridColumn: "1 / -1" }}>
+                        <span style={{ color: "#64748B", display: "block", fontSize: "0.68rem" }}>Código MRZ:</span>
+                        <code style={{ fontSize: "0.72rem", color: "#334155" }}>{String(metadatosAria.mrz)}</code>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
           {/* Datos de Identificación */}
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "12px" }}>
             <div>
-              <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 600, color: "#334155", marginBottom: "4px" }}>
-                Tipo Identificación
-              </label>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "4px" }}>
+                <label style={{ fontSize: "0.78rem", fontWeight: 600, color: "#334155" }}>
+                  Tipo Identificación
+                </label>
+              </div>
               <select
                 value={tipoIdentificacion}
-                onChange={(e) => setTipoIdentificacion(e.target.value as any)}
+                onChange={(e) => {
+                  setTipoIdentificacion(e.target.value as any);
+                  marcarCampoModificado("tipoIdentificacion");
+                }}
                 style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid #CBD5E1", fontSize: "0.85rem" }}
               >
                 <option value="cedula">Cédula de Identidad</option>
@@ -405,15 +614,22 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, alGuardarExitoso }
             </div>
 
             <div>
-              <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 600, color: "#334155", marginBottom: "4px" }}>
-                Número de Identificación *
-              </label>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "4px" }}>
+                <label style={{ fontSize: "0.78rem", fontWeight: 600, color: "#334155" }}>
+                  Número de Identificación *
+                </label>
+                <IndicadorOrigenCampo
+                  esAria={camposAria["identificacion"]}
+                  esModificado={camposModificados["identificacion"]}
+                />
+              </div>
               <input
                 type="text"
                 value={identificacion}
                 onChange={async (e) => {
                   const val = e.target.value;
                   setIdentificacion(val);
+                  marcarCampoModificado("identificacion");
                   if (val.length >= 10) {
                     const dup = await verificarDuplicado(val);
                     if (dup.existe) setAvisoDuplicado(dup.mensaje || "Identificación ya registrada.");
@@ -421,7 +637,18 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, alGuardarExitoso }
                   }
                 }}
                 placeholder={tipoPersoneria === "natural" ? "1719103986" : "1792345678001"}
-                style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid #CBD5E1", fontSize: "0.85rem" }}
+                style={{
+                  width: "100%",
+                  padding: "8px 10px",
+                  borderRadius: "8px",
+                  border: camposAria["identificacion"] && !camposModificados["identificacion"]
+                    ? "1.5px solid #10B981"
+                    : "1px solid #CBD5E1",
+                  background: camposAria["identificacion"] && !camposModificados["identificacion"]
+                    ? "#F0FDF4"
+                    : "#FFFFFF",
+                  fontSize: "0.85rem"
+                }}
               />
             </div>
           </div>
@@ -458,40 +685,89 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, alGuardarExitoso }
           {tipoPersoneria === "natural" ? (
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
               <div>
-                <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 600, color: "#334155", marginBottom: "4px" }}>
-                  Nombres *
-                </label>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "4px" }}>
+                  <label style={{ fontSize: "0.78rem", fontWeight: 600, color: "#334155" }}>
+                    Nombres *
+                  </label>
+                  <IndicadorOrigenCampo
+                    esAria={camposAria["nombres"]}
+                    esModificado={camposModificados["nombres"]}
+                  />
+                </div>
                 <input
                   type="text"
                   value={nombres}
-                  onChange={(e) => setNombres(e.target.value)}
-                  placeholder="Carlos Alberto"
-                  style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid #CBD5E1", fontSize: "0.85rem" }}
+                  onChange={(e) => {
+                    setNombres(e.target.value);
+                    marcarCampoModificado("nombres");
+                  }}
+                  placeholder="KLEBER MANUEL"
+                  style={{
+                    width: "100%",
+                    padding: "8px 10px",
+                    borderRadius: "8px",
+                    border: camposAria["nombres"] && !camposModificados["nombres"]
+                      ? "1.5px solid #10B981"
+                      : "1px solid #CBD5E1",
+                    background: camposAria["nombres"] && !camposModificados["nombres"]
+                      ? "#F0FDF4"
+                      : "#FFFFFF",
+                    fontSize: "0.85rem"
+                  }}
                 />
               </div>
               <div>
-                <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 600, color: "#334155", marginBottom: "4px" }}>
-                  Apellidos *
-                </label>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "4px" }}>
+                  <label style={{ fontSize: "0.78rem", fontWeight: 600, color: "#334155" }}>
+                    Apellidos *
+                  </label>
+                  <IndicadorOrigenCampo
+                    esAria={camposAria["apellidos"]}
+                    esModificado={camposModificados["apellidos"]}
+                  />
+                </div>
                 <input
                   type="text"
                   value={apellidos}
-                  onChange={(e) => setApellidos(e.target.value)}
-                  placeholder="Pérez Mena"
-                  style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid #CBD5E1", fontSize: "0.85rem" }}
+                  onChange={(e) => {
+                    setApellidos(e.target.value);
+                    marcarCampoModificado("apellidos");
+                  }}
+                  placeholder="TOAPANTA CHANCUSI"
+                  style={{
+                    width: "100%",
+                    padding: "8px 10px",
+                    borderRadius: "8px",
+                    border: camposAria["apellidos"] && !camposModificados["apellidos"]
+                      ? "1.5px solid #10B981"
+                      : "1px solid #CBD5E1",
+                    background: camposAria["apellidos"] && !camposModificados["apellidos"]
+                      ? "#F0FDF4"
+                      : "#FFFFFF",
+                    fontSize: "0.85rem"
+                  }}
                 />
               </div>
             </div>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
               <div>
-                <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 600, color: "#334155", marginBottom: "4px" }}>
-                  Razón Social de la Empresa *
-                </label>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "4px" }}>
+                  <label style={{ fontSize: "0.78rem", fontWeight: 600, color: "#334155" }}>
+                    Razón Social de la Empresa *
+                  </label>
+                  <IndicadorOrigenCampo
+                    esAria={camposAria["razonSocial"]}
+                    esModificado={camposModificados["razonSocial"]}
+                  />
+                </div>
                 <input
                   type="text"
                   value={razonSocial}
-                  onChange={(e) => setRazonSocial(e.target.value)}
+                  onChange={(e) => {
+                    setRazonSocial(e.target.value);
+                    marcarCampoModificado("razonSocial");
+                  }}
                   placeholder="INMOBILIARIA & CONSTRUCTORA ANDINA S.A.S."
                   style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid #CBD5E1", fontSize: "0.85rem" }}
                 />

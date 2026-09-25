@@ -71,7 +71,6 @@ const MAPA_RUTAS_FISICAS_WIDGETS: Record<string, string> = {
   "selector-rol-activo": "apps/tranqi-web/app/panel/SelectorRolActivo.tsx",
   "crm_clientes": "apps/tranqi-web/modulos/crm-clientes/componentes/BandejaClientesCRM.tsx",
   "crm-clientes": "apps/tranqi-web/modulos/crm-clientes/componentes/BandejaClientesCRM.tsx",
-  "alta_cliente_crm": "apps/tranqi-web/modulos/crm-clientes/componentes/ModalAltaClienteAsistida.tsx",
   "vitrina_comercial": "packages/comercio/src/componentes/VitrinaComercialVisual.tsx",
   "vitrina": "packages/comercio/src/componentes/VitrinaComercialVisual.tsx",
   "gestion_catalogo": "packages/comercio/src/componentes/ConsolaGestionCatalogo.tsx",

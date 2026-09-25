@@ -127,13 +127,6 @@ const INVENTARIO_GLOBAL_WIDGETS: Record<string, { titulo: string; subtitulo: str
     colorIcono: "#5000BA",
     categoria: "Gestión Legal"
   },
-  alta_cliente_crm: {
-    titulo: "Alta Asistida & Recepción Multicanal",
-    subtitulo: "Registro asistido de clientes con OCR ARIA de cédula/nombramiento y verificación de conflictos",
-    icono: UserCheck,
-    colorIcono: "#05876E",
-    categoria: "Gestión Legal"
-  },
   agentes_ia: {
     titulo: "Agentes de IA",
     subtitulo: "Configuración de los asistentes Aria de tranqi: prompts, modelo y herramientas",
@@ -365,12 +358,12 @@ function obtenerWidgetsInicialesDinamicos(panelId: string, slugStr: string): str
   if (rolActivo === "OPERADOR" || rolActivo === "AUXILIAR" || rolActivo === "TECNICO") {
     if (panelId === "panel_herramientas" || slugStr === "herramientas") return ["catalogo_productos", "firma_documentos_pdf", "billetera_documentos", "emision_notificaciones"];
     if (panelId === "panel_seguridad" || slugStr === "seguridad") return ["mfa_seguridad", "auditoria"];
-    if (panelId === "panel_administrar" || slugStr === "administrar") return ["crm_clientes", "alta_cliente_crm", "socios", "solicitud_socio", "historial_pagos", "emision_notificaciones", "bitacora_notificaciones", "monitoreo_notificaciones_usuarios", "gestion_terminos_consentimientos", "configuracion_contrato_abogado", "consulta_usuarios_perfiles"];
+    if (panelId === "panel_administrar" || slugStr === "administrar") return ["crm_clientes", "socios", "solicitud_socio", "historial_pagos", "emision_notificaciones", "bitacora_notificaciones", "monitoreo_notificaciones_usuarios", "gestion_terminos_consentimientos", "configuracion_contrato_abogado", "consulta_usuarios_perfiles"];
     if (panelId === "panel_cuenta" || slugStr === "cuenta") return ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos"];
   } else if (rolActivo === "ADMINISTRADOR" || rolActivo === "SUPERADMIN") {
     if (panelId === "panel_herramientas" || slugStr === "herramientas") return ["catalogo_productos", "firma_documentos_pdf", "billetera_documentos", "emision_notificaciones"];
     if (panelId === "panel_seguridad" || slugStr === "seguridad") return ["mfa_seguridad", "auditoria"];
-    if (panelId === "panel_administrar" || slugStr === "administrar") return ["crm_clientes", "alta_cliente_crm", "gestion_usuarios", "consulta_usuarios_perfiles", "socios", "solicitud_socio", "historial_pagos", "emision_notificaciones", "bitacora_notificaciones", "monitoreo_notificaciones_usuarios", "gestion_terminos_consentimientos", "configuracion_contrato_abogado", "auditoria"];
+    if (panelId === "panel_administrar" || slugStr === "administrar") return ["crm_clientes", "gestion_usuarios", "consulta_usuarios_perfiles", "socios", "solicitud_socio", "historial_pagos", "emision_notificaciones", "bitacora_notificaciones", "monitoreo_notificaciones_usuarios", "gestion_terminos_consentimientos", "configuracion_contrato_abogado", "auditoria"];
     if (panelId === "panel_configuracion" || slugStr === "configuracion") return ["configuracion_negocio", "configuracion_correo", "pasarela_payphone", "perfiles", "agentes_ia", "notificaciones"];
     if (panelId === "panel_cuenta" || slugStr === "cuenta") return ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos"];
   } else if (rolActivo === "ABOGADO") {
@@ -461,12 +454,12 @@ export function PanelDinamicoModular({ slug, negocio }: Props) {
         if (rolActivo === "OPERADOR" || rolActivo === "AUXILIAR" || rolActivo === "TECNICO") {
           if (panelIdBuscado === "panel_herramientas" || slug === "herramientas") listW = ["catalogo_productos", "firma_documentos_pdf", "billetera_documentos", "emision_notificaciones"];
           else if (panelIdBuscado === "panel_seguridad" || slug === "seguridad") listW = ["mfa_seguridad", "auditoria"];
-          else if (panelIdBuscado === "panel_administrar" || slug === "administrar") listW = ["crm_clientes", "alta_cliente_crm", "socios", "solicitud_socio", "historial_pagos", "emision_notificaciones", "bitacora_notificaciones", "monitoreo_notificaciones_usuarios", "gestion_terminos_consentimientos", "configuracion_contrato_abogado", "consulta_usuarios_perfiles"];
+          else if (panelIdBuscado === "panel_administrar" || slug === "administrar") listW = ["crm_clientes", "socios", "solicitud_socio", "historial_pagos", "emision_notificaciones", "bitacora_notificaciones", "monitoreo_notificaciones_usuarios", "gestion_terminos_consentimientos", "configuracion_contrato_abogado", "consulta_usuarios_perfiles"];
           else if (panelIdBuscado === "panel_cuenta" || slug === "cuenta") listW = ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos"];
         } else if (rolActivo === "ADMINISTRADOR" || rolActivo === "SUPERADMIN") {
           if (panelIdBuscado === "panel_herramientas" || slug === "herramientas") listW = ["catalogo_productos", "firma_documentos_pdf", "billetera_documentos", "emision_notificaciones"];
           else if (panelIdBuscado === "panel_seguridad" || slug === "seguridad") listW = ["mfa_seguridad", "auditoria"];
-          else if (panelIdBuscado === "panel_administrar" || slug === "administrar") listW = ["crm_clientes", "alta_cliente_crm", "gestion_usuarios", "consulta_usuarios_perfiles", "socios", "solicitud_socio", "historial_pagos", "emision_notificaciones", "bitacora_notificaciones", "monitoreo_notificaciones_usuarios", "gestion_terminos_consentimientos", "configuracion_contrato_abogado", "auditoria"];
+          else if (panelIdBuscado === "panel_administrar" || slug === "administrar") listW = ["crm_clientes", "gestion_usuarios", "consulta_usuarios_perfiles", "socios", "solicitud_socio", "historial_pagos", "emision_notificaciones", "bitacora_notificaciones", "monitoreo_notificaciones_usuarios", "gestion_terminos_consentimientos", "configuracion_contrato_abogado", "auditoria"];
           else if (panelIdBuscado === "panel_configuracion" || slug === "configuracion") listW = ["configuracion_negocio", "configuracion_correo", "pasarela_payphone", "perfiles", "agentes_ia", "notificaciones"];
           else if (panelIdBuscado === "panel_cuenta" || slug === "cuenta") listW = ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos"];
         } else if (rolActivo === "ABOGADO") {
@@ -587,9 +580,6 @@ export function PanelDinamicoModular({ slug, negocio }: Props) {
       case "clientes_crm":
       case "clientes":
         return <BandejaClientesCRM />;
-      case "alta_cliente_crm":
-      case "alta_cliente":
-        return <ModalAltaClienteAsistida abierto={true} alCerrar={cerrar} alGuardarExitoso={cerrar} />;
       case "agentes_ia":
         // La consola de agentes es una pantalla propia (/panel/agentes) y no un
         // widget en linea: necesita un layout con gate aal2 y hace lecturas a

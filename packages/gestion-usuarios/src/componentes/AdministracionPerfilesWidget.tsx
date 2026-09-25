@@ -240,7 +240,6 @@ const PERFILES_INICIALES: PerfilDef[] = [
       panel_configuracion: ["notificaciones", "agentes_ia"],
       panel_administrar: ["asignaciones_agenda", 
         "crm_clientes",
-        "alta_cliente_crm",
         "socios",
         "solicitud_socio",
         "historial_pagos",
@@ -266,7 +265,7 @@ const PERFILES_INICIALES: PerfilDef[] = [
       panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos", "historial_pagos"],
       panel_herramientas: ["citas_programadas", "disponibilidad", "crm_clientes", "catalogo_productos", "firma_documentos_pdf", "billetera_documentos", "solicitud_socio"],
       panel_configuracion: ["notificaciones", "agentes_ia"],
-      panel_administrar: ["crm_clientes", "alta_cliente_crm", "historial_pagos"]
+      panel_administrar: ["crm_clientes", "historial_pagos"]
     },
     activo: true
   },
@@ -284,7 +283,6 @@ const PERFILES_INICIALES: PerfilDef[] = [
       panel_configuracion: ["configuracion_negocio", "configuracion_correo", "pasarela_payphone", "perfiles", "agentes_ia", "notificaciones"],
       panel_administrar: ["asignaciones_agenda", 
         "crm_clientes",
-        "alta_cliente_crm",
         "gestion_usuarios",
         "consulta_usuarios_perfiles",
         "socios",
@@ -314,7 +312,6 @@ const PERFILES_INICIALES: PerfilDef[] = [
       panel_configuracion: ["configuracion_negocio", "configuracion_correo", "pasarela_payphone", "perfiles", "agentes_ia", "notificaciones"],
       panel_administrar: ["asignaciones_agenda", 
         "crm_clientes",
-        "alta_cliente_crm",
         "gestion_usuarios",
         "consulta_usuarios_perfiles",
         "socios",
@@ -352,7 +349,7 @@ export const MATRIZ_FUNCIONAL_ROLES: Record<string, { paneles: string[]; widgets
       panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos", "historial_pagos"],
       panel_herramientas: ["crm_clientes", "catalogo_productos", "firma_documentos_pdf", "billetera_documentos", "solicitud_socio"],
       panel_configuracion: ["notificaciones", "agentes_ia"],
-      panel_administrar: ["crm_clientes", "alta_cliente_crm", "historial_pagos"]
+      panel_administrar: ["crm_clientes", "historial_pagos"]
     }
   },
   OPERADOR: {
@@ -364,7 +361,6 @@ export const MATRIZ_FUNCIONAL_ROLES: Record<string, { paneles: string[]; widgets
       panel_configuracion: ["notificaciones", "agentes_ia"],
       panel_administrar: [
         "crm_clientes",
-        "alta_cliente_crm",
         "socios",
         "solicitud_socio",
         "historial_pagos",
@@ -386,7 +382,6 @@ export const MATRIZ_FUNCIONAL_ROLES: Record<string, { paneles: string[]; widgets
       panel_configuracion: ["configuracion_negocio", "configuracion_correo", "pasarela_payphone", "perfiles", "agentes_ia", "notificaciones"],
       panel_administrar: [
         "crm_clientes",
-        "alta_cliente_crm",
         "gestion_usuarios",
         "consulta_usuarios_perfiles",
         "socios",
@@ -410,7 +405,6 @@ export const MATRIZ_FUNCIONAL_ROLES: Record<string, { paneles: string[]; widgets
       panel_configuracion: ["configuracion_negocio", "configuracion_correo", "pasarela_payphone", "perfiles", "agentes_ia", "notificaciones"],
       panel_administrar: [
         "crm_clientes",
-        "alta_cliente_crm",
         "gestion_usuarios",
         "consulta_usuarios_perfiles",
         "socios",
@@ -567,17 +561,6 @@ const WIDGETS_INVENTARIO_INICIALES: WidgetInventarioDef[] = [
     categoria: "Gestión Legal",
     ruta: "/panel/clientes",
     rutaFisica: "/crm-clientes/componentes/BandejaClientesCRM.tsx",
-    panelId: "panel_administrar",
-    activo: true,
-    creadoEn: "2026-08-22"
-  },
-  {
-    clave: "alta_cliente_crm",
-    nombre: "Alta Asistida & Recepción Multicanal",
-    descripcion: "Registro asistido de clientes con OCR ARIA de cédula/nombramiento y verificación de conflictos.",
-    categoria: "Gestión Legal",
-    ruta: "/panel/clientes?accion=alta",
-    rutaFisica: "/crm-clientes/componentes/ModalAltaClienteAsistida.tsx",
     panelId: "panel_administrar",
     activo: true,
     creadoEn: "2026-08-22"
@@ -900,21 +883,6 @@ function RenderizadorWidgetReal({ clave, negocio }: { clave: string; negocio: st
           </p>
           <div style={{ padding: "12px", background: "#F5F3FF", borderRadius: "8px", border: "1px dashed #DDD6FE", textAlign: "center", fontSize: "0.82rem", color: "#4C1D95", fontWeight: 700 }}>
             Bandeja 360° · Detección de Conflictos · Historial de Causas
-          </div>
-        </div>
-      );
-
-    case "alta_cliente_crm":
-      return (
-        <div style={{ background: "#ffffff", padding: "18px", borderRadius: "12px", border: "1.5px solid #05876E", boxShadow: "0 4px 12px rgba(5,135,110,0.08)" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 800, fontSize: "0.95rem", color: "#05876E", marginBottom: "10px" }}>
-            <UserCheck size={18} /> Alta Asistida & Recepción Multicanal
-          </div>
-          <p style={{ fontSize: "0.82rem", color: "#64748B", marginBottom: "12px" }}>
-            Captura ágil de nuevos clientes con extracción OCR ARIA de documentos de identidad y comprobación automática de antecedentes.
-          </p>
-          <div style={{ padding: "12px", background: "#ECFDF5", borderRadius: "8px", border: "1px dashed #A7F3D0", textAlign: "center", fontSize: "0.82rem", color: "#065F46", fontWeight: 700 }}>
-            OCR Cédula / Nombramiento · Validación RUC SRI · Conflict Check Inmediato
           </div>
         </div>
       );
