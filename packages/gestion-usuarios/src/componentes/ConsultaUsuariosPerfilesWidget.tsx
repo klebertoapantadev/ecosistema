@@ -145,12 +145,14 @@ function CeldaPerfilesInteractiva({
     }
   }
 
+  const puedeAsignarRoles = nivelMaximoGestor >= 80;
+
   return (
     <div>
       <div className="perfiles-usuario" style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
         {perfiles.map((p) => {
           const tiene = asignados.includes(p.clave);
-          const fueraDeAlcance = p.nivel > nivelMaximoGestor;
+          const fueraDeAlcance = !puedeAsignarRoles || p.nivel > nivelMaximoGestor;
           const esBase = p.clave === "CLIENTE";
           const esAbogado = p.clave === "ABOGADO";
           const estaCargandoEste = ocupado === p.clave;
@@ -169,23 +171,25 @@ function CeldaPerfilesInteractiva({
                 border: tiene ? "1px solid #D8B4FE" : "1px solid #E2E8F0",
                 fontSize: "0.76rem",
                 cursor: fueraDeAlcance || (esBase && tiene) || esAbogado || ocupado !== null ? "default" : "pointer",
-                opacity: fueraDeAlcance ? 0.5 : estaCargandoEste ? 0.7 : 1,
+                opacity: fueraDeAlcance ? 0.55 : estaCargandoEste ? 0.7 : 1,
                 transition: "all 0.15s ease"
               }}
               title={
-                fueraDeAlcance
-                  ? `Requiere jerarquía ${p.nivel} o superior`
-                  : esBase
-                    ? "Perfil base, no se puede retirar"
-                    : esAbogado
-                      ? "Se asigna automáticamente al confirmar el contrato de socio firmado"
-                      : `Nivel ${p.nivel}`
+                !puedeAsignarRoles
+                  ? "Solo administradores pueden asignar o revocar perfiles (Solo Lectura)"
+                  : fueraDeAlcance
+                    ? `Requiere jerarquía ${p.nivel} o superior`
+                    : esBase
+                      ? "Perfil base, no se puede retirar"
+                      : esAbogado
+                        ? "Se asigna automáticamente al confirmar el contrato de socio firmado"
+                        : `Nivel ${p.nivel}`
               }
             >
               <input
                 type="checkbox"
                 checked={tiene}
-                disabled={ocupado !== null || fueraDeAlcance || (esBase && tiene) || esAbogado}
+                disabled={!puedeAsignarRoles || ocupado !== null || fueraDeAlcance || (esBase && tiene) || esAbogado}
                 onChange={(e) => alternar(p.clave, e.target.checked)}
               />
               <span style={{ fontWeight: tiene ? 700 : 500, color: tiene ? "#5000BA" : "#475569" }}>
@@ -201,7 +205,7 @@ function CeldaPerfilesInteractiva({
   );
 }
 
-function CeldaAccionUsuario({ usuario }: { usuario: UsuarioConMembresia }) {
+function CeldaAccionUsuario({ usuario, puedeEliminar = false }: { usuario: UsuarioConMembresia; puedeEliminar?: boolean }) {
   const [eliminando, setEliminando] = useState(false);
   const [modalPush, setModalPush] = useState<{
     abierto: boolean;
@@ -217,6 +221,10 @@ function CeldaAccionUsuario({ usuario }: { usuario: UsuarioConMembresia }) {
     mensaje: "",
     tipo: "exito",
   });
+
+  if (!puedeEliminar) {
+    return <span style={{ fontSize: "0.74rem", color: "#94A3B8", fontWeight: 600 }}>Solo Lectura</span>;
+  }
 
   async function handleEliminar() {
     setModalPush({
@@ -504,10 +512,10 @@ export function ConsultaUsuariosPerfilesWidget({ negocio = "TRANQ" }: Props) {
     {
       id: "accion",
       encabezado: "Acción",
-      valor: (u) => u.usu_correo === "kleber.toapanta.ch@gmail.com" ? "Protegido" : "Eliminar",
+      valor: (u) => nivelMaximoGestor < 80 ? "Solo Lectura" : u.usu_correo === "kleber.toapanta.ch@gmail.com" ? "Protegido" : "Eliminar",
       ordenable: false,
       render: (u) => (
-        <CeldaAccionUsuario usuario={u} />
+        <CeldaAccionUsuario usuario={u} puedeEliminar={nivelMaximoGestor >= 80} />
       )
     }
   ];

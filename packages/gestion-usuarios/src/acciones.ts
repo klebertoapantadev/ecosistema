@@ -39,6 +39,11 @@ export async function obtenerDatosGestionUsuariosAction(consulta: string = "", n
 export async function asignarPerfil(usuarioId: string, perfil: string, negocio: string = "TRANQ"): Promise<Resultado> {
   if (!perfil.trim()) return { ok: false, error: "Selecciona un perfil" };
 
+  const nivelGestor = await obtenerNivelMaximoGestor(negocio);
+  if (nivelGestor < 80) {
+    return { ok: false, error: "No tienes permisos de administrador para asignar perfiles." };
+  }
+
   const supabase = await crearClienteServidor();
   const perfilClaveUpper = perfil.toUpperCase().trim();
   const negocioUpper = (negocio || "TRANQ").toUpperCase().trim();
@@ -150,6 +155,11 @@ export async function asignarPerfil(usuarioId: string, perfil: string, negocio: 
 }
 
 export async function quitarPerfil(usuarioId: string, perfil: string, negocio: string = "TRANQ"): Promise<Resultado> {
+  const nivelGestor = await obtenerNivelMaximoGestor(negocio);
+  if (nivelGestor < 80) {
+    return { ok: false, error: "No tienes permisos de administrador para revocar perfiles." };
+  }
+
   const supabase = await crearClienteServidor();
   const perfilClaveUpper = perfil.toUpperCase().trim();
   const negocioUpper = (negocio || "TRANQ").toUpperCase().trim();

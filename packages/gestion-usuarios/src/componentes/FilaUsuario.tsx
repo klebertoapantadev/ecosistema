@@ -102,6 +102,8 @@ export function FilaUsuario({
 
   const nombre = [usuario.usu_nombres, usuario.usu_apellidos].filter(Boolean).join(" ") || "—";
 
+  const puedeAsignarRoles = nivelMaximoGestor >= 80;
+
   return (
     <tr>
       <td>{nombre}</td>
@@ -111,7 +113,7 @@ export function FilaUsuario({
         <div className="perfiles-usuario">
           {perfiles.map((p) => {
             const tiene = asignados.includes(p.clave);
-            const fueraDeAlcance = p.nivel > nivelMaximoGestor;
+            const fueraDeAlcance = !puedeAsignarRoles || p.nivel > nivelMaximoGestor;
             const esBase = p.clave === "CLIENTE";
             const esAbogado = p.clave === "ABOGADO";
 
@@ -120,19 +122,21 @@ export function FilaUsuario({
                 key={p.clave}
                 className={`perfil-casilla${tiene ? " perfil-casilla-activa" : ""}`}
                 title={
-                  fueraDeAlcance
-                    ? `Requiere jerarquía ${p.nivel} o superior`
-                    : esBase
-                      ? "Perfil base, no se puede retirar"
-                      : esAbogado
-                        ? "Se asigna automáticamente al confirmar el contrato de socio firmado"
-                        : `Nivel ${p.nivel}`
+                  !puedeAsignarRoles
+                    ? "Solo administradores pueden asignar o revocar perfiles (Solo Lectura)"
+                    : fueraDeAlcance
+                      ? `Requiere jerarquía ${p.nivel} o superior`
+                      : esBase
+                        ? "Perfil base, no se puede retirar"
+                        : esAbogado
+                          ? "Se asigna automáticamente al confirmar el contrato de socio firmado"
+                          : `Nivel ${p.nivel}`
                 }
               >
                 <input
                   type="checkbox"
                   checked={tiene}
-                  disabled={ocupado !== null || fueraDeAlcance || (esBase && tiene) || esAbogado}
+                  disabled={!puedeAsignarRoles || ocupado !== null || fueraDeAlcance || (esBase && tiene) || esAbogado}
                   onChange={(e) => alternar(p.clave, e.target.checked)}
                 />
                 {p.nombre}
@@ -144,7 +148,9 @@ export function FilaUsuario({
         {mensaje && <p className="error-auth mensaje-fila">{mensaje}</p>}
       </td>
       <td style={{ position: "sticky", right: 0, background: "#ffffff", zIndex: 1, boxShadow: "-2px 0 6px rgba(0,0,0,0.04)", textAlign: "center" }}>
-        {usuario.usu_correo !== "kleber.toapanta.ch@gmail.com" ? (
+        {!puedeAsignarRoles ? (
+          <span style={{ fontSize: "0.74rem", color: "#94A3B8", fontWeight: 600 }}>Solo Lectura</span>
+        ) : usuario.usu_correo !== "kleber.toapanta.ch@gmail.com" ? (
           <button
             type="button"
             onClick={handleEliminar}
