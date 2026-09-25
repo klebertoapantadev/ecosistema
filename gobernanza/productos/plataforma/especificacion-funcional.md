@@ -836,15 +836,22 @@ Motor unificado de comunicación multicanal y alertas en tiempo real para todos 
    - **Eliminación Lógica y Pestaña de Eliminadas:** La eliminación de notificaciones es **estrictamente lógica** (`not_detalles->eliminada: true, eliminada_en: ...`). La sección de notificaciones y la campana disponen de una pestaña/filtro dedicado **"🗑️ Eliminadas"** donde el usuario puede consultar sus notificaciones descartadas y **Restaurarlas** cuando lo requiera.
 6. **Widget de Monitoreo de Notificaciones por Usuario para Operadores y Administradores (`monitoreo_notificaciones_usuarios`):**
    - Módulo común y protegido en la consola de administración (`/panel/administrar?widget=monitoreo_notificaciones_usuarios` y en la Consola SuperAdmin) que permite a los Operadores y Administradores auditar las notificaciones recibidas por cualquier usuario del negocio.
+   - **Identificación Clara de Remitente (Quién Envía) y Destinatario (Quién Recibe):**
+     - **Remitente / Quién Envía:** Identifica con precisión si la notificación proviene de un usuario específico (ej. Postulante Abogado cargando contrato, Administrador emitiendo campaña) o del Sistema automatizado, mostrando su nombre, correo y etiqueta de tipo (`POSTULANTE`, `ADMINISTRADOR`, `SISTEMA`, `CLIENTE`).
+     - **Destinatario / Quién Recibe:** Muestra el usuario objetivo, su nombre completo, correo electrónico e identificador único (`usuario_id`).
    - **Métricas y DataGrid Auditado:**
      - KPIs en tiempo real: Total, Pendientes, Confirmadas (Leídas), Pospuestas activas y Eliminadas lógicas.
-     - Detalle exhaustivo por notificación: Destinatario (Nombre, Correo, ID), Asunto, Canal, **Fecha exacta de confirmación/lectura**, **Tiempo y fecha límite de pospuesto**, **Estado de eliminación lógica con fecha** y botón de **Restaurar para el Usuario**.
-     - Filtros multicriterio por usuario específico, estado, canal y búsqueda libre en tiempo real.
-7. **Preferencias del Usuario y Silenciado Temporal:**
+     - Detalle exhaustivo por notificación: Remitente (Nombre, Correo, Tipo), Destinatario (Nombre, Correo, ID), Asunto, Canal, **Fecha exacta de confirmación/lectura**, **Tiempo y fecha límite de pospuesto**, **Estado de eliminación lógica con fecha** y botón de **Restaurar para el Usuario**.
+     - Modal de detalle con comparación visual de fichas de Remitente y Destinatario, renderizado del HTML original y auditoría del ciclo de vida.
+     - Filtros multicriterio por usuario específico (filtrando tanto como emisor o receptor), estado, canal y búsqueda libre en tiempo real.
+7. **Aislamiento Estricto y Prohibición de Alertas de Staff a Clientes:**
+   - Todo usuario con perfil activo de `CLIENTE` recibe **únicamente** sus propias notificaciones o comunicaciones públicas masivas. Bajo ninguna circunstancia un usuario con rol de cliente puede recibir alertas operativas de postulaciones de socios abogados, subidas de contratos ni eventos de staff.
+   - Queda estrictamente prohibido asignar permisos de staff o superadmin mediante listas de correos hardcodeadas en código o bases de datos; la autorización se rige exclusivamente por `usu_superadmin_plataforma = true` y roles activos en `seg_membresia`.
+8. **Preferencias del Usuario y Silenciado Temporal:**
    - El usuario puede ajustar en su panel (`/panel/notificaciones`) sus preferencias de recepción por canal (excepto para notificaciones críticas de seguridad o reseteo de clave).
    - **Silenciado por Tiempo (Mute Temporal):** El sistema permite al usuario silenciar las notificaciones por periodos configurables: *Hoy*, *Esta Semana*, *Este Mes* o *Rango Personalizado de Fechas*, reactivando los despachos automáticamente al vencer la vigencia.
-8. **Matriz Estricta de Control de Acceso por Perfil:**
-   - **SuperAdmin y Administrador de Negocio (`SUPERADMIN`, `ADMINISTRADOR`):** Tienen acceso total a la Consola Transversal de Emisión de Notificaciones (`/panel/emision-notificaciones`), al Widget de Monitoreo de Notificaciones por Usuario (`monitoreo_notificaciones_usuarios`) y a la Bitácora de Despacho.
+9. **Matriz Estricta de Control de Acceso por Perfil:**
+   - **SuperAdmin y Administrador de Negocio (`SUPERADMIN`, `ADMINISTRADOR`):** Tienen acceso total a la Consola Transversal de Emisión de Notificaciones (`/panel/emision-notificaciones`), al Widget de Monitoreo de Notificaciones por Usuario (`monitoreo_notificaciones_usuarios`) con visualización de quién envía y quién recibe, y a la Bitácora de Despacho.
    - **Operadores (`OPERADOR`, `AUXILIAR`):** Poseen acceso al Monitoreo de Notificaciones por Usuario para brindar soporte y verificar confirmaciones/pospuestos.
    - **Clientes y Roles Operativos (`CLIENTE`, `ABOGADO`, `TECNICO`, etc.):** **No poseen acceso a la consola de emisión ni a herramientas de auditoría global**. Únicamente tienen acceso a su vista propia de notificaciones recibidas, historial, eliminadas y configuración de preferencias (`/panel/notificaciones`).
 

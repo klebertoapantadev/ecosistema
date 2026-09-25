@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextResponse } from "next/server";
 import { obtenerPerfilActual } from "@eco/identidad";
 import { crearClienteServidor, crearClienteAdmin } from "@eco/supabase/servidor";
@@ -54,7 +55,7 @@ export async function GET() {
         const perfilesTRANQ = await obtenerPerfiles("TRANQ");
         const perfiles = Array.from(new Set([...perfilesTranqi, ...perfilesTRANQ]));
         const correo = (perfil.usu_correo || "").toLowerCase().trim();
-        const esSuperAdminEmail = correo === "kleber.toapanta.ch@gmail.com" || correo === "jesus251296@gmail.com" || correo === "satcomla.ti@gmail.com";
+        const esSuperAdminEmail = correo === "kleber.toapanta.ch@gmail.com" || correo === "jesus251296@gmail.com";
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const client: any = crearClienteAdmin() || await crearClienteServidor();
@@ -78,13 +79,17 @@ export async function GET() {
           .order("not_creado_en", { ascending: false })
           .limit(100);
 
-        if (!esAutorizado) {
-          query = query.eq("not_usuario_id", perfil.usu_id);
-        } else {
-          query = query.or(`not_usuario_id.eq.${perfil.usu_id},not_negocio.eq.TRANQ`);
-        }
+        query = query.eq("not_usuario_id", perfil.usu_id);
 
-        const { data: registros } = await query;
+        let registros: any[] = [];
+        try {
+          const resQuery = await query;
+          if (resQuery && Array.isArray(resQuery.data)) {
+            registros = resQuery.data;
+          }
+        } catch (errQuery) {
+          console.warn("Aviso al consultar not_registro:", errQuery);
+        }
 
         const registrosClavesVistas = new Set<string>();
 

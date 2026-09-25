@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import {
   Bell, Search, Filter, RefreshCw, Eye, CheckCircle2, Clock, Trash2,
-  User, Check, RotateCcw, X, ShieldAlert
+  User, Check, RotateCcw, X, ShieldAlert, Send
 } from "lucide-react";
 
 export interface NotificacionUsuarioAdminItem {
@@ -11,6 +11,10 @@ export interface NotificacionUsuarioAdminItem {
   usuario_id: string;
   usuario_nombre: string;
   usuario_correo: string;
+  emisor_id?: string | null;
+  emisor_nombre?: string | null;
+  emisor_correo?: string | null;
+  emisor_tipo?: "SISTEMA" | "POSTULANTE" | "ADMINISTRADOR" | "CLIENTE" | "ABOGADO" | string | null;
   not_negocio: string;
   not_canal: string;
   not_titulo: string;
@@ -134,6 +138,8 @@ export function MonitoreoNotificacionesUsuariosWidget({ negocio = "TRANQ" }: Pro
         n.not_titulo.toLowerCase().includes(q) ||
         n.usuario_nombre.toLowerCase().includes(q) ||
         n.usuario_correo.toLowerCase().includes(q) ||
+        (n.emisor_nombre && n.emisor_nombre.toLowerCase().includes(q)) ||
+        (n.emisor_correo && n.emisor_correo.toLowerCase().includes(q)) ||
         n.not_contenido_html.toLowerCase().includes(q);
       if (!coincide) return false;
     }
@@ -353,7 +359,8 @@ export function MonitoreoNotificacionesUsuariosWidget({ negocio = "TRANQ" }: Pro
           <table className="tabla-panel" style={{ width: "100%", fontSize: "0.84rem" }}>
             <thead>
               <tr style={{ background: "#f8fafc", textAlign: "left" }}>
-                <th style={{ padding: "10px 12px" }}>Destinatario</th>
+                <th style={{ padding: "10px 12px" }}>Remitente (Quién Envía)</th>
+                <th style={{ padding: "10px 12px" }}>Destinatario (Quién Recibe)</th>
                 <th style={{ padding: "10px 12px" }}>Asunto / Título</th>
                 <th style={{ padding: "10px 12px" }}>Canal</th>
                 <th style={{ padding: "10px 12px" }}>Confirmación / Lectura</th>
@@ -370,8 +377,30 @@ export function MonitoreoNotificacionesUsuariosWidget({ negocio = "TRANQ" }: Pro
 
                 return (
                   <tr key={item.not_id} style={{ borderBottom: "1px solid #f1f5f9", background: item.not_eliminada ? "#fffbfb" : undefined }}>
-                    {/* Destinatario */}
-                    <td style={{ padding: "12px" }}>
+                    {/* Remitente (Quién Envía) */}
+                    <td style={{ padding: "12px", minWidth: "160px" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "3px" }}>
+                        <span
+                          style={{
+                            padding: "1px 6px",
+                            borderRadius: "4px",
+                            fontSize: "0.66rem",
+                            fontWeight: 800,
+                            textTransform: "uppercase",
+                            background: item.emisor_tipo === "POSTULANTE" ? "#f3e8ff" : item.emisor_tipo === "ADMINISTRADOR" ? "#e0f2fe" : "#f1f5f9",
+                            color: item.emisor_tipo === "POSTULANTE" ? "#6b21a8" : item.emisor_tipo === "ADMINISTRADOR" ? "#0369a1" : "#475569",
+                            border: item.emisor_tipo === "POSTULANTE" ? "1px solid #d8b4fe" : item.emisor_tipo === "ADMINISTRADOR" ? "1px solid #bae6fd" : "1px solid #cbd5e1"
+                          }}
+                        >
+                          {item.emisor_tipo || "SISTEMA"}
+                        </span>
+                      </div>
+                      <strong style={{ display: "block", color: "#0f172a" }}>{item.emisor_nombre || "Sistema"}</strong>
+                      <span style={{ fontSize: "0.74rem", color: "#64748b" }}>{item.emisor_correo || "—"}</span>
+                    </td>
+
+                    {/* Destinatario (Quién Recibe) */}
+                    <td style={{ padding: "12px", minWidth: "160px" }}>
                       <strong style={{ display: "block", color: "#0f172a" }}>{item.usuario_nombre}</strong>
                       <span style={{ fontSize: "0.74rem", color: "#64748b" }}>{item.usuario_correo}</span>
                     </td>
@@ -565,14 +594,32 @@ export function MonitoreoNotificacionesUsuariosWidget({ negocio = "TRANQ" }: Pro
             </div>
 
             <div style={{ padding: "20px", overflowY: "auto", flex: 1, fontSize: "0.85rem" }}>
-              {/* Info Destinatario */}
-              <div style={{ background: "#f8fafc", padding: "12px 14px", borderRadius: "10px", border: "1px solid #e2e8f0", marginBottom: "14px" }}>
-                <span style={{ fontSize: "0.7rem", color: "#64748b", fontWeight: 800, textTransform: "uppercase" }}>Destinatario</span>
-                <div style={{ fontSize: "0.95rem", fontWeight: 800, color: "#0f172a", marginTop: "2px" }}>
-                  {notifSeleccionada.usuario_nombre}
+              {/* Info Remitente y Destinatario */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "14px" }}>
+                <div style={{ background: "#f8fafc", padding: "12px 14px", borderRadius: "10px", border: "1px solid #e2e8f0" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
+                    <span style={{ fontSize: "0.7rem", color: "#64748b", fontWeight: 800, textTransform: "uppercase" }}>Remitente (Quién Envía)</span>
+                    <span style={{ fontSize: "0.64rem", padding: "1px 5px", borderRadius: "4px", fontWeight: 800, background: "#e2e8f0", color: "#334155" }}>
+                      {notifSeleccionada.emisor_tipo || "SISTEMA"}
+                    </span>
+                  </div>
+                  <div style={{ fontSize: "0.95rem", fontWeight: 800, color: "#0f172a" }}>
+                    {notifSeleccionada.emisor_nombre || "Sistema"}
+                  </div>
+                  <div style={{ fontSize: "0.78rem", color: "#475569" }}>{notifSeleccionada.emisor_correo || "—"}</div>
+                  {notifSeleccionada.emisor_id && (
+                    <div style={{ fontSize: "0.7rem", color: "#94a3b8", marginTop: "2px" }}>ID: {notifSeleccionada.emisor_id}</div>
+                  )}
                 </div>
-                <div style={{ fontSize: "0.78rem", color: "#475569" }}>{notifSeleccionada.usuario_correo}</div>
-                <div style={{ fontSize: "0.7rem", color: "#94a3b8", marginTop: "2px" }}>ID: {notifSeleccionada.usuario_id}</div>
+
+                <div style={{ background: "#f8fafc", padding: "12px 14px", borderRadius: "10px", border: "1px solid #e2e8f0" }}>
+                  <span style={{ fontSize: "0.7rem", color: "#64748b", fontWeight: 800, textTransform: "uppercase" }}>Destinatario (Quién Recibe)</span>
+                  <div style={{ fontSize: "0.95rem", fontWeight: 800, color: "#0f172a", marginTop: "4px" }}>
+                    {notifSeleccionada.usuario_nombre}
+                  </div>
+                  <div style={{ fontSize: "0.78rem", color: "#475569" }}>{notifSeleccionada.usuario_correo}</div>
+                  <div style={{ fontSize: "0.7rem", color: "#94a3b8", marginTop: "2px" }}>ID: {notifSeleccionada.usuario_id}</div>
+                </div>
               </div>
 
               {/* Título & Contenido */}
