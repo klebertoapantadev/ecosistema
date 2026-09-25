@@ -250,7 +250,7 @@ export default async function PagePanel({ searchParams }: Props) {
       ) : modo === "abogado" ? (
         <PanelAbogado nombreCompleto={nombreCompleto} />
       ) : modo === "admin" ? (
-        <PanelAdministrador esSuperadmin={puedeConmutar} esAdminGlobal={esAdminGlobal} />
+        <PanelAdministrador esAdminGlobal={esAdminGlobal} />
       ) : modo === "operador" ? (
         <PanelOperador nombreCompleto={nombreCompleto} />
       ) : (
@@ -695,16 +695,14 @@ function PanelOperador({ nombreCompleto }: { nombreCompleto: string }) {
 
       <div className="rejilla-cliente">
         <div className="columna-cliente">
-          <section className="tarjeta-proteccion" style={{ background: "linear-gradient(135deg, var(--acento-hondo) 0%, var(--acento) 100%)", color: "#ffffff" }}>
+          <section className="tarjeta-proteccion tarjeta-admin">
             <div className="tarjeta-proteccion-fila">
               <div>
-                <div className="eyebrow-cliente" style={{ color: "var(--acento-diluido)" }}>Operaciones Ecosistema</div>
-                <div className="tarjeta-proteccion-plan" style={{ color: "#ffffff" }}>Bandeja de Operador & Auxiliar</div>
-                <div className="tarjeta-proteccion-meta" style={{ color: "rgba(255,255,255,0.9)" }}>
-                  Gestión integral de clientes, verificación de postulaciones, cobros y despacho de notificaciones.
+                <div className="tarjeta-proteccion-plan">Bandeja de operación</div>
+                <div className="tarjeta-proteccion-meta">
+                  Clientes, postulaciones, cobros y notificaciones.
                 </div>
               </div>
-              <span className="badge-activo" style={{ background: "var(--acento-linea)", color: "var(--acento-hondo)" }}>Operativo</span>
             </div>
           </section>
 
@@ -748,30 +746,14 @@ function PanelOperador({ nombreCompleto }: { nombreCompleto: string }) {
 }
 
 /* ──────────────── 3. PANEL MODO ADMINISTRADOR ──────────────── */
-function PanelAdministrador({ esSuperadmin, esAdminGlobal }: { esSuperadmin: boolean; esAdminGlobal: boolean }) {
+function PanelAdministrador({ esAdminGlobal }: { esAdminGlobal: boolean }) {
   return (
     <>
-      <h1>Consola de Control del Portal — tranqi</h1>
-      <p className="inicio-cliente-sub">Gobernanza multitenant de plataforma, usuarios y telemetría de negocio</p>
+      <h1>Inicio</h1>
+      <p className="inicio-cliente-sub">Tus accesos directos y los avisos pendientes.</p>
 
       <div className="rejilla-cliente">
         <div className="columna-cliente">
-          {/* 1) HERO CARD */}
-          <section className="tarjeta-proteccion tarjeta-admin" aria-labelledby="t-admin">
-            <div className="tarjeta-proteccion-fila">
-              <div>
-                <div className="eyebrow-cliente" id="t-admin">Plataforma Ecosistema</div>
-                <div className="tarjeta-proteccion-plan">
-                  Administrador de <i>tranqi</i> {esSuperadmin && "(SuperAdmin Activo)"}
-                </div>
-                <div className="tarjeta-proteccion-meta">
-                  Gestión centralizada de miembros, aprobación de socios abogados, configuración SMTP en Vault y auditoría BDD.
-                </div>
-              </div>
-              <span className="badge-rol">Operativo</span>
-            </div>
-          </section>
-
           {/* 2) ACCESS GRID (Favoritos primero + Accesos predeterminados) */}
           <div className="accesos-cliente">
             <TarjetasFavoritasGrid />
@@ -804,9 +786,9 @@ function PanelAdministrador({ esSuperadmin, esAdminGlobal }: { esSuperadmin: boo
           <SeccionNotificacionesEcosistema esAdmin={esAdminGlobal} />
 
           <section className="tarjeta-seccion" aria-labelledby="t-superadmin">
-            <header><h2 id="t-superadmin">Gobernanza Multitenant</h2></header>
+            <header><h2 id="t-superadmin">Negocios en la plataforma</h2></header>
             <div className="vacio-seccion">
-              <b>4 Negocios Activos</b>
+              <b>4 activos</b>
               <span>tranqi, FastFix Home, Tinkay Floristería, Margaritas Floristería.</span>
             </div>
           </section>

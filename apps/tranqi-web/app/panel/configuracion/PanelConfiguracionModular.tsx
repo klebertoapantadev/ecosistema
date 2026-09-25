@@ -435,28 +435,23 @@ export function PanelConfiguracionModular({ esAdmin, esSuperadmin = false, confi
       <section className="tarjeta-proteccion tarjeta-admin" style={{ marginBottom: "20px" }}>
         <div className="tarjeta-proteccion-fila">
           <div>
-            <div className="eyebrow-cliente">Consola de Configuración General & Servicios</div>
             <div className="tarjeta-proteccion-plan">
-              Configurar — <i>Parámetros del Sistema ({negocio})</i>
+              Configurar
             </div>
             <div className="tarjeta-proteccion-meta">
-              Identidad legal del negocio, servidor SMTP saliente cifrado en Vault, preferencias de notificación y administración de perfiles.
+              Datos del negocio, correo saliente, avisos y perfiles.
             </div>
           </div>
-          <span className="badge-rol" style={{ background: "rgba(80, 0, 186, 0.12)", color: "var(--violeta, #5000BA)", border: "1px solid var(--violeta-suave, var(--acento-diluido))" }}>
-            <ShieldCheck style={{ width: 14, height: 14, marginRight: 4 }} />
-            Gobernanza Activa
-          </span>
         </div>
       </section>
 
       <div style={{ marginBottom: "24px" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px", flexWrap: "wrap", gap: "8px" }}>
           <h3 style={{ fontSize: "0.88rem", fontWeight: 800, color: "var(--panel-gris, var(--texto-suave))", textTransform: "uppercase", letterSpacing: "0.08em", margin: 0 }}>
-            Módulos de Configuración Asignados
+            Módulos
           </h3>
           <span style={{ fontSize: "0.82rem", color: "var(--panel-gris, var(--texto-suave))", fontWeight: 600 }}>
-            {favoritos.length} Destacados
+            {favoritos.length} {favoritos.length === 1 ? "favorito" : "favoritos"}
           </span>
         </div>
 
@@ -547,21 +542,6 @@ export function PanelConfiguracionModular({ esAdmin, esSuperadmin = false, confi
 
                 <div style={{ minWidth: 0, marginTop: "6px" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: "4px", flexWrap: "wrap", marginBottom: "4px" }}>
-                    {esFav && (
-                      <span
-                        style={{
-                          fontSize: "0.58rem",
-                          fontWeight: 800,
-                          color: "var(--aviso-texto)",
-                          background: "var(--amarillo, #FEE300)",
-                          padding: "1px 6px",
-                          borderRadius: "999px",
-                          letterSpacing: "0.04em"
-                        }}
-                      >
-                        FAVORITO
-                      </span>
-                    )}
                     {infoCustom.requiereMfa && (
                       <span
                         style={{

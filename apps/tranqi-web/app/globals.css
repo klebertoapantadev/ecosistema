@@ -3275,3 +3275,20 @@ div.tarjeta-acceso-icono { display: grid; place-items: center; padding: 0; }
   --acento-diluido: #EAF7F2;
   --acento-linea: #B7E3D6;
 }
+
+/* ── TRQ-016 · Cabecera de las pantallas de gestión ─────────────────────────
+   .tarjeta-admin pintaba un degradado violeta como cabecera de Administrar,
+   Configurar, Mi cuenta y Auditoría: una superficie de color que no lleva
+   ningún dato, y que compite con la única que debería haber (§3, regla 1).
+   Aquí es un título sobre el fondo del panel. La tarjeta de póliza del
+   cliente (.tarjeta-proteccion sin modificador) no cambia.                   */
+.tarjeta-proteccion.tarjeta-admin {
+  background: none; border: none; color: var(--texto);
+  padding: 4px 0 4px; border-radius: 0; overflow: visible; animation: none;
+}
+.tarjeta-admin .cinta-proteccion { display: none; }
+.tarjeta-admin .eyebrow-cliente { color: var(--texto-suave); }
+.tarjeta-admin .tarjeta-proteccion-plan { margin-top: 0; font-size: 1.6rem; }
+.tarjeta-admin .tarjeta-proteccion-plan i { color: var(--texto-suave); font-weight: 600; font-size: 1rem; }
+.tarjeta-admin .tarjeta-proteccion-meta { color: var(--texto-suave); max-width: 70ch; }
+.tarjeta-admin .badge-rol { background: var(--fondo-hundido); color: var(--texto-2); }

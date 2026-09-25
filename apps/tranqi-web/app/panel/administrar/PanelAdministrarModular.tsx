@@ -1006,12 +1006,11 @@ export function PanelAdministrarModular({ negocio = "TRANQ", esSuperAdmin = fals
       <section className="tarjeta-proteccion tarjeta-admin" style={{ marginBottom: "20px" }}>
         <div className="tarjeta-proteccion-fila">
           <div>
-            <div className="eyebrow-cliente">Consola de Gestión Operativa & Control</div>
             <div className="tarjeta-proteccion-plan">
-              Administrar — <i>Módulos de Gestión ({negocio})</i>
+              Administrar
             </div>
             <div className="tarjeta-proteccion-meta">
-              Gestión centralizada de usuarios, aprobación de socios profesionales, solicitudes, despacho de notificaciones y auditoría BDD.
+              Usuarios, socios, solicitudes, notificaciones y auditoría.
             </div>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
@@ -1053,10 +1052,10 @@ export function PanelAdministrarModular({ negocio = "TRANQ", esSuperAdmin = fals
       <div style={{ marginBottom: "24px" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px", flexWrap: "wrap", gap: "8px" }}>
           <h3 style={{ fontSize: "0.88rem", fontWeight: 800, color: "var(--panel-gris, var(--texto-suave))", textTransform: "uppercase", letterSpacing: "0.08em", margin: 0 }}>
-            Módulos de Administración Asignados
+            Módulos
           </h3>
           <span style={{ fontSize: "0.82rem", color: "var(--panel-gris, var(--texto-suave))", fontWeight: 600 }}>
-            {favoritos.length} Destacados
+            {favoritos.length} {favoritos.length === 1 ? "favorito" : "favoritos"}
           </span>
         </div>
 
@@ -1147,21 +1146,6 @@ export function PanelAdministrarModular({ negocio = "TRANQ", esSuperAdmin = fals
 
                 <div style={{ minWidth: 0, marginTop: "6px" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: "4px", flexWrap: "wrap", marginBottom: "4px" }}>
-                    {esFav && (
-                      <span
-                        style={{
-                          fontSize: "0.58rem",
-                          fontWeight: 800,
-                          color: "var(--aviso-texto)",
-                          background: "var(--amarillo, #FEE300)",
-                          padding: "1px 6px",
-                          borderRadius: "999px",
-                          letterSpacing: "0.04em"
-                        }}
-                      >
-                        DESTACADO
-                      </span>
-                    )}
                     {infoCustom.requiereMfa && (
                       <span
                         style={{

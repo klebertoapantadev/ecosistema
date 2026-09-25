@@ -600,15 +600,14 @@ export function PanelCuentaModular({ perfil, historial, puedeConmutar = true, ro
   return (
     <div style={{ width: "100%" }}>
       {/* Header Hero Card del Panel Mi Cuenta */}
-      <section className="tarjeta-proteccion" style={{ marginBottom: "20px" }}>
+      <section className="tarjeta-proteccion tarjeta-admin" style={{ marginBottom: "20px" }}>
         <div className="tarjeta-proteccion-fila">
           <div>
-            <div className="eyebrow-cliente">Centro de Configuración de Cuenta</div>
             <div className="tarjeta-proteccion-plan">
-              Mi Cuenta — <i>Identidad & Preferencias</i>
+              Mi cuenta
             </div>
             <div className="tarjeta-proteccion-meta">
-              Gestiona tu información personal, correo electrónico, WhatsApp, historial de accesos y seguridad de la cuenta.
+              Tus datos, correo, WhatsApp, accesos y seguridad.
             </div>
           </div>
         </div>
@@ -617,10 +616,10 @@ export function PanelCuentaModular({ perfil, historial, puedeConmutar = true, ro
       <div style={{ marginBottom: "24px" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px", flexWrap: "wrap", gap: "8px" }}>
           <h3 style={{ fontSize: "0.88rem", fontWeight: 800, color: "var(--panel-gris, var(--texto-suave))", textTransform: "uppercase", letterSpacing: "0.08em", margin: 0 }}>
-            Widgets de Mi Cuenta
+            Opciones
           </h3>
           <span style={{ fontSize: "0.82rem", color: "var(--panel-gris, var(--texto-suave))", fontWeight: 600 }}>
-            {favoritos.length} Favoritos
+            {favoritos.length} {favoritos.length === 1 ? "favorito" : "favoritos"}
           </span>
         </div>
 
@@ -714,21 +713,6 @@ export function PanelCuentaModular({ perfil, historial, puedeConmutar = true, ro
 
                 <div style={{ minWidth: 0, marginTop: "6px" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: "4px", flexWrap: "wrap", marginBottom: "4px" }}>
-                    {esFav && (
-                      <span
-                        style={{
-                          fontSize: "0.58rem",
-                          fontWeight: 800,
-                          color: "var(--aviso-texto)",
-                          background: "var(--amarillo, #FEE300)",
-                          padding: "1px 6px",
-                          borderRadius: "999px",
-                          letterSpacing: "0.04em"
-                        }}
-                      >
-                        FAVORITO
-                      </span>
-                    )}
                     {infoCustom.requiereMfa && (
                       <span
                         style={{

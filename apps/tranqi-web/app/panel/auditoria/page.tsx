@@ -40,12 +40,11 @@ export default async function PaginaAuditoria({
         }}
       >
         <div>
-          <div className="eyebrow-cliente">Gobernanza & Seguridad</div>
           <div className="tarjeta-proteccion-plan" style={{ fontSize: "1.3rem", fontWeight: 800 }}>
-            Bitácora de Auditoría del Sistema <i>({NEGOCIO})</i>
+            Auditoría
           </div>
           <div className="tarjeta-proteccion-meta" style={{ marginTop: "4px" }}>
-            Registro inmutable auditado por disparadores PostgreSQL (`tranqui_legal` y `comun_seguridad`).
+            Quién cambió qué y cuándo en los datos del negocio.
           </div>
         </div>
 
