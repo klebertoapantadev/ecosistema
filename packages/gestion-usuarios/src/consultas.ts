@@ -86,17 +86,17 @@ export async function buscarUsuarios(
 
   const ids = usuarios.map(u => u.usu_id);
 
-  // 2. Traer membresías y sus perfiles
+  // 2. Traer membresías
   const { data: membresias } = await adminSupabase
     .schema("comun_seguridad")
     .from("seg_membresia")
-    .select("mem_usuario_id, mem_estado, mem_negocio, seg_membresia_perfil(seg_perfil(per_clave, per_nivel))")
+    .select("mem_id, mem_usuario_id, mem_estado, mem_negocio, mem_rol")
     .in("mem_usuario_id", ids);
 
   const negocioUpper = (negocio || "").toUpperCase();
   const mapaMembresia = new Map<string, any>();
 
-  (membresias || []).forEach(m => {
+  (membresias || []).forEach((m) => {
     const esNegocio =
       (m.mem_negocio || "").toUpperCase() === negocioUpper ||
       (negocioUpper === "TRANQI" && (m.mem_negocio || "").toUpperCase() === "TRANQ") ||
@@ -107,19 +107,48 @@ export async function buscarUsuarios(
     }
   });
 
+  // 3. Traer perfiles asociados directamente por mem_id
+  const memIds = Array.from(mapaMembresia.values()).map((m) => m.mem_id).filter(Boolean);
+  const mapaPerfilesMembresia = new Map<string, Array<{ per_clave: string; per_nivel: number }>>();
+
+  if (memIds.length > 0) {
+    const { data: mpData } = await adminSupabase
+      .schema("comun_seguridad")
+      .from("seg_membresia_perfil")
+      .select("mpe_membresia_id, seg_perfil(per_clave, per_nivel)")
+      .in("mpe_membresia_id", memIds);
+
+    (mpData || []).forEach((row: any) => {
+      if (row.seg_perfil && row.mpe_membresia_id) {
+        const list = mapaPerfilesMembresia.get(row.mpe_membresia_id) || [];
+        list.push(row.seg_perfil);
+        mapaPerfilesMembresia.set(row.mpe_membresia_id, list);
+      }
+    });
+  }
+
   const resultado: UsuarioConMembresia[] = usuarios.map((u) => {
     const m = mapaMembresia.get(u.usu_id);
-    const perfiles = ((m?.seg_membresia_perfil ?? []) as { seg_perfil: { per_clave: string; per_nivel: number } | null }[])
-      .map((mp) => mp.seg_perfil)
-      .filter((p): p is { per_clave: string; per_nivel: number } => p != null)
-      .sort((a, b) => b.per_nivel - a.per_nivel);
+    const perfilesRaw = m?.mem_id ? (mapaPerfilesMembresia.get(m.mem_id) || []) : [];
+    const perfilesOrdenados = [...perfilesRaw].sort((a, b) => b.per_nivel - a.per_nivel);
 
-    let listaClaves = perfiles.map((p) => p.per_clave);
+    let listaClaves = perfilesOrdenados.map((p) => p.per_clave.toUpperCase());
     if (m?.mem_rol && !listaClaves.includes(m.mem_rol.toUpperCase())) {
       listaClaves.push(m.mem_rol.toUpperCase());
     }
 
-    let nMax = perfiles[0]?.per_nivel ?? 10;
+    if (!listaClaves.includes("CLIENTE")) {
+      listaClaves.push("CLIENTE");
+    }
+
+    let nMax = perfilesOrdenados[0]?.per_nivel ?? 10;
+    if (m?.mem_rol) {
+      const rolUpper = m.mem_rol.toUpperCase();
+      if (rolUpper === "SUPERADMIN") nMax = Math.max(nMax, 100);
+      else if (rolUpper === "ADMIN" || rolUpper === "ADMINISTRADOR") nMax = Math.max(nMax, 80);
+      else if (rolUpper === "ABOGADO" || rolUpper === "TECNICO") nMax = Math.max(nMax, 50);
+      else if (rolUpper === "OPERADOR" || rolUpper === "AUXILIAR") nMax = Math.max(nMax, 30);
+    }
 
     const correoLower = (u.usu_correo || "").toLowerCase().trim();
     if (u.usu_superadmin_plataforma || correoLower === "kleber.toapanta.ch@gmail.com" || correoLower === "jesus251296@gmail.com") {
@@ -132,7 +161,7 @@ export async function buscarUsuarios(
       usu_nombres: u.usu_nombres,
       usu_apellidos: u.usu_apellidos,
       usu_correo: u.usu_correo,
-      perfiles: listaClaves.length > 0 ? Array.from(new Set(listaClaves)) : ["CLIENTE"],
+      perfiles: Array.from(new Set(listaClaves)),
       nivelMaximo: nMax,
       mem_estado: m?.mem_estado || "ACTIVO",
     };
