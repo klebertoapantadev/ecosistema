@@ -41,6 +41,7 @@ Este documento describe el **comportamiento compartido por los 4 productos** (Tr
 | **`PLT-020`** | **Agenda, Disponibilidad, Citas y Consulta Telemática** | 🟡 En Desarrollo | **75%** | Kleber Toapanta |
 | **`PLT-021`** | **Despachador de Tareas Programadas (recordatorios, caducidades, cobros)** | 🟡 En Desarrollo | **70%** | **Jesus Navarrete** |
 | **`PLT-022`** | **Tokens de Acceso MCP e Integraciones Agénticas por Negocio** | ✅ Implementado | **100%** | Kleber Toapanta |
+| **`PLT-023`** | **Convenios Corporativos B2B2C, Paquetes de Beneficios y Enlace de Afiliación** | 🟡 Especificado | **30%** | Kleber Toapanta / Jesus Navarrete |
 
 ---
 

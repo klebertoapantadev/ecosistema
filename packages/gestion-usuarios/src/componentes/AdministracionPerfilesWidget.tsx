@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import {
   ShieldCheck, Users,
   CheckCircle2, ChevronDown, ChevronUp, Search, Sliders,
-  Plus, Check, LayoutGrid, Layers, ExternalLink, PanelLeft, Eye, ArrowRight, ArrowLeft,
+  Plus, Check, LayoutGrid, Layers, List, ExternalLink, PanelLeft, Eye, ArrowRight, ArrowLeft,
   Palette, UserCheck, X, Sparkles, Trash2, Star, Move, Copy, Package, GripVertical,
   Home, User, Settings, Shield, Folder, Wrench, Building, Briefcase, Bell, Database,
   Activity, Globe, Lock, KeyRound, CheckSquare, Terminal, Zap, Pencil, LogOut, LogIn,
@@ -1564,6 +1564,38 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
 
   const [isAsignando, setIsAsignando] = useState(false);
 
+  // Modos de Vista de Widgets y Paneles Colapsables
+  const [modoVistaWidgets, setModoVistaWidgets] = useState<"rejilla" | "lista" | "botones">("rejilla");
+  const [panelesColapsados, setPanelesColapsados] = useState<Record<string, boolean>>({});
+  const [filtroBusquedaWidgets, setFiltroBusquedaWidgets] = useState<string>("");
+
+  const toggleColapsarPanel = (panelId: string) => {
+    setPanelesColapsados(prev => ({
+      ...prev,
+      [panelId]: !prev[panelId]
+    }));
+  };
+
+  const colapsarTodosPaneles = () => {
+    const todos: Record<string, boolean> = {};
+    panelesSidebar.forEach(p => {
+      todos[p.id] = true;
+    });
+    setPanelesColapsados(todos);
+  };
+
+  const expandirTodosPaneles = () => {
+    setPanelesColapsados({});
+  };
+
+  const copiarRutaFisica = (ruta: string, nombre: string) => {
+    if (typeof navigator !== "undefined" && navigator.clipboard) {
+      navigator.clipboard.writeText(ruta);
+      setMensajeExito(`Ruta de '${nombre}' copiada al portapapeles.`);
+      setTimeout(() => setMensajeExito(null), 3000);
+    }
+  };
+
   // Formulario Perfil
   const [nuevoPerfil, setNuevoPerfil] = useState({
     clave: "",
@@ -2311,6 +2343,171 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
             </div>
           </div>
 
+          {/* BARRA DE HERRAMIENTAS DE VISUALIZACIÓN: BUSCADOR EN VIVO, SELECTOR DE VISTA (TARJETAS / LISTA / BOTONES) Y COLAPSAR/EXPANDIR */}
+          <div
+            style={{
+              background: "#ffffff",
+              border: "1px solid var(--panel-linea, #E4E4E4)",
+              borderRadius: "12px",
+              padding: "10px 14px",
+              marginBottom: "16px",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              flexWrap: "wrap",
+              gap: "10px",
+              boxShadow: "0 1px 3px rgba(0,0,0,0.04)"
+            }}
+          >
+            {/* Buscador de widgets dentro de los paneles */}
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", flex: 1, minWidth: "220px", maxWidth: "420px" }}>
+              <div style={{ position: "relative", width: "100%" }}>
+                <Search size={14} color="var(--panel-gris, #737373)" style={{ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)" }} />
+                <input
+                  type="text"
+                  placeholder="Buscar widget por nombre, clave o ruta física..."
+                  value={filtroBusquedaWidgets}
+                  onChange={(e) => setFiltroBusquedaWidgets(e.target.value)}
+                  style={{
+                    width: "100%",
+                    padding: "7px 28px 7px 32px",
+                    borderRadius: "8px",
+                    border: "1.5px solid var(--panel-linea, #E4E4E4)",
+                    fontSize: "0.8rem",
+                    outline: "none",
+                    background: "#FAFAFA"
+                  }}
+                />
+                {filtroBusquedaWidgets && (
+                  <button
+                    type="button"
+                    onClick={() => setFiltroBusquedaWidgets("")}
+                    style={{ position: "absolute", right: "8px", top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "#737373" }}
+                  >
+                    <X size={14} />
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Grupo de Controles: Modo de Vista + Expandir/Colapsar */}
+            <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
+              {/* Segmented Control para Modo de Vista */}
+              <div style={{ display: "inline-flex", background: "var(--panel-papel, #F7F6FA)", padding: "3px", borderRadius: "8px", border: "1px solid var(--panel-linea, #E4E4E4)" }}>
+                <button
+                  type="button"
+                  onClick={() => setModoVistaWidgets("rejilla")}
+                  title="Vista Tarjetas (Rejilla)"
+                  style={{
+                    background: modoVistaWidgets === "rejilla" ? "#ffffff" : "transparent",
+                    color: modoVistaWidgets === "rejilla" ? "var(--negro, #111111)" : "var(--panel-gris, #737373)",
+                    border: "none",
+                    borderRadius: "6px",
+                    padding: "5px 10px",
+                    fontSize: "0.76rem",
+                    fontWeight: modoVistaWidgets === "rejilla" ? 800 : 600,
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "5px",
+                    boxShadow: modoVistaWidgets === "rejilla" ? "0 1px 3px rgba(0,0,0,0.1)" : "none"
+                  }}
+                >
+                  <LayoutGrid size={13} /> <span>Tarjetas</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setModoVistaWidgets("lista")}
+                  title="Vista Lista Detallada (Rutas físicas completas y máxima legibilidad)"
+                  style={{
+                    background: modoVistaWidgets === "lista" ? "#ffffff" : "transparent",
+                    color: modoVistaWidgets === "lista" ? "var(--negro, #111111)" : "var(--panel-gris, #737373)",
+                    border: "none",
+                    borderRadius: "6px",
+                    padding: "5px 10px",
+                    fontSize: "0.76rem",
+                    fontWeight: modoVistaWidgets === "lista" ? 800 : 600,
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "5px",
+                    boxShadow: modoVistaWidgets === "lista" ? "0 1px 3px rgba(0,0,0,0.1)" : "none"
+                  }}
+                >
+                  <List size={13} /> <span>Lista Detallada</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setModoVistaWidgets("botones")}
+                  title="Vista Botones / Compacta (Botones de acceso ágil)"
+                  style={{
+                    background: modoVistaWidgets === "botones" ? "#ffffff" : "transparent",
+                    color: modoVistaWidgets === "botones" ? "var(--negro, #111111)" : "var(--panel-gris, #737373)",
+                    border: "none",
+                    borderRadius: "6px",
+                    padding: "5px 10px",
+                    fontSize: "0.76rem",
+                    fontWeight: modoVistaWidgets === "botones" ? 800 : 600,
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "5px",
+                    boxShadow: modoVistaWidgets === "botones" ? "0 1px 3px rgba(0,0,0,0.1)" : "none"
+                  }}
+                >
+                  <Layers size={13} /> <span>Botones</span>
+                </button>
+              </div>
+
+              {/* Botones de Colapsar / Expandir Todos */}
+              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                <button
+                  type="button"
+                  onClick={colapsarTodosPaneles}
+                  title="Colapsar todos los paneles para ver resumen compacto"
+                  style={{
+                    background: "#ffffff",
+                    border: "1px solid var(--panel-linea, #E4E4E4)",
+                    color: "var(--panel-gris, #737373)",
+                    borderRadius: "6px",
+                    padding: "5px 9px",
+                    fontSize: "0.74rem",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "4px"
+                  }}
+                >
+                  <ChevronUp size={13} /> <span>Colapsar Todos</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={expandirTodosPaneles}
+                  title="Expandir todos los paneles"
+                  style={{
+                    background: "#ffffff",
+                    border: "1px solid var(--panel-linea, #E4E4E4)",
+                    color: "var(--panel-gris, #737373)",
+                    borderRadius: "6px",
+                    padding: "5px 9px",
+                    fontSize: "0.74rem",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "4px"
+                  }}
+                >
+                  <ChevronDown size={13} /> <span>Expandir Todos</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
           {/* LISTADO LIMPIO DE PANELES CON SUS WIDGETS AUTORIZADOS POR PANEL */}
           <div style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
             {panelesSidebar.map(panel => {
@@ -2336,6 +2533,19 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                 }
               }
 
+              // Filtrar si hay término de búsqueda activo
+              const widgetsFiltrados = widgetsOrdenados.filter(w => {
+                if (!filtroBusquedaWidgets) return true;
+                const q = filtroBusquedaWidgets.toLowerCase();
+                return (
+                  w.nombre.toLowerCase().includes(q) ||
+                  w.clave.toLowerCase().includes(q) ||
+                  (w.categoria && w.categoria.toLowerCase().includes(q)) ||
+                  (w.rutaFisica && w.rutaFisica.toLowerCase().includes(q))
+                );
+              });
+
+              const estaColapsado = !!panelesColapsados[panel.id];
               const esDestinoDropOver = panelOverId === panel.id && widgetArrastrado?.panelOrigenId !== panel.id;
 
               return (
@@ -2367,10 +2577,11 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                       ? "2.5px dashed var(--violeta, #5000BA)"
                       : `1.5px solid ${temaPerfilActivo.colorBorde}44`,
                     borderRadius: "14px",
-                    padding: "16px",
+                    padding: estaColapsado ? "12px 16px" : "16px",
                     background: esDestinoDropOver ? "#F5F3FF" : "#ffffff",
                     transition: "all 0.2s ease",
-                    position: "relative"
+                    position: "relative",
+                    boxShadow: "0 1px 3px rgba(0,0,0,0.02)"
                   }}
                 >
                   {esDestinoDropOver && (
@@ -2379,14 +2590,34 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                     </div>
                   )}
 
-                  {/* ENCABEZADO DEL PANEL CON CONMUTADOR MFA, CONFIGURAR ÍCONO Y BOTÓN "+ AGREGAR WIDGET" */}
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px", flexWrap: "wrap", gap: "10px" }}>
+                  {/* ENCABEZADO DEL PANEL CON CONMUTADOR MFA, CONFIGURAR ÍCONO, COLAPSABLE Y BOTÓN "+ AGREGAR WIDGET" */}
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: estaColapsado ? 0 : "12px", flexWrap: "wrap", gap: "10px" }}>
                     <div
-                      onClick={() => setPanelEditarModal(panel)}
-                      style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer" }}
-                      title="Haz clic para seleccionar el ícono del sidebar o editar la ruta/nombre del panel"
+                      style={{ display: "flex", alignItems: "center", gap: "10px" }}
                     >
+                      {/* Botón expandir/colapsar */}
+                      <button
+                        type="button"
+                        onClick={() => toggleColapsarPanel(panel.id)}
+                        title={estaColapsado ? `Expandir panel ${panel.nombre}` : `Colapsar panel ${panel.nombre}`}
+                        style={{
+                          background: "var(--panel-papel, #F7F6FA)",
+                          border: "1px solid var(--panel-linea, #E4E4E4)",
+                          borderRadius: "8px",
+                          width: "30px",
+                          height: "30px",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          cursor: "pointer",
+                          color: "var(--negro, #111111)"
+                        }}
+                      >
+                        {estaColapsado ? <ChevronDown size={16} /> : <ChevronUp size={16} />}
+                      </button>
+
                       <span
+                        onClick={() => setPanelEditarModal(panel)}
                         style={{
                           background: "rgba(80, 0, 186, 0.12)",
                           padding: "6px 8px",
@@ -2394,15 +2625,36 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
-                          border: "1px solid rgba(80, 0, 186, 0.25)"
+                          border: "1px solid rgba(80, 0, 186, 0.25)",
+                          cursor: "pointer"
                         }}
+                        title="Haz clic para seleccionar el ícono del sidebar"
                       >
                         <IconoPanelDinamico nombreIcono={panel.icono} size={20} color={temaPerfilActivo.colorPrimario} />
                       </span>
                       <div>
-                        <strong style={{ fontSize: "0.95rem", color: "#111111", display: "block" }}>{panel.nombre}</strong>
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                          <strong
+                            onClick={() => toggleColapsarPanel(panel.id)}
+                            style={{ fontSize: "0.95rem", color: "#111111", cursor: "pointer" }}
+                          >
+                            {panel.nombre}
+                          </strong>
+                          <span style={{
+                            background: widgetsOrdenados.length > 0 ? "rgba(80,0,186,0.08)" : "var(--panel-linea-suave, #FAFAF9)",
+                            color: widgetsOrdenados.length > 0 ? "var(--violeta, #5000BA)" : "var(--panel-gris, #737373)",
+                            fontSize: "0.72rem",
+                            fontWeight: 800,
+                            padding: "2px 8px",
+                            borderRadius: "999px",
+                            border: "1px solid rgba(80,0,186,0.15)"
+                          }}>
+                            {widgetsOrdenados.length} {widgetsOrdenados.length === 1 ? "widget" : "widgets"}
+                          </span>
+                        </div>
                         <code style={{ fontSize: "0.72rem", color: "var(--panel-gris, #737373)" }}>{panel.ruta}</code>
                       </div>
+
                       <button
                         type="button"
                         onClick={(e) => {
@@ -2497,175 +2749,459 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                     </div>
                   </div>
 
-                  <p style={{ fontSize: "0.78rem", color: "var(--panel-gris, #737373)", margin: "0 0 14px 0" }}>{panel.descripcion}</p>
+                  {!estaColapsado && (
+                    <>
+                      <p style={{ fontSize: "0.78rem", color: "var(--panel-gris, #737373)", margin: "0 0 14px 0" }}>{panel.descripcion}</p>
 
-                  {/* REJILLA DE ELEMENTOS ASIGNADOS CON POSICIONADO Y ORDENAMIENTO GARANTIZADO */}
-                  {widgetsOrdenados.length > 0 ? (
-                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(290px, 1fr))", gap: "12px" }}>
-                      {widgetsOrdenados.map((w, idx) => {
-                        const esFavoritos = w.clave === "favoritos";
-                        const esArrastrando = widgetArrastrado?.widgetClave === w.clave;
+                      {/* RENDERIZADO SEGÚN EL MODO DE VISTA SELECCIONADO */}
+                      {widgetsFiltrados.length > 0 ? (
+                        <>
+                          {/* 1. MODO LISTA DETALLADA (MÁXIMA LEGIBILIDAD, RUTAS COMPLETAS) */}
+                          {modoVistaWidgets === "lista" && (
+                            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                              {widgetsFiltrados.map((w, idx) => {
+                                const esFavoritos = w.clave === "favoritos";
+                                const esArrastrando = widgetArrastrado?.widgetClave === w.clave;
 
-                        return (
-                          <div
-                            key={w.clave}
-                            draggable={true}
-                            onDragStart={(e) => {
-                              e.dataTransfer.setData("text/plain", JSON.stringify({ widgetClave: w.clave, panelOrigenId: panel.id }));
-                              setWidgetArrastrado({ widgetClave: w.clave, panelOrigenId: panel.id });
-                            }}
-                            onDragEnd={() => {
-                              setWidgetArrastrado(null);
-                              setPanelOverId(null);
-                            }}
-                            style={{
-                              background: esFavoritos ? `${temaPerfilActivo.colorFondoSuave}` : "#ffffff",
-                              padding: "12px 14px",
-                              borderRadius: "10px",
-                              border: esArrastrando
-                                ? "2px dashed var(--violeta, #5000BA)"
-                                : esFavoritos
-                                ? `2px solid ${temaPerfilActivo.colorBorde}`
-                                : "1.5px solid var(--panel-linea, #E4E4E4)",
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "space-between",
-                              gap: "10px",
-                              cursor: "grab",
-                              opacity: esArrastrando ? 0.45 : 1,
-                              transform: esArrastrando ? "scale(0.98)" : "none",
-                              transition: "all 0.15s ease"
-                            }}
-                          >
-                            <div style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "flex-start", gap: "6px" }}>
-                              <span title="Arrastrar para mover entre paneles" style={{ display: "inline-flex", cursor: "grab", flexShrink: 0 }}>
-                                <GripVertical size={16} color="var(--panel-gris, #737373)" style={{ marginTop: "2px", opacity: 0.6, flexShrink: 0 }} />
-                              </span>
-                              <div style={{ minWidth: 0, flex: 1 }}>
-                                <div style={{ fontWeight: 800, fontSize: "0.85rem", color: temaPerfilActivo.colorTexto, display: "flex", alignItems: "center", gap: "6px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                                  {esFavoritos && <Star size={14} fill={temaPerfilActivo.colorPrimario} color={temaPerfilActivo.colorPrimario} style={{ flexShrink: 0 }} />}
-                                  <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{w.nombre}</span>
-                                </div>
-                                <div style={{ fontSize: "0.68rem", color: temaPerfilActivo.colorPrimario, fontWeight: 700, opacity: 0.85, marginTop: "2px", display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
-                                  <span>Posición #{idx + 1} • {w.clave}</span>
-                                  <code style={{ fontSize: "0.66rem", color: "var(--panel-gris, #737373)", background: "rgba(0,0,0,0.05)", padding: "1px 6px", borderRadius: "4px", fontWeight: 600, maxWidth: "160px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", display: "inline-block" }}>
-                                    {w.rutaFisica || `/plataforma/${w.clave}.tsx`}
-                                  </code>
-                                </div>
-                              </div>
+                                return (
+                                  <div
+                                    key={w.clave}
+                                    draggable={true}
+                                    onDragStart={(e) => {
+                                      e.dataTransfer.setData("text/plain", JSON.stringify({ widgetClave: w.clave, panelOrigenId: panel.id }));
+                                      setWidgetArrastrado({ widgetClave: w.clave, panelOrigenId: panel.id });
+                                    }}
+                                    onDragEnd={() => {
+                                      setWidgetArrastrado(null);
+                                      setPanelOverId(null);
+                                    }}
+                                    style={{
+                                      background: esFavoritos ? `${temaPerfilActivo.colorFondoSuave}` : "#ffffff",
+                                      padding: "10px 14px",
+                                      borderRadius: "10px",
+                                      border: esArrastrando
+                                        ? "2px dashed var(--violeta, #5000BA)"
+                                        : esFavoritos
+                                        ? `2px solid ${temaPerfilActivo.colorBorde}`
+                                        : "1.5px solid var(--panel-linea, #E4E4E4)",
+                                      display: "flex",
+                                      alignItems: "center",
+                                      justifyContent: "space-between",
+                                      gap: "12px",
+                                      cursor: "grab",
+                                      opacity: esArrastrando ? 0.45 : 1,
+                                      transition: "all 0.15s ease",
+                                      flexWrap: "wrap"
+                                    }}
+                                  >
+                                    <div style={{ display: "flex", alignItems: "center", gap: "10px", flex: 1, minWidth: "260px" }}>
+                                      <span title="Arrastrar para mover entre paneles" style={{ display: "inline-flex", cursor: "grab", flexShrink: 0 }}>
+                                        <GripVertical size={16} color="var(--panel-gris, #737373)" style={{ opacity: 0.6 }} />
+                                      </span>
+
+                                      <span style={{
+                                        background: "var(--panel-papel, #F7F6FA)",
+                                        border: "1px solid var(--panel-linea, #E4E4E4)",
+                                        color: temaPerfilActivo.colorPrimario,
+                                        fontWeight: 800,
+                                        fontSize: "0.72rem",
+                                        padding: "2px 6px",
+                                        borderRadius: "6px",
+                                        flexShrink: 0
+                                      }}>
+                                        #{idx + 1}
+                                      </span>
+
+                                      <div style={{ minWidth: 0, flex: 1 }}>
+                                        <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                                          <strong style={{ fontWeight: 800, fontSize: "0.88rem", color: temaPerfilActivo.colorTexto }}>
+                                            {w.nombre}
+                                          </strong>
+                                          <code style={{ fontSize: "0.72rem", color: "var(--panel-gris, #737373)", background: "rgba(0,0,0,0.05)", padding: "1px 6px", borderRadius: "4px" }}>
+                                            {w.clave}
+                                          </code>
+                                          {w.categoria && (
+                                            <span style={{ fontSize: "0.68rem", fontWeight: 700, background: "#EEF2FF", color: "#4F46E5", padding: "1px 6px", borderRadius: "4px" }}>
+                                              {w.categoria}
+                                            </span>
+                                          )}
+                                        </div>
+
+                                        <div style={{ marginTop: "4px", display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                                          <span style={{ fontSize: "0.72rem", color: "var(--panel-gris, #737373)" }}>Ruta Física:</span>
+                                          <code style={{ fontSize: "0.72rem", color: "#047857", background: "#ECFDF5", padding: "1px 6px", borderRadius: "4px", border: "1px solid #A7F3D0" }}>
+                                            {w.rutaFisica || `/plataforma/${w.clave}.tsx`}
+                                          </code>
+                                          <button
+                                            type="button"
+                                            onClick={() => copiarRutaFisica(w.rutaFisica || `/plataforma/${w.clave}.tsx`, w.nombre)}
+                                            title="Copiar ruta física"
+                                            style={{ background: "none", border: "none", cursor: "pointer", color: "var(--panel-gris, #737373)", display: "inline-flex", alignItems: "center", gap: "3px", fontSize: "0.68rem" }}
+                                          >
+                                            <Copy size={11} /> <span>Copiar</span>
+                                          </button>
+                                        </div>
+                                      </div>
+                                    </div>
+
+                                    {/* Botones de acción */}
+                                    <div style={{ display: "flex", alignItems: "center", gap: "4px", flexShrink: 0 }}>
+                                      <button
+                                        type="button"
+                                        title="Subir posición"
+                                        disabled={idx === 0}
+                                        onClick={() => reordenarWidgetEnPanel(perfilSeleccionado, panel.id, w.clave, "izquierda")}
+                                        style={{
+                                          background: "#ffffff",
+                                          border: "1px solid var(--panel-linea, #E4E4E4)",
+                                          borderRadius: "6px",
+                                          padding: "5px 8px",
+                                          cursor: idx === 0 ? "not-allowed" : "pointer",
+                                          opacity: idx === 0 ? 0.3 : 1,
+                                          display: "flex",
+                                          alignItems: "center"
+                                        }}
+                                      >
+                                        <ArrowLeft size={13} />
+                                      </button>
+
+                                      <button
+                                        type="button"
+                                        title="Bajar posición"
+                                        disabled={idx === widgetsFiltrados.length - 1}
+                                        onClick={() => reordenarWidgetEnPanel(perfilSeleccionado, panel.id, w.clave, "derecha")}
+                                        style={{
+                                          background: "#ffffff",
+                                          border: "1px solid var(--panel-linea, #E4E4E4)",
+                                          borderRadius: "6px",
+                                          padding: "5px 8px",
+                                          cursor: idx === widgetsFiltrados.length - 1 ? "not-allowed" : "pointer",
+                                          opacity: idx === widgetsFiltrados.length - 1 ? 0.3 : 1,
+                                          display: "flex",
+                                          alignItems: "center"
+                                        }}
+                                      >
+                                        <ArrowRight size={13} />
+                                      </button>
+
+                                      <button
+                                        type="button"
+                                        title="Reorganizar: Mover o duplicar este widget a otro panel"
+                                        onClick={() => {
+                                          setWidgetTransferir({ widget: w, panelOrigenId: panel.id });
+                                          const primerDestino = panelesSidebar.find(p => p.id !== panel.id)?.id || "";
+                                          setPanelDestinoId(primerDestino);
+                                          setAccionTransferir("mover");
+                                        }}
+                                        style={{
+                                          background: "#F3E8FF",
+                                          border: "1px solid #DDD6FE",
+                                          color: "#5000BA",
+                                          borderRadius: "6px",
+                                          padding: "5px 8px",
+                                          cursor: "pointer",
+                                          display: "flex",
+                                          alignItems: "center",
+                                          gap: "4px",
+                                          fontSize: "0.72rem",
+                                          fontWeight: 700
+                                        }}
+                                      >
+                                        <Move size={13} /> <span>Mover</span>
+                                      </button>
+
+                                      <button
+                                        type="button"
+                                        title={`Retirar ${w.nombre} de ${panel.nombre}`}
+                                        aria-label={`Retirar ${w.nombre} de ${panel.nombre}`}
+                                        onClick={() => retirarWidgetDePanel(perfilSeleccionado, w.clave, panel.id)}
+                                        className="btn-responsive-accion"
+                                        style={{
+                                          background: "#FEF2F2",
+                                          border: "1px solid #FCA5A5",
+                                          color: "#DC2626",
+                                          borderRadius: "6px",
+                                          padding: "5px 8px",
+                                          cursor: "pointer",
+                                          fontSize: "0.72rem",
+                                          fontWeight: 800,
+                                          display: "inline-flex",
+                                          alignItems: "center",
+                                          gap: "3px"
+                                        }}
+                                      >
+                                        <Trash2 size={13} />
+                                        <span className="btn-texto-responsive">Retirar</span>
+                                      </button>
+                                    </div>
+                                  </div>
+                                );
+                              })}
                             </div>
+                          )}
 
-                             <div style={{ display: "flex", alignItems: "center", gap: "4px", flexShrink: 0 }}>
-                              {/* Reordenamiento Interno: Mover a la Izquierda / Subir Posición */}
-                              <button
-                                type="button"
-                                title="Subir posición / Mover a la izquierda"
-                                disabled={idx === 0}
-                                onClick={() => reordenarWidgetEnPanel(perfilSeleccionado, panel.id, w.clave, "izquierda")}
-                                style={{
-                                  background: "#ffffff",
-                                  border: "1px solid var(--panel-linea, #E4E4E4)",
-                                  borderRadius: "6px",
-                                  padding: "5px 7px",
-                                  cursor: idx === 0 ? "not-allowed" : "pointer",
-                                  opacity: idx === 0 ? 0.3 : 1,
-                                  color: "var(--negro, #111111)",
-                                  display: "flex",
-                                  alignItems: "center"
-                                }}
-                              >
-                                <ArrowLeft size={13} />
-                              </button>
+                          {/* 2. MODO BOTONES / COMPACTO (CHIPS INTERACTIVOS PARA VISIÓN RÁPIDA) */}
+                          {modoVistaWidgets === "botones" && (
+                            <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
+                              {widgetsFiltrados.map((w, idx) => {
+                                const esFavoritos = w.clave === "favoritos";
+                                const esArrastrando = widgetArrastrado?.widgetClave === w.clave;
 
-                              {/* Reordenamiento Interno: Mover a la Derecha / Bajar Posición */}
-                              <button
-                                type="button"
-                                title="Bajar posición / Mover a la derecha"
-                                disabled={idx === widgetsOrdenados.length - 1}
-                                onClick={() => reordenarWidgetEnPanel(perfilSeleccionado, panel.id, w.clave, "derecha")}
-                                style={{
-                                  background: "#ffffff",
-                                  border: "1px solid var(--panel-linea, #E4E4E4)",
-                                  borderRadius: "6px",
-                                  padding: "5px 7px",
-                                  cursor: idx === widgetsOrdenados.length - 1 ? "not-allowed" : "pointer",
-                                  opacity: idx === widgetsOrdenados.length - 1 ? 0.3 : 1,
-                                  color: "var(--negro, #111111)",
-                                  display: "flex",
-                                  alignItems: "center"
-                                }}
-                              >
-                                <ArrowRight size={13} />
-                              </button>
-
-                              {/* Modal Reorganizar: Mover o Duplicar a otro Panel */}
-                              <button
-                                type="button"
-                                title="Reorganizar: Mover o duplicar este widget a otro panel"
-                                onClick={() => {
-                                  setWidgetTransferir({ widget: w, panelOrigenId: panel.id });
-                                  const primerDestino = panelesSidebar.find(p => p.id !== panel.id)?.id || "";
-                                  setPanelDestinoId(primerDestino);
-                                  setAccionTransferir("mover");
-                                }}
-                                style={{
-                                  background: "#F3E8FF",
-                                  border: "1px solid #DDD6FE",
-                                  color: "#5000BA",
-                                  borderRadius: "6px",
-                                  padding: "5px 7px",
-                                  cursor: "pointer",
-                                  display: "flex",
-                                  alignItems: "center"
-                                }}
-                              >
-                                <Move size={14} />
-                              </button>
-
-                              {/* Retirar / Eliminar de este Panel */}
-                              <button
-                                type="button"
-                                title={`Retirar ${w.nombre} de ${panel.nombre}`}
-                                aria-label={`Retirar ${w.nombre} de ${panel.nombre}`}
-                                onClick={() => retirarWidgetDePanel(perfilSeleccionado, w.clave, panel.id)}
-                                className="btn-responsive-accion"
-                                style={{
-                                  background: "#FEF2F2",
-                                  border: "1px solid #FCA5A5",
-                                  color: "#DC2626",
-                                  borderRadius: "6px",
-                                  padding: "5px 8px",
-                                  cursor: "pointer",
-                                  fontSize: "0.72rem",
-                                  fontWeight: 800,
-                                  display: "inline-flex",
-                                  alignItems: "center",
-                                  gap: "3px",
-                                  flexShrink: 0
-                                }}
-                              >
-                                <Trash2 size={13} />
-                                <span className="btn-texto-responsive">Retirar</span>
-                              </button>
+                                return (
+                                  <div
+                                    key={w.clave}
+                                    draggable={true}
+                                    onDragStart={(e) => {
+                                      e.dataTransfer.setData("text/plain", JSON.stringify({ widgetClave: w.clave, panelOrigenId: panel.id }));
+                                      setWidgetArrastrado({ widgetClave: w.clave, panelOrigenId: panel.id });
+                                    }}
+                                    onDragEnd={() => {
+                                      setWidgetArrastrado(null);
+                                      setPanelOverId(null);
+                                    }}
+                                    style={{
+                                      background: esFavoritos ? `${temaPerfilActivo.colorFondoSuave}` : "#ffffff",
+                                      border: esArrastrando
+                                        ? "2px dashed var(--violeta, #5000BA)"
+                                        : esFavoritos
+                                        ? `1.5px solid ${temaPerfilActivo.colorBorde}`
+                                        : "1px solid var(--panel-linea, #E4E4E4)",
+                                      borderRadius: "8px",
+                                      padding: "6px 10px",
+                                      display: "inline-flex",
+                                      alignItems: "center",
+                                      gap: "8px",
+                                      boxShadow: "0 1px 2px rgba(0,0,0,0.03)",
+                                      cursor: "grab",
+                                      opacity: esArrastrando ? 0.45 : 1
+                                    }}
+                                  >
+                                    <span style={{ fontSize: "0.68rem", fontWeight: 800, color: temaPerfilActivo.colorPrimario, background: "rgba(80,0,186,0.06)", padding: "1px 5px", borderRadius: "4px" }}>
+                                      #{idx + 1}
+                                    </span>
+                                    <strong style={{ fontSize: "0.82rem", color: temaPerfilActivo.colorTexto }}>
+                                      {w.nombre}
+                                    </strong>
+                                    <span style={{ display: "inline-flex", alignItems: "center", gap: "2px" }}>
+                                      <button
+                                        type="button"
+                                        title="Subir"
+                                        disabled={idx === 0}
+                                        onClick={() => reordenarWidgetEnPanel(perfilSeleccionado, panel.id, w.clave, "izquierda")}
+                                        style={{ background: "none", border: "none", cursor: idx === 0 ? "not-allowed" : "pointer", opacity: idx === 0 ? 0.2 : 0.7, padding: "1px" }}
+                                      >
+                                        <ArrowLeft size={11} />
+                                      </button>
+                                      <button
+                                        type="button"
+                                        title="Bajar"
+                                        disabled={idx === widgetsFiltrados.length - 1}
+                                        onClick={() => reordenarWidgetEnPanel(perfilSeleccionado, panel.id, w.clave, "derecha")}
+                                        style={{ background: "none", border: "none", cursor: idx === widgetsFiltrados.length - 1 ? "not-allowed" : "pointer", opacity: idx === widgetsFiltrados.length - 1 ? 0.2 : 0.7, padding: "1px" }}
+                                      >
+                                        <ArrowRight size={11} />
+                                      </button>
+                                      <button
+                                        type="button"
+                                        title="Mover de panel"
+                                        onClick={() => {
+                                          setWidgetTransferir({ widget: w, panelOrigenId: panel.id });
+                                          const primerDestino = panelesSidebar.find(p => p.id !== panel.id)?.id || "";
+                                          setPanelDestinoId(primerDestino);
+                                          setAccionTransferir("mover");
+                                        }}
+                                        style={{ background: "none", border: "none", cursor: "pointer", color: "#5000BA", padding: "1px" }}
+                                      >
+                                        <Move size={11} />
+                                      </button>
+                                      <button
+                                        type="button"
+                                        title={`Retirar de ${panel.nombre}`}
+                                        onClick={() => retirarWidgetDePanel(perfilSeleccionado, w.clave, panel.id)}
+                                        style={{ background: "none", border: "none", cursor: "pointer", color: "#DC2626", padding: "1px" }}
+                                      >
+                                        <Trash2 size={11} />
+                                      </button>
+                                    </span>
+                                  </div>
+                                );
+                              })}
                             </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  ) : (
-                    <div
-                      style={{
-                        padding: "16px",
-                        borderRadius: "10px",
-                        background: "var(--panel-papel, #F7F6FA)",
-                        border: "1px dashed var(--panel-linea, #E4E4E4)",
-                        textAlign: "center",
-                        fontSize: "0.8rem",
-                        color: "var(--panel-gris, #737373)"
-                      }}
-                    >
-                      No hay widgets asignados a este panel para <strong>{perfilActualObj?.nombre}</strong>. Haz clic en el botón <strong>+ Agregar Widget</strong> para vincular uno.
-                    </div>
+                          )}
+
+                          {/* 3. MODO TARJETAS / REJILLA MEJORADA */}
+                          {modoVistaWidgets === "rejilla" && (
+                            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: "12px" }}>
+                              {widgetsFiltrados.map((w, idx) => {
+                                const esFavoritos = w.clave === "favoritos";
+                                const esArrastrando = widgetArrastrado?.widgetClave === w.clave;
+
+                                return (
+                                  <div
+                                    key={w.clave}
+                                    draggable={true}
+                                    onDragStart={(e) => {
+                                      e.dataTransfer.setData("text/plain", JSON.stringify({ widgetClave: w.clave, panelOrigenId: panel.id }));
+                                      setWidgetArrastrado({ widgetClave: w.clave, panelOrigenId: panel.id });
+                                    }}
+                                    onDragEnd={() => {
+                                      setWidgetArrastrado(null);
+                                      setPanelOverId(null);
+                                    }}
+                                    style={{
+                                      background: esFavoritos ? `${temaPerfilActivo.colorFondoSuave}` : "#ffffff",
+                                      padding: "12px 14px",
+                                      borderRadius: "10px",
+                                      border: esArrastrando
+                                        ? "2px dashed var(--violeta, #5000BA)"
+                                        : esFavoritos
+                                        ? `2px solid ${temaPerfilActivo.colorBorde}`
+                                        : "1.5px solid var(--panel-linea, #E4E4E4)",
+                                      display: "flex",
+                                      alignItems: "center",
+                                      justifyContent: "space-between",
+                                      gap: "10px",
+                                      cursor: "grab",
+                                      opacity: esArrastrando ? 0.45 : 1,
+                                      transform: esArrastrando ? "scale(0.98)" : "none",
+                                      transition: "all 0.15s ease"
+                                    }}
+                                  >
+                                    <div style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "flex-start", gap: "6px" }}>
+                                      <span title="Arrastrar para mover entre paneles" style={{ display: "inline-flex", cursor: "grab", flexShrink: 0 }}>
+                                        <GripVertical size={16} color="var(--panel-gris, #737373)" style={{ marginTop: "2px", opacity: 0.6, flexShrink: 0 }} />
+                                      </span>
+                                      <div style={{ minWidth: 0, flex: 1 }}>
+                                        <div title={w.nombre} style={{ fontWeight: 800, fontSize: "0.85rem", color: temaPerfilActivo.colorTexto, display: "flex", alignItems: "center", gap: "6px" }}>
+                                          {esFavoritos && <Star size={14} fill={temaPerfilActivo.colorPrimario} color={temaPerfilActivo.colorPrimario} style={{ flexShrink: 0 }} />}
+                                          <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{w.nombre}</span>
+                                        </div>
+                                        <div style={{ fontSize: "0.68rem", color: temaPerfilActivo.colorPrimario, fontWeight: 700, opacity: 0.85, marginTop: "2px", display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
+                                          <span>Posición #{idx + 1} • {w.clave}</span>
+                                          <code
+                                            title={`Clic para copiar: ${w.rutaFisica || `/plataforma/${w.clave}.tsx`}`}
+                                            onClick={() => copiarRutaFisica(w.rutaFisica || `/plataforma/${w.clave}.tsx`, w.nombre)}
+                                            style={{ fontSize: "0.66rem", color: "var(--panel-gris, #737373)", background: "rgba(0,0,0,0.05)", padding: "1px 6px", borderRadius: "4px", fontWeight: 600, maxWidth: "180px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", display: "inline-block", cursor: "pointer" }}
+                                          >
+                                            {w.rutaFisica || `/plataforma/${w.clave}.tsx`}
+                                          </code>
+                                        </div>
+                                      </div>
+                                    </div>
+
+                                    <div style={{ display: "flex", alignItems: "center", gap: "4px", flexShrink: 0 }}>
+                                      <button
+                                        type="button"
+                                        title="Subir posición / Mover a la izquierda"
+                                        disabled={idx === 0}
+                                        onClick={() => reordenarWidgetEnPanel(perfilSeleccionado, panel.id, w.clave, "izquierda")}
+                                        style={{
+                                          background: "#ffffff",
+                                          border: "1px solid var(--panel-linea, #E4E4E4)",
+                                          borderRadius: "6px",
+                                          padding: "5px 7px",
+                                          cursor: idx === 0 ? "not-allowed" : "pointer",
+                                          opacity: idx === 0 ? 0.3 : 1,
+                                          color: "var(--negro, #111111)",
+                                          display: "flex",
+                                          alignItems: "center"
+                                        }}
+                                      >
+                                        <ArrowLeft size={13} />
+                                      </button>
+
+                                      <button
+                                        type="button"
+                                        title="Bajar posición / Mover a la derecha"
+                                        disabled={idx === widgetsFiltrados.length - 1}
+                                        onClick={() => reordenarWidgetEnPanel(perfilSeleccionado, panel.id, w.clave, "derecha")}
+                                        style={{
+                                          background: "#ffffff",
+                                          border: "1px solid var(--panel-linea, #E4E4E4)",
+                                          borderRadius: "6px",
+                                          padding: "5px 7px",
+                                          cursor: idx === widgetsFiltrados.length - 1 ? "not-allowed" : "pointer",
+                                          opacity: idx === widgetsFiltrados.length - 1 ? 0.3 : 1,
+                                          color: "var(--negro, #111111)",
+                                          display: "flex",
+                                          alignItems: "center"
+                                        }}
+                                      >
+                                        <ArrowRight size={13} />
+                                      </button>
+
+                                      <button
+                                        type="button"
+                                        title="Reorganizar: Mover o duplicar este widget a otro panel"
+                                        onClick={() => {
+                                          setWidgetTransferir({ widget: w, panelOrigenId: panel.id });
+                                          const primerDestino = panelesSidebar.find(p => p.id !== panel.id)?.id || "";
+                                          setPanelDestinoId(primerDestino);
+                                          setAccionTransferir("mover");
+                                        }}
+                                        style={{
+                                          background: "#F3E8FF",
+                                          border: "1px solid #DDD6FE",
+                                          color: "#5000BA",
+                                          borderRadius: "6px",
+                                          padding: "5px 7px",
+                                          cursor: "pointer",
+                                          display: "flex",
+                                          alignItems: "center"
+                                        }}
+                                      >
+                                        <Move size={14} />
+                                      </button>
+
+                                      <button
+                                        type="button"
+                                        title={`Retirar ${w.nombre} de ${panel.nombre}`}
+                                        aria-label={`Retirar ${w.nombre} de ${panel.nombre}`}
+                                        onClick={() => retirarWidgetDePanel(perfilSeleccionado, w.clave, panel.id)}
+                                        className="btn-responsive-accion"
+                                        style={{
+                                          background: "#FEF2F2",
+                                          border: "1px solid #FCA5A5",
+                                          color: "#DC2626",
+                                          borderRadius: "6px",
+                                          padding: "5px 8px",
+                                          cursor: "pointer",
+                                          fontSize: "0.72rem",
+                                          fontWeight: 800,
+                                          display: "inline-flex",
+                                          alignItems: "center",
+                                          gap: "3px",
+                                          flexShrink: 0
+                                        }}
+                                      >
+                                        <Trash2 size={13} />
+                                        <span className="btn-texto-responsive">Retirar</span>
+                                      </button>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </>
+                      ) : (
+                        <div
+                          style={{
+                            padding: "16px",
+                            borderRadius: "10px",
+                            background: "var(--panel-papel, #F7F6FA)",
+                            border: "1px dashed var(--panel-linea, #E4E4E4)",
+                            textAlign: "center",
+                            fontSize: "0.8rem",
+                            color: "var(--panel-gris, #737373)"
+                          }}
+                        >
+                          {filtroBusquedaWidgets
+                            ? `No se encontraron widgets que coincidan con "${filtroBusquedaWidgets}" en este panel.`
+                            : `No hay widgets asignados a este panel para ${perfilActualObj?.nombre}. Haz clic en el botón + Agregar Widget para vincular uno.`}
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
               );
