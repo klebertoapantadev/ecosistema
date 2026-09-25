@@ -13,6 +13,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@eco/datagrid": "workspace:*",
     "@eco/db": "workspace:*",
     "@eco/notificaciones": "workspace:*",
     "@eco/supabase": "workspace:*",

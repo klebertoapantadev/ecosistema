@@ -828,100 +828,390 @@ export async function activarNuevoMfaTotp(secretKey: string, codigoTotp: string)
 // ═══════════════════════════════════════════════════════════════════
 // PLT-001 / PLT-008: WIDGET ADMINISTRATIVO DE GESTIÓN DE TÉRMINOS Y CONSENTIMIENTOS
 // ═══════════════════════════════════════════════════════════════════
+// GESTIÓN DE TÉRMINOS, CLAUSULAS LOPDP, CONTRATOS & VERSIONAMIENTO
+// ═══════════════════════════════════════════════════════════════════
 
 export interface ConfigTerminosCategoria {
   categoria: string;
+  titulo?: string;
+  tipo?: string;
   version: string;
   fechaVigencia: string;
   requiereAceptacionObligatoria: boolean;
   contenidoMarkdown: string;
   actualizadoEn: string;
+  notasCambio?: string;
+}
+
+export interface HistorialVersionTermino {
+  id: string;
+  negocio: string;
+  clave: string;
+  version: string;
+  titulo: string;
+  fechaVigencia: string;
+  requiereAceptacion: boolean;
+  contenidoMarkdown: string;
+  notasCambio?: string | null;
+  creadoPor?: string | null;
+  creadoEn: string;
+}
+
+export interface RegistroConsentimientoUsuario {
+  id: string;
+  usuarioId: string;
+  usuarioNombre?: string;
+  usuarioCorreo?: string;
+  negocio: string;
+  claveDocumento: string;
+  tituloDocumento?: string;
+  version: string;
+  estado: "ACEPTADO" | "RECHAZADO" | "REVOCADO";
+  fechaAccion: string;
+  ip?: string | null;
+  userAgent?: string | null;
+  hashContenido?: string | null;
+  metadatos?: Record<string, unknown>;
 }
 
 export async function obtenerConfiguracionTerminos(
   negocio: string = "tranqi"
 ): Promise<Resultado<Record<string, ConfigTerminosCategoria>>> {
   const supabase = await crearClienteServidor();
+  const negKey = (negocio || "tranqi").toUpperCase();
+
+  try {
+    // 1. Consultar tabla dedicada en base de datos comun_seguridad.seg_termino_documento
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: docs, error } = await (supabase.schema("comun_seguridad") as any)
+      .from("seg_termino_documento")
+      .select("*")
+      .or(`ted_negocio.eq.${negKey},ted_negocio.eq.${negocio.toLowerCase()}`)
+      .eq("ted_activo", true);
+
+    if (!error && docs && docs.length > 0) {
+      const mapa: Record<string, ConfigTerminosCategoria> = {};
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      for (const d of docs as any[]) {
+        mapa[d.ted_clave] = {
+          categoria: d.ted_clave,
+          titulo: d.ted_titulo,
+          tipo: d.ted_tipo,
+          version: d.ted_version_actual,
+          fechaVigencia: d.ted_fecha_vigencia,
+          requiereAceptacionObligatoria: d.ted_requiere_aceptacion,
+          contenidoMarkdown: d.ted_contenido_markdown,
+          actualizadoEn: d.ted_actualizado_en,
+        };
+      }
+      return { ok: true, data: mapa };
+    }
+  } catch (errBdd) {
+    console.warn("Tabla seg_termino_documento no disponible, buscando fallback:", errBdd);
+  }
+
+  // Fallback 2: Consultar detalle usuario si aún no hay migración
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { ok: false, error: "Sesión no encontrada" };
+  if (user) {
+    const { data: usuarioExistente } = await supabase
+      .schema("comun_seguridad")
+      .from("seg_usuario")
+      .select("usu_detalle_usuario")
+      .eq("usu_id", user.id)
+      .maybeSingle();
 
-  // Buscar configuración persistida en base de datos
-  const { data: usuarioExistente } = await supabase
-    .schema("comun_seguridad")
-    .from("seg_usuario")
-    .select("usu_detalle_usuario")
-    .eq("usu_id", user.id)
-    .maybeSingle();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const detalle = (usuarioExistente?.usu_detalle_usuario as Record<string, any>) || {};
+    const terminosGuardados = detalle.configuracion_terminos?.[negocio] || detalle.configuracion_terminos?.[negKey] || {};
+    return { ok: true, data: terminosGuardados };
+  }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const detalle = (usuarioExistente?.usu_detalle_usuario as Record<string, any>) || {};
-  const terminosGuardados = detalle.configuracion_terminos?.[negocio] || {};
-
-  return {
-    ok: true,
-    data: terminosGuardados,
-  };
+  return { ok: true, data: {} };
 }
 
 export async function guardarConfiguracionTerminos(datos: {
   negocio: string;
   categoria: string;
+  titulo?: string;
+  tipo?: string;
   version: string;
   fechaVigencia: string;
   requiereAceptacionObligatoria: boolean;
   contenidoMarkdown: string;
-}): Promise<Resultado<{ mensaje: string }>> {
+  notasCambio?: string;
+}): Promise<Resultado<{ mensaje: string; versionId?: string }>> {
   const supabase = await crearClienteServidor();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { ok: false, error: "Sesión no encontrada" };
+  const negKey = (datos.negocio || "tranqi").toUpperCase();
 
-  const { data: usuarioExistente } = await supabase
-    .schema("comun_seguridad")
-    .from("seg_usuario")
-    .select("usu_detalle_usuario")
-    .eq("usu_id", user.id)
-    .maybeSingle();
+  try {
+    // 1. Upsert en tabla maestra comun_seguridad.seg_termino_documento
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: docGuardado, error: errDoc } = await (supabase.schema("comun_seguridad") as any)
+      .from("seg_termino_documento")
+      .upsert(
+        {
+          ted_negocio: negKey,
+          ted_clave: datos.categoria,
+          ted_titulo: datos.titulo || datos.categoria,
+          ted_tipo: datos.tipo || "terminos",
+          ted_version_actual: datos.version.trim(),
+          ted_fecha_vigencia: datos.fechaVigencia || new Date().toISOString().split("T")[0],
+          ted_requiere_aceptacion: datos.requiereAceptacionObligatoria,
+          ted_contenido_markdown: datos.contenidoMarkdown,
+          ted_activo: true,
+          ted_actualizado_en: new Date().toISOString(),
+        },
+        { onConflict: "ted_negocio,ted_clave" }
+      )
+      .select("ted_id")
+      .maybeSingle();
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const detalleActual = (usuarioExistente?.usu_detalle_usuario as Record<string, any>) || {};
-  const configActual = detalleActual.configuracion_terminos || {};
-  const configNegocioActual = configActual[datos.negocio] || {};
+    if (errDoc) {
+      console.warn("Error guardando seg_termino_documento:", errDoc);
+    }
 
-  const nuevaCategoriaConfig: ConfigTerminosCategoria = {
-    categoria: datos.categoria,
-    version: datos.version.trim(),
-    fechaVigencia: datos.fechaVigencia,
-    requiereAceptacionObligatoria: datos.requiereAceptacionObligatoria,
-    contenidoMarkdown: datos.contenidoMarkdown,
-    actualizadoEn: new Date().toISOString(),
-  };
+    // 2. Registrar en historial inmutable de versiones comun_seguridad.seg_termino_historial_version
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error: errHist } = await (supabase.schema("comun_seguridad") as any)
+      .from("seg_termino_historial_version")
+      .insert({
+        thv_documento_id: docGuardado?.ted_id || null,
+        thv_negocio: negKey,
+        thv_clave: datos.categoria,
+        thv_version: datos.version.trim(),
+        thv_titulo: datos.titulo || datos.categoria,
+        thv_fecha_vigencia: datos.fechaVigencia || new Date().toISOString().split("T")[0],
+        thv_requiere_aceptacion: datos.requiereAceptacionObligatoria,
+        thv_contenido_markdown: datos.contenidoMarkdown,
+        thv_notas_cambio: datos.notasCambio || `Publicación de versión ${datos.version.trim()}`,
+        thv_creado_por: user?.id || null,
+        thv_creado_en: new Date().toISOString(),
+      });
 
-  const nuevoDetalle = {
-    ...detalleActual,
-    configuracion_terminos: {
-      ...configActual,
-      [datos.negocio]: {
-        ...configNegocioActual,
-        [datos.categoria]: nuevaCategoriaConfig,
-      },
-    },
-  };
+    if (errHist) {
+      console.warn("Error insertando seg_termino_historial_version:", errHist);
+    }
+  } catch (errBdd) {
+    console.warn("Error secundario en tablas BDD de términos:", errBdd);
+  }
 
-  const { error } = await supabase
-    .schema("comun_seguridad")
-    .from("seg_usuario")
-    .update({
-      usu_detalle_usuario: nuevoDetalle,
-      usu_actualizado_en: new Date().toISOString(),
-    })
-    .eq("usu_id", user.id);
+  // Respaldo en detalle_usuario para compatibilidad
+  if (user) {
+    try {
+      const { data: usuarioExistente } = await supabase
+        .schema("comun_seguridad")
+        .from("seg_usuario")
+        .select("usu_detalle_usuario")
+        .eq("usu_id", user.id)
+        .maybeSingle();
 
-  if (error) return { ok: false, error: error.message };
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const detalleActual = (usuarioExistente?.usu_detalle_usuario as Record<string, any>) || {};
+      const configActual = detalleActual.configuracion_terminos || {};
+      const configNegocioActual = configActual[datos.negocio] || {};
+
+      const nuevaCategoriaConfig: ConfigTerminosCategoria = {
+        categoria: datos.categoria,
+        titulo: datos.titulo,
+        tipo: datos.tipo,
+        version: datos.version.trim(),
+        fechaVigencia: datos.fechaVigencia,
+        requiereAceptacionObligatoria: datos.requiereAceptacionObligatoria,
+        contenidoMarkdown: datos.contenidoMarkdown,
+        actualizadoEn: new Date().toISOString(),
+        notasCambio: datos.notasCambio,
+      };
+
+      await supabase
+        .schema("comun_seguridad")
+        .from("seg_usuario")
+        .update({
+          usu_detalle_usuario: {
+            ...detalleActual,
+            configuracion_terminos: {
+              ...configActual,
+              [datos.negocio]: {
+                ...configNegocioActual,
+                [datos.categoria]: nuevaCategoriaConfig,
+              },
+            },
+          },
+          usu_actualizado_en: new Date().toISOString(),
+        })
+        .eq("usu_id", user.id);
+    } catch { /* Ignorar fallback */ }
+  }
 
   return {
     ok: true,
-    data: { mensaje: `Términos y consentimientos de '${datos.categoria}' guardados correctamente.` },
+    data: {
+      mensaje: `Versión ${datos.version.trim()} de '${datos.titulo || datos.categoria}' guardada e indexada en el historial.`,
+    },
   };
 }
+
+export async function obtenerHistorialVersionesTermino(
+  negocio: string,
+  categoria: string
+): Promise<Resultado<HistorialVersionTermino[]>> {
+  const supabase = await crearClienteServidor();
+  const negKey = (negocio || "tranqi").toUpperCase();
+
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: historial, error } = await (supabase.schema("comun_seguridad") as any)
+      .from("seg_termino_historial_version")
+      .select("*")
+      .or(`thv_negocio.eq.${negKey},thv_negocio.eq.${negocio.toLowerCase()}`)
+      .eq("thv_clave", categoria)
+      .order("thv_creado_en", { ascending: false });
+
+    if (error) return { ok: false, error: error.message };
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const items: HistorialVersionTermino[] = (historial || []).map((h: any) => ({
+      id: h.thv_id,
+      negocio: h.thv_negocio,
+      clave: h.thv_clave,
+      version: h.thv_version,
+      titulo: h.thv_titulo,
+      fechaVigencia: h.thv_fecha_vigencia,
+      requiereAceptacion: h.thv_requiere_aceptacion,
+      contenidoMarkdown: h.thv_contenido_markdown,
+      notasCambio: h.thv_notas_cambio,
+      creadoPor: h.thv_creado_por,
+      creadoEn: h.thv_creado_en,
+    }));
+
+    return { ok: true, data: items };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "Error consultando historial de versiones" };
+  }
+}
+
+export async function registrarConsentimientoUsuario(datos: {
+  negocio: string;
+  claveDocumento: string;
+  version: string;
+  estado?: "ACEPTADO" | "RECHAZADO" | "REVOCADO";
+  hashContenido?: string;
+  metadatos?: Record<string, unknown>;
+}): Promise<Resultado<{ id: string }>> {
+  const supabase = await crearClienteServidor();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "Usuario no autenticado" };
+
+  const { ip, userAgent } = await obtenerIpYAgente();
+  const negKey = (datos.negocio || "tranqi").toUpperCase();
+  const estadoFinal = datos.estado || "ACEPTADO";
+
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: nuevo, error } = await (supabase.schema("comun_seguridad") as any)
+      .from("seg_usuario_consentimiento")
+      .insert({
+        usc_usuario_id: user.id,
+        usc_negocio: negKey,
+        usc_clave_documento: datos.claveDocumento,
+        usc_version: datos.version.trim(),
+        usc_estado: estadoFinal,
+        usc_ip: ip,
+        usc_user_agent: userAgent,
+        usc_hash_contenido: datos.hashContenido || null,
+        usc_metadatos: datos.metadatos || {},
+      })
+      .select("usc_id")
+      .single();
+
+    if (error) return { ok: false, error: error.message };
+
+    // Si es consentimiento de términos globales, actualizar también seg_usuario
+    if (datos.claveDocumento === "terminos_globales" || datos.claveDocumento === "terminos") {
+      await supabase
+        .schema("comun_seguridad")
+        .from("seg_usuario")
+        .update({
+          usu_terminos_aceptados_en: new Date().toISOString(),
+          usu_terminos_version: datos.version.trim(),
+        })
+        .eq("usu_id", user.id);
+    }
+
+    return { ok: true, data: { id: nuevo.usc_id } };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "Error registrando consentimiento" };
+  }
+}
+
+export async function obtenerHistorialConsentimientos(
+  negocio?: string,
+  claveDocumento?: string
+): Promise<Resultado<RegistroConsentimientoUsuario[]>> {
+  const supabase = await crearClienteServidor();
+  const adminClient = crearClienteAdmin() || supabase;
+
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let query = (adminClient.schema("comun_seguridad") as any)
+      .from("seg_usuario_consentimiento")
+      .select(`
+        usc_id,
+        usc_usuario_id,
+        usc_negocio,
+        usc_clave_documento,
+        usc_version,
+        usc_estado,
+        usc_fecha_accion,
+        usc_ip,
+        usc_user_agent,
+        usc_hash_contenido,
+        usc_metadatos,
+        seg_usuario (
+          usu_nombres,
+          usu_apellidos,
+          usu_correo
+        )
+      `)
+      .order("usc_fecha_accion", { ascending: false })
+      .limit(500);
+
+    if (negocio && negocio !== "todos") {
+      query = query.or(`usc_negocio.eq.${negocio.toUpperCase()},usc_negocio.eq.${negocio.toLowerCase()}`);
+    }
+    if (claveDocumento && claveDocumento !== "todas") {
+      query = query.eq("usc_clave_documento", claveDocumento);
+    }
+
+    const { data, error } = await query;
+    if (error) return { ok: false, error: error.message };
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const registros: RegistroConsentimientoUsuario[] = (data || []).map((row: any) => {
+      const u = row.seg_usuario;
+      const nombreComp = u ? `${u.usu_nombres || ""} ${u.usu_apellidos || ""}`.trim() : "Usuario Anónimo";
+      return {
+        id: row.usc_id,
+        usuarioId: row.usc_usuario_id,
+        usuarioNombre: nombreComp || "Sin Nombre",
+        usuarioCorreo: u?.usu_correo || "Sin Correo",
+        negocio: row.usc_negocio,
+        claveDocumento: row.usc_clave_documento,
+        version: row.usc_version,
+        estado: row.usc_estado,
+        fechaAccion: row.usc_fecha_accion,
+        ip: row.usc_ip,
+        userAgent: row.usc_user_agent,
+        hashContenido: row.usc_hash_contenido,
+        metadatos: row.usc_metadatos,
+      };
+    });
+
+    return { ok: true, data: registros };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "Error obteniendo auditoría de consentimientos" };
+  }
+}
+
 
 

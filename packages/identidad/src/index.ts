@@ -23,6 +23,14 @@ export {
   obtenerEstadoMfa,
   obtenerConfiguracionTerminos,
   guardarConfiguracionTerminos,
+  obtenerHistorialVersionesTermino,
+  registrarConsentimientoUsuario,
+  obtenerHistorialConsentimientos,
+} from "./acciones";
+export type {
+  ConfigTerminosCategoria,
+  HistorialVersionTermino,
+  RegistroConsentimientoUsuario,
 } from "./acciones";
 
 export {
