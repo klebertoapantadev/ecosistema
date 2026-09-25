@@ -95,12 +95,14 @@ function CeldaPerfilesInteractiva({
   usuario,
   negocio,
   perfiles,
-  nivelMaximoGestor
+  nivelMaximoGestor,
+  onActualizarPerfiles
 }: {
   usuario: UsuarioConMembresia;
   negocio: string;
   perfiles: PerfilAsignable[];
   nivelMaximoGestor: number;
+  onActualizarPerfiles?: (usuarioId: string, nuevosPerfiles: string[]) => void;
 }) {
   const [asignados, setAsignados] = useState<string[]>(usuario.perfiles);
   const [ocupado, setOcupado] = useState<string | null>(null);
@@ -113,10 +115,13 @@ function CeldaPerfilesInteractiva({
 
   async function alternar(clave: string, marcado: boolean) {
     const estadoPrevio = [...asignados];
-    // 1. Actualización optimista inmediata en la interfaz para evitar desmarcado
-    setAsignados((actual) =>
-      marcado ? Array.from(new Set([...actual, clave])) : actual.filter((c) => c !== clave)
-    );
+    const nuevosPerfiles = marcado
+      ? Array.from(new Set([...asignados, clave]))
+      : asignados.filter((c) => c !== clave);
+
+    // 1. Actualización optimista inmediata en estado local y padre
+    setAsignados(nuevosPerfiles);
+    onActualizarPerfiles?.(usuario.usu_id, nuevosPerfiles);
     setOcupado(clave);
     setMensaje(null);
 
@@ -128,10 +133,12 @@ function CeldaPerfilesInteractiva({
       if (!resultado.ok) {
         // Rollback al estado previo si falla la acción
         setAsignados(estadoPrevio);
+        onActualizarPerfiles?.(usuario.usu_id, estadoPrevio);
         setMensaje(resultado.error ?? "Error al procesar la solicitud");
       }
     } catch (err: any) {
       setAsignados(estadoPrevio);
+      onActualizarPerfiles?.(usuario.usu_id, estadoPrevio);
       setMensaje(err?.message || "Error al procesar la solicitud");
     } finally {
       setOcupado(null);
@@ -486,6 +493,11 @@ export function ConsultaUsuariosPerfilesWidget({ negocio = "TRANQ" }: Props) {
           negocio={negocio}
           perfiles={perfiles}
           nivelMaximoGestor={nivelMaximoGestor}
+          onActualizarPerfiles={(usuarioId, nuevosPerfiles) => {
+            setUsuarios((prev) =>
+              prev.map((item) => (item.usu_id === usuarioId ? { ...item, perfiles: nuevosPerfiles } : item))
+            );
+          }}
         />
       )
     },
