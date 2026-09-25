@@ -150,8 +150,8 @@ export function EditorContratoOperador({
     return (
       <div
         style={{
-          background: "#F8FAFC",
-          border: "1.5px solid #E2E8F0",
+          background: "var(--fondo-suave)",
+          border: "1.5px solid var(--linea)",
           borderRadius: "14px",
           padding: "16px 20px",
           marginTop: "16px",
@@ -163,14 +163,14 @@ export function EditorContratoOperador({
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          <div style={{ background: "#EDE9FE", padding: "8px", borderRadius: "8px", color: "#6D28D9" }}>
+          <div style={{ background: "var(--acento-diluido)", padding: "8px", borderRadius: "8px", color: "var(--acento)" }}>
             <FileEdit size={20} />
           </div>
           <div>
-            <h4 style={{ margin: 0, fontSize: "0.92rem", fontWeight: 800, color: "#1E293B" }}>
+            <h4 style={{ margin: 0, fontSize: "0.92rem", fontWeight: 800, color: "var(--texto)" }}>
               Reenviar Contrato con Modificaciones
             </h4>
-            <p style={{ margin: "2px 0 0 0", fontSize: "0.78rem", color: "#64748B" }}>
+            <p style={{ margin: "2px 0 0 0", fontSize: "0.78rem", color: "var(--texto-suave)" }}>
               Si requieres ajustar cláusulas tras la firma del postulante, abre el editor para emitir la <strong>Versión {siguienteVersion}</strong>.
             </p>
           </div>
@@ -205,7 +205,7 @@ export function EditorContratoOperador({
     <div
       style={{
         background: "#FFFFFF",
-        border: "1.5px solid #E2E8F0",
+        border: "1.5px solid var(--linea)",
         borderRadius: "16px",
         padding: "22px 26px",
         boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.05)",
@@ -213,30 +213,30 @@ export function EditorContratoOperador({
       }}
     >
       {/* Encabezado del Editor */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "16px", borderBottom: "1px solid #F1F5F9", paddingBottom: "14px" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "16px", borderBottom: "1px solid var(--fondo-hundido)", paddingBottom: "14px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          <div style={{ background: "#EDE9FE", padding: "10px", borderRadius: "10px", color: "#6D28D9" }}>
+          <div style={{ background: "var(--acento-diluido)", padding: "10px", borderRadius: "10px", color: "var(--acento)" }}>
             <FileEdit size={22} />
           </div>
           <div>
-            <h3 style={{ margin: 0, fontSize: "1.05rem", fontWeight: 800, color: "#1E293B" }}>
+            <h3 style={{ margin: 0, fontSize: "1.05rem", fontWeight: 800, color: "var(--texto)" }}>
               Personalización y Emisión del Contrato (Markdown .MD)
             </h3>
-            <p style={{ margin: "2px 0 0 0", fontSize: "0.82rem", color: "#64748B" }}>
+            <p style={{ margin: "2px 0 0 0", fontSize: "0.82rem", color: "var(--texto-suave)" }}>
               Edita las cláusulas específicas para <strong>{nombrePostulante}</strong>, previsualiza el PDF en tiempo real y emite la <strong>Versión {siguienteVersion}</strong> para firma.
             </p>
           </div>
         </div>
 
         {/* Pestañas de modo */}
-        <div style={{ display: "flex", background: "#F1F5F9", borderRadius: "10px", padding: "3px", gap: "4px" }}>
+        <div style={{ display: "flex", background: "var(--fondo-hundido)", borderRadius: "10px", padding: "3px", gap: "4px" }}>
           <button
             type="button"
             onClick={() => setModo("EDITAR")}
             style={{
               padding: "6px 14px",
               background: modo === "EDITAR" ? "#FFFFFF" : "transparent",
-              color: modo === "EDITAR" ? "#5000BA" : "#64748B",
+              color: modo === "EDITAR" ? "#5000BA" : "var(--texto-suave)",
               fontWeight: 700,
               fontSize: "0.82rem",
               borderRadius: "8px",
@@ -255,7 +255,7 @@ export function EditorContratoOperador({
             style={{
               padding: "6px 14px",
               background: modo === "PREVIEW" ? "#FFFFFF" : "transparent",
-              color: modo === "PREVIEW" ? "#5000BA" : "#64748B",
+              color: modo === "PREVIEW" ? "#5000BA" : "var(--texto-suave)",
               fontWeight: 700,
               fontSize: "0.82rem",
               borderRadius: "8px",
@@ -274,14 +274,14 @@ export function EditorContratoOperador({
       </div>
 
       {error && (
-        <div style={{ padding: "10px 14px", background: "#FEF2F2", border: "1px solid #FECACA", borderRadius: "8px", color: "#991B1B", fontSize: "0.82rem", marginBottom: "14px", display: "flex", gap: "8px" }}>
+        <div style={{ padding: "10px 14px", background: "var(--error-diluido)", border: "1px solid var(--error-linea)", borderRadius: "8px", color: "var(--error-texto)", fontSize: "0.82rem", marginBottom: "14px", display: "flex", gap: "8px" }}>
           <AlertTriangle size={16} style={{ flexShrink: 0, marginTop: "2px" }} />
           <div>{error}</div>
         </div>
       )}
 
       {exito && (
-        <div style={{ padding: "10px 14px", background: "#F0FDF4", border: "1px solid #BBF7D0", borderRadius: "8px", color: "#166534", fontSize: "0.82rem", marginBottom: "14px", display: "flex", gap: "8px" }}>
+        <div style={{ padding: "10px 14px", background: "var(--exito-diluido)", border: "1px solid var(--exito-linea)", borderRadius: "8px", color: "var(--exito-texto)", fontSize: "0.82rem", marginBottom: "14px", display: "flex", gap: "8px" }}>
           <CheckCircle2 size={16} style={{ flexShrink: 0, marginTop: "2px" }} />
           <div>{exito}</div>
         </div>
@@ -291,7 +291,7 @@ export function EditorContratoOperador({
       {modo === "EDITAR" && (
         <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
           <div>
-            <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 700, color: "#334155", marginBottom: "4px" }}>
+            <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 700, color: "var(--texto-2)", marginBottom: "4px" }}>
               Título Oficial del Contrato:
             </label>
             <input
@@ -302,7 +302,7 @@ export function EditorContratoOperador({
                 width: "100%",
                 padding: "8px 12px",
                 borderRadius: "8px",
-                border: "1px solid #CBD5E1",
+                border: "1px solid var(--linea-fuerte)",
                 fontSize: "0.88rem",
                 fontWeight: 600,
                 outline: "none",
@@ -313,10 +313,10 @@ export function EditorContratoOperador({
 
           <div>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
-              <label style={{ fontSize: "0.8rem", fontWeight: 700, color: "#334155" }}>
+              <label style={{ fontSize: "0.8rem", fontWeight: 700, color: "var(--texto-2)" }}>
                 Cláusulas del Contrato (Markdown .MD):
               </label>
-              <span style={{ fontSize: "0.72rem", color: "#64748B" }}>
+              <span style={{ fontSize: "0.72rem", color: "var(--texto-suave)" }}>
                 Variables disponibles: <code>{"{{nombre_completo}}"}</code>, <code>{"{{cedula}}"}</code>
               </span>
             </div>
@@ -328,13 +328,13 @@ export function EditorContratoOperador({
                 width: "100%",
                 padding: "12px",
                 borderRadius: "8px",
-                border: "1px solid #CBD5E1",
+                border: "1px solid var(--linea-fuerte)",
                 fontFamily: "monospace",
                 fontSize: "0.85rem",
                 lineHeight: 1.45,
                 outline: "none",
                 boxSizing: "border-box",
-                background: "#FAFAFA",
+                background: "var(--fondo-suave)",
               }}
             />
           </div>
@@ -345,7 +345,7 @@ export function EditorContratoOperador({
       {modo === "PREVIEW" && (
         <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <span style={{ fontSize: "0.82rem", fontWeight: 700, color: "#475569" }}>
+            <span style={{ fontSize: "0.82rem", fontWeight: 700, color: "var(--texto-2)" }}>
               Borrador Vectorial generado para: <strong>{nombrePostulante}</strong>
             </span>
             <button
@@ -353,10 +353,10 @@ export function EditorContratoOperador({
               onClick={handleDescargarBorrador}
               style={{
                 padding: "6px 12px",
-                background: "#F1F5F9",
-                border: "1px solid #CBD5E1",
+                background: "var(--fondo-hundido)",
+                border: "1px solid var(--linea-fuerte)",
                 borderRadius: "8px",
-                color: "#1E293B",
+                color: "var(--texto)",
                 fontWeight: 700,
                 fontSize: "0.78rem",
                 cursor: "pointer",
@@ -365,12 +365,12 @@ export function EditorContratoOperador({
                 gap: "6px",
               }}
             >
-              <Download size={14} color="#047857" />
+              <Download size={14} color="var(--exito-texto)" />
               Descargar Borrador en PDF
             </button>
           </div>
 
-          <div style={{ width: "100%", height: "550px", borderRadius: "10px", overflow: "hidden", border: "1px solid #CBD5E1", background: "#334155" }}>
+          <div style={{ width: "100%", height: "550px", borderRadius: "10px", overflow: "hidden", border: "1px solid var(--linea-fuerte)", background: "var(--texto-2)" }}>
             {urlPdfPreview ? (
               <iframe
                 src={`${urlPdfPreview}#toolbar=0&navpanes=0`}
@@ -387,8 +387,8 @@ export function EditorContratoOperador({
       )}
 
       {/* Panel de Emisión y Comentarios del Operador */}
-      <div style={{ marginTop: "16px", paddingTop: "14px", borderTop: "1px solid #F1F5F9" }}>
-        <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 700, color: "#334155", marginBottom: "4px" }}>
+      <div style={{ marginTop: "16px", paddingTop: "14px", borderTop: "1px solid var(--fondo-hundido)" }}>
+        <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 700, color: "var(--texto-2)", marginBottom: "4px" }}>
           Nota o Justificación de la Versión {siguienteVersion} (se notificará al solicitante):
         </label>
         <input
@@ -400,7 +400,7 @@ export function EditorContratoOperador({
             width: "100%",
             padding: "8px 12px",
             borderRadius: "8px",
-            border: "1px solid #CBD5E1",
+            border: "1px solid var(--linea-fuerte)",
             fontSize: "0.85rem",
             outline: "none",
             boxSizing: "border-box",
@@ -438,9 +438,9 @@ export function EditorContratoOperador({
                 onClick={() => setPanelAbierto(false)}
                 style={{
                   padding: "10px 14px",
-                  background: "#F1F5F9",
-                  color: "#475569",
-                  border: "1px solid #CBD5E1",
+                  background: "var(--fondo-hundido)",
+                  color: "var(--texto-2)",
+                  border: "1px solid var(--linea-fuerte)",
                   borderRadius: "8px",
                   fontWeight: 700,
                   fontSize: "0.82rem",
@@ -491,13 +491,13 @@ export function EditorContratoOperador({
 
       {/* Historial Desplegable de Versiones y Observaciones */}
       {mostrarHistorial && (
-        <div style={{ marginTop: "16px", paddingTop: "14px", borderTop: "1px solid #E2E8F0" }}>
-          <h4 style={{ margin: "0 0 10px 0", fontSize: "0.88rem", fontWeight: 800, color: "#1E293B" }}>
+        <div style={{ marginTop: "16px", paddingTop: "14px", borderTop: "1px solid var(--linea)" }}>
+          <h4 style={{ margin: "0 0 10px 0", fontSize: "0.88rem", fontWeight: 800, color: "var(--texto)" }}>
             Línea de Tiempo y Negociación de Cláusulas
           </h4>
 
           {historialVersiones.length === 0 ? (
-            <p style={{ margin: 0, fontSize: "0.8rem", color: "#64748B" }}>
+            <p style={{ margin: 0, fontSize: "0.8rem", color: "var(--texto-suave)" }}>
               Aún no se han emitido versiones personalizadas para esta solicitud. Se utilizará la plantilla institucional como v1.
             </p>
           ) : (
@@ -509,23 +509,23 @@ export function EditorContratoOperador({
                     key={v.vcs_id}
                     style={{
                       padding: "10px 14px",
-                      background: esObservacion ? "#FEF3C7" : "#F8FAFC",
-                      border: `1px solid ${esObservacion ? "#FCD34D" : "#E2E8F0"}`,
+                      background: esObservacion ? "var(--aviso-diluido)" : "var(--fondo-suave)",
+                      border: `1px solid ${esObservacion ? "var(--aviso-linea)" : "var(--linea)"}`,
                       borderRadius: "10px",
                       fontSize: "0.82rem",
                     }}
                   >
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
-                      <span style={{ fontWeight: 800, color: esObservacion ? "#92400E" : "#1E293B" }}>
+                      <span style={{ fontWeight: 800, color: esObservacion ? "var(--aviso-texto)" : "var(--texto)" }}>
                         {esObservacion ? "Observación del Solicitante" : `Versión ${v.vcs_numero_version} (${v.vcs_rol_creador})`}
                       </span>
-                      <span style={{ fontSize: "0.72rem", color: "#64748B" }}>
+                      <span style={{ fontSize: "0.72rem", color: "var(--texto-suave)" }}>
                         {new Date(v.vcs_creado_en).toLocaleString("es-EC")}
                       </span>
                     </div>
 
                     {v.vcs_comentarios && (
-                      <p style={{ margin: "4px 0", color: "#334155", fontStyle: "italic" }}>
+                      <p style={{ margin: "4px 0", color: "var(--texto-2)", fontStyle: "italic" }}>
                         "{v.vcs_comentarios}"
                       </p>
                     )}

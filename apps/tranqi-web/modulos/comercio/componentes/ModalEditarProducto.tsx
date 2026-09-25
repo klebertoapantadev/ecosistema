@@ -59,7 +59,7 @@ function SelectorEncuadreFoto({
   onCambiarAjuste,
   onCambiarZoom,
   titulo = "Encuadre & Posición en Catálogo (Cuadrado 1:1)",
-  colorTema = "#0284C7",
+  colorTema = "var(--acento)",
 }: {
   imagenUrl: string;
   posicion?: string;
@@ -85,8 +85,8 @@ function SelectorEncuadreFoto({
     <div
       style={{
         marginTop: "10px",
-        background: "#F8FAFC",
-        border: "1.5px dashed #CBD5E1",
+        background: "var(--fondo-suave)",
+        border: "1.5px dashed var(--linea-fuerte)",
         borderRadius: "10px",
         padding: "12px",
       }}
@@ -94,11 +94,11 @@ function SelectorEncuadreFoto({
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
           <Sparkles size={14} color={colorTema} />
-          <span style={{ fontSize: "0.74rem", fontWeight: 800, color: "#1E293B" }}>
+          <span style={{ fontSize: "0.74rem", fontWeight: 800, color: "var(--texto)" }}>
             {titulo}
           </span>
         </div>
-        <span style={{ fontSize: "0.68rem", color: "#64748B", fontWeight: 600 }}>
+        <span style={{ fontSize: "0.68rem", color: "var(--texto-suave)", fontWeight: 600 }}>
           Proporción Cuadrada 1:1
         </span>
       </div>
@@ -112,7 +112,7 @@ function SelectorEncuadreFoto({
             height: "105px",
             borderRadius: "10px",
             overflow: "hidden",
-            background: "#0F172A",
+            background: "var(--texto)",
             border: `2px solid ${colorTema}`,
             flexShrink: 0,
             boxShadow: "0 3px 8px rgba(0,0,0,0.15)",
@@ -175,7 +175,7 @@ function SelectorEncuadreFoto({
         <div style={{ flex: 1, minWidth: "220px", display: "flex", flexDirection: "column", gap: "8px" }}>
           {/* Posición / Enfoque */}
           <div>
-            <div style={{ fontSize: "0.7rem", fontWeight: 700, color: "#475569", marginBottom: "4px" }}>
+            <div style={{ fontSize: "0.7rem", fontWeight: 700, color: "var(--texto-2)", marginBottom: "4px" }}>
               Enfoque Vertical (¿Qué parte mostrar?):
             </div>
             <div style={{ display: "flex", gap: "4px", flexWrap: "wrap" }}>
@@ -191,11 +191,11 @@ function SelectorEncuadreFoto({
                       borderRadius: "6px",
                       fontSize: "0.68rem",
                       fontWeight: activo ? 800 : 600,
-                      border: activo ? `1.5px solid ${colorTema}` : "1px solid #CBD5E1",
-                      background: activo ? "#FFFFFF" : "#F1F5F9",
-                      color: activo ? colorTema : "#475569",
+                      border: activo ? `1.5px solid ${colorTema}` : "1px solid var(--linea-fuerte)",
+                      background: activo ? "#FFFFFF" : "var(--fondo-hundido)",
+                      color: activo ? colorTema : "var(--texto-2)",
                       cursor: "pointer",
-                      boxShadow: activo ? `0 1px 3px ${colorTema}33` : "none",
+                      boxShadow: activo ? `0 1px 3px color-mix(in srgb, ${colorTema} 20%, transparent)` : "none",
                     }}
                   >
                     {pr.label}
@@ -208,7 +208,7 @@ function SelectorEncuadreFoto({
           {/* Modo de Ajuste: Cover vs Contain */}
           <div style={{ display: "flex", gap: "12px", alignItems: "center", flexWrap: "wrap" }}>
             <div>
-              <div style={{ fontSize: "0.7rem", fontWeight: 700, color: "#475569", marginBottom: "4px" }}>
+              <div style={{ fontSize: "0.7rem", fontWeight: 700, color: "var(--texto-2)", marginBottom: "4px" }}>
                 Ajuste:
               </div>
               <div style={{ display: "flex", gap: "4px" }}>
@@ -220,9 +220,9 @@ function SelectorEncuadreFoto({
                     borderRadius: "6px",
                     fontSize: "0.68rem",
                     fontWeight: ajuste === "cover" ? 800 : 600,
-                    border: ajuste === "cover" ? `1.5px solid ${colorTema}` : "1px solid #CBD5E1",
-                    background: ajuste === "cover" ? "#FFFFFF" : "#F1F5F9",
-                    color: ajuste === "cover" ? colorTema : "#475569",
+                    border: ajuste === "cover" ? `1.5px solid ${colorTema}` : "1px solid var(--linea-fuerte)",
+                    background: ajuste === "cover" ? "#FFFFFF" : "var(--fondo-hundido)",
+                    color: ajuste === "cover" ? colorTema : "var(--texto-2)",
                     cursor: "pointer",
                   }}
                 >
@@ -236,9 +236,9 @@ function SelectorEncuadreFoto({
                     borderRadius: "6px",
                     fontSize: "0.68rem",
                     fontWeight: ajuste === "contain" ? 800 : 600,
-                    border: ajuste === "contain" ? `1.5px solid ${colorTema}` : "1px solid #CBD5E1",
-                    background: ajuste === "contain" ? "#FFFFFF" : "#F1F5F9",
-                    color: ajuste === "contain" ? colorTema : "#475569",
+                    border: ajuste === "contain" ? `1.5px solid ${colorTema}` : "1px solid var(--linea-fuerte)",
+                    background: ajuste === "contain" ? "#FFFFFF" : "var(--fondo-hundido)",
+                    color: ajuste === "contain" ? colorTema : "var(--texto-2)",
                     cursor: "pointer",
                   }}
                 >
@@ -250,7 +250,7 @@ function SelectorEncuadreFoto({
             {/* Escala / Zoom */}
             {ajuste === "cover" && (
               <div>
-                <div style={{ fontSize: "0.7rem", fontWeight: 700, color: "#475569", marginBottom: "4px" }}>
+                <div style={{ fontSize: "0.7rem", fontWeight: 700, color: "var(--texto-2)", marginBottom: "4px" }}>
                   Escala: {zoom}%
                 </div>
                 <div style={{ display: "flex", gap: "3px" }}>
@@ -264,9 +264,9 @@ function SelectorEncuadreFoto({
                         borderRadius: "4px",
                         fontSize: "0.65rem",
                         fontWeight: zoom === z ? 800 : 600,
-                        border: zoom === z ? `1.5px solid ${colorTema}` : "1px solid #CBD5E1",
-                        background: zoom === z ? "#FFFFFF" : "#F1F5F9",
-                        color: zoom === z ? colorTema : "#475569",
+                        border: zoom === z ? `1.5px solid ${colorTema}` : "1px solid var(--linea-fuerte)",
+                        background: zoom === z ? "#FFFFFF" : "var(--fondo-hundido)",
+                        color: zoom === z ? colorTema : "var(--texto-2)",
                         cursor: "pointer",
                       }}
                     >
@@ -742,7 +742,7 @@ export function ModalEditarProducto({
           width: "100%",
           maxWidth: "680px",
           maxHeight: "92vh",
-          boxShadow: `0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 3px ${colActiva.border}55`,
+          boxShadow: `0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 3px color-mix(in srgb, ${colActiva.border} 33%, transparent)`,
           border: `2.5px solid ${colActiva.border}`,
           display: "flex",
           flexDirection: "column",
@@ -758,7 +758,7 @@ export function ModalEditarProducto({
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            background: "linear-gradient(135deg, #0F172A 0%, #1E293B 100%)",
+            background: "linear-gradient(135deg, var(--texto) 0%, var(--texto) 100%)",
             color: "#FFFFFF",
           }}
         >
@@ -769,7 +769,7 @@ export function ModalEditarProducto({
                 height: "38px",
                 borderRadius: "10px",
                 background: "rgba(56, 189, 248, 0.15)",
-                color: "#38BDF8",
+                color: "var(--acento)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -783,7 +783,7 @@ export function ModalEditarProducto({
                 <span
                   style={{
                     background: "rgba(56, 189, 248, 0.2)",
-                    color: "#38BDF8",
+                    color: "var(--acento)",
                     fontSize: "0.68rem",
                     fontWeight: 800,
                     padding: "2px 6px",
@@ -797,7 +797,7 @@ export function ModalEditarProducto({
                   <span
                     style={{
                       background: "rgba(56, 189, 248, 0.12)",
-                      color: "#38BDF8",
+                      color: "var(--acento)",
                       fontSize: "0.68rem",
                       fontWeight: 700,
                       padding: "2px 7px",
@@ -868,9 +868,9 @@ export function ModalEditarProducto({
                 onClick={onAbrirManual}
                 title="Ver Manual de Configuración Floral"
                 style={{
-                  background: "#F1F5F9",
-                  border: "1px solid #CBD5E1",
-                  color: "#334155",
+                  background: "var(--fondo-hundido)",
+                  border: "1px solid var(--linea-fuerte)",
+                  color: "var(--texto-2)",
                   padding: "5px 10px",
                   borderRadius: "6px",
                   fontSize: "0.75rem",
@@ -892,7 +892,7 @@ export function ModalEditarProducto({
                 background: "transparent",
                 border: "none",
                 cursor: "pointer",
-                color: "#64748B",
+                color: "var(--texto-suave)",
                 padding: "6px",
                 borderRadius: "8px",
               }}
@@ -908,9 +908,9 @@ export function ModalEditarProducto({
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            background: "#F8FAFC",
+            background: "var(--fondo-suave)",
             padding: "8px 18px",
-            borderBottom: "1px solid #E2E8F0",
+            borderBottom: "1px solid var(--linea)",
             flexWrap: "wrap",
             gap: "8px",
           }}
@@ -927,9 +927,9 @@ export function ModalEditarProducto({
                 borderRadius: "8px",
                 fontSize: "0.8rem",
                 fontWeight: esModoMaster ? 800 : 600,
-                border: esModoMaster ? "1.5px solid #0284C7" : "1px solid #CBD5E1",
-                background: esModoMaster ? "#0284C7" : "#FFFFFF",
-                color: esModoMaster ? "#FFFFFF" : "#475569",
+                border: esModoMaster ? "1.5px solid var(--acento)" : "1px solid var(--linea-fuerte)",
+                background: esModoMaster ? "var(--acento)" : "#FFFFFF",
+                color: esModoMaster ? "#FFFFFF" : "var(--texto-2)",
                 cursor: "pointer",
                 boxShadow: esModoMaster ? "0 2px 4px rgba(2, 132, 199, 0.25)" : "none",
                 transition: "all 0.15s ease",
@@ -953,11 +953,11 @@ export function ModalEditarProducto({
                 borderRadius: "8px",
                 fontSize: "0.8rem",
                 fontWeight: !esModoMaster ? 800 : 600,
-                border: !esModoMaster ? `1.5px solid ${colVariante.border}` : "1px solid #CBD5E1",
+                border: !esModoMaster ? `1.5px solid ${colVariante.border}` : "1px solid var(--linea-fuerte)",
                 background: !esModoMaster ? colVariante.bg : "#FFFFFF",
-                color: !esModoMaster ? colVariante.text : "#475569",
+                color: !esModoMaster ? colVariante.text : "var(--texto-2)",
                 cursor: "pointer",
-                boxShadow: !esModoMaster ? `0 2px 4px ${colVariante.border}33` : "none",
+                boxShadow: !esModoMaster ? `0 2px 4px color-mix(in srgb, ${colVariante.border} 20%, transparent)` : "none",
                 transition: "all 0.15s ease",
               }}
             >
@@ -966,7 +966,7 @@ export function ModalEditarProducto({
             </button>
           </div>
 
-          <div style={{ fontSize: "0.72rem", color: "#64748B" }}>
+          <div style={{ fontSize: "0.72rem", color: "var(--texto-suave)" }}>
             {esModoMaster ? (
               <span>Modificando portada y atributos base globales</span>
             ) : (
@@ -982,9 +982,9 @@ export function ModalEditarProducto({
           {error && (
             <div
               style={{
-                background: "#FEF2F2",
-                border: "1px solid #FCA5A5",
-                color: "#991B1B",
+                background: "var(--error-diluido)",
+                border: "1px solid var(--error-linea)",
+                color: "var(--error-texto)",
                 padding: "10px 14px",
                 borderRadius: "8px",
                 marginBottom: "14px",
@@ -1006,7 +1006,7 @@ export function ModalEditarProducto({
             <div>
               {/* 1. DATOS PRINCIPALES DEL PRODUCTO MASTER */}
               <div style={{ marginBottom: "14px" }}>
-                <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 700, color: "#1E293B", marginBottom: "4px" }}>
+                <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 700, color: "var(--texto)", marginBottom: "4px" }}>
                   Nombre del {esFloristeria ? "Arreglo / Producto Floral" : "Servicio Master"} *
                 </label>
                 <input
@@ -1019,7 +1019,7 @@ export function ModalEditarProducto({
                     width: "100%",
                     padding: "9px 12px",
                     borderRadius: "8px",
-                    border: "1px solid #CBD5E1",
+                    border: "1px solid var(--linea-fuerte)",
                     fontSize: "0.9rem",
                     boxSizing: "border-box",
                     fontWeight: 600,
@@ -1029,7 +1029,7 @@ export function ModalEditarProducto({
 
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "14px" }}>
                 <div>
-                  <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 600, color: "#334155", marginBottom: "4px" }}>
+                  <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 600, color: "var(--texto-2)", marginBottom: "4px" }}>
                     Categoría / Colección *
                   </label>
                   <select
@@ -1039,7 +1039,7 @@ export function ModalEditarProducto({
                       width: "100%",
                       padding: "9px 12px",
                       borderRadius: "8px",
-                      border: "1px solid #CBD5E1",
+                      border: "1px solid var(--linea-fuerte)",
                       fontSize: "0.85rem",
                       boxSizing: "border-box",
                       background: "#FFFFFF",
@@ -1054,7 +1054,7 @@ export function ModalEditarProducto({
                 </div>
 
                 <div>
-                  <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 600, color: "#334155", marginBottom: "4px" }}>
+                  <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 600, color: "var(--texto-2)", marginBottom: "4px" }}>
                     Tipo de Oferta Comercial
                   </label>
                   <select
@@ -1064,7 +1064,7 @@ export function ModalEditarProducto({
                       width: "100%",
                       padding: "9px 12px",
                       borderRadius: "8px",
-                      border: "1px solid #CBD5E1",
+                      border: "1px solid var(--linea-fuerte)",
                       fontSize: "0.85rem",
                       boxSizing: "border-box",
                       background: "#FFFFFF",
@@ -1101,8 +1101,8 @@ export function ModalEditarProducto({
               {/* 2. RECURSOS DIGITALES Y MULTIMEDIA GLOBALES (MASTER) */}
               <div
                 style={{
-                  background: "#F8FAFC",
-                  border: "1px solid #E2E8F0",
+                  background: "var(--fondo-suave)",
+                  border: "1px solid var(--linea)",
                   borderRadius: "10px",
                   padding: "14px",
                   marginBottom: "14px",
@@ -1110,12 +1110,12 @@ export function ModalEditarProducto({
               >
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                    <ImageIcon size={16} color="#475569" />
-                    <span style={{ fontSize: "0.78rem", fontWeight: 800, color: "#334155", textTransform: "uppercase" }}>
+                    <ImageIcon size={16} color="var(--texto-2)" />
+                    <span style={{ fontSize: "0.78rem", fontWeight: 800, color: "var(--texto-2)", textTransform: "uppercase" }}>
                       Recursos Digitales Globales (Foto Principal Master)
                     </span>
                   </div>
-                  <span style={{ fontSize: "0.7rem", color: "#64748B", fontWeight: 600 }}>
+                  <span style={{ fontSize: "0.7rem", color: "var(--texto-suave)", fontWeight: 600 }}>
                     Las variantes heredarán esta foto salvo que tengan una propia
                   </span>
                 </div>
@@ -1123,16 +1123,16 @@ export function ModalEditarProducto({
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "10px" }}>
                   <div>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "2px" }}>
-                      <label style={{ fontSize: "0.72rem", fontWeight: 700, color: "#334155" }}>
+                      <label style={{ fontSize: "0.72rem", fontWeight: 700, color: "var(--texto-2)" }}>
                         URL Imagen de Portada Principal (Global) *
                       </label>
                       {(imagenUrl.includes("photos.google.com") || imagenUrl.includes("photos.app.goo.gl")) && (
-                        <span style={{ fontSize: "0.68rem", color: "#D97706", fontWeight: 700, display: "flex", alignItems: "center", gap: "3px" }}>
+                        <span style={{ fontSize: "0.68rem", color: "var(--aviso)", fontWeight: 700, display: "flex", alignItems: "center", gap: "3px" }}>
                           <AlertCircle size={12} /> Requiere Extracción
                         </span>
                       )}
                       {imagenUrl.includes("lh3.googleusercontent.com") && (
-                        <span style={{ fontSize: "0.68rem", color: "#16A34A", fontWeight: 700, display: "flex", alignItems: "center", gap: "3px" }}>
+                        <span style={{ fontSize: "0.68rem", color: "var(--exito)", fontWeight: 700, display: "flex", alignItems: "center", gap: "3px" }}>
                           <CheckCircle2 size={12} /> Imagen Directa Lista
                         </span>
                       )}
@@ -1155,22 +1155,22 @@ export function ModalEditarProducto({
                         width: "100%",
                         padding: "7px 10px",
                         borderRadius: "6px",
-                        border: (imagenUrl.includes("photos.google.com") || imagenUrl.includes("photos.app.goo.gl")) ? "1.5px solid #F59E0B" : "1px solid #CBD5E1",
+                        border: (imagenUrl.includes("photos.google.com") || imagenUrl.includes("photos.app.goo.gl")) ? "1.5px solid var(--aviso)" : "1px solid var(--linea-fuerte)",
                         fontSize: "0.8rem",
                         boxSizing: "border-box",
                       }}
                     />
 
                     {exitoAutoConvertir && (
-                      <div style={{ marginTop: "4px", fontSize: "0.7rem", color: "#15803D", background: "#DCFCE7", padding: "4px 8px", borderRadius: "4px", border: "1px solid #BBF7D0", display: "flex", alignItems: "center", gap: "4px" }}>
+                      <div style={{ marginTop: "4px", fontSize: "0.7rem", color: "var(--exito-texto)", background: "var(--exito-diluido)", padding: "4px 8px", borderRadius: "4px", border: "1px solid var(--exito-linea)", display: "flex", alignItems: "center", gap: "4px" }}>
                         <CheckCircle2 size={13} /> {exitoAutoConvertir}
                       </div>
                     )}
 
                     {(imagenUrl.includes("photos.google.com") || imagenUrl.includes("photos.app.goo.gl") || imagenUrl.includes("drive.google.com/drive")) && (
-                      <div style={{ marginTop: "6px", fontSize: "0.7rem", color: "#92400E", background: "#FEF3C7", padding: "8px 10px", borderRadius: "6px", border: "1px solid #FDE68A", lineHeight: 1.4 }}>
+                      <div style={{ marginTop: "6px", fontSize: "0.7rem", color: "var(--aviso-texto)", background: "var(--aviso-diluido)", padding: "8px 10px", borderRadius: "6px", border: "1px solid var(--aviso-linea)", lineHeight: 1.4 }}>
                         <div style={{ fontWeight: 800, marginBottom: "3px", display: "flex", alignItems: "center", gap: "4px" }}>
-                          <AlertCircle size={13} color="#D97706" /> Enlace de Álbum Web Detectado
+                          <AlertCircle size={13} color="var(--aviso)" /> Enlace de Álbum Web Detectado
                         </div>
                         <div>Este enlace abre el visor web de Google Fotos, no un archivo de imagen directo (.jpg).</div>
                         <div style={{ marginTop: "6px", display: "flex", gap: "6px", flexWrap: "wrap", alignItems: "center" }}>
@@ -1179,7 +1179,7 @@ export function ModalEditarProducto({
                             disabled={resolviendoImagen}
                             onClick={() => handleConvertirImagenGlobal()}
                             style={{
-                              background: "#0284C7",
+                              background: "var(--acento)",
                               color: "#FFFFFF",
                               border: "none",
                               padding: "4px 9px",
@@ -1210,7 +1210,7 @@ export function ModalEditarProducto({
                               setImagenUrl("");
                             }}
                             style={{
-                              background: "#B45309",
+                              background: "var(--aviso-texto)",
                               color: "#FFFFFF",
                               border: "none",
                               padding: "4px 8px",
@@ -1237,13 +1237,13 @@ export function ModalEditarProducto({
                         onCambiarAjuste={(aj) => setFotoAjusteMaster(aj)}
                         onCambiarZoom={(zm) => setFotoZoomMaster(zm)}
                         titulo="Encuadre & Posición en Carrusel Cuadrado (Portada Master)"
-                        colorTema="#0284C7"
+                        colorTema="var(--acento)"
                       />
                     )}
                   </div>
 
                   <div>
-                    <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#334155", marginBottom: "2px" }}>
+                    <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "var(--texto-2)", marginBottom: "2px" }}>
                       URL Álbum de Muestras Reales (Google Photos / Instagram)
                     </label>
                     <input
@@ -1255,7 +1255,7 @@ export function ModalEditarProducto({
                         width: "100%",
                         padding: "7px 10px",
                         borderRadius: "6px",
-                        border: "1px solid #CBD5E1",
+                        border: "1px solid var(--linea-fuerte)",
                         fontSize: "0.8rem",
                         boxSizing: "border-box",
                       }}
@@ -1265,7 +1265,7 @@ export function ModalEditarProducto({
 
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
                   <div>
-                    <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#334155", marginBottom: "2px" }}>
+                    <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "var(--texto-2)", marginBottom: "2px" }}>
                       URL Video / GIF Demostrativo (YouTube, MP4)
                     </label>
                     <input
@@ -1277,7 +1277,7 @@ export function ModalEditarProducto({
                         width: "100%",
                         padding: "6px 10px",
                         borderRadius: "6px",
-                        border: "1px solid #CBD5E1",
+                        border: "1px solid var(--linea-fuerte)",
                         fontSize: "0.78rem",
                         boxSizing: "border-box",
                       }}
@@ -1285,7 +1285,7 @@ export function ModalEditarProducto({
                   </div>
 
                   <div>
-                    <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#334155", marginBottom: "2px" }}>
+                    <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "var(--texto-2)", marginBottom: "2px" }}>
                       Galería Adicional (URLs por salto de línea)
                     </label>
                     <textarea
@@ -1297,7 +1297,7 @@ export function ModalEditarProducto({
                         width: "100%",
                         padding: "6px 10px",
                         borderRadius: "6px",
-                        border: "1px solid #CBD5E1",
+                        border: "1px solid var(--linea-fuerte)",
                         fontSize: "0.78rem",
                         boxSizing: "border-box",
                       }}
@@ -1308,7 +1308,7 @@ export function ModalEditarProducto({
 
               {/* 3. TIEMPO DE ENTREGA GLOBAL & DESCRIPCIÓN BASE */}
               <div style={{ marginBottom: "14px" }}>
-                <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, color: "#1E293B", marginBottom: "4px" }}>
+                <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, color: "var(--texto)", marginBottom: "4px" }}>
                   Promesa y Tiempo de Entrega Global * (Heredado por defecto)
                 </label>
                 <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginBottom: "6px" }}>
@@ -1324,9 +1324,9 @@ export function ModalEditarProducto({
                           borderRadius: "6px",
                           fontSize: "0.72rem",
                           fontWeight: 700,
-                          border: sel ? "1.5px solid #0F172A" : "1px solid #CBD5E1",
-                          background: sel ? "#0F172A" : "#FFFFFF",
-                          color: sel ? "#FFFFFF" : "#475569",
+                          border: sel ? "1.5px solid var(--texto)" : "1px solid var(--linea-fuerte)",
+                          background: sel ? "var(--texto)" : "#FFFFFF",
+                          color: sel ? "#FFFFFF" : "var(--texto-2)",
                           cursor: "pointer",
                         }}
                       >
@@ -1345,7 +1345,7 @@ export function ModalEditarProducto({
                     width: "100%",
                     padding: "8px 12px",
                     borderRadius: "8px",
-                    border: "1px solid #CBD5E1",
+                    border: "1px solid var(--linea-fuerte)",
                     fontSize: "0.85rem",
                     boxSizing: "border-box",
                   }}
@@ -1354,7 +1354,7 @@ export function ModalEditarProducto({
 
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "16px" }}>
                 <div>
-                  <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 600, color: "#334155", marginBottom: "4px" }}>
+                  <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 600, color: "var(--texto-2)", marginBottom: "4px" }}>
                     Descripción Detallada Base (Global)
                   </label>
                   <textarea
@@ -1366,7 +1366,7 @@ export function ModalEditarProducto({
                       width: "100%",
                       padding: "8px 12px",
                       borderRadius: "8px",
-                      border: "1px solid #CBD5E1",
+                      border: "1px solid var(--linea-fuerte)",
                       fontSize: "0.82rem",
                       boxSizing: "border-box",
                     }}
@@ -1374,7 +1374,7 @@ export function ModalEditarProducto({
                 </div>
 
                 <div>
-                  <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 600, color: "#334155", marginBottom: "4px" }}>
+                  <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 600, color: "var(--texto-2)", marginBottom: "4px" }}>
                     Beneficios / ¿Qué incluye? Base (Una viñeta por línea)
                   </label>
                   <textarea
@@ -1390,7 +1390,7 @@ export function ModalEditarProducto({
                       width: "100%",
                       padding: "8px 12px",
                       borderRadius: "8px",
-                      border: "1px solid #CBD5E1",
+                      border: "1px solid var(--linea-fuerte)",
                       fontSize: "0.82rem",
                       boxSizing: "border-box",
                     }}
@@ -1401,8 +1401,8 @@ export function ModalEditarProducto({
               {/* 4. CONFIGURACIÓN GLOBAL DE IVA SRI (ECUADOR) */}
               <div
                 style={{
-                  background: "#F8FAFC",
-                  border: "1px solid #E2E8F0",
+                  background: "var(--fondo-suave)",
+                  border: "1px solid var(--linea)",
                   borderRadius: "10px",
                   padding: "12px 14px",
                   marginBottom: "14px",
@@ -1410,8 +1410,8 @@ export function ModalEditarProducto({
               >
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px", flexWrap: "wrap", gap: "6px" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                    <Percent size={16} color="#0284C7" />
-                    <label style={{ fontSize: "0.8rem", fontWeight: 800, color: "#1E293B" }}>
+                    <Percent size={16} color="var(--acento)" />
+                    <label style={{ fontSize: "0.8rem", fontWeight: 800, color: "var(--texto)" }}>
                       Tarifa IVA SRI Predeterminada (Global para este Producto)
                     </label>
                   </div>
@@ -1419,9 +1419,9 @@ export function ModalEditarProducto({
                     type="button"
                     onClick={() => aplicarIvaMasterATodos(tarifaIvaMaster)}
                     style={{
-                      background: "#E0F2FE",
-                      border: "1px solid #7DD3FC",
-                      color: "#0369A1",
+                      background: "var(--acento-diluido)",
+                      border: "1px solid var(--acento-linea)",
+                      color: "var(--acento-hondo)",
                       padding: "3px 8px",
                       borderRadius: "6px",
                       fontSize: "0.7rem",
@@ -1446,9 +1446,9 @@ export function ModalEditarProducto({
                       borderRadius: "8px",
                       fontSize: "0.78rem",
                       fontWeight: 700,
-                      border: tarifaIvaMaster === 15 ? "1.5px solid #0284C7" : "1px solid #CBD5E1",
-                      background: tarifaIvaMaster === 15 ? "#F0F9FF" : "#FFFFFF",
-                      color: tarifaIvaMaster === 15 ? "#0284C7" : "#475569",
+                      border: tarifaIvaMaster === 15 ? "1.5px solid var(--acento)" : "1px solid var(--linea-fuerte)",
+                      background: tarifaIvaMaster === 15 ? "var(--acento-diluido)" : "#FFFFFF",
+                      color: tarifaIvaMaster === 15 ? "var(--acento)" : "var(--texto-2)",
                       cursor: "pointer",
                       textAlign: "left",
                       display: "flex",
@@ -1456,7 +1456,7 @@ export function ModalEditarProducto({
                     }}
                   >
                     <span>🇪🇨 IVA 15% (Tarifa General SRI)</span>
-                    <span style={{ fontSize: "0.68rem", fontWeight: 500, color: "#64748B" }}>
+                    <span style={{ fontSize: "0.68rem", fontWeight: 500, color: "var(--texto-suave)" }}>
                       Calcula IVA 15% sobre la base imponible
                     </span>
                   </button>
@@ -1469,9 +1469,9 @@ export function ModalEditarProducto({
                       borderRadius: "8px",
                       fontSize: "0.78rem",
                       fontWeight: 700,
-                      border: tarifaIvaMaster === 0 ? "1.5px solid #10B981" : "1px solid #CBD5E1",
-                      background: tarifaIvaMaster === 0 ? "#ECFDF5" : "#FFFFFF",
-                      color: tarifaIvaMaster === 0 ? "#059669" : "#475569",
+                      border: tarifaIvaMaster === 0 ? "1.5px solid var(--exito)" : "1px solid var(--linea-fuerte)",
+                      background: tarifaIvaMaster === 0 ? "var(--exito-diluido)" : "#FFFFFF",
+                      color: tarifaIvaMaster === 0 ? "var(--exito)" : "var(--texto-2)",
                       cursor: "pointer",
                       textAlign: "left",
                       display: "flex",
@@ -1479,7 +1479,7 @@ export function ModalEditarProducto({
                     }}
                   >
                     <span>🌿 IVA 0% (Exento SRI / Tarifa Cero)</span>
-                    <span style={{ fontSize: "0.68rem", fontWeight: 500, color: "#64748B" }}>
+                    <span style={{ fontSize: "0.68rem", fontWeight: 500, color: "var(--texto-suave)" }}>
                       Servicios médicos, canasta básica o exentos
                     </span>
                   </button>
@@ -1489,8 +1489,8 @@ export function ModalEditarProducto({
               {/* 5. LOGÍSTICA & TRANSPORTE A DOMICILIO (DELIVERY) */}
               <div
                 style={{
-                  background: deliveryIncluido ? "#F0FDF4" : "#F8FAFC",
-                  border: deliveryIncluido ? "1.5px solid #86EFAC" : "1px solid #E2E8F0",
+                  background: deliveryIncluido ? "var(--exito-diluido)" : "var(--fondo-suave)",
+                  border: deliveryIncluido ? "1.5px solid var(--exito-linea)" : "1px solid var(--linea)",
                   borderRadius: "10px",
                   padding: "12px 14px",
                   marginBottom: "16px",
@@ -1498,8 +1498,8 @@ export function ModalEditarProducto({
                 }}
               >
                 <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "8px" }}>
-                  <Truck size={16} color={deliveryIncluido ? "#16A34A" : "#64748B"} />
-                  <label style={{ fontSize: "0.8rem", fontWeight: 800, color: deliveryIncluido ? "#166534" : "#1E293B" }}>
+                  <Truck size={16} color={deliveryIncluido ? "var(--exito)" : "var(--texto-suave)"} />
+                  <label style={{ fontSize: "0.8rem", fontWeight: 800, color: deliveryIncluido ? "var(--exito-texto)" : "var(--texto)" }}>
                     Logística & Entrega a Domicilio (Transporte)
                   </label>
                 </div>
@@ -1517,9 +1517,9 @@ export function ModalEditarProducto({
                       borderRadius: "6px",
                       fontSize: "0.72rem",
                       fontWeight: 700,
-                      border: deliveryIncluido && modalidadTransporte === "INCLUIDO_GRATIS" ? "1.5px solid #16A34A" : "1px solid #CBD5E1",
-                      background: deliveryIncluido && modalidadTransporte === "INCLUIDO_GRATIS" ? "#DCFCE7" : "#FFFFFF",
-                      color: deliveryIncluido && modalidadTransporte === "INCLUIDO_GRATIS" ? "#166534" : "#475569",
+                      border: deliveryIncluido && modalidadTransporte === "INCLUIDO_GRATIS" ? "1.5px solid var(--exito)" : "1px solid var(--linea-fuerte)",
+                      background: deliveryIncluido && modalidadTransporte === "INCLUIDO_GRATIS" ? "var(--exito-diluido)" : "#FFFFFF",
+                      color: deliveryIncluido && modalidadTransporte === "INCLUIDO_GRATIS" ? "var(--exito-texto)" : "var(--texto-2)",
                       cursor: "pointer",
                       textAlign: "center",
                     }}
@@ -1539,9 +1539,9 @@ export function ModalEditarProducto({
                       borderRadius: "6px",
                       fontSize: "0.72rem",
                       fontWeight: 700,
-                      border: !deliveryIncluido && modalidadTransporte === "COSTO_ADICIONAL" ? "1.5px solid #F59E0B" : "1px solid #CBD5E1",
-                      background: !deliveryIncluido && modalidadTransporte === "COSTO_ADICIONAL" ? "#FEF3C7" : "#FFFFFF",
-                      color: !deliveryIncluido && modalidadTransporte === "COSTO_ADICIONAL" ? "#92400E" : "#475569",
+                      border: !deliveryIncluido && modalidadTransporte === "COSTO_ADICIONAL" ? "1.5px solid var(--aviso)" : "1px solid var(--linea-fuerte)",
+                      background: !deliveryIncluido && modalidadTransporte === "COSTO_ADICIONAL" ? "var(--aviso-diluido)" : "#FFFFFF",
+                      color: !deliveryIncluido && modalidadTransporte === "COSTO_ADICIONAL" ? "var(--aviso-texto)" : "var(--texto-2)",
                       cursor: "pointer",
                       textAlign: "center",
                     }}
@@ -1561,9 +1561,9 @@ export function ModalEditarProducto({
                       borderRadius: "6px",
                       fontSize: "0.72rem",
                       fontWeight: 700,
-                      border: !deliveryIncluido && modalidadTransporte === "SOLO_RETIRO" ? "1.5px solid #64748B" : "1px solid #CBD5E1",
-                      background: !deliveryIncluido && modalidadTransporte === "SOLO_RETIRO" ? "#F1F5F9" : "#FFFFFF",
-                      color: !deliveryIncluido && modalidadTransporte === "SOLO_RETIRO" ? "#1E293B" : "#475569",
+                      border: !deliveryIncluido && modalidadTransporte === "SOLO_RETIRO" ? "1.5px solid var(--texto-suave)" : "1px solid var(--linea-fuerte)",
+                      background: !deliveryIncluido && modalidadTransporte === "SOLO_RETIRO" ? "var(--fondo-hundido)" : "#FFFFFF",
+                      color: !deliveryIncluido && modalidadTransporte === "SOLO_RETIRO" ? "var(--texto)" : "var(--texto-2)",
                       cursor: "pointer",
                       textAlign: "center",
                     }}
@@ -1574,7 +1574,7 @@ export function ModalEditarProducto({
 
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
                   <div>
-                    <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#334155", marginBottom: "2px" }}>
+                    <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "var(--texto-2)", marginBottom: "2px" }}>
                       Etiqueta Visible de Transporte
                     </label>
                     <input
@@ -1586,7 +1586,7 @@ export function ModalEditarProducto({
                         width: "100%",
                         padding: "6px 10px",
                         borderRadius: "6px",
-                        border: "1px solid #CBD5E1",
+                        border: "1px solid var(--linea-fuerte)",
                         fontSize: "0.78rem",
                         boxSizing: "border-box",
                         background: "#FFFFFF",
@@ -1595,7 +1595,7 @@ export function ModalEditarProducto({
                   </div>
 
                   <div>
-                    <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#334155", marginBottom: "2px" }}>
+                    <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "var(--texto-2)", marginBottom: "2px" }}>
                       Zona o Sector de Cobertura
                     </label>
                     <input
@@ -1607,7 +1607,7 @@ export function ModalEditarProducto({
                         width: "100%",
                         padding: "6px 10px",
                         borderRadius: "6px",
-                        border: "1px solid #CBD5E1",
+                        border: "1px solid var(--linea-fuerte)",
                         fontSize: "0.78rem",
                         boxSizing: "border-box",
                         background: "#FFFFFF",
@@ -1620,8 +1620,8 @@ export function ModalEditarProducto({
               {/* Banner resumen que invita a configurar tamaños */}
               <div
                 style={{
-                  background: "#F0F9FF",
-                  border: "1.5px dashed #38BDF8",
+                  background: "var(--acento-diluido)",
+                  border: "1.5px dashed var(--acento)",
                   borderRadius: "10px",
                   padding: "12px 16px",
                   display: "flex",
@@ -1631,10 +1631,10 @@ export function ModalEditarProducto({
                 }}
               >
                 <div>
-                  <div style={{ fontSize: "0.82rem", fontWeight: 800, color: "#0369A1" }}>
+                  <div style={{ fontSize: "0.82rem", fontWeight: 800, color: "var(--acento-hondo)" }}>
                     🏷️ Variantes / Tamaños configurados: {variantesLocales.length}
                   </div>
-                  <div style={{ fontSize: "0.72rem", color: "#0284C7" }}>
+                  <div style={{ fontSize: "0.72rem", color: "var(--acento)" }}>
                     Puedes personalizar fotos individuales y precios para cada tamaño en la pestaña de variantes.
                   </div>
                 </div>
@@ -1645,7 +1645,7 @@ export function ModalEditarProducto({
                     setVarianteActivaIndex(0);
                   }}
                   style={{
-                    background: "#0284C7",
+                    background: "var(--acento)",
                     color: "#FFFFFF",
                     border: "none",
                     padding: "6px 12px",
@@ -1667,8 +1667,8 @@ export function ModalEditarProducto({
           {!esModoMaster && (
             <div
               style={{
-                background: "#F8FAFC",
-                border: "1.5px solid #CBD5E1",
+                background: "var(--fondo-suave)",
+                border: "1.5px solid var(--linea-fuerte)",
                 borderRadius: "12px",
                 padding: "16px",
                 marginBottom: "16px",
@@ -1676,8 +1676,8 @@ export function ModalEditarProducto({
             >
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                  <Layers size={17} color="#0F172A" />
-                  <span style={{ fontSize: "0.85rem", fontWeight: 800, color: "#0F172A", textTransform: "uppercase" }}>
+                  <Layers size={17} color="var(--texto)" />
+                  <span style={{ fontSize: "0.85rem", fontWeight: 800, color: "var(--texto)", textTransform: "uppercase" }}>
                     Selecciona el Tamaño / Variante para Personalizar ({variantesLocales.length})
                   </span>
                 </div>
@@ -1685,7 +1685,7 @@ export function ModalEditarProducto({
                   type="button"
                   onClick={agregarNuevaVariante}
                   style={{
-                    background: "#0F172A",
+                    background: "var(--texto)",
                     color: "#FFFFFF",
                     border: "none",
                     borderRadius: "6px",
@@ -1722,9 +1722,9 @@ export function ModalEditarProducto({
                       style={{
                         padding: "7px 12px",
                         borderRadius: "8px",
-                        border: activa ? `2px solid ${col.border}` : `1.5px solid ${col.border}66`,
+                        border: activa ? `2px solid ${col.border}` : `1.5px solid color-mix(in srgb, ${col.border} 40%, transparent)`,
                         background: activa ? col.bg : "#FFFFFF",
-                        color: activa ? col.text : "#475569",
+                        color: activa ? col.text : "var(--texto-2)",
                         fontWeight: activa ? 800 : 600,
                         fontSize: "0.78rem",
                         cursor: "pointer",
@@ -1732,12 +1732,12 @@ export function ModalEditarProducto({
                         alignItems: "center",
                         gap: "6px",
                         transition: "all 0.15s ease",
-                        boxShadow: activa ? `0 2px 8px ${col.border}33` : "none",
+                        boxShadow: activa ? `0 2px 8px color-mix(in srgb, ${col.border} 20%, transparent)` : "none",
                       }}
                     >
                       <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: col.dot, flexShrink: 0 }} />
                       <span>{v.var_nombre}</span>
-                      <span style={{ fontWeight: 800, color: activa ? col.text : "#0F172A" }}>
+                      <span style={{ fontWeight: 800, color: activa ? col.text : "var(--texto)" }}>
                         ${(v.precio_total || pvpCalculado).toFixed(2)}
                       </span>
                       {tieneFotoPropia ? (
@@ -1745,7 +1745,7 @@ export function ModalEditarProducto({
                           title="Tiene Foto Propia Exclusiva"
                           style={{
                             fontSize: "0.62rem",
-                            background: "#0284C7",
+                            background: "var(--acento)",
                             color: "#FFFFFF",
                             padding: "1px 5px",
                             borderRadius: "4px",
@@ -1759,8 +1759,8 @@ export function ModalEditarProducto({
                           title="Hereda la Foto Global"
                           style={{
                             fontSize: "0.62rem",
-                            background: "#F1F5F9",
-                            color: "#64748B",
+                            background: "var(--fondo-hundido)",
+                            color: "var(--texto-suave)",
                             padding: "1px 5px",
                             borderRadius: "4px",
                             fontWeight: 600,
@@ -1782,7 +1782,7 @@ export function ModalEditarProducto({
                     borderRadius: "10px",
                     padding: "14px",
                     border: `2px solid ${colActiva.border}`,
-                    boxShadow: `0 3px 10px ${colActiva.border}22`,
+                    boxShadow: `0 3px 10px color-mix(in srgb, ${colActiva.border} 13%, transparent)`,
                   }}
                 >
                   {/* Banner de Variante Activa */}
@@ -1809,7 +1809,7 @@ export function ModalEditarProducto({
                   {/* 2. Datos básicos de la variante (Nombre y SKU) */}
                   <div style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr", gap: "10px", marginBottom: "10px" }}>
                     <div>
-                      <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#334155", marginBottom: "2px" }}>
+                      <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "var(--texto-2)", marginBottom: "2px" }}>
                         Nombre de la Variante / Tamaño *
                       </label>
                       <input
@@ -1822,7 +1822,7 @@ export function ModalEditarProducto({
                           width: "100%",
                           padding: "7px 10px",
                           borderRadius: "6px",
-                          border: "1px solid #CBD5E1",
+                          border: "1px solid var(--linea-fuerte)",
                           fontSize: "0.82rem",
                           boxSizing: "border-box",
                           fontWeight: 600,
@@ -1831,7 +1831,7 @@ export function ModalEditarProducto({
                     </div>
 
                     <div>
-                      <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#334155", marginBottom: "2px" }}>
+                      <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "var(--texto-2)", marginBottom: "2px" }}>
                         Código SKU / Referencia
                       </label>
                       <input
@@ -1843,7 +1843,7 @@ export function ModalEditarProducto({
                           width: "100%",
                           padding: "7px 10px",
                           borderRadius: "6px",
-                          border: "1px solid #CBD5E1",
+                          border: "1px solid var(--linea-fuerte)",
                           fontSize: "0.82rem",
                           boxSizing: "border-box",
                         }}
@@ -1853,7 +1853,7 @@ export function ModalEditarProducto({
 
                   <div style={{ display: "grid", gridTemplateColumns: "1.1fr 1fr 1.1fr", gap: "10px" }}>
                     <div>
-                      <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#334155", marginBottom: "2px" }}>
+                      <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "var(--texto-2)", marginBottom: "2px" }}>
                         Precio Venta Sin IVA ($) *
                       </label>
                       <input
@@ -1868,17 +1868,17 @@ export function ModalEditarProducto({
                           width: "100%",
                           padding: "7px 10px",
                           borderRadius: "6px",
-                          border: "1px solid #CBD5E1",
+                          border: "1px solid var(--linea-fuerte)",
                           fontSize: "0.88rem",
                           fontWeight: 800,
                           boxSizing: "border-box",
-                          color: "#0F172A",
+                          color: "var(--texto)",
                         }}
                       />
                     </div>
 
                     <div>
-                      <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#334155", marginBottom: "2px" }}>
+                      <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "var(--texto-2)", marginBottom: "2px" }}>
                         Tarifa IVA SRI
                       </label>
                       <select
@@ -1888,7 +1888,7 @@ export function ModalEditarProducto({
                           width: "100%",
                           padding: "7px 10px",
                           borderRadius: "6px",
-                          border: "1px solid #CBD5E1",
+                          border: "1px solid var(--linea-fuerte)",
                           fontSize: "0.82rem",
                           boxSizing: "border-box",
                           background: "#FFFFFF",
@@ -1900,7 +1900,7 @@ export function ModalEditarProducto({
                     </div>
 
                     <div>
-                      <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#334155", marginBottom: "2px" }}>
+                      <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "var(--texto-2)", marginBottom: "2px" }}>
                         PVP Anterior / Tachado ($)
                       </label>
                       <input
@@ -1922,10 +1922,10 @@ export function ModalEditarProducto({
                           width: "100%",
                           padding: "7px 10px",
                           borderRadius: "6px",
-                          border: "1px solid #CBD5E1",
+                          border: "1px solid var(--linea-fuerte)",
                           fontSize: "0.85rem",
                           boxSizing: "border-box",
-                          color: "#64748B",
+                          color: "var(--texto-suave)",
                         }}
                       />
                     </div>
@@ -1936,8 +1936,8 @@ export function ModalEditarProducto({
                     style={{
                       margin: "12px 0",
                       padding: "8px 12px",
-                      background: "#F8FAFC",
-                      border: "1px dashed #CBD5E1",
+                      background: "var(--fondo-suave)",
+                      border: "1px dashed var(--linea-fuerte)",
                       borderRadius: "6px",
                       display: "flex",
                       alignItems: "center",
@@ -1946,30 +1946,30 @@ export function ModalEditarProducto({
                     }}
                   >
                     <div>
-                      <span style={{ color: "#64748B" }}>Base: </span>
-                      <strong style={{ color: "#0F172A" }}>${Number(varianteActual.var_precio || 0).toFixed(2)}</strong>
-                      <span style={{ margin: "0 6px", color: "#CBD5E1" }}>|</span>
-                      <span style={{ color: "#64748B" }}>IVA ({varianteActual.var_tarifa_iva_porcentaje ?? 15}%): </span>
-                      <strong style={{ color: "#0F172A" }}>
+                      <span style={{ color: "var(--texto-suave)" }}>Base: </span>
+                      <strong style={{ color: "var(--texto)" }}>${Number(varianteActual.var_precio || 0).toFixed(2)}</strong>
+                      <span style={{ margin: "0 6px", color: "var(--linea-fuerte)" }}>|</span>
+                      <span style={{ color: "var(--texto-suave)" }}>IVA ({varianteActual.var_tarifa_iva_porcentaje ?? 15}%): </span>
+                      <strong style={{ color: "var(--texto)" }}>
                         ${(Number(varianteActual.var_precio || 0) * (varianteActual.var_tarifa_iva_porcentaje ?? 15) / 100).toFixed(2)}
                       </strong>
                     </div>
                     <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
-                      <span style={{ color: "#64748B" }}>PVP Total:</span>
-                      <strong style={{ color: "#059669", fontSize: "0.95rem", fontWeight: 800 }}>
+                      <span style={{ color: "var(--texto-suave)" }}>PVP Total:</span>
+                      <strong style={{ color: "var(--exito)", fontSize: "0.95rem", fontWeight: 800 }}>
                         ${(Number(varianteActual.var_precio || 0) * (1 + (varianteActual.var_tarifa_iva_porcentaje ?? 15) / 100)).toFixed(2)}
                       </strong>
                       {varianteActual.var_precio_comparacion &&
                         Number(varianteActual.var_precio_comparacion) >
                           Number(varianteActual.var_precio || 0) * (1 + (varianteActual.var_tarifa_iva_porcentaje ?? 15) / 100) && (
                           <>
-                            <span style={{ textDecoration: "line-through", color: "#94A3B8", fontSize: "0.85rem", fontWeight: 500 }} title="Precio regular tachado">
+                            <span style={{ textDecoration: "line-through", color: "var(--texto-tenue)", fontSize: "0.85rem", fontWeight: 500 }} title="Precio regular tachado">
                               ${Number(varianteActual.var_precio_comparacion).toFixed(2)}
                             </span>
                             <span
                               style={{
-                                background: "#FEE2E2",
-                                color: "#DC2626",
+                                background: "var(--error-diluido)",
+                                color: "var(--error)",
                                 fontSize: "0.72rem",
                                 fontWeight: 800,
                                 padding: "2px 7px",
@@ -1993,7 +1993,7 @@ export function ModalEditarProducto({
                           style={{
                             background: "transparent",
                             border: "none",
-                            color: "#EF4444",
+                            color: "var(--error)",
                             cursor: "pointer",
                             padding: "2px",
                             marginLeft: "6px",
@@ -2008,8 +2008,8 @@ export function ModalEditarProducto({
                   {/* 1. SECCIÓN DE FOTO DE PORTADA PARA ESTE TAMAÑO (HERENCIA VS SOBREESCRITURA) */}
                   <div
                     style={{
-                      background: "#F8FAFC",
-                      border: "1px solid #E2E8F0",
+                      background: "var(--fondo-suave)",
+                      border: "1px solid var(--linea)",
                       borderRadius: "8px",
                       padding: "12px",
                       marginBottom: "12px",
@@ -2018,7 +2018,7 @@ export function ModalEditarProducto({
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
                       <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                         <ImageIcon size={15} color={colActiva.dot} />
-                        <label style={{ fontSize: "0.75rem", fontWeight: 800, color: "#1E293B" }}>
+                        <label style={{ fontSize: "0.75rem", fontWeight: 800, color: "var(--texto)" }}>
                           Foto de Portada para "{varianteActual.var_nombre}"
                         </label>
                       </div>
@@ -2036,9 +2036,9 @@ export function ModalEditarProducto({
                             borderRadius: "4px",
                             fontSize: "0.68rem",
                             fontWeight: 700,
-                            border: !varianteActual.var_detalle_variante?.portada_url ? "1.5px solid #0F172A" : "1px solid #CBD5E1",
-                            background: !varianteActual.var_detalle_variante?.portada_url ? "#0F172A" : "#FFFFFF",
-                            color: !varianteActual.var_detalle_variante?.portada_url ? "#FFFFFF" : "#64748B",
+                            border: !varianteActual.var_detalle_variante?.portada_url ? "1.5px solid var(--texto)" : "1px solid var(--linea-fuerte)",
+                            background: !varianteActual.var_detalle_variante?.portada_url ? "var(--texto)" : "#FFFFFF",
+                            color: !varianteActual.var_detalle_variante?.portada_url ? "#FFFFFF" : "var(--texto-suave)",
                             cursor: "pointer",
                           }}
                         >
@@ -2065,7 +2065,7 @@ export function ModalEditarProducto({
                               flex: 1,
                               padding: "7px 10px",
                               borderRadius: "6px",
-                              border: "1px solid #CBD5E1",
+                              border: "1px solid var(--linea-fuerte)",
                               fontSize: "0.8rem",
                               boxSizing: "border-box",
                               background: "#FFFFFF",
@@ -2076,7 +2076,7 @@ export function ModalEditarProducto({
                             disabled={resolviendoVarianteImg}
                             onClick={() => handleConvertirImagenVariante()}
                             style={{
-                              background: "#0284C7",
+                              background: "var(--acento)",
                               color: "#FFFFFF",
                               border: "none",
                               padding: "7px 12px",
@@ -2128,7 +2128,7 @@ export function ModalEditarProducto({
                           varianteActual.var_detalle_variante.portada_url.includes("photos.app.goo.gl") ||
                           varianteActual.var_detalle_variante.portada_url.includes("photos.google.com")
                         ) && (
-                          <div style={{ marginTop: "6px", fontSize: "0.68rem", color: "#B45309", background: "#FEF3C7", padding: "4px 8px", borderRadius: "4px", border: "1px solid #FDE68A", lineHeight: 1.35 }}>
+                          <div style={{ marginTop: "6px", fontSize: "0.68rem", color: "var(--aviso-texto)", background: "var(--aviso-diluido)", padding: "4px 8px", borderRadius: "4px", border: "1px solid var(--aviso-linea)", lineHeight: 1.35 }}>
                             ⚠️ Haz clic en <strong>🪄 Auto-Convertir</strong> para extraer la foto directa de Google Fotos para este tamaño.
                           </div>
                         )}
@@ -2140,14 +2140,14 @@ export function ModalEditarProducto({
                           alignItems: "center",
                           justifyContent: "space-between",
                           background: "#FFFFFF",
-                          border: "1px dashed #CBD5E1",
+                          border: "1px dashed var(--linea-fuerte)",
                           borderRadius: "6px",
                           padding: "8px 12px",
                         }}
                       >
                         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                           {imagenUrl ? (
-                            <div style={{ width: "36px", height: "36px", borderRadius: "4px", overflow: "hidden", background: "#0F172A", flexShrink: 0 }}>
+                            <div style={{ width: "36px", height: "36px", borderRadius: "4px", overflow: "hidden", background: "var(--texto)", flexShrink: 0 }}>
                               <img
                                 src={imagenUrl}
                                 alt="Master Heredada"
@@ -2158,15 +2158,15 @@ export function ModalEditarProducto({
                               />
                             </div>
                           ) : (
-                            <div style={{ width: "36px", height: "36px", borderRadius: "4px", background: "#E2E8F0", display: "flex", alignItems: "center", justifyContent: "center", color: "#94A3B8" }}>
+                            <div style={{ width: "36px", height: "36px", borderRadius: "4px", background: "var(--linea)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--texto-tenue)" }}>
                               <ImageIcon size={16} />
                             </div>
                           )}
                           <div>
-                            <div style={{ fontSize: "0.75rem", color: "#1E293B", fontWeight: 700 }}>
+                            <div style={{ fontSize: "0.75rem", color: "var(--texto)", fontWeight: 700 }}>
                               ⚪ <strong>Foto Heredada del Master</strong>
                             </div>
-                            <div style={{ fontSize: "0.68rem", color: "#64748B" }}>
+                            <div style={{ fontSize: "0.68rem", color: "var(--texto-suave)" }}>
                               Este tamaño muestra la imagen de portada global en la vitrina.
                             </div>
                           </div>
@@ -2199,12 +2199,12 @@ export function ModalEditarProducto({
                   <div
                     style={{
                       marginTop: "12px",
-                      borderTop: `1.5px solid ${colActiva.border}44`,
+                      borderTop: `1.5px solid color-mix(in srgb, ${colActiva.border} 27%, transparent)`,
                       paddingTop: "12px",
                       background: colActiva.bg,
                       borderRadius: "8px",
                       padding: "10px",
-                      border: `1px solid ${colActiva.border}66`,
+                      border: `1px solid color-mix(in srgb, ${colActiva.border} 40%, transparent)`,
                     }}
                   >
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }}>
@@ -2214,7 +2214,7 @@ export function ModalEditarProducto({
                           Tiempo de Entrega & Beneficios de este Tamaño
                         </span>
                       </div>
-                      <span style={{ fontSize: "0.68rem", color: "#64748B" }}>
+                      <span style={{ fontSize: "0.68rem", color: "var(--texto-suave)" }}>
                         Si se deja vacío, hereda automáticamente los valores globales
                       </span>
                     </div>
@@ -2222,10 +2222,10 @@ export function ModalEditarProducto({
                     {/* Tiempo de Entrega Específico de esta variante */}
                     <div style={{ marginBottom: "8px" }}>
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "2px" }}>
-                        <label style={{ fontSize: "0.72rem", fontWeight: 700, color: "#334155" }}>
+                        <label style={{ fontSize: "0.72rem", fontWeight: 700, color: "var(--texto-2)" }}>
                           Tiempo de Entrega para este Tamaño:
                         </label>
-                        <span style={{ fontSize: "0.68rem", color: varianteActual.var_detalle_variante?.tiempo_entrega ? colActiva.text : "#64748B", fontWeight: 700 }}>
+                        <span style={{ fontSize: "0.68rem", color: varianteActual.var_detalle_variante?.tiempo_entrega ? colActiva.text : "var(--texto-suave)", fontWeight: 700 }}>
                           {varianteActual.var_detalle_variante?.tiempo_entrega ? "🟢 Tiempo Específico Activo" : `⚪ Hereda Global (${tiempoEntrega})`}
                         </span>
                       </div>
@@ -2241,9 +2241,9 @@ export function ModalEditarProducto({
                             borderRadius: "5px",
                             fontSize: "0.68rem",
                             fontWeight: 700,
-                            border: !varianteActual.var_detalle_variante?.tiempo_entrega ? `1.5px solid ${colActiva.border}` : "1px solid #CBD5E1",
+                            border: !varianteActual.var_detalle_variante?.tiempo_entrega ? `1.5px solid ${colActiva.border}` : "1px solid var(--linea-fuerte)",
                             background: !varianteActual.var_detalle_variante?.tiempo_entrega ? colActiva.badge : "#FFFFFF",
-                            color: !varianteActual.var_detalle_variante?.tiempo_entrega ? colActiva.text : "#475569",
+                            color: !varianteActual.var_detalle_variante?.tiempo_entrega ? colActiva.text : "var(--texto-2)",
                             cursor: "pointer",
                           }}
                         >
@@ -2264,9 +2264,9 @@ export function ModalEditarProducto({
                                 borderRadius: "5px",
                                 fontSize: "0.68rem",
                                 fontWeight: 700,
-                                border: sel ? `1.5px solid ${colActiva.border}` : "1px solid #CBD5E1",
+                                border: sel ? `1.5px solid ${colActiva.border}` : "1px solid var(--linea-fuerte)",
                                 background: sel ? colActiva.badge : "#FFFFFF",
-                                color: sel ? colActiva.text : "#475569",
+                                color: sel ? colActiva.text : "var(--texto-2)",
                                 cursor: "pointer",
                               }}
                             >
@@ -2280,7 +2280,7 @@ export function ModalEditarProducto({
                     {/* Beneficios / ¿Qué incluye? con Selector de Modo (Heredar / Anexar / Reemplazar) */}
                     <div>
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
-                        <label style={{ fontSize: "0.72rem", fontWeight: 700, color: "#334155" }}>
+                        <label style={{ fontSize: "0.72rem", fontWeight: 700, color: "var(--texto-2)" }}>
                           Beneficios & Contenido de este Tamaño:
                         </label>
                         <div style={{ display: "flex", gap: "4px" }}>
@@ -2301,9 +2301,9 @@ export function ModalEditarProducto({
                                   fontSize: "0.65rem",
                                   fontWeight: 700,
                                   textTransform: "capitalize",
-                                  border: activo ? `1.5px solid ${colActiva.border}` : "1px solid #CBD5E1",
+                                  border: activo ? `1.5px solid ${colActiva.border}` : "1px solid var(--linea-fuerte)",
                                   background: activo ? colActiva.badge : "#FFFFFF",
-                                  color: activo ? colActiva.text : "#475569",
+                                  color: activo ? colActiva.text : "var(--texto-2)",
                                   cursor: "pointer",
                                 }}
                               >
@@ -2315,7 +2315,7 @@ export function ModalEditarProducto({
                       </div>
 
                       {(!varianteActual.var_detalle_variante?.beneficios_modo || varianteActual.var_detalle_variante?.beneficios_modo === "heredar") ? (
-                        <div style={{ fontSize: "0.7rem", color: "#64748B", background: "#FFFFFF", padding: "6px 10px", borderRadius: "6px", border: "1px solid #E2E8F0" }}>
+                        <div style={{ fontSize: "0.7rem", color: "var(--texto-suave)", background: "#FFFFFF", padding: "6px 10px", borderRadius: "6px", border: "1px solid var(--linea)" }}>
                           <em>Hereda los beneficios generales definidos en el producto master.</em>
                         </div>
                       ) : (
@@ -2341,7 +2341,7 @@ export function ModalEditarProducto({
                               width: "100%",
                               padding: "6px 10px",
                               borderRadius: "6px",
-                              border: "1px solid #CBD5E1",
+                              border: "1px solid var(--linea-fuerte)",
                               fontSize: "0.75rem",
                               boxSizing: "border-box",
                               background: "#FFFFFF",
@@ -2363,7 +2363,7 @@ export function ModalEditarProducto({
               justifyContent: "space-between",
               alignItems: "center",
               paddingTop: "14px",
-              borderTop: "1px solid #E2E8F0",
+              borderTop: "1px solid var(--linea)",
               marginTop: "8px",
             }}
           >
@@ -2372,9 +2372,9 @@ export function ModalEditarProducto({
               onClick={handleEliminar}
               disabled={eliminando}
               style={{
-                background: confirmarEliminar ? "#DC2626" : "transparent",
-                color: confirmarEliminar ? "#FFFFFF" : "#EF4444",
-                border: confirmarEliminar ? "none" : "1px solid #FCA5A5",
+                background: confirmarEliminar ? "var(--error)" : "transparent",
+                color: confirmarEliminar ? "#FFFFFF" : "var(--error)",
+                border: confirmarEliminar ? "none" : "1px solid var(--error-linea)",
                 padding: "8px 14px",
                 borderRadius: "8px",
                 fontSize: "0.82rem",
@@ -2394,8 +2394,8 @@ export function ModalEditarProducto({
                 type="button"
                 onClick={onCerrar}
                 style={{
-                  background: "#F1F5F9",
-                  color: "#475569",
+                  background: "var(--fondo-hundido)",
+                  color: "var(--texto-2)",
                   border: "none",
                   padding: "9px 16px",
                   borderRadius: "8px",
@@ -2411,7 +2411,7 @@ export function ModalEditarProducto({
                 type="submit"
                 disabled={guardando}
                 style={{
-                  background: esFloristeria ? "#E11D48" : "#0284C7",
+                  background: esFloristeria ? "var(--error)" : "var(--acento)",
                   color: "#FFFFFF",
                   border: "none",
                   padding: "9px 20px",

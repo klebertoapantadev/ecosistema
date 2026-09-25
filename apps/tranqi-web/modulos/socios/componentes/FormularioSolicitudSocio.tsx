@@ -93,26 +93,26 @@ function renderizarMarkdownHTML(texto: string): string {
     }
 
     // Bold replacement
-    linea = linea.replace(/\*\*(.*?)\*\*/g, "<strong style='color: #111827; font-weight: 700;'>$1</strong>");
+    linea = linea.replace(/\*\*(.*?)\*\*/g, "<strong style='color: var(--texto); font-weight: 700;'>$1</strong>");
 
     if (linea.startsWith("### ")) {
       if (enLista) { htmlOut.push("</ul>"); enLista = false; }
       htmlOut.push(`<h4 style="font-size: 0.98rem; font-weight: 800; color: #5000BA; margin: 16px 0 8px 0;">${linea.replace(/^###\s+/, "")}</h4>`);
     } else if (linea.startsWith("## ")) {
       if (enLista) { htmlOut.push("</ul>"); enLista = false; }
-      htmlOut.push(`<h3 style="font-size: 1.08rem; font-weight: 800; color: #111827; margin: 18px 0 10px 0;">${linea.replace(/^##\s+/, "")}</h3>`);
+      htmlOut.push(`<h3 style="font-size: 1.08rem; font-weight: 800; color: var(--texto); margin: 18px 0 10px 0;">${linea.replace(/^##\s+/, "")}</h3>`);
     } else if (linea.startsWith("# ")) {
       if (enLista) { htmlOut.push("</ul>"); enLista = false; }
-      htmlOut.push(`<h2 style="font-size: 1.2rem; font-weight: 800; color: #111827; margin: 20px 0 12px 0;">${linea.replace(/^#\s+/, "")}</h2>`);
+      htmlOut.push(`<h2 style="font-size: 1.2rem; font-weight: 800; color: var(--texto); margin: 20px 0 12px 0;">${linea.replace(/^#\s+/, "")}</h2>`);
     } else if (linea.startsWith("- ") || linea.startsWith("* ")) {
       if (!enLista) {
         htmlOut.push("<ul style='padding-left: 20px; margin: 8px 0; display: flex; flex-direction: column; gap: 6px;'>");
         enLista = true;
       }
-      htmlOut.push(`<li style="color: #374151; line-height: 1.55; font-size: 0.88rem;">${linea.replace(/^[-*]\s+/, "")}</li>`);
+      htmlOut.push(`<li style="color: var(--texto-2); line-height: 1.55; font-size: 0.88rem;">${linea.replace(/^[-*]\s+/, "")}</li>`);
     } else {
       if (enLista) { htmlOut.push("</ul>"); enLista = false; }
-      htmlOut.push(`<p style="margin: 0 0 10px 0; color: #374151; line-height: 1.6; font-size: 0.88rem;">${linea}</p>`);
+      htmlOut.push(`<p style="margin: 0 0 10px 0; color: var(--texto-2); line-height: 1.6; font-size: 0.88rem;">${linea}</p>`);
     }
   }
 
@@ -171,7 +171,7 @@ async function subirDocumento(
 
 const btnPillStyle: React.CSSProperties = {
   background: "#ffffff",
-  border: "1px solid #E4E4E4",
+  border: "1px solid var(--linea)",
   borderRadius: "6px",
   padding: "4px 8px",
   fontSize: "0.75rem",
@@ -268,11 +268,11 @@ function RecortadorFotoPerfil({
   };
 
   return (
-    <div style={{ marginTop: "12px", padding: "16px", background: "#F7F6FA", borderRadius: "12px", border: "1px solid #5000BA" }}>
+    <div style={{ marginTop: "12px", padding: "16px", background: "var(--fondo-suave)", borderRadius: "12px", border: "1px solid #5000BA" }}>
       <strong style={{ fontSize: "0.88rem", color: "#5000BA", display: "flex", alignItems: "center", gap: "6px", marginBottom: "4px" }}>
         <Sliders size={16} /> Ajuste y Recorte de Foto de Perfil Profesional
       </strong>
-      <p style={{ fontSize: "0.76rem", color: "#737373", marginBottom: "14px" }}>
+      <p style={{ fontSize: "0.76rem", color: "var(--texto-suave)", marginBottom: "14px" }}>
         Ajusta el zoom, movimiento o <strong>arrastra la foto con el mouse o dedo</strong> directamente sobre la silueta.
       </p>
 
@@ -449,7 +449,7 @@ function RecortadorFotoPerfil({
                 flex: 1,
                 padding: "8px 10px",
                 background: "#ffffff",
-                border: "1px solid #E4E4E4",
+                border: "1px solid var(--linea)",
                 borderRadius: "8px",
                 fontSize: "0.78rem",
                 fontWeight: 700,
@@ -615,17 +615,17 @@ function ModalCamaraEnVivo({
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            borderBottom: "1px solid #E5E7EB",
+            borderBottom: "1px solid var(--linea)",
           }}
         >
-          <strong style={{ fontSize: "0.95rem", color: "#111827", display: "flex", alignItems: "center", gap: "8px" }}>
+          <strong style={{ fontSize: "0.95rem", color: "var(--texto)", display: "flex", alignItems: "center", gap: "8px" }}>
             <Camera size={18} color="#5000BA" />
             {titulo}
           </strong>
           <button
             type="button"
             onClick={alCerrar}
-            style={{ background: "none", border: "none", cursor: "pointer", color: "#6B7280", padding: "4px" }}
+            style={{ background: "none", border: "none", cursor: "pointer", color: "var(--texto-suave)", padding: "4px" }}
           >
             <X size={20} />
           </button>
@@ -646,9 +646,9 @@ function ModalCamaraEnVivo({
             <p style={{ color: "#ffffff", fontSize: "0.85rem" }}>Iniciando cámara en vivo...</p>
           )}
           {errorCamara ? (
-            <div style={{ padding: "24px", color: "#FCA5A5", textAlign: "center" }}>
+            <div style={{ padding: "24px", color: "var(--error-linea)", textAlign: "center" }}>
               <p style={{ fontSize: "0.88rem", marginBottom: "8px" }}>{errorCamara}</p>
-              <p style={{ fontSize: "0.78rem", color: "#D1D5DB" }}>
+              <p style={{ fontSize: "0.78rem", color: "var(--linea-fuerte)" }}>
                 Puedes usar la opción de cargar archivo para seleccionar una imagen desde tu dispositivo.
               </p>
             </div>
@@ -669,8 +669,8 @@ function ModalCamaraEnVivo({
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            background: "#F9FAFB",
-            borderTop: "1px solid #E5E7EB",
+            background: "var(--fondo-suave)",
+            borderTop: "1px solid var(--linea)",
           }}
         >
           <button
@@ -679,7 +679,7 @@ function ModalCamaraEnVivo({
             style={{
               padding: "8px 16px",
               borderRadius: "8px",
-              border: "1px solid #D1D5DB",
+              border: "1px solid var(--linea-fuerte)",
               background: "#ffffff",
               fontSize: "0.85rem",
               fontWeight: 600,
@@ -735,9 +735,9 @@ function EstadoCampo({
           display: "inline-flex",
           alignItems: "center",
           gap: "4px",
-          background: "#ECFDF5",
-          color: "#047857",
-          border: "1px solid #A7F3D0",
+          background: "var(--exito-diluido)",
+          color: "var(--exito-texto)",
+          border: "1px solid var(--exito-linea)",
           borderRadius: "999px",
           padding: "2px 8px",
           fontSize: "0.72rem",
@@ -757,9 +757,9 @@ function EstadoCampo({
           display: "inline-flex",
           alignItems: "center",
           gap: "4px",
-          background: "#FEE2E2",
-          color: "#B91C1C",
-          border: "1px solid #FECACA",
+          background: "var(--error-diluido)",
+          color: "var(--error)",
+          border: "1px solid var(--error-linea)",
           borderRadius: "999px",
           padding: "2px 8px",
           fontSize: "0.72rem",
@@ -778,9 +778,9 @@ function EstadoCampo({
         display: "inline-flex",
         alignItems: "center",
         gap: "4px",
-        background: "#FFFBEB",
-        color: "#B45309",
-        border: "1px solid #FDE68A",
+        background: "var(--aviso-diluido)",
+        color: "var(--aviso-texto)",
+        border: "1px solid var(--aviso-linea)",
         borderRadius: "999px",
         padding: "2px 8px",
         fontSize: "0.72rem",
@@ -893,7 +893,7 @@ function CampoSubidaArchivo({
           etiquetaVacio={obligatorio ? "Único obligatorio pendiente" : "Sin archivo (opcional)"}
         />
       </div>
-      <span style={{ fontSize: "0.76rem", color: "var(--panel-gris, #737373)" }}>{subtitulo}</span>
+      <span style={{ fontSize: "0.76rem", color: "var(--panel-gris, var(--texto-suave))" }}>{subtitulo}</span>
 
       {/* Inputs ocultos para selector estándar y cámara nativa */}
       <input
@@ -940,7 +940,7 @@ function CampoSubidaArchivo({
               ? (esFotoPerfil ? "Añadir / Cambiar imagen" : "Añadir / Cambiar archivos")
               : (esFotoPerfil ? "Seleccionar o arrastrar fotografía de perfil" : "Seleccionar o arrastrar archivos")}
           </span>
-          <span style={{ display: "block", fontSize: "0.72rem", color: "var(--panel-gris, #737373)", marginTop: "2px" }}>
+          <span style={{ display: "block", fontSize: "0.72rem", color: "var(--panel-gris, var(--texto-suave))", marginTop: "2px" }}>
             {esFotoPerfil
               ? `Formatos admitidos: JPG, PNG, WEBP • Solo imágenes • Máx ${TAMANO_MAXIMO_MB} MB`
               : `Formatos admitidos: PDF, Word, JPG, PNG • Máx ${TAMANO_MAXIMO_MB} MB c/u`}
@@ -1006,7 +1006,7 @@ function CampoSubidaArchivo({
         />
       )}
 
-      {errorLocal && <p style={{ fontSize: "0.78rem", color: "#DC2626", fontWeight: 700, margin: 0 }}>{errorLocal}</p>}
+      {errorLocal && <p style={{ fontSize: "0.78rem", color: "var(--error)", fontWeight: 700, margin: 0 }}>{errorLocal}</p>}
 
       {/* Lista de archivos adjuntados con vista previa */}
       {archivos.length > 0 && (
@@ -1025,7 +1025,7 @@ function CampoSubidaArchivo({
                   padding: "8px 12px",
                   background: "#ffffff",
                   borderRadius: "8px",
-                  border: "1px solid var(--panel-linea, #E4E4E4)",
+                  border: "1px solid var(--panel-linea, var(--linea))",
                   fontSize: "0.82rem",
                 }}
               >
@@ -1043,7 +1043,7 @@ function CampoSubidaArchivo({
                     <strong style={{ display: "block", color: "#111111", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap" }}>
                       {file.name}
                     </strong>
-                    <span style={{ display: "block", fontSize: "0.72rem", color: "var(--panel-gris, #737373)" }}>
+                    <span style={{ display: "block", fontSize: "0.72rem", color: "var(--panel-gris, var(--texto-suave))" }}>
                       {formatoTamanoArchivo(file.size)}
                     </span>
                     {comentarios && onCambiarComentario && (
@@ -1058,7 +1058,7 @@ function CampoSubidaArchivo({
                           padding: "4px 8px",
                           fontSize: "0.75rem",
                           borderRadius: "4px",
-                          border: "1px solid #D1D5DB",
+                          border: "1px solid var(--linea-fuerte)",
                           outline: "none"
                         }}
                       />
@@ -1071,7 +1071,7 @@ function CampoSubidaArchivo({
                   onClick={() => eliminarArchivo(idx)}
                   style={{
                     background: "rgba(220, 38, 38, 0.08)",
-                    color: "#DC2626",
+                    color: "var(--error)",
                     border: "none",
                     borderRadius: "6px",
                     padding: "6px",
@@ -1159,14 +1159,14 @@ function SelectorMultiSeleccion({
           gap: "6px",
           minHeight: "42px",
           padding: "8px 10px",
-          background: "var(--panel-papel, #F7F6FA)",
+          background: "var(--panel-papel, var(--fondo-suave))",
           borderRadius: "10px",
-          border: "1px solid var(--panel-linea, #E4E4E4)",
+          border: "1px solid var(--panel-linea, var(--linea))",
           alignItems: "center",
         }}
       >
         {seleccionados.length === 0 ? (
-          <span style={{ fontSize: "0.82rem", color: "var(--panel-gris, #737373)", fontStyle: "italic" }}>
+          <span style={{ fontSize: "0.82rem", color: "var(--panel-gris, var(--texto-suave))", fontStyle: "italic" }}>
             Ninguno seleccionado. Haz clic abajo para desplegar opciones...
           </span>
         ) : (
@@ -1179,7 +1179,7 @@ function SelectorMultiSeleccion({
                 gap: "5px",
                 padding: "4px 10px",
                 borderRadius: "999px",
-                background: "var(--violeta-suave, #F3E8FF)",
+                background: "var(--violeta-suave, var(--acento-diluido))",
                 color: "var(--violeta, #5000BA)",
                 fontSize: "0.8rem",
                 fontWeight: 700,
@@ -1209,7 +1209,7 @@ function SelectorMultiSeleccion({
             width: "100%",
             padding: "10px 14px",
             borderRadius: "10px",
-            border: "1px solid var(--panel-linea, #E4E4E4)",
+            border: "1px solid var(--panel-linea, var(--linea))",
             background: "#ffffff",
             fontSize: "0.86rem",
             fontWeight: 700,
@@ -1236,7 +1236,7 @@ function SelectorMultiSeleccion({
               right: 0,
               background: "#ffffff",
               borderRadius: "12px",
-              border: "1px solid var(--panel-linea, #E4E4E4)",
+              border: "1px solid var(--panel-linea, var(--linea))",
               boxShadow: "0 10px 25px rgba(0,0,0,0.12)",
               zIndex: 100,
               padding: "12px",
@@ -1247,8 +1247,8 @@ function SelectorMultiSeleccion({
             }}
           >
             {/* Buscador */}
-            <div style={{ display: "flex", alignItems: "center", gap: "8px", background: "var(--panel-papel, #F7F6FA)", padding: "6px 10px", borderRadius: "8px", border: "1px solid #E4E4E4" }}>
-              <Search size={15} color="var(--panel-gris, #737373)" />
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", background: "var(--panel-papel, var(--fondo-suave))", padding: "6px 10px", borderRadius: "8px", border: "1px solid var(--linea)" }}>
+              <Search size={15} color="var(--panel-gris, var(--texto-suave))" />
               <input
                 type="text"
                 value={busqueda}
@@ -1277,8 +1277,8 @@ function SelectorMultiSeleccion({
                       gap: "10px",
                       padding: "8px 12px",
                       borderRadius: "8px",
-                      background: checked ? "#F3E8FF" : "#FFFFFF",
-                      border: checked ? "1px solid #5000BA" : "1px solid #E4E4E4",
+                      background: checked ? "var(--acento-diluido)" : "#FFFFFF",
+                      border: checked ? "1px solid #5000BA" : "1px solid var(--linea)",
                       cursor: "pointer",
                       fontSize: "0.86rem",
                       fontWeight: checked ? 700 : 500,
@@ -1312,7 +1312,7 @@ function SelectorMultiSeleccion({
             </div>
 
             {/* Opción Otros (editable) */}
-            <div style={{ borderTop: "1px solid #E4E4E4", paddingTop: "8px", marginTop: "4px" }}>
+            <div style={{ borderTop: "1px solid var(--linea)", paddingTop: "8px", marginTop: "4px" }}>
               <button
                 type="button"
                 onClick={() => setModoOtros(!modoOtros)}
@@ -1346,7 +1346,7 @@ function SelectorMultiSeleccion({
                       flex: 1,
                       padding: "6px 10px",
                       borderRadius: "6px",
-                      border: "1px solid #E4E4E4",
+                      border: "1px solid var(--linea)",
                       fontSize: "0.82rem",
                       outline: "none",
                     }}
@@ -1947,7 +1947,7 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
 
         {/* Tarjetas de Beneficios Clave */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "14px" }}>
-          <div style={{ background: "#ffffff", border: "1px solid #E4E4E4", borderRadius: "14px", padding: "18px", boxShadow: "0 2px 8px rgba(0,0,0,0.03)" }}>
+          <div style={{ background: "#ffffff", border: "1px solid var(--linea)", borderRadius: "14px", padding: "18px", boxShadow: "0 2px 8px rgba(0,0,0,0.03)" }}>
             <div style={{ width: "38px", height: "38px", borderRadius: "10px", background: "rgba(80, 0, 186, 0.08)", color: "#5000BA", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "10px" }}>
               <Scale size={20} />
             </div>
@@ -1957,7 +1957,7 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
             </p>
           </div>
 
-          <div style={{ background: "#ffffff", border: "1px solid #E4E4E4", borderRadius: "14px", padding: "18px", boxShadow: "0 2px 8px rgba(0,0,0,0.03)" }}>
+          <div style={{ background: "#ffffff", border: "1px solid var(--linea)", borderRadius: "14px", padding: "18px", boxShadow: "0 2px 8px rgba(0,0,0,0.03)" }}>
             <div style={{ width: "38px", height: "38px", borderRadius: "10px", background: "rgba(5, 135, 110, 0.08)", color: "#05876E", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "10px" }}>
               <Lock size={20} />
             </div>
@@ -1967,8 +1967,8 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
             </p>
           </div>
 
-          <div style={{ background: "#ffffff", border: "1px solid #E4E4E4", borderRadius: "14px", padding: "18px", boxShadow: "0 2px 8px rgba(0,0,0,0.03)" }}>
-            <div style={{ width: "38px", height: "38px", borderRadius: "10px", background: "rgba(217, 119, 6, 0.08)", color: "#D97706", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "10px" }}>
+          <div style={{ background: "#ffffff", border: "1px solid var(--linea)", borderRadius: "14px", padding: "18px", boxShadow: "0 2px 8px rgba(0,0,0,0.03)" }}>
+            <div style={{ width: "38px", height: "38px", borderRadius: "10px", background: "rgba(217, 119, 6, 0.08)", color: "var(--aviso)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "10px" }}>
               <Award size={20} />
             </div>
             <strong style={{ display: "block", fontSize: "0.92rem", color: "#111111", marginBottom: "4px" }}>Honorarios Claros</strong>
@@ -1979,7 +1979,7 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
         </div>
 
         {/* Sección de Texto Preliminar Editable */}
-        <div style={{ background: "#ffffff", border: "1px solid #E4E4E4", borderRadius: "16px", padding: "22px", boxShadow: "0 2px 10px rgba(0,0,0,0.04)" }}>
+        <div style={{ background: "#ffffff", border: "1px solid var(--linea)", borderRadius: "16px", padding: "22px", boxShadow: "0 2px 10px rgba(0,0,0,0.04)" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px", flexWrap: "wrap", gap: "8px" }}>
             <span style={{ fontSize: "0.86rem", fontWeight: 800, color: "#5000BA", display: "flex", alignItems: "center", gap: "6px" }}>
               <Briefcase size={16} /> Condiciones de Participación y Beneficios del Equipo
@@ -2062,7 +2062,7 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
                 fontSize: "0.88rem",
                 lineHeight: 1.6,
                 color: "#222222",
-                background: "var(--panel-papel, #F7F6FA)",
+                background: "var(--panel-papel, var(--fondo-suave))",
                 padding: "18px 20px",
                 borderRadius: "12px",
                 border: "1px solid #EAEAEA",
@@ -2107,7 +2107,7 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
           style={{
             background: "#ffffff",
             borderRadius: "18px",
-            border: "1px solid #E4E4E4",
+            border: "1px solid var(--linea)",
             padding: "28px",
             boxShadow: "0 8px 24px rgba(0,0,0,0.06)",
             textAlign: "center",
@@ -2134,7 +2134,7 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
             style={{
               display: "inline-block",
               background: "rgba(217, 119, 6, 0.12)",
-              color: "#D97706",
+              color: "var(--aviso)",
               border: "1px solid rgba(217, 119, 6, 0.3)",
               borderRadius: "999px",
               padding: "4px 14px",
@@ -2154,7 +2154,7 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
           </p>
 
           {/* Rastreador de Estado del Proceso */}
-          <div style={{ background: "#F7F6FA", borderRadius: "14px", padding: "18px", textAlign: "left", marginBottom: "24px", border: "1px solid #EAEAEA" }}>
+          <div style={{ background: "var(--fondo-suave)", borderRadius: "14px", padding: "18px", textAlign: "left", marginBottom: "24px", border: "1px solid #EAEAEA" }}>
             <strong style={{ fontSize: "0.86rem", color: "#5000BA", display: "flex", alignItems: "center", gap: "6px", marginBottom: "14px" }}>
               <FolderTree size={16} /> Etapas de tu Acreditación Profesional:
             </strong>
@@ -2171,21 +2171,21 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
               </div>
 
               <div style={{ display: "flex", alignItems: "flex-start", gap: "10px" }}>
-                <span style={{ background: "#D97706", color: "#fff", borderRadius: "50%", width: "22px", height: "22px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.72rem", fontWeight: 800, flexShrink: 0 }}>
+                <span style={{ background: "var(--aviso)", color: "#fff", borderRadius: "50%", width: "22px", height: "22px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.72rem", fontWeight: 800, flexShrink: 0 }}>
                   2
                 </span>
                 <div>
-                  <strong style={{ fontSize: "0.84rem", color: "#D97706", display: "block" }}>2. Verificación Asistida (SENESCYT & Foro)</strong>
+                  <strong style={{ fontSize: "0.84rem", color: "var(--aviso)", display: "block" }}>2. Verificación Asistida (SENESCYT & Foro)</strong>
                   <span style={{ fontSize: "0.76rem", color: "#666" }}>Validación de autenticidad en el Consejo de la Judicatura y acreditación de matrícula profesional.</span>
                 </div>
               </div>
 
               <div style={{ display: "flex", alignItems: "flex-start", gap: "10px" }}>
-                <span style={{ background: "#9CA3AF", color: "#fff", borderRadius: "50%", width: "22px", height: "22px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.72rem", fontWeight: 800, flexShrink: 0 }}>
+                <span style={{ background: "var(--texto-tenue)", color: "#fff", borderRadius: "50%", width: "22px", height: "22px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.72rem", fontWeight: 800, flexShrink: 0 }}>
                   3
                 </span>
                 <div>
-                  <strong style={{ fontSize: "0.84rem", color: "#6B7280", display: "block" }}>3. Activación de Rol y Cuenta Digital</strong>
+                  <strong style={{ fontSize: "0.84rem", color: "var(--texto-suave)", display: "block" }}>3. Activación de Rol y Cuenta Digital</strong>
                   <span style={{ fontSize: "0.76rem", color: "#666" }}>Te notificaremos por correo y notificación Push al momento de la aprobación para firmar tu contrato digital.</span>
                 </div>
               </div>
@@ -2220,8 +2220,8 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
               onClick={() => setPasoActual("formulario")}
               style={{
                 background: "#ffffff",
-                border: "1px solid #D1D5DB",
-                color: "#374151",
+                border: "1px solid var(--linea-fuerte)",
+                color: "var(--texto-2)",
                 padding: "12px 20px",
                 fontSize: "0.88rem",
                 fontWeight: 700,
@@ -2260,8 +2260,8 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
               onClick={() => setModalConfirmarAccion("eliminar")}
               style={{
                 background: "#ffffff",
-                border: "1px solid #DC2626",
-                color: "#DC2626",
+                border: "1px solid var(--error)",
+                color: "var(--error)",
                 padding: "12px 18px",
                 fontSize: "0.88rem",
                 fontWeight: 700,
@@ -2310,8 +2310,8 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
                   width: "48px",
                   height: "48px",
                   borderRadius: "50%",
-                  background: modalConfirmarAccion === "eliminar" ? "#FEE2E2" : "#EDE9FE",
-                  color: modalConfirmarAccion === "eliminar" ? "#DC2626" : "#5000BA",
+                  background: modalConfirmarAccion === "eliminar" ? "var(--error-diluido)" : "var(--acento-diluido)",
+                  color: modalConfirmarAccion === "eliminar" ? "var(--error)" : "#5000BA",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
@@ -2339,8 +2339,8 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
                   style={{
                     flex: 1,
                     padding: "10px 16px",
-                    background: "#F3F4F6",
-                    color: "#374151",
+                    background: "var(--fondo-hundido)",
+                    color: "var(--texto-2)",
                     border: "none",
                     borderRadius: "8px",
                     fontSize: "0.88rem",
@@ -2358,7 +2358,7 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
                   style={{
                     flex: 1,
                     padding: "10px 16px",
-                    background: modalConfirmarAccion === "eliminar" ? "#DC2626" : "#5000BA",
+                    background: modalConfirmarAccion === "eliminar" ? "var(--error)" : "#5000BA",
                     color: "#FFF",
                     border: "none",
                     borderRadius: "8px",
@@ -2402,7 +2402,7 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
           <button
             type="button"
             onClick={() => setModalConfirmarAccion("eliminar")}
-            style={{ background: "rgba(220,38,38,0.06)", border: "1px solid rgba(220,38,38,0.2)", borderRadius: "8px", padding: "4px 8px", color: "#DC2626", fontSize: "0.76rem", fontWeight: 700, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "4px" }}
+            style={{ background: "rgba(220,38,38,0.06)", border: "1px solid rgba(220,38,38,0.2)", borderRadius: "8px", padding: "4px 8px", color: "var(--error)", fontSize: "0.76rem", fontWeight: 700, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "4px" }}
           >
             <Trash2 size={12} /> Eliminar Solicitud
           </button>
@@ -2412,8 +2412,8 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
       {/* Resumen de Requisitos y Estado de Afiliación */}
       <div
         style={{
-          background: "#F9FAFB",
-          border: "1px solid #E5E7EB",
+          background: "var(--fondo-suave)",
+          border: "1px solid var(--linea)",
           borderRadius: "14px",
           padding: "14px 18px",
           marginBottom: "16px",
@@ -2425,21 +2425,21 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "8px" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
             <Scale size={18} color="#5000BA" />
-            <strong style={{ fontSize: "0.92rem", color: "#111827" }}>
+            <strong style={{ fontSize: "0.92rem", color: "var(--texto)" }}>
               Requisito de Afiliación a la Red:
             </strong>
           </div>
           {carnetArchivos.length > 0 || carnetExistente ? (
-            <span style={{ background: "#ECFDF5", color: "#047857", border: "1px solid #A7F3D0", padding: "3px 10px", borderRadius: "999px", fontSize: "0.76rem", fontWeight: 800, display: "inline-flex", alignItems: "center", gap: "4px" }}>
+            <span style={{ background: "var(--exito-diluido)", color: "var(--exito-texto)", border: "1px solid var(--exito-linea)", padding: "3px 10px", borderRadius: "999px", fontSize: "0.76rem", fontWeight: 800, display: "inline-flex", alignItems: "center", gap: "4px" }}>
               <Check size={13} strokeWidth={2.5} /> Matrícula Profesional cargada (Único obligatorio cumplido)
             </span>
           ) : (
-            <span style={{ background: "#FEE2E2", color: "#B91C1C", border: "1px solid #FECACA", padding: "3px 10px", borderRadius: "999px", fontSize: "0.76rem", fontWeight: 800, display: "inline-flex", alignItems: "center", gap: "4px" }}>
+            <span style={{ background: "var(--error-diluido)", color: "var(--error)", border: "1px solid var(--error-linea)", padding: "3px 10px", borderRadius: "999px", fontSize: "0.76rem", fontWeight: 800, display: "inline-flex", alignItems: "center", gap: "4px" }}>
               <AlertCircle size={13} strokeWidth={2.5} /> Matrícula Profesional pendiente (Único obligatorio)
             </span>
           )}
         </div>
-        <p style={{ margin: 0, fontSize: "0.78rem", color: "#4B5563", lineHeight: "1.45" }}>
+        <p style={{ margin: 0, fontSize: "0.78rem", color: "var(--texto-2)", lineHeight: "1.45" }}>
           La <strong>Matrícula Profesional / Carnet</strong> es el <strong>único requisito obligatorio</strong>. Puedes cargar una imagen o tomar una foto directamente con la cámara de tu dispositivo. Los demás campos son opcionales y se van marcando con un check verde conforme los completes.
         </p>
       </div>
@@ -2465,7 +2465,7 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
           )}
           <div>
             <span style={{ display: "block", fontWeight: 700, color: "#111111" }}>Foto de Perfil actual cargada</span>
-            <span style={{ fontSize: "0.76rem", color: "#6B7280" }}>{fotoExistente.dcs_nombre_archivo}</span>
+            <span style={{ fontSize: "0.76rem", color: "var(--texto-suave)" }}>{fotoExistente.dcs_nombre_archivo}</span>
           </div>
           <a href={fotoExistente.url} target="_blank" rel="noopener noreferrer" style={{ marginLeft: "auto", color: "#5000BA", fontWeight: 800, textDecoration: "none", fontSize: "0.8rem", display: "inline-flex", alignItems: "center", gap: "4px" }}>
             <ExternalLink size={14} /> Ver archivo
@@ -2497,7 +2497,7 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
 
         {/* Banner de Datos Oficiales Extraídos por ARIA desde el Carnet */}
         {dictamenAriaCarnet && (
-          <div style={{ padding: "14px 18px", background: "rgba(5, 135, 110, 0.05)", border: "1.5px solid #05876E", borderRadius: "12px", marginTop: "10px", fontSize: "0.84rem", color: "#065F46" }}>
+          <div style={{ padding: "14px 18px", background: "rgba(5, 135, 110, 0.05)", border: "1.5px solid #05876E", borderRadius: "12px", marginTop: "10px", fontSize: "0.84rem", color: "var(--exito-texto)" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 800, color: "#05876E", marginBottom: "8px" }}>
               <CheckCircle2 size={18} /> Datos Extraídos por Tranqi desde tu Carnet Profesional
             </div>
@@ -2605,8 +2605,8 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
                   style={{
                     fontSize: "0.72rem",
                     fontWeight: 800,
-                    color: "#065F46",
-                    background: "#D1FAE5",
+                    color: "var(--exito-texto)",
+                    background: "var(--exito-diluido)",
                     padding: "2px 8px",
                     borderRadius: "999px",
                   }}
@@ -2614,10 +2614,10 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
                   ✓ Único Requisito Obligatorio Cumplido
                 </span>
               </div>
-              <h3 style={{ margin: "4px 0 2px 0", fontSize: "1.05rem", fontWeight: 800, color: "#111827" }}>
+              <h3 style={{ margin: "4px 0 2px 0", fontSize: "1.05rem", fontWeight: 800, color: "var(--texto)" }}>
                 {nombres || apellidos ? `${nombres} ${apellidos}`.trim() : (dictamenAriaCarnet?.titular || "Abogado Colegiado")}
               </h3>
-              <div style={{ display: "flex", alignItems: "center", gap: "12px", fontSize: "0.82rem", color: "#4B5563", flexWrap: "wrap" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "12px", fontSize: "0.82rem", color: "var(--texto-2)", flexWrap: "wrap" }}>
                 <span><strong>Matrícula:</strong> {matriculaProfesional || dictamenAriaCarnet?.matricula_profesional || "Registrada"}</span>
                 {cedula && <span><strong>Cédula:</strong> {cedula}</span>}
                 <span style={{ color: "#05876E", fontWeight: 700 }}>Foro de Abogados / Judicatura</span>
@@ -2627,7 +2627,7 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
         )}
 
         {/* Checklist de Criterios de Calidad y Legibilidad del Carnet */}
-        <div style={{ background: "rgba(5, 135, 110, 0.04)", border: "1px solid rgba(5, 135, 110, 0.2)", borderRadius: "10px", padding: "10px 14px", marginTop: "8px", fontSize: "0.78rem", color: "#065F46" }}>
+        <div style={{ background: "rgba(5, 135, 110, 0.04)", border: "1px solid rgba(5, 135, 110, 0.2)", borderRadius: "10px", padding: "10px 14px", marginTop: "8px", fontSize: "0.78rem", color: "var(--exito-texto)" }}>
           <strong style={{ display: "block", marginBottom: "4px", color: "#05876E" }}>Requisitos de Legibilidad del Carnet Profesional:</strong>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "6px" }}>
             <span>Fotografía clara y frontal del carnet sin esquinas recortadas.</span>
@@ -2637,24 +2637,24 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
         </div>
 
         {avisoLegibilidadCarnet && (
-          <div style={{ marginTop: "8px", padding: "8px 12px", background: "#FFFBEB", border: "1px solid #F59E0B", borderRadius: "8px", fontSize: "0.78rem", color: "#B45309" }}>
+          <div style={{ marginTop: "8px", padding: "8px 12px", background: "var(--aviso-diluido)", border: "1px solid var(--aviso)", borderRadius: "8px", fontSize: "0.78rem", color: "var(--aviso-texto)" }}>
             {avisoLegibilidadCarnet}
           </div>
         )}
 
         {/* Previsualizador Rápido con Botón de Inspección Zoom del Carnet */}
         {carnetPreviewUrl && (
-          <div style={{ marginTop: "10px", display: "flex", alignItems: "center", gap: "12px", background: "#FFFFFF", padding: "10px 14px", border: "1px solid #E4E4E4", borderRadius: "10px", boxShadow: "0 2px 6px rgba(0,0,0,0.03)" }}>
+          <div style={{ marginTop: "10px", display: "flex", alignItems: "center", gap: "12px", background: "#FFFFFF", padding: "10px 14px", border: "1px solid var(--linea)", borderRadius: "10px", boxShadow: "0 2px 6px rgba(0,0,0,0.03)" }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={carnetPreviewUrl} alt="Vista previa carnet profesional" style={{ width: "60px", height: "45px", objectFit: "cover", borderRadius: "6px", border: "1px solid #D8B4FE" }} />
             <div>
               <span style={{ display: "block", fontSize: "0.82rem", fontWeight: 700, color: "#111111" }}>Carnet Profesional listo para subir</span>
-              <span style={{ fontSize: "0.74rem", color: "#6B7280" }}>{carnetArchivos[0]?.name} ({formatoTamanoArchivo(carnetArchivos[0]?.size || 0)})</span>
+              <span style={{ fontSize: "0.74rem", color: "var(--texto-suave)" }}>{carnetArchivos[0]?.name} ({formatoTamanoArchivo(carnetArchivos[0]?.size || 0)})</span>
             </div>
             <button
               type="button"
               onClick={() => setModalInspeccionDoc({ url: carnetPreviewUrl, titulo: "Inspección de Legibilidad — Carnet Profesional" })}
-              style={{ marginLeft: "auto", background: "#FAF5FF", border: "1px solid #D8B4FE", color: "#6B21A8", padding: "6px 12px", borderRadius: "8px", fontSize: "0.78rem", fontWeight: 700, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "4px" }}
+              style={{ marginLeft: "auto", background: "var(--acento-diluido)", border: "1px solid #D8B4FE", color: "#6B21A8", padding: "6px 12px", borderRadius: "8px", fontSize: "0.78rem", fontWeight: 700, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "4px" }}
             >
               <ZoomIn size={14} /> Inspeccionar Legibilidad
             </button>
@@ -2666,7 +2666,7 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
             <Scale size={18} color="#05876E" />
             <div>
               <span style={{ display: "block", fontWeight: 700, color: "#111111" }}>Carnet Profesional actual registrado</span>
-              <span style={{ fontSize: "0.76rem", color: "#6B7280" }}>{carnetExistente.dcs_nombre_archivo}</span>
+              <span style={{ fontSize: "0.76rem", color: "var(--texto-suave)" }}>{carnetExistente.dcs_nombre_archivo}</span>
             </div>
             <a href={carnetExistente.url} target="_blank" rel="noopener noreferrer" style={{ marginLeft: "auto", color: "#05876E", fontWeight: 800, textDecoration: "none", fontSize: "0.8rem", display: "inline-flex", alignItems: "center", gap: "4px" }}>
               <ExternalLink size={14} /> Ver archivo
@@ -2751,7 +2751,7 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
               <input
                 value={correoInicial}
                 disabled
-                style={{ background: "#F3F4F6", color: "#6B7280", cursor: "not-allowed" }}
+                style={{ background: "var(--fondo-hundido)", color: "var(--texto-suave)", cursor: "not-allowed" }}
               />
             </label>
           )}
@@ -2763,7 +2763,7 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
           if (!cedula) return null;
           if (!val.esValida && val.advertencia) {
             return (
-              <div style={{ marginTop: "10px", padding: "6px 12px", background: "rgba(245, 158, 11, 0.08)", border: "1px solid #F59E0B", borderRadius: "8px", fontSize: "0.76rem", color: "#B45309", display: "flex", alignItems: "center", gap: "6px" }}>
+              <div style={{ marginTop: "10px", padding: "6px 12px", background: "rgba(245, 158, 11, 0.08)", border: "1px solid var(--aviso)", borderRadius: "8px", fontSize: "0.76rem", color: "var(--aviso-texto)", display: "flex", alignItems: "center", gap: "6px" }}>
                 <AlertTriangle size={14} /> {val.advertencia}
               </div>
             );
@@ -2818,17 +2818,17 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
         />
 
         {identificacionPreviewUrl && (
-          <div style={{ marginTop: "10px", display: "flex", alignItems: "center", gap: "12px", background: "#FFFFFF", padding: "10px 14px", border: "1px solid #E4E4E4", borderRadius: "10px", boxShadow: "0 2px 6px rgba(0,0,0,0.03)" }}>
+          <div style={{ marginTop: "10px", display: "flex", alignItems: "center", gap: "12px", background: "#FFFFFF", padding: "10px 14px", border: "1px solid var(--linea)", borderRadius: "10px", boxShadow: "0 2px 6px rgba(0,0,0,0.03)" }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={identificacionPreviewUrl} alt="Vista previa de cédula" style={{ width: "60px", height: "45px", objectFit: "cover", borderRadius: "6px", border: "1px solid #D8B4FE" }} />
             <div>
               <span style={{ display: "block", fontSize: "0.82rem", fontWeight: 700, color: "#111111" }}>Cédula/Pasaporte adjunto</span>
-              <span style={{ fontSize: "0.74rem", color: "#6B7280" }}>{identificacionArchivos[0]?.name}</span>
+              <span style={{ fontSize: "0.74rem", color: "var(--texto-suave)" }}>{identificacionArchivos[0]?.name}</span>
             </div>
             <button
               type="button"
               onClick={() => setModalInspeccionDoc({ url: identificacionPreviewUrl, titulo: "Inspección de Legibilidad — Cédula / Pasaporte" })}
-              style={{ marginLeft: "auto", background: "#FAF5FF", border: "1px solid #D8B4FE", color: "#6B21A8", padding: "6px 12px", borderRadius: "8px", fontSize: "0.78rem", fontWeight: 700, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "4px" }}
+              style={{ marginLeft: "auto", background: "var(--acento-diluido)", border: "1px solid #D8B4FE", color: "#6B21A8", padding: "6px 12px", borderRadius: "8px", fontSize: "0.78rem", fontWeight: 700, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "4px" }}
             >
               <ZoomIn size={14} /> Inspeccionar
             </button>
@@ -2840,7 +2840,7 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
             <FileText size={18} color="#05876E" />
             <div>
               <span style={{ display: "block", fontWeight: 700, color: "#111111" }}>Documento de Identificación actual cargado</span>
-              <span style={{ fontSize: "0.76rem", color: "#6B7280" }}>{identificacionExistente.dcs_nombre_archivo}</span>
+              <span style={{ fontSize: "0.76rem", color: "var(--texto-suave)" }}>{identificacionExistente.dcs_nombre_archivo}</span>
             </div>
             <a href={identificacionExistente.url} target="_blank" rel="noopener noreferrer" style={{ marginLeft: "auto", color: "#05876E", fontWeight: 800, textDecoration: "none", fontSize: "0.8rem", display: "inline-flex", alignItems: "center", gap: "4px" }}>
               <ExternalLink size={14} /> Ver archivo
@@ -2873,7 +2873,7 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
           etiquetaVacio="Sin cobertura seleccionada (opcional)"
         />
       </div>
-      <p style={{ fontSize: "0.82rem", color: "var(--panel-gris, #737373)", marginTop: "4px", marginBottom: "12px" }}>
+      <p style={{ fontSize: "0.82rem", color: "var(--panel-gris, var(--texto-suave))", marginTop: "4px", marginBottom: "12px" }}>
         ¿En qué ubicaciones puedes prestar tus servicios profesionales? Selecciona las provincias donde tienes presencia o litigas, o marca &quot;Todo el Ecuador&quot;.
       </p>
       <SelectorMultiSeleccion
@@ -2898,7 +2898,7 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
       <div
         style={{
           marginTop: "20px",
-          border: "1px solid var(--panel-linea, #E4E4E4)",
+          border: "1px solid var(--panel-linea, var(--linea))",
           borderRadius: "14px",
           overflow: "hidden",
           background: "#ffffff",
@@ -2913,7 +2913,7 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
             padding: "16px 18px",
             background: panelEstudiosAbierto ? "rgba(80, 0, 186, 0.04)" : "#ffffff",
             border: "none",
-            borderBottom: panelEstudiosAbierto ? "1px solid var(--panel-linea, #E4E4E4)" : "none",
+            borderBottom: panelEstudiosAbierto ? "1px solid var(--panel-linea, var(--linea))" : "none",
             cursor: "pointer",
             display: "flex",
             alignItems: "center",
@@ -2949,7 +2949,7 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
                   etiquetaVacio="Vacío (opcional)"
                 />
               </div>
-              <p style={{ margin: "2px 0 0 0", fontSize: "0.78rem", color: "#6B7280" }}>
+              <p style={{ margin: "2px 0 0 0", fontSize: "0.78rem", color: "var(--texto-suave)" }}>
                 Universidad de graduación, año y título profesional registrado en SENESCYT
               </p>
             </div>
@@ -3007,7 +3007,7 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
                 <FileText size={18} color="#5000BA" />
                 <div>
                   <span style={{ display: "block", fontWeight: 700, color: "#111111" }}>Título Universitario actual cargado</span>
-                  <span style={{ fontSize: "0.76rem", color: "#6B7280" }}>{tituloExistente.dcs_nombre_archivo}</span>
+                  <span style={{ fontSize: "0.76rem", color: "var(--texto-suave)" }}>{tituloExistente.dcs_nombre_archivo}</span>
                 </div>
                 <a href={tituloExistente.url} target="_blank" rel="noopener noreferrer" style={{ marginLeft: "auto", color: "#5000BA", fontWeight: 800, textDecoration: "none", fontSize: "0.8rem", display: "inline-flex", alignItems: "center", gap: "4px" }}>
                   <ExternalLink size={14} /> Ver archivo
@@ -3022,7 +3022,7 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
       <div
         style={{
           marginTop: "16px",
-          border: "1px solid var(--panel-linea, #E4E4E4)",
+          border: "1px solid var(--panel-linea, var(--linea))",
           borderRadius: "14px",
           overflow: "hidden",
           background: "#ffffff",
@@ -3037,7 +3037,7 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
             padding: "16px 18px",
             background: panelExperienciaAbierto ? "rgba(80, 0, 186, 0.04)" : "#ffffff",
             border: "none",
-            borderBottom: panelExperienciaAbierto ? "1px solid var(--panel-linea, #E4E4E4)" : "none",
+            borderBottom: panelExperienciaAbierto ? "1px solid var(--panel-linea, var(--linea))" : "none",
             cursor: "pointer",
             display: "flex",
             alignItems: "center",
@@ -3073,7 +3073,7 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
                   etiquetaVacio="Vacío (opcional)"
                 />
               </div>
-              <p style={{ margin: "2px 0 0 0", fontSize: "0.78rem", color: "#6B7280" }}>
+              <p style={{ margin: "2px 0 0 0", fontSize: "0.78rem", color: "var(--texto-suave)" }}>
                 Años de ejercicio, trayectoria laboral, currículum vitae (CV) y certificaciones
               </p>
             </div>
@@ -3185,7 +3185,7 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
             />
             {cvYCertificadosExistentes.length > 0 && (
               <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginTop: "4px" }}>
-                <span style={{ fontSize: "0.8rem", fontWeight: 700, color: "var(--panel-gris, #737373)", display: "block" }}>Archivos existentes cargados en repositorio:</span>
+                <span style={{ fontSize: "0.8rem", fontWeight: 700, color: "var(--panel-gris, var(--texto-suave))", display: "block" }}>Archivos existentes cargados en repositorio:</span>
                 {cvYCertificadosExistentes.map((d) => (
                   <div key={d.dcs_id} style={{ display: "flex", alignItems: "center", gap: "12px", padding: "10px 14px", background: "rgba(80, 0, 186, 0.04)", border: "1px solid rgba(80, 0, 186, 0.15)", borderRadius: "8px", fontSize: "0.84rem" }}>
                     <FileText size={18} color="#5000BA" />
@@ -3193,7 +3193,7 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
                       <span style={{ display: "block", fontWeight: 700, color: "#111111" }}>
                         {d.dcs_tipo === "cv" ? "Hoja de Vida (CV)" : (d.dcs_comentario || "Certificado")}
                       </span>
-                      <span style={{ fontSize: "0.76rem", color: "#6B7280" }}>{d.dcs_nombre_archivo}</span>
+                      <span style={{ fontSize: "0.76rem", color: "var(--texto-suave)" }}>{d.dcs_nombre_archivo}</span>
                     </div>
                     <a href={d.url} target="_blank" rel="noopener noreferrer" style={{ marginLeft: "auto", color: "#5000BA", fontWeight: 800, textDecoration: "none", fontSize: "0.8rem", display: "inline-flex", alignItems: "center", gap: "4px" }}>
                       <ExternalLink size={14} /> Ver archivo
@@ -3301,8 +3301,8 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
                 width: "48px",
                 height: "48px",
                 borderRadius: "50%",
-                background: modalConfirmarAccion === "eliminar" ? "#FEE2E2" : "#EDE9FE",
-                color: modalConfirmarAccion === "eliminar" ? "#DC2626" : "#5000BA",
+                background: modalConfirmarAccion === "eliminar" ? "var(--error-diluido)" : "var(--acento-diluido)",
+                color: modalConfirmarAccion === "eliminar" ? "var(--error)" : "#5000BA",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -3330,8 +3330,8 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
                 style={{
                   flex: 1,
                   padding: "10px 16px",
-                  background: "#F3F4F6",
-                  color: "#374151",
+                  background: "var(--fondo-hundido)",
+                  color: "var(--texto-2)",
                   border: "none",
                   borderRadius: "8px",
                   fontSize: "0.88rem",
@@ -3349,7 +3349,7 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
                 style={{
                   flex: 1,
                   padding: "10px 16px",
-                  background: modalConfirmarAccion === "eliminar" ? "#DC2626" : "#5000BA",
+                  background: modalConfirmarAccion === "eliminar" ? "var(--error)" : "#5000BA",
                   color: "#FFF",
                   border: "none",
                   borderRadius: "8px",
@@ -3398,17 +3398,17 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 20px", borderBottom: "1px solid #E5E7EB" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 20px", borderBottom: "1px solid var(--linea)" }}>
               <strong style={{ fontSize: "0.95rem", color: "#111111" }}>{modalInspeccionDoc.titulo}</strong>
               <button
                 type="button"
                 onClick={() => setModalInspeccionDoc(null)}
-                style={{ background: "transparent", border: "none", cursor: "pointer", color: "#6B7280", padding: "4px" }}
+                style={{ background: "transparent", border: "none", cursor: "pointer", color: "var(--texto-suave)", padding: "4px" }}
               >
                 <X size={20} />
               </button>
             </div>
-            <div style={{ padding: "20px", overflow: "auto", textAlign: "center", background: "#1F2937", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <div style={{ padding: "20px", overflow: "auto", textAlign: "center", background: "var(--texto)", display: "flex", alignItems: "center", justifyContent: "center" }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={modalInspeccionDoc.url}
@@ -3416,8 +3416,8 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
                 style={{ maxWidth: "100%", maxHeight: "68vh", objectFit: "contain", borderRadius: "8px" }}
               />
             </div>
-            <div style={{ padding: "12px 20px", borderTop: "1px solid #E5E7EB", display: "flex", justifyContent: "space-between", alignItems: "center", background: "#F9FAFB" }}>
-              <span style={{ fontSize: "0.8rem", color: "#4B5563" }}>
+            <div style={{ padding: "12px 20px", borderTop: "1px solid var(--linea)", display: "flex", justifyContent: "space-between", alignItems: "center", background: "var(--fondo-suave)" }}>
+              <span style={{ fontSize: "0.8rem", color: "var(--texto-2)" }}>
                 Verifica que los nombres, fotografía y número de cédula sean completamente legibles y nítidos.
               </span>
               <button

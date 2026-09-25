@@ -675,7 +675,7 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
             bottom: "24px",
             right: "24px",
             zIndex: 9999,
-            background: toastMensaje.tipo === "exito" ? "#05876E" : toastMensaje.tipo === "error" ? "#DC2626" : "#5000BA",
+            background: toastMensaje.tipo === "exito" ? "#05876E" : toastMensaje.tipo === "error" ? "var(--error)" : "#5000BA",
             color: "#ffffff",
             padding: "12px 20px",
             borderRadius: "12px",
@@ -779,8 +779,8 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
               onClick={() => setCategoriaActiva(key)}
               style={{
                 background: esActiva ? "#5000BA" : "#ffffff",
-                color: esActiva ? "#ffffff" : "#374151",
-                border: esActiva ? "1px solid #5000BA" : "1px solid #E5E7EB",
+                color: esActiva ? "#ffffff" : "var(--texto-2)",
+                border: esActiva ? "1px solid #5000BA" : "1px solid var(--linea)",
                 borderRadius: "12px",
                 padding: "10px 16px",
                 fontSize: "0.82rem",
@@ -798,8 +798,8 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
               <span>{cfg.label}</span>
               <span
                 style={{
-                  background: esActiva ? "rgba(255,255,255,0.25)" : "#F3F4F6",
-                  color: esActiva ? "#ffffff" : "#6B7280",
+                  background: esActiva ? "rgba(255,255,255,0.25)" : "var(--fondo-hundido)",
+                  color: esActiva ? "#ffffff" : "var(--texto-suave)",
                   fontSize: "0.72rem",
                   fontWeight: 800,
                   padding: "2px 7px",
@@ -818,7 +818,7 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
         style={{
           background: "#ffffff",
           borderRadius: "14px",
-          border: "1px solid #E5E7EB",
+          border: "1px solid var(--linea)",
           padding: "14px 18px",
           marginBottom: "20px",
           display: "flex",
@@ -829,7 +829,7 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
         }}
       >
         <div style={{ position: "relative", flex: "1 1 280px" }}>
-          <Search size={16} color="#9CA3AF" style={{ position: "absolute", left: "14px", top: "50%", transform: "translateY(-50%)" }} />
+          <Search size={16} color="var(--texto-tenue)" style={{ position: "absolute", left: "14px", top: "50%", transform: "translateY(-50%)" }} />
           <input
             type="text"
             value={busqueda}
@@ -839,7 +839,7 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
               width: "100%",
               padding: "10px 14px 10px 38px",
               borderRadius: "10px",
-              border: "1px solid #D1D5DB",
+              border: "1px solid var(--linea-fuerte)",
               fontSize: "0.85rem"
             }}
           />
@@ -852,7 +852,7 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
             style={{
               padding: "10px 14px",
               borderRadius: "10px",
-              border: "1px solid #D1D5DB",
+              border: "1px solid var(--linea-fuerte)",
               fontSize: "0.82rem",
               fontWeight: 700,
               background: "#ffffff"
@@ -868,8 +868,8 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
             type="button"
             onClick={cargarDocumentos}
             style={{
-              background: "#F3F4F6",
-              border: "1px solid #E5E7EB",
+              background: "var(--fondo-hundido)",
+              border: "1px solid var(--linea)",
               borderRadius: "10px",
               padding: "10px 14px",
               cursor: "pointer",
@@ -888,17 +888,17 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
 
       {/* LISTA GRID DE DOCUMENTOS */}
       {cargando ? (
-        <div style={{ padding: "50px", textAlign: "center", background: "#ffffff", borderRadius: "16px", border: "1px solid #E5E7EB" }}>
+        <div style={{ padding: "50px", textAlign: "center", background: "#ffffff", borderRadius: "16px", border: "1px solid var(--linea)" }}>
           <RefreshCw size={28} className="anim-girar" color="#5000BA" style={{ marginBottom: "10px" }} />
-          <p style={{ fontSize: "0.9rem", color: "#6B7280", margin: 0 }}>Cargando documentos de la bóveda segura...</p>
+          <p style={{ fontSize: "0.9rem", color: "var(--texto-suave)", margin: 0 }}>Cargando documentos de la bóveda segura...</p>
         </div>
       ) : documentosFiltrados.length === 0 ? (
-        <div style={{ padding: "60px 20px", textAlign: "center", background: "#ffffff", borderRadius: "16px", border: "1.5px dashed #D1D5DB" }}>
-          <Folder size={44} color="#9CA3AF" style={{ marginBottom: "12px" }} />
-          <h3 style={{ fontSize: "1.1rem", fontWeight: 800, color: "#1F2937", margin: "0 0 6px 0" }}>
+        <div style={{ padding: "60px 20px", textAlign: "center", background: "#ffffff", borderRadius: "16px", border: "1.5px dashed var(--linea-fuerte)" }}>
+          <Folder size={44} color="var(--texto-tenue)" style={{ marginBottom: "12px" }} />
+          <h3 style={{ fontSize: "1.1rem", fontWeight: 800, color: "var(--texto)", margin: "0 0 6px 0" }}>
             No hay documentos en esta categoría
           </h3>
-          <p style={{ fontSize: "0.86rem", color: "#6B7280", margin: "0 0 16px 0", maxWidth: "480px", marginLeft: "auto", marginRight: "auto" }}>
+          <p style={{ fontSize: "0.86rem", color: "var(--texto-suave)", margin: "0 0 16px 0", maxWidth: "480px", marginLeft: "auto", marginRight: "auto" }}>
             Guarda tus cédulas (anverso y reverso), contratos, matrículas o títulos para mantenerlos protegidos y generar enlaces temporales con PIN.
           </p>
           <button
@@ -941,7 +941,7 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
                 style={{
                   background: "#ffffff",
                   borderRadius: "16px",
-                  border: "1px solid #E5E7EB",
+                  border: "1px solid var(--linea)",
                   padding: "18px",
                   display: "flex",
                   flexDirection: "column",
@@ -969,7 +969,7 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
                               fontSize: "0.68rem",
                               fontWeight: 800,
                               color: "#5000BA",
-                              background: "#F3E8FF",
+                              background: "var(--acento-diluido)",
                               padding: "2px 8px",
                               borderRadius: "6px"
                             }}
@@ -982,34 +982,34 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
 
                     {/* SEMÁFORO DE CADUCIDAD */}
                     {doc.estado_calculado === "vigente" && (
-                      <span style={{ fontSize: "0.72rem", fontWeight: 700, color: "#05876E", background: "#ECFDF5", padding: "3px 8px", borderRadius: "10px", display: "flex", alignItems: "center", gap: "4px" }}>
+                      <span style={{ fontSize: "0.72rem", fontWeight: 700, color: "#05876E", background: "var(--exito-diluido)", padding: "3px 8px", borderRadius: "10px", display: "flex", alignItems: "center", gap: "4px" }}>
                         <CheckCircle2 size={12} /> Vigente
                       </span>
                     )}
                     {doc.estado_calculado === "por_vencer" && (
-                      <span style={{ fontSize: "0.72rem", fontWeight: 700, color: "#D97706", background: "#FFFBEB", padding: "3px 8px", borderRadius: "10px", display: "flex", alignItems: "center", gap: "4px" }} title={`Alerta activa a ${mesesAlerta} meses de caducidad`}>
+                      <span style={{ fontSize: "0.72rem", fontWeight: 700, color: "var(--aviso)", background: "var(--aviso-diluido)", padding: "3px 8px", borderRadius: "10px", display: "flex", alignItems: "center", gap: "4px" }} title={`Alerta activa a ${mesesAlerta} meses de caducidad`}>
                         <AlertTriangle size={12} /> Vence en {doc.dias_para_vencer}d
                       </span>
                     )}
                     {doc.estado_calculado === "vencido" && (
-                      <span style={{ fontSize: "0.72rem", fontWeight: 700, color: "#DC2626", background: "#FEF2F2", padding: "3px 8px", borderRadius: "10px", display: "flex", alignItems: "center", gap: "4px" }}>
+                      <span style={{ fontSize: "0.72rem", fontWeight: 700, color: "var(--error)", background: "var(--error-diluido)", padding: "3px 8px", borderRadius: "10px", display: "flex", alignItems: "center", gap: "4px" }}>
                         <XCircle size={12} /> Caducado
                       </span>
                     )}
                   </div>
 
-                  <h3 style={{ fontSize: "1rem", fontWeight: 800, color: "#111827", margin: "0 0 6px 0", lineHeight: 1.3 }}>
+                  <h3 style={{ fontSize: "1rem", fontWeight: 800, color: "var(--texto)", margin: "0 0 6px 0", lineHeight: 1.3 }}>
                     {doc.doc_titulo}
                   </h3>
 
                   {/* METADATOS EXTRACTOS & DINÁMICOS */}
-                  <div style={{ fontSize: "0.78rem", color: "#4B5563", display: "flex", flexDirection: "column", gap: "4px", marginBottom: "14px" }}>
+                  <div style={{ fontSize: "0.78rem", color: "var(--texto-2)", display: "flex", flexDirection: "column", gap: "4px", marginBottom: "14px" }}>
                     {doc.doc_fecha_caducidad && (
                       <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                        <Calendar size={13} color="#DC2626" />
+                        <Calendar size={13} color="var(--error)" />
                         <span>Caduca: <strong>{new Date(doc.doc_fecha_caducidad).toLocaleDateString()}</strong></span>
                         {doc.doc_alertar_caducidad !== false && (
-                          <span style={{ fontSize: "0.68rem", color: "#5000BA", background: "#F3E8FF", padding: "1px 6px", borderRadius: "4px", fontWeight: 700 }}>
+                          <span style={{ fontSize: "0.68rem", color: "#5000BA", background: "var(--acento-diluido)", padding: "1px 6px", borderRadius: "4px", fontWeight: 700 }}>
                             {mesesAlerta}m
                           </span>
                         )}
@@ -1018,14 +1018,14 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
 
                     {doc.doc_titular_nombre && (
                       <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                        <User size={13} color="#6B7280" />
+                        <User size={13} color="var(--texto-suave)" />
                         <span>Titular: <strong>{doc.doc_titular_nombre}</strong></span>
                       </div>
                     )}
 
                     {doc.doc_titular_identificacion && (
                       <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                        <Tag size={13} color="#6B7280" />
+                        <Tag size={13} color="var(--texto-suave)" />
                         <span>Identificación: <code>{doc.doc_titular_identificacion}</code></span>
                       </div>
                     )}
@@ -1038,18 +1038,18 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
                             key={idx}
                             style={{
                               fontSize: "0.7rem",
-                              background: "#F3F4F6",
-                              color: "#374151",
+                              background: "var(--fondo-hundido)",
+                              color: "var(--texto-2)",
                               padding: "2px 6px",
                               borderRadius: "4px",
-                              border: "1px solid #E5E7EB"
+                              border: "1px solid var(--linea)"
                             }}
                           >
                             <strong>{m.clave}:</strong> {m.valor}
                           </span>
                         ))}
                         {metaDinamicos.length > 3 && (
-                          <span style={{ fontSize: "0.7rem", color: "#6B7280", alignSelf: "center" }}>
+                          <span style={{ fontSize: "0.7rem", color: "var(--texto-suave)", alignSelf: "center" }}>
                             +{metaDinamicos.length - 3} más
                           </span>
                         )}
@@ -1059,14 +1059,14 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
                 </div>
 
                 {/* BOTONES DE ACCIÓN */}
-                <div style={{ borderTop: "1px solid #F3F4F6", paddingTop: "12px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "6px", flexWrap: "wrap" }}>
+                <div style={{ borderTop: "1px solid var(--fondo-hundido)", paddingTop: "12px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "6px", flexWrap: "wrap" }}>
                   <div style={{ display: "flex", gap: "6px" }}>
                     <button
                       type="button"
                       onClick={() => abrirVisor(doc)}
                       style={{
-                        background: "#F3F4F6",
-                        color: "#1F2937",
+                        background: "var(--fondo-hundido)",
+                        color: "var(--texto)",
                         border: "none",
                         borderRadius: "8px",
                         padding: "7px 12px",
@@ -1086,8 +1086,8 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
                       type="button"
                       onClick={() => abrirCompartir(doc)}
                       style={{
-                        background: "#EEF2FF",
-                        color: "#4F46E5",
+                        background: "var(--acento-diluido)",
+                        color: "var(--acento)",
                         border: "none",
                         borderRadius: "8px",
                         padding: "7px 12px",
@@ -1109,7 +1109,7 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
                     onClick={() => setDocParaEliminar(doc)}
                     style={{
                       background: "transparent",
-                      color: "#9CA3AF",
+                      color: "var(--texto-tenue)",
                       border: "none",
                       padding: "6px",
                       borderRadius: "6px",
@@ -1157,17 +1157,17 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
           >
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px" }}>
               <div>
-                <h2 style={{ fontSize: "1.25rem", fontWeight: 800, margin: 0, color: "#111827", display: "flex", alignItems: "center", gap: "8px" }}>
+                <h2 style={{ fontSize: "1.25rem", fontWeight: 800, margin: 0, color: "var(--texto)", display: "flex", alignItems: "center", gap: "8px" }}>
                   <Upload size={20} color="#5000BA" /> Resguardar Documento en Billetera
                 </h2>
-                <p style={{ fontSize: "0.8rem", color: "#6B7280", margin: 0 }}>
+                <p style={{ fontSize: "0.8rem", color: "var(--texto-suave)", margin: 0 }}>
                   Formatos PDF o Imágenes (PNG, JPG, WebP). Sube una o varias partes (ej. anverso y reverso).
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setModalSubirAbierto(false)}
-                style={{ background: "#F3F4F6", border: "none", borderRadius: "50%", width: "32px", height: "32px", cursor: "pointer" }}
+                style={{ background: "var(--fondo-hundido)", border: "none", borderRadius: "50%", width: "32px", height: "32px", cursor: "pointer" }}
               >
                 ✕
               </button>
@@ -1177,11 +1177,11 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
               {/* ZONA DE CARGA MULTI-ARCHIVO */}
               <div
                 style={{
-                  border: "2px dashed #DDD6FE",
+                  border: "2px dashed var(--acento-linea)",
                   borderRadius: "14px",
                   padding: "18px",
                   textAlign: "center",
-                  background: "#FAF5FF",
+                  background: "var(--acento-diluido)",
                   marginBottom: "14px",
                   position: "relative"
                 }}
@@ -1200,11 +1200,11 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
                   }}
                 />
                 <div>
-                  <Upload size={32} color="#7C3AED" style={{ margin: "0 auto 6px auto" }} />
+                  <Upload size={32} color="var(--acento)" style={{ margin: "0 auto 6px auto" }} />
                   <div style={{ fontSize: "0.92rem", fontWeight: 800, color: "#4C1D95" }}>
                     Haz clic o arrastra 1 o más archivos aquí
                   </div>
-                  <div style={{ fontSize: "0.76rem", color: "#6B7280" }}>
+                  <div style={{ fontSize: "0.76rem", color: "var(--texto-suave)" }}>
                     Imágenes (PNG, JPG, WebP) o PDFs (hasta 25MB c/u). Ej. Anverso + Reverso de Cédula.
                   </div>
                 </div>
@@ -1214,7 +1214,7 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
               {archivosSeleccionados.length > 0 && (
                 <div style={{ marginBottom: "16px" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
-                    <span style={{ fontSize: "0.78rem", fontWeight: 800, color: "#374151" }}>
+                    <span style={{ fontSize: "0.78rem", fontWeight: 800, color: "var(--texto-2)" }}>
                       Archivos Adjuntos ({archivosSeleccionados.length}):
                     </span>
                     <button
@@ -1222,9 +1222,9 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
                       onClick={() => ejecutarAnalisisAria()}
                       disabled={analizandoConAria}
                       style={{
-                        background: "#F3E8FF",
+                        background: "var(--acento-diluido)",
                         color: "#5000BA",
-                        border: "1px solid #DDD6FE",
+                        border: "1px solid var(--acento-linea)",
                         borderRadius: "8px",
                         padding: "4px 10px",
                         fontSize: "0.74rem",
@@ -1250,26 +1250,26 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "space-between",
-                            background: "#F9FAFB",
-                            border: "1px solid #E5E7EB",
+                            background: "var(--fondo-suave)",
+                            border: "1px solid var(--linea)",
                             borderRadius: "8px",
                             padding: "6px 12px",
                             fontSize: "0.78rem"
                           }}
                         >
                           <div style={{ display: "flex", alignItems: "center", gap: "8px", overflow: "hidden" }}>
-                            {esImg ? <ImageIcon size={15} color="#2563EB" /> : <FileText size={15} color="#DC2626" />}
-                            <span style={{ fontWeight: 700, color: "#1F2937", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap", maxWidth: "340px" }}>
+                            {esImg ? <ImageIcon size={15} color="var(--acento)" /> : <FileText size={15} color="var(--error)" />}
+                            <span style={{ fontWeight: 700, color: "var(--texto)", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap", maxWidth: "340px" }}>
                               Parte {idx + 1}: {arch.nombre}
                             </span>
-                            <span style={{ fontSize: "0.7rem", color: "#6B7280" }}>
+                            <span style={{ fontSize: "0.7rem", color: "var(--texto-suave)" }}>
                               ({(arch.tamano / (1024 * 1024)).toFixed(2)} MB)
                             </span>
                           </div>
                           <button
                             type="button"
                             onClick={() => eliminarArchivoDeLista(arch.id)}
-                            style={{ background: "transparent", border: "none", color: "#DC2626", cursor: "pointer", padding: "2px" }}
+                            style={{ background: "transparent", border: "none", color: "var(--error)", cursor: "pointer", padding: "2px" }}
                             title="Quitar este archivo"
                           >
                             <X size={14} />
@@ -1332,7 +1332,7 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
 
                         <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: "6px" }}>
                           {/* Paso 1: Recibiendo el documento */}
-                          <li style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "0.8rem", color: "#1F2937" }}>
+                          <li style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "0.8rem", color: "var(--texto)" }}>
                             {segundosAnalisis > 3 ? (
                               <CheckCircle2 size={16} color="#05876E" style={{ flexShrink: 0 }} />
                             ) : (
@@ -1354,7 +1354,7 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
                           </li>
 
                           {/* Paso 2: Leyendo el contenido con visión */}
-                          <li style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "0.8rem", color: "#1F2937" }}>
+                          <li style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "0.8rem", color: "var(--texto)" }}>
                             {segundosAnalisis > 12 ? (
                               <CheckCircle2 size={16} color="#05876E" style={{ flexShrink: 0 }} />
                             ) : segundosAnalisis >= 3 ? (
@@ -1375,7 +1375,7 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
                                   width: "12px",
                                   height: "12px",
                                   borderRadius: "50%",
-                                  border: "2px solid #9CA3AF",
+                                  border: "2px solid var(--texto-tenue)",
                                   background: "transparent",
                                   display: "inline-block",
                                   flexShrink: 0,
@@ -1383,13 +1383,13 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
                                 }}
                               />
                             )}
-                            <span style={{ fontWeight: segundosAnalisis >= 3 && segundosAnalisis <= 12 ? 700 : 500, color: segundosAnalisis < 3 ? "#6B7280" : "#1F2937" }}>
+                            <span style={{ fontWeight: segundosAnalisis >= 3 && segundosAnalisis <= 12 ? 700 : 500, color: segundosAnalisis < 3 ? "var(--texto-suave)" : "var(--texto)" }}>
                               Leyendo el contenido con visión
                             </span>
                           </li>
 
                           {/* Paso 3: Completando los campos */}
-                          <li style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "0.8rem", color: "#1F2937" }}>
+                          <li style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "0.8rem", color: "var(--texto)" }}>
                             {segundosAnalisis > 12 ? (
                               <span
                                 className="billetera-aria-latido"
@@ -1408,7 +1408,7 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
                                   width: "12px",
                                   height: "12px",
                                   borderRadius: "50%",
-                                  border: "2px solid #9CA3AF",
+                                  border: "2px solid var(--texto-tenue)",
                                   background: "transparent",
                                   display: "inline-block",
                                   flexShrink: 0,
@@ -1416,7 +1416,7 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
                                 }}
                               />
                             )}
-                            <span style={{ fontWeight: segundosAnalisis > 12 ? 700 : 500, color: segundosAnalisis <= 12 ? "#6B7280" : "#1F2937" }}>
+                            <span style={{ fontWeight: segundosAnalisis > 12 ? 700 : 500, color: segundosAnalisis <= 12 ? "var(--texto-suave)" : "var(--texto)" }}>
                               Completando los campos
                             </span>
                           </li>
@@ -1442,7 +1442,7 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
                   </div>
 
                   {/* Pie en gris */}
-                  <div style={{ marginTop: "12px", fontSize: "0.76rem", color: "#6B7280", borderTop: "1px solid rgba(80,0,186,0.12)", paddingTop: "8px" }}>
+                  <div style={{ marginTop: "12px", fontSize: "0.76rem", color: "var(--texto-suave)", borderTop: "1px solid rgba(80,0,186,0.12)", paddingTop: "8px" }}>
                     Suele tardar entre 10 y 40 segundos. No cierres esta ventana.
                   </div>
                 </div>
@@ -1452,8 +1452,8 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
               {analisisDetectado && !analizandoConAria && (
                 <div
                   style={{
-                    background: "#F8FAFC",
-                    border: "1.5px solid #DDD6FE",
+                    background: "var(--fondo-suave)",
+                    border: "1.5px solid var(--acento-linea)",
                     borderRadius: "14px",
                     padding: "14px 16px",
                     marginBottom: "16px",
@@ -1465,53 +1465,53 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
                       <Sparkles size={16} /> Datos Clave Detectados por Tranqi (IA)
                     </div>
                     {analisisDetectado.requiereCaducidad ? (
-                      <span style={{ fontSize: "0.72rem", fontWeight: 700, color: "#DC2626", background: "#FEF2F2", border: "1px solid #FCA5A5", padding: "2px 8px", borderRadius: "8px", display: "flex", alignItems: "center", gap: "4px" }}>
+                      <span style={{ fontSize: "0.72rem", fontWeight: 700, color: "var(--error)", background: "var(--error-diluido)", border: "1px solid var(--error-linea)", padding: "2px 8px", borderRadius: "8px", display: "flex", alignItems: "center", gap: "4px" }}>
                         <BellRing size={12} /> Requiere Caducidad ({analisisDetectado.fechaCaducidad || "Programada"})
                       </span>
                     ) : (
-                      <span style={{ fontSize: "0.72rem", fontWeight: 700, color: "#05876E", background: "#ECFDF5", border: "1px solid #A7F3D0", padding: "2px 8px", borderRadius: "8px", display: "flex", alignItems: "center", gap: "4px" }}>
+                      <span style={{ fontSize: "0.72rem", fontWeight: 700, color: "#05876E", background: "var(--exito-diluido)", border: "1px solid var(--exito-linea)", padding: "2px 8px", borderRadius: "8px", display: "flex", alignItems: "center", gap: "4px" }}>
                         <CheckCircle2 size={12} /> Sin Caducidad Requerida (Desmarcada)
                       </span>
                     )}
                   </div>
 
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "8px", fontSize: "0.78rem", marginBottom: "10px" }}>
-                    <div style={{ background: "#ffffff", padding: "8px 10px", borderRadius: "8px", border: "1px solid #E2E8F0" }}>
-                      <span style={{ color: "#64748B", display: "block", fontSize: "0.7rem", fontWeight: 600 }}>Tipo de Documento</span>
-                      <strong style={{ color: "#1E293B" }}>{analisisDetectado.queEs || "Documento"}</strong>
+                    <div style={{ background: "#ffffff", padding: "8px 10px", borderRadius: "8px", border: "1px solid var(--linea)" }}>
+                      <span style={{ color: "var(--texto-suave)", display: "block", fontSize: "0.7rem", fontWeight: 600 }}>Tipo de Documento</span>
+                      <strong style={{ color: "var(--texto)" }}>{analisisDetectado.queEs || "Documento"}</strong>
                     </div>
 
-                    <div style={{ background: "#ffffff", padding: "8px 10px", borderRadius: "8px", border: "1px solid #E2E8F0" }}>
-                      <span style={{ color: "#64748B", display: "block", fontSize: "0.7rem", fontWeight: 600 }}>A quién pertenece</span>
-                      <strong style={{ color: "#1E293B" }}>{analisisDetectado.titularNombre || "No especificado"}</strong>
+                    <div style={{ background: "#ffffff", padding: "8px 10px", borderRadius: "8px", border: "1px solid var(--linea)" }}>
+                      <span style={{ color: "var(--texto-suave)", display: "block", fontSize: "0.7rem", fontWeight: 600 }}>A quién pertenece</span>
+                      <strong style={{ color: "var(--texto)" }}>{analisisDetectado.titularNombre || "No especificado"}</strong>
                     </div>
 
-                    <div style={{ background: "#ffffff", padding: "8px 10px", borderRadius: "8px", border: "1px solid #E2E8F0" }}>
-                      <span style={{ color: "#64748B", display: "block", fontSize: "0.7rem", fontWeight: 600 }}>Identificación / ID</span>
-                      <strong style={{ color: "#1E293B" }}>{analisisDetectado.titularIdentificacion || "No visible"}</strong>
+                    <div style={{ background: "#ffffff", padding: "8px 10px", borderRadius: "8px", border: "1px solid var(--linea)" }}>
+                      <span style={{ color: "var(--texto-suave)", display: "block", fontSize: "0.7rem", fontWeight: 600 }}>Identificación / ID</span>
+                      <strong style={{ color: "var(--texto)" }}>{analisisDetectado.titularIdentificacion || "No visible"}</strong>
                     </div>
 
-                    <div style={{ background: "#ffffff", padding: "8px 10px", borderRadius: "8px", border: "1px solid #E2E8F0" }}>
-                      <span style={{ color: "#64748B", display: "block", fontSize: "0.7rem", fontWeight: 600 }}>Lugar / Nacimiento</span>
-                      <strong style={{ color: "#1E293B" }}>
+                    <div style={{ background: "#ffffff", padding: "8px 10px", borderRadius: "8px", border: "1px solid var(--linea)" }}>
+                      <span style={{ color: "var(--texto-suave)", display: "block", fontSize: "0.7rem", fontWeight: 600 }}>Lugar / Nacimiento</span>
+                      <strong style={{ color: "var(--texto)" }}>
                         {analisisDetectado.lugarNacimiento || "—"} {analisisDetectado.fechaNacimiento ? `(${analisisDetectado.fechaNacimiento})` : ""}
                       </strong>
                     </div>
                   </div>
 
-                  <p style={{ margin: 0, fontSize: "0.74rem", color: "#4B5563", lineHeight: 1.4 }}>
+                  <p style={{ margin: 0, fontSize: "0.74rem", color: "var(--texto-2)", lineHeight: 1.4 }}>
                     {resumenAria || "Los datos se han asignado automáticamente como metadatos dinámicos editables abajo."}
                   </p>
                 </div>
               )}
 
               {resumenAria && !analisisDetectado && !analizandoConAria && (
-                <div role="status" style={{ background: "#F8FAFC", border: "1.5px solid #CBD5E1", padding: "12px 16px", borderRadius: "12px", marginBottom: "14px", fontSize: "0.82rem", color: "#334155" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 800, color: "#1E293B", marginBottom: "4px" }}>
-                    <AlertTriangle size={16} color="#64748B" /> Tranqi no pudo completar los campos
+                <div role="status" style={{ background: "var(--fondo-suave)", border: "1.5px solid var(--linea-fuerte)", padding: "12px 16px", borderRadius: "12px", marginBottom: "14px", fontSize: "0.82rem", color: "var(--texto-2)" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 800, color: "var(--texto)", marginBottom: "4px" }}>
+                    <AlertTriangle size={16} color="var(--texto-suave)" /> Tranqi no pudo completar los campos
                   </div>
                   <div>{resumenAria}</div>
-                  <div style={{ marginTop: "4px", color: "#64748B" }}>
+                  <div style={{ marginTop: "4px", color: "var(--texto-suave)" }}>
                     Complétalos a mano o pulsa «Re-analizar con Tranqi (IA)».
                   </div>
                 </div>
@@ -1520,8 +1520,8 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
               {/* CAMPOS BASE DEL DOCUMENTO */}
               <div className="rejilla-auto" style={{ "--min": "200px", "--hueco": "12px", marginBottom: "16px" } as React.CSSProperties}>
                 <div>
-                  <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, color: "#374151", marginBottom: "4px" }}>
-                    Título del Documento <span style={{ color: "#DC2626" }}>*</span>
+                  <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, color: "var(--texto-2)", marginBottom: "4px" }}>
+                    Título del Documento <span style={{ color: "var(--error)" }}>*</span>
                   </label>
                   <input
                     type="text"
@@ -1539,19 +1539,19 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
                       width: "100%",
                       padding: "8px 12px",
                       borderRadius: "8px",
-                      border: erroresCampos.titulo ? "1.5px solid #DC2626" : "1px solid #D1D5DB",
+                      border: erroresCampos.titulo ? "1.5px solid var(--error)" : "1px solid var(--linea-fuerte)",
                       fontSize: "0.85rem"
                     }}
                   />
                   {erroresCampos.titulo && (
-                    <span style={{ color: "#DC2626", fontSize: "0.74rem", marginTop: "4px", display: "block" }}>
+                    <span style={{ color: "var(--error)", fontSize: "0.74rem", marginTop: "4px", display: "block" }}>
                       {erroresCampos.titulo}
                     </span>
                   )}
                 </div>
 
                 <div>
-                  <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, color: "#374151", marginBottom: "4px" }}>
+                  <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, color: "var(--texto-2)", marginBottom: "4px" }}>
                     Categoría
                   </label>
                   <select
@@ -1559,7 +1559,7 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
                     className={analizandoConAria ? "billetera-aria-esqueleto" : ""}
                     value={nuevaCategoria}
                     onChange={(e) => setNuevaCategoria(e.target.value)}
-                    style={{ width: "100%", padding: "8px 12px", borderRadius: "8px", border: "1px solid #D1D5DB", fontSize: "0.85rem" }}
+                    style={{ width: "100%", padding: "8px 12px", borderRadius: "8px", border: "1px solid var(--linea-fuerte)", fontSize: "0.85rem" }}
                   >
                     <option value="identidad">Identidad & Personal</option>
                     <option value="vehicular">Vehicular & Seguros</option>
@@ -1571,9 +1571,9 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
               </div>
 
               {/* SECCIÓN DE ALERTAS DE CADUCIDAD (SELECCIONADA POR DEFECTO) */}
-              <div style={{ background: "#F8FAFC", border: "1px solid #E2E8F0", borderRadius: "12px", padding: "14px", marginBottom: "18px" }}>
+              <div style={{ background: "var(--fondo-suave)", border: "1px solid var(--linea)", borderRadius: "12px", padding: "14px", marginBottom: "18px" }}>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: alertarCaducidad ? "12px" : "0" }}>
-                  <label style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "0.82rem", fontWeight: 800, color: "#1E293B", cursor: "pointer" }}>
+                  <label style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "0.82rem", fontWeight: 800, color: "var(--texto)", cursor: "pointer" }}>
                     <input
                       type="checkbox"
                       checked={alertarCaducidad}
@@ -1587,15 +1587,15 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
                     />
                     <BellRing size={16} color="#5000BA" /> Alertar Caducidad de este Documento
                   </label>
-                  <span style={{ fontSize: "0.72rem", color: "#64748B" }}>
+                  <span style={{ fontSize: "0.72rem", color: "var(--texto-suave)" }}>
                     Notificaciones en campana y correo
                   </span>
                 </div>
 
                 {alertarCaducidad && (
-                  <div className="rejilla-auto" style={{ "--min": "200px", "--hueco": "12px", paddingTop: "8px", borderTop: "1px solid var(--panel-linea, #E4E4E4)" } as React.CSSProperties}>
+                  <div className="rejilla-auto" style={{ "--min": "200px", "--hueco": "12px", paddingTop: "8px", borderTop: "1px solid var(--panel-linea, var(--linea))" } as React.CSSProperties}>
                     <div>
-                      <label style={{ display: "block", fontSize: "0.76rem", fontWeight: 700, color: "#DC2626", marginBottom: "4px" }}>
+                      <label style={{ display: "block", fontSize: "0.76rem", fontWeight: 700, color: "var(--error)", marginBottom: "4px" }}>
                         Fecha de Expiración / Caducidad
                       </label>
                       <input
@@ -1613,26 +1613,26 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
                           width: "100%",
                           padding: "8px 12px",
                           borderRadius: "8px",
-                          border: erroresCampos.fechaCaducidad ? "1.5px solid #DC2626" : "1px solid #FCA5A5",
+                          border: erroresCampos.fechaCaducidad ? "1.5px solid var(--error)" : "1px solid var(--error-linea)",
                           fontSize: "0.85rem",
                           background: "#FFF"
                         }}
                       />
                       {erroresCampos.fechaCaducidad && (
-                        <span style={{ color: "#DC2626", fontSize: "0.74rem", marginTop: "4px", display: "block" }}>
+                        <span style={{ color: "var(--error)", fontSize: "0.74rem", marginTop: "4px", display: "block" }}>
                           {erroresCampos.fechaCaducidad}
                         </span>
                       )}
                     </div>
 
                     <div>
-                      <label style={{ display: "block", fontSize: "0.76rem", fontWeight: 700, color: "#334155", marginBottom: "4px" }}>
+                      <label style={{ display: "block", fontSize: "0.76rem", fontWeight: 700, color: "var(--texto-2)", marginBottom: "4px" }}>
                         Anticipación de Alerta
                       </label>
                       <select
                         value={mesesAnticipacionAlerta}
                         onChange={(e) => setMesesAnticipacionAlerta(Number(e.target.value))}
-                        style={{ width: "100%", padding: "8px 12px", borderRadius: "8px", border: "1px solid #CBD5E1", fontSize: "0.85rem", background: "#FFF", fontWeight: 700 }}
+                        style={{ width: "100%", padding: "8px 12px", borderRadius: "8px", border: "1px solid var(--linea-fuerte)", fontSize: "0.85rem", background: "#FFF", fontWeight: 700 }}
                       >
                         {OPCIONES_ANTICIPACION_ALERTA.map((op) => (
                           <option key={op.meses} value={op.meses}>
@@ -1649,19 +1649,19 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
               <div
                 className={recienRellenado ? "billetera-aria-rellenado" : ""}
                 style={{
-                  border: erroresCampos.metadatos ? "1.5px solid #DC2626" : "1px solid #E5E7EB",
+                  border: erroresCampos.metadatos ? "1.5px solid var(--error)" : "1px solid var(--linea)",
                   borderRadius: "12px",
                   padding: "14px",
                   marginBottom: "20px",
-                  background: "#FAFAFA"
+                  background: "var(--fondo-suave)"
                 }}
               >
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
                   <div>
-                    <span style={{ fontSize: "0.82rem", fontWeight: 800, color: "#111827", display: "flex", alignItems: "center", gap: "6px" }}>
+                    <span style={{ fontSize: "0.82rem", fontWeight: 800, color: "var(--texto)", display: "flex", alignItems: "center", gap: "6px" }}>
                       <Layers size={15} color="#5000BA" /> Metadatos Dinámicos del Documento
                     </span>
-                    <p style={{ fontSize: "0.72rem", color: "#6B7280", margin: "2px 0 0 0" }}>
+                    <p style={{ fontSize: "0.72rem", color: "var(--texto-suave)", margin: "2px 0 0 0" }}>
                       Campos leídos automáticamente o agregados manualmente (editables y eliminables).
                     </p>
                   </div>
@@ -1671,9 +1671,9 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
                     disabled={analizandoConAria}
                     onClick={() => agregarCampoMetadato("", "")}
                     style={{
-                      background: analizandoConAria ? "#F3F4F6" : "#EDE9FE",
-                      color: analizandoConAria ? "#9CA3AF" : "#5000BA",
-                      border: "1px solid #DDD6FE",
+                      background: analizandoConAria ? "var(--fondo-hundido)" : "var(--acento-diluido)",
+                      color: analizandoConAria ? "var(--texto-tenue)" : "#5000BA",
+                      border: "1px solid var(--acento-linea)",
                       borderRadius: "8px",
                       padding: "5px 12px",
                       fontSize: "0.74rem",
@@ -1689,15 +1689,15 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
                 </div>
 
                 {erroresCampos.metadatos && (
-                  <span style={{ color: "#DC2626", fontSize: "0.74rem", marginBottom: "10px", display: "block" }}>
+                  <span style={{ color: "var(--error)", fontSize: "0.74rem", marginBottom: "10px", display: "block" }}>
                     {erroresCampos.metadatos}
                   </span>
                 )}
 
                 {/* LISTADO DE METADATOS DINÁMICOS */}
                 {metadatosDinamicos.length === 0 ? (
-                  <div style={{ padding: "14px", textAlign: "center", background: "#ffffff", borderRadius: "8px", border: "1px dashed #D1D5DB" }}>
-                    <p style={{ fontSize: "0.76rem", color: "#6B7280", margin: "0 0 8px 0" }}>
+                  <div style={{ padding: "14px", textAlign: "center", background: "#ffffff", borderRadius: "8px", border: "1px dashed var(--linea-fuerte)" }}>
+                    <p style={{ fontSize: "0.76rem", color: "var(--texto-suave)", margin: "0 0 8px 0" }}>
                       No hay metadatos adicionales registrados.
                     </p>
                     <div style={{ display: "flex", gap: "6px", justifyContent: "center", flexWrap: "wrap" }}>
@@ -1705,7 +1705,7 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
                         type="button"
                         disabled={analizandoConAria}
                         onClick={() => agregarCampoMetadato("Nombre del Titular", "")}
-                        style={{ background: "#F3F4F6", border: "1px solid #E5E7EB", borderRadius: "6px", padding: "3px 8px", fontSize: "0.7rem", color: analizandoConAria ? "#9CA3AF" : "#374151", cursor: analizandoConAria ? "not-allowed" : "pointer" }}
+                        style={{ background: "var(--fondo-hundido)", border: "1px solid var(--linea)", borderRadius: "6px", padding: "3px 8px", fontSize: "0.7rem", color: analizandoConAria ? "var(--texto-tenue)" : "var(--texto-2)", cursor: analizandoConAria ? "not-allowed" : "pointer" }}
                       >
                         + Titular
                       </button>
@@ -1713,7 +1713,7 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
                         type="button"
                         disabled={analizandoConAria}
                         onClick={() => agregarCampoMetadato("Cédula / RUC", "")}
-                        style={{ background: "#F3F4F6", border: "1px solid #E5E7EB", borderRadius: "6px", padding: "3px 8px", fontSize: "0.7rem", color: analizandoConAria ? "#9CA3AF" : "#374151", cursor: analizandoConAria ? "not-allowed" : "pointer" }}
+                        style={{ background: "var(--fondo-hundido)", border: "1px solid var(--linea)", borderRadius: "6px", padding: "3px 8px", fontSize: "0.7rem", color: analizandoConAria ? "var(--texto-tenue)" : "var(--texto-2)", cursor: analizandoConAria ? "not-allowed" : "pointer" }}
                       >
                         + Identificación
                       </button>
@@ -1721,7 +1721,7 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
                         type="button"
                         disabled={analizandoConAria}
                         onClick={() => agregarCampoMetadato("Entidad Emisora", "")}
-                        style={{ background: "#F3F4F6", border: "1px solid #E5E7EB", borderRadius: "6px", padding: "3px 8px", fontSize: "0.7rem", color: analizandoConAria ? "#9CA3AF" : "#374151", cursor: analizandoConAria ? "not-allowed" : "pointer" }}
+                        style={{ background: "var(--fondo-hundido)", border: "1px solid var(--linea)", borderRadius: "6px", padding: "3px 8px", fontSize: "0.7rem", color: analizandoConAria ? "var(--texto-tenue)" : "var(--texto-2)", cursor: analizandoConAria ? "not-allowed" : "pointer" }}
                       >
                         + Entidad Emisora
                       </button>
@@ -1729,7 +1729,7 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
                         type="button"
                         disabled={analizandoConAria}
                         onClick={() => agregarCampoMetadato("Número / Matrícula", "")}
-                        style={{ background: "#F3F4F6", border: "1px solid #E5E7EB", borderRadius: "6px", padding: "3px 8px", fontSize: "0.7rem", color: analizandoConAria ? "#9CA3AF" : "#374151", cursor: analizandoConAria ? "not-allowed" : "pointer" }}
+                        style={{ background: "var(--fondo-hundido)", border: "1px solid var(--linea)", borderRadius: "6px", padding: "3px 8px", fontSize: "0.7rem", color: analizandoConAria ? "var(--texto-tenue)" : "var(--texto-2)", cursor: analizandoConAria ? "not-allowed" : "pointer" }}
                       >
                         + N° Documento
                       </button>
@@ -1752,10 +1752,10 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
                           style={{
                             padding: "6px 8px",
                             borderRadius: "6px",
-                            border: "1px solid #D1D5DB",
+                            border: "1px solid var(--linea-fuerte)",
                             fontSize: "0.78rem",
                             fontWeight: 700,
-                            color: "#1F2937"
+                            color: "var(--texto)"
                           }}
                         />
 
@@ -1769,9 +1769,9 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
                           style={{
                             padding: "6px 8px",
                             borderRadius: "6px",
-                            border: "1px solid #D1D5DB",
+                            border: "1px solid var(--linea-fuerte)",
                             fontSize: "0.78rem",
-                            color: "#374151"
+                            color: "var(--texto-2)"
                           }}
                         />
 
@@ -1780,9 +1780,9 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
                           disabled={analizandoConAria}
                           onClick={() => eliminarCampoMetadato(meta.id)}
                           style={{
-                            background: analizandoConAria ? "#F3F4F6" : "#FEE2E2",
+                            background: analizandoConAria ? "var(--fondo-hundido)" : "var(--error-diluido)",
                             border: "none",
-                            color: analizandoConAria ? "#9CA3AF" : "#DC2626",
+                            color: analizandoConAria ? "var(--texto-tenue)" : "var(--error)",
                             borderRadius: "6px",
                             height: "30px",
                             display: "flex",
@@ -1805,7 +1805,7 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
                 <button
                   type="button"
                   onClick={() => setModalSubirAbierto(false)}
-                  style={{ background: "#F3F4F6", border: "none", borderRadius: "10px", padding: "10px 18px", fontSize: "0.85rem", fontWeight: 700, cursor: "pointer" }}
+                  style={{ background: "var(--fondo-hundido)", border: "none", borderRadius: "10px", padding: "10px 18px", fontSize: "0.85rem", fontWeight: 700, cursor: "pointer" }}
                 >
                   Cancelar
                 </button>
@@ -1875,14 +1875,14 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
           >
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                <div style={{ background: "#EEF2FF", padding: "10px", borderRadius: "12px" }}>
-                  <Share2 size={22} color="#4F46E5" />
+                <div style={{ background: "var(--acento-diluido)", padding: "10px", borderRadius: "12px" }}>
+                  <Share2 size={22} color="var(--acento)" />
                 </div>
                 <div>
-                  <h2 style={{ fontSize: "1.2rem", fontWeight: 800, margin: 0, color: "#111827" }}>
+                  <h2 style={{ fontSize: "1.2rem", fontWeight: 800, margin: 0, color: "var(--texto)" }}>
                     Compartir Enlace Efímero (TTL)
                   </h2>
-                  <p style={{ fontSize: "0.82rem", color: "#6B7280", margin: 0 }}>
+                  <p style={{ fontSize: "0.82rem", color: "var(--texto-suave)", margin: 0 }}>
                     {docParaCompartir.doc_titulo}
                   </p>
                 </div>
@@ -1890,15 +1890,15 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
               <button
                 type="button"
                 onClick={() => setDocParaCompartir(null)}
-                style={{ background: "#F3F4F6", border: "none", borderRadius: "50%", width: "32px", height: "32px", cursor: "pointer" }}
+                style={{ background: "var(--fondo-hundido)", border: "none", borderRadius: "50%", width: "32px", height: "32px", cursor: "pointer" }}
               >
                 ✕
               </button>
             </div>
 
             {/* GENERADOR DE ENLACE */}
-            <div style={{ background: "#F8FAFC", borderRadius: "14px", padding: "18px", border: "1px solid #E2E8F0", marginBottom: "18px" }}>
-              <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 800, color: "#1E293B", marginBottom: "8px" }}>
+            <div style={{ background: "var(--fondo-suave)", borderRadius: "14px", padding: "18px", border: "1px solid var(--linea)", marginBottom: "18px" }}>
+              <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 800, color: "var(--texto)", marginBottom: "8px" }}>
                 Tiempo de Expiración (TTL)
               </label>
               <div className="rejilla-auto" style={{ "--min": "130px", "--hueco": "8px", marginBottom: "14px" } as React.CSSProperties}>
@@ -1915,9 +1915,9 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
                     type="button"
                     onClick={() => setModoTtl(op.id)}
                     style={{
-                      background: modoTtl === op.id ? "#4F46E5" : "#ffffff",
-                      color: modoTtl === op.id ? "#ffffff" : "#334155",
-                      border: modoTtl === op.id ? "1px solid #4F46E5" : "1px solid #CBD5E1",
+                      background: modoTtl === op.id ? "var(--acento)" : "#ffffff",
+                      color: modoTtl === op.id ? "#ffffff" : "var(--texto-2)",
+                      border: modoTtl === op.id ? "1px solid var(--acento)" : "1px solid var(--linea-fuerte)",
                       borderRadius: "8px",
                       padding: "8px",
                       fontSize: "0.78rem",
@@ -1931,13 +1931,13 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
               </div>
 
               {modoTtl === "una_vista" && (
-                <div style={{ background: "#FEF2F2", border: "1px solid #FCA5A5", padding: "8px 12px", borderRadius: "8px", fontSize: "0.76rem", color: "#991B1B", marginBottom: "12px", display: "flex", alignItems: "center", gap: "6px" }}>
+                <div style={{ background: "var(--error-diluido)", border: "1px solid var(--error-linea)", padding: "8px 12px", borderRadius: "8px", fontSize: "0.76rem", color: "var(--error-texto)", marginBottom: "12px", display: "flex", alignItems: "center", gap: "6px" }}>
                   <Flame size={16} /> <strong>Modo Burn-on-Read:</strong> El enlace se destruirá y revocará de inmediato tras la 1ra apertura.
                 </div>
               )}
 
               <div style={{ marginBottom: "14px" }}>
-                <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, color: "#334155", marginBottom: "4px" }}>
+                <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, color: "var(--texto-2)", marginBottom: "4px" }}>
                   PIN de Seguridad (Opcional, 4 dígitos)
                 </label>
                 <input
@@ -1946,7 +1946,7 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
                   value={pinTtl}
                   onChange={(e) => setPinTtl(e.target.value)}
                   placeholder="Ej. 1234"
-                  style={{ width: "100%", padding: "8px 12px", borderRadius: "8px", border: "1px solid #CBD5E1", fontSize: "0.85rem", letterSpacing: "2px" }}
+                  style={{ width: "100%", padding: "8px 12px", borderRadius: "8px", border: "1px solid var(--linea-fuerte)", fontSize: "0.85rem", letterSpacing: "2px" }}
                 />
               </div>
 
@@ -1956,7 +1956,7 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
                 disabled={generandoTtl}
                 style={{
                   width: "100%",
-                  background: "#4F46E5",
+                  background: "var(--acento)",
                   color: "#ffffff",
                   border: "none",
                   borderRadius: "10px",
@@ -1971,8 +1971,8 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
             </div>
 
             {enlaceGenerado && (
-              <div style={{ background: "#ECFDF5", border: "1.5px solid #A7F3D0", borderRadius: "14px", padding: "16px", marginBottom: "18px" }}>
-                <div style={{ fontSize: "0.8rem", fontWeight: 800, color: "#065F46", marginBottom: "6px" }}>
+              <div style={{ background: "var(--exito-diluido)", border: "1.5px solid var(--exito-linea)", borderRadius: "14px", padding: "16px", marginBottom: "18px" }}>
+                <div style={{ fontSize: "0.8rem", fontWeight: 800, color: "var(--exito-texto)", marginBottom: "6px" }}>
                   Enlace Efímero Generado:
                 </div>
                 <div style={{ display: "flex", gap: "8px" }}>
@@ -1980,7 +1980,7 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
                     type="text"
                     readOnly
                     value={enlaceGenerado}
-                    style={{ flex: 1, padding: "8px 10px", borderRadius: "8px", border: "1px solid #6EE7B7", fontSize: "0.78rem", background: "#ffffff" }}
+                    style={{ flex: 1, padding: "8px 10px", borderRadius: "8px", border: "1px solid var(--exito-linea)", fontSize: "0.78rem", background: "#ffffff" }}
                   />
                   <button
                     type="button"
@@ -1995,19 +1995,19 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
 
             {/* HISTORIAL DE ENLACES ACTIVOS */}
             <div>
-              <h4 style={{ fontSize: "0.84rem", fontWeight: 800, color: "#374151", margin: "0 0 8px 0" }}>
+              <h4 style={{ fontSize: "0.84rem", fontWeight: 800, color: "var(--texto-2)", margin: "0 0 8px 0" }}>
                 Enlaces Generados para este Documento
               </h4>
               {listaEnlacesActivos.length === 0 ? (
-                <div style={{ fontSize: "0.78rem", color: "#9CA3AF" }}>No hay enlaces activos en este momento.</div>
+                <div style={{ fontSize: "0.78rem", color: "var(--texto-tenue)" }}>No hay enlaces activos en este momento.</div>
               ) : (
                 <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                   {listaEnlacesActivos.map((enl) => (
                     <div
                       key={enl.ttl_id}
                       style={{
-                        background: "#F9FAFB",
-                        border: "1px solid #E5E7EB",
+                        background: "var(--fondo-suave)",
+                        border: "1px solid var(--linea)",
                         borderRadius: "10px",
                         padding: "10px 12px",
                         display: "flex",
@@ -2017,10 +2017,10 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
                       }}
                     >
                       <div>
-                        <div style={{ fontWeight: 700, color: enl.esta_vigente ? "#111827" : "#9CA3AF" }}>
+                        <div style={{ fontWeight: 700, color: enl.esta_vigente ? "var(--texto)" : "var(--texto-tenue)" }}>
                           Modo: {enl.ttl_modo_expiracion} {enl.ttl_una_sola_vista && "(1 vista)"} {enl.requiere_pin && "(PIN)"}
                         </div>
-                        <div style={{ color: "#6B7280", fontSize: "0.72rem" }}>
+                        <div style={{ color: "var(--texto-suave)", fontSize: "0.72rem" }}>
                           {enl.esta_vigente ? `Expira: ${new Date(enl.ttl_expira_en).toLocaleString()}` : "Inactivo / Expirado"} • Vistas: {enl.ttl_visitas_conteo}
                         </div>
                       </div>
@@ -2030,7 +2030,7 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
                           <button
                             type="button"
                             onClick={() => copiarEnlace(enl.enlace_url)}
-                            style={{ background: "#E0E7FF", color: "#3730A3", border: "none", borderRadius: "6px", padding: "4px 8px", cursor: "pointer", fontWeight: 700 }}
+                            style={{ background: "var(--acento-diluido)", color: "var(--acento-hondo)", border: "none", borderRadius: "6px", padding: "4px 8px", cursor: "pointer", fontWeight: 700 }}
                           >
                             Copiar
                           </button>
@@ -2039,7 +2039,7 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
                           <button
                             type="button"
                             onClick={() => revocarEnlace(enl.ttl_token)}
-                            style={{ background: "#FEE2E2", color: "#991B1B", border: "none", borderRadius: "6px", padding: "4px 8px", cursor: "pointer", fontWeight: 700 }}
+                            style={{ background: "var(--error-diluido)", color: "var(--error-texto)", border: "none", borderRadius: "6px", padding: "4px 8px", cursor: "pointer", fontWeight: 700 }}
                           >
                             Revocar
                           </button>
@@ -2104,17 +2104,17 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
             >
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "14px" }}>
                 <div>
-                  <h2 style={{ fontSize: "1.25rem", fontWeight: 800, margin: 0, color: "#111827" }}>
+                  <h2 style={{ fontSize: "1.25rem", fontWeight: 800, margin: 0, color: "var(--texto)" }}>
                     {docParaVer.doc_titulo}
                   </h2>
-                  <p style={{ fontSize: "0.8rem", color: "#6B7280", margin: 0 }}>
+                  <p style={{ fontSize: "0.8rem", color: "var(--texto-suave)", margin: 0 }}>
                     Categoría: {CATEGORIAS_CONFIG[docParaVer.doc_categoria]?.label || docParaVer.doc_categoria} • {archivosVisor.length} archivo(s)
                   </p>
                 </div>
                 <button
                   type="button"
                   onClick={() => setDocParaVer(null)}
-                  style={{ background: "#F3F4F6", border: "none", borderRadius: "50%", width: "32px", height: "32px", cursor: "pointer" }}
+                  style={{ background: "var(--fondo-hundido)", border: "none", borderRadius: "50%", width: "32px", height: "32px", cursor: "pointer" }}
                 >
                   ✕
                 </button>
@@ -2129,8 +2129,8 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
                       type="button"
                       onClick={() => setIndiceArchivoVer(idx)}
                       style={{
-                        background: indiceArchivoVer === idx ? "#5000BA" : "#F3F4F6",
-                        color: indiceArchivoVer === idx ? "#ffffff" : "#374151",
+                        background: indiceArchivoVer === idx ? "#5000BA" : "var(--fondo-hundido)",
+                        color: indiceArchivoVer === idx ? "#ffffff" : "var(--texto-2)",
                         border: "none",
                         borderRadius: "8px",
                         padding: "6px 12px",
@@ -2151,7 +2151,7 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
               )}
 
               {/* PREVISUALIZADOR */}
-              <div style={{ background: "#F9FAFB", border: "1px solid #E5E7EB", borderRadius: "12px", overflow: "hidden", marginBottom: "16px", minHeight: "260px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <div style={{ background: "var(--fondo-suave)", border: "1px solid var(--linea)", borderRadius: "12px", overflow: "hidden", marginBottom: "16px", minHeight: "260px", display: "flex", alignItems: "center", justifyContent: "center" }}>
                 {archivoActual?.base64 ? (
                   esImg ? (
                     <img
@@ -2167,74 +2167,74 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
                     />
                   )
                 ) : (
-                  <div style={{ padding: "40px", textAlign: "center", color: "#6B7280" }}>
-                    <FileText size={40} color="#9CA3AF" style={{ margin: "0 auto 8px auto" }} />
+                  <div style={{ padding: "40px", textAlign: "center", color: "var(--texto-suave)" }}>
+                    <FileText size={40} color="var(--texto-tenue)" style={{ margin: "0 auto 8px auto" }} />
                     <div>Previsualizador no disponible en modo offline</div>
                   </div>
                 )}
               </div>
 
               {/* SECCIÓN DE VIGENCIA Y EXPIRACIÓN */}
-              <div style={{ background: "#F8FAFC", padding: "12px 16px", borderRadius: "10px", border: "1px solid #E2E8F0", marginBottom: "14px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "8px" }}>
+              <div style={{ background: "var(--fondo-suave)", padding: "12px 16px", borderRadius: "10px", border: "1px solid var(--linea)", marginBottom: "14px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "8px" }}>
                 <div>
-                  <span style={{ fontSize: "0.76rem", color: "#64748B", display: "block" }}>Fecha de Caducidad / Expiración:</span>
-                  <span style={{ fontSize: "0.92rem", fontWeight: 800, color: docParaVer.doc_fecha_caducidad ? "#1E293B" : "#94A3B8" }}>
+                  <span style={{ fontSize: "0.76rem", color: "var(--texto-suave)", display: "block" }}>Fecha de Caducidad / Expiración:</span>
+                  <span style={{ fontSize: "0.92rem", fontWeight: 800, color: docParaVer.doc_fecha_caducidad ? "var(--texto)" : "var(--texto-tenue)" }}>
                     {docParaVer.doc_fecha_caducidad ? new Date(docParaVer.doc_fecha_caducidad).toLocaleDateString() : "Indefinida / Sin Expiración"}
                   </span>
                 </div>
 
                 {docParaVer.doc_alertar_caducidad !== false && docParaVer.doc_fecha_caducidad && (
-                  <div style={{ background: "#F5F3FF", border: "1px solid #DDD6FE", padding: "4px 10px", borderRadius: "8px", fontSize: "0.76rem", color: "#5000BA", fontWeight: 700, display: "flex", alignItems: "center", gap: "6px" }}>
+                  <div style={{ background: "var(--acento-diluido)", border: "1px solid var(--acento-linea)", padding: "4px 10px", borderRadius: "8px", fontSize: "0.76rem", color: "#5000BA", fontWeight: 700, display: "flex", alignItems: "center", gap: "6px" }}>
                     <BellRing size={14} /> Alerta activa ({docParaVer.doc_meses_anticipacion_alerta ?? 3} meses de anticipación)
                   </div>
                 )}
               </div>
 
               {/* TABLA DE METADATOS DINÁMICOS */}
-              <div style={{ background: "#FFFFFF", border: "1px solid #E5E7EB", borderRadius: "12px", padding: "14px", marginBottom: "18px" }}>
-                <h4 style={{ fontSize: "0.82rem", fontWeight: 800, color: "#111827", margin: "0 0 10px 0", display: "flex", alignItems: "center", gap: "6px" }}>
+              <div style={{ background: "#FFFFFF", border: "1px solid var(--linea)", borderRadius: "12px", padding: "14px", marginBottom: "18px" }}>
+                <h4 style={{ fontSize: "0.82rem", fontWeight: 800, color: "var(--texto)", margin: "0 0 10px 0", display: "flex", alignItems: "center", gap: "6px" }}>
                   <Layers size={14} color="#5000BA" /> Metadatos y Parámetros del Documento
                 </h4>
 
                 {metaDinamicos.length > 0 ? (
                   <div className="rejilla-auto" style={{ "--min": "180px", "--hueco": "8px" } as React.CSSProperties}>
                     {metaDinamicos.map((m, idx: number) => (
-                      <div key={idx} style={{ background: "#F9FAFB", padding: "8px 12px", borderRadius: "8px", border: "1px solid #F3F4F6", fontSize: "0.78rem" }}>
-                        <span style={{ color: "#6B7280", display: "block", fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase" }}>
+                      <div key={idx} style={{ background: "var(--fondo-suave)", padding: "8px 12px", borderRadius: "8px", border: "1px solid var(--fondo-hundido)", fontSize: "0.78rem" }}>
+                        <span style={{ color: "var(--texto-suave)", display: "block", fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase" }}>
                           {m.clave}
                         </span>
-                        <strong style={{ color: "#111827" }}>{m.valor}</strong>
+                        <strong style={{ color: "var(--texto)" }}>{m.valor}</strong>
                       </div>
                     ))}
                   </div>
                 ) : (
                   <div className="rejilla-auto" style={{ "--min": "180px", "--hueco": "8px", fontSize: "0.78rem" } as React.CSSProperties}>
                     {docParaVer.doc_titular_nombre && (
-                      <div style={{ background: "#F9FAFB", padding: "8px 12px", borderRadius: "8px" }}>
-                        <span style={{ color: "#6B7280", display: "block", fontSize: "0.7rem" }}>Titular:</span>
+                      <div style={{ background: "var(--fondo-suave)", padding: "8px 12px", borderRadius: "8px" }}>
+                        <span style={{ color: "var(--texto-suave)", display: "block", fontSize: "0.7rem" }}>Titular:</span>
                         <strong>{docParaVer.doc_titular_nombre}</strong>
                       </div>
                     )}
                     {docParaVer.doc_titular_identificacion && (
-                      <div style={{ background: "#F9FAFB", padding: "8px 12px", borderRadius: "8px" }}>
-                        <span style={{ color: "#6B7280", display: "block", fontSize: "0.7rem" }}>Identificación:</span>
+                      <div style={{ background: "var(--fondo-suave)", padding: "8px 12px", borderRadius: "8px" }}>
+                        <span style={{ color: "var(--texto-suave)", display: "block", fontSize: "0.7rem" }}>Identificación:</span>
                         <strong>{docParaVer.doc_titular_identificacion}</strong>
                       </div>
                     )}
                     {docParaVer.doc_entidad_emisora && (
-                      <div style={{ background: "#F9FAFB", padding: "8px 12px", borderRadius: "8px" }}>
-                        <span style={{ color: "#6B7280", display: "block", fontSize: "0.7rem" }}>Emisor:</span>
+                      <div style={{ background: "var(--fondo-suave)", padding: "8px 12px", borderRadius: "8px" }}>
+                        <span style={{ color: "var(--texto-suave)", display: "block", fontSize: "0.7rem" }}>Emisor:</span>
                         <strong>{docParaVer.doc_entidad_emisora}</strong>
                       </div>
                     )}
                     {docParaVer.doc_numero_documento && (
-                      <div style={{ background: "#F9FAFB", padding: "8px 12px", borderRadius: "8px" }}>
-                        <span style={{ color: "#6B7280", display: "block", fontSize: "0.7rem" }}>N° Documento:</span>
+                      <div style={{ background: "var(--fondo-suave)", padding: "8px 12px", borderRadius: "8px" }}>
+                        <span style={{ color: "var(--texto-suave)", display: "block", fontSize: "0.7rem" }}>N° Documento:</span>
                         <strong>{docParaVer.doc_numero_documento}</strong>
                       </div>
                     )}
                     {!docParaVer.doc_titular_nombre && !docParaVer.doc_titular_identificacion && (
-                      <div style={{ color: "#9CA3AF", fontSize: "0.78rem", gridColumn: "1 / -1" }}>
+                      <div style={{ color: "var(--texto-tenue)", fontSize: "0.78rem", gridColumn: "1 / -1" }}>
                         Sin metadatos dinámicos adicionales registrados.
                       </div>
                     )}
@@ -2266,7 +2266,7 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
                 <button
                   type="button"
                   onClick={() => setDocParaVer(null)}
-                  style={{ background: "#F3F4F6", border: "none", borderRadius: "10px", padding: "9px 18px", fontSize: "0.84rem", fontWeight: 700, cursor: "pointer" }}
+                  style={{ background: "var(--fondo-hundido)", border: "none", borderRadius: "10px", padding: "9px 18px", fontSize: "0.84rem", fontWeight: 700, cursor: "pointer" }}
                 >
                   Cerrar
                 </button>
@@ -2304,27 +2304,27 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
               textAlign: "center"
             }}
           >
-            <div style={{ background: "#FEE2E2", width: "48px", height: "48px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 12px auto" }}>
-              <Trash2 size={24} color="#DC2626" />
+            <div style={{ background: "var(--error-diluido)", width: "48px", height: "48px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 12px auto" }}>
+              <Trash2 size={24} color="var(--error)" />
             </div>
-            <h3 style={{ fontSize: "1.1rem", fontWeight: 800, color: "#111827", margin: "0 0 6px 0" }}>
+            <h3 style={{ fontSize: "1.1rem", fontWeight: 800, color: "var(--texto)", margin: "0 0 6px 0" }}>
               ¿Eliminar este documento?
             </h3>
-            <p style={{ fontSize: "0.84rem", color: "#6B7280", margin: "0 0 20px 0" }}>
+            <p style={{ fontSize: "0.84rem", color: "var(--texto-suave)", margin: "0 0 20px 0" }}>
               Se eliminará <strong>{docParaEliminar.doc_titulo}</strong> y se revocarán todos los enlaces efímeros vinculados.
             </p>
             <div style={{ display: "flex", gap: "10px", justifyContent: "center" }}>
               <button
                 type="button"
                 onClick={() => setDocParaEliminar(null)}
-                style={{ background: "#F3F4F6", border: "none", borderRadius: "10px", padding: "10px 18px", fontSize: "0.84rem", fontWeight: 700, cursor: "pointer" }}
+                style={{ background: "var(--fondo-hundido)", border: "none", borderRadius: "10px", padding: "10px 18px", fontSize: "0.84rem", fontWeight: 700, cursor: "pointer" }}
               >
                 Cancelar
               </button>
               <button
                 type="button"
                 onClick={confirmarEliminar}
-                style={{ background: "#DC2626", color: "#ffffff", border: "none", borderRadius: "10px", padding: "10px 20px", fontSize: "0.84rem", fontWeight: 800, cursor: "pointer" }}
+                style={{ background: "var(--error)", color: "#ffffff", border: "none", borderRadius: "10px", padding: "10px 20px", fontSize: "0.84rem", fontWeight: 800, cursor: "pointer" }}
               >
                 Sí, Eliminar
               </button>

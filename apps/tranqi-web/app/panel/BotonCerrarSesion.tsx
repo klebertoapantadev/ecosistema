@@ -73,7 +73,7 @@ export function BotonCerrarSesion({ variante = "nav", className = "" }: BotonCer
             transition: "all 0.2s ease"
           }}
         >
-          {cargando ? <Loader2 className="animate-spin" size={13} /> : <LogOut size={13} color="#FCA5A5" />}
+          {cargando ? <Loader2 className="animate-spin" size={13} /> : <LogOut size={13} color="var(--error-linea)" />}
           <span>{cargando ? "Saliendo..." : "Cerrar sesión"}</span>
         </button>
       ) : (
@@ -100,15 +100,15 @@ export function BotonCerrarSesion({ variante = "nav", className = "" }: BotonCer
           <div role="dialog" aria-modal="true" aria-labelledby="titulo-cerrar-sesion" style={{ background: "#ffffff", borderRadius: "18px", padding: "24px", maxWidth: "420px", width: "100%", boxShadow: "0 20px 50px rgba(0,0,0,0.4)" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "14px" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                <div style={{ background: "rgba(220, 38, 38, 0.12)", color: "#DC2626", borderRadius: "50%", width: "42px", height: "42px", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <div style={{ background: "rgba(220, 38, 38, 0.12)", color: "var(--error)", borderRadius: "50%", width: "42px", height: "42px", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                   <LogOut size={22} />
                 </div>
                 <div>
                   <h3 id="titulo-cerrar-sesion" style={{ fontSize: "1.1rem", fontWeight: 800, margin: 0, color: "#111111" }}>Cerrar Sesión</h3>
-                  <span style={{ fontSize: "0.76rem", color: "#737373" }}>Confirmación de salida</span>
+                  <span style={{ fontSize: "0.76rem", color: "var(--texto-suave)" }}>Confirmación de salida</span>
                 </div>
               </div>
-              <button type="button" onClick={() => setMostrarModal(false)} disabled={cargando} style={{ background: "transparent", border: "none", cursor: "pointer", color: "#737373", padding: "4px" }}>
+              <button type="button" onClick={() => setMostrarModal(false)} disabled={cargando} style={{ background: "transparent", border: "none", cursor: "pointer", color: "var(--texto-suave)", padding: "4px" }}>
                 <X size={18} />
               </button>
             </div>
@@ -124,7 +124,7 @@ export function BotonCerrarSesion({ variante = "nav", className = "" }: BotonCer
                 disabled={cargando}
                 // El foco entra en la opción segura: Enter por inercia no cierra la sesión.
                 autoFocus
-                style={{ padding: "9px 16px", borderRadius: "8px", border: "1px solid #E4E4E4", background: "#ffffff", color: "#111111", fontWeight: 700, fontSize: "0.82rem", cursor: "pointer" }}
+                style={{ padding: "9px 16px", borderRadius: "8px", border: "1px solid var(--linea)", background: "#ffffff", color: "#111111", fontWeight: 700, fontSize: "0.82rem", cursor: "pointer" }}
               >
                 Cancelar
               </button>
@@ -133,7 +133,7 @@ export function BotonCerrarSesion({ variante = "nav", className = "" }: BotonCer
                 type="button"
                 onClick={ejecutarSalida}
                 disabled={cargando}
-                style={{ padding: "9px 18px", borderRadius: "8px", border: "none", background: "#DC2626", color: "#ffffff", fontWeight: 800, fontSize: "0.82rem", cursor: cargando ? "wait" : "pointer", display: "flex", alignItems: "center", gap: "6px", boxShadow: "0 2px 8px rgba(220, 38, 38, 0.3)" }}
+                style={{ padding: "9px 18px", borderRadius: "8px", border: "none", background: "var(--error)", color: "#ffffff", fontWeight: 800, fontSize: "0.82rem", cursor: cargando ? "wait" : "pointer", display: "flex", alignItems: "center", gap: "6px", boxShadow: "0 2px 8px rgba(220, 38, 38, 0.3)" }}
               >
                 {cargando ? <Loader2 className="animate-spin" size={14} /> : <LogOut size={14} />}
                 <span>{cargando ? "Saliendo..." : "Sí, Cerrar Sesión"}</span>

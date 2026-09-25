@@ -39,13 +39,13 @@ export function VisorAuditoriaWidget({ negocio = "tranqi", esquemaNegocio = "tra
   }, [cargarDatos]);
 
   return (
-    <div style={{ width: "100%", background: "#ffffff", borderRadius: "16px", border: "1px solid #e2e8f0", padding: "20px" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", borderBottom: "1px solid #f1f5f9", paddingBottom: "14px", flexWrap: "wrap", gap: "10px" }}>
+    <div style={{ width: "100%", background: "#ffffff", borderRadius: "16px", border: "1px solid var(--linea)", padding: "20px" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", borderBottom: "1px solid var(--fondo-hundido)", paddingBottom: "14px", flexWrap: "wrap", gap: "10px" }}>
         <div>
-          <h2 style={{ fontSize: "1.2rem", fontWeight: 900, margin: 0, color: "#0f172a", display: "flex", alignItems: "center", gap: "8px" }}>
+          <h2 style={{ fontSize: "1.2rem", fontWeight: 900, margin: 0, color: "var(--texto)", display: "flex", alignItems: "center", gap: "8px" }}>
             <Shield size={22} color="#5000BA" /> Auditoría BDD & Telemetría Inmutable ({negocio})
           </h2>
-          <p style={{ fontSize: "0.82rem", color: "#64748b", margin: "3px 0 0 0" }}>
+          <p style={{ fontSize: "0.82rem", color: "var(--texto-suave)", margin: "3px 0 0 0" }}>
             Registro inmutable auditado por disparadores PostgreSQL (<code>{esquemaNegocio}</code> y <code>comun_seguridad</code>).
           </p>
         </div>
@@ -54,9 +54,9 @@ export function VisorAuditoriaWidget({ negocio = "tranqi", esquemaNegocio = "tra
           type="button"
           onClick={cargarDatos}
           style={{
-            background: "#f1f5f9",
-            border: "1px solid #cbd5e1",
-            color: "#334155",
+            background: "var(--fondo-hundido)",
+            border: "1px solid var(--linea-fuerte)",
+            color: "var(--texto-2)",
             padding: "8px 14px",
             borderRadius: "8px",
             fontSize: "0.8rem",
@@ -72,11 +72,11 @@ export function VisorAuditoriaWidget({ negocio = "tranqi", esquemaNegocio = "tra
       </div>
 
       {cargando ? (
-        <div style={{ padding: "40px", textAlign: "center", color: "#64748b" }}>
+        <div style={{ padding: "40px", textAlign: "center", color: "var(--texto-suave)" }}>
           Cargando registros inmutables de auditoría...
         </div>
       ) : error ? (
-        <div style={{ padding: "20px", background: "#fef2f2", border: "1px solid #fee2e2", borderRadius: "8px", color: "#b91c1c", fontSize: "0.85rem" }}>
+        <div style={{ padding: "20px", background: "var(--error-diluido)", border: "1px solid var(--error-diluido)", borderRadius: "8px", color: "var(--error)", fontSize: "0.85rem" }}>
           <strong>Error de Auditoría:</strong> {error}
         </div>
       ) : (

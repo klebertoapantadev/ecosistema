@@ -263,7 +263,7 @@ export function BandejaClientesCRM({ negocio: _negocio = "TRANQ", tipoPersoneria
       {toastError && (
         <div
           style={{
-            background: "#DC2626",
+            background: "var(--error)",
             color: "#FFFFFF",
             padding: "12px 20px",
             borderRadius: "10px",
@@ -284,7 +284,7 @@ export function BandejaClientesCRM({ negocio: _negocio = "TRANQ", tipoPersoneria
       <div
         style={{
           background: "#FFFFFF",
-          border: "1px solid #E2E8F0",
+          border: "1px solid var(--linea)",
           borderRadius: "16px",
           padding: "20px 24px",
           display: "flex",
@@ -296,11 +296,11 @@ export function BandejaClientesCRM({ negocio: _negocio = "TRANQ", tipoPersoneria
         }}
       >
         <div>
-          <h1 style={{ margin: 0, fontSize: "1.35rem", fontWeight: 800, color: "#0F172A", display: "flex", alignItems: "center", gap: "10px" }}>
-            <Users size={26} color="#0284C7" />
+          <h1 style={{ margin: 0, fontSize: "1.35rem", fontWeight: 800, color: "var(--texto)", display: "flex", alignItems: "center", gap: "10px" }}>
+            <Users size={26} color="var(--acento)" />
             CRM Jurídico y Recepción de Clientes
           </h1>
-          <p style={{ margin: "4px 0 0", fontSize: "0.85rem", color: "#64748B" }}>
+          <p style={{ margin: "4px 0 0", fontSize: "0.85rem", color: "var(--texto-suave)" }}>
             Administración 360° de personas naturales y jurídicas, validación Tranqi y verificación de conflicto de intereses
           </p>
         </div>
@@ -312,9 +312,9 @@ export function BandejaClientesCRM({ negocio: _negocio = "TRANQ", tipoPersoneria
             onClick={handleCompartirConsulta}
             className="btn-responsive-accion"
             style={{
-              background: copiadoConsulta ? "#ECFDF5" : "#F8FAFC",
-              color: copiadoConsulta ? "#047857" : "#334155",
-              border: copiadoConsulta ? "1px solid #10B981" : "1px solid #CBD5E1",
+              background: copiadoConsulta ? "var(--exito-diluido)" : "var(--fondo-suave)",
+              color: copiadoConsulta ? "var(--exito-texto)" : "var(--texto-2)",
+              border: copiadoConsulta ? "1px solid var(--exito)" : "1px solid var(--linea-fuerte)",
               padding: "10px 16px",
               borderRadius: "10px",
               fontSize: "0.85rem",
@@ -329,7 +329,7 @@ export function BandejaClientesCRM({ negocio: _negocio = "TRANQ", tipoPersoneria
             title="Copiar enlace con los parámetros de búsqueda y filtros actuales"
             aria-label="Compartir parámetros de consulta"
           >
-            {copiadoConsulta ? <CheckCircle2 size={16} color="#10B981" /> : <Share2 size={16} color="#0284C7" />}
+            {copiadoConsulta ? <CheckCircle2 size={16} color="var(--exito)" /> : <Share2 size={16} color="var(--acento)" />}
             <span className="btn-texto-responsive">{copiadoConsulta ? "¡Copiado!" : "Compartir"}</span>
           </button>
 
@@ -338,9 +338,9 @@ export function BandejaClientesCRM({ negocio: _negocio = "TRANQ", tipoPersoneria
             onClick={manejarSincronizarLeads}
             disabled={sincronizando}
             style={{
-              background: "#F8FAFC",
-              color: "#334155",
-              border: "1px solid #CBD5E1",
+              background: "var(--fondo-suave)",
+              color: "var(--texto-2)",
+              border: "1px solid var(--linea-fuerte)",
               padding: "10px 16px",
               borderRadius: "10px",
               fontSize: "0.85rem",
@@ -362,7 +362,7 @@ export function BandejaClientesCRM({ negocio: _negocio = "TRANQ", tipoPersoneria
             type="button"
             onClick={() => setModalAltaAbierto(true)}
             style={{
-              background: "#0284C7",
+              background: "var(--acento)",
               color: "#FFFFFF",
               border: "none",
               padding: "10px 20px",
@@ -384,7 +384,7 @@ export function BandejaClientesCRM({ negocio: _negocio = "TRANQ", tipoPersoneria
       </div>
 
       {/* Selector de Pestañas */}
-      <div style={{ display: "flex", gap: "8px", borderBottom: "1px solid #E2E8F0", paddingBottom: "8px" }}>
+      <div style={{ display: "flex", gap: "8px", borderBottom: "1px solid var(--linea)", paddingBottom: "8px" }}>
         <button
           type="button"
           onClick={() => setPestanaActiva("clientes")}
@@ -392,8 +392,8 @@ export function BandejaClientesCRM({ negocio: _negocio = "TRANQ", tipoPersoneria
             padding: "8px 16px",
             borderRadius: "8px",
             border: "none",
-            background: pestanaActiva === "clientes" ? "#0284C7" : "#F1F5F9",
-            color: pestanaActiva === "clientes" ? "#FFFFFF" : "#64748B",
+            background: pestanaActiva === "clientes" ? "var(--acento)" : "var(--fondo-hundido)",
+            color: pestanaActiva === "clientes" ? "#FFFFFF" : "var(--texto-suave)",
             fontWeight: 700,
             fontSize: "0.88rem",
             cursor: "pointer",
@@ -413,8 +413,8 @@ export function BandejaClientesCRM({ negocio: _negocio = "TRANQ", tipoPersoneria
             padding: "8px 16px",
             borderRadius: "8px",
             border: "none",
-            background: pestanaActiva === "prospectos_chat" ? "#0284C7" : "#F1F5F9",
-            color: pestanaActiva === "prospectos_chat" ? "#FFFFFF" : "#64748B",
+            background: pestanaActiva === "prospectos_chat" ? "var(--acento)" : "var(--fondo-hundido)",
+            color: pestanaActiva === "prospectos_chat" ? "#FFFFFF" : "var(--texto-suave)",
             fontWeight: 700,
             fontSize: "0.88rem",
             cursor: "pointer",
@@ -437,7 +437,7 @@ export function BandejaClientesCRM({ negocio: _negocio = "TRANQ", tipoPersoneria
           <div
         style={{
           background: "#FFFFFF",
-          border: "1px solid #E2E8F0",
+          border: "1px solid var(--linea)",
           borderRadius: "12px",
           padding: "14px 18px",
           display: "flex",
@@ -455,9 +455,9 @@ export function BandejaClientesCRM({ negocio: _negocio = "TRANQ", tipoPersoneria
             style={{
               padding: "6px 14px",
               borderRadius: "20px",
-              border: filtroTipo === "todas" ? "1px solid #0284C7" : "1px solid #E2E8F0",
-              background: filtroTipo === "todas" ? "#F0F9FF" : "#FFFFFF",
-              color: filtroTipo === "todas" ? "#0284C7" : "#64748B",
+              border: filtroTipo === "todas" ? "1px solid var(--acento)" : "1px solid var(--linea)",
+              background: filtroTipo === "todas" ? "var(--acento-diluido)" : "#FFFFFF",
+              color: filtroTipo === "todas" ? "var(--acento)" : "var(--texto-suave)",
               fontSize: "0.82rem",
               fontWeight: 600,
               cursor: "pointer",
@@ -471,9 +471,9 @@ export function BandejaClientesCRM({ negocio: _negocio = "TRANQ", tipoPersoneria
             style={{
               padding: "6px 14px",
               borderRadius: "20px",
-              border: filtroTipo === "natural" ? "1px solid #0284C7" : "1px solid #E2E8F0",
-              background: filtroTipo === "natural" ? "#F0F9FF" : "#FFFFFF",
-              color: filtroTipo === "natural" ? "#0284C7" : "#64748B",
+              border: filtroTipo === "natural" ? "1px solid var(--acento)" : "1px solid var(--linea)",
+              background: filtroTipo === "natural" ? "var(--acento-diluido)" : "#FFFFFF",
+              color: filtroTipo === "natural" ? "var(--acento)" : "var(--texto-suave)",
               fontSize: "0.82rem",
               fontWeight: 600,
               cursor: "pointer",
@@ -491,9 +491,9 @@ export function BandejaClientesCRM({ negocio: _negocio = "TRANQ", tipoPersoneria
             style={{
               padding: "6px 14px",
               borderRadius: "20px",
-              border: filtroTipo === "juridica" ? "1px solid #0284C7" : "1px solid #E2E8F0",
-              background: filtroTipo === "juridica" ? "#F0F9FF" : "#FFFFFF",
-              color: filtroTipo === "juridica" ? "#0284C7" : "#64748B",
+              border: filtroTipo === "juridica" ? "1px solid var(--acento)" : "1px solid var(--linea)",
+              background: filtroTipo === "juridica" ? "var(--acento-diluido)" : "#FFFFFF",
+              color: filtroTipo === "juridica" ? "var(--acento)" : "var(--texto-suave)",
               fontSize: "0.82rem",
               fontWeight: 600,
               cursor: "pointer",
@@ -510,7 +510,7 @@ export function BandejaClientesCRM({ negocio: _negocio = "TRANQ", tipoPersoneria
         {/* Buscador */}
         <form onSubmit={manejarBusquedaSubmit} style={{ display: "flex", gap: "8px", flex: 1, maxWidth: "380px" }}>
           <div style={{ position: "relative", width: "100%" }}>
-            <Search size={16} color="#94A3B8" style={{ position: "absolute", left: "10px", top: "10px" }} />
+            <Search size={16} color="var(--texto-tenue)" style={{ position: "absolute", left: "10px", top: "10px" }} />
             <input
               type="text"
               placeholder="Buscar por Cédula, RUC o Nombre..."
@@ -520,7 +520,7 @@ export function BandejaClientesCRM({ negocio: _negocio = "TRANQ", tipoPersoneria
                 width: "100%",
                 padding: "8px 12px 8px 34px",
                 borderRadius: "8px",
-                border: "1px solid #CBD5E1",
+                border: "1px solid var(--linea-fuerte)",
                 fontSize: "0.85rem",
               }}
             />
@@ -528,13 +528,13 @@ export function BandejaClientesCRM({ negocio: _negocio = "TRANQ", tipoPersoneria
           <button
             type="submit"
             style={{
-              background: "#F1F5F9",
-              border: "1px solid #CBD5E1",
+              background: "var(--fondo-hundido)",
+              border: "1px solid var(--linea-fuerte)",
               borderRadius: "8px",
               padding: "0 14px",
               fontSize: "0.82rem",
               fontWeight: 600,
-              color: "#334155",
+              color: "var(--texto-2)",
               cursor: "pointer",
             }}
           >
@@ -547,23 +547,23 @@ export function BandejaClientesCRM({ negocio: _negocio = "TRANQ", tipoPersoneria
       <div
         style={{
           background: "#FFFFFF",
-          border: "1px solid #E2E8F0",
+          border: "1px solid var(--linea)",
           borderRadius: "16px",
           overflow: "hidden",
           boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
         }}
       >
         {cargando ? (
-          <div style={{ padding: "40px", textAlign: "center", color: "#64748B" }}>
+          <div style={{ padding: "40px", textAlign: "center", color: "var(--texto-suave)" }}>
             Cargando cartera de clientes...
           </div>
         ) : clientes.length === 0 ? (
           <div style={{ padding: "50px 20px", textAlign: "center" }}>
-            <Users size={40} color="#94A3B8" style={{ margin: "0 auto 12px" }} />
-            <h3 style={{ margin: "0 0 6px", fontSize: "1rem", color: "#0F172A" }}>
+            <Users size={40} color="var(--texto-tenue)" style={{ margin: "0 auto 12px" }} />
+            <h3 style={{ margin: "0 0 6px", fontSize: "1rem", color: "var(--texto)" }}>
               No se encontraron clientes registrados
             </h3>
-            <p style={{ margin: "0 0 16px", fontSize: "0.85rem", color: "#64748B" }}>
+            <p style={{ margin: "0 0 16px", fontSize: "0.85rem", color: "var(--texto-suave)" }}>
               Utiliza el botón "+ Registrar Cliente" para dar de alta al primer cliente desde el mostrador.
             </p>
             <div style={{ display: "flex", gap: "10px", justifyContent: "center", flexWrap: "wrap" }}>
@@ -572,9 +572,9 @@ export function BandejaClientesCRM({ negocio: _negocio = "TRANQ", tipoPersoneria
                 onClick={manejarSincronizarLeads}
                 disabled={sincronizando}
                 style={{
-                  background: "#F1F5F9",
-                  color: "#334155",
-                  border: "1px solid #CBD5E1",
+                  background: "var(--fondo-hundido)",
+                  color: "var(--texto-2)",
+                  border: "1px solid var(--linea-fuerte)",
                   padding: "8px 16px",
                   borderRadius: "8px",
                   fontSize: "0.85rem",
@@ -592,7 +592,7 @@ export function BandejaClientesCRM({ negocio: _negocio = "TRANQ", tipoPersoneria
                 type="button"
                 onClick={() => setModalAltaAbierto(true)}
                 style={{
-                  background: "#0284C7",
+                  background: "var(--acento)",
                   color: "#FFFFFF",
                   border: "none",
                   padding: "8px 16px",
@@ -610,7 +610,7 @@ export function BandejaClientesCRM({ negocio: _negocio = "TRANQ", tipoPersoneria
           <div style={{ overflowX: "auto" }}>
             <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left", fontSize: "0.85rem" }}>
               <thead>
-                <tr style={{ background: "#F8FAFC", borderBottom: "1px solid #E2E8F0", color: "#475569" }}>
+                <tr style={{ background: "var(--fondo-suave)", borderBottom: "1px solid var(--linea)", color: "var(--texto-2)" }}>
                   <th style={{ padding: "12px 16px", fontWeight: 700 }}>Identificación</th>
                   <th style={{ padding: "12px 16px", fontWeight: 700 }}>Cliente / Razón Social</th>
                   <th style={{ padding: "12px 16px", fontWeight: 700 }}>Personería</th>
@@ -626,19 +626,19 @@ export function BandejaClientesCRM({ negocio: _negocio = "TRANQ", tipoPersoneria
                   return (
                     <tr
                       key={c.clp_id}
-                      style={{ borderBottom: "1px solid #F1F5F9", transition: "background 0.1s ease" }}
-                      onMouseEnter={(e) => (e.currentTarget.style.background = "#F8FAFC")}
+                      style={{ borderBottom: "1px solid var(--fondo-hundido)", transition: "background 0.1s ease" }}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = "var(--fondo-suave)")}
                       onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
                     >
-                      <td style={{ padding: "14px 16px", fontWeight: 700, color: "#0F172A" }}>
-                        <span style={{ background: "#F1F5F9", padding: "3px 8px", borderRadius: "6px", fontSize: "0.8rem" }}>
+                      <td style={{ padding: "14px 16px", fontWeight: 700, color: "var(--texto)" }}>
+                        <span style={{ background: "var(--fondo-hundido)", padding: "3px 8px", borderRadius: "6px", fontSize: "0.8rem" }}>
                           {c.clp_identificacion}
                         </span>
                       </td>
                       <td style={{ padding: "14px 16px" }}>
-                        <div style={{ fontWeight: 700, color: "#0F172A" }}>{nombre}</div>
+                        <div style={{ fontWeight: 700, color: "var(--texto)" }}>{nombre}</div>
                         {c.clp_casillero_judicial && (
-                          <div style={{ fontSize: "0.75rem", color: "#64748B" }}>
+                          <div style={{ fontSize: "0.75rem", color: "var(--texto-suave)" }}>
                             Casillero: {c.clp_casillero_judicial}
                           </div>
                         )}
@@ -650,8 +650,8 @@ export function BandejaClientesCRM({ negocio: _negocio = "TRANQ", tipoPersoneria
                             borderRadius: "12px",
                             fontSize: "0.75rem",
                             fontWeight: 600,
-                            background: c.clp_tipo_personeria === "juridica" ? "#E0F2FE" : "#F3E8FF",
-                            color: c.clp_tipo_personeria === "juridica" ? "#0284C7" : "#7E22CE",
+                            background: c.clp_tipo_personeria === "juridica" ? "var(--acento-diluido)" : "var(--acento-diluido)",
+                            color: c.clp_tipo_personeria === "juridica" ? "var(--acento)" : "#7E22CE",
                             display: "inline-flex",
                             alignItems: "center",
                             gap: "4px",
@@ -661,9 +661,9 @@ export function BandejaClientesCRM({ negocio: _negocio = "TRANQ", tipoPersoneria
                           {c.clp_tipo_personeria === "juridica" ? "Jurídica" : "Natural"}
                         </span>
                       </td>
-                      <td style={{ padding: "14px 16px", color: "#475569" }}>
+                      <td style={{ padding: "14px 16px", color: "var(--texto-2)" }}>
                         <div>{c.clp_correo || "—"}</div>
-                        <div style={{ fontSize: "0.75rem", color: "#64748B" }}>{c.clp_celular || c.clp_telefono || "—"}</div>
+                        <div style={{ fontSize: "0.75rem", color: "var(--texto-suave)" }}>{c.clp_celular || c.clp_telefono || "—"}</div>
                       </td>
                       <td style={{ padding: "14px 16px" }}>
                         {!c.clp_activo && (c.clp_detalle_cliente?.estado_crm === "PENDIENTE_PAGO" || !c.clp_detalle_cliente?.estado_crm) ? (
@@ -673,16 +673,16 @@ export function BandejaClientesCRM({ negocio: _negocio = "TRANQ", tipoPersoneria
                               borderRadius: "12px",
                               fontSize: "0.75rem",
                               fontWeight: 700,
-                              background: "#FEF3C7",
-                              color: "#B45309",
-                              border: "1px solid #FDE68A",
+                              background: "var(--aviso-diluido)",
+                              color: "var(--aviso-texto)",
+                              border: "1px solid var(--aviso-linea)",
                               display: "inline-flex",
                               alignItems: "center",
                               gap: "4px",
                             }}
                             title="Cliente registrado pendiente de confirmación de pago"
                           >
-                            <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#F59E0B" }} />
+                            <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "var(--aviso)" }} />
                             Inactivo (Pendiente Pago)
                           </span>
                         ) : !c.clp_activo ? (
@@ -692,15 +692,15 @@ export function BandejaClientesCRM({ negocio: _negocio = "TRANQ", tipoPersoneria
                               borderRadius: "12px",
                               fontSize: "0.75rem",
                               fontWeight: 700,
-                              background: "#F1F5F9",
-                              color: "#64748B",
-                              border: "1px solid #CBD5E1",
+                              background: "var(--fondo-hundido)",
+                              color: "var(--texto-suave)",
+                              border: "1px solid var(--linea-fuerte)",
                               display: "inline-flex",
                               alignItems: "center",
                               gap: "4px",
                             }}
                           >
-                            <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#94A3B8" }} />
+                            <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "var(--texto-tenue)" }} />
                             Inactivo
                           </span>
                         ) : c.clp_detalle_cliente?.estado_crm === "PROSPECTO" ? (
@@ -710,15 +710,15 @@ export function BandejaClientesCRM({ negocio: _negocio = "TRANQ", tipoPersoneria
                               borderRadius: "12px",
                               fontSize: "0.75rem",
                               fontWeight: 700,
-                              background: "#E0F2FE",
-                              color: "#0369A1",
-                              border: "1px solid #BAE6FD",
+                              background: "var(--acento-diluido)",
+                              color: "var(--acento-hondo)",
+                              border: "1px solid var(--acento-linea)",
                               display: "inline-flex",
                               alignItems: "center",
                               gap: "4px",
                             }}
                           >
-                            <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#0284C7" }} />
+                            <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "var(--acento)" }} />
                             Prospecto
                           </span>
                         ) : (
@@ -728,21 +728,21 @@ export function BandejaClientesCRM({ negocio: _negocio = "TRANQ", tipoPersoneria
                               borderRadius: "12px",
                               fontSize: "0.75rem",
                               fontWeight: 700,
-                              background: "#D1FAE5",
-                              color: "#065F46",
-                              border: "1px solid #A7F3D0",
+                              background: "var(--exito-diluido)",
+                              color: "var(--exito-texto)",
+                              border: "1px solid var(--exito-linea)",
                               display: "inline-flex",
                               alignItems: "center",
                               gap: "4px",
                             }}
                           >
-                            <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#10B981" }} />
+                            <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "var(--exito)" }} />
                             Activo
                           </span>
                         )}
                       </td>
                       <td style={{ padding: "14px 16px" }}>
-                        <span style={{ fontSize: "0.75rem", color: "#64748B", textTransform: "capitalize" }}>
+                        <span style={{ fontSize: "0.75rem", color: "var(--texto-suave)", textTransform: "capitalize" }}>
                           {c.clp_origen_registro?.replace("_", " ")}
                         </span>
                       </td>
@@ -752,9 +752,9 @@ export function BandejaClientesCRM({ negocio: _negocio = "TRANQ", tipoPersoneria
                             type="button"
                             onClick={() => setClienteSeleccionadoId(c.clp_id)}
                             style={{
-                              background: "#F0F9FF",
-                              border: "1px solid #BAE6FD",
-                              color: "#0284C7",
+                              background: "var(--acento-diluido)",
+                              border: "1px solid var(--acento-linea)",
+                              color: "var(--acento)",
                               padding: "6px 10px",
                               borderRadius: "8px",
                               fontSize: "0.78rem",
@@ -774,9 +774,9 @@ export function BandejaClientesCRM({ negocio: _negocio = "TRANQ", tipoPersoneria
                             type="button"
                             onClick={() => manejarAbrirEditar(c)}
                             style={{
-                              background: "#F8FAFC",
-                              border: "1px solid #CBD5E1",
-                              color: "#334155",
+                              background: "var(--fondo-suave)",
+                              border: "1px solid var(--linea-fuerte)",
+                              color: "var(--texto-2)",
                               padding: "6px 10px",
                               borderRadius: "8px",
                               fontSize: "0.78rem",
@@ -796,9 +796,9 @@ export function BandejaClientesCRM({ negocio: _negocio = "TRANQ", tipoPersoneria
                             type="button"
                             onClick={() => manejarAlternarEstado(c)}
                             style={{
-                              background: c.clp_activo ? "#FEF2F2" : "#F0FDF4",
-                              border: c.clp_activo ? "1px solid #FECACA" : "1px solid #BBF7D0",
-                              color: c.clp_activo ? "#DC2626" : "#16A34A",
+                              background: c.clp_activo ? "var(--error-diluido)" : "var(--exito-diluido)",
+                              border: c.clp_activo ? "1px solid var(--error-linea)" : "1px solid var(--exito-linea)",
+                              color: c.clp_activo ? "var(--error)" : "var(--exito)",
                               padding: "6px 8px",
                               borderRadius: "8px",
                               fontSize: "0.78rem",
@@ -820,8 +820,8 @@ export function BandejaClientesCRM({ negocio: _negocio = "TRANQ", tipoPersoneria
                               onClick={() => manejarEliminar(c)}
                               style={{
                                 background: "#FFFFFF",
-                                border: "1px solid #FCA5A5",
-                                color: "#DC2626",
+                                border: "1px solid var(--error-linea)",
+                                color: "var(--error)",
                                 padding: "6px 8px",
                                 borderRadius: "8px",
                                 fontSize: "0.78rem",

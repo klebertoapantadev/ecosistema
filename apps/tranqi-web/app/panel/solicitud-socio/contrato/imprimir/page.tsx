@@ -51,12 +51,12 @@ export default async function PaginaImprimirContrato({ searchParams }: Props) {
     html = html.replace(/^### (.*?)$/gm, '<h3 style="font-size: 1.08rem; margin-top: 16px; margin-bottom: 8px; font-weight: 700; color: #333;">$1</h3>');
     html = html.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
     html = html.replace(/\*(.*?)\*/g, "<em>$1</em>");
-    html = html.replace(/^\d+\.\s+(.*?)$/gm, '<li style="margin-left: 24px; margin-bottom: 8px; font-size: 0.95rem; line-height: 1.5; color: #374151;">$1</li>');
+    html = html.replace(/^\d+\.\s+(.*?)$/gm, '<li style="margin-left: 24px; margin-bottom: 8px; font-size: 0.95rem; line-height: 1.5; color: var(--texto-2);">$1</li>');
 
     // Procesar bloques de párrafo
     html = html.split("\n\n").map(p => {
       if (p.trim().startsWith("<h") || p.trim().startsWith("<li")) return p;
-      return `<p style="margin-bottom: 14px; font-size: 0.95rem; line-height: 1.6; text-align: justify; color: #374151;">${p}</p>`;
+      return `<p style="margin-bottom: 14px; font-size: 0.95rem; line-height: 1.6; text-align: justify; color: var(--texto-2);">${p}</p>`;
     }).join("");
 
     return html;
@@ -100,13 +100,13 @@ export default async function PaginaImprimirContrato({ searchParams }: Props) {
           <div style={{ textAlign: "center" }}>
             <div style={{ borderTop: "1px solid #000", width: "80%", margin: "0 auto 8px" }}></div>
             <strong style={{ display: "block", fontSize: "0.9rem" }}>tranqi</strong>
-            <span style={{ fontSize: "0.85rem", color: "#6B7280" }}>Por la plataforma</span>
+            <span style={{ fontSize: "0.85rem", color: "var(--texto-suave)" }}>Por la plataforma</span>
           </div>
 
           <div style={{ textAlign: "center" }}>
             <div style={{ borderTop: "1px solid #000", width: "80%", margin: "0 auto 8px" }}></div>
             <strong style={{ display: "block", fontSize: "0.9rem" }}>{nombreCompleto}</strong>
-            <span style={{ fontSize: "0.85rem", color: "#6B7280" }}>Socio Abogado Postulante</span>
+            <span style={{ fontSize: "0.85rem", color: "var(--texto-suave)" }}>Socio Abogado Postulante</span>
           </div>
         </div>
       </main>

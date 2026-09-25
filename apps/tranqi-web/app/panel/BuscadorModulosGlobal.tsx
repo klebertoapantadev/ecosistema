@@ -100,7 +100,7 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
     categoria: "Comercio & Clientes",
     minNivel: 1,
     icono: ShoppingBag,
-    colorIcono: "#0284C7"
+    colorIcono: "var(--acento)"
   },
   {
     clave: "vitrina_comercial_empresas",
@@ -130,7 +130,7 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
     categoria: "Comercio & Pagos",
     minNivel: 1,
     icono: ShoppingBag,
-    colorIcono: "#0284C7"
+    colorIcono: "var(--acento)"
   },
   {
     clave: "pasarela_payphone",
@@ -140,7 +140,7 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
     categoria: "Comercio & Pagos",
     minNivel: 50,
     icono: CreditCard,
-    colorIcono: "#D97706"
+    colorIcono: "var(--aviso)"
   },
   {
     clave: "configuracion_facturacion_sri",
@@ -150,7 +150,7 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
     categoria: "Comercio & Pagos",
     minNivel: 80,
     icono: FileCheck,
-    colorIcono: "#059669"
+    colorIcono: "var(--exito)"
   },
   {
     clave: "configuracion_aria",
@@ -160,7 +160,7 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
     categoria: "Seguridad & Integraciones",
     minNivel: 80,
     icono: Bot,
-    colorIcono: "#059669"
+    colorIcono: "var(--exito)"
   },
   {
     clave: "configuracion_logistica",
@@ -170,7 +170,7 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
     categoria: "Comercio & Pagos",
     minNivel: 80,
     icono: MapPin,
-    colorIcono: "#16A34A"
+    colorIcono: "var(--exito)"
   },
   {
     clave: "consola_chat",
@@ -190,7 +190,7 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
     categoria: "Comercio & Pagos",
     minNivel: 20,
     icono: MessageSquare,
-    colorIcono: "#D97706"
+    colorIcono: "var(--aviso)"
   },
   {
     clave: "inventario_rosas",
@@ -210,7 +210,7 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
     categoria: "Comercio & Pagos",
     minNivel: 20,
     icono: ClipboardList,
-    colorIcono: "#0F172A"
+    colorIcono: "var(--texto)"
   },
   {
     clave: "taller_floral",
@@ -220,7 +220,7 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
     categoria: "Comercio & Pagos",
     minNivel: 15,
     icono: ClipboardList,
-    colorIcono: "#059669"
+    colorIcono: "var(--exito)"
   },
   {
     clave: "confirmacion_entregas",
@@ -230,7 +230,7 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
     categoria: "Comercio & Pagos",
     minNivel: 15,
     icono: MessageSquare,
-    colorIcono: "#059669"
+    colorIcono: "var(--exito)"
   },
   {
     clave: "pedidos_tienda",
@@ -240,7 +240,7 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
     categoria: "Comercio & Pagos",
     minNivel: 40,
     icono: ClipboardList,
-    colorIcono: "#0284C7"
+    colorIcono: "var(--acento)"
   },
   {
     clave: "testimonios_clientes",
@@ -250,7 +250,7 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
     categoria: "Comercio & Pagos",
     minNivel: 40,
     icono: MessageSquareHeart,
-    colorIcono: "#D97706"
+    colorIcono: "var(--aviso)"
   },
   {
     clave: "tokens_mcp",
@@ -260,7 +260,7 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
     categoria: "Seguridad & Integraciones",
     minNivel: 80,
     icono: KeyRound,
-    colorIcono: "#0284C7"
+    colorIcono: "var(--acento)"
   },
   {
     clave: "firma_documentos_pdf",
@@ -310,7 +310,7 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
     categoria: "Seguridad",
     minNivel: 1,
     icono: ShieldCheck,
-    colorIcono: "#111827"
+    colorIcono: "var(--texto)"
   },
   {
     clave: "notificaciones",
@@ -320,7 +320,7 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
     categoria: "Comunicación",
     minNivel: 1,
     icono: Bell,
-    colorIcono: "#D97706"
+    colorIcono: "var(--aviso)"
   },
   {
     clave: "gestion_convenios_corporativos",
@@ -350,7 +350,7 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
     categoria: "Comercio & B2B",
     minNivel: 30,
     icono: Briefcase,
-    colorIcono: "#2563EB"
+    colorIcono: "var(--acento)"
   },
   {
     clave: "gestion_informativos",
@@ -360,7 +360,7 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
     categoria: "Comercio & Comunicación",
     minNivel: 30,
     icono: Bell,
-    colorIcono: "#D97706"
+    colorIcono: "var(--aviso)"
   },
   {
     clave: "paquete_beneficios_abogados",
@@ -380,7 +380,7 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
     categoria: "Comunidad & Clientes",
     minNivel: 1,
     icono: Bell,
-    colorIcono: "#0284C7"
+    colorIcono: "var(--acento)"
   },
   {
     clave: "disponibilidad_abogados",
@@ -440,7 +440,7 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
     categoria: "Operación Legal",
     minNivel: 50,
     icono: UserCog,
-    colorIcono: "#0284C7"
+    colorIcono: "var(--acento)"
   },
   {
     clave: "solicitud_socio",
@@ -460,7 +460,7 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
     categoria: "Administración",
     minNivel: 80,
     icono: Shield,
-    colorIcono: "#DC2626"
+    colorIcono: "var(--error)"
   },
   {
     clave: "configuracion_negocio",
@@ -500,7 +500,7 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
     categoria: "Comunicación",
     minNivel: 80,
     icono: Bell,
-    colorIcono: "#D97706"
+    colorIcono: "var(--aviso)"
   },
   {
     clave: "monitoreo_notificaciones_usuarios",
@@ -520,7 +520,7 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
     categoria: "Comunicación",
     minNivel: 50,
     icono: BarChart2,
-    colorIcono: "#2563EB"
+    colorIcono: "var(--acento)"
   },
   {
     clave: "auditoria",
@@ -530,7 +530,7 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
     categoria: "Seguridad & Auditoría",
     minNivel: 80,
     icono: ShieldCheck,
-    colorIcono: "#111827"
+    colorIcono: "var(--texto)"
   },
   {
     clave: "configuracion_contrato_abogado",
@@ -560,7 +560,7 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
     categoria: "Comunicación",
     minNivel: 80,
     icono: BarChart2,
-    colorIcono: "#2563EB"
+    colorIcono: "var(--acento)"
   },
   {
     clave: "financiamiento",
@@ -670,14 +670,14 @@ export function BuscadorModulosGlobal({ nivelUsuario, esSuperadmin = false }: Pr
           display: "flex",
           alignItems: "center",
           background: "#ffffff",
-          border: abierto ? "1.5px solid var(--violeta, #5000BA)" : "1px solid var(--panel-linea, #E4E4E4)",
+          border: abierto ? "1.5px solid var(--violeta, #5000BA)" : "1px solid var(--panel-linea, var(--linea))",
           boxShadow: abierto ? "0 4px 14px rgba(80,0,186,0.12)" : "0 1px 3px rgba(0,0,0,0.04)",
           borderRadius: "10px",
           padding: "8px 12px",
           transition: "all 0.2s ease"
         }}
       >
-        <Search size={16} style={{ color: "var(--panel-gris, #737373)", marginRight: "8px", flexShrink: 0 }} />
+        <Search size={16} style={{ color: "var(--panel-gris, var(--texto-suave))", marginRight: "8px", flexShrink: 0 }} />
 
         <input
           ref={inputRef}
@@ -707,12 +707,12 @@ export function BuscadorModulosGlobal({ nivelUsuario, esSuperadmin = false }: Pr
           <button
             type="button"
             onClick={() => { setConsulta(""); setAbierto(false); }}
-            style={{ background: "none", border: "none", cursor: "pointer", color: "var(--panel-gris, #737373)", padding: "2px", display: "flex" }}
+            style={{ background: "none", border: "none", cursor: "pointer", color: "var(--panel-gris, var(--texto-suave))", padding: "2px", display: "flex" }}
           >
             <X size={14} />
           </button>
         ) : (
-          <kbd style={{ fontSize: "0.65rem", fontWeight: 700, color: "var(--panel-gris, #737373)", background: "var(--panel-papel, #F7F6FA)", border: "1px solid var(--panel-linea, #E4E4E4)", borderRadius: "4px", padding: "1px 5px", flexShrink: 0 }}>
+          <kbd style={{ fontSize: "0.65rem", fontWeight: 700, color: "var(--panel-gris, var(--texto-suave))", background: "var(--panel-papel, var(--fondo-suave))", border: "1px solid var(--panel-linea, var(--linea))", borderRadius: "4px", padding: "1px 5px", flexShrink: 0 }}>
             Ctrl K
           </kbd>
         )}
@@ -728,7 +728,7 @@ export function BuscadorModulosGlobal({ nivelUsuario, esSuperadmin = false }: Pr
             right: 0,
             background: "#ffffff",
             borderRadius: "12px",
-            border: "1px solid var(--panel-linea, #E4E4E4)",
+            border: "1px solid var(--panel-linea, var(--linea))",
             boxShadow: "0 10px 25px rgba(0,0,0,0.15)",
             zIndex: 100,
             overflow: "hidden",
@@ -736,7 +736,7 @@ export function BuscadorModulosGlobal({ nivelUsuario, esSuperadmin = false }: Pr
             overflowY: "auto"
           }}
         >
-          <div style={{ padding: "8px 12px", background: "var(--panel-papel, #F7F6FA)", borderBottom: "1px solid var(--panel-linea, #E4E4E4)", fontSize: "0.72rem", fontWeight: 800, color: "var(--panel-gris, #737373)", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+          <div style={{ padding: "8px 12px", background: "var(--panel-papel, var(--fondo-suave))", borderBottom: "1px solid var(--panel-linea, var(--linea))", fontSize: "0.72rem", fontWeight: 800, color: "var(--panel-gris, var(--texto-suave))", textTransform: "uppercase", letterSpacing: "0.06em" }}>
             Módulos Autorizados ({resultados.length})
           </div>
 
@@ -756,33 +756,33 @@ export function BuscadorModulosGlobal({ nivelUsuario, esSuperadmin = false }: Pr
                     alignItems: "center",
                     gap: "10px",
                     cursor: "pointer",
-                    background: activo ? "var(--panel-linea-suave, #F5F3FF)" : "#ffffff",
+                    background: activo ? "var(--panel-linea-suave, var(--acento-diluido))" : "#ffffff",
                     borderLeft: activo ? "3px solid var(--violeta, #5000BA)" : "3px solid transparent",
                     transition: "all 0.1s ease"
                   }}
                 >
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "30px", height: "30px", borderRadius: "8px", background: "var(--panel-papel, #F7F6FA)", flexShrink: 0 }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "30px", height: "30px", borderRadius: "8px", background: "var(--panel-papel, var(--fondo-suave))", flexShrink: 0 }}>
                     <Icono size={16} color={m.colorIcono || "var(--violeta, #5000BA)"} />
                   </div>
 
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontWeight: 700, fontSize: "0.85rem", color: "#111111", display: "flex", alignItems: "center", gap: "6px" }}>
                       <span>{m.nombre}</span>
-                      <span style={{ fontSize: "0.64rem", fontWeight: 800, background: "var(--panel-papel, #E5E7EB)", color: "var(--panel-gris, #4B5563)", padding: "1px 6px", borderRadius: "999px" }}>
+                      <span style={{ fontSize: "0.64rem", fontWeight: 800, background: "var(--panel-papel, var(--linea))", color: "var(--panel-gris, var(--texto-2))", padding: "1px 6px", borderRadius: "999px" }}>
                         {m.categoria}
                       </span>
                     </div>
-                    <div style={{ fontSize: "0.74rem", color: "var(--panel-gris, #737373)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                    <div style={{ fontSize: "0.74rem", color: "var(--panel-gris, var(--texto-suave))", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                       {m.detalle}
                     </div>
                   </div>
 
-                  <ChevronRight size={14} style={{ color: "var(--panel-gris, #737373)" }} />
+                  <ChevronRight size={14} style={{ color: "var(--panel-gris, var(--texto-suave))" }} />
                 </div>
               );
             })
           ) : (
-            <div style={{ padding: "16px", textAlign: "center", color: "var(--panel-gris, #737373)", fontSize: "0.82rem" }}>
+            <div style={{ padding: "16px", textAlign: "center", color: "var(--panel-gris, var(--texto-suave))", fontSize: "0.82rem" }}>
               No se encontraron módulos autorizados para &quot;{consulta}&quot;.
             </div>
           )}

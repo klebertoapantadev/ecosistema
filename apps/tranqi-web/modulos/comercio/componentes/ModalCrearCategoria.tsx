@@ -107,11 +107,11 @@ export function ModalCrearCategoria({ abierto, onCerrar, onCategoriaCreada, nego
         <div
           style={{
             padding: "16px 20px",
-            borderBottom: "1px solid #E2E8F0",
+            borderBottom: "1px solid var(--linea)",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            background: esFloristeria ? "#FFFDF8" : "#F8FAFC",
+            background: esFloristeria ? "#FFFDF8" : "var(--fondo-suave)",
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
@@ -120,8 +120,8 @@ export function ModalCrearCategoria({ abierto, onCerrar, onCategoriaCreada, nego
                 width: "36px",
                 height: "36px",
                 borderRadius: "10px",
-                background: esFloristeria ? "#FEF2F2" : "#E0F2FE",
-                color: esFloristeria ? "#E11D48" : "#0284C7",
+                background: esFloristeria ? "var(--error-diluido)" : "var(--acento-diluido)",
+                color: esFloristeria ? "var(--error)" : "var(--acento)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -130,10 +130,10 @@ export function ModalCrearCategoria({ abierto, onCerrar, onCategoriaCreada, nego
               {esFloristeria ? <Flower2 size={20} /> : <FolderPlus size={20} />}
             </div>
             <div>
-              <h2 style={{ margin: 0, fontSize: "1.05rem", fontWeight: 800, color: "#0F172A" }}>
+              <h2 style={{ margin: 0, fontSize: "1.05rem", fontWeight: 800, color: "var(--texto)" }}>
                 {esFloristeria ? "Nueva Colección / Ocasión Floral" : "Nueva Categoría Comercial"}
               </h2>
-              <span style={{ fontSize: "0.75rem", color: "#64748B" }}>
+              <span style={{ fontSize: "0.75rem", color: "var(--texto-suave)" }}>
                 Organiza productos y vitrinas visuales en el catálogo
               </span>
             </div>
@@ -146,7 +146,7 @@ export function ModalCrearCategoria({ abierto, onCerrar, onCategoriaCreada, nego
               background: "transparent",
               border: "none",
               cursor: "pointer",
-              color: "#64748B",
+              color: "var(--texto-suave)",
               padding: "6px",
             }}
           >
@@ -159,9 +159,9 @@ export function ModalCrearCategoria({ abierto, onCerrar, onCategoriaCreada, nego
           {error && (
             <div
               style={{
-                background: "#FEF2F2",
-                border: "1px solid #FCA5A5",
-                color: "#991B1B",
+                background: "var(--error-diluido)",
+                border: "1px solid var(--error-linea)",
+                color: "var(--error-texto)",
                 padding: "8px 12px",
                 borderRadius: "8px",
                 marginBottom: "12px",
@@ -177,7 +177,7 @@ export function ModalCrearCategoria({ abierto, onCerrar, onCategoriaCreada, nego
           )}
 
           <div style={{ marginBottom: "12px" }}>
-            <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, color: "#334155", marginBottom: "4px" }}>
+            <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, color: "var(--texto-2)", marginBottom: "4px" }}>
               Nombre de la {esFloristeria ? "Colección" : "Categoría"} *
             </label>
             <input
@@ -190,7 +190,7 @@ export function ModalCrearCategoria({ abierto, onCerrar, onCategoriaCreada, nego
                 width: "100%",
                 padding: "8px 12px",
                 borderRadius: "8px",
-                border: "1px solid #CBD5E1",
+                border: "1px solid var(--linea-fuerte)",
                 fontSize: "0.85rem",
                 boxSizing: "border-box",
               }}
@@ -199,7 +199,7 @@ export function ModalCrearCategoria({ abierto, onCerrar, onCategoriaCreada, nego
 
           <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: "10px", marginBottom: "12px" }}>
             <div>
-              <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 600, color: "#475569", marginBottom: "4px" }}>
+              <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 600, color: "var(--texto-2)", marginBottom: "4px" }}>
                 Identificador Slug
               </label>
               <input
@@ -211,7 +211,7 @@ export function ModalCrearCategoria({ abierto, onCerrar, onCategoriaCreada, nego
                   width: "100%",
                   padding: "7px 10px",
                   borderRadius: "6px",
-                  border: "1px solid #CBD5E1",
+                  border: "1px solid var(--linea-fuerte)",
                   fontSize: "0.8rem",
                   boxSizing: "border-box",
                 }}
@@ -219,7 +219,7 @@ export function ModalCrearCategoria({ abierto, onCerrar, onCategoriaCreada, nego
             </div>
 
             <div>
-              <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 600, color: "#475569", marginBottom: "4px" }}>
+              <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 600, color: "var(--texto-2)", marginBottom: "4px" }}>
                 Posición / Orden
               </label>
               <input
@@ -231,7 +231,7 @@ export function ModalCrearCategoria({ abierto, onCerrar, onCategoriaCreada, nego
                   width: "100%",
                   padding: "7px 10px",
                   borderRadius: "6px",
-                  border: "1px solid #CBD5E1",
+                  border: "1px solid var(--linea-fuerte)",
                   fontSize: "0.8rem",
                   boxSizing: "border-box",
                 }}
@@ -242,23 +242,23 @@ export function ModalCrearCategoria({ abierto, onCerrar, onCategoriaCreada, nego
           {/* Recursos Digitales de la Categoría */}
           <div
             style={{
-              background: "#F0FDF4",
-              border: "1px solid #BBF7D0",
+              background: "var(--exito-diluido)",
+              border: "1px solid var(--exito-linea)",
               borderRadius: "8px",
               padding: "10px 12px",
               marginBottom: "12px",
             }}
           >
             <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "8px" }}>
-              <ImageIcon size={14} color="#15803D" />
-              <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "#15803D", textTransform: "uppercase" }}>
+              <ImageIcon size={14} color="var(--exito-texto)" />
+              <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--exito-texto)", textTransform: "uppercase" }}>
                 Recursos Digitales de la Colección
               </span>
             </div>
 
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", marginBottom: "8px" }}>
               <div>
-                <label style={{ display: "block", fontSize: "0.7rem", fontWeight: 600, color: "#334155", marginBottom: "2px" }}>
+                <label style={{ display: "block", fontSize: "0.7rem", fontWeight: 600, color: "var(--texto-2)", marginBottom: "2px" }}>
                   URL Portada / Banner
                 </label>
                 <input
@@ -270,7 +270,7 @@ export function ModalCrearCategoria({ abierto, onCerrar, onCategoriaCreada, nego
                     width: "100%",
                     padding: "6px 8px",
                     borderRadius: "6px",
-                    border: "1px solid #CBD5E1",
+                    border: "1px solid var(--linea-fuerte)",
                     fontSize: "0.75rem",
                     boxSizing: "border-box",
                   }}
@@ -278,7 +278,7 @@ export function ModalCrearCategoria({ abierto, onCerrar, onCategoriaCreada, nego
               </div>
 
               <div>
-                <label style={{ display: "block", fontSize: "0.7rem", fontWeight: 600, color: "#334155", marginBottom: "2px" }}>
+                <label style={{ display: "block", fontSize: "0.7rem", fontWeight: 600, color: "var(--texto-2)", marginBottom: "2px" }}>
                   URL Video Reel / Spot (MP4 / YouTube)
                 </label>
                 <input
@@ -290,7 +290,7 @@ export function ModalCrearCategoria({ abierto, onCerrar, onCategoriaCreada, nego
                     width: "100%",
                     padding: "6px 8px",
                     borderRadius: "6px",
-                    border: "1px solid #CBD5E1",
+                    border: "1px solid var(--linea-fuerte)",
                     fontSize: "0.75rem",
                     boxSizing: "border-box",
                   }}
@@ -299,7 +299,7 @@ export function ModalCrearCategoria({ abierto, onCerrar, onCategoriaCreada, nego
             </div>
 
             <div>
-              <label style={{ display: "block", fontSize: "0.7rem", fontWeight: 600, color: "#334155", marginBottom: "2px" }}>
+              <label style={{ display: "block", fontSize: "0.7rem", fontWeight: 600, color: "var(--texto-2)", marginBottom: "2px" }}>
                 URL Álbum de Muestras / Galería (Drive / iCloud)
               </label>
               <input
@@ -311,7 +311,7 @@ export function ModalCrearCategoria({ abierto, onCerrar, onCategoriaCreada, nego
                   width: "100%",
                   padding: "6px 8px",
                   borderRadius: "6px",
-                  border: "1px solid #CBD5E1",
+                  border: "1px solid var(--linea-fuerte)",
                   fontSize: "0.75rem",
                   boxSizing: "border-box",
                 }}
@@ -320,7 +320,7 @@ export function ModalCrearCategoria({ abierto, onCerrar, onCategoriaCreada, nego
           </div>
 
           <div style={{ marginBottom: "16px" }}>
-            <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 600, color: "#475569", marginBottom: "4px" }}>
+            <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 600, color: "var(--texto-2)", marginBottom: "4px" }}>
               Descripción / Alcance
             </label>
             <textarea
@@ -332,7 +332,7 @@ export function ModalCrearCategoria({ abierto, onCerrar, onCategoriaCreada, nego
                 width: "100%",
                 padding: "8px 12px",
                 borderRadius: "8px",
-                border: "1px solid #CBD5E1",
+                border: "1px solid var(--linea-fuerte)",
                 fontSize: "0.82rem",
                 boxSizing: "border-box",
               }}
@@ -344,8 +344,8 @@ export function ModalCrearCategoria({ abierto, onCerrar, onCategoriaCreada, nego
               type="button"
               onClick={onCerrar}
               style={{
-                background: "#F1F5F9",
-                color: "#475569",
+                background: "var(--fondo-hundido)",
+                color: "var(--texto-2)",
                 border: "none",
                 padding: "8px 14px",
                 borderRadius: "8px",
@@ -360,7 +360,7 @@ export function ModalCrearCategoria({ abierto, onCerrar, onCategoriaCreada, nego
               type="submit"
               disabled={guardando}
               style={{
-                background: esFloristeria ? "#E11D48" : "#0284C7",
+                background: esFloristeria ? "var(--error)" : "var(--acento)",
                 color: "#FFFFFF",
                 border: "none",
                 padding: "8px 18px",

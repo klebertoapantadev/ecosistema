@@ -148,11 +148,11 @@ export function ModalHistorialUsoPlan({
     negocio === "tinkay" ? HISTORIAL_SEMILLA_TINKAY : HISTORIAL_SEMILLA_TRANQI;
 
   const obtenerIconoConcepto = (concepto: string) => {
-    if (concepto === "CONSULTA_TELEMATICA") return <Video size={18} color="#3B82F6" />;
-    if (concepto === "REVISION_CONTRATO") return <FileText size={18} color="#10B981" />;
+    if (concepto === "CONSULTA_TELEMATICA") return <Video size={18} color="var(--acento)" />;
+    if (concepto === "REVISION_CONTRATO") return <FileText size={18} color="var(--exito)" />;
     if (concepto === "ENTREGA_FLORAL") return <Flower2 size={18} color="#EC4899" />;
-    if (concepto === "VISITA_TECNICA") return <Wrench size={18} color="#F59E0B" />;
-    return <Sparkles size={18} color="#6366F1" />;
+    if (concepto === "VISITA_TECNICA") return <Wrench size={18} color="var(--aviso)" />;
+    return <Sparkles size={18} color="var(--acento)" />;
   };
 
   return (
@@ -186,7 +186,7 @@ export function ModalHistorialUsoPlan({
         <div
           style={{
             padding: "20px 24px",
-            background: "linear-gradient(135deg, #1E1B4B 0%, #312E81 100%)",
+            background: "linear-gradient(135deg, #1E1B4B 0%, var(--acento-hondo) 100%)",
             color: "#FFFFFF",
             display: "flex",
             alignItems: "center",
@@ -205,13 +205,13 @@ export function ModalHistorialUsoPlan({
                 justifyContent: "center",
               }}
             >
-              <ShieldCheck size={22} color="#A5B4FC" />
+              <ShieldCheck size={22} color="var(--acento-linea)" />
             </div>
             <div>
               <h3 style={{ margin: 0, fontSize: "1.2rem", fontWeight: 800 }}>
                 Mi Plan & Historial de Cobertura
               </h3>
-              <p style={{ margin: 0, fontSize: "0.8rem", color: "#C7D2FE" }}>
+              <p style={{ margin: 0, fontSize: "0.8rem", color: "var(--acento-linea)" }}>
                 Auditoría de vigencia, facturación y trazabilidad de uso de tus beneficios
               </p>
             </div>
@@ -241,8 +241,8 @@ export function ModalHistorialUsoPlan({
           {/* 1. RESUMEN DEL CONTRATO / SUSCRIPCIÓN */}
           <div
             style={{
-              background: "#F8FAFC",
-              border: "1px solid #E2E8F0",
+              background: "var(--fondo-suave)",
+              border: "1px solid var(--linea)",
               borderRadius: "16px",
               padding: "18px",
               marginBottom: "24px",
@@ -252,8 +252,8 @@ export function ModalHistorialUsoPlan({
               <div>
                 <span
                   style={{
-                    background: "#DCFCE7",
-                    color: "#166534",
+                    background: "var(--exito-diluido)",
+                    color: "var(--exito-texto)",
                     fontSize: "0.72rem",
                     fontWeight: 800,
                     padding: "3px 10px",
@@ -266,12 +266,12 @@ export function ModalHistorialUsoPlan({
                 >
                   <CheckCircle2 size={12} /> MEMBRESÍA ACTIVA
                 </span>
-                <h4 style={{ margin: 0, fontSize: "1.15rem", fontWeight: 800, color: "#0F172A" }}>
+                <h4 style={{ margin: 0, fontSize: "1.15rem", fontWeight: 800, color: "var(--texto)" }}>
                   {cobertura?.planNombre || "Plan Amparo Familiar"}
                 </h4>
               </div>
 
-              <span style={{ fontSize: "0.82rem", color: "#64748B" }}>
+              <span style={{ fontSize: "0.82rem", color: "var(--texto-suave)" }}>
                 ID: <code style={{ fontWeight: 700 }}>{cobertura?.suscripcionId || "sub-activo"}</code>
               </span>
             </div>
@@ -282,32 +282,32 @@ export function ModalHistorialUsoPlan({
                 gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
                 gap: "12px",
                 fontSize: "0.82rem",
-                color: "#475569",
+                color: "var(--texto-2)",
               }}
             >
               <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                <Calendar size={16} color="#6366F1" />
+                <Calendar size={16} color="var(--acento)" />
                 <span>
                   Próxima Facturación: <strong>{cobertura?.fechaRenovacion || "Fin de mes"}</strong>
                 </span>
               </div>
 
               <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                <CreditCard size={16} color="#0284C7" />
+                <CreditCard size={16} color="var(--acento)" />
                 <span>
                   Método de Pago: <strong>Visa Pichincha (•••• 4500)</strong>
                 </span>
               </div>
 
               <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                <Users size={16} color="#10B981" />
+                <Users size={16} color="var(--exito)" />
                 <span>
                   Miembros Cubiertos: <strong>{cobertura?.miembrosCubiertos || 4} Registrados</strong>
                 </span>
               </div>
 
               <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                <Receipt size={16} color="#D97706" />
+                <Receipt size={16} color="var(--aviso)" />
                 <span>
                   Facturación SRI: <strong>IVA 15% incluido</strong>
                 </span>
@@ -317,8 +317,8 @@ export function ModalHistorialUsoPlan({
 
           {/* 2. LÍNEA DE TIEMPO / BITÁCORA DE CONSUMOS */}
           <div>
-            <h4 style={{ margin: "0 0 16px", fontSize: "1rem", fontWeight: 800, color: "#0F172A", display: "flex", alignItems: "center", gap: "8px" }}>
-              <Clock size={18} color="#6366F1" /> Trazabilidad & Consumos del Periodo
+            <h4 style={{ margin: "0 0 16px", fontSize: "1rem", fontWeight: 800, color: "var(--texto)", display: "flex", alignItems: "center", gap: "8px" }}>
+              <Clock size={18} color="var(--acento)" /> Trazabilidad & Consumos del Periodo
             </h4>
 
             <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
@@ -326,7 +326,7 @@ export function ModalHistorialUsoPlan({
                 <div
                   key={item.id}
                   style={{
-                    border: "1px solid #E2E8F0",
+                    border: "1px solid var(--linea)",
                     borderRadius: "14px",
                     padding: "16px",
                     background: "#FFFFFF",
@@ -340,7 +340,7 @@ export function ModalHistorialUsoPlan({
                           width: "36px",
                           height: "36px",
                           borderRadius: "10px",
-                          background: "#F1F5F9",
+                          background: "var(--fondo-hundido)",
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
@@ -349,17 +349,17 @@ export function ModalHistorialUsoPlan({
                         {obtenerIconoConcepto(item.concepto)}
                       </div>
                       <div>
-                        <strong style={{ fontSize: "0.9rem", color: "#0F172A", display: "block" }}>
+                        <strong style={{ fontSize: "0.9rem", color: "var(--texto)", display: "block" }}>
                           {item.titulo}
                         </strong>
-                        <span style={{ fontSize: "0.75rem", color: "#64748B" }}>{item.fecha}</span>
+                        <span style={{ fontSize: "0.75rem", color: "var(--texto-suave)" }}>{item.fecha}</span>
                       </div>
                     </div>
 
                     <span
                       style={{
-                        background: "#EFF6FF",
-                        color: "#1E40AF",
+                        background: "var(--acento-diluido)",
+                        color: "var(--acento-hondo)",
                         fontSize: "0.72rem",
                         fontWeight: 700,
                         padding: "3px 8px",
@@ -370,12 +370,12 @@ export function ModalHistorialUsoPlan({
                     </span>
                   </div>
 
-                  <p style={{ margin: "0 0 8px", fontSize: "0.82rem", color: "#334155" }}>
+                  <p style={{ margin: "0 0 8px", fontSize: "0.82rem", color: "var(--texto-2)" }}>
                     {item.descripcion}
                   </p>
 
                   {item.responsableNombre && (
-                    <div style={{ fontSize: "0.78rem", color: "#475569", marginBottom: "8px" }}>
+                    <div style={{ fontSize: "0.78rem", color: "var(--texto-2)", marginBottom: "8px" }}>
                       Atendido por: <strong>{item.responsableNombre}</strong>
                     </div>
                   )}
@@ -384,8 +384,8 @@ export function ModalHistorialUsoPlan({
                   {item.evidenciaUrl && (
                     <div
                       style={{
-                        background: "#F8FAFC",
-                        border: "1px solid #E2E8F0",
+                        background: "var(--fondo-suave)",
+                        border: "1px solid var(--linea)",
                         borderRadius: "8px",
                         padding: "8px 12px",
                         display: "flex",
@@ -395,7 +395,7 @@ export function ModalHistorialUsoPlan({
                         marginTop: "10px",
                       }}
                     >
-                      <div style={{ display: "flex", alignItems: "center", gap: "6px", color: "#334155" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "6px", color: "var(--texto-2)" }}>
                         {item.evidenciaTipo === "FOTO_POD" ? (
                           <>
                             <ImageIcon size={14} color="#EC4899" />
@@ -405,7 +405,7 @@ export function ModalHistorialUsoPlan({
                           </>
                         ) : (
                           <>
-                            <FileText size={14} color="#10B981" />
+                            <FileText size={14} color="var(--exito)" />
                             <span>
                               Expediente / Dictamen: <strong>{item.evidenciaDetalle?.casoCodigo || "Dictamen Oficial"}</strong>
                             </span>
@@ -418,8 +418,8 @@ export function ModalHistorialUsoPlan({
                         onClick={() => setEvidenciaModalUrl(item.evidenciaUrl!)}
                         style={{
                           background: "#FFFFFF",
-                          border: "1px solid #CBD5E1",
-                          color: "#1E293B",
+                          border: "1px solid var(--linea-fuerte)",
+                          color: "var(--texto)",
                           padding: "4px 10px",
                           borderRadius: "6px",
                           fontSize: "0.72rem",
@@ -444,21 +444,21 @@ export function ModalHistorialUsoPlan({
         <div
           style={{
             padding: "16px 24px",
-            borderTop: "1px solid #E2E8F0",
+            borderTop: "1px solid var(--linea)",
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
-            background: "#F8FAFC",
+            background: "var(--fondo-suave)",
           }}
         >
-          <span style={{ fontSize: "0.75rem", color: "#64748B" }}>
+          <span style={{ fontSize: "0.75rem", color: "var(--texto-suave)" }}>
             Tus derechos se reinician automáticamente al inicio de cada ciclo de facturación.
           </span>
           <button
             type="button"
             onClick={alCerrar}
             style={{
-              background: "#0F172A",
+              background: "var(--texto)",
               color: "#FFFFFF",
               border: "none",
               padding: "8px 18px",

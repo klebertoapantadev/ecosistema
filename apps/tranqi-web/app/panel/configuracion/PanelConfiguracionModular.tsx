@@ -44,7 +44,7 @@ const TODOS_WIDGETS_CONFIG: WidgetConfigDef[] = [
     titulo: "Pasarela Payphone (Botón de Pago)",
     subtitulo: "Configuración de credenciales API, StoreID y simulador de cobro de honorarios",
     icono: CreditCard,
-    colorIcono: "#D97706",
+    colorIcono: "var(--aviso)",
     categoria: "Servicios de Despacho",
     soloAdmin: true
   },
@@ -53,7 +53,7 @@ const TODOS_WIDGETS_CONFIG: WidgetConfigDef[] = [
     titulo: "Parámetros de Facturación Electrónica SRI",
     subtitulo: "RUC, régimen RIMPE/General, serie 001-001, secuenciales y firma electrónica .p12 en Supabase Vault",
     icono: FileCheck,
-    colorIcono: "#059669",
+    colorIcono: "var(--exito)",
     categoria: "Parámetros del Negocio",
     soloAdmin: true
   },
@@ -62,7 +62,7 @@ const TODOS_WIDGETS_CONFIG: WidgetConfigDef[] = [
     titulo: "Catálogo Comercial & Honorarios",
     subtitulo: "Tarifario de servicios legales, planes y precios con desglose de IVA",
     icono: ShoppingBag,
-    colorIcono: "#0284C7",
+    colorIcono: "var(--acento)",
     categoria: "Parámetros del Negocio",
     soloAdmin: true
   },
@@ -115,7 +115,7 @@ const TODOS_WIDGETS_CONFIG: WidgetConfigDef[] = [
     titulo: "Agente Conversacional ARIA",
     subtitulo: "Parámetros ARIA_BASE, ARIA_AGENT_ID y claves en Supabase Vault propios del negocio",
     icono: Bot,
-    colorIcono: "#059669",
+    colorIcono: "var(--exito)",
     categoria: "Servicios de Despacho",
     soloAdmin: true
   },
@@ -124,7 +124,7 @@ const TODOS_WIDGETS_CONFIG: WidgetConfigDef[] = [
     titulo: "Envíos, Zonas y Cobertura GPS",
     subtitulo: "Polígonos en Pichincha, zona de envío gratis por defecto, recargo por km vial y simulador GPS",
     icono: MapPin,
-    colorIcono: "#16A34A",
+    colorIcono: "var(--exito)",
     categoria: "Parámetros del Negocio",
     soloAdmin: true
   },
@@ -142,7 +142,7 @@ const TODOS_WIDGETS_CONFIG: WidgetConfigDef[] = [
     titulo: "Tokens & APIs MCP",
     subtitulo: "Gestión y emisión de tokens de acceso para conectar herramientas MCP con bots y agentes externos",
     icono: KeyRound,
-    colorIcono: "#0284C7",
+    colorIcono: "var(--acento)",
     categoria: "Servicios de Despacho",
     soloAdmin: true
   }
@@ -293,8 +293,8 @@ export function PanelConfiguracionModular({ esAdmin, esSuperadmin = false, confi
           <header
             style={{
               padding: "16px 20px",
-              background: "var(--panel-papel, #F7F6FA)",
-              borderBottom: "1px solid var(--panel-linea, #E4E4E4)",
+              background: "var(--panel-papel, var(--fondo-suave))",
+              borderBottom: "1px solid var(--panel-linea, var(--linea))",
               display: "flex",
               alignItems: "center",
               justifyContent: "space-between"
@@ -306,7 +306,7 @@ export function PanelConfiguracionModular({ esAdmin, esSuperadmin = false, confi
                   padding: "8px",
                   borderRadius: "8px",
                   background: "var(--blanco, #ffffff)",
-                  border: "1px solid var(--panel-linea, #E4E4E4)",
+                  border: "1px solid var(--panel-linea, var(--linea))",
                   display: "flex"
                 }}
               >
@@ -328,7 +328,7 @@ export function PanelConfiguracionModular({ esAdmin, esSuperadmin = false, confi
                     </span>
                   )}
                 </div>
-                <span style={{ fontSize: "0.8rem", color: "var(--panel-gris, #737373)", marginTop: "2px", display: "block" }}>
+                <span style={{ fontSize: "0.8rem", color: "var(--panel-gris, var(--texto-suave))", marginTop: "2px", display: "block" }}>
                   {widgetInfoActual.subtitulo}
                 </span>
               </div>
@@ -443,7 +443,7 @@ export function PanelConfiguracionModular({ esAdmin, esSuperadmin = false, confi
               Identidad legal del negocio, servidor SMTP saliente cifrado en Vault, preferencias de notificación y administración de perfiles.
             </div>
           </div>
-          <span className="badge-rol" style={{ background: "rgba(80, 0, 186, 0.12)", color: "var(--violeta, #5000BA)", border: "1px solid var(--violeta-suave, #F3E8FF)" }}>
+          <span className="badge-rol" style={{ background: "rgba(80, 0, 186, 0.12)", color: "var(--violeta, #5000BA)", border: "1px solid var(--violeta-suave, var(--acento-diluido))" }}>
             <ShieldCheck style={{ width: 14, height: 14, marginRight: 4 }} />
             Gobernanza Activa
           </span>
@@ -452,10 +452,10 @@ export function PanelConfiguracionModular({ esAdmin, esSuperadmin = false, confi
 
       <div style={{ marginBottom: "24px" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px", flexWrap: "wrap", gap: "8px" }}>
-          <h3 style={{ fontSize: "0.88rem", fontWeight: 800, color: "var(--panel-gris, #737373)", textTransform: "uppercase", letterSpacing: "0.08em", margin: 0 }}>
+          <h3 style={{ fontSize: "0.88rem", fontWeight: 800, color: "var(--panel-gris, var(--texto-suave))", textTransform: "uppercase", letterSpacing: "0.08em", margin: 0 }}>
             Módulos de Configuración Asignados
           </h3>
-          <span style={{ fontSize: "0.82rem", color: "var(--panel-gris, #737373)", fontWeight: 600 }}>
+          <span style={{ fontSize: "0.82rem", color: "var(--panel-gris, var(--texto-suave))", fontWeight: 600 }}>
             {favoritos.length} Destacados
           </span>
         </div>
@@ -473,7 +473,7 @@ export function PanelConfiguracionModular({ esAdmin, esSuperadmin = false, confi
                 onClick={() => handleIntentarAbrirWidget(w.id, w)}
                 className="tarjeta-acceso"
                 style={{
-                  border: "1px solid var(--panel-linea, #E4E4E4)",
+                  border: "1px solid var(--panel-linea, var(--linea))",
                   cursor: "pointer",
                   position: "relative"
                 }}
@@ -507,11 +507,11 @@ export function PanelConfiguracionModular({ esAdmin, esSuperadmin = false, confi
                       }}
                       style={{
                         background: "rgba(255,255,255,0.9)",
-                        border: "1px solid var(--panel-linea, #E4E4E4)",
+                        border: "1px solid var(--panel-linea, var(--linea))",
                         borderRadius: "6px",
                         cursor: "pointer",
                         padding: "4px",
-                        color: "var(--panel-gris, #737373)",
+                        color: "var(--panel-gris, var(--texto-suave))",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
@@ -531,13 +531,13 @@ export function PanelConfiguracionModular({ esAdmin, esSuperadmin = false, confi
                       border: "none",
                       cursor: "pointer",
                       padding: "3px",
-                      color: esFav ? "#D97706" : "var(--panel-gris, #737373)",
+                      color: esFav ? "var(--aviso)" : "var(--panel-gris, var(--texto-suave))",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center"
                     }}
                   >
-                    <Star size={16} fill={esFav ? "#FEE300" : "none"} stroke={esFav ? "#D97706" : "currentColor"} />
+                    <Star size={16} fill={esFav ? "#FEE300" : "none"} stroke={esFav ? "var(--aviso)" : "currentColor"} />
                   </button>
                 </div>
 
@@ -552,7 +552,7 @@ export function PanelConfiguracionModular({ esAdmin, esSuperadmin = false, confi
                         style={{
                           fontSize: "0.58rem",
                           fontWeight: 800,
-                          color: "#92400E",
+                          color: "var(--aviso-texto)",
                           background: "var(--amarillo, #FEE300)",
                           padding: "1px 6px",
                           borderRadius: "999px",
@@ -568,7 +568,7 @@ export function PanelConfiguracionModular({ esAdmin, esSuperadmin = false, confi
                           fontSize: "0.58rem",
                           fontWeight: 800,
                           color: "var(--violeta, #5000BA)",
-                          background: "var(--violeta-suave, #F3E8FF)",
+                          background: "var(--violeta-suave, var(--acento-diluido))",
                           padding: "1px 6px",
                           borderRadius: "999px",
                           display: "inline-flex",

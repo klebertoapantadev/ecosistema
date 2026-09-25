@@ -58,7 +58,7 @@ const MODULOS_ADMIN: ModuloAdminDef[] = [
     subtitulo: "Validación de ventas, calendario de entregas (Hoy/Semana/Mes), llamadas Exequiales y despacho diario a Taller",
     ruta: "/panel/administrar?widget=envio_pedidos_taller",
     icono: ClipboardList,
-    colorIcono: "#0F172A",
+    colorIcono: "var(--texto)",
     categoria: "Comercio y Pagos"
   },
   {
@@ -67,7 +67,7 @@ const MODULOS_ADMIN: ModuloAdminDef[] = [
     subtitulo: "Consola de producción con alertas en tiempo real y actualización de estado (En preparación / Listo entrega)",
     ruta: "/panel/administrar?widget=taller_floral",
     icono: ClipboardList,
-    colorIcono: "#059669",
+    colorIcono: "var(--exito)",
     categoria: "Comercio y Pagos"
   },
   {
@@ -76,7 +76,7 @@ const MODULOS_ADMIN: ModuloAdminDef[] = [
     subtitulo: "Bandeja operativa de órdenes e-commerce con ubicación GPS, dedicatorias y desglose interno de logística",
     ruta: "/panel/pedidos",
     icono: ClipboardList,
-    colorIcono: "#0284C7",
+    colorIcono: "var(--acento)",
     categoria: "Comercio y Pagos"
   },
   {
@@ -85,7 +85,7 @@ const MODULOS_ADMIN: ModuloAdminDef[] = [
     subtitulo: "Consola de alertas institucionales (ANT, SRI, Municipios), novedades tributarias y convenios de capacitación",
     ruta: "/panel/administrar?widget=gestion_informativos",
     icono: Bell,
-    colorIcono: "#D97706",
+    colorIcono: "var(--aviso)",
     categoria: "Comercio & Comunicación"
   },
   {
@@ -112,7 +112,7 @@ const MODULOS_ADMIN: ModuloAdminDef[] = [
     subtitulo: "Gestión laboral de colaboradores, contratos tipificados, firma .p12, avisos IESS y actas de finiquito SUT",
     ruta: "/panel/administrar?widget=legal_hr_laboral",
     icono: Briefcase,
-    colorIcono: "#2563EB",
+    colorIcono: "var(--acento)",
     categoria: "Comercio & B2B"
   },
   {
@@ -139,7 +139,7 @@ const MODULOS_ADMIN: ModuloAdminDef[] = [
     subtitulo: "Redacción y despacho masivo multicanal (In-App, Push, Email y WhatsApp)",
     ruta: "/panel/administrar?widget=emision_notificaciones",
     icono: Bell,
-    colorIcono: "#D97706",
+    colorIcono: "var(--aviso)",
     categoria: "Comunicación"
   },
   {
@@ -148,7 +148,7 @@ const MODULOS_ADMIN: ModuloAdminDef[] = [
     subtitulo: "Consulta auditada e historial en tiempo real de notificaciones emitidas",
     ruta: "/panel/administrar?widget=bitacora_notificaciones",
     icono: BarChart2,
-    colorIcono: "#2563EB",
+    colorIcono: "var(--acento)",
     categoria: "Comunicación"
   },
   {
@@ -166,7 +166,7 @@ const MODULOS_ADMIN: ModuloAdminDef[] = [
     subtitulo: "Consulta de registros inmutables PostgreSQL y telemetría de APIs",
     ruta: "/panel/administrar?widget=auditoria",
     icono: Shield,
-    colorIcono: "#111827",
+    colorIcono: "var(--texto)",
     categoria: "Seguridad & Auditoría"
   },
   {
@@ -247,7 +247,7 @@ const MODULOS_ADMIN: ModuloAdminDef[] = [
     subtitulo: "Calendario de citas confirmadas (telemáticas vs presenciales), asignación de abogados e historial",
     ruta: "/panel/administrar?widget=asignaciones_agenda",
     icono: Calendar,
-    colorIcono: "#0284C7",
+    colorIcono: "var(--acento)",
     categoria: "Agenda"
   },
   {
@@ -307,7 +307,7 @@ export function SociosWidget() {
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
             <strong>{[s.usuario?.usu_nombres, s.usuario?.usu_apellidos].filter(Boolean).join(" ") || "—"}</strong>
             {esUrgentePropuesta && (
-              <span title="Propuesta de modificación al contrato pendiente de revisión" style={{ fontSize: "0.7rem", background: "#DC2626", color: "#FFF", borderRadius: "999px", padding: "1px 7px", fontWeight: 800 }}>
+              <span title="Propuesta de modificación al contrato pendiente de revisión" style={{ fontSize: "0.7rem", background: "var(--error)", color: "#FFF", borderRadius: "999px", padding: "1px 7px", fontWeight: 800 }}>
                 URGENTE
               </span>
             )}
@@ -319,7 +319,7 @@ export function SociosWidget() {
       id: "correo",
       encabezado: "Correo Electrónico",
       valor: (s) => s.usuario?.usu_correo || "—",
-      render: (s) => <span style={{ color: "#334155" }}>{s.usuario?.usu_correo || "—"}</span>
+      render: (s) => <span style={{ color: "var(--texto-2)" }}>{s.usuario?.usu_correo || "—"}</span>
     },
     {
       id: "fecha",
@@ -349,9 +349,9 @@ export function SociosWidget() {
             display: "inline-flex",
             alignItems: "center",
             gap: "5px",
-            background: "#FEF3C7",
-            color: "#92400E",
-            border: "1.5px solid #F59E0B",
+            background: "var(--aviso-diluido)",
+            color: "var(--aviso-texto)",
+            border: "1.5px solid var(--aviso)",
             borderRadius: "8px",
             padding: "4px 8px",
             fontSize: "0.76rem",
@@ -365,9 +365,9 @@ export function SociosWidget() {
             display: "inline-flex",
             alignItems: "center",
             gap: "5px",
-            background: "#ECFDF5",
-            color: "#065F46",
-            border: "1.5px solid #10B981",
+            background: "var(--exito-diluido)",
+            color: "var(--exito-texto)",
+            border: "1.5px solid var(--exito)",
             borderRadius: "8px",
             padding: "4px 8px",
             fontSize: "0.76rem",
@@ -381,9 +381,9 @@ export function SociosWidget() {
             display: "inline-flex",
             alignItems: "center",
             gap: "5px",
-            background: "#EFF6FF",
-            color: "#1E40AF",
-            border: "1px solid #93C5FD",
+            background: "var(--acento-diluido)",
+            color: "var(--acento-hondo)",
+            border: "1px solid var(--acento-linea)",
             borderRadius: "8px",
             padding: "4px 8px",
             fontSize: "0.76rem",
@@ -396,9 +396,9 @@ export function SociosWidget() {
             display: "inline-flex",
             alignItems: "center",
             gap: "5px",
-            background: "#F3F4F6",
-            color: "#4B5563",
-            border: "1px solid #D1D5DB",
+            background: "var(--fondo-hundido)",
+            color: "var(--texto-2)",
+            border: "1px solid var(--linea-fuerte)",
             borderRadius: "8px",
             padding: "4px 8px",
             fontSize: "0.76rem",
@@ -407,7 +407,7 @@ export function SociosWidget() {
             Esperando Firma Abogado
           </span>
         ) : (
-          <span style={{ fontSize: "0.78rem", color: "#9CA3AF" }}>—</span>
+          <span style={{ fontSize: "0.78rem", color: "var(--texto-tenue)" }}>—</span>
         );
       }
     },
@@ -441,7 +441,7 @@ export function SociosWidget() {
 
   if (cargando) {
     return (
-      <div style={{ padding: "40px", textAlign: "center", color: "var(--panel-gris, #737373)" }}>
+      <div style={{ padding: "40px", textAlign: "center", color: "var(--panel-gris, var(--texto-suave))" }}>
         Cargando solicitudes de socios abogados...
       </div>
     );
@@ -455,7 +455,7 @@ export function SociosWidget() {
         idFila={(s) => s.ssc_id}
         nombreExportacion="solicitudes-socios-abogados"
         contenidoExpandible={(s) => (
-          <div style={{ padding: "12px 16px", background: "#f8fafc", borderRadius: "8px", border: "1px solid #e2e8f0", fontSize: "0.82rem" }}>
+          <div style={{ padding: "12px 16px", background: "var(--fondo-suave)", borderRadius: "8px", border: "1px solid var(--linea)", fontSize: "0.82rem" }}>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "10px" }}>
               <div><strong>Cédula:</strong> {s.ssc_cedula || "—"}</div>
               <div><strong>Matrícula:</strong> {s.ssc_matricula_profesional || "—"}</div>
@@ -463,7 +463,7 @@ export function SociosWidget() {
               <div><strong>Años de Experiencia:</strong> {s.ssc_anos_experiencia || "—"}</div>
             </div>
             {s.ssc_resumen_profesional && (
-              <p style={{ marginTop: "8px", color: "#475569" }}>
+              <p style={{ marginTop: "8px", color: "var(--texto-2)" }}>
                 <strong>Resumen:</strong> {s.ssc_resumen_profesional}
               </p>
             )}
@@ -477,7 +477,7 @@ export function SociosWidget() {
 // Componente Widget Nativo para Solicitudes de Socio (Sin iframe)
 function SolicitudSocioWidget() {
   return (
-    <div style={{ padding: "24px", textAlign: "center", background: "#FAFAFA", borderRadius: "12px", border: "1px solid #E5E5E5" }}>
+    <div style={{ padding: "24px", textAlign: "center", background: "var(--fondo-suave)", borderRadius: "12px", border: "1px solid var(--linea)" }}>
       <ClipboardList style={{ width: 42, height: 42, color: "#05876E", margin: "0 auto 12px", display: "block" }} />
       <h3 style={{ fontSize: "1.1rem", fontWeight: 700, margin: "0 0 8px 0" }}>Formulario de Solicitud de Socio Abogado</h3>
       <p style={{ margin: "0 0 20px 0", color: "#666", fontSize: "0.88rem", maxWidth: "540px", marginInline: "auto" }}>
@@ -797,12 +797,12 @@ export function PanelAdministrarModular({ negocio = "TRANQ", esSuperAdmin = fals
   if (widgetActivo && moduloActualDef && moduloInfoActual) {
     return (
       <div style={{ width: "100%", animation: "fadeIn 0.15s ease" }}>
-        <section className="tarjeta-seccion" style={{ background: "var(--blanco, #ffffff)", borderRadius: "16px", overflow: "hidden", width: "100%", border: "1px solid var(--panel-linea, #E4E4E4)" }}>
+        <section className="tarjeta-seccion" style={{ background: "var(--blanco, #ffffff)", borderRadius: "16px", overflow: "hidden", width: "100%", border: "1px solid var(--panel-linea, var(--linea))" }}>
           <header
             style={{
               padding: "16px 20px",
-              background: "var(--panel-papel, #F7F6FA)",
-              borderBottom: "1px solid var(--panel-linea, #E4E4E4)",
+              background: "var(--panel-papel, var(--fondo-suave))",
+              borderBottom: "1px solid var(--panel-linea, var(--linea))",
               display: "flex",
               alignItems: "center",
               justifyContent: "space-between"
@@ -814,7 +814,7 @@ export function PanelAdministrarModular({ negocio = "TRANQ", esSuperAdmin = fals
                   padding: "8px",
                   borderRadius: "8px",
                   background: "var(--blanco, #ffffff)",
-                  border: "1px solid var(--panel-linea, #E4E4E4)",
+                  border: "1px solid var(--panel-linea, var(--linea))",
                   display: "flex"
                 }}
               >
@@ -836,7 +836,7 @@ export function PanelAdministrarModular({ negocio = "TRANQ", esSuperAdmin = fals
                     </span>
                   )}
                 </div>
-                <span style={{ fontSize: "0.8rem", color: "var(--panel-gris, #737373)", marginTop: "2px", display: "block" }}>
+                <span style={{ fontSize: "0.8rem", color: "var(--panel-gris, var(--texto-suave))", marginTop: "2px", display: "block" }}>
                   {moduloInfoActual.subtitulo}
                 </span>
               </div>
@@ -1023,11 +1023,11 @@ export function PanelAdministrarModular({ negocio = "TRANQ", esSuperAdmin = fals
                 style={{
                   fontSize: "0.78rem",
                   fontWeight: 800,
-                  color: "#DC2626",
-                  background: "#FEF2F2",
+                  color: "var(--error)",
+                  background: "var(--error-diluido)",
                   padding: "7px 16px",
                   borderRadius: "20px",
-                  border: "1.5px solid #FCA5A5",
+                  border: "1.5px solid var(--error-linea)",
                   display: "inline-flex",
                   alignItems: "center",
                   gap: "6px",
@@ -1042,7 +1042,7 @@ export function PanelAdministrarModular({ negocio = "TRANQ", esSuperAdmin = fals
                 <span className="btn-texto-responsive">{reseteando ? "Reseteando..." : "Reset Pruebas"}</span>
               </button>
             )}
-            <span className="badge-rol btn-responsive-accion" style={{ background: "rgba(220, 38, 38, 0.25)", color: "#FEE2E2", border: "1px solid rgba(239, 68, 68, 0.4)" }}>
+            <span className="badge-rol btn-responsive-accion" style={{ background: "rgba(220, 38, 38, 0.25)", color: "var(--error-diluido)", border: "1px solid rgba(239, 68, 68, 0.4)" }}>
               <Lock style={{ width: 14, height: 14, marginRight: 4 }} />
               <span className="btn-texto-responsive">MFA Protegido</span>
             </span>
@@ -1052,10 +1052,10 @@ export function PanelAdministrarModular({ negocio = "TRANQ", esSuperAdmin = fals
 
       <div style={{ marginBottom: "24px" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px", flexWrap: "wrap", gap: "8px" }}>
-          <h3 style={{ fontSize: "0.88rem", fontWeight: 800, color: "var(--panel-gris, #737373)", textTransform: "uppercase", letterSpacing: "0.08em", margin: 0 }}>
+          <h3 style={{ fontSize: "0.88rem", fontWeight: 800, color: "var(--panel-gris, var(--texto-suave))", textTransform: "uppercase", letterSpacing: "0.08em", margin: 0 }}>
             Módulos de Administración Asignados
           </h3>
-          <span style={{ fontSize: "0.82rem", color: "var(--panel-gris, #737373)", fontWeight: 600 }}>
+          <span style={{ fontSize: "0.82rem", color: "var(--panel-gris, var(--texto-suave))", fontWeight: 600 }}>
             {favoritos.length} Destacados
           </span>
         </div>
@@ -1073,7 +1073,7 @@ export function PanelAdministrarModular({ negocio = "TRANQ", esSuperAdmin = fals
                 onClick={() => handleIntentarAbrirWidget(m.id, m)}
                 className="tarjeta-acceso"
                 style={{
-                  border: "1px solid var(--panel-linea, #E4E4E4)",
+                  border: "1px solid var(--panel-linea, var(--linea))",
                   cursor: "pointer",
                   position: "relative",
                   textDecoration: "none",
@@ -1108,11 +1108,11 @@ export function PanelAdministrarModular({ negocio = "TRANQ", esSuperAdmin = fals
                     }}
                     style={{
                       background: "rgba(255,255,255,0.9)",
-                      border: "1px solid var(--panel-linea, #E4E4E4)",
+                      border: "1px solid var(--panel-linea, var(--linea))",
                       borderRadius: "6px",
                       cursor: "pointer",
                       padding: "4px",
-                      color: "var(--panel-gris, #737373)",
+                      color: "var(--panel-gris, var(--texto-suave))",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
@@ -1131,13 +1131,13 @@ export function PanelAdministrarModular({ negocio = "TRANQ", esSuperAdmin = fals
                       border: "none",
                       cursor: "pointer",
                       padding: "3px",
-                      color: esFav ? "#D97706" : "var(--panel-gris, #737373)",
+                      color: esFav ? "var(--aviso)" : "var(--panel-gris, var(--texto-suave))",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center"
                     }}
                   >
-                    <Star size={16} fill={esFav ? "#FEE300" : "none"} stroke={esFav ? "#D97706" : "currentColor"} />
+                    <Star size={16} fill={esFav ? "#FEE300" : "none"} stroke={esFav ? "var(--aviso)" : "currentColor"} />
                   </button>
                 </div>
 
@@ -1152,7 +1152,7 @@ export function PanelAdministrarModular({ negocio = "TRANQ", esSuperAdmin = fals
                         style={{
                           fontSize: "0.58rem",
                           fontWeight: 800,
-                          color: "#92400E",
+                          color: "var(--aviso-texto)",
                           background: "var(--amarillo, #FEE300)",
                           padding: "1px 6px",
                           borderRadius: "999px",
@@ -1168,7 +1168,7 @@ export function PanelAdministrarModular({ negocio = "TRANQ", esSuperAdmin = fals
                           fontSize: "0.58rem",
                           fontWeight: 800,
                           color: "var(--violeta, #5000BA)",
-                          background: "var(--violeta-suave, #F3E8FF)",
+                          background: "var(--violeta-suave, var(--acento-diluido))",
                           padding: "1px 6px",
                           borderRadius: "999px",
                           display: "inline-flex",
@@ -1185,7 +1185,7 @@ export function PanelAdministrarModular({ negocio = "TRANQ", esSuperAdmin = fals
                           fontSize: "0.6rem",
                           fontWeight: 800,
                           color: "#FFFFFF",
-                          background: conteoPropuestasUrgentes > 0 ? "#DC2626" : "#D97706",
+                          background: conteoPropuestasUrgentes > 0 ? "var(--error)" : "var(--aviso)",
                           padding: "2px 8px",
                           borderRadius: "999px",
                           display: "inline-flex",

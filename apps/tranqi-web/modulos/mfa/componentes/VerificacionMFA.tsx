@@ -169,10 +169,10 @@ export function VerificacionMFA({ necesitaInscripcion: propNecesitaInscripcion }
 
   if (requiereInscripcion) {
     return (
-      <div className="tarjeta-mfa" style={{ maxWidth: "480px", margin: "0 auto", padding: "24px", background: "#ffffff", borderRadius: "16px", border: "1px solid #E4E4E4", boxShadow: "0 4px 16px rgba(0,0,0,0.04)" }}>
+      <div className="tarjeta-mfa" style={{ maxWidth: "480px", margin: "0 auto", padding: "24px", background: "#ffffff", borderRadius: "16px", border: "1px solid var(--linea)", boxShadow: "0 4px 16px rgba(0,0,0,0.04)" }}>
         {!qr ? (
           <div style={{ textAlign: "center" }}>
-            <div style={{ width: "52px", height: "52px", borderRadius: "50%", background: "#F5F3FF", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px auto" }}>
+            <div style={{ width: "52px", height: "52px", borderRadius: "50%", background: "var(--acento-diluido)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px auto" }}>
               <Smartphone size={26} color="var(--violeta, #5000BA)" />
             </div>
             <h3 style={{ fontSize: "1.15rem", fontWeight: 800, color: "#111", marginBottom: "8px" }}>
@@ -201,7 +201,7 @@ export function VerificacionMFA({ necesitaInscripcion: propNecesitaInscripcion }
               Abre tu app autenticadora, escanea el QR e ingresa el código de 6 dígitos que aparezca:
             </p>
 
-            <div style={{ padding: "12px", background: "#F9FAFB", borderRadius: "12px", display: "inline-block", border: "1px solid #E5E7EB", marginBottom: "14px" }}>
+            <div style={{ padding: "12px", background: "var(--fondo-suave)", borderRadius: "12px", display: "inline-block", border: "1px solid var(--linea)", marginBottom: "14px" }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={qr} alt="Código QR MFA" style={{ width: "180px", height: "180px", display: "block" }} />
             </div>
@@ -244,7 +244,7 @@ export function VerificacionMFA({ necesitaInscripcion: propNecesitaInscripcion }
           </div>
         )}
         {error && (
-          <div style={{ marginTop: "14px", padding: "10px", borderRadius: "8px", background: "#FEF2F2", border: "1px solid #FCA5A5", color: "#DC2626", fontSize: "0.82rem", display: "flex", alignItems: "center", gap: "8px" }}>
+          <div style={{ marginTop: "14px", padding: "10px", borderRadius: "8px", background: "var(--error-diluido)", border: "1px solid var(--error-linea)", color: "var(--error)", fontSize: "0.82rem", display: "flex", alignItems: "center", gap: "8px" }}>
             <AlertCircle size={16} />
             <span>{error}</span>
           </div>
@@ -254,8 +254,8 @@ export function VerificacionMFA({ necesitaInscripcion: propNecesitaInscripcion }
   }
 
   return (
-    <div className="tarjeta-mfa" style={{ maxWidth: "440px", margin: "0 auto", padding: "24px", background: "#ffffff", borderRadius: "16px", border: "1px solid #E4E4E4", boxShadow: "0 4px 16px rgba(0,0,0,0.04)", textAlign: "center" }}>
-      <div style={{ width: "52px", height: "52px", borderRadius: "50%", background: "#F5F3FF", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 14px auto" }}>
+    <div className="tarjeta-mfa" style={{ maxWidth: "440px", margin: "0 auto", padding: "24px", background: "#ffffff", borderRadius: "16px", border: "1px solid var(--linea)", boxShadow: "0 4px 16px rgba(0,0,0,0.04)", textAlign: "center" }}>
+      <div style={{ width: "52px", height: "52px", borderRadius: "50%", background: "var(--acento-diluido)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 14px auto" }}>
         <ShieldCheck size={28} color="var(--violeta, #5000BA)" />
       </div>
       <h3 style={{ fontSize: "1.15rem", fontWeight: 800, color: "#111", marginBottom: "6px" }}>
@@ -305,7 +305,7 @@ export function VerificacionMFA({ necesitaInscripcion: propNecesitaInscripcion }
       </div>
 
       {error && (
-        <div style={{ marginTop: "14px", padding: "10px", borderRadius: "8px", background: "#FEF2F2", border: "1px solid #FCA5A5", color: "#DC2626", fontSize: "0.82rem", display: "flex", alignItems: "center", gap: "8px", textAlign: "left" }}>
+        <div style={{ marginTop: "14px", padding: "10px", borderRadius: "8px", background: "var(--error-diluido)", border: "1px solid var(--error-linea)", color: "var(--error)", fontSize: "0.82rem", display: "flex", alignItems: "center", gap: "8px", textAlign: "left" }}>
           <AlertCircle size={16} />
           <span>{error}</span>
         </div>

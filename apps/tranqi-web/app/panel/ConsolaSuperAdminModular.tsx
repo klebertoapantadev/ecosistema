@@ -105,7 +105,7 @@ export const CATALOGO_SUPERADMIN_TODOS: ModuloSuperAdminDef[] = [
     ruta: "/panel/catalogo-productos",
     icono: Sparkles,
     iconoKey: "Sparkles",
-    color: "#0284C7",
+    color: "var(--acento)",
     rutaFisica: "packages/comercio/src/componentes/VitrinaComercialVisual.tsx",
     paquete: "@eco/comercio",
     panelDestino: "Herramientas (/panel/catalogo-productos)",
@@ -120,7 +120,7 @@ export const CATALOGO_SUPERADMIN_TODOS: ModuloSuperAdminDef[] = [
     ruta: "/panel/aria",
     icono: Bot,
     iconoKey: "Bot",
-    color: "#059669",
+    color: "var(--exito)",
     rutaFisica: "packages/configuracion-negocio/src/componentes/FormularioAria.tsx",
     paquete: "@eco/configuracion-negocio",
     panelDestino: "Configuración (/panel/aria)",
@@ -136,7 +136,7 @@ export const CATALOGO_SUPERADMIN_TODOS: ModuloSuperAdminDef[] = [
     ruta: "/panel/logistica",
     icono: MapPin,
     iconoKey: "MapPin",
-    color: "#16A34A",
+    color: "var(--exito)",
     rutaFisica: "packages/comercio/src/componentes/FormularioLogisticaCobertura.tsx",
     paquete: "@eco/comercio",
     panelDestino: "Configuración (/panel/logistica)",
@@ -168,7 +168,7 @@ export const CATALOGO_SUPERADMIN_TODOS: ModuloSuperAdminDef[] = [
     ruta: "/panel/entrega-inmediata",
     icono: ShoppingBag,
     iconoKey: "ShoppingBag",
-    color: "#D97706",
+    color: "var(--aviso)",
     rutaFisica: "packages/comercio/src/componentes/ConsolaEntregaInmediata.tsx",
     paquete: "@eco/comercio",
     panelDestino: "Administrar (/panel/entrega-inmediata)",
@@ -200,7 +200,7 @@ export const CATALOGO_SUPERADMIN_TODOS: ModuloSuperAdminDef[] = [
     ruta: "/panel/envio-pedidos",
     icono: ClipboardList,
     iconoKey: "ClipboardList",
-    color: "#0F172A",
+    color: "var(--texto)",
     rutaFisica: "packages/comercio/src/componentes/ConsolaEnvioPedidosTaller.tsx",
     paquete: "@eco/comercio",
     panelDestino: "Administrar (/panel/envio-pedidos)",
@@ -216,7 +216,7 @@ export const CATALOGO_SUPERADMIN_TODOS: ModuloSuperAdminDef[] = [
     ruta: "/panel/taller",
     icono: ClipboardList,
     iconoKey: "ClipboardList",
-    color: "#059669",
+    color: "var(--exito)",
     rutaFisica: "packages/comercio/src/componentes/ConsolaTallerFloral.tsx",
     paquete: "@eco/comercio",
     panelDestino: "Administrar (/panel/taller)",
@@ -232,7 +232,7 @@ export const CATALOGO_SUPERADMIN_TODOS: ModuloSuperAdminDef[] = [
     ruta: "/panel/entregas",
     icono: ClipboardList,
     iconoKey: "ClipboardList",
-    color: "#059669",
+    color: "var(--exito)",
     rutaFisica: "packages/comercio/src/componentes/ConsolaConfirmacionEntregas.tsx",
     paquete: "@eco/comercio",
     panelDestino: "Administrar (/panel/entregas)",
@@ -248,7 +248,7 @@ export const CATALOGO_SUPERADMIN_TODOS: ModuloSuperAdminDef[] = [
     ruta: "/panel/pedidos",
     icono: ClipboardList,
     iconoKey: "ClipboardList",
-    color: "#0284C7",
+    color: "var(--acento)",
     rutaFisica: "packages/comercio/src/componentes/BandejaPedidosTienda.tsx",
     paquete: "@eco/comercio",
     panelDestino: "Administrar (/panel/pedidos)",
@@ -264,7 +264,7 @@ export const CATALOGO_SUPERADMIN_TODOS: ModuloSuperAdminDef[] = [
     ruta: "/panel/testimonios",
     icono: MessageSquareHeart,
     iconoKey: "MessageSquareHeart",
-    color: "#D97706",
+    color: "var(--aviso)",
     rutaFisica: "packages/comercio/src/componentes/ConsolaTestimoniosClientes.tsx",
     paquete: "@eco/comercio",
     panelDestino: "Administrar (/panel/testimonios)",
@@ -280,7 +280,7 @@ export const CATALOGO_SUPERADMIN_TODOS: ModuloSuperAdminDef[] = [
     ruta: "/panel/configuracion?widget=gestion_catalogo",
     icono: ShoppingBag,
     iconoKey: "ShoppingBag",
-    color: "#0284C7",
+    color: "var(--acento)",
     rutaFisica: "packages/comercio/src/componentes/CatalogoProductosComercio.tsx",
     paquete: "@eco/comercio",
     panelDestino: "Configuración (/panel/configuracion)",
@@ -295,7 +295,7 @@ export const CATALOGO_SUPERADMIN_TODOS: ModuloSuperAdminDef[] = [
     ruta: "/panel/clientes?widget=vitrina_comercial_personas",
     icono: ShoppingBag,
     iconoKey: "ShoppingBag",
-    color: "#0284C7",
+    color: "var(--acento)",
     rutaFisica: "packages/comercio/src/componentes/VitrinaComercialVisual.tsx",
     paquete: "@eco/comercio",
     panelDestino: "Clientes (/panel/clientes)",
@@ -325,7 +325,7 @@ export const CATALOGO_SUPERADMIN_TODOS: ModuloSuperAdminDef[] = [
     ruta: "/panel/catalogo-productos",
     icono: ShoppingBag,
     iconoKey: "ShoppingBag",
-    color: "#0284C7",
+    color: "var(--acento)",
     rutaFisica: "packages/comercio/src/componentes/CatalogoProductosComercio.tsx",
     paquete: "@eco/comercio",
     panelDestino: "Herramientas (/panel/catalogo-productos)",
@@ -340,7 +340,7 @@ export const CATALOGO_SUPERADMIN_TODOS: ModuloSuperAdminDef[] = [
     ruta: "/panel/configuracion?widget=pasarela_payphone",
     icono: CreditCard,
     iconoKey: "CreditCard",
-    color: "#D97706",
+    color: "var(--aviso)",
     rutaFisica: "packages/comercio/src/componentes/ConfiguracionPasarelaPayphone.tsx",
     paquete: "@eco/comercio",
     panelDestino: "Configuración (/panel/configuracion)",
@@ -355,7 +355,7 @@ export const CATALOGO_SUPERADMIN_TODOS: ModuloSuperAdminDef[] = [
     ruta: "/panel/configuracion?widget=configuracion_facturacion_sri",
     icono: FileCheck,
     iconoKey: "FileCheck",
-    color: "#059669",
+    color: "var(--exito)",
     rutaFisica: "packages/comercio/src/componentes/ConfiguracionFacturacionSri.tsx",
     paquete: "@eco/comercio",
     panelDestino: "Configuración (/panel/configuracion)",
@@ -462,7 +462,7 @@ export const CATALOGO_SUPERADMIN_TODOS: ModuloSuperAdminDef[] = [
     ruta: "/panel/administrar?widget=legal_hr_laboral",
     icono: Briefcase,
     iconoKey: "Briefcase",
-    color: "#2563EB",
+    color: "var(--acento)",
     rutaFisica: "packages/comercio/src/componentes/LegalHRLaboral.tsx",
     paquete: "@eco/comercio",
     panelDestino: "Administrar (/panel/administrar) / Empresas",
@@ -494,7 +494,7 @@ export const CATALOGO_SUPERADMIN_TODOS: ModuloSuperAdminDef[] = [
     ruta: "/panel/administrar?widget=gestion_informativos",
     icono: Bell,
     iconoKey: "Bell",
-    color: "#D97706",
+    color: "var(--aviso)",
     rutaFisica: "packages/comercio/src/componentes/ConsolaGestionInformativosWidget.tsx",
     paquete: "@eco/comercio",
     panelDestino: "Administrar (/panel/administrar)",
@@ -526,7 +526,7 @@ export const CATALOGO_SUPERADMIN_TODOS: ModuloSuperAdminDef[] = [
     ruta: "/panel/clientes?widget=muro_informativo_comunidad",
     icono: BellRing,
     iconoKey: "BellRing",
-    color: "#0284C7",
+    color: "var(--acento)",
     rutaFisica: "packages/comercio/src/componentes/TableroBeneficiosAvisosWidget.tsx",
     paquete: "@eco/comercio",
     panelDestino: "Clientes (/panel/clientes)",
@@ -710,7 +710,7 @@ export const CATALOGO_SUPERADMIN_TODOS: ModuloSuperAdminDef[] = [
     ruta: "/panel/administrar?widget=auditoria",
     icono: Shield,
     iconoKey: "Shield",
-    color: "#111827",
+    color: "var(--texto)",
     rutaFisica: "packages/auditoria/src/componentes/TablaAuditoria.tsx",
     paquete: "@eco/auditoria",
     panelDestino: "Administrar / Seguridad (/panel/administrar)",
@@ -725,7 +725,7 @@ export const CATALOGO_SUPERADMIN_TODOS: ModuloSuperAdminDef[] = [
     ruta: "/panel/administrar?widget=emision_notificaciones",
     icono: Bell,
     iconoKey: "Bell",
-    color: "#D97706",
+    color: "var(--aviso)",
     rutaFisica: "packages/notificaciones/src/EmisionNotificacionesWidget.tsx",
     paquete: "@eco/notificaciones",
     panelDestino: "Administrar / Herramientas (/panel/administrar)",
@@ -755,7 +755,7 @@ export const CATALOGO_SUPERADMIN_TODOS: ModuloSuperAdminDef[] = [
     ruta: "/panel/administrar?widget=bitacora_notificaciones",
     icono: Bell,
     iconoKey: "Bell",
-    color: "#2563EB",
+    color: "var(--acento)",
     rutaFisica: "packages/notificaciones/src/BitacoraNotificacionesWidget.tsx",
     paquete: "@eco/notificaciones",
     panelDestino: "Administrar (/panel/administrar)",
@@ -770,7 +770,7 @@ export const CATALOGO_SUPERADMIN_TODOS: ModuloSuperAdminDef[] = [
     ruta: "/panel/configuracion?widget=notificaciones",
     icono: Bell,
     iconoKey: "Bell",
-    color: "#D97706",
+    color: "var(--aviso)",
     rutaFisica: "packages/notificaciones/src/componentes/PreferenciasNotificacionWidget.tsx",
     paquete: "@eco/notificaciones",
     panelDestino: "Configuración (/panel/configuracion)",
@@ -815,7 +815,7 @@ export const CATALOGO_SUPERADMIN_TODOS: ModuloSuperAdminDef[] = [
     ruta: "/panel/cuenta?widget=mfa_seguridad",
     icono: KeyRound,
     iconoKey: "KeyRound",
-    color: "#D97706",
+    color: "var(--aviso)",
     rutaFisica: "packages/identidad/src/componentes/WidgetConfiguracionMfa.tsx",
     paquete: "@eco/identidad",
     panelDestino: "Seguridad / Mi Cuenta (/panel/cuenta)",
@@ -830,7 +830,7 @@ export const CATALOGO_SUPERADMIN_TODOS: ModuloSuperAdminDef[] = [
     ruta: "/panel/cuenta?widget=historial_accesos",
     icono: History,
     iconoKey: "History",
-    color: "#111827",
+    color: "var(--texto)",
     rutaFisica: "packages/identidad/src/componentes/HistorialAccesos.tsx",
     paquete: "@eco/identidad",
     panelDestino: "Mi Cuenta (/panel/cuenta)",
@@ -978,11 +978,11 @@ export function ConsolaSuperAdminModular() {
             style={{
               fontSize: "0.78rem",
               fontWeight: 800,
-              color: "#DC2626",
-              background: "#FEF2F2",
+              color: "var(--error)",
+              background: "var(--error-diluido)",
               padding: "7px 16px",
               borderRadius: "20px",
-              border: "1.5px solid #FCA5A5",
+              border: "1.5px solid var(--error-linea)",
               display: "inline-flex",
               alignItems: "center",
               gap: "6px",
@@ -1000,11 +1000,11 @@ export function ConsolaSuperAdminModular() {
             style={{
               fontSize: "0.78rem",
               fontWeight: 800,
-              color: "#D97706",
-              background: "#FEF3C7",
+              color: "var(--aviso)",
+              background: "var(--aviso-diluido)",
               padding: "6px 14px",
               borderRadius: "20px",
-              border: "1px solid #FCD34D",
+              border: "1px solid var(--aviso-linea)",
               display: "inline-flex",
               alignItems: "center",
               gap: "6px"
@@ -1024,7 +1024,7 @@ export function ConsolaSuperAdminModular() {
       {/* HERO CARD SUPERADMIN */}
       <section
         style={{
-          background: "linear-gradient(135deg, #1E1B4B 0%, #312E81 100%)",
+          background: "linear-gradient(135deg, #1E1B4B 0%, var(--acento-hondo) 100%)",
           borderRadius: "20px",
           padding: "28px 32px",
           color: "#ffffff",
@@ -1033,7 +1033,7 @@ export function ConsolaSuperAdminModular() {
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "8px" }}>
-          <Shield size={22} color="#F59E0B" />
+          <Shield size={22} color="var(--aviso)" />
           <span style={{ fontSize: "0.75rem", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.08em", background: "rgba(255,255,255,0.15)", padding: "4px 10px", borderRadius: "20px" }}>
             CATÁLOGO UNIFICADO DE WIDGETS Y MÓDULOS (16 DISPONIBLES)
           </span>
@@ -1048,7 +1048,7 @@ export function ConsolaSuperAdminModular() {
 
       {/* SECCIÓN ACCESOS FAVORITOS */}
       <div style={{ marginBottom: "28px" }}>
-        <h3 style={{ fontSize: "0.92rem", fontWeight: 800, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "12px" }}>
+        <h3 style={{ fontSize: "0.92rem", fontWeight: 800, color: "var(--texto-2)", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "12px" }}>
           Accesos Rápidos Marcados
         </h3>
         <TarjetasFavoritasGrid />
@@ -1071,7 +1071,7 @@ export function ConsolaSuperAdminModular() {
                 style={{
                   background: "#ffffff",
                   borderRadius: "16px",
-                  border: "1px solid #E4E4E4",
+                  border: "1px solid var(--linea)",
                   padding: "20px",
                   display: "flex",
                   flexDirection: "column",
@@ -1085,11 +1085,11 @@ export function ConsolaSuperAdminModular() {
                 <div>
                   {/* BARRA DE BOTONES SUPERIOR */}
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px" }}>
-                    <div style={{ width: "40px", height: "40px", borderRadius: "10px", background: "#F7F6FA", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <div style={{ width: "40px", height: "40px", borderRadius: "10px", background: "var(--fondo-suave)", display: "flex", alignItems: "center", justifyContent: "center" }}>
                       <IconoComp size={20} color={m.color} />
                     </div>
                     <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                      <span style={{ fontSize: "0.72rem", fontWeight: 800, color: m.color, background: "#F3F4F6", padding: "4px 8px", borderRadius: "6px" }}>
+                      <span style={{ fontSize: "0.72rem", fontWeight: 800, color: m.color, background: "var(--fondo-hundido)", padding: "4px 8px", borderRadius: "6px" }}>
                         Módulo Activo
                       </span>
                       <button
@@ -1097,13 +1097,13 @@ export function ConsolaSuperAdminModular() {
                         onClick={(e) => abrirModalEditar(e, m, info)}
                         title="Editar Título, Descripción e Ícono de este Widget"
                         style={{
-                          border: "1px solid #E5E7EB",
+                          border: "1px solid var(--linea)",
                           background: "#FFFFFF",
                           borderRadius: "8px",
                           padding: "4px 8px",
                           fontSize: "0.74rem",
                           fontWeight: 700,
-                          color: "#4B5563",
+                          color: "var(--texto-2)",
                           cursor: "pointer",
                           display: "flex",
                           alignItems: "center",
@@ -1123,7 +1123,7 @@ export function ConsolaSuperAdminModular() {
                   </p>
                 </div>
 
-                <div style={{ marginTop: "16px", paddingTop: "10px", borderTop: "1px solid #F3F4F6", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <div style={{ marginTop: "16px", paddingTop: "10px", borderTop: "1px solid var(--fondo-hundido)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                   <Link
                     href={m.ruta}
                     style={{ fontSize: "0.76rem", fontWeight: 800, color: "var(--violeta, #5000BA)", textDecoration: "none" }}
@@ -1145,7 +1145,7 @@ export function ConsolaSuperAdminModular() {
           marginTop: "32px",
           background: "var(--blanco, #ffffff)",
           borderRadius: "14px",
-          border: "1px solid var(--panel-linea, #E4E4E4)",
+          border: "1px solid var(--panel-linea, var(--linea))",
           padding: "24px",
           display: "flex",
           flexDirection: "column",
@@ -1158,7 +1158,7 @@ export function ConsolaSuperAdminModular() {
             <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
               <span
                 style={{
-                  background: "var(--violeta-suave, #F3E8FF)",
+                  background: "var(--violeta-suave, var(--acento-diluido))",
                   color: "var(--violeta, #5000BA)",
                   padding: "3px 10px",
                   borderRadius: "6px",
@@ -1172,8 +1172,8 @@ export function ConsolaSuperAdminModular() {
               </span>
               <span
                 style={{
-                  background: "#ECFDF5",
-                  color: "#065F46",
+                  background: "var(--exito-diluido)",
+                  color: "var(--exito-texto)",
                   padding: "3px 10px",
                   borderRadius: "6px",
                   fontSize: "0.72rem",
@@ -1187,7 +1187,7 @@ export function ConsolaSuperAdminModular() {
             <h3 style={{ margin: 0, fontSize: "1.15rem", fontWeight: 800, color: "var(--negro, #111111)" }}>
               📋 Inventario Maestro & Validación de Componentes Fuente (.tsx)
             </h3>
-            <p style={{ margin: "4px 0 0 0", fontSize: "0.84rem", color: "var(--panel-gris, #737373)" }}>
+            <p style={{ margin: "4px 0 0 0", fontSize: "0.84rem", color: "var(--panel-gris, var(--texto-suave))" }}>
               Reporte técnico de widgets del ecosistema: ruta física del componente, perfiles autorizados y verificación de unicidad sin duplicados.
             </p>
           </div>
@@ -1197,7 +1197,7 @@ export function ConsolaSuperAdminModular() {
               <strong style={{ fontSize: "1.2rem", fontWeight: 900, color: "var(--violeta, #5000BA)", display: "block" }}>
                 {CATALOGO_SUPERADMIN_TODOS.length}
               </strong>
-              <span style={{ fontSize: "0.72rem", color: "#64748B", fontWeight: 700 }}>Módulos Registrados</span>
+              <span style={{ fontSize: "0.72rem", color: "var(--texto-suave)", fontWeight: 700 }}>Módulos Registrados</span>
             </div>
           </div>
         </div>
@@ -1218,7 +1218,7 @@ export function ConsolaSuperAdminModular() {
                         width: "32px",
                         height: "32px",
                         borderRadius: "8px",
-                        background: `${r.color}15`,
+                        background: `color-mix(in srgb, ${r.color} 8%, transparent)`,
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
@@ -1228,8 +1228,8 @@ export function ConsolaSuperAdminModular() {
                       <IconoR size={18} color={r.color} />
                     </div>
                     <div>
-                      <strong style={{ color: "#0F172A", fontSize: "0.85rem", display: "block" }}>{r.nombre}</strong>
-                      <code style={{ fontSize: "0.72rem", color: "#64748B", background: "#F1F5F9", padding: "1px 5px", borderRadius: "4px" }}>
+                      <strong style={{ color: "var(--texto)", fontSize: "0.85rem", display: "block" }}>{r.nombre}</strong>
+                      <code style={{ fontSize: "0.72rem", color: "var(--texto-suave)", background: "var(--fondo-hundido)", padding: "1px 5px", borderRadius: "4px" }}>
                         clave: {r.clave}
                       </code>
                     </div>
@@ -1243,10 +1243,10 @@ export function ConsolaSuperAdminModular() {
               valor: (r: ModuloSuperAdminDef) => r.rutaFisica,
               render: (r: ModuloSuperAdminDef) => (
                 <div>
-                  <span style={{ fontSize: "0.74rem", fontFamily: "monospace", color: "#1E293B", fontWeight: 700, display: "block" }}>
+                  <span style={{ fontSize: "0.74rem", fontFamily: "monospace", color: "var(--texto)", fontWeight: 700, display: "block" }}>
                     {r.rutaFisica}
                   </span>
-                  <span style={{ fontSize: "0.68rem", color: "#64748B" }}>
+                  <span style={{ fontSize: "0.68rem", color: "var(--texto-suave)" }}>
                     Paquete: <strong style={{ color: "var(--violeta, #5000BA)" }}>{r.paquete}</strong>
                   </span>
                 </div>
@@ -1262,8 +1262,8 @@ export function ConsolaSuperAdminModular() {
                     style={{
                       padding: "2px 8px",
                       borderRadius: "6px",
-                      background: "#EDE9FE",
-                      color: "#5B21B6",
+                      background: "var(--acento-diluido)",
+                      color: "var(--acento-hondo)",
                       fontWeight: 800,
                       fontSize: "0.72rem",
                       display: "inline-block",
@@ -1272,7 +1272,7 @@ export function ConsolaSuperAdminModular() {
                   >
                     {r.categoria}
                   </span>
-                  <span style={{ display: "block", fontSize: "0.72rem", color: "#475569" }}>
+                  <span style={{ display: "block", fontSize: "0.72rem", color: "var(--texto-2)" }}>
                     {r.panelDestino}
                   </span>
                 </div>
@@ -1286,15 +1286,15 @@ export function ConsolaSuperAdminModular() {
                 <div style={{ display: "flex", flexWrap: "wrap", gap: "4px" }}>
                   {r.perfilesAsignados.map((p) => {
                     const colorBg =
-                      p === "SUPERADMIN" ? "#F3E8FF" :
-                      p === "ADMINISTRADOR" ? "#FEF3C7" :
-                      p === "OPERADOR" ? "#ECFDF5" :
-                      p === "ABOGADO" ? "#EFF6FF" : "#F1F5F9";
+                      p === "SUPERADMIN" ? "var(--acento-diluido)" :
+                      p === "ADMINISTRADOR" ? "var(--aviso-diluido)" :
+                      p === "OPERADOR" ? "var(--exito-diluido)" :
+                      p === "ABOGADO" ? "var(--acento-diluido)" : "var(--fondo-hundido)";
                     const colorTxt =
                       p === "SUPERADMIN" ? "#6B21A8" :
-                      p === "ADMINISTRADOR" ? "#92400E" :
-                      p === "OPERADOR" ? "#065F46" :
-                      p === "ABOGADO" ? "#1E40AF" : "#475569";
+                      p === "ADMINISTRADOR" ? "var(--aviso-texto)" :
+                      p === "OPERADOR" ? "var(--exito-texto)" :
+                      p === "ABOGADO" ? "var(--acento-hondo)" : "var(--texto-2)";
                     return (
                       <span
                         key={p}
@@ -1327,8 +1327,8 @@ export function ConsolaSuperAdminModular() {
                     gap: "4px",
                     padding: "3px 8px",
                     borderRadius: "6px",
-                    background: "#ECFDF5",
-                    color: "#047857",
+                    background: "var(--exito-diluido)",
+                    color: "var(--exito-texto)",
                     fontWeight: 800,
                     fontSize: "0.72rem",
                   }}
@@ -1346,9 +1346,9 @@ export function ConsolaSuperAdminModular() {
                   style={{
                     fontSize: "0.72rem",
                     fontWeight: 700,
-                    color: r.fechaRegistro ? "#065F46" : "#94A3B8",
-                    background: r.fechaRegistro ? "#ECFDF5" : "#F8FAFC",
-                    border: r.fechaRegistro ? "1px solid #A7F3D0" : "1px solid #E2E8F0",
+                    color: r.fechaRegistro ? "var(--exito-texto)" : "var(--texto-tenue)",
+                    background: r.fechaRegistro ? "var(--exito-diluido)" : "var(--fondo-suave)",
+                    border: r.fechaRegistro ? "1px solid var(--exito-linea)" : "1px solid var(--linea)",
                     padding: "2px 8px",
                     borderRadius: "6px",
                     display: "inline-flex",
@@ -1366,7 +1366,7 @@ export function ConsolaSuperAdminModular() {
               encabezado: "Descripción Funcional",
               valor: (r: ModuloSuperAdminDef) => r.detalle,
               render: (r: ModuloSuperAdminDef) => (
-                <span style={{ fontSize: "0.78rem", color: "#475569", lineHeight: 1.4 }}>
+                <span style={{ fontSize: "0.78rem", color: "var(--texto-2)", lineHeight: 1.4 }}>
                   {r.detalle}
                 </span>
               ),
@@ -1379,17 +1379,17 @@ export function ConsolaSuperAdminModular() {
             <div
               style={{
                 padding: "14px 18px",
-                background: "#F8FAFC",
+                background: "var(--fondo-suave)",
                 borderRadius: "8px",
                 fontSize: "0.8rem",
-                border: "1px solid #E2E8F0",
+                border: "1px solid var(--linea)",
                 display: "flex",
                 flexDirection: "column",
                 gap: "8px",
               }}
             >
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <strong style={{ color: "#0F172A", fontSize: "0.88rem" }}>
+                <strong style={{ color: "var(--texto)", fontSize: "0.88rem" }}>
                   🔎 Ficha Técnica y Gobernanza: {r.nombre} ({r.clave})
                 </strong>
                 <Link
@@ -1407,20 +1407,20 @@ export function ConsolaSuperAdminModular() {
 
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "10px", marginTop: "4px" }}>
                 <div>
-                  <span style={{ color: "#64748B", display: "block", fontSize: "0.72rem" }}>Ruta Física (.tsx):</span>
-                  <code style={{ fontSize: "0.75rem", color: "#0F172A" }}>{r.rutaFisica}</code>
+                  <span style={{ color: "var(--texto-suave)", display: "block", fontSize: "0.72rem" }}>Ruta Física (.tsx):</span>
+                  <code style={{ fontSize: "0.75rem", color: "var(--texto)" }}>{r.rutaFisica}</code>
                 </div>
                 <div>
-                  <span style={{ color: "#64748B", display: "block", fontSize: "0.72rem" }}>Ruta de Enrutamiento / URL:</span>
-                  <code style={{ fontSize: "0.75rem", color: "#0F172A" }}>{r.ruta}</code>
+                  <span style={{ color: "var(--texto-suave)", display: "block", fontSize: "0.72rem" }}>Ruta de Enrutamiento / URL:</span>
+                  <code style={{ fontSize: "0.75rem", color: "var(--texto)" }}>{r.ruta}</code>
                 </div>
                 <div>
-                  <span style={{ color: "#64748B", display: "block", fontSize: "0.72rem" }}>Paquete Monorepo:</span>
+                  <span style={{ color: "var(--texto-suave)", display: "block", fontSize: "0.72rem" }}>Paquete Monorepo:</span>
                   <strong style={{ fontSize: "0.78rem", color: "var(--violeta, #5000BA)" }}>{r.paquete}</strong>
                 </div>
                 <div>
-                  <span style={{ color: "#64748B", display: "block", fontSize: "0.72rem" }}>Regla de Unicidad:</span>
-                  <span style={{ fontSize: "0.75rem", color: "#065F46", fontWeight: 700 }}>
+                  <span style={{ color: "var(--texto-suave)", display: "block", fontSize: "0.72rem" }}>Regla de Unicidad:</span>
+                  <span style={{ fontSize: "0.75rem", color: "var(--exito-texto)", fontWeight: 700 }}>
                     Sin colisiones con otros componentes ni duplicación de vistas.
                   </span>
                 </div>

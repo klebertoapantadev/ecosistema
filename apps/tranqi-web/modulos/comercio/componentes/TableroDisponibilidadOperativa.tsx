@@ -124,7 +124,7 @@ export function TableroDisponibilidadOperativa({
       style={{
         background: "#FFFFFF",
         borderRadius: "16px",
-        border: "1px solid #E2E8F0",
+        border: "1px solid var(--linea)",
         padding: "20px 24px",
         boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.05)",
         maxWidth: enModal ? "780px" : "100%",
@@ -150,15 +150,15 @@ export function TableroDisponibilidadOperativa({
               height: "40px",
               borderRadius: "10px",
               background: esFloristeria
-                ? "#FFF1F2"
+                ? "var(--error-diluido)"
                 : esLegal
-                ? "#F5F3FF"
-                : "#F0F9FF",
+                ? "var(--acento-diluido)"
+                : "var(--acento-diluido)",
               color: esFloristeria
-                ? "#E11D48"
+                ? "var(--error)"
                 : esLegal
                 ? "#5000BA"
-                : "#0284C7",
+                : "var(--acento)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -179,7 +179,7 @@ export function TableroDisponibilidadOperativa({
                   margin: 0,
                   fontSize: "1.2rem",
                   fontWeight: 800,
-                  color: "#0F172A",
+                  color: "var(--texto)",
                 }}
               >
                 {esFloristeria
@@ -190,8 +190,8 @@ export function TableroDisponibilidadOperativa({
               </h2>
               <span
                 style={{
-                  background: "#ECFDF5",
-                  color: "#059669",
+                  background: "var(--exito-diluido)",
+                  color: "var(--exito)",
                   padding: "2px 8px",
                   borderRadius: "12px",
                   fontSize: "0.7rem",
@@ -209,7 +209,7 @@ export function TableroDisponibilidadOperativa({
               style={{
                 margin: "4px 0 0",
                 fontSize: "0.82rem",
-                color: "#64748B",
+                color: "var(--texto-suave)",
               }}
             >
               {esFloristeria
@@ -227,9 +227,9 @@ export function TableroDisponibilidadOperativa({
             onClick={cargarDatos}
             disabled={cargando}
             style={{
-              background: "#F8FAFC",
-              border: "1px solid #CBD5E1",
-              color: "#475569",
+              background: "var(--fondo-suave)",
+              border: "1px solid var(--linea-fuerte)",
+              color: "var(--texto-2)",
               padding: "7px 12px",
               borderRadius: "8px",
               fontSize: "0.8rem",
@@ -249,7 +249,7 @@ export function TableroDisponibilidadOperativa({
             onClick={handleGuardar}
             disabled={guardando}
             style={{
-              background: esFloristeria ? "#E11D48" : "#0F172A",
+              background: esFloristeria ? "var(--error)" : "var(--texto)",
               color: "#FFFFFF",
               border: "none",
               padding: "8px 16px",
@@ -273,9 +273,9 @@ export function TableroDisponibilidadOperativa({
       {mensajeExito && (
         <div
           style={{
-            background: "#F0FDF4",
-            border: "1px solid #86EFAC",
-            color: "#166534",
+            background: "var(--exito-diluido)",
+            border: "1px solid var(--exito-linea)",
+            color: "var(--exito-texto)",
             padding: "10px 14px",
             borderRadius: "8px",
             marginBottom: "14px",
@@ -293,9 +293,9 @@ export function TableroDisponibilidadOperativa({
       {error && (
         <div
           style={{
-            background: "#FEF2F2",
-            border: "1px solid #FCA5A5",
-            color: "#991B1B",
+            background: "var(--error-diluido)",
+            border: "1px solid var(--error-linea)",
+            color: "var(--error-texto)",
             padding: "10px 14px",
             borderRadius: "8px",
             marginBottom: "14px",
@@ -321,10 +321,10 @@ export function TableroDisponibilidadOperativa({
               borderRadius: "20px",
               border:
                 filtroCategoria === "TODAS"
-                  ? "1.5px solid #E11D48"
-                  : "1px solid #CBD5E1",
-              background: filtroCategoria === "TODAS" ? "#FFF1F2" : "#FFFFFF",
-              color: filtroCategoria === "TODAS" ? "#BE123C" : "#475569",
+                  ? "1.5px solid var(--error)"
+                  : "1px solid var(--linea-fuerte)",
+              background: filtroCategoria === "TODAS" ? "var(--error-diluido)" : "#FFFFFF",
+              color: filtroCategoria === "TODAS" ? "var(--error-texto)" : "var(--texto-2)",
               fontSize: "0.78rem",
               fontWeight: 700,
               cursor: "pointer",
@@ -341,10 +341,10 @@ export function TableroDisponibilidadOperativa({
               borderRadius: "20px",
               border:
                 filtroCategoria === "ROSAS"
-                  ? "1.5px solid #E11D48"
-                  : "1px solid #CBD5E1",
-              background: filtroCategoria === "ROSAS" ? "#FFF1F2" : "#FFFFFF",
-              color: filtroCategoria === "ROSAS" ? "#BE123C" : "#475569",
+                  ? "1.5px solid var(--error)"
+                  : "1px solid var(--linea-fuerte)",
+              background: filtroCategoria === "ROSAS" ? "var(--error-diluido)" : "#FFFFFF",
+              color: filtroCategoria === "ROSAS" ? "var(--error-texto)" : "var(--texto-2)",
               fontSize: "0.78rem",
               fontWeight: 700,
               cursor: "pointer",
@@ -361,11 +361,11 @@ export function TableroDisponibilidadOperativa({
               borderRadius: "20px",
               border:
                 filtroCategoria === "ENVOLTORIO"
-                  ? "1.5px solid #E11D48"
-                  : "1px solid #CBD5E1",
+                  ? "1.5px solid var(--error)"
+                  : "1px solid var(--linea-fuerte)",
               background:
-                filtroCategoria === "ENVOLTORIO" ? "#FFF1F2" : "#FFFFFF",
-              color: filtroCategoria === "ENVOLTORIO" ? "#BE123C" : "#475569",
+                filtroCategoria === "ENVOLTORIO" ? "var(--error-diluido)" : "#FFFFFF",
+              color: filtroCategoria === "ENVOLTORIO" ? "var(--error-texto)" : "var(--texto-2)",
               fontSize: "0.78rem",
               fontWeight: 700,
               cursor: "pointer",
@@ -392,12 +392,12 @@ export function TableroDisponibilidadOperativa({
             <div
               key={it.id}
               style={{
-                background: esAgotado ? "#F8FAFC" : "#FFFFFF",
+                background: esAgotado ? "var(--fondo-suave)" : "#FFFFFF",
                 border: esAgotado
-                  ? "1px solid #E2E8F0"
+                  ? "1px solid var(--linea)"
                   : esBajo
-                  ? "1.5px solid #FCD34D"
-                  : "1.5px solid #E2E8F0",
+                  ? "1.5px solid var(--aviso-linea)"
+                  : "1.5px solid var(--linea)",
                 borderRadius: "12px",
                 padding: "14px",
                 display: "flex",
@@ -416,7 +416,7 @@ export function TableroDisponibilidadOperativa({
                       height: "28px",
                       borderRadius: "50%",
                       backgroundColor: it.color_hex,
-                      border: "2px solid #CBD5E1",
+                      border: "2px solid var(--linea-fuerte)",
                       flexShrink: 0,
                       boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
                     }}
@@ -427,13 +427,13 @@ export function TableroDisponibilidadOperativa({
                     style={{
                       fontSize: "0.88rem",
                       fontWeight: 700,
-                      color: esAgotado ? "#64748B" : "#0F172A",
+                      color: esAgotado ? "var(--texto-suave)" : "var(--texto)",
                     }}
                   >
                     {it.nombre}
                   </div>
                   {it.nombre_secundario && (
-                    <div style={{ fontSize: "0.72rem", color: "#64748B" }}>
+                    <div style={{ fontSize: "0.72rem", color: "var(--texto-suave)" }}>
                       {it.nombre_secundario}
                     </div>
                   )}
@@ -446,7 +446,7 @@ export function TableroDisponibilidadOperativa({
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "space-between",
-                  background: "#F8FAFC",
+                  background: "var(--fondo-suave)",
                   padding: "6px 10px",
                   borderRadius: "8px",
                 }}
@@ -455,7 +455,7 @@ export function TableroDisponibilidadOperativa({
                   style={{
                     fontSize: "0.75rem",
                     fontWeight: 600,
-                    color: "#475569",
+                    color: "var(--texto-2)",
                   }}
                 >
                   {it.unidad === "BONCHE"
@@ -476,9 +476,9 @@ export function TableroDisponibilidadOperativa({
                       width: "24px",
                       height: "24px",
                       borderRadius: "6px",
-                      border: "1px solid #CBD5E1",
+                      border: "1px solid var(--linea-fuerte)",
                       background: "#FFFFFF",
-                      color: "#334155",
+                      color: "var(--texto-2)",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
@@ -492,7 +492,7 @@ export function TableroDisponibilidadOperativa({
                     style={{
                       fontSize: "1rem",
                       fontWeight: 800,
-                      color: esAgotado ? "#94A3B8" : "#0F172A",
+                      color: esAgotado ? "var(--texto-tenue)" : "var(--texto)",
                       minWidth: "24px",
                       textAlign: "center",
                     }}
@@ -507,9 +507,9 @@ export function TableroDisponibilidadOperativa({
                       width: "24px",
                       height: "24px",
                       borderRadius: "6px",
-                      border: "1px solid #CBD5E1",
+                      border: "1px solid var(--linea-fuerte)",
                       background: "#FFFFFF",
-                      color: "#334155",
+                      color: "var(--texto-2)",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
@@ -532,12 +532,12 @@ export function TableroDisponibilidadOperativa({
                     borderRadius: "6px",
                     border:
                       it.estado === "DISPONIBLE"
-                        ? "1.5px solid #16A34A"
-                        : "1px solid #E2E8F0",
+                        ? "1.5px solid var(--exito)"
+                        : "1px solid var(--linea)",
                     background:
-                      it.estado === "DISPONIBLE" ? "#DCFCE7" : "#FFFFFF",
+                      it.estado === "DISPONIBLE" ? "var(--exito-diluido)" : "#FFFFFF",
                     color:
-                      it.estado === "DISPONIBLE" ? "#15803D" : "#64748B",
+                      it.estado === "DISPONIBLE" ? "var(--exito-texto)" : "var(--texto-suave)",
                     fontSize: "0.68rem",
                     fontWeight: 700,
                     cursor: "pointer",
@@ -555,10 +555,10 @@ export function TableroDisponibilidadOperativa({
                     borderRadius: "6px",
                     border:
                       it.estado === "BAJO"
-                        ? "1.5px solid #D97706"
-                        : "1px solid #E2E8F0",
-                    background: it.estado === "BAJO" ? "#FEF3C7" : "#FFFFFF",
-                    color: it.estado === "BAJO" ? "#B45309" : "#64748B",
+                        ? "1.5px solid var(--aviso)"
+                        : "1px solid var(--linea)",
+                    background: it.estado === "BAJO" ? "var(--aviso-diluido)" : "#FFFFFF",
+                    color: it.estado === "BAJO" ? "var(--aviso-texto)" : "var(--texto-suave)",
                     fontSize: "0.68rem",
                     fontWeight: 700,
                     cursor: "pointer",
@@ -576,11 +576,11 @@ export function TableroDisponibilidadOperativa({
                     borderRadius: "6px",
                     border:
                       it.estado === "AGOTADO"
-                        ? "1.5px solid #DC2626"
-                        : "1px solid #E2E8F0",
+                        ? "1.5px solid var(--error)"
+                        : "1px solid var(--linea)",
                     background:
-                      it.estado === "AGOTADO" ? "#FEE2E2" : "#FFFFFF",
-                    color: it.estado === "AGOTADO" ? "#B91C1C" : "#64748B",
+                      it.estado === "AGOTADO" ? "var(--error-diluido)" : "#FFFFFF",
+                    color: it.estado === "AGOTADO" ? "var(--error)" : "var(--texto-suave)",
                     fontSize: "0.68rem",
                     fontWeight: 700,
                     cursor: "pointer",

@@ -64,7 +64,7 @@ export function ModalVerificarMFAWidget({
           borderRadius: "16px",
           width: "100%",
           maxWidth: "460px",
-          border: "1px solid var(--panel-linea, #E4E4E4)",
+          border: "1px solid var(--panel-linea, var(--linea))",
           boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.15)",
           overflow: "hidden",
         }}
@@ -74,8 +74,8 @@ export function ModalVerificarMFAWidget({
         <div
           style={{
             padding: "16px 20px",
-            background: "var(--panel-papel, #F7F6FA)",
-            borderBottom: "1px solid var(--panel-linea, #E4E4E4)",
+            background: "var(--panel-papel, var(--fondo-suave))",
+            borderBottom: "1px solid var(--panel-linea, var(--linea))",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
@@ -97,7 +97,7 @@ export function ModalVerificarMFAWidget({
               <h3 style={{ fontSize: "0.98rem", fontWeight: 800, margin: 0, color: "var(--negro, #111111)" }}>
                 Autenticación MFA Requerida
               </h3>
-              <span style={{ fontSize: "0.76rem", color: "var(--panel-gris, #737373)" }}>
+              <span style={{ fontSize: "0.76rem", color: "var(--panel-gris, var(--texto-suave))" }}>
                 Widget Protegido por Inactividad
               </span>
             </div>
@@ -111,7 +111,7 @@ export function ModalVerificarMFAWidget({
               border: "none",
               cursor: "pointer",
               padding: "4px",
-              color: "var(--panel-gris, #737373)",
+              color: "var(--panel-gris, var(--texto-suave))",
               display: "flex",
               borderRadius: "50%",
             }}
@@ -126,8 +126,8 @@ export function ModalVerificarMFAWidget({
             style={{
               padding: "12px",
               borderRadius: "8px",
-              background: "var(--violeta-suave, #F3E8FF)",
-              border: "1px solid var(--panel-linea, #E4E4E4)",
+              background: "var(--violeta-suave, var(--acento-diluido))",
+              border: "1px solid var(--panel-linea, var(--linea))",
               color: "var(--violeta, #5000BA)",
               fontSize: "0.83rem",
               lineHeight: 1.4,
@@ -188,14 +188,14 @@ export function ModalVerificarMFAWidget({
                   width: "100%",
                   padding: "12px 12px 12px 38px",
                   borderRadius: "8px",
-                  border: "1px solid var(--panel-linea, #E4E4E4)",
+                  border: "1px solid var(--panel-linea, var(--linea))",
                   fontSize: "1.1rem",
                   letterSpacing: "3px",
                   fontWeight: 800,
                   outline: "none",
                 }}
               />
-              <KeyRound size={18} style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: "var(--panel-gris, #737373)" }} />
+              <KeyRound size={18} style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: "var(--panel-gris, var(--texto-suave))" }} />
             </div>
           </div>
 
@@ -205,8 +205,8 @@ export function ModalVerificarMFAWidget({
               onClick={onCerrar}
               className="btn-mini"
               style={{
-                background: "var(--panel-papel, #F7F6FA)",
-                border: "1px solid var(--panel-linea, #E4E4E4)",
+                background: "var(--panel-papel, var(--fondo-suave))",
+                border: "1px solid var(--panel-linea, var(--linea))",
                 color: "var(--negro, #111111)",
                 padding: "8px 16px",
               }}

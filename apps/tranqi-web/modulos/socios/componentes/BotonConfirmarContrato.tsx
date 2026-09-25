@@ -83,21 +83,21 @@ export function BotonConfirmarContrato({
   }
 
   return (
-    <div style={{ marginTop: "16px", background: "#F8FAFC", border: "1.5px solid #CBD5E1", borderRadius: "14px", padding: "20px 24px" }}>
+    <div style={{ marginTop: "16px", background: "var(--fondo-suave)", border: "1.5px solid var(--linea-fuerte)", borderRadius: "14px", padding: "20px 24px" }}>
       <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "8px" }}>
         <ShieldCheck size={24} color="#5000BA" />
         <div>
-          <h3 style={{ margin: 0, fontSize: "1.05rem", fontWeight: 800, color: "#1E293B" }}>
+          <h3 style={{ margin: 0, fontSize: "1.05rem", fontWeight: 800, color: "var(--texto)" }}>
             Fase 3: Verificación y Contra-Firma Institucional tranqi
           </h3>
-          <p style={{ margin: "2px 0 0 0", fontSize: "0.82rem", color: "#64748B" }}>
+          <p style={{ margin: "2px 0 0 0", fontSize: "0.82rem", color: "var(--texto-suave)" }}>
             El postulante ha cargado su contrato firmado. Revisa el documento y realiza la contra-firma digital de tranqi para formalizar e integrar su activación.
           </p>
         </div>
       </div>
 
       <div style={{ margin: "16px 0" }}>
-        <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 700, color: "#334155", marginBottom: "6px" }}>
+        <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 700, color: "var(--texto-2)", marginBottom: "6px" }}>
           Nota u observaciones de activación (opcional):
           <textarea
             value={comentario}
@@ -110,7 +110,7 @@ export function BotonConfirmarContrato({
               marginTop: "4px",
               padding: "8px 12px",
               borderRadius: "8px",
-              border: "1px solid #CBD5E1",
+              border: "1px solid var(--linea-fuerte)",
               fontSize: "0.85rem",
               outline: "none",
               boxSizing: "border-box",
@@ -120,13 +120,13 @@ export function BotonConfirmarContrato({
       </div>
 
       {error && (
-        <div style={{ background: "#FEF2F2", border: "1px solid #FCA5A5", color: "#DC2626", padding: "10px 14px", borderRadius: "8px", fontSize: "0.84rem", fontWeight: 600, marginBottom: "12px" }}>
+        <div style={{ background: "var(--error-diluido)", border: "1px solid var(--error-linea)", color: "var(--error)", padding: "10px 14px", borderRadius: "8px", fontSize: "0.84rem", fontWeight: 600, marginBottom: "12px" }}>
           {error}
         </div>
       )}
 
       {exito && (
-        <div style={{ background: "#ECFDF5", border: "1px solid #10B981", color: "#065F46", padding: "10px 14px", borderRadius: "8px", fontSize: "0.84rem", fontWeight: 600, marginBottom: "12px" }}>
+        <div style={{ background: "var(--exito-diluido)", border: "1px solid var(--exito)", color: "var(--exito-texto)", padding: "10px 14px", borderRadius: "8px", fontSize: "0.84rem", fontWeight: 600, marginBottom: "12px" }}>
           {exito}
         </div>
       )}

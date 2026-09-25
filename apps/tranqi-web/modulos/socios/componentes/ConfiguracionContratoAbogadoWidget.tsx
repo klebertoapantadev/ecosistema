@@ -115,7 +115,7 @@ export function ConfiguracionContratoAbogadoWidget() {
     // Saltos de línea dobles como párrafos
     html = html.split("\n\n").map(p => {
       if (p.trim().startsWith("<h") || p.trim().startsWith("<li")) return p;
-      return `<p style="margin-bottom: 14px; font-size: 0.92rem; line-height: 1.6; color: #374151;">${p}</p>`;
+      return `<p style="margin-bottom: 14px; font-size: 0.92rem; line-height: 1.6; color: var(--texto-2);">${p}</p>`;
     }).join("");
 
     return html;
@@ -123,7 +123,7 @@ export function ConfiguracionContratoAbogadoWidget() {
 
   if (cargando) {
     return (
-      <div style={{ padding: "40px", textAlign: "center", color: "#6B7280" }}>
+      <div style={{ padding: "40px", textAlign: "center", color: "var(--texto-suave)" }}>
         <RefreshCw className="animate-spin" style={{ margin: "0 auto 10px" }} />
         Cargando plantilla de contrato activa...
       </div>
@@ -141,8 +141,8 @@ export function ConfiguracionContratoAbogadoWidget() {
             style={{
               padding: "8px 16px",
               background: vista === "editar" ? "#5000BA" : "#FFF",
-              color: vista === "editar" ? "#FFF" : "#374151",
-              border: "1px solid " + (vista === "editar" ? "#5000BA" : "#D1D5DB"),
+              color: vista === "editar" ? "#FFF" : "var(--texto-2)",
+              border: "1px solid " + (vista === "editar" ? "#5000BA" : "var(--linea-fuerte)"),
               borderRadius: "8px",
               fontSize: "0.85rem",
               fontWeight: 700,
@@ -160,8 +160,8 @@ export function ConfiguracionContratoAbogadoWidget() {
             style={{
               padding: "8px 16px",
               background: vista === "vista_previa" ? "#5000BA" : "#FFF",
-              color: vista === "vista_previa" ? "#FFF" : "#374151",
-              border: "1px solid " + (vista === "vista_previa" ? "#5000BA" : "#D1D5DB"),
+              color: vista === "vista_previa" ? "#FFF" : "var(--texto-2)",
+              border: "1px solid " + (vista === "vista_previa" ? "#5000BA" : "var(--linea-fuerte)"),
               borderRadius: "8px",
               fontSize: "0.85rem",
               fontWeight: 700,
@@ -205,9 +205,9 @@ export function ConfiguracionContratoAbogadoWidget() {
           style={{
             padding: "12px 16px",
             borderRadius: "8px",
-            background: mensaje.tipo === "exito" ? "#ECFDF5" : "#FEF2F2",
-            border: "1px solid " + (mensaje.tipo === "exito" ? "#10B981" : "#EF4444"),
-            color: mensaje.tipo === "exito" ? "#065F46" : "#991B1B",
+            background: mensaje.tipo === "exito" ? "var(--exito-diluido)" : "var(--error-diluido)",
+            border: "1px solid " + (mensaje.tipo === "exito" ? "var(--exito)" : "var(--error)"),
+            color: mensaje.tipo === "exito" ? "var(--exito-texto)" : "var(--error-texto)",
             fontSize: "0.88rem",
             marginBottom: "16px",
             display: "flex",
@@ -236,7 +236,7 @@ export function ConfiguracionContratoAbogadoWidget() {
                 padding: "10px 14px",
                 fontSize: "0.9rem",
                 borderRadius: "8px",
-                border: "1px solid #D1D5DB",
+                border: "1px solid var(--linea-fuerte)",
                 outline: "none",
               }}
             />
@@ -264,7 +264,7 @@ export function ConfiguracionContratoAbogadoWidget() {
                 fontSize: "0.85rem",
                 padding: "16px",
                 borderRadius: "8px",
-                border: "1px solid #D1D5DB",
+                border: "1px solid var(--linea-fuerte)",
                 outline: "none",
                 lineHeight: 1.5,
                 boxSizing: "border-box",
@@ -278,15 +278,15 @@ export function ConfiguracionContratoAbogadoWidget() {
             background: "#FFF",
             padding: "30px 40px",
             borderRadius: "12px",
-            border: "1px solid #E5E7EB",
+            border: "1px solid var(--linea)",
             boxShadow: "0 4px 12px rgba(0,0,0,0.04)",
           }}
         >
-          <div style={{ textAlign: "center", borderBottom: "2px solid #E5E7EB", paddingBottom: "16px", marginBottom: "20px" }}>
-            <h2 style={{ fontSize: "1.3rem", fontWeight: 800, color: "#111827", margin: 0 }}>
+          <div style={{ textAlign: "center", borderBottom: "2px solid var(--linea)", paddingBottom: "16px", marginBottom: "20px" }}>
+            <h2 style={{ fontSize: "1.3rem", fontWeight: 800, color: "var(--texto)", margin: 0 }}>
               {titulo || "Sin Título Específico"}
             </h2>
-            <span style={{ fontSize: "0.75rem", color: "#6B7280", marginTop: "4px", display: "block" }}>
+            <span style={{ fontSize: "0.75rem", color: "var(--texto-suave)", marginTop: "4px", display: "block" }}>
               Vista previa del documento dinámico
             </span>
           </div>

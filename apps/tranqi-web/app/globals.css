@@ -3227,3 +3227,51 @@ div.tarjeta-acceso-icono { display: grid; place-items: center; padding: 0; }
   }
 }
 
+/* ── TRQ-016 · Registro de trabajo: tokens de las pantallas del panel ──────
+   Las pantallas de trabajo se escribieron con la paleta de Tailwind a mano
+   (173 hex distintos, azul cielo #0284C7 como acción). Estos tokens son su
+   traducción al sistema visual (gobernanza/productos/tranqi/sistema-visual.md):
+   neutros para casi todo y color solo como señal (§3).
+
+   --acento es la acción del perfil (regla 2): violeta por defecto, esmeralda
+   en abogado/socio. Los diluidos se repiten en cada perfil a propósito: una
+   variable que depende de otra se resuelve donde se declara, así que un
+   color-mix sobre --acento en :root se quedaría violeta para el abogado.
+   Error y urgencia comparten el naranja hondo de §6: el sistema no tiene rojo. */
+:root {
+  --texto: #111111;
+  --texto-2: #3F3F46;
+  --texto-suave: #6B6B76;
+  --texto-tenue: #9D9DA6;
+  --linea-fuerte: #D4D4D8;
+  --linea: #E7E7EA;
+  --fondo-suave: #F8F8FA;
+  --fondo-hundido: #F1F1F4;
+
+  --acento: var(--violeta);
+  --acento-hondo: #3A0088;
+  --acento-diluido: #F3EEFB;
+  --acento-linea: #D9C8F2;
+
+  --exito: var(--esmeralda);
+  --exito-texto: #04614F;
+  --exito-diluido: #EAF7F2;
+  --exito-linea: #B7E3D6;
+
+  --aviso: #A77B00;
+  --aviso-texto: #6B5000;
+  --aviso-diluido: #FFF8D9;
+  --aviso-linea: #F0DE8C;
+
+  --error: #C33F00;
+  --error-texto: #9A3200;
+  --error-diluido: #FFE9DE;
+  --error-linea: #FFC7AD;
+}
+.panel-layout.perfil-abogado,
+.panel-layout.perfil-socio {
+  --acento: var(--esmeralda);
+  --acento-hondo: #04614F;
+  --acento-diluido: #EAF7F2;
+  --acento-linea: #B7E3D6;
+}

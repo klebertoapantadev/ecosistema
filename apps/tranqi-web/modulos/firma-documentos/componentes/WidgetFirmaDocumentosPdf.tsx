@@ -226,7 +226,7 @@ export function WidgetFirmaDocumentosPdf({
         errorCorrectionLevel: "M",
         margin: 1,
         width: 200,
-        color: { dark: "#0F172A", light: "#FFFFFF" },
+        color: { dark: "var(--texto)", light: "#FFFFFF" },
       });
       setQrPreviewDataUrl(qrDataUrl);
 
@@ -619,18 +619,18 @@ export function WidgetFirmaDocumentosPdf({
       {/* AVISO DE PRIVACIDAD ZERO-CUSTODY */}
       <div
         style={{
-          background: "#F0FDF4",
-          border: "1px solid #BBF7D0",
+          background: "var(--exito-diluido)",
+          border: "1px solid var(--exito-linea)",
           borderRadius: "12px",
           padding: "10px 16px",
           display: "flex",
           alignItems: "center",
           gap: "10px",
           fontSize: "0.8rem",
-          color: "#166534",
+          color: "var(--exito-texto)",
         }}
       >
-        <ShieldCheck size={18} color="#16A34A" style={{ flexShrink: 0 }} />
+        <ShieldCheck size={18} color="var(--exito)" style={{ flexShrink: 0 }} />
         <span>
           <strong>Privacidad Zero-Custody:</strong> Tu certificado `.p12`, contraseña y documentos se procesan exclusivamente en la memoria de tu dispositivo. <strong>Ningún archivo se envía a servidores externos.</strong>
         </span>
@@ -640,7 +640,7 @@ export function WidgetFirmaDocumentosPdf({
       <div
         style={{
           background: "#FFFFFF",
-          border: "1px solid #E2E8F0",
+          border: "1px solid var(--linea)",
           borderRadius: "12px",
           padding: "10px 20px",
           display: "flex",
@@ -656,7 +656,7 @@ export function WidgetFirmaDocumentosPdf({
               display: "flex",
               alignItems: "center",
               gap: "6px",
-              color: paso === "1_CARGAR_PDF" ? "#5000BA" : "#64748B",
+              color: paso === "1_CARGAR_PDF" ? "#5000BA" : "var(--texto-suave)",
               fontWeight: 700,
               fontSize: "0.82rem",
             }}
@@ -666,8 +666,8 @@ export function WidgetFirmaDocumentosPdf({
                 width: "22px",
                 height: "22px",
                 borderRadius: "50%",
-                background: paso === "1_CARGAR_PDF" ? "#5000BA" : "#E2E8F0",
-                color: paso === "1_CARGAR_PDF" ? "#FFF" : "#64748B",
+                background: paso === "1_CARGAR_PDF" ? "#5000BA" : "var(--linea)",
+                color: paso === "1_CARGAR_PDF" ? "#FFF" : "var(--texto-suave)",
                 display: "inline-flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -679,14 +679,14 @@ export function WidgetFirmaDocumentosPdf({
             1. Subir PDF
           </div>
 
-          <ChevronRight size={16} aria-hidden="true" style={{ color: "var(--panel-linea, #E4E4E4)" }} />
+          <ChevronRight size={16} aria-hidden="true" style={{ color: "var(--panel-linea, var(--linea))" }} />
 
           <div
             style={{
               display: "flex",
               alignItems: "center",
               gap: "6px",
-              color: paso === "2_CARGAR_CERTIFICADO" ? "#5000BA" : "#64748B",
+              color: paso === "2_CARGAR_CERTIFICADO" ? "#5000BA" : "var(--texto-suave)",
               fontWeight: 700,
               fontSize: "0.82rem",
             }}
@@ -696,8 +696,8 @@ export function WidgetFirmaDocumentosPdf({
                 width: "22px",
                 height: "22px",
                 borderRadius: "50%",
-                background: paso === "2_CARGAR_CERTIFICADO" ? "#5000BA" : "#E2E8F0",
-                color: paso === "2_CARGAR_CERTIFICADO" ? "#FFF" : "#64748B",
+                background: paso === "2_CARGAR_CERTIFICADO" ? "#5000BA" : "var(--linea)",
+                color: paso === "2_CARGAR_CERTIFICADO" ? "#FFF" : "var(--texto-suave)",
                 display: "inline-flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -709,14 +709,14 @@ export function WidgetFirmaDocumentosPdf({
             2. Validar Firma (.p12)
           </div>
 
-          <ChevronRight size={16} aria-hidden="true" style={{ color: "var(--panel-linea, #E4E4E4)" }} />
+          <ChevronRight size={16} aria-hidden="true" style={{ color: "var(--panel-linea, var(--linea))" }} />
 
           <div
             style={{
               display: "flex",
               alignItems: "center",
               gap: "6px",
-              color: paso === "3_UBICAR_FIRMA" ? "#5000BA" : "#64748B",
+              color: paso === "3_UBICAR_FIRMA" ? "#5000BA" : "var(--texto-suave)",
               fontWeight: 700,
               fontSize: "0.82rem",
             }}
@@ -726,8 +726,8 @@ export function WidgetFirmaDocumentosPdf({
                 width: "22px",
                 height: "22px",
                 borderRadius: "50%",
-                background: paso === "3_UBICAR_FIRMA" ? "#5000BA" : "#E2E8F0",
-                color: paso === "3_UBICAR_FIRMA" ? "#FFF" : "#64748B",
+                background: paso === "3_UBICAR_FIRMA" ? "#5000BA" : "var(--linea)",
+                color: paso === "3_UBICAR_FIRMA" ? "#FFF" : "var(--texto-suave)",
                 display: "inline-flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -739,14 +739,14 @@ export function WidgetFirmaDocumentosPdf({
             3. Posicionar y Estampar
           </div>
 
-          <ChevronRight size={16} aria-hidden="true" style={{ color: "var(--panel-linea, #E4E4E4)" }} />
+          <ChevronRight size={16} aria-hidden="true" style={{ color: "var(--panel-linea, var(--linea))" }} />
 
           <div
             style={{
               display: "flex",
               alignItems: "center",
               gap: "6px",
-              color: paso === "4_DOCUMENTO_FIRMADO" ? "#05876E" : "#64748B",
+              color: paso === "4_DOCUMENTO_FIRMADO" ? "#05876E" : "var(--texto-suave)",
               fontWeight: 700,
               fontSize: "0.82rem",
             }}
@@ -756,8 +756,8 @@ export function WidgetFirmaDocumentosPdf({
                 width: "22px",
                 height: "22px",
                 borderRadius: "50%",
-                background: paso === "4_DOCUMENTO_FIRMADO" ? "#05876E" : "#E2E8F0",
-                color: paso === "4_DOCUMENTO_FIRMADO" ? "#FFF" : "#64748B",
+                background: paso === "4_DOCUMENTO_FIRMADO" ? "#05876E" : "var(--linea)",
+                color: paso === "4_DOCUMENTO_FIRMADO" ? "#FFF" : "var(--texto-suave)",
                 display: "inline-flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -776,12 +776,12 @@ export function WidgetFirmaDocumentosPdf({
             onClick={handleReiniciar}
             style={{
               background: "transparent",
-              border: "1px solid #E2E8F0",
+              border: "1px solid var(--linea)",
               borderRadius: "8px",
               padding: "4px 10px",
               fontSize: "0.75rem",
               fontWeight: 700,
-              color: "#64748B",
+              color: "var(--texto-suave)",
               cursor: "pointer",
               display: "flex",
               alignItems: "center",
@@ -799,7 +799,7 @@ export function WidgetFirmaDocumentosPdf({
           style={{
             background: "#FFFFFF",
             borderRadius: "16px",
-            border: "2px dashed #CBD5E1",
+            border: "2px dashed var(--linea-fuerte)",
             padding: "48px 24px",
             textAlign: "center",
             display: "flex",
@@ -814,7 +814,7 @@ export function WidgetFirmaDocumentosPdf({
               width: "64px",
               height: "64px",
               borderRadius: "50%",
-              background: "#F3E8FF",
+              background: "var(--acento-diluido)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -825,10 +825,10 @@ export function WidgetFirmaDocumentosPdf({
           </div>
 
           <div>
-            <h2 style={{ margin: "0 0 6px 0", fontSize: "1.2rem", fontWeight: 800, color: "#1E293B" }}>
+            <h2 style={{ margin: "0 0 6px 0", fontSize: "1.2rem", fontWeight: 800, color: "var(--texto)" }}>
               Selecciona o arrastra el documento PDF a firmar
             </h2>
-            <p style={{ margin: 0, fontSize: "0.85rem", color: "#64748B", maxWidth: "520px" }}>
+            <p style={{ margin: 0, fontSize: "0.85rem", color: "var(--texto-suave)", maxWidth: "520px" }}>
               Admite contratos, actas, escritos judiciales, informes o cualquier documento en formato PDF de hasta 25MB.
             </p>
           </div>
@@ -865,7 +865,7 @@ export function WidgetFirmaDocumentosPdf({
           style={{
             background: "#FFFFFF",
             borderRadius: "16px",
-            border: "1px solid #E2E8F0",
+            border: "1px solid var(--linea)",
             padding: "32px 24px",
             maxWidth: "680px",
             margin: "0 auto",
@@ -876,10 +876,10 @@ export function WidgetFirmaDocumentosPdf({
           <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "16px" }}>
             <KeyRound size={22} aria-hidden="true" />
             <div>
-              <h2 style={{ margin: 0, fontSize: "1.15rem", fontWeight: 800, color: "#1E293B" }}>
+              <h2 style={{ margin: 0, fontSize: "1.15rem", fontWeight: 800, color: "var(--texto)" }}>
                 Cargar Firma Electrónica (.p12 / .pfx)
               </h2>
-              <p style={{ margin: "2px 0 0 0", fontSize: "0.8rem", color: "#64748B" }}>
+              <p style={{ margin: "2px 0 0 0", fontSize: "0.8rem", color: "var(--texto-suave)" }}>
                 Documento cargado: <strong>{archivoPdf?.name}</strong> ({totalPaginas} {totalPaginas === 1 ? "página" : "páginas"})
               </p>
             </div>
@@ -887,7 +887,7 @@ export function WidgetFirmaDocumentosPdf({
 
           <form onSubmit={handleValidarP12} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
             <div>
-              <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 700, color: "#334155", marginBottom: "6px" }}>
+              <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 700, color: "var(--texto-2)", marginBottom: "6px" }}>
                 Archivo de Certificado Digital (.p12 o .pfx):
               </label>
               <input
@@ -897,16 +897,16 @@ export function WidgetFirmaDocumentosPdf({
                 style={{
                   width: "100%",
                   padding: "10px",
-                  border: "1.5px dashed #CBD5E1",
+                  border: "1.5px dashed var(--linea-fuerte)",
                   borderRadius: "8px",
                   fontSize: "0.82rem",
-                  background: "#F8FAFC",
+                  background: "var(--fondo-suave)",
                 }}
               />
             </div>
 
             <div>
-              <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 700, color: "#334155", marginBottom: "6px" }}>
+              <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 700, color: "var(--texto-2)", marginBottom: "6px" }}>
                 Contraseña del Certificado:
               </label>
               <div style={{ position: "relative" }}>
@@ -918,7 +918,7 @@ export function WidgetFirmaDocumentosPdf({
                   style={{
                     width: "100%",
                     padding: "10px 42px 10px 12px",
-                    border: "1px solid #CBD5E1",
+                    border: "1px solid var(--linea-fuerte)",
                     borderRadius: "8px",
                     fontSize: "0.88rem",
                   }}
@@ -934,7 +934,7 @@ export function WidgetFirmaDocumentosPdf({
                     background: "none",
                     border: "none",
                     cursor: "pointer",
-                    color: "#64748B",
+                    color: "var(--texto-suave)",
                   }}
                 >
                   {mostrarClave ? <EyeOff size={16} /> : <Eye size={16} />}
@@ -945,12 +945,12 @@ export function WidgetFirmaDocumentosPdf({
             {errorP12 && (
               <div
                 style={{
-                  background: "#FEF2F2",
-                  border: "1px solid #FCA5A5",
+                  background: "var(--error-diluido)",
+                  border: "1px solid var(--error-linea)",
                   borderRadius: "8px",
                   padding: "10px 14px",
                   fontSize: "0.82rem",
-                  color: "#B91C1C",
+                  color: "var(--error)",
                   display: "flex",
                   alignItems: "center",
                   gap: "8px",
@@ -965,7 +965,7 @@ export function WidgetFirmaDocumentosPdf({
               type="submit"
               disabled={procesandoP12 || !bufferP12 || !claveP12}
               style={{
-                background: procesandoP12 ? "#94A3B8" : "#5000BA",
+                background: procesandoP12 ? "var(--texto-tenue)" : "#5000BA",
                 color: "#FFFFFF",
                 padding: "12px",
                 borderRadius: "8px",
@@ -1004,7 +1004,7 @@ export function WidgetFirmaDocumentosPdf({
             style={{
               background: "#FFFFFF",
               borderRadius: "16px",
-              border: "1px solid #E2E8F0",
+              border: "1px solid var(--linea)",
               padding: "20px",
               display: "flex",
               flexDirection: "column",
@@ -1015,20 +1015,20 @@ export function WidgetFirmaDocumentosPdf({
             {infoCert && (
               <div
                 style={{
-                  background: "#F0FDF4",
-                  border: "1px solid #BBF7D0",
+                  background: "var(--exito-diluido)",
+                  border: "1px solid var(--exito-linea)",
                   borderRadius: "10px",
                   padding: "12px",
                 }}
               >
                 <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "4px" }}>
-                  <CheckCircle2 size={16} color="#16A34A" />
-                  <strong style={{ fontSize: "0.84rem", color: "#166534" }}>Firma Verificada</strong>
+                  <CheckCircle2 size={16} color="var(--exito)" />
+                  <strong style={{ fontSize: "0.84rem", color: "var(--exito-texto)" }}>Firma Verificada</strong>
                 </div>
-                <p style={{ margin: 0, fontSize: "0.8rem", color: "#14532D", fontWeight: 700 }}>
+                <p style={{ margin: 0, fontSize: "0.8rem", color: "var(--exito-texto)", fontWeight: 700 }}>
                   {infoCert.nombreTitular}
                 </p>
-                <p style={{ margin: "2px 0 0 0", fontSize: "0.72rem", color: "#166534" }}>
+                <p style={{ margin: "2px 0 0 0", fontSize: "0.72rem", color: "var(--exito-texto)" }}>
                   Emisor: {infoCert.entidadEmisora}
                 </p>
               </div>
@@ -1036,26 +1036,26 @@ export function WidgetFirmaDocumentosPdf({
 
             {/* Paginación del Documento */}
             <div>
-              <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, color: "#475569", marginBottom: "6px" }}>
+              <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, color: "var(--texto-2)", marginBottom: "6px" }}>
                 Página donde estampar:
               </label>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "#F8FAFC", padding: "6px 12px", borderRadius: "8px", border: "1px solid #E2E8F0" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "var(--fondo-suave)", padding: "6px 12px", borderRadius: "8px", border: "1px solid var(--linea)" }}>
                 <button
                   type="button"
                   onClick={() => setPaginaActual((p) => Math.max(1, p - 1))}
                   disabled={paginaActual <= 1}
-                  style={{ background: "#FFF", border: "1px solid #CBD5E1", borderRadius: "6px", width: "28px", height: "28px", display: "flex", alignItems: "center", justifyContent: "center", cursor: paginaActual <= 1 ? "not-allowed" : "pointer", opacity: paginaActual <= 1 ? 0.5 : 1 }}
+                  style={{ background: "#FFF", border: "1px solid var(--linea-fuerte)", borderRadius: "6px", width: "28px", height: "28px", display: "flex", alignItems: "center", justifyContent: "center", cursor: paginaActual <= 1 ? "not-allowed" : "pointer", opacity: paginaActual <= 1 ? 0.5 : 1 }}
                 >
                   <ChevronLeft size={16} />
                 </button>
-                <span style={{ fontSize: "0.82rem", fontWeight: 700, color: "#1E293B" }}>
+                <span style={{ fontSize: "0.82rem", fontWeight: 700, color: "var(--texto)" }}>
                   Página {paginaActual} de {totalPaginas}
                 </span>
                 <button
                   type="button"
                   onClick={() => setPaginaActual((p) => Math.min(totalPaginas, p + 1))}
                   disabled={paginaActual >= totalPaginas}
-                  style={{ background: "#FFF", border: "1px solid #CBD5E1", borderRadius: "6px", width: "28px", height: "28px", display: "flex", alignItems: "center", justifyContent: "center", cursor: paginaActual >= totalPaginas ? "not-allowed" : "pointer", opacity: paginaActual >= totalPaginas ? 0.5 : 1 }}
+                  style={{ background: "#FFF", border: "1px solid var(--linea-fuerte)", borderRadius: "6px", width: "28px", height: "28px", display: "flex", alignItems: "center", justifyContent: "center", cursor: paginaActual >= totalPaginas ? "not-allowed" : "pointer", opacity: paginaActual >= totalPaginas ? 0.5 : 1 }}
                 >
                   <ChevronRight size={16} />
                 </button>
@@ -1064,7 +1064,7 @@ export function WidgetFirmaDocumentosPdf({
 
             {/* Accesos Rápidos de Alineación */}
             <div>
-              <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, color: "#475569", marginBottom: "6px" }}>
+              <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, color: "var(--texto-2)", marginBottom: "6px" }}>
                 Alineaciones Rápidas:
               </label>
               <div className="rejilla-auto" style={{ "--min": "180px", "--hueco": "8px" } as React.CSSProperties}>
@@ -1072,9 +1072,9 @@ export function WidgetFirmaDocumentosPdf({
                   type="button"
                   onClick={() => { setPosicionXPorcentaje(58.0); setPosicionYPorcentaje(82.0); }}
                   style={{
-                    background: posicionXPorcentaje >= 50 && posicionYPorcentaje >= 70 ? "#F3E8FF" : "#F8FAFC",
-                    border: `1px solid ${posicionXPorcentaje >= 50 && posicionYPorcentaje >= 70 ? "#5000BA" : "#CBD5E1"}`,
-                    color: posicionXPorcentaje >= 50 && posicionYPorcentaje >= 70 ? "#5000BA" : "#334155",
+                    background: posicionXPorcentaje >= 50 && posicionYPorcentaje >= 70 ? "var(--acento-diluido)" : "var(--fondo-suave)",
+                    border: `1px solid ${posicionXPorcentaje >= 50 && posicionYPorcentaje >= 70 ? "#5000BA" : "var(--linea-fuerte)"}`,
+                    color: posicionXPorcentaje >= 50 && posicionYPorcentaje >= 70 ? "#5000BA" : "var(--texto-2)",
                     padding: "8px",
                     borderRadius: "8px",
                     fontSize: "0.76rem",
@@ -1088,9 +1088,9 @@ export function WidgetFirmaDocumentosPdf({
                   type="button"
                   onClick={() => { setPosicionXPorcentaje(8.0); setPosicionYPorcentaje(82.0); }}
                   style={{
-                    background: posicionXPorcentaje < 30 && posicionYPorcentaje >= 70 ? "#F3E8FF" : "#F8FAFC",
-                    border: `1px solid ${posicionXPorcentaje < 30 && posicionYPorcentaje >= 70 ? "#5000BA" : "#CBD5E1"}`,
-                    color: posicionXPorcentaje < 30 && posicionYPorcentaje >= 70 ? "#5000BA" : "#334155",
+                    background: posicionXPorcentaje < 30 && posicionYPorcentaje >= 70 ? "var(--acento-diluido)" : "var(--fondo-suave)",
+                    border: `1px solid ${posicionXPorcentaje < 30 && posicionYPorcentaje >= 70 ? "#5000BA" : "var(--linea-fuerte)"}`,
+                    color: posicionXPorcentaje < 30 && posicionYPorcentaje >= 70 ? "#5000BA" : "var(--texto-2)",
                     padding: "8px",
                     borderRadius: "8px",
                     fontSize: "0.76rem",
@@ -1104,9 +1104,9 @@ export function WidgetFirmaDocumentosPdf({
                   type="button"
                   onClick={() => { setPosicionXPorcentaje(31.0); setPosicionYPorcentaje(84.0); }}
                   style={{
-                    background: "#F8FAFC",
-                    border: "1px solid #CBD5E1",
-                    color: "#334155",
+                    background: "var(--fondo-suave)",
+                    border: "1px solid var(--linea-fuerte)",
+                    color: "var(--texto-2)",
                     padding: "8px",
                     borderRadius: "8px",
                     fontSize: "0.76rem",
@@ -1120,9 +1120,9 @@ export function WidgetFirmaDocumentosPdf({
                   type="button"
                   onClick={() => { setPosicionXPorcentaje(58.0); setPosicionYPorcentaje(6.0); }}
                   style={{
-                    background: "#F8FAFC",
-                    border: "1px solid #CBD5E1",
-                    color: "#334155",
+                    background: "var(--fondo-suave)",
+                    border: "1px solid var(--linea-fuerte)",
+                    color: "var(--texto-2)",
                     padding: "8px",
                     borderRadius: "8px",
                     fontSize: "0.76rem",
@@ -1137,35 +1137,35 @@ export function WidgetFirmaDocumentosPdf({
 
             {/* Micro-Ajustes */}
             <div>
-              <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, color: "#475569", marginBottom: "6px" }}>
+              <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, color: "var(--texto-2)", marginBottom: "6px" }}>
                 Micro-Ajustes ({posicionXPorcentaje}%, {posicionYPorcentaje}%):
               </label>
               <div className="rejilla-auto" style={{ "--min": "180px", "--hueco": "6px" } as React.CSSProperties}>
                 <button
                   type="button"
                   onClick={() => setPosicionYPorcentaje((y) => Math.max(2, Number((y - 2).toFixed(1))))}
-                  style={{ background: "#FFF", border: "1px solid #E2E8F0", borderRadius: "6px", padding: "6px", fontSize: "0.74rem", fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", gap: "4px", cursor: "pointer" }}
+                  style={{ background: "#FFF", border: "1px solid var(--linea)", borderRadius: "6px", padding: "6px", fontSize: "0.74rem", fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", gap: "4px", cursor: "pointer" }}
                 >
                   <ArrowUp size={12} /> Subir
                 </button>
                 <button
                   type="button"
                   onClick={() => setPosicionYPorcentaje((y) => Math.min(90, Number((y + 2).toFixed(1))))}
-                  style={{ background: "#FFF", border: "1px solid #E2E8F0", borderRadius: "6px", padding: "6px", fontSize: "0.74rem", fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", gap: "4px", cursor: "pointer" }}
+                  style={{ background: "#FFF", border: "1px solid var(--linea)", borderRadius: "6px", padding: "6px", fontSize: "0.74rem", fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", gap: "4px", cursor: "pointer" }}
                 >
                   <ArrowDown size={12} /> Bajar
                 </button>
                 <button
                   type="button"
                   onClick={() => setPosicionXPorcentaje((x) => Math.max(2, Number((x - 2).toFixed(1))))}
-                  style={{ background: "#FFF", border: "1px solid #E2E8F0", borderRadius: "6px", padding: "6px", fontSize: "0.74rem", fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", gap: "4px", cursor: "pointer" }}
+                  style={{ background: "#FFF", border: "1px solid var(--linea)", borderRadius: "6px", padding: "6px", fontSize: "0.74rem", fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", gap: "4px", cursor: "pointer" }}
                 >
                   <ArrowLeft size={12} /> Izquierda
                 </button>
                 <button
                   type="button"
                   onClick={() => setPosicionXPorcentaje((x) => Math.min(60, Number((x + 2).toFixed(1))))}
-                  style={{ background: "#FFF", border: "1px solid #E2E8F0", borderRadius: "6px", padding: "6px", fontSize: "0.74rem", fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", gap: "4px", cursor: "pointer" }}
+                  style={{ background: "#FFF", border: "1px solid var(--linea)", borderRadius: "6px", padding: "6px", fontSize: "0.74rem", fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", gap: "4px", cursor: "pointer" }}
                 >
                   <ArrowRight size={12} /> Derecha
                 </button>
@@ -1175,12 +1175,12 @@ export function WidgetFirmaDocumentosPdf({
             {errorEstampado && (
               <div
                 style={{
-                  background: "#FEF2F2",
-                  border: "1px solid #FCA5A5",
+                  background: "var(--error-diluido)",
+                  border: "1px solid var(--error-linea)",
                   borderRadius: "8px",
                   padding: "8px 12px",
                   fontSize: "0.78rem",
-                  color: "#B91C1C",
+                  color: "var(--error)",
                   display: "flex",
                   alignItems: "center",
                   gap: "6px",
@@ -1196,7 +1196,7 @@ export function WidgetFirmaDocumentosPdf({
               onClick={handleEstamparFirma}
               disabled={estampando}
               style={{
-                background: estampando ? "#94A3B8" : "#5000BA",
+                background: estampando ? "var(--texto-tenue)" : "#5000BA",
                 color: "#FFFFFF",
                 padding: "12px",
                 borderRadius: "10px",
@@ -1230,7 +1230,7 @@ export function WidgetFirmaDocumentosPdf({
           <div
             className="widget-firma-visor-col"
             style={{
-              background: "#334155",
+              background: "var(--texto-2)",
               borderRadius: "16px",
               overflow: "hidden",
               display: "flex",
@@ -1304,7 +1304,7 @@ export function WidgetFirmaDocumentosPdf({
                       height: "92%",
                       aspectRatio: "1 / 1",
                       flexShrink: 0,
-                      background: "#F8FAFC",
+                      background: "var(--fondo-suave)",
                       borderRadius: "2px",
                       display: "flex",
                       alignItems: "center",
@@ -1324,7 +1324,7 @@ export function WidgetFirmaDocumentosPdf({
                     )}
                   </div>
 
-                  <div style={{ width: "1px", height: "85%", background: "#CBD5E1", flexShrink: 0 }} />
+                  <div style={{ width: "1px", height: "85%", background: "var(--linea-fuerte)", flexShrink: 0 }} />
 
                   <div
                     style={{
@@ -1340,13 +1340,13 @@ export function WidgetFirmaDocumentosPdf({
                     <span style={{ fontSize: "clamp(0.48rem, 1.1vw, 0.65rem)", fontWeight: 800, color: "#5000BA", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                       FIRMADO DIGITALMENTE
                     </span>
-                    <strong style={{ fontSize: "clamp(0.44rem, 1.0vw, 0.60rem)", fontWeight: 800, color: "#0F172A", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                    <strong style={{ fontSize: "clamp(0.44rem, 1.0vw, 0.60rem)", fontWeight: 800, color: "var(--texto)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                       {infoCert.nombreTitular}
                     </strong>
-                    <span style={{ fontSize: "clamp(0.38rem, 0.85vw, 0.50rem)", color: "#475569", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                    <span style={{ fontSize: "clamp(0.38rem, 0.85vw, 0.50rem)", color: "var(--texto-2)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                       {infoCert.entidadEmisora}
                     </span>
-                    <span style={{ fontSize: "clamp(0.34rem, 0.75vw, 0.44rem)", color: "#64748B", whiteSpace: "nowrap" }}>
+                    <span style={{ fontSize: "clamp(0.34rem, 0.75vw, 0.44rem)", color: "var(--texto-suave)", whiteSpace: "nowrap" }}>
                       PAdES · Validez Legal EC
                     </span>
                   </div>
@@ -1362,7 +1362,7 @@ export function WidgetFirmaDocumentosPdf({
           style={{
             background: "#FFFFFF",
             borderRadius: "16px",
-            border: "1px solid #E2E8F0",
+            border: "1px solid var(--linea)",
             padding: "24px",
             display: "flex",
             flexDirection: "column",
@@ -1372,8 +1372,8 @@ export function WidgetFirmaDocumentosPdf({
           {/* Banner de Éxito */}
           <div
             style={{
-              background: "#F0FDF4",
-              border: "1.5px solid #86EFAC",
+              background: "var(--exito-diluido)",
+              border: "1.5px solid var(--exito-linea)",
               borderRadius: "12px",
               padding: "16px 20px",
               display: "flex",
@@ -1386,7 +1386,7 @@ export function WidgetFirmaDocumentosPdf({
             <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
               <div
                 style={{
-                  background: "#16A34A",
+                  background: "var(--exito)",
                   borderRadius: "50%",
                   width: "36px",
                   height: "36px",
@@ -1399,10 +1399,10 @@ export function WidgetFirmaDocumentosPdf({
                 <CheckCircle2 size={22} />
               </div>
               <div>
-                <h3 style={{ margin: 0, fontSize: "1.05rem", fontWeight: 800, color: "#166534" }}>
+                <h3 style={{ margin: 0, fontSize: "1.05rem", fontWeight: 800, color: "var(--exito-texto)" }}>
                   ¡Documento firmado digitalmente con éxito!
                 </h3>
-                <p style={{ margin: "2px 0 0 0", fontSize: "0.82rem", color: "#15803D" }}>
+                <p style={{ margin: "2px 0 0 0", fontSize: "0.82rem", color: "var(--exito-texto)" }}>
                   El documento contiene la estampa oficial con código QR y metadatos PAdES válidos ante la ley ecuatoriana.
                 </p>
               </div>
@@ -1435,8 +1435,8 @@ export function WidgetFirmaDocumentosPdf({
                 onClick={handleReiniciar}
                 style={{
                   background: "#FFFFFF",
-                  border: "1.5px solid #CBD5E1",
-                  color: "#334155",
+                  border: "1.5px solid var(--linea-fuerte)",
+                  color: "var(--texto-2)",
                   padding: "10px 16px",
                   borderRadius: "8px",
                   fontWeight: 700,
@@ -1455,7 +1455,7 @@ export function WidgetFirmaDocumentosPdf({
           {/* Visor del Documento Firmado */}
           <div
             style={{
-              background: "#334155",
+              background: "var(--texto-2)",
               borderRadius: "12px",
               padding: "16px",
               display: "flex",

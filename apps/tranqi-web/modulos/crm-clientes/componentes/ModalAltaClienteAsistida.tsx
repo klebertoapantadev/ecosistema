@@ -93,9 +93,9 @@ function IndicadorOrigenCampo({ esAria, esModificado }: { esAria?: boolean; esMo
       <span
         title="Dato extraído y mapeado automáticamente por Tranqi OCR"
         style={{
-          background: "#ECFDF5",
-          color: "#047857",
-          border: "1px solid #A7F3D0",
+          background: "var(--exito-diluido)",
+          color: "var(--exito-texto)",
+          border: "1px solid var(--exito-linea)",
           borderRadius: "4px",
           padding: "1px 6px",
           fontSize: "0.68rem",
@@ -114,9 +114,9 @@ function IndicadorOrigenCampo({ esAria, esModificado }: { esAria?: boolean; esMo
       <span
         title="Dato ingresado o modificado manualmente"
         style={{
-          background: "#F1F5F9",
-          color: "#475569",
-          border: "1px solid #CBD5E1",
+          background: "var(--fondo-hundido)",
+          color: "var(--texto-2)",
+          border: "1px solid var(--linea-fuerte)",
           borderRadius: "4px",
           padding: "1px 6px",
           fontSize: "0.68rem",
@@ -855,19 +855,19 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
         <div
           style={{
             padding: "16px 24px",
-            borderBottom: "1px solid #E2E8F0",
+            borderBottom: "1px solid var(--linea)",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            background: "#F8FAFC",
+            background: "var(--fondo-suave)",
           }}
         >
           <div>
-            <h2 style={{ margin: 0, fontSize: "1.15rem", fontWeight: 700, color: "#0F172A", display: "flex", alignItems: "center", gap: "8px" }}>
-              {clienteAEditar ? <Edit3 size={20} color="#0284C7" /> : <Scale size={20} color="#0284C7" />}
+            <h2 style={{ margin: 0, fontSize: "1.15rem", fontWeight: 700, color: "var(--texto)", display: "flex", alignItems: "center", gap: "8px" }}>
+              {clienteAEditar ? <Edit3 size={20} color="var(--acento)" /> : <Scale size={20} color="var(--acento)" />}
               {clienteAEditar ? "Editar Datos del Cliente · CRM Jurídico" : "Alta Manual Asistida de Cliente · CRM Jurídico"}
             </h2>
-            <p style={{ margin: "2px 0 0", fontSize: "0.82rem", color: "#64748B" }}>
+            <p style={{ margin: "2px 0 0", fontSize: "0.82rem", color: "var(--texto-suave)" }}>
               {clienteAEditar ? `Actualizando ficha de ${clienteAEditar.clp_identificacion}` : "Ingreso para Personas Naturales, Empresas, Representantes y Litigios Telemáticos"}
             </p>
           </div>
@@ -877,9 +877,9 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
               onClick={limpiarFormulario}
               title="Limpiar y vaciar todos los campos del formulario"
               style={{
-                background: "#F1F5F9",
-                border: "1px solid #CBD5E1",
-                color: "#475569",
+                background: "var(--fondo-hundido)",
+                border: "1px solid var(--linea-fuerte)",
+                color: "var(--texto-2)",
                 borderRadius: "8px",
                 padding: "6px 12px",
                 fontSize: "0.78rem",
@@ -902,7 +902,7 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
               style={{
                 background: "transparent",
                 border: "none",
-                color: "#64748B",
+                color: "var(--texto-suave)",
                 cursor: "pointer",
                 padding: "6px",
                 borderRadius: "50%",
@@ -927,9 +927,9 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
                 flex: 1,
                 padding: "10px",
                 borderRadius: "10px",
-                border: tipoPersoneria === "natural" ? "2px solid #0284C7" : "1px solid #CBD5E1",
-                background: tipoPersoneria === "natural" ? "#F0F9FF" : "#FFFFFF",
-                color: tipoPersoneria === "natural" ? "#0369A1" : "#475569",
+                border: tipoPersoneria === "natural" ? "2px solid var(--acento)" : "1px solid var(--linea-fuerte)",
+                background: tipoPersoneria === "natural" ? "var(--acento-diluido)" : "#FFFFFF",
+                color: tipoPersoneria === "natural" ? "var(--acento-hondo)" : "var(--texto-2)",
                 fontWeight: 600,
                 display: "flex",
                 alignItems: "center",
@@ -952,9 +952,9 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
                 flex: 1,
                 padding: "10px",
                 borderRadius: "10px",
-                border: tipoPersoneria === "juridica" ? "2px solid #0284C7" : "1px solid #CBD5E1",
-                background: tipoPersoneria === "juridica" ? "#F0F9FF" : "#FFFFFF",
-                color: tipoPersoneria === "juridica" ? "#0369A1" : "#475569",
+                border: tipoPersoneria === "juridica" ? "2px solid var(--acento)" : "1px solid var(--linea-fuerte)",
+                background: tipoPersoneria === "juridica" ? "var(--acento-diluido)" : "#FFFFFF",
+                color: tipoPersoneria === "juridica" ? "var(--acento-hondo)" : "var(--texto-2)",
                 fontWeight: 600,
                 display: "flex",
                 alignItems: "center",
@@ -974,8 +974,8 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
             archivoCedulaNatural ? (
               <div
                 style={{
-                  background: "#F0FDF4",
-                  border: "1.5px solid #86EFAC",
+                  background: "var(--exito-diluido)",
+                  border: "1.5px solid var(--exito-linea)",
                   borderRadius: "12px",
                   padding: "12px 16px",
                   display: "flex",
@@ -986,19 +986,19 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
                 }}
               >
                 <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                  <div style={{ background: "#DCFCE7", padding: "8px", borderRadius: "8px", color: "#16A34A" }}>
+                  <div style={{ background: "var(--exito-diluido)", padding: "8px", borderRadius: "8px", color: "var(--exito)" }}>
                     <Wallet size={20} />
                   </div>
                   <div>
                     <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                      <p style={{ margin: 0, fontSize: "0.85rem", fontWeight: 700, color: "#166534" }}>
+                      <p style={{ margin: 0, fontSize: "0.85rem", fontWeight: 700, color: "var(--exito-texto)" }}>
                         Cédula de Identidad Cargada (Requisito Obligatorio)
                       </p>
-                      <span style={{ background: "#DCFCE7", color: "#15803D", fontSize: "0.68rem", fontWeight: 700, padding: "1px 6px", borderRadius: "4px" }}>
+                      <span style={{ background: "var(--exito-diluido)", color: "var(--exito-texto)", fontSize: "0.68rem", fontWeight: 700, padding: "1px 6px", borderRadius: "4px" }}>
                         En Billetera Digital
                       </span>
                     </div>
-                    <p style={{ margin: "2px 0 0", fontSize: "0.75rem", color: "#475569" }}>
+                    <p style={{ margin: "2px 0 0", fontSize: "0.75rem", color: "var(--texto-2)" }}>
                       📄 {archivoCedulaNatural.nombre} ({(archivoCedulaNatural.tamano / 1024).toFixed(1)} KB) · Extraído y certificado por Tranqi
                     </p>
                   </div>
@@ -1007,8 +1007,8 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
                   <label
                     style={{
                       background: "#FFFFFF",
-                      border: "1px solid #86EFAC",
-                      color: "#15803D",
+                      border: "1px solid var(--exito-linea)",
+                      color: "var(--exito-texto)",
                       padding: "6px 12px",
                       borderRadius: "6px",
                       fontSize: "0.76rem",
@@ -1033,9 +1033,9 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
                     type="button"
                     onClick={() => setArchivoCedulaNatural(null)}
                     style={{
-                      background: "#FEE2E2",
-                      border: "1px solid #FCA5A5",
-                      color: "#B91C1C",
+                      background: "var(--error-diluido)",
+                      border: "1px solid var(--error-linea)",
+                      color: "var(--error)",
                       padding: "6px 8px",
                       borderRadius: "6px",
                       cursor: "pointer",
@@ -1051,8 +1051,8 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
             ) : (
               <div
                 style={{
-                  border: "1.5px dashed #0284C7",
-                  background: "#F8FAFC",
+                  border: "1.5px dashed var(--acento)",
+                  background: "var(--fondo-suave)",
                   borderRadius: "12px",
                   padding: "12px 16px",
                   display: "flex",
@@ -1063,26 +1063,26 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
                 }}
               >
                 <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                  <div style={{ background: "#E0F2FE", padding: "8px", borderRadius: "8px", color: "#0284C7" }}>
+                  <div style={{ background: "var(--acento-diluido)", padding: "8px", borderRadius: "8px", color: "var(--acento)" }}>
                     <Sparkles size={20} />
                   </div>
                   <div>
                     <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                      <p style={{ margin: 0, fontSize: "0.85rem", fontWeight: 700, color: "#0F172A" }}>
+                      <p style={{ margin: 0, fontSize: "0.85rem", fontWeight: 700, color: "var(--texto)" }}>
                         Cédula de Identidad (Requisito Obligatorio · Billetera Digital)
                       </p>
-                      <span style={{ background: "#FEF3C7", color: "#92400E", fontSize: "0.68rem", fontWeight: 700, padding: "1px 6px", borderRadius: "4px" }}>
+                      <span style={{ background: "var(--aviso-diluido)", color: "var(--aviso-texto)", fontSize: "0.68rem", fontWeight: 700, padding: "1px 6px", borderRadius: "4px" }}>
                         Obligatorio
                       </span>
                     </div>
-                    <p style={{ margin: "2px 0 0", fontSize: "0.75rem", color: "#64748B" }}>
+                    <p style={{ margin: "2px 0 0", fontSize: "0.75rem", color: "var(--texto-suave)" }}>
                       Sube la cédula en PDF o imagen: Tranqi autocompletará el formulario y la archivará en la Billetera Digital del cliente.
                     </p>
                   </div>
                 </div>
                 <label
                   style={{
-                    background: "#0284C7",
+                    background: "var(--acento)",
                     color: "#FFFFFF",
                     padding: "8px 14px",
                     borderRadius: "8px",
@@ -1112,8 +1112,8 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
             /* Banner para Persona Jurídica */
             <div
               style={{
-                border: "1px solid #BAE6FD",
-                background: "#F0F9FF",
+                border: "1px solid var(--acento-linea)",
+                background: "var(--acento-diluido)",
                 borderRadius: "12px",
                 padding: "12px 16px",
                 display: "flex",
@@ -1124,21 +1124,21 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
               }}
             >
               <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                <div style={{ background: "#E0F2FE", padding: "8px", borderRadius: "8px", color: "#0284C7" }}>
+                <div style={{ background: "var(--acento-diluido)", padding: "8px", borderRadius: "8px", color: "var(--acento)" }}>
                   <Building2 size={20} />
                 </div>
                 <div>
-                  <p style={{ margin: 0, fontSize: "0.85rem", fontWeight: 700, color: "#0369A1" }}>
+                  <p style={{ margin: 0, fontSize: "0.85rem", fontWeight: 700, color: "var(--acento-hondo)" }}>
                     Registro de Empresa / Persona Jurídica (S.A.S., Cía. Ltda., S.A.)
                   </p>
-                  <p style={{ margin: "2px 0 0", fontSize: "0.75rem", color: "#475569" }}>
+                  <p style={{ margin: "2px 0 0", fontSize: "0.75rem", color: "var(--texto-2)" }}>
                     Requisitos obligatorios: Identificación del Representante Legal y Nombramiento Vigente Inscrito en Registro Mercantil.
                   </p>
                 </div>
               </div>
               <label
                 style={{
-                  background: "#0284C7",
+                  background: "var(--acento)",
                   color: "#FFFFFF",
                   padding: "7px 12px",
                   borderRadius: "8px",
@@ -1165,19 +1165,19 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
 
           {/* Barra Compacta de Estado ARIA OCR (Log Desplegable Opcional) */}
           {(badgeAriaId || badgeAriaNom || badgeAriaRepCedula || logExtraccionAria.length > 0) && (
-            <div style={{ background: "#F0FDF4", border: "1px solid #86EFAC", color: "#166534", padding: "8px 12px", borderRadius: "10px", fontSize: "0.8rem", display: "flex", flexDirection: "column", gap: "6px" }}>
+            <div style={{ background: "var(--exito-diluido)", border: "1px solid var(--exito-linea)", color: "var(--exito-texto)", padding: "8px 12px", borderRadius: "10px", fontSize: "0.8rem", display: "flex", flexDirection: "column", gap: "6px" }}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "8px" }}>
                 <span style={{ display: "flex", alignItems: "center", gap: "6px", fontWeight: 700 }}>
-                  <CheckCircle2 size={16} color="#16A34A" />
+                  <CheckCircle2 size={16} color="var(--exito)" />
                   {badgeAriaId || badgeAriaNom || badgeAriaRepCedula || `✨ ${logExtraccionAria.length} datos identificados y mapeados al formulario`}
                 </span>
                 <button
                   type="button"
                   onClick={() => setMostrarLogDetallado(!mostrarLogDetallado)}
                   style={{
-                    background: "#DCFCE7",
-                    border: "1px solid #86EFAC",
-                    color: "#15803D",
+                    background: "var(--exito-diluido)",
+                    border: "1px solid var(--exito-linea)",
+                    color: "var(--exito-texto)",
                     padding: "3px 8px",
                     borderRadius: "6px",
                     fontSize: "0.72rem",
@@ -1196,15 +1196,15 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
 
               {/* Panel Desplegable de Log de Extracción y Mapeo */}
               {mostrarLogDetallado && (
-                <div style={{ background: "#FFFFFF", border: "1px solid #BBF7D0", borderRadius: "8px", padding: "10px", marginTop: "2px" }}>
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px", borderBottom: "1px solid #E2E8F0", paddingBottom: "6px", flexWrap: "wrap", gap: "6px" }}>
+                <div style={{ background: "#FFFFFF", border: "1px solid var(--exito-linea)", borderRadius: "8px", padding: "10px", marginTop: "2px" }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px", borderBottom: "1px solid var(--linea)", paddingBottom: "6px", flexWrap: "wrap", gap: "6px" }}>
                     <div style={{ display: "flex", gap: "6px" }}>
                       <button
                         type="button"
                         onClick={() => setFiltroLog("todos")}
                         style={{
-                          background: filtroLog === "todos" ? "#0284C7" : "#F1F5F9",
-                          color: filtroLog === "todos" ? "#FFFFFF" : "#475569",
+                          background: filtroLog === "todos" ? "var(--acento)" : "var(--fondo-hundido)",
+                          color: filtroLog === "todos" ? "#FFFFFF" : "var(--texto-2)",
                           border: "none",
                           borderRadius: "4px",
                           padding: "2px 7px",
@@ -1219,8 +1219,8 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
                         type="button"
                         onClick={() => setFiltroLog("mapeados")}
                         style={{
-                          background: filtroLog === "mapeados" ? "#059669" : "#F1F5F9",
-                          color: filtroLog === "mapeados" ? "#FFFFFF" : "#475569",
+                          background: filtroLog === "mapeados" ? "var(--exito)" : "var(--fondo-hundido)",
+                          color: filtroLog === "mapeados" ? "#FFFFFF" : "var(--texto-2)",
                           border: "none",
                           borderRadius: "4px",
                           padding: "2px 7px",
@@ -1235,8 +1235,8 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
                         type="button"
                         onClick={() => setFiltroLog("metadatos")}
                         style={{
-                          background: filtroLog === "metadatos" ? "#6366F1" : "#F1F5F9",
-                          color: filtroLog === "metadatos" ? "#FFFFFF" : "#475569",
+                          background: filtroLog === "metadatos" ? "var(--acento)" : "var(--fondo-hundido)",
+                          color: filtroLog === "metadatos" ? "#FFFFFF" : "var(--texto-2)",
                           border: "none",
                           borderRadius: "4px",
                           padding: "2px 7px",
@@ -1259,8 +1259,8 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
                           <div
                             key={claveUnica}
                             style={{
-                              background: esMapeado ? "#F0FDF4" : "#F8FAFC",
-                              border: esMapeado ? "1px solid #86EFAC" : "1px solid #E2E8F0",
+                              background: esMapeado ? "var(--exito-diluido)" : "var(--fondo-suave)",
+                              border: esMapeado ? "1px solid var(--exito-linea)" : "1px solid var(--linea)",
                               borderRadius: "6px",
                               padding: "6px 8px",
                               display: "flex",
@@ -1270,22 +1270,22 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
                             }}
                           >
                             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "4px" }}>
-                              <span style={{ fontSize: "0.68rem", fontWeight: 700, color: esMapeado ? "#15803D" : "#475569" }}>
+                              <span style={{ fontSize: "0.68rem", fontWeight: 700, color: esMapeado ? "var(--exito-texto)" : "var(--texto-2)" }}>
                                 {item.campoDetectado}
                               </span>
-                              <span style={{ fontSize: "0.6rem", padding: "1px 4px", borderRadius: "3px", fontWeight: 700, background: esMapeado ? "#DCFCE7" : "#E0E7FF", color: esMapeado ? "#166534" : "#3730A3" }}>
+                              <span style={{ fontSize: "0.6rem", padding: "1px 4px", borderRadius: "3px", fontWeight: 700, background: esMapeado ? "var(--exito-diluido)" : "var(--acento-diluido)", color: esMapeado ? "var(--exito-texto)" : "var(--acento-hondo)" }}>
                                 {esMapeado ? `➔ ${item.campoMapeadoEnFormulario}` : "JSONB"}
                               </span>
                             </div>
                             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "4px" }}>
-                              <strong style={{ fontSize: "0.74rem", color: "#0F172A", wordBreak: "break-all" }}>
+                              <strong style={{ fontSize: "0.74rem", color: "var(--texto)", wordBreak: "break-all" }}>
                                 {item.valorOriginal}
                               </strong>
                               <button
                                 type="button"
                                 title="Copiar dato"
                                 onClick={() => copiarAlPortapapeles(item.valorOriginal, claveUnica)}
-                                style={{ background: "transparent", border: "none", color: copiadoId === claveUnica ? "#10B981" : "#94A3B8", cursor: "pointer", padding: "2px" }}
+                                style={{ background: "transparent", border: "none", color: copiadoId === claveUnica ? "var(--exito)" : "var(--texto-tenue)", cursor: "pointer", padding: "2px" }}
                               >
                                 {copiadoId === claveUnica ? <Check size={11} /> : <Copy size={11} />}
                               </button>
@@ -1295,7 +1295,7 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
                       })}
                     </div>
                   ) : (
-                    <div style={{ textAlign: "center", padding: "8px", color: "#64748B", fontSize: "0.72rem" }}>
+                    <div style={{ textAlign: "center", padding: "8px", color: "var(--texto-suave)", fontSize: "0.72rem" }}>
                       No hay campos para el filtro seleccionado.
                     </div>
                   )}
@@ -1308,11 +1308,11 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
           {resVerificacion && (resVerificacion.esUsuarioWeb || resVerificacion.tienePlanActivo || resVerificacion.clienteCRM) && (
             <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
               {resVerificacion.esUsuarioWeb && (
-                <div style={{ background: "#EFF6FF", border: "1px solid #BFDBFE", color: "#1E40AF", padding: "8px 12px", borderRadius: "8px", fontSize: "0.8rem", display: "flex", alignItems: "flex-start", gap: "8px" }}>
-                  <UserCheck size={16} style={{ color: "#2563EB", marginTop: "2px", flexShrink: 0 }} />
+                <div style={{ background: "var(--acento-diluido)", border: "1px solid var(--acento-linea)", color: "var(--acento-hondo)", padding: "8px 12px", borderRadius: "8px", fontSize: "0.8rem", display: "flex", alignItems: "flex-start", gap: "8px" }}>
+                  <UserCheck size={16} style={{ color: "var(--acento)", marginTop: "2px", flexShrink: 0 }} />
                   <div>
-                    <div style={{ fontWeight: 700, color: "#1E3A8A" }}>Usuario Web Registrado en la Plataforma</div>
-                    <div style={{ color: "#1E40AF", marginTop: "1px" }}>
+                    <div style={{ fontWeight: 700, color: "var(--acento-hondo)" }}>Usuario Web Registrado en la Plataforma</div>
+                    <div style={{ color: "var(--acento-hondo)", marginTop: "1px" }}>
                       Cuenta activa asociada a <strong>{resVerificacion.usuarioWeb?.correo}</strong> ({resVerificacion.usuarioWeb?.nombreCompleto}). Su ficha en el CRM quedará vinculada automáticamente a su acceso web.
                     </div>
                   </div>
@@ -1320,13 +1320,13 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
               )}
 
               {resVerificacion.tienePlanActivo && resVerificacion.planActivo && (
-                <div style={{ background: "#F0FDF4", border: "1px solid #BBF7D0", color: "#166534", padding: "8px 12px", borderRadius: "8px", fontSize: "0.8rem", display: "flex", alignItems: "flex-start", gap: "8px" }}>
-                  <Sparkles size={16} style={{ color: "#16A34A", marginTop: "2px", flexShrink: 0 }} />
+                <div style={{ background: "var(--exito-diluido)", border: "1px solid var(--exito-linea)", color: "var(--exito-texto)", padding: "8px 12px", borderRadius: "8px", fontSize: "0.8rem", display: "flex", alignItems: "flex-start", gap: "8px" }}>
+                  <Sparkles size={16} style={{ color: "var(--exito)", marginTop: "2px", flexShrink: 0 }} />
                   <div>
-                    <div style={{ fontWeight: 700, color: "#14532D" }}>
+                    <div style={{ fontWeight: 700, color: "var(--exito-texto)" }}>
                       ✨ Plan Activo Vigente: {resVerificacion.planActivo.planNombre}
                     </div>
-                    <div style={{ color: "#15803D", marginTop: "1px" }}>
+                    <div style={{ color: "var(--exito-texto)", marginTop: "1px" }}>
                       Modalidad <strong>{resVerificacion.planActivo.frecuencia}</strong> ({resVerificacion.planActivo.esGratuito ? "Suscripción Gratuita $0.00" : `$${resVerificacion.planActivo.monto.toFixed(2)}`})
                       {resVerificacion.planActivo.consultasDisponibles !== null && (
                         <span> • <strong>{resVerificacion.planActivo.consultasDisponibles}</strong> consulta(s) disponibles este periodo</span>
@@ -1337,11 +1337,11 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
               )}
 
               {resVerificacion.clienteCRM && (
-                <div style={{ background: "#FFFBEB", border: "1px solid #FDE68A", color: "#92400E", padding: "8px 12px", borderRadius: "8px", fontSize: "0.8rem", display: "flex", alignItems: "flex-start", gap: "8px" }}>
-                  <AlertTriangle size={16} style={{ color: "#D97706", marginTop: "2px", flexShrink: 0 }} />
+                <div style={{ background: "var(--aviso-diluido)", border: "1px solid var(--aviso-linea)", color: "var(--aviso-texto)", padding: "8px 12px", borderRadius: "8px", fontSize: "0.8rem", display: "flex", alignItems: "flex-start", gap: "8px" }}>
+                  <AlertTriangle size={16} style={{ color: "var(--aviso)", marginTop: "2px", flexShrink: 0 }} />
                   <div>
-                    <div style={{ fontWeight: 700, color: "#78350F" }}>Cliente ya Registrado en el CRM Legal</div>
-                    <div style={{ color: "#92400E", marginTop: "1px" }}>
+                    <div style={{ fontWeight: 700, color: "var(--aviso-texto)" }}>Cliente ya Registrado en el CRM Legal</div>
+                    <div style={{ color: "var(--aviso-texto)", marginTop: "1px" }}>
                       Ficha registrada a nombre de <strong>{resVerificacion.clienteCRM.clp_razon_social || `${resVerificacion.clienteCRM.clp_nombres || ""} ${resVerificacion.clienteCRM.clp_apellidos || ""}`.trim()}</strong> (ID: {resVerificacion.clienteCRM.clp_identificacion}).
                     </div>
                   </div>
@@ -1356,14 +1356,14 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
           {tipoPersoneria === "natural" ? (
             <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
               {/* Bloque 1: Identificación y Nombres Completos (Editable) */}
-              <div style={{ border: "1px solid #E2E8F0", borderRadius: "10px", padding: "12px 14px", background: "#FFFFFF", display: "flex", flexDirection: "column", gap: "10px" }}>
-                <span style={{ fontSize: "0.8rem", fontWeight: 700, color: "#0F172A", display: "flex", alignItems: "center", gap: "6px" }}>
-                  <User size={15} color="#0284C7" /> Identificación y Nombres del Titular
+              <div style={{ border: "1px solid var(--linea)", borderRadius: "10px", padding: "12px 14px", background: "#FFFFFF", display: "flex", flexDirection: "column", gap: "10px" }}>
+                <span style={{ fontSize: "0.8rem", fontWeight: 700, color: "var(--texto)", display: "flex", alignItems: "center", gap: "6px" }}>
+                  <User size={15} color="var(--acento)" /> Identificación y Nombres del Titular
                 </span>
 
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1.5fr", gap: "10px" }}>
                   <div>
-                    <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 600, color: "#334155", marginBottom: "3px" }}>
+                    <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 600, color: "var(--texto-2)", marginBottom: "3px" }}>
                       Tipo Documento
                     </label>
                     <select
@@ -1372,7 +1372,7 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
                         setTipoIdentificacion(e.target.value as "cedula" | "ruc" | "pasaporte");
                         marcarCampoModificado("tipoIdentificacion");
                       }}
-                      style={{ width: "100%", padding: "7px 10px", borderRadius: "6px", border: "1px solid #CBD5E1", fontSize: "0.82rem" }}
+                      style={{ width: "100%", padding: "7px 10px", borderRadius: "6px", border: "1px solid var(--linea-fuerte)", fontSize: "0.82rem" }}
                     >
                       <option value="cedula">Cédula de Identidad</option>
                       <option value="ruc">RUC Personal (13 dígitos)</option>
@@ -1382,7 +1382,7 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
 
                   <div>
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "3px" }}>
-                      <label style={{ fontSize: "0.75rem", fontWeight: 600, color: "#334155" }}>
+                      <label style={{ fontSize: "0.75rem", fontWeight: 600, color: "var(--texto-2)" }}>
                         Número de Identificación *
                       </label>
                       <IndicadorOrigenCampo esAria={camposAria["identificacion"]} esModificado={camposModificados["identificacion"]} />
@@ -1402,10 +1402,10 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
                         padding: "7px 10px",
                         borderRadius: "6px",
                         border: camposAria["identificacion"] && !camposModificados["identificacion"]
-                          ? "1.5px solid #10B981"
-                          : "1px solid #CBD5E1",
+                          ? "1.5px solid var(--exito)"
+                          : "1px solid var(--linea-fuerte)",
                         background: camposAria["identificacion"] && !camposModificados["identificacion"]
-                          ? "#F0FDF4"
+                          ? "var(--exito-diluido)"
                           : "#FFFFFF",
                         fontSize: "0.82rem"
                       }}
@@ -1416,7 +1416,7 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
                   <div>
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "3px" }}>
-                      <label style={{ fontSize: "0.75rem", fontWeight: 600, color: "#334155" }}>
+                      <label style={{ fontSize: "0.75rem", fontWeight: 600, color: "var(--texto-2)" }}>
                         Nombres *
                       </label>
                       <IndicadorOrigenCampo esAria={camposAria["nombres"]} esModificado={camposModificados["nombres"]} />
@@ -1434,10 +1434,10 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
                         padding: "7px 10px",
                         borderRadius: "6px",
                         border: camposAria["nombres"] && !camposModificados["nombres"]
-                          ? "1.5px solid #10B981"
-                          : "1px solid #CBD5E1",
+                          ? "1.5px solid var(--exito)"
+                          : "1px solid var(--linea-fuerte)",
                         background: camposAria["nombres"] && !camposModificados["nombres"]
-                          ? "#F0FDF4"
+                          ? "var(--exito-diluido)"
                           : "#FFFFFF",
                         fontSize: "0.82rem"
                       }}
@@ -1446,7 +1446,7 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
 
                   <div>
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "3px" }}>
-                      <label style={{ fontSize: "0.75rem", fontWeight: 600, color: "#334155" }}>
+                      <label style={{ fontSize: "0.75rem", fontWeight: 600, color: "var(--texto-2)" }}>
                         Apellidos *
                       </label>
                       <IndicadorOrigenCampo esAria={camposAria["apellidos"]} esModificado={camposModificados["apellidos"]} />
@@ -1464,10 +1464,10 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
                         padding: "7px 10px",
                         borderRadius: "6px",
                         border: camposAria["apellidos"] && !camposModificados["apellidos"]
-                          ? "1.5px solid #10B981"
-                          : "1px solid #CBD5E1",
+                          ? "1.5px solid var(--exito)"
+                          : "1px solid var(--linea-fuerte)",
                         background: camposAria["apellidos"] && !camposModificados["apellidos"]
-                          ? "#F0FDF4"
+                          ? "var(--exito-diluido)"
                           : "#FFFFFF",
                         fontSize: "0.82rem"
                       }}
@@ -1477,16 +1477,16 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
               </div>
 
               {/* Bloque 2: Datos de Filiación, Cédula y Registro Civil (Editable) */}
-              <div style={{ border: "1px solid #E2E8F0", borderRadius: "10px", padding: "12px 14px", background: "#F8FAFC", display: "flex", flexDirection: "column", gap: "10px" }}>
-                <span style={{ fontSize: "0.8rem", fontWeight: 700, color: "#1E293B", display: "flex", alignItems: "center", gap: "6px" }}>
-                  <Scale size={14} color="#0284C7" /> Datos de Identidad, Cédula & Registro Civil
+              <div style={{ border: "1px solid var(--linea)", borderRadius: "10px", padding: "12px 14px", background: "var(--fondo-suave)", display: "flex", flexDirection: "column", gap: "10px" }}>
+                <span style={{ fontSize: "0.8rem", fontWeight: 700, color: "var(--texto)", display: "flex", alignItems: "center", gap: "6px" }}>
+                  <Scale size={14} color="var(--acento)" /> Datos de Identidad, Cédula & Registro Civil
                 </span>
 
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: "10px" }}>
                   {/* Nacionalidad */}
                   <div>
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "3px" }}>
-                      <label style={{ fontSize: "0.73rem", fontWeight: 600, color: "#334155" }}>
+                      <label style={{ fontSize: "0.73rem", fontWeight: 600, color: "var(--texto-2)" }}>
                         Nacionalidad *
                       </label>
                       <IndicadorOrigenCampo esAria={camposAria["nacionalidad"]} esModificado={camposModificados["nacionalidad"]} />
@@ -1503,8 +1503,8 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
                         width: "100%",
                         padding: "6px 8px",
                         borderRadius: "6px",
-                        border: camposAria["nacionalidad"] && !camposModificados["nacionalidad"] ? "1.5px solid #10B981" : "1px solid #CBD5E1",
-                        background: camposAria["nacionalidad"] && !camposModificados["nacionalidad"] ? "#F0FDF4" : "#FFFFFF",
+                        border: camposAria["nacionalidad"] && !camposModificados["nacionalidad"] ? "1.5px solid var(--exito)" : "1px solid var(--linea-fuerte)",
+                        background: camposAria["nacionalidad"] && !camposModificados["nacionalidad"] ? "var(--exito-diluido)" : "#FFFFFF",
                         fontSize: "0.8rem"
                       }}
                     />
@@ -1513,7 +1513,7 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
                   {/* Fecha de Nacimiento */}
                   <div>
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "3px" }}>
-                      <label style={{ fontSize: "0.73rem", fontWeight: 600, color: "#334155" }}>
+                      <label style={{ fontSize: "0.73rem", fontWeight: 600, color: "var(--texto-2)" }}>
                         Fecha de Nacimiento *
                       </label>
                       <IndicadorOrigenCampo esAria={camposAria["fechaNacimiento"]} esModificado={camposModificados["fechaNacimiento"]} />
@@ -1529,8 +1529,8 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
                         width: "100%",
                         padding: "6px 8px",
                         borderRadius: "6px",
-                        border: camposAria["fechaNacimiento"] && !camposModificados["fechaNacimiento"] ? "1.5px solid #10B981" : "1px solid #CBD5E1",
-                        background: camposAria["fechaNacimiento"] && !camposModificados["fechaNacimiento"] ? "#F0FDF4" : "#FFFFFF",
+                        border: camposAria["fechaNacimiento"] && !camposModificados["fechaNacimiento"] ? "1.5px solid var(--exito)" : "1px solid var(--linea-fuerte)",
+                        background: camposAria["fechaNacimiento"] && !camposModificados["fechaNacimiento"] ? "var(--exito-diluido)" : "#FFFFFF",
                         fontSize: "0.8rem"
                       }}
                     />
@@ -1539,7 +1539,7 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
                   {/* Lugar de Nacimiento */}
                   <div>
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "3px" }}>
-                      <label style={{ fontSize: "0.73rem", fontWeight: 600, color: "#334155" }}>
+                      <label style={{ fontSize: "0.73rem", fontWeight: 600, color: "var(--texto-2)" }}>
                         Lugar de Nacimiento
                       </label>
                       <IndicadorOrigenCampo esAria={camposAria["lugarNacimiento"]} esModificado={camposModificados["lugarNacimiento"]} />
@@ -1556,8 +1556,8 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
                         width: "100%",
                         padding: "6px 8px",
                         borderRadius: "6px",
-                        border: camposAria["lugarNacimiento"] && !camposModificados["lugarNacimiento"] ? "1.5px solid #10B981" : "1px solid #CBD5E1",
-                        background: camposAria["lugarNacimiento"] && !camposModificados["lugarNacimiento"] ? "#F0FDF4" : "#FFFFFF",
+                        border: camposAria["lugarNacimiento"] && !camposModificados["lugarNacimiento"] ? "1.5px solid var(--exito)" : "1px solid var(--linea-fuerte)",
+                        background: camposAria["lugarNacimiento"] && !camposModificados["lugarNacimiento"] ? "var(--exito-diluido)" : "#FFFFFF",
                         fontSize: "0.8rem"
                       }}
                     />
@@ -1568,7 +1568,7 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
                   {/* Sexo / Género */}
                   <div>
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "3px" }}>
-                      <label style={{ fontSize: "0.73rem", fontWeight: 600, color: "#334155" }}>
+                      <label style={{ fontSize: "0.73rem", fontWeight: 600, color: "var(--texto-2)" }}>
                         Sexo / Género
                       </label>
                       <IndicadorOrigenCampo esAria={camposAria["sexo"]} esModificado={camposModificados["sexo"]} />
@@ -1583,8 +1583,8 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
                         width: "100%",
                         padding: "6px 8px",
                         borderRadius: "6px",
-                        border: camposAria["sexo"] && !camposModificados["sexo"] ? "1.5px solid #10B981" : "1px solid #CBD5E1",
-                        background: camposAria["sexo"] && !camposModificados["sexo"] ? "#F0FDF4" : "#FFFFFF",
+                        border: camposAria["sexo"] && !camposModificados["sexo"] ? "1.5px solid var(--exito)" : "1px solid var(--linea-fuerte)",
+                        background: camposAria["sexo"] && !camposModificados["sexo"] ? "var(--exito-diluido)" : "#FFFFFF",
                         fontSize: "0.8rem"
                       }}
                     >
@@ -1597,7 +1597,7 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
                   {/* Estado Civil */}
                   <div>
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "3px" }}>
-                      <label style={{ fontSize: "0.73rem", fontWeight: 600, color: "#334155" }}>
+                      <label style={{ fontSize: "0.73rem", fontWeight: 600, color: "var(--texto-2)" }}>
                         Estado Civil *
                       </label>
                       <IndicadorOrigenCampo esAria={camposAria["estadoCivil"]} esModificado={camposModificados["estadoCivil"]} />
@@ -1612,8 +1612,8 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
                         width: "100%",
                         padding: "6px 8px",
                         borderRadius: "6px",
-                        border: camposAria["estadoCivil"] && !camposModificados["estadoCivil"] ? "1.5px solid #10B981" : "1px solid #CBD5E1",
-                        background: camposAria["estadoCivil"] && !camposModificados["estadoCivil"] ? "#F0FDF4" : "#FFFFFF",
+                        border: camposAria["estadoCivil"] && !camposModificados["estadoCivil"] ? "1.5px solid var(--exito)" : "1px solid var(--linea-fuerte)",
+                        background: camposAria["estadoCivil"] && !camposModificados["estadoCivil"] ? "var(--exito-diluido)" : "#FFFFFF",
                         fontSize: "0.8rem"
                       }}
                     >
@@ -1628,7 +1628,7 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
                   {/* Cónyuge / Conviviente */}
                   <div>
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "3px" }}>
-                      <label style={{ fontSize: "0.73rem", fontWeight: 600, color: "#334155" }}>
+                      <label style={{ fontSize: "0.73rem", fontWeight: 600, color: "var(--texto-2)" }}>
                         Cónyuge / Conviviente
                       </label>
                       <IndicadorOrigenCampo esAria={camposAria["conyuge"]} esModificado={camposModificados["conyuge"]} />
@@ -1645,8 +1645,8 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
                         width: "100%",
                         padding: "6px 8px",
                         borderRadius: "6px",
-                        border: camposAria["conyuge"] && !camposModificados["conyuge"] ? "1.5px solid #10B981" : "1px solid #CBD5E1",
-                        background: camposAria["conyuge"] && !camposModificados["conyuge"] ? "#F0FDF4" : "#FFFFFF",
+                        border: camposAria["conyuge"] && !camposModificados["conyuge"] ? "1.5px solid var(--exito)" : "1px solid var(--linea-fuerte)",
+                        background: camposAria["conyuge"] && !camposModificados["conyuge"] ? "var(--exito-diluido)" : "#FFFFFF",
                         fontSize: "0.8rem"
                       }}
                     />
@@ -1655,7 +1655,7 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
                   {/* Fecha de Expiración Cédula */}
                   <div>
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "3px" }}>
-                      <label style={{ fontSize: "0.73rem", fontWeight: 600, color: "#334155" }}>
+                      <label style={{ fontSize: "0.73rem", fontWeight: 600, color: "var(--texto-2)" }}>
                         Vencimiento Cédula
                       </label>
                       <IndicadorOrigenCampo esAria={camposAria["fechaExpiracionDocumento"]} esModificado={camposModificados["fechaExpiracionDocumento"]} />
@@ -1671,8 +1671,8 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
                         width: "100%",
                         padding: "6px 8px",
                         borderRadius: "6px",
-                        border: camposAria["fechaExpiracionDocumento"] && !camposModificados["fechaExpiracionDocumento"] ? "1.5px solid #10B981" : "1px solid #CBD5E1",
-                        background: camposAria["fechaExpiracionDocumento"] && !camposModificados["fechaExpiracionDocumento"] ? "#F0FDF4" : "#FFFFFF",
+                        border: camposAria["fechaExpiracionDocumento"] && !camposModificados["fechaExpiracionDocumento"] ? "1.5px solid var(--exito)" : "1px solid var(--linea-fuerte)",
+                        background: camposAria["fechaExpiracionDocumento"] && !camposModificados["fechaExpiracionDocumento"] ? "var(--exito-diluido)" : "#FFFFFF",
                         fontSize: "0.8rem"
                       }}
                     />
@@ -1681,8 +1681,8 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
               </div>
 
               {/* Sección Opcional de Apoderado / Representante Legal en Persona Natural */}
-              <div style={{ border: "1px solid #E2E8F0", borderRadius: "10px", padding: "12px", background: "#F8FAFC" }}>
-                <label style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "0.82rem", fontWeight: 700, color: "#0F172A", cursor: "pointer" }}>
+              <div style={{ border: "1px solid var(--linea)", borderRadius: "10px", padding: "12px", background: "var(--fondo-suave)" }}>
+                <label style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "0.82rem", fontWeight: 700, color: "var(--texto)", cursor: "pointer" }}>
                   <input
                     type="checkbox"
                     checked={tieneApoderadoNatural}
@@ -1690,14 +1690,14 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
                   />
                   <span>¿Actúa a través de Apoderado, Tutor o Representante Legal? (Opcional)</span>
                 </label>
-                <p style={{ margin: "2px 0 8px 24px", fontSize: "0.73rem", color: "#64748B" }}>
+                <p style={{ margin: "2px 0 8px 24px", fontSize: "0.73rem", color: "var(--texto-suave)" }}>
                   Aplica para ecuatorianos en el exterior con poder especial, menores en juicios de alimentos, tutores o albaceas.
                 </p>
 
                 {tieneApoderadoNatural && (
                   <div style={{ marginTop: "10px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
                     <div>
-                      <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 600, color: "#475569", marginBottom: "3px" }}>
+                      <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 600, color: "var(--texto-2)", marginBottom: "3px" }}>
                         Nombres y Apellidos del Apoderado / Tutor
                       </label>
                       <input
@@ -1705,11 +1705,11 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
                         placeholder="Ej. Ab. Carlos Andrade M."
                         value={apoNombres}
                         onChange={(e) => setApoNombres(e.target.value)}
-                        style={{ width: "100%", padding: "6px 8px", borderRadius: "6px", border: "1px solid #CBD5E1", fontSize: "0.8rem" }}
+                        style={{ width: "100%", padding: "6px 8px", borderRadius: "6px", border: "1px solid var(--linea-fuerte)", fontSize: "0.8rem" }}
                       />
                     </div>
                     <div>
-                      <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 600, color: "#475569", marginBottom: "3px" }}>
+                      <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 600, color: "var(--texto-2)", marginBottom: "3px" }}>
                         Cédula / Pasaporte del Apoderado
                       </label>
                       <input
@@ -1717,17 +1717,17 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
                         placeholder="1712345678"
                         value={apoCedula}
                         onChange={(e) => setApoCedula(e.target.value)}
-                        style={{ width: "100%", padding: "6px 8px", borderRadius: "6px", border: "1px solid #CBD5E1", fontSize: "0.8rem" }}
+                        style={{ width: "100%", padding: "6px 8px", borderRadius: "6px", border: "1px solid var(--linea-fuerte)", fontSize: "0.8rem" }}
                       />
                     </div>
                     <div>
-                      <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 600, color: "#475569", marginBottom: "3px" }}>
+                      <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 600, color: "var(--texto-2)", marginBottom: "3px" }}>
                         Calidad / Tipo de Representación
                       </label>
                       <select
                         value={apoCalidadPoder}
                         onChange={(e) => setApoCalidadPoder(e.target.value)}
-                        style={{ width: "100%", padding: "6px 8px", borderRadius: "6px", border: "1px solid #CBD5E1", fontSize: "0.8rem" }}
+                        style={{ width: "100%", padding: "6px 8px", borderRadius: "6px", border: "1px solid var(--linea-fuerte)", fontSize: "0.8rem" }}
                       >
                         <option value="Apoderado General">Apoderado General (Poder Amplio)</option>
                         <option value="Apoderado Especial">Apoderado Especial (Procuración Judicial)</option>
@@ -1737,7 +1737,7 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
                       </select>
                     </div>
                     <div>
-                      <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 600, color: "#475569", marginBottom: "3px" }}>
+                      <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 600, color: "var(--texto-2)", marginBottom: "3px" }}>
                         Notaría / Consulado y Vigencia
                       </label>
                       <input
@@ -1745,7 +1745,7 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
                         placeholder="Ej. Consulado Ecuador en Madrid / Notaría 5"
                         value={apoNotariaVigencia}
                         onChange={(e) => setApoNotariaVigencia(e.target.value)}
-                        style={{ width: "100%", padding: "6px 8px", borderRadius: "6px", border: "1px solid #CBD5E1", fontSize: "0.8rem" }}
+                        style={{ width: "100%", padding: "6px 8px", borderRadius: "6px", border: "1px solid var(--linea-fuerte)", fontSize: "0.8rem" }}
                       />
                     </div>
                   </div>
@@ -1760,7 +1760,7 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
                 <div>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "4px" }}>
-                    <label style={{ fontSize: "0.78rem", fontWeight: 600, color: "#334155" }}>
+                    <label style={{ fontSize: "0.78rem", fontWeight: 600, color: "var(--texto-2)" }}>
                       Razón Social de la Empresa *
                     </label>
                     <IndicadorOrigenCampo
@@ -1781,10 +1781,10 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
                       padding: "8px 10px",
                       borderRadius: "8px",
                       border: camposAria["razonSocial"] && !camposModificados["razonSocial"]
-                        ? "1.5px solid #10B981"
-                        : "1px solid #CBD5E1",
+                        ? "1.5px solid var(--exito)"
+                        : "1px solid var(--linea-fuerte)",
                       background: camposAria["razonSocial"] && !camposModificados["razonSocial"]
-                        ? "#F0FDF4"
+                        ? "var(--exito-diluido)"
                         : "#FFFFFF",
                       fontSize: "0.85rem"
                     }}
@@ -1792,7 +1792,7 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
                 </div>
                 <div>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "4px" }}>
-                    <label style={{ fontSize: "0.78rem", fontWeight: 600, color: "#334155" }}>
+                    <label style={{ fontSize: "0.78rem", fontWeight: 600, color: "var(--texto-2)" }}>
                       Nombre Comercial / Fantasía (Opcional)
                     </label>
                     <IndicadorOrigenCampo
@@ -1808,13 +1808,13 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
                       marcarCampoModificado("nombreComercial");
                     }}
                     placeholder="Andina Construcciones"
-                    style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid #CBD5E1", fontSize: "0.85rem" }}
+                    style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid var(--linea-fuerte)", fontSize: "0.85rem" }}
                   />
                 </div>
               </div>
 
               <div>
-                <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 600, color: "#334155", marginBottom: "4px" }}>
+                <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 600, color: "var(--texto-2)", marginBottom: "4px" }}>
                   Actividad Económica / Sector (Opcional)
                 </label>
                 <input
@@ -1822,31 +1822,31 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
                   value={actividadEconomica}
                   onChange={(e) => setActividadEconomica(e.target.value)}
                   placeholder="Ej. Construcción y Promoción Inmobiliaria / Servicios Legales y Corporativos"
-                  style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid #CBD5E1", fontSize: "0.85rem" }}
+                  style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid var(--linea-fuerte)", fontSize: "0.85rem" }}
                 />
               </div>
 
               {/* Bóveda de Documentación Obligatoria de la Empresa (Billetera Digital) */}
-              <div style={{ border: "1.5px solid #BAE6FD", borderRadius: "12px", padding: "14px", background: "#F0F9FF", display: "flex", flexDirection: "column", gap: "10px" }}>
+              <div style={{ border: "1.5px solid var(--acento-linea)", borderRadius: "12px", padding: "14px", background: "var(--acento-diluido)", display: "flex", flexDirection: "column", gap: "10px" }}>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "6px" }}>
-                  <span style={{ fontSize: "0.84rem", fontWeight: 700, color: "#0369A1", display: "flex", alignItems: "center", gap: "6px" }}>
+                  <span style={{ fontSize: "0.84rem", fontWeight: 700, color: "var(--acento-hondo)", display: "flex", alignItems: "center", gap: "6px" }}>
                     <ShieldCheck size={18} />
                     Documentación Legal Obligatoria de la Empresa (Billetera Digital)
                   </span>
-                  <span style={{ fontSize: "0.72rem", color: "#0369A1", fontWeight: 600, background: "#E0F2FE", padding: "2px 8px", borderRadius: "6px" }}>
+                  <span style={{ fontSize: "0.72rem", color: "var(--acento-hondo)", fontWeight: 600, background: "var(--acento-diluido)", padding: "2px 8px", borderRadius: "6px" }}>
                     Cédula + Nombramiento Inscrito
                   </span>
                 </div>
 
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
                   {/* Tarjeta A: Cédula del Representante Legal (Obligatorio) */}
-                  <div style={{ background: "#FFFFFF", border: archivoRepCedula ? "1.5px solid #86EFAC" : "1.5px dashed #38BDF8", borderRadius: "10px", padding: "10px 12px" }}>
+                  <div style={{ background: "#FFFFFF", border: archivoRepCedula ? "1.5px solid var(--exito-linea)" : "1.5px dashed var(--acento)", borderRadius: "10px", padding: "10px 12px" }}>
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "6px" }}>
                       <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                        <span style={{ fontSize: "0.76rem", fontWeight: 700, color: "#0F172A" }}>
+                        <span style={{ fontSize: "0.76rem", fontWeight: 700, color: "var(--texto)" }}>
                           1. Cédula del Representante *
                         </span>
-                        <span style={{ background: archivoRepCedula ? "#DCFCE7" : "#FEF3C7", color: archivoRepCedula ? "#15803D" : "#92400E", fontSize: "0.65rem", fontWeight: 700, padding: "1px 5px", borderRadius: "4px" }}>
+                        <span style={{ background: archivoRepCedula ? "var(--exito-diluido)" : "var(--aviso-diluido)", color: archivoRepCedula ? "var(--exito-texto)" : "var(--aviso-texto)", fontSize: "0.65rem", fontWeight: 700, padding: "1px 5px", borderRadius: "4px" }}>
                           {archivoRepCedula ? "Cargada" : "Obligatorio"}
                         </span>
                       </div>
@@ -1854,25 +1854,25 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
 
                     {archivoRepCedula ? (
                       <div>
-                        <p style={{ margin: "0 0 6px", fontSize: "0.72rem", color: "#475569" }}>
+                        <p style={{ margin: "0 0 6px", fontSize: "0.72rem", color: "var(--texto-2)" }}>
                           📄 {archivoRepCedula.nombre} ({(archivoRepCedula.tamano / 1024).toFixed(1)} KB)
                         </p>
                         <div style={{ display: "flex", gap: "6px" }}>
-                          <label style={{ background: "#F0FDF4", border: "1px solid #86EFAC", color: "#166534", padding: "4px 8px", borderRadius: "6px", fontSize: "0.72rem", fontWeight: 600, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                          <label style={{ background: "var(--exito-diluido)", border: "1px solid var(--exito-linea)", color: "var(--exito-texto)", padding: "4px 8px", borderRadius: "6px", fontSize: "0.72rem", fontWeight: 600, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "4px" }}>
                             <Upload size={11} /> Reemplazar
                             <input type="file" accept="image/*,application/pdf" onChange={manejarCargaArchivoRepCedula} style={{ display: "none" }} disabled={procesandoAriaRepCedula} />
                           </label>
-                          <button type="button" onClick={() => setArchivoRepCedula(null)} style={{ background: "#FEE2E2", border: "1px solid #FCA5A5", color: "#B91C1C", padding: "4px 6px", borderRadius: "6px", cursor: "pointer" }} title="Quitar archivo">
+                          <button type="button" onClick={() => setArchivoRepCedula(null)} style={{ background: "var(--error-diluido)", border: "1px solid var(--error-linea)", color: "var(--error)", padding: "4px 6px", borderRadius: "6px", cursor: "pointer" }} title="Quitar archivo">
                             <Trash2 size={11} />
                           </button>
                         </div>
                       </div>
                     ) : (
                       <div>
-                        <p style={{ margin: "0 0 8px", fontSize: "0.72rem", color: "#64748B" }}>
+                        <p style={{ margin: "0 0 8px", fontSize: "0.72rem", color: "var(--texto-suave)" }}>
                           Sube la cédula o pasaporte del representante legal para extracción y archivo seguro.
                         </p>
-                        <label style={{ background: "#0284C7", color: "#FFFFFF", padding: "6px 10px", borderRadius: "6px", fontSize: "0.74rem", fontWeight: 600, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "5px" }}>
+                        <label style={{ background: "var(--acento)", color: "#FFFFFF", padding: "6px 10px", borderRadius: "6px", fontSize: "0.74rem", fontWeight: 600, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "5px" }}>
                           <Upload size={12} />
                           {procesandoAriaRepCedula ? "Analizando..." : "Cargar Cédula Representante"}
                           <input type="file" accept="image/*,application/pdf" onChange={manejarCargaArchivoRepCedula} style={{ display: "none" }} disabled={procesandoAriaRepCedula} />
@@ -1882,13 +1882,13 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
                   </div>
 
                   {/* Tarjeta B: Nombramiento Inscrito en Registro Mercantil (Obligatorio) */}
-                  <div style={{ background: "#FFFFFF", border: archivoNombramiento ? "1.5px solid #86EFAC" : "1.5px dashed #38BDF8", borderRadius: "10px", padding: "10px 12px" }}>
+                  <div style={{ background: "#FFFFFF", border: archivoNombramiento ? "1.5px solid var(--exito-linea)" : "1.5px dashed var(--acento)", borderRadius: "10px", padding: "10px 12px" }}>
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "6px" }}>
                       <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                        <span style={{ fontSize: "0.76rem", fontWeight: 700, color: "#0F172A" }}>
+                        <span style={{ fontSize: "0.76rem", fontWeight: 700, color: "var(--texto)" }}>
                           2. Nombramiento Inscrito *
                         </span>
-                        <span style={{ background: archivoNombramiento ? "#DCFCE7" : "#FEF3C7", color: archivoNombramiento ? "#15803D" : "#92400E", fontSize: "0.65rem", fontWeight: 700, padding: "1px 5px", borderRadius: "4px" }}>
+                        <span style={{ background: archivoNombramiento ? "var(--exito-diluido)" : "var(--aviso-diluido)", color: archivoNombramiento ? "var(--exito-texto)" : "var(--aviso-texto)", fontSize: "0.65rem", fontWeight: 700, padding: "1px 5px", borderRadius: "4px" }}>
                           {archivoNombramiento ? "Cargado" : "Obligatorio"}
                         </span>
                       </div>
@@ -1896,25 +1896,25 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
 
                     {archivoNombramiento ? (
                       <div>
-                        <p style={{ margin: "0 0 6px", fontSize: "0.72rem", color: "#475569" }}>
+                        <p style={{ margin: "0 0 6px", fontSize: "0.72rem", color: "var(--texto-2)" }}>
                           📄 {archivoNombramiento.nombre} ({(archivoNombramiento.tamano / 1024).toFixed(1)} KB)
                         </p>
                         <div style={{ display: "flex", gap: "6px" }}>
-                          <label style={{ background: "#F0FDF4", border: "1px solid #86EFAC", color: "#166534", padding: "4px 8px", borderRadius: "6px", fontSize: "0.72rem", fontWeight: 600, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                          <label style={{ background: "var(--exito-diluido)", border: "1px solid var(--exito-linea)", color: "var(--exito-texto)", padding: "4px 8px", borderRadius: "6px", fontSize: "0.72rem", fontWeight: 600, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "4px" }}>
                             <Upload size={11} /> Reemplazar
                             <input type="file" accept="application/pdf,image/*" onChange={manejarCargaNombramiento} style={{ display: "none" }} disabled={procesandoAriaNom} />
                           </label>
-                          <button type="button" onClick={() => setArchivoNombramiento(null)} style={{ background: "#FEE2E2", border: "1px solid #FCA5A5", color: "#B91C1C", padding: "4px 6px", borderRadius: "6px", cursor: "pointer" }} title="Quitar archivo">
+                          <button type="button" onClick={() => setArchivoNombramiento(null)} style={{ background: "var(--error-diluido)", border: "1px solid var(--error-linea)", color: "var(--error)", padding: "4px 6px", borderRadius: "6px", cursor: "pointer" }} title="Quitar archivo">
                             <Trash2 size={11} />
                           </button>
                         </div>
                       </div>
                     ) : (
                       <div>
-                        <p style={{ margin: "0 0 8px", fontSize: "0.72rem", color: "#64748B" }}>
+                        <p style={{ margin: "0 0 8px", fontSize: "0.72rem", color: "var(--texto-suave)" }}>
                           Sube el nombramiento inscrito para certificar el cargo, periodo y facultades estatutarias.
                         </p>
-                        <label style={{ background: "#0284C7", color: "#FFFFFF", padding: "6px 10px", borderRadius: "6px", fontSize: "0.74rem", fontWeight: 600, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "5px" }}>
+                        <label style={{ background: "var(--acento)", color: "#FFFFFF", padding: "6px 10px", borderRadius: "6px", fontSize: "0.74rem", fontWeight: 600, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "5px" }}>
                           <Upload size={12} />
                           {procesandoAriaNom ? "Analizando..." : "Cargar Nombramiento PDF"}
                           <input type="file" accept="application/pdf,image/*" onChange={manejarCargaNombramiento} style={{ display: "none" }} disabled={procesandoAriaNom} />
@@ -1928,12 +1928,12 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
                 {(badgeAriaRepCedula || badgeAriaNom) && (
                   <div style={{ display: "flex", flexDirection: "column", gap: "4px", marginTop: "2px" }}>
                     {badgeAriaRepCedula && (
-                      <div style={{ background: "#DCFCE7", border: "1px solid #86EFAC", color: "#166534", padding: "4px 8px", borderRadius: "6px", fontSize: "0.72rem" }}>
+                      <div style={{ background: "var(--exito-diluido)", border: "1px solid var(--exito-linea)", color: "var(--exito-texto)", padding: "4px 8px", borderRadius: "6px", fontSize: "0.72rem" }}>
                         {badgeAriaRepCedula}
                       </div>
                     )}
                     {badgeAriaNom && (
-                      <div style={{ background: "#DCFCE7", border: "1px solid #86EFAC", color: "#166534", padding: "4px 8px", borderRadius: "6px", fontSize: "0.72rem" }}>
+                      <div style={{ background: "var(--exito-diluido)", border: "1px solid var(--exito-linea)", color: "var(--exito-texto)", padding: "4px 8px", borderRadius: "6px", fontSize: "0.72rem" }}>
                         {badgeAriaNom}
                       </div>
                     )}
@@ -1941,14 +1941,14 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
                 )}
 
                 {/* Campos Formulario del Representante Legal */}
-                <div style={{ borderTop: "1px solid #BAE6FD", paddingTop: "10px", marginTop: "2px" }}>
-                  <span style={{ display: "block", fontSize: "0.74rem", fontWeight: 700, color: "#0369A1", marginBottom: "8px" }}>
+                <div style={{ borderTop: "1px solid var(--acento-linea)", paddingTop: "10px", marginTop: "2px" }}>
+                  <span style={{ display: "block", fontSize: "0.74rem", fontWeight: 700, color: "var(--acento-hondo)", marginBottom: "8px" }}>
                     Datos del Representante Legal Mapeados
                   </span>
                   <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr 1fr", gap: "8px" }}>
                     <div>
                       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "2px" }}>
-                        <label style={{ fontSize: "0.7rem", fontWeight: 600, color: "#475569" }}>
+                        <label style={{ fontSize: "0.7rem", fontWeight: 600, color: "var(--texto-2)" }}>
                           Nombres del Representante *
                         </label>
                         <IndicadorOrigenCampo esAria={camposAria["repNombres"]} esModificado={camposModificados["repNombres"]} />
@@ -1966,10 +1966,10 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
                           padding: "6px 8px",
                           borderRadius: "6px",
                           border: camposAria["repNombres"] && !camposModificados["repNombres"]
-                            ? "1.5px solid #10B981"
-                            : "1px solid #CBD5E1",
+                            ? "1.5px solid var(--exito)"
+                            : "1px solid var(--linea-fuerte)",
                           background: camposAria["repNombres"] && !camposModificados["repNombres"]
-                            ? "#F0FDF4"
+                            ? "var(--exito-diluido)"
                             : "#FFFFFF",
                           fontSize: "0.8rem"
                         }}
@@ -1977,7 +1977,7 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
                     </div>
                     <div>
                       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "2px" }}>
-                        <label style={{ fontSize: "0.7rem", fontWeight: 600, color: "#475569" }}>
+                        <label style={{ fontSize: "0.7rem", fontWeight: 600, color: "var(--texto-2)" }}>
                           Cédula / Pasaporte *
                         </label>
                         <IndicadorOrigenCampo esAria={camposAria["repCedula"]} esModificado={camposModificados["repCedula"]} />
@@ -1995,10 +1995,10 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
                           padding: "6px 8px",
                           borderRadius: "6px",
                           border: camposAria["repCedula"] && !camposModificados["repCedula"]
-                            ? "1.5px solid #10B981"
-                            : "1px solid #CBD5E1",
+                            ? "1.5px solid var(--exito)"
+                            : "1px solid var(--linea-fuerte)",
                           background: camposAria["repCedula"] && !camposModificados["repCedula"]
-                            ? "#F0FDF4"
+                            ? "var(--exito-diluido)"
                             : "#FFFFFF",
                           fontSize: "0.8rem"
                         }}
@@ -2006,7 +2006,7 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
                     </div>
                     <div>
                       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "2px" }}>
-                        <label style={{ fontSize: "0.7rem", fontWeight: 600, color: "#475569" }}>
+                        <label style={{ fontSize: "0.7rem", fontWeight: 600, color: "var(--texto-2)" }}>
                           Cargo Estatutario
                         </label>
                         <IndicadorOrigenCampo esAria={camposAria["repCargo"]} esModificado={camposModificados["repCargo"]} />
@@ -2019,7 +2019,7 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
                           setRepCargo(e.target.value);
                           marcarCampoModificado("repCargo");
                         }}
-                        style={{ width: "100%", padding: "6px 8px", borderRadius: "6px", border: "1px solid #CBD5E1", fontSize: "0.8rem" }}
+                        style={{ width: "100%", padding: "6px 8px", borderRadius: "6px", border: "1px solid var(--linea-fuerte)", fontSize: "0.8rem" }}
                       />
                     </div>
                   </div>
@@ -2027,7 +2027,7 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", marginTop: "8px" }}>
                     <div>
                       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "2px" }}>
-                        <label style={{ fontSize: "0.7rem", fontWeight: 600, color: "#475569" }}>
+                        <label style={{ fontSize: "0.7rem", fontWeight: 600, color: "var(--texto-2)" }}>
                           Vigencia Nombramiento (Calculada / Mercantil)
                         </label>
                         <IndicadorOrigenCampo esAria={camposAria["repVencimientoNombramiento"]} esModificado={camposModificados["repVencimientoNombramiento"]} />
@@ -2036,11 +2036,11 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
                         type="date"
                         value={repVencimientoNombramiento}
                         onChange={(e) => setRepVencimientoNombramiento(e.target.value)}
-                        style={{ width: "100%", padding: "6px 8px", borderRadius: "6px", border: "1px solid #CBD5E1", fontSize: "0.8rem" }}
+                        style={{ width: "100%", padding: "6px 8px", borderRadius: "6px", border: "1px solid var(--linea-fuerte)", fontSize: "0.8rem" }}
                       />
                     </div>
                     <div>
-                      <label style={{ display: "block", fontSize: "0.7rem", fontWeight: 600, color: "#475569", marginBottom: "2px" }}>
+                      <label style={{ display: "block", fontSize: "0.7rem", fontWeight: 600, color: "var(--texto-2)", marginBottom: "2px" }}>
                         Correo Directo Representante (Opcional)
                       </label>
                       <input
@@ -2048,7 +2048,7 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
                         placeholder="gerencia@empresa.com"
                         value={repCorreo}
                         onChange={(e) => setRepCorreo(e.target.value)}
-                        style={{ width: "100%", padding: "6px 8px", borderRadius: "6px", border: "1px solid #CBD5E1", fontSize: "0.8rem" }}
+                        style={{ width: "100%", padding: "6px 8px", borderRadius: "6px", border: "1px solid var(--linea-fuerte)", fontSize: "0.8rem" }}
                       />
                     </div>
                   </div>
@@ -2060,7 +2060,7 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
           {/* Contacto y Casillero Judicial */}
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "12px" }}>
             <div>
-              <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 600, color: "#334155", marginBottom: "4px" }}>
+              <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 600, color: "var(--texto-2)", marginBottom: "4px" }}>
                 {tipoPersoneria === "juridica" ? "Correo Facturación / Notificaciones *" : "Correo Electrónico *"}
               </label>
               <input
@@ -2073,11 +2073,11 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
                   await evaluarDuplicadosYPlanes(identificacion, val);
                 }}
                 placeholder={tipoPersoneria === "juridica" ? "facturacion@empresa.com" : "cliente@correo.com"}
-                style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid #CBD5E1", fontSize: "0.85rem" }}
+                style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid var(--linea-fuerte)", fontSize: "0.85rem" }}
               />
             </div>
             <div>
-              <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 600, color: "#334155", marginBottom: "4px" }}>
+              <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 600, color: "var(--texto-2)", marginBottom: "4px" }}>
                 Celular / WhatsApp (Contacto)
               </label>
               <input
@@ -2085,11 +2085,11 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
                 value={celular}
                 onChange={(e) => setCelular(e.target.value)}
                 placeholder="0991234567"
-                style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid #CBD5E1", fontSize: "0.85rem" }}
+                style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid var(--linea-fuerte)", fontSize: "0.85rem" }}
               />
             </div>
             <div>
-              <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 600, color: "#334155", marginBottom: "4px" }}>
+              <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 600, color: "var(--texto-2)", marginBottom: "4px" }}>
                 Casillero Judicial Electrónico
               </label>
               <input
@@ -2097,14 +2097,14 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
                 value={casilleroElectronico}
                 onChange={(e) => setCasilleroElectronico(e.target.value)}
                 placeholder="1719103986@funcionjudicial.gob.ec"
-                style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid #CBD5E1", fontSize: "0.85rem" }}
+                style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid var(--linea-fuerte)", fontSize: "0.85rem" }}
               />
             </div>
           </div>
 
           {/* Sección de Contraparte y Conflict Check */}
-          <div style={{ border: "1px solid #E2E8F0", borderRadius: "10px", padding: "12px 14px", background: "#F8FAFC" }}>
-            <span style={{ fontSize: "0.82rem", fontWeight: 700, color: "#0F172A", display: "block", marginBottom: "6px" }}>
+          <div style={{ border: "1px solid var(--linea)", borderRadius: "10px", padding: "12px 14px", background: "var(--fondo-suave)" }}>
+            <span style={{ fontSize: "0.82rem", fontWeight: 700, color: "var(--texto)", display: "block", marginBottom: "6px" }}>
               Contraparte Preliminar (Verificación de Conflicto de Intereses)
             </span>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
@@ -2116,7 +2116,7 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
                   setContraparteNombres(e.target.value);
                   ejecutarConflictCheck(contraparteIdentificacion, e.target.value);
                 }}
-                style={{ padding: "6px 8px", borderRadius: "6px", border: "1px solid #CBD5E1", fontSize: "0.8rem" }}
+                style={{ padding: "6px 8px", borderRadius: "6px", border: "1px solid var(--linea-fuerte)", fontSize: "0.8rem" }}
               />
               <input
                 type="text"
@@ -2126,12 +2126,12 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
                   setContraparteIdentificacion(e.target.value);
                   ejecutarConflictCheck(e.target.value, contraparteNombres);
                 }}
-                style={{ padding: "6px 8px", borderRadius: "6px", border: "1px solid #CBD5E1", fontSize: "0.8rem" }}
+                style={{ padding: "6px 8px", borderRadius: "6px", border: "1px solid var(--linea-fuerte)", fontSize: "0.8rem" }}
               />
             </div>
 
             {alertaConflicto && (
-              <div style={{ marginTop: "8px", background: "#FEF3C7", border: "1px solid #F59E0B", color: "#92400E", padding: "8px 10px", borderRadius: "6px", fontSize: "0.78rem", display: "flex", alignItems: "center", gap: "6px" }}>
+              <div style={{ marginTop: "8px", background: "var(--aviso-diluido)", border: "1px solid var(--aviso)", color: "var(--aviso-texto)", padding: "8px 10px", borderRadius: "6px", fontSize: "0.78rem", display: "flex", alignItems: "center", gap: "6px" }}>
                 <AlertTriangle size={16} />
                 {alertaConflicto}
               </div>
@@ -2141,25 +2141,25 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
           {/* Banner de Sincronización con Billetera Digital */}
           <div
             style={{
-              background: "#F8FAFC",
-              border: "1px solid #E2E8F0",
+              background: "var(--fondo-suave)",
+              border: "1px solid var(--linea)",
               borderRadius: "8px",
               padding: "8px 12px",
               display: "flex",
               alignItems: "center",
               gap: "8px",
               fontSize: "0.74rem",
-              color: "#475569",
+              color: "var(--texto-2)",
             }}
           >
-            <Wallet size={15} color="#0284C7" />
+            <Wallet size={15} color="var(--acento)" />
             <span>
               <strong>Billetera Digital Activa:</strong> Todos los documentos cargados (cédulas, nombramiento, RUC) serán cifrados y guardados en la bóveda digital personal del cliente para emisión inmediata de poderes, minutas y contratos.
             </span>
           </div>
 
           {errorValidacion && (
-            <div style={{ background: "#FEF2F2", border: "1px solid #F87171", color: "#991B1B", padding: "10px 14px", borderRadius: "8px", fontSize: "0.82rem" }}>
+            <div style={{ background: "var(--error-diluido)", border: "1px solid #F87171", color: "var(--error-texto)", padding: "10px 14px", borderRadius: "8px", fontSize: "0.82rem" }}>
               {errorValidacion}
             </div>
           )}
@@ -2169,8 +2169,8 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
         <div
           style={{
             padding: "16px 24px",
-            borderTop: "1px solid #E2E8F0",
-            background: "#F8FAFC",
+            borderTop: "1px solid var(--linea)",
+            background: "var(--fondo-suave)",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
@@ -2189,9 +2189,9 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
               style={{
                 padding: "9px 16px",
                 borderRadius: "8px",
-                border: "1px solid #CBD5E1",
+                border: "1px solid var(--linea-fuerte)",
                 background: "#FFFFFF",
-                color: "#475569",
+                color: "var(--texto-2)",
                 fontSize: "0.85rem",
                 fontWeight: 600,
                 cursor: "pointer",
@@ -2207,9 +2207,9 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
               style={{
                 padding: "9px 14px",
                 borderRadius: "8px",
-                border: "1px solid #E2E8F0",
-                background: "#F8FAFC",
-                color: "#64748B",
+                border: "1px solid var(--linea)",
+                background: "var(--fondo-suave)",
+                color: "var(--texto-suave)",
                 fontSize: "0.85rem",
                 fontWeight: 600,
                 cursor: "pointer",
@@ -2231,9 +2231,9 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
               style={{
                 padding: "9px 16px",
                 borderRadius: "8px",
-                border: "1px solid #CBD5E1",
+                border: "1px solid var(--linea-fuerte)",
                 background: "#FFFFFF",
-                color: "#0F172A",
+                color: "var(--texto)",
                 fontSize: "0.85rem",
                 fontWeight: 600,
                 cursor: "pointer",
@@ -2249,9 +2249,9 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
               style={{
                 padding: "9px 16px",
                 borderRadius: "8px",
-                border: "1px solid #0284C7",
-                background: "#F0F9FF",
-                color: "#0284C7",
+                border: "1px solid var(--acento)",
+                background: "var(--acento-diluido)",
+                color: "var(--acento)",
                 fontSize: "0.85rem",
                 fontWeight: 600,
                 cursor: "pointer",
@@ -2272,7 +2272,7 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
                 padding: "9px 18px",
                 borderRadius: "8px",
                 border: "none",
-                background: "#0284C7",
+                background: "var(--acento)",
                 color: "#FFFFFF",
                 fontSize: "0.85rem",
                 fontWeight: 600,

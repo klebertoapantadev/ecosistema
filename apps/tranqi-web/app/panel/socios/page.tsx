@@ -22,7 +22,7 @@ export default async function PaginaSocios() {
           title="Cerrar módulo y volver a Administrar"
           style={{
             background: "var(--blanco, #ffffff)",
-            border: "1.5px solid var(--panel-linea, #E4E4E4)",
+            border: "1.5px solid var(--panel-linea, var(--linea))",
             color: "var(--negro, #111111)",
             borderRadius: "50%",
             width: "36px",

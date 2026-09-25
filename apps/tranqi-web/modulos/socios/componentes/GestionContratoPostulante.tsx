@@ -188,7 +188,7 @@ export function GestionContratoPostulante({ solicitud }: Props) {
     <div style={{ marginTop: "24px", animation: "fadeIn 0.2s ease" }}>
       {/* Encabezado Principal */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", flexWrap: "wrap", gap: "10px" }}>
-        <h3 style={{ fontSize: "1.15rem", fontWeight: 800, color: "#111827", display: "flex", alignItems: "center", gap: "8px", margin: 0 }}>
+        <h3 style={{ fontSize: "1.15rem", fontWeight: 800, color: "var(--texto)", display: "flex", alignItems: "center", gap: "8px", margin: 0 }}>
           <FileText size={22} color="#05876E" /> Contrato de Sociedad de Abogados
         </h3>
 
@@ -222,9 +222,9 @@ export function GestionContratoPostulante({ solicitud }: Props) {
               display: "inline-flex",
               alignItems: "center",
               gap: "6px",
-              background: "#F3F4F6",
-              color: "#374151",
-              border: "1px solid #D1D5DB",
+              background: "var(--fondo-hundido)",
+              color: "var(--texto-2)",
+              border: "1px solid var(--linea-fuerte)",
               textDecoration: "none",
               borderRadius: "8px",
               padding: "6px 12px",
@@ -238,14 +238,14 @@ export function GestionContratoPostulante({ solicitud }: Props) {
       </div>
 
       {contratoFirmado && (
-        <div style={{ background: "#ECFDF5", border: "1.5px solid #10B981", borderRadius: "12px", padding: "18px", marginBottom: "20px" }}>
+        <div style={{ background: "var(--exito-diluido)", border: "1.5px solid var(--exito)", borderRadius: "12px", padding: "18px", marginBottom: "20px" }}>
           <div style={{ display: "flex", gap: "12px", alignItems: "flex-start" }}>
             <CheckCircle size={24} color="#05876E" style={{ flexShrink: 0, marginTop: "2px" }} />
             <div style={{ flexGrow: 1 }}>
-              <h4 style={{ margin: "0 0 4px 0", color: "#065F46", fontWeight: 800, fontSize: "0.98rem" }}>
+              <h4 style={{ margin: "0 0 4px 0", color: "var(--exito-texto)", fontWeight: 800, fontSize: "0.98rem" }}>
                 ¡Contrato firmado registrado correctamente!
               </h4>
-              <p style={{ margin: "0 0 10px 0", color: "#047857", fontSize: "0.86rem", lineHeight: 1.5 }}>
+              <p style={{ margin: "0 0 10px 0", color: "var(--exito-texto)", fontSize: "0.86rem", lineHeight: 1.5 }}>
                 Archivo: <strong>"{contratoFirmado.dcs_nombre_archivo || "Contrato_Tranqi_Firmado.pdf"}"</strong>.
                 El equipo legal de tranqi está revisando el documento para efectuar la contra-firma institucional y activar tus credenciales.
               </p>
@@ -274,14 +274,14 @@ export function GestionContratoPostulante({ solicitud }: Props) {
       )}
 
       {error && (
-        <div style={{ background: "#FEF2F2", border: "1px solid #F87171", borderRadius: "10px", padding: "12px", color: "#B91C1C", fontSize: "0.86rem", marginBottom: "16px", display: "flex", gap: "8px" }}>
+        <div style={{ background: "var(--error-diluido)", border: "1px solid #F87171", borderRadius: "10px", padding: "12px", color: "var(--error)", fontSize: "0.86rem", marginBottom: "16px", display: "flex", gap: "8px" }}>
           <AlertCircle size={18} style={{ flexShrink: 0, marginTop: "1px" }} />
           <span>{error}</span>
         </div>
       )}
 
       {exito && (
-        <div style={{ background: "#F0FDF4", border: "1px solid #4ADE80", borderRadius: "10px", padding: "12px", color: "#15803D", fontSize: "0.86rem", marginBottom: "16px", display: "flex", gap: "8px" }}>
+        <div style={{ background: "var(--exito-diluido)", border: "1px solid var(--exito-linea)", borderRadius: "10px", padding: "12px", color: "var(--exito-texto)", fontSize: "0.86rem", marginBottom: "16px", display: "flex", gap: "8px" }}>
           <CheckCircle size={18} style={{ flexShrink: 0, marginTop: "1px" }} />
           <span>{exito}</span>
         </div>
@@ -296,9 +296,9 @@ export function GestionContratoPostulante({ solicitud }: Props) {
             flex: 1,
             padding: "14px 18px",
             borderRadius: "12px",
-            border: `2px solid ${seccionActiva === "FIRMAR" ? "#05876E" : "#E5E7EB"}`,
-            background: seccionActiva === "FIRMAR" ? "#F0FDF4" : "#FFFFFF",
-            color: seccionActiva === "FIRMAR" ? "#065F46" : "#4B5563",
+            border: `2px solid ${seccionActiva === "FIRMAR" ? "#05876E" : "var(--linea)"}`,
+            background: seccionActiva === "FIRMAR" ? "var(--exito-diluido)" : "#FFFFFF",
+            color: seccionActiva === "FIRMAR" ? "var(--exito-texto)" : "var(--texto-2)",
             fontWeight: 800,
             fontSize: "0.95rem",
             cursor: "pointer",
@@ -309,7 +309,7 @@ export function GestionContratoPostulante({ solicitud }: Props) {
             boxShadow: seccionActiva === "FIRMAR" ? "0 4px 12px rgba(5, 135, 110, 0.15)" : "none",
           }}
         >
-          <FileCheck2 size={20} color={seccionActiva === "FIRMAR" ? "#05876E" : "#9CA3AF"} />
+          <FileCheck2 size={20} color={seccionActiva === "FIRMAR" ? "#05876E" : "var(--texto-tenue)"} />
           Opción 1: Aceptar y Firmar Contrato
         </button>
 
@@ -320,9 +320,9 @@ export function GestionContratoPostulante({ solicitud }: Props) {
             flex: 1,
             padding: "14px 18px",
             borderRadius: "12px",
-            border: `2px solid ${seccionActiva === "OBSERVACIONES" ? "#D97706" : "#E5E7EB"}`,
-            background: seccionActiva === "OBSERVACIONES" ? "#FFFBEB" : "#FFFFFF",
-            color: seccionActiva === "OBSERVACIONES" ? "#92400E" : "#4B5563",
+            border: `2px solid ${seccionActiva === "OBSERVACIONES" ? "var(--aviso)" : "var(--linea)"}`,
+            background: seccionActiva === "OBSERVACIONES" ? "var(--aviso-diluido)" : "#FFFFFF",
+            color: seccionActiva === "OBSERVACIONES" ? "var(--aviso-texto)" : "var(--texto-2)",
             fontWeight: 800,
             fontSize: "0.95rem",
             cursor: "pointer",
@@ -333,14 +333,14 @@ export function GestionContratoPostulante({ solicitud }: Props) {
             boxShadow: seccionActiva === "OBSERVACIONES" ? "0 4px 12px rgba(217, 119, 6, 0.15)" : "none",
           }}
         >
-          <MessageSquare size={20} color={seccionActiva === "OBSERVACIONES" ? "#D97706" : "#9CA3AF"} />
+          <MessageSquare size={20} color={seccionActiva === "OBSERVACIONES" ? "var(--aviso)" : "var(--texto-tenue)"} />
           Opción 2: Enviar Comentarios / Observaciones
         </button>
       </div>
 
       {/* SECCIÓN 1: ACEPTAR Y FIRMAR */}
       {seccionActiva === "FIRMAR" && (
-        <div style={{ background: "#FFFFFF", border: "1.5px solid #E5E7EB", borderRadius: "14px", padding: "20px" }}>
+        <div style={{ background: "#FFFFFF", border: "1.5px solid var(--linea)", borderRadius: "14px", padding: "20px" }}>
           <div style={{ display: "flex", gap: "10px", marginBottom: "16px" }}>
             <button
               type="button"
@@ -349,8 +349,8 @@ export function GestionContratoPostulante({ solicitud }: Props) {
                 padding: "8px 16px",
                 borderRadius: "8px",
                 border: "none",
-                background: tipoFirma === "DIGITAL_P12" ? "#05876E" : "#F3F4F6",
-                color: tipoFirma === "DIGITAL_P12" ? "#FFFFFF" : "#4B5563",
+                background: tipoFirma === "DIGITAL_P12" ? "#05876E" : "var(--fondo-hundido)",
+                color: tipoFirma === "DIGITAL_P12" ? "#FFFFFF" : "var(--texto-2)",
                 fontWeight: 700,
                 fontSize: "0.82rem",
                 cursor: "pointer",
@@ -370,8 +370,8 @@ export function GestionContratoPostulante({ solicitud }: Props) {
                 padding: "8px 16px",
                 borderRadius: "8px",
                 border: "none",
-                background: tipoFirma === "MANUAL_PDF" ? "#05876E" : "#F3F4F6",
-                color: tipoFirma === "MANUAL_PDF" ? "#FFFFFF" : "#4B5563",
+                background: tipoFirma === "MANUAL_PDF" ? "#05876E" : "var(--fondo-hundido)",
+                color: tipoFirma === "MANUAL_PDF" ? "#FFFFFF" : "var(--texto-2)",
                 fontWeight: 700,
                 fontSize: "0.82rem",
                 cursor: "pointer",
@@ -386,14 +386,14 @@ export function GestionContratoPostulante({ solicitud }: Props) {
           </div>
 
           {tipoFirma === "DIGITAL_P12" ? (
-            <div style={{ background: "#F8FAFC", border: "1px solid #E2E8F0", borderRadius: "12px", padding: "18px" }}>
+            <div style={{ background: "var(--fondo-suave)", border: "1px solid var(--linea)", borderRadius: "12px", padding: "18px" }}>
               <div style={{ display: "flex", gap: "10px", alignItems: "flex-start", marginBottom: "12px" }}>
                 <ShieldCheck size={24} color="#05876E" />
                 <div>
-                  <h4 style={{ margin: "0 0 4px 0", color: "#1E293B", fontWeight: 800, fontSize: "0.95rem" }}>
+                  <h4 style={{ margin: "0 0 4px 0", color: "var(--texto)", fontWeight: 800, fontSize: "0.95rem" }}>
                     Firma Electrónica PAdES con Estampa de QR Oficial
                   </h4>
-                  <p style={{ margin: 0, color: "#64748B", fontSize: "0.82rem", lineHeight: 1.45 }}>
+                  <p style={{ margin: 0, color: "var(--texto-suave)", fontSize: "0.82rem", lineHeight: 1.45 }}>
                     Firma directamente desde tu navegador utilizando tu archivo de firma electrónica (.p12 / .pfx) emitido por Security Data, Banco Central del Ecuador, Consejo de la Judicatura o ANFAC.
                   </p>
                 </div>
@@ -405,7 +405,7 @@ export function GestionContratoPostulante({ solicitud }: Props) {
                   onClick={() => setModalFirmaAbierto(true)}
                   style={{
                     padding: "12px 24px",
-                    background: "linear-gradient(135deg, #05876E 0%, #047857 100%)",
+                    background: "linear-gradient(135deg, #05876E 0%, var(--exito-texto) 100%)",
                     color: "#FFFFFF",
                     border: "none",
                     borderRadius: "10px",
@@ -424,11 +424,11 @@ export function GestionContratoPostulante({ solicitud }: Props) {
               </div>
             </div>
           ) : (
-            <div style={{ background: "#F8FAFC", border: "1px solid #E2E8F0", borderRadius: "12px", padding: "18px" }}>
-              <h4 style={{ margin: "0 0 6px 0", color: "#1E293B", fontWeight: 800, fontSize: "0.95rem" }}>
+            <div style={{ background: "var(--fondo-suave)", border: "1px solid var(--linea)", borderRadius: "12px", padding: "18px" }}>
+              <h4 style={{ margin: "0 0 6px 0", color: "var(--texto)", fontWeight: 800, fontSize: "0.95rem" }}>
                 Subir PDF Firmado Manuscrito / Escaneado
               </h4>
-              <p style={{ margin: "0 0 12px 0", color: "#64748B", fontSize: "0.82rem" }}>
+              <p style={{ margin: "0 0 12px 0", color: "var(--texto-suave)", fontSize: "0.82rem" }}>
                 Descarga el contrato oficial en PDF, imprímelo, fírmalo manualmente, escanéalo y súbelo aquí en formato PDF.
               </p>
 
@@ -439,17 +439,17 @@ export function GestionContratoPostulante({ solicitud }: Props) {
                   alignItems: "center",
                   justifyContent: "center",
                   padding: "24px",
-                  border: "2px dashed #CBD5E1",
+                  border: "2px dashed var(--linea-fuerte)",
                   borderRadius: "10px",
                   background: "#FFFFFF",
                   cursor: "pointer",
                 }}
               >
                 <UploadCloud size={32} color="#05876E" />
-                <span style={{ marginTop: "8px", fontSize: "0.88rem", fontWeight: 700, color: "#1E293B" }}>
+                <span style={{ marginTop: "8px", fontSize: "0.88rem", fontWeight: 700, color: "var(--texto)" }}>
                   Haz clic para seleccionar el archivo PDF firmado
                 </span>
-                <span style={{ fontSize: "0.75rem", color: "#94A3B8", marginTop: "2px" }}>
+                <span style={{ fontSize: "0.75rem", color: "var(--texto-tenue)", marginTop: "2px" }}>
                   Máximo 15 MB · Solo archivos .pdf
                 </span>
                 <input
@@ -467,14 +467,14 @@ export function GestionContratoPostulante({ solicitud }: Props) {
 
       {/* SECCIÓN 2: ENVIAR OBSERVACIONES */}
       {seccionActiva === "OBSERVACIONES" && (
-        <form onSubmit={handleEnviarObservaciones} style={{ background: "#FFFFFF", border: "1.5px solid #FCD34D", borderRadius: "14px", padding: "20px" }}>
+        <form onSubmit={handleEnviarObservaciones} style={{ background: "#FFFFFF", border: "1.5px solid var(--aviso-linea)", borderRadius: "14px", padding: "20px" }}>
           <div style={{ display: "flex", gap: "10px", alignItems: "flex-start", marginBottom: "14px" }}>
-            <MessageSquare size={24} color="#D97706" />
+            <MessageSquare size={24} color="var(--aviso)" />
             <div>
-              <h4 style={{ margin: "0 0 4px 0", color: "#92400E", fontWeight: 800, fontSize: "0.98rem" }}>
+              <h4 style={{ margin: "0 0 4px 0", color: "var(--aviso-texto)", fontWeight: 800, fontSize: "0.98rem" }}>
                 Observaciones y Comentarios al Contrato
               </h4>
-              <p style={{ margin: 0, color: "#78350F", fontSize: "0.82rem" }}>
+              <p style={{ margin: 0, color: "var(--aviso-texto)", fontSize: "0.82rem" }}>
                 Si requieres ajustar alguna cláusula, porcentaje u obligación antes de firmar, describe tus motivos aquí. Se notificará de inmediato al operador de tranqi para que ajuste el contrato.
               </p>
             </div>
@@ -489,7 +489,7 @@ export function GestionContratoPostulante({ solicitud }: Props) {
               width: "100%",
               padding: "12px",
               borderRadius: "8px",
-              border: "1px solid #CBD5E1",
+              border: "1px solid var(--linea-fuerte)",
               fontSize: "0.88rem",
               outline: "none",
               boxSizing: "border-box",
@@ -503,7 +503,7 @@ export function GestionContratoPostulante({ solicitud }: Props) {
               disabled={enviandoObs}
               style={{
                 padding: "12px 22px",
-                background: "#D97706",
+                background: "var(--aviso)",
                 color: "#FFFFFF",
                 border: "none",
                 borderRadius: "10px",

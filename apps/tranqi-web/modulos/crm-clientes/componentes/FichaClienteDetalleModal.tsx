@@ -124,8 +124,8 @@ export function FichaClienteDetalleModal({ clienteId, alCerrar, alEditarCliente,
         <div
           style={{
             padding: "18px 24px",
-            borderBottom: "1px solid #E2E8F0",
-            background: "#F8FAFC",
+            borderBottom: "1px solid var(--linea)",
+            background: "var(--fondo-suave)",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
@@ -137,8 +137,8 @@ export function FichaClienteDetalleModal({ clienteId, alCerrar, alEditarCliente,
                 width: "44px",
                 height: "44px",
                 borderRadius: "12px",
-                background: perfil?.clp_tipo_personeria === "juridica" ? "#E0F2FE" : "#F3E8FF",
-                color: perfil?.clp_tipo_personeria === "juridica" ? "#0284C7" : "#7E22CE",
+                background: perfil?.clp_tipo_personeria === "juridica" ? "var(--acento-diluido)" : "var(--acento-diluido)",
+                color: perfil?.clp_tipo_personeria === "juridica" ? "var(--acento)" : "#7E22CE",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -148,20 +148,20 @@ export function FichaClienteDetalleModal({ clienteId, alCerrar, alEditarCliente,
             </div>
             <div>
               <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                <h2 style={{ margin: 0, fontSize: "1.2rem", fontWeight: 700, color: "#0F172A" }}>
+                <h2 style={{ margin: 0, fontSize: "1.2rem", fontWeight: 700, color: "var(--texto)" }}>
                   {nombreMostrado || "Cargando cliente..."}
                 </h2>
                 {perfil?.clp_activo ? (
-                  <span style={{ padding: "2px 8px", borderRadius: "10px", fontSize: "0.72rem", fontWeight: 700, background: "#D1FAE5", color: "#065F46" }}>
+                  <span style={{ padding: "2px 8px", borderRadius: "10px", fontSize: "0.72rem", fontWeight: 700, background: "var(--exito-diluido)", color: "var(--exito-texto)" }}>
                     Activo
                   </span>
                 ) : (
-                  <span style={{ padding: "2px 8px", borderRadius: "10px", fontSize: "0.72rem", fontWeight: 700, background: "#FEF3C7", color: "#B45309" }}>
+                  <span style={{ padding: "2px 8px", borderRadius: "10px", fontSize: "0.72rem", fontWeight: 700, background: "var(--aviso-diluido)", color: "var(--aviso-texto)" }}>
                     Inactivo (Pendiente Pago)
                   </span>
                 )}
               </div>
-              <p style={{ margin: "2px 0 0", fontSize: "0.82rem", color: "#64748B" }}>
+              <p style={{ margin: "2px 0 0", fontSize: "0.82rem", color: "var(--texto-suave)" }}>
                 {perfil?.clp_tipo_identificacion?.toUpperCase()}: {perfil?.clp_identificacion} · {perfil?.clp_tipo_personeria === "juridica" ? "Persona Jurídica (Empresa)" : "Persona Natural"}
               </p>
             </div>
@@ -174,7 +174,7 @@ export function FichaClienteDetalleModal({ clienteId, alCerrar, alEditarCliente,
                 onClick={alEditarCliente}
                 title="Editar datos del cliente"
                 style={{
-                  background: "#0284C7",
+                  background: "var(--acento)",
                   border: "none",
                   padding: "8px 12px",
                   borderRadius: "8px",
@@ -198,12 +198,12 @@ export function FichaClienteDetalleModal({ clienteId, alCerrar, alEditarCliente,
               title="Imprimir o Exportar Ficha"
               style={{
                 background: "#FFFFFF",
-                border: "1px solid #CBD5E1",
+                border: "1px solid var(--linea-fuerte)",
                 padding: "8px 12px",
                 borderRadius: "8px",
                 fontSize: "0.8rem",
                 fontWeight: 600,
-                color: "#334155",
+                color: "var(--texto-2)",
                 cursor: "pointer",
                 display: "flex",
                 alignItems: "center",
@@ -218,7 +218,7 @@ export function FichaClienteDetalleModal({ clienteId, alCerrar, alEditarCliente,
               style={{
                 background: "transparent",
                 border: "none",
-                color: "#64748B",
+                color: "var(--texto-suave)",
                 cursor: "pointer",
                 padding: "6px",
                 borderRadius: "50%",
@@ -230,7 +230,7 @@ export function FichaClienteDetalleModal({ clienteId, alCerrar, alEditarCliente,
         </div>
 
         {/* Barra de Pestañas (Tabs) */}
-        <div style={{ display: "flex", borderBottom: "1px solid #E2E8F0", padding: "0 24px", background: "#FFFFFF" }}>
+        <div style={{ display: "flex", borderBottom: "1px solid var(--linea)", padding: "0 24px", background: "#FFFFFF" }}>
           {[
             { id: "general", label: "📋 Datos Generales", icon: User },
             { id: "expedientes", label: `📁 Expedientes (${detalle?.expedientes?.length || 0})`, icon: Scale },
@@ -244,9 +244,9 @@ export function FichaClienteDetalleModal({ clienteId, alCerrar, alEditarCliente,
               style={{
                 padding: "12px 16px",
                 border: "none",
-                borderBottom: tabActiva === tab.id ? "2px solid #0284C7" : "2px solid transparent",
+                borderBottom: tabActiva === tab.id ? "2px solid var(--acento)" : "2px solid transparent",
                 background: "transparent",
-                color: tabActiva === tab.id ? "#0284C7" : "#64748B",
+                color: tabActiva === tab.id ? "var(--acento)" : "var(--texto-suave)",
                 fontWeight: tabActiva === tab.id ? 700 : 500,
                 fontSize: "0.85rem",
                 cursor: "pointer",
@@ -263,7 +263,7 @@ export function FichaClienteDetalleModal({ clienteId, alCerrar, alEditarCliente,
         {/* Contenido de Pestañas */}
         <div style={{ padding: "20px 24px", overflowY: "auto", flex: 1 }}>
           {cargando ? (
-            <div style={{ textAlign: "center", padding: "40px", color: "#64748B" }}>
+            <div style={{ textAlign: "center", padding: "40px", color: "var(--texto-suave)" }}>
               Cargando información 360° del cliente...
             </div>
           ) : (
@@ -272,22 +272,22 @@ export function FichaClienteDetalleModal({ clienteId, alCerrar, alEditarCliente,
               {tabActiva === "general" && (
                 <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "14px" }}>
-                    <div style={{ background: "#F8FAFC", padding: "14px", borderRadius: "10px", border: "1px solid #E2E8F0" }}>
-                      <span style={{ fontSize: "0.75rem", color: "#64748B", textTransform: "uppercase", fontWeight: 700 }}>Contacto Principal</span>
-                      <p style={{ margin: "6px 0 2px", fontSize: "0.88rem", fontWeight: 600, color: "#0F172A", display: "flex", alignItems: "center", gap: "6px" }}>
-                        <Mail size={15} color="#0284C7" /> {perfil?.clp_correo || "Sin correo"}
+                    <div style={{ background: "var(--fondo-suave)", padding: "14px", borderRadius: "10px", border: "1px solid var(--linea)" }}>
+                      <span style={{ fontSize: "0.75rem", color: "var(--texto-suave)", textTransform: "uppercase", fontWeight: 700 }}>Contacto Principal</span>
+                      <p style={{ margin: "6px 0 2px", fontSize: "0.88rem", fontWeight: 600, color: "var(--texto)", display: "flex", alignItems: "center", gap: "6px" }}>
+                        <Mail size={15} color="var(--acento)" /> {perfil?.clp_correo || "Sin correo"}
                       </p>
-                      <p style={{ margin: "4px 0 0", fontSize: "0.88rem", fontWeight: 600, color: "#0F172A", display: "flex", alignItems: "center", gap: "6px" }}>
-                        <Phone size={15} color="#16A34A" /> {perfil?.clp_celular || perfil?.clp_telefono || "Sin teléfono"}
+                      <p style={{ margin: "4px 0 0", fontSize: "0.88rem", fontWeight: 600, color: "var(--texto)", display: "flex", alignItems: "center", gap: "6px" }}>
+                        <Phone size={15} color="var(--exito)" /> {perfil?.clp_celular || perfil?.clp_telefono || "Sin teléfono"}
                       </p>
                     </div>
 
-                    <div style={{ background: "#F8FAFC", padding: "14px", borderRadius: "10px", border: "1px solid #E2E8F0" }}>
-                      <span style={{ fontSize: "0.75rem", color: "#64748B", textTransform: "uppercase", fontWeight: 700 }}>Casillero Judicial</span>
-                      <p style={{ margin: "6px 0 2px", fontSize: "0.88rem", fontWeight: 600, color: "#0F172A" }}>
+                    <div style={{ background: "var(--fondo-suave)", padding: "14px", borderRadius: "10px", border: "1px solid var(--linea)" }}>
+                      <span style={{ fontSize: "0.75rem", color: "var(--texto-suave)", textTransform: "uppercase", fontWeight: 700 }}>Casillero Judicial</span>
+                      <p style={{ margin: "6px 0 2px", fontSize: "0.88rem", fontWeight: 600, color: "var(--texto)" }}>
                         Físico: {perfil?.clp_casillero_judicial || "No registrado"}
                       </p>
-                      <p style={{ margin: "4px 0 0", fontSize: "0.82rem", color: "#475569" }}>
+                      <p style={{ margin: "4px 0 0", fontSize: "0.82rem", color: "var(--texto-2)" }}>
                         Electrónico: {perfil?.clp_casillero_electronico || "No registrado"}
                       </p>
                     </div>
@@ -295,21 +295,21 @@ export function FichaClienteDetalleModal({ clienteId, alCerrar, alEditarCliente,
 
                   {/* Representante Legal si aplica */}
                   {perfil?.clp_detalle_cliente?.representante_legal && (
-                    <div style={{ background: "#F0FDF4", border: "1px solid #BBF7D0", padding: "14px", borderRadius: "10px" }}>
-                      <span style={{ fontSize: "0.75rem", color: "#166534", textTransform: "uppercase", fontWeight: 700 }}>
+                    <div style={{ background: "var(--exito-diluido)", border: "1px solid var(--exito-linea)", padding: "14px", borderRadius: "10px" }}>
+                      <span style={{ fontSize: "0.75rem", color: "var(--exito-texto)", textTransform: "uppercase", fontWeight: 700 }}>
                         Representante Legal Certificado (Inscripción Mercantil)
                       </span>
                       <div style={{ marginTop: "6px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "10px" }}>
                         <div>
-                          <p style={{ margin: 0, fontWeight: 700, color: "#14532D", fontSize: "0.95rem" }}>
+                          <p style={{ margin: 0, fontWeight: 700, color: "var(--exito-texto)", fontSize: "0.95rem" }}>
                             {perfil.clp_detalle_cliente.representante_legal.nombres}
                           </p>
-                          <p style={{ margin: "2px 0 0", fontSize: "0.82rem", color: "#166534" }}>
+                          <p style={{ margin: "2px 0 0", fontSize: "0.82rem", color: "var(--exito-texto)" }}>
                             C.I. {perfil.clp_detalle_cliente.representante_legal.cedula} · Cargo: {perfil.clp_detalle_cliente.representante_legal.cargo || "Gerente General"}
                           </p>
                         </div>
                         {perfil.clp_detalle_cliente.representante_legal.nombramientoVence && (
-                          <div style={{ background: "#DCFCE7", padding: "6px 12px", borderRadius: "6px", fontSize: "0.8rem", color: "#166534", fontWeight: 600 }}>
+                          <div style={{ background: "var(--exito-diluido)", padding: "6px 12px", borderRadius: "6px", fontSize: "0.8rem", color: "var(--exito-texto)", fontWeight: 600 }}>
                             Vence Nombramiento: {perfil.clp_detalle_cliente.representante_legal.nombramientoVence}
                           </div>
                         )}
@@ -323,7 +323,7 @@ export function FichaClienteDetalleModal({ clienteId, alCerrar, alEditarCliente,
               {tabActiva === "expedientes" && (
                 <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <span style={{ fontSize: "0.85rem", fontWeight: 600, color: "#475569" }}>
+                    <span style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--texto-2)" }}>
                       Causas y Trámites Radicados
                     </span>
                     {alRadicarExpediente && (
@@ -331,7 +331,7 @@ export function FichaClienteDetalleModal({ clienteId, alCerrar, alEditarCliente,
                         type="button"
                         onClick={() => alRadicarExpediente(clienteId, nombreMostrado)}
                         style={{
-                          background: "#0284C7",
+                          background: "var(--acento)",
                           color: "#FFFFFF",
                           border: "none",
                           padding: "6px 12px",
@@ -351,7 +351,7 @@ export function FichaClienteDetalleModal({ clienteId, alCerrar, alEditarCliente,
                   </div>
 
                   {detalle?.expedientes?.length === 0 ? (
-                    <div style={{ background: "#F8FAFC", padding: "30px", borderRadius: "10px", textAlign: "center", color: "#64748B" }}>
+                    <div style={{ background: "var(--fondo-suave)", padding: "30px", borderRadius: "10px", textAlign: "center", color: "var(--texto-suave)" }}>
                       El cliente aún no tiene expedientes radicados.
                     </div>
                   ) : (
@@ -360,7 +360,7 @@ export function FichaClienteDetalleModal({ clienteId, alCerrar, alEditarCliente,
                         key={exp.cas_id}
                         style={{
                           background: "#FFFFFF",
-                          border: "1px solid #E2E8F0",
+                          border: "1px solid var(--linea)",
                           borderRadius: "10px",
                           padding: "14px",
                           display: "flex",
@@ -369,18 +369,18 @@ export function FichaClienteDetalleModal({ clienteId, alCerrar, alEditarCliente,
                         }}
                       >
                         <div>
-                          <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "#0284C7", background: "#E0F2FE", padding: "2px 8px", borderRadius: "4px" }}>
+                          <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--acento)", background: "var(--acento-diluido)", padding: "2px 8px", borderRadius: "4px" }}>
                             {exp.cas_codigo_expediente || "TRQ-MAT"}
                           </span>
-                          <h4 style={{ margin: "6px 0 2px", fontSize: "0.92rem", color: "#0F172A" }}>
+                          <h4 style={{ margin: "6px 0 2px", fontSize: "0.92rem", color: "var(--texto)" }}>
                             {exp.cas_titulo}
                           </h4>
-                          <p style={{ margin: 0, fontSize: "0.78rem", color: "#64748B" }}>
+                          <p style={{ margin: 0, fontSize: "0.78rem", color: "var(--texto-suave)" }}>
                             Tipo: {exp.cas_tipo_tramite} · Etapa: {exp.cas_etapa_procesal}
                           </p>
                         </div>
                         <div style={{ textAlign: "right" }}>
-                          <span style={{ fontSize: "0.8rem", fontWeight: 600, color: exp.cas_estado === "en_curso" ? "#16A34A" : "#D97706" }}>
+                          <span style={{ fontSize: "0.8rem", fontWeight: 600, color: exp.cas_estado === "en_curso" ? "var(--exito)" : "var(--aviso)" }}>
                             {exp.cas_estado.toUpperCase()}
                           </span>
                         </div>
@@ -394,7 +394,7 @@ export function FichaClienteDetalleModal({ clienteId, alCerrar, alEditarCliente,
               {tabActiva === "citas" && (
                 <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <span style={{ fontSize: "0.85rem", fontWeight: 600, color: "#475569" }}>
+                    <span style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--texto-2)" }}>
                       Historial de Videoconsultas y Turnos
                     </span>
                     {alAgendarCita && (
@@ -402,7 +402,7 @@ export function FichaClienteDetalleModal({ clienteId, alCerrar, alEditarCliente,
                         type="button"
                         onClick={() => alAgendarCita(clienteId, nombreMostrado)}
                         style={{
-                          background: "#0284C7",
+                          background: "var(--acento)",
                           color: "#FFFFFF",
                           border: "none",
                           padding: "6px 12px",
@@ -422,21 +422,21 @@ export function FichaClienteDetalleModal({ clienteId, alCerrar, alEditarCliente,
                   </div>
 
                   {detalle?.citas?.length === 0 ? (
-                    <div style={{ background: "#F8FAFC", padding: "30px", borderRadius: "10px", textAlign: "center", color: "#64748B" }}>
+                    <div style={{ background: "var(--fondo-suave)", padding: "30px", borderRadius: "10px", textAlign: "center", color: "var(--texto-suave)" }}>
                       No registra citas agendadas en plataforma.
                     </div>
                   ) : (
                     detalle?.citas?.map((cit) => (
-                      <div key={cit.cit_id} style={{ background: "#FFFFFF", border: "1px solid #E2E8F0", borderRadius: "8px", padding: "12px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <div key={cit.cit_id} style={{ background: "#FFFFFF", border: "1px solid var(--linea)", borderRadius: "8px", padding: "12px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                         <div>
-                          <p style={{ margin: 0, fontSize: "0.88rem", fontWeight: 600, color: "#0F172A" }}>
+                          <p style={{ margin: 0, fontSize: "0.88rem", fontWeight: 600, color: "var(--texto)" }}>
                             {new Date(cit.cit_inicio_en).toLocaleDateString()} · {new Date(cit.cit_inicio_en).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                           </p>
-                          <p style={{ margin: "2px 0 0", fontSize: "0.78rem", color: "#64748B" }}>
+                          <p style={{ margin: "2px 0 0", fontSize: "0.78rem", color: "var(--texto-suave)" }}>
                             Modalidad: {cit.cit_modalidad} · Motivo: {cit.cit_motivo || "Orientación"}
                           </p>
                         </div>
-                        <span style={{ fontSize: "0.78rem", fontWeight: 700, color: cit.cit_estado === "confirmada" ? "#16A34A" : "#64748B" }}>
+                        <span style={{ fontSize: "0.78rem", fontWeight: 700, color: cit.cit_estado === "confirmada" ? "var(--exito)" : "var(--texto-suave)" }}>
                           {cit.cit_estado.toUpperCase()}
                         </span>
                       </div>
@@ -447,18 +447,18 @@ export function FichaClienteDetalleModal({ clienteId, alCerrar, alEditarCliente,
 
               {/* TAB 4: BILLETERA */}
               {tabActiva === "billetera" && (
-                <div style={{ background: "#F8FAFC", padding: "24px", borderRadius: "10px", textAlign: "center" }}>
-                  <Folder size={36} color="#0284C7" style={{ margin: "0 auto 10px" }} />
-                  <h4 style={{ margin: "0 0 6px", fontSize: "0.95rem", color: "#0F172A" }}>
+                <div style={{ background: "var(--fondo-suave)", padding: "24px", borderRadius: "10px", textAlign: "center" }}>
+                  <Folder size={36} color="var(--acento)" style={{ margin: "0 auto 10px" }} />
+                  <h4 style={{ margin: "0 0 6px", fontSize: "0.95rem", color: "var(--texto)" }}>
                     Billetera Digital Universal (TRQ-COM-001)
                   </h4>
-                  <p style={{ margin: "0 auto 16px", maxWidth: "420px", fontSize: "0.82rem", color: "#64748B" }}>
+                  <p style={{ margin: "0 auto 16px", maxWidth: "420px", fontSize: "0.82rem", color: "var(--texto-suave)" }}>
                     Documentos custodiados del cliente (Cédulas, Títulos, Nombramientos y Poderes) vinculables a expedientes sin duplicar archivos.
                   </p>
                   <Link
                     href="/panel/billetera-documentos"
                     style={{
-                      background: "#0284C7",
+                      background: "var(--acento)",
                       color: "#FFFFFF",
                       padding: "8px 16px",
                       borderRadius: "8px",
@@ -478,12 +478,12 @@ export function FichaClienteDetalleModal({ clienteId, alCerrar, alEditarCliente,
               {/* TAB 5: AUDITORÍA Y TRACKING */}
               {tabActiva === "auditoria" && (
                 <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                  <span style={{ fontSize: "0.85rem", fontWeight: 600, color: "#475569" }}>
+                  <span style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--texto-2)" }}>
                     Línea de Tiempo de Accesos, Consultas e Impresiones
                   </span>
 
                   {auditoriaEventos.length === 0 ? (
-                    <div style={{ background: "#F8FAFC", padding: "20px", borderRadius: "8px", textAlign: "center", color: "#64748B", fontSize: "0.85rem" }}>
+                    <div style={{ background: "var(--fondo-suave)", padding: "20px", borderRadius: "8px", textAlign: "center", color: "var(--texto-suave)", fontSize: "0.85rem" }}>
                       Sin eventos previos registrados.
                     </div>
                   ) : (
@@ -491,8 +491,8 @@ export function FichaClienteDetalleModal({ clienteId, alCerrar, alEditarCliente,
                       <div
                         key={ev.reg_id}
                         style={{
-                          borderLeft: "3px solid #0284C7",
-                          background: "#F8FAFC",
+                          borderLeft: "3px solid var(--acento)",
+                          background: "var(--fondo-suave)",
                           padding: "10px 14px",
                           borderRadius: "0 8px 8px 0",
                           display: "flex",
@@ -501,18 +501,18 @@ export function FichaClienteDetalleModal({ clienteId, alCerrar, alEditarCliente,
                         }}
                       >
                         <div>
-                          <p style={{ margin: 0, fontSize: "0.85rem", fontWeight: 700, color: "#0F172A" }}>
+                          <p style={{ margin: 0, fontSize: "0.85rem", fontWeight: 700, color: "var(--texto)" }}>
                             {ev.reg_operacion}
                           </p>
-                          <p style={{ margin: "2px 0 0", fontSize: "0.78rem", color: "#475569" }}>
+                          <p style={{ margin: "2px 0 0", fontSize: "0.78rem", color: "var(--texto-2)" }}>
                             {ev.reg_datos_nuevos?.detalle || "Acción registrada en el sistema."}
                           </p>
                         </div>
                         <div style={{ textAlign: "right" }}>
-                          <span style={{ fontSize: "0.75rem", color: "#64748B", display: "block" }}>
+                          <span style={{ fontSize: "0.75rem", color: "var(--texto-suave)", display: "block" }}>
                             {new Date(ev.reg_creado_en).toLocaleString()}
                           </span>
-                          <span style={{ fontSize: "0.72rem", color: "#0284C7", fontWeight: 600 }}>
+                          <span style={{ fontSize: "0.72rem", color: "var(--acento)", fontWeight: 600 }}>
                             {ev.reg_datos_nuevos?.usuario_email || "Usuario del Staff"}
                           </span>
                         </div>

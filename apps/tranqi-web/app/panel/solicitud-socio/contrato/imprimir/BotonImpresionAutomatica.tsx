@@ -16,8 +16,8 @@ export function BotonImpresionAutomatica() {
       display: "flex",
       justifyContent: "space-between",
       alignItems: "center",
-      background: "#F3F4F6",
-      borderBottom: "1px solid #D1D5DB",
+      background: "var(--fondo-hundido)",
+      borderBottom: "1px solid var(--linea-fuerte)",
       padding: "12px 24px",
       position: "sticky",
       top: 0,
@@ -31,7 +31,7 @@ export function BotonImpresionAutomatica() {
           alignItems: "center",
           gap: "6px",
           background: "#FFF",
-          border: "1px solid #D1D5DB",
+          border: "1px solid var(--linea-fuerte)",
           borderRadius: "6px",
           padding: "6px 12px",
           fontSize: "0.82rem",
@@ -42,7 +42,7 @@ export function BotonImpresionAutomatica() {
         <ArrowLeft size={14} /> Cerrar Pestaña
       </button>
 
-      <span style={{ fontSize: "0.85rem", color: "#4B5563", fontWeight: 700 }}>
+      <span style={{ fontSize: "0.85rem", color: "var(--texto-2)", fontWeight: 700 }}>
         Presiona Ctrl+P o haz clic en Imprimir para Guardar como PDF
       </span>
 

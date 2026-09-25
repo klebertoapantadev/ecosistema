@@ -184,7 +184,7 @@ export function ModalFirmaDigitalPdf({
         width: 120,
         errorCorrectionLevel: "M",
         color: {
-          dark: esTranqi ? "#3B0086" : "#047857",
+          dark: esTranqi ? "#3B0086" : "var(--exito-texto)",
           light: "#FFFFFF",
         },
       });
@@ -388,7 +388,7 @@ export function ModalFirmaDigitalPdf({
           flex-direction: column;
           box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.45);
           overflow: hidden;
-          border: 1px solid #E2E8F0;
+          border: 1px solid var(--linea);
         }
         .modal-firma-cuerpo {
           display: grid;
@@ -399,7 +399,7 @@ export function ModalFirmaDigitalPdf({
         }
         .modal-firma-sidebar {
           padding: 20px;
-          border-right: 1px solid #E2E8F0;
+          border-right: 1px solid var(--linea);
           display: flex;
           flex-direction: column;
           gap: 14px;
@@ -407,7 +407,7 @@ export function ModalFirmaDigitalPdf({
           overflow-y: auto;
         }
         .modal-firma-visor-col {
-          background: #334155;
+          background: var(--texto-2);
           display: flex;
           flex-direction: column;
           overflow: hidden;
@@ -439,7 +439,7 @@ export function ModalFirmaDigitalPdf({
           }
           .modal-firma-sidebar {
             border-right: none;
-            border-top: 1px solid #E2E8F0;
+            border-top: 1px solid var(--linea);
             padding: 12px 14px;
             flex-shrink: 0;
             order: 2;
@@ -465,7 +465,7 @@ export function ModalFirmaDigitalPdf({
             padding: "16px 24px",
             background: esTranqi
               ? "linear-gradient(135deg, #3B0086 0%, #5000BA 100%)"
-              : "linear-gradient(135deg, #047857 0%, #05876E 100%)",
+              : "linear-gradient(135deg, var(--exito-texto) 0%, #05876E 100%)",
             color: "#FFFFFF",
             display: "flex",
             justifyContent: "space-between",
@@ -520,8 +520,8 @@ export function ModalFirmaDigitalPdf({
         <div
           className="modal-firma-pasos-desk"
           style={{
-            background: "#F8FAFC",
-            borderBottom: "1px solid #E2E8F0",
+            background: "var(--fondo-suave)",
+            borderBottom: "1px solid var(--linea)",
             padding: "8px 24px",
             gap: "16px",
             fontSize: "0.82rem",
@@ -533,12 +533,12 @@ export function ModalFirmaDigitalPdf({
               display: "flex",
               alignItems: "center",
               gap: "6px",
-              color: pasoActual === "1_VALIDAR_CERTIFICADO" ? (esTranqi ? "#5000BA" : "#047857") : "#64748B",
+              color: pasoActual === "1_VALIDAR_CERTIFICADO" ? (esTranqi ? "#5000BA" : "var(--exito-texto)") : "var(--texto-suave)",
             }}
           >
             <span
               style={{
-                background: pasoActual === "1_VALIDAR_CERTIFICADO" ? (esTranqi ? "#5000BA" : "#047857") : "#CBD5E1",
+                background: pasoActual === "1_VALIDAR_CERTIFICADO" ? (esTranqi ? "#5000BA" : "var(--exito-texto)") : "var(--linea-fuerte)",
                 color: "#FFF",
                 width: "20px",
                 height: "20px",
@@ -554,19 +554,19 @@ export function ModalFirmaDigitalPdf({
             Validar Certificado (.p12)
           </div>
 
-          <ChevronRight size={16} aria-hidden="true" style={{ color: "var(--panel-linea, #E4E4E4)" }} />
+          <ChevronRight size={16} aria-hidden="true" style={{ color: "var(--panel-linea, var(--linea))" }} />
 
           <div
             style={{
               display: "flex",
               alignItems: "center",
               gap: "6px",
-              color: pasoActual === "2_UBICAR_FIRMA" ? (esTranqi ? "#5000BA" : "#047857") : "#64748B",
+              color: pasoActual === "2_UBICAR_FIRMA" ? (esTranqi ? "#5000BA" : "var(--exito-texto)") : "var(--texto-suave)",
             }}
           >
             <span
               style={{
-                background: pasoActual === "2_UBICAR_FIRMA" ? (esTranqi ? "#5000BA" : "#047857") : "#CBD5E1",
+                background: pasoActual === "2_UBICAR_FIRMA" ? (esTranqi ? "#5000BA" : "var(--exito-texto)") : "var(--linea-fuerte)",
                 color: "#FFF",
                 width: "20px",
                 height: "20px",
@@ -582,19 +582,19 @@ export function ModalFirmaDigitalPdf({
             Ubicar Firma con QR en Documento
           </div>
 
-          <ChevronRight size={16} aria-hidden="true" style={{ color: "var(--panel-linea, #E4E4E4)" }} />
+          <ChevronRight size={16} aria-hidden="true" style={{ color: "var(--panel-linea, var(--linea))" }} />
 
           <div
             style={{
               display: "flex",
               alignItems: "center",
               gap: "6px",
-              color: pasoActual === "3_REVISAR_Y_ENVIAR" ? (esTranqi ? "#5000BA" : "#047857") : "#64748B",
+              color: pasoActual === "3_REVISAR_Y_ENVIAR" ? (esTranqi ? "#5000BA" : "var(--exito-texto)") : "var(--texto-suave)",
             }}
           >
             <span
               style={{
-                background: pasoActual === "3_REVISAR_Y_ENVIAR" ? (esTranqi ? "#5000BA" : "#047857") : "#CBD5E1",
+                background: pasoActual === "3_REVISAR_Y_ENVIAR" ? (esTranqi ? "#5000BA" : "var(--exito-texto)") : "var(--linea-fuerte)",
                 color: "#FFF",
                 width: "20px",
                 height: "20px",
@@ -615,20 +615,20 @@ export function ModalFirmaDigitalPdf({
         <div
           className="modal-firma-pasos-mob"
           style={{
-            background: "#F8FAFC",
-            borderBottom: "1px solid #E2E8F0",
+            background: "var(--fondo-suave)",
+            borderBottom: "1px solid var(--linea)",
             padding: "6px 14px",
             alignItems: "center",
             justifyContent: "space-between",
             fontSize: "0.78rem",
             fontWeight: 800,
-            color: esTranqi ? "#5000BA" : "#047857",
+            color: esTranqi ? "#5000BA" : "var(--exito-texto)",
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
             <span
               style={{
-                background: esTranqi ? "#5000BA" : "#047857",
+                background: esTranqi ? "#5000BA" : "var(--exito-texto)",
                 color: "#FFF",
                 width: "20px",
                 height: "20px",
@@ -648,7 +648,7 @@ export function ModalFirmaDigitalPdf({
             </span>
           </div>
 
-          <span style={{ fontSize: "0.72rem", color: "#64748B", fontWeight: 600 }}>
+          <span style={{ fontSize: "0.72rem", color: "var(--texto-suave)", fontWeight: 600 }}>
             {pasoActual === "1_VALIDAR_CERTIFICADO" ? "33%" : pasoActual === "2_UBICAR_FIRMA" ? "66%" : "100%"}
           </span>
         </div>
@@ -657,16 +657,16 @@ export function ModalFirmaDigitalPdf({
         <div
           style={{
             padding: "6px 16px",
-            background: "#F0FDF4",
-            borderBottom: "1px solid #DCFCE7",
+            background: "var(--exito-diluido)",
+            borderBottom: "1px solid var(--exito-diluido)",
             display: "flex",
             alignItems: "center",
             gap: "8px",
             fontSize: "0.74rem",
-            color: "#166534",
+            color: "var(--exito-texto)",
           }}
         >
-          <ShieldCheck size={14} color="#16A34A" style={{ flexShrink: 0 }} />
+          <ShieldCheck size={14} color="var(--exito)" style={{ flexShrink: 0 }} />
           <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
             <strong>Privacidad Zero-Custody:</strong> Tu certificado se procesa localmente en tu dispositivo.
           </span>
@@ -680,10 +680,10 @@ export function ModalFirmaDigitalPdf({
             {pasoActual === "1_VALIDAR_CERTIFICADO" && (
               <form onSubmit={handleValidarP12} style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
                 <div>
-                  <h3 style={{ margin: "0 0 4px 0", fontSize: "0.95rem", fontWeight: 700, color: "#1E293B" }}>
+                  <h3 style={{ margin: "0 0 4px 0", fontSize: "0.95rem", fontWeight: 700, color: "var(--texto)" }}>
                     1. Cargar Archivo de Firma (.p12 / .pfx)
                   </h3>
-                  <p style={{ margin: 0, fontSize: "0.78rem", color: "#64748B" }}>
+                  <p style={{ margin: 0, fontSize: "0.78rem", color: "var(--texto-suave)" }}>
                     Selecciona tu certificado emitido por Security Data, Banco Central, Judicatura, ANFAC, etc.
                   </p>
                 </div>
@@ -696,19 +696,19 @@ export function ModalFirmaDigitalPdf({
                       alignItems: "center",
                       justifyContent: "center",
                       padding: "18px 14px",
-                      border: "2px dashed #CBD5E1",
+                      border: "2px dashed var(--linea-fuerte)",
                       borderRadius: "12px",
-                      background: "#F8FAFC",
+                      background: "var(--fondo-suave)",
                       cursor: "pointer",
                       textAlign: "center",
                       transition: "border-color 0.2s ease",
                     }}
                   >
-                    <KeyRound size={26} color={esTranqi ? "#5000BA" : "#047857"} style={{ marginBottom: "6px" }} />
-                    <span style={{ fontSize: "0.82rem", fontWeight: 600, color: "#334155" }}>
+                    <KeyRound size={26} color={esTranqi ? "#5000BA" : "var(--exito-texto)"} style={{ marginBottom: "6px" }} />
+                    <span style={{ fontSize: "0.82rem", fontWeight: 600, color: "var(--texto-2)" }}>
                       {archivoP12 ? archivoP12.name : "Examinar archivo .p12 o .pfx"}
                     </span>
-                    <span style={{ fontSize: "0.72rem", color: "#94A3B8", marginTop: "3px" }}>
+                    <span style={{ fontSize: "0.72rem", color: "var(--texto-tenue)", marginTop: "3px" }}>
                       Haga clic para seleccionar desde su dispositivo
                     </span>
                     <input
@@ -726,7 +726,7 @@ export function ModalFirmaDigitalPdf({
                 </div>
 
                 <div>
-                  <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 700, color: "#334155", marginBottom: "4px" }}>
+                  <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 700, color: "var(--texto-2)", marginBottom: "4px" }}>
                     Contraseña de la Firma Electrónica
                   </label>
                   <div style={{ position: "relative" }}>
@@ -740,7 +740,7 @@ export function ModalFirmaDigitalPdf({
                         width: "100%",
                         padding: "10px 40px 10px 12px",
                         fontSize: "0.88rem",
-                        border: "1.5px solid #CBD5E1",
+                        border: "1.5px solid var(--linea-fuerte)",
                         borderRadius: "10px",
                         outline: "none",
                         boxSizing: "border-box",
@@ -757,7 +757,7 @@ export function ModalFirmaDigitalPdf({
                         background: "none",
                         border: "none",
                         cursor: "pointer",
-                        color: "#64748B",
+                        color: "var(--texto-suave)",
                         display: "flex",
                       }}
                     >
@@ -770,10 +770,10 @@ export function ModalFirmaDigitalPdf({
                   <div
                     style={{
                       padding: "10px",
-                      background: "#FEF2F2",
-                      border: "1px solid #FECACA",
+                      background: "var(--error-diluido)",
+                      border: "1px solid var(--error-linea)",
                       borderRadius: "10px",
-                      color: "#991B1B",
+                      color: "var(--error-texto)",
                       fontSize: "0.78rem",
                       display: "flex",
                       gap: "6px",
@@ -791,7 +791,7 @@ export function ModalFirmaDigitalPdf({
                     padding: "12px",
                     background: esTranqi
                       ? "linear-gradient(135deg, #5000BA 0%, #3B0086 100%)"
-                      : "linear-gradient(135deg, #047857 0%, #065F46 100%)",
+                      : "linear-gradient(135deg, var(--exito-texto) 0%, var(--exito-texto) 100%)",
                     color: "#FFFFFF",
                     border: "none",
                     borderRadius: "10px",
@@ -827,27 +827,27 @@ export function ModalFirmaDigitalPdf({
                 <div
                   style={{
                     padding: "12px",
-                    background: "#F0FDF4",
-                    border: "1px solid #BBF7D0",
+                    background: "var(--exito-diluido)",
+                    border: "1px solid var(--exito-linea)",
                     borderRadius: "10px",
                   }}
                 >
-                  <div style={{ display: "flex", alignItems: "center", gap: "6px", color: "#16A34A", marginBottom: "6px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px", color: "var(--exito)", marginBottom: "6px" }}>
                     <CheckCircle2 size={16} />
                     <span style={{ fontSize: "0.82rem", fontWeight: 800 }}>Certificado Válido con QR Oficial</span>
                   </div>
 
-                  <div style={{ fontSize: "0.78rem", color: "#1E293B", lineHeight: 1.35 }}>
+                  <div style={{ fontSize: "0.78rem", color: "var(--texto)", lineHeight: 1.35 }}>
                     <div style={{ display: "flex", alignItems: "flex-start", gap: "6px", marginBottom: "3px" }}>
-                      <UserCheck size={13} color="#047857" style={{ flexShrink: 0, marginTop: "2px" }} />
+                      <UserCheck size={13} color="var(--exito-texto)" style={{ flexShrink: 0, marginTop: "2px" }} />
                       <span><strong>Titular:</strong> {infoCert.nombreTitular}</span>
                     </div>
                     <div style={{ display: "flex", alignItems: "flex-start", gap: "6px", marginBottom: "3px" }}>
-                      <Building size={13} color="#047857" style={{ flexShrink: 0, marginTop: "2px" }} />
+                      <Building size={13} color="var(--exito-texto)" style={{ flexShrink: 0, marginTop: "2px" }} />
                       <span><strong>Emisor:</strong> {infoCert.entidadEmisora}</span>
                     </div>
                     <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                      <Calendar size={13} color="#047857" />
+                      <Calendar size={13} color="var(--exito-texto)" />
                       <span><strong>Vigencia:</strong> hasta {new Date(infoCert.validoHasta).toLocaleDateString("es-EC")}</span>
                     </div>
                   </div>
@@ -861,7 +861,7 @@ export function ModalFirmaDigitalPdf({
                     style={{
                       background: "none",
                       border: "none",
-                      color: "#047857",
+                      color: "var(--exito-texto)",
                       fontSize: "0.72rem",
                       fontWeight: 600,
                       cursor: "pointer",
@@ -875,10 +875,10 @@ export function ModalFirmaDigitalPdf({
                 </div>
 
                 <div>
-                  <h4 style={{ margin: "0 0 4px 0", fontSize: "0.9rem", fontWeight: 700, color: "#1E293B" }}>
+                  <h4 style={{ margin: "0 0 4px 0", fontSize: "0.9rem", fontWeight: 700, color: "var(--texto)" }}>
                     2. Posiciona tu Sello QR en la Página {paginaActual}
                   </h4>
-                  <p style={{ margin: 0, fontSize: "0.75rem", color: "#64748B" }}>
+                  <p style={{ margin: 0, fontSize: "0.75rem", color: "var(--texto-suave)" }}>
                     Arrastra el recuadro con el QR directamente en el visor o usa las opciones rápidas.
                   </p>
                 </div>
@@ -894,12 +894,12 @@ export function ModalFirmaDigitalPdf({
                     }}
                     style={{
                       padding: "8px 10px",
-                      background: posicionXPorcentaje > 50 ? "#DCFCE7" : "#F8FAFC",
-                      border: `1.5px solid ${posicionXPorcentaje > 50 ? "#22C55E" : "#CBD5E1"}`,
+                      background: posicionXPorcentaje > 50 ? "var(--exito-diluido)" : "var(--fondo-suave)",
+                      border: `1.5px solid ${posicionXPorcentaje > 50 ? "var(--exito)" : "var(--linea-fuerte)"}`,
                       borderRadius: "8px",
                       fontSize: "0.78rem",
                       fontWeight: 600,
-                      color: posicionXPorcentaje > 50 ? "#166534" : "#475569",
+                      color: posicionXPorcentaje > 50 ? "var(--exito-texto)" : "var(--texto-2)",
                       cursor: "pointer",
                       textAlign: "left",
                       display: "flex",
@@ -908,7 +908,7 @@ export function ModalFirmaDigitalPdf({
                     }}
                   >
                     <span>Columna Derecha (Firma del Abogado)</span>
-                    {posicionXPorcentaje > 50 && <Check size={14} color="#16A34A" />}
+                    {posicionXPorcentaje > 50 && <Check size={14} color="var(--exito)" />}
                   </button>
 
                   <button
@@ -920,12 +920,12 @@ export function ModalFirmaDigitalPdf({
                     }}
                     style={{
                       padding: "8px 10px",
-                      background: posicionXPorcentaje <= 50 ? "#EDE9FE" : "#F8FAFC",
-                      border: `1.5px solid ${posicionXPorcentaje <= 50 ? "#8B5CF6" : "#CBD5E1"}`,
+                      background: posicionXPorcentaje <= 50 ? "var(--acento-diluido)" : "var(--fondo-suave)",
+                      border: `1.5px solid ${posicionXPorcentaje <= 50 ? "var(--acento)" : "var(--linea-fuerte)"}`,
                       borderRadius: "8px",
                       fontSize: "0.78rem",
                       fontWeight: 600,
-                      color: posicionXPorcentaje <= 50 ? "#5B21B6" : "#475569",
+                      color: posicionXPorcentaje <= 50 ? "var(--acento-hondo)" : "var(--texto-2)",
                       cursor: "pointer",
                       textAlign: "left",
                       display: "flex",
@@ -934,7 +934,7 @@ export function ModalFirmaDigitalPdf({
                     }}
                   >
                     <span>Columna Izquierda (Firma Tranqi)</span>
-                    {posicionXPorcentaje <= 50 && <Check size={14} color="#7C3AED" />}
+                    {posicionXPorcentaje <= 50 && <Check size={14} color="var(--acento)" />}
                   </button>
                 </div>
 
@@ -942,12 +942,12 @@ export function ModalFirmaDigitalPdf({
                 <div
                   style={{
                     padding: "10px",
-                    background: "#F8FAFC",
-                    border: "1px solid #E2E8F0",
+                    background: "var(--fondo-suave)",
+                    border: "1px solid var(--linea)",
                     borderRadius: "10px",
                   }}
                 >
-                  <div style={{ fontSize: "0.72rem", fontWeight: 700, color: "#64748B", marginBottom: "6px" }}>
+                  <div style={{ fontSize: "0.72rem", fontWeight: 700, color: "var(--texto-suave)", marginBottom: "6px" }}>
                     Ajuste de posición ({posicionXPorcentaje}%, {posicionYPorcentaje}%):
                   </div>
                   <div className="rejilla-auto" style={{ "--min": "180px", "--hueco": "6px" } as React.CSSProperties}>
@@ -957,7 +957,7 @@ export function ModalFirmaDigitalPdf({
                       style={{
                         padding: "6px",
                         background: "#FFF",
-                        border: "1px solid #CBD5E1",
+                        border: "1px solid var(--linea-fuerte)",
                         borderRadius: "6px",
                         fontSize: "0.72rem",
                         fontWeight: 600,
@@ -976,7 +976,7 @@ export function ModalFirmaDigitalPdf({
                       style={{
                         padding: "6px",
                         background: "#FFF",
-                        border: "1px solid #CBD5E1",
+                        border: "1px solid var(--linea-fuerte)",
                         borderRadius: "6px",
                         fontSize: "0.72rem",
                         fontWeight: 600,
@@ -995,7 +995,7 @@ export function ModalFirmaDigitalPdf({
                       style={{
                         padding: "6px",
                         background: "#FFF",
-                        border: "1px solid #CBD5E1",
+                        border: "1px solid var(--linea-fuerte)",
                         borderRadius: "6px",
                         fontSize: "0.72rem",
                         fontWeight: 600,
@@ -1014,7 +1014,7 @@ export function ModalFirmaDigitalPdf({
                       style={{
                         padding: "6px",
                         background: "#FFF",
-                        border: "1px solid #CBD5E1",
+                        border: "1px solid var(--linea-fuerte)",
                         borderRadius: "6px",
                         fontSize: "0.72rem",
                         fontWeight: 600,
@@ -1034,10 +1034,10 @@ export function ModalFirmaDigitalPdf({
                   <div
                     style={{
                       padding: "8px 10px",
-                      background: "#FEF2F2",
-                      border: "1px solid #FECACA",
+                      background: "var(--error-diluido)",
+                      border: "1px solid var(--error-linea)",
                       borderRadius: "8px",
-                      color: "#991B1B",
+                      color: "var(--error-texto)",
                       fontSize: "0.75rem",
                     }}
                   >
@@ -1054,7 +1054,7 @@ export function ModalFirmaDigitalPdf({
                     padding: "12px",
                     background: esTranqi
                       ? "linear-gradient(135deg, #5000BA 0%, #3B0086 100%)"
-                      : "linear-gradient(135deg, #047857 0%, #065F46 100%)",
+                      : "linear-gradient(135deg, var(--exito-texto) 0%, var(--exito-texto) 100%)",
                     color: "#FFFFFF",
                     border: "none",
                     borderRadius: "10px",
@@ -1089,8 +1089,8 @@ export function ModalFirmaDigitalPdf({
                 <div
                   style={{
                     padding: "14px",
-                    background: "#F0FDF4",
-                    border: "1.5px solid #86EFAC",
+                    background: "var(--exito-diluido)",
+                    border: "1.5px solid var(--exito-linea)",
                     borderRadius: "12px",
                     textAlign: "center",
                   }}
@@ -1100,8 +1100,8 @@ export function ModalFirmaDigitalPdf({
                       width: "42px",
                       height: "42px",
                       borderRadius: "50%",
-                      background: "#DCFCE7",
-                      color: "#16A34A",
+                      background: "var(--exito-diluido)",
+                      color: "var(--exito)",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
@@ -1110,10 +1110,10 @@ export function ModalFirmaDigitalPdf({
                   >
                     <CheckCircle2 size={24} />
                   </div>
-                  <h4 style={{ margin: "0 0 2px 0", fontSize: "0.95rem", fontWeight: 800, color: "#166534" }}>
+                  <h4 style={{ margin: "0 0 2px 0", fontSize: "0.95rem", fontWeight: 800, color: "var(--exito-texto)" }}>
                     ¡Documento Firmado con Sello QR!
                   </h4>
-                  <p style={{ margin: 0, fontSize: "0.75rem", color: "#15803D" }}>
+                  <p style={{ margin: 0, fontSize: "0.75rem", color: "var(--exito-texto)" }}>
                     La firma digital y el código QR de verificación han sido estampados en el contrato.
                   </p>
                 </div>
@@ -1125,10 +1125,10 @@ export function ModalFirmaDigitalPdf({
                     onClick={handleDescargarPdfFirmado}
                     style={{
                       padding: "10px 12px",
-                      background: "#F8FAFC",
-                      border: "1.5px solid #CBD5E1",
+                      background: "var(--fondo-suave)",
+                      border: "1.5px solid var(--linea-fuerte)",
                       borderRadius: "8px",
-                      color: "#1E293B",
+                      color: "var(--texto)",
                       fontWeight: 700,
                       fontSize: "0.82rem",
                       cursor: "pointer",
@@ -1139,7 +1139,7 @@ export function ModalFirmaDigitalPdf({
                       transition: "background 0.2s ease",
                     }}
                   >
-                    <Download size={16} color="#047857" />
+                    <Download size={16} color="var(--exito-texto)" />
                     Descargar Copia Firmada (PDF)
                   </button>
 
@@ -1153,7 +1153,7 @@ export function ModalFirmaDigitalPdf({
                       padding: "6px 10px",
                       background: "none",
                       border: "none",
-                      color: "#64748B",
+                      color: "var(--texto-suave)",
                       fontSize: "0.75rem",
                       fontWeight: 600,
                       cursor: "pointer",
@@ -1172,10 +1172,10 @@ export function ModalFirmaDigitalPdf({
                   <div
                     style={{
                       padding: "8px 10px",
-                      background: "#FEF2F2",
-                      border: "1px solid #FECACA",
+                      background: "var(--error-diluido)",
+                      border: "1px solid var(--error-linea)",
                       borderRadius: "8px",
-                      color: "#991B1B",
+                      color: "var(--error-texto)",
                       fontSize: "0.75rem",
                     }}
                   >
@@ -1192,7 +1192,7 @@ export function ModalFirmaDigitalPdf({
                     padding: "12px",
                     background: esTranqi
                       ? "linear-gradient(135deg, #5000BA 0%, #3B0086 100%)"
-                      : "linear-gradient(135deg, #047857 0%, #065F46 100%)",
+                      : "linear-gradient(135deg, var(--exito-texto) 0%, var(--exito-texto) 100%)",
                     color: "#FFFFFF",
                     border: "none",
                     borderRadius: "10px",
@@ -1230,17 +1230,17 @@ export function ModalFirmaDigitalPdf({
             <div
               style={{
                 padding: "8px 16px",
-                background: "#1E293B",
-                color: "#E2E8F0",
+                background: "var(--texto)",
+                color: "var(--linea)",
                 fontSize: "0.8rem",
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "center",
-                borderBottom: "1px solid #475569",
+                borderBottom: "1px solid var(--texto-2)",
               }}
             >
               <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                <FileText size={15} color="#38BDF8" />
+                <FileText size={15} color="var(--acento)" />
                 <span style={{ fontWeight: 600 }}>
                   {pasoActual === "3_REVISAR_Y_ENVIAR"
                     ? "Vista Previa: Contrato Firmado con Sello QR"
@@ -1255,10 +1255,10 @@ export function ModalFirmaDigitalPdf({
                   onClick={() => setPaginaActual((p) => Math.max(1, p - 1))}
                   disabled={paginaActual <= 1}
                   style={{
-                    background: paginaActual <= 1 ? "#334155" : "#475569",
+                    background: paginaActual <= 1 ? "var(--texto-2)" : "var(--texto-2)",
                     border: "none",
                     borderRadius: "6px",
-                    color: paginaActual <= 1 ? "#64748B" : "#FFF",
+                    color: paginaActual <= 1 ? "var(--texto-suave)" : "#FFF",
                     padding: "4px 8px",
                     cursor: paginaActual <= 1 ? "not-allowed" : "pointer",
                     display: "flex",
@@ -1271,7 +1271,7 @@ export function ModalFirmaDigitalPdf({
                   <ChevronLeft size={14} /> Anterior
                 </button>
 
-                <span style={{ fontWeight: 700, fontSize: "0.8rem", color: "#F8FAFC" }}>
+                <span style={{ fontWeight: 700, fontSize: "0.8rem", color: "var(--fondo-suave)" }}>
                   Página {paginaActual} de {totalPaginas}
                 </span>
 
@@ -1280,10 +1280,10 @@ export function ModalFirmaDigitalPdf({
                   onClick={() => setPaginaActual((p) => Math.min(totalPaginas, p + 1))}
                   disabled={paginaActual >= totalPaginas}
                   style={{
-                    background: paginaActual >= totalPaginas ? "#334155" : "#475569",
+                    background: paginaActual >= totalPaginas ? "var(--texto-2)" : "var(--texto-2)",
                     border: "none",
                     borderRadius: "6px",
-                    color: paginaActual >= totalPaginas ? "#64748B" : "#FFF",
+                    color: paginaActual >= totalPaginas ? "var(--texto-suave)" : "#FFF",
                     padding: "4px 8px",
                     cursor: paginaActual >= totalPaginas ? "not-allowed" : "pointer",
                     display: "flex",
@@ -1301,7 +1301,7 @@ export function ModalFirmaDigitalPdf({
                     type="button"
                     onClick={() => setPaginaActual(totalPaginas)}
                     style={{
-                      background: "#047857",
+                      background: "var(--exito-texto)",
                       border: "none",
                       borderRadius: "6px",
                       color: "#FFF",
@@ -1328,7 +1328,7 @@ export function ModalFirmaDigitalPdf({
                 alignItems: "center",
                 justifyContent: "center",
                 padding: "12px",
-                background: "#334155",
+                background: "var(--texto-2)",
                 height: "100%",
               }}
             >
@@ -1386,7 +1386,7 @@ export function ModalFirmaDigitalPdf({
                         width: `${((230 / 595.28) * 100).toFixed(2)}%`,
                         height: `${((72 / 841.89) * 100).toFixed(2)}%`,
                         background: "rgba(255, 255, 255, 0.98)",
-                        border: `1.5px solid ${esTranqi ? "#5000BA" : "#047857"}`,
+                        border: `1.5px solid ${esTranqi ? "#5000BA" : "var(--exito-texto)"}`,
                         borderRadius: "3px",
                         padding: "2px 4px",
                         boxSizing: "border-box",
@@ -1408,7 +1408,7 @@ export function ModalFirmaDigitalPdf({
                           height: "92%",
                           aspectRatio: "1 / 1",
                           flexShrink: 0,
-                          background: "#F8FAFC",
+                          background: "var(--fondo-suave)",
                           borderRadius: "2px",
                           display: "flex",
                           alignItems: "center",
@@ -1424,12 +1424,12 @@ export function ModalFirmaDigitalPdf({
                             style={{ width: "100%", height: "100%", objectFit: "contain" }}
                           />
                         ) : (
-                          <QrCode size={24} color={esTranqi ? "#5000BA" : "#047857"} />
+                          <QrCode size={24} color={esTranqi ? "#5000BA" : "var(--exito-texto)"} />
                         )}
                       </div>
 
                       {/* Separador vertical */}
-                      <div style={{ width: "1px", height: "85%", background: "#CBD5E1", flexShrink: 0 }} />
+                      <div style={{ width: "1px", height: "85%", background: "var(--linea-fuerte)", flexShrink: 0 }} />
 
                       {/* Textos Oficiales Derechos con Tipografía Responsiva */}
                       <div
@@ -1447,7 +1447,7 @@ export function ModalFirmaDigitalPdf({
                           style={{
                             fontSize: "clamp(6px, 0.85vw, 8.5px)",
                             fontWeight: 800,
-                            color: esTranqi ? "#5000BA" : "#047857",
+                            color: esTranqi ? "#5000BA" : "var(--exito-texto)",
                             textTransform: "uppercase",
                             letterSpacing: "0.2px",
                             whiteSpace: "nowrap",
@@ -1462,7 +1462,7 @@ export function ModalFirmaDigitalPdf({
                           style={{
                             fontSize: "clamp(6.5px, 0.95vw, 9.5px)",
                             fontWeight: 800,
-                            color: "#0F172A",
+                            color: "var(--texto)",
                             whiteSpace: "nowrap",
                             overflow: "hidden",
                             textOverflow: "ellipsis",
@@ -1474,7 +1474,7 @@ export function ModalFirmaDigitalPdf({
                         <div
                           style={{
                             fontSize: "clamp(5px, 0.72vw, 7.5px)",
-                            color: "#475569",
+                            color: "var(--texto-2)",
                             whiteSpace: "nowrap",
                             overflow: "hidden",
                             textOverflow: "ellipsis",
@@ -1487,7 +1487,7 @@ export function ModalFirmaDigitalPdf({
                           style={{
                             fontSize: "clamp(4.5px, 0.65vw, 7px)",
                             fontWeight: 700,
-                            color: esTranqi ? "#6D28D9" : "#059669",
+                            color: esTranqi ? "var(--acento)" : "var(--exito)",
                             letterSpacing: "0.2px",
                             whiteSpace: "nowrap",
                             overflow: "hidden",

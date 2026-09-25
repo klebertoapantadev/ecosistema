@@ -55,7 +55,7 @@ export default async function PaginaAuditoria({
           title="Cerrar vista de auditoría y regresar al panel de administración"
           style={{
             background: "#ffffff",
-            border: "1.5px solid #E4E4E4",
+            border: "1.5px solid var(--linea)",
             color: "#111111",
             borderRadius: "50%",
             width: "36px",

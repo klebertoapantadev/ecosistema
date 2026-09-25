@@ -458,7 +458,7 @@ async function PanelCliente({ saludo, nombre, usuarioId }: { saludo: string | nu
               </Link>
             </header>
             {pagosRecientes.length === 0 ? (
-              <div style={{ padding: "10px 0 4px", fontSize: "0.84rem", color: "#64748B" }}>
+              <div style={{ padding: "10px 0 4px", fontSize: "0.84rem", color: "var(--texto-suave)" }}>
                 <p style={{ margin: "0 0 10px" }}>
                   Consulta tus pagos realizados y descarga tus facturas electrónicas SRI.
                 </p>
@@ -615,7 +615,7 @@ async function PanelAbogado({ nombreCompleto }: { nombreCompleto: string }) {
               <Link
                 href="/panel/agendamiento?widget=mi_perfil_abogado"
                 className="chip-proteccion"
-                style={{ textDecoration: "none", background: "#FEE300", color: "#111827", fontWeight: 800 }}
+                style={{ textDecoration: "none", background: "#FEE300", color: "var(--texto)", fontWeight: 800 }}
               >
                 Editar Especialidades y Horarios →
               </Link>
@@ -629,7 +629,7 @@ async function PanelAbogado({ nombreCompleto }: { nombreCompleto: string }) {
                 <h2 id="t-agenda-abogado-home" style={{ margin: 0 }}>
                   Mi Agenda de Consultas: Hoy / Semana / Mes
                 </h2>
-                <span style={{ fontSize: "0.82rem", color: "#64748B" }}>
+                <span style={{ fontSize: "0.82rem", color: "var(--texto-suave)" }}>
                   Confirma o rechaza asignaciones, registra notas de reunión, documentos y vincula consultas al expediente del cliente.
                 </span>
               </div>
@@ -695,16 +695,16 @@ function PanelOperador({ nombreCompleto }: { nombreCompleto: string }) {
 
       <div className="rejilla-cliente">
         <div className="columna-cliente">
-          <section className="tarjeta-proteccion" style={{ background: "linear-gradient(135deg, #0369A1 0%, #0284C7 100%)", color: "#ffffff" }}>
+          <section className="tarjeta-proteccion" style={{ background: "linear-gradient(135deg, var(--acento-hondo) 0%, var(--acento) 100%)", color: "#ffffff" }}>
             <div className="tarjeta-proteccion-fila">
               <div>
-                <div className="eyebrow-cliente" style={{ color: "#E0F2FE" }}>Operaciones Ecosistema</div>
+                <div className="eyebrow-cliente" style={{ color: "var(--acento-diluido)" }}>Operaciones Ecosistema</div>
                 <div className="tarjeta-proteccion-plan" style={{ color: "#ffffff" }}>Bandeja de Operador & Auxiliar</div>
                 <div className="tarjeta-proteccion-meta" style={{ color: "rgba(255,255,255,0.9)" }}>
                   Gestión integral de clientes, verificación de postulaciones, cobros y despacho de notificaciones.
                 </div>
               </div>
-              <span className="badge-activo" style={{ background: "#BAE6FD", color: "#075985" }}>Operativo</span>
+              <span className="badge-activo" style={{ background: "var(--acento-linea)", color: "var(--acento-hondo)" }}>Operativo</span>
             </div>
           </section>
 
