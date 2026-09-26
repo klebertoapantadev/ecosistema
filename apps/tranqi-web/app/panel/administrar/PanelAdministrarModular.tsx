@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { UserCog, Users, ClipboardList, Bell, Shield, ChevronRight, Star, Lock, Eye, Pencil, FileText, Sliders, RotateCcw, BarChart2, Receipt, Calendar, type LucideIcon } from "lucide-react";
+import { Users, ClipboardList, Bell, Shield, ChevronRight, Star, Lock, Eye, Pencil, Sliders, RotateCcw, BarChart2, Receipt, Calendar, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { ConsultaUsuariosPerfilesWidget } from "@eco/gestion-usuarios/componentes/ConsultaUsuariosPerfilesWidget";
 import { AdministracionPerfilesWidget } from "@eco/gestion-usuarios/componentes/AdministracionPerfilesWidget";
