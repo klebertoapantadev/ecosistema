@@ -37,11 +37,16 @@ function iconoDe(p: ProductoCatalogo) {
   return FileCheck;
 }
 
-export function RejillaPlanes({ negocio = "tranqi" }: { negocio?: string }) {
+interface RejillaPlanesProps {
+  negocio?: string;
+  filtroInicial?: Filtro;
+}
+
+export function RejillaPlanes({ negocio = "tranqi", filtroInicial = "todos" }: RejillaPlanesProps) {
   const router = useRouter();
   const { avisar } = useAvisos();
   const [productos, setProductos] = useState<ProductoCatalogo[] | null>(null);
-  const [filtro, setFiltro] = useState<Filtro>("todos");
+  const [filtro, setFiltro] = useState<Filtro>(filtroInicial);
   const [seleccion, setSeleccion] = useState<{ producto: ProductoCatalogo; variante: VarianteCatalogo } | null>(null);
   const [pagoAbierto, setPagoAbierto] = useState(false);
   const dialogo = useRef<HTMLDialogElement>(null);

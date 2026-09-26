@@ -15,7 +15,7 @@ import { WidgetNotificacionesCliente } from "@eco/notificaciones";
 import { obtenerSolicitudPropia } from "../../modulos/socios/consultas";
 import { ConsolaSuperAdminModular } from "./ConsolaSuperAdminModular";
 import { TarjetaEstadoSolicitudHome } from "./TarjetaEstadoSolicitudHome";
-import { SeccionCoberturaCliente } from "@eco/comercio";
+import { SeccionCoberturaCliente, obtenerCoberturaUsuarioAction } from "@eco/comercio";
 import { MenuCuenta } from "./MenuCuenta";
 import { obtenerResumenInicioCliente, type DocumentoBilletera } from "../../modulos/inicio-cliente/consultas";
 import { CifraQueCuenta } from "../../modulos/inicio-cliente/componentes/CifraQueCuenta";
@@ -201,7 +201,11 @@ function vigenciaDocumento(d: DocumentoBilletera): { detalle: string; pildora: {
 }
 
 async function PanelCliente({ saludo, nombre, usuarioId }: { saludo: string | null; nombre: string; usuarioId: string | null }) {
-  const resumen = usuarioId ? await obtenerResumenInicioCliente(usuarioId) : null;
+  const [resumen, cobertura] = await Promise.all([
+    usuarioId ? obtenerResumenInicioCliente(usuarioId) : null,
+    obtenerCoberturaUsuarioAction("tranqi").catch(() => null)
+  ]);
+  const tienePlanActivo = Boolean(cobertura?.tienePlanActivo && !cobertura?.suscripcionId?.startsWith("sub-demo"));
   const tramites = resumen?.tramitesAbiertos ?? null;
   const consultas = resumen?.consultasResueltas ?? null;
   const caso = resumen?.casoReciente ?? null;
@@ -211,7 +215,9 @@ async function PanelCliente({ saludo, nombre, usuarioId }: { saludo: string | nu
 
   const subtitulo = tramites
     ? `Tienes ${tramites === 1 ? "1 trámite" : `${tramites} trámites`} en marcha${cita ? ` y una cita el ${FECHA_CORTA.format(new Date(cita.inicio))}` : ""}.`
-    : "¿Qué necesitas resolver hoy?";
+    : tienePlanActivo
+      ? "¿Qué necesitas resolver hoy?"
+      : "Elige tu plan de cobertura legal o agenda una consulta.";
 
   return (
     <>
@@ -228,6 +234,16 @@ async function PanelCliente({ saludo, nombre, usuarioId }: { saludo: string | nu
 
       <div className="rejilla-cliente">
         <div className="columna-cliente">
+          {/* Si NO tiene plan activo, presenta PRIMERO el panel de planes y servicios (por defecto en Planes) */}
+          {!tienePlanActivo && (
+            <RejillaPlanes negocio="tranqi" filtroInicial="planes" />
+          )}
+
+          {/* Si TIENE plan activo, presenta primero su estado de cobertura activa */}
+          {tienePlanActivo && (
+            <SeccionCoberturaCliente negocio="tranqi" />
+          )}
+
           {/* 2B + 10A: cifras que cuentan. Solo las que se pudieron leer. */}
           {resumen && (
             <div className="cifras-inicio">
@@ -285,12 +301,6 @@ async function PanelCliente({ saludo, nombre, usuarioId }: { saludo: string | nu
             </section>
           )}
 
-          {/* 1) COBERTURA & PLAN ACTIVO DINÁMICO (PLT-009 / PLT-020) */}
-          <SeccionCoberturaCliente negocio="tranqi" />
-
-          {/* 3B: planes y servicios en rejilla con selector (sustituye al carrusel). */}
-          <RejillaPlanes negocio="tranqi" />
-
           {/* 2) ACCESS GRID (Favoritos primero + Accesos predeterminados) */}
           <div className="accesos-cliente">
             <TarjetasFavoritasGrid />
@@ -314,6 +324,11 @@ async function PanelCliente({ saludo, nombre, usuarioId }: { saludo: string | nu
               )
             ))}
           </div>
+
+          {/* Si ya TIENE plan activo, el catálogo de planes y servicios se ubica abajo */}
+          {tienePlanActivo && (
+            <RejillaPlanes negocio="tranqi" filtroInicial="todos" />
+          )}
 
         </div>
 
