@@ -557,54 +557,66 @@ export async function analizarIdentificacionConAria(
       logExtraccion.push({
         campoDetectado: "Nacionalidad",
         valorOriginal: nacionalidad,
-        estado: "metadato_perfil_jsonb",
+        campoMapeadoEnFormulario: "nacionalidad",
+        estado: "mapeado_formulario",
         confianza: 95,
       });
+      camposLeidos.push("nacionalidad");
     }
 
     if (fechaNacimiento) {
       logExtraccion.push({
         campoDetectado: "Fecha de Nacimiento",
         valorOriginal: fechaNacimiento,
-        estado: "metadato_perfil_jsonb",
+        campoMapeadoEnFormulario: "fechaNacimiento",
+        estado: "mapeado_formulario",
         confianza: 92,
       });
+      camposLeidos.push("fechaNacimiento");
     }
 
     if (lugarNacimiento) {
       logExtraccion.push({
         campoDetectado: "Lugar de Nacimiento",
         valorOriginal: lugarNacimiento,
-        estado: "metadato_perfil_jsonb",
+        campoMapeadoEnFormulario: "lugarNacimiento",
+        estado: "mapeado_formulario",
         confianza: 88,
       });
+      camposLeidos.push("lugarNacimiento");
     }
 
     if (sexo) {
       logExtraccion.push({
         campoDetectado: "Sexo / Género",
         valorOriginal: sexo,
-        estado: "metadato_perfil_jsonb",
+        campoMapeadoEnFormulario: "sexo",
+        estado: "mapeado_formulario",
         confianza: 95,
       });
+      camposLeidos.push("sexo");
     }
 
     if (estadoCivil) {
       logExtraccion.push({
         campoDetectado: "Estado Civil",
         valorOriginal: estadoCivil,
-        estado: "metadato_perfil_jsonb",
+        campoMapeadoEnFormulario: "estadoCivil",
+        estado: "mapeado_formulario",
         confianza: 90,
       });
+      camposLeidos.push("estadoCivil");
     }
 
     if (conyuge) {
       logExtraccion.push({
         campoDetectado: "Cónyuge / Conviviente",
         valorOriginal: conyuge,
-        estado: "metadato_perfil_jsonb",
+        campoMapeadoEnFormulario: "conyuge",
+        estado: "mapeado_formulario",
         confianza: 85,
       });
+      camposLeidos.push("conyuge");
     }
 
     if (codigoDactilar) {
@@ -638,9 +650,11 @@ export async function analizarIdentificacionConAria(
       logExtraccion.push({
         campoDetectado: "Fecha de Vencimiento Documento",
         valorOriginal: fechaExpiracion,
-        estado: "metadato_perfil_jsonb",
+        campoMapeadoEnFormulario: "fechaExpiracionDocumento",
+        estado: "mapeado_formulario",
         confianza: 90,
       });
+      camposLeidos.push("fechaExpiracionDocumento");
     }
 
     if (mrz) {
@@ -891,6 +905,7 @@ export async function verificarDuplicado(
   // 1. Buscar en trq_cliente_perfil (CRM Legal)
   if (idLimpio.length >= 8) {
     const { data: cExist } = await supabase
+      .schema("tranqui_legal")
       .from("trq_cliente_perfil")
       .select("clp_id, clp_usuario_id, clp_nombres, clp_apellidos, clp_razon_social, clp_identificacion, clp_correo, clp_telefono")
       .eq("clp_identificacion", idLimpio)
@@ -904,6 +919,7 @@ export async function verificarDuplicado(
 
   if (!clienteCRM && correoLimpio.length > 4) {
     const { data: cExistCorreo } = await supabase
+      .schema("tranqui_legal")
       .from("trq_cliente_perfil")
       .select("clp_id, clp_usuario_id, clp_nombres, clp_apellidos, clp_razon_social, clp_identificacion, clp_correo, clp_telefono")
       .eq("clp_correo", correoLimpio)
@@ -920,6 +936,7 @@ export async function verificarDuplicado(
 
   if (targetUserId) {
     const { data: uData } = await supabase
+      .schema("comun_seguridad")
       .from("seg_usuario" as any)
       .select("usu_id, usu_nombre_completo, usu_nombres, usu_apellidos, usu_correo, usu_creado_en")
       .eq("usu_id", targetUserId)
@@ -936,6 +953,7 @@ export async function verificarDuplicado(
     }
   } else if (correoLimpio.length > 4) {
     const { data: uDataCorreo } = await supabase
+      .schema("comun_seguridad")
       .from("seg_usuario" as any)
       .select("usu_id, usu_nombre_completo, usu_nombres, usu_apellidos, usu_correo, usu_creado_en")
       .eq("usu_correo", correoLimpio)
@@ -1089,6 +1107,15 @@ export interface DatosCreacionCliente {
   razonSocial?: string;
   nombreComercial?: string;
   actividadEconomica?: string;
+  // Campos de Identidad / Cédula y Registro Civil
+  nacionalidad?: string;
+  fechaNacimiento?: string;
+  lugarNacimiento?: string;
+  sexo?: string;
+  estadoCivil?: string;
+  conyuge?: string;
+  fechaExpiracionDocumento?: string;
+  // Contacto y Domicilio
   correo?: string;
   telefono?: string;
   celular?: string;
@@ -1131,7 +1158,7 @@ export interface DatosCreacionCliente {
  */
 export async function crearClienteManual(datos: DatosCreacionCliente) {
   const supabase: any = await crearClienteServidor();
-  const adminClient: any = crearClienteAdmin();
+  const adminClient: any = crearClienteAdmin() || supabase;
 
   const { data: authUser } = await supabase.auth.getUser();
   if (!authUser?.user) {
@@ -1155,11 +1182,12 @@ export async function crearClienteManual(datos: DatosCreacionCliente) {
   const emailFinal = datos.correo?.trim().toLowerCase() || `cliente.${idLimpio}@tranqi.ec`;
   const nombreCompleto = datos.tipoPersoneria === "juridica"
     ? datos.razonSocial?.trim() || "Empresa"
-    : `${datos.nombres?.trim()} ${datos.apellidos?.trim()}`.trim();
+    : `${datos.nombres?.trim() || ""} ${datos.apellidos?.trim() || ""}`.trim() || "Cliente";
 
   let usuarioId: string;
 
   const { data: usuarioExistente } = await adminClient
+    .schema("comun_seguridad")
     .from("seg_usuario")
     .select("usu_id")
     .or(`usu_correo.eq.${emailFinal},usu_identificacion.eq.${idLimpio}`)
@@ -1169,12 +1197,18 @@ export async function crearClienteManual(datos: DatosCreacionCliente) {
     usuarioId = (usuarioExistente as any).usu_id;
   } else {
     const { data: nuevoUsuario, error: errUsu } = await adminClient
+      .schema("comun_seguridad")
       .from("seg_usuario")
       .insert({
         usu_correo: emailFinal,
         usu_nombre_completo: nombreCompleto,
         usu_identificacion: idLimpio,
-        usu_telefono: datos.celular || datos.telefono,
+        usu_cedula: idLimpio.length === 10 ? idLimpio : null,
+        usu_nombres: datos.nombres?.trim() || null,
+        usu_apellidos: datos.apellidos?.trim() || null,
+        usu_telefono: datos.celular || datos.telefono || null,
+        usu_whatsapp: datos.celular || null,
+        usu_origen: "manual_operador",
       })
       .select("usu_id")
       .single();
@@ -1185,39 +1219,51 @@ export async function crearClienteManual(datos: DatosCreacionCliente) {
     usuarioId = (nuevoUsuario as any).usu_id;
   }
 
-  // 3. Insertar perfil en tranqui_legal.trq_cliente_perfil
-  const { data: nuevoPerfil, error: errPerfil } = await supabase
+  // 3. Insertar o actualizar perfil en tranqui_legal.trq_cliente_perfil
+  const { data: nuevoPerfil, error: errPerfil } = await adminClient
+    .schema("tranqui_legal")
     .from("trq_cliente_perfil")
-    .insert({
-      clp_usuario_id: usuarioId,
-      clp_tipo_personeria: datos.tipoPersoneria,
-      clp_tipo_identificacion: datos.tipoIdentificacion,
-      clp_identificacion: idLimpio,
-      clp_nombres: datos.nombres?.trim(),
-      clp_apellidos: datos.apellidos?.trim(),
-      clp_razon_social: datos.razonSocial?.trim(),
-      clp_nombre_comercial: datos.nombreComercial?.trim(),
-      clp_correo: datos.correo?.trim(),
-      clp_telefono: datos.telefono?.trim(),
-      clp_celular: datos.celular?.trim(),
-      clp_direccion: datos.direccion?.trim(),
-      clp_casillero_judicial: datos.casilleroJudicial?.trim(),
-      clp_casillero_electronico: datos.casilleroElectronico?.trim(),
-      clp_origen_registro: "manual_operador",
-      clp_creado_por: authUser.user.id,
-      clp_detalle_cliente: {
-        actividad_economica: datos.actividadEconomica || null,
-        representante_legal: datos.representanteLegal || null,
-        apoderado_persona_natural: datos.apoderadoPersonaNatural || null,
-        contacto_facturacion: datos.contactoFacturacion || null,
-        contraparte_preliminar: datos.contrapartePreliminar || null,
-        validacion_omitida: !!datos.omitirValidacionAlgoritmo,
-        motivo_excepcion: datos.motivoExcepcion || null,
-        metadatos_aria: datos.metadatosAria || null,
-        campos_leidos_aria: datos.camposAutocompletadosAria || [],
-        log_extraccion_aria: datos.logExtraccionAria || [],
+    .upsert(
+      {
+        clp_usuario_id: usuarioId,
+        clp_tipo_personeria: datos.tipoPersoneria,
+        clp_tipo_identificacion: datos.tipoIdentificacion,
+        clp_identificacion: idLimpio,
+        clp_nombres: datos.nombres?.trim() || null,
+        clp_apellidos: datos.apellidos?.trim() || null,
+        clp_razon_social: datos.razonSocial?.trim() || null,
+        clp_nombre_comercial: datos.nombreComercial?.trim() || null,
+        clp_correo: datos.correo?.trim() || null,
+        clp_telefono: datos.telefono?.trim() || null,
+        clp_celular: datos.celular?.trim() || null,
+        clp_direccion: datos.direccion?.trim() || null,
+        clp_casillero_judicial: datos.casilleroJudicial?.trim() || null,
+        clp_casillero_electronico: datos.casilleroElectronico?.trim() || null,
+        clp_origen_registro: "manual_operador",
+        clp_creado_por: authUser.user.id,
+        clp_activo: true,
+        clp_detalle_cliente: {
+          nacionalidad: datos.nacionalidad || "ECUATORIANA",
+          fecha_nacimiento: datos.fechaNacimiento || null,
+          lugar_nacimiento: datos.lugarNacimiento || null,
+          sexo: datos.sexo || null,
+          estado_civil: datos.estadoCivil || null,
+          conyuge: datos.conyuge || null,
+          fecha_expiracion_documento: datos.fechaExpiracionDocumento || null,
+          actividad_economica: datos.actividadEconomica || null,
+          representante_legal: datos.representanteLegal || null,
+          apoderado_persona_natural: datos.apoderadoPersonaNatural || null,
+          contacto_facturacion: datos.contactoFacturacion || null,
+          contraparte_preliminar: datos.contrapartePreliminar || null,
+          validacion_omitida: !!datos.omitirValidacionAlgoritmo,
+          motivo_excepcion: datos.motivoExcepcion || null,
+          metadatos_aria: datos.metadatosAria || null,
+          campos_leidos_aria: datos.camposAutocompletadosAria || [],
+          log_extraccion_aria: datos.logExtraccionAria || [],
+        },
       },
-    })
+      { onConflict: "clp_tipo_identificacion,clp_identificacion" }
+    )
     .select("clp_id, clp_secuencial")
     .single();
 
@@ -1229,7 +1275,7 @@ export async function crearClienteManual(datos: DatosCreacionCliente) {
   await registrarEventoAuditoriaCliente(
     (nuevoPerfil as any).clp_id,
     "creacion_cliente",
-    `Cliente creado manualmente por ${authUser.user.email} (Canal: Mostrador Despacho).`
+    `Cliente ${nombreCompleto} (${idLimpio}) creado/actualizado manualmente por ${authUser.user.email} (Canal: Mostrador Despacho).`
   );
 
   revalidatePath("/panel/clientes");
@@ -1253,8 +1299,10 @@ export async function obtenerClientesCRM(filtros?: {
   limite?: number;
 }) {
   const supabase: any = await crearClienteServidor();
+  const adminClient: any = crearClienteAdmin() || supabase;
 
-  let query = supabase
+  let query = adminClient
+    .schema("tranqui_legal")
     .from("trq_cliente_perfil")
     .select(`
       clp_id,
@@ -1305,7 +1353,8 @@ export async function obtenerClientesCRM(filtros?: {
   if ((!data || data.length === 0) && (!filtros?.busqueda || filtros.busqueda.trim() === "") && (!filtros?.tipoPersoneria || filtros.tipoPersoneria === "todas")) {
     const syncRes = await sincronizarUsuariosAProspectosCRMAction();
     if (syncRes.ok && syncRes.count > 0) {
-      const { data: recargados } = await supabase
+      const { data: recargados } = await adminClient
+        .schema("tranqui_legal")
         .from("trq_cliente_perfil")
         .select(`
           clp_id,
@@ -1366,6 +1415,7 @@ export async function sincronizarUsuariosAProspectosCRMAction(): Promise<{ ok: b
     }
 
     const { data: existentes } = await supabaseAdmin
+      .schema("tranqui_legal")
       .from("trq_cliente_perfil")
       .select("clp_usuario_id, clp_identificacion");
 
@@ -1403,6 +1453,7 @@ export async function sincronizarUsuariosAProspectosCRMAction(): Promise<{ ok: b
 
     if (aInsertar.length > 0) {
       const { error: errInsert } = await supabaseAdmin
+        .schema("tranqui_legal")
         .from("trq_cliente_perfil")
         .insert(aInsertar);
 
@@ -1425,8 +1476,10 @@ export async function sincronizarUsuariosAProspectosCRMAction(): Promise<{ ok: b
  */
 export async function obtenerDetalleCliente360(clienteId: string) {
   const supabase: any = await crearClienteServidor();
+  const adminClient: any = crearClienteAdmin() || supabase;
 
-  const { data: perfil, error: errPerfil } = await supabase
+  const { data: perfil, error: errPerfil } = await adminClient
+    .schema("tranqui_legal")
     .from("trq_cliente_perfil")
     .select("*")
     .eq("clp_id", clienteId)
@@ -1440,7 +1493,8 @@ export async function obtenerDetalleCliente360(clienteId: string) {
   const usuarioId = (perfil as any).clp_usuario_id;
 
   // 1. Obtener Expedientes del cliente
-  const { data: expedientes } = await supabase
+  const { data: expedientes } = await adminClient
+    .schema("tranqui_legal")
     .from("trq_caso_judicial")
     .select("cas_id, cas_codigo_expediente, cas_titulo, cas_estado, cas_etapa_procesal, cas_tipo_tramite, cas_abierto_en, cas_abogado_id")
     .eq("cas_cliente_id", usuarioId)
@@ -1448,7 +1502,8 @@ export async function obtenerDetalleCliente360(clienteId: string) {
     .order("cas_abierto_en", { ascending: false });
 
   // 2. Obtener Citas de agenda
-  const { data: citas } = await supabase
+  const { data: citas } = await adminClient
+    .schema("tranqui_legal")
     .from("trq_cita")
     .select("cit_id, cit_inicio_en, cit_fin_en, cit_modalidad, cit_estado, cit_motivo")
     .eq("cit_cliente_id", usuarioId)
@@ -1459,7 +1514,7 @@ export async function obtenerDetalleCliente360(clienteId: string) {
   await registrarEventoAuditoriaCliente(
     clienteId,
     "visualizacion_ficha",
-    "Visualización de la Ficha Integral 360° del cliente."
+    `Ficha 360° del cliente ${perfil.clp_nombres || ""} ${perfil.clp_apellidos || perfil.clp_razon_social || ""} consultada en CRM.`
   );
 
   return {
@@ -1483,20 +1538,24 @@ export async function registrarEventoAuditoriaCliente(
 ) {
   try {
     const supabase: any = await crearClienteServidor();
+    const adminClient: any = crearClienteAdmin() || supabase;
     const { data: authUser } = await supabase.auth.getUser();
 
-    await supabase.from("aud_registro").insert({
-      reg_tabla: "trq_cliente_perfil",
-      reg_registro_id: clienteId,
-      reg_operacion: tipoEvento.toUpperCase(),
-      reg_usuario_id: authUser?.user?.id || null,
-      reg_datos_nuevos: {
-        tipo_evento: tipoEvento,
-        detalle,
-        timestamp: new Date().toISOString(),
-        usuario_email: authUser?.user?.email || "anonimo",
-      },
-    });
+    await adminClient
+      .schema("comun_auditoria")
+      .from("aud_registro")
+      .insert({
+        reg_tabla: "trq_cliente_perfil",
+        reg_registro_id: clienteId,
+        reg_operacion: tipoEvento.toUpperCase(),
+        reg_usuario_id: authUser?.user?.id || null,
+        reg_datos_nuevos: {
+          tipo_evento: tipoEvento,
+          detalle,
+          timestamp: new Date().toISOString(),
+          usuario_email: authUser?.user?.email || "anonimo",
+        },
+      });
   } catch (error) {
     console.error("Error al registrar auditoría de cliente:", error);
   }
@@ -1507,8 +1566,10 @@ export async function registrarEventoAuditoriaCliente(
  */
 export async function obtenerHistorialAuditoriaCliente(clienteId: string) {
   const supabase: any = await crearClienteServidor();
+  const adminClient: any = crearClienteAdmin() || supabase;
 
-  const { data, error } = await supabase
+  const { data, error } = await adminClient
+    .schema("comun_auditoria")
     .from("aud_registro")
     .select("reg_id, reg_operacion, reg_usuario_id, reg_creado_en, reg_datos_nuevos")
     .eq("reg_tabla", "trq_cliente_perfil")
