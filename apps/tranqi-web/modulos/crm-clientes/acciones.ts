@@ -111,7 +111,7 @@ export async function validarRucEcuador(ruc: string): Promise<{ valida: boolean;
 // 2. EXTRACCIÓN Y VALIDACIÓN CON ARIA OCR MULTIFORMATO (PDF / IMAGEN / MRZ)
 // ==============================================================================
 
-import zlib from "node:zlib";
+import { extractText, getDocumentProxy } from "unpdf";
 
 export interface ItemLogExtraccionAria {
   campoDetectado: string;
@@ -197,38 +197,39 @@ function normalizarFechaEcuador(fechaRaw: string): string | undefined {
 }
 
 /**
- * Extrae todo el texto decodificable de un PDF (streams comprimidos con FlateDecode y strings)
+ * Extrae el texto visible de un PDF decodificando sus fuentes (ToUnicode).
+ *
+ * No se leen los bytes crudos: la cédula digital del Registro Civil codifica el
+ * texto por glifos, así que en crudo solo quedan legibles los metadatos
+ * (p. ej. `/CreationDate (D:20260922165830…)`), y de ahí salía una "cédula"
+ * 2026092216. Un PDF escaneado (solo imagen) devuelve "".
  */
-function extraerTextoDeBufferPdf(buffer: Buffer): string {
-  const chunks: string[] = [];
-
-  // 1. Extraer texto directo no comprimido
-  const textoPlano = buffer.toString("latin1");
-  chunks.push(textoPlano);
-
-  // 2. Extraer y descomprimir streams /FlateDecode
-  const streamRegex = /stream[\r\n]+([\s\S]*?)[\r\n]+endstream/g;
-  let match: RegExpExecArray | null;
-
-  while ((match = streamRegex.exec(textoPlano)) !== null) {
-    const streamData = match[1];
-    if (!streamData) continue;
-    try {
-      const streamBuf = Buffer.from(streamData, "latin1");
-      const uncompressed = zlib.inflateSync(streamBuf);
-      chunks.push(uncompressed.toString("utf8"));
-    } catch {
-      try {
-        const streamBuf = Buffer.from(streamData, "latin1");
-        const uncompressed = zlib.inflateRawSync(streamBuf);
-        chunks.push(uncompressed.toString("utf8"));
-      } catch {
-        // Ignorar streams que no sean texto
-      }
-    }
+async function extraerTextoDeBufferPdf(buffer: Buffer): Promise<string> {
+  try {
+    const pdf = await getDocumentProxy(new Uint8Array(buffer));
+    const { text } = await extractText(pdf, { mergePages: true });
+    // La capa oculta del MRZ sale pegada a la visible ("ABCABC"): se deja una copia.
+    return text
+      .split("\n")
+      .map((linea) => {
+        const mitad = linea.length / 2;
+        return Number.isInteger(mitad) && mitad > 0 && linea.slice(0, mitad) === linea.slice(mitad) ? linea.slice(0, mitad) : linea;
+      })
+      .join("\n");
+  } catch {
+    return "";
   }
+}
 
-  return chunks.join("\n");
+/**
+ * Primer número de 10 dígitos del texto que pase el módulo 10 de cédula.
+ */
+async function buscarCedulaValidaEnTexto(texto: string): Promise<string | undefined> {
+  for (const m of texto.matchAll(/(?<!\d)(\d{10})(?!\d)/g)) {
+    const candidata = m[1];
+    if (candidata && (await validarCedulaEcuador(candidata)).valida) return candidata;
+  }
+  return undefined;
 }
 
 /**
@@ -251,7 +252,8 @@ export async function analizarIdentificacionConAria(
     }
 
     const esPdf = archivoNombre.toLowerCase().endsWith(".pdf") || base64Puro.startsWith("JVBERi");
-    const textoCompleto = esPdf ? extraerTextoDeBufferPdf(buffer) : buffer.toString("utf8");
+    // Las imágenes aún no pasan por visión de ARIA: sin texto, solo queda el nombre del archivo.
+    const textoCompleto = esPdf ? await extraerTextoDeBufferPdf(buffer) : "";
 
     let identificacion: string | undefined;
     let nombres: string | undefined;
@@ -277,10 +279,11 @@ export async function analizarIdentificacionConAria(
     // A. EXTRACCIÓN POR CÓDIGO MRZ (Machine Readable Zone)
     // =========================================================================
     // Ejemplo: TOAPANTA<CHANCUSI<<KLEBER<MANU
-    const mrzNombreMatch = textoCompleto.match(/([A-Z0-9<]{5,})<([A-Z0-9<]+)<<([A-Z0-9<]+)/);
+    // Solo letras: la línea 1 del MRZ (I<ECU…<<<<<…) también tiene "<<" y no es un nombre.
+    const mrzNombreMatch = textoCompleto.match(/^([A-Z]+(?:<[A-Z]+)*)<<([A-Z]+(?:<[A-Z]+)*)<*$/m);
     if (mrzNombreMatch) {
-      const parteApellidos = mrzNombreMatch[1] + "<" + mrzNombreMatch[2];
-      const parteNombres = mrzNombreMatch[3];
+      const parteApellidos = mrzNombreMatch[1];
+      const parteNombres = mrzNombreMatch[2];
       if (parteApellidos && parteNombres) {
         apellidos = limpiarTextoExtraido(parteApellidos);
         nombres = limpiarTextoExtraido(parteNombres);
@@ -290,9 +293,11 @@ export async function analizarIdentificacionConAria(
     }
 
     // Identificación en MRZ o NUI (ej: I<ECU1040081280<<<<<1714898226)
-    const mrzIdMatch = textoCompleto.match(/I<ECU[0-9<]+<([0-9]{10})/i) || textoCompleto.match(/([0-9]{10})/);
-    if (mrzIdMatch && mrzIdMatch[1]) {
-      identificacion = mrzIdMatch[1];
+    // Sin MRZ, un número suelto solo cuenta si pasa el módulo 10: fechas y folios también tienen 10 dígitos.
+    const mrzIdMatch = textoCompleto.match(/I<ECU[0-9<]+<([0-9]{10})/i);
+    const idSuelta = mrzIdMatch?.[1] ?? (await buscarCedulaValidaEnTexto(textoCompleto));
+    if (idSuelta) {
+      identificacion = idSuelta;
       if (!camposLeidos.includes("identificacion")) camposLeidos.push("identificacion");
     }
 
@@ -356,7 +361,7 @@ export async function analizarIdentificacionConAria(
     }
 
     // 9. Cónyuge o Conviviente
-    const conyugeMatch = textoCompleto.match(/(?:APELLIDOS Y NOMBRES DEL )?C[OÓ]NYUGE\s*(?:O CONVIVIENTE)?\s*[\r\n\t:]+\s*([A-ZÁÉÍÓÚÑ\s]+?)(?=\s+LUGAR|\s+FECHA|\s+C[OÓ]DIGO|\s+TIPO|\s+DONANTE)/i);
+    const conyugeMatch = textoCompleto.match(/(?:APELLIDOS Y NOMBRES DEL )?C[OÓ]NYUGU?E\s*(?:O CONVIVIENTE)?\s*[\r\n\t:]+\s*([A-ZÁÉÍÓÚÑ\s]+?)(?=\s+LUGAR|\s+FECHA|\s+C[OÓ]DIGO|\s+TIPO|\s+DONANTE)/i);
     if (conyugeMatch && conyugeMatch[1] && conyugeMatch[1].trim().length > 3) {
       conyuge = limpiarTextoExtraido(conyugeMatch[1]);
       camposLeidos.push("conyuge");
@@ -382,7 +387,7 @@ export async function analizarIdentificacionConAria(
     }
 
     // 12. Tipo de Sangre
-    const sangreMatch = textoCompleto.match(/TIPO DE SANGRE\s*[\r\n\t:]+\s*([ABO][+-])/i);
+    const sangreMatch = textoCompleto.match(/TIPO DE SANGRE[\s:]+((?:AB|A|B|O)[+-])/i);
     if (sangreMatch && sangreMatch[1]) {
       tipoSangre = sangreMatch[1].trim();
       camposLeidos.push("tipoSangre");
