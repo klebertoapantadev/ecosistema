@@ -6,7 +6,7 @@ import {
   FileText, CheckCircle2, ArrowRight, Calendar, Scale, Info, Check, Eye,
   Copy, Layers, FileCheck, HelpCircle, Briefcase, ChevronDown, ChevronUp,
   UserCheck, Send, CheckSquare, Hash, Award, Building, Wallet, Lock, Shield,
-  Trash2, FilePlus2
+  Trash2, FilePlus2, RotateCcw
 } from "lucide-react";
 import {
   validarCedulaEcuador,
@@ -459,6 +459,63 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, alGuardarExitoso }
     }
   };
 
+  // Limpiar y resetear el formulario completo a su estado inicial
+  const limpiarFormulario = () => {
+    setTipoPersoneria("natural");
+    setTipoIdentificacion("cedula");
+    setIdentificacion("");
+    setNombres("");
+    setApellidos("");
+    setRazonSocial("");
+    setNombreComercial("");
+    setActividadEconomica("");
+    setNacionalidad("ECUATORIANA");
+    setFechaNacimiento("");
+    setLugarNacimiento("");
+    setSexo("HOMBRE");
+    setEstadoCivil("SOLTERO");
+    setConyuge("");
+    setFechaExpiracionDocumento("");
+    setCorreo("");
+    setCelular("");
+    setTelefono("");
+    setDireccion("");
+    setCasilleroJudicial("");
+    setCasilleroElectronico("");
+    setRepNombres("");
+    setRepCedula("");
+    setRepCargo("Gerente General");
+    setRepVencimientoNombramiento("");
+    setRepCorreo("");
+    setRepCelular("");
+    setNombramientoValidadoAria(false);
+    setTieneApoderadoNatural(false);
+    setApoNombres("");
+    setApoCedula("");
+    setApoCalidadPoder("Apoderado General");
+    setApoNotariaVigencia("");
+    setContraparteNombres("");
+    setContraparteIdentificacion("");
+    setAlertaConflicto(null);
+    setOmitirValidacionAlgoritmo(false);
+    setMotivoExcepcion("");
+    setArchivoCedulaNatural(null);
+    setArchivoRepCedula(null);
+    setArchivoNombramiento(null);
+    setArchivoRucSRI(null);
+    setBadgeAriaId(null);
+    setBadgeAriaNom(null);
+    setBadgeAriaRepCedula(null);
+    setErrorValidacion(null);
+    setAvisoDuplicado(null);
+    setResVerificacion(null);
+    setMetadatosAria(null);
+    setLogExtraccionAria([]);
+    setMostrarLogDetallado(false);
+    setCamposAria({});
+    setCamposModificados({});
+  };
+
   const manejarGuardar = (accionContinuidad: "solo_guardar" | "radicar_expediente" | "agendar_cita") => {
     setErrorValidacion(null);
 
@@ -640,6 +697,7 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, alGuardarExitoso }
           setErrorValidacion(res.error || "Error al registrar cliente.");
           return;
         }
+        limpiarFormulario();
         alGuardarExitoso({
           clienteId: res.clienteId || "",
           usuarioId: res.usuarioId || "",
@@ -707,19 +765,46 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, alGuardarExitoso }
               Ingreso para Personas Naturales, Empresas, Representantes y Litigios Telemáticos
             </p>
           </div>
-          <button
-            onClick={alCerrar}
-            style={{
-              background: "transparent",
-              border: "none",
-              color: "#64748B",
-              cursor: "pointer",
-              padding: "6px",
-              borderRadius: "50%",
-            }}
-          >
-            <X size={20} />
-          </button>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <button
+              type="button"
+              onClick={limpiarFormulario}
+              title="Limpiar y vaciar todos los campos del formulario"
+              style={{
+                background: "#F1F5F9",
+                border: "1px solid #CBD5E1",
+                color: "#475569",
+                borderRadius: "8px",
+                padding: "6px 12px",
+                fontSize: "0.78rem",
+                fontWeight: 600,
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "5px",
+                cursor: "pointer",
+                transition: "all 0.15s ease",
+              }}
+            >
+              <RotateCcw size={13} />
+              Limpiar Formulario
+            </button>
+            <button
+              onClick={() => {
+                limpiarFormulario();
+                alCerrar();
+              }}
+              style={{
+                background: "transparent",
+                border: "none",
+                color: "#64748B",
+                cursor: "pointer",
+                padding: "6px",
+                borderRadius: "50%",
+              }}
+            >
+              <X size={20} />
+            </button>
+          </div>
         </div>
 
         {/* Cuerpo con Scroll */}
@@ -1987,23 +2072,50 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, alGuardarExitoso }
             flexWrap: "wrap",
           }}
         >
-          <button
-            type="button"
-            onClick={alCerrar}
-            disabled={isPending}
-            style={{
-              padding: "9px 16px",
-              borderRadius: "8px",
-              border: "1px solid #CBD5E1",
-              background: "#FFFFFF",
-              color: "#475569",
-              fontSize: "0.85rem",
-              fontWeight: 600,
-              cursor: "pointer",
-            }}
-          >
-            Cancelar
-          </button>
+          <div style={{ display: "flex", gap: "8px" }}>
+            <button
+              type="button"
+              onClick={() => {
+                limpiarFormulario();
+                alCerrar();
+              }}
+              disabled={isPending}
+              style={{
+                padding: "9px 16px",
+                borderRadius: "8px",
+                border: "1px solid #CBD5E1",
+                background: "#FFFFFF",
+                color: "#475569",
+                fontSize: "0.85rem",
+                fontWeight: 600,
+                cursor: "pointer",
+              }}
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              onClick={limpiarFormulario}
+              disabled={isPending}
+              title="Limpiar todos los campos y documentos"
+              style={{
+                padding: "9px 14px",
+                borderRadius: "8px",
+                border: "1px solid #E2E8F0",
+                background: "#F8FAFC",
+                color: "#64748B",
+                fontSize: "0.85rem",
+                fontWeight: 600,
+                cursor: "pointer",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "5px",
+              }}
+            >
+              <RotateCcw size={14} />
+              Limpiar Formulario
+            </button>
+          </div>
 
           <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
             <button
