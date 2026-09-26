@@ -1172,6 +1172,16 @@ export interface DatosCreacionCliente {
   documentosBilletera?: DocumentoBilleteraCarga[];
 }
 
+function formatearFechaIsoSegura(f?: string | null): string | null {
+  if (!f || typeof f !== "string" || !f.trim()) return null;
+  try {
+    const d = new Date(f.trim());
+    return isNaN(d.getTime()) ? null : d.toISOString();
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Crea un cliente de forma manual asistida en el CRM
  */
@@ -1239,60 +1249,85 @@ export async function crearClienteManual(datos: DatosCreacionCliente) {
   }
 
   // 3. Insertar o actualizar perfil en tranqui_legal.trq_cliente_perfil
-  const { data: nuevoPerfil, error: errPerfil } = await adminClient
+  const payloadPerfil = {
+    clp_usuario_id: usuarioId,
+    clp_tipo_personeria: datos.tipoPersoneria,
+    clp_tipo_identificacion: datos.tipoIdentificacion,
+    clp_identificacion: idLimpio,
+    clp_nombres: datos.nombres?.trim() || null,
+    clp_apellidos: datos.apellidos?.trim() || null,
+    clp_razon_social: datos.razonSocial?.trim() || null,
+    clp_nombre_comercial: datos.nombreComercial?.trim() || null,
+    clp_correo: datos.correo?.trim() || null,
+    clp_telefono: datos.telefono?.trim() || null,
+    clp_celular: datos.celular?.trim() || null,
+    clp_direccion: datos.direccion?.trim() || null,
+    clp_casillero_judicial: datos.casilleroJudicial?.trim() || null,
+    clp_casillero_electronico: datos.casilleroElectronico?.trim() || null,
+    clp_origen_registro: "manual_operador",
+    clp_creado_por: authUser.user.id,
+    clp_activo: true,
+    clp_detalle_cliente: {
+      nacionalidad: datos.nacionalidad || "ECUATORIANA",
+      fecha_nacimiento: datos.fechaNacimiento || null,
+      lugar_nacimiento: datos.lugarNacimiento || null,
+      sexo: datos.sexo || null,
+      estado_civil: datos.estadoCivil || null,
+      conyuge: datos.conyuge || null,
+      fecha_expiracion_documento: datos.fechaExpiracionDocumento || null,
+      actividad_economica: datos.actividadEconomica || null,
+      representante_legal: datos.representanteLegal || null,
+      apoderado_persona_natural: datos.apoderadoPersonaNatural || null,
+      contacto_facturacion: datos.contactoFacturacion || null,
+      contraparte_preliminar: datos.contrapartePreliminar || null,
+      validacion_omitida: !!datos.omitirValidacionAlgoritmo,
+      motivo_excepcion: datos.motivoExcepcion || null,
+      metadatos_aria: datos.metadatosAria || null,
+      campos_leidos_aria: datos.camposAutocompletadosAria || [],
+      log_extraccion_aria: datos.logExtraccionAria || [],
+      documentos_billetera_guardados: datos.documentosBilletera?.map(d => ({
+        tipo: d.tipo,
+        titulo: d.titulo,
+        archivoNombre: d.archivoNombre,
+      })) || [],
+    },
+  };
+
+  // Buscar si ya existe perfil para update seguro sin error de clave única
+  const { data: perfilExistente } = await adminClient
     .schema("tranqui_legal")
     .from("trq_cliente_perfil")
-    .upsert(
-      {
-        clp_usuario_id: usuarioId,
-        clp_tipo_personeria: datos.tipoPersoneria,
-        clp_tipo_identificacion: datos.tipoIdentificacion,
-        clp_identificacion: idLimpio,
-        clp_nombres: datos.nombres?.trim() || null,
-        clp_apellidos: datos.apellidos?.trim() || null,
-        clp_razon_social: datos.razonSocial?.trim() || null,
-        clp_nombre_comercial: datos.nombreComercial?.trim() || null,
-        clp_correo: datos.correo?.trim() || null,
-        clp_telefono: datos.telefono?.trim() || null,
-        clp_celular: datos.celular?.trim() || null,
-        clp_direccion: datos.direccion?.trim() || null,
-        clp_casillero_judicial: datos.casilleroJudicial?.trim() || null,
-        clp_casillero_electronico: datos.casilleroElectronico?.trim() || null,
-        clp_origen_registro: "manual_operador",
-        clp_creado_por: authUser.user.id,
-        clp_activo: true,
-        clp_detalle_cliente: {
-          nacionalidad: datos.nacionalidad || "ECUATORIANA",
-          fecha_nacimiento: datos.fechaNacimiento || null,
-          lugar_nacimiento: datos.lugarNacimiento || null,
-          sexo: datos.sexo || null,
-          estado_civil: datos.estadoCivil || null,
-          conyuge: datos.conyuge || null,
-          fecha_expiracion_documento: datos.fechaExpiracionDocumento || null,
-          actividad_economica: datos.actividadEconomica || null,
-          representante_legal: datos.representanteLegal || null,
-          apoderado_persona_natural: datos.apoderadoPersonaNatural || null,
-          contacto_facturacion: datos.contactoFacturacion || null,
-          contraparte_preliminar: datos.contrapartePreliminar || null,
-          validacion_omitida: !!datos.omitirValidacionAlgoritmo,
-          motivo_excepcion: datos.motivoExcepcion || null,
-          metadatos_aria: datos.metadatosAria || null,
-          campos_leidos_aria: datos.camposAutocompletadosAria || [],
-          log_extraccion_aria: datos.logExtraccionAria || [],
-          documentos_billetera_guardados: datos.documentosBilletera?.map(d => ({
-            tipo: d.tipo,
-            titulo: d.titulo,
-            archivoNombre: d.archivoNombre,
-          })) || [],
-        },
-      },
-      { onConflict: "clp_tipo_identificacion,clp_identificacion" }
-    )
-    .select("clp_id, clp_secuencial")
-    .single();
+    .select("clp_id")
+    .or(`clp_usuario_id.eq.${usuarioId},clp_identificacion.eq.${idLimpio}`)
+    .maybeSingle();
 
-  if (errPerfil || !nuevoPerfil) {
-    throw new Error(`Error al crear perfil del cliente: ${errPerfil?.message || "Desconocido"}`);
+  let clientePerfilId: string;
+
+  if (perfilExistente) {
+    const { data: perfilActualizado, error: errUpd } = await adminClient
+      .schema("tranqui_legal")
+      .from("trq_cliente_perfil")
+      .update(payloadPerfil)
+      .eq("clp_id", perfilExistente.clp_id)
+      .select("clp_id")
+      .single();
+
+    if (errUpd || !perfilActualizado) {
+      throw new Error(`Error al actualizar perfil de cliente: ${errUpd?.message || "Desconocido"}`);
+    }
+    clientePerfilId = perfilActualizado.clp_id;
+  } else {
+    const { data: perfilCreado, error: errIns } = await adminClient
+      .schema("tranqui_legal")
+      .from("trq_cliente_perfil")
+      .insert(payloadPerfil)
+      .select("clp_id")
+      .single();
+
+    if (errIns || !perfilCreado) {
+      throw new Error(`Error al crear perfil de cliente: ${errIns?.message || "Desconocido"}`);
+    }
+    clientePerfilId = perfilCreado.clp_id;
   }
 
   // 4. Guardar documentos en la Billetera Digital (tranqui_legal.trq_billetera_documento)
@@ -1318,8 +1353,8 @@ export async function crearClienteManual(datos: DatosCreacionCliente) {
             doc_numero_documento: doc.numeroDocumento || null,
             doc_titular_nombre: doc.titularNombre || nombreCompleto,
             doc_titular_identificacion: doc.titularIdentificacion || idLimpio,
-            doc_fecha_nacimiento: doc.fechaNacimiento ? new Date(doc.fechaNacimiento).toISOString() : null,
-            doc_fecha_caducidad: doc.fechaCaducidad ? new Date(doc.fechaCaducidad).toISOString() : null,
+            doc_fecha_nacimiento: formatearFechaIsoSegura(doc.fechaNacimiento),
+            doc_fecha_caducidad: formatearFechaIsoSegura(doc.fechaCaducidad),
             doc_metadatos_ocr: doc.metadatosOcr || {},
             doc_detalles: doc.detalles || {},
             doc_alertar_caducidad: true,
@@ -1338,7 +1373,7 @@ export async function crearClienteManual(datos: DatosCreacionCliente) {
     : "";
 
   await registrarEventoAuditoriaCliente(
-    (nuevoPerfil as any).clp_id,
+    clientePerfilId,
     "creacion_cliente",
     `Cliente ${nombreCompleto} (${idLimpio}) creado/actualizado manualmente por ${authUser.user.email} (Canal: Mostrador Despacho)${detalleDocs}.`
   );
@@ -1347,7 +1382,7 @@ export async function crearClienteManual(datos: DatosCreacionCliente) {
 
   return {
     ok: true,
-    clienteId: (nuevoPerfil as any).clp_id,
+    clienteId: clientePerfilId,
     usuarioId,
     nombreCompleto,
     identificacion: idLimpio,

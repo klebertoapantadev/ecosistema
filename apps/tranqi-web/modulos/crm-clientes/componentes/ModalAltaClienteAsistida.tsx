@@ -968,13 +968,13 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, alGuardarExitoso }
             </div>
           )}
 
-          {/* Log Interactivo de Extracción y Auditoría de Mapeo de ARIA OCR */}
-          {(badgeAriaId || logExtraccionAria.length > 0) && (
-            <div style={{ background: "#F0FDF4", border: "1px solid #86EFAC", color: "#166534", padding: "12px 14px", borderRadius: "10px", fontSize: "0.82rem", display: "flex", flexDirection: "column", gap: "10px" }}>
+          {/* Barra Compacta de Estado ARIA OCR (Log Desplegable Opcional) */}
+          {(badgeAriaId || badgeAriaNom || badgeAriaRepCedula || logExtraccionAria.length > 0) && (
+            <div style={{ background: "#F0FDF4", border: "1px solid #86EFAC", color: "#166534", padding: "8px 12px", borderRadius: "10px", fontSize: "0.8rem", display: "flex", flexDirection: "column", gap: "6px" }}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "8px" }}>
                 <span style={{ display: "flex", alignItems: "center", gap: "6px", fontWeight: 700 }}>
                   <CheckCircle2 size={16} color="#16A34A" />
-                  {badgeAriaId || `✨ Documento extraído con ${logExtraccionAria.length} datos identificados`}
+                  {badgeAriaId || badgeAriaNom || badgeAriaRepCedula || `✨ ${logExtraccionAria.length} datos identificados y mapeados al formulario`}
                 </span>
                 <button
                   type="button"
@@ -983,9 +983,9 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, alGuardarExitoso }
                     background: "#DCFCE7",
                     border: "1px solid #86EFAC",
                     color: "#15803D",
-                    padding: "4px 10px",
+                    padding: "3px 8px",
                     borderRadius: "6px",
-                    fontSize: "0.74rem",
+                    fontSize: "0.72rem",
                     fontWeight: 700,
                     cursor: "pointer",
                     display: "inline-flex",
@@ -994,16 +994,15 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, alGuardarExitoso }
                   }}
                 >
                   <Eye size={12} />
-                  {mostrarLogDetallado ? "Ocultar Log de Extracción" : "Ver Log de Extracción y Mapeo ARIA"}
+                  {mostrarLogDetallado ? "Ocultar Datos Brutos" : `Ver Datos Brutos (${logExtraccionAria.length})`}
                   {mostrarLogDetallado ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
                 </button>
               </div>
 
               {/* Panel Desplegable de Log de Extracción y Mapeo */}
               {mostrarLogDetallado && (
-                <div style={{ background: "#FFFFFF", border: "1px solid #BBF7D0", borderRadius: "8px", padding: "12px", marginTop: "2px" }}>
-                  {/* Filtros de Pestañas del Log */}
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "10px", borderBottom: "1px solid #E2E8F0", paddingBottom: "8px", flexWrap: "wrap", gap: "6px" }}>
+                <div style={{ background: "#FFFFFF", border: "1px solid #BBF7D0", borderRadius: "8px", padding: "10px", marginTop: "2px" }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px", borderBottom: "1px solid #E2E8F0", paddingBottom: "6px", flexWrap: "wrap", gap: "6px" }}>
                     <div style={{ display: "flex", gap: "6px" }}>
                       <button
                         type="button"
@@ -1013,8 +1012,8 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, alGuardarExitoso }
                           color: filtroLog === "todos" ? "#FFFFFF" : "#475569",
                           border: "none",
                           borderRadius: "4px",
-                          padding: "3px 8px",
-                          fontSize: "0.72rem",
+                          padding: "2px 7px",
+                          fontSize: "0.7rem",
                           fontWeight: 600,
                           cursor: "pointer",
                         }}
@@ -1029,8 +1028,8 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, alGuardarExitoso }
                           color: filtroLog === "mapeados" ? "#FFFFFF" : "#475569",
                           border: "none",
                           borderRadius: "4px",
-                          padding: "3px 8px",
-                          fontSize: "0.72rem",
+                          padding: "2px 7px",
+                          fontSize: "0.7rem",
                           fontWeight: 600,
                           cursor: "pointer",
                         }}
@@ -1045,23 +1044,19 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, alGuardarExitoso }
                           color: filtroLog === "metadatos" ? "#FFFFFF" : "#475569",
                           border: "none",
                           borderRadius: "4px",
-                          padding: "3px 8px",
-                          fontSize: "0.72rem",
+                          padding: "2px 7px",
+                          fontSize: "0.7rem",
                           fontWeight: 600,
                           cursor: "pointer",
                         }}
                       >
-                        🔵 Perfil Digital JSONB ({logExtraccionAria.filter(i => i.estado === "metadato_perfil_jsonb").length})
+                        🔵 Metadatos JSONB ({logExtraccionAria.filter(i => i.estado === "metadato_perfil_jsonb").length})
                       </button>
                     </div>
-                    <span style={{ fontSize: "0.68rem", color: "#64748B" }}>
-                      Trazabilidad Inmutable del Documento Oficial
-                    </span>
                   </div>
 
-                  {/* Tabla / Grid de Log de Datos Extraídos */}
                   {logsFiltrados.length > 0 ? (
-                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "8px", maxHeight: "220px", overflowY: "auto", paddingRight: "4px" }}>
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "6px", maxHeight: "180px", overflowY: "auto" }}>
                       {logsFiltrados.map((item, idx) => {
                         const esMapeado = item.estado === "mapeado_formulario";
                         const claveUnica = `${item.campoDetectado}_${idx}`;
@@ -1072,48 +1067,32 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, alGuardarExitoso }
                               background: esMapeado ? "#F0FDF4" : "#F8FAFC",
                               border: esMapeado ? "1px solid #86EFAC" : "1px solid #E2E8F0",
                               borderRadius: "6px",
-                              padding: "8px 10px",
+                              padding: "6px 8px",
                               display: "flex",
                               flexDirection: "column",
                               justifyContent: "space-between",
-                              gap: "4px",
+                              gap: "2px",
                             }}
                           >
                             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "4px" }}>
-                              <span style={{ fontSize: "0.7rem", fontWeight: 700, color: esMapeado ? "#15803D" : "#475569" }}>
+                              <span style={{ fontSize: "0.68rem", fontWeight: 700, color: esMapeado ? "#15803D" : "#475569" }}>
                                 {item.campoDetectado}
                               </span>
-                              <span
-                                style={{
-                                  fontSize: "0.62rem",
-                                  padding: "1px 5px",
-                                  borderRadius: "4px",
-                                  fontWeight: 700,
-                                  background: esMapeado ? "#DCFCE7" : "#E0E7FF",
-                                  color: esMapeado ? "#166534" : "#3730A3",
-                                }}
-                              >
-                                {esMapeado ? `➔ Campo: ${item.campoMapeadoEnFormulario}` : "JSONB"}
+                              <span style={{ fontSize: "0.6rem", padding: "1px 4px", borderRadius: "3px", fontWeight: 700, background: esMapeado ? "#DCFCE7" : "#E0E7FF", color: esMapeado ? "#166534" : "#3730A3" }}>
+                                {esMapeado ? `➔ ${item.campoMapeadoEnFormulario}` : "JSONB"}
                               </span>
                             </div>
-
-                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "6px" }}>
-                              <strong style={{ fontSize: "0.78rem", color: "#0F172A", wordBreak: "break-all" }}>
+                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "4px" }}>
+                              <strong style={{ fontSize: "0.74rem", color: "#0F172A", wordBreak: "break-all" }}>
                                 {item.valorOriginal}
                               </strong>
                               <button
                                 type="button"
                                 title="Copiar dato"
                                 onClick={() => copiarAlPortapapeles(item.valorOriginal, claveUnica)}
-                                style={{
-                                  background: "transparent",
-                                  border: "none",
-                                  color: copiadoId === claveUnica ? "#10B981" : "#94A3B8",
-                                  cursor: "pointer",
-                                  padding: "2px",
-                                }}
+                                style={{ background: "transparent", border: "none", color: copiadoId === claveUnica ? "#10B981" : "#94A3B8", cursor: "pointer", padding: "2px" }}
                               >
-                                {copiadoId === claveUnica ? <Check size={12} /> : <Copy size={12} />}
+                                {copiadoId === claveUnica ? <Check size={11} /> : <Copy size={11} />}
                               </button>
                             </div>
                           </div>
@@ -1121,82 +1100,24 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, alGuardarExitoso }
                       })}
                     </div>
                   ) : (
-                    <p style={{ margin: "10px 0", fontSize: "0.75rem", color: "#64748B", textAlign: "center" }}>
-                      No hay registros para este filtro.
-                    </p>
+                    <div style={{ textAlign: "center", padding: "8px", color: "#64748B", fontSize: "0.72rem" }}>
+                      No hay campos para el filtro seleccionado.
+                    </div>
                   )}
                 </div>
               )}
             </div>
           )}
 
-          {/* Datos de Identificación Base */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "12px" }}>
-            <div>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "4px" }}>
-                <label style={{ fontSize: "0.78rem", fontWeight: 600, color: "#334155" }}>
-                  Tipo Identificación
-                </label>
-              </div>
-              <select
-                value={tipoIdentificacion}
-                onChange={(e) => {
-                  setTipoIdentificacion(e.target.value as any);
-                  marcarCampoModificado("tipoIdentificacion");
-                }}
-                style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid #CBD5E1", fontSize: "0.85rem" }}
-              >
-                <option value="cedula">Cédula de Identidad</option>
-                <option value="ruc">RUC (Registro Único de Contribuyentes)</option>
-                <option value="pasaporte">Pasaporte / ID Extranjero</option>
-              </select>
-            </div>
-
-            <div>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "4px" }}>
-                <label style={{ fontSize: "0.78rem", fontWeight: 600, color: "#334155" }}>
-                  {tipoPersoneria === "juridica" ? "Número de RUC de la Empresa *" : "Número de Identificación *"}
-                </label>
-                <IndicadorOrigenCampo
-                  esAria={camposAria["identificacion"]}
-                  esModificado={camposModificados["identificacion"]}
-                />
-              </div>
-              <input
-                type="text"
-                value={identificacion}
-                onChange={async (e) => {
-                  const val = e.target.value;
-                  setIdentificacion(val);
-                  marcarCampoModificado("identificacion");
-                  await evaluarDuplicadosYPlanes(val, correo);
-                }}
-                placeholder={tipoPersoneria === "natural" ? "1719103986" : "1792345678001"}
-                style={{
-                  width: "100%",
-                  padding: "8px 10px",
-                  borderRadius: "8px",
-                  border: camposAria["identificacion"] && !camposModificados["identificacion"]
-                    ? "1.5px solid #10B981"
-                    : "1px solid #CBD5E1",
-                  background: camposAria["identificacion"] && !camposModificados["identificacion"]
-                    ? "#F0FDF4"
-                    : "#FFFFFF",
-                  fontSize: "0.85rem"
-                }}
-              />
-            </div>
-          </div>
-
           {/* Bloque de Advertencias: Usuario Web Registrado, Plan Activo o Duplicados */}
           {resVerificacion && (resVerificacion.esUsuarioWeb || resVerificacion.tienePlanActivo || resVerificacion.clienteCRM) && (
             <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
               {resVerificacion.esUsuarioWeb && (
-                <div style={{ background: "#EFF6FF", border: "1px solid #BFDBFE", color: "#1E40AF", padding: "10px 14px", borderRadius: "8px", fontSize: "0.82rem", display: "flex", alignItems: "flex-start", gap: "8px" }}>
-                  <UserCheck size={18} style={{ color: "#2563EB", marginTop: "2px", flexShrink: 0 }} />
+                <div style={{ background: "#EFF6FF", border: "1px solid #BFDBFE", color: "#1E40AF", padding: "8px 12px", borderRadius: "8px", fontSize: "0.8rem", display: "flex", alignItems: "flex-start", gap: "8px" }}>
+                  <UserCheck size={16} style={{ color: "#2563EB", marginTop: "2px", flexShrink: 0 }} />
                   <div>
                     <div style={{ fontWeight: 700, color: "#1E3A8A" }}>Usuario Web Registrado en la Plataforma</div>
-                    <div style={{ color: "#1E40AF", marginTop: "2px" }}>
+                    <div style={{ color: "#1E40AF", marginTop: "1px" }}>
                       Cuenta activa asociada a <strong>{resVerificacion.usuarioWeb?.correo}</strong> ({resVerificacion.usuarioWeb?.nombreCompleto}). Su ficha en el CRM quedará vinculada automáticamente a su acceso web.
                     </div>
                   </div>
@@ -1204,13 +1125,13 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, alGuardarExitoso }
               )}
 
               {resVerificacion.tienePlanActivo && resVerificacion.planActivo && (
-                <div style={{ background: "#F0FDF4", border: "1px solid #BBF7D0", color: "#166534", padding: "10px 14px", borderRadius: "8px", fontSize: "0.82rem", display: "flex", alignItems: "flex-start", gap: "8px" }}>
-                  <Sparkles size={18} style={{ color: "#16A34A", marginTop: "2px", flexShrink: 0 }} />
+                <div style={{ background: "#F0FDF4", border: "1px solid #BBF7D0", color: "#166534", padding: "8px 12px", borderRadius: "8px", fontSize: "0.8rem", display: "flex", alignItems: "flex-start", gap: "8px" }}>
+                  <Sparkles size={16} style={{ color: "#16A34A", marginTop: "2px", flexShrink: 0 }} />
                   <div>
                     <div style={{ fontWeight: 700, color: "#14532D" }}>
                       ✨ Plan Activo Vigente: {resVerificacion.planActivo.planNombre}
                     </div>
-                    <div style={{ color: "#15803D", marginTop: "2px" }}>
+                    <div style={{ color: "#15803D", marginTop: "1px" }}>
                       Modalidad <strong>{resVerificacion.planActivo.frecuencia}</strong> ({resVerificacion.planActivo.esGratuito ? "Suscripción Gratuita $0.00" : `$${resVerificacion.planActivo.monto.toFixed(2)}`})
                       {resVerificacion.planActivo.consultasDisponibles !== null && (
                         <span> • <strong>{resVerificacion.planActivo.consultasDisponibles}</strong> consulta(s) disponibles este periodo</span>
@@ -1221,11 +1142,11 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, alGuardarExitoso }
               )}
 
               {resVerificacion.clienteCRM && (
-                <div style={{ background: "#FFFBEB", border: "1px solid #FDE68A", color: "#92400E", padding: "10px 14px", borderRadius: "8px", fontSize: "0.82rem", display: "flex", alignItems: "flex-start", gap: "8px" }}>
-                  <AlertTriangle size={18} style={{ color: "#D97706", marginTop: "2px", flexShrink: 0 }} />
+                <div style={{ background: "#FFFBEB", border: "1px solid #FDE68A", color: "#92400E", padding: "8px 12px", borderRadius: "8px", fontSize: "0.8rem", display: "flex", alignItems: "flex-start", gap: "8px" }}>
+                  <AlertTriangle size={16} style={{ color: "#D97706", marginTop: "2px", flexShrink: 0 }} />
                   <div>
                     <div style={{ fontWeight: 700, color: "#78350F" }}>Cliente ya Registrado en el CRM Legal</div>
-                    <div style={{ color: "#92400E", marginTop: "2px" }}>
+                    <div style={{ color: "#92400E", marginTop: "1px" }}>
                       Ficha registrada a nombre de <strong>{resVerificacion.clienteCRM.clp_razon_social || `${resVerificacion.clienteCRM.clp_nombres || ""} ${resVerificacion.clienteCRM.clp_apellidos || ""}`.trim()}</strong> (ID: {resVerificacion.clienteCRM.clp_identificacion}).
                     </div>
                   </div>
@@ -1234,121 +1155,146 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, alGuardarExitoso }
             </div>
           )}
 
-          {/* Casilla de Bypass de Validación Algorítmica */}
-          <div style={{ background: "#FFFBEB", border: "1px solid #FDE68A", padding: "10px 14px", borderRadius: "8px", display: "flex", flexDirection: "column", gap: "6px" }}>
-            <label style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "0.82rem", fontWeight: 600, color: "#92400E", cursor: "pointer" }}>
-              <input
-                type="checkbox"
-                checked={omitirValidacionAlgoritmo}
-                onChange={(e) => setOmitirValidacionAlgoritmo(e.target.checked)}
-              />
-              Omitir validación de algoritmo (Cédula especial / Extranjería / Pasaporte)
-            </label>
-            {omitirValidacionAlgoritmo && (
-              <input
-                type="text"
-                placeholder="Motivo de la excepción (ej. Pasaporte diplomático o cédula de naturalización)"
-                value={motivoExcepcion}
-                onChange={(e) => setMotivoExcepcion(e.target.value)}
-                style={{ width: "100%", padding: "6px 10px", borderRadius: "6px", border: "1px solid #FCD34D", fontSize: "0.8rem" }}
-              />
-            )}
-          </div>
-
           {/* ========================================================================= */}
-          {/* TAB 1: FORMULARIO PERSONA NATURAL (CIUDADANO) */}
+          {/* TAB 1: FORMULARIO PERSONA NATURAL (CIUDADANO) DIRECTAMENTE EDITABLE */}
           {/* ========================================================================= */}
           {tipoPersoneria === "natural" ? (
             <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
-                <div>
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "4px" }}>
-                    <label style={{ fontSize: "0.78rem", fontWeight: 600, color: "#334155" }}>
-                      Nombres *
+              {/* Bloque 1: Identificación y Nombres Completos (Editable) */}
+              <div style={{ border: "1px solid #E2E8F0", borderRadius: "10px", padding: "12px 14px", background: "#FFFFFF", display: "flex", flexDirection: "column", gap: "10px" }}>
+                <span style={{ fontSize: "0.8rem", fontWeight: 700, color: "#0F172A", display: "flex", alignItems: "center", gap: "6px" }}>
+                  <User size={15} color="#0284C7" /> Identificación y Nombres del Titular
+                </span>
+
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1.5fr", gap: "10px" }}>
+                  <div>
+                    <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 600, color: "#334155", marginBottom: "3px" }}>
+                      Tipo Documento
                     </label>
-                    <IndicadorOrigenCampo
-                      esAria={camposAria["nombres"]}
-                      esModificado={camposModificados["nombres"]}
+                    <select
+                      value={tipoIdentificacion}
+                      onChange={(e) => {
+                        setTipoIdentificacion(e.target.value as any);
+                        marcarCampoModificado("tipoIdentificacion");
+                      }}
+                      style={{ width: "100%", padding: "7px 10px", borderRadius: "6px", border: "1px solid #CBD5E1", fontSize: "0.82rem" }}
+                    >
+                      <option value="cedula">Cédula de Identidad</option>
+                      <option value="ruc">RUC Personal (13 dígitos)</option>
+                      <option value="pasaporte">Pasaporte / Extranjería</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "3px" }}>
+                      <label style={{ fontSize: "0.75rem", fontWeight: 600, color: "#334155" }}>
+                        Número de Identificación *
+                      </label>
+                      <IndicadorOrigenCampo esAria={camposAria["identificacion"]} esModificado={camposModificados["identificacion"]} />
+                    </div>
+                    <input
+                      type="text"
+                      value={identificacion}
+                      onChange={async (e) => {
+                        const val = e.target.value;
+                        setIdentificacion(val);
+                        marcarCampoModificado("identificacion");
+                        await evaluarDuplicadosYPlanes(val, correo);
+                      }}
+                      placeholder="1714898226"
+                      style={{
+                        width: "100%",
+                        padding: "7px 10px",
+                        borderRadius: "6px",
+                        border: camposAria["identificacion"] && !camposModificados["identificacion"]
+                          ? "1.5px solid #10B981"
+                          : "1px solid #CBD5E1",
+                        background: camposAria["identificacion"] && !camposModificados["identificacion"]
+                          ? "#F0FDF4"
+                          : "#FFFFFF",
+                        fontSize: "0.82rem"
+                      }}
                     />
                   </div>
-                  <input
-                    type="text"
-                    value={nombres}
-                    onChange={(e) => {
-                      setNombres(e.target.value);
-                      marcarCampoModificado("nombres");
-                    }}
-                    placeholder="KLEBER MANUEL"
-                    style={{
-                      width: "100%",
-                      padding: "8px 10px",
-                      borderRadius: "8px",
-                      border: camposAria["nombres"] && !camposModificados["nombres"]
-                        ? "1.5px solid #10B981"
-                        : "1px solid #CBD5E1",
-                      background: camposAria["nombres"] && !camposModificados["nombres"]
-                        ? "#F0FDF4"
-                        : "#FFFFFF",
-                      fontSize: "0.85rem"
-                    }}
-                  />
                 </div>
-                <div>
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "4px" }}>
-                    <label style={{ fontSize: "0.78rem", fontWeight: 600, color: "#334155" }}>
-                      Apellidos *
-                    </label>
-                    <IndicadorOrigenCampo
-                      esAria={camposAria["apellidos"]}
-                      esModificado={camposModificados["apellidos"]}
+
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+                  <div>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "3px" }}>
+                      <label style={{ fontSize: "0.75rem", fontWeight: 600, color: "#334155" }}>
+                        Nombres *
+                      </label>
+                      <IndicadorOrigenCampo esAria={camposAria["nombres"]} esModificado={camposModificados["nombres"]} />
+                    </div>
+                    <input
+                      type="text"
+                      value={nombres}
+                      onChange={(e) => {
+                        setNombres(e.target.value);
+                        marcarCampoModificado("nombres");
+                      }}
+                      placeholder="KLEBER MANUEL"
+                      style={{
+                        width: "100%",
+                        padding: "7px 10px",
+                        borderRadius: "6px",
+                        border: camposAria["nombres"] && !camposModificados["nombres"]
+                          ? "1.5px solid #10B981"
+                          : "1px solid #CBD5E1",
+                        background: camposAria["nombres"] && !camposModificados["nombres"]
+                          ? "#F0FDF4"
+                          : "#FFFFFF",
+                        fontSize: "0.82rem"
+                      }}
                     />
                   </div>
-                  <input
-                    type="text"
-                    value={apellidos}
-                    onChange={(e) => {
-                      setApellidos(e.target.value);
-                      marcarCampoModificado("apellidos");
-                    }}
-                    placeholder="TOAPANTA CHANCUSI"
-                    style={{
-                      width: "100%",
-                      padding: "8px 10px",
-                      borderRadius: "8px",
-                      border: camposAria["apellidos"] && !camposModificados["apellidos"]
-                        ? "1.5px solid #10B981"
-                        : "1px solid #CBD5E1",
-                      background: camposAria["apellidos"] && !camposModificados["apellidos"]
-                        ? "#F0FDF4"
-                        : "#FFFFFF",
-                      fontSize: "0.85rem"
-                    }}
-                  />
+
+                  <div>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "3px" }}>
+                      <label style={{ fontSize: "0.75rem", fontWeight: 600, color: "#334155" }}>
+                        Apellidos *
+                      </label>
+                      <IndicadorOrigenCampo esAria={camposAria["apellidos"]} esModificado={camposModificados["apellidos"]} />
+                    </div>
+                    <input
+                      type="text"
+                      value={apellidos}
+                      onChange={(e) => {
+                        setApellidos(e.target.value);
+                        marcarCampoModificado("apellidos");
+                      }}
+                      placeholder="TOAPANTA CHANCUSI"
+                      style={{
+                        width: "100%",
+                        padding: "7px 10px",
+                        borderRadius: "6px",
+                        border: camposAria["apellidos"] && !camposModificados["apellidos"]
+                          ? "1.5px solid #10B981"
+                          : "1px solid #CBD5E1",
+                        background: camposAria["apellidos"] && !camposModificados["apellidos"]
+                          ? "#F0FDF4"
+                          : "#FFFFFF",
+                        fontSize: "0.82rem"
+                      }}
+                    />
+                  </div>
                 </div>
               </div>
 
-              {/* Datos de Filiación, Cédula y Registro Civil (Requisitos Básicos y Opcionales) */}
-              <div style={{ border: "1px solid #E2E8F0", borderRadius: "10px", padding: "14px", background: "#F8FAFC", display: "flex", flexDirection: "column", gap: "10px" }}>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid #E2E8F0", paddingBottom: "6px" }}>
-                  <span style={{ fontSize: "0.8rem", fontWeight: 700, color: "#1E293B", display: "flex", alignItems: "center", gap: "6px" }}>
-                    <Scale size={14} color="#0284C7" /> Datos de Identidad, Cédula & Registro Civil
-                  </span>
-                  <span style={{ fontSize: "0.7rem", color: "#64748B" }}>
-                    Requisitos para validez procesal y escrituras notariales
-                  </span>
-                </div>
+              {/* Bloque 2: Datos de Filiación, Cédula y Registro Civil (Editable) */}
+              <div style={{ border: "1px solid #E2E8F0", borderRadius: "10px", padding: "12px 14px", background: "#F8FAFC", display: "flex", flexDirection: "column", gap: "10px" }}>
+                <span style={{ fontSize: "0.8rem", fontWeight: 700, color: "#1E293B", display: "flex", alignItems: "center", gap: "6px" }}>
+                  <Scale size={14} color="#0284C7" /> Datos de Identidad, Cédula & Registro Civil
+                </span>
 
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "10px" }}>
-                  {/* Nacionalidad (Obligatorio) */}
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: "10px" }}>
+                  {/* Nacionalidad */}
                   <div>
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "4px" }}>
-                      <label style={{ fontSize: "0.75rem", fontWeight: 600, color: "#334155" }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "3px" }}>
+                      <label style={{ fontSize: "0.73rem", fontWeight: 600, color: "#334155" }}>
                         Nacionalidad *
                       </label>
-                      <IndicadorOrigenCampo
-                        esAria={camposAria["nacionalidad"]}
-                        esModificado={camposModificados["nacionalidad"]}
-                      />
+                      <IndicadorOrigenCampo esAria={camposAria["nacionalidad"]} esModificado={camposModificados["nacionalidad"]} />
                     </div>
                     <input
                       type="text"
@@ -1360,29 +1306,22 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, alGuardarExitoso }
                       placeholder="ECUATORIANA"
                       style={{
                         width: "100%",
-                        padding: "7px 10px",
+                        padding: "6px 8px",
                         borderRadius: "6px",
-                        border: camposAria["nacionalidad"] && !camposModificados["nacionalidad"]
-                          ? "1.5px solid #10B981"
-                          : "1px solid #CBD5E1",
-                        background: camposAria["nacionalidad"] && !camposModificados["nacionalidad"]
-                          ? "#F0FDF4"
-                          : "#FFFFFF",
-                        fontSize: "0.82rem"
+                        border: camposAria["nacionalidad"] && !camposModificados["nacionalidad"] ? "1.5px solid #10B981" : "1px solid #CBD5E1",
+                        background: camposAria["nacionalidad"] && !camposModificados["nacionalidad"] ? "#F0FDF4" : "#FFFFFF",
+                        fontSize: "0.8rem"
                       }}
                     />
                   </div>
 
-                  {/* Fecha de Nacimiento (Obligatorio) */}
+                  {/* Fecha de Nacimiento */}
                   <div>
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "4px" }}>
-                      <label style={{ fontSize: "0.75rem", fontWeight: 600, color: "#334155" }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "3px" }}>
+                      <label style={{ fontSize: "0.73rem", fontWeight: 600, color: "#334155" }}>
                         Fecha de Nacimiento *
                       </label>
-                      <IndicadorOrigenCampo
-                        esAria={camposAria["fechaNacimiento"]}
-                        esModificado={camposModificados["fechaNacimiento"]}
-                      />
+                      <IndicadorOrigenCampo esAria={camposAria["fechaNacimiento"]} esModificado={camposModificados["fechaNacimiento"]} />
                     </div>
                     <input
                       type="date"
@@ -1393,105 +1332,51 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, alGuardarExitoso }
                       }}
                       style={{
                         width: "100%",
-                        padding: "7px 10px",
+                        padding: "6px 8px",
                         borderRadius: "6px",
-                        border: camposAria["fechaNacimiento"] && !camposModificados["fechaNacimiento"]
-                          ? "1.5px solid #10B981"
-                          : "1px solid #CBD5E1",
-                        background: camposAria["fechaNacimiento"] && !camposModificados["fechaNacimiento"]
-                          ? "#F0FDF4"
-                          : "#FFFFFF",
-                        fontSize: "0.82rem"
+                        border: camposAria["fechaNacimiento"] && !camposModificados["fechaNacimiento"] ? "1.5px solid #10B981" : "1px solid #CBD5E1",
+                        background: camposAria["fechaNacimiento"] && !camposModificados["fechaNacimiento"] ? "#F0FDF4" : "#FFFFFF",
+                        fontSize: "0.8rem"
                       }}
                     />
                   </div>
 
-                  {/* Estado Civil (Obligatorio) */}
+                  {/* Lugar de Nacimiento */}
                   <div>
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "4px" }}>
-                      <label style={{ fontSize: "0.75rem", fontWeight: 600, color: "#334155" }}>
-                        Estado Civil *
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "3px" }}>
+                      <label style={{ fontSize: "0.73rem", fontWeight: 600, color: "#334155" }}>
+                        Lugar de Nacimiento
                       </label>
-                      <IndicadorOrigenCampo
-                        esAria={camposAria["estadoCivil"]}
-                        esModificado={camposModificados["estadoCivil"]}
-                      />
+                      <IndicadorOrigenCampo esAria={camposAria["lugarNacimiento"]} esModificado={camposModificados["lugarNacimiento"]} />
                     </div>
-                    <select
-                      value={estadoCivil}
+                    <input
+                      type="text"
+                      value={lugarNacimiento}
                       onChange={(e) => {
-                        setEstadoCivil(e.target.value);
-                        marcarCampoModificado("estadoCivil");
+                        setLugarNacimiento(e.target.value);
+                        marcarCampoModificado("lugarNacimiento");
                       }}
+                      placeholder="PICHINCHA QUITO"
                       style={{
                         width: "100%",
-                        padding: "7px 10px",
+                        padding: "6px 8px",
                         borderRadius: "6px",
-                        border: camposAria["estadoCivil"] && !camposModificados["estadoCivil"]
-                          ? "1.5px solid #10B981"
-                          : "1px solid #CBD5E1",
-                        background: camposAria["estadoCivil"] && !camposModificados["estadoCivil"]
-                          ? "#F0FDF4"
-                          : "#FFFFFF",
-                        fontSize: "0.82rem"
+                        border: camposAria["lugarNacimiento"] && !camposModificados["lugarNacimiento"] ? "1.5px solid #10B981" : "1px solid #CBD5E1",
+                        background: camposAria["lugarNacimiento"] && !camposModificados["lugarNacimiento"] ? "#F0FDF4" : "#FFFFFF",
+                        fontSize: "0.8rem"
                       }}
-                    >
-                      <option value="SOLTERO">SOLTERO(A)</option>
-                      <option value="CASADO">CASADO(A)</option>
-                      <option value="UNION DE HECHO">UNIÓN DE HECHO</option>
-                      <option value="DIVORCIADO">DIVORCIADO(A)</option>
-                      <option value="VIUDO">VIUDO(A)</option>
-                    </select>
+                    />
                   </div>
                 </div>
 
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "10px" }}>
-                  {/* Cónyuge / Conviviente (Condicional / Recomendado si Casado o Unión de Hecho) */}
-                  {(estadoCivil === "CASADO" || estadoCivil === "UNION DE HECHO" || conyuge) && (
-                    <div>
-                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "4px" }}>
-                        <label style={{ fontSize: "0.75rem", fontWeight: 600, color: "#334155" }}>
-                          Cónyuge / Conviviente {estadoCivil === "CASADO" ? "(Sociedad Conyugal) *" : "(Opcional)"}
-                        </label>
-                        <IndicadorOrigenCampo
-                          esAria={camposAria["conyuge"]}
-                          esModificado={camposModificados["conyuge"]}
-                        />
-                      </div>
-                      <input
-                        type="text"
-                        value={conyuge}
-                        onChange={(e) => {
-                          setConyuge(e.target.value);
-                          marcarCampoModificado("conyuge");
-                        }}
-                        placeholder="NOMBRES Y APELLIDOS DEL CÓNYUGE"
-                        style={{
-                          width: "100%",
-                          padding: "7px 10px",
-                          borderRadius: "6px",
-                          border: camposAria["conyuge"] && !camposModificados["conyuge"]
-                            ? "1.5px solid #10B981"
-                            : "1px solid #CBD5E1",
-                          background: camposAria["conyuge"] && !camposModificados["conyuge"]
-                            ? "#F0FDF4"
-                            : "#FFFFFF",
-                          fontSize: "0.82rem"
-                        }}
-                      />
-                    </div>
-                  )}
-
-                  {/* Sexo / Género (Opcional) */}
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: "10px" }}>
+                  {/* Sexo / Género */}
                   <div>
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "4px" }}>
-                      <label style={{ fontSize: "0.75rem", fontWeight: 600, color: "#334155" }}>
-                        Sexo / Género (Opcional)
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "3px" }}>
+                      <label style={{ fontSize: "0.73rem", fontWeight: 600, color: "#334155" }}>
+                        Sexo / Género
                       </label>
-                      <IndicadorOrigenCampo
-                        esAria={camposAria["sexo"]}
-                        esModificado={camposModificados["sexo"]}
-                      />
+                      <IndicadorOrigenCampo esAria={camposAria["sexo"]} esModificado={camposModificados["sexo"]} />
                     </div>
                     <select
                       value={sexo}
@@ -1501,15 +1386,11 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, alGuardarExitoso }
                       }}
                       style={{
                         width: "100%",
-                        padding: "7px 10px",
+                        padding: "6px 8px",
                         borderRadius: "6px",
-                        border: camposAria["sexo"] && !camposModificados["sexo"]
-                          ? "1.5px solid #10B981"
-                          : "1px solid #CBD5E1",
-                        background: camposAria["sexo"] && !camposModificados["sexo"]
-                          ? "#F0FDF4"
-                          : "#FFFFFF",
-                        fontSize: "0.82rem"
+                        border: camposAria["sexo"] && !camposModificados["sexo"] ? "1.5px solid #10B981" : "1px solid #CBD5E1",
+                        background: camposAria["sexo"] && !camposModificados["sexo"] ? "#F0FDF4" : "#FFFFFF",
+                        fontSize: "0.8rem"
                       }}
                     >
                       <option value="HOMBRE">HOMBRE</option>
@@ -1518,50 +1399,71 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, alGuardarExitoso }
                     </select>
                   </div>
 
-                  {/* Lugar de Nacimiento (Opcional) */}
+                  {/* Estado Civil */}
                   <div>
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "4px" }}>
-                      <label style={{ fontSize: "0.75rem", fontWeight: 600, color: "#334155" }}>
-                        Lugar de Nacimiento (Opcional)
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "3px" }}>
+                      <label style={{ fontSize: "0.73rem", fontWeight: 600, color: "#334155" }}>
+                        Estado Civil *
                       </label>
-                      <IndicadorOrigenCampo
-                        esAria={camposAria["lugarNacimiento"]}
-                        esModificado={camposModificados["lugarNacimiento"]}
-                      />
+                      <IndicadorOrigenCampo esAria={camposAria["estadoCivil"]} esModificado={camposModificados["estadoCivil"]} />
+                    </div>
+                    <select
+                      value={estadoCivil}
+                      onChange={(e) => {
+                        setEstadoCivil(e.target.value);
+                        marcarCampoModificado("estadoCivil");
+                      }}
+                      style={{
+                        width: "100%",
+                        padding: "6px 8px",
+                        borderRadius: "6px",
+                        border: camposAria["estadoCivil"] && !camposModificados["estadoCivil"] ? "1.5px solid #10B981" : "1px solid #CBD5E1",
+                        background: camposAria["estadoCivil"] && !camposModificados["estadoCivil"] ? "#F0FDF4" : "#FFFFFF",
+                        fontSize: "0.8rem"
+                      }}
+                    >
+                      <option value="SOLTERO">SOLTERO(A)</option>
+                      <option value="CASADO">CASADO(A)</option>
+                      <option value="UNION DE HECHO">UNIÓN DE HECHO</option>
+                      <option value="DIVORCIADO">DIVORCIADO(A)</option>
+                      <option value="VIUDO">VIUDO(A)</option>
+                    </select>
+                  </div>
+
+                  {/* Cónyuge / Conviviente */}
+                  <div>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "3px" }}>
+                      <label style={{ fontSize: "0.73rem", fontWeight: 600, color: "#334155" }}>
+                        Cónyuge / Conviviente
+                      </label>
+                      <IndicadorOrigenCampo esAria={camposAria["conyuge"]} esModificado={camposModificados["conyuge"]} />
                     </div>
                     <input
                       type="text"
-                      value={lugarNacimiento}
+                      value={conyuge}
                       onChange={(e) => {
-                        setLugarNacimiento(e.target.value);
-                        marcarCampoModificado("lugarNacimiento");
+                        setConyuge(e.target.value);
+                        marcarCampoModificado("conyuge");
                       }}
-                      placeholder="PICHINCHA / QUITO"
+                      placeholder="GUERRERO TORRES NANCY GIOCONDA"
                       style={{
                         width: "100%",
-                        padding: "7px 10px",
+                        padding: "6px 8px",
                         borderRadius: "6px",
-                        border: camposAria["lugarNacimiento"] && !camposModificados["lugarNacimiento"]
-                          ? "1.5px solid #10B981"
-                          : "1px solid #CBD5E1",
-                        background: camposAria["lugarNacimiento"] && !camposModificados["lugarNacimiento"]
-                          ? "#F0FDF4"
-                          : "#FFFFFF",
-                        fontSize: "0.82rem"
+                        border: camposAria["conyuge"] && !camposModificados["conyuge"] ? "1.5px solid #10B981" : "1px solid #CBD5E1",
+                        background: camposAria["conyuge"] && !camposModificados["conyuge"] ? "#F0FDF4" : "#FFFFFF",
+                        fontSize: "0.8rem"
                       }}
                     />
                   </div>
 
-                  {/* Fecha de Vencimiento Documento (Opcional) */}
+                  {/* Fecha de Expiración Cédula */}
                   <div>
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "4px" }}>
-                      <label style={{ fontSize: "0.75rem", fontWeight: 600, color: "#334155" }}>
-                        Vencimiento Cédula (Opcional)
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "3px" }}>
+                      <label style={{ fontSize: "0.73rem", fontWeight: 600, color: "#334155" }}>
+                        Vencimiento Cédula
                       </label>
-                      <IndicadorOrigenCampo
-                        esAria={camposAria["fechaExpiracionDocumento"]}
-                        esModificado={camposModificados["fechaExpiracionDocumento"]}
-                      />
+                      <IndicadorOrigenCampo esAria={camposAria["fechaExpiracionDocumento"]} esModificado={camposModificados["fechaExpiracionDocumento"]} />
                     </div>
                     <input
                       type="date"
@@ -1572,15 +1474,11 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, alGuardarExitoso }
                       }}
                       style={{
                         width: "100%",
-                        padding: "7px 10px",
+                        padding: "6px 8px",
                         borderRadius: "6px",
-                        border: camposAria["fechaExpiracionDocumento"] && !camposModificados["fechaExpiracionDocumento"]
-                          ? "1.5px solid #10B981"
-                          : "1px solid #CBD5E1",
-                        background: camposAria["fechaExpiracionDocumento"] && !camposModificados["fechaExpiracionDocumento"]
-                          ? "#F0FDF4"
-                          : "#FFFFFF",
-                        fontSize: "0.82rem"
+                        border: camposAria["fechaExpiracionDocumento"] && !camposModificados["fechaExpiracionDocumento"] ? "1.5px solid #10B981" : "1px solid #CBD5E1",
+                        background: camposAria["fechaExpiracionDocumento"] && !camposModificados["fechaExpiracionDocumento"] ? "#F0FDF4" : "#FFFFFF",
+                        fontSize: "0.8rem"
                       }}
                     />
                   </div>
