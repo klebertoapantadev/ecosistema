@@ -1417,6 +1417,25 @@ const storeCustomCategorias: Map<string, CategoriaCatalogo[]> = new Map();
 const storeCustomProductos: Map<string, ProductoCatalogo[]> = new Map();
 
 // Helper para generar slug simple
+function normalizarIdentificadorNegocio(negocio?: string): { principal: string; variantes: string[] } {
+  const norm = (negocio || "tranqi").toLowerCase().trim();
+  const upper = (negocio || "TRANQ").toUpperCase().trim();
+  
+  if (norm.startsWith("tranq") || norm.startsWith("legal")) {
+    return { principal: "tranqi", variantes: ["tranqi", "TRANQ", "TRANQI", "legal", "LEGAL", "tranqui"] };
+  }
+  if (norm.startsWith("tinkay") || norm.startsWith("tnk")) {
+    return { principal: "tinkay", variantes: ["tinkay", "TNK", "TINKAY"] };
+  }
+  if (norm.startsWith("fastfix") || norm.startsWith("ffh")) {
+    return { principal: "fastfix", variantes: ["fastfix", "FFH", "FASTFIX"] };
+  }
+  if (norm.startsWith("margaritas") || norm.startsWith("mrg")) {
+    return { principal: "margaritas", variantes: ["margaritas", "MRG", "MARGARITAS"] };
+  }
+  return { principal: norm, variantes: Array.from(new Set([norm, upper, negocio || ""])) };
+}
+
 function generarSlug(texto: string): string {
   return texto
     .toLowerCase()
@@ -1434,6 +1453,7 @@ function generarSlug(texto: string): string {
  * Obtiene todas las categorías disponibles para el negocio
  */
 export async function obtenerCategoriasAction(negocio = "tranqi"): Promise<CategoriaCatalogo[]> {
+  const { principal, variantes } = normalizarIdentificadorNegocio(negocio);
   let admin: any = null;
   let supabase: any = null;
   try {
@@ -1449,7 +1469,7 @@ export async function obtenerCategoriasAction(negocio = "tranqi"): Promise<Categ
     try {
       // 0. Intentar RPC
       const { data: catRpc, error: errRpc } = await clienteActivo.rpc("com_fn_obtener_categorias_catalogo", {
-        p_negocio: negocio,
+        p_negocio: principal,
       });
       if (!errRpc && Array.isArray(catRpc) && catRpc.length > 0) {
         return catRpc as CategoriaCatalogo[];
@@ -1463,7 +1483,7 @@ export async function obtenerCategoriasAction(negocio = "tranqi"): Promise<Categ
         .schema("comun_comercio")
         .from("com_categoria")
         .select("*")
-        .eq("ctg_negocio", negocio)
+        .in("ctg_negocio", variantes)
         .eq("ctg_activo", true)
         .order("ctg_orden", { ascending: true });
 
@@ -1471,7 +1491,7 @@ export async function obtenerCategoriasAction(negocio = "tranqi"): Promise<Categ
         const { data: catPub } = await clienteActivo
           .from("com_categoria")
           .select("*")
-          .eq("ctg_negocio", negocio)
+          .in("ctg_negocio", variantes)
           .eq("ctg_activo", true)
           .order("ctg_orden", { ascending: true });
         catCom = catPub;
@@ -1485,9 +1505,12 @@ export async function obtenerCategoriasAction(negocio = "tranqi"): Promise<Categ
     }
   }
 
-  const semillasPorNegocio = negocio === "tinkay" ? CATEGORIAS_SEMILLA_TINKAY : (negocio === "tranqi" ? CATEGORIAS_SEMILLA_TRANQI : []);
+  const semillasPorNegocio = principal === "tinkay" || principal === "margaritas"
+    ? CATEGORIAS_SEMILLA_TINKAY
+    : CATEGORIAS_SEMILLA_TRANQI;
+
   const base = categoriasDb.length > 0 ? categoriasDb : semillasPorNegocio;
-  const customs = storeCustomCategorias.get(negocio) || [];
+  const customs = storeCustomCategorias.get(principal) || storeCustomCategorias.get(negocio) || [];
 
   // Mezclar evitando duplicados por ctg_id o ctg_slug
   const resultado: CategoriaCatalogo[] = [...base];
@@ -1508,6 +1531,7 @@ export async function obtenerCatalogoProductosAction(
   negocio = "tranqi",
   canal?: string
 ): Promise<ProductoCatalogo[]> {
+  const { principal, variantes } = normalizarIdentificadorNegocio(negocio);
   let admin: any = null;
   let supabase: any = null;
   try {
@@ -1529,7 +1553,7 @@ export async function obtenerCatalogoProductosAction(
       const { data: prodsRpc, error: errRpc } = await clienteActivo.rpc(
         "com_fn_obtener_catalogo_productos",
         {
-          p_negocio: negocio,
+          p_negocio: principal,
           p_canal: canal && canal !== "TODOS" && canal !== "todos" ? canal.toUpperCase().trim() : null,
         }
       );
@@ -1537,7 +1561,7 @@ export async function obtenerCatalogoProductosAction(
       if (!errRpc && Array.isArray(prodsRpc) && prodsRpc.length > 0) {
         const prodsList: ProductoCatalogo[] = prodsRpc.map((p: any) => ({
           pro_id: p.pro_id || p.id,
-          pro_negocio: p.pro_negocio || negocio,
+          pro_negocio: p.pro_negocio || principal,
           pro_nombre: p.pro_nombre || p.nombre,
           pro_slug: p.pro_slug || p.slug,
           pro_descripcion: p.pro_descripcion || p.descripcion,
@@ -1575,7 +1599,7 @@ export async function obtenerCatalogoProductosAction(
           }),
         }));
 
-        const customs = storeCustomProductos.get(negocio) || [];
+        const customs = storeCustomProductos.get(principal) || storeCustomProductos.get(negocio) || [];
         customs.forEach((p) => {
           const idx = prodsList.findIndex((item) => item.pro_id === p.pro_id || item.pro_slug === p.pro_slug);
           if (idx >= 0) {
@@ -1597,14 +1621,14 @@ export async function obtenerCatalogoProductosAction(
         .schema("comun_comercio")
         .from("com_categoria")
         .select("ctg_id, ctg_nombre, ctg_slug, ctg_negocio, ctg_activo")
-        .eq("ctg_negocio", negocio)
+        .in("ctg_negocio", variantes)
         .eq("ctg_activo", true);
       
       if (errC || !cData || cData.length === 0) {
         const { data: cDataPub } = await clienteActivo
           .from("com_categoria")
           .select("ctg_id, ctg_nombre, ctg_slug, ctg_negocio, ctg_activo")
-          .eq("ctg_negocio", negocio)
+          .in("ctg_negocio", variantes)
           .eq("ctg_activo", true);
         cData = cDataPub;
       }
@@ -1615,7 +1639,7 @@ export async function obtenerCatalogoProductosAction(
         .schema("comun_comercio")
         .from("com_producto")
         .select("*")
-        .eq("pro_negocio", negocio)
+        .in("pro_negocio", variantes)
         .eq("pro_activo", true)
         .order("pro_destacado", { ascending: false });
 
@@ -1623,7 +1647,7 @@ export async function obtenerCatalogoProductosAction(
         const { data: pPub } = await clienteActivo
           .from("com_producto")
           .select("*")
-          .eq("pro_negocio", negocio)
+          .in("pro_negocio", variantes)
           .eq("pro_activo", true)
           .order("pro_destacado", { ascending: false });
         pCom = pPub;
@@ -1635,7 +1659,7 @@ export async function obtenerCatalogoProductosAction(
           .schema("comun_comercio")
           .from("com_variante")
           .select("*")
-          .eq("var_negocio", negocio)
+          .in("var_negocio", variantes)
           .eq("var_activo", true)
           .order("var_precio", { ascending: true });
 
@@ -1643,7 +1667,7 @@ export async function obtenerCatalogoProductosAction(
           const { data: vPub } = await clienteActivo
             .from("com_variante")
             .select("*")
-            .eq("var_negocio", negocio)
+            .in("var_negocio", variantes)
             .eq("var_activo", true)
             .order("var_precio", { ascending: true });
           vCom = vPub;
@@ -1717,11 +1741,13 @@ export async function obtenerCatalogoProductosAction(
     }));
   } else {
     // Si no hay productos en la BD, cargamos las semillas preconfiguradas
-    listaFinal = negocio === "tinkay" ? [...PRODUCTOS_SEMILLA_TINKAY] : (negocio === "tranqi" ? [...PRODUCTOS_SEMILLA_TRANQI] : []);
+    listaFinal = principal === "tinkay" || principal === "margaritas"
+      ? [...PRODUCTOS_SEMILLA_TINKAY]
+      : [...PRODUCTOS_SEMILLA_TRANQI];
   }
 
   // Incorporar productos creados o editados dinámicamente en memoria
-  const customs = storeCustomProductos.get(negocio) || [];
+  const customs = storeCustomProductos.get(principal) || storeCustomProductos.get(negocio) || [];
   customs.forEach((p) => {
     const idx = listaFinal.findIndex((item) => item.pro_id === p.pro_id || item.pro_slug === p.pro_slug);
     if (idx >= 0) {
@@ -1774,7 +1800,8 @@ export async function crearCategoriaAction(datos: {
   negocio?: string;
 }): Promise<{ ok: boolean; categoria?: CategoriaCatalogo; error?: string }> {
   try {
-    const negocio = datos.negocio || "tranqi";
+    const { principal } = normalizarIdentificadorNegocio(datos.negocio);
+    const negocio = principal;
     const nombre = datos.nombre.trim();
     if (!nombre) {
       return { ok: false, error: "El nombre de la categoría es obligatorio." };
@@ -2032,7 +2059,8 @@ export async function crearProductoAction(datos: {
   negocio?: string;
 }): Promise<{ ok: boolean; producto?: ProductoCatalogo; error?: string }> {
   try {
-    const negocio = datos.negocio || "tranqi";
+    const { principal } = normalizarIdentificadorNegocio(datos.negocio);
+    const negocio = principal;
     const nombre = datos.nombre.trim();
     if (!nombre) {
       return { ok: false, error: "El nombre del producto u honorario es obligatorio." };
@@ -2256,7 +2284,8 @@ export async function editarProductoAction(datos: {
   negocio?: string;
 }): Promise<{ ok: boolean; producto?: ProductoCatalogo; error?: string }> {
   try {
-    const negocio = datos.negocio || "tranqi";
+    const { principal } = normalizarIdentificadorNegocio(datos.negocio);
+    const negocio = principal;
     const nombre = datos.nombre.trim();
     if (!nombre) {
       return { ok: false, error: "El nombre del producto es obligatorio." };
@@ -2611,6 +2640,8 @@ export async function eliminarProductoAction(
   negocio = "tranqi"
 ): Promise<{ ok: boolean; error?: string }> {
   try {
+    const { principal } = normalizarIdentificadorNegocio(negocio);
+    const negocioNorm = principal;
     const admin: any = crearClienteAdmin();
     const supabase: any = await crearClienteServidor();
     const clienteActivo = admin || supabase;
@@ -2635,11 +2666,11 @@ export async function eliminarProductoAction(
     }
 
     // Almacén en memoria: marcar como inactivo (tombstone)
-    const actuales = storeCustomProductos.get(negocio) || [];
+    const actuales = storeCustomProductos.get(negocioNorm) || [];
     const filtrados = actuales.filter((p) => p.pro_id !== pro_id);
     const tombstone: any = { pro_id, pro_activo: false };
     filtrados.push(tombstone);
-    storeCustomProductos.set(negocio, filtrados);
+    storeCustomProductos.set(negocioNorm, filtrados);
 
     revalidatePath("/panel/catalogo-productos");
     return { ok: true };
@@ -2655,12 +2686,19 @@ export async function restaurarCatalogoEjemploAction(
   negocio = "tranqi"
 ): Promise<{ ok: boolean; mensaje?: string; error?: string; cantidad?: number }> {
   try {
+    const { principal } = normalizarIdentificadorNegocio(negocio);
+    const negocioNorm = principal;
     const admin: any = crearClienteAdmin();
     const supabase: any = await crearClienteServidor();
     const clienteActivo = admin || supabase;
 
-    const categorias = negocio === "tinkay" ? CATEGORIAS_SEMILLA_TINKAY : (negocio === "tranqi" ? CATEGORIAS_SEMILLA_TRANQI : []);
-    const productos = negocio === "tinkay" ? PRODUCTOS_SEMILLA_TINKAY : (negocio === "tranqi" ? PRODUCTOS_SEMILLA_TRANQI : []);
+    const categorias = negocioNorm === "tinkay" || negocioNorm === "margaritas"
+      ? CATEGORIAS_SEMILLA_TINKAY
+      : CATEGORIAS_SEMILLA_TRANQI;
+
+    const productos = negocioNorm === "tinkay" || negocioNorm === "margaritas"
+      ? PRODUCTOS_SEMILLA_TINKAY
+      : PRODUCTOS_SEMILLA_TRANQI;
 
     if (clienteActivo) {
       // 1. Insertar o actualizar categorías
@@ -2671,7 +2709,7 @@ export async function restaurarCatalogoEjemploAction(
             .from("com_categoria")
             .upsert({
               ctg_id: cat.ctg_id,
-              ctg_negocio: negocio,
+              ctg_negocio: negocioNorm,
               ctg_nombre: cat.ctg_nombre,
               ctg_slug: cat.ctg_slug,
               ctg_descripcion: cat.ctg_descripcion,
@@ -2692,7 +2730,7 @@ export async function restaurarCatalogoEjemploAction(
             .from("com_producto")
             .upsert({
               pro_id: prod.pro_id,
-              pro_negocio: negocio,
+              pro_negocio: negocioNorm,
               pro_nombre: prod.pro_nombre,
               pro_slug: prod.pro_slug,
               pro_descripcion: prod.pro_descripcion,
@@ -2709,7 +2747,7 @@ export async function restaurarCatalogoEjemploAction(
               .from("com_variante")
               .upsert({
                 var_id: v.var_id,
-                var_negocio: negocio,
+                var_negocio: negocioNorm,
                 var_producto_id: prod.pro_id,
                 var_sku: v.var_sku,
                 var_nombre: v.var_nombre,
@@ -2730,15 +2768,15 @@ export async function restaurarCatalogoEjemploAction(
     }
 
     // Limpiar overrides en memoria
-    storeCustomCategorias.delete(negocio);
-    storeCustomProductos.delete(negocio);
+    storeCustomCategorias.delete(negocioNorm);
+    storeCustomProductos.delete(negocioNorm);
 
     revalidatePath("/panel/catalogo-productos");
     revalidatePath("/panel/herramientas");
 
     return {
       ok: true,
-      mensaje: `Catálogo de ${negocio.toUpperCase()} restaurado con éxito (${productos.length} productos y ${categorias.length} categorías).`,
+      mensaje: `Catálogo de ${negocioNorm.toUpperCase()} restaurado con éxito (${productos.length} productos y ${categorias.length} categorías).`,
       cantidad: productos.length,
     };
   } catch (err: any) {
@@ -2757,6 +2795,7 @@ export async function obtenerConfiguracionPasarelaAction(
   negocio = "tranqi",
   pasarela = "PAYPHONE"
 ): Promise<ConfiguracionPasarela> {
+  const { principal, variantes } = normalizarIdentificadorNegocio(negocio);
   const supabase: any = await crearClienteServidor();
 
   let data: any = null;
@@ -2765,7 +2804,7 @@ export async function obtenerConfiguracionPasarelaAction(
       .schema("comun_comercio")
       .from("com_pasarela_configuracion")
       .select("*")
-      .eq("psc_negocio", negocio)
+      .in("psc_negocio", variantes)
       .eq("psc_pasarela", pasarela)
       .maybeSingle();
     data = dCom;
@@ -2774,7 +2813,7 @@ export async function obtenerConfiguracionPasarelaAction(
       const { data: dPub } = await supabase
         .from("com_pasarela_configuracion")
         .select("*")
-        .eq("psc_negocio", negocio)
+        .in("psc_negocio", variantes)
         .eq("psc_pasarela", pasarela)
         .maybeSingle();
       data = dPub;
@@ -2785,7 +2824,7 @@ export async function obtenerConfiguracionPasarelaAction(
 
   if (!data) {
     return {
-      psc_negocio: negocio,
+      psc_negocio: principal,
       psc_pasarela: pasarela,
       psc_nombre_visible: "Payphone (Tarjetas y Saldo)",
       psc_ambiente: "PRUEBAS",
@@ -2801,7 +2840,7 @@ export async function obtenerConfiguracionPasarelaAction(
 
   return {
     psc_id: data.psc_id,
-    psc_negocio: data.psc_negocio,
+    psc_negocio: data.psc_negocio || principal,
     psc_pasarela: data.psc_pasarela,
     psc_nombre_visible: data.psc_nombre_visible,
     psc_ambiente: data.psc_ambiente || "PRUEBAS",
@@ -2825,7 +2864,8 @@ export async function guardarConfiguracionPasarelaAction(datos: {
   modoSimulado: boolean;
   activo: boolean;
 }): Promise<{ ok: boolean; error?: string }> {
-  const negocio = datos.negocio || "tranqi";
+  const { principal } = normalizarIdentificadorNegocio(datos.negocio);
+  const negocio = principal;
   const admin: any = crearClienteAdmin();
   const supabase: any = await crearClienteServidor();
   const clienteActivo = admin || supabase;
@@ -3744,6 +3784,7 @@ const storeDisponibilidad = new Map<string, ItemDisponibilidadOperativa[]>();
 export async function obtenerDisponibilidadOperativaAction(
   negocio = "tranqi"
 ): Promise<ItemDisponibilidadOperativa[]> {
+  const { principal, variantes } = normalizarIdentificadorNegocio(negocio);
   const admin: any = crearClienteAdmin();
   const supabase: any = await crearClienteServidor();
   const clienteActivo = admin || supabase;
@@ -3755,7 +3796,7 @@ export async function obtenerDisponibilidadOperativaAction(
         .schema("comun_comercio")
         .from("com_inventario")
         .select("*, com_insumo(*)")
-        .eq("inv_negocio", negocio);
+        .in("inv_negocio", variantes);
 
       if (data && data.length > 0) {
         dbItems = data.map((d: any) => ({
@@ -3783,16 +3824,16 @@ export async function obtenerDisponibilidadOperativaAction(
   }
 
   const semillas =
-    negocio === "tinkay"
+    principal === "tinkay"
       ? DISPONIBILIDAD_SEMILLA_TINKAY
-      : negocio === "tranqi"
+      : principal === "tranqi"
       ? DISPONIBILIDAD_SEMILLA_TRANQI
-      : negocio === "fastfix"
+      : principal === "fastfix"
       ? DISPONIBILIDAD_SEMILLA_FASTFIX
       : DISPONIBILIDAD_SEMILLA_TINKAY;
 
   const base = dbItems.length > 0 ? dbItems : semillas;
-  const enMemoria = storeDisponibilidad.get(negocio);
+  const enMemoria = storeDisponibilidad.get(principal) || storeDisponibilidad.get(negocio);
 
   return enMemoria || base;
 }
@@ -3805,7 +3846,8 @@ export async function actualizarDisponibilidadOperativaAction(
   itemsActualizados: ItemDisponibilidadOperativa[]
 ): Promise<{ ok: boolean; items?: ItemDisponibilidadOperativa[]; error?: string }> {
   try {
-    storeDisponibilidad.set(negocio, itemsActualizados);
+    const { principal } = normalizarIdentificadorNegocio(negocio);
+    storeDisponibilidad.set(principal, itemsActualizados);
 
     const admin: any = crearClienteAdmin();
     const supabase: any = await crearClienteServidor();
@@ -3820,7 +3862,7 @@ export async function actualizarDisponibilidadOperativaAction(
             .from("com_inventario")
             .upsert(
               {
-                inv_negocio: negocio,
+                inv_negocio: principal,
                 inv_local_codigo: "MATRIZ",
                 inv_stock_actual: it.cantidad_disponible,
                 inv_actualizado_en: new Date().toISOString(),
