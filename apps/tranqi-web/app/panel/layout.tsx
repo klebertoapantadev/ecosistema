@@ -26,7 +26,45 @@ function modoDePerfiles(perfiles: string[]): ModoRol {
   if (perfiles.includes("ADMINISTRADOR")) return "admin";
   if (perfiles.includes("ABOGADO")) return "abogado";
   if (perfiles.includes("OPERADOR")) return "operador";
+  if (perfiles.includes("TECNICO")) return "tecnico";
+  if (perfiles.includes("AUXILIAR")) return "auxiliar";
   return (perfiles[0]?.toLowerCase() ?? "cliente") as ModoRol;
+}
+
+function resolverModoRolSeguro(
+  perfiles: string[],
+  esSuperAdmin: boolean,
+  modoCookie?: string | null
+): ModoRol {
+  const modoNormalizado = modoValido(modoCookie ?? undefined);
+
+  // 1. Si es SUPERADMIN de la plataforma, tiene permiso de conmutar a cualquier rol ("Ver como")
+  if (esSuperAdmin) {
+    return modoNormalizado ?? "superadmin";
+  }
+
+  // 2. Si el usuario NO es superadmin, solo puede usar un rol que REALMENTE tenga asignado en la BDD
+  const perfilesUpper = perfiles.map((p) => p.toUpperCase().trim());
+
+  if (modoNormalizado) {
+    const modoUpper = modoNormalizado.toUpperCase();
+    const esValido = perfilesUpper.some((p) => {
+      if (p === "ADMINISTRADOR" && (modoUpper === "ADMIN" || modoUpper === "ADMINISTRADOR")) return true;
+      if (p === "OPERADOR" && modoUpper === "OPERADOR") return true;
+      if (p === "ABOGADO" && modoUpper === "ABOGADO") return true;
+      if (p === "TECNICO" && modoUpper === "TECNICO") return true;
+      if (p === "AUXILIAR" && modoUpper === "AUXILIAR") return true;
+      if (p === "CLIENTE" && modoUpper === "CLIENTE") return true;
+      return false;
+    });
+
+    if (esValido) {
+      return modoNormalizado;
+    }
+  }
+
+  // 3. Fallback estricto al rol más alto que el usuario posea
+  return modoDePerfiles(perfiles);
 }
 
 export default async function LayoutPanel({ children }: { children: React.ReactNode }) {
@@ -39,6 +77,10 @@ export default async function LayoutPanel({ children }: { children: React.ReactN
   await asegurarMembresiaCliente(supabase, perfil.usu_id, NEGOCIO);
 
   const perfiles = await obtenerPerfiles(NEGOCIO);
+  const correo = perfil.usu_correo?.toLowerCase().trim() || "";
+  const esSuperAdminEmail = correo === "kleber.toapanta.ch@gmail.com" || correo === "jesus251296@gmail.com";
+  const esSuperAdminPlataforma = Boolean(perfil.usu_superadmin_plataforma);
+  const esSuperAdmin = esSuperAdminEmail || esSuperAdminPlataforma || perfiles.includes("SUPERADMIN");
 
   const MAPA_CLASES_PERFIL: Record<string, string> = {
     cliente: "perfil-cliente",
@@ -53,9 +95,8 @@ export default async function LayoutPanel({ children }: { children: React.ReactN
   };
 
   const cookieStore = await cookies();
-  const modoCookie = modoValido(cookieStore.get("tranqi_modo_rol")?.value)
-    || modoValido(cookieStore.get("tranqi_rol_favorito")?.value);
-  const modoActivo: ModoRol = modoCookie ? modoCookie : modoDePerfiles(perfiles);
+  const modoCookie = cookieStore.get("tranqi_modo_rol")?.value || cookieStore.get("tranqi_rol_favorito")?.value;
+  const modoActivo: ModoRol = resolverModoRolSeguro(perfiles, esSuperAdmin, modoCookie);
 
   const clasePerfil = MAPA_CLASES_PERFIL[modoActivo.toLowerCase()] || `perfil-${modoActivo.toLowerCase()}`;
   const railPlegado = cookieStore.get(COOKIE_RAIL_PLEGADO)?.value === "1";
