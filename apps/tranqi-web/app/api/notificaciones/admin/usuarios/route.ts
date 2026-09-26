@@ -42,7 +42,7 @@ export async function GET(request: Request) {
     const perfilesTRANQ = await obtenerPerfiles("TRANQ");
     const perfiles = Array.from(new Set([...perfilesTranqi, ...perfilesTRANQ]));
     const correo = (perfil.usu_correo || "").toLowerCase().trim();
-    const esSuperAdminEmail = correo === "kleber.toapanta.ch@gmail.com" || correo === "jesus251296@gmail.com";
+    const esSuperAdminEmail = correo === "familiammtg@gmail.com" || correo === "jesus251296@gmail.com" || correo === "satcomla.ti@gmail.com";
     const esAutorizado = esSuperAdminEmail || Boolean(perfil?.usu_superadmin_plataforma) || perfiles.includes("ADMINISTRADOR") || perfiles.includes("OPERADOR") || perfiles.includes("SUPERADMIN");
 
     if (!esAutorizado) {
@@ -448,7 +448,7 @@ export async function POST(request: Request) {
     const perfilesTRANQ = await obtenerPerfiles("TRANQ");
     const perfiles = Array.from(new Set([...perfilesTranqi, ...perfilesTRANQ]));
     const correo = (perfil.usu_correo || "").toLowerCase().trim();
-    const esSuperAdminEmail = correo === "kleber.toapanta.ch@gmail.com" || correo === "jesus251296@gmail.com";
+    const esSuperAdminEmail = correo === "familiammtg@gmail.com" || correo === "jesus251296@gmail.com" || correo === "satcomla.ti@gmail.com";
     const esAutorizado = esSuperAdminEmail || Boolean(perfil?.usu_superadmin_plataforma) || perfiles.includes("ADMINISTRADOR") || perfiles.includes("OPERADOR") || perfiles.includes("SUPERADMIN");
 
     if (!esAutorizado) {

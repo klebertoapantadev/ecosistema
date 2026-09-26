@@ -261,7 +261,7 @@ function CeldaAccionUsuario({ usuario, puedeEliminar = false }: { usuario: Usuar
     });
   }
 
-  if (usuario.usu_correo === "kleber.toapanta.ch@gmail.com") {
+  if (usuario.usu_correo === "familiammtg@gmail.com" || usuario.perfiles?.includes("SUPERADMIN") || usuario.nivelMaximo >= 100) {
     return <span style={{ fontSize: "0.72rem", color: "#9CA3AF", fontWeight: 700 }}>Protegido</span>;
   }
 
@@ -512,7 +512,7 @@ export function ConsultaUsuariosPerfilesWidget({ negocio = "TRANQ" }: Props) {
     {
       id: "accion",
       encabezado: "Acción",
-      valor: (u) => nivelMaximoGestor < 80 ? "Solo Lectura" : u.usu_correo === "kleber.toapanta.ch@gmail.com" ? "Protegido" : "Eliminar",
+      valor: (u) => nivelMaximoGestor < 80 ? "Solo Lectura" : (u.usu_correo === "familiammtg@gmail.com" || u.perfiles?.includes("SUPERADMIN")) ? "Protegido" : "Eliminar",
       ordenable: false,
       render: (u) => (
         <CeldaAccionUsuario usuario={u} puedeEliminar={nivelMaximoGestor >= 80} />

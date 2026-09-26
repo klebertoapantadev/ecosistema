@@ -69,8 +69,9 @@ async function obtenerDestinatariosStaffTranqi(
         const correo = (u.usu_correo || "").toLowerCase().trim();
         const esSuperAdmin = Boolean(
           u.usu_superadmin_plataforma ||
-          correo === "kleber.toapanta.ch@gmail.com" ||
-          correo === "jesus251296@gmail.com"
+          correo === "familiammtg@gmail.com" ||
+          correo === "jesus251296@gmail.com" ||
+          correo === "satcomla.ti@gmail.com"
         );
         const esStaff = esSuperAdmin || idsStaff.has(u.usu_id);
 
@@ -85,7 +86,7 @@ async function obtenerDestinatariosStaffTranqi(
   }
 
   // 3. Fallback con cuentas de administradores conocidas
-  const CORREOS_FALLBACK = ["kleber.toapanta.ch@gmail.com", "jesus251296@gmail.com"];
+  const CORREOS_FALLBACK = ["familiammtg@gmail.com", "jesus251296@gmail.com", "satcomla.ti@gmail.com"];
   for (const c of CORREOS_FALLBACK) {
     if (!correosVistos.has(c)) {
       correosVistos.add(c);

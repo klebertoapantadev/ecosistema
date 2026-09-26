@@ -151,7 +151,7 @@ export function FilaUsuario({
       <td style={{ position: "sticky", right: 0, background: "#ffffff", zIndex: 1, boxShadow: "-2px 0 6px rgba(0,0,0,0.04)", textAlign: "center" }}>
         {!puedeEliminar ? (
           <span style={{ fontSize: "0.74rem", color: "#94A3B8", fontWeight: 600 }}>Solo Lectura</span>
-        ) : usuario.usu_correo !== "kleber.toapanta.ch@gmail.com" ? (
+        ) : (usuario.usu_correo !== "familiammtg@gmail.com" && !usuario.perfiles?.includes("SUPERADMIN")) ? (
           <button
             type="button"
             onClick={handleEliminar}
