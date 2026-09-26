@@ -21,10 +21,12 @@ import {
   Target,
   Tag,
   Hash,
+  Upload,
 } from "lucide-react";
 import {
   crearProductoAction,
   resolverUrlImagenDirectaAction,
+  subirImagenCatalogoAction,
   CategoriaCatalogo,
   ProductoCatalogo,
 } from "../acciones";
@@ -99,6 +101,7 @@ export function ModalCrearProducto({
   );
 
   const [resolviendoImagen, setResolviendoImagen] = useState(false);
+  const [subiendoImagen, setSubiendoImagen] = useState(false);
   const [exitoAutoConvertir, setExitoAutoConvertir] = useState<string | null>(null);
   const [canalesSeleccionados, setCanalesSeleccionados] = useState<CanalVisibilidad[]>([...CANALES_POR_DEFECTO]);
 
@@ -253,6 +256,32 @@ export function ModalCrearProducto({
       setError(`Error al convertir: ${e.message || e}`);
     } finally {
       setResolviendoImagen(false);
+    }
+  };
+
+  const handleSubirArchivoLocal = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setSubiendoImagen(true);
+    setError(null);
+    setExitoAutoConvertir(null);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("negocio", negocio || "comun");
+      formData.append("carpeta", "portadas");
+      const res = await subirImagenCatalogoAction(formData);
+      if (res.ok && res.urlPublica) {
+        setImagenUrl(res.urlPublica);
+        setExitoAutoConvertir(`¡Imagen "${res.nombreArchivo || file.name}" cargada con éxito desde tu equipo!`);
+      } else {
+        setError(res.error || "No se pudo cargar la imagen seleccionada.");
+      }
+    } catch (err: any) {
+      setError(`Error al cargar la imagen: ${err.message || err}`);
+    } finally {
+      setSubiendoImagen(false);
+      e.target.value = "";
     }
   };
 
@@ -682,29 +711,69 @@ export function ModalCrearProducto({
                     </span>
                   )}
                 </div>
-                <input
-                  type="url"
-                  placeholder="https://photos.google.com/share/... o https://lh3.googleusercontent.com/..."
-                  value={imagenUrl}
-                  onChange={(e) => {
-                    const raw = e.target.value;
-                    const driveMatch = raw.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/) || raw.match(/drive\.google\.com\/(?:open|uc)\?(?:.*&)?id=([a-zA-Z0-9_-]+)/);
-                    if (driveMatch && driveMatch[1]) {
-                      setImagenUrl(`https://lh3.googleusercontent.com/d/${driveMatch[1]}=w1200`);
-                    } else {
-                      setImagenUrl(raw);
-                    }
-                    setExitoAutoConvertir(null);
-                  }}
-                  style={{
-                    width: "100%",
-                    padding: "7px 10px",
-                    borderRadius: "6px",
-                    border: (imagenUrl.includes("photos.google.com") || imagenUrl.includes("photos.app.goo.gl")) ? "1.5px solid #F59E0B" : "1px solid #CBD5E1",
-                    fontSize: "0.8rem",
-                    boxSizing: "border-box",
-                  }}
-                />
+                <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
+                  <input
+                    type="url"
+                    placeholder="https://... o sube una imagen desde tu PC ➔"
+                    value={imagenUrl}
+                    onChange={(e) => {
+                      const raw = e.target.value;
+                      const driveMatch = raw.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/) || raw.match(/drive\.google\.com\/(?:open|uc)\?(?:.*&)?id=([a-zA-Z0-9_-]+)/);
+                      if (driveMatch && driveMatch[1]) {
+                        setImagenUrl(`https://lh3.googleusercontent.com/d/${driveMatch[1]}=w1200`);
+                      } else {
+                        setImagenUrl(raw);
+                      }
+                      setExitoAutoConvertir(null);
+                    }}
+                    style={{
+                      flex: 1,
+                      padding: "7px 10px",
+                      borderRadius: "6px",
+                      border: (imagenUrl.includes("photos.google.com") || imagenUrl.includes("photos.app.goo.gl")) ? "1.5px solid #F59E0B" : "1px solid #CBD5E1",
+                      fontSize: "0.8rem",
+                      boxSizing: "border-box",
+                    }}
+                  />
+
+                  <label
+                    style={{
+                      background: subiendoImagen ? "#94A3B8" : "#15803D",
+                      color: "#FFFFFF",
+                      padding: "7px 11px",
+                      borderRadius: "6px",
+                      fontSize: "0.74rem",
+                      fontWeight: 700,
+                      cursor: subiendoImagen ? "wait" : "pointer",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "5px",
+                      whiteSpace: "nowrap",
+                      flexShrink: 0,
+                      boxShadow: "0 1px 2px rgba(0,0,0,0.1)",
+                    }}
+                    title="Seleccionar foto desde tu disco local o Google Drive en PC"
+                  >
+                    {subiendoImagen ? (
+                      <>
+                        <Loader2 size={13} className="animate-spin" />
+                        <span>Subiendo...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Upload size={13} />
+                        <span>📁 Subir PC</span>
+                      </>
+                    )}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      disabled={subiendoImagen}
+                      onChange={handleSubirArchivoLocal}
+                      style={{ display: "none" }}
+                    />
+                  </label>
+                </div>
 
                 {exitoAutoConvertir && (
                   <div style={{ marginTop: "4px", fontSize: "0.7rem", color: "#15803D", background: "#DCFCE7", padding: "4px 8px", borderRadius: "4px", border: "1px solid #BBF7D0", display: "flex", alignItems: "center", gap: "4px" }}>

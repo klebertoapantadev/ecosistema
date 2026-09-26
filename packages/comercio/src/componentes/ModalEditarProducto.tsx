@@ -33,11 +33,14 @@ import {
   Target,
   Tag,
   Hash,
+  Upload,
+  HardDrive,
 } from "lucide-react";
 import {
   editarProductoAction,
   eliminarProductoAction,
   resolverUrlImagenDirectaAction,
+  subirImagenCatalogoAction,
   CategoriaCatalogo,
   ProductoCatalogo,
   VarianteCatalogo,
@@ -362,9 +365,12 @@ export function ModalEditarProducto({
   const [beneficiosTexto, setBeneficiosTexto] = useState("");
   const [requisitosTexto, setRequisitosTexto] = useState("");
 
-  // Auto-Conversión de imágenes
+  // Auto-Conversión y Subida Local de imágenes
   const [resolviendoImagen, setResolviendoImagen] = useState(false);
   const [resolviendoVarianteImg, setResolviendoVarianteImg] = useState(false);
+  const [subiendoImagenGlobal, setSubiendoImagenGlobal] = useState(false);
+  const [subiendoImagenVariante, setSubiendoImagenVariante] = useState(false);
+  const [subiendoGaleria, setSubiendoGaleria] = useState(false);
   const [exitoAutoConvertir, setExitoAutoConvertir] = useState<string | null>(null);
 
   // Configuración Impositiva Global & Logística (Transporte / Delivery)
@@ -729,6 +735,81 @@ export function ModalEditarProducto({
       setError(`Error al convertir: ${e.message || e}`);
     } finally {
       setResolviendoVarianteImg(false);
+    }
+  };
+
+  const handleSubirArchivoGlobal = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setSubiendoImagenGlobal(true);
+    setError(null);
+    setExitoAutoConvertir(null);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("negocio", negocio || "comun");
+      formData.append("carpeta", "portadas");
+      const res = await subirImagenCatalogoAction(formData);
+      if (res.ok && res.urlPublica) {
+        setImagenUrl(res.urlPublica);
+        setExitoAutoConvertir(`¡Imagen "${res.nombreArchivo || file.name}" cargada con éxito desde tu equipo!`);
+      } else {
+        setError(res.error || "No se pudo cargar la imagen seleccionada.");
+      }
+    } catch (err: any) {
+      setError(`Error al cargar la imagen: ${err.message || err}`);
+    } finally {
+      setSubiendoImagenGlobal(false);
+      e.target.value = "";
+    }
+  };
+
+  const handleSubirArchivoVariante = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setSubiendoImagenVariante(true);
+    setError(null);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("negocio", negocio || "comun");
+      formData.append("carpeta", "variantes");
+      const res = await subirImagenCatalogoAction(formData);
+      if (res.ok && res.urlPublica) {
+        const det = { ...(varianteActual?.var_detalle_variante || {}), portada_url: res.urlPublica };
+        actualizarVarianteActual("var_detalle_variante", det);
+      } else {
+        setError(res.error || "No se pudo cargar la imagen de la variante.");
+      }
+    } catch (err: any) {
+      setError(`Error al cargar la imagen de la variante: ${err.message || err}`);
+    } finally {
+      setSubiendoImagenVariante(false);
+      e.target.value = "";
+    }
+  };
+
+  const handleSubirArchivoGaleria = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setSubiendoGaleria(true);
+    setError(null);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("negocio", negocio || "comun");
+      formData.append("carpeta", "galeria");
+      const res = await subirImagenCatalogoAction(formData);
+      if (res.ok && res.urlPublica) {
+        setGaleriaTexto((prev) => (prev.trim() ? `${prev.trim()}\n${res.urlPublica}` : res.urlPublica!));
+      } else {
+        setError(res.error || "No se pudo cargar la foto a la galería.");
+      }
+    } catch (err: any) {
+      setError(`Error al cargar imagen a la galería: ${err.message || err}`);
+    } finally {
+      setSubiendoGaleria(false);
+      e.target.value = "";
     }
   };
 
@@ -1325,29 +1406,69 @@ export function ModalEditarProducto({
                         </span>
                       )}
                     </div>
-                    <input
-                      type="url"
-                      placeholder="https://photos.google.com/share/... o https://lh3.googleusercontent.com/..."
-                      value={imagenUrl}
-                      onChange={(e) => {
-                        const raw = e.target.value;
-                        const driveMatch = raw.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/) || raw.match(/drive\.google\.com\/(?:open|uc)\?(?:.*&)?id=([a-zA-Z0-9_-]+)/);
-                        if (driveMatch && driveMatch[1]) {
-                          setImagenUrl(`https://lh3.googleusercontent.com/d/${driveMatch[1]}=w1200`);
-                        } else {
-                          setImagenUrl(raw);
-                        }
-                        setExitoAutoConvertir(null);
-                      }}
-                      style={{
-                        width: "100%",
-                        padding: "7px 10px",
-                        borderRadius: "6px",
-                        border: (imagenUrl.includes("photos.google.com") || imagenUrl.includes("photos.app.goo.gl")) ? "1.5px solid #F59E0B" : "1px solid #CBD5E1",
-                        fontSize: "0.8rem",
-                        boxSizing: "border-box",
-                      }}
-                    />
+                    <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
+                      <input
+                        type="url"
+                        placeholder="https://... o sube una imagen desde tu PC ➔"
+                        value={imagenUrl}
+                        onChange={(e) => {
+                          const raw = e.target.value;
+                          const driveMatch = raw.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/) || raw.match(/drive\.google\.com\/(?:open|uc)\?(?:.*&)?id=([a-zA-Z0-9_-]+)/);
+                          if (driveMatch && driveMatch[1]) {
+                            setImagenUrl(`https://lh3.googleusercontent.com/d/${driveMatch[1]}=w1200`);
+                          } else {
+                            setImagenUrl(raw);
+                          }
+                          setExitoAutoConvertir(null);
+                        }}
+                        style={{
+                          flex: 1,
+                          padding: "7px 10px",
+                          borderRadius: "6px",
+                          border: (imagenUrl.includes("photos.google.com") || imagenUrl.includes("photos.app.goo.gl")) ? "1.5px solid #F59E0B" : "1px solid #CBD5E1",
+                          fontSize: "0.8rem",
+                          boxSizing: "border-box",
+                        }}
+                      />
+
+                      <label
+                        style={{
+                          background: subiendoImagenGlobal ? "#94A3B8" : "#0F172A",
+                          color: "#FFFFFF",
+                          padding: "7px 11px",
+                          borderRadius: "6px",
+                          fontSize: "0.74rem",
+                          fontWeight: 700,
+                          cursor: subiendoImagenGlobal ? "wait" : "pointer",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "5px",
+                          whiteSpace: "nowrap",
+                          flexShrink: 0,
+                          boxShadow: "0 1px 2px rgba(0,0,0,0.1)",
+                        }}
+                        title="Seleccionar foto desde tu disco local o Google Drive en PC"
+                      >
+                        {subiendoImagenGlobal ? (
+                          <>
+                            <Loader2 size={13} className="animate-spin" />
+                            <span>Subiendo...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Upload size={13} />
+                            <span>📁 Subir desde PC</span>
+                          </>
+                        )}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          disabled={subiendoImagenGlobal}
+                          onChange={handleSubirArchivoGlobal}
+                          style={{ display: "none" }}
+                        />
+                      </label>
+                    </div>
 
                     {exitoAutoConvertir && (
                       <div style={{ marginTop: "4px", fontSize: "0.7rem", color: "#15803D", background: "#DCFCE7", padding: "4px 8px", borderRadius: "4px", border: "1px solid #BBF7D0", display: "flex", alignItems: "center", gap: "4px" }}>
@@ -1473,9 +1594,32 @@ export function ModalEditarProducto({
                   </div>
 
                   <div>
-                    <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#334155", marginBottom: "2px" }}>
-                      Galería Adicional (URLs por salto de línea)
-                    </label>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "2px" }}>
+                      <label style={{ fontSize: "0.72rem", fontWeight: 700, color: "#334155" }}>
+                        Galería Adicional (URLs por salto de línea)
+                      </label>
+                      <label
+                        style={{
+                          fontSize: "0.68rem",
+                          fontWeight: 700,
+                          color: "#0284C7",
+                          cursor: subiendoGaleria ? "wait" : "pointer",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "3px",
+                        }}
+                      >
+                        {subiendoGaleria ? <Loader2 size={11} className="animate-spin" /> : <Upload size={11} />}
+                        <span>+ Cargar Foto PC</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          disabled={subiendoGaleria}
+                          onChange={handleSubirArchivoGaleria}
+                          style={{ display: "none" }}
+                        />
+                      </label>
+                    </div>
                     <textarea
                       rows={2}
                       placeholder="https://...foto1.jpg&#10;https://...foto2.jpg"
@@ -2522,10 +2666,10 @@ export function ModalEditarProducto({
 
                     {varianteActual.var_detalle_variante?.portada_url ? (
                       <div>
-                        <div style={{ display: "flex", gap: "8px", alignItems: "center", marginBottom: "6px" }}>
+                        <div style={{ display: "flex", gap: "6px", alignItems: "center", marginBottom: "6px" }}>
                           <input
                             type="url"
-                            placeholder="Pega URL de Google Fotos, Drive o CDN para este tamaño..."
+                            placeholder="URL o sube imagen para este tamaño ➔"
                             value={varianteActual.var_detalle_variante.portada_url}
                             onChange={(e) => {
                               const raw = e.target.value.trim();
@@ -2544,6 +2688,44 @@ export function ModalEditarProducto({
                               background: "#FFFFFF",
                             }}
                           />
+
+                          <label
+                            style={{
+                              background: subiendoImagenVariante ? "#94A3B8" : "#0F172A",
+                              color: "#FFFFFF",
+                              padding: "7px 11px",
+                              borderRadius: "6px",
+                              fontSize: "0.72rem",
+                              fontWeight: 700,
+                              cursor: subiendoImagenVariante ? "wait" : "pointer",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "4px",
+                              whiteSpace: "nowrap",
+                              flexShrink: 0,
+                            }}
+                            title="Cargar foto local para este tamaño"
+                          >
+                            {subiendoImagenVariante ? (
+                              <>
+                                <Loader2 size={12} className="animate-spin" />
+                                <span>Subiendo...</span>
+                              </>
+                            ) : (
+                              <>
+                                <Upload size={12} />
+                                <span>📁 Subir PC</span>
+                              </>
+                            )}
+                            <input
+                              type="file"
+                              accept="image/*"
+                              disabled={subiendoImagenVariante}
+                              onChange={handleSubirArchivoVariante}
+                              style={{ display: "none" }}
+                            />
+                          </label>
+
                           <button
                             type="button"
                             disabled={resolviendoVarianteImg}
@@ -2552,7 +2734,7 @@ export function ModalEditarProducto({
                               background: "#0284C7",
                               color: "#FFFFFF",
                               border: "none",
-                              padding: "7px 12px",
+                              padding: "7px 10px",
                               borderRadius: "6px",
                               fontSize: "0.72rem",
                               fontWeight: 700,
@@ -2565,11 +2747,13 @@ export function ModalEditarProducto({
                           >
                             {resolviendoVarianteImg ? (
                               <>
-                                <Loader2 size={12} className="animate-spin" /> Extrayendo...
+                                <Loader2 size={12} className="animate-spin" />
+                                <span>...</span>
                               </>
                             ) : (
                               <>
-                                <Wand2 size={12} /> 🪄 Auto-Convertir
+                                <Wand2 size={12} />
+                                <span>Auto-Fix</span>
                               </>
                             )}
                           </button>

@@ -2033,6 +2033,123 @@ export async function resolverUrlImagenDirectaAction(
 }
 
 /**
+ * Sube una imagen desde el equipo / drive local a Supabase Storage (bucket 'catalogo')
+ * o retorna fallback optimizado si el storage no está disponible.
+ */
+export async function subirImagenCatalogoAction(
+  formData: FormData
+): Promise<{ ok: boolean; urlPublica?: string; error?: string; nombreArchivo?: string }> {
+  try {
+    const file = formData.get("file") as File | null;
+    const negocioRaw = (formData.get("negocio") as string) || "comun";
+    const carpeta = (formData.get("carpeta") as string) || "portadas";
+    const { principal } = normalizarIdentificadorNegocio(negocioRaw);
+
+    if (!file || typeof file.arrayBuffer !== "function") {
+      return { ok: false, error: "No se recibió un archivo válido." };
+    }
+
+    // Validar tipo de archivo
+    const tiposPermitidos = [
+      "image/jpeg",
+      "image/png",
+      "image/webp",
+      "image/gif",
+      "image/avif",
+      "image/svg+xml",
+    ];
+    if (!tiposPermitidos.includes(file.type)) {
+      return {
+        ok: false,
+        error: "Formato no permitido. Solo se aceptan imágenes (JPG, PNG, WEBP, GIF, AVIF, SVG).",
+      };
+    }
+
+    // Tamaño máximo 15MB
+    if (file.size > 15 * 1024 * 1024) {
+      return {
+        ok: false,
+        error: "La imagen supera el tamaño máximo permitido de 15 MB.",
+      };
+    }
+
+    const buffer = Buffer.from(await file.arrayBuffer());
+    const ext = file.name.split(".").pop() || "jpg";
+    const nombreLimpio = file.name
+      .replace(/\.[^/.]+$/, "")
+      .replace(/[^a-zA-Z0-9_-]/g, "_")
+      .toLowerCase()
+      .substring(0, 40);
+    const rutaArchivo = `${principal}/${carpeta}/${Date.now()}-${nombreLimpio}.${ext}`;
+
+    const admin: any = crearClienteAdmin();
+    const supabase: any = await crearClienteServidor();
+    const clienteActivo = admin || supabase;
+
+    if (clienteActivo?.storage) {
+      const bucketName = "catalogo";
+      try {
+        // Asegurar que el bucket exista
+        const { data: buckets } = await clienteActivo.storage.listBuckets();
+        const existe = buckets?.some((b: any) => b.name === bucketName || b.id === bucketName);
+        if (!existe && admin) {
+          await admin.storage.createBucket(bucketName, {
+            public: true,
+            fileSizeLimit: 15728640,
+            allowedMimeTypes: tiposPermitidos,
+          }).catch(() => {});
+        }
+
+        const { error: uploadError } = await clienteActivo.storage
+          .from(bucketName)
+          .upload(rutaArchivo, buffer, {
+            contentType: file.type,
+            upsert: true,
+          });
+
+        if (!uploadError) {
+          const { data: pubData } = clienteActivo.storage
+            .from(bucketName)
+            .getPublicUrl(rutaArchivo);
+
+          if (pubData?.publicUrl) {
+            return {
+              ok: true,
+              urlPublica: pubData.publicUrl,
+              nombreArchivo: file.name,
+            };
+          }
+        }
+      } catch (storageErr: any) {
+        console.warn("Aviso: Supabase Storage fallback en subida de imagen:", storageErr?.message);
+      }
+    }
+
+    // Fallback: Si el archivo es liviano (< 3MB) y Storage falló, retornar Data URL para que nunca quede bloqueado
+    if (file.size <= 3 * 1024 * 1024) {
+      const base64Data = buffer.toString("base64");
+      const dataUrl = `data:${file.type};base64,${base64Data}`;
+      return {
+        ok: true,
+        urlPublica: dataUrl,
+        nombreArchivo: file.name,
+      };
+    }
+
+    return {
+      ok: false,
+      error: "No se pudo subir la imagen al almacenamiento. Por favor intenta con una imagen menor a 3MB o verifica la conexión.",
+    };
+  } catch (err: any) {
+    return {
+      ok: false,
+      error: `Error al procesar la subida del archivo: ${err.message || err}`,
+    };
+  }
+}
+
+
+/**
  * Crea un nuevo producto u honorario profesional con su variante de cobro
  */
 export async function crearProductoAction(datos: {
