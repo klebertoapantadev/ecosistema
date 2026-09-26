@@ -638,7 +638,7 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, alGuardarExitoso }
         const res = await crearClienteManual(datos);
         alGuardarExitoso({
           clienteId: res.clienteId,
-          usuarioId: res.usuarioId,
+          usuarioId: res.usuarioId || "",
           nombreCompleto: res.nombreCompleto,
           identificacion: res.identificacion,
           accionContinuidad,
