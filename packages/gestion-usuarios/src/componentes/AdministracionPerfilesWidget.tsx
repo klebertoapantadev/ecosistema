@@ -1564,10 +1564,27 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
 
   const [isAsignando, setIsAsignando] = useState(false);
 
-  // Modos de Vista de Widgets y Paneles Colapsables
-  const [modoVistaWidgets, setModoVistaWidgets] = useState<"rejilla" | "lista" | "botones">("rejilla");
+  // Modos de Vista de Widgets y Paneles Colapsables (Por defecto: Lista Detallada)
+  const [modoVistaWidgets, setModoVistaWidgets] = useState<"rejilla" | "lista" | "botones">(() => {
+    if (typeof window !== "undefined") {
+      const guardado = localStorage.getItem("tranqi_modo_vista_widgets");
+      if (guardado === "rejilla" || guardado === "lista" || guardado === "botones") {
+        return guardado;
+      }
+    }
+    return "lista";
+  });
   const [panelesColapsados, setPanelesColapsados] = useState<Record<string, boolean>>({});
   const [filtroBusquedaWidgets, setFiltroBusquedaWidgets] = useState<string>("");
+
+  const cambiarModoVista = (modo: "rejilla" | "lista" | "botones") => {
+    setModoVistaWidgets(modo);
+    try {
+      if (typeof window !== "undefined") {
+        localStorage.setItem("tranqi_modo_vista_widgets", modo);
+      }
+    } catch { /* Ignorar */ }
+  };
 
   const toggleColapsarPanel = (panelId: string) => {
     setPanelesColapsados(prev => ({
@@ -2486,7 +2503,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
               <div style={{ display: "inline-flex", background: "var(--panel-papel, #F7F6FA)", padding: "3px", borderRadius: "8px", border: "1px solid var(--panel-linea, #E4E4E4)" }}>
                 <button
                   type="button"
-                  onClick={() => setModoVistaWidgets("rejilla")}
+                  onClick={() => cambiarModoVista("rejilla")}
                   title="Vista Tarjetas (Rejilla)"
                   style={{
                     background: modoVistaWidgets === "rejilla" ? "#ffffff" : "transparent",
@@ -2508,7 +2525,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
 
                 <button
                   type="button"
-                  onClick={() => setModoVistaWidgets("lista")}
+                  onClick={() => cambiarModoVista("lista")}
                   title="Vista Lista Detallada (Rutas físicas completas y máxima legibilidad)"
                   style={{
                     background: modoVistaWidgets === "lista" ? "#ffffff" : "transparent",
@@ -2530,7 +2547,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
 
                 <button
                   type="button"
-                  onClick={() => setModoVistaWidgets("botones")}
+                  onClick={() => cambiarModoVista("botones")}
                   title="Vista Botones / Compacta (Botones de acceso ágil)"
                   style={{
                     background: modoVistaWidgets === "botones" ? "#ffffff" : "transparent",
