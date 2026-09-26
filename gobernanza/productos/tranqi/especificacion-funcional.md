@@ -42,7 +42,7 @@ Tranqi adopta las mejores prácticas y estándares internacionales de **Law Prac
 | **`TRQ-CAS-002`** | **Equipo Legal** | **Asignación Multirrol de Abogados (Titular / Co-patrocinadores / Mesa de Control)** | 🟡 Especificado | **25%** | Kleber Toapanta |
 | **`TRQ-DOC-001`** | **Gestión Documental** | **Gestor Documental por Etapas Procesales, Billetera y Versionamiento vN** | 🟡 Especificado | **30%** | Kleber Toapanta |
 | **`TRQ-CAS-003`** | **Actuaciones** | **Bitácora Procesal, Plazos COGEP y Notas Internas vs. Públicas** | 🟡 Especificado | **25%** | Kleber Toapanta / Jesus Navarrete |
-| **`TRQ-DIG-001`** | **Digitalización** | **Ingesta de Archivo Físico Histórico, OCR Masivo y Cerebro de Precedentes** | 🟡 Especificado | **25%** | Jesus Navarrete (IA) / Kleber Toapanta |
+| **`TRQ-DIG-001`** | **Digitalización** | **Ingesta de Archivo Físico Histórico, Topología de Bodega, Etiquetado QR y Cerebro de Precedentes** | 🟡 En Desarrollo | **60%** | Jesus Navarrete (IA) / Kleber Toapanta |
 | **`TRQ-CLI-001`** | **Cliente** | **Portal de Casos, Solicitud de Patrocinio y Consultas Telemáticas** | 🟡 En Desarrollo | **40%** | Jesus Navarrete / Kleber Toapanta |
 | **`TRQ-CLI-002`** | **Cliente** | **Módulo Express de Revisión y Dictamen Legal de Contratos/Minutas (IA)** | ⏳ Pendiente | **0%** | **Jesus Navarrete (IA)** |
 | **`TRQ-CLI-003`** | **Cliente** | **Directorio Público y Selección Geolocalizada de Abogados** | ✅ Implementado | **100%** | Kleber Toapanta |
@@ -635,9 +635,33 @@ Módulo para migrar el archivo histórico en papel (carpetas y archivadores de a
 2. **Digitalización de Expedientes Históricos / Cerrados (Prioridad P1):** Se cargan como expedientes históricos archivados (`cas_estado = 'cerrado' / 'archivado'`), sirviendo como base de precedentes y modelos contractuales.
 
 #### 3. Flujo Técnico de Digitalización Asistida por ARIA
-1. **Carga Masiva por Lotes (`trq_archivo_digitalizacion_lote`):** Carga de tomos escaneados en PDF de alto volumen.
-2. **Segmentación Inteligente:** ARIA detecta saltos de cuerpo procesal (sellos notariales, firmas, encabezados judiciales) y desglosa el tomo en piezas documentales individuales clasificadas en las carpetas procesales estándar.
-3. **Extracción Automática de Metadatos:** ARIA extrae partes procesales, número de juicio SATJE, juzgado, cuantía y genera una **Ficha Sinóptica Ejecutiva** (resumen de 1 página del estado del caso).
+1. **Carga Masiva por Lotes (`trq_archivo_digitalizacion_lote`):** Carga de tomos escaneados en PDF de alto volumen (mediante escáner ADF de producción o captura móvil).
+2. **Segmentación Inteligente:** ARIA detecta saltos de cuerpo procesal (sellos notariales, firmas, encabezados judiciales) y desglosa el tomo en piezas documentales individuales clasificadas en las carpetas procesales estándar (`01_poderes`, `02_pruebas`, `03_escritos`, `04_providencias`, `05_facturacion`).
+3. **Extracción Automática de Metadatos:** ARIA extrae partes procesales (Actor, Demandado), número de juicio SATJE, juzgado, cuantía y genera una **Ficha Sinóptica Ejecutiva** (resumen de 1 página del estado del caso).
+
+#### 4. Topología de Archivo Físico y Coordenadas en Escaparates (*Warehouse Slotting*)
+Para que cualquier operador o abogado localice una carpeta física en menos de 15 segundos:
+1. **Coordenada Topológica Estructurada en Sistema (`cas_detalle_expediente.archivo_fisico`):**
+   - `Bodega / Sala`: Ubicación física (ej. *Matriz Quito Piso 2*).
+   - `Escaparate / Módulo`: Número de estantería o cuerpo (ej. *MÓDULO 3*).
+   - `Nivel / Balda`: Altura o repisa numerada (ej. *NIVEL 2*).
+   - `Caja Archivadora`: Caja norma archivo etiquetada frontalmente (ej. *CAJA CJ-08*).
+   - `Posición en Caja`: Número correlativo de carpeta dentro de la caja (ej. *Carpeta #14*).
+2. **Etiqueta Adhesiva Inteligente de Lomo con Código QR:**
+   - Impresión térmica automatizada al crearse el expediente digital (`TRQ-MAT-YYYY-XXXXX`).
+   - **Banda de Color Visual por Materia:** 🟦 Azul (*Civil e Inquilinato*), 🟥 Rojo (*Penal y Tránsito*), 🟩 Verde (*Corporativo y Empresas*), 🟨 Amarillo (*Familia y Niñez*).
+   - **Identificador Visible:** Número de posición `#14`, Código `TRQ-MAT-2026-00042`, Nombre del Cliente en mayúsculas `PÉREZ MORALES, JUAN`.
+   - **Código QR Enlazado:** Al escanearlo con la app de Tranqi, abre inmediatamente el expediente digital en pantalla o registra el préstamo del cuerpo físico.
+3. **Cadena de Custodia y Control de Préstamos (*Check-in / Check-out*):**
+   - Toda salida de la carpeta física a juzgados, notarías o audiencias exige escaneo del QR, registrando abogado responsable, destino y hora de salida (`PRESTADO_AUDIENCIA`).
+   - Al retornar a la bodega, un nuevo escaneo devuelve el estado a `ARCHIVADO_EN_BODEGA`.
+
+#### 5. Gestión Diferenciada de Personería y Portabilidad B2B2C
+1. **Personas Naturales (B2C):** Expedientes individuales donde el cliente es titular exclusivo y único con acceso protegido por RLS.
+2. **Empresas (B2B):** Expedientes corporativos donde la titularidad corresponde a la persona jurídica (RUC) y su gestión es delegada a sus apoderados o representantes legales acreditados.
+3. **Empleados Beneficiados por Convenios (B2B2C):**
+   - **Secreto Profesional y Propiedad:** El caso personal del trabajador (ej. divorcio o inquilinato) le pertenece al trabajador, no a la empresa que subsidia el convenio.
+   - **Portabilidad por Desvinculación (Despido / Renuncia):** Al cesar el convenio con la empresa, el trabajador conserva el 100% del acceso a su expediente digital y documentación histórica, realizando una transición transparente a cliente individual (B2C) sin perder sus causas ni sus escritos.
 
 ---
 

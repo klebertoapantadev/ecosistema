@@ -476,16 +476,19 @@ Motor centralizado de gestión de bienes, servicios, recetas (BOM), inventarios,
         - `heredar` (por defecto): Utiliza la lista base del producto master.
         - `anexar`: Conserva los beneficios del master y adiciona viñetas exclusivas de ese tamaño (`beneficios_custom`, ej: *+ Corona dorada de reina + Mariposas 3D translúcidas*).
         - `reemplazar`: Sustituye 100% los beneficios del master por una lista exclusiva para esa variante.
-      - *Modo de Descripción (`descripcion_modo`):* `heredar` | `anexar` | `reemplazar`.
 18. **Bolsa Unificada de Derechos de Consumo y Descarga Atómica (`com_derecho_consumo` & `com_fn_consumir_derecho`):**
     - **Modelado de Bundles por Periodo:** Las suscripciones recurrentes en los distintos negocios del ecosistema (*Tranqi Amparo Familiar*, *Tinkay Club Floral*, *FastFix Hogar Seguro*) no facturan dinero por uso puntual, sino que acreditan una **Bolsa Periódica de Derechos de Consumo** (`CONSULTA_TELEMATICA`, `REVISION_CONTRATO`, `ENTREGA_FLORAL`, `VISITA_TECNICA`).
-19. **Taxonomía Semántica de Usos (Casos de Uso) y Etiquetas de Recomendación IA (`com_producto.pro_detalle_producto.usos` & `etiquetas`):**
+    - **Liquidación Atómica:** Al agendar una cita o programar un despacho floral, el sistema ejecuta `comun_comercio.com_fn_consumir_derecho()`, verificando en una sola transacción que existan cupos disponibles (`der_consumidos < der_incluidos` o `der_incluidos is null`) y descontando a $0.00.
+    - **Política de Restitución:** Si el usuario cancela una cita o entrega con la antelación reglamentaria, la función `comun_comercio.com_fn_devolver_derecho()` reintegra el cupo sin permitir saldos negativos.
+19. **Aprovisionamiento Automático de Suscripción Gratuita de Onboarding y Cupones de Bienvenida (`com_fn_asegurar_suscripcion_gratuita`):**
+    - Todo cliente nuevo o existente al obtener membresía en un negocio con modelo freemium o recurrente (`tranqi`, `tinkay`, `fastfix`) recibe de forma inmediata e irrevocable una suscripción activa a costo `$0.00` (`com_suscripcion`), asegurando que ningún usuario quede desprovisto de plan base.
+    - **Tranqi (`TRQ-PLAN-FREE`):** Inicializa atómicamente en `com_derecho_consumo` **1 Consulta Virtual de Orientación Legal Gratuita** (30 min) y habilita el cupón de bienvenida `TRANQI10TRAMITE` con **10% de descuento en su primer trámite legal**.
+    - **Tinkay (`TNK-PLAN-FREE`):** Habilita el cupón de bienvenida `TINKAY-ENVIOGRATIS` con **Entrega Gratuita en su Primera Compra Online** y abre el acceso al *Club Floral* recurrente con descuentos escalonados: Semanal (-20% con florero de cristal de regalo), Mensual (-10%) y Anual (-15%).
+20. **Taxonomía Semántica de Usos (Casos de Uso) y Etiquetas de Recomendación IA (`com_producto.pro_detalle_producto.usos` & `etiquetas`):**
     - **Relación 1 a Muchos (Multi-Usos):** A diferencia de la Categoría/Colección que es estructural (1:1), los productos pueden pertenecer a múltiples escenarios o casos de aplicación simultáneos (`usos: ["cumpleanos", "aniversario", "amor_romance", "pedida_mano", "recuperate"]`).
     - **Exclusión Semántica Automática:** Un producto no catalogado para un uso sensible (ej. `condolencias` / `funeral`) queda automáticamente excluido de las consultas de recomendación de IA y filtros de búsqueda bajo ese criterio.
     - **Presencia en MCP de Catálogo (`consultar_catalogo`):** La herramienta MCP para agentes de IA (ARIA) acepta el parámetro `uso` (o alias `ocasion`) y evalúa coincidencias exactas y semánticas sobre `pro_detalle_producto.usos`, `pro_detalle_producto.etiquetas` y metadata, asegurando recomendaciones hiper-precisas en canales conversacionales (WhatsApp, Web, App).
-    - **Liquidación Atómica:** Al agendar una cita o programar un despacho floral, el sistema ejecuta `comun_comercio.com_fn_consumir_derecho()`, verificando en una sola transacción que existan cupos disponibles (`der_consumidos < der_incluidos` o `der_incluidos is null`) y descontando a $0.00.
-    - **Política de Restitución:** Si el usuario cancela una cita o entrega con la antelación reglamentaria, la función `comun_comercio.com_fn_devolver_derecho()` reintegra el cupo sin permitir saldos negativos.
-19. **Trazabilidad Universal de Consumo y Evidencias Multimedia / Proof of Delivery (`com_derecho_consumo_historial`):**
+21. **Trazabilidad Universal de Consumo y Evidencias Multimedia / Proof of Delivery (`com_derecho_consumo_historial`):**
     - **Registro Obligatorio de Auditoría:** Cada consumo realizado con cargo a una suscripción (`PLAN_SUSCRIPCION`), bono promocional (`CUPON_BIENVENIDA`) o convenio institucional (`CONVENIO_B2B`) persiste una fila inmutable en `comun_comercio.com_derecho_consumo_historial`.
     - **Vínculo Operativo Multi-Dominio:** Relaciona el consumo con la entidad real del negocio (ID de Cita en `trq_cita`, ID de Caso/Expediente en `trq_caso`, ID de Visita Técnica en `ffh_visita_tecnica` o Guía de Despacho en `com_orden`).
     - **Evidencia Multimedia / Proof of Delivery (POD):**
@@ -493,7 +496,7 @@ Motor centralizado de gestión de bienes, servicios, recetas (BOM), inventarios,
       - *LegalTech (Tranqi):* Enlace al dictamen formal con semáforo de riesgos en PDF o acta de consulta telemática.
       - *Mantenimiento (FastFix):* Fotografía de antes/después de la reparación y reporte técnico firmado.
     - **Consola de Auditoría del Cliente (`ModalHistorialUsoPlan.tsx`):** El cliente consulta en vivo el estado de su membresía, próxima facturación, tarjeta emisora asociada, beneficiarios registrados y la línea de tiempo completa de sus beneficios utilizados con acceso a sus respectivas evidencias.
-20. **Canales de Visibilidad Omnicanal de Productos Master (`canales_visibilidad`):**
+22. **Canales de Visibilidad Omnicanal de Productos Master (`canales_visibilidad`):**
     - **Definición de Canales Oficiales:** Cada producto master (`com_producto`) define en qué puntos de contacto, aplicaciones y canales de atención es visible y comercializable:
       1. `ECOMMERCE_WEB`: Portal web y tienda online del negocio (Tinkay, Tranqi, FastFix, Margaritas).
       2. `APP_CLIENTES`: Aplicaciones móviles nativas para clientes (iOS / Android / Capacitor).
