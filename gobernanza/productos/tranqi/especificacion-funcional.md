@@ -544,7 +544,16 @@ Módulo central de administración y ciclo de vida de clientes (Personas Natural
    - **Persona Jurídica (Empresas / S.A.S.):** Es **obligatorio** subir la Cédula/Pasaporte del Representante Legal y el Nombramiento Vigente Inscrito en el Registro Mercantil. ARIA extrae la razón social, RUC, cargo estatutario, periodo de vigencia, notaría e inscripción mercantil.
    - **Billetera Digital Universal:** Todo documento procesado durante el alta asistida se almacena de forma inmediata y cifrada en `tranqui_legal.trq_billetera_documento`, indexado al `doc_usuario_id` para reutilización directa en contratos, minutas y poderes.
    - **Mapeo Inteligente y Resguardo Estructurado:** Los datos funcionales se mapean a los campos del formulario con insignias de origen (`✨ Leído por ARIA`), mientras que los metadatos secundarios (filiación de padres, tipo de sangre, condición de donante, tomo/folio de inscripción mercantil) se resguardan de forma inmutable en `clp_detalle_cliente` y `doc_metadatos_ocr`.
-
+8. **Envío Automático de Correo de Invitación al Portal Web Digital:**
+   - Al registrar a un cliente de forma manual o asistida en el mostrador, si se ingresa su correo electrónico, el sistema despacha de manera automática un correo corporativo oficial (`🏛️ Bienvenido a Tranqi: Activa tu Portal Jurídico Digital`) con enlace directo a la plataforma web para activar su cuenta y consultar sus expedientes, documentos de billetera y citas.
+9. **Ciclo de Vida y Estado del Cliente (Inactivo / Pendiente de Pago por Defecto):**
+   - Todo cliente registrado manualmente nace en estado **`Inactivo (Pendiente de Pago)`** (`clp_activo = false`, `estado_crm = 'PENDIENTE_PAGO'`).
+   - La activación a **`Activo`** se produce automáticamente al confirmarse un pago del cliente (suscripción, abono de honorario o pasarela Payphone) o mediante conmutación explícita por parte de un operador autorizado desde el CRM.
+10. **Edición Integral de Datos del Cliente en CRM:**
+   - Se proporciona la acción `[Editar Datos]` tanto en la bandeja general de clientes como en la Ficha 360°, permitiendo actualizar en caliente los datos de filiación, domicilio, casilleros judiciales, contacto, representante legal o apoderados, auditando el cambio con el ID del operador en sesión.
+11. **Regla de Integridad Procesal Estricta: Prohibición de Eliminación de Clientes con Casos o Pagos:**
+   - Ningún cliente confirmado/activo ni ningún cliente que posea al menos un expediente legal (`trq_caso_judicial`), cita agendada (`trq_cita`) o comprobante/pago registrado (`trq_honorario`) puede ser eliminado de la base de datos.
+   - El sistema bloquea el borrado físico y permite únicamente su **Inactivación Lógica** (`clp_activo = false`, `estado_crm = 'INACTIVO'`) para garantizar la trazabilidad y custodia procesal inmutable.
 
 ---
 

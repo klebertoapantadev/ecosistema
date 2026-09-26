@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import {
   X, User, Building2, Scale, Calendar, Folder, Clock, Printer,
   Shield, CheckCircle2, FileText, Phone, Mail, MapPin, ExternalLink,
-  Plus, AlertCircle, History, Eye
+  Plus, AlertCircle, History, Eye, Pencil
 } from "lucide-react";
 import {
   obtenerDetalleCliente360,
@@ -15,11 +15,12 @@ import {
 interface Props {
   clienteId: string | null;
   alCerrar: () => void;
+  alEditarCliente?: () => void;
   alRadicarExpediente?: (clienteId: string, nombreCompleto: string) => void;
   alAgendarCita?: (clienteId: string, nombreCompleto: string) => void;
 }
 
-export function FichaClienteDetalleModal({ clienteId, alCerrar, alRadicarExpediente, alAgendarCita }: Props) {
+export function FichaClienteDetalleModal({ clienteId, alCerrar, alEditarCliente, alRadicarExpediente, alAgendarCita }: Props) {
   const [tabActiva, setTabActiva] = useState<"general" | "expedientes" | "billetera" | "citas" | "auditoria">("general");
   const [cargando, setCargando] = useState(true);
   const [detalle, setDetalle] = useState<any>(null);
@@ -115,9 +116,20 @@ export function FichaClienteDetalleModal({ clienteId, alCerrar, alRadicarExpedie
               {perfil?.clp_tipo_personeria === "juridica" ? <Building2 size={24} /> : <User size={24} />}
             </div>
             <div>
-              <h2 style={{ margin: 0, fontSize: "1.2rem", fontWeight: 700, color: "#0F172A" }}>
-                {nombreMostrado || "Cargando cliente..."}
-              </h2>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <h2 style={{ margin: 0, fontSize: "1.2rem", fontWeight: 700, color: "#0F172A" }}>
+                  {nombreMostrado || "Cargando cliente..."}
+                </h2>
+                {perfil?.clp_activo ? (
+                  <span style={{ padding: "2px 8px", borderRadius: "10px", fontSize: "0.72rem", fontWeight: 700, background: "#D1FAE5", color: "#065F46" }}>
+                    Activo
+                  </span>
+                ) : (
+                  <span style={{ padding: "2px 8px", borderRadius: "10px", fontSize: "0.72rem", fontWeight: 700, background: "#FEF3C7", color: "#B45309" }}>
+                    Inactivo (Pendiente Pago)
+                  </span>
+                )}
+              </div>
               <p style={{ margin: "2px 0 0", fontSize: "0.82rem", color: "#64748B" }}>
                 {perfil?.clp_tipo_identificacion?.toUpperCase()}: {perfil?.clp_identificacion} · {perfil?.clp_tipo_personeria === "juridica" ? "Persona Jurídica (Empresa)" : "Persona Natural"}
               </p>
@@ -125,6 +137,30 @@ export function FichaClienteDetalleModal({ clienteId, alCerrar, alRadicarExpedie
           </div>
 
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            {alEditarCliente && (
+              <button
+                type="button"
+                onClick={alEditarCliente}
+                title="Editar datos del cliente"
+                style={{
+                  background: "#0284C7",
+                  border: "none",
+                  padding: "8px 12px",
+                  borderRadius: "8px",
+                  fontSize: "0.8rem",
+                  fontWeight: 600,
+                  color: "#FFFFFF",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  boxShadow: "0 2px 4px rgba(2, 132, 199, 0.25)",
+                }}
+              >
+                <Pencil size={14} />
+                Editar Datos
+              </button>
+            )}
             <button
               type="button"
               onClick={manejarImprimir}

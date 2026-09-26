@@ -3,9 +3,15 @@
 import React, { useState, useEffect } from "react";
 import {
   Users, UserPlus, Search, Building2, User, Scale, Calendar,
-  Folder, Eye, Plus, CheckCircle2, Shield, Sparkles, Filter, ChevronRight, RefreshCw, Share2
+  Folder, Eye, Plus, CheckCircle2, Shield, Sparkles, Filter, ChevronRight,
+  RefreshCw, Share2, Pencil, Power, Trash2, AlertCircle
 } from "lucide-react";
-import { obtenerClientesCRM, sincronizarUsuariosAProspectosCRMAction } from "../acciones";
+import {
+  obtenerClientesCRM,
+  sincronizarUsuariosAProspectosCRMAction,
+  alternarEstadoClienteCRMAction,
+  eliminarClienteCRMAction,
+} from "../acciones";
 import { ModalAltaClienteAsistida } from "./ModalAltaClienteAsistida";
 import { FichaClienteDetalleModal } from "./FichaClienteDetalleModal";
 
@@ -23,10 +29,12 @@ export function BandejaClientesCRM({ negocio = "TRANQ" }: Props) {
 
   // Modales
   const [modalAltaAbierto, setModalAltaAbierto] = useState(false);
+  const [clienteAEditar, setClienteAEditar] = useState<any | null>(null);
   const [clienteSeleccionadoId, setClienteSeleccionadoId] = useState<string | null>(null);
 
-  // Mensaje de éxito temporal
+  // Mensaje de éxito o error temporal
   const [toastExito, setToastExito] = useState<string | null>(null);
+  const [toastError, setToastError] = useState<string | null>(null);
 
   // 1. Inicializar parámetros desde URL (Deep Linking & Compartir)
   useEffect(() => {
@@ -102,12 +110,65 @@ export function BandejaClientesCRM({ negocio = "TRANQ" }: Props) {
         setTimeout(() => setToastExito(null), 5000);
         cargarClientes();
       } else {
-        alert("Error al sincronizar: " + (res.mensaje || "Desconocido"));
+        setToastError("Error al sincronizar: " + (res.mensaje || "Desconocido"));
+        setTimeout(() => setToastError(null), 5000);
       }
     } catch (err: any) {
-      alert("Error al sincronizar: " + err?.message);
+      setToastError("Error al sincronizar: " + err?.message);
+      setTimeout(() => setToastError(null), 5000);
     } finally {
       setSincronizando(false);
+    }
+  };
+
+  const manejarAbrirEditar = (c: any) => {
+    setClienteAEditar(c);
+    setModalAltaAbierto(true);
+  };
+
+  const manejarAlternarEstado = async (c: any) => {
+    const nuevoEstado = !c.clp_activo;
+    const accionTexto = nuevoEstado ? "activar" : "inactivar";
+    const nombre = c.clp_razon_social || `${c.clp_nombres || ""} ${c.clp_apellidos || ""}`.trim();
+    if (!confirm(`¿Estás seguro de que deseas ${accionTexto} al cliente "${nombre}"?`)) {
+      return;
+    }
+
+    try {
+      const res = await alternarEstadoClienteCRMAction(c.clp_id, nuevoEstado);
+      if (res.ok) {
+        setToastExito(`✅ Cliente ${nombre} ahora está ${nuevoEstado ? "ACTIVO" : "INACTIVO"}.`);
+        setTimeout(() => setToastExito(null), 4000);
+        cargarClientes();
+      } else {
+        setToastError(res.error || "No se pudo cambiar el estado del cliente.");
+        setTimeout(() => setToastError(null), 6000);
+      }
+    } catch (e: any) {
+      setToastError("Error: " + e?.message);
+      setTimeout(() => setToastError(null), 6000);
+    }
+  };
+
+  const manejarEliminar = async (c: any) => {
+    const nombre = c.clp_razon_social || `${c.clp_nombres || ""} ${c.clp_apellidos || ""}`.trim();
+    if (!confirm(`¿Deseas remover al prospecto "${nombre}"? (Nota: Si posee causas o pagos, el sistema solo permitirá Inactivarlo).`)) {
+      return;
+    }
+
+    try {
+      const res = await eliminarClienteCRMAction(c.clp_id);
+      if (res.ok) {
+        setToastExito(`✅ Prospecto ${nombre} eliminado.`);
+        setTimeout(() => setToastExito(null), 4000);
+        cargarClientes();
+      } else {
+        setToastError(res.error || "No se pudo eliminar el cliente.");
+        setTimeout(() => setToastError(null), 7000);
+      }
+    } catch (e: any) {
+      setToastError("Error: " + e?.message);
+      setTimeout(() => setToastError(null), 7000);
     }
   };
 
@@ -118,10 +179,11 @@ export function BandejaClientesCRM({ negocio = "TRANQ" }: Props) {
     accionContinuidad: "solo_guardar" | "radicar_expediente" | "agendar_cita";
   }) => {
     setModalAltaAbierto(false);
+    setClienteAEditar(null);
     cargarClientes();
 
     if (res.accionContinuidad === "solo_guardar") {
-      setToastExito(`✅ Cliente ${res.nombreCompleto} registrado exitosamente.`);
+      setToastExito(`✅ Cliente ${res.nombreCompleto} guardado exitosamente.`);
       setTimeout(() => setToastExito(null), 4000);
     } else if (res.accionContinuidad === "radicar_expediente") {
       setClienteSeleccionadoId(res.clienteId);
@@ -154,6 +216,26 @@ export function BandejaClientesCRM({ negocio = "TRANQ" }: Props) {
         >
           <CheckCircle2 size={18} />
           {toastExito}
+        </div>
+      )}
+
+      {toastError && (
+        <div
+          style={{
+            background: "#DC2626",
+            color: "#FFFFFF",
+            padding: "12px 20px",
+            borderRadius: "10px",
+            fontSize: "0.88rem",
+            fontWeight: 600,
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+          }}
+        >
+          <AlertCircle size={18} />
+          {toastError}
         </div>
       )}
 
@@ -493,7 +575,7 @@ export function BandejaClientesCRM({ negocio = "TRANQ" }: Props) {
                         <div style={{ fontSize: "0.75rem", color: "#64748B" }}>{c.clp_celular || c.clp_telefono || "—"}</div>
                       </td>
                       <td style={{ padding: "14px 16px" }}>
-                        {c.clp_detalle_cliente?.estado_crm === "PROSPECTO" ? (
+                        {!c.clp_activo && (c.clp_detalle_cliente?.estado_crm === "PENDIENTE_PAGO" || !c.clp_detalle_cliente?.estado_crm) ? (
                           <span
                             style={{
                               padding: "3px 10px",
@@ -501,14 +583,51 @@ export function BandejaClientesCRM({ negocio = "TRANQ" }: Props) {
                               fontSize: "0.75rem",
                               fontWeight: 700,
                               background: "#FEF3C7",
-                              color: "#92400E",
-                              border: "1px solid #FCD34D",
+                              color: "#B45309",
+                              border: "1px solid #FDE68A",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "4px",
+                            }}
+                            title="Cliente registrado pendiente de confirmación de pago"
+                          >
+                            <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#F59E0B" }} />
+                            Inactivo (Pendiente Pago)
+                          </span>
+                        ) : !c.clp_activo ? (
+                          <span
+                            style={{
+                              padding: "3px 10px",
+                              borderRadius: "12px",
+                              fontSize: "0.75rem",
+                              fontWeight: 700,
+                              background: "#F1F5F9",
+                              color: "#64748B",
+                              border: "1px solid #CBD5E1",
                               display: "inline-flex",
                               alignItems: "center",
                               gap: "4px",
                             }}
                           >
-                            <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#D97706" }} />
+                            <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#94A3B8" }} />
+                            Inactivo
+                          </span>
+                        ) : c.clp_detalle_cliente?.estado_crm === "PROSPECTO" ? (
+                          <span
+                            style={{
+                              padding: "3px 10px",
+                              borderRadius: "12px",
+                              fontSize: "0.75rem",
+                              fontWeight: 700,
+                              background: "#E0F2FE",
+                              color: "#0369A1",
+                              border: "1px solid #BAE6FD",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "4px",
+                            }}
+                          >
+                            <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#0284C7" }} />
                             Prospecto
                           </span>
                         ) : (
@@ -537,26 +656,95 @@ export function BandejaClientesCRM({ negocio = "TRANQ" }: Props) {
                         </span>
                       </td>
                       <td style={{ padding: "14px 16px", textAlign: "right" }}>
-                        <button
-                          type="button"
-                          onClick={() => setClienteSeleccionadoId(c.clp_id)}
-                          style={{
-                            background: "#F0F9FF",
-                            border: "1px solid #BAE6FD",
-                            color: "#0284C7",
-                            padding: "6px 12px",
-                            borderRadius: "8px",
-                            fontSize: "0.8rem",
-                            fontWeight: 600,
-                            cursor: "pointer",
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: "6px",
-                          }}
-                        >
-                          <Eye size={14} />
-                          Ficha 360°
-                        </button>
+                        <div style={{ display: "inline-flex", gap: "6px", alignItems: "center", justifyContent: "flex-end" }}>
+                          <button
+                            type="button"
+                            onClick={() => setClienteSeleccionadoId(c.clp_id)}
+                            style={{
+                              background: "#F0F9FF",
+                              border: "1px solid #BAE6FD",
+                              color: "#0284C7",
+                              padding: "6px 10px",
+                              borderRadius: "8px",
+                              fontSize: "0.78rem",
+                              fontWeight: 600,
+                              cursor: "pointer",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "4px",
+                            }}
+                            title="Ver Ficha 360°, Expedientes, Billetera y Citas"
+                          >
+                            <Eye size={13} />
+                            Ficha 360°
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => manejarAbrirEditar(c)}
+                            style={{
+                              background: "#F8FAFC",
+                              border: "1px solid #CBD5E1",
+                              color: "#334155",
+                              padding: "6px 10px",
+                              borderRadius: "8px",
+                              fontSize: "0.78rem",
+                              fontWeight: 600,
+                              cursor: "pointer",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "4px",
+                            }}
+                            title="Editar datos de filiación, contacto, representante legal o casilleros"
+                          >
+                            <Pencil size={13} />
+                            Editar
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => manejarAlternarEstado(c)}
+                            style={{
+                              background: c.clp_activo ? "#FEF2F2" : "#F0FDF4",
+                              border: c.clp_activo ? "1px solid #FECACA" : "1px solid #BBF7D0",
+                              color: c.clp_activo ? "#DC2626" : "#16A34A",
+                              padding: "6px 8px",
+                              borderRadius: "8px",
+                              fontSize: "0.78rem",
+                              fontWeight: 600,
+                              cursor: "pointer",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "4px",
+                            }}
+                            title={c.clp_activo ? "Inactivar cliente en el CRM" : "Activar cliente en el CRM"}
+                          >
+                            <Power size={13} />
+                            {c.clp_activo ? "Inactivar" : "Activar"}
+                          </button>
+
+                          {!c.clp_activo && (
+                            <button
+                              type="button"
+                              onClick={() => manejarEliminar(c)}
+                              style={{
+                                background: "#FFFFFF",
+                                border: "1px solid #FCA5A5",
+                                color: "#DC2626",
+                                padding: "6px 8px",
+                                borderRadius: "8px",
+                                fontSize: "0.78rem",
+                                fontWeight: 600,
+                                cursor: "pointer",
+                                display: "inline-flex",
+                                alignItems: "center",
+                              }}
+                              title="Remover prospecto (Bloqueado si posee causas judiciales o pagos)"
+                            >
+                              <Trash2 size={13} />
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   );
@@ -570,13 +758,24 @@ export function BandejaClientesCRM({ negocio = "TRANQ" }: Props) {
       {/* Modales de Alta y Detalle 360 */}
       <ModalAltaClienteAsistida
         abierto={modalAltaAbierto}
-        alCerrar={() => setModalAltaAbierto(false)}
+        clienteAEditar={clienteAEditar}
+        alCerrar={() => {
+          setModalAltaAbierto(false);
+          setClienteAEditar(null);
+        }}
         alGuardarExitoso={manejarAltaExito}
       />
 
       <FichaClienteDetalleModal
         clienteId={clienteSeleccionadoId}
         alCerrar={() => setClienteSeleccionadoId(null)}
+        alEditarCliente={() => {
+          const cliente = clientes.find((x) => x.clp_id === clienteSeleccionadoId);
+          if (cliente) {
+            setClienteSeleccionadoId(null);
+            manejarAbrirEditar(cliente);
+          }
+        }}
       />
     </div>
   );

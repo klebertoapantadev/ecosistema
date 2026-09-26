@@ -1388,8 +1388,9 @@ export async function crearClienteManual(datos: DatosCreacionCliente): Promise<R
       clp_casillero_electronico: datos.casilleroElectronico?.trim() || null,
       clp_origen_registro: "manual_operador",
       clp_creado_por: authUser.user.id,
-      clp_activo: true,
+      clp_activo: false,
       clp_detalle_cliente: {
+        estado_crm: "PENDIENTE_PAGO",
         nacionalidad: datos.nacionalidad || "ECUATORIANA",
         fecha_nacimiento: formatearFechaIsoSegura(datos.fechaNacimiento) || datos.fechaNacimiento || null,
         lugar_nacimiento: datos.lugarNacimiento || null,
@@ -1416,13 +1417,13 @@ export async function crearClienteManual(datos: DatosCreacionCliente): Promise<R
     };
 
     // Buscar si ya existe perfil por identificación o por usuario
-    let perfilExistente: { clp_id: string; clp_usuario_id?: string } | null = null;
+    let perfilExistente: { clp_id: string; clp_usuario_id?: string; clp_activo?: boolean } | null = null;
 
     try {
       const { data: pPorId } = await adminClient
         .schema("tranqui_legal")
         .from("trq_cliente_perfil")
-        .select("clp_id, clp_usuario_id")
+        .select("clp_id, clp_usuario_id, clp_activo")
         .eq("clp_identificacion", idLimpio)
         .maybeSingle();
 
@@ -1438,7 +1439,7 @@ export async function crearClienteManual(datos: DatosCreacionCliente): Promise<R
         const { data: pPorUsu } = await adminClient
           .schema("tranqui_legal")
           .from("trq_cliente_perfil")
-          .select("clp_id, clp_usuario_id")
+          .select("clp_id, clp_usuario_id, clp_activo")
           .eq("clp_usuario_id", usuarioId)
           .maybeSingle();
 
@@ -1456,6 +1457,10 @@ export async function crearClienteManual(datos: DatosCreacionCliente): Promise<R
       if (perfilExistente.clp_usuario_id) {
         payloadPerfil.clp_usuario_id = perfilExistente.clp_usuario_id;
         usuarioId = perfilExistente.clp_usuario_id;
+      }
+      // Si ya existía y estaba activo, preservar su estado activo
+      if (typeof perfilExistente.clp_activo === "boolean") {
+        payloadPerfil.clp_activo = perfilExistente.clp_activo;
       }
 
       const { data: perfilActualizado, error: errUpd } = await adminClient
@@ -1521,7 +1526,44 @@ export async function crearClienteManual(datos: DatosCreacionCliente): Promise<R
       }
     }
 
-    // 5. Registrar evento de auditoría
+    // 5. Envío Automático de Correo de Invitación para Portal Web (si tiene correo)
+    if (datos.correo && datos.correo.includes("@")) {
+      try {
+        const { enviarCorreo } = await import("@eco/notificaciones/enviar-correo");
+        const loginUrl = `https://www.tranqi24.com/ingresar?email=${encodeURIComponent(datos.correo.trim())}`;
+        await enviarCorreo({
+          negocio: "TRANQ",
+          para: datos.correo.trim(),
+          asunto: "🏛️ Bienvenido a Tranqi: Activa tu Portal Jurídico Digital",
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #E2E8F0; border-radius: 12px; background: #FFFFFF;">
+              <h2 style="color: #0284C7; margin-top: 0;">Bienvenido a Tranqi</h2>
+              <p>Estimado/a <strong>${nombreCompleto}</strong>,</p>
+              <p>Has sido registrado como cliente en nuestra plataforma jurídica digital <strong>Tranqi</strong>.</p>
+              <p>Desde tu portal personal podrás:</p>
+              <ul style="color: #334155; line-height: 1.6;">
+                <li>Consultar el estado y avance de tus causas, procesos y expedientes judiciales.</li>
+                <li>Gestionar turnos y videoconsultas de asesoría jurídica.</li>
+                <li>Acceder a tu Billetera Digital para descargar tus documentos custodiados.</li>
+                <li>Revisar comprobantes de pago y estado de honorarios.</li>
+              </ul>
+              <div style="text-align: center; margin: 28px 0;">
+                <a href="${loginUrl}" style="background: #0284C7; color: #FFFFFF; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold; display: inline-block;">
+                  Acceder a mi Portal Jurídico
+                </a>
+              </div>
+              <p style="font-size: 0.85rem; color: #64748B; margin-top: 24px; border-top: 1px solid #E2E8F0; padding-top: 12px;">
+                Si tienes alguna consulta, puedes responder directamente a este mensaje o contactar a tu asesor legal.
+              </p>
+            </div>
+          `,
+        });
+      } catch (errCorreo: any) {
+        console.warn("Aviso al enviar correo de invitación:", errCorreo?.message);
+      }
+    }
+
+    // 6. Registrar evento de auditoría
     const detalleDocs = cantidadDocsGuardados > 0
       ? ` (${cantidadDocsGuardados} documento(s) archivado(s) en su Billetera Digital)`
       : "";
@@ -1529,7 +1571,7 @@ export async function crearClienteManual(datos: DatosCreacionCliente): Promise<R
     await registrarEventoAuditoriaCliente(
       clientePerfilId,
       "creacion_cliente",
-      `Cliente ${nombreCompleto} (${idLimpio}) registrado por ${authUser.user.email} (Canal: Mostrador Despacho)${detalleDocs}.`
+      `Cliente ${nombreCompleto} (${idLimpio}) registrado por ${authUser.user.email} (Canal: Mostrador Despacho, Estado: Inactivo/Pendiente de Pago)${detalleDocs}.`
     );
 
     try {
@@ -1550,6 +1592,328 @@ export async function crearClienteManual(datos: DatosCreacionCliente): Promise<R
   } catch (error: any) {
     console.error("Error en crearClienteManual:", error);
     return { ok: false, error: error?.message || "Error al procesar el registro del cliente." };
+  }
+}
+
+/**
+ * Actualiza los datos de filiación, contacto, representante legal o casilleros de un cliente existente
+ */
+export async function actualizarClienteCRMAction(
+  clienteId: string,
+  datos: DatosCreacionCliente
+): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const supabase: any = await crearClienteServidor();
+    const adminClient: any = crearClienteAdmin() || supabase;
+    const { data: authUser, error: authError } = await supabase.auth.getUser();
+
+    if (authError || !authUser?.user) {
+      return { ok: false, error: "Sesión expirada o no autorizada. Por favor inicia sesión nuevamente." };
+    }
+
+    const { data: perfilActual, error: errPerf } = await adminClient
+      .schema("tranqui_legal")
+      .from("trq_cliente_perfil")
+      .select("*")
+      .eq("clp_id", clienteId)
+      .is("clp_eliminado_en", null)
+      .single();
+
+    if (errPerf || !perfilActual) {
+      return { ok: false, error: "El cliente a actualizar no existe o fue eliminado." };
+    }
+
+    const idLimpio = datos.identificacion.trim().replace(/[^a-zA-Z0-9]/g, "");
+    const nombreCompleto = datos.tipoPersoneria === "juridica"
+      ? (datos.razonSocial?.trim() || datos.nombreComercial?.trim() || idLimpio)
+      : `${datos.nombres?.trim() || ""} ${datos.apellidos?.trim() || ""}`.trim();
+
+    const detalleActualizado = {
+      ...(perfilActual.clp_detalle_cliente || {}),
+      nacionalidad: datos.nacionalidad || "ECUATORIANA",
+      fecha_nacimiento: formatearFechaIsoSegura(datos.fechaNacimiento) || datos.fechaNacimiento || null,
+      lugar_nacimiento: datos.lugarNacimiento || null,
+      sexo: datos.sexo || null,
+      estado_civil: datos.estadoCivil || null,
+      conyuge: datos.conyuge || null,
+      fecha_expiracion_documento: formatearFechaIsoSegura(datos.fechaExpiracionDocumento) || datos.fechaExpiracionDocumento || null,
+      actividad_economica: datos.actividadEconomica || null,
+      representante_legal: datos.representanteLegal || null,
+      apoderado_persona_natural: datos.apoderadoPersonaNatural || null,
+      contacto_facturacion: datos.contactoFacturacion || null,
+      contraparte_preliminar: datos.contrapartePreliminar || null,
+      validacion_omitida: !!datos.omitirValidacionAlgoritmo,
+      motivo_excepcion: datos.motivoExcepcion || null,
+      fecha_ultima_modificacion: new Date().toISOString(),
+      modificado_por: authUser.user.email,
+    };
+
+    const payloadUpd: any = {
+      clp_tipo_personeria: datos.tipoPersoneria,
+      clp_tipo_identificacion: datos.tipoIdentificacion,
+      clp_identificacion: idLimpio,
+      clp_nombres: datos.nombres?.trim() || null,
+      clp_apellidos: datos.apellidos?.trim() || null,
+      clp_razon_social: datos.razonSocial?.trim() || null,
+      clp_nombre_comercial: datos.nombreComercial?.trim() || null,
+      clp_correo: datos.correo?.trim() || null,
+      clp_telefono: datos.telefono?.trim() || null,
+      clp_celular: datos.celular?.trim() || null,
+      clp_direccion: datos.direccion?.trim() || null,
+      clp_casillero_judicial: datos.casilleroJudicial?.trim() || null,
+      clp_casillero_electronico: datos.casilleroElectronico?.trim() || null,
+      clp_detalle_cliente: detalleActualizado,
+    };
+
+    const { error: errUpdate } = await adminClient
+      .schema("tranqui_legal")
+      .from("trq_cliente_perfil")
+      .update(payloadUpd)
+      .eq("clp_id", clienteId);
+
+    if (errUpdate) {
+      return { ok: false, error: "Error al actualizar perfil: " + errUpdate.message };
+    }
+
+    // Sincronizar en seg_usuario si tiene usuarioId
+    if (perfilActual.clp_usuario_id) {
+      try {
+        await adminClient
+          .schema("comun_seguridad")
+          .from("seg_usuario")
+          .update({
+            usu_nombres: datos.nombres?.trim() || null,
+            usu_apellidos: datos.apellidos?.trim() || null,
+            usu_whatsapp: datos.celular?.trim() || null,
+          })
+          .eq("usu_id", perfilActual.clp_usuario_id);
+      } catch (errSeg) {
+        console.warn("Aviso al sincronizar seg_usuario:", errSeg);
+      }
+    }
+
+    // Guardar nuevos documentos si se enviaron
+    if (datos.documentosBilletera && datos.documentosBilletera.length > 0) {
+      for (const doc of datos.documentosBilletera) {
+        if (!doc.archivoBase64) continue;
+        try {
+          await adminClient
+            .schema("tranqui_legal")
+            .from("trq_billetera_documento")
+            .insert({
+              doc_usuario_id: perfilActual.clp_usuario_id || authUser.user.id,
+              doc_negocio: "TRANQ",
+              doc_categoria: doc.categoria || "identidad",
+              doc_tipo: doc.tipo || "CEDULA",
+              doc_titulo: doc.titulo || doc.archivoNombre,
+              doc_archivo_nombre: doc.archivoNombre,
+              doc_archivo_base64: doc.archivoBase64,
+              doc_archivo_mimetype: doc.archivoMimetype || "application/pdf",
+              doc_archivo_tamano: doc.archivoTamano || 0,
+              doc_numero_documento: doc.numeroDocumento || null,
+              doc_titular_nombre: doc.titularNombre || nombreCompleto,
+              doc_titular_identificacion: doc.titularIdentificacion || idLimpio,
+              doc_fecha_nacimiento: formatearFechaIsoSegura(doc.fechaNacimiento),
+              doc_fecha_caducidad: formatearFechaIsoSegura(doc.fechaCaducidad),
+              doc_metadatos_ocr: doc.metadatosOcr || {},
+              doc_detalles: doc.detalles || {},
+              doc_alertar_caducidad: true,
+              doc_meses_anticipacion_alerta: 3,
+            });
+        } catch (errDoc: any) {
+          console.warn("Aviso al guardar documento en billetera:", errDoc?.message);
+        }
+      }
+    }
+
+    // Registrar auditoría
+    await registrarEventoAuditoriaCliente(
+      clienteId,
+      "modificacion_datos",
+      `Datos del cliente ${nombreCompleto} (${idLimpio}) actualizados por ${authUser.user.email}.`
+    );
+
+    revalidatePath("/panel/clientes");
+    revalidatePath("/panel/usuarios");
+    return { ok: true };
+  } catch (err: any) {
+    console.error("Error en actualizarClienteCRMAction:", err);
+    return { ok: false, error: err?.message || "Error al actualizar los datos del cliente." };
+  }
+}
+
+/**
+ * Activa o inactiva a un cliente en el CRM
+ */
+export async function alternarEstadoClienteCRMAction(
+  clienteId: string,
+  activo: boolean
+): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const supabase: any = await crearClienteServidor();
+    const adminClient: any = crearClienteAdmin() || supabase;
+    const { data: authUser, error: authError } = await supabase.auth.getUser();
+
+    if (authError || !authUser?.user) {
+      return { ok: false, error: "Sesión expirada o no autorizada." };
+    }
+
+    const { data: perfil, error: errPerfil } = await adminClient
+      .schema("tranqui_legal")
+      .from("trq_cliente_perfil")
+      .select("clp_id, clp_nombres, clp_apellidos, clp_razon_social, clp_identificacion, clp_detalle_cliente")
+      .eq("clp_id", clienteId)
+      .is("clp_eliminado_en", null)
+      .single();
+
+    if (errPerfil || !perfil) {
+      return { ok: false, error: "Cliente no encontrado." };
+    }
+
+    const nuevoEstadoCRM = activo ? "ACTIVO" : "INACTIVO";
+    const nuevoDetalle = {
+      ...(perfil.clp_detalle_cliente || {}),
+      estado_crm: nuevoEstadoCRM,
+      fecha_cambio_estado: new Date().toISOString(),
+      cambiado_por: authUser.user.email,
+    };
+
+    const { error: errUpd } = await adminClient
+      .schema("tranqui_legal")
+      .from("trq_cliente_perfil")
+      .update({
+        clp_activo: activo,
+        clp_detalle_cliente: nuevoDetalle,
+      })
+      .eq("clp_id", clienteId);
+
+    if (errUpd) {
+      return { ok: false, error: "Error al actualizar estado: " + errUpd.message };
+    }
+
+    const nombreCliente = perfil.clp_razon_social || `${perfil.clp_nombres || ""} ${perfil.clp_apellidos || ""}`.trim();
+    await registrarEventoAuditoriaCliente(
+      clienteId,
+      "modificacion_datos",
+      `Estado del cliente ${nombreCliente} (${perfil.clp_identificacion}) cambiado a [${activo ? "ACTIVO" : "INACTIVO"}] por ${authUser.user.email}.`
+    );
+
+    revalidatePath("/panel/clientes");
+    return { ok: true };
+  } catch (err: any) {
+    console.error("Error en alternarEstadoClienteCRMAction:", err);
+    return { ok: false, error: err?.message || "Error al alternar estado del cliente." };
+  }
+}
+
+/**
+ * Elimina un cliente solo si no tiene casos jurídicos, citas ni transacciones de pago.
+ * Si tiene expedientes o pagos, la eliminación se bloquea y solo se permite la inactivación.
+ */
+export async function eliminarClienteCRMAction(clienteId: string): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const supabase: any = await crearClienteServidor();
+    const adminClient: any = crearClienteAdmin() || supabase;
+    const { data: authUser, error: authError } = await supabase.auth.getUser();
+
+    if (authError || !authUser?.user) {
+      return { ok: false, error: "Sesión expirada o no autorizada." };
+    }
+
+    const { data: perfil, error: errPerfil } = await adminClient
+      .schema("tranqui_legal")
+      .from("trq_cliente_perfil")
+      .select("clp_id, clp_usuario_id, clp_nombres, clp_apellidos, clp_razon_social, clp_identificacion, clp_activo, clp_detalle_cliente")
+      .eq("clp_id", clienteId)
+      .is("clp_eliminado_en", null)
+      .single();
+
+    if (errPerfil || !perfil) {
+      return { ok: false, error: "El cliente no existe o ya fue eliminado." };
+    }
+
+    const usuarioId = perfil.clp_usuario_id;
+
+    // Regla 1: Bloquear si tiene casos judiciales o expedientes creados
+    if (usuarioId) {
+      const { count: countCasos } = await adminClient
+        .schema("tranqui_legal")
+        .from("trq_caso_judicial")
+        .select("cas_id", { count: "exact", head: true })
+        .eq("cas_cliente_id", usuarioId)
+        .is("cas_eliminado_en", null);
+
+      if (countCasos && countCasos > 0) {
+        return {
+          ok: false,
+          error: `No es posible eliminar el cliente porque tiene ${countCasos} expediente(s) o causa(s) jurídica(s) vinculada(s). Por regla de custodia procesal, solo está permitido Inactivarlo.`,
+        };
+      }
+
+      // Regla 2: Bloquear si tiene citas agendadas
+      const { count: countCitas } = await adminClient
+        .schema("tranqui_legal")
+        .from("trq_cita")
+        .select("cit_id", { count: "exact", head: true })
+        .eq("cit_cliente_id", usuarioId)
+        .is("cit_eliminado_en", null);
+
+      if (countCitas && countCitas > 0) {
+        return {
+          ok: false,
+          error: `No es posible eliminar el cliente porque tiene ${countCitas} cita(s) agendada(s). Por favor inactiva el cliente.`,
+        };
+      }
+
+      // Regla 3: Bloquear si tiene honorarios o facturación
+      const { count: countHonorarios } = await adminClient
+        .schema("tranqui_legal")
+        .from("trq_honorario")
+        .select("hon_id", { count: "exact", head: true })
+        .eq("hon_cliente_id", usuarioId);
+
+      if (countHonorarios && countHonorarios > 0) {
+        return {
+          ok: false,
+          error: "No es posible eliminar un cliente con honorarios o pagos registrados. Solo puede ser Inactivado.",
+        };
+      }
+    }
+
+    // Regla 4: No se puede eliminar directamente si está activo
+    if (perfil.clp_activo) {
+      return {
+        ok: false,
+        error: "Un cliente activo no puede eliminarse directamente. Si no tiene casos asociados, primero debe inactivarse.",
+      };
+    }
+
+    // Soft delete seguro
+    const { error: errDel } = await adminClient
+      .schema("tranqui_legal")
+      .from("trq_cliente_perfil")
+      .update({
+        clp_eliminado_en: new Date().toISOString(),
+        clp_activo: false,
+      })
+      .eq("clp_id", clienteId);
+
+    if (errDel) {
+      return { ok: false, error: "Error al eliminar cliente: " + errDel.message };
+    }
+
+    const nombreCliente = perfil.clp_razon_social || `${perfil.clp_nombres || ""} ${perfil.clp_apellidos || ""}`.trim();
+    await registrarEventoAuditoriaCliente(
+      clienteId,
+      "modificacion_datos",
+      `Cliente prospecto ${nombreCliente} (${perfil.clp_identificacion}) removido del CRM por ${authUser.user.email}.`
+    );
+
+    revalidatePath("/panel/clientes");
+    return { ok: true };
+  } catch (err: any) {
+    console.error("Error en eliminarClienteCRMAction:", err);
+    return { ok: false, error: err?.message || "Error al procesar la eliminación del cliente." };
   }
 }
 

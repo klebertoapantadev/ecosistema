@@ -19,6 +19,11 @@ const PK_POR_TABLA: Record<string, string> = {
   trq_solicitud_materia: "sma_id",
   trq_solicitud_provincia: "spr_id",
   trq_solicitud_socio: "ssc_id",
+  trq_cliente_perfil: "clp_id",
+  trq_billetera_documento: "doc_id",
+  trq_caso_judicial: "cas_id",
+  trq_cita: "cit_id",
+  trq_honorario: "hon_id",
   seg_usuario: "usu_id",
   seg_membresia: "mem_id",
   seg_otp_correo: "otp_id",
@@ -34,6 +39,11 @@ export const ETIQUETA_TABLA: Record<string, string> = {
   trq_solicitud_materia: "Solicitud × materia",
   trq_solicitud_provincia: "Solicitud × provincia",
   trq_solicitud_socio: "Solicitud de socio",
+  trq_cliente_perfil: "Perfil de Cliente CRM",
+  trq_billetera_documento: "Billetera de Documentos",
+  trq_caso_judicial: "Expediente Jurídico",
+  trq_cita: "Cita / Turno",
+  trq_honorario: "Honorarios y Pagos",
   seg_usuario: "Cuenta de usuario",
   seg_membresia: "Membresía",
   seg_otp_correo: "Verificación de correo (OTP)",
@@ -91,7 +101,19 @@ function idCorto(registro: RegistroAuditoria): string {
 
 function nombreActor(registro: RegistroAuditoria): string {
   const nombre = [registro.actor_nombres, registro.actor_apellidos].filter(Boolean).join(" ");
-  return nombre || registro.actor_correo || "—";
+  if (nombre) return nombre;
+  if (registro.actor_correo) return registro.actor_correo;
+  const nuevo = (registro.reg_datos_nuevos || {}) as Record<string, any>;
+  const anterior = (registro.reg_datos_anteriores || {}) as Record<string, any>;
+  return (
+    nuevo.usuario_email ||
+    nuevo.cambiado_por ||
+    nuevo.modificado_por ||
+    nuevo.creado_por ||
+    anterior.usuario_email ||
+    anterior.cambiado_por ||
+    "Operador / Sistema"
+  );
 }
 
 const COLUMNAS: ColumnaDataGrid<RegistroAuditoria>[] = [

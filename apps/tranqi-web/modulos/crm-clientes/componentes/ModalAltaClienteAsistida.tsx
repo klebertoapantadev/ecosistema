@@ -1,12 +1,10 @@
-"use client";
-
-import React, { useState, useTransition } from "react";
+import React, { useState, useEffect, useTransition } from "react";
 import {
   X, User, Building2, ShieldCheck, AlertTriangle, Sparkles, Upload,
   FileText, CheckCircle2, ArrowRight, Calendar, Scale, Info, Check, Eye,
   Copy, Layers, FileCheck, HelpCircle, Briefcase, ChevronDown, ChevronUp,
   UserCheck, Send, CheckSquare, Hash, Award, Building, Wallet, Lock, Shield,
-  Trash2, FilePlus2, RotateCcw
+  Trash2, FilePlus2, RotateCcw, Edit3
 } from "lucide-react";
 import {
   validarCedulaEcuador,
@@ -16,6 +14,7 @@ import {
   verificarDuplicado,
   verificarConflictoIntereses,
   crearClienteManual,
+  actualizarClienteCRMAction,
   type DatosCreacionCliente,
   type DocumentoBilleteraCarga,
   type ResultadoAriaIdentificacion,
@@ -27,6 +26,7 @@ import {
 interface Props {
   abierto: boolean;
   alCerrar: () => void;
+  clienteAEditar?: any | null;
   alGuardarExitoso: (resultado: {
     clienteId: string;
     usuarioId: string;
@@ -90,7 +90,7 @@ function IndicadorOrigenCampo({ esAria, esModificado }: { esAria?: boolean; esMo
   return null;
 }
 
-export function ModalAltaClienteAsistida({ abierto, alCerrar, alGuardarExitoso }: Props) {
+export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, alGuardarExitoso }: Props) {
   const [isPending, startTransition] = useTransition();
 
   // Tipo de personería
@@ -137,6 +137,52 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, alGuardarExitoso }
   const [apoCedula, setApoCedula] = useState("");
   const [apoCalidadPoder, setApoCalidadPoder] = useState("Apoderado General");
   const [apoNotariaVigencia, setApoNotariaVigencia] = useState("");
+
+  // Precargar datos si se abre en modo edición
+  useEffect(() => {
+    if (clienteAEditar) {
+      setTipoPersoneria(clienteAEditar.clp_tipo_personeria || "natural");
+      setTipoIdentificacion(clienteAEditar.clp_tipo_identificacion || "cedula");
+      setIdentificacion(clienteAEditar.clp_identificacion || "");
+      setNombres(clienteAEditar.clp_nombres || "");
+      setApellidos(clienteAEditar.clp_apellidos || "");
+      setRazonSocial(clienteAEditar.clp_razon_social || "");
+      setNombreComercial(clienteAEditar.clp_nombre_comercial || "");
+      setCorreo(clienteAEditar.clp_correo || "");
+      setCelular(clienteAEditar.clp_celular || "");
+      setTelefono(clienteAEditar.clp_telefono || "");
+      setDireccion(clienteAEditar.clp_direccion || "");
+      setCasilleroJudicial(clienteAEditar.clp_casillero_judicial || "");
+      setCasilleroElectronico(clienteAEditar.clp_casillero_electronico || "");
+
+      const det = clienteAEditar.clp_detalle_cliente || {};
+      setNacionalidad(det.nacionalidad || "ECUATORIANA");
+      setFechaNacimiento(det.fecha_nacimiento || "");
+      setLugarNacimiento(det.lugar_nacimiento || "");
+      setSexo(det.sexo || "HOMBRE");
+      setEstadoCivil(det.estado_civil || "SOLTERO");
+      setConyuge(det.conyuge || "");
+      setFechaExpiracionDocumento(det.fecha_expiracion_documento || "");
+      setActividadEconomica(det.actividad_economica || "");
+
+      if (det.representante_legal) {
+        setRepNombres(det.representante_legal.nombres || "");
+        setRepCedula(det.representante_legal.cedula || "");
+        setRepCargo(det.representante_legal.cargo || "Gerente General");
+        setRepVencimientoNombramiento(det.representante_legal.nombramientoVence || "");
+        setRepCorreo(det.representante_legal.correo || "");
+        setRepCelular(det.representante_legal.celular || "");
+      }
+
+      if (det.apoderado_persona_natural) {
+        setTieneApoderadoNatural(true);
+        setApoNombres(det.apoderado_persona_natural.nombres || "");
+        setApoCedula(det.apoderado_persona_natural.cedula || "");
+        setApoCalidadPoder(det.apoderado_persona_natural.calidadPoder || "Apoderado General");
+        setApoNotariaVigencia(det.apoderado_persona_natural.notariaVigencia || "");
+      }
+    }
+  }, [clienteAEditar]);
 
   // Contraparte y Conflict Check
   const [contraparteNombres, setContraparteNombres] = useState("");
@@ -529,7 +575,7 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, alGuardarExitoso }
         setErrorValidacion("Nombres y Apellidos son obligatorios para personas naturales.");
         return;
       }
-      if (!archivoCedulaNatural && !omitirValidacionAlgoritmo) {
+      if (!archivoCedulaNatural && !omitirValidacionAlgoritmo && !clienteAEditar) {
         setErrorValidacion("⚠️ La Cédula de Identidad es obligatoria para Persona Natural. Sube el documento para que ARIA lo analice y archive en la Billetera Digital (o activa la casilla 'Omitir validación por excepción').");
         return;
       }
@@ -540,11 +586,11 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, alGuardarExitoso }
         setErrorValidacion("La Razón Social es obligatoria para personas jurídicas.");
         return;
       }
-      if (!archivoRepCedula && !omitirValidacionAlgoritmo) {
+      if (!archivoRepCedula && !omitirValidacionAlgoritmo && !clienteAEditar) {
         setErrorValidacion("⚠️ La Cédula de Identidad del Representante Legal es obligatoria para Empresas. Súbela en la sección de documentos (o activa 'Omitir validación por excepción').");
         return;
       }
-      if (!archivoNombramiento && !omitirValidacionAlgoritmo) {
+      if (!archivoNombramiento && !omitirValidacionAlgoritmo && !clienteAEditar) {
         setErrorValidacion("⚠️ El Nombramiento inscrito de Representante Legal es obligatorio para Empresas. Súbelo en la sección de documentos (o activa 'Omitir validación por excepción').");
         return;
       }
@@ -692,21 +738,37 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, alGuardarExitoso }
           documentosBilletera: docsParaBilletera.length > 0 ? docsParaBilletera : undefined,
         };
 
-        const res = await crearClienteManual(datos);
-        if (!res.ok) {
-          setErrorValidacion(res.error || "Error al registrar cliente.");
-          return;
+        if (clienteAEditar?.clp_id) {
+          const res = await actualizarClienteCRMAction(clienteAEditar.clp_id, datos);
+          if (!res.ok) {
+            setErrorValidacion(res.error || "Error al actualizar cliente.");
+            return;
+          }
+          limpiarFormulario();
+          alGuardarExitoso({
+            clienteId: clienteAEditar.clp_id,
+            usuarioId: clienteAEditar.clp_usuario_id || "",
+            nombreCompleto: datos.tipoPersoneria === "juridica" ? (datos.razonSocial || datos.identificacion) : `${datos.nombres} ${datos.apellidos}`.trim(),
+            identificacion: datos.identificacion,
+            accionContinuidad,
+          });
+        } else {
+          const res = await crearClienteManual(datos);
+          if (!res.ok) {
+            setErrorValidacion(res.error || "Error al registrar cliente.");
+            return;
+          }
+          limpiarFormulario();
+          alGuardarExitoso({
+            clienteId: res.clienteId || "",
+            usuarioId: res.usuarioId || "",
+            nombreCompleto: res.nombreCompleto || "",
+            identificacion: res.identificacion || "",
+            accionContinuidad,
+          });
         }
-        limpiarFormulario();
-        alGuardarExitoso({
-          clienteId: res.clienteId || "",
-          usuarioId: res.usuarioId || "",
-          nombreCompleto: res.nombreCompleto || "",
-          identificacion: res.identificacion || "",
-          accionContinuidad,
-        });
       } catch (err: any) {
-        setErrorValidacion(err?.message || "Error al registrar cliente.");
+        setErrorValidacion(err?.message || "Error al procesar la solicitud.");
       }
     });
   };
@@ -758,11 +820,11 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, alGuardarExitoso }
         >
           <div>
             <h2 style={{ margin: 0, fontSize: "1.15rem", fontWeight: 700, color: "#0F172A", display: "flex", alignItems: "center", gap: "8px" }}>
-              <Scale size={20} color="#0284C7" />
-              Alta Manual Asistida de Cliente · CRM Jurídico
+              {clienteAEditar ? <Edit3 size={20} color="#0284C7" /> : <Scale size={20} color="#0284C7" />}
+              {clienteAEditar ? "Editar Datos del Cliente · CRM Jurídico" : "Alta Manual Asistida de Cliente · CRM Jurídico"}
             </h2>
             <p style={{ margin: "2px 0 0", fontSize: "0.82rem", color: "#64748B" }}>
-              Ingreso para Personas Naturales, Empresas, Representantes y Litigios Telemáticos
+              {clienteAEditar ? `Actualizando ficha de ${clienteAEditar.clp_identificacion}` : "Ingreso para Personas Naturales, Empresas, Representantes y Litigios Telemáticos"}
             </p>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
