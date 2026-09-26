@@ -636,11 +636,15 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, alGuardarExitoso }
         };
 
         const res = await crearClienteManual(datos);
+        if (!res.ok) {
+          setErrorValidacion(res.error || "Error al registrar cliente.");
+          return;
+        }
         alGuardarExitoso({
-          clienteId: res.clienteId,
+          clienteId: res.clienteId || "",
           usuarioId: res.usuarioId || "",
-          nombreCompleto: res.nombreCompleto,
-          identificacion: res.identificacion,
+          nombreCompleto: res.nombreCompleto || "",
+          identificacion: res.identificacion || "",
           accionContinuidad,
         });
       } catch (err: any) {

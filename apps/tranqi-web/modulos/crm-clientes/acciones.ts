@@ -1202,17 +1202,27 @@ function formatearFechaIsoSegura(f?: string | null): string | null {
   }
 }
 
+export interface ResultadoCreacionCliente {
+  ok: boolean;
+  clienteId?: string;
+  usuarioId?: string;
+  nombreCompleto?: string;
+  identificacion?: string;
+  documentosGuardados?: number;
+  error?: string;
+}
+
 /**
  * Crea un cliente de forma manual asistida en el CRM
  */
-export async function crearClienteManual(datos: DatosCreacionCliente) {
+export async function crearClienteManual(datos: DatosCreacionCliente): Promise<ResultadoCreacionCliente> {
   try {
     const supabase: any = await crearClienteServidor();
     const adminClient: any = crearClienteAdmin() || supabase;
 
     const { data: authUser } = await supabase.auth.getUser();
     if (!authUser?.user) {
-      throw new Error("No autenticado en la plataforma.");
+      return { ok: false, error: "No autenticado en la plataforma. Por favor inicia sesión nuevamente." };
     }
 
     const idLimpio = datos.identificacion.trim();
@@ -1221,10 +1231,10 @@ export async function crearClienteManual(datos: DatosCreacionCliente) {
     if (!datos.omitirValidacionAlgoritmo) {
       if (datos.tipoPersoneria === "natural" && datos.tipoIdentificacion === "cedula") {
         const v = await validarCedulaEcuador(idLimpio);
-        if (!v.valida) throw new Error(`Cédula inválida: ${v.motivo}`);
+        if (!v.valida) return { ok: false, error: `Cédula inválida: ${v.motivo}` };
       } else if (datos.tipoPersoneria === "juridica" || datos.tipoIdentificacion === "ruc") {
         const v = await validarRucEcuador(idLimpio);
-        if (!v.valida) throw new Error(`RUC inválido: ${v.motivo}`);
+        if (!v.valida) return { ok: false, error: `RUC inválido: ${v.motivo}` };
       }
     }
 
@@ -1236,48 +1246,60 @@ export async function crearClienteManual(datos: DatosCreacionCliente) {
     // 2. Localizar o aprovisionar usuario en auth.users / seg_usuario
     let usuarioId: string | null = null;
 
-    // Buscar en seg_usuario por correo
-    const { data: usuarioPorCorreo } = await adminClient
-      .schema("comun_seguridad")
-      .from("seg_usuario")
-      .select("usu_id")
-      .eq("usu_correo", emailFinal)
-      .maybeSingle();
-
-    if (usuarioPorCorreo?.usu_id) {
-      usuarioId = usuarioPorCorreo.usu_id;
-    }
-
-    // Si no, buscar por usu_cedula
-    if (!usuarioId && idLimpio.length === 10) {
-      const { data: usuarioPorCedula } = await adminClient
+    // A. Buscar en seg_usuario por correo
+    try {
+      const { data: usuarioPorCorreo } = await adminClient
         .schema("comun_seguridad")
         .from("seg_usuario")
         .select("usu_id")
-        .eq("usu_cedula", idLimpio)
+        .eq("usu_correo", emailFinal)
         .maybeSingle();
 
-      if (usuarioPorCedula?.usu_id) {
-        usuarioId = usuarioPorCedula.usu_id;
+      if (usuarioPorCorreo?.usu_id) {
+        usuarioId = usuarioPorCorreo.usu_id;
+      }
+    } catch (e) {
+      console.warn("Aviso búsqueda por correo:", e);
+    }
+
+    // B. Buscar por usu_cedula
+    if (!usuarioId && idLimpio.length === 10) {
+      try {
+        const { data: usuarioPorCedula } = await adminClient
+          .schema("comun_seguridad")
+          .from("seg_usuario")
+          .select("usu_id")
+          .eq("usu_cedula", idLimpio)
+          .maybeSingle();
+
+        if (usuarioPorCedula?.usu_id) {
+          usuarioId = usuarioPorCedula.usu_id;
+        }
+      } catch (e) {
+        console.warn("Aviso búsqueda por cedula:", e);
       }
     }
 
-    // Si no, buscar si ya existe un perfil de cliente
+    // C. Buscar si ya existe un perfil de cliente
     if (!usuarioId) {
-      const { data: perfilPorId } = await adminClient
-        .schema("tranqui_legal")
-        .from("trq_cliente_perfil")
-        .select("clp_usuario_id")
-        .eq("clp_identificacion", idLimpio)
-        .maybeSingle();
+      try {
+        const { data: perfilPorId } = await adminClient
+          .schema("tranqui_legal")
+          .from("trq_cliente_perfil")
+          .select("clp_usuario_id")
+          .eq("clp_identificacion", idLimpio)
+          .maybeSingle();
 
-      if (perfilPorId?.clp_usuario_id) {
-        usuarioId = perfilPorId.clp_usuario_id;
+        if (perfilPorId?.clp_usuario_id) {
+          usuarioId = perfilPorId.clp_usuario_id;
+        }
+      } catch (e) {
+        console.warn("Aviso búsqueda por perfil:", e);
       }
     }
 
-    // Si aún no existe, crearlo vía auth.admin.createUser
-    if (!usuarioId) {
+    // D. Si aún no existe y tenemos adminClient con auth.admin, intentar crearlo
+    if (!usuarioId && adminClient?.auth?.admin?.createUser) {
       try {
         const { data: authCreated } = await adminClient.auth.admin.createUser({
           email: emailFinal,
@@ -1349,7 +1371,7 @@ export async function crearClienteManual(datos: DatosCreacionCliente) {
     }
 
     // 3. Insertar o actualizar perfil en tranqui_legal.trq_cliente_perfil
-    const payloadPerfil = {
+    const payloadPerfil: any = {
       clp_usuario_id: usuarioId,
       clp_tipo_personeria: datos.tipoPersoneria,
       clp_tipo_identificacion: datos.tipoIdentificacion,
@@ -1394,43 +1416,58 @@ export async function crearClienteManual(datos: DatosCreacionCliente) {
     };
 
     // Buscar si ya existe perfil por identificación o por usuario
-    let perfilExistente = null;
+    let perfilExistente: { clp_id: string; clp_usuario_id?: string } | null = null;
 
-    const { data: pPorId } = await adminClient
-      .schema("tranqui_legal")
-      .from("trq_cliente_perfil")
-      .select("clp_id")
-      .eq("clp_identificacion", idLimpio)
-      .maybeSingle();
-
-    if (pPorId?.clp_id) {
-      perfilExistente = pPorId;
-    } else {
-      const { data: pPorUsu } = await adminClient
+    try {
+      const { data: pPorId } = await adminClient
         .schema("tranqui_legal")
         .from("trq_cliente_perfil")
-        .select("clp_id")
-        .eq("clp_usuario_id", usuarioId)
+        .select("clp_id, clp_usuario_id")
+        .eq("clp_identificacion", idLimpio)
         .maybeSingle();
 
-      if (pPorUsu?.clp_id) {
-        perfilExistente = pPorUsu;
+      if (pPorId?.clp_id) {
+        perfilExistente = pPorId;
+      }
+    } catch (e) {
+      console.warn("Aviso búsqueda perfil por ID:", e);
+    }
+
+    if (!perfilExistente) {
+      try {
+        const { data: pPorUsu } = await adminClient
+          .schema("tranqui_legal")
+          .from("trq_cliente_perfil")
+          .select("clp_id, clp_usuario_id")
+          .eq("clp_usuario_id", usuarioId)
+          .maybeSingle();
+
+        if (pPorUsu?.clp_id) {
+          perfilExistente = pPorUsu;
+        }
+      } catch (e) {
+        console.warn("Aviso búsqueda perfil por usuario:", e);
       }
     }
 
     let clientePerfilId: string;
 
     if (perfilExistente) {
+      if (perfilExistente.clp_usuario_id) {
+        payloadPerfil.clp_usuario_id = perfilExistente.clp_usuario_id;
+        usuarioId = perfilExistente.clp_usuario_id;
+      }
+
       const { data: perfilActualizado, error: errUpd } = await adminClient
         .schema("tranqui_legal")
         .from("trq_cliente_perfil")
         .update(payloadPerfil)
         .eq("clp_id", perfilExistente.clp_id)
         .select("clp_id")
-        .single();
+        .maybeSingle();
 
       if (errUpd || !perfilActualizado) {
-        throw new Error(`Error al actualizar perfil de cliente: ${errUpd?.message || "Desconocido"}`);
+        return { ok: false, error: `Error al actualizar perfil de cliente: ${errUpd?.message || "Error desconocido"}` };
       }
       clientePerfilId = perfilActualizado.clp_id;
     } else {
@@ -1439,10 +1476,10 @@ export async function crearClienteManual(datos: DatosCreacionCliente) {
         .from("trq_cliente_perfil")
         .insert(payloadPerfil)
         .select("clp_id")
-        .single();
+        .maybeSingle();
 
       if (errIns || !perfilCreado) {
-        throw new Error(`Error al crear perfil de cliente: ${errIns?.message || "Desconocido"}`);
+        return { ok: false, error: `Error al crear perfil de cliente: ${errIns?.message || "Error desconocido"}` };
       }
       clientePerfilId = perfilCreado.clp_id;
     }
@@ -1479,7 +1516,7 @@ export async function crearClienteManual(datos: DatosCreacionCliente) {
             });
           cantidadDocsGuardados++;
         } catch (errDoc: any) {
-          console.error("Error al persistir documento en billetera digital:", errDoc?.message);
+          console.warn("Aviso al guardar documento en billetera:", errDoc?.message);
         }
       }
     }
@@ -1495,8 +1532,12 @@ export async function crearClienteManual(datos: DatosCreacionCliente) {
       `Cliente ${nombreCompleto} (${idLimpio}) registrado por ${authUser.user.email} (Canal: Mostrador Despacho)${detalleDocs}.`
     );
 
-    revalidatePath("/panel/clientes");
-    revalidatePath("/panel/usuarios");
+    try {
+      revalidatePath("/panel/clientes");
+      revalidatePath("/panel/usuarios");
+    } catch (e) {
+      console.warn("Aviso revalidatePath:", e);
+    }
 
     return {
       ok: true,
@@ -1508,7 +1549,7 @@ export async function crearClienteManual(datos: DatosCreacionCliente) {
     };
   } catch (error: any) {
     console.error("Error en crearClienteManual:", error);
-    throw new Error(error?.message || "Error al guardar el cliente.");
+    return { ok: false, error: error?.message || "Error al procesar el registro del cliente." };
   }
 }
 
