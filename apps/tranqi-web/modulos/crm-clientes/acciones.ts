@@ -211,7 +211,7 @@ async function extraerTextoDeBufferPdf(buffer: Buffer): Promise<string> {
     // La capa oculta del MRZ sale pegada a la visible ("ABCABC"): se deja una copia.
     return text
       .split("\n")
-      .map((linea) => {
+      .map((linea: string) => {
         const mitad = linea.length / 2;
         return Number.isInteger(mitad) && mitad > 0 && linea.slice(0, mitad) === linea.slice(mitad) ? linea.slice(0, mitad) : linea;
       })
@@ -838,45 +838,220 @@ export async function analizarNombramientoConAria(
 /**
  * Verifica si la identificación o correo ya existen en el sistema
  */
-export async function verificarDuplicado(identificacion: string, correo?: string) {
+export interface InformacionPlanClienteVerif {
+  suscripcionId: string;
+  planNombre: string;
+  planSku: string;
+  frecuencia: string;
+  monto: number;
+  proximoCobro: string | null;
+  consultasDisponibles: number | null;
+  esGratuito: boolean;
+}
+
+export interface ResultadoVerificacionCliente {
+  existe: boolean;
+  tipo?: "cliente_perfil" | "usuario_existente" | "ambos";
+  esUsuarioWeb: boolean;
+  tienePlanActivo: boolean;
+  clienteCRM?: any;
+  usuarioWeb?: {
+    id: string;
+    nombreCompleto: string;
+    correo: string;
+    creadoEn?: string;
+  };
+  planActivo?: InformacionPlanClienteVerif;
+  mensaje?: string;
+  advertencias: Array<{
+    tipo: "info" | "alerta" | "exito";
+    titulo: string;
+    descripcion: string;
+  }>;
+}
+
+/**
+ * Verifica si la identificación o correo ya existen en el sistema (CRM y Usuario Web)
+ * y si cuenta con un plan/suscripción vigente activo en el ecosistema.
+ */
+export async function verificarDuplicado(
+  identificacion: string,
+  correo?: string,
+  negocio = "tranqi"
+): Promise<ResultadoVerificacionCliente> {
   const supabase: any = await crearClienteServidor();
-  const idLimrio = identificacion.trim();
+  const idLimpio = identificacion ? identificacion.trim() : "";
+  const correoLimpio = correo ? correo.trim().toLowerCase() : "";
 
-  const { data: clienteExistente } = await supabase
-    .from("trq_cliente_perfil")
-    .select("clp_id, clp_nombres, clp_apellidos, clp_razon_social, clp_identificacion, clp_correo, clp_telefono")
-    .eq("clp_identificacion", idLimrio)
-    .is("clp_eliminado_en", null)
-    .maybeSingle();
+  let clienteCRM: any = null;
+  let usuarioWeb: any = null;
+  let planActivo: InformacionPlanClienteVerif | undefined = undefined;
+  const advertencias: Array<{ tipo: "info" | "alerta" | "exito"; titulo: string; descripcion: string }> = [];
 
-  if (clienteExistente) {
-    return {
-      existe: true,
-      tipo: "cliente_perfil",
-      cliente: clienteExistente,
-      mensaje: `Cliente ya registrado: ${(clienteExistente as any).clp_razon_social || `${(clienteExistente as any).clp_nombres} ${(clienteExistente as any).clp_apellidos}`}`,
-    };
+  // 1. Buscar en trq_cliente_perfil (CRM Legal)
+  if (idLimpio.length >= 8) {
+    const { data: cExist } = await supabase
+      .from("trq_cliente_perfil")
+      .select("clp_id, clp_usuario_id, clp_nombres, clp_apellidos, clp_razon_social, clp_identificacion, clp_correo, clp_telefono")
+      .eq("clp_identificacion", idLimpio)
+      .is("clp_eliminado_en", null)
+      .maybeSingle();
+
+    if (cExist) {
+      clienteCRM = cExist;
+    }
   }
 
-  if (correo && correo.trim().length > 3) {
-    const { data: usuarioCorreo } = await supabase
+  if (!clienteCRM && correoLimpio.length > 4) {
+    const { data: cExistCorreo } = await supabase
+      .from("trq_cliente_perfil")
+      .select("clp_id, clp_usuario_id, clp_nombres, clp_apellidos, clp_razon_social, clp_identificacion, clp_correo, clp_telefono")
+      .eq("clp_correo", correoLimpio)
+      .is("clp_eliminado_en", null)
+      .maybeSingle();
+
+    if (cExistCorreo) {
+      clienteCRM = cExistCorreo;
+    }
+  }
+
+  // 2. Buscar en seg_usuario (Usuarios de la Plataforma Web / Google OAuth)
+  const targetUserId = clienteCRM?.clp_usuario_id;
+
+  if (targetUserId) {
+    const { data: uData } = await supabase
       .from("seg_usuario" as any)
-      .select("usu_id, usu_nombre_completo, usu_correo")
-      .eq("usu_correo", correo.trim().toLowerCase())
+      .select("usu_id, usu_nombre_completo, usu_nombres, usu_apellidos, usu_correo, usu_creado_en")
+      .eq("usu_id", targetUserId)
       .is("usu_eliminado_en", null)
       .maybeSingle();
 
-    if (usuarioCorreo) {
-      return {
-        existe: true,
-        tipo: "usuario_existente",
-        usuario: usuarioCorreo,
-        mensaje: `Usuario registrado en la plataforma con el correo ${correo}. Se vinculará su perfil de cliente.`,
+    if (uData) {
+      usuarioWeb = {
+        id: uData.usu_id,
+        nombreCompleto: uData.usu_nombre_completo || `${uData.usu_nombres || ""} ${uData.usu_apellidos || ""}`.trim(),
+        correo: uData.usu_correo,
+        creadoEn: uData.usu_creado_en,
+      };
+    }
+  } else if (correoLimpio.length > 4) {
+    const { data: uDataCorreo } = await supabase
+      .from("seg_usuario" as any)
+      .select("usu_id, usu_nombre_completo, usu_nombres, usu_apellidos, usu_correo, usu_creado_en")
+      .eq("usu_correo", correoLimpio)
+      .is("usu_eliminado_en", null)
+      .maybeSingle();
+
+    if (uDataCorreo) {
+      usuarioWeb = {
+        id: uDataCorreo.usu_id,
+        nombreCompleto: uDataCorreo.usu_nombre_completo || `${uDataCorreo.usu_nombres || ""} ${uDataCorreo.usu_apellidos || ""}`.trim(),
+        correo: uDataCorreo.usu_correo,
+        creadoEn: uDataCorreo.usu_creado_en,
       };
     }
   }
 
-  return { existe: false };
+  // 3. Consultar Suscripción / Plan Vigente en comun_comercio
+  const userIdParaPlan = usuarioWeb?.id || clienteCRM?.clp_usuario_id;
+  if (userIdParaPlan) {
+    try {
+      const { data: subs } = await supabase
+        .schema("comun_comercio")
+        .from("com_suscripcion")
+        .select("sub_id, sub_estado, sub_frecuencia, sub_monto_periodo, sub_proximo_cobro_en, com_variante(var_nombre, var_sku, var_detalle_variante)")
+        .eq("sub_cliente_id", userIdParaPlan)
+        .eq("sub_negocio", negocio)
+        .eq("sub_estado", "ACTIVA")
+        .is("sub_eliminado_en", null)
+        .order("sub_creado_en", { ascending: false })
+        .limit(1);
+
+      if (subs && subs.length > 0) {
+        const sub = subs[0];
+        const variante = (sub as any).com_variante || {};
+        const monto = Number(sub.sub_monto_periodo || 0);
+        const sku = variante.var_sku || "PLAN";
+        const nombre = variante.var_nombre || "Plan Vigente";
+
+        // Obtener saldo de derechos de consumo disponibles
+        let consultasDisponibles: number | null = null;
+        try {
+          const primerDiaMes = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split("T")[0];
+          const { data: der } = await supabase
+            .schema("comun_comercio")
+            .from("com_derecho_consumo")
+            .select("der_incluidos, der_consumidos")
+            .eq("der_suscripcion_id", sub.sub_id)
+            .eq("der_concepto", "CONSULTA_TELEMATICA")
+            .eq("der_periodo", primerDiaMes)
+            .maybeSingle();
+
+          if (der) {
+            consultasDisponibles = der.der_incluidos !== null ? Math.max(0, der.der_incluidos - der.der_consumidos) : null;
+          }
+        } catch {
+          // Ignorar fallback
+        }
+
+        planActivo = {
+          suscripcionId: sub.sub_id,
+          planNombre: nombre,
+          planSku: sku,
+          frecuencia: sub.sub_frecuencia,
+          monto,
+          proximoCobro: sub.sub_proximo_cobro_en,
+          consultasDisponibles,
+          esGratuito: monto === 0 || sku.includes("FREE"),
+        };
+      }
+    } catch {
+      // Ignorar fallback si falla esquema
+    }
+  }
+
+  // 4. Construir Advertencias Estructuradas
+  if (clienteCRM) {
+    const nombre = clienteCRM.clp_razon_social || `${clienteCRM.clp_nombres || ""} ${clienteCRM.clp_apellidos || ""}`.trim();
+    advertencias.push({
+      tipo: "alerta",
+      titulo: "Cliente ya registrado en el CRM Legal",
+      descripcion: `Este cliente ya cuenta con ficha en el CRM a nombre de "${nombre}" (ID: ${clienteCRM.clp_identificacion}).`,
+    });
+  }
+
+  if (usuarioWeb) {
+    advertencias.push({
+      tipo: "info",
+      titulo: "Usuario Web Registrado en la Plataforma",
+      descripcion: `Cuenta web activa asociada al correo "${usuarioWeb.correo}" (${usuarioWeb.nombreCompleto}). Su perfil de cliente quedará automáticamente vinculado a su acceso web.`,
+    });
+  }
+
+  if (planActivo) {
+    const detalleDerecho = planActivo.consultasDisponibles !== null
+      ? ` • ${planActivo.consultasDisponibles} consulta(s) disponibles este periodo`
+      : "";
+    advertencias.push({
+      tipo: "exito",
+      titulo: `Plan Activo Vigente: ${planActivo.planNombre}`,
+      descripcion: `Modalidad ${planActivo.frecuencia} (${planActivo.esGratuito ? "Suscripción Gratuita $0.00" : `$${planActivo.monto.toFixed(2)}`})${detalleDerecho}.`,
+    });
+  }
+
+  const existe = Boolean(clienteCRM || usuarioWeb);
+
+  return {
+    existe,
+    tipo: clienteCRM && usuarioWeb ? "ambos" : clienteCRM ? "cliente_perfil" : usuarioWeb ? "usuario_existente" : undefined,
+    esUsuarioWeb: Boolean(usuarioWeb),
+    tienePlanActivo: Boolean(planActivo),
+    clienteCRM,
+    usuarioWeb,
+    planActivo,
+    mensaje: advertencias.length > 0 && advertencias[0] ? advertencias[0].descripcion : undefined,
+    advertencias,
+  };
 }
 
 /**

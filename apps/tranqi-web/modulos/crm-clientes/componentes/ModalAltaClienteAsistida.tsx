@@ -19,6 +19,7 @@ import {
   type ResultadoAriaIdentificacion,
   type ResultadoAriaNombramiento,
   type ItemLogExtraccionAria,
+  type ResultadoVerificacionCliente,
 } from "../acciones";
 
 interface Props {
@@ -134,6 +135,7 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, alGuardarExitoso }
   const [badgeAriaNom, setBadgeAriaNom] = useState<string | null>(null);
   const [errorValidacion, setErrorValidacion] = useState<string | null>(null);
   const [avisoDuplicado, setAvisoDuplicado] = useState<string | null>(null);
+  const [resVerificacion, setResVerificacion] = useState<ResultadoVerificacionCliente | null>(null);
   const [metadatosAria, setMetadatosAria] = useState<Record<string, unknown> | null>(null);
   const [logExtraccionAria, setLogExtraccionAria] = useState<ItemLogExtraccionAria[]>([]);
   const [mostrarLogDetallado, setMostrarLogDetallado] = useState(false);
@@ -152,6 +154,28 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, alGuardarExitoso }
     navigator.clipboard.writeText(texto);
     setCopiadoId(clave);
     setTimeout(() => setCopiadoId(null), 2000);
+  };
+
+  const evaluarDuplicadosYPlanes = async (idVal: string, mailVal: string) => {
+    const idLimp = idVal ? idVal.trim() : "";
+    const mailLimp = mailVal ? mailVal.trim() : "";
+
+    if (idLimp.length >= 8 || (mailLimp.length >= 5 && mailLimp.includes("@"))) {
+      try {
+        const res = await verificarDuplicado(idLimp, mailLimp, "tranqi");
+        setResVerificacion(res);
+        if (res.advertencias.length > 0 && res.advertencias[0]) {
+          setAvisoDuplicado(res.advertencias[0].descripcion);
+        } else {
+          setAvisoDuplicado(null);
+        }
+      } catch {
+        // Fallback
+      }
+    } else {
+      setResVerificacion(null);
+      setAvisoDuplicado(null);
+    }
   };
 
   if (!abierto) return null;
@@ -761,11 +785,7 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, alGuardarExitoso }
                   const val = e.target.value;
                   setIdentificacion(val);
                   marcarCampoModificado("identificacion");
-                  if (val.length >= 10) {
-                    const dup = await verificarDuplicado(val);
-                    if (dup.existe) setAvisoDuplicado(dup.mensaje || "Identificación ya registrada.");
-                    else setAvisoDuplicado(null);
-                  }
+                  await evaluarDuplicadosYPlanes(val, correo);
                 }}
                 placeholder={tipoPersoneria === "natural" ? "1719103986" : "1792345678001"}
                 style={{
@@ -784,10 +804,49 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, alGuardarExitoso }
             </div>
           </div>
 
-          {avisoDuplicado && (
-            <div style={{ background: "#EFF6FF", border: "1px solid #BFDBFE", color: "#1E40AF", padding: "8px 12px", borderRadius: "8px", fontSize: "0.8rem", display: "flex", alignItems: "center", gap: "6px" }}>
-              <Info size={16} />
-              {avisoDuplicado}
+          {/* Bloque de Advertencias: Usuario Web Registrado, Plan Activo o Duplicados */}
+          {resVerificacion && (resVerificacion.esUsuarioWeb || resVerificacion.tienePlanActivo || resVerificacion.clienteCRM) && (
+            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+              {resVerificacion.esUsuarioWeb && (
+                <div style={{ background: "#EFF6FF", border: "1px solid #BFDBFE", color: "#1E40AF", padding: "10px 14px", borderRadius: "8px", fontSize: "0.82rem", display: "flex", alignItems: "flex-start", gap: "8px" }}>
+                  <UserCheck size={18} style={{ color: "#2563EB", marginTop: "2px", flexShrink: 0 }} />
+                  <div>
+                    <div style={{ fontWeight: 700, color: "#1E3A8A" }}>Usuario Web Registrado en la Plataforma</div>
+                    <div style={{ color: "#1E40AF", marginTop: "2px" }}>
+                      Cuenta activa asociada a <strong>{resVerificacion.usuarioWeb?.correo}</strong> ({resVerificacion.usuarioWeb?.nombreCompleto}). Su ficha en el CRM quedará vinculada automáticamente a su acceso web.
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {resVerificacion.tienePlanActivo && resVerificacion.planActivo && (
+                <div style={{ background: "#F0FDF4", border: "1px solid #BBF7D0", color: "#166534", padding: "10px 14px", borderRadius: "8px", fontSize: "0.82rem", display: "flex", alignItems: "flex-start", gap: "8px" }}>
+                  <Sparkles size={18} style={{ color: "#16A34A", marginTop: "2px", flexShrink: 0 }} />
+                  <div>
+                    <div style={{ fontWeight: 700, color: "#14532D" }}>
+                      ✨ Plan Activo Vigente: {resVerificacion.planActivo.planNombre}
+                    </div>
+                    <div style={{ color: "#15803D", marginTop: "2px" }}>
+                      Modalidad <strong>{resVerificacion.planActivo.frecuencia}</strong> ({resVerificacion.planActivo.esGratuito ? "Suscripción Gratuita $0.00" : `$${resVerificacion.planActivo.monto.toFixed(2)}`})
+                      {resVerificacion.planActivo.consultasDisponibles !== null && (
+                        <span> • <strong>{resVerificacion.planActivo.consultasDisponibles}</strong> consulta(s) disponibles este periodo</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {resVerificacion.clienteCRM && (
+                <div style={{ background: "#FFFBEB", border: "1px solid #FDE68A", color: "#92400E", padding: "10px 14px", borderRadius: "8px", fontSize: "0.82rem", display: "flex", alignItems: "flex-start", gap: "8px" }}>
+                  <AlertTriangle size={18} style={{ color: "#D97706", marginTop: "2px", flexShrink: 0 }} />
+                  <div>
+                    <div style={{ fontWeight: 700, color: "#78350F" }}>Cliente ya Registrado en el CRM Legal</div>
+                    <div style={{ color: "#92400E", marginTop: "2px" }}>
+                      Ficha registrada a nombre de <strong>{resVerificacion.clienteCRM.clp_razon_social || `${resVerificacion.clienteCRM.clp_nombres || ""} ${resVerificacion.clienteCRM.clp_apellidos || ""}`.trim()}</strong> (ID: {resVerificacion.clienteCRM.clp_identificacion}).
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -1164,7 +1223,12 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, alGuardarExitoso }
               <input
                 type="email"
                 value={correo}
-                onChange={(e) => setCorreo(e.target.value)}
+                onChange={async (e) => {
+                  const val = e.target.value;
+                  setCorreo(val);
+                  marcarCampoModificado("correo");
+                  await evaluarDuplicadosYPlanes(identificacion, val);
+                }}
                 placeholder={tipoPersoneria === "juridica" ? "facturacion@empresa.com" : "cliente@correo.com"}
                 style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid #CBD5E1", fontSize: "0.85rem" }}
               />
