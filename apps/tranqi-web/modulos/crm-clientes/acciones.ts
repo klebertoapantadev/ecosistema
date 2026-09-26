@@ -1172,11 +1172,31 @@ export interface DatosCreacionCliente {
   documentosBilletera?: DocumentoBilleteraCarga[];
 }
 
+/**
+ * Convierte y formatea una fecha asegurando la zona horaria de Ecuador (America/Guayaquil, UTC-5).
+ * Previene desfases de día hacia atrás causados por conversiones automáticas a medianoche UTC.
+ */
 function formatearFechaIsoSegura(f?: string | null): string | null {
   if (!f || typeof f !== "string" || !f.trim()) return null;
+  const s = f.trim();
+
+  // Formato YYYY-MM-DD
+  const matchDate = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (matchDate) {
+    return `${matchDate[1]}-${matchDate[2]}-${matchDate[3]}T00:00:00-05:00`;
+  }
+
+  // Formato YYYY-MM-DDTHH:MM o YYYY-MM-DD HH:MM:SS sin zona horaria
+  const matchDateTime = s.match(/^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})(?::(\d{2}))?$/);
+  if (matchDateTime) {
+    const segs = matchDateTime[6] || "00";
+    return `${matchDateTime[1]}-${matchDateTime[2]}-${matchDateTime[3]}T${matchDateTime[4]}:${matchDateTime[5]}:${segs}-05:00`;
+  }
+
   try {
-    const d = new Date(f.trim());
-    return isNaN(d.getTime()) ? null : d.toISOString();
+    const d = new Date(s);
+    if (isNaN(d.getTime())) return null;
+    return d.toISOString();
   } catch {
     return null;
   }
