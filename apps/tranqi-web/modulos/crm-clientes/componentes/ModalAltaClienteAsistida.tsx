@@ -5,7 +5,8 @@ import {
   X, User, Building2, ShieldCheck, AlertTriangle, Sparkles, Upload,
   FileText, CheckCircle2, ArrowRight, Calendar, Scale, Info, Check, Eye,
   Copy, Layers, FileCheck, HelpCircle, Briefcase, ChevronDown, ChevronUp,
-  UserCheck, Send, CheckSquare, Hash, Award, Building
+  UserCheck, Send, CheckSquare, Hash, Award, Building, Wallet, Lock, Shield,
+  Trash2, FilePlus2
 } from "lucide-react";
 import {
   validarCedulaEcuador,
@@ -16,6 +17,7 @@ import {
   verificarConflictoIntereses,
   crearClienteManual,
   type DatosCreacionCliente,
+  type DocumentoBilleteraCarga,
   type ResultadoAriaIdentificacion,
   type ResultadoAriaNombramiento,
   type ItemLogExtraccionAria,
@@ -32,6 +34,14 @@ interface Props {
     identificacion: string;
     accionContinuidad: "solo_guardar" | "radicar_expediente" | "agendar_cita";
   }) => void;
+}
+
+interface ArchivoBilleteraEstado {
+  nombre: string;
+  base64: string;
+  mimetype: string;
+  tamano: number;
+  resultadoOcr?: any;
 }
 
 function IndicadorOrigenCampo({ esAria, esModificado }: { esAria?: boolean; esModificado?: boolean }) {
@@ -137,11 +147,19 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, alGuardarExitoso }
   const [omitirValidacionAlgoritmo, setOmitirValidacionAlgoritmo] = useState(false);
   const [motivoExcepcion, setMotivoExcepcion] = useState("");
 
+  // Estados de Archivos para Billetera Digital
+  const [archivoCedulaNatural, setArchivoCedulaNatural] = useState<ArchivoBilleteraEstado | null>(null);
+  const [archivoRepCedula, setArchivoRepCedula] = useState<ArchivoBilleteraEstado | null>(null);
+  const [archivoNombramiento, setArchivoNombramiento] = useState<ArchivoBilleteraEstado | null>(null);
+  const [archivoRucSRI, setArchivoRucSRI] = useState<ArchivoBilleteraEstado | null>(null);
+
   // Estados de ARIA OCR, Metadatos y Log de Auditoría
   const [procesandoAriaId, setProcesandoAriaId] = useState(false);
   const [procesandoAriaNom, setProcesandoAriaNom] = useState(false);
+  const [procesandoAriaRepCedula, setProcesandoAriaRepCedula] = useState(false);
   const [badgeAriaId, setBadgeAriaId] = useState<string | null>(null);
   const [badgeAriaNom, setBadgeAriaNom] = useState<string | null>(null);
+  const [badgeAriaRepCedula, setBadgeAriaRepCedula] = useState<string | null>(null);
   const [errorValidacion, setErrorValidacion] = useState<string | null>(null);
   const [avisoDuplicado, setAvisoDuplicado] = useState<string | null>(null);
   const [resVerificacion, setResVerificacion] = useState<ResultadoVerificacionCliente | null>(null);
@@ -189,7 +207,7 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, alGuardarExitoso }
 
   if (!abierto) return null;
 
-  // Manejo de carga digital con ARIA OCR (Cédula / RUC / Pasaporte)
+  // Manejo de carga digital con ARIA OCR (Cédula Persona Natural / RUC / Pasaporte)
   const manejarCargaArchivoId = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -204,6 +222,21 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, alGuardarExitoso }
       setProcesandoAriaId(false);
 
       if (res.ok) {
+        // Guardar archivo para la Billetera Digital
+        const nuevoArchivoBilletera: ArchivoBilleteraEstado = {
+          nombre: file.name,
+          base64,
+          mimetype: file.type || "application/pdf",
+          tamano: file.size,
+          resultadoOcr: res,
+        };
+
+        if (res.tipoPersoneria === "juridica" || (res.identificacion && res.identificacion.length === 13)) {
+          setArchivoRucSRI(nuevoArchivoBilletera);
+        } else {
+          setArchivoCedulaNatural(nuevoArchivoBilletera);
+        }
+
         const nuevosCamposAria: Record<string, boolean> = {};
 
         if (res.tipoPersoneria) {
@@ -274,11 +307,11 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, alGuardarExitoso }
         }
 
         if (res.metadatosAdicionales) {
-          setMetadatosAria(res.metadatosAdicionales);
+          setMetadatosAria((prev) => ({ ...(prev || {}), ...res.metadatosAdicionales }));
         }
 
         if (res.logExtraccion && res.logExtraccion.length > 0) {
-          setLogExtraccionAria(res.logExtraccion);
+          setLogExtraccionAria((prev) => [...prev.filter(p => !res.logExtraccion?.some(r => r.campoDetectado === p.campoDetectado)), ...(res.logExtraccion || [])]);
         }
 
         setCamposAria((prev) => ({ ...prev, ...nuevosCamposAria }));
@@ -303,6 +336,56 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, alGuardarExitoso }
     reader.readAsDataURL(file);
   };
 
+  // Manejo de carga de Cédula del Representante Legal (Persona Jurídica)
+  const manejarCargaArchivoRepCedula = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setProcesandoAriaRepCedula(true);
+    const reader = new FileReader();
+    reader.onload = async () => {
+      const base64 = reader.result as string;
+      const res: ResultadoAriaIdentificacion = await analizarIdentificacionConAria(base64, file.name);
+      setProcesandoAriaRepCedula(false);
+
+      if (res.ok) {
+        setArchivoRepCedula({
+          nombre: file.name,
+          base64,
+          mimetype: file.type || "application/pdf",
+          tamano: file.size,
+          resultadoOcr: res,
+        });
+
+        const nuevosCamposAria: Record<string, boolean> = {};
+        const repNomCompleto = `${res.nombres || ""} ${res.apellidos || ""}`.trim();
+        if (repNomCompleto) {
+          setRepNombres(repNomCompleto);
+          nuevosCamposAria["repNombres"] = true;
+        }
+        if (res.identificacion) {
+          setRepCedula(res.identificacion);
+          nuevosCamposAria["repCedula"] = true;
+        }
+
+        if (res.metadatosAdicionales) {
+          setMetadatosAria((prev) => ({ ...(prev || {}), representante_legal_cedula_ocr: res.metadatosAdicionales }));
+        }
+
+        if (res.logExtraccion && res.logExtraccion.length > 0) {
+          setLogExtraccionAria((prev) => [...prev, ...(res.logExtraccion || [])]);
+        }
+
+        setCamposAria((prev) => ({ ...prev, ...nuevosCamposAria }));
+        setBadgeAriaRepCedula(`✨ Cédula del Representante Legal verificada por ARIA (${repNomCompleto || res.identificacion})`);
+        setMostrarLogDetallado(true);
+      } else {
+        setErrorValidacion(res.mensaje || "No se pudo extraer la cédula del representante.");
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
   // Manejo de carga de Nombramiento de Representante Legal con ARIA OCR
   const manejarCargaNombramiento = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -316,6 +399,14 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, alGuardarExitoso }
       setProcesandoAriaNom(false);
 
       if (res.ok) {
+        setArchivoNombramiento({
+          nombre: file.name,
+          base64,
+          mimetype: file.type || "application/pdf",
+          tamano: file.size,
+          resultadoOcr: res,
+        });
+
         const nuevosCamposAria: Record<string, boolean> = {};
         if (res.razonSocial && !razonSocial) {
           setRazonSocial(res.razonSocial);
@@ -376,18 +467,123 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, alGuardarExitoso }
       return;
     }
 
-    if (tipoPersoneria === "natural" && (!nombres || !apellidos)) {
-      setErrorValidacion("Nombres y Apellidos son obligatorios para personas naturales.");
-      return;
+    if (tipoPersoneria === "natural") {
+      if (!nombres || !apellidos) {
+        setErrorValidacion("Nombres y Apellidos son obligatorios para personas naturales.");
+        return;
+      }
+      if (!archivoCedulaNatural && !omitirValidacionAlgoritmo) {
+        setErrorValidacion("⚠️ La Cédula de Identidad es obligatoria para Persona Natural. Sube el documento para que ARIA lo analice y archive en la Billetera Digital (o activa la casilla 'Omitir validación por excepción').");
+        return;
+      }
     }
 
-    if (tipoPersoneria === "juridica" && !razonSocial) {
-      setErrorValidacion("La Razón Social es obligatoria para personas jurídicas.");
-      return;
+    if (tipoPersoneria === "juridica") {
+      if (!razonSocial) {
+        setErrorValidacion("La Razón Social es obligatoria para personas jurídicas.");
+        return;
+      }
+      if (!archivoRepCedula && !omitirValidacionAlgoritmo) {
+        setErrorValidacion("⚠️ La Cédula de Identidad del Representante Legal es obligatoria para Empresas. Súbela en la sección de documentos (o activa 'Omitir validación por excepción').");
+        return;
+      }
+      if (!archivoNombramiento && !omitirValidacionAlgoritmo) {
+        setErrorValidacion("⚠️ El Nombramiento inscrito de Representante Legal es obligatorio para Empresas. Súbelo en la sección de documentos (o activa 'Omitir validación por excepción').");
+        return;
+      }
     }
 
     startTransition(async () => {
       try {
+        // Empaquetar documentos que serán archivados en la Billetera Digital
+        const docsParaBilletera: DocumentoBilleteraCarga[] = [];
+
+        if (tipoPersoneria === "natural" && archivoCedulaNatural) {
+          docsParaBilletera.push({
+            categoria: "identidad",
+            tipo: tipoIdentificacion === "pasaporte" ? "PASAPORTE" : "CEDULA",
+            titulo: `${tipoIdentificacion === "pasaporte" ? "Pasaporte" : "Cédula de Identidad"} - ${nombres} ${apellidos}`.trim(),
+            archivoNombre: archivoCedulaNatural.nombre,
+            archivoBase64: archivoCedulaNatural.base64,
+            archivoMimetype: archivoCedulaNatural.mimetype,
+            archivoTamano: archivoCedulaNatural.tamano,
+            numeroDocumento: identificacion.trim(),
+            titularNombre: `${nombres} ${apellidos}`.trim(),
+            titularIdentificacion: identificacion.trim(),
+            fechaNacimiento: fechaNacimiento || undefined,
+            fechaCaducidad: fechaExpiracionDocumento || undefined,
+            metadatosOcr: archivoCedulaNatural.resultadoOcr || {},
+            detalles: {
+              nacionalidad,
+              estado_civil: estadoCivil,
+              conyuge: conyuge || null,
+              lugar_nacimiento: lugarNacimiento || null,
+              sexo,
+            }
+          });
+        }
+
+        if (tipoPersoneria === "juridica") {
+          if (archivoRepCedula) {
+            docsParaBilletera.push({
+              categoria: "identidad",
+              tipo: "CEDULA",
+              titulo: `Cédula de Identidad del Representante Legal - ${repNombres || "Representante"}`,
+              archivoNombre: archivoRepCedula.nombre,
+              archivoBase64: archivoRepCedula.base64,
+              archivoMimetype: archivoRepCedula.mimetype,
+              archivoTamano: archivoRepCedula.tamano,
+              numeroDocumento: repCedula.trim(),
+              titularNombre: repNombres.trim(),
+              titularIdentificacion: repCedula.trim(),
+              metadatosOcr: archivoRepCedula.resultadoOcr || {},
+              detalles: {
+                cargo: repCargo,
+                empresa_ruc: identificacion.trim(),
+                empresa_razon_social: razonSocial.trim(),
+              }
+            });
+          }
+
+          if (archivoNombramiento) {
+            docsParaBilletera.push({
+              categoria: "profesional",
+              tipo: "NOMBRAMIENTO_REP_LEGAL",
+              titulo: `Nombramiento Representante Legal (${repCargo || "Gerente General"}) - ${razonSocial || "Empresa"}`,
+              archivoNombre: archivoNombramiento.nombre,
+              archivoBase64: archivoNombramiento.base64,
+              archivoMimetype: archivoNombramiento.mimetype,
+              archivoTamano: archivoNombramiento.tamano,
+              numeroDocumento: identificacion.trim(), // RUC
+              titularNombre: repNombres.trim(),
+              titularIdentificacion: repCedula.trim(),
+              fechaCaducidad: repVencimientoNombramiento || undefined,
+              metadatosOcr: archivoNombramiento.resultadoOcr || {},
+              detalles: {
+                cargo: repCargo,
+                ruc_empresa: identificacion.trim(),
+                fecha_vencimiento: repVencimientoNombramiento || null,
+              }
+            });
+          }
+
+          if (archivoRucSRI) {
+            docsParaBilletera.push({
+              categoria: "identidad",
+              tipo: "RUC",
+              titulo: `Certificado RUC SRI - ${razonSocial || "Empresa"}`,
+              archivoNombre: archivoRucSRI.nombre,
+              archivoBase64: archivoRucSRI.base64,
+              archivoMimetype: archivoRucSRI.mimetype,
+              archivoTamano: archivoRucSRI.tamano,
+              numeroDocumento: identificacion.trim(),
+              titularNombre: razonSocial.trim(),
+              titularIdentificacion: identificacion.trim(),
+              metadatosOcr: archivoRucSRI.resultadoOcr || {},
+            });
+          }
+        }
+
         const datos: DatosCreacionCliente = {
           tipoPersoneria,
           tipoIdentificacion,
@@ -436,6 +632,7 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, alGuardarExitoso }
           metadatosAria: metadatosAria || undefined,
           camposAutocompletadosAria: Object.keys(camposAria).filter((k) => camposAria[k]),
           logExtraccionAria: logExtraccionAria.length > 0 ? logExtraccionAria : undefined,
+          documentosBilletera: docsParaBilletera.length > 0 ? docsParaBilletera : undefined,
         };
 
         const res = await crearClienteManual(datos);
@@ -577,59 +774,199 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, alGuardarExitoso }
             </button>
           </div>
 
-          {/* Banner de Carga con ARIA OCR */}
-          <div
-            style={{
-              border: "1.5px dashed #0284C7",
-              background: "#F8FAFC",
-              borderRadius: "12px",
-              padding: "12px 16px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              gap: "12px",
-              flexWrap: "wrap",
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-              <div style={{ background: "#E0F2FE", padding: "8px", borderRadius: "8px", color: "#0284C7" }}>
-                <Sparkles size={20} />
+          {/* Banner de Carga con ARIA OCR y Billetera Digital */}
+          {tipoPersoneria === "natural" ? (
+            archivoCedulaNatural ? (
+              <div
+                style={{
+                  background: "#F0FDF4",
+                  border: "1.5px solid #86EFAC",
+                  borderRadius: "12px",
+                  padding: "12px 16px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: "12px",
+                  flexWrap: "wrap",
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                  <div style={{ background: "#DCFCE7", padding: "8px", borderRadius: "8px", color: "#16A34A" }}>
+                    <Wallet size={20} />
+                  </div>
+                  <div>
+                    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                      <p style={{ margin: 0, fontSize: "0.85rem", fontWeight: 700, color: "#166534" }}>
+                        Cédula de Identidad Cargada (Requisito Obligatorio)
+                      </p>
+                      <span style={{ background: "#DCFCE7", color: "#15803D", fontSize: "0.68rem", fontWeight: 700, padding: "1px 6px", borderRadius: "4px" }}>
+                        En Billetera Digital
+                      </span>
+                    </div>
+                    <p style={{ margin: "2px 0 0", fontSize: "0.75rem", color: "#475569" }}>
+                      📄 {archivoCedulaNatural.nombre} ({(archivoCedulaNatural.tamano / 1024).toFixed(1)} KB) · Extraído y certificado por ARIA
+                    </p>
+                  </div>
+                </div>
+                <div style={{ display: "flex", gap: "6px" }}>
+                  <label
+                    style={{
+                      background: "#FFFFFF",
+                      border: "1px solid #86EFAC",
+                      color: "#15803D",
+                      padding: "6px 12px",
+                      borderRadius: "6px",
+                      fontSize: "0.76rem",
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "4px",
+                    }}
+                  >
+                    <Upload size={12} />
+                    Reemplazar
+                    <input
+                      type="file"
+                      accept="image/*,application/pdf"
+                      onChange={manejarCargaArchivoId}
+                      style={{ display: "none" }}
+                      disabled={procesandoAriaId}
+                    />
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setArchivoCedulaNatural(null)}
+                    style={{
+                      background: "#FEE2E2",
+                      border: "1px solid #FCA5A5",
+                      color: "#B91C1C",
+                      padding: "6px 8px",
+                      borderRadius: "6px",
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                    }}
+                    title="Quitar archivo"
+                  >
+                    <Trash2 size={13} />
+                  </button>
+                </div>
               </div>
-              <div>
-                <p style={{ margin: 0, fontSize: "0.85rem", fontWeight: 600, color: "#0F172A" }}>
-                  Autocompletado Inteligente con ARIA (OCR & Mapeo Automático)
-                </p>
-                <p style={{ margin: "2px 0 0", fontSize: "0.75rem", color: "#64748B" }}>
-                  Carga la Cédula, RUC digital SRI, Pasaporte o Nombramiento y ARIA mapeará los campos al instante
-                </p>
+            ) : (
+              <div
+                style={{
+                  border: "1.5px dashed #0284C7",
+                  background: "#F8FAFC",
+                  borderRadius: "12px",
+                  padding: "12px 16px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: "12px",
+                  flexWrap: "wrap",
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                  <div style={{ background: "#E0F2FE", padding: "8px", borderRadius: "8px", color: "#0284C7" }}>
+                    <Sparkles size={20} />
+                  </div>
+                  <div>
+                    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                      <p style={{ margin: 0, fontSize: "0.85rem", fontWeight: 700, color: "#0F172A" }}>
+                        Cédula de Identidad (Requisito Obligatorio · Billetera Digital)
+                      </p>
+                      <span style={{ background: "#FEF3C7", color: "#92400E", fontSize: "0.68rem", fontWeight: 700, padding: "1px 6px", borderRadius: "4px" }}>
+                        Obligatorio
+                      </span>
+                    </div>
+                    <p style={{ margin: "2px 0 0", fontSize: "0.75rem", color: "#64748B" }}>
+                      Sube la cédula en PDF o imagen: ARIA autocompletará el formulario y la archivará en la Billetera Digital del cliente.
+                    </p>
+                  </div>
+                </div>
+                <label
+                  style={{
+                    background: "#0284C7",
+                    color: "#FFFFFF",
+                    padding: "8px 14px",
+                    borderRadius: "8px",
+                    fontSize: "0.8rem",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    whiteSpace: "nowrap",
+                    boxShadow: "0 1px 2px rgba(0,0,0,0.05)"
+                  }}
+                >
+                  <Upload size={14} />
+                  {procesandoAriaId ? "Analizando con ARIA..." : "Cargar Cédula de Identidad"}
+                  <input
+                    type="file"
+                    accept="image/*,application/pdf"
+                    onChange={manejarCargaArchivoId}
+                    style={{ display: "none" }}
+                    disabled={procesandoAriaId}
+                  />
+                </label>
               </div>
-            </div>
-            <label
+            )
+          ) : (
+            /* Banner para Persona Jurídica */
+            <div
               style={{
-                background: "#0284C7",
-                color: "#FFFFFF",
-                padding: "7px 14px",
-                borderRadius: "8px",
-                fontSize: "0.8rem",
-                fontWeight: 600,
-                cursor: "pointer",
+                border: "1px solid #BAE6FD",
+                background: "#F0F9FF",
+                borderRadius: "12px",
+                padding: "12px 16px",
                 display: "flex",
                 alignItems: "center",
-                gap: "6px",
-                whiteSpace: "nowrap",
+                justifyContent: "space-between",
+                gap: "12px",
+                flexWrap: "wrap",
               }}
             >
-              <Upload size={14} />
-              {procesandoAriaId ? "Analizando..." : "Cargar Identificación / RUC"}
-              <input
-                type="file"
-                accept="image/*,application/pdf"
-                onChange={manejarCargaArchivoId}
-                style={{ display: "none" }}
-                disabled={procesandoAriaId}
-              />
-            </label>
-          </div>
+              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                <div style={{ background: "#E0F2FE", padding: "8px", borderRadius: "8px", color: "#0284C7" }}>
+                  <Building2 size={20} />
+                </div>
+                <div>
+                  <p style={{ margin: 0, fontSize: "0.85rem", fontWeight: 700, color: "#0369A1" }}>
+                    Registro de Empresa / Persona Jurídica (S.A.S., Cía. Ltda., S.A.)
+                  </p>
+                  <p style={{ margin: "2px 0 0", fontSize: "0.75rem", color: "#475569" }}>
+                    Requisitos obligatorios: Identificación del Representante Legal y Nombramiento Vigente Inscrito en Registro Mercantil.
+                  </p>
+                </div>
+              </div>
+              <label
+                style={{
+                  background: "#0284C7",
+                  color: "#FFFFFF",
+                  padding: "7px 12px",
+                  borderRadius: "8px",
+                  fontSize: "0.78rem",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px",
+                }}
+              >
+                <Upload size={13} />
+                {procesandoAriaId ? "Analizando..." : "Cargar RUC SRI (Opcional)"}
+                <input
+                  type="file"
+                  accept="image/*,application/pdf"
+                  onChange={manejarCargaArchivoId}
+                  style={{ display: "none" }}
+                  disabled={procesandoAriaId}
+                />
+              </label>
+            </div>
+          )}
 
           {/* Log Interactivo de Extracción y Auditoría de Mapeo de ARIA OCR */}
           {(badgeAriaId || logExtraccionAria.length > 0) && (
@@ -1396,125 +1733,231 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, alGuardarExitoso }
                 />
               </div>
 
-              {/* Representante Legal Principal con ARIA OCR */}
-              <div style={{ border: "1px solid #BAE6FD", borderRadius: "10px", padding: "12px", background: "#F0F9FF" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
-                  <span style={{ fontSize: "0.82rem", fontWeight: 700, color: "#0369A1", display: "flex", alignItems: "center", gap: "6px" }}>
-                    <UserCheck size={16} />
-                    Representante Legal Principal (Obligatorio para Contratos y Demandas)
+              {/* Bóveda de Documentación Obligatoria de la Empresa (Billetera Digital) */}
+              <div style={{ border: "1.5px solid #BAE6FD", borderRadius: "12px", padding: "14px", background: "#F0F9FF", display: "flex", flexDirection: "column", gap: "10px" }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "6px" }}>
+                  <span style={{ fontSize: "0.84rem", fontWeight: 700, color: "#0369A1", display: "flex", alignItems: "center", gap: "6px" }}>
+                    <ShieldCheck size={18} />
+                    Documentación Legal Obligatoria de la Empresa (Billetera Digital)
                   </span>
-                  <label style={{ fontSize: "0.75rem", color: "#0284C7", fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: "4px" }}>
-                    <Upload size={12} />
-                    {procesandoAriaNom ? "Analizando Nombramiento..." : "Cargar Nombramiento PDF"}
-                    <input
-                      type="file"
-                      accept="application/pdf,image/*"
-                      onChange={manejarCargaNombramiento}
-                      style={{ display: "none" }}
-                      disabled={procesandoAriaNom}
-                    />
-                  </label>
+                  <span style={{ fontSize: "0.72rem", color: "#0369A1", fontWeight: 600, background: "#E0F2FE", padding: "2px 8px", borderRadius: "6px" }}>
+                    Cédula + Nombramiento Inscrito
+                  </span>
                 </div>
 
-                {badgeAriaNom && (
-                  <div style={{ background: "#F0FDF4", border: "1px solid #86EFAC", color: "#166534", padding: "6px 10px", borderRadius: "6px", fontSize: "0.75rem", marginBottom: "8px" }}>
-                    {badgeAriaNom}
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+                  {/* Tarjeta A: Cédula del Representante Legal (Obligatorio) */}
+                  <div style={{ background: "#FFFFFF", border: archivoRepCedula ? "1.5px solid #86EFAC" : "1.5px dashed #38BDF8", borderRadius: "10px", padding: "10px 12px" }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "6px" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                        <span style={{ fontSize: "0.76rem", fontWeight: 700, color: "#0F172A" }}>
+                          1. Cédula del Representante *
+                        </span>
+                        <span style={{ background: archivoRepCedula ? "#DCFCE7" : "#FEF3C7", color: archivoRepCedula ? "#15803D" : "#92400E", fontSize: "0.65rem", fontWeight: 700, padding: "1px 5px", borderRadius: "4px" }}>
+                          {archivoRepCedula ? "Cargada" : "Obligatorio"}
+                        </span>
+                      </div>
+                    </div>
+
+                    {archivoRepCedula ? (
+                      <div>
+                        <p style={{ margin: "0 0 6px", fontSize: "0.72rem", color: "#475569" }}>
+                          📄 {archivoRepCedula.nombre} ({(archivoRepCedula.tamano / 1024).toFixed(1)} KB)
+                        </p>
+                        <div style={{ display: "flex", gap: "6px" }}>
+                          <label style={{ background: "#F0FDF4", border: "1px solid #86EFAC", color: "#166534", padding: "4px 8px", borderRadius: "6px", fontSize: "0.72rem", fontWeight: 600, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                            <Upload size={11} /> Reemplazar
+                            <input type="file" accept="image/*,application/pdf" onChange={manejarCargaArchivoRepCedula} style={{ display: "none" }} disabled={procesandoAriaRepCedula} />
+                          </label>
+                          <button type="button" onClick={() => setArchivoRepCedula(null)} style={{ background: "#FEE2E2", border: "1px solid #FCA5A5", color: "#B91C1C", padding: "4px 6px", borderRadius: "6px", cursor: "pointer" }} title="Quitar archivo">
+                            <Trash2 size={11} />
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div>
+                        <p style={{ margin: "0 0 8px", fontSize: "0.72rem", color: "#64748B" }}>
+                          Sube la cédula o pasaporte del representante legal para extracción y archivo seguro.
+                        </p>
+                        <label style={{ background: "#0284C7", color: "#FFFFFF", padding: "6px 10px", borderRadius: "6px", fontSize: "0.74rem", fontWeight: 600, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "5px" }}>
+                          <Upload size={12} />
+                          {procesandoAriaRepCedula ? "Analizando..." : "Cargar Cédula Representante"}
+                          <input type="file" accept="image/*,application/pdf" onChange={manejarCargaArchivoRepCedula} style={{ display: "none" }} disabled={procesandoAriaRepCedula} />
+                        </label>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Tarjeta B: Nombramiento Inscrito en Registro Mercantil (Obligatorio) */}
+                  <div style={{ background: "#FFFFFF", border: archivoNombramiento ? "1.5px solid #86EFAC" : "1.5px dashed #38BDF8", borderRadius: "10px", padding: "10px 12px" }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "6px" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                        <span style={{ fontSize: "0.76rem", fontWeight: 700, color: "#0F172A" }}>
+                          2. Nombramiento Inscrito *
+                        </span>
+                        <span style={{ background: archivoNombramiento ? "#DCFCE7" : "#FEF3C7", color: archivoNombramiento ? "#15803D" : "#92400E", fontSize: "0.65rem", fontWeight: 700, padding: "1px 5px", borderRadius: "4px" }}>
+                          {archivoNombramiento ? "Cargado" : "Obligatorio"}
+                        </span>
+                      </div>
+                    </div>
+
+                    {archivoNombramiento ? (
+                      <div>
+                        <p style={{ margin: "0 0 6px", fontSize: "0.72rem", color: "#475569" }}>
+                          📄 {archivoNombramiento.nombre} ({(archivoNombramiento.tamano / 1024).toFixed(1)} KB)
+                        </p>
+                        <div style={{ display: "flex", gap: "6px" }}>
+                          <label style={{ background: "#F0FDF4", border: "1px solid #86EFAC", color: "#166534", padding: "4px 8px", borderRadius: "6px", fontSize: "0.72rem", fontWeight: 600, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                            <Upload size={11} /> Reemplazar
+                            <input type="file" accept="application/pdf,image/*" onChange={manejarCargaNombramiento} style={{ display: "none" }} disabled={procesandoAriaNom} />
+                          </label>
+                          <button type="button" onClick={() => setArchivoNombramiento(null)} style={{ background: "#FEE2E2", border: "1px solid #FCA5A5", color: "#B91C1C", padding: "4px 6px", borderRadius: "6px", cursor: "pointer" }} title="Quitar archivo">
+                            <Trash2 size={11} />
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div>
+                        <p style={{ margin: "0 0 8px", fontSize: "0.72rem", color: "#64748B" }}>
+                          Sube el nombramiento inscrito para certificar el cargo, periodo y facultades estatutarias.
+                        </p>
+                        <label style={{ background: "#0284C7", color: "#FFFFFF", padding: "6px 10px", borderRadius: "6px", fontSize: "0.74rem", fontWeight: 600, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "5px" }}>
+                          <Upload size={12} />
+                          {procesandoAriaNom ? "Analizando..." : "Cargar Nombramiento PDF"}
+                          <input type="file" accept="application/pdf,image/*" onChange={manejarCargaNombramiento} style={{ display: "none" }} disabled={procesandoAriaNom} />
+                        </label>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Badges de Estado OCR */}
+                {(badgeAriaRepCedula || badgeAriaNom) && (
+                  <div style={{ display: "flex", flexDirection: "column", gap: "4px", marginTop: "2px" }}>
+                    {badgeAriaRepCedula && (
+                      <div style={{ background: "#DCFCE7", border: "1px solid #86EFAC", color: "#166534", padding: "4px 8px", borderRadius: "6px", fontSize: "0.72rem" }}>
+                        {badgeAriaRepCedula}
+                      </div>
+                    )}
+                    {badgeAriaNom && (
+                      <div style={{ background: "#DCFCE7", border: "1px solid #86EFAC", color: "#166534", padding: "4px 8px", borderRadius: "6px", fontSize: "0.72rem" }}>
+                        {badgeAriaNom}
+                      </div>
+                    )}
                   </div>
                 )}
 
-                <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr 1fr", gap: "8px" }}>
-                  <div>
-                    <label style={{ display: "block", fontSize: "0.7rem", fontWeight: 600, color: "#475569", marginBottom: "2px" }}>
-                      Nombres del Representante
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="Carlos Alberto Pérez Mena"
-                      value={repNombres}
-                      onChange={(e) => {
-                        setRepNombres(e.target.value);
-                        marcarCampoModificado("repNombres");
-                      }}
-                      style={{
-                        width: "100%",
-                        padding: "6px 8px",
-                        borderRadius: "6px",
-                        border: camposAria["repNombres"] && !camposModificados["repNombres"]
-                          ? "1.5px solid #10B981"
-                          : "1px solid #CBD5E1",
-                        background: camposAria["repNombres"] && !camposModificados["repNombres"]
-                          ? "#F0FDF4"
-                          : "#FFFFFF",
-                        fontSize: "0.8rem"
-                      }}
-                    />
+                {/* Campos Formulario del Representante Legal */}
+                <div style={{ borderTop: "1px solid #BAE6FD", paddingTop: "10px", marginTop: "2px" }}>
+                  <span style={{ display: "block", fontSize: "0.74rem", fontWeight: 700, color: "#0369A1", marginBottom: "8px" }}>
+                    Datos del Representante Legal Mapeados
+                  </span>
+                  <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr 1fr", gap: "8px" }}>
+                    <div>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "2px" }}>
+                        <label style={{ fontSize: "0.7rem", fontWeight: 600, color: "#475569" }}>
+                          Nombres del Representante *
+                        </label>
+                        <IndicadorOrigenCampo esAria={camposAria["repNombres"]} esModificado={camposModificados["repNombres"]} />
+                      </div>
+                      <input
+                        type="text"
+                        placeholder="Carlos Alberto Pérez Mena"
+                        value={repNombres}
+                        onChange={(e) => {
+                          setRepNombres(e.target.value);
+                          marcarCampoModificado("repNombres");
+                        }}
+                        style={{
+                          width: "100%",
+                          padding: "6px 8px",
+                          borderRadius: "6px",
+                          border: camposAria["repNombres"] && !camposModificados["repNombres"]
+                            ? "1.5px solid #10B981"
+                            : "1px solid #CBD5E1",
+                          background: camposAria["repNombres"] && !camposModificados["repNombres"]
+                            ? "#F0FDF4"
+                            : "#FFFFFF",
+                          fontSize: "0.8rem"
+                        }}
+                      />
+                    </div>
+                    <div>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "2px" }}>
+                        <label style={{ fontSize: "0.7rem", fontWeight: 600, color: "#475569" }}>
+                          Cédula / Pasaporte *
+                        </label>
+                        <IndicadorOrigenCampo esAria={camposAria["repCedula"]} esModificado={camposModificados["repCedula"]} />
+                      </div>
+                      <input
+                        type="text"
+                        placeholder="1719103986"
+                        value={repCedula}
+                        onChange={(e) => {
+                          setRepCedula(e.target.value);
+                          marcarCampoModificado("repCedula");
+                        }}
+                        style={{
+                          width: "100%",
+                          padding: "6px 8px",
+                          borderRadius: "6px",
+                          border: camposAria["repCedula"] && !camposModificados["repCedula"]
+                            ? "1.5px solid #10B981"
+                            : "1px solid #CBD5E1",
+                          background: camposAria["repCedula"] && !camposModificados["repCedula"]
+                            ? "#F0FDF4"
+                            : "#FFFFFF",
+                          fontSize: "0.8rem"
+                        }}
+                      />
+                    </div>
+                    <div>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "2px" }}>
+                        <label style={{ fontSize: "0.7rem", fontWeight: 600, color: "#475569" }}>
+                          Cargo Estatutario
+                        </label>
+                        <IndicadorOrigenCampo esAria={camposAria["repCargo"]} esModificado={camposModificados["repCargo"]} />
+                      </div>
+                      <input
+                        type="text"
+                        placeholder="Gerente General"
+                        value={repCargo}
+                        onChange={(e) => {
+                          setRepCargo(e.target.value);
+                          marcarCampoModificado("repCargo");
+                        }}
+                        style={{ width: "100%", padding: "6px 8px", borderRadius: "6px", border: "1px solid #CBD5E1", fontSize: "0.8rem" }}
+                      />
+                    </div>
                   </div>
-                  <div>
-                    <label style={{ display: "block", fontSize: "0.7rem", fontWeight: 600, color: "#475569", marginBottom: "2px" }}>
-                      Cédula / Pasaporte
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="1719103986"
-                      value={repCedula}
-                      onChange={(e) => {
-                        setRepCedula(e.target.value);
-                        marcarCampoModificado("repCedula");
-                      }}
-                      style={{
-                        width: "100%",
-                        padding: "6px 8px",
-                        borderRadius: "6px",
-                        border: camposAria["repCedula"] && !camposModificados["repCedula"]
-                          ? "1.5px solid #10B981"
-                          : "1px solid #CBD5E1",
-                        background: camposAria["repCedula"] && !camposModificados["repCedula"]
-                          ? "#F0FDF4"
-                          : "#FFFFFF",
-                        fontSize: "0.8rem"
-                      }}
-                    />
-                  </div>
-                  <div>
-                    <label style={{ display: "block", fontSize: "0.7rem", fontWeight: 600, color: "#475569", marginBottom: "2px" }}>
-                      Cargo Estatutario
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="Gerente General"
-                      value={repCargo}
-                      onChange={(e) => {
-                        setRepCargo(e.target.value);
-                        marcarCampoModificado("repCargo");
-                      }}
-                      style={{ width: "100%", padding: "6px 8px", borderRadius: "6px", border: "1px solid #CBD5E1", fontSize: "0.8rem" }}
-                    />
-                  </div>
-                </div>
 
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", marginTop: "8px" }}>
-                  <div>
-                    <label style={{ display: "block", fontSize: "0.7rem", fontWeight: 600, color: "#475569", marginBottom: "2px" }}>
-                      Vigencia Nombramiento / Registro Mercantil
-                    </label>
-                    <input
-                      type="date"
-                      value={repVencimientoNombramiento}
-                      onChange={(e) => setRepVencimientoNombramiento(e.target.value)}
-                      style={{ width: "100%", padding: "6px 8px", borderRadius: "6px", border: "1px solid #CBD5E1", fontSize: "0.8rem" }}
-                    />
-                  </div>
-                  <div>
-                    <label style={{ display: "block", fontSize: "0.7rem", fontWeight: 600, color: "#475569", marginBottom: "2px" }}>
-                      Correo Directo Representante (Opcional)
-                    </label>
-                    <input
-                      type="email"
-                      placeholder="gerencia@empresa.com"
-                      value={repCorreo}
-                      onChange={(e) => setRepCorreo(e.target.value)}
-                      style={{ width: "100%", padding: "6px 8px", borderRadius: "6px", border: "1px solid #CBD5E1", fontSize: "0.8rem" }}
-                    />
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", marginTop: "8px" }}>
+                    <div>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "2px" }}>
+                        <label style={{ fontSize: "0.7rem", fontWeight: 600, color: "#475569" }}>
+                          Vigencia Nombramiento (Calculada / Mercantil)
+                        </label>
+                        <IndicadorOrigenCampo esAria={camposAria["repVencimientoNombramiento"]} esModificado={camposModificados["repVencimientoNombramiento"]} />
+                      </div>
+                      <input
+                        type="date"
+                        value={repVencimientoNombramiento}
+                        onChange={(e) => setRepVencimientoNombramiento(e.target.value)}
+                        style={{ width: "100%", padding: "6px 8px", borderRadius: "6px", border: "1px solid #CBD5E1", fontSize: "0.8rem" }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ display: "block", fontSize: "0.7rem", fontWeight: 600, color: "#475569", marginBottom: "2px" }}>
+                        Correo Directo Representante (Opcional)
+                      </label>
+                      <input
+                        type="email"
+                        placeholder="gerencia@empresa.com"
+                        value={repCorreo}
+                        onChange={(e) => setRepCorreo(e.target.value)}
+                        style={{ width: "100%", padding: "6px 8px", borderRadius: "6px", border: "1px solid #CBD5E1", fontSize: "0.8rem" }}
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1600,6 +2043,26 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, alGuardarExitoso }
                 {alertaConflicto}
               </div>
             )}
+          </div>
+
+          {/* Banner de Sincronización con Billetera Digital */}
+          <div
+            style={{
+              background: "#F8FAFC",
+              border: "1px solid #E2E8F0",
+              borderRadius: "8px",
+              padding: "8px 12px",
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              fontSize: "0.74rem",
+              color: "#475569",
+            }}
+          >
+            <Wallet size={15} color="#0284C7" />
+            <span>
+              <strong>Billetera Digital Activa:</strong> Todos los documentos cargados (cédulas, nombramiento, RUC) serán cifrados y guardados en la bóveda digital personal del cliente para emisión inmediata de poderes, minutas y contratos.
+            </span>
           </div>
 
           {errorValidacion && (

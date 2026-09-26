@@ -539,6 +539,11 @@ Módulo central de administración y ciclo de vida de clientes (Personas Natural
    - Todo usuario que se registra en la web (Google OAuth o correo/contraseña) genera de manera reactiva e inmediata su ficha en `trq_cliente_perfil` con estado `PROSPECTO` (`clp_detalle_cliente->>'estado_crm' = 'PROSPECTO'`).
    - Se le asigna un identificador provisional único `WEB-{UUID}` si aún no ha ingresado su cédula formal.
    - La bandeja de CRM incluye botón de sincronización masiva en tiempo real y auto-hidratación al cargar la vista.
+7. **Requisitos Documentales Obligatorios y Sincronización Automática con la Billetera Digital (`TRQ-COM-001`):**
+   - **Persona Natural (Registro Personal):** Es **obligatorio** subir la Cédula de Identidad o Pasaporte. ARIA extrae automáticamente nombres, apellidos, nacionalidad, fecha/lugar de nacimiento, sexo, estado civil, cónyuge, fecha de expiración y código dactilar.
+   - **Persona Jurídica (Empresas / S.A.S.):** Es **obligatorio** subir la Cédula/Pasaporte del Representante Legal y el Nombramiento Vigente Inscrito en el Registro Mercantil. ARIA extrae la razón social, RUC, cargo estatutario, periodo de vigencia, notaría e inscripción mercantil.
+   - **Billetera Digital Universal:** Todo documento procesado durante el alta asistida se almacena de forma inmediata y cifrada en `tranqui_legal.trq_billetera_documento`, indexado al `doc_usuario_id` para reutilización directa en contratos, minutas y poderes.
+   - **Mapeo Inteligente y Resguardo Estructurado:** Los datos funcionales se mapean a los campos del formulario con insignias de origen (`✨ Leído por ARIA`), mientras que los metadatos secundarios (filiación de padres, tipo de sangre, condición de donante, tomo/folio de inscripción mercantil) se resguardan de forma inmutable en `clp_detalle_cliente` y `doc_metadatos_ocr`.
 
 
 ---

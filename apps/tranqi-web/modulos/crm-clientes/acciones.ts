@@ -1098,6 +1098,23 @@ export async function verificarConflictoIntereses(identificacion: string, nombre
 // 4. CREACIÓN Y GESTIÓN DE CLIENTES
 // ==============================================================================
 
+export interface DocumentoBilleteraCarga {
+  categoria: "identidad" | "vehicular" | "contratos" | "profesional" | "otros";
+  tipo: string;
+  titulo: string;
+  archivoNombre: string;
+  archivoBase64: string;
+  archivoMimetype: string;
+  archivoTamano: number;
+  numeroDocumento?: string;
+  titularNombre?: string;
+  titularIdentificacion?: string;
+  fechaNacimiento?: string;
+  fechaCaducidad?: string;
+  metadatosOcr?: Record<string, unknown>;
+  detalles?: Record<string, unknown>;
+}
+
 export interface DatosCreacionCliente {
   tipoPersoneria: "natural" | "juridica";
   tipoIdentificacion: "cedula" | "ruc" | "pasaporte";
@@ -1151,6 +1168,8 @@ export interface DatosCreacionCliente {
   metadatosAria?: Record<string, unknown>;
   camposAutocompletadosAria?: string[];
   logExtraccionAria?: ItemLogExtraccionAria[];
+  // Documentos para persistir en la Billetera Digital
+  documentosBilletera?: DocumentoBilleteraCarga[];
 }
 
 /**
@@ -1260,6 +1279,11 @@ export async function crearClienteManual(datos: DatosCreacionCliente) {
           metadatos_aria: datos.metadatosAria || null,
           campos_leidos_aria: datos.camposAutocompletadosAria || [],
           log_extraccion_aria: datos.logExtraccionAria || [],
+          documentos_billetera_guardados: datos.documentosBilletera?.map(d => ({
+            tipo: d.tipo,
+            titulo: d.titulo,
+            archivoNombre: d.archivoNombre,
+          })) || [],
         },
       },
       { onConflict: "clp_tipo_identificacion,clp_identificacion" }
@@ -1271,11 +1295,52 @@ export async function crearClienteManual(datos: DatosCreacionCliente) {
     throw new Error(`Error al crear perfil del cliente: ${errPerfil?.message || "Desconocido"}`);
   }
 
-  // 4. Registrar evento de auditoría de creación
+  // 4. Guardar documentos en la Billetera Digital (tranqui_legal.trq_billetera_documento)
+  let cantidadDocsGuardados = 0;
+  if (datos.documentosBilletera && datos.documentosBilletera.length > 0) {
+    for (const doc of datos.documentosBilletera) {
+      if (!doc.archivoBase64) continue;
+
+      try {
+        await adminClient
+          .schema("tranqui_legal")
+          .from("trq_billetera_documento")
+          .insert({
+            doc_usuario_id: usuarioId,
+            doc_negocio: "TRANQ",
+            doc_categoria: doc.categoria || "identidad",
+            doc_tipo: doc.tipo || "CEDULA",
+            doc_titulo: doc.titulo || doc.archivoNombre,
+            doc_archivo_nombre: doc.archivoNombre,
+            doc_archivo_base64: doc.archivoBase64,
+            doc_archivo_mimetype: doc.archivoMimetype || "application/pdf",
+            doc_archivo_tamano: doc.archivoTamano || 0,
+            doc_numero_documento: doc.numeroDocumento || null,
+            doc_titular_nombre: doc.titularNombre || nombreCompleto,
+            doc_titular_identificacion: doc.titularIdentificacion || idLimpio,
+            doc_fecha_nacimiento: doc.fechaNacimiento ? new Date(doc.fechaNacimiento).toISOString() : null,
+            doc_fecha_caducidad: doc.fechaCaducidad ? new Date(doc.fechaCaducidad).toISOString() : null,
+            doc_metadatos_ocr: doc.metadatosOcr || {},
+            doc_detalles: doc.detalles || {},
+            doc_alertar_caducidad: true,
+            doc_meses_anticipacion_alerta: 3,
+          });
+        cantidadDocsGuardados++;
+      } catch (errDoc: any) {
+        console.error("Error al persistir documento en billetera digital:", errDoc?.message);
+      }
+    }
+  }
+
+  // 5. Registrar evento de auditoría de creación
+  const detalleDocs = cantidadDocsGuardados > 0
+    ? ` (${cantidadDocsGuardados} documento(s) archivado(s) en su Billetera Digital)`
+    : "";
+
   await registrarEventoAuditoriaCliente(
     (nuevoPerfil as any).clp_id,
     "creacion_cliente",
-    `Cliente ${nombreCompleto} (${idLimpio}) creado/actualizado manualmente por ${authUser.user.email} (Canal: Mostrador Despacho).`
+    `Cliente ${nombreCompleto} (${idLimpio}) creado/actualizado manualmente por ${authUser.user.email} (Canal: Mostrador Despacho)${detalleDocs}.`
   );
 
   revalidatePath("/panel/clientes");
@@ -1286,6 +1351,7 @@ export async function crearClienteManual(datos: DatosCreacionCliente) {
     usuarioId,
     nombreCompleto,
     identificacion: idLimpio,
+    documentosGuardados: cantidadDocsGuardados,
   };
 }
 
