@@ -480,6 +480,8 @@ export async function obtenerConfiguracionNavegacionRolAction(
 ): Promise<Resultado<{ widgetsPorPanel: Record<string, string[]>; panelesAsignados: string[] }>> {
   const supabase = await crearClienteServidor();
   const negocioNorm = (negocio || "tranqi").toLowerCase().trim();
+  const negocioUpper = (negocio || "TRANQ").toUpperCase().trim();
+  const variantesNegocio = Array.from(new Set([negocioNorm, negocioUpper, "TRANQ", "tranqi"]));
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data, error } = await (supabase
@@ -487,7 +489,7 @@ export async function obtenerConfiguracionNavegacionRolAction(
     .from("seg_rol_widget")
     .select("rlw_widget_id, seg_widget(wdg_clave, wdg_detalle_widget)") as any)
     .eq("rlw_rol", perfilClave.toUpperCase().trim())
-    .eq("rlw_negocio", negocioNorm)
+    .in("rlw_negocio", variantesNegocio)
     .eq("rlw_visible", true);
 
   if (error) return { ok: false, error: error.message };

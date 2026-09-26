@@ -130,9 +130,9 @@ export function NavegacionSidebar({
         if (savedPaneles) {
           const parsed = JSON.parse(savedPaneles);
           if (Array.isArray(parsed) && parsed.length > 0) {
-            const idsExistentes = new Set(parsed.map((p: PanelDefNav) => p.id));
-            const baseSinDuplicados = PANELES_BASE_DEFAULT.filter(p => !idsExistentes.has(p.id));
-            listaPaneles = [...baseSinDuplicados, ...parsed];
+            const idsBase = new Set(PANELES_BASE_DEFAULT.map((p: PanelDefNav) => p.id));
+            const extras = parsed.filter((p: PanelDefNav) => !idsBase.has(p.id));
+            listaPaneles = [...PANELES_BASE_DEFAULT, ...extras];
           }
         }
 
