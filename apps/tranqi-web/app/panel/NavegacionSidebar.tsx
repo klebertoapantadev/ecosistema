@@ -94,7 +94,7 @@ function obtenerPanelesInicialesPorRol(modoActivo: ModoRol): PanelDefNav[] {
   }
 
   if (rolKey === "CLIENTE") {
-    return PANELES_BASE_DEFAULT.filter(p => p.id === "panel_inicio" || p.id === "panel_cuenta" || p.id === "panel_herramientas");
+    return PANELES_BASE_DEFAULT.filter(p => p.id === "panel_inicio" || p.id === "panel_agendamiento" || p.id === "panel_herramientas" || p.id === "panel_cuenta");
   }
 
   if (rolKey === "ABOGADO") {
@@ -125,6 +125,15 @@ export function NavegacionSidebar({
           return;
         }
 
+        // REGLA CLIENTE: Menú estrictamente acotado a la experiencia del cliente final
+        if (rolKey === "CLIENTE") {
+          const panelesCliente = PANELES_BASE_DEFAULT.filter(
+            (p) => p.id === "panel_inicio" || p.id === "panel_agendamiento" || p.id === "panel_herramientas" || p.id === "panel_cuenta"
+          );
+          setPanelesVisibles(panelesCliente);
+          return;
+        }
+
         const savedPaneles = localStorage.getItem(`tranqi_paneles_sidebar_${negocio}`) || localStorage.getItem("tranqi_paneles_sidebar_TRANQ");
         let listaPaneles: PanelDefNav[] = PANELES_BASE_DEFAULT;
         if (savedPaneles) {
@@ -141,14 +150,7 @@ export function NavegacionSidebar({
 
         let widgetsPorPanel: Record<string, string[]> = {
           panel_inicio: ["favoritos"],
-          panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos"],
-          panel_usuarios: ["consulta_usuarios_perfiles", "crm_clientes", "monitoreo_notificaciones_usuarios"],
-          panel_red_profesional: ["socios", "solicitud_socio"],
-          panel_terminos: ["gestion_terminos_consentimientos"],
-          panel_agendamiento: ["asignaciones_agenda"],
-          panel_administrar: ["historial_pagos", "emision_notificaciones", "bitacora_notificaciones"],
-          panel_herramientas: ["catalogo_productos", "firma_documentos_pdf", "billetera_documentos"],
-          panel_configuracion: ["notificaciones"]
+          panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos"]
         };
 
         if (rolKey === "OPERADOR" || rolKey === "AUXILIAR" || rolKey === "TECNICO") {

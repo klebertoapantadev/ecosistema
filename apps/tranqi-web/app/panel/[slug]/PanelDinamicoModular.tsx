@@ -400,9 +400,9 @@ const INVENTARIO_GLOBAL_WIDGETS: Record<string, { titulo: string; subtitulo: str
   }
 };
 
-function obtenerWidgetsInicialesDinamicos(panelId: string, slugStr: string, rolDefault: string = "ADMINISTRADOR"): string[] {
-  let rolActivo = (rolDefault || "ADMINISTRADOR").toUpperCase();
-  if (typeof document !== "undefined") {
+function obtenerWidgetsInicialesDinamicos(panelId: string, slugStr: string, rolDefault: string = "CLIENTE", esSuperAdmin: boolean = false): string[] {
+  let rolActivo = (rolDefault || "CLIENTE").toUpperCase();
+  if (esSuperAdmin && typeof document !== "undefined") {
     const cookieStore = document.cookie || "";
     const matchModo = cookieStore.match(/tranqi_modo_rol=([^;]+)/);
     const matchFav = cookieStore.match(/tranqi_rol_favorito=([^;]+)/);
@@ -447,23 +447,18 @@ function obtenerWidgetsInicialesDinamicos(panelId: string, slugStr: string, rolD
     if (esPanelCuenta) return ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos", "historial_pagos"];
     if (esPanelConf) return ["notificaciones"];
   } else {
-    // ROL CLIENTE
+    // ROL CLIENTE: Acceso exclusivo a sus widgets propios
     if (esPanelAgenda) return ["agendar_cita", "mis_citas"];
     if (esPanelHerr) return ["catalogo_productos", "firma_documentos_pdf", "billetera_documentos", "solicitud_socio"];
     if (esPanelCuenta) return ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos", "historial_pagos"];
     if (esPanelConf) return ["notificaciones"];
+    return [];
   }
-
-  // Fallback si ningún rol coincide directamente para el panel buscado
-  if (esPanelUsuarios) return ["consulta_usuarios_perfiles", "crm_clientes", "monitoreo_notificaciones_usuarios"];
-  if (esPanelRed) return ["socios", "solicitud_socio"];
-  if (esPanelTerminos) return ["gestion_terminos_consentimientos", "configuracion_contrato_abogado"];
-  if (esPanelAgenda) return ["asignaciones_agenda"];
 
   return [];
 }
 
-export function PanelDinamicoModular({ slug, negocio, rolInicial = "ADMINISTRADOR", esSuperAdmin: _esSuperAdmin }: Props) {
+export function PanelDinamicoModular({ slug, negocio, rolInicial = "ADMINISTRADOR", esSuperAdmin }: Props) {
   const slugNormalizado = slug.replace(/-/g, "_");
   const panelIdBuscado = slugNormalizado.startsWith("panel_") ? slugNormalizado : `panel_${slugNormalizado}`;
 
@@ -532,12 +527,14 @@ export function PanelDinamicoModular({ slug, negocio, rolInicial = "ADMINISTRADO
           }
         }
 
-        const cookieStore = typeof document !== "undefined" ? document.cookie : "";
-        let rolActivo = (rolInicial || "ADMINISTRADOR").toUpperCase();
-        const matchModo = cookieStore.match(/tranqi_modo_rol=([^;]+)/);
-        const matchFav = cookieStore.match(/tranqi_rol_favorito=([^;]+)/);
-        if (matchModo && matchModo[1]) rolActivo = matchModo[1].toUpperCase();
-        else if (matchFav && matchFav[1]) rolActivo = matchFav[1].toUpperCase();
+        let rolActivo = (rolInicial || "CLIENTE").toUpperCase();
+        if (esSuperAdmin) {
+          const cookieStore = typeof document !== "undefined" ? document.cookie : "";
+          const matchModo = cookieStore.match(/tranqi_modo_rol=([^;]+)/);
+          const matchFav = cookieStore.match(/tranqi_rol_favorito=([^;]+)/);
+          if (matchModo && matchModo[1]) rolActivo = matchModo[1].toUpperCase();
+          else if (matchFav && matchFav[1]) rolActivo = matchFav[1].toUpperCase();
+        }
 
         // 1. Presets canónicos de asignación por rol y por panel
         let listW: string[] = obtenerWidgetsInicialesDinamicos(panelIdBuscado, slug, rolActivo);
