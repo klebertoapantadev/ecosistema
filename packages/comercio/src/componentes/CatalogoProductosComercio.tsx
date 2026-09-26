@@ -51,14 +51,14 @@ import { ModalEditarProducto, PALETA_COLORES_VARIANTES } from "./ModalEditarProd
 import { ManualConfiguracionCatalogoModal } from "./ManualConfiguracionCatalogoModal";
 import { TableroDisponibilidadOperativa } from "./TableroDisponibilidadOperativa";
 import { BookOpen, Flower2, Wrench, Activity, LayoutGrid } from "lucide-react";
+import { detectarTipoNegocio } from "../utils/negocio";
 
 interface Props {
   negocio?: string;
 }
 
 export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
-  const esFloristeria = negocio === "tinkay" || negocio === "margaritas";
-  const esMantenimiento = negocio === "fastfix";
+  const { esFloristeria, esLegal, esMantenimiento } = detectarTipoNegocio(negocio);
 
   const [pestanaActiva, setPestanaActiva] = useState<"catalogo" | "disponibilidad">("catalogo");
   const [modoVista, setModoVista] = useState<"admin" | "cliente">("admin");
@@ -1369,8 +1369,66 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                     {p.pro_descripcion}
                   </p>
 
-                  {/* Badge de Logística / Entrega a Domicilio */}
-                  {Boolean(p.pro_detalle_producto?.logistica?.delivery_incluido) && (
+                  {/* Badge de Modalidad / Logística */}
+                  {esLegal ? (
+                    p.pro_detalle_producto?.logistica?.delivery_incluido ? (
+                      <div
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "6px",
+                          background: "#ECFDF5",
+                          border: "1px solid #10B981",
+                          color: "#065F46",
+                          padding: "4px 10px",
+                          borderRadius: "8px",
+                          fontSize: "0.72rem",
+                          fontWeight: 800,
+                          marginBottom: "10px",
+                          alignSelf: "flex-start",
+                        }}
+                      >
+                        <Truck size={13} color="#059669" />
+                        <span>{p.pro_detalle_producto?.logistica?.etiqueta_transporte || "📦 Mensajería Notarial Segura"}</span>
+                        {p.pro_detalle_producto?.logistica?.cobertura_texto && (
+                          <span style={{ fontSize: "0.68rem", fontWeight: 600, color: "#047857", marginLeft: "2px" }}>
+                            • {p.pro_detalle_producto.logistica.cobertura_texto}
+                          </span>
+                        )}
+                      </div>
+                    ) : (
+                      <div
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "6px",
+                          background: "#EFF6FF",
+                          border: "1px solid #BFDBFE",
+                          color: "#1E40AF",
+                          padding: "4px 10px",
+                          borderRadius: "8px",
+                          fontSize: "0.72rem",
+                          fontWeight: 800,
+                          marginBottom: "10px",
+                          alignSelf: "flex-start",
+                        }}
+                      >
+                        <Scale size={13} color="#2563EB" />
+                        <span>
+                          {p.pro_tipo === "SUSCRIPCION"
+                            ? "🛡️ Cobertura Legal Continua"
+                            : p.pro_detalle_producto?.logistica?.etiqueta_transporte && !p.pro_detalle_producto.logistica.etiqueta_transporte.includes("Envío")
+                            ? p.pro_detalle_producto.logistica.etiqueta_transporte
+                            : "🌐 Modalidad 100% Telemática"}
+                        </span>
+                        {p.pro_detalle_producto?.logistica?.cobertura_texto && !p.pro_detalle_producto.logistica.cobertura_texto.includes("Quito Urbano") && (
+                          <span style={{ fontSize: "0.68rem", fontWeight: 600, color: "#1D4ED8", marginLeft: "2px" }}>
+                            • {p.pro_detalle_producto.logistica.cobertura_texto}
+                          </span>
+                        )}
+                      </div>
+                    )
+                  ) : Boolean(p.pro_detalle_producto?.logistica?.delivery_incluido) ? (
                     <div
                       style={{
                         display: "inline-flex",
@@ -1396,7 +1454,8 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                         </span>
                       )}
                     </div>
-                  )}
+                  ) : null}
+
 
                   {/* Canales de Visibilidad Activos */}
                   <div style={{ display: "flex", flexWrap: "wrap", gap: "4px", marginBottom: "12px" }}>

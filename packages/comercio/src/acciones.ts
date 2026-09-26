@@ -181,6 +181,14 @@ const PRODUCTOS_SEMILLA_TRANQI: ProductoCatalogo[] = [
       imagen_url: "/imagenes/catalogo/notarizacion.jpg",
       video_url: "https://www.youtube.com/watch?v=kXYiU_JCYtU",
       tiempo_entrega: "24 a 48 horas hábiles",
+      usos: ["tramite_notarial", "compraventa_inmueble", "creacion_empresa"],
+      etiquetas: ["notaria", "poder notarial", "escritura", "protocolizacion", "declaracion juramentada", "poder especial"],
+      logistica: {
+        delivery_incluido: true,
+        modalidad_transporte: "COURIER_NOTARIAL",
+        etiqueta_transporte: "📦 Mensajería & Traslado Notarial",
+        cobertura_texto: "Quito Urbano y Valles",
+      },
       beneficios: [
         "Coordinación y turno prioritario en notaría de confianza",
         "Retiro y entrega de documentos a domicilio u oficina por mensajería segura",
@@ -232,6 +240,14 @@ const PRODUCTOS_SEMILLA_TRANQI: ProductoCatalogo[] = [
       imagen_url: "/imagenes/catalogo/permiso-salida.jpg",
       video_url: "https://www.youtube.com/watch?v=kXYiU_JCYtU",
       tiempo_entrega: "24 horas hábiles",
+      usos: ["salida_menores", "divorcio_familia", "tramite_notarial"],
+      etiquetas: ["permiso de salida", "viaje menores", "autorizacion notarial", "salida pais", "migracion ecuador"],
+      logistica: {
+        delivery_incluido: false,
+        modalidad_transporte: "TELEMATICO_DIGITAL",
+        etiqueta_transporte: "🌐 Asesoría & Minuta Notarial",
+        cobertura_texto: "Cobertura Nacional (Ecuador)",
+      },
       beneficios: [
         "Elaboración de autorización estandarizada conforme a la Ley Notarial",
         "Verificación de regulaciones migratorias del país de destino",
@@ -282,6 +298,14 @@ const PRODUCTOS_SEMILLA_TRANQI: ProductoCatalogo[] = [
       imagen_url: "/imagenes/catalogo/revision-contratos.jpg",
       video_url: "https://www.youtube.com/watch?v=kXYiU_JCYtU",
       tiempo_entrega: "Menos de 24 horas",
+      usos: ["contratos_mercantil", "compraventa_inmueble", "creacion_empresa", "disputa_laboral"],
+      etiquetas: ["revision de contratos", "arrendamiento", "semaforo de riesgos", "dictamen legal", "blindaje contractual", "promesa compraventa"],
+      logistica: {
+        delivery_incluido: false,
+        modalidad_transporte: "TELEMATICO_DIGITAL",
+        etiqueta_transporte: "📄 Dictamen Digital en 24h",
+        cobertura_texto: "100% Telemático / Nacional",
+      },
       beneficios: [
         "Semáforo de riesgos legales por cada cláusula analizada",
         "Redacción correctiva y sugerencias de blindaje para el firmante",
@@ -331,6 +355,14 @@ const PRODUCTOS_SEMILLA_TRANQI: ProductoCatalogo[] = [
       imagen_url: "/imagenes/catalogo/consultas.jpg",
       video_url: "https://www.youtube.com/watch?v=kXYiU_JCYtU",
       tiempo_entrega: "Agendamiento inmediato / Mismo día",
+      usos: ["consulta_especialista", "disputa_laboral", "divorcio_familia", "defensa_penal", "cobro_deudas"],
+      etiquetas: ["consulta legal", "abogado online", "videollamada", "asesoria penal", "asesoria laboral", "conciliacion"],
+      logistica: {
+        delivery_incluido: false,
+        modalidad_transporte: "TELEMATICO_DIGITAL",
+        etiqueta_transporte: "⚖️ Videollamada 1 a 1 Telemática",
+        cobertura_texto: "100% Telemático / Nacional",
+      },
       beneficios: [
         "Videollamada privada en alta definición por Google Meet / Zoom",
         "Asignación de abogado especialista en la materia de tu caso",
@@ -425,6 +457,14 @@ const PRODUCTOS_SEMILLA_TRANQI: ProductoCatalogo[] = [
       imagen_url: "/imagenes/catalogo/divorcio.jpg",
       video_url: "https://www.youtube.com/watch?v=kXYiU_JCYtU",
       tiempo_entrega: "7 a 15 días hábiles",
+      usos: ["divorcio_familia", "tramite_notarial"],
+      etiquetas: ["divorcio", "mutuo acuerdo", "pension alimenticia", "tenencia", "liquidacion conyugal", "patrocinio legal"],
+      logistica: {
+        delivery_incluido: false,
+        modalidad_transporte: "NOTARIAL_PRESENCIAL",
+        etiqueta_transporte: "⚖️ Patrocinio Notarial / Judicial",
+        cobertura_texto: "Pichincha / Guayas / Nacional",
+      },
       beneficios: [
         "Elaboración del acuerdo regulador de tenencia, alimentos y visitas (si hay hijos)",
         "Representación y comparecencia ante notario público o juez de familia",
@@ -475,6 +515,14 @@ const PRODUCTOS_SEMILLA_TRANQI: ProductoCatalogo[] = [
       imagen_url: "/imagenes/catalogo/planes-b2c.jpg",
       video_url: "https://www.youtube.com/watch?v=kXYiU_JCYtU",
       tiempo_entrega: "Activación inmediata tras suscripción",
+      usos: ["amparo_familiar", "consulta_especialista", "contratos_mercantil"],
+      etiquetas: ["plan familiar", "amparo legal", "abogado de cabecera", "suscripcion legal", "aria legal 24/7", "boton sos"],
+      logistica: {
+        delivery_incluido: false,
+        modalidad_transporte: "TELEMATICO_DIGITAL",
+        etiqueta_transporte: "🛡️ Membresía Activa / Cobertura Continua",
+        cobertura_texto: "100% Telemático / Nacional",
+      },
       beneficios: [
         "Bolsa mensual de citas telemáticas con abogados especialistas",
         "Revisiones y dictámenes express de contratos con semáforo de riesgos",
@@ -591,6 +639,14 @@ const PRODUCTOS_SEMILLA_TRANQI: ProductoCatalogo[] = [
       imagen_url: "/imagenes/catalogo/planes-b2b.jpg",
       video_url: "https://www.youtube.com/watch?v=kXYiU_JCYtU",
       tiempo_entrega: "Activación y onboarding corporativo en 24 horas",
+      usos: ["asesoria_corporativa", "contratos_mercantil", "disputa_laboral", "creacion_empresa"],
+      etiquetas: ["abogado empresas", "derecho societario", "laboral empresas", "b2b", "compliance", "contratos comerciales"],
+      logistica: {
+        delivery_incluido: false,
+        modalidad_transporte: "TELEMATICO_DIGITAL",
+        etiqueta_transporte: "🏢 Blindaje Corporativo Integral",
+        cobertura_texto: "Cobertura Nacional B2B",
+      },
       beneficios: [
         "Asesoría laboral, societaria, tributaria y contractual preventiva",
         "Revisión y elaboración ilimitada de contratos comerciales",
@@ -623,6 +679,7 @@ const PRODUCTOS_SEMILLA_TRANQI: ProductoCatalogo[] = [
         var_detalle_variante: {
           tramo: "1-10",
           tarifa_por_colaborador: 15.0,
+
         },
         monto_iva: 2.25,
         precio_total: 17.25,

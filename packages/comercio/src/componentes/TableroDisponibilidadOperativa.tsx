@@ -22,6 +22,7 @@ import {
   obtenerDisponibilidadOperativaAction,
   actualizarDisponibilidadOperativaAction,
 } from "../acciones";
+import { detectarTipoNegocio } from "../utils/negocio";
 
 interface Props {
   negocio?: string;
@@ -34,9 +35,7 @@ export function TableroDisponibilidadOperativa({
   enModal = false,
   onCerrar,
 }: Props) {
-  const esFloristeria = negocio === "tinkay" || negocio === "margaritas";
-  const esLegal = negocio === "tranqi";
-  const esMantenimiento = negocio === "fastfix";
+  const { esFloristeria, esLegal, esMantenimiento } = detectarTipoNegocio(negocio);
 
   const [items, setItems] = useState<ItemDisponibilidadOperativa[]>([]);
   const [filtroCategoria, setFiltroCategoria] = useState<string>("TODAS");

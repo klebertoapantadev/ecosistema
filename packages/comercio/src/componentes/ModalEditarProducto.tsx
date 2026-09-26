@@ -52,6 +52,7 @@ import {
 } from "../canales";
 import { ModalCrearCategoria } from "./ModalCrearCategoria";
 import { ModalGaleriaMedios } from "./ModalGaleriaMedios";
+import { detectarTipoNegocio } from "../utils/negocio";
 
 
 export const COLOR_PRODUCTO_MASTER = {
@@ -333,9 +334,7 @@ export function ModalEditarProducto({
   negocio = "tranqi",
   onAbrirManual,
 }: Props) {
-  const esFloristeria = negocio === "tinkay" || negocio === "margaritas";
-  const esLegal = negocio === "tranqi";
-  const esMantenimiento = negocio === "fastfix";
+  const { esFloristeria, esLegal, esMantenimiento } = detectarTipoNegocio(negocio);
 
   const [categoriasLocales, setCategoriasLocales] = useState<CategoriaCatalogo[]>(categorias || []);
   const [modalCatAbierto, setModalCatAbierto] = useState(false);
@@ -434,16 +433,18 @@ export function ModalEditarProducto({
   ];
 
   const PRESETS_USOS_LEGAL = [
-    { clave: "creacion_empresa", label: "🏢 Creación Empresa / SAS" },
-    { clave: "disputa_laboral", label: "⚖️ Asuntos Laborales" },
-    { clave: "divorcio_familia", label: "💔 Divorcio y Familia" },
-    { clave: "compraventa_inmueble", label: "🏠 Compraventa Inmueble" },
-    { clave: "herencia_posesion", label: "📜 Herencias y Testamentos" },
-    { clave: "redaccion_contratos", label: "📄 Redacción de Contratos" },
-    { clave: "cobro_deudas", label: "💳 Cobranza y Cartera" },
-    { clave: "tramite_notarial", label: "🏛️ Trámites Notariales" },
-    { clave: "propiedad_intelectual", label: "💡 Registro Marcas / Patentes" },
-    { clave: "defensa_penal", label: "🛡️ Asistencia Penal" },
+    { clave: "contratos_mercantil", label: "📄 Revisión de Contratos & Blindaje" },
+    { clave: "tramite_notarial", label: "🏛️ Trámites Notariales & Poderes" },
+    { clave: "salida_menores", label: "✈️ Salida del País de Menores" },
+    { clave: "divorcio_familia", label: "💔 Divorcio por Mutuo Acuerdo / Familia" },
+    { clave: "consulta_especialista", label: "⚖️ Consulta Jurídica Telemática 1 a 1" },
+    { clave: "amparo_familiar", label: "🛡️ Planes de Cobertura Legal Continua" },
+    { clave: "asesoria_corporativa", label: "🏢 Asesoría Corporativa & B2B" },
+    { clave: "disputa_laboral", label: "💼 Asuntos Laborales & Liquidaciones" },
+    { clave: "cobro_deudas", label: "💳 Cobranza y Cartera Judicial" },
+    { clave: "creacion_empresa", label: "🚀 Constitución de Compañías / SAS" },
+    { clave: "propiedad_intelectual", label: "💡 Registro de Marcas & Patentes (SENADI)" },
+    { clave: "defensa_penal", label: "🚨 Asistencia Flagrancia & Penal" },
   ];
 
   const PRESETS_USOS_MANTENIMIENTO = [
@@ -513,15 +514,17 @@ export function ModalEditarProducto({
       ]
     : esLegal
     ? [
-        { label: "⚡ Asesoría Inmediata (Mismo Día)", val: "⚡ Asesoría Inmediata (Mismo Día)" },
-        { label: "📄 24 a 48 horas hábiles", val: "24 a 48 horas hábiles" },
-        { label: "⚖️ 3 a 5 días hábiles", val: "3 a 5 días hábiles" },
+        { label: "⚡ Agendamiento Inmediato / Mismo Día", val: "Agendamiento inmediato / Mismo día" },
+        { label: "📄 Menos de 24 horas (Dictamen Express)", val: "Menos de 24 horas" },
+        { label: "⚖️ 24 a 48 horas hábiles", val: "24 a 48 horas hábiles" },
+        { label: "🏛️ 7 a 15 días hábiles (Procesal / Notarial)", val: "7 a 15 días hábiles" },
       ]
     : [
         { label: "⚡ Emergencia Técnica (45-60 min)", val: "⚡ Emergencia Técnica (45 - 60 min)" },
         { label: "🔧 Turno Mismo Día", val: "🔧 Mismo Día / Turno Tarde" },
         { label: "📅 Visita Programada", val: "📅 Visita Programada" },
       ];
+
 
   // Propagación de IVA Master a todas las variantes
   const aplicarIvaMasterATodos = (nuevaTarifa: number) => {
@@ -592,10 +595,29 @@ export function ModalEditarProducto({
 
       // IVA Master y Logística
       setTarifaIvaMaster(det.tarifa_iva_predeterminada !== undefined ? Number(det.tarifa_iva_predeterminada) : 15);
-      setDeliveryIncluido(det.logistica?.delivery_incluido !== undefined ? Boolean(det.logistica.delivery_incluido) : true);
-      setModalidadTransporte(det.logistica?.modalidad_transporte || "INCLUIDO_GRATIS");
-      setEtiquetaTransporte(det.logistica?.etiqueta_transporte || "🚚 Envío a Domicilio Incluido");
-      setCoberturaTransporte(det.logistica?.cobertura_texto || "Quito Urbano y Valles");
+      
+      const defaultDelivery = esFloristeria ? true : esLegal ? false : true;
+      const tieneLogisticaDefinida = det.logistica && typeof det.logistica.delivery_incluido === "boolean";
+      setDeliveryIncluido(tieneLogisticaDefinida ? Boolean(det.logistica.delivery_incluido) : defaultDelivery);
+      setModalidadTransporte(det.logistica?.modalidad_transporte || (esLegal ? "TELEMATICO_DIGITAL" : "INCLUIDO_GRATIS"));
+      
+      const rawEtiqueta = det.logistica?.etiqueta_transporte;
+      const rawCobertura = det.logistica?.cobertura_texto;
+      if (esLegal) {
+        setEtiquetaTransporte(
+          rawEtiqueta && !rawEtiqueta.includes("Envío a Domicilio") && !rawEtiqueta.includes("Visita Técnica")
+            ? rawEtiqueta
+            : "🌐 Modalidad 100% Telemática"
+        );
+        setCoberturaTransporte(
+          rawCobertura && !rawCobertura.includes("Quito Urbano y Valles")
+            ? rawCobertura
+            : "Nacional (Ecuador)"
+        );
+      } else {
+        setEtiquetaTransporte(rawEtiqueta || (esFloristeria ? "🌸 Envío a Domicilio Incluido" : "🔧 Visita Técnica Incluida"));
+        setCoberturaTransporte(rawCobertura || "Quito Urbano y Valles");
+      }
 
       // Clonar variantes
       const vars = producto.variantes && producto.variantes.length > 0
@@ -1922,7 +1944,7 @@ export function ModalEditarProducto({
                 </div>
               </div>
 
-              {/* 5. LOGÍSTICA & TRANSPORTE A DOMICILIO (DELIVERY) */}
+              {/* 5. MODALIDAD DE ATENCIÓN / LOGÍSTICA & TRANSPORTE */}
               <div
                 style={{
                   background: deliveryIncluido ? "#F0FDF4" : "#F8FAFC",
@@ -1934,90 +1956,175 @@ export function ModalEditarProducto({
                 }}
               >
                 <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "8px" }}>
-                  <Truck size={16} color={deliveryIncluido ? "#16A34A" : "#64748B"} />
+                  {esLegal ? (
+                    <Scale size={16} color={deliveryIncluido ? "#16A34A" : "#0284C7"} />
+                  ) : esFloristeria ? (
+                    <Flower2 size={16} color={deliveryIncluido ? "#16A34A" : "#E11D48"} />
+                  ) : (
+                    <Truck size={16} color={deliveryIncluido ? "#16A34A" : "#64748B"} />
+                  )}
                   <label style={{ fontSize: "0.8rem", fontWeight: 800, color: deliveryIncluido ? "#166534" : "#1E293B" }}>
-                    Logística & Entrega a Domicilio (Transporte)
+                    {esLegal
+                      ? "Modalidad de Atención Legal & Entrega de Dictamen"
+                      : esFloristeria
+                      ? "Logística, Envíos & Entrega Floral"
+                      : "Logística & Turnos de Cuadrilla Técnica"}
                   </label>
                 </div>
 
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "6px", marginBottom: "10px" }}>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setDeliveryIncluido(true);
-                      setModalidadTransporte("INCLUIDO_GRATIS");
-                      setEtiquetaTransporte("🚚 Envío a Domicilio Incluido");
-                    }}
-                    style={{
-                      padding: "8px 10px",
-                      borderRadius: "6px",
-                      fontSize: "0.72rem",
-                      fontWeight: 700,
-                      border: deliveryIncluido && modalidadTransporte === "INCLUIDO_GRATIS" ? "1.5px solid #16A34A" : "1px solid #CBD5E1",
-                      background: deliveryIncluido && modalidadTransporte === "INCLUIDO_GRATIS" ? "#DCFCE7" : "#FFFFFF",
-                      color: deliveryIncluido && modalidadTransporte === "INCLUIDO_GRATIS" ? "#166534" : "#475569",
-                      cursor: "pointer",
-                      textAlign: "center",
-                    }}
-                  >
-                    🚚 Envío Incluido (Gratis)
-                  </button>
+                  {esLegal ? (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setDeliveryIncluido(false);
+                          setModalidadTransporte("TELEMATICO_DIGITAL");
+                          setEtiquetaTransporte("🌐 Modalidad 100% Telemática");
+                          setCoberturaTransporte("Cobertura Nacional (Ecuador)");
+                        }}
+                        style={{
+                          padding: "8px 10px",
+                          borderRadius: "6px",
+                          fontSize: "0.72rem",
+                          fontWeight: 700,
+                          border: !deliveryIncluido && modalidadTransporte === "TELEMATICO_DIGITAL" ? "1.5px solid #0284C7" : "1px solid #CBD5E1",
+                          background: !deliveryIncluido && modalidadTransporte === "TELEMATICO_DIGITAL" ? "#E0F2FE" : "#FFFFFF",
+                          color: !deliveryIncluido && modalidadTransporte === "TELEMATICO_DIGITAL" ? "#0369A1" : "#475569",
+                          cursor: "pointer",
+                          textAlign: "center",
+                        }}
+                      >
+                        🌐 100% Telemático / Digital
+                      </button>
 
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setDeliveryIncluido(false);
-                      setModalidadTransporte("COSTO_ADICIONAL");
-                      setEtiquetaTransporte("📦 Delivery con Costo Adicional");
-                    }}
-                    style={{
-                      padding: "8px 10px",
-                      borderRadius: "6px",
-                      fontSize: "0.72rem",
-                      fontWeight: 700,
-                      border: !deliveryIncluido && modalidadTransporte === "COSTO_ADICIONAL" ? "1.5px solid #F59E0B" : "1px solid #CBD5E1",
-                      background: !deliveryIncluido && modalidadTransporte === "COSTO_ADICIONAL" ? "#FEF3C7" : "#FFFFFF",
-                      color: !deliveryIncluido && modalidadTransporte === "COSTO_ADICIONAL" ? "#92400E" : "#475569",
-                      cursor: "pointer",
-                      textAlign: "center",
-                    }}
-                  >
-                    📦 Costo Adicional en Checkout
-                  </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setDeliveryIncluido(false);
+                          setModalidadTransporte("NOTARIAL_PRESENCIAL");
+                          setEtiquetaTransporte("🏛️ Gestión Notarial Segura");
+                          setCoberturaTransporte("Sedes Notariales / Despacho");
+                        }}
+                        style={{
+                          padding: "8px 10px",
+                          borderRadius: "6px",
+                          fontSize: "0.72rem",
+                          fontWeight: 700,
+                          border: !deliveryIncluido && modalidadTransporte === "NOTARIAL_PRESENCIAL" ? "1.5px solid #6366F1" : "1px solid #CBD5E1",
+                          background: !deliveryIncluido && modalidadTransporte === "NOTARIAL_PRESENCIAL" ? "#EEF2FF" : "#FFFFFF",
+                          color: !deliveryIncluido && modalidadTransporte === "NOTARIAL_PRESENCIAL" ? "#4338CA" : "#475569",
+                          cursor: "pointer",
+                          textAlign: "center",
+                        }}
+                      >
+                        🏛️ Gestión Notarial / Despacho
+                      </button>
 
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setDeliveryIncluido(false);
-                      setModalidadTransporte("SOLO_RETIRO");
-                      setEtiquetaTransporte("🏪 Solo Retiro en Local");
-                    }}
-                    style={{
-                      padding: "8px 10px",
-                      borderRadius: "6px",
-                      fontSize: "0.72rem",
-                      fontWeight: 700,
-                      border: !deliveryIncluido && modalidadTransporte === "SOLO_RETIRO" ? "1.5px solid #64748B" : "1px solid #CBD5E1",
-                      background: !deliveryIncluido && modalidadTransporte === "SOLO_RETIRO" ? "#F1F5F9" : "#FFFFFF",
-                      color: !deliveryIncluido && modalidadTransporte === "SOLO_RETIRO" ? "#1E293B" : "#475569",
-                      cursor: "pointer",
-                      textAlign: "center",
-                    }}
-                  >
-                    🏪 Solo Retiro en Local
-                  </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setDeliveryIncluido(true);
+                          setModalidadTransporte("COURIER_NOTARIAL");
+                          setEtiquetaTransporte("📦 Mensajería Notarial Segura");
+                          setCoberturaTransporte("Quito Urbano y Valles");
+                        }}
+                        style={{
+                          padding: "8px 10px",
+                          borderRadius: "6px",
+                          fontSize: "0.72rem",
+                          fontWeight: 700,
+                          border: deliveryIncluido ? "1.5px solid #16A34A" : "1px solid #CBD5E1",
+                          background: deliveryIncluido ? "#DCFCE7" : "#FFFFFF",
+                          color: deliveryIncluido ? "#166534" : "#475569",
+                          cursor: "pointer",
+                          textAlign: "center",
+                        }}
+                      >
+                        📦 Courier Físico Escrituras
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setDeliveryIncluido(true);
+                          setModalidadTransporte("INCLUIDO_GRATIS");
+                          setEtiquetaTransporte(esFloristeria ? "🌸 Envío Floral Incluido" : "🚚 Visita Técnica Incluida");
+                        }}
+                        style={{
+                          padding: "8px 10px",
+                          borderRadius: "6px",
+                          fontSize: "0.72rem",
+                          fontWeight: 700,
+                          border: deliveryIncluido && modalidadTransporte === "INCLUIDO_GRATIS" ? "1.5px solid #16A34A" : "1px solid #CBD5E1",
+                          background: deliveryIncluido && modalidadTransporte === "INCLUIDO_GRATIS" ? "#DCFCE7" : "#FFFFFF",
+                          color: deliveryIncluido && modalidadTransporte === "INCLUIDO_GRATIS" ? "#166534" : "#475569",
+                          cursor: "pointer",
+                          textAlign: "center",
+                        }}
+                      >
+                        🚚 Envío Incluido (Gratis)
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setDeliveryIncluido(false);
+                          setModalidadTransporte("COSTO_ADICIONAL");
+                          setEtiquetaTransporte(esFloristeria ? "📦 Delivery con Costo Adicional" : "📦 Traslado con Costo");
+                        }}
+                        style={{
+                          padding: "8px 10px",
+                          borderRadius: "6px",
+                          fontSize: "0.72rem",
+                          fontWeight: 700,
+                          border: !deliveryIncluido && modalidadTransporte === "COSTO_ADICIONAL" ? "1.5px solid #F59E0B" : "1px solid #CBD5E1",
+                          background: !deliveryIncluido && modalidadTransporte === "COSTO_ADICIONAL" ? "#FEF3C7" : "#FFFFFF",
+                          color: !deliveryIncluido && modalidadTransporte === "COSTO_ADICIONAL" ? "#92400E" : "#475569",
+                          cursor: "pointer",
+                          textAlign: "center",
+                        }}
+                      >
+                        📦 Costo Adicional en Checkout
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setDeliveryIncluido(false);
+                          setModalidadTransporte("SOLO_RETIRO");
+                          setEtiquetaTransporte(esFloristeria ? "🏪 Retiro en Taller Floral" : "🏪 Solo Retiro en Local");
+                        }}
+                        style={{
+                          padding: "8px 10px",
+                          borderRadius: "6px",
+                          fontSize: "0.72rem",
+                          fontWeight: 700,
+                          border: !deliveryIncluido && modalidadTransporte === "SOLO_RETIRO" ? "1.5px solid #64748B" : "1px solid #CBD5E1",
+                          background: !deliveryIncluido && modalidadTransporte === "SOLO_RETIRO" ? "#F1F5F9" : "#FFFFFF",
+                          color: !deliveryIncluido && modalidadTransporte === "SOLO_RETIRO" ? "#1E293B" : "#475569",
+                          cursor: "pointer",
+                          textAlign: "center",
+                        }}
+                      >
+                        🏪 Solo Retiro en Local
+                      </button>
+                    </>
+                  )}
                 </div>
 
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
                   <div>
                     <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#334155", marginBottom: "2px" }}>
-                      Etiqueta Visible de Transporte
+                      {esLegal ? "Etiqueta Visible de Modalidad" : "Etiqueta Visible de Transporte"}
                     </label>
                     <input
                       type="text"
                       value={etiquetaTransporte}
                       onChange={(e) => setEtiquetaTransporte(e.target.value)}
-                      placeholder="Ej. 🚚 Envío a Domicilio Incluido"
+                      placeholder={esLegal ? "Ej. 🌐 Modalidad 100% Telemática" : "Ej. 🚚 Envío a Domicilio Incluido"}
                       style={{
                         width: "100%",
                         padding: "6px 10px",
@@ -2032,13 +2139,13 @@ export function ModalEditarProducto({
 
                   <div>
                     <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#334155", marginBottom: "2px" }}>
-                      Zona o Sector de Cobertura
+                      {esLegal ? "Alcance de Cobertura Legal" : "Zona o Sector de Cobertura"}
                     </label>
                     <input
                       type="text"
                       value={coberturaTransporte}
                       onChange={(e) => setCoberturaTransporte(e.target.value)}
-                      placeholder="Ej. Quito Urbano y Valles"
+                      placeholder={esLegal ? "Ej. Cobertura Nacional (Ecuador)" : "Ej. Quito Urbano y Valles"}
                       style={{
                         width: "100%",
                         padding: "6px 10px",
@@ -2052,6 +2159,7 @@ export function ModalEditarProducto({
                   </div>
                 </div>
               </div>
+
 
               {/* 6. CANALES DE VISIBILIDAD Y DISTRIBUCIÓN */}
               <div

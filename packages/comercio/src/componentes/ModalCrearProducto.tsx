@@ -37,6 +37,7 @@ import {
 } from "../canales";
 import { ModalCrearCategoria } from "./ModalCrearCategoria";
 import { ModalGaleriaMedios } from "./ModalGaleriaMedios";
+import { detectarTipoNegocio } from "../utils/negocio";
 
 
 interface Props {
@@ -56,9 +57,7 @@ export function ModalCrearProducto({
   categorias,
   negocio = "tranqi",
 }: Props) {
-  const esFloristeria = negocio === "tinkay" || negocio === "margaritas";
-  const esLegal = negocio === "tranqi";
-  const esMantenimiento = negocio === "fastfix";
+  const { esFloristeria, esLegal, esMantenimiento } = detectarTipoNegocio(negocio);
 
   const [categoriasLocales, setCategoriasLocales] = useState<CategoriaCatalogo[]>(categorias || []);
   const [modalCatAbierto, setModalCatAbierto] = useState(false);
@@ -125,16 +124,18 @@ export function ModalCrearProducto({
   ];
 
   const PRESETS_USOS_LEGAL = [
-    { clave: "creacion_empresa", label: "🏢 Creación Empresa / SAS" },
-    { clave: "disputa_laboral", label: "⚖️ Asuntos Laborales" },
-    { clave: "divorcio_familia", label: "💔 Divorcio y Familia" },
-    { clave: "compraventa_inmueble", label: "🏠 Compraventa Inmueble" },
-    { clave: "herencia_posesion", label: "📜 Herencias y Testamentos" },
-    { clave: "redaccion_contratos", label: "📄 Redacción de Contratos" },
-    { clave: "cobro_deudas", label: "💳 Cobranza y Cartera" },
-    { clave: "tramite_notarial", label: "🏛️ Trámites Notariales" },
-    { clave: "propiedad_intelectual", label: "💡 Registro Marcas / Patentes" },
-    { clave: "defensa_penal", label: "🛡️ Asistencia Penal" },
+    { clave: "contratos_mercantil", label: "📄 Revisión de Contratos & Blindaje" },
+    { clave: "tramite_notarial", label: "🏛️ Trámites Notariales & Poderes" },
+    { clave: "salida_menores", label: "✈️ Salida del País de Menores" },
+    { clave: "divorcio_familia", label: "💔 Divorcio por Mutuo Acuerdo / Familia" },
+    { clave: "consulta_especialista", label: "⚖️ Consulta Jurídica Telemática 1 a 1" },
+    { clave: "amparo_familiar", label: "🛡️ Planes de Cobertura Legal Continua" },
+    { clave: "asesoria_corporativa", label: "🏢 Asesoría Corporativa & B2B" },
+    { clave: "disputa_laboral", label: "💼 Asuntos Laborales & Liquidaciones" },
+    { clave: "cobro_deudas", label: "💳 Cobranza y Cartera Judicial" },
+    { clave: "creacion_empresa", label: "🚀 Constitución de Compañías / SAS" },
+    { clave: "propiedad_intelectual", label: "💡 Registro de Marcas & Patentes (SENADI)" },
+    { clave: "defensa_penal", label: "🚨 Asistencia Flagrancia & Penal" },
   ];
 
   const PRESETS_USOS_MANTENIMIENTO = [
@@ -212,15 +213,17 @@ export function ModalCrearProducto({
       ]
     : esLegal
     ? [
-        { label: "⚡ Asesoría Inmediata (Mismo Día)", val: "⚡ Asesoría Inmediata (Mismo Día)" },
-        { label: "📄 24 a 48 horas hábiles", val: "24 a 48 horas hábiles" },
-        { label: "⚖️ 3 a 5 días hábiles", val: "3 a 5 días hábiles" },
+        { label: "⚡ Agendamiento Inmediato / Mismo Día", val: "Agendamiento inmediato / Mismo día" },
+        { label: "📄 Menos de 24 horas (Dictamen Express)", val: "Menos de 24 horas" },
+        { label: "⚖️ 24 a 48 horas hábiles", val: "24 a 48 horas hábiles" },
+        { label: "🏛️ 7 a 15 días hábiles (Procesal / Notarial)", val: "7 a 15 días hábiles" },
       ]
     : [
         { label: "⚡ Emergencia Técnica (45-60 min)", val: "⚡ Emergencia Técnica (45 - 60 min)" },
         { label: "🔧 Turno Mismo Día", val: "🔧 Mismo Día / Turno Tarde" },
         { label: "📅 Visita Programada", val: "📅 Visita Programada" },
       ];
+
 
   if (!abierto) return null;
 

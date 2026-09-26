@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { X, FolderPlus, Flower2, Scale, Wrench, CheckCircle2, AlertCircle, Image as ImageIcon } from "lucide-react";
 import { crearCategoriaAction, CategoriaCatalogo } from "../acciones";
+import { detectarTipoNegocio } from "../utils/negocio";
 
 interface Props {
   abierto: boolean;
@@ -12,8 +13,7 @@ interface Props {
 }
 
 export function ModalCrearCategoria({ abierto, onCerrar, onCategoriaCreada, negocio = "tranqi" }: Props) {
-  const esFloristeria = negocio === "tinkay" || negocio === "margaritas";
-  const esMantenimiento = negocio === "fastfix";
+  const { esFloristeria, esLegal, esMantenimiento } = detectarTipoNegocio(negocio);
 
   const [nombre, setNombre] = useState("");
   const [slug, setSlug] = useState("");

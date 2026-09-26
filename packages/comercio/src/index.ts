@@ -16,4 +16,5 @@ export * from "./componentes/SeccionCoberturaCliente";
 export * from "./componentes/ModalHistorialUsoPlan";
 export * from "./componentes/CarruselProductosCliente";
 export * from "./componentes/ModalGaleriaMedios";
+export * from "./utils/negocio";
 
