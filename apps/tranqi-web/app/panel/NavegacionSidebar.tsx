@@ -4,7 +4,7 @@ import { useState, useEffect, useLayoutEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 import {
   Home, CircleUser, Settings, ShieldCheck, ClipboardList, Wrench, CreditCard,
-  PanelLeft, Sliders, Folder, Activity, FileText, UserCog,
+  PanelLeft, Sliders, Folder, Activity, FileText, UserCog, Briefcase, Calendar, Users,
   CheckSquare, Globe, Building, Sparkles, Phone, Lock, KeyRound, Terminal, Zap,
   Eye, Search, Pencil, LogOut, LogIn, ShoppingBag, type LucideIcon
 } from "lucide-react";
@@ -38,6 +38,9 @@ const MAPA_ICONOS_NAV: Record<string, LucideIcon> = {
   Folder,
   Activity,
   FileText,
+  Briefcase,
+  Calendar,
+  Users,
   CheckSquare,
   Globe,
   Building,
@@ -54,6 +57,10 @@ const MAPA_ICONOS_NAV: Record<string, LucideIcon> = {
   LogIn,
   PanelLeft,
   panel_inicio: Home,
+  panel_usuarios: Users,
+  panel_red_profesional: Briefcase,
+  panel_terminos: FileText,
+  panel_agendamiento: Calendar,
   panel_administrar: UserCog,
   panel_configuracion: Settings,
   panel_cuenta: CircleUser,
@@ -64,10 +71,14 @@ const MAPA_ICONOS_NAV: Record<string, LucideIcon> = {
 // Configuración inicial de paneles base del ecosistema
 const PANELES_BASE_DEFAULT: PanelDefNav[] = [
   { id: "panel_inicio", nombre: "Inicio", ruta: "/panel", icono: "Home" },
+  { id: "panel_usuarios", nombre: "Usuarios", ruta: "/panel/usuarios", icono: "Users" },
+  { id: "panel_red_profesional", nombre: "Red profesional", ruta: "/panel/red-profesional", icono: "Briefcase" },
+  { id: "panel_terminos", nombre: "Términos & Condiciones", ruta: "/panel/terminos", icono: "FileText" },
+  { id: "panel_agendamiento", nombre: "Agendamiento", ruta: "/panel/agendamiento", icono: "Calendar" },
   { id: "panel_administrar", nombre: "Administrar", ruta: "/panel/administrar", icono: "UserCog" },
+  { id: "panel_herramientas", nombre: "Herramientas", ruta: "/panel/herramientas", icono: "Wrench" },
   { id: "panel_configuracion", nombre: "Configurar", ruta: "/panel/configuracion", icono: "Settings" },
   { id: "panel_cuenta", nombre: "Mi cuenta", ruta: "/panel/cuenta", icono: "CircleUser" },
-  { id: "panel_herramientas", nombre: "Herramientas", ruta: "/panel/herramientas", icono: "Wrench" },
   { id: "panel_seguridad", nombre: "Seguridad", ruta: "/panel/seguridad", icono: "Shield" },
 ];
 
@@ -82,8 +93,12 @@ function obtenerPanelesInicialesPorRol(modoActivo: ModoRol): PanelDefNav[] {
     return PANELES_BASE_DEFAULT.filter(p => p.id !== "panel_configuracion");
   }
 
-  if (rolKey === "CLIENTE" || rolKey === "ABOGADO") {
+  if (rolKey === "CLIENTE") {
     return PANELES_BASE_DEFAULT.filter(p => p.id === "panel_inicio" || p.id === "panel_cuenta" || p.id === "panel_herramientas");
+  }
+
+  if (rolKey === "ABOGADO") {
+    return PANELES_BASE_DEFAULT.filter(p => p.id === "panel_inicio" || p.id === "panel_usuarios" || p.id === "panel_agendamiento" || p.id === "panel_cuenta" || p.id === "panel_herramientas");
   }
 
   return PANELES_BASE_DEFAULT;
@@ -127,54 +142,45 @@ export function NavegacionSidebar({
         let widgetsPorPanel: Record<string, string[]> = {
           panel_inicio: ["favoritos"],
           panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos"],
-          panel_herramientas: ["agendar_cita", "mis_citas", "catalogo_productos", "firma_documentos_pdf", "billetera_documentos", "solicitud_socio"],
+          panel_usuarios: ["consulta_usuarios_perfiles", "crm_clientes", "monitoreo_notificaciones_usuarios"],
+          panel_red_profesional: ["socios", "solicitud_socio"],
+          panel_terminos: ["gestion_terminos_consentimientos"],
+          panel_agendamiento: ["asignaciones_agenda"],
+          panel_administrar: ["historial_pagos", "emision_notificaciones", "bitacora_notificaciones"],
+          panel_herramientas: ["catalogo_productos", "firma_documentos_pdf", "billetera_documentos"],
           panel_configuracion: ["notificaciones"]
         };
 
         if (rolKey === "OPERADOR" || rolKey === "AUXILIAR" || rolKey === "TECNICO") {
           widgetsPorPanel = {
             ...widgetsPorPanel,
-            panel_herramientas: ["catalogo_productos", "firma_documentos_pdf", "billetera_documentos", "emision_notificaciones"],
-            panel_administrar: ["asignaciones_agenda", 
-              "crm_clientes",
-              "socios",
-              "solicitud_socio",
-              "historial_pagos",
-              "emision_notificaciones",
-              "bitacora_notificaciones",
-              "monitoreo_notificaciones_usuarios",
-              "gestion_terminos_consentimientos",
-              "configuracion_contrato_abogado",
-              "consulta_usuarios_perfiles"
-            ],
+            panel_usuarios: ["consulta_usuarios_perfiles", "crm_clientes", "monitoreo_notificaciones_usuarios"],
+            panel_red_profesional: ["socios", "solicitud_socio"],
+            panel_terminos: ["gestion_terminos_consentimientos"],
+            panel_agendamiento: ["asignaciones_agenda"],
+            panel_administrar: ["historial_pagos", "emision_notificaciones", "bitacora_notificaciones"],
+            panel_herramientas: ["catalogo_productos", "firma_documentos_pdf", "billetera_documentos"],
             panel_seguridad: ["mfa_seguridad"]
           };
         } else if (rolKey === "ABOGADO") {
           widgetsPorPanel = {
             ...widgetsPorPanel,
-            panel_herramientas: ["citas_programadas", "disponibilidad", "crm_clientes", "catalogo_productos", "firma_documentos_pdf", "billetera_documentos"],
-            panel_administrar: ["crm_clientes"]
+            panel_usuarios: ["crm_clientes"],
+            panel_agendamiento: ["citas_programadas", "disponibilidad", "asignaciones_agenda"],
+            panel_herramientas: ["catalogo_productos", "firma_documentos_pdf", "billetera_documentos", "solicitud_socio"],
+            panel_administrar: ["historial_pagos"]
           };
         } else if (rolKey === "ADMINISTRADOR") {
           widgetsPorPanel = {
             ...widgetsPorPanel,
-            panel_herramientas: ["catalogo_productos", "firma_documentos_pdf", "billetera_documentos", "emision_notificaciones"],
+            panel_usuarios: ["gestion_usuarios", "consulta_usuarios_perfiles", "crm_clientes", "monitoreo_notificaciones_usuarios"],
+            panel_red_profesional: ["socios", "solicitud_socio"],
+            panel_terminos: ["gestion_terminos_consentimientos"],
+            panel_agendamiento: ["asignaciones_agenda"],
+            panel_administrar: ["historial_pagos", "emision_notificaciones", "bitacora_notificaciones", "perfiles", "auditoria"],
+            panel_herramientas: ["catalogo_productos", "firma_documentos_pdf", "billetera_documentos"],
             panel_configuracion: ["configuracion_negocio", "configuracion_correo", "pasarela_payphone", "perfiles", "agentes_ia", "notificaciones"],
-            panel_administrar: ["asignaciones_agenda", 
-              "crm_clientes",
-              "gestion_usuarios",
-              "consulta_usuarios_perfiles",
-              "socios",
-              "solicitud_socio",
-              "historial_pagos",
-              "emision_notificaciones",
-              "bitacora_notificaciones",
-              "monitoreo_notificaciones_usuarios",
-              "gestion_terminos_consentimientos",
-              "configuracion_contrato_abogado",
-              "auditoria"
-            ],
-            panel_seguridad: ["auditoria"]
+            panel_seguridad: ["mfa_seguridad", "auditoria"]
           };
         }
 

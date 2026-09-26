@@ -43,6 +43,7 @@ import { DataGrid, type ColumnaDataGrid } from "@eco/datagrid";
 interface Props {
   negocio?: string;
   onGuardarExito?: () => void;
+  documentoInicial?: string;
 }
 
 export interface CategoriaTerminoDef {
@@ -165,14 +166,37 @@ En Quito, a la fecha de aceptación de la solicitud.`,
   },
 ];
 
-export function GestionTerminosConsentimientosWidget({ negocio = "tranqi", onGuardarExito }: Props) {
+export function GestionTerminosConsentimientosWidget({ negocio = "tranqi", onGuardarExito, documentoInicial }: Props) {
   // Pestañas principales
   const [pestanaPrincipal, setPestanaPrincipal] = useState<"editor" | "historial" | "auditoria">("editor");
 
   // Filtro y selección de documento
   const [busquedaDoc, setBusquedaDoc] = useState("");
   const [filtroTipo, setFiltroTipo] = useState<"todos" | "terminos" | "beneficios" | "contratos">("todos");
-  const [catSeleccionada, setCatSeleccionada] = useState<string>("notificaciones");
+  
+  const obtenerDocInicial = () => {
+    if (documentoInicial && CATEGORIAS_TERMINOS.some(c => c.key === documentoInicial)) {
+      return documentoInicial;
+    }
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const docParam = params.get("doc") || params.get("documento");
+      if (docParam && CATEGORIAS_TERMINOS.some(c => c.key === docParam)) {
+        return docParam;
+      }
+      if (docParam === "contrato" || docParam === "contrato_abogado") return "contrato_socio";
+      if (docParam === "lopdp") return "empleo_lopdp";
+    }
+    return "notificaciones";
+  };
+
+  const [catSeleccionada, setCatSeleccionada] = useState<string>(obtenerDocInicial);
+
+  useEffect(() => {
+    if (documentoInicial && CATEGORIAS_TERMINOS.some(c => c.key === documentoInicial)) {
+      setCatSeleccionada(documentoInicial);
+    }
+  }, [documentoInicial]);
 
   // Estados del editor
   const [version, setVersion] = useState<string>("v1.5.0");

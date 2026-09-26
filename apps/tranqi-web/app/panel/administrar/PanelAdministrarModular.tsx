@@ -39,15 +39,6 @@ export interface ModuloAdminDef {
 
 const MODULOS_ADMIN: ModuloAdminDef[] = [
   {
-    id: "crm_clientes",
-    titulo: "CRM Jurídico & Gestión de Clientes",
-    subtitulo: "Directorio 360°, expedientes y seguimiento integral de clientes",
-    ruta: "/panel/administrar?widget=crm_clientes",
-    icono: Users,
-    colorIcono: "#5000BA",
-    categoria: "Gestión Legal"
-  },
-  {
     id: "historial_pagos",
     titulo: "Historial de Transacciones & Pagos",
     subtitulo: "Auditoría contable y registro de pagos Payphone en vivo y simulados",
@@ -66,33 +57,6 @@ const MODULOS_ADMIN: ModuloAdminDef[] = [
     categoria: "Comunicación"
   },
   {
-    id: "socios",
-    titulo: "Aprobación de Socios Abogados",
-    subtitulo: "Validación de matrículas, acreditación y verificación de abogados",
-    ruta: "/panel/socios",
-    icono: Users,
-    colorIcono: "#05876E",
-    categoria: "Operación Legal"
-  },
-  {
-    id: "solicitud_socio",
-    titulo: "Solicitudes de Socios",
-    subtitulo: "Procesamiento de postulaciones y formularios de postulación socio",
-    ruta: "/panel/solicitud-socio",
-    icono: ClipboardList,
-    colorIcono: "#05876E",
-    categoria: "Operación Legal"
-  },
-  {
-    id: "monitoreo_notificaciones_usuarios",
-    titulo: "Monitoreo de Notificaciones por Usuario",
-    subtitulo: "Auditoría en tiempo real de notificaciones, fechas de confirmación, tiempo de pospuesto y eliminados",
-    ruta: "/panel/administrar?widget=monitoreo_notificaciones_usuarios",
-    icono: Bell,
-    colorIcono: "#1F6FEB",
-    categoria: "Comunicación"
-  },
-  {
     id: "bitacora_notificaciones",
     titulo: "Bitácora & Historial de Notificaciones",
     subtitulo: "Consulta auditada e historial en tiempo real de notificaciones emitidas",
@@ -102,55 +66,10 @@ const MODULOS_ADMIN: ModuloAdminDef[] = [
     categoria: "Comunicación"
   },
   {
-    id: "configuracion_contrato_abogado",
-    titulo: "Configuración de Contrato de Socios",
-    subtitulo: "Administración de la plantilla del contrato de sociedad de abogados (.MD/HTML)",
-    ruta: "/panel/administrar?widget=configuracion_contrato_abogado",
-    icono: FileText,
-    colorIcono: "#05876E",
-    categoria: "Gobernanza & Legales"
-  },
-  {
-    id: "gestion_terminos_consentimientos",
-    titulo: "Términos, Consentimientos & LOPDP",
-    subtitulo: "Configuración de cláusulas LOPDP, notificaciones, WhatsApp y protección de datos",
-    ruta: "/panel/administrar?widget=gestion_terminos_consentimientos",
-    icono: FileText,
-    colorIcono: "#5000BA",
-    categoria: "Gobernanza & Legales"
-  },
-  {
-    id: "consulta_usuarios",
-    titulo: "Consulta de Usuarios & Perfiles",
-    subtitulo: "Directorio de miembros y asignación jerárquica de roles",
-    ruta: "/panel/administrar?widget=consulta_usuarios",
-    icono: Eye,
-    colorIcono: "var(--violeta, #5000BA)",
-    categoria: "Usuarios & Permisos"
-  },
-  {
-    id: "asignaciones_agenda",
-    titulo: "Asignaciones y Contingencia (Agenda)",
-    subtitulo: "Mesa de control de asignaciones operativas y reasignación de citas",
-    ruta: "/panel/administrar?widget=asignaciones_agenda",
-    icono: Calendar,
-    colorIcono: "#0284C7",
-    categoria: "Agenda"
-  },
-  {
-    id: "gestion_usuarios",
-    titulo: "Gestión de Usuarios & Membresías",
-    subtitulo: "Administración de miembros, asignación de perfiles y techo jerárquico",
-    ruta: "/panel/usuarios",
-    icono: UserCog,
-    colorIcono: "var(--violeta, #5000BA)",
-    categoria: "Usuarios & Permisos"
-  },
-  {
     id: "perfiles",
     titulo: "Administración de Perfiles & Permisos",
     subtitulo: "Catálogo de perfiles, jerarquía (1–100) y matriz de gobernanza BDD",
-    ruta: "/panel/configuracion?widget=perfiles",
+    ruta: "/panel/administrar?widget=perfiles",
     icono: Sliders,
     colorIcono: "var(--violeta, #5000BA)",
     categoria: "Usuarios & Permisos"
@@ -159,7 +78,7 @@ const MODULOS_ADMIN: ModuloAdminDef[] = [
     id: "auditoria",
     titulo: "Auditoría BDD & Telemetría",
     subtitulo: "Consulta de registros inmutables PostgreSQL y telemetría de APIs",
-    ruta: "/panel/auditoria",
+    ruta: "/panel/administrar?widget=auditoria",
     icono: Shield,
     colorIcono: "#111827",
     categoria: "Seguridad & Auditoría"
@@ -167,7 +86,7 @@ const MODULOS_ADMIN: ModuloAdminDef[] = [
 ];
 
 // Componente Widget Nativo para Aprobación de Socios Abogados con DataGrid
-function SociosWidget() {
+export function SociosWidget() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [solicitudes, setSolicitudes] = useState<any[]>([]);
   const [cargando, setCargando] = useState(true);

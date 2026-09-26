@@ -164,6 +164,51 @@ const PANELES_SIDEBAR_INICIALES: PanelSidebarDef[] = [
     mostrarSinWidgets: true
   },
   {
+    id: "panel_usuarios",
+    nombre: "Usuarios",
+    ruta: "/panel/usuarios",
+    descripcion: "Directorio de usuarios, CRM Jurídico & Gestión de Clientes y Monitoreo de Notificaciones por Usuario.",
+    icono: "Users",
+    requiereMfa: false,
+    mostrarSinWidgets: true
+  },
+  {
+    id: "panel_red_profesional",
+    nombre: "Red profesional",
+    ruta: "/panel/red-profesional",
+    descripcion: "Aprobación de socios abogados y procesamiento de solicitudes de incorporación.",
+    icono: "Briefcase",
+    requiereMfa: false,
+    mostrarSinWidgets: true
+  },
+  {
+    id: "panel_terminos",
+    nombre: "Términos & Condiciones",
+    ruta: "/panel/terminos",
+    descripcion: "Términos, Consentimientos LOPDP y Configuración de Contrato de Socios.",
+    icono: "FileText",
+    requiereMfa: false,
+    mostrarSinWidgets: true
+  },
+  {
+    id: "panel_agendamiento",
+    nombre: "Agendamiento",
+    ruta: "/panel/agendamiento",
+    descripcion: "Mesa de asignaciones, contingencia de citas y disponibilidad horaria.",
+    icono: "Calendar",
+    requiereMfa: false,
+    mostrarSinWidgets: true
+  },
+  {
+    id: "panel_administrar",
+    nombre: "Administrar (Consola de Gestión)",
+    ruta: "/panel/administrar",
+    descripcion: "Consola de administración protegida para pagos, despacho de notificaciones, bitácoras y auditoría BDD.",
+    icono: "Shield",
+    requiereMfa: true,
+    mostrarSinWidgets: true
+  },
+  {
     id: "panel_cuenta",
     nombre: "Mi Cuenta & Identidad",
     ruta: "/panel/cuenta",
@@ -198,15 +243,6 @@ const PANELES_SIDEBAR_INICIALES: PanelSidebarDef[] = [
     icono: "Settings",
     requiereMfa: false,
     mostrarSinWidgets: true
-  },
-  {
-    id: "panel_administrar",
-    nombre: "Administrar (Consola de Gestión)",
-    ruta: "/panel/administrar",
-    descripcion: "Consola de administración protegida para usuarios, socios, solicitudes, notificaciones y auditoría.",
-    icono: "Shield",
-    requiereMfa: true,
-    mostrarSinWidgets: true
   }
 ];
 
@@ -216,12 +252,13 @@ const PERFILES_INICIALES: PerfilDef[] = [
     nombre: "Cliente (Jerarquía Base)",
     nivel: 1,
     ambito: "Empresa",
-    descripcion: "Perfil base de usuario. Acceso a paneles de Inicio, Mi Cuenta, Herramientas y Preferencias de Notificaciones.",
-    panelesAsignados: ["panel_inicio", "panel_cuenta", "panel_herramientas", "panel_configuracion"],
+    descripcion: "Perfil base de usuario. Acceso a paneles de Inicio, Mi Cuenta, Herramientas, Agendamiento y Preferencias de Notificaciones.",
+    panelesAsignados: ["panel_inicio", "panel_agendamiento", "panel_cuenta", "panel_herramientas", "panel_configuracion"],
     widgetsAsignadosPorPanel: {
       panel_inicio: ["favoritos"],
+      panel_agendamiento: ["agendar_cita", "mis_citas"],
       panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos", "historial_pagos"],
-      panel_herramientas: ["agendar_cita", "mis_citas", "catalogo_productos", "firma_documentos_pdf", "billetera_documentos", "solicitud_socio"],
+      panel_herramientas: ["catalogo_productos", "firma_documentos_pdf", "billetera_documentos", "solicitud_socio"],
       panel_configuracion: ["notificaciones"]
     },
     activo: true
@@ -231,25 +268,18 @@ const PERFILES_INICIALES: PerfilDef[] = [
     nombre: "Operador / Auxiliar",
     nivel: 30,
     ambito: "Empresa",
-    descripcion: "Perfil operativo para atención al cliente, evaluación de solicitudes, configuración de términos, contratos y beneficios.",
-    panelesAsignados: ["panel_inicio", "panel_cuenta", "panel_herramientas", "panel_configuracion", "panel_administrar"],
+    descripcion: "Perfil operativo para atención al cliente, evaluación de solicitudes, configuración de términos, contratos y gestión de usuarios.",
+    panelesAsignados: ["panel_inicio", "panel_usuarios", "panel_red_profesional", "panel_terminos", "panel_agendamiento", "panel_administrar", "panel_cuenta", "panel_herramientas", "panel_configuracion"],
     widgetsAsignadosPorPanel: {
       panel_inicio: ["favoritos"],
+      panel_usuarios: ["consulta_usuarios_perfiles", "crm_clientes", "monitoreo_notificaciones_usuarios"],
+      panel_red_profesional: ["socios", "solicitud_socio"],
+      panel_terminos: ["gestion_terminos_consentimientos", "configuracion_contrato_abogado"],
+      panel_agendamiento: ["asignaciones_agenda"],
+      panel_administrar: ["historial_pagos", "emision_notificaciones", "bitacora_notificaciones"],
       panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos"],
-      panel_herramientas: ["catalogo_productos", "firma_documentos_pdf", "billetera_documentos", "emision_notificaciones"],
-      panel_configuracion: ["notificaciones", "agentes_ia"],
-      panel_administrar: ["asignaciones_agenda", 
-        "crm_clientes",
-        "socios",
-        "solicitud_socio",
-        "historial_pagos",
-        "emision_notificaciones",
-        "bitacora_notificaciones",
-        "monitoreo_notificaciones_usuarios",
-        "gestion_terminos_consentimientos",
-        "configuracion_contrato_abogado",
-        "consulta_usuarios_perfiles"
-      ]
+      panel_herramientas: ["catalogo_productos", "firma_documentos_pdf", "billetera_documentos"],
+      panel_configuracion: ["notificaciones", "agentes_ia"]
     },
     activo: true
   },
@@ -258,14 +288,15 @@ const PERFILES_INICIALES: PerfilDef[] = [
     nombre: "Socio Abogado / Profesional",
     nivel: 50,
     ambito: "Empresa",
-    descripcion: "Perfil profesional para atención legal de causas y expedientes.",
-    panelesAsignados: ["panel_inicio", "panel_cuenta", "panel_herramientas", "panel_configuracion", "panel_administrar"],
+    descripcion: "Perfil profesional para atención legal de causas, citas y expedientes.",
+    panelesAsignados: ["panel_inicio", "panel_usuarios", "panel_agendamiento", "panel_cuenta", "panel_herramientas", "panel_configuracion"],
     widgetsAsignadosPorPanel: {
       panel_inicio: ["favoritos"],
+      panel_usuarios: ["crm_clientes"],
+      panel_agendamiento: ["citas_programadas", "disponibilidad", "asignaciones_agenda"],
       panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos", "historial_pagos"],
-      panel_herramientas: ["citas_programadas", "disponibilidad", "crm_clientes", "catalogo_productos", "firma_documentos_pdf", "billetera_documentos", "solicitud_socio"],
-      panel_configuracion: ["notificaciones", "agentes_ia"],
-      panel_administrar: ["crm_clientes", "historial_pagos"]
+      panel_herramientas: ["catalogo_productos", "firma_documentos_pdf", "billetera_documentos", "solicitud_socio"],
+      panel_configuracion: ["notificaciones", "agentes_ia"]
     },
     activo: true
   },
@@ -274,27 +305,18 @@ const PERFILES_INICIALES: PerfilDef[] = [
     nombre: "Administrador del Negocio",
     nivel: 80,
     ambito: "Empresa",
-    descripcion: "Gestión del negocio: usuarios, parámetros de marca, SMTP, perfiles, contratos, términos y auditoría.",
-    panelesAsignados: ["panel_inicio", "panel_cuenta", "panel_herramientas", "panel_configuracion", "panel_administrar"],
+    descripcion: "Gestión completa del negocio: usuarios, red profesional, términos, agendamiento, módulos administrativos y gobernanza.",
+    panelesAsignados: ["panel_inicio", "panel_usuarios", "panel_red_profesional", "panel_terminos", "panel_agendamiento", "panel_administrar", "panel_cuenta", "panel_herramientas", "panel_configuracion"],
     widgetsAsignadosPorPanel: {
       panel_inicio: ["favoritos"],
+      panel_usuarios: ["gestion_usuarios", "consulta_usuarios_perfiles", "crm_clientes", "monitoreo_notificaciones_usuarios"],
+      panel_red_profesional: ["socios", "solicitud_socio"],
+      panel_terminos: ["gestion_terminos_consentimientos", "configuracion_contrato_abogado"],
+      panel_agendamiento: ["asignaciones_agenda"],
+      panel_administrar: ["historial_pagos", "emision_notificaciones", "bitacora_notificaciones", "perfiles", "auditoria"],
       panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos"],
-      panel_herramientas: ["catalogo_productos", "firma_documentos_pdf", "billetera_documentos", "emision_notificaciones"],
-      panel_configuracion: ["configuracion_negocio", "configuracion_correo", "pasarela_payphone", "perfiles", "agentes_ia", "notificaciones"],
-      panel_administrar: ["asignaciones_agenda", 
-        "crm_clientes",
-        "gestion_usuarios",
-        "consulta_usuarios_perfiles",
-        "socios",
-        "solicitud_socio",
-        "historial_pagos",
-        "emision_notificaciones",
-        "bitacora_notificaciones",
-        "monitoreo_notificaciones_usuarios",
-        "gestion_terminos_consentimientos",
-        "configuracion_contrato_abogado",
-        "auditoria"
-      ]
+      panel_herramientas: ["catalogo_productos", "firma_documentos_pdf", "billetera_documentos"],
+      panel_configuracion: ["configuracion_negocio", "configuracion_correo", "pasarela_payphone", "perfiles", "agentes_ia", "notificaciones"]
     },
     activo: true
   },
@@ -304,26 +326,17 @@ const PERFILES_INICIALES: PerfilDef[] = [
     nivel: 100,
     ambito: "Plataforma",
     descripcion: "Gobernanza exclusiva de la plataforma y matriz global de perfiles.",
-    panelesAsignados: ["panel_inicio", "panel_cuenta", "panel_herramientas", "panel_configuracion", "panel_administrar"],
+    panelesAsignados: ["panel_inicio", "panel_usuarios", "panel_red_profesional", "panel_terminos", "panel_agendamiento", "panel_administrar", "panel_cuenta", "panel_herramientas", "panel_configuracion"],
     widgetsAsignadosPorPanel: {
       panel_inicio: ["favoritos"],
+      panel_usuarios: ["gestion_usuarios", "consulta_usuarios_perfiles", "crm_clientes", "monitoreo_notificaciones_usuarios"],
+      panel_red_profesional: ["socios", "solicitud_socio"],
+      panel_terminos: ["gestion_terminos_consentimientos", "configuracion_contrato_abogado"],
+      panel_agendamiento: ["asignaciones_agenda"],
+      panel_administrar: ["historial_pagos", "emision_notificaciones", "bitacora_notificaciones", "perfiles", "auditoria"],
       panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos"],
-      panel_herramientas: ["catalogo_productos", "firma_documentos_pdf", "billetera_documentos", "emision_notificaciones"],
-      panel_configuracion: ["configuracion_negocio", "configuracion_correo", "pasarela_payphone", "perfiles", "agentes_ia", "notificaciones"],
-      panel_administrar: ["asignaciones_agenda", 
-        "crm_clientes",
-        "gestion_usuarios",
-        "consulta_usuarios_perfiles",
-        "socios",
-        "solicitud_socio",
-        "historial_pagos",
-        "emision_notificaciones",
-        "bitacora_notificaciones",
-        "monitoreo_notificaciones_usuarios",
-        "gestion_terminos_consentimientos",
-        "configuracion_contrato_abogado",
-        "auditoria"
-      ]
+      panel_herramientas: ["catalogo_productos", "firma_documentos_pdf", "billetera_documentos"],
+      panel_configuracion: ["configuracion_negocio", "configuracion_correo", "pasarela_payphone", "perfiles", "agentes_ia", "notificaciones"]
     },
     activo: true,
     esSuperAdmin: true
@@ -331,92 +344,84 @@ const PERFILES_INICIALES: PerfilDef[] = [
 ];
 
 // MATRIZ CANÓNICA DE ASIGNACIÓN ESTRICTA POR ROL Y PANEL FUNCIONAL
-// Regla de Oro: Cada uno de los 28 módulos está asignado al menos a un perfil operativo/administrativo DIFERENTE de SuperAdmin.
 export const MATRIZ_FUNCIONAL_ROLES: Record<string, { paneles: string[]; widgetsPorPanel: Record<string, string[]> }> = {
   CLIENTE: {
-    paneles: ["panel_inicio", "panel_cuenta", "panel_herramientas", "panel_configuracion"],
+    paneles: ["panel_inicio", "panel_agendamiento", "panel_cuenta", "panel_herramientas", "panel_configuracion"],
     widgetsPorPanel: {
       panel_inicio: ["favoritos"],
+      panel_agendamiento: ["agendar_cita", "mis_citas"],
       panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos", "historial_pagos"],
       panel_herramientas: ["catalogo_productos", "firma_documentos_pdf", "billetera_documentos", "solicitud_socio"],
       panel_configuracion: ["notificaciones"]
     }
   },
   ABOGADO: {
-    paneles: ["panel_inicio", "panel_cuenta", "panel_herramientas", "panel_configuracion", "panel_administrar"],
+    paneles: ["panel_inicio", "panel_usuarios", "panel_agendamiento", "panel_cuenta", "panel_herramientas", "panel_configuracion"],
     widgetsPorPanel: {
       panel_inicio: ["favoritos"],
+      panel_usuarios: ["crm_clientes"],
+      panel_agendamiento: ["citas_programadas", "disponibilidad", "asignaciones_agenda"],
       panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos", "historial_pagos"],
-      panel_herramientas: ["crm_clientes", "catalogo_productos", "firma_documentos_pdf", "billetera_documentos", "solicitud_socio"],
-      panel_configuracion: ["notificaciones", "agentes_ia"],
-      panel_administrar: ["crm_clientes", "historial_pagos"]
+      panel_herramientas: ["catalogo_productos", "firma_documentos_pdf", "billetera_documentos", "solicitud_socio"],
+      panel_configuracion: ["notificaciones", "agentes_ia"]
     }
   },
   OPERADOR: {
-    paneles: ["panel_inicio", "panel_cuenta", "panel_herramientas", "panel_configuracion", "panel_administrar"],
+    paneles: ["panel_inicio", "panel_usuarios", "panel_red_profesional", "panel_terminos", "panel_agendamiento", "panel_administrar", "panel_cuenta", "panel_herramientas", "panel_configuracion"],
     widgetsPorPanel: {
       panel_inicio: ["favoritos"],
-      panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos"],
-      panel_herramientas: ["catalogo_productos", "firma_documentos_pdf", "billetera_documentos", "emision_notificaciones"],
-      panel_configuracion: ["notificaciones", "agentes_ia"],
+      panel_usuarios: ["consulta_usuarios_perfiles", "crm_clientes", "monitoreo_notificaciones_usuarios"],
+      panel_red_profesional: ["socios", "solicitud_socio"],
+      panel_terminos: ["gestion_terminos_consentimientos", "configuracion_contrato_abogado"],
+      panel_agendamiento: ["asignaciones_agenda"],
       panel_administrar: [
-        "crm_clientes",
-        "socios",
-        "solicitud_socio",
         "historial_pagos",
         "emision_notificaciones",
-        "bitacora_notificaciones",
-        "monitoreo_notificaciones_usuarios",
-        "gestion_terminos_consentimientos",
-        "configuracion_contrato_abogado",
-        "consulta_usuarios_perfiles"
-      ]
+        "bitacora_notificaciones"
+      ],
+      panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos"],
+      panel_herramientas: ["catalogo_productos", "firma_documentos_pdf", "billetera_documentos"],
+      panel_configuracion: ["notificaciones", "agentes_ia"]
     }
   },
   ADMINISTRADOR: {
-    paneles: ["panel_inicio", "panel_cuenta", "panel_herramientas", "panel_configuracion", "panel_administrar"],
+    paneles: ["panel_inicio", "panel_usuarios", "panel_red_profesional", "panel_terminos", "panel_agendamiento", "panel_administrar", "panel_cuenta", "panel_herramientas", "panel_configuracion"],
     widgetsPorPanel: {
       panel_inicio: ["favoritos"],
-      panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos"],
-      panel_herramientas: ["catalogo_productos", "firma_documentos_pdf", "billetera_documentos", "emision_notificaciones"],
-      panel_configuracion: ["configuracion_negocio", "configuracion_correo", "pasarela_payphone", "perfiles", "agentes_ia", "notificaciones"],
+      panel_usuarios: ["gestion_usuarios", "consulta_usuarios_perfiles", "crm_clientes", "monitoreo_notificaciones_usuarios"],
+      panel_red_profesional: ["socios", "solicitud_socio"],
+      panel_terminos: ["gestion_terminos_consentimientos", "configuracion_contrato_abogado"],
+      panel_agendamiento: ["asignaciones_agenda"],
       panel_administrar: [
-        "crm_clientes",
-        "gestion_usuarios",
-        "consulta_usuarios_perfiles",
-        "socios",
-        "solicitud_socio",
         "historial_pagos",
         "emision_notificaciones",
         "bitacora_notificaciones",
-        "monitoreo_notificaciones_usuarios",
-        "gestion_terminos_consentimientos",
-        "configuracion_contrato_abogado",
+        "perfiles",
         "auditoria"
-      ]
+      ],
+      panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos"],
+      panel_herramientas: ["catalogo_productos", "firma_documentos_pdf", "billetera_documentos"],
+      panel_configuracion: ["configuracion_negocio", "configuracion_correo", "pasarela_payphone", "perfiles", "agentes_ia", "notificaciones"]
     }
   },
   SUPERADMIN: {
-    paneles: ["panel_inicio", "panel_cuenta", "panel_herramientas", "panel_configuracion", "panel_administrar"],
+    paneles: ["panel_inicio", "panel_usuarios", "panel_red_profesional", "panel_terminos", "panel_agendamiento", "panel_administrar", "panel_cuenta", "panel_herramientas", "panel_configuracion"],
     widgetsPorPanel: {
       panel_inicio: ["favoritos"],
-      panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos"],
-      panel_herramientas: ["catalogo_productos", "firma_documentos_pdf", "billetera_documentos", "emision_notificaciones"],
-      panel_configuracion: ["configuracion_negocio", "configuracion_correo", "pasarela_payphone", "perfiles", "agentes_ia", "notificaciones"],
+      panel_usuarios: ["gestion_usuarios", "consulta_usuarios_perfiles", "crm_clientes", "monitoreo_notificaciones_usuarios"],
+      panel_red_profesional: ["socios", "solicitud_socio"],
+      panel_terminos: ["gestion_terminos_consentimientos", "configuracion_contrato_abogado"],
+      panel_agendamiento: ["asignaciones_agenda"],
       panel_administrar: [
-        "crm_clientes",
-        "gestion_usuarios",
-        "consulta_usuarios_perfiles",
-        "socios",
-        "solicitud_socio",
         "historial_pagos",
         "emision_notificaciones",
         "bitacora_notificaciones",
-        "monitoreo_notificaciones_usuarios",
-        "gestion_terminos_consentimientos",
-        "configuracion_contrato_abogado",
+        "perfiles",
         "auditoria"
-      ]
+      ],
+      panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos"],
+      panel_herramientas: ["catalogo_productos", "firma_documentos_pdf", "billetera_documentos"],
+      panel_configuracion: ["configuracion_negocio", "configuracion_correo", "pasarela_payphone", "perfiles", "agentes_ia", "notificaciones"]
     }
   }
 };
@@ -559,9 +564,9 @@ const WIDGETS_INVENTARIO_INICIALES: WidgetInventarioDef[] = [
     nombre: "CRM Jurídico & Gestión de Clientes",
     descripcion: "Directorio 360°, KPIs, expedientes y verificación de conflictos (conflict check) en vivo.",
     categoria: "Gestión Legal",
-    ruta: "/panel/clientes",
+    ruta: "/panel/usuarios?widget=crm_clientes",
     rutaFisica: "/crm-clientes/componentes/BandejaClientesCRM.tsx",
-    panelId: "panel_administrar",
+    panelId: "panel_usuarios",
     activo: true,
     creadoEn: "2026-08-22"
   },
@@ -570,9 +575,9 @@ const WIDGETS_INVENTARIO_INICIALES: WidgetInventarioDef[] = [
     nombre: "Monitoreo de Notificaciones por Usuario",
     descripcion: "Auditoría en tiempo real de notificaciones, fechas de confirmación, tiempo de pospuesto y eliminados.",
     categoria: "Comunicación",
-    ruta: "/panel/administrar?widget=monitoreo_notificaciones_usuarios",
+    ruta: "/panel/usuarios?widget=monitoreo_notificaciones_usuarios",
     rutaFisica: "/notificaciones/MonitoreoNotificacionesUsuariosWidget.tsx",
-    panelId: "panel_administrar",
+    panelId: "panel_usuarios",
     activo: true,
     creadoEn: "2026-08-23"
   },
@@ -591,10 +596,10 @@ const WIDGETS_INVENTARIO_INICIALES: WidgetInventarioDef[] = [
     clave: "gestion_usuarios",
     nombre: "Gestión de Usuarios & Membresías",
     descripcion: "Asignación de perfiles, roles y techo jerárquico.",
-    categoria: "Administración",
-    ruta: "/panel/usuarios",
+    categoria: "Usuarios & Permisos",
+    ruta: "/panel/usuarios?widget=gestion_usuarios",
     rutaFisica: "/gestion-usuarios/AdministracionPerfilesWidget.tsx",
-    panelId: "panel_administrar",
+    panelId: "panel_usuarios",
     activo: true,
     creadoEn: "2026-07-27"
   },
@@ -602,10 +607,10 @@ const WIDGETS_INVENTARIO_INICIALES: WidgetInventarioDef[] = [
     clave: "consulta_usuarios_perfiles",
     nombre: "Consulta de Usuarios & Perfiles",
     descripcion: "Directorio de miembros, matriz de roles y consulta de permisos (Solo Lectura).",
-    categoria: "Consulta & Directorio",
-    ruta: "/panel/usuarios",
+    categoria: "Usuarios & Permisos",
+    ruta: "/panel/usuarios?widget=consulta_usuarios_perfiles",
     rutaFisica: "/gestion-usuarios/ConsultaUsuariosPerfilesWidget.tsx",
-    panelId: "panel_administrar",
+    panelId: "panel_usuarios",
     activo: true,
     creadoEn: "2026-07-31"
   },
@@ -614,9 +619,9 @@ const WIDGETS_INVENTARIO_INICIALES: WidgetInventarioDef[] = [
     nombre: "Aprobación de Socios Abogados",
     descripcion: "Revisión de matrículas y verificación de credenciales.",
     categoria: "Operación Legal",
-    ruta: "/panel/socios",
+    ruta: "/panel/red-profesional?widget=socios",
     rutaFisica: "/tranqi/AprobacionSociosWidget.tsx",
-    panelId: "panel_administrar",
+    panelId: "panel_red_profesional",
     activo: true,
     creadoEn: "2026-07-28"
   },
@@ -625,9 +630,9 @@ const WIDGETS_INVENTARIO_INICIALES: WidgetInventarioDef[] = [
     nombre: "Solicitudes de Socios",
     descripcion: "Revisión y procesamiento de formularios de solicitud.",
     categoria: "Operación Legal",
-    ruta: "/panel/solicitud-socio",
+    ruta: "/panel/red-profesional?widget=solicitud_socio",
     rutaFisica: "/tranqi/SolicitudSocioWidget.tsx",
-    panelId: "panel_administrar",
+    panelId: "panel_red_profesional",
     activo: true,
     creadoEn: "2026-07-28"
   },
@@ -636,7 +641,7 @@ const WIDGETS_INVENTARIO_INICIALES: WidgetInventarioDef[] = [
     nombre: "Auditoría por Triggers BDD",
     descripcion: "Registro inmutable de transacciones, diffs JSONB e IP.",
     categoria: "Seguridad & Auditoría",
-    ruta: "/panel/auditoria",
+    ruta: "/panel/administrar?widget=auditoria",
     rutaFisica: "/auditoria/TablaAuditoria.tsx",
     panelId: "panel_administrar",
     activo: true,
@@ -647,7 +652,7 @@ const WIDGETS_INVENTARIO_INICIALES: WidgetInventarioDef[] = [
     nombre: "Emisión de Notificaciones Multicanal",
     descripcion: "Despacho masivo multicanal (In-App, Push, Email y WhatsApp).",
     categoria: "Comunicación",
-    ruta: "/panel/emision-notificaciones",
+    ruta: "/panel/administrar?widget=emision_notificaciones",
     rutaFisica: "/notificaciones/EmisionNotificacionesWidget.tsx",
     panelId: "panel_administrar",
     activo: true,
@@ -680,9 +685,9 @@ const WIDGETS_INVENTARIO_INICIALES: WidgetInventarioDef[] = [
     nombre: "Administración de Perfiles & Permisos",
     descripcion: "Matriz de perfiles, jerarquía (1-100) y asignación de widgets.",
     categoria: "Gobernanza",
-    ruta: "/panel/configuracion",
+    ruta: "/panel/administrar?widget=perfiles",
     rutaFisica: "/gestion-usuarios/AdministracionPerfilesWidget.tsx",
-    panelId: "panel_configuracion",
+    panelId: "panel_administrar",
     activo: true,
     creadoEn: "2026-07-31"
   },
@@ -699,12 +704,12 @@ const WIDGETS_INVENTARIO_INICIALES: WidgetInventarioDef[] = [
   },
   {
     clave: "gestion_terminos_consentimientos",
-    nombre: "Términos, Contratos & Beneficios",
-    descripcion: "Configuración centralizada de cláusulas LOPDP, contratos de sociedad, términos y beneficios informativos.",
+    nombre: "Términos, Consentimientos & LOPDP",
+    descripcion: "Configuración centralizada de cláusulas LOPDP, notificaciones, WhatsApp y contrato de socios.",
     categoria: "Gobernanza & Legales",
-    ruta: "/panel/administrar?widget=gestion_terminos_consentimientos",
+    ruta: "/panel/terminos?widget=gestion_terminos_consentimientos",
     rutaFisica: "/identidad/GestionTerminosConsentimientosWidget.tsx",
-    panelId: "panel_administrar",
+    panelId: "panel_terminos",
     activo: true,
     creadoEn: "2026-08-13"
   },
@@ -712,10 +717,10 @@ const WIDGETS_INVENTARIO_INICIALES: WidgetInventarioDef[] = [
     clave: "configuracion_contrato_abogado",
     nombre: "Configuración de Contrato de Socios",
     descripcion: "Administración de la plantilla del contrato de sociedad de abogados (.MD/HTML).",
-    categoria: "Operación Legal",
-    ruta: "/panel/administrar?widget=configuracion_contrato_abogado",
+    categoria: "Gobernanza & Legales",
+    ruta: "/panel/terminos?widget=configuracion_contrato_abogado",
     rutaFisica: "/tranqi/ConfiguracionContratoAbogadoWidget.tsx",
-    panelId: "panel_administrar",
+    panelId: "panel_terminos",
     activo: true,
     creadoEn: "2026-08-13"
   },
@@ -759,7 +764,7 @@ const WIDGETS_INVENTARIO_INICIALES: WidgetInventarioDef[] = [
     categoria: "Agenda",
     ruta: "/panel/agendar",
     rutaFisica: "/agenda/componentes/FormularioAgendar.tsx",
-    panelId: "panel_herramientas",
+    panelId: "panel_agendamiento",
     activo: true,
     creadoEn: "2026-09-05"
   },
@@ -770,7 +775,7 @@ const WIDGETS_INVENTARIO_INICIALES: WidgetInventarioDef[] = [
     categoria: "Agenda",
     ruta: "/panel/mis-citas",
     rutaFisica: "/agenda/componentes/ListaCitasCliente.tsx",
-    panelId: "panel_herramientas",
+    panelId: "panel_agendamiento",
     activo: true,
     creadoEn: "2026-09-05"
   },
@@ -781,7 +786,7 @@ const WIDGETS_INVENTARIO_INICIALES: WidgetInventarioDef[] = [
     categoria: "Agenda",
     ruta: "/panel/agenda",
     rutaFisica: "/agenda/componentes/BandejaCitasAbogado.tsx",
-    panelId: "panel_herramientas",
+    panelId: "panel_agendamiento",
     activo: true,
     creadoEn: "2026-09-05"
   },
@@ -792,18 +797,18 @@ const WIDGETS_INVENTARIO_INICIALES: WidgetInventarioDef[] = [
     categoria: "Agenda",
     ruta: "/panel/agenda/disponibilidad",
     rutaFisica: "/agenda/componentes/EditorDisponibilidad.tsx",
-    panelId: "panel_herramientas",
+    panelId: "panel_agendamiento",
     activo: true,
     creadoEn: "2026-09-05"
   },
   {
     clave: "asignaciones_agenda",
-    nombre: "Asignaciones y Contingencia",
+    nombre: "Asignaciones y Contingencia (Agenda)",
     descripcion: "Citas que se quedaron sin abogado porque el asignado canceló. La cita del afiliado sigue viva y hay que reasignarla antes de la hora.",
     categoria: "Agenda",
     ruta: "/panel/agenda/asignaciones",
     rutaFisica: "/agenda/componentes/MesaAsignaciones.tsx",
-    panelId: "panel_administrar",
+    panelId: "panel_agendamiento",
     activo: true,
     creadoEn: "2026-09-05"
   }
