@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { UserCog, Users, ClipboardList, Bell, Shield, ChevronRight, Star, Lock, Eye, Pencil, FileText, Sliders, RotateCcw, BarChart2, type LucideIcon } from "lucide-react";
+import { UserCog, Users, ClipboardList, Bell, Shield, ChevronRight, Star, Lock, Eye, Pencil, FileText, Sliders, RotateCcw, BarChart2, Receipt, Calendar, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { ConsultaUsuariosPerfilesWidget } from "@eco/gestion-usuarios/componentes/ConsultaUsuariosPerfilesWidget";
 import { AdministracionPerfilesWidget } from "@eco/gestion-usuarios/componentes/AdministracionPerfilesWidget";
@@ -9,6 +9,8 @@ import { EmisionNotificacionesWidget, BitacoraNotificacionesWidget, MonitoreoNot
 import { GestionTerminosConsentimientosWidget } from "@eco/identidad/componentes/GestionTerminosConsentimientosWidget";
 import { VisorAuditoriaWidget } from "../auditoria/VisorAuditoriaWidget";
 import { ConfiguracionContratoAbogadoWidget } from "../../../modulos/socios/componentes/ConfiguracionContratoAbogadoWidget";
+import { BandejaClientesCRM } from "../../../modulos/crm-clientes/componentes/BandejaClientesCRM";
+import { HistorialTransaccionesPago } from "@eco/comercio";
 import { DataGrid, type ColumnaDataGrid } from "@eco/datagrid";
 import { useCustomWidgets } from "../gestorTitulosWidgets";
 import { ModalEditarWidget } from "../ModalEditarWidget";
@@ -37,31 +39,31 @@ export interface ModuloAdminDef {
 
 const MODULOS_ADMIN: ModuloAdminDef[] = [
   {
-    id: "gestion_usuarios",
-    titulo: "Gestión de Usuarios & Membresías",
-    subtitulo: "Administración de miembros, asignación de perfiles y techo jerárquico",
-    ruta: "/panel/usuarios",
-    icono: UserCog,
-    colorIcono: "var(--violeta, #5000BA)",
-    categoria: "Usuarios & Permisos"
+    id: "crm_clientes",
+    titulo: "CRM Jurídico & Gestión de Clientes",
+    subtitulo: "Directorio 360°, expedientes y seguimiento integral de clientes",
+    ruta: "/panel/administrar?widget=crm_clientes",
+    icono: Users,
+    colorIcono: "#5000BA",
+    categoria: "Gestión Legal"
   },
   {
-    id: "consulta_usuarios",
-    titulo: "Consulta de Usuarios & Perfiles",
-    subtitulo: "Directorio de miembros y matriz de roles (Solo Lectura)",
-    ruta: "/panel/administrar?widget=consulta_usuarios",
-    icono: Eye,
-    colorIcono: "var(--violeta, #5000BA)",
-    categoria: "Usuarios & Permisos"
+    id: "historial_pagos",
+    titulo: "Historial de Transacciones & Pagos",
+    subtitulo: "Auditoría contable y registro de pagos Payphone en vivo y simulados",
+    ruta: "/panel/administrar?widget=historial_pagos",
+    icono: Receipt,
+    colorIcono: "#05876E",
+    categoria: "Comercio y Pagos"
   },
   {
-    id: "perfiles",
-    titulo: "Administración de Perfiles & Permisos",
-    subtitulo: "Catálogo de perfiles, jerarquía (1–100) y matriz de gobernanza BDD",
-    ruta: "/panel/configuracion?widget=perfiles",
-    icono: Sliders,
-    colorIcono: "var(--violeta, #5000BA)",
-    categoria: "Usuarios & Permisos"
+    id: "emision_notificaciones",
+    titulo: "Emisión de Notificaciones Multicanal",
+    subtitulo: "Redacción y despacho masivo multicanal (In-App, Push, Email y WhatsApp)",
+    ruta: "/panel/administrar?widget=emision_notificaciones",
+    icono: Bell,
+    colorIcono: "#D97706",
+    categoria: "Comunicación"
   },
   {
     id: "socios",
@@ -82,15 +84,6 @@ const MODULOS_ADMIN: ModuloAdminDef[] = [
     categoria: "Operación Legal"
   },
   {
-    id: "emision_notificaciones",
-    titulo: "Emisión de Notificaciones Multicanal",
-    subtitulo: "Redacción y despacho masivo multicanal (In-App, Push, Email y WhatsApp)",
-    ruta: "/panel/administrar?widget=emision_notificaciones",
-    icono: Bell,
-    colorIcono: "#D97706",
-    categoria: "Comunicación"
-  },
-  {
     id: "monitoreo_notificaciones_usuarios",
     titulo: "Monitoreo de Notificaciones por Usuario",
     subtitulo: "Auditoría en tiempo real de notificaciones, fechas de confirmación, tiempo de pospuesto y eliminados",
@@ -109,6 +102,15 @@ const MODULOS_ADMIN: ModuloAdminDef[] = [
     categoria: "Comunicación"
   },
   {
+    id: "configuracion_contrato_abogado",
+    titulo: "Configuración de Contrato de Socios",
+    subtitulo: "Administración de la plantilla del contrato de sociedad de abogados (.MD/HTML)",
+    ruta: "/panel/administrar?widget=configuracion_contrato_abogado",
+    icono: FileText,
+    colorIcono: "#05876E",
+    categoria: "Gobernanza & Legales"
+  },
+  {
     id: "gestion_terminos_consentimientos",
     titulo: "Términos, Consentimientos & LOPDP",
     subtitulo: "Configuración de cláusulas LOPDP, notificaciones, WhatsApp y protección de datos",
@@ -118,6 +120,42 @@ const MODULOS_ADMIN: ModuloAdminDef[] = [
     categoria: "Gobernanza & Legales"
   },
   {
+    id: "consulta_usuarios",
+    titulo: "Consulta de Usuarios & Perfiles",
+    subtitulo: "Directorio de miembros y asignación jerárquica de roles",
+    ruta: "/panel/administrar?widget=consulta_usuarios",
+    icono: Eye,
+    colorIcono: "var(--violeta, #5000BA)",
+    categoria: "Usuarios & Permisos"
+  },
+  {
+    id: "asignaciones_agenda",
+    titulo: "Asignaciones y Contingencia (Agenda)",
+    subtitulo: "Mesa de control de asignaciones operativas y reasignación de citas",
+    ruta: "/panel/administrar?widget=asignaciones_agenda",
+    icono: Calendar,
+    colorIcono: "#0284C7",
+    categoria: "Agenda"
+  },
+  {
+    id: "gestion_usuarios",
+    titulo: "Gestión de Usuarios & Membresías",
+    subtitulo: "Administración de miembros, asignación de perfiles y techo jerárquico",
+    ruta: "/panel/usuarios",
+    icono: UserCog,
+    colorIcono: "var(--violeta, #5000BA)",
+    categoria: "Usuarios & Permisos"
+  },
+  {
+    id: "perfiles",
+    titulo: "Administración de Perfiles & Permisos",
+    subtitulo: "Catálogo de perfiles, jerarquía (1–100) y matriz de gobernanza BDD",
+    ruta: "/panel/configuracion?widget=perfiles",
+    icono: Sliders,
+    colorIcono: "var(--violeta, #5000BA)",
+    categoria: "Usuarios & Permisos"
+  },
+  {
     id: "auditoria",
     titulo: "Auditoría BDD & Telemetría",
     subtitulo: "Consulta de registros inmutables PostgreSQL y telemetría de APIs",
@@ -125,15 +163,6 @@ const MODULOS_ADMIN: ModuloAdminDef[] = [
     icono: Shield,
     colorIcono: "#111827",
     categoria: "Seguridad & Auditoría"
-  },
-  {
-    id: "configuracion_contrato_abogado",
-    titulo: "Configuración de Contrato de Socios",
-    subtitulo: "Administración de la plantilla del contrato de sociedad de abogados (.MD/HTML)",
-    ruta: "/panel/administrar?widget=configuracion_contrato_abogado",
-    icono: FileText,
-    colorIcono: "#05876E",
-    categoria: "Gobernanza & Legales"
   }
 ];
 
@@ -376,9 +405,36 @@ function obtenerModulosInicialesAdmin(rolForzado?: string): ModuloAdminDef[] {
     else if (matchFav && matchFav[1]) rolActivo = matchFav[1].toUpperCase();
   }
 
-  let ids: string[] = ["gestion_usuarios", "consulta_usuarios", "perfiles", "socios", "solicitud_socio", "emision_notificaciones", "monitoreo_notificaciones_usuarios", "bitacora_notificaciones", "gestion_terminos_consentimientos", "auditoria", "configuracion_contrato_abogado"];
+  let ids: string[] = [
+    "crm_clientes",
+    "historial_pagos",
+    "emision_notificaciones",
+    "socios",
+    "solicitud_socio",
+    "monitoreo_notificaciones_usuarios",
+    "bitacora_notificaciones",
+    "configuracion_contrato_abogado",
+    "gestion_terminos_consentimientos",
+    "consulta_usuarios",
+    "asignaciones_agenda",
+    "gestion_usuarios",
+    "perfiles",
+    "auditoria"
+  ];
   if (rolActivo === "OPERADOR" || rolActivo === "AUXILIAR" || rolActivo === "TECNICO") {
-    ids = ["socios", "solicitud_socio", "monitoreo_notificaciones_usuarios", "bitacora_notificaciones", "configuracion_contrato_abogado", "gestion_terminos_consentimientos", "consulta_usuarios"];
+    ids = [
+      "crm_clientes",
+      "historial_pagos",
+      "emision_notificaciones",
+      "socios",
+      "solicitud_socio",
+      "monitoreo_notificaciones_usuarios",
+      "bitacora_notificaciones",
+      "configuracion_contrato_abogado",
+      "gestion_terminos_consentimientos",
+      "consulta_usuarios",
+      "asignaciones_agenda"
+    ];
   }
 
   return MODULOS_ADMIN.filter(m => ids.includes(m.id));
@@ -510,9 +566,36 @@ export function PanelAdministrarModular({ negocio = "TRANQ", esSuperAdmin = fals
         // 1. Presets de asignación por rol para panel_administrar
         let idsAsignados: string[] = [];
         if (esOperador) {
-          idsAsignados = ["socios", "solicitud_socio", "monitoreo_notificaciones_usuarios", "bitacora_notificaciones", "configuracion_contrato_abogado", "gestion_terminos_consentimientos", "consulta_usuarios"];
+          idsAsignados = [
+            "crm_clientes",
+            "historial_pagos",
+            "emision_notificaciones",
+            "socios",
+            "solicitud_socio",
+            "monitoreo_notificaciones_usuarios",
+            "bitacora_notificaciones",
+            "configuracion_contrato_abogado",
+            "gestion_terminos_consentimientos",
+            "consulta_usuarios",
+            "asignaciones_agenda"
+          ];
         } else if (rolEncontrado === "ADMINISTRADOR" || rolEncontrado === "SUPERADMIN") {
-          idsAsignados = ["gestion_usuarios", "consulta_usuarios", "perfiles", "socios", "solicitud_socio", "emision_notificaciones", "monitoreo_notificaciones_usuarios", "bitacora_notificaciones", "gestion_terminos_consentimientos", "auditoria", "configuracion_contrato_abogado"];
+          idsAsignados = [
+            "crm_clientes",
+            "historial_pagos",
+            "emision_notificaciones",
+            "socios",
+            "solicitud_socio",
+            "monitoreo_notificaciones_usuarios",
+            "bitacora_notificaciones",
+            "configuracion_contrato_abogado",
+            "gestion_terminos_consentimientos",
+            "consulta_usuarios",
+            "asignaciones_agenda",
+            "gestion_usuarios",
+            "perfiles",
+            "auditoria"
+          ];
         }
 
         // 2. Consultar servidor BDD PostgreSQL (comun_seguridad.seg_rol_widget)
@@ -765,6 +848,34 @@ export function PanelAdministrarModular({ negocio = "TRANQ", esSuperAdmin = fals
             {/* 6. CONFIGURACIÓN DE CONTRATO DE SOCIOS */}
             {widgetActivo === "configuracion_contrato_abogado" && (
               <ConfiguracionContratoAbogadoWidget />
+            )}
+
+            {/* 7. CRM JURÍDICO & GESTIÓN DE CLIENTES */}
+            {widgetActivo === "crm_clientes" && (
+              <div style={{ width: "100%" }}>
+                <BandejaClientesCRM negocio={negocio} />
+              </div>
+            )}
+
+            {/* 8. HISTORIAL DE TRANSACCIONES & PAGOS */}
+            {widgetActivo === "historial_pagos" && (
+              <div style={{ width: "100%" }}>
+                <HistorialTransaccionesPago />
+              </div>
+            )}
+
+            {/* 9. ASIGNACIONES Y CONTINGENCIA (AGENDA) */}
+            {widgetActivo === "asignaciones_agenda" && (
+              <div style={{ padding: "24px", textAlign: "center", background: "#F8FAFC", borderRadius: "12px", border: "1px solid #E2E8F0" }}>
+                <Calendar style={{ width: 42, height: 42, color: "#0284C7", margin: "0 auto 12px", display: "block" }} />
+                <h3 style={{ fontSize: "1.1rem", fontWeight: 700, margin: "0 0 8px 0" }}>Mesa de Asignaciones y Contingencia</h3>
+                <p style={{ margin: "0 0 20px 0", color: "#64748B", fontSize: "0.88rem", maxWidth: "520px", marginInline: "auto" }}>
+                  Gestiona la distribución de casos, reasignaciones operativas y contingencias de la agenda profesional.
+                </p>
+                <Link href="/panel/agenda/asignaciones" className="btn btn-primario" style={{ textDecoration: "none", display: "inline-flex", alignItems: "center", gap: "8px", background: "#0284C7", color: "#fff", padding: "10px 18px", borderRadius: "10px", fontWeight: 700, fontSize: "0.85rem" }}>
+                  <Calendar size={16} /> Abrir Mesa de Asignaciones
+                </Link>
+              </div>
             )}
           </div>
         </section>
