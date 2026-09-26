@@ -31,6 +31,7 @@ import {
 import { ModalCrearProducto } from "./ModalCrearProducto";
 import { ModalCrearCategoria } from "./ModalCrearCategoria";
 import { ModalEditarProducto } from "./ModalEditarProducto";
+import { ModalGaleriaMedios } from "./ModalGaleriaMedios";
 
 interface Props {
   negocio?: string;
@@ -50,6 +51,7 @@ export function ConsolaGestionCatalogo({ negocio = "tranqi" }: Props) {
   const [modalCatAbierto, setModalCatAbierto] = useState(false);
   const [productoAEditar, setProductoAEditar] = useState<ProductoCatalogo | null>(null);
   const [modalEditarAbierto, setModalEditarAbierto] = useState(false);
+  const [modalGaleriaGlobalAbierto, setModalGaleriaGlobalAbierto] = useState(false);
 
   // 1. Inicializar parámetros desde URL (Deep Linking & Compartir)
   useEffect(() => {
@@ -280,6 +282,30 @@ export function ConsolaGestionCatalogo({ negocio = "tranqi" }: Props) {
           >
             <FolderPlus size={16} />
             <span className="btn-texto-responsive">Nueva Categoría</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setModalGaleriaGlobalAbierto(true)}
+            className="btn-responsive-accion"
+            title="Abrir biblioteca y galería de imágenes del negocio"
+            aria-label="Abrir biblioteca y galería de imágenes del negocio"
+            style={{
+              background: "#F8FAFC",
+              border: "1px solid #CBD5E1",
+              color: "#0F172A",
+              padding: "8px 14px",
+              borderRadius: "8px",
+              fontSize: "0.82rem",
+              fontWeight: 700,
+              cursor: "pointer",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+            }}
+          >
+            <ImageIcon size={16} color="#0284C7" />
+            <span className="btn-texto-responsive">Biblioteca de Medios</span>
           </button>
 
           <button
@@ -647,6 +673,14 @@ export function ConsolaGestionCatalogo({ negocio = "tranqi" }: Props) {
         }}
         categorias={categoriasLista}
         negocio={negocio}
+      />
+
+      {/* Modal Biblioteca Multimedia Global del Negocio */}
+      <ModalGaleriaMedios
+        abierto={modalGaleriaGlobalAbierto}
+        onCerrar={() => setModalGaleriaGlobalAbierto(false)}
+        negocio={negocio}
+        titulo={`Biblioteca Multimedia y Galería (${negocio.toUpperCase()})`}
       />
     </div>
   );

@@ -51,6 +51,8 @@ import {
   CanalVisibilidad,
 } from "../canales";
 import { ModalCrearCategoria } from "./ModalCrearCategoria";
+import { ModalGaleriaMedios } from "./ModalGaleriaMedios";
+
 
 export const COLOR_PRODUCTO_MASTER = {
   nombre: "Master Slate / Sky",
@@ -372,6 +374,22 @@ export function ModalEditarProducto({
   const [subiendoImagenVariante, setSubiendoImagenVariante] = useState(false);
   const [subiendoGaleria, setSubiendoGaleria] = useState(false);
   const [exitoAutoConvertir, setExitoAutoConvertir] = useState<string | null>(null);
+
+  // Galería Multimedia del Negocio
+  const [modalGaleriaAbierto, setModalGaleriaAbierto] = useState(false);
+  const [contextoGaleria, setContextoGaleria] = useState<"master" | "variante" | "galeria">("master");
+
+  const handleSeleccionarDesdeGaleria = (url: string) => {
+    if (contextoGaleria === "master") {
+      setImagenUrl(url);
+      setExitoAutoConvertir("¡Imagen seleccionada desde la galería del negocio!");
+    } else if (contextoGaleria === "variante") {
+      const det = { ...(varianteActual?.var_detalle_variante || {}), portada_url: url };
+      actualizarVarianteActual("var_detalle_variante", det);
+    } else if (contextoGaleria === "galeria") {
+      setGaleriaTexto((prev) => (prev.trim() ? `${prev.trim()}\n${url}` : url));
+    }
+  };
 
   // Configuración Impositiva Global & Logística (Transporte / Delivery)
   const [tarifaIvaMaster, setTarifaIvaMaster] = useState<number>(15);
@@ -1457,7 +1475,7 @@ export function ModalEditarProducto({
                         ) : (
                           <>
                             <Upload size={13} />
-                            <span>📁 Subir desde PC</span>
+                            <span>📁 Subir PC</span>
                           </>
                         )}
                         <input
@@ -1468,6 +1486,34 @@ export function ModalEditarProducto({
                           style={{ display: "none" }}
                         />
                       </label>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setContextoGaleria("master");
+                          setModalGaleriaAbierto(true);
+                        }}
+                        style={{
+                          background: "#0284C7",
+                          color: "#FFFFFF",
+                          border: "none",
+                          padding: "7px 11px",
+                          borderRadius: "6px",
+                          fontSize: "0.74rem",
+                          fontWeight: 700,
+                          cursor: "pointer",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "4px",
+                          whiteSpace: "nowrap",
+                          flexShrink: 0,
+                          boxShadow: "0 1px 2px rgba(2, 132, 199, 0.2)",
+                        }}
+                        title="Abrir galería de imágenes del negocio"
+                      >
+                        <ImageIcon size={13} />
+                        <span>🖼️ Galería</span>
+                      </button>
                     </div>
 
                     {exitoAutoConvertir && (
@@ -1598,27 +1644,52 @@ export function ModalEditarProducto({
                       <label style={{ fontSize: "0.72rem", fontWeight: 700, color: "#334155" }}>
                         Galería Adicional (URLs por salto de línea)
                       </label>
-                      <label
-                        style={{
-                          fontSize: "0.68rem",
-                          fontWeight: 700,
-                          color: "#0284C7",
-                          cursor: subiendoGaleria ? "wait" : "pointer",
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: "3px",
-                        }}
-                      >
-                        {subiendoGaleria ? <Loader2 size={11} className="animate-spin" /> : <Upload size={11} />}
-                        <span>+ Cargar Foto PC</span>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          disabled={subiendoGaleria}
-                          onChange={handleSubirArchivoGaleria}
-                          style={{ display: "none" }}
-                        />
-                      </label>
+                      <div style={{ display: "flex", gap: "6px" }}>
+                        <label
+                          style={{
+                            fontSize: "0.68rem",
+                            fontWeight: 700,
+                            color: "#0284C7",
+                            cursor: subiendoGaleria ? "wait" : "pointer",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "3px",
+                          }}
+                        >
+                          {subiendoGaleria ? <Loader2 size={11} className="animate-spin" /> : <Upload size={11} />}
+                          <span>+ Subir PC</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            disabled={subiendoGaleria}
+                            onChange={handleSubirArchivoGaleria}
+                            style={{ display: "none" }}
+                          />
+                        </label>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setContextoGaleria("galeria");
+                            setModalGaleriaAbierto(true);
+                          }}
+                          style={{
+                            background: "none",
+                            border: "none",
+                            color: "#0284C7",
+                            fontSize: "0.68rem",
+                            fontWeight: 700,
+                            cursor: "pointer",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "3px",
+                            padding: 0,
+                          }}
+                        >
+                          <ImageIcon size={11} />
+                          <span>+ De Galería</span>
+                        </button>
+                      </div>
                     </div>
                     <textarea
                       rows={2}
@@ -2728,6 +2799,33 @@ export function ModalEditarProducto({
 
                           <button
                             type="button"
+                            onClick={() => {
+                              setContextoGaleria("variante");
+                              setModalGaleriaAbierto(true);
+                            }}
+                            style={{
+                              background: "#0284C7",
+                              color: "#FFFFFF",
+                              border: "none",
+                              padding: "7px 10px",
+                              borderRadius: "6px",
+                              fontSize: "0.72rem",
+                              fontWeight: 700,
+                              cursor: "pointer",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "4px",
+                              whiteSpace: "nowrap",
+                              boxShadow: "0 1px 2px rgba(2, 132, 199, 0.2)",
+                            }}
+                            title="Abrir galería de medios"
+                          >
+                            <ImageIcon size={12} />
+                            <span>🖼️ Galería</span>
+                          </button>
+
+                          <button
+                            type="button"
                             disabled={resolviendoVarianteImg}
                             onClick={() => handleConvertirImagenVariante()}
                             style={{
@@ -3244,6 +3342,15 @@ export function ModalEditarProducto({
           }
         }}
         negocio={negocio}
+      />
+
+      {/* Modal Galería y Biblioteca Multimedia por Negocio */}
+      <ModalGaleriaMedios
+        abierto={modalGaleriaAbierto}
+        onCerrar={() => setModalGaleriaAbierto(false)}
+        negocio={negocio}
+        onSeleccionarImagen={(url) => handleSeleccionarDesdeGaleria(url)}
+        titulo={`Biblioteca de Medios (${negocio.toUpperCase()})`}
       />
     </div>
   );

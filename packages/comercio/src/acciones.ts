@@ -2148,6 +2148,136 @@ export async function subirImagenCatalogoAction(
   }
 }
 
+/**
+ * Elemento multimedia de la galería por negocio
+ */
+export interface ElementoMedioGaleria {
+  id: string;
+  nombre: string;
+  rutaCompleta: string;
+  urlPublica: string;
+  carpeta: string;
+  tamanioBytes?: number;
+  creadoEn?: string;
+  tipoMime?: string;
+}
+
+// Almacén en memoria de respaldo para persistencia rápida de medios por negocio
+const storeMediosMemoria = new Map<string, ElementoMedioGaleria[]>();
+
+/**
+ * Lista todos los archivos multimedia de la galería correspondientes a un negocio específico
+ */
+export async function listarGaleriaNegocioAction(
+  negocioRaw: string,
+  carpetaFiltro?: string
+): Promise<{ ok: boolean; medios: ElementoMedioGaleria[]; error?: string }> {
+  try {
+    const { principal } = normalizarIdentificadorNegocio(negocioRaw);
+    const admin: any = crearClienteAdmin();
+    const supabase: any = await crearClienteServidor();
+    const clienteActivo = admin || supabase;
+    const bucketName = "catalogo";
+
+    const mediosEncontrados: ElementoMedioGaleria[] = [];
+    const carpetasRevisar = carpetaFiltro
+      ? [carpetaFiltro]
+      : ["portadas", "variantes", "galeria", "general", ""];
+
+    if (clienteActivo?.storage) {
+      for (const carpeta of carpetasRevisar) {
+        try {
+          const prefijo = carpeta ? `${principal}/${carpeta}` : principal;
+          const { data: archivos, error: listError } = await clienteActivo.storage
+            .from(bucketName)
+            .list(prefijo, {
+              limit: 100,
+              offset: 0,
+              sortBy: { column: "created_at", order: "desc" },
+            });
+
+          if (!listError && Array.isArray(archivos)) {
+            for (const file of archivos) {
+              if (!file.name || file.name === ".emptyFolderPlaceholder") continue;
+              // Si es una carpeta interna, omitir o iterar
+              if (file.id === null && !file.metadata) continue;
+
+              const rutaCompleta = carpeta ? `${principal}/${carpeta}/${file.name}` : `${principal}/${file.name}`;
+              const { data: pubData } = clienteActivo.storage
+                .from(bucketName)
+                .getPublicUrl(rutaCompleta);
+
+              mediosEncontrados.push({
+                id: file.id || rutaCompleta,
+                nombre: file.name,
+                rutaCompleta,
+                urlPublica: pubData?.publicUrl || "",
+                carpeta: carpeta || "general",
+                tamanioBytes: file.metadata?.size || 0,
+                creadoEn: file.created_at || new Date().toISOString(),
+                tipoMime: file.metadata?.mimetype || "image/jpeg",
+              });
+            }
+          }
+        } catch {
+          // Continuar con siguiente carpeta
+        }
+      }
+    }
+
+    // Combinar con medios registrados en memoria de sesión
+    const enMemoria = storeMediosMemoria.get(principal) || [];
+    for (const mem of enMemoria) {
+      if (!mediosEncontrados.some((m) => m.urlPublica === mem.urlPublica || m.rutaCompleta === mem.rutaCompleta)) {
+        mediosEncontrados.push(mem);
+      }
+    }
+
+    // Ordenar descendente por fecha de creación
+    mediosEncontrados.sort((a, b) => new Date(b.creadoEn || 0).getTime() - new Date(a.creadoEn || 0).getTime());
+
+    return { ok: true, medios: mediosEncontrados };
+  } catch (err: any) {
+    return { ok: false, medios: [], error: err.message || "Error al listar medios de la galería." };
+  }
+}
+
+/**
+ * Elimina una imagen de la galería de medios del negocio
+ */
+export async function eliminarImagenGaleriaAction(
+  negocioRaw: string,
+  rutaCompleta: string
+): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const { principal } = normalizarIdentificadorNegocio(negocioRaw);
+    const admin: any = crearClienteAdmin();
+    const supabase: any = await crearClienteServidor();
+    const clienteActivo = admin || supabase;
+    const bucketName = "catalogo";
+
+    if (clienteActivo?.storage && rutaCompleta) {
+      try {
+        await clienteActivo.storage.from(bucketName).remove([rutaCompleta]);
+      } catch (e: any) {
+        console.warn("Aviso al eliminar de Storage:", e?.message);
+      }
+    }
+
+    // Eliminar también del almacén en memoria
+    const enMemoria = storeMediosMemoria.get(principal) || [];
+    const actualizados = enMemoria.filter((m) => m.rutaCompleta !== rutaCompleta && m.urlPublica !== rutaCompleta);
+    storeMediosMemoria.set(principal, actualizados);
+
+    revalidatePath("/panel");
+    revalidatePath("/panel/catalogo-productos");
+    return { ok: true };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Error al eliminar archivo de la galería." };
+  }
+}
+
+
 
 /**
  * Crea un nuevo producto u honorario profesional con su variante de cobro

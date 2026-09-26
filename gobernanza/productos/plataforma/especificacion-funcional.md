@@ -507,6 +507,14 @@ Motor centralizado de gestión de bienes, servicios, recetas (BOM), inventarios,
       - La consola de gestión (`CatalogoProductosComercio.tsx`) permite filtrar por canal activo y exhibe los badges de canales en cada tarjeta.
       - Los formularios de creación (`ModalCrearProducto.tsx`) y edición master (`ModalEditarProducto.tsx`) proveen selectores interactivos multiselección conmutables.
       - Las consultas de servidor (`obtenerCatalogoProductosAction`) y los endpoints MCP (`consultar_catalogo`, `detalle_producto` en `@eco/agentes-ia`) aceptan el parámetro opcional `canal` para retornar únicamente los productos autorizados para dicho medio.
+21. **Biblioteca y Galería Multimedia por Negocio (*Media Library & Storage Manager*):**
+    - **Aislamiento Multi-Tenant en Storage:** Cada negocio (`tranqi`, `tinkay`, `fastfix`, `margaritas`) posee su propio árbol de directorios de almacenamiento en Supabase Storage dentro del bucket público `catalogo` (`{negocio}/portadas/`, `{negocio}/variantes/`, `{negocio}/galeria/`, `{negocio}/general/`).
+    - **Modal de Gestión y Biblioteca de Medios (`ModalGaleriaMedios.tsx`):**
+      - *Exploración Visual y Búsqueda:* Cuadrícula de fotos con búsqueda reactiva en tiempo real por nombre de archivo y filtro por carpeta de destino.
+      - *Carga Rápida y Drag & Drop:* Permite arrastrar y soltar múltiples imágenes locales o examinar archivos desde el disco duro del equipo, con barra de progreso por archivo y validación de tipos MIME (`JPG`, `PNG`, `WEBP`, `GIF`, `AVIF`, `SVG`, hasta 15 MB).
+      - *Selección Asistida:* Con 1 clic, asigna la URL pública de alta resolución a la Portada Master, Portada de Variante o Galería Adicional del producto en edición o creación.
+      - *Eliminación Segura con Confirmación:* Modal de advertencia para purgar fotos obsoletas de la nube (`eliminarImagenGaleriaAction`), manteniendo la integridad referencial.
+    - **Acceso Directo:** Disponible permanentemente desde la barra superior de la consola de catálogo (`ConsolaGestionCatalogo.tsx`) y como selector directo en los modales de producto.
 
 **Implementación técnica:** ver [`especificacion-tecnica.md`](especificacion-tecnica.md) §7 (`comun_comercio`).
 

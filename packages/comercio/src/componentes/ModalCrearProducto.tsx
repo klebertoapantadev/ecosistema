@@ -36,6 +36,8 @@ import {
   CanalVisibilidad,
 } from "../canales";
 import { ModalCrearCategoria } from "./ModalCrearCategoria";
+import { ModalGaleriaMedios } from "./ModalGaleriaMedios";
+
 
 interface Props {
   abierto: boolean;
@@ -102,6 +104,7 @@ export function ModalCrearProducto({
 
   const [resolviendoImagen, setResolviendoImagen] = useState(false);
   const [subiendoImagen, setSubiendoImagen] = useState(false);
+  const [modalGaleriaAbierto, setModalGaleriaAbierto] = useState(false);
   const [exitoAutoConvertir, setExitoAutoConvertir] = useState<string | null>(null);
   const [canalesSeleccionados, setCanalesSeleccionados] = useState<CanalVisibilidad[]>([...CANALES_POR_DEFECTO]);
 
@@ -773,6 +776,31 @@ export function ModalCrearProducto({
                       style={{ display: "none" }}
                     />
                   </label>
+
+                  <button
+                    type="button"
+                    onClick={() => setModalGaleriaAbierto(true)}
+                    style={{
+                      background: "#0284C7",
+                      color: "#FFFFFF",
+                      border: "none",
+                      padding: "7px 11px",
+                      borderRadius: "6px",
+                      fontSize: "0.74rem",
+                      fontWeight: 700,
+                      cursor: "pointer",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "4px",
+                      whiteSpace: "nowrap",
+                      flexShrink: 0,
+                      boxShadow: "0 1px 2px rgba(2, 132, 199, 0.2)",
+                    }}
+                    title="Abrir galería de imágenes del negocio"
+                  >
+                    <ImageIcon size={13} />
+                    <span>🖼️ Galería</span>
+                  </button>
                 </div>
 
                 {exitoAutoConvertir && (
@@ -1304,6 +1332,18 @@ export function ModalCrearProducto({
           }
         }}
         negocio={negocio}
+      />
+
+      {/* Modal Galería y Biblioteca Multimedia por Negocio */}
+      <ModalGaleriaMedios
+        abierto={modalGaleriaAbierto}
+        onCerrar={() => setModalGaleriaAbierto(false)}
+        negocio={negocio}
+        onSeleccionarImagen={(url) => {
+          setImagenUrl(url);
+          setExitoAutoConvertir("¡Imagen seleccionada desde la galería del negocio!");
+        }}
+        titulo={`Biblioteca de Medios (${negocio.toUpperCase()})`}
       />
     </div>
   );

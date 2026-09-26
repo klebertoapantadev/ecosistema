@@ -15,3 +15,5 @@ export * from "./componentes/TableroDisponibilidadOperativa";
 export * from "./componentes/SeccionCoberturaCliente";
 export * from "./componentes/ModalHistorialUsoPlan";
 export * from "./componentes/CarruselProductosCliente";
+export * from "./componentes/ModalGaleriaMedios";
+
