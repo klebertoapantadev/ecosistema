@@ -55,7 +55,7 @@ export async function GET() {
         const perfilesTRANQ = await obtenerPerfiles("TRANQ");
         const perfiles = Array.from(new Set([...perfilesTranqi, ...perfilesTRANQ]));
         const correo = (perfil.usu_correo || "").toLowerCase().trim();
-        const esSuperAdminEmail = correo === "familiammtg@gmail.com" || correo === "jesus251296@gmail.com" || correo === "satcomla.ti@gmail.com";
+        const esSuperAdminEmail = correo === "familiammtg@gmail.com" || correo === "jesus251296@gmail.com";
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const client: any = crearClienteAdmin() || await crearClienteServidor();
