@@ -43,18 +43,23 @@ BEGIN
   -- Extraer metadatos de Google OAuth o registro directo
   v_nombres := coalesce(
     new.raw_user_meta_data ->> 'given_name',
-    new.raw_user_meta_data ->> 'nombres',
-    split_part(coalesce(new.raw_user_meta_data ->> 'name', new.raw_user_meta_data ->> 'full_name', v_email_clean), ' ', 1)
+    new.raw_user_meta_data ->> 'nombres'
   );
 
   v_apellidos := coalesce(
     new.raw_user_meta_data ->> 'family_name',
-    new.raw_user_meta_data ->> 'apellidos',
-    substr(
-      coalesce(new.raw_user_meta_data ->> 'name', new.raw_user_meta_data ->> 'full_name', ''),
-      length(v_nombres) + 2
-    )
+    new.raw_user_meta_data ->> 'apellidos'
   );
+
+  v_terminos_version := new.raw_user_meta_data ->> 'terminos_version';
+
+  IF v_nombres IS NULL AND v_apellidos IS NULL THEN
+    v_nombre_completo := trim(coalesce(new.raw_user_meta_data ->> 'name', new.raw_user_meta_data ->> 'full_name', v_email_clean));
+    IF v_nombre_completo IS NOT NULL AND v_nombre_completo <> '' THEN
+      v_nombres := split_part(v_nombre_completo, ' ', 1);
+      v_apellidos := nullif(trim(substring(v_nombre_completo from length(v_nombres) + 1)), '');
+    END IF;
+  END IF;
 
   v_avatar := coalesce(
     new.raw_user_meta_data ->> 'avatar_url',
@@ -68,8 +73,9 @@ BEGIN
     usu_correo,
     usu_nombres,
     usu_apellidos,
-    usu_avatar_url,
     usu_superadmin_plataforma,
+    usu_terminos_aceptados_en,
+    usu_terminos_version,
     usu_detalle_usuario
   )
   VALUES (
@@ -77,9 +83,14 @@ BEGIN
     new.email,
     v_nombres,
     v_apellidos,
-    v_avatar,
     v_es_superadmin,
+    CASE WHEN v_terminos_version IS NOT NULL THEN now() ELSE NULL END,
+    v_terminos_version,
     jsonb_build_object(
+      'nombres', v_nombres,
+      'apellidos', v_apellidos,
+      'foto', v_avatar,
+      'avatar_url', v_avatar,
       'proveedor_auth', coalesce(new.raw_app_meta_data ->> 'provider', 'email'),
       'creado_via', 'auth_trigger_provisionamiento',
       'email_confirmado_en', new.email_confirmed_at
@@ -89,12 +100,15 @@ BEGIN
     usu_correo = EXCLUDED.usu_correo,
     usu_nombres = coalesce(EXCLUDED.usu_nombres, comun_seguridad.seg_usuario.usu_nombres),
     usu_apellidos = coalesce(EXCLUDED.usu_apellidos, comun_seguridad.seg_usuario.usu_apellidos),
-    usu_avatar_url = coalesce(EXCLUDED.usu_avatar_url, comun_seguridad.seg_usuario.usu_avatar_url),
     usu_superadmin_plataforma = CASE 
       WHEN lower(EXCLUDED.usu_correo) = 'kleber.toapanta.ch@gmail.com' THEN false
       WHEN v_es_superadmin THEN true 
       ELSE comun_seguridad.seg_usuario.usu_superadmin_plataforma 
     END,
+    usu_detalle_usuario = coalesce(comun_seguridad.seg_usuario.usu_detalle_usuario, '{}'::jsonb) || jsonb_build_object(
+      'foto', coalesce(v_avatar, comun_seguridad.seg_usuario.usu_detalle_usuario ->> 'foto'),
+      'avatar_url', coalesce(v_avatar, comun_seguridad.seg_usuario.usu_detalle_usuario ->> 'avatar_url')
+    ),
     usu_actualizado_en = now();
 
   RETURN new;
