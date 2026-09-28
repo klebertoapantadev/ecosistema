@@ -5,7 +5,7 @@ import Link from "next/link";
 import {
   LayoutGrid, Wrench, Shield, Users, Bell, UserCog, ClipboardList, FileText,
   Settings, ChevronRight, CircleUser, KeyRound, FileCheck, Folder, type LucideIcon,
-  Bot, ShoppingBag, CreditCard, Receipt, Share2, CheckCircle2
+  Bot, ShoppingBag, CreditCard, Receipt, Share2, CheckCircle2, Sparkles
 } from "lucide-react";
 import { useWidgetEnUrl } from "../useWidgetEnUrl";
 import { BotonVolverWidget } from "../BotonVolverWidget";
@@ -132,6 +132,20 @@ const METADATOS_PANELES_BASE: Record<string, { nombre: string; descripcion: stri
 };
 
 const INVENTARIO_GLOBAL_WIDGETS: Record<string, { titulo: string; subtitulo: string; icono: LucideIcon; colorIcono: string; categoria: string }> = {
+  vitrina_comercial: {
+    titulo: "Planes, Servicios & Honorarios",
+    subtitulo: "Oferta de servicios legales, planes de suscripción y tarifario interactivo",
+    icono: Sparkles,
+    colorIcono: "#5000BA",
+    categoria: "Comercio y Pagos"
+  },
+  vitrina: {
+    titulo: "Planes, Servicios & Honorarios",
+    subtitulo: "Oferta de servicios legales, planes de suscripción y tarifario interactivo",
+    icono: Sparkles,
+    colorIcono: "#5000BA",
+    categoria: "Comercio y Pagos"
+  },
   catalogo_productos: {
     titulo: "Catálogo Comercial & Honorarios",
     subtitulo: "Servicios jurídicos, tarifario de honorarios y suscripciones con IVA 15%",
@@ -449,7 +463,7 @@ function obtenerWidgetsInicialesDinamicos(panelId: string, slugStr: string, rolD
   } else {
     // ROL CLIENTE: Acceso exclusivo a sus widgets propios
     if (esPanelAgenda) return ["agendar_cita", "mis_citas"];
-    if (esPanelHerr) return ["catalogo_productos", "firma_documentos_pdf", "billetera_documentos", "solicitud_socio"];
+    if (esPanelHerr) return ["vitrina_comercial", "firma_documentos_pdf", "billetera_documentos", "solicitud_socio"];
     if (esPanelCuenta) return ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos", "historial_pagos"];
     if (esPanelConf) return ["notificaciones"];
     return [];
