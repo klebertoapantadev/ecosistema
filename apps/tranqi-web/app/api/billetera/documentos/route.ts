@@ -177,8 +177,23 @@ export async function POST(req: NextRequest) {
       detalles
     } = body;
 
-    if (!titulo || !categoria) {
+    if (!titulo || typeof titulo !== "string" || !titulo.trim() || !categoria) {
       return NextResponse.json({ ok: false, error: "El título y la categoría son obligatorios" }, { status: 400 });
+    }
+
+    if (alertarCaducidad === true && (!fechaCaducidad || typeof fechaCaducidad !== "string" || !fechaCaducidad.trim())) {
+      return NextResponse.json({ ok: false, error: "Indica la fecha de caducidad o desactiva la alerta" }, { status: 400 });
+    }
+
+    const tieneMetadatosValidos = Array.isArray(metadatosDinamicos) && metadatosDinamicos.some(
+      (m: any) => typeof m?.clave === "string" && typeof m?.valor === "string" && m.clave.trim().length > 0 && m.valor.trim().length > 0
+    );
+
+    if (!tieneMetadatosValidos) {
+      return NextResponse.json({
+        ok: false,
+        error: "El documento necesita al menos un dato (titular, número u otro)"
+      }, { status: 400 });
     }
 
     // Normalización de archivos adjuntos
