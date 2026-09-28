@@ -6,6 +6,7 @@
 --              3. Limpia notificaciones de staff indebidas asociadas a clientes.
 
 -- 1. Actualizar seg_fn_obtener_staff_negocio
+DROP FUNCTION IF EXISTS comun_seguridad.seg_fn_obtener_staff_negocio(text);
 CREATE OR REPLACE FUNCTION comun_seguridad.seg_fn_obtener_staff_negocio(p_negocio text DEFAULT 'TRANQ')
 RETURNS TABLE (
   usu_id uuid,
@@ -42,6 +43,7 @@ $$;
 GRANT EXECUTE ON FUNCTION comun_seguridad.seg_fn_obtener_staff_negocio(text) TO authenticated, service_role, anon;
 
 -- 2. Actualizar not_fn_notificar_staff
+DROP FUNCTION IF EXISTS comun_notificacion.not_fn_notificar_staff(text, text, text, text, uuid);
 CREATE OR REPLACE FUNCTION comun_notificacion.not_fn_notificar_staff(
   p_negocio text,
   p_titulo text,
