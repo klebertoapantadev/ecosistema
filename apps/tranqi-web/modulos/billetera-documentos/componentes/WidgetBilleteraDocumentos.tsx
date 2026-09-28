@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Folder, Shield, Upload, Share2, Clock, CheckCircle2, AlertTriangle, XCircle,
   FileText, Search, Eye, Trash2, KeyRound, ExternalLink, Copy, Check, Sparkles,
@@ -135,6 +135,10 @@ export function WidgetBilleteraDocumentos({ negocio = "TRANQ", onCerrar }: Props
 
   // Estados de Asistente Aria & Envío
   const [analizandoConAria, setAnalizandoConAria] = useState<boolean>(false);
+  const [segundosAnalisis, setSegundosAnalisis] = useState<number>(0);
+  const inicioAnalisisRef = useRef<number>(0);
+  const [recienRellenado, setRecienRellenado] = useState<boolean>(false);
+  const [erroresCampos, setErroresCampos] = useState<{ titulo?: string; fechaCaducidad?: string; metadatos?: string }>({});
   const [resumenAria, setResumenAria] = useState<string | null>(null);
   const [analisisDetectado, setAnalisisDetectado] = useState<{
     queEs?: string | null;
@@ -148,6 +152,32 @@ export function WidgetBilleteraDocumentos({ negocio = "TRANQ", onCerrar }: Props
     resumenOcr?: string | null;
   } | null>(null);
   const [guardandoDoc, setGuardandoDoc] = useState<boolean>(false);
+
+  // Efecto para temporizador de segundos durante análisis de Aria
+  useEffect(() => {
+    if (analizandoConAria) {
+      inicioAnalisisRef.current = Date.now();
+      setSegundosAnalisis(0);
+      const intervalo = setInterval(() => {
+        const transcurrido = Math.floor((Date.now() - inicioAnalisisRef.current) / 1000);
+        setSegundosAnalisis(transcurrido);
+      }, 1000);
+      return () => clearInterval(intervalo);
+    } else {
+      setSegundosAnalisis(0);
+    }
+  }, [analizandoConAria]);
+
+  // Efecto para destello de campos rellenados tras análisis exitoso
+  useEffect(() => {
+    if (analisisDetectado) {
+      setRecienRellenado(true);
+      const timer = setTimeout(() => {
+        setRecienRellenado(false);
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [analisisDetectado]);
 
   // Estados de Compartir TTL
   const [modoTtl, setModoTtl] = useState<string>("24h");
@@ -327,12 +357,6 @@ export function WidgetBilleteraDocumentos({ negocio = "TRANQ", onCerrar }: Props
           const listaActualizada = [...archivosSeleccionados, ...archivosNuevos];
           setArchivosSeleccionados(listaActualizada);
 
-          // Si es el primer archivo y no hay título, sugerir título base
-          if (!nuevoTitulo && archivosNuevos[0]) {
-            const nombreLimpio = archivosNuevos[0].nombre.replace(/\.[^/.]+$/, "").replace(/[-_]/g, " ");
-            setNuevoTitulo(nombreLimpio.charAt(0).toUpperCase() + nombreLimpio.slice(1));
-          }
-
           // Ejecutar Aria para los archivos combinados
           ejecutarAnalisisAria(listaActualizada);
         }
@@ -358,17 +382,26 @@ export function WidgetBilleteraDocumentos({ negocio = "TRANQ", onCerrar }: Props
 
   // Funciones para gestión de metadatos dinámicos
   const agregarCampoMetadato = (clavePrevia = "", valorPrevio = "") => {
+    if (erroresCampos.metadatos) {
+      setErroresCampos(prev => ({ ...prev, metadatos: undefined }));
+    }
     const nuevoId = `meta-${Date.now()}-${Math.random().toString(36).slice(2, 5)}`;
     setMetadatosDinamicos([...metadatosDinamicos, { id: nuevoId, clave: clavePrevia, valor: valorPrevio }]);
   };
 
   const actualizarCampoMetadato = (id: string, campo: "clave" | "valor", texto: string) => {
+    if (erroresCampos.metadatos) {
+      setErroresCampos(prev => ({ ...prev, metadatos: undefined }));
+    }
     setMetadatosDinamicos(
       metadatosDinamicos.map(m => (m.id === id ? { ...m, [campo]: texto } : m))
     );
   };
 
   const eliminarCampoMetadato = (id: string) => {
+    if (erroresCampos.metadatos) {
+      setErroresCampos(prev => ({ ...prev, metadatos: undefined }));
+    }
     setMetadatosDinamicos(metadatosDinamicos.filter(m => m.id !== id));
   };
 
@@ -379,14 +412,44 @@ export function WidgetBilleteraDocumentos({ negocio = "TRANQ", onCerrar }: Props
       return;
     }
 
+    if (analizandoConAria) {
+      mostrarToast("Espera a que ARIA termine de leer el documento", "error");
+      return;
+    }
+
+    const nuevosErrores: { titulo?: string; fechaCaducidad?: string; metadatos?: string } = {};
+
+    const tituloFinal = nuevoTitulo.trim();
+    if (!tituloFinal) {
+      nuevosErrores.titulo = "Escribe un título para el documento";
+    }
+
+    if (alertarCaducidad && (!nuevaFechaCaducidad || !nuevaFechaCaducidad.trim())) {
+      nuevosErrores.fechaCaducidad = "Indica la fecha de caducidad o desmarca la alerta";
+    }
+
+    // Filtrar filas de metadatos con clave Y valor no vacíos
+    const metadatosLimpios = metadatosDinamicos
+      .filter(m => m.clave.trim() && m.valor.trim())
+      .map(m => ({ clave: m.clave.trim(), valor: m.valor.trim() }));
+
+    if (metadatosLimpios.length === 0) {
+      nuevosErrores.metadatos = "Añade al menos un dato del documento (por ejemplo, el titular o el número)";
+    }
+
+    if (Object.keys(nuevosErrores).length > 0) {
+      setErroresCampos(nuevosErrores);
+      const primerMensaje = nuevosErrores.titulo || nuevosErrores.fechaCaducidad || nuevosErrores.metadatos;
+      if (primerMensaje) {
+        mostrarToast(primerMensaje, "error");
+      }
+      return;
+    }
+
+    setErroresCampos({});
+
     try {
       setGuardandoDoc(true);
-      const tituloFinal = nuevoTitulo.trim() || archivosSeleccionados[0]?.nombre.replace(/\.[^/.]+$/, "") || "Documento Seguro";
-
-      // Filtrar metadatos vacíos
-      const metadatosLimpios = metadatosDinamicos
-        .filter(m => m.clave.trim() || m.valor.trim())
-        .map(m => ({ clave: m.clave.trim() || "Campo", valor: m.valor.trim() }));
 
       // Extraer campos conocidos desde metadatos dinámicos
       let titularFinal = "";
@@ -476,6 +539,8 @@ export function WidgetBilleteraDocumentos({ negocio = "TRANQ", onCerrar }: Props
     setMetadatosDinamicos([]);
     setResumenAria(null);
     setAnalisisDetectado(null);
+    setErroresCampos({});
+    setRecienRellenado(false);
   };
 
   const abrirCompartir = async (doc: DocumentoBilletera) => {
@@ -1216,11 +1281,170 @@ export function WidgetBilleteraDocumentos({ negocio = "TRANQ", onCerrar }: Props
                 </div>
               )}
 
-              {/* BANNER INFORMATIVO / ESTADO DE ARIA IA */}
+              {/* TARJETA DE ANÁLISIS EN CURSO (SUSTITUYE BANNER ANTERIOR) */}
               {analizandoConAria && (
-                <div style={{ background: "rgba(80,0,186,0.06)", border: "1.5px dashed #5000BA", padding: "12px 16px", borderRadius: "10px", marginBottom: "14px", display: "flex", alignItems: "center", gap: "10px", fontSize: "0.82rem", color: "#5000BA", fontWeight: 700 }}>
-                  <Sparkles size={18} />
-                  <span>✨ Aria está analizando el documento para extraer tipo, titular, ID, lugar/nacimiento y verificar si requiere caducidad...</span>
+                <div
+                  role="status"
+                  aria-live="polite"
+                  className="billetera-aria-brillo"
+                  style={{
+                    border: "2px solid #5000BA",
+                    background: "rgba(80,0,186,0.06)",
+                    borderRadius: "14px",
+                    padding: "18px",
+                    marginBottom: "16px"
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "16px" }}>
+                    <div style={{ display: "flex", alignItems: "flex-start", gap: "14px", flex: 1 }}>
+                      {/* Icono de documento con línea de escaneo */}
+                      <div
+                        style={{
+                          position: "relative",
+                          width: "36px",
+                          height: "36px",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          flexShrink: 0,
+                          overflow: "hidden"
+                        }}
+                      >
+                        <FileText size={36} color="#5000BA" />
+                        <div
+                          className="billetera-aria-escaneo"
+                          style={{
+                            position: "absolute",
+                            left: 0,
+                            right: 0,
+                            height: "2px",
+                            background: "linear-gradient(90deg, #5000BA, #B1FBE3)",
+                            pointerEvents: "none"
+                          }}
+                        />
+                      </div>
+
+                      {/* Título y Pasos de análisis */}
+                      <div style={{ flex: 1 }}>
+                        <h3 style={{ margin: "0 0 10px 0", fontSize: "0.95rem", fontWeight: 800, color: "#5000BA" }}>
+                          ARIA está leyendo tu documento
+                        </h3>
+
+                        <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: "6px" }}>
+                          {/* Paso 1: Recibiendo el documento */}
+                          <li style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "0.8rem", color: "#1F2937" }}>
+                            {segundosAnalisis > 3 ? (
+                              <CheckCircle2 size={16} color="#05876E" style={{ flexShrink: 0 }} />
+                            ) : (
+                              <span
+                                className="billetera-aria-latido"
+                                style={{
+                                  width: "12px",
+                                  height: "12px",
+                                  borderRadius: "50%",
+                                  background: "#5000BA",
+                                  display: "inline-block",
+                                  flexShrink: 0
+                                }}
+                              />
+                            )}
+                            <span style={{ fontWeight: segundosAnalisis <= 3 ? 700 : 500 }}>
+                              Recibiendo el documento
+                            </span>
+                          </li>
+
+                          {/* Paso 2: Leyendo el contenido con visión */}
+                          <li style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "0.8rem", color: "#1F2937" }}>
+                            {segundosAnalisis > 12 ? (
+                              <CheckCircle2 size={16} color="#05876E" style={{ flexShrink: 0 }} />
+                            ) : segundosAnalisis >= 3 ? (
+                              <span
+                                className="billetera-aria-latido"
+                                style={{
+                                  width: "12px",
+                                  height: "12px",
+                                  borderRadius: "50%",
+                                  background: "#5000BA",
+                                  display: "inline-block",
+                                  flexShrink: 0
+                                }}
+                              />
+                            ) : (
+                              <span
+                                style={{
+                                  width: "12px",
+                                  height: "12px",
+                                  borderRadius: "50%",
+                                  border: "2px solid #9CA3AF",
+                                  background: "transparent",
+                                  display: "inline-block",
+                                  flexShrink: 0,
+                                  boxSizing: "border-box"
+                                }}
+                              />
+                            )}
+                            <span style={{ fontWeight: segundosAnalisis >= 3 && segundosAnalisis <= 12 ? 700 : 500, color: segundosAnalisis < 3 ? "#6B7280" : "#1F2937" }}>
+                              Leyendo el contenido con visión
+                            </span>
+                          </li>
+
+                          {/* Paso 3: Completando los campos */}
+                          <li style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "0.8rem", color: "#1F2937" }}>
+                            {segundosAnalisis > 12 ? (
+                              <span
+                                className="billetera-aria-latido"
+                                style={{
+                                  width: "12px",
+                                  height: "12px",
+                                  borderRadius: "50%",
+                                  background: "#5000BA",
+                                  display: "inline-block",
+                                  flexShrink: 0
+                                }}
+                              />
+                            ) : (
+                              <span
+                                style={{
+                                  width: "12px",
+                                  height: "12px",
+                                  borderRadius: "50%",
+                                  border: "2px solid #9CA3AF",
+                                  background: "transparent",
+                                  display: "inline-block",
+                                  flexShrink: 0,
+                                  boxSizing: "border-box"
+                                }}
+                              />
+                            )}
+                            <span style={{ fontWeight: segundosAnalisis > 12 ? 700 : 500, color: segundosAnalisis <= 12 ? "#6B7280" : "#1F2937" }}>
+                              Completando los campos
+                            </span>
+                          </li>
+                        </ul>
+                      </div>
+                    </div>
+
+                    {/* Contador de segundos */}
+                    <div
+                      style={{
+                        fontSize: "1.15rem",
+                        fontWeight: 800,
+                        color: "#5000BA",
+                        fontVariantNumeric: "tabular-nums",
+                        flexShrink: 0,
+                        padding: "4px 8px",
+                        background: "rgba(80,0,186,0.08)",
+                        borderRadius: "8px"
+                      }}
+                    >
+                      {segundosAnalisis} s
+                    </div>
+                  </div>
+
+                  {/* Pie en gris */}
+                  <div style={{ marginTop: "12px", fontSize: "0.76rem", color: "#6B7280", borderTop: "1px solid rgba(80,0,186,0.12)", paddingTop: "8px" }}>
+                    Suele tardar entre 10 y 40 segundos. No cierres esta ventana.
+                  </div>
                 </div>
               )}
 
@@ -1282,11 +1506,14 @@ export function WidgetBilleteraDocumentos({ negocio = "TRANQ", onCerrar }: Props
               )}
 
               {resumenAria && !analisisDetectado && !analizandoConAria && (
-                <div style={{ background: "#F0FDF4", border: "1.5px solid #05876E", padding: "12px 16px", borderRadius: "12px", marginBottom: "14px", fontSize: "0.82rem", color: "#065F46" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 800, color: "#05876E", marginBottom: "4px" }}>
-                    <CheckCircle2 size={16} /> Resumen de Análisis — Agente Aria IA
+                <div role="status" style={{ background: "#F8FAFC", border: "1.5px solid #CBD5E1", padding: "12px 16px", borderRadius: "12px", marginBottom: "14px", fontSize: "0.82rem", color: "#334155" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 800, color: "#1E293B", marginBottom: "4px" }}>
+                    <AlertTriangle size={16} color="#64748B" /> ARIA no pudo completar los campos
                   </div>
                   <div>{resumenAria}</div>
+                  <div style={{ marginTop: "4px", color: "#64748B" }}>
+                    Complétalos a mano o pulsa «Re-analizar con Aria (IA)».
+                  </div>
                 </div>
               )}
 
@@ -1294,15 +1521,33 @@ export function WidgetBilleteraDocumentos({ negocio = "TRANQ", onCerrar }: Props
               <div className="rejilla-auto" style={{ "--min": "200px", "--hueco": "12px", marginBottom: "16px" } as React.CSSProperties}>
                 <div>
                   <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, color: "#374151", marginBottom: "4px" }}>
-                    Título del Documento
+                    Título del Documento <span style={{ color: "#DC2626" }}>*</span>
                   </label>
                   <input
                     type="text"
+                    disabled={analizandoConAria}
+                    className={`${analizandoConAria ? "billetera-aria-esqueleto" : ""} ${recienRellenado ? "billetera-aria-rellenado" : ""}`.trim()}
                     value={nuevoTitulo}
-                    onChange={(e) => setNuevoTitulo(e.target.value)}
-                    placeholder="Ej. Cédula de Identidad y Votación"
-                    style={{ width: "100%", padding: "8px 12px", borderRadius: "8px", border: "1px solid #D1D5DB", fontSize: "0.85rem" }}
+                    onChange={(e) => {
+                      setNuevoTitulo(e.target.value);
+                      if (erroresCampos.titulo) {
+                        setErroresCampos(prev => ({ ...prev, titulo: undefined }));
+                      }
+                    }}
+                    placeholder={analizandoConAria ? "ARIA está completando este campo…" : "Ej. Cédula de Identidad y Votación"}
+                    style={{
+                      width: "100%",
+                      padding: "8px 12px",
+                      borderRadius: "8px",
+                      border: erroresCampos.titulo ? "1.5px solid #DC2626" : "1px solid #D1D5DB",
+                      fontSize: "0.85rem"
+                    }}
                   />
+                  {erroresCampos.titulo && (
+                    <span style={{ color: "#DC2626", fontSize: "0.74rem", marginTop: "4px", display: "block" }}>
+                      {erroresCampos.titulo}
+                    </span>
+                  )}
                 </div>
 
                 <div>
@@ -1310,6 +1555,8 @@ export function WidgetBilleteraDocumentos({ negocio = "TRANQ", onCerrar }: Props
                     Categoría
                   </label>
                   <select
+                    disabled={analizandoConAria}
+                    className={analizandoConAria ? "billetera-aria-esqueleto" : ""}
                     value={nuevaCategoria}
                     onChange={(e) => setNuevaCategoria(e.target.value)}
                     style={{ width: "100%", padding: "8px 12px", borderRadius: "8px", border: "1px solid #D1D5DB", fontSize: "0.85rem" }}
@@ -1330,7 +1577,12 @@ export function WidgetBilleteraDocumentos({ negocio = "TRANQ", onCerrar }: Props
                     <input
                       type="checkbox"
                       checked={alertarCaducidad}
-                      onChange={(e) => setAlertarCaducidad(e.target.checked)}
+                      onChange={(e) => {
+                        setAlertarCaducidad(e.target.checked);
+                        if (erroresCampos.fechaCaducidad) {
+                          setErroresCampos(prev => ({ ...prev, fechaCaducidad: undefined }));
+                        }
+                      }}
                       style={{ width: "16px", height: "16px", accentColor: "#5000BA" }}
                     />
                     <BellRing size={16} color="#5000BA" /> Alertar Caducidad de este Documento
@@ -1348,10 +1600,29 @@ export function WidgetBilleteraDocumentos({ negocio = "TRANQ", onCerrar }: Props
                       </label>
                       <input
                         type="date"
+                        disabled={analizandoConAria}
+                        className={analizandoConAria ? "billetera-aria-esqueleto" : ""}
                         value={nuevaFechaCaducidad}
-                        onChange={(e) => setNuevaFechaCaducidad(e.target.value)}
-                        style={{ width: "100%", padding: "8px 12px", borderRadius: "8px", border: "1px solid #FCA5A5", fontSize: "0.85rem", background: "#FFF" }}
+                        onChange={(e) => {
+                          setNuevaFechaCaducidad(e.target.value);
+                          if (erroresCampos.fechaCaducidad) {
+                            setErroresCampos(prev => ({ ...prev, fechaCaducidad: undefined }));
+                          }
+                        }}
+                        style={{
+                          width: "100%",
+                          padding: "8px 12px",
+                          borderRadius: "8px",
+                          border: erroresCampos.fechaCaducidad ? "1.5px solid #DC2626" : "1px solid #FCA5A5",
+                          fontSize: "0.85rem",
+                          background: "#FFF"
+                        }}
                       />
+                      {erroresCampos.fechaCaducidad && (
+                        <span style={{ color: "#DC2626", fontSize: "0.74rem", marginTop: "4px", display: "block" }}>
+                          {erroresCampos.fechaCaducidad}
+                        </span>
+                      )}
                     </div>
 
                     <div>
@@ -1375,7 +1646,16 @@ export function WidgetBilleteraDocumentos({ negocio = "TRANQ", onCerrar }: Props
               </div>
 
               {/* SECCIÓN DE METADATOS DINÁMICOS (EDITABLES, ELIMINABLES, AGREGABLES) */}
-              <div style={{ border: "1px solid #E5E7EB", borderRadius: "12px", padding: "14px", marginBottom: "20px", background: "#FAFAFA" }}>
+              <div
+                className={recienRellenado ? "billetera-aria-rellenado" : ""}
+                style={{
+                  border: erroresCampos.metadatos ? "1.5px solid #DC2626" : "1px solid #E5E7EB",
+                  borderRadius: "12px",
+                  padding: "14px",
+                  marginBottom: "20px",
+                  background: "#FAFAFA"
+                }}
+              >
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
                   <div>
                     <span style={{ fontSize: "0.82rem", fontWeight: 800, color: "#111827", display: "flex", alignItems: "center", gap: "6px" }}>
@@ -1388,16 +1668,17 @@ export function WidgetBilleteraDocumentos({ negocio = "TRANQ", onCerrar }: Props
 
                   <button
                     type="button"
+                    disabled={analizandoConAria}
                     onClick={() => agregarCampoMetadato("", "")}
                     style={{
-                      background: "#EDE9FE",
-                      color: "#5000BA",
+                      background: analizandoConAria ? "#F3F4F6" : "#EDE9FE",
+                      color: analizandoConAria ? "#9CA3AF" : "#5000BA",
                       border: "1px solid #DDD6FE",
                       borderRadius: "8px",
                       padding: "5px 12px",
                       fontSize: "0.74rem",
                       fontWeight: 800,
-                      cursor: "pointer",
+                      cursor: analizandoConAria ? "not-allowed" : "pointer",
                       display: "flex",
                       alignItems: "center",
                       gap: "4px"
@@ -1406,6 +1687,12 @@ export function WidgetBilleteraDocumentos({ negocio = "TRANQ", onCerrar }: Props
                     <Plus size={13} /> Agregar Campo
                   </button>
                 </div>
+
+                {erroresCampos.metadatos && (
+                  <span style={{ color: "#DC2626", fontSize: "0.74rem", marginBottom: "10px", display: "block" }}>
+                    {erroresCampos.metadatos}
+                  </span>
+                )}
 
                 {/* LISTADO DE METADATOS DINÁMICOS */}
                 {metadatosDinamicos.length === 0 ? (
@@ -1416,29 +1703,33 @@ export function WidgetBilleteraDocumentos({ negocio = "TRANQ", onCerrar }: Props
                     <div style={{ display: "flex", gap: "6px", justifyContent: "center", flexWrap: "wrap" }}>
                       <button
                         type="button"
+                        disabled={analizandoConAria}
                         onClick={() => agregarCampoMetadato("Nombre del Titular", "")}
-                        style={{ background: "#F3F4F6", border: "1px solid #E5E7EB", borderRadius: "6px", padding: "3px 8px", fontSize: "0.7rem", color: "#374151", cursor: "pointer" }}
+                        style={{ background: "#F3F4F6", border: "1px solid #E5E7EB", borderRadius: "6px", padding: "3px 8px", fontSize: "0.7rem", color: analizandoConAria ? "#9CA3AF" : "#374151", cursor: analizandoConAria ? "not-allowed" : "pointer" }}
                       >
                         + Titular
                       </button>
                       <button
                         type="button"
+                        disabled={analizandoConAria}
                         onClick={() => agregarCampoMetadato("Cédula / RUC", "")}
-                        style={{ background: "#F3F4F6", border: "1px solid #E5E7EB", borderRadius: "6px", padding: "3px 8px", fontSize: "0.7rem", color: "#374151", cursor: "pointer" }}
+                        style={{ background: "#F3F4F6", border: "1px solid #E5E7EB", borderRadius: "6px", padding: "3px 8px", fontSize: "0.7rem", color: analizandoConAria ? "#9CA3AF" : "#374151", cursor: analizandoConAria ? "not-allowed" : "pointer" }}
                       >
                         + Identificación
                       </button>
                       <button
                         type="button"
+                        disabled={analizandoConAria}
                         onClick={() => agregarCampoMetadato("Entidad Emisora", "")}
-                        style={{ background: "#F3F4F6", border: "1px solid #E5E7EB", borderRadius: "6px", padding: "3px 8px", fontSize: "0.7rem", color: "#374151", cursor: "pointer" }}
+                        style={{ background: "#F3F4F6", border: "1px solid #E5E7EB", borderRadius: "6px", padding: "3px 8px", fontSize: "0.7rem", color: analizandoConAria ? "#9CA3AF" : "#374151", cursor: analizandoConAria ? "not-allowed" : "pointer" }}
                       >
                         + Entidad Emisora
                       </button>
                       <button
                         type="button"
+                        disabled={analizandoConAria}
                         onClick={() => agregarCampoMetadato("Número / Matrícula", "")}
-                        style={{ background: "#F3F4F6", border: "1px solid #E5E7EB", borderRadius: "6px", padding: "3px 8px", fontSize: "0.7rem", color: "#374151", cursor: "pointer" }}
+                        style={{ background: "#F3F4F6", border: "1px solid #E5E7EB", borderRadius: "6px", padding: "3px 8px", fontSize: "0.7rem", color: analizandoConAria ? "#9CA3AF" : "#374151", cursor: analizandoConAria ? "not-allowed" : "pointer" }}
                       >
                         + N° Documento
                       </button>
@@ -1453,6 +1744,8 @@ export function WidgetBilleteraDocumentos({ negocio = "TRANQ", onCerrar }: Props
                       >
                         <input
                           type="text"
+                          disabled={analizandoConAria}
+                          className={analizandoConAria ? "billetera-aria-esqueleto" : ""}
                           value={meta.clave}
                           onChange={(e) => actualizarCampoMetadato(meta.id, "clave", e.target.value)}
                           placeholder="Nombre del Campo (ej. Titular)"
@@ -1468,6 +1761,8 @@ export function WidgetBilleteraDocumentos({ negocio = "TRANQ", onCerrar }: Props
 
                         <input
                           type="text"
+                          disabled={analizandoConAria}
+                          className={analizandoConAria ? "billetera-aria-esqueleto" : ""}
                           value={meta.valor}
                           onChange={(e) => actualizarCampoMetadato(meta.id, "valor", e.target.value)}
                           placeholder="Valor del Campo (ej. Kleber Toapanta)"
@@ -1482,17 +1777,18 @@ export function WidgetBilleteraDocumentos({ negocio = "TRANQ", onCerrar }: Props
 
                         <button
                           type="button"
+                          disabled={analizandoConAria}
                           onClick={() => eliminarCampoMetadato(meta.id)}
                           style={{
-                            background: "#FEE2E2",
+                            background: analizandoConAria ? "#F3F4F6" : "#FEE2E2",
                             border: "none",
-                            color: "#DC2626",
+                            color: analizandoConAria ? "#9CA3AF" : "#DC2626",
                             borderRadius: "6px",
                             height: "30px",
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "center",
-                            cursor: "pointer"
+                            cursor: analizandoConAria ? "not-allowed" : "pointer"
                           }}
                           title="Eliminar este campo"
                         >
@@ -1515,7 +1811,7 @@ export function WidgetBilleteraDocumentos({ negocio = "TRANQ", onCerrar }: Props
                 </button>
                 <button
                   type="submit"
-                  disabled={guardandoDoc || archivosSeleccionados.length === 0}
+                  disabled={guardandoDoc || analizandoConAria || archivosSeleccionados.length === 0}
                   style={{
                     background: "#5000BA",
                     color: "#ffffff",
@@ -1524,11 +1820,23 @@ export function WidgetBilleteraDocumentos({ negocio = "TRANQ", onCerrar }: Props
                     padding: "10px 22px",
                     fontSize: "0.85rem",
                     fontWeight: 800,
-                    cursor: guardandoDoc || archivosSeleccionados.length === 0 ? "not-allowed" : "pointer",
-                    boxShadow: "0 4px 12px rgba(80, 0, 186, 0.3)"
+                    cursor: guardandoDoc || analizandoConAria || archivosSeleccionados.length === 0 ? "not-allowed" : "pointer",
+                    boxShadow: "0 4px 12px rgba(80, 0, 186, 0.3)",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "8px"
                   }}
                 >
-                  {guardandoDoc ? "Resguardando..." : `Guardar en Billetera (${archivosSeleccionados.length} archivo${archivosSeleccionados.length === 1 ? "" : "s"})`}
+                  {analizandoConAria ? (
+                    <>
+                      <Sparkles size={16} className="anim-girar" />
+                      <span>Espera: ARIA está leyendo el documento…</span>
+                    </>
+                  ) : guardandoDoc ? (
+                    "Resguardando..."
+                  ) : (
+                    `Guardar en Billetera (${archivosSeleccionados.length} archivo${archivosSeleccionados.length === 1 ? "" : "s"})`
+                  )}
                 </button>
               </div>
             </form>

@@ -82,7 +82,7 @@ Bóveda digital de documentos personales, familiares y profesionales donde cada 
    - Estructura de metadatos 100% dinámica (`clave: valor`) almacenada en JSONB (`doc_detalles.metadatos_dinamicos` y `doc_metadatos_ocr`).
    - El usuario puede editar la etiqueta del campo, editar el valor, eliminar campos existentes o añadir nuevos campos personalizados con `[+ Agregar Campo]`.
    - Asistido por **Aria IA** para sugerir y precargar parámetros automáticamente al analizar los archivos cargados.
-   - *Flexibilidad Cero Fricción:* Ningún metadato es obligatorio; todos los campos son editables y opcionales. El formulario base solo requiere el título, tipo y categoría, con alerta de expiración activada por defecto.
+   - *Mínimo para guardar:* todos los campos son editables y ninguno en concreto es obligatorio, pero un documento no se guarda vacío: exige título, categoría, al menos un dato con etiqueta y valor (titular, número u otro) y, si la alerta de expiración está activa (lo está por defecto), la fecha de caducidad. Lo comprueban el formulario y `POST /api/billetera/documentos`. Mientras Aria analiza, los campos quedan en espera y no se puede guardar; el formulario muestra el progreso del análisis.
 4. **Motor de Alertas Proactivas de Caducidad Configurable:**
    - Conmutador para activar o desactivar alertas de vencimiento por documento (`doc_alertar_caducidad`, activo por defecto).
    - Tiempo de anticipación configurable: por defecto **3 meses antes (90 días)**, con opciones de 1 mes, 2 meses, 6 meses o 1 año.
