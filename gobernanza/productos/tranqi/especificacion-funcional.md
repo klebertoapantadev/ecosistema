@@ -431,9 +431,10 @@ Escenario: Mesa de Control con Dictamen de Aria para el Operador
 >   frontera que fija el [ADR-0005](../../arquitectura/adr/0005-frontera-de-identidad-en-herramientas-de-ia.md)
 >   para las herramientas de IA, y aplica igual a un endpoint de la app.
 > - **Fuera `archivoBase64`.** El documento ya está en el bucket privado; a Aria
->   se le pasa una URL firmada de 5 minutos (`image_urls` de ARIA descarga la
->   imagen del lado servidor). Mandar el fichero en el cuerpo obligaría a
->   reenviarlo entero al proveedor del modelo en cada reintento.
+>   se le pasa una URL firmada de 5 minutos (`document_urls` de ARIA descarga el
+>   fichero del lado servidor: una imagen la ve el modelo tal cual; un PDF con
+>   poco o ningún texto se rasteriza y también se ve). Mandar el fichero en el
+>   cuerpo obligaría a reenviarlo entero al proveedor del modelo en cada reintento.
 
 #### 6. Estado de implementación (2026-09-06)
 

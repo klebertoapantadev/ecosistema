@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { randomUUID } from "node:crypto";
-import zlib from "node:zlib";
+import { extractText, getDocumentProxy } from "unpdf";
 import { crearClienteServidor, crearClienteAdmin } from "@eco/supabase/servidor";
 import { extraerDocumento, type ExtraccionDocumento } from "../../../../modulos/socios/servicios/verificacionIdentidadAria";
 
@@ -18,6 +18,8 @@ interface ArchivoEntrada {
 const CARPETA_TEMPORAL = "analisis-temporal";
 const VIGENCIA_URL_SEGUNDOS = 300;
 const MIMES_ANALIZABLES = ["image/png", "image/jpeg", "image/jpg", "image/webp", "application/pdf"];
+/** Partes de un documento que se mandan juntas a Aria (el backend lee hasta seis). */
+const MAX_PARTES = 6;
 
 /** Traduce lo que detecta Aria al vocabulario de categorías de la billetera. */
 function categoriaDe(tipo: string | null): "identidad" | "vehicular" | "contratos" | "profesional" | "otros" {
@@ -47,64 +49,14 @@ function categoriaDe(tipo: string | null): "identidad" | "vehicular" | "contrato
 }
 
 /**
- * Extractor resiliente de texto desde un buffer PDF (decodifica flujos comprimidos FlateDecode y strings).
+ * Capa de texto de un PDF, solo para el motor local de respaldo. Antes se
+ * leía el binario con expresiones regulares y salían nombres de operadores
+ * PDF ("ProcSet") como número de identificación.
  */
-function extraerTextoDePdfBuffer(buffer: Buffer): string {
-  const contenido = buffer.toString("binary");
-  const textos: string[] = [];
-
-  const streamRegex = /stream\r?\n([\s\S]*?)\r?\nendstream/g;
-  let match: RegExpExecArray | null;
-
-  while ((match = streamRegex.exec(contenido)) !== null) {
-    const rawStream = match[1];
-    if (!rawStream) continue;
-
-    const streamBuf = Buffer.from(rawStream, "binary");
-    let decompressed: string | null = null;
-
-    try {
-      decompressed = zlib.inflateSync(streamBuf).toString("utf-8");
-    } catch {
-      try {
-        decompressed = zlib.inflateRawSync(streamBuf).toString("utf-8");
-      } catch {
-        decompressed = rawStream;
-      }
-    }
-
-    if (decompressed) {
-      const tjMatches = decompressed.matchAll(/\((.*?)\)\s*Tj/g);
-      for (const m of tjMatches) {
-        if (m[1]) textos.push(m[1].replace(/\\([()\\])/g, "$1"));
-      }
-
-      const tjArrayMatches = decompressed.matchAll(/\[(.*?)\]\s*TJ/g);
-      for (const m of tjArrayMatches) {
-        if (m[1]) {
-          const innerStrings = m[1].matchAll(/\((.*?)\)/g);
-          let combined = "";
-          for (const s of innerStrings) {
-            if (s[1]) combined += s[1].replace(/\\([()\\])/g, "$1");
-          }
-          if (combined) textos.push(combined);
-        }
-      }
-
-      const palabras = decompressed.match(/[A-Za-zÁÉÍÓÚáéíóúñÑ0-9]{3,}/g);
-      if (palabras && palabras.length > 5) {
-        textos.push(palabras.join(" "));
-      }
-    }
-  }
-
-  // Capturar fragmentos legibles del cuerpo plano
-  const stringsVisibles = contenido.match(/[A-Za-zÁÉÍÓÚáéíóúñÑ0-9\s.,:\-/@()]{4,}/g);
-  if (stringsVisibles) {
-    textos.push(stringsVisibles.slice(0, 100).join(" "));
-  }
-
-  return textos.join(" ");
+async function extraerTextoDePdf(buffer: Buffer): Promise<string> {
+  const pdf = await getDocumentProxy(new Uint8Array(buffer));
+  const { text } = await extractText(pdf, { mergePages: true });
+  return text;
 }
 
 /**
@@ -367,12 +319,15 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, error: "No se proporcionaron archivos" }, { status: 400 });
   }
 
-  // Se analiza el primer archivo que sea imagen o PDF
-  const archivo = archivos.find((a) => {
-    const mime = (a.mimetype ?? "").toLowerCase();
-    const ext = (a.nombre ?? "").split(".").pop()?.toLowerCase() ?? "";
-    return MIMES_ANALIZABLES.includes(mime) || ["png", "jpg", "jpeg", "webp", "pdf"].includes(ext);
-  });
+  // Todas las partes analizables (anverso, reverso, anexos) van juntas a Aria.
+  const analizables = archivos
+    .filter((a) => {
+      const mime = (a.mimetype ?? "").toLowerCase();
+      const ext = (a.nombre ?? "").split(".").pop()?.toLowerCase() ?? "";
+      return MIMES_ANALIZABLES.includes(mime) || ["png", "jpg", "jpeg", "webp", "pdf"].includes(ext);
+    })
+    .slice(0, MAX_PARTES);
+  const archivo = analizables[0];
 
   if (!archivo) {
     return NextResponse.json({
@@ -385,55 +340,61 @@ export async function POST(req: NextRequest) {
 
   const nombreArchivo = archivo.nombre ?? "documento.pdf";
   const nombreContexto = cuerpo.nombreContexto ?? "";
-  let bufferArchivo: Buffer | null = null;
+  const partes = analizables
+    .filter((a) => a.base64)
+    .map((a) => {
+      const limpio = a.base64!.includes(",") ? a.base64!.split(",")[1]! : a.base64!;
+      const esPdf = Boolean(a.mimetype?.includes("pdf") || a.nombre?.toLowerCase().endsWith(".pdf"));
+      return { archivo: a, buffer: Buffer.from(limpio, "base64"), esPdf };
+    });
 
-  if (archivo.base64) {
-    const limpio = archivo.base64.includes(",") ? archivo.base64.split(",")[1]! : archivo.base64;
-    bufferArchivo = Buffer.from(limpio, "base64");
-  }
-
-  // 1. Extracción de texto local si es PDF
+  // 1. Texto local de los PDF, solo para el motor de respaldo
   let textoExtraidoLocal = "";
-  if (bufferArchivo && (archivo.mimetype?.includes("pdf") || nombreArchivo.toLowerCase().endsWith(".pdf"))) {
+  for (const parte of partes.filter((p) => p.esPdf)) {
     try {
-      textoExtraidoLocal = extraerTextoDePdfBuffer(bufferArchivo);
+      textoExtraidoLocal += ` ${await extraerTextoDePdf(parte.buffer)}`;
     } catch (errPdf) {
       console.warn("Aviso al extraer texto directo de PDF:", errPdf);
     }
   }
 
-  // 2. Intentar llamar a Aria si hay almacenamiento y credenciales
+  // 2. Aria lee todas las partes: las ve con su modelo multimodal
   const admin = crearClienteAdmin();
   let analisisAria: ExtraccionDocumento | null = null;
-  let rutaTemporal: string | null = null;
+  const rutasTemporales: string[] = [];
 
-  if (admin && bufferArchivo) {
+  if (admin && partes.length > 0) {
     try {
-      const ext = (archivo.nombre ?? "").split(".").pop()?.toLowerCase() || (archivo.mimetype?.includes("pdf") ? "pdf" : "jpg");
-      rutaTemporal = `${CARPETA_TEMPORAL}/${user.id}/${randomUUID()}.${ext}`;
-      const contentType = archivo.mimetype || (ext === "pdf" ? "application/pdf" : "image/jpeg");
+      const urlsFirmadas: string[] = [];
+      for (const parte of partes) {
+        const ext =
+          (parte.archivo.nombre ?? "").split(".").pop()?.toLowerCase() || (parte.esPdf ? "pdf" : "jpg");
+        const ruta = `${CARPETA_TEMPORAL}/${user.id}/${randomUUID()}.${ext}`;
+        const contentType = parte.archivo.mimetype || (parte.esPdf ? "application/pdf" : "image/jpeg");
 
-      const { error: errorSubida } = await admin.storage
-        .from("socios-documentos")
-        .upload(rutaTemporal, bufferArchivo, { contentType, upsert: true });
+        const { error: errorSubida } = await admin.storage
+          .from("socios-documentos")
+          .upload(ruta, parte.buffer, { contentType, upsert: true });
+        if (errorSubida) continue;
+        rutasTemporales.push(ruta);
 
-      if (!errorSubida) {
         const { data: firmada } = await admin.storage
           .from("socios-documentos")
-          .createSignedUrl(rutaTemporal, VIGENCIA_URL_SEGUNDOS);
+          .createSignedUrl(ruta, VIGENCIA_URL_SEGUNDOS);
+        if (firmada?.signedUrl) urlsFirmadas.push(firmada.signedUrl);
+      }
 
-        if (firmada?.signedUrl) {
-          const { extraccion } = await extraerDocumento(firmada.signedUrl);
-          if (extraccion && extraccion.legible) {
-            analisisAria = extraccion;
-          }
+      if (urlsFirmadas.length > 0) {
+        const { extraccion } = await extraerDocumento(urlsFirmadas);
+        if (extraccion && extraccion.legible) {
+          analisisAria = extraccion;
         }
       }
     } catch (errAria) {
       console.warn("Aviso al consultar agente Aria:", errAria);
     } finally {
-      if (rutaTemporal) {
-        await admin.storage.from("socios-documentos").remove([rutaTemporal]).catch(() => {});
+      if (rutasTemporales.length > 0) {
+        await admin.storage.from("socios-documentos").remove(rutasTemporales).catch(() => {});
       }
     }
   }
