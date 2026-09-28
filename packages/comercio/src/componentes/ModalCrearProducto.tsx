@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   X,
   PackagePlus,
@@ -33,6 +33,7 @@ import {
 import {
   CANALES_CATALOGO_OFICIALES,
   CANALES_POR_DEFECTO,
+  CANALES_REQUIEREN_IMAGEN,
   CanalVisibilidad,
 } from "../canales";
 import { ModalCrearCategoria } from "./ModalCrearCategoria";
@@ -198,7 +199,19 @@ export function ModalCrearProducto({
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Verificación reactiva de al menos una imagen
+  const tieneAlMenosUnaImagen = useMemo(() => {
+    if (imagenUrl && imagenUrl.trim().length > 0) return true;
+    if (albumFotosUrl && albumFotosUrl.trim().length > 0) return true;
+    return false;
+  }, [imagenUrl, albumFotosUrl]);
+
   const toggleCanal = (clave: CanalVisibilidad) => {
+    if (CANALES_REQUIEREN_IMAGEN.includes(clave) && !canalesSeleccionados.includes(clave) && !tieneAlMenosUnaImagen) {
+      setError("Para activar la visibilidad en E-Commerce Web o App Clientes, es obligatorio configurar al menos una imagen de portada.");
+      return;
+    }
+    setError(null);
     setCanalesSeleccionados((prev) =>
       prev.includes(clave) ? prev.filter((c) => c !== clave) : [...prev, clave]
     );
@@ -981,28 +994,60 @@ export function ModalCrearProducto({
             <p style={{ fontSize: "0.75rem", color: "#64748B", margin: "0 0 10px 0" }}>
               Indica en qué plataformas, aplicaciones y agentes de IA estará disponible este producto:
             </p>
+
+            {!tieneAlMenosUnaImagen && (
+              <div
+                style={{
+                  background: "#FFFBEB",
+                  border: "1px solid #FDE68A",
+                  borderRadius: "8px",
+                  padding: "8px 12px",
+                  marginBottom: "10px",
+                  display: "flex",
+                  alignItems: "flex-start",
+                  gap: "8px",
+                  fontSize: "0.74rem",
+                  color: "#92400E",
+                  lineHeight: "1.35",
+                }}
+              >
+                <AlertCircle size={15} color="#D97706" style={{ flexShrink: 0, marginTop: "2px" }} />
+                <div>
+                  <strong style={{ fontWeight: 800 }}>Control de Calidad Visual:</strong> Los canales <strong>E-Commerce Web</strong> y <strong>App Clientes</strong> requieren al menos 1 imagen configurada para poder activarse y ser visibles al público.
+                </div>
+              </div>
+            )}
+
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: "8px" }}>
               {CANALES_CATALOGO_OFICIALES.map((c) => {
                 const activo = canalesSeleccionados.includes(c.clave);
+                const exigeImagenYFalta = CANALES_REQUIEREN_IMAGEN.includes(c.clave) && !tieneAlMenosUnaImagen;
+
                 return (
                   <button
                     key={c.clave}
                     type="button"
                     onClick={() => toggleCanal(c.clave)}
+                    title={
+                      exigeImagenYFalta
+                        ? `Requiere al menos 1 imagen configurada para activarse en ${c.nombre}`
+                        : undefined
+                    }
                     style={{
                       display: "flex",
                       alignItems: "center",
                       gap: "8px",
                       padding: "8px 10px",
                       borderRadius: "8px",
-                      border: `1.5px solid ${activo ? c.color : "#E2E8F0"}`,
-                      background: activo ? `${c.color}12` : "#FFFFFF",
-                      color: activo ? "#0F172A" : "#64748B",
+                      border: `1.5px solid ${activo ? c.color : exigeImagenYFalta ? "#CBD5E1" : "#E2E8F0"}`,
+                      background: activo ? `${c.color}12` : exigeImagenYFalta ? "#F1F5F9" : "#FFFFFF",
+                      color: activo ? "#0F172A" : exigeImagenYFalta ? "#94A3B8" : "#64748B",
                       cursor: "pointer",
                       fontSize: "0.78rem",
                       fontWeight: activo ? 700 : 500,
                       textAlign: "left",
                       transition: "all 0.15s ease",
+                      opacity: exigeImagenYFalta && !activo ? 0.75 : 1,
                     }}
                   >
                     <span
@@ -1014,10 +1059,15 @@ export function ModalCrearProducto({
                         flexShrink: 0,
                       }}
                     />
-                    <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                       <div style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                         {c.nombre}
                       </div>
+                      {exigeImagenYFalta && (
+                        <span style={{ fontSize: "0.65rem", background: "#FEF2F2", color: "#DC2626", border: "1px solid #FECACA", borderRadius: "4px", padding: "1px 4px", marginLeft: "4px", fontWeight: 700 }}>
+                          📷 Foto req.
+                        </span>
+                      )}
                     </div>
                   </button>
                 );

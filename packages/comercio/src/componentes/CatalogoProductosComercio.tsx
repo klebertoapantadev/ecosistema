@@ -11,6 +11,7 @@ import {
   Sparkles,
   Tag,
   CheckCircle,
+  AlertCircle,
   HelpCircle,
   Clock,
   ChevronLeft,
@@ -42,7 +43,9 @@ import {
 import {
   CANALES_CATALOGO_OFICIALES,
   CANALES_POR_DEFECTO,
+  CANALES_REQUIEREN_IMAGEN,
   CanalVisibilidad,
+  productoTieneAlMenosUnaImagen,
 } from "../canales";
 import { ModalCheckoutPayphone } from "./ModalCheckoutPayphone";
 import { ModalCrearProducto } from "./ModalCrearProducto";
@@ -1458,25 +1461,53 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
 
 
                   {/* Canales de Visibilidad Activos */}
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: "4px", marginBottom: "12px" }}>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: "4px", marginBottom: "12px", alignItems: "center" }}>
+                    {!productoTieneAlMenosUnaImagen(p) && (
+                      <span
+                        title="Este producto no tiene fotos configuradas. Está oculto en E-Commerce Web y App Clientes hasta que agregues al menos una imagen."
+                        style={{
+                          fontSize: "0.66rem",
+                          fontWeight: 800,
+                          background: "#FEF2F2",
+                          color: "#DC2626",
+                          border: "1px solid #FECACA",
+                          borderRadius: "6px",
+                          padding: "2px 6px",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "4px",
+                        }}
+                      >
+                        <AlertCircle size={11} color="#DC2626" />
+                        <span>Sin imagen (Oculto Web/App)</span>
+                      </span>
+                    )}
                     {(p.canales_visibilidad || CANALES_POR_DEFECTO).map((cid) => {
                       const infoCanal = CANALES_CATALOGO_OFICIALES.find((c) => c.clave === cid);
                       if (!infoCanal) return null;
+                      const requiereImgYFalta = !productoTieneAlMenosUnaImagen(p) && CANALES_REQUIEREN_IMAGEN.includes(cid);
+
                       return (
                         <span
                           key={cid}
-                          title={`Visible en canal: ${infoCanal.nombre}`}
+                          title={
+                            requiereImgYFalta
+                              ? `Oculto en ${infoCanal.nombre}: requiere al menos 1 imagen configurada`
+                              : `Visible en canal: ${infoCanal.nombre}`
+                          }
                           style={{
                             fontSize: "0.66rem",
                             fontWeight: 700,
-                            background: "#F1F5F9",
-                            color: "#475569",
-                            border: "1px solid #E2E8F0",
+                            background: requiereImgYFalta ? "#F1F5F9" : "#F1F5F9",
+                            color: requiereImgYFalta ? "#94A3B8" : "#475569",
+                            border: `1px solid ${requiereImgYFalta ? "#CBD5E1" : "#E2E8F0"}`,
                             borderRadius: "6px",
                             padding: "2px 6px",
                             display: "inline-flex",
                             alignItems: "center",
                             gap: "3px",
+                            textDecoration: requiereImgYFalta ? "line-through" : "none",
+                            opacity: requiereImgYFalta ? 0.6 : 1,
                           }}
                         >
                           <span>{infoCanal.nombre}</span>

@@ -2,7 +2,12 @@
 
 import { crearClienteServidor, crearClienteAdmin } from "@eco/supabase/servidor";
 import { revalidatePath } from "next/cache";
-import { CanalVisibilidad, CANALES_POR_DEFECTO } from "./canales";
+import {
+  CanalVisibilidad,
+  CANALES_POR_DEFECTO,
+  CANALES_REQUIEREN_IMAGEN,
+  productoTieneAlMenosUnaImagen,
+} from "./canales";
 
 export interface CategoriaCatalogo {
   ctg_id: string;
@@ -1826,12 +1831,17 @@ export async function obtenerCatalogoProductosAction(
   // Filtrar productos inactivos o eliminados
   let productosActivos = listaFinal.filter((p: any) => p.pro_activo !== false);
 
-  // Filtrar por canal si fue solicitado
+  // Filtrar por canal si fue solicitado (y aplicar regla de imagen obligatoria para Web/App)
   if (canal && typeof canal === "string" && canal.trim().length > 0 && canal !== "todos") {
-    const canalUpper = canal.trim().toUpperCase();
-    productosActivos = productosActivos.filter((p) =>
-      p.canales_visibilidad?.includes(canalUpper as CanalVisibilidad)
-    );
+    const canalUpper = canal.trim().toUpperCase() as CanalVisibilidad;
+    productosActivos = productosActivos.filter((p) => {
+      const tieneCanal = p.canales_visibilidad?.includes(canalUpper);
+      if (!tieneCanal) return false;
+      if (CANALES_REQUIEREN_IMAGEN.includes(canalUpper)) {
+        return productoTieneAlMenosUnaImagen(p);
+      }
+      return true;
+    });
   }
 
   return productosActivos;
@@ -2420,6 +2430,17 @@ export async function crearProductoAction(datos: {
       }
     }
 
+    // Control de Imagen Obligatoria para Web y App
+    const tieneImg = Boolean(
+      resolvedImg ||
+      datos.albumFotosUrl?.trim()
+    );
+
+    let canalesFinales = canales;
+    if (!tieneImg) {
+      canalesFinales = canalesFinales.filter((c) => !CANALES_REQUIEREN_IMAGEN.includes(c));
+    }
+
     const nuevoProducto: ProductoCatalogo = {
       pro_id: prodId,
       pro_negocio: negocio,
@@ -2429,7 +2450,7 @@ export async function crearProductoAction(datos: {
       pro_tipo: datos.tipo,
       pro_destacado: Boolean(datos.destacado),
       pro_categoria_principal_id: cat?.ctg_id || null,
-      canales_visibilidad: canales,
+      canales_visibilidad: canalesFinales,
       pro_detalle_producto: {
         icono: datos.icono || "Scale",
         imagen_url: resolvedImg,
@@ -2441,7 +2462,7 @@ export async function crearProductoAction(datos: {
         modalidad_pago: datos.modalidadPago || "Botón Payphone / Tarjeta / Saldo",
         usos: datos.usos || [],
         etiquetas: datos.etiquetas || [],
-        canales_visibilidad: canales,
+        canales_visibilidad: canalesFinales,
         creado_desde_panel: true,
       },
       categoria: cat
@@ -2719,6 +2740,21 @@ export async function editarProductoAction(datos: {
       });
     }
 
+    // Control de Imagen Obligatoria para Web y App
+    const tieneImg = Boolean(
+      resolvedImagenUrl?.trim() ||
+      (Array.isArray(resolvedGaleria) && resolvedGaleria.some((g) => typeof g === "string" && g.trim().length > 0)) ||
+      (Array.isArray(variantesActualizadas) && variantesActualizadas.some((v) => {
+        const vdet = v.var_detalle_variante || {};
+        return Boolean(vdet.portada_url?.trim() || vdet.imagen_url?.trim() || vdet.foto_url?.trim() || (Array.isArray(vdet.imagenes) && vdet.imagenes.length > 0));
+      }))
+    );
+
+    let canalesFinales = canales;
+    if (!tieneImg) {
+      canalesFinales = (canalesFinales as CanalVisibilidad[]).filter((c: CanalVisibilidad) => !CANALES_REQUIEREN_IMAGEN.includes(c));
+    }
+
     const prodEditado: ProductoCatalogo = {
       ...prodActual,
       pro_nombre: nombre,
@@ -2726,7 +2762,7 @@ export async function editarProductoAction(datos: {
       pro_tipo: datos.tipo,
       pro_destacado: Boolean(datos.destacado),
       pro_categoria_principal_id: cat?.ctg_id || prodActual.pro_categoria_principal_id,
-      canales_visibilidad: canales,
+      canales_visibilidad: canalesFinales,
       pro_detalle_producto: {
         ...prodActual.pro_detalle_producto,
         icono: datos.icono || prodActual.pro_detalle_producto?.icono || "Sparkles",
@@ -2746,7 +2782,7 @@ export async function editarProductoAction(datos: {
         logistica: datos.logistica !== undefined ? datos.logistica : prodActual.pro_detalle_producto?.logistica,
         usos: datos.usos !== undefined ? datos.usos : (prodActual.pro_detalle_producto?.usos || prodActual.pro_detalle_producto?.ocasiones || []),
         etiquetas: datos.etiquetas !== undefined ? datos.etiquetas : (prodActual.pro_detalle_producto?.etiquetas || []),
-        canales_visibilidad: canales,
+        canales_visibilidad: canalesFinales,
         editado_en: new Date().toISOString(),
       },
 

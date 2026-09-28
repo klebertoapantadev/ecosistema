@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   X,
   FileEdit,
@@ -48,6 +48,7 @@ import {
 import {
   CANALES_CATALOGO_OFICIALES,
   CANALES_POR_DEFECTO,
+  CANALES_REQUIEREN_IMAGEN,
   CanalVisibilidad,
 } from "../canales";
 import { ModalCrearCategoria } from "./ModalCrearCategoria";
@@ -400,16 +401,46 @@ export function ModalEditarProducto({
   const [coberturaTransporte, setCoberturaTransporte] = useState<string>("Quito Urbano y Valles");
   const [canalesSeleccionados, setCanalesSeleccionados] = useState<CanalVisibilidad[]>([...CANALES_POR_DEFECTO]);
 
-  const toggleCanal = (clave: CanalVisibilidad) => {
-    setCanalesSeleccionados((prev) =>
-      prev.includes(clave) ? prev.filter((c) => c !== clave) : [...prev, clave]
-    );
-  };
-
   // Editor Multivariante (Tamaños / Modalidades)
   const [modoEdicion, setModoEdicion] = useState<"master" | "variante">("master");
   const [variantesLocales, setVariantesLocales] = useState<VarianteCatalogo[]>([]);
   const [varianteActivaIndex, setVarianteActivaIndex] = useState<number>(0);
+
+  // Verificación reactiva de al menos una imagen (master, galería o variantes)
+  const tieneAlMenosUnaImagen = useMemo(() => {
+    if (imagenUrl && imagenUrl.trim().length > 0) return true;
+    if (albumFotosUrl && albumFotosUrl.trim().length > 0) return true;
+    const urlsGaleria = galeriaTexto
+      .split("\n")
+      .map((g) => g.trim())
+      .filter((g) => g.length > 0);
+    if (urlsGaleria.length > 0) return true;
+    if (
+      variantesLocales &&
+      variantesLocales.some((v) => {
+        const vdet = v.var_detalle_variante || {};
+        if (vdet.portada_url && String(vdet.portada_url).trim().length > 0) return true;
+        if (vdet.imagen_url && String(vdet.imagen_url).trim().length > 0) return true;
+        if (vdet.foto_url && String(vdet.foto_url).trim().length > 0) return true;
+        if (Array.isArray(vdet.imagenes) && vdet.imagenes.some((img: unknown) => typeof img === "string" && img.trim().length > 0)) return true;
+        return false;
+      })
+    ) {
+      return true;
+    }
+    return false;
+  }, [imagenUrl, albumFotosUrl, galeriaTexto, variantesLocales]);
+
+  const toggleCanal = (clave: CanalVisibilidad) => {
+    if (CANALES_REQUIEREN_IMAGEN.includes(clave) && !canalesSeleccionados.includes(clave) && !tieneAlMenosUnaImagen) {
+      setError("Para activar la visibilidad en E-Commerce Web o App Clientes, es obligatorio configurar al menos una imagen en la Portada, Galería o Variantes.");
+      return;
+    }
+    setError(null);
+    setCanalesSeleccionados((prev) =>
+      prev.includes(clave) ? prev.filter((c) => c !== clave) : [...prev, clave]
+    );
+  };
 
   const [guardando, setGuardando] = useState(false);
   const [eliminando, setEliminando] = useState(false);
@@ -2185,28 +2216,60 @@ export function ModalEditarProducto({
                 <p style={{ fontSize: "0.75rem", color: "#64748B", margin: "0 0 10px 0" }}>
                   Indica en qué plataformas, aplicaciones y agentes de IA estará disponible este producto:
                 </p>
+
+                {!tieneAlMenosUnaImagen && (
+                  <div
+                    style={{
+                      background: "#FFFBEB",
+                      border: "1px solid #FDE68A",
+                      borderRadius: "8px",
+                      padding: "8px 12px",
+                      marginBottom: "10px",
+                      display: "flex",
+                      alignItems: "flex-start",
+                      gap: "8px",
+                      fontSize: "0.74rem",
+                      color: "#92400E",
+                      lineHeight: "1.35",
+                    }}
+                  >
+                    <AlertCircle size={15} color="#D97706" style={{ flexShrink: 0, marginTop: "2px" }} />
+                    <div>
+                      <strong style={{ fontWeight: 800 }}>Control de Calidad Visual:</strong> Los canales <strong>E-Commerce Web</strong> y <strong>App Clientes</strong> requieren al menos 1 imagen configurada para poder activarse y ser visibles al público.
+                    </div>
+                  </div>
+                )}
+
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: "8px" }}>
                   {CANALES_CATALOGO_OFICIALES.map((c) => {
                     const activo = canalesSeleccionados.includes(c.clave);
+                    const exigeImagenYFalta = CANALES_REQUIEREN_IMAGEN.includes(c.clave) && !tieneAlMenosUnaImagen;
+
                     return (
                       <button
                         key={c.clave}
                         type="button"
                         onClick={() => toggleCanal(c.clave)}
+                        title={
+                          exigeImagenYFalta
+                            ? `Requiere al menos 1 imagen configurada para activarse en ${c.nombre}`
+                            : undefined
+                        }
                         style={{
                           display: "flex",
                           alignItems: "center",
                           gap: "8px",
                           padding: "8px 10px",
                           borderRadius: "8px",
-                          border: `1.5px solid ${activo ? c.color : "#E2E8F0"}`,
-                          background: activo ? `${c.color}12` : "#FFFFFF",
-                          color: activo ? "#0F172A" : "#64748B",
+                          border: `1.5px solid ${activo ? c.color : exigeImagenYFalta ? "#CBD5E1" : "#E2E8F0"}`,
+                          background: activo ? `${c.color}12` : exigeImagenYFalta ? "#F1F5F9" : "#FFFFFF",
+                          color: activo ? "#0F172A" : exigeImagenYFalta ? "#94A3B8" : "#64748B",
                           cursor: "pointer",
                           fontSize: "0.78rem",
                           fontWeight: activo ? 700 : 500,
                           textAlign: "left",
                           transition: "all 0.15s ease",
+                          opacity: exigeImagenYFalta && !activo ? 0.75 : 1,
                         }}
                       >
                         <span
@@ -2218,10 +2281,15 @@ export function ModalEditarProducto({
                             flexShrink: 0,
                           }}
                         />
-                        <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                           <div style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                             {c.nombre}
                           </div>
+                          {exigeImagenYFalta && (
+                            <span style={{ fontSize: "0.65rem", background: "#FEF2F2", color: "#DC2626", border: "1px solid #FECACA", borderRadius: "4px", padding: "1px 4px", marginLeft: "4px", fontWeight: 700 }}>
+                              📷 Foto req.
+                            </span>
+                          )}
                         </div>
                       </button>
                     );
