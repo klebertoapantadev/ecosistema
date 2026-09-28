@@ -103,15 +103,15 @@ function nombreActor(registro: RegistroAuditoria): string {
   const nombre = [registro.actor_nombres, registro.actor_apellidos].filter(Boolean).join(" ");
   if (nombre) return nombre;
   if (registro.actor_correo) return registro.actor_correo;
-  const nuevo = (registro.reg_datos_nuevos || {}) as Record<string, any>;
-  const anterior = (registro.reg_datos_anteriores || {}) as Record<string, any>;
+  const nuevo = (registro.reg_datos_nuevos || {}) as Record<string, unknown>;
+  const anterior = (registro.reg_datos_anteriores || {}) as Record<string, unknown>;
   return (
-    nuevo.usuario_email ||
-    nuevo.cambiado_por ||
-    nuevo.modificado_por ||
-    nuevo.creado_por ||
-    anterior.usuario_email ||
-    anterior.cambiado_por ||
+    (typeof nuevo.usuario_email === "string" ? nuevo.usuario_email : undefined) ||
+    (typeof nuevo.cambiado_por === "string" ? nuevo.cambiado_por : undefined) ||
+    (typeof nuevo.modificado_por === "string" ? nuevo.modificado_por : undefined) ||
+    (typeof nuevo.creado_por === "string" ? nuevo.creado_por : undefined) ||
+    (typeof anterior.usuario_email === "string" ? anterior.usuario_email : undefined) ||
+    (typeof anterior.cambiado_por === "string" ? anterior.cambiado_por : undefined) ||
     "Operador / Sistema"
   );
 }

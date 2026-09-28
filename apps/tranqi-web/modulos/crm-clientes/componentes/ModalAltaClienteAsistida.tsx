@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState, useEffect, useTransition } from "react";
 import {
   X, User, Building2, ShieldCheck, AlertTriangle, Sparkles, Upload,
