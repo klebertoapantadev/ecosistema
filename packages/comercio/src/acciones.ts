@@ -8,6 +8,7 @@ import {
   CANALES_REQUIEREN_IMAGEN,
   productoTieneAlMenosUnaImagen,
 } from "./canales";
+import { normalizarIdentificadorNegocio } from "./utils/negocio";
 
 export interface CategoriaCatalogo {
   ctg_id: string;
@@ -1479,24 +1480,6 @@ const storeCustomCategorias: Map<string, CategoriaCatalogo[]> = new Map();
 const storeCustomProductos: Map<string, ProductoCatalogo[]> = new Map();
 
 // Helper para generar slug simple
-export function normalizarIdentificadorNegocio(negocio?: string): { principal: string; variantes: string[] } {
-  const norm = (negocio || "tranqi").toLowerCase().trim();
-  const upper = (negocio || "TRANQ").toUpperCase().trim();
-  
-  if (norm.startsWith("tranq") || norm.startsWith("legal")) {
-    return { principal: "tranqi", variantes: ["tranqi", "TRANQ", "TRANQI", "legal", "LEGAL", "tranqui"] };
-  }
-  if (norm.startsWith("tinkay") || norm.startsWith("tnk")) {
-    return { principal: "tinkay", variantes: ["tinkay", "TNK", "TINKAY"] };
-  }
-  if (norm.startsWith("fastfix") || norm.startsWith("ffh")) {
-    return { principal: "fastfix", variantes: ["fastfix", "FFH", "FASTFIX"] };
-  }
-  if (norm.startsWith("margaritas") || norm.startsWith("mrg")) {
-    return { principal: "margaritas", variantes: ["margaritas", "MRG", "MARGARITAS"] };
-  }
-  return { principal: norm, variantes: Array.from(new Set([norm, upper, negocio || ""])) };
-}
 
 function generarSlug(texto: string): string {
   return texto

@@ -52,3 +52,24 @@ export function detectarTipoNegocio(negocio?: string): InfoNegocioCatalogo {
       : "fastfix",
   };
 }
+
+export function normalizarIdentificadorNegocio(negocio?: string): { principal: string; variantes: string[] } {
+  const norm = (negocio || "tranqi").toLowerCase().trim();
+  const upper = (negocio || "TRANQ").toUpperCase().trim();
+
+  if (norm.startsWith("tranq") || norm.startsWith("legal")) {
+    return { principal: "tranqi", variantes: ["tranqi", "TRANQ", "TRANQI", "legal", "LEGAL", "tranqui"] };
+  }
+  if (norm.startsWith("tinkay") || norm.startsWith("tnk")) {
+    return { principal: "tinkay", variantes: ["tinkay", "TNK", "TINKAY"] };
+  }
+  if (norm.startsWith("fastfix") || norm.startsWith("ffh")) {
+    return { principal: "fastfix", variantes: ["fastfix", "FFH", "FASTFIX"] };
+  }
+  if (norm.startsWith("margaritas") || norm.startsWith("mrg")) {
+    return { principal: "margaritas", variantes: ["margaritas", "MRG", "MARGARITAS"] };
+  }
+
+  return { principal: norm, variantes: [norm, upper] };
+}
+

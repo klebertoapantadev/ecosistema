@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { crearClienteServidor, crearClienteAdmin } from "@eco/supabase/servidor";
-import { normalizarIdentificadorNegocio } from "./acciones";
+import { normalizarIdentificadorNegocio } from "./utils/negocio";
 
 export interface ReglaDescuentoProducto {
   producto_nombre: string;
