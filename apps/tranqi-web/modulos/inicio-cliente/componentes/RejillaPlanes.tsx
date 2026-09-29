@@ -37,6 +37,18 @@ function iconoDe(p: ProductoCatalogo) {
   return FileCheck;
 }
 
+function obtenerFoto(p: ProductoCatalogo, v?: VarianteCatalogo): string | null {
+  return (
+    v?.var_detalle_variante?.portada_url ||
+    v?.var_detalle_variante?.imagen_url ||
+    p.pro_detalle_producto?.portada_url ||
+    p.pro_detalle_producto?.foto_portada ||
+    p.pro_detalle_producto?.imagen_url ||
+    (Array.isArray(p.pro_detalle_producto?.galeria_imagenes) && p.pro_detalle_producto.galeria_imagenes[0]) ||
+    null
+  );
+}
+
 interface RejillaPlanesProps {
   negocio?: string;
   filtroInicial?: Filtro;
@@ -47,6 +59,7 @@ export function RejillaPlanes({ negocio = "tranqi", filtroInicial = "todos" }: R
   const { avisar } = useAvisos();
   const [productos, setProductos] = useState<ProductoCatalogo[] | null>(null);
   const [filtro, setFiltro] = useState<Filtro>(filtroInicial);
+  const [variantesSeleccionadas, setVariantesSeleccionadas] = useState<Record<string, string>>({});
   const [seleccion, setSeleccion] = useState<{ producto: ProductoCatalogo; variante: VarianteCatalogo } | null>(null);
   const [pagoAbierto, setPagoAbierto] = useState(false);
   const dialogo = useRef<HTMLDialogElement>(null);
@@ -132,9 +145,12 @@ export function RejillaPlanes({ negocio = "tranqi", filtroInicial = "todos" }: R
 
       <div className="planes-rejilla">
         {visibles.map((p) => {
-          const variante = p.variantes[0];
+          const varianteIdActual = variantesSeleccionadas[p.pro_id];
+          const variante = (p.variantes || []).find((v) => v.var_id === varianteIdActual) || p.variantes[0];
           if (!variante) return null;
+
           const Icono = iconoDe(p);
+          const foto = obtenerFoto(p, variante);
           const beneficios: string[] = Array.isArray(p.pro_detalle_producto?.beneficios)
             ? p.pro_detalle_producto.beneficios.filter(Boolean).slice(0, 4)
             : [];
@@ -142,17 +158,73 @@ export function RejillaPlanes({ negocio = "tranqi", filtroInicial = "todos" }: R
 
           return (
             <article key={`${filtro}-${p.pro_id}`} className={`plan-tarjeta${p.pro_id === recomendado ? " es-recomendado" : ""}`}>
-              <div className="plan-cabecera">
-                <span className="plan-icono" aria-hidden="true"><Icono size={18} strokeWidth={1.7} /></span>
-                {p.pro_id === recomendado && <span className="plan-chip">Recomendado</span>}
-              </div>
+              {/* Foto de portada o encabezado con ícono */}
+              {foto ? (
+                <div style={{ position: "relative", width: "100%", height: "135px", borderRadius: "12px", overflow: "hidden", marginBottom: "8px" }}>
+                  <img
+                    src={foto}
+                    alt={p.pro_nombre}
+                    style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                    loading="lazy"
+                  />
+                  {p.pro_id === recomendado && (
+                    <span className="plan-chip" style={{ position: "absolute", top: "8px", right: "8px", boxShadow: "0 2px 8px rgba(0,0,0,0.25)" }}>
+                      Recomendado
+                    </span>
+                  )}
+                  {p.variantes.length > 1 && (
+                    <span style={{ position: "absolute", bottom: "6px", left: "6px", background: "rgba(15,23,42,0.85)", color: "#FFFFFF", fontSize: "0.65rem", fontWeight: 700, padding: "2px 7px", borderRadius: "6px" }}>
+                      {p.variantes.length} modalidades
+                    </span>
+                  )}
+                </div>
+              ) : (
+                <div className="plan-cabecera">
+                  <span className="plan-icono" aria-hidden="true"><Icono size={18} strokeWidth={1.7} /></span>
+                  {p.pro_id === recomendado && <span className="plan-chip">Recomendado</span>}
+                </div>
+              )}
+
               <span className="plan-eyebrow">{esPlan(p) ? "Suscripción" : "Servicio puntual"}</span>
-              <h3>{p.pro_nombre}</h3>
+              <h3 style={{ fontSize: "0.98rem", lineHeight: 1.25, margin: "2px 0 4px" }}>{p.pro_nombre}</h3>
 
               {tiempoEntrega && (
                 <div style={{ fontSize: "0.72rem", color: "var(--panel-gris)", display: "flex", alignItems: "center", gap: "4px", margin: "2px 0 6px", fontWeight: 600 }}>
                   <span aria-hidden="true">⏱️</span>
                   <span>{tiempoEntrega}</span>
+                </div>
+              )}
+
+              {/* Selector de variantes si tiene más de 1 opción */}
+              {p.variantes.length > 1 && (
+                <div style={{ margin: "4px 0 8px", display: "flex", flexDirection: "column", gap: "3px" }}>
+                  <label htmlFor={`var-select-${p.pro_id}`} style={{ fontSize: "0.688rem", fontWeight: 700, color: "var(--panel-gris)", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                    Opción / Nivel:
+                  </label>
+                  <select
+                    id={`var-select-${p.pro_id}`}
+                    value={variante.var_id}
+                    onChange={(e) => {
+                      const vId = e.target.value;
+                      setVariantesSeleccionadas((prev) => ({ ...prev, [p.pro_id]: vId }));
+                    }}
+                    style={{
+                      padding: "5px 8px",
+                      borderRadius: "7px",
+                      border: "1.5px solid var(--panel-linea)",
+                      fontSize: "0.78rem",
+                      fontWeight: 700,
+                      background: "var(--panel-papel)",
+                      color: "var(--negro)",
+                      cursor: "pointer",
+                    }}
+                  >
+                    {p.variantes.map((v) => (
+                      <option key={v.var_id} value={v.var_id}>
+                        {v.var_nombre} ({USD.format(v.precio_total)})
+                      </option>
+                    ))}
+                  </select>
                 </div>
               )}
 
@@ -163,7 +235,7 @@ export function RejillaPlanes({ negocio = "tranqi", filtroInicial = "todos" }: R
                   ))}
                 </ul>
               ) : p.pro_descripcion ? (
-                <p style={{ fontSize: "0.813rem", color: "var(--panel-gris)", margin: "6px 0 12px", lineHeight: 1.4, display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+                <p style={{ fontSize: "0.813rem", color: "var(--panel-gris)", margin: "4px 0 10px", lineHeight: 1.4, display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
                   {p.pro_descripcion}
                 </p>
               ) : null}
@@ -171,7 +243,10 @@ export function RejillaPlanes({ negocio = "tranqi", filtroInicial = "todos" }: R
               <div className="plan-pie">
                 <div className="plan-precio">
                   <b>{USD.format(variante.precio_total)}</b>
-                  <small>IVA {variante.var_tarifa_iva_porcentaje} % incl.</small>
+                  <small>
+                    IVA {variante.var_tarifa_iva_porcentaje} % incl.
+                    {variante.var_frecuencia_recurrencia ? ` · ${variante.var_frecuencia_recurrencia.toLowerCase()}` : ""}
+                  </small>
                 </div>
                 <button type="button" className="btn btn-primario btn-pequeno" onClick={() => abrirConfirmacion(p, variante)}>
                   {esPlan(p) ? "Contratar" : "Adquirir"}
@@ -191,16 +266,73 @@ export function RejillaPlanes({ negocio = "tranqi", filtroInicial = "todos" }: R
             <button type="button" className="dialogo-cerrar" onClick={() => dialogo.current?.close()} aria-label="Cerrar">
               <X size={18} aria-hidden="true" />
             </button>
-            <span className="dialogo-icono" aria-hidden="true"><CreditCard size={22} /></span>
-            <h2 id="t-confirmar-compra">Confirmar compra</h2>
-            <p className="dialogo-sub">
+
+            {obtenerFoto(seleccion.producto, seleccion.variante) ? (
+              <div style={{ width: "100%", height: "120px", borderRadius: "12px", overflow: "hidden", marginBottom: "4px" }}>
+                <img
+                  src={obtenerFoto(seleccion.producto, seleccion.variante)!}
+                  alt={seleccion.producto.pro_nombre}
+                  style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                />
+              </div>
+            ) : (
+              <span className="dialogo-icono" aria-hidden="true"><CreditCard size={22} /></span>
+            )}
+
+            <h2 id="t-confirmar-compra" style={{ margin: "2px 0 0" }}>Confirmar compra</h2>
+            <p className="dialogo-sub" style={{ margin: 0 }}>
               Vas a adquirir <b>{seleccion.producto.pro_nombre}</b>
-              {seleccion.variante.var_nombre && seleccion.variante.var_nombre !== seleccion.producto.pro_nombre
-                ? ` · ${seleccion.variante.var_nombre}` : ""}.
             </p>
 
+            {/* Selector de variantes dentro del modal si hay más de 1 */}
+            {seleccion.producto.variantes.length > 1 && (
+              <div style={{ background: "var(--panel-papel)", padding: "12px 14px", borderRadius: "12px", display: "grid", gap: "8px" }}>
+                <b style={{ fontSize: "0.82rem", color: "var(--negro)" }}>Selecciona tu modalidad o plan:</b>
+                <div style={{ display: "grid", gap: "6px" }}>
+                  {seleccion.producto.variantes.map((v) => {
+                    const estaElegida = v.var_id === seleccion.variante.var_id;
+                    return (
+                      <button
+                        key={v.var_id}
+                        type="button"
+                        onClick={() => {
+                          setSeleccion({ ...seleccion, variante: v });
+                          setVariantesSeleccionadas((prev) => ({ ...prev, [seleccion.producto.pro_id]: v.var_id }));
+                        }}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          padding: "8px 12px",
+                          borderRadius: "8px",
+                          border: estaElegida ? "1.5px solid var(--panel-accion)" : "1px solid var(--panel-linea)",
+                          background: estaElegida ? "var(--panel-tenue)" : "var(--blanco)",
+                          cursor: "pointer",
+                          textAlign: "left",
+                        }}
+                      >
+                        <div>
+                          <div style={{ fontWeight: 700, fontSize: "0.85rem", color: estaElegida ? "var(--panel-accion)" : "var(--negro)" }}>
+                            {v.var_nombre}
+                          </div>
+                          {v.var_frecuencia_recurrencia && (
+                            <div style={{ fontSize: "0.72rem", color: "var(--panel-gris)" }}>
+                              Cobro {v.var_frecuencia_recurrencia.toLowerCase()}
+                            </div>
+                          )}
+                        </div>
+                        <div style={{ fontWeight: 800, fontSize: "0.95rem", color: "var(--negro)" }}>
+                          {USD.format(v.precio_total)}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             {seleccion.producto.pro_descripcion && (
-              <p style={{ fontSize: "0.85rem", color: "var(--panel-gris)", lineHeight: 1.45, margin: "0 0 6px" }}>
+              <p style={{ fontSize: "0.83rem", color: "var(--panel-gris)", lineHeight: 1.45, margin: 0 }}>
                 {seleccion.producto.pro_descripcion}
               </p>
             )}
@@ -219,7 +351,7 @@ export function RejillaPlanes({ negocio = "tranqi", filtroInicial = "todos" }: R
             <dl className="desglose-compra">
               <div><dt>Subtotal</dt><dd>{USD.format(seleccion.variante.var_precio)}</dd></div>
               <div><dt>IVA {seleccion.variante.var_tarifa_iva_porcentaje} %</dt><dd>{USD.format(seleccion.variante.monto_iva)}</dd></div>
-              <div className="es-total"><dt>Total</dt><dd>{USD.format(seleccion.variante.precio_total)}</dd></div>
+              <div className="es-total"><dt>Total a pagar</dt><dd>{USD.format(seleccion.variante.precio_total)}</dd></div>
             </dl>
             <div className="forma-pago">
               <CreditCard size={18} aria-hidden="true" />
