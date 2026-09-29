@@ -225,7 +225,11 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
         negocio,
       });
 
-      if (!res.ok) {
+      if (res.ok && res.producto) {
+        setProductos((prev) =>
+          prev.map((p) => (p.pro_id === proId ? res.producto! : p))
+        );
+      } else if (!res.ok) {
         // Rollback
         setProductos((prev) =>
           prev.map((p) => (p.pro_id === proId ? prodActual : p))

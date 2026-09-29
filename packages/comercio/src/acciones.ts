@@ -3067,39 +3067,111 @@ export async function alternarCanalVisibilidadProductoAction(params: {
     const clienteActivo = admin || supabase;
 
     if (clienteActivo) {
+      let persistido = false;
+
+      // 1. Intentar RPC específico com_fn_actualizar_canales_producto
       try {
-        await clienteActivo
+        const { data: resRpc, error: errRpc } = await clienteActivo
           .schema("comun_comercio")
-          .from("com_producto")
-          .update({
-            pro_detalle_producto: detalleActualizado,
-          })
-          .eq("pro_id", params.pro_id);
-      } catch {
+          .rpc("com_fn_actualizar_canales_producto", {
+            p_pro_id: params.pro_id,
+            p_canales: canalesNuevos,
+          });
+        if (!errRpc && resRpc?.ok) persistido = true;
+      } catch {}
+
+      if (!persistido) {
+        try {
+          const { data: resRpcPub, error: errRpcPub } = await clienteActivo.rpc(
+            "com_fn_actualizar_canales_producto",
+            {
+              p_pro_id: params.pro_id,
+              p_canales: canalesNuevos,
+            }
+          );
+          if (!errRpcPub && resRpcPub?.ok) persistido = true;
+        } catch {}
+      }
+
+      // 2. Intentar RPC general com_fn_guardar_producto_catalogo
+      if (!persistido) {
+        const payloadRpc = {
+          pro_id: prodActual.pro_id,
+          negocio,
+          nombre: prodActual.pro_nombre,
+          slug: prodActual.pro_slug,
+          descripcion: prodActual.pro_descripcion || "",
+          categoria_id: prodActual.pro_categoria_principal_id || prodActual.categoria?.ctg_id || null,
+          tipo: prodActual.pro_tipo || "SERVICIO",
+          destacado: Boolean(prodActual.pro_destacado),
+          detalle_producto: detalleActualizado,
+          variantes: (prodActual.variantes || []).map((v) => ({
+            var_id: v.var_id,
+            var_sku: v.var_sku,
+            var_nombre: v.var_nombre,
+            var_precio: v.var_precio,
+            var_precio_comparacion: v.var_precio_comparacion,
+            var_tarifa_iva_porcentaje: v.var_tarifa_iva_porcentaje,
+            var_codigo_impuesto_sri: v.var_codigo_impuesto_sri,
+            var_tipo_oferta: v.var_tipo_oferta || "REGULAR",
+            var_activo: v.var_activo !== false,
+            var_detalle_variante: v.var_detalle_variante || {},
+          })),
+        };
+
+        try {
+          const { data: rpcRes, error: errRpc2 } = await clienteActivo
+            .schema("comun_comercio")
+            .rpc("com_fn_guardar_producto_catalogo", { p_datos: payloadRpc });
+          if (!errRpc2 && rpcRes?.ok) persistido = true;
+        } catch {}
+
+        if (!persistido) {
+          try {
+            const { data: rpcRes2, error: errRpc3 } = await clienteActivo.rpc(
+              "com_fn_guardar_producto_catalogo",
+              { p_datos: payloadRpc }
+            );
+            if (!errRpc3 && rpcRes2?.ok) persistido = true;
+          } catch {}
+        }
+      }
+
+      // 3. Fallback directo a com_producto
+      if (!persistido) {
         try {
           await clienteActivo
+            .schema("comun_comercio")
             .from("com_producto")
-            .update({
-              pro_detalle_producto: detalleActualizado,
-            })
+            .update({ pro_detalle_producto: detalleActualizado, pro_actualizado_en: new Date().toISOString() })
             .eq("pro_id", params.pro_id);
-        } catch {}
+        } catch {
+          try {
+            await clienteActivo
+              .from("com_producto")
+              .update({ pro_detalle_producto: detalleActualizado, pro_actualizado_en: new Date().toISOString() })
+              .eq("pro_id", params.pro_id);
+          } catch {}
+        }
       }
     }
 
-    // Actualizar en memoria
-    const actuales = storeCustomProductos.get(negocio) || [];
-    const idx = actuales.findIndex((p) => p.pro_id === params.pro_id);
-    if (idx >= 0) {
-      actuales[idx] = prodActualizado;
-    } else {
-      actuales.push(prodActualizado);
-    }
-    storeCustomProductos.set(negocio, actuales);
+    // Actualizar en memoria (para ambos identificadores normalizados)
+    [negocio, params.negocio || "tranqi"].forEach((k) => {
+      const actuales = storeCustomProductos.get(k) || [];
+      const idx = actuales.findIndex((p) => p.pro_id === params.pro_id || p.pro_slug === prodActual.pro_slug);
+      if (idx >= 0) {
+        actuales[idx] = prodActualizado;
+      } else {
+        actuales.push(prodActualizado);
+      }
+      storeCustomProductos.set(k, actuales);
+    });
 
     try {
       revalidatePath("/panel/catalogo-productos");
       revalidatePath("/panel/herramientas");
+      revalidatePath("/panel");
     } catch {}
 
     return { ok: true, canales_visibilidad: canalesNuevos, producto: prodActualizado };
