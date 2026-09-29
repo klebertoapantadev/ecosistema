@@ -4503,15 +4503,24 @@ export async function obtenerCoberturaUsuarioAction(
   };
 }
 
-export async function obtenerProductosDestacadosClienteAction(negocio: string): Promise<ProductoCatalogo[]> {
-  const todos = await obtenerCatalogoProductosAction(negocio);
-  // Filtra únicamente productos activos marcados como destacados (pro_destacado === true)
-  const destacados = todos.filter(
-    (p) => p.pro_destacado && p.variantes && p.variantes.length > 0 && p.variantes.some((v) => v.var_activo)
-  );
-  if (destacados.length > 0) return destacados;
-  // Respaldo ordenado: los primeros 4 productos con variantes activas
-  return todos.filter((p) => p.variantes?.some((v) => v.var_activo)).slice(0, 4);
+export async function obtenerProductosDestacadosClienteAction(
+  negocio: string,
+  canal = "ECOMMERCE_WEB"
+): Promise<ProductoCatalogo[]> {
+  const todos = await obtenerCatalogoProductosAction(negocio, canal);
+  // Filtra rigurosamente productos activos con variantes activas y visibilidad en el canal solicitado
+  return todos.filter((p) => {
+    if (!p.variantes || p.variantes.length === 0 || !p.variantes.some((v) => v.var_activo)) {
+      return false;
+    }
+    if (canal && canal !== "TODOS") {
+      const canales = Array.isArray(p.canales_visibilidad) ? p.canales_visibilidad : [];
+      if (canales.length > 0 && !canales.includes(canal.toUpperCase().trim() as CanalVisibilidad)) {
+        return false;
+      }
+    }
+    return true;
+  });
 }
 
 export async function consumirDerechoUsuarioAction(datos: {

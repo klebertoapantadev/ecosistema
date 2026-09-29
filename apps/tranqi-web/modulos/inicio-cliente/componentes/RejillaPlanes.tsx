@@ -55,7 +55,7 @@ export function RejillaPlanes({ negocio = "tranqi", filtroInicial = "todos" }: R
 
   useEffect(() => {
     let vigente = true;
-    obtenerProductosDestacadosClienteAction(negocio)
+    obtenerProductosDestacadosClienteAction(negocio, "ECOMMERCE_WEB")
       .then((data) => { if (vigente) setProductos(data); })
       .catch(() => { if (vigente) setProductos([]); });
     return () => { vigente = false; };
@@ -85,9 +85,13 @@ export function RejillaPlanes({ negocio = "tranqi", filtroInicial = "todos" }: R
   // Sin productos no hay sección: igual que hacía el carrusel.
   if (!productos || productos.length === 0) return null;
 
-  const visibles = productos.filter((p) =>
-    filtro === "todos" ? true : filtro === "planes" ? esPlan(p) : !esPlan(p),
-  );
+  const visibles = productos.filter((p) => {
+    const canales = Array.isArray(p.canales_visibilidad) ? p.canales_visibilidad : [];
+    if (canales.length > 0 && !canales.includes("ECOMMERCE_WEB")) {
+      return false;
+    }
+    return filtro === "todos" ? true : filtro === "planes" ? esPlan(p) : !esPlan(p);
+  });
   const hayDeAmbos = productos.some(esPlan) && productos.some((p) => !esPlan(p));
   // Un solo recomendado: el primer plan destacado. Se marca con borde y
   // fondo tenue, no con color pleno: la pantalla ya tiene su única
@@ -132,8 +136,10 @@ export function RejillaPlanes({ negocio = "tranqi", filtroInicial = "todos" }: R
           if (!variante) return null;
           const Icono = iconoDe(p);
           const beneficios: string[] = Array.isArray(p.pro_detalle_producto?.beneficios)
-            ? p.pro_detalle_producto.beneficios.slice(0, 3)
+            ? p.pro_detalle_producto.beneficios.filter(Boolean).slice(0, 4)
             : [];
+          const tiempoEntrega = p.pro_detalle_producto?.tiempo_entrega || p.pro_detalle_producto?.promesa_entrega;
+
           return (
             <article key={`${filtro}-${p.pro_id}`} className={`plan-tarjeta${p.pro_id === recomendado ? " es-recomendado" : ""}`}>
               <div className="plan-cabecera">
@@ -142,13 +148,26 @@ export function RejillaPlanes({ negocio = "tranqi", filtroInicial = "todos" }: R
               </div>
               <span className="plan-eyebrow">{esPlan(p) ? "Suscripción" : "Servicio puntual"}</span>
               <h3>{p.pro_nombre}</h3>
-              {beneficios.length > 0 && (
+
+              {tiempoEntrega && (
+                <div style={{ fontSize: "0.72rem", color: "var(--panel-gris)", display: "flex", alignItems: "center", gap: "4px", margin: "2px 0 6px", fontWeight: 600 }}>
+                  <span aria-hidden="true">⏱️</span>
+                  <span>{tiempoEntrega}</span>
+                </div>
+              )}
+
+              {beneficios.length > 0 ? (
                 <ul className="plan-beneficios">
                   {beneficios.map((b) => (
                     <li key={b}><Check size={15} strokeWidth={2.2} aria-hidden="true" />{b}</li>
                   ))}
                 </ul>
-              )}
+              ) : p.pro_descripcion ? (
+                <p style={{ fontSize: "0.813rem", color: "var(--panel-gris)", margin: "6px 0 12px", lineHeight: 1.4, display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+                  {p.pro_descripcion}
+                </p>
+              ) : null}
+
               <div className="plan-pie">
                 <div className="plan-precio">
                   <b>{USD.format(variante.precio_total)}</b>
@@ -179,6 +198,24 @@ export function RejillaPlanes({ negocio = "tranqi", filtroInicial = "todos" }: R
               {seleccion.variante.var_nombre && seleccion.variante.var_nombre !== seleccion.producto.pro_nombre
                 ? ` · ${seleccion.variante.var_nombre}` : ""}.
             </p>
+
+            {seleccion.producto.pro_descripcion && (
+              <p style={{ fontSize: "0.85rem", color: "var(--panel-gris)", lineHeight: 1.45, margin: "0 0 6px" }}>
+                {seleccion.producto.pro_descripcion}
+              </p>
+            )}
+
+            {Array.isArray(seleccion.producto.pro_detalle_producto?.beneficios) && seleccion.producto.pro_detalle_producto.beneficios.length > 0 && (
+              <div style={{ background: "var(--panel-papel)", padding: "10px 14px", borderRadius: "10px", fontSize: "0.813rem" }}>
+                <b style={{ display: "block", marginBottom: "6px", color: "var(--negro)" }}>¿Qué incluye?</b>
+                <ul style={{ margin: 0, paddingLeft: "18px", display: "grid", gap: "4px", color: "var(--panel-gris)" }}>
+                  {seleccion.producto.pro_detalle_producto.beneficios.map((b: string) => (
+                    <li key={b}>{b}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
             <dl className="desglose-compra">
               <div><dt>Subtotal</dt><dd>{USD.format(seleccion.variante.var_precio)}</dd></div>
               <div><dt>IVA {seleccion.variante.var_tarifa_iva_porcentaje} %</dt><dd>{USD.format(seleccion.variante.monto_iva)}</dd></div>
