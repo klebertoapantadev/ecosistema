@@ -95,21 +95,18 @@ insert into comun_seguridad.seg_rol_widget (
   rlw_negocio,
   rlw_rol,
   rlw_widget_id,
-  rlw_visible,
-  rlw_configuracion_override
+  rlw_visible
 )
 select
   w.wdg_negocio,
   r.rol,
   w.wdg_id,
-  true,
-  jsonb_build_object('panel_asignado', 'panel_administrar')
+  true
 from comun_seguridad.seg_widget w
 cross join (values ('OPERADOR'), ('ADMINISTRADOR'), ('SUPERADMIN')) as r(rol)
 where w.wdg_clave = 'gestion_convenios_corporativos'
 on conflict (rlw_negocio, rlw_rol, rlw_widget_id) do update set
-  rlw_visible = true,
-  rlw_configuracion_override = excluded.rlw_configuracion_override;
+  rlw_visible = true;
 
 -- 4. RPCs de Gestión Transaccional de Convenios (SECURITY DEFINER)
 create or replace function comun_comercio.com_fn_guardar_convenio_empresa(p_datos jsonb)
