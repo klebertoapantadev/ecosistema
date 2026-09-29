@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import {
   Home, CircleUser, Settings, ShieldCheck, ClipboardList, Wrench, CreditCard,
   PanelLeft, Sliders, Folder, Activity, FileText, UserCog, Briefcase, Calendar, Users,
-  CheckSquare, Globe, Building, Sparkles, Phone, Lock, KeyRound, Terminal, Zap,
+  CheckSquare, Globe, Building2, Sparkles, Phone, Lock, KeyRound, Terminal, Zap,
   Eye, Search, Pencil, LogOut, LogIn, ShoppingBag, type LucideIcon
 } from "lucide-react";
 import { EnlacePanel } from "./EnlacePanel";
@@ -43,7 +43,8 @@ const MAPA_ICONOS_NAV: Record<string, LucideIcon> = {
   Users,
   CheckSquare,
   Globe,
-  Building,
+  Building: Building2,
+  Building2,
   Sparkles,
   Phone,
   Lock,
@@ -58,7 +59,7 @@ const MAPA_ICONOS_NAV: Record<string, LucideIcon> = {
   PanelLeft,
   panel_inicio: Home,
   panel_clientes: CircleUser,
-  panel_empresas: Building,
+  panel_empresas: Building2,
   panel_usuarios: Users,
   panel_red_profesional: Briefcase,
   panel_terminos: FileText,
@@ -74,7 +75,7 @@ const MAPA_ICONOS_NAV: Record<string, LucideIcon> = {
 const PANELES_BASE_DEFAULT: PanelDefNav[] = [
   { id: "panel_inicio", nombre: "Inicio", ruta: "/panel", icono: "Home" },
   { id: "panel_clientes", nombre: "Clientes", ruta: "/panel/clientes", icono: "CircleUser" },
-  { id: "panel_empresas", nombre: "Empresas", ruta: "/panel/empresas", icono: "Building" },
+  { id: "panel_empresas", nombre: "Empresas", ruta: "/panel/empresas", icono: "Building2" },
   { id: "panel_usuarios", nombre: "Usuarios", ruta: "/panel/usuarios", icono: "Users" },
   { id: "panel_red_profesional", nombre: "Red profesional", ruta: "/panel/red-profesional", icono: "Briefcase" },
   { id: "panel_terminos", nombre: "Términos & Condiciones", ruta: "/panel/terminos", icono: "FileText" },
