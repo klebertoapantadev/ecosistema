@@ -497,7 +497,8 @@ export function ConsolaGestionCatalogo({ negocio = "tranqi" }: Props) {
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
           {productosFiltrados.map((p) => {
-            const varPrincipal = p.variantes[0];
+            const variantesLista = Array.isArray(p.variantes) ? p.variantes : [];
+            const varPrincipal = variantesLista[0];
             const tieneImagen = Boolean(p.pro_detalle_producto?.imagen_url);
             const tieneVideo = Boolean(p.pro_detalle_producto?.video_url);
 
@@ -567,7 +568,7 @@ export function ConsolaGestionCatalogo({ negocio = "tranqi" }: Props) {
                     </h4>
 
                     <div style={{ fontSize: "0.78rem", color: "#64748B", marginTop: "2px" }}>
-                      SKU: <strong style={{ color: "#334155" }}>{varPrincipal?.var_sku || "N/A"}</strong> • {p.variantes.length} modalidad(es)
+                      SKU: <strong style={{ color: "#334155" }}>{varPrincipal?.var_sku || "N/A"}</strong> • {variantesLista.length} modalidad(es)
                     </div>
                   </div>
                 </div>
@@ -575,11 +576,11 @@ export function ConsolaGestionCatalogo({ negocio = "tranqi" }: Props) {
                 {/* Precios e Impuestos */}
                 <div style={{ textAlign: "right", minWidth: "140px" }}>
                   <div style={{ fontSize: "1.1rem", fontWeight: 800, color: "#0F172A" }}>
-                    ${varPrincipal?.precio_total.toFixed(2) || "0.00"}{" "}
+                    ${varPrincipal?.precio_total ? varPrincipal.precio_total.toFixed(2) : "0.00"}{" "}
                     <span style={{ fontSize: "0.75rem", color: "#64748B", fontWeight: 500 }}>USD</span>
                   </div>
                   <div style={{ fontSize: "0.72rem", color: "#64748B" }}>
-                    Base: ${varPrincipal?.var_precio.toFixed(2)} + IVA 15%
+                    Base: ${varPrincipal?.var_precio !== undefined ? varPrincipal.var_precio.toFixed(2) : "0.00"} + IVA 15%
                   </div>
                 </div>
 

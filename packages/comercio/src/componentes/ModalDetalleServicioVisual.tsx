@@ -35,8 +35,9 @@ export function ModalDetalleServicioVisual({
 
   if (!abierto || !producto) return null;
 
-  const currentVarId = varianteSeleccionadaId || producto.variantes[0]?.var_id;
-  const currentVar = producto.variantes.find((v) => v.var_id === currentVarId) || producto.variantes[0];
+  const vars = Array.isArray(producto.variantes) ? producto.variantes : [];
+  const currentVarId = varianteSeleccionadaId || vars[0]?.var_id;
+  const currentVar = vars.find((v) => v.var_id === currentVarId) || vars[0];
 
   const detalle = producto.pro_detalle_producto || {};
   const imagenUrl =
@@ -238,13 +239,13 @@ export function ModalDetalleServicioVisual({
           </p>
 
           {/* Selector de Modalidades / Tarifas si tiene varias */}
-          {producto.variantes.length > 1 && (
+          {vars.length > 1 && (
             <div style={{ background: "#F8FAFC", border: "1px solid #E2E8F0", borderRadius: "12px", padding: "14px" }}>
               <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 700, color: "#334155", marginBottom: "8px" }}>
                 Selecciona tu plan o modalidad de atención:
               </label>
               <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                {producto.variantes.map((v) => {
+                {vars.map((v) => {
                   const activa = currentVar?.var_id === v.var_id;
                   return (
                     <button

@@ -30,6 +30,10 @@ import {
   ExternalLink,
   Truck,
   Share2,
+  CheckCircle2,
+  CheckSquare,
+  Square,
+  Globe,
 } from "lucide-react";
 import {
   ProductoCatalogo,
@@ -39,6 +43,7 @@ import {
   obtenerCategoriasAction,
   restaurarCatalogoEjemploAction,
   editarProductoAction,
+  alternarCanalVisibilidadProductoAction,
 } from "../acciones";
 import {
   CANALES_CATALOGO_OFICIALES,
@@ -74,6 +79,9 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
   const [busqueda, setBusqueda] = useState("");
   const [categoriaSeleccionada, setCategoriaSeleccionada] = useState<string>("todas");
   const [canalSeleccionado, setCanalSeleccionado] = useState<string>("todos");
+  const [verTodosEnFiltroCanal, setVerTodosEnFiltroCanal] = useState<boolean>(false);
+  const [guardandoCanalKey, setGuardandoCanalKey] = useState<string | null>(null);
+  const [mensajeErrorCanal, setMensajeErrorCanal] = useState<string | null>(null);
 
   // Estado de modales
   const [checkoutAbierto, setCheckoutAbierto] = useState(false);
@@ -135,13 +143,14 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
         obtenerCatalogoProductosAction(negocio),
         obtenerCategoriasAction(negocio),
       ]);
-      setProductos(prods);
-      setCategoriasLista(cats);
+      const prodsSeguros = Array.isArray(prods) ? prods : [];
+      setProductos(prodsSeguros);
+      setCategoriasLista(Array.isArray(cats) ? cats : []);
 
       // Preseleccionar primera variante por defecto para cada producto
       const iniciales: Record<string, string> = {};
-      prods.forEach((p) => {
-        if (p.variantes.length > 0 && p.variantes[0]) {
+      prodsSeguros.forEach((p) => {
+        if (p && Array.isArray(p.variantes) && p.variantes.length > 0 && p.variantes[0]) {
           iniciales[p.pro_id] = p.variantes[0].var_id;
         }
       });
@@ -156,6 +165,83 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
   useEffect(() => {
     cargarDatos();
   }, [negocio]);
+
+  // Alternar canal de visibilidad de un producto con actualización optimista
+  const handleAlternarCanal = async (proId: string, canal: CanalVisibilidad) => {
+    const key = `${proId}_${canal}`;
+    setGuardandoCanalKey(key);
+    setMensajeErrorCanal(null);
+
+    const prodActual = productos.find((p) => p.pro_id === proId);
+    if (!prodActual) {
+      setGuardandoCanalKey(null);
+      return;
+    }
+
+    const canalesActuales: CanalVisibilidad[] = Array.isArray(prodActual.canales_visibilidad)
+      ? [...prodActual.canales_visibilidad]
+      : Array.isArray(prodActual.pro_detalle_producto?.canales_visibilidad)
+      ? [...prodActual.pro_detalle_producto.canales_visibilidad]
+      : [...CANALES_POR_DEFECTO];
+
+    const estaActivo = canalesActuales.includes(canal);
+    const nuevoEstado = !estaActivo;
+
+    // Validación preventiva de imagen obligatoria
+    if (nuevoEstado && CANALES_REQUIEREN_IMAGEN.includes(canal) && !productoTieneAlMenosUnaImagen(prodActual)) {
+      const infoCanal = CANALES_CATALOGO_OFICIALES.find((c) => c.clave === canal);
+      setMensajeErrorCanal(
+        `📷 El canal "${infoCanal?.nombre || canal}" exige que el producto tenga al menos una foto (en portada, galería o variantes). Agrega una imagen antes de activarlo.`
+      );
+      setGuardandoCanalKey(null);
+      return;
+    }
+
+    const nuevosCanales = nuevoEstado
+      ? Array.from(new Set([...canalesActuales, canal]))
+      : canalesActuales.filter((c) => c !== canal);
+
+    // Actualización optimista inmediata en UI
+    setProductos((prev) =>
+      prev.map((p) =>
+        p.pro_id === proId
+          ? {
+              ...p,
+              canales_visibilidad: nuevosCanales,
+              pro_detalle_producto: {
+                ...(p.pro_detalle_producto || {}),
+                canales_visibilidad: nuevosCanales,
+              },
+            }
+          : p
+      )
+    );
+
+    try {
+      const res = await alternarCanalVisibilidadProductoAction({
+        pro_id: proId,
+        canal,
+        activo: nuevoEstado,
+        negocio,
+      });
+
+      if (!res.ok) {
+        // Rollback
+        setProductos((prev) =>
+          prev.map((p) => (p.pro_id === proId ? prodActual : p))
+        );
+        setMensajeErrorCanal(res.error || "No se pudo actualizar la visibilidad en el canal.");
+      }
+    } catch (err: any) {
+      // Rollback
+      setProductos((prev) =>
+        prev.map((p) => (p.pro_id === proId ? prodActual : p))
+      );
+      setMensajeErrorCanal(err.message || "Error de conexión al actualizar canal.");
+    } finally {
+      setGuardandoCanalKey(null);
+    }
+  };
 
   // Compartir parámetros de consulta mediante URL
   const handleCompartirConsulta = () => {
@@ -210,20 +296,21 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
   };
 
   // Filtrado
-  const productosFiltrados = productos.filter((p) => {
+  const productosFiltrados = (productos || []).filter((p) => {
+    if (!p) return false;
     const cumpleBusqueda =
       busqueda.trim() === "" ||
-      p.pro_nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
+      (p.pro_nombre && p.pro_nombre.toLowerCase().includes(busqueda.toLowerCase())) ||
       (p.pro_descripcion && p.pro_descripcion.toLowerCase().includes(busqueda.toLowerCase()));
 
     const cumpleCategoria =
       categoriaSeleccionada === "todas" ||
       (p.categoria && p.categoria.ctg_slug === categoriaSeleccionada);
 
-    const canales = p.canales_visibilidad || CANALES_POR_DEFECTO;
+    const canales = p.canales_visibilidad || p.pro_detalle_producto?.canales_visibilidad || CANALES_POR_DEFECTO;
     const cumpleCanal =
       canalSeleccionado === "todos" ||
-      canales.includes(canalSeleccionado as CanalVisibilidad);
+      (verTodosEnFiltroCanal ? true : canales.includes(canalSeleccionado as CanalVisibilidad));
 
     return cumpleBusqueda && cumpleCategoria && cumpleCanal;
   });
@@ -606,26 +693,29 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
         </div>
 
         {/* Filtro por Canal de Visibilidad */}
-        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
           <select
             value={canalSeleccionado}
-            onChange={(e) => setCanalSeleccionado(e.target.value)}
+            onChange={(e) => {
+              setCanalSeleccionado(e.target.value);
+              if (e.target.value === "todos") setVerTodosEnFiltroCanal(false);
+            }}
             aria-label="Filtrar por canal de visibilidad"
             style={{
               padding: "7px 12px",
               borderRadius: "8px",
-              border: "1px solid #CBD5E1",
+              border: canalSeleccionado !== "todos" ? "1.5px solid #0284C7" : "1px solid #CBD5E1",
               fontSize: "0.8rem",
-              fontWeight: 600,
-              background: "#F8FAFC",
-              color: "#0F172A",
+              fontWeight: 700,
+              background: canalSeleccionado !== "todos" ? "#F0F9FF" : "#F8FAFC",
+              color: canalSeleccionado !== "todos" ? "#0369A1" : "#0F172A",
               cursor: "pointer",
             }}
           >
             <option value="todos">🌐 Todos los canales ({productos.length})</option>
             {CANALES_CATALOGO_OFICIALES.map((c) => {
-              const count = productos.filter((p) =>
-                (p.canales_visibilidad || CANALES_POR_DEFECTO).includes(c.clave)
+              const count = (productos || []).filter((p) =>
+                (p.canales_visibilidad || p.pro_detalle_producto?.canales_visibilidad || CANALES_POR_DEFECTO).includes(c.clave)
               ).length;
               return (
                 <option key={c.clave} value={c.clave}>
@@ -634,6 +724,39 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
               );
             })}
           </select>
+
+          {canalSeleccionado !== "todos" && modoVista === "admin" && (
+            <button
+              type="button"
+              onClick={() => setVerTodosEnFiltroCanal((prev) => !prev)}
+              className="btn-responsive-accion"
+              title={
+                verTodosEnFiltroCanal
+                  ? "Mostrando todos los productos para activar/desactivar con el check. Clic para volver a ver solo los activos."
+                  : "Clic para ver todos los productos y activar o desactivar su visibilidad en este canal usando el check de cada tarjeta."
+              }
+              aria-label="Alternar entre ver solo activos o todos los productos para activar/desactivar"
+              style={{
+                padding: "6px 11px",
+                borderRadius: "8px",
+                border: verTodosEnFiltroCanal ? "1.5px solid #0284C7" : "1px solid #CBD5E1",
+                background: verTodosEnFiltroCanal ? "#0284C7" : "#FFFFFF",
+                color: verTodosEnFiltroCanal ? "#FFFFFF" : "#475569",
+                fontSize: "0.78rem",
+                fontWeight: 700,
+                cursor: "pointer",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "5px",
+                transition: "all 0.15s ease",
+              }}
+            >
+              {verTodosEnFiltroCanal ? <CheckSquare size={13} /> : <Eye size={13} />}
+              <span className="btn-texto-responsive">
+                {verTodosEnFiltroCanal ? `Ver Todos (${productos.length})` : "Ver Todos (Activar/Desactivar)"}
+              </span>
+            </button>
+          )}
         </div>
 
         <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
@@ -799,6 +922,43 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
         );
       })()}
 
+      {/* Mensaje de Feedback o Advertencia de Canales */}
+      {mensajeErrorCanal && (
+        <div
+          style={{
+            background: "#FEF2F2",
+            border: "1px solid #FECACA",
+            color: "#991B1B",
+            padding: "10px 16px",
+            borderRadius: "10px",
+            marginBottom: "16px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            fontSize: "0.82rem",
+            fontWeight: 600,
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <AlertCircle size={16} color="#DC2626" />
+            <span>{mensajeErrorCanal}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setMensajeErrorCanal(null)}
+            style={{
+              background: "none",
+              border: "none",
+              color: "#991B1B",
+              cursor: "pointer",
+              padding: "2px",
+            }}
+          >
+            <X size={15} />
+          </button>
+        </div>
+      )}
+
       {/* Grid de Productos */}
       {cargando ? (
         <div style={{ padding: "60px 20px", textAlign: "center", color: "#64748B" }}>
@@ -891,9 +1051,10 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
           }}
         >
           {productosFiltrados.map((p) => {
-            const currentVarId = varianteSeleccionadaPorProducto[p.pro_id] || p.variantes[0]?.var_id;
-            const currentVar = p.variantes.find((v) => v.var_id === currentVarId) || p.variantes[0];
-            const esHonorario = p.pro_tipo === "SERVICIO" || p.pro_slug.includes("honorarios");
+            const variantesLista = Array.isArray(p.variantes) ? p.variantes : [];
+            const currentVarId = varianteSeleccionadaPorProducto[p.pro_id] || variantesLista[0]?.var_id;
+            const currentVar = variantesLista.find((v) => v.var_id === currentVarId) || variantesLista[0];
+            const esHonorario = p.pro_tipo === "SERVICIO" || (p.pro_slug && p.pro_slug.includes("honorarios"));
 
             // Recolección de fotos de cada variante y del master para el carrusel
             const fotosDisponibles: Array<{
@@ -918,7 +1079,7 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
               });
             }
 
-            p.variantes.forEach((v, idx) => {
+            variantesLista.forEach((v, idx) => {
               if (v.var_detalle_variante?.portada_url && !fotosDisponibles.some((f) => f.url === v.var_detalle_variante.portada_url)) {
                 const col = PALETA_COLORES_VARIANTES[idx % PALETA_COLORES_VARIANTES.length] || PALETA_COLORES_VARIANTES[0]!;
                 fotosDisponibles.push({
@@ -1249,7 +1410,7 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                   </div>
                 )}
 
-                {/* Barra Superior de la Tarjeta: Destacado + Botón Editar Master */}
+                {/* Barra Superior de la Tarjeta: Check Canal + Destacado + Botón Editar Master */}
                 <div
                   style={{
                     position: "absolute",
@@ -1261,6 +1422,73 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                     zIndex: 4,
                   }}
                 >
+                  {/* Check / Switch de Visibilidad en el Canal Seleccionado */}
+                  {canalSeleccionado !== "todos" && modoVista === "admin" && (() => {
+                    const infoCanalFiltro = CANALES_CATALOGO_OFICIALES.find((c) => c.clave === canalSeleccionado);
+                    const canalesProd = p.canales_visibilidad || p.pro_detalle_producto?.canales_visibilidad || CANALES_POR_DEFECTO;
+                    const estaActivoEnCanal = canalesProd.includes(canalSeleccionado as CanalVisibilidad);
+                    const isSaving = guardandoCanalKey === `${p.pro_id}_${canalSeleccionado}`;
+                    const requiereImgYFalta = !productoTieneAlMenosUnaImagen(p) && CANALES_REQUIEREN_IMAGEN.includes(canalSeleccionado as CanalVisibilidad);
+
+                    return (
+                      <button
+                        type="button"
+                        onClick={async (e) => {
+                          e.stopPropagation();
+                          await handleAlternarCanal(p.pro_id, canalSeleccionado as CanalVisibilidad);
+                        }}
+                        disabled={isSaving}
+                        className="btn-responsive-accion"
+                        title={
+                          requiereImgYFalta
+                            ? `⚠️ Requiere al menos una imagen configurada para activarse en ${infoCanalFiltro?.nombre || canalSeleccionado}`
+                            : estaActivoEnCanal
+                            ? `Desactivar visibilidad en ${infoCanalFiltro?.nombre || canalSeleccionado}`
+                            : `Activar visibilidad en ${infoCanalFiltro?.nombre || canalSeleccionado}`
+                        }
+                        aria-label={`Alternar visibilidad en ${infoCanalFiltro?.nombre || canalSeleccionado}`}
+                        style={{
+                          background: estaActivoEnCanal
+                            ? "linear-gradient(135deg, #059669 0%, #10B981 100%)"
+                            : "rgba(15, 23, 42, 0.88)",
+                          border: estaActivoEnCanal
+                            ? "1.5px solid #34D399"
+                            : "1.5px solid rgba(255, 255, 255, 0.35)",
+                          color: "#FFFFFF",
+                          padding: "5px 10px",
+                          borderRadius: "8px",
+                          fontSize: "0.74rem",
+                          fontWeight: 800,
+                          cursor: isSaving ? "wait" : "pointer",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "5px",
+                          boxShadow: "0 2px 6px rgba(0,0,0,0.25)",
+                          backdropFilter: "blur(6px)",
+                          transition: "all 0.15s ease",
+                        }}
+                      >
+                        {isSaving ? (
+                          <RefreshCw size={12} className="animate-spin" />
+                        ) : estaActivoEnCanal ? (
+                          <CheckCircle2 size={13} color="#FFFFFF" />
+                        ) : (
+                          <div
+                            style={{
+                              width: "11px",
+                              height: "11px",
+                              borderRadius: "3px",
+                              border: "2px solid rgba(255,255,255,0.8)",
+                            }}
+                          />
+                        )}
+                        <span className="btn-texto-responsive">
+                          {estaActivoEnCanal ? "Visible en Canal" : "Oculto en Canal"}
+                        </span>
+                      </button>
+                    );
+                  })()}
+
                   {p.pro_destacado && (
                     <div
                       style={{
@@ -1460,8 +1688,8 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                   ) : null}
 
 
-                  {/* Canales de Visibilidad Activos */}
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: "4px", marginBottom: "12px", alignItems: "center" }}>
+                  {/* Canales de Visibilidad */}
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: "5px", marginBottom: "12px", alignItems: "center" }}>
                     {!productoTieneAlMenosUnaImagen(p) && (
                       <span
                         title="Este producto no tiene fotos configuradas. Está oculto en E-Commerce Web y App Clientes hasta que agregues al menos una imagen."
@@ -1482,23 +1710,87 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                         <span>Sin imagen (Oculto Web/App)</span>
                       </span>
                     )}
-                    {(p.canales_visibilidad || CANALES_POR_DEFECTO).map((cid) => {
-                      const infoCanal = CANALES_CATALOGO_OFICIALES.find((c) => c.clave === cid);
-                      if (!infoCanal) return null;
+
+                    {CANALES_CATALOGO_OFICIALES.map((canalObj) => {
+                      const cid = canalObj.clave;
+                      const canalesProd = p.canales_visibilidad || p.pro_detalle_producto?.canales_visibilidad || CANALES_POR_DEFECTO;
+                      const estaActivo = canalesProd.includes(cid);
                       const requiereImgYFalta = !productoTieneAlMenosUnaImagen(p) && CANALES_REQUIEREN_IMAGEN.includes(cid);
+                      const isSaving = guardandoCanalKey === `${p.pro_id}_${cid}`;
+
+                      if (modoVista === "cliente" && !estaActivo) return null;
+
+                      if (modoVista === "admin") {
+                        return (
+                          <button
+                            key={cid}
+                            type="button"
+                            onClick={async (e) => {
+                              e.stopPropagation();
+                              await handleAlternarCanal(p.pro_id, cid);
+                            }}
+                            disabled={isSaving}
+                            title={
+                              requiereImgYFalta
+                                ? `⚠️ ${canalObj.nombre}: requiere al menos 1 foto para activarse en Web/App`
+                                : estaActivo
+                                ? `Activo en ${canalObj.nombre} (clic para desactivar)`
+                                : `Inactivo en ${canalObj.nombre} (clic para activar)`
+                            }
+                            aria-label={`Alternar ${canalObj.nombre}`}
+                            style={{
+                              fontSize: "0.66rem",
+                              fontWeight: 700,
+                              background: isSaving
+                                ? "#F1F5F9"
+                                : estaActivo
+                                ? "#ECFDF5"
+                                : "#F8FAFC",
+                              color: isSaving
+                                ? "#64748B"
+                                : estaActivo
+                                ? "#065F46"
+                                : "#94A3B8",
+                              border: isSaving
+                                ? "1px dashed #CBD5E1"
+                                : estaActivo
+                                ? "1px solid #10B981"
+                                : "1px dashed #CBD5E1",
+                              borderRadius: "6px",
+                              padding: "2px 6px",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "3px",
+                              cursor: isSaving ? "wait" : "pointer",
+                              textDecoration: requiereImgYFalta && estaActivo ? "line-through" : "none",
+                              opacity: estaActivo ? 1 : 0.65,
+                              transition: "all 0.15s ease",
+                            }}
+                          >
+                            {isSaving ? (
+                              <RefreshCw size={9} className="animate-spin" />
+                            ) : estaActivo ? (
+                              <CheckCircle2 size={10} color="#10B981" />
+                            ) : (
+                              <div style={{ width: "8px", height: "8px", borderRadius: "2px", border: "1.5px solid #94A3B8" }} />
+                            )}
+                            <span>{canalObj.nombre}</span>
+                          </button>
+                        );
+                      }
 
                       return (
                         <span
                           key={cid}
                           title={
                             requiereImgYFalta
-                              ? `Oculto en ${infoCanal.nombre}: requiere al menos 1 imagen configurada`
-                              : `Visible en canal: ${infoCanal.nombre}`
+                              ? `Oculto en ${canalObj.nombre}: requiere al menos 1 imagen configurada`
+                              : `Visible en canal: ${canalObj.nombre}`
                           }
                           style={{
                             fontSize: "0.66rem",
                             fontWeight: 700,
-                            background: requiereImgYFalta ? "#F1F5F9" : "#F1F5F9",
+                            background: "#F1F5F9",
                             color: requiereImgYFalta ? "#94A3B8" : "#475569",
                             border: `1px solid ${requiereImgYFalta ? "#CBD5E1" : "#E2E8F0"}`,
                             borderRadius: "6px",
@@ -1510,14 +1802,14 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                             opacity: requiereImgYFalta ? 0.6 : 1,
                           }}
                         >
-                          <span>{infoCanal.nombre}</span>
+                          <span>{canalObj.nombre}</span>
                         </span>
                       );
                     })}
                   </div>
 
                   {/* Selector de Variantes / Tamaños con Colores Individuales */}
-                  {p.variantes.length > 1 && (
+                  {variantesLista.length > 1 && (
                     <div style={{ marginBottom: "14px" }}>
                       <label
                         style={{
@@ -1531,7 +1823,7 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                         {esFloristeria ? "Selecciona el tamaño / cantidad de rosas:" : "Selecciona la variante / opción:"}
                       </label>
                       <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-                        {p.variantes.map((v, vIdx) => {
+                        {variantesLista.map((v, vIdx) => {
                           const activa = currentVarId === v.var_id;
                           const colVar = PALETA_COLORES_VARIANTES[vIdx % PALETA_COLORES_VARIANTES.length] || PALETA_COLORES_VARIANTES[0]!;
 
@@ -1593,12 +1885,12 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
 
                               <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                                 <div style={{ fontSize: "0.85rem", fontWeight: 800, color: activa ? colVar.text : "#0F172A" }}>
-                                  ${v.precio_total.toFixed(2)}
+                                  ${v.precio_total ? v.precio_total.toFixed(2) : "0.00"}
                                 </div>
 
                                 {modoVista === "admin" && (
                                   <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-                                    {p.variantes.length > 1 && (
+                                    {variantesLista.length > 1 && (
                                       <div style={{ display: "flex", flexDirection: "column", gap: "1px" }}>
                                         <button
                                           type="button"
@@ -1607,7 +1899,7 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                                             e.stopPropagation();
                                             const targetIdx = vIdx - 1;
                                             if (targetIdx < 0) return;
-                                            const nuevas = [...p.variantes];
+                                            const nuevas = [...variantesLista];
                                             const temp = nuevas[vIdx]!;
                                             nuevas[vIdx] = nuevas[targetIdx]!;
                                             nuevas[targetIdx] = temp;
@@ -1648,12 +1940,12 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
 
                                         <button
                                           type="button"
-                                          disabled={vIdx === p.variantes.length - 1}
+                                          disabled={vIdx === variantesLista.length - 1}
                                           onClick={async (e) => {
                                             e.stopPropagation();
                                             const targetIdx = vIdx + 1;
-                                            if (targetIdx >= p.variantes.length) return;
-                                            const nuevas = [...p.variantes];
+                                            if (targetIdx >= variantesLista.length) return;
+                                            const nuevas = [...variantesLista];
                                             const temp = nuevas[vIdx]!;
                                             nuevas[vIdx] = nuevas[targetIdx]!;
                                             nuevas[targetIdx] = temp;
@@ -1682,8 +1974,8 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                                             border: `1px solid ${colVar.border}`,
                                             borderRadius: "3px",
                                             padding: "1px 4px",
-                                            cursor: vIdx === p.variantes.length - 1 ? "not-allowed" : "pointer",
-                                            opacity: vIdx === p.variantes.length - 1 ? 0.3 : 1,
+                                            cursor: vIdx === variantesLista.length - 1 ? "not-allowed" : "pointer",
+                                            opacity: vIdx === variantesLista.length - 1 ? 0.3 : 1,
                                             display: "flex",
                                             alignItems: "center",
                                             justifyContent: "center",
@@ -1745,15 +2037,15 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
                         <div>
                           <div style={{ fontSize: "0.75rem", color: "#64748B" }}>
-                            Base Imponible: ${currentVar.var_precio.toFixed(2)}
+                            Base Imponible: ${currentVar.var_precio !== undefined ? currentVar.var_precio.toFixed(2) : "0.00"}
                           </div>
                           <div style={{ fontSize: "0.7rem", color: "#94A3B8" }}>
-                            + IVA ({currentVar.var_tarifa_iva_porcentaje}%): ${currentVar.monto_iva.toFixed(2)}
+                            + IVA ({currentVar.var_tarifa_iva_porcentaje ?? 15}%): ${currentVar.monto_iva !== undefined ? currentVar.monto_iva.toFixed(2) : "0.00"}
                           </div>
                         </div>
                         <div style={{ textAlign: "right" }}>
                           <div style={{ fontSize: "1.35rem", fontWeight: 800, color: "#0F172A" }}>
-                            ${currentVar.precio_total.toFixed(2)}
+                            ${currentVar.precio_total !== undefined ? currentVar.precio_total.toFixed(2) : "0.00"}
                           </div>
                           <div style={{ fontSize: "0.65rem", color: "#059669", fontWeight: 700 }}>
                             TOTAL FACTURABLE

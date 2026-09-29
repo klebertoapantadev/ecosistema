@@ -1671,7 +1671,35 @@ export async function obtenerCatalogoProductosAction(
           }
         });
 
-        return prodsList;
+        // Filtrar productos inactivos o tombstones
+        let prodsActivos = prodsList.filter((p: any) => p && p.pro_activo !== false && (p.pro_nombre || p.nombre));
+
+        // Normalizar estructura segura para cada producto
+        prodsActivos.forEach((p) => {
+          if (!Array.isArray(p.variantes)) {
+            p.variantes = [];
+          }
+          if (!Array.isArray(p.canales_visibilidad)) {
+            p.canales_visibilidad = Array.isArray(p.pro_detalle_producto?.canales_visibilidad)
+              ? p.pro_detalle_producto.canales_visibilidad
+              : [...CANALES_POR_DEFECTO];
+          }
+        });
+
+        // Filtrar por canal si aplica
+        if (canal && typeof canal === "string" && canal.trim().length > 0 && canal !== "todos" && canal !== "TODOS") {
+          const canalUpper = canal.trim().toUpperCase() as CanalVisibilidad;
+          prodsActivos = prodsActivos.filter((p) => {
+            const tieneCanal = p.canales_visibilidad?.includes(canalUpper);
+            if (!tieneCanal) return false;
+            if (CANALES_REQUIEREN_IMAGEN.includes(canalUpper)) {
+              return productoTieneAlMenosUnaImagen(p);
+            }
+            return true;
+          });
+        }
+
+        return prodsActivos;
       }
     } catch {
       // Fallback a consultas de tabla
@@ -1819,17 +1847,20 @@ export async function obtenerCatalogoProductosAction(
     }
   });
 
-  // Asegurar que todo producto tenga canales_visibilidad
-  listaFinal.forEach((p) => {
+  // Filtrar productos inactivos o eliminados
+  let productosActivos = listaFinal.filter((p: any) => p && p.pro_activo !== false && (p.pro_nombre || p.nombre));
+
+  // Asegurar que todo producto tenga variantes y canales_visibilidad normalizados
+  productosActivos.forEach((p) => {
+    if (!Array.isArray(p.variantes)) {
+      p.variantes = [];
+    }
     if (!p.canales_visibilidad || !Array.isArray(p.canales_visibilidad)) {
       p.canales_visibilidad = Array.isArray(p.pro_detalle_producto?.canales_visibilidad)
         ? p.pro_detalle_producto.canales_visibilidad
         : [...CANALES_POR_DEFECTO];
     }
   });
-
-  // Filtrar productos inactivos o eliminados
-  let productosActivos = listaFinal.filter((p: any) => p.pro_activo !== false);
 
   // Filtrar por canal si fue solicitado (y aplicar regla de imagen obligatoria para Web/App)
   if (canal && typeof canal === "string" && canal.trim().length > 0 && canal !== "todos") {
@@ -2973,7 +3004,112 @@ export async function editarProductoAction(datos: {
 }
 
 /**
- * Elimina o desactiva un producto del catálogo
+ * Activa o desactiva la visibilidad de un producto en un canal específico (ej. ECOMMERCE_WEB, APP_CLIENTES, CHATBOT_WHATSAPP)
+ */
+export async function alternarCanalVisibilidadProductoAction(params: {
+  pro_id: string;
+  canal: CanalVisibilidad;
+  activo?: boolean;
+  negocio?: string;
+}): Promise<{ ok: boolean; canales_visibilidad?: CanalVisibilidad[]; error?: string; producto?: ProductoCatalogo }> {
+  try {
+    const { principal } = normalizarIdentificadorNegocio(params.negocio);
+    const negocio = principal;
+    const prods = await obtenerCatalogoProductosAction(negocio);
+    const prodActual = prods.find((p) => p.pro_id === params.pro_id);
+    if (!prodActual) {
+      return { ok: false, error: "Producto no encontrado para configurar canal." };
+    }
+
+    const canalesActuales: CanalVisibilidad[] = Array.isArray(prodActual.canales_visibilidad)
+      ? [...prodActual.canales_visibilidad]
+      : Array.isArray(prodActual.pro_detalle_producto?.canales_visibilidad)
+      ? [...prodActual.pro_detalle_producto.canales_visibilidad]
+      : [...CANALES_POR_DEFECTO];
+
+    const estaActivo = canalesActuales.includes(params.canal);
+    const nuevoEstado = params.activo !== undefined ? params.activo : !estaActivo;
+
+    // Verificar control de calidad visual: si se intenta activar para ECOMMERCE_WEB o APP_CLIENTES, debe tener imagen
+    if (nuevoEstado && CANALES_REQUIEREN_IMAGEN.includes(params.canal)) {
+      if (!productoTieneAlMenosUnaImagen(prodActual)) {
+        return {
+          ok: false,
+          error: `El canal ${params.canal} requiere que el producto cuente con al menos una imagen configurada. Agrega una foto antes de activarlo.`,
+        };
+      }
+    }
+
+    let canalesNuevos: CanalVisibilidad[];
+    if (nuevoEstado) {
+      canalesNuevos = Array.from(new Set([...canalesActuales, params.canal]));
+    } else {
+      canalesNuevos = canalesActuales.filter((c) => c !== params.canal);
+    }
+
+    const detalleActualizado = {
+      ...(prodActual.pro_detalle_producto || {}),
+      canales_visibilidad: canalesNuevos,
+      editado_en: new Date().toISOString(),
+    };
+
+    const prodActualizado: ProductoCatalogo = {
+      ...prodActual,
+      canales_visibilidad: canalesNuevos,
+      pro_detalle_producto: detalleActualizado,
+    };
+
+    // Actualizar en Supabase
+    let admin: any = null;
+    let supabase: any = null;
+    try { admin = crearClienteAdmin(); } catch {}
+    try { supabase = await crearClienteServidor(); } catch {}
+    const clienteActivo = admin || supabase;
+
+    if (clienteActivo) {
+      try {
+        await clienteActivo
+          .schema("comun_comercio")
+          .from("com_producto")
+          .update({
+            pro_detalle_producto: detalleActualizado,
+          })
+          .eq("pro_id", params.pro_id);
+      } catch {
+        try {
+          await clienteActivo
+            .from("com_producto")
+            .update({
+              pro_detalle_producto: detalleActualizado,
+            })
+            .eq("pro_id", params.pro_id);
+        } catch {}
+      }
+    }
+
+    // Actualizar en memoria
+    const actuales = storeCustomProductos.get(negocio) || [];
+    const idx = actuales.findIndex((p) => p.pro_id === params.pro_id);
+    if (idx >= 0) {
+      actuales[idx] = prodActualizado;
+    } else {
+      actuales.push(prodActualizado);
+    }
+    storeCustomProductos.set(negocio, actuales);
+
+    try {
+      revalidatePath("/panel/catalogo-productos");
+      revalidatePath("/panel/herramientas");
+    } catch {}
+
+    return { ok: true, canales_visibilidad: canalesNuevos, producto: prodActualizado };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Error al actualizar visibilidad de canal." };
+  }
+}
+
+/**
+ * Elimina definitivamente un producto del catálogo (Borrado Físico Definitivo)
  */
 export async function eliminarProductoAction(
   pro_id: string,
@@ -2987,17 +3123,38 @@ export async function eliminarProductoAction(
     const clienteActivo = admin || supabase;
 
     if (clienteActivo) {
+      // 1. Borrado físico definitivo en Supabase (las FK cascade borran variantes y relaciones)
+      let deleteOk = false;
       try {
-        await clienteActivo
+        const { error: errDel } = await clienteActivo
           .schema("comun_comercio")
           .from("com_producto")
-          .update({ pro_activo: false })
+          .delete()
           .eq("pro_id", pro_id);
+        if (!errDel) deleteOk = true;
       } catch {
+        // Intentar sobre esquema público/default
+      }
+
+      if (!deleteOk) {
+        try {
+          const { error: errDel2 } = await clienteActivo
+            .from("com_producto")
+            .delete()
+            .eq("pro_id", pro_id);
+          if (!errDel2) deleteOk = true;
+        } catch {
+          // Continuar
+        }
+      }
+
+      // Si existiese algún bloqueo de FK estricto no en cascada, desactivar y marcar eliminado
+      if (!deleteOk) {
         try {
           await clienteActivo
+            .schema("comun_comercio")
             .from("com_producto")
-            .update({ pro_activo: false })
+            .update({ pro_activo: false, pro_eliminado_en: new Date().toISOString() })
             .eq("pro_id", pro_id);
         } catch {
           // Continuar
@@ -3005,17 +3162,17 @@ export async function eliminarProductoAction(
       }
     }
 
-    // Almacén en memoria: marcar como inactivo (tombstone)
+    // 2. Almacén en memoria: purgar completamente el producto (sin tombstones)
     const actuales = storeCustomProductos.get(negocioNorm) || [];
     const filtrados = actuales.filter((p) => p.pro_id !== pro_id);
-    const tombstone: any = { pro_id, pro_activo: false };
-    filtrados.push(tombstone);
     storeCustomProductos.set(negocioNorm, filtrados);
 
     revalidatePath("/panel/catalogo-productos");
+    revalidatePath("/panel/configuracion");
+    revalidatePath("/panel/herramientas");
     return { ok: true };
   } catch (err: any) {
-    return { ok: false, error: err.message || "Error al eliminar el producto." };
+    return { ok: false, error: err.message || "Error al eliminar definitivamente el producto." };
   }
 }
 
