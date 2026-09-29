@@ -164,6 +164,24 @@ const PANELES_SIDEBAR_INICIALES: PanelSidebarDef[] = [
     mostrarSinWidgets: true
   },
   {
+    id: "panel_clientes",
+    nombre: "Clientes",
+    ruta: "/panel/clientes",
+    descripcion: "Oferta comercial para personas naturales, citas, trámites familiares y opciones de clientes.",
+    icono: "User",
+    requiereMfa: false,
+    mostrarSinWidgets: true
+  },
+  {
+    id: "panel_empresas",
+    nombre: "Empresas",
+    ruta: "/panel/empresas",
+    descripcion: "Catálogo corporativo, constitución SAS, convenios de beneficios SATCOM y planes mensuales B2B.",
+    icono: "Building",
+    requiereMfa: false,
+    mostrarSinWidgets: true
+  },
+  {
     id: "panel_usuarios",
     nombre: "Usuarios",
     ruta: "/panel/usuarios",
@@ -252,10 +270,12 @@ const PERFILES_INICIALES: PerfilDef[] = [
     nombre: "Cliente (Jerarquía Base)",
     nivel: 1,
     ambito: "Empresa",
-    descripcion: "Perfil base de usuario. Acceso a paneles de Inicio, Mi Cuenta, Herramientas, Agendamiento y Preferencias de Notificaciones.",
-    panelesAsignados: ["panel_inicio", "panel_agendamiento", "panel_cuenta", "panel_herramientas", "panel_configuracion"],
+    descripcion: "Perfil base de usuario. Acceso a paneles de Inicio, Clientes, Empresas, Mi Cuenta, Herramientas, Agendamiento y Preferencias de Notificaciones.",
+    panelesAsignados: ["panel_inicio", "panel_clientes", "panel_empresas", "panel_agendamiento", "panel_cuenta", "panel_herramientas", "panel_configuracion"],
     widgetsAsignadosPorPanel: {
       panel_inicio: ["favoritos"],
+      panel_clientes: ["vitrina_comercial_personas", "agendar_cita", "mis_citas", "billetera_documentos", "firma_documentos_pdf"],
+      panel_empresas: ["vitrina_comercial_empresas", "gestion_convenios_corporativos", "billetera_documentos", "firma_documentos_pdf"],
       panel_agendamiento: ["agendar_cita", "mis_citas"],
       panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos", "historial_pagos"],
       panel_herramientas: ["catalogo_productos", "firma_documentos_pdf", "billetera_documentos", "solicitud_socio"],
@@ -269,9 +289,11 @@ const PERFILES_INICIALES: PerfilDef[] = [
     nivel: 30,
     ambito: "Empresa",
     descripcion: "Perfil operativo para atención al cliente, evaluación de solicitudes, configuración de términos, contratos y gestión de usuarios.",
-    panelesAsignados: ["panel_inicio", "panel_usuarios", "panel_red_profesional", "panel_terminos", "panel_agendamiento", "panel_administrar", "panel_cuenta", "panel_herramientas", "panel_configuracion"],
+    panelesAsignados: ["panel_inicio", "panel_clientes", "panel_empresas", "panel_usuarios", "panel_red_profesional", "panel_terminos", "panel_agendamiento", "panel_administrar", "panel_cuenta", "panel_herramientas", "panel_configuracion"],
     widgetsAsignadosPorPanel: {
       panel_inicio: ["favoritos"],
+      panel_clientes: ["vitrina_comercial_personas", "crm_clientes", "agendar_cita", "mis_citas", "billetera_documentos", "firma_documentos_pdf"],
+      panel_empresas: ["vitrina_comercial_empresas", "gestion_convenios_corporativos", "crm_clientes", "billetera_documentos", "firma_documentos_pdf"],
       panel_usuarios: ["consulta_usuarios_perfiles", "crm_clientes", "monitoreo_notificaciones_usuarios"],
       panel_red_profesional: ["socios", "solicitud_socio"],
       panel_terminos: ["gestion_terminos_consentimientos", "configuracion_contrato_abogado"],
@@ -289,9 +311,11 @@ const PERFILES_INICIALES: PerfilDef[] = [
     nivel: 50,
     ambito: "Empresa",
     descripcion: "Perfil profesional para atención legal de causas, citas y expedientes.",
-    panelesAsignados: ["panel_inicio", "panel_usuarios", "panel_agendamiento", "panel_cuenta", "panel_herramientas", "panel_configuracion"],
+    panelesAsignados: ["panel_inicio", "panel_clientes", "panel_empresas", "panel_usuarios", "panel_agendamiento", "panel_cuenta", "panel_herramientas", "panel_configuracion"],
     widgetsAsignadosPorPanel: {
       panel_inicio: ["favoritos"],
+      panel_clientes: ["vitrina_comercial_personas", "crm_clientes", "billetera_documentos", "firma_documentos_pdf"],
+      panel_empresas: ["vitrina_comercial_empresas", "gestion_convenios_corporativos", "crm_clientes", "billetera_documentos", "firma_documentos_pdf"],
       panel_usuarios: ["crm_clientes"],
       panel_agendamiento: ["citas_programadas", "disponibilidad", "asignaciones_agenda"],
       panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos", "historial_pagos"],
@@ -306,9 +330,11 @@ const PERFILES_INICIALES: PerfilDef[] = [
     nivel: 80,
     ambito: "Empresa",
     descripcion: "Gestión completa del negocio: usuarios, red profesional, términos, agendamiento, módulos administrativos y gobernanza.",
-    panelesAsignados: ["panel_inicio", "panel_usuarios", "panel_red_profesional", "panel_terminos", "panel_agendamiento", "panel_administrar", "panel_cuenta", "panel_herramientas", "panel_configuracion"],
+    panelesAsignados: ["panel_inicio", "panel_clientes", "panel_empresas", "panel_usuarios", "panel_red_profesional", "panel_terminos", "panel_agendamiento", "panel_administrar", "panel_cuenta", "panel_herramientas", "panel_configuracion"],
     widgetsAsignadosPorPanel: {
       panel_inicio: ["favoritos"],
+      panel_clientes: ["vitrina_comercial_personas", "crm_clientes", "agendar_cita", "mis_citas", "billetera_documentos", "firma_documentos_pdf"],
+      panel_empresas: ["vitrina_comercial_empresas", "gestion_convenios_corporativos", "crm_clientes", "billetera_documentos", "firma_documentos_pdf"],
       panel_usuarios: ["gestion_usuarios", "consulta_usuarios_perfiles", "crm_clientes", "monitoreo_notificaciones_usuarios"],
       panel_red_profesional: ["socios", "solicitud_socio"],
       panel_terminos: ["gestion_terminos_consentimientos", "configuracion_contrato_abogado"],
@@ -326,9 +352,11 @@ const PERFILES_INICIALES: PerfilDef[] = [
     nivel: 100,
     ambito: "Plataforma",
     descripcion: "Gobernanza exclusiva de la plataforma y matriz global de perfiles.",
-    panelesAsignados: ["panel_inicio", "panel_usuarios", "panel_red_profesional", "panel_terminos", "panel_agendamiento", "panel_administrar", "panel_cuenta", "panel_herramientas", "panel_configuracion"],
+    panelesAsignados: ["panel_inicio", "panel_clientes", "panel_empresas", "panel_usuarios", "panel_red_profesional", "panel_terminos", "panel_agendamiento", "panel_administrar", "panel_cuenta", "panel_herramientas", "panel_configuracion"],
     widgetsAsignadosPorPanel: {
       panel_inicio: ["favoritos"],
+      panel_clientes: ["vitrina_comercial_personas", "crm_clientes", "agendar_cita", "mis_citas", "billetera_documentos", "firma_documentos_pdf"],
+      panel_empresas: ["vitrina_comercial_empresas", "gestion_convenios_corporativos", "crm_clientes", "billetera_documentos", "firma_documentos_pdf"],
       panel_usuarios: ["gestion_usuarios", "consulta_usuarios_perfiles", "crm_clientes", "monitoreo_notificaciones_usuarios"],
       panel_red_profesional: ["socios", "solicitud_socio"],
       panel_terminos: ["gestion_terminos_consentimientos", "configuracion_contrato_abogado"],
@@ -346,9 +374,11 @@ const PERFILES_INICIALES: PerfilDef[] = [
 // MATRIZ CANÓNICA DE ASIGNACIÓN ESTRICTA POR ROL Y PANEL FUNCIONAL
 export const MATRIZ_FUNCIONAL_ROLES: Record<string, { paneles: string[]; widgetsPorPanel: Record<string, string[]> }> = {
   CLIENTE: {
-    paneles: ["panel_inicio", "panel_agendamiento", "panel_cuenta", "panel_herramientas", "panel_configuracion"],
+    paneles: ["panel_inicio", "panel_clientes", "panel_empresas", "panel_agendamiento", "panel_cuenta", "panel_herramientas", "panel_configuracion"],
     widgetsPorPanel: {
       panel_inicio: ["favoritos"],
+      panel_clientes: ["vitrina_comercial_personas", "agendar_cita", "mis_citas", "billetera_documentos", "firma_documentos_pdf"],
+      panel_empresas: ["vitrina_comercial_empresas", "gestion_convenios_corporativos", "billetera_documentos", "firma_documentos_pdf"],
       panel_agendamiento: ["agendar_cita", "mis_citas"],
       panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos", "historial_pagos"],
       panel_herramientas: ["catalogo_productos", "firma_documentos_pdf", "billetera_documentos", "solicitud_socio"],
@@ -356,9 +386,11 @@ export const MATRIZ_FUNCIONAL_ROLES: Record<string, { paneles: string[]; widgets
     }
   },
   ABOGADO: {
-    paneles: ["panel_inicio", "panel_usuarios", "panel_agendamiento", "panel_cuenta", "panel_herramientas", "panel_configuracion"],
+    paneles: ["panel_inicio", "panel_clientes", "panel_empresas", "panel_usuarios", "panel_agendamiento", "panel_cuenta", "panel_herramientas", "panel_configuracion"],
     widgetsPorPanel: {
       panel_inicio: ["favoritos"],
+      panel_clientes: ["vitrina_comercial_personas", "crm_clientes", "billetera_documentos", "firma_documentos_pdf"],
+      panel_empresas: ["vitrina_comercial_empresas", "gestion_convenios_corporativos", "crm_clientes", "billetera_documentos", "firma_documentos_pdf"],
       panel_usuarios: ["crm_clientes"],
       panel_agendamiento: ["citas_programadas", "disponibilidad", "asignaciones_agenda"],
       panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos", "historial_pagos"],
@@ -367,9 +399,11 @@ export const MATRIZ_FUNCIONAL_ROLES: Record<string, { paneles: string[]; widgets
     }
   },
   OPERADOR: {
-    paneles: ["panel_inicio", "panel_usuarios", "panel_red_profesional", "panel_terminos", "panel_agendamiento", "panel_administrar", "panel_cuenta", "panel_herramientas", "panel_configuracion"],
+    paneles: ["panel_inicio", "panel_clientes", "panel_empresas", "panel_usuarios", "panel_red_profesional", "panel_terminos", "panel_agendamiento", "panel_administrar", "panel_cuenta", "panel_herramientas", "panel_configuracion"],
     widgetsPorPanel: {
       panel_inicio: ["favoritos"],
+      panel_clientes: ["vitrina_comercial_personas", "crm_clientes", "agendar_cita", "mis_citas", "billetera_documentos", "firma_documentos_pdf"],
+      panel_empresas: ["vitrina_comercial_empresas", "gestion_convenios_corporativos", "crm_clientes", "billetera_documentos", "firma_documentos_pdf"],
       panel_usuarios: ["consulta_usuarios_perfiles", "crm_clientes", "monitoreo_notificaciones_usuarios"],
       panel_red_profesional: ["socios", "solicitud_socio"],
       panel_terminos: ["gestion_terminos_consentimientos", "configuracion_contrato_abogado"],
@@ -381,9 +415,11 @@ export const MATRIZ_FUNCIONAL_ROLES: Record<string, { paneles: string[]; widgets
     }
   },
   ADMINISTRADOR: {
-    paneles: ["panel_inicio", "panel_usuarios", "panel_red_profesional", "panel_terminos", "panel_agendamiento", "panel_administrar", "panel_cuenta", "panel_herramientas", "panel_configuracion"],
+    paneles: ["panel_inicio", "panel_clientes", "panel_empresas", "panel_usuarios", "panel_red_profesional", "panel_terminos", "panel_agendamiento", "panel_administrar", "panel_cuenta", "panel_herramientas", "panel_configuracion"],
     widgetsPorPanel: {
       panel_inicio: ["favoritos"],
+      panel_clientes: ["vitrina_comercial_personas", "crm_clientes", "agendar_cita", "mis_citas", "billetera_documentos", "firma_documentos_pdf"],
+      panel_empresas: ["vitrina_comercial_empresas", "gestion_convenios_corporativos", "crm_clientes", "billetera_documentos", "firma_documentos_pdf"],
       panel_usuarios: ["gestion_usuarios", "consulta_usuarios_perfiles", "crm_clientes", "monitoreo_notificaciones_usuarios"],
       panel_red_profesional: ["socios", "solicitud_socio"],
       panel_terminos: ["gestion_terminos_consentimientos", "configuracion_contrato_abogado"],
@@ -395,9 +431,11 @@ export const MATRIZ_FUNCIONAL_ROLES: Record<string, { paneles: string[]; widgets
     }
   },
   SUPERADMIN: {
-    paneles: ["panel_inicio", "panel_usuarios", "panel_red_profesional", "panel_terminos", "panel_agendamiento", "panel_administrar", "panel_cuenta", "panel_herramientas", "panel_configuracion"],
+    paneles: ["panel_inicio", "panel_clientes", "panel_empresas", "panel_usuarios", "panel_red_profesional", "panel_terminos", "panel_agendamiento", "panel_administrar", "panel_cuenta", "panel_herramientas", "panel_configuracion"],
     widgetsPorPanel: {
       panel_inicio: ["favoritos"],
+      panel_clientes: ["vitrina_comercial_personas", "crm_clientes", "agendar_cita", "mis_citas", "billetera_documentos", "firma_documentos_pdf"],
+      panel_empresas: ["vitrina_comercial_empresas", "gestion_convenios_corporativos", "crm_clientes", "billetera_documentos", "firma_documentos_pdf"],
       panel_usuarios: ["gestion_usuarios", "consulta_usuarios_perfiles", "crm_clientes", "monitoreo_notificaciones_usuarios"],
       panel_red_profesional: ["socios", "solicitud_socio"],
       panel_terminos: ["gestion_terminos_consentimientos", "configuracion_contrato_abogado"],
@@ -411,6 +449,28 @@ export const MATRIZ_FUNCIONAL_ROLES: Record<string, { paneles: string[]; widgets
 };
 
 const WIDGETS_INVENTARIO_INICIALES: WidgetInventarioDef[] = [
+  {
+    clave: "vitrina_comercial_personas",
+    nombre: "Oferta para Personas Naturales & Familias",
+    descripcion: "Trámites notariales, videoconsultas individuales, defensa legal y planes familiares.",
+    categoria: "Comercio",
+    ruta: "/panel/clientes?widget=vitrina_comercial_personas",
+    rutaFisica: "/comercio/componentes/VitrinaComercialVisual.tsx",
+    panelId: "panel_clientes",
+    activo: true,
+    creadoEn: "2026-09-29"
+  },
+  {
+    clave: "vitrina_comercial_empresas",
+    nombre: "Oferta Corporativa & Planes Empresas",
+    descripcion: "Planes legales corporativos, constitución SAS, convenios de beneficios y asesoría empresarial.",
+    categoria: "Comercio B2B",
+    ruta: "/panel/empresas?widget=vitrina_comercial_empresas",
+    rutaFisica: "/comercio/componentes/VitrinaComercialVisual.tsx",
+    panelId: "panel_empresas",
+    activo: true,
+    creadoEn: "2026-09-29"
+  },
   {
     clave: "gestion_convenios_corporativos",
     nombre: "Convenios y Beneficios Corporativos",

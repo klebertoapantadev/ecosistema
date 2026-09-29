@@ -30,11 +30,21 @@ import {
 import { ModalCheckoutPayphone } from "./ModalCheckoutPayphone";
 import { ModalDetalleServicioVisual } from "./ModalDetalleServicioVisual";
 
-interface Props {
+export interface VitrinaComercialVisualProps {
   negocio?: string;
+  filtroAudiencia?: "todos" | "personas" | "empresas";
+  tituloOverride?: string;
+  subtituloOverride?: string;
+  eyebrowOverride?: string;
 }
 
-export function VitrinaComercialVisual({ negocio = "tranqi" }: Props) {
+export function VitrinaComercialVisual({
+  negocio = "tranqi",
+  filtroAudiencia = "todos",
+  tituloOverride,
+  subtituloOverride,
+  eyebrowOverride,
+}: VitrinaComercialVisualProps) {
   const [productos, setProductos] = useState<ProductoCatalogo[]>([]);
   const [categoriasLista, setCategoriasLista] = useState<CategoriaCatalogo[]>([]);
   const [cargando, setCargando] = useState(true);
@@ -96,8 +106,51 @@ export function VitrinaComercialVisual({ negocio = "tranqi" }: Props) {
     }
   };
 
-  // Filtrado
+  // Helper de filtrado por tipo de audiencia
+  const esCategoriaDeAudiencia = (slug: string, nombre: string) => {
+    if (filtroAudiencia === "todos") return true;
+    const s = (slug + " " + nombre).toLowerCase();
+    const esCorporativo = s.includes("corporativ") || s.includes("empresa") || s.includes("societar") || s.includes("sas") || s.includes("b2b");
+    if (filtroAudiencia === "empresas") {
+      return esCorporativo || s.includes("consultas") || s.includes("judicial");
+    }
+    if (filtroAudiencia === "personas") {
+      return !esCorporativo || s.includes("familiar") || s.includes("personal");
+    }
+    return true;
+  };
+
+  const categoriasVisibles = categoriasLista.filter((c) =>
+    esCategoriaDeAudiencia(c.ctg_slug, c.ctg_nombre)
+  );
+
+  // Filtrado de productos
   const productosFiltrados = productos.filter((p) => {
+    const slugCat = p.categoria?.ctg_slug || "";
+    const nombreCat = p.categoria?.ctg_nombre || "";
+    const nombreProd = p.pro_nombre || "";
+    const textoCompleto = (slugCat + " " + nombreCat + " " + nombreProd).toLowerCase();
+
+    // Filtro de audiencia
+    if (filtroAudiencia === "empresas") {
+      const esParaEmpresas =
+        textoCompleto.includes("corporativ") ||
+        textoCompleto.includes("empresa") ||
+        textoCompleto.includes("societar") ||
+        textoCompleto.includes("sas") ||
+        textoCompleto.includes("b2b") ||
+        textoCompleto.includes("consulta") ||
+        textoCompleto.includes("judicial");
+      if (!esParaEmpresas) return false;
+    } else if (filtroAudiencia === "personas") {
+      const esExclusivoEmpresas =
+        textoCompleto.includes("corporativ") ||
+        (textoCompleto.includes("empresa") && !textoCompleto.includes("familiar")) ||
+        textoCompleto.includes("societar") ||
+        textoCompleto.includes("sas express");
+      if (esExclusivoEmpresas) return false;
+    }
+
     const cumpleBusqueda =
       busqueda.trim() === "" ||
       p.pro_nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
@@ -127,12 +180,43 @@ export function VitrinaComercialVisual({ negocio = "tranqi" }: Props) {
     setDetalleModalAbierto(true);
   };
 
+  const bgGradiente =
+    filtroAudiencia === "personas"
+      ? "linear-gradient(135deg, #0C4A6E 0%, #0284C7 50%, #38BDF8 100%)"
+      : filtroAudiencia === "empresas"
+      ? "linear-gradient(135deg, #1E1B4B 0%, #4338CA 50%, #6366F1 100%)"
+      : "linear-gradient(135deg, #0F172A 0%, #1E293B 50%, #0369A1 100%)";
+
+  const eyebrowTexto =
+    eyebrowOverride ||
+    (filtroAudiencia === "personas"
+      ? "Protección Legal Individual & Familiar"
+      : filtroAudiencia === "empresas"
+      ? "Soluciones Legales & Convenios Corporativos B2B"
+      : "Servicios Jurídicos & Protección Legal");
+
+  const tituloTexto =
+    tituloOverride ||
+    (filtroAudiencia === "personas"
+      ? "Servicios Jurídicos para Personas & Familias"
+      : filtroAudiencia === "empresas"
+      ? "Catálogo de Planes & Soluciones para Empresas"
+      : "Oferta de Servicios & Tarifario Oficial");
+
+  const subtituloTexto =
+    subtituloOverride ||
+    (filtroAudiencia === "personas"
+      ? "Trámites notariales, poderes, consultas telemáticas 1 a 1, planes de protección familiar y defensa legal personal."
+      : filtroAudiencia === "empresas"
+      ? "Constitución de compañías SAS, asesoría societaria, paquetes de beneficios para colaboradores (SATCOM) y planes mensuales para negocios."
+      : "Contrata trámites puntuales, videoconsultas con abogados certificados o activa planes familiares y corporativos con liquidación inmediata vía Payphone.");
+
   return (
     <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: "24px" }}>
       {/* Hero Banner Visual de la Vitrina */}
       <div
         style={{
-          background: "linear-gradient(135deg, #0F172A 0%, #1E293B 50%, #0369A1 100%)",
+          background: bgGradiente,
           borderRadius: "20px",
           padding: "32px 28px",
           color: "#FFFFFF",
@@ -141,7 +225,7 @@ export function VitrinaComercialVisual({ negocio = "tranqi" }: Props) {
           overflow: "hidden",
         }}
       >
-        <div style={{ position: "relative", zIndex: 2, maxWidth: "620px" }}>
+        <div style={{ position: "relative", zIndex: 2, maxWidth: "660px" }}>
           <div
             style={{
               display: "inline-flex",
@@ -159,7 +243,7 @@ export function VitrinaComercialVisual({ negocio = "tranqi" }: Props) {
             }}
           >
             <Sparkles size={14} color="#38BDF8" />
-            Servicios Jurídicos & Protección Legal
+            {eyebrowTexto}
           </div>
           <h1
             style={{
@@ -170,7 +254,7 @@ export function VitrinaComercialVisual({ negocio = "tranqi" }: Props) {
               letterSpacing: "-0.5px",
             }}
           >
-            Oferta de Servicios & Tarifario Oficial
+            {tituloTexto}
           </h1>
           <p
             style={{
@@ -180,7 +264,7 @@ export function VitrinaComercialVisual({ negocio = "tranqi" }: Props) {
               lineHeight: 1.5,
             }}
           >
-            Contrata trámites puntuales, videoconsultas con abogados certificados o activa planes familiares y corporativos con liquidación inmediata vía Payphone.
+            {subtituloTexto}
           </p>
         </div>
 
@@ -193,7 +277,7 @@ export function VitrinaComercialVisual({ negocio = "tranqi" }: Props) {
             width: "220px",
             height: "220px",
             borderRadius: "50%",
-            background: "rgba(56, 189, 248, 0.12)",
+            background: "rgba(255, 255, 255, 0.12)",
             pointerEvents: "none",
           }}
         />
@@ -261,16 +345,16 @@ export function VitrinaComercialVisual({ negocio = "tranqi" }: Props) {
               fontWeight: 700,
               cursor: "pointer",
               border: "none",
-              background: categoriaSeleccionada === "todas" ? "#0284C7" : "#F1F5F9",
+              background: categoriaSeleccionada === "todas" ? (filtroAudiencia === "empresas" ? "#4338CA" : "#0284C7") : "#F1F5F9",
               color: categoriaSeleccionada === "todas" ? "#FFFFFF" : "#475569",
               whiteSpace: "nowrap",
               transition: "all 0.15s ease",
             }}
           >
-            Todos ({productos.length})
+            Todos ({productosFiltrados.length})
           </button>
-          {categoriasLista.map((c) => {
-            const count = productos.filter((p) => p.categoria?.ctg_slug === c.ctg_slug).length;
+          {categoriasVisibles.map((c) => {
+            const count = productosFiltrados.filter((p) => p.categoria?.ctg_slug === c.ctg_slug).length;
             const activa = categoriaSeleccionada === c.ctg_slug;
             return (
               <button
@@ -284,13 +368,13 @@ export function VitrinaComercialVisual({ negocio = "tranqi" }: Props) {
                   fontWeight: 700,
                   cursor: "pointer",
                   border: "none",
-                  background: activa ? "#0284C7" : "#F1F5F9",
+                  background: activa ? (filtroAudiencia === "empresas" ? "#4338CA" : "#0284C7") : "#F1F5F9",
                   color: activa ? "#FFFFFF" : "#475569",
                   whiteSpace: "nowrap",
                   transition: "all 0.15s ease",
                 }}
               >
-                {c.ctg_nombre} ({count})
+                {c.ctg_nombre} {count > 0 && `(${count})`}
               </button>
             );
           })}
@@ -715,4 +799,12 @@ export function VitrinaComercialVisual({ negocio = "tranqi" }: Props) {
       />
     </div>
   );
+}
+
+export function VitrinaComercialPersonas({ negocio = "tranqi" }: { negocio?: string }) {
+  return <VitrinaComercialVisual negocio={negocio} filtroAudiencia="personas" />;
+}
+
+export function VitrinaComercialEmpresas({ negocio = "tranqi" }: { negocio?: string }) {
+  return <VitrinaComercialVisual negocio={negocio} filtroAudiencia="empresas" />;
 }

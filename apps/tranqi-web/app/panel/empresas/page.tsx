@@ -5,17 +5,17 @@ import { obtenerPerfilActual, obtenerPerfiles } from "@eco/identidad";
 import { PanelDinamicoModular } from "../[slug]/PanelDinamicoModular";
 
 export const metadata: Metadata = {
-  title: "Servicios para Clientes & Familias — tranqi",
-  description: "Catálogo oficial para personas naturales, trámites notariales, citas y opciones de clientes.",
+  title: "Soluciones & Convenios para Empresas — tranqi",
+  description: "Catálogo corporativo, constitución SAS, convenios de beneficios SATCOM y planes mensuales para empresas.",
 };
 
 const NEGOCIO = "TRANQ";
 
-export default async function PaginaPanelClientes() {
+export default async function PaginaPanelEmpresas() {
   const perfil = await obtenerPerfilActual();
 
   if (!perfil) {
-    redirect(`/ingresar?redirect=/panel/clientes`);
+    redirect(`/ingresar?redirect=/panel/empresas`);
   }
 
   const perfiles = await obtenerPerfiles(NEGOCIO);
@@ -47,5 +47,5 @@ export default async function PaginaPanelClientes() {
     rolActivo = perfilesUpper[0] || "CLIENTE";
   }
 
-  return <PanelDinamicoModular slug="clientes" negocio={NEGOCIO} rolInicial={rolActivo} esSuperAdmin={esSuperAdmin} />;
+  return <PanelDinamicoModular slug="empresas" negocio={NEGOCIO} rolInicial={rolActivo} esSuperAdmin={esSuperAdmin} />;
 }

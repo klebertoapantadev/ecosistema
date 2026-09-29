@@ -73,6 +73,26 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
     colorIcono: "#FE5800"
   },
   {
+    clave: "vitrina_comercial_personas",
+    nombre: "Oferta para Personas & Familias",
+    detalle: "Trámites notariales, videoconsultas individuales, defensa legal y planes familiares",
+    ruta: "/panel/clientes?widget=vitrina_comercial_personas",
+    categoria: "Comercio & Clientes",
+    minNivel: 1,
+    icono: ShoppingBag,
+    colorIcono: "#0284C7"
+  },
+  {
+    clave: "vitrina_comercial_empresas",
+    nombre: "Oferta Corporativa & Planes Empresas",
+    detalle: "Planes legales corporativos, constitución SAS, convenios de beneficios y asesoría empresarial",
+    ruta: "/panel/empresas?widget=vitrina_comercial_empresas",
+    categoria: "Comercio & Empresas",
+    minNivel: 1,
+    icono: Building2,
+    colorIcono: "#5000BA"
+  },
+  {
     clave: "catalogo_productos",
     nombre: "Catálogo Comercial & Honorarios Profesionales",
     detalle: "Catálogo de servicios, tarifario de honorarios y suscripciones legales con cálculo de IVA 15%",

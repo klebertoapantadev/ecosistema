@@ -16,6 +16,22 @@ interface WidgetFavInfo {
 }
 
 const CATALOGO_FAVORITOS: Record<string, WidgetFavInfo> = {
+  vitrina_comercial_personas: {
+    id: "vitrina_comercial_personas",
+    titulo: "Servicios para Personas & Familias",
+    subtitulo: "Trámites notariales, videoconsultas individuales, defensa legal y planes familiares",
+    icono: ShoppingBag,
+    href: "/panel/clientes?widget=vitrina_comercial_personas",
+    origen: "Herramientas"
+  },
+  vitrina_comercial_empresas: {
+    id: "vitrina_comercial_empresas",
+    titulo: "Soluciones & Planes Empresas",
+    subtitulo: "Planes legales corporativos, constitución SAS, convenios y asesoría empresarial",
+    icono: Building2,
+    href: "/panel/empresas?widget=vitrina_comercial_empresas",
+    origen: "Herramientas"
+  },
   catalogo_productos: {
     id: "catalogo_productos",
     titulo: "Catálogo & Honorarios",

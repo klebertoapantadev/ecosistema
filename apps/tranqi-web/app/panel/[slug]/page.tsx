@@ -53,7 +53,7 @@ export default async function PaginaPanelDinamico({ params }: Props) {
 
   // Protección de acceso por rol para CLIENTE
   if (!esSuperAdmin && rolActivo === "CLIENTE") {
-    const slugsPermitidosCliente = ["agendamiento", "herramientas", "cuenta"];
+    const slugsPermitidosCliente = ["clientes", "empresas", "agendamiento", "herramientas", "cuenta"];
     if (!slugsPermitidosCliente.includes(slug.toLowerCase().trim())) {
       redirect("/panel");
     }

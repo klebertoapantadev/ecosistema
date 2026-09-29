@@ -38,6 +38,8 @@ const MAPA_RUTAS_FISICAS_WIDGETS: Record<string, string> = {
   "tabla-auditoria": "packages/auditoria/src/componentes/TablaAuditoria.tsx",
   "auditoria-tabla": "packages/auditoria/src/componentes/TablaAuditoria.tsx",
   auditoria_tabla: "packages/auditoria/src/componentes/TablaAuditoria.tsx",
+  vitrina_comercial_personas: "packages/comercio/src/componentes/VitrinaComercialVisual.tsx",
+  vitrina_comercial_empresas: "packages/comercio/src/componentes/VitrinaComercialVisual.tsx",
   gestion_convenios_corporativos: "packages/comercio/src/componentes/GestionConveniosCorporativos.tsx",
   convenios_corporativos: "packages/comercio/src/componentes/GestionConveniosCorporativos.tsx",
   convenios: "packages/comercio/src/componentes/GestionConveniosCorporativos.tsx",

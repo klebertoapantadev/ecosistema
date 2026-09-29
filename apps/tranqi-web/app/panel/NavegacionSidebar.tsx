@@ -57,6 +57,8 @@ const MAPA_ICONOS_NAV: Record<string, LucideIcon> = {
   LogIn,
   PanelLeft,
   panel_inicio: Home,
+  panel_clientes: CircleUser,
+  panel_empresas: Building,
   panel_usuarios: Users,
   panel_red_profesional: Briefcase,
   panel_terminos: FileText,
@@ -71,6 +73,8 @@ const MAPA_ICONOS_NAV: Record<string, LucideIcon> = {
 // Configuración inicial de paneles base del ecosistema
 const PANELES_BASE_DEFAULT: PanelDefNav[] = [
   { id: "panel_inicio", nombre: "Inicio", ruta: "/panel", icono: "Home" },
+  { id: "panel_clientes", nombre: "Clientes", ruta: "/panel/clientes", icono: "CircleUser" },
+  { id: "panel_empresas", nombre: "Empresas", ruta: "/panel/empresas", icono: "Building" },
   { id: "panel_usuarios", nombre: "Usuarios", ruta: "/panel/usuarios", icono: "Users" },
   { id: "panel_red_profesional", nombre: "Red profesional", ruta: "/panel/red-profesional", icono: "Briefcase" },
   { id: "panel_terminos", nombre: "Términos & Condiciones", ruta: "/panel/terminos", icono: "FileText" },
@@ -94,11 +98,15 @@ function obtenerPanelesInicialesPorRol(modoActivo: ModoRol): PanelDefNav[] {
   }
 
   if (rolKey === "CLIENTE") {
-    return PANELES_BASE_DEFAULT.filter(p => p.id === "panel_inicio" || p.id === "panel_agendamiento" || p.id === "panel_herramientas" || p.id === "panel_cuenta");
+    return PANELES_BASE_DEFAULT.filter(
+      p => p.id === "panel_inicio" || p.id === "panel_clientes" || p.id === "panel_empresas" || p.id === "panel_agendamiento" || p.id === "panel_herramientas" || p.id === "panel_cuenta"
+    );
   }
 
   if (rolKey === "ABOGADO") {
-    return PANELES_BASE_DEFAULT.filter(p => p.id === "panel_inicio" || p.id === "panel_usuarios" || p.id === "panel_agendamiento" || p.id === "panel_cuenta" || p.id === "panel_herramientas");
+    return PANELES_BASE_DEFAULT.filter(
+      p => p.id === "panel_inicio" || p.id === "panel_clientes" || p.id === "panel_empresas" || p.id === "panel_usuarios" || p.id === "panel_agendamiento" || p.id === "panel_cuenta" || p.id === "panel_herramientas"
+    );
   }
 
   return PANELES_BASE_DEFAULT;
@@ -156,6 +164,8 @@ export function NavegacionSidebar({
         if (rolKey === "OPERADOR" || rolKey === "AUXILIAR" || rolKey === "TECNICO") {
           widgetsPorPanel = {
             ...widgetsPorPanel,
+            panel_clientes: ["vitrina_comercial_personas", "crm_clientes", "agendar_cita", "mis_citas", "billetera_documentos", "firma_documentos_pdf"],
+            panel_empresas: ["vitrina_comercial_empresas", "gestion_convenios_corporativos", "crm_clientes", "billetera_documentos", "firma_documentos_pdf"],
             panel_usuarios: ["consulta_usuarios_perfiles", "crm_clientes", "monitoreo_notificaciones_usuarios"],
             panel_red_profesional: ["socios", "solicitud_socio"],
             panel_terminos: ["gestion_terminos_consentimientos"],
@@ -167,6 +177,8 @@ export function NavegacionSidebar({
         } else if (rolKey === "ABOGADO") {
           widgetsPorPanel = {
             ...widgetsPorPanel,
+            panel_clientes: ["vitrina_comercial_personas", "crm_clientes", "billetera_documentos", "firma_documentos_pdf"],
+            panel_empresas: ["vitrina_comercial_empresas", "gestion_convenios_corporativos", "crm_clientes", "billetera_documentos", "firma_documentos_pdf"],
             panel_usuarios: ["crm_clientes"],
             panel_agendamiento: ["citas_programadas", "disponibilidad", "asignaciones_agenda"],
             panel_herramientas: ["catalogo_productos", "firma_documentos_pdf", "billetera_documentos", "solicitud_socio"],
@@ -175,6 +187,8 @@ export function NavegacionSidebar({
         } else if (rolKey === "ADMINISTRADOR") {
           widgetsPorPanel = {
             ...widgetsPorPanel,
+            panel_clientes: ["vitrina_comercial_personas", "crm_clientes", "agendar_cita", "mis_citas", "billetera_documentos", "firma_documentos_pdf"],
+            panel_empresas: ["vitrina_comercial_empresas", "gestion_convenios_corporativos", "crm_clientes", "billetera_documentos", "firma_documentos_pdf"],
             panel_usuarios: ["gestion_usuarios", "consulta_usuarios_perfiles", "crm_clientes", "monitoreo_notificaciones_usuarios"],
             panel_red_profesional: ["socios", "solicitud_socio"],
             panel_terminos: ["gestion_terminos_consentimientos"],
@@ -183,6 +197,14 @@ export function NavegacionSidebar({
             panel_herramientas: ["catalogo_productos", "firma_documentos_pdf", "billetera_documentos"],
             panel_configuracion: ["configuracion_negocio", "configuracion_correo", "pasarela_payphone", "perfiles", "agentes_ia", "notificaciones"],
             panel_seguridad: ["mfa_seguridad", "auditoria"]
+          };
+        } else {
+          widgetsPorPanel = {
+            ...widgetsPorPanel,
+            panel_clientes: ["vitrina_comercial_personas", "agendar_cita", "mis_citas", "billetera_documentos", "firma_documentos_pdf"],
+            panel_empresas: ["vitrina_comercial_empresas", "gestion_convenios_corporativos", "billetera_documentos", "firma_documentos_pdf"],
+            panel_agendamiento: ["agendar_cita", "mis_citas"],
+            panel_herramientas: ["vitrina_comercial", "firma_documentos_pdf", "billetera_documentos", "solicitud_socio"],
           };
         }
 

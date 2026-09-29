@@ -125,6 +125,16 @@ const METADATOS_PANELES_BASE: Record<string, { nombre: string; descripcion: stri
     descripcion: "Perfil de usuario, conmutador de rol ('Ver como') e historial de accesos.",
     icono: "User"
   },
+  panel_clientes: {
+    nombre: "Clientes",
+    descripcion: "Oferta comercial para personas naturales, citas, trámites familiares y opciones de clientes.",
+    icono: "User"
+  },
+  panel_empresas: {
+    nombre: "Empresas",
+    descripcion: "Catálogo corporativo, constitución SAS, convenios de beneficios SATCOM y planes mensuales B2B.",
+    icono: "Building"
+  },
   panel_configuracion: {
     nombre: "Configurar",
     descripcion: "Parámetros del negocio, servidor SMTP, perfiles y alertas de notificaciones.",
@@ -133,6 +143,20 @@ const METADATOS_PANELES_BASE: Record<string, { nombre: string; descripcion: stri
 };
 
 const INVENTARIO_GLOBAL_WIDGETS: Record<string, { titulo: string; subtitulo: string; icono: LucideIcon; colorIcono: string; categoria: string }> = {
+  vitrina_comercial_personas: {
+    titulo: "Oferta para Personas Naturales & Familias",
+    subtitulo: "Trámites notariales, videoconsultas individuales, defensa legal y planes familiares",
+    icono: Sparkles,
+    colorIcono: "#0284C7",
+    categoria: "Comercio Personas"
+  },
+  vitrina_comercial_empresas: {
+    titulo: "Oferta Corporativa & Empresas",
+    subtitulo: "Planes legales corporativos, constitución SAS, convenios de beneficios y asesoría empresarial",
+    icono: Building2,
+    colorIcono: "#5000BA",
+    categoria: "Comercio Corporativo"
+  },
   vitrina_comercial: {
     titulo: "Planes, Servicios & Honorarios",
     subtitulo: "Oferta de servicios legales, planes de suscripción y tarifario interactivo",
@@ -433,6 +457,8 @@ function obtenerWidgetsInicialesDinamicos(panelId: string, slugStr: string, rolD
   }
 
   const slugNorm = slugStr.replace(/-/g, "_");
+  const esPanelClientes = panelId === "panel_clientes" || slugNorm === "clientes";
+  const esPanelEmpresas = panelId === "panel_empresas" || slugNorm === "empresas";
   const esPanelUsuarios = panelId === "panel_usuarios" || slugNorm === "usuarios";
   const esPanelRed = panelId === "panel_red_profesional" || slugNorm === "red_profesional" || slugStr === "red-profesional";
   const esPanelTerminos = panelId === "panel_terminos" || slugNorm === "terminos";
@@ -444,6 +470,8 @@ function obtenerWidgetsInicialesDinamicos(panelId: string, slugStr: string, rolD
   const esPanelConf = panelId === "panel_configuracion" || slugNorm === "configuracion";
 
   if (rolActivo === "OPERADOR" || rolActivo === "AUXILIAR" || rolActivo === "TECNICO") {
+    if (esPanelClientes) return ["vitrina_comercial_personas", "crm_clientes", "agendar_cita", "mis_citas", "billetera_documentos", "firma_documentos_pdf"];
+    if (esPanelEmpresas) return ["vitrina_comercial_empresas", "gestion_convenios_corporativos", "crm_clientes", "billetera_documentos", "firma_documentos_pdf"];
     if (esPanelUsuarios) return ["consulta_usuarios_perfiles", "crm_clientes", "monitoreo_notificaciones_usuarios"];
     if (esPanelRed) return ["socios", "solicitud_socio"];
     if (esPanelTerminos) return ["gestion_terminos_consentimientos", "configuracion_contrato_abogado"];
@@ -453,6 +481,8 @@ function obtenerWidgetsInicialesDinamicos(panelId: string, slugStr: string, rolD
     if (esPanelSeg) return ["mfa_seguridad"];
     if (esPanelCuenta) return ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos"];
   } else if (rolActivo === "ADMINISTRADOR" || rolActivo === "SUPERADMIN") {
+    if (esPanelClientes) return ["vitrina_comercial_personas", "crm_clientes", "agendar_cita", "mis_citas", "billetera_documentos", "firma_documentos_pdf"];
+    if (esPanelEmpresas) return ["vitrina_comercial_empresas", "gestion_convenios_corporativos", "crm_clientes", "billetera_documentos", "firma_documentos_pdf"];
     if (esPanelUsuarios) return ["gestion_usuarios", "consulta_usuarios_perfiles", "crm_clientes", "monitoreo_notificaciones_usuarios"];
     if (esPanelRed) return ["socios", "solicitud_socio"];
     if (esPanelTerminos) return ["gestion_terminos_consentimientos", "configuracion_contrato_abogado"];
@@ -463,13 +493,17 @@ function obtenerWidgetsInicialesDinamicos(panelId: string, slugStr: string, rolD
     if (esPanelConf) return ["configuracion_negocio", "configuracion_correo", "pasarela_payphone", "perfiles", "agentes_ia", "notificaciones"];
     if (esPanelCuenta) return ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos"];
   } else if (rolActivo === "ABOGADO") {
+    if (esPanelClientes) return ["vitrina_comercial_personas", "crm_clientes", "billetera_documentos", "firma_documentos_pdf"];
+    if (esPanelEmpresas) return ["vitrina_comercial_empresas", "gestion_convenios_corporativos", "crm_clientes", "billetera_documentos", "firma_documentos_pdf"];
     if (esPanelUsuarios) return ["crm_clientes"];
     if (esPanelAgenda) return ["citas_programadas", "disponibilidad", "asignaciones_agenda"];
     if (esPanelHerr) return ["crm_clientes", "catalogo_productos", "firma_documentos_pdf", "billetera_documentos"];
     if (esPanelCuenta) return ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos", "historial_pagos"];
     if (esPanelConf) return ["notificaciones"];
   } else {
-    // ROL CLIENTE: Acceso exclusivo a sus widgets propios
+    // ROL CLIENTE: Acceso a ofertas diferenciadas y sus herramientas
+    if (esPanelClientes) return ["vitrina_comercial_personas", "agendar_cita", "mis_citas", "billetera_documentos", "firma_documentos_pdf"];
+    if (esPanelEmpresas) return ["vitrina_comercial_empresas", "gestion_convenios_corporativos", "billetera_documentos", "firma_documentos_pdf"];
     if (esPanelAgenda) return ["agendar_cita", "mis_citas"];
     if (esPanelHerr) return ["vitrina_comercial", "firma_documentos_pdf", "billetera_documentos", "solicitud_socio"];
     if (esPanelCuenta) return ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos", "historial_pagos"];
@@ -659,6 +693,17 @@ export function PanelDinamicoModular({ slug, negocio, rolInicial = "ADMINISTRADO
             color="#FE5800"
           />
         );
+      case "vitrina_comercial_personas":
+      case "vitrina_personas":
+      case "oferta_personas":
+      case "servicios_personas":
+        return <VitrinaComercialVisual negocio={negocio} filtroAudiencia="personas" />;
+      case "vitrina_comercial_empresas":
+      case "vitrina_empresas":
+      case "oferta_empresas":
+      case "planes_corporativos":
+      case "servicios_empresas":
+        return <VitrinaComercialVisual negocio={negocio} filtroAudiencia="empresas" />;
       case "vitrina_comercial":
       case "vitrina":
       case "servicios":
