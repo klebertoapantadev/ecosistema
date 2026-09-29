@@ -5,7 +5,7 @@ import Link from "next/link";
 import {
   LayoutGrid, Wrench, Shield, Users, Bell, UserCog, ClipboardList, FileText,
   Settings, ChevronRight, CircleUser, KeyRound, FileCheck, Folder, type LucideIcon,
-  Bot, ShoppingBag, CreditCard, Receipt, Share2, CheckCircle2, Sparkles, Building2
+  Bot, ShoppingBag, CreditCard, Receipt, Share2, CheckCircle2, Sparkles, Building2, Scale
 } from "lucide-react";
 import { useWidgetEnUrl } from "../useWidgetEnUrl";
 import { BotonVolverWidget } from "../BotonVolverWidget";
@@ -30,6 +30,7 @@ import {
   ConfiguracionPasarelaPayphone,
   HistorialTransaccionesPago,
   GestionConveniosCorporativos,
+  TableroDisponibilidadOperativa,
 } from "@eco/comercio";
 import { SociosWidget } from "../administrar/PanelAdministrarModular";
 import { ConfiguracionContratoAbogadoWidget } from "@/modulos/socios/componentes/ConfiguracionContratoAbogadoWidget";
@@ -311,6 +312,20 @@ const INVENTARIO_GLOBAL_WIDGETS: Record<string, { titulo: string; subtitulo: str
     colorIcono: "#05876E",
     categoria: "Comercio & B2B"
   },
+  disponibilidad_abogados: {
+    titulo: "Disponibilidad de Abogados & Turnos",
+    subtitulo: "Control de horas disponibles por especialista. Postulación preliminar y aprobación con sincronización ARIA",
+    icono: Scale,
+    colorIcono: "#5000BA",
+    categoria: "Agendamiento & Operación"
+  },
+  disponibilidad_operativa: {
+    titulo: "Disponibilidad Operativa & Especialistas",
+    subtitulo: "Control de stock de horas y cuadrillas de atención técnica o profesional",
+    icono: Scale,
+    colorIcono: "#5000BA",
+    categoria: "Agendamiento & Operación"
+  },
   gestion_usuarios: {
     titulo: "Gestión de Usuarios & Membresías",
     subtitulo: "Administración de miembros, asignación de perfiles y techo jerárquico",
@@ -475,9 +490,9 @@ function obtenerWidgetsInicialesDinamicos(panelId: string, slugStr: string, rolD
     if (esPanelUsuarios) return ["consulta_usuarios_perfiles", "crm_clientes", "monitoreo_notificaciones_usuarios"];
     if (esPanelRed) return ["socios", "solicitud_socio"];
     if (esPanelTerminos) return ["gestion_terminos_consentimientos", "configuracion_contrato_abogado"];
-    if (esPanelAgenda) return ["asignaciones_agenda"];
-    if (esPanelAdmin) return ["gestion_convenios_corporativos", "historial_pagos", "emision_notificaciones", "bitacora_notificaciones"];
-    if (esPanelHerr) return ["catalogo_productos", "firma_documentos_pdf", "billetera_documentos"];
+    if (esPanelAgenda) return ["disponibilidad_abogados", "asignaciones_agenda"];
+    if (esPanelAdmin) return ["gestion_convenios_corporativos", "disponibilidad_abogados", "historial_pagos", "emision_notificaciones", "bitacora_notificaciones"];
+    if (esPanelHerr) return ["catalogo_productos", "disponibilidad_abogados", "firma_documentos_pdf", "billetera_documentos"];
     if (esPanelSeg) return ["mfa_seguridad"];
     if (esPanelCuenta) return ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos"];
   } else if (rolActivo === "ADMINISTRADOR" || rolActivo === "SUPERADMIN") {
@@ -486,9 +501,9 @@ function obtenerWidgetsInicialesDinamicos(panelId: string, slugStr: string, rolD
     if (esPanelUsuarios) return ["gestion_usuarios", "consulta_usuarios_perfiles", "crm_clientes", "monitoreo_notificaciones_usuarios"];
     if (esPanelRed) return ["socios", "solicitud_socio"];
     if (esPanelTerminos) return ["gestion_terminos_consentimientos", "configuracion_contrato_abogado"];
-    if (esPanelAgenda) return ["asignaciones_agenda"];
-    if (esPanelAdmin) return ["gestion_convenios_corporativos", "historial_pagos", "emision_notificaciones", "bitacora_notificaciones", "perfiles", "auditoria"];
-    if (esPanelHerr) return ["catalogo_productos", "firma_documentos_pdf", "billetera_documentos"];
+    if (esPanelAgenda) return ["disponibilidad_abogados", "asignaciones_agenda"];
+    if (esPanelAdmin) return ["gestion_convenios_corporativos", "disponibilidad_abogados", "historial_pagos", "emision_notificaciones", "bitacora_notificaciones", "perfiles", "auditoria"];
+    if (esPanelHerr) return ["catalogo_productos", "disponibilidad_abogados", "firma_documentos_pdf", "billetera_documentos"];
     if (esPanelSeg) return ["mfa_seguridad", "auditoria"];
     if (esPanelConf) return ["configuracion_negocio", "configuracion_correo", "pasarela_payphone", "perfiles", "agentes_ia", "notificaciones"];
     if (esPanelCuenta) return ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos"];
@@ -496,8 +511,8 @@ function obtenerWidgetsInicialesDinamicos(panelId: string, slugStr: string, rolD
     if (esPanelClientes) return ["vitrina_comercial_personas", "crm_clientes", "billetera_documentos", "firma_documentos_pdf"];
     if (esPanelEmpresas) return ["vitrina_comercial_empresas", "gestion_convenios_corporativos", "crm_clientes", "billetera_documentos", "firma_documentos_pdf"];
     if (esPanelUsuarios) return ["crm_clientes"];
-    if (esPanelAgenda) return ["citas_programadas", "disponibilidad", "asignaciones_agenda"];
-    if (esPanelHerr) return ["crm_clientes", "catalogo_productos", "firma_documentos_pdf", "billetera_documentos"];
+    if (esPanelAgenda) return ["disponibilidad_abogados", "citas_programadas", "disponibilidad", "asignaciones_agenda"];
+    if (esPanelHerr) return ["crm_clientes", "catalogo_productos", "disponibilidad_abogados", "firma_documentos_pdf", "billetera_documentos"];
     if (esPanelCuenta) return ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos", "historial_pagos"];
     if (esPanelConf) return ["notificaciones"];
   } else {
@@ -756,6 +771,9 @@ export function PanelDinamicoModular({ slug, negocio, rolInicial = "ADMINISTRADO
       case "convenios_corporativos":
       case "convenios":
         return <GestionConveniosCorporativos negocio={negocio} />;
+      case "disponibilidad_abogados":
+      case "disponibilidad_operativa":
+        return <TableroDisponibilidadOperativa negocio={negocio} />;
       case "gestion_usuarios":
       case "perfiles":
         return <AdministracionPerfilesWidget esAdmin={true} negocio={negocio} />;

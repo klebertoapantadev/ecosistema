@@ -43,6 +43,8 @@ const MAPA_RUTAS_FISICAS_WIDGETS: Record<string, string> = {
   gestion_convenios_corporativos: "packages/comercio/src/componentes/GestionConveniosCorporativos.tsx",
   convenios_corporativos: "packages/comercio/src/componentes/GestionConveniosCorporativos.tsx",
   convenios: "packages/comercio/src/componentes/GestionConveniosCorporativos.tsx",
+  disponibilidad_abogados: "packages/comercio/src/componentes/TableroDisponibilidadOperativa.tsx",
+  disponibilidad_operativa: "packages/comercio/src/componentes/TableroDisponibilidadOperativa.tsx",
   gestion_usuarios: "packages/gestion-usuarios/src/componentes/AdministracionPerfilesWidget.tsx",
   perfiles: "packages/gestion-usuarios/src/componentes/AdministracionPerfilesWidget.tsx",
   "admin-perfiles": "packages/gestion-usuarios/src/componentes/AdministracionPerfilesWidget.tsx",

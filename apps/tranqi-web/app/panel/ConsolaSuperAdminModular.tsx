@@ -6,7 +6,7 @@ import {
   Sparkles, Shield, LayoutGrid, Pencil, Users, UserCheck, Eye,
   Settings, Mail, ShieldCheck, Bell, CircleUser, KeyRound, Sliders, Briefcase,
   Receipt, History, RotateCcw, FileCheck, Folder, ShoppingBag, CreditCard,
-  CalendarClock, CalendarPlus, CalendarCheck, Building2, type LucideIcon
+  CalendarClock, CalendarPlus, CalendarCheck, Building2, Scale, type LucideIcon
 } from "lucide-react";
 import { resetearSistemaSuperAdminAction } from "@eco/gestion-usuarios/acciones";
 import { ModalNotificacionPush } from "@eco/notificaciones";
@@ -260,6 +260,21 @@ export const CATALOGO_SUPERADMIN_TODOS: ModuloSuperAdminDef[] = [
     panelDestino: "Administrar (/panel/administrar)",
     categoria: "Comercio & B2B",
     perfilesAsignados: ["OPERADOR", "ADMINISTRADOR", "SUPERADMIN"],
+    estadoDuplicidad: "CANONICO",
+  },
+  {
+    clave: "disponibilidad_abogados",
+    nombre: "Disponibilidad de Abogados & Turnos",
+    detalle: "Gestión de horas y cupos. Postulación preliminar de abogados y aprobación operativa con sincronización ARIA",
+    ruta: "/panel/agendamiento?widget=disponibilidad_abogados",
+    icono: Scale,
+    iconoKey: "Scale",
+    color: "#5000BA",
+    rutaFisica: "packages/comercio/src/componentes/TableroDisponibilidadOperativa.tsx",
+    paquete: "@eco/comercio",
+    panelDestino: "Agendamiento (/panel/agendamiento)",
+    categoria: "Agendamiento & Operación",
+    perfilesAsignados: ["ABOGADO", "OPERADOR", "ADMINISTRADOR", "SUPERADMIN"],
     estadoDuplicidad: "CANONICO",
   },
   {

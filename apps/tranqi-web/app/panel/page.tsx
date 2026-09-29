@@ -4,7 +4,7 @@ import { cookies } from "next/headers";
 import {
   Calendar, Upload, Coins, MessageCircle, FileText,
   Briefcase, UserCheck, Users, Settings, ShieldCheck, Bell, FileCheck,
-  ShoppingBag, CreditCard, Folder, Receipt, Building2,
+  ShoppingBag, CreditCard, Folder, Receipt, Building2, Scale,
   type LucideIcon
 } from "lucide-react";
 import { obtenerPerfilActual, obtenerSaludo, obtenerPerfiles, obtenerNivelMaximo } from "@eco/identidad";
@@ -39,6 +39,7 @@ const ACCESOS_CLIENTE: { icono: LucideIcon; nombre: string; detalle: string; hre
 ];
 
 const ACCESOS_ABOGADO: { icono: LucideIcon; nombre: string; detalle: string; href?: string }[] = [
+  { icono: Scale, nombre: "Mi Disponibilidad de Horas", detalle: "Declarar horas preliminares", href: "/panel/agendamiento?widget=disponibilidad_abogados" },
   { icono: Users, nombre: "CRM & Clientes", detalle: "Directorio y expedientes", href: "/panel/clientes" },
   { icono: Coins, nombre: "Mis honorarios", detalle: "Tarifario y liquidación", href: "/panel/catalogo-productos" },
   { icono: Folder, nombre: "Billetera digital", detalle: "Documentos y expedientes", href: "/panel/billetera-documentos" },
@@ -50,6 +51,7 @@ const ACCESOS_ABOGADO: { icono: LucideIcon; nombre: string; detalle: string; hre
 
 const WIDGETS_OPERADOR: { clave: string; icono: LucideIcon; nombre: string; detalle: string; ruta: string }[] = [
   { clave: "crm_clientes", icono: Users, nombre: "CRM Jurídico & Clientes", detalle: "Directorio 360°, KPIs y alta asistida", ruta: "/panel/clientes" },
+  { clave: "disponibilidad_abogados", icono: Scale, nombre: "Disponibilidad de Abogados", detalle: "Aprobación de horas y turnos", ruta: "/panel/agendamiento?widget=disponibilidad_abogados" },
   { clave: "gestion_convenios_corporativos", icono: Building2, nombre: "Convenios Corporativos & B2B", detalle: "Alianzas y beneficios empresariales", ruta: "/panel/administrar?widget=gestion_convenios_corporativos" },
   { clave: "socios", icono: UserCheck, nombre: "Aprobación de socios", detalle: "Cédula, título y matrícula", ruta: "/panel/socios" },
   { clave: "solicitud_socio", icono: Briefcase, nombre: "Solicitudes de socios", detalle: "Postulaciones en revisión", ruta: "/panel/administrar?widget=solicitud_socio" },
@@ -62,6 +64,7 @@ const WIDGETS_OPERADOR: { clave: string; icono: LucideIcon; nombre: string; deta
 
 const WIDGETS_ADMIN: { clave: string; icono: LucideIcon; nombre: string; detalle: string; ruta: string; estado: "registrado" | "proximamente" }[] = [
   { clave: "catalogo_productos", icono: ShoppingBag, nombre: "Catálogo & Honorarios", detalle: "Servicios y precios con IVA", ruta: "/panel/catalogo-productos", estado: "registrado" },
+  { clave: "disponibilidad_abogados", icono: Scale, nombre: "Disponibilidad de Abogados", detalle: "Control de cupos y turnos", ruta: "/panel/agendamiento?widget=disponibilidad_abogados", estado: "registrado" },
   { clave: "gestion_convenios_corporativos", icono: Building2, nombre: "Convenios Corporativos & B2B", detalle: "Alianzas y paquetes de beneficios", ruta: "/panel/administrar?widget=gestion_convenios_corporativos", estado: "registrado" },
   { clave: "pasarela_payphone", icono: CreditCard, nombre: "Pasarela Payphone", detalle: "Botón de pago y simulador", ruta: "/panel/configuracion?widget=pasarela_payphone", estado: "registrado" },
   { clave: "crm_clientes", icono: Users, nombre: "CRM Jurídico & Clientes", detalle: "Expedientes y conflict check", ruta: "/panel/clientes", estado: "registrado" },

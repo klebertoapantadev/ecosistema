@@ -69,6 +69,10 @@ export interface ItemDisponibilidadOperativa {
   unidad: "BONCHE" | "TALLO" | "PLIEGO" | "HORA" | "CUADRILLA" | "UNIDAD";
   cantidad_disponible: number;
   estado: "DISPONIBLE" | "BAJO" | "AGOTADO";
+  estado_aprobacion?: "APROBADO" | "PRELIMINAR" | "RECHAZADO";
+  propuesta_preliminar_horas?: number;
+  propuesta_por_nombre?: string;
+  propuesta_fecha?: string;
   color_hex?: string;
   color_nombre?: string;
   imagen_url?: string;
@@ -4427,11 +4431,117 @@ export async function actualizarDisponibilidadOperativaAction(
       }
     }
 
-    revalidatePath("/panel");
-    revalidatePath("/panel/catalogo-productos");
+    try {
+      revalidatePath("/panel");
+      revalidatePath("/panel/catalogo-productos");
+      revalidatePath("/panel/herramientas");
+      revalidatePath("/panel/agendamiento");
+      revalidatePath("/panel/administrar");
+    } catch {}
     return { ok: true, items: itemsActualizados };
   } catch (err: any) {
     return { ok: false, error: err.message || "Error al actualizar disponibilidad." };
+  }
+}
+
+/**
+ * Propuesta de disponibilidad preliminar enviada por el abogado/profesional
+ */
+export async function proponerDisponibilidadPreliminarAction(
+  negocio: string,
+  itemId: string,
+  horasPropuestas: number,
+  abogadoNombre?: string
+): Promise<{ ok: boolean; items?: ItemDisponibilidadOperativa[]; error?: string }> {
+  try {
+    const { principal } = normalizarIdentificadorNegocio(negocio);
+    const listaActual = await obtenerDisponibilidadOperativaAction(negocio);
+    const actualizada = listaActual.map((it) => {
+      if (it.id === itemId || it.codigo === itemId) {
+        return {
+          ...it,
+          estado_aprobacion: "PRELIMINAR" as const,
+          propuesta_preliminar_horas: horasPropuestas,
+          propuesta_por_nombre: abogadoNombre || "Abogado Profesional",
+          propuesta_fecha: new Date().toISOString(),
+        };
+      }
+      return it;
+    });
+
+    storeDisponibilidad.set(principal, actualizada);
+    try {
+      revalidatePath("/panel");
+      revalidatePath("/panel/herramientas");
+      revalidatePath("/panel/agendamiento");
+    } catch {}
+    return { ok: true, items: actualizada };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Error al enviar propuesta de disponibilidad preliminar." };
+  }
+}
+
+/**
+ * Aprobación de propuesta de disponibilidad por parte del operador
+ */
+export async function aprobarPropuestaDisponibilidadAction(
+  negocio: string,
+  itemId: string,
+  horasAprobadas?: number
+): Promise<{ ok: boolean; items?: ItemDisponibilidadOperativa[]; error?: string }> {
+  try {
+    const { principal } = normalizarIdentificadorNegocio(negocio);
+    const listaActual = await obtenerDisponibilidadOperativaAction(negocio);
+    const actualizada = listaActual.map((it) => {
+      if (it.id === itemId || it.codigo === itemId) {
+        const cantFinal = typeof horasAprobadas === "number" ? horasAprobadas : (it.propuesta_preliminar_horas ?? it.cantidad_disponible);
+        return {
+          ...it,
+          cantidad_disponible: cantFinal,
+          estado: (cantFinal <= 0 ? "AGOTADO" : cantFinal <= 3 ? "BAJO" : "DISPONIBLE") as any,
+          estado_aprobacion: "APROBADO" as const,
+          propuesta_preliminar_horas: undefined,
+        };
+      }
+      return it;
+    });
+
+    return await actualizarDisponibilidadOperativaAction(negocio, actualizada);
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Error al aprobar propuesta de disponibilidad." };
+  }
+}
+
+/**
+ * Rechaza o descarta una propuesta preliminar de disponibilidad
+ */
+export async function rechazarPropuestaDisponibilidadAction(
+  negocio: string,
+  itemId: string
+): Promise<{ ok: boolean; items?: ItemDisponibilidadOperativa[]; error?: string }> {
+  try {
+    const { principal } = normalizarIdentificadorNegocio(negocio);
+    const listaActual = await obtenerDisponibilidadOperativaAction(negocio);
+    const actualizada = listaActual.map((it) => {
+      if (it.id === itemId || it.codigo === itemId) {
+        return {
+          ...it,
+          estado_aprobacion: "APROBADO" as const,
+          propuesta_preliminar_horas: undefined,
+        };
+      }
+      return it;
+    });
+
+    storeDisponibilidad.set(principal, actualizada);
+    try {
+      revalidatePath("/panel");
+      revalidatePath("/panel/herramientas");
+      revalidatePath("/panel/agendamiento");
+    } catch {}
+    return { ok: true, items: actualizada };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Error al descartar propuesta." };
   }
 }
 

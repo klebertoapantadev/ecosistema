@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import {
   Search, X, UserCog, UserCheck, Settings, Mail, Bell, Shield, ShieldCheck,
   CircleUser, ChevronRight, Sliders, Briefcase, FileText, BarChart2, FileCheck, Folder,
-  CalendarClock, CalendarPlus, CalendarCheck, Shuffle, ShoppingBag, CreditCard, Building2
+  CalendarClock, CalendarPlus, CalendarCheck, Shuffle, ShoppingBag, CreditCard, Building2, Scale
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCustomWidgets } from "./gestorTitulosWidgets";
@@ -181,6 +181,16 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
     minNivel: 50,
     icono: Building2,
     colorIcono: "#05876E"
+  },
+  {
+    clave: "disponibilidad_abogados",
+    nombre: "Disponibilidad de Abogados & Turnos",
+    detalle: "Gestión de horas y cupos. Postulación preliminar por abogados y aprobación por operadores con sincronización ARIA",
+    ruta: "/panel/agendamiento?widget=disponibilidad_abogados",
+    categoria: "Agendamiento & Operación",
+    minNivel: 30,
+    icono: Scale,
+    colorIcono: "#5000BA"
   },
   {
     clave: "gestion_usuarios",

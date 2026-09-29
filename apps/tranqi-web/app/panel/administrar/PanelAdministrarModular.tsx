@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Users, ClipboardList, Bell, Shield, ChevronRight, Star, Lock, Eye, Pencil, Sliders, RotateCcw, BarChart2, Receipt, Calendar, Building2, type LucideIcon } from "lucide-react";
+import { Users, ClipboardList, Bell, Shield, ChevronRight, Star, Lock, Eye, Pencil, Sliders, RotateCcw, BarChart2, Receipt, Calendar, Building2, Scale, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { ConsultaUsuariosPerfilesWidget } from "@eco/gestion-usuarios/componentes/ConsultaUsuariosPerfilesWidget";
 import { AdministracionPerfilesWidget } from "@eco/gestion-usuarios/componentes/AdministracionPerfilesWidget";
@@ -10,7 +10,7 @@ import { GestionTerminosConsentimientosWidget } from "@eco/identidad/componentes
 import { VisorAuditoriaWidget } from "../auditoria/VisorAuditoriaWidget";
 import { ConfiguracionContratoAbogadoWidget } from "../../../modulos/socios/componentes/ConfiguracionContratoAbogadoWidget";
 import { BandejaClientesCRM } from "../../../modulos/crm-clientes/componentes/BandejaClientesCRM";
-import { HistorialTransaccionesPago, GestionConveniosCorporativos } from "@eco/comercio";
+import { HistorialTransaccionesPago, GestionConveniosCorporativos, TableroDisponibilidadOperativa } from "@eco/comercio";
 import { DataGrid, type ColumnaDataGrid } from "@eco/datagrid";
 import { useCustomWidgets } from "../gestorTitulosWidgets";
 import { ModalEditarWidget } from "../ModalEditarWidget";
@@ -46,6 +46,15 @@ const MODULOS_ADMIN: ModuloAdminDef[] = [
     icono: Building2,
     colorIcono: "#05876E",
     categoria: "Comercio & B2B"
+  },
+  {
+    id: "disponibilidad_abogados",
+    titulo: "Disponibilidad de Abogados & Turnos",
+    subtitulo: "Gestión de horas disponibles por especialista. Postulación preliminar y aprobación con sincronización ARIA",
+    ruta: "/panel/administrar?widget=disponibilidad_abogados",
+    icono: Scale,
+    colorIcono: "#5000BA",
+    categoria: "Agendamiento & Operación"
   },
   {
     id: "historial_pagos",
@@ -793,6 +802,13 @@ export function PanelAdministrarModular({ negocio = "TRANQ", esSuperAdmin = fals
             {(widgetActivo === "gestion_convenios_corporativos" || widgetActivo === "convenios_corporativos" || widgetActivo === "convenios") && (
               <div style={{ width: "100%" }}>
                 <GestionConveniosCorporativos negocio={negocio} />
+              </div>
+            )}
+
+            {/* 7.8. DISPONIBILIDAD DE ABOGADOS & OPERATIVA */}
+            {(widgetActivo === "disponibilidad_abogados" || widgetActivo === "disponibilidad_operativa") && (
+              <div style={{ width: "100%" }}>
+                <TableroDisponibilidadOperativa negocio={negocio} modoVista="operador" />
               </div>
             )}
 

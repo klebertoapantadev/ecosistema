@@ -34,6 +34,7 @@ import {
   CheckSquare,
   Square,
   Globe,
+  Building2,
 } from "lucide-react";
 import {
   ProductoCatalogo,
@@ -542,6 +543,33 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
               >
                 <FolderPlus size={15} />
                 <span className="btn-texto-responsive">{esFloristeria ? "Nueva Colección" : "Nueva Categoría"}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (typeof window !== "undefined") {
+                    window.location.href = "/panel/administrar?widget=gestion_convenios_corporativos";
+                  }
+                }}
+                className="btn-responsive-accion"
+                title="Ver y Gestionar Convenios Corporativos y Beneficios B2B (SATCOM)"
+                aria-label="Convenios Corporativos"
+                style={{
+                  background: "#ECFDF5",
+                  color: "#05876E",
+                  border: "1px solid #A7F3D0",
+                  padding: "8px 14px",
+                  borderRadius: "8px",
+                  fontSize: "0.85rem",
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px",
+                }}
+              >
+                <Building2 size={15} />
+                <span className="btn-texto-responsive">Convenios B2B</span>
               </button>
             </>
           )}

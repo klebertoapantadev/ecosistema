@@ -8,7 +8,7 @@ import {
   Palette, UserCheck, X, Sparkles, Trash2, Star, Move, Copy, Package, GripVertical,
   Home, User, Settings, Shield, Folder, Wrench, Building, Briefcase, Bell, Database,
   Activity, Globe, Lock, KeyRound, CheckSquare, Terminal, Zap, Pencil, LogOut, LogIn,
-  Forward, Inbox, FileText, Download, Printer, Share2, RotateCcw, Loader2, type LucideIcon
+  Forward, Inbox, FileText, Download, Printer, Share2, RotateCcw, Loader2, Scale, type LucideIcon
 } from "lucide-react";
 import { guardarPerfil, guardarWidget, guardarAsignacionWidget, obtenerDatosGestionUsuariosAction } from "../acciones";
 import type { UsuarioConMembresia } from "../consultas";
@@ -297,10 +297,10 @@ const PERFILES_INICIALES: PerfilDef[] = [
       panel_usuarios: ["consulta_usuarios_perfiles", "crm_clientes", "monitoreo_notificaciones_usuarios"],
       panel_red_profesional: ["socios", "solicitud_socio"],
       panel_terminos: ["gestion_terminos_consentimientos", "configuracion_contrato_abogado"],
-      panel_agendamiento: ["asignaciones_agenda"],
-      panel_administrar: ["historial_pagos", "emision_notificaciones", "bitacora_notificaciones", "gestion_convenios_corporativos"],
+      panel_agendamiento: ["disponibilidad_abogados", "asignaciones_agenda"],
+      panel_administrar: ["gestion_convenios_corporativos", "disponibilidad_abogados", "historial_pagos", "emision_notificaciones", "bitacora_notificaciones"],
       panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos"],
-      panel_herramientas: ["catalogo_productos", "firma_documentos_pdf", "billetera_documentos"],
+      panel_herramientas: ["catalogo_productos", "disponibilidad_abogados", "firma_documentos_pdf", "billetera_documentos"],
       panel_configuracion: ["notificaciones", "agentes_ia"]
     },
     activo: true
@@ -317,9 +317,9 @@ const PERFILES_INICIALES: PerfilDef[] = [
       panel_clientes: ["vitrina_comercial_personas", "crm_clientes", "billetera_documentos", "firma_documentos_pdf"],
       panel_empresas: ["vitrina_comercial_empresas", "gestion_convenios_corporativos", "crm_clientes", "billetera_documentos", "firma_documentos_pdf"],
       panel_usuarios: ["crm_clientes"],
-      panel_agendamiento: ["citas_programadas", "disponibilidad", "asignaciones_agenda"],
+      panel_agendamiento: ["disponibilidad_abogados", "citas_programadas", "disponibilidad", "asignaciones_agenda"],
       panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos", "historial_pagos"],
-      panel_herramientas: ["catalogo_productos", "firma_documentos_pdf", "billetera_documentos", "solicitud_socio"],
+      panel_herramientas: ["catalogo_productos", "disponibilidad_abogados", "firma_documentos_pdf", "billetera_documentos", "solicitud_socio"],
       panel_configuracion: ["notificaciones", "agentes_ia"]
     },
     activo: true
@@ -338,10 +338,10 @@ const PERFILES_INICIALES: PerfilDef[] = [
       panel_usuarios: ["gestion_usuarios", "consulta_usuarios_perfiles", "crm_clientes", "monitoreo_notificaciones_usuarios"],
       panel_red_profesional: ["socios", "solicitud_socio"],
       panel_terminos: ["gestion_terminos_consentimientos", "configuracion_contrato_abogado"],
-      panel_agendamiento: ["asignaciones_agenda"],
-      panel_administrar: ["historial_pagos", "emision_notificaciones", "bitacora_notificaciones", "gestion_convenios_corporativos", "perfiles", "auditoria"],
+      panel_agendamiento: ["disponibilidad_abogados", "asignaciones_agenda"],
+      panel_administrar: ["gestion_convenios_corporativos", "disponibilidad_abogados", "historial_pagos", "emision_notificaciones", "bitacora_notificaciones", "perfiles", "auditoria"],
       panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos"],
-      panel_herramientas: ["catalogo_productos", "firma_documentos_pdf", "billetera_documentos"],
+      panel_herramientas: ["catalogo_productos", "disponibilidad_abogados", "firma_documentos_pdf", "billetera_documentos"],
       panel_configuracion: ["configuracion_negocio", "configuracion_correo", "pasarela_payphone", "perfiles", "agentes_ia", "notificaciones"]
     },
     activo: true
@@ -360,10 +360,10 @@ const PERFILES_INICIALES: PerfilDef[] = [
       panel_usuarios: ["gestion_usuarios", "consulta_usuarios_perfiles", "crm_clientes", "monitoreo_notificaciones_usuarios"],
       panel_red_profesional: ["socios", "solicitud_socio"],
       panel_terminos: ["gestion_terminos_consentimientos", "configuracion_contrato_abogado"],
-      panel_agendamiento: ["asignaciones_agenda"],
-      panel_administrar: ["historial_pagos", "emision_notificaciones", "bitacora_notificaciones", "gestion_convenios_corporativos", "perfiles", "auditoria"],
+      panel_agendamiento: ["disponibilidad_abogados", "asignaciones_agenda"],
+      panel_administrar: ["gestion_convenios_corporativos", "disponibilidad_abogados", "historial_pagos", "emision_notificaciones", "bitacora_notificaciones", "perfiles", "auditoria"],
       panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos"],
-      panel_herramientas: ["catalogo_productos", "firma_documentos_pdf", "billetera_documentos"],
+      panel_herramientas: ["catalogo_productos", "disponibilidad_abogados", "firma_documentos_pdf", "billetera_documentos"],
       panel_configuracion: ["configuracion_negocio", "configuracion_correo", "pasarela_payphone", "perfiles", "agentes_ia", "notificaciones"]
     },
     activo: true,
@@ -392,9 +392,9 @@ export const MATRIZ_FUNCIONAL_ROLES: Record<string, { paneles: string[]; widgets
       panel_clientes: ["vitrina_comercial_personas", "crm_clientes", "billetera_documentos", "firma_documentos_pdf"],
       panel_empresas: ["vitrina_comercial_empresas", "gestion_convenios_corporativos", "crm_clientes", "billetera_documentos", "firma_documentos_pdf"],
       panel_usuarios: ["crm_clientes"],
-      panel_agendamiento: ["citas_programadas", "disponibilidad", "asignaciones_agenda"],
+      panel_agendamiento: ["disponibilidad_abogados", "citas_programadas", "disponibilidad", "asignaciones_agenda"],
       panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos", "historial_pagos"],
-      panel_herramientas: ["catalogo_productos", "firma_documentos_pdf", "billetera_documentos", "solicitud_socio"],
+      panel_herramientas: ["catalogo_productos", "disponibilidad_abogados", "firma_documentos_pdf", "billetera_documentos", "solicitud_socio"],
       panel_configuracion: ["notificaciones", "agentes_ia"]
     }
   },
@@ -407,10 +407,10 @@ export const MATRIZ_FUNCIONAL_ROLES: Record<string, { paneles: string[]; widgets
       panel_usuarios: ["consulta_usuarios_perfiles", "crm_clientes", "monitoreo_notificaciones_usuarios"],
       panel_red_profesional: ["socios", "solicitud_socio"],
       panel_terminos: ["gestion_terminos_consentimientos", "configuracion_contrato_abogado"],
-      panel_agendamiento: ["asignaciones_agenda"],
-      panel_administrar: ["historial_pagos", "emision_notificaciones", "bitacora_notificaciones", "gestion_convenios_corporativos"],
+      panel_agendamiento: ["disponibilidad_abogados", "asignaciones_agenda"],
+      panel_administrar: ["gestion_convenios_corporativos", "disponibilidad_abogados", "historial_pagos", "emision_notificaciones", "bitacora_notificaciones"],
       panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos"],
-      panel_herramientas: ["catalogo_productos", "firma_documentos_pdf", "billetera_documentos"],
+      panel_herramientas: ["catalogo_productos", "disponibilidad_abogados", "firma_documentos_pdf", "billetera_documentos"],
       panel_configuracion: ["notificaciones", "agentes_ia"]
     }
   },
@@ -423,10 +423,10 @@ export const MATRIZ_FUNCIONAL_ROLES: Record<string, { paneles: string[]; widgets
       panel_usuarios: ["gestion_usuarios", "consulta_usuarios_perfiles", "crm_clientes", "monitoreo_notificaciones_usuarios"],
       panel_red_profesional: ["socios", "solicitud_socio"],
       panel_terminos: ["gestion_terminos_consentimientos", "configuracion_contrato_abogado"],
-      panel_agendamiento: ["asignaciones_agenda"],
-      panel_administrar: ["historial_pagos", "emision_notificaciones", "bitacora_notificaciones", "gestion_convenios_corporativos", "perfiles", "auditoria"],
+      panel_agendamiento: ["disponibilidad_abogados", "asignaciones_agenda"],
+      panel_administrar: ["gestion_convenios_corporativos", "disponibilidad_abogados", "historial_pagos", "emision_notificaciones", "bitacora_notificaciones", "perfiles", "auditoria"],
       panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos"],
-      panel_herramientas: ["catalogo_productos", "firma_documentos_pdf", "billetera_documentos"],
+      panel_herramientas: ["catalogo_productos", "disponibilidad_abogados", "firma_documentos_pdf", "billetera_documentos"],
       panel_configuracion: ["configuracion_negocio", "configuracion_correo", "pasarela_payphone", "perfiles", "agentes_ia", "notificaciones"]
     }
   },
@@ -439,10 +439,10 @@ export const MATRIZ_FUNCIONAL_ROLES: Record<string, { paneles: string[]; widgets
       panel_usuarios: ["gestion_usuarios", "consulta_usuarios_perfiles", "crm_clientes", "monitoreo_notificaciones_usuarios"],
       panel_red_profesional: ["socios", "solicitud_socio"],
       panel_terminos: ["gestion_terminos_consentimientos", "configuracion_contrato_abogado"],
-      panel_agendamiento: ["asignaciones_agenda"],
-      panel_administrar: ["historial_pagos", "emision_notificaciones", "bitacora_notificaciones", "gestion_convenios_corporativos", "perfiles", "auditoria"],
+      panel_agendamiento: ["disponibilidad_abogados", "asignaciones_agenda"],
+      panel_administrar: ["gestion_convenios_corporativos", "disponibilidad_abogados", "historial_pagos", "emision_notificaciones", "bitacora_notificaciones", "perfiles", "auditoria"],
       panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos"],
-      panel_herramientas: ["catalogo_productos", "firma_documentos_pdf", "billetera_documentos"],
+      panel_herramientas: ["catalogo_productos", "disponibilidad_abogados", "firma_documentos_pdf", "billetera_documentos"],
       panel_configuracion: ["configuracion_negocio", "configuracion_correo", "pasarela_payphone", "perfiles", "agentes_ia", "notificaciones"]
     }
   }
@@ -479,6 +479,28 @@ const WIDGETS_INVENTARIO_INICIALES: WidgetInventarioDef[] = [
     ruta: "/panel/administrar?widget=gestion_convenios_corporativos",
     rutaFisica: "/comercio/componentes/GestionConveniosCorporativos.tsx",
     panelId: "panel_administrar",
+    activo: true,
+    creadoEn: "2026-09-29"
+  },
+  {
+    clave: "disponibilidad_abogados",
+    nombre: "Disponibilidad de Abogados & Turnos",
+    descripcion: "Control de horas disponibles por especialista. Modo postulación preliminar de abogados y aprobación por operadores.",
+    categoria: "Operaciones",
+    ruta: "/panel/agendamiento?widget=disponibilidad_abogados",
+    rutaFisica: "/comercio/componentes/TableroDisponibilidadOperativa.tsx",
+    panelId: "panel_agendamiento",
+    activo: true,
+    creadoEn: "2026-09-29"
+  },
+  {
+    clave: "disponibilidad_operativa",
+    nombre: "Disponibilidad Operativa & Especialistas",
+    descripcion: "Control de stock de horas y cuadrillas de atención técnica o profesional.",
+    categoria: "Operaciones",
+    ruta: "/panel/agendamiento?widget=disponibilidad_operativa",
+    rutaFisica: "/comercio/componentes/TableroDisponibilidadOperativa.tsx",
+    panelId: "panel_agendamiento",
     activo: true,
     creadoEn: "2026-09-29"
   },
@@ -883,6 +905,22 @@ function RenderizadorWidgetReal({ clave, negocio }: { clave: string; negocio: st
           </p>
           <div style={{ padding: "12px", background: "#F0F9FF", borderRadius: "8px", border: "1px dashed #BAE6FD", textAlign: "center", fontSize: "0.82rem", color: "#0369A1", fontWeight: 700 }}>
             Servicios Disponibles · Planes de Suscripción · Tarifario Oficial
+          </div>
+        </div>
+      );
+
+    case "disponibilidad_abogados":
+    case "disponibilidad_operativa":
+      return (
+        <div style={{ background: "#ffffff", padding: "18px", borderRadius: "12px", border: "1.5px solid #5000BA", boxShadow: "0 4px 12px rgba(80,0,186,0.08)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 800, fontSize: "0.95rem", color: "#5000BA", marginBottom: "10px" }}>
+            <Scale size={18} /> Disponibilidad de Abogados & Turnos
+          </div>
+          <p style={{ fontSize: "0.82rem", color: "#64748B", marginBottom: "12px" }}>
+            Gestión de turnos y cupos. Postulación preliminar por abogados y aprobación por operadores con sincronización ARIA.
+          </p>
+          <div style={{ padding: "12px", background: "#F5F3FF", borderRadius: "8px", border: "1px dashed #DDD6FE", textAlign: "center", fontSize: "0.82rem", color: "#5B21B6", fontWeight: 700 }}>
+            Postulación Preliminar · Aprobación Operador · Sincronización ARIA MCP
           </div>
         </div>
       );
