@@ -512,7 +512,7 @@ Motor centralizado de gestión de bienes, servicios, recetas (BOM), inventarios,
       - Los formularios de creación (`ModalCrearProducto.tsx`) y edición master (`ModalEditarProducto.tsx`) proveen selectores interactivos multiselección conmutables.
       - **Control de Calidad Visual (Imagen Obligatoria para Web y App):** Para que un producto sea visible y seleccionable en los canales `ECOMMERCE_WEB` y `APP_CLIENTES`, es mandatorio que cuente con al menos una imagen configurada (en la portada del producto, álbum/galería o en una de sus variantes activas). Si un producto no tiene imágenes, la UI bloquea la activación de dichos canales mostrando una advertencia (`📷 Foto req.`), y las consultas públicas/RPC (`com_fn_obtener_catalogo_productos`) lo excluyen automáticamente para preservar la estética y calidad del portal web y la app móvil.
       - Las consultas de servidor (`obtenerCatalogoProductosAction`) y los endpoints MCP (`consultar_catalogo`, `detalle_producto` en `@eco/agentes-ia`) aceptan el parámetro opcional `canal` para retornar únicamente los productos autorizados para dicho medio.
-21. **Biblioteca y Galería Multimedia por Negocio (*Media Library & Storage Manager*):**
+23. **Biblioteca y Galería Multimedia por Negocio (*Media Library & Storage Manager*):**
     - **Aislamiento Multi-Tenant en Storage:** Cada negocio (`tranqi`, `tinkay`, `fastfix`, `margaritas`) posee su propio árbol de directorios de almacenamiento en Supabase Storage dentro del bucket público `catalogo` (`{negocio}/portadas/`, `{negocio}/variantes/`, `{negocio}/galeria/`, `{negocio}/general/`).
     - **Modal de Gestión y Biblioteca de Medios (`ModalGaleriaMedios.tsx`):**
       - *Exploración Visual y Búsqueda:* Cuadrícula de fotos con búsqueda reactiva en tiempo real por nombre de archivo y filtro por carpeta de destino.
@@ -520,6 +520,10 @@ Motor centralizado de gestión de bienes, servicios, recetas (BOM), inventarios,
       - *Selección Asistida:* Con 1 clic, asigna la URL pública de alta resolución a la Portada Master, Portada de Variante o Galería Adicional del producto en edición o creación.
       - *Eliminación Segura con Confirmación:* Modal de advertencia para purgar fotos obsoletas de la nube (`eliminarImagenGaleriaAction`), manteniendo la integridad referencial.
     - **Acceso Directo:** Disponible permanentemente desde la barra superior de la consola de catálogo (`ConsolaGestionCatalogo.tsx`) y como selector directo en los modales de producto.
+24. **Desacoplamiento de Transacciones Históricas y Borrado Físico Definitivo (*Snapshot Pattern & Hard Delete*):**
+    - **Inmutabilidad Tributaria y Financiera:** Todas las órdenes (`com_orden_item`), cobros (`com_transaccion_pago`), comprobantes electrónicos SRI (`fac_factura_item`) y bitácoras de auditoría capturan y congelan una instantánea (*snapshot*) completa del producto/variante (nombre comercial, base imponible, tarifa de IVA, descripción y SKU) en el instante exacto de la venta.
+    - **Autonomía del Catálogo y Borrado Físico Definitivo:** Las modificaciones posteriores de precio, características o la **eliminación física definitiva** (`DELETE FROM comun_comercio.com_producto`) de un producto no distorsionan ni invalidan los registros contables históricos.
+    - **Cascada y Purga Limpia:** Al eliminar un producto desde la consola, la base de datos elimina en cascada sus variantes (`com_variante`), categorías asignadas (`com_producto_categoria`), personalizaciones y recursos asociados (`ON DELETE CASCADE`), y el sistema purga inmediatamente los estados y cachés en memoria sin dejar registros residuales (*tombstones*).
 
 **Implementación técnica:** ver [`especificacion-tecnica.md`](especificacion-tecnica.md) §7 (`comun_comercio`).
 

@@ -37,3 +37,15 @@ En Margaritas Floristería el catálogo administra **diseños florales boutique,
 * **Modalidades:**
   * **Plan Standard (2 Arreglos / Semana):** Base $69.5652 + IVA 15% ($10.43) = **$80.00 / mes**.
   * **Plan Premium (4 Arreglos / Semana con Florero de Cristal):** Base $130.4348 + IVA 15% ($19.57) = **$150.00 / mes**.
+
+---
+
+## 4. Canales de Visibilidad y Borrado Físico Definitivo
+
+1. **Control de Visibilidad Omnicanal:**
+   * Al filtrar por canal en la consola (`ECOMMERCE_WEB`, `APP_CLIENTES`, `CHATBOT_WEB`, `CHATBOT_APP`, `CHATBOT_WHATSAPP`, `OTROS_API`), cada tarjeta presenta un **Switch / Check interactivo** para habilitar o deshabilitar el diseño floral en ese canal con 1 solo clic.
+   * En modo Administrador, los badges de canales permiten alternar la visibilidad de cualquier punto de contacto de forma inmediata.
+   * Los canales `ECOMMERCE_WEB` y `APP_CLIENTES` exigen al menos 1 fotografía o portada de alta resolución para activarse.
+2. **Borrado Físico Definitivo:**
+   * La acción de eliminar un diseño o producto remueve permanentemente el registro en `comun_comercio.com_producto` y sus variantes en cascada.
+   * Las órdenes de compra previas, pagos Payphone y facturas electrónicas SRI permanecen intactas e inmutables mediante el congelamiento de *snapshots* transaccionales en el momento de la venta.

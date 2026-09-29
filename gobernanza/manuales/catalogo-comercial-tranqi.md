@@ -102,3 +102,15 @@ Los planes de suscripción en Tranqi acreditan una **bolsa mensual de derechos d
 El cliente no administra el catálogo comercial, pero tiene acceso pleno a su **Consola de Auditoría y Trazabilidad (`ModalHistorialUsoPlan.tsx`)**:
 * **Estado del Contrato:** Próxima fecha de facturación, tarjeta emisora asociada y beneficiarios registrados.
 * **Línea de Tiempo de Consumos:** Registro de cada cita o revisión ejecutada con fecha, abogado responsable y enlace directo al **Acta de Consulta o Dictamen Legal en PDF**.
+
+---
+
+## 8. Canales de Visibilidad y Borrado Físico Definitivo
+
+1. **Control de Visibilidad Omnicanal:**
+   * Al filtrar por canal en la consola (`ECOMMERCE_WEB`, `APP_CLIENTES`, `CHATBOT_WEB`, `CHATBOT_APP`, `CHATBOT_WHATSAPP`, `OTROS_API`), cada tarjeta presenta un **Switch / Check interactivo** para habilitar o deshabilitar el servicio en ese punto de contacto con 1 solo clic.
+   * En modo Administrador, los badges inferiores actúan como conmutadores rápidos de cualquier canal.
+   * Los canales `ECOMMERCE_WEB` y `APP_CLIENTES` exigen al menos 1 fotografía o portada de calidad para activarse.
+2. **Borrado Físico Definitivo:**
+   * La acción de eliminar remueve permanentemente el registro en `comun_comercio.com_producto` y sus variantes en cascada.
+   * Las transacciones previas de Payphone, facturas electrónicas y bitácoras de auditoría permanecen intactas e inmutables gracias al congelamiento de *snapshots* transaccionales en el instante de la venta.

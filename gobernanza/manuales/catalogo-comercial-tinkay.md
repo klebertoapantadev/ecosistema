@@ -154,3 +154,15 @@ Tinkay opera un modelo de suscripción recurrente para hogares, consultorios y e
 2. **Registro de Proof of Delivery (POD):**
    * Al completarse cada entrega semanal/quincenal, el repartidor motorizado registra obligatoriamente la **fotografía del arreglo entregado en el domicilio/oficina** con nombre y firma de quien recibió.
    * Esta evidencia se guarda en `comun_comercio.com_derecho_consumo_historial` y se muestra automáticamente en el historial del cliente (`ModalHistorialUsoPlan.tsx`) para plena transparencia del servicio.
+
+---
+
+## 11. Canales de Visibilidad y Borrado Físico Definitivo
+
+1. **Control de Visibilidad Omnicanal:**
+   * Al filtrar por canal en la consola (`ECOMMERCE_WEB`, `APP_CLIENTES`, `CHATBOT_WEB`, `CHATBOT_APP`, `CHATBOT_WHATSAPP`, `OTROS_API`), cada tarjeta presenta un **Switch / Check interactivo** para habilitar o deshabilitar el producto en ese canal con 1 solo clic.
+   * En modo Administrador, los badges de canales permiten alternar la visibilidad de cualquier punto de contacto de forma inmediata.
+   * Los canales `ECOMMERCE_WEB` y `APP_CLIENTES` exigen al menos 1 fotografía o portada de alta resolución para activarse.
+2. **Borrado Físico Definitivo:**
+   * La acción de eliminar un arreglo o producto remueve permanentemente el registro en `comun_comercio.com_producto` y sus variantes en cascada.
+   * Las órdenes de compra previas, pagos Payphone y facturas electrónicas SRI permanecen intactas e inmutables mediante el congelamiento de *snapshots* transaccionales en el momento de la venta.
