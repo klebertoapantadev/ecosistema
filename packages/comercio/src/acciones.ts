@@ -1479,7 +1479,7 @@ const storeCustomCategorias: Map<string, CategoriaCatalogo[]> = new Map();
 const storeCustomProductos: Map<string, ProductoCatalogo[]> = new Map();
 
 // Helper para generar slug simple
-function normalizarIdentificadorNegocio(negocio?: string): { principal: string; variantes: string[] } {
+export function normalizarIdentificadorNegocio(negocio?: string): { principal: string; variantes: string[] } {
   const norm = (negocio || "tranqi").toLowerCase().trim();
   const upper = (negocio || "TRANQ").toUpperCase().trim();
   

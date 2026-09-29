@@ -5,7 +5,7 @@ import Link from "next/link";
 import {
   LayoutGrid, Wrench, Shield, Users, Bell, UserCog, ClipboardList, FileText,
   Settings, ChevronRight, CircleUser, KeyRound, FileCheck, Folder, type LucideIcon,
-  Bot, ShoppingBag, CreditCard, Receipt, Share2, CheckCircle2, Sparkles
+  Bot, ShoppingBag, CreditCard, Receipt, Share2, CheckCircle2, Sparkles, Building2
 } from "lucide-react";
 import { useWidgetEnUrl } from "../useWidgetEnUrl";
 import { BotonVolverWidget } from "../BotonVolverWidget";
@@ -29,6 +29,7 @@ import {
   CatalogoProductosComercio,
   ConfiguracionPasarelaPayphone,
   HistorialTransaccionesPago,
+  GestionConveniosCorporativos,
 } from "@eco/comercio";
 import { SociosWidget } from "../administrar/PanelAdministrarModular";
 import { ConfiguracionContratoAbogadoWidget } from "@/modulos/socios/componentes/ConfiguracionContratoAbogadoWidget";
@@ -279,6 +280,13 @@ const INVENTARIO_GLOBAL_WIDGETS: Record<string, { titulo: string; subtitulo: str
     colorIcono: "#2563EB",
     categoria: "Comunicación"
   },
+  gestion_convenios_corporativos: {
+    titulo: "Convenios Corporativos & Paquetes B2B",
+    subtitulo: "Gestión de alianzas empresariales, bolsas de consultas y descuentos automáticos",
+    icono: Building2,
+    colorIcono: "#05876E",
+    categoria: "Comercio & B2B"
+  },
   gestion_usuarios: {
     titulo: "Gestión de Usuarios & Membresías",
     subtitulo: "Administración de miembros, asignación de perfiles y techo jerárquico",
@@ -440,7 +448,7 @@ function obtenerWidgetsInicialesDinamicos(panelId: string, slugStr: string, rolD
     if (esPanelRed) return ["socios", "solicitud_socio"];
     if (esPanelTerminos) return ["gestion_terminos_consentimientos", "configuracion_contrato_abogado"];
     if (esPanelAgenda) return ["asignaciones_agenda"];
-    if (esPanelAdmin) return ["historial_pagos", "emision_notificaciones", "bitacora_notificaciones"];
+    if (esPanelAdmin) return ["gestion_convenios_corporativos", "historial_pagos", "emision_notificaciones", "bitacora_notificaciones"];
     if (esPanelHerr) return ["catalogo_productos", "firma_documentos_pdf", "billetera_documentos"];
     if (esPanelSeg) return ["mfa_seguridad"];
     if (esPanelCuenta) return ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos"];
@@ -449,7 +457,7 @@ function obtenerWidgetsInicialesDinamicos(panelId: string, slugStr: string, rolD
     if (esPanelRed) return ["socios", "solicitud_socio"];
     if (esPanelTerminos) return ["gestion_terminos_consentimientos", "configuracion_contrato_abogado"];
     if (esPanelAgenda) return ["asignaciones_agenda"];
-    if (esPanelAdmin) return ["historial_pagos", "emision_notificaciones", "bitacora_notificaciones", "perfiles", "auditoria"];
+    if (esPanelAdmin) return ["gestion_convenios_corporativos", "historial_pagos", "emision_notificaciones", "bitacora_notificaciones", "perfiles", "auditoria"];
     if (esPanelHerr) return ["catalogo_productos", "firma_documentos_pdf", "billetera_documentos"];
     if (esPanelSeg) return ["mfa_seguridad", "auditoria"];
     if (esPanelConf) return ["configuracion_negocio", "configuracion_correo", "pasarela_payphone", "perfiles", "agentes_ia", "notificaciones"];
@@ -699,6 +707,10 @@ export function PanelDinamicoModular({ slug, negocio, rolInicial = "ADMINISTRADO
       case "bitacora_notificaciones":
       case "bitacora-notificaciones":
         return <BitacoraNotificacionesWidget negocio={negocio} />;
+      case "gestion_convenios_corporativos":
+      case "convenios_corporativos":
+      case "convenios":
+        return <GestionConveniosCorporativos negocio={negocio} />;
       case "gestion_usuarios":
       case "perfiles":
         return <AdministracionPerfilesWidget esAdmin={true} negocio={negocio} />;

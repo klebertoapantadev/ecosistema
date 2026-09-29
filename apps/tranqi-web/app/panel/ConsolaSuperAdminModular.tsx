@@ -6,7 +6,7 @@ import {
   Sparkles, Shield, LayoutGrid, Pencil, Users, UserCheck, Eye,
   Settings, Mail, ShieldCheck, Bell, CircleUser, KeyRound, Sliders, Briefcase,
   Receipt, History, RotateCcw, FileCheck, Folder, ShoppingBag, CreditCard,
-  CalendarClock, CalendarPlus, CalendarCheck, type LucideIcon
+  CalendarClock, CalendarPlus, CalendarCheck, Building2, type LucideIcon
 } from "lucide-react";
 import { resetearSistemaSuperAdminAction } from "@eco/gestion-usuarios/acciones";
 import { ModalNotificacionPush } from "@eco/notificaciones";
@@ -215,6 +215,21 @@ export const CATALOGO_SUPERADMIN_TODOS: ModuloSuperAdminDef[] = [
     panelDestino: "Herramientas (/panel/billetera-documentos)",
     categoria: "Gestión Documental",
     perfilesAsignados: ["CLIENTE", "ABOGADO", "OPERADOR", "ADMINISTRADOR", "SUPERADMIN"],
+    estadoDuplicidad: "CANONICO",
+  },
+  {
+    clave: "gestion_convenios_corporativos",
+    nombre: "Convenios Corporativos & Paquetes B2B",
+    detalle: "Gestión de alianzas empresariales, bolsas de consultas y descuentos automáticos",
+    ruta: "/panel/administrar?widget=gestion_convenios_corporativos",
+    icono: Building2,
+    iconoKey: "Building2",
+    color: "#05876E",
+    rutaFisica: "packages/comercio/src/componentes/GestionConveniosCorporativos.tsx",
+    paquete: "@eco/comercio",
+    panelDestino: "Administrar (/panel/administrar)",
+    categoria: "Comercio & B2B",
+    perfilesAsignados: ["OPERADOR", "ADMINISTRADOR", "SUPERADMIN"],
     estadoDuplicidad: "CANONICO",
   },
   {

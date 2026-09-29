@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { User, Users, History, KeyRound, ShieldAlert, Settings, Mail, Bell, Star, ChevronRight, ShieldCheck, Sliders, Receipt, Lock, FileText, BarChart2, FileCheck, Folder, ShoppingBag, CreditCard, CalendarPlus, CalendarCheck, CalendarClock, Shuffle, type LucideIcon } from "lucide-react";
+import { User, Users, History, KeyRound, ShieldAlert, Settings, Mail, Bell, Star, ChevronRight, ShieldCheck, Sliders, Receipt, Lock, FileText, BarChart2, FileCheck, Folder, ShoppingBag, CreditCard, CalendarPlus, CalendarCheck, CalendarClock, Shuffle, Building2, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { useCustomWidgets } from "./gestorTitulosWidgets";
 
@@ -23,6 +23,14 @@ const CATALOGO_FAVORITOS: Record<string, WidgetFavInfo> = {
     icono: ShoppingBag,
     href: "/panel/catalogo-productos",
     origen: "Configurar"
+  },
+  gestion_convenios_corporativos: {
+    id: "gestion_convenios_corporativos",
+    titulo: "Convenios Corporativos & B2B",
+    subtitulo: "Gestión de alianzas empresariales, bolsas de consultas y descuentos automáticos",
+    icono: Building2,
+    href: "/panel/administrar?widget=gestion_convenios_corporativos",
+    origen: "Administrar"
   },
   pasarela_payphone: {
     id: "pasarela_payphone",

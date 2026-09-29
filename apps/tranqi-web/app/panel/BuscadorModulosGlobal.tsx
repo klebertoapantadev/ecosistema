@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import {
   Search, X, UserCog, UserCheck, Settings, Mail, Bell, Shield, ShieldCheck,
   CircleUser, ChevronRight, Sliders, Briefcase, FileText, BarChart2, FileCheck, Folder,
-  CalendarClock, CalendarPlus, CalendarCheck, Shuffle, ShoppingBag, CreditCard
+  CalendarClock, CalendarPlus, CalendarCheck, Shuffle, ShoppingBag, CreditCard, Building2
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCustomWidgets } from "./gestorTitulosWidgets";
@@ -151,6 +151,16 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
     minNivel: 1,
     icono: Bell,
     colorIcono: "#D97706"
+  },
+  {
+    clave: "gestion_convenios_corporativos",
+    nombre: "Convenios Corporativos & Beneficios B2B",
+    detalle: "Gestión de alianzas empresariales, paquetes de beneficios SATCOM, bolsas de consultas y descuentos",
+    ruta: "/panel/administrar?widget=gestion_convenios_corporativos",
+    categoria: "Comercio & B2B",
+    minNivel: 50,
+    icono: Building2,
+    colorIcono: "#05876E"
   },
   {
     clave: "gestion_usuarios",

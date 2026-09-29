@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Users, ClipboardList, Bell, Shield, ChevronRight, Star, Lock, Eye, Pencil, Sliders, RotateCcw, BarChart2, Receipt, Calendar, type LucideIcon } from "lucide-react";
+import { Users, ClipboardList, Bell, Shield, ChevronRight, Star, Lock, Eye, Pencil, Sliders, RotateCcw, BarChart2, Receipt, Calendar, Building2, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { ConsultaUsuariosPerfilesWidget } from "@eco/gestion-usuarios/componentes/ConsultaUsuariosPerfilesWidget";
 import { AdministracionPerfilesWidget } from "@eco/gestion-usuarios/componentes/AdministracionPerfilesWidget";
@@ -10,7 +10,7 @@ import { GestionTerminosConsentimientosWidget } from "@eco/identidad/componentes
 import { VisorAuditoriaWidget } from "../auditoria/VisorAuditoriaWidget";
 import { ConfiguracionContratoAbogadoWidget } from "../../../modulos/socios/componentes/ConfiguracionContratoAbogadoWidget";
 import { BandejaClientesCRM } from "../../../modulos/crm-clientes/componentes/BandejaClientesCRM";
-import { HistorialTransaccionesPago } from "@eco/comercio";
+import { HistorialTransaccionesPago, GestionConveniosCorporativos } from "@eco/comercio";
 import { DataGrid, type ColumnaDataGrid } from "@eco/datagrid";
 import { useCustomWidgets } from "../gestorTitulosWidgets";
 import { ModalEditarWidget } from "../ModalEditarWidget";
@@ -38,6 +38,15 @@ export interface ModuloAdminDef {
 }
 
 const MODULOS_ADMIN: ModuloAdminDef[] = [
+  {
+    id: "gestion_convenios_corporativos",
+    titulo: "Convenios Corporativos & Beneficios B2B",
+    subtitulo: "Alianzas corporativas, asignación de bolsas de consultas y descuentos automáticos",
+    ruta: "/panel/administrar?widget=gestion_convenios_corporativos",
+    icono: Building2,
+    colorIcono: "#05876E",
+    categoria: "Comercio & B2B"
+  },
   {
     id: "historial_pagos",
     titulo: "Historial de Transacciones & Pagos",
@@ -325,6 +334,7 @@ function obtenerModulosInicialesAdmin(rolForzado?: string): ModuloAdminDef[] {
   }
 
   let ids: string[] = [
+    "gestion_convenios_corporativos",
     "crm_clientes",
     "historial_pagos",
     "emision_notificaciones",
@@ -342,6 +352,7 @@ function obtenerModulosInicialesAdmin(rolForzado?: string): ModuloAdminDef[] {
   ];
   if (rolActivo === "OPERADOR" || rolActivo === "AUXILIAR" || rolActivo === "TECNICO") {
     ids = [
+      "gestion_convenios_corporativos",
       "crm_clientes",
       "historial_pagos",
       "emision_notificaciones",
@@ -486,6 +497,7 @@ export function PanelAdministrarModular({ negocio = "TRANQ", esSuperAdmin = fals
         let idsAsignados: string[] = [];
         if (esOperador) {
           idsAsignados = [
+            "gestion_convenios_corporativos",
             "crm_clientes",
             "historial_pagos",
             "emision_notificaciones",
@@ -500,6 +512,7 @@ export function PanelAdministrarModular({ negocio = "TRANQ", esSuperAdmin = fals
           ];
         } else if (rolEncontrado === "ADMINISTRADOR" || rolEncontrado === "SUPERADMIN") {
           idsAsignados = [
+            "gestion_convenios_corporativos",
             "crm_clientes",
             "historial_pagos",
             "emision_notificaciones",
@@ -773,6 +786,13 @@ export function PanelAdministrarModular({ negocio = "TRANQ", esSuperAdmin = fals
             {widgetActivo === "crm_clientes" && (
               <div style={{ width: "100%" }}>
                 <BandejaClientesCRM negocio={negocio} />
+              </div>
+            )}
+
+            {/* 7.5. CONVENIOS CORPORATIVOS & PAQUETES B2B */}
+            {(widgetActivo === "gestion_convenios_corporativos" || widgetActivo === "convenios_corporativos" || widgetActivo === "convenios") && (
+              <div style={{ width: "100%" }}>
+                <GestionConveniosCorporativos negocio={negocio} />
               </div>
             )}
 

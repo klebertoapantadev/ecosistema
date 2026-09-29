@@ -160,7 +160,7 @@ export function NavegacionSidebar({
             panel_red_profesional: ["socios", "solicitud_socio"],
             panel_terminos: ["gestion_terminos_consentimientos"],
             panel_agendamiento: ["asignaciones_agenda"],
-            panel_administrar: ["historial_pagos", "emision_notificaciones", "bitacora_notificaciones"],
+            panel_administrar: ["gestion_convenios_corporativos", "historial_pagos", "emision_notificaciones", "bitacora_notificaciones"],
             panel_herramientas: ["catalogo_productos", "firma_documentos_pdf", "billetera_documentos"],
             panel_seguridad: ["mfa_seguridad"]
           };
@@ -179,7 +179,7 @@ export function NavegacionSidebar({
             panel_red_profesional: ["socios", "solicitud_socio"],
             panel_terminos: ["gestion_terminos_consentimientos"],
             panel_agendamiento: ["asignaciones_agenda"],
-            panel_administrar: ["historial_pagos", "emision_notificaciones", "bitacora_notificaciones", "perfiles", "auditoria"],
+            panel_administrar: ["gestion_convenios_corporativos", "historial_pagos", "emision_notificaciones", "bitacora_notificaciones", "perfiles", "auditoria"],
             panel_herramientas: ["catalogo_productos", "firma_documentos_pdf", "billetera_documentos"],
             panel_configuracion: ["configuracion_negocio", "configuracion_correo", "pasarela_payphone", "perfiles", "agentes_ia", "notificaciones"],
             panel_seguridad: ["mfa_seguridad", "auditoria"]

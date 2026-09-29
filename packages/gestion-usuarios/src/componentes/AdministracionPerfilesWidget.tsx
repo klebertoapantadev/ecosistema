@@ -276,7 +276,7 @@ const PERFILES_INICIALES: PerfilDef[] = [
       panel_red_profesional: ["socios", "solicitud_socio"],
       panel_terminos: ["gestion_terminos_consentimientos", "configuracion_contrato_abogado"],
       panel_agendamiento: ["asignaciones_agenda"],
-      panel_administrar: ["historial_pagos", "emision_notificaciones", "bitacora_notificaciones"],
+      panel_administrar: ["historial_pagos", "emision_notificaciones", "bitacora_notificaciones", "gestion_convenios_corporativos"],
       panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos"],
       panel_herramientas: ["catalogo_productos", "firma_documentos_pdf", "billetera_documentos"],
       panel_configuracion: ["notificaciones", "agentes_ia"]
@@ -313,7 +313,7 @@ const PERFILES_INICIALES: PerfilDef[] = [
       panel_red_profesional: ["socios", "solicitud_socio"],
       panel_terminos: ["gestion_terminos_consentimientos", "configuracion_contrato_abogado"],
       panel_agendamiento: ["asignaciones_agenda"],
-      panel_administrar: ["historial_pagos", "emision_notificaciones", "bitacora_notificaciones", "perfiles", "auditoria"],
+      panel_administrar: ["historial_pagos", "emision_notificaciones", "bitacora_notificaciones", "gestion_convenios_corporativos", "perfiles", "auditoria"],
       panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos"],
       panel_herramientas: ["catalogo_productos", "firma_documentos_pdf", "billetera_documentos"],
       panel_configuracion: ["configuracion_negocio", "configuracion_correo", "pasarela_payphone", "perfiles", "agentes_ia", "notificaciones"]
@@ -333,7 +333,7 @@ const PERFILES_INICIALES: PerfilDef[] = [
       panel_red_profesional: ["socios", "solicitud_socio"],
       panel_terminos: ["gestion_terminos_consentimientos", "configuracion_contrato_abogado"],
       panel_agendamiento: ["asignaciones_agenda"],
-      panel_administrar: ["historial_pagos", "emision_notificaciones", "bitacora_notificaciones", "perfiles", "auditoria"],
+      panel_administrar: ["historial_pagos", "emision_notificaciones", "bitacora_notificaciones", "gestion_convenios_corporativos", "perfiles", "auditoria"],
       panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos"],
       panel_herramientas: ["catalogo_productos", "firma_documentos_pdf", "billetera_documentos"],
       panel_configuracion: ["configuracion_negocio", "configuracion_correo", "pasarela_payphone", "perfiles", "agentes_ia", "notificaciones"]
@@ -374,11 +374,7 @@ export const MATRIZ_FUNCIONAL_ROLES: Record<string, { paneles: string[]; widgets
       panel_red_profesional: ["socios", "solicitud_socio"],
       panel_terminos: ["gestion_terminos_consentimientos", "configuracion_contrato_abogado"],
       panel_agendamiento: ["asignaciones_agenda"],
-      panel_administrar: [
-        "historial_pagos",
-        "emision_notificaciones",
-        "bitacora_notificaciones"
-      ],
+      panel_administrar: ["historial_pagos", "emision_notificaciones", "bitacora_notificaciones", "gestion_convenios_corporativos"],
       panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos"],
       panel_herramientas: ["catalogo_productos", "firma_documentos_pdf", "billetera_documentos"],
       panel_configuracion: ["notificaciones", "agentes_ia"]
@@ -392,13 +388,7 @@ export const MATRIZ_FUNCIONAL_ROLES: Record<string, { paneles: string[]; widgets
       panel_red_profesional: ["socios", "solicitud_socio"],
       panel_terminos: ["gestion_terminos_consentimientos", "configuracion_contrato_abogado"],
       panel_agendamiento: ["asignaciones_agenda"],
-      panel_administrar: [
-        "historial_pagos",
-        "emision_notificaciones",
-        "bitacora_notificaciones",
-        "perfiles",
-        "auditoria"
-      ],
+      panel_administrar: ["historial_pagos", "emision_notificaciones", "bitacora_notificaciones", "gestion_convenios_corporativos", "perfiles", "auditoria"],
       panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos"],
       panel_herramientas: ["catalogo_productos", "firma_documentos_pdf", "billetera_documentos"],
       panel_configuracion: ["configuracion_negocio", "configuracion_correo", "pasarela_payphone", "perfiles", "agentes_ia", "notificaciones"]
@@ -412,13 +402,7 @@ export const MATRIZ_FUNCIONAL_ROLES: Record<string, { paneles: string[]; widgets
       panel_red_profesional: ["socios", "solicitud_socio"],
       panel_terminos: ["gestion_terminos_consentimientos", "configuracion_contrato_abogado"],
       panel_agendamiento: ["asignaciones_agenda"],
-      panel_administrar: [
-        "historial_pagos",
-        "emision_notificaciones",
-        "bitacora_notificaciones",
-        "perfiles",
-        "auditoria"
-      ],
+      panel_administrar: ["historial_pagos", "emision_notificaciones", "bitacora_notificaciones", "gestion_convenios_corporativos", "perfiles", "auditoria"],
       panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos"],
       panel_herramientas: ["catalogo_productos", "firma_documentos_pdf", "billetera_documentos"],
       panel_configuracion: ["configuracion_negocio", "configuracion_correo", "pasarela_payphone", "perfiles", "agentes_ia", "notificaciones"]
@@ -427,6 +411,17 @@ export const MATRIZ_FUNCIONAL_ROLES: Record<string, { paneles: string[]; widgets
 };
 
 const WIDGETS_INVENTARIO_INICIALES: WidgetInventarioDef[] = [
+  {
+    clave: "gestion_convenios_corporativos",
+    nombre: "Convenios y Beneficios Corporativos",
+    descripcion: "Administración de empresas asociadas, paquetes de beneficios B2B, reglas de descuento y nómina de colaboradores.",
+    categoria: "Operaciones",
+    ruta: "/panel/administrar?widget=gestion_convenios_corporativos",
+    rutaFisica: "/comercio/componentes/GestionConveniosCorporativos.tsx",
+    panelId: "panel_administrar",
+    activo: true,
+    creadoEn: "2026-09-29"
+  },
   {
     clave: "favoritos",
     nombre: "Gestor de Accesos Rápidos & Favoritos",
