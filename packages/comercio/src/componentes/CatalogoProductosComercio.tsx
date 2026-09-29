@@ -59,7 +59,9 @@ import { ModalCrearCategoria } from "./ModalCrearCategoria";
 import { ModalEditarProducto, PALETA_COLORES_VARIANTES } from "./ModalEditarProducto";
 import { ManualConfiguracionCatalogoModal } from "./ManualConfiguracionCatalogoModal";
 import { TableroDisponibilidadOperativa } from "./TableroDisponibilidadOperativa";
-import { BookOpen, Flower2, Wrench, Activity, LayoutGrid } from "lucide-react";
+import { GestionConveniosCorporativos } from "./GestionConveniosCorporativos";
+import { VitrinaComercialVisual } from "./VitrinaComercialVisual";
+import { BookOpen, Flower2, Wrench, Activity, LayoutGrid, Users } from "lucide-react";
 import { detectarTipoNegocio } from "../utils/negocio";
 
 interface Props {
@@ -69,7 +71,7 @@ interface Props {
 export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
   const { esFloristeria, esLegal, esMantenimiento } = detectarTipoNegocio(negocio);
 
-  const [pestanaActiva, setPestanaActiva] = useState<"catalogo" | "disponibilidad">("catalogo");
+  const [pestanaActiva, setPestanaActiva] = useState<"catalogo" | "disponibilidad" | "convenios" | "empresas">("catalogo");
   const [modoVista, setModoVista] = useState<"admin" | "cliente">("admin");
   const [videoModalUrl, setVideoModalUrl] = useState<string | null>(null);
 
@@ -119,8 +121,8 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
       const urlCat = params.get("categoria");
       const urlCanal = params.get("canal");
 
-      if (urlPestana === "catalogo" || urlPestana === "disponibilidad") {
-        setPestanaActiva(urlPestana);
+      if (urlPestana === "catalogo" || urlPestana === "disponibilidad" || urlPestana === "convenios" || urlPestana === "empresas") {
+        setPestanaActiva(urlPestana as any);
       }
       if (urlModo === "admin" || urlModo === "cliente") {
         setModoVista(urlModo);
@@ -626,7 +628,7 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
         </div>
       </div>
 
-      {/* Selector de Pestaña: Catálogo vs Disponibilidad Operativa */}
+      {/* Selector de Pestaña: Catálogo vs Empresas vs Convenios vs Disponibilidad */}
       <div
         style={{
           display: "flex",
@@ -634,6 +636,7 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
           borderBottom: "1px solid #E2E8F0",
           marginBottom: "20px",
           paddingBottom: "8px",
+          flexWrap: "wrap",
         }}
       >
         <button
@@ -655,8 +658,56 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
           }}
         >
           <LayoutGrid size={15} />
-          <span>{esFloristeria ? "Catálogo y Diseños" : esMantenimiento ? "Servicios y Tarifas" : "Honorarios y Planes"}</span>
+          <span>{esFloristeria ? "Catálogo y Diseños" : esMantenimiento ? "Servicios y Tarifas" : "Honorarios y Planes (General)"}</span>
         </button>
+
+        {esLegal && (
+          <>
+            <button
+              type="button"
+              onClick={() => setPestanaActiva("empresas")}
+              style={{
+                background: pestanaActiva === "empresas" ? "#5000BA" : "transparent",
+                color: pestanaActiva === "empresas" ? "#FFFFFF" : "#64748B",
+                border: "none",
+                padding: "8px 16px",
+                borderRadius: "8px",
+                fontSize: "0.85rem",
+                fontWeight: 700,
+                cursor: "pointer",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+                transition: "all 0.15s ease",
+              }}
+            >
+              <Building2 size={15} />
+              <span>Oferta Corporativa & Empresas</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setPestanaActiva("convenios")}
+              style={{
+                background: pestanaActiva === "convenios" ? "#05876E" : "transparent",
+                color: pestanaActiva === "convenios" ? "#FFFFFF" : "#64748B",
+                border: "none",
+                padding: "8px 16px",
+                borderRadius: "8px",
+                fontSize: "0.85rem",
+                fontWeight: 700,
+                cursor: "pointer",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+                transition: "all 0.15s ease",
+              }}
+            >
+              <Users size={15} />
+              <span>Convenios B2B & SATCOM</span>
+            </button>
+          </>
+        )}
 
         <button
           type="button"
@@ -687,7 +738,15 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
         </button>
       </div>
 
-      {pestanaActiva === "disponibilidad" ? (
+      {pestanaActiva === "convenios" ? (
+        <div style={{ width: "100%" }}>
+          <GestionConveniosCorporativos negocio={negocio} />
+        </div>
+      ) : pestanaActiva === "empresas" ? (
+        <div style={{ width: "100%" }}>
+          <VitrinaComercialVisual negocio={negocio} filtroAudiencia="empresas" />
+        </div>
+      ) : pestanaActiva === "disponibilidad" ? (
         <TableroDisponibilidadOperativa negocio={negocio} />
       ) : (
         <>
