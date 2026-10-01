@@ -15,7 +15,7 @@ import { WidgetNotificacionesCliente } from "@eco/notificaciones";
 import { obtenerSolicitudPropia } from "../../modulos/socios/consultas";
 import { ConsolaSuperAdminModular } from "./ConsolaSuperAdminModular";
 import { TarjetaEstadoSolicitudHome } from "./TarjetaEstadoSolicitudHome";
-import { SeccionCoberturaCliente, obtenerCoberturaUsuarioAction } from "@eco/comercio";
+import { SeccionCoberturaCliente, obtenerCoberturaUsuarioAction, TarjetaBeneficiosCorporativosCliente } from "@eco/comercio";
 import { MenuCuenta } from "./MenuCuenta";
 import { obtenerResumenInicioCliente, type DocumentoBilletera } from "../../modulos/inicio-cliente/consultas";
 import { CifraQueCuenta } from "../../modulos/inicio-cliente/componentes/CifraQueCuenta";
@@ -239,6 +239,9 @@ async function PanelCliente({ saludo, nombre, usuarioId }: { saludo: string | nu
 
       <div className="rejilla-cliente">
         <div className="columna-cliente">
+          {/* Si el usuario pertenece a una empresa aliada con convenio B2B (SATCOM, etc.), muestra sus beneficios corporativos */}
+          <TarjetaBeneficiosCorporativosCliente negocio="tranqi" ocultarSiNoTiene={true} variante="completa" />
+
           {/* Si NO tiene plan activo, presenta PRIMERO el panel de planes y servicios (por defecto en Planes) */}
           {!tienePlanActivo && (
             <RejillaPlanes negocio="tranqi" filtroInicial="planes" />

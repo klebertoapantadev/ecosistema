@@ -17,6 +17,7 @@ export * from "./componentes/ModalHistorialUsoPlan";
 export * from "./componentes/CarruselProductosCliente";
 export * from "./componentes/ModalGaleriaMedios";
 export * from "./componentes/GestionConveniosCorporativos";
+export * from "./componentes/TarjetaBeneficiosCorporativosCliente";
 export * from "./acciones-convenios";
 export * from "./utils/negocio";
 

@@ -274,7 +274,7 @@ const PERFILES_INICIALES: PerfilDef[] = [
     panelesAsignados: ["panel_inicio", "panel_clientes", "panel_empresas", "panel_agendamiento", "panel_cuenta", "panel_herramientas", "panel_configuracion"],
     widgetsAsignadosPorPanel: {
       panel_inicio: ["favoritos"],
-      panel_clientes: ["vitrina_comercial_personas", "agendar_cita", "mis_citas", "billetera_documentos", "firma_documentos_pdf"],
+      panel_clientes: ["mis_beneficios_corporativos", "vitrina_comercial_personas", "agendar_cita", "mis_citas", "billetera_documentos", "firma_documentos_pdf"],
       panel_empresas: ["vitrina_comercial_empresas", "gestion_convenios_corporativos", "billetera_documentos", "firma_documentos_pdf"],
       panel_agendamiento: ["agendar_cita", "mis_citas"],
       panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos", "historial_pagos"],
@@ -292,7 +292,7 @@ const PERFILES_INICIALES: PerfilDef[] = [
     panelesAsignados: ["panel_inicio", "panel_clientes", "panel_empresas", "panel_usuarios", "panel_red_profesional", "panel_terminos", "panel_agendamiento", "panel_administrar", "panel_cuenta", "panel_herramientas", "panel_configuracion"],
     widgetsAsignadosPorPanel: {
       panel_inicio: ["favoritos"],
-      panel_clientes: ["vitrina_comercial_personas", "crm_clientes", "agendar_cita", "mis_citas", "billetera_documentos", "firma_documentos_pdf"],
+      panel_clientes: ["mis_beneficios_corporativos", "vitrina_comercial_personas", "crm_clientes", "agendar_cita", "mis_citas", "billetera_documentos", "firma_documentos_pdf"],
       panel_empresas: ["vitrina_comercial_empresas", "gestion_convenios_corporativos", "crm_clientes", "billetera_documentos", "firma_documentos_pdf"],
       panel_usuarios: ["consulta_usuarios_perfiles", "crm_clientes", "monitoreo_notificaciones_usuarios"],
       panel_red_profesional: ["socios", "solicitud_socio"],
@@ -314,7 +314,7 @@ const PERFILES_INICIALES: PerfilDef[] = [
     panelesAsignados: ["panel_inicio", "panel_clientes", "panel_empresas", "panel_usuarios", "panel_agendamiento", "panel_cuenta", "panel_herramientas", "panel_configuracion"],
     widgetsAsignadosPorPanel: {
       panel_inicio: ["favoritos"],
-      panel_clientes: ["vitrina_comercial_personas", "crm_clientes", "billetera_documentos", "firma_documentos_pdf"],
+      panel_clientes: ["mis_beneficios_corporativos", "vitrina_comercial_personas", "crm_clientes", "billetera_documentos", "firma_documentos_pdf"],
       panel_empresas: ["vitrina_comercial_empresas", "gestion_convenios_corporativos", "crm_clientes", "billetera_documentos", "firma_documentos_pdf"],
       panel_usuarios: ["crm_clientes"],
       panel_agendamiento: ["disponibilidad_abogados", "citas_programadas", "disponibilidad", "asignaciones_agenda"],
@@ -333,7 +333,7 @@ const PERFILES_INICIALES: PerfilDef[] = [
     panelesAsignados: ["panel_inicio", "panel_clientes", "panel_empresas", "panel_usuarios", "panel_red_profesional", "panel_terminos", "panel_agendamiento", "panel_administrar", "panel_cuenta", "panel_herramientas", "panel_configuracion"],
     widgetsAsignadosPorPanel: {
       panel_inicio: ["favoritos"],
-      panel_clientes: ["vitrina_comercial_personas", "crm_clientes", "agendar_cita", "mis_citas", "billetera_documentos", "firma_documentos_pdf"],
+      panel_clientes: ["mis_beneficios_corporativos", "vitrina_comercial_personas", "crm_clientes", "agendar_cita", "mis_citas", "billetera_documentos", "firma_documentos_pdf"],
       panel_empresas: ["vitrina_comercial_empresas", "gestion_convenios_corporativos", "crm_clientes", "billetera_documentos", "firma_documentos_pdf"],
       panel_usuarios: ["gestion_usuarios", "consulta_usuarios_perfiles", "crm_clientes", "monitoreo_notificaciones_usuarios"],
       panel_red_profesional: ["socios", "solicitud_socio"],

@@ -61,6 +61,7 @@ import { ManualConfiguracionCatalogoModal } from "./ManualConfiguracionCatalogoM
 import { TableroDisponibilidadOperativa } from "./TableroDisponibilidadOperativa";
 import { GestionConveniosCorporativos } from "./GestionConveniosCorporativos";
 import { VitrinaComercialVisual } from "./VitrinaComercialVisual";
+import { TarjetaBeneficiosCorporativosCliente } from "./TarjetaBeneficiosCorporativosCliente";
 import { BookOpen, Flower2, Wrench, Activity, LayoutGrid, Users } from "lucide-react";
 import { detectarTipoNegocio } from "../utils/negocio";
 
@@ -626,6 +627,11 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
             <span className="btn-texto-responsive">Actualizar</span>
           </button>
         </div>
+      </div>
+
+      {/* Banner Compacto de Beneficios Corporativos (si el cliente está vinculado a un convenio) */}
+      <div style={{ marginBottom: "18px" }}>
+        <TarjetaBeneficiosCorporativosCliente negocio={negocio} ocultarSiNoTiene={true} variante="banner_compacto" />
       </div>
 
       {/* Selector de Pestaña: Catálogo vs Empresas vs Convenios vs Disponibilidad */}

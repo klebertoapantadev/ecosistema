@@ -5,7 +5,7 @@ import Link from "next/link";
 import {
   LayoutGrid, Wrench, Shield, Users, Bell, UserCog, ClipboardList, FileText,
   Settings, ChevronRight, CircleUser, KeyRound, FileCheck, Folder, type LucideIcon,
-  Bot, ShoppingBag, CreditCard, Receipt, Share2, CheckCircle2, Sparkles, Building2, Scale
+  Bot, ShoppingBag, CreditCard, Receipt, Share2, CheckCircle2, Sparkles, Building2, Scale, Gift
 } from "lucide-react";
 import { useWidgetEnUrl } from "../useWidgetEnUrl";
 import { BotonVolverWidget } from "../BotonVolverWidget";
@@ -31,6 +31,7 @@ import {
   HistorialTransaccionesPago,
   GestionConveniosCorporativos,
   TableroDisponibilidadOperativa,
+  TarjetaBeneficiosCorporativosCliente,
 } from "@eco/comercio";
 import { SociosWidget } from "../administrar/PanelAdministrarModular";
 import { ConfiguracionContratoAbogadoWidget } from "@/modulos/socios/componentes/ConfiguracionContratoAbogadoWidget";
@@ -312,6 +313,13 @@ const INVENTARIO_GLOBAL_WIDGETS: Record<string, { titulo: string; subtitulo: str
     colorIcono: "#05876E",
     categoria: "Comercio & B2B"
   },
+  mis_beneficios_corporativos: {
+    titulo: "Mis Beneficios Corporativos & Convenio",
+    subtitulo: "Consultas telemáticas gratuitas ($0.00) y descuentos corporativos activos por convenio empresarial",
+    icono: Gift,
+    colorIcono: "#05876E",
+    categoria: "Comercio Personas"
+  },
   disponibilidad_abogados: {
     titulo: "Disponibilidad de Abogados & Turnos",
     subtitulo: "Control de horas disponibles por especialista. Postulación preliminar y aprobación con sincronización ARIA",
@@ -485,7 +493,7 @@ function obtenerWidgetsInicialesDinamicos(panelId: string, slugStr: string, rolD
   const esPanelConf = panelId === "panel_configuracion" || slugNorm === "configuracion";
 
   if (rolActivo === "OPERADOR" || rolActivo === "AUXILIAR" || rolActivo === "TECNICO") {
-    if (esPanelClientes) return ["vitrina_comercial_personas", "crm_clientes", "agendar_cita", "mis_citas", "billetera_documentos", "firma_documentos_pdf"];
+    if (esPanelClientes) return ["mis_beneficios_corporativos", "vitrina_comercial_personas", "crm_clientes", "agendar_cita", "mis_citas", "billetera_documentos", "firma_documentos_pdf"];
     if (esPanelEmpresas) return ["vitrina_comercial_empresas", "gestion_convenios_corporativos", "crm_clientes", "billetera_documentos", "firma_documentos_pdf"];
     if (esPanelUsuarios) return ["consulta_usuarios_perfiles", "crm_clientes", "monitoreo_notificaciones_usuarios"];
     if (esPanelRed) return ["socios", "solicitud_socio"];
@@ -496,7 +504,7 @@ function obtenerWidgetsInicialesDinamicos(panelId: string, slugStr: string, rolD
     if (esPanelSeg) return ["mfa_seguridad"];
     if (esPanelCuenta) return ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos"];
   } else if (rolActivo === "ADMINISTRADOR" || rolActivo === "SUPERADMIN") {
-    if (esPanelClientes) return ["vitrina_comercial_personas", "crm_clientes", "agendar_cita", "mis_citas", "billetera_documentos", "firma_documentos_pdf"];
+    if (esPanelClientes) return ["mis_beneficios_corporativos", "vitrina_comercial_personas", "crm_clientes", "agendar_cita", "mis_citas", "billetera_documentos", "firma_documentos_pdf"];
     if (esPanelEmpresas) return ["vitrina_comercial_empresas", "gestion_convenios_corporativos", "crm_clientes", "billetera_documentos", "firma_documentos_pdf"];
     if (esPanelUsuarios) return ["gestion_usuarios", "consulta_usuarios_perfiles", "crm_clientes", "monitoreo_notificaciones_usuarios"];
     if (esPanelRed) return ["socios", "solicitud_socio"];
@@ -508,7 +516,7 @@ function obtenerWidgetsInicialesDinamicos(panelId: string, slugStr: string, rolD
     if (esPanelConf) return ["configuracion_negocio", "configuracion_correo", "pasarela_payphone", "perfiles", "agentes_ia", "notificaciones"];
     if (esPanelCuenta) return ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos"];
   } else if (rolActivo === "ABOGADO") {
-    if (esPanelClientes) return ["vitrina_comercial_personas", "crm_clientes", "billetera_documentos", "firma_documentos_pdf"];
+    if (esPanelClientes) return ["mis_beneficios_corporativos", "vitrina_comercial_personas", "crm_clientes", "billetera_documentos", "firma_documentos_pdf"];
     if (esPanelEmpresas) return ["vitrina_comercial_empresas", "gestion_convenios_corporativos", "crm_clientes", "billetera_documentos", "firma_documentos_pdf"];
     if (esPanelUsuarios) return ["crm_clientes"];
     if (esPanelAgenda) return ["disponibilidad_abogados", "citas_programadas", "disponibilidad", "asignaciones_agenda"];
@@ -517,7 +525,7 @@ function obtenerWidgetsInicialesDinamicos(panelId: string, slugStr: string, rolD
     if (esPanelConf) return ["notificaciones"];
   } else {
     // ROL CLIENTE: Acceso a ofertas diferenciadas y sus herramientas
-    if (esPanelClientes) return ["vitrina_comercial_personas", "agendar_cita", "mis_citas", "billetera_documentos", "firma_documentos_pdf"];
+    if (esPanelClientes) return ["mis_beneficios_corporativos", "vitrina_comercial_personas", "agendar_cita", "mis_citas", "billetera_documentos", "firma_documentos_pdf"];
     if (esPanelEmpresas) return ["vitrina_comercial_empresas", "gestion_convenios_corporativos", "billetera_documentos", "firma_documentos_pdf"];
     if (esPanelAgenda) return ["agendar_cita", "mis_citas"];
     if (esPanelHerr) return ["vitrina_comercial", "firma_documentos_pdf", "billetera_documentos", "solicitud_socio"];
@@ -771,6 +779,10 @@ export function PanelDinamicoModular({ slug, negocio, rolInicial = "ADMINISTRADO
       case "convenios_corporativos":
       case "convenios":
         return <GestionConveniosCorporativos negocio={negocio} />;
+      case "mis_beneficios_corporativos":
+      case "beneficios_corporativos":
+      case "beneficios_cliente":
+        return <TarjetaBeneficiosCorporativosCliente negocio={negocio} />;
       case "disponibilidad_abogados":
       case "disponibilidad_operativa":
         return <TableroDisponibilidadOperativa negocio={negocio} />;

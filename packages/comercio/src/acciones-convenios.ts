@@ -455,3 +455,101 @@ export async function eliminarConvenioEmpresaAction(
     return { ok: false, error: err.message || "Error al eliminar el convenio." };
   }
 }
+
+export interface BeneficiosCorporativosUsuario {
+  tieneConvenio: boolean;
+  convenioId?: string;
+  empresaNombre?: string;
+  empresaRuc?: string;
+  dominioCorreo?: string;
+  consultasGratisTotal: number;
+  consultasDisponibles: number;
+  descuentoGeneralPct: number;
+  excepcionesPorProducto: ReglaDescuentoProducto[];
+  validoHasta?: string | null;
+}
+
+/**
+ * Consulta y auto-afilia los beneficios corporativos de un usuario según su correo y convenios B2B activos
+ */
+export async function obtenerBeneficiosCorporativosUsuarioAction(
+  negocio = "tranqi"
+): Promise<BeneficiosCorporativosUsuario> {
+  const respuestaVacia: BeneficiosCorporativosUsuario = {
+    tieneConvenio: false,
+    consultasGratisTotal: 0,
+    consultasDisponibles: 0,
+    descuentoGeneralPct: 0,
+    excepcionesPorProducto: [],
+  };
+
+  try {
+    const { principal } = normalizarIdentificadorNegocio(negocio);
+    let supabase: any = null;
+    try { supabase = await crearClienteServidor(); } catch {}
+    if (!supabase) return respuestaVacia;
+
+    const { data: { user } } = await supabase.auth.getUser();
+    const email = user?.email?.toLowerCase().trim() || "";
+    if (!email) return respuestaVacia;
+
+    // 1. Probar RPC en Supabase
+    try {
+      const { data: rpcRes, error: rpcErr } = await supabase
+        .schema("comun_comercio")
+        .rpc("com_fn_verificar_y_autoafiliar_usuario_convenio", {
+          p_usuario_id: user.id,
+          p_correo: email,
+          p_negocio: principal,
+        });
+
+      if (!rpcErr && rpcRes && rpcRes.tiene_convenio) {
+        return {
+          tieneConvenio: true,
+          convenioId: rpcRes.convenio_id,
+          empresaNombre: rpcRes.empresa_nombre,
+          empresaRuc: rpcRes.empresa_ruc,
+          dominioCorreo: rpcRes.dominio,
+          consultasGratisTotal: rpcRes.consultas_gratis_total || 2,
+          consultasDisponibles: rpcRes.consultas_disponibles || 2,
+          descuentoGeneralPct: rpcRes.descuento_general_pct || 15,
+          excepcionesPorProducto: rpcRes.excepciones_por_producto || [],
+          validoHasta: rpcRes.valido_hasta,
+        };
+      }
+    } catch {}
+
+    // 2. Fallback: Comparar con convenios activos
+    const convenios = await obtenerConveniosEmpresaAction(principal);
+    const dominioUsuario = email.includes("@") ? email.substring(email.indexOf("@")) : "";
+
+    const convenioEncontrado = convenios.find((c) => {
+      if (!c.cve_activo) return false;
+      const domCve = (c.cve_dominio_correo || "").toLowerCase().trim();
+      const dominiosAut = (c.cve_detalle_convenio?.dominios_autorizados || []).map((d: string) => d.toLowerCase().trim());
+      return domCve === dominioUsuario || domCve === `@${dominioUsuario}` || dominiosAut.includes(dominioUsuario) || dominiosAut.includes(`@${dominioUsuario}`);
+    });
+
+    if (convenioEncontrado) {
+      const paquete = convenioEncontrado.cve_detalle_convenio?.paquete_beneficios;
+      return {
+        tieneConvenio: true,
+        convenioId: convenioEncontrado.cve_id,
+        empresaNombre: convenioEncontrado.cve_empresa_nombre,
+        empresaRuc: convenioEncontrado.cve_empresa_ruc,
+        dominioCorreo: convenioEncontrado.cve_dominio_correo,
+        consultasGratisTotal: paquete?.bolsa_derechos?.consultas_telematicas?.cupos_incluidos || 2,
+        consultasDisponibles: paquete?.bolsa_derechos?.consultas_telematicas?.cupos_incluidos || 2,
+        descuentoGeneralPct: paquete?.reglas_descuento?.descuento_general_servicios_pct || 15,
+        excepcionesPorProducto: paquete?.reglas_descuento?.excepciones_por_producto || [],
+        validoHasta: convenioEncontrado.cve_valido_hasta,
+      };
+    }
+
+    return respuestaVacia;
+  } catch (err) {
+    console.error("Error al obtener beneficios corporativos del usuario:", err);
+    return respuestaVacia;
+  }
+}
+
