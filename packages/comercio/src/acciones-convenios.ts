@@ -123,7 +123,7 @@ export async function obtenerConveniosEmpresaAction(
   negocio = "tranqi"
 ): Promise<ConvenioEmpresa[]> {
   try {
-    const { principal } = normalizarIdentificadorNegocio(negocio);
+    const { principal, variantes } = normalizarIdentificadorNegocio(negocio);
     let admin: any = null;
     let supabase: any = null;
     try { admin = crearClienteAdmin(); } catch {}
@@ -137,7 +137,7 @@ export async function obtenerConveniosEmpresaAction(
           .schema("comun_comercio")
           .from("com_convenio_empresa")
           .select("*, com_beneficiario_empresa(count)")
-          .eq("cve_negocio", principal)
+          .in("cve_negocio", [principal, ...variantes])
           .order("cve_creado_en", { ascending: false });
 
         if (!error && Array.isArray(data) && data.length > 0) {
@@ -151,7 +151,7 @@ export async function obtenerConveniosEmpresaAction(
           const { data } = await clienteActivo
             .from("com_convenio_empresa")
             .select("*")
-            .eq("cve_negocio", principal);
+            .in("cve_negocio", [principal, ...variantes]);
           if (Array.isArray(data) && data.length > 0) conveniosDb = data;
         } catch {}
       }
@@ -160,16 +160,15 @@ export async function obtenerConveniosEmpresaAction(
     const enMemoria = storeConveniosMemoria.get(principal) || (principal === "tranqi" ? [CONVENIO_SATCOM_BASE] : []);
 
     if (conveniosDb.length > 0) {
-      // Combinar con memoria
-      const idsDb = new Set(conveniosDb.map((c) => c.cve_id));
-      const extras = enMemoria.filter((c) => !idsDb.has(c.cve_id));
-      return [...conveniosDb, ...extras];
+      // Sincronizar memoria con lo que viene de la BDD
+      storeConveniosMemoria.set(principal, conveniosDb);
+      return conveniosDb;
     }
 
     return enMemoria;
   } catch (err) {
     console.error("Error al obtener convenios:", err);
-    return [CONVENIO_SATCOM_BASE];
+    return storeConveniosMemoria.get("tranqi") || [CONVENIO_SATCOM_BASE];
   }
 }
 
@@ -180,7 +179,7 @@ export async function guardarConvenioEmpresaAction(
   datos: Partial<ConvenioEmpresa> & { negocio?: string }
 ): Promise<{ ok: boolean; error?: string; convenio?: ConvenioEmpresa }> {
   try {
-    const { principal } = normalizarIdentificadorNegocio(datos.negocio);
+    const { principal, variantes } = normalizarIdentificadorNegocio(datos.negocio);
     const negocio = principal;
     const nombre = (datos.cve_empresa_nombre || "").trim();
 
@@ -188,7 +187,9 @@ export async function guardarConvenioEmpresaAction(
       return { ok: false, error: "El nombre de la empresa es obligatorio." };
     }
 
-    const cveId = datos.cve_id || `cve-${Date.now()}`;
+    let cveId = datos.cve_id || "";
+    const esUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(cveId);
+
     const detalleConvenio = datos.cve_detalle_convenio || {
       paquete_beneficios: {
         bolsa_derechos: {
@@ -209,6 +210,34 @@ export async function guardarConvenioEmpresaAction(
       auto_afiliacion_dominio: true,
     };
 
+    let admin: any = null;
+    let supabase: any = null;
+    try { admin = crearClienteAdmin(); } catch {}
+    try { supabase = await crearClienteServidor(); } catch {}
+    const clienteActivo = admin || supabase;
+
+    // Si no tenemos UUID, buscar si ya existe en Supabase por negocio + nombre / RUC
+    if (clienteActivo && !esUuid) {
+      try {
+        const { data: existente } = await clienteActivo
+          .schema("comun_comercio")
+          .from("com_convenio_empresa")
+          .select("cve_id")
+          .in("cve_negocio", [principal, ...variantes])
+          .ilike("cve_empresa_nombre", nombre)
+          .limit(1)
+          .maybeSingle();
+
+        if (existente?.cve_id) {
+          cveId = existente.cve_id;
+        }
+      } catch {}
+    }
+
+    if (!cveId) {
+      cveId = `cve-${Date.now()}`;
+    }
+
     const convenioActualizado: ConvenioEmpresa = {
       cve_id: cveId,
       cve_negocio: negocio,
@@ -226,12 +255,6 @@ export async function guardarConvenioEmpresaAction(
     };
 
     // 1. Persistir en Supabase
-    let admin: any = null;
-    let supabase: any = null;
-    try { admin = crearClienteAdmin(); } catch {}
-    try { supabase = await crearClienteServidor(); } catch {}
-    const clienteActivo = admin || supabase;
-
     if (clienteActivo) {
       const payloadRpc = {
         cve_id: /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(cveId) ? cveId : null,
@@ -271,26 +294,56 @@ export async function guardarConvenioEmpresaAction(
 
       if (!rpcOk) {
         try {
-          await clienteActivo
-            .schema("comun_comercio")
-            .from("com_convenio_empresa")
-            .upsert({
-              cve_negocio: negocio,
-              cve_empresa_nombre: nombre,
-              cve_empresa_ruc: datos.cve_empresa_ruc,
-              cve_dominio_correo: datos.cve_dominio_correo,
-              cve_monto_bono_inicial: datos.cve_monto_bono_inicial || 0,
-              cve_activo: datos.cve_activo !== false,
-              cve_valido_hasta: datos.cve_valido_hasta,
-              cve_detalle_convenio: detalleConvenio,
-            });
+          const idEsUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(cveId);
+          if (idEsUuid) {
+            await clienteActivo
+              .schema("comun_comercio")
+              .from("com_convenio_empresa")
+              .update({
+                cve_empresa_nombre: nombre,
+                cve_empresa_ruc: datos.cve_empresa_ruc,
+                cve_dominio_correo: datos.cve_dominio_correo,
+                cve_monto_bono_inicial: datos.cve_monto_bono_inicial || 0,
+                cve_activo: datos.cve_activo !== false,
+                cve_valido_hasta: datos.cve_valido_hasta,
+                cve_detalle_convenio: detalleConvenio,
+              })
+              .eq("cve_id", cveId);
+          } else {
+            const { data: insData } = await clienteActivo
+              .schema("comun_comercio")
+              .from("com_convenio_empresa")
+              .insert({
+                cve_negocio: negocio,
+                cve_empresa_nombre: nombre,
+                cve_empresa_ruc: datos.cve_empresa_ruc,
+                cve_dominio_correo: datos.cve_dominio_correo,
+                cve_monto_bono_inicial: datos.cve_monto_bono_inicial || 0,
+                cve_porcentaje_subsidio: 100,
+                cve_activo: datos.cve_activo !== false,
+                cve_valido_hasta: datos.cve_valido_hasta,
+                cve_detalle_convenio: detalleConvenio,
+              })
+              .select("cve_id")
+              .single();
+
+            if (insData?.cve_id) {
+              convenioActualizado.cve_id = insData.cve_id;
+            }
+          }
         } catch {}
       }
     }
 
-    // 2. Actualizar en memoria
+    // 2. Actualizar en memoria (reemplazando cualquier versión previa por ID o Nombre)
     const actuales = storeConveniosMemoria.get(negocio) || (negocio === "tranqi" ? [CONVENIO_SATCOM_BASE] : []);
-    const idx = actuales.findIndex((c) => c.cve_id === convenioActualizado.cve_id || c.cve_empresa_nombre.toLowerCase() === nombre.toLowerCase());
+    const idx = actuales.findIndex(
+      (c) =>
+        c.cve_id === convenioActualizado.cve_id ||
+        (datos.cve_id && c.cve_id === datos.cve_id) ||
+        c.cve_empresa_nombre.toLowerCase() === nombre.toLowerCase()
+    );
+
     if (idx >= 0) {
       actuales[idx] = convenioActualizado;
     } else {
@@ -299,6 +352,7 @@ export async function guardarConvenioEmpresaAction(
     storeConveniosMemoria.set(negocio, actuales);
 
     try {
+      revalidatePath("/panel/empresas");
       revalidatePath("/panel/administrar");
       revalidatePath("/panel");
     } catch {}

@@ -184,7 +184,12 @@ export function GestionConveniosCorporativos({ negocio = "tranqi", modoVista = "
       const res = await guardarConvenioEmpresaAction(payload);
       if (res.ok && res.convenio) {
         setConvenios((prev) => {
-          const idx = prev.findIndex((c) => c.cve_id === res.convenio!.cve_id);
+          const idx = prev.findIndex(
+            (c) =>
+              c.cve_id === res.convenio!.cve_id ||
+              (convenioEnEdicion && c.cve_id === convenioEnEdicion.cve_id) ||
+              c.cve_empresa_nombre.toLowerCase() === res.convenio!.cve_empresa_nombre.toLowerCase()
+          );
           if (idx >= 0) {
             const copia = [...prev];
             copia[idx] = res.convenio!;
