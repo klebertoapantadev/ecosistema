@@ -79,11 +79,30 @@ export function GestionConveniosCorporativos({ negocio = "tranqi", modoVista = "
   const cargarDatos = async () => {
     setCargando(true);
     try {
+      // 1. Cargar caché local inmediato para resiliencia offline y persistencia entre recargas
+      if (typeof window !== "undefined") {
+        const saved = localStorage.getItem(`tranqi_convenios_b2b_${negocio}`);
+        if (saved) {
+          try {
+            const parsed = JSON.parse(saved);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              setConvenios(parsed);
+            }
+          } catch {}
+        }
+      }
+
       const [listaConvenios, catalogo] = await Promise.all([
         obtenerConveniosEmpresaAction(negocio),
         obtenerCatalogoProductosAction(negocio, "ECOMMERCE_WEB"),
       ]);
-      setConvenios(listaConvenios);
+
+      if (Array.isArray(listaConvenios) && listaConvenios.length > 0) {
+        setConvenios(listaConvenios);
+        if (typeof window !== "undefined") {
+          localStorage.setItem(`tranqi_convenios_b2b_${negocio}`, JSON.stringify(listaConvenios));
+        }
+      }
       setProductosDisponibles(catalogo);
     } catch (err) {
       console.error("Error al cargar convenios:", err);
@@ -190,12 +209,22 @@ export function GestionConveniosCorporativos({ negocio = "tranqi", modoVista = "
               (convenioEnEdicion && c.cve_id === convenioEnEdicion.cve_id) ||
               c.cve_empresa_nombre.toLowerCase() === res.convenio!.cve_empresa_nombre.toLowerCase()
           );
+          let nuevaLista: ConvenioEmpresa[];
           if (idx >= 0) {
-            const copia = [...prev];
-            copia[idx] = res.convenio!;
-            return copia;
+            nuevaLista = [...prev];
+            nuevaLista[idx] = res.convenio!;
+          } else {
+            nuevaLista = [res.convenio!, ...prev];
           }
-          return [res.convenio!, ...prev];
+
+          // Guardar inmediatamente en LocalStorage para garantizar que nunca se pierda
+          if (typeof window !== "undefined") {
+            try {
+              localStorage.setItem(`tranqi_convenios_b2b_${negocio}`, JSON.stringify(nuevaLista));
+            } catch {}
+          }
+
+          return nuevaLista;
         });
         setModalAbierto(false);
         setMensajeNotificacion({ tipo: "ok", texto: `Convenio con ${formNombre} guardado con éxito.` });
