@@ -29,6 +29,7 @@ import {
 } from "../acciones";
 import { ModalCheckoutPayphone } from "./ModalCheckoutPayphone";
 import { ModalDetalleServicioVisual } from "./ModalDetalleServicioVisual";
+import { obtenerImagenFallbackNegocio } from "../utils/negocio";
 
 export interface VitrinaComercialVisualProps {
   negocio?: string;
@@ -453,10 +454,11 @@ export function VitrinaComercialVisual({
             const currentVar = p.variantes.find((v) => v.var_id === currentVarId) || p.variantes[0];
 
             const detalle = p.pro_detalle_producto || {};
+            const fallbackDefault = obtenerImagenFallbackNegocio(p.pro_negocio || negocio);
             const imagenUrl =
               currentVar?.var_detalle_variante?.portada_url ||
               detalle.imagen_url ||
-              "https://images.unsplash.com/photo-1450133064473-71024230f91b?auto=format&fit=crop&w=1000&q=80";
+              fallbackDefault;
             const fotoPosicion = currentVar?.var_detalle_variante?.foto_posicion || detalle.foto_posicion || "center center";
             const fotoAjuste = currentVar?.var_detalle_variante?.foto_ajuste || detalle.foto_ajuste || "cover";
             const fotoZoom = Number(currentVar?.var_detalle_variante?.foto_zoom || detalle.foto_zoom || 100);
@@ -498,6 +500,9 @@ export function VitrinaComercialVisual({
                       src={imagenUrl}
                       alt=""
                       aria-hidden="true"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = fallbackDefault;
+                      }}
                       style={{
                         position: "absolute",
                         inset: 0,
@@ -513,6 +518,9 @@ export function VitrinaComercialVisual({
                   <img
                     src={imagenUrl}
                     alt={p.pro_nombre}
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = fallbackDefault;
+                    }}
                     style={{
                       position: "relative",
                       width: "100%",

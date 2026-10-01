@@ -837,8 +837,7 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                       src={fotoMostrar}
                       alt={p.pro_nombre}
                       onError={(e) => {
-                        // Si la URL falla (ej. página web o link caducado), fallback a placeholder floral estilizado
-                        (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1561181286-d3fee7d55364?w=600&auto=format&fit=crop&q=80";
+                        (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?q=80&w=1200&auto=format&fit=crop";
                       }}
                       style={{
                         position: "relative",

@@ -53,7 +53,7 @@ import {
 } from "../canales";
 import { ModalCrearCategoria } from "./ModalCrearCategoria";
 import { ModalGaleriaMedios } from "./ModalGaleriaMedios";
-import { detectarTipoNegocio } from "../utils/negocio";
+import { detectarTipoNegocio, obtenerImagenFallbackNegocio } from "../utils/negocio";
 
 
 export const COLOR_PRODUCTO_MASTER = {
@@ -167,7 +167,7 @@ function SelectorEncuadreFoto({
             alt="Preview Encuadre"
             onError={(e) => {
               (e.target as HTMLImageElement).src =
-                "https://images.unsplash.com/photo-1561181286-d3fee7d55364?w=600&auto=format&fit=crop&q=80";
+                obtenerImagenFallbackNegocio();
             }}
             style={{
               position: "relative",
@@ -3083,7 +3083,7 @@ export function ModalEditarProducto({
                                 src={imagenUrl}
                                 alt="Master Heredada"
                                 onError={(e) => {
-                                  (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1561181286-d3fee7d55364?w=600&auto=format&fit=crop&q=80";
+                                  (e.target as HTMLImageElement).src = obtenerImagenFallbackNegocio(producto?.pro_negocio);
                                 }}
                                 style={{ width: "100%", height: "100%", objectFit: "cover" }}
                               />

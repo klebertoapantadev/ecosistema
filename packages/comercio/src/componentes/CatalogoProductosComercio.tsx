@@ -63,7 +63,7 @@ import { GestionConveniosCorporativos } from "./GestionConveniosCorporativos";
 import { VitrinaComercialVisual } from "./VitrinaComercialVisual";
 import { TarjetaBeneficiosCorporativosCliente } from "./TarjetaBeneficiosCorporativosCliente";
 import { BookOpen, Flower2, Wrench, Activity, LayoutGrid, Users } from "lucide-react";
-import { detectarTipoNegocio } from "../utils/negocio";
+import { detectarTipoNegocio, obtenerImagenFallbackNegocio } from "../utils/negocio";
 
 interface Props {
   negocio?: string;
@@ -1212,7 +1212,8 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
               Math.max(0, fotosDisponibles.length - 1)
             );
             const fotoActual = fotosDisponibles[activeCarouselIdx];
-            const fotoMostrar = fotoActual?.url || currentVar?.var_detalle_variante?.portada_url || p.pro_detalle_producto?.imagen_url;
+            const fallbackDefault = obtenerImagenFallbackNegocio(p.pro_negocio || negocio);
+            const fotoMostrar = fotoActual?.url || currentVar?.var_detalle_variante?.portada_url || p.pro_detalle_producto?.imagen_url || fallbackDefault;
             const posicionActual = fotoActual?.posicion || currentVar?.var_detalle_variante?.foto_posicion || p.pro_detalle_producto?.foto_posicion || "center center";
             const ajusteActual = fotoActual?.ajuste || currentVar?.var_detalle_variante?.foto_ajuste || p.pro_detalle_producto?.foto_ajuste || "cover";
             const zoomActual = Number(fotoActual?.zoom || currentVar?.var_detalle_variante?.foto_zoom || p.pro_detalle_producto?.foto_zoom || 100);
@@ -1248,6 +1249,9 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                         src={fotoMostrar}
                         alt=""
                         aria-hidden="true"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = fallbackDefault;
+                        }}
                         style={{
                           position: "absolute",
                           inset: 0,
@@ -1264,8 +1268,7 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                       src={fotoMostrar}
                       alt={p.pro_nombre}
                       onError={(e) => {
-                        // Si la URL falla (ej. página web o link caducado), fallback a placeholder floral estilizado
-                        (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1561181286-d3fee7d55364?w=600&auto=format&fit=crop&q=80";
+                        (e.target as HTMLImageElement).src = fallbackDefault;
                       }}
                       style={{
                         position: "relative",

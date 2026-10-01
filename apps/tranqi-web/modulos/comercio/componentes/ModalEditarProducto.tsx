@@ -145,7 +145,7 @@ function SelectorEncuadreFoto({
             alt="Preview Encuadre"
             onError={(e) => {
               (e.target as HTMLImageElement).src =
-                "https://images.unsplash.com/photo-1561181286-d3fee7d55364?w=600&auto=format&fit=crop&q=80";
+                "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?q=80&w=1200&auto=format&fit=crop";
             }}
             style={{
               position: "relative",
@@ -1979,7 +1979,7 @@ export function ModalEditarProducto({
                                 src={imagenUrl}
                                 alt="Master Heredada"
                                 onError={(e) => {
-                                  (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1561181286-d3fee7d55364?w=600&auto=format&fit=crop&q=80";
+                                  (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?q=80&w=1200&auto=format&fit=crop";
                                 }}
                                 style={{ width: "100%", height: "100%", objectFit: "cover" }}
                               />

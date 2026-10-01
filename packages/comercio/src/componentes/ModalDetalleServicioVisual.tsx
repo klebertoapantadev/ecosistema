@@ -13,6 +13,7 @@ import {
   Info,
 } from "lucide-react";
 import { ProductoCatalogo, VarianteCatalogo } from "../acciones";
+import { obtenerImagenFallbackNegocio } from "../utils/negocio";
 
 interface Props {
   abierto: boolean;
@@ -40,10 +41,11 @@ export function ModalDetalleServicioVisual({
   const currentVar = vars.find((v) => v.var_id === currentVarId) || vars[0];
 
   const detalle = producto.pro_detalle_producto || {};
+  const fallbackDefault = obtenerImagenFallbackNegocio(producto.pro_negocio || negocio);
   const imagenUrl =
     currentVar?.var_detalle_variante?.portada_url ||
     detalle.imagen_url ||
-    "https://images.unsplash.com/photo-1450133064473-71024230f91b?auto=format&fit=crop&w=1000&q=80";
+    fallbackDefault;
   const videoUrl = detalle.video_url;
   const beneficios: string[] = Array.isArray(detalle.beneficios) && detalle.beneficios.length > 0
     ? detalle.beneficios
@@ -118,6 +120,9 @@ export function ModalDetalleServicioVisual({
               <img
                 src={imagenUrl}
                 alt={producto.pro_nombre}
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = fallbackDefault;
+                }}
                 style={{
                   width: "100%",
                   height: "100%",

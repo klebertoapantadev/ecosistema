@@ -73,3 +73,20 @@ export function normalizarIdentificadorNegocio(negocio?: string): { principal: s
   return { principal: norm, variantes: [norm, upper] };
 }
 
+export const IMAGEN_FALLBACK_LEGAL =
+  "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?q=80&w=1200&auto=format&fit=crop";
+
+export const IMAGEN_FALLBACK_FLORISTERIA =
+  "https://images.unsplash.com/photo-1563241527-3004b7be0ffd?w=800&auto=format&fit=crop&q=80";
+
+export const IMAGEN_FALLBACK_MANTENIMIENTO =
+  "https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=800&auto=format&fit=crop&q=80";
+
+export function obtenerImagenFallbackNegocio(negocio?: string): string {
+  const { tipoNegocio } = detectarTipoNegocio(negocio);
+  if (tipoNegocio === "FLORISTERIA") return IMAGEN_FALLBACK_FLORISTERIA;
+  if (tipoNegocio === "MANTENIMIENTO") return IMAGEN_FALLBACK_MANTENIMIENTO;
+  return IMAGEN_FALLBACK_LEGAL;
+}
+
+

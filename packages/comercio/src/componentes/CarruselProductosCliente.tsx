@@ -18,6 +18,7 @@ import {
   VarianteCatalogo,
 } from "../acciones";
 import { ModalCheckoutPayphone } from "./ModalCheckoutPayphone";
+import { obtenerImagenFallbackNegocio } from "../utils/negocio";
 
 interface Props {
   negocio?: string;
@@ -204,7 +205,8 @@ export function CarruselProductosCliente({
           if (!varPrincipal) return null;
 
           const esSuscripcion = prod.pro_tipo === "SUSCRIPCION";
-          const imagenUrl = prod.pro_detalle_producto?.imagen_url || "/imagenes/catalogo/notarizacion.jpg";
+          const fallbackDefault = obtenerImagenFallbackNegocio(prod.pro_negocio || negocio);
+          const imagenUrl = prod.pro_detalle_producto?.imagen_url || fallbackDefault;
           const beneficios = prod.pro_detalle_producto?.beneficios || [];
 
           return (
@@ -241,6 +243,9 @@ export function CarruselProductosCliente({
                 <img
                   src={imagenUrl}
                   alt={prod.pro_nombre}
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = fallbackDefault;
+                  }}
                   style={{
                     width: "100%",
                     height: "100%",
