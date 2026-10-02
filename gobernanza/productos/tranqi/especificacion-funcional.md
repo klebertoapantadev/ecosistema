@@ -555,6 +555,14 @@ Módulo central de administración y ciclo de vida de clientes (Personas Natural
 11. **Regla de Integridad Procesal Estricta: Prohibición de Eliminación de Clientes con Casos o Pagos:**
    - Ningún cliente confirmado/activo ni ningún cliente que posea al menos un expediente legal (`trq_caso_judicial`), cita agendada (`trq_cita`) o comprobante/pago registrado (`trq_honorario`) puede ser eliminado de la base de datos.
    - El sistema bloquea el borrado físico y permite únicamente su **Inactivación Lógica** (`clp_activo = false`, `estado_crm = 'INACTIVO'`) para garantizar la trazabilidad y custodia procesal inmutable.
+12. **Captura conversacional de contactos desde el buddie (ARIA):**
+   - **Modelo y Herramienta:** Tabla `tranqui_legal.trq_prospecto`, herramienta MCP `registrar_contacto` con alcance `prospectos:crear` sobre el servidor MCP de catálogo (`/api/mcp/catalogo`).
+   - **Consentimiento y Privacidad (LOPDP):** El parámetro `p_autoriza_contacto` es estrictamente obligatorio (`check p_autoriza_contacto = true`). Sin el consentimiento expreso del usuario, el contacto no se almacena.
+   - **Normalización e Integridad:** Normalización de números telefónicos a formato E.164 (`+593...`), validación de correo por regex y recorte seguro de cadenas (nombre máx. 120 caracteres, interés máx. 500 caracteres).
+   - **Anti-duplicado y Anti-abuso:** Actualización idempotente si el contacto con el mismo WhatsApp en estado `NUEVO` fue registrado en las últimas 24 horas; límite anti-abuso de máximo 30 prospectos por hora por negocio.
+   - **Ciclo de Vida y Estados:** Flujo `NUEVO` ➔ `CONTACTADO` ➔ `CONVERTIDO` / `DESCARTADO`.
+   - **Bandeja de Gestión:** Pestaña "Contactos del chat" en la bandeja del CRM con acciones rápidas para marcar como contactado, convertido o descartado y registro de notas de seguimiento.
+   - **Visibilidad y Seguridad (RLS):** Administradores del negocio y socios abogados habilitados disponen de lectura (`SELECT`); la actualización de estado y notas (`UPDATE`) está reservada a administradores del negocio. La inserción (`INSERT`) se realiza exclusivamente a través de la función `trq_fn_registrar_prospecto` (`SECURITY DEFINER`).
 
 ---
 
