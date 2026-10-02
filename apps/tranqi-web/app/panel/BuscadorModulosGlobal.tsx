@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import {
   Search, X, UserCog, UserCheck, Settings, Mail, Bell, Shield, ShieldCheck,
   CircleUser, ChevronRight, Sliders, Briefcase, FileText, BarChart2, FileCheck, Folder,
-  CalendarClock, CalendarPlus, CalendarCheck, Shuffle, ShoppingBag, CreditCard, Building2, Scale
+  CalendarClock, CalendarPlus, CalendarCheck, Shuffle, ShoppingBag, CreditCard, Building2, Scale, KeyRound
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCustomWidgets } from "./gestorTitulosWidgets";
@@ -111,6 +111,16 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
     minNivel: 50,
     icono: CreditCard,
     colorIcono: "#D97706"
+  },
+  {
+    clave: "tokens_mcp",
+    nombre: "Tokens de Integración MCP (ARIA / Agentes IA)",
+    detalle: "Gestión y emisión de API Keys Bearer para integrar herramientas MCP y agentes externos al catálogo",
+    ruta: "/panel/configuracion?widget=tokens_mcp",
+    categoria: "Seguridad & Integraciones",
+    minNivel: 80,
+    icono: KeyRound,
+    colorIcono: "#0284C7"
   },
   {
     clave: "firma_documentos_pdf",

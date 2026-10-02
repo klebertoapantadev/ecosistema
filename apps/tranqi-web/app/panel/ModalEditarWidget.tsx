@@ -92,6 +92,10 @@ const MAPA_RUTAS_FISICAS_WIDGETS: Record<string, string> = {
   "historial_pagos": "packages/comercio/src/componentes/HistorialTransaccionesPago.tsx",
   "historial-pagos": "packages/comercio/src/componentes/HistorialTransaccionesPago.tsx",
   "pagos": "packages/comercio/src/componentes/HistorialTransaccionesPago.tsx",
+  "tokens_mcp": "packages/configuracion-negocio/src/componentes/GestionTokensMcpWidget.tsx",
+  "tokens-mcp": "packages/configuracion-negocio/src/componentes/GestionTokensMcpWidget.tsx",
+  "mcp_tokens": "packages/configuracion-negocio/src/componentes/GestionTokensMcpWidget.tsx",
+  "mcp-tokens": "packages/configuracion-negocio/src/componentes/GestionTokensMcpWidget.tsx",
 };
 
 export function ModalEditarWidget({

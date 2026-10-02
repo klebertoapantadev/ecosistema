@@ -1,9 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Settings, Mail, Bell, Star, ChevronRight, ShieldCheck, Sliders, Pencil, Lock, CreditCard, ShoppingBag, type LucideIcon } from "lucide-react";
-import { FormularioConfiguracionNegocio } from "@eco/configuracion-negocio/componentes/FormularioConfiguracionNegocio";
-import { FormularioSmtp } from "@eco/configuracion-negocio/componentes/FormularioSmtp";
+import { Settings, Mail, Bell, Star, ChevronRight, ShieldCheck, Sliders, Pencil, Lock, CreditCard, ShoppingBag, KeyRound, type LucideIcon } from "lucide-react";
+import { FormularioConfiguracionNegocio, FormularioSmtp, GestionTokensMcpWidget } from "@eco/configuracion-negocio";
 import { PreferenciasNotificacionWidget } from "@eco/notificaciones";
 import { AdministracionPerfilesWidget } from "@eco/gestion-usuarios/componentes/AdministracionPerfilesWidget";
 import { GestionTerminosConsentimientosWidget } from "@eco/identidad/componentes/GestionTerminosConsentimientosWidget";
@@ -96,6 +95,15 @@ const TODOS_WIDGETS_CONFIG: WidgetConfigDef[] = [
     colorIcono: "var(--violeta, #5000BA)",
     categoria: "Gobernanza",
     soloAdmin: true
+  },
+  {
+    id: "tokens_mcp",
+    titulo: "Tokens & APIs MCP",
+    subtitulo: "Gestión y emisión de tokens de acceso para conectar herramientas MCP con bots y agentes externos",
+    icono: KeyRound,
+    colorIcono: "#0284C7",
+    categoria: "Servicios de Despacho",
+    soloAdmin: true
   }
 ];
 
@@ -104,6 +112,9 @@ const ALIAS_WIDGET: Record<string, string> = {
   configuracion_correo: "correo",
   preferencias_notificacion: "notificaciones",
   terminos: "gestion_terminos_consentimientos",
+  mcp_tokens: "tokens_mcp",
+  "tokens-mcp": "tokens_mcp",
+  "mcp-tokens": "tokens_mcp",
   gestion_terminos_consentimientos: "gestion_terminos_consentimientos",
   pasarela_payphone: "pasarela_payphone",
   payphone: "pasarela_payphone",
@@ -317,6 +328,13 @@ export function PanelConfiguracionModular({ esAdmin, esSuperadmin = false, confi
             {(widgetActivo === "gestion_catalogo" || widgetActivo === "catalogo_productos") && (
               <div style={{ width: "100%" }}>
                 <CatalogoProductosComercio negocio={negocio} />
+              </div>
+            )}
+
+            {/* 8. TOKENS DE INTEGRACIÓN MCP (ARIA / AGENTES IA) */}
+            {(widgetActivo === "tokens_mcp" || widgetActivo === "mcp_tokens") && (
+              <div style={{ width: "100%" }}>
+                <GestionTokensMcpWidget negocio={negocio} />
               </div>
             )}
           </div>

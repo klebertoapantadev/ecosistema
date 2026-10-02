@@ -161,6 +161,14 @@ const CATALOGO_FAVORITOS: Record<string, WidgetFavInfo> = {
     href: "/panel/administrar?widget=gestion_terminos_consentimientos",
     origen: "Configurar"
   },
+  tokens_mcp: {
+    id: "tokens_mcp",
+    titulo: "Tokens & APIs MCP",
+    subtitulo: "Generación de API Keys Bearer para conectar herramientas MCP con bots y agentes externos",
+    icono: KeyRound,
+    href: "/panel/configuracion?widget=tokens_mcp",
+    origen: "Configurar"
+  },
   bitacora_notificaciones: {
     id: "bitacora_notificaciones",
     titulo: "Bitácora & Historial de Notificaciones",
