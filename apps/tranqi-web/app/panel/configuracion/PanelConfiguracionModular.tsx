@@ -2,7 +2,9 @@
 
 import React, { useState, useEffect } from "react";
 import { Settings, Mail, Bell, Star, ChevronRight, ShieldCheck, Sliders, Pencil, Lock, CreditCard, ShoppingBag, KeyRound, type LucideIcon } from "lucide-react";
-import { FormularioConfiguracionNegocio, FormularioSmtp, GestionTokensMcpWidget } from "@eco/configuracion-negocio";
+import { FormularioConfiguracionNegocio } from "@eco/configuracion-negocio/componentes/FormularioConfiguracionNegocio";
+import { FormularioSmtp } from "@eco/configuracion-negocio/componentes/FormularioSmtp";
+import { GestionTokensMcpWidget } from "@eco/configuracion-negocio/componentes/GestionTokensMcpWidget";
 import { PreferenciasNotificacionWidget } from "@eco/notificaciones";
 import { AdministracionPerfilesWidget } from "@eco/gestion-usuarios/componentes/AdministracionPerfilesWidget";
 import { GestionTerminosConsentimientosWidget } from "@eco/identidad/componentes/GestionTerminosConsentimientosWidget";
