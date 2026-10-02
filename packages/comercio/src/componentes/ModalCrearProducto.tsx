@@ -22,6 +22,8 @@ import {
   Tag,
   Hash,
   Upload,
+  Calendar,
+  Power,
 } from "lucide-react";
 import {
   crearProductoAction,
@@ -36,6 +38,7 @@ import {
   CANALES_REQUIEREN_IMAGEN,
   CanalVisibilidad,
 } from "../canales";
+import { TipoVigenciaTemporal } from "../utils/vigencia";
 import { ModalCrearCategoria } from "./ModalCrearCategoria";
 import { ModalGaleriaMedios } from "./ModalGaleriaMedios";
 import { detectarTipoNegocio } from "../utils/negocio";
@@ -101,6 +104,14 @@ export function ModalCrearProducto({
       ? "Dirección exacta y número de contacto del destinatario\nMensaje para la tarjeta dedicatoria"
       : "Cédula de ciudadanía o pasaporte vigente\nDocumentación básica de soporte"
   );
+
+  // Estado Activo y Temporalidad / Vigencia Estacional
+  const [proActivo, setProActivo] = useState(true);
+  const [vigenciaTipo, setVigenciaTipo] = useState<TipoVigenciaTemporal>("SIEMPRE");
+  const [fechaInicio, setFechaInicio] = useState("");
+  const [fechaFin, setFechaFin] = useState("");
+  const [mensajeFueraTemporada, setMensajeFueraTemporada] = useState("");
+  const [etiquetaTemporada, setEtiquetaTemporada] = useState("");
 
   const [resolviendoImagen, setResolviendoImagen] = useState(false);
   const [subiendoImagen, setSubiendoImagen] = useState(false);
@@ -366,6 +377,12 @@ export function ModalCrearProducto({
         tiempoEntrega: tiempoEntrega.trim() || undefined,
         requisitos,
         modalidadPago,
+        pro_activo: proActivo,
+        vigencia_tipo: vigenciaTipo,
+        fecha_inicio: fechaInicio.trim() || undefined,
+        fecha_fin: fechaFin.trim() || undefined,
+        mensaje_fuera_temporada: mensajeFueraTemporada.trim() || undefined,
+        etiqueta_temporada: etiquetaTemporada.trim() || undefined,
         usos: usosSeleccionados,
         etiquetas: etiquetasSeleccionadas,
         canales_visibilidad: canalesSeleccionados,
@@ -605,6 +622,258 @@ export function ModalCrearProducto({
                 </option>
               </select>
             </div>
+          </div>
+
+          {/* CONTROL DE ESTADO ACTIVO & TEMPORALIDAD ESTACIONAL */}
+          <div
+            style={{
+              background: !proActivo ? "#FEF2F2" : vigenciaTipo !== "SIEMPRE" ? "#FFFBEB" : "#F8FAFC",
+              border: !proActivo
+                ? "1.5px solid #FCA5A5"
+                : vigenciaTipo !== "SIEMPRE"
+                ? "1.5px solid #FDE68A"
+                : "1px solid #E2E8F0",
+              borderRadius: "10px",
+              padding: "14px",
+              marginBottom: "14px",
+              transition: "all 0.2s ease",
+            }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px", flexWrap: "wrap", gap: "8px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                <Calendar size={16} color={!proActivo ? "#DC2626" : vigenciaTipo !== "SIEMPRE" ? "#D97706" : "#0284C7"} />
+                <span style={{ fontSize: "0.8rem", fontWeight: 800, color: !proActivo ? "#991B1B" : "#1E293B", textTransform: "uppercase" }}>
+                  Disponibilidad & Temporalidad Estacional
+                </span>
+              </div>
+
+              {/* Switch Principal Activar / Desactivar Producto */}
+              <button
+                type="button"
+                onClick={() => setProActivo(!proActivo)}
+                style={{
+                  background: proActivo ? "#ECFDF5" : "#FEF2F2",
+                  border: proActivo ? "1.5px solid #10B981" : "1.5px solid #EF4444",
+                  color: proActivo ? "#065F46" : "#991B1B",
+                  padding: "5px 12px",
+                  borderRadius: "8px",
+                  fontSize: "0.75rem",
+                  fontWeight: 800,
+                  cursor: "pointer",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
+                }}
+              >
+                <Power size={13} color={proActivo ? "#10B981" : "#EF4444"} />
+                <span>{proActivo ? "🟢 Producto Activo en Catálogo" : "⚪ Producto Desactivado (Oculto)"}</span>
+              </button>
+            </div>
+
+            <p style={{ fontSize: "0.73rem", color: "#64748B", margin: "0 0 10px 0" }}>
+              Configura si el producto se ofrece todo el año o en una temporada especial (ej. "Bouquet San Valentín" del 10 al 15 de febrero):
+            </p>
+
+            {/* 3 Modos de Vigencia */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "6px", marginBottom: "10px" }}>
+              <button
+                type="button"
+                onClick={() => setVigenciaTipo("SIEMPRE")}
+                style={{
+                  padding: "8px 10px",
+                  borderRadius: "6px",
+                  fontSize: "0.72rem",
+                  fontWeight: 700,
+                  border: vigenciaTipo === "SIEMPRE" ? "1.5px solid #0284C7" : "1px solid #CBD5E1",
+                  background: vigenciaTipo === "SIEMPRE" ? "#E0F2FE" : "#FFFFFF",
+                  color: vigenciaTipo === "SIEMPRE" ? "#0369A1" : "#475569",
+                  cursor: "pointer",
+                  textAlign: "center",
+                }}
+              >
+                🌐 Todo el Año
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setVigenciaTipo("RANGO_FECHAS")}
+                style={{
+                  padding: "8px 10px",
+                  borderRadius: "6px",
+                  fontSize: "0.72rem",
+                  fontWeight: 700,
+                  border: vigenciaTipo === "RANGO_FECHAS" ? "1.5px solid #8B5CF6" : "1px solid #CBD5E1",
+                  background: vigenciaTipo === "RANGO_FECHAS" ? "#F5F3FF" : "#FFFFFF",
+                  color: vigenciaTipo === "RANGO_FECHAS" ? "#5B21B6" : "#475569",
+                  cursor: "pointer",
+                  textAlign: "center",
+                }}
+              >
+                📅 Rango Fechas
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setVigenciaTipo("ESTACIONAL_ANUAL");
+                  if (!fechaInicio) setFechaInicio("02-10");
+                  if (!fechaFin) setFechaFin("02-15");
+                  if (!etiquetaTemporada) setEtiquetaTemporada(esFloristeria ? "San Valentín" : "Temporada Anual");
+                  if (!mensajeFueraTemporada) setMensajeFueraTemporada("Disponible únicamente del 10 al 15 de febrero de cada año.");
+                }}
+                style={{
+                  padding: "8px 10px",
+                  borderRadius: "6px",
+                  fontSize: "0.72rem",
+                  fontWeight: 700,
+                  border: vigenciaTipo === "ESTACIONAL_ANUAL" ? "1.5px solid #E11D48" : "1px solid #CBD5E1",
+                  background: vigenciaTipo === "ESTACIONAL_ANUAL" ? "#FFF1F2" : "#FFFFFF",
+                  color: vigenciaTipo === "ESTACIONAL_ANUAL" ? "#9F1239" : "#475569",
+                  cursor: "pointer",
+                  textAlign: "center",
+                }}
+              >
+                🌹 Estacional Anual
+              </button>
+            </div>
+
+            {/* Campos contextuales para Rango de Fechas o Estacional Anual */}
+            {vigenciaTipo === "RANGO_FECHAS" && (
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginTop: "8px" }}>
+                <div>
+                  <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#334155", marginBottom: "2px" }}>
+                    Fecha de Inicio (YYYY-MM-DD)
+                  </label>
+                  <input
+                    type="date"
+                    value={fechaInicio}
+                    onChange={(e) => setFechaInicio(e.target.value)}
+                    style={{
+                      width: "100%",
+                      padding: "6px 10px",
+                      borderRadius: "6px",
+                      border: "1px solid #CBD5E1",
+                      fontSize: "0.8rem",
+                      boxSizing: "border-box",
+                      background: "#FFFFFF",
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#334155", marginBottom: "2px" }}>
+                    Fecha de Fin (YYYY-MM-DD)
+                  </label>
+                  <input
+                    type="date"
+                    value={fechaFin}
+                    onChange={(e) => setFechaFin(e.target.value)}
+                    style={{
+                      width: "100%",
+                      padding: "6px 10px",
+                      borderRadius: "6px",
+                      border: "1px solid #CBD5E1",
+                      fontSize: "0.8rem",
+                      boxSizing: "border-box",
+                      background: "#FFFFFF",
+                    }}
+                  />
+                </div>
+              </div>
+            )}
+
+            {vigenciaTipo === "ESTACIONAL_ANUAL" && (
+              <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginTop: "8px" }}>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+                  <div>
+                    <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#334155", marginBottom: "2px" }}>
+                      Fecha Inicio Anual (MM-DD, ej. 02-10)
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="MM-DD (ej. 02-10)"
+                      value={fechaInicio}
+                      onChange={(e) => setFechaInicio(e.target.value)}
+                      style={{
+                        width: "100%",
+                        padding: "6px 10px",
+                        borderRadius: "6px",
+                        border: "1px solid #CBD5E1",
+                        fontSize: "0.8rem",
+                        boxSizing: "border-box",
+                        background: "#FFFFFF",
+                      }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#334155", marginBottom: "2px" }}>
+                      Fecha Fin Anual (MM-DD, ej. 02-15)
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="MM-DD (ej. 02-15)"
+                      value={fechaFin}
+                      onChange={(e) => setFechaFin(e.target.value)}
+                      style={{
+                        width: "100%",
+                        padding: "6px 10px",
+                        borderRadius: "6px",
+                        border: "1px solid #CBD5E1",
+                        fontSize: "0.8rem",
+                        boxSizing: "border-box",
+                        background: "#FFFFFF",
+                      }}
+                    />
+                  </div>
+                </div>
+
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1.5fr", gap: "10px" }}>
+                  <div>
+                    <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#334155", marginBottom: "2px" }}>
+                      Etiqueta de Temporada
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Ej. San Valentín"
+                      value={etiquetaTemporada}
+                      onChange={(e) => setEtiquetaTemporada(e.target.value)}
+                      style={{
+                        width: "100%",
+                        padding: "6px 10px",
+                        borderRadius: "6px",
+                        border: "1px solid #CBD5E1",
+                        fontSize: "0.78rem",
+                        boxSizing: "border-box",
+                        background: "#FFFFFF",
+                      }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#334155", marginBottom: "2px" }}>
+                      Mensaje fuera de temporada
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Ej. Disponible únicamente del 10 al 15 de febrero."
+                      value={mensajeFueraTemporada}
+                      onChange={(e) => setMensajeFueraTemporada(e.target.value)}
+                      style={{
+                        width: "100%",
+                        padding: "6px 10px",
+                        borderRadius: "6px",
+                        border: "1px solid #CBD5E1",
+                        fontSize: "0.78rem",
+                        boxSizing: "border-box",
+                        background: "#FFFFFF",
+                      }}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Tarifa Base e IVA */}

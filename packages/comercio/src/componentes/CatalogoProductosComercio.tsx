@@ -45,6 +45,7 @@ import {
   restaurarCatalogoEjemploAction,
   editarProductoAction,
   alternarCanalVisibilidadProductoAction,
+  alternarActivoProductoAction,
 } from "../acciones";
 import {
   CANALES_CATALOGO_OFICIALES,
@@ -53,6 +54,7 @@ import {
   CanalVisibilidad,
   productoTieneAlMenosUnaImagen,
 } from "../canales";
+import { evaluarVigenciaProducto } from "../utils/vigencia";
 import { ModalCheckoutPayphone } from "./ModalCheckoutPayphone";
 import { ModalCrearProducto } from "./ModalCrearProducto";
 import { ModalCrearCategoria } from "./ModalCrearCategoria";
@@ -62,7 +64,7 @@ import { TableroDisponibilidadOperativa } from "./TableroDisponibilidadOperativa
 import { GestionConveniosCorporativos } from "./GestionConveniosCorporativos";
 import { VitrinaComercialVisual } from "./VitrinaComercialVisual";
 import { TarjetaBeneficiosCorporativosCliente } from "./TarjetaBeneficiosCorporativosCliente";
-import { BookOpen, Flower2, Wrench, Activity, LayoutGrid, Users } from "lucide-react";
+import { BookOpen, Flower2, Wrench, Activity, LayoutGrid, Users, Calendar, Power } from "lucide-react";
 import { detectarTipoNegocio, obtenerImagenFallbackNegocio } from "../utils/negocio";
 
 interface Props {
@@ -85,6 +87,7 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
   const [canalSeleccionado, setCanalSeleccionado] = useState<string>("todos");
   const [verTodosEnFiltroCanal, setVerTodosEnFiltroCanal] = useState<boolean>(false);
   const [guardandoCanalKey, setGuardandoCanalKey] = useState<string | null>(null);
+  const [guardandoActivoKey, setGuardandoActivoKey] = useState<string | null>(null);
   const [mensajeErrorCanal, setMensajeErrorCanal] = useState<string | null>(null);
 
   // Estado de modales
@@ -144,7 +147,7 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
     setCargando(true);
     try {
       const [prods, cats] = await Promise.all([
-        obtenerCatalogoProductosAction(negocio),
+        obtenerCatalogoProductosAction(negocio, undefined, true), // Incluye inactivos para gestión de catálogo
         obtenerCategoriasAction(negocio),
       ]);
       const prodsSeguros = Array.isArray(prods) ? prods : [];
@@ -169,6 +172,51 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
   useEffect(() => {
     cargarDatos();
   }, [negocio]);
+
+  // Alternar estado activo / inactivo de un producto en un clic con actualización optimista
+  const handleAlternarActivo = async (proId: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    setGuardandoActivoKey(proId);
+    const prodActual = productos.find((p) => p.pro_id === proId);
+    if (!prodActual) {
+      setGuardandoActivoKey(null);
+      return;
+    }
+    const nuevoActivo = prodActual.pro_activo === false ? true : false;
+
+    // Actualización optimista inmediata en UI
+    setProductos((prev) =>
+      prev.map((p) => (p.pro_id === proId ? { ...p, pro_activo: nuevoActivo } : p))
+    );
+
+    try {
+      const res = await alternarActivoProductoAction({
+        pro_id: proId,
+        activo: nuevoActivo,
+        negocio,
+      });
+
+      if (res.ok && res.producto) {
+        setProductos((prev) =>
+          prev.map((p) => (p.pro_id === proId ? res.producto! : p))
+        );
+      } else if (!res.ok) {
+        // Rollback
+        setProductos((prev) =>
+          prev.map((p) => (p.pro_id === proId ? prodActual : p))
+        );
+        alert(res.error || "No se pudo cambiar el estado del producto.");
+      }
+    } catch (err: any) {
+      // Rollback
+      setProductos((prev) =>
+        prev.map((p) => (p.pro_id === proId ? prodActual : p))
+      );
+      alert(err.message || "Error al actualizar estado del producto.");
+    } finally {
+      setGuardandoActivoKey(null);
+    }
+  };
 
   // Alternar canal de visibilidad de un producto con actualización optimista
   const handleAlternarCanal = async (proId: string, canal: CanalVisibilidad) => {
@@ -306,6 +354,14 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
   // Filtrado
   const productosFiltrados = (productos || []).filter((p) => {
     if (!p) return false;
+
+    // En vista de cliente, ocultar productos inactivos o fuera de temporada
+    if (modoVista === "cliente") {
+      if (p.pro_activo === false) return false;
+      const vig = evaluarVigenciaProducto(p.pro_detalle_producto, p.pro_activo);
+      if (!vig.estaVigente) return false;
+    }
+
     const cumpleBusqueda =
       busqueda.trim() === "" ||
       (p.pro_nombre && p.pro_nombre.toLowerCase().includes(busqueda.toLowerCase())) ||
@@ -1223,20 +1279,31 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
             const tiempoMostrar = currentVar?.var_detalle_variante?.tiempo_entrega || p.pro_detalle_producto?.tiempo_entrega;
             const albumUrl = currentVar?.var_detalle_variante?.album_url || p.pro_detalle_producto?.album_fotos_url;
 
+            const vigenciaInfo = evaluarVigenciaProducto(p.pro_detalle_producto, p.pro_activo);
+            const estaActivoGeneral = p.pro_activo !== false;
+            const isSavingActivo = guardandoActivoKey === p.pro_id;
+
             return (
               <div
                 key={p.pro_id}
                 style={{
-                  background: "#FFFFFF",
-                  border: esHonorario ? "2px solid #0284C7" : "1px solid #E2E8F0",
+                  background: !estaActivoGeneral ? "#F8FAFC" : "#FFFFFF",
+                  border: !estaActivoGeneral
+                    ? "2px dashed #94A3B8"
+                    : !vigenciaInfo.estaVigente
+                    ? "2px solid #F59E0B"
+                    : esHonorario
+                    ? "2px solid #0284C7"
+                    : "1px solid #E2E8F0",
                   borderRadius: "16px",
                   overflow: "hidden",
                   display: "flex",
                   flexDirection: "column",
+                  opacity: !estaActivoGeneral ? 0.78 : 1,
                   boxShadow: esHonorario
                     ? "0 4px 12px rgba(2, 132, 199, 0.1)"
                     : "0 2px 6px rgba(0,0,0,0.04)",
-                  transition: "transform 0.15s ease, box-shadow 0.15s ease",
+                  transition: "transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease",
                   position: "relative",
                 }}
               >
@@ -1510,7 +1577,7 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                   </div>
                 )}
 
-                {/* Barra Superior de la Tarjeta: Check Canal + Destacado + Botón Editar Master */}
+                {/* Barra Superior de la Tarjeta: Botón Activar/Desactivar + Check Canal + Destacado + Botón Editar Master */}
                 <div
                   style={{
                     position: "absolute",
@@ -1522,6 +1589,51 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                     zIndex: 4,
                   }}
                 >
+                  {/* Botón Instantáneo Activar / Desactivar Producto */}
+                  {modoVista === "admin" && (
+                    <button
+                      type="button"
+                      onClick={(e) => handleAlternarActivo(p.pro_id, e)}
+                      disabled={isSavingActivo}
+                      className="btn-responsive-accion"
+                      title={estaActivoGeneral ? "Producto activo en catálogo. Clic para desactivar" : "Producto inactivo. Clic para activar"}
+                      aria-label={estaActivoGeneral ? "Desactivar producto" : "Activar producto"}
+                      style={{
+                        background: isSavingActivo
+                          ? "#F1F5F9"
+                          : estaActivoGeneral
+                          ? "linear-gradient(135deg, #059669 0%, #10B981 100%)"
+                          : "linear-gradient(135deg, #475569 0%, #334155 100%)",
+                        border: estaActivoGeneral
+                          ? "1.5px solid #34D399"
+                          : "1.5px solid #94A3B8",
+                        color: "#FFFFFF",
+                        padding: "5px 10px",
+                        borderRadius: "8px",
+                        fontSize: "0.74rem",
+                        fontWeight: 800,
+                        cursor: isSavingActivo ? "wait" : "pointer",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "5px",
+                        boxShadow: "0 2px 6px rgba(0,0,0,0.25)",
+                        backdropFilter: "blur(6px)",
+                        transition: "all 0.15s ease",
+                      }}
+                    >
+                      {isSavingActivo ? (
+                        <RefreshCw size={12} className="animate-spin" />
+                      ) : estaActivoGeneral ? (
+                        <Power size={12} color="#FFFFFF" />
+                      ) : (
+                        <Power size={12} color="#CBD5E1" />
+                      )}
+                      <span className="btn-texto-responsive">
+                        {estaActivoGeneral ? "🟢 Activo" : "⚪ Inactivo"}
+                      </span>
+                    </button>
+                  )}
+
                   {/* Check / Switch de Visibilidad en el Canal Seleccionado */}
                   {canalSeleccionado !== "todos" && modoVista === "admin" && (() => {
                     const infoCanalFiltro = CANALES_CATALOGO_OFICIALES.find((c) => c.clave === canalSeleccionado);
@@ -1643,6 +1755,50 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                 </div>
 
                 <div style={{ padding: "18px 20px", display: "flex", flexDirection: "column", flex: 1 }}>
+                  {/* Badge de Inactivo o Vigencia Estacional */}
+                  {!estaActivoGeneral ? (
+                    <div
+                      style={{
+                        background: "#FEF2F2",
+                        border: "1px solid #FECACA",
+                        color: "#DC2626",
+                        padding: "3px 8px",
+                        borderRadius: "6px",
+                        fontSize: "0.7rem",
+                        fontWeight: 800,
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "4px",
+                        marginBottom: "8px",
+                        alignSelf: "flex-start",
+                      }}
+                    >
+                      <AlertCircle size={12} color="#DC2626" />
+                      <span>⚪ INACTIVO — Oculto al público</span>
+                    </div>
+                  ) : vigenciaInfo.vigenciaTipo !== "SIEMPRE" ? (
+                    <div
+                      style={{
+                        background: vigenciaInfo.estaVigente ? "#ECFDF5" : "#FFFBEB",
+                        border: vigenciaInfo.estaVigente ? "1px solid #A7F3D0" : "1px solid #FDE68A",
+                        color: vigenciaInfo.estaVigente ? "#065F46" : "#92400E",
+                        padding: "3px 8px",
+                        borderRadius: "6px",
+                        fontSize: "0.7rem",
+                        fontWeight: 800,
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "4px",
+                        marginBottom: "8px",
+                        alignSelf: "flex-start",
+                      }}
+                      title={vigenciaInfo.mensaje}
+                    >
+                      <Calendar size={12} color={vigenciaInfo.estaVigente ? "#059669" : "#D97706"} />
+                      <span>{vigenciaInfo.etiquetaBadge}</span>
+                    </div>
+                  ) : null}
+
                   {/* Icono y Categoría */}
                   <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "10px" }}>
                     {!fotoMostrar && (

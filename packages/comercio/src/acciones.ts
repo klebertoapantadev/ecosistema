@@ -30,6 +30,7 @@ export interface ProductoCatalogo {
   pro_descripcion: string | null;
   pro_tipo: "FISICO" | "SERVICIO" | "SUSCRIPCION" | "DIGITAL";
   pro_destacado: boolean;
+  pro_activo?: boolean;
   pro_categoria_principal_id: string | null;
   pro_detalle_producto: any;
   canales_visibilidad?: CanalVisibilidad[];
@@ -218,19 +219,151 @@ const PRODUCTOS_SEMILLA_TRANQI: ProductoCatalogo[] = [
     },
     variantes: [
       {
-        var_id: "var-trq-not-doc",
+        var_id: "var-trq-not-dec-jur",
         var_producto_id: "prod-trq-notarizacion",
-        var_sku: "TRQ-NOT-DOC",
-        var_nombre: "Notarización y Gestión en Notaría",
-        var_precio: 200.0,
-        var_precio_comparacion: 250.0,
+        var_sku: "TRQ-NOT-DEC-JUR",
+        var_nombre: "Declaración Juramentada (Bienes, Ingresos o No Impedimento)",
+        var_precio: 35.0,
+        var_precio_comparacion: 45.0,
         var_codigo_impuesto_sri: "IVA_15",
         var_tarifa_iva_porcentaje: 15,
         var_tipo_oferta: "UNICO",
         var_activo: true,
-        var_detalle_variante: { duracion_min: 45, concepto_derecho: "PODER_NOTARIAL", modalidades: ["virtual", "presencial"] },
-        monto_iva: 30.0,
-        precio_total: 230.0,
+        var_detalle_variante: {
+          orden: 1,
+          duracion_min: 30,
+          concepto_derecho: "DECLARACION_JURAMENTADA",
+          modalidades: ["virtual", "presencial"],
+          descripcion_corta: "Para concursos públicos, no impedimento laboral, justificación de ingresos o residencia.",
+        },
+        monto_iva: 5.25,
+        precio_total: 40.25,
+      },
+      {
+        var_id: "var-trq-not-uni-hec",
+        var_producto_id: "prod-trq-notarizacion",
+        var_sku: "TRQ-NOT-UNI-HEC",
+        var_nombre: "Declaración Notarial de Unión de Hecho",
+        var_precio: 90.0,
+        var_precio_comparacion: 120.0,
+        var_codigo_impuesto_sri: "IVA_15",
+        var_tarifa_iva_porcentaje: 15,
+        var_tipo_oferta: "UNICO",
+        var_activo: true,
+        var_detalle_variante: {
+          orden: 2,
+          duracion_min: 45,
+          concepto_derecho: "UNION_DE_HECHO",
+          modalidades: ["presencial", "virtual"],
+          descripcion_corta: "Reconocimiento solemne notarial con fines legales, IESS y patrimoniales.",
+        },
+        monto_iva: 13.5,
+        precio_total: 103.5,
+      },
+      {
+        var_id: "var-trq-not-pod-esp",
+        var_producto_id: "prod-trq-notarizacion",
+        var_sku: "TRQ-NOT-POD-ESP",
+        var_nombre: "Otorgamiento de Poder Especial Notarial",
+        var_precio: 75.0,
+        var_precio_comparacion: 95.0,
+        var_codigo_impuesto_sri: "IVA_15",
+        var_tarifa_iva_porcentaje: 15,
+        var_tipo_oferta: "UNICO",
+        var_activo: true,
+        var_detalle_variante: {
+          orden: 3,
+          duracion_min: 45,
+          concepto_derecho: "PODER_ESPECIAL",
+          modalidades: ["virtual", "presencial"],
+          descripcion_corta: "Para venta de vehículo, cobro de pensión, trámites bancarios o IESS.",
+        },
+        monto_iva: 11.25,
+        precio_total: 86.25,
+      },
+      {
+        var_id: "var-trq-not-pod-gen",
+        var_producto_id: "prod-trq-notarizacion",
+        var_sku: "TRQ-NOT-POD-GEN",
+        var_nombre: "Otorgamiento de Poder General Notarial",
+        var_precio: 140.0,
+        var_precio_comparacion: 180.0,
+        var_codigo_impuesto_sri: "IVA_15",
+        var_tarifa_iva_porcentaje: 15,
+        var_tipo_oferta: "UNICO",
+        var_activo: true,
+        var_detalle_variante: {
+          orden: 4,
+          duracion_min: 60,
+          concepto_derecho: "PODER_GENERAL",
+          modalidades: ["presencial"],
+          descripcion_corta: "Facultades amplias de administración, disposición y representación judicial.",
+        },
+        monto_iva: 21.0,
+        precio_total: 161.0,
+      },
+      {
+        var_id: "var-trq-not-mat-doc",
+        var_producto_id: "prod-trq-notarizacion",
+        var_sku: "TRQ-NOT-MAT-DOC",
+        var_nombre: "Materialización de Documentos Digitales & Exterior (por hoja)",
+        var_precio: 25.0,
+        var_precio_comparacion: 35.0,
+        var_codigo_impuesto_sri: "IVA_15",
+        var_tarifa_iva_porcentaje: 15,
+        var_tipo_oferta: "UNICO",
+        var_activo: true,
+        var_detalle_variante: {
+          orden: 5,
+          duracion_min: 30,
+          concepto_derecho: "MATERIALIZACION_DIGITAL",
+          modalidades: ["virtual"],
+          descripcion_corta: "Certificación notarial con validez física de correos, contratos o firmas electrónicas.",
+        },
+        monto_iva: 3.75,
+        precio_total: 28.75,
+      },
+      {
+        var_id: "var-trq-not-rec-fir",
+        var_producto_id: "prod-trq-notarizacion",
+        var_sku: "TRQ-NOT-REC-FIR",
+        var_nombre: "Reconocimiento de Firmas & Rúbricas en Contratos",
+        var_precio: 40.0,
+        var_precio_comparacion: 55.0,
+        var_codigo_impuesto_sri: "IVA_15",
+        var_tarifa_iva_porcentaje: 15,
+        var_tipo_oferta: "UNICO",
+        var_activo: true,
+        var_detalle_variante: {
+          orden: 6,
+          duracion_min: 30,
+          concepto_derecho: "RECONOCIMIENTO_FIRMA",
+          modalidades: ["presencial", "virtual"],
+          descripcion_corta: "Autenticación notarial para contratos de arrendamiento, promesas y finiquitos.",
+        },
+        monto_iva: 6.0,
+        precio_total: 46.0,
+      },
+      {
+        var_id: "var-trq-not-pro-doc",
+        var_producto_id: "prod-trq-notarizacion",
+        var_sku: "TRQ-NOT-PRO-DOC",
+        var_nombre: "Protocolización de Escrituras, Minutas y Estatutos",
+        var_precio: 120.0,
+        var_precio_comparacion: 160.0,
+        var_codigo_impuesto_sri: "IVA_15",
+        var_tarifa_iva_porcentaje: 15,
+        var_tipo_oferta: "UNICO",
+        var_activo: true,
+        var_detalle_variante: {
+          orden: 7,
+          duracion_min: 60,
+          concepto_derecho: "PROTOCOLIZACION",
+          modalidades: ["presencial"],
+          descripcion_corta: "Incorporación al libro de protocolo notarial con otorgamiento de copias de ley.",
+        },
+        monto_iva: 18.0,
+        precio_total: 138.0,
       },
     ],
   },
@@ -840,6 +973,77 @@ const CATEGORIAS_SEMILLA_TINKAY: CategoriaCatalogo[] = [
 ];
 
 const PRODUCTOS_SEMILLA_TINKAY: ProductoCatalogo[] = [
+  {
+    pro_id: "prod-tinkay-san-valentin",
+    pro_negocio: "tinkay",
+    pro_nombre: "Bouquet Edición Especial San Valentín",
+    pro_slug: "tinkay-bouq-san-valentin",
+    pro_descripcion: "Arreglo maestro de edición limitada para el Día del Amor y la Amistad. 24 a 50 rosas rojas premium aterciopeladas con bombones y dedicatoria.",
+    pro_tipo: "FISICO",
+    pro_destacado: true,
+    pro_categoria_principal_id: "cat-tinkay-002",
+    canales_visibilidad: [...CANALES_POR_DEFECTO],
+    pro_detalle_producto: {
+      icono: "Sparkles",
+      imagen_url: "https://images.unsplash.com/photo-1563241527-3004b7be0ffd?w=1000&auto=format&fit=crop&q=80",
+      descripcion_corta: "Edición estacional exclusiva San Valentín (10 al 15 de Febrero).",
+      etiquetas: ["san valentin", "14 de febrero", "amor", "rosas rojas", "edicion limitada"],
+      vigencia_tipo: "ESTACIONAL_ANUAL",
+      fecha_inicio: "02-10",
+      fecha_fin: "02-15",
+      etiqueta_temporada: "San Valentín",
+      mensaje_fuera_temporada: "Disponible únicamente en temporada de San Valentín (del 10 al 15 de Febrero de cada año).",
+      tiempo_entrega: "🚚 Entrega garantizada 13 y 14 de Febrero",
+      tarifa_iva_predeterminada: 0,
+      codigo_impuesto_sri: "IVA_0",
+      canales_visibilidad: [...CANALES_POR_DEFECTO],
+      logistica: {
+        delivery_incluido: true,
+        modalidad_transporte: "INCLUIDO_GRATIS",
+        etiqueta_transporte: "🚚 Envío Especial de San Valentín",
+        cobertura_texto: "Quito Urbano y Valles",
+      },
+      beneficios: [
+        "Rosas rojas de exportación seleccionadas grano a grano",
+        "Empaque rojo pasión de terciopelo y lazo de seda",
+        "Caja de bombones artesanales incluida",
+        "Tarjeta dedicatoria lacrada con mensaje personalizado",
+      ],
+    },
+    categoria: { ctg_id: "cat-tinkay-002", ctg_nombre: "Estilo Coreano", ctg_slug: "cat-coreanos" },
+    variantes: [
+      {
+        var_id: "var-tinkay-val-24",
+        var_producto_id: "prod-tinkay-san-valentin",
+        var_sku: "TNK-VAL-24",
+        var_nombre: "Bouquet San Valentín 24 Rosas Rojas + Bombones",
+        var_precio: 35.0,
+        var_precio_comparacion: 45.0,
+        var_codigo_impuesto_sri: "IVA_0",
+        var_tarifa_iva_porcentaje: 0,
+        var_tipo_oferta: "REGULAR",
+        var_activo: true,
+        var_detalle_variante: { orden: 1, pvp_nominal: 35.0, tallos: 24 },
+        monto_iva: 0.0,
+        precio_total: 35.0,
+      },
+      {
+        var_id: "var-tinkay-val-50",
+        var_producto_id: "prod-tinkay-san-valentin",
+        var_sku: "TNK-VAL-50",
+        var_nombre: "Bouquet San Valentín 50 Rosas Rojas Monumental",
+        var_precio: 60.0,
+        var_precio_comparacion: 75.0,
+        var_codigo_impuesto_sri: "IVA_0",
+        var_tarifa_iva_porcentaje: 0,
+        var_tipo_oferta: "REGULAR",
+        var_activo: true,
+        var_detalle_variante: { orden: 2, pvp_nominal: 60.0, tallos: 50 },
+        monto_iva: 0.0,
+        precio_total: 60.0,
+      },
+    ],
+  },
   {
     pro_id: "prod-tinkay-florero",
     pro_negocio: "tinkay",
@@ -1578,7 +1782,8 @@ export async function obtenerCategoriasAction(negocio = "tranqi"): Promise<Categ
  */
 export async function obtenerCatalogoProductosAction(
   negocio = "tranqi",
-  canal?: string
+  canal?: string,
+  incluirInactivos = false
 ): Promise<ProductoCatalogo[]> {
   const { principal, variantes } = normalizarIdentificadorNegocio(negocio);
   let admin: any = null;
@@ -1616,6 +1821,7 @@ export async function obtenerCatalogoProductosAction(
           pro_descripcion: p.pro_descripcion || p.descripcion,
           pro_tipo: p.pro_tipo || p.tipo || "FISICO",
           pro_destacado: p.pro_destacado ?? false,
+          pro_activo: p.pro_activo !== false && p.pro_detalle_producto?.pro_activo !== false,
           pro_categoria_principal_id: p.pro_categoria_principal_id || p.categoria?.ctg_id || null,
           pro_detalle_producto: p.pro_detalle_producto || {},
           canales_visibilidad: Array.isArray(p.canales_visibilidad)
@@ -1658,8 +1864,8 @@ export async function obtenerCatalogoProductosAction(
           }
         });
 
-        // Filtrar productos inactivos o tombstones
-        let prodsActivos = prodsList.filter((p: any) => p && p.pro_activo !== false && (p.pro_nombre || p.nombre));
+        // Filtrar productos inactivos salvo que se soliciten explícitamente
+        let prodsActivos = prodsList.filter((p: any) => p && (incluirInactivos || p.pro_activo !== false) && (p.pro_nombre || p.nombre));
 
         // Normalizar estructura segura para cada producto
         prodsActivos.forEach((p) => {
@@ -1712,21 +1918,25 @@ export async function obtenerCatalogoProductosAction(
       catsDb = cData || [];
 
       // 2. Productos
-      let { data: pCom, error: errPCom } = await clienteActivo
+      let queryCom = clienteActivo
         .schema("comun_comercio")
         .from("com_producto")
         .select("*")
-        .in("pro_negocio", variantes)
-        .eq("pro_activo", true)
-        .order("pro_destacado", { ascending: false });
+        .in("pro_negocio", variantes);
+      if (!incluirInactivos) {
+        queryCom = queryCom.eq("pro_activo", true);
+      }
+      let { data: pCom, error: errPCom } = await queryCom.order("pro_destacado", { ascending: false });
 
       if (errPCom || !pCom || pCom.length === 0) {
-        const { data: pPub } = await clienteActivo
+        let queryPub = clienteActivo
           .from("com_producto")
           .select("*")
-          .in("pro_negocio", variantes)
-          .eq("pro_activo", true)
-          .order("pro_destacado", { ascending: false });
+          .in("pro_negocio", variantes);
+        if (!incluirInactivos) {
+          queryPub = queryPub.eq("pro_activo", true);
+        }
+        const { data: pPub } = await queryPub.order("pro_destacado", { ascending: false });
         pCom = pPub;
       }
 
@@ -1803,6 +2013,7 @@ export async function obtenerCatalogoProductosAction(
       pro_descripcion: p.pro_descripcion,
       pro_tipo: p.pro_tipo,
       pro_destacado: p.pro_destacado,
+      pro_activo: p.pro_activo !== false && p.pro_detalle_producto?.pro_activo !== false,
       pro_categoria_principal_id: p.pro_categoria_principal_id,
       pro_detalle_producto: p.pro_detalle_producto || {},
       canales_visibilidad: Array.isArray(p.pro_detalle_producto?.canales_visibilidad)
@@ -1834,8 +2045,8 @@ export async function obtenerCatalogoProductosAction(
     }
   });
 
-  // Filtrar productos inactivos o eliminados
-  let productosActivos = listaFinal.filter((p: any) => p && p.pro_activo !== false && (p.pro_nombre || p.nombre));
+  // Filtrar productos inactivos o eliminados salvo que se soliciten explícitamente
+  let productosActivos = listaFinal.filter((p: any) => p && (incluirInactivos || p.pro_activo !== false) && (p.pro_nombre || p.nombre));
 
   // Asegurar que todo producto tenga variantes y canales_visibilidad normalizados
   productosActivos.forEach((p) => {
@@ -1863,6 +2074,87 @@ export async function obtenerCatalogoProductosAction(
   }
 
   return productosActivos;
+}
+
+/**
+ * Alterna de manera instantánea el estado activo / inactivo de un producto master
+ */
+export async function alternarActivoProductoAction(params: {
+  pro_id: string;
+  activo?: boolean;
+  negocio?: string;
+}): Promise<{ ok: boolean; activo: boolean; error?: string; producto?: ProductoCatalogo }> {
+  try {
+    const { principal } = normalizarIdentificadorNegocio(params.negocio);
+    const negocio = principal;
+    const prods = await obtenerCatalogoProductosAction(negocio, undefined, true);
+    const prodActual = prods.find((p) => p.pro_id === params.pro_id);
+    if (!prodActual) {
+      return { ok: false, activo: false, error: "Producto no encontrado para activar o desactivar." };
+    }
+
+    const estadoActual = prodActual.pro_activo !== false;
+    const nuevoEstado = params.activo !== undefined ? params.activo : !estadoActual;
+
+    const detalleActualizado = {
+      ...(prodActual.pro_detalle_producto || {}),
+      pro_activo: nuevoEstado,
+      editado_en: new Date().toISOString(),
+    };
+
+    const prodActualizado: ProductoCatalogo = {
+      ...prodActual,
+      pro_activo: nuevoEstado,
+      pro_detalle_producto: detalleActualizado,
+    };
+
+    // 1. Actualizar en Supabase
+    let admin: any = null;
+    let supabase: any = null;
+    try { admin = crearClienteAdmin(); } catch {}
+    try { supabase = await crearClienteServidor(); } catch {}
+    const clienteActivo = admin || supabase;
+
+    if (clienteActivo) {
+      try {
+        await clienteActivo
+          .schema("comun_comercio")
+          .from("com_producto")
+          .update({
+            pro_activo: nuevoEstado,
+            pro_detalle_producto: detalleActualizado,
+          })
+          .eq("pro_id", params.pro_id);
+      } catch {
+        try {
+          await clienteActivo
+            .from("com_producto")
+            .update({
+              pro_activo: nuevoEstado,
+              pro_detalle_producto: detalleActualizado,
+            })
+            .eq("pro_id", params.pro_id);
+        } catch {}
+      }
+    }
+
+    // 2. Actualizar en memoria
+    const customs = storeCustomProductos.get(negocio) || [];
+    const idx = customs.findIndex((p) => p.pro_id === params.pro_id || p.pro_slug === prodActual.pro_slug);
+    if (idx >= 0) {
+      customs[idx] = prodActualizado;
+    } else {
+      customs.unshift(prodActualizado);
+    }
+    storeCustomProductos.set(negocio, customs);
+
+    revalidatePath("/panel/catalogo-productos");
+    revalidatePath("/panel");
+
+    return { ok: true, activo: nuevoEstado, producto: prodActualizado };
+  } catch (err: any) {
+    return { ok: false, activo: false, error: err.message || "Error al alternar estado del producto." };
+  }
 }
 
 // ==============================================================================
@@ -2388,6 +2680,12 @@ export async function crearProductoAction(datos: {
   usos?: string[];
   etiquetas?: string[];
   canales_visibilidad?: CanalVisibilidad[];
+  vigencia_tipo?: "SIEMPRE" | "RANGO_FECHAS" | "ESTACIONAL_ANUAL";
+  fecha_inicio?: string;
+  fecha_fin?: string;
+  mensaje_fuera_temporada?: string;
+  etiqueta_temporada?: string;
+  pro_activo?: boolean;
   negocio?: string;
 }): Promise<{ ok: boolean; producto?: ProductoCatalogo; error?: string }> {
   try {
@@ -2467,6 +2765,7 @@ export async function crearProductoAction(datos: {
       pro_descripcion: datos.descripcion.trim(),
       pro_tipo: datos.tipo,
       pro_destacado: Boolean(datos.destacado),
+      pro_activo: datos.pro_activo !== false,
       pro_categoria_principal_id: cat?.ctg_id || null,
       canales_visibilidad: canalesFinales,
       pro_detalle_producto: {
@@ -2481,6 +2780,12 @@ export async function crearProductoAction(datos: {
         usos: datos.usos || [],
         etiquetas: datos.etiquetas || [],
         canales_visibilidad: canalesFinales,
+        vigencia_tipo: datos.vigencia_tipo || "SIEMPRE",
+        fecha_inicio: datos.fecha_inicio?.trim() || null,
+        fecha_fin: datos.fecha_fin?.trim() || null,
+        mensaje_fuera_temporada: datos.mensaje_fuera_temporada?.trim() || null,
+        etiqueta_temporada: datos.etiqueta_temporada?.trim() || null,
+        pro_activo: datos.pro_activo !== false,
         creado_desde_panel: true,
       },
       categoria: cat
@@ -2612,6 +2917,12 @@ export async function editarProductoAction(datos: {
   usos?: string[];
   etiquetas?: string[];
   canales_visibilidad?: CanalVisibilidad[];
+  vigencia_tipo?: "SIEMPRE" | "RANGO_FECHAS" | "ESTACIONAL_ANUAL";
+  fecha_inicio?: string;
+  fecha_fin?: string;
+  mensaje_fuera_temporada?: string;
+  etiqueta_temporada?: string;
+  pro_activo?: boolean;
   varianteId?: string;
   variantes?: Array<{
     var_id?: string;
@@ -2638,7 +2949,7 @@ export async function editarProductoAction(datos: {
     const cat = cats.find((c) => c.ctg_id === datos.categoriaId) || null;
 
     // Buscar producto actual
-    const prods = await obtenerCatalogoProductosAction(negocio);
+    const prods = await obtenerCatalogoProductosAction(negocio, undefined, true);
     const prodActual = prods.find((p) => p.pro_id === datos.pro_id);
     if (!prodActual) {
       return { ok: false, error: "Producto no encontrado para editar." };
@@ -2773,12 +3084,15 @@ export async function editarProductoAction(datos: {
       canalesFinales = (canalesFinales as CanalVisibilidad[]).filter((c: CanalVisibilidad) => !CANALES_REQUIEREN_IMAGEN.includes(c));
     }
 
+    const proActivoFinal = datos.pro_activo !== undefined ? datos.pro_activo : (prodActual.pro_activo ?? prodActual.pro_detalle_producto?.pro_activo ?? true);
+
     const prodEditado: ProductoCatalogo = {
       ...prodActual,
       pro_nombre: nombre,
       pro_descripcion: datos.descripcion.trim(),
       pro_tipo: datos.tipo,
       pro_destacado: Boolean(datos.destacado),
+      pro_activo: proActivoFinal,
       pro_categoria_principal_id: cat?.ctg_id || prodActual.pro_categoria_principal_id,
       canales_visibilidad: canalesFinales,
       pro_detalle_producto: {
@@ -2801,6 +3115,12 @@ export async function editarProductoAction(datos: {
         usos: datos.usos !== undefined ? datos.usos : (prodActual.pro_detalle_producto?.usos || prodActual.pro_detalle_producto?.ocasiones || []),
         etiquetas: datos.etiquetas !== undefined ? datos.etiquetas : (prodActual.pro_detalle_producto?.etiquetas || []),
         canales_visibilidad: canalesFinales,
+        vigencia_tipo: datos.vigencia_tipo !== undefined ? datos.vigencia_tipo : (prodActual.pro_detalle_producto?.vigencia_tipo || "SIEMPRE"),
+        fecha_inicio: datos.fecha_inicio !== undefined ? datos.fecha_inicio?.trim() : (prodActual.pro_detalle_producto?.fecha_inicio || null),
+        fecha_fin: datos.fecha_fin !== undefined ? datos.fecha_fin?.trim() : (prodActual.pro_detalle_producto?.fecha_fin || null),
+        mensaje_fuera_temporada: datos.mensaje_fuera_temporada !== undefined ? datos.mensaje_fuera_temporada?.trim() : (prodActual.pro_detalle_producto?.mensaje_fuera_temporada || null),
+        etiqueta_temporada: datos.etiqueta_temporada !== undefined ? datos.etiqueta_temporada?.trim() : (prodActual.pro_detalle_producto?.etiqueta_temporada || null),
+        pro_activo: proActivoFinal,
         editado_en: new Date().toISOString(),
       },
 
@@ -2830,6 +3150,7 @@ export async function editarProductoAction(datos: {
           categoria_id: cat?.ctg_id || null,
           tipo: datos.tipo,
           destacado: Boolean(datos.destacado),
+          pro_activo: proActivoFinal,
           detalle_producto: prodEditado.pro_detalle_producto,
           variantes: variantesActualizadas.map((v) => ({
             var_id: v.var_id,
@@ -2886,6 +3207,7 @@ export async function editarProductoAction(datos: {
                 pro_descripcion: datos.descripcion.trim(),
                 pro_tipo: datos.tipo,
                 pro_destacado: Boolean(datos.destacado),
+                pro_activo: proActivoFinal,
                 pro_categoria_principal_id: cat?.ctg_id || null,
                 pro_detalle_producto: prodEditado.pro_detalle_producto,
               })
@@ -2912,7 +3234,7 @@ export async function editarProductoAction(datos: {
                   pro_tipo: datos.tipo,
                   pro_destacado: Boolean(datos.destacado),
                   pro_categoria_principal_id: cat?.ctg_id || null,
-                  pro_activo: true,
+                  pro_activo: proActivoFinal,
                   pro_detalle_producto: prodEditado.pro_detalle_producto,
                 },
                 { onConflict: "pro_negocio, pro_slug" }

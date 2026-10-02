@@ -20,4 +20,5 @@ export * from "./componentes/GestionConveniosCorporativos";
 export * from "./componentes/TarjetaBeneficiosCorporativosCliente";
 export * from "./acciones-convenios";
 export * from "./utils/negocio";
+export * from "./utils/vigencia";
 

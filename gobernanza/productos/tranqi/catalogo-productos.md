@@ -21,9 +21,15 @@
 ## 2. Productos Maestros y Variantes (`com_producto` y `com_variante`)
 
 ### A. Categoría: Trámites Puntuales (`TRQ_TRAMITES`)
-1. **Notarización de Documentos:**
-   * `TRQ-NOT-DOC`: Notarización y Gestión en Notaría — Subtotal: **$200.00** + IVA.
-     * Tipo: `SERVICIO_PUNTUAL`.
+1. **Notarización de Documentos & Poderes:**
+   * `TRQ-NOT-DEC-JUR`: Declaración Juramentada — Subtotal: **$30.43** (PVP: **$35.00** con IVA).
+   * `TRQ-NOT-UNI-HEC`: Declaración de Unión de Hecho — Subtotal: **$78.26** (PVP: **$90.00** con IVA).
+   * `TRQ-NOT-POD-ESP`: Poder Especial Notarial — Subtotal: **$65.22** (PVP: **$75.00** con IVA).
+   * `TRQ-NOT-POD-GEN`: Poder General Notarial — Subtotal: **$121.74** (PVP: **$140.00** con IVA).
+   * `TRQ-NOT-MAT-DOC`: Materialización Digital & Exterior — Subtotal: **$21.74** (PVP: **$25.00** con IVA).
+   * `TRQ-NOT-REC-FIR`: Reconocimiento de Firmas — Subtotal: **$34.78** (PVP: **$40.00** con IVA).
+   * `TRQ-NOT-PRO-DOC`: Protocolización de Escrituras — Subtotal: **$104.35** (PVP: **$120.00** con IVA).
+   * Tipo: `SERVICIO_PUNTUAL` con múltiples variantes tarifarias oficiales.
 2. **Permiso de Salida del País (Menores):**
    * `TRQ-SAL-PAI`: Trámite Integral de Salida de Menores — Subtotal: **$150.00** + IVA.
 3. **Revisión Express de Contratos:**

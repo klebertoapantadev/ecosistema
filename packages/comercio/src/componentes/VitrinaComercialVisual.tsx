@@ -18,6 +18,7 @@ import {
   ChevronRight,
   Layers,
   Truck,
+  Calendar,
 } from "lucide-react";
 import {
   ProductoCatalogo,
@@ -30,6 +31,7 @@ import {
 import { ModalCheckoutPayphone } from "./ModalCheckoutPayphone";
 import { ModalDetalleServicioVisual } from "./ModalDetalleServicioVisual";
 import { obtenerImagenFallbackNegocio } from "../utils/negocio";
+import { evaluarVigenciaProducto } from "../utils/vigencia";
 
 export interface VitrinaComercialVisualProps {
   negocio?: string;
@@ -127,6 +129,11 @@ export function VitrinaComercialVisual({
 
   // Filtrado de productos
   const productosFiltrados = productos.filter((p) => {
+    // Filtro de estado activo y vigencia temporal
+    if (p.pro_activo === false) return false;
+    const vigencia = evaluarVigenciaProducto(p.pro_detalle_producto, p.pro_activo);
+    if (!vigencia.estaVigente) return false;
+
     const slugCat = p.categoria?.ctg_slug || "";
     const nombreCat = p.categoria?.ctg_nombre || "";
     const nombreProd = p.pro_nombre || "";
@@ -454,6 +461,7 @@ export function VitrinaComercialVisual({
             const currentVar = p.variantes.find((v) => v.var_id === currentVarId) || p.variantes[0];
 
             const detalle = p.pro_detalle_producto || {};
+            const vigencia = evaluarVigenciaProducto(detalle, p.pro_activo);
             const fallbackDefault = obtenerImagenFallbackNegocio(p.pro_negocio || negocio);
             const imagenUrl =
               currentVar?.var_detalle_variante?.portada_url ||
@@ -541,8 +549,8 @@ export function VitrinaComercialVisual({
                     }}
                   />
 
-                  {/* Badges de Categoría y Destacado */}
-                  <div style={{ position: "absolute", top: "12px", left: "12px", display: "flex", gap: "6px" }}>
+                  {/* Badges de Categoría, Destacado y Temporada */}
+                  <div style={{ position: "absolute", top: "12px", left: "12px", display: "flex", flexWrap: "wrap", gap: "6px" }}>
                     <span
                       style={{
                         background: "rgba(15, 23, 42, 0.85)",
@@ -572,6 +580,24 @@ export function VitrinaComercialVisual({
                         }}
                       >
                         <Sparkles size={10} /> DESTACADO
+                      </span>
+                    )}
+                    {vigencia.tipo !== "SIEMPRE" && (
+                      <span
+                        style={{
+                          background: vigencia.tipo === "ESTACIONAL_ANUAL" ? "linear-gradient(135deg, #EC4899, #BE185D)" : "linear-gradient(135deg, #6366F1, #4F46E5)",
+                          color: "#FFFFFF",
+                          padding: "3px 8px",
+                          borderRadius: "12px",
+                          fontSize: "0.7rem",
+                          fontWeight: 800,
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "3px",
+                          boxShadow: "0 2px 6px rgba(0,0,0,0.25)",
+                        }}
+                      >
+                        <Calendar size={10} /> {vigencia.etiqueta || "Temporada"}
                       </span>
                     )}
                   </div>
