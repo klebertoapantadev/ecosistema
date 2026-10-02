@@ -104,7 +104,8 @@ export function crearServidorMcpCatalogo(opciones: OpcionesServidorMcpCatalogo) 
   const herramientas: Record<string, Herramienta<ContextoMcpCatalogo>> = {
     consultar_catalogo: {
       descripcion:
-        "Busca productos, ramos, servicios y tarifas del catálogo oficial con precios, fotos y variantes.",
+        "Busca productos, ramos, servicios y tarifas del catálogo oficial con precios, fotos y variantes. " +
+        "pvp_total_usd es el precio final con IVA; frecuencia indica si se cobra de forma recurrente (p. ej. MENSUAL) o es un pago único (null).",
       esquema: {
         type: "object",
         properties: {
@@ -258,6 +259,7 @@ export function crearServidorMcpCatalogo(opciones: OpcionesServidorMcpCatalogo) 
                 tarifa_iva: tarifaIva,
                 monto_iva_usd: Number(montoIva.toFixed(2)),
                 pvp_total_usd: Number(pvpTotal.toFixed(2)),
+                frecuencia: v.var_frecuencia_recurrencia ?? v.frecuencia ?? null,
                 foto_variante_url: v.var_detalle_variante?.portada_url || v.foto_variante_url || null,
               };
             }),
@@ -330,6 +332,7 @@ export function crearServidorMcpCatalogo(opciones: OpcionesServidorMcpCatalogo) 
                 tarifa_iva: tarifaIva,
                 monto_iva_usd: Number(montoIva.toFixed(2)),
                 pvp_total_usd: Number(pvpTotal.toFixed(2)),
+                frecuencia: v.var_frecuencia_recurrencia ?? v.frecuencia ?? null,
                 detalle_variante: v.var_detalle_variante || {},
               };
             }),
