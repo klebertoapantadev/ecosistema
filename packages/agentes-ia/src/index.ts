@@ -118,6 +118,7 @@ export {
 export {
   crearServidorMcpCatalogo,
   type ContextoMcpCatalogo,
+  type OpcionesServidorMcpCatalogo,
 } from "./mcp-catalogo";
 
 

@@ -8,6 +8,7 @@ export interface ContextoMcpCatalogo {
   negocioId: string;
   tokenNombre: string;
   alcances: string[];
+  token: string;
 }
 
 export interface OpcionesServidorMcpCatalogo {
@@ -15,6 +16,10 @@ export interface OpcionesServidorMcpCatalogo {
   supabaseUrl?: string;
   supabaseAnonKey?: string;
   consultarProductos?: (negocioId: string) => Promise<any[]>;
+  herramientasAdicionales?: Record<
+    string,
+    Herramienta<ContextoMcpCatalogo> & { alcanceRequerido?: string }
+  >;
 }
 
 export function crearServidorMcpCatalogo(opciones: OpcionesServidorMcpCatalogo) {
@@ -341,10 +346,34 @@ export function crearServidorMcpCatalogo(opciones: OpcionesServidorMcpCatalogo) 
     },
   };
 
+  const herramientasFinales: Record<string, Herramienta<ContextoMcpCatalogo>> = {
+    ...herramientas,
+  };
+
+  if (opciones.herramientasAdicionales) {
+    for (const [clave, h] of Object.entries(opciones.herramientasAdicionales)) {
+      if (h.alcanceRequerido) {
+        const alcance = h.alcanceRequerido;
+        herramientasFinales[clave] = {
+          descripcion: h.descripcion,
+          esquema: h.esquema,
+          async ejecutar(argumentos, contexto) {
+            if (!contexto.alcances.includes(alcance) && !contexto.alcances.includes("*")) {
+              return { error: `El token no tiene el alcance ${alcance}.` };
+            }
+            return h.ejecutar(argumentos, contexto);
+          },
+        };
+      } else {
+        herramientasFinales[clave] = h;
+      }
+    }
+  }
+
   return crearManejadorMcp<ContextoMcpCatalogo>({
     nombre: `mcp-catalogo-${negocioPorDefecto}`,
     version: "1.0.0",
-    herramientas,
+    herramientas: herramientasFinales,
     async autenticar(peticion: Request) {
       const token = extraerBearerToken(peticion);
       if (!token) return null;
@@ -365,6 +394,7 @@ export function crearServidorMcpCatalogo(opciones: OpcionesServidorMcpCatalogo) 
         negocioId: validacion.negocioId,
         tokenNombre: validacion.nombre ?? "Token MCP",
         alcances: validacion.alcances ?? [],
+        token,
       };
     },
   });

@@ -25,6 +25,7 @@ export function GestionTokensMcpWidget({ negocio }: Props) {
   const [nombre, setNombre] = useState("");
   const [alcanceCatalogo, setAlcanceCatalogo] = useState(true);
   const [alcancePedidos, setAlcancePedidos] = useState(false);
+  const [alcanceProspectos, setAlcanceProspectos] = useState(false);
   const [expiracionDias, setExpiracionDias] = useState<number | 0>(0);
   const [isPending, startTransition] = useTransition();
 
@@ -51,6 +52,7 @@ export function GestionTokensMcpWidget({ negocio }: Props) {
     const alcances: string[] = [];
     if (alcanceCatalogo) alcances.push("catalogo:leer");
     if (alcancePedidos) alcances.push("pedidos:crear");
+    if (alcanceProspectos) alcances.push("prospectos:crear");
     if (alcances.length === 0) alcances.push("catalogo:leer");
 
     startTransition(async () => {
@@ -66,6 +68,7 @@ export function GestionTokensMcpWidget({ negocio }: Props) {
         setModalCrear(false);
         setNombre("");
         setExpiracionDias(0);
+        setAlcanceProspectos(false);
         void cargarTokens();
       } else {
         setError(res.error);
@@ -392,6 +395,14 @@ export function GestionTokensMcpWidget({ negocio }: Props) {
                       onChange={(e) => setAlcancePedidos(e.target.checked)}
                     />
                     <code>pedidos:crear</code> — Generar cotizaciones y pedidos agénticos
+                  </label>
+                  <label style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "0.85rem", color: "#374151", cursor: "pointer" }}>
+                    <input
+                      type="checkbox"
+                      checked={alcanceProspectos}
+                      onChange={(e) => setAlcanceProspectos(e.target.checked)}
+                    />
+                    <code>prospectos:crear</code> — Registrar contactos captados por asistentes de chat
                   </label>
                 </div>
               </div>

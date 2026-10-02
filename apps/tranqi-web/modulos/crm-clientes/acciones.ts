@@ -2214,3 +2214,144 @@ export async function obtenerHistorialAuditoriaCliente(clienteId: string) {
 
   return data || [];
 }
+
+// ==============================================================================
+// 7. GESTIÓN DE PROSPECTOS (CONTACTOS CAPTADOS POR BUDDIE ARIA)
+// ==============================================================================
+
+export interface ProspectoChat {
+  psp_id: string;
+  psp_secuencial: number;
+  psp_negocio: string;
+  psp_nombre: string;
+  psp_whatsapp: string;
+  psp_correo: string | null;
+  psp_ciudad: string | null;
+  psp_servicio_sku: string | null;
+  psp_interes: string | null;
+  psp_canal: string;
+  psp_autoriza_contacto: boolean;
+  psp_autorizado_en: string;
+  psp_estado: "NUEVO" | "CONTACTADO" | "CONVERTIDO" | "DESCARTADO";
+  psp_atendido_por: string | null;
+  psp_atendido_en: string | null;
+  psp_detalle_prospecto: {
+    token_nombre?: string;
+    notas?: Array<{ texto: string; en: string; por?: string }>;
+    [key: string]: unknown;
+  };
+  psp_creado_en: string;
+  psp_actualizado_en: string;
+}
+
+/**
+ * Consulta los prospectos captados por el agente de chat/buddie
+ */
+export async function obtenerProspectosChatAction(estado?: string): Promise<{
+  ok: boolean;
+  datos?: ProspectoChat[];
+  error?: string;
+}> {
+  try {
+    const supabase: any = await crearClienteServidor();
+    let query = supabase
+      .schema("tranqui_legal")
+      .from("trq_prospecto")
+      .select("*")
+      .is("psp_eliminado_en", null)
+      .order("psp_creado_en", { ascending: false })
+      .limit(200);
+
+    if (estado && estado.trim().length > 0 && estado !== "TODOS") {
+      query = query.eq("psp_estado", estado.trim());
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      console.error("Error al obtener prospectos de chat:", error);
+      return { ok: false, error: error.message };
+    }
+
+    return { ok: true, datos: data || [] };
+  } catch (err) {
+    console.error("Error en obtenerProspectosChatAction:", err);
+    return { ok: false, error: err instanceof Error ? err.message : "Error al consultar los prospectos de chat." };
+  }
+}
+
+/**
+ * Actualiza el estado de atención de un prospecto de chat
+ */
+export async function actualizarEstadoProspectoAction(
+  id: string,
+  estado: "CONTACTADO" | "CONVERTIDO" | "DESCARTADO" | "NUEVO",
+  nota?: string
+): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const supabase: any = await crearClienteServidor();
+    const { data: authData, error: authErr } = await supabase.auth.getUser();
+
+    if (authErr || !authData?.user) {
+      return { ok: false, error: "No autenticado en la plataforma. Por favor inicia sesión." };
+    }
+
+    const payload: Record<string, unknown> = {
+      psp_estado: estado,
+      psp_atendido_por: authData.user.id,
+      psp_atendido_en: new Date().toISOString(),
+      psp_actualizado_en: new Date().toISOString(),
+    };
+
+    if (nota && nota.trim().length > 0) {
+      const { data: actual, error: errGet } = await supabase
+        .schema("tranqui_legal")
+        .from("trq_prospecto")
+        .select("psp_detalle_prospecto")
+        .eq("psp_id", id)
+        .single();
+
+      if (errGet) {
+        return { ok: false, error: errGet.message };
+      }
+
+      const detalle = actual?.psp_detalle_prospecto || {};
+      const notas = Array.isArray(detalle.notas) ? [...detalle.notas] : [];
+      notas.push({
+        texto: nota.trim(),
+        en: new Date().toISOString(),
+        por: authData.user.email || authData.user.id,
+      });
+
+      payload.psp_detalle_prospecto = {
+        ...detalle,
+        notas,
+      };
+    }
+
+    const { data: filas, error: errUpdate } = await supabase
+      .schema("tranqui_legal")
+      .from("trq_prospecto")
+      .update(payload)
+      .eq("psp_id", id)
+      .select("psp_id");
+
+    if (errUpdate) {
+      console.error("Error al actualizar estado del prospecto:", errUpdate);
+      return { ok: false, error: errUpdate.message };
+    }
+
+    // La RLS solo deja actualizar a administradores del negocio: un abogado ve
+    // el prospecto pero su update no toca ninguna fila y no devuelve error.
+    if (!filas || filas.length === 0) {
+      return { ok: false, error: "No tienes permiso para cambiar el estado de este contacto." };
+    }
+
+    revalidatePath("/panel/clientes");
+    return { ok: true };
+  } catch (err) {
+    console.error("Error en actualizarEstadoProspectoAction:", err);
+    return { ok: false, error: err instanceof Error ? err.message : "Error al actualizar el estado del prospecto." };
+  }
+}
+
