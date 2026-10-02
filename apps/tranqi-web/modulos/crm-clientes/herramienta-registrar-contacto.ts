@@ -35,6 +35,11 @@ export const herramientaRegistrarContacto: Herramienta<ContextoMcpCatalogo> & { 
         type: "string",
         description: "resumen en una o dos frases de lo que necesita",
       },
+      canal: {
+        type: "string",
+        enum: ["buddy_web", "whatsapp_aria"],
+        description: "Por dónde llegó la persona: 'buddy_web' (chat de la página) o 'whatsapp_aria' (conversación de WhatsApp). Por defecto buddy_web.",
+      },
     },
     required: ["nombre", "whatsapp", "autoriza_contacto"],
   },
@@ -69,7 +74,7 @@ export const herramientaRegistrarContacto: Herramienta<ContextoMcpCatalogo> & { 
           p_ciudad: typeof args.ciudad === "string" && args.ciudad.trim().length > 0 ? args.ciudad.trim() : null,
           p_servicio_sku: typeof args.servicio_sku === "string" && args.servicio_sku.trim().length > 0 ? args.servicio_sku.trim() : null,
           p_interes: typeof args.interes === "string" && args.interes.trim().length > 0 ? args.interes.trim() : null,
-          p_canal: "buddy_web",
+          p_canal: args.canal === "whatsapp_aria" ? "whatsapp_aria" : "buddy_web",
         }),
         signal: AbortSignal.timeout(8000),
       });

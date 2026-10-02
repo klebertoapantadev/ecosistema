@@ -86,7 +86,8 @@ Registra los datos de contacto de una persona interesada para que el equipo de T
   "correo": "carlos.perez@ejemplo.com",
   "ciudad": "Quito",
   "servicio_sku": "TRQ-DIV-MUT",
-  "interes": "Consulta sobre divorcio de mutuo acuerdo"
+  "interes": "Consulta sobre divorcio de mutuo acuerdo",
+  "canal": "buddy_web"
 }
 ```
 
