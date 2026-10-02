@@ -18,7 +18,11 @@ export * from "./componentes/CarruselProductosCliente";
 export * from "./componentes/ModalGaleriaMedios";
 export * from "./componentes/GestionConveniosCorporativos";
 export * from "./componentes/TarjetaBeneficiosCorporativosCliente";
+export * from "./componentes/ConsolaGestionInformativosWidget";
+export * from "./componentes/TableroBeneficiosAvisosWidget";
+export * from "./componentes/BannerInformativoSuperior";
 export * from "./acciones-convenios";
+export * from "./acciones-informativos";
 export * from "./utils/negocio";
 export * from "./utils/vigencia";
 

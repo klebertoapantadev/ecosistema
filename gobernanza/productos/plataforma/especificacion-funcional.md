@@ -42,6 +42,7 @@ Este documento describe el **comportamiento compartido por los 4 productos** (Tr
 | **`PLT-021`** | **Despachador de Tareas Programadas (recordatorios, caducidades, cobros)** | 🟡 En Desarrollo | **70%** | **Jesus Navarrete** |
 | **`PLT-022`** | **Tokens de Acceso MCP e Integraciones Agénticas por Negocio** | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`PLT-023`** | **Convenios Corporativos B2B2C, Paquetes de Beneficios y Enlace de Afiliación** | ✅ Implementado | **100%** | Kleber Toapanta |
+| **`PLT-024`** | **Campañas Informativas, Alertas Institucionales y Paquete de Beneficios** | ✅ Implementado | **100%** | Kleber Toapanta |
 
 ---
 
@@ -1514,6 +1515,37 @@ CREATE TRIGGER trg_aud_com_beneficio_consumo AFTER INSERT OR UPDATE OR DELETE ON
    - Valida que el colaborador tenga cupos disponibles de consultas gratuitas en su periodo vigente (`COUNT(cbn_id) < consultas_gratis_total`).
    - Inserta el registro en `com_beneficio_consumo`.
    - Bloquea cualquier intento de sobregiro transaccionalmente mediante bloqueo de fila (`FOR UPDATE`).
+
+---
+
+## PLT-024 — Campañas Informativas, Alertas Institucionales y Paquete de Beneficios & Convenios
+
+**Responsable:** Kleber Toapanta  
+**Módulos / Widgets:** `gestion_informativos`, `paquete_beneficios_abogados`, `muro_informativo_comunidad`, `BannerInformativoSuperior`  
+**Esquema:** `comun_comercio` (`com_campana_informativa`)
+
+### 1. Descripción
+Módulo unificado y transversal para la gestión, publicación y visualización omnicanal de **campañas informativas, alertas de instituciones públicas (ANT, SRI, Municipios), novedades tributarias y paquetes de beneficios/convenios de capacitación** orientados a las distintas audiencias del ecosistema (`TODOS`, `CLIENTES`, `EMPRESAS`, `ABOGADOS` / `PROFESIONALES`).
+
+### 2. Reglas de Negocio
+1. **Segmentación de Audiencia:**
+   - `TODOS`: Comunicados globales y alertas de impacto general (ej. cortes programados, feriados nacionales).
+   - `CLIENTES`: Alertas para personas naturales (ej. "ANT suspende matriculación vehicular del 10 al 15 de Octubre").
+   - `EMPRESAS`: Novedades tributarias y beneficios corporativos (ej. "Descuento del 10% en Patente Municipal de Quito durante Noviembre").
+   - `ABOGADOS` / `PROFESIONALES`: Paquete exclusivo de convenios de formación, maestrías, becas universitarias, herramientas de software y firma electrónica.
+2. **Ubicaciones de Despliegue (*Placement*):**
+   - `LANDING_BANNER`: Cintillo o ticker rotativo en el encabezado superior de la landing page.
+   - `LANDING_GRID`: Rejilla de avisos destacados en la landing de la aplicación.
+   - `PANEL_INICIO`: Tarjeta o banner destacado en el tablero de inicio (`/panel`).
+   - `PANEL_BENEFICIOS`: Cartelera o muro exclusivo de beneficios y alertas (`/panel/red-profesional`, `/panel/clientes`).
+3. **Vigencia Temporal & Control de Publicación:**
+   - Cada campaña define `cmp_fecha_inicio` y `cmp_fecha_fin` (o permanente si `cmp_fecha_fin` es nulo).
+   - Solo se despliegan aquellas con `cmp_activo = true` y cuya fecha actual esté comprendida dentro del intervalo de vigencia.
+4. **Recursos Multimedia & Call-to-Action (CTA):**
+   - Soporte para portada de imagen (URL directa o selector de galería), video explicativo (YouTube o MP4) y botón de acción directa (texto del CTA + URL externa o interna).
+5. **Persistencia & Gobernanza de Base de Datos:**
+   - Tabla `comun_comercio.com_campana_informativa` con RLS habilitado (lectura pública para campañas activas, escritura restringida a Operadores y Administradores de la empresa).
+   - Trigger de auditoría `comun_auditoria.aud_fn_auditar_tabla()` en cada inserción, edición o borrado.
 
 ---
 

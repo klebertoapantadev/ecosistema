@@ -32,6 +32,8 @@ import {
   GestionConveniosCorporativos,
   TableroDisponibilidadOperativa,
   TarjetaBeneficiosCorporativosCliente,
+  ConsolaGestionInformativosWidget,
+  TableroBeneficiosAvisosWidget,
 } from "@eco/comercio";
 import { SociosWidget } from "../administrar/PanelAdministrarModular";
 import { ConfiguracionContratoAbogadoWidget } from "@/modulos/socios/componentes/ConfiguracionContratoAbogadoWidget";
@@ -403,6 +405,27 @@ const INVENTARIO_GLOBAL_WIDGETS: Record<string, { titulo: string; subtitulo: str
     icono: LayoutGrid,
     colorIcono: "#0284C7",
     categoria: "Agenda"
+  },
+  gestion_informativos: {
+    titulo: "Gestión de Informativos & Beneficios",
+    subtitulo: "Consola de administración de alertas institucionales, novedades tributarias y convenios de capacitación",
+    icono: Bell,
+    colorIcono: "#D97706",
+    categoria: "Comercio & Comunicación"
+  },
+  paquete_beneficios_abogados: {
+    titulo: "Paquete de Beneficios & Convenios",
+    subtitulo: "Muro de beneficios, maestrías, herramientas jurídicas y convenios académicos para socios abogados",
+    icono: Sparkles,
+    colorIcono: "#5000BA",
+    categoria: "Red Profesional"
+  },
+  muro_informativo_comunidad: {
+    titulo: "Avisos & Alertas de la Comunidad",
+    subtitulo: "Cartelera informativa ciudadana con alertas de la ANT, SRI y novedades de interés legal",
+    icono: Bell,
+    colorIcono: "#0284C7",
+    categoria: "Información & Clientes"
   },
   notificaciones: {
     titulo: "Preferencias de Alertas & Notificaciones",
@@ -783,6 +806,18 @@ export function PanelDinamicoModular({ slug, negocio, rolInicial = "ADMINISTRADO
       case "beneficios_corporativos":
       case "beneficios_cliente":
         return <TarjetaBeneficiosCorporativosCliente negocio={negocio} />;
+      case "gestion_informativos":
+      case "informativos":
+      case "avisos":
+        return <ConsolaGestionInformativosWidget negocio={negocio} />;
+      case "paquete_beneficios_abogados":
+      case "beneficios_abogados":
+      case "convenios_abogados":
+        return <TableroBeneficiosAvisosWidget negocio={negocio} audienciaActiva="ABOGADOS" />;
+      case "muro_informativo_comunidad":
+      case "alertas_comunidad":
+      case "cartelera_comunidad":
+        return <TableroBeneficiosAvisosWidget negocio={negocio} audienciaActiva="TODOS" />;
       case "disponibilidad_abogados":
       case "disponibilidad_operativa":
         return <TableroDisponibilidadOperativa negocio={negocio} />;

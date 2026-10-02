@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { BannerInformativoSuperior } from "@eco/comercio";
 
 interface AbogadoCard {
   id: string;
@@ -389,6 +390,7 @@ export default function TranqiLanding() {
 
   return (
     <>
+      <BannerInformativoSuperior negocio="tranqi" />
       <nav className="nav-landing">
         <a className="logo" href="#hero"><img src="/assets/tranqi-white.svg" alt="tranqi" /></a>
         <div className="links">

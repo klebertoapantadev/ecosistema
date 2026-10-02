@@ -10,7 +10,7 @@ import { GestionTerminosConsentimientosWidget } from "@eco/identidad/componentes
 import { VisorAuditoriaWidget } from "../auditoria/VisorAuditoriaWidget";
 import { ConfiguracionContratoAbogadoWidget } from "../../../modulos/socios/componentes/ConfiguracionContratoAbogadoWidget";
 import { BandejaClientesCRM } from "../../../modulos/crm-clientes/componentes/BandejaClientesCRM";
-import { HistorialTransaccionesPago, GestionConveniosCorporativos, TableroDisponibilidadOperativa } from "@eco/comercio";
+import { HistorialTransaccionesPago, GestionConveniosCorporativos, TableroDisponibilidadOperativa, ConsolaGestionInformativosWidget } from "@eco/comercio";
 import { DataGrid, type ColumnaDataGrid } from "@eco/datagrid";
 import { useCustomWidgets } from "../gestorTitulosWidgets";
 import { ModalEditarWidget } from "../ModalEditarWidget";
@@ -38,6 +38,15 @@ export interface ModuloAdminDef {
 }
 
 const MODULOS_ADMIN: ModuloAdminDef[] = [
+  {
+    id: "gestion_informativos",
+    titulo: "Gestión de Informativos & Beneficios",
+    subtitulo: "Consola de alertas institucionales (ANT, SRI, Municipios), novedades tributarias y convenios de capacitación",
+    ruta: "/panel/administrar?widget=gestion_informativos",
+    icono: Bell,
+    colorIcono: "#D97706",
+    categoria: "Comercio & Comunicación"
+  },
   {
     id: "gestion_convenios_corporativos",
     titulo: "Convenios Corporativos & Beneficios B2B",
@@ -795,6 +804,13 @@ export function PanelAdministrarModular({ negocio = "TRANQ", esSuperAdmin = fals
             {widgetActivo === "crm_clientes" && (
               <div style={{ width: "100%" }}>
                 <BandejaClientesCRM negocio={negocio} />
+              </div>
+            )}
+
+            {/* 7.3. GESTIÓN DE INFORMATIVOS & BENEFICIOS */}
+            {(widgetActivo === "gestion_informativos" || widgetActivo === "informativos") && (
+              <div style={{ width: "100%" }}>
+                <ConsolaGestionInformativosWidget negocio={negocio} />
               </div>
             )}
 

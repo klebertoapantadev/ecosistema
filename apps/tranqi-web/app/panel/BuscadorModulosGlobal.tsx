@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import {
   Search, X, UserCog, UserCheck, Settings, Mail, Bell, Shield, ShieldCheck,
   CircleUser, ChevronRight, Sliders, Briefcase, FileText, BarChart2, FileCheck, Folder,
-  CalendarClock, CalendarPlus, CalendarCheck, Shuffle, ShoppingBag, CreditCard, Building2, Scale, KeyRound
+  CalendarClock, CalendarPlus, CalendarCheck, Shuffle, ShoppingBag, CreditCard, Building2, Scale, KeyRound, Sparkles
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCustomWidgets } from "./gestorTitulosWidgets";
@@ -191,6 +191,36 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
     minNivel: 50,
     icono: Building2,
     colorIcono: "#05876E"
+  },
+  {
+    clave: "gestion_informativos",
+    nombre: "Gestión de Informativos, Alertas & Beneficios",
+    detalle: "Consola de administración de alertas institucionales (ANT, SRI, Municipios) y convenios de capacitación",
+    ruta: "/panel/administrar?widget=gestion_informativos",
+    categoria: "Comercio & Comunicación",
+    minNivel: 30,
+    icono: Bell,
+    colorIcono: "#D97706"
+  },
+  {
+    clave: "paquete_beneficios_abogados",
+    nombre: "Paquete de Beneficios & Convenios para Abogados",
+    detalle: "Listado de convenios de capacitación, maestrías, herramientas y beneficios gremiales para la red profesional",
+    ruta: "/panel/red-profesional?widget=paquete_beneficios_abogados",
+    categoria: "Red Profesional",
+    minNivel: 50,
+    icono: Sparkles,
+    colorIcono: "#5000BA"
+  },
+  {
+    clave: "muro_informativo_comunidad",
+    nombre: "Avisos & Alertas de la Comunidad",
+    detalle: "Cartelera informativa ciudadana con alertas de la ANT, novedades tributarias y noticias de interés",
+    ruta: "/panel/clientes?widget=muro_informativo_comunidad",
+    categoria: "Comunidad & Clientes",
+    minNivel: 1,
+    icono: Bell,
+    colorIcono: "#0284C7"
   },
   {
     clave: "disponibilidad_abogados",
