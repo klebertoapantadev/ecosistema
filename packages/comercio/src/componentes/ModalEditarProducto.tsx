@@ -1573,7 +1573,8 @@ export function ModalEditarProducto({
                       textAlign: "center",
                     }}
                   >
-                    🌹 Estacional Anual (Recurrente)
+                    <Clock size={13} style={{ display: "inline-block", verticalAlign: "middle", marginRight: "4px" }} />
+                    Estacional Anual (Recurrente)
                   </button>
                 </div>
 
@@ -3455,12 +3456,30 @@ export function ModalEditarProducto({
                       </label>
                       <input
                         type="number"
-                        step="0.0001"
+                        step="0.01"
                         min="0.01"
                         required
                         placeholder="0.00"
                         value={varianteActual.var_precio}
-                        onChange={(e) => actualizarVarianteActual("var_precio", e.target.value)}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (val === "") {
+                            actualizarVarianteActual("var_precio", "");
+                            return;
+                          }
+                          const num = parseFloat(val);
+                          if (!isNaN(num)) {
+                            actualizarVarianteActual("var_precio", Math.round(num * 100) / 100);
+                          } else {
+                            actualizarVarianteActual("var_precio", val);
+                          }
+                        }}
+                        onBlur={(e) => {
+                          const num = parseFloat(e.target.value);
+                          if (!isNaN(num)) {
+                            actualizarVarianteActual("var_precio", parseFloat(num.toFixed(2)));
+                          }
+                        }}
                         style={{
                           width: "100%",
                           padding: "7px 10px",

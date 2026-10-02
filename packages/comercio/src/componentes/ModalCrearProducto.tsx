@@ -734,7 +734,8 @@ export function ModalCrearProducto({
                   textAlign: "center",
                 }}
               >
-                🌹 Estacional Anual
+                <Clock size={13} style={{ display: "inline-block", verticalAlign: "middle", marginRight: "4px" }} />
+                Estacional Anual
               </button>
             </div>
 
@@ -893,12 +894,27 @@ export function ModalCrearProducto({
                 </label>
                 <input
                   type="number"
-                  step="0.0001"
+                  step="0.01"
                   min="0.01"
                   required
                   placeholder="0.00"
                   value={precioBase}
-                  onChange={(e) => setPrecioBase(e.target.value === "" ? "" : parseFloat(e.target.value))}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val === "") {
+                      setPrecioBase("");
+                      return;
+                    }
+                    const num = parseFloat(val);
+                    if (!isNaN(num)) {
+                      setPrecioBase(Math.round(num * 100) / 100);
+                    }
+                  }}
+                  onBlur={() => {
+                    if (typeof precioBase === "number" && !isNaN(precioBase)) {
+                      setPrecioBase(parseFloat(precioBase.toFixed(2)));
+                    }
+                  }}
                   style={{
                     width: "100%",
                     padding: "8px 12px",

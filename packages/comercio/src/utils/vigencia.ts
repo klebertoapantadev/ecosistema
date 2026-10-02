@@ -217,7 +217,7 @@ export function evaluarVigenciaProducto(
       : `${formatearFechaCorta(inicioMD)} - ${formatearFechaCorta(finMD)}`;
 
     if (enTemporada) {
-      const badge = `🌹 En Temporada: ${textoTemporada}`;
+      const badge = `⏰ En Temporada: ${textoTemporada}`;
       const msg = `Producto estacional activo cada año (${textoTemporada}).`;
       return {
         estaVigente: true,
