@@ -111,7 +111,10 @@ export function TableroBeneficiosAvisosWidget({
             setCampanas(
               parsed.filter(
                 (c: any) =>
-                  c.inf_activo !== false && !eliminados.has(c.inf_id) && !eliminados.has(c.inf_slug)
+                  c.inf_activo !== false &&
+                  !eliminados.has(c.inf_id) &&
+                  !eliminados.has(c.inf_slug) &&
+                  (!c.inf_titulo || !eliminados.has(c.inf_titulo))
               )
             );
           }
@@ -130,7 +133,10 @@ export function TableroBeneficiosAvisosWidget({
         });
         if (!cancelado && Array.isArray(data)) {
           const limpios = data.filter(
-            (c: any) => !eliminados.has(c.inf_id) && !eliminados.has(c.inf_slug)
+            (c: any) =>
+              !eliminados.has(c.inf_id) &&
+              !eliminados.has(c.inf_slug) &&
+              (!c.inf_titulo || !eliminados.has(c.inf_titulo))
           );
           setCampanas(limpios);
           if (typeof window !== "undefined") {

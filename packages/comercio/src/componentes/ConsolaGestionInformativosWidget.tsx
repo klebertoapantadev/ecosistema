@@ -124,12 +124,13 @@ export function ConsolaGestionInformativosWidget({ negocio = "tranqi", esAdmin =
     return new Set();
   };
 
-  const guardarEliminadoLocal = (id: string, slug?: string) => {
+  const guardarEliminadoLocal = (id: string, slug?: string, titulo?: string) => {
     if (typeof window === "undefined") return;
     try {
       const set = getEliminadosLocal();
       if (id) set.add(id);
       if (slug) set.add(slug);
+      if (titulo) set.add(titulo);
       localStorage.setItem(DELETED_KEY, JSON.stringify(Array.from(set)));
     } catch {}
   };
@@ -145,7 +146,10 @@ export function ConsolaGestionInformativosWidget({ negocio = "tranqi", esAdmin =
           const parsed = JSON.parse(guardado);
           if (Array.isArray(parsed)) {
             const limpios = parsed.filter(
-              (c: CampanaInformativa) => !eliminados.has(c.inf_id) && !eliminados.has(c.inf_slug)
+              (c: CampanaInformativa) =>
+                !eliminados.has(c.inf_id) &&
+                !eliminados.has(c.inf_slug) &&
+                (!c.inf_titulo || !eliminados.has(c.inf_titulo))
             );
             setCampanas(limpios);
           }
@@ -161,7 +165,10 @@ export function ConsolaGestionInformativosWidget({ negocio = "tranqi", esAdmin =
       });
       if (Array.isArray(data)) {
         const limpios = data.filter(
-          (c: CampanaInformativa) => !eliminados.has(c.inf_id) && !eliminados.has(c.inf_slug)
+          (c: CampanaInformativa) =>
+            !eliminados.has(c.inf_id) &&
+            !eliminados.has(c.inf_slug) &&
+            (!c.inf_titulo || !eliminados.has(c.inf_titulo))
         );
         setCampanas(limpios);
         if (typeof window !== "undefined") {
@@ -273,6 +280,7 @@ export function ConsolaGestionInformativosWidget({ negocio = "tranqi", esAdmin =
             const set = getEliminadosLocal();
             set.delete(res.campana.inf_id);
             set.delete(res.campana.inf_slug);
+            if (res.campana.inf_titulo) set.delete(res.campana.inf_titulo);
             localStorage.setItem(DELETED_KEY, JSON.stringify(Array.from(set)));
           } catch {}
         }
@@ -319,12 +327,19 @@ export function ConsolaGestionInformativosWidget({ negocio = "tranqi", esAdmin =
   const handleEliminar = async (id: string, tit: string) => {
     if (!confirm(`¿Eliminar definitivamente la campaña "${tit}"?`)) return;
     const target = campanas.find((c) => c.inf_id === id || c.inf_slug === id);
-    guardarEliminadoLocal(id, target?.inf_slug);
+    const targetSlug = target?.inf_slug;
+    const targetTit = target?.inf_titulo || tit;
+    guardarEliminadoLocal(id, targetSlug, targetTit);
     const eliminados = getEliminadosLocal();
 
     setCampanas((prev) => {
       const actualizados = prev.filter(
-        (c) => c.inf_id !== id && c.inf_slug !== id && !eliminados.has(c.inf_id) && !eliminados.has(c.inf_slug)
+        (c) =>
+          c.inf_id !== id &&
+          c.inf_slug !== id &&
+          !eliminados.has(c.inf_id) &&
+          !eliminados.has(c.inf_slug) &&
+          (!c.inf_titulo || !eliminados.has(c.inf_titulo))
       );
       if (typeof window !== "undefined") {
         localStorage.setItem(CACHE_KEY, JSON.stringify(actualizados));
@@ -332,7 +347,7 @@ export function ConsolaGestionInformativosWidget({ negocio = "tranqi", esAdmin =
       return actualizados;
     });
 
-    const res = await eliminarCampanaInformativaAction(negocio, id);
+    const res = await eliminarCampanaInformativaAction(negocio, id, targetSlug, targetTit);
     if (!res.ok) {
       console.warn("Aviso al eliminar en servidor:", res.error);
     }

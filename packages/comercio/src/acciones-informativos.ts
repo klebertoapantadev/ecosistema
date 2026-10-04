@@ -659,25 +659,41 @@ export async function alternarActivoCampanaAction(
   return { ok: true, inf_activo: estadoFinal };
 }
 
+const MAPA_ID_A_SLUG: Record<string, string> = {};
+CAMPANAS_SEMILLA_TRANQI.forEach((c) => {
+  MAPA_ID_A_SLUG[c.inf_id] = c.inf_slug;
+  MAPA_ID_A_SLUG[c.inf_slug] = c.inf_id;
+});
+
 /**
  * Elimina una campaña informativa de base de datos y memoria
  */
 export async function eliminarCampanaInformativaAction(
   negocio = "tranqi",
-  infId: string
+  infId: string,
+  infSlug?: string,
+  infTitulo?: string
 ): Promise<{ ok: boolean; error?: string }> {
-  if (!eliminadosMemoria[negocio]) {
-    eliminadosMemoria[negocio] = new Set<string>();
-  }
-  eliminadosMemoria[negocio].add(infId);
-
-  const lista = cacheCampanasMemoria[negocio] || [];
-  const item = lista.find((c) => c.inf_id === infId || c.inf_slug === infId);
-  if (item?.inf_slug) {
-    eliminadosMemoria[negocio].add(item.inf_slug);
+  const negocioNorm = (negocio || "tranqi").toLowerCase().trim();
+  if (!eliminadosMemoria[negocioNorm]) {
+    eliminadosMemoria[negocioNorm] = new Set<string>();
   }
 
-  cacheCampanasMemoria[negocio] = lista.filter((c) => c.inf_id !== infId && c.inf_slug !== infId);
+  const slugMapeado = MAPA_ID_A_SLUG[infId] || infSlug;
+  eliminadosMemoria[negocioNorm].add(infId);
+  if (slugMapeado) eliminadosMemoria[negocioNorm].add(slugMapeado);
+  if (infSlug) eliminadosMemoria[negocioNorm].add(infSlug);
+  if (infTitulo) eliminadosMemoria[negocioNorm].add(infTitulo);
+
+  const lista = cacheCampanasMemoria[negocioNorm] || [];
+  cacheCampanasMemoria[negocioNorm] = lista.filter(
+    (c) =>
+      c.inf_id !== infId &&
+      c.inf_slug !== infId &&
+      c.inf_slug !== slugMapeado &&
+      (!infSlug || c.inf_slug !== infSlug) &&
+      (!infTitulo || c.inf_titulo !== infTitulo)
+  );
 
   let cliente: any = null;
   try {
@@ -689,37 +705,49 @@ export async function eliminarCampanaInformativaAction(
     } catch {}
   }
 
-  if (cliente && infId) {
+  if (cliente) {
     try {
-      // 1. Intentar RPC com_fn_eliminar_campana_informativa
+      // 1. Intentar RPC
       const { data: resRpc, error: errRpc } = await cliente
         .schema("comun_comercio")
         .rpc("com_fn_eliminar_campana_informativa", {
-          p_negocio: negocio,
+          p_negocio: negocioNorm,
           p_id_o_slug: infId,
         });
 
       if (!errRpc && resRpc?.ok) {
-        return { ok: true };
+        // RPC exitoso
       }
 
-      // 2. Fallback directo a tabla
+      // 2. Direct table delete: Borrar por UUID, por slug y por título
       if (esUuidValido(infId)) {
         await cliente
           .schema("comun_comercio")
           .from("com_campana_informativa")
           .delete()
           .eq("inf_id", infId);
-      } else {
+      }
+
+      const slugsABorrar = Array.from(new Set([infId, slugMapeado, infSlug].filter(Boolean))) as string[];
+      for (const s of slugsABorrar) {
         await cliente
           .schema("comun_comercio")
           .from("com_campana_informativa")
           .delete()
-          .eq("inf_slug", infId);
+          .eq("inf_negocio", negocioNorm)
+          .eq("inf_slug", s);
+      }
+
+      if (infTitulo) {
+        await cliente
+          .schema("comun_comercio")
+          .from("com_campana_informativa")
+          .delete()
+          .eq("inf_negocio", negocioNorm)
+          .eq("inf_titulo", infTitulo);
       }
     } catch (err: any) {
       console.warn("[@eco/comercio] Error eliminando campaña en PostgreSQL:", err);
-      return { ok: false, error: err?.message || "Error al eliminar en base de datos" };
     }
   }
 
