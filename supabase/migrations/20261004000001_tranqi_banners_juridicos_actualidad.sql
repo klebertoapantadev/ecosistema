@@ -39,12 +39,19 @@ create policy com_campana_informativa_select_policy on comun_comercio.com_campan
   for select
   using (
     inf_activo = true
+    or comun_seguridad.seg_fn_es_superadmin()
     or exists (
       select 1 from comun_seguridad.seg_membresia m
-      join comun_seguridad.seg_rol r on r.rol_id = m.mbr_rol_id
-      where m.mbr_usuario_id = auth.uid()
-        and m.mbr_activo = true
-        and r.rol_clave in ('ADMINISTRADOR', 'SUPERADMIN', 'OPERADOR')
+      where m.mem_usuario_id = auth.uid()
+        and (
+          m.mem_rol in ('ADMINISTRADOR', 'SUPERADMIN', 'OPERADOR')
+          or exists (
+            select 1 from comun_seguridad.seg_membresia_perfil mp
+            join comun_seguridad.seg_perfil p on p.per_id = mp.mpe_perfil_id
+            where mp.mpe_membresia_id = m.mem_id
+              and p.per_clave in ('ADMINISTRADOR', 'SUPERADMIN', 'OPERADOR')
+          )
+        )
     )
   );
 
@@ -52,12 +59,19 @@ drop policy if exists com_campana_informativa_admin_policy on comun_comercio.com
 create policy com_campana_informativa_admin_policy on comun_comercio.com_campana_informativa
   for all
   using (
-    exists (
+    comun_seguridad.seg_fn_es_superadmin()
+    or exists (
       select 1 from comun_seguridad.seg_membresia m
-      join comun_seguridad.seg_rol r on r.rol_id = m.mbr_rol_id
-      where m.mbr_usuario_id = auth.uid()
-        and m.mbr_activo = true
-        and r.rol_clave in ('ADMINISTRADOR', 'SUPERADMIN', 'OPERADOR')
+      where m.mem_usuario_id = auth.uid()
+        and (
+          m.mem_rol in ('ADMINISTRADOR', 'SUPERADMIN', 'OPERADOR')
+          or exists (
+            select 1 from comun_seguridad.seg_membresia_perfil mp
+            join comun_seguridad.seg_perfil p on p.per_id = mp.mpe_perfil_id
+            where mp.mpe_membresia_id = m.mem_id
+              and p.per_clave in ('ADMINISTRADOR', 'SUPERADMIN', 'OPERADOR')
+          )
+        )
     )
   );
 
