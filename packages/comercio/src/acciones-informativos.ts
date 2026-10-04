@@ -453,13 +453,13 @@ export async function obtenerCampanasInformativasAction(params: {
 
     if (tipo && c.inf_tipo !== tipo) return false;
 
-    if (audiencia && audiencia !== "TODOS") {
+    if (audiencia && (audiencia as string) !== "TODOS") {
       const matchAudiencia =
         c.inf_audiencia.includes("TODOS") || c.inf_audiencia.includes(audiencia);
       if (!matchAudiencia) return false;
     }
 
-    if (ubicacion) {
+    if (ubicacion && (ubicacion as string) !== "TODOS") {
       const matchUbicacion = c.inf_ubicaciones.includes(ubicacion);
       if (!matchUbicacion) return false;
     }

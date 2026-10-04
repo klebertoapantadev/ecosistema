@@ -26,14 +26,34 @@ export function BannerInformativoSuperior({
   ubicacion = "PANEL_INICIO",
   audiencia = "TODOS",
 }: Props) {
-  const [campanas, setCampanas] = useState<CampanaInformativa[]>([]);
+  const [campanas, setCampanas] = useState<CampanaInformativa[]>(() => {
+    if (typeof window === "undefined") return [];
+    try {
+      const raw = localStorage.getItem(`eco_campanas_informativas_${negocio}`);
+      const rawDel = localStorage.getItem(`eco_campanas_eliminadas_${negocio}`);
+      const eliminados = rawDel ? new Set(JSON.parse(rawDel)) : new Set();
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+          return parsed.filter(
+            (c: any) =>
+              c.inf_activo !== false &&
+              !eliminados.has(c.inf_id) &&
+              !eliminados.has(c.inf_slug) &&
+              (!c.inf_titulo || !eliminados.has(c.inf_titulo))
+          );
+        }
+      }
+    } catch {}
+    return [];
+  });
   const [indiceActivo, setIndiceActivo] = useState(0);
   const [cerrado, setCerrado] = useState(false);
 
   // Comprobar preferencia de usuario en SessionStorage (solo para la sesión actual)
   useEffect(() => {
     try {
-      // Limpiar clave obsoleta permanente si existía
+      // Limpiar clave obsoleta permanente si existía en localStorage
       if (typeof window !== "undefined") {
         localStorage.removeItem(`eco_ocultar_banner_${negocio}`);
         const oc = sessionStorage.getItem(`eco_ocultar_banner_sesion_${negocio}`);
@@ -72,7 +92,12 @@ export function BannerInformativoSuperior({
               !eliminados.has(c.inf_slug) &&
               (!c.inf_titulo || !eliminados.has(c.inf_titulo))
           );
-          setCampanas(limpios);
+          if (limpios.length > 0) {
+            setCampanas(limpios);
+            if (typeof window !== "undefined") {
+              localStorage.setItem(`eco_campanas_informativas_${negocio}`, JSON.stringify(limpios));
+            }
+          }
         }
       } catch (err) {
         // Silencioso para no romper landing o panel
