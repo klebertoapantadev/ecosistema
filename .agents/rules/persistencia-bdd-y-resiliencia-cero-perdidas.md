@@ -31,3 +31,10 @@ Para componentes operativos y widgets del panel donde el usuario edita parámetr
 
 ## 4. Búsqueda y Actualización In Situ (Evitar Duplicados)
 * Toda función de actualización en SQL o TypeScript debe resolver registros existentes no solo por UUID exacto, sino también por claves de negocio alternativas (ej. `lower(empresa_nombre)`, `ruc`, `slug`), ejecutando siempre un `UPDATE` en lugar de un `INSERT` huérfano.
+
+---
+
+## 5. Ciclo de Vida de Eliminación y Prevención de Resurrección de Semillas
+* **Triple Identificador**: Todo borrado (`DELETE` o `eliminar...Action`) debe buscar y eliminar por `UUID`, por `slug` y por `título/código único`.
+* **Registro de Exclusión (`DELETED_KEY` & `eliminadosMemoria`)**: Tanto en cliente (`localStorage`) como en memoria de la Server Action se debe mantener un conjunto de exclusión de elementos borrados para que datos semilla nunca resuciten tras un reinicio de servidor o recarga de página.
+* Ver guía completa en [`gobernanza/estandares/06-guia-implementacion-funcionalidades-persistencia-rpc.md`](../../gobernanza/estandares/06-guia-implementacion-funcionalidades-persistencia-rpc.md).

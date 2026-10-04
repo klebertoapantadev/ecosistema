@@ -43,19 +43,27 @@ This skill ensures that all form edits, configurations, business rules, and tran
    - Perform an `UPDATE` in-place when a matching record exists to prevent orphaned duplicate records.
    <!-- Ejecuta un `UPDATE` en sitio cuando exista un registro coincidente para evitar registros duplicados huérfanos. -->
 
-4. **Mandatory Idempotent SQL Delivery**:
+4. **Triple-Identifier Deletion & Exclusion Sets**:
+   <!-- Borrado por Triple Identificador y Conjuntos de Exclusión -->
+   - When deleting entities that originate from mock/seed arrays, delete in PostgreSQL by UUID, by slug, and by business title/code.
+   <!-- Al eliminar entidades que provienen de arrays semilla/mock, elimina en PostgreSQL por UUID, por slug y por título/código de negocio. -->
+   - Maintain a `DELETED_KEY` in `localStorage` and `eliminadosMemoria` in Server Actions so deleted items NEVER resurrect upon server cold starts or page refreshes.
+   <!-- Mantén un `DELETED_KEY` en `localStorage` y `eliminadosMemoria` en Server Actions para que los elementos eliminados NUNCA resuciten tras reinicios de servidor o recargas de página. -->
+
+5. **Mandatory Idempotent SQL Delivery**:
    <!-- Entrega Obligatoria de SQL Idempotente -->
-   - Always provide the user with the exact, copy-pasteable SQL snippet with `CREATE OR REPLACE FUNCTION`, table DDLs, and `GRANT EXECUTE` permissions to `anon, authenticated, service_role` so remote databases can be updated in 1 click.
-   <!-- Proporciona siempre al usuario el script SQL exacto y listo para copiar/pegar con `CREATE OR REPLACE FUNCTION`, DDLs de tablas y permisos `GRANT EXECUTE` a `anon, authenticated, service_role` para actualizar bases de datos remotas en 1 clic. -->
+   - Always provide the user with the exact, copy-pasteable SQL snippet with `CREATE OR REPLACE FUNCTION` using `SECURITY DEFINER` and `SET search_path`, table DDLs, and `GRANT EXECUTE` permissions to `anon, authenticated, service_role` so remote databases can be updated in 1 click.
+   <!-- Proporciona siempre al usuario el script SQL exacto y listo para copiar/pegar con `CREATE OR REPLACE FUNCTION` usando `SECURITY DEFINER` y `SET search_path`, DDLs de tablas y permisos `GRANT EXECUTE` a `anon, authenticated, service_role` para actualizar bases de datos remotas en 1 clic. -->
 
 ---
 
 ## 2. Implementation Checklist
 <!-- 2. Lista de Chequeo de Implementación -->
 
-* [ ] Server Action exports `async` functions with proper typing.
+* [ ] Server Action exports `async` functions with proper typing and multi-identifier mapping (`MAPA_ID_A_SLUG`).
 * [ ] Database write operations verify both `schema("<name>").rpc(...)` and fallback table mutations.
+* [ ] SQL functions are declared with `SECURITY DEFINER` and have `GRANT EXECUTE` to `anon, authenticated, service_role`.
 * [ ] Errors from Supabase are caught and propagated in `{ ok: false, error: ... }`.
-* [ ] React component utilizes `localStorage` cache on load and on save.
+* [ ] React component utilizes `localStorage` cache (`CACHE_KEY`) on load and on save, and filters by `DELETED_KEY`.
 * [ ] Migration file created in `supabase/migrations/YYYYMMDD_*.sql`.
-* [ ] Idempotent SQL script provided to user for direct execution in Supabase SQL Editor.
+* [ ] Reference standard [`gobernanza/estandares/06-guia-implementacion-funcionalidades-persistencia-rpc.md`](../../gobernanza/estandares/06-guia-implementacion-funcionalidades-persistencia-rpc.md).
