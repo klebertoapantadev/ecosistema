@@ -352,6 +352,7 @@ function obtenerModulosInicialesAdmin(rolForzado?: string): ModuloAdminDef[] {
   }
 
   let ids: string[] = [
+    "gestion_informativos",
     "gestion_convenios_corporativos",
     "crm_clientes",
     "historial_pagos",
@@ -370,6 +371,7 @@ function obtenerModulosInicialesAdmin(rolForzado?: string): ModuloAdminDef[] {
   ];
   if (rolActivo === "OPERADOR" || rolActivo === "AUXILIAR" || rolActivo === "TECNICO") {
     ids = [
+      "gestion_informativos",
       "gestion_convenios_corporativos",
       "crm_clientes",
       "historial_pagos",

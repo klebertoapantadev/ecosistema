@@ -6,7 +6,7 @@ import {
   Sparkles, Shield, LayoutGrid, Pencil, Users, UserCheck, Eye,
   Settings, Mail, ShieldCheck, Bell, CircleUser, KeyRound, Sliders, Briefcase,
   Receipt, History, RotateCcw, FileCheck, Folder, ShoppingBag, CreditCard,
-  CalendarClock, CalendarPlus, CalendarCheck, Building2, Scale, type LucideIcon
+  CalendarClock, CalendarPlus, CalendarCheck, Building2, Scale, Award, BellRing, type LucideIcon
 } from "lucide-react";
 import { resetearSistemaSuperAdminAction } from "@eco/gestion-usuarios/acciones";
 import { ModalNotificacionPush } from "@eco/notificaciones";
@@ -29,6 +29,7 @@ export interface ModuloSuperAdminDef {
   categoria: string;
   perfilesAsignados: string[];
   estadoDuplicidad: "CANONICO" | "COMPARTIDO";
+  fechaRegistro?: string;
 }
 
 export interface CategoriaSuperAdminGroup {
@@ -261,6 +262,55 @@ export const CATALOGO_SUPERADMIN_TODOS: ModuloSuperAdminDef[] = [
     categoria: "Comercio & B2B",
     perfilesAsignados: ["OPERADOR", "ADMINISTRADOR", "SUPERADMIN"],
     estadoDuplicidad: "CANONICO",
+    fechaRegistro: "2026-09-29",
+  },
+  {
+    clave: "gestion_informativos",
+    nombre: "Gestión de Informativos & Beneficios",
+    detalle: "Consola de administración de alertas de instituciones (ANT, SRI, Municipios), novedades tributarias y convenios",
+    ruta: "/panel/administrar?widget=gestion_informativos",
+    icono: Bell,
+    iconoKey: "Bell",
+    color: "#D97706",
+    rutaFisica: "packages/comercio/src/componentes/ConsolaGestionInformativosWidget.tsx",
+    paquete: "@eco/comercio",
+    panelDestino: "Administrar (/panel/administrar)",
+    categoria: "Comercio & Comunicación",
+    perfilesAsignados: ["OPERADOR", "ADMINISTRADOR", "SUPERADMIN"],
+    estadoDuplicidad: "CANONICO",
+    fechaRegistro: "2026-10-02",
+  },
+  {
+    clave: "paquete_beneficios_abogados",
+    nombre: "Paquete de Beneficios & Convenios",
+    detalle: "Listado de convenios de capacitación, maestrías, herramientas y beneficios gremiales para la red profesional",
+    ruta: "/panel/red-profesional?widget=paquete_beneficios_abogados",
+    icono: Award,
+    iconoKey: "Award",
+    color: "#5000BA",
+    rutaFisica: "packages/comercio/src/componentes/TableroBeneficiosAvisosWidget.tsx",
+    paquete: "@eco/comercio",
+    panelDestino: "Red Profesional (/panel/red-profesional)",
+    categoria: "Red Profesional",
+    perfilesAsignados: ["ABOGADO", "OPERADOR", "ADMINISTRADOR", "SUPERADMIN"],
+    estadoDuplicidad: "CANONICO",
+    fechaRegistro: "2026-10-02",
+  },
+  {
+    clave: "muro_informativo_comunidad",
+    nombre: "Avisos & Alertas de la Comunidad",
+    detalle: "Panel informativo con alertas de instituciones públicas, noticias tributarias y oportunidades de ahorro",
+    ruta: "/panel/clientes?widget=muro_informativo_comunidad",
+    icono: BellRing,
+    iconoKey: "BellRing",
+    color: "#0284C7",
+    rutaFisica: "packages/comercio/src/componentes/TableroBeneficiosAvisosWidget.tsx",
+    paquete: "@eco/comercio",
+    panelDestino: "Clientes (/panel/clientes)",
+    categoria: "Información & Comunidad",
+    perfilesAsignados: ["CLIENTE", "ABOGADO", "OPERADOR", "ADMINISTRADOR", "SUPERADMIN"],
+    estadoDuplicidad: "CANONICO",
+    fechaRegistro: "2026-10-02",
   },
   {
     clave: "disponibilidad_abogados",
@@ -276,6 +326,7 @@ export const CATALOGO_SUPERADMIN_TODOS: ModuloSuperAdminDef[] = [
     categoria: "Agendamiento & Operación",
     perfilesAsignados: ["ABOGADO", "OPERADOR", "ADMINISTRADOR", "SUPERADMIN"],
     estadoDuplicidad: "CANONICO",
+    fechaRegistro: "2026-09-29",
   },
   {
     clave: "gestion_usuarios",
@@ -1012,6 +1063,30 @@ export function ConsolaSuperAdminModular() {
                   }}
                 >
                   ✓ Canónico / Único
+                </span>
+              ),
+            },
+            {
+              id: "fechaRegistro",
+              encabezado: "Fecha Registro",
+              valor: (r: ModuloSuperAdminDef) => r.fechaRegistro || "—",
+              render: (r: ModuloSuperAdminDef) => (
+                <span
+                  style={{
+                    fontSize: "0.72rem",
+                    fontWeight: 700,
+                    color: r.fechaRegistro ? "#065F46" : "#94A3B8",
+                    background: r.fechaRegistro ? "#ECFDF5" : "#F8FAFC",
+                    border: r.fechaRegistro ? "1px solid #A7F3D0" : "1px solid #E2E8F0",
+                    padding: "2px 8px",
+                    borderRadius: "6px",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "4px",
+                    whiteSpace: "nowrap"
+                  }}
+                >
+                  📅 {r.fechaRegistro || "2026-07-27"}
                 </span>
               ),
             },

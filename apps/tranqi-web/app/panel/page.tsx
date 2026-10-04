@@ -4,7 +4,7 @@ import { cookies } from "next/headers";
 import {
   Calendar, Upload, Coins, MessageCircle, FileText,
   Briefcase, UserCheck, Users, Settings, ShieldCheck, Bell, FileCheck,
-  ShoppingBag, CreditCard, Folder, Receipt, Building2, Scale,
+  ShoppingBag, CreditCard, Folder, Receipt, Building2, Scale, Award,
   type LucideIcon
 } from "lucide-react";
 import { obtenerPerfilActual, obtenerSaludo, obtenerPerfiles, obtenerNivelMaximo } from "@eco/identidad";
@@ -29,27 +29,28 @@ const NEGOCIO = "tranqi";
 
 const ACCESOS_CLIENTE: { icono: LucideIcon; nombre: string; detalle: string; href?: string }[] = [
   { icono: ShoppingBag, nombre: "Catálogo & Servicios", detalle: "Honorarios y planes legales", href: "/panel/catalogo-productos" },
+  { icono: Bell, nombre: "Avisos & Alertas", detalle: "Novedades y alertas legales", href: "/panel/clientes?widget=muro_informativo_comunidad" },
   { icono: Folder, nombre: "Billetera digital", detalle: "Documentos con OCR y TTL", href: "/panel/billetera-documentos" },
   { icono: FileCheck, nombre: "Firmar un documento", detalle: "Con tu certificado digital", href: "/panel/firma-documentos" },
   { icono: Briefcase, nombre: "Ser abogado socio", detalle: "Postula a la red", href: "/panel/solicitud-socio" },
   { icono: Calendar, nombre: "Agendar cita", detalle: "Presencial o por video", href: "/panel/agendar" },
   { icono: Upload, nombre: "Subir documento", detalle: "Contratos, cédulas, actas", href: "/panel/cuenta" },
   { icono: Coins, nombre: "Financiamiento", detalle: "Cuotas para tu caso", href: "/panel" },
-  { icono: MessageCircle, nombre: "Preguntar a tranqi", detalle: "Respuesta en minutos", href: "/panel" },
 ];
 
 const ACCESOS_ABOGADO: { icono: LucideIcon; nombre: string; detalle: string; href?: string }[] = [
   { icono: Scale, nombre: "Mi Disponibilidad de Horas", detalle: "Declarar horas preliminares", href: "/panel/agendamiento?widget=disponibilidad_abogados" },
+  { icono: Award, nombre: "Paquete de Beneficios", detalle: "Convenios y capacitaciones", href: "/panel/red-profesional?widget=paquete_beneficios_abogados" },
   { icono: Users, nombre: "CRM & Clientes", detalle: "Directorio y expedientes", href: "/panel/clientes" },
   { icono: Coins, nombre: "Mis honorarios", detalle: "Tarifario y liquidación", href: "/panel/catalogo-productos" },
   { icono: Folder, nombre: "Billetera digital", detalle: "Documentos y expedientes", href: "/panel/billetera-documentos" },
   { icono: FileCheck, nombre: "Firmar un documento", detalle: "Con tu certificado digital", href: "/panel/firma-documentos" },
   { icono: Briefcase, nombre: "Nuevas solicitudes", detalle: "3 casos en espera" },
   { icono: Calendar, nombre: "Citas de hoy", detalle: "2 videollamadas" },
-  { icono: FileText, nombre: "Cargar expediente", detalle: "Demandas y providencias" },
 ];
 
 const WIDGETS_OPERADOR: { clave: string; icono: LucideIcon; nombre: string; detalle: string; ruta: string }[] = [
+  { clave: "gestion_informativos", icono: Bell, nombre: "Gestión de Informativos", detalle: "Alertas, noticias y beneficios", ruta: "/panel/administrar?widget=gestion_informativos" },
   { clave: "crm_clientes", icono: Users, nombre: "CRM Jurídico & Clientes", detalle: "Directorio 360°, KPIs y alta asistida", ruta: "/panel/clientes" },
   { clave: "disponibilidad_abogados", icono: Scale, nombre: "Disponibilidad de Abogados", detalle: "Aprobación de horas y turnos", ruta: "/panel/agendamiento?widget=disponibilidad_abogados" },
   { clave: "gestion_convenios_corporativos", icono: Building2, nombre: "Convenios Corporativos & B2B", detalle: "Alianzas y beneficios empresariales", ruta: "/panel/administrar?widget=gestion_convenios_corporativos" },
@@ -63,6 +64,7 @@ const WIDGETS_OPERADOR: { clave: string; icono: LucideIcon; nombre: string; deta
 ];
 
 const WIDGETS_ADMIN: { clave: string; icono: LucideIcon; nombre: string; detalle: string; ruta: string; estado: "registrado" | "proximamente" }[] = [
+  { clave: "gestion_informativos", icono: Bell, nombre: "Gestión de Informativos", detalle: "Alertas y novedades", ruta: "/panel/administrar?widget=gestion_informativos", estado: "registrado" },
   { clave: "catalogo_productos", icono: ShoppingBag, nombre: "Catálogo & Honorarios", detalle: "Servicios y precios con IVA", ruta: "/panel/catalogo-productos", estado: "registrado" },
   { clave: "disponibilidad_abogados", icono: Scale, nombre: "Disponibilidad de Abogados", detalle: "Control de cupos y turnos", ruta: "/panel/agendamiento?widget=disponibilidad_abogados", estado: "registrado" },
   { clave: "gestion_convenios_corporativos", icono: Building2, nombre: "Convenios Corporativos & B2B", detalle: "Alianzas y paquetes de beneficios", ruta: "/panel/administrar?widget=gestion_convenios_corporativos", estado: "registrado" },

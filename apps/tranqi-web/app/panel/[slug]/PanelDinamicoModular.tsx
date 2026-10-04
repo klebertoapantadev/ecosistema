@@ -516,42 +516,43 @@ function obtenerWidgetsInicialesDinamicos(panelId: string, slugStr: string, rolD
   const esPanelConf = panelId === "panel_configuracion" || slugNorm === "configuracion";
 
   if (rolActivo === "OPERADOR" || rolActivo === "AUXILIAR" || rolActivo === "TECNICO") {
-    if (esPanelClientes) return ["mis_beneficios_corporativos", "vitrina_comercial_personas", "crm_clientes", "agendar_cita", "mis_citas", "billetera_documentos", "firma_documentos_pdf"];
+    if (esPanelClientes) return ["mis_beneficios_corporativos", "vitrina_comercial_personas", "muro_informativo_comunidad", "crm_clientes", "agendar_cita", "mis_citas", "billetera_documentos", "firma_documentos_pdf"];
     if (esPanelEmpresas) return ["vitrina_comercial_empresas", "gestion_convenios_corporativos", "crm_clientes", "billetera_documentos", "firma_documentos_pdf"];
     if (esPanelUsuarios) return ["consulta_usuarios_perfiles", "crm_clientes", "monitoreo_notificaciones_usuarios"];
-    if (esPanelRed) return ["socios", "solicitud_socio"];
+    if (esPanelRed) return ["socios", "paquete_beneficios_abogados", "solicitud_socio"];
     if (esPanelTerminos) return ["gestion_terminos_consentimientos", "configuracion_contrato_abogado"];
     if (esPanelAgenda) return ["disponibilidad_abogados", "asignaciones_agenda"];
-    if (esPanelAdmin) return ["gestion_convenios_corporativos", "disponibilidad_abogados", "historial_pagos", "emision_notificaciones", "bitacora_notificaciones"];
+    if (esPanelAdmin) return ["gestion_informativos", "gestion_convenios_corporativos", "disponibilidad_abogados", "historial_pagos", "emision_notificaciones", "bitacora_notificaciones"];
     if (esPanelHerr) return ["catalogo_productos", "disponibilidad_abogados", "firma_documentos_pdf", "billetera_documentos"];
     if (esPanelSeg) return ["mfa_seguridad"];
     if (esPanelCuenta) return ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos"];
   } else if (rolActivo === "ADMINISTRADOR" || rolActivo === "SUPERADMIN") {
-    if (esPanelClientes) return ["mis_beneficios_corporativos", "vitrina_comercial_personas", "crm_clientes", "agendar_cita", "mis_citas", "billetera_documentos", "firma_documentos_pdf"];
+    if (esPanelClientes) return ["mis_beneficios_corporativos", "vitrina_comercial_personas", "muro_informativo_comunidad", "crm_clientes", "agendar_cita", "mis_citas", "billetera_documentos", "firma_documentos_pdf"];
     if (esPanelEmpresas) return ["vitrina_comercial_empresas", "gestion_convenios_corporativos", "crm_clientes", "billetera_documentos", "firma_documentos_pdf"];
     if (esPanelUsuarios) return ["gestion_usuarios", "consulta_usuarios_perfiles", "crm_clientes", "monitoreo_notificaciones_usuarios"];
-    if (esPanelRed) return ["socios", "solicitud_socio"];
+    if (esPanelRed) return ["socios", "paquete_beneficios_abogados", "solicitud_socio"];
     if (esPanelTerminos) return ["gestion_terminos_consentimientos", "configuracion_contrato_abogado"];
     if (esPanelAgenda) return ["disponibilidad_abogados", "asignaciones_agenda"];
-    if (esPanelAdmin) return ["gestion_convenios_corporativos", "disponibilidad_abogados", "historial_pagos", "emision_notificaciones", "bitacora_notificaciones", "perfiles", "auditoria"];
+    if (esPanelAdmin) return ["gestion_informativos", "gestion_convenios_corporativos", "disponibilidad_abogados", "historial_pagos", "emision_notificaciones", "bitacora_notificaciones", "perfiles", "auditoria"];
     if (esPanelHerr) return ["catalogo_productos", "disponibilidad_abogados", "firma_documentos_pdf", "billetera_documentos"];
     if (esPanelSeg) return ["mfa_seguridad", "auditoria"];
-    if (esPanelConf) return ["configuracion_negocio", "configuracion_correo", "pasarela_payphone", "perfiles", "agentes_ia", "notificaciones"];
+    if (esPanelConf) return ["configuracion_negocio", "configuracion_correo", "pasarela_payphone", "perfiles", "agentes_ia", "notificaciones", "tokens_mcp"];
     if (esPanelCuenta) return ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos"];
   } else if (rolActivo === "ABOGADO") {
-    if (esPanelClientes) return ["mis_beneficios_corporativos", "vitrina_comercial_personas", "crm_clientes", "billetera_documentos", "firma_documentos_pdf"];
+    if (esPanelClientes) return ["mis_beneficios_corporativos", "vitrina_comercial_personas", "muro_informativo_comunidad", "crm_clientes", "billetera_documentos", "firma_documentos_pdf"];
     if (esPanelEmpresas) return ["vitrina_comercial_empresas", "gestion_convenios_corporativos", "crm_clientes", "billetera_documentos", "firma_documentos_pdf"];
     if (esPanelUsuarios) return ["crm_clientes"];
+    if (esPanelRed) return ["paquete_beneficios_abogados"];
     if (esPanelAgenda) return ["disponibilidad_abogados", "citas_programadas", "disponibilidad", "asignaciones_agenda"];
-    if (esPanelHerr) return ["crm_clientes", "catalogo_productos", "disponibilidad_abogados", "firma_documentos_pdf", "billetera_documentos"];
+    if (esPanelHerr) return ["crm_clientes", "catalogo_productos", "disponibilidad_abogados", "firma_documentos_pdf", "billetera_documentos", "solicitud_socio"];
     if (esPanelCuenta) return ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos", "historial_pagos"];
-    if (esPanelConf) return ["notificaciones"];
+    if (esPanelConf) return ["notificaciones", "agentes_ia"];
   } else {
     // ROL CLIENTE: Acceso a ofertas diferenciadas y sus herramientas
-    if (esPanelClientes) return ["mis_beneficios_corporativos", "vitrina_comercial_personas", "agendar_cita", "mis_citas", "billetera_documentos", "firma_documentos_pdf"];
+    if (esPanelClientes) return ["mis_beneficios_corporativos", "vitrina_comercial_personas", "muro_informativo_comunidad", "agendar_cita", "mis_citas", "billetera_documentos", "firma_documentos_pdf"];
     if (esPanelEmpresas) return ["vitrina_comercial_empresas", "gestion_convenios_corporativos", "billetera_documentos", "firma_documentos_pdf"];
     if (esPanelAgenda) return ["agendar_cita", "mis_citas"];
-    if (esPanelHerr) return ["vitrina_comercial", "firma_documentos_pdf", "billetera_documentos", "solicitud_socio"];
+    if (esPanelHerr) return ["catalogo_productos", "firma_documentos_pdf", "billetera_documentos", "solicitud_socio"];
     if (esPanelCuenta) return ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos", "historial_pagos"];
     if (esPanelConf) return ["notificaciones"];
     return [];

@@ -3179,6 +3179,11 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                                               {w.categoria}
                                             </span>
                                           )}
+                                          {w.creadoEn && (
+                                            <span style={{ fontSize: "0.68rem", fontWeight: 700, background: "#FEF3C7", color: "#92400E", padding: "1px 7px", borderRadius: "4px", border: "1px solid #FDE68A", display: "inline-flex", alignItems: "center", gap: "3px" }}>
+                                              📅 {w.creadoEn}
+                                            </span>
+                                          )}
                                         </div>
 
                                         <div style={{ marginTop: "4px", display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
@@ -4112,9 +4117,16 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                     <span style={{ fontWeight: 800, fontSize: "0.95rem", display: "block" }}>{w.nombre}</span>
                     <code style={{ fontSize: "0.72rem", color: "var(--panel-gris, #737373)" }}>{w.clave}</code>
                   </div>
-                  <span style={{ fontSize: "0.68rem", fontWeight: 700, background: "var(--panel-linea-suave, #FAFAF9)", padding: "2px 8px", borderRadius: "999px", border: "1px solid var(--panel-linea, #E4E4E4)" }}>
-                    {w.categoria}
-                  </span>
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "4px" }}>
+                    <span style={{ fontSize: "0.68rem", fontWeight: 700, background: "var(--panel-linea-suave, #FAFAF9)", padding: "2px 8px", borderRadius: "999px", border: "1px solid var(--panel-linea, #E4E4E4)" }}>
+                      {w.categoria}
+                    </span>
+                    {w.creadoEn && (
+                      <span style={{ fontSize: "0.66rem", fontWeight: 800, color: "#047857", background: "#ECFDF5", padding: "2px 7px", borderRadius: "6px", border: "1px solid #A7F3D0", display: "inline-flex", alignItems: "center", gap: "3px" }}>
+                        📅 Reg: {w.creadoEn}
+                      </span>
+                    )}
+                  </div>
                 </div>
 
                 <p style={{ fontSize: "0.8rem", color: "var(--panel-gris, #737373)", margin: "0 0 12px 0", lineHeight: 1.4, flex: 1 }}>
