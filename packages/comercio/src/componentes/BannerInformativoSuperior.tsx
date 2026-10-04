@@ -50,20 +50,14 @@ export function BannerInformativoSuperior({
   const [indiceActivo, setIndiceActivo] = useState(0);
   const [cerrado, setCerrado] = useState(false);
 
-  // Comprobar preferencia de usuario en SessionStorage (solo para la sesión actual)
+  // Limpieza de claves de bloqueo antiguas
   useEffect(() => {
     try {
-      // Limpiar clave obsoleta permanente si existía en localStorage
       if (typeof window !== "undefined") {
         localStorage.removeItem(`eco_ocultar_banner_${negocio}`);
-        const oc = sessionStorage.getItem(`eco_ocultar_banner_sesion_${negocio}`);
-        if (oc === "true") {
-          setCerrado(true);
-        }
+        sessionStorage.removeItem(`eco_ocultar_banner_sesion_${negocio}`);
       }
-    } catch {
-      // ignore
-    }
+    } catch {}
   }, [negocio]);
 
   useEffect(() => {
@@ -118,15 +112,15 @@ export function BannerInformativoSuperior({
     return () => clearInterval(intervalo);
   }, [campanas.length]);
 
-  const handleCerrar = (porSesion: boolean = true) => {
-    setCerrado(true);
-    if (porSesion && typeof window !== "undefined") {
-      try {
-        sessionStorage.setItem(`eco_ocultar_banner_sesion_${negocio}`, "true");
-      } catch {
-        // ignore
+  const handleCerrarActual = () => {
+    setCampanas((prev) => {
+      const restantes = prev.filter((_, idx) => idx !== indiceActivo);
+      if (restantes.length === 0) {
+        setCerrado(true);
       }
-    }
+      return restantes;
+    });
+    setIndiceActivo(0);
   };
 
   if (cerrado || campanas.length === 0) return null;
@@ -225,9 +219,9 @@ export function BannerInformativoSuperior({
 
       <button
         type="button"
-        onClick={() => handleCerrar(true)}
-        title="Ocultar aviso informativo"
-        aria-label="Cerrar y no volver a mostrar este aviso"
+        onClick={handleCerrarActual}
+        title="Ocultar este aviso y pasar al siguiente"
+        aria-label="Cerrar este aviso"
         style={{
           background: "transparent",
           border: "none",

@@ -425,9 +425,6 @@ export async function obtenerCampanasInformativasAction(params: {
           }));
 
           cacheCampanasMemoria[negocio] = mapeados;
-        } else if ((eliminadosMemoria[negocio]?.size ?? 0) > 0) {
-          // Si BDD retornó 0 filas y hubo eliminaciones, no forzar semillas
-          cacheCampanasMemoria[negocio] = [];
         }
       }
     } catch (err) {
