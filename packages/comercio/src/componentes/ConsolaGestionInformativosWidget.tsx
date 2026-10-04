@@ -112,14 +112,34 @@ export function ConsolaGestionInformativosWidget({ negocio = "tranqi", esAdmin =
   // Galería de medios
   const [galeriaAbierta, setGaleriaAbierta] = useState(false);
 
+  const CACHE_KEY = `eco_campanas_informativas_${negocio}`;
+
   const cargarDatos = async () => {
+    // 1. Carga inmediata síncrona desde cache local para resiliencia instantánea
+    if (typeof window !== "undefined") {
+      try {
+        const guardado = localStorage.getItem(CACHE_KEY);
+        if (guardado) {
+          const parsed = JSON.parse(guardado);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setCampanas(parsed);
+          }
+        }
+      } catch {}
+    }
+
     setCargando(true);
     try {
       const data = await obtenerCampanasInformativasAction({
         negocio,
         incluirInactivos: true,
       });
-      setCampanas(data);
+      if (Array.isArray(data)) {
+        setCampanas(data);
+        if (typeof window !== "undefined") {
+          localStorage.setItem(CACHE_KEY, JSON.stringify(data));
+        }
+      }
     } catch (err) {
       console.error("Error cargando campañas informativas:", err);
     } finally {
@@ -218,11 +238,24 @@ export function ConsolaGestionInformativosWidget({ negocio = "tranqi", esAdmin =
       };
 
       const res = await guardarCampanaInformativaAction(payload);
-      if (res.ok) {
+      if (res.ok && res.campana) {
+        setCampanas((prev) => {
+          const idx = prev.findIndex(
+            (c) => c.inf_id === res.campana!.inf_id || c.inf_slug === res.campana!.inf_slug
+          );
+          const actualizados =
+            idx >= 0
+              ? prev.map((c, i) => (i === idx ? res.campana! : c))
+              : [res.campana!, ...prev];
+          if (typeof window !== "undefined") {
+            localStorage.setItem(CACHE_KEY, JSON.stringify(actualizados));
+          }
+          return actualizados;
+        });
         setModalAbierto(false);
         await cargarDatos();
       } else {
-        setErrorForm(res.error || "No se pudo guardar la campaña.");
+        setErrorForm(res.error || "No se pudo guardar la campaña en la base de datos.");
       }
     } catch (err: any) {
       setErrorForm(err?.message || "Error al procesar la solicitud.");
@@ -232,22 +265,41 @@ export function ConsolaGestionInformativosWidget({ negocio = "tranqi", esAdmin =
   };
 
   const handleAlternarActivo = async (id: string, actual: boolean) => {
-    // Optimistic update
-    setCampanas((prev) =>
-      prev.map((c) => (c.inf_id === id ? { ...c, inf_activo: !actual } : c))
-    );
+    // Optimistic update & cache local inmediata
+    setCampanas((prev) => {
+      const actualizados = prev.map((c) =>
+        c.inf_id === id || c.inf_slug === id ? { ...c, inf_activo: !actual } : c
+      );
+      if (typeof window !== "undefined") {
+        localStorage.setItem(CACHE_KEY, JSON.stringify(actualizados));
+      }
+      return actualizados;
+    });
     await alternarActivoCampanaAction(negocio, id, !actual);
   };
 
   const handleEliminar = async (id: string, tit: string) => {
-    if (!confirm(`¿Eliminar la campaña "${tit}"?`)) return;
-    setCampanas((prev) => prev.filter((c) => c.inf_id !== id));
-    await eliminarCampanaInformativaAction(negocio, id);
+    if (!confirm(`¿Eliminar definitivamente la campaña "${tit}"?`)) return;
+    setCampanas((prev) => {
+      const actualizados = prev.filter((c) => c.inf_id !== id && c.inf_slug !== id);
+      if (typeof window !== "undefined") {
+        localStorage.setItem(CACHE_KEY, JSON.stringify(actualizados));
+      }
+      return actualizados;
+    });
+    const res = await eliminarCampanaInformativaAction(negocio, id);
+    if (!res.ok) {
+      alert("Aviso: " + (res.error || "No se pudo eliminar en el servidor."));
+      await cargarDatos();
+    }
   };
 
   const handleRestaurarEjemplo = async () => {
     if (!confirm("¿Deseas restaurar las campañas y convenios informativos oficiales de ejemplo?")) return;
     setCargando(true);
+    if (typeof window !== "undefined") {
+      localStorage.removeItem(CACHE_KEY);
+    }
     await restaurarCampanasEjemploAction(negocio);
     await cargarDatos();
   };

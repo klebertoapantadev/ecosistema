@@ -85,8 +85,24 @@ export function TableroBeneficiosAvisosWidget({
   const [busqueda, setBusqueda] = useState("");
   const [reproduciendoVideoUrl, setReproduciendoVideoUrl] = useState<string | null>(null);
 
+  const CACHE_KEY = `eco_campanas_informativas_${negocio}`;
+
   useEffect(() => {
     let cancelado = false;
+
+    // 1. Carga inmediata síncrona desde cache
+    if (typeof window !== "undefined") {
+      try {
+        const guardado = localStorage.getItem(CACHE_KEY);
+        if (guardado) {
+          const parsed = JSON.parse(guardado);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setCampanas(parsed.filter((c: any) => c.inf_activo !== false));
+          }
+        }
+      } catch {}
+    }
+
     const cargar = async () => {
       setCargando(true);
       try {
@@ -96,7 +112,12 @@ export function TableroBeneficiosAvisosWidget({
           tipo: soloBeneficios ? "BENEFICIO_CONVENIO" : undefined,
           incluirInactivos: false,
         });
-        if (!cancelado) setCampanas(data);
+        if (!cancelado && Array.isArray(data)) {
+          setCampanas(data);
+          if (typeof window !== "undefined") {
+            localStorage.setItem(CACHE_KEY, JSON.stringify(data));
+          }
+        }
       } catch (err) {
         console.error("Error cargando tablero de beneficios:", err);
       } finally {

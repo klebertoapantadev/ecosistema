@@ -316,10 +316,19 @@ const CAMPANAS_SEMILLA_TRANQI: CampanaInformativa[] = [
   },
 ];
 
-// Almacenamiento en memoria para resiliencia offline/sesión
+// Almacenamiento en memoria para resiliencia offline/sesión y seguimiento de eliminados
 let cacheCampanasMemoria: Record<string, CampanaInformativa[]> = {
-  tranqi: CAMPANAS_SEMILLA_TRANQI,
+  tranqi: [...CAMPANAS_SEMILLA_TRANQI],
 };
+
+const eliminadosMemoria: Record<string, Set<string>> = {
+  tranqi: new Set<string>(),
+};
+
+function esUuidValido(v?: string | null): boolean {
+  if (!v) return false;
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v.trim());
+}
 
 /**
  * Obtiene las campañas informativas activas y vigentes
@@ -334,34 +343,30 @@ export async function obtenerCampanasInformativasAction(params: {
   const negocio = (params.negocio || "tranqi").toLowerCase().trim();
   const { audiencia, ubicacion, tipo, incluirInactivos = false } = params;
 
-  let admin: any = null;
-  let supabase: any = null;
+  let cliente: any = null;
   try {
-    admin = crearClienteAdmin();
+    cliente = crearClienteAdmin();
   } catch {}
-  try {
-    supabase = await crearClienteServidor();
-  } catch {}
-
-  const cliente = admin || supabase;
+  if (!cliente) {
+    try {
+      cliente = await crearClienteServidor();
+    } catch {}
+  }
 
   if (cliente) {
     try {
-      let query = cliente
+      // 1. Intentar vía RPC dedicada
+      const { data: dataRpc, error: errorRpc } = await cliente
         .schema("comun_comercio")
-        .from("com_campana_informativa")
-        .select("*")
-        .eq("inf_negocio", negocio)
-        .order("inf_prioridad", { ascending: false })
-        .order("inf_fecha_inicio", { ascending: false });
+        .rpc("com_fn_obtener_campanas_informativas", {
+          p_negocio: negocio,
+          p_audiencia: audiencia || "TODOS",
+          p_tipo: tipo || null,
+          p_incluir_inactivos: incluirInactivos,
+        });
 
-      if (!incluirInactivos) {
-        query = query.eq("inf_activo", true);
-      }
-
-      const { data, error } = await query;
-      if (!error && Array.isArray(data) && data.length > 0) {
-        const mapeados: CampanaInformativa[] = data.map((d: any) => ({
+      if (!errorRpc && Array.isArray(dataRpc) && dataRpc.length > 0) {
+        const mapeados: CampanaInformativa[] = dataRpc.map((d: any) => ({
           inf_id: d.inf_id,
           inf_negocio: d.inf_negocio,
           inf_titulo: d.inf_titulo,
@@ -381,13 +386,59 @@ export async function obtenerCampanasInformativasAction(params: {
         }));
 
         cacheCampanasMemoria[negocio] = mapeados;
+        return mapeados;
+      }
+
+      // 2. Fallback a consulta directa de tabla
+      let query = cliente
+        .schema("comun_comercio")
+        .from("com_campana_informativa")
+        .select("*")
+        .eq("inf_negocio", negocio)
+        .order("inf_prioridad", { ascending: false })
+        .order("inf_fecha_inicio", { ascending: false });
+
+      if (!incluirInactivos) {
+        query = query.eq("inf_activo", true);
+      }
+
+      const { data, error } = await query;
+      if (!error && Array.isArray(data)) {
+        if (data.length > 0) {
+          const mapeados: CampanaInformativa[] = data.map((d: any) => ({
+            inf_id: d.inf_id,
+            inf_negocio: d.inf_negocio,
+            inf_titulo: d.inf_titulo,
+            inf_slug: d.inf_slug,
+            inf_subtitulo: d.inf_subtitulo,
+            inf_contenido_md: d.inf_contenido_md,
+            inf_tipo: d.inf_tipo,
+            inf_audiencia: Array.isArray(d.inf_audiencia) ? d.inf_audiencia : ["TODOS"],
+            inf_ubicaciones: Array.isArray(d.inf_ubicaciones) ? d.inf_ubicaciones : ["PANEL_INICIO"],
+            inf_fecha_inicio: d.inf_fecha_inicio,
+            inf_fecha_fin: d.inf_fecha_fin,
+            inf_activo: d.inf_activo !== false,
+            inf_prioridad: d.inf_prioridad || "MEDIA",
+            inf_detalle: d.inf_detalle || {},
+            inf_creado_en: d.inf_creado_en,
+            inf_actualizado_en: d.inf_actualizado_en,
+          }));
+
+          cacheCampanasMemoria[negocio] = mapeados;
+        } else if ((eliminadosMemoria[negocio]?.size ?? 0) > 0) {
+          // Si BDD retornó 0 filas y hubo eliminaciones, no forzar semillas
+          cacheCampanasMemoria[negocio] = [];
+        }
       }
     } catch (err) {
       console.warn("[@eco/comercio] Error consultando com_campana_informativa:", err);
     }
   }
 
-  const base = cacheCampanasMemoria[negocio] || CAMPANAS_SEMILLA_TRANQI;
+  const setEliminados = eliminadosMemoria[negocio] || new Set<string>();
+  const base = (cacheCampanasMemoria[negocio] || CAMPANAS_SEMILLA_TRANQI).filter(
+    (c) => !setEliminados.has(c.inf_id) && !setEliminados.has(c.inf_slug)
+  );
 
   const ahora = new Date().toISOString();
 
@@ -458,9 +509,15 @@ export async function guardarCampanaInformativaAction(
     inf_actualizado_en: new Date().toISOString(),
   };
 
+  // Quitar de eliminados si se vuelve a guardar
+  if (eliminadosMemoria[negocio]) {
+    eliminadosMemoria[negocio].delete(id);
+    eliminadosMemoria[negocio].delete(slug);
+  }
+
   // 1. Guardar en memoria
   const lista = cacheCampanasMemoria[negocio] || [...CAMPANAS_SEMILLA_TRANQI];
-  const idx = lista.findIndex((c) => c.inf_id === id);
+  const idx = lista.findIndex((c) => c.inf_id === id || c.inf_slug === slug);
   if (idx >= 0) {
     lista[idx] = nuevaCampana;
   } else {
@@ -469,14 +526,20 @@ export async function guardarCampanaInformativaAction(
   cacheCampanasMemoria[negocio] = lista;
 
   // 2. Persistir en PostgreSQL
-  let admin: any = null;
+  let cliente: any = null;
   try {
-    admin = crearClienteAdmin();
+    cliente = crearClienteAdmin();
   } catch {}
-
-  if (admin) {
+  if (!cliente) {
     try {
-      const payload: any = {
+      cliente = await crearClienteServidor();
+    } catch {}
+  }
+
+  if (cliente) {
+    try {
+      // 2.1 Intentar vía RPC com_fn_guardar_campana_informativa
+      const payloadRpc: any = {
         inf_negocio: negocio,
         inf_titulo: nuevaCampana.inf_titulo,
         inf_slug: nuevaCampana.inf_slug,
@@ -490,25 +553,42 @@ export async function guardarCampanaInformativaAction(
         inf_activo: nuevaCampana.inf_activo,
         inf_prioridad: nuevaCampana.inf_prioridad,
         inf_detalle: nuevaCampana.inf_detalle,
-        inf_actualizado_en: new Date().toISOString(),
       };
 
-      if (id && !id.startsWith("inf-")) {
-        payload.inf_id = id;
+      if (esUuidValido(id)) {
+        payloadRpc.inf_id = id;
       }
 
-      const { data, error } = await admin
+      const { data: resRpc, error: errRpc } = await cliente
+        .schema("comun_comercio")
+        .rpc("com_fn_guardar_campana_informativa", { p_campana: payloadRpc });
+
+      if (!errRpc && resRpc?.ok && resRpc.campana) {
+        nuevaCampana.inf_id = resRpc.campana.inf_id;
+        return { ok: true, campana: nuevaCampana };
+      }
+
+      // 2.2 Fallback directo a tabla com_campana_informativa
+      const payloadTabla: any = { ...payloadRpc };
+      if (esUuidValido(id)) {
+        payloadTabla.inf_id = id;
+      }
+      payloadTabla.inf_actualizado_en = new Date().toISOString();
+
+      const { data, error } = await cliente
         .schema("comun_comercio")
         .from("com_campana_informativa")
-        .upsert(payload, { onConflict: "inf_slug" })
+        .upsert(payloadTabla, { onConflict: "inf_negocio,inf_slug" })
         .select()
         .single();
 
-      if (!error && data) {
+      if (error) {
+        console.error("[@eco/comercio] Error en upsert com_campana_informativa:", error);
+      } else if (data) {
         nuevaCampana.inf_id = data.inf_id;
       }
-    } catch (err) {
-      console.warn("[@eco/comercio] Error persistiendo campaña en Supabase:", err);
+    } catch (err: any) {
+      console.error("[@eco/comercio] Error persistiendo campaña en Supabase:", err);
     }
   }
 
@@ -524,7 +604,7 @@ export async function alternarActivoCampanaAction(
   nuevoActivo?: boolean
 ): Promise<{ ok: boolean; inf_activo: boolean; error?: string }> {
   const lista = cacheCampanasMemoria[negocio] || [...CAMPANAS_SEMILLA_TRANQI];
-  const item = lista.find((c) => c.inf_id === infId);
+  const item = lista.find((c) => c.inf_id === infId || c.inf_slug === infId);
   const estadoFinal = typeof nuevoActivo === "boolean" ? nuevoActivo : !(item?.inf_activo ?? true);
 
   if (item) {
@@ -532,18 +612,45 @@ export async function alternarActivoCampanaAction(
     item.inf_actualizado_en = new Date().toISOString();
   }
 
-  let admin: any = null;
+  let cliente: any = null;
   try {
-    admin = crearClienteAdmin();
+    cliente = crearClienteAdmin();
   } catch {}
-
-  if (admin && infId && !infId.startsWith("inf-")) {
+  if (!cliente) {
     try {
-      await admin
+      cliente = await crearClienteServidor();
+    } catch {}
+  }
+
+  if (cliente && infId) {
+    try {
+      // 1. Intentar RPC
+      const { data: resRpc, error: errRpc } = await cliente
         .schema("comun_comercio")
-        .from("com_campana_informativa")
-        .update({ inf_activo: estadoFinal, inf_actualizado_en: new Date().toISOString() })
-        .eq("inf_id", infId);
+        .rpc("com_fn_alternar_activo_campana", {
+          p_negocio: negocio,
+          p_id_o_slug: infId,
+          p_activo: estadoFinal,
+        });
+
+      if (!errRpc && resRpc?.ok) {
+        return { ok: true, inf_activo: estadoFinal };
+      }
+
+      // 2. Fallback directo a tabla
+      if (esUuidValido(infId)) {
+        await cliente
+          .schema("comun_comercio")
+          .from("com_campana_informativa")
+          .update({ inf_activo: estadoFinal, inf_actualizado_en: new Date().toISOString() })
+          .eq("inf_id", infId);
+      } else {
+        await cliente
+          .schema("comun_comercio")
+          .from("com_campana_informativa")
+          .update({ inf_activo: estadoFinal, inf_actualizado_en: new Date().toISOString() })
+          .eq("inf_slug", infId);
+      }
     } catch (err) {
       console.warn("[@eco/comercio] Error actualizando inf_activo en PostgreSQL:", err);
     }
@@ -553,29 +660,66 @@ export async function alternarActivoCampanaAction(
 }
 
 /**
- * Elimina una campaña informativa
+ * Elimina una campaña informativa de base de datos y memoria
  */
 export async function eliminarCampanaInformativaAction(
   negocio = "tranqi",
   infId: string
 ): Promise<{ ok: boolean; error?: string }> {
+  if (!eliminadosMemoria[negocio]) {
+    eliminadosMemoria[negocio] = new Set<string>();
+  }
+  eliminadosMemoria[negocio].add(infId);
+
   const lista = cacheCampanasMemoria[negocio] || [];
-  cacheCampanasMemoria[negocio] = lista.filter((c) => c.inf_id !== infId);
+  const item = lista.find((c) => c.inf_id === infId || c.inf_slug === infId);
+  if (item?.inf_slug) {
+    eliminadosMemoria[negocio].add(item.inf_slug);
+  }
 
-  let admin: any = null;
+  cacheCampanasMemoria[negocio] = lista.filter((c) => c.inf_id !== infId && c.inf_slug !== infId);
+
+  let cliente: any = null;
   try {
-    admin = crearClienteAdmin();
+    cliente = crearClienteAdmin();
   } catch {}
-
-  if (admin && infId && !infId.startsWith("inf-")) {
+  if (!cliente) {
     try {
-      await admin
+      cliente = await crearClienteServidor();
+    } catch {}
+  }
+
+  if (cliente && infId) {
+    try {
+      // 1. Intentar RPC com_fn_eliminar_campana_informativa
+      const { data: resRpc, error: errRpc } = await cliente
         .schema("comun_comercio")
-        .from("com_campana_informativa")
-        .delete()
-        .eq("inf_id", infId);
-    } catch (err) {
+        .rpc("com_fn_eliminar_campana_informativa", {
+          p_negocio: negocio,
+          p_id_o_slug: infId,
+        });
+
+      if (!errRpc && resRpc?.ok) {
+        return { ok: true };
+      }
+
+      // 2. Fallback directo a tabla
+      if (esUuidValido(infId)) {
+        await cliente
+          .schema("comun_comercio")
+          .from("com_campana_informativa")
+          .delete()
+          .eq("inf_id", infId);
+      } else {
+        await cliente
+          .schema("comun_comercio")
+          .from("com_campana_informativa")
+          .delete()
+          .eq("inf_slug", infId);
+      }
+    } catch (err: any) {
       console.warn("[@eco/comercio] Error eliminando campaña en PostgreSQL:", err);
+      return { ok: false, error: err?.message || "Error al eliminar en base de datos" };
     }
   }
 
@@ -588,6 +732,15 @@ export async function eliminarCampanaInformativaAction(
 export async function restaurarCampanasEjemploAction(
   negocio = "tranqi"
 ): Promise<{ ok: boolean; total: number }> {
+  if (eliminadosMemoria[negocio]) {
+    eliminadosMemoria[negocio].clear();
+  }
   cacheCampanasMemoria[negocio] = [...CAMPANAS_SEMILLA_TRANQI];
+
+  // Re-persistir semillas en la base de datos
+  for (const s of CAMPANAS_SEMILLA_TRANQI) {
+    await guardarCampanaInformativaAction(s);
+  }
+
   return { ok: true, total: CAMPANAS_SEMILLA_TRANQI.length };
 }
