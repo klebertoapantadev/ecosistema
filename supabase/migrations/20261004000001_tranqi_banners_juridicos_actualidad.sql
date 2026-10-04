@@ -1,9 +1,9 @@
 -- ==============================================================================
--- Migración: Banners y Campañas Informativas Jurídicas de Actualidad para Tranqi
--- Esquema: comun_comercio (com_campana_informativa)
+-- Migración: Banners, Campañas Informativas y Registro de Widgets para Tranqi
+-- Esquema: comun_comercio (com_campana_informativa) y comun_seguridad (Widgets y Roles)
 -- ==============================================================================
 
--- 1. Crear tabla si no existe
+-- 1. Crear tabla comun_comercio.com_campana_informativa si no existe
 create table if not exists comun_comercio.com_campana_informativa (
   inf_id uuid primary key default gen_random_uuid(),
   inf_negocio text not null default 'tranqi',
@@ -252,3 +252,116 @@ on conflict (inf_negocio, inf_slug) do update set
   inf_prioridad = excluded.inf_prioridad,
   inf_detalle = excluded.inf_detalle,
   inf_actualizado_en = now();
+
+-- ==============================================================================
+-- 7. Registro y Pre-configuración de Widgets y Roles en comun_seguridad
+-- ==============================================================================
+
+do $$
+declare
+  neg text;
+  w_id uuid;
+begin
+  for neg in select unnest(array['tranqi', 'fastfix', 'tinkay', 'margaritas']) loop
+
+    -- 1. Widget de Gestión: gestion_informativos
+    insert into comun_seguridad.seg_widget (wdg_clave, wdg_nombre, wdg_activo, wdg_detalle_widget)
+    values (
+      'gestion_informativos',
+      'Gestión de Informativos & Beneficios',
+      true,
+      jsonb_build_object(
+        'negocio', neg,
+        'descripcion', 'Consola de administración de alertas de instituciones, noticias tributarias y convenios de capacitación.',
+        'categoria', 'Comercio & Comunicación',
+        'ruta', '/panel/administrar?widget=gestion_informativos',
+        'panel_defecto', 'panel_administrar',
+        'icono', 'Megaphone'
+      )
+    )
+    on conflict (wdg_clave) do update
+    set wdg_nombre = excluded.wdg_nombre,
+        wdg_activo = true,
+        wdg_detalle_widget = excluded.wdg_detalle_widget
+    returning wdg_id into w_id;
+
+    if w_id is null then
+      select wdg_id into w_id from comun_seguridad.seg_widget where wdg_clave = 'gestion_informativos';
+    end if;
+
+    insert into comun_seguridad.seg_rol_widget (rlw_negocio, rlw_rol, rlw_widget_id, rlw_visible)
+    values
+      (neg, 'ADMINISTRADOR', w_id, true),
+      (neg, 'SUPERADMIN', w_id, true),
+      (neg, 'OPERADOR', w_id, true)
+    on conflict (rlw_negocio, rlw_rol, rlw_widget_id) do update set rlw_visible = true;
+
+    -- 2. Widget de Vista: paquete_beneficios_abogados
+    insert into comun_seguridad.seg_widget (wdg_clave, wdg_nombre, wdg_activo, wdg_detalle_widget)
+    values (
+      'paquete_beneficios_abogados',
+      'Paquete de Beneficios & Convenios',
+      true,
+      jsonb_build_object(
+        'negocio', neg,
+        'descripcion', 'Listado de convenios de capacitación, maestrías, herramientas y beneficios gremiales para la red profesional.',
+        'categoria', 'Red Profesional',
+        'ruta', '/panel/red-profesional?widget=paquete_beneficios_abogados',
+        'panel_defecto', 'panel_red_profesional',
+        'icono', 'Award'
+      )
+    )
+    on conflict (wdg_clave) do update
+    set wdg_nombre = excluded.wdg_nombre,
+        wdg_activo = true,
+        wdg_detalle_widget = excluded.wdg_detalle_widget
+    returning wdg_id into w_id;
+
+    if w_id is null then
+      select wdg_id into w_id from comun_seguridad.seg_widget where wdg_clave = 'paquete_beneficios_abogados';
+    end if;
+
+    insert into comun_seguridad.seg_rol_widget (rlw_negocio, rlw_rol, rlw_widget_id, rlw_visible)
+    values
+      (neg, 'ABOGADO', w_id, true),
+      (neg, 'ADMINISTRADOR', w_id, true),
+      (neg, 'SUPERADMIN', w_id, true),
+      (neg, 'OPERADOR', w_id, true)
+    on conflict (rlw_negocio, rlw_rol, rlw_widget_id) do update set rlw_visible = true;
+
+    -- 3. Widget de Vista: muro_informativo_comunidad
+    insert into comun_seguridad.seg_widget (wdg_clave, wdg_nombre, wdg_activo, wdg_detalle_widget)
+    values (
+      'muro_informativo_comunidad',
+      'Avisos & Alertas de la Comunidad',
+      true,
+      jsonb_build_object(
+        'negocio', neg,
+        'descripcion', 'Panel informativo con alertas de instituciones públicas, noticias tributarias y oportunidades de ahorro.',
+        'categoria', 'Información & Comunidad',
+        'ruta', '/panel/clientes?widget=muro_informativo_comunidad',
+        'panel_defecto', 'panel_clientes',
+        'icono', 'BellRing'
+      )
+    )
+    on conflict (wdg_clave) do update
+    set wdg_nombre = excluded.wdg_nombre,
+        wdg_activo = true,
+        wdg_detalle_widget = excluded.wdg_detalle_widget
+    returning wdg_id into w_id;
+
+    if w_id is null then
+      select wdg_id into w_id from comun_seguridad.seg_widget where wdg_clave = 'muro_informativo_comunidad';
+    end if;
+
+    insert into comun_seguridad.seg_rol_widget (rlw_negocio, rlw_rol, rlw_widget_id, rlw_visible)
+    values
+      (neg, 'CLIENTE', w_id, true),
+      (neg, 'ABOGADO', w_id, true),
+      (neg, 'ADMINISTRADOR', w_id, true),
+      (neg, 'SUPERADMIN', w_id, true),
+      (neg, 'OPERADOR', w_id, true)
+    on conflict (rlw_negocio, rlw_rol, rlw_widget_id) do update set rlw_visible = true;
+
+  end loop;
+end $$;
