@@ -711,13 +711,26 @@ p { line-height: 1.55; }
 }
 
 .panel-usuario {
-  font-size: 0.8rem; display: flex; flex-direction: column; gap: 8px;
-  border-top: 1px solid rgba(255,255,255,0.16); padding-top: 16px;
+  font-size: 0.8rem; display: flex; flex-direction: column; gap: 4px;
+  border-bottom: 1px solid rgba(255,255,255,0.14); padding-bottom: 14px; margin-bottom: 2px;
+}
+.nombre-usuario-activo {
+  font-weight: 700; color: #FFFFFF; font-size: 0.86rem; line-height: 1.25; word-break: break-word;
+}
+.correo-usuario-activo {
+  font-size: 0.74rem; color: rgba(255,255,255,0.65); word-break: break-all;
 }
 .etiqueta-superadmin {
   display: inline-block; background: var(--amarillo); color: var(--negro);
   font-weight: 800; font-size: 0.68rem; padding: 3px 8px; border-radius: 999px; width: fit-content;
-  text-decoration: none;
+  text-decoration: none; margin-top: 4px; transition: transform 0.15s ease, opacity 0.15s ease;
+}
+.etiqueta-superadmin:hover { opacity: 0.9; transform: translateY(-1px); }
+.etiqueta-rol-activo {
+  display: inline-block; background: rgba(255,255,255,0.16); color: #FFFFFF;
+  border: 1px solid rgba(255,255,255,0.22);
+  font-weight: 700; font-size: 0.68rem; padding: 2px 8px; border-radius: 999px; width: fit-content;
+  text-transform: uppercase; letter-spacing: 0.04em; margin-top: 4px;
 }
 
 /* ── Rail plegable (TRQ-013, variante 1A del muestrario) ─────────
@@ -787,7 +800,7 @@ p { line-height: 1.55; }
   .rail-plegado .etiqueta-nav,
   .rail-plegado .separador-nav,
   .rail-plegado .chip-pronto-nav { opacity: 0; }
-  .rail-plegado .panel-usuario { opacity: 0; visibility: hidden; }
+  .rail-plegado .panel-usuario { opacity: 0; visibility: hidden; height: 0; min-height: 0; margin: 0; padding: 0; overflow: hidden; border: none; }
 }
 
 /* ══════════ Inicio del cliente v2 (TRQ-013) ══════════════════════════

@@ -16,6 +16,18 @@ import type { ModoRol } from "./SelectorRolActivo";
 
 const NEGOCIO = "tranqi";
 
+const ETIQUETAS_ROL: Record<string, string> = {
+  abogado: "Socio Abogado",
+  socio: "Socio Abogado",
+  admin: "Administrador",
+  administrador: "Administrador",
+  operador: "Operador",
+  auxiliar: "Auxiliar",
+  tecnico: "Técnico",
+  superadmin: "SuperAdmin",
+  cliente: "Cliente"
+};
+
 function modoValido(valor: string | undefined): ModoRol | null {
   if (!valor || !valor.trim()) return null;
   return valor.toLowerCase().trim() as ModoRol;
@@ -124,26 +136,25 @@ export default async function LayoutPanel({ children }: { children: React.ReactN
             <SelloCompilacion className="sello-compilacion" />
           </div>
 
-          <NavegacionSidebar modoActivo={modoActivo} negocio={NEGOCIO} />
-
-          {/* TRQ-013: la etiqueta amarilla "Rol Activo" sale del rail; el
-              cambio de rol vive en el menú de cuenta del inicio y en Mi cuenta
-              (widget ver_como), y el color del rail ya dice el perfil. Se
-              queda solo para el superadmin: le recuerda que está viendo la
-              plataforma con el rol de otro, y eso es un aviso, no decoración. */}
           <div className="panel-usuario">
             <span className="nombre-usuario-activo">{[perfil.usu_nombres, perfil.usu_apellidos].filter(Boolean).join(" ")}</span>
             <span className="correo-usuario-activo">{perfil.usu_correo}</span>
-            {perfil.usu_superadmin_plataforma && (
+            {perfil.usu_superadmin_plataforma ? (
               <Link
                 href="/panel/cuenta?widget=ver_como"
                 className="etiqueta-superadmin"
                 title="Cambiar el rol con el que ves la plataforma"
               >
-                {`SuperAdmin (${modoActivo}) ▾`}
+                {`SuperAdmin (${ETIQUETAS_ROL[modoActivo.toLowerCase()] || modoActivo}) ▾`}
               </Link>
-            )}
+            ) : modoActivo.toLowerCase() !== "cliente" ? (
+              <span className="etiqueta-rol-activo">
+                {ETIQUETAS_ROL[modoActivo.toLowerCase()] || modoActivo.toUpperCase()}
+              </span>
+            ) : null}
           </div>
+
+          <NavegacionSidebar modoActivo={modoActivo} negocio={NEGOCIO} />
         </aside>
         <main className="panel-contenido">{children}</main>
 
