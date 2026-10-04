@@ -3,7 +3,71 @@
 -- Esquema: comun_comercio (com_campana_informativa)
 -- ==============================================================================
 
--- Asegurar constraint único en slug por negocio para inserciones idempotentes
+-- 1. Crear tabla si no existe
+create table if not exists comun_comercio.com_campana_informativa (
+  inf_id uuid primary key default gen_random_uuid(),
+  inf_negocio text not null default 'tranqi',
+  inf_titulo text not null,
+  inf_slug text not null,
+  inf_subtitulo text,
+  inf_contenido_md text,
+  inf_tipo text not null default 'COMUNICADO_GENERAL', 
+  -- Tipos: 'BENEFICIO_CONVENIO', 'ALERTA_REGULATORIA', 'NOTICIA_TRIBUTARIA_MUNICIPAL', 'COMUNICADO_GENERAL'
+  inf_audiencia text[] not null default array['TODOS'], 
+  -- Audiencias: 'TODOS', 'ABOGADOS', 'CLIENTES', 'EMPRESAS'
+  inf_ubicaciones text[] not null default array['PANEL_INICIO'], 
+  -- Ubicaciones: 'LANDING_BANNER', 'LANDING_GRID', 'PANEL_INICIO', 'PANEL_BENEFICIOS'
+  inf_fecha_inicio timestamptz not null default now(),
+  inf_fecha_fin timestamptz,
+  inf_activo boolean not null default true,
+  inf_prioridad text not null default 'MEDIA', -- 'ALTA', 'MEDIA', 'BAJA'
+  inf_detalle jsonb not null default '{}'::jsonb, 
+  -- { imagen_url, video_url, cta_texto, cta_url, institucion, porcentaje_descuento, categoria, color_tag, icono, cta_tipo }
+  inf_creado_en timestamptz not null default now(),
+  inf_actualizado_en timestamptz not null default now()
+);
+
+-- 2. Índices de búsqueda y filtrado
+create index if not exists idx_com_campana_negocio_activo on comun_comercio.com_campana_informativa (inf_negocio, inf_activo);
+create index if not exists idx_com_campana_fechas on comun_comercio.com_campana_informativa (inf_fecha_inicio, inf_fecha_fin);
+
+-- 3. RLS
+alter table comun_comercio.com_campana_informativa enable row level security;
+
+drop policy if exists com_campana_informativa_select_policy on comun_comercio.com_campana_informativa;
+create policy com_campana_informativa_select_policy on comun_comercio.com_campana_informativa
+  for select
+  using (
+    inf_activo = true
+    or exists (
+      select 1 from comun_seguridad.seg_membresia m
+      join comun_seguridad.seg_rol r on r.rol_id = m.mbr_rol_id
+      where m.mbr_usuario_id = auth.uid()
+        and m.mbr_activo = true
+        and r.rol_clave in ('ADMINISTRADOR', 'SUPERADMIN', 'OPERADOR')
+    )
+  );
+
+drop policy if exists com_campana_informativa_admin_policy on comun_comercio.com_campana_informativa;
+create policy com_campana_informativa_admin_policy on comun_comercio.com_campana_informativa
+  for all
+  using (
+    exists (
+      select 1 from comun_seguridad.seg_membresia m
+      join comun_seguridad.seg_rol r on r.rol_id = m.mbr_rol_id
+      where m.mbr_usuario_id = auth.uid()
+        and m.mbr_activo = true
+        and r.rol_clave in ('ADMINISTRADOR', 'SUPERADMIN', 'OPERADOR')
+    )
+  );
+
+-- 4. Auditoría
+drop trigger if exists trg_auditoria_com_campana_informativa on comun_comercio.com_campana_informativa;
+create trigger trg_auditoria_com_campana_informativa
+  after insert or update or delete on comun_comercio.com_campana_informativa
+  for each row execute function comun_auditoria.aud_fn_auditar_tabla();
+
+-- 5. Constraint único en slug por negocio para inserciones idempotentes
 do $$
 begin
   if not exists (
@@ -15,7 +79,7 @@ begin
   end if;
 end $$;
 
--- Inserción / Actualización de las 6 Noticias y Banners de Actualidad
+-- 6. Inserción / Actualización de las 6 Noticias y Banners de Actualidad
 insert into comun_comercio.com_campana_informativa (
   inf_negocio,
   inf_titulo,
