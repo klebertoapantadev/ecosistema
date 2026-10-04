@@ -28,6 +28,18 @@ export function BannerInformativoSuperior({
   const [indiceActivo, setIndiceActivo] = useState(0);
   const [cerrado, setCerrado] = useState(false);
 
+  // Comprobar preferencia de usuario en LocalStorage
+  useEffect(() => {
+    try {
+      const oc = localStorage.getItem(`eco_ocultar_banner_${negocio}`);
+      if (oc === "true") {
+        setCerrado(true);
+      }
+    } catch {
+      // ignore
+    }
+  }, [negocio]);
+
   useEffect(() => {
     let cancelado = false;
     const cargar = async () => {
@@ -58,6 +70,17 @@ export function BannerInformativoSuperior({
     }, 6000);
     return () => clearInterval(intervalo);
   }, [campanas.length]);
+
+  const handleCerrar = (persistir: boolean = false) => {
+    setCerrado(true);
+    if (persistir) {
+      try {
+        localStorage.setItem(`eco_ocultar_banner_${negocio}`, "true");
+      } catch {
+        // ignore
+      }
+    }
+  };
 
   if (cerrado || campanas.length === 0) return null;
 
@@ -155,8 +178,9 @@ export function BannerInformativoSuperior({
 
       <button
         type="button"
-        onClick={() => setCerrado(true)}
-        title="Cerrar aviso"
+        onClick={() => handleCerrar(true)}
+        title="Ocultar aviso informativo"
+        aria-label="Cerrar y no volver a mostrar este aviso"
         style={{
           background: "transparent",
           border: "none",

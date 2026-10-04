@@ -265,8 +265,9 @@ begin
   for neg in select unnest(array['tranqi', 'fastfix', 'tinkay', 'margaritas']) loop
 
     -- 1. Widget de Gestión: gestion_informativos
-    insert into comun_seguridad.seg_widget (wdg_clave, wdg_nombre, wdg_activo, wdg_detalle_widget)
+    insert into comun_seguridad.seg_widget (wdg_negocio, wdg_clave, wdg_nombre, wdg_activo, wdg_detalle_widget)
     values (
+      neg,
       'gestion_informativos',
       'Gestión de Informativos & Beneficios',
       true,
@@ -279,26 +280,30 @@ begin
         'icono', 'Megaphone'
       )
     )
-    on conflict (wdg_clave) do update
+    on conflict (wdg_negocio, wdg_clave) do update
     set wdg_nombre = excluded.wdg_nombre,
         wdg_activo = true,
         wdg_detalle_widget = excluded.wdg_detalle_widget
     returning wdg_id into w_id;
 
     if w_id is null then
-      select wdg_id into w_id from comun_seguridad.seg_widget where wdg_clave = 'gestion_informativos';
+      select wdg_id into w_id from comun_seguridad.seg_widget where wdg_negocio = neg and wdg_clave = 'gestion_informativos';
     end if;
 
-    insert into comun_seguridad.seg_rol_widget (rlw_negocio, rlw_rol, rlw_widget_id, rlw_visible)
-    values
-      (neg, 'ADMINISTRADOR', w_id, true),
-      (neg, 'SUPERADMIN', w_id, true),
-      (neg, 'OPERADOR', w_id, true)
-    on conflict (rlw_negocio, rlw_rol, rlw_widget_id) do update set rlw_visible = true;
+    if w_id is not null then
+      insert into comun_seguridad.seg_rol_widget (rlw_negocio, rlw_rol, rlw_widget_id, rlw_visible)
+      values
+        (neg, 'ADMINISTRADOR', w_id, true),
+        (neg, 'SUPERADMIN', w_id, true),
+        (neg, 'OPERADOR', w_id, true)
+      on conflict (rlw_negocio, rlw_rol, rlw_widget_id) do update set rlw_visible = true;
+    end if;
 
     -- 2. Widget de Vista: paquete_beneficios_abogados
-    insert into comun_seguridad.seg_widget (wdg_clave, wdg_nombre, wdg_activo, wdg_detalle_widget)
+    w_id := null;
+    insert into comun_seguridad.seg_widget (wdg_negocio, wdg_clave, wdg_nombre, wdg_activo, wdg_detalle_widget)
     values (
+      neg,
       'paquete_beneficios_abogados',
       'Paquete de Beneficios & Convenios',
       true,
@@ -311,27 +316,31 @@ begin
         'icono', 'Award'
       )
     )
-    on conflict (wdg_clave) do update
+    on conflict (wdg_negocio, wdg_clave) do update
     set wdg_nombre = excluded.wdg_nombre,
         wdg_activo = true,
         wdg_detalle_widget = excluded.wdg_detalle_widget
     returning wdg_id into w_id;
 
     if w_id is null then
-      select wdg_id into w_id from comun_seguridad.seg_widget where wdg_clave = 'paquete_beneficios_abogados';
+      select wdg_id into w_id from comun_seguridad.seg_widget where wdg_negocio = neg and wdg_clave = 'paquete_beneficios_abogados';
     end if;
 
-    insert into comun_seguridad.seg_rol_widget (rlw_negocio, rlw_rol, rlw_widget_id, rlw_visible)
-    values
-      (neg, 'ABOGADO', w_id, true),
-      (neg, 'ADMINISTRADOR', w_id, true),
-      (neg, 'SUPERADMIN', w_id, true),
-      (neg, 'OPERADOR', w_id, true)
-    on conflict (rlw_negocio, rlw_rol, rlw_widget_id) do update set rlw_visible = true;
+    if w_id is not null then
+      insert into comun_seguridad.seg_rol_widget (rlw_negocio, rlw_rol, rlw_widget_id, rlw_visible)
+      values
+        (neg, 'ABOGADO', w_id, true),
+        (neg, 'ADMINISTRADOR', w_id, true),
+        (neg, 'SUPERADMIN', w_id, true),
+        (neg, 'OPERADOR', w_id, true)
+      on conflict (rlw_negocio, rlw_rol, rlw_widget_id) do update set rlw_visible = true;
+    end if;
 
     -- 3. Widget de Vista: muro_informativo_comunidad
-    insert into comun_seguridad.seg_widget (wdg_clave, wdg_nombre, wdg_activo, wdg_detalle_widget)
+    w_id := null;
+    insert into comun_seguridad.seg_widget (wdg_negocio, wdg_clave, wdg_nombre, wdg_activo, wdg_detalle_widget)
     values (
+      neg,
       'muro_informativo_comunidad',
       'Avisos & Alertas de la Comunidad',
       true,
@@ -344,24 +353,26 @@ begin
         'icono', 'BellRing'
       )
     )
-    on conflict (wdg_clave) do update
+    on conflict (wdg_negocio, wdg_clave) do update
     set wdg_nombre = excluded.wdg_nombre,
         wdg_activo = true,
         wdg_detalle_widget = excluded.wdg_detalle_widget
     returning wdg_id into w_id;
 
     if w_id is null then
-      select wdg_id into w_id from comun_seguridad.seg_widget where wdg_clave = 'muro_informativo_comunidad';
+      select wdg_id into w_id from comun_seguridad.seg_widget where wdg_negocio = neg and wdg_clave = 'muro_informativo_comunidad';
     end if;
 
-    insert into comun_seguridad.seg_rol_widget (rlw_negocio, rlw_rol, rlw_widget_id, rlw_visible)
-    values
-      (neg, 'CLIENTE', w_id, true),
-      (neg, 'ABOGADO', w_id, true),
-      (neg, 'ADMINISTRADOR', w_id, true),
-      (neg, 'SUPERADMIN', w_id, true),
-      (neg, 'OPERADOR', w_id, true)
-    on conflict (rlw_negocio, rlw_rol, rlw_widget_id) do update set rlw_visible = true;
+    if w_id is not null then
+      insert into comun_seguridad.seg_rol_widget (rlw_negocio, rlw_rol, rlw_widget_id, rlw_visible)
+      values
+        (neg, 'CLIENTE', w_id, true),
+        (neg, 'ABOGADO', w_id, true),
+        (neg, 'ADMINISTRADOR', w_id, true),
+        (neg, 'SUPERADMIN', w_id, true),
+        (neg, 'OPERADOR', w_id, true)
+      on conflict (rlw_negocio, rlw_rol, rlw_widget_id) do update set rlw_visible = true;
+    end if;
 
   end loop;
 end $$;
