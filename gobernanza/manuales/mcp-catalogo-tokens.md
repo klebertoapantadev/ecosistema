@@ -10,7 +10,7 @@ El **Servidor MCP de Catálogo** expone las herramientas comerciales del ecosist
 
 Permite que asistentes de inteligencia artificial externos (como bots de WhatsApp sobre **YCloud**, flujos en **n8n**, **Claude Desktop**, **Cursor** o agentes personalizados) consulten de forma autónoma y en tiempo real:
 - Catálogo de productos, servicios, ramos y honorarios.
-- Precios y variantes oficiales con cálculo de **IVA 15% SRI**.
+- Precios y variantes oficiales con cálculo de **IVA 15% SRI** y periodicidad de cobro (pago único o recurrente, p. ej. `MENSUAL`).
 - Enlaces a álbumes de fotos oficiales (Google Photos / CDN).
 - Disponibilidad operativa y existencias.
 
@@ -73,6 +73,15 @@ Obtiene la ficha técnica, variantes de precio y fotos de un producto específic
   "slug_o_id": "ramo-rosas-pasion"
 }
 ```
+
+**Campos de precio de cada variante** (iguales en `consultar_catalogo` y `detalle_producto`):
+
+| Campo | Significado |
+| :--- | :--- |
+| `base_imponible_usd` | Precio sin IVA. |
+| `tarifa_iva` / `monto_iva_usd` | Porcentaje y monto de IVA. |
+| `pvp_total_usd` | Precio final con IVA: es el que se comunica al cliente. |
+| `frecuencia` | `var_frecuencia_recurrencia` de la variante: `null` si es pago único, o la periodicidad (`MENSUAL`, …) si se cobra de forma recurrente. Sin este campo un agente no distingue un plan mensual de uno anual. |
 
 ---
 
