@@ -818,7 +818,17 @@ export function PanelDinamicoModular({ slug, negocio, rolInicial = "ADMINISTRADO
       case "muro_informativo_comunidad":
       case "alertas_comunidad":
       case "cartelera_comunidad":
-        return <TableroBeneficiosAvisosWidget negocio={negocio} audienciaActiva="TODOS" />;
+        return (
+          <TableroBeneficiosAvisosWidget
+            negocio={negocio}
+            audienciaActiva="TODOS"
+            linkGestion={
+              esSuperAdmin || ["OPERADOR", "ADMINISTRADOR", "ADMIN", "AUXILIAR", "TECNICO"].includes(rolInicial.toUpperCase())
+                ? "/panel/administrar?widget=gestion_informativos"
+                : undefined
+            }
+          />
+        );
       case "disponibilidad_abogados":
       case "disponibilidad_operativa":
         return <TableroDisponibilidadOperativa negocio={negocio} />;

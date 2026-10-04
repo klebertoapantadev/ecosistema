@@ -19,6 +19,7 @@ import {
   ShieldCheck,
   CheckCircle2,
   Search,
+  Settings,
 } from "lucide-react";
 import {
   CampanaInformativa,
@@ -35,6 +36,7 @@ interface Props {
   tituloSeccion?: string;
   subtituloSeccion?: string;
   soloBeneficios?: boolean;
+  linkGestion?: string;
 }
 
 const TIPO_INFO_MAP: Record<TipoInformativo, { label: string; icon: any; bg: string; text: string; border: string }> = {
@@ -75,6 +77,7 @@ export function TableroBeneficiosAvisosWidget({
   tituloSeccion,
   subtituloSeccion,
   soloBeneficios = false,
+  linkGestion,
 }: Props) {
   const [campanas, setCampanas] = useState<CampanaInformativa[]>([]);
   const [cargando, setCargando] = useState(true);
@@ -146,31 +149,60 @@ export function TableroBeneficiosAvisosWidget({
           boxShadow: "0 10px 25px -5px rgba(0,0,0,0.15)",
         }}
       >
-        <div
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "6px",
-            background: "rgba(255, 255, 255, 0.15)",
-            backdropFilter: "blur(6px)",
-            padding: "3px 10px",
-            borderRadius: "20px",
-            fontSize: "0.72rem",
-            fontWeight: 800,
-            textTransform: "uppercase",
-            letterSpacing: "0.05em",
-            marginBottom: "8px",
-          }}
-        >
-          {soloBeneficios ? <Award size={12} /> : <Megaphone size={12} />}
-          {soloBeneficios ? "Red Profesional · Beneficios Exclusivos" : "Comunidad & Novedades Oficiales"}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "16px" }}>
+          <div style={{ flex: 1, minWidth: "280px" }}>
+            <div
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+                background: "rgba(255, 255, 255, 0.15)",
+                backdropFilter: "blur(6px)",
+                padding: "3px 10px",
+                borderRadius: "20px",
+                fontSize: "0.72rem",
+                fontWeight: 800,
+                textTransform: "uppercase",
+                letterSpacing: "0.05em",
+                marginBottom: "8px",
+              }}
+            >
+              {soloBeneficios ? <Award size={12} /> : <Megaphone size={12} />}
+              {soloBeneficios ? "Red Profesional · Beneficios Exclusivos" : "Comunidad & Novedades Oficiales"}
+            </div>
+            <h2 style={{ fontSize: "1.35rem", fontWeight: 900, margin: "0 0 6px 0", letterSpacing: "-0.02em" }}>
+              {tituloHeader}
+            </h2>
+            <p style={{ margin: 0, fontSize: "0.85rem", opacity: 0.9, maxWidth: "720px", lineHeight: 1.45 }}>
+              {subtituloHeader}
+            </p>
+          </div>
+
+          {linkGestion && (
+            <a
+              href={linkGestion}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "8px",
+                background: "#FFFFFF",
+                color: "#0F172A",
+                padding: "9px 16px",
+                borderRadius: "10px",
+                fontWeight: 700,
+                fontSize: "0.84rem",
+                textDecoration: "none",
+                boxShadow: "0 4px 14px rgba(0,0,0,0.2)",
+                whiteSpace: "nowrap",
+                marginTop: "4px",
+              }}
+              title="Abrir la consola de administración de informativos y campañas"
+            >
+              <Settings size={16} color="#0369A1" />
+              Administrar Informativos
+            </a>
+          )}
         </div>
-        <h2 style={{ fontSize: "1.35rem", fontWeight: 900, margin: "0 0 6px 0", letterSpacing: "-0.02em" }}>
-          {tituloHeader}
-        </h2>
-        <p style={{ margin: 0, fontSize: "0.85rem", opacity: 0.9, maxWidth: "720px", lineHeight: 1.45 }}>
-          {subtituloHeader}
-        </p>
       </div>
 
       {/* Barra de Filtros */}
