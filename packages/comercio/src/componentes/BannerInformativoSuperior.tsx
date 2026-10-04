@@ -30,12 +30,16 @@ export function BannerInformativoSuperior({
   const [indiceActivo, setIndiceActivo] = useState(0);
   const [cerrado, setCerrado] = useState(false);
 
-  // Comprobar preferencia de usuario en LocalStorage
+  // Comprobar preferencia de usuario en SessionStorage (solo para la sesión actual)
   useEffect(() => {
     try {
-      const oc = localStorage.getItem(`eco_ocultar_banner_${negocio}`);
-      if (oc === "true") {
-        setCerrado(true);
+      // Limpiar clave obsoleta permanente si existía
+      if (typeof window !== "undefined") {
+        localStorage.removeItem(`eco_ocultar_banner_${negocio}`);
+        const oc = sessionStorage.getItem(`eco_ocultar_banner_sesion_${negocio}`);
+        if (oc === "true") {
+          setCerrado(true);
+        }
       }
     } catch {
       // ignore
@@ -89,11 +93,11 @@ export function BannerInformativoSuperior({
     return () => clearInterval(intervalo);
   }, [campanas.length]);
 
-  const handleCerrar = (persistir: boolean = false) => {
+  const handleCerrar = (porSesion: boolean = true) => {
     setCerrado(true);
-    if (persistir) {
+    if (porSesion && typeof window !== "undefined") {
       try {
-        localStorage.setItem(`eco_ocultar_banner_${negocio}`, "true");
+        sessionStorage.setItem(`eco_ocultar_banner_sesion_${negocio}`, "true");
       } catch {
         // ignore
       }
