@@ -67,12 +67,17 @@ export function BannerInformativoSuperior({
   const esAlerta = actual.inf_tipo === "ALERTA_REGULATORIA";
   const esConvenio = actual.inf_tipo === "BENEFICIO_CONVENIO";
   const det = actual.inf_detalle || {};
+  const colorTag = det.color_tag;
 
-  const bgStyle = esAlerta
+  const bgStyle = colorTag
+    ? `linear-gradient(90deg, ${colorTag} 0%, #0F172A 100%)`
+    : esAlerta
     ? "linear-gradient(90deg, #991B1B 0%, #DC2626 50%, #B91C1C 100%)"
     : esConvenio
     ? "linear-gradient(90deg, #312E81 0%, #4338CA 50%, #3730A3 100%)"
     : "linear-gradient(90deg, #0F172A 0%, #1E293B 50%, #0369A1 100%)";
+
+  const etiquetaCategoria = det.categoria || (esAlerta ? "Alerta" : esConvenio ? "Convenio" : "Aviso");
 
   return (
     <div
@@ -107,8 +112,9 @@ export function BannerInformativoSuperior({
             display: "inline-flex",
             alignItems: "center",
             gap: "5px",
-            background: "rgba(255,255,255,0.2)",
-            padding: "2px 8px",
+            background: colorTag ? "rgba(255,255,255,0.25)" : "rgba(255,255,255,0.2)",
+            border: colorTag ? "1px solid rgba(255,255,255,0.4)" : "none",
+            padding: "2px 9px",
             borderRadius: "12px",
             fontSize: "0.68rem",
             fontWeight: 800,
@@ -117,7 +123,7 @@ export function BannerInformativoSuperior({
           }}
         >
           {esAlerta ? <AlertTriangle size={12} /> : esConvenio ? <Award size={12} /> : <Megaphone size={12} />}
-          {esAlerta ? "Alerta" : esConvenio ? "Convenio" : "Aviso"}
+          {etiquetaCategoria}
         </div>
 
         <span style={{ fontWeight: 800 }}>{actual.inf_titulo}:</span>
@@ -130,7 +136,7 @@ export function BannerInformativoSuperior({
             rel="noreferrer"
             style={{
               background: "#FFFFFF",
-              color: esAlerta ? "#991B1B" : "#312E81",
+              color: colorTag || (esAlerta ? "#991B1B" : "#312E81"),
               padding: "3px 10px",
               borderRadius: "12px",
               fontSize: "0.72rem",

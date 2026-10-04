@@ -315,23 +315,24 @@ export function TableroBeneficiosAvisosWidget({
                   />
 
                   {/* Badges superiores */}
-                  <div style={{ position: "absolute", top: "12px", left: "12px", display: "flex", gap: "6px", flexWrap: "wrap" }}>
+                  <div style={{ position: "absolute", top: "12px", left: "12px", display: "flex", gap: "6px", flexWrap: "wrap", zIndex: 2 }}>
                     <span
                       style={{
-                        background: tipoDef.bg,
-                        color: tipoDef.text,
-                        border: `1px solid ${tipoDef.border}`,
-                        padding: "3px 9px",
+                        background: det.color_tag ? det.color_tag : tipoDef.bg,
+                        color: det.color_tag ? "#FFFFFF" : tipoDef.text,
+                        border: det.color_tag ? "1px solid rgba(255,255,255,0.3)" : `1px solid ${tipoDef.border}`,
+                        padding: "3px 10px",
                         borderRadius: "12px",
                         fontSize: "0.7rem",
                         fontWeight: 800,
                         textTransform: "uppercase",
                         display: "flex",
                         alignItems: "center",
-                        gap: "4px",
+                        gap: "5px",
+                        boxShadow: "0 2px 6px rgba(0,0,0,0.25)",
                       }}
                     >
-                      <TipoIcono size={12} /> {tipoDef.label}
+                      <TipoIcono size={12} /> {det.categoria || tipoDef.label}
                     </span>
                     {det.porcentaje_descuento && (
                       <span
