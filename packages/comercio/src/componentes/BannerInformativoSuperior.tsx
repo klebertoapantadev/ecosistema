@@ -17,12 +17,14 @@ import {
 
 interface Props {
   negocio?: string;
-  ubicacion?: "LANDING_BANNER" | "PANEL_INICIO";
+  ubicacion?: "LANDING_BANNER" | "PANEL_INICIO" | "TODOS";
+  audiencia?: "TODOS" | "ABOGADOS" | "CLIENTES" | "EMPRESAS";
 }
 
 export function BannerInformativoSuperior({
   negocio = "tranqi",
-  ubicacion = "LANDING_BANNER",
+  ubicacion = "PANEL_INICIO",
+  audiencia = "TODOS",
 }: Props) {
   const [campanas, setCampanas] = useState<CampanaInformativa[]>([]);
   const [indiceActivo, setIndiceActivo] = useState(0);
@@ -44,23 +46,39 @@ export function BannerInformativoSuperior({
     let cancelado = false;
     const cargar = async () => {
       try {
+        let eliminados = new Set<string>();
+        if (typeof window !== "undefined") {
+          try {
+            const raw = localStorage.getItem(`eco_campanas_eliminadas_${negocio}`);
+            if (raw) eliminados = new Set(JSON.parse(raw));
+          } catch {}
+        }
+
         const data = await obtenerCampanasInformativasAction({
           negocio,
-          ubicacion,
+          ubicacion: ubicacion === "TODOS" ? undefined : ubicacion,
+          audiencia: audiencia === "TODOS" ? undefined : (audiencia as any),
           incluirInactivos: false,
         });
-        if (!cancelado && data.length > 0) {
-          setCampanas(data);
+
+        if (!cancelado && Array.isArray(data) && data.length > 0) {
+          const limpios = data.filter(
+            (c) =>
+              !eliminados.has(c.inf_id) &&
+              !eliminados.has(c.inf_slug) &&
+              (!c.inf_titulo || !eliminados.has(c.inf_titulo))
+          );
+          setCampanas(limpios);
         }
       } catch (err) {
-        // Silencioso para no romper landing
+        // Silencioso para no romper landing o panel
       }
     };
     cargar();
     return () => {
       cancelado = true;
     };
-  }, [negocio, ubicacion]);
+  }, [negocio, ubicacion, audiencia]);
 
   // Rotación automática si hay más de 1
   useEffect(() => {

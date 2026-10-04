@@ -12,6 +12,7 @@ import { ProveedorAvisos } from "./AvisosPanel";
 import { BarraAsistente } from "./asistente/BarraAsistente";
 import { rolConAsistente } from "../../modulos/asistente/rol";
 import { crearClienteServidor } from "@eco/supabase/servidor";
+import { BannerInformativoSuperior } from "@eco/comercio";
 import type { ModoRol } from "./SelectorRolActivo";
 
 const NEGOCIO = "tranqi";
@@ -156,7 +157,14 @@ export default async function LayoutPanel({ children }: { children: React.ReactN
 
           <NavegacionSidebar modoActivo={modoActivo} negocio={NEGOCIO} />
         </aside>
-        <main className="panel-contenido">{children}</main>
+        <main className="panel-contenido">
+          <BannerInformativoSuperior
+            negocio={NEGOCIO}
+            ubicacion="TODOS"
+            audiencia={modoActivo.toUpperCase() as any}
+          />
+          {children}
+        </main>
 
         {/* PLT-004. Tercera columna, no burbuja flotante: el asistente convive
             con la pantalla en vez de taparla.

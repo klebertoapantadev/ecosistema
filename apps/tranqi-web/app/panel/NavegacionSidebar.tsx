@@ -100,7 +100,7 @@ function obtenerPanelesInicialesPorRol(modoActivo: ModoRol): PanelDefNav[] {
 
   if (rolKey === "CLIENTE") {
     return PANELES_BASE_DEFAULT.filter(
-      p => p.id === "panel_inicio" || p.id === "panel_clientes" || p.id === "panel_empresas" || p.id === "panel_agendamiento" || p.id === "panel_herramientas" || p.id === "panel_cuenta"
+      p => p.id === "panel_inicio" || p.id === "panel_clientes" || p.id === "panel_agendamiento" || p.id === "panel_cuenta"
     );
   }
 
@@ -137,7 +137,7 @@ export function NavegacionSidebar({
         // REGLA CLIENTE: Menú estrictamente acotado a la experiencia del cliente final
         if (rolKey === "CLIENTE") {
           const panelesCliente = PANELES_BASE_DEFAULT.filter(
-            (p) => p.id === "panel_inicio" || p.id === "panel_clientes" || p.id === "panel_empresas" || p.id === "panel_agendamiento" || p.id === "panel_herramientas" || p.id === "panel_cuenta"
+            (p) => p.id === "panel_inicio" || p.id === "panel_clientes" || p.id === "panel_agendamiento" || p.id === "panel_cuenta"
           );
           setPanelesVisibles(panelesCliente);
           return;
@@ -204,9 +204,7 @@ export function NavegacionSidebar({
           widgetsPorPanel = {
             ...widgetsPorPanel,
             panel_clientes: ["mis_beneficios_corporativos", "vitrina_comercial_personas", "muro_informativo_comunidad", "agendar_cita", "mis_citas", "billetera_documentos", "firma_documentos_pdf"],
-            panel_empresas: ["vitrina_comercial_empresas", "gestion_convenios_corporativos", "billetera_documentos", "firma_documentos_pdf"],
             panel_agendamiento: ["agendar_cita", "mis_citas"],
-            panel_herramientas: ["catalogo_productos", "firma_documentos_pdf", "billetera_documentos", "solicitud_socio"],
           };
         }
 

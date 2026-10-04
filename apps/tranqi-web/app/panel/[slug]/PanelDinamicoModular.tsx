@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   LayoutGrid, Wrench, Shield, Users, Bell, UserCog, ClipboardList, FileText,
-  Settings, ChevronRight, CircleUser, KeyRound, FileCheck, Folder, type LucideIcon,
+  Settings, ChevronRight, CircleUser, KeyRound, FileCheck, Folder, Calendar, type LucideIcon,
   Bot, ShoppingBag, CreditCard, Receipt, Share2, CheckCircle2, Sparkles, Building2, Scale, Gift
 } from "lucide-react";
 import { useWidgetEnUrl } from "../useWidgetEnUrl";
@@ -147,6 +147,20 @@ const METADATOS_PANELES_BASE: Record<string, { nombre: string; descripcion: stri
 };
 
 const INVENTARIO_GLOBAL_WIDGETS: Record<string, { titulo: string; subtitulo: string; icono: LucideIcon; colorIcono: string; categoria: string }> = {
+  agendar_cita: {
+    titulo: "Agendar Consulta o Trámite",
+    subtitulo: "Elige materia legal, fecha y modalidad presencial o videollamada",
+    icono: Calendar,
+    colorIcono: "#0284C7",
+    categoria: "Operación & Citas"
+  },
+  mis_citas: {
+    titulo: "Mis Citas & Consultas Programadas",
+    subtitulo: "Consulta tus próximas citas legales, enlaces de videollamada y estado",
+    icono: Calendar,
+    colorIcono: "#5000BA",
+    categoria: "Operación & Citas"
+  },
   vitrina_comercial_personas: {
     titulo: "Oferta para Personas Naturales & Familias",
     subtitulo: "Trámites notariales, videoconsultas individuales, defensa legal y planes familiares",
@@ -548,11 +562,9 @@ function obtenerWidgetsInicialesDinamicos(panelId: string, slugStr: string, rolD
     if (esPanelCuenta) return ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos", "historial_pagos"];
     if (esPanelConf) return ["notificaciones", "agentes_ia"];
   } else {
-    // ROL CLIENTE: Acceso a ofertas diferenciadas y sus herramientas
+    // ROL CLIENTE: Acceso a servicios de personas, agendamiento y cuenta
     if (esPanelClientes) return ["mis_beneficios_corporativos", "vitrina_comercial_personas", "muro_informativo_comunidad", "agendar_cita", "mis_citas", "billetera_documentos", "firma_documentos_pdf"];
-    if (esPanelEmpresas) return ["vitrina_comercial_empresas", "gestion_convenios_corporativos", "billetera_documentos", "firma_documentos_pdf"];
     if (esPanelAgenda) return ["agendar_cita", "mis_citas"];
-    if (esPanelHerr) return ["catalogo_productos", "firma_documentos_pdf", "billetera_documentos", "solicitud_socio"];
     if (esPanelCuenta) return ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos", "historial_pagos"];
     if (esPanelConf) return ["notificaciones"];
     return [];
