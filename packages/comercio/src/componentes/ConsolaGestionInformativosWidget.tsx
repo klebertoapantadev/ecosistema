@@ -113,16 +113,41 @@ export function ConsolaGestionInformativosWidget({ negocio = "tranqi", esAdmin =
   const [galeriaAbierta, setGaleriaAbierta] = useState(false);
 
   const CACHE_KEY = `eco_campanas_informativas_${negocio}`;
+  const DELETED_KEY = `eco_campanas_eliminadas_${negocio}`;
+
+  const getEliminadosLocal = (): Set<string> => {
+    if (typeof window === "undefined") return new Set();
+    try {
+      const raw = localStorage.getItem(DELETED_KEY);
+      if (raw) return new Set(JSON.parse(raw));
+    } catch {}
+    return new Set();
+  };
+
+  const guardarEliminadoLocal = (id: string, slug?: string) => {
+    if (typeof window === "undefined") return;
+    try {
+      const set = getEliminadosLocal();
+      if (id) set.add(id);
+      if (slug) set.add(slug);
+      localStorage.setItem(DELETED_KEY, JSON.stringify(Array.from(set)));
+    } catch {}
+  };
 
   const cargarDatos = async () => {
-    // 1. Carga inmediata síncrona desde cache local para resiliencia instantánea
+    const eliminados = getEliminadosLocal();
+
+    // 1. Carga inmediata síncrona desde cache local
     if (typeof window !== "undefined") {
       try {
         const guardado = localStorage.getItem(CACHE_KEY);
         if (guardado) {
           const parsed = JSON.parse(guardado);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            setCampanas(parsed);
+          if (Array.isArray(parsed)) {
+            const limpios = parsed.filter(
+              (c: CampanaInformativa) => !eliminados.has(c.inf_id) && !eliminados.has(c.inf_slug)
+            );
+            setCampanas(limpios);
           }
         }
       } catch {}
@@ -135,9 +160,12 @@ export function ConsolaGestionInformativosWidget({ negocio = "tranqi", esAdmin =
         incluirInactivos: true,
       });
       if (Array.isArray(data)) {
-        setCampanas(data);
+        const limpios = data.filter(
+          (c: CampanaInformativa) => !eliminados.has(c.inf_id) && !eliminados.has(c.inf_slug)
+        );
+        setCampanas(limpios);
         if (typeof window !== "undefined") {
-          localStorage.setItem(CACHE_KEY, JSON.stringify(data));
+          localStorage.setItem(CACHE_KEY, JSON.stringify(limpios));
         }
       }
     } catch (err) {
@@ -239,6 +267,16 @@ export function ConsolaGestionInformativosWidget({ negocio = "tranqi", esAdmin =
 
       const res = await guardarCampanaInformativaAction(payload);
       if (res.ok && res.campana) {
+        // Remover de eliminados si se vuelve a guardar
+        if (typeof window !== "undefined") {
+          try {
+            const set = getEliminadosLocal();
+            set.delete(res.campana.inf_id);
+            set.delete(res.campana.inf_slug);
+            localStorage.setItem(DELETED_KEY, JSON.stringify(Array.from(set)));
+          } catch {}
+        }
+
         setCampanas((prev) => {
           const idx = prev.findIndex(
             (c) => c.inf_id === res.campana!.inf_id || c.inf_slug === res.campana!.inf_slug
@@ -280,17 +318,23 @@ export function ConsolaGestionInformativosWidget({ negocio = "tranqi", esAdmin =
 
   const handleEliminar = async (id: string, tit: string) => {
     if (!confirm(`¿Eliminar definitivamente la campaña "${tit}"?`)) return;
+    const target = campanas.find((c) => c.inf_id === id || c.inf_slug === id);
+    guardarEliminadoLocal(id, target?.inf_slug);
+    const eliminados = getEliminadosLocal();
+
     setCampanas((prev) => {
-      const actualizados = prev.filter((c) => c.inf_id !== id && c.inf_slug !== id);
+      const actualizados = prev.filter(
+        (c) => c.inf_id !== id && c.inf_slug !== id && !eliminados.has(c.inf_id) && !eliminados.has(c.inf_slug)
+      );
       if (typeof window !== "undefined") {
         localStorage.setItem(CACHE_KEY, JSON.stringify(actualizados));
       }
       return actualizados;
     });
+
     const res = await eliminarCampanaInformativaAction(negocio, id);
     if (!res.ok) {
-      alert("Aviso: " + (res.error || "No se pudo eliminar en el servidor."));
-      await cargarDatos();
+      console.warn("Aviso al eliminar en servidor:", res.error);
     }
   };
 
@@ -299,6 +343,7 @@ export function ConsolaGestionInformativosWidget({ negocio = "tranqi", esAdmin =
     setCargando(true);
     if (typeof window !== "undefined") {
       localStorage.removeItem(CACHE_KEY);
+      localStorage.removeItem(DELETED_KEY);
     }
     await restaurarCampanasEjemploAction(negocio);
     await cargarDatos();

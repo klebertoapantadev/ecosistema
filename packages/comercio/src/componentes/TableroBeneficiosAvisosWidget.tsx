@@ -86,9 +86,20 @@ export function TableroBeneficiosAvisosWidget({
   const [reproduciendoVideoUrl, setReproduciendoVideoUrl] = useState<string | null>(null);
 
   const CACHE_KEY = `eco_campanas_informativas_${negocio}`;
+  const DELETED_KEY = `eco_campanas_eliminadas_${negocio}`;
+
+  const getEliminadosLocal = (): Set<string> => {
+    if (typeof window === "undefined") return new Set();
+    try {
+      const raw = localStorage.getItem(DELETED_KEY);
+      if (raw) return new Set(JSON.parse(raw));
+    } catch {}
+    return new Set();
+  };
 
   useEffect(() => {
     let cancelado = false;
+    const eliminados = getEliminadosLocal();
 
     // 1. Carga inmediata síncrona desde cache
     if (typeof window !== "undefined") {
@@ -96,8 +107,13 @@ export function TableroBeneficiosAvisosWidget({
         const guardado = localStorage.getItem(CACHE_KEY);
         if (guardado) {
           const parsed = JSON.parse(guardado);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            setCampanas(parsed.filter((c: any) => c.inf_activo !== false));
+          if (Array.isArray(parsed)) {
+            setCampanas(
+              parsed.filter(
+                (c: any) =>
+                  c.inf_activo !== false && !eliminados.has(c.inf_id) && !eliminados.has(c.inf_slug)
+              )
+            );
           }
         }
       } catch {}
@@ -113,9 +129,12 @@ export function TableroBeneficiosAvisosWidget({
           incluirInactivos: false,
         });
         if (!cancelado && Array.isArray(data)) {
-          setCampanas(data);
+          const limpios = data.filter(
+            (c: any) => !eliminados.has(c.inf_id) && !eliminados.has(c.inf_slug)
+          );
+          setCampanas(limpios);
           if (typeof window !== "undefined") {
-            localStorage.setItem(CACHE_KEY, JSON.stringify(data));
+            localStorage.setItem(CACHE_KEY, JSON.stringify(limpios));
           }
         }
       } catch (err) {
