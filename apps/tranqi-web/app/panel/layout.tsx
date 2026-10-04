@@ -161,7 +161,7 @@ export default async function LayoutPanel({ children }: { children: React.ReactN
           <BannerInformativoSuperior
             negocio={NEGOCIO}
             ubicacion="TODOS"
-            audiencia={modoActivo.toUpperCase() as any}
+            audiencia={modoActivo === "abogado" ? "ABOGADOS" : modoActivo === "cliente" ? "CLIENTES" : "TODOS"}
           />
           {children}
         </main>

@@ -705,7 +705,7 @@ export function PanelDinamicoModular({ slug, negocio, rolInicial = "ADMINISTRADO
     cargarConfiguracion();
     window.addEventListener("storage", cargarConfiguracion);
     return () => window.removeEventListener("storage", cargarConfiguracion);
-  }, [slug, negocio, panelIdBuscado, rolInicial, metaBase.descripcion, slugNormalizado]);
+  }, [slug, negocio, panelIdBuscado, rolInicial, metaBase.descripcion, slugNormalizado, esSuperAdmin]);
 
   const renderWidgetComponente = (wClave: string) => {
     switch (wClave) {

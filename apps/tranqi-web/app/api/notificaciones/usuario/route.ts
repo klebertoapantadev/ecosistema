@@ -57,8 +57,19 @@ export async function GET() {
         const correo = (perfil.usu_correo || "").toLowerCase().trim();
         const esSuperAdminEmail = correo === "familiammtg@gmail.com" || correo === "jesus251296@gmail.com";
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const client: any = crearClienteAdmin() || await crearClienteServidor();
+        let client = null;
+        try {
+          client = crearClienteAdmin();
+        } catch (err) {
+          console.warn("[notificaciones] Error creando cliente admin:", err);
+          client = null;
+        }
+        if (!client) {
+          client = await crearClienteServidor();
+        }
+        if (!client) {
+          return NextResponse.json({ ok: false, error: "No se pudo conectar a la base de datos" }, { status: 500 });
+        }
 
         // Consultar membresía directa para asegurar que rol OPERADOR/ADMINISTRADOR esté siempre detectado
         const { data: memUser } = await client
@@ -330,8 +341,19 @@ export async function POST(request: Request) {
       fecha: new Date().toISOString()
     };
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const client: any = crearClienteAdmin() || await crearClienteServidor();
+    let client = null;
+    try {
+      client = crearClienteAdmin();
+    } catch (err) {
+      console.warn("[notificaciones] Error creando cliente admin:", err);
+      client = null;
+    }
+    if (!client) {
+      client = await crearClienteServidor();
+    }
+    if (!client) {
+      return NextResponse.json({ error: "No se pudo conectar a la base de datos" }, { status: 500 });
+    }
 
     const esUUIDValido = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(not_id);
 
@@ -398,7 +420,7 @@ export async function POST(request: Request) {
         };
       }
 
-      await client
+      await (client as any)
         .schema("comun_notificacion")
         .from("not_registro")
         .update({
@@ -451,7 +473,7 @@ export async function POST(request: Request) {
       }
 
       try {
-        await client
+        await (client as any)
           .schema("comun_notificacion")
           .from("not_registro")
           .insert(filaInsertar);

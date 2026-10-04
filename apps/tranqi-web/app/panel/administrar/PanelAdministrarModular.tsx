@@ -611,7 +611,7 @@ export function PanelAdministrarModular({ negocio = "TRANQ", esSuperAdmin = fals
     cargarConfiguracionPanel();
     window.addEventListener("storage", cargarConfiguracionPanel);
     return () => window.removeEventListener("storage", cargarConfiguracionPanel);
-  }, [negocio]);
+  }, [negocio, rolInicial]);
 
   // Leer modulo inicial desde localStorage o URL
   useEffect(() => {
