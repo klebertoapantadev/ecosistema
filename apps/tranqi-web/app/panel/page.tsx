@@ -15,7 +15,7 @@ import { WidgetNotificacionesCliente } from "@eco/notificaciones";
 import { obtenerSolicitudPropia } from "../../modulos/socios/consultas";
 import { ConsolaSuperAdminModular } from "./ConsolaSuperAdminModular";
 import { TarjetaEstadoSolicitudHome } from "./TarjetaEstadoSolicitudHome";
-import { SeccionCoberturaCliente, obtenerCoberturaUsuarioAction, TarjetaBeneficiosCorporativosCliente } from "@eco/comercio";
+import { SeccionCoberturaCliente, obtenerCoberturaUsuarioAction, TarjetaBeneficiosCorporativosCliente, BannerInformativoSuperior } from "@eco/comercio";
 import { MenuCuenta } from "./MenuCuenta";
 import { obtenerResumenInicioCliente, type DocumentoBilletera } from "../../modulos/inicio-cliente/consultas";
 import { CifraQueCuenta } from "../../modulos/inicio-cliente/componentes/CifraQueCuenta";
@@ -158,6 +158,15 @@ export default async function PagePanel({ searchParams }: Props) {
           rolTexto={textoRol(modo)}
           puedeConmutar={puedeConmutar}
           modoActual={modo}
+        />
+      </div>
+
+      {/* Banner Informativo Superior - Exclusivo para el Menú de Inicio */}
+      <div style={{ marginBottom: "14px" }}>
+        <BannerInformativoSuperior
+          negocio={NEGOCIO}
+          ubicacion="TODOS"
+          audiencia={modo === "abogado" ? "ABOGADOS" : modo === "cliente" ? "CLIENTES" : "TODOS"}
         />
       </div>
 
