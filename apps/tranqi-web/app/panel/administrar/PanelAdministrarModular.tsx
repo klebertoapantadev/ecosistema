@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Users, ClipboardList, Bell, Shield, ChevronRight, Star, Lock, Eye, Pencil, Sliders, RotateCcw, BarChart2, Receipt, Calendar, Building2, Scale, type LucideIcon } from "lucide-react";
+import { Users, ClipboardList, Bell, Shield, ChevronRight, Star, Lock, Eye, Pencil, Sliders, RotateCcw, BarChart2, Receipt, Calendar, Building2, Scale, ShieldCheck, Briefcase, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { ConsultaUsuariosPerfilesWidget } from "@eco/gestion-usuarios/componentes/ConsultaUsuariosPerfilesWidget";
 import { AdministracionPerfilesWidget } from "@eco/gestion-usuarios/componentes/AdministracionPerfilesWidget";
@@ -10,7 +10,7 @@ import { GestionTerminosConsentimientosWidget } from "@eco/identidad/componentes
 import { VisorAuditoriaWidget } from "../auditoria/VisorAuditoriaWidget";
 import { ConfiguracionContratoAbogadoWidget } from "../../../modulos/socios/componentes/ConfiguracionContratoAbogadoWidget";
 import { BandejaClientesCRM } from "../../../modulos/crm-clientes/componentes/BandejaClientesCRM";
-import { HistorialTransaccionesPago, GestionConveniosCorporativos, TableroDisponibilidadOperativa, ConsolaGestionInformativosWidget } from "@eco/comercio";
+import { HistorialTransaccionesPago, GestionConveniosCorporativos, TableroDisponibilidadOperativa, ConsolaGestionInformativosWidget, ComplianceScoreEmpresarial, LegalHRLaboral } from "@eco/comercio";
 import { DataGrid, type ColumnaDataGrid } from "@eco/datagrid";
 import { useCustomWidgets } from "../gestorTitulosWidgets";
 import { ModalEditarWidget } from "../ModalEditarWidget";
@@ -54,6 +54,24 @@ const MODULOS_ADMIN: ModuloAdminDef[] = [
     ruta: "/panel/administrar?widget=gestion_convenios_corporativos",
     icono: Building2,
     colorIcono: "#05876E",
+    categoria: "Comercio & B2B"
+  },
+  {
+    id: "compliance_score_legal",
+    titulo: "Compliance & Score Legal Empresarial",
+    subtitulo: "Matriz de obligaciones normativas, monitoreo de caducidades con ARIA y cálculo del Legal Health Score",
+    ruta: "/panel/administrar?widget=compliance_score_legal",
+    icono: ShieldCheck,
+    colorIcono: "#05876E",
+    categoria: "Comercio & B2B"
+  },
+  {
+    id: "legal_hr_laboral",
+    titulo: "Legal HR: Contratos y Finiquitos",
+    subtitulo: "Gestión laboral de colaboradores, contratos tipificados, firma .p12, avisos IESS y actas de finiquito SUT",
+    ruta: "/panel/administrar?widget=legal_hr_laboral",
+    icono: Briefcase,
+    colorIcono: "#2563EB",
     categoria: "Comercio & B2B"
   },
   {
@@ -354,6 +372,8 @@ function obtenerModulosInicialesAdmin(rolForzado?: string): ModuloAdminDef[] {
   let ids: string[] = [
     "gestion_informativos",
     "gestion_convenios_corporativos",
+    "compliance_score_legal",
+    "legal_hr_laboral",
     "crm_clientes",
     "historial_pagos",
     "emision_notificaciones",
@@ -373,6 +393,8 @@ function obtenerModulosInicialesAdmin(rolForzado?: string): ModuloAdminDef[] {
     ids = [
       "gestion_informativos",
       "gestion_convenios_corporativos",
+      "compliance_score_legal",
+      "legal_hr_laboral",
       "crm_clientes",
       "historial_pagos",
       "emision_notificaciones",
@@ -820,6 +842,20 @@ export function PanelAdministrarModular({ negocio = "TRANQ", esSuperAdmin = fals
             {(widgetActivo === "gestion_convenios_corporativos" || widgetActivo === "convenios_corporativos" || widgetActivo === "convenios") && (
               <div style={{ width: "100%" }}>
                 <GestionConveniosCorporativos negocio={negocio} />
+              </div>
+            )}
+
+            {/* 7.6. COMPLIANCE & LEGAL HEALTH SCORE */}
+            {(widgetActivo === "compliance_score_legal" || widgetActivo === "compliance" || widgetActivo === "compliance_empresarial") && (
+              <div style={{ width: "100%" }}>
+                <ComplianceScoreEmpresarial negocio={negocio} />
+              </div>
+            )}
+
+            {/* 7.7. LEGAL HR LABORAL (ONBOARDING & FINIQUITOS) */}
+            {(widgetActivo === "legal_hr_laboral" || widgetActivo === "legal_hr" || widgetActivo === "laboral") && (
+              <div style={{ width: "100%" }}>
+                <LegalHRLaboral negocio={negocio} />
               </div>
             )}
 

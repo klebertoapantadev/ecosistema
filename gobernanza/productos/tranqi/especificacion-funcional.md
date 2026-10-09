@@ -58,6 +58,9 @@ Tranqi adopta las mejores prácticas y estándares internacionales de **Law Prac
 | **`TRQ-ADM-004`** | **Operador/Admin** | **Catálogo Comercial, Tarifario de Honorarios, Pasarela Payphone e Historial** | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`TRQ-B2B-001`** | **B2B / Empresas** | **Convenios Corporativos: Consultas Jurídicas Gratuitas, Descuento en Servicios y Billetera Legal** | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`TRQ-B2B-002`** | **B2B / Empresas** | **Widget de Nómina Corporativa, Carga Masiva, Invitaciones por Correo y Link con Empresa Padre** | 🟡 Especificado | **30%** | Kleber Toapanta |
+| **`TRQ-B2B-003`** | **B2B / Empresas** | **Portal Empresa: Administradores Corporativos, Roles RBAC, Secreto Profesional y Expedientes** | 🟡 Especificado | **30%** | Kleber Toapanta |
+| **`TRQ-B2B-004`** | **B2B / Empresas** | **Tranqi Legal HR: Onboarding/Offboarding Laboral, Firma Contratos .p12 y Finiquitos SUT/MDT** | 🟡 Especificado | **25%** | Kleber Toapanta |
+| **`TRQ-B2B-005`** | **B2B / Empresas** | **Corporate Compliance & Legal Health Score: Matriz Regulatoria, Vencimientos y Auditoría con ARIA** | 🟡 Especificado | **25%** | Kleber Toapanta |
 
 ---
 
@@ -808,4 +811,115 @@ Widget modular administrativo desarrollado bajo la arquitectura del ecosistema (
    - El widget queda registrado en `comun_seguridad.seg_widget` con clave `gestion_convenios_corporativos`.
    - Preconfigurado por defecto en `seg_rol_widget` para los roles `OPERADOR`, `ADMINISTRADOR` y `SUPERADMIN`.
    - Políticas RLS garantizan que el operador de una empresa cliente solo pueda visualizar y gestionar la nómina de su propia empresa (`cve_id`).
+
+---
+
+### TRQ-B2B-003 — Portal Empresa: Administradores Corporativos, Roles RBAC, Secreto Profesional y Expedientes
+**Responsable:** Kleber Toapanta | **Estado:** 🟡 Especificado (30%)  
+**Identificador de Módulo:** `portal_empresa_b2b`  
+**Ubicación en UI:** `/panel/empresa` / Consola Corporativa B2B
+
+#### 1. Descripción
+Consola integral para empresas clientes que contratan servicios corporativos y convenios de beneficios legales en Tranqi. Permite delegar la administración interna de la empresa en múltiples usuarios con perfiles específicos, supervisar métricas de consumo de beneficios de colaboradores, gestionar expedientes corporativos propios y garantizar la frontera de confidencialidad y secreto profesional.
+
+#### 2. Sub-Roles RBAC dentro de la Empresa Cliente (`comun_comercio.com_convenio_administrador`)
+1. **`ADMIN_EMPRESA` (Gerente General / Administrador Principal):**
+   - Control total de la empresa en la plataforma.
+   - Invitar, asignar y revocar otros administradores y gestores.
+   - Visualizar la nómina y telemetría de beneficios de colaboradores.
+   - Acceso total a los expedientes corporativos y contratos de la persona jurídica.
+   - Gestión de facturación, retención y paquetes de convenios.
+2. **`GESTOR_TALENTO_HUMANO` (RRHH / Bienestar Laboral):**
+   - Carga y actualización de nómina de colaboradores y envío de invitaciones/Magic Links.
+   - Supervisión del consumo de cupos de consultas gratuitas y saldo de billetera corporativa.
+   - **Frontera de Seguridad:** No tiene acceso a los expedientes corporativos judiciales o contractuales de la empresa.
+3. **`GESTOR_LEGAL` (Abogado In-House / Apoderado Especial):**
+   - Visualización y seguimiento procesal de expedientes corporativos de la empresa.
+   - Carga de documentación y coordinación con los abogados patrocinadores de Tranqi.
+   - **Frontera de Seguridad:** No gestiona nómina ni facturación de beneficios.
+
+#### 3. Regla Inviolable de Privacidad y Secreto Profesional (COFJ Art. 335 / LOPDP)
+- **Casos Personales de los Trabajadores:** Cuando un empleado utiliza sus beneficios (consultas gratuitas o tarifas preferenciales) para tramitar un asunto personal (divorcio, inquilinato, alimentos, tránsito, etc.), dicho trámite goza de **Secreto Profesional absoluto**.
+- **Lo que ve la Empresa:** Únicamente telemetría numérica agregada e individual de consumo (ej. *"Juan Pérez ha consumido 1 de 2 consultas gratuitas del convenio anual"*, *"1 caso personal activo"*).
+- **Lo que la Empresa NUNCA puede ver:** Título del caso, materia judicial, nombres de contrapartes, detalles, escritos, audios, chats o documentos adjuntos. Cualquier vulneración de esta frontera acarrea responsabilidad civil y penal.
+
+#### 4. Expedientes Corporativos de la Empresa
+- Casos judiciales o trámites extrajudiciales donde el cliente titular es la persona jurídica (`cas_empresa_id = cve_id`).
+- Los administradores y gestores legales asignados pueden monitorear el avance procesal, consultar actuaciones del SATJE, revisar minutas y descargar escritos patrocinados por el equipo legal de Tranqi.
+- Soporte para permisos granulares: asignación de expedientes específicos a gestores puntuales mediante `cva_permisos->'expedientes_asignados'`.
+
+---
+
+### TRQ-B2B-004 — Tranqi Legal HR: Onboarding y Offboarding Laboral (Contratos, Firma .p12 y Finiquitos MDT/SUT)
+**Responsable:** Kleber Toapanta | **Estado:** 🟡 Especificado (25%)  
+**Identificador de Módulo:** `tranqi_legal_hr`  
+**Ubicación en UI:** Portal Empresa → Pestaña `Legal HR / Laboral`
+
+#### 1. Descripción
+Módulo especializado para la administración y blindaje jurídico laboral del talento humano de la empresa. Automatiza la generación de contratos laborales bajo la legislación ecuatoriana, su firma electrónica válida, la custodia de acuerdos de confidencialidad (NDA), reglamentos internos y la liquidación formal en procesos de desvinculación (Actas de Finiquito MDT/SUT y avisos IESS).
+
+#### 2. Funcionalidades y Reglas de Negocio
+1. **Onboarding Laboral y Contratación Digital:**
+   - Generación guiada de contratos según tipología del Código del Trabajo:
+     - Indefinido con periodo de prueba de 90 días.
+     - Jornada Parcial / Especial.
+     - Teletrabajo / Remoto.
+     - Servicios Profesionales / Factura (Civil/Mercantil).
+   - Firma electrónica con certificado `.p12` / `.pfx` en navegador (sin custodia del certificado en el servidor).
+   - Generación de paquetes de cumplimiento: Acuerdo de Confidencialidad y Propiedad Intelectual (NDA), Notificación de Política de Protección de Datos Personales y Constancia de Entrega del Reglamento Interno de Trabajo.
+2. **Offboarding Laboral y Blindaje de Finiquitos:**
+   - Calculadora legal de liquidación: cómputo exacto de décimo tercero proporcional, décimo cuarto proporcional, vacaciones no gozadas, bonificación por desahucio (25% por año) e indemnización por despido intempestivo según causales tipificadas.
+   - Generación de Acta de Finiquito estandarizada para registro y legalización ante el Ministerio del Trabajo (SUT).
+   - Generación de comprobante y constancia de aviso de salida IESS.
+   - Checklist de finiquito: revocación de accesos, devolución de equipos y firma de descargo patronal.
+
+---
+
+### TRQ-B2B-005 — Corporate Compliance & Legal Health Score: Matriz Regulatoria y Extracción con ARIA
+**Responsable:** Kleber Toapanta | **Estado:** 🟡 Especificado (25%)  
+**Identificador de Módulo:** `corporate_compliance_score`  
+**Ubicación en UI:** Portal Empresa → Pestaña `Compliance & Score Legal`
+
+#### 1. Descripción
+Sistema de gestión de cumplimiento normativo (Compliance) continuo para personas jurídicas en Ecuador. Mantiene una matriz viva de obligaciones regulatorias, societarias, tributarias, laborales y municipales. Utiliza el agente de Inteligencia Artificial **ARIA** para la lectura automatizada de documentos oficiales, extracción de fechas de vigencia/caducidad y cálculo en tiempo real del **Score de Cumplimiento Legal (0 a 100%)**, alertando proactivamente sobre vencimientos para evitar multas, clausuras o sanciones.
+
+#### 2. Matriz Base de Obligaciones Regulatorias (Ecuador)
+Toda empresa registrada parte de una matriz base preconfigurada:
+- **SRI:** RUC activo y actualizado; Certificado de Cumplimiento Tributario (no adeudar).
+- **Superintendencia de Compañías:** Nombramiento vigente de Representante Legal inscrito en Registro Mercantil; Presentación de Balances Anuales y Nómina de Accionistas.
+- **IESS:** Certificado de Cumplimiento de Obligaciones Patronales.
+- **Municipio (ej. Quito / Guayaquil):** Licencia Única de Actividades Económicas (LUAE) / Tasa de Habilitación; Declaración de Patente Municipal y 1.5 por mil sobre activos totales.
+- **Cuerpo de Bomberos:** Permiso de Funcionamiento y Prevención de Incendios.
+- **Ministerio del Trabajo:** Registro de Contratos en SUT; Reglamento Interno aprobado (si > 10 trabajadores); Registro de Responsable de Seguridad y Salud.
+- **Protección de Datos (SPDP):** Registro de Base de Datos y Política de Tratamiento de Datos Personales.
+- **Requisitos Personalizados Sectoriales:** Habilitación de ítems ad-hoc según la naturaleza de la empresa (ej. ARCOTEL para empresas de telecomunicaciones como SATCOM; ARCSA para alimentos/salud).
+
+#### 3. Auditoría Documental con ARIA (IA)
+- Ingesta de archivos en formato PDF o imagen de alta resolución.
+- ARIA ejecuta OCR y validación contextual:
+  - Extrae y valida la razón social y RUC del documento contrastándolo con la empresa.
+  - Extrae la fecha de emisión y la **fecha límite de vigencia o caducidad**.
+  - Asigna observaciones de consistencia o alerta en caso de documentos mutilados o no legibles.
+- Disparo de alertas preventivas multicanal (correo y campanita): 45 días, 30 días, 15 días y al momento de vencimiento.
+
+#### 4. Algoritmo del Legal Health Score (0 a 100%)
+El Score se calcula como la media ponderada de las obligaciones según su criticidad:
+- **Nivel Crítico (Peso 40%):** RUC, Nombramiento Legal, LUAE, Obligaciones Patronales IESS.
+- **Nivel Alto (Peso 35%):** Cumplimiento Tributario, Balances SuperCías, Patente Municipal, Bomberos.
+- **Nivel Medio (Peso 25%):** SUT, LOPDP, normativas internas.
+- **Estados de cada ítem:**
+  - `VIGENTE` = 100% del peso.
+  - `POR_VENCER` (< 30 días) = 60% del peso.
+  - `VENCIDO` o `PENDIENTE` = 0% del peso.
+  - `EXENTO` = Se excluye del divisor para no penalizar sin causa.
+- **Escala de Salud Legal:**
+  - 🟢 **90% - 100%:** Cumplimiento Excelente (Riesgo legal nulo).
+  - 🟡 **70% - 89%:** Cumplimiento Aceptable (Requiere atención a renovaciones próximas).
+  - 🔴 **< 70%:** Riesgo Legal Alto (Vulnerabilidad inminente a clausura o multas).
+
+#### 5. Reglas de Persistencia y Cero Pérdida de Datos (Estándar BDD)
+- Conforme al principio de resiliencia híbrida y la regla de no supresión de errores:
+  - Todo cambio en la matriz de compliance o de administradores se realiza mediante RPCs transaccionales `SECURITY DEFINER` con `search_path = ''`.
+  - Queda prohibida la mutación en memoria RAM aislada; el cliente React mantiene caché sincronizada en `localStorage` pero toda acción propaga errores de base de datos `{ ok: false, error: ... }`.
+  - Todas las tablas implementan RLS estricto y triggers de auditoría transversal `comun_auditoria.aud_fn_auditar_tabla()`.
 

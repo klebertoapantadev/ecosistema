@@ -5,7 +5,8 @@ import Link from "next/link";
 import {
   LayoutGrid, Wrench, Shield, Users, Bell, UserCog, ClipboardList, FileText,
   Settings, ChevronRight, CircleUser, KeyRound, FileCheck, Folder, Calendar, type LucideIcon,
-  Bot, ShoppingBag, CreditCard, Receipt, Share2, CheckCircle2, Sparkles, Building2, Scale, Gift
+  Bot, ShoppingBag, CreditCard, Receipt, Share2, CheckCircle2, Sparkles, Building2, Scale, Gift,
+  ShieldCheck, Briefcase
 } from "lucide-react";
 import { useWidgetEnUrl } from "../useWidgetEnUrl";
 import { BotonVolverWidget } from "../BotonVolverWidget";
@@ -34,6 +35,8 @@ import {
   TarjetaBeneficiosCorporativosCliente,
   ConsolaGestionInformativosWidget,
   TableroBeneficiosAvisosWidget,
+  ComplianceScoreEmpresarial,
+  LegalHRLaboral,
 } from "@eco/comercio";
 import { SociosWidget } from "../administrar/PanelAdministrarModular";
 import { ConfiguracionContratoAbogadoWidget } from "@/modulos/socios/componentes/ConfiguracionContratoAbogadoWidget";
@@ -329,6 +332,20 @@ const INVENTARIO_GLOBAL_WIDGETS: Record<string, { titulo: string; subtitulo: str
     colorIcono: "#05876E",
     categoria: "Comercio & B2B"
   },
+  compliance_score_legal: {
+    titulo: "Compliance & Score Legal Empresarial",
+    subtitulo: "Matriz de obligaciones normativas, monitoreo continuo de caducidades con ARIA y cálculo del Legal Health Score",
+    icono: ShieldCheck,
+    colorIcono: "#05876E",
+    categoria: "Comercio & B2B"
+  },
+  legal_hr_laboral: {
+    titulo: "Legal HR: Contratos y Finiquitos",
+    subtitulo: "Gestión laboral de colaboradores, contratos tipificados, firma .p12, avisos IESS y actas de finiquito SUT",
+    icono: Briefcase,
+    colorIcono: "#2563EB",
+    categoria: "Comercio & B2B"
+  },
   mis_beneficios_corporativos: {
     titulo: "Mis Beneficios Corporativos & Convenio",
     subtitulo: "Consultas telemáticas gratuitas ($0.00) y descuentos corporativos activos por convenio empresarial",
@@ -531,30 +548,30 @@ function obtenerWidgetsInicialesDinamicos(panelId: string, slugStr: string, rolD
 
   if (rolActivo === "OPERADOR" || rolActivo === "AUXILIAR" || rolActivo === "TECNICO") {
     if (esPanelClientes) return ["mis_beneficios_corporativos", "vitrina_comercial_personas", "muro_informativo_comunidad", "crm_clientes", "agendar_cita", "mis_citas", "billetera_documentos", "firma_documentos_pdf"];
-    if (esPanelEmpresas) return ["vitrina_comercial_empresas", "gestion_convenios_corporativos", "crm_clientes", "billetera_documentos", "firma_documentos_pdf"];
+    if (esPanelEmpresas) return ["vitrina_comercial_empresas", "gestion_convenios_corporativos", "compliance_score_legal", "legal_hr_laboral", "crm_clientes", "billetera_documentos", "firma_documentos_pdf"];
     if (esPanelUsuarios) return ["consulta_usuarios_perfiles", "crm_clientes", "monitoreo_notificaciones_usuarios"];
     if (esPanelRed) return ["socios", "paquete_beneficios_abogados", "solicitud_socio"];
     if (esPanelTerminos) return ["gestion_terminos_consentimientos", "configuracion_contrato_abogado"];
     if (esPanelAgenda) return ["disponibilidad_abogados", "asignaciones_agenda"];
-    if (esPanelAdmin) return ["gestion_informativos", "gestion_convenios_corporativos", "disponibilidad_abogados", "historial_pagos", "emision_notificaciones", "bitacora_notificaciones"];
+    if (esPanelAdmin) return ["gestion_informativos", "gestion_convenios_corporativos", "compliance_score_legal", "legal_hr_laboral", "disponibilidad_abogados", "historial_pagos", "emision_notificaciones", "bitacora_notificaciones"];
     if (esPanelHerr) return ["catalogo_productos", "disponibilidad_abogados", "firma_documentos_pdf", "billetera_documentos"];
     if (esPanelSeg) return ["mfa_seguridad"];
     if (esPanelCuenta) return ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos"];
   } else if (rolActivo === "ADMINISTRADOR" || rolActivo === "SUPERADMIN") {
     if (esPanelClientes) return ["mis_beneficios_corporativos", "vitrina_comercial_personas", "muro_informativo_comunidad", "crm_clientes", "agendar_cita", "mis_citas", "billetera_documentos", "firma_documentos_pdf"];
-    if (esPanelEmpresas) return ["vitrina_comercial_empresas", "gestion_convenios_corporativos", "crm_clientes", "billetera_documentos", "firma_documentos_pdf"];
+    if (esPanelEmpresas) return ["vitrina_comercial_empresas", "gestion_convenios_corporativos", "compliance_score_legal", "legal_hr_laboral", "crm_clientes", "billetera_documentos", "firma_documentos_pdf"];
     if (esPanelUsuarios) return ["gestion_usuarios", "consulta_usuarios_perfiles", "crm_clientes", "monitoreo_notificaciones_usuarios"];
     if (esPanelRed) return ["socios", "paquete_beneficios_abogados", "solicitud_socio"];
     if (esPanelTerminos) return ["gestion_terminos_consentimientos", "configuracion_contrato_abogado"];
     if (esPanelAgenda) return ["disponibilidad_abogados", "asignaciones_agenda"];
-    if (esPanelAdmin) return ["gestion_informativos", "gestion_convenios_corporativos", "disponibilidad_abogados", "historial_pagos", "emision_notificaciones", "bitacora_notificaciones", "perfiles", "auditoria"];
+    if (esPanelAdmin) return ["gestion_informativos", "gestion_convenios_corporativos", "compliance_score_legal", "legal_hr_laboral", "disponibilidad_abogados", "historial_pagos", "emision_notificaciones", "bitacora_notificaciones", "perfiles", "auditoria"];
     if (esPanelHerr) return ["catalogo_productos", "disponibilidad_abogados", "firma_documentos_pdf", "billetera_documentos"];
     if (esPanelSeg) return ["mfa_seguridad", "auditoria"];
     if (esPanelConf) return ["configuracion_negocio", "configuracion_correo", "pasarela_payphone", "perfiles", "agentes_ia", "notificaciones", "tokens_mcp"];
     if (esPanelCuenta) return ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos"];
   } else if (rolActivo === "ABOGADO") {
     if (esPanelClientes) return ["mis_beneficios_corporativos", "vitrina_comercial_personas", "muro_informativo_comunidad", "crm_clientes", "billetera_documentos", "firma_documentos_pdf"];
-    if (esPanelEmpresas) return ["vitrina_comercial_empresas", "gestion_convenios_corporativos", "crm_clientes", "billetera_documentos", "firma_documentos_pdf"];
+    if (esPanelEmpresas) return ["vitrina_comercial_empresas", "gestion_convenios_corporativos", "compliance_score_legal", "legal_hr_laboral", "crm_clientes", "billetera_documentos", "firma_documentos_pdf"];
     if (esPanelUsuarios) return ["crm_clientes"];
     if (esPanelRed) return ["paquete_beneficios_abogados"];
     if (esPanelAgenda) return ["disponibilidad_abogados", "citas_programadas", "disponibilidad", "asignaciones_agenda"];
@@ -815,6 +832,16 @@ export function PanelDinamicoModular({ slug, negocio, rolInicial = "ADMINISTRADO
       case "convenios_corporativos":
       case "convenios":
         return <GestionConveniosCorporativos negocio={negocio} />;
+      case "compliance_score_legal":
+      case "compliance":
+      case "compliance_empresarial":
+      case "legal_compliance":
+        return <ComplianceScoreEmpresarial negocio={negocio} />;
+      case "legal_hr_laboral":
+      case "legal_hr":
+      case "laboral":
+      case "finiquitos":
+        return <LegalHRLaboral negocio={negocio} />;
       case "mis_beneficios_corporativos":
       case "beneficios_corporativos":
       case "beneficios_cliente":

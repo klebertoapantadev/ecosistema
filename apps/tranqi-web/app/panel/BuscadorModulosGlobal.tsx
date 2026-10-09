@@ -193,6 +193,26 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
     colorIcono: "#05876E"
   },
   {
+    clave: "compliance_score_legal",
+    nombre: "Compliance & Score Legal Empresarial",
+    detalle: "Matriz de obligaciones normativas (SRI, IESS, LUAE, SuperCías), lectura inteligente ARIA y Health Score",
+    ruta: "/panel/administrar?widget=compliance_score_legal",
+    categoria: "Comercio & B2B",
+    minNivel: 30,
+    icono: ShieldCheck,
+    colorIcono: "#05876E"
+  },
+  {
+    clave: "legal_hr_laboral",
+    nombre: "Legal HR: Contratos y Finiquitos Laborales",
+    detalle: "Gestión laboral de colaboradores, contratos Código del Trabajo, firma .p12, avisos IESS y actas SUT",
+    ruta: "/panel/administrar?widget=legal_hr_laboral",
+    categoria: "Comercio & B2B",
+    minNivel: 30,
+    icono: Briefcase,
+    colorIcono: "#2563EB"
+  },
+  {
     clave: "gestion_informativos",
     nombre: "Gestión de Informativos, Alertas & Beneficios",
     detalle: "Consola de administración de alertas institucionales (ANT, SRI, Municipios) y convenios de capacitación",

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { User, Users, History, KeyRound, ShieldAlert, Settings, Mail, Bell, Star, ChevronRight, ShieldCheck, Sliders, Receipt, Lock, FileText, BarChart2, FileCheck, Folder, ShoppingBag, CreditCard, CalendarPlus, CalendarCheck, CalendarClock, Shuffle, Building2, Scale, type LucideIcon } from "lucide-react";
+import { User, Users, History, KeyRound, ShieldAlert, Settings, Mail, Bell, Star, ChevronRight, ShieldCheck, Sliders, Receipt, Lock, FileText, BarChart2, FileCheck, Folder, ShoppingBag, CreditCard, CalendarPlus, CalendarCheck, CalendarClock, Shuffle, Building2, Scale, Briefcase, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { useCustomWidgets } from "./gestorTitulosWidgets";
 
@@ -46,6 +46,22 @@ const CATALOGO_FAVORITOS: Record<string, WidgetFavInfo> = {
     subtitulo: "Gestión de alianzas empresariales, bolsas de consultas y descuentos automáticos",
     icono: Building2,
     href: "/panel/administrar?widget=gestion_convenios_corporativos",
+    origen: "Administrar"
+  },
+  compliance_score_legal: {
+    id: "compliance_score_legal",
+    titulo: "Compliance & Score Legal",
+    subtitulo: "Matriz de obligaciones normativas, monitoreo con ARIA y Legal Health Score",
+    icono: ShieldCheck,
+    href: "/panel/administrar?widget=compliance_score_legal",
+    origen: "Administrar"
+  },
+  legal_hr_laboral: {
+    id: "legal_hr_laboral",
+    titulo: "Legal HR & Finiquitos",
+    subtitulo: "Contratos de trabajo tipificados, firma .p12, avisos IESS y actas SUT",
+    icono: Briefcase,
+    href: "/panel/administrar?widget=legal_hr_laboral",
     origen: "Administrar"
   },
   disponibilidad_abogados: {

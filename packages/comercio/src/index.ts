@@ -21,8 +21,12 @@ export * from "./componentes/TarjetaBeneficiosCorporativosCliente";
 export * from "./componentes/ConsolaGestionInformativosWidget";
 export * from "./componentes/TableroBeneficiosAvisosWidget";
 export * from "./componentes/BannerInformativoSuperior";
+export * from "./componentes/ComplianceScoreEmpresarial";
+export * from "./componentes/LegalHRLaboral";
 export * from "./acciones-convenios";
 export * from "./acciones-informativos";
+export * from "./acciones-compliance";
+export * from "./acciones-legal-hr";
 export * from "./utils/negocio";
 export * from "./utils/vigencia";
 
