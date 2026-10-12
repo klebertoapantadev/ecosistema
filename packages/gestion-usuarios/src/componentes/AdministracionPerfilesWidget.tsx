@@ -127,6 +127,7 @@ export interface PerfilDef {
   descripcion: string;
   panelesAsignados: string[];
   widgetsAsignadosPorPanel: Record<string, string[]>;
+  titulosWidgetsPorPanel?: Record<string, string>;
   activo: boolean;
   esSuperAdmin?: boolean;
 }
@@ -1393,6 +1394,18 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
   const KEY_PANELES = `tranqi_paneles_sidebar_${negocio}`;
   const KEY_PERFILES = `tranqi_perfiles_${negocio}`;
   const KEY_INVENTARIO = `tranqi_inventario_widgets_${negocio}`;
+  const KEY_TITULOS_WIDGETS = `ecosistema_titulos_widgets_paneles_${negocio}`;
+
+  // Gestión de Títulos Personalizados por Panel Individual
+  const [titulosPersonalizados, setTitulosPersonalizados] = useState<Record<string, string>>({});
+  const [widgetEditarNombre, setWidgetEditarNombre] = useState<{
+    panelId: string;
+    panelNombre: string;
+    widgetClave: string;
+    widgetNombreBase: string;
+  } | null>(null);
+  const [inputNuevoNombre, setInputNuevoNombre] = useState<string>("");
+  const [guardandoNombreWidget, setGuardandoNombreWidget] = useState<boolean>(false);
 
   // Cargar estado persistido al cargar el componente
   useEffect(() => {
@@ -1469,10 +1482,73 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
           setInventarioWidgets([...actualizados, ...nuevosWidgets]);
         }
       }
+
+      // Cargar títulos personalizados por panel
+      const savedTitulos = localStorage.getItem(KEY_TITULOS_WIDGETS);
+      if (savedTitulos) {
+        try {
+          const parsedTitulos = JSON.parse(savedTitulos);
+          if (parsedTitulos && typeof parsedTitulos === "object") {
+            setTitulosPersonalizados(parsedTitulos);
+          }
+        } catch (e) {}
+      } else {
+        try {
+          const rawCustom = localStorage.getItem("tranqi_custom_widgets_config");
+          if (rawCustom) {
+            const parsed = JSON.parse(rawCustom);
+            const extraidos: Record<string, string> = {};
+            Object.entries(parsed).forEach(([k, v]: [string, any]) => {
+              if (k.includes(":") && v?.titulo) {
+                extraidos[k] = v.titulo;
+              }
+            });
+            if (Object.keys(extraidos).length > 0) {
+              setTitulosPersonalizados(extraidos);
+            }
+          }
+        } catch (e) {}
+      }
     } catch (err) {
       console.warn("Error cargando configuración persistida:", err);
     }
-  }, [negocio]);
+  }, [negocio, KEY_PANELES, KEY_PERFILES, KEY_INVENTARIO, KEY_TITULOS_WIDGETS]);
+
+  // Suscribirse a cambios en vivo de títulos de widgets
+  useEffect(() => {
+    const recargarTitulos = () => {
+      try {
+        const saved = localStorage.getItem(KEY_TITULOS_WIDGETS);
+        if (saved) {
+          setTitulosPersonalizados(JSON.parse(saved));
+        } else {
+          const rawCustom = localStorage.getItem("tranqi_custom_widgets_config");
+          if (rawCustom) {
+            const parsed = JSON.parse(rawCustom);
+            const extraidos: Record<string, string> = {};
+            Object.entries(parsed).forEach(([k, v]: [string, any]) => {
+              if (k.includes(":") && v?.titulo) {
+                extraidos[k] = v.titulo;
+              }
+            });
+            if (Object.keys(extraidos).length > 0) {
+              setTitulosPersonalizados(extraidos);
+            }
+          }
+        }
+      } catch (e) {}
+    };
+
+    window.addEventListener("storage", recargarTitulos);
+    window.addEventListener("ecosistema_titulos_widgets_updated", recargarTitulos);
+    window.addEventListener("tranqi_widget_custom_updated", recargarTitulos);
+
+    return () => {
+      window.removeEventListener("storage", recargarTitulos);
+      window.removeEventListener("ecosistema_titulos_widgets_updated", recargarTitulos);
+      window.removeEventListener("tranqi_widget_custom_updated", recargarTitulos);
+    };
+  }, [KEY_TITULOS_WIDGETS]);
 
   // Guardar dinámicamente ante cualquier cambio de estado
   useEffect(() => {
@@ -1495,6 +1571,165 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
       localStorage.setItem(KEY_INVENTARIO, JSON.stringify(inventarioWidgets));
     } catch (e) {}
   }, [inventarioWidgets, negocio]);
+
+  // Helper para obtener el nombre visible de un widget en un panel específico
+  const obtenerNombreVisualWidget = (panelId: string, widgetClave: string, nombrePorDefecto: string) => {
+    const panelNorm = panelId.startsWith("panel_") ? panelId.replace("panel_", "") : `panel_${panelId}`;
+    const custom = titulosPersonalizados[`${panelId}:${widgetClave}`] || titulosPersonalizados[`${panelNorm}:${widgetClave}`];
+    if (custom && custom.trim()) return custom.trim();
+
+    try {
+      const raw = localStorage.getItem("tranqi_custom_widgets_config");
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        const c = parsed[`${panelId}:${widgetClave}`] || parsed[`${panelNorm}:${widgetClave}`];
+        if (c?.titulo?.trim()) return c.titulo.trim();
+      }
+    } catch (e) {}
+
+    return nombrePorDefecto;
+  };
+
+  // Abrir modal de edición de nombre individual
+  const abrirModalEditarNombre = (panelId: string, panelNombre: string, widget: WidgetInventarioDef) => {
+    const nombreActual = obtenerNombreVisualWidget(panelId, widget.clave, widget.nombre);
+    setWidgetEditarNombre({
+      panelId,
+      panelNombre,
+      widgetClave: widget.clave,
+      widgetNombreBase: widget.nombre
+    });
+    setInputNuevoNombre(nombreActual);
+  };
+
+  // Guardar nombre personalizado del widget para el panel
+  const handleGuardarNombreWidget = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!widgetEditarNombre) return;
+
+    const { panelId, widgetClave, widgetNombreBase } = widgetEditarNombre;
+    const panelNorm = panelId.startsWith("panel_") ? panelId.replace("panel_", "") : `panel_${panelId}`;
+    const nuevoNombreLimpio = inputNuevoNombre.trim();
+
+    setGuardandoNombreWidget(true);
+    try {
+      const nuevosTitulos = { ...titulosPersonalizados };
+
+      if (!nuevoNombreLimpio || nuevoNombreLimpio === widgetNombreBase) {
+        delete nuevosTitulos[`${panelId}:${widgetClave}`];
+        delete nuevosTitulos[`${panelNorm}:${widgetClave}`];
+      } else {
+        nuevosTitulos[`${panelId}:${widgetClave}`] = nuevoNombreLimpio;
+        nuevosTitulos[`${panelNorm}:${widgetClave}`] = nuevoNombreLimpio;
+      }
+
+      setTitulosPersonalizados(nuevosTitulos);
+      localStorage.setItem(KEY_TITULOS_WIDGETS, JSON.stringify(nuevosTitulos));
+
+      try {
+        const rawCustom = localStorage.getItem("tranqi_custom_widgets_config");
+        const parsedCustom = rawCustom ? JSON.parse(rawCustom) : {};
+        const k1 = `${panelId}:${widgetClave}`;
+        const k2 = `${panelNorm}:${widgetClave}`;
+        if (!nuevoNombreLimpio || nuevoNombreLimpio === widgetNombreBase) {
+          delete parsedCustom[k1];
+          delete parsedCustom[k2];
+        } else {
+          parsedCustom[k1] = { ...(parsedCustom[k1] || {}), titulo: nuevoNombreLimpio };
+          parsedCustom[k2] = { ...(parsedCustom[k2] || {}), titulo: nuevoNombreLimpio };
+        }
+        localStorage.setItem("tranqi_custom_widgets_config", JSON.stringify(parsedCustom));
+      } catch (e) {}
+
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new Event("storage"));
+        window.dispatchEvent(new CustomEvent("tranqi_widget_custom_updated", {
+          detail: {
+            panelId,
+            widgetId: widgetClave,
+            titulo: nuevoNombreLimpio || widgetNombreBase
+          }
+        }));
+        window.dispatchEvent(new CustomEvent("ecosistema_titulos_widgets_updated", {
+          detail: {
+            panelId,
+            widgetClave,
+            titulo: nuevoNombreLimpio || widgetNombreBase
+          }
+        }));
+      }
+
+      const perfilActivoObj = perfiles.find(p => p.clave === perfilSeleccionado);
+      if (perfilActivoObj) {
+        await guardarConfiguracionPanelesPerfilAction(
+          perfilSeleccionado,
+          negocio,
+          perfilActivoObj.panelesAsignados || [],
+          perfilActivoObj.widgetsAsignadosPorPanel || {},
+          nuevosTitulos
+        );
+      }
+
+      setWidgetEditarNombre(null);
+    } catch (err) {
+      console.error("Error al guardar título personalizado del widget:", err);
+      alert("Hubo un problema al guardar el título. Por favor intente nuevamente.");
+    } finally {
+      setGuardandoNombreWidget(false);
+    }
+  };
+
+  // Restaurar nombre original del widget para este panel
+  const handleRestaurarNombreOriginal = async () => {
+    if (!widgetEditarNombre) return;
+    const { panelId, widgetClave, widgetNombreBase } = widgetEditarNombre;
+    const panelNorm = panelId.startsWith("panel_") ? panelId.replace("panel_", "") : `panel_${panelId}`;
+
+    setGuardandoNombreWidget(true);
+    try {
+      const nuevosTitulos = { ...titulosPersonalizados };
+      delete nuevosTitulos[`${panelId}:${widgetClave}`];
+      delete nuevosTitulos[`${panelNorm}:${widgetClave}`];
+
+      setTitulosPersonalizados(nuevosTitulos);
+      localStorage.setItem(KEY_TITULOS_WIDGETS, JSON.stringify(nuevosTitulos));
+
+      try {
+        const rawCustom = localStorage.getItem("tranqi_custom_widgets_config");
+        const parsedCustom = rawCustom ? JSON.parse(rawCustom) : {};
+        delete parsedCustom[`${panelId}:${widgetClave}`];
+        delete parsedCustom[`${panelNorm}:${widgetClave}`];
+        localStorage.setItem("tranqi_custom_widgets_config", JSON.stringify(parsedCustom));
+      } catch (e) {}
+
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new Event("storage"));
+        window.dispatchEvent(new CustomEvent("tranqi_widget_custom_updated", {
+          detail: { panelId, widgetId: widgetClave, titulo: widgetNombreBase }
+        }));
+        window.dispatchEvent(new CustomEvent("ecosistema_titulos_widgets_updated", {
+          detail: { panelId, widgetClave, titulo: widgetNombreBase }
+        }));
+      }
+
+      const perfilActivoObj = perfiles.find(p => p.clave === perfilSeleccionado);
+      if (perfilActivoObj) {
+        await guardarConfiguracionPanelesPerfilAction(
+          perfilSeleccionado,
+          negocio,
+          perfilActivoObj.panelesAsignados || [],
+          perfilActivoObj.widgetsAsignadosPorPanel || {},
+          nuevosTitulos
+        );
+      }
+
+      setWidgetEditarNombre(null);
+    } catch (err) {
+      console.error("Error al restaurar nombre:", err);
+    } finally {
+      setGuardandoNombreWidget(false);
+    }
+  };
 
   // Estado Drag & Drop HTML5 (Reorganización Gráfica para Web Desktop)
   const [widgetArrastrado, setWidgetArrastrado] = useState<{ widgetClave: string; panelOrigenId: string } | null>(null);
@@ -1622,7 +1857,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
 
     const perfilObj = nuevosPerfiles.find(p => p.clave === perfilClave);
     const paneles = panelesActualizados || perfilObj?.panelesAsignados || [];
-    guardarConfiguracionPanelesPerfilAction(perfilClave, negocio, paneles, mapaActualizado).catch(err => {
+    guardarConfiguracionPanelesPerfilAction(perfilClave, negocio, paneles, mapaActualizado, titulosPersonalizados).catch(err => {
       console.error("Error persistiendo configuración en seg_perfil:", err);
     });
   };
@@ -3137,39 +3372,52 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                                       </span>
 
                                       <div style={{ minWidth: 0, flex: 1 }}>
-                                        <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
-                                          <strong style={{ fontWeight: 800, fontSize: "0.88rem", color: temaPerfilActivo.colorTexto }}>
-                                            {w.nombre}
-                                          </strong>
-                                          <code style={{ fontSize: "0.72rem", color: "var(--panel-gris, #737373)", background: "rgba(0,0,0,0.05)", padding: "1px 6px", borderRadius: "4px" }}>
-                                            {w.clave}
-                                          </code>
-                                          {w.categoria && (
-                                            <span style={{ fontSize: "0.68rem", fontWeight: 700, background: "#EEF2FF", color: "#4F46E5", padding: "1px 6px", borderRadius: "4px" }}>
-                                              {w.categoria}
-                                            </span>
-                                          )}
-                                          {w.creadoEn && (
-                                            <span style={{ fontSize: "0.68rem", fontWeight: 700, background: "#FEF3C7", color: "#92400E", padding: "1px 7px", borderRadius: "4px", border: "1px solid #FDE68A", display: "inline-flex", alignItems: "center", gap: "3px" }}>
-                                              📅 {w.creadoEn}
-                                            </span>
-                                          )}
-                                        </div>
+                                        {(() => {
+                                          const nombreVisual = obtenerNombreVisualWidget(panel.id, w.clave, w.nombre);
+                                          const esNombreCustom = nombreVisual !== w.nombre;
+                                          return (
+                                            <>
+                                              <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                                                <strong style={{ fontWeight: 800, fontSize: "0.88rem", color: temaPerfilActivo.colorTexto }}>
+                                                  {nombreVisual}
+                                                </strong>
+                                                {esNombreCustom && (
+                                                  <span style={{ fontSize: "0.68rem", fontWeight: 700, background: "#FEF3C7", color: "#92400E", padding: "1px 6px", borderRadius: "4px", border: "1px solid #FDE68A" }}>
+                                                    ✏️ Personalizado
+                                                  </span>
+                                                )}
+                                                <code style={{ fontSize: "0.72rem", color: "var(--panel-gris, #737373)", background: "rgba(0,0,0,0.05)", padding: "1px 6px", borderRadius: "4px" }}>
+                                                  {w.clave}
+                                                </code>
+                                                {w.categoria && (
+                                                  <span style={{ fontSize: "0.68rem", fontWeight: 700, background: "#EEF2FF", color: "#4F46E5", padding: "1px 6px", borderRadius: "4px" }}>
+                                                    {w.categoria}
+                                                  </span>
+                                                )}
+                                                {w.creadoEn && (
+                                                  <span style={{ fontSize: "0.68rem", fontWeight: 700, background: "#FEF3C7", color: "#92400E", padding: "1px 7px", borderRadius: "4px", border: "1px solid #FDE68A", display: "inline-flex", alignItems: "center", gap: "3px" }}>
+                                                    📅 {w.creadoEn}
+                                                  </span>
+                                                )}
+                                              </div>
 
-                                        <div style={{ marginTop: "4px", display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
-                                          <span style={{ fontSize: "0.72rem", color: "var(--panel-gris, #737373)" }}>Ruta Física:</span>
-                                          <code style={{ fontSize: "0.72rem", color: "#047857", background: "#ECFDF5", padding: "1px 6px", borderRadius: "4px", border: "1px solid #A7F3D0" }}>
-                                            {w.rutaFisica || `/plataforma/${w.clave}.tsx`}
-                                          </code>
-                                          <button
-                                            type="button"
-                                            onClick={() => copiarRutaFisica(w.rutaFisica || `/plataforma/${w.clave}.tsx`, w.nombre)}
-                                            title="Copiar ruta física"
-                                            style={{ background: "none", border: "none", cursor: "pointer", color: "var(--panel-gris, #737373)", display: "inline-flex", alignItems: "center", gap: "3px", fontSize: "0.68rem" }}
-                                          >
-                                            <Copy size={11} /> <span>Copiar</span>
-                                          </button>
-                                        </div>
+                                              <div style={{ marginTop: "4px", display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                                                <span style={{ fontSize: "0.72rem", color: "var(--panel-gris, #737373)" }}>Ruta Física:</span>
+                                                <code style={{ fontSize: "0.72rem", color: "#047857", background: "#ECFDF5", padding: "1px 6px", borderRadius: "4px", border: "1px solid #A7F3D0" }}>
+                                                  {w.rutaFisica || `/plataforma/${w.clave}.tsx`}
+                                                </code>
+                                                <button
+                                                  type="button"
+                                                  onClick={() => copiarRutaFisica(w.rutaFisica || `/plataforma/${w.clave}.tsx`, w.nombre)}
+                                                  title="Copiar ruta física"
+                                                  style={{ background: "none", border: "none", cursor: "pointer", color: "var(--panel-gris, #737373)", display: "inline-flex", alignItems: "center", gap: "3px", fontSize: "0.68rem" }}
+                                                >
+                                                  <Copy size={11} /> <span>Copiar</span>
+                                                </button>
+                                              </div>
+                                            </>
+                                          );
+                                        })()}
                                       </div>
                                     </div>
 
@@ -3201,6 +3449,30 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                                         <ExternalLink size={13} />
                                         <span className="btn-texto-responsive">Abrir</span>
                                       </a>
+
+                                      <button
+                                        type="button"
+                                        title={`Editar nombre de visualización en ${panel.nombre}`}
+                                        aria-label={`Editar nombre en ${panel.nombre}`}
+                                        onClick={() => abrirModalEditarNombre(panel.id, panel.nombre, w)}
+                                        className="btn-responsive-accion"
+                                        style={{
+                                          background: "#F5F3FF",
+                                          border: "1px solid #DDD6FE",
+                                          color: "#5000BA",
+                                          borderRadius: "6px",
+                                          padding: "5px 8px",
+                                          cursor: "pointer",
+                                          fontSize: "0.72rem",
+                                          fontWeight: 700,
+                                          display: "inline-flex",
+                                          alignItems: "center",
+                                          gap: "3px"
+                                        }}
+                                      >
+                                        <Pencil size={13} />
+                                        <span className="btn-texto-responsive">Editar</span>
+                                      </button>
 
                                       <button
                                         type="button"
@@ -3302,6 +3574,8 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                               {widgetsFiltrados.map((w, idx) => {
                                 const esFavoritos = w.clave === "favoritos";
                                 const esArrastrando = widgetArrastrado?.widgetClave === w.clave;
+                                const nombreVisual = obtenerNombreVisualWidget(panel.id, w.clave, w.nombre);
+                                const esNombreCustom = nombreVisual !== w.nombre;
 
                                 return (
                                   <div
@@ -3336,9 +3610,22 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                                       #{idx + 1}
                                     </span>
                                     <strong style={{ fontSize: "0.82rem", color: temaPerfilActivo.colorTexto }}>
-                                      {w.nombre}
+                                      {nombreVisual}
                                     </strong>
+                                    {esNombreCustom && (
+                                      <span style={{ fontSize: "0.62rem", fontWeight: 700, color: "#B45309" }} title="Nombre personalizado para este panel">
+                                        ✏️
+                                      </span>
+                                    )}
                                     <span style={{ display: "inline-flex", alignItems: "center", gap: "2px" }}>
+                                      <button
+                                        type="button"
+                                        title={`Editar nombre en ${panel.nombre}`}
+                                        onClick={() => abrirModalEditarNombre(panel.id, panel.nombre, w)}
+                                        style={{ background: "none", border: "none", cursor: "pointer", color: "#5000BA", padding: "1px" }}
+                                      >
+                                        <Pencil size={11} />
+                                      </button>
                                       <button
                                         type="button"
                                         title="Subir"
@@ -3391,6 +3678,8 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                               {widgetsFiltrados.map((w, idx) => {
                                 const esFavoritos = w.clave === "favoritos";
                                 const esArrastrando = widgetArrastrado?.widgetClave === w.clave;
+                                const nombreVisual = obtenerNombreVisualWidget(panel.id, w.clave, w.nombre);
+                                const esNombreCustom = nombreVisual !== w.nombre;
 
                                 return (
                                   <div
@@ -3428,9 +3717,14 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                                         <GripVertical size={16} color="var(--panel-gris, #737373)" style={{ marginTop: "2px", opacity: 0.6, flexShrink: 0 }} />
                                       </span>
                                       <div style={{ minWidth: 0, flex: 1 }}>
-                                        <div title={w.nombre} style={{ fontWeight: 800, fontSize: "0.85rem", color: temaPerfilActivo.colorTexto, display: "flex", alignItems: "center", gap: "6px" }}>
+                                        <div title={nombreVisual} style={{ fontWeight: 800, fontSize: "0.85rem", color: temaPerfilActivo.colorTexto, display: "flex", alignItems: "center", gap: "6px" }}>
                                           {esFavoritos && <Star size={14} fill={temaPerfilActivo.colorPrimario} color={temaPerfilActivo.colorPrimario} style={{ flexShrink: 0 }} />}
-                                          <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{w.nombre}</span>
+                                          <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{nombreVisual}</span>
+                                          {esNombreCustom && (
+                                            <span style={{ fontSize: "0.64rem", fontWeight: 700, background: "#FEF3C7", color: "#92400E", padding: "1px 5px", borderRadius: "4px" }} title="Nombre personalizado para este panel">
+                                              ✏️
+                                            </span>
+                                          )}
                                         </div>
                                         <div style={{ fontSize: "0.68rem", color: temaPerfilActivo.colorPrimario, fontWeight: 700, opacity: 0.85, marginTop: "2px", display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
                                           <span>Posición #{idx + 1} • {w.clave}</span>
@@ -3446,6 +3740,24 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                                     </div>
 
                                     <div style={{ display: "flex", alignItems: "center", gap: "4px", flexShrink: 0 }}>
+                                      <button
+                                        type="button"
+                                        title={`Editar nombre de ${nombreVisual} en ${panel.nombre}`}
+                                        onClick={() => abrirModalEditarNombre(panel.id, panel.nombre, w)}
+                                        style={{
+                                          background: "#F5F3FF",
+                                          border: "1px solid #DDD6FE",
+                                          color: "#5000BA",
+                                          borderRadius: "6px",
+                                          padding: "5px 7px",
+                                          cursor: "pointer",
+                                          display: "flex",
+                                          alignItems: "center"
+                                        }}
+                                      >
+                                        <Pencil size={13} />
+                                      </button>
+
                                       <button
                                         type="button"
                                         title="Subir posición / Mover a la izquierda"
@@ -5364,6 +5676,177 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                 >
                   {accionTransferir === "mover" ? "⇄ Mover Widget" : "Duplicar Widget"}
                 </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal para Editar Nombre de Widget por Panel Individual */}
+      {widgetEditarNombre && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: "rgba(0, 0, 0, 0.55)",
+            backdropFilter: "blur(3px)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 10000,
+            padding: "20px"
+          }}
+          onClick={() => !guardandoNombreWidget && setWidgetEditarNombre(null)}
+        >
+          <div
+            style={{
+              background: "#FFFFFF",
+              borderRadius: "16px",
+              padding: "24px",
+              maxWidth: "520px",
+              width: "100%",
+              boxShadow: "0 20px 40px rgba(0, 0, 0, 0.2)",
+              border: "1px solid #E4E4E4"
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <div style={{ width: "36px", height: "36px", borderRadius: "10px", background: "#F5F3FF", display: "flex", alignItems: "center", justifyContent: "center", color: "#5000BA" }}>
+                  <Pencil size={18} />
+                </div>
+                <div>
+                  <h3 style={{ fontSize: "1.05rem", fontWeight: 800, margin: 0, color: "#111111" }}>
+                    Editar Nombre en Panel
+                  </h3>
+                  <p style={{ fontSize: "0.78rem", color: "#737373", margin: "2px 0 0 0" }}>
+                    Panel: <strong style={{ color: "#5000BA" }}>{widgetEditarNombre.panelNombre}</strong>
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setWidgetEditarNombre(null)}
+                disabled={guardandoNombreWidget}
+                style={{ background: "none", border: "none", cursor: "pointer", color: "#737373", padding: "4px" }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <form onSubmit={handleGuardarNombreWidget} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+              <div style={{ background: "#F8FAFC", borderRadius: "10px", padding: "12px", border: "1px solid #E2E8F0", fontSize: "0.82rem" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
+                  <span style={{ color: "#64748B", fontWeight: 600 }}>Identificador Clave:</span>
+                  <code style={{ color: "#0F172A", fontWeight: 700 }}>{widgetEditarNombre.widgetClave}</code>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                  <span style={{ color: "#64748B", fontWeight: 600 }}>Nombre Original Base:</span>
+                  <span style={{ color: "#334155", fontWeight: 700 }}>{widgetEditarNombre.widgetNombreBase}</span>
+                </div>
+              </div>
+
+              <div>
+                <label style={{ fontSize: "0.84rem", fontWeight: 800, color: "#111111", display: "block", marginBottom: "6px" }}>
+                  Nombre Visual para este Panel
+                </label>
+                <input
+                  type="text"
+                  value={inputNuevoNombre}
+                  onChange={(e) => setInputNuevoNombre(e.target.value)}
+                  placeholder={`Ej: ${widgetEditarNombre.widgetNombreBase}`}
+                  autoFocus
+                  required
+                  style={{
+                    width: "100%",
+                    padding: "10px 12px",
+                    borderRadius: "8px",
+                    border: "1.5px solid #DDD6FE",
+                    fontSize: "0.92rem",
+                    fontWeight: 600,
+                    outline: "none",
+                    boxSizing: "border-box"
+                  }}
+                />
+                <span style={{ display: "block", fontSize: "0.74rem", color: "#737373", marginTop: "5px" }}>
+                  💡 Este nombre personalizado solo se aplicará al visualizar este widget dentro del panel <strong>{widgetEditarNombre.panelNombre}</strong>.
+                </span>
+              </div>
+
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px", marginTop: "10px", flexWrap: "wrap" }}>
+                <button
+                  type="button"
+                  onClick={handleRestaurarNombreOriginal}
+                  disabled={guardandoNombreWidget}
+                  style={{
+                    background: "#FEF2F2",
+                    border: "1px solid #FECACA",
+                    color: "#DC2626",
+                    borderRadius: "8px",
+                    padding: "8px 12px",
+                    fontSize: "0.78rem",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "4px"
+                  }}
+                >
+                  <RotateCcw size={13} />
+                  <span>Restaurar Original</span>
+                </button>
+
+                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <button
+                    type="button"
+                    onClick={() => setWidgetEditarNombre(null)}
+                    disabled={guardandoNombreWidget}
+                    style={{
+                      background: "#F7F6FA",
+                      border: "1px solid #E4E4E4",
+                      borderRadius: "8px",
+                      padding: "8px 14px",
+                      fontSize: "0.82rem",
+                      fontWeight: 700,
+                      cursor: "pointer"
+                    }}
+                  >
+                    Cancelar
+                  </button>
+
+                  <button
+                    type="submit"
+                    disabled={guardandoNombreWidget}
+                    style={{
+                      background: "#5000BA",
+                      color: "#FFFFFF",
+                      border: "none",
+                      borderRadius: "8px",
+                      padding: "8px 18px",
+                      fontSize: "0.82rem",
+                      fontWeight: 800,
+                      cursor: "pointer",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "6px"
+                    }}
+                  >
+                    {guardandoNombreWidget ? (
+                      <>
+                        <Loader2 size={14} className="animate-spin" />
+                        <span>Guardando...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Check size={14} />
+                        <span>Guardar</span>
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
             </form>
           </div>

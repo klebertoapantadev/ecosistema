@@ -118,14 +118,15 @@ export function obtenerCustomizacionesWidgets(): MapaCustomizacionesWidget {
 }
 
 /**
- * Recupera la versión personalizada para un widget específico
+ * Recupera la versión personalizada para un widget específico (priorizando configuración por panel si aplica)
  */
 export function obtenerCustomizacionWidget(
   id: string,
   tituloPorDefecto: string,
   subtituloPorDefecto: string,
   iconoPorDefectoKey?: string,
-  mapa?: MapaCustomizacionesWidget
+  mapa?: MapaCustomizacionesWidget,
+  panelId?: string
 ): {
   titulo: string;
   subtitulo: string;
@@ -134,7 +135,21 @@ export function obtenerCustomizacionWidget(
   tiempoMfaMinutos: number;
 } {
   const customMap = mapa ?? obtenerCustomizacionesWidgets();
-  const custom = customMap[id];
+
+  // 1. Buscar coincidencia exacta por panel: "panel_clientes:vitrina_comercial_personas"
+  let custom: CustomizacionWidget | undefined;
+  if (panelId) {
+    const k1 = `${panelId}:${id}`;
+    const panelNorm = panelId.startsWith("panel_") ? panelId.replace("panel_", "") : `panel_${panelId}`;
+    const k2 = `${panelNorm}:${id}`;
+    custom = customMap[k1] || customMap[k2];
+  }
+
+  // 2. Fallback a configuración global del widget por clave: "vitrina_comercial_personas"
+  if (!custom) {
+    custom = customMap[id];
+  }
+
   return {
     titulo: custom?.titulo?.trim() ? custom.titulo : tituloPorDefecto,
     subtitulo: custom?.subtitulo?.trim() ? custom.subtitulo : subtituloPorDefecto,
@@ -155,7 +170,7 @@ export function obtenerIconoComponente(iconoKey?: string, fallbackIcono?: Lucide
 }
 
 /**
- * Guarda o actualiza la configuración personalizada de un widget
+ * Guarda o actualiza la configuración personalizada de un widget (soporta guardado individual por panel)
  */
 export function guardarCustomizacionWidget(
   id: string,
@@ -163,23 +178,37 @@ export function guardarCustomizacionWidget(
   subtitulo: string,
   iconoKey?: string,
   requiereMfa?: boolean,
-  tiempoMfaMinutos?: number
+  tiempoMfaMinutos?: number,
+  panelId?: string
 ) {
   if (typeof window === "undefined") return;
   try {
     const mapaActual = obtenerCustomizacionesWidgets();
-    mapaActual[id] = {
+    const claveGuardar = panelId ? `${panelId}:${id}` : id;
+
+    const dataCustom: CustomizacionWidget = {
       titulo: titulo.trim(),
       subtitulo: subtitulo.trim(),
       iconoKey,
       requiereMfa: Boolean(requiereMfa),
       tiempoMfaMinutos: tiempoMfaMinutos ?? 15,
     };
+
+    mapaActual[claveGuardar] = dataCustom;
+
+    // Si se especificó panelId, sincronizar también la variante normalizada (con/sin prefijo panel_)
+    if (panelId) {
+      const panelNorm = panelId.startsWith("panel_") ? panelId.replace("panel_", "") : `panel_${panelId}`;
+      mapaActual[`${panelNorm}:${id}`] = dataCustom;
+    }
+
     localStorage.setItem(CLAVE_LOCAL_STORAGE, JSON.stringify(mapaActual));
     window.dispatchEvent(
       new CustomEvent(NOMBRE_EVENTO_CUSTOM, {
         detail: {
-          id,
+          id: claveGuardar,
+          panelId,
+          widgetId: id,
           titulo: titulo.trim(),
           subtitulo: subtitulo.trim(),
           iconoKey,
@@ -215,8 +244,14 @@ export function useCustomWidgets() {
     };
   }, []);
 
-  const getWidgetInfo = (id: string, tituloDef: string, subtituloDef: string, iconoDefKey?: string) => {
-    return obtenerCustomizacionWidget(id, tituloDef, subtituloDef, iconoDefKey, customizaciones);
+  const getWidgetInfo = (
+    id: string,
+    tituloDef: string,
+    subtituloDef: string,
+    iconoDefKey?: string,
+    panelId?: string
+  ) => {
+    return obtenerCustomizacionWidget(id, tituloDef, subtituloDef, iconoDefKey, customizaciones, panelId);
   };
 
   return {

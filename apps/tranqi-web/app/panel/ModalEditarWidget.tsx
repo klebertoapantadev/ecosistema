@@ -14,13 +14,15 @@ interface Props {
   requiereMfaActual?: boolean;
   tiempoMfaActualMinutos?: number;
   rutaFisicaActual?: string;
+  panelId?: string;
   onGuardar: (
     id: string,
     nuevoTitulo: string,
     nuevoSubtitulo: string,
     nuevoIconoKey?: string,
     nuevoRequiereMfa?: boolean,
-    nuevoTiempoMfaMinutos?: number
+    nuevoTiempoMfaMinutos?: number,
+    panelId?: string
   ) => void;
 }
 
@@ -120,6 +122,7 @@ export function ModalEditarWidget({
   requiereMfaActual = false,
   tiempoMfaActualMinutos = 15,
   rutaFisicaActual,
+  panelId,
   onGuardar,
 }: Props) {
   const [titulo, setTitulo] = useState(tituloActual);
@@ -146,7 +149,7 @@ export function ModalEditarWidget({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onGuardar(widgetId, titulo, subtitulo, iconoKey, requiereMfa, tiempoMfaMinutos);
+    onGuardar(widgetId, titulo, subtitulo, iconoKey, requiereMfa, tiempoMfaMinutos, panelId);
     onCerrar();
   };
 

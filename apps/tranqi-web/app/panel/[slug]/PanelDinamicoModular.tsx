@@ -6,8 +6,9 @@ import {
   LayoutGrid, Wrench, Shield, Users, Bell, UserCog, ClipboardList, FileText,
   Settings, ChevronRight, CircleUser, KeyRound, FileCheck, Folder, Calendar, type LucideIcon,
   Bot, ShoppingBag, CreditCard, Receipt, Share2, CheckCircle2, Sparkles, Building2, Scale, Gift,
-  ShieldCheck, Briefcase
+  ShieldCheck, Briefcase, Pencil
 } from "lucide-react";
+import { ModalEditarWidget } from "../ModalEditarWidget";
 import { useWidgetEnUrl } from "../useWidgetEnUrl";
 import { BotonVolverWidget } from "../BotonVolverWidget";
 import { AdministracionPerfilesWidget } from "@eco/gestion-usuarios/componentes/AdministracionPerfilesWidget";
@@ -579,7 +580,15 @@ export function PanelDinamicoModular({ slug, negocio, rolInicial = "ADMINISTRADO
   });
   const { widgetActivo, abrir, cerrar } = useWidgetEnUrl();
   const [copiadoModulo, setCopiadoModulo] = useState(false);
-  const { getWidgetInfo } = useCustomWidgets();
+  const { getWidgetInfo, guardarWidget } = useCustomWidgets();
+  const [widgetEditar, setWidgetEditar] = useState<{
+    id: string;
+    titulo: string;
+    subtitulo: string;
+    iconoKey?: string;
+    requiereMfa?: boolean;
+    tiempoMfaMinutos?: number;
+  } | null>(null);
 
   // Compartir URL con el módulo y panel activo
   const handleCompartirModulo = (wClave?: string | null) => {
@@ -653,6 +662,25 @@ export function PanelDinamicoModular({ slug, negocio, rolInicial = "ADMINISTRADO
           if (Array.isArray(wBdd)) {
             listW = wBdd;
             configuracionEncontrada = true;
+          }
+
+          // Si hay títulos personalizados por panel en base de datos, sincronizarlos
+          if (resBdd.data.titulosWidgetsPorPanel && typeof window !== "undefined") {
+            try {
+              const rawTit = localStorage.getItem("tranqi_custom_widgets_config");
+              const currentCustom = rawTit ? JSON.parse(rawTit) : {};
+              let modificado = false;
+              Object.entries(resBdd.data.titulosWidgetsPorPanel).forEach(([k, tit]) => {
+                if (tit && (!currentCustom[k] || currentCustom[k].titulo !== tit)) {
+                  currentCustom[k] = { ...(currentCustom[k] || {}), titulo: tit };
+                  modificado = true;
+                }
+              });
+              if (modificado) {
+                localStorage.setItem("tranqi_custom_widgets_config", JSON.stringify(currentCustom));
+                window.dispatchEvent(new CustomEvent("tranqi_widget_custom_updated"));
+              }
+            } catch (e) {}
           }
         }
 
@@ -1072,7 +1100,7 @@ export function PanelDinamicoModular({ slug, negocio, rolInicial = "ADMINISTRADO
                 categoria: "Operación"
               };
               const IconoComp = def.icono;
-              const infoCustom = getWidgetInfo(wClave, def.titulo, def.subtitulo);
+              const infoCustom = getWidgetInfo(wClave, def.titulo, def.subtitulo, undefined, panelIdBuscado || slug);
 
               return (
                 <div
@@ -1096,7 +1124,38 @@ export function PanelDinamicoModular({ slug, negocio, rolInicial = "ADMINISTRADO
                       <div style={{ width: "42px", height: "42px", borderRadius: "12px", background: "#F7F6FA", display: "flex", alignItems: "center", justifyContent: "center" }}>
                         <IconoComp size={22} color={def.colorIcono} />
                       </div>
-                      <ChevronRight size={18} color="#9CA3AF" />
+                      <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                        {(esSuperAdmin || rolInicial === "SUPERADMIN" || rolInicial === "ADMINISTRADOR") && (
+                          <button
+                            type="button"
+                            title={`Editar personalización de ${infoCustom.titulo} en ${panelInfo.nombre}`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setWidgetEditar({
+                                id: wClave,
+                                titulo: infoCustom.titulo,
+                                subtitulo: infoCustom.subtitulo,
+                                iconoKey: infoCustom.iconoKey,
+                                requiereMfa: infoCustom.requiereMfa,
+                                tiempoMfaMinutos: infoCustom.tiempoMfaMinutos
+                              });
+                            }}
+                            style={{
+                              background: "none",
+                              border: "none",
+                              cursor: "pointer",
+                              padding: "4px",
+                              borderRadius: "6px",
+                              color: "#9CA3AF",
+                              display: "flex",
+                              alignItems: "center"
+                            }}
+                          >
+                            <Pencil size={15} />
+                          </button>
+                        )}
+                        <ChevronRight size={18} color="#9CA3AF" />
+                      </div>
                     </div>
                     <h3 style={{ fontSize: "0.98rem", fontWeight: 800, color: "#111", margin: "0 0 6px 0" }}>
                       {infoCustom.titulo}
@@ -1119,6 +1178,25 @@ export function PanelDinamicoModular({ slug, negocio, rolInicial = "ADMINISTRADO
           </div>
         )}
       </section>
+
+      {/* Modal para Editar Título, Subtítulo, Ícono y MFA de Widget en este Panel */}
+      {widgetEditar && (
+        <ModalEditarWidget
+          abierto={Boolean(widgetEditar)}
+          onCerrar={() => setWidgetEditar(null)}
+          widgetId={widgetEditar.id}
+          tituloActual={widgetEditar.titulo}
+          subtituloActual={widgetEditar.subtitulo}
+          iconoActualKey={widgetEditar.iconoKey}
+          requiereMfaActual={widgetEditar.requiereMfa}
+          tiempoMfaActualMinutos={widgetEditar.tiempoMfaMinutos}
+          panelId={panelIdBuscado || slug}
+          onGuardar={(id, nuevoTitulo, nuevoSubtitulo, nuevoIconoKey, nuevoRequiereMfa, nuevoTiempoMfaMinutos, pId) => {
+            guardarWidget(id, nuevoTitulo, nuevoSubtitulo, nuevoIconoKey, nuevoRequiereMfa, nuevoTiempoMfaMinutos, pId || panelIdBuscado || slug);
+            setWidgetEditar(null);
+          }}
+        />
+      )}
     </div>
   );
 }

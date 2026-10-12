@@ -479,7 +479,8 @@ export async function guardarConfiguracionPanelesPerfilAction(
   perfilClave: string,
   negocio: string,
   panelesAsignados: string[],
-  widgetsAsignadosPorPanel: Record<string, string[]>
+  widgetsAsignadosPorPanel: Record<string, string[]>,
+  titulosWidgetsPorPanel?: Record<string, string>
 ): Promise<Resultado> {
   try {
     const supabase = await crearClienteServidor();
@@ -499,10 +500,19 @@ export async function guardarConfiguracionPanelesPerfilAction(
 
     const detalleActual = (perfilRow?.per_detalle_perfil as Record<string, any>) || {};
     const negociosMap = detalleActual.negocios || {};
+    const negocioConfigActual = negociosMap[negocioNorm] || {};
+
+    const titulosMerged = {
+      ...(detalleActual.titulosWidgetsPorPanel || {}),
+      ...(negocioConfigActual.titulosWidgetsPorPanel || {}),
+      ...(titulosWidgetsPorPanel || {})
+    };
 
     negociosMap[negocioNorm] = {
+      ...negocioConfigActual,
       panelesAsignados,
       widgetsAsignadosPorPanel,
+      titulosWidgetsPorPanel: titulosMerged,
       actualizadoEn: new Date().toISOString()
     };
 
@@ -512,6 +522,7 @@ export async function guardarConfiguracionPanelesPerfilAction(
       // Guardar también a nivel raíz para consistencia y fallback
       panelesAsignados,
       widgetsAsignadosPorPanel,
+      titulosWidgetsPorPanel: titulosMerged,
       actualizadoEn: new Date().toISOString()
     };
 
@@ -544,7 +555,7 @@ export async function guardarConfiguracionPanelesPerfilAction(
 export async function obtenerConfiguracionNavegacionRolAction(
   perfilClave: string,
   negocio: string
-): Promise<Resultado<{ widgetsPorPanel: Record<string, string[]>; panelesAsignados: string[] }>> {
+): Promise<Resultado<{ widgetsPorPanel: Record<string, string[]>; panelesAsignados: string[]; titulosWidgetsPorPanel?: Record<string, string> }>> {
   const supabase = await crearClienteServidor();
   const adminSupabase = crearClienteAdmin() || supabase;
   const negocioNorm = (negocio || "tranqi").toLowerCase().trim();
@@ -554,6 +565,7 @@ export async function obtenerConfiguracionNavegacionRolAction(
 
   let widgetsPorPanel: Record<string, string[]> = {};
   let panelesAsignados: string[] = [];
+  let titulosWidgetsPorPanel: Record<string, string> = {};
   let configuracionDesdeBdd = false;
 
   // 1. Consultar si seg_perfil tiene configuración específica en per_detalle_perfil
@@ -571,10 +583,12 @@ export async function obtenerConfiguracionNavegacionRolAction(
       if (negocioConfig?.widgetsPorPanel) {
         widgetsPorPanel = { ...negocioConfig.widgetsPorPanel };
         panelesAsignados = negocioConfig.panelesAsignados || [];
+        titulosWidgetsPorPanel = negocioConfig.titulosWidgetsPorPanel || detalle.titulosWidgetsPorPanel || {};
         configuracionDesdeBdd = true;
       } else if (detalle.widgetsPorPanel) {
         widgetsPorPanel = { ...detalle.widgetsPorPanel };
         panelesAsignados = detalle.panelesAsignados || [];
+        titulosWidgetsPorPanel = detalle.titulosWidgetsPorPanel || {};
         configuracionDesdeBdd = true;
       }
     }
@@ -626,7 +640,8 @@ export async function obtenerConfiguracionNavegacionRolAction(
     ok: true,
     data: {
       widgetsPorPanel,
-      panelesAsignados: Array.from(panelesSet)
+      panelesAsignados: Array.from(panelesSet),
+      titulosWidgetsPorPanel
     }
   };
 }
