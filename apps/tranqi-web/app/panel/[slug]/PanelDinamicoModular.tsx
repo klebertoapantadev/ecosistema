@@ -800,8 +800,10 @@ export function PanelDinamicoModular({ slug, negocio, rolInicial = "ADMINISTRADO
         return <HistorialTransaccionesPago negocio={negocio} />;
       case "crm_clientes":
       case "clientes_crm":
-      case "clientes":
-        return <BandejaClientesCRM />;
+      case "clientes": {
+        const tipoInicialCRM = slug === "clientes" ? "natural" : slug === "empresas" ? "juridica" : undefined;
+        return <BandejaClientesCRM negocio={negocio} tipoPersoneriaPorDefecto={tipoInicialCRM} />;
+      }
       case "agentes_ia":
         return <EnlaceConsolaAgentes />;
       case "firma_documentos_pdf":

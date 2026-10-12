@@ -17,14 +17,30 @@ import { FichaClienteDetalleModal } from "./FichaClienteDetalleModal";
 
 interface Props {
   negocio?: string;
+  tipoPersoneriaPorDefecto?: "todas" | "natural" | "juridica";
 }
 
-export function BandejaClientesCRM({ negocio = "TRANQ" }: Props) {
+export function BandejaClientesCRM({ negocio = "TRANQ", tipoPersoneriaPorDefecto }: Props) {
   const [clientes, setClientes] = useState<any[]>([]);
   const [cargando, setCargando] = useState(true);
   const [sincronizando, setSincronizando] = useState(false);
   const [busqueda, setBusqueda] = useState("");
-  const [filtroTipo, setFiltroTipo] = useState<"todas" | "natural" | "juridica">("todas");
+
+  const resolverTipoInicial = (): "todas" | "natural" | "juridica" => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const urlTipo = params.get("tipo") as "todas" | "natural" | "juridica" | null;
+      if (urlTipo && ["todas", "natural", "juridica"].includes(urlTipo)) {
+        return urlTipo;
+      }
+      const pathname = window.location.pathname.toLowerCase();
+      if (pathname.includes("/clientes")) return "natural";
+      if (pathname.includes("/empresas")) return "juridica";
+    }
+    return tipoPersoneriaPorDefecto || "todas";
+  };
+
+  const [filtroTipo, setFiltroTipo] = useState<"todas" | "natural" | "juridica">(resolverTipoInicial);
   const [copiadoConsulta, setCopiadoConsulta] = useState(false);
 
   // Modales
@@ -36,7 +52,7 @@ export function BandejaClientesCRM({ negocio = "TRANQ" }: Props) {
   const [toastExito, setToastExito] = useState<string | null>(null);
   const [toastError, setToastError] = useState<string | null>(null);
 
-  // 1. Inicializar parámetros desde URL (Deep Linking & Compartir)
+  // 1. Inicializar parámetros desde URL (Deep Linking & Compartir) o por contexto de navegación
   useEffect(() => {
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
@@ -48,9 +64,18 @@ export function BandejaClientesCRM({ negocio = "TRANQ" }: Props) {
       }
       if (urlTipo && ["todas", "natural", "juridica"].includes(urlTipo)) {
         setFiltroTipo(urlTipo);
+      } else if (tipoPersoneriaPorDefecto) {
+        setFiltroTipo(tipoPersoneriaPorDefecto);
+      } else {
+        const pathname = window.location.pathname.toLowerCase();
+        if (pathname.includes("/clientes")) {
+          setFiltroTipo("natural");
+        } else if (pathname.includes("/empresas")) {
+          setFiltroTipo("juridica");
+        }
       }
     }
-  }, []);
+  }, [tipoPersoneriaPorDefecto]);
 
   const cargarClientes = () => {
     setCargando(true);
