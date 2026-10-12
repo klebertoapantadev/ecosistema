@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { obtenerPerfilActual, obtenerPerfiles } from "@eco/identidad";
+import { obtenerConfiguracionNavegacionRolAction } from "@eco/gestion-usuarios/acciones";
 import { PanelDinamicoModular } from "./PanelDinamicoModular";
 
 const NEGOCIO = "TRANQ";
@@ -59,5 +60,24 @@ export default async function PaginaPanelDinamico({ params }: Props) {
     }
   }
 
-  return <PanelDinamicoModular slug={slug} negocio={NEGOCIO} rolInicial={rolActivo} esSuperAdmin={esSuperAdmin} />;
+  const resBdd = await obtenerConfiguracionNavegacionRolAction(rolActivo, NEGOCIO);
+  const slugNorm = slug.replace(/-/g, "_");
+  const panelKey = slugNorm.startsWith("panel_") ? slugNorm : `panel_${slugNorm}`;
+  const widgetsIniciales = resBdd.ok && resBdd.data?.widgetsPorPanel
+    ? (resBdd.data.widgetsPorPanel[panelKey] ??
+       resBdd.data.widgetsPorPanel[slug] ??
+       resBdd.data.widgetsPorPanel[slugNorm] ??
+       resBdd.data.widgetsPorPanel[`panel_${slug}`] ??
+       [])
+    : [];
+
+  return (
+    <PanelDinamicoModular
+      slug={slug}
+      negocio={NEGOCIO}
+      rolInicial={rolActivo}
+      esSuperAdmin={esSuperAdmin}
+      widgetsIniciales={widgetsIniciales}
+    />
+  );
 }

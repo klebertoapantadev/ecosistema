@@ -48,6 +48,7 @@ interface Props {
   negocio: string;
   rolInicial?: string;
   esSuperAdmin?: boolean;
+  widgetsIniciales?: string[];
 }
 
 // PLT-020: las pantallas de agenda son rutas propias, no widgets en linea --
@@ -550,7 +551,7 @@ function obtenerWidgetsInicialesDinamicos(panelId: string, slugStr: string, rolD
   return [];
 }
 
-export function PanelDinamicoModular({ slug, negocio, rolInicial = "ADMINISTRADOR", esSuperAdmin }: Props) {
+export function PanelDinamicoModular({ slug, negocio, rolInicial = "ADMINISTRADOR", esSuperAdmin, widgetsIniciales }: Props) {
   const slugNormalizado = slug.replace(/-/g, "_");
   const panelIdBuscado = slugNormalizado.startsWith("panel_") ? slugNormalizado : `panel_${slugNormalizado}`;
 
@@ -566,7 +567,16 @@ export function PanelDinamicoModular({ slug, negocio, rolInicial = "ADMINISTRADO
     icono: metaBase.icono
   });
 
-  const [widgetsAsignados, setWidgetsAsignados] = useState<string[]>(() => obtenerWidgetsInicialesDinamicos(panelIdBuscado, slug, rolInicial));
+  const [widgetsAsignados, setWidgetsAsignados] = useState<string[]>(() => {
+    if (widgetsIniciales && widgetsIniciales.length > 0) {
+      let w = [...widgetsIniciales];
+      if (rolInicial?.toUpperCase() === "OPERADOR" && (panelIdBuscado === "panel_usuarios" || slugNormalizado === "usuarios")) {
+        w = w.filter(item => item !== "crm_clientes");
+      }
+      return w;
+    }
+    return obtenerWidgetsInicialesDinamicos(panelIdBuscado, slug, rolInicial);
+  });
   const { widgetActivo, abrir, cerrar } = useWidgetEnUrl();
   const [copiadoModulo, setCopiadoModulo] = useState(false);
   const { getWidgetInfo } = useCustomWidgets();

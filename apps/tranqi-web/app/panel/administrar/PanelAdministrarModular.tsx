@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Users, ClipboardList, Bell, Shield, ChevronRight, Star, Lock, Eye, Pencil, Sliders, RotateCcw, BarChart2, Receipt, Calendar, Building2, Scale, ShieldCheck, Briefcase, type LucideIcon } from "lucide-react";
+import { Users, ClipboardList, Bell, Shield, ChevronRight, Star, Lock, Eye, Pencil, Sliders, RotateCcw, BarChart2, Receipt, Calendar, Building2, Scale, ShieldCheck, Briefcase, FileText, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { ConsultaUsuariosPerfilesWidget } from "@eco/gestion-usuarios/componentes/ConsultaUsuariosPerfilesWidget";
 import { AdministracionPerfilesWidget } from "@eco/gestion-usuarios/componentes/AdministracionPerfilesWidget";
@@ -20,11 +20,13 @@ import { BotonVolverWidget } from "../BotonVolverWidget";
 
 import { obtenerListaSolicitudesSociosAction } from "../../../modulos/socios/acciones";
 import { obtenerConfiguracionNavegacionRolAction, resetearSistemaSuperAdminAction } from "@eco/gestion-usuarios/acciones";
+import { MATRIZ_FUNCIONAL_ROLES } from "@eco/gestion-usuarios/matriz-roles";
 
 interface Props {
   negocio?: string;
   esSuperAdmin?: boolean;
   rolInicial?: string;
+  widgetsIniciales?: string[];
 }
 
 export interface ModuloAdminDef {
@@ -127,6 +129,87 @@ const MODULOS_ADMIN: ModuloAdminDef[] = [
     icono: Shield,
     colorIcono: "#111827",
     categoria: "Seguridad & Auditoría"
+  },
+  {
+    id: "socios",
+    titulo: "Aprobación de Socios Abogados",
+    subtitulo: "Validación de matrículas, acreditación y verificación de abogados",
+    ruta: "/panel/administrar?widget=socios",
+    icono: Users,
+    colorIcono: "#05876E",
+    categoria: "Operación Legal"
+  },
+  {
+    id: "solicitud_socio",
+    titulo: "Solicitudes de Socios",
+    subtitulo: "Procesamiento de postulaciones y formularios de postulación socio",
+    ruta: "/panel/administrar?widget=solicitud_socio",
+    icono: ClipboardList,
+    colorIcono: "#05876E",
+    categoria: "Operación Legal"
+  },
+  {
+    id: "monitoreo_notificaciones_usuarios",
+    titulo: "Monitoreo de Notificaciones por Usuario",
+    subtitulo: "Auditoría en tiempo real de notificaciones, fechas de confirmación, tiempo de pospuesto y eliminados",
+    ruta: "/panel/administrar?widget=monitoreo_notificaciones_usuarios",
+    icono: Bell,
+    colorIcono: "#1F6FEB",
+    categoria: "Comunicación"
+  },
+  {
+    id: "gestion_terminos_consentimientos",
+    titulo: "Términos, Consentimientos & LOPDP",
+    subtitulo: "Configuración centralizada de cláusulas LOPDP, notificaciones y contrato de socios",
+    ruta: "/panel/administrar?widget=gestion_terminos_consentimientos",
+    icono: FileText,
+    colorIcono: "#5000BA",
+    categoria: "Gobernanza & Legales"
+  },
+  {
+    id: "configuracion_contrato_abogado",
+    titulo: "Configuración de Contrato de Socios",
+    subtitulo: "Administración de la plantilla del contrato de sociedad de abogados (.MD/HTML)",
+    ruta: "/panel/administrar?widget=configuracion_contrato_abogado",
+    icono: FileText,
+    colorIcono: "#05876E",
+    categoria: "Gobernanza & Legales"
+  },
+  {
+    id: "consulta_usuarios",
+    titulo: "Consulta de Usuarios & Perfiles",
+    subtitulo: "Directorio de miembros, matriz de roles y consulta de permisos (Solo Lectura)",
+    ruta: "/panel/administrar?widget=consulta_usuarios",
+    icono: Users,
+    colorIcono: "#5000BA",
+    categoria: "Usuarios & Permisos"
+  },
+  {
+    id: "consulta_usuarios_perfiles",
+    titulo: "Consulta de Usuarios & Perfiles",
+    subtitulo: "Directorio de miembros, matriz de roles y consulta de permisos (Solo Lectura)",
+    ruta: "/panel/administrar?widget=consulta_usuarios_perfiles",
+    icono: Users,
+    colorIcono: "#5000BA",
+    categoria: "Usuarios & Permisos"
+  },
+  {
+    id: "asignaciones_agenda",
+    titulo: "Asignaciones y Contingencia (Agenda)",
+    subtitulo: "Mesa de control de asignaciones operativas y reasignación de citas",
+    ruta: "/panel/administrar?widget=asignaciones_agenda",
+    icono: Calendar,
+    colorIcono: "#0284C7",
+    categoria: "Agenda"
+  },
+  {
+    id: "gestion_usuarios",
+    titulo: "Gestión de Usuarios & Membresías",
+    subtitulo: "Administración de miembros, asignación de perfiles y techo jerárquico",
+    ruta: "/panel/administrar?widget=gestion_usuarios",
+    icono: Sliders,
+    colorIcono: "var(--violeta, #5000BA)",
+    categoria: "Usuarios & Permisos"
   }
 ];
 
@@ -359,63 +442,36 @@ function SolicitudSocioWidget() {
   );
 }
 
-function obtenerModulosInicialesAdmin(rolForzado?: string): ModuloAdminDef[] {
-  let rolActivo = rolForzado || "ADMINISTRADOR";
-  if (!rolForzado && typeof document !== "undefined") {
-    const cookieStore = document.cookie || "";
-    const matchModo = cookieStore.match(/tranqi_modo_rol=([^;]+)/);
-    const matchFav = cookieStore.match(/tranqi_rol_favorito=([^;]+)/);
-    if (matchModo && matchModo[1]) rolActivo = matchModo[1].toUpperCase();
-    else if (matchFav && matchFav[1]) rolActivo = matchFav[1].toUpperCase();
+function resolverModulosAdminPorIds(ids: string[]): ModuloAdminDef[] {
+  const filtrados: ModuloAdminDef[] = [];
+  for (const id of ids) {
+    const enInventario = MODULOS_ADMIN.find(m =>
+      m.id === id ||
+      (id === "perfiles" && m.id === "perfiles") ||
+      (id === "consulta_usuarios_perfiles" && (m.id === "consulta_usuarios" || m.id === "consulta_usuarios_perfiles")) ||
+      (id === "consulta_usuarios" && (m.id === "consulta_usuarios" || m.id === "consulta_usuarios_perfiles")) ||
+      (id === "terminos" && m.id === "gestion_terminos_consentimientos")
+    );
+    if (enInventario && !filtrados.some(f => f.id === enInventario.id)) {
+      filtrados.push(enInventario);
+    }
   }
-
-  let ids: string[] = [
-    "gestion_informativos",
-    "gestion_convenios_corporativos",
-    "compliance_score_legal",
-    "legal_hr_laboral",
-    "crm_clientes",
-    "historial_pagos",
-    "emision_notificaciones",
-    "socios",
-    "solicitud_socio",
-    "monitoreo_notificaciones_usuarios",
-    "bitacora_notificaciones",
-    "configuracion_contrato_abogado",
-    "gestion_terminos_consentimientos",
-    "consulta_usuarios",
-    "asignaciones_agenda",
-    "gestion_usuarios",
-    "perfiles",
-    "auditoria"
-  ];
-  if (rolActivo === "OPERADOR" || rolActivo === "AUXILIAR" || rolActivo === "TECNICO") {
-    ids = [
-      "gestion_informativos",
-      "gestion_convenios_corporativos",
-      "compliance_score_legal",
-      "legal_hr_laboral",
-      "crm_clientes",
-      "historial_pagos",
-      "emision_notificaciones",
-      "socios",
-      "solicitud_socio",
-      "monitoreo_notificaciones_usuarios",
-      "bitacora_notificaciones",
-      "configuracion_contrato_abogado",
-      "gestion_terminos_consentimientos",
-      "consulta_usuarios",
-      "asignaciones_agenda"
-    ];
-  }
-
-  return MODULOS_ADMIN.filter(m => ids.includes(m.id));
+  return filtrados;
 }
 
-export function PanelAdministrarModular({ negocio = "TRANQ", esSuperAdmin = false, rolInicial }: Props) {
+export function PanelAdministrarModular({ negocio = "TRANQ", esSuperAdmin = false, rolInicial, widgetsIniciales }: Props) {
   const [rolActivo, setRolActivo] = useState<string>(() => rolInicial?.toUpperCase() || "ADMINISTRADOR");
   const [favoritos, setFavoritos] = useState<string[]>(["gestion_usuarios", "socios"]);
-  const [modulosAsignados, setModulosAsignados] = useState<ModuloAdminDef[]>(() => obtenerModulosInicialesAdmin(rolInicial));
+  const [modulosAsignados, setModulosAsignados] = useState<ModuloAdminDef[]>(() => {
+    if (widgetsIniciales && widgetsIniciales.length > 0) {
+      const res = resolverModulosAdminPorIds(widgetsIniciales);
+      if (res.length > 0) return res;
+    }
+    const rolKey = rolInicial?.toUpperCase() || "ADMINISTRADOR";
+    const matrizRol = MATRIZ_FUNCIONAL_ROLES[rolKey] || MATRIZ_FUNCIONAL_ROLES["ADMINISTRADOR"] || MATRIZ_FUNCIONAL_ROLES["CLIENTE"];
+    const baseIds = matrizRol?.widgetsPorPanel?.["panel_administrar"] || [];
+    return resolverModulosAdminPorIds(baseIds);
+  });
   const { widgetActivo, abrir, cerrar } = useWidgetEnUrl();
   const [widgetEditar, setWidgetEditar] = useState<{
     id: string;
@@ -535,44 +591,11 @@ export function PanelAdministrarModular({ negocio = "TRANQ", esSuperAdmin = fals
 
         const esOperador = rolEncontrado === "OPERADOR" || rolEncontrado === "AUXILIAR" || rolEncontrado === "TECNICO";
 
-        // 1. Presets de asignación por rol para panel_administrar
-        let idsAsignados: string[] = [];
-        if (esOperador) {
-          idsAsignados = [
-            "gestion_convenios_corporativos",
-            "crm_clientes",
-            "historial_pagos",
-            "emision_notificaciones",
-            "socios",
-            "solicitud_socio",
-            "monitoreo_notificaciones_usuarios",
-            "bitacora_notificaciones",
-            "configuracion_contrato_abogado",
-            "gestion_terminos_consentimientos",
-            "consulta_usuarios",
-            "asignaciones_agenda"
-          ];
-        } else if (rolEncontrado === "ADMINISTRADOR" || rolEncontrado === "SUPERADMIN") {
-          idsAsignados = [
-            "gestion_convenios_corporativos",
-            "crm_clientes",
-            "historial_pagos",
-            "emision_notificaciones",
-            "socios",
-            "solicitud_socio",
-            "monitoreo_notificaciones_usuarios",
-            "bitacora_notificaciones",
-            "configuracion_contrato_abogado",
-            "gestion_terminos_consentimientos",
-            "consulta_usuarios",
-            "asignaciones_agenda",
-            "gestion_usuarios",
-            "perfiles",
-            "auditoria"
-          ];
-        }
+        // Base canónica desde MATRIZ_FUNCIONAL_ROLES
+        const matrizRol = MATRIZ_FUNCIONAL_ROLES[rolEncontrado] || MATRIZ_FUNCIONAL_ROLES["ADMINISTRADOR"] || MATRIZ_FUNCIONAL_ROLES["CLIENTE"];
+        let idsAsignados: string[] = matrizRol?.widgetsPorPanel?.["panel_administrar"] ? [...matrizRol.widgetsPorPanel["panel_administrar"]] : [];
 
-        // 2. Consultar servidor BDD PostgreSQL (comun_seguridad.seg_perfil / seg_rol_widget)
+        // 1. Consultar servidor BDD PostgreSQL (comun_seguridad.seg_perfil / seg_rol_widget)
         const resBdd = await obtenerConfiguracionNavegacionRolAction(rolEncontrado, (negocio || "TRANQ").toUpperCase());
         if (resBdd.ok && resBdd.data && resBdd.data.widgetsPorPanel) {
           const wBdd = resBdd.data.widgetsPorPanel["panel_administrar"] ?? resBdd.data.widgetsPorPanel["administrar"];
@@ -581,7 +604,7 @@ export function PanelAdministrarModular({ negocio = "TRANQ", esSuperAdmin = fals
           }
         }
 
-        // 3. Complementar con personalizaciones en localStorage si existen
+        // 2. Complementar con personalizaciones en localStorage si existen
         const savedPerfiles =
           localStorage.getItem(`tranqi_perfiles_${negocio}`) ||
           localStorage.getItem(`tranqi_perfiles_${(negocio || "").toUpperCase()}`) ||
@@ -601,8 +624,11 @@ export function PanelAdministrarModular({ negocio = "TRANQ", esSuperAdmin = fals
               }
               if (perfilObj && perfilObj.widgetsAsignadosPorPanel) {
                 const wLocal = perfilObj.widgetsAsignadosPorPanel["panel_administrar"] ?? perfilObj.widgetsAsignadosPorPanel["administrar"];
-                if (Array.isArray(wLocal)) {
-                  idsAsignados = [...wLocal];
+                if (Array.isArray(wLocal) && wLocal.length > 0) {
+                  const tieneBase = wLocal.includes("gestion_informativos") || wLocal.includes("disponibilidad_abogados");
+                  if (rolEncontrado !== "OPERADOR" || tieneBase) {
+                    idsAsignados = [...wLocal];
+                  }
                 }
               }
             }
@@ -617,19 +643,8 @@ export function PanelAdministrarModular({ negocio = "TRANQ", esSuperAdmin = fals
           idsAsignados = idsAsignados.filter(id => !MODULOS_PROHIBIDOS_OPERADOR.has(id));
         }
 
-        // 4. Mapear y filtrar MODULOS_ADMIN
-        const filtrados: ModuloAdminDef[] = [];
-        for (const id of idsAsignados) {
-          const enInventario = MODULOS_ADMIN.find(m =>
-            m.id === id ||
-            (id === "perfiles" && m.id === "perfiles") ||
-            (id === "consulta_usuarios_perfiles" && m.id === "consulta_usuarios") ||
-            (id === "terminos" && m.id === "gestion_terminos_consentimientos")
-          );
-          if (enInventario && !filtrados.some(f => f.id === enInventario.id)) {
-            filtrados.push(enInventario);
-          }
-        }
+        // 3. Mapear y filtrar MODULOS_ADMIN
+        const filtrados = resolverModulosAdminPorIds(idsAsignados);
         if (filtrados.length > 0) {
           setModulosAsignados(filtrados);
           return;

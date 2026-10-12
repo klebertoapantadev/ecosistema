@@ -13,6 +13,7 @@ import { BotonCerrarSesion } from "./BotonCerrarSesion";
 import type { ModoRol } from "./SelectorRolActivo";
 import { useRail } from "./CapaPerfilRail";
 import { obtenerConfiguracionNavegacionRolAction } from "@eco/gestion-usuarios/acciones";
+import { MATRIZ_FUNCIONAL_ROLES } from "@eco/gestion-usuarios/matriz-roles";
 
 interface PanelDefNav {
   id: string;
@@ -157,55 +158,11 @@ export function NavegacionSidebar({
         // Consultar servidor (PostgreSQL comun_seguridad.seg_rol_widget)
         const resBdd = await obtenerConfiguracionNavegacionRolAction(modoActivo, negocio.toUpperCase());
 
-        let widgetsPorPanel: Record<string, string[]> = {
-          panel_inicio: ["favoritos"],
-          panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos"]
-        };
-
-        if (rolKey === "OPERADOR" || rolKey === "AUXILIAR" || rolKey === "TECNICO") {
-          widgetsPorPanel = {
-            ...widgetsPorPanel,
-            panel_clientes: ["vitrina_comercial_personas", "muro_informativo_comunidad", "crm_clientes", "agendar_cita", "mis_citas", "billetera_documentos", "firma_documentos_pdf"],
-            panel_empresas: ["vitrina_comercial_empresas", "gestion_convenios_corporativos", "compliance_score_legal", "legal_hr_laboral", "crm_clientes", "billetera_documentos", "firma_documentos_pdf"],
-            panel_usuarios: ["consulta_usuarios_perfiles", "crm_clientes", "monitoreo_notificaciones_usuarios"],
-            panel_red_profesional: ["socios", "paquete_beneficios_abogados", "solicitud_socio"],
-            panel_terminos: ["gestion_terminos_consentimientos", "configuracion_contrato_abogado"],
-            panel_agendamiento: ["disponibilidad_abogados", "asignaciones_agenda"],
-            panel_administrar: ["gestion_informativos", "gestion_convenios_corporativos", "compliance_score_legal", "legal_hr_laboral", "disponibilidad_abogados", "historial_pagos", "emision_notificaciones", "bitacora_notificaciones"],
-            panel_herramientas: ["catalogo_productos", "disponibilidad_abogados", "firma_documentos_pdf", "billetera_documentos"],
-            panel_seguridad: ["mfa_seguridad"]
-          };
-        } else if (rolKey === "ABOGADO") {
-          widgetsPorPanel = {
-            ...widgetsPorPanel,
-            panel_clientes: ["vitrina_comercial_personas", "muro_informativo_comunidad", "crm_clientes", "billetera_documentos", "firma_documentos_pdf"],
-            panel_empresas: ["vitrina_comercial_empresas", "gestion_convenios_corporativos", "compliance_score_legal", "legal_hr_laboral", "crm_clientes", "billetera_documentos", "firma_documentos_pdf"],
-            panel_usuarios: ["crm_clientes"],
-            panel_red_profesional: ["paquete_beneficios_abogados"],
-            panel_agendamiento: ["disponibilidad_abogados", "citas_programadas", "disponibilidad", "asignaciones_agenda"],
-            panel_herramientas: ["catalogo_productos", "disponibilidad_abogados", "firma_documentos_pdf", "billetera_documentos", "solicitud_socio"],
-            panel_administrar: ["gestion_convenios_corporativos", "compliance_score_legal", "disponibilidad_abogados", "historial_pagos"]
-          };
-        } else if (rolKey === "ADMINISTRADOR" || rolKey === "SUPERADMIN") {
-          widgetsPorPanel = {
-            ...widgetsPorPanel,
-            panel_clientes: ["vitrina_comercial_personas", "muro_informativo_comunidad", "crm_clientes", "agendar_cita", "mis_citas", "billetera_documentos", "firma_documentos_pdf"],
-            panel_empresas: ["vitrina_comercial_empresas", "gestion_convenios_corporativos", "compliance_score_legal", "legal_hr_laboral", "crm_clientes", "billetera_documentos", "firma_documentos_pdf"],
-            panel_usuarios: ["gestion_usuarios", "consulta_usuarios_perfiles", "crm_clientes", "monitoreo_notificaciones_usuarios"],
-            panel_red_profesional: ["socios", "paquete_beneficios_abogados", "solicitud_socio"],
-            panel_terminos: ["gestion_terminos_consentimientos", "configuracion_contrato_abogado"],
-            panel_agendamiento: ["disponibilidad_abogados", "asignaciones_agenda"],
-            panel_administrar: ["gestion_informativos", "gestion_convenios_corporativos", "compliance_score_legal", "legal_hr_laboral", "disponibilidad_abogados", "historial_pagos", "emision_notificaciones", "bitacora_notificaciones", "perfiles", "auditoria"],
-            panel_herramientas: ["catalogo_productos", "disponibilidad_abogados", "firma_documentos_pdf", "billetera_documentos"],
-            panel_configuracion: ["configuracion_negocio", "configuracion_correo", "pasarela_payphone", "perfiles", "agentes_ia", "notificaciones", "tokens_mcp"],
-            panel_seguridad: ["mfa_seguridad", "auditoria"]
-          };
-        } else {
-          widgetsPorPanel = {
-            ...widgetsPorPanel,
-            panel_clientes: ["vitrina_comercial_personas", "muro_informativo_comunidad", "agendar_cita", "mis_citas", "billetera_documentos", "firma_documentos_pdf"],
-            panel_agendamiento: ["agendar_cita", "mis_citas"],
-          };
+        // Base canónica desde MATRIZ_FUNCIONAL_ROLES
+        const matrizRol = MATRIZ_FUNCIONAL_ROLES[rolKey] || MATRIZ_FUNCIONAL_ROLES["CLIENTE"] || { widgetsPorPanel: {} };
+        let widgetsPorPanel: Record<string, string[]> = {};
+        for (const [pId, wList] of Object.entries(matrizRol.widgetsPorPanel || {})) {
+          widgetsPorPanel[pId] = Array.isArray(wList) ? [...wList] : [];
         }
 
         if (resBdd.ok && resBdd.data && resBdd.data.widgetsPorPanel) {

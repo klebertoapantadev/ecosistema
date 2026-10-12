@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { obtenerPerfilActual, obtenerPerfiles } from "@eco/identidad";
+import { obtenerConfiguracionNavegacionRolAction } from "@eco/gestion-usuarios/acciones";
 import { PanelAdministrarModular } from "./PanelAdministrarModular";
 
 const NEGOCIO = "TRANQ";
@@ -46,5 +47,17 @@ export default async function PaginaPanelAdministrar() {
     redirect("/panel");
   }
 
-  return <PanelAdministrarModular negocio={NEGOCIO} esSuperAdmin={esSuperAdmin} rolInicial={rolActivo} />;
+  const resBdd = await obtenerConfiguracionNavegacionRolAction(rolActivo, NEGOCIO);
+  const widgetsIniciales = resBdd.ok && resBdd.data?.widgetsPorPanel
+    ? (resBdd.data.widgetsPorPanel["panel_administrar"] ?? resBdd.data.widgetsPorPanel["administrar"] ?? [])
+    : [];
+
+  return (
+    <PanelAdministrarModular
+      negocio={NEGOCIO}
+      esSuperAdmin={esSuperAdmin}
+      rolInicial={rolActivo}
+      widgetsIniciales={widgetsIniciales}
+    />
+  );
 }
