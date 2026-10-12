@@ -109,16 +109,78 @@ export function VitrinaComercialVisual({
     }
   };
 
-  // Helper de filtrado por tipo de audiencia
+  // Helper para resolver la categoría completa de un producto
+  const obtenerCategoriaProducto = (
+    p: ProductoCatalogo
+  ): { ctg_id?: string; ctg_slug?: string; ctg_nombre?: string } | null => {
+    if (p.categoria && (p.categoria.ctg_slug || p.categoria.ctg_nombre)) {
+      return p.categoria;
+    }
+    if (p.pro_categoria_principal_id) {
+      const encontrada = categoriasLista.find(
+        (c) =>
+          c.ctg_id === p.pro_categoria_principal_id ||
+          c.ctg_slug === p.pro_categoria_principal_id
+      );
+      if (encontrada) return encontrada;
+    }
+    return null;
+  };
+
+  // Helper para identificar categoría corporativa (Empresas / B2B)
+  const esCategoriaCorporativa = (slug = "", nombre = "") => {
+    const s = `${slug} ${nombre}`.toLowerCase();
+    return (
+      s.includes("corporativ") ||
+      s.includes("empresa") ||
+      s.includes("societar") ||
+      s.includes("sas") ||
+      s.includes("b2b")
+    );
+  };
+
+  // Helper para identificar categorías de clientes / personas:
+  // Requerimiento explícito: Trámites Puntuales, Planes Familiares y Consultas Legales
+  const esCategoriaCliente = (slug = "", nombre = "") => {
+    const s = `${slug} ${nombre}`.toLowerCase();
+
+    // Descartar explícitamente categorías corporativas
+    if (
+      s.includes("corporativ") ||
+      s.includes("empresa") ||
+      s.includes("societar") ||
+      s.includes("sas express") ||
+      s.includes("b2b")
+    ) {
+      return false;
+    }
+
+    // En Tranqi / negocios jurídicos, descartar procesos judiciales y requerir estrictamente las 3 categorías
+    if (negocio === "tranqi" || negocio.startsWith("trq")) {
+      if (s.includes("proceso") || s.includes("judicial") || s.includes("litigio")) {
+        return false;
+      }
+      const esTramite = s.includes("tramite");
+      const esPlanFamiliar =
+        s.includes("familiar") ||
+        (s.includes("plan") && !s.includes("corp") && !s.includes("empresa"));
+      const esConsulta =
+        s.includes("consulta") || s.includes("asesoria") || s.includes("orientacion");
+      return esTramite || esPlanFamiliar || esConsulta;
+    }
+
+    // Para otros negocios en el ecosistema, si no es corporativo aplica a personas
+    return true;
+  };
+
+  // Helper de filtrado de categoría por tipo de audiencia
   const esCategoriaDeAudiencia = (slug: string, nombre: string) => {
     if (filtroAudiencia === "todos") return true;
-    const s = (slug + " " + nombre).toLowerCase();
-    const esCorporativo = s.includes("corporativ") || s.includes("empresa") || s.includes("societar") || s.includes("sas") || s.includes("b2b");
     if (filtroAudiencia === "empresas") {
-      return esCorporativo || s.includes("consultas") || s.includes("judicial");
+      return esCategoriaCorporativa(slug, nombre);
     }
     if (filtroAudiencia === "personas") {
-      return !esCorporativo || s.includes("familiar") || s.includes("personal");
+      return esCategoriaCliente(slug, nombre);
     }
     return true;
   };
@@ -127,48 +189,56 @@ export function VitrinaComercialVisual({
     esCategoriaDeAudiencia(c.ctg_slug, c.ctg_nombre)
   );
 
-  // Filtrado de productos
-  const productosFiltrados = productos.filter((p) => {
+  // Auto-ajustar categoría seleccionada si no pertenece a las visibles de la audiencia
+  useEffect(() => {
+    if (categoriaSeleccionada !== "todas") {
+      const existe = categoriasVisibles.some((c) => c.ctg_slug === categoriaSeleccionada);
+      if (!existe) {
+        setCategoriaSeleccionada("todas");
+      }
+    }
+  }, [categoriasVisibles, categoriaSeleccionada]);
+
+  // 1. Filtrar productos por audiencia y vigencia
+  const productosPorAudiencia = productos.filter((p) => {
     // Filtro de estado activo y vigencia temporal
     if (p.pro_activo === false) return false;
     const vigencia = evaluarVigenciaProducto(p.pro_detalle_producto, p.pro_activo);
     if (!vigencia.estaVigente) return false;
 
-    const slugCat = p.categoria?.ctg_slug || "";
-    const nombreCat = p.categoria?.ctg_nombre || "";
-    const nombreProd = p.pro_nombre || "";
-    const textoCompleto = (slugCat + " " + nombreCat + " " + nombreProd).toLowerCase();
+    const cat = obtenerCategoriaProducto(p);
+    const slugCat = cat?.ctg_slug || "";
+    const nombreCat = cat?.ctg_nombre || "";
 
-    // Filtro de audiencia
+    // Filtro de audiencia estricto por categoría del producto
     if (filtroAudiencia === "empresas") {
-      const esParaEmpresas =
-        textoCompleto.includes("corporativ") ||
-        textoCompleto.includes("empresa") ||
-        textoCompleto.includes("societar") ||
-        textoCompleto.includes("sas") ||
-        textoCompleto.includes("b2b") ||
-        textoCompleto.includes("consulta") ||
-        textoCompleto.includes("judicial");
-      if (!esParaEmpresas) return false;
-    } else if (filtroAudiencia === "personas") {
-      const esExclusivoEmpresas =
-        textoCompleto.includes("corporativ") ||
-        (textoCompleto.includes("empresa") && !textoCompleto.includes("familiar")) ||
-        textoCompleto.includes("societar") ||
-        textoCompleto.includes("sas express");
-      if (esExclusivoEmpresas) return false;
+      // Únicamente productos marcados como en categoría corporativos
+      return esCategoriaCorporativa(slugCat, nombreCat);
     }
+    if (filtroAudiencia === "personas") {
+      // Únicamente trámites puntuales, planes familiares y consultas legales
+      return esCategoriaCliente(slugCat, nombreCat);
+    }
+    return true;
+  });
+
+  // 2. Filtrado interactivo por píldora de categoría y búsqueda
+  const productosFiltrados = productosPorAudiencia.filter((p) => {
+    const cat = obtenerCategoriaProducto(p);
+    const catSlug = cat?.ctg_slug || "";
+    const catId = cat?.ctg_id || p.pro_categoria_principal_id || "";
+
+    const cumpleCategoria =
+      categoriaSeleccionada === "todas" ||
+      catSlug === categoriaSeleccionada ||
+      catId === categoriaSeleccionada;
 
     const cumpleBusqueda =
       busqueda.trim() === "" ||
       p.pro_nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
       (p.pro_descripcion && p.pro_descripcion.toLowerCase().includes(busqueda.toLowerCase()));
 
-    const cumpleCategoria =
-      categoriaSeleccionada === "todas" ||
-      (p.categoria && p.categoria.ctg_slug === categoriaSeleccionada);
-
-    return cumpleBusqueda && cumpleCategoria;
+    return cumpleCategoria && cumpleBusqueda;
   });
 
   // Abrir checkout directo
@@ -359,10 +429,17 @@ export function VitrinaComercialVisual({
               transition: "all 0.15s ease",
             }}
           >
-            Todos ({productosFiltrados.length})
+            Todos ({productosPorAudiencia.length})
           </button>
           {categoriasVisibles.map((c) => {
-            const count = productosFiltrados.filter((p) => p.categoria?.ctg_slug === c.ctg_slug).length;
+            const count = productosPorAudiencia.filter((p) => {
+              const cat = obtenerCategoriaProducto(p);
+              return (
+                cat?.ctg_slug === c.ctg_slug ||
+                cat?.ctg_id === c.ctg_id ||
+                p.pro_categoria_principal_id === c.ctg_id
+              );
+            }).length;
             const activa = categoriaSeleccionada === c.ctg_slug;
             return (
               <button
@@ -563,7 +640,7 @@ export function VitrinaComercialVisual({
                         textTransform: "uppercase",
                       }}
                     >
-                      {p.categoria?.ctg_nombre || "Servicio"}
+                      {obtenerCategoriaProducto(p)?.ctg_nombre || p.categoria?.ctg_nombre || "Servicio"}
                     </span>
                     {p.pro_destacado && (
                       <span
