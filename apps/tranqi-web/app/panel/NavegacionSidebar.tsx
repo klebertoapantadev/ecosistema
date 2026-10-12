@@ -243,7 +243,11 @@ export function NavegacionSidebar({
 
     actualizarNavegacion();
     window.addEventListener("storage", actualizarNavegacion);
-    return () => window.removeEventListener("storage", actualizarNavegacion);
+    window.addEventListener("tranqi_perfiles_updated", actualizarNavegacion);
+    return () => {
+      window.removeEventListener("storage", actualizarNavegacion);
+      window.removeEventListener("tranqi_perfiles_updated", actualizarNavegacion);
+    };
   }, [modoActivo, negocio]);
 
   const ruta = usePathname();

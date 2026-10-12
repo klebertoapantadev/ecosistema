@@ -739,6 +739,10 @@ Pantalla de configuración del negocio (identidad legal + datos de `PLT-008`) y 
       - *CRM Jurídico, Directorio 360°, Alta Asistida, Aprobación de Socios, Solicitudes, Historial de Pagos, Notificaciones y Términos:* Asignados a `panel_administrar` para `OPERADOR`, `ADMINISTRADOR`, `SUPERADMIN` (y `ABOGADO` para su CRM).
       - *Configuración de Negocio, SMTP Vault, Pasarela Payphone, Agentes IA, Perfiles:* Asignados a `panel_configuracion` para `ADMINISTRADOR` y `SUPERADMIN`.
     - **Autonomía Operativa Inmediata:** Los administradores mantienen la facultad de reorganizar o transferir widgets posteriormente, pero el acceso inicial queda operativo y accesible de inmediato por defecto desde el código y la base de datos sin requerir ninguna configuración manual.
+38. **Persistencia Exacta de Widgets por Panel y Perfil en Base de Datos (`comun_seguridad.seg_perfil.per_detalle_perfil`):**
+    - **Sincronización Bidireccional BDD + LocalStorage:** Toda acción de retiro, adición, transferencia o reordenamiento de módulos dentro de un panel en `AdministracionPerfilesWidget` persiste inmediatamente tanto en `localStorage` como en PostgreSQL (`comun_seguridad.seg_perfil.per_detalle_perfil` mediante Server Action `guardarConfiguracionPanelesPerfilAction`).
+    - **Alineación Estricta sin Inyecciones Espurias:** Los paneles dinámicos (`PanelDinamicoModular`, `PanelAdministrarModular`, etc.) consumen fielmente la lista exacta de widgets asignados en la configuración. Queda prohibida la acumulación arbitraria de widgets retirados o la mezcla de módulos ajenos (ej. el módulo `crm_clientes` pertenece a Clientes y Empresas, y queda excluido del panel `panel_usuarios` para el perfil Operador).
+    - **Sincronización Multi-Dominio:** Los cambios aplicados desde cualquier dominio (ej. Vercel o producción) son reflejados instantáneamente en todos los perfiles y paneles gracias a la fuente de verdad centralizada en PostgreSQL.
 
 
 

@@ -10,7 +10,7 @@ import {
   Activity, Globe, Lock, KeyRound, CheckSquare, Terminal, Zap, Pencil, LogOut, LogIn,
   Forward, Inbox, FileText, Download, Printer, Share2, RotateCcw, Loader2, Scale, type LucideIcon
 } from "lucide-react";
-import { guardarPerfil, guardarWidget, guardarAsignacionWidget, obtenerDatosGestionUsuariosAction } from "../acciones";
+import { guardarPerfil, guardarWidget, guardarAsignacionWidget, guardarConfiguracionPanelesPerfilAction, obtenerDatosGestionUsuariosAction } from "../acciones";
 import { MATRIZ_FUNCIONAL_ROLES } from "../matriz-roles";
 import type { UsuarioConMembresia } from "../consultas";
 
@@ -295,7 +295,7 @@ const PERFILES_INICIALES: PerfilDef[] = [
       panel_inicio: ["favoritos"],
       panel_clientes: ["vitrina_comercial_personas", "muro_informativo_comunidad", "crm_clientes", "agendar_cita", "mis_citas", "billetera_documentos", "firma_documentos_pdf"],
       panel_empresas: ["vitrina_comercial_empresas", "gestion_convenios_corporativos", "crm_clientes", "billetera_documentos", "firma_documentos_pdf"],
-      panel_usuarios: ["consulta_usuarios_perfiles", "crm_clientes", "monitoreo_notificaciones_usuarios"],
+      panel_usuarios: ["consulta_usuarios_perfiles", "monitoreo_notificaciones_usuarios"],
       panel_red_profesional: ["socios", "paquete_beneficios_abogados", "solicitud_socio"],
       panel_terminos: ["gestion_terminos_consentimientos", "configuracion_contrato_abogado"],
       panel_agendamiento: ["disponibilidad_abogados", "asignaciones_agenda"],
@@ -312,12 +312,11 @@ const PERFILES_INICIALES: PerfilDef[] = [
     nivel: 50,
     ambito: "Empresa",
     descripcion: "Perfil profesional para atención legal de causas, citas y expedientes.",
-    panelesAsignados: ["panel_inicio", "panel_clientes", "panel_empresas", "panel_usuarios", "panel_red_profesional", "panel_agendamiento", "panel_cuenta", "panel_herramientas", "panel_configuracion"],
+    panelesAsignados: ["panel_inicio", "panel_clientes", "panel_empresas", "panel_red_profesional", "panel_agendamiento", "panel_cuenta", "panel_herramientas", "panel_configuracion"],
     widgetsAsignadosPorPanel: {
       panel_inicio: ["favoritos"],
       panel_clientes: ["vitrina_comercial_personas", "muro_informativo_comunidad", "crm_clientes", "billetera_documentos", "firma_documentos_pdf"],
       panel_empresas: ["vitrina_comercial_empresas", "gestion_convenios_corporativos", "crm_clientes", "billetera_documentos", "firma_documentos_pdf"],
-      panel_usuarios: ["crm_clientes"],
       panel_red_profesional: ["paquete_beneficios_abogados"],
       panel_agendamiento: ["disponibilidad_abogados", "citas_programadas", "disponibilidad", "asignaciones_agenda"],
       panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos", "historial_pagos"],
@@ -337,7 +336,7 @@ const PERFILES_INICIALES: PerfilDef[] = [
       panel_inicio: ["favoritos"],
       panel_clientes: ["vitrina_comercial_personas", "muro_informativo_comunidad", "crm_clientes", "agendar_cita", "mis_citas", "billetera_documentos", "firma_documentos_pdf"],
       panel_empresas: ["vitrina_comercial_empresas", "gestion_convenios_corporativos", "crm_clientes", "billetera_documentos", "firma_documentos_pdf"],
-      panel_usuarios: ["gestion_usuarios", "consulta_usuarios_perfiles", "crm_clientes", "monitoreo_notificaciones_usuarios"],
+      panel_usuarios: ["gestion_usuarios", "consulta_usuarios_perfiles", "monitoreo_notificaciones_usuarios"],
       panel_red_profesional: ["socios", "paquete_beneficios_abogados", "solicitud_socio"],
       panel_terminos: ["gestion_terminos_consentimientos", "configuracion_contrato_abogado"],
       panel_agendamiento: ["disponibilidad_abogados", "asignaciones_agenda"],
@@ -359,7 +358,7 @@ const PERFILES_INICIALES: PerfilDef[] = [
       panel_inicio: ["favoritos"],
       panel_clientes: ["vitrina_comercial_personas", "muro_informativo_comunidad", "crm_clientes", "agendar_cita", "mis_citas", "billetera_documentos", "firma_documentos_pdf"],
       panel_empresas: ["vitrina_comercial_empresas", "gestion_convenios_corporativos", "crm_clientes", "billetera_documentos", "firma_documentos_pdf"],
-      panel_usuarios: ["gestion_usuarios", "consulta_usuarios_perfiles", "crm_clientes", "monitoreo_notificaciones_usuarios"],
+      panel_usuarios: ["gestion_usuarios", "consulta_usuarios_perfiles", "monitoreo_notificaciones_usuarios"],
       panel_red_profesional: ["socios", "paquete_beneficios_abogados", "solicitud_socio"],
       panel_terminos: ["gestion_terminos_consentimientos", "configuracion_contrato_abogado"],
       panel_agendamiento: ["disponibilidad_abogados", "asignaciones_agenda"],
@@ -1421,7 +1420,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
       if (savedPerfiles) {
         const parsed = JSON.parse(savedPerfiles);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          // Asegurar que perfiles base mantengan widgets iniciales si no los tenian
+          // Asegurar que perfiles base mantengan nuevos paneles sin re-inyectar widgets retirados
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const combinados = parsed.map((p: any) => {
             const base = PERFILES_INICIALES.find(b => b.clave === p.clave);
@@ -1429,9 +1428,20 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
             const panelesMerged = Array.from(new Set([...(p.panelesAsignados || []), ...base.panelesAsignados]));
             const widgetsMerged: Record<string, string[]> = { ...(p.widgetsAsignadosPorPanel || {}) };
             Object.entries(base.widgetsAsignadosPorPanel || {}).forEach(([panelKey, listBase]) => {
-              const currentList = widgetsMerged[panelKey] || [];
-              widgetsMerged[panelKey] = Array.from(new Set([...currentList, ...listBase]));
+              if (widgetsMerged[panelKey] === undefined) {
+                // Solo asignar por defecto si el panel nunca fue configurado
+                widgetsMerged[panelKey] = [...listBase];
+              }
             });
+
+            // Sanitización estricta: asegurar que crm_clientes no esté en panel_usuarios para OPERADOR
+            if (p.clave?.toUpperCase() === "OPERADOR" && widgetsMerged["panel_usuarios"]) {
+              widgetsMerged["panel_usuarios"] = widgetsMerged["panel_usuarios"].filter((w: string) => w !== "crm_clientes");
+            }
+            if (p.clave?.toUpperCase() === "ABOGADO" && widgetsMerged["panel_usuarios"]) {
+              widgetsMerged["panel_usuarios"] = widgetsMerged["panel_usuarios"].filter((w: string) => w !== "crm_clientes");
+            }
+
             return {
               ...p,
               panelesAsignados: panelesMerged,
@@ -1592,6 +1602,31 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
   // Tema del perfil activo seleccionado
   const temaPerfilActivo = TEMAS_PERFIL[perfilSeleccionado] || TEMA_POR_DEFECTO;
 
+  // Sincronizar cambios en perfiles tanto en localStorage como en base de datos (seg_perfil)
+  const sincronizarConfiguracionPerfil = (
+    nuevosPerfiles: PerfilDef[],
+    perfilClave: string,
+    mapaActualizado: Record<string, string[]>,
+    panelesActualizados?: string[]
+  ) => {
+    setPerfiles(nuevosPerfiles);
+    try {
+      localStorage.setItem(KEY_PERFILES, JSON.stringify(nuevosPerfiles));
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new Event("storage"));
+        window.dispatchEvent(new CustomEvent("tranqi_perfiles_updated"));
+      }
+    } catch (e) {
+      console.error("Error guardando perfiles en localStorage:", e);
+    }
+
+    const perfilObj = nuevosPerfiles.find(p => p.clave === perfilClave);
+    const paneles = panelesActualizados || perfilObj?.panelesAsignados || [];
+    guardarConfiguracionPanelesPerfilAction(perfilClave, negocio, paneles, mapaActualizado).catch(err => {
+      console.error("Error persistiendo configuración en seg_perfil:", err);
+    });
+  };
+
   // Reordenar posición interna de un widget dentro de un panel (Izquierda / Derecha)
   const reordenarWidgetEnPanel = (
     perfilClave: string,
@@ -1622,7 +1657,8 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
       [panelId]: reordenados
     };
 
-    setPerfiles(perfiles.map(p => p.clave === perfilClave ? { ...p, widgetsAsignadosPorPanel: mapaActualizado } : p));
+    const nuevosPerfiles = perfiles.map(p => p.clave === perfilClave ? { ...p, widgetsAsignadosPorPanel: mapaActualizado } : p);
+    sincronizarConfiguracionPerfil(nuevosPerfiles, perfilClave, mapaActualizado, perfil.panelesAsignados);
   };
 
   // Ejecutar Transferencia (Mover o Duplicar entre Paneles)
@@ -1656,7 +1692,8 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
       [panelDestinoId]: nuevoDestinoList,
     };
 
-    setPerfiles(perfiles.map(p => p.clave === perfilClave ? { ...p, widgetsAsignadosPorPanel: mapaActualizado } : p));
+    const nuevosPerfiles = perfiles.map(p => p.clave === perfilClave ? { ...p, widgetsAsignadosPorPanel: mapaActualizado } : p);
+    sincronizarConfiguracionPerfil(nuevosPerfiles, perfilClave, mapaActualizado, perfil.panelesAsignados);
 
     const nombreOrigen = panelesSidebar.find(p => p.id === panelOrigenId)?.nombre || panelOrigenId;
     const nombreDestino = panelesSidebar.find(p => p.id === panelDestinoId)?.nombre || panelDestinoId;
@@ -1871,7 +1908,8 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
       ? perfil.panelesAsignados
       : [...perfil.panelesAsignados, panelId];
 
-    setPerfiles(perfiles.map(p => p.clave === perfilClave ? { ...p, panelesAsignados: panelesActualizados, widgetsAsignadosPorPanel: mapaActualizado } : p));
+    const nuevosPerfiles = perfiles.map(p => p.clave === perfilClave ? { ...p, panelesAsignados: panelesActualizados, widgetsAsignadosPorPanel: mapaActualizado } : p);
+    sincronizarConfiguracionPerfil(nuevosPerfiles, perfilClave, mapaActualizado, panelesActualizados);
 
     await guardarAsignacionWidget(perfilClave, widgetClave, negocio, true, panelId);
 
@@ -1921,11 +1959,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
           : p
       );
 
-      setPerfiles(nuevosPerfiles);
-      localStorage.setItem(`tranqi_perfiles_${negocio}`, JSON.stringify(nuevosPerfiles));
-      if (typeof window !== "undefined") {
-        window.dispatchEvent(new Event("storage"));
-      }
+      sincronizarConfiguracionPerfil(nuevosPerfiles, perfilClave, matriz.widgetsPorPanel, matriz.paneles);
 
       const nombrePerfil = perfilActual.nombre;
       setMensajeExito(`⚡ Perfil '${nombrePerfil}' restaurado a su configuración funcional óptima según rol.`);
@@ -2018,11 +2052,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
           : p
       );
 
-      setPerfiles(nuevosPerfiles);
-      localStorage.setItem(`tranqi_perfiles_${negocio}`, JSON.stringify(nuevosPerfiles));
-      if (typeof window !== "undefined") {
-        window.dispatchEvent(new Event("storage"));
-      }
+      sincronizarConfiguracionPerfil(nuevosPerfiles, perfilClave, mapaActualizado, Array.from(panelesNuevos));
 
       if (countAsignados > 0) {
         setMensajeExito(`⚡ Se auto-asignaron ${countAsignados} widgets autorizados para '${perfil.nombre}'.`);
@@ -2061,12 +2091,14 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
             totalAsignados++;
           }
         }
+        guardarConfiguracionPanelesPerfilAction(rolClave, negocio, matriz.paneles, matriz.widgetsPorPanel).catch(console.error);
       }
 
       setPerfiles(perfilesActualizados);
       localStorage.setItem(`tranqi_perfiles_${negocio}`, JSON.stringify(perfilesActualizados));
       if (typeof window !== "undefined") {
         window.dispatchEvent(new Event("storage"));
+        window.dispatchEvent(new CustomEvent("tranqi_perfiles_updated"));
       }
 
       setMensajeExito(`⚡ Ecosistema alineado: 28 módulos funcionales asignados a sus perfiles operativos correspondientes.`);
@@ -2090,7 +2122,8 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
       [panelId]: nuevosAsignados
     };
 
-    setPerfiles(perfiles.map(p => p.clave === perfilClave ? { ...p, widgetsAsignadosPorPanel: mapaActualizado } : p));
+    const nuevosPerfiles = perfiles.map(p => p.clave === perfilClave ? { ...p, widgetsAsignadosPorPanel: mapaActualizado } : p);
+    sincronizarConfiguracionPerfil(nuevosPerfiles, perfilClave, mapaActualizado, perfil.panelesAsignados);
 
     await guardarAsignacionWidget(perfilClave, widgetClave, negocio, false, panelId);
 

@@ -572,32 +572,42 @@ export function PanelAdministrarModular({ negocio = "TRANQ", esSuperAdmin = fals
           ];
         }
 
-        // 2. Consultar servidor BDD PostgreSQL (comun_seguridad.seg_rol_widget)
+        // 2. Consultar servidor BDD PostgreSQL (comun_seguridad.seg_perfil / seg_rol_widget)
         const resBdd = await obtenerConfiguracionNavegacionRolAction(rolEncontrado, (negocio || "TRANQ").toUpperCase());
         if (resBdd.ok && resBdd.data && resBdd.data.widgetsPorPanel) {
-          const wBdd = resBdd.data.widgetsPorPanel["panel_administrar"] || resBdd.data.widgetsPorPanel["administrar"] || [];
-          if (wBdd.length > 0) {
-            idsAsignados = Array.from(new Set([...idsAsignados, ...wBdd]));
+          const wBdd = resBdd.data.widgetsPorPanel["panel_administrar"] ?? resBdd.data.widgetsPorPanel["administrar"];
+          if (Array.isArray(wBdd) && wBdd.length > 0) {
+            idsAsignados = [...wBdd];
           }
         }
 
         // 3. Complementar con personalizaciones en localStorage si existen
-        const savedPerfiles = localStorage.getItem(`tranqi_perfiles_${negocio}`) || localStorage.getItem("tranqi_perfiles_TRANQ");
+        const savedPerfiles =
+          localStorage.getItem(`tranqi_perfiles_${negocio}`) ||
+          localStorage.getItem(`tranqi_perfiles_${(negocio || "").toUpperCase()}`) ||
+          localStorage.getItem(`tranqi_perfiles_${(negocio || "").toLowerCase()}`) ||
+          localStorage.getItem("tranqi_perfiles_TRANQ") ||
+          localStorage.getItem("tranqi_perfiles_tranqi");
+
         if (savedPerfiles) {
-          const perfiles = JSON.parse(savedPerfiles);
-          if (Array.isArray(perfiles)) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            let perfilObj = perfiles.find((p: any) => p.clave?.toUpperCase() === rolEncontrado);
-            if (!perfilObj && (rolEncontrado === "OPERADOR" || rolEncontrado === "AUXILIAR")) {
+          try {
+            const perfiles = JSON.parse(savedPerfiles);
+            if (Array.isArray(perfiles)) {
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              perfilObj = perfiles.find((p: any) => p.clave?.toUpperCase() === "OPERADOR");
-            }
-            if (perfilObj && perfilObj.widgetsAsignadosPorPanel) {
-              const wLocal = perfilObj.widgetsAsignadosPorPanel["panel_administrar"] || perfilObj.widgetsAsignadosPorPanel["administrar"] || [];
-              if (wLocal.length > 0) {
-                idsAsignados = Array.from(new Set([...idsAsignados, ...wLocal]));
+              let perfilObj = perfiles.find((p: any) => p.clave?.toUpperCase() === rolEncontrado);
+              if (!perfilObj && (rolEncontrado === "OPERADOR" || rolEncontrado === "AUXILIAR")) {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                perfilObj = perfiles.find((p: any) => p.clave?.toUpperCase() === "OPERADOR");
+              }
+              if (perfilObj && perfilObj.widgetsAsignadosPorPanel) {
+                const wLocal = perfilObj.widgetsAsignadosPorPanel["panel_administrar"] ?? perfilObj.widgetsAsignadosPorPanel["administrar"];
+                if (Array.isArray(wLocal)) {
+                  idsAsignados = [...wLocal];
+                }
               }
             }
+          } catch {
+            // Ignorar error de lectura de localStorage
           }
         }
 
@@ -632,7 +642,11 @@ export function PanelAdministrarModular({ negocio = "TRANQ", esSuperAdmin = fals
 
     cargarConfiguracionPanel();
     window.addEventListener("storage", cargarConfiguracionPanel);
-    return () => window.removeEventListener("storage", cargarConfiguracionPanel);
+    window.addEventListener("tranqi_perfiles_updated", cargarConfiguracionPanel);
+    return () => {
+      window.removeEventListener("storage", cargarConfiguracionPanel);
+      window.removeEventListener("tranqi_perfiles_updated", cargarConfiguracionPanel);
+    };
   }, [negocio, rolInicial]);
 
   // Leer modulo inicial desde localStorage o URL

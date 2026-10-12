@@ -475,25 +475,125 @@ export async function guardarAsignacionWidget(
   return { ok: true, data: undefined };
 }
 
+export async function guardarConfiguracionPanelesPerfilAction(
+  perfilClave: string,
+  negocio: string,
+  panelesAsignados: string[],
+  widgetsAsignadosPorPanel: Record<string, string[]>
+): Promise<Resultado> {
+  try {
+    const supabase = await crearClienteServidor();
+    const adminSupabase = crearClienteAdmin() || supabase;
+    const perfilClaveUpper = (perfilClave || "").toUpperCase().trim();
+    const negocioNorm = (negocio || "tranqi").toLowerCase().trim();
+
+    if (!perfilClaveUpper) return { ok: false, error: "Clave de perfil no válida" };
+
+    // 1. Obtener registro actual del perfil en seg_perfil
+    const { data: perfilRow } = await (adminSupabase
+      .schema("comun_seguridad")
+      .from("seg_perfil")
+      .select("per_detalle_perfil")
+      .eq("per_clave", perfilClaveUpper) as any)
+      .maybeSingle();
+
+    const detalleActual = (perfilRow?.per_detalle_perfil as Record<string, any>) || {};
+    const negociosMap = detalleActual.negocios || {};
+
+    negociosMap[negocioNorm] = {
+      panelesAsignados,
+      widgetsAsignadosPorPanel,
+      actualizadoEn: new Date().toISOString()
+    };
+
+    const nuevoDetalle = {
+      ...detalleActual,
+      negocios: negociosMap,
+      // Guardar también a nivel raíz para consistencia y fallback
+      panelesAsignados,
+      widgetsAsignadosPorPanel,
+      actualizadoEn: new Date().toISOString()
+    };
+
+    const { error: updErr } = await (adminSupabase
+      .schema("comun_seguridad")
+      .from("seg_perfil") as any)
+      .update({
+        per_detalle_perfil: nuevoDetalle,
+        per_actualizado_en: new Date().toISOString()
+      })
+      .eq("per_clave", perfilClaveUpper);
+
+    if (updErr) {
+      console.error("Error guardando configuracion en seg_perfil:", updErr);
+      return { ok: false, error: updErr.message };
+    }
+
+    revalidatePath("/panel/configuracion");
+    revalidatePath("/panel/usuarios");
+    revalidatePath("/panel/administrar");
+    revalidatePath("/panel");
+
+    return { ok: true, data: undefined };
+  } catch (err: any) {
+    console.error("Error inesperado en guardarConfiguracionPanelesPerfilAction:", err);
+    return { ok: false, error: err.message };
+  }
+}
+
 export async function obtenerConfiguracionNavegacionRolAction(
   perfilClave: string,
   negocio: string
 ): Promise<Resultado<{ widgetsPorPanel: Record<string, string[]>; panelesAsignados: string[] }>> {
   const supabase = await crearClienteServidor();
+  const adminSupabase = crearClienteAdmin() || supabase;
   const negocioNorm = (negocio || "tranqi").toLowerCase().trim();
   const negocioUpper = (negocio || "TRANQ").toUpperCase().trim();
   const variantesNegocio = Array.from(new Set([negocioNorm, negocioUpper, "TRANQ", "tranqi"]));
   const rolUpper = (perfilClave || "CLIENTE").toUpperCase().trim();
 
-  // 1. Obtener la matriz canónica para el rol (o fallback a OPERADOR / CLIENTE)
-  const matrizRol = MATRIZ_FUNCIONAL_ROLES[rolUpper] || MATRIZ_FUNCIONAL_ROLES["CLIENTE"] || { paneles: [], widgetsPorPanel: {} };
-  const widgetsPorPanel: Record<string, string[]> = {};
-  for (const [panelId, widgets] of Object.entries(matrizRol.widgetsPorPanel)) {
-    widgetsPorPanel[panelId] = [...widgets];
-  }
-  const panelesSet = new Set<string>(matrizRol.paneles || ["panel_inicio", "panel_cuenta"]);
+  let widgetsPorPanel: Record<string, string[]> = {};
+  let panelesAsignados: string[] = [];
+  let configuracionDesdeBdd = false;
 
-  // 2. Consultar en base de datos los permisos específicos de seg_rol_widget
+  // 1. Consultar si seg_perfil tiene configuración específica en per_detalle_perfil
+  try {
+    const { data: perfilRow } = await (adminSupabase
+      .schema("comun_seguridad")
+      .from("seg_perfil")
+      .select("per_detalle_perfil")
+      .eq("per_clave", rolUpper) as any)
+      .maybeSingle();
+
+    if (perfilRow?.per_detalle_perfil) {
+      const detalle = perfilRow.per_detalle_perfil as Record<string, any>;
+      const negocioConfig = detalle.negocios?.[negocioNorm] || detalle.negocios?.[negocioUpper];
+      if (negocioConfig?.widgetsPorPanel) {
+        widgetsPorPanel = { ...negocioConfig.widgetsPorPanel };
+        panelesAsignados = negocioConfig.panelesAsignados || [];
+        configuracionDesdeBdd = true;
+      } else if (detalle.widgetsPorPanel) {
+        widgetsPorPanel = { ...detalle.widgetsPorPanel };
+        panelesAsignados = detalle.panelesAsignados || [];
+        configuracionDesdeBdd = true;
+      }
+    }
+  } catch (e) {
+    console.error("Error leyendo per_detalle_perfil:", e);
+  }
+
+  // 2. Si no hay configuración persistida personalizada en seg_perfil, recurrir a MATRIZ_FUNCIONAL_ROLES
+  if (!configuracionDesdeBdd) {
+    const matrizRol = MATRIZ_FUNCIONAL_ROLES[rolUpper] || MATRIZ_FUNCIONAL_ROLES["CLIENTE"] || { paneles: [], widgetsPorPanel: {} };
+    for (const [panelId, widgets] of Object.entries(matrizRol.widgetsPorPanel)) {
+      widgetsPorPanel[panelId] = [...widgets];
+    }
+    panelesAsignados = [...(matrizRol.paneles || ["panel_inicio", "panel_cuenta"])];
+  }
+
+  const panelesSet = new Set<string>(panelesAsignados);
+
+  // 3. Consultar en base de datos los permisos específicos de seg_rol_widget
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data, error } = await (supabase
     .schema("comun_seguridad")

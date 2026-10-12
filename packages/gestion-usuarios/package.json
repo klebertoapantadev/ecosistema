@@ -8,7 +8,8 @@
     ".": "./src/index.ts",
     "./componentes/*": "./src/componentes/*.tsx",
     "./consultas": "./src/consultas.ts",
-    "./acciones": "./src/acciones.ts"
+    "./acciones": "./src/acciones.ts",
+    "./matriz-roles": "./src/matriz-roles.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit"

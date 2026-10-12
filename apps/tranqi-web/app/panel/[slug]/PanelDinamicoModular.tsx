@@ -41,6 +41,7 @@ import {
 import { SociosWidget } from "../administrar/PanelAdministrarModular";
 import { ConfiguracionContratoAbogadoWidget } from "@/modulos/socios/componentes/ConfiguracionContratoAbogadoWidget";
 import { obtenerConfiguracionNavegacionRolAction } from "@eco/gestion-usuarios/acciones";
+import { MATRIZ_FUNCIONAL_ROLES } from "@eco/gestion-usuarios/matriz-roles";
 
 interface Props {
   slug: string;
@@ -534,57 +535,16 @@ function obtenerWidgetsInicialesDinamicos(panelId: string, slugStr: string, rolD
   }
 
   const slugNorm = slugStr.replace(/-/g, "_");
-  const esPanelClientes = panelId === "panel_clientes" || slugNorm === "clientes";
-  const esPanelEmpresas = panelId === "panel_empresas" || slugNorm === "empresas";
-  const esPanelUsuarios = panelId === "panel_usuarios" || slugNorm === "usuarios";
-  const esPanelRed = panelId === "panel_red_profesional" || slugNorm === "red_profesional" || slugStr === "red-profesional";
-  const esPanelTerminos = panelId === "panel_terminos" || slugNorm === "terminos";
-  const esPanelAgenda = panelId === "panel_agendamiento" || slugNorm === "agendamiento" || slugNorm === "agenda";
-  const esPanelAdmin = panelId === "panel_administrar" || slugNorm === "administrar";
-  const esPanelHerr = panelId === "panel_herramientas" || slugNorm === "herramientas";
-  const esPanelSeg = panelId === "panel_seguridad" || slugNorm === "seguridad";
-  const esPanelCuenta = panelId === "panel_cuenta" || slugNorm === "cuenta";
-  const esPanelConf = panelId === "panel_configuracion" || slugNorm === "configuracion";
+  const panelKey = panelId || `panel_${slugNorm}`;
 
-  if (rolActivo === "OPERADOR" || rolActivo === "AUXILIAR" || rolActivo === "TECNICO") {
-    if (esPanelClientes) return ["vitrina_comercial_personas", "muro_informativo_comunidad", "crm_clientes", "agendar_cita", "mis_citas", "billetera_documentos", "firma_documentos_pdf"];
-    if (esPanelEmpresas) return ["vitrina_comercial_empresas", "gestion_convenios_corporativos", "compliance_score_legal", "legal_hr_laboral", "crm_clientes", "billetera_documentos", "firma_documentos_pdf"];
-    if (esPanelUsuarios) return ["consulta_usuarios_perfiles", "crm_clientes", "monitoreo_notificaciones_usuarios"];
-    if (esPanelRed) return ["socios", "paquete_beneficios_abogados", "solicitud_socio"];
-    if (esPanelTerminos) return ["gestion_terminos_consentimientos", "configuracion_contrato_abogado"];
-    if (esPanelAgenda) return ["disponibilidad_abogados", "asignaciones_agenda"];
-    if (esPanelAdmin) return ["gestion_informativos", "gestion_convenios_corporativos", "compliance_score_legal", "legal_hr_laboral", "disponibilidad_abogados", "historial_pagos", "emision_notificaciones", "bitacora_notificaciones"];
-    if (esPanelHerr) return ["catalogo_productos", "disponibilidad_abogados", "firma_documentos_pdf", "billetera_documentos"];
-    if (esPanelSeg) return ["mfa_seguridad"];
-    if (esPanelCuenta) return ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos"];
-  } else if (rolActivo === "ADMINISTRADOR" || rolActivo === "SUPERADMIN") {
-    if (esPanelClientes) return ["vitrina_comercial_personas", "muro_informativo_comunidad", "crm_clientes", "agendar_cita", "mis_citas", "billetera_documentos", "firma_documentos_pdf"];
-    if (esPanelEmpresas) return ["vitrina_comercial_empresas", "gestion_convenios_corporativos", "compliance_score_legal", "legal_hr_laboral", "crm_clientes", "billetera_documentos", "firma_documentos_pdf"];
-    if (esPanelUsuarios) return ["gestion_usuarios", "consulta_usuarios_perfiles", "crm_clientes", "monitoreo_notificaciones_usuarios"];
-    if (esPanelRed) return ["socios", "paquete_beneficios_abogados", "solicitud_socio"];
-    if (esPanelTerminos) return ["gestion_terminos_consentimientos", "configuracion_contrato_abogado"];
-    if (esPanelAgenda) return ["disponibilidad_abogados", "asignaciones_agenda"];
-    if (esPanelAdmin) return ["gestion_informativos", "gestion_convenios_corporativos", "compliance_score_legal", "legal_hr_laboral", "disponibilidad_abogados", "historial_pagos", "emision_notificaciones", "bitacora_notificaciones", "perfiles", "auditoria"];
-    if (esPanelHerr) return ["catalogo_productos", "disponibilidad_abogados", "firma_documentos_pdf", "billetera_documentos"];
-    if (esPanelSeg) return ["mfa_seguridad", "auditoria"];
-    if (esPanelConf) return ["configuracion_negocio", "configuracion_correo", "pasarela_payphone", "perfiles", "agentes_ia", "notificaciones", "tokens_mcp"];
-    if (esPanelCuenta) return ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos"];
-  } else if (rolActivo === "ABOGADO") {
-    if (esPanelClientes) return ["vitrina_comercial_personas", "muro_informativo_comunidad", "crm_clientes", "billetera_documentos", "firma_documentos_pdf"];
-    if (esPanelEmpresas) return ["vitrina_comercial_empresas", "gestion_convenios_corporativos", "compliance_score_legal", "legal_hr_laboral", "crm_clientes", "billetera_documentos", "firma_documentos_pdf"];
-    if (esPanelUsuarios) return ["crm_clientes"];
-    if (esPanelRed) return ["paquete_beneficios_abogados"];
-    if (esPanelAgenda) return ["disponibilidad_abogados", "citas_programadas", "disponibilidad", "asignaciones_agenda"];
-    if (esPanelHerr) return ["crm_clientes", "catalogo_productos", "disponibilidad_abogados", "firma_documentos_pdf", "billetera_documentos", "solicitud_socio"];
-    if (esPanelCuenta) return ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos", "historial_pagos"];
-    if (esPanelConf) return ["notificaciones", "agentes_ia"];
-  } else {
-    // ROL CLIENTE: Acceso a servicios de personas, agendamiento y cuenta
-    if (esPanelClientes) return ["vitrina_comercial_personas", "muro_informativo_comunidad", "agendar_cita", "mis_citas", "billetera_documentos", "firma_documentos_pdf"];
-    if (esPanelAgenda) return ["agendar_cita", "mis_citas"];
-    if (esPanelCuenta) return ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos", "historial_pagos"];
-    if (esPanelConf) return ["notificaciones"];
-    return [];
+  const matrizRol = MATRIZ_FUNCIONAL_ROLES[rolActivo] || MATRIZ_FUNCIONAL_ROLES["CLIENTE"];
+  if (matrizRol?.widgetsPorPanel) {
+    const w =
+      matrizRol.widgetsPorPanel[panelKey] ??
+      matrizRol.widgetsPorPanel[panelId] ??
+      matrizRol.widgetsPorPanel[slugNorm] ??
+      matrizRol.widgetsPorPanel[`panel_${slugNorm}`];
+    if (Array.isArray(w)) return [...w];
   }
 
   return [];
@@ -671,47 +631,69 @@ export function PanelDinamicoModular({ slug, negocio, rolInicial = "ADMINISTRADO
         let listW: string[] = [];
         let configuracionEncontrada = false;
 
-        // 1. Consultar servidor (PostgreSQL comun_seguridad.seg_rol_widget)
+        // 1. Consultar servidor (PostgreSQL comun_seguridad.seg_perfil / seg_rol_widget)
         const resBdd = await obtenerConfiguracionNavegacionRolAction(rolActivo, (negocio || "TRANQ").toUpperCase());
         if (resBdd.ok && resBdd.data && resBdd.data.widgetsPorPanel) {
           const wBdd =
-            resBdd.data.widgetsPorPanel[panelIdBuscado] ||
-            resBdd.data.widgetsPorPanel[slug] ||
-            resBdd.data.widgetsPorPanel[slugNormalizado] ||
-            resBdd.data.widgetsPorPanel[`panel_${slug}`];
-          if (Array.isArray(wBdd) && wBdd.length > 0) {
+            resBdd.data.widgetsPorPanel[panelIdBuscado] ??
+            resBdd.data.widgetsPorPanel[slug] ??
+            resBdd.data.widgetsPorPanel[slugNormalizado] ??
+            resBdd.data.widgetsPorPanel[`panel_${slug}`] ??
+            resBdd.data.widgetsPorPanel[`panel_${slugNormalizado}`];
+          if (Array.isArray(wBdd)) {
             listW = wBdd;
             configuracionEncontrada = true;
           }
         }
 
         // 2. Complementar con personalizaciones en localStorage si existen en esta máquina
-        const savedPerfiles = localStorage.getItem(`tranqi_perfiles_${negocio}`) || localStorage.getItem("tranqi_perfiles_TRANQ");
+        const savedPerfiles =
+          localStorage.getItem(`tranqi_perfiles_${negocio}`) ||
+          localStorage.getItem(`tranqi_perfiles_${(negocio || "").toUpperCase()}`) ||
+          localStorage.getItem(`tranqi_perfiles_${(negocio || "").toLowerCase()}`) ||
+          localStorage.getItem("tranqi_perfiles_TRANQ") ||
+          localStorage.getItem("tranqi_perfiles_tranqi");
+
         if (savedPerfiles) {
-          const perfiles = JSON.parse(savedPerfiles);
-          if (Array.isArray(perfiles)) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            let perfilObj = perfiles.find((p: any) => p.clave?.toUpperCase() === rolActivo);
-            if (!perfilObj && (rolActivo === "OPERADOR" || rolActivo === "AUXILIAR")) {
+          try {
+            const perfiles = JSON.parse(savedPerfiles);
+            if (Array.isArray(perfiles)) {
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              perfilObj = perfiles.find((p: any) => p.clave?.toUpperCase() === "OPERADOR");
-            }
-            if (perfilObj && perfilObj.widgetsAsignadosPorPanel) {
-              const wLocal =
-                perfilObj.widgetsAsignadosPorPanel[panelIdBuscado] ||
-                perfilObj.widgetsAsignadosPorPanel[slug] ||
-                perfilObj.widgetsAsignadosPorPanel[slugNormalizado];
-              if (Array.isArray(wLocal) && wLocal.length > 0) {
-                listW = wLocal;
-                configuracionEncontrada = true;
+              let perfilObj = perfiles.find((p: any) => p.clave?.toUpperCase() === rolActivo);
+              if (!perfilObj && (rolActivo === "OPERADOR" || rolActivo === "AUXILIAR")) {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                perfilObj = perfiles.find((p: any) => p.clave?.toUpperCase() === "OPERADOR");
+              }
+              if (perfilObj && perfilObj.widgetsAsignadosPorPanel) {
+                const wLocal =
+                  perfilObj.widgetsAsignadosPorPanel[panelIdBuscado] ??
+                  perfilObj.widgetsAsignadosPorPanel[slug] ??
+                  perfilObj.widgetsAsignadosPorPanel[slugNormalizado] ??
+                  perfilObj.widgetsAsignadosPorPanel[`panel_${slug}`] ??
+                  perfilObj.widgetsAsignadosPorPanel[`panel_${slugNormalizado}`];
+                if (Array.isArray(wLocal)) {
+                  // Si es OPERADOR y el panel es panel_usuarios, asegurar que crm_clientes quede excluido
+                  const wFiltrado = (rolActivo === "OPERADOR" && (panelIdBuscado === "panel_usuarios" || slugNormalizado === "usuarios"))
+                    ? wLocal.filter((w: string) => w !== "crm_clientes")
+                    : wLocal;
+                  listW = wFiltrado;
+                  configuracionEncontrada = true;
+                }
               }
             }
+          } catch (e) {
+            console.error("Error leyendo tranqi_perfiles de localStorage:", e);
           }
         }
 
         // 3. Fallback canónico únicamente si no existe configuración guardada
-        if (!configuracionEncontrada || listW.length === 0) {
+        if (!configuracionEncontrada) {
           listW = obtenerWidgetsInicialesDinamicos(panelIdBuscado, slug, rolActivo);
+        }
+
+        // Sanitización universal: Si el perfil es OPERADOR y el panel es usuarios, jamás mostrar crm_clientes
+        if (rolActivo === "OPERADOR" && (panelIdBuscado === "panel_usuarios" || slugNormalizado === "usuarios")) {
+          listW = listW.filter(w => w !== "crm_clientes");
         }
 
         setWidgetsAsignados(listW);
@@ -722,7 +704,11 @@ export function PanelDinamicoModular({ slug, negocio, rolInicial = "ADMINISTRADO
 
     cargarConfiguracion();
     window.addEventListener("storage", cargarConfiguracion);
-    return () => window.removeEventListener("storage", cargarConfiguracion);
+    window.addEventListener("tranqi_perfiles_updated", cargarConfiguracion);
+    return () => {
+      window.removeEventListener("storage", cargarConfiguracion);
+      window.removeEventListener("tranqi_perfiles_updated", cargarConfiguracion);
+    };
   }, [slug, negocio, panelIdBuscado, rolInicial, metaBase.descripcion, slugNormalizado, esSuperAdmin]);
 
   const renderWidgetComponente = (wClave: string) => {
