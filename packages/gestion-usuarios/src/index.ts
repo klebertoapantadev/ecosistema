@@ -4,4 +4,4 @@ export { asignarPerfil, quitarPerfil, eliminarUsuarioSuperAdminAction, resetearS
 export { FilaUsuario } from "./componentes/FilaUsuario";
 export { AdministracionPerfilesWidget } from "./componentes/AdministracionPerfilesWidget";
 export { ConsultaUsuariosPerfilesWidget } from "./componentes/ConsultaUsuariosPerfilesWidget";
-
+export * from "./matriz-roles";

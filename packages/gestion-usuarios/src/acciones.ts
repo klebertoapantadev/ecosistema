@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { crearClienteServidor, crearClienteAdmin } from "@eco/supabase/servidor";
 import { buscarUsuarios, obtenerPerfilesAsignables } from "./consultas";
+import { MATRIZ_FUNCIONAL_ROLES } from "./matriz-roles";
 
 export interface Resultado<T = void> {
   ok: boolean;
@@ -482,33 +483,42 @@ export async function obtenerConfiguracionNavegacionRolAction(
   const negocioNorm = (negocio || "tranqi").toLowerCase().trim();
   const negocioUpper = (negocio || "TRANQ").toUpperCase().trim();
   const variantesNegocio = Array.from(new Set([negocioNorm, negocioUpper, "TRANQ", "tranqi"]));
+  const rolUpper = (perfilClave || "CLIENTE").toUpperCase().trim();
 
+  // 1. Obtener la matriz canónica para el rol (o fallback a OPERADOR / CLIENTE)
+  const matrizRol = MATRIZ_FUNCIONAL_ROLES[rolUpper] || MATRIZ_FUNCIONAL_ROLES["CLIENTE"] || { paneles: [], widgetsPorPanel: {} };
+  const widgetsPorPanel: Record<string, string[]> = {};
+  for (const [panelId, widgets] of Object.entries(matrizRol.widgetsPorPanel)) {
+    widgetsPorPanel[panelId] = [...widgets];
+  }
+  const panelesSet = new Set<string>(matrizRol.paneles || ["panel_inicio", "panel_cuenta"]);
+
+  // 2. Consultar en base de datos los permisos específicos de seg_rol_widget
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data, error } = await (supabase
     .schema("comun_seguridad")
     .from("seg_rol_widget")
-    .select("rlw_widget_id, seg_widget(wdg_clave, wdg_detalle_widget)") as any)
-    .eq("rlw_rol", perfilClave.toUpperCase().trim())
-    .in("rlw_negocio", variantesNegocio)
-    .eq("rlw_visible", true);
+    .select("rlw_widget_id, rlw_visible, seg_widget(wdg_clave, wdg_detalle_widget)") as any)
+    .eq("rlw_rol", rolUpper)
+    .in("rlw_negocio", variantesNegocio);
 
-  if (error) return { ok: false, error: error.message };
+  if (!error && data && Array.isArray(data) && data.length > 0) {
+    const widgetsDesactivados = new Set<string>();
 
-  const widgetsPorPanel: Record<string, string[]> = {};
-  const panelesSet = new Set<string>(["panel_inicio", "panel_cuenta"]);
-
-  if (data && Array.isArray(data) && data.length > 0) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     for (const r of data as any[]) {
       const widgetClave = r.seg_widget?.wdg_clave || r.rlw_widget_id;
-      const detalle = (r.seg_widget?.wdg_detalle_widget as Record<string, unknown>) || {};
-      const panelId = (detalle.panel_defecto as string) || "panel_configuracion";
-
-      if (!widgetsPorPanel[panelId]) widgetsPorPanel[panelId] = [];
-      if (widgetClave && !widgetsPorPanel[panelId].includes(widgetClave)) {
-        widgetsPorPanel[panelId].push(widgetClave);
+      if (widgetClave) {
+        if (r.rlw_visible === false) {
+          widgetsDesactivados.add(widgetClave);
+        }
       }
-      panelesSet.add(panelId);
+    }
+
+    // Filtrar widgets desactivados explícitamente en base de datos
+    if (widgetsDesactivados.size > 0) {
+      for (const panelId of Object.keys(widgetsPorPanel)) {
+        widgetsPorPanel[panelId] = (widgetsPorPanel[panelId] || []).filter((w) => !widgetsDesactivados.has(w));
+      }
     }
   }
 
