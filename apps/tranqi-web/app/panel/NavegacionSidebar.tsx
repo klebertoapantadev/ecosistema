@@ -165,7 +165,7 @@ export function NavegacionSidebar({
         if (rolKey === "OPERADOR" || rolKey === "AUXILIAR" || rolKey === "TECNICO") {
           widgetsPorPanel = {
             ...widgetsPorPanel,
-            panel_clientes: ["mis_beneficios_corporativos", "vitrina_comercial_personas", "muro_informativo_comunidad", "crm_clientes", "agendar_cita", "mis_citas", "billetera_documentos", "firma_documentos_pdf"],
+            panel_clientes: ["vitrina_comercial_personas", "muro_informativo_comunidad", "crm_clientes", "agendar_cita", "mis_citas", "billetera_documentos", "firma_documentos_pdf"],
             panel_empresas: ["vitrina_comercial_empresas", "gestion_convenios_corporativos", "compliance_score_legal", "legal_hr_laboral", "crm_clientes", "billetera_documentos", "firma_documentos_pdf"],
             panel_usuarios: ["consulta_usuarios_perfiles", "crm_clientes", "monitoreo_notificaciones_usuarios"],
             panel_red_profesional: ["socios", "paquete_beneficios_abogados", "solicitud_socio"],
@@ -178,7 +178,7 @@ export function NavegacionSidebar({
         } else if (rolKey === "ABOGADO") {
           widgetsPorPanel = {
             ...widgetsPorPanel,
-            panel_clientes: ["mis_beneficios_corporativos", "vitrina_comercial_personas", "muro_informativo_comunidad", "crm_clientes", "billetera_documentos", "firma_documentos_pdf"],
+            panel_clientes: ["vitrina_comercial_personas", "muro_informativo_comunidad", "crm_clientes", "billetera_documentos", "firma_documentos_pdf"],
             panel_empresas: ["vitrina_comercial_empresas", "gestion_convenios_corporativos", "compliance_score_legal", "legal_hr_laboral", "crm_clientes", "billetera_documentos", "firma_documentos_pdf"],
             panel_usuarios: ["crm_clientes"],
             panel_red_profesional: ["paquete_beneficios_abogados"],
@@ -189,7 +189,7 @@ export function NavegacionSidebar({
         } else if (rolKey === "ADMINISTRADOR" || rolKey === "SUPERADMIN") {
           widgetsPorPanel = {
             ...widgetsPorPanel,
-            panel_clientes: ["mis_beneficios_corporativos", "vitrina_comercial_personas", "muro_informativo_comunidad", "crm_clientes", "agendar_cita", "mis_citas", "billetera_documentos", "firma_documentos_pdf"],
+            panel_clientes: ["vitrina_comercial_personas", "muro_informativo_comunidad", "crm_clientes", "agendar_cita", "mis_citas", "billetera_documentos", "firma_documentos_pdf"],
             panel_empresas: ["vitrina_comercial_empresas", "gestion_convenios_corporativos", "compliance_score_legal", "legal_hr_laboral", "crm_clientes", "billetera_documentos", "firma_documentos_pdf"],
             panel_usuarios: ["gestion_usuarios", "consulta_usuarios_perfiles", "crm_clientes", "monitoreo_notificaciones_usuarios"],
             panel_red_profesional: ["socios", "paquete_beneficios_abogados", "solicitud_socio"],
@@ -203,7 +203,7 @@ export function NavegacionSidebar({
         } else {
           widgetsPorPanel = {
             ...widgetsPorPanel,
-            panel_clientes: ["mis_beneficios_corporativos", "vitrina_comercial_personas", "muro_informativo_comunidad", "agendar_cita", "mis_citas", "billetera_documentos", "firma_documentos_pdf"],
+            panel_clientes: ["vitrina_comercial_personas", "muro_informativo_comunidad", "agendar_cita", "mis_citas", "billetera_documentos", "firma_documentos_pdf"],
             panel_agendamiento: ["agendar_cita", "mis_citas"],
           };
         }

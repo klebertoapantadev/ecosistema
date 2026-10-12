@@ -547,7 +547,7 @@ function obtenerWidgetsInicialesDinamicos(panelId: string, slugStr: string, rolD
   const esPanelConf = panelId === "panel_configuracion" || slugNorm === "configuracion";
 
   if (rolActivo === "OPERADOR" || rolActivo === "AUXILIAR" || rolActivo === "TECNICO") {
-    if (esPanelClientes) return ["mis_beneficios_corporativos", "vitrina_comercial_personas", "muro_informativo_comunidad", "crm_clientes", "agendar_cita", "mis_citas", "billetera_documentos", "firma_documentos_pdf"];
+    if (esPanelClientes) return ["vitrina_comercial_personas", "muro_informativo_comunidad", "crm_clientes", "agendar_cita", "mis_citas", "billetera_documentos", "firma_documentos_pdf"];
     if (esPanelEmpresas) return ["vitrina_comercial_empresas", "gestion_convenios_corporativos", "compliance_score_legal", "legal_hr_laboral", "crm_clientes", "billetera_documentos", "firma_documentos_pdf"];
     if (esPanelUsuarios) return ["consulta_usuarios_perfiles", "crm_clientes", "monitoreo_notificaciones_usuarios"];
     if (esPanelRed) return ["socios", "paquete_beneficios_abogados", "solicitud_socio"];
@@ -558,7 +558,7 @@ function obtenerWidgetsInicialesDinamicos(panelId: string, slugStr: string, rolD
     if (esPanelSeg) return ["mfa_seguridad"];
     if (esPanelCuenta) return ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos"];
   } else if (rolActivo === "ADMINISTRADOR" || rolActivo === "SUPERADMIN") {
-    if (esPanelClientes) return ["mis_beneficios_corporativos", "vitrina_comercial_personas", "muro_informativo_comunidad", "crm_clientes", "agendar_cita", "mis_citas", "billetera_documentos", "firma_documentos_pdf"];
+    if (esPanelClientes) return ["vitrina_comercial_personas", "muro_informativo_comunidad", "crm_clientes", "agendar_cita", "mis_citas", "billetera_documentos", "firma_documentos_pdf"];
     if (esPanelEmpresas) return ["vitrina_comercial_empresas", "gestion_convenios_corporativos", "compliance_score_legal", "legal_hr_laboral", "crm_clientes", "billetera_documentos", "firma_documentos_pdf"];
     if (esPanelUsuarios) return ["gestion_usuarios", "consulta_usuarios_perfiles", "crm_clientes", "monitoreo_notificaciones_usuarios"];
     if (esPanelRed) return ["socios", "paquete_beneficios_abogados", "solicitud_socio"];
@@ -570,7 +570,7 @@ function obtenerWidgetsInicialesDinamicos(panelId: string, slugStr: string, rolD
     if (esPanelConf) return ["configuracion_negocio", "configuracion_correo", "pasarela_payphone", "perfiles", "agentes_ia", "notificaciones", "tokens_mcp"];
     if (esPanelCuenta) return ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos"];
   } else if (rolActivo === "ABOGADO") {
-    if (esPanelClientes) return ["mis_beneficios_corporativos", "vitrina_comercial_personas", "muro_informativo_comunidad", "crm_clientes", "billetera_documentos", "firma_documentos_pdf"];
+    if (esPanelClientes) return ["vitrina_comercial_personas", "muro_informativo_comunidad", "crm_clientes", "billetera_documentos", "firma_documentos_pdf"];
     if (esPanelEmpresas) return ["vitrina_comercial_empresas", "gestion_convenios_corporativos", "compliance_score_legal", "legal_hr_laboral", "crm_clientes", "billetera_documentos", "firma_documentos_pdf"];
     if (esPanelUsuarios) return ["crm_clientes"];
     if (esPanelRed) return ["paquete_beneficios_abogados"];
@@ -580,7 +580,7 @@ function obtenerWidgetsInicialesDinamicos(panelId: string, slugStr: string, rolD
     if (esPanelConf) return ["notificaciones", "agentes_ia"];
   } else {
     // ROL CLIENTE: Acceso a servicios de personas, agendamiento y cuenta
-    if (esPanelClientes) return ["mis_beneficios_corporativos", "vitrina_comercial_personas", "muro_informativo_comunidad", "agendar_cita", "mis_citas", "billetera_documentos", "firma_documentos_pdf"];
+    if (esPanelClientes) return ["vitrina_comercial_personas", "muro_informativo_comunidad", "agendar_cita", "mis_citas", "billetera_documentos", "firma_documentos_pdf"];
     if (esPanelAgenda) return ["agendar_cita", "mis_citas"];
     if (esPanelCuenta) return ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos", "historial_pagos"];
     if (esPanelConf) return ["notificaciones"];
@@ -668,24 +668,24 @@ export function PanelDinamicoModular({ slug, negocio, rolInicial = "ADMINISTRADO
           else if (matchFav && matchFav[1]) rolActivo = matchFav[1].toUpperCase();
         }
 
-        // 1. Presets canónicos de asignación por rol y por panel
-        let listW: string[] = obtenerWidgetsInicialesDinamicos(panelIdBuscado, slug, rolActivo);
+        let listW: string[] = [];
+        let configuracionEncontrada = false;
 
-        // 2. Consultar servidor (PostgreSQL comun_seguridad.seg_rol_widget)
+        // 1. Consultar servidor (PostgreSQL comun_seguridad.seg_rol_widget)
         const resBdd = await obtenerConfiguracionNavegacionRolAction(rolActivo, (negocio || "TRANQ").toUpperCase());
         if (resBdd.ok && resBdd.data && resBdd.data.widgetsPorPanel) {
           const wBdd =
             resBdd.data.widgetsPorPanel[panelIdBuscado] ||
             resBdd.data.widgetsPorPanel[slug] ||
             resBdd.data.widgetsPorPanel[slugNormalizado] ||
-            resBdd.data.widgetsPorPanel[`panel_${slug}`] ||
-            [];
-          if (wBdd.length > 0) {
-            listW = Array.from(new Set([...listW, ...wBdd]));
+            resBdd.data.widgetsPorPanel[`panel_${slug}`];
+          if (Array.isArray(wBdd) && wBdd.length > 0) {
+            listW = wBdd;
+            configuracionEncontrada = true;
           }
         }
 
-        // 3. Complementar con personalizaciones en localStorage si existen en esta máquina
+        // 2. Complementar con personalizaciones en localStorage si existen en esta máquina
         const savedPerfiles = localStorage.getItem(`tranqi_perfiles_${negocio}`) || localStorage.getItem("tranqi_perfiles_TRANQ");
         if (savedPerfiles) {
           const perfiles = JSON.parse(savedPerfiles);
@@ -700,16 +700,17 @@ export function PanelDinamicoModular({ slug, negocio, rolInicial = "ADMINISTRADO
               const wLocal =
                 perfilObj.widgetsAsignadosPorPanel[panelIdBuscado] ||
                 perfilObj.widgetsAsignadosPorPanel[slug] ||
-                perfilObj.widgetsAsignadosPorPanel[slugNormalizado] ||
-                [];
-              if (wLocal.length > 0) {
-                listW = Array.from(new Set([...listW, ...wLocal]));
+                perfilObj.widgetsAsignadosPorPanel[slugNormalizado];
+              if (Array.isArray(wLocal) && wLocal.length > 0) {
+                listW = wLocal;
+                configuracionEncontrada = true;
               }
             }
           }
         }
 
-        if (listW.length === 0) {
+        // 3. Fallback canónico únicamente si no existe configuración guardada
+        if (!configuracionEncontrada || listW.length === 0) {
           listW = obtenerWidgetsInicialesDinamicos(panelIdBuscado, slug, rolActivo);
         }
 
