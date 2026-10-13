@@ -680,7 +680,9 @@ export function PanelDinamicoModular({ slug, negocio, rolInicial = "ADMINISTRADO
                 localStorage.setItem("tranqi_custom_widgets_config", JSON.stringify(currentCustom));
                 window.dispatchEvent(new CustomEvent("tranqi_widget_custom_updated"));
               }
-            } catch (e) {}
+            } catch (err) {
+              console.warn("No se pudo sincronizar títulos de widgets desde BDD:", err);
+            }
           }
         }
 
