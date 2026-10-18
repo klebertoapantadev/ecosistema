@@ -1830,7 +1830,14 @@ export async function obtenerCatalogoProductosAction(
             ? p.pro_detalle_producto.canales_visibilidad
             : [...CANALES_POR_DEFECTO],
           categoria: p.categoria || null,
-          variantes: (p.variantes || []).map((v: any) => {
+          variantes: ((p.variantes || []) as any[])
+            .sort((a: any, b: any) => {
+              const ordA = typeof a.var_detalle_variante?.orden === "number" ? a.var_detalle_variante.orden : 999;
+              const ordB = typeof b.var_detalle_variante?.orden === "number" ? b.var_detalle_variante.orden : 999;
+              if (ordA !== ordB) return ordA - ordB;
+              return Number(a.var_precio ?? a.precio ?? 0) - Number(b.var_precio ?? b.precio ?? 0);
+            })
+            .map((v: any) => {
             const base = Number(v.var_precio ?? v.precio ?? 0);
             const tarifaIva = Number(v.var_tarifa_iva_porcentaje ?? v.tarifa_iva ?? 0);
             const montoIva = Number(v.monto_iva ?? ((base * tarifaIva) / 100));
@@ -3029,6 +3036,7 @@ export async function editarProductoAction(datos: {
               ...(v.var_detalle_variante || {}),
               orden: idx + 1,
               portada_url: varPortada || null,
+              album_url: v.var_detalle_variante?.album_url ? String(v.var_detalle_variante.album_url).trim() || null : null,
               modalidad_pago: datos.modalidadPago || v.var_detalle_variante?.modalidad_pago,
             },
             monto_iva: montoIva,
@@ -3147,7 +3155,12 @@ export async function editarProductoAction(datos: {
             ctg_slug: cat.ctg_slug,
           }
         : prodActual.categoria,
-      variantes: variantesActualizadas,
+      variantes: [...variantesActualizadas].sort((a, b) => {
+        const ordA = typeof a.var_detalle_variante?.orden === "number" ? a.var_detalle_variante.orden : 999;
+        const ordB = typeof b.var_detalle_variante?.orden === "number" ? b.var_detalle_variante.orden : 999;
+        if (ordA !== ordB) return ordA - ordB;
+        return (a.var_precio || 0) - (b.var_precio || 0);
+      }),
     };
 
     // 1. Intentar actualizar en Supabase

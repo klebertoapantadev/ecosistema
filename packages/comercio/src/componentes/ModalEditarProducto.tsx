@@ -37,6 +37,7 @@ import {
   HardDrive,
   Calendar,
   Power,
+  Camera,
 } from "lucide-react";
 import {
   editarProductoAction,
@@ -670,9 +671,22 @@ export function ModalEditarProducto({
         setCoberturaTransporte(rawCobertura || "Quito Urbano y Valles");
       }
 
-      // Clonar variantes
+      // Clonar y ordenar variantes por orden ascendente y precio
       const vars = producto.variantes && producto.variantes.length > 0
-        ? producto.variantes.map((v) => ({ ...v }))
+        ? [...producto.variantes]
+            .sort((a, b) => {
+              const ordA = typeof a.var_detalle_variante?.orden === "number" ? a.var_detalle_variante.orden : 999;
+              const ordB = typeof b.var_detalle_variante?.orden === "number" ? b.var_detalle_variante.orden : 999;
+              if (ordA !== ordB) return ordA - ordB;
+              return (a.var_precio || 0) - (b.var_precio || 0);
+            })
+            .map((v, idx) => ({
+              ...v,
+              var_detalle_variante: {
+                ...(v.var_detalle_variante || {}),
+                orden: typeof v.var_detalle_variante?.orden === "number" ? v.var_detalle_variante.orden : idx + 1,
+              },
+            }))
         : [
             {
               var_id: `var-${Date.now()}`,
@@ -685,7 +699,7 @@ export function ModalEditarProducto({
               var_tarifa_iva_porcentaje: 15,
               var_tipo_oferta: "REGULAR",
               var_activo: true,
-              var_detalle_variante: {},
+              var_detalle_variante: { orden: 1 },
               monto_iva: 3,
               precio_total: 23,
             },
@@ -784,7 +798,16 @@ export function ModalEditarProducto({
     const temp = nuevas[idx]!;
     nuevas[idx] = nuevas[targetIdx]!;
     nuevas[targetIdx] = temp;
-    setVariantesLocales(nuevas);
+
+    const nuevasConOrden = nuevas.map((v, i) => ({
+      ...v,
+      var_detalle_variante: {
+        ...(v.var_detalle_variante || {}),
+        orden: i + 1,
+      },
+    }));
+
+    setVariantesLocales(nuevasConOrden);
     setVarianteActivaIndex(targetIdx);
   };
 
@@ -964,26 +987,29 @@ export function ModalEditarProducto({
       }
     }
 
-    // 2. Validación y auto-conversión de portadas de variantes
+    // 2. Validación y auto-conversión de portadas de variantes y estampado de orden secuencial
     const variantesParaGuardar = await Promise.all(
-      variantesLocales.map(async (v) => {
+      variantesLocales.map(async (v, i) => {
         const port = v.var_detalle_variante?.portada_url;
+        let portFinal = port || null;
         if (
           port &&
           (port.includes("photos.google.com") || port.includes("photos.app.goo.gl"))
         ) {
           const resV = await resolverUrlImagenDirectaAction(port);
           if (resV.ok && resV.urlDirecta) {
-            return {
-              ...v,
-              var_detalle_variante: {
-                ...(v.var_detalle_variante || {}),
-                portada_url: resV.urlDirecta,
-              },
-            };
+            portFinal = resV.urlDirecta;
           }
         }
-        return v;
+        return {
+          ...v,
+          var_detalle_variante: {
+            ...(v.var_detalle_variante || {}),
+            orden: i + 1,
+            portada_url: portFinal,
+            album_url: v.var_detalle_variante?.album_url?.trim() || null,
+          },
+        };
       })
     );
 
@@ -3414,6 +3440,163 @@ export function ModalEditarProducto({
                           }}
                         >
                           + Personalizar Foto Propia
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* 1.1 CONFIGURACIÓN DE ÁLBUM DE MUESTRAS REALES PARA ESTE TAMAÑO (HERENCIA VS PROPIO) */}
+                  <div
+                    style={{
+                      background: "#F8FAFC",
+                      border: "1px solid #E2E8F0",
+                      borderRadius: "8px",
+                      padding: "12px",
+                      marginBottom: "12px",
+                    }}
+                  >
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                        <Camera size={15} color={colActiva.dot} />
+                        <label style={{ fontSize: "0.75rem", fontWeight: 800, color: "#1E293B" }}>
+                          Álbum de Muestras Reales para "{varianteActual.var_nombre}"
+                        </label>
+                      </div>
+
+                      {/* Selector de Herencia vs Álbum Propio */}
+                      <div style={{ display: "flex", gap: "4px" }}>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const det = { ...(varianteActual.var_detalle_variante || {}), album_url: null };
+                            actualizarVarianteActual("var_detalle_variante", det);
+                          }}
+                          style={{
+                            padding: "3px 8px",
+                            borderRadius: "4px",
+                            fontSize: "0.68rem",
+                            fontWeight: 700,
+                            border: !varianteActual.var_detalle_variante?.album_url ? "1.5px solid #0F172A" : "1px solid #CBD5E1",
+                            background: !varianteActual.var_detalle_variante?.album_url ? "#0F172A" : "#FFFFFF",
+                            color: !varianteActual.var_detalle_variante?.album_url ? "#FFFFFF" : "#64748B",
+                            cursor: "pointer",
+                          }}
+                        >
+                          ⚪ Usar Álbum del Master
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (!varianteActual.var_detalle_variante?.album_url) {
+                              const det = { ...(varianteActual.var_detalle_variante || {}), album_url: albumFotosUrl || "https://" };
+                              actualizarVarianteActual("var_detalle_variante", det);
+                            }
+                          }}
+                          style={{
+                            padding: "3px 8px",
+                            borderRadius: "4px",
+                            fontSize: "0.68rem",
+                            fontWeight: 700,
+                            border: Boolean(varianteActual.var_detalle_variante?.album_url) ? `1.5px solid ${colActiva.border}` : "1px solid #CBD5E1",
+                            background: Boolean(varianteActual.var_detalle_variante?.album_url) ? colActiva.bg : "#FFFFFF",
+                            color: Boolean(varianteActual.var_detalle_variante?.album_url) ? colActiva.text : "#64748B",
+                            cursor: "pointer",
+                          }}
+                        >
+                          📸 Álbum Propio de este Tamaño
+                        </button>
+                      </div>
+                    </div>
+
+                    {varianteActual.var_detalle_variante?.album_url ? (
+                      <div>
+                        <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
+                          <input
+                            type="url"
+                            placeholder="https://photos.app.goo.gl/... o enlace de fotos de este tamaño ➔"
+                            value={varianteActual.var_detalle_variante.album_url}
+                            onChange={(e) => {
+                              const det = { ...(varianteActual.var_detalle_variante || {}), album_url: e.target.value.trim() || null };
+                              actualizarVarianteActual("var_detalle_variante", det);
+                            }}
+                            style={{
+                              flex: 1,
+                              padding: "7px 10px",
+                              borderRadius: "6px",
+                              border: "1px solid #CBD5E1",
+                              fontSize: "0.8rem",
+                              boxSizing: "border-box",
+                              background: "#FFFFFF",
+                            }}
+                          />
+                          {varianteActual.var_detalle_variante.album_url && (
+                            <a
+                              href={varianteActual.var_detalle_variante.album_url}
+                              target="_blank"
+                              rel="noreferrer"
+                              style={{
+                                background: colActiva.badge,
+                                color: colActiva.text,
+                                border: `1px solid ${colActiva.border}`,
+                                padding: "7px 10px",
+                                borderRadius: "6px",
+                                fontSize: "0.72rem",
+                                fontWeight: 700,
+                                textDecoration: "none",
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "4px",
+                                whiteSpace: "nowrap",
+                              }}
+                            >
+                              <ExternalLink size={12} />
+                              <span>Probar Link</span>
+                            </a>
+                          )}
+                        </div>
+                        <div style={{ marginTop: "4px", fontSize: "0.68rem", color: "#64748B" }}>
+                          🟢 Este tamaño abrirá este álbum exclusivo cuando el cliente haga clic en "📸 Muestras Reales".
+                        </div>
+                      </div>
+                    ) : (
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          background: "#FFFFFF",
+                          border: "1px dashed #CBD5E1",
+                          borderRadius: "6px",
+                          padding: "8px 12px",
+                        }}
+                      >
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                          <span style={{ fontSize: "0.75rem", color: "#1E293B", fontWeight: 700 }}>
+                            ⚪ Álbum Heredado del Master:
+                          </span>
+                          <span style={{ fontSize: "0.72rem", color: albumFotosUrl ? "#0284C7" : "#94A3B8", fontStyle: albumFotosUrl ? "normal" : "italic" }}>
+                            {albumFotosUrl || "Sin álbum global configurado en el master"}
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const det = { ...(varianteActual.var_detalle_variante || {}), album_url: albumFotosUrl || "https://" };
+                            actualizarVarianteActual("var_detalle_variante", det);
+                          }}
+                          style={{
+                            background: colActiva.badge,
+                            color: colActiva.text,
+                            border: `1px solid ${colActiva.border}`,
+                            padding: "4px 9px",
+                            borderRadius: "4px",
+                            fontSize: "0.7rem",
+                            fontWeight: 700,
+                            cursor: "pointer",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          + Configurar Álbum Exclusivo
                         </button>
                       </div>
                     )}

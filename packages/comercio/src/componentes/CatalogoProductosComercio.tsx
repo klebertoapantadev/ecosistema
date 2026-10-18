@@ -114,6 +114,8 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
 
   // Estado de feedback al copiar URL de consulta
   const [copiadoConsulta, setCopiadoConsulta] = useState(false);
+  // Estado para indicar si se está guardando el orden de variantes de un producto
+  const [guardandoOrdenProdId, setGuardandoOrdenProdId] = useState<string | null>(null);
 
   // Inicializar parámetros de consulta desde URL (Deep Linking & Compartir)
   useEffect(() => {
@@ -215,6 +217,67 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
       alert(err.message || "Error al actualizar estado del producto.");
     } finally {
       setGuardandoActivoKey(null);
+    }
+  };
+
+  // Reordenar variantes de un producto directamente en la tarjeta con actualización optimista y persistencia en Supabase
+  const handleMoverVarianteEnTarjeta = async (
+    p: ProductoCatalogo,
+    variantesLista: VarianteCatalogo[],
+    vIdx: number,
+    direccion: "arriba" | "abajo",
+    e: React.MouseEvent
+  ) => {
+    e.stopPropagation();
+    const targetIdx = direccion === "arriba" ? vIdx - 1 : vIdx + 1;
+    if (targetIdx < 0 || targetIdx >= variantesLista.length) return;
+
+    const nuevas = [...variantesLista];
+    const temp = nuevas[vIdx]!;
+    nuevas[vIdx] = nuevas[targetIdx]!;
+    nuevas[targetIdx] = temp;
+
+    // Estampar orden secuencial 1..N
+    const nuevasConOrden = nuevas.map((v, i) => ({
+      ...v,
+      var_detalle_variante: {
+        ...(v.var_detalle_variante || {}),
+        orden: i + 1,
+      },
+    }));
+
+    // Actualización optimista inmediata en la UI
+    setProductos((prev) =>
+      prev.map((item) =>
+        item.pro_id === p.pro_id ? { ...item, variantes: nuevasConOrden } : item
+      )
+    );
+
+    setGuardandoOrdenProdId(p.pro_id);
+    try {
+      const res = await editarProductoAction({
+        pro_id: p.pro_id,
+        nombre: p.pro_nombre,
+        descripcion: p.pro_descripcion || "",
+        categoriaId: p.pro_categoria_principal_id || undefined,
+        tipo: p.pro_tipo,
+        destacado: p.pro_destacado,
+        pro_activo: p.pro_activo,
+        variantes: nuevasConOrden,
+        negocio,
+      });
+
+      if (res.ok && res.producto) {
+        setProductos((prev) =>
+          prev.map((item) =>
+            item.pro_id === p.pro_id ? res.producto! : item
+          )
+        );
+      }
+    } catch (err) {
+      console.error("Error al reordenar variantes en tarjeta:", err);
+    } finally {
+      setGuardandoOrdenProdId(null);
     }
   };
 
@@ -1204,7 +1267,12 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
           }}
         >
           {productosFiltrados.map((p) => {
-            const variantesLista = Array.isArray(p.variantes) ? p.variantes : [];
+            const variantesLista = (Array.isArray(p.variantes) ? [...p.variantes] : []).sort((a, b) => {
+              const ordA = typeof a.var_detalle_variante?.orden === "number" ? a.var_detalle_variante.orden : 999;
+              const ordB = typeof b.var_detalle_variante?.orden === "number" ? b.var_detalle_variante.orden : 999;
+              if (ordA !== ordB) return ordA - ordB;
+              return (a.var_precio || 0) - (b.var_precio || 0);
+            });
             const currentVarId = varianteSeleccionadaPorProducto[p.pro_id] || variantesLista[0]?.var_id;
             const currentVar = variantesLista.find((v) => v.var_id === currentVarId) || variantesLista[0];
             const esHonorario = p.pro_tipo === "SERVICIO" || (p.pro_slug && p.pro_slug.includes("honorarios"));
@@ -2137,6 +2205,14 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                                     📸 Foto
                                   </span>
                                 )}
+                                {v.var_detalle_variante?.album_url && (
+                                  <span
+                                    title={`Álbum exclusivo para ${v.var_nombre}`}
+                                    style={{ fontSize: "0.62rem", background: "#EFF6FF", color: "#1D4ED8", border: "1px solid #BFDBFE", padding: "1px 5px", borderRadius: "4px", fontWeight: 700 }}
+                                  >
+                                    📁 Álbum
+                                  </span>
+                                )}
                               </div>
 
                               <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
@@ -2150,33 +2226,8 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                                       <div style={{ display: "flex", flexDirection: "column", gap: "1px" }}>
                                         <button
                                           type="button"
-                                          disabled={vIdx === 0}
-                                          onClick={async (e) => {
-                                            e.stopPropagation();
-                                            const targetIdx = vIdx - 1;
-                                            if (targetIdx < 0) return;
-                                            const nuevas = [...variantesLista];
-                                            const temp = nuevas[vIdx]!;
-                                            nuevas[vIdx] = nuevas[targetIdx]!;
-                                            nuevas[targetIdx] = temp;
-
-                                            setProductos((prev) =>
-                                              prev.map((item) =>
-                                                item.pro_id === p.pro_id ? { ...item, variantes: nuevas } : item
-                                              )
-                                            );
-
-                                            await editarProductoAction({
-                                              pro_id: p.pro_id,
-                                              nombre: p.pro_nombre,
-                                              descripcion: p.pro_descripcion || "",
-                                              categoriaId: p.pro_categoria_principal_id || undefined,
-                                              tipo: p.pro_tipo,
-                                              destacado: p.pro_destacado,
-                                              variantes: nuevas,
-                                              negocio,
-                                            });
-                                          }}
+                                          disabled={vIdx === 0 || guardandoOrdenProdId === p.pro_id}
+                                          onClick={(e) => handleMoverVarianteEnTarjeta(p, variantesLista, vIdx, "arriba", e)}
                                           title="Mover variante arriba"
                                           aria-label="Mover variante arriba"
                                           style={{
@@ -2184,8 +2235,8 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                                             border: `1px solid ${colVar.border}`,
                                             borderRadius: "3px",
                                             padding: "1px 4px",
-                                            cursor: vIdx === 0 ? "not-allowed" : "pointer",
-                                            opacity: vIdx === 0 ? 0.3 : 1,
+                                            cursor: vIdx === 0 || guardandoOrdenProdId === p.pro_id ? "not-allowed" : "pointer",
+                                            opacity: vIdx === 0 ? 0.3 : guardandoOrdenProdId === p.pro_id ? 0.6 : 1,
                                             display: "flex",
                                             alignItems: "center",
                                             justifyContent: "center",
@@ -2196,33 +2247,8 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
 
                                         <button
                                           type="button"
-                                          disabled={vIdx === variantesLista.length - 1}
-                                          onClick={async (e) => {
-                                            e.stopPropagation();
-                                            const targetIdx = vIdx + 1;
-                                            if (targetIdx >= variantesLista.length) return;
-                                            const nuevas = [...variantesLista];
-                                            const temp = nuevas[vIdx]!;
-                                            nuevas[vIdx] = nuevas[targetIdx]!;
-                                            nuevas[targetIdx] = temp;
-
-                                            setProductos((prev) =>
-                                              prev.map((item) =>
-                                                item.pro_id === p.pro_id ? { ...item, variantes: nuevas } : item
-                                              )
-                                            );
-
-                                            await editarProductoAction({
-                                              pro_id: p.pro_id,
-                                              nombre: p.pro_nombre,
-                                              descripcion: p.pro_descripcion || "",
-                                              categoriaId: p.pro_categoria_principal_id || undefined,
-                                              tipo: p.pro_tipo,
-                                              destacado: p.pro_destacado,
-                                              variantes: nuevas,
-                                              negocio,
-                                            });
-                                          }}
+                                          disabled={vIdx === variantesLista.length - 1 || guardandoOrdenProdId === p.pro_id}
+                                          onClick={(e) => handleMoverVarianteEnTarjeta(p, variantesLista, vIdx, "abajo", e)}
                                           title="Mover variante abajo"
                                           aria-label="Mover variante abajo"
                                           style={{
@@ -2230,8 +2256,8 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                                             border: `1px solid ${colVar.border}`,
                                             borderRadius: "3px",
                                             padding: "1px 4px",
-                                            cursor: vIdx === variantesLista.length - 1 ? "not-allowed" : "pointer",
-                                            opacity: vIdx === variantesLista.length - 1 ? 0.3 : 1,
+                                            cursor: vIdx === variantesLista.length - 1 || guardandoOrdenProdId === p.pro_id ? "not-allowed" : "pointer",
+                                            opacity: vIdx === variantesLista.length - 1 ? 0.3 : guardandoOrdenProdId === p.pro_id ? 0.6 : 1,
                                             display: "flex",
                                             alignItems: "center",
                                             justifyContent: "center",
