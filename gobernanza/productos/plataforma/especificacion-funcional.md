@@ -472,6 +472,8 @@ Motor centralizado de gestión de bienes, servicios, recetas (BOM), inventarios,
     - **Herencia por Defecto en Variantes:** Toda variante (`com_variante`) hereda automáticamente los recursos y textos globales del producto master sin requerir duplicación manual de datos.
     - **Sobrescritura Granular en Variante (`com_variante.var_detalle_variante`):** Cada variante puede personalizar de forma opcional e independiente:
       - *Foto / Portada Específica:* Si se asigna una URL en `portada_url`, la vitrina y checkout muestran la foto del tamaño específico (ej. arreglo pequeño vs arreglo gigante VIP con corona). Si se deja vacía, hereda la portada global.
+      - *Álbum de Muestras Reales Específico (`album_url`):* Permite configurar un enlace a álbum de Google Photos o galería de fotos reales exclusivo para ese tamaño o variante puntual. Si se deja vacío, hereda de forma transparente el álbum configurado en el producto master (`album_fotos_url`).
+      - *Reordenamiento Secuencial de Variantes:* Permite reordenar el orden de presentación de las variaciones tanto directamente desde la tarjeta del catálogo comercial como desde el modal de edición (`ModalEditarProducto.tsx`), persistiendo el campo `orden` numérico secuencial (`1..N`) en `com_variante.var_detalle_variante` y garantizando el ordenamiento visual y operacional en tienda web, apps móviles y agentes ARIA.
       - *Tiempo de Entrega Específico:* Permite fijar un SLA particular para esa variante (ej. *Pequeño: Entrega Inmediata 45-90 min* vs *Gigante VIP: Elaboración 24h*).
       - *Modo de Beneficios (`beneficios_modo`):*
         - `heredar` (por defecto): Utiliza la lista base del producto master.
