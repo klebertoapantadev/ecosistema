@@ -25,6 +25,7 @@ import {
   subirImagenCatalogoAction,
   ElementoMedioGaleria,
 } from "../acciones";
+import { subirImagenClienteOAccion } from "../utils/clienteStorage";
 
 interface Props {
   abierto: boolean;
@@ -104,8 +105,24 @@ export function ModalGaleriaMedios({
     setError(null);
     setExito(null);
 
+    const LIMITE_5MB = 5 * 1024 * 1024;
     const lista = Array.from(archivos);
-    setArchivosProgreso(lista.map((f) => ({ nombre: f.name, estado: "subiendo" })));
+
+    // Detectar de inmediato archivos que superan 5MB
+    const excedidos = lista.filter((f) => f.size > LIMITE_5MB);
+    if (excedidos.length > 0) {
+      const detalleExcedidos = excedidos
+        .map((f) => `"${f.name}" (${(f.size / (1024 * 1024)).toFixed(2)} MB)`)
+        .join(", ");
+      setError(`⚠️ Advertencia de tamaño: Se detectaron archivos que superan el límite de 5 MB: ${detalleExcedidos}. Por favor selecciona fotos de menor peso.`);
+    }
+
+    setArchivosProgreso(
+      lista.map((f) => ({
+        nombre: f.name,
+        estado: f.size > LIMITE_5MB ? "error" : "subiendo",
+      }))
+    );
 
     let exitosos = 0;
     let ultimaUrl = "";
@@ -113,13 +130,11 @@ export function ModalGaleriaMedios({
 
     for (let i = 0; i < lista.length; i++) {
       const file = lista[i]!;
+      if (file.size > LIMITE_5MB) {
+        continue;
+      }
       try {
-        const formData = new FormData();
-        formData.append("file", file);
-        formData.append("negocio", negocio);
-        formData.append("carpeta", filtroCarpeta || "portadas");
-
-        const res = await subirImagenCatalogoAction(formData);
+        const res = await subirImagenClienteOAccion(file, negocio, filtroCarpeta || "portadas");
         if (res.ok && res.urlPublica) {
           exitosos++;
           ultimaUrl = res.urlPublica;
@@ -143,7 +158,7 @@ export function ModalGaleriaMedios({
       setExito(`¡Se subieron ${exitosos} imagen(es) a la galería de ${negocio.toUpperCase()}!`);
       await cargarMedios();
       setTabActiva("biblioteca");
-    } else {
+    } else if (excedidos.length === 0) {
       setError("No se pudo subir ninguno de los archivos seleccionados.");
     }
   };
@@ -745,7 +760,7 @@ export function ModalGaleriaMedios({
                   Arrastra y suelta fotos aquí, o haz clic para examinar
                 </h4>
                 <p style={{ margin: "0 0 14px 0", fontSize: "0.78rem", color: "#64748B" }}>
-                  Archivos compatibles: JPG, PNG, WEBP, GIF, SVG (Hasta 15 MB por imagen).
+                  Archivos compatibles: JPG, PNG, WEBP, GIF, SVG (Hasta 5 MB por imagen).
                 </p>
 
                 <div style={{ display: "inline-flex", gap: "8px", alignItems: "center" }}>

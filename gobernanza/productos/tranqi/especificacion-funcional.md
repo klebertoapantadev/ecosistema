@@ -12,7 +12,8 @@ responsables: Kleber Toapanta / Jesus Navarrete
 **Esquema de Base de Datos:** `tranqui_legal` · **Prefijo de tablas:** `trq_`  
 **Propietarios:** Tranqi Legal Network (Ecosistema Legaltech)
 
-**Sistema visual:** [`sistema-visual.md`](sistema-visual.md) — paleta, uso del color por perfil (Cliente, Abogado, Operador/Administrador) y maquetas de referencia. Aplica a `tranqi-web` y aplicaciones móviles.
+**Sistema visual:** [`sistema-visual.md`](sistema-visual.md) — paleta, uso del color por perfil (Cliente, Abogado, Operador/Administrador) y maquetas de referencia. Aplica a `tranqi-web` y aplicaciones móviles.  
+**Homologación de Prototipo (87 pantallas):** [`homologacion-prototipo-vs-produccion.md`](homologacion-prototipo-vs-produccion.md) — auditoría y mapeo detallado entre las expectativas del prototipo del cliente y las URLs reales activas en producción (https://www.tranqi24.com).
 
 ---
 
@@ -42,6 +43,7 @@ Tranqi adopta las mejores prácticas y estándares internacionales de **Law Prac
 | **`TRQ-CAS-002`** | **Equipo Legal** | **Asignación Multirrol de Abogados (Titular / Co-patrocinadores / Mesa de Control)** | 🟡 Especificado | **25%** | Kleber Toapanta |
 | **`TRQ-DOC-001`** | **Gestión Documental** | **Gestor Documental por Etapas Procesales, Billetera y Versionamiento vN** | 🟡 Especificado | **30%** | Kleber Toapanta |
 | **`TRQ-CAS-003`** | **Actuaciones** | **Bitácora Procesal, Plazos COGEP y Notas Internas vs. Públicas** | 🟡 Especificado | **25%** | Kleber Toapanta / Jesus Navarrete |
+| **`TRQ-GES-001`** | **Gestor / Tramitador** | **Rol Gestor (Interno / Externo por Honorarios): Asignación Temporal N:M a Casos, Diligencias Operativas y Registro de Horas Facturables** | ⏳ Pendiente | **0%** | Kleber Toapanta / Jesus Navarrete |
 | **`TRQ-DIG-001`** | **Digitalización** | **Ingesta de Archivo Físico Histórico, Topología de Bodega, Etiquetado QR y Cerebro de Precedentes** | 🟡 En Desarrollo | **60%** | Jesus Navarrete (IA) / Kleber Toapanta |
 | **`TRQ-CLI-001`** | **Cliente** | **Portal de Casos, Solicitud de Patrocinio y Consultas Telemáticas** | 🟡 En Desarrollo | **40%** | Jesus Navarrete / Kleber Toapanta |
 | **`TRQ-CLI-002`** | **Cliente** | **Módulo Express de Revisión y Dictamen Legal de Contratos/Minutas (IA)** | ⏳ Pendiente | **0%** | **Jesus Navarrete (IA)** |
@@ -55,7 +57,7 @@ Tranqi adopta las mejores prácticas y estándares internacionales de **Law Prac
 | **`TRQ-ADM-001`** | **Operador/Admin** | **Mesa de Control de Acreditación, Contra-Firma Tranqi y Activación de Socios** | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`TRQ-ADM-002`** | **Operador/Admin** | **Asignación Inteligente de Casos (IA), Liquidación de Honorarios y Comisiones** | ⏳ Pendiente | **0%** | **Jesus Navarrete (IA)** / Kleber Toapanta |
 | **`TRQ-ADM-003`** | **Operador/Admin** | **Auditoría Transversal BDD, Telemetría API y Bitácora de Campañas** | ✅ Implementado | **100%** | Kleber Toapanta |
-| **`TRQ-ADM-004`** | **Operador/Admin** | **Catálogo Comercial, Tarifario de Honorarios, Pasarela Payphone e Historial** | ✅ Implementado | **100%** | Kleber Toapanta |
+| **`TRQ-ADM-004`** | **Operador/Admin** | **Catálogo Comercial, Tarifario de Honorarios, Pasarela Pagoplux (Pagos y Facturación Electrónica SRI) e Historial** | 🟡 En Desarrollo | **30%** | Kleber Toapanta |
 | **`TRQ-B2B-001`** | **B2B / Empresas** | **Convenios Corporativos: Consultas Jurídicas Gratuitas, Descuento en Servicios y Billetera Legal** | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`TRQ-B2B-002`** | **B2B / Empresas** | **Widget de Nómina Corporativa, Carga Masiva, Invitaciones por Correo y Link con Empresa Padre** | 🟡 Especificado | **30%** | Kleber Toapanta |
 | **`TRQ-B2B-003`** | **B2B / Empresas** | **Portal Empresa: Administradores Corporativos, Roles RBAC, Secreto Profesional y Expedientes** | 🟡 Especificado | **30%** | Kleber Toapanta |
@@ -591,15 +593,74 @@ Contenedor nuclear (*Matter*) del consultorio jurídico. Centraliza la informaci
 #### 1. Descripción
 Modelo de conformación de equipos jurídicos por expediente, permitiendo la colaboración estructurada entre socios profesionales, asistentes y la Mesa de Control.
 
-#### 2. Roles en el Expediente
-1. **Abogado Titular / Responsable (*Lead Attorney*):** Patrocinador principal, suscribe escritos, comparece a audiencias y lidera la estrategia jurídica.
-2. **Abogado Co-patrocinador / Colaborador (*Associate Attorney*):** Apoya en la revisión de pruebas, redacción de minutas y diligencias judiciales.
-3. **Paralegal / Asistente:** Carga de documentos, seguimiento de providencias y transcripciones.
-4. **Mesa de Control / Operador:** Supervisión de calidad, asignación y auditoría de plazos.
+#### 2. Roles en el Expediente (Topología de 4 Actores)
+1. **Cliente:** Titular o beneficiario del caso, consulta estados, carga insumos iniciales y abona honorarios.
+2. **Abogado Titular / Responsable (*Lead Attorney*):** Patrocinador principal, suscribe escritos con firma `.p12`, comparece a audiencias y lidera la estrategia jurídica.
+3. **Gestor (Tramitador Colaborador - Interno o Externo por Honorarios):** Responsable operativo de la radicación, diligencias notariales/registrales, retiro de providencias y carga de habilitantes/tasas con acceso temporal y restringido.
+4. **Mesa de Control / Operador Tranqi:** Supervisión de calidad, asignación, contingencia operativa, auditoría de plazos y aprobación de liquidaciones.
 
 #### 3. Reglas de Negocio
 - **Aislamiento RLS Estricto:** Un socio abogado solo tiene acceso de lectura/escritura a los expedientes donde figura en el equipo asignado (`trq_caso_abogado_equipo`).
-- **Reasignación por Contingencia:** La Mesa de Control puede reasignar el abogado titular ante imprevistos médicos o audiencias superpuestas, con registro inmutable en auditoría.
+- **Reasignación por Contingencia:** La Mesa de Control puede reasignar el abogado titular o el gestor ante imprevistos, con registro inmutable en auditoría.
+
+---
+
+### TRQ-GES-001 — Rol Gestor (Interno / Externo por Honorarios): Asignación Temporal N:M a Casos, Diligencias Operativas y Registro de Horas Facturables
+**Responsables:** Kleber Toapanta / Jesus Navarrete | **Estado:** ⏳ Pendiente (0% Implementado / En Especificación)
+
+> [!WARNING]
+> **Estado de Implementación:** El concepto de Gestor **NO existe actualmente en producción ni en base de datos (0% implementado / 100% pendiente)**. No debe confundirse con el rol de Operador. La presente especificación establece la arquitectura funcional y técnica para su posterior desarrollo.
+
+#### 1. Contexto y Visión de Negocio
+En la práctica jurídica y de tramitación legal (procesos notariales, vehiculares, mercantiles, societarios, registrales y judiciales), la figura del **Gestor** (tramitador, procurador judicial o paralegal de campo) es el ejecutor operativo de diligencias físicas y digitales. En casos facturables por horas o por arancel fijo de gestión, el sistema debe contemplar la asignación mandatoria o facultativa de un gestor colaborando directamente con el abogado titular y bajo la supervisión de la Mesa de Control de Tranqi.
+
+#### 2. Modalidades de Contratación del Gestor
+1. **Gestor Interno:** Personal operativo de planta del estudio legal o de Tranqi, con salario fijo o tarifa interna de horas.
+2. **Gestor Externo (Honorarios Profesionales / Freelance):** Tramitador independiente acreditado en la red, contratado por evento/trámite o por bolsa de horas, quien factura honorarios con retención e IVA 15% SRI al liquidar la diligencia.
+
+#### 3. Modelo de Seguridad y Acceso Temporal Restringido (Principio de Mínimo Privilegio)
+A diferencia de un operador o administrador, el Gestor opera bajo una política de **Acceso Estrictamente Acotado (Case-Bounded & Time-Bounded Access)**:
+- **Sin Directorio Global:** No tiene acceso al catálogo general de clientes, a la facturación global de la firma ni a otros casos de la plataforma.
+- **Acceso Exclusivo al Caso Asignado:** Únicamente puede consultar el expediente específico donde exista un registro activo en `trq_caso_gestor`.
+- **Ventana de Acceso Temporal (Time-to-Live):** La asignación define un rango de fechas (`fecha_inicio` a `fecha_fin_acceso`). Al cumplirse la fecha o finalizar la diligencia, el RLS revoca automáticamente la visibilidad.
+- **Secreto Profesional y Carpetas Protegidas:** El gestor NO puede ver las notas internas de estrategia del abogado litigante (`es_confidencial_abogado = true`) ni documentos no vinculados a su diligencia.
+
+#### 4. Responsabilidades y Flujo Operativo del Gestor
+1. **Recepción de Diligencia:** Notificación in-app y WhatsApp de nueva asignación de trámite con plazo máximo de ejecución.
+2. **Descarga de Habilitantes:** Consulta y descarga de escritos firmados por el abogado titular y poderes del cliente.
+3. **Ejecución y Carga de Evidencias:** Carga digital inmediata de:
+   - Fotos/escaneos de fe de presentación o sello de recepción en ventanilla judicial/notarial.
+   - Facturas o comprobantes de pago de aranceles y tasas públicas oficiales (SRI, Judicatura, Notaría).
+   - Resoluciones, copias certificadas o actas obtenidas.
+4. **Cronómetro y Registro de Horas Facturables:** Ingreso de horas invertidas en la diligencia (con justificación y geolocalización opcional) para alimentar la liquidación contable del caso.
+
+#### 5. Modelo de Datos Preliminar (A implementar)
+```sql
+-- Tabla de perfil de gestores en tranquil_legal
+CREATE TABLE IF NOT EXISTS tranqui_legal.trq_gestor (
+    ges_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    ges_usr_id UUID NOT NULL REFERENCES comun_seguridad.seg_usuario(usr_id),
+    ges_tipo VARCHAR(20) NOT NULL CHECK (ges_tipo IN ('INTERNO', 'EXTERNO_HONORARIOS')),
+    ges_identificacion VARCHAR(20) NOT NULL,
+    ges_nombres VARCHAR(150) NOT NULL,
+    ges_telefono VARCHAR(30),
+    ges_tarifa_hora NUMERIC(10,2) DEFAULT 0.00,
+    ges_activo BOOLEAN DEFAULT TRUE,
+    ges_datos_bancarios JSONB DEFAULT '{}'::jsonb
+);
+
+-- Tabla de asignación N:M temporal a expedientes
+CREATE TABLE IF NOT EXISTS tranqui_legal.trq_caso_gestor (
+    cgs_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    cgs_cas_id UUID NOT NULL REFERENCES tranqui_legal.trq_caso(cas_id),
+    cgs_ges_id UUID NOT NULL REFERENCES tranqui_legal.trq_gestor(ges_id),
+    cgs_fecha_inicio TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    cgs_fecha_limite TIMESTAMPTZ,
+    cgs_estado VARCHAR(20) NOT NULL DEFAULT 'ACTIVO' CHECK (cgs_estado IN ('ACTIVO', 'COMPLETADO', 'REVOCADO', 'VENCIDO')),
+    cgs_instrucciones TEXT,
+    cgs_honorario_pactado NUMERIC(10,2) DEFAULT 0.00
+);
+```
 
 ---
 

@@ -22,6 +22,11 @@ const commit = process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7);
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  experimental: {
+    serverActions: {
+      bodySizeLimit: "6mb",
+    },
+  },
   transpilePackages: ["@eco/agentes-ia", "@eco/supabase", "@eco/identidad", "@eco/configuracion-negocio", "@eco/gestion-usuarios", "@eco/primitivas"],
   // Monorepo pnpm: sin esto, el file tracing del build serverless no ve el
   // node_modules hoisted en la raiz del workspace y el deploy pierde

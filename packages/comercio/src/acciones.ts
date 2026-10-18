@@ -2442,11 +2442,12 @@ export async function subirImagenCatalogoAction(
       };
     }
 
-    // Tamaño máximo 15MB
-    if (file.size > 15 * 1024 * 1024) {
+    // Tamaño máximo 5MB por imagen
+    if (file.size > 5 * 1024 * 1024) {
+      const tamanoMb = (file.size / (1024 * 1024)).toFixed(2);
       return {
         ok: false,
-        error: "La imagen supera el tamaño máximo permitido de 15 MB.",
+        error: `La imagen supera el tamaño máximo permitido de 5 MB (tamaño actual: ${tamanoMb} MB). Por favor selecciona un archivo más liviano o redúcelo antes de subir.`,
       };
     }
 
@@ -2466,17 +2467,6 @@ export async function subirImagenCatalogoAction(
     if (clienteActivo?.storage) {
       const bucketName = "catalogo";
       try {
-        // Asegurar que el bucket exista
-        const { data: buckets } = await clienteActivo.storage.listBuckets();
-        const existe = buckets?.some((b: any) => b.name === bucketName || b.id === bucketName);
-        if (!existe && admin) {
-          await admin.storage.createBucket(bucketName, {
-            public: true,
-            fileSizeLimit: 15728640,
-            allowedMimeTypes: tiposPermitidos,
-          }).catch(() => {});
-        }
-
         const { error: uploadError } = await clienteActivo.storage
           .from(bucketName)
           .upload(rutaArchivo, buffer, {
@@ -2495,6 +2485,32 @@ export async function subirImagenCatalogoAction(
               urlPublica: pubData.publicUrl,
               nombreArchivo: file.name,
             };
+          }
+        } else {
+          console.warn("Aviso: Falló subida a bucket 'catalogo':", uploadError.message);
+          // Si el bucket no existe y tenemos admin, intentar crearlo
+          if (admin && (uploadError.message?.includes("not found") || uploadError.message?.includes("Bucket"))) {
+            await admin.storage.createBucket(bucketName, {
+              public: true,
+              fileSizeLimit: 15728640,
+              allowedMimeTypes: tiposPermitidos,
+            }).catch(() => {});
+            const { error: retryErr } = await admin.storage
+              .from(bucketName)
+              .upload(rutaArchivo, buffer, {
+                contentType: file.type,
+                upsert: true,
+              });
+            if (!retryErr) {
+              const { data: pubData } = admin.storage.from(bucketName).getPublicUrl(rutaArchivo);
+              if (pubData?.publicUrl) {
+                return {
+                  ok: true,
+                  urlPublica: pubData.publicUrl,
+                  nombreArchivo: file.name,
+                };
+              }
+            }
           }
         }
       } catch (storageErr: any) {

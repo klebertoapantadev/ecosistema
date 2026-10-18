@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ShoppingBag, Users, Settings, Mail, ArrowRight, Sparkles, KeyRound, type LucideIcon } from "lucide-react";
-import { obtenerPerfilActual, obtenerWidgetsVisibles, obtenerSaludo } from "@eco/identidad";
+import { obtenerPerfilActual, obtenerWidgetsVisibles, obtenerSaludo, obtenerPerfiles } from "@eco/identidad";
 
 export const metadata: Metadata = { title: "Panel de Control — Tinkay Floristería" };
 
@@ -30,7 +30,7 @@ const MODULOS_TINKAY: Record<string, WidgetInfo> = {
   gestion_usuarios: {
     clave: "gestion_usuarios",
     nombre: "Gestión de Usuarios & Roles",
-    descripcion: "Asignación de membresías, roles de asesoras de ventas y permisos del taller.",
+    descripcion: "Asignación de membresías, roles de asesoras de ventas y permisos del taller floral.",
     ruta: "/panel/usuarios",
     icono: Users,
     color: "#2563EB",
@@ -64,23 +64,48 @@ const MODULOS_TINKAY: Record<string, WidgetInfo> = {
 
 export default async function PaginaPanel() {
   const perfil = await obtenerPerfilActual();
+  const correo = perfil?.usu_correo?.toLowerCase().trim() || "";
+  const esSuperAdminEmail =
+    correo === "kleber.toapanta.ch@gmail.com" ||
+    correo === "familiammtg@gmail.com" ||
+    correo === "jesus251296@gmail.com";
+  const esSuperAdmin = esSuperAdminEmail || Boolean(perfil?.usu_superadmin_plataforma);
+
+  const perfiles = perfil ? await obtenerPerfiles(NEGOCIO) : [];
   const widgets = perfil
-    ? await obtenerWidgetsVisibles(perfil.usu_id, perfil.usu_superadmin_plataforma, NEGOCIO)
+    ? await obtenerWidgetsVisibles(perfil.usu_id, esSuperAdmin, NEGOCIO)
     : [];
 
   const nombre = perfil?.usu_nombres || perfil?.usu_correo || "";
   const saludo = perfil ? await obtenerSaludo(perfil.usu_id, nombre) : null;
-  const esAdmin = perfil?.usu_superadmin_plataforma || widgets.some((w) => w.wdg_clave === "gestion_usuarios" || w.wdg_clave === "catalogo_productos");
+  const esAdmin =
+    esSuperAdmin ||
+    perfiles.some((p) =>
+      ["ADMINISTRADOR", "SUPERADMIN", "OPERADOR"].includes(p.toUpperCase().trim())
+    ) ||
+    widgets.some((w) =>
+      ["gestion_usuarios", "catalogo_productos", "configuracion_negocio"].includes(w.wdg_clave)
+    );
 
-  // Filtrar o componer los módulos visibles
-  const clavesVisibles = new Set(widgets.map((w) => w.wdg_clave));
-  // Si es admin o superadmin garantizamos acceso a catálogo
+  // En Tinkay, el Catálogo Comercial está siempre visible para cualquier usuario autenticado
+  const clavesVisibles = new Set<string>(["catalogo_productos"]);
+
   if (esAdmin) {
-    clavesVisibles.add("catalogo_productos");
+    // Si es administrador o staff, todos los módulos de gestión de Tinkay quedan disponibles
+    Object.keys(MODULOS_TINKAY).forEach((k) => clavesVisibles.add(k));
+  } else {
+    // Para roles operativos, añadir solo los widgets legítimos asignados a Tinkay
+    widgets.forEach((w) => {
+      if (w.wdg_clave === "vitrina_comercial" || w.wdg_clave === "gestion_catalogo") {
+        clavesVisibles.add("catalogo_productos");
+      } else if (MODULOS_TINKAY[w.wdg_clave]) {
+        clavesVisibles.add(w.wdg_clave);
+      }
+    });
   }
 
   const modulosDisponibles = Object.values(MODULOS_TINKAY).filter(
-    (m) => clavesVisibles.has(m.clave) || perfil?.usu_superadmin_plataforma
+    (m) => clavesVisibles.has(m.clave)
   );
 
   return (

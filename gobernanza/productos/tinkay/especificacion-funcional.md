@@ -34,7 +34,14 @@ Tinkay se apoya plenamente en la arquitectura de Plataforma común:
 - **`PLT-008` (Configuración de Negocio):** Redes sociales de Tinkay, teléfonos, políticas de entrega y credenciales SMTP.
 - **`PLT-009` (Catálogo Unificado):** Tinkay consume `comun_comercio`. No posee tabla de producto aislada; sus productos se identifican con `pro_negocio = 'tinkay'`.
 - **`PLT-010` (Integración Omnicanal):** Conexión con WhatsApp Business (YCloud), feeds de catálogo y consola de supervisión humana.
-- **`PLT-011` (Widgets Administrativos):** Todas las consolas de vendedoras, taller y administración se construyen como widgets autocontenidos.
+- **`PLT-011` (Widgets Administrativos y Panel Modular):** Catálogo de herramientas y módulos propio de la floristería:
+  - `catalogo_productos` / `vitrina_comercial` (`/panel/catalogo-productos`): Catálogo multidimensional de arreglos florales, bouquets, stock de bonches y precios SRI con IVA 15%.
+  - `gestion_usuarios` (`/panel/usuarios`): Asignación de membresías y roles de taller y asesoras.
+  - `tokens_mcp` (`/panel/tokens-mcp`): Credenciales de catálogo para bots de WhatsApp y automatizaciones.
+  - `configuracion_negocio` (`/panel/configuracion`): Políticas de entrega, dedicatorias y redes oficiales.
+  - `configuracion_correo` (`/panel/correo`): Servidor SMTP para confirmaciones de despacho.
+  - Aislamiento estricto: quedan excluidos los módulos jurídicos y de contratación de otros negocios (Tranqi).
+  - Migración de saneamiento: [`20261016000001_corregir_widgets_tinkay_y_catalogo_comercial.sql`](file:///c:/IA/Ecosistema/supabase/migrations/20261016000001_corregir_widgets_tinkay_y_catalogo_comercial.sql).
 
 ---
 

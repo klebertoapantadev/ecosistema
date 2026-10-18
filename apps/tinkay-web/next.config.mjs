@@ -22,6 +22,11 @@ const commit = process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7);
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  experimental: {
+    serverActions: {
+      bodySizeLimit: "6mb",
+    },
+  },
   transpilePackages: ["@eco/supabase", "@eco/identidad", "@eco/configuracion-negocio", "@eco/gestion-usuarios", "@eco/primitivas"],
   env: {
     NEXT_PUBLIC_COMPILADO_EN: compiladoEn,

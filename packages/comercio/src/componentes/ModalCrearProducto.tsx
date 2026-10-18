@@ -32,6 +32,7 @@ import {
   CategoriaCatalogo,
   ProductoCatalogo,
 } from "../acciones";
+import { subirImagenClienteOAccion } from "../utils/clienteStorage";
 import {
   CANALES_CATALOGO_OFICIALES,
   CANALES_POR_DEFECTO,
@@ -289,18 +290,24 @@ export function ModalCrearProducto({
     }
   };
 
+  const LIMITE_MAX_IMAGEN_BYTES = 5 * 1024 * 1024; // 5 MB
+
   const handleSubirArchivoLocal = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    setSubiendoImagen(true);
     setError(null);
     setExitoAutoConvertir(null);
+
+    if (file.size > LIMITE_MAX_IMAGEN_BYTES) {
+      const tamanoMb = (file.size / (1024 * 1024)).toFixed(2);
+      setError(`⚠️ La imagen "${file.name}" supera el tamaño máximo permitido de 5 MB (tamaño detectado: ${tamanoMb} MB). Por favor selecciona una imagen menor a 5 MB.`);
+      e.target.value = "";
+      return;
+    }
+
+    setSubiendoImagen(true);
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("negocio", negocio || "comun");
-      formData.append("carpeta", "portadas");
-      const res = await subirImagenCatalogoAction(formData);
+      const res = await subirImagenClienteOAccion(file, negocio || "comun", "portadas");
       if (res.ok && res.urlPublica) {
         setImagenUrl(res.urlPublica);
         setExitoAutoConvertir(`¡Imagen "${res.nombreArchivo || file.name}" cargada con éxito desde tu equipo!`);

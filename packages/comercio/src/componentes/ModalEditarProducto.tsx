@@ -47,6 +47,7 @@ import {
   ProductoCatalogo,
   VarianteCatalogo,
 } from "../acciones";
+import { subirImagenClienteOAccion } from "../utils/clienteStorage";
 import {
   CANALES_CATALOGO_OFICIALES,
   CANALES_POR_DEFECTO,
@@ -828,18 +829,24 @@ export function ModalEditarProducto({
     }
   };
 
+  const LIMITE_MAX_IMAGEN_BYTES = 5 * 1024 * 1024; // 5 MB
+
   const handleSubirArchivoGlobal = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    setSubiendoImagenGlobal(true);
     setError(null);
     setExitoAutoConvertir(null);
+
+    if (file.size > LIMITE_MAX_IMAGEN_BYTES) {
+      const tamanoMb = (file.size / (1024 * 1024)).toFixed(2);
+      setError(`⚠️ La imagen "${file.name}" supera el tamaño máximo permitido de 5 MB (tamaño detectado: ${tamanoMb} MB). Por favor selecciona una imagen menor a 5 MB.`);
+      e.target.value = "";
+      return;
+    }
+
+    setSubiendoImagenGlobal(true);
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("negocio", negocio || "comun");
-      formData.append("carpeta", "portadas");
-      const res = await subirImagenCatalogoAction(formData);
+      const res = await subirImagenClienteOAccion(file, negocio || "comun", "portadas");
       if (res.ok && res.urlPublica) {
         setImagenUrl(res.urlPublica);
         setExitoAutoConvertir(`¡Imagen "${res.nombreArchivo || file.name}" cargada con éxito desde tu equipo!`);
@@ -857,14 +864,18 @@ export function ModalEditarProducto({
   const handleSubirArchivoVariante = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    setSubiendoImagenVariante(true);
     setError(null);
+
+    if (file.size > LIMITE_MAX_IMAGEN_BYTES) {
+      const tamanoMb = (file.size / (1024 * 1024)).toFixed(2);
+      setError(`⚠️ La imagen "${file.name}" supera el tamaño máximo permitido de 5 MB (tamaño detectado: ${tamanoMb} MB). Por favor selecciona una imagen menor a 5 MB.`);
+      e.target.value = "";
+      return;
+    }
+
+    setSubiendoImagenVariante(true);
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("negocio", negocio || "comun");
-      formData.append("carpeta", "variantes");
-      const res = await subirImagenCatalogoAction(formData);
+      const res = await subirImagenClienteOAccion(file, negocio || "comun", "variantes");
       if (res.ok && res.urlPublica) {
         const det = { ...(varianteActual?.var_detalle_variante || {}), portada_url: res.urlPublica };
         actualizarVarianteActual("var_detalle_variante", det);
@@ -882,14 +893,18 @@ export function ModalEditarProducto({
   const handleSubirArchivoGaleria = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    setSubiendoGaleria(true);
     setError(null);
+
+    if (file.size > LIMITE_MAX_IMAGEN_BYTES) {
+      const tamanoMb = (file.size / (1024 * 1024)).toFixed(2);
+      setError(`⚠️ La foto "${file.name}" supera el tamaño máximo permitido de 5 MB (tamaño detectado: ${tamanoMb} MB). Por favor selecciona una imagen menor a 5 MB.`);
+      e.target.value = "";
+      return;
+    }
+
+    setSubiendoGaleria(true);
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("negocio", negocio || "comun");
-      formData.append("carpeta", "galeria");
-      const res = await subirImagenCatalogoAction(formData);
+      const res = await subirImagenClienteOAccion(file, negocio || "comun", "galeria");
       if (res.ok && res.urlPublica) {
         setGaleriaTexto((prev) => (prev.trim() ? `${prev.trim()}\n${res.urlPublica}` : res.urlPublica!));
       } else {

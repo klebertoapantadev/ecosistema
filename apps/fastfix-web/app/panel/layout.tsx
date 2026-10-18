@@ -40,11 +40,13 @@ export default async function LayoutPanel({ children }: { children: React.ReactN
           </form>
         </div>
         <div className="panel-nav-links">
-          {widgets.map((w) => (
-            <Link key={w.wdg_clave} href={`/panel/${rutaDeWidget(w.wdg_clave)}`}>
-              {w.wdg_nombre}
-            </Link>
-          ))}
+          {widgets
+            .filter((w) => Boolean(rutaDeWidget(w.wdg_clave)))
+            .map((w) => (
+              <Link key={w.wdg_clave} href={`/panel/${rutaDeWidget(w.wdg_clave)}`}>
+                {w.wdg_nombre}
+              </Link>
+            ))}
           <Link href="/panel/cuenta">Mi cuenta</Link>
         </div>
       </aside>
