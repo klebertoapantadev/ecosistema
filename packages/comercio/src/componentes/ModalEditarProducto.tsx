@@ -458,6 +458,7 @@ export function ModalEditarProducto({
   const [guardando, setGuardando] = useState(false);
   const [eliminando, setEliminando] = useState(false);
   const [confirmarEliminar, setConfirmarEliminar] = useState(false);
+  const [confirmarEliminarVariante, setConfirmarEliminarVariante] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Presets de Usos / Casos de Aplicación contextuales por industria
@@ -715,6 +716,7 @@ export function ModalEditarProducto({
         setModoEdicion("master");
       }
       setConfirmarEliminar(false);
+      setConfirmarEliminarVariante(false);
       setError(null);
     }
   }, [producto, varianteInicialId, categorias, negocio, esFloristeria, esLegal]);
@@ -782,12 +784,33 @@ export function ModalEditarProducto({
 
   const eliminarVarianteActual = () => {
     if (variantesLocales.length <= 1) {
-      setError("El producto debe tener al menos una modalidad de tarifa.");
+      setError(esFloristeria ? "El producto debe conservar al menos un tamaño." : "El producto debe conservar al menos una variante de tarifa.");
       return;
     }
     const filtradas = variantesLocales.filter((_, idx) => idx !== varianteActivaIndex);
-    setVariantesLocales(filtradas);
+    const reordenadas = filtradas.map((v, i) => ({
+      ...v,
+      var_detalle_variante: {
+        ...(v.var_detalle_variante || {}),
+        orden: i + 1,
+      },
+    }));
+    setVariantesLocales(reordenadas);
     setVarianteActivaIndex(0);
+    setConfirmarEliminarVariante(false);
+    setError(null);
+  };
+
+  const handleEliminarVarianteClick = () => {
+    if (variantesLocales.length <= 1) {
+      setError(esFloristeria ? "El producto debe conservar al menos un tamaño." : "El producto debe conservar al menos una variante de tarifa.");
+      return;
+    }
+    if (!confirmarEliminarVariante) {
+      setConfirmarEliminarVariante(true);
+      return;
+    }
+    eliminarVarianteActual();
   };
 
   const moverVariante = (idx: number, direccion: "arriba" | "abajo", e?: React.MouseEvent) => {
@@ -1214,7 +1237,11 @@ export function ModalEditarProducto({
                     </span>
                     <button
                       type="button"
-                      onClick={() => setModoEdicion("master")}
+                      onClick={() => {
+                        setModoEdicion("master");
+                        setConfirmarEliminar(false);
+                        setConfirmarEliminarVariante(false);
+                      }}
                       title="Volver al modo de configuración master"
                       style={{
                         background: "rgba(255, 255, 255, 0.15)",
@@ -1301,7 +1328,11 @@ export function ModalEditarProducto({
           <div style={{ display: "flex", gap: "6px" }}>
             <button
               type="button"
-              onClick={() => setModoEdicion("master")}
+              onClick={() => {
+                setModoEdicion("master");
+                setConfirmarEliminar(false);
+                setConfirmarEliminarVariante(false);
+              }}
               style={{
                 display: "flex",
                 alignItems: "center",
@@ -1326,6 +1357,8 @@ export function ModalEditarProducto({
               type="button"
               onClick={() => {
                 setModoEdicion("variante");
+                setConfirmarEliminar(false);
+                setConfirmarEliminarVariante(false);
                 if (varianteActivaIndex >= variantesLocales.length) setVarianteActivaIndex(0);
               }}
               style={{
@@ -3934,27 +3967,74 @@ export function ModalEditarProducto({
               marginTop: "8px",
             }}
           >
-            <button
-              type="button"
-              onClick={handleEliminar}
-              disabled={eliminando}
-              style={{
-                background: confirmarEliminar ? "#DC2626" : "transparent",
-                color: confirmarEliminar ? "#FFFFFF" : "#EF4444",
-                border: confirmarEliminar ? "none" : "1px solid #FCA5A5",
-                padding: "8px 14px",
-                borderRadius: "8px",
-                fontSize: "0.82rem",
-                fontWeight: 700,
-                cursor: "pointer",
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "6px",
-              }}
-            >
-              <Trash2 size={14} />
-              <span>{confirmarEliminar ? "Confirmar Desactivación" : "Desactivar"}</span>
-            </button>
+            {esModoMaster ? (
+              <button
+                type="button"
+                onClick={handleEliminar}
+                disabled={eliminando}
+                title={
+                  confirmarEliminar
+                    ? "Eliminar permanentemente este producto y todas sus variantes de la base de datos"
+                    : "Eliminar producto master del catálogo"
+                }
+                style={{
+                  background: confirmarEliminar ? "#DC2626" : "transparent",
+                  color: confirmarEliminar ? "#FFFFFF" : "#EF4444",
+                  border: confirmarEliminar ? "none" : "1.5px solid #EF4444",
+                  padding: "8px 14px",
+                  borderRadius: "8px",
+                  fontSize: "0.82rem",
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  transition: "all 0.15s ease",
+                }}
+              >
+                <Trash2 size={14} />
+                <span>
+                  {confirmarEliminar
+                    ? "⚠️ ¿Confirmar Eliminación Definitiva?"
+                    : esFloristeria
+                    ? "Eliminar Arreglo Completo"
+                    : "Eliminar Producto"}
+                </span>
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={handleEliminarVarianteClick}
+                disabled={variantesLocales.length <= 1}
+                title={
+                  variantesLocales.length <= 1
+                    ? (esFloristeria ? "Debe existir al menos un tamaño en el producto" : "Debe existir al menos una variante en el producto")
+                    : (confirmarEliminarVariante ? "Confirmar quitar este tamaño de la lista" : "Quitar este tamaño / variante")
+                }
+                style={{
+                  background: confirmarEliminarVariante ? "#DC2626" : "transparent",
+                  color: variantesLocales.length <= 1 ? "#94A3B8" : confirmarEliminarVariante ? "#FFFFFF" : "#EF4444",
+                  border: variantesLocales.length <= 1 ? "1px solid #E2E8F0" : confirmarEliminarVariante ? "none" : "1.5px solid #FCA5A5",
+                  padding: "8px 14px",
+                  borderRadius: "8px",
+                  fontSize: "0.82rem",
+                  fontWeight: 700,
+                  cursor: variantesLocales.length <= 1 ? "not-allowed" : "pointer",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  opacity: variantesLocales.length <= 1 ? 0.6 : 1,
+                  transition: "all 0.15s ease",
+                }}
+              >
+                <Trash2 size={14} />
+                <span>
+                  {confirmarEliminarVariante
+                    ? `⚠️ ¿Confirmar Eliminar "${varianteActual?.var_nombre}"?`
+                    : "Eliminar esta Variante"}
+                </span>
+              </button>
+            )}
 
             <div style={{ display: "flex", gap: "8px" }}>
               <button

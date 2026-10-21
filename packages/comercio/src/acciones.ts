@@ -3277,6 +3277,23 @@ export async function editarProductoAction(datos: {
           }
 
           if (dbProdId) {
+            // Purgar en Supabase las variantes que fueron eliminadas en el editor
+            const skusActuales = new Set(variantesActualizadas.map((v) => v.var_sku));
+            for (const vAnterior of prodActual.variantes || []) {
+              if (vAnterior.var_sku && !skusActuales.has(vAnterior.var_sku)) {
+                try {
+                  await clienteActivo
+                    .schema("comun_comercio")
+                    .from("com_variante")
+                    .delete()
+                    .eq("var_producto_id", dbProdId)
+                    .eq("var_sku", vAnterior.var_sku);
+                } catch (ePurge) {
+                  console.warn("No se pudo purgar variante eliminada en Supabase:", vAnterior.var_sku, ePurge);
+                }
+              }
+            }
+
             for (const v of variantesActualizadas) {
               const varDetalle = v.var_detalle_variante || {};
               const varPayload: any = {
