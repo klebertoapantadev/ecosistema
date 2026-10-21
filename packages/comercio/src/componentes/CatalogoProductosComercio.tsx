@@ -1277,6 +1277,29 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
             const currentVar = variantesLista.find((v) => v.var_id === currentVarId) || variantesLista[0];
             const esHonorario = p.pro_tipo === "SERVICIO" || (p.pro_slug && p.pro_slug.includes("honorarios"));
 
+            // Beneficios / ¿Qué incluye? activos para la variante seleccionada o master
+            const beneficiosLista: string[] = (() => {
+              const masterBen: string[] = Array.isArray(p.pro_detalle_producto?.beneficios)
+                ? p.pro_detalle_producto.beneficios.filter((b: unknown) => typeof b === "string" && b.trim().length > 0)
+                : [];
+
+              if (!currentVar) return masterBen;
+
+              const vdet = currentVar.var_detalle_variante || {};
+              const modo = vdet.beneficios_modo || "heredar";
+              const customBen: string[] = Array.isArray(vdet.beneficios_custom)
+                ? vdet.beneficios_custom.filter((b: unknown) => typeof b === "string" && b.trim().length > 0)
+                : [];
+
+              if (modo === "reemplazar" && customBen.length > 0) {
+                return customBen;
+              }
+              if (modo === "anexar" && customBen.length > 0) {
+                return [...masterBen, ...customBen];
+              }
+              return masterBen;
+            })();
+
             // Recolección de fotos de cada variante y del master para el carrusel
             const fotosDisponibles: Array<{
               url: string;
@@ -2148,6 +2171,60 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                       );
                     })}
                   </div>
+
+                  {/* Beneficios / ¿Qué incluye? del Producto y Variante */}
+                  {beneficiosLista.length > 0 && (
+                    <div
+                      style={{
+                        background: "#F8FAFC",
+                        border: "1px solid #E2E8F0",
+                        borderRadius: "10px",
+                        padding: "10px 12px",
+                        marginBottom: "14px",
+                      }}
+                    >
+                      <div
+                        style={{
+                          fontSize: "0.72rem",
+                          fontWeight: 800,
+                          color: "#334155",
+                          textTransform: "uppercase",
+                          letterSpacing: "0.02em",
+                          marginBottom: "6px",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "5px",
+                        }}
+                      >
+                        <Sparkles size={12} color="#0284C7" />
+                        <span>
+                          {esFloristeria
+                            ? "🌸 ¿Qué incluye este arreglo?"
+                            : esLegal
+                            ? "⚖️ Alcance y Beneficios del Servicio:"
+                            : "✨ Beneficios y Características:"}
+                        </span>
+                      </div>
+                      <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
+                        {beneficiosLista.map((ben: string, bIdx: number) => (
+                          <div
+                            key={bIdx}
+                            style={{
+                              fontSize: "0.75rem",
+                              color: "#475569",
+                              display: "flex",
+                              alignItems: "flex-start",
+                              gap: "6px",
+                              lineHeight: 1.35,
+                            }}
+                          >
+                            <CheckCircle2 size={13} color="#10B981" style={{ flexShrink: 0, marginTop: "2px" }} />
+                            <span>{ben}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
                   {/* Selector de Variantes / Tamaños con Colores Individuales */}
                   {variantesLista.length > 1 && (

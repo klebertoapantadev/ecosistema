@@ -47,20 +47,38 @@ export function ModalDetalleServicioVisual({
     detalle.imagen_url ||
     fallbackDefault;
   const videoUrl = detalle.video_url;
-  const beneficios: string[] = Array.isArray(detalle.beneficios) && detalle.beneficios.length > 0
-    ? detalle.beneficios
-    : [
+  const masterBeneficios = Array.isArray(detalle.beneficios)
+    ? detalle.beneficios.filter((b: unknown) => typeof b === "string" && b.trim().length > 0)
+    : [];
+  const vdet = currentVar?.var_detalle_variante || {};
+  const customBen = Array.isArray(vdet.beneficios_custom)
+    ? vdet.beneficios_custom.filter((b: unknown) => typeof b === "string" && b.trim().length > 0)
+    : [];
+  const beneficiosCalculados = vdet.beneficios_modo === "reemplazar" && customBen.length > 0
+    ? customBen
+    : vdet.beneficios_modo === "anexar" && customBen.length > 0
+    ? [...masterBeneficios, ...customBen]
+    : masterBeneficios;
+
+  const esLegalNegocio = (producto.pro_negocio || negocio) === "tranqi";
+  const beneficios: string[] = beneficiosCalculados.length > 0
+    ? beneficiosCalculados
+    : esLegalNegocio
+    ? [
         "Asignación de abogado especialista acreditado",
         "Revisión y acompañamiento integral durante todo el proceso",
         "Constancia digital y respaldo en tu expediente seguro",
-      ];
+      ]
+    : [];
   const requisitos: string[] = Array.isArray(detalle.requisitos) && detalle.requisitos.length > 0
     ? detalle.requisitos
-    : [
+    : esLegalNegocio
+    ? [
         "Documento de identidad (cédula o pasaporte vigente)",
         "Información básica o antecedentes de tu caso",
-      ];
-  const tiempoEntrega = detalle.tiempo_entrega || "24 a 48 horas hábiles";
+      ]
+    : [];
+  const tiempoEntrega = detalle.tiempo_entrega || (esLegalNegocio ? "24 a 48 horas hábiles" : "Mismo Día / Entrega Inmediata");
 
   // Extraer embed de YouTube si aplica
   const getEmbedUrl = (url: string) => {

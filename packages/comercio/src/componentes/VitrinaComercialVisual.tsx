@@ -549,7 +549,18 @@ export function VitrinaComercialVisual({
             const fotoZoom = Number(currentVar?.var_detalle_variante?.foto_zoom || detalle.foto_zoom || 100);
             const scaleFactor = fotoZoom && fotoZoom !== 100 ? fotoZoom / 100 : 1;
             const videoUrl = detalle.video_url;
-            const beneficios: string[] = Array.isArray(detalle.beneficios) ? detalle.beneficios.slice(0, 2) : [];
+            const masterBen: string[] = Array.isArray(detalle.beneficios)
+              ? detalle.beneficios.filter((b: unknown) => typeof b === "string" && b.trim().length > 0)
+              : [];
+            const vdet = currentVar?.var_detalle_variante || {};
+            const customBen: string[] = Array.isArray(vdet.beneficios_custom)
+              ? vdet.beneficios_custom.filter((b: unknown) => typeof b === "string" && b.trim().length > 0)
+              : [];
+            const beneficios: string[] = vdet.beneficios_modo === "reemplazar" && customBen.length > 0
+              ? customBen
+              : vdet.beneficios_modo === "anexar" && customBen.length > 0
+              ? [...masterBen, ...customBen]
+              : masterBen;
 
             return (
               <div
