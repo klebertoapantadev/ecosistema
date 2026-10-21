@@ -1301,8 +1301,8 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
             }
 
             variantesLista.forEach((v, idx) => {
+              const col = PALETA_COLORES_VARIANTES[idx % PALETA_COLORES_VARIANTES.length] || PALETA_COLORES_VARIANTES[0]!;
               if (v.var_detalle_variante?.portada_url && !fotosDisponibles.some((f) => f.url === v.var_detalle_variante.portada_url)) {
-                const col = PALETA_COLORES_VARIANTES[idx % PALETA_COLORES_VARIANTES.length] || PALETA_COLORES_VARIANTES[0]!;
                 fotosDisponibles.push({
                   url: v.var_detalle_variante.portada_url,
                   origen: "variante",
@@ -1312,6 +1312,23 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                   posicion: v.var_detalle_variante.foto_posicion || p.pro_detalle_producto?.foto_posicion || "center center",
                   ajuste: v.var_detalle_variante.foto_ajuste || p.pro_detalle_producto?.foto_ajuste || "cover",
                   zoom: v.var_detalle_variante.foto_zoom || p.pro_detalle_producto?.foto_zoom || 100,
+                });
+              }
+
+              if (Array.isArray(v.var_detalle_variante?.galeria_urls)) {
+                v.var_detalle_variante.galeria_urls.forEach((url: string, gIdx: number) => {
+                  if (url && typeof url === "string" && !fotosDisponibles.some((f) => f.url === url)) {
+                    fotosDisponibles.push({
+                      url,
+                      origen: "variante",
+                      etiqueta: `${v.var_nombre} (#${gIdx + 2})`,
+                      varianteId: v.var_id,
+                      col,
+                      posicion: v.var_detalle_variante.foto_posicion || p.pro_detalle_producto?.foto_posicion || "center center",
+                      ajuste: v.var_detalle_variante.foto_ajuste || p.pro_detalle_producto?.foto_ajuste || "cover",
+                      zoom: v.var_detalle_variante.foto_zoom || p.pro_detalle_producto?.foto_zoom || 100,
+                    });
+                  }
                 });
               }
             });

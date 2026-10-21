@@ -32,6 +32,8 @@ interface Props {
   onCerrar: () => void;
   negocio?: string;
   onSeleccionarImagen?: (url: string, medio?: ElementoMedioGaleria) => void;
+  onSeleccionarMultiples?: (urls: string[], medios?: ElementoMedioGaleria[]) => void;
+  modoSeleccion?: "simple" | "multiple";
   titulo?: string;
   carpetaPredeterminada?: "portadas" | "variantes" | "galeria" | "general" | "";
 }
@@ -41,6 +43,8 @@ export function ModalGaleriaMedios({
   onCerrar,
   negocio = "tranqi",
   onSeleccionarImagen,
+  onSeleccionarMultiples,
+  modoSeleccion = "simple",
   titulo = "Galería y Biblioteca Multimedia del Negocio",
   carpetaPredeterminada = "",
 }: Props) {
@@ -50,6 +54,7 @@ export function ModalGaleriaMedios({
   const [busqueda, setBusqueda] = useState("");
   const [filtroCarpeta, setFiltroCarpeta] = useState<string>(carpetaPredeterminada);
   const [seleccionado, setSeleccionado] = useState<ElementoMedioGaleria | null>(null);
+  const [seleccionadosMultiples, setSeleccionadosMultiples] = useState<ElementoMedioGaleria[]>([]);
   const [eliminandoId, setEliminandoId] = useState<string | null>(null);
   const [confirmarEliminar, setConfirmarEliminar] = useState<ElementoMedioGaleria | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -82,6 +87,7 @@ export function ModalGaleriaMedios({
     if (abierto) {
       cargarMedios();
       setSeleccionado(null);
+      setSeleccionadosMultiples([]);
       setConfirmarEliminar(null);
       setExito(null);
       setError(null);
@@ -544,11 +550,27 @@ export function ModalGaleriaMedios({
                   }}
                 >
                   {mediosFiltrados.map((item) => {
-                    const esActivo = seleccionado?.id === item.id;
+                    const esActivo = modoSeleccion === "multiple"
+                      ? seleccionadosMultiples.some((m) => m.id === item.id)
+                      : seleccionado?.id === item.id;
+                    const indiceSeleccionMultiple = modoSeleccion === "multiple"
+                      ? seleccionadosMultiples.findIndex((m) => m.id === item.id) + 1
+                      : 0;
+
                     return (
                       <div
                         key={item.id}
-                        onClick={() => setSeleccionado(item)}
+                        onClick={() => {
+                          if (modoSeleccion === "multiple") {
+                            setSeleccionadosMultiples((prev) => {
+                              const existe = prev.some((m) => m.id === item.id);
+                              if (existe) return prev.filter((m) => m.id !== item.id);
+                              return [...prev, item];
+                            });
+                          } else {
+                            setSeleccionado(item);
+                          }
+                        }}
                         style={{
                           border: esActivo ? "2.5px solid #0284C7" : "1px solid #E2E8F0",
                           borderRadius: "10px",
@@ -615,16 +637,21 @@ export function ModalGaleriaMedios({
                                 right: "6px",
                                 background: "#0284C7",
                                 color: "#FFFFFF",
-                                borderRadius: "50%",
-                                width: "22px",
+                                borderRadius: modoSeleccion === "multiple" ? "12px" : "50%",
+                                minWidth: "22px",
                                 height: "22px",
+                                padding: modoSeleccion === "multiple" ? "0 6px" : "0",
                                 display: "flex",
                                 alignItems: "center",
                                 justifyContent: "center",
                                 boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
+                                fontSize: "0.7rem",
+                                fontWeight: 800,
+                                gap: "3px",
                               }}
                             >
-                              <CheckCircle2 size={16} />
+                              <CheckCircle2 size={14} />
+                              {modoSeleccion === "multiple" && <span>#{indiceSeleccionMultiple}</span>}
                             </div>
                           )}
                         </div>
@@ -947,7 +974,15 @@ export function ModalGaleriaMedios({
           }}
         >
           <div style={{ fontSize: "0.75rem", color: "#64748B" }}>
-            {seleccionado ? (
+            {modoSeleccion === "multiple" ? (
+              seleccionadosMultiples.length > 0 ? (
+                <span>
+                  Seleccionadas: <strong style={{ color: "#0F172A" }}>{seleccionadosMultiples.length} imagen(es)</strong>
+                </span>
+              ) : (
+                <span>Haz clic en una o varias imágenes para seleccionarlas</span>
+              )
+            ) : seleccionado ? (
               <span>
                 Seleccionado: <strong style={{ color: "#0F172A" }}>{seleccionado.nombre}</strong> ({formatBytes(seleccionado.tamanioBytes)})
               </span>
@@ -974,28 +1009,43 @@ export function ModalGaleriaMedios({
               Cerrar
             </button>
 
-            {onSeleccionarImagen && (
+            {(onSeleccionarImagen || onSeleccionarMultiples) && (
               <button
                 type="button"
-                disabled={!seleccionado}
-                onClick={handleConfirmarSeleccion}
+                disabled={modoSeleccion === "multiple" ? seleccionadosMultiples.length === 0 : !seleccionado}
+                onClick={() => {
+                  if (modoSeleccion === "multiple") {
+                    if (onSeleccionarMultiples) {
+                      onSeleccionarMultiples(seleccionadosMultiples.map((s) => s.urlPublica), seleccionadosMultiples);
+                    } else if (onSeleccionarImagen && seleccionadosMultiples[0]) {
+                      onSeleccionarImagen(seleccionadosMultiples[0].urlPublica, seleccionadosMultiples[0]);
+                    }
+                    onCerrar();
+                  } else {
+                    handleConfirmarSeleccion();
+                  }
+                }}
                 style={{
-                  background: seleccionado ? "#0284C7" : "#94A3B8",
+                  background: (modoSeleccion === "multiple" ? seleccionadosMultiples.length > 0 : Boolean(seleccionado)) ? "#0284C7" : "#94A3B8",
                   color: "#FFFFFF",
                   border: "none",
                   padding: "8px 18px",
                   borderRadius: "8px",
                   fontSize: "0.8rem",
                   fontWeight: 800,
-                  cursor: seleccionado ? "pointer" : "not-allowed",
+                  cursor: (modoSeleccion === "multiple" ? seleccionadosMultiples.length > 0 : Boolean(seleccionado)) ? "pointer" : "not-allowed",
                   display: "inline-flex",
                   alignItems: "center",
                   gap: "6px",
-                  boxShadow: seleccionado ? "0 2px 4px rgba(2, 132, 199, 0.3)" : "none",
+                  boxShadow: (modoSeleccion === "multiple" ? seleccionadosMultiples.length > 0 : Boolean(seleccionado)) ? "0 2px 4px rgba(2, 132, 199, 0.3)" : "none",
                 }}
               >
                 <CheckCircle2 size={15} />
-                <span>Usar Imagen Seleccionada</span>
+                <span>
+                  {modoSeleccion === "multiple"
+                    ? `Usar ${seleccionadosMultiples.length} ${seleccionadosMultiples.length === 1 ? "Imagen" : "Imágenes"}`
+                    : "Usar Imagen Seleccionada"}
+                </span>
               </button>
             )}
           </div>

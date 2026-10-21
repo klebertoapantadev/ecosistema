@@ -68,7 +68,8 @@ export default async function PaginaPanel() {
   const esSuperAdminEmail =
     correo === "kleber.toapanta.ch@gmail.com" ||
     correo === "familiammtg@gmail.com" ||
-    correo === "jesus251296@gmail.com";
+    correo === "jesus251296@gmail.com" ||
+    correo === "tinkay.uio@gmail.com";
   const esSuperAdmin = esSuperAdminEmail || Boolean(perfil?.usu_superadmin_plataforma);
 
   const perfiles = perfil ? await obtenerPerfiles(NEGOCIO) : [];
