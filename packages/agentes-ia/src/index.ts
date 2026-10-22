@@ -62,6 +62,13 @@ export async function invocarAgente(
    * descarga como si fuera un JPEG y el modelo no ve nada.
    */
   documentUrls?: string[],
+  /**
+   * Cuanto se espera a ARIA antes de abortar. Tiene que quedar POR DEBAJO del
+   * `maxDuration` de la ruta que llama: si Vercel mata la funcion antes, el
+   * navegador recibe un 504 sin cuerpo y la ruta no llega a decir que paso.
+   * Al vencer, el fetch lanza un `TimeoutError` que la ruta puede distinguir.
+   */
+  tiempoMaximoMs = 120000,
 ): Promise<RespuestaAgente> {
   const r = await fetch(`${config.baseUrl}/v1/agents/${config.agentId}/invoke`, {
     method: "POST",
@@ -76,7 +83,7 @@ export async function invocarAgente(
       image_urls: imageUrls,
       document_urls: documentUrls,
     }),
-    signal: AbortSignal.timeout(120000),
+    signal: AbortSignal.timeout(tiempoMaximoMs),
   });
   const data = await r.json();
   if (!r.ok) {
