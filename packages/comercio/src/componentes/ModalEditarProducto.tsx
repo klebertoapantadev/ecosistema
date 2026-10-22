@@ -1452,6 +1452,34 @@ export function ModalEditarProducto({
                     : "Configuración General del Servicio Profesional Master")
                   : `Editar Tarifa y Variación: ${varianteActual?.var_nombre || ""}`}
               </h2>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginTop: "3px" }}>
+                <span
+                  title={`ID único en base de datos: ${producto.pro_id}`}
+                  style={{
+                    fontSize: "0.68rem",
+                    color: "#94A3B8",
+                    fontFamily: "monospace",
+                    background: "rgba(255,255,255,0.08)",
+                    padding: "1px 6px",
+                    borderRadius: "4px",
+                    border: "1px solid rgba(255,255,255,0.12)",
+                  }}
+                >
+                  🔑 Código Único: {producto.pro_id.length > 20 ? `${producto.pro_id.slice(0, 13)}...` : producto.pro_id}
+                </span>
+                {producto.pro_slug && (
+                  <span
+                    title={`Slug URL comercial: ${producto.pro_slug}`}
+                    style={{
+                      fontSize: "0.68rem",
+                      color: "#38BDF8",
+                      fontFamily: "monospace",
+                    }}
+                  >
+                    • {producto.pro_slug}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
 

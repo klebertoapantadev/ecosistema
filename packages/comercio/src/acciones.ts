@@ -2834,61 +2834,109 @@ export async function crearProductoAction(datos: {
 
     if (clienteActivo) {
       try {
-        await clienteActivo
-          .schema("comun_comercio")
-          .from("com_producto")
-          .upsert(
+        const payloadRpc = {
+          negocio,
+          nombre,
+          slug,
+          descripcion: datos.descripcion.trim(),
+          categoria_id: cat?.ctg_id || null,
+          tipo: datos.tipo,
+          destacado: Boolean(datos.destacado),
+          pro_activo: nuevoProducto.pro_activo,
+          detalle_producto: nuevoProducto.pro_detalle_producto,
+          variantes: [
             {
-              pro_negocio: negocio,
-              pro_nombre: nombre,
-              pro_slug: slug,
-              pro_descripcion: datos.descripcion.trim(),
-              pro_tipo: datos.tipo,
-              pro_destacado: Boolean(datos.destacado),
-              pro_categoria_principal_id: cat?.ctg_id || null,
-              pro_activo: true,
-              pro_detalle_producto: nuevoProducto.pro_detalle_producto,
-            },
-            { onConflict: "pro_negocio, pro_slug" }
-          );
-
-        await clienteActivo
-          .schema("comun_comercio")
-          .from("com_variante")
-          .upsert(
-            {
-              var_negocio: negocio,
               var_sku: sku,
               var_nombre: nuevaVariante.var_nombre,
               var_precio: base,
+              var_precio_comparacion: null,
               var_codigo_impuesto_sri: nuevaVariante.var_codigo_impuesto_sri,
               var_tarifa_iva_porcentaje: tarifaIva,
               var_tipo_oferta: "REGULAR",
               var_activo: true,
               var_detalle_variante: nuevaVariante.var_detalle_variante,
             },
-            { onConflict: "var_negocio, var_sku" }
-          );
-      } catch {
-        // Fallback en public
+          ],
+        };
+
+        let rpcOk = false;
         try {
-          await clienteActivo.from("com_producto").upsert(
-            {
-              pro_negocio: negocio,
-              pro_nombre: nombre,
-              pro_slug: slug,
-              pro_descripcion: datos.descripcion.trim(),
-              pro_tipo: datos.tipo,
-              pro_destacado: Boolean(datos.destacado),
-              pro_categoria_principal_id: cat?.ctg_id || null,
-              pro_activo: true,
-              pro_detalle_producto: nuevoProducto.pro_detalle_producto,
-            },
-            { onConflict: "pro_negocio, pro_slug" }
-          );
-        } catch {
-          // Guardar en memoria
+          const { data: resRpc, error: errRpc } = await clienteActivo
+            .schema("comun_comercio")
+            .rpc("com_fn_guardar_producto_catalogo", { p_datos: payloadRpc });
+          if (!errRpc && resRpc?.ok && resRpc?.pro_id) {
+            nuevoProducto.pro_id = resRpc.pro_id;
+            if (nuevoProducto.variantes[0]) {
+              nuevoProducto.variantes[0].var_producto_id = resRpc.pro_id;
+            }
+            rpcOk = true;
+          }
+        } catch {}
+
+        if (!rpcOk) {
+          try {
+            const { data: resRpcPub, error: errRpcPub } = await clienteActivo.rpc(
+              "com_fn_guardar_producto_catalogo",
+              { p_datos: payloadRpc }
+            );
+            if (!errRpcPub && resRpcPub?.ok && resRpcPub?.pro_id) {
+              nuevoProducto.pro_id = resRpcPub.pro_id;
+              if (nuevoProducto.variantes[0]) {
+                nuevoProducto.variantes[0].var_producto_id = resRpcPub.pro_id;
+              }
+              rpcOk = true;
+            }
+          } catch {}
         }
+
+        if (!rpcOk) {
+          const { data: prodDb } = await clienteActivo
+            .schema("comun_comercio")
+            .from("com_producto")
+            .upsert(
+              {
+                pro_negocio: negocio,
+                pro_nombre: nombre,
+                pro_slug: slug,
+                pro_descripcion: datos.descripcion.trim(),
+                pro_tipo: datos.tipo,
+                pro_destacado: Boolean(datos.destacado),
+                pro_categoria_principal_id: cat?.ctg_id || null,
+                pro_activo: true,
+                pro_detalle_producto: nuevoProducto.pro_detalle_producto,
+              },
+              { onConflict: "pro_negocio, pro_slug" }
+            )
+            .select("pro_id")
+            .maybeSingle();
+
+          if (prodDb?.pro_id) {
+            nuevoProducto.pro_id = prodDb.pro_id;
+            nuevaVariante.var_producto_id = prodDb.pro_id;
+            try {
+              await clienteActivo
+                .schema("comun_comercio")
+                .from("com_variante")
+                .upsert(
+                  {
+                    var_producto_id: prodDb.pro_id,
+                    var_negocio: negocio,
+                    var_sku: sku,
+                    var_nombre: nuevaVariante.var_nombre,
+                    var_precio: base,
+                    var_codigo_impuesto_sri: nuevaVariante.var_codigo_impuesto_sri,
+                    var_tarifa_iva_porcentaje: tarifaIva,
+                    var_tipo_oferta: "REGULAR",
+                    var_activo: true,
+                    var_detalle_variante: nuevaVariante.var_detalle_variante,
+                  },
+                  { onConflict: "var_negocio, var_sku" }
+                );
+            } catch {}
+          }
+        }
+      } catch {
+        // Guardar en memoria
       }
     }
 
@@ -2971,9 +3019,51 @@ export async function editarProductoAction(datos: {
     const cats = await obtenerCategoriasAction(negocio);
     const cat = cats.find((c) => c.ctg_id === datos.categoriaId) || null;
 
-    // Buscar producto actual
+    // Buscar producto actual en memoria, catálogo o base de datos
     const prods = await obtenerCatalogoProductosAction(negocio, undefined, true);
-    const prodActual = prods.find((p) => p.pro_id === datos.pro_id);
+    let prodActual = prods.find((p) => p.pro_id === datos.pro_id || (p.pro_slug && p.pro_slug === datos.pro_id));
+
+    let adminCliente: any = null;
+    let supabaseCliente: any = null;
+    try { adminCliente = crearClienteAdmin(); } catch {}
+    try { supabaseCliente = await crearClienteServidor(); } catch {}
+    const clienteBusqueda = adminCliente || supabaseCliente;
+
+    // Si no se encuentra en el array inicial, buscar directo en PostgreSQL
+    if (!prodActual && clienteBusqueda) {
+      try {
+        const esUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(datos.pro_id);
+        let q = clienteBusqueda.schema("comun_comercio").from("com_producto").select("*");
+        if (esUuid) {
+          q = q.eq("pro_id", datos.pro_id);
+        } else {
+          q = q.eq("pro_negocio", negocio).or(`pro_slug.eq.${datos.pro_id},pro_nombre.ilike.${nombre}`);
+        }
+        const { data: dbItem } = await q.maybeSingle();
+        if (dbItem) {
+          prodActual = {
+            pro_id: dbItem.pro_id,
+            pro_negocio: dbItem.pro_negocio,
+            pro_nombre: dbItem.pro_nombre,
+            pro_slug: dbItem.pro_slug,
+            pro_descripcion: dbItem.pro_descripcion || "",
+            pro_tipo: dbItem.pro_tipo || "FISICO",
+            pro_destacado: Boolean(dbItem.pro_destacado),
+            pro_activo: dbItem.pro_activo,
+            pro_categoria_principal_id: dbItem.pro_categoria_principal_id,
+            pro_detalle_producto: dbItem.pro_detalle_producto || {},
+            variantes: [],
+          };
+        }
+      } catch {}
+    }
+
+    // Si aún no se encuentra, buscar en el almacén en memoria
+    if (!prodActual) {
+      const customs = storeCustomProductos.get(negocio) || [];
+      prodActual = customs.find((p) => p.pro_id === datos.pro_id || p.pro_slug === datos.pro_id || p.pro_nombre.toLowerCase() === nombre.toLowerCase());
+    }
+
     if (!prodActual) {
       return { ok: false, error: "Producto no encontrado para editar." };
     }
@@ -3170,8 +3260,9 @@ export async function editarProductoAction(datos: {
 
     if (clienteActivo) {
       try {
+        const targetId = prodActual.pro_id;
         const payloadRpc = {
-          pro_id: datos.pro_id,
+          pro_id: targetId,
           negocio,
           nombre,
           slug: prodActual.pro_slug || generarSlug(nombre),
@@ -3224,7 +3315,8 @@ export async function editarProductoAction(datos: {
 
         // 2. Fallback a consultas directas si el RPC no está instalado
         if (!rpcExitoso) {
-          const esUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(datos.pro_id);
+          const targetId = prodActual.pro_id;
+          const esUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(targetId);
           let dbProdId: string | null = null;
 
           if (esUuid) {
@@ -3240,7 +3332,7 @@ export async function editarProductoAction(datos: {
                 pro_categoria_principal_id: cat?.ctg_id || null,
                 pro_detalle_producto: prodEditado.pro_detalle_producto,
               })
-              .eq("pro_id", datos.pro_id)
+              .eq("pro_id", targetId)
               .select("pro_id")
               .single();
 
@@ -3343,7 +3435,7 @@ export async function editarProductoAction(datos: {
 
     // 2. Guardar en almacén local
     const actuales = storeCustomProductos.get(negocio) || [];
-    const idx = actuales.findIndex((p) => p.pro_id === datos.pro_id);
+    const idx = actuales.findIndex((p) => p.pro_id === prodActual.pro_id || p.pro_id === datos.pro_id || p.pro_slug === prodActual.pro_slug);
     if (idx >= 0) {
       actuales[idx] = prodEditado;
     } else {
