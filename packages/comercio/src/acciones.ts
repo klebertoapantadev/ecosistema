@@ -2164,6 +2164,179 @@ export async function alternarActivoProductoAction(params: {
   }
 }
 
+/**
+ * Alterna de manera instantánea el estado destacado (true/false) de un producto master
+ */
+export async function alternarDestacadoProductoAction(params: {
+  pro_id: string;
+  destacado?: boolean;
+  negocio?: string;
+}): Promise<{ ok: boolean; destacado: boolean; error?: string; producto?: ProductoCatalogo }> {
+  try {
+    const { principal } = normalizarIdentificadorNegocio(params.negocio);
+    const negocio = principal;
+    const prods = await obtenerCatalogoProductosAction(negocio, undefined, true);
+    const prodActual = prods.find((p) => p.pro_id === params.pro_id);
+    if (!prodActual) {
+      return { ok: false, destacado: false, error: "Producto no encontrado para alternar destacado." };
+    }
+
+    const estadoActual = Boolean(prodActual.pro_destacado);
+    const nuevoDestacado = params.destacado !== undefined ? params.destacado : !estadoActual;
+
+    const prodActualizado: ProductoCatalogo = {
+      ...prodActual,
+      pro_destacado: nuevoDestacado,
+    };
+
+    // 1. Actualizar en Supabase
+    let admin: any = null;
+    let supabase: any = null;
+    try { admin = crearClienteAdmin(); } catch {}
+    try { supabase = await crearClienteServidor(); } catch {}
+    const clienteActivo = admin || supabase;
+
+    if (clienteActivo) {
+      try {
+        await clienteActivo
+          .schema("comun_comercio")
+          .from("com_producto")
+          .update({ pro_destacado: nuevoDestacado })
+          .eq("pro_id", params.pro_id);
+      } catch {
+        try {
+          await clienteActivo
+            .from("com_producto")
+            .update({ pro_destacado: nuevoDestacado })
+            .eq("pro_id", params.pro_id);
+        } catch {}
+      }
+    }
+
+    // 2. Actualizar en memoria
+    const customs = storeCustomProductos.get(negocio) || [];
+    const idx = customs.findIndex((p) => p.pro_id === params.pro_id || p.pro_slug === prodActual.pro_slug);
+    if (idx >= 0) {
+      customs[idx] = prodActualizado;
+    } else {
+      customs.unshift(prodActualizado);
+    }
+    storeCustomProductos.set(negocio, customs);
+
+    revalidatePath("/panel/catalogo-productos");
+    revalidatePath("/panel");
+
+    return { ok: true, destacado: nuevoDestacado, producto: prodActualizado };
+  } catch (err: any) {
+    return { ok: false, destacado: false, error: err.message || "Error al alternar estado destacado." };
+  }
+}
+
+export interface ResumenPlanDestacadoLanding {
+  categoria: "familiar" | "corporativo";
+  categoriaNombre: string;
+  productoId: string;
+  nombre: string;
+  descripcion: string;
+  precioDesde: number;
+  precioDesdeTexto: string;
+  destacado: boolean;
+}
+
+/**
+ * Obtiene el primer plan destacado del grupo 'Planes Familiares' y el primer plan destacado
+ * del grupo 'Planes Corporativos' para la sección de planes de la landing page de Tranqi.
+ */
+export async function obtenerPlanesDestacadosLandingTranqiAction(): Promise<{
+  ok: boolean;
+  familiar: ResumenPlanDestacadoLanding;
+  corporativo: ResumenPlanDestacadoLanding;
+}> {
+  const fallbackFamiliar: ResumenPlanDestacadoLanding = {
+    categoria: "familiar",
+    categoriaNombre: "Planes Familiares",
+    productoId: "prod-trq-plan-proteccion",
+    nombre: "Planes de Protección Jurídica Continua",
+    descripcion: "Membresías de cobertura legal preventiva para personas naturales y familias.",
+    precioDesde: 23,
+    precioDesdeTexto: "23.00",
+    destacado: true,
+  };
+
+  const fallbackCorporativo: ResumenPlanDestacadoLanding = {
+    categoria: "corporativo",
+    categoriaNombre: "Planes Corporativos",
+    productoId: "prod-trq-plan-corporativo",
+    nombre: "Cobertura Legal Corporativa Empresas (B2B)",
+    descripcion: "Licenciamiento legal por tramos de empleados con abogado empresarial dedicado.",
+    precioDesde: 10.35,
+    precioDesdeTexto: "10.35",
+    destacado: true,
+  };
+
+  try {
+    const todos = await obtenerCatalogoProductosAction("tranqi", "ECOMMERCE_WEB");
+    if (!todos || todos.length === 0) {
+      return { ok: true, familiar: fallbackFamiliar, corporativo: fallbackCorporativo };
+    }
+
+    // 1. Filtrar Planes Familiares
+    const prodsFamiliares = todos.filter((p) => {
+      const catNombre = (p.categoria?.ctg_nombre || "").toLowerCase();
+      const catSlug = (p.categoria?.ctg_slug || "").toLowerCase();
+      const esCorp = catNombre.includes("corp") || catSlug.includes("corp") || catNombre.includes("empresa") || catSlug.includes("b2b");
+      return !esCorp && (catNombre.includes("familiar") || catNombre.includes("plan") || catSlug.includes("plan") || catSlug.includes("familiar"));
+    });
+
+    const primerFamiliarDestacado = prodsFamiliares.find((p) => p.pro_destacado) || prodsFamiliares[0];
+    let familiarRes = fallbackFamiliar;
+    if (primerFamiliarDestacado) {
+      const varsActivas = (primerFamiliarDestacado.variantes || []).filter((v) => v.var_activo);
+      const precios = varsActivas.map((v) => Number(v.precio_total ?? v.var_precio ?? 0)).filter((p) => p > 0);
+      const minPrecio = precios.length > 0 ? Math.min(...precios) : 23;
+      familiarRes = {
+        categoria: "familiar",
+        categoriaNombre: primerFamiliarDestacado.categoria?.ctg_nombre || "Planes Familiares",
+        productoId: primerFamiliarDestacado.pro_id,
+        nombre: primerFamiliarDestacado.pro_nombre,
+        descripcion: primerFamiliarDestacado.pro_descripcion || fallbackFamiliar.descripcion,
+        precioDesde: minPrecio,
+        precioDesdeTexto: minPrecio % 1 === 0 ? `${minPrecio}.00` : minPrecio.toFixed(2),
+        destacado: Boolean(primerFamiliarDestacado.pro_destacado),
+      };
+    }
+
+    // 2. Filtrar Planes Corporativos
+    const prodsCorporativos = todos.filter((p) => {
+      const catNombre = (p.categoria?.ctg_nombre || "").toLowerCase();
+      const catSlug = (p.categoria?.ctg_slug || "").toLowerCase();
+      return catNombre.includes("corp") || catSlug.includes("corp") || catNombre.includes("empresa") || catSlug.includes("b2b");
+    });
+
+    const primerCorporativoDestacado = prodsCorporativos.find((p) => p.pro_destacado) || prodsCorporativos[0];
+    let corporativoRes = fallbackCorporativo;
+    if (primerCorporativoDestacado) {
+      const varsActivas = (primerCorporativoDestacado.variantes || []).filter((v) => v.var_activo);
+      const precios = varsActivas.map((v) => Number(v.precio_total ?? v.var_precio ?? 0)).filter((p) => p > 0);
+      const minPrecio = precios.length > 0 ? Math.min(...precios) : 10.35;
+      corporativoRes = {
+        categoria: "corporativo",
+        categoriaNombre: primerCorporativoDestacado.categoria?.ctg_nombre || "Planes Corporativos",
+        productoId: primerCorporativoDestacado.pro_id,
+        nombre: primerCorporativoDestacado.pro_nombre,
+        descripcion: primerCorporativoDestacado.pro_descripcion || fallbackCorporativo.descripcion,
+        precioDesde: minPrecio,
+        precioDesdeTexto: minPrecio % 1 === 0 ? `${minPrecio}.00` : minPrecio.toFixed(2),
+        destacado: Boolean(primerCorporativoDestacado.pro_destacado),
+      };
+    }
+
+    return { ok: true, familiar: familiarRes, corporativo: corporativoRes };
+  } catch {
+    return { ok: true, familiar: fallbackFamiliar, corporativo: fallbackCorporativo };
+  }
+}
+
 // ==============================================================================
 // 3. ACCIONES DE CREACIÓN DE CATEGORÍAS Y PRODUCTOS
 // ==============================================================================

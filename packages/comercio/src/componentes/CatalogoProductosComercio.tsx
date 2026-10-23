@@ -46,6 +46,7 @@ import {
   editarProductoAction,
   alternarCanalVisibilidadProductoAction,
   alternarActivoProductoAction,
+  alternarDestacadoProductoAction,
 } from "../acciones";
 import {
   CANALES_CATALOGO_OFICIALES,
@@ -88,6 +89,7 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
   const [verTodosEnFiltroCanal, setVerTodosEnFiltroCanal] = useState<boolean>(false);
   const [guardandoCanalKey, setGuardandoCanalKey] = useState<string | null>(null);
   const [guardandoActivoKey, setGuardandoActivoKey] = useState<string | null>(null);
+  const [guardandoDestacadoKey, setGuardandoDestacadoKey] = useState<string | null>(null);
   const [mensajeErrorCanal, setMensajeErrorCanal] = useState<string | null>(null);
 
   // Estado de modales
@@ -217,6 +219,51 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
       alert(err.message || "Error al actualizar estado del producto.");
     } finally {
       setGuardandoActivoKey(null);
+    }
+  };
+
+  // Alternar estado destacado de un producto en un clic con actualización optimista
+  const handleAlternarDestacado = async (proId: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    setGuardandoDestacadoKey(proId);
+    const prodActual = productos.find((p) => p.pro_id === proId);
+    if (!prodActual) {
+      setGuardandoDestacadoKey(null);
+      return;
+    }
+    const nuevoDestacado = !prodActual.pro_destacado;
+
+    // Actualización optimista inmediata en UI
+    setProductos((prev) =>
+      prev.map((p) => (p.pro_id === proId ? { ...p, pro_destacado: nuevoDestacado } : p))
+    );
+
+    try {
+      const res = await alternarDestacadoProductoAction({
+        pro_id: proId,
+        destacado: nuevoDestacado,
+        negocio,
+      });
+
+      if (res.ok && res.producto) {
+        setProductos((prev) =>
+          prev.map((p) => (p.pro_id === proId ? res.producto! : p))
+        );
+      } else if (!res.ok) {
+        // Rollback
+        setProductos((prev) =>
+          prev.map((p) => (p.pro_id === proId ? prodActual : p))
+        );
+        alert(res.error || "No se pudo cambiar el estado destacado.");
+      }
+    } catch (err: any) {
+      // Rollback
+      setProductos((prev) =>
+        prev.map((p) => (p.pro_id === proId ? prodActual : p))
+      );
+      alert(err.message || "Error al actualizar estado destacado.");
+    } finally {
+      setGuardandoDestacadoKey(null);
     }
   };
 
@@ -1809,24 +1856,66 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                     );
                   })()}
 
-                  {p.pro_destacado && (
-                    <div
+                  {/* Insignia / Switch Rápido de Producto Destacado */}
+                  {modoVista === "admin" ? (
+                    <button
+                      type="button"
+                      onClick={async (e) => {
+                        e.stopPropagation();
+                        await handleAlternarDestacado(p.pro_id);
+                      }}
+                      disabled={guardandoDestacadoKey === p.pro_id}
+                      className="btn-responsive-accion"
+                      title={p.pro_destacado ? "Quitar insignia de producto destacado" : "Asignar insignia de producto destacado"}
+                      aria-label={p.pro_destacado ? "Quitar insignia de producto destacado" : "Asignar insignia de producto destacado"}
                       style={{
-                        background: "linear-gradient(135deg, #F59E0B, #D97706)",
+                        background: p.pro_destacado
+                          ? "linear-gradient(135deg, #F59E0B, #D97706)"
+                          : "rgba(15, 23, 42, 0.78)",
+                        border: p.pro_destacado ? "1.5px solid #FCD34D" : "1.5px solid rgba(255, 255, 255, 0.35)",
                         color: "#FFFFFF",
-                        padding: "2px 8px",
+                        padding: "4px 9px",
                         borderRadius: "12px",
                         fontSize: "0.7rem",
                         fontWeight: 800,
-                        display: "flex",
+                        display: "inline-flex",
                         alignItems: "center",
                         gap: "4px",
-                        boxShadow: "0 2px 4px rgba(0,0,0,0.15)",
+                        boxShadow: "0 2px 5px rgba(0,0,0,0.18)",
+                        cursor: guardandoDestacadoKey === p.pro_id ? "wait" : "pointer",
+                        backdropFilter: "blur(6px)",
+                        transition: "all 0.15s ease",
                       }}
                     >
-                      <Sparkles size={10} />
-                      DESTACADO
-                    </div>
+                      {guardandoDestacadoKey === p.pro_id ? (
+                        <RefreshCw size={10} className="animate-spin" />
+                      ) : (
+                        <Sparkles size={11} color={p.pro_destacado ? "#FFFFFF" : "#FCD34D"} />
+                      )}
+                      <span className="btn-texto-responsive">
+                        {p.pro_destacado ? "DESTACADO" : "DESTACAR"}
+                      </span>
+                    </button>
+                  ) : (
+                    p.pro_destacado && (
+                      <div
+                        style={{
+                          background: "linear-gradient(135deg, #F59E0B, #D97706)",
+                          color: "#FFFFFF",
+                          padding: "2px 8px",
+                          borderRadius: "12px",
+                          fontSize: "0.7rem",
+                          fontWeight: 800,
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "4px",
+                          boxShadow: "0 2px 4px rgba(0,0,0,0.15)",
+                        }}
+                      >
+                        <Sparkles size={10} />
+                        DESTACADO
+                      </div>
+                    )
                   )}
 
                   {modoVista === "admin" && (

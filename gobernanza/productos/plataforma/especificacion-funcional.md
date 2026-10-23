@@ -529,6 +529,13 @@ Motor centralizado de gestión de bienes, servicios, recetas (BOM), inventarios,
     - **Inmutabilidad Tributaria y Financiera:** Todas las órdenes (`com_orden_item`), cobros (`com_transaccion_pago`), comprobantes electrónicos SRI (`fac_factura_item`) y bitácoras de auditoría capturan y congelan una instantánea (*snapshot*) completa del producto/variante (nombre comercial, base imponible, tarifa de IVA, descripción y SKU) en el instante exacto de la venta.
     - **Autonomía del Catálogo y Borrado Físico Definitivo:** Las modificaciones posteriores de precio, características o la **eliminación física definitiva** (`DELETE FROM comun_comercio.com_producto`) de un producto no distorsionan ni invalidan los registros contables históricos.
     - **Cascada y Purga Limpia:** Al eliminar un producto desde la consola, la base de datos elimina en cascada sus variantes (`com_variante`), categorías asignadas (`com_producto_categoria`), personalizaciones y recursos asociados (`ON DELETE CASCADE`), y el sistema purga inmediatamente los estados y cachés en memoria sin dejar registros residuales (*tombstones*).
+25. **Gestión de Insignia 'Destacado' y Exposición en Portadas / Landing (`pro_destacado`):**
+    - **Asignación Rápida y en Modales:**
+      - La consola de catálogo (`CatalogoProductosComercio.tsx`) provee un botón interactivo directo en la cabecera de la tarjeta para alternar la condición de *Destacado* (`alternarDestacadoProductoAction`) con actualización optimista inmediata en UI y persistencia en Supabase.
+      - Los formularios de creación (`ModalCrearProducto.tsx`) y edición master (`ModalEditarProducto.tsx`) incluyen el switch interactivo `⭐ Insignia Destacado: SÍ / ☆ Destacado: NO` junto a la disponibilidad y temporalidad estacional.
+    - **Exposición Dinámica en la Sección de Planes (Landing Web Tranqi):**
+      - La sección `#planes` de la landing page (`apps/tranqi-web/app/page.tsx` y endpoint público `/api/planes-publicos`) consulta y expone los 2 planes clave: el primer plan destacado del grupo *Planes Familiares* y el primer destacado del grupo *Planes Corporativos*.
+      - Se presentan limpiamente sin imágenes, con su breve descripción y el rótulo estandarizado `Planes desde $XX` (calculando automáticamente el valor más bajo de sus variantes activas configuradas).
 
 **Implementación técnica:** ver [`especificacion-tecnica.md`](especificacion-tecnica.md) §7 (`comun_comercio`).
 

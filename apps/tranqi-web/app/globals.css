@@ -300,17 +300,144 @@ p { line-height: 1.55; }
 .mock .boton { background: var(--amarillo); border-radius: 999px; text-align: center; padding: 11px; font-size: 0.76rem; font-weight: 800; letter-spacing: 0.06em; }
 
 /* ── PLANES · amarillo ── */
-#planes { background: var(--amarillo); }
-#planes h2 { font-size: clamp(1.8rem, 3.4vw, 2.7rem); }
-#planes .precio { font-size: clamp(3.6rem, 9vw, 7.4rem); font-weight: 900; letter-spacing: -0.04em; line-height: 1; margin-top: 14px; }
-/* letter-spacing se hereda YA CALCULADO en px: los -0.04em del precio son
-   -4,7px a 7.4rem, y aplicados a "al año" (0.35em) se comían el espacio y se
-   leía "alaño". El periodo declara su propio espaciado, que sí se mide contra
-   su tamaño. */
-#planes .precio .periodo { font-size: 0.35em; font-weight: 800; letter-spacing: -0.01em; }
-#planes .sub { margin-top: 22px; font-weight: 700; font-size: clamp(1.1rem, 1.9vw, 1.35rem); max-width: 560px; }
-#planes .nota { margin-top: 12px; font-size: 1.02rem; max-width: 520px; }
-#planes .btn { margin-top: 32px; }
+#planes { background: var(--amarillo); padding: clamp(40px, 6vw, 80px) 0; }
+#planes .cabecera-planes { text-align: left; margin-bottom: 28px; }
+#planes h2 { font-size: clamp(1.8rem, 3.4vw, 2.7rem); color: var(--negro); }
+#planes .sub { margin-top: 12px; font-weight: 600; font-size: clamp(1rem, 1.6vw, 1.2rem); max-width: 640px; color: rgba(0, 0, 0, 0.85); line-height: 1.45; }
+#planes .nota { margin-top: 20px; font-size: 0.95rem; color: rgba(0, 0, 0, 0.75); }
+
+.planes-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 28px;
+  width: 100%;
+}
+
+.plan-card {
+  background: #FFFFFF;
+  border-radius: 24px;
+  padding: clamp(24px, 3.5vw, 36px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.07), 0 2px 6px rgba(0, 0, 0, 0.04);
+  border: 2px solid rgba(0, 0, 0, 0.06);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.plan-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.12);
+}
+
+.plan-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.plan-badge-categoria {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #1E293B;
+  background: #F1F5F9;
+  padding: 4px 10px;
+  border-radius: 20px;
+}
+
+.plan-badge-destacado {
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  background: linear-gradient(135deg, #F59E0B, #D97706);
+  color: #FFFFFF;
+  padding: 4px 10px;
+  border-radius: 20px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  box-shadow: 0 2px 6px rgba(245, 158, 11, 0.35);
+}
+
+.plan-card-titulo {
+  font-size: clamp(1.35rem, 2vw, 1.7rem);
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  color: var(--negro);
+  line-height: 1.25;
+  margin: 0 0 12px 0;
+}
+
+.plan-card-desc {
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: #475569;
+  margin: 0 0 24px 0;
+  flex-grow: 1;
+}
+
+.plan-card-precio-box {
+  background: #F8FAFC;
+  border-radius: 16px;
+  padding: 14px 18px;
+  margin-bottom: 20px;
+  border: 1px solid #E2E8F0;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.plan-card-desde {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #64748B;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.plan-card-monto {
+  display: flex;
+  align-items: baseline;
+  gap: 2px;
+}
+
+.plan-card-moneda {
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: var(--negro);
+}
+
+.plan-card-valor {
+  font-size: clamp(1.8rem, 3vw, 2.3rem);
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  color: var(--negro);
+  line-height: 1;
+}
+
+.plan-card-btn {
+  width: 100%;
+  text-align: center;
+  justify-content: center;
+  display: flex;
+  margin-top: 0;
+  padding: 13px 20px;
+  font-size: 0.95rem;
+}
+
+@media (max-width: 768px) {
+  .planes-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+}
 
 /* ── STATEMENT · rosa ── */
 #statement { background: var(--rosa); }

@@ -1772,28 +1772,55 @@ export function ModalEditarProducto({
                     </label>
                   </div>
 
-                  {/* Switch Principal Activar / Desactivar Producto */}
-                  <button
-                    type="button"
-                    onClick={() => setProActivo(!proActivo)}
-                    style={{
-                      background: proActivo ? "#ECFDF5" : "#FEF2F2",
-                      border: proActivo ? "1.5px solid #10B981" : "1.5px solid #EF4444",
-                      color: proActivo ? "#065F46" : "#991B1B",
-                      padding: "5px 12px",
-                      borderRadius: "8px",
-                      fontSize: "0.75rem",
-                      fontWeight: 800,
-                      cursor: "pointer",
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: "6px",
-                      boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
-                    }}
-                  >
-                    <Power size={13} color={proActivo ? "#10B981" : "#EF4444"} />
-                    <span>{proActivo ? "🟢 Producto Activo en Catálogo" : "⚪ Producto Desactivado (Oculto)"}</span>
-                  </button>
+                  <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
+                    {/* Switch Principal Activar / Desactivar Producto */}
+                    <button
+                      type="button"
+                      onClick={() => setProActivo(!proActivo)}
+                      style={{
+                        background: proActivo ? "#ECFDF5" : "#FEF2F2",
+                        border: proActivo ? "1.5px solid #10B981" : "1.5px solid #EF4444",
+                        color: proActivo ? "#065F46" : "#991B1B",
+                        padding: "5px 12px",
+                        borderRadius: "8px",
+                        fontSize: "0.75rem",
+                        fontWeight: 800,
+                        cursor: "pointer",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "6px",
+                        boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
+                      }}
+                    >
+                      <Power size={13} color={proActivo ? "#10B981" : "#EF4444"} />
+                      <span>{proActivo ? "🟢 Activo en Catálogo" : "⚪ Desactivado (Oculto)"}</span>
+                    </button>
+
+                    {/* Switch Insignia Destacado (Web & Landing) */}
+                    <button
+                      type="button"
+                      onClick={() => setDestacado(!destacado)}
+                      style={{
+                        background: destacado ? "linear-gradient(135deg, #FEF3C7, #FDE68A)" : "#F1F5F9",
+                        border: destacado ? "1.5px solid #F59E0B" : "1.5px solid #CBD5E1",
+                        color: destacado ? "#B45309" : "#64748B",
+                        padding: "5px 12px",
+                        borderRadius: "8px",
+                        fontSize: "0.75rem",
+                        fontWeight: 800,
+                        cursor: "pointer",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "6px",
+                        boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
+                        transition: "all 0.15s ease",
+                      }}
+                      title="Marca este producto con la insignia DESTACADO para priorizarlo en la sección de planes de la landing y en el catálogo"
+                    >
+                      <Sparkles size={13} color={destacado ? "#D97706" : "#94A3B8"} />
+                      <span>{destacado ? "⭐ Insignia Destacado: SÍ" : "☆ Destacado: NO"}</span>
+                    </button>
+                  </div>
                 </div>
 
                 <p style={{ fontSize: "0.73rem", color: "#64748B", margin: "0 0 10px 0" }}>

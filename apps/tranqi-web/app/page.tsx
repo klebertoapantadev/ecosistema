@@ -13,6 +13,17 @@ interface AbogadoCard {
   verificado: boolean;
 }
 
+interface PlanDestacadoLanding {
+  categoria: string;
+  categoriaNombre: string;
+  productoId: string;
+  nombre: string;
+  descripcion: string;
+  precioDesde: number;
+  precioDesdeTexto: string;
+  destacado: boolean;
+}
+
 const ABOGADOS_BASE: AbogadoCard[] = [
   { id: "1", nombre: "Mateo Salazar", cargo: "Socio fundador", materia: "Derecho Civil", ubicacion: "Quito · 4 prov.", experiencia: "12 años", verificado: true },
   { id: "2", nombre: "Camila Rosero", cargo: "Abogada litigante", materia: "Derecho Laboral", ubicacion: "Guayaquil · 2 prov.", experiencia: "8 años", verificado: true },
@@ -42,6 +53,31 @@ const FALLBACK: Record<string, string> = {
 export default function TranqiLanding() {
   const carruselRef = useRef<HTMLDivElement>(null);
   const [abogados, setAbogados] = useState<AbogadoCard[]>(ABOGADOS_BASE);
+  const [planesDestacados, setPlanesDestacados] = useState<{
+    familiar: PlanDestacadoLanding;
+    corporativo: PlanDestacadoLanding;
+  }>({
+    familiar: {
+      categoria: "familiar",
+      categoriaNombre: "Planes Familiares",
+      productoId: "prod-trq-plan-proteccion",
+      nombre: "Planes de Protección Jurídica Continua",
+      descripcion: "Membresías de cobertura legal preventiva para personas naturales y familias.",
+      precioDesde: 23,
+      precioDesdeTexto: "23.00",
+      destacado: true,
+    },
+    corporativo: {
+      categoria: "corporativo",
+      categoriaNombre: "Planes Corporativos",
+      productoId: "prod-trq-plan-corporativo",
+      nombre: "Cobertura Legal Corporativa Empresas (B2B)",
+      descripcion: "Licenciamiento legal por tramos de empleados con abogado empresarial dedicado.",
+      precioDesde: 10.35,
+      precioDesdeTexto: "10.35",
+      destacado: true,
+    },
+  });
   const isDragging = useRef(false);
   const startX = useRef(0);
   const scrollLeftPos = useRef(0);
@@ -97,6 +133,24 @@ export default function TranqiLanding() {
       }
     }
     cargarAbogadosRegistrados();
+  }, []);
+
+  useEffect(() => {
+    async function cargarPlanesDestacados() {
+      try {
+        const res = await fetch("/api/planes-publicos");
+        const json = await res.json();
+        if (json.ok && json.familiar && json.corporativo) {
+          setPlanesDestacados({
+            familiar: json.familiar,
+            corporativo: json.corporativo,
+          });
+        }
+      } catch {
+        // Fallback inmediato a los valores por defecto
+      }
+    }
+    cargarPlanesDestacados();
   }, []);
 
   useEffect(() => {
@@ -547,11 +601,64 @@ export default function TranqiLanding() {
           <path pathLength={1} stroke="#7866FF" d="M 1244 0 C 1244 130 1420 300 1282 500 C 1162 662 882 642 902 462 C 922 302 1182 322 1162 522 C 1140 740 336 800 336 900" />
         </svg></div>
         <div className="wrap">
-          <h2 className="reveal">Protección jurídica accesible</h2>
-          <div className="precio reveal">USD 20 <span className="periodo">al año</span></div>
-          <p className="sub reveal">Un sistema diseñado para que cualquier persona pueda contar con respaldo legal permanente.</p>
-          <p className="nota reveal">Sé parte de un futuro donde la justicia es rápida, eficiente y accesible.</p>
-          <a className="btn btn-negro reveal" href="/ingresar">Ingresar / Registrarme</a>
+          <div className="cabecera-planes reveal">
+            <h2>Protección jurídica accesible</h2>
+            <p className="sub">Un sistema diseñado para que cualquier persona o empresa cuente con respaldo legal permanente.</p>
+          </div>
+
+          <div className="planes-grid reveal">
+            {/* 1. Primer plan destacado del grupo 'Planes Familiares' */}
+            <div className="plan-card">
+              <div className="plan-card-header">
+                <span className="plan-badge-categoria">{planesDestacados.familiar.categoriaNombre}</span>
+                {planesDestacados.familiar.destacado && (
+                  <span className="plan-badge-destacado">⭐ DESTACADO</span>
+                )}
+              </div>
+              <h3 className="plan-card-titulo">{planesDestacados.familiar.nombre}</h3>
+              <p className="plan-card-desc">{planesDestacados.familiar.descripcion}</p>
+
+              <div className="plan-card-precio-box">
+                <span className="plan-card-desde">Planes desde</span>
+                <div className="plan-card-monto">
+                  <span className="plan-card-moneda">$</span>
+                  <span className="plan-card-valor">{planesDestacados.familiar.precioDesdeTexto}</span>
+                </div>
+              </div>
+
+              <a className="btn btn-negro plan-card-btn" href="/ingresar">
+                Ingresar / Registrarme
+              </a>
+            </div>
+
+            {/* 2. Primer plan destacado del grupo 'Planes Corporativos' */}
+            <div className="plan-card">
+              <div className="plan-card-header">
+                <span className="plan-badge-categoria">{planesDestacados.corporativo.categoriaNombre}</span>
+                {planesDestacados.corporativo.destacado && (
+                  <span className="plan-badge-destacado">⭐ DESTACADO</span>
+                )}
+              </div>
+              <h3 className="plan-card-titulo">{planesDestacados.corporativo.nombre}</h3>
+              <p className="plan-card-desc">{planesDestacados.corporativo.descripcion}</p>
+
+              <div className="plan-card-precio-box">
+                <span className="plan-card-desde">Planes desde</span>
+                <div className="plan-card-monto">
+                  <span className="plan-card-moneda">$</span>
+                  <span className="plan-card-valor">{planesDestacados.corporativo.precioDesdeTexto}</span>
+                </div>
+              </div>
+
+              <a className="btn btn-negro plan-card-btn" href="/ingresar">
+                Ingresar / Registrarme
+              </a>
+            </div>
+          </div>
+
+          <p className="nota reveal" style={{ textAlign: "center", marginTop: 24, maxWidth: "100%" }}>
+            Sé parte de un futuro donde la justicia es rápida, eficiente y accesible.
+          </p>
         </div>
       </section>
 
