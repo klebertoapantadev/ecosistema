@@ -3,29 +3,19 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import {
-  ShieldCheck,
-  CheckCircle2,
-  ArrowRight,
-  ArrowLeft,
-  Briefcase,
-  TrendingUp,
-  Award,
-  Wallet,
-  BookOpen,
-  Users2,
-  CreditCard,
+  Check,
   Send,
   Loader2,
-  AlertCircle
+  AlertCircle,
+  ArrowRight,
+  ArrowLeft
 } from "lucide-react";
 import { validarCorreoEstructurado } from "@eco/primitivas";
 
 export default function PaginaRedAbogados() {
-  // Estado para formulario de contacto directo de la sección final
   const [nombre, setNombre] = useState("");
   const [correo, setCorreo] = useState("");
   const [telefono, setTelefono] = useState("");
-  const [areaPractica, setAreaPractica] = useState("Derecho Civil & Procesal");
   const [mensaje, setMensaje] = useState("");
   const [errorCorreo, setErrorCorreo] = useState<string | null>(null);
   const [sugerenciaCorreo, setSugerenciaCorreo] = useState<string | null>(null);
@@ -54,8 +44,8 @@ export default function PaginaRedAbogados() {
     e.preventDefault();
     setErrorForm(null);
 
-    if (!nombre.trim() || !correo.trim() || !telefono.trim()) {
-      setErrorForm("Por favor completa tu nombre, correo y teléfono.");
+    if (!nombre.trim() || !correo.trim()) {
+      setErrorForm("Por favor completa tu nombre y correo electrónico.");
       return;
     }
 
@@ -73,18 +63,18 @@ export default function PaginaRedAbogados() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          empresa: "Abogado Independiente / Estudio Jurídico",
+          empresa: "Abogado(a) Independiente",
           nombreContacto: nombre.trim(),
-          cargo: "Abogado(a) Postulante",
+          cargo: "Postulante Red Nacional",
           correo: correo.trim().toLowerCase(),
-          telefono: telefono.trim(),
-          interes: `Red de Abogados — Especialidad: ${areaPractica}`,
-          mensaje: mensaje.trim() || "Deseo recibir información para sumarme a la Red Nacional de Abogados Tranqi."
+          telefono: telefono.trim() || "No especificado",
+          interes: "Red Nacional de Abogados (somostranqi)",
+          mensaje: mensaje.trim() || "Solicitud de contacto e información de activación en la Red Nacional de Abogados."
         })
       });
 
       if (!res.ok) {
-        throw new Error("No se pudo enviar la consulta. Intenta nuevamente.");
+        throw new Error("No se pudo enviar el formulario. Intenta nuevamente.");
       }
 
       setEnviado(true);
@@ -96,50 +86,39 @@ export default function PaginaRedAbogados() {
   };
 
   return (
-    <div style={{ minHeight: "100vh", backgroundColor: "#0a0e17", color: "#f8fafc", fontFamily: "var(--fuente-sans, sans-serif)", overflowX: "hidden" }}>
+    <div style={{ minHeight: "100vh", backgroundColor: "#ffffff", color: "#333333", fontFamily: "var(--fuente-sans, 'Poppins', 'Inter', sans-serif)", overflowX: "hidden" }}>
       {/* ═════════════════════════════════════════════════════════════ */}
-      {/* NAVEGACIÓN SUPERIOR */}
+      {/* NAVEGACIÓN SUPERIOR (Fondo Blanco, idéntica al original) */}
       {/* ═════════════════════════════════════════════════════════════ */}
       <header
         style={{
           position: "sticky",
           top: 0,
           zIndex: 50,
-          backgroundColor: "rgba(10, 14, 23, 0.92)",
-          backdropFilter: "blur(14px)",
-          borderBottom: "1px solid rgba(255, 255, 255, 0.08)"
+          backgroundColor: "#ffffff",
+          boxShadow: "0 1px 10px rgba(0, 0, 0, 0.06)",
+          borderBottom: "1px solid #f0f0f0"
         }}
       >
         <div
           style={{
-            maxWidth: "1280px",
+            maxWidth: "1180px",
             margin: "0 auto",
-            padding: "14px 24px",
+            padding: "12px 24px",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between"
           }}
         >
-          {/* Logo y Badge */}
+          {/* Logo Tranqi original */}
           <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
             <Link href="/" style={{ display: "flex", alignItems: "center" }}>
-              <img src="/assets/tranqi-white.svg" alt="tranqi" style={{ height: "30px", width: "auto" }} />
+              <img
+                src="/assets/abogados/tranqi_logo.png"
+                alt="Tranqi"
+                style={{ height: "42px", width: "auto" }}
+              />
             </Link>
-            <span
-              style={{
-                fontSize: "0.72rem",
-                letterSpacing: "0.08em",
-                textTransform: "uppercase",
-                background: "rgba(254, 227, 0, 0.15)",
-                color: "#FEE300",
-                fontWeight: 800,
-                padding: "3px 8px",
-                borderRadius: "6px",
-                border: "1px solid rgba(254, 227, 0, 0.3)"
-              }}
-            >
-              Red Nacional
-            </span>
           </div>
 
           {/* Menú de Navegación somostranqi */}
@@ -147,34 +126,69 @@ export default function PaginaRedAbogados() {
             style={{
               display: "flex",
               alignItems: "center",
-              gap: "28px"
+              gap: "32px"
             }}
-            className="menu-desktop"
           >
-            <a href="#beneficios" style={{ color: "#cbd5e1", textDecoration: "none", fontSize: "0.9rem", fontWeight: 600 }}>
+            <a
+              href="#beneficios"
+              style={{
+                color: "#5100bb",
+                textDecoration: "none",
+                fontSize: "0.95rem",
+                fontWeight: 600,
+                transition: "opacity 0.2s"
+              }}
+            >
               Beneficios
             </a>
-            <a href="#comofunciona" style={{ color: "#cbd5e1", textDecoration: "none", fontSize: "0.9rem", fontWeight: 600 }}>
-              Cómo Funciona
+            <a
+              href="#comofunciona"
+              style={{
+                color: "#5100bb",
+                textDecoration: "none",
+                fontSize: "0.95rem",
+                fontWeight: 600,
+                transition: "opacity 0.2s"
+              }}
+            >
+              Como Funciona
             </a>
-            <a href="#app" style={{ color: "#cbd5e1", textDecoration: "none", fontSize: "0.9rem", fontWeight: 600 }}>
+            <a
+              href="#app"
+              style={{
+                color: "#5100bb",
+                textDecoration: "none",
+                fontSize: "0.95rem",
+                fontWeight: 600,
+                transition: "opacity 0.2s"
+              }}
+            >
               App
             </a>
-            <a href="#unete" style={{ color: "#cbd5e1", textDecoration: "none", fontSize: "0.9rem", fontWeight: 600 }}>
+            <a
+              href="#formulario"
+              style={{
+                color: "#5100bb",
+                textDecoration: "none",
+                fontSize: "0.95rem",
+                fontWeight: 600,
+                transition: "opacity 0.2s"
+              }}
+            >
               Únete a la red
             </a>
           </nav>
 
           {/* Acciones */}
-          <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
             <Link
               href="/"
               style={{
                 display: "inline-flex",
                 alignItems: "center",
-                gap: "6px",
-                fontSize: "0.85rem",
-                color: "#94a3b8",
+                gap: "5px",
+                fontSize: "0.88rem",
+                color: "#666666",
                 textDecoration: "none",
                 fontWeight: 600
               }}
@@ -186,15 +200,16 @@ export default function PaginaRedAbogados() {
               style={{
                 display: "inline-flex",
                 alignItems: "center",
-                gap: "8px",
-                backgroundColor: "#FEE300",
-                color: "#000000",
+                backgroundColor: "#fee400",
+                color: "#5100bb",
                 fontSize: "0.85rem",
                 fontWeight: 800,
-                padding: "8px 18px",
+                padding: "9px 22px",
                 borderRadius: "999px",
                 textDecoration: "none",
-                boxShadow: "0 4px 14px rgba(254, 227, 0, 0.25)"
+                textTransform: "uppercase",
+                letterSpacing: "0.04em",
+                boxShadow: "0 2px 8px rgba(254, 228, 0, 0.4)"
               }}
             >
               Quiero Unirme
@@ -204,460 +219,246 @@ export default function PaginaRedAbogados() {
       </header>
 
       {/* ═════════════════════════════════════════════════════════════ */}
-      {/* SECCIÓN 1: HERO (Tu práctica legal...) */}
+      {/* SECCIÓN 0: HERO (Foto con iluminación natural como imagen 2) */}
       {/* ═════════════════════════════════════════════════════════════ */}
       <section
         style={{
           position: "relative",
-          minHeight: "75vh",
+          minHeight: "86vh",
           display: "flex",
           alignItems: "center",
-          justifyContent: "center",
-          padding: "80px 24px 100px",
-          backgroundImage: "linear-gradient(rgba(10, 14, 23, 0.82), rgba(10, 14, 23, 0.94)), url('/assets/abogados/chico1b.webp')",
+          backgroundImage: "linear-gradient(to right, rgba(0, 0, 0, 0.48) 0%, rgba(0, 0, 0, 0.28) 42%, rgba(0, 0, 0, 0) 65%), url('/assets/abogados/chico1b.webp')",
           backgroundSize: "cover",
-          backgroundPosition: "center top",
-          borderBottom: "1px solid rgba(255, 255, 255, 0.08)"
+          backgroundPosition: "center right",
+          padding: "70px 24px"
         }}
       >
-        <div style={{ maxWidth: "860px", margin: "0 auto", textAlign: "center", position: "relative", zIndex: 10 }}>
-          <div
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "8px",
-              background: "rgba(129, 57, 255, 0.2)",
-              border: "1px solid rgba(129, 57, 255, 0.4)",
-              color: "#c7c7f4",
-              fontSize: "0.82rem",
-              fontWeight: 800,
-              textTransform: "uppercase",
-              letterSpacing: "0.08em",
-              padding: "6px 16px",
-              borderRadius: "999px",
-              marginBottom: "20px"
-            }}
-          >
-            <ShieldCheck size={16} color="#FEE300" /> Red Nacional de Abogados
-          </div>
+        <div
+          style={{
+            maxWidth: "1180px",
+            margin: "0 auto",
+            width: "100%",
+            display: "flex",
+            alignItems: "center"
+          }}
+        >
+          {/* Columna Izquierda con texto blanco alineado a la izquierda */}
+          <div style={{ maxWidth: "640px" }}>
+            <div style={{ marginBottom: "18px" }}>
+              <span
+                style={{
+                  display: "inline-block",
+                  color: "#ffffff",
+                  fontSize: "0.85rem",
+                  fontWeight: 700,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.1em",
+                  borderBottom: "2px solid #fee400",
+                  paddingBottom: "4px"
+                }}
+              >
+                RED NACIONAL DE ABOGADOS
+              </span>
+            </div>
 
-          <h1
-            style={{
-              fontSize: "clamp(2.3rem, 5vw, 3.6rem)",
-              fontWeight: 900,
-              lineHeight: 1.15,
-              color: "#ffffff",
-              letterSpacing: "-0.03em",
-              marginBottom: "22px"
-            }}
-          >
-            Tu práctica legal con <span style={{ color: "#FEE300" }}>más casos</span>, más ingresos y <span style={{ color: "#a5ff5b" }}>más respaldo</span>.
-          </h1>
-
-          <p
-            style={{
-              fontSize: "clamp(1.05rem, 2vw, 1.25rem)",
-              lineHeight: 1.6,
-              color: "#cbd5e1",
-              maxWidth: "740px",
-              margin: "0 auto 36px"
-            }}
-          >
-            Únete a la red de abogados de Tranqi y conecta con clientes reales que necesitan tu ayuda, mientras accedes a beneficios exclusivos, capacitación y una cuenta digital pensada para tu profesión.
-          </p>
-
-          <div style={{ display: "flex", gap: "16px", justifyContent: "center", flexWrap: "wrap" }}>
-            <a
-              href="/registro?intencion=abogado&destino=/panel/solicitud-socio"
+            <h1
               style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "8px",
-                backgroundColor: "#FEE300",
-                color: "#000000",
-                fontSize: "1rem",
+                fontSize: "clamp(2.4rem, 4.6vw, 3.8rem)",
                 fontWeight: 800,
-                padding: "14px 32px",
-                borderRadius: "999px",
-                textDecoration: "none",
-                boxShadow: "0 6px 20px rgba(254, 227, 0, 0.35)",
-                transition: "transform 0.2s"
-              }}
-            >
-              Quiero Unirme <ArrowRight size={18} />
-            </a>
-
-            <a
-              href="#beneficios"
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "8px",
-                backgroundColor: "rgba(255, 255, 255, 0.08)",
+                lineHeight: 1.14,
                 color: "#ffffff",
-                fontSize: "1rem",
-                fontWeight: 700,
-                padding: "14px 28px",
-                borderRadius: "999px",
-                textDecoration: "none",
-                border: "1px solid rgba(255, 255, 255, 0.2)"
+                letterSpacing: "-0.02em",
+                margin: "0 0 24px 0",
+                textShadow: "0 2px 14px rgba(0, 0, 0, 0.3)"
               }}
             >
-              Por qué unirte
-            </a>
+              Tu práctica legal con más casos, más ingresos y más respaldo.
+            </h1>
+
+            <p
+              style={{
+                fontSize: "clamp(1.05rem, 1.8vw, 1.15rem)",
+                lineHeight: 1.65,
+                color: "#ffffff",
+                margin: "0 0 36px 0",
+                maxWidth: "580px",
+                textShadow: "0 1px 8px rgba(0, 0, 0, 0.4)"
+              }}
+            >
+              Únete a la red de abogados de Tranqi y conecta con clientes reales que necesitan tu ayuda, mientras accedes a beneficios exclusivos, capacitación y una cuenta digital pensada para tu profesión.
+            </p>
+
+            <div>
+              <a
+                href="/registro?intencion=abogado&destino=/panel/solicitud-socio"
+                style={{
+                  display: "inline-block",
+                  backgroundColor: "#fee400",
+                  color: "#000000",
+                  fontSize: "0.95rem",
+                  fontWeight: 800,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.06em",
+                  padding: "14px 34px",
+                  borderRadius: "999px",
+                  textDecoration: "none",
+                  boxShadow: "0 4px 18px rgba(0, 0, 0, 0.25)",
+                  transition: "transform 0.15s ease"
+                }}
+              >
+                QUIERO UNIRME
+              </a>
+            </div>
           </div>
         </div>
       </section>
 
       {/* ═════════════════════════════════════════════════════════════ */}
-      {/* SECCIÓN 2: BENEFICIOS (#beneficios) */}
+      {/* SECCIÓN 1: BENEFICIOS (Morado #5100bb con patrón de marca) */}
       {/* ═════════════════════════════════════════════════════════════ */}
       <section
         id="beneficios"
         style={{
-          padding: "100px 24px",
-          maxWidth: "1280px",
-          margin: "0 auto"
+          backgroundColor: "#5100bb",
+          backgroundImage: "url('/assets/abogados/patronmarca3.png')",
+          backgroundRepeat: "no-repeat",
+          backgroundPosition: "top right",
+          padding: "90px 24px 100px",
+          color: "#ffffff"
         }}
       >
-        <div style={{ textAlign: "center", maxWidth: "780px", margin: "0 auto 60px" }}>
-          <span
-            style={{
-              fontSize: "0.82rem",
-              fontWeight: 800,
-              textTransform: "uppercase",
-              letterSpacing: "0.12em",
-              color: "#a5ff5b",
-              display: "block",
-              marginBottom: "10px"
-            }}
-          >
-            Por qué unirte
-          </span>
-          <h2
-            style={{
-              fontSize: "clamp(2rem, 3.5vw, 2.8rem)",
-              fontWeight: 900,
-              color: "#ffffff",
-              lineHeight: 1.2,
-              marginBottom: "16px"
-            }}
-          >
-            Todo lo que ganas al ser Socio Tranqi.
-          </h2>
-          <p style={{ fontSize: "1.1rem", color: "#94a3b8", lineHeight: 1.6 }}>
-            Formar parte de la Red Nacional de Abogados significa acceso directo a clientes, herramientas y un ecosistema que crece contigo.
-          </p>
-        </div>
-
-        {/* Grid de 8 Beneficios */}
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-            gap: "24px"
-          }}
-        >
-          {/* 1 */}
-          <div
-            style={{
-              backgroundColor: "rgba(17, 24, 39, 0.7)",
-              border: "1px solid rgba(255, 255, 255, 0.08)",
-              borderRadius: "18px",
-              padding: "28px",
-              display: "flex",
-              flexDirection: "column",
-              gap: "14px"
-            }}
-          >
-            <div
+        <div style={{ maxWidth: "1180px", margin: "0 auto" }}>
+          <div style={{ marginBottom: "50px" }}>
+            <span
               style={{
-                width: "48px",
-                height: "48px",
-                borderRadius: "12px",
-                backgroundColor: "rgba(129, 57, 255, 0.15)",
-                color: "#c7c7f4",
-                display: "grid",
-                placeItems: "center"
+                display: "inline-block",
+                color: "#ffffff",
+                fontSize: "0.85rem",
+                fontWeight: 700,
+                textTransform: "uppercase",
+                letterSpacing: "0.1em",
+                borderBottom: "2px solid #fee400",
+                paddingBottom: "4px",
+                marginBottom: "14px"
               }}
             >
-              <Briefcase size={24} />
-            </div>
-            <h3 style={{ fontSize: "1.2rem", fontWeight: 800, color: "#ffffff", margin: 0 }}>
-              Nuevas oportunidades laborales
-            </h3>
-            <p style={{ fontSize: "0.92rem", color: "#94a3b8", lineHeight: 1.6, margin: 0 }}>
-              Acceso permanente a solicitudes de patrocinio, consultas y trámites legales asignados de acuerdo con tus áreas de práctica.
+              Por qué unirte
+            </span>
+            <h2
+              style={{
+                fontSize: "clamp(2.2rem, 4vw, 3.2rem)",
+                fontWeight: 800,
+                lineHeight: 1.18,
+                margin: "12px 0 16px 0",
+                color: "#ffffff"
+              }}
+            >
+              Todo lo que ganas al ser Socio Tranqi.
+            </h2>
+            <p
+              style={{
+                fontSize: "1.15rem",
+                lineHeight: 1.6,
+                color: "rgba(255, 255, 255, 0.9)",
+                maxWidth: "800px",
+                margin: 0
+              }}
+            >
+              Formar parte de la Red Nacional de Abogados significa acceso directo a clientes, herramientas y un ecosistema que crece contigo.
             </p>
           </div>
 
-          {/* 2 */}
+          {/* 8 Beneficios en 2 columnas con checks blancos */}
           <div
             style={{
-              backgroundColor: "rgba(17, 24, 39, 0.7)",
-              border: "1px solid rgba(255, 255, 255, 0.08)",
-              borderRadius: "18px",
-              padding: "28px",
-              display: "flex",
-              flexDirection: "column",
-              gap: "14px"
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
+              columnGap: "60px",
+              rowGap: "26px"
             }}
           >
-            <div
-              style={{
-                width: "48px",
-                height: "48px",
-                borderRadius: "12px",
-                backgroundColor: "rgba(165, 255, 91, 0.15)",
-                color: "#a5ff5b",
-                display: "grid",
-                placeItems: "center"
-              }}
-            >
-              <TrendingUp size={24} />
-            </div>
-            <h3 style={{ fontSize: "1.2rem", fontWeight: 800, color: "#ffffff", margin: 0 }}>
-              Nuevas fuentes de ingresos
-            </h3>
-            <p style={{ fontSize: "0.92rem", color: "#94a3b8", lineHeight: 1.6, margin: 0 }}>
-              Multiplica tus ingresos profesionales y rentabiliza tus horas disponibles sin invertir en publicidad ni captación comercial.
-            </p>
-          </div>
-
-          {/* 3 */}
-          <div
-            style={{
-              backgroundColor: "rgba(17, 24, 39, 0.7)",
-              border: "1px solid rgba(255, 255, 255, 0.08)",
-              borderRadius: "18px",
-              padding: "28px",
-              display: "flex",
-              flexDirection: "column",
-              gap: "14px"
-            }}
-          >
-            <div
-              style={{
-                width: "48px",
-                height: "48px",
-                borderRadius: "12px",
-                backgroundColor: "rgba(254, 227, 0, 0.15)",
-                color: "#FEE300",
-                display: "grid",
-                placeItems: "center"
-              }}
-            >
-              <Award size={24} />
-            </div>
-            <h3 style={{ fontSize: "1.2rem", fontWeight: 800, color: "#ffffff", margin: 0 }}>
-              Beneficios exclusivos
-            </h3>
-            <p style={{ fontSize: "0.92rem", color: "#94a3b8", lineHeight: 1.6, margin: 0 }}>
-              Condiciones preferenciales en servicios del ecosistema, asesoría contable, herramientas digitales y convenios corporativos.
-            </p>
-          </div>
-
-          {/* 4 */}
-          <div
-            style={{
-              backgroundColor: "rgba(17, 24, 39, 0.7)",
-              border: "1px solid rgba(255, 255, 255, 0.08)",
-              borderRadius: "18px",
-              padding: "28px",
-              display: "flex",
-              flexDirection: "column",
-              gap: "14px"
-            }}
-          >
-            <div
-              style={{
-                width: "48px",
-                height: "48px",
-                borderRadius: "12px",
-                backgroundColor: "rgba(129, 57, 255, 0.15)",
-                color: "#c7c7f4",
-                display: "grid",
-                placeItems: "center"
-              }}
-            >
-              <BookOpen size={24} />
-            </div>
-            <h3 style={{ fontSize: "1.2rem", fontWeight: 800, color: "#ffffff", margin: 0 }}>
-              Capacitación constante
-            </h3>
-            <p style={{ fontSize: "0.92rem", color: "#94a3b8", lineHeight: 1.6, margin: 0 }}>
-              Actualización legal permanente con juristas expertos en reformas legislativas, jurisprudencia y litigio estratégico en el Ecuador.
-            </p>
-          </div>
-
-          {/* 5 */}
-          <div
-            style={{
-              backgroundColor: "rgba(17, 24, 39, 0.7)",
-              border: "1px solid rgba(255, 255, 255, 0.08)",
-              borderRadius: "18px",
-              padding: "28px",
-              display: "flex",
-              flexDirection: "column",
-              gap: "14px"
-            }}
-          >
-            <div
-              style={{
-                width: "48px",
-                height: "48px",
-                borderRadius: "12px",
-                backgroundColor: "rgba(254, 227, 0, 0.15)",
-                color: "#FEE300",
-                display: "grid",
-                placeItems: "center"
-              }}
-            >
-              <ShieldCheck size={24} />
-            </div>
-            <h3 style={{ fontSize: "1.2rem", fontWeight: 800, color: "#ffffff", margin: 0 }}>
-              Certificaciones
-            </h3>
-            <p style={{ fontSize: "0.92rem", color: "#94a3b8", lineHeight: 1.6, margin: 0 }}>
-              Insignia oficial de Abogado Verificado ante los clientes de Tranqi, respaldando tu probidad, matrícula y trayectoria profesional.
-            </p>
-          </div>
-
-          {/* 6 */}
-          <div
-            style={{
-              backgroundColor: "rgba(17, 24, 39, 0.7)",
-              border: "1px solid rgba(255, 255, 255, 0.08)",
-              borderRadius: "18px",
-              padding: "28px",
-              display: "flex",
-              flexDirection: "column",
-              gap: "14px"
-            }}
-          >
-            <div
-              style={{
-                width: "48px",
-                height: "48px",
-                borderRadius: "12px",
-                backgroundColor: "rgba(165, 255, 91, 0.15)",
-                color: "#a5ff5b",
-                display: "grid",
-                placeItems: "center"
-              }}
-            >
-              <Users2 size={24} />
-            </div>
-            <h3 style={{ fontSize: "1.2rem", fontWeight: 800, color: "#ffffff", margin: 0 }}>
-              Red de derivación de clientes
-            </h3>
-            <p style={{ fontSize: "0.92rem", color: "#94a3b8", lineHeight: 1.6, margin: 0 }}>
-              Derivación inteligente de usuarios particulares y empresas que requieren atención legal inmediata en tu provincia o cantón.
-            </p>
-          </div>
-
-          {/* 7 */}
-          <div
-            style={{
-              backgroundColor: "rgba(17, 24, 39, 0.7)",
-              border: "1px solid rgba(255, 255, 255, 0.08)",
-              borderRadius: "18px",
-              padding: "28px",
-              display: "flex",
-              flexDirection: "column",
-              gap: "14px"
-            }}
-          >
-            <div
-              style={{
-                width: "48px",
-                height: "48px",
-                borderRadius: "12px",
-                backgroundColor: "rgba(129, 57, 255, 0.15)",
-                color: "#c7c7f4",
-                display: "grid",
-                placeItems: "center"
-              }}
-            >
-              <Wallet size={24} />
-            </div>
-            <h3 style={{ fontSize: "1.2rem", fontWeight: 800, color: "#ffffff", margin: 0 }}>
-              Cuenta digital propia
-            </h3>
-            <p style={{ fontSize: "0.92rem", color: "#94a3b8", lineHeight: 1.6, margin: 0 }}>
-              Panel de gestión para cobro puntual de honorarios, control de liquidaciones y trazabilidad de ingresos con total transparencia.
-            </p>
-          </div>
-
-          {/* 8 */}
-          <div
-            style={{
-              backgroundColor: "rgba(17, 24, 39, 0.7)",
-              border: "1px solid rgba(255, 255, 255, 0.08)",
-              borderRadius: "18px",
-              padding: "28px",
-              display: "flex",
-              flexDirection: "column",
-              gap: "14px"
-            }}
-          >
-            <div
-              style={{
-                width: "48px",
-                height: "48px",
-                borderRadius: "12px",
-                backgroundColor: "rgba(254, 227, 0, 0.15)",
-                color: "#FEE300",
-                display: "grid",
-                placeItems: "center"
-              }}
-            >
-              <CreditCard size={24} />
-            </div>
-            <h3 style={{ fontSize: "1.2rem", fontWeight: 800, color: "#ffffff", margin: 0 }}>
-              Programas de crédito y desarrollo
-            </h3>
-            <p style={{ fontSize: "0.92rem", color: "#94a3b8", lineHeight: 1.6, margin: 0 }}>
-              Acceso a financiamiento jurídico para tus clientes y facilidades de financiamiento para modernizar tu propio despacho profesional.
-            </p>
+            {[
+              "Nuevas oportunidades laborales",
+              "Beneficios exclusivos",
+              "Certificaciones",
+              "Cuenta digital propia",
+              "Nuevas fuentes de ingresos",
+              "Capacitación constante",
+              "Red de derivación de clientes",
+              "Programas de crédito y desarrollo"
+            ].map((beneficio, i) => (
+              <div
+                key={i}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "16px"
+                }}
+              >
+                <div
+                  style={{
+                    width: "36px",
+                    height: "36px",
+                    borderRadius: "50%",
+                    backgroundColor: "#ffffff",
+                    color: "#5100bb",
+                    display: "grid",
+                    placeItems: "center",
+                    flexShrink: 0
+                  }}
+                >
+                  <Check size={20} strokeWidth={3} />
+                </div>
+                <h3
+                  style={{
+                    fontSize: "1.2rem",
+                    fontWeight: 700,
+                    color: "#ffffff",
+                    margin: 0
+                  }}
+                >
+                  {beneficio}
+                </h3>
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
       {/* ═════════════════════════════════════════════════════════════ */}
-      {/* SECCIÓN 3: CÓMO FUNCIONA (#comofunciona) */}
+      {/* SECCIÓN 2: CÓMO FUNCIONA (Fondo Blanco #ffffff) */}
       {/* ═════════════════════════════════════════════════════════════ */}
       <section
         id="comofunciona"
         style={{
-          padding: "100px 24px",
-          backgroundColor: "#0d131f",
-          borderTop: "1px solid rgba(255, 255, 255, 0.06)",
-          borderBottom: "1px solid rgba(255, 255, 255, 0.06)"
+          backgroundColor: "#ffffff",
+          padding: "90px 24px",
+          color: "#333333"
         }}
       >
-        <div style={{ maxWidth: "1280px", margin: "0 auto" }}>
-          <div style={{ textAlign: "center", maxWidth: "780px", margin: "0 auto 60px" }}>
+        <div style={{ maxWidth: "1180px", margin: "0 auto" }}>
+          <div style={{ marginBottom: "60px" }}>
             <span
               style={{
-                fontSize: "0.82rem",
-                fontWeight: 800,
+                display: "inline-block",
+                color: "#5100bb",
+                fontSize: "0.85rem",
+                fontWeight: 700,
                 textTransform: "uppercase",
-                letterSpacing: "0.12em",
-                color: "#FEE300",
-                display: "block",
-                marginBottom: "10px"
+                letterSpacing: "0.1em",
+                borderBottom: "2px solid #fee400",
+                paddingBottom: "4px",
+                marginBottom: "14px"
               }}
             >
               Cómo funciona
             </span>
             <h2
               style={{
-                fontSize: "clamp(2rem, 3.5vw, 2.8rem)",
-                fontWeight: 900,
-                color: "#ffffff",
-                lineHeight: 1.2,
-                marginBottom: "16px"
+                fontSize: "clamp(2.1rem, 3.8vw, 3rem)",
+                fontWeight: 800,
+                color: "#1e1e2f",
+                margin: "12px 0 0 0"
               }}
             >
               Empieza a recibir casos en tres pasos.
@@ -667,109 +468,130 @@ export default function PaginaRedAbogados() {
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
-              gap: "32px"
+              gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+              gap: "40px"
             }}
           >
             {/* Paso 1 */}
-            <div
-              style={{
-                backgroundColor: "#111827",
-                borderRadius: "20px",
-                padding: "36px 30px",
-                border: "1px solid rgba(255, 255, 255, 0.08)",
-                position: "relative"
-              }}
-            >
+            <div>
               <div
                 style={{
                   width: "56px",
                   height: "56px",
                   borderRadius: "14px",
-                  backgroundColor: "#5000BA",
+                  backgroundColor: "#5100bb",
                   display: "grid",
                   placeItems: "center",
-                  marginBottom: "24px"
+                  marginBottom: "20px"
                 }}
               >
-                <img src="/assets/abogados/paso1.png" alt="Paso 1" style={{ width: "28px", height: "auto" }} />
+                <img
+                  src="/assets/abogados/paso1.png"
+                  alt="Regístrate"
+                  style={{ width: "26px", height: "auto" }}
+                />
               </div>
-              <span style={{ fontSize: "0.82rem", fontWeight: 800, color: "#FEE300", textTransform: "uppercase" }}>
-                Paso 01
-              </span>
-              <h3 style={{ fontSize: "1.4rem", fontWeight: 800, color: "#ffffff", margin: "8px 0 12px" }}>
+              <h3
+                style={{
+                  fontSize: "1.35rem",
+                  fontWeight: 700,
+                  color: "#1e1e2f",
+                  margin: "0 0 10px 0"
+                }}
+              >
                 Regístrate
               </h3>
-              <p style={{ fontSize: "0.96rem", color: "#94a3b8", lineHeight: 1.6, margin: 0 }}>
-                Completa el formulario con tu información profesional y área de práctica. Solo toma unos minutos.
+              <p
+                style={{
+                  fontSize: "0.98rem",
+                  lineHeight: 1.6,
+                  color: "#666666",
+                  margin: 0
+                }}
+              >
+                Completa el formulario con tu información profesional y área de práctica.
               </p>
             </div>
 
             {/* Paso 2 */}
-            <div
-              style={{
-                backgroundColor: "#111827",
-                borderRadius: "20px",
-                padding: "36px 30px",
-                border: "1px solid rgba(255, 255, 255, 0.08)",
-                position: "relative"
-              }}
-            >
+            <div>
               <div
                 style={{
                   width: "56px",
                   height: "56px",
                   borderRadius: "14px",
-                  backgroundColor: "#5000BA",
+                  backgroundColor: "#5100bb",
                   display: "grid",
                   placeItems: "center",
-                  marginBottom: "24px"
+                  marginBottom: "20px"
                 }}
               >
-                <img src="/assets/abogados/paso2.png" alt="Paso 2" style={{ width: "28px", height: "auto" }} />
+                <img
+                  src="/assets/abogados/paso2.png"
+                  alt="Verificación"
+                  style={{ width: "26px", height: "auto" }}
+                />
               </div>
-              <span style={{ fontSize: "0.82rem", fontWeight: 800, color: "#FEE300", textTransform: "uppercase" }}>
-                Paso 02
-              </span>
-              <h3 style={{ fontSize: "1.4rem", fontWeight: 800, color: "#ffffff", margin: "8px 0 12px" }}>
+              <h3
+                style={{
+                  fontSize: "1.35rem",
+                  fontWeight: 700,
+                  color: "#1e1e2f",
+                  margin: "0 0 10px 0"
+                }}
+              >
                 Verificación
               </h3>
-              <p style={{ fontSize: "0.96rem", color: "#94a3b8", lineHeight: 1.6, margin: 0 }}>
-                Nuestro equipo valida tu perfil, matrícula del Foro y título universitario para activarte en la Red Nacional de Abogados.
+              <p
+                style={{
+                  fontSize: "0.98rem",
+                  lineHeight: 1.6,
+                  color: "#666666",
+                  margin: 0
+                }}
+              >
+                Nuestro equipo valida tu perfil y te activa dentro de la Red Nacional de Abogados.
               </p>
             </div>
 
             {/* Paso 3 */}
-            <div
-              style={{
-                backgroundColor: "#111827",
-                borderRadius: "20px",
-                padding: "36px 30px",
-                border: "1px solid rgba(255, 255, 255, 0.08)",
-                position: "relative"
-              }}
-            >
+            <div>
               <div
                 style={{
                   width: "56px",
                   height: "56px",
                   borderRadius: "14px",
-                  backgroundColor: "#5000BA",
+                  backgroundColor: "#5100bb",
                   display: "grid",
                   placeItems: "center",
-                  marginBottom: "24px"
+                  marginBottom: "20px"
                 }}
               >
-                <img src="/assets/abogados/paso3.png" alt="Paso 3" style={{ width: "28px", height: "auto" }} />
+                <img
+                  src="/assets/abogados/paso3.png"
+                  alt="Recibe casos y beneficios"
+                  style={{ width: "26px", height: "auto" }}
+                />
               </div>
-              <span style={{ fontSize: "0.82rem", fontWeight: 800, color: "#FEE300", textTransform: "uppercase" }}>
-                Paso 03
-              </span>
-              <h3 style={{ fontSize: "1.4rem", fontWeight: 800, color: "#ffffff", margin: "8px 0 12px" }}>
+              <h3
+                style={{
+                  fontSize: "1.35rem",
+                  fontWeight: 700,
+                  color: "#1e1e2f",
+                  margin: "0 0 10px 0"
+                }}
+              >
                 Recibe casos y beneficios
               </h3>
-              <p style={{ fontSize: "0.96rem", color: "#94a3b8", lineHeight: 1.6, margin: 0 }}>
-                Accede a la app, gestiona tus citas presenciales o virtuales, cobra tus honorarios y crece con Tranqi.
+              <p
+                style={{
+                  fontSize: "0.98rem",
+                  lineHeight: 1.6,
+                  color: "#666666",
+                  margin: 0
+                }}
+              >
+                Accede a la app, gestiona tus citas, cobra tus honorarios y crece con Tranqi.
               </p>
             </div>
           </div>
@@ -777,92 +599,105 @@ export default function PaginaRedAbogados() {
       </section>
 
       {/* ═════════════════════════════════════════════════════════════ */}
-      {/* SECCIÓN 4: MANIFIESTO */}
+      {/* SECCIÓN 3: MANIFIESTO (Fondo Claro con tipografía morada) */}
       {/* ═════════════════════════════════════════════════════════════ */}
       <section
         style={{
-          padding: "90px 24px",
-          background: "linear-gradient(135deg, #5000BA 0%, #1e0944 100%)",
+          backgroundColor: "#f9fafb",
+          borderTop: "1px solid #eeeeee",
+          borderBottom: "1px solid #eeeeee",
+          padding: "80px 24px",
           textAlign: "center"
         }}
       >
         <div style={{ maxWidth: "860px", margin: "0 auto" }}>
-          <p
+          <h2
             style={{
-              fontSize: "clamp(1.5rem, 3.2vw, 2.3rem)",
-              fontWeight: 800,
-              color: "#ffffff",
-              lineHeight: 1.35,
-              marginBottom: "24px"
+              fontSize: "clamp(1.5rem, 2.8vw, 2.2rem)",
+              fontWeight: 700,
+              color: "#333333",
+              lineHeight: 1.4,
+              margin: "0 0 20px 0"
             }}
           >
-            “Sé el abogado que la gente busca cuando más lo necesita — y que Tranqi lleve hasta ti a quien lo necesita.”
-          </p>
-          <p
+            Sé el abogado que la gente busca cuando más lo necesita — y que Tranqi lleve hasta ti a quien lo necesita.
+          </h2>
+          <h4
             style={{
               fontSize: "1.1rem",
-              color: "#FEE300",
-              fontWeight: 700,
+              fontWeight: 800,
+              color: "#5100bb",
               textTransform: "uppercase",
               letterSpacing: "0.06em",
               margin: 0
             }}
           >
             Democratizar la justicia para que los derechos sean de todos.
-          </p>
+          </h4>
         </div>
       </section>
 
       {/* ═════════════════════════════════════════════════════════════ */}
-      {/* SECCIÓN 5: APP MÓVIL (#app) */}
+      {/* SECCIÓN 4: APP (Fondo Blanco #ffffff con fonoapp.webp) */}
       {/* ═════════════════════════════════════════════════════════════ */}
       <section
         id="app"
         style={{
-          padding: "100px 24px",
-          maxWidth: "1280px",
-          margin: "0 auto"
+          backgroundColor: "#ffffff",
+          padding: "90px 24px",
+          color: "#333333"
         }}
       >
         <div
           style={{
+            maxWidth: "1180px",
+            margin: "0 auto",
             display: "grid",
             gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
             gap: "50px",
             alignItems: "center"
           }}
         >
-          {/* Texto Izquierda */}
+          {/* Izquierda: Textos y Lista */}
           <div>
             <span
               style={{
-                fontSize: "0.82rem",
-                fontWeight: 800,
+                display: "inline-block",
+                color: "#5100bb",
+                fontSize: "0.85rem",
+                fontWeight: 700,
                 textTransform: "uppercase",
-                letterSpacing: "0.12em",
-                color: "#a5ff5b",
-                display: "block",
-                marginBottom: "10px"
+                letterSpacing: "0.1em",
+                borderBottom: "2px solid #fee400",
+                paddingBottom: "4px",
+                marginBottom: "14px"
               }}
             >
               Cómo funciona
             </span>
             <h2
               style={{
-                fontSize: "clamp(2rem, 3.5vw, 2.8rem)",
-                fontWeight: 900,
-                color: "#ffffff",
-                lineHeight: 1.2,
-                marginBottom: "18px"
+                fontSize: "clamp(2.1rem, 3.8vw, 2.9rem)",
+                fontWeight: 800,
+                color: "#1e1e2f",
+                lineHeight: 1.18,
+                margin: "10px 0 16px 0"
               }}
             >
               Gestiona tu práctica legal desde el celular.
             </h2>
-            <p style={{ fontSize: "1.15rem", color: "#cbd5e1", lineHeight: 1.6, marginBottom: "32px" }}>
-              La misma app que usan tus clientes, <span style={{ color: "#FEE300", fontWeight: 700 }}>ahora trabajando para ti</span>.
-            </p>
+            <h3
+              style={{
+                fontSize: "1.2rem",
+                fontWeight: 600,
+                color: "#5100bb",
+                margin: "0 0 28px 0"
+              }}
+            >
+              La misma app que usan tus clientes, ahora trabajando para ti.
+            </h3>
 
-            <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "grid", gap: "16px" }}>
+            <div style={{ display: "grid", gap: "16px" }}>
               {[
                 "Agenda citas presenciales y virtuales",
                 "Recibe casos derivados de la Red Nacional",
@@ -870,196 +705,141 @@ export default function PaginaRedAbogados() {
                 "Accede a programas de crédito y desarrollo",
                 "Da seguimiento a cada trámite en curso"
               ].map((item, idx) => (
-                <li key={idx} style={{ display: "flex", alignItems: "center", gap: "12px", fontSize: "1.02rem", color: "#f1f5f9" }}>
+                <div key={idx} style={{ display: "flex", alignItems: "center", gap: "14px" }}>
                   <div
                     style={{
-                      width: "24px",
-                      height: "24px",
+                      width: "26px",
+                      height: "26px",
                       borderRadius: "50%",
-                      backgroundColor: "rgba(165, 255, 91, 0.15)",
-                      color: "#a5ff5b",
+                      backgroundColor: "rgba(81, 0, 187, 0.1)",
+                      color: "#5100bb",
                       display: "grid",
                       placeItems: "center",
                       flexShrink: 0
                     }}
                   >
-                    <CheckCircle2 size={16} />
+                    <Check size={16} strokeWidth={3} />
                   </div>
-                  <span>{item}</span>
-                </li>
+                  <span style={{ fontSize: "1.05rem", color: "#444444", fontWeight: 500 }}>
+                    {item}
+                  </span>
+                </div>
               ))}
-            </ul>
+            </div>
           </div>
 
-          {/* Imagen Mockup Derecha */}
+          {/* Derecha: Mockup del Celular */}
           <div style={{ textAlign: "center" }}>
-            <div
+            <img
+              src="/assets/abogados/fonoapp.webp"
+              alt="Tranqi App Móvil"
               style={{
-                display: "inline-block",
-                padding: "20px",
-                background: "radial-gradient(circle, rgba(129, 57, 255, 0.25) 0%, rgba(10, 14, 23, 0) 70%)",
-                borderRadius: "32px"
+                maxWidth: "100%",
+                maxHeight: "540px",
+                height: "auto",
+                objectFit: "contain"
               }}
-            >
-              <img
-                src="/assets/abogados/fonoapp.webp"
-                alt="App móvil Tranqi para abogados"
-                style={{
-                  maxWidth: "100%",
-                  maxHeight: "520px",
-                  height: "auto",
-                  filter: "drop-shadow(0 20px 40px rgba(0,0,0,0.6))"
-                }}
-              />
-            </div>
+            />
           </div>
         </div>
       </section>
 
       {/* ═════════════════════════════════════════════════════════════ */}
-      {/* SECCIÓN 6: LÁMINA FINAL DE ACTIVACIÓN (#unete, Screenshot 3) */}
+      {/* SECCIÓN 5: FORMULARIO Y REGISTRO (Screenshot 3 verde esmeralda) */}
       {/* ═════════════════════════════════════════════════════════════ */}
       <section
-        id="unete"
+        id="formulario"
         style={{
-          padding: "60px 24px 100px",
-          maxWidth: "1280px",
-          margin: "0 auto"
+          padding: "50px 24px 90px",
+          backgroundColor: "#ffffff"
         }}
       >
-        {/* Contenedor Verde Esmeralda (Screenshot 3) */}
         <div
           style={{
+            maxWidth: "1180px",
+            margin: "0 auto",
             backgroundColor: "#085e54",
-            borderRadius: "28px",
+            borderRadius: "24px",
             overflow: "hidden",
-            boxShadow: "0 25px 60px rgba(0, 0, 0, 0.5)",
-            position: "relative",
+            boxShadow: "0 18px 45px rgba(8, 94, 84, 0.25)",
             display: "grid",
             gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
-            alignItems: "stretch"
+            color: "#ffffff"
           }}
         >
-          {/* Columna Izquierda: Información de activación y checklist */}
+          {/* Columna Izquierda: Información de activación y botón de registro obligatorio */}
           <div
             style={{
               padding: "48px 40px",
               display: "flex",
               flexDirection: "column",
-              justifyContent: "space-between",
-              zIndex: 10
+              justifyContent: "space-between"
             }}
           >
             <div>
-              <div
-                style={{
-                  display: "inline-block",
-                  fontSize: "0.78rem",
-                  fontWeight: 800,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.1em",
-                  color: "#a5ff5b",
-                  marginBottom: "12px"
-                }}
-              >
-                Convocatoria Abierta
-              </div>
-
               <h2
                 style={{
-                  fontSize: "clamp(2rem, 3.6vw, 2.7rem)",
-                  fontWeight: 900,
+                  fontSize: "clamp(1.9rem, 3.5vw, 2.6rem)",
+                  fontWeight: 800,
                   color: "#ffffff",
-                  lineHeight: 1.15,
-                  letterSpacing: "-0.02em",
-                  marginBottom: "16px"
+                  lineHeight: 1.18,
+                  margin: "0 0 16px 0"
                 }}
               >
                 Forma parte de la Red Nacional de Abogados Tranqi.
               </h2>
 
-              <p
+              <h4
                 style={{
                   fontSize: "1.2rem",
                   fontWeight: 700,
-                  color: "#f8fafc",
-                  marginBottom: "8px"
+                  color: "#ffffff",
+                  margin: "0 0 8px 0"
                 }}
               >
                 Lo legal para todos, empieza contigo.
-              </p>
+              </h4>
 
               <p
                 style={{
                   fontSize: "0.95rem",
-                  color: "rgba(255, 255, 255, 0.85)",
-                  lineHeight: 1.5,
-                  marginBottom: "28px"
+                  color: "rgba(255, 255, 255, 0.9)",
+                  margin: "0 0 32px 0",
+                  lineHeight: 1.5
                 }}
               >
                 Déjanos tus datos y un asesor de Tranqi se pondrá en contacto para activar tu perfil.
               </p>
 
-              {/* Checklist exactamente como Screenshot 3 */}
+              {/* Checklist idéntico a Screenshot 3 */}
               <div style={{ display: "grid", gap: "14px", marginBottom: "36px" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "10px", fontSize: "0.98rem", fontWeight: 600, color: "#ffffff" }}>
-                  <div
-                    style={{
-                      width: "22px",
-                      height: "22px",
-                      borderRadius: "6px",
-                      border: "2px solid #ffffff",
-                      display: "grid",
-                      placeItems: "center",
-                      color: "#ffffff"
-                    }}
-                  >
-                    ✓
+                {[
+                  "Da seguimiento a cada trámite en curso",
+                  "Activación en pocos días",
+                  "Soporte durante todo el proceso"
+                ].map((item, i) => (
+                  <div key={i} style={{ display: "flex", alignItems: "center", gap: "12px", fontSize: "1rem", fontWeight: 600 }}>
+                    <div
+                      style={{
+                        width: "22px",
+                        height: "22px",
+                        borderRadius: "5px",
+                        border: "2px solid #ffffff",
+                        display: "grid",
+                        placeItems: "center",
+                        flexShrink: 0
+                      }}
+                    >
+                      <Check size={15} strokeWidth={3} />
+                    </div>
+                    <span>{item}</span>
                   </div>
-                  <span>Da seguimiento a cada trámite en curso</span>
-                </div>
-
-                <div style={{ display: "flex", alignItems: "center", gap: "10px", fontSize: "0.98rem", fontWeight: 600, color: "#ffffff" }}>
-                  <div
-                    style={{
-                      width: "22px",
-                      height: "22px",
-                      borderRadius: "6px",
-                      border: "2px solid #ffffff",
-                      display: "grid",
-                      placeItems: "center",
-                      color: "#ffffff"
-                    }}
-                  >
-                    ✓
-                  </div>
-                  <span>Activación en pocos días</span>
-                </div>
-
-                <div style={{ display: "flex", alignItems: "center", gap: "10px", fontSize: "0.98rem", fontWeight: 600, color: "#ffffff" }}>
-                  <div
-                    style={{
-                      width: "22px",
-                      height: "22px",
-                      borderRadius: "6px",
-                      border: "2px solid #ffffff",
-                      display: "grid",
-                      placeItems: "center",
-                      color: "#ffffff"
-                    }}
-                  >
-                    ✓
-                  </div>
-                  <span>Soporte durante todo el proceso</span>
-                </div>
+                ))}
               </div>
             </div>
 
             {/* BOTÓN OBLIGATORIO DE REGISTRO COMO ABOGADO (el existente) */}
-            <div style={{ paddingTop: "16px", borderTop: "1px solid rgba(255, 255, 255, 0.15)" }}>
-              <p style={{ fontSize: "0.85rem", color: "rgba(255, 255, 255, 0.8)", marginBottom: "12px", fontWeight: 500 }}>
-                ¿Listo para iniciar tu registro profesional de inmediato?
-              </p>
+            <div style={{ paddingTop: "20px", borderTop: "1px solid rgba(255, 255, 255, 0.2)" }}>
               <a
                 href="/registro?intencion=abogado&destino=/panel/solicitud-socio"
                 style={{
@@ -1068,24 +848,23 @@ export default function PaginaRedAbogados() {
                   justifyContent: "center",
                   gap: "10px",
                   width: "100%",
-                  maxWidth: "380px",
-                  backgroundColor: "#FEE300",
+                  backgroundColor: "#fee400",
                   color: "#000000",
-                  fontSize: "1.05rem",
-                  fontWeight: 900,
-                  padding: "16px 28px",
-                  borderRadius: "14px",
+                  fontSize: "1rem",
+                  fontWeight: 800,
+                  padding: "15px 28px",
+                  borderRadius: "12px",
                   textDecoration: "none",
-                  boxShadow: "0 8px 24px rgba(0,0,0,0.3)",
-                  textAlign: "center"
+                  textAlign: "center",
+                  boxShadow: "0 4px 14px rgba(0, 0, 0, 0.2)"
                 }}
               >
-                Quiero ser parte de la red <ArrowRight size={20} />
+                Quiero ser parte de la red <ArrowRight size={18} />
               </a>
             </div>
           </div>
 
-          {/* Columna Derecha: Foto de la Abogada y Formulario de Contacto Rápido */}
+          {/* Columna Derecha: Foto de la abogada con formulario original */}
           <div
             style={{
               position: "relative",
@@ -1097,103 +876,103 @@ export default function PaginaRedAbogados() {
               alignItems: "flex-end"
             }}
           >
-            {/* Gradiente de integración sobre la imagen */}
+            {/* Gradiente sutil inferior */}
             <div
               style={{
                 position: "absolute",
                 inset: 0,
-                background: "linear-gradient(to top, rgba(8, 94, 84, 0.95) 0%, rgba(8, 94, 84, 0.3) 50%, transparent 100%)"
+                background: "linear-gradient(to top, rgba(8, 94, 84, 0.95) 0%, rgba(8, 94, 84, 0.25) 50%, transparent 100%)"
               }}
             />
 
-            {/* Formulario Rápido para Abogados que desean ser contactados */}
+            {/* Formulario de Contacto integrado */}
             <div
               style={{
                 position: "relative",
                 zIndex: 10,
                 width: "100%",
-                padding: "28px",
-                backgroundColor: "rgba(10, 14, 23, 0.88)",
-                backdropFilter: "blur(12px)",
-                borderTop: "1px solid rgba(255, 255, 255, 0.15)"
+                padding: "24px 30px",
+                backgroundColor: "rgba(255, 255, 255, 0.95)",
+                backdropFilter: "blur(8px)",
+                color: "#333333"
               }}
             >
               {enviado ? (
-                <div style={{ textAlign: "center", padding: "20px 10px" }}>
+                <div style={{ textAlign: "center", padding: "16px 10px" }}>
                   <div
                     style={{
-                      width: "50px",
-                      height: "50px",
+                      width: "44px",
+                      height: "44px",
                       borderRadius: "50%",
-                      backgroundColor: "rgba(165, 255, 91, 0.2)",
-                      color: "#a5ff5b",
+                      backgroundColor: "#085e54",
+                      color: "#ffffff",
                       display: "grid",
                       placeItems: "center",
-                      margin: "0 auto 12px"
+                      margin: "0 auto 10px"
                     }}
                   >
-                    <CheckCircle2 size={28} />
+                    <Check size={22} strokeWidth={3} />
                   </div>
-                  <h4 style={{ fontSize: "1.2rem", fontWeight: 800, color: "#ffffff", margin: "0 0 6px" }}>
-                    ¡Datos recibidos con éxito!
+                  <h4 style={{ fontSize: "1.15rem", fontWeight: 700, margin: "0 0 6px 0", color: "#085e54" }}>
+                    ¡Información Enviada!
                   </h4>
-                  <p style={{ fontSize: "0.88rem", color: "#cbd5e1", margin: "0 0 16px" }}>
-                    Un asesor de Tranqi se comunicará contigo al teléfono o correo indicado para guiarte en el proceso de activación.
+                  <p style={{ fontSize: "0.88rem", color: "#666666", margin: "0 0 14px 0" }}>
+                    Un asesor de Tranqi se comunicará contigo para asistirte en la activación.
                   </p>
                   <a
                     href="/registro?intencion=abogado&destino=/panel/solicitud-socio"
                     style={{
                       display: "inline-block",
-                      backgroundColor: "#FEE300",
+                      backgroundColor: "#fee400",
                       color: "#000000",
                       fontSize: "0.85rem",
-                      fontWeight: 800,
-                      padding: "8px 18px",
+                      fontWeight: 700,
+                      padding: "8px 20px",
                       borderRadius: "999px",
                       textDecoration: "none"
                     }}
                   >
-                    Avanzar con mi registro ahora
+                    Completar Registro Ahora
                   </a>
                 </div>
               ) : (
                 <form onSubmit={handleEnviarConsulta}>
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "14px" }}>
-                    <span style={{ fontSize: "0.86rem", fontWeight: 800, color: "#FEE300", textTransform: "uppercase" }}>
-                      ¿Prefieres que un asesor te contacte?
+                  <div style={{ marginBottom: "10px" }}>
+                    <span style={{ fontSize: "0.82rem", fontWeight: 700, color: "#085e54", textTransform: "uppercase" }}>
+                      O solicita que un asesor te contacte:
                     </span>
                   </div>
 
                   {errorForm && (
                     <div
                       style={{
-                        padding: "8px 12px",
-                        backgroundColor: "rgba(239, 68, 68, 0.15)",
-                        border: "1px solid rgba(239, 68, 68, 0.4)",
-                        borderRadius: "8px",
-                        color: "#f87171",
-                        fontSize: "0.8rem",
-                        marginBottom: "12px"
+                        padding: "6px 10px",
+                        backgroundColor: "#fee2e2",
+                        border: "1px solid #f87171",
+                        borderRadius: "6px",
+                        color: "#b91c1c",
+                        fontSize: "0.78rem",
+                        marginBottom: "10px"
                       }}
                     >
                       {errorForm}
                     </div>
                   )}
 
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "10px" }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "8px" }}>
                     <input
                       type="text"
                       required
                       value={nombre}
                       onChange={(e) => setNombre(e.target.value)}
-                      placeholder="Tu Nombre Completo *"
+                      placeholder="Name"
                       style={{
                         width: "100%",
                         padding: "8px 12px",
-                        borderRadius: "8px",
-                        backgroundColor: "rgba(31, 41, 55, 0.9)",
-                        border: "1px solid rgba(255, 255, 255, 0.15)",
-                        color: "#ffffff",
+                        borderRadius: "6px",
+                        backgroundColor: "#ffffff",
+                        border: "1px solid #cccccc",
+                        color: "#333333",
                         fontSize: "0.85rem",
                         outline: "none"
                       }}
@@ -1206,20 +985,20 @@ export default function PaginaRedAbogados() {
                         value={correo}
                         onChange={(e) => validarEmail(e.target.value)}
                         onBlur={() => validarEmail(correo)}
-                        placeholder="tu.correo@ejemplo.com *"
+                        placeholder="Email Address"
                         style={{
                           width: "100%",
                           padding: "8px 12px",
-                          borderRadius: "8px",
-                          backgroundColor: "rgba(31, 41, 55, 0.9)",
-                          border: errorCorreo ? "1.5px solid #ef4444" : "1px solid rgba(255, 255, 255, 0.15)",
-                          color: "#ffffff",
+                          borderRadius: "6px",
+                          backgroundColor: "#ffffff",
+                          border: errorCorreo ? "1.5px solid #ef4444" : "1px solid #cccccc",
+                          color: "#333333",
                           fontSize: "0.85rem",
                           outline: "none"
                         }}
                       />
                       {errorCorreo && (
-                        <div style={{ marginTop: "4px", fontSize: "0.72rem", color: "#f87171" }}>
+                        <div style={{ marginTop: "4px", fontSize: "0.72rem", color: "#dc2626" }}>
                           <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
                             <AlertCircle size={12} style={{ flexShrink: 0 }} />
                             <span>{errorCorreo}</span>
@@ -1234,9 +1013,9 @@ export default function PaginaRedAbogados() {
                               style={{
                                 display: "block",
                                 marginTop: "2px",
-                                background: "rgba(254, 227, 0, 0.2)",
-                                color: "#FEE300",
-                                border: "none",
+                                background: "#fef3c7",
+                                color: "#92400e",
+                                border: "1px solid #f59e0b",
                                 borderRadius: "4px",
                                 padding: "2px 6px",
                                 fontSize: "0.72rem",
@@ -1252,63 +1031,41 @@ export default function PaginaRedAbogados() {
                     </div>
                   </div>
 
-                  <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: "10px", marginBottom: "10px" }}>
+                  <div style={{ marginBottom: "8px" }}>
                     <input
                       type="tel"
-                      required
                       value={telefono}
                       onChange={(e) => setTelefono(e.target.value)}
-                      placeholder="Teléfono / WhatsApp *"
+                      placeholder="Teléfono / WhatsApp"
                       style={{
                         width: "100%",
                         padding: "8px 12px",
-                        borderRadius: "8px",
-                        backgroundColor: "rgba(31, 41, 55, 0.9)",
-                        border: "1px solid rgba(255, 255, 255, 0.15)",
-                        color: "#ffffff",
+                        borderRadius: "6px",
+                        backgroundColor: "#ffffff",
+                        border: "1px solid #cccccc",
+                        color: "#333333",
                         fontSize: "0.85rem",
                         outline: "none"
                       }}
                     />
-
-                    <select
-                      value={areaPractica}
-                      onChange={(e) => setAreaPractica(e.target.value)}
-                      style={{
-                        width: "100%",
-                        padding: "8px 10px",
-                        borderRadius: "8px",
-                        backgroundColor: "rgba(31, 41, 55, 0.9)",
-                        border: "1px solid rgba(255, 255, 255, 0.15)",
-                        color: "#ffffff",
-                        fontSize: "0.82rem",
-                        outline: "none"
-                      }}
-                    >
-                      <option value="Derecho Civil & Procesal">Civil & Procesal</option>
-                      <option value="Derecho Laboral">Laboral</option>
-                      <option value="Derecho Penal">Penal</option>
-                      <option value="Derecho Societario">Societario / Corporativo</option>
-                      <option value="Derecho de Familia">Familia & Niñez</option>
-                      <option value="Otra Especialidad">Otra Especialidad</option>
-                    </select>
                   </div>
 
-                  <div style={{ marginBottom: "12px" }}>
-                    <input
-                      type="text"
+                  <div style={{ marginBottom: "10px" }}>
+                    <textarea
+                      rows={2}
                       value={mensaje}
                       onChange={(e) => setMensaje(e.target.value)}
-                      placeholder="Mensaje o consulta específica (opcional)"
+                      placeholder="Message"
                       style={{
                         width: "100%",
                         padding: "8px 12px",
-                        borderRadius: "8px",
-                        backgroundColor: "rgba(31, 41, 55, 0.9)",
-                        border: "1px solid rgba(255, 255, 255, 0.15)",
-                        color: "#ffffff",
+                        borderRadius: "6px",
+                        backgroundColor: "#ffffff",
+                        border: "1px solid #cccccc",
+                        color: "#333333",
                         fontSize: "0.85rem",
-                        outline: "none"
+                        outline: "none",
+                        resize: "none"
                       }}
                     />
                   </div>
@@ -1319,11 +1076,11 @@ export default function PaginaRedAbogados() {
                     style={{
                       width: "100%",
                       padding: "10px 16px",
-                      borderRadius: "10px",
-                      backgroundColor: "rgba(255, 255, 255, 0.12)",
-                      border: "1px solid rgba(255, 255, 255, 0.2)",
+                      borderRadius: "6px",
+                      backgroundColor: "#5100bb",
+                      border: "none",
                       color: "#ffffff",
-                      fontSize: "0.88rem",
+                      fontSize: "0.9rem",
                       fontWeight: 700,
                       cursor: enviando ? "not-allowed" : "pointer",
                       display: "flex",
@@ -1334,11 +1091,11 @@ export default function PaginaRedAbogados() {
                   >
                     {enviando ? (
                       <>
-                        <Loader2 size={16} className="anim-girar" /> Enviando datos...
+                        <Loader2 size={16} className="anim-girar" /> Enviando...
                       </>
                     ) : (
                       <>
-                        <Send size={15} /> Solicitar Contacto de un Asesor
+                        <Send size={15} /> Enviar
                       </>
                     )}
                   </button>
@@ -1350,19 +1107,18 @@ export default function PaginaRedAbogados() {
       </section>
 
       {/* ═════════════════════════════════════════════════════════════ */}
-      {/* PIE DE PÁGINA */}
+      {/* PIE DE PÁGINA (somostranqi original) */}
       {/* ═════════════════════════════════════════════════════════════ */}
       <footer
         style={{
-          borderTop: "1px solid rgba(255, 255, 255, 0.08)",
-          padding: "40px 24px",
-          backgroundColor: "#070a10",
+          borderTop: "1px solid #eeeeee",
+          padding: "30px 24px",
+          backgroundColor: "#ffffff",
           textAlign: "center"
         }}
       >
-        <div style={{ maxWidth: "1280px", margin: "0 auto", display: "flex", flexDirection: "column", alignItems: "center", gap: "16px" }}>
-          <img src="/assets/tranqi-white.svg" alt="tranqi" style={{ height: "26px", width: "auto" }} />
-          <div style={{ display: "flex", gap: "20px", flexWrap: "wrap", justifyContent: "center", fontSize: "0.85rem", color: "#94a3b8" }}>
+        <div style={{ maxWidth: "1180px", margin: "0 auto", display: "flex", flexDirection: "column", alignItems: "center", gap: "12px" }}>
+          <div style={{ display: "flex", gap: "20px", flexWrap: "wrap", justifyContent: "center", fontSize: "0.85rem", color: "#666666" }}>
             <Link href="/" style={{ color: "inherit", textDecoration: "none" }}>
               Inicio
             </Link>
@@ -1370,17 +1126,17 @@ export default function PaginaRedAbogados() {
               Planes
             </Link>
             <Link href="/empresas/contacto" style={{ color: "inherit", textDecoration: "none" }}>
-              Planes Corporativos
+              Empresas
             </Link>
             <Link href="/vacantes" style={{ color: "inherit", textDecoration: "none" }}>
               Bolsa de Empleo
             </Link>
             <Link href="/terminos" style={{ color: "inherit", textDecoration: "none" }}>
-              Términos y Privacidad
+              Términos
             </Link>
           </div>
-          <p style={{ margin: 0, fontSize: "0.8rem", color: "#64748b" }}>
-            © 2026 Tranqi. Todos los derechos reservados. Red Nacional de Abogados.
+          <p style={{ margin: 0, fontSize: "0.85rem", color: "#999999" }}>
+            © 2026 Tranqi. Todos los derechos reservados.
           </p>
         </div>
       </footer>
