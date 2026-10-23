@@ -1274,9 +1274,10 @@ export function FormularioSolicitudSocio({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const documentosExistentes = (solicitudExistente?.trq_documento_socio as any[]) ?? [];
   const fotoExistente = documentosExistentes.find((d) => d.dcs_tipo === "foto_perfil" || d.dcs_comentario?.includes("[tipo:foto_perfil]") || d.dcs_comentario?.includes("[perfil]") || d.dcs_url?.includes("foto_perfil"));
-  const identificacionExistente = documentosExistentes.find((d) => d.dcs_tipo === "cedula" || d.dcs_tipo === "identificacion" || d.dcs_comentario?.includes("[tipo:cedula]") || d.dcs_comentario?.includes("[identidad]") || d.dcs_url?.includes("/cedula-"));
+  const carnetExistente = documentosExistentes.find((d) => d.dcs_tipo === "matricula" || d.dcs_comentario?.includes("[tipo:matricula]") || d.dcs_comentario?.includes("[carnet]") || d.dcs_comentario?.toLowerCase().includes("carnet") || d.dcs_url?.includes("/matricula-"));
+  const identificacionExistente = documentosExistentes.find((d) => (d.dcs_tipo === "cedula" || d.dcs_tipo === "identificacion" || d.dcs_comentario?.includes("[tipo:cedula]") || d.dcs_comentario?.includes("[identidad]") || d.dcs_url?.includes("/cedula-")) && d !== carnetExistente);
   const tituloExistente = documentosExistentes.find((d) => d.dcs_tipo === "titulo" || d.dcs_comentario?.includes("[tipo:titulo]") || d.dcs_url?.includes("/titulo-"));
-  const cvYCertificadosExistentes = documentosExistentes.filter((d) => (d.dcs_tipo === "cv" || d.dcs_tipo === "otro" || d.dcs_comentario?.includes("[tipo:cv]") || d.dcs_url?.includes("/cv-")) && d !== fotoExistente && d !== identificacionExistente && d !== tituloExistente);
+  const cvYCertificadosExistentes = documentosExistentes.filter((d) => (d.dcs_tipo === "cv" || d.dcs_tipo === "otro" || d.dcs_comentario?.includes("[tipo:cv]") || d.dcs_url?.includes("/cv-")) && d !== fotoExistente && d !== identificacionExistente && d !== tituloExistente && d !== carnetExistente);
 
   // Estado del texto preliminar de beneficios (editable)
   const [textoBeneficios, setTextoBeneficios] = useState<string>(`### Únete a la Red Jurídica Oficial de tranqi
@@ -1304,6 +1305,40 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
     observaciones?: string[];
     nombre_archivo?: string;
   } | null>(null);
+
+  // Estado y extracción ARIA del Carnet Profesional (Obligatorio)
+  const [carnetArchivos, setCarnetArchivos] = useState<File[]>([]);
+  const [carnetPreviewUrl, setCarnetPreviewUrl] = useState<string | null>(null);
+  const [avisoLegibilidadCarnet, setAvisoLegibilidadCarnet] = useState<string | null>(null);
+  const [analizandoCarnetAria, setAnalizandoCarnetAria] = useState(false);
+  const [dictamenAriaCarnet, setDictamenAriaCarnet] = useState<{
+    titular?: string | null;
+    nombres?: string | null;
+    apellidos?: string | null;
+    identificacion?: string | null;
+    matricula_profesional?: string | null;
+    fecha_inscripcion?: string | null;
+    anos_experiencia_calculados?: number | null;
+    tipo_detectado?: string | null;
+    emisor?: string | null;
+    fecha_emision?: string | null;
+    fecha_caducidad?: string | null;
+    legible?: boolean;
+    observaciones?: string[];
+    nombre_archivo?: string;
+  } | null>(null);
+
+  // Paneles colapsables individuales opcionales (Estudios y Experiencia)
+  const [panelEstudiosAbierto, setPanelEstudiosAbierto] = useState<boolean>(() =>
+    Boolean(solicitudExistente?.ssc_universidad || tituloExistente)
+  );
+  const [panelExperienciaAbierto, setPanelExperienciaAbierto] = useState<boolean>(() =>
+    Boolean(
+      (solicitudExistente?.trq_experiencia_laboral as any[])?.length ||
+      (solicitudExistente?.ssc_anos_experiencia && Number(solicitudExistente.ssc_anos_experiencia) > 0) ||
+      cvYCertificadosExistentes.length > 0
+    )
+  );
 
   const [cedula, setCedula] = useState<string>((solicitudExistente?.ssc_cedula as string) ?? "");
   const [matriculaProfesional, setMatriculaProfesional] = useState<string>((solicitudExistente?.ssc_matricula_profesional as string) ?? "");
@@ -1336,6 +1371,87 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
   const [tituloArchivos, setTituloArchivos] = useState<File[]>([]);
   const [cvYCertificados, setCvYCertificados] = useState<File[]>([]);
   const [cvYCertificadosComentarios, setCvYCertificadosComentarios] = useState<string[]>([]);
+
+  const manejarCambioCarnet = async (archivos: File[]) => {
+    setCarnetArchivos(archivos);
+    if (archivos.length === 0 || !archivos[0]) return;
+
+    const arch = archivos[0];
+    setAnalizandoCarnetAria(true);
+    setError(null);
+
+    try {
+      const formData = new FormData();
+      formData.append("archivo", arch);
+
+      const resp = await fetch("/api/agentes/aria-extraer-identidad", {
+        method: "POST",
+        body: formData,
+      });
+
+      const res = await resp.json();
+      if (res.ok && res.datos) {
+        setDictamenAriaCarnet(res.datos);
+        if (res.datos.identificacion) {
+          setCedula(res.datos.identificacion);
+        }
+        if (res.datos.matricula_profesional) {
+          setMatriculaProfesional(res.datos.matricula_profesional);
+        }
+        if (res.datos.nombres) {
+          setNombres(res.datos.nombres);
+        }
+        if (res.datos.apellidos) {
+          setApellidos(res.datos.apellidos);
+        } else if (res.datos.titular && !res.datos.nombres) {
+          setNombres(res.datos.titular);
+        }
+        if (res.datos.anos_experiencia_calculados !== undefined && res.datos.anos_experiencia_calculados !== null) {
+          setAnosExperiencia(String(res.datos.anos_experiencia_calculados));
+        } else if (res.datos.fecha_inscripcion) {
+          const matchAnio = res.datos.fecha_inscripcion.match(/\b(19\d{2}|20\d{2})\b/);
+          if (matchAnio) {
+            const anioInsc = parseInt(matchAnio[1], 10);
+            const anioActual = new Date().getFullYear();
+            if (anioInsc <= anioActual) {
+              setAnosExperiencia(String(anioActual - anioInsc));
+            }
+          }
+        }
+      }
+    } catch (err) {
+      console.warn("Aviso al analizar carnet profesional con ARIA:", err);
+    } finally {
+      setAnalizandoCarnetAria(false);
+    }
+  };
+
+  useEffect(() => {
+    if (carnetArchivos.length > 0 && carnetArchivos[0]) {
+      const arch = carnetArchivos[0];
+      if (arch.type.startsWith("image/")) {
+        const url = URL.createObjectURL(arch);
+        setCarnetPreviewUrl(url);
+
+        const img = new Image();
+        img.onload = () => {
+          if (img.width < 600 || img.height < 400) {
+            setAvisoLegibilidadCarnet("La imagen tiene una resolución moderada. Asegúrate de que los números y nombres sean completamente legibles.");
+          } else {
+            setAvisoLegibilidadCarnet(null);
+          }
+        };
+        img.src = url;
+        return () => URL.revokeObjectURL(url);
+      } else {
+        setCarnetPreviewUrl(null);
+        setAvisoLegibilidadCarnet(null);
+      }
+    } else {
+      setCarnetPreviewUrl(null);
+      setAvisoLegibilidadCarnet(null);
+    }
+  }, [carnetArchivos]);
 
   const manejarCambioIdentificacion = async (archivos: File[]) => {
     setIdentificacionArchivos(archivos);
@@ -1581,13 +1697,8 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
       return;
     }
 
-    if (!identificacionExistente && identificacionArchivos.length === 0) {
-      setError("Debes adjuntar obligatoriamente una copia digital clara de tu Cédula de Identidad (anverso y reverso) o Pasaporte vigente.");
-      return;
-    }
-
-    if (!tituloExistente && tituloArchivos.length === 0) {
-      setError("Debes adjuntar obligatoriamente una copia digital de tu Título Profesional registrado en la SENESCYT.");
+    if (!carnetExistente && carnetArchivos.length === 0) {
+      setError("Debes adjuntar obligatoriamente una imagen clara de tu Carnet Profesional del Foro de Abogados.");
       return;
     }
 
@@ -1600,7 +1711,7 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
           apellidos,
           matriculaProfesional,
           universidad,
-          anioGraduacion: Number(anioGraduacion),
+          anioGraduacion: Number(anioGraduacion || new Date().getFullYear()),
           anosExperiencia: sinExperienciaPrevia ? 0 : Number(anosExperiencia || 0),
           resumenProfesional: sinExperienciaPrevia && !resumenProfesional.includes("primera oportunidad")
             ? `${resumenProfesional}<br/><p><em>[Perfil: En búsqueda de primera oportunidad laboral / Recién graduado]</em></p>`
@@ -1626,10 +1737,11 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
 
       // Subida de archivos con control de repositorio común y clasificación por concepto (Secuencial y robusto)
       const fotoArchivo = fotoPerfilArchivos[0];
+      const carnetArchivo = carnetArchivos[0];
       const identificacionArchivo = identificacionArchivos[0];
       const tituloArchivo = tituloArchivos[0];
 
-      const listaParaSubir: { tipo: "foto_perfil" | "cedula" | "titulo" | "cv"; archivo: File; comentario: string; concepto?: string }[] = [];
+      const listaParaSubir: { tipo: "foto_perfil" | "matricula" | "cedula" | "titulo" | "cv"; archivo: File; comentario: string; concepto?: string }[] = [];
 
       if (fotoArchivo) {
         listaParaSubir.push({
@@ -1637,6 +1749,15 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
           archivo: fotoArchivo,
           comentario: "Foto de Perfil Profesional",
           concepto: CONCEPTOS_REPOSITORIO.PERFIL,
+        });
+      }
+
+      if (carnetArchivo) {
+        listaParaSubir.push({
+          tipo: "matricula",
+          archivo: carnetArchivo,
+          comentario: "Carnet Profesional del Foro de Abogados (Consejo de la Judicatura)",
+          concepto: CONCEPTOS_REPOSITORIO.REGISTRO,
         });
       }
 
@@ -2214,69 +2335,74 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
         </div>
       )}
 
-      {/* Campo Obligatorio: Cédula de Identidad / Pasaporte con Extracción ARIA */}
+      {/* Campo Obligatorio Principal: Carnet Profesional (Foro de Abogados / Consejo de la Judicatura) */}
       <div style={{ marginTop: "16px", marginBottom: "18px" }}>
         <CampoSubidaArchivo
-          etiqueta="Documento de Identificación Oficial (Obligatorio • Cédula / Pasaporte) • [Repositorio: Identidad]"
-          subtitulo="Adjunta tu Cédula (anverso y reverso) o Pasaporte. ARIA leerá automáticamente tus nombres completos y número de identificación desde el documento."
-          aceptar={TIPOS_ACEPTADOS}
+          etiqueta="Carnet Profesional (Obligatorio • Foro de Abogados / Consejo de la Judicatura) • [Repositorio: Acreditación]"
+          subtitulo="Sube una fotografía clara de tu carnet profesional del Foro de Abogados. ARIA leerá automáticamente tu matrícula profesional, cédula y nombres para simplificar tu registro."
+          aceptar="image/jpeg,image/png,image/webp"
           multiple={false}
-          archivos={identificacionArchivos}
-          onCambiar={manejarCambioIdentificacion}
-          icono={FileText}
+          archivos={carnetArchivos}
+          onCambiar={manejarCambioCarnet}
+          icono={Scale}
         />
 
         {/* Indicador de Análisis con ARIA */}
-        {analizandoIdentidadAria && (
+        {analizandoCarnetAria && (
           <div style={{ padding: "12px 16px", background: "rgba(80, 0, 186, 0.06)", border: "1.5px dashed #5000BA", borderRadius: "10px", marginTop: "10px", display: "flex", alignItems: "center", gap: "10px", fontSize: "0.84rem", color: "#5000BA", fontWeight: 700 }}>
             <Sparkles size={18} color="#5000BA" />
-            <span>✨ ARIA está procesando y leyendo tu documento de identidad para extraer tus datos oficiales...</span>
+            <span>✨ ARIA está procesando y leyendo tu Carnet Profesional para autocompletar tus datos oficiales...</span>
           </div>
         )}
 
-        {/* Banner de Datos Oficiales Extraídos por ARIA */}
-        {dictamenAriaExtraccion && (
+        {/* Banner de Datos Oficiales Extraídos por ARIA desde el Carnet */}
+        {dictamenAriaCarnet && (
           <div style={{ padding: "14px 18px", background: "rgba(5, 135, 110, 0.05)", border: "1.5px solid #05876E", borderRadius: "12px", marginTop: "10px", fontSize: "0.84rem", color: "#065F46" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 800, color: "#05876E", marginBottom: "8px" }}>
-              <CheckCircle2 size={18} /> Datos Oficiales Extraídos por ARIA desde tu Documento
+              <CheckCircle2 size={18} /> Datos Extraídos por ARIA desde tu Carnet Profesional
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "8px" }}>
-              <div><strong>Titular Oficial:</strong> {dictamenAriaExtraccion.titular || `${nombres} ${apellidos}`}</div>
-              <div><strong>Identificación:</strong> {dictamenAriaExtraccion.identificacion || cedula}</div>
-              <div><strong>Tipo Detectado:</strong> {dictamenAriaExtraccion.tipo_detectado || "Cédula de Identidad"}</div>
-              {dictamenAriaExtraccion.fecha_caducidad && <div><strong>Vencimiento:</strong> {dictamenAriaExtraccion.fecha_caducidad}</div>}
+              <div><strong>Titular Oficial:</strong> {dictamenAriaCarnet.titular || `${nombres} ${apellidos}`}</div>
+              <div><strong>Matrícula Profesional:</strong> {dictamenAriaCarnet.matricula_profesional || matriculaProfesional || "Detectada"}</div>
+              <div><strong>Cédula de Identidad:</strong> {dictamenAriaCarnet.identificacion || cedula || "Detectada"}</div>
+              {dictamenAriaCarnet.fecha_inscripcion && (
+                <div><strong>Inscripción en Foro:</strong> {dictamenAriaCarnet.fecha_inscripcion}</div>
+              )}
+              {dictamenAriaCarnet.anos_experiencia_calculados !== undefined && dictamenAriaCarnet.anos_experiencia_calculados !== null && (
+                <div><strong>Experiencia Estimada:</strong> {dictamenAriaCarnet.anos_experiencia_calculados} años</div>
+              )}
             </div>
           </div>
         )}
 
-        {/* Checklist de Criterios de Calidad y Legibilidad */}
+        {/* Checklist de Criterios de Calidad y Legibilidad del Carnet */}
         <div style={{ background: "rgba(5, 135, 110, 0.04)", border: "1px solid rgba(5, 135, 110, 0.2)", borderRadius: "10px", padding: "10px 14px", marginTop: "8px", fontSize: "0.78rem", color: "#065F46" }}>
-          <strong style={{ display: "block", marginBottom: "4px", color: "#05876E" }}>Requisitos de Legibilidad para Acreditación:</strong>
+          <strong style={{ display: "block", marginBottom: "4px", color: "#05876E" }}>Requisitos de Legibilidad del Carnet Profesional:</strong>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "6px" }}>
-            <span>Anverso y reverso visibles y sin cortes de bordes.</span>
-            <span>Nombres, apellidos y número de cédula 100% nítidos.</span>
+            <span>Fotografía clara y frontal del carnet sin esquinas recortadas.</span>
+            <span>Matrícula No., Cédula y Nombres 100% nítidos y legibles.</span>
             <span>Sin reflejos de flash sobre el texto ni sombras oscuras.</span>
           </div>
         </div>
 
-        {avisoLegibilidadIdentificacion && (
+        {avisoLegibilidadCarnet && (
           <div style={{ marginTop: "8px", padding: "8px 12px", background: "#FFFBEB", border: "1px solid #F59E0B", borderRadius: "8px", fontSize: "0.78rem", color: "#B45309" }}>
-            {avisoLegibilidadIdentificacion}
+            {avisoLegibilidadCarnet}
           </div>
         )}
 
-        {/* Previsualizador Rápido con Botón de Inspección Zoom */}
-        {identificacionPreviewUrl && (
+        {/* Previsualizador Rápido con Botón de Inspección Zoom del Carnet */}
+        {carnetPreviewUrl && (
           <div style={{ marginTop: "10px", display: "flex", alignItems: "center", gap: "12px", background: "#FFFFFF", padding: "10px 14px", border: "1px solid #E4E4E4", borderRadius: "10px", boxShadow: "0 2px 6px rgba(0,0,0,0.03)" }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={identificacionPreviewUrl} alt="Vista previa de documento" style={{ width: "60px", height: "45px", objectFit: "cover", borderRadius: "6px", border: "1px solid #D8B4FE" }} />
+            <img src={carnetPreviewUrl} alt="Vista previa carnet profesional" style={{ width: "60px", height: "45px", objectFit: "cover", borderRadius: "6px", border: "1px solid #D8B4FE" }} />
             <div>
-              <span style={{ display: "block", fontSize: "0.82rem", fontWeight: 700, color: "#111111" }}>Documento de identificación listo para subir</span>
-              <span style={{ fontSize: "0.74rem", color: "#6B7280" }}>{identificacionArchivos[0]?.name} ({formatoTamanoArchivo(identificacionArchivos[0]?.size || 0)})</span>
+              <span style={{ display: "block", fontSize: "0.82rem", fontWeight: 700, color: "#111111" }}>Carnet Profesional listo para subir</span>
+              <span style={{ fontSize: "0.74rem", color: "#6B7280" }}>{carnetArchivos[0]?.name} ({formatoTamanoArchivo(carnetArchivos[0]?.size || 0)})</span>
             </div>
             <button
               type="button"
-              onClick={() => setModalInspeccionDoc({ url: identificacionPreviewUrl, titulo: "Inspección de Legibilidad — Cédula / Pasaporte" })}
+              onClick={() => setModalInspeccionDoc({ url: carnetPreviewUrl, titulo: "Inspección de Legibilidad — Carnet Profesional" })}
               style={{ marginLeft: "auto", background: "#FAF5FF", border: "1px solid #D8B4FE", color: "#6B21A8", padding: "6px 12px", borderRadius: "8px", fontSize: "0.78rem", fontWeight: 700, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "4px" }}
             >
               <ZoomIn size={14} /> Inspeccionar Legibilidad
@@ -2284,42 +2410,42 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
           </div>
         )}
 
-        {identificacionExistente && identificacionArchivos.length === 0 && (
+        {carnetExistente && carnetArchivos.length === 0 && (
           <div style={{ display: "flex", alignItems: "center", gap: "12px", padding: "10px 14px", background: "rgba(5, 135, 110, 0.04)", border: "1px solid rgba(5, 135, 110, 0.2)", borderRadius: "8px", marginTop: "8px", fontSize: "0.84rem" }}>
-            <FileText size={18} color="#05876E" />
+            <Scale size={18} color="#05876E" />
             <div>
-              <span style={{ display: "block", fontWeight: 700, color: "#111111" }}>Documento de Identificación Oficial actual cargado</span>
-              <span style={{ fontSize: "0.76rem", color: "#6B7280" }}>{identificacionExistente.dcs_nombre_archivo}</span>
+              <span style={{ display: "block", fontWeight: 700, color: "#111111" }}>Carnet Profesional actual registrado</span>
+              <span style={{ fontSize: "0.76rem", color: "#6B7280" }}>{carnetExistente.dcs_nombre_archivo}</span>
             </div>
-            <a href={identificacionExistente.url} target="_blank" rel="noopener noreferrer" style={{ marginLeft: "auto", color: "#05876E", fontWeight: 800, textDecoration: "none", fontSize: "0.8rem", display: "inline-flex", alignItems: "center", gap: "4px" }}>
+            <a href={carnetExistente.url} target="_blank" rel="noopener noreferrer" style={{ marginLeft: "auto", color: "#05876E", fontWeight: 800, textDecoration: "none", fontSize: "0.8rem", display: "inline-flex", alignItems: "center", gap: "4px" }}>
               <ExternalLink size={14} /> Ver archivo
             </a>
           </div>
         )}
       </div>
 
-      {/* Identidad Oficial: Nombres Completos y Cédula (Leídos desde el documento) */}
+      {/* Identidad Oficial: Nombres Completos, Cédula y Matrícula */}
       <div style={{ background: "rgba(80, 0, 186, 0.03)", border: "1px solid rgba(80, 0, 186, 0.15)", borderRadius: "14px", padding: "18px", marginBottom: "20px" }}>
         <span style={{ fontSize: "0.88rem", fontWeight: 800, color: "#5000BA", display: "flex", alignItems: "center", gap: "6px", marginBottom: "12px" }}>
-          <ShieldCheck size={16} /> Identidad Oficial del Titular (Extraída por ARIA desde tu Documento)
+          <ShieldCheck size={16} /> Identidad Oficial del Titular (Extraída por ARIA desde tu Carnet)
         </span>
 
         <div className="fila-dos-columnas">
           <label>
-            Nombres Oficiales (según documento)
+            Nombres Oficiales (según carnet)
             <input
               value={nombres}
               onChange={(e) => setNombres(e.target.value)}
-              placeholder="ej. Kleber Geovanny"
+              placeholder="ej. Juan Genaro"
               required
             />
           </label>
           <label>
-            Apellidos Oficiales (según documento)
+            Apellidos Oficiales (según carnet)
             <input
               value={apellidos}
               onChange={(e) => setApellidos(e.target.value)}
-              placeholder="ej. Toapanta Chinchin"
+              placeholder="ej. Mora Moscoso"
               required
             />
           </label>
@@ -2327,13 +2453,34 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
 
         <div className="fila-dos-columnas" style={{ marginTop: "10px" }}>
           <label>
-            Cédula de Identidad / RUC / Pasaporte
+            Cédula de Identidad (10 dígitos)
             <input
               value={cedula}
               onChange={(e) => setCedula(e.target.value)}
               required
               maxLength={13}
-              placeholder="ej. 1714898226"
+              placeholder="ej. 1700189820"
+            />
+          </label>
+          <label>
+            Matrícula profesional (Foro de Abogados)
+            <input
+              value={matriculaProfesional}
+              onChange={(e) => setMatriculaProfesional(e.target.value)}
+              required
+              placeholder="ej. 17-1975-17"
+            />
+          </label>
+        </div>
+
+        <div className="fila-dos-columnas" style={{ marginTop: "10px" }}>
+          <label>
+            Teléfono de contacto (Móvil / WhatsApp)
+            <input
+              type="tel"
+              value={telefonoContacto}
+              onChange={(e) => setTelefonoContacto(e.target.value)}
+              placeholder="ej. 099 123 4567 o +593 99 123 4567"
             />
           </label>
           {correoInicial && (
@@ -2370,71 +2517,72 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
         })()}
       </div>
 
-        {/* TRQ-ABG-005. Solo aparece cuando el documento ya está subido: la
-            verificación necesita el fichero en el bucket para poder pasarle a
-            Aria una URL firmada, y un documento aún sin enviar no lo está. */}
-        {solicitudExistente?.ssc_id && identificacionExistente && (
-          <InspeccionIdentidadAria
-            dictamen={
-              ((solicitudExistente as { ssc_detalles?: { aria_validacion?: DictamenAria } }).ssc_detalles
-                ?.aria_validacion ?? null) as DictamenAria | null
-            }
-            solicitudId={solicitudExistente.ssc_id as string}
-            datosReferencia={{ cedula }}
-            puedeVerificar
-            documentos={[
-              { id: identificacionExistente.dcs_id as string, tipo: "cedula", etiqueta: "mi identificación" },
-              ...(tituloExistente
-                ? [{ id: tituloExistente.dcs_id as string, tipo: "titulo" as const, etiqueta: "mi título" }]
-                : []),
-            ]}
-          />
+      {/* Inspección de Identidad ARIA si ya existe solicitud */}
+      {solicitudExistente?.ssc_id && (carnetExistente || identificacionExistente) && (
+        <InspeccionIdentidadAria
+          dictamen={
+            ((solicitudExistente as { ssc_detalles?: { aria_validacion?: DictamenAria } }).ssc_detalles
+              ?.aria_validacion ?? null) as DictamenAria | null
+          }
+          solicitudId={solicitudExistente.ssc_id as string}
+          datosReferencia={{ cedula }}
+          puedeVerificar
+          documentos={[
+            ...(carnetExistente
+              ? [{ id: carnetExistente.dcs_id as string, tipo: "matricula" as const, etiqueta: "mi carnet profesional" }]
+              : []),
+            ...(identificacionExistente
+              ? [{ id: identificacionExistente.dcs_id as string, tipo: "cedula" as const, etiqueta: "mi identificación" }]
+              : []),
+            ...(tituloExistente
+              ? [{ id: tituloExistente.dcs_id as string, tipo: "titulo" as const, etiqueta: "mi título" }]
+              : []),
+          ]}
+        />
+      )}
+
+      {/* Documento de Identificación Oficial (Opcional • Cédula / Pasaporte) */}
+      <div style={{ marginBottom: "20px" }}>
+        <CampoSubidaArchivo
+          etiqueta="Documento de Identificación Adicional (Opcional • Cédula / Pasaporte) • [Repositorio: Identidad]"
+          subtitulo="Si lo deseas, puedes adjuntar tu Cédula o Pasaporte vigente como respaldo complementario de identidad (opcional)."
+          aceptar={TIPOS_ACEPTADOS}
+          multiple={false}
+          archivos={identificacionArchivos}
+          onCambiar={manejarCambioIdentificacion}
+          icono={FileText}
+        />
+
+        {identificacionPreviewUrl && (
+          <div style={{ marginTop: "10px", display: "flex", alignItems: "center", gap: "12px", background: "#FFFFFF", padding: "10px 14px", border: "1px solid #E4E4E4", borderRadius: "10px", boxShadow: "0 2px 6px rgba(0,0,0,0.03)" }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={identificacionPreviewUrl} alt="Vista previa de cédula" style={{ width: "60px", height: "45px", objectFit: "cover", borderRadius: "6px", border: "1px solid #D8B4FE" }} />
+            <div>
+              <span style={{ display: "block", fontSize: "0.82rem", fontWeight: 700, color: "#111111" }}>Cédula/Pasaporte adjunto</span>
+              <span style={{ fontSize: "0.74rem", color: "#6B7280" }}>{identificacionArchivos[0]?.name}</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setModalInspeccionDoc({ url: identificacionPreviewUrl, titulo: "Inspección de Legibilidad — Cédula / Pasaporte" })}
+              style={{ marginLeft: "auto", background: "#FAF5FF", border: "1px solid #D8B4FE", color: "#6B21A8", padding: "6px 12px", borderRadius: "8px", fontSize: "0.78rem", fontWeight: 700, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "4px" }}
+            >
+              <ZoomIn size={14} /> Inspeccionar
+            </button>
+          </div>
         )}
 
-      <label>
-        Matrícula profesional (Foro de Abogados)
-        <input value={matriculaProfesional} onChange={(e) => setMatriculaProfesional(e.target.value)} required placeholder="ej. 17-2020-89" />
-      </label>
-
-      <label>
-        Universidad de graduación
-        <input value={universidad} onChange={(e) => setUniversidad(e.target.value)} required placeholder="ej. Universidad Central del Ecuador" />
-      </label>
-
-      <div className="fila-dos-columnas">
-        <label>
-          Año de graduación
-          <input type="number" value={anioGraduacion} onChange={(e) => setAnioGraduacion(e.target.value)} required min={1960} max={new Date().getFullYear()} placeholder="2020" />
-        </label>
-        <label>
-          Años de experiencia
-          <input
-            type="number"
-            value={sinExperienciaPrevia ? "0" : anosExperiencia}
-            onChange={(e) => setAnosExperiencia(e.target.value)}
-            disabled={sinExperienciaPrevia}
-            min={0}
-            max={70}
-            placeholder={sinExperienciaPrevia ? "0 (Primera Oportunidad)" : "5"}
-          />
-        </label>
-      </div>
-
-      <label>
-        Teléfono de contacto (Móvil / WhatsApp)
-        <input
-          type="tel"
-          value={telefonoContacto}
-          onChange={(e) => setTelefonoContacto(e.target.value)}
-          placeholder="ej. 099 123 4567 o +593 99 123 4567"
-        />
-      </label>
-
-      <div style={{ display: "block", marginBottom: "16px" }}>
-        <span style={{ fontWeight: 700, display: "block", marginBottom: "6px" }}>
-          Cuéntanos por qué quieres unirte a la red (Formato HTML / Rich Text)
-        </span>
-        <EditorHtmlResumen valor={resumenProfesional} onChange={setResumenProfesional} />
+        {identificacionExistente && identificacionArchivos.length === 0 && (
+          <div style={{ display: "flex", alignItems: "center", gap: "12px", padding: "10px 14px", background: "rgba(5, 135, 110, 0.04)", border: "1px solid rgba(5, 135, 110, 0.2)", borderRadius: "8px", marginTop: "8px", fontSize: "0.84rem" }}>
+            <FileText size={18} color="#05876E" />
+            <div>
+              <span style={{ display: "block", fontWeight: 700, color: "#111111" }}>Documento de Identificación actual cargado</span>
+              <span style={{ fontSize: "0.76rem", color: "#6B7280" }}>{identificacionExistente.dcs_nombre_archivo}</span>
+            </div>
+            <a href={identificacionExistente.url} target="_blank" rel="noopener noreferrer" style={{ marginLeft: "auto", color: "#05876E", fontWeight: 800, textDecoration: "none", fontSize: "0.8rem", display: "inline-flex", alignItems: "center", gap: "4px" }}>
+              <ExternalLink size={14} /> Ver archivo
+            </a>
+          </div>
+        )}
       </div>
 
       <h2>Especialidades profesionales</h2>
@@ -2468,149 +2616,338 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
         labelOtros="Añadir otra provincia o ubicación..."
       />
 
-      <h2 style={{ marginTop: "24px" }}>Experiencia laboral</h2>
-
-      {/* Opción Destacada: No tengo experiencia laboral / Primera oportunidad */}
-      <div
-        style={{
-          background: sinExperienciaPrevia ? "rgba(5, 135, 110, 0.08)" : "rgba(80, 0, 186, 0.04)",
-          border: sinExperienciaPrevia ? "1.5px solid #05876E" : "1px solid rgba(80, 0, 186, 0.2)",
-          borderRadius: "12px",
-          padding: "14px 16px",
-          marginBottom: "16px",
-          transition: "all 0.2s ease",
-        }}
-      >
-        <label style={{ display: "flex", alignItems: "flex-start", gap: "10px", cursor: "pointer", margin: 0 }}>
-          <input
-            type="checkbox"
-            checked={sinExperienciaPrevia}
-            onChange={(e) => {
-              const checked = e.target.checked;
-              setSinExperienciaPrevia(checked);
-              if (checked) {
-                setAnosExperiencia("0");
-              }
-            }}
-            style={{ marginTop: "3px", width: "18px", height: "18px", accentColor: "#05876E" }}
-          />
-          <div>
-            <strong style={{ display: "inline-flex", alignItems: "center", gap: "6px", color: sinExperienciaPrevia ? "#05876E" : "#5000BA", fontSize: "0.88rem" }}>
-              <GraduationCap size={17} /> No tengo experiencia laboral previa (estoy buscando mi primera oportunidad)
-            </strong>
-            <p style={{ margin: "4px 0 0 0", fontSize: "0.78rem", color: "#555555", lineHeight: 1.4 }}>
-              Marca esta casilla si eres recién graduado o estás iniciando tu carrera profesional. En tranqi valoramos el talento emergente y te brindamos acompañamiento en tus primeros casos.
-            </p>
-          </div>
-        </label>
+      <div style={{ display: "block", marginTop: "24px", marginBottom: "20px" }}>
+        <span style={{ fontWeight: 700, display: "block", marginBottom: "6px" }}>
+          Cuéntanos por qué quieres unirte a la red (Formato HTML / Rich Text)
+        </span>
+        <EditorHtmlResumen valor={resumenProfesional} onChange={setResumenProfesional} />
       </div>
 
-      {!sinExperienciaPrevia && (
-        <>
-          {experiencia.map((exp, i) => (
-            <div key={i} className="tarjeta-experiencia">
-              <div className="fila-dos-columnas">
-                <label>
-                  Empresa / Firma Jurídica
-                  <input value={exp.empresa} onChange={(e) => actualizarExperiencia(i, "empresa", e.target.value)} required />
-                </label>
-                <label>
-                  Cargo
-                  <input value={exp.cargo} onChange={(e) => actualizarExperiencia(i, "cargo", e.target.value)} required />
-                </label>
-              </div>
-              <div className="fila-dos-columnas">
-                <label>
-                  Desde
-                  <input type="date" value={exp.fechaInicio} onChange={(e) => actualizarExperiencia(i, "fechaInicio", e.target.value)} required />
-                </label>
-                <label>
-                  Hasta (vacío si es tu trabajo actual)
-                  <input type="date" value={exp.fechaFin} onChange={(e) => actualizarExperiencia(i, "fechaFin", e.target.value)} />
-                </label>
-              </div>
-              <label>
-                Descripción breve
-                <input value={exp.descripcion} onChange={(e) => actualizarExperiencia(i, "descripcion", e.target.value)} />
-              </label>
-              <button type="button" className="btn-mini" onClick={() => setExperiencia((prev) => prev.filter((_, idx) => idx !== i))}>
-                Quitar
-              </button>
+      {/* PANEL COLAPSABLE INDIVIDUAL 1: ESTUDIOS Y FORMACIÓN ACADÉMICA (OPCIONAL) */}
+      <div
+        style={{
+          marginTop: "20px",
+          border: "1px solid var(--panel-linea, #E4E4E4)",
+          borderRadius: "14px",
+          overflow: "hidden",
+          background: "#ffffff",
+          boxShadow: "0 2px 8px rgba(0,0,0,0.02)",
+        }}
+      >
+        <button
+          type="button"
+          onClick={() => setPanelEstudiosAbierto(!panelEstudiosAbierto)}
+          style={{
+            width: "100%",
+            padding: "16px 18px",
+            background: panelEstudiosAbierto ? "rgba(80, 0, 186, 0.04)" : "#ffffff",
+            border: "none",
+            borderBottom: panelEstudiosAbierto ? "1px solid var(--panel-linea, #E4E4E4)" : "none",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            textAlign: "left",
+            transition: "background 0.2s ease",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+            <div
+              style={{
+                width: "36px",
+                height: "36px",
+                borderRadius: "10px",
+                background: "rgba(80, 0, 186, 0.08)",
+                color: "var(--violeta, #5000BA)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flexShrink: 0,
+              }}
+            >
+              <GraduationCap size={20} />
             </div>
-          ))}
-          <button type="button" className="btn-mini" onClick={() => setExperiencia((prev) => [...prev, { ...EXPERIENCIA_VACIA }])}>
-            + Agregar experiencia
-          </button>
-        </>
-      )}
-
-      {/* Campo Hoja de Vida (CV), Certificados o cartas de referencia */}
-      <CampoSubidaArchivo
-        etiqueta="Hoja de Vida (CV), Certificados o cartas de referencia (opcional) • [Repositorio: Registro]"
-        subtitulo="Adjunta tu CV actualizado, certificados de capacitación o cartas de recomendación en formato PDF, Word o imagen (máx 10 MB cada uno)"
-        aceptar={TIPOS_ACEPTADOS}
-        multiple={true}
-        archivos={cvYCertificados}
-        onCambiar={manejarCambioCV}
-        icono={FileText}
-        comentarios={cvYCertificadosComentarios}
-        onCambiarComentario={manejarCambioComentariosCV}
-      />
-      {cvYCertificadosExistentes.length > 0 && (
-        <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginTop: "8px" }}>
-          <span style={{ fontSize: "0.8rem", fontWeight: 700, color: "var(--panel-gris, #737373)", display: "block" }}>Archivos existentes cargados en repositorio:</span>
-          {cvYCertificadosExistentes.map((d) => (
-            <div key={d.dcs_id} style={{ display: "flex", alignItems: "center", gap: "12px", padding: "10px 14px", background: "rgba(80, 0, 186, 0.04)", border: "1px solid rgba(80, 0, 186, 0.15)", borderRadius: "8px", fontSize: "0.84rem" }}>
-              <FileText size={18} color="#5000BA" />
-              <div>
-                <span style={{ display: "block", fontWeight: 700, color: "#111111" }}>
-                  {d.dcs_tipo === "cv" ? "Hoja de Vida (CV)" : (d.dcs_comentario || "Certificado")}
+            <div>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <strong style={{ fontSize: "0.95rem", color: "#111111" }}>
+                  Estudios y Formación Académica
+                </strong>
+                <span
+                  style={{
+                    fontSize: "0.72rem",
+                    fontWeight: 800,
+                    background: "#F3F4F6",
+                    color: "#4B5563",
+                    padding: "2px 8px",
+                    borderRadius: "999px",
+                  }}
+                >
+                  Opcional
                 </span>
-                <span style={{ fontSize: "0.76rem", color: "#6B7280" }}>{d.dcs_nombre_archivo}</span>
               </div>
-              <a href={d.url} target="_blank" rel="noopener noreferrer" style={{ marginLeft: "auto", color: "#5000BA", fontWeight: 800, textDecoration: "none", fontSize: "0.8rem", display: "inline-flex", alignItems: "center", gap: "4px" }}>
-                <ExternalLink size={14} /> Ver archivo
-              </a>
+              <p style={{ margin: "2px 0 0 0", fontSize: "0.78rem", color: "#6B7280" }}>
+                Universidad de graduación, año y título profesional registrado en SENESCYT
+              </p>
             </div>
-          ))}
-        </div>
-      )}
-
-      <h2>Verificación asistida de título</h2>
-      <p className="aviso-borrador">
-        Para agilizar tu acreditación, consulta tu título en la plataforma de la SENESCYT y adjunta una copia digital.
-      </p>
-
-      <label className="campo-check">
-        <input type="checkbox" checked={senescytVerificado} onChange={(e) => setSenescytVerificado(e.target.checked)} />
-        Verifiqué mi título en el portal oficial de la{" "}
-        <a href={ENLACES_VERIFICACION.senescyt} target="_blank" rel="noopener noreferrer">
-          SENESCYT <ExternalLink className="icono-enlace-externo" aria-hidden="true" strokeWidth={2} />
-        </a>
-      </label>
-
-      {/* Documento del Título */}
-      <CampoSubidaArchivo
-        etiqueta="Documento del Título Profesional (Requerido) • [Repositorio: Acreditación]"
-        subtitulo="Copia digital del título universitario registrado en la SENESCYT (PDF o imagen, máx 10 MB)"
-        aceptar={TIPOS_ACEPTADOS}
-        multiple={false}
-        archivos={tituloArchivos}
-        onCambiar={setTituloArchivos}
-        icono={FileText}
-      />
-      {tituloExistente && tituloArchivos.length === 0 && (
-        <div style={{ display: "flex", alignItems: "center", gap: "12px", padding: "10px 14px", background: "rgba(80, 0, 186, 0.04)", border: "1px solid rgba(80, 0, 186, 0.15)", borderRadius: "8px", marginTop: "8px", fontSize: "0.84rem" }}>
-          <FileText size={18} color="#5000BA" />
-          <div>
-            <span style={{ display: "block", fontWeight: 700, color: "#111111" }}>Título Universitario actual cargado</span>
-            <span style={{ fontSize: "0.76rem", color: "#6B7280" }}>{tituloExistente.dcs_nombre_archivo}</span>
           </div>
-          <a href={tituloExistente.url} target="_blank" rel="noopener noreferrer" style={{ marginLeft: "auto", color: "#5000BA", fontWeight: 800, textDecoration: "none", fontSize: "0.8rem", display: "inline-flex", alignItems: "center", gap: "4px" }}>
-            <ExternalLink size={14} /> Ver archivo
-          </a>
-        </div>
-      )}
+          <span style={{ fontSize: "0.82rem", fontWeight: 800, color: "var(--violeta, #5000BA)" }}>
+            {panelEstudiosAbierto ? "▲ Ocultar panel" : "▼ Desplegar panel (Opcional)"}
+          </span>
+        </button>
+
+        {panelEstudiosAbierto && (
+          <div style={{ padding: "18px", display: "flex", flexDirection: "column", gap: "14px" }}>
+            <label>
+              Universidad de graduación (Opcional)
+              <input
+                value={universidad}
+                onChange={(e) => setUniversidad(e.target.value)}
+                placeholder="ej. Universidad Central del Ecuador"
+              />
+            </label>
+
+            <label>
+              Año de graduación (Opcional)
+              <input
+                type="number"
+                value={anioGraduacion}
+                onChange={(e) => setAnioGraduacion(e.target.value)}
+                min={1960}
+                max={new Date().getFullYear()}
+                placeholder="2020"
+              />
+            </label>
+
+            <div style={{ background: "rgba(5, 135, 110, 0.04)", border: "1px solid rgba(5, 135, 110, 0.2)", borderRadius: "10px", padding: "12px", marginTop: "4px" }}>
+              <label className="campo-check" style={{ margin: 0 }}>
+                <input type="checkbox" checked={senescytVerificado} onChange={(e) => setSenescytVerificado(e.target.checked)} />
+                Verifiqué mi título en el portal oficial de la{" "}
+                <a href={ENLACES_VERIFICACION.senescyt} target="_blank" rel="noopener noreferrer">
+                  SENESCYT <ExternalLink className="icono-enlace-externo" aria-hidden="true" strokeWidth={2} />
+                </a>
+              </label>
+            </div>
+
+            {/* Documento del Título */}
+            <CampoSubidaArchivo
+              etiqueta="Documento del Título Profesional (Opcional) • [Repositorio: Acreditación]"
+              subtitulo="Copia digital del título universitario registrado en la SENESCYT (PDF o imagen, máx 10 MB)"
+              aceptar={TIPOS_ACEPTADOS}
+              multiple={false}
+              archivos={tituloArchivos}
+              onCambiar={setTituloArchivos}
+              icono={FileText}
+            />
+            {tituloExistente && tituloArchivos.length === 0 && (
+              <div style={{ display: "flex", alignItems: "center", gap: "12px", padding: "10px 14px", background: "rgba(80, 0, 186, 0.04)", border: "1px solid rgba(80, 0, 186, 0.15)", borderRadius: "8px", marginTop: "4px", fontSize: "0.84rem" }}>
+                <FileText size={18} color="#5000BA" />
+                <div>
+                  <span style={{ display: "block", fontWeight: 700, color: "#111111" }}>Título Universitario actual cargado</span>
+                  <span style={{ fontSize: "0.76rem", color: "#6B7280" }}>{tituloExistente.dcs_nombre_archivo}</span>
+                </div>
+                <a href={tituloExistente.url} target="_blank" rel="noopener noreferrer" style={{ marginLeft: "auto", color: "#5000BA", fontWeight: 800, textDecoration: "none", fontSize: "0.8rem", display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                  <ExternalLink size={14} /> Ver archivo
+                </a>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* PANEL COLAPSABLE INDIVIDUAL 2: EXPERIENCIA LABORAL Y HOJA DE VIDA (OPCIONAL) */}
+      <div
+        style={{
+          marginTop: "16px",
+          border: "1px solid var(--panel-linea, #E4E4E4)",
+          borderRadius: "14px",
+          overflow: "hidden",
+          background: "#ffffff",
+          boxShadow: "0 2px 8px rgba(0,0,0,0.02)",
+        }}
+      >
+        <button
+          type="button"
+          onClick={() => setPanelExperienciaAbierto(!panelExperienciaAbierto)}
+          style={{
+            width: "100%",
+            padding: "16px 18px",
+            background: panelExperienciaAbierto ? "rgba(80, 0, 186, 0.04)" : "#ffffff",
+            border: "none",
+            borderBottom: panelExperienciaAbierto ? "1px solid var(--panel-linea, #E4E4E4)" : "none",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            textAlign: "left",
+            transition: "background 0.2s ease",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+            <div
+              style={{
+                width: "36px",
+                height: "36px",
+                borderRadius: "10px",
+                background: "rgba(80, 0, 186, 0.08)",
+                color: "var(--violeta, #5000BA)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flexShrink: 0,
+              }}
+            >
+              <Briefcase size={20} />
+            </div>
+            <div>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <strong style={{ fontSize: "0.95rem", color: "#111111" }}>
+                  Experiencia Laboral y Hoja de Vida
+                </strong>
+                <span
+                  style={{
+                    fontSize: "0.72rem",
+                    fontWeight: 800,
+                    background: "#F3F4F6",
+                    color: "#4B5563",
+                    padding: "2px 8px",
+                    borderRadius: "999px",
+                  }}
+                >
+                  Opcional
+                </span>
+              </div>
+              <p style={{ margin: "2px 0 0 0", fontSize: "0.78rem", color: "#6B7280" }}>
+                Años de ejercicio, trayectoria laboral, currículum vitae (CV) y certificaciones
+              </p>
+            </div>
+          </div>
+          <span style={{ fontSize: "0.82rem", fontWeight: 800, color: "var(--violeta, #5000BA)" }}>
+            {panelExperienciaAbierto ? "▲ Ocultar panel" : "▼ Desplegar panel (Opcional)"}
+          </span>
+        </button>
+
+        {panelExperienciaAbierto && (
+          <div style={{ padding: "18px", display: "flex", flexDirection: "column", gap: "14px" }}>
+            <label>
+              Años de experiencia profesional (Opcional)
+              <input
+                type="number"
+                value={sinExperienciaPrevia ? "0" : anosExperiencia}
+                onChange={(e) => setAnosExperiencia(e.target.value)}
+                disabled={sinExperienciaPrevia}
+                min={0}
+                max={70}
+                placeholder={sinExperienciaPrevia ? "0 (Primera Oportunidad)" : "5"}
+              />
+            </label>
+
+            {/* Opción Destacada: No tengo experiencia laboral / Primera oportunidad */}
+            <div
+              style={{
+                background: sinExperienciaPrevia ? "rgba(5, 135, 110, 0.08)" : "rgba(80, 0, 186, 0.04)",
+                border: sinExperienciaPrevia ? "1.5px solid #05876E" : "1px solid rgba(80, 0, 186, 0.2)",
+                borderRadius: "12px",
+                padding: "14px 16px",
+                transition: "all 0.2s ease",
+              }}
+            >
+              <label style={{ display: "flex", alignItems: "flex-start", gap: "10px", cursor: "pointer", margin: 0 }}>
+                <input
+                  type="checkbox"
+                  checked={sinExperienciaPrevia}
+                  onChange={(e) => {
+                    const checked = e.target.checked;
+                    setSinExperienciaPrevia(checked);
+                    if (checked) {
+                      setAnosExperiencia("0");
+                    }
+                  }}
+                  style={{ marginTop: "3px", width: "18px", height: "18px", accentColor: "#05876E" }}
+                />
+                <div>
+                  <strong style={{ display: "inline-flex", alignItems: "center", gap: "6px", color: sinExperienciaPrevia ? "#05876E" : "#5000BA", fontSize: "0.88rem" }}>
+                    <GraduationCap size={17} /> No tengo experiencia laboral previa (estoy buscando mi primera oportunidad)
+                  </strong>
+                  <p style={{ margin: "4px 0 0 0", fontSize: "0.78rem", color: "#555555", lineHeight: 1.4 }}>
+                    Marca esta casilla si eres recién graduado o estás iniciando tu carrera profesional. En tranqi valoramos el talento emergente.
+                  </p>
+                </div>
+              </label>
+            </div>
+
+            {!sinExperienciaPrevia && (
+              <>
+                {experiencia.map((exp, i) => (
+                  <div key={i} className="tarjeta-experiencia">
+                    <div className="fila-dos-columnas">
+                      <label>
+                        Empresa / Firma Jurídica
+                        <input value={exp.empresa} onChange={(e) => actualizarExperiencia(i, "empresa", e.target.value)} />
+                      </label>
+                      <label>
+                        Cargo
+                        <input value={exp.cargo} onChange={(e) => actualizarExperiencia(i, "cargo", e.target.value)} />
+                      </label>
+                    </div>
+                    <div className="fila-dos-columnas">
+                      <label>
+                        Desde
+                        <input type="date" value={exp.fechaInicio} onChange={(e) => actualizarExperiencia(i, "fechaInicio", e.target.value)} />
+                      </label>
+                      <label>
+                        Hasta (vacío si es tu trabajo actual)
+                        <input type="date" value={exp.fechaFin} onChange={(e) => actualizarExperiencia(i, "fechaFin", e.target.value)} />
+                      </label>
+                    </div>
+                    <label>
+                      Descripción breve
+                      <input value={exp.descripcion} onChange={(e) => actualizarExperiencia(i, "descripcion", e.target.value)} />
+                    </label>
+                    <button type="button" className="btn-mini" onClick={() => setExperiencia((prev) => prev.filter((_, idx) => idx !== i))}>
+                      Quitar
+                    </button>
+                  </div>
+                ))}
+                <button type="button" className="btn-mini" onClick={() => setExperiencia((prev) => [...prev, { ...EXPERIENCIA_VACIA }])}>
+                  + Agregar experiencia
+                </button>
+              </>
+            )}
+
+            {/* Campo Hoja de Vida (CV), Certificados o cartas de referencia */}
+            <CampoSubidaArchivo
+              etiqueta="Hoja de Vida (CV), Certificados o cartas de referencia (opcional) • [Repositorio: Registro]"
+              subtitulo="Adjunta tu CV actualizado, certificados de capacitación o cartas de recomendación en formato PDF, Word o imagen (máx 10 MB cada uno)"
+              aceptar={TIPOS_ACEPTADOS}
+              multiple={true}
+              archivos={cvYCertificados}
+              onCambiar={manejarCambioCV}
+              icono={FileText}
+              comentarios={cvYCertificadosComentarios}
+              onCambiarComentario={manejarCambioComentariosCV}
+            />
+            {cvYCertificadosExistentes.length > 0 && (
+              <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginTop: "4px" }}>
+                <span style={{ fontSize: "0.8rem", fontWeight: 700, color: "var(--panel-gris, #737373)", display: "block" }}>Archivos existentes cargados en repositorio:</span>
+                {cvYCertificadosExistentes.map((d) => (
+                  <div key={d.dcs_id} style={{ display: "flex", alignItems: "center", gap: "12px", padding: "10px 14px", background: "rgba(80, 0, 186, 0.04)", border: "1px solid rgba(80, 0, 186, 0.15)", borderRadius: "8px", fontSize: "0.84rem" }}>
+                    <FileText size={18} color="#5000BA" />
+                    <div>
+                      <span style={{ display: "block", fontWeight: 700, color: "#111111" }}>
+                        {d.dcs_tipo === "cv" ? "Hoja de Vida (CV)" : (d.dcs_comentario || "Certificado")}
+                      </span>
+                      <span style={{ fontSize: "0.76rem", color: "#6B7280" }}>{d.dcs_nombre_archivo}</span>
+                    </div>
+                    <a href={d.url} target="_blank" rel="noopener noreferrer" style={{ marginLeft: "auto", color: "#5000BA", fontWeight: 800, textDecoration: "none", fontSize: "0.8rem", display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                      <ExternalLink size={14} /> Ver archivo
+                    </a>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
 
       {/* Sección de Términos de Servicio y Autorización de Verificación LOPDP */}
       <div style={{ background: "rgba(80, 0, 186, 0.05)", border: "1px solid rgba(80, 0, 186, 0.2)", borderRadius: "12px", padding: "16px", marginTop: "24px" }}>

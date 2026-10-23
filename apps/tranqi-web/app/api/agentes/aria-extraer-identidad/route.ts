@@ -10,18 +10,22 @@ const VIGENCIA_URL_SEGUNDOS = 300;
 
 function separarNombresApellidos(titular: string | null): { nombres: string; apellidos: string } {
   if (!titular) return { nombres: "", apellidos: "" };
-  const partes = titular.trim().replace(/\s+/g, " ").split(" ");
-  const p0 = partes[0] ?? "";
-  const p1 = partes[1] ?? "";
-  const p2 = partes[2] ?? "";
-  if (partes.length <= 1) return { nombres: p0, apellidos: "" };
-  if (partes.length === 2) return { nombres: p0, apellidos: p1 };
-  if (partes.length === 3) return { nombres: p0, apellidos: `${p1} ${p2}`.trim() };
+  // Limpiar prefijos honoríficos comunes en carnets del Foro de Abogados
+  const titularLimpio = titular
+    .trim()
+    .replace(/^(DR\.|DRA\.|AB\.|ABG\.|LIC\.|DOCTOR|ABOGADO|DOCTORA|ABOGADA)\s+/i, "")
+    .replace(/\s+/g, " ");
+
+  const partes = titularLimpio.split(" ");
+  if (partes.length <= 1) return { nombres: partes[0] ?? "", apellidos: "" };
+  if (partes.length === 2) return { nombres: partes[1] ?? "", apellidos: partes[0] ?? "" };
+  if (partes.length === 3) return { nombres: partes[2] ?? "", apellidos: `${partes[0]} ${partes[1]}`.trim() };
   
-  // Para 4 o más palabras en documentos oficiales ecuatorianos (ej: "TOAPANTA CHINCHIN KLEBER GEOVANNY" o "KLEBER GEOVANNY TOAPANTA CHINCHIN")
-  // Asignamos 2 primeros a nombres y 2 últimos a apellidos como formato estándar
-  const nombres = partes.slice(0, Math.ceil(partes.length / 2)).join(" ");
-  const apellidos = partes.slice(Math.ceil(partes.length / 2)).join(" ");
+  // En carnets oficiales y cédulas ecuatorianas el orden estándar es: [1er Apellido] [2do Apellido] [1er Nombre] [2do Nombre]
+  // Ej: "MORA MOSCOSO JUAN GENARO" -> Apellidos: "Mora Moscoso", Nombres: "Juan Genaro"
+  const mitad = Math.floor(partes.length / 2);
+  const apellidos = partes.slice(0, mitad).join(" ");
+  const nombres = partes.slice(mitad).join(" ");
   return { nombres, apellidos };
 }
 
@@ -104,16 +108,36 @@ export async function POST(req: NextRequest) {
     // 2. Extraer datos del documento con ARIA
     const { extraccion, runId } = await extraerDocumento(urlFirmada);
 
-    const { nombres, apellidos } = separarNombresApellidos(extraccion.titular);
+    const { nombres: nombresSep, apellidos: apellidosSep } = separarNombresApellidos(extraccion.titular);
+    const nombresFinal = extraccion.nombres || nombresSep;
+    const apellidosFinal = extraccion.apellidos || apellidosSep;
     const validacionCedula = extraccion.identificacion ? validarCedulaEcuatoriana(extraccion.identificacion) : null;
+
+    // Calcular años de experiencia si se detecta fecha de inscripción
+    let anosExperienciaCalculados: number | null = null;
+    if (extraccion.fecha_inscripcion || extraccion.fecha_emision) {
+      const fechaRef = extraccion.fecha_inscripcion || extraccion.fecha_emision || "";
+      const matchAnio = fechaRef.match(/\b(19\d{2}|20\d{2})\b/);
+      const anioStr = matchAnio?.[1];
+      if (anioStr) {
+        const anioInsc = parseInt(anioStr, 10);
+        const anioActual = new Date().getFullYear();
+        if (!isNaN(anioInsc) && anioInsc <= anioActual) {
+          anosExperienciaCalculados = Math.max(0, anioActual - anioInsc);
+        }
+      }
+    }
 
     return NextResponse.json({
       ok: true,
       datos: {
         titular: extraccion.titular,
-        nombres,
-        apellidos,
+        nombres: nombresFinal,
+        apellidos: apellidosFinal,
         identificacion: extraccion.identificacion,
+        matricula_profesional: extraccion.matricula_profesional ?? null,
+        fecha_inscripcion: extraccion.fecha_inscripcion ?? null,
+        anos_experiencia_calculados: anosExperienciaCalculados,
         tipo_detectado: extraccion.tipo_detectado,
         emisor: extraccion.emisor,
         fecha_emision: extraccion.fecha_emision,
