@@ -682,15 +682,6 @@ export default function TranqiLanding() {
               <p className="rotulo-equipo">Nuestro equipo</p>
               <h2 style={{ marginBottom: 0 }}>Abogados reales, <i>verificados</i>, listos para acompañarte.</h2>
             </div>
-
-            <div className="acciones-equipo">
-              <a className="btn btn-blanco-borde" href="/registro?intencion=abogado&destino=/panel/solicitud-socio">
-                Únete al equipo Jurídico
-              </a>
-              <a className="btn btn-blanco-borde" href="/registro?intencion=abogado&destino=/panel/solicitud-socio">
-                Únete al equipo Tranqi
-              </a>
-            </div>
           </div>
 
           <div style={{ position: "relative" }}>
@@ -758,6 +749,9 @@ export default function TranqiLanding() {
               </svg>
               Título y matrícula verificados antes de aparecer en la red
             </p>
+            <a className="btn btn-blanco-borde" href="https://www.tranqi24.com/abogados">
+              Únete al equipo legal
+            </a>
           </div>
         </div>
       </section>

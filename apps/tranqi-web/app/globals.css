@@ -2768,19 +2768,19 @@ div.tarjeta-acceso-icono { display: grid; place-items: center; padding: 0; }
 
 #equipo .cuadricula-equipo {
   display: flex;
-  gap: 16px;
+  gap: 12px;
   overflow-x: auto !important;
   scroll-snap-type: x proximity;
   scroll-behavior: smooth;
   touch-action: pan-x pan-y;
-  padding-bottom: 12px;
+  padding-bottom: 10px;
   scrollbar-width: thin;
   scrollbar-color: #05876E #052A23;
   -webkit-overflow-scrolling: touch;
   user-select: none;
 }
 #equipo .cuadricula-equipo::-webkit-scrollbar {
-  height: 6px;
+  height: 5px;
 }
 #equipo .cuadricula-equipo::-webkit-scrollbar-track {
   background: #052A23;
@@ -2792,12 +2792,12 @@ div.tarjeta-acceso-icono { display: grid; place-items: center; padding: 0; }
 }
 
 #equipo .card-equipo {
-  flex: 0 0 clamp(245px, 72vw, 270px);
+  flex: 0 0 clamp(170px, 50vw, 190px);
   min-width: 0;
   scroll-snap-align: start;
   background: #0A3A30;
   border: 1px solid rgba(216, 255, 179, 0.18);
-  border-radius: 16px;
+  border-radius: 12px;
   overflow: hidden;
   transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.35s;
 }
@@ -2811,40 +2811,40 @@ div.tarjeta-acceso-icono { display: grid; place-items: center; padding: 0; }
 
 #equipo .retrato-equipo {
   position: relative;
-  aspect-ratio: 4 / 3.6;
+  aspect-ratio: 4 / 3.4;
   background: radial-gradient(120% 90% at 30% 0%, rgba(216, 255, 179, 0.16), transparent 60%), linear-gradient(165deg, #0C4738 0%, #062F26 72%);
 }
 
 #equipo .etiqueta-equipo {
   position: absolute;
-  top: 14px;
-  left: 14px;
+  top: 10px;
+  left: 10px;
   background: #D8FFB3;
   color: #06251D;
-  font-size: 11px;
+  font-size: 9px;
   font-weight: 800;
   letter-spacing: 0.02em;
-  padding: 6px 12px;
+  padding: 4px 8px;
   border-radius: 999px;
   z-index: 2;
 }
 
 #equipo .verificado-equipo {
   position: absolute;
-  right: 14px;
-  bottom: 14px;
-  width: 30px;
-  height: 30px;
+  right: 10px;
+  bottom: 10px;
+  width: 22px;
+  height: 22px;
   border-radius: 50%;
   background: #05876E;
-  border: 2px solid #0A3A30;
+  border: 1.5px solid #0A3A30;
   display: grid;
   place-items: center;
   z-index: 2;
 }
 #equipo .verificado-equipo svg {
-  width: 15px;
-  height: 15px;
+  width: 11px;
+  height: 11px;
 }
 
 #equipo .silueta-equipo {
@@ -2854,35 +2854,35 @@ div.tarjeta-acceso-icono { display: grid; place-items: center; padding: 0; }
   place-items: center;
 }
 #equipo .silueta-equipo svg {
-  width: 54%;
+  width: 50%;
   opacity: 0.9;
 }
 
 #equipo .datos-equipo {
-  padding: 18px 18px 20px;
+  padding: 12px 14px 14px;
 }
 
 #equipo .nombre-equipo {
-  font-size: 1.06rem;
+  font-size: 0.88rem;
   font-weight: 800;
   margin-bottom: 2px;
   color: #FFFFFF;
 }
 
 #equipo .cargo-equipo {
-  font-size: 0.86rem;
+  font-size: 0.74rem;
   font-weight: 600;
   color: #D8FFB3;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 
 #equipo .fila-meta-equipo {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  padding-top: 12px;
+  padding-top: 8px;
   border-top: 1px solid rgba(216, 255, 179, 0.16);
-  font-size: 0.8rem;
+  font-size: 0.72rem;
   color: rgba(255, 255, 255, 0.65);
 }
 #equipo .fila-meta-equipo b {
@@ -2892,14 +2892,18 @@ div.tarjeta-acceso-icono { display: grid; place-items: center; padding: 0; }
 }
 
 #equipo .pie-equipo {
-  margin-top: 40px;
+  margin-top: 28px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 24px;
+  gap: 20px;
   flex-wrap: wrap;
-  padding-top: 28px;
+  padding-top: 20px;
   border-top: 1px solid rgba(216, 255, 179, 0.16);
+}
+#equipo .pie-equipo .btn {
+  padding: 10px 22px;
+  font-size: 0.9rem;
 }
 
 /* La cinta sale por x=174, justo bajo esta línea, y no hay alto para pasarla
@@ -2978,8 +2982,8 @@ div.tarjeta-acceso-icono { display: grid; place-items: center; padding: 0; }
   background: #05876E;
   border: 2px solid #D8FFB3;
   color: #FFFFFF;
-  width: 38px;
-  height: 38px;
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
   display: inline-flex;
   align-items: center;
@@ -2990,18 +2994,18 @@ div.tarjeta-acceso-icono { display: grid; place-items: center; padding: 0; }
   padding: 0;
 }
 #equipo .btn-carrusel-flotante svg {
-  width: 18px !important;
-  height: 18px !important;
+  width: 14px !important;
+  height: 14px !important;
 }
 #equipo .btn-carrusel-flotante:hover {
   background: #062F26;
   transform: translateY(-50%) scale(1.12);
 }
 #equipo .btn-carrusel-flotante-izq {
-  left: -18px;
+  left: -15px;
 }
 #equipo .btn-carrusel-flotante-der {
-  right: -18px;
+  right: -15px;
 }
 
 @media (max-width: 900px) {
@@ -3068,27 +3072,35 @@ div.tarjeta-acceso-icono { display: grid; place-items: center; padding: 0; }
     background: transparent !important;
   }
   #equipo .card-equipo {
-    flex: 0 0 205px !important;
+    flex: 0 0 145px !important;
   }
   #equipo .retrato-equipo {
-    aspect-ratio: 16 / 9.5 !important;
+    aspect-ratio: 16 / 11 !important;
   }
   #equipo .pie-equipo {
-    margin-top: 14px !important;
-    padding-top: 10px !important;
+    margin-top: 18px !important;
+    padding-top: 14px !important;
     flex-direction: column !important;
-    align-items: flex-start !important;
+    align-items: stretch !important;
     text-align: left !important;
+    gap: 14px !important;
+  }
+  #equipo .pie-equipo .btn {
+    width: 100% !important;
+    text-align: center !important;
+    display: inline-flex !important;
+    justify-content: center !important;
+    align-items: center !important;
   }
   #equipo .confianza-equipo {
     font-size: 0.78rem !important;
     text-align: left !important;
   }
   #equipo .btn-carrusel-flotante-izq {
-    left: 2px !important;
+    left: -8px !important;
   }
   #equipo .btn-carrusel-flotante-der {
-    right: 2px !important;
+    right: -8px !important;
   }
 }
 
