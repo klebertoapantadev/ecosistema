@@ -53,11 +53,11 @@ section {
 .ribbon path {
   fill: none; stroke-linecap: round;
   vector-effect: non-scaling-stroke;
-  /* el mínimo manda en móvil: 64px sobre 375px era el 17% del ancho y la
-     cinta se comía el titular. 30px la deja como hilo, no como mancha. */
-  stroke-width: clamp(30px, 8.5vw, 122px);
+  /* Grosor reducido 25% (22px móvil - 90px escritorio) y 30% de transparencia adicional (opacity: 0.70) */
+  stroke-width: clamp(22px, 6.4vw, 90px);
   stroke-dasharray: 1 2;
   stroke-dashoffset: 1.05;
+  opacity: 0.70;
   transition: stroke-dashoffset 1.6s cubic-bezier(0.32, 0.72, 0.3, 1);
 }
 .ribbon path.trazado { stroke-dashoffset: 0; }

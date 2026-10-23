@@ -409,7 +409,7 @@ export default function TranqiLanding() {
       {/* HERO · el hilo nace y sale por x=1016 */}
       <section id="hero" data-buddie="hero">
         <div className="ribbon"><svg viewBox="0 0 1440 900" preserveAspectRatio="none">
-          <path pathLength={1} stroke="#7866FF" d="M 1140 170 C 1400 300 1300 570 1020 570 C 770 570 730 330 970 290 C 1200 252 1250 520 1120 700 C 1070 780 1016 800 1016 900" />
+          <path pathLength={1} stroke="#7866FF" d="M 1180 160 C 1400 280 1350 550 1160 550 C 980 550 960 320 1120 290 C 1260 260 1280 520 1160 700 C 1090 780 1016 810 1016 900" />
         </svg></div>
         <div className="wrap">
           <img className="logo-big" src="/assets/tranqi-white.svg" alt="tranqi®" />
@@ -559,17 +559,17 @@ export default function TranqiLanding() {
       {/* STATEMENT · entra 336 · sale 1094 */}
       <section id="statement" data-buddie="statement">
         <div className="ribbon"><svg viewBox="0 0 1440 900" preserveAspectRatio="none">
-          <path pathLength={1} stroke="#FE5800" d="M 336 0 C 336 130 520 180 700 160 C 980 130 1100 300 980 460 C 862 618 602 562 662 422 C 722 302 1094 402 1094 900" />
+          <path pathLength={1} stroke="#FE5800" d="M 336 0 C 336 160 540 180 820 180 C 1100 180 1260 260 1260 480 C 1260 700 1094 760 1094 900" />
         </svg></div>
         <div className="wrap">
           <p className="reveal">Lo legal, para todos.</p>
         </div>
       </section>
 
-      {/* RED · entra 1094 · sale 174 */}
+      {/* RED · entra 1094 · sale 70 */}
       <section id="red" data-buddie="red">
         <div className="ribbon"><svg viewBox="0 0 1440 900" preserveAspectRatio="none">
-          <path pathLength={1} stroke="#7866FF" opacity={0.85} d="M 1094 0 C 1094 140 800 262 560 342 C 330 420 174 640 174 900" />
+          <path pathLength={1} stroke="#7866FF" d="M 1094 0 C 1094 180 1260 320 1260 520 C 1260 740 1020 855 620 855 C 360 855 70 830 70 900" />
         </svg></div>
         <div className="wrap">
           <h2 className="reveal">¿Eres abogado? La red también es para ti.</h2>
@@ -588,14 +588,14 @@ export default function TranqiLanding() {
         </div>
       </section>
 
-      {/* NUESTRO EQUIPO · entra 174 · sale 174 (TRQ-002 / PLT-019)
+      {/* NUESTRO EQUIPO · entra 70 · sale 70 (TRQ-002 / PLT-019)
           Esmeralda plena, el acento del lado abogado. Era lima al 55 % sobre la
           tinta verde, que daba un salvia (#7A9F73) ajeno a la paleta y dejaba el
           titular blanco a 3,0:1 y la lima a 2,7:1; sobre esmeralda suben a 4,5:1
           y 4,0:1, por encima del 3:1 que AA pide al texto grande (TRQ-012). */}
       <section id="equipo" data-buddie="equipo">
         <div className="ribbon"><svg viewBox="0 0 1440 1400" preserveAspectRatio="none">
-          <path pathLength={1} stroke="#05876E" d="M 174 0 C 174 360 1200 480 1100 800 C 1000 1120 174 1050 174 1400" />
+          <path pathLength={1} stroke="#05876E" d="M 70 0 C 70 300 70 450 300 470 C 650 490 1240 500 1240 780 C 1240 1060 70 1140 70 1400" />
         </svg></div>
         <div className="lienzo-equipo">
           <div className="cabecera-equipo reveal">
@@ -683,10 +683,10 @@ export default function TranqiLanding() {
         </div>
       </section>
 
-      {/* CONTACTO · entra 174 · el hilo muere aquí */}
+      {/* CONTACTO · entra 70 · el hilo muere aquí */}
       <section id="contacto" data-buddie="contacto">
         <div className="ribbon"><svg viewBox="0 0 1440 900" preserveAspectRatio="none">
-          <path pathLength={1} stroke="#5000BA" d="M 174 0 C 174 140 420 330 638 425 C 750 474 720 560 720 640" />
+          <path pathLength={1} stroke="#5000BA" d="M 70 0 C 70 180 140 380 180 500 C 210 600 240 700 260 760" />
         </svg></div>
         <div className="wrap">
           <img className="reveal" src="/assets/tranqi-white.svg" alt="tranqi" />
