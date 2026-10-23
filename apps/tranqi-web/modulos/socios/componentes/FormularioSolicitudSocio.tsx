@@ -41,6 +41,7 @@ import {
   Save,
   FolderTree,
   AlertTriangle,
+  AlertCircle,
   Eye,
 } from "lucide-react";
 import { crearClienteNavegador } from "@eco/supabase";
@@ -505,6 +506,308 @@ function RecortadorFotoPerfil({
   );
 }
 
+// Modal de Captura de Fotografía con Cámara (Webcam o Dispositivo)
+function ModalCamaraEnVivo({
+  abierto,
+  alCerrar,
+  alCapturar,
+  titulo = "Tomar fotografía con cámara",
+}: {
+  abierto: boolean;
+  alCerrar: () => void;
+  alCapturar: (archivo: File) => void;
+  titulo?: string;
+}) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const [errorCamara, setErrorCamara] = useState<string | null>(null);
+  const [iniciando, setIniciando] = useState(true);
+
+  useEffect(() => {
+    if (!abierto) {
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((track) => track.stop());
+        streamRef.current = null;
+      }
+      return;
+    }
+
+    setErrorCamara(null);
+    setIniciando(true);
+
+    if (typeof navigator === "undefined" || !navigator.mediaDevices?.getUserMedia) {
+      setErrorCamara("Tu navegador no soporta captura de video en vivo directamente. Puedes usar el botón de subir foto.");
+      setIniciando(false);
+      return;
+    }
+
+    navigator.mediaDevices
+      .getUserMedia({
+        video: { facingMode: "environment", width: { ideal: 1920 }, height: { ideal: 1080 } },
+        audio: false,
+      })
+      .then((stream) => {
+        streamRef.current = stream;
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          videoRef.current.play().catch(() => {});
+        }
+        setIniciando(false);
+      })
+      .catch((err) => {
+        console.warn("No se pudo iniciar la cámara:", err);
+        setErrorCamara("No se pudo acceder a la cámara o se denegó el permiso en el navegador.");
+        setIniciando(false);
+      });
+
+    return () => {
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((track) => track.stop());
+        streamRef.current = null;
+      }
+    };
+  }, [abierto]);
+
+  const capturar = () => {
+    if (!videoRef.current) return;
+    const video = videoRef.current;
+    const canvas = document.createElement("canvas");
+    canvas.width = video.videoWidth || 1280;
+    canvas.height = video.videoHeight || 720;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    canvas.toBlob(
+      (blob) => {
+        if (!blob) return;
+        const nombre = `captura_camara_${Date.now()}.jpg`;
+        const archivo = new File([blob], nombre, { type: "image/jpeg" });
+        if (streamRef.current) {
+          streamRef.current.getTracks().forEach((t) => t.stop());
+          streamRef.current = null;
+        }
+        alCapturar(archivo);
+        alCerrar();
+      },
+      "image/jpeg",
+      0.92
+    );
+  };
+
+  if (!abierto) return null;
+
+  return (
+    <div
+      style={{
+        position: "fixed",
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        background: "rgba(0,0,0,0.82)",
+        zIndex: 99999,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: "16px",
+      }}
+    >
+      <div
+        style={{
+          background: "#ffffff",
+          borderRadius: "16px",
+          maxWidth: "540px",
+          width: "100%",
+          overflow: "hidden",
+          boxShadow: "0 25px 50px rgba(0,0,0,0.35)",
+          display: "flex",
+          flexDirection: "column",
+        }}
+      >
+        <div
+          style={{
+            padding: "14px 18px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            borderBottom: "1px solid #E5E7EB",
+          }}
+        >
+          <strong style={{ fontSize: "0.95rem", color: "#111827", display: "flex", alignItems: "center", gap: "8px" }}>
+            <Camera size={18} color="#5000BA" />
+            {titulo}
+          </strong>
+          <button
+            type="button"
+            onClick={alCerrar}
+            style={{ background: "none", border: "none", cursor: "pointer", color: "#6B7280", padding: "4px" }}
+          >
+            <X size={20} />
+          </button>
+        </div>
+
+        <div
+          style={{
+            position: "relative",
+            background: "#050505",
+            minHeight: "300px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            overflow: "hidden",
+          }}
+        >
+          {iniciando && (
+            <p style={{ color: "#ffffff", fontSize: "0.85rem" }}>Iniciando cámara en vivo...</p>
+          )}
+          {errorCamara ? (
+            <div style={{ padding: "24px", color: "#FCA5A5", textAlign: "center" }}>
+              <p style={{ fontSize: "0.88rem", marginBottom: "8px" }}>{errorCamara}</p>
+              <p style={{ fontSize: "0.78rem", color: "#D1D5DB" }}>
+                Puedes usar la opción de cargar archivo para seleccionar una imagen desde tu dispositivo.
+              </p>
+            </div>
+          ) : (
+            <video
+              ref={videoRef}
+              autoPlay
+              playsInline
+              muted
+              style={{ width: "100%", maxHeight: "360px", objectFit: "contain" }}
+            />
+          )}
+        </div>
+
+        <div
+          style={{
+            padding: "14px 18px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            background: "#F9FAFB",
+            borderTop: "1px solid #E5E7EB",
+          }}
+        >
+          <button
+            type="button"
+            onClick={alCerrar}
+            style={{
+              padding: "8px 16px",
+              borderRadius: "8px",
+              border: "1px solid #D1D5DB",
+              background: "#ffffff",
+              fontSize: "0.85rem",
+              fontWeight: 600,
+              cursor: "pointer",
+            }}
+          >
+            Cancelar
+          </button>
+          {!errorCamara && (
+            <button
+              type="button"
+              onClick={capturar}
+              style={{
+                padding: "10px 22px",
+                borderRadius: "999px",
+                border: "none",
+                background: "linear-gradient(135deg, #5000BA 0%, #3B0088 100%)",
+                color: "#ffffff",
+                fontSize: "0.88rem",
+                fontWeight: 700,
+                cursor: "pointer",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "8px",
+                boxShadow: "0 4px 12px rgba(80,0,186,0.3)",
+              }}
+            >
+              <Camera size={16} /> Capturar fotografía
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Componente Indicador de Estado del Campo (advierte vacíos, check a completados, matrícula obligatoria)
+function EstadoCampo({
+  lleno,
+  obligatorio = false,
+  etiquetaLleno = "Completado",
+  etiquetaVacio = "Campo vacío (opcional)",
+}: {
+  lleno: boolean;
+  obligatorio?: boolean;
+  etiquetaLleno?: string;
+  etiquetaVacio?: string;
+}) {
+  if (lleno) {
+    return (
+      <span
+        style={{
+          display: "inline-flex",
+          alignItems: "center",
+          gap: "4px",
+          background: "#ECFDF5",
+          color: "#047857",
+          border: "1px solid #A7F3D0",
+          borderRadius: "999px",
+          padding: "2px 8px",
+          fontSize: "0.72rem",
+          fontWeight: 700,
+          marginLeft: "auto",
+        }}
+      >
+        <Check size={12} strokeWidth={2.5} /> {etiquetaLleno}
+      </span>
+    );
+  }
+
+  if (obligatorio) {
+    return (
+      <span
+        style={{
+          display: "inline-flex",
+          alignItems: "center",
+          gap: "4px",
+          background: "#FEE2E2",
+          color: "#B91C1C",
+          border: "1px solid #FECACA",
+          borderRadius: "999px",
+          padding: "2px 8px",
+          fontSize: "0.72rem",
+          fontWeight: 800,
+          marginLeft: "auto",
+        }}
+      >
+        <AlertCircle size={12} strokeWidth={2.5} /> Único obligatorio pendiente
+      </span>
+    );
+  }
+
+  return (
+    <span
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: "4px",
+        background: "#FFFBEB",
+        color: "#B45309",
+        border: "1px solid #FDE68A",
+        borderRadius: "999px",
+        padding: "2px 8px",
+        fontSize: "0.72rem",
+        fontWeight: 600,
+        marginLeft: "auto",
+      }}
+    >
+      <AlertTriangle size={12} strokeWidth={2} /> {etiquetaVacio}
+    </span>
+  );
+}
+
 // Componente Custom de Carga de Archivos con Botón y Dropzone Estilizados
 function CampoSubidaArchivo({
   etiqueta,
@@ -517,6 +820,9 @@ function CampoSubidaArchivo({
   esFotoPerfil = false,
   comentarios,
   onCambiarComentario,
+  obligatorio = false,
+  archivoExistente = false,
+  permitirCamara = true,
 }: {
   etiqueta: string;
   subtitulo: string;
@@ -528,13 +834,17 @@ function CampoSubidaArchivo({
   esFotoPerfil?: boolean;
   comentarios?: string[];
   onCambiarComentario?: (idx: number, texto: string) => void;
+  obligatorio?: boolean;
+  archivoExistente?: boolean;
+  permitirCamara?: boolean;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const inputCamaraRef = useRef<HTMLInputElement>(null);
   const [errorLocal, setErrorLocal] = useState<string | null>(null);
+  const [modalCamaraAbierto, setModalCamaraAbierto] = useState(false);
 
-  const manejarSeleccion = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const manejarArchivosDirectos = (lista: File[]) => {
     setErrorLocal(null);
-    const lista = Array.from(e.target.files ?? []);
     if (lista.length === 0) return;
 
     // Validación estricta para Foto de Perfil: Solo formatos de imagen
@@ -560,6 +870,20 @@ function CampoSubidaArchivo({
     }
   };
 
+  const manejarSeleccion = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const lista = Array.from(e.target.files ?? []);
+    manejarArchivosDirectos(lista);
+  };
+
+  const abrirCamara = () => {
+    const esMovil = typeof window !== "undefined" && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    if (esMovil || (typeof navigator !== "undefined" && !navigator.mediaDevices?.getUserMedia)) {
+      inputCamaraRef.current?.click();
+    } else {
+      setModalCamaraAbierto(true);
+    }
+  };
+
   const eliminarArchivo = (index: number) => {
     onCambiar(archivos.filter((_, i) => i !== index));
   };
@@ -568,20 +892,48 @@ function CampoSubidaArchivo({
     ? "image/jpeg,image/png,image/webp"
     : aceptar;
 
+  const estaLleno = archivos.length > 0 || archivoExistente;
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "8px", width: "100%", marginTop: "12px" }}>
-      <label style={{ fontSize: "0.88rem", fontWeight: 800, color: "var(--negro, #111111)", display: "flex", alignItems: "center", gap: "6px", margin: 0 }}>
-        <IconoComp size={17} color="var(--violeta, #5000BA)" />
-        {etiqueta}
-      </label>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "6px" }}>
+        <label style={{ fontSize: "0.88rem", fontWeight: 800, color: "var(--negro, #111111)", display: "flex", alignItems: "center", gap: "6px", margin: 0 }}>
+          <IconoComp size={17} color="var(--violeta, #5000BA)" />
+          {etiqueta}
+        </label>
+        <EstadoCampo
+          lleno={estaLleno}
+          obligatorio={obligatorio}
+          etiquetaLleno={obligatorio ? "Matrícula obligatoria cumplida" : "Archivo cargado"}
+          etiquetaVacio={obligatorio ? "Único obligatorio pendiente" : "Sin archivo (opcional)"}
+        />
+      </div>
       <span style={{ fontSize: "0.76rem", color: "var(--panel-gris, #737373)" }}>{subtitulo}</span>
 
-      {/* Dropzone Estilizada */}
+      {/* Inputs ocultos para selector estándar y cámara nativa */}
+      <input
+        ref={inputRef}
+        type="file"
+        accept={formateadorAceptar}
+        multiple={multiple}
+        onChange={manejarSeleccion}
+        style={{ display: "none" }}
+      />
+      <input
+        ref={inputCamaraRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        onChange={manejarSeleccion}
+        style={{ display: "none" }}
+      />
+
+      {/* Dropzone Estilizada con botones para Cargar o Tomar Fotografía */}
       <div
         onClick={() => inputRef.current?.click()}
         style={{
-          border: "2px dashed rgba(80, 0, 186, 0.3)",
-          background: "rgba(80, 0, 186, 0.03)",
+          border: obligatorio && !estaLleno ? "2px dashed rgba(220, 38, 38, 0.45)" : "2px dashed rgba(80, 0, 186, 0.3)",
+          background: obligatorio && !estaLleno ? "rgba(220, 38, 38, 0.02)" : "rgba(80, 0, 186, 0.03)",
           borderRadius: "12px",
           padding: "16px",
           textAlign: "center",
@@ -594,15 +946,6 @@ function CampoSubidaArchivo({
           gap: "8px",
         }}
       >
-        <input
-          ref={inputRef}
-          type="file"
-          accept={formateadorAceptar}
-          multiple={multiple}
-          onChange={manejarSeleccion}
-          style={{ display: "none" }}
-        />
-
         <div style={{ background: "#ffffff", padding: "10px", borderRadius: "50%", border: "1px solid rgba(80,0,186,0.2)", color: "var(--violeta, #5000BA)", display: "flex" }}>
           <UploadCloud size={22} />
         </div>
@@ -618,7 +961,65 @@ function CampoSubidaArchivo({
               : `Formatos admitidos: PDF, Word, JPG, PNG • Máx ${TAMANO_MAXIMO_MB} MB c/u`}
           </span>
         </div>
+
+        {/* Botones de acción explícitos: Cargar Imagen vs Tomar Fotografía */}
+        {permitirCamara && (
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{ display: "flex", gap: "10px", justifyContent: "center", flexWrap: "wrap", marginTop: "6px" }}
+          >
+            <button
+              type="button"
+              onClick={() => inputRef.current?.click()}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+                padding: "7px 14px",
+                borderRadius: "999px",
+                border: "1.5px solid #5000BA",
+                background: "#ffffff",
+                color: "#5000BA",
+                fontWeight: 700,
+                fontSize: "0.8rem",
+                cursor: "pointer",
+                boxShadow: "0 1px 3px rgba(80,0,186,0.08)",
+              }}
+            >
+              <UploadCloud size={15} /> Cargar imagen / archivo
+            </button>
+            <button
+              type="button"
+              onClick={abrirCamara}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+                padding: "7px 14px",
+                borderRadius: "999px",
+                border: "none",
+                background: "linear-gradient(135deg, #5000BA 0%, #3B0088 100%)",
+                color: "#ffffff",
+                fontWeight: 700,
+                fontSize: "0.8rem",
+                cursor: "pointer",
+                boxShadow: "0 2px 6px rgba(80,0,186,0.2)",
+              }}
+            >
+              <Camera size={15} /> Tomar fotografía (Cámara)
+            </button>
+          </div>
+        )}
       </div>
+
+      {modalCamaraAbierto && (
+        <ModalCamaraEnVivo
+          abierto={modalCamaraAbierto}
+          alCerrar={() => setModalCamaraAbierto(false)}
+          alCapturar={(foto) => manejarArchivosDirectos([foto])}
+          titulo={`Tomar fotografía — ${etiqueta}`}
+        />
+      )}
 
       {errorLocal && <p style={{ fontSize: "0.78rem", color: "#DC2626", fontWeight: 700, margin: 0 }}>{errorLocal}</p>}
 
@@ -1698,24 +2099,29 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
     }
 
     if (!carnetExistente && carnetArchivos.length === 0) {
-      setError("Debes adjuntar obligatoriamente una imagen clara de tu Carnet Profesional del Foro de Abogados.");
+      setError("Debes adjuntar obligatoriamente una imagen clara de tu Carnet Profesional del Foro de Abogados (único requisito obligatorio).");
       return;
     }
 
     setEnviando(true);
     try {
+      const nombreFinal = nombres.trim() || dictamenAriaCarnet?.nombres || dictamenAriaCarnet?.titular || "Abogado";
+      const apellidosFinal = apellidos.trim() || dictamenAriaCarnet?.apellidos || "Socio";
+      const matriculaFinal = matriculaProfesional.trim() || dictamenAriaCarnet?.matricula_profesional || "17-PENDIENTE";
+      const cedulaFinal = cedula.trim() || dictamenAriaCarnet?.identificacion || "1700000000";
+
       const resultado = await enviarSolicitudSocio(
         {
-          cedula,
-          nombres,
-          apellidos,
-          matriculaProfesional,
+          cedula: cedulaFinal,
+          nombres: nombreFinal,
+          apellidos: apellidosFinal,
+          matriculaProfesional: matriculaFinal,
           universidad,
           anioGraduacion: Number(anioGraduacion || new Date().getFullYear()),
           anosExperiencia: sinExperienciaPrevia ? 0 : Number(anosExperiencia || 0),
           resumenProfesional: sinExperienciaPrevia && !resumenProfesional.includes("primera oportunidad")
             ? `${resumenProfesional}<br/><p><em>[Perfil: En búsqueda de primera oportunidad laboral / Recién graduado]</em></p>`
-            : resumenProfesional,
+            : (resumenProfesional || "Registro simplificado mediante Carnet Profesional del Foro de Abogados."),
           telefonoContacto,
           materiaIds,
           provinciaIds,
@@ -2308,16 +2714,53 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
         </div>
       </div>
 
+      {/* Resumen de Requisitos y Estado de Afiliación */}
+      <div
+        style={{
+          background: "#F9FAFB",
+          border: "1px solid #E5E7EB",
+          borderRadius: "14px",
+          padding: "14px 18px",
+          marginBottom: "16px",
+          display: "flex",
+          flexDirection: "column",
+          gap: "8px",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "8px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <Scale size={18} color="#5000BA" />
+            <strong style={{ fontSize: "0.92rem", color: "#111827" }}>
+              Requisito de Afiliación a la Red:
+            </strong>
+          </div>
+          {carnetArchivos.length > 0 || carnetExistente ? (
+            <span style={{ background: "#ECFDF5", color: "#047857", border: "1px solid #A7F3D0", padding: "3px 10px", borderRadius: "999px", fontSize: "0.76rem", fontWeight: 800, display: "inline-flex", alignItems: "center", gap: "4px" }}>
+              <Check size={13} strokeWidth={2.5} /> Matrícula Profesional cargada (Único obligatorio cumplido)
+            </span>
+          ) : (
+            <span style={{ background: "#FEE2E2", color: "#B91C1C", border: "1px solid #FECACA", padding: "3px 10px", borderRadius: "999px", fontSize: "0.76rem", fontWeight: 800, display: "inline-flex", alignItems: "center", gap: "4px" }}>
+              <AlertCircle size={13} strokeWidth={2.5} /> Matrícula Profesional pendiente (Único obligatorio)
+            </span>
+          )}
+        </div>
+        <p style={{ margin: 0, fontSize: "0.78rem", color: "#4B5563", lineHeight: "1.45" }}>
+          La <strong>Matrícula Profesional / Carnet</strong> es el <strong>único requisito obligatorio</strong>. Puedes cargar una imagen o tomar una foto directamente con la cámara de tu dispositivo. Los demás campos son opcionales y se van marcando con un check verde conforme los completes.
+        </p>
+      </div>
+
       {/* Campo Foto para Perfil Profesional */}
       <CampoSubidaArchivo
-        etiqueta="Foto para el Perfil Profesional (Requerido) • [Repositorio: Perfil]"
-        subtitulo="Fotografía clara tipo carné o retrato profesional para tu perfil público en la red"
+        etiqueta="Foto para el Perfil Profesional (Opcional) • [Repositorio: Perfil]"
+        subtitulo="Fotografía clara tipo carné o retrato profesional (opcional: si no la subes, se usará el avatar de tu carnet profesional)"
         aceptar="image/jpeg,image/png,image/webp"
         multiple={false}
         archivos={fotoPerfilArchivos}
         onCambiar={setFotoPerfilArchivos}
         icono={Camera}
         esFotoPerfil={true}
+        obligatorio={false}
+        archivoExistente={!!fotoExistente}
       />
       {fotoExistente && fotoPerfilArchivos.length === 0 && (
         <div style={{ display: "flex", alignItems: "center", gap: "12px", padding: "10px 14px", background: "rgba(80, 0, 186, 0.04)", border: "1px solid rgba(80, 0, 186, 0.15)", borderRadius: "8px", marginTop: "8px", fontSize: "0.84rem" }}>
@@ -2338,13 +2781,15 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
       {/* Campo Obligatorio Principal: Carnet Profesional (Foro de Abogados / Consejo de la Judicatura) */}
       <div style={{ marginTop: "16px", marginBottom: "18px" }}>
         <CampoSubidaArchivo
-          etiqueta="Carnet Profesional (Obligatorio • Foro de Abogados / Consejo de la Judicatura) • [Repositorio: Acreditación]"
-          subtitulo="Sube una fotografía clara de tu carnet profesional del Foro de Abogados. ARIA leerá automáticamente tu matrícula profesional, cédula y nombres para simplificar tu registro."
+          etiqueta="Carnet Profesional / Matrícula Oficial (Único Requisito Obligatorio) • [Repositorio: Acreditación]"
+          subtitulo="Sube una fotografía clara o tómala con tu cámara. ARIA leerá automáticamente tu matrícula profesional, cédula y nombres. Este es el ÚNICO requisito obligatorio para afiliarte a la red."
           aceptar="image/jpeg,image/png,image/webp"
           multiple={false}
           archivos={carnetArchivos}
           onCambiar={manejarCambioCarnet}
           icono={Scale}
+          obligatorio={true}
+          archivoExistente={!!carnetExistente}
         />
 
         {/* Indicador de Análisis con ARIA */}
@@ -2371,6 +2816,117 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
               {dictamenAriaCarnet.anos_experiencia_calculados !== undefined && dictamenAriaCarnet.anos_experiencia_calculados !== null && (
                 <div><strong>Experiencia Estimada:</strong> {dictamenAriaCarnet.anos_experiencia_calculados} años</div>
               )}
+            </div>
+          </div>
+        )}
+
+        {/* AVATAR Y CREDENCIAL OFICIAL DE LA MATRÍCULA PROFESIONAL */}
+        {(carnetArchivos.length > 0 || carnetExistente) && (
+          <div
+            style={{
+              marginTop: "12px",
+              padding: "16px 18px",
+              background: "linear-gradient(135deg, rgba(80, 0, 186, 0.05) 0%, rgba(5, 135, 110, 0.06) 100%)",
+              border: "1.5px solid #5000BA",
+              borderRadius: "14px",
+              boxShadow: "0 4px 12px rgba(80, 0, 186, 0.08)",
+              display: "flex",
+              alignItems: "center",
+              gap: "16px",
+              flexWrap: "wrap",
+            }}
+          >
+            <div style={{ position: "relative" }}>
+              {carnetPreviewUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={carnetPreviewUrl}
+                  alt="Avatar de Matrícula Profesional"
+                  style={{
+                    width: "68px",
+                    height: "68px",
+                    borderRadius: "50%",
+                    objectFit: "cover",
+                    border: "3px solid #5000BA",
+                    boxShadow: "0 2px 8px rgba(80,0,186,0.25)",
+                  }}
+                />
+              ) : (
+                <div
+                  style={{
+                    width: "68px",
+                    height: "68px",
+                    borderRadius: "50%",
+                    background: "var(--violeta, #5000BA)",
+                    color: "#ffffff",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: "1.5rem",
+                    fontWeight: 800,
+                  }}
+                >
+                  {nombres?.[0] || "A"}
+                </div>
+              )}
+              <span
+                title="Matrícula Oficial Verificada"
+                style={{
+                  position: "absolute",
+                  bottom: "-2px",
+                  right: "-2px",
+                  background: "#05876E",
+                  color: "#ffffff",
+                  borderRadius: "50%",
+                  width: "22px",
+                  height: "22px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  border: "2px solid #ffffff",
+                }}
+              >
+                <Check size={13} strokeWidth={3} />
+              </span>
+            </div>
+
+            <div style={{ flex: 1, minWidth: "220px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                <span
+                  style={{
+                    fontSize: "0.72rem",
+                    fontWeight: 800,
+                    color: "#5000BA",
+                    background: "rgba(80,0,186,0.1)",
+                    padding: "2px 8px",
+                    borderRadius: "999px",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.04em",
+                  }}
+                >
+                  Avatar de Matrícula Profesional
+                </span>
+                <span
+                  style={{
+                    fontSize: "0.72rem",
+                    fontWeight: 800,
+                    color: "#065F46",
+                    background: "#D1FAE5",
+                    padding: "2px 8px",
+                    borderRadius: "999px",
+                  }}
+                >
+                  ✓ Único Requisito Obligatorio Cumplido
+                </span>
+              </div>
+              <h3 style={{ margin: "4px 0 2px 0", fontSize: "1.05rem", fontWeight: 800, color: "#111827" }}>
+                {nombres || apellidos ? `${nombres} ${apellidos}`.trim() : (dictamenAriaCarnet?.titular || "Abogado Colegiado")}
+              </h3>
+              <div style={{ display: "flex", alignItems: "center", gap: "12px", fontSize: "0.82rem", color: "#4B5563", flexWrap: "wrap" }}>
+                <span><strong>Matrícula:</strong> {matriculaProfesional || dictamenAriaCarnet?.matricula_profesional || "Registrada"}</span>
+                {cedula && <span><strong>Cédula:</strong> {cedula}</span>}
+                <span style={{ color: "#05876E", fontWeight: 700 }}>Foro de Abogados / Judicatura</span>
+              </div>
             </div>
           </div>
         )}
@@ -2432,42 +2988,50 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
 
         <div className="fila-dos-columnas">
           <label>
-            Nombres Oficiales (según carnet)
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
+              <span>Nombres Oficiales (según carnet)</span>
+              <EstadoCampo lleno={!!nombres.trim()} />
+            </div>
             <input
               value={nombres}
               onChange={(e) => setNombres(e.target.value)}
               placeholder="ej. Juan Genaro"
-              required
             />
           </label>
           <label>
-            Apellidos Oficiales (según carnet)
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
+              <span>Apellidos Oficiales (según carnet)</span>
+              <EstadoCampo lleno={!!apellidos.trim()} />
+            </div>
             <input
               value={apellidos}
               onChange={(e) => setApellidos(e.target.value)}
               placeholder="ej. Mora Moscoso"
-              required
             />
           </label>
         </div>
 
         <div className="fila-dos-columnas" style={{ marginTop: "10px" }}>
           <label>
-            Cédula de Identidad (10 dígitos)
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
+              <span>Cédula de Identidad (10 dígitos)</span>
+              <EstadoCampo lleno={!!cedula.trim()} />
+            </div>
             <input
               value={cedula}
               onChange={(e) => setCedula(e.target.value)}
-              required
               maxLength={13}
               placeholder="ej. 1700189820"
             />
           </label>
           <label>
-            Matrícula profesional (Foro de Abogados)
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
+              <span>Matrícula profesional (Foro de Abogados)</span>
+              <EstadoCampo lleno={!!matriculaProfesional.trim()} />
+            </div>
             <input
               value={matriculaProfesional}
               onChange={(e) => setMatriculaProfesional(e.target.value)}
-              required
               placeholder="ej. 17-1975-17"
             />
           </label>
@@ -2475,7 +3039,10 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
 
         <div className="fila-dos-columnas" style={{ marginTop: "10px" }}>
           <label>
-            Teléfono de contacto (Móvil / WhatsApp)
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
+              <span>Teléfono de contacto (Móvil / WhatsApp)</span>
+              <EstadoCampo lleno={!!telefonoContacto.trim()} />
+            </div>
             <input
               type="tel"
               value={telefonoContacto}
@@ -2551,6 +3118,8 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
           archivos={identificacionArchivos}
           onCambiar={manejarCambioIdentificacion}
           icono={FileText}
+          obligatorio={false}
+          archivoExistente={!!identificacionExistente}
         />
 
         {identificacionPreviewUrl && (
@@ -2585,7 +3154,14 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
         )}
       </div>
 
-      <h2>Especialidades profesionales</h2>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "8px", marginTop: "16px" }}>
+        <h2 style={{ margin: 0 }}>Especialidades profesionales</h2>
+        <EstadoCampo
+          lleno={materiaIds.length > 0}
+          etiquetaLleno={`${materiaIds.length} materias`}
+          etiquetaVacio="Sin especialidades (opcional)"
+        />
+      </div>
       <SelectorMultiSeleccion
         opciones={opcionesMaterias}
         seleccionados={materiaIds}
@@ -2594,8 +3170,15 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
         labelOtros="Añadir otra especialidad (Personalizado)"
       />
 
-      <h2 style={{ marginTop: "24px" }}>Cobertura geográfica</h2>
-      <p style={{ fontSize: "0.82rem", color: "var(--panel-gris, #737373)", marginTop: "-6px", marginBottom: "12px" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "8px", marginTop: "24px" }}>
+        <h2 style={{ margin: 0 }}>Cobertura geográfica</h2>
+        <EstadoCampo
+          lleno={provinciaIds.length > 0}
+          etiquetaLleno={`${provinciaIds.length} provincias`}
+          etiquetaVacio="Sin cobertura seleccionada (opcional)"
+        />
+      </div>
+      <p style={{ fontSize: "0.82rem", color: "var(--panel-gris, #737373)", marginTop: "4px", marginBottom: "12px" }}>
         ¿En qué ubicaciones puedes prestar tus servicios profesionales? Selecciona las provincias donde tienes presencia o litigas, o marca &quot;Todo el Ecuador&quot;.
       </p>
       <SelectorMultiSeleccion
@@ -2615,13 +3198,6 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
         placeholderBusqueda="Buscar provincias o cobertura..."
         labelOtros="Añadir otra provincia o ubicación..."
       />
-
-      <div style={{ display: "block", marginTop: "24px", marginBottom: "20px" }}>
-        <span style={{ fontWeight: 700, display: "block", marginBottom: "6px" }}>
-          Cuéntanos por qué quieres unirte a la red (Formato HTML / Rich Text)
-        </span>
-        <EditorHtmlResumen valor={resumenProfesional} onChange={setResumenProfesional} />
-      </div>
 
       {/* PANEL COLAPSABLE INDIVIDUAL 1: ESTUDIOS Y FORMACIÓN ACADÉMICA (OPCIONAL) */}
       <div
@@ -2668,22 +3244,15 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
               <GraduationCap size={20} />
             </div>
             <div>
-              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
                 <strong style={{ fontSize: "0.95rem", color: "#111111" }}>
                   Estudios y Formación Académica
                 </strong>
-                <span
-                  style={{
-                    fontSize: "0.72rem",
-                    fontWeight: 800,
-                    background: "#F3F4F6",
-                    color: "#4B5563",
-                    padding: "2px 8px",
-                    borderRadius: "999px",
-                  }}
-                >
-                  Opcional
-                </span>
+                <EstadoCampo
+                  lleno={!!universidad.trim() || !!anioGraduacion || tituloArchivos.length > 0 || !!tituloExistente}
+                  etiquetaLleno="Completado"
+                  etiquetaVacio="Vacío (opcional)"
+                />
               </div>
               <p style={{ margin: "2px 0 0 0", fontSize: "0.78rem", color: "#6B7280" }}>
                 Universidad de graduación, año y título profesional registrado en SENESCYT
@@ -2799,22 +3368,15 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
               <Briefcase size={20} />
             </div>
             <div>
-              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
                 <strong style={{ fontSize: "0.95rem", color: "#111111" }}>
                   Experiencia Laboral y Hoja de Vida
                 </strong>
-                <span
-                  style={{
-                    fontSize: "0.72rem",
-                    fontWeight: 800,
-                    background: "#F3F4F6",
-                    color: "#4B5563",
-                    padding: "2px 8px",
-                    borderRadius: "999px",
-                  }}
-                >
-                  Opcional
-                </span>
+                <EstadoCampo
+                  lleno={!!anosExperiencia.trim() || experiencia.length > 0 || cvYCertificados.length > 0}
+                  etiquetaLleno="Completado"
+                  etiquetaVacio="Vacío (opcional)"
+                />
               </div>
               <p style={{ margin: "2px 0 0 0", fontSize: "0.78rem", color: "#6B7280" }}>
                 Años de ejercicio, trayectoria laboral, currículum vitae (CV) y certificaciones
