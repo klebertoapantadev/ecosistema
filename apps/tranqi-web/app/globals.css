@@ -455,7 +455,44 @@ p { line-height: 1.55; }
   text-align: center;
 }
 .logo-auth { font-size: 1.6rem; font-weight: 800; color: var(--violeta); text-decoration: none; }
-.pagina-auth h1 { font-size: clamp(1.4rem, 3vw, 1.9rem); font-weight: 800; }
+.pagina-auth h1 { font-size: clamp(1.4rem, 3vw, 1.9rem); font-weight: 800; margin: 0; }
+
+/* Selector de pestañas Ingresar / Registrarme */
+.tabs-auth-switch {
+  display: flex;
+  width: min(380px, 100%);
+  background: #f4f3f8;
+  padding: 4px;
+  border-radius: 999px;
+  gap: 4px;
+  border: 1px solid rgba(80, 0, 186, 0.12);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.04);
+  margin-top: 4px;
+  margin-bottom: 2px;
+}
+.tab-auth-item {
+  flex: 1;
+  padding: 10px 16px;
+  border-radius: 999px;
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 0.92rem;
+  color: #555566;
+  text-align: center;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.tab-auth-item:hover {
+  color: var(--violeta);
+  background: rgba(80, 0, 186, 0.06);
+}
+.tab-auth-item.activa {
+  background: var(--violeta);
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(80, 0, 186, 0.28);
+}
 
 /* Pantalla de trabajo, no landing: el acento identifica el perfil (aquí
    cliente, ver sistema-visual.md §2/§3) -- botón violeta rectangular, no la

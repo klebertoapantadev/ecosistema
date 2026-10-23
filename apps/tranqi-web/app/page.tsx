@@ -401,8 +401,7 @@ export default function TranqiLanding() {
           <a href="#red">Abogados</a>
           <a href="#equipo">Equipo</a>
           <a href="/vacantes">Bolsa de empleo</a>
-          <a href="/ingresar" className="link-ingresar">Ingresar</a>
-          <a href="/registro" className="cta">Únete</a>
+          <a href="/ingresar" className="cta">Ingresar</a>
         </div>
       </nav>
 
@@ -552,7 +551,7 @@ export default function TranqiLanding() {
           <div className="precio reveal">USD 20 <span className="periodo">al año</span></div>
           <p className="sub reveal">Un sistema diseñado para que cualquier persona pueda contar con respaldo legal permanente.</p>
           <p className="nota reveal">Sé parte de un futuro donde la justicia es rápida, eficiente y accesible.</p>
-          <a className="btn btn-negro reveal" href="/registro">Unirme ahora</a>
+          <a className="btn btn-negro reveal" href="/ingresar">Ingresar / Registrarme</a>
         </div>
       </section>
 
