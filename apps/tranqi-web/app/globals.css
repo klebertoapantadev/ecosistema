@@ -459,7 +459,13 @@ p { line-height: 1.55; }
 #contacto .btn { margin-top: 36px; }
 /* dos márgenes auto reparten el hueco: contenido centrado, pie abajo */
 #contacto .wrap { margin-top: auto; }
-#contacto .pie { margin-top: auto; padding-top: 60px; color: rgba(255,255,255,0.5); font-size: 0.84rem; position: relative; z-index: 2; }
+#contacto .pie { margin-top: auto; padding-top: 40px; color: rgba(255,255,255,0.5); font-size: 0.84rem; position: relative; z-index: 2; }
+
+/* ── VACANTES (Lámina Bolsa de empleo) ── */
+#vacantes { background: #06251D; color: var(--blanco); position: relative; display: flex; flex-direction: column; justify-content: center; }
+#vacantes h2 { font-size: clamp(2rem, 4.2vw, 3.2rem); color: var(--blanco); max-width: 680px; line-height: 1.18; }
+#vacantes .wrap { margin-top: auto; z-index: 2; position: relative; }
+#vacantes .pie { margin-top: auto; padding-top: 50px; color: rgba(255,255,255,0.5); font-size: 0.84rem; position: relative; z-index: 2; text-align: center; }
 
 @media (max-width: 900px) {
   .nav-landing .links a:not(.cta) { display: none; }

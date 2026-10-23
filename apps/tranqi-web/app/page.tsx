@@ -48,6 +48,7 @@ const FALLBACK: Record<string, string> = {
   red: "Si eres abogado, la red te da clientes, ingresos y capacitación constante.",
   equipo: "Nuestros abogados cuentan con título verificado en SENESCYT y matrícula activa en el Foro de Abogados.",
   contacto: "Este es el momento de dar el paso. Pregúntame cómo unirte.",
+  vacantes: "Buscamos talento para crecer: revisa nuestras oportunidades laborales en operaciones, soporte y área legal.",
 };
 
 export default function TranqiLanding() {
@@ -452,9 +453,7 @@ export default function TranqiLanding() {
           <a href="#problema">El problema</a>
           <a href="#app">La app</a>
           <a href="#planes">Planes</a>
-          <a href="#red">Abogados</a>
           <a href="#equipo">Equipo</a>
-          <a href="/vacantes">Bolsa de empleo</a>
           <a href="/ingresar" className="cta">Ingresar</a>
         </div>
       </nav>
@@ -650,8 +649,8 @@ export default function TranqiLanding() {
                 </div>
               </div>
 
-              <a className="btn btn-negro plan-card-btn" href="/ingresar">
-                Ingresar / Registrarme
+              <a className="btn btn-negro plan-card-btn" href="/empresas/contacto">
+                Más Información
               </a>
             </div>
           </div>
@@ -672,36 +671,10 @@ export default function TranqiLanding() {
         </div>
       </section>
 
-      {/* RED · entra 1094 · sale 70 */}
-      <section id="red" data-buddie="red">
-        <div className="ribbon"><svg viewBox="0 0 1440 900" preserveAspectRatio="none">
-          <path pathLength={1} stroke="#7866FF" d="M 1094 0 C 1094 180 1260 320 1260 520 C 1260 740 1020 855 620 855 C 360 855 70 830 70 900" />
-        </svg></div>
-        <div className="wrap">
-          <h2 className="reveal">¿Eres abogado? La red también es para ti.</h2>
-          <ul className="beneficios reveal">
-            <li><b>Nuevas</b> oportunidades laborales</li>
-            <li><b>Nuevas</b> fuentes de ingresos</li>
-            <li><b>Beneficios</b> exclusivos</li>
-            <li><b>Capacitación</b> constante</li>
-            <li><b>Certificaciones</b></li>
-            <li><b>Derivación</b> de clientes</li>
-            <li><b>Cuenta</b> digital</li>
-            <li><b>Crédito</b> y desarrollo</li>
-          </ul>
-          <a className="btn btn-blanco-borde reveal" href="/registro?intencion=abogado&destino=/panel/solicitud-socio">Quiero ser parte de la red</a>
-          <p className="pub-date reveal" style={{ marginTop: 24, fontSize: "0.78rem", color: "rgba(255, 255, 255, 0.45)", fontWeight: 500, letterSpacing: "0.04em" }}>Publicado: 23 de julio de 2026 06:21</p>
-        </div>
-      </section>
-
-      {/* NUESTRO EQUIPO · entra 70 · sale 70 (TRQ-002 / PLT-019)
-          Esmeralda plena, el acento del lado abogado. Era lima al 55 % sobre la
-          tinta verde, que daba un salvia (#7A9F73) ajeno a la paleta y dejaba el
-          titular blanco a 3,0:1 y la lima a 2,7:1; sobre esmeralda suben a 4,5:1
-          y 4,0:1, por encima del 3:1 que AA pide al texto grande (TRQ-012). */}
+      {/* NUESTRO EQUIPO · entra 1094 · sale 70 (TRQ-002 / PLT-019) */}
       <section id="equipo" data-buddie="equipo">
         <div className="ribbon"><svg viewBox="0 0 1440 1400" preserveAspectRatio="none">
-          <path pathLength={1} stroke="#05876E" d="M 70 0 C 70 300 70 450 300 470 C 650 490 1240 500 1240 780 C 1240 1060 70 1140 70 1400" />
+          <path pathLength={1} stroke="#05876E" d="M 1094 0 C 1094 280 1150 420 850 470 C 500 500 120 540 120 800 C 120 1080 70 1140 70 1400" />
         </svg></div>
         <div className="lienzo-equipo">
           <div className="cabecera-equipo reveal">
@@ -789,15 +762,66 @@ export default function TranqiLanding() {
         </div>
       </section>
 
-      {/* CONTACTO · entra 70 · el hilo muere aquí */}
+      {/* CONTACTO (LÁMINA TRANQI) · entra 70 · sale 720 */}
       <section id="contacto" data-buddie="contacto">
         <div className="ribbon"><svg viewBox="0 0 1440 900" preserveAspectRatio="none">
-          <path pathLength={1} stroke="#5000BA" d="M 70 0 C 70 180 140 380 180 500 C 210 600 240 700 260 760" />
+          <path pathLength={1} stroke="#5000BA" d="M 70 0 C 70 200 180 380 320 500 C 460 620 620 720 720 900" />
         </svg></div>
         <div className="wrap">
           <img className="reveal" src="/assets/tranqi-white.svg" alt="tranqi" />
           <h2 className="reveal">Democratizar la justicia, para que los derechos <i>sean de todos</i>.</h2>
           <a className="btn btn-amarillo reveal" href="#" id="ctaHablar">Hablar con tranqi ahora</a>
+        </div>
+      </section>
+
+      {/* RED (LÁMINA ABOGADOS) · entra 720 · sale 1000 */}
+      <section id="red" data-buddie="red">
+        <div className="ribbon"><svg viewBox="0 0 1440 900" preserveAspectRatio="none">
+          <path pathLength={1} stroke="#FE5800" d="M 720 0 C 720 200 880 350 1050 480 C 1200 600 1150 780 1000 900" />
+        </svg></div>
+        <div className="wrap">
+          <h2 className="reveal">¿Eres abogado? La red también es para ti.</h2>
+          <ul className="beneficios reveal">
+            <li><b>Nuevas</b> oportunidades laborales</li>
+            <li><b>Nuevas</b> fuentes de ingresos</li>
+            <li><b>Beneficios</b> exclusivos</li>
+            <li><b>Capacitación</b> constante</li>
+            <li><b>Certificaciones</b></li>
+            <li><b>Derivación</b> de clientes</li>
+            <li><b>Cuenta</b> digital</li>
+            <li><b>Crédito</b> y desarrollo</li>
+          </ul>
+          <a className="btn btn-blanco-borde reveal" href="/registro?intencion=abogado&destino=/panel/solicitud-socio">Quiero ser parte de la red</a>
+          <p className="pub-date reveal" style={{ marginTop: 24, fontSize: "0.78rem", color: "rgba(255, 255, 255, 0.45)", fontWeight: 500, letterSpacing: "0.04em" }}>Publicado: 23 de julio de 2026 06:21</p>
+        </div>
+      </section>
+
+      {/* BOLSA DE EMPLEO · entra 1000 · el hilo culmina aquí */}
+      <section id="vacantes" data-buddie="vacantes">
+        <div className="ribbon"><svg viewBox="0 0 1440 900" preserveAspectRatio="none">
+          <path pathLength={1} stroke="#D8FFB3" d="M 1000 0 C 1000 220 750 380 500 560 C 320 700 240 800 240 900" />
+        </svg></div>
+        <div className="wrap">
+          <div className="saludo reveal" style={{ fontSize: "0.85rem", letterSpacing: "0.15em", textTransform: "uppercase", color: "#D8FFB3", fontWeight: 800, marginBottom: 8 }}>
+            Oportunidades Laborales
+          </div>
+          <h2 className="reveal">Bolsa de empleo y talento legal</h2>
+          <p className="desc reveal" style={{ maxWidth: 640, margin: "16px 0 32px", fontSize: "1.15rem", lineHeight: 1.6, color: "rgba(255, 255, 255, 0.9)" }}>
+            Sé parte del equipo que democratiza el acceso a la justicia. Únete a nuestro equipo en administración, operaciones, soporte y asistencia jurídica.
+          </p>
+          <div className="tres reveal" style={{ maxWidth: 820, marginBottom: 36 }}>
+            <b><i>01</i> Operaciones & Gestión</b>
+            <b><i>02</i> Asistencia Legal</b>
+            <b><i>03</i> Soporte & Clientes</b>
+          </div>
+          <div className="ctas reveal" style={{ display: "flex", gap: 14, flexWrap: "wrap", alignItems: "center" }}>
+            <a className="btn btn-amarillo" href="/vacantes">
+              Ver bolsa de empleo y postular
+            </a>
+            <a className="btn btn-blanco-borde" href="#hero">
+              Volver al inicio
+            </a>
+          </div>
         </div>
         <div className="pie">© tranqi® 2026 · Todos los derechos reservados · Demo impulsada por ARIA</div>
       </section>

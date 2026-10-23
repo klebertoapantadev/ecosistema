@@ -31,3 +31,7 @@ export function agregarCampanaServidor(campana: CampanaBitacora): void {
 export function obtenerCampanasServidor(): CampanaBitacora[] {
   return ALMACEN_CAMPANAS;
 }
+
+export function limpiarCampanasServidor(): void {
+  ALMACEN_CAMPANAS.length = 0;
+}

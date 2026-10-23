@@ -181,6 +181,39 @@ export function WidgetNotificacionesCliente({ negocio = "tranqi", esAdmin = fals
     enviarAccionServidor(item, "posponer", horas);
   };
 
+  const cerrarToast = (item?: NotificacionItem | null) => {
+    if (item && typeof window !== "undefined") {
+      try {
+        const sesionCerrados = JSON.parse(sessionStorage.getItem("tranqi_toasts_cerrados") || "[]");
+        if (!sesionCerrados.includes(item.not_id)) {
+          sesionCerrados.push(item.not_id);
+          sessionStorage.setItem("tranqi_toasts_cerrados", JSON.stringify(sesionCerrados));
+        }
+      } catch {}
+    }
+    setAlertaPushToast(null);
+  };
+
+  const eliminarTodasLasNotificaciones = async () => {
+    setNotificaciones([]);
+    setAlertaPushToast(null);
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem(STORAGE_KEY_LEIDAS, "[]");
+        localStorage.setItem(STORAGE_KEY_ELIMINADAS, "[]");
+        localStorage.setItem(STORAGE_KEY_POSPUESTAS, "{}");
+        sessionStorage.setItem("tranqi_toasts_cerrados", "[]");
+      } catch {}
+    }
+    try {
+      await fetch("/api/notificaciones/usuario", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ accion: "eliminar_todas" })
+      });
+    } catch {}
+  };
+
   const cargarNotificaciones = () => {
     fetch("/api/notificaciones/usuario")
       .then(res => res.json())
@@ -191,9 +224,16 @@ export function WidgetNotificacionesCliente({ negocio = "tranqi", esAdmin = fals
           const e = eliminadasLocal;
           const l = leidasLocal;
 
+          let toastsCerradosEnSesion = new Set<string>();
+          if (typeof window !== "undefined") {
+            try {
+              toastsCerradosEnSesion = new Set(JSON.parse(sessionStorage.getItem("tranqi_toasts_cerrados") || "[]"));
+            } catch {}
+          }
+
           // Filtrar las visibles activas para toast
           const pendientesParaToast = data.notificaciones.filter((n: NotificacionItem) => {
-            if (e.has(n.not_id) || n.not_eliminada) return false;
+            if (e.has(n.not_id) || n.not_eliminada || toastsCerradosEnSesion.has(n.not_id)) return false;
             const pospServer = n.not_pospuesta_hasta ? new Date(n.not_pospuesta_hasta).getTime() : 0;
             const pospLocal = p[n.not_id] || 0;
             const pospFinal = Math.max(pospServer, pospLocal);
@@ -297,7 +337,7 @@ export function WidgetNotificacionesCliente({ negocio = "tranqi", esAdmin = fals
             </div>
             <button
               type="button"
-              onClick={() => setAlertaPushToast(null)}
+              onClick={() => cerrarToast(alertaPushToast)}
               style={{
                 background: "rgba(255,255,255,0.12)",
                 border: "none",
@@ -438,15 +478,36 @@ export function WidgetNotificacionesCliente({ negocio = "tranqi", esAdmin = fals
           significaba nada. La tarjeta se distingue como todas las demás del
           panel: superficie blanca y línea de 1px. */}
       <section className="tarjeta-seccion" aria-labelledby="t-notificaciones-eco">
-        <header>
-          <h2 id="t-notificaciones-eco">Notificaciones</h2>
-          {/* El contador solo aparece cuando hay algo pendiente: un chip que
-              dice "0 Pendientes" ocupa sitio para no informar de nada. Fondo
-              diluido y no pleno, como manda §6 del sistema visual. */}
-          {noLeidasCount > 0 && (
-            <span className="chip-pendientes">
-              {noLeidasCount} {noLeidasCount === 1 ? "pendiente" : "pendientes"}
-            </span>
+        <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <h2 id="t-notificaciones-eco">Notificaciones</h2>
+            {noLeidasCount > 0 && (
+              <span className="chip-pendientes">
+                {noLeidasCount} {noLeidasCount === 1 ? "pendiente" : "pendientes"}
+              </span>
+            )}
+          </div>
+          {notificaciones.length > 0 && (
+            <button
+              type="button"
+              onClick={eliminarTodasLasNotificaciones}
+              style={{
+                background: "transparent",
+                border: "none",
+                color: "#64748b",
+                fontSize: "0.75rem",
+                fontWeight: 600,
+                cursor: "pointer",
+                padding: "4px 8px",
+                borderRadius: "4px",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "4px"
+              }}
+              title="Eliminar todas las notificaciones actuales"
+            >
+              <Trash2 size={13} /> Limpiar todo
+            </button>
           )}
         </header>
 

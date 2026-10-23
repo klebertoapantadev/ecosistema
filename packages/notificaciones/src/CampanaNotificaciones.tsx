@@ -108,6 +108,17 @@ export function CampanaNotificaciones({ negocio }: Props) {
     enviarAccion(item, "restaurar");
   };
 
+  const eliminarTodas = async () => {
+    setNotificaciones([]);
+    try {
+      await fetch("/api/notificaciones/usuario", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ accion: "eliminar_todas" })
+      });
+    } catch {}
+  };
+
   const listaFiltrada = notificaciones.filter(n => {
     if (filtro === "eliminadas") return Boolean(n.not_eliminada);
     if (n.not_eliminada) return false;
@@ -292,24 +303,46 @@ export function CampanaNotificaciones({ negocio }: Props) {
                 </button>
               </div>
 
-              {noLeidasCount > 0 && filtro !== "eliminadas" && (
-                <button
-                  onClick={marcarTodasComoLeidas}
-                  style={{
-                    background: "none",
-                    border: "none",
-                    color: "#388bfd",
-                    cursor: "pointer",
-                    fontWeight: 600,
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "4px",
-                    fontSize: "0.74rem"
-                  }}
-                >
-                  <CheckCheck size={13} /> Leídas
-                </button>
-              )}
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                {noLeidasCount > 0 && filtro !== "eliminadas" && (
+                  <button
+                    onClick={marcarTodasComoLeidas}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      color: "#388bfd",
+                      cursor: "pointer",
+                      fontWeight: 600,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "4px",
+                      fontSize: "0.74rem"
+                    }}
+                    title="Marcar todas como leídas"
+                  >
+                    <CheckCheck size={13} /> Leídas
+                  </button>
+                )}
+                {notificaciones.length > 0 && (
+                  <button
+                    onClick={eliminarTodas}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      color: "#f87171",
+                      cursor: "pointer",
+                      fontWeight: 600,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "3px",
+                      fontSize: "0.74rem"
+                    }}
+                    title="Eliminar todas las notificaciones"
+                  >
+                    <Trash2 size={13} /> Limpiar
+                  </button>
+                )}
+              </div>
             </div>
 
             {/* Lista de Notificaciones */}

@@ -2,7 +2,7 @@
 import { NextResponse } from "next/server";
 import { obtenerPerfilActual } from "@eco/identidad";
 import { crearClienteServidor, crearClienteAdmin } from "@eco/supabase/servidor";
-import { obtenerCampanasServidor } from "../almacen";
+import { obtenerCampanasServidor, limpiarCampanasServidor } from "../almacen";
 
 export interface RegistroNotificacion {
   not_id: string;
@@ -81,7 +81,7 @@ export async function GET() {
 
         const rolesMembresia = ((memUser || []) as Array<{ mem_rol?: string | null }>).map(m => (m.mem_rol || "").toUpperCase());
         const esStaffMembresia = rolesMembresia.includes("OPERADOR") || rolesMembresia.includes("ADMINISTRADOR") || rolesMembresia.includes("SUPERADMIN") || rolesMembresia.includes("AUXILIAR");
-        const esAutorizado = esSuperAdminEmail || Boolean(perfil?.usu_superadmin_plataforma) || perfiles.includes("ADMINISTRADOR") || perfiles.includes("OPERADOR") || perfiles.includes("SUPERADMIN") || esStaffMembresia;
+        const _esAutorizado = esSuperAdminEmail || Boolean(perfil?.usu_superadmin_plataforma) || perfiles.includes("ADMINISTRADOR") || perfiles.includes("OPERADOR") || perfiles.includes("SUPERADMIN") || esStaffMembresia;
 
         let query = client
           .schema("comun_notificacion")
@@ -177,118 +177,7 @@ export async function GET() {
           }
         }
 
-        // Si el usuario es administrador u operador, sintetizar alertas para nuevas postulaciones, propuestas y contratos pendientes
-        if (esAutorizado) {
-          try {
-            // 1. Nuevas postulaciones de socio abogado recibidas y pendientes de evaluación
-            const { data: solicitudesPendientes } = await client
-              .schema("tranqui_legal")
-              .from("trq_solicitud_socio")
-              .select("ssc_id, ssc_usuario_id, ssc_estado, ssc_actualizado_en, ssc_creado_en")
-              .in("ssc_estado", ["enviada", "pendiente", "revision"])
-              .is("ssc_eliminado_en", null)
-              .order("ssc_creado_en", { ascending: false });
 
-            if (solicitudesPendientes && Array.isArray(solicitudesPendientes)) {
-              for (const sol of solicitudesPendientes) {
-                const { data: uPost } = await client
-                  .schema("comun_seguridad")
-                  .from("seg_usuario")
-                  .select("usu_nombres, usu_apellidos, usu_correo")
-                  .eq("usu_id", sol.ssc_usuario_id)
-                  .maybeSingle();
-
-                const nombrePost = [uPost?.usu_nombres, uPost?.usu_apellidos].filter(Boolean).join(" ") || uPost?.usu_correo || "Postulante";
-                const titulo = `Nueva Postulación de Socio Abogado: ${nombrePost}`;
-                const synthSolId = `postulacion-${sol.ssc_id}`;
-                const yaExiste = registrosClavesVistas.has(synthSolId) || notificaciones.some(n => n.not_id === synthSolId || n.not_titulo.includes(nombrePost));
-                if (!yaExiste) {
-                  notificaciones.unshift({
-                    not_id: synthSolId,
-                    not_titulo: titulo,
-                    not_contenido_html: `<p>El profesional <strong>${nombrePost}</strong> (<code>${uPost?.usu_correo || ""}</code>) ha registrado una postulación como Socio Abogado en tranqi. Haz clic en <a href="/panel/socios/${sol.ssc_id}" style="color: #5000BA; font-weight: 700;">Evaluar Solicitud de Socio</a> para revisar su matrícula y registro SENESCYT.</p>`,
-                    not_url_accion: `/panel/socios/${sol.ssc_id}`,
-                    not_leido_en: null,
-                    not_creado_en: sol.ssc_actualizado_en || sol.ssc_creado_en || new Date().toISOString(),
-                    not_canal: "IN_APP",
-                    not_eliminada: false
-                  });
-                }
-              }
-            }
-
-            // 2. Alertas para contratos firmados recibidos y propuestas de modificación
-            const { data: solicitudesConDocs } = await client
-              .schema("tranqui_legal")
-              .from("trq_solicitud_socio")
-              .select(`
-                ssc_id,
-                ssc_usuario_id,
-                ssc_estado,
-                ssc_actualizado_en,
-                trq_documento_socio (dcs_tipo, dcs_comentario, dcs_creado_en)
-              `)
-              .is("ssc_eliminado_en", null)
-              .order("ssc_actualizado_en", { ascending: false });
-
-            if (solicitudesConDocs && Array.isArray(solicitudesConDocs)) {
-              for (const sol of solicitudesConDocs) {
-                const docs = (sol.trq_documento_socio || []) as Array<{ dcs_tipo: string; dcs_comentario?: string; dcs_creado_en: string }>;
-                const tieneContrato = docs.some(d => d.dcs_tipo === "contrato_socio" || d.dcs_comentario?.includes("[tipo:contrato_socio]"));
-                const tienePropuesta = docs.some(d => d.dcs_comentario?.includes("[PROPUESTA_MODIFICACION_CONTRATO]"));
-
-                if (tieneContrato || tienePropuesta) {
-                  const { data: uPost } = await client
-                    .schema("comun_seguridad")
-                    .from("seg_usuario")
-                    .select("usu_nombres, usu_apellidos, usu_correo")
-                    .eq("usu_id", sol.ssc_usuario_id)
-                    .maybeSingle();
-
-                  const nombrePost = [uPost?.usu_nombres, uPost?.usu_apellidos].filter(Boolean).join(" ") || uPost?.usu_correo || "Postulante";
-
-                  if (tieneContrato) {
-                    const tituloContrato = `Contrato Firmado Recibido — Postulante: ${nombrePost}`;
-                    const synthContratoId = `contrato-${sol.ssc_id}`;
-                    const yaExiste = registrosClavesVistas.has(synthContratoId) || notificaciones.some(n => n.not_id === synthContratoId);
-                    if (!yaExiste) {
-                      notificaciones.unshift({
-                        not_id: synthContratoId,
-                        not_titulo: tituloContrato,
-                        not_contenido_html: `<p>El postulante <strong>${nombrePost}</strong> ha subido su contrato firmado. Haz clic en <a href="/panel/socios/${sol.ssc_id}" style="color: #05876E; font-weight: 700;">Verificar Contrato y Activar Socio</a> para completar su incorporación.</p>`,
-                        not_url_accion: `/panel/socios/${sol.ssc_id}`,
-                        not_leido_en: null,
-                        not_creado_en: sol.ssc_actualizado_en || new Date().toISOString(),
-                        not_canal: "IN_APP",
-                        not_eliminada: false
-                      });
-                    }
-                  }
-
-                  if (tienePropuesta) {
-                    const tituloPropuesta = `Propuesta de Modificación al Contrato — Postulante: ${nombrePost}`;
-                    const synthPropuestaId = `propuesta-${sol.ssc_id}`;
-                    const yaExiste = registrosClavesVistas.has(synthPropuestaId) || notificaciones.some(n => n.not_id === synthPropuestaId);
-                    if (!yaExiste) {
-                      notificaciones.unshift({
-                        not_id: synthPropuestaId,
-                        not_titulo: tituloPropuesta,
-                        not_contenido_html: `<p>El postulante <strong>${nombrePost}</strong> ha enviado una propuesta de cambios al contrato en formato Word. Haz clic en <a href="/panel/socios/${sol.ssc_id}" style="color: #D97706; font-weight: 700;">Revisar Propuesta</a>.</p>`,
-                        not_url_accion: `/panel/socios/${sol.ssc_id}`,
-                        not_leido_en: null,
-                        not_creado_en: sol.ssc_actualizado_en || new Date().toISOString(),
-                        not_canal: "IN_APP",
-                        not_eliminada: false
-                      });
-                    }
-                  }
-                }
-              }
-            }
-          } catch (errStaffSync) {
-            console.warn("Aviso en sync staff notificaciones:", errStaffSync);
-          }
-        }
       } catch (errApi) {
         console.error("Error al consultar notificaciones en API:", errApi);
       }
@@ -329,10 +218,6 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { not_id, accion, horas, titulo, contenido_html, url_accion } = body;
 
-    if (!not_id || !accion) {
-      return NextResponse.json({ error: "Parámetros incompletos" }, { status: 400 });
-    }
-
     const nombreActor = [perfil.usu_nombres, perfil.usu_apellidos].filter(Boolean).join(" ") || perfil.usu_correo;
     const actorInfo = {
       usuario_id: perfil.usu_id,
@@ -351,13 +236,32 @@ export async function POST(request: Request) {
     if (!client) {
       client = await crearClienteServidor();
     }
-    if (!client) {
-      return NextResponse.json({ error: "No se pudo conectar a la base de datos" }, { status: 500 });
+
+    if (accion === "eliminar_todas") {
+      limpiarCampanasServidor();
+      const ahora = new Date().toISOString();
+      try {
+        await (client as any)
+          .schema("comun_notificacion")
+          .from("not_registro")
+          .update({
+            not_leido_en: ahora,
+            not_detalles: { eliminada: true, eliminada_en: ahora, eliminada_por: actorInfo }
+          })
+          .eq("not_usuario_id", perfil.usu_id);
+      } catch (errClear) {
+        console.warn("Aviso al limpiar notificaciones en BDD:", errClear);
+      }
+      return NextResponse.json({ success: true, accion: "eliminar_todas" });
+    }
+
+    if (!not_id || !accion) {
+      return NextResponse.json({ error: "Parámetros incompletos" }, { status: 400 });
     }
 
     const esUUIDValido = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(not_id);
 
-    // 1. Verificar si el registro existe en comun_notificacion.not_registro
+    // 1. Verificar si el registro existe en comun_notificacion.not_registro para este usuario
     let queryExistente = client
       .schema("comun_notificacion")
       .from("not_registro")
@@ -366,7 +270,9 @@ export async function POST(request: Request) {
     if (esUUIDValido) {
       queryExistente = queryExistente.eq("not_id", not_id);
     } else {
-      queryExistente = queryExistente.contains("not_detalles", { clave_original: not_id });
+      queryExistente = queryExistente
+        .eq("not_usuario_id", perfil.usu_id)
+        .contains("not_detalles", { clave_original: not_id });
     }
 
     const { data: registroExistente } = await queryExistente.maybeSingle();
@@ -488,3 +394,46 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: msg }, { status: 500 });
   }
 }
+
+export async function DELETE() {
+  try {
+    const perfil = await obtenerPerfilActual();
+    if (!perfil) {
+      return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+    }
+
+    limpiarCampanasServidor();
+
+    let client = null;
+    try {
+      client = crearClienteAdmin();
+    } catch {
+      client = null;
+    }
+    if (!client) {
+      client = await crearClienteServidor();
+    }
+
+    if (client) {
+      const ahora = new Date().toISOString();
+      try {
+        await (client as any)
+          .schema("comun_notificacion")
+          .from("not_registro")
+          .update({
+            not_leido_en: ahora,
+            not_detalles: { eliminada: true, eliminada_en: ahora }
+          })
+          .eq("not_usuario_id", perfil.usu_id);
+      } catch (errDel) {
+        console.warn("Aviso al eliminar notificaciones:", errDel);
+      }
+    }
+
+    return NextResponse.json({ success: true, message: "Todas las notificaciones han sido eliminadas." });
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : "Error al eliminar notificaciones";
+    return NextResponse.json({ error: msg }, { status: 500 });
+  }
+}
+

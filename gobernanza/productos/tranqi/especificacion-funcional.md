@@ -805,8 +805,15 @@ Tranqi habilita un canal comercial corporativo B2B2C donde empresas (personas ju
    - La empresa puede transferir un fondo prepagado a la billetera digital de cada colaborador (ej. bono de $50 USD) para que cubra trámites específicos o tasas notariales.
 4. **Herencia y Configuración de Paquetes (Default vs. Personalizado):**
    - **Paquete Base Default de Tranqi:** Si la empresa no define un paquete especial, aplica la plantilla default (1 Consulta Jurídica Gratuita al año + 10% Descuento en catálogo).
-   - **Paquete Custom de la Empresa:** La empresa puede pactar condiciones mejoradas (ej. Banco Pichincha: 3 Consultas Gratuitas + 25% Descuento + $50 Bono).
    - **Paquete Override por Colaborador:** Soporte para otorgar beneficios VIP a cargos directivos o gerenciales dentro de la misma nómina corporativa.
+
+#### 5. Canal de Captación Comercial B2B y Formulario de Contacto Personalizado (`/empresas/contacto`)
+- **Punto de Entrada en Landing:** En la tarjeta de **Planes Corporativos** de la página de inicio, el botón redirige con `Más Información` hacia `/empresas/contacto`.
+- **Estructura Informativa y Beneficios:** Presenta la síntesis de beneficios clave (Abogado Empresarial Dedicado, Bienestar Legal B2B2C, Portal Empresa RBAC, Onboarding por dominio `@tuempresa.com`, Blindaje Contractual Preventivo y Tarifas por tramos desde $10.35/mes).
+- **Captura y Persistencia:** Registro de leads corporativos en la tabla `tranqui_legal.trq_contacto_empresa` con RLS, trazabilidad de IP/agente y auditoría transversal.
+- **Despacho Automatizado de Correos:**
+  1. **Confirmación al Solicitante:** Notificación con diseño de marca confirmando la recepción y resumen de sus datos, indicando contacto en menos de 24 horas.
+  2. **Alerta a Operaciones:** Despacho inmediato de ficha técnica del prospecto a `admin.operaciones@tranqi24.com`.
 
 ---
 
