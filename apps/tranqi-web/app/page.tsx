@@ -31,7 +31,7 @@ const FALLBACK: Record<string, string> = {
   hola: "Somos una estructura digital de protección jurídica: abogados + tecnología + financiamiento.",
   problema: "Fuerte, ¿no? Hoy la justicia es cara y reactiva. Eso es justo lo que venimos a cambiar.",
   manifiesto: "Eso somos: el amigo que te explica sin enredos y no te deja solo.",
-  app: "Toda tu vida legal en una app: consultas, citas, pagos y trámites.",
+  app: "Toda tu vida legal en una app: actualmente estamos en construcción (próximamente en tiendas de apps).",
   planes: "USD 20 al año. Menos de 6 centavos al día por vivir tranqi.",
   statement: "Así de simple: lo legal, para todos.",
   red: "Si eres abogado, la red te da clientes, ingresos y capacitación constante.",
@@ -480,7 +480,14 @@ export default function TranqiLanding() {
           <path pathLength={1} stroke="#7866FF" d="M 1180 0 C 1180 150 1330 355 1292 565 C 1268 700 1244 780 1244 900" />
         </svg></div>
         <div className="wrap">
-          <div className="head reveal"><img src="/assets/tranqi-black.svg" alt="tranqi" /><span>App</span></div>
+          <div className="head reveal">
+            <img src="/assets/tranqi-black.svg" alt="tranqi" />
+            <span className="app-titulo">App</span>
+            <span className="badge-app-construccion" title="Aplicación móvil en desarrollo">
+              <span className="badge-app-dot" />
+              Estamos en construcción · Próximamente
+            </span>
+          </div>
           <div className="app-grid">
             <div>
               <p className="lead reveal">La aplicación te permite acceder de forma rápida y segura a todos los servicios del sistema de asistencia legal.</p>
@@ -492,9 +499,38 @@ export default function TranqiLanding() {
                 <li>Dar seguimiento a tus trámites</li>
               </ul>
               <p className="cierre-app reveal">Tecnología, asistencia legal y acompañamiento profesional, desde cualquier lugar.</p>
+              <div className="aviso-app-construccion reveal">
+                <div className="aviso-app-icono" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" width="20" height="20">
+                    <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+                  </svg>
+                </div>
+                <div className="aviso-app-cuerpo">
+                  <p className="aviso-app-titulo">Estamos en construcción (próximamente)</p>
+                  <p className="aviso-app-sub">Nuestra aplicación móvil estará disponible muy pronto para iOS y Android.</p>
+                </div>
+                <div className="aviso-app-badge-tiendas">
+                  <span className="tienda-chip" title="Próximamente en App Store">
+                    <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor">
+                      <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 7.18c.63-.77 1.06-1.84.94-2.91-.91.04-2.02.61-2.67 1.38-.58.67-1.09 1.77-.95 2.82 1.02.08 2.05-.52 2.68-1.29z"/>
+                    </svg>
+                    App Store
+                  </span>
+                  <span className="tienda-chip" title="Próximamente en Google Play">
+                    <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor">
+                      <path d="M3.609 1.814L13.793 12 3.61 22.186c-.198-.242-.31-.568-.31-.936V2.75c0-.368.112-.694.309-.936zM15.207 13.414l2.121 2.122-12.02 6.94 9.899-9.062zm2.121-4.95l-2.121 2.122-9.899-9.062 12.02 6.94zM16.621 12l2.829-2.828c.39-.39 1.024-.39 1.414 0l.136.136c.39.39.39 1.024 0 1.414L18.743 12l2.257 2.278c.39.39.39 1.024 0 1.414l-.136.136c-.39.39-1.024.39-1.414 0L16.621 12z"/>
+                    </svg>
+                    Google Play
+                  </span>
+                </div>
+              </div>
             </div>
             <div className="mock-panel reveal">
               <div className="mock">
+                <div className="mock-cinta-construccion">
+                  <span className="badge-app-dot-sm" />
+                  En construcción (próximamente)
+                </div>
                 <img className="mlogo" src="/assets/tranqi-black.svg" alt="tranqi" />
                 <div className="foto">Hola,</div>
                 <div className="chip naranja">URGENTE</div>
