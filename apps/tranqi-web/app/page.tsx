@@ -400,7 +400,7 @@ export default function TranqiLanding() {
           <a href="#planes">Planes</a>
           <a href="#red">Abogados</a>
           <a href="#equipo">Equipo</a>
-          <a href="/vacantes">Vacantes</a>
+          <a href="/vacantes">Bolsa de empleo</a>
           <a href="/ingresar" className="link-ingresar">Ingresar</a>
           <a href="/registro" className="cta">Únete</a>
         </div>

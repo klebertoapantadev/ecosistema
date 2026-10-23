@@ -79,7 +79,7 @@ p { line-height: 1.55; }
   background: var(--violeta);
 }
 .nav-landing .logo img { height: 30px; width: auto; }
-.nav-landing .links { display: flex; gap: 30px; align-items: center; }
+.nav-landing .links { display: flex; gap: clamp(14px, 1.8vw, 28px); align-items: center; }
 .nav-landing .links a { color: var(--blanco); text-decoration: none; font-weight: 500; font-size: 0.94rem; }
 .nav-landing .links a:hover { color: var(--menta); }
 .nav-landing .links a.cta { background: var(--amarillo); color: var(--negro); font-weight: 700; padding: 10px 22px; border-radius: 999px; }

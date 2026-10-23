@@ -172,7 +172,7 @@ export default function PaginaBolsaEmpleo() {
       <header className="vacantes-portada">
         <h1>Bolsa de empleo y oportunidades laborales</h1>
         <p>
-          Sé parte del equipo que democratiza el acceso a la justicia. Explora nuestras vacantes abiertas en administración, soporte, asistencia legal y operaciones.
+          Sé parte del equipo que democratiza el acceso a la justicia. Explora nuestras oportunidades en la bolsa de empleo en administración, soporte, asistencia legal y operaciones.
         </p>
 
         {/* Filtros */}
