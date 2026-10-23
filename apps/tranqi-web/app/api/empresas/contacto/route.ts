@@ -2,6 +2,7 @@
 import { NextResponse } from "next/server";
 import nodemailer from "nodemailer";
 import { crearClienteServidor, crearClienteAdmin } from "@eco/supabase/servidor";
+import { validarCorreoEstructurado } from "@eco/primitivas";
 
 export async function POST(request: Request) {
   try {
@@ -26,13 +27,15 @@ export async function POST(request: Request) {
       );
     }
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(correo)) {
+    // Validación estricta y de estructura de correo electrónico
+    const valCorreo = validarCorreoEstructurado(correo);
+    if (!valCorreo.esValido) {
       return NextResponse.json(
-        { error: "El correo electrónico ingresado no tiene un formato válido." },
+        { error: valCorreo.error || "El correo electrónico ingresado no tiene una estructura válida." },
         { status: 400 }
       );
     }
+    const correoFinal = valCorreo.correoNormalizado || String(correo).toLowerCase().trim();
 
     // 1. Guardar en base de datos si la conexión está disponible
     let client = null;
@@ -60,7 +63,7 @@ export async function POST(request: Request) {
             cte_ruc: ruc ? String(ruc).trim() : null,
             cte_nombre_contacto: String(nombreContacto).trim(),
             cte_cargo: cargo ? String(cargo).trim() : null,
-            cte_correo: String(correo).toLowerCase().trim(),
+            cte_correo: correoFinal,
             cte_telefono: String(telefono).trim(),
             cte_empleados_rango: empleados ? String(empleados).trim() : null,
             cte_interes: interes ? String(interes).trim() : null,
@@ -215,7 +218,7 @@ export async function POST(request: Request) {
         </tr>
         <tr style="border-bottom: 1px solid #1f2937;">
           <td style="padding: 10px 0; color: #94a3b8; font-weight: 600;">Correo Electrónico:</td>
-          <td style="padding: 10px 0;"><a href="mailto:${correo}" style="color: #60a5fa; font-weight: 700; text-decoration: none;">${correo}</a></td>
+          <td style="padding: 10px 0;"><a href="mailto:${correoFinal}" style="color: #60a5fa; font-weight: 700; text-decoration: none;">${correoFinal}</a></td>
         </tr>
         <tr style="border-bottom: 1px solid #1f2937;">
           <td style="padding: 10px 0; color: #94a3b8; font-weight: 600;">Teléfono / WhatsApp:</td>
@@ -243,7 +246,7 @@ export async function POST(request: Request) {
       }
 
       <div style="margin-top: 28px; text-align: center;">
-        <a href="mailto:${correo}?subject=Propuesta%20Corporativa%20Tranqi%20para%20${encodeURIComponent(empresa)}" style="display: inline-block; background-color: #FEE300; color: #000000; text-decoration: none; font-size: 14px; font-weight: 800; padding: 12px 26px; border-radius: 8px;">
+        <a href="mailto:${correoFinal}?subject=Propuesta%20Corporativa%20Tranqi%20para%20${encodeURIComponent(empresa)}" style="display: inline-block; background-color: #FEE300; color: #000000; text-decoration: none; font-size: 14px; font-weight: 800; padding: 12px 26px; border-radius: 8px;">
           Responder al Solicitante
         </a>
       </div>
@@ -257,7 +260,7 @@ export async function POST(request: Request) {
         await Promise.all([
           transporter.sendMail({
             from: `"Tranqi Empresas" <${smtpUser}>`,
-            to: correo,
+            to: correoFinal,
             subject: `🏢 Confirmación de Solicitud de Información Corporativa — ${empresa}`,
             html: htmlSolicitante
           }),

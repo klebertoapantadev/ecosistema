@@ -781,17 +781,10 @@ export default function TranqiLanding() {
         </svg></div>
         <div className="wrap">
           <h2 className="reveal">¿Eres abogado? La red también es para ti.</h2>
-          <ul className="beneficios reveal">
-            <li><b>Nuevas</b> oportunidades laborales</li>
-            <li><b>Nuevas</b> fuentes de ingresos</li>
-            <li><b>Beneficios</b> exclusivos</li>
-            <li><b>Capacitación</b> constante</li>
-            <li><b>Certificaciones</b></li>
-            <li><b>Derivación</b> de clientes</li>
-            <li><b>Cuenta</b> digital</li>
-            <li><b>Crédito</b> y desarrollo</li>
-          </ul>
-          <a className="btn btn-blanco-borde reveal" href="/registro?intencion=abogado&destino=/panel/solicitud-socio">Quiero ser parte de la red</a>
+          <p className="reveal" style={{ maxWidth: 640, margin: "16px 0 28px", fontSize: "1.15rem", lineHeight: 1.6, color: "rgba(255, 255, 255, 0.9)" }}>
+            Tu práctica legal con más casos, más ingresos y más respaldo. Conéctate con clientes reales y forma parte de la Red Nacional de Abogados Tranqi.
+          </p>
+          <a className="btn btn-amarillo reveal" href="/abogados">Más Información</a>
           <p className="pub-date reveal" style={{ marginTop: 24, fontSize: "0.78rem", color: "rgba(255, 255, 255, 0.45)", fontWeight: 500, letterSpacing: "0.04em" }}>Publicado: 23 de julio de 2026 06:21</p>
         </div>
       </section>

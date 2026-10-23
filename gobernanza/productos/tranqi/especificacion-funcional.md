@@ -54,6 +54,7 @@ Tranqi adopta las mejores prácticas y estándares internacionales de **Law Prac
 | **`TRQ-ABG-003`** | **Abogado** | **Firma Electrónica Avanzada PAdES en Navegador (Zero-Custody `.p12`/`.pfx`)** | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`TRQ-ABG-004`** | **Abogado** | **Agenda Profesional, Citas Presenciales y Sala de Videoconsulta Segura** | 🟡 En Desarrollo | **75%** | Kleber Toapanta / Jesus Navarrete |
 | **`TRQ-ABG-005`** | **Abogado** | **Verificación Inteligente de Identidad y Carnet Profesional con Aria (IA) en Registro Simplificado de Abogados** | ✅ Implementado | **100%** | **Jesus Navarrete (IA) / Kleber Toapanta** |
+| **`TRQ-ABG-006`** | **Abogado** | **Portal Informativo de la Red Nacional de Abogados (/abogados): Beneficios, Modelo Operativo, Validación de Correo y Botón de Registro** | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`TRQ-ADM-001`** | **Operador/Admin** | **Mesa de Control de Acreditación, Contra-Firma Tranqi y Activación de Socios** | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`TRQ-ADM-002`** | **Operador/Admin** | **Asignación Inteligente de Casos (IA), Liquidación de Honorarios y Comisiones** | ⏳ Pendiente | **0%** | **Jesus Navarrete (IA)** / Kleber Toapanta |
 | **`TRQ-ADM-003`** | **Operador/Admin** | **Auditoría Transversal BDD, Telemetría API y Bitácora de Campañas** | ✅ Implementado | **100%** | Kleber Toapanta |
@@ -990,4 +991,30 @@ El Score se calcula como la media ponderada de las obligaciones según su critic
   - Todo cambio en la matriz de compliance o de administradores se realiza mediante RPCs transaccionales `SECURITY DEFINER` con `search_path = ''`.
   - Queda prohibida la mutación en memoria RAM aislada; el cliente React mantiene caché sincronizada en `localStorage` pero toda acción propaga errores de base de datos `{ ok: false, error: ... }`.
   - Todas las tablas implementan RLS estricto y triggers de auditoría transversal `comun_auditoria.aud_fn_auditar_tabla()`.
+
+---
+
+### TRQ-ABG-006 — Portal Informativo de la Red Nacional de Abogados (`/abogados`)
+**Responsables:** Kleber Toapanta | **Estado:** ✅ Implementado (100%)
+
+#### 1. Descripción
+Vista dedicada e informativa que replica íntegramente la estructura, propuesta de valor y experiencia de `https://www.somostranqi.com/` para la atracción y captación de profesionales del Derecho a la Red Nacional de Abogados Tranqi.
+
+#### 2. Componentes y Secciones Implementadas
+1. **Hero Principal:**
+   - Encabezado: *"Tu práctica legal con más casos, más ingresos y más respaldo."*
+   - Badges de confianza: Red Nacional de Abogados, beneficios e invitación a la comunidad.
+   - Enlace directo a registro y exploración de beneficios.
+2. **Matriz de Beneficios (8 Pilares):**
+   - Nuevas oportunidades laborales, nuevas fuentes de ingresos, beneficios exclusivos del ecosistema, capacitación constante, certificaciones oficiales de idoneidad, red de derivación inteligente de clientes, cuenta digital propia para gestión contable y programas de crédito y desarrollo.
+3. **Flujo de Ingreso en 3 Pasos:**
+   - Paso 1: Registro inicial de datos y credenciales profesionales.
+   - Paso 2: Verificación de título en SENESCYT y matrícula en Foro de Abogados.
+   - Paso 3: Activación en la red, recepción de casos y monetización vía app.
+4. **App Móvil de Gestión Legal:**
+   - Visualización de la herramienta de despacho virtual en el smartphone (agenda, pagos, seguimiento de trámites en curso).
+5. **Lámina de Activación y Soporte (Cierre):**
+   - Réplica fiel del contenedor verde esmeralda con el checklist de activación rápida y soporte integral.
+   - **Botón Obligatorio de Registro:** Conexión directa al flujo de auto-registro y solicitud de socio (`/registro?intencion=abogado&destino=/panel/solicitud-socio`).
+   - Formulario de contacto asistido con **validación estricta de correo electrónico** (`validarCorreoEstructurado` de `@eco/primitivas`), detección de typos comunes (`@gmailc.om`, `.con`) y sugerencia de corrección con un solo clic.
 

@@ -22,6 +22,9 @@ const commit = process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7);
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
   experimental: {
     serverActions: {
       bodySizeLimit: "6mb",

@@ -8,4 +8,8 @@ export {
   sumarCentavos,
   aplicarDescuentoPorcentaje,
 } from "./moneda";
+export {
+  validarCorreoEstructurado,
+  type ResultadoValidacionCorreo
+} from "./correo";
 

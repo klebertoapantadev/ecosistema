@@ -14,8 +14,10 @@ import {
   Send,
   Loader2,
   Phone,
-  TrendingDown
+  TrendingDown,
+  AlertCircle
 } from "lucide-react";
+import { validarCorreoEstructurado } from "@eco/primitivas";
 
 export default function PaginaContactoEmpresas() {
   const [empresa, setEmpresa] = useState("");
@@ -29,9 +31,29 @@ export default function PaginaContactoEmpresas() {
   const [mensaje, setMensaje] = useState("");
   const [aceptaTerminos, setAceptaTerminos] = useState(true);
 
+  const [errorCorreo, setErrorCorreo] = useState<string | null>(null);
+  const [sugerenciaCorreo, setSugerenciaCorreo] = useState<string | null>(null);
+
   const [enviando, setEnviando] = useState(false);
   const [enviadoExitoso, setEnviadoExitoso] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  const validarEmailEnTiempoReal = (valor: string) => {
+    setCorreo(valor);
+    if (!valor.trim()) {
+      setErrorCorreo(null);
+      setSugerenciaCorreo(null);
+      return;
+    }
+    const res = validarCorreoEstructurado(valor);
+    if (!res.esValido) {
+      setErrorCorreo(res.error || "Formato de correo no válido.");
+      setSugerenciaCorreo(res.sugerencia || null);
+    } else {
+      setErrorCorreo(null);
+      setSugerenciaCorreo(null);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,6 +61,15 @@ export default function PaginaContactoEmpresas() {
 
     if (!empresa.trim() || !nombreContacto.trim() || !correo.trim() || !telefono.trim()) {
       setErrorMsg("Por favor complete los campos obligatorios marcados con (*).");
+      return;
+    }
+
+    // Validación estricta de correo electrónico
+    const valCorreo = validarCorreoEstructurado(correo);
+    if (!valCorreo.esValido) {
+      setErrorMsg(valCorreo.error || "El correo electrónico ingresado no tiene un formato válido.");
+      setErrorCorreo(valCorreo.error || null);
+      setSugerenciaCorreo(valCorreo.sugerencia || null);
       return;
     }
 
@@ -633,19 +664,60 @@ export default function PaginaContactoEmpresas() {
                         type="email"
                         required
                         value={correo}
-                        onChange={(e) => setCorreo(e.target.value)}
+                        onChange={(e) => validarEmailEnTiempoReal(e.target.value)}
+                        onBlur={() => validarEmailEnTiempoReal(correo)}
                         placeholder="contacto@empresa.com"
                         style={{
                           width: "100%",
                           padding: "10px 14px",
                           borderRadius: "10px",
                           backgroundColor: "#1f2937",
-                          border: "1px solid #374151",
+                          border: errorCorreo ? "1.5px solid #ef4444" : "1px solid #374151",
                           color: "#ffffff",
                           fontSize: "0.9rem",
                           outline: "none"
                         }}
                       />
+                      {errorCorreo && (
+                        <div
+                          style={{
+                            marginTop: "6px",
+                            fontSize: "0.78rem",
+                            color: "#f87171",
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: "4px"
+                          }}
+                        >
+                          <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+                            <AlertCircle size={13} style={{ flexShrink: 0 }} />
+                            <span>{errorCorreo}</span>
+                          </div>
+                          {sugerenciaCorreo && (
+                            <div style={{ marginTop: "2px" }}>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setCorreo(sugerenciaCorreo);
+                                  validarEmailEnTiempoReal(sugerenciaCorreo);
+                                }}
+                                style={{
+                                  background: "rgba(254, 227, 0, 0.15)",
+                                  color: "#FEE300",
+                                  border: "1px solid rgba(254, 227, 0, 0.4)",
+                                  borderRadius: "6px",
+                                  padding: "3px 8px",
+                                  fontSize: "0.75rem",
+                                  cursor: "pointer",
+                                  fontWeight: 700
+                                }}
+                              >
+                                Corregir a {sugerenciaCorreo}
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
 
                     <div>
