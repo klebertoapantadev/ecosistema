@@ -25,12 +25,12 @@ const ABOGADOS_BASE: AbogadoCard[] = [
 ];
 
 const PRESENTACION =
-  "¡Hola! Soy tranqi, el amigo que estudió derecho. Te acompaño mientras exploras — y si algo te da curiosidad, haz clic en mí y hablamos.";
+  "¡Hola! Soy tranqi, tu respaldo legal de confianza. Te acompaño mientras exploras — y si algo te da curiosidad, haz clic en mí y hablamos.";
 
 const FALLBACK: Record<string, string> = {
   hola: "Somos una estructura digital de protección jurídica: abogados + tecnología + financiamiento.",
   problema: "Fuerte, ¿no? Hoy la justicia es cara y reactiva. Eso es justo lo que venimos a cambiar.",
-  manifiesto: "Eso somos: el amigo que te explica sin enredos y no te deja solo.",
+  manifiesto: "Eso somos: tu respaldo legal de confianza, que te orienta sin enredos y no te deja solo.",
   app: "Toda tu vida legal en una app: actualmente estamos en construcción (próximamente en tiendas de apps).",
   planes: "USD 20 al año. Menos de 6 centavos al día por vivir tranqi.",
   statement: "Así de simple: lo legal, para todos.",
@@ -469,7 +469,7 @@ export default function TranqiLanding() {
           <path pathLength={1} stroke="#7866FF" opacity={0.92} d="M 430 0 C 430 32 520 32 760 32 C 1000 32 1250 38 1250 300 C 1250 560 1180 700 1180 900" />
         </svg></div>
         <div className="wrap">
-          <p className="frase">Tranqi es el amigo que estudió derecho, te entiende y te aconseja sin hacerte sentir perdido.</p>
+          <p className="frase">Tranqi es tu respaldo legal de confianza: te entiende, te orienta y te protege sin hacerte sentir perdido.</p>
         </div>
         <p className="credito">Foto: <a href="https://unsplash.com/@silverkblack" target="_blank" rel="noopener">Vitaly Gariev</a> · Unsplash</p>
       </section>
@@ -710,7 +710,7 @@ export default function TranqiLanding() {
       <div id="chat">
         <div className="chat-head">
           <div className="mini" />
-          <div><b>Tranqi</b><small>El amigo que estudió derecho</small></div>
+          <div><b>Tranqi</b><small>Tu respaldo legal de confianza</small></div>
           <button className="x" id="chatClose" aria-label="Cerrar">×</button>
         </div>
         <div className="chat-log" id="chatLog" />

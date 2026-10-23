@@ -159,7 +159,6 @@ p { line-height: 1.55; }
 #manifiesto .credito a:hover { color: rgba(255, 255, 255, 0.85); }
 
 /* ── APP · menta ── */
-/* ── APP · menta ── */
 #app { background: var(--menta); }
 #app .head { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
 #app .head img { height: clamp(38px, 4.6vw, 54px); width: auto; }
