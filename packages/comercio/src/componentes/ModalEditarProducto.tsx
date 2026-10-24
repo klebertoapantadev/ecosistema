@@ -3439,6 +3439,166 @@ export function ModalEditarProducto({
                     </div>
                   </div>
 
+                  {/* 2. Datos básicos de la variante (Nombre y SKU) */}
+                  <div style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr", gap: "10px", marginBottom: "10px" }}>
+                    <div>
+                      <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#334155", marginBottom: "2px" }}>
+                        Nombre de la Variante / Tamaño *
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        placeholder={esFloristeria ? "Ej. Pequeño (12 Rosas) o Gigante VIP (50 Rosas + Corona)" : "Ej. Opción Estándar"}
+                        value={varianteActual.var_nombre}
+                        onChange={(e) => actualizarVarianteActual("var_nombre", e.target.value)}
+                        style={{
+                          width: "100%",
+                          padding: "7px 10px",
+                          borderRadius: "6px",
+                          border: "1px solid #CBD5E1",
+                          fontSize: "0.82rem",
+                          boxSizing: "border-box",
+                          fontWeight: 600,
+                        }}
+                      />
+                    </div>
+
+                    <div>
+                      <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#334155", marginBottom: "2px" }}>
+                        Código SKU / Referencia
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="Ej. TNK-COR-MED"
+                        value={varianteActual.var_sku || ""}
+                        onChange={(e) => actualizarVarianteActual("var_sku", e.target.value)}
+                        style={{
+                          width: "100%",
+                          padding: "7px 10px",
+                          borderRadius: "6px",
+                          border: "1px solid #CBD5E1",
+                          fontSize: "0.82rem",
+                          boxSizing: "border-box",
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: "10px" }}>
+                    <div>
+                      <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#334155", marginBottom: "2px" }}>
+                        Precio Base Imponible ($ USD) *
+                      </label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0.01"
+                        required
+                        placeholder="0.00"
+                        value={varianteActual.var_precio}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (val === "") {
+                            actualizarVarianteActual("var_precio", "");
+                            return;
+                          }
+                          const num = parseFloat(val);
+                          if (!isNaN(num)) {
+                            actualizarVarianteActual("var_precio", Math.round(num * 100) / 100);
+                          } else {
+                            actualizarVarianteActual("var_precio", val);
+                          }
+                        }}
+                        onBlur={(e) => {
+                          const num = parseFloat(e.target.value);
+                          if (!isNaN(num)) {
+                            actualizarVarianteActual("var_precio", parseFloat(num.toFixed(2)));
+                          }
+                        }}
+                        style={{
+                          width: "100%",
+                          padding: "7px 10px",
+                          borderRadius: "6px",
+                          border: "1px solid #CBD5E1",
+                          fontSize: "0.88rem",
+                          fontWeight: 800,
+                          boxSizing: "border-box",
+                          color: "#0F172A",
+                        }}
+                      />
+                    </div>
+
+                    <div>
+                      <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#334155", marginBottom: "2px" }}>
+                        Tarifa IVA SRI (Ecuador)
+                      </label>
+                      <select
+                        value={varianteActual.var_tarifa_iva_porcentaje ?? 15}
+                        onChange={(e) => actualizarVarianteActual("var_tarifa_iva_porcentaje", e.target.value)}
+                        style={{
+                          width: "100%",
+                          padding: "7px 10px",
+                          borderRadius: "6px",
+                          border: "1px solid #CBD5E1",
+                          fontSize: "0.82rem",
+                          boxSizing: "border-box",
+                          background: "#FFFFFF",
+                        }}
+                      >
+                        <option value={15}>IVA 15% (Estándar)</option>
+                        <option value={0}>IVA 0% (Exento SRI)</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Resumen de PVP en vivo */}
+                  <div
+                    style={{
+                      margin: "12px 0",
+                      padding: "8px 12px",
+                      background: "#F8FAFC",
+                      border: "1px dashed #CBD5E1",
+                      borderRadius: "6px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      fontSize: "0.78rem",
+                    }}
+                  >
+                    <div>
+                      <span style={{ color: "#64748B" }}>Base: </span>
+                      <strong style={{ color: "#0F172A" }}>${Number(varianteActual.var_precio || 0).toFixed(2)}</strong>
+                      <span style={{ margin: "0 6px", color: "#CBD5E1" }}>|</span>
+                      <span style={{ color: "#64748B" }}>IVA ({varianteActual.var_tarifa_iva_porcentaje ?? 15}%): </span>
+                      <strong style={{ color: "#0F172A" }}>
+                        ${(Number(varianteActual.var_precio || 0) * (varianteActual.var_tarifa_iva_porcentaje ?? 15) / 100).toFixed(2)}
+                      </strong>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                      <span style={{ color: "#64748B" }}>PVP Total:</span>
+                      <strong style={{ color: "#059669", fontSize: "0.95rem", fontWeight: 800 }}>
+                        ${(Number(varianteActual.var_precio || 0) * (1 + (varianteActual.var_tarifa_iva_porcentaje ?? 15) / 100)).toFixed(2)}
+                      </strong>
+                      {variantesLocales.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={eliminarVarianteActual}
+                          title="Eliminar esta variante"
+                          style={{
+                            background: "transparent",
+                            border: "none",
+                            color: "#EF4444",
+                            cursor: "pointer",
+                            padding: "2px",
+                            marginLeft: "6px",
+                          }}
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
                   {/* 1. SECCIÓN DE FOTO DE PORTADA PARA ESTE TAMAÑO (HERENCIA VS SOBREESCRITURA) */}
                   <div
                     style={{
@@ -4107,166 +4267,6 @@ export function ModalEditarProducto({
                           ))}
                         </div>
                       )}
-                  </div>
-
-                  {/* 2. Datos básicos de la variante (Nombre y SKU) */}
-                  <div style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr", gap: "10px", marginBottom: "10px" }}>
-                    <div>
-                      <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#334155", marginBottom: "2px" }}>
-                        Nombre de la Variante / Tamaño *
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        placeholder={esFloristeria ? "Ej. Pequeño (12 Rosas) o Gigante VIP (50 Rosas + Corona)" : "Ej. Opción Estándar"}
-                        value={varianteActual.var_nombre}
-                        onChange={(e) => actualizarVarianteActual("var_nombre", e.target.value)}
-                        style={{
-                          width: "100%",
-                          padding: "7px 10px",
-                          borderRadius: "6px",
-                          border: "1px solid #CBD5E1",
-                          fontSize: "0.82rem",
-                          boxSizing: "border-box",
-                          fontWeight: 600,
-                        }}
-                      />
-                    </div>
-
-                    <div>
-                      <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#334155", marginBottom: "2px" }}>
-                        Código SKU / Referencia
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="Ej. TNK-COR-MED"
-                        value={varianteActual.var_sku || ""}
-                        onChange={(e) => actualizarVarianteActual("var_sku", e.target.value)}
-                        style={{
-                          width: "100%",
-                          padding: "7px 10px",
-                          borderRadius: "6px",
-                          border: "1px solid #CBD5E1",
-                          fontSize: "0.82rem",
-                          boxSizing: "border-box",
-                        }}
-                      />
-                    </div>
-                  </div>
-
-                  <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: "10px" }}>
-                    <div>
-                      <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#334155", marginBottom: "2px" }}>
-                        Precio Base Imponible ($ USD) *
-                      </label>
-                      <input
-                        type="number"
-                        step="0.01"
-                        min="0.01"
-                        required
-                        placeholder="0.00"
-                        value={varianteActual.var_precio}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          if (val === "") {
-                            actualizarVarianteActual("var_precio", "");
-                            return;
-                          }
-                          const num = parseFloat(val);
-                          if (!isNaN(num)) {
-                            actualizarVarianteActual("var_precio", Math.round(num * 100) / 100);
-                          } else {
-                            actualizarVarianteActual("var_precio", val);
-                          }
-                        }}
-                        onBlur={(e) => {
-                          const num = parseFloat(e.target.value);
-                          if (!isNaN(num)) {
-                            actualizarVarianteActual("var_precio", parseFloat(num.toFixed(2)));
-                          }
-                        }}
-                        style={{
-                          width: "100%",
-                          padding: "7px 10px",
-                          borderRadius: "6px",
-                          border: "1px solid #CBD5E1",
-                          fontSize: "0.88rem",
-                          fontWeight: 800,
-                          boxSizing: "border-box",
-                          color: "#0F172A",
-                        }}
-                      />
-                    </div>
-
-                    <div>
-                      <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#334155", marginBottom: "2px" }}>
-                        Tarifa IVA SRI (Ecuador)
-                      </label>
-                      <select
-                        value={varianteActual.var_tarifa_iva_porcentaje ?? 15}
-                        onChange={(e) => actualizarVarianteActual("var_tarifa_iva_porcentaje", e.target.value)}
-                        style={{
-                          width: "100%",
-                          padding: "7px 10px",
-                          borderRadius: "6px",
-                          border: "1px solid #CBD5E1",
-                          fontSize: "0.82rem",
-                          boxSizing: "border-box",
-                          background: "#FFFFFF",
-                        }}
-                      >
-                        <option value={15}>IVA 15% (Estándar)</option>
-                        <option value={0}>IVA 0% (Exento SRI)</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  {/* Resumen de PVP en vivo */}
-                  <div
-                    style={{
-                      margin: "12px 0",
-                      padding: "8px 12px",
-                      background: "#F8FAFC",
-                      border: "1px dashed #CBD5E1",
-                      borderRadius: "6px",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      fontSize: "0.78rem",
-                    }}
-                  >
-                    <div>
-                      <span style={{ color: "#64748B" }}>Base: </span>
-                      <strong style={{ color: "#0F172A" }}>${Number(varianteActual.var_precio || 0).toFixed(2)}</strong>
-                      <span style={{ margin: "0 6px", color: "#CBD5E1" }}>|</span>
-                      <span style={{ color: "#64748B" }}>IVA ({varianteActual.var_tarifa_iva_porcentaje ?? 15}%): </span>
-                      <strong style={{ color: "#0F172A" }}>
-                        ${(Number(varianteActual.var_precio || 0) * (varianteActual.var_tarifa_iva_porcentaje ?? 15) / 100).toFixed(2)}
-                      </strong>
-                    </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                      <span style={{ color: "#64748B" }}>PVP Total:</span>
-                      <strong style={{ color: "#059669", fontSize: "0.95rem", fontWeight: 800 }}>
-                        ${(Number(varianteActual.var_precio || 0) * (1 + (varianteActual.var_tarifa_iva_porcentaje ?? 15) / 100)).toFixed(2)}
-                      </strong>
-                      {variantesLocales.length > 1 && (
-                        <button
-                          type="button"
-                          onClick={eliminarVarianteActual}
-                          title="Eliminar esta variante"
-                          style={{
-                            background: "transparent",
-                            border: "none",
-                            color: "#EF4444",
-                            cursor: "pointer",
-                            padding: "2px",
-                            marginLeft: "6px",
-                          }}
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      )}
-                    </div>
                   </div>
 
                   {/* 3. SUB-SECCIÓN: PERSONALIZACIÓN & SOBRESCRITURA DE ESTA VARIANTE */}
