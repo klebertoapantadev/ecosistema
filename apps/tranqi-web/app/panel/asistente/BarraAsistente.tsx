@@ -18,6 +18,8 @@ interface Mensaje {
   texto: string;
   /** Marca el turno en vuelo, para pintar los puntos suspensivos. */
   pensando?: boolean;
+  /** El turno en vuelo ya pasa de AVISO_LENTO_MS: se dice que sigue en ello. */
+  lento?: boolean;
   /** Slug del fallo, si lo hubo. Se muestra pequeño bajo el mensaje. */
   codigo?: string;
 }
@@ -29,6 +31,9 @@ interface Props {
 
 const ANCHO_COLAPSO = 1080;
 const CLAVE_PREFERENCIA = "tranqi_asistente_abierto";
+/** A partir de aqui los puntos solos parecen un cuelgue. Un turno con varias
+ *  consultas al expediente y al catalogo tarda de verdad 40-110 s. */
+const AVISO_LENTO_MS = 20_000;
 
 /** Qué se le dice al usuario según dónde se rompió. Cada uno sugiere la
  *  salida real; "reintenta" no sirve cuando falta una variable de entorno. */
@@ -38,6 +43,10 @@ const MENSAJE_ERROR: Record<string, string> = {
   sin_agente: "El asistente no está configurado del todo todavía. Avisa al equipo de tranqi.",
   conversacion: "No pude abrir la conversación. Avisa al equipo de tranqi.",
   aria: "No consigo hablar con el asistente ahora mismo. Inténtalo en un momento.",
+  // Tardar no es estar caido: lo util es preguntar algo mas acotado.
+  aria_tiempo: "Esta pregunta me está llevando demasiado. ¿Me la haces por partes, empezando por lo más urgente?",
+  // El 504 sin cuerpo es Vercel cortando la funcion antes que la propia ruta.
+  http_504: "Esta pregunta me está llevando demasiado. ¿Me la haces por partes, empezando por lo más urgente?",
   inesperado: "Algo se rompió por dentro. Avisa al equipo de tranqi.",
 };
 
@@ -108,6 +117,13 @@ export function BarraAsistente({ nombre, saludo }: Props) {
       { autor: "usuario", texto: pregunta },
       { autor: "asistente", texto: "", pensando: true },
     ]);
+    const avisoLento = setTimeout(() => {
+      setMensajes((previos) =>
+        previos.map((mensaje, indice) =>
+          indice === previos.length - 1 && mensaje.pensando ? { ...mensaje, lento: true } : mensaje,
+        ),
+      );
+    }, AVISO_LENTO_MS);
 
     try {
       const respuesta = await fetch("/api/asistente", {
@@ -116,10 +132,12 @@ export function BarraAsistente({ nombre, saludo }: Props) {
         body: JSON.stringify({ prompt: pregunta, conversacion_id: conversacionId.current }),
       });
       const datos = await respuesta.json().catch(() => null);
+      // La ruta devuelve el hilo tambien cuando falla: el siguiente mensaje
+      // sigue en la misma conversacion en vez de abrir otra sin contexto.
+      conversacionId.current = datos?.conversacion_id ?? conversacionId.current;
       if (!respuesta.ok || !datos || datos.error) {
         throw new Error(datos?.codigo ?? `http_${respuesta.status}`);
       }
-      conversacionId.current = datos.conversacion_id ?? conversacionId.current;
       setMensajes((previos) => [
         ...previos.slice(0, -1),
         { autor: "asistente", texto: datos.response },
@@ -139,6 +157,7 @@ export function BarraAsistente({ nombre, saludo }: Props) {
         },
       ]);
     } finally {
+      clearTimeout(avisoLento);
       setOcupado(false);
     }
   }, [texto, ocupado]);
@@ -196,11 +215,18 @@ export function BarraAsistente({ nombre, saludo }: Props) {
             style={{ "--orden": Math.min(indice, 6) } as React.CSSProperties}
           >
             {mensaje.pensando ? (
-              <span className="asistente-puntos" aria-label="escribiendo">
-                <i />
-                <i />
-                <i />
-              </span>
+              <>
+                <span className="asistente-puntos" aria-label="escribiendo">
+                  <i />
+                  <i />
+                  <i />
+                </span>
+                {mensaje.lento && (
+                  <small className="asistente-lento">
+                    Sigo en ello: estoy revisando tu información. Puede tardar un minuto.
+                  </small>
+                )}
+              </>
             ) : (
               <>
                 {mensaje.texto}
