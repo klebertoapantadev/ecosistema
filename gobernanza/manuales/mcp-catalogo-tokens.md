@@ -64,6 +64,14 @@ Busca productos, ramos o servicios filtrados por término, categoría o presupue
 }
 ```
 
+**Cómo se busca `termino`.** Acepta frases naturales ("permiso de salida del país para mi hijo"), no solo palabras clave:
+
+- Se normaliza: minúsculas, sin tildes (`pension` = `pensión`) y guiones o guiones bajos como espacios (`permiso-salida` = `permiso salida`).
+- Se parte en palabras y se ignoran las vacías (`de`, `del`, `la`, `el`, `los`, `las`, `un`, `una`, `para`, `por`, `mi`, `con`, `y`, `a`, `en`) y las letras sueltas.
+- Cada palabra se busca por separado en nombre, slug, descripción, etiquetas, usos, nombre de cada variante y su `descripcion_corta`. Basta con que coincida una palabra para que el producto aparezca.
+- Los resultados se ordenan por número de palabras coincidentes (más coincidencias primero); en empate se mantiene el orden del catálogo (destacados primero).
+- Si `termino` está vacío o solo tiene palabras vacías, no se filtra por texto.
+
 ### 2. `detalle_producto`
 Obtiene la ficha técnica, variantes de precio y fotos de un producto específico.
 
