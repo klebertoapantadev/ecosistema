@@ -964,26 +964,49 @@ export function ModalEditarProducto({
     }
   };
 
+  // Admite varias imágenes: la primera queda como portada del tamaño y el resto
+  // se anexa a la galería del tamaño (galeria_urls), igual que la selección múltiple de la galería.
   const handleSubirArchivoVariante = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const listaArchivos = Array.from(e.target.files || []);
+    if (listaArchivos.length === 0) return;
     setError(null);
 
-    if (file.size > LIMITE_MAX_IMAGEN_BYTES) {
-      const tamanoMb = (file.size / (1024 * 1024)).toFixed(2);
-      setError(`⚠️ La imagen "${file.name}" supera el tamaño máximo permitido de 5 MB (tamaño detectado: ${tamanoMb} MB). Por favor selecciona una imagen menor a 5 MB.`);
-      e.target.value = "";
-      return;
+    for (const file of listaArchivos) {
+      if (file.size > LIMITE_MAX_IMAGEN_BYTES) {
+        const tamanoMb = (file.size / (1024 * 1024)).toFixed(2);
+        setError(`⚠️ La imagen "${file.name}" supera el tamaño máximo permitido de 5 MB (tamaño detectado: ${tamanoMb} MB). Por favor selecciona imágenes menores a 5 MB.`);
+        e.target.value = "";
+        return;
+      }
     }
 
     setSubiendoImagenVariante(true);
     try {
-      const res = await subirImagenClienteOAccion(file, negocio || "comun", "variantes");
-      if (res.ok && res.urlPublica) {
-        const det = { ...(varianteActual?.var_detalle_variante || {}), portada_url: res.urlPublica };
+      const nuevasUrls: string[] = [];
+      const errores: string[] = [];
+      for (const file of listaArchivos) {
+        const res = await subirImagenClienteOAccion(file, negocio || "comun", "variantes");
+        if (res.ok && res.urlPublica) {
+          nuevasUrls.push(res.urlPublica);
+        } else {
+          errores.push(`${file.name}: ${res.error || "no se pudo cargar"}`);
+        }
+      }
+
+      if (nuevasUrls.length > 0) {
+        const [primera, ...resto] = nuevasUrls;
+        const actuales: string[] = Array.isArray(varianteActual?.var_detalle_variante?.galeria_urls)
+          ? [...varianteActual.var_detalle_variante.galeria_urls]
+          : [];
+        const det = {
+          ...(varianteActual?.var_detalle_variante || {}),
+          portada_url: primera,
+          galeria_urls: resto.length > 0 ? Array.from(new Set([...actuales, ...resto])) : actuales,
+        };
         actualizarVarianteActual("var_detalle_variante", det);
-      } else {
-        setError(res.error || "No se pudo cargar la imagen de la variante.");
+      }
+      if (errores.length > 0) {
+        setError(`No se pudieron cargar ${errores.length} imagen(es): ${errores.join(" · ")}`);
       }
     } catch (err: any) {
       setError(`Error al cargar la imagen de la variante: ${err.message || err}`);
@@ -3638,27 +3661,6 @@ export function ModalEditarProducto({
                         >
                           ⚪ Usar Foto Global (Heredada)
                         </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (!varianteActual.var_detalle_variante?.portada_url) {
-                              const det = { ...(varianteActual.var_detalle_variante || {}), portada_url: imagenUrl || "" };
-                              actualizarVarianteActual("var_detalle_variante", det);
-                            }
-                          }}
-                          style={{
-                            padding: "3px 8px",
-                            borderRadius: "4px",
-                            fontSize: "0.68rem",
-                            fontWeight: 700,
-                            border: Boolean(varianteActual.var_detalle_variante?.portada_url) ? `1.5px solid ${colActiva.border}` : "1px solid #CBD5E1",
-                            background: Boolean(varianteActual.var_detalle_variante?.portada_url) ? colActiva.bg : "#FFFFFF",
-                            color: Boolean(varianteActual.var_detalle_variante?.portada_url) ? colActiva.text : "#64748B",
-                            cursor: "pointer",
-                          }}
-                        >
-                          📸 Foto Propia de este Tamaño
-                        </button>
                       </div>
                     </div>
 
@@ -3702,7 +3704,7 @@ export function ModalEditarProducto({
                               whiteSpace: "nowrap",
                               flexShrink: 0,
                             }}
-                            title="Cargar foto local para este tamaño"
+                            title="Cargar una o varias fotos (la primera será la portada; el resto va a la galería del tamaño)"
                           >
                             {subiendoImagenVariante ? (
                               <>
@@ -3718,6 +3720,7 @@ export function ModalEditarProducto({
                             <input
                               type="file"
                               accept="image/*"
+                              multiple
                               disabled={subiendoImagenVariante}
                               onChange={handleSubirArchivoVariante}
                               style={{ display: "none" }}
@@ -4902,7 +4905,7 @@ export function ModalEditarProducto({
         negocio={negocio}
         onSeleccionarImagen={(url) => handleSeleccionarDesdeGaleria(url)}
         onSeleccionarMultiples={(urls) => handleSeleccionarMultiplesDesdeGaleria(urls)}
-        modoSeleccion={contextoGaleria === "galeria" || contextoGaleria === "variante_galeria" ? "multiple" : "simple"}
+        modoSeleccion={contextoGaleria === "galeria" || contextoGaleria === "variante_galeria" || contextoGaleria === "variante" ? "multiple" : "simple"}
         titulo={`Biblioteca de Medios (${negocio.toUpperCase()})`}
       />
     </div>

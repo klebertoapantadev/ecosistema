@@ -1992,27 +1992,6 @@ export function ModalEditarProducto({
                         >
                           ⚪ Usar Foto Global (Heredada)
                         </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (!varianteActual.var_detalle_variante?.portada_url) {
-                              const det = { ...(varianteActual.var_detalle_variante || {}), portada_url: imagenUrl || "" };
-                              actualizarVarianteActual("var_detalle_variante", det);
-                            }
-                          }}
-                          style={{
-                            padding: "3px 8px",
-                            borderRadius: "4px",
-                            fontSize: "0.68rem",
-                            fontWeight: 700,
-                            border: Boolean(varianteActual.var_detalle_variante?.portada_url) ? `1.5px solid ${colActiva.border}` : "1px solid #CBD5E1",
-                            background: Boolean(varianteActual.var_detalle_variante?.portada_url) ? colActiva.bg : "#FFFFFF",
-                            color: Boolean(varianteActual.var_detalle_variante?.portada_url) ? colActiva.text : "#64748B",
-                            cursor: "pointer",
-                          }}
-                        >
-                          📸 Foto Propia de este Tamaño
-                        </button>
                       </div>
                     </div>
 
