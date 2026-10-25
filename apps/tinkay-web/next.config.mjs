@@ -32,6 +32,25 @@ const nextConfig = {
     NEXT_PUBLIC_COMPILADO_EN: compiladoEn,
     ...(commit ? { NEXT_PUBLIC_COMMIT: commit } : {}),
   },
+  async redirects() {
+    return [
+      {
+        source: "/TempEscuale",
+        destination: "/TempEscuale/",
+        permanent: false,
+      },
+      {
+        source: "/tempescuela",
+        destination: "/tempescuela/",
+        permanent: false,
+      },
+      {
+        source: "/TempEscuela",
+        destination: "/TempEscuale/",
+        permanent: false,
+      },
+    ];
+  },
   outputFileTracingRoot: path.join(__dirname, "../../"),
 };
 

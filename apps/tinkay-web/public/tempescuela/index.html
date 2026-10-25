@@ -1,0 +1,1316 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Día de los Difuntos en Ecuador - Tradiciones con Amor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700;800&family=Nunito:wght@600;800;900&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --morado-vibrante: #6a1b9a;
+      --morado-claro: #9c27b0;
+      --morado-pastel: #f3e5f5;
+      --amarillo-sol: #ffb300;
+      --amarillo-claro: #fff9c4;
+      --rosa-fiesta: #ec407a;
+      --celeste-cielo: #4fc3f7;
+      --verde-hoja: #66bb6a;
+      --naranja-dulce: #ff7043;
+      --texto-oscuro: #2e1534;
+      --blanco: #ffffff;
+      --sombra-juguete: 0 12px 28px rgba(106, 27, 154, 0.22);
+      --sombra-boton: 0 6px 0px rgba(0, 0, 0, 0.18);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+
+    body {
+      font-family: 'Fredoka', 'Nunito', sans-serif;
+      background: radial-gradient(circle at 50% 10%, #ffebee 0%, #f3e5f5 50%, #e1bee7 100%);
+      color: var(--texto-oscuro);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* Banderines festivos arriba */
+    .bunting-bar {
+      width: 100%;
+      height: 22px;
+      display: flex;
+      position: relative;
+      overflow: hidden;
+      z-index: 10;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    }
+
+    .flag {
+      flex: 1;
+      height: 100%;
+      clip-path: polygon(0 0, 100% 0, 50% 100%);
+      animation: swing 3s ease-in-out infinite alternate;
+    }
+
+    .flag:nth-child(5n+1) {
+      background: #ff5252;
+    }
+
+    .flag:nth-child(5n+2) {
+      background: #ffd740;
+    }
+
+    .flag:nth-child(5n+3) {
+      background: #40c4ff;
+    }
+
+    .flag:nth-child(5n+4) {
+      background: #ab47bc;
+    }
+
+    .flag:nth-child(5n+5) {
+      background: #69f0ae;
+    }
+
+    @keyframes swing {
+      0% {
+        transform: rotate(0deg);
+      }
+
+      50% {
+        transform: rotate(2deg);
+      }
+
+      100% {
+        transform: rotate(-2deg);
+      }
+    }
+
+    /* Barra superior con controles */
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 24px;
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(10px);
+      border-bottom: 3px solid rgba(156, 39, 176, 0.15);
+      z-index: 100;
+    }
+
+    .badge-ecuador {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 800;
+      font-size: 1.1rem;
+      color: var(--morado-vibrante);
+      background: #fff;
+      padding: 6px 14px;
+      border-radius: 999px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      border: 2px solid var(--amarillo-sol);
+    }
+
+    .bandera-mini {
+      display: inline-flex;
+      width: 24px;
+      height: 16px;
+      border-radius: 3px;
+      overflow: hidden;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    .bandera-mini .col-y {
+      width: 50%;
+      height: 100%;
+      background: #ffd100;
+    }
+
+    .bandera-mini .col-b {
+      width: 25%;
+      height: 100%;
+      background: #0033a0;
+    }
+
+    .bandera-mini .col-r {
+      width: 25%;
+      height: 100%;
+      background: #da291c;
+    }
+
+    .header-controls {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .btn-tool {
+      background: white;
+      border: 2px solid #ce93d8;
+      color: var(--morado-vibrante);
+      font-family: inherit;
+      font-weight: 700;
+      font-size: 0.95rem;
+      padding: 8px 16px;
+      border-radius: 999px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+    }
+
+    .btn-tool:hover {
+      transform: translateY(-2px) scale(1.04);
+      background: var(--morado-pastel);
+      border-color: var(--morado-claro);
+    }
+
+    .btn-tool:active {
+      transform: translateY(1px);
+    }
+
+    .btn-tool.active {
+      background: var(--morado-vibrante);
+      color: white;
+    }
+
+    /* Contenedor Principal de Diapositivas */
+    main {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 16px 20px 24px 20px;
+      position: relative;
+    }
+
+    .slide-stage {
+      width: 100%;
+      max-width: 1200px;
+      height: min(84vh, 720px);
+      background: white;
+      border-radius: 36px;
+      box-shadow: var(--sombra-juguete);
+      border: 6px solid #fff;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .slide {
+      width: 100%;
+      height: 100%;
+      position: absolute;
+      top: 0;
+      left: 0;
+      padding: 24px 36px;
+      display: none;
+      flex-direction: column;
+      opacity: 0;
+      transform: scale(0.96) translateX(40px);
+      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .slide.active {
+      display: flex;
+      opacity: 1;
+      transform: scale(1) translateX(0);
+      position: relative;
+      z-index: 5;
+    }
+
+    /* Título de diapositiva */
+    .slide-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+
+    .slide-title-wrap {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .slide-icon {
+      font-size: 2.4rem;
+      background: #fff3e0;
+      width: 58px;
+      height: 58px;
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+      animation: bounce 2s infinite ease-in-out;
+    }
+
+    @keyframes bounce {
+
+      0%,
+      100% {
+        transform: translateY(0);
+      }
+
+      50% {
+        transform: translateY(-6px);
+      }
+    }
+
+    .slide-title {
+      font-size: 2rem;
+      font-weight: 800;
+      color: var(--morado-vibrante);
+      line-height: 1.15;
+    }
+
+    .slide-tag {
+      background: #e8f5e9;
+      color: #2e7d32;
+      font-weight: 800;
+      font-size: 0.85rem;
+      padding: 6px 14px;
+      border-radius: 999px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* Layout de contenido */
+    .slide-body {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 28px;
+      align-items: center;
+      min-height: 0;
+    }
+
+    .slide-image-box {
+      width: 100%;
+      height: 100%;
+      max-height: 440px;
+      border-radius: 26px;
+      overflow: hidden;
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12);
+      border: 4px solid #fff;
+      position: relative;
+      background: #fce4ec;
+    }
+
+    .slide-image-box img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: transform 0.5s ease;
+    }
+
+    .slide-image-box:hover img {
+      transform: scale(1.03);
+    }
+
+    .slide-card-text {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .kid-big-phrase {
+      font-size: 1.65rem;
+      font-weight: 800;
+      line-height: 1.35;
+      color: #371746;
+      background: linear-gradient(135deg, #fff9c4 0%, #fff 100%);
+      padding: 20px 24px;
+      border-radius: 24px;
+      border-left: 8px solid var(--amarillo-sol);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.06);
+    }
+
+    .kid-highlight-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .kid-pill-item {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      background: #ffffff;
+      padding: 12px 18px;
+      border-radius: 18px;
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #4a148c;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+      border: 2px solid #ede7f6;
+      transition: transform 0.2s ease, border-color 0.2s ease;
+      cursor: pointer;
+    }
+
+    .kid-pill-item:hover {
+      transform: translateX(6px) scale(1.02);
+      border-color: var(--rosa-fiesta);
+      background: #fffbfd;
+    }
+
+    .kid-pill-item .emoji {
+      font-size: 1.8rem;
+    }
+
+    /* Rima / Cancioncita destacada */
+    .song-box {
+      background: linear-gradient(135deg, #e1f5fe 0%, #ede7f6 100%);
+      border-radius: 22px;
+      padding: 16px 20px;
+      border: 3px dashed #81d4fa;
+      text-align: center;
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: #01579b;
+      margin-top: 8px;
+    }
+
+    /* Mini Juego Interactivo (Diapositiva 5) */
+    .game-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-top: 10px;
+    }
+
+    .game-card {
+      background: white;
+      border: 4px solid #e0e0e0;
+      border-radius: 20px;
+      padding: 16px 10px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.06);
+    }
+
+    .game-card:hover {
+      transform: translateY(-4px) scale(1.05);
+      box-shadow: 0 10px 18px rgba(0, 0, 0, 0.12);
+    }
+
+    .game-card .food-emoji {
+      font-size: 3rem;
+      margin-bottom: 6px;
+      display: block;
+    }
+
+    .game-card .food-name {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: #424242;
+    }
+
+    .game-card.correct {
+      border-color: #4caf50;
+      background: #e8f5e9;
+      animation: pop 0.4s ease;
+    }
+
+    .game-card.wrong {
+      border-color: #ef5350;
+      background: #ffebee;
+      animation: shake 0.4s ease;
+    }
+
+    @keyframes pop {
+      0% {
+        transform: scale(0.9);
+      }
+
+      70% {
+        transform: scale(1.15);
+      }
+
+      100% {
+        transform: scale(1.05);
+      }
+    }
+
+    @keyframes shake {
+
+      0%,
+      100% {
+        transform: translateX(0);
+      }
+
+      20%,
+      60% {
+        transform: translateX(-8px);
+      }
+
+      40%,
+      80% {
+        transform: translateX(8px);
+      }
+    }
+
+    /* Barra inferior con controles de navegación */
+    footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 30px;
+      background: rgba(255, 255, 255, 0.95);
+      border-top: 2px solid rgba(0, 0, 0, 0.06);
+      z-index: 100;
+    }
+
+    .btn-nav {
+      font-family: inherit;
+      font-size: 1.3rem;
+      font-weight: 800;
+      padding: 14px 28px;
+      border-radius: 999px;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: white;
+      transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+      box-shadow: 0 6px 0 rgba(0, 0, 0, 0.15);
+    }
+
+    .btn-nav:active {
+      transform: translateY(3px);
+      box-shadow: 0 3px 0 rgba(0, 0, 0, 0.15);
+    }
+
+    .btn-prev {
+      background: #78909c;
+    }
+
+    .btn-prev:hover {
+      background: #607d8b;
+    }
+
+    .btn-next {
+      background: linear-gradient(135deg, #ab47bc, #6a1b9a);
+      box-shadow: 0 6px 0 #4a148c;
+    }
+
+    .btn-next:hover {
+      background: linear-gradient(135deg, #ba68c8, #7b1fa2);
+      transform: translateY(-2px);
+    }
+
+    .slide-dots {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .dot {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #e0e0e0;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .dot.active {
+      width: 38px;
+      border-radius: 12px;
+      background: var(--morado-vibrante);
+      box-shadow: 0 0 10px rgba(106, 27, 154, 0.4);
+    }
+
+    /* Panel de Notas para Papás Expositores */
+    .speaker-drawer {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: #2b1038;
+      color: #fce4ec;
+      padding: 20px 30px;
+      border-top-left-radius: 28px;
+      border-top-right-radius: 28px;
+      box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.35);
+      z-index: 500;
+      transform: translateY(105%);
+      transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+      max-height: 48vh;
+      overflow-y: auto;
+    }
+
+    .speaker-drawer.open {
+      transform: translateY(0);
+    }
+
+    .drawer-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+      padding-bottom: 8px;
+    }
+
+    .drawer-title {
+      font-size: 1.2rem;
+      font-weight: 800;
+      color: #ffd54f;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .close-drawer {
+      background: rgba(255, 255, 255, 0.15);
+      border: none;
+      color: white;
+      font-size: 1.1rem;
+      font-weight: 800;
+      padding: 4px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    .notes-content {
+      font-size: 1.05rem;
+      line-height: 1.5;
+    }
+
+    .notes-content strong {
+      color: #ffe082;
+    }
+
+    .notes-tips {
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      padding: 10px 14px;
+      margin-top: 10px;
+      border-left: 4px solid #80cbc4;
+      font-size: 0.95rem;
+    }
+
+    /* Animación de confeti canvas */
+    #confetti-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      z-index: 9999;
+    }
+
+    /* Estilos de Impresión / Guardar en PDF */
+    @media print {
+      body {
+        background: white !important;
+        color: black !important;
+      }
+
+      header,
+      footer,
+      .bunting-bar,
+      #confetti-canvas,
+      .speaker-drawer {
+        display: none !important;
+      }
+
+      main {
+        padding: 0 !important;
+        display: block !important;
+      }
+
+      .slide-stage {
+        max-width: 100% !important;
+        height: auto !important;
+        border: none !important;
+        box-shadow: none !important;
+        border-radius: 0 !important;
+        display: block !important;
+      }
+
+      .slide {
+        display: flex !important;
+        opacity: 1 !important;
+        transform: none !important;
+        position: relative !important;
+        height: 96vh !important;
+        page-break-after: always !important;
+        break-after: page !important;
+        padding: 20px !important;
+      }
+
+      .slide-image-box {
+        max-height: 480px !important;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Banderines de fiesta ecuatoriana -->
+  <div class="bunting-bar">
+    <div class="flag"></div>
+    <div class="flag"></div>
+    <div class="flag"></div>
+    <div class="flag"></div>
+    <div class="flag"></div>
+    <div class="flag"></div>
+    <div class="flag"></div>
+    <div class="flag"></div>
+    <div class="flag"></div>
+    <div class="flag"></div>
+    <div class="flag"></div>
+    <div class="flag"></div>
+    <div class="flag"></div>
+    <div class="flag"></div>
+    <div class="flag"></div>
+    <div class="flag"></div>
+    <div class="flag"></div>
+    <div class="flag"></div>
+    <div class="flag"></div>
+    <div class="flag"></div>
+    <div class="flag"></div>
+  </div>
+
+  <canvas id="confetti-canvas"></canvas>
+
+  <!-- Encabezado con herramientas de orador -->
+  <header>
+    <div class="badge-ecuador">
+      <span class="bandera-mini">
+        <span class="col-y"></span>
+        <span class="col-b"></span>
+        <span class="col-r"></span>
+      </span>
+      <span>Tradición Ecuatoriana &bull; Inicial C - Delfines 🐬🐬</span>
+    </div>
+
+    <div class="header-controls">
+      <button class="btn-tool" onclick="window.print()" title="Imprimir o Guardar diapositivas en PDF">
+        <span>🖨️ PDF / Imprimir</span>
+      </button>
+      <button class="btn-tool" id="btn-sound" title="Activar sonido infantil">
+        <span>🔊 Sonidos: Sí</span>
+      </button>
+      <button class="btn-tool" id="btn-notes" title="Ver guía y preguntas para papitos">
+        <span>👨‍👩‍👧 Guía Papitos</span>
+      </button>
+      <button class="btn-tool" id="btn-fullscreen" title="Pantalla completa para proyector">
+        <span>⛶ Pantalla Completa</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Escenario de Diapositivas -->
+  <main>
+    <div class="slide-stage">
+
+      <!-- SLIDE 1: PORTADA / BIENVENIDA -->
+      <section class="slide active" id="slide-0" data-title="Día de los Difuntos" data-sound="cheer">
+        <div class="slide-header">
+          <div class="slide-title-wrap">
+            <div class="slide-icon">🇪🇨</div>
+            <h1 class="slide-title">Día de los Difuntos</h1>
+          </div>
+          <span class="slide-tag">2 de Noviembre</span>
+        </div>
+        <div class="slide-body">
+          <div class="slide-image-box">
+            <img src="img/slide1_bienvenida.jpg" alt="Guagua de pan y Colada Morada sonriendo">
+          </div>
+          <div class="slide-card-text">
+            <div class="kid-big-phrase">
+              👋 ¡Hola amiguitos! Bienvenidos a conocer la hermosa tradición del <strong>Día de los Difuntos</strong> en
+              el Ecuador.
+            </div>
+            <div class="kid-highlight-list">
+              <div class="kid-pill-item" onclick="playSound('pop')">
+                <span class="emoji">🥖</span>
+                <span>¡La tierna <strong>Guagua de Pan</strong>!</span>
+              </div>
+              <div class="kid-pill-item" onclick="playSound('pop')">
+                <span class="emoji">🍇</span>
+                <span>¡La dulce y calientita <strong>Colada Morada</strong>!</span>
+              </div>
+            </div>
+            <div class="song-box">
+              🎶 "¡Huele a canelita, sabe a amor, en el Ecuador hay fiesta y sabor!" 🎶
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SLIDE 2: LA TRADICIÓN DE VISITAR EL CEMENTERIO -->
+      <section class="slide" id="slide-1" data-title="Visita al Cementerio" data-sound="magic">
+        <div class="slide-header">
+          <div class="slide-title-wrap">
+            <div class="slide-icon">🌻</div>
+            <h2 class="slide-title">Visita al Cementerio: ¡Flores y Amor para Recordar!</h2>
+          </div>
+          <span class="slide-tag">Tradición Familiar</span>
+        </div>
+        <div class="slide-body">
+          <div class="slide-image-box">
+            <img src="img/slide2_cementerio_flores.jpg"
+              alt="Familia ecuatoriana visitando con flores coloridas el cementerio en un día soleado y lleno de paz">
+          </div>
+          <div class="slide-card-text">
+            <div class="kid-big-phrase">
+              🌼 En Ecuador, las familias visitamos el cementerio juntos para llenar de flores hermosas y cariño el
+              lugar donde descansan nuestros seres queridos.
+            </div>
+            <div class="kid-highlight-list">
+              <div class="kid-pill-item" onclick="playSound('sparkle')">
+                <span class="emoji">💐</span>
+                <span><strong>Ramos y coronas de flores:</strong> Llenamos todo de amarillo, rojo y violeta.</span>
+              </div>
+              <div class="kid-pill-item" onclick="playSound('sparkle')">
+                <span class="emoji">☀️</span>
+                <span><strong>Un jardín de paz y amor:</strong> Recordamos sus abrazos, risas y cuentos.</span>
+              </div>
+              <div class="kid-pill-item" onclick="playSound('sparkle')">
+                <span class="emoji">🥖</span>
+                <span><strong>Compartir en familia:</strong> En muchos pueblitos compartimos colada y pancito
+                  juntos.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SLIDE 3: LA MÁGICA COLADA MORADA -->
+      <section class="slide" id="slide-2" data-title="La Colada Morada" data-sound="bubble">
+        <div class="slide-header">
+          <div class="slide-title-wrap">
+            <div class="slide-icon">🍓</div>
+            <h2 class="slide-title">¡La Poción Mágica de Frutas: La Colada Morada!</h2>
+          </div>
+          <span class="slide-tag">Receta de la Abuela</span>
+        </div>
+        <div class="slide-body">
+          <div class="slide-image-box">
+            <img src="img/slide2_colada_morada.jpg" alt="Familia feliz cocinando colada morada en una olla grande">
+          </div>
+          <div class="slide-card-text">
+            <div class="kid-big-phrase">
+              🫐 En una olla gigante y calientita, toda la familia ayuda a cocinar con frutas ricas y saludables.
+            </div>
+            <div class="kid-highlight-list">
+              <div class="kid-pill-item" onclick="playSound('fruit')">
+                <span class="emoji">🫐</span>
+                <span><strong>Moras y Mortiños:</strong> ¡Le dan su color morado mágico!</span>
+              </div>
+              <div class="kid-pill-item" onclick="playSound('fruit')">
+                <span class="emoji">🍍</span>
+                <span><strong>Piña y Frutillas:</strong> ¡Dulcecitas y jugosas!</span>
+              </div>
+              <div class="kid-pill-item" onclick="playSound('fruit')">
+                <span class="emoji">🌿</span>
+                <span><strong>Hierbitas aromáticas:</strong> Canela, clavo de olor y arrayán.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SLIDE 4: LAS GUAGUAS DE PAN -->
+      <section class="slide" id="slide-3" data-title="Las Guaguas de Pan" data-sound="pop">
+        <div class="slide-header">
+          <div class="slide-title-wrap">
+            <div class="slide-icon">🥖</div>
+            <h2 class="slide-title">¡Las Guaguas de Pan y sus Vestidos de Colores!</h2>
+          </div>
+          <span class="slide-tag">Palabra Kichwa</span>
+        </div>
+        <div class="slide-body">
+          <div class="slide-image-box">
+            <img src="img/slide3_guaguas_pan.jpg" alt="Niños decorando guaguas de pan con dulce de colores">
+          </div>
+          <div class="slide-card-text">
+            <div class="kid-big-phrase">
+              👶 ¿Sabían que la palabra <strong>"GUAGUA"</strong> significa <em>BEBÉ</em> o <em>NIÑO</em> en idioma
+              Kichwa?
+            </div>
+            <div class="kid-highlight-list">
+              <div class="kid-pill-item" onclick="playSound('sparkle')">
+                <span class="emoji">🍞</span>
+                <span>Hechas de <strong>pancito calientito</strong> y suave.</span>
+              </div>
+              <div class="kid-pill-item" onclick="playSound('sparkle')">
+                <span class="emoji">🎨</span>
+                <span>¡Las pintamos con caritas felices y <strong>glaseado de colores</strong>!</span>
+              </div>
+              <div class="kid-pill-item" onclick="playSound('sparkle')">
+                <span class="emoji">🍫</span>
+                <span>¡Algunas tienen relleno sorpresa de <strong>mora o chocolate</strong>!</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SLIDE 5: MINI JUEGO INTERACTIVO -->
+      <section class="slide" id="slide-4" data-title="¡A Jugar!" data-sound="tada">
+        <div class="slide-header">
+          <div class="slide-title-wrap">
+            <div class="slide-icon">🎮</div>
+            <h2 class="slide-title">Mini-Juego: ¿Qué ingrediente va a la Colada Morada?</h2>
+          </div>
+          <span class="slide-tag">Participación de los Niños</span>
+        </div>
+        <div class="slide-body">
+          <div class="slide-card-text" style="grid-column: 1 / -1;">
+            <div class="kid-big-phrase" style="text-align: center;">
+              👇 ¡Amiguitos! Toquen la pantalla o digan fuerte: ¿Cuáles de estos ingredientes SÍ van a la Colada Morada?
+            </div>
+
+            <div class="game-grid">
+              <div class="game-card" onclick="checkIngredient(this, true)">
+                <span class="food-emoji">🍍</span>
+                <span class="food-name">Piña Dulce</span>
+              </div>
+              <div class="game-card" onclick="checkIngredient(this, true)">
+                <span class="food-emoji">🫐</span>
+                <span class="food-name">Moras y Mortiño</span>
+              </div>
+              <div class="game-card" onclick="checkIngredient(this, false)">
+                <span class="food-emoji">🍕</span>
+                <span class="food-name">¿Pizza?</span>
+              </div>
+              <div class="game-card" onclick="checkIngredient(this, true)">
+                <span class="food-emoji">🍓</span>
+                <span class="food-name">Frutillas</span>
+              </div>
+              <div class="game-card" onclick="checkIngredient(this, false)">
+                <span class="food-emoji">🌭</span>
+                <span class="food-name">¿Hot Dog?</span>
+              </div>
+              <div class="game-card" onclick="checkIngredient(this, true)">
+                <span class="food-emoji">🌾</span>
+                <span class="food-name">Harina Morada</span>
+              </div>
+            </div>
+
+            <div id="game-feedback"
+              style="text-align: center; font-size: 1.3rem; font-weight: 800; min-height: 38px; color: var(--morado-vibrante); margin-top: 10px;">
+              ¡Toca las frutas para agregarlas a la olla mágica! ✨
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SLIDE 6: CELEBRACIÓN Y DESPEDIDA -->
+      <section class="slide" id="slide-5" data-title="¡A Compartir!" data-sound="applause">
+        <div class="slide-header">
+          <div class="slide-title-wrap">
+            <div class="slide-icon">🎉</div>
+            <h2 class="slide-title">¡El Gran Secreto de Esta Tradición!</h2>
+          </div>
+          <span class="slide-tag">¡Viva el Ecuador!</span>
+        </div>
+        <div class="slide-body">
+          <div class="slide-image-box">
+            <img src="img/slide5_fiesta_familia.jpg" alt="Niños y familias celebrando juntos con guaguas y colada">
+          </div>
+          <div class="slide-card-text">
+            <div class="kid-big-phrase">
+              ❤️ El ingrediente más importante de todos es... <strong>¡COMPARTIR EN FAMILIA Y DARNOS MUCHO
+                AMOR!</strong>
+            </div>
+            <div class="kid-highlight-list">
+              <div class="kid-pill-item">
+                <span class="emoji">👨‍👩‍👧‍👦</span>
+                <span><strong>Unión familiar:</strong> Recordamos con amor y alegría a quienes siempre viven en nuestro
+                  corazón.</span>
+              </div>
+              <div class="kid-pill-item">
+                <span class="emoji">🥖</span>
+                <span><strong>Nuestra tradición:</strong> Compartimos con cariño las ricas guaguas de pan y la colada
+                  morada.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- Barra de Navegación -->
+  <footer>
+    <button class="btn-nav btn-prev" id="btn-prev" onclick="prevSlide()">
+      <span>⬅ Atrás</span>
+    </button>
+
+    <div class="slide-dots" id="dots-container">
+      <!-- Generado dinámicamente -->
+    </div>
+
+    <button class="btn-nav btn-next" id="btn-next" onclick="nextSlide()">
+      <span>Siguiente ➡</span>
+    </button>
+  </footer>
+
+  <!-- Drawer / Cajón con Notas para los Papás Expositores -->
+  <aside class="speaker-drawer" id="speaker-drawer">
+    <div class="drawer-header">
+      <div class="drawer-title">
+        <span>📖 Guía del Papito/Mamita Expositor(a)</span>
+        <span id="drawer-slide-num" style="font-size: 0.9rem; color: #80cbc4;">(Diapositiva 1/6)</span>
+      </div>
+      <button class="close-drawer" onclick="toggleNotesDrawer()">✕ Cerrar</button>
+    </div>
+    <div class="notes-content" id="notes-content">
+      <!-- Contenido inyectado dinámicamente según la slide -->
+    </div>
+  </aside>
+
+  <script>
+    // Configuración y datos de orador para cada diapositiva
+    const speakerNotes = [
+      {
+        guia: "<strong>Cómo empezar (Rompehielos de 1 minuto):</strong><br>• Saluden con mucha energía y una gran sonrisa: <em>'¡Buenos días niños y niñas! Como papitos y mamitas de la clase, hoy Jueves 29 de Octubre nos reunimos para aprender sobre una hermosa fiesta de nuestro país: ¡El Día de los Difuntos! ¿A quién le gusta comer pancito dulce? ¿Y a quién le gustan las historias divertidas?'</em><br>• Muestren la imagen en pantalla. Señalen a la Guagua y a la Colada y díganles que son dos superamigos ecuatorianos que nos visitan cada año para recordarnos cuánto nos queremos.",
+        pregunta: "¿Qué creen que tiene en la cabeza la guagüita de pan? ¡Miren sus colores!",
+        duracion: "Tiempo sugerido: 1 minuto"
+      },
+      {
+        guia: "<strong>La tradición de visitar el cementerio en familia (Para 4 años):</strong><br>• En Ecuador, el 2 de noviembre las familias visitamos el cementerio como quien visita un jardín de recuerdos.<br>• Llevamos ramos de flores de colores vivos (girasoles, rosas) y coronas de flores o papel.<br>• Explicar que limpiamos y arreglamos con amor el lugar donde descansan nuestros abuelitos y personas queridas, rezamos, cantamos y les decimos con una sonrisa que siempre viven en nuestro corazón.<br>• En muchas comunidades y pueblos de nuestro Ecuador, las familias incluso comparten colada morada y guaguas de pan allí mismo en un banquete de unión y respeto.<br>• Enfatizar la paz y el amor: <em>'No es un lugar de miedo, es un lugar lleno de flores, sol y amor familiar'</em>.",
+        pregunta: "¿Qué color de flor les gustaría llevar para llenar de alegría ese jardín de recuerdos?",
+        duracion: "Tiempo sugerido: 1.5 minutos"
+      },
+      {
+        guia: "<strong>Explicación sensorial de la Colada Morada:</strong><br>• Describir los colores y aromas: mora moradita, mortiño de la sierra, piña dulce.<br>• Cuéntenles que es una receta ancestral que viene desde hace muchísimos años de nuestros antepasados en Ecuador.<br>• <strong>Tip interactivo:</strong> Si llevaron una ramita de canela o una piña en su canastita, ¡pásensela a la profe para que los niños sientan su olor!",
+        pregunta: "¿De qué color se pone la lengua cuando tomamos colada morada? ¡Morada como un monstruito bueno!",
+        duracion: "Tiempo sugerido: 1.5 minutos"
+      },
+      {
+        guia: "<strong>El significado de la palabra Kichwa y el juego de decorar:</strong><br>• Enseñar la palabra Kichwa <em>'Guagua'</em> = Bebé o niño chiquito. Háganles repetir: <em>'¡Todos somos guaguas!'</em>.<br>• Contar que las mamás y abuelitas horneaban los panes con forma de niños para festejar la vida de los más pequeños.<br>• Muestren los vestiditos dibujados con azúcar de colores.",
+        pregunta: "¿Si ustedes hicieran su propia guagua de pan, qué carita le dibujarían? ¿Feliz o sacando la lengua?",
+        duracion: "Tiempo sugerido: 1.5 minutos"
+      },
+      {
+        guia: "<strong>Dinámica interactiva grupal:</strong><br>• Inviten a los niños a responder todos a una sola voz.<br>• Tomen el mouse o toquen la pantalla en cada alimento.<br>• Cuando toquen la Pizza o el Hot Dog, hagan sonido de sorpresa graciosa: <em>'¡Noooo, quién le pone pizza a la colada morada!'</em> (a los 4 años les da muchísima risa lo disparatado).",
+        pregunta: "¡Griten fuerte: ¿La piña va a la olla sí o no?!",
+        duracion: "Tiempo sugerido: 2 minutos"
+      },
+      {
+        guia: "<strong>Cierre y aclaración de fechas:</strong><br>• Resuman el mensaje central: Las tradiciones de nuestro Ecuador son valiosas porque unen a toda la familia en la mesa y en el corazón.<br>• Explicar con sencillez la diferencia de fechas: <em>'Hoy Jueves 29 de Octubre celebramos y compartimos en la escuelita con nuestros amiguitos, y el 2 de Noviembre lo celebrarán en casa con sus familias'</em>.<br>• Si llevaron guaguas de pan o las hojas de colorear para repartir, este es el momento cumbre para entregar la sorpresa.",
+        pregunta: "¡Un fuerte aplauso para nuestro hermoso Ecuador y para todos ustedes!",
+        duracion: "Tiempo sugerido: 1.5 minutos"
+      }
+    ];
+
+    let currentSlide = 0;
+    const slides = document.querySelectorAll('.slide');
+    const totalSlides = slides.length;
+    let soundEnabled = true;
+
+    // Generar puntos indicadores
+    const dotsContainer = document.getElementById('dots-container');
+    slides.forEach((_, idx) => {
+      const dot = document.createElement('div');
+      dot.className = `dot ${idx === 0 ? 'active' : ''}`;
+      dot.onclick = () => goToSlide(idx);
+      dotsContainer.appendChild(dot);
+    });
+
+    function updateSlide() {
+      slides.forEach((s, idx) => {
+        s.classList.toggle('active', idx === currentSlide);
+      });
+      document.querySelectorAll('.dot').forEach((d, idx) => {
+        d.classList.toggle('active', idx === currentSlide);
+      });
+
+      // Actualizar botón Prev
+      document.getElementById('btn-prev').style.visibility = currentSlide === 0 ? 'hidden' : 'visible';
+
+      const nextBtn = document.getElementById('btn-next');
+      if (currentSlide === totalSlides - 1) {
+        nextBtn.innerHTML = '<span>🎉 ¡Fin de la Fiesta!</span>';
+        triggerGrandConfetti();
+      } else {
+        nextBtn.innerHTML = '<span>Siguiente ➡</span>';
+      }
+
+      // Actualizar notas de orador
+      updateSpeakerDrawer();
+
+      // Reproducir sonido ambiental del slide
+      const soundType = slides[currentSlide].getAttribute('data-sound');
+      if (soundType) {
+        playSound(soundType);
+      }
+    }
+
+    function nextSlide() {
+      if (currentSlide < totalSlides - 1) {
+        currentSlide++;
+        updateSlide();
+      }
+    }
+
+    function prevSlide() {
+      if (currentSlide > 0) {
+        currentSlide--;
+        updateSlide();
+      }
+    }
+
+    function goToSlide(index) {
+      currentSlide = index;
+      updateSlide();
+    }
+
+    // Navegación con teclado
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
+        nextSlide();
+      } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+        prevSlide();
+      } else if (e.key === 'f' || e.key === 'F') {
+        toggleFullScreen();
+      }
+    });
+
+    // Control de notas del orador
+    function toggleNotesDrawer() {
+      const drawer = document.getElementById('speaker-drawer');
+      const btn = document.getElementById('btn-notes');
+      drawer.classList.toggle('open');
+      btn.classList.toggle('active', drawer.classList.contains('open'));
+    }
+
+    document.getElementById('btn-notes').addEventListener('click', toggleNotesDrawer);
+
+    function updateSpeakerDrawer() {
+      const note = speakerNotes[currentSlide];
+      document.getElementById('drawer-slide-num').textContent = `(Diapositiva ${currentSlide + 1} de ${totalSlides})`;
+      document.getElementById('notes-content').innerHTML = `
+        <p>${note.guia}</p>
+        <div class="notes-tips">
+          <strong>❓ Pregunta sugerida para los niños:</strong> "${note.pregunta}"<br>
+          <span style="color: #ffcc80;">⏱️ ${note.duracion}</span>
+        </div>
+      `;
+    }
+    updateSpeakerDrawer();
+
+    // Pantalla completa
+    function toggleFullScreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(err => alert(err.message));
+      } else {
+        if (document.exitFullscreen) {
+          document.exitFullscreen();
+        }
+      }
+    }
+    document.getElementById('btn-fullscreen').addEventListener('click', toggleFullScreen);
+
+    // Sonidos con Web Audio API (Generador sintético, funciona 100% offline sin mp3 externos)
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    let audioCtx = null;
+
+    function getAudioCtx() {
+      if (!audioCtx) {
+        audioCtx = new AudioContext();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+      return audioCtx;
+    }
+
+    function playSound(type) {
+      if (!soundEnabled) return;
+      try {
+        const ctx = getAudioCtx();
+        const now = ctx.currentTime;
+
+        if (type === 'pop') {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(320, now);
+          osc.frequency.exponentialRampToValueAtTime(800, now + 0.1);
+          gain.gain.setValueAtTime(0.4, now);
+          gain.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now);
+          osc.stop(now + 0.12);
+        } else if (type === 'magic' || type === 'sparkle') {
+          [523.25, 659.25, 783.99, 1046.50].forEach((freq, i) => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(freq, now + i * 0.08);
+            gain.gain.setValueAtTime(0.2, now + i * 0.08);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.08 + 0.25);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(now + i * 0.08);
+            osc.stop(now + i * 0.08 + 0.25);
+          });
+        } else if (type === 'bubble') {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(400, now);
+          osc.frequency.linearRampToValueAtTime(650, now + 0.15);
+          gain.gain.setValueAtTime(0.3, now);
+          gain.gain.exponentialRampToValueAtTime(0.01, now + 0.16);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now);
+          osc.stop(now + 0.16);
+        } else if (type === 'tada' || type === 'cheer' || type === 'applause') {
+          [440, 554.37, 659.25, 880].forEach((freq, i) => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(freq, now + i * 0.06);
+            gain.gain.setValueAtTime(0.25, now + i * 0.06);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + i * 0.06 + 0.35);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(now + i * 0.06);
+            osc.stop(now + i * 0.06 + 0.35);
+          });
+        } else if (type === 'fruit') {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(600, now);
+          osc.frequency.exponentialRampToValueAtTime(950, now + 0.08);
+          gain.gain.setValueAtTime(0.3, now);
+          gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now);
+          osc.stop(now + 0.1);
+        }
+      } catch (err) {
+        console.warn('Audio no inicializado:', err);
+      }
+    }
+
+    // Alternar sonido
+    document.getElementById('btn-sound').addEventListener('click', () => {
+      soundEnabled = !soundEnabled;
+      document.getElementById('btn-sound').innerHTML = soundEnabled ? '<span>🔊 Sonidos: Sí</span>' : '<span>🔇 Sonidos: No</span>';
+      if (soundEnabled) playSound('pop');
+    });
+
+    // Lógica del Mini Juego
+    let correctCount = 0;
+    function checkIngredient(card, isCorrect) {
+      if (card.classList.contains('correct') || card.classList.contains('wrong')) return;
+
+      const feedback = document.getElementById('game-feedback');
+
+      if (isCorrect) {
+        card.classList.add('correct');
+        playSound('sparkle');
+        correctCount++;
+        feedback.innerHTML = `🌟 ¡SIII! ¡A la olla! (${correctCount} de 4 ingredientes listos)`;
+        feedback.style.color = '#2e7d32';
+
+        if (correctCount === 4) {
+          setTimeout(() => {
+            playSound('tada');
+            feedback.innerHTML = `🎉 ¡BRAVO! ¡Cocinamos la Colada Morada más deliciosa del mundo! 😋🥣`;
+            triggerGrandConfetti();
+          }, 400);
+        }
+      } else {
+        card.classList.add('wrong');
+        playSound('pop');
+        feedback.innerHTML = `😂 ¡Uy noooo! ¡Ese no va a la colada morada! ¡A comerlo después!`;
+        feedback.style.color = '#c62828';
+      }
+    }
+
+    // Efecto de Confeti en Canvas
+    const canvas = document.getElementById('confetti-canvas');
+    const ctx = canvas.getContext('2d');
+    let particles = [];
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    function triggerGrandConfetti() {
+      const colors = ['#ff1744', '#ffd600', '#2979ff', '#00e676', '#d500f9', '#ff9100'];
+      for (let i = 0; i < 90; i++) {
+        particles.push({
+          x: canvas.width * 0.5 + (Math.random() - 0.5) * 200,
+          y: canvas.height * 0.5,
+          vx: (Math.random() - 0.5) * 16,
+          vy: -Math.random() * 14 - 6,
+          size: Math.random() * 12 + 6,
+          color: colors[Math.floor(Math.random() * colors.length)],
+          rotation: Math.random() * 360,
+          rotationSpeed: (Math.random() - 0.5) * 12,
+          opacity: 1
+        });
+      }
+    }
+
+    function animateConfetti() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.35; // Gravedad
+        p.rotation += p.rotationSpeed;
+        p.opacity -= 0.008;
+
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate((p.rotation * Math.PI) / 180);
+        ctx.globalAlpha = Math.max(0, p.opacity);
+        ctx.fillStyle = p.color;
+        ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.6);
+        ctx.restore();
+
+        if (p.opacity <= 0 || p.y > canvas.height) {
+          particles.splice(i, 1);
+        }
+      }
+      requestAnimationFrame(animateConfetti);
+    }
+    animateConfetti();
+  </script>
+</body>
+
+</html>

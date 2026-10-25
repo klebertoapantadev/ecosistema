@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>¡Colorea tu Guagua de Pan! - Día de los Difuntos Ecuador</title>
+  <style>
+    @page {
+      size: A4 portrait;
+      margin: 10mm;
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: 'Arial Rounded MT Bold', 'Helvetica Rounded', sans-serif;
+      background: #fff;
+      color: #000;
+      padding: 15px;
+    }
+    .print-banner {
+      background: #f0f0f0;
+      padding: 10px 16px;
+      border-radius: 8px;
+      margin-bottom: 15px;
+      text-align: center;
+      font-size: 14px;
+    }
+    .print-btn {
+      background: #7b1fa2;
+      color: white;
+      border: none;
+      padding: 8px 18px;
+      border-radius: 6px;
+      font-size: 15px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-left: 10px;
+    }
+    .page-sheet {
+      border: 4px dashed #333;
+      border-radius: 20px;
+      padding: 20px;
+      height: 94vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .header-sheet {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 3px solid #333;
+      padding-bottom: 12px;
+    }
+    .title-h1 {
+      font-size: 24px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .sub-h2 {
+      font-size: 15px;
+      color: #444;
+      margin-top: 4px;
+    }
+    .student-info {
+      font-size: 16px;
+      font-weight: bold;
+    }
+    .line-name {
+      display: inline-block;
+      width: 180px;
+      border-bottom: 2px solid #000;
+    }
+    .canvas-art {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 0;
+    }
+    svg {
+      width: 100%;
+      max-height: 520px;
+    }
+    .footer-instructions {
+      border-top: 3px dashed #333;
+      padding-top: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 14px;
+      font-weight: bold;
+    }
+    .badge-ecuador {
+      background: #000;
+      color: #fff;
+      padding: 6px 14px;
+      border-radius: 999px;
+      font-size: 13px;
+    }
+
+    @media print {
+      .print-banner { display: none; }
+      body { padding: 0; }
+      .page-sheet { border: 3px solid #000; height: 100vh; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="print-banner">
+    <span>💡 <strong>Tip para los papitos:</strong> Haz clic en el botón para imprimir varias copias para todos los niños del aula (Ctrl + P).</span>
+    <button class="print-btn" onclick="window.print()">🖨️ Imprimir Hoja para Colorear</button>
+  </div>
+
+  <div class="page-sheet">
+    <div class="header-sheet">
+      <div>
+        <h1 class="title-h1">🎨 ¡Decora tu Guagua de Pan!</h1>
+        <div class="sub-h2">Tradición Ecuatoriana &bull; Día de los Difuntos</div>
+      </div>
+      <div class="student-info">
+        Nombre: <span class="line-name"></span>
+      </div>
+    </div>
+
+    <div class="canvas-art">
+      <!-- Ilustración vectorial limpia para colorear con crayolas y marcadores -->
+      <svg viewBox="0 0 800 650" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <!-- SOL Y NUBES ARRIBA -->
+        <circle cx="110" cy="90" r="45" stroke="#000" stroke-width="6" stroke-dasharray="10 6"/>
+        <line x1="110" y1="25" x2="110" y2="5" stroke="#000" stroke-width="6" stroke-linecap="round"/>
+        <line x1="160" y1="50" x2="178" y2="35" stroke="#000" stroke-width="6" stroke-linecap="round"/>
+        <line x1="175" y1="95" x2="198" y2="98" stroke="#000" stroke-width="6" stroke-linecap="round"/>
+        <line x1="160" y1="140" x2="178" y2="155" stroke="#000" stroke-width="6" stroke-linecap="round"/>
+        <line x1="60" y1="50" x2="42" y2="35" stroke="#000" stroke-width="6" stroke-linecap="round"/>
+        <line x1="45" y1="95" x2="22" y2="98" stroke="#000" stroke-width="6" stroke-linecap="round"/>
+
+        <!-- NUBE CORAZÓN -->
+        <path d="M680 70 C 680 50, 650 40, 630 60 C 610 40, 580 50, 580 70 C 580 100, 630 125, 630 125 C 630 125, 680 100, 680 70 Z" stroke="#000" stroke-width="5" fill="none"/>
+
+        <!-- FLORES EN EL SUELO -->
+        <g transform="translate(40, 520)">
+          <!-- Flor 1 -->
+          <circle cx="50" cy="50" r="14" stroke="#000" stroke-width="5"/>
+          <circle cx="50" cy="24" r="12" stroke="#000" stroke-width="5"/>
+          <circle cx="76" cy="50" r="12" stroke="#000" stroke-width="5"/>
+          <circle cx="50" cy="76" r="12" stroke="#000" stroke-width="5"/>
+          <circle cx="24" cy="50" r="12" stroke="#000" stroke-width="5"/>
+          <path d="M50 88 L50 120" stroke="#000" stroke-width="6"/>
+          <path d="M50 100 Q70 95 65 110" stroke="#000" stroke-width="5" fill="none"/>
+        </g>
+
+        <g transform="translate(680, 510)">
+          <!-- Flor 2 -->
+          <circle cx="50" cy="50" r="16" stroke="#000" stroke-width="5"/>
+          <circle cx="50" cy="22" r="13" stroke="#000" stroke-width="5"/>
+          <circle cx="78" cy="50" r="13" stroke="#000" stroke-width="5"/>
+          <circle cx="50" cy="78" r="13" stroke="#000" stroke-width="5"/>
+          <circle cx="22" cy="50" r="13" stroke="#000" stroke-width="5"/>
+          <path d="M50 90 L50 130" stroke="#000" stroke-width="6"/>
+          <path d="M50 105 Q30 100 35 115" stroke="#000" stroke-width="5" fill="none"/>
+        </g>
+
+        <!-- PERSONAJE CENTRAL: LA GUAGUA DE PAN -->
+        <g id="guagua">
+          <!-- Cuerpo de la guagua (forma envolvente de bebé) -->
+          <path d="M 330 170 
+                   C 330 80, 470 80, 470 170 
+                   C 470 230, 490 280, 495 380 
+                   C 500 500, 460 580, 400 580 
+                   C 340 580, 300 500, 305 380 
+                   C 310 280, 330 230, 330 170 Z" 
+                stroke="#000" stroke-width="8" stroke-linecap="round" fill="none"/>
+
+          <!-- Corona / Adorno de azúcar en la cabeza -->
+          <path d="M 355 125 Q 400 95 445 125" stroke="#000" stroke-width="6" fill="none"/>
+          <circle cx="370" cy="115" r="7" stroke="#000" stroke-width="5"/>
+          <circle cx="400" cy="108" r="8" stroke="#000" stroke-width="5"/>
+          <circle cx="430" cy="115" r="7" stroke="#000" stroke-width="5"/>
+
+          <!-- Ojos tiernos y grandes para colorear -->
+          <ellipse cx="375" cy="175" rx="14" ry="18" stroke="#000" stroke-width="6"/>
+          <ellipse cx="425" cy="175" rx="14" ry="18" stroke="#000" stroke-width="6"/>
+          <circle cx="372" cy="170" r="5" fill="#000"/>
+          <circle cx="422" cy="170" r="5" fill="#000"/>
+
+          <!-- Chapitas sonrientes -->
+          <circle cx="350" cy="195" r="10" stroke="#000" stroke-width="4" stroke-dasharray="4 3"/>
+          <circle cx="450" cy="195" r="10" stroke="#000" stroke-width="4" stroke-dasharray="4 3"/>
+
+          <!-- Gran Sonrisa -->
+          <path d="M 382 205 Q 400 225 418 205" stroke="#000" stroke-width="6" stroke-linecap="round" fill="none"/>
+
+          <!-- Cuello y bufanda/collar -->
+          <path d="M 338 238 Q 400 260 462 238" stroke="#000" stroke-width="7" fill="none"/>
+          <path d="M 342 255 Q 400 275 458 255" stroke="#000" stroke-width="5" fill="none"/>
+
+          <!-- Dibujos de azúcar en el cuerpo (vestido típico andino) -->
+          <!-- Línea zigzag -->
+          <path d="M 330 305 L 350 285 L 370 305 L 390 285 L 410 305 L 430 285 L 450 305 L 470 285" 
+                stroke="#000" stroke-width="6" fill="none" stroke-linejoin="round"/>
+
+          <!-- Botones grandes en forma de flor o corazones -->
+          <path d="M400 340 C 400 330, 385 325, 375 335 C 365 325, 350 330, 350 340 C 350 355, 375 368, 375 368 C 375 368, 400 355, 400 340 Z" stroke="#000" stroke-width="5" fill="none"/>
+          <path d="M450 340 C 450 330, 435 325, 425 335 C 415 325, 400 330, 400 340 C 400 355, 425 368, 425 368 C 425 368, 450 355, 450 340 Z" stroke="#000" stroke-width="5" fill="none"/>
+
+          <!-- Franja de rombos decorativos -->
+          <rect x="345" y="405" width="22" height="22" transform="rotate(45 356 416)" stroke="#000" stroke-width="5" fill="none"/>
+          <rect x="388" y="405" width="22" height="22" transform="rotate(45 399 416)" stroke="#000" stroke-width="5" fill="none"/>
+          <rect x="431" y="405" width="22" height="22" transform="rotate(45 442 416)" stroke="#000" stroke-width="5" fill="none"/>
+
+          <!-- Onditas en la parte inferior -->
+          <path d="M 335 480 Q 365 460 395 480 Q 425 460 465 480" stroke="#000" stroke-width="6" fill="none"/>
+          <path d="M 338 510 Q 368 490 398 510 Q 428 490 462 510" stroke="#000" stroke-width="6" fill="none"/>
+        </g>
+
+        <!-- PERSONAJE ACOMPAÑANTE: TAZA DE COLADA MORADA -->
+        <g id="taza" transform="translate(530, 310)">
+          <!-- Vapocito en forma de corazones saliendo -->
+          <path d="M 60 10 Q 75 -20 60 -40 Q 45 -60 60 -80" stroke="#000" stroke-width="4" stroke-dasharray="6 4" fill="none"/>
+          <path d="M 90 20 Q 105 -10 90 -30 Q 75 -50 90 -70" stroke="#000" stroke-width="4" stroke-dasharray="6 4" fill="none"/>
+
+          <!-- Canela sobresaliendo -->
+          <rect x="100" y="-30" width="20" height="90" rx="6" transform="rotate(15 110 15)" stroke="#000" stroke-width="5" fill="none"/>
+
+          <!-- Cuerpo de la taza -->
+          <path d="M 20 60 L 35 190 Q 85 220 135 190 L 150 60 Z" stroke="#000" stroke-width="7" stroke-linejoin="round" fill="none"/>
+          <!-- Borde superior -->
+          <ellipse cx="85" cy="60" rx="65" ry="18" stroke="#000" stroke-width="6" fill="none"/>
+          <!-- Frutita flotando -->
+          <ellipse cx="65" cy="62" rx="14" ry="8" stroke="#000" stroke-width="4"/>
+
+          <!-- Asa de la taza -->
+          <path d="M 145 90 C 190 95, 190 160, 138 175" stroke="#000" stroke-width="7" fill="none"/>
+
+          <!-- Carita tierna de la taza -->
+          <circle cx="68" cy="125" r="7" fill="#000"/>
+          <circle cx="102" cy="125" r="7" fill="#000"/>
+          <path d="M 77 145 Q 85 158 93 145" stroke="#000" stroke-width="5" fill="none" stroke-linecap="round"/>
+        </g>
+
+        <!-- TROZOS DE FRUTAS DIVERTIDAS EN EL AIRE -->
+        <!-- Mora -->
+        <g transform="translate(180, 260)">
+          <circle cx="20" cy="20" r="10" stroke="#000" stroke-width="4"/>
+          <circle cx="34" cy="20" r="10" stroke="#000" stroke-width="4"/>
+          <circle cx="27" cy="34" r="10" stroke="#000" stroke-width="4"/>
+          <circle cx="27" cy="8" r="8" stroke="#000" stroke-width="4"/>
+        </g>
+        <!-- Piña -->
+        <g transform="translate(170, 370)">
+          <path d="M 30 20 L 50 45 L 30 70 L 10 45 Z" stroke="#000" stroke-width="5" fill="none"/>
+          <path d="M 30 18 L 30 5" stroke="#000" stroke-width="4"/>
+          <path d="M 30 18 L 22 8" stroke="#000" stroke-width="4"/>
+          <path d="M 30 18 L 38 8" stroke="#000" stroke-width="4"/>
+        </g>
+      </svg>
+    </div>
+
+    <div class="footer-instructions">
+      <div>
+        🖍️ <strong>Consejo para colorear:</strong> ¡Usa tus colores favoritos! Morado para la colada, amarillo y rosado para el glaseado.
+      </div>
+      <div class="badge-ecuador">
+        🇪🇨 Tradición del Ecuador
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>
