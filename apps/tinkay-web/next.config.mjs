@@ -32,22 +32,15 @@ const nextConfig = {
     NEXT_PUBLIC_COMPILADO_EN: compiladoEn,
     ...(commit ? { NEXT_PUBLIC_COMMIT: commit } : {}),
   },
-  async redirects() {
+  async rewrites() {
     return [
       {
-        source: "/TempEscuale",
-        destination: "/TempEscuale/",
-        permanent: false,
-      },
-      {
         source: "/tempescuela",
-        destination: "/tempescuela/",
-        permanent: false,
+        destination: "/tempescuela/index.html",
       },
       {
-        source: "/TempEscuela",
-        destination: "/TempEscuale/",
-        permanent: false,
+        source: "/TempEscuale",
+        destination: "/tempescuela/index.html",
       },
     ];
   },
