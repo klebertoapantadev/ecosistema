@@ -24,6 +24,7 @@ import {
   Upload,
   Calendar,
   Power,
+  Settings2,
 } from "lucide-react";
 import {
   crearProductoAction,
@@ -50,6 +51,7 @@ interface Props {
   onCerrar: () => void;
   onProductoCreado: (prod: ProductoCatalogo) => void;
   onCategoriaCreada?: (cat: CategoriaCatalogo) => void;
+  onCategoriaEliminada?: (catId: string) => void;
   categorias: CategoriaCatalogo[];
   negocio?: string;
 }
@@ -59,6 +61,7 @@ export function ModalCrearProducto({
   onCerrar,
   onProductoCreado,
   onCategoriaCreada,
+  onCategoriaEliminada,
   categorias,
   negocio = "tranqi",
 }: Props) {
@@ -66,6 +69,7 @@ export function ModalCrearProducto({
 
   const [categoriasLocales, setCategoriasLocales] = useState<CategoriaCatalogo[]>(categorias || []);
   const [modalCatAbierto, setModalCatAbierto] = useState(false);
+  const [catModalTab, setCatModalTab] = useState<"crear" | "gestionar">("crear");
 
   useEffect(() => {
     if (categorias && categorias.length > 0) {
@@ -543,27 +547,56 @@ export function ModalCrearProducto({
                 <label style={{ fontSize: "0.78rem", fontWeight: 600, color: "#334155" }}>
                   Categoría / Colección *
                 </label>
-                <button
-                  type="button"
-                  onClick={() => setModalCatAbierto(true)}
-                  style={{
-                    background: "none",
-                    border: "none",
-                    color: esFloristeria ? "#E11D48" : "#0284C7",
-                    fontSize: "0.74rem",
-                    fontWeight: 700,
-                    cursor: "pointer",
-                    padding: "2px 6px",
-                    borderRadius: "4px",
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "4px",
-                  }}
-                  title={esFloristeria ? "Crear nueva colección floral" : "Crear nueva categoría"}
-                >
-                  <FolderPlus size={13} />
-                  <span>+ Nueva</span>
-                </button>
+                <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCatModalTab("crear");
+                      setModalCatAbierto(true);
+                    }}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      color: esFloristeria ? "#E11D48" : "#0284C7",
+                      fontSize: "0.74rem",
+                      fontWeight: 700,
+                      cursor: "pointer",
+                      padding: "2px 6px",
+                      borderRadius: "4px",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "4px",
+                    }}
+                    title={esFloristeria ? "Crear nueva colección floral" : "Crear nueva categoría"}
+                  >
+                    <FolderPlus size={13} />
+                    <span>+ Nueva</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCatModalTab("gestionar");
+                      setModalCatAbierto(true);
+                    }}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      color: "#64748B",
+                      fontSize: "0.74rem",
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      padding: "2px 6px",
+                      borderRadius: "4px",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "4px",
+                    }}
+                    title="Administrar y eliminar categorías existentes"
+                  >
+                    <Settings2 size={13} />
+                    <span>Gestionar</span>
+                  </button>
+                </div>
               </div>
               <select
                 value={categoriaId}
@@ -1692,15 +1725,28 @@ export function ModalCrearProducto({
         </form>
       </div>
 
-      {/* Modal para Crear Nueva Categoría / Colección en línea */}
+      {/* Modal para Crear y Administrar / Eliminar Categorías */}
       <ModalCrearCategoria
         abierto={modalCatAbierto}
+        tabInicial={catModalTab}
         onCerrar={() => setModalCatAbierto(false)}
         onCategoriaCreada={(nueva) => {
           setCategoriasLocales((prev) => [...prev, nueva]);
           setCategoriaId(nueva.ctg_id);
           if (onCategoriaCreada) {
             onCategoriaCreada(nueva);
+          }
+        }}
+        onCategoriaEliminada={(catIdEliminada) => {
+          setCategoriasLocales((prev) => {
+            const rest = prev.filter((c) => c.ctg_id !== catIdEliminada && c.ctg_slug !== catIdEliminada);
+            if (categoriaId === catIdEliminada && rest[0]) {
+              setCategoriaId(rest[0].ctg_id);
+            }
+            return rest;
+          });
+          if (onCategoriaEliminada) {
+            onCategoriaEliminada(catIdEliminada);
           }
         }}
         negocio={negocio}

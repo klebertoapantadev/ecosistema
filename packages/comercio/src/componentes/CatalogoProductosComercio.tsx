@@ -35,6 +35,7 @@ import {
   Square,
   Globe,
   Building2,
+  Settings2,
 } from "lucide-react";
 import {
   ProductoCatalogo,
@@ -99,6 +100,7 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
 
   const [modalProdAbierto, setModalProdAbierto] = useState(false);
   const [modalCatAbierto, setModalCatAbierto] = useState(false);
+  const [catModalTab, setCatModalTab] = useState<"crear" | "gestionar">("crear");
   const [productoAEditar, setProductoAEditar] = useState<ProductoCatalogo | null>(null);
   const [varianteAEditarId, setVarianteAEditarId] = useState<string | undefined>(undefined);
   const [modalEditarAbierto, setModalEditarAbierto] = useState(false);
@@ -692,7 +694,10 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
 
               <button
                 type="button"
-                onClick={() => setModalCatAbierto(true)}
+                onClick={() => {
+                  setCatModalTab("crear");
+                  setModalCatAbierto(true);
+                }}
                 className="btn-responsive-accion"
                 title="Crear Nueva Categoría"
                 aria-label="Crear Nueva Categoría"
@@ -712,6 +717,33 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
               >
                 <FolderPlus size={15} />
                 <span className="btn-texto-responsive">{esFloristeria ? "Nueva Colección" : "Nueva Categoría"}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setCatModalTab("gestionar");
+                  setModalCatAbierto(true);
+                }}
+                className="btn-responsive-accion"
+                title="Administrar y Eliminar Categorías"
+                aria-label="Gestionar Categorías"
+                style={{
+                  background: "#FFFFFF",
+                  color: "#475569",
+                  border: "1px solid #CBD5E1",
+                  padding: "8px 12px",
+                  borderRadius: "8px",
+                  fontSize: "0.85rem",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px",
+                }}
+              >
+                <Settings2 size={15} />
+                <span className="btn-texto-responsive">Gestionar</span>
               </button>
               <button
                 type="button"
@@ -1060,27 +1092,55 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
           ))}
 
           {modoVista === "admin" && (
-            <button
-              type="button"
-              onClick={() => setModalCatAbierto(true)}
-              style={{
-                padding: "5px 12px",
-                borderRadius: "8px",
-                fontSize: "0.78rem",
-                fontWeight: 700,
-                cursor: "pointer",
-                border: "1.5px dashed #CBD5E1",
-                background: "#FFFFFF",
-                color: esFloristeria ? "#E11D48" : "#0284C7",
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "4px",
-              }}
-              title={esFloristeria ? "Crear nueva colección floral" : "Crear nueva categoría"}
-            >
-              <FolderPlus size={13} />
-              <span>{esFloristeria ? "+ Colección" : "+ Categoría"}</span>
-            </button>
+            <div style={{ display: "inline-flex", gap: "4px" }}>
+              <button
+                type="button"
+                onClick={() => {
+                  setCatModalTab("crear");
+                  setModalCatAbierto(true);
+                }}
+                style={{
+                  padding: "5px 12px",
+                  borderRadius: "8px",
+                  fontSize: "0.78rem",
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  border: "1.5px dashed #CBD5E1",
+                  background: "#FFFFFF",
+                  color: esFloristeria ? "#E11D48" : "#0284C7",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "4px",
+                }}
+                title={esFloristeria ? "Crear nueva colección floral" : "Crear nueva categoría"}
+              >
+                <FolderPlus size={13} />
+                <span>{esFloristeria ? "+ Colección" : "+ Categoría"}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setCatModalTab("gestionar");
+                  setModalCatAbierto(true);
+                }}
+                style={{
+                  padding: "5px 8px",
+                  borderRadius: "8px",
+                  fontSize: "0.78rem",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  border: "1px solid #CBD5E1",
+                  background: "#F8FAFC",
+                  color: "#64748B",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "4px",
+                }}
+                title="Administrar y eliminar colecciones"
+              >
+                <Settings2 size={12} />
+              </button>
+            </div>
           )}
         </div>
       </div>
@@ -2578,12 +2638,21 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
         negocio={negocio}
       />
 
-      {/* Modal Crear Categoría */}
+      {/* Modal Crear y Administrar Categoría */}
       <ModalCrearCategoria
         abierto={modalCatAbierto}
+        tabInicial={catModalTab}
         onCerrar={() => setModalCatAbierto(false)}
         onCategoriaCreada={(nueva) => {
           setCategoriasLista((prev) => [...prev, nueva]);
+        }}
+        onCategoriaEliminada={(catIdEliminada) => {
+          setCategoriasLista((prev) =>
+            prev.filter((c) => c.ctg_id !== catIdEliminada && c.ctg_slug !== catIdEliminada)
+          );
+          if (categoriaSeleccionada === catIdEliminada) {
+            setCategoriaSeleccionada("todas");
+          }
         }}
         negocio={negocio}
       />

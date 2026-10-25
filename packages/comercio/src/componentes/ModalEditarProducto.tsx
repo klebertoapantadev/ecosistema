@@ -38,6 +38,7 @@ import {
   Calendar,
   Power,
   Camera,
+  Settings2,
 } from "lucide-react";
 import {
   editarProductoAction,
@@ -323,6 +324,7 @@ interface Props {
   onProductoEditado: (prod: ProductoCatalogo) => void;
   onProductoEliminado: (proId: string) => void;
   onCategoriaCreada?: (cat: CategoriaCatalogo) => void;
+  onCategoriaEliminada?: (catId: string) => void;
   categorias: CategoriaCatalogo[];
   negocio?: string;
   onAbrirManual?: () => void;
@@ -336,6 +338,7 @@ export function ModalEditarProducto({
   onProductoEditado,
   onProductoEliminado,
   onCategoriaCreada,
+  onCategoriaEliminada,
   categorias,
   negocio = "tranqi",
   onAbrirManual,
@@ -344,6 +347,7 @@ export function ModalEditarProducto({
 
   const [categoriasLocales, setCategoriasLocales] = useState<CategoriaCatalogo[]>(categorias || []);
   const [modalCatAbierto, setModalCatAbierto] = useState(false);
+  const [catModalTab, setCatModalTab] = useState<"crear" | "gestionar">("crear");
 
   useEffect(() => {
     if (categorias && categorias.length > 0) {
@@ -1684,27 +1688,56 @@ export function ModalEditarProducto({
                     <label style={{ fontSize: "0.78rem", fontWeight: 600, color: "#334155" }}>
                       Categoría / Colección *
                     </label>
-                    <button
-                      type="button"
-                      onClick={() => setModalCatAbierto(true)}
-                      style={{
-                        background: "none",
-                        border: "none",
-                        color: esFloristeria ? "#E11D48" : "#0284C7",
-                        fontSize: "0.74rem",
-                        fontWeight: 700,
-                        cursor: "pointer",
-                        padding: "2px 6px",
-                        borderRadius: "4px",
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: "4px",
-                      }}
-                      title={esFloristeria ? "Crear nueva colección floral" : "Crear nueva categoría"}
-                    >
-                      <FolderPlus size={13} />
-                      <span>+ Nueva</span>
-                    </button>
+                    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setCatModalTab("crear");
+                          setModalCatAbierto(true);
+                        }}
+                        style={{
+                          background: "none",
+                          border: "none",
+                          color: esFloristeria ? "#E11D48" : "#0284C7",
+                          fontSize: "0.74rem",
+                          fontWeight: 700,
+                          cursor: "pointer",
+                          padding: "2px 6px",
+                          borderRadius: "4px",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "4px",
+                        }}
+                        title={esFloristeria ? "Crear nueva colección floral" : "Crear nueva categoría"}
+                      >
+                        <FolderPlus size={13} />
+                        <span>+ Nueva</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setCatModalTab("gestionar");
+                          setModalCatAbierto(true);
+                        }}
+                        style={{
+                          background: "none",
+                          border: "none",
+                          color: "#64748B",
+                          fontSize: "0.74rem",
+                          fontWeight: 600,
+                          cursor: "pointer",
+                          padding: "2px 6px",
+                          borderRadius: "4px",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "4px",
+                        }}
+                        title="Administrar y eliminar categorías existentes"
+                      >
+                        <Settings2 size={13} />
+                        <span>Gestionar</span>
+                      </button>
+                    </div>
                   </div>
                   <select
                     value={categoriaId}
@@ -3689,44 +3722,6 @@ export function ModalEditarProducto({
                             }}
                           />
 
-                          <label
-                            style={{
-                              background: subiendoImagenVariante ? "#94A3B8" : "#0F172A",
-                              color: "#FFFFFF",
-                              padding: "7px 11px",
-                              borderRadius: "6px",
-                              fontSize: "0.72rem",
-                              fontWeight: 700,
-                              cursor: subiendoImagenVariante ? "wait" : "pointer",
-                              display: "inline-flex",
-                              alignItems: "center",
-                              gap: "4px",
-                              whiteSpace: "nowrap",
-                              flexShrink: 0,
-                            }}
-                            title="Cargar una o varias fotos (la primera será la portada; el resto va a la galería del tamaño)"
-                          >
-                            {subiendoImagenVariante ? (
-                              <>
-                                <Loader2 size={12} className="animate-spin" />
-                                <span>Subiendo...</span>
-                              </>
-                            ) : (
-                              <>
-                                <Upload size={12} />
-                                <span>📁 Subir PC</span>
-                              </>
-                            )}
-                            <input
-                              type="file"
-                              accept="image/*"
-                              multiple
-                              disabled={subiendoImagenVariante}
-                              onChange={handleSubirArchivoVariante}
-                              style={{ display: "none" }}
-                            />
-                          </label>
-
                           <button
                             type="button"
                             onClick={() => {
@@ -3737,21 +3732,21 @@ export function ModalEditarProducto({
                               background: "#0284C7",
                               color: "#FFFFFF",
                               border: "none",
-                              padding: "7px 10px",
+                              padding: "7px 12px",
                               borderRadius: "6px",
-                              fontSize: "0.72rem",
+                              fontSize: "0.74rem",
                               fontWeight: 700,
                               cursor: "pointer",
                               display: "inline-flex",
                               alignItems: "center",
-                              gap: "4px",
+                              gap: "5px",
                               whiteSpace: "nowrap",
                               boxShadow: "0 1px 2px rgba(2, 132, 199, 0.2)",
                             }}
-                            title="Abrir galería de medios"
+                            title="Abrir galería de medios (puedes seleccionar una imagen existente o subir nuevas fotos desde tu PC)"
                           >
-                            <ImageIcon size={12} />
-                            <span>🖼️ Galería</span>
+                            <ImageIcon size={13} />
+                            <span>Galería</span>
                           </button>
 
                           <button
@@ -4059,34 +4054,6 @@ export function ModalEditarProducto({
                           {(varianteActual.var_detalle_variante?.galeria_urls || []).length} fotos añadidas
                         </span>
 
-                        <label
-                          style={{
-                            fontSize: "0.72rem",
-                            fontWeight: 700,
-                            color: colActiva.text,
-                            background: colActiva.badge,
-                            border: `1px solid ${colActiva.border}`,
-                            borderRadius: "6px",
-                            padding: "4px 8px",
-                            cursor: subiendoGaleriaVariante ? "wait" : "pointer",
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: "4px",
-                          }}
-                          title="Subir una o varias fotos desde tu computadora para esta variante"
-                        >
-                          {subiendoGaleriaVariante ? <Loader2 size={12} className="animate-spin" /> : <Upload size={12} />}
-                          <span>+ Subir PC (Varios)</span>
-                          <input
-                            type="file"
-                            accept="image/*"
-                            multiple
-                            disabled={subiendoGaleriaVariante}
-                            onChange={handleSubirArchivosGaleriaVariante}
-                            style={{ display: "none" }}
-                          />
-                        </label>
-
                         <button
                           type="button"
                           onClick={() => {
@@ -4098,24 +4065,25 @@ export function ModalEditarProducto({
                             color: "#FFFFFF",
                             border: "none",
                             borderRadius: "6px",
-                            padding: "4px 10px",
-                            fontSize: "0.72rem",
+                            padding: "5px 12px",
+                            fontSize: "0.74rem",
                             fontWeight: 700,
                             cursor: "pointer",
                             display: "inline-flex",
                             alignItems: "center",
-                            gap: "4px",
+                            gap: "5px",
+                            boxShadow: "0 1px 2px rgba(2, 132, 199, 0.2)",
                           }}
-                          title="Abrir galería de medios del negocio y seleccionar una o varias imágenes"
+                          title="Abrir galería de medios para seleccionar o subir fotos para este tamaño"
                         >
-                          <ImageIcon size={12} />
+                          <ImageIcon size={13} />
                           <span>+ Seleccionar de Galería</span>
                         </button>
                       </div>
                     </div>
 
                     <p style={{ fontSize: "0.7rem", color: "#64748B", margin: "0 0 8px 0" }}>
-                      Ingresa varias URLs (una por línea) o selecciónalas de la galería/PC. Estas fotos se mostrarán en el carrusel cuando el cliente seleccione este tamaño.
+                      Ingresa varias URLs (una por línea) o selecciónalas desde la Galería (donde también puedes subir fotos nuevas desde tu PC). Estas fotos se mostrarán en el carrusel cuando el cliente seleccione este tamaño.
                     </p>
 
                     <textarea
@@ -4884,15 +4852,28 @@ export function ModalEditarProducto({
         </form>
       </div>
 
-      {/* Modal para Crear Nueva Categoría / Colección en línea */}
+      {/* Modal para Crear y Administrar / Eliminar Categorías */}
       <ModalCrearCategoria
         abierto={modalCatAbierto}
+        tabInicial={catModalTab}
         onCerrar={() => setModalCatAbierto(false)}
         onCategoriaCreada={(nueva) => {
           setCategoriasLocales((prev) => [...prev, nueva]);
           setCategoriaId(nueva.ctg_id);
           if (onCategoriaCreada) {
             onCategoriaCreada(nueva);
+          }
+        }}
+        onCategoriaEliminada={(catIdEliminada) => {
+          setCategoriasLocales((prev) => {
+            const rest = prev.filter((c) => c.ctg_id !== catIdEliminada && c.ctg_slug !== catIdEliminada);
+            if (categoriaId === catIdEliminada && rest[0]) {
+              setCategoriaId(rest[0].ctg_id);
+            }
+            return rest;
+          });
+          if (onCategoriaEliminada) {
+            onCategoriaEliminada(catIdEliminada);
           }
         }}
         negocio={negocio}

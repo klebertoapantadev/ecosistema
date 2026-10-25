@@ -58,6 +58,15 @@ La interfaz de usuario (`tinkay-web`) adopta el contexto de la categoría desde 
 3. **Modo Amor / Aniversario (`CAT_OCAS_AMOR` / `CAT_OCAS_ANIV`):**
    * Cross-selling sugerido: *Caja Ferrero Rocher*, *Globo burbuja helio personalizado*, *Set mariposas 3D*.
 
+### D. Gestión y Eliminación Segura de Colecciones (Control de Integridad Referencial)
+
+1. **Creación Ágil de Colecciones:** Se realiza mediante el diálogo `ModalCrearCategoria`, permitiendo definir el nombre, slug, orden, portada, spot de video y álbum de fotos de Google Photos.
+2. **Control Anti-Orfandad al Eliminar:**
+   - La opción de eliminación verifica si existen arreglos o productos que apunten a la colección (tanto como `pro_categoria_principal_id` como en `com_producto_categoria`).
+   - Si la colección cuenta con 1 o más productos asociados, la acción se bloquea de forma estricta (botón inactivo con candado `🔒 En uso` y rechazo en RPC `com_fn_eliminar_categoria_catalogo`).
+   - Solo cuando la colección tenga 0 productos asignados se habilita el botón `Eliminar`, permitiendo su baja segura previa confirmación.
+3. **Sincronización Reactiva:** Al dar de baja una colección vacía, se actualizan inmediatamente los selectores de los modales de creación/edición y los filtros de la vitrina comercial.
+
 ---
 
 ## 2. Productos Maestros y Variantes (`com_producto` y `com_variante`)

@@ -1686,6 +1686,7 @@ const PRODUCTOS_SEMILLA_TINKAY: ProductoCatalogo[] = [
 // Almacén en memoria para productos y categorías creados dinámicamente durante la sesión
 const storeCustomCategorias: Map<string, CategoriaCatalogo[]> = new Map();
 const storeCustomProductos: Map<string, ProductoCatalogo[]> = new Map();
+const storeCategoriasEliminadas: Set<string> = new Set();
 
 // Helper para generar slug simple
 
@@ -1773,7 +1774,13 @@ export async function obtenerCategoriasAction(negocio = "tranqi"): Promise<Categ
     }
   });
 
-  return resultado;
+  // Filtrar categorías que hayan sido dadas de baja en sesión
+  return resultado.filter(
+    (c) =>
+      !storeCategoriasEliminadas.has(c.ctg_id) &&
+      !storeCategoriasEliminadas.has(c.ctg_slug) &&
+      c.ctg_activo !== false
+  );
 }
 
 /**
@@ -2476,6 +2483,352 @@ export async function crearCategoriaAction(datos: {
     return { ok: true, categoria: categoriaGuardada };
   } catch (err: any) {
     return { ok: false, error: err.message || "Error al crear la categoría." };
+  }
+}
+
+/**
+ * Consulta y calcula el uso de cada categoría del negocio indicando cuántos productos tiene asignados
+ */
+export async function obtenerCategoriasConUsoAction(
+  negocio = "tranqi"
+): Promise<Array<CategoriaCatalogo & { productos_conteo: number; en_uso: boolean }>> {
+  const { principal } = normalizarIdentificadorNegocio(negocio);
+  let admin: any = null;
+  let supabase: any = null;
+  try {
+    admin = crearClienteAdmin();
+  } catch {}
+  try {
+    supabase = await crearClienteServidor();
+  } catch {}
+  const clienteActivo = admin || supabase;
+
+  // 1. Intentar RPC en base de datos
+  if (clienteActivo) {
+    try {
+      const { data: rpcRes, error: errRpc } = await clienteActivo
+        .schema("comun_comercio")
+        .rpc("com_fn_obtener_categorias_con_uso", { p_negocio: principal });
+      if (!errRpc && Array.isArray(rpcRes) && rpcRes.length > 0) {
+        return rpcRes.filter(
+          (c: any) =>
+            !storeCategoriasEliminadas.has(c.ctg_id) &&
+            !storeCategoriasEliminadas.has(c.ctg_slug)
+        );
+      }
+    } catch {
+      // Fallback
+    }
+
+    try {
+      const { data: rpcPub, error: errPub } = await clienteActivo.rpc(
+        "com_fn_obtener_categorias_con_uso",
+        { p_negocio: principal }
+      );
+      if (!errPub && Array.isArray(rpcPub) && rpcPub.length > 0) {
+        return rpcPub.filter(
+          (c: any) =>
+            !storeCategoriasEliminadas.has(c.ctg_id) &&
+            !storeCategoriasEliminadas.has(c.ctg_slug)
+        );
+      }
+    } catch {
+      // Fallback
+    }
+  }
+
+  // 2. Fallback calculado: mezclar categorías y productos
+  const [categorias, productos] = await Promise.all([
+    obtenerCategoriasAction(negocio),
+    obtenerCatalogoProductosAction(negocio, undefined, true),
+  ]);
+
+  return categorias.map((cat) => {
+    const conteo = productos.filter(
+      (p) =>
+        p.pro_categoria_principal_id === cat.ctg_id ||
+        p.categoria?.ctg_id === cat.ctg_id ||
+        p.categoria?.ctg_slug === cat.ctg_slug ||
+        p.pro_detalle_producto?.categoria_id === cat.ctg_id
+    ).length;
+
+    return {
+      ...cat,
+      productos_conteo: conteo,
+      en_uso: conteo > 0,
+    };
+  });
+}
+
+/**
+ * Verifica si una categoría en particular está en uso por algún producto u oferta comercial
+ */
+export async function verificarUsoCategoriaAction(
+  categoriaId: string,
+  negocio = "tranqi"
+): Promise<{
+  enUso: boolean;
+  conteoProductos: number;
+  nombresEjemplo?: string[];
+  error?: string;
+}> {
+  if (!categoriaId || !categoriaId.trim()) {
+    return { enUso: false, conteoProductos: 0 };
+  }
+
+  const { principal } = normalizarIdentificadorNegocio(negocio);
+  const idLimpio = categoriaId.trim();
+
+  let admin: any = null;
+  let supabase: any = null;
+  try {
+    admin = crearClienteAdmin();
+  } catch {}
+  try {
+    supabase = await crearClienteServidor();
+  } catch {}
+  const clienteActivo = admin || supabase;
+
+  let conteoDb = 0;
+  let ejemplosDb: string[] = [];
+
+  if (clienteActivo) {
+    try {
+      // Verificar productos con FK principal o campo en detalle
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(idLimpio);
+
+      let query = clienteActivo
+        .schema("comun_comercio")
+        .from("com_producto")
+        .select("pro_id, pro_nombre, pro_categoria_principal_id")
+        .is("pro_eliminado_en", null);
+
+      if (isUuid) {
+        query = query.eq("pro_categoria_principal_id", idLimpio);
+      } else {
+        query = query.or(
+          `pro_categoria_principal_id.eq.${idLimpio},pro_detalle_producto->>categoria_id.eq.${idLimpio}`
+        );
+      }
+
+      const { data: prods, error: errProd } = await query;
+      if (!errProd && prods) {
+        conteoDb = prods.length;
+        ejemplosDb = prods.slice(0, 3).map((p: any) => p.pro_nombre).filter(Boolean);
+      }
+    } catch {
+      // Fallback
+    }
+  }
+
+  // Comprobar también productos en memoria
+  const prodsMem = await obtenerCatalogoProductosAction(negocio, undefined, true);
+  const prodsMemUso = prodsMem.filter(
+    (p) =>
+      p.pro_categoria_principal_id === idLimpio ||
+      p.categoria?.ctg_id === idLimpio ||
+      p.categoria?.ctg_slug === idLimpio ||
+      p.pro_detalle_producto?.categoria_id === idLimpio
+  );
+
+  const totalConteo = Math.max(conteoDb, prodsMemUso.length);
+  const ejemplos = ejemplosDb.length > 0 ? ejemplosDb : prodsMemUso.slice(0, 3).map((p) => p.pro_nombre);
+
+  return {
+    enUso: totalConteo > 0,
+    conteoProductos: totalConteo,
+    nombresEjemplo: ejemplos,
+  };
+}
+
+/**
+ * Elimina una categoría comercial con control estricto de integridad:
+ * Si la categoría está en uso por 1 o más productos, la operación se bloquea.
+ */
+export async function eliminarCategoriaAction(datos: {
+  categoriaId: string;
+  negocio?: string;
+}): Promise<{
+  ok: boolean;
+  enUso?: boolean;
+  conteoProductos?: number;
+  error?: string;
+  mensaje?: string;
+}> {
+  try {
+    const { principal } = normalizarIdentificadorNegocio(datos.negocio);
+    const negocio = principal;
+    const catId = datos.categoriaId?.trim();
+
+    if (!catId) {
+      return { ok: false, error: "Identificador de categoría inválido." };
+    }
+
+    let admin: any = null;
+    let supabase: any = null;
+    try {
+      admin = crearClienteAdmin();
+    } catch {}
+    try {
+      supabase = await crearClienteServidor();
+    } catch {}
+    const clienteActivo = admin || supabase;
+
+    // 1. Intentar RPC transaccional seguro (Security Definer)
+    if (clienteActivo) {
+      try {
+        const { data: rpcRes, error: errRpc } = await clienteActivo
+          .schema("comun_comercio")
+          .rpc("com_fn_eliminar_categoria_catalogo", {
+            p_categoria_id: catId,
+            p_negocio: negocio,
+          });
+
+        if (!errRpc && rpcRes) {
+          if (rpcRes.ok === false) {
+            return {
+              ok: false,
+              enUso: Boolean(rpcRes.en_uso),
+              conteoProductos: rpcRes.conteo_productos || 0,
+              error: rpcRes.error || "No se puede eliminar la categoría.",
+            };
+          }
+
+          // Éxito confirmado por la base de datos
+          storeCategoriasEliminadas.add(catId);
+          if (rpcRes.categoria_id) {
+            storeCategoriasEliminadas.add(String(rpcRes.categoria_id));
+          }
+
+          // Limpiar de store local si existía
+          const actuales = storeCustomCategorias.get(negocio) || [];
+          storeCustomCategorias.set(
+            negocio,
+            actuales.filter((c) => c.ctg_id !== catId && c.ctg_slug !== catId)
+          );
+
+          revalidatePath("/panel/catalogo-productos");
+          return {
+            ok: true,
+            mensaje: rpcRes.mensaje || "Categoría eliminada exitosamente.",
+          };
+        }
+      } catch {
+        // Fallback a verificación directa
+      }
+
+      // Probar wrapper en public
+      try {
+        const { data: rpcPub, error: errPub } = await clienteActivo.rpc(
+          "com_fn_eliminar_categoria_catalogo",
+          {
+            p_categoria_id: catId,
+            p_negocio: negocio,
+          }
+        );
+
+        if (!errPub && rpcPub) {
+          if (rpcPub.ok === false) {
+            return {
+              ok: false,
+              enUso: Boolean(rpcPub.en_uso),
+              conteoProductos: rpcPub.conteo_productos || 0,
+              error: rpcPub.error || "No se puede eliminar la categoría.",
+            };
+          }
+
+          storeCategoriasEliminadas.add(catId);
+          if (rpcPub.categoria_id) {
+            storeCategoriasEliminadas.add(String(rpcPub.categoria_id));
+          }
+
+          const actuales = storeCustomCategorias.get(negocio) || [];
+          storeCustomCategorias.set(
+            negocio,
+            actuales.filter((c) => c.ctg_id !== catId && c.ctg_slug !== catId)
+          );
+
+          revalidatePath("/panel/catalogo-productos");
+          return {
+            ok: true,
+            mensaje: rpcPub.mensaje || "Categoría eliminada exitosamente.",
+          };
+        }
+      } catch {
+        // Fallback
+      }
+    }
+
+    // 2. Control de integridad directo si el RPC aún no está creado o en desarrollo local
+    const verificacion = await verificarUsoCategoriaAction(catId, negocio);
+    if (verificacion.enUso && verificacion.conteoProductos > 0) {
+      const ejemplos = verificacion.nombresEjemplo?.length
+        ? ` (ej. ${verificacion.nombresEjemplo.join(", ")})`
+        : "";
+      return {
+        ok: false,
+        enUso: true,
+        conteoProductos: verificacion.conteoProductos,
+        error: `No se puede eliminar la categoría porque está en uso por ${verificacion.conteoProductos} producto(s)${ejemplos}. Reasigna o retira los productos asociados antes de eliminarla.`,
+      };
+    }
+
+    // 3. Si no está en uso: dar de baja en Supabase
+    if (clienteActivo) {
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(catId);
+
+      try {
+        let updateQuery = clienteActivo
+          .schema("comun_comercio")
+          .from("com_categoria")
+          .update({
+            ctg_activo: false,
+            ctg_eliminado_en: new Date().toISOString(),
+            ctg_actualizado_en: new Date().toISOString(),
+          });
+
+        if (isUuid) {
+          updateQuery = updateQuery.eq("ctg_id", catId);
+        } else {
+          updateQuery = updateQuery.or(`ctg_id.eq.${catId},ctg_slug.eq.${catId}`);
+        }
+
+        await updateQuery;
+
+        // Intentar delete físico si no tiene dependencias
+        let deleteQuery = clienteActivo
+          .schema("comun_comercio")
+          .from("com_categoria")
+          .delete();
+        if (isUuid) {
+          deleteQuery = deleteQuery.eq("ctg_id", catId);
+        } else {
+          deleteQuery = deleteQuery.or(`ctg_id.eq.${catId},ctg_slug.eq.${catId}`);
+        }
+        await deleteQuery;
+      } catch {
+        // Soft delete y registro en memoria
+      }
+    }
+
+    // 4. Registrar en store local de eliminadas y limpiar
+    storeCategoriasEliminadas.add(catId);
+    const actuales = storeCustomCategorias.get(negocio) || [];
+    storeCustomCategorias.set(
+      negocio,
+      actuales.filter((c) => c.ctg_id !== catId && c.ctg_slug !== catId)
+    );
+
+    revalidatePath("/panel/catalogo-productos");
+    return {
+      ok: true,
+      mensaje: "Categoría eliminada exitosamente del catálogo.",
+    };
+  } catch (err: any) {
+    return {
+      ok: false,
+      error: err.message || "Error al procesar la eliminación de la categoría.",
+    };
   }
 }
 

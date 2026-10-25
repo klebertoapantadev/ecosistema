@@ -19,6 +19,7 @@ import {
   FileCheck,
   CheckCircle2,
   Share2,
+  Settings2,
 } from "lucide-react";
 import {
   ProductoCatalogo,
@@ -49,6 +50,7 @@ export function ConsolaGestionCatalogo({ negocio = "tranqi" }: Props) {
   // Modales
   const [modalProdAbierto, setModalProdAbierto] = useState(false);
   const [modalCatAbierto, setModalCatAbierto] = useState(false);
+  const [catModalTab, setCatModalTab] = useState<"crear" | "gestionar">("crear");
   const [productoAEditar, setProductoAEditar] = useState<ProductoCatalogo | null>(null);
   const [modalEditarAbierto, setModalEditarAbierto] = useState(false);
   const [modalGaleriaGlobalAbierto, setModalGaleriaGlobalAbierto] = useState(false);
@@ -262,7 +264,10 @@ export function ConsolaGestionCatalogo({ negocio = "tranqi" }: Props) {
 
           <button
             type="button"
-            onClick={() => setModalCatAbierto(true)}
+            onClick={() => {
+              setCatModalTab("crear");
+              setModalCatAbierto(true);
+            }}
             className="btn-responsive-accion"
             title="Crear nueva categoría de servicios"
             aria-label="Crear nueva categoría de servicios"
@@ -282,6 +287,33 @@ export function ConsolaGestionCatalogo({ negocio = "tranqi" }: Props) {
           >
             <FolderPlus size={16} />
             <span className="btn-texto-responsive">Nueva Categoría</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setCatModalTab("gestionar");
+              setModalCatAbierto(true);
+            }}
+            className="btn-responsive-accion"
+            title="Administrar y eliminar categorías"
+            aria-label="Administrar categorías"
+            style={{
+              background: "#FFFFFF",
+              border: "1px solid #CBD5E1",
+              color: "#475569",
+              padding: "8px 12px",
+              borderRadius: "8px",
+              fontSize: "0.82rem",
+              fontWeight: 600,
+              cursor: "pointer",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+            }}
+          >
+            <Settings2 size={16} />
+            <span className="btn-texto-responsive">Gestionar</span>
           </button>
 
           <button
@@ -654,8 +686,17 @@ export function ConsolaGestionCatalogo({ negocio = "tranqi" }: Props) {
 
       <ModalCrearCategoria
         abierto={modalCatAbierto}
+        tabInicial={catModalTab}
         onCerrar={() => setModalCatAbierto(false)}
         onCategoriaCreada={(nueva) => setCategoriasLista((prev) => [...prev, nueva])}
+        onCategoriaEliminada={(catIdEliminada) => {
+          setCategoriasLista((prev) =>
+            prev.filter((c) => c.ctg_id !== catIdEliminada && c.ctg_slug !== catIdEliminada)
+          );
+          if (categoriaSeleccionada === catIdEliminada) {
+            setCategoriaSeleccionada("todas");
+          }
+        }}
         negocio={negocio}
       />
 

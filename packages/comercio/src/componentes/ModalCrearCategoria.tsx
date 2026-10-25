@@ -1,20 +1,56 @@
 "use client";
 
-import React, { useState } from "react";
-import { X, FolderPlus, Flower2, Scale, Wrench, CheckCircle2, AlertCircle, Image as ImageIcon } from "lucide-react";
-import { crearCategoriaAction, CategoriaCatalogo } from "../acciones";
+import React, { useState, useEffect } from "react";
+import {
+  X,
+  FolderPlus,
+  Flower2,
+  CheckCircle2,
+  AlertCircle,
+  Image as ImageIcon,
+  Trash2,
+  Settings2,
+  Lock,
+  Search,
+  RefreshCw,
+  AlertTriangle,
+  Info,
+} from "lucide-react";
+import {
+  crearCategoriaAction,
+  eliminarCategoriaAction,
+  obtenerCategoriasConUsoAction,
+  CategoriaCatalogo,
+} from "../acciones";
 import { detectarTipoNegocio } from "../utils/negocio";
+
+type CategoriaConUso = CategoriaCatalogo & {
+  productos_conteo: number;
+  en_uso: boolean;
+};
 
 interface Props {
   abierto: boolean;
   onCerrar: () => void;
   onCategoriaCreada: (cat: CategoriaCatalogo) => void;
+  onCategoriaEliminada?: (categoriaId: string) => void;
   negocio?: string;
+  tabInicial?: "crear" | "gestionar";
 }
 
-export function ModalCrearCategoria({ abierto, onCerrar, onCategoriaCreada, negocio = "tranqi" }: Props) {
-  const { esFloristeria, esLegal, esMantenimiento } = detectarTipoNegocio(negocio);
+export function ModalCrearCategoria({
+  abierto,
+  onCerrar,
+  onCategoriaCreada,
+  onCategoriaEliminada,
+  negocio = "tranqi",
+  tabInicial = "crear",
+}: Props) {
+  const { esFloristeria } = detectarTipoNegocio(negocio);
 
+  const [tabActiva, setTabActiva] = useState<"crear" | "gestionar">(tabInicial);
+
+  // Estados Formulario Crear
   const [nombre, setNombre] = useState("");
   const [slug, setSlug] = useState("");
   const [descripcion, setDescripcion] = useState("");
@@ -24,7 +60,40 @@ export function ModalCrearCategoria({ abierto, onCerrar, onCategoriaCreada, nego
   const [videoUrl, setVideoUrl] = useState("");
   const [albumFotosUrl, setAlbumFotosUrl] = useState("");
   const [guardando, setGuardando] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [errorCrear, setErrorCrear] = useState<string | null>(null);
+
+  // Estados Tab Gestionar / Eliminar
+  const [categoriasUso, setCategoriasUso] = useState<CategoriaConUso[]>([]);
+  const [cargandoLista, setCargandoLista] = useState(false);
+  const [busqueda, setBusqueda] = useState("");
+  const [catAEliminar, setCatAEliminar] = useState<CategoriaConUso | null>(null);
+  const [eliminandoId, setEliminandoId] = useState<string | null>(null);
+  const [mensajeErrorGestion, setMensajeErrorGestion] = useState<string | null>(null);
+  const [mensajeExitoGestion, setMensajeExitoGestion] = useState<string | null>(null);
+
+  // Sincronizar tab inicial cuando se abre el modal
+  useEffect(() => {
+    if (abierto) {
+      setTabActiva(tabInicial);
+      setErrorCrear(null);
+      setMensajeErrorGestion(null);
+      setMensajeExitoGestion(null);
+      setCatAEliminar(null);
+      cargarCategoriasConUso();
+    }
+  }, [abierto, tabInicial, negocio]);
+
+  const cargarCategoriasConUso = async () => {
+    setCargandoLista(true);
+    try {
+      const datos = await obtenerCategoriasConUsoAction(negocio);
+      setCategoriasUso(datos);
+    } catch (err: any) {
+      setMensajeErrorGestion(err?.message || "No se pudo cargar la lista de categorías.");
+    } finally {
+      setCargandoLista(false);
+    }
+  };
 
   if (!abierto) return null;
 
@@ -41,9 +110,9 @@ export function ModalCrearCategoria({ abierto, onCerrar, onCategoriaCreada, nego
 
   const handleGuardar = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
+    setErrorCrear(null);
     if (!nombre.trim()) {
-      setError(esFloristeria ? "Ingresa el nombre de la colección floral." : "Ingresa el nombre de la categoría.");
+      setErrorCrear(esFloristeria ? "Ingresa el nombre de la colección floral." : "Ingresa el nombre de la categoría.");
       return;
     }
 
@@ -63,22 +132,63 @@ export function ModalCrearCategoria({ abierto, onCerrar, onCategoriaCreada, nego
 
       if (res.ok && res.categoria) {
         onCategoriaCreada(res.categoria);
-        onCerrar();
         setNombre("");
         setSlug("");
         setDescripcion("");
         setImagenUrl("");
         setVideoUrl("");
         setAlbumFotosUrl("");
+        onCerrar();
       } else {
-        setError(res.error || "No se pudo crear la categoría.");
+        setErrorCrear(res.error || "No se pudo crear la categoría.");
       }
     } catch (err: any) {
-      setError(err.message || "Error al procesar la solicitud.");
+      setErrorCrear(err.message || "Error al procesar la solicitud.");
     } finally {
       setGuardando(false);
     }
   };
+
+  const handleConfirmarEliminar = async () => {
+    if (!catAEliminar) return;
+
+    setEliminandoId(catAEliminar.ctg_id);
+    setMensajeErrorGestion(null);
+    setMensajeExitoGestion(null);
+
+    try {
+      const res = await eliminarCategoriaAction({
+        categoriaId: catAEliminar.ctg_id,
+        negocio,
+      });
+
+      if (res.ok) {
+        setMensajeExitoGestion(res.mensaje || `Categoría "${catAEliminar.ctg_nombre}" eliminada correctamente.`);
+        // Actualizar lista local de forma reactiva
+        setCategoriasUso((prev) => prev.filter((c) => c.ctg_id !== catAEliminar.ctg_id && c.ctg_slug !== catAEliminar.ctg_slug));
+        if (onCategoriaEliminada) {
+          onCategoriaEliminada(catAEliminar.ctg_id);
+        }
+        setCatAEliminar(null);
+      } else {
+        setMensajeErrorGestion(res.error || "No se pudo eliminar la categoría.");
+      }
+    } catch (err: any) {
+      setMensajeErrorGestion(err?.message || "Error al ejecutar la eliminación.");
+    } finally {
+      setEliminandoId(null);
+    }
+  };
+
+  const categoriasFiltradas = categoriasUso.filter((c) => {
+    if (!busqueda.trim()) return true;
+    const q = busqueda.toLowerCase().trim();
+    return (
+      c.ctg_nombre.toLowerCase().includes(q) ||
+      c.ctg_slug.toLowerCase().includes(q) ||
+      (c.ctg_descripcion && c.ctg_descripcion.toLowerCase().includes(q))
+    );
+  });
 
   return (
     <div
@@ -99,9 +209,13 @@ export function ModalCrearCategoria({ abierto, onCerrar, onCategoriaCreada, nego
           background: "#FFFFFF",
           borderRadius: "16px",
           width: "100%",
-          maxWidth: "520px",
-          boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.2)",
+          maxWidth: tabActiva === "gestionar" ? "680px" : "540px",
+          maxHeight: "90vh",
+          display: "flex",
+          flexDirection: "column",
+          boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.25)",
           overflow: "hidden",
+          transition: "max-width 0.2s ease",
         }}
       >
         {/* Cabecera */}
@@ -132,10 +246,12 @@ export function ModalCrearCategoria({ abierto, onCerrar, onCategoriaCreada, nego
             </div>
             <div>
               <h2 style={{ margin: 0, fontSize: "1.05rem", fontWeight: 800, color: "#0F172A" }}>
-                {esFloristeria ? "Nueva Colección / Ocasión Floral" : "Nueva Categoría Comercial"}
+                {esFloristeria ? "Colecciones & Ocasiones Florales" : "Categorías Comerciales"}
               </h2>
               <span style={{ fontSize: "0.75rem", color: "#64748B" }}>
-                Organiza productos y vitrinas visuales en el catálogo
+                {tabActiva === "crear"
+                  ? "Crea una nueva clasificación para el catálogo"
+                  : "Administra y elimina categorías sin productos activos"}
               </span>
             </div>
           </div>
@@ -155,230 +271,657 @@ export function ModalCrearCategoria({ abierto, onCerrar, onCategoriaCreada, nego
           </button>
         </div>
 
-        {/* Formulario */}
-        <form onSubmit={handleGuardar} style={{ padding: "18px 22px" }}>
-          {error && (
-            <div
-              style={{
-                background: "#FEF2F2",
-                border: "1px solid #FCA5A5",
-                color: "#991B1B",
-                padding: "8px 12px",
-                borderRadius: "8px",
-                marginBottom: "12px",
-                fontSize: "0.8rem",
-                display: "flex",
-                alignItems: "center",
-                gap: "8px",
-              }}
-            >
-              <AlertCircle size={15} />
-              <span>{error}</span>
-            </div>
-          )}
-
-          <div style={{ marginBottom: "12px" }}>
-            <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, color: "#334155", marginBottom: "4px" }}>
-              Nombre de la {esFloristeria ? "Colección" : "Categoría"} *
-            </label>
-            <input
-              type="text"
-              required
-              placeholder={esFloristeria ? "Ej. Bouquets Estilo Coreano o Ramos para Florero" : "Ej. Trámites Notariales"}
-              value={nombre}
-              onChange={(e) => handleNombreChange(e.target.value)}
-              style={{
-                width: "100%",
-                padding: "8px 12px",
-                borderRadius: "8px",
-                border: "1px solid #CBD5E1",
-                fontSize: "0.85rem",
-                boxSizing: "border-box",
-              }}
-            />
-          </div>
-
-          <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: "10px", marginBottom: "12px" }}>
-            <div>
-              <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 600, color: "#475569", marginBottom: "4px" }}>
-                Identificador Slug
-              </label>
-              <input
-                type="text"
-                placeholder="ej. cat-coreanos"
-                value={slug}
-                onChange={(e) => setSlug(e.target.value)}
-                style={{
-                  width: "100%",
-                  padding: "7px 10px",
-                  borderRadius: "6px",
-                  border: "1px solid #CBD5E1",
-                  fontSize: "0.8rem",
-                  boxSizing: "border-box",
-                }}
-              />
-            </div>
-
-            <div>
-              <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 600, color: "#475569", marginBottom: "4px" }}>
-                Posición / Orden
-              </label>
-              <input
-                type="number"
-                min="1"
-                value={orden}
-                onChange={(e) => setOrden(parseInt(e.target.value) || 1)}
-                style={{
-                  width: "100%",
-                  padding: "7px 10px",
-                  borderRadius: "6px",
-                  border: "1px solid #CBD5E1",
-                  fontSize: "0.8rem",
-                  boxSizing: "border-box",
-                }}
-              />
-            </div>
-          </div>
-
-          {/* Recursos Digitales de la Categoría */}
-          <div
+        {/* Pestañas de Navegación */}
+        <div
+          style={{
+            display: "flex",
+            background: "#F1F5F9",
+            padding: "4px 8px",
+            borderBottom: "1px solid #E2E8F0",
+            gap: "6px",
+          }}
+        >
+          <button
+            type="button"
+            onClick={() => {
+              setTabActiva("crear");
+              setMensajeErrorGestion(null);
+            }}
             style={{
-              background: "#F0FDF4",
-              border: "1px solid #BBF7D0",
+              flex: 1,
+              padding: "8px 12px",
               borderRadius: "8px",
-              padding: "10px 12px",
-              marginBottom: "12px",
+              border: "none",
+              fontSize: "0.8rem",
+              fontWeight: 700,
+              cursor: "pointer",
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "6px",
+              background: tabActiva === "crear" ? "#FFFFFF" : "transparent",
+              color: tabActiva === "crear" ? (esFloristeria ? "#E11D48" : "#0284C7") : "#64748B",
+              boxShadow: tabActiva === "crear" ? "0 1px 3px rgba(0,0,0,0.1)" : "none",
             }}
           >
-            <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "8px" }}>
-              <ImageIcon size={14} color="#15803D" />
-              <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "#15803D", textTransform: "uppercase" }}>
-                Recursos Digitales de la Colección
-              </span>
-            </div>
+            <FolderPlus size={15} />
+            <span>+ {esFloristeria ? "Nueva Colección" : "Nueva Categoría"}</span>
+          </button>
 
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", marginBottom: "8px" }}>
-              <div>
-                <label style={{ display: "block", fontSize: "0.7rem", fontWeight: 600, color: "#334155", marginBottom: "2px" }}>
-                  URL Portada / Banner
+          <button
+            type="button"
+            onClick={() => {
+              setTabActiva("gestionar");
+              setErrorCrear(null);
+              cargarCategoriasConUso();
+            }}
+            style={{
+              flex: 1,
+              padding: "8px 12px",
+              borderRadius: "8px",
+              border: "none",
+              fontSize: "0.8rem",
+              fontWeight: 700,
+              cursor: "pointer",
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "6px",
+              background: tabActiva === "gestionar" ? "#FFFFFF" : "transparent",
+              color: tabActiva === "gestionar" ? "#0F172A" : "#64748B",
+              boxShadow: tabActiva === "gestionar" ? "0 1px 3px rgba(0,0,0,0.1)" : "none",
+            }}
+          >
+            <Settings2 size={15} />
+            <span>Administrar ({categoriasUso.length})</span>
+          </button>
+        </div>
+
+        {/* Contenido según pestaña */}
+        <div style={{ overflowY: "auto", flex: 1, padding: "18px 22px" }}>
+          {tabActiva === "crear" ? (
+            /* TAB 1: FORMULARIO CREAR CATEGORÍA */
+            <form onSubmit={handleGuardar}>
+              {errorCrear && (
+                <div
+                  style={{
+                    background: "#FEF2F2",
+                    border: "1px solid #FCA5A5",
+                    color: "#991B1B",
+                    padding: "8px 12px",
+                    borderRadius: "8px",
+                    marginBottom: "12px",
+                    fontSize: "0.8rem",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                  }}
+                >
+                  <AlertCircle size={15} />
+                  <span>{errorCrear}</span>
+                </div>
+              )}
+
+              <div style={{ marginBottom: "12px" }}>
+                <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, color: "#334155", marginBottom: "4px" }}>
+                  Nombre de la {esFloristeria ? "Colección" : "Categoría"} *
                 </label>
                 <input
-                  type="url"
-                  placeholder="https://images.unsplash.com/..."
-                  value={imagenUrl}
-                  onChange={(e) => setImagenUrl(e.target.value)}
+                  type="text"
+                  required
+                  placeholder={esFloristeria ? "Ej. Bouquets Estilo Coreano o Ramos para Florero" : "Ej. Trámites Notariales"}
+                  value={nombre}
+                  onChange={(e) => handleNombreChange(e.target.value)}
                   style={{
                     width: "100%",
-                    padding: "6px 8px",
-                    borderRadius: "6px",
+                    padding: "8px 12px",
+                    borderRadius: "8px",
                     border: "1px solid #CBD5E1",
-                    fontSize: "0.75rem",
+                    fontSize: "0.85rem",
                     boxSizing: "border-box",
                   }}
                 />
               </div>
 
-              <div>
-                <label style={{ display: "block", fontSize: "0.7rem", fontWeight: 600, color: "#334155", marginBottom: "2px" }}>
-                  URL Video Reel / Spot (MP4 / YouTube)
-                </label>
-                <input
-                  type="url"
-                  placeholder="https://youtube.com/shorts/... o MP4"
-                  value={videoUrl}
-                  onChange={(e) => setVideoUrl(e.target.value)}
-                  style={{
-                    width: "100%",
-                    padding: "6px 8px",
-                    borderRadius: "6px",
-                    border: "1px solid #CBD5E1",
-                    fontSize: "0.75rem",
-                    boxSizing: "border-box",
-                  }}
-                />
-              </div>
-            </div>
+              <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: "10px", marginBottom: "12px" }}>
+                <div>
+                  <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 600, color: "#475569", marginBottom: "4px" }}>
+                    Identificador Slug
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="ej. cat-coreanos"
+                    value={slug}
+                    onChange={(e) => setSlug(e.target.value)}
+                    style={{
+                      width: "100%",
+                      padding: "7px 10px",
+                      borderRadius: "6px",
+                      border: "1px solid #CBD5E1",
+                      fontSize: "0.8rem",
+                      boxSizing: "border-box",
+                    }}
+                  />
+                </div>
 
-            <div>
-              <label style={{ display: "block", fontSize: "0.7rem", fontWeight: 600, color: "#334155", marginBottom: "2px" }}>
-                URL Álbum de Muestras / Galería (Drive / iCloud)
-              </label>
-              <input
-                type="url"
-                placeholder="https://photos.app.goo.gl/..."
-                value={albumFotosUrl}
-                onChange={(e) => setAlbumFotosUrl(e.target.value)}
+                <div>
+                  <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 600, color: "#475569", marginBottom: "4px" }}>
+                    Posición / Orden
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    value={orden}
+                    onChange={(e) => setOrden(parseInt(e.target.value) || 1)}
+                    style={{
+                      width: "100%",
+                      padding: "7px 10px",
+                      borderRadius: "6px",
+                      border: "1px solid #CBD5E1",
+                      fontSize: "0.8rem",
+                      boxSizing: "border-box",
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Recursos Digitales */}
+              <div
                 style={{
-                  width: "100%",
-                  padding: "6px 8px",
-                  borderRadius: "6px",
-                  border: "1px solid #CBD5E1",
-                  fontSize: "0.75rem",
-                  boxSizing: "border-box",
+                  background: "#F0FDF4",
+                  border: "1px solid #BBF7D0",
+                  borderRadius: "8px",
+                  padding: "10px 12px",
+                  marginBottom: "12px",
                 }}
-              />
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "8px" }}>
+                  <ImageIcon size={14} color="#15803D" />
+                  <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "#15803D", textTransform: "uppercase" }}>
+                    Recursos Digitales de la Colección
+                  </span>
+                </div>
+
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", marginBottom: "8px" }}>
+                  <div>
+                    <label style={{ display: "block", fontSize: "0.7rem", fontWeight: 600, color: "#334155", marginBottom: "2px" }}>
+                      URL Portada / Banner
+                    </label>
+                    <input
+                      type="url"
+                      placeholder="https://images.unsplash.com/..."
+                      value={imagenUrl}
+                      onChange={(e) => setImagenUrl(e.target.value)}
+                      style={{
+                        width: "100%",
+                        padding: "6px 8px",
+                        borderRadius: "6px",
+                        border: "1px solid #CBD5E1",
+                        fontSize: "0.75rem",
+                        boxSizing: "border-box",
+                      }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ display: "block", fontSize: "0.7rem", fontWeight: 600, color: "#334155", marginBottom: "2px" }}>
+                      URL Video Reel / Spot
+                    </label>
+                    <input
+                      type="url"
+                      placeholder="https://youtube.com/shorts/..."
+                      value={videoUrl}
+                      onChange={(e) => setVideoUrl(e.target.value)}
+                      style={{
+                        width: "100%",
+                        padding: "6px 8px",
+                        borderRadius: "6px",
+                        border: "1px solid #CBD5E1",
+                        fontSize: "0.75rem",
+                        boxSizing: "border-box",
+                      }}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label style={{ display: "block", fontSize: "0.7rem", fontWeight: 600, color: "#334155", marginBottom: "2px" }}>
+                    URL Álbum de Fotos / Galería
+                  </label>
+                  <input
+                    type="url"
+                    placeholder="https://photos.app.goo.gl/..."
+                    value={albumFotosUrl}
+                    onChange={(e) => setAlbumFotosUrl(e.target.value)}
+                    style={{
+                      width: "100%",
+                      padding: "6px 8px",
+                      borderRadius: "6px",
+                      border: "1px solid #CBD5E1",
+                      fontSize: "0.75rem",
+                      boxSizing: "border-box",
+                    }}
+                  />
+                </div>
+              </div>
+
+              <div style={{ marginBottom: "16px" }}>
+                <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 600, color: "#475569", marginBottom: "4px" }}>
+                  Descripción / Alcance
+                </label>
+                <textarea
+                  rows={2}
+                  placeholder={esFloristeria ? "Arreglos florales envueltos en papel coreano..." : "Breve resumen..."}
+                  value={descripcion}
+                  onChange={(e) => setDescripcion(e.target.value)}
+                  style={{
+                    width: "100%",
+                    padding: "8px 12px",
+                    borderRadius: "8px",
+                    border: "1px solid #CBD5E1",
+                    fontSize: "0.82rem",
+                    boxSizing: "border-box",
+                  }}
+                />
+              </div>
+
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: "8px" }}>
+                <button
+                  type="button"
+                  onClick={onCerrar}
+                  style={{
+                    background: "#F1F5F9",
+                    color: "#475569",
+                    border: "none",
+                    padding: "8px 14px",
+                    borderRadius: "8px",
+                    fontSize: "0.82rem",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                  }}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={guardando}
+                  style={{
+                    background: esFloristeria ? "#E11D48" : "#0284C7",
+                    color: "#FFFFFF",
+                    border: "none",
+                    padding: "8px 18px",
+                    borderRadius: "8px",
+                    fontSize: "0.82rem",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "6px",
+                  }}
+                >
+                  <CheckCircle2 size={15} />
+                  <span>{guardando ? "Creando..." : esFloristeria ? "Crear Colección" : "Crear Categoría"}</span>
+                </button>
+              </div>
+            </form>
+          ) : (
+            /* TAB 2: ADMINISTRAR Y ELIMINAR CATEGORÍAS */
+            <div>
+              {/* Notificaciones de Éxito / Error */}
+              {mensajeExitoGestion && (
+                <div
+                  style={{
+                    background: "#F0FDF4",
+                    border: "1px solid #86EFAC",
+                    color: "#166534",
+                    padding: "9px 14px",
+                    borderRadius: "8px",
+                    marginBottom: "12px",
+                    fontSize: "0.82rem",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                  }}
+                >
+                  <CheckCircle2 size={16} />
+                  <span>{mensajeExitoGestion}</span>
+                </div>
+              )}
+
+              {mensajeErrorGestion && (
+                <div
+                  style={{
+                    background: "#FEF2F2",
+                    border: "1px solid #FCA5A5",
+                    color: "#991B1B",
+                    padding: "9px 14px",
+                    borderRadius: "8px",
+                    marginBottom: "12px",
+                    fontSize: "0.82rem",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                  }}
+                >
+                  <AlertTriangle size={16} />
+                  <span>{mensajeErrorGestion}</span>
+                </div>
+              )}
+
+              {/* Banner Informativo de Regla de Negocio */}
+              <div
+                style={{
+                  background: "#EFF6FF",
+                  border: "1px solid #BFDBFE",
+                  borderRadius: "8px",
+                  padding: "10px 12px",
+                  marginBottom: "14px",
+                  display: "flex",
+                  alignItems: "flex-start",
+                  gap: "8px",
+                }}
+              >
+                <Info size={16} color="#1D4ED8" style={{ marginTop: "2px", flexShrink: 0 }} />
+                <span style={{ fontSize: "0.76rem", color: "#1E40AF", lineHeight: 1.4 }}>
+                  <strong>Control de Integridad:</strong> Solo es posible eliminar categorías que{" "}
+                  <strong>no tengan productos asignados</strong>. Si una categoría está en uso, el botón estará bloqueado
+                  para proteger la consistencia del catálogo comercial.
+                </span>
+              </div>
+
+              {/* Buscador y Refrescar */}
+              <div style={{ display: "flex", gap: "8px", marginBottom: "12px" }}>
+                <div style={{ position: "relative", flex: 1 }}>
+                  <Search
+                    size={14}
+                    style={{ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)", color: "#94A3B8" }}
+                  />
+                  <input
+                    type="text"
+                    placeholder="Filtrar por nombre o slug..."
+                    value={busqueda}
+                    onChange={(e) => setBusqueda(e.target.value)}
+                    style={{
+                      width: "100%",
+                      padding: "7px 10px 7px 32px",
+                      borderRadius: "8px",
+                      border: "1px solid #CBD5E1",
+                      fontSize: "0.82rem",
+                      boxSizing: "border-box",
+                    }}
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={cargarCategoriasConUso}
+                  disabled={cargandoLista}
+                  style={{
+                    background: "#FFFFFF",
+                    border: "1px solid #CBD5E1",
+                    borderRadius: "8px",
+                    padding: "7px 12px",
+                    cursor: "pointer",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    fontSize: "0.78rem",
+                    fontWeight: 600,
+                    color: "#475569",
+                  }}
+                  title="Actualizar estado de uso"
+                >
+                  <RefreshCw size={13} className={cargandoLista ? "animate-spin" : ""} />
+                  <span>Refrescar</span>
+                </button>
+              </div>
+
+              {/* Diálogo de Confirmación de Eliminación */}
+              {catAEliminar && (
+                <div
+                  style={{
+                    background: "#FFF1F2",
+                    border: "1px solid #FECDD3",
+                    borderRadius: "10px",
+                    padding: "12px 14px",
+                    marginBottom: "14px",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "8px",
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#9F1239" }}>
+                    <AlertTriangle size={18} />
+                    <span style={{ fontSize: "0.85rem", fontWeight: 700 }}>
+                      ¿Confirmas eliminar la categoría &ldquo;{catAEliminar.ctg_nombre}&rdquo;?
+                    </span>
+                  </div>
+                  <p style={{ margin: 0, fontSize: "0.76rem", color: "#881337" }}>
+                    Esta acción retirará la categoría del catálogo y de los filtros de navegación. Esta operación no se puede revertir.
+                  </p>
+                  <div style={{ display: "flex", justifyContent: "flex-end", gap: "8px", marginTop: "4px" }}>
+                    <button
+                      type="button"
+                      disabled={Boolean(eliminandoId)}
+                      onClick={() => setCatAEliminar(null)}
+                      style={{
+                        background: "#FFFFFF",
+                        border: "1px solid #CBD5E1",
+                        padding: "6px 12px",
+                        borderRadius: "6px",
+                        fontSize: "0.76rem",
+                        fontWeight: 600,
+                        cursor: "pointer",
+                        color: "#475569",
+                      }}
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      type="button"
+                      disabled={Boolean(eliminandoId)}
+                      onClick={handleConfirmarEliminar}
+                      style={{
+                        background: "#E11D48",
+                        border: "none",
+                        padding: "6px 14px",
+                        borderRadius: "6px",
+                        fontSize: "0.76rem",
+                        fontWeight: 700,
+                        cursor: "pointer",
+                        color: "#FFFFFF",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "6px",
+                      }}
+                    >
+                      <Trash2 size={13} />
+                      <span>{eliminandoId ? "Eliminando..." : "Sí, Eliminar"}</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Lista de Categorías */}
+              {cargandoLista ? (
+                <div style={{ padding: "28px", textAlign: "center", color: "#64748B", fontSize: "0.82rem" }}>
+                  <RefreshCw size={20} className="animate-spin" style={{ margin: "0 auto 8px" }} />
+                  <span>Verificando categorías y uso de productos...</span>
+                </div>
+              ) : categoriasFiltradas.length === 0 ? (
+                <div style={{ padding: "28px", textAlign: "center", color: "#94A3B8", fontSize: "0.82rem" }}>
+                  No se encontraron categorías coincidentes.
+                </div>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                  {categoriasFiltradas.map((cat) => {
+                    const enUso = cat.en_uso || cat.productos_conteo > 0;
+                    return (
+                      <div
+                        key={cat.ctg_id}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          padding: "10px 14px",
+                          borderRadius: "10px",
+                          border: "1px solid #E2E8F0",
+                          background: enUso ? "#FAFAFA" : "#FFFFFF",
+                          gap: "12px",
+                        }}
+                      >
+                        {/* Datos de la Categoría */}
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                            <span style={{ fontSize: "0.88rem", fontWeight: 700, color: "#1E293B" }}>
+                              {cat.ctg_nombre}
+                            </span>
+                            <span
+                              style={{
+                                fontSize: "0.7rem",
+                                padding: "2px 6px",
+                                borderRadius: "4px",
+                                background: "#F1F5F9",
+                                color: "#64748B",
+                                fontFamily: "monospace",
+                              }}
+                            >
+                              {cat.ctg_slug}
+                            </span>
+                          </div>
+
+                          <div style={{ display: "flex", alignItems: "center", gap: "8px", marginTop: "4px" }}>
+                            {enUso ? (
+                              <span
+                                style={{
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  gap: "4px",
+                                  fontSize: "0.72rem",
+                                  fontWeight: 600,
+                                  color: "#0369A1",
+                                  background: "#E0F2FE",
+                                  padding: "2px 8px",
+                                  borderRadius: "12px",
+                                }}
+                              >
+                                <Lock size={11} />
+                                <span>
+                                  En uso ({cat.productos_conteo} {esFloristeria ? "arreglos" : "productos"})
+                                </span>
+                              </span>
+                            ) : (
+                              <span
+                                style={{
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  gap: "4px",
+                                  fontSize: "0.72rem",
+                                  fontWeight: 600,
+                                  color: "#15803D",
+                                  background: "#DCFCE7",
+                                  padding: "2px 8px",
+                                  borderRadius: "12px",
+                                }}
+                              >
+                                <CheckCircle2 size={11} />
+                                <span>Sin productos (Disponible para eliminar)</span>
+                              </span>
+                            )}
+
+                            {cat.ctg_descripcion && (
+                              <span
+                                style={{
+                                  fontSize: "0.72rem",
+                                  color: "#64748B",
+                                  whiteSpace: "nowrap",
+                                  overflow: "hidden",
+                                  textOverflow: "ellipsis",
+                                  maxWidth: "220px",
+                                }}
+                                title={cat.ctg_descripcion}
+                              >
+                                {cat.ctg_descripcion}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Botón de Acción Eliminar / Bloqueado */}
+                        <div>
+                          {enUso ? (
+                            <button
+                              type="button"
+                              disabled
+                              title={`No se puede eliminar: tiene ${cat.productos_conteo} producto(s) asignados.`}
+                              style={{
+                                background: "#F1F5F9",
+                                border: "1px solid #E2E8F0",
+                                color: "#94A3B8",
+                                padding: "6px 12px",
+                                borderRadius: "8px",
+                                fontSize: "0.74rem",
+                                fontWeight: 600,
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "5px",
+                                cursor: "not-allowed",
+                              }}
+                            >
+                              <Lock size={12} />
+                              <span>En uso</span>
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => setCatAEliminar(cat)}
+                              style={{
+                                background: "#FFF1F2",
+                                border: "1px solid #FECDD3",
+                                color: "#E11D48",
+                                padding: "6px 12px",
+                                borderRadius: "8px",
+                                fontSize: "0.74rem",
+                                fontWeight: 700,
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "5px",
+                                cursor: "pointer",
+                                transition: "all 0.15s ease",
+                              }}
+                              title="Eliminar esta categoría que no tiene productos asignados"
+                            >
+                              <Trash2 size={13} />
+                              <span>Eliminar</span>
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "16px" }}>
+                <button
+                  type="button"
+                  onClick={onCerrar}
+                  style={{
+                    background: "#F1F5F9",
+                    color: "#475569",
+                    border: "none",
+                    padding: "8px 16px",
+                    borderRadius: "8px",
+                    fontSize: "0.82rem",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                  }}
+                >
+                  Cerrar
+                </button>
+              </div>
             </div>
-          </div>
-
-          <div style={{ marginBottom: "16px" }}>
-            <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 600, color: "#475569", marginBottom: "4px" }}>
-              Descripción / Alcance
-            </label>
-            <textarea
-              rows={2}
-              placeholder={esFloristeria ? "Arreglos florales de exportación envueltos en papel coreano..." : "Breve resumen de la categoría..."}
-              value={descripcion}
-              onChange={(e) => setDescripcion(e.target.value)}
-              style={{
-                width: "100%",
-                padding: "8px 12px",
-                borderRadius: "8px",
-                border: "1px solid #CBD5E1",
-                fontSize: "0.82rem",
-                boxSizing: "border-box",
-              }}
-            />
-          </div>
-
-          <div style={{ display: "flex", justifyContent: "flex-end", gap: "8px" }}>
-            <button
-              type="button"
-              onClick={onCerrar}
-              style={{
-                background: "#F1F5F9",
-                color: "#475569",
-                border: "none",
-                padding: "8px 14px",
-                borderRadius: "8px",
-                fontSize: "0.82rem",
-                fontWeight: 600,
-                cursor: "pointer",
-              }}
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              disabled={guardando}
-              style={{
-                background: esFloristeria ? "#E11D48" : "#0284C7",
-                color: "#FFFFFF",
-                border: "none",
-                padding: "8px 18px",
-                borderRadius: "8px",
-                fontSize: "0.82rem",
-                fontWeight: 700,
-                cursor: "pointer",
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "6px",
-              }}
-            >
-              <CheckCircle2 size={15} />
-              <span>{guardando ? "Creando..." : "Crear Colección"}</span>
-            </button>
-          </div>
-        </form>
+          )}
+        </div>
       </div>
     </div>
   );
