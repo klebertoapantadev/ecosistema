@@ -622,6 +622,480 @@
       z-index: 9999;
     }
 
+    /* ========================================================
+       MODAL / AVISO INTELIGENTE DE ROTACIÓN PARA CELULARES
+       ======================================================== */
+    .rotate-hint {
+      display: none;
+      position: fixed;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: calc(100% - 20px);
+      max-width: 420px;
+      background: linear-gradient(135deg, #37104b 0%, #6a1b9a 100%);
+      color: #fff;
+      padding: 10px 14px;
+      border-radius: 16px;
+      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45);
+      z-index: 10000;
+      border: 2px solid #ffd54f;
+      animation: pulseHint 2.4s infinite ease-in-out;
+    }
+
+    @keyframes pulseHint {
+      0%, 100% { box-shadow: 0 6px 20px rgba(106, 27, 154, 0.4); }
+      50% { box-shadow: 0 10px 28px rgba(255, 213, 79, 0.65); }
+    }
+
+    .rotate-hint-body {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .rotate-hint-icon {
+      font-size: 2.2rem;
+      animation: rotatePhone 2.5s infinite ease-in-out;
+      display: inline-block;
+      flex-shrink: 0;
+    }
+
+    @keyframes rotatePhone {
+      0% { transform: rotate(0deg); }
+      30% { transform: rotate(-90deg); }
+      75% { transform: rotate(-90deg); }
+      100% { transform: rotate(0deg); }
+    }
+
+    .rotate-hint-text {
+      flex: 1;
+      font-size: 0.82rem;
+      line-height: 1.25;
+    }
+
+    .rotate-hint-text strong {
+      display: block;
+      color: #ffd54f;
+      font-size: 0.92rem;
+      margin-bottom: 2px;
+    }
+
+    .rotate-hint-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .btn-rotate-action {
+      background: #ffd54f;
+      color: #3e1251;
+      border: none;
+      padding: 5px 12px;
+      border-radius: 999px;
+      font-weight: 800;
+      font-size: 0.8rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
+    }
+
+    .btn-rotate-dismiss {
+      background: rgba(255, 255, 255, 0.18);
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      padding: 5px 10px;
+      border-radius: 999px;
+      font-weight: 700;
+      font-size: 0.78rem;
+      cursor: pointer;
+    }
+
+    /* Mostrar hint solo en portrait en móviles */
+    @media (max-width: 900px) and (orientation: portrait) {
+      .rotate-hint.show-portrait {
+        display: block;
+      }
+    }
+
+    @media (orientation: landscape) {
+      .rotate-hint {
+        display: none !important;
+      }
+    }
+
+    /* ========================================================
+       RESPONSIVE CELULARES: MODO VERTICAL (PORTRAIT)
+       "Pequeño pero nítido y claro"
+       ======================================================== */
+    @media (max-width: 768px) and (orientation: portrait) {
+      .bunting-bar {
+        height: 12px;
+      }
+
+      header {
+        padding: 6px 10px;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 6px;
+      }
+
+      .badge-ecuador {
+        font-size: 0.8rem;
+        padding: 4px 10px;
+        gap: 6px;
+        justify-content: center;
+      }
+
+      .header-controls {
+        gap: 4px;
+        display: flex;
+        justify-content: center;
+        width: 100%;
+      }
+
+      .btn-tool {
+        font-size: 0.72rem;
+        padding: 4px 8px;
+        white-space: nowrap;
+        gap: 4px;
+        border-radius: 12px;
+      }
+
+      main {
+        padding: 6px 8px 8px 8px;
+        flex: 1;
+        display: flex;
+      }
+
+      .slide-stage {
+        height: auto;
+        min-height: calc(100dvh - 145px);
+        max-height: calc(100dvh - 145px);
+        border-radius: 18px;
+        border-width: 3px;
+        box-shadow: 0 6px 16px rgba(106, 27, 154, 0.15);
+      }
+
+      .slide {
+        padding: 10px 12px;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      .slide-header {
+        margin-bottom: 6px;
+      }
+
+      .slide-title-wrap {
+        gap: 6px;
+      }
+
+      .slide-icon {
+        width: 34px;
+        height: 34px;
+        font-size: 1.25rem;
+        border-radius: 10px;
+      }
+
+      .slide-title {
+        font-size: 1.05rem;
+        line-height: 1.2;
+      }
+
+      .slide-tag {
+        font-size: 0.68rem;
+        padding: 2px 7px;
+      }
+
+      .slide-body {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        min-height: auto;
+      }
+
+      .slide-image-box {
+        width: 100%;
+        height: 160px;
+        max-height: 160px;
+        border-radius: 14px;
+        border-width: 2px;
+        flex-shrink: 0;
+      }
+
+      .slide-card-text {
+        gap: 8px;
+      }
+
+      .kid-big-phrase {
+        font-size: 0.88rem;
+        padding: 8px 10px;
+        line-height: 1.3;
+        border-radius: 12px;
+        border-left-width: 4px;
+      }
+
+      .kid-highlight-list {
+        gap: 6px;
+      }
+
+      .kid-pill-item {
+        font-size: 0.8rem;
+        padding: 7px 10px;
+        border-radius: 10px;
+        gap: 6px;
+      }
+
+      .kid-pill-item .emoji {
+        font-size: 1.2rem;
+      }
+
+      .song-box {
+        font-size: 0.8rem;
+        padding: 7px 10px;
+        border-radius: 12px;
+        margin-top: 2px;
+      }
+
+      .game-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 6px;
+        margin-top: 4px;
+      }
+
+      .game-card {
+        padding: 6px 2px;
+        border-radius: 10px;
+        border-width: 2px;
+      }
+
+      .game-card .food-emoji {
+        font-size: 1.6rem;
+        margin-bottom: 2px;
+      }
+
+      .game-card .food-name {
+        font-size: 0.72rem;
+      }
+
+      #game-feedback {
+        font-size: 0.85rem !important;
+        min-height: 24px !important;
+      }
+
+      footer {
+        padding: 6px 12px;
+      }
+
+      .btn-nav {
+        font-size: 0.88rem;
+        padding: 7px 14px;
+        gap: 5px;
+        box-shadow: 0 3px 0 rgba(0, 0, 0, 0.15);
+      }
+
+      .slide-dots {
+        gap: 5px;
+      }
+
+      .dot {
+        width: 8px;
+        height: 8px;
+      }
+
+      .dot.active {
+        width: 18px;
+        border-radius: 6px;
+      }
+
+      .speaker-drawer {
+        padding: 12px 14px;
+        max-height: 70vh;
+      }
+    }
+
+    /* ========================================================
+       RESPONSIVE CELULARES / TABLETS: MODO HORIZONTAL (LANDSCAPE)
+       "Presentación panorámica de pantalla completa"
+       ======================================================== */
+    @media (max-height: 560px) and (orientation: landscape) {
+      body {
+        overflow: hidden;
+      }
+
+      .bunting-bar {
+        height: 8px;
+      }
+
+      header {
+        padding: 3px 12px;
+      }
+
+      .badge-ecuador {
+        font-size: 0.75rem;
+        padding: 2px 8px;
+        gap: 6px;
+      }
+
+      .header-controls {
+        gap: 5px;
+      }
+
+      .btn-tool {
+        font-size: 0.72rem;
+        padding: 3px 8px;
+        gap: 4px;
+      }
+
+      main {
+        padding: 4px 10px;
+      }
+
+      .slide-stage {
+        height: calc(100dvh - 80px);
+        max-height: calc(100dvh - 80px);
+        border-radius: 14px;
+        border-width: 3px;
+      }
+
+      .slide {
+        padding: 8px 16px;
+        justify-content: space-between;
+      }
+
+      .slide-header {
+        margin-bottom: 4px;
+      }
+
+      .slide-title-wrap {
+        gap: 8px;
+      }
+
+      .slide-icon {
+        width: 30px;
+        height: 30px;
+        font-size: 1.15rem;
+        border-radius: 8px;
+      }
+
+      .slide-title {
+        font-size: 1.05rem;
+        line-height: 1.15;
+      }
+
+      .slide-tag {
+        font-size: 0.68rem;
+        padding: 2px 6px;
+      }
+
+      .slide-body {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        align-items: stretch;
+        min-height: 0;
+        flex: 1;
+      }
+
+      .slide-image-box {
+        width: 100%;
+        height: 100%;
+        max-height: calc(100dvh - 165px);
+        border-radius: 12px;
+        border-width: 2px;
+      }
+
+      .slide-card-text {
+        gap: 6px;
+        justify-content: center;
+        overflow-y: auto;
+      }
+
+      .kid-big-phrase {
+        font-size: 0.85rem;
+        padding: 7px 10px;
+        line-height: 1.25;
+        border-radius: 10px;
+        border-left-width: 4px;
+      }
+
+      .kid-highlight-list {
+        gap: 5px;
+      }
+
+      .kid-pill-item {
+        font-size: 0.78rem;
+        padding: 5px 9px;
+        border-radius: 9px;
+        gap: 6px;
+      }
+
+      .kid-pill-item .emoji {
+        font-size: 1.1rem;
+      }
+
+      .song-box {
+        font-size: 0.8rem;
+        padding: 5px 9px;
+        border-radius: 10px;
+        margin-top: 2px;
+      }
+
+      .game-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 5px;
+        margin-top: 2px;
+      }
+
+      .game-card {
+        padding: 5px 2px;
+        border-radius: 9px;
+        border-width: 2px;
+      }
+
+      .game-card .food-emoji {
+        font-size: 1.3rem;
+        margin-bottom: 2px;
+      }
+
+      .game-card .food-name {
+        font-size: 0.72rem;
+      }
+
+      #game-feedback {
+        font-size: 0.82rem !important;
+        min-height: 20px !important;
+        margin-top: 2px !important;
+      }
+
+      footer {
+        padding: 3px 14px;
+      }
+
+      .btn-nav {
+        font-size: 0.85rem;
+        padding: 5px 14px;
+        gap: 5px;
+        box-shadow: 0 3px 0 rgba(0, 0, 0, 0.15);
+      }
+
+      .slide-dots {
+        gap: 5px;
+      }
+
+      .dot {
+        width: 8px;
+        height: 8px;
+      }
+
+      .dot.active {
+        width: 18px;
+      }
+    }
+
     /* Estilos de Impresión / Guardar en PDF */
     @media print {
       body {
@@ -670,6 +1144,25 @@
 </head>
 
 <body>
+
+  <!-- Banner / Sugerencia Inteligente de Giro para Móviles -->
+  <div id="rotate-hint" class="rotate-hint">
+    <div class="rotate-hint-body">
+      <div class="rotate-hint-icon">📱</div>
+      <div class="rotate-hint-text">
+        <strong>💡 ¡Tip para celular!</strong>
+        Gira tu teléfono a horizontal para ver la presentación como en una computadora o proyector.
+      </div>
+    </div>
+    <div class="rotate-hint-actions">
+      <button class="btn-rotate-action" onclick="requestLandscapeFullScreen()">
+        <span>🔄 Girar y Ampliar</span>
+      </button>
+      <button class="btn-rotate-dismiss" onclick="dismissRotateHint()">
+        <span>Continuar vertical</span>
+      </button>
+    </div>
+  </div>
 
   <!-- Banderines de fiesta ecuatoriana -->
   <div class="bunting-bar">
@@ -1310,6 +1803,83 @@
       requestAnimationFrame(animateConfetti);
     }
     animateConfetti();
+
+    // ========================================================
+    // CONTROL DE ORIENTACIÓN, FULLSCREEN Y GESTOS TÁCTILES
+    // ========================================================
+    const rotateHint = document.getElementById('rotate-hint');
+
+    function checkOrientationHint() {
+      const isPortrait = window.innerHeight > window.innerWidth;
+      const isSmallScreen = window.innerWidth <= 900;
+      const dismissed = sessionStorage.getItem('rotateHintDismissed');
+
+      if (isPortrait && isSmallScreen && !dismissed) {
+        rotateHint.classList.add('show-portrait');
+      } else {
+        rotateHint.classList.remove('show-portrait');
+      }
+    }
+
+    function dismissRotateHint() {
+      sessionStorage.setItem('rotateHintDismissed', 'true');
+      rotateHint.classList.remove('show-portrait');
+    }
+
+    async function requestLandscapeFullScreen() {
+      try {
+        const docEl = document.documentElement;
+        if (!document.fullscreenElement) {
+          if (docEl.requestFullscreen) {
+            await docEl.requestFullscreen();
+          } else if (docEl.webkitRequestFullscreen) {
+            await docEl.webkitRequestFullscreen();
+          }
+        }
+
+        if (screen.orientation && screen.orientation.lock) {
+          await screen.orientation.lock('landscape').catch(() => {});
+        }
+      } catch (e) {
+        console.warn('Orientation lock no soportado en este navegador:', e);
+      }
+      dismissRotateHint();
+    }
+
+    window.addEventListener('resize', checkOrientationHint);
+    window.addEventListener('orientationchange', checkOrientationHint);
+    checkOrientationHint();
+
+    // Soporte para gestos táctiles (Swipe izquierda / derecha)
+    let touchStartX = 0;
+    let touchEndX = 0;
+    const stageEl = document.querySelector('.slide-stage');
+
+    if (stageEl) {
+      stageEl.addEventListener('touchstart', (e) => {
+        if (e.changedTouches && e.changedTouches[0]) {
+          touchStartX = e.changedTouches[0].clientX;
+        }
+      }, { passive: true });
+
+      stageEl.addEventListener('touchend', (e) => {
+        if (e.changedTouches && e.changedTouches[0]) {
+          touchEndX = e.changedTouches[0].clientX;
+          handleSwipeGesture();
+        }
+      }, { passive: true });
+    }
+
+    function handleSwipeGesture() {
+      const deltaX = touchEndX - touchStartX;
+      if (Math.abs(deltaX) > 40) {
+        if (deltaX < 0) {
+          nextSlide(); // Deslizar hacia la izquierda -> siguiente
+        } else {
+          prevSlide(); // Deslizar hacia la derecha -> anterior
+        }
+      }
+    }
   </script>
 </body>
 
