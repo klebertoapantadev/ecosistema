@@ -26,19 +26,29 @@ export function TarjetaProductoConCarrusel({ producto, modoSobrio }: Props) {
   const fotos = producto.fotos.length > 0 ? producto.fotos : ['/img/slide4_flores_amor.jpg'];
   const fotoActual = fotos[fotoActualIndex] ?? fotos[0] ?? '/img/slide4_flores_amor.jpg';
 
+  const cambiarFotoCard = (nuevoIdx: number) => {
+    setFotoActualIndex(nuevoIdx);
+    const url = fotos[nuevoIdx];
+    const varDirecta =
+      producto.variantes.find((v) => v.foto === url) || producto.variantes[nuevoIdx];
+    if (varDirecta) {
+      setVarianteSeleccionada(varDirecta);
+    }
+  };
+
   const anteriorFoto = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setFotoActualIndex((prev) => (prev === 0 ? fotos.length - 1 : prev - 1));
+    cambiarFotoCard(fotoActualIndex === 0 ? fotos.length - 1 : fotoActualIndex - 1);
   };
 
   const siguienteFoto = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setFotoActualIndex((prev) => (prev === fotos.length - 1 ? 0 : prev + 1));
+    cambiarFotoCard(fotoActualIndex === fotos.length - 1 ? 0 : fotoActualIndex + 1);
   };
 
   const irAFoto = (e: React.MouseEvent, index: number) => {
     e.stopPropagation();
-    setFotoActualIndex(index);
+    cambiarFotoCard(index);
   };
 
   const handleAgregar = (e: React.MouseEvent) => {
@@ -154,7 +164,12 @@ export function TarjetaProductoConCarrusel({ producto, modoSobrio }: Props) {
                       const idx = fotos.indexOf(v.foto);
                       if (idx !== -1) {
                         setFotoActualIndex(idx);
+                        return;
                       }
+                    }
+                    const idx = producto.variantes.findIndex((it) => it.sku === v.sku);
+                    if (idx !== -1 && fotos[idx]) {
+                      setFotoActualIndex(idx);
                     }
                   }}
                 >

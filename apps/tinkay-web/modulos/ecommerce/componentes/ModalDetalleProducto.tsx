@@ -93,6 +93,31 @@ export function ModalDetalleProducto() {
     setProductoSeleccionadoModal(null);
   };
 
+  const cambiarFotoActiva = (nuevoIdx: number) => {
+    setFotoActivaIndex(nuevoIdx);
+    const url = fotos[nuevoIdx];
+    const varDirecta =
+      producto.variantes.find((v) => v.foto === url) || producto.variantes[nuevoIdx];
+    if (varDirecta) {
+      setVarianteSeleccionada(varDirecta);
+    }
+  };
+
+  const seleccionarVariante = (v: VarianteEcommerce) => {
+    setVarianteSeleccionada(v);
+    if (v.foto) {
+      const idx = fotos.indexOf(v.foto);
+      if (idx !== -1) {
+        setFotoActivaIndex(idx);
+        return;
+      }
+    }
+    const vIdx = producto.variantes.findIndex((it) => it.sku === v.sku);
+    if (vIdx !== -1 && fotos[vIdx]) {
+      setFotoActivaIndex(vIdx);
+    }
+  };
+
   return (
     <div className="modal-backdrop-ecommerce" onClick={() => setProductoSeleccionadoModal(null)}>
       <div
@@ -126,7 +151,9 @@ export function ModalDetalleProducto() {
                     type="button"
                     className="flecha-galeria flecha-izq"
                     onClick={() =>
-                      setFotoActivaIndex((prev) => (prev === 0 ? fotos.length - 1 : prev - 1))
+                      cambiarFotoActiva(
+                        fotoActivaIndex === 0 ? fotos.length - 1 : fotoActivaIndex - 1
+                      )
                     }
                     aria-label="Foto anterior"
                   >
@@ -136,7 +163,9 @@ export function ModalDetalleProducto() {
                     type="button"
                     className="flecha-galeria flecha-der"
                     onClick={() =>
-                      setFotoActivaIndex((prev) => (prev === fotos.length - 1 ? 0 : prev + 1))
+                      cambiarFotoActiva(
+                        fotoActivaIndex === fotos.length - 1 ? 0 : fotoActivaIndex + 1
+                      )
                     }
                     aria-label="Siguiente foto"
                   >
@@ -146,19 +175,33 @@ export function ModalDetalleProducto() {
               )}
             </div>
 
-            {/* Miniaturas */}
+            {/* Miniaturas con Badge de Precio */}
             {fotos.length > 1 && (
               <div className="tira-miniaturas">
-                {fotos.map((f, i) => (
-                  <button
-                    key={i}
-                    type="button"
-                    className={`miniatura-item ${i === fotoActivaIndex ? 'miniatura-activa' : ''}`}
-                    onClick={() => setFotoActivaIndex(i)}
-                  >
-                    <img src={f} alt={`Miniatura ${i + 1}`} />
-                  </button>
-                ))}
+                {fotos.map((f, i) => {
+                  const varAsoc =
+                    producto.variantes.find((v) => v.foto === f) || producto.variantes[i];
+                  return (
+                    <button
+                      key={i}
+                      type="button"
+                      className={`miniatura-item ${i === fotoActivaIndex ? 'miniatura-activa' : ''}`}
+                      onClick={() => cambiarFotoActiva(i)}
+                      title={
+                        varAsoc
+                          ? `${varAsoc.nombre} — $${varAsoc.pvp.toFixed(2)}`
+                          : `Foto ${i + 1}`
+                      }
+                    >
+                      <img src={f} alt={`Miniatura ${i + 1}`} />
+                      {varAsoc && (
+                        <span className="miniatura-badge-precio">
+                          ${varAsoc.pvp.toFixed(0)}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
             )}
 
@@ -228,28 +271,32 @@ export function ModalDetalleProducto() {
                 1. Selecciona la Presentación / Tamaño:
               </label>
               <div className="lista-opciones-variante">
-                {producto.variantes.map((v) => (
-                  <button
-                    key={v.sku}
-                    type="button"
-                    className={`opcion-variante-card ${v.sku === varianteSeleccionada.sku ? 'seleccionada' : ''}`}
-                    onClick={() => {
-                      setVarianteSeleccionada(v);
-                      if (v.foto) {
-                        const idx = fotos.indexOf(v.foto);
-                        if (idx !== -1) {
-                          setFotoActivaIndex(idx);
-                        }
-                      }
-                    }}
-                  >
-                    <div className="info-variante-texto">
-                      <strong>{v.nombre}</strong>
-                      {v.detalle && <small>{v.detalle}</small>}
-                    </div>
-                    <span className="precio-variante-pill">${v.pvp.toFixed(2)}</span>
-                  </button>
-                ))}
+                {producto.variantes.map((v, vIdx) => {
+                  const fotoVariante = v.foto || fotos[vIdx];
+                  return (
+                    <button
+                      key={v.sku}
+                      type="button"
+                      className={`opcion-variante-card ${v.sku === varianteSeleccionada.sku ? 'seleccionada' : ''}`}
+                      onClick={() => seleccionarVariante(v)}
+                    >
+                      <div className="contenedor-izq-variante">
+                        {fotoVariante && (
+                          <img
+                            src={fotoVariante}
+                            alt={v.nombre}
+                            className="mini-foto-variante-selector"
+                          />
+                        )}
+                        <div className="info-variante-texto">
+                          <strong>{v.nombre}</strong>
+                          {v.detalle && <small>{v.detalle}</small>}
+                        </div>
+                      </div>
+                      <span className="precio-variante-pill">${v.pvp.toFixed(2)}</span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
 

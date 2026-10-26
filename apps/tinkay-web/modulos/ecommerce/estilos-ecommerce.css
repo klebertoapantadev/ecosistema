@@ -993,9 +993,28 @@
   background: none;
   padding: 0;
   flex-shrink: 0;
+  position: relative;
 }
 .miniatura-item.miniatura-activa {
   border-color: var(--rosa);
+  box-shadow: 0 0 0 1px var(--rosa);
+}
+.miniatura-badge-precio {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  background: rgba(26, 47, 35, 0.85);
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 1px 4px;
+  border-radius: 4px;
+  line-height: 1.1;
+  pointer-events: none;
+}
+.miniatura-item.miniatura-activa .miniatura-badge-precio {
+  background: var(--rosa);
+  color: #fff;
 }
 .miniatura-item img {
   width: 100%;
@@ -1123,6 +1142,22 @@
 .opcion-variante-card.seleccionada {
   border-color: var(--rosa);
   background: rgba(236, 127, 167, 0.06);
+}
+.contenedor-izq-variante {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.mini-foto-variante-selector {
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  object-fit: cover;
+  border: 1.5px solid var(--linea);
+  flex-shrink: 0;
+}
+.opcion-variante-card.seleccionada .mini-foto-variante-selector {
+  border-color: var(--rosa);
 }
 .info-variante-texto strong {
   display: block;

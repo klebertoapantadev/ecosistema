@@ -155,8 +155,12 @@ export async function cargarCatalogoDinamicoTinkay(): Promise<{
           });
 
         // Recolección y desduplicación de fotografías
+        // Primero aseguramos que cada variante aporte su fotografía en el orden exacto de las variantes
         const fotos: string[] = [];
-        if (detalle.imagen_url && typeof detalle.imagen_url === 'string') {
+        variantes.forEach((v) => {
+          if (v.foto && !fotos.includes(v.foto)) fotos.push(v.foto);
+        });
+        if (detalle.imagen_url && typeof detalle.imagen_url === 'string' && !fotos.includes(detalle.imagen_url)) {
           fotos.push(detalle.imagen_url);
         }
         if (Array.isArray(detalle.galeria_urls)) {
@@ -164,9 +168,6 @@ export async function cargarCatalogoDinamicoTinkay(): Promise<{
             if (f && typeof f === 'string' && !fotos.includes(f)) fotos.push(f);
           });
         }
-        variantes.forEach((v) => {
-          if (v.foto && !fotos.includes(v.foto)) fotos.push(v.foto);
-        });
 
         // Fallback fotográfico de seguridad
         if (fotos.length === 0) {

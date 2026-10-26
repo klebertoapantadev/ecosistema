@@ -140,9 +140,9 @@ export const PRODUCTOS_TINKAY: ProductoEcommerce[] = [
     categoriasSecundarias: ['cat-ocas-cumple', 'cat-ocas-aniv', 'cat-ocas-amor'],
     fotos: [
       'https://oaybbpdxhlxjbpwnoymy.supabase.co/storage/v1/object/public/catalogo/tinkay/portadas/1792674929601-box_floral_m__2_.jpg',
+      'https://oaybbpdxhlxjbpwnoymy.supabase.co/storage/v1/object/public/catalogo/tinkay/portadas/1792833826612-box_floral_orquideas__2_.jpg',
       'https://oaybbpdxhlxjbpwnoymy.supabase.co/storage/v1/object/public/catalogo/tinkay/portadas/1792838895655-box_floral__s___5_.jpg',
       'https://oaybbpdxhlxjbpwnoymy.supabase.co/storage/v1/object/public/catalogo/tinkay/portadas/1792790901988-box_l__4_.jpg',
-      'https://oaybbpdxhlxjbpwnoymy.supabase.co/storage/v1/object/public/catalogo/tinkay/portadas/1792833826612-box_floral_orquideas__2_.jpg',
       'https://oaybbpdxhlxjbpwnoymy.supabase.co/storage/v1/object/public/catalogo/tinkay/portadas/1792845331950-box_solido_l___2_.jpg',
       'https://oaybbpdxhlxjbpwnoymy.supabase.co/storage/v1/object/public/catalogo/tinkay/portadas/1792838894211-box__xxl___2_.jpg',
       'https://oaybbpdxhlxjbpwnoymy.supabase.co/storage/v1/object/public/catalogo/tinkay/portadas/1792838893079-box__xxxl___2_.jpg',
