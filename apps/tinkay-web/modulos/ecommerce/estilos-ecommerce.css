@@ -2570,3 +2570,204 @@
   color: var(--gris);
 }
 
+/* ==============================================================================
+   ADAPTACIÓN MÓVIL 100% RESPONSIVE & ESTÁNDAR SOLO ÍCONO (<640px)
+   ============================================================================== */
+
+/* Modo Solo Ícono en Responsive Móvil (<640px) */
+@media (max-width: 640px) {
+  .btn-responsive-accion .btn-texto-responsive {
+    display: none !important;
+  }
+  .btn-carrito-cabecera {
+    padding: 9px 12px;
+  }
+}
+
+/* Teléfonos y Tablets Pequeñas (<768px) */
+@media (max-width: 768px) {
+  /* Cabecera */
+  .nav-enlaces-floristeria {
+    display: none;
+  }
+  .contenedor-cabecera-principal {
+    padding: 10px 16px;
+  }
+  .logo-tinkay-marca {
+    font-size: 1.6rem;
+  }
+
+  /* Hero */
+  .hero-carrusel-contenedor {
+    min-height: 460px;
+  }
+  .hero-contenido-editorial {
+    padding: 40px 18px;
+    max-width: 100%;
+  }
+  .hero-titulo-display {
+    font-size: 2.1rem;
+    line-height: 1.12;
+  }
+  .hero-descripcion-lead {
+    font-size: 0.95rem;
+  }
+  .hero-fila-cta {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+  .btn-hero-primario {
+    width: 100%;
+    justify-content: center;
+    padding: 13px 20px;
+    font-size: 0.95rem;
+  }
+  .hero-precio-etiqueta {
+    flex-direction: row;
+    align-items: baseline;
+    gap: 8px;
+  }
+  .hero-pilares {
+    gap: 10px;
+  }
+  .pilar-item {
+    font-size: 0.75rem;
+  }
+  .hero-controles {
+    right: 14px;
+    bottom: 14px;
+  }
+
+  /* Carrusel de Productos Destacados */
+  .seccion-carrusel-destacados {
+    padding: 36px 16px;
+  }
+  .item-riel-destacados {
+    flex: 0 0 82vw;
+  }
+
+  /* Flechas visibles en móviles para carruseles de fotos */
+  .flecha-carrusel {
+    opacity: 0.88 !important;
+    width: 28px;
+    height: 28px;
+    background: rgba(255, 255, 255, 0.92);
+  }
+  .overlay-hover-detalle {
+    display: none;
+  }
+
+  /* Vitrina */
+  .seccion-vitrina-catalogo {
+    padding: 40px 16px 60px;
+  }
+  .cabecera-vitrina {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+  }
+  .barra-busqueda-vitrina {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .campo-busqueda-icono {
+    min-width: 100%;
+  }
+  .selector-presupuesto-wrapper {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  /* Modales estilo Bottom Sheet en móviles */
+  .modal-backdrop-ecommerce {
+    padding: 0;
+    align-items: flex-end;
+  }
+  .modal-contenido-detalle-producto {
+    max-height: 92vh;
+    border-radius: 24px 24px 0 0;
+    padding: 20px 16px;
+  }
+  .modal-contenido-checkout {
+    max-height: 94vh;
+    border-radius: 24px 24px 0 0;
+    padding: 20px 16px;
+  }
+  .grid-detalle-producto {
+    padding: 0;
+    gap: 20px;
+  }
+
+  /* Dedicatoria en Móvil */
+  .fila-de-para {
+    flex-direction: column;
+  }
+  .grid-complementos-sugeridos {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+
+  /* Checkout en Móvil */
+  .pills-metodos-pago {
+    grid-template-columns: 1fr;
+  }
+  .grid-dos-columnas {
+    grid-template-columns: 1fr;
+  }
+  .input-col-2 {
+    grid-column: span 1;
+  }
+}
+
+/* Pantallas Extra Pequeñas (<480px) */
+@media (max-width: 480px) {
+  .grid-productos-vitrina {
+    grid-template-columns: 1fr;
+  }
+  .drawer-panel-carrito {
+    width: 100vw;
+  }
+  .grid-campos-entrega-unificada {
+    grid-template-columns: 1fr;
+  }
+  .pills-modalidad-entrega {
+    grid-template-columns: 1fr;
+  }
+
+  /* Chat Mía en Pantalla Completa Móvil */
+  .ventana-chat-flotante {
+    inset: 0 !important;
+    width: 100vw !important;
+    height: 100dvh !important;
+    max-height: 100dvh !important;
+    border-radius: 0 !important;
+    bottom: 0 !important;
+    right: 0 !important;
+  }
+  .btn-flotante-chat-tinkay {
+    bottom: max(16px, env(safe-area-inset-bottom));
+    right: 14px;
+    padding: 8px 14px 8px 10px;
+  }
+  .estado-en-linea {
+    display: none;
+  }
+  .nombre-agente {
+    font-size: 0.82rem;
+  }
+
+  /* Touch Safe Area */
+  .pie-drawer-carrito {
+    padding-bottom: max(20px, env(safe-area-inset-bottom));
+  }
+}
+
+/* Dispositivos Táctiles (Touch screens sin puntero de ratón) */
+@media (hover: none) {
+  .flecha-carrusel {
+    opacity: 0.85;
+  }
+}
+
+

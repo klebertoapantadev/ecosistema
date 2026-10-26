@@ -36,12 +36,13 @@ export function EncabezadoEcommerce() {
 
           <button
             type="button"
-            className="btn-carrito-cabecera"
+            className="btn-carrito-cabecera btn-responsive-accion"
             onClick={() => setDrawerAbierto(true)}
+            title="Ver carrito de compras"
             aria-label={`Ver carrito de compras con ${cantidadTotal} productos`}
           >
             <ShoppingBag size={20} />
-            <span className="texto-carrito-btn">Carrito</span>
+            <span className="texto-carrito-btn btn-texto-responsive">Carrito</span>
             {cantidadTotal > 0 && (
               <span className="badge-cantidad-carrito">{cantidadTotal}</span>
             )}
