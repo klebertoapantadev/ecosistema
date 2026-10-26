@@ -153,20 +153,21 @@ export function ChatAriaFlotante() {
       query.includes('mama')
     ) {
       const prodBox = catalogo.find((p) => p.id === 'box-florales' || p.slug === 'box-florales') ?? catalogo[1] ?? catalogo[0]!;
-      const prodCombo = catalogo.find((p) => p.id === 'combo-aniversario-especial' || p.slug === 'combo-aniversario-especial') ?? catalogo[4] ?? catalogo[0]!;
+      const prodCoreano = catalogo.find((p) => p.id === 'tinkay-bouq-mix' || p.slug === 'bouquet-coreano') ?? catalogo[0]!;
+      const varBoxM = prodBox.variantes.find((v) => v.nombre.includes('(M)') || v.sku.includes('BOXFLORA')) ?? prodBox.variantes[0]!;
       return {
         texto:
-          '¡Qué gran motivo para celebrar! Para cumpleaños te recomiendo nuestros Box Florales en caja de lujo cilíndrica o el Combo Especial con globo helio personalizado y bombones Ferrero Rocher.',
+          '¡Qué gran motivo para celebrar! Para cumpleaños te recomiendo nuestros elegantes Box Florales en caja cilíndrica de alta costura o el moderno Bouquet Estilo Coreano con base hidratada.',
         productosSugeridos: [
           {
             producto: prodBox,
-            variantePorDefecto: prodBox.variantes[1] ?? prodBox.variantes[0]!,
-            mensajeMotivo: 'Box Floral 40 rosas con base hidratada OASIS.',
+            variantePorDefecto: varBoxM,
+            mensajeMotivo: 'Box Floral (M) con ~40 rosas de exportación por $40.00.',
           },
           {
-            producto: prodCombo,
-            variantePorDefecto: prodCombo.variantes[0]!,
-            mensajeMotivo: 'Box + Globo Helio + Caja Ferrero Rocher x8.',
+            producto: prodCoreano,
+            variantePorDefecto: prodCoreano.variantes[0]!,
+            mensajeMotivo: 'Bouquet Coreano Mediano con papeles plisados por $28.00.',
           },
         ],
         sugerenciaDedicatoria: {
@@ -190,12 +191,12 @@ export function ChatAriaFlotante() {
       const prodCoreano = catalogo.find((p) => p.id === 'tinkay-bouq-mix' || p.slug === 'bouquet-coreano') ?? catalogo[0]!;
       return {
         texto:
-          'Tenemos alternativas accesibles de altísima calidad floral con precios transparentes (PVP con IVA incluido). Por ejemplo, el ramo de 25 rosas para florero está en $20.00 y el Bouquet Coreano Mediano de 25 rosas en $28.00:',
+          'Tenemos alternativas accesibles de altísima calidad floral con precios transparentes (Tarifa IVA 0%). Por ejemplo, el ramo de 25 rosas para florero está en $23.00 y el Bouquet Coreano Mediano de 25 rosas en $28.00:',
         productosSugeridos: [
           {
             producto: prodFlorero,
             variantePorDefecto: prodFlorero.variantes[0]!,
-            mensajeMotivo: '25 rosas de tallo largo de 70 cm por $20.00.',
+            mensajeMotivo: '25 rosas de tallo largo de 70 cm por $23.00.',
           },
           {
             producto: prodCoreano,

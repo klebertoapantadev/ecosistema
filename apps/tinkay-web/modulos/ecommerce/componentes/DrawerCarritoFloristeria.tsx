@@ -544,7 +544,7 @@ export function DrawerCarritoFloristeria() {
                 <span>${subtotalBaseImponible.toFixed(2)}</span>
               </div>
               <div className="fila-desglose">
-                <span>IVA 15% (SRI Ecuador)</span>
+                <span>{totalIva > 0 ? 'IVA 15% (SRI Ecuador)' : 'IVA 0% (Flores de Exportación)'}</span>
                 <span>${totalIva.toFixed(2)}</span>
               </div>
               <div className="fila-desglose">

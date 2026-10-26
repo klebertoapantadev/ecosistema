@@ -201,7 +201,11 @@ export function ModalDetalleProducto() {
                       ${varianteSeleccionada.precioComparacion.toFixed(2)}
                     </span>
                   )}
-                <span className="iva-etiqueta-modal">PVP (IVA 15% incluido)</span>
+                <span className="iva-etiqueta-modal">
+                  {varianteSeleccionada.tarifaIva > 0
+                    ? `PVP (IVA ${varianteSeleccionada.tarifaIva}% incluido)`
+                    : 'PVP (Tarifa IVA 0% — Flores Frescas)'}
+                </span>
               </div>
             </div>
 

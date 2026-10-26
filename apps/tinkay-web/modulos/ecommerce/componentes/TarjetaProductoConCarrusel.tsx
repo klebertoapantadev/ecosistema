@@ -179,7 +179,11 @@ export function TarjetaProductoConCarrusel({ producto, modoSobrio }: Props) {
                   </span>
                 )}
             </div>
-            <span className="subtexto-iva">PVP con IVA 15%</span>
+            <span className="subtexto-iva">
+              {varianteSeleccionada.tarifaIva > 0
+                ? `PVP (Inc. IVA ${varianteSeleccionada.tarifaIva}%)`
+                : 'PVP (Tarifa IVA 0%)'}
+            </span>
           </div>
 
           <div className="acciones-tarjeta">

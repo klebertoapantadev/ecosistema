@@ -23,7 +23,7 @@ const SLIDES_HERO = [
     titulo: 'Box Florales de Lujo',
     subtitulo: 'Cajas rígidas de alta costura con rosas frescas seleccionadas y orquídeas en base hidratada OASIS.',
     imagen: 'https://oaybbpdxhlxjbpwnoymy.supabase.co/storage/v1/object/public/catalogo/tinkay/portadas/1792674929601-box_floral_m__2_.jpg',
-    precioDesde: '$30.00',
+    precioDesde: '$40.00 (Box M)',
     botonTexto: 'Explorar Box Florales',
   },
   {
@@ -33,7 +33,7 @@ const SLIDES_HERO = [
     titulo: 'Ramos Clásicos para Florero',
     subtitulo: 'Tallos largos de 70 cm en espiral (25, 50 y 100 rosas) con sobre de nutriente Chrysal incluido.',
     imagen: 'https://oaybbpdxhlxjbpwnoymy.supabase.co/storage/v1/object/public/catalogo/tinkay/portadas/1792605329074-bouquet50__1_.png',
-    precioDesde: '$20.00',
+    precioDesde: '$23.00',
     botonTexto: 'Ver Ramos para Florero',
   },
   {

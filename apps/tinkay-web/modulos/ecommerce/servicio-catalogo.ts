@@ -112,7 +112,7 @@ export async function cargarCatalogoDinamicoTinkay(): Promise<{
 
     // Mapeo de Productos
     const productos: ProductoEcommerce[] = prodsDb
-      .filter((p) => p.pro_tipo !== 'SERVICIO')
+      .filter((p) => p.pro_tipo !== 'SERVICIO' && p.pro_slug !== 'combo-aniversario-especial')
       .map((p) => {
         const detalle = p.pro_detalle_producto || {};
         const varsRaw: SupabaseVarianteRaw[] = Array.isArray(p.com_variante) ? p.com_variante : [];
@@ -220,7 +220,7 @@ export async function cargarCatalogoDinamicoTinkay(): Promise<{
               tarifaIva: 15,
             }
           ],
-          destacado: p.pro_destacado === true,
+          destacado: p.pro_slug === 'box-florales' ? true : esCondol ? false : p.pro_destacado === true,
           nuevo: false,
           entregaHoy: true,
           esCondolencias: esCondol,
