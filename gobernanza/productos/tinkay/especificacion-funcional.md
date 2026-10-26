@@ -52,12 +52,13 @@ Tinkay se apoya plenamente en la arquitectura de Plataforma común:
 - **Semillas y Datos en BD:** Migración [`20260907000003_tinkay_catalogo_productos_semilla_y_aria.sql`](file:///c:/@Antigravity/ecosistema/supabase/migrations/20260907000003_tinkay_catalogo_productos_semilla_y_aria.sql).
 - **Taxonomía N:M:** Un mismo arreglo pertenece simultáneamente a múltiples categorías (`com_producto_categoria`) según Formato (`CAT_FLOREROS`, `CAT_COREANOS`, `CAT_ABANICOS`) y Ocasión (`CAT_OCAS_AMOR`, `CAT_OCAS_ANIV`, `CAT_OCAS_CUMPLE`, `CAT_OCAS_CONDOL`, `CAT_EVENTOS`).
 - **Álbumes Públicos de Google Photos & Multimedia:** Cada producto y categoría enlaza a su álbum de fotos reales del taller en alta resolución (`photos.app.goo.gl/...`), video demostrativo/GIF y galería desde distintos ángulos para inspección inmediata del cliente.
-- **Manejo Monetario:** Precios almacenados en base imponible sin IVA con 4 decimales (`var_precio = PVP / 1.15`), tarifa del 15% (`var_tarifa_iva_porcentaje`) y PVP nominal precalculado.
+- **Manejo Monetario y Tributario (SRI Ecuador):** Las flores frescas y arreglos botánicos se comercializan con tarifa **IVA 0%** (`var_tarifa_iva_porcentaje = 0`, donde PVP = Base Imponible). Los complementos gourmet (chocolates Ferrero) y servicios especiales de logística/montaje aplican **IVA 15%** (`var_tarifa_iva_porcentaje = 15`, donde `PVP = Base * 1.15`).
 
 ### TNK-002 — E-Commerce Web, Carrito y Pasarela Payphone
 - **Vitrina Web:** `apps/tinkay-web` con diseño editorial botánico según [`sistema-visual.md`](sistema-visual.md).
+- **Catálogo Real & Variantes:** Visualización de productos reales (Bouquet Coreano, Box Florales con Box M a $40 como principal, Bouquets para Florero, Especiales Puro Amor, Abanicos y Pedestales). Exclusión estricta de productos de prueba o combos inexistentes.
 - **Cajita de Pagos Payphone:** Configuración de pasarela registrada en `comun_comercio.com_pasarela_configuracion` (modo pruebas / simulado habilitado).
-- **Parámetros de Entrega:** Selección de dedicatoria impresa, fecha y franja horaria (⚡ Entrega Express 45-90 min / 🌸 Pide hoy, recibe hoy / 📅 Agenda programada).
+- **Parámetros de Entrega:** Selección de dedicatoria impresa individual o unificada, fecha y franja horaria (gratuita mañana/tarde o recargo de hora exacta / madrugador).
 
 ### TNK-003 — Gestión de Vendedoras y Liquidación Automatizada de Comisiones
 - **Enlaces con Atribución:** Cada asesora cuenta con enlaces y QR únicos (`tinkay.com/chat?asesora=paola`) para atribución de la conversación y venta.
