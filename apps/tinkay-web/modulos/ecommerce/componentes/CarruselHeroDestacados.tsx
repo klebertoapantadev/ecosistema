@@ -50,7 +50,8 @@ const SLIDES_HERO = [
 ];
 
 export function CarruselHeroDestacados() {
-  const { setProductoSeleccionadoModal } = useCarrito();
+  const { setProductoSeleccionadoModal, productos } = useCarrito();
+  const catalogo = productos && productos.length > 0 ? productos : PRODUCTOS_TINKAY;
   const [slideActivo, setSlideActivo] = useState(0);
 
   useEffect(() => {
@@ -67,7 +68,7 @@ export function CarruselHeroDestacados() {
       window.open(slide.enlaceExterno, '_blank', 'noopener,noreferrer');
       return;
     }
-    const prod = PRODUCTOS_TINKAY.find((p) => p.id === slide.productoId);
+    const prod = catalogo.find((p) => p.id === slide.productoId || p.slug === slide.productoId);
     if (prod) {
       setProductoSeleccionadoModal(prod);
     }

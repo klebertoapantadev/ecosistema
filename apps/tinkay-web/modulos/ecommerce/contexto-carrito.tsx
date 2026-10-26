@@ -8,7 +8,10 @@ import {
   DedicatoriaArreglo,
   DatosEntrega,
   ModalidadEntrega,
+  CategoriaEcommerce,
 } from './tipos';
+import { PRODUCTOS_TINKAY, CATEGORIAS_TINKAY } from './datos-catalogo';
+import { cargarCatalogoDinamicoTinkay } from './servicio-catalogo';
 
 interface ContextoCarritoValor {
   items: ItemCarrito[];
@@ -19,6 +22,8 @@ interface ContextoCarritoValor {
   productoSeleccionadoModal: ProductoEcommerce | null;
   checkoutAbierto: boolean;
   ordenConfirmadaId: string | null;
+  productos: ProductoEcommerce[];
+  categorias: CategoriaEcommerce[];
 
   // Acciones
   setDrawerAbierto: (abierto: boolean) => void;
@@ -78,6 +83,21 @@ export function ProveedorCarrito({ children }: { children: React.ReactNode }) {
   const [checkoutAbierto, setCheckoutAbierto] = useState(false);
   const [ordenConfirmadaId, setOrdenConfirmadaId] = useState<string | null>(null);
   const [cargado, setCargado] = useState(false);
+
+  // Catálogo dinámico sincronizado con Supabase en tiempo real
+  const [productos, setProductos] = useState<ProductoEcommerce[]>(PRODUCTOS_TINKAY);
+  const [categorias, setCategorias] = useState<CategoriaEcommerce[]>(CATEGORIAS_TINKAY);
+
+  useEffect(() => {
+    cargarCatalogoDinamicoTinkay().then(({ productos: prodsLive, categorias: catsLive }) => {
+      if (prodsLive && prodsLive.length > 0) {
+        setProductos(prodsLive);
+      }
+      if (catsLive && catsLive.length > 0) {
+        setCategorias(catsLive);
+      }
+    });
+  }, []);
 
   // Cargar estado inicial desde LocalStorage para resiliencia
   useEffect(() => {
@@ -254,6 +274,8 @@ export function ProveedorCarrito({ children }: { children: React.ReactNode }) {
         productoSeleccionadoModal,
         checkoutAbierto,
         ordenConfirmadaId,
+        productos,
+        categorias,
         setDrawerAbierto,
         setProductoSeleccionadoModal,
         setCheckoutAbierto,

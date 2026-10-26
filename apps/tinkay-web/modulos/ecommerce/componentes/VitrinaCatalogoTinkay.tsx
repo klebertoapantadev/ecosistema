@@ -1,11 +1,16 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
+import { useCarrito } from '../contexto-carrito';
 import { CATEGORIAS_TINKAY, PRODUCTOS_TINKAY } from '../datos-catalogo';
 import { TarjetaProductoConCarrusel } from './TarjetaProductoConCarrusel';
 import { Search, SlidersHorizontal, Feather, Sparkles } from 'lucide-react';
 
 export function VitrinaCatalogoTinkay() {
+  const { productos, categorias } = useCarrito();
+  const catalogoProductos = productos && productos.length > 0 ? productos : PRODUCTOS_TINKAY;
+  const catalogoCategorias = categorias && categorias.length > 0 ? categorias : CATEGORIAS_TINKAY;
+
   const [categoriaActiva, setCategoriaActiva] = useState<string>('cat-todos');
   const [terminoBusqueda, setTerminoBusqueda] = useState<string>('');
   const [filtroPresupuesto, setFiltroPresupuesto] = useState<string>('todos');
@@ -13,7 +18,7 @@ export function VitrinaCatalogoTinkay() {
   const esModoCondolencias = categoriaActiva === 'cat-ocas-condol';
 
   const productosFiltrados = useMemo(() => {
-    return PRODUCTOS_TINKAY.filter((p) => {
+    return catalogoProductos.filter((p) => {
       // Filtro de categoría
       if (categoriaActiva !== 'cat-todos') {
         const coincidePrincipal = p.categoriaPrincipal === categoriaActiva;
@@ -40,7 +45,7 @@ export function VitrinaCatalogoTinkay() {
 
       return true;
     });
-  }, [categoriaActiva, terminoBusqueda, filtroPresupuesto]);
+  }, [categoriaActiva, terminoBusqueda, filtroPresupuesto, catalogoProductos]);
 
   return (
     <section className={`seccion-vitrina-catalogo ${esModoCondolencias ? 'vitrina-modo-condolencias' : ''}`} id="catalogo">
@@ -114,7 +119,7 @@ export function VitrinaCatalogoTinkay() {
 
         {/* Pestañas de Categorías Multidimensionales */}
         <div className="pills-categorias-scroll">
-          {CATEGORIAS_TINKAY.map((cat) => {
+          {catalogoCategorias.map((cat) => {
             const estaActiva = cat.id === categoriaActiva;
             return (
               <button

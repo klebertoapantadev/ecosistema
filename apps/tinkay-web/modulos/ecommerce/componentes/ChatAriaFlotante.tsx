@@ -36,7 +36,10 @@ export function ChatAriaFlotante() {
     setProductoSeleccionadoModal,
     setDrawerAbierto,
     cantidadTotal,
+    productos,
   } = useCarrito();
+
+  const catalogo = productos && productos.length > 0 ? productos : PRODUCTOS_TINKAY;
 
   const [abierto, setAbierto] = useState(false);
   const [mensajes, setMensajes] = useState<MensajeChat[]>(MENSAJES_INICIALES);
@@ -86,7 +89,7 @@ export function ChatAriaFlotante() {
       query.includes('velaci') ||
       query.includes('duelo')
     ) {
-      const prodCondol = PRODUCTOS_TINKAY.find((p) => p.esCondolencias) ?? PRODUCTOS_TINKAY[5]!;
+      const prodCondol = catalogo.find((p) => p.esCondolencias) ?? catalogo[5] ?? catalogo[0]!;
       const varCondol = prodCondol.variantes[0]!;
       return {
         texto:
@@ -116,8 +119,8 @@ export function ChatAriaFlotante() {
       query.includes('pareja') ||
       query.includes('romant')
     ) {
-      const prodCoreano = PRODUCTOS_TINKAY.find((p) => p.id === 'tinkay-bouq-mix') ?? PRODUCTOS_TINKAY[0]!;
-      const prodAmor = PRODUCTOS_TINKAY.find((p) => p.id === 'tinkay-bouq-san-valentin') ?? PRODUCTOS_TINKAY[3]!;
+      const prodCoreano = catalogo.find((p) => p.id === 'tinkay-bouq-mix' || p.slug === 'bouquet-coreano') ?? catalogo[0]!;
+      const prodAmor = catalogo.find((p) => p.id === 'tinkay-bouq-san-valentin' || p.slug === 'bouquets-especiales-puro-amor') ?? catalogo[3] ?? catalogo[0]!;
       return {
         texto:
           '¡Qué hermoso detalle! Para romance y fechas inolvidables, nuestro Bouquet Estilo Coreano con papeles plisados y base hidratada es el favorito. También tenemos la majestuosa edición "Puro Amor" con forma de corazón de ~180 rosas rojas.',
@@ -149,8 +152,8 @@ export function ChatAriaFlotante() {
       query.includes('mamá') ||
       query.includes('mama')
     ) {
-      const prodBox = PRODUCTOS_TINKAY.find((p) => p.id === 'box-florales') ?? PRODUCTOS_TINKAY[1]!;
-      const prodCombo = PRODUCTOS_TINKAY.find((p) => p.id === 'combo-aniversario-especial') ?? PRODUCTOS_TINKAY[4]!;
+      const prodBox = catalogo.find((p) => p.id === 'box-florales' || p.slug === 'box-florales') ?? catalogo[1] ?? catalogo[0]!;
+      const prodCombo = catalogo.find((p) => p.id === 'combo-aniversario-especial' || p.slug === 'combo-aniversario-especial') ?? catalogo[4] ?? catalogo[0]!;
       return {
         texto:
           '¡Qué gran motivo para celebrar! Para cumpleaños te recomiendo nuestros Box Florales en caja de lujo cilíndrica o el Combo Especial con globo helio personalizado y bombones Ferrero Rocher.',
@@ -183,8 +186,8 @@ export function ChatAriaFlotante() {
       query.includes('cuanto') ||
       query.includes('cuánto')
     ) {
-      const prodFlorero = PRODUCTOS_TINKAY.find((p) => p.id === 'tinkay-bouq-florero') ?? PRODUCTOS_TINKAY[2]!;
-      const prodCoreano = PRODUCTOS_TINKAY.find((p) => p.id === 'tinkay-bouq-mix') ?? PRODUCTOS_TINKAY[0]!;
+      const prodFlorero = catalogo.find((p) => p.id === 'tinkay-bouq-florero' || p.slug === 'bouquet-clasico-para-florero') ?? catalogo[2] ?? catalogo[0]!;
+      const prodCoreano = catalogo.find((p) => p.id === 'tinkay-bouq-mix' || p.slug === 'bouquet-coreano') ?? catalogo[0]!;
       return {
         texto:
           'Tenemos alternativas accesibles de altísima calidad floral con precios transparentes (PVP con IVA incluido). Por ejemplo, el ramo de 25 rosas para florero está en $20.00 y el Bouquet Coreano Mediano de 25 rosas en $28.00:',
@@ -204,7 +207,7 @@ export function ChatAriaFlotante() {
     }
 
     // 6. Caso General / Consulta de entrega o compra
-    const prodDestacado = PRODUCTOS_TINKAY[0]!;
+    const prodDestacado = catalogo[0]!;
     return {
       texto:
         'Con gusto te asesoro. En Tinkay entregamos flores frescas en Quito y Valles (Cumbayá, Tumbaco, Los Chillos) con opción de franja horaria gratuita, entrega a hora exacta o retiro gratis en nuestra tienda física (https://maps.app.goo.gl/D56gQohzuwha4sLf8). Aquí tienes nuestro arreglo más solicitado del día:',
