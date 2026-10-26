@@ -36,6 +36,16 @@ export function ModalDetalleProducto() {
     }
   );
 
+  React.useEffect(() => {
+    if (producto && producto.variantes[0]) {
+      setVarianteSeleccionada(producto.variantes[0]);
+      setFotoActivaIndex(0);
+      setComplementosSeleccionados([]);
+      setIncluirDedicatoria(false);
+      setDedicatoria({ para: '', de: '', mensaje: '' });
+    }
+  }, [producto]);
+
   // Estado para la tarjeta de dedicatoria
   const [incluirDedicatoria, setIncluirDedicatoria] = useState(false);
   const [dedicatoria, setDedicatoria] = useState<DedicatoriaArreglo>({
@@ -176,6 +186,21 @@ export function ModalDetalleProducto() {
                 <span className="precio-pvp-destacado">
                   ${varianteSeleccionada.pvp.toFixed(2)}
                 </span>
+                {varianteSeleccionada.precioComparacion &&
+                  varianteSeleccionada.precioComparacion > varianteSeleccionada.pvp && (
+                    <span
+                      style={{
+                        textDecoration: 'line-through',
+                        opacity: 0.55,
+                        fontSize: '1.25rem',
+                        fontWeight: 500,
+                        marginLeft: '8px',
+                        color: 'var(--tinta-media)',
+                      }}
+                    >
+                      ${varianteSeleccionada.precioComparacion.toFixed(2)}
+                    </span>
+                  )}
                 <span className="iva-etiqueta-modal">PVP (IVA 15% incluido)</span>
               </div>
             </div>
@@ -204,7 +229,15 @@ export function ModalDetalleProducto() {
                     key={v.sku}
                     type="button"
                     className={`opcion-variante-card ${v.sku === varianteSeleccionada.sku ? 'seleccionada' : ''}`}
-                    onClick={() => setVarianteSeleccionada(v)}
+                    onClick={() => {
+                      setVarianteSeleccionada(v);
+                      if (v.foto) {
+                        const idx = fotos.indexOf(v.foto);
+                        if (idx !== -1) {
+                          setFotoActivaIndex(idx);
+                        }
+                      }
+                    }}
                   >
                     <div className="info-variante-texto">
                       <strong>{v.nombre}</strong>

@@ -56,7 +56,27 @@ export function ChatAriaFlotante() {
   const procesarMensajeUsuario = (texto: string) => {
     const query = texto.toLowerCase();
 
-    // 1. Caso Condolencias / Velaciones / Pésame
+    // 1. Caso Tienda física / Ubicación / Dirección / Maps
+    if (
+      query.includes('tienda') ||
+      query.includes('donde') ||
+      query.includes('dónde') ||
+      query.includes('ubicacion') ||
+      query.includes('ubicación') ||
+      query.includes('direccion') ||
+      query.includes('dirección') ||
+      query.includes('local') ||
+      query.includes('maps') ||
+      query.includes('visitar') ||
+      query.includes('retiro')
+    ) {
+      return {
+        texto:
+          '¡Con mucho gusto! Nuestra tienda física y taller floral principal está ubicada en Quito. Puedes visitarnos directamente, retirar tus pedidos sin costo de envío o coordinar composiciones personalizadas. Puedes abrir nuestra ubicación en Google Maps aquí: https://maps.app.goo.gl/D56gQohzuwha4sLf8. ¿Te gustaría coordinar un pedido para retiro hoy?',
+      };
+    }
+
+    // 2. Caso Condolencias / Velaciones / Pésame
     if (
       query.includes('condolencia') ||
       query.includes('pesame') ||
@@ -66,11 +86,11 @@ export function ChatAriaFlotante() {
       query.includes('velaci') ||
       query.includes('duelo')
     ) {
-      const prodCondol = PRODUCTOS_TINKAY.find((p) => p.esCondolencias) ?? PRODUCTOS_TINKAY[3]!;
+      const prodCondol = PRODUCTOS_TINKAY.find((p) => p.esCondolencias) ?? PRODUCTOS_TINKAY[5]!;
       const varCondol = prodCondol.variantes[0]!;
       return {
         texto:
-          'Comprendo el momento y te acompaño con profundo respeto. Para ocasiones de condolencias y velaciones preparamos composiciones sobrias con rosas blancas, liliums y follajes andinos. Nuestro Arreglo Monumental incluye pedestal de madera y cinta solemne membretada.',
+          'Comprendo el momento y te acompaño con profundo respeto. Para ocasiones de condolencias y velaciones preparamos composiciones sobrias con rosas blancas, liliums y follajes andinos. Nuestro Abanico Monumental incluye atril de madera y cinta solemne membretada.',
         productosSugeridos: [
           {
             producto: prodCondol,
@@ -85,7 +105,7 @@ export function ChatAriaFlotante() {
       };
     }
 
-    // 2. Caso Amor / Aniversario / Pedida de mano / Enamorados
+    // 3. Caso Amor / Aniversario / Pedida de mano / Enamorados
     if (
       query.includes('amor') ||
       query.includes('aniversario') ||
@@ -96,21 +116,21 @@ export function ChatAriaFlotante() {
       query.includes('pareja') ||
       query.includes('romant')
     ) {
-      const prodCoreano = PRODUCTOS_TINKAY.find((p) => p.id === 'tinkay-bouq-coreano') ?? PRODUCTOS_TINKAY[0]!;
-      const prod100 = PRODUCTOS_TINKAY.find((p) => p.id === 'tinkay-bouq-florero') ?? PRODUCTOS_TINKAY[1]!;
+      const prodCoreano = PRODUCTOS_TINKAY.find((p) => p.id === 'tinkay-bouq-mix') ?? PRODUCTOS_TINKAY[0]!;
+      const prodAmor = PRODUCTOS_TINKAY.find((p) => p.id === 'tinkay-bouq-san-valentin') ?? PRODUCTOS_TINKAY[3]!;
       return {
         texto:
-          '¡Qué hermoso detalle! Para romance y fechas inolvidables, nuestro Bouquet Estilo Coreano VIP con papeles plisados y rosas de exportación es el favorito indiscutible. También tenemos el clásico ramo de 100 rosas para florero si deseas causar el máximo impacto.',
+          '¡Qué hermoso detalle! Para romance y fechas inolvidables, nuestro Bouquet Estilo Coreano con papeles plisados y base hidratada es el favorito. También tenemos la majestuosa edición "Puro Amor" con forma de corazón de ~180 rosas rojas.',
         productosSugeridos: [
           {
             producto: prodCoreano,
             variantePorDefecto: prodCoreano.variantes[1] ?? prodCoreano.variantes[0]!,
-            mensajeMotivo: '24 rosas rojas envueltas en papel coreano plisado.',
+            mensajeMotivo: '40 rosas de exportación con base hidratada.',
           },
           {
-            producto: prod100,
-            variantePorDefecto: prod100.variantes[2] ?? prod100.variantes[0]!,
-            mensajeMotivo: '100 rosas de exportación de 70 cm.',
+            producto: prodAmor,
+            variantePorDefecto: prodAmor.variantes[0]!,
+            mensajeMotivo: 'Corazón monumental de rosas rojas de exportación.',
           },
         ],
         sugerenciaDedicatoria: {
@@ -120,7 +140,7 @@ export function ChatAriaFlotante() {
       };
     }
 
-    // 3. Caso Cumpleaños / Celebración / Alegría
+    // 4. Caso Cumpleaños / Celebración / Alegría
     if (
       query.includes('cumple') ||
       query.includes('cumpleaños') ||
@@ -129,21 +149,21 @@ export function ChatAriaFlotante() {
       query.includes('mamá') ||
       query.includes('mama')
     ) {
-      const prodMix = PRODUCTOS_TINKAY.find((p) => p.id === 'tinkay-bouq-mix') ?? PRODUCTOS_TINKAY[2]!;
-      const prodCoreano = PRODUCTOS_TINKAY.find((p) => p.id === 'tinkay-bouq-coreano') ?? PRODUCTOS_TINKAY[0]!;
+      const prodBox = PRODUCTOS_TINKAY.find((p) => p.id === 'box-florales') ?? PRODUCTOS_TINKAY[1]!;
+      const prodCombo = PRODUCTOS_TINKAY.find((p) => p.id === 'combo-aniversario-especial') ?? PRODUCTOS_TINKAY[4]!;
       return {
         texto:
-          '¡Qué gran motivo para celebrar! Para cumpleaños te recomiendo nuestro Bouquet Mix Exótico multicolor (con orquídeas y eucalipto perfumado) o el Bouquet Coreano en tono blush. Ambos llenan el día de vitalidad y alegría.',
+          '¡Qué gran motivo para celebrar! Para cumpleaños te recomiendo nuestros Box Florales en caja de lujo cilíndrica o el Combo Especial con globo helio personalizado y bombones Ferrero Rocher.',
         productosSugeridos: [
           {
-            producto: prodMix,
-            variantePorDefecto: prodMix.variantes[0]!,
-            mensajeMotivo: 'Composición silvestre multicolor con flores de temporada.',
+            producto: prodBox,
+            variantePorDefecto: prodBox.variantes[1] ?? prodBox.variantes[0]!,
+            mensajeMotivo: 'Box Floral 40 rosas con base hidratada OASIS.',
           },
           {
-            producto: prodCoreano,
-            variantePorDefecto: prodCoreano.variantes[0]!,
-            mensajeMotivo: '12 rosas frescas con empaque festivo satinado.',
+            producto: prodCombo,
+            variantePorDefecto: prodCombo.variantes[0]!,
+            mensajeMotivo: 'Box + Globo Helio + Caja Ferrero Rocher x8.',
           },
         ],
         sugerenciaDedicatoria: {
@@ -153,7 +173,7 @@ export function ChatAriaFlotante() {
       };
     }
 
-    // 4. Caso Presupuesto / Económico / Precios
+    // 5. Caso Presupuesto / Económico / Precios
     if (
       query.includes('30') ||
       query.includes('barato') ||
@@ -163,35 +183,35 @@ export function ChatAriaFlotante() {
       query.includes('cuanto') ||
       query.includes('cuánto')
     ) {
-      const prodFlorero = PRODUCTOS_TINKAY.find((p) => p.id === 'tinkay-bouq-florero') ?? PRODUCTOS_TINKAY[1]!;
-      const prodCoreano = PRODUCTOS_TINKAY.find((p) => p.id === 'tinkay-bouq-coreano') ?? PRODUCTOS_TINKAY[0]!;
+      const prodFlorero = PRODUCTOS_TINKAY.find((p) => p.id === 'tinkay-bouq-florero') ?? PRODUCTOS_TINKAY[2]!;
+      const prodCoreano = PRODUCTOS_TINKAY.find((p) => p.id === 'tinkay-bouq-mix') ?? PRODUCTOS_TINKAY[0]!;
       return {
         texto:
-          'Tenemos alternativas accesibles de altísima calidad floral con precios transparentes (PVP con IVA incluido). Por ejemplo, el ramo de 25 rosas para florero está en $20.00 y el Bouquet Coreano pequeño de 12 rosas en $25.00:',
+          'Tenemos alternativas accesibles de altísima calidad floral con precios transparentes (PVP con IVA incluido). Por ejemplo, el ramo de 25 rosas para florero está en $20.00 y el Bouquet Coreano Mediano de 25 rosas en $28.00:',
         productosSugeridos: [
           {
             producto: prodFlorero,
             variantePorDefecto: prodFlorero.variantes[0]!,
-            mensajeMotivo: '25 rosas de tallo largo por solo $20.00.',
+            mensajeMotivo: '25 rosas de tallo largo de 70 cm por $20.00.',
           },
           {
             producto: prodCoreano,
             variantePorDefecto: prodCoreano.variantes[0]!,
-            mensajeMotivo: '12 rosas en papel plisado de vanguardia por $25.00.',
+            mensajeMotivo: '25 rosas en envoltura coreana con base hidratada por $28.00.',
           },
         ],
       };
     }
 
-    // 5. Caso General / Consulta de entrega o compra
+    // 6. Caso General / Consulta de entrega o compra
     const prodDestacado = PRODUCTOS_TINKAY[0]!;
     return {
       texto:
-        'Con gusto te asesoro. En Tinkay entregamos flores frescas en Quito y Valles (Cumbayá, Tumbaco, Los Chillos) con opción de franja horaria gratuita o entrega en hora exacta. Aquí tienes nuestro arreglo más solicitado del día:',
+        'Con gusto te asesoro. En Tinkay entregamos flores frescas en Quito y Valles (Cumbayá, Tumbaco, Los Chillos) con opción de franja horaria gratuita, entrega a hora exacta o retiro gratis en nuestra tienda física (https://maps.app.goo.gl/D56gQohzuwha4sLf8). Aquí tienes nuestro arreglo más solicitado del día:',
       productosSugeridos: [
         {
           producto: prodDestacado,
-          variantePorDefecto: prodDestacado.variantes[1] ?? prodDestacado.variantes[0]!,
+          variantePorDefecto: prodDestacado.variantes[0]!,
           mensajeMotivo: 'El bouquet más pedido por nuestros clientes.',
         },
       ],

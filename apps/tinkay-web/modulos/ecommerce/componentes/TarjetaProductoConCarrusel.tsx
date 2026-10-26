@@ -148,7 +148,15 @@ export function TarjetaProductoConCarrusel({ producto, modoSobrio }: Props) {
                   key={v.sku}
                   type="button"
                   className={`chip-variante-opcion ${v.sku === varianteSeleccionada.sku ? 'seleccionada' : ''}`}
-                  onClick={() => setVarianteSeleccionada(v)}
+                  onClick={() => {
+                    setVarianteSeleccionada(v);
+                    if (v.foto) {
+                      const idx = fotos.indexOf(v.foto);
+                      if (idx !== -1) {
+                        setFotoActualIndex(idx);
+                      }
+                    }
+                  }}
                 >
                   {(v.nombre.split('(')[0] ?? v.nombre).trim()}
                 </button>
@@ -160,9 +168,17 @@ export function TarjetaProductoConCarrusel({ producto, modoSobrio }: Props) {
         {/* Precio y Acción */}
         <div className="fila-precio-accion">
           <div className="columna-precio">
-            <span className="precio-pvp-grande">
-              ${varianteSeleccionada.pvp.toFixed(2)}
-            </span>
+            <div className="precios-agrupados">
+              <span className="precio-pvp-grande">
+                ${varianteSeleccionada.pvp.toFixed(2)}
+              </span>
+              {varianteSeleccionada.precioComparacion &&
+                varianteSeleccionada.precioComparacion > varianteSeleccionada.pvp && (
+                  <span className="precio-tachado-nominal">
+                    ${varianteSeleccionada.precioComparacion.toFixed(2)}
+                  </span>
+                )}
+            </div>
             <span className="subtexto-iva">PVP con IVA 15%</span>
           </div>
 

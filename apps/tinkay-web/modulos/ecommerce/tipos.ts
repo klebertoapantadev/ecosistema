@@ -19,6 +19,8 @@ export interface VarianteEcommerce {
   detalle?: string;
   recetaBom?: string;
   unidadesFlores?: number;
+  foto?: string;
+  precioComparacion?: number;
 }
 
 export interface ProductoEcommerce {

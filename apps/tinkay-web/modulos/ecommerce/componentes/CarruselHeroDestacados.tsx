@@ -8,33 +8,44 @@ import { ChevronLeft, ChevronRight, Sparkles, ArrowRight, Clock, ShieldCheck, He
 const SLIDES_HERO = [
   {
     id: 'slide-coreano',
-    productoId: 'tinkay-bouq-coreano',
-    etiqueta: 'EDICIÓN ESPECIAL 2026',
+    productoId: 'tinkay-bouq-mix',
+    etiqueta: 'TENDENCIA COREANA 2026',
     titulo: 'Bouquets Estilo Coreano',
-    subtitulo: 'Plisados vaporosos, capas translúcidas y rosas de exportación con apertura perfecta.',
-    imagen: 'https://images.unsplash.com/photo-1561181286-d3fee7d55364?auto=format&fit=crop&w=1400&q=85',
-    precioDesde: '$25.00',
+    subtitulo: 'Plisados vaporosos, capas translúcidas y rosas de exportación con base hidratada.',
+    imagen: 'https://oaybbpdxhlxjbpwnoymy.supabase.co/storage/v1/object/public/catalogo/tinkay/portadas/1792605252605-coreano_l__1_.jpg',
+    precioDesde: '$28.00',
     botonTexto: 'Ver Colección Coreana',
+  },
+  {
+    id: 'slide-box',
+    productoId: 'box-florales',
+    etiqueta: 'COLECCIÓN EXCLUSIVA',
+    titulo: 'Box Florales de Lujo',
+    subtitulo: 'Cajas rígidas de alta costura con rosas frescas seleccionadas y orquídeas en base hidratada OASIS.',
+    imagen: 'https://oaybbpdxhlxjbpwnoymy.supabase.co/storage/v1/object/public/catalogo/tinkay/portadas/1792674929601-box_floral_m__2_.jpg',
+    precioDesde: '$30.00',
+    botonTexto: 'Explorar Box Florales',
   },
   {
     id: 'slide-100rosas',
     productoId: 'tinkay-bouq-florero',
-    etiqueta: 'ROMANCE & PEDIDA DE MANO',
-    titulo: '100 Rosas de Gran Impacto',
-    subtitulo: 'Tallos largos de 70 cm preparados en espiral para deslumbrar en cualquier espacio.',
-    imagen: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1400&q=85',
+    etiqueta: 'ROSAS DE EXPORTACIÓN',
+    titulo: 'Ramos Clásicos para Florero',
+    subtitulo: 'Tallos largos de 70 cm en espiral (25, 50 y 100 rosas) con sobre de nutriente Chrysal incluido.',
+    imagen: 'https://oaybbpdxhlxjbpwnoymy.supabase.co/storage/v1/object/public/catalogo/tinkay/portadas/1792605329074-bouquet50__1_.png',
     precioDesde: '$20.00',
-    botonTexto: 'Explorar Ramos de Rosas',
+    botonTexto: 'Ver Ramos para Florero',
   },
   {
-    id: 'slide-mix',
-    productoId: 'tinkay-bouq-mix',
-    etiqueta: 'BOTÁNICA ANDINA SOSTENIBLE',
-    titulo: 'Mix Exótico de Temporada',
-    subtitulo: 'Orquídeas, hortensias celestes y follaje aromático de eucalipto fresco.',
-    imagen: 'https://images.unsplash.com/photo-1525310072745-f49212b5ac6d?auto=format&fit=crop&w=1400&q=85',
-    precioDesde: '$35.00',
-    botonTexto: 'Descubrir Mix Exótico',
+    id: 'slide-tienda',
+    productoId: '',
+    etiqueta: 'TIENDA FÍSICA EN QUITO',
+    titulo: 'Visita Nuestro Taller Floral',
+    subtitulo: 'Conoce nuestras instalaciones en Quito, retira tus pedidos o recibe asesoría personalizada.',
+    imagen: '/img/logo/tinkay-tienda-neon.jpg',
+    precioDesde: 'Quito',
+    botonTexto: '📍 Abrir en Google Maps',
+    enlaceExterno: 'https://maps.app.goo.gl/D56gQohzuwha4sLf8',
   },
 ];
 
@@ -52,6 +63,10 @@ export function CarruselHeroDestacados() {
   const slide = SLIDES_HERO[slideActivo] ?? SLIDES_HERO[0]!;
 
   const handleVerProducto = () => {
+    if (slide.enlaceExterno) {
+      window.open(slide.enlaceExterno, '_blank', 'noopener,noreferrer');
+      return;
+    }
     const prod = PRODUCTOS_TINKAY.find((p) => p.id === slide.productoId);
     if (prod) {
       setProductoSeleccionadoModal(prod);

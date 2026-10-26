@@ -413,6 +413,17 @@ export function DrawerCarritoFloristeria() {
                   <Calendar size={16} />
                   <strong>Coordinación de Entrega en Quito / Valles</strong>
                 </div>
+                <div style={{ padding: '0 14px 10px', fontSize: '0.8rem', color: 'var(--verde)' }}>
+                  <span>📍 ¿Prefieres retirar en persona? Visítanos en nuestra tienda física: </span>
+                  <a
+                    href="https://maps.app.goo.gl/D56gQohzuwha4sLf8"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ textDecoration: 'underline', fontWeight: 600, color: 'var(--verde)' }}
+                  >
+                    Ver en Maps
+                  </a>
+                </div>
 
                 <div className="grid-campos-entrega-unificada">
                   <input
