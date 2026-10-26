@@ -1,85 +1,150 @@
-// Muestra visual del sistema de marca de Tinkay -- ver
-// gobernanza/productos/tinkay/sistema-visual.md. Sin funcionalidad real: no
-// hay catalogo (comun_comercio sin poblar para este negocio todavia), los
-// productos y precios son de ejemplo para mostrar hacia donde va el trabajo.
-// Los enlaces a /registro y /ingresar siguen activos para seguir probando
-// @eco/identidad contra Supabase.
+'use client';
 
-import Link from "next/link";
+import React from 'react';
+import Link from 'next/link';
+import { ProveedorCarrito } from '../modulos/ecommerce/contexto-carrito';
+import { EncabezadoEcommerce } from '../modulos/ecommerce/componentes/EncabezadoEcommerce';
+import { CarruselHeroDestacados } from '../modulos/ecommerce/componentes/CarruselHeroDestacados';
+import { CarruselProductosDestacados } from '../modulos/ecommerce/componentes/CarruselProductosDestacados';
+import { VitrinaCatalogoTinkay } from '../modulos/ecommerce/componentes/VitrinaCatalogoTinkay';
+import { ModalDetalleProducto } from '../modulos/ecommerce/componentes/ModalDetalleProducto';
+import { DrawerCarritoFloristeria } from '../modulos/ecommerce/componentes/DrawerCarritoFloristeria';
+import { ModalCheckoutTinkay } from '../modulos/ecommerce/componentes/ModalCheckoutTinkay';
+import { ChatAriaFlotante } from '../modulos/ecommerce/componentes/ChatAriaFlotante';
+import { Sparkles, ShieldCheck, Heart, Truck, Phone } from 'lucide-react';
 
-const PRODUCTOS_MUESTRA = [
-  { nombre: "Box de rosas", categoria: "Box Flower", precio: "$32", emoji: "🌹", estado: "disponible" as const },
-  { nombre: "Ramo de orquídeas blancas", categoria: "Orquídeas", precio: "$45", emoji: "🌸", estado: "nuevo" as const },
-  { nombre: "Centro floral de evento", categoria: "Eventos", precio: "$120", emoji: "💐", estado: "disponible" as const },
-  { nombre: "Ramo sorpresa del día", categoria: "Bouquets", precio: "$28", emoji: "🌷", estado: "urgente" as const },
-  { nombre: "Arreglo peonías rosa", categoria: "Especiales", precio: "$56", emoji: "🌺", estado: "agotado" as const },
-];
-
-const ETIQUETA_ESTADO: Record<string, string> = {
-  disponible: "Disponible",
-  nuevo: "Nuevo",
-  urgente: "Entrega hoy",
-  agotado: "Agotado",
-};
-
-export default function Page() {
+export default function PaginaEcommerceTinkay() {
   return (
-    <div>
-      <header className="muestra-encabezado">
-        <span className="logo-auth">tinkay</span>
-        <nav className="muestra-encabezado-enlaces">
-          <Link href="/ingresar">Ingresar</Link>
-          <Link href="/registro" className="btn btn-primario">Registrarme</Link>
-        </nav>
-      </header>
+    <ProveedorCarrito>
+      <div className="pagina-ecommerce-tinkay-layout">
+        {/* Encabezado Superior con Carrito */}
+        <EncabezadoEcommerce />
 
-      <section className="muestra-hero">
-        <span className="muestra-etiqueta">Flores &amp; Eventos</span>
-        <h1>Flores con historia, para cada momento</h1>
-        <p>
-          Arreglos florales y decoración de eventos en Quito — de la caja que
-          sorprende hasta el altar completo. Esta es una muestra visual del
-          nuevo sistema de marca, todavía sin catálogo real conectado.
-        </p>
-        <span className="btn btn-primario">Ver catálogo (próximamente)</span>
-      </section>
+        {/* Carrusel Principal Hero Editorial */}
+        <CarruselHeroDestacados />
 
-      <section className="muestra-seccion">
-        <div className="muestra-seccion-titulo">
-          <h2>Lo más pedido</h2>
-          <span>Productos de ejemplo — no representan inventario real</span>
-        </div>
-        <div className="grid-productos">
-          {PRODUCTOS_MUESTRA.map((p) => (
-            <div key={p.nombre} className="tarjeta-producto">
-              <div className="tarjeta-producto-foto">
-                <span className={`chip-estado chip-${p.estado}`}>{ETIQUETA_ESTADO[p.estado]}</span>
-                <span aria-hidden="true">{p.emoji}</span>
+        {/* Carrusel de Productos Destacados (Lo más pedido) */}
+        <CarruselProductosDestacados />
+
+        {/* Vitrina Completa con Filtros Multidimensionales y Búsqueda */}
+        <VitrinaCatalogoTinkay />
+
+        {/* Sección de Experiencia y Compromiso Botánico */}
+        <section className="seccion-compromiso-tinkay">
+          <div className="contenedor-maximo">
+            <div className="grid-compromiso-cuatro">
+              <div className="tarjeta-compromiso">
+                <div className="icono-circulo-dorado">
+                  <Truck size={24} />
+                </div>
+                <h3>Entrega en Franja o a Hora Exacta</h3>
+                <p>
+                  Franjas gratuitas en la mañana o tarde en Quito y Valles, o agenda tu entrega a la hora
+                  exacta para dar la sorpresa soñada.
+                </p>
               </div>
-              <div className="tarjeta-producto-info">
-                <span>{p.categoria}</span>
-                <strong>{p.nombre}</strong>
-                <span className="tarjeta-producto-precio">{p.precio}</span>
+
+              <div className="tarjeta-compromiso">
+                <div className="icono-circulo-dorado">
+                  <Sparkles size={24} />
+                </div>
+                <h3>Rosas Ecuatorianas de Exportación</h3>
+                <p>
+                  Botones gigantes y apertura lenta cultivadas en fincas andinas de altitud, con hidratación
+                  nutritiva Chrysal incluida.
+                </p>
+              </div>
+
+              <div className="tarjeta-compromiso">
+                <div className="icono-circulo-dorado">
+                  <Heart size={24} />
+                </div>
+                <h3>Dedicatoria Impresa y Caligrafía</h3>
+                <p>
+                  Tarjetas personalizadas individuales para cada destinatario impresas en papel verjurado fino
+                  con mensajes emotivos asistidos por IA.
+                </p>
+              </div>
+
+              <div className="tarjeta-compromiso">
+                <div className="icono-circulo-dorado">
+                  <ShieldCheck size={24} />
+                </div>
+                <h3>Pago 100% Seguro con Payphone</h3>
+                <p>
+                  Aceptamos todas las tarjetas de crédito y débito Visa y Mastercard con facturación
+                  electrónica avalada por el SRI.
+                </p>
               </div>
             </div>
-          ))}
-        </div>
-      </section>
+          </div>
+        </section>
 
-      <section className="seccion-condolencias">
-        <h2>Condolencias</h2>
-        <p>
-          Un acompañamiento sobrio en los momentos difíciles — coronas y
-          arreglos de condolencia con entrega puntual. Tratamiento visual
-          deliberadamente distinto al resto del catálogo.
-        </p>
-        <span className="btn btn-condolencias">Ver arreglos de condolencia</span>
-      </section>
+        {/* Pie de Página de la Floristería */}
+        <footer className="pie-pagina-ecommerce">
+          <div className="contenedor-maximo">
+            <div className="grid-pie-columnas">
+              <div className="columna-pie-marca">
+                <span className="logo-tinkay-marca">tinkay</span>
+                <p>
+                  Flores con historia, para cada momento. Taller de floristería contemporánea y decoración
+                  botánica en Quito y Cumbayá.
+                </p>
+                <div className="telefono-contacto-pie">
+                  <Phone size={15} />
+                  <span>Atención telefónica &amp; WhatsApp: +593 99 123 4567</span>
+                </div>
+              </div>
 
-      <footer className="muestra-pie">
-        Muestra visual del sistema de marca de Tinkay — sin funcionalidad de
-        compra todavía. Ver <Link href="/terminos">Términos de Servicio</Link>.
-      </footer>
-    </div>
+              <div className="columna-pie-links">
+                <h4>Colecciones</h4>
+                <ul>
+                  <li><a href="#catalogo">Bouquets Estilo Coreano</a></li>
+                  <li><a href="#catalogo">Ramos Clásicos para Florero</a></li>
+                  <li><a href="#catalogo">Mix Exótico de Temporada</a></li>
+                  <li><a href="#catalogo">Condolencias &amp; Funerarios</a></li>
+                </ul>
+              </div>
+
+              <div className="columna-pie-links">
+                <h4>Servicios &amp; Envíos</h4>
+                <ul>
+                  <li><span>Quito Urbano &amp; Cumbayá</span></li>
+                  <li><span>Tumbaco, San Rafael &amp; Conocoto</span></li>
+                  <li><span>Montajes para Matrimonios y Eventos</span></li>
+                  <li><span>Entrega Express en Horario Exacto</span></li>
+                </ul>
+              </div>
+
+              <div className="columna-pie-links">
+                <h4>Legal &amp; Transparencia</h4>
+                <ul>
+                  <li><Link href="/terminos">Términos y Condiciones</Link></li>
+                  <li><Link href="/ingresar">Portal de Clientes</Link></li>
+                  <li><span>Precios B2C en USD con IVA 15%</span></li>
+                  <li><span className="sello-compilacion">Tinkay v1.0 • E-Commerce</span></li>
+                </ul>
+              </div>
+            </div>
+
+            <div className="sub-pie-copyright">
+              <span>© {new Date().getFullYear()} Tinkay Floristería Cía. Ltda. Todos los derechos reservados.</span>
+            </div>
+          </div>
+        </footer>
+
+        {/* Modal de Detalle de Producto */}
+        <ModalDetalleProducto />
+
+        {/* Drawer Lateral del Carrito de Compras */}
+        <DrawerCarritoFloristeria />
+
+        {/* Modal de Checkout Payphone y Transferencia */}
+        <ModalCheckoutTinkay />
+
+        {/* Agente de Chat ARIA ("Mía") */}
+        <ChatAriaFlotante />
+      </div>
+    </ProveedorCarrito>
   );
 }

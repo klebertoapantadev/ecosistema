@@ -1,3 +1,5 @@
+@import "../modulos/ecommerce/estilos-ecommerce.css";
+
 /* Sistema visual de Tinkay -- ver gobernanza/productos/tinkay/sistema-visual.md.
    Reemplaza el fallback neutro (@eco/identidad/estilos-base.css): mismas clases
    que consumen los componentes compartidos (registro/ingresar/bienvenida/
