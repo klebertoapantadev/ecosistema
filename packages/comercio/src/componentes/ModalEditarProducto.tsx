@@ -402,17 +402,23 @@ export function ModalEditarProducto({
     if (contextoGaleria === "master") {
       setImagenUrl(url);
       setExitoAutoConvertir("¡Imagen seleccionada desde la galería del negocio!");
-    } else if (contextoGaleria === "variante") {
-      const det = { ...(varianteActual?.var_detalle_variante || {}), portada_url: url };
-      actualizarVarianteActual("var_detalle_variante", det);
     } else if (contextoGaleria === "galeria") {
       setGaleriaTexto((prev) => (prev.trim() ? `${prev.trim()}\n${url}` : url));
-    } else if (contextoGaleria === "variante_galeria") {
+    } else if (contextoGaleria === "variante" || contextoGaleria === "variante_galeria") {
       const actuales: string[] = Array.isArray(varianteActual?.var_detalle_variante?.galeria_urls)
         ? [...varianteActual.var_detalle_variante.galeria_urls]
         : [];
+      const portActual = varianteActual?.var_detalle_variante?.portada_url;
+      if (portActual && !actuales.includes(portActual)) {
+        actuales.unshift(portActual);
+      }
       if (!actuales.includes(url)) {
-        const det = { ...(varianteActual?.var_detalle_variante || {}), galeria_urls: [...actuales, url] };
+        const combinadas = [...actuales, url];
+        const det = {
+          ...(varianteActual?.var_detalle_variante || {}),
+          galeria_urls: combinadas,
+          portada_url: varianteActual?.var_detalle_variante?.portada_url || combinadas[0] || url,
+        };
         actualizarVarianteActual("var_detalle_variante", det);
       }
     }
@@ -429,23 +435,19 @@ export function ModalEditarProducto({
         const combinadas = Array.from(new Set([...lineasExistentes, ...urls]));
         return combinadas.join("\n");
       });
-    } else if (contextoGaleria === "variante_galeria") {
+    } else if (contextoGaleria === "variante" || contextoGaleria === "variante_galeria") {
       const actuales: string[] = Array.isArray(varianteActual?.var_detalle_variante?.galeria_urls)
         ? [...varianteActual.var_detalle_variante.galeria_urls]
         : [];
+      const portActual = varianteActual?.var_detalle_variante?.portada_url;
+      if (portActual && !actuales.includes(portActual)) {
+        actuales.unshift(portActual);
+      }
       const combinadas = Array.from(new Set([...actuales, ...urls]));
-      const det = { ...(varianteActual?.var_detalle_variante || {}), galeria_urls: combinadas };
-      actualizarVarianteActual("var_detalle_variante", det);
-    } else if (contextoGaleria === "variante") {
-      const [primera, ...resto] = urls;
-      const actuales: string[] = Array.isArray(varianteActual?.var_detalle_variante?.galeria_urls)
-        ? [...varianteActual.var_detalle_variante.galeria_urls]
-        : [];
-      const combinadas = resto.length > 0 ? Array.from(new Set([...actuales, ...resto])) : actuales;
       const det = {
         ...(varianteActual?.var_detalle_variante || {}),
-        portada_url: primera || varianteActual?.var_detalle_variante?.portada_url || null,
         galeria_urls: combinadas,
+        portada_url: varianteActual?.var_detalle_variante?.portada_url || combinadas[0] || null,
       };
       actualizarVarianteActual("var_detalle_variante", det);
     } else if (contextoGaleria === "master") {
@@ -924,7 +926,18 @@ export function ModalEditarProducto({
     try {
       const res = await resolverUrlImagenDirectaAction(target);
       if (res.ok && res.urlDirecta) {
-        const det = { ...(varianteActual?.var_detalle_variante || {}), portada_url: res.urlDirecta };
+        const actuales: string[] = Array.isArray(varianteActual?.var_detalle_variante?.galeria_urls)
+          ? [...varianteActual.var_detalle_variante.galeria_urls]
+          : [];
+        const galeriaActualizada = actuales.map((u) => (u === target ? res.urlDirecta! : u));
+        if (!galeriaActualizada.includes(res.urlDirecta)) {
+          galeriaActualizada.push(res.urlDirecta);
+        }
+        const det = {
+          ...(varianteActual?.var_detalle_variante || {}),
+          portada_url: res.urlDirecta,
+          galeria_urls: galeriaActualizada,
+        };
         actualizarVarianteActual("var_detalle_variante", det);
       } else {
         setError(res.error || "No se pudo convertir automáticamente la URL de Google Fotos de esta variante.");
@@ -1077,8 +1090,16 @@ export function ModalEditarProducto({
         const actuales: string[] = Array.isArray(varianteActual?.var_detalle_variante?.galeria_urls)
           ? [...varianteActual.var_detalle_variante.galeria_urls]
           : [];
+        const portActual = varianteActual?.var_detalle_variante?.portada_url;
+        if (portActual && !actuales.includes(portActual)) {
+          actuales.unshift(portActual);
+        }
         const combinadas = Array.from(new Set([...actuales, ...nuevasUrls]));
-        const det = { ...(varianteActual?.var_detalle_variante || {}), galeria_urls: combinadas };
+        const det = {
+          ...(varianteActual?.var_detalle_variante || {}),
+          galeria_urls: combinadas,
+          portada_url: varianteActual?.var_detalle_variante?.portada_url || combinadas[0] || null,
+        };
         actualizarVarianteActual("var_detalle_variante", det);
       }
     } catch (err: any) {
@@ -1093,13 +1114,38 @@ export function ModalEditarProducto({
     const actuales: string[] = Array.isArray(varianteActual?.var_detalle_variante?.galeria_urls)
       ? [...varianteActual.var_detalle_variante.galeria_urls]
       : [];
-    actuales.splice(idxParaQuitar, 1);
-    const det = { ...(varianteActual?.var_detalle_variante || {}), galeria_urls: actuales };
+    const portActual = varianteActual?.var_detalle_variante?.portada_url;
+    if (portActual && !actuales.includes(portActual)) {
+      actuales.unshift(portActual);
+    }
+    const [eliminada] = actuales.splice(idxParaQuitar, 1);
+    let nuevaPortada = varianteActual?.var_detalle_variante?.portada_url;
+    if (nuevaPortada === eliminada || !nuevaPortada) {
+      nuevaPortada = actuales[0] || null;
+    }
+    const det = {
+      ...(varianteActual?.var_detalle_variante || {}),
+      galeria_urls: actuales,
+      portada_url: nuevaPortada,
+    };
     actualizarVarianteActual("var_detalle_variante", det);
   };
 
   const handleEstablecerPortadaDesdeGaleriaVariante = (url: string) => {
-    const det = { ...(varianteActual?.var_detalle_variante || {}), portada_url: url };
+    const actuales: string[] = Array.isArray(varianteActual?.var_detalle_variante?.galeria_urls)
+      ? [...varianteActual.var_detalle_variante.galeria_urls]
+      : [];
+    const portActual = varianteActual?.var_detalle_variante?.portada_url;
+    if (portActual && !actuales.includes(portActual)) {
+      actuales.unshift(portActual);
+    }
+    // Mover url al primer puesto para que la #1 sea siempre la portada principal
+    const reordenadas = [url, ...actuales.filter((u) => u !== url)];
+    const det = {
+      ...(varianteActual?.var_detalle_variante || {}),
+      portada_url: url,
+      galeria_urls: reordenadas,
+    };
     actualizarVarianteActual("var_detalle_variante", det);
   };
 
@@ -1226,6 +1272,15 @@ export function ModalEditarProducto({
               galeriaFinal.push(trimmedG);
             }
           }
+        }
+
+        // Sincronizar portada con la primera foto de la galería si hay fotos
+        if (galeriaFinal.length > 0) {
+          if (!portFinal || !galeriaFinal.includes(portFinal)) {
+            portFinal = galeriaFinal[0];
+          }
+        } else {
+          portFinal = null;
         }
 
         const usosFinal = Array.isArray(v.var_detalle_variante?.usos)
@@ -2969,84 +3024,96 @@ export function ModalEditarProducto({
                   Marca los escenarios donde los agentes de IA (como ARIA) y los filtros deben recomendar este ítem. Los productos sin un uso específico (ej. <em>Condolencias</em>) serán excluidos automáticamente de esas consultas.
                 </p>
 
-                {/* Grid de Presets Rápidos */}
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(165px, 1fr))", gap: "6px", marginBottom: "10px" }}>
-                  {presetsUsosActivos.map((u) => {
-                    const activo = usosSeleccionados.includes(u.clave);
-                    return (
-                      <button
-                        key={u.clave}
-                        type="button"
-                        onClick={() => toggleUso(u.clave)}
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "space-between",
-                          padding: "6px 10px",
-                          borderRadius: "6px",
-                          fontSize: "0.75rem",
-                          fontWeight: activo ? 700 : 500,
-                          border: activo ? "1.5px solid #0284C7" : "1px solid #CBD5E1",
-                          background: activo ? "#F0F9FF" : "#FFFFFF",
-                          color: activo ? "#0369A1" : "#475569",
-                          cursor: "pointer",
-                          textAlign: "left",
-                          transition: "all 0.15s ease",
-                        }}
-                      >
-                        <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                          {u.label}
-                        </span>
-                        <span
-                          style={{
-                            width: "8px",
-                            height: "8px",
-                            borderRadius: "50%",
-                            background: activo ? "#0284C7" : "#CBD5E1",
-                            flexShrink: 0,
-                            marginLeft: "6px",
-                          }}
-                        />
-                      </button>
-                    );
-                  })}
-                </div>
-
-                {/* Usos Personalizados Adicionales */}
-                {usosSeleccionados.filter((u) => !presetsUsosActivos.some((p) => p.clave === u)).length > 0 && (
-                  <div style={{ marginBottom: "10px", display: "flex", gap: "6px", flexWrap: "wrap", alignItems: "center" }}>
-                    <span style={{ fontSize: "0.7rem", color: "#64748B", fontWeight: 600 }}>Usos personalizados:</span>
-                    {usosSeleccionados
+                {/* Grid Unificado de Usos (Presets + Personalizados) */}
+                {(() => {
+                  const usosDeEstaSeccion = [
+                    ...presetsUsosActivos.map((p) => ({
+                      clave: p.clave,
+                      label: p.label,
+                      esPreset: true,
+                    })),
+                    ...usosSeleccionados
                       .filter((u) => !presetsUsosActivos.some((p) => p.clave === u))
-                      .map((u) => (
-                        <span
-                          key={u}
-                          style={{
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: "4px",
-                            background: "#EFF6FF",
-                            color: "#1D4ED8",
-                            border: "1px solid #BFDBFE",
-                            borderRadius: "12px",
-                            padding: "2px 8px",
-                            fontSize: "0.72rem",
-                            fontWeight: 700,
-                          }}
-                        >
-                          🏷️ {u.replace(/_/g, " ")}
+                      .map((u) => ({
+                        clave: u,
+                        label: `🏷️ ${u.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}`,
+                        esPreset: false,
+                      })),
+                  ];
+
+                  return (
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(165px, 1fr))", gap: "6px", marginBottom: "10px" }}>
+                      {usosDeEstaSeccion.map((u) => {
+                        const activo = usosSeleccionados.includes(u.clave);
+                        return (
                           <button
+                            key={u.clave}
                             type="button"
-                            onClick={() => handleEliminarUso(u)}
-                            style={{ background: "none", border: "none", color: "#93C5FD", cursor: "pointer", padding: 0, display: "flex" }}
-                            title="Eliminar uso"
+                            onClick={() => toggleUso(u.clave)}
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "space-between",
+                              padding: "6px 10px",
+                              borderRadius: "6px",
+                              fontSize: "0.75rem",
+                              fontWeight: activo ? 700 : 500,
+                              border: activo ? "1.5px solid #0284C7" : "1px solid #CBD5E1",
+                              background: activo ? "#F0F9FF" : "#FFFFFF",
+                              color: activo ? "#0369A1" : "#475569",
+                              cursor: "pointer",
+                              textAlign: "left",
+                              transition: "all 0.15s ease",
+                              gap: "4px",
+                            }}
                           >
-                            <X size={12} />
+                            <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", flex: 1 }}>
+                              {u.label}
+                            </span>
+                            <div style={{ display: "flex", alignItems: "center", gap: "5px", flexShrink: 0 }}>
+                              {!u.esPreset && (
+                                <span
+                                  role="button"
+                                  tabIndex={0}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleEliminarUso(u.clave);
+                                  }}
+                                  onKeyDown={(e) => {
+                                    if (e.key === "Enter" || e.key === " ") {
+                                      e.stopPropagation();
+                                      handleEliminarUso(u.clave);
+                                    }
+                                  }}
+                                  title="Eliminar este uso"
+                                  style={{
+                                    color: "#94A3B8",
+                                    cursor: "pointer",
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    padding: "2px",
+                                    borderRadius: "3px",
+                                  }}
+                                >
+                                  <X size={12} />
+                                </span>
+                              )}
+                              <span
+                                style={{
+                                  width: "8px",
+                                  height: "8px",
+                                  borderRadius: "50%",
+                                  background: activo ? "#0284C7" : "#CBD5E1",
+                                  flexShrink: 0,
+                                }}
+                              />
+                            </div>
                           </button>
-                        </span>
-                      ))}
-                  </div>
-                )}
+                        );
+                      })}
+                    </div>
+                  );
+                })()}
 
                 {/* Input para agregar uso libre */}
                 <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
@@ -3655,227 +3722,426 @@ export function ModalEditarProducto({
                     </div>
                   </div>
 
-                  {/* 1. SECCIÓN DE FOTO DE PORTADA PARA ESTE TAMAÑO (HERENCIA VS SOBREESCRITURA) */}
-                  <div
-                    style={{
-                      background: "#F8FAFC",
-                      border: "1px solid #E2E8F0",
-                      borderRadius: "8px",
-                      padding: "12px",
-                      marginBottom: "12px",
-                    }}
-                  >
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                        <ImageIcon size={15} color={colActiva.dot} />
-                        <label style={{ fontSize: "0.75rem", fontWeight: 800, color: "#1E293B" }}>
-                          Foto de Portada para "{varianteActual.var_nombre}"
-                        </label>
-                      </div>
+                  {/* 1. SECCIÓN UNIFICADA: GALERÍA DE FOTOS (1 A N) PARA ESTA VARIANTE */}
+                  {(() => {
+                    const rawGal = Array.isArray(varianteActual?.var_detalle_variante?.galeria_urls)
+                      ? varianteActual.var_detalle_variante.galeria_urls.filter((u: any) => typeof u === "string" && u.trim().length > 0)
+                      : [];
+                    const portActual = varianteActual?.var_detalle_variante?.portada_url?.trim() || null;
+                    const fotosVariante: string[] = (portActual && !rawGal.includes(portActual))
+                      ? [portActual, ...rawGal]
+                      : rawGal;
+                    const fotoPortada = portActual || (fotosVariante.length > 0 ? fotosVariante[0] : null);
+                    const tieneFotosPropias = fotosVariante.length > 0;
 
-                      {/* Selector de Herencia vs Personalizado */}
-                      <div style={{ display: "flex", gap: "4px" }}>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const det = { ...(varianteActual.var_detalle_variante || {}), portada_url: null };
-                            actualizarVarianteActual("var_detalle_variante", det);
-                          }}
-                          style={{
-                            padding: "3px 8px",
-                            borderRadius: "4px",
-                            fontSize: "0.68rem",
-                            fontWeight: 700,
-                            border: !varianteActual.var_detalle_variante?.portada_url ? "1.5px solid #0F172A" : "1px solid #CBD5E1",
-                            background: !varianteActual.var_detalle_variante?.portada_url ? "#0F172A" : "#FFFFFF",
-                            color: !varianteActual.var_detalle_variante?.portada_url ? "#FFFFFF" : "#64748B",
-                            cursor: "pointer",
-                          }}
-                        >
-                          ⚪ Usar Foto Global (Heredada)
-                        </button>
-                      </div>
-                    </div>
+                    return (
+                      <div
+                        style={{
+                          background: "#F8FAFC",
+                          border: "1.5px solid #E2E8F0",
+                          borderRadius: "10px",
+                          padding: "12px",
+                          marginBottom: "12px",
+                        }}
+                      >
+                        {/* Cabecera del contenedor unificado */}
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px", flexWrap: "wrap", gap: "6px" }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                            <ImageIcon size={16} color={colActiva.text} />
+                            <label style={{ fontSize: "0.8rem", fontWeight: 800, color: "#1E293B" }}>
+                              Galería de Fotos para "{varianteActual.var_nombre}"
+                            </label>
+                            <span
+                              style={{
+                                fontSize: "0.7rem",
+                                fontWeight: 700,
+                                background: tieneFotosPropias ? colActiva.badge : "#F1F5F9",
+                                color: tieneFotosPropias ? colActiva.text : "#64748B",
+                                padding: "2px 8px",
+                                borderRadius: "12px",
+                                border: `1px solid ${tieneFotosPropias ? colActiva.border : "#CBD5E1"}`,
+                              }}
+                            >
+                              {tieneFotosPropias
+                                ? `${fotosVariante.length} ${fotosVariante.length === 1 ? "foto añadida" : "fotos añadidas"}`
+                                : "⚪ Heredando del Master"}
+                            </span>
+                          </div>
 
-                    {varianteActual.var_detalle_variante?.portada_url ? (
-                      <div>
-                        <div style={{ display: "flex", gap: "6px", alignItems: "center", marginBottom: "6px" }}>
-                          <input
-                            type="url"
-                            placeholder="URL o sube imagen para este tamaño ➔"
-                            value={varianteActual.var_detalle_variante.portada_url}
-                            onChange={(e) => {
-                              const raw = e.target.value.trim();
-                              const driveMatch = raw.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/) || raw.match(/drive\.google\.com\/(?:open|uc)\?(?:.*&)?id=([a-zA-Z0-9_-]+)/);
-                              const valFinal = driveMatch && driveMatch[1] ? `https://lh3.googleusercontent.com/d/${driveMatch[1]}=w1200` : raw;
-                              const det = { ...(varianteActual.var_detalle_variante || {}), portada_url: valFinal || null };
-                              actualizarVarianteActual("var_detalle_variante", det);
-                            }}
-                            style={{
-                              flex: 1,
-                              padding: "7px 10px",
-                              borderRadius: "6px",
-                              border: "1px solid #CBD5E1",
-                              fontSize: "0.8rem",
-                              boxSizing: "border-box",
-                              background: "#FFFFFF",
-                            }}
-                          />
-
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setContextoGaleria("variante");
-                              setModalGaleriaAbierto(true);
-                            }}
-                            style={{
-                              background: "#0284C7",
-                              color: "#FFFFFF",
-                              border: "none",
-                              padding: "7px 12px",
-                              borderRadius: "6px",
-                              fontSize: "0.74rem",
-                              fontWeight: 700,
-                              cursor: "pointer",
-                              display: "inline-flex",
-                              alignItems: "center",
-                              gap: "5px",
-                              whiteSpace: "nowrap",
-                              boxShadow: "0 1px 2px rgba(2, 132, 199, 0.2)",
-                            }}
-                            title="Abrir galería de medios (puedes seleccionar una imagen existente o subir nuevas fotos desde tu PC)"
-                          >
-                            <ImageIcon size={13} />
-                            <span>Galería</span>
-                          </button>
-
-                          <button
-                            type="button"
-                            disabled={resolviendoVarianteImg}
-                            onClick={() => handleConvertirImagenVariante()}
-                            style={{
-                              background: "#0284C7",
-                              color: "#FFFFFF",
-                              border: "none",
-                              padding: "7px 10px",
-                              borderRadius: "6px",
-                              fontSize: "0.72rem",
-                              fontWeight: 700,
-                              cursor: resolviendoVarianteImg ? "wait" : "pointer",
-                              display: "inline-flex",
-                              alignItems: "center",
-                              gap: "4px",
-                              whiteSpace: "nowrap",
-                            }}
-                          >
-                            {resolviendoVarianteImg ? (
-                              <>
-                                <Loader2 size={12} className="animate-spin" />
-                                <span>...</span>
-                              </>
-                            ) : (
-                              <>
-                                <Wand2 size={12} />
-                                <span>Auto-Fix</span>
-                              </>
+                          {/* Acciones principales */}
+                          <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
+                            {tieneFotosPropias && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const det = {
+                                    ...(varianteActual.var_detalle_variante || {}),
+                                    portada_url: null,
+                                    galeria_urls: [],
+                                  };
+                                  actualizarVarianteActual("var_detalle_variante", det);
+                                }}
+                                style={{
+                                  background: "#FFFFFF",
+                                  color: "#64748B",
+                                  border: "1px solid #CBD5E1",
+                                  borderRadius: "6px",
+                                  padding: "5px 10px",
+                                  fontSize: "0.72rem",
+                                  fontWeight: 600,
+                                  cursor: "pointer",
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  gap: "4px",
+                                }}
+                                title="Eliminar fotos exclusivas y volver a heredar la imagen del producto principal"
+                              >
+                                ⚪ Usar Foto del Master
+                              </button>
                             )}
-                          </button>
+
+                            <label
+                              style={{
+                                background: "#FFFFFF",
+                                color: "#0284C7",
+                                border: "1px solid #BAE6FD",
+                                borderRadius: "6px",
+                                padding: "5px 10px",
+                                fontSize: "0.74rem",
+                                fontWeight: 700,
+                                cursor: subiendoGaleriaVariante ? "wait" : "pointer",
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "4px",
+                                boxShadow: "0 1px 2px rgba(0,0,0,0.03)",
+                              }}
+                              title="Subir una o varias fotos desde tu PC para este tamaño"
+                            >
+                              {subiendoGaleriaVariante ? (
+                                <Loader2 size={13} className="animate-spin" />
+                              ) : (
+                                <Upload size={13} />
+                              )}
+                              <span>{subiendoGaleriaVariante ? "Subiendo..." : "📁 Subir PC"}</span>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                multiple
+                                disabled={subiendoGaleriaVariante}
+                                onChange={handleSubirArchivosGaleriaVariante}
+                                style={{ display: "none" }}
+                              />
+                            </label>
+
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setContextoGaleria("variante_galeria");
+                                setModalGaleriaAbierto(true);
+                              }}
+                              style={{
+                                background: "#0284C7",
+                                color: "#FFFFFF",
+                                border: "none",
+                                borderRadius: "6px",
+                                padding: "5px 12px",
+                                fontSize: "0.74rem",
+                                fontWeight: 700,
+                                cursor: "pointer",
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "5px",
+                                boxShadow: "0 1px 2px rgba(2, 132, 199, 0.2)",
+                              }}
+                              title="Abrir galería de medios para seleccionar o subir fotos para este tamaño"
+                            >
+                              <ImageIcon size={13} />
+                              <span>+ Seleccionar de Galería</span>
+                            </button>
+                          </div>
                         </div>
 
-                        {/* Selector de encuadre específico para esta variante */}
-                        <SelectorEncuadreFoto
-                          imagenUrl={varianteActual.var_detalle_variante.portada_url}
-                          posicion={varianteActual.var_detalle_variante.foto_posicion || fotoPosicionMaster || "center center"}
-                          ajuste={varianteActual.var_detalle_variante.foto_ajuste || fotoAjusteMaster || "cover"}
-                          zoom={Number(varianteActual.var_detalle_variante.foto_zoom) || fotoZoomMaster || 100}
-                          onCambiarPosicion={(pos) => {
-                            const det = { ...(varianteActual.var_detalle_variante || {}), foto_posicion: pos };
-                            actualizarVarianteActual("var_detalle_variante", det);
-                          }}
-                          onCambiarAjuste={(aj) => {
-                            const det = { ...(varianteActual.var_detalle_variante || {}), foto_ajuste: aj };
-                            actualizarVarianteActual("var_detalle_variante", det);
-                          }}
-                          onCambiarZoom={(zm) => {
-                            const det = { ...(varianteActual.var_detalle_variante || {}), foto_zoom: zm };
-                            actualizarVarianteActual("var_detalle_variante", det);
-                          }}
-                          titulo={`Encuadre & Posición ("${varianteActual.var_nombre}")`}
-                          colorTema={colActiva.border}
-                        />
+                        {/* Contenido: Si no tiene fotos propias -> estado heredado */}
+                        {!tieneFotosPropias ? (
+                          <div
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "space-between",
+                              background: "#FFFFFF",
+                              border: "1px dashed #CBD5E1",
+                              borderRadius: "8px",
+                              padding: "10px 14px",
+                              gap: "12px",
+                            }}
+                          >
+                            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                              {imagenUrl ? (
+                                <div style={{ width: "42px", height: "42px", borderRadius: "6px", overflow: "hidden", background: "#0F172A", flexShrink: 0, border: "1px solid #E2E8F0" }}>
+                                  <img
+                                    src={imagenUrl}
+                                    alt="Master Heredada"
+                                    onError={(e) => {
+                                      (e.target as HTMLImageElement).src = obtenerImagenFallbackNegocio(producto?.pro_negocio);
+                                    }}
+                                    style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                                  />
+                                </div>
+                              ) : (
+                                <div style={{ width: "42px", height: "42px", borderRadius: "6px", background: "#E2E8F0", display: "flex", alignItems: "center", justifyContent: "center", color: "#94A3B8" }}>
+                                  <ImageIcon size={18} />
+                                </div>
+                              )}
+                              <div>
+                                <div style={{ fontSize: "0.76rem", color: "#1E293B", fontWeight: 700 }}>
+                                  ⚪ <strong>Foto Heredada del Master</strong>
+                                </div>
+                                <div style={{ fontSize: "0.7rem", color: "#64748B" }}>
+                                  Este tamaño muestra la imagen de portada global en la vitrina. Agrega 1 o más fotos exclusivas para personalizarlo (la foto #1 será la portada).
+                                </div>
+                              </div>
+                            </div>
 
-                        {Boolean(
-                          varianteActual.var_detalle_variante.portada_url.includes("photos.app.goo.gl") ||
-                          varianteActual.var_detalle_variante.portada_url.includes("photos.google.com")
-                        ) && (
-                          <div style={{ marginTop: "6px", fontSize: "0.68rem", color: "#B45309", background: "#FEF3C7", padding: "4px 8px", borderRadius: "4px", border: "1px solid #FDE68A", lineHeight: 1.35 }}>
-                            ⚠️ Haz clic en <strong>🪄 Auto-Convertir</strong> para extraer la foto directa de Google Fotos para este tamaño.
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const det = {
+                                  ...(varianteActual.var_detalle_variante || {}),
+                                  portada_url: imagenUrl || "https://",
+                                  galeria_urls: imagenUrl ? [imagenUrl] : [],
+                                };
+                                actualizarVarianteActual("var_detalle_variante", det);
+                              }}
+                              style={{
+                                background: colActiva.badge,
+                                color: colActiva.text,
+                                border: `1px solid ${colActiva.border}`,
+                                padding: "6px 12px",
+                                borderRadius: "6px",
+                                fontSize: "0.72rem",
+                                fontWeight: 700,
+                                cursor: "pointer",
+                                whiteSpace: "nowrap",
+                              }}
+                            >
+                              + Personalizar Fotos Propias
+                            </button>
+                          </div>
+                        ) : (
+                          <div>
+                            <p style={{ fontSize: "0.7rem", color: "#64748B", margin: "0 0 6px 0" }}>
+                              Ingresa varias URLs (una por línea) o selecciónalas desde la Galería. La foto marcada como <strong>★ Portada</strong> (#1) es la que se mostrará en la vitrina y tarjeta del producto.
+                            </p>
+
+                            <textarea
+                              rows={2}
+                              placeholder={"https://...foto1.jpg\nhttps://...foto2.jpg"}
+                              value={fotosVariante.join("\n")}
+                              onChange={(e) => {
+                                const urls = e.target.value
+                                  .split("\n")
+                                  .map((u) => u.trim())
+                                  .filter((u) => u.length > 0);
+                                const portOk = urls.includes(fotoPortada || "");
+                                const det = {
+                                  ...(varianteActual.var_detalle_variante || {}),
+                                  galeria_urls: urls,
+                                  portada_url: portOk ? fotoPortada : (urls[0] || null),
+                                };
+                                actualizarVarianteActual("var_detalle_variante", det);
+                              }}
+                              style={{
+                                width: "100%",
+                                padding: "6px 10px",
+                                borderRadius: "6px",
+                                border: "1px solid #CBD5E1",
+                                fontSize: "0.75rem",
+                                boxSizing: "border-box",
+                                background: "#FFFFFF",
+                                fontFamily: "monospace",
+                              }}
+                            />
+
+                            {/* Miniaturas de Fotos de la Galería de la Variante */}
+                            <div
+                              style={{
+                                marginTop: "8px",
+                                display: "grid",
+                                gridTemplateColumns: "repeat(auto-fill, minmax(95px, 1fr))",
+                                gap: "8px",
+                              }}
+                            >
+                              {fotosVariante.map((gUrl: string, idx: number) => {
+                                const esPortada = fotoPortada === gUrl;
+                                return (
+                                  <div
+                                    key={`${gUrl}-${idx}`}
+                                    style={{
+                                      position: "relative",
+                                      borderRadius: "6px",
+                                      overflow: "hidden",
+                                      border: esPortada ? "2.5px solid #10B981" : "1px solid #E2E8F0",
+                                      background: "#0F172A",
+                                      aspectRatio: "1 / 1",
+                                      display: "flex",
+                                      flexDirection: "column",
+                                      justifyContent: "space-between",
+                                      boxShadow: esPortada ? "0 0 0 2px rgba(16, 185, 129, 0.25)" : "none",
+                                    }}
+                                  >
+                                    <img
+                                      src={gUrl}
+                                      alt={`Foto ${idx + 1}`}
+                                      style={{
+                                        position: "absolute",
+                                        top: 0,
+                                        left: 0,
+                                        width: "100%",
+                                        height: "100%",
+                                        objectFit: "cover",
+                                      }}
+                                    />
+                                    <div
+                                      style={{
+                                        position: "relative",
+                                        zIndex: 2,
+                                        display: "flex",
+                                        justifyContent: "space-between",
+                                        alignItems: "center",
+                                        padding: "3px",
+                                        background: "linear-gradient(to bottom, rgba(0,0,0,0.7), transparent)",
+                                      }}
+                                    >
+                                      <span
+                                        style={{
+                                          fontSize: "0.62rem",
+                                          color: "#FFFFFF",
+                                          fontWeight: 800,
+                                          background: "rgba(0,0,0,0.5)",
+                                          padding: "1px 4px",
+                                          borderRadius: "3px",
+                                        }}
+                                      >
+                                        #{idx + 1}
+                                      </span>
+                                      <button
+                                        type="button"
+                                        onClick={() => handleQuitarFotoGaleriaVariante(idx)}
+                                        style={{
+                                          background: "rgba(220, 38, 38, 0.85)",
+                                          color: "#FFFFFF",
+                                          border: "none",
+                                          borderRadius: "50%",
+                                          width: "18px",
+                                          height: "18px",
+                                          display: "flex",
+                                          alignItems: "center",
+                                          justifyContent: "center",
+                                          cursor: "pointer",
+                                          padding: 0,
+                                        }}
+                                        title="Quitar foto de la galería"
+                                      >
+                                        <X size={10} />
+                                      </button>
+                                    </div>
+
+                                    <div
+                                      style={{
+                                        position: "relative",
+                                        zIndex: 2,
+                                        display: "flex",
+                                        justifyContent: "center",
+                                        padding: "3px",
+                                        background: "linear-gradient(to top, rgba(0,0,0,0.75), transparent)",
+                                      }}
+                                    >
+                                      <button
+                                        type="button"
+                                        onClick={() => handleEstablecerPortadaDesdeGaleriaVariante(gUrl)}
+                                        style={{
+                                          background: esPortada ? "#10B981" : "rgba(255,255,255,0.9)",
+                                          color: esPortada ? "#FFFFFF" : "#0F172A",
+                                          border: "none",
+                                          borderRadius: "3px",
+                                          fontSize: "0.6rem",
+                                          fontWeight: 800,
+                                          padding: "2px 6px",
+                                          cursor: "pointer",
+                                          whiteSpace: "nowrap",
+                                        }}
+                                        title={esPortada ? "Esta es la foto de portada actual" : "Hacer que esta foto sea la portada de este tamaño (mover a #1)"}
+                                      >
+                                        {esPortada ? "★ Portada" : "Hacer Portada"}
+                                      </button>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+
+                            {/* Selector de encuadre específico para la foto de portada */}
+                            {fotoPortada && (
+                              <div style={{ marginTop: "10px" }}>
+                                <SelectorEncuadreFoto
+                                  imagenUrl={fotoPortada}
+                                  posicion={varianteActual.var_detalle_variante?.foto_posicion || fotoPosicionMaster || "center center"}
+                                  ajuste={varianteActual.var_detalle_variante?.foto_ajuste || fotoAjusteMaster || "cover"}
+                                  zoom={Number(varianteActual.var_detalle_variante?.foto_zoom) || fotoZoomMaster || 100}
+                                  onCambiarPosicion={(pos) => {
+                                    const det = { ...(varianteActual.var_detalle_variante || {}), foto_posicion: pos };
+                                    actualizarVarianteActual("var_detalle_variante", det);
+                                  }}
+                                  onCambiarAjuste={(aj) => {
+                                    const det = { ...(varianteActual.var_detalle_variante || {}), foto_ajuste: aj };
+                                    actualizarVarianteActual("var_detalle_variante", det);
+                                  }}
+                                  onCambiarZoom={(zm) => {
+                                    const det = { ...(varianteActual.var_detalle_variante || {}), foto_zoom: zm };
+                                    actualizarVarianteActual("var_detalle_variante", det);
+                                  }}
+                                  titulo={`Encuadre & Posición de la Portada ("${varianteActual.var_nombre}")`}
+                                  colorTema={colActiva.border}
+                                />
+
+                                {Boolean(
+                                  fotoPortada.includes("photos.app.goo.gl") ||
+                                  fotoPortada.includes("photos.google.com")
+                                ) && (
+                                  <div style={{ marginTop: "6px", fontSize: "0.68rem", color: "#B45309", background: "#FEF3C7", padding: "6px 10px", borderRadius: "6px", border: "1px solid #FDE68A", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                    <span>⚠️ La portada actual es un enlace web de Google Fotos.</span>
+                                    <button
+                                      type="button"
+                                      disabled={resolviendoVarianteImg}
+                                      onClick={() => handleConvertirImagenVariante(fotoPortada)}
+                                      style={{
+                                        background: "#0284C7",
+                                        color: "#FFFFFF",
+                                        border: "none",
+                                        padding: "3px 8px",
+                                        borderRadius: "4px",
+                                        fontSize: "0.68rem",
+                                        fontWeight: 700,
+                                        cursor: resolviendoVarianteImg ? "wait" : "pointer",
+                                        display: "inline-flex",
+                                        alignItems: "center",
+                                        gap: "4px",
+                                      }}
+                                    >
+                                      {resolviendoVarianteImg ? <Loader2 size={11} className="animate-spin" /> : <Wand2 size={11} />}
+                                      <span>Auto-Convertir</span>
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                            )}
                           </div>
                         )}
                       </div>
-                    ) : (
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "space-between",
-                          background: "#FFFFFF",
-                          border: "1px dashed #CBD5E1",
-                          borderRadius: "6px",
-                          padding: "8px 12px",
-                        }}
-                      >
-                        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                          {imagenUrl ? (
-                            <div style={{ width: "36px", height: "36px", borderRadius: "4px", overflow: "hidden", background: "#0F172A", flexShrink: 0 }}>
-                              <img
-                                src={imagenUrl}
-                                alt="Master Heredada"
-                                onError={(e) => {
-                                  (e.target as HTMLImageElement).src = obtenerImagenFallbackNegocio(producto?.pro_negocio);
-                                }}
-                                style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                              />
-                            </div>
-                          ) : (
-                            <div style={{ width: "36px", height: "36px", borderRadius: "4px", background: "#E2E8F0", display: "flex", alignItems: "center", justifyContent: "center", color: "#94A3B8" }}>
-                              <ImageIcon size={16} />
-                            </div>
-                          )}
-                          <div>
-                            <div style={{ fontSize: "0.75rem", color: "#1E293B", fontWeight: 700 }}>
-                              ⚪ <strong>Foto Heredada del Master</strong>
-                            </div>
-                            <div style={{ fontSize: "0.68rem", color: "#64748B" }}>
-                              Este tamaño muestra la imagen de portada global en la vitrina.
-                            </div>
-                          </div>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const det = { ...(varianteActual.var_detalle_variante || {}), portada_url: imagenUrl || "https://" };
-                            actualizarVarianteActual("var_detalle_variante", det);
-                          }}
-                          style={{
-                            background: colActiva.badge,
-                            color: colActiva.text,
-                            border: `1px solid ${colActiva.border}`,
-                            padding: "4px 9px",
-                            borderRadius: "4px",
-                            fontSize: "0.7rem",
-                            fontWeight: 700,
-                            cursor: "pointer",
-                            whiteSpace: "nowrap",
-                          }}
-                        >
-                          + Personalizar Foto Propia
-                        </button>
-                      </div>
-                    )}
-                  </div>
+                    );
+                  })()}
 
-                  {/* 1.1 CONFIGURACIÓN DE ÁLBUM DE MUESTRAS REALES PARA ESTE TAMAÑO (HERENCIA VS PROPIO) */}
+                  {/* 2. CONFIGURACIÓN DE ÁLBUM DE MUESTRAS REALES PARA ESTE TAMAÑO (HERENCIA VS PROPIO) */}
                   <div
                     style={{
                       background: "#F8FAFC",
@@ -4030,214 +4296,6 @@ export function ModalEditarProducto({
                         </button>
                       </div>
                     )}
-                  </div>
-
-                  {/* 1.2. Galería de Fotos y Múltiples URLs Exclusivas para esta Variante / Tamaño */}
-                  <div
-                    style={{
-                      background: "#F8FAFC",
-                      border: "1.5px solid #E2E8F0",
-                      borderRadius: "10px",
-                      padding: "12px",
-                      marginBottom: "12px",
-                    }}
-                  >
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px", flexWrap: "wrap", gap: "6px" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                        <ImageIcon size={15} color={colActiva.text} />
-                        <label style={{ fontSize: "0.78rem", fontWeight: 800, color: "#1E293B" }}>
-                          Galería y Múltiples Fotos para "{varianteActual.var_nombre}"
-                        </label>
-                      </div>
-                      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                        <span style={{ fontSize: "0.72rem", color: colActiva.text, fontWeight: 700, background: colActiva.badge, padding: "2px 8px", borderRadius: "12px", border: `1px solid ${colActiva.border}` }}>
-                          {(varianteActual.var_detalle_variante?.galeria_urls || []).length} fotos añadidas
-                        </span>
-
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setContextoGaleria("variante_galeria");
-                            setModalGaleriaAbierto(true);
-                          }}
-                          style={{
-                            background: "#0284C7",
-                            color: "#FFFFFF",
-                            border: "none",
-                            borderRadius: "6px",
-                            padding: "5px 12px",
-                            fontSize: "0.74rem",
-                            fontWeight: 700,
-                            cursor: "pointer",
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: "5px",
-                            boxShadow: "0 1px 2px rgba(2, 132, 199, 0.2)",
-                          }}
-                          title="Abrir galería de medios para seleccionar o subir fotos para este tamaño"
-                        >
-                          <ImageIcon size={13} />
-                          <span>+ Seleccionar de Galería</span>
-                        </button>
-                      </div>
-                    </div>
-
-                    <p style={{ fontSize: "0.7rem", color: "#64748B", margin: "0 0 8px 0" }}>
-                      Ingresa varias URLs (una por línea) o selecciónalas desde la Galería (donde también puedes subir fotos nuevas desde tu PC). Estas fotos se mostrarán en el carrusel cuando el cliente seleccione este tamaño.
-                    </p>
-
-                    <textarea
-                      rows={2}
-                      placeholder={"https://...foto-angulo1.jpg\nhttps://...foto-angulo2.jpg"}
-                      value={
-                        Array.isArray(varianteActual.var_detalle_variante?.galeria_urls)
-                          ? varianteActual.var_detalle_variante.galeria_urls.join("\n")
-                          : ""
-                      }
-                      onChange={(e) => {
-                        const urls = e.target.value
-                          .split("\n")
-                          .map((u) => u.trim())
-                          .filter((u) => u.length > 0);
-                        const det = { ...(varianteActual.var_detalle_variante || {}), galeria_urls: urls };
-                        actualizarVarianteActual("var_detalle_variante", det);
-                      }}
-                      style={{
-                        width: "100%",
-                        padding: "6px 10px",
-                        borderRadius: "6px",
-                        border: "1px solid #CBD5E1",
-                        fontSize: "0.75rem",
-                        boxSizing: "border-box",
-                        background: "#FFFFFF",
-                        fontFamily: "monospace",
-                      }}
-                    />
-
-                    {/* Miniaturas de Fotos de la Galería de la Variante */}
-                    {Array.isArray(varianteActual.var_detalle_variante?.galeria_urls) &&
-                      varianteActual.var_detalle_variante.galeria_urls.length > 0 && (
-                        <div
-                          style={{
-                            marginTop: "8px",
-                            display: "grid",
-                            gridTemplateColumns: "repeat(auto-fill, minmax(90px, 1fr))",
-                            gap: "8px",
-                          }}
-                        >
-                          {varianteActual.var_detalle_variante.galeria_urls.map((gUrl: string, idx: number) => (
-                            <div
-                              key={`${gUrl}-${idx}`}
-                              style={{
-                                position: "relative",
-                                borderRadius: "6px",
-                                overflow: "hidden",
-                                border: "1px solid #E2E8F0",
-                                background: "#0F172A",
-                                aspectRatio: "1 / 1",
-                                display: "flex",
-                                flexDirection: "column",
-                                justifyContent: "space-between",
-                              }}
-                            >
-                              {/* eslint-disable-next-line @next/next/no-img-element */}
-                              <img
-                                src={gUrl}
-                                alt={`Foto ${idx + 1}`}
-                                style={{
-                                  position: "absolute",
-                                  top: 0,
-                                  left: 0,
-                                  width: "100%",
-                                  height: "100%",
-                                  objectFit: "cover",
-                                }}
-                              />
-                              <div
-                                style={{
-                                  position: "relative",
-                                  zIndex: 2,
-                                  display: "flex",
-                                  justifyContent: "space-between",
-                                  alignItems: "center",
-                                  padding: "3px",
-                                  background: "linear-gradient(to bottom, rgba(0,0,0,0.7), transparent)",
-                                }}
-                              >
-                                <span
-                                  style={{
-                                    fontSize: "0.62rem",
-                                    color: "#FFFFFF",
-                                    fontWeight: 800,
-                                    background: "rgba(0,0,0,0.5)",
-                                    padding: "1px 4px",
-                                    borderRadius: "3px",
-                                  }}
-                                >
-                                  #{idx + 1}
-                                </span>
-                                <button
-                                  type="button"
-                                  onClick={() => handleQuitarFotoGaleriaVariante(idx)}
-                                  style={{
-                                    background: "rgba(220, 38, 38, 0.85)",
-                                    color: "#FFFFFF",
-                                    border: "none",
-                                    borderRadius: "50%",
-                                    width: "18px",
-                                    height: "18px",
-                                    display: "flex",
-                                    alignItems: "center",
-                                    justifyContent: "center",
-                                    cursor: "pointer",
-                                    padding: 0,
-                                  }}
-                                  title="Quitar foto de la galería"
-                                >
-                                  <X size={10} />
-                                </button>
-                              </div>
-                              <div
-                                style={{
-                                  position: "relative",
-                                  zIndex: 2,
-                                  display: "flex",
-                                  justifyContent: "center",
-                                  padding: "3px",
-                                  background: "linear-gradient(to top, rgba(0,0,0,0.75), transparent)",
-                                }}
-                              >
-                                <button
-                                  type="button"
-                                  onClick={() => handleEstablecerPortadaDesdeGaleriaVariante(gUrl)}
-                                  style={{
-                                    background:
-                                      varianteActual.var_detalle_variante?.portada_url === gUrl
-                                        ? "#10B981"
-                                        : "rgba(255,255,255,0.9)",
-                                    color:
-                                      varianteActual.var_detalle_variante?.portada_url === gUrl
-                                        ? "#FFFFFF"
-                                        : "#0F172A",
-                                    border: "none",
-                                    borderRadius: "3px",
-                                    fontSize: "0.58rem",
-                                    fontWeight: 700,
-                                    padding: "2px 5px",
-                                    cursor: "pointer",
-                                    whiteSpace: "nowrap",
-                                  }}
-                                  title="Hacer que esta foto sea la portada de este tamaño"
-                                >
-                                  {varianteActual.var_detalle_variante?.portada_url === gUrl
-                                    ? "✓ Portada"
-                                    : "Hacer Portada"}
-                                </button>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
                   </div>
 
                   {/* 3. SUB-SECCIÓN: PERSONALIZACIÓN & SOBRESCRITURA DE ESTA VARIANTE */}
@@ -4572,113 +4630,106 @@ export function ModalEditarProducto({
                           Configura para qué ocasiones la IA (ARIA) y los filtros recomendarán específicamente este tamaño:
                         </p>
 
-                        {/* Grid de Presets para la Variante */}
-                        <div
-                          style={{
-                            display: "grid",
-                            gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))",
-                            gap: "5px",
-                            marginBottom: "8px",
-                          }}
-                        >
-                          {presetsUsosActivos.map((u) => {
-                            const activo = Array.isArray(varianteActual.var_detalle_variante?.usos)
-                              ? varianteActual.var_detalle_variante.usos.includes(u.clave)
-                              : false;
-                            return (
-                              <button
-                                key={u.clave}
-                                type="button"
-                                onClick={() => toggleUsoVariante(u.clave)}
-                                style={{
-                                  display: "flex",
-                                  alignItems: "center",
-                                  justifyContent: "space-between",
-                                  padding: "5px 8px",
-                                  borderRadius: "6px",
-                                  fontSize: "0.72rem",
-                                  fontWeight: activo ? 700 : 500,
-                                  border: activo ? `1.5px solid ${colActiva.border}` : "1px solid #CBD5E1",
-                                  background: activo ? colActiva.bg : "#FFFFFF",
-                                  color: activo ? colActiva.text : "#475569",
-                                  cursor: "pointer",
-                                  textAlign: "left",
-                                  transition: "all 0.15s ease",
-                                }}
-                              >
-                                <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                                  {u.label}
-                                </span>
-                                <span
-                                  style={{
-                                    width: "7px",
-                                    height: "7px",
-                                    borderRadius: "50%",
-                                    background: activo ? colActiva.text : "#CBD5E1",
-                                    flexShrink: 0,
-                                    marginLeft: "4px",
-                                  }}
-                                />
-                              </button>
-                            );
-                          })}
-                        </div>
+                        {/* Grid Unificado de Usos para la Variante (Presets + Personalizados) */}
+                        {(() => {
+                          const usosVar = Array.isArray(varianteActual.var_detalle_variante?.usos)
+                            ? varianteActual.var_detalle_variante.usos
+                            : [];
+                          const todosUsosVariante = [
+                            ...presetsUsosActivos.map((p) => ({
+                              clave: p.clave,
+                              label: p.label,
+                              esPreset: true,
+                            })),
+                            ...usosVar
+                              .filter((u: string) => !presetsUsosActivos.some((p) => p.clave === u))
+                              .map((u: string) => ({
+                                clave: u,
+                                label: `🏷️ ${u.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}`,
+                                esPreset: false,
+                              })),
+                          ];
 
-                        {/* Usos Personalizados Adicionales de la Variante */}
-                        {Array.isArray(varianteActual.var_detalle_variante?.usos) &&
-                          varianteActual.var_detalle_variante.usos.filter(
-                            (u: string) => !presetsUsosActivos.some((p) => p.clave === u)
-                          ).length > 0 && (
+                          return (
                             <div
                               style={{
-                                marginBottom: "8px",
-                                display: "flex",
+                                display: "grid",
+                                gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))",
                                 gap: "5px",
-                                flexWrap: "wrap",
-                                alignItems: "center",
+                                marginBottom: "8px",
                               }}
                             >
-                              <span style={{ fontSize: "0.68rem", color: "#64748B", fontWeight: 600 }}>
-                                Personalizados:
-                              </span>
-                              {varianteActual.var_detalle_variante.usos
-                                .filter((u: string) => !presetsUsosActivos.some((p) => p.clave === u))
-                                .map((u: string) => (
-                                  <span
-                                    key={u}
+                              {todosUsosVariante.map((u) => {
+                                const activo = usosVar.includes(u.clave);
+                                return (
+                                  <button
+                                    key={u.clave}
+                                    type="button"
+                                    onClick={() => toggleUsoVariante(u.clave)}
                                     style={{
-                                      display: "inline-flex",
+                                      display: "flex",
                                       alignItems: "center",
-                                      gap: "3px",
-                                      background: colActiva.badge,
-                                      color: colActiva.text,
-                                      border: `1px solid ${colActiva.border}`,
-                                      borderRadius: "12px",
-                                      padding: "2px 7px",
-                                      fontSize: "0.7rem",
-                                      fontWeight: 700,
+                                      justifyContent: "space-between",
+                                      padding: "5px 8px",
+                                      borderRadius: "6px",
+                                      fontSize: "0.72rem",
+                                      fontWeight: activo ? 700 : 500,
+                                      border: activo ? `1.5px solid ${colActiva.border}` : "1px solid #CBD5E1",
+                                      background: activo ? colActiva.bg : "#FFFFFF",
+                                      color: activo ? colActiva.text : "#475569",
+                                      cursor: "pointer",
+                                      textAlign: "left",
+                                      transition: "all 0.15s ease",
+                                      gap: "4px",
                                     }}
                                   >
-                                    🏷️ {u.replace(/_/g, " ")}
-                                    <button
-                                      type="button"
-                                      onClick={() => handleEliminarUsoVariante(u)}
-                                      style={{
-                                        background: "none",
-                                        border: "none",
-                                        color: colActiva.text,
-                                        cursor: "pointer",
-                                        padding: 0,
-                                        display: "flex",
-                                      }}
-                                      title="Eliminar uso"
-                                    >
-                                      <X size={11} />
-                                    </button>
-                                  </span>
-                                ))}
+                                    <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", flex: 1 }}>
+                                      {u.label}
+                                    </span>
+                                    <div style={{ display: "flex", alignItems: "center", gap: "4px", flexShrink: 0 }}>
+                                      {!u.esPreset && (
+                                        <span
+                                          role="button"
+                                          tabIndex={0}
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleEliminarUsoVariante(u.clave);
+                                          }}
+                                          onKeyDown={(e) => {
+                                            if (e.key === "Enter" || e.key === " ") {
+                                              e.stopPropagation();
+                                              handleEliminarUsoVariante(u.clave);
+                                            }
+                                          }}
+                                          title="Eliminar este uso"
+                                          style={{
+                                            color: "#94A3B8",
+                                            cursor: "pointer",
+                                            display: "inline-flex",
+                                            alignItems: "center",
+                                            padding: "1px",
+                                            borderRadius: "3px",
+                                          }}
+                                        >
+                                          <X size={11} />
+                                        </span>
+                                      )}
+                                      <span
+                                        style={{
+                                          width: "7px",
+                                          height: "7px",
+                                          borderRadius: "50%",
+                                          background: activo ? colActiva.text : "#CBD5E1",
+                                          flexShrink: 0,
+                                        }}
+                                      />
+                                    </div>
+                                  </button>
+                                );
+                              })}
                             </div>
-                          )}
+                          );
+                        })()}
 
                         {/* Input para agregar uso personalizado a la variante */}
                         <div style={{ display: "flex", gap: "6px" }}>

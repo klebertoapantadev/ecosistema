@@ -1452,82 +1452,96 @@ export function ModalCrearProducto({
               Marca los escenarios donde los agentes de IA (como ARIA) deben recomendar este ítem:
             </p>
 
-            {/* Grid de Presets */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(165px, 1fr))", gap: "6px", marginBottom: "10px" }}>
-              {presetsUsosActivos.map((u) => {
-                const activo = usosSeleccionados.includes(u.clave);
-                return (
-                  <button
-                    key={u.clave}
-                    type="button"
-                    onClick={() => toggleUso(u.clave)}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      padding: "6px 10px",
-                      borderRadius: "6px",
-                      fontSize: "0.75rem",
-                      fontWeight: activo ? 700 : 500,
-                      border: activo ? "1.5px solid #0284C7" : "1px solid #CBD5E1",
-                      background: activo ? "#F0F9FF" : "#FFFFFF",
-                      color: activo ? "#0369A1" : "#475569",
-                      cursor: "pointer",
-                      textAlign: "left",
-                    }}
-                  >
-                    <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                      {u.label}
-                    </span>
-                    <span
-                      style={{
-                        width: "8px",
-                        height: "8px",
-                        borderRadius: "50%",
-                        background: activo ? "#0284C7" : "#CBD5E1",
-                        flexShrink: 0,
-                        marginLeft: "6px",
-                      }}
-                    />
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Usos Personalizados */}
-            {usosSeleccionados.filter((u) => !presetsUsosActivos.some((p) => p.clave === u)).length > 0 && (
-              <div style={{ marginBottom: "10px", display: "flex", gap: "6px", flexWrap: "wrap", alignItems: "center" }}>
-                <span style={{ fontSize: "0.7rem", color: "#64748B", fontWeight: 600 }}>Personalizados:</span>
-                {usosSeleccionados
+            {/* Grid Unificado de Usos (Presets + Personalizados) */}
+            {(() => {
+              const usosDeEstaSeccion = [
+                ...presetsUsosActivos.map((p) => ({
+                  clave: p.clave,
+                  label: p.label,
+                  esPreset: true,
+                })),
+                ...usosSeleccionados
                   .filter((u) => !presetsUsosActivos.some((p) => p.clave === u))
-                  .map((u) => (
-                    <span
-                      key={u}
-                      style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: "4px",
-                        background: "#EFF6FF",
-                        color: "#1D4ED8",
-                        border: "1px solid #BFDBFE",
-                        borderRadius: "12px",
-                        padding: "2px 8px",
-                        fontSize: "0.72rem",
-                        fontWeight: 700,
-                      }}
-                    >
-                      🏷️ {u.replace(/_/g, " ")}
+                  .map((u) => ({
+                    clave: u,
+                    label: `🏷️ ${u.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}`,
+                    esPreset: false,
+                  })),
+              ];
+
+              return (
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(165px, 1fr))", gap: "6px", marginBottom: "10px" }}>
+                  {usosDeEstaSeccion.map((u) => {
+                    const activo = usosSeleccionados.includes(u.clave);
+                    return (
                       <button
+                        key={u.clave}
                         type="button"
-                        onClick={() => handleEliminarUso(u)}
-                        style={{ background: "none", border: "none", color: "#93C5FD", cursor: "pointer", padding: 0 }}
+                        onClick={() => toggleUso(u.clave)}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          padding: "6px 10px",
+                          borderRadius: "6px",
+                          fontSize: "0.75rem",
+                          fontWeight: activo ? 700 : 500,
+                          border: activo ? "1.5px solid #0284C7" : "1px solid #CBD5E1",
+                          background: activo ? "#F0F9FF" : "#FFFFFF",
+                          color: activo ? "#0369A1" : "#475569",
+                          cursor: "pointer",
+                          textAlign: "left",
+                          transition: "all 0.15s ease",
+                          gap: "4px",
+                        }}
                       >
-                        <X size={12} />
+                        <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", flex: 1 }}>
+                          {u.label}
+                        </span>
+                        <div style={{ display: "flex", alignItems: "center", gap: "5px", flexShrink: 0 }}>
+                          {!u.esPreset && (
+                            <span
+                              role="button"
+                              tabIndex={0}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleEliminarUso(u.clave);
+                              }}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter" || e.key === " ") {
+                                  e.stopPropagation();
+                                  handleEliminarUso(u.clave);
+                                }
+                              }}
+                              title="Eliminar este uso"
+                              style={{
+                                color: "#94A3B8",
+                                cursor: "pointer",
+                                display: "inline-flex",
+                                alignItems: "center",
+                                padding: "2px",
+                                borderRadius: "3px",
+                              }}
+                            >
+                              <X size={12} />
+                            </span>
+                          )}
+                          <span
+                            style={{
+                              width: "8px",
+                              height: "8px",
+                              borderRadius: "50%",
+                              background: activo ? "#0284C7" : "#CBD5E1",
+                              flexShrink: 0,
+                            }}
+                          />
+                        </div>
                       </button>
-                    </span>
-                  ))}
-              </div>
-            )}
+                    );
+                  })}
+                </div>
+              );
+            })()}
 
             {/* Input para agregar uso libre */}
             <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>

@@ -16,6 +16,8 @@ interface SupabaseVarianteRaw {
     orden?: number;
     pvp_nominal?: number;
     portada_url?: string;
+    album_url?: string;
+    galeria_urls?: string[];
     beneficios_custom?: string[];
     detalle?: string;
     modalidad_pago?: string;
@@ -143,7 +145,11 @@ export async function cargarCatalogoDinamicoTinkay(): Promise<{
               baseImponible: base,
               tarifaIva,
               precioComparacion,
-              foto: v.var_detalle_variante?.portada_url || undefined,
+              foto:
+                v.var_detalle_variante?.portada_url ||
+                (Array.isArray(v.var_detalle_variante?.galeria_urls)
+                  ? v.var_detalle_variante.galeria_urls[0]
+                  : undefined),
               detalle:
                 v.var_detalle_variante?.beneficios_custom?.[0] ||
                 v.var_detalle_variante?.detalle ||
@@ -159,6 +165,13 @@ export async function cargarCatalogoDinamicoTinkay(): Promise<{
         const fotos: string[] = [];
         variantes.forEach((v) => {
           if (v.foto && !fotos.includes(v.foto)) fotos.push(v.foto);
+        });
+        (p.com_variante || []).forEach((v) => {
+          if (Array.isArray(v.var_detalle_variante?.galeria_urls)) {
+            v.var_detalle_variante.galeria_urls.forEach((f: string) => {
+              if (f && typeof f === 'string' && !fotos.includes(f)) fotos.push(f);
+            });
+          }
         });
         if (detalle.imagen_url && typeof detalle.imagen_url === 'string' && !fotos.includes(detalle.imagen_url)) {
           fotos.push(detalle.imagen_url);
