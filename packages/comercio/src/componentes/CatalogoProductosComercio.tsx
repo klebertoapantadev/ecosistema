@@ -2635,6 +2635,7 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
           setCategoriasLista((prev) => [...prev, nueva]);
         }}
         categorias={categoriasLista}
+        productos={productos}
         negocio={negocio}
       />
 
@@ -2679,6 +2680,7 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
           setCategoriasLista((prev) => [...prev, nueva]);
         }}
         categorias={categoriasLista}
+        productos={productos}
         negocio={negocio}
         onAbrirManual={() => setModalManualAbierto(true)}
       />

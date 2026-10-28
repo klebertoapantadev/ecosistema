@@ -681,6 +681,7 @@ export function ConsolaGestionCatalogo({ negocio = "tranqi" }: Props) {
         onCerrar={() => setModalProdAbierto(false)}
         onProductoCreado={(nuevo) => setProductos((prev) => [nuevo, ...prev])}
         categorias={categoriasLista}
+        productos={productos}
         negocio={negocio}
       />
 
@@ -714,6 +715,7 @@ export function ConsolaGestionCatalogo({ negocio = "tranqi" }: Props) {
           setProductos((prev) => prev.filter((item) => item.pro_id !== proId));
         }}
         categorias={categoriasLista}
+        productos={productos}
         negocio={negocio}
       />
 

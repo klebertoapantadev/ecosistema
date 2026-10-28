@@ -5780,3 +5780,85 @@ export async function activarSuscripcionTrasPagoAction(datos: {
   return nuevaCobertura;
 }
 
+/**
+ * Verifica si una clave de Uso / Escenario IA está en uso por algún producto o variante
+ * en comun_comercio.com_producto / com_variante del negocio indicado.
+ */
+export async function verificarUsoEnCatalogoAction(params: {
+  negocio: string;
+  claveUso: string;
+}): Promise<{
+  enUso: boolean;
+  totalProductos: number;
+  nombresProductos: string[];
+  error?: string;
+}> {
+  try {
+    const supabase = await crearClienteServidor();
+    const { principal, variantes: negVariantes } = normalizarIdentificadorNegocio(params.negocio);
+    const clave = params.claveUso.toLowerCase().trim();
+
+    // Consultamos productos y variantes del negocio
+    const [prodsRes, varsRes] = await Promise.all([
+      supabase
+        .schema("comun_comercio")
+        .from("com_producto")
+        .select("pro_id, pro_nombre, pro_detalle_producto")
+        .in("pro_negocio", negVariantes.length > 0 ? negVariantes : [principal]),
+      supabase
+        .schema("comun_comercio")
+        .from("com_variante")
+        .select("var_id, var_producto_id, var_nombre, var_detalle_variante")
+        .in("var_negocio", negVariantes.length > 0 ? negVariantes : [principal]),
+    ]);
+
+    if (prodsRes.error) {
+      console.warn("verificarUsoEnCatalogoAction: error al consultar com_producto", prodsRes.error);
+      return { enUso: false, totalProductos: 0, nombresProductos: [], error: prodsRes.error.message };
+    }
+
+    const mapaNombresProds = new Map<string, string>();
+    for (const p of prodsRes.data || []) {
+      mapaNombresProds.set(p.pro_id, p.pro_nombre || "Producto sin nombre");
+    }
+
+    const productosQueUsan = new Set<string>();
+
+    // 1. Revisar productos maestros
+    for (const p of prodsRes.data || []) {
+      const det: any = p.pro_detalle_producto || {};
+      const usosP: string[] = [
+        ...(Array.isArray(det.usos) ? det.usos : []),
+        ...(Array.isArray(det.ocasiones) ? det.ocasiones : []),
+      ].map((u) => String(u).toLowerCase().trim());
+
+      if (usosP.includes(clave)) {
+        productosQueUsan.add(p.pro_nombre || "Producto sin nombre");
+      }
+    }
+
+    // 2. Revisar variantes
+    for (const v of varsRes.data || []) {
+      const detV: any = v.var_detalle_variante || {};
+      const usosV: string[] = [
+        ...(Array.isArray(detV.usos) ? detV.usos : []),
+        ...(Array.isArray(detV.ocasiones) ? detV.ocasiones : []),
+      ].map((u) => String(u).toLowerCase().trim());
+
+      if (usosV.includes(clave)) {
+        const nombreProd = mapaNombresProds.get(v.var_producto_id) || v.var_nombre || "Variante de producto";
+        productosQueUsan.add(nombreProd);
+      }
+    }
+
+    const listaNombres = Array.from(productosQueUsan);
+    return {
+      enUso: listaNombres.length > 0,
+      totalProductos: listaNombres.length,
+      nombresProductos: listaNombres,
+    };
+  } catch (err: any) {
+    console.error("Excepción en verificarUsoEnCatalogoAction:", err);
+    return { enUso: false, totalProductos: 0, nombresProductos: [], error: err?.message };
+  }
+}

@@ -30,6 +30,7 @@ import {
   crearProductoAction,
   resolverUrlImagenDirectaAction,
   subirImagenCatalogoAction,
+  verificarUsoEnCatalogoAction,
   CategoriaCatalogo,
   ProductoCatalogo,
 } from "../acciones";
@@ -44,6 +45,15 @@ import { TipoVigenciaTemporal } from "../utils/vigencia";
 import { ModalCrearCategoria } from "./ModalCrearCategoria";
 import { ModalGaleriaMedios } from "./ModalGaleriaMedios";
 import { detectarTipoNegocio } from "../utils/negocio";
+import {
+  obtenerPresetsPorNegocio,
+  obtenerUsosEliminadosStorage,
+  guardarUsosEliminadosStorage,
+  obtenerUsosPersonalizadosStorage,
+  guardarUsosPersonalizadosStorage,
+  verificarUsoEnProductosLocales,
+} from "../utils/usosCatalogo";
+import { ModalBloqueoUso, ModalConfirmarEliminarUso } from "./ModalesValidacionUso";
 
 
 interface Props {
@@ -53,6 +63,7 @@ interface Props {
   onCategoriaCreada?: (cat: CategoriaCatalogo) => void;
   onCategoriaEliminada?: (catId: string) => void;
   categorias: CategoriaCatalogo[];
+  productos?: ProductoCatalogo[];
   negocio?: string;
 }
 
@@ -63,6 +74,7 @@ export function ModalCrearProducto({
   onCategoriaCreada,
   onCategoriaEliminada,
   categorias,
+  productos = [],
   negocio = "tranqi",
 }: Props) {
   const { esFloristeria, esLegal, esMantenimiento } = detectarTipoNegocio(negocio);
@@ -124,60 +136,58 @@ export function ModalCrearProducto({
   const [exitoAutoConvertir, setExitoAutoConvertir] = useState<string | null>(null);
   const [canalesSeleccionados, setCanalesSeleccionados] = useState<CanalVisibilidad[]>([...CANALES_POR_DEFECTO]);
 
-  // Presets de Usos / Casos de Aplicación contextuales por industria
-  const PRESETS_USOS_FLORISTERIA = [
-    { clave: "cumpleanos", label: "🎂 Cumpleaños" },
-    { clave: "aniversario", label: "💍 Aniversario" },
-    { clave: "amor_romance", label: "❤️ Amor y Romance" },
-    { clave: "pedida_mano", label: "💍 Pedida de Mano" },
-    { clave: "recuperate", label: "🏥 Recupérate Pronto" },
-    { clave: "agradecimiento", label: "💐 Agradecimiento" },
-    { clave: "graduacion", label: "🎓 Graduación" },
-    { clave: "condolencias", label: "🕊️ Condolencias / Duelo" },
-    { clave: "corporativo", label: "🏢 Corporativo / Eventos" },
-    { clave: "nacimiento_bebe", label: "🍼 Nacimiento / Baby" },
-    { clave: "dia_madre_mujer", label: "🌸 Día Madre / Mujer" },
-    { clave: "sorpresa_diaria", label: "✨ Sorpresa / Detalle" },
-  ];
-
-  const PRESETS_USOS_LEGAL = [
-    { clave: "contratos_mercantil", label: "📄 Revisión de Contratos & Blindaje" },
-    { clave: "tramite_notarial", label: "🏛️ Trámites Notariales & Poderes" },
-    { clave: "salida_menores", label: "✈️ Salida del País de Menores" },
-    { clave: "divorcio_familia", label: "💔 Divorcio por Mutuo Acuerdo / Familia" },
-    { clave: "consulta_especialista", label: "⚖️ Consulta Jurídica Telemática 1 a 1" },
-    { clave: "amparo_familiar", label: "🛡️ Planes de Cobertura Legal Continua" },
-    { clave: "asesoria_corporativa", label: "🏢 Asesoría Corporativa & B2B" },
-    { clave: "disputa_laboral", label: "💼 Asuntos Laborales & Liquidaciones" },
-    { clave: "cobro_deudas", label: "💳 Cobranza y Cartera Judicial" },
-    { clave: "creacion_empresa", label: "🚀 Constitución de Compañías / SAS" },
-    { clave: "propiedad_intelectual", label: "💡 Registro de Marcas & Patentes (SENADI)" },
-    { clave: "defensa_penal", label: "🚨 Asistencia Flagrancia & Penal" },
-  ];
-
-  const PRESETS_USOS_MANTENIMIENTO = [
-    { clave: "fuga_agua", label: "🚰 Fuga de Agua / Grifería" },
-    { clave: "cortocircuito_electrico", label: "⚡ Red Eléctrica / Luces" },
-    { clave: "calefon_calentador", label: "🔥 Calefones y Gas" },
-    { clave: "mantenimiento_preventivo", label: "🛠️ Mantenimiento Preventivo" },
-    { clave: "remodelacion_hogar", label: "🧱 Remodelación / Pintura" },
-    { clave: "cerrajeria_seguridad", label: "🚪 Cerrajería y Puertas" },
-    { clave: "climatizacion_ac", label: "❄️ Aires y Clima" },
-    { clave: "destape_tuberias", label: "🚽 Destape de Cañerías" },
-    { clave: "inspeccion_diagnostico", label: "🔍 Diagnóstico Técnico" },
-  ];
-
-  const presetsUsosActivos = esFloristeria
-    ? PRESETS_USOS_FLORISTERIA
-    : esLegal
-    ? PRESETS_USOS_LEGAL
-    : PRESETS_USOS_MANTENIMIENTO;
-
   // Estado de Usos y Etiquetas Semánticas
   const [usosSeleccionados, setUsosSeleccionados] = useState<string[]>([]);
   const [nuevoUsoTexto, setNuevoUsoTexto] = useState("");
   const [etiquetasSeleccionadas, setEtiquetasSeleccionadas] = useState<string[]>([]);
   const [nuevaEtiquetaTexto, setNuevaEtiquetaTexto] = useState("");
+
+  // Usos eliminados y personalizados persistidos por negocio
+  const [usosEliminados, setUsosEliminados] = useState<string[]>([]);
+  const [usosPersonalizados, setUsosPersonalizados] = useState<{ clave: string; label: string }[]>([]);
+  const [modalBloqueoUso, setModalBloqueoUso] = useState<{ clave: string; label: string; productos: string[] } | null>(null);
+  const [modalConfirmarEliminarUso, setModalConfirmarEliminarUso] = useState<{ clave: string; label: string } | null>(null);
+  const [verificandoUsoClave, setVerificandoUsoClave] = useState<string | null>(null);
+  const [mensajeExitoUso, setMensajeExitoUso] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (abierto) {
+      setUsosEliminados(obtenerUsosEliminadosStorage(negocio));
+      setUsosPersonalizados(obtenerUsosPersonalizadosStorage(negocio));
+    }
+  }, [abierto, negocio]);
+
+  const presetsBase = useMemo(() => obtenerPresetsPorNegocio(negocio), [negocio]);
+  const presetsUsosActivos = useMemo(
+    () => presetsBase.filter((p) => !usosEliminados.includes(p.clave)),
+    [presetsBase, usosEliminados]
+  );
+
+  const todosUsosDisponibles = useMemo(() => {
+    const mapa = new Map<string, { clave: string; label: string; esPreset: boolean }>();
+
+    for (const p of presetsUsosActivos) {
+      mapa.set(p.clave, { clave: p.clave, label: p.label, esPreset: true });
+    }
+
+    for (const u of usosPersonalizados) {
+      if (!usosEliminados.includes(u.clave) && !mapa.has(u.clave)) {
+        mapa.set(u.clave, { clave: u.clave, label: u.label, esPreset: false });
+      }
+    }
+
+    for (const u of usosSeleccionados) {
+      if (!usosEliminados.includes(u) && !mapa.has(u)) {
+        mapa.set(u, {
+          clave: u,
+          label: `🏷️ ${u.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}`,
+          esPreset: false,
+        });
+      }
+    }
+
+    return Array.from(mapa.values());
+  }, [presetsUsosActivos, usosPersonalizados, usosSeleccionados, usosEliminados]);
 
   const toggleUso = (clave: string) => {
     const normalizada = clave.toLowerCase().trim();
@@ -190,14 +200,90 @@ export function ModalCrearProducto({
 
   const handleAgregarUsoPersonalizado = () => {
     const limpio = nuevoUsoTexto.trim().toLowerCase().replace(/\s+/g, "_");
-    if (limpio && !usosSeleccionados.includes(limpio)) {
+    if (!limpio) return;
+    const label = `🏷️ ${nuevoUsoTexto.trim().replace(/\b\w/g, (c) => c.toUpperCase())}`;
+
+    if (usosEliminados.includes(limpio)) {
+      const restantes = usosEliminados.filter((k) => k !== limpio);
+      setUsosEliminados(restantes);
+      guardarUsosEliminadosStorage(negocio, restantes);
+    }
+
+    if (!usosPersonalizados.some((u) => u.clave === limpio)) {
+      const nuevosPers = [...usosPersonalizados, { clave: limpio, label }];
+      setUsosPersonalizados(nuevosPers);
+      guardarUsosPersonalizadosStorage(negocio, nuevosPers);
+    }
+
+    if (!usosSeleccionados.includes(limpio)) {
       setUsosSeleccionados((prev) => [...prev, limpio]);
-      setNuevoUsoTexto("");
+    }
+    setNuevoUsoTexto("");
+  };
+
+  const handleSolicitarEliminarUso = async (clave: string, label: string) => {
+    setVerificandoUsoClave(clave);
+    try {
+      const prodsQueUsanLocal = verificarUsoEnProductosLocales(
+        clave,
+        productos,
+        undefined,
+        usosSeleccionados
+      );
+
+      if (prodsQueUsanLocal.length > 0) {
+        setModalBloqueoUso({
+          clave,
+          label,
+          productos: prodsQueUsanLocal,
+        });
+        return;
+      }
+
+      const resServer = await verificarUsoEnCatalogoAction({
+        negocio,
+        claveUso: clave,
+      });
+
+      if (resServer.enUso && resServer.nombresProductos.length > 0) {
+        setModalBloqueoUso({
+          clave,
+          label,
+          productos: resServer.nombresProductos,
+        });
+        return;
+      }
+
+      setModalConfirmarEliminarUso({ clave, label });
+    } catch (err) {
+      console.error("Error validando uso:", err);
+      setModalConfirmarEliminarUso({ clave, label });
+    } finally {
+      setVerificandoUsoClave(null);
     }
   };
 
-  const handleEliminarUso = (usoAEliminar: string) => {
-    setUsosSeleccionados((prev) => prev.filter((u) => u !== usoAEliminar));
+  const ejecutarEliminacionUso = (clave: string, label: string) => {
+    const actualizados = Array.from(new Set([...usosEliminados, clave]));
+    setUsosEliminados(actualizados);
+    guardarUsosEliminadosStorage(negocio, actualizados);
+
+    const persActualizados = usosPersonalizados.filter((u) => u.clave !== clave);
+    setUsosPersonalizados(persActualizados);
+    guardarUsosPersonalizadosStorage(negocio, persActualizados);
+
+    setUsosSeleccionados((prev) => prev.filter((u) => u !== clave));
+
+    setModalConfirmarEliminarUso(null);
+    setMensajeExitoUso(`Uso «${label}» eliminado correctamente del catálogo.`);
+    setTimeout(() => setMensajeExitoUso(null), 3500);
+  };
+
+  const handleRestaurarUsosPredeterminados = () => {
+    setUsosEliminados([]);
+    guardarUsosEliminadosStorage(negocio, []);
+    setMensajeExitoUso("Se han restaurado los usos predeterminados.");
+    setTimeout(() => setMensajeExitoUso(null), 3000);
   };
 
   const handleAgregarEtiqueta = () => {
@@ -1452,96 +1538,106 @@ export function ModalCrearProducto({
               Marca los escenarios donde los agentes de IA (como ARIA) deben recomendar este ítem:
             </p>
 
-            {/* Grid Unificado de Usos (Presets + Personalizados) */}
-            {(() => {
-              const usosDeEstaSeccion = [
-                ...presetsUsosActivos.map((p) => ({
-                  clave: p.clave,
-                  label: p.label,
-                  esPreset: true,
-                })),
-                ...usosSeleccionados
-                  .filter((u) => !presetsUsosActivos.some((p) => p.clave === u))
-                  .map((u) => ({
-                    clave: u,
-                    label: `🏷️ ${u.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}`,
-                    esPreset: false,
-                  })),
-              ];
+            {/* Feedback tras eliminar uso */}
+            {mensajeExitoUso && (
+              <div
+                style={{
+                  background: "#ECFDF5",
+                  color: "#065F46",
+                  border: "1px solid #A7F3D0",
+                  padding: "8px 12px",
+                  borderRadius: "6px",
+                  fontSize: "0.78rem",
+                  marginBottom: "10px",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                }}
+              >
+                <CheckCircle2 size={16} color="#059669" />
+                <span>{mensajeExitoUso}</span>
+              </div>
+            )}
 
-              return (
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(165px, 1fr))", gap: "6px", marginBottom: "10px" }}>
-                  {usosDeEstaSeccion.map((u) => {
-                    const activo = usosSeleccionados.includes(u.clave);
-                    return (
-                      <button
-                        key={u.clave}
-                        type="button"
-                        onClick={() => toggleUso(u.clave)}
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "space-between",
-                          padding: "6px 10px",
-                          borderRadius: "6px",
-                          fontSize: "0.75rem",
-                          fontWeight: activo ? 700 : 500,
-                          border: activo ? "1.5px solid #0284C7" : "1px solid #CBD5E1",
-                          background: activo ? "#F0F9FF" : "#FFFFFF",
-                          color: activo ? "#0369A1" : "#475569",
-                          cursor: "pointer",
-                          textAlign: "left",
-                          transition: "all 0.15s ease",
-                          gap: "4px",
+            {/* Grid Unificado de Usos (Presets + Personalizados) */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(165px, 1fr))", gap: "6px", marginBottom: "10px" }}>
+              {todosUsosDisponibles.map((u) => {
+                const activo = usosSeleccionados.includes(u.clave);
+                const estaVerificando = verificandoUsoClave === u.clave;
+
+                return (
+                  <button
+                    key={u.clave}
+                    type="button"
+                    onClick={() => toggleUso(u.clave)}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      padding: "6px 10px",
+                      borderRadius: "6px",
+                      fontSize: "0.75rem",
+                      fontWeight: activo ? 700 : 500,
+                      border: activo ? "1.5px solid #0284C7" : "1px solid #CBD5E1",
+                      background: activo ? "#F0F9FF" : "#FFFFFF",
+                      color: activo ? "#0369A1" : "#475569",
+                      cursor: "pointer",
+                      textAlign: "left",
+                      transition: "all 0.15s ease",
+                      gap: "4px",
+                      opacity: estaVerificando ? 0.6 : 1,
+                    }}
+                  >
+                    <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", flex: 1 }}>
+                      {u.label}
+                    </span>
+                    <div style={{ display: "flex", alignItems: "center", gap: "5px", flexShrink: 0 }}>
+                      <span
+                        role="button"
+                        tabIndex={0}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleSolicitarEliminarUso(u.clave, u.label);
                         }}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.stopPropagation();
+                            handleSolicitarEliminarUso(u.clave, u.label);
+                          }
+                        }}
+                        title="Eliminar este uso (solo permitido si ningún producto lo utiliza)"
+                        style={{
+                          color: "#94A3B8",
+                          cursor: "pointer",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          padding: "2px",
+                          borderRadius: "3px",
+                          transition: "all 0.15s ease",
+                        }}
+                        onMouseEnter={(e) => (e.currentTarget.style.color = "#EF4444")}
+                        onMouseLeave={(e) => (e.currentTarget.style.color = "#94A3B8")}
                       >
-                        <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", flex: 1 }}>
-                          {u.label}
-                        </span>
-                        <div style={{ display: "flex", alignItems: "center", gap: "5px", flexShrink: 0 }}>
-                          {!u.esPreset && (
-                            <span
-                              role="button"
-                              tabIndex={0}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleEliminarUso(u.clave);
-                              }}
-                              onKeyDown={(e) => {
-                                if (e.key === "Enter" || e.key === " ") {
-                                  e.stopPropagation();
-                                  handleEliminarUso(u.clave);
-                                }
-                              }}
-                              title="Eliminar este uso"
-                              style={{
-                                color: "#94A3B8",
-                                cursor: "pointer",
-                                display: "inline-flex",
-                                alignItems: "center",
-                                padding: "2px",
-                                borderRadius: "3px",
-                              }}
-                            >
-                              <X size={12} />
-                            </span>
-                          )}
-                          <span
-                            style={{
-                              width: "8px",
-                              height: "8px",
-                              borderRadius: "50%",
-                              background: activo ? "#0284C7" : "#CBD5E1",
-                              flexShrink: 0,
-                            }}
-                          />
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              );
-            })()}
+                        {estaVerificando ? (
+                          <Loader2 size={12} className="animate-spin" />
+                        ) : (
+                          <X size={12} />
+                        )}
+                      </span>
+                      <span
+                        style={{
+                          width: "8px",
+                          height: "8px",
+                          borderRadius: "50%",
+                          background: activo ? "#0284C7" : "#CBD5E1",
+                          flexShrink: 0,
+                        }}
+                      />
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
 
             {/* Input para agregar uso libre */}
             <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
@@ -1583,6 +1679,28 @@ export function ModalCrearProducto({
                 + Agregar Uso
               </button>
             </div>
+
+            {/* Enlace para restaurar presets si existen eliminados */}
+            {usosEliminados.length > 0 && (
+              <div style={{ marginTop: "8px", display: "flex", justifyContent: "flex-end" }}>
+                <button
+                  type="button"
+                  onClick={handleRestaurarUsosPredeterminados}
+                  style={{
+                    background: "transparent",
+                    border: "none",
+                    color: "#0284C7",
+                    fontSize: "0.72rem",
+                    cursor: "pointer",
+                    textDecoration: "underline",
+                    padding: 0,
+                    fontWeight: 600,
+                  }}
+                >
+                  ↺ Restaurar usos predeterminados ({usosEliminados.length} eliminados)
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Etiquetas Semánticas */}
@@ -1776,6 +1894,29 @@ export function ModalCrearProducto({
           setExitoAutoConvertir("¡Imagen seleccionada desde la galería del negocio!");
         }}
         titulo={`Biblioteca de Medios (${negocio.toUpperCase()})`}
+      />
+
+      {/* Modales de Validación y Confirmación de Eliminación de Usos */}
+      <ModalBloqueoUso
+        abierto={Boolean(modalBloqueoUso)}
+        usoLabel={modalBloqueoUso?.label || ""}
+        productos={modalBloqueoUso?.productos || []}
+        onCerrar={() => setModalBloqueoUso(null)}
+      />
+
+      <ModalConfirmarEliminarUso
+        abierto={Boolean(modalConfirmarEliminarUso)}
+        usoLabel={modalConfirmarEliminarUso?.label || ""}
+        negocio={negocio}
+        onCancelar={() => setModalConfirmarEliminarUso(null)}
+        onConfirmar={() => {
+          if (modalConfirmarEliminarUso) {
+            ejecutarEliminacionUso(
+              modalConfirmarEliminarUso.clave,
+              modalConfirmarEliminarUso.label
+            );
+          }
+        }}
       />
     </div>
   );

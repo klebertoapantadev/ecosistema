@@ -29,4 +29,5 @@ export * from "./acciones-compliance";
 export * from "./acciones-legal-hr";
 export * from "./utils/negocio";
 export * from "./utils/vigencia";
-
+export * from "./utils/usosCatalogo";
+export * from "./componentes/ModalesValidacionUso";
