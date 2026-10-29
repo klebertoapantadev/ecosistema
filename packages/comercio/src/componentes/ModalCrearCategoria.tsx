@@ -15,6 +15,7 @@ import {
   RefreshCw,
   AlertTriangle,
   Info,
+  Loader2,
 } from "lucide-react";
 import {
   crearCategoriaAction,
@@ -87,7 +88,18 @@ export function ModalCrearCategoria({
     setCargandoLista(true);
     try {
       const datos = await obtenerCategoriasConUsoAction(negocio);
-      setCategoriasUso(datos);
+      let filtrados = datos;
+      if (typeof window !== "undefined") {
+        try {
+          const keyStorage = `eco_cats_eliminadas_${negocio}`;
+          const guardadas: string[] = JSON.parse(localStorage.getItem(keyStorage) || "[]");
+          if (guardadas.length > 0) {
+            const setElim = new Set(guardadas);
+            filtrados = datos.filter((c) => !setElim.has(c.ctg_id) && !setElim.has(c.ctg_slug));
+          }
+        } catch {}
+      }
+      setCategoriasUso(filtrados);
     } catch (err: any) {
       setMensajeErrorGestion(err?.message || "No se pudo cargar la lista de categorías.");
     } finally {
@@ -152,22 +164,38 @@ export function ModalCrearCategoria({
   const handleConfirmarEliminar = async () => {
     if (!catAEliminar) return;
 
-    setEliminandoId(catAEliminar.ctg_id);
+    const idEliminar = catAEliminar.ctg_id;
+    const slugEliminar = catAEliminar.ctg_slug;
+    const nombreEliminar = catAEliminar.ctg_nombre;
+
+    setEliminandoId(idEliminar);
     setMensajeErrorGestion(null);
     setMensajeExitoGestion(null);
 
     try {
       const res = await eliminarCategoriaAction({
-        categoriaId: catAEliminar.ctg_id,
+        categoriaId: idEliminar,
+        slug: slugEliminar,
         negocio,
       });
 
       if (res.ok) {
-        setMensajeExitoGestion(res.mensaje || `Categoría "${catAEliminar.ctg_nombre}" eliminada correctamente.`);
+        setMensajeExitoGestion(res.mensaje || `Categoría "${nombreEliminar}" eliminada correctamente.`);
         // Actualizar lista local de forma reactiva
-        setCategoriasUso((prev) => prev.filter((c) => c.ctg_id !== catAEliminar.ctg_id && c.ctg_slug !== catAEliminar.ctg_slug));
+        setCategoriasUso((prev) => prev.filter((c) => c.ctg_id !== idEliminar && c.ctg_slug !== slugEliminar));
+        
+        // Persistir en localStorage
+        if (typeof window !== "undefined") {
+          try {
+            const keyStorage = `eco_cats_eliminadas_${negocio}`;
+            const guardadas: string[] = JSON.parse(localStorage.getItem(keyStorage) || "[]");
+            guardadas.push(idEliminar, slugEliminar);
+            localStorage.setItem(keyStorage, JSON.stringify(Array.from(new Set(guardadas))));
+          } catch {}
+        }
+
         if (onCategoriaEliminada) {
-          onCategoriaEliminada(catAEliminar.ctg_id);
+          onCategoriaEliminada(idEliminar);
         }
         setCatAEliminar(null);
       } else {
@@ -675,72 +703,6 @@ export function ModalCrearCategoria({
                 </button>
               </div>
 
-              {/* Diálogo de Confirmación de Eliminación */}
-              {catAEliminar && (
-                <div
-                  style={{
-                    background: "#FFF1F2",
-                    border: "1px solid #FECDD3",
-                    borderRadius: "10px",
-                    padding: "12px 14px",
-                    marginBottom: "14px",
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "8px",
-                  }}
-                >
-                  <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#9F1239" }}>
-                    <AlertTriangle size={18} />
-                    <span style={{ fontSize: "0.85rem", fontWeight: 700 }}>
-                      ¿Confirmas eliminar la categoría &ldquo;{catAEliminar.ctg_nombre}&rdquo;?
-                    </span>
-                  </div>
-                  <p style={{ margin: 0, fontSize: "0.76rem", color: "#881337" }}>
-                    Esta acción retirará la categoría del catálogo y de los filtros de navegación. Esta operación no se puede revertir.
-                  </p>
-                  <div style={{ display: "flex", justifyContent: "flex-end", gap: "8px", marginTop: "4px" }}>
-                    <button
-                      type="button"
-                      disabled={Boolean(eliminandoId)}
-                      onClick={() => setCatAEliminar(null)}
-                      style={{
-                        background: "#FFFFFF",
-                        border: "1px solid #CBD5E1",
-                        padding: "6px 12px",
-                        borderRadius: "6px",
-                        fontSize: "0.76rem",
-                        fontWeight: 600,
-                        cursor: "pointer",
-                        color: "#475569",
-                      }}
-                    >
-                      Cancelar
-                    </button>
-                    <button
-                      type="button"
-                      disabled={Boolean(eliminandoId)}
-                      onClick={handleConfirmarEliminar}
-                      style={{
-                        background: "#E11D48",
-                        border: "none",
-                        padding: "6px 14px",
-                        borderRadius: "6px",
-                        fontSize: "0.76rem",
-                        fontWeight: 700,
-                        cursor: "pointer",
-                        color: "#FFFFFF",
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: "6px",
-                      }}
-                    >
-                      <Trash2 size={13} />
-                      <span>{eliminandoId ? "Eliminando..." : "Sí, Eliminar"}</span>
-                    </button>
-                  </div>
-                </div>
-              )}
-
               {/* Lista de Categorías */}
               {cargandoLista ? (
                 <div style={{ padding: "28px", textAlign: "center", color: "#64748B", fontSize: "0.82rem" }}>
@@ -873,9 +835,10 @@ export function ModalCrearCategoria({
                           ) : (
                             <button
                               type="button"
+                              disabled={Boolean(eliminandoId)}
                               onClick={() => setCatAEliminar(cat)}
                               style={{
-                                background: "#FFF1F2",
+                                background: eliminandoId === cat.ctg_id ? "#FFE4E6" : "#FFF1F2",
                                 border: "1px solid #FECDD3",
                                 color: "#E11D48",
                                 padding: "6px 12px",
@@ -885,13 +848,22 @@ export function ModalCrearCategoria({
                                 display: "inline-flex",
                                 alignItems: "center",
                                 gap: "5px",
-                                cursor: "pointer",
+                                cursor: eliminandoId === cat.ctg_id ? "wait" : "pointer",
                                 transition: "all 0.15s ease",
                               }}
                               title="Eliminar esta categoría que no tiene productos asignados"
                             >
-                              <Trash2 size={13} />
-                              <span>Eliminar</span>
+                              {eliminandoId === cat.ctg_id ? (
+                                <>
+                                  <Loader2 size={13} className="animate-spin" />
+                                  <span>Eliminando...</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Trash2 size={13} />
+                                  <span>Eliminar</span>
+                                </>
+                              )}
                             </button>
                           )}
                         </div>
@@ -923,6 +895,146 @@ export function ModalCrearCategoria({
           )}
         </div>
       </div>
+
+      {/* Modal Diálogo Flotante de Confirmación de Eliminación (Centrado en Pantalla) */}
+      {catAEliminar && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(15, 23, 42, 0.72)",
+            backdropFilter: "blur(4px)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 10050,
+            padding: "16px",
+            animation: "fadeIn 0.15s ease",
+          }}
+          onClick={() => {
+            if (!eliminandoId) setCatAEliminar(null);
+          }}
+        >
+          <div
+            style={{
+              background: "#FFFFFF",
+              borderRadius: "16px",
+              width: "100%",
+              maxWidth: "460px",
+              padding: "24px",
+              boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.35)",
+              border: "1px solid #FECDD3",
+              position: "relative",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: "flex", alignItems: "flex-start", gap: "14px", marginBottom: "16px" }}>
+              <div
+                style={{
+                  width: "44px",
+                  height: "44px",
+                  borderRadius: "12px",
+                  background: "#FFE4E6",
+                  color: "#E11D48",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  flexShrink: 0,
+                }}
+              >
+                <Trash2 size={22} />
+              </div>
+              <div style={{ flex: 1 }}>
+                <h3 style={{ margin: "0 0 4px 0", fontSize: "1.05rem", fontWeight: 800, color: "#0F172A" }}>
+                  ¿Eliminar esta categoría?
+                </h3>
+                <p style={{ margin: 0, fontSize: "0.82rem", color: "#64748B", lineHeight: 1.4 }}>
+                  Vas a retirar del catálogo la categoría:
+                </p>
+                <div style={{ marginTop: "6px", display: "inline-flex", alignItems: "center", gap: "6px" }}>
+                  <span style={{ fontWeight: 700, fontSize: "0.95rem", color: "#E11D48" }}>
+                    {catAEliminar.ctg_nombre}
+                  </span>
+                  <code style={{ fontSize: "0.72rem", background: "#F1F5F9", color: "#475569", padding: "2px 6px", borderRadius: "4px" }}>
+                    {catAEliminar.ctg_slug}
+                  </code>
+                </div>
+              </div>
+            </div>
+
+            <div
+              style={{
+                background: "#FFF1F2",
+                border: "1px solid #FECDD3",
+                borderRadius: "10px",
+                padding: "10px 12px",
+                marginBottom: "20px",
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+                fontSize: "0.78rem",
+                color: "#9F1239",
+              }}
+            >
+              <AlertTriangle size={16} style={{ flexShrink: 0 }} />
+              <span>
+                Esta acción retirará la categoría de la vitrina, filtros y catálogo. No se puede revertir.
+              </span>
+            </div>
+
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px" }}>
+              <button
+                type="button"
+                disabled={Boolean(eliminandoId)}
+                onClick={() => setCatAEliminar(null)}
+                style={{
+                  background: "#F1F5F9",
+                  color: "#475569",
+                  border: "none",
+                  padding: "9px 16px",
+                  borderRadius: "8px",
+                  fontSize: "0.82rem",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                }}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                disabled={Boolean(eliminandoId)}
+                onClick={handleConfirmarEliminar}
+                style={{
+                  background: "#E11D48",
+                  color: "#FFFFFF",
+                  border: "none",
+                  padding: "9px 18px",
+                  borderRadius: "8px",
+                  fontSize: "0.82rem",
+                  fontWeight: 700,
+                  cursor: eliminandoId ? "wait" : "pointer",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  boxShadow: "0 4px 12px rgba(225, 29, 72, 0.35)",
+                }}
+              >
+                {eliminandoId ? (
+                  <>
+                    <Loader2 size={15} className="animate-spin" />
+                    <span>Eliminando...</span>
+                  </>
+                ) : (
+                  <>
+                    <Trash2 size={15} />
+                    <span>Sí, Eliminar</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -2543,21 +2543,28 @@ export async function obtenerCategoriasConUsoAction(
     obtenerCatalogoProductosAction(negocio, undefined, true),
   ]);
 
-  return categorias.map((cat) => {
-    const conteo = productos.filter(
-      (p) =>
-        p.pro_categoria_principal_id === cat.ctg_id ||
-        p.categoria?.ctg_id === cat.ctg_id ||
-        p.categoria?.ctg_slug === cat.ctg_slug ||
-        p.pro_detalle_producto?.categoria_id === cat.ctg_id
-    ).length;
+  return categorias
+    .filter(
+      (c) =>
+        !storeCategoriasEliminadas.has(c.ctg_id) &&
+        !storeCategoriasEliminadas.has(c.ctg_slug) &&
+        c.ctg_activo !== false
+    )
+    .map((cat) => {
+      const conteo = productos.filter(
+        (p) =>
+          p.pro_categoria_principal_id === cat.ctg_id ||
+          p.categoria?.ctg_id === cat.ctg_id ||
+          p.categoria?.ctg_slug === cat.ctg_slug ||
+          p.pro_detalle_producto?.categoria_id === cat.ctg_id
+      ).length;
 
-    return {
-      ...cat,
-      productos_conteo: conteo,
-      en_uso: conteo > 0,
-    };
-  });
+      return {
+        ...cat,
+        productos_conteo: conteo,
+        en_uso: conteo > 0,
+      };
+    });
 }
 
 /**
@@ -2647,6 +2654,7 @@ export async function verificarUsoCategoriaAction(
  */
 export async function eliminarCategoriaAction(datos: {
   categoriaId: string;
+  slug?: string;
   negocio?: string;
 }): Promise<{
   ok: boolean;
@@ -2659,8 +2667,9 @@ export async function eliminarCategoriaAction(datos: {
     const { principal } = normalizarIdentificadorNegocio(datos.negocio);
     const negocio = principal;
     const catId = datos.categoriaId?.trim();
+    const slug = datos.slug?.trim();
 
-    if (!catId) {
+    if (!catId && !slug) {
       return { ok: false, error: "Identificador de categoría inválido." };
     }
 
@@ -2676,91 +2685,96 @@ export async function eliminarCategoriaAction(datos: {
 
     // 1. Intentar RPC transaccional seguro (Security Definer)
     if (clienteActivo) {
-      try {
-        const { data: rpcRes, error: errRpc } = await clienteActivo
-          .schema("comun_comercio")
-          .rpc("com_fn_eliminar_categoria_catalogo", {
-            p_categoria_id: catId,
-            p_negocio: negocio,
-          });
+      const idsAProbar = [catId, slug].filter(Boolean) as string[];
+      for (const idParaRpc of idsAProbar) {
+        try {
+          const { data: rpcRes, error: errRpc } = await clienteActivo
+            .schema("comun_comercio")
+            .rpc("com_fn_eliminar_categoria_catalogo", {
+              p_categoria_id: idParaRpc,
+              p_negocio: negocio,
+            });
 
-        if (!errRpc && rpcRes) {
-          if (rpcRes.ok === false) {
+          if (!errRpc && rpcRes) {
+            if (rpcRes.ok === false) {
+              return {
+                ok: false,
+                enUso: Boolean(rpcRes.en_uso),
+                conteoProductos: rpcRes.conteo_productos || 0,
+                error: rpcRes.error || "No se puede eliminar la categoría.",
+              };
+            }
+
+            // Éxito confirmado por la base de datos
+            if (catId) storeCategoriasEliminadas.add(catId);
+            if (slug) storeCategoriasEliminadas.add(slug);
+            if (rpcRes.categoria_id) {
+              storeCategoriasEliminadas.add(String(rpcRes.categoria_id));
+            }
+
+            // Limpiar de store local si existía
+            const actuales = storeCustomCategorias.get(negocio) || [];
+            storeCustomCategorias.set(
+              negocio,
+              actuales.filter((c) => c.ctg_id !== catId && c.ctg_slug !== catId && c.ctg_id !== slug && c.ctg_slug !== slug)
+            );
+
+            revalidatePath("/panel/catalogo-productos");
             return {
-              ok: false,
-              enUso: Boolean(rpcRes.en_uso),
-              conteoProductos: rpcRes.conteo_productos || 0,
-              error: rpcRes.error || "No se puede eliminar la categoría.",
+              ok: true,
+              mensaje: rpcRes.mensaje || "Categoría eliminada exitosamente.",
             };
           }
+        } catch {
+          // Fallback a siguiente intento o comprobación directa
+        }
 
-          // Éxito confirmado por la base de datos
-          storeCategoriasEliminadas.add(catId);
-          if (rpcRes.categoria_id) {
-            storeCategoriasEliminadas.add(String(rpcRes.categoria_id));
-          }
-
-          // Limpiar de store local si existía
-          const actuales = storeCustomCategorias.get(negocio) || [];
-          storeCustomCategorias.set(
-            negocio,
-            actuales.filter((c) => c.ctg_id !== catId && c.ctg_slug !== catId)
+        // Probar wrapper en public
+        try {
+          const { data: rpcPub, error: errPub } = await clienteActivo.rpc(
+            "com_fn_eliminar_categoria_catalogo",
+            {
+              p_categoria_id: idParaRpc,
+              p_negocio: negocio,
+            }
           );
 
-          revalidatePath("/panel/catalogo-productos");
-          return {
-            ok: true,
-            mensaje: rpcRes.mensaje || "Categoría eliminada exitosamente.",
-          };
-        }
-      } catch {
-        // Fallback a verificación directa
-      }
+          if (!errPub && rpcPub) {
+            if (rpcPub.ok === false) {
+              return {
+                ok: false,
+                enUso: Boolean(rpcPub.en_uso),
+                conteoProductos: rpcPub.conteo_productos || 0,
+                error: rpcPub.error || "No se puede eliminar la categoría.",
+              };
+            }
 
-      // Probar wrapper en public
-      try {
-        const { data: rpcPub, error: errPub } = await clienteActivo.rpc(
-          "com_fn_eliminar_categoria_catalogo",
-          {
-            p_categoria_id: catId,
-            p_negocio: negocio,
-          }
-        );
+            if (catId) storeCategoriasEliminadas.add(catId);
+            if (slug) storeCategoriasEliminadas.add(slug);
+            if (rpcPub.categoria_id) {
+              storeCategoriasEliminadas.add(String(rpcPub.categoria_id));
+            }
 
-        if (!errPub && rpcPub) {
-          if (rpcPub.ok === false) {
+            const actuales = storeCustomCategorias.get(negocio) || [];
+            storeCustomCategorias.set(
+              negocio,
+              actuales.filter((c) => c.ctg_id !== catId && c.ctg_slug !== catId && c.ctg_id !== slug && c.ctg_slug !== slug)
+            );
+
+            revalidatePath("/panel/catalogo-productos");
             return {
-              ok: false,
-              enUso: Boolean(rpcPub.en_uso),
-              conteoProductos: rpcPub.conteo_productos || 0,
-              error: rpcPub.error || "No se puede eliminar la categoría.",
+              ok: true,
+              mensaje: rpcPub.mensaje || "Categoría eliminada exitosamente.",
             };
           }
-
-          storeCategoriasEliminadas.add(catId);
-          if (rpcPub.categoria_id) {
-            storeCategoriasEliminadas.add(String(rpcPub.categoria_id));
-          }
-
-          const actuales = storeCustomCategorias.get(negocio) || [];
-          storeCustomCategorias.set(
-            negocio,
-            actuales.filter((c) => c.ctg_id !== catId && c.ctg_slug !== catId)
-          );
-
-          revalidatePath("/panel/catalogo-productos");
-          return {
-            ok: true,
-            mensaje: rpcPub.mensaje || "Categoría eliminada exitosamente.",
-          };
+        } catch {
+          // Fallback
         }
-      } catch {
-        // Fallback
       }
     }
 
     // 2. Control de integridad directo si el RPC aún no está creado o en desarrollo local
-    const verificacion = await verificarUsoCategoriaAction(catId, negocio);
+    const verificacion = await verificarUsoCategoriaAction(catId || slug || "", negocio);
     if (verificacion.enUso && verificacion.conteoProductos > 0) {
       const ejemplos = verificacion.nombresEjemplo?.length
         ? ` (ej. ${verificacion.nombresEjemplo.join(", ")})`
@@ -2775,9 +2789,13 @@ export async function eliminarCategoriaAction(datos: {
 
     // 3. Si no está en uso: dar de baja en Supabase
     if (clienteActivo) {
-      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(catId);
-
       try {
+        const orConditions = [
+          catId ? `ctg_id.eq.${catId}` : null,
+          catId ? `ctg_slug.eq.${catId}` : null,
+          slug ? `ctg_slug.eq.${slug}` : null,
+        ].filter(Boolean).join(",");
+
         let updateQuery = clienteActivo
           .schema("comun_comercio")
           .from("com_categoria")
@@ -2787,12 +2805,9 @@ export async function eliminarCategoriaAction(datos: {
             ctg_actualizado_en: new Date().toISOString(),
           });
 
-        if (isUuid) {
-          updateQuery = updateQuery.eq("ctg_id", catId);
-        } else {
-          updateQuery = updateQuery.or(`ctg_id.eq.${catId},ctg_slug.eq.${catId}`);
+        if (orConditions) {
+          updateQuery = updateQuery.or(orConditions);
         }
-
         await updateQuery;
 
         // Intentar delete físico si no tiene dependencias
@@ -2800,10 +2815,8 @@ export async function eliminarCategoriaAction(datos: {
           .schema("comun_comercio")
           .from("com_categoria")
           .delete();
-        if (isUuid) {
-          deleteQuery = deleteQuery.eq("ctg_id", catId);
-        } else {
-          deleteQuery = deleteQuery.or(`ctg_id.eq.${catId},ctg_slug.eq.${catId}`);
+        if (orConditions) {
+          deleteQuery = deleteQuery.or(orConditions);
         }
         await deleteQuery;
       } catch {
@@ -2812,11 +2825,12 @@ export async function eliminarCategoriaAction(datos: {
     }
 
     // 4. Registrar en store local de eliminadas y limpiar
-    storeCategoriasEliminadas.add(catId);
+    if (catId) storeCategoriasEliminadas.add(catId);
+    if (slug) storeCategoriasEliminadas.add(slug);
     const actuales = storeCustomCategorias.get(negocio) || [];
     storeCustomCategorias.set(
       negocio,
-      actuales.filter((c) => c.ctg_id !== catId && c.ctg_slug !== catId)
+      actuales.filter((c) => c.ctg_id !== catId && c.ctg_slug !== catId && c.ctg_id !== slug && c.ctg_slug !== slug)
     );
 
     revalidatePath("/panel/catalogo-productos");
