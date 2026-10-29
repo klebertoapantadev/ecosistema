@@ -2491,8 +2491,8 @@ export async function crearCategoriaAction(datos: {
  */
 export async function obtenerCategoriasConUsoAction(
   negocio = "tranqi"
-): Promise<Array<CategoriaCatalogo & { productos_conteo: number; en_uso: boolean }>> {
-  const { principal } = normalizarIdentificadorNegocio(negocio);
+): Promise<Array<CategoriaCatalogo & { productos_conteo: number; en_uso: boolean; productos_ejemplo?: string[] }>> {
+  const { principal, variantes } = normalizarIdentificadorNegocio(negocio);
   let admin: any = null;
   let supabase: any = null;
   try {
@@ -2503,68 +2503,169 @@ export async function obtenerCategoriasConUsoAction(
   } catch {}
   const clienteActivo = admin || supabase;
 
-  // 1. Intentar RPC en base de datos
-  if (clienteActivo) {
-    try {
-      const { data: rpcRes, error: errRpc } = await clienteActivo
-        .schema("comun_comercio")
-        .rpc("com_fn_obtener_categorias_con_uso", { p_negocio: principal });
-      if (!errRpc && Array.isArray(rpcRes) && rpcRes.length > 0) {
-        return rpcRes.filter(
-          (c: any) =>
-            !storeCategoriasEliminadas.has(c.ctg_id) &&
-            !storeCategoriasEliminadas.has(c.ctg_slug)
-        );
-      }
-    } catch {
-      // Fallback
-    }
+  // 1. Obtener todas las categorías base
+  const categorias = await obtenerCategoriasAction(negocio);
+  const categoriasActivas = categorias.filter(
+    (c) =>
+      !storeCategoriasEliminadas.has(c.ctg_id) &&
+      !storeCategoriasEliminadas.has(c.ctg_slug) &&
+      c.ctg_activo !== false
+  );
 
-    try {
-      const { data: rpcPub, error: errPub } = await clienteActivo.rpc(
-        "com_fn_obtener_categorias_con_uso",
-        { p_negocio: principal }
+  // 2. Si no hay cliente de base de datos, calcular con catálogo en memoria
+  if (!clienteActivo) {
+    const prodsMem = await obtenerCatalogoProductosAction(negocio, undefined, true);
+    return categoriasActivas.map((cat) => {
+      const prodsUso = prodsMem.filter(
+        (p) =>
+          p.pro_activo !== false &&
+          (p.pro_categoria_principal_id === cat.ctg_id ||
+            p.categoria?.ctg_id === cat.ctg_id ||
+            p.categoria?.ctg_slug === cat.ctg_slug ||
+            p.pro_detalle_producto?.categoria_id === cat.ctg_id)
       );
-      if (!errPub && Array.isArray(rpcPub) && rpcPub.length > 0) {
-        return rpcPub.filter(
-          (c: any) =>
-            !storeCategoriasEliminadas.has(c.ctg_id) &&
-            !storeCategoriasEliminadas.has(c.ctg_slug)
-        );
-      }
-    } catch {
-      // Fallback
-    }
+      return {
+        ...cat,
+        productos_conteo: prodsUso.length,
+        en_uso: prodsUso.length > 0,
+        productos_ejemplo: prodsUso.slice(0, 3).map((p) => p.pro_nombre),
+      };
+    });
   }
 
-  // 2. Fallback calculado: mezclar categorías y productos
-  const [categorias, productos] = await Promise.all([
-    obtenerCategoriasAction(negocio),
-    obtenerCatalogoProductosAction(negocio, undefined, true),
-  ]);
+  // 3. Consultar tablas de Supabase en paralelo para cálculo 100% exacto e infalible
+  try {
+    const [catDbRes, prodDbRes, pcDbRes] = await Promise.all([
+      // A. Mapeo de categorías en Supabase (UUIDs vs Slugs)
+      clienteActivo
+        .schema("comun_comercio")
+        .from("com_categoria")
+        .select("ctg_id, ctg_slug, ctg_nombre")
+        .in("ctg_negocio", variantes)
+        .is("ctg_eliminado_en", null),
 
-  return categorias
-    .filter(
-      (c) =>
-        !storeCategoriasEliminadas.has(c.ctg_id) &&
-        !storeCategoriasEliminadas.has(c.ctg_slug) &&
-        c.ctg_activo !== false
-    )
-    .map((cat) => {
-      const conteo = productos.filter(
-        (p) =>
+      // B. Productos reales en Supabase (activos y no eliminados)
+      clienteActivo
+        .schema("comun_comercio")
+        .from("com_producto")
+        .select("pro_id, pro_nombre, pro_categoria_principal_id, pro_detalle_producto, pro_activo")
+        .in("pro_negocio", variantes)
+        .is("pro_eliminado_en", null)
+        .eq("pro_activo", true),
+
+      // C. Relaciones secundarias en tabla pivote
+      clienteActivo
+        .schema("comun_comercio")
+        .from("com_producto_categoria")
+        .select("pct_categoria_id, pct_producto_id")
+        .is("pct_eliminado_en", null),
+    ]);
+
+    const catsDb = catDbRes.data || [];
+    const prodsDb = prodDbRes.data || [];
+    const pcDb = pcDbRes.data || [];
+
+    // Mapa para resolver UUID real en BDD a partir del slug o id
+    const slugToUuid = new Map<string, string>();
+    catsDb.forEach((c: any) => {
+      if (c.ctg_slug && c.ctg_id) {
+        slugToUuid.set(c.ctg_slug, c.ctg_id);
+      }
+    });
+
+    // IDs de productos activos válidos
+    const prodsActivosIds = new Set(prodsDb.map((p: any) => p.pro_id));
+
+    // Productos de memoria para contemplar semillas locales
+    const prodsMem = await obtenerCatalogoProductosAction(negocio, undefined, true);
+
+    return categoriasActivas.map((cat) => {
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(cat.ctg_id);
+      const uuidReal = slugToUuid.get(cat.ctg_slug) || (isUuid ? cat.ctg_id : null);
+
+      // 1. Productos con FK directa en BDD
+      const prodsFk = prodsDb.filter(
+        (p: any) =>
+          (uuidReal && p.pro_categoria_principal_id === uuidReal) ||
           p.pro_categoria_principal_id === cat.ctg_id ||
-          p.categoria?.ctg_id === cat.ctg_id ||
-          p.categoria?.ctg_slug === cat.ctg_slug ||
-          p.pro_detalle_producto?.categoria_id === cat.ctg_id
-      ).length;
+          p.pro_detalle_producto?.categoria_id === cat.ctg_id ||
+          p.pro_detalle_producto?.categoria_id === cat.ctg_slug ||
+          p.pro_detalle_producto?.categoria_slug === cat.ctg_slug
+      );
+
+      // 2. Relaciones secundarias con productos activos
+      const relSecundarias = pcDb.filter(
+        (r: any) =>
+          ((uuidReal && r.pct_categoria_id === uuidReal) || r.pct_categoria_id === cat.ctg_id) &&
+          prodsActivosIds.has(r.pct_producto_id)
+      );
+
+      // 3. Productos en memoria
+      const prodsMemMatch = prodsMem.filter(
+        (p) =>
+          p.pro_activo !== false &&
+          (p.pro_categoria_principal_id === cat.ctg_id ||
+            (uuidReal && p.pro_categoria_principal_id === uuidReal) ||
+            p.categoria?.ctg_id === cat.ctg_id ||
+            p.categoria?.ctg_slug === cat.ctg_slug ||
+            p.pro_detalle_producto?.categoria_id === cat.ctg_id)
+      );
+
+      // Unificar IDs de productos para evitar duplicados
+      const idsUnicos = new Set<string>();
+      const nombresEjemplo: string[] = [];
+
+      prodsFk.forEach((p: any) => {
+        if (!idsUnicos.has(p.pro_id)) {
+          idsUnicos.add(p.pro_id);
+          if (p.pro_nombre) nombresEjemplo.push(p.pro_nombre);
+        }
+      });
+
+      relSecundarias.forEach((r: any) => {
+        if (!idsUnicos.has(r.pct_producto_id)) {
+          idsUnicos.add(r.pct_producto_id);
+        }
+      });
+
+      prodsMemMatch.forEach((p) => {
+        if (!idsUnicos.has(p.pro_id)) {
+          idsUnicos.add(p.pro_id);
+          if (p.pro_nombre && !nombresEjemplo.includes(p.pro_nombre)) {
+            nombresEjemplo.push(p.pro_nombre);
+          }
+        }
+      });
+
+      const totalConteo = idsUnicos.size;
 
       return {
         ...cat,
-        productos_conteo: conteo,
-        en_uso: conteo > 0,
+        productos_conteo: totalConteo,
+        en_uso: totalConteo > 0,
+        productos_ejemplo: nombresEjemplo.slice(0, 3),
       };
     });
+  } catch {
+    // Fallback resiliente
+    const prodsMem = await obtenerCatalogoProductosAction(negocio, undefined, true);
+    return categoriasActivas.map((cat) => {
+      const prodsUso = prodsMem.filter(
+        (p) =>
+          p.pro_activo !== false &&
+          (p.pro_categoria_principal_id === cat.ctg_id ||
+            p.categoria?.ctg_id === cat.ctg_id ||
+            p.categoria?.ctg_slug === cat.ctg_slug ||
+            p.pro_detalle_producto?.categoria_id === cat.ctg_id)
+      );
+      return {
+        ...cat,
+        productos_conteo: prodsUso.length,
+        en_uso: prodsUso.length > 0,
+        productos_ejemplo: prodsUso.slice(0, 3).map((p) => p.pro_nombre),
+      };
+    });
+  }
 }
 
 /**

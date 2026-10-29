@@ -28,6 +28,7 @@ import { detectarTipoNegocio } from "../utils/negocio";
 type CategoriaConUso = CategoriaCatalogo & {
   productos_conteo: number;
   en_uso: boolean;
+  productos_ejemplo?: string[];
 };
 
 interface Props {
@@ -775,10 +776,11 @@ export function ModalCrearCategoria({
                                   padding: "2px 8px",
                                   borderRadius: "12px",
                                 }}
+                                title={cat.productos_ejemplo?.length ? `En uso por: ${cat.productos_ejemplo.join(", ")}` : undefined}
                               >
                                 <Lock size={11} />
                                 <span>
-                                  En uso ({cat.productos_conteo} {esFloristeria ? "arreglos" : "productos"})
+                                  En uso ({cat.productos_conteo} {cat.productos_conteo === 1 ? (esFloristeria ? "arreglo" : "producto") : (esFloristeria ? "arreglos" : "productos")})
                                 </span>
                               </span>
                             ) : (
@@ -824,7 +826,7 @@ export function ModalCrearCategoria({
                             <button
                               type="button"
                               disabled
-                              title={`No se puede eliminar: tiene ${cat.productos_conteo} producto(s) asignados.`}
+                              title={`No se puede eliminar: tiene ${cat.productos_conteo} producto(s) asignados${cat.productos_ejemplo?.length ? ` (ej. ${cat.productos_ejemplo.join(", ")})` : ""}.`}
                               style={{
                                 background: "#F1F5F9",
                                 border: "1px solid #E2E8F0",
