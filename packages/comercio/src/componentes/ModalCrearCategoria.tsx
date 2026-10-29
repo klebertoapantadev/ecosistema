@@ -69,6 +69,7 @@ export function ModalCrearCategoria({
   const [busqueda, setBusqueda] = useState("");
   const [catAEliminar, setCatAEliminar] = useState<CategoriaConUso | null>(null);
   const [eliminandoId, setEliminandoId] = useState<string | null>(null);
+  const [errorEliminarModal, setErrorEliminarModal] = useState<string | null>(null);
   const [mensajeErrorGestion, setMensajeErrorGestion] = useState<string | null>(null);
   const [mensajeExitoGestion, setMensajeExitoGestion] = useState<string | null>(null);
 
@@ -77,6 +78,7 @@ export function ModalCrearCategoria({
     if (abierto) {
       setTabActiva(tabInicial);
       setErrorCrear(null);
+      setErrorEliminarModal(null);
       setMensajeErrorGestion(null);
       setMensajeExitoGestion(null);
       setCatAEliminar(null);
@@ -169,6 +171,7 @@ export function ModalCrearCategoria({
     const nombreEliminar = catAEliminar.ctg_nombre;
 
     setEliminandoId(idEliminar);
+    setErrorEliminarModal(null);
     setMensajeErrorGestion(null);
     setMensajeExitoGestion(null);
 
@@ -179,7 +182,10 @@ export function ModalCrearCategoria({
         negocio,
       });
 
-      if (res.ok) {
+      // Si fue exitosa o si la base de datos reporta que ya no existe
+      const yaNoExiste = res.error?.includes("no existe") || res.error?.includes("ya ha sido eliminada");
+
+      if (res.ok || yaNoExiste) {
         setMensajeExitoGestion(res.mensaje || `Categoría "${nombreEliminar}" eliminada correctamente.`);
         // Actualizar lista local de forma reactiva
         setCategoriasUso((prev) => prev.filter((c) => c.ctg_id !== idEliminar && c.ctg_slug !== slugEliminar));
@@ -198,11 +204,15 @@ export function ModalCrearCategoria({
           onCategoriaEliminada(idEliminar);
         }
         setCatAEliminar(null);
+        setErrorEliminarModal(null);
       } else {
+        setErrorEliminarModal(res.error || "No se pudo eliminar la categoría.");
         setMensajeErrorGestion(res.error || "No se pudo eliminar la categoría.");
       }
     } catch (err: any) {
-      setMensajeErrorGestion(err?.message || "Error al ejecutar la eliminación.");
+      const msg = err?.message || "Error al ejecutar la eliminación.";
+      setErrorEliminarModal(msg);
+      setMensajeErrorGestion(msg);
     } finally {
       setEliminandoId(null);
     }
@@ -836,7 +846,10 @@ export function ModalCrearCategoria({
                             <button
                               type="button"
                               disabled={Boolean(eliminandoId)}
-                              onClick={() => setCatAEliminar(cat)}
+                              onClick={() => {
+                                setErrorEliminarModal(null);
+                                setCatAEliminar(cat);
+                              }}
                               style={{
                                 background: eliminandoId === cat.ctg_id ? "#FFE4E6" : "#FFF1F2",
                                 border: "1px solid #FECDD3",
@@ -912,7 +925,10 @@ export function ModalCrearCategoria({
             animation: "fadeIn 0.15s ease",
           }}
           onClick={() => {
-            if (!eliminandoId) setCatAEliminar(null);
+            if (!eliminandoId) {
+              setCatAEliminar(null);
+              setErrorEliminarModal(null);
+            }
           }}
         >
           <div
@@ -962,31 +978,59 @@ export function ModalCrearCategoria({
               </div>
             </div>
 
-            <div
-              style={{
-                background: "#FFF1F2",
-                border: "1px solid #FECDD3",
-                borderRadius: "10px",
-                padding: "10px 12px",
-                marginBottom: "20px",
-                display: "flex",
-                alignItems: "center",
-                gap: "8px",
-                fontSize: "0.78rem",
-                color: "#9F1239",
-              }}
-            >
-              <AlertTriangle size={16} style={{ flexShrink: 0 }} />
-              <span>
-                Esta acción retirará la categoría de la vitrina, filtros y catálogo. No se puede revertir.
-              </span>
-            </div>
+            {errorEliminarModal ? (
+              <div
+                style={{
+                  background: "#FEF2F2",
+                  border: "1px solid #FCA5A5",
+                  borderRadius: "10px",
+                  padding: "12px 14px",
+                  marginBottom: "20px",
+                  display: "flex",
+                  alignItems: "flex-start",
+                  gap: "10px",
+                  fontSize: "0.8rem",
+                  color: "#991B1B",
+                }}
+              >
+                <AlertCircle size={18} style={{ flexShrink: 0, marginTop: "2px", color: "#DC2626" }} />
+                <div style={{ flex: 1 }}>
+                  <strong style={{ display: "block", marginBottom: "3px", color: "#B91C1C" }}>
+                    No se puede eliminar en este momento:
+                  </strong>
+                  <span>{errorEliminarModal}</span>
+                </div>
+              </div>
+            ) : (
+              <div
+                style={{
+                  background: "#FFF1F2",
+                  border: "1px solid #FECDD3",
+                  borderRadius: "10px",
+                  padding: "10px 12px",
+                  marginBottom: "20px",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  fontSize: "0.78rem",
+                  color: "#9F1239",
+                }}
+              >
+                <AlertTriangle size={16} style={{ flexShrink: 0 }} />
+                <span>
+                  Esta acción retirará la categoría de la vitrina, filtros y catálogo. No se puede revertir.
+                </span>
+              </div>
+            )}
 
             <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px" }}>
               <button
                 type="button"
                 disabled={Boolean(eliminandoId)}
-                onClick={() => setCatAEliminar(null)}
+                onClick={() => {
+                  setCatAEliminar(null);
+                  setErrorEliminarModal(null);
+                }}
                 style={{
                   background: "#F1F5F9",
                   color: "#475569",

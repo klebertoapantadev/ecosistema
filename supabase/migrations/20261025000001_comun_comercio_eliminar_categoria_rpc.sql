@@ -48,28 +48,31 @@ begin
 
   if v_cat_record is null or v_cat_record.ctg_id is null then
     return jsonb_build_object(
-      'ok', false,
-      'error', 'La categoría no existe o ya ha sido eliminada previamente.'
+      'ok', true,
+      'en_uso', false,
+      'mensaje', 'La categoría no existe en la base de datos o ya ha sido eliminada previamente.'
     );
   end if;
 
   v_ctg_id := v_cat_record.ctg_id;
 
-  -- 2. Verificar uso como categoría principal en com_producto
+  -- 2. Verificar uso como categoría principal en com_producto (solo productos activos)
   select count(*), array_agg(pro_nombre) filter (where pro_nombre is not null)
   into v_conteo_principales, v_nombres_ejemplo
   from comun_comercio.com_producto
   where (pro_categoria_principal_id = v_ctg_id or (pro_detalle_producto->>'categoria_id') = v_ctg_id::text)
-    and pro_eliminado_en is null;
+    and pro_eliminado_en is null
+    and pro_activo = true;
 
-  -- 3. Verificar uso en com_producto_categoria (relaciones secundarias)
+  -- 3. Verificar uso en com_producto_categoria (relaciones secundarias con productos activos)
   select count(*)
   into v_conteo_relacionados
   from comun_comercio.com_producto_categoria pc
   join comun_comercio.com_producto p on p.pro_id = pc.pct_producto_id
   where pc.pct_categoria_id = v_ctg_id
     and pc.pct_eliminado_en is null
-    and p.pro_eliminado_en is null;
+    and p.pro_eliminado_en is null
+    and p.pro_activo = true;
 
   -- 4. Verificar si tiene subcategorías dependientes
   select count(*)
@@ -81,7 +84,7 @@ begin
 
   v_total_en_uso := coalesce(v_conteo_principales, 0) + coalesce(v_conteo_relacionados, 0);
 
-  -- 5. Control estricto: Si está en uso, NO permitir eliminar
+  -- 5. Control estricto: Si está en uso por productos activos, NO permitir eliminar
   if v_total_en_uso > 0 or coalesce(v_conteo_hijas, 0) > 0 then
     return jsonb_build_object(
       'ok', false,
@@ -96,7 +99,11 @@ begin
     );
   end if;
 
-  -- 6. Si no está en uso: dar de baja de forma segura (soft delete y desactivación)
+  -- 6. Si no está en uso: limpiar relaciones secundarias inactivas/residuales
+  delete from comun_comercio.com_producto_categoria
+  where pct_categoria_id = v_ctg_id;
+
+  -- 7. Dar de baja de forma segura (soft delete y desactivación)
   update comun_comercio.com_categoria
   set
     ctg_activo = false,

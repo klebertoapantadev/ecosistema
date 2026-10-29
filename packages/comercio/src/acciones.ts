@@ -2601,21 +2601,35 @@ export async function verificarUsoCategoriaAction(
 
   if (clienteActivo) {
     try {
-      // Verificar productos con FK principal o campo en detalle
       const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(idLimpio);
+      let uuidParaFk: string | null = isUuid ? idLimpio : null;
+
+      if (!uuidParaFk) {
+        try {
+          const { data: catDb } = await clienteActivo
+            .schema("comun_comercio")
+            .from("com_categoria")
+            .select("ctg_id")
+            .eq("ctg_slug", idLimpio)
+            .is("ctg_eliminado_en", null)
+            .maybeSingle();
+          if (catDb?.ctg_id) {
+            uuidParaFk = catDb.ctg_id;
+          }
+        } catch {}
+      }
 
       let query = clienteActivo
         .schema("comun_comercio")
         .from("com_producto")
-        .select("pro_id, pro_nombre, pro_categoria_principal_id")
-        .is("pro_eliminado_en", null);
+        .select("pro_id, pro_nombre, pro_categoria_principal_id, pro_detalle_producto")
+        .is("pro_eliminado_en", null)
+        .eq("pro_activo", true);
 
-      if (isUuid) {
-        query = query.eq("pro_categoria_principal_id", idLimpio);
+      if (uuidParaFk) {
+        query = query.eq("pro_categoria_principal_id", uuidParaFk);
       } else {
-        query = query.or(
-          `pro_categoria_principal_id.eq.${idLimpio},pro_detalle_producto->>categoria_id.eq.${idLimpio}`
-        );
+        query = query.eq("pro_detalle_producto->>categoria_id", idLimpio);
       }
 
       const { data: prods, error: errProd } = await query;
@@ -2632,10 +2646,11 @@ export async function verificarUsoCategoriaAction(
   const prodsMem = await obtenerCatalogoProductosAction(negocio, undefined, true);
   const prodsMemUso = prodsMem.filter(
     (p) =>
-      p.pro_categoria_principal_id === idLimpio ||
-      p.categoria?.ctg_id === idLimpio ||
-      p.categoria?.ctg_slug === idLimpio ||
-      p.pro_detalle_producto?.categoria_id === idLimpio
+      p.pro_activo !== false &&
+      (p.pro_categoria_principal_id === idLimpio ||
+        p.categoria?.ctg_id === idLimpio ||
+        p.categoria?.ctg_slug === idLimpio ||
+        p.pro_detalle_producto?.categoria_id === idLimpio)
   );
 
   const totalConteo = Math.max(conteoDb, prodsMemUso.length);
@@ -2685,7 +2700,7 @@ export async function eliminarCategoriaAction(datos: {
 
     // 1. Intentar RPC transaccional seguro (Security Definer)
     if (clienteActivo) {
-      const idsAProbar = [catId, slug].filter(Boolean) as string[];
+      const idsAProbar = [slug, catId].filter(Boolean) as string[];
       for (const idParaRpc of idsAProbar) {
         try {
           const { data: rpcRes, error: errRpc } = await clienteActivo
@@ -2697,6 +2712,24 @@ export async function eliminarCategoriaAction(datos: {
 
           if (!errRpc && rpcRes) {
             if (rpcRes.ok === false) {
+              if (
+                rpcRes.error?.includes("no existe") ||
+                rpcRes.error?.includes("ya ha sido eliminada")
+              ) {
+                if (catId) storeCategoriasEliminadas.add(catId);
+                if (slug) storeCategoriasEliminadas.add(slug);
+                const actuales = storeCustomCategorias.get(negocio) || [];
+                storeCustomCategorias.set(
+                  negocio,
+                  actuales.filter((c) => c.ctg_id !== catId && c.ctg_slug !== catId && c.ctg_id !== slug && c.ctg_slug !== slug)
+                );
+                revalidatePath("/panel/catalogo-productos");
+                return {
+                  ok: true,
+                  mensaje: "Categoría retirada exitosamente del catálogo.",
+                };
+              }
+
               return {
                 ok: false,
                 enUso: Boolean(rpcRes.en_uso),
@@ -2712,7 +2745,6 @@ export async function eliminarCategoriaAction(datos: {
               storeCategoriasEliminadas.add(String(rpcRes.categoria_id));
             }
 
-            // Limpiar de store local si existía
             const actuales = storeCustomCategorias.get(negocio) || [];
             storeCustomCategorias.set(
               negocio,
@@ -2726,7 +2758,7 @@ export async function eliminarCategoriaAction(datos: {
             };
           }
         } catch {
-          // Fallback a siguiente intento o comprobación directa
+          // Siguiente intento
         }
 
         // Probar wrapper en public
@@ -2741,6 +2773,24 @@ export async function eliminarCategoriaAction(datos: {
 
           if (!errPub && rpcPub) {
             if (rpcPub.ok === false) {
+              if (
+                rpcPub.error?.includes("no existe") ||
+                rpcPub.error?.includes("ya ha sido eliminada")
+              ) {
+                if (catId) storeCategoriasEliminadas.add(catId);
+                if (slug) storeCategoriasEliminadas.add(slug);
+                const actuales = storeCustomCategorias.get(negocio) || [];
+                storeCustomCategorias.set(
+                  negocio,
+                  actuales.filter((c) => c.ctg_id !== catId && c.ctg_slug !== catId && c.ctg_id !== slug && c.ctg_slug !== slug)
+                );
+                revalidatePath("/panel/catalogo-productos");
+                return {
+                  ok: true,
+                  mensaje: "Categoría retirada exitosamente del catálogo.",
+                };
+              }
+
               return {
                 ok: false,
                 enUso: Boolean(rpcPub.en_uso),
@@ -2774,7 +2824,24 @@ export async function eliminarCategoriaAction(datos: {
     }
 
     // 2. Control de integridad directo si el RPC aún no está creado o en desarrollo local
-    const verificacion = await verificarUsoCategoriaAction(catId || slug || "", negocio);
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(catId || "");
+    let uuidReal: string | null = isUuid ? catId! : null;
+
+    if (!uuidReal && clienteActivo && (slug || catId)) {
+      try {
+        const { data: catRow } = await clienteActivo
+          .schema("comun_comercio")
+          .from("com_categoria")
+          .select("ctg_id")
+          .eq("ctg_slug", slug || catId)
+          .is("ctg_eliminado_en", null)
+          .maybeSingle();
+        if (catRow?.ctg_id) uuidReal = catRow.ctg_id;
+      } catch {}
+    }
+
+    const idAVerificar = uuidReal || slug || catId || "";
+    const verificacion = await verificarUsoCategoriaAction(idAVerificar, negocio);
     if (verificacion.enUso && verificacion.conteoProductos > 0) {
       const ejemplos = verificacion.nombresEjemplo?.length
         ? ` (ej. ${verificacion.nombresEjemplo.join(", ")})`
@@ -2790,12 +2857,16 @@ export async function eliminarCategoriaAction(datos: {
     // 3. Si no está en uso: dar de baja en Supabase
     if (clienteActivo) {
       try {
-        const orConditions = [
-          catId ? `ctg_id.eq.${catId}` : null,
-          catId ? `ctg_slug.eq.${catId}` : null,
-          slug ? `ctg_slug.eq.${slug}` : null,
-        ].filter(Boolean).join(",");
+        // Limpiar com_producto_categoria si hay relaciones secundarias
+        if (uuidReal) {
+          await clienteActivo
+            .schema("comun_comercio")
+            .from("com_producto_categoria")
+            .delete()
+            .eq("pct_categoria_id", uuidReal);
+        }
 
+        // Soft delete y delete en com_categoria
         let updateQuery = clienteActivo
           .schema("comun_comercio")
           .from("com_categoria")
@@ -2805,18 +2876,26 @@ export async function eliminarCategoriaAction(datos: {
             ctg_actualizado_en: new Date().toISOString(),
           });
 
-        if (orConditions) {
-          updateQuery = updateQuery.or(orConditions);
+        if (uuidReal) {
+          updateQuery = updateQuery.eq("ctg_id", uuidReal);
+        } else if (slug) {
+          updateQuery = updateQuery.eq("ctg_slug", slug);
+        } else if (catId) {
+          updateQuery = updateQuery.eq("ctg_slug", catId);
         }
         await updateQuery;
 
-        // Intentar delete físico si no tiene dependencias
         let deleteQuery = clienteActivo
           .schema("comun_comercio")
           .from("com_categoria")
           .delete();
-        if (orConditions) {
-          deleteQuery = deleteQuery.or(orConditions);
+
+        if (uuidReal) {
+          deleteQuery = deleteQuery.eq("ctg_id", uuidReal);
+        } else if (slug) {
+          deleteQuery = deleteQuery.eq("ctg_slug", slug);
+        } else if (catId) {
+          deleteQuery = deleteQuery.eq("ctg_slug", catId);
         }
         await deleteQuery;
       } catch {
