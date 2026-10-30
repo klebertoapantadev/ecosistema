@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { useCarrito } from '../contexto-carrito';
 import { PRODUCTOS_TINKAY, FRASES_DEDICATORIAS } from '../datos-catalogo';
 import { ProductoEcommerce, VarianteEcommerce, DedicatoriaArreglo } from '../tipos';
+import { obtenerNombreProductoIndividual } from './VitrinaCatalogoTinkay';
 import {
   X,
   ChevronLeft,
@@ -205,15 +206,14 @@ export function ModalDetalleProducto() {
     );
   };
 
+  const nombreBaseProducto =
+    producto?.nombreBase ||
+    producto?.nombre.split(' — ')[0] ||
+    producto?.nombre || '';
+
   const tituloModal =
-    varianteSeleccionada?.nombre &&
-    (varianteSeleccionada.nombre.toLowerCase().startsWith('box') ||
-     varianteSeleccionada.nombre.toLowerCase().startsWith('mix') ||
-     varianteSeleccionada.nombre.toLowerCase().startsWith('tamaño') ||
-     producto?.nombre.toLowerCase().includes('box floral'))
-      ? varianteSeleccionada.nombre
-      : varianteSeleccionada?.nombre && (producto?.variantes.length ?? 0) > 1
-      ? `${producto?.nombre} — ${varianteSeleccionada.nombre}`
+    varianteSeleccionada?.nombre
+      ? obtenerNombreProductoIndividual(nombreBaseProducto, varianteSeleccionada.nombre)
       : producto?.nombre || '';
 
   const handleAgregarAlCarrito = () => {

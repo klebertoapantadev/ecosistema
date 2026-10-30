@@ -37,6 +37,32 @@ function productoCoincideConCategoria(
   return coincidePrincipal || Boolean(coincideSecundaria) || coincideUso;
 }
 
+export function obtenerNombreProductoIndividual(
+  nombreProducto: string,
+  nombreVariante: string
+): string {
+  const vNorm = (nombreVariante || '').trim();
+  const pNorm = (nombreProducto || '').trim();
+  const vLower = vNorm.toLowerCase();
+  const pLower = pNorm.toLowerCase();
+
+  if (!vNorm) return pNorm;
+  if (!pNorm) return vNorm;
+
+  // Si la variante ya incluye el nombre del producto o términos representativos completos
+  if (
+    vLower.includes(pLower) ||
+    vLower.startsWith('box') ||
+    vLower.startsWith('mix floral') ||
+    vLower.startsWith('pedestal') ||
+    vLower.startsWith('abanico')
+  ) {
+    return vNorm;
+  }
+
+  return `${pNorm} — ${vNorm}`;
+}
+
 export function VitrinaCatalogoTinkay() {
   const { productos, categorias } = useCarrito();
   const catalogoProductos = productos && productos.length > 0 ? productos : PRODUCTOS_TINKAY;
@@ -48,7 +74,7 @@ export function VitrinaCatalogoTinkay() {
 
   const esModoCondolencias = categoriaActiva === 'cat-ocas-condol';
 
-  // 1. Expandir productos que deben desplegarse como variantes individuales (ej. Box Florales)
+  // 1. Expandir todas las variaciones como productos individuales (excepto categoría Extras)
   const productosBaseDesplegados = useMemo(() => {
     return catalogoProductos.flatMap((p) => {
       // Ocultar estrictamente productos de la categoría "Extras" del catálogo principal
@@ -56,13 +82,8 @@ export function VitrinaCatalogoTinkay() {
       if (p.categoriaPrincipal?.toLowerCase().includes('extra')) return [];
       if (p.categoriaNombre?.toLowerCase().includes('extra')) return [];
 
-      const esBoxFlorales =
-        p.slug === 'box-florales' ||
-        p.categoriaPrincipal === 'box-florales' ||
-        p.categoriaNombre?.toLowerCase().includes('box floral') ||
-        p.nombre.toLowerCase().includes('box floral');
-
-      if (esBoxFlorales && p.variantes && p.variantes.length > 1) {
+      // Si el producto tiene múltiples variaciones, se despliega cada una como un producto individual
+      if (p.variantes && p.variantes.length > 1) {
         // Galería completa de todas las variaciones para las miniaturas del modal
         const todasLasFotosModal = p.variantes
           .map((v) => v.foto)
@@ -71,12 +92,14 @@ export function VitrinaCatalogoTinkay() {
         return p.variantes.map((v) => {
           // Para la tarjeta individual de la vitrina: ÚNICAMENTE la foto de esta variación
           const fotosTarjetaIndividual = v.foto ? [v.foto] : p.fotos.slice(0, 1);
+          const nombreIndividual = obtenerNombreProductoIndividual(p.nombre, v.nombre);
 
           const productoIndividual: ProductoEcommerce = {
             ...p,
             id: `${p.id}__${v.sku}`,
             slug: `${p.slug}-${v.sku.toLowerCase()}`,
-            nombre: v.nombre, // ej: "Box Floral (L)", "Mix Floral (XXL)", etc.
+            nombre: nombreIndividual,
+            nombreBase: p.nombre,
             descripcionCorta: v.detalle || p.descripcionCorta,
             fotos: fotosTarjetaIndividual, // En la vitrina: SOLO muestra la imagen de esta variación individual
             fotosModal: todasLasFotosModal.length > 0 ? todasLasFotosModal : p.fotos, // En el modal: galería de todas las variaciones
@@ -141,7 +164,11 @@ export function VitrinaCatalogoTinkay() {
 
       // Filtro de presupuesto individual
       if (filtroPresupuesto !== 'todos') {
-        const pvp = p.variantes[0]?.pvp ?? 0;
+        const varCorrespondiente =
+          (p.varianteInicialSku
+            ? p.variantes.find((v) => v.sku === p.varianteInicialSku)
+            : null) ?? p.variantes[0];
+        const pvp = varCorrespondiente?.pvp ?? 0;
         if (filtroPresupuesto === 'menor-30' && pvp > 30) return false;
         if (filtroPresupuesto === '30-50' && (pvp < 30 || pvp > 50)) return false;
         if (filtroPresupuesto === 'mayor-50' && pvp < 50) return false;

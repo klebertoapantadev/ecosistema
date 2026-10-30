@@ -27,6 +27,7 @@ export interface ProductoEcommerce {
   id: string;
   slug: string;
   nombre: string;
+  nombreBase?: string; // Nombre original del producto antes del desglose individual por variantes
   descripcionCorta: string;
   descripcionLarga: string;
   categoriaPrincipal: string;

@@ -13,13 +13,17 @@ interface Props {
 export function TarjetaProductoConCarrusel({ producto, modoSobrio }: Props) {
   const { agregarItem, setProductoSeleccionadoModal } = useCarrito();
   const [fotoActualIndex, setFotoActualIndex] = useState(0);
-  const varianteInicial = producto.variantes[0] ?? {
-    sku: 'DEF',
-    nombre: 'Estándar',
-    pvp: 25,
-    baseImponible: 21.74,
-    tarifaIva: 15,
-  };
+  const varianteInicial =
+    (producto.varianteInicialSku
+      ? producto.variantes.find((v) => v.sku === producto.varianteInicialSku)
+      : null) ??
+    producto.variantes[0] ?? {
+      sku: 'DEF',
+      nombre: 'Estándar',
+      pvp: 25,
+      baseImponible: 21.74,
+      tarifaIva: 15,
+    };
   const [varianteSeleccionada, setVarianteSeleccionada] = useState<VarianteEcommerce>(varianteInicial);
   const [favorito, setFavorito] = useState(false);
 
@@ -53,7 +57,12 @@ export function TarjetaProductoConCarrusel({ producto, modoSobrio }: Props) {
 
   const handleAgregar = (e: React.MouseEvent) => {
     e.stopPropagation();
-    agregarItem(producto, varianteSeleccionada);
+    const prodParaCarrito: ProductoEcommerce = {
+      ...producto,
+      nombre: producto.nombre,
+      fotos: varianteSeleccionada.foto ? [varianteSeleccionada.foto] : producto.fotos,
+    };
+    agregarItem(prodParaCarrito, varianteSeleccionada);
   };
 
   return (
@@ -150,8 +159,8 @@ export function TarjetaProductoConCarrusel({ producto, modoSobrio }: Props) {
         <h3 className="titulo-producto-carrusel">{producto.nombre}</h3>
         <p className="descripcion-corta-carrusel">{producto.descripcionCorta}</p>
 
-        {/* Selector de Variantes Rápidas */}
-        {producto.variantes.length > 1 && (
+        {/* Selector de Variantes Rápidas (solo si el producto no está desplegado individualmente por variante) */}
+        {!producto.varianteInicialSku && producto.variantes.length > 1 && (
           <div className="selector-variantes-mini" onClick={(e) => e.stopPropagation()}>
             <label className="etiqueta-variante-mini">Presentación:</label>
             <div className="chips-variantes">
