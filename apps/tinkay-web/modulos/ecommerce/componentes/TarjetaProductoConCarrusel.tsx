@@ -175,7 +175,7 @@ export function TarjetaProductoConCarrusel({ producto, modoSobrio }: Props) {
                     }
                   }}
                 >
-                  {(v.nombre.split('(')[0] ?? v.nombre).trim()}
+                  {v.nombre.trim()}
                 </button>
               ))}
             </div>

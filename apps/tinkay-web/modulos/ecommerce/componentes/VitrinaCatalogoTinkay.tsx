@@ -3,8 +3,39 @@
 import React, { useState, useMemo } from 'react';
 import { useCarrito } from '../contexto-carrito';
 import { CATEGORIAS_TINKAY, PRODUCTOS_TINKAY } from '../datos-catalogo';
+import { ProductoEcommerce } from '../tipos';
 import { TarjetaProductoConCarrusel } from './TarjetaProductoConCarrusel';
 import { Search, SlidersHorizontal, Feather, Sparkles } from 'lucide-react';
+
+function productoCoincideConCategoria(
+  p: ProductoEcommerce,
+  catId: string
+): boolean {
+  if (p.esExtra || p.esComplemento) return false;
+  if (p.categoriaPrincipal?.toLowerCase().includes('extra')) return false;
+  if (p.categoriaNombre?.toLowerCase().includes('extra')) return false;
+
+  if (catId === 'cat-todos') return true;
+
+  const coincidePrincipal = p.categoriaPrincipal === catId;
+  const coincideSecundaria = p.categoriasSecundarias?.includes(catId);
+
+  const catLower = catId.toLowerCase();
+  let coincideUso = false;
+  if (catLower.includes('aniv')) {
+    coincideUso = (p.usos || []).some((u) => u.includes('aniv')) || Boolean(p.categoriasSecundarias?.includes('cat-ocas-aniv'));
+  } else if (catLower.includes('amor')) {
+    coincideUso = (p.usos || []).some((u) => u.includes('amor') || u.includes('romance') || u.includes('pedida')) || Boolean(p.categoriasSecundarias?.includes('cat-ocas-amor'));
+  } else if (catLower.includes('cumple')) {
+    coincideUso = (p.usos || []).some((u) => u.includes('cumple') || u.includes('festejo')) || Boolean(p.categoriasSecundarias?.includes('cat-ocas-cumple'));
+  } else if (catLower.includes('condol')) {
+    coincideUso = Boolean(p.esCondolencias) || (p.usos || []).some((u) => u.includes('condol') || u.includes('duelo')) || Boolean(p.categoriasSecundarias?.includes('cat-ocas-condol'));
+  } else {
+    coincideUso = (p.usos || []).some((u) => u === catLower || u.includes(catLower));
+  }
+
+  return coincidePrincipal || Boolean(coincideSecundaria) || coincideUso;
+}
 
 export function VitrinaCatalogoTinkay() {
   const { productos, categorias } = useCarrito();
@@ -17,9 +48,47 @@ export function VitrinaCatalogoTinkay() {
 
   const esModoCondolencias = categoriaActiva === 'cat-ocas-condol';
 
-  // Categorías visibles: ocultar categorías de tipo "Extras" / complementos de la barra principal
+  // 1. Expandir productos que deben desplegarse como variantes individuales (ej. Box Florales)
+  const productosBaseDesplegados = useMemo(() => {
+    return catalogoProductos.flatMap((p) => {
+      // Ocultar estrictamente productos de la categoría "Extras" del catálogo principal
+      if (p.esExtra || p.esComplemento) return [];
+      if (p.categoriaPrincipal?.toLowerCase().includes('extra')) return [];
+      if (p.categoriaNombre?.toLowerCase().includes('extra')) return [];
+
+      const esBoxFlorales =
+        p.slug === 'box-florales' ||
+        p.categoriaPrincipal === 'box-florales' ||
+        p.categoriaNombre?.toLowerCase().includes('box floral') ||
+        p.nombre.toLowerCase().includes('box floral');
+
+      if (esBoxFlorales && p.variantes && p.variantes.length > 1) {
+        return p.variantes.map((v) => {
+          const fotosVariante = v.foto
+            ? [v.foto, ...p.fotos.filter((f) => f !== v.foto)]
+            : p.fotos;
+
+          const productoIndividual: ProductoEcommerce = {
+            ...p,
+            id: `${p.id}__${v.sku}`,
+            slug: `${p.slug}-${v.sku.toLowerCase()}`,
+            nombre: v.nombre, // ej: "Box Floral (L)", "Mix Floral (XXL)", etc.
+            descripcionCorta: v.detalle || p.descripcionCorta,
+            fotos: fotosVariante,
+            variantes: [v], // Se muestra con esta variante fija a su PVP individual
+            destacado: p.destacado,
+          };
+          return productoIndividual;
+        });
+      }
+
+      return [p];
+    });
+  }, [catalogoProductos]);
+
+  // 2. Categorías visibles: ocultar extras Y ocultar estrictamente grupos/categorías sin productos
   const categoriasVisibles = useMemo(() => {
-    return catalogoCategorias.filter((cat) => {
+    const candidatas = catalogoCategorias.filter((cat) => {
       const nombreLower = (cat.nombre || '').toLowerCase();
       const slugLower = (cat.slug || '').toLowerCase();
       return (
@@ -28,36 +97,31 @@ export function VitrinaCatalogoTinkay() {
         cat.tipo !== 'COMPLEMENTO'
       );
     });
-  }, [catalogoCategorias]);
 
+    // Descartar grupos o categorías sin productos activos disponibles
+    return candidatas.filter((cat) => {
+      if (cat.id === 'cat-todos') return true;
+      return productosBaseDesplegados.some((p) => productoCoincideConCategoria(p, cat.id));
+    });
+  }, [catalogoCategorias, productosBaseDesplegados]);
+
+  // Si la categoría activa quedó sin productos o se ocultó, regresar a 'cat-todos'
+  React.useEffect(() => {
+    if (
+      categoriaActiva !== 'cat-todos' &&
+      categoriasVisibles.length > 0 &&
+      !categoriasVisibles.some((c) => c.id === categoriaActiva)
+    ) {
+      setCategoriaActiva('cat-todos');
+    }
+  }, [categoriasVisibles, categoriaActiva]);
+
+  // 3. Filtrado reactivo de productos por categoría, búsqueda y presupuesto
   const productosFiltrados = useMemo(() => {
-    return catalogoProductos.filter((p) => {
-      // 1. Ocultar estrictamente productos de la categoría "Extras" del catálogo principal
-      if (p.esExtra || p.esComplemento) return false;
-      if (p.categoriaPrincipal?.toLowerCase().includes('extra')) return false;
-      if (p.categoriaNombre?.toLowerCase().includes('extra')) return false;
-
-      // Filtro de categoría y ocasión multidimensional
+    return productosBaseDesplegados.filter((p) => {
+      // Filtro de categoría y ocasión
       if (categoriaActiva !== 'cat-todos') {
-        const coincidePrincipal = p.categoriaPrincipal === categoriaActiva;
-        const coincideSecundaria = p.categoriasSecundarias?.includes(categoriaActiva);
-
-        // Cruce multidimensional con usos y ocasiones de compra
-        const catActivaLower = categoriaActiva.toLowerCase();
-        let coincideUso = false;
-        if (catActivaLower.includes('aniv')) {
-          coincideUso = (p.usos || []).some((u) => u.includes('aniv')) || p.categoriasSecundarias?.includes('cat-ocas-aniv');
-        } else if (catActivaLower.includes('amor')) {
-          coincideUso = (p.usos || []).some((u) => u.includes('amor') || u.includes('romance') || u.includes('pedida')) || p.categoriasSecundarias?.includes('cat-ocas-amor');
-        } else if (catActivaLower.includes('cumple')) {
-          coincideUso = (p.usos || []).some((u) => u.includes('cumple') || u.includes('festejo')) || p.categoriasSecundarias?.includes('cat-ocas-cumple');
-        } else if (catActivaLower.includes('condol')) {
-          coincideUso = p.esCondolencias || (p.usos || []).some((u) => u.includes('condol') || u.includes('duelo')) || p.categoriasSecundarias?.includes('cat-ocas-condol');
-        } else {
-          coincideUso = (p.usos || []).some((u) => u === catActivaLower || u.includes(catActivaLower));
-        }
-
-        if (!coincidePrincipal && !coincideSecundaria && !coincideUso) return false;
+        if (!productoCoincideConCategoria(p, categoriaActiva)) return false;
       }
 
       // Filtro de búsqueda por texto
@@ -69,17 +133,17 @@ export function VitrinaCatalogoTinkay() {
         if (!coincideNombre && !coincideDesc && !coincideEtiqueta) return false;
       }
 
-      // Filtro de presupuesto
+      // Filtro de presupuesto individual
       if (filtroPresupuesto !== 'todos') {
-        const precioMin = Math.min(...p.variantes.map((v) => v.pvp));
-        if (filtroPresupuesto === 'menor-30' && precioMin > 30) return false;
-        if (filtroPresupuesto === '30-50' && (precioMin < 30 || precioMin > 50)) return false;
-        if (filtroPresupuesto === 'mayor-50' && precioMin < 50) return false;
+        const pvp = p.variantes[0]?.pvp ?? 0;
+        if (filtroPresupuesto === 'menor-30' && pvp > 30) return false;
+        if (filtroPresupuesto === '30-50' && (pvp < 30 || pvp > 50)) return false;
+        if (filtroPresupuesto === 'mayor-50' && pvp < 50) return false;
       }
 
       return true;
     });
-  }, [categoriaActiva, terminoBusqueda, filtroPresupuesto, catalogoProductos]);
+  }, [categoriaActiva, terminoBusqueda, filtroPresupuesto, productosBaseDesplegados]);
 
   return (
     <section className={`seccion-vitrina-catalogo ${esModoCondolencias ? 'vitrina-modo-condolencias' : ''}`} id="catalogo">
