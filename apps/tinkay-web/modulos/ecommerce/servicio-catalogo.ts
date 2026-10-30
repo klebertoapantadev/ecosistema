@@ -154,7 +154,6 @@ export async function cargarCatalogoDinamicoTinkay(): Promise<{
               detalle:
                 v.var_detalle_variante?.beneficios_custom?.[0] ||
                 v.var_detalle_variante?.detalle ||
-                v.var_detalle_variante?.modalidad_pago ||
                 undefined,
               recetaBom: v.var_detalle_variante?.receta_bom || undefined,
               unidadesFlores: v.var_detalle_variante?.tallos || undefined,

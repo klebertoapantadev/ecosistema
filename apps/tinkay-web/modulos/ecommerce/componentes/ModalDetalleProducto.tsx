@@ -267,21 +267,6 @@ export function ModalDetalleProducto() {
     }
   };
 
-  const seleccionarVariante = (v: VarianteEcommerce) => {
-    setVarianteSeleccionada(v);
-    if (v.foto) {
-      const idx = fotos.indexOf(v.foto);
-      if (idx !== -1) {
-        setFotoActivaIndex(idx);
-        return;
-      }
-    }
-    const vIdx = producto.variantes.findIndex((it) => it.sku === v.sku);
-    if (vIdx !== -1 && fotos[vIdx]) {
-      setFotoActivaIndex(vIdx);
-    }
-  };
-
   return (
     <div className="modal-backdrop-ecommerce" onClick={() => setProductoSeleccionadoModal(null)}>
       <div
@@ -420,23 +405,25 @@ export function ModalDetalleProducto() {
 
             <p className="descripcion-larga-modal">{producto.descripcionLarga}</p>
 
-            {varianteSeleccionada.detalle && (
-              <div
-                className="detalle-variante-destacado"
-                style={{
-                  background: 'rgba(235, 78, 126, 0.08)',
-                  borderLeft: '3px solid #eb4e7e',
-                  padding: '9px 14px',
-                  borderRadius: '6px',
-                  margin: '10px 0 14px',
-                  fontSize: '0.92rem',
-                  fontWeight: 500,
-                  color: 'var(--tinta-fuerte, #222)',
-                }}
-              >
-                ✨ <strong>Presentación seleccionada:</strong> {varianteSeleccionada.detalle}
-              </div>
-            )}
+            {varianteSeleccionada.detalle &&
+              !varianteSeleccionada.detalle.toLowerCase().includes('payphone') &&
+              !varianteSeleccionada.detalle.toLowerCase().includes('tarjeta') && (
+                <div
+                  className="detalle-variante-destacado"
+                  style={{
+                    background: 'rgba(235, 78, 126, 0.08)',
+                    borderLeft: '3px solid #eb4e7e',
+                    padding: '9px 14px',
+                    borderRadius: '6px',
+                    margin: '10px 0 14px',
+                    fontSize: '0.92rem',
+                    fontWeight: 500,
+                    color: 'var(--tinta-fuerte, #222)',
+                  }}
+                >
+                  ✨ <strong>Detalle:</strong> {varianteSeleccionada.detalle}
+                </div>
+              )}
 
             {/* Receta Botánica (BOM) */}
             {varianteSeleccionada.recetaBom && (
@@ -449,41 +436,6 @@ export function ModalDetalleProducto() {
               </div>
             )}
 
-            {/* Selector de Variantes / Tamaños */}
-            <div className="bloque-seleccion-variante">
-              <label className="etiqueta-bloque">
-                1. Selecciona la Presentación / Tamaño:
-              </label>
-              <div className="lista-opciones-variante">
-                {producto.variantes.map((v, vIdx) => {
-                  const fotoVariante = v.foto || fotos[vIdx];
-                  return (
-                    <button
-                      key={v.sku}
-                      type="button"
-                      className={`opcion-variante-card ${v.sku === varianteSeleccionada.sku ? 'seleccionada' : ''}`}
-                      onClick={() => seleccionarVariante(v)}
-                    >
-                      <div className="contenedor-izq-variante">
-                        {fotoVariante && (
-                          <img
-                            src={fotoVariante}
-                            alt={v.nombre}
-                            className="mini-foto-variante-selector"
-                          />
-                        )}
-                        <div className="info-variante-texto">
-                          <strong>{v.nombre}</strong>
-                          {v.detalle && <small>{v.detalle}</small>}
-                        </div>
-                      </div>
-                      <span className="precio-variante-pill">${v.pvp.toFixed(2)}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
             {/* Tarjeta de Dedicatoria Personalizada Opcional */}
             <div className="bloque-dedicatoria-modal">
               <div className="encabezado-dedicatoria-toggle">
@@ -493,7 +445,7 @@ export function ModalDetalleProducto() {
                     checked={incluirDedicatoria}
                     onChange={(e) => setIncluirDedicatoria(e.target.checked)}
                   />
-                  <span>2. Agregar Tarjeta de Dedicatoria Impresa (Gratis)</span>
+                  <span>1. Agregar Tarjeta de Dedicatoria Impresa (Gratis)</span>
                 </label>
               </div>
 
@@ -575,7 +527,7 @@ export function ModalDetalleProducto() {
               <div className="bloque-complementos-modal">
                 <div className="encabezado-seccion-complementos">
                   <label className="etiqueta-bloque">
-                    3. ¿Deseas acompañar tu arreglo con algún detalle?
+                    2. ¿Deseas acompañar tu arreglo con algún detalle?
                   </label>
                   <span className="subtitulo-seccion-complementos">
                     Haz clic en cualquier producto para ver su fotografía ampliada y detalles completos antes de agregarlo.
