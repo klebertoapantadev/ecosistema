@@ -14,6 +14,7 @@ import {
   ShieldCheck,
   Plus,
   Check,
+  Eye,
 } from 'lucide-react';
 
 export function ModalDetalleProducto() {
@@ -57,6 +58,12 @@ export function ModalDetalleProducto() {
 
   // Estado para complementos rápidos seleccionados
   const [complementosSeleccionados, setComplementosSeleccionados] = useState<string[]>([]);
+  // Estado para variantes específicas elegidas de complementos (ej. color cinta)
+  const [variantesExtrasElegidas, setVariantesExtrasElegidas] = useState<Record<string, VarianteEcommerce>>({});
+  // Estado para inspección en foto grande y detalles de un extra
+  const [extraParaInspeccionar, setExtraParaInspeccionar] = useState<ProductoEcommerce | null>(null);
+  const [varianteExtraInspeccion, setVarianteExtraInspeccion] = useState<VarianteEcommerce | null>(null);
+  const [fotoExtraActivaIdx, setFotoExtraActivaIdx] = useState(0);
 
   // Detectar si el producto actual es de Condolencias & Funerarios
   const esProductoCondolencias = React.useMemo(() => {
@@ -135,6 +142,45 @@ export function ModalDetalleProducto() {
     );
   };
 
+  const abrirInspeccionExtra = (extra: ProductoEcommerce, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    setExtraParaInspeccionar(extra);
+    const elegidaPrevia = variantesExtrasElegidas[extra.id];
+    const def = elegidaPrevia || obtenerVarianteComplemento(extra) || extra.variantes[0] || null;
+    setVarianteExtraInspeccion(def);
+    setFotoExtraActivaIdx(0);
+  };
+
+  const cerrarInspeccionExtra = () => {
+    setExtraParaInspeccionar(null);
+  };
+
+  const seleccionarVarianteExtraInspeccion = (v: VarianteEcommerce) => {
+    setVarianteExtraInspeccion(v);
+    if (extraParaInspeccionar) {
+      setVariantesExtrasElegidas((prev) => ({ ...prev, [extraParaInspeccionar.id]: v }));
+      if (v.foto && extraParaInspeccionar.fotos.includes(v.foto)) {
+        const fIdx = extraParaInspeccionar.fotos.indexOf(v.foto);
+        if (fIdx !== -1) setFotoExtraActivaIdx(fIdx);
+      }
+    }
+  };
+
+  const confirmarAgregarExtraDesdeInspeccion = (extra: ProductoEcommerce) => {
+    if (!complementosSeleccionados.includes(extra.id)) {
+      setComplementosSeleccionados((prev) => [...prev, extra.id]);
+    }
+    if (varianteExtraInspeccion) {
+      setVariantesExtrasElegidas((prev) => ({ ...prev, [extra.id]: varianteExtraInspeccion }));
+    }
+    cerrarInspeccionExtra();
+  };
+
+  const confirmarQuitarExtraDesdeInspeccion = (extra: ProductoEcommerce) => {
+    setComplementosSeleccionados((prev) => prev.filter((id) => id !== extra.id));
+    cerrarInspeccionExtra();
+  };
+
   const aplicarFrase = (frase: string) => {
     setDedicatoria((prev) => ({ ...prev, mensaje: frase }));
   };
@@ -157,11 +203,11 @@ export function ModalDetalleProducto() {
       incluirDedicatoria && dedicatoria.mensaje.trim() ? dedicatoria : undefined
     );
 
-    // 2. Agregar los complementos marcados
+    // 2. Agregar los complementos marcados con su variante elegida
     complementosSeleccionados.forEach((compId) => {
       const prodComp = productosComplementos.find((p) => p.id === compId);
       if (prodComp) {
-        const varComp = obtenerVarianteComplemento(prodComp);
+        const varComp = variantesExtrasElegidas[compId] || obtenerVarianteComplemento(prodComp);
         if (varComp) {
           agregarItem(prodComp, varComp);
         }
@@ -473,34 +519,79 @@ export function ModalDetalleProducto() {
             {/* Complementos de Cross-Selling */}
             {!producto.esComplemento && !producto.esExtra && productosComplementos.length > 0 && (
               <div className="bloque-complementos-modal">
-                <label className="etiqueta-bloque">
-                  3. ¿Deseas acompañar tu arreglo con algún detalle?
-                </label>
+                <div className="encabezado-seccion-complementos">
+                  <label className="etiqueta-bloque">
+                    3. ¿Deseas acompañar tu arreglo con algún detalle?
+                  </label>
+                  <span className="subtitulo-seccion-complementos">
+                    Haz clic en cualquier producto para ver su fotografía ampliada y detalles completos antes de agregarlo.
+                  </span>
+                </div>
+
                 <div className="grid-complementos-sugeridos">
                   {productosComplementos.map((comp) => {
                     const seleccionado = complementosSeleccionados.includes(comp.id);
-                    const varComp = obtenerVarianteComplemento(comp);
+                    const varComp = variantesExtrasElegidas[comp.id] || obtenerVarianteComplemento(comp);
                     if (!varComp) return null;
                     return (
-                      <button
+                      <div
                         key={comp.id}
-                        type="button"
                         className={`item-complemento-card ${seleccionado ? 'complemento-elegido' : ''}`}
-                        onClick={() => toggleComplemento(comp.id)}
+                        onClick={() => abrirInspeccionExtra(comp)}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            abrirInspeccionExtra(comp);
+                          }
+                        }}
                       >
-                        <img
-                          src={comp.fotos[0] ?? '/img/slide4_flores_amor.jpg'}
-                          alt={comp.nombre}
-                          className="miniatura-complemento"
-                        />
+                        <div className="contenedor-foto-complemento">
+                          <img
+                            src={comp.fotos[0] ?? '/img/slide4_flores_amor.jpg'}
+                            alt={comp.nombre}
+                            className="miniatura-complemento"
+                          />
+                          <span className="badge-lupa-extra">
+                            <Eye size={13} />
+                            <span>Ver foto</span>
+                          </span>
+                        </div>
+
                         <div className="info-comp">
                           <strong>{comp.nombre}</strong>
-                          <span>+${varComp.pvp.toFixed(2)}</span>
+                          <span className="precio-comp">+${varComp.pvp.toFixed(2)}</span>
+                          {varComp.nombre && varComp.nombre !== comp.nombre && (
+                            <small className="variante-elegida-tag" title={varComp.nombre}>
+                              {varComp.nombre.replace(/Cinta condolencias personalizada/gi, '').trim() || varComp.nombre}
+                            </small>
+                          )}
                         </div>
-                        <div className="icono-check-comp">
+
+                        <button
+                          type="button"
+                          className="btn-ver-detalle-comp"
+                          onClick={(e) => abrirInspeccionExtra(comp, e)}
+                          title="Ver foto grande e información"
+                        >
+                          <Eye size={12} />
+                          <span>Ver detalle</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          className="icono-check-comp"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleComplemento(comp.id);
+                          }}
+                          title={seleccionado ? 'Quitar este detalle' : 'Agregar este detalle'}
+                          aria-label={seleccionado ? 'Quitar este detalle' : 'Agregar este detalle'}
+                        >
                           {seleccionado ? <Check size={16} /> : <Plus size={16} />}
-                        </div>
-                      </button>
+                        </button>
+                      </div>
                     );
                   })}
                 </div>
@@ -519,7 +610,7 @@ export function ModalDetalleProducto() {
                   varianteSeleccionada.pvp +
                   complementosSeleccionados.reduce((acc, cId) => {
                     const c = productosComplementos.find((p) => p.id === cId);
-                    const varC = c ? obtenerVarianteComplemento(c) : null;
+                    const varC = c ? (variantesExtrasElegidas[cId] || obtenerVarianteComplemento(c)) : null;
                     return acc + (varC?.pvp ?? 0);
                   }, 0)
                 ).toFixed(2)}</span>
@@ -528,6 +619,184 @@ export function ModalDetalleProducto() {
           </div>
         </div>
       </div>
+
+      {/* Modal / Diálogo de Vista Previa y Foto Grande del Extra */}
+      {extraParaInspeccionar && (
+        <div
+          className="modal-backdrop-preview-extra"
+          onClick={cerrarInspeccionExtra}
+        >
+          <div
+            className="modal-card-preview-extra"
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+          >
+            <button
+              type="button"
+              className="btn-cerrar-preview-extra"
+              onClick={cerrarInspeccionExtra}
+              aria-label="Cerrar vista previa del producto"
+            >
+              <X size={18} />
+            </button>
+
+            {/* Visor de Foto Grande del Extra */}
+            <div className="visor-foto-grande-extra">
+              {extraParaInspeccionar.fotos.length > 0 ? (
+                <img
+                  src={
+                    extraParaInspeccionar.fotos[fotoExtraActivaIdx] ??
+                    extraParaInspeccionar.fotos[0]
+                  }
+                  alt={extraParaInspeccionar.nombre}
+                  className="imagen-grande-extra"
+                />
+              ) : (
+                <div className="placeholder-foto-extra">Sin fotografía disponible</div>
+              )}
+
+              {extraParaInspeccionar.fotos.length > 1 && (
+                <div className="controles-carrusel-extra">
+                  <button
+                    type="button"
+                    className="flecha-galeria-extra flecha-extra-izq"
+                    onClick={() =>
+                      setFotoExtraActivaIdx((prev) =>
+                        prev === 0 ? extraParaInspeccionar.fotos.length - 1 : prev - 1
+                      )
+                    }
+                    aria-label="Foto anterior"
+                  >
+                    <ChevronLeft size={18} />
+                  </button>
+                  <button
+                    type="button"
+                    className="flecha-galeria-extra flecha-extra-der"
+                    onClick={() =>
+                      setFotoExtraActivaIdx((prev) =>
+                        prev === extraParaInspeccionar.fotos.length - 1 ? 0 : prev + 1
+                      )
+                    }
+                    aria-label="Foto siguiente"
+                  >
+                    <ChevronRight size={18} />
+                  </button>
+                </div>
+              )}
+
+              {/* Miniaturas si hay varias fotos */}
+              {extraParaInspeccionar.fotos.length > 1 && (
+                <div className="tira-miniaturas-extra">
+                  {extraParaInspeccionar.fotos.map((f, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      className={`miniatura-extra-item ${i === fotoExtraActivaIdx ? 'activa' : ''}`}
+                      onClick={() => setFotoExtraActivaIdx(i)}
+                    >
+                      <img src={f} alt={`Miniatura ${i + 1}`} />
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Información Completa del Producto Extra */}
+            <div className="cuerpo-detalle-extra">
+              <div className="encabezado-detalle-extra">
+                <span className="categoria-extra-badge">
+                  {extraParaInspeccionar.categoriaNombre || 'Complemento Especial'}
+                </span>
+                <h3 className="titulo-extra-preview">{extraParaInspeccionar.nombre}</h3>
+                <div className="precio-extra-preview">
+                  <span>
+                    +${(varianteExtraInspeccion?.pvp ?? obtenerVarianteComplemento(extraParaInspeccionar)?.pvp ?? 0).toFixed(2)}
+                  </span>
+                  <small>Precio adicional al arreglo principal</small>
+                </div>
+              </div>
+
+              {/* Descripción Detallada */}
+              <div className="descripcion-extra-box">
+                <p className="texto-descripcion-extra">
+                  {extraParaInspeccionar.descripcionLarga ||
+                    extraParaInspeccionar.descripcionCorta ||
+                    varianteExtraInspeccion?.detalle ||
+                    'Complemento botánico exclusivo para enriquecer la presentación y significado de tu arreglo.'}
+                </p>
+              </div>
+
+              {/* Variantes / Opciones si tiene más de 1 (ej. Colores de Cinta) */}
+              {extraParaInspeccionar.variantes.length > 1 && (
+                <div className="seccion-variantes-extra">
+                  <span className="etiqueta-variantes-extra">Selecciona el modelo / presentación:</span>
+                  <div className="grid-opciones-variantes-extra">
+                    {extraParaInspeccionar.variantes.map((v) => {
+                      const seleccionada = varianteExtraInspeccion?.sku === v.sku;
+                      return (
+                        <button
+                          key={v.sku}
+                          type="button"
+                          className={`btn-variante-extra-chip ${seleccionada ? 'activa' : ''}`}
+                          onClick={() => seleccionarVarianteExtraInspeccion(v)}
+                        >
+                          <span>{v.nombre}</span>
+                          <span className="precio-chip">${v.pvp.toFixed(2)}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Beneficios / Garantías del Extra */}
+              <div className="badges-beneficios-extra">
+                <div className="beneficio-extra-item">
+                  <Sparkles size={14} />
+                  <span>Elaborado y colocado cuidadosamente en taller por floristas</span>
+                </div>
+                <div className="beneficio-extra-item">
+                  <Truck size={14} />
+                  <span>Se despacha e integra directamente en el viaje de tu arreglo</span>
+                </div>
+              </div>
+
+              {/* Botones de Acción */}
+              <div className="acciones-preview-extra">
+                {complementosSeleccionados.includes(extraParaInspeccionar.id) ? (
+                  <button
+                    type="button"
+                    className="btn btn-quitar-extra-preview"
+                    onClick={() => confirmarQuitarExtraDesdeInspeccion(extraParaInspeccionar)}
+                  >
+                    <Check size={16} />
+                    <span>✓ Extra Agregado — Quitar de mi Pedido</span>
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className="btn btn-primario btn-agregar-extra-preview"
+                    onClick={() => confirmarAgregarExtraDesdeInspeccion(extraParaInspeccionar)}
+                  >
+                    <Plus size={16} />
+                    <span>
+                      Agregar este Detalle (+${(varianteExtraInspeccion?.pvp ?? obtenerVarianteComplemento(extraParaInspeccionar)?.pvp ?? 0).toFixed(2)})
+                    </span>
+                  </button>
+                )}
+                <button
+                  type="button"
+                  className="btn-volver-arreglo"
+                  onClick={cerrarInspeccionExtra}
+                >
+                  Volver a la selección de flores
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
