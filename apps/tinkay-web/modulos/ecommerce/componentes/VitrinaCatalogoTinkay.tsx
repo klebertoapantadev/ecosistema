@@ -37,11 +37,27 @@ export function VitrinaCatalogoTinkay() {
       if (p.categoriaPrincipal?.toLowerCase().includes('extra')) return false;
       if (p.categoriaNombre?.toLowerCase().includes('extra')) return false;
 
-      // Filtro de categoría
+      // Filtro de categoría y ocasión multidimensional
       if (categoriaActiva !== 'cat-todos') {
         const coincidePrincipal = p.categoriaPrincipal === categoriaActiva;
         const coincideSecundaria = p.categoriasSecundarias?.includes(categoriaActiva);
-        if (!coincidePrincipal && !coincideSecundaria) return false;
+
+        // Cruce multidimensional con usos y ocasiones de compra
+        const catActivaLower = categoriaActiva.toLowerCase();
+        let coincideUso = false;
+        if (catActivaLower.includes('aniv')) {
+          coincideUso = (p.usos || []).some((u) => u.includes('aniv')) || p.categoriasSecundarias?.includes('cat-ocas-aniv');
+        } else if (catActivaLower.includes('amor')) {
+          coincideUso = (p.usos || []).some((u) => u.includes('amor') || u.includes('romance') || u.includes('pedida')) || p.categoriasSecundarias?.includes('cat-ocas-amor');
+        } else if (catActivaLower.includes('cumple')) {
+          coincideUso = (p.usos || []).some((u) => u.includes('cumple') || u.includes('festejo')) || p.categoriasSecundarias?.includes('cat-ocas-cumple');
+        } else if (catActivaLower.includes('condol')) {
+          coincideUso = p.esCondolencias || (p.usos || []).some((u) => u.includes('condol') || u.includes('duelo')) || p.categoriasSecundarias?.includes('cat-ocas-condol');
+        } else {
+          coincideUso = (p.usos || []).some((u) => u === catActivaLower || u.includes(catActivaLower));
+        }
+
+        if (!coincidePrincipal && !coincideSecundaria && !coincideUso) return false;
       }
 
       // Filtro de búsqueda por texto

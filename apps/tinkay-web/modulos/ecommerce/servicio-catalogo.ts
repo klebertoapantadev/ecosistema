@@ -204,7 +204,7 @@ export async function cargarCatalogoDinamicoTinkay(): Promise<{
           : typeof detalle.usos === 'string'
           ? [detalle.usos]
           : [];
-        const usos: string[] = usosRaw.map((u: any) => String(u).trim().toLowerCase());
+        let usos: string[] = usosRaw.map((u: any) => String(u).trim().toLowerCase());
 
         const esExtra =
           catNombre.toLowerCase().includes('extra') ||
@@ -226,6 +226,30 @@ export async function cargarCatalogoDinamicoTinkay(): Promise<{
           detalle.ocasion_recomendada?.toUpperCase().includes('CONDOL') ||
           usos.some((u: string) => u.includes('condol') || u.includes('duelo') || u.includes('pesame'));
 
+        // Si no es extra ni condolencias y no tiene usos explícitos, asignar usos florales versátiles por defecto
+        if (usos.length === 0 && !esExtra && !esCondol) {
+          usos = ['amor_romance', 'aniversario', 'cumpleanos'];
+        }
+
+        const tieneUso = (palabra: string) =>
+          usos.some((u: string) => u.includes(palabra)) ||
+          (typeof detalle.ocasion_recomendada === 'string' && detalle.ocasion_recomendada.toLowerCase().includes(palabra)) ||
+          (Array.isArray(detalle.etiquetas) && detalle.etiquetas.some((e: any) => String(e).toLowerCase().includes(palabra)));
+
+        const catsSecundarias: string[] = [];
+        if (esCondol || tieneUso('condol') || tieneUso('duelo') || tieneUso('pesame')) {
+          catsSecundarias.push('cat-ocas-condol');
+        }
+        if (tieneUso('amor') || tieneUso('romance') || tieneUso('pedida') || p.pro_slug?.includes('san-valentin') || p.pro_slug?.includes('amor')) {
+          catsSecundarias.push('cat-ocas-amor');
+        }
+        if (tieneUso('aniv') || p.pro_slug?.includes('aniversario')) {
+          catsSecundarias.push('cat-ocas-aniv');
+        }
+        if (tieneUso('cumple') || tieneUso('festejo') || tieneUso('sorpresa') || tieneUso('celebracion')) {
+          catsSecundarias.push('cat-ocas-cumple');
+        }
+
         return {
           id: p.pro_slug || p.pro_id,
           slug: p.pro_slug || p.pro_id,
@@ -244,11 +268,7 @@ export async function cargarCatalogoDinamicoTinkay(): Promise<{
             ? 'extras-condolencias'
             : 'cat-coreanos'),
           categoriaNombre: catNombre || undefined,
-          categoriasSecundarias: [
-            ...(esCondol ? ['cat-ocas-condol'] : []),
-            ...(p.pro_slug?.includes('san-valentin') || p.pro_slug?.includes('amor') ? ['cat-ocas-amor'] : []),
-            ...(p.pro_slug?.includes('aniversario') ? ['cat-ocas-aniv'] : []),
-          ],
+          categoriasSecundarias: catsSecundarias,
           fotos,
           variantes: variantes.length > 0 ? variantes : [
             {
