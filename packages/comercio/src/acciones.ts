@@ -4443,6 +4443,117 @@ export async function eliminarProductoAction(
 }
 
 /**
+ * Elimina o desactiva de forma segura una variante/tamaño del catálogo
+ * tanto en Supabase (com_variante) como en el store de cache en memoria.
+ */
+export async function eliminarVarianteAction(datos: {
+  var_id: string;
+  pro_id?: string;
+  negocio?: string;
+}): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const { principal } = normalizarIdentificadorNegocio(datos.negocio || "tinkay");
+    const negocioNorm = principal;
+    const admin: any = crearClienteAdmin();
+    const supabase: any = await crearClienteServidor();
+    const clienteActivo = admin || supabase;
+
+    if (clienteActivo) {
+      // 1. Intentar RPC de eliminación segura
+      try {
+        const { data: rpcRes, error: errRpc } = await clienteActivo
+          .schema("comun_comercio")
+          .rpc("com_fn_eliminar_variante_catalogo", {
+            p_var_id: datos.var_id,
+            p_pro_id: datos.pro_id || null,
+            p_negocio: negocioNorm,
+          });
+        if (!errRpc && rpcRes?.ok) {
+          revalidatePath("/panel/catalogo-productos");
+          return { ok: true };
+        }
+      } catch {
+        // Fallback a wrapper public
+        try {
+          const { data: rpcPubRes, error: errPub } = await clienteActivo
+            .rpc("com_fn_eliminar_variante_catalogo", {
+              p_var_id: datos.var_id,
+              p_pro_id: datos.pro_id || null,
+              p_negocio: negocioNorm,
+            });
+          if (!errPub && rpcPubRes?.ok) {
+            revalidatePath("/panel/catalogo-productos");
+            return { ok: true };
+          }
+        } catch {}
+      }
+
+      // 2. Borrado físico directo en com_variante
+      let deleteOk = false;
+      const esUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(datos.var_id);
+      try {
+        let q = clienteActivo.schema("comun_comercio").from("com_variante").delete();
+        if (esUuid) {
+          q = q.eq("var_id", datos.var_id);
+        } else {
+          q = q.eq("var_sku", datos.var_id);
+          if (datos.pro_id) q = q.eq("var_producto_id", datos.pro_id);
+        }
+        const { error: errDel } = await q;
+        if (!errDel) deleteOk = true;
+      } catch {}
+
+      if (!deleteOk) {
+        try {
+          let q = clienteActivo.from("com_variante").delete();
+          if (esUuid) {
+            q = q.eq("var_id", datos.var_id);
+          } else {
+            q = q.eq("var_sku", datos.var_id);
+            if (datos.pro_id) q = q.eq("var_producto_id", datos.pro_id);
+          }
+          const { error: errDel2 } = await q;
+          if (!errDel2) deleteOk = true;
+        } catch {}
+      }
+
+      // 3. Si hay FK que impida borrado físico, desactivar variante (soft-delete)
+      if (!deleteOk) {
+        try {
+          await clienteActivo
+            .schema("comun_comercio")
+            .from("com_variante")
+            .update({
+              var_activo: false,
+              var_eliminado_en: new Date().toISOString(),
+              var_actualizado_en: new Date().toISOString(),
+            })
+            .eq("var_id", datos.var_id);
+          deleteOk = true;
+        } catch {}
+      }
+    }
+
+    // 4. Limpiar del almacén de memoria
+    try {
+      const customs = storeCustomProductos.get(negocioNorm) || [];
+      for (const prod of customs) {
+        if (!datos.pro_id || prod.pro_id === datos.pro_id) {
+          prod.variantes = (prod.variantes || []).filter(
+            (v) => v.var_id !== datos.var_id && v.var_sku !== datos.var_id
+          );
+        }
+      }
+    } catch {}
+
+    revalidatePath("/panel/catalogo-productos");
+    return { ok: true };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Error al eliminar la variante." };
+  }
+}
+
+/**
  * Restaura o siembra el catálogo de ejemplo oficial en la base de datos Supabase
  */
 export async function restaurarCatalogoEjemploAction(

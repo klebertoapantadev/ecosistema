@@ -43,6 +43,7 @@ import {
 import {
   editarProductoAction,
   eliminarProductoAction,
+  eliminarVarianteAction,
   resolverUrlImagenDirectaAction,
   subirImagenCatalogoAction,
   verificarUsoEnCatalogoAction,
@@ -532,6 +533,7 @@ export function ModalEditarProducto({
 
   const [guardando, setGuardando] = useState(false);
   const [eliminando, setEliminando] = useState(false);
+  const [eliminandoVariante, setEliminandoVariante] = useState(false);
   const [confirmarEliminar, setConfirmarEliminar] = useState(false);
   const [confirmarEliminarVariante, setConfirmarEliminarVariante] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -986,7 +988,7 @@ export function ModalEditarProducto({
     setError(null);
   };
 
-  const handleEliminarVarianteClick = () => {
+  const handleEliminarVarianteClick = async () => {
     if (variantesLocales.length <= 1) {
       setError(esFloristeria ? "El producto debe conservar al menos un tamaño." : "El producto debe conservar al menos una variante de tarifa.");
       return;
@@ -995,7 +997,41 @@ export function ModalEditarProducto({
       setConfirmarEliminarVariante(true);
       return;
     }
-    eliminarVarianteActual();
+
+    const varianteAEliminar = variantesLocales[varianteActivaIndex];
+    if (!varianteAEliminar) return;
+
+    setEliminandoVariante(true);
+    setError(null);
+
+    try {
+      // Si la variante ya fue guardada en Supabase (tiene ID persistido que no sea temporal), eliminar en el servidor
+      const esPersistida =
+        varianteAEliminar.var_id &&
+        !varianteAEliminar.var_id.startsWith("var-new-") &&
+        !varianteAEliminar.var_id.startsWith("var-");
+
+      if (esPersistida) {
+        const res = await eliminarVarianteAction({
+          var_id: varianteAEliminar.var_id,
+          pro_id: producto.pro_id,
+          negocio,
+        });
+
+        if (!res.ok) {
+          setError(res.error || "No se pudo eliminar la variante de la base de datos.");
+          setEliminandoVariante(false);
+          return;
+        }
+      }
+
+      eliminarVarianteActual();
+    } catch (err: any) {
+      setError(err.message || "Error al eliminar la variante.");
+    } finally {
+      setEliminandoVariante(false);
+      setConfirmarEliminarVariante(false);
+    }
   };
 
   const moverVariante = (idx: number, direccion: "arriba" | "abajo", e?: React.MouseEvent) => {
@@ -3860,15 +3896,17 @@ export function ModalEditarProducto({
                       {variantesLocales.length > 1 && (
                         <button
                           type="button"
-                          onClick={eliminarVarianteActual}
+                          onClick={handleEliminarVarianteClick}
+                          disabled={eliminandoVariante}
                           title="Eliminar esta variante"
                           style={{
                             background: "transparent",
                             border: "none",
                             color: "#EF4444",
-                            cursor: "pointer",
+                            cursor: eliminandoVariante ? "not-allowed" : "pointer",
                             padding: "2px",
                             marginLeft: "6px",
+                            opacity: eliminandoVariante ? 0.5 : 1,
                           }}
                         >
                           <Trash2 size={14} />
@@ -4977,11 +5015,11 @@ export function ModalEditarProducto({
               <button
                 type="button"
                 onClick={handleEliminarVarianteClick}
-                disabled={variantesLocales.length <= 1}
+                disabled={variantesLocales.length <= 1 || eliminandoVariante}
                 title={
                   variantesLocales.length <= 1
                     ? (esFloristeria ? "Debe existir al menos un tamaño en el producto" : "Debe existir al menos una variante en el producto")
-                    : (confirmarEliminarVariante ? "Confirmar quitar este tamaño de la lista" : "Quitar este tamaño / variante")
+                    : (confirmarEliminarVariante ? "Confirmar eliminación definitiva de este tamaño" : "Quitar este tamaño / variante")
                 }
                 style={{
                   background: confirmarEliminarVariante ? "#DC2626" : "transparent",
@@ -4991,17 +5029,19 @@ export function ModalEditarProducto({
                   borderRadius: "8px",
                   fontSize: "0.82rem",
                   fontWeight: 700,
-                  cursor: variantesLocales.length <= 1 ? "not-allowed" : "pointer",
+                  cursor: (variantesLocales.length <= 1 || eliminandoVariante) ? "not-allowed" : "pointer",
                   display: "inline-flex",
                   alignItems: "center",
                   gap: "6px",
-                  opacity: variantesLocales.length <= 1 ? 0.6 : 1,
+                  opacity: (variantesLocales.length <= 1 || eliminandoVariante) ? 0.6 : 1,
                   transition: "all 0.15s ease",
                 }}
               >
                 <Trash2 size={14} />
                 <span>
-                  {confirmarEliminarVariante
+                  {eliminandoVariante
+                    ? "Eliminando..."
+                    : confirmarEliminarVariante
                     ? `⚠️ ¿Confirmar Eliminar "${varianteActual?.var_nombre}"?`
                     : "Eliminar esta Variante"}
                 </span>
