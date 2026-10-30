@@ -7,10 +7,17 @@ import { TarjetaProductoConCarrusel } from './TarjetaProductoConCarrusel';
 import { ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
 
 export function CarruselProductosDestacados() {
+  const scrollRef = useRef<HTMLDivElement>(null);
   const { productos } = useCarrito();
   const catalogo = productos && productos.length > 0 ? productos : PRODUCTOS_TINKAY;
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const productosDestacados = catalogo.filter((p) => p.destacado);
+  const productosDestacados = catalogo.filter(
+    (p) =>
+      p.destacado &&
+      !p.esExtra &&
+      !p.esComplemento &&
+      !p.categoriaPrincipal?.toLowerCase().includes('extra') &&
+      !p.categoriaNombre?.toLowerCase().includes('extra')
+  );
 
   const scroll = (direccion: 'izq' | 'der') => {
     if (!scrollRef.current) return;

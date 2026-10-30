@@ -29,6 +29,7 @@ interface SupabaseVarianteRaw {
 interface SupabaseProductoRaw {
   pro_id: string;
   pro_slug?: string;
+  pro_categoria_principal_id?: string;
   pro_nombre: string;
   pro_descripcion?: string;
   pro_tipo?: string;
@@ -190,17 +191,40 @@ export async function cargarCatalogoDinamicoTinkay(): Promise<{
           }
         }
 
-        const esCondol =
-          p.pro_slug?.includes('abanico') ||
-          p.pro_slug?.includes('pedestal') ||
-          detalle.ocasion_recomendada?.includes('CONDOL') ||
-          detalle.usos?.includes('condolencias');
+        // Buscar categoría en catsDb por UUID o slug
+        const catEncontrada = catsDb.find(
+          (c) => c.ctg_id === p.pro_categoria_principal_id || c.ctg_slug === p.pro_categoria_principal_id
+        );
+        const catNombre = catEncontrada?.ctg_nombre || '';
+        const catSlug = catEncontrada?.ctg_slug || '';
+        const catTipo = catEncontrada?.ctg_tipo;
 
-        const esComp =
+        const usosRaw = Array.isArray(detalle.usos)
+          ? detalle.usos
+          : typeof detalle.usos === 'string'
+          ? [detalle.usos]
+          : [];
+        const usos: string[] = usosRaw.map((u: any) => String(u).trim().toLowerCase());
+
+        const esExtra =
+          catNombre.toLowerCase().includes('extra') ||
+          catSlug.toLowerCase().includes('extra') ||
+          catTipo === 'COMPLEMENTO' ||
+          p.pro_tipo === 'COMPLEMENTO' ||
           p.pro_slug?.includes('ferrero') ||
           p.pro_slug?.includes('choc') ||
           p.pro_slug?.includes('globo') ||
-          p.pro_slug?.includes('mariposa');
+          p.pro_slug?.includes('mariposa') ||
+          p.pro_slug?.includes('servicios-logisticos') ||
+          p.pro_slug?.includes('cinta');
+
+        const esCondol =
+          catNombre.toLowerCase().includes('condol') ||
+          catSlug.toLowerCase().includes('condol') ||
+          p.pro_slug?.includes('abanico') ||
+          p.pro_slug?.includes('pedestal') ||
+          detalle.ocasion_recomendada?.toUpperCase().includes('CONDOL') ||
+          usos.some((u: string) => u.includes('condol') || u.includes('duelo') || u.includes('pesame'));
 
         return {
           id: p.pro_slug || p.pro_id,
@@ -208,17 +232,18 @@ export async function cargarCatalogoDinamicoTinkay(): Promise<{
           nombre: p.pro_nombre,
           descripcionCorta: detalle.descripcion_corta || p.pro_descripcion || 'Arreglo floral exclusivo de exportación.',
           descripcionLarga: p.pro_descripcion || detalle.descripcion_corta || '',
-          categoriaPrincipal: p.pro_slug?.includes('coreano')
+          categoriaPrincipal: catSlug || catEncontrada?.ctg_id || (p.pro_slug?.includes('coreano')
             ? 'cat-coreanos'
             : p.pro_slug?.includes('florero')
             ? 'cat-floreros'
             : p.pro_slug?.includes('box')
             ? 'box-florales'
             : esCondol
-            ? 'cat-abanicos'
-            : esComp
-            ? 'cat-detalles'
-            : 'cat-coreanos',
+            ? 'cat-ocas-condol'
+            : esExtra
+            ? 'extras-condolencias'
+            : 'cat-coreanos'),
+          categoriaNombre: catNombre || undefined,
           categoriasSecundarias: [
             ...(esCondol ? ['cat-ocas-condol'] : []),
             ...(p.pro_slug?.includes('san-valentin') || p.pro_slug?.includes('amor') ? ['cat-ocas-amor'] : []),
@@ -234,11 +259,13 @@ export async function cargarCatalogoDinamicoTinkay(): Promise<{
               tarifaIva: 15,
             }
           ],
-          destacado: p.pro_slug === 'box-florales' ? true : esCondol ? false : p.pro_destacado === true,
+          destacado: p.pro_slug === 'box-florales' ? true : esCondol || esExtra ? false : p.pro_destacado === true,
           nuevo: false,
           entregaHoy: true,
           esCondolencias: esCondol,
-          esComplemento: esComp,
+          esComplemento: esExtra,
+          esExtra: esExtra,
+          usos,
           ocasionRecomendada: esCondol ? 'Condolencias y Homenajes Solemnes' : 'Amor, Cumpleaños o Aniversario',
           etiquetas: Array.isArray(detalle.etiquetas) ? detalle.etiquetas : ['Flores de Exportación', 'Quito'],
         };

@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { useCarrito } from '../contexto-carrito';
 import { PRODUCTOS_TINKAY, FRASES_DEDICATORIAS } from '../datos-catalogo';
-import { VarianteEcommerce, DedicatoriaArreglo } from '../tipos';
+import { ProductoEcommerce, VarianteEcommerce, DedicatoriaArreglo } from '../tipos';
 import {
   X,
   ChevronLeft,
@@ -21,6 +21,7 @@ export function ModalDetalleProducto() {
     productoSeleccionadoModal,
     setProductoSeleccionadoModal,
     agregarItem,
+    productos,
   } = useCarrito();
 
   const producto = productoSeleccionadoModal;
@@ -57,11 +58,76 @@ export function ModalDetalleProducto() {
   // Estado para complementos rápidos seleccionados
   const [complementosSeleccionados, setComplementosSeleccionados] = useState<string[]>([]);
 
-  if (!producto) return null;
+  // Detectar si el producto actual es de Condolencias & Funerarios
+  const esProductoCondolencias = React.useMemo(() => {
+    if (!producto) return false;
+    const catPrincipal = (producto.categoriaPrincipal || '').toLowerCase();
+    const catNombre = (producto.categoriaNombre || '').toLowerCase();
+    const secundarias = (producto.categoriasSecundarias || []).map((s: string) => s.toLowerCase());
+    const etiquetas = (producto.etiquetas || []).map((e: string) => e.toLowerCase());
+    const usos = (producto.usos || []).map((u: string) => u.toLowerCase());
+    const nombre = (producto.nombre || '').toLowerCase();
 
-  const fotos = producto.fotos.length > 0 ? producto.fotos : ['/img/slide4_flores_amor.jpg'];
+    return (
+      producto.esCondolencias === true ||
+      catPrincipal.includes('condol') ||
+      catNombre.includes('condol') ||
+      secundarias.some((s: string) => s.includes('condol')) ||
+      nombre.includes('pedestal') ||
+      nombre.includes('abanico') ||
+      nombre.includes('condolencia') ||
+      nombre.includes('pésame') ||
+      usos.some((u: string) => u.includes('condol') || u.includes('duelo') || u.includes('pesame')) ||
+      etiquetas.some((e: string) => e.includes('condol') || e.includes('duelo') || e.includes('fúnebre') || e.includes('funebre'))
+    );
+  }, [producto]);
 
-  const productosComplementos = PRODUCTOS_TINKAY.filter((p) => p.esComplemento);
+  // Helper para verificar si un producto Extra tiene uso "Condolencias"
+  const tieneUsoCondolencias = (extra: ProductoEcommerce) => {
+    const usos = (extra.usos || []).map((u: string) => u.toLowerCase());
+    const nombre = (extra.nombre || '').toLowerCase();
+    const slug = (extra.slug || '').toLowerCase();
+    const catPrincipal = (extra.categoriaPrincipal || '').toLowerCase();
+    const catNombre = (extra.categoriaNombre || '').toLowerCase();
+    const etiquetas = (extra.etiquetas || []).map((e: string) => e.toLowerCase());
+
+    return (
+      usos.some((u: string) => u.includes('condol') || u.includes('duelo') || u.includes('pesame')) ||
+      nombre.includes('condolencia') ||
+      nombre.includes('pésame') ||
+      nombre.includes('cinta') ||
+      slug.includes('condol') ||
+      slug.includes('cinta') ||
+      catPrincipal.includes('condol') ||
+      catNombre.includes('condol') ||
+      etiquetas.some((e: string) => e.includes('condol') || e.includes('duelo') || e.includes('fúnebre'))
+    );
+  };
+
+  // Filtrar productos de categorías Extras según la regla de venta cruzada
+  const productosComplementos = React.useMemo(() => {
+    if (!producto || producto.esComplemento || producto.esExtra) return [];
+
+    const catalogo = productos && productos.length > 0 ? productos : PRODUCTOS_TINKAY;
+    const extras = catalogo.filter((p) => {
+      const catPrincipal = (p.categoriaPrincipal || '').toLowerCase();
+      const catNombre = (p.categoriaNombre || '').toLowerCase();
+      return (
+        p.esExtra === true ||
+        p.esComplemento === true ||
+        catPrincipal.includes('extra') ||
+        catNombre.includes('extra')
+      );
+    });
+
+    if (esProductoCondolencias) {
+      // Condolencias & Funerarios: presenta Extras con uso "Condolencias"
+      return extras.filter((extra) => tieneUsoCondolencias(extra));
+    } else {
+      // Resto de productos: presenta Extras con uso DIFERENTE de "Condolencias"
+      return extras.filter((extra) => !tieneUsoCondolencias(extra));
+    }
+  }, [producto, esProductoCondolencias, productos]);
 
   const toggleComplemento = (id: string) => {
     setComplementosSeleccionados((prev) =>
@@ -73,7 +139,17 @@ export function ModalDetalleProducto() {
     setDedicatoria((prev) => ({ ...prev, mensaje: frase }));
   };
 
+  const obtenerVarianteComplemento = (comp: ProductoEcommerce) => {
+    return (
+      comp.variantes.find((v: VarianteEcommerce) => v.nombre.toLowerCase().includes('cinta')) ||
+      comp.variantes.find((v: VarianteEcommerce) => v.pvp > 0) ||
+      comp.variantes[0]
+    );
+  };
+
   const handleAgregarAlCarrito = () => {
+    if (!producto) return;
+
     // 1. Agregar el arreglo principal con su variante y dedicatoria
     agregarItem(
       producto,
@@ -84,14 +160,22 @@ export function ModalDetalleProducto() {
     // 2. Agregar los complementos marcados
     complementosSeleccionados.forEach((compId) => {
       const prodComp = productosComplementos.find((p) => p.id === compId);
-      if (prodComp && prodComp.variantes[0]) {
-        agregarItem(prodComp, prodComp.variantes[0]);
+      if (prodComp) {
+        const varComp = obtenerVarianteComplemento(prodComp);
+        if (varComp) {
+          agregarItem(prodComp, varComp);
+        }
       }
     });
 
     // Cerrar modal
     setProductoSeleccionadoModal(null);
   };
+
+  if (!producto) return null;
+
+  const fotos =
+    producto.fotos && producto.fotos.length > 0 ? producto.fotos : ['/img/slide4_flores_amor.jpg'];
 
   const cambiarFotoActiva = (nuevoIdx: number) => {
     setFotoActivaIndex(nuevoIdx);
@@ -387,7 +471,7 @@ export function ModalDetalleProducto() {
             </div>
 
             {/* Complementos de Cross-Selling */}
-            {!producto.esComplemento && productosComplementos.length > 0 && (
+            {!producto.esComplemento && !producto.esExtra && productosComplementos.length > 0 && (
               <div className="bloque-complementos-modal">
                 <label className="etiqueta-bloque">
                   3. ¿Deseas acompañar tu arreglo con algún detalle?
@@ -395,7 +479,7 @@ export function ModalDetalleProducto() {
                 <div className="grid-complementos-sugeridos">
                   {productosComplementos.map((comp) => {
                     const seleccionado = complementosSeleccionados.includes(comp.id);
-                    const varComp = comp.variantes[0];
+                    const varComp = obtenerVarianteComplemento(comp);
                     if (!varComp) return null;
                     return (
                       <button
@@ -435,7 +519,8 @@ export function ModalDetalleProducto() {
                   varianteSeleccionada.pvp +
                   complementosSeleccionados.reduce((acc, cId) => {
                     const c = productosComplementos.find((p) => p.id === cId);
-                    return acc + (c?.variantes[0]?.pvp ?? 0);
+                    const varC = c ? obtenerVarianteComplemento(c) : null;
+                    return acc + (varC?.pvp ?? 0);
                   }, 0)
                 ).toFixed(2)}</span>
               </button>

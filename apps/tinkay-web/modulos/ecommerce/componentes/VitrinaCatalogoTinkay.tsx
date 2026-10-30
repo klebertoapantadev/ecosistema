@@ -17,8 +17,26 @@ export function VitrinaCatalogoTinkay() {
 
   const esModoCondolencias = categoriaActiva === 'cat-ocas-condol';
 
+  // Categorías visibles: ocultar categorías de tipo "Extras" / complementos de la barra principal
+  const categoriasVisibles = useMemo(() => {
+    return catalogoCategorias.filter((cat) => {
+      const nombreLower = (cat.nombre || '').toLowerCase();
+      const slugLower = (cat.slug || '').toLowerCase();
+      return (
+        !nombreLower.includes('extra') &&
+        !slugLower.includes('extra') &&
+        cat.tipo !== 'COMPLEMENTO'
+      );
+    });
+  }, [catalogoCategorias]);
+
   const productosFiltrados = useMemo(() => {
     return catalogoProductos.filter((p) => {
+      // 1. Ocultar estrictamente productos de la categoría "Extras" del catálogo principal
+      if (p.esExtra || p.esComplemento) return false;
+      if (p.categoriaPrincipal?.toLowerCase().includes('extra')) return false;
+      if (p.categoriaNombre?.toLowerCase().includes('extra')) return false;
+
       // Filtro de categoría
       if (categoriaActiva !== 'cat-todos') {
         const coincidePrincipal = p.categoriaPrincipal === categoriaActiva;
@@ -119,7 +137,7 @@ export function VitrinaCatalogoTinkay() {
 
         {/* Pestañas de Categorías Multidimensionales */}
         <div className="pills-categorias-scroll">
-          {catalogoCategorias.map((cat) => {
+          {categoriasVisibles.map((cat) => {
             const estaActiva = cat.id === categoriaActiva;
             return (
               <button

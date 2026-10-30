@@ -2503,7 +2503,34 @@ export async function obtenerCategoriasConUsoAction(
   } catch {}
   const clienteActivo = admin || supabase;
 
-  // 1. Obtener todas las categorías base
+  // 1. Intentar RPC oficial sincronizado com_fn_obtener_categorias_con_uso
+  if (clienteActivo) {
+    try {
+      let rpcUso = await clienteActivo.rpc("com_fn_obtener_categorias_con_uso", {
+        p_negocio: principal,
+      });
+      if (rpcUso.error) {
+        try {
+          rpcUso = await clienteActivo
+            .schema("comun_comercio")
+            .rpc("com_fn_obtener_categorias_con_uso", {
+              p_negocio: principal,
+            });
+        } catch {}
+      }
+
+      if (!rpcUso.error && Array.isArray(rpcUso.data) && rpcUso.data.length > 0) {
+        return (rpcUso.data as any[]).filter(
+          (c) =>
+            !storeCategoriasEliminadas.has(c.ctg_id) &&
+            !storeCategoriasEliminadas.has(c.ctg_slug) &&
+            c.ctg_activo !== false
+        );
+      }
+    } catch {}
+  }
+
+  // 2. Obtener todas las categorías base si RPC no estuviera disponible
   const categorias = await obtenerCategoriasAction(negocio);
   const categoriasActivas = categorias.filter(
     (c) =>
@@ -2512,7 +2539,7 @@ export async function obtenerCategoriasConUsoAction(
       c.ctg_activo !== false
   );
 
-  // 2. Si no hay cliente de base de datos, calcular con catálogo en memoria
+  // 3. Si no hay cliente de base de datos, calcular con catálogo en memoria
   if (!clienteActivo) {
     const prodsMem = await obtenerCatalogoProductosAction(negocio, undefined, true);
     return categoriasActivas.map((cat) => {
@@ -2533,7 +2560,7 @@ export async function obtenerCategoriasConUsoAction(
     });
   }
 
-  // 3. Consultar tablas de Supabase en paralelo para cálculo 100% exacto e infalible
+  // 4. Consultar tablas de Supabase en paralelo como respaldo
   try {
     const [catDbRes, prodDbRes, pcDbRes] = await Promise.all([
       // A. Mapeo de categorías en Supabase (UUIDs vs Slugs)

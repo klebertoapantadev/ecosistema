@@ -143,7 +143,9 @@ export function TarjetaProductoConCarrusel({ producto, modoSobrio }: Props) {
       {/* Información del Producto */}
       <div className="info-producto-carrusel">
         <span className="categoria-rotulo">
-          {producto.esCondolencias ? '🕊️ Condolencias Solemnes' : producto.categoriaPrincipal.replace('cat-', '').toUpperCase()}
+          {producto.esCondolencias
+            ? '🕊️ Condolencias Solemnes'
+            : (producto.categoriaNombre || producto.categoriaPrincipal.replace('cat-', '')).toUpperCase()}
         </span>
         <h3 className="titulo-producto-carrusel">{producto.nombre}</h3>
         <p className="descripcion-corta-carrusel">{producto.descripcionCorta}</p>

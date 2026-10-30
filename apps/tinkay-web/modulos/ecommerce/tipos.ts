@@ -30,6 +30,7 @@ export interface ProductoEcommerce {
   descripcionCorta: string;
   descripcionLarga: string;
   categoriaPrincipal: string;
+  categoriaNombre?: string;
   categoriasSecundarias: string[];
   fotos: string[]; // Carrusel de fotos reales en alta definición
   variantes: VarianteEcommerce[];
@@ -38,6 +39,8 @@ export interface ProductoEcommerce {
   entregaHoy?: boolean;
   esCondolencias?: boolean;
   esComplemento?: boolean;
+  esExtra?: boolean; // Pertenece a categoría "Extras"
+  usos?: string[]; // Usos recomendados (ej. 'condolencias', 'cumpleanos')
   ocasionRecomendada?: string;
   etiquetas: string[];
 }
