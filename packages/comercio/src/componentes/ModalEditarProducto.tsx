@@ -946,10 +946,15 @@ export function ModalEditarProducto({
     const base = 25;
     const ivaPorc = 15;
     const montoIva = Number(((base * ivaPorc) / 100).toFixed(2));
+    const prodCode = (producto.pro_slug || producto.pro_nombre || "ITEM")
+      .replace(/[^a-zA-Z0-9]/g, "")
+      .substring(0, 8)
+      .toUpperCase();
+    const skuUnico = `${negocio.toUpperCase().substring(0, 3)}-${prodCode}-${Date.now().toString(36).toUpperCase()}-${variantesLocales.length + 1}`;
     const nueva: VarianteCatalogo = {
       var_id: `var-new-${Date.now()}`,
       var_producto_id: producto.pro_id,
-      var_sku: `${negocio.toUpperCase().substring(0, 3)}-VAR-${variantesLocales.length + 1}`,
+      var_sku: skuUnico,
       var_nombre: esFloristeria
         ? `Tamaño Especial (${variantesLocales.length + 1})`
         : `Opción ${variantesLocales.length + 1}`,
