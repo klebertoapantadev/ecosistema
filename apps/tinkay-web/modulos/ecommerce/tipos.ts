@@ -33,6 +33,8 @@ export interface ProductoEcommerce {
   categoriaNombre?: string;
   categoriasSecundarias: string[];
   fotos: string[]; // Carrusel de fotos reales en alta definición
+  fotosModal?: string[]; // Galería completa para el modal de detalle
+  varianteInicialSku?: string; // Variante preseleccionada en caso de desglose individual
   variantes: VarianteEcommerce[];
   destacado: boolean;
   nuevo?: boolean;

@@ -120,9 +120,11 @@ export function DrawerCarritoFloristeria() {
                       <div className="datos-principales-item">
                         <div className="titulos-item-carrito">
                           <strong>{item.producto.nombre}</strong>
-                          <span className="variante-nombre-item">
-                            {item.variante.nombre}
-                          </span>
+                          {item.variante.nombre && item.variante.nombre.trim() !== item.producto.nombre.trim() && (
+                            <span className="variante-nombre-item">
+                              {item.variante.nombre}
+                            </span>
+                          )}
                         </div>
 
                         <div className="precio-y-cantidad-fila">

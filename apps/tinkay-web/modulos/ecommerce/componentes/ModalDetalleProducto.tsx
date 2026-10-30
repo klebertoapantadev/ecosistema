@@ -39,9 +39,21 @@ export function ModalDetalleProducto() {
   );
 
   React.useEffect(() => {
-    if (producto && producto.variantes[0]) {
-      setVarianteSeleccionada(producto.variantes[0]);
-      setFotoActivaIndex(0);
+    if (producto && producto.variantes && producto.variantes.length > 0) {
+      const varInicial =
+        producto.variantes.find((v) => v.sku === producto.varianteInicialSku) ||
+        producto.variantes[0]!;
+      setVarianteSeleccionada(varInicial);
+
+      const fotosDisponibles =
+        producto.fotosModal && producto.fotosModal.length > 0
+          ? producto.fotosModal
+          : producto.fotos && producto.fotos.length > 0
+          ? producto.fotos
+          : ['/img/slide4_flores_amor.jpg'];
+
+      const fotoIdx = varInicial.foto ? fotosDisponibles.indexOf(varInicial.foto) : 0;
+      setFotoActivaIndex(fotoIdx >= 0 ? fotoIdx : 0);
       setComplementosSeleccionados([]);
       setIncluirDedicatoria(false);
       setDedicatoria({ para: '', de: '', mensaje: '' });
@@ -193,12 +205,30 @@ export function ModalDetalleProducto() {
     );
   };
 
+  const tituloModal =
+    varianteSeleccionada?.nombre &&
+    (varianteSeleccionada.nombre.toLowerCase().startsWith('box') ||
+     varianteSeleccionada.nombre.toLowerCase().startsWith('mix') ||
+     varianteSeleccionada.nombre.toLowerCase().startsWith('tamaño') ||
+     producto?.nombre.toLowerCase().includes('box floral'))
+      ? varianteSeleccionada.nombre
+      : varianteSeleccionada?.nombre && (producto?.variantes.length ?? 0) > 1
+      ? `${producto?.nombre} — ${varianteSeleccionada.nombre}`
+      : producto?.nombre || '';
+
   const handleAgregarAlCarrito = () => {
     if (!producto) return;
 
+    const productoParaCarrito: ProductoEcommerce = {
+      ...producto,
+      id: `${producto.id}__${varianteSeleccionada.sku}`,
+      nombre: tituloModal,
+      fotos: varianteSeleccionada.foto ? [varianteSeleccionada.foto] : producto.fotos,
+    };
+
     // 1. Agregar el arreglo principal con su variante y dedicatoria
     agregarItem(
-      producto,
+      productoParaCarrito,
       varianteSeleccionada,
       incluirDedicatoria && dedicatoria.mensaje.trim() ? dedicatoria : undefined
     );
@@ -221,7 +251,11 @@ export function ModalDetalleProducto() {
   if (!producto) return null;
 
   const fotos =
-    producto.fotos && producto.fotos.length > 0 ? producto.fotos : ['/img/slide4_flores_amor.jpg'];
+    producto.fotosModal && producto.fotosModal.length > 0
+      ? producto.fotosModal
+      : producto.fotos && producto.fotos.length > 0
+      ? producto.fotos
+      : ['/img/slide4_flores_amor.jpg'];
 
   const cambiarFotoActiva = (nuevoIdx: number) => {
     setFotoActivaIndex(nuevoIdx);
@@ -311,11 +345,13 @@ export function ModalDetalleProducto() {
                 {fotos.map((f, i) => {
                   const varAsoc =
                     producto.variantes.find((v) => v.foto === f) || producto.variantes[i];
+                  const estaActiva =
+                    i === fotoActivaIndex || (varAsoc && varAsoc.sku === varianteSeleccionada.sku);
                   return (
                     <button
                       key={i}
                       type="button"
-                      className={`miniatura-item ${i === fotoActivaIndex ? 'miniatura-activa' : ''}`}
+                      className={`miniatura-item ${estaActiva ? 'miniatura-activa' : ''}`}
                       onClick={() => cambiarFotoActiva(i)}
                       title={
                         varAsoc
@@ -354,7 +390,7 @@ export function ModalDetalleProducto() {
               <span className="categoria-pill-modal">
                 {producto.esCondolencias ? '🕊️ Condolencias Solemnes' : 'Colección Tinkay'}
               </span>
-              <h2 className="titulo-modal-producto">{producto.nombre}</h2>
+              <h2 className="titulo-modal-producto">{tituloModal}</h2>
               <div className="fila-precio-modal">
                 <span className="precio-pvp-destacado">
                   ${varianteSeleccionada.pvp.toFixed(2)}
@@ -383,6 +419,24 @@ export function ModalDetalleProducto() {
             </div>
 
             <p className="descripcion-larga-modal">{producto.descripcionLarga}</p>
+
+            {varianteSeleccionada.detalle && (
+              <div
+                className="detalle-variante-destacado"
+                style={{
+                  background: 'rgba(235, 78, 126, 0.08)',
+                  borderLeft: '3px solid #eb4e7e',
+                  padding: '9px 14px',
+                  borderRadius: '6px',
+                  margin: '10px 0 14px',
+                  fontSize: '0.92rem',
+                  fontWeight: 500,
+                  color: 'var(--tinta-fuerte, #222)',
+                }}
+              >
+                ✨ <strong>Presentación seleccionada:</strong> {varianteSeleccionada.detalle}
+              </div>
+            )}
 
             {/* Receta Botánica (BOM) */}
             {varianteSeleccionada.recetaBom && (

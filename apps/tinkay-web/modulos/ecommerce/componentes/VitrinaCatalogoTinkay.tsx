@@ -63,10 +63,14 @@ export function VitrinaCatalogoTinkay() {
         p.nombre.toLowerCase().includes('box floral');
 
       if (esBoxFlorales && p.variantes && p.variantes.length > 1) {
+        // Galería completa de todas las variaciones para las miniaturas del modal
+        const todasLasFotosModal = p.variantes
+          .map((v) => v.foto)
+          .filter((f): f is string => Boolean(f));
+
         return p.variantes.map((v) => {
-          const fotosVariante = v.foto
-            ? [v.foto, ...p.fotos.filter((f) => f !== v.foto)]
-            : p.fotos;
+          // Para la tarjeta individual de la vitrina: ÚNICAMENTE la foto de esta variación
+          const fotosTarjetaIndividual = v.foto ? [v.foto] : p.fotos.slice(0, 1);
 
           const productoIndividual: ProductoEcommerce = {
             ...p,
@@ -74,8 +78,10 @@ export function VitrinaCatalogoTinkay() {
             slug: `${p.slug}-${v.sku.toLowerCase()}`,
             nombre: v.nombre, // ej: "Box Floral (L)", "Mix Floral (XXL)", etc.
             descripcionCorta: v.detalle || p.descripcionCorta,
-            fotos: fotosVariante,
-            variantes: [v], // Se muestra con esta variante fija a su PVP individual
+            fotos: fotosTarjetaIndividual, // En la vitrina: SOLO muestra la imagen de esta variación individual
+            fotosModal: todasLasFotosModal.length > 0 ? todasLasFotosModal : p.fotos, // En el modal: galería de todas las variaciones
+            variantes: p.variantes, // En el modal: lista completa de variantes para alternar
+            varianteInicialSku: v.sku, // Marca cuál variante abrió el usuario
             destacado: p.destacado,
           };
           return productoIndividual;
