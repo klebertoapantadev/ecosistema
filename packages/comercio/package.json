@@ -7,15 +7,18 @@
   "exports": {
     ".": "./src/index.ts",
     "./componentes/*": "./src/componentes/*.tsx",
-    "./acciones": "./src/acciones.ts"
+    "./acciones": "./src/acciones.ts",
+    "./plux": "./src/plux.ts"
   },
   "scripts": {
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
   },
   "dependencies": {
     "@eco/db": "workspace:*",
     "@eco/supabase": "workspace:*",
-    "lucide-react": "1.27.0"
+    "lucide-react": "1.27.0",
+    "zod": "4.4.3"
   },
   "devDependencies": {
     "@eco/config": "workspace:*",
@@ -24,6 +27,7 @@
     "@types/react-dom": "^19.0.0",
     "next": "15.5.22",
     "react": "19.2.8",
-    "typescript": "^5.7.0"
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0"
   }
 }

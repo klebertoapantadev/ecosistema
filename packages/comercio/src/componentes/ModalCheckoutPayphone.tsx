@@ -28,6 +28,8 @@ import {
   confirmarPagoPayphoneAction,
   obtenerDatosFacturacionAction,
 } from "../acciones";
+import { obtenerPasarelasCheckoutAction, type PasarelaCheckout } from "../acciones-plux";
+import { BotonPagoPlux } from "./BotonPagoPlux";
 
 interface Props {
   abierto: boolean;
@@ -84,6 +86,20 @@ export function ModalCheckoutPayphone({
 
   // Resultado de confirmación
   const [resultadoPago, setResultadoPago] = useState<any | null>(null);
+
+  // PLUX solo aparece si la base de datos lo ofrece a esta cuenta (activo y,
+  // mientras esté en pruebas, solo para probadores).
+  const [plux, setPlux] = useState<PasarelaCheckout | null>(null);
+  useEffect(() => {
+    if (!abierto) return;
+    let cancelado = false;
+    obtenerPasarelasCheckoutAction(negocio).then((r) => {
+      if (!cancelado) setPlux(r.ok ? r.data.find((p) => p.pasarela === "PLUX") ?? null : null);
+    });
+    return () => {
+      cancelado = true;
+    };
+  }, [abierto, negocio]);
 
   // Cargar datos de facturación existentes al abrir el modal
   useEffect(() => {
@@ -813,6 +829,39 @@ export function ModalCheckoutPayphone({
                   {modoSimulado ? "Continuar con Simulación" : "Pagar con Payphone"}
                 </button>
               </div>
+
+              {plux &&
+                (identificacion.trim() && email.trim() && razonSocial.trim() && telefono.trim() && direccion.trim() ? (
+                  <BotonPagoPlux
+                    negocio={negocio}
+                    varianteId={variante.var_id}
+                    ambiente={plux.ambiente}
+                    pagador={{
+                      nombre: razonSocial.trim(),
+                      identificacion: identificacion.trim(),
+                      email: email.trim(),
+                      telefono: telefono.trim(),
+                      direccion: direccion.trim(),
+                    }}
+                    alPagoAprobado={(identificador, pago) => {
+                      const res = {
+                        ok: true,
+                        estado: "APROBADO",
+                        clientTransactionId: identificador,
+                        autorizacionCodigo: pago.autorizacion,
+                        marcaTarjeta: pago.marcaTarjeta,
+                        ultimosDigitos: pago.ultimosDigitos,
+                      };
+                      setResultadoPago(res);
+                      setPaso("resultado");
+                      alPagoExitoso?.(res);
+                    }}
+                  />
+                ) : (
+                  <p style={{ fontSize: "0.78rem", color: "#64748B", marginTop: "12px" }}>
+                    Completa los datos de facturación, incluida la dirección, para pagar con PLUX.
+                  </p>
+                ))}
             </form>
           )}
 

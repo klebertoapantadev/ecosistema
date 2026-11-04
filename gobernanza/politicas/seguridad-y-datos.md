@@ -73,6 +73,8 @@ Un *Custom Access Token Hook* inyecta el rol de `seg_membresia` como claim del J
 
 Integración vía API abstraída, agnóstica de proveedor. Toda operación con credenciales de la pasarela vive en Edge Function. Todo webhook entrante valida su firma antes de procesar.
 
+**Excepción documentada — PLUX (`TRQ-ADM-004`):** PLUX no firma su webhook; lo autentica con Basic sobre las credenciales de API elegidas en su dashboard, y no publica una API de consulta servidor a servidor. La Edge Function `plux-webhook` compara ese Basic en tiempo constante contra `psc_credenciales_privadas`, y `com_fn_confirmar_pago_plux` solo aprueba si el monto coincide con el que fijó el servidor al preparar el pago, de forma idempotente. Antes de pasar PLUX a `PRODUCCION` hay que pedir a PLUX firma del webhook o una API de consulta y retirar esta excepción.
+
 ## 8. Transiciones de estado críticas
 
 Ninguna transición de estado irreversible o sensible (aprobar, rechazar, procesar pago, activar cuenta) se ejecuta con un `UPDATE` directo desde el cliente. Se ejecuta vía RPC transaccional que valida precondiciones y aplica todos los efectos relacionados de forma atómica.

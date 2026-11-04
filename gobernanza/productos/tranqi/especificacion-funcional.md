@@ -58,7 +58,7 @@ Tranqi adopta las mejores prácticas y estándares internacionales de **Law Prac
 | **`TRQ-ADM-001`** | **Operador/Admin** | **Mesa de Control de Acreditación, Contra-Firma Tranqi y Activación de Socios** | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`TRQ-ADM-002`** | **Operador/Admin** | **Asignación Inteligente de Casos (IA), Liquidación de Honorarios y Comisiones** | ⏳ Pendiente | **0%** | **Jesus Navarrete (IA)** / Kleber Toapanta |
 | **`TRQ-ADM-003`** | **Operador/Admin** | **Auditoría Transversal BDD, Telemetría API y Bitácora de Campañas** | ✅ Implementado | **100%** | Kleber Toapanta |
-| **`TRQ-ADM-004`** | **Operador/Admin** | **Catálogo Comercial, Tarifario de Honorarios, Pasarela Pagoplux (Pagos y Facturación Electrónica SRI) e Historial** | 🟡 En Desarrollo | **30%** | Kleber Toapanta |
+| **`TRQ-ADM-004`** | **Operador/Admin** | **Catálogo Comercial, Tarifario de Honorarios, Pasarela Pagoplux (Pagos y Facturación Electrónica SRI) e Historial** | 🟡 En Desarrollo | **45%** | Kleber Toapanta |
 | **`TRQ-B2B-001`** | **B2B / Empresas** | **Convenios Corporativos: Consultas Jurídicas Gratuitas, Descuento en Servicios y Billetera Legal** | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`TRQ-B2B-002`** | **B2B / Empresas** | **Widget de Nómina Corporativa, Carga Masiva, Invitaciones por Correo y Link con Empresa Padre** | 🟡 Especificado | **30%** | Kleber Toapanta |
 | **`TRQ-B2B-003`** | **B2B / Empresas** | **Portal Empresa: Administradores Corporativos, Roles RBAC, Secreto Profesional y Expedientes** | 🟡 Especificado | **30%** | Kleber Toapanta |

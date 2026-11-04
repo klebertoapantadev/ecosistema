@@ -31,3 +31,6 @@ export * from "./utils/negocio";
 export * from "./utils/vigencia";
 export * from "./utils/usosCatalogo";
 export * from "./componentes/ModalesValidacionUso";
+export * from "./acciones-plux";
+export * from "./plux";
+export * from "./componentes/BotonPagoPlux";
