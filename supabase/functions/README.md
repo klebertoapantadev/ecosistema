@@ -44,6 +44,8 @@ update comun_comercio.com_pasarela_configuracion
 
 En el dashboard de PLUX, *Developers → Web hook*: URL `https://oaybbpdxhlxjbpwnoymy.supabase.co/functions/v1/plux-webhook?negocio=tranqi`, la misma credencial de API, tipo *Pago Tarjeta* y estado activo. PLUX admite una sola URL de webhook por comercio.
 
-Mientras `psc_ambiente = 'PRUEBAS'`, PLUX solo lo ven los superadmins y los correos de `probadores`: con el sandbox, una tarjeta de prueba activa un plan real. Pasar a cobro real = credenciales de producción de PLUX (tras su certificación) y `psc_ambiente = 'PRODUCCION'`; con `visibilidad = 'PROBADORES'` se puede abrir primero solo a los probadores y después a todos (`'TODOS'`).
+Visibilidad (`com_fn_pasarela_visible`): en `PRUEBAS` la pasarela solo la ven los superadmins y los correos de `probadores`, salvo que `visibilidad = 'TODOS'` la abra a todos de forma explícita. **Estado desde el 5-nov-2026:** PLUX de tranqi en sandbox con `visibilidad = 'TODOS'`, por decisión de producto: cualquiera que pague con una tarjeta de prueba de PLUX activa un plan sin cobro real. Para volver a cerrarlo, `visibilidad = 'PROBADORES'`. Pasar a cobro real = credenciales de producción de PLUX (tras su certificación) y `psc_ambiente = 'PRODUCCION'`.
+
+**Requisito de API:** `comun_comercio` tiene que estar en los esquemas expuestos de PostgREST (*Settings → API → Exposed schemas*, o `PATCH /v1/projects/{ref}/postgrest` con `db_schema`). Sin él fallan el webhook y las acciones del checkout (`PGRST106 Invalid schema`). Se añadió en producción el 5-nov-2026. Al exponerlo, `authenticated` no puede leer `psc_credenciales_privadas` (migración `20261105000001`).
 
 Sin credenciales o con la fila inactiva la función responde `503` y no confirma nada.
