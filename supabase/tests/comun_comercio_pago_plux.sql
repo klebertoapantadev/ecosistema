@@ -2,7 +2,7 @@
 -- Se ejecuta con `supabase test db` (pgTAP, gobernanza/estandares/04-pruebas.md §4).
 -- Todo dentro de una transacción que se deshace al final.
 begin;
-select plan(14);
+select plan(16);
 
 -- ── Permisos: nadie fuera del webhook confirma pagos ni lee credenciales ─────
 select ok(not has_function_privilege('authenticated', 'comun_comercio.com_fn_confirmar_pago_plux(text, jsonb)', 'execute'),
@@ -13,6 +13,8 @@ select ok(not has_function_privilege('authenticated', 'comun_comercio.com_fn_cre
   'authenticated no puede leer las credenciales del webhook');
 select ok(has_function_privilege('authenticated', 'comun_comercio.com_fn_preparar_pago_plux(text, uuid, jsonb)', 'execute'),
   'authenticated puede preparar un pago');
+select ok(not has_column_privilege('authenticated', 'comun_comercio.com_pasarela_configuracion', 'psc_credenciales_privadas', 'select'),
+  'authenticated no puede leer las credenciales privadas de una pasarela');
 
 -- ── Visibilidad: una pasarela solo para probadores se oculta al resto ────────
 -- Un usuario cualquiera (sin fila de superadmin ni correo en la lista).
@@ -25,6 +27,8 @@ select ok(not comun_comercio.com_fn_pasarela_visible('PRUEBAS', '{}'::jsonb),
   'en pruebas la pasarela nunca es para todos');
 select ok(not comun_comercio.com_fn_pasarela_visible('PRODUCCION', '{"visibilidad":"PROBADORES","probadores":"no-es-lista"}'::jsonb),
   'una lista de probadores mal formada no rompe ni abre la pasarela');
+select ok(comun_comercio.com_fn_pasarela_visible('PRUEBAS', '{"visibilidad":"TODOS"}'::jsonb),
+  'visibilidad TODOS explícita abre también un sandbox');
 
 reset role;
 
