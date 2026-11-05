@@ -407,10 +407,10 @@ export function ModalCheckoutPayphone({
             </div>
             <div>
               <h2 style={{ margin: 0, fontSize: "1.1rem", fontWeight: 700, color: "#0F172A" }}>
-                Botón de Pago Payphone
+                Pago con tarjeta
               </h2>
               <p style={{ margin: 0, fontSize: "0.8rem", color: "#64748B" }}>
-                Tarjetas de Crédito / Débito & Saldo Digital
+                {plux ? "Crédito o débito con Payphone o PLUX" : "Crédito, débito y saldo digital con Payphone"}
               </p>
             </div>
           </div>
