@@ -357,7 +357,7 @@ export function RejillaPlanes({ negocio = "tranqi", filtroInicial = "todos" }: R
               <CreditCard size={18} aria-hidden="true" />
               <div>
                 <b>Tarjeta de débito o crédito</b>
-                <small>Pago seguro con Payphone</small>
+                <small>Pago seguro con tarjeta</small>
               </div>
             </div>
             <div className="dialogo-acciones">
