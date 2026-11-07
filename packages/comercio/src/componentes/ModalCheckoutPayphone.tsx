@@ -87,15 +87,23 @@ export function ModalCheckoutPayphone({
   // Resultado de confirmación
   const [resultadoPago, setResultadoPago] = useState<any | null>(null);
 
-  // PLUX solo aparece si la base de datos lo ofrece a esta cuenta (activo y,
-  // mientras esté en pruebas, solo para probadores).
+  // Se consulta qué pasarela activa corresponde mostrar al usuario según la
+  // configuración del negocio (PLUX o Payphone, nunca las dos a la vez).
   const [plux, setPlux] = useState<PasarelaCheckout | null>(null);
+  const [cargandoPasarela, setCargandoPasarela] = useState(true);
   useEffect(() => {
     if (!abierto) return;
     let cancelado = false;
-    obtenerPasarelasCheckoutAction(negocio).then((r) => {
-      if (!cancelado) setPlux(r.ok ? r.data.find((p) => p.pasarela === "PLUX") ?? null : null);
-    });
+    setCargandoPasarela(true);
+    obtenerPasarelasCheckoutAction(negocio)
+      .then((r) => {
+        if (!cancelado) {
+          setPlux(r.ok ? r.data.find((p) => p.pasarela === "PLUX") ?? null : null);
+        }
+      })
+      .finally(() => {
+        if (!cancelado) setCargandoPasarela(false);
+      });
     return () => {
       cancelado = true;
     };
@@ -410,7 +418,7 @@ export function ModalCheckoutPayphone({
                 Pago con tarjeta
               </h2>
               <p style={{ margin: 0, fontSize: "0.8rem", color: "#64748B" }}>
-                {plux ? "Crédito o débito con Payphone o PLUX" : "Crédito, débito y saldo digital con Payphone"}
+                {plux ? "Crédito o débito con PLUX" : "Crédito, débito y saldo digital con Payphone"}
               </p>
             </div>
           </div>
@@ -489,43 +497,45 @@ export function ModalCheckoutPayphone({
           {/* PASO 1: Formulario de Facturación y Selección de Modo */}
           {paso === "formulario" && (
             <form onSubmit={manejarPrepararPago}>
-              {/* Selector Modo Simulado vs Modo Real */}
-              <div
-                style={{
-                  background: modoSimulado ? "#FEF3C7" : "#F1F5F9",
-                  border: modoSimulado ? "1px solid #FCD34D" : "1px solid #CBD5E1",
-                  borderRadius: "12px",
-                  padding: "12px 16px",
-                  marginBottom: "20px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                }}
-              >
-                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                  <Sparkles size={20} color={modoSimulado ? "#B45309" : "#64748B"} />
-                  <div>
-                    <div style={{ fontSize: "0.85rem", fontWeight: 700, color: modoSimulado ? "#92400E" : "#334155" }}>
-                      {modoSimulado ? "⚡ Modo Simulado Activo (Sandbox)" : "🔒 Modo Real Payphone"}
-                    </div>
-                    <div style={{ fontSize: "0.75rem", color: modoSimulado ? "#B45309" : "#64748B" }}>
-                      {modoSimulado
-                        ? "Permite probar el flujo de cobro sin débito bancario real."
-                        : "Conecta con la pasarela oficial Payphone para cobro real."}
+              {/* Selector Modo Simulado vs Modo Real (solo cuando el procesador es Payphone) */}
+              {!plux && !cargandoPasarela && (
+                <div
+                  style={{
+                    background: modoSimulado ? "#FEF3C7" : "#F1F5F9",
+                    border: modoSimulado ? "1px solid #FCD34D" : "1px solid #CBD5E1",
+                    borderRadius: "12px",
+                    padding: "12px 16px",
+                    marginBottom: "20px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                    <Sparkles size={20} color={modoSimulado ? "#B45309" : "#64748B"} />
+                    <div>
+                      <div style={{ fontSize: "0.85rem", fontWeight: 700, color: modoSimulado ? "#92400E" : "#334155" }}>
+                        {modoSimulado ? "⚡ Modo Simulado Activo (Sandbox)" : "🔒 Modo Real Payphone"}
+                      </div>
+                      <div style={{ fontSize: "0.75rem", color: modoSimulado ? "#B45309" : "#64748B" }}>
+                        {modoSimulado
+                          ? "Permite probar el flujo de cobro sin débito bancario real."
+                          : "Conecta con la pasarela oficial Payphone para cobro real."}
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                <label style={{ display: "flex", alignItems: "center", cursor: "pointer", gap: "6px" }}>
-                  <input
-                    type="checkbox"
-                    checked={modoSimulado}
-                    onChange={(e) => setModoSimulado(e.target.checked)}
-                    style={{ width: "16px", height: "16px", cursor: "pointer" }}
-                  />
-                  <span style={{ fontSize: "0.8rem", fontWeight: 600, color: "#334155" }}>Simular</span>
-                </label>
-              </div>
+                  <label style={{ display: "flex", alignItems: "center", cursor: "pointer", gap: "6px" }}>
+                    <input
+                      type="checkbox"
+                      checked={modoSimulado}
+                      onChange={(e) => setModoSimulado(e.target.checked)}
+                      style={{ width: "16px", height: "16px", cursor: "pointer" }}
+                    />
+                    <span style={{ fontSize: "0.8rem", fontWeight: 600, color: "#334155" }}>Simular</span>
+                  </label>
+                </div>
+              )}
 
               {/* Banner Informativo de Perfil de Facturación */}
               {tienePerfilFacturacion ? (
@@ -791,77 +801,98 @@ export function ModalCheckoutPayphone({
                 </label>
               </div>
 
-              <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
-                <button
-                  type="button"
-                  onClick={reiniciarYCerrar}
-                  style={{
-                    background: "#F1F5F9",
-                    color: "#475569",
-                    border: "none",
-                    padding: "10px 16px",
-                    borderRadius: "8px",
-                    fontSize: "0.85rem",
-                    fontWeight: 600,
-                    cursor: "pointer",
-                  }}
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  disabled={procesando}
-                  style={{
-                    background: "#0284C7",
-                    color: "#FFFFFF",
-                    border: "none",
-                    padding: "10px 20px",
-                    borderRadius: "8px",
-                    fontSize: "0.85rem",
-                    fontWeight: 700,
-                    cursor: procesando ? "not-allowed" : "pointer",
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "8px",
-                  }}
-                >
-                  {procesando ? <RefreshCw size={16} className="animate-spin" /> : <Lock size={16} />}
-                  {modoSimulado ? "Continuar con Simulación" : "Pagar con Payphone"}
-                </button>
-              </div>
-
-              {plux &&
-                (identificacion.trim() && email.trim() && razonSocial.trim() && telefono.trim() && direccion.trim() ? (
-                  <BotonPagoPlux
-                    negocio={negocio}
-                    varianteId={variante.var_id}
-                    ambiente={plux.ambiente}
-                    pagador={{
-                      nombre: razonSocial.trim(),
-                      identificacion: identificacion.trim(),
-                      email: email.trim(),
-                      telefono: telefono.trim(),
-                      direccion: direccion.trim(),
+              {plux ? (
+                <div>
+                  {identificacion.trim() && email.trim() && razonSocial.trim() && telefono.trim() && direccion.trim() ? (
+                    <BotonPagoPlux
+                      negocio={negocio}
+                      varianteId={variante.var_id}
+                      ambiente={plux.ambiente}
+                      pagador={{
+                        nombre: razonSocial.trim(),
+                        identificacion: identificacion.trim(),
+                        email: email.trim(),
+                        telefono: telefono.trim(),
+                        direccion: direccion.trim(),
+                      }}
+                      alPagoAprobado={(identificador, pago) => {
+                        const res = {
+                          ok: true,
+                          estado: "APROBADO",
+                          clientTransactionId: identificador,
+                          autorizacionCodigo: pago.autorizacion,
+                          marcaTarjeta: pago.marcaTarjeta,
+                          ultimosDigitos: pago.ultimosDigitos,
+                        };
+                        setResultadoPago(res);
+                        setPaso("resultado");
+                        alPagoExitoso?.(res);
+                      }}
+                    />
+                  ) : (
+                    <p style={{ fontSize: "0.78rem", color: "#64748B", marginTop: "4px", marginBottom: "12px" }}>
+                      Completa todos los datos de facturación, incluida la dirección domiciliaria, para habilitar el pago con PLUX.
+                    </p>
+                  )}
+                  <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "12px" }}>
+                    <button
+                      type="button"
+                      onClick={reiniciarYCerrar}
+                      style={{
+                        background: "#F1F5F9",
+                        color: "#475569",
+                        border: "none",
+                        padding: "10px 16px",
+                        borderRadius: "8px",
+                        fontSize: "0.85rem",
+                        fontWeight: 600,
+                        cursor: "pointer",
+                      }}
+                    >
+                      Cancelar
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
+                  <button
+                    type="button"
+                    onClick={reiniciarYCerrar}
+                    style={{
+                      background: "#F1F5F9",
+                      color: "#475569",
+                      border: "none",
+                      padding: "10px 16px",
+                      borderRadius: "8px",
+                      fontSize: "0.85rem",
+                      fontWeight: 600,
+                      cursor: "pointer",
                     }}
-                    alPagoAprobado={(identificador, pago) => {
-                      const res = {
-                        ok: true,
-                        estado: "APROBADO",
-                        clientTransactionId: identificador,
-                        autorizacionCodigo: pago.autorizacion,
-                        marcaTarjeta: pago.marcaTarjeta,
-                        ultimosDigitos: pago.ultimosDigitos,
-                      };
-                      setResultadoPago(res);
-                      setPaso("resultado");
-                      alPagoExitoso?.(res);
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={procesando || cargandoPasarela}
+                    style={{
+                      background: "#0284C7",
+                      color: "#FFFFFF",
+                      border: "none",
+                      padding: "10px 20px",
+                      borderRadius: "8px",
+                      fontSize: "0.85rem",
+                      fontWeight: 700,
+                      cursor: procesando || cargandoPasarela ? "not-allowed" : "pointer",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "8px",
                     }}
-                  />
-                ) : (
-                  <p style={{ fontSize: "0.78rem", color: "#64748B", marginTop: "12px" }}>
-                    Completa los datos de facturación, incluida la dirección, para pagar con PLUX.
-                  </p>
-                ))}
+                  >
+                    {procesando || cargandoPasarela ? <RefreshCw size={16} className="animate-spin" /> : <Lock size={16} />}
+                    {modoSimulado ? "Continuar con Simulación" : "Pagar con Payphone"}
+                  </button>
+                </div>
+              )}
             </form>
           )}
 

@@ -91,6 +91,10 @@ export interface ConfiguracionPasarela {
   modoSimulado: boolean;
   token?: string;
   comisionPorcentaje: number;
+  remail?: string;
+  nombreComercio?: string;
+  visibilidad?: "TODOS" | "PROBADORES";
+  probadores?: string[];
   detalle?: any;
 }
 
@@ -4670,23 +4674,28 @@ export async function obtenerConfiguracionPasarelaAction(
   pasarela = "PAYPHONE"
 ): Promise<ConfiguracionPasarela> {
   const { principal, variantes } = normalizarIdentificadorNegocio(negocio);
+  const admin: any = crearClienteAdmin();
   const supabase: any = await crearClienteServidor();
+  const cliente = admin || supabase;
+  const columnas = admin
+    ? "*"
+    : "psc_id, psc_negocio, psc_pasarela, psc_nombre_visible, psc_ambiente, psc_activo, psc_credenciales_publicas, psc_comision_porcentaje, psc_orden_visual, psc_detalle_pasarela";
 
   let data: any = null;
   try {
-    const { data: dCom } = await supabase
+    const { data: dCom } = await cliente
       .schema("comun_comercio")
       .from("com_pasarela_configuracion")
-      .select("*")
+      .select(columnas)
       .in("psc_negocio", variantes)
       .eq("psc_pasarela", pasarela)
       .maybeSingle();
     data = dCom;
 
     if (!data) {
-      const { data: dPub } = await supabase
+      const { data: dPub } = await cliente
         .from("com_pasarela_configuracion")
-        .select("*")
+        .select(columnas)
         .in("psc_negocio", variantes)
         .eq("psc_pasarela", pasarela)
         .maybeSingle();
@@ -4697,12 +4706,28 @@ export async function obtenerConfiguracionPasarelaAction(
   }
 
   if (!data) {
+    if (pasarela === "PLUX") {
+      return {
+        psc_negocio: principal,
+        psc_pasarela: "PLUX",
+        psc_nombre_visible: "PLUX (Tarjeta de Crédito / Débito)",
+        psc_ambiente: "PRUEBAS",
+        psc_activo: principal === "tranqi",
+        storeId: "",
+        modoSimulado: false,
+        comisionPorcentaje: 4.5,
+        remail: "admin.operaciones@tranqi24.com",
+        nombreComercio: "Tranqi",
+        visibilidad: "TODOS",
+        probadores: [],
+      };
+    }
     return {
       psc_negocio: principal,
       psc_pasarela: pasarela,
       psc_nombre_visible: "Payphone (Tarjetas y Saldo)",
       psc_ambiente: "PRUEBAS",
-      psc_activo: true,
+      psc_activo: principal !== "tranqi",
       storeId: "STORE-DEMO-TRANQI-001",
       modoSimulado: true,
       comisionPorcentaje: 6.0,
@@ -4711,6 +4736,7 @@ export async function obtenerConfiguracionPasarelaAction(
 
   const pub = data.psc_credenciales_publicas || {};
   const priv = data.psc_credenciales_privadas || {};
+  const det = data.psc_detalle_pasarela || {};
 
   return {
     psc_id: data.psc_id,
@@ -4722,13 +4748,18 @@ export async function obtenerConfiguracionPasarelaAction(
     storeId: pub.storeId || "STORE-DEMO-TRANQI-001",
     modoSimulado: pub.modoSimulado ?? priv.modoSimulado ?? true,
     token: priv.token || "",
-    comisionPorcentaje: Number(data.psc_comision_porcentaje) || 6.0,
-    detalle: data.psc_detalle_pasarela || {},
+    comisionPorcentaje: Number(data.psc_comision_porcentaje) || (pasarela === "PLUX" ? 4.5 : 6.0),
+    remail: pub.remail || "admin.operaciones@tranqi24.com",
+    nombreComercio: pub.nombre_comercio || "Tranqi",
+    visibilidad: det.visibilidad === "PROBADORES" ? "PROBADORES" : "TODOS",
+    probadores: Array.isArray(det.probadores) ? det.probadores : [],
+    detalle: det,
   };
 }
 
 /**
- * Guarda o actualiza la configuración de la pasarela Payphone
+ * Guarda o actualiza la configuración de la pasarela Payphone y, si se activa,
+ * desactiva PLUX para mantener un único procesador activo en el negocio.
  */
 export async function guardarConfiguracionPasarelaAction(datos: {
   negocio?: string;
@@ -4776,6 +4807,15 @@ export async function guardarConfiguracionPasarelaAction(datos: {
           },
           { onConflict: "psc_negocio, psc_pasarela" }
         );
+
+      if (datos.activo) {
+        await clienteActivo
+          .schema("comun_comercio")
+          .from("com_pasarela_configuracion")
+          .update({ psc_activo: false, psc_actualizado_en: new Date().toISOString() })
+          .eq("psc_negocio", negocio)
+          .eq("psc_pasarela", "PLUX");
+      }
     } catch {
       try {
         await clienteActivo.from("com_pasarela_configuracion").upsert(
@@ -4795,6 +4835,79 @@ export async function guardarConfiguracionPasarelaAction(datos: {
         console.error("Error al guardar pasarela:", err);
       }
     }
+  }
+
+  revalidatePath("/panel");
+  return { ok: true };
+}
+
+/**
+ * Guarda o actualiza la configuración de la pasarela PLUX (PagoPlux) y, si se
+ * activa, desactiva Payphone para mantener un único procesador activo.
+ */
+export async function guardarConfiguracionPluxAction(datos: {
+  negocio?: string;
+  remail: string;
+  nombreComercio: string;
+  clienteId?: string;
+  claveSecreta?: string;
+  ambiente: "PRUEBAS" | "PRODUCCION";
+  visibilidad: "TODOS" | "PROBADORES";
+  probadores?: string[];
+  activo: boolean;
+}): Promise<{ ok: boolean; error?: string }> {
+  const { principal } = normalizarIdentificadorNegocio(datos.negocio);
+  const negocio = principal;
+  const admin: any = crearClienteAdmin();
+  const supabase: any = await crearClienteServidor();
+  const clienteActivo = admin || supabase;
+
+  if (!datos.remail.trim() || !datos.nombreComercio.trim()) {
+    return { ok: false, error: "El correo del comercio en PLUX y el nombre comercial son obligatorios." };
+  }
+
+  const payload: Record<string, any> = {
+    psc_negocio: negocio,
+    psc_pasarela: "PLUX",
+    psc_nombre_visible: "PLUX (Tarjeta de Crédito / Débito)",
+    psc_ambiente: datos.ambiente,
+    psc_activo: datos.activo,
+    psc_orden_visual: 1,
+    psc_credenciales_publicas: {
+      remail: datos.remail.trim(),
+      nombre_comercio: datos.nombreComercio.trim(),
+    },
+    psc_detalle_pasarela: {
+      visibilidad: datos.visibilidad,
+      probadores: (datos.probadores ?? []).map((c) => c.trim()).filter(Boolean),
+    },
+    psc_actualizado_en: new Date().toISOString(),
+  };
+
+  if (datos.clienteId?.trim() && datos.claveSecreta?.trim()) {
+    payload.psc_credenciales_privadas = {
+      cliente_id: datos.clienteId.trim(),
+      clave_secreta: datos.claveSecreta.trim(),
+    };
+  }
+
+  try {
+    const { error } = await clienteActivo
+      .schema("comun_comercio")
+      .from("com_pasarela_configuracion")
+      .upsert(payload, { onConflict: "psc_negocio, psc_pasarela" });
+    if (error) return { ok: false, error: "No se pudo guardar la configuración de PLUX." };
+
+    if (datos.activo) {
+      await clienteActivo
+        .schema("comun_comercio")
+        .from("com_pasarela_configuracion")
+        .update({ psc_activo: false, psc_actualizado_en: new Date().toISOString() })
+        .eq("psc_negocio", negocio)
+        .eq("psc_pasarela", "PAYPHONE");
+    }
+  } catch (err: any) {
+    return { ok: false, error: err?.message || "Error al guardar la configuración de PLUX." };
   }
 
   revalidatePath("/panel");
