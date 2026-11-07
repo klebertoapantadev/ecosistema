@@ -106,8 +106,11 @@ export {
 } from "./capsula";
 export {
   crearManejadorMcp,
+  conDocumentos,
+  type DocumentoAdjunto,
   type Herramienta,
   type OpcionesServidorMcp,
+  type ResultadoConDocumentos,
 } from "./mcp-servidor";
 export {
   llamarConsola,

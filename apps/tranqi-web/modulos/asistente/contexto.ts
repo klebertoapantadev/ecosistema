@@ -8,6 +8,13 @@ export interface ContextoAsistente {
   sesion: SesionAsistente;
   /** Cliente PostgREST que actua como el usuario. RLS decide que ve. */
   supabase: ClienteConToken;
+  /**
+   * Origen HTTP con el que ARIA alcanzo este MCP (https://www.tranqi24.com).
+   * Las herramientas que devuelven un documento construyen con el la URL que
+   * ARIA descargara despues: si ARIA llego hasta aqui por ese origen, tambien
+   * llega al endpoint de documentos que cuelga de el.
+   */
+  origen: string;
 }
 
 /**
@@ -51,5 +58,6 @@ export async function autenticarPeticionMcp(
   if (!rolesPermitidos.includes(sesion.rol)) return null;
 
   const tokenUsuario = await acunarTokenSupabase(sesion.usuarioId, secretoJwt, urlProyecto);
-  return { sesion, supabase: crearClienteConToken(tokenUsuario) };
+  const origen = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") || new URL(peticion.url).origin;
+  return { sesion, supabase: crearClienteConToken(tokenUsuario), origen };
 }

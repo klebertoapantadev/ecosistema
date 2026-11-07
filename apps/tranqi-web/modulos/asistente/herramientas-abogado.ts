@@ -1,6 +1,7 @@
 import type { Herramienta } from "@eco/agentes-ia";
 import type { ContextoAsistente } from "./contexto";
 import { HERRAMIENTAS_ABOGADO_AGENDA } from "./herramientas-abogado-agenda";
+import { HERRAMIENTAS_DOCUMENTOS } from "./documentos";
 import { campos, dinero, fechaEcuador, fechaHoraEcuador, lista } from "./formato";
 
 // Herramientas del copiloto del ABOGADO (agente "Tranqi Asistente Abogado").
@@ -130,9 +131,9 @@ const agendaDelDia: HerramientaAbogado = {
 
 const documentosDelCaso: HerramientaAbogado = {
   descripcion:
-    "Documentos del expediente de un caso asignado, con su estado de revision. " +
-    "Devuelve METADATOS, no el contenido: si necesitas leer un documento, dilo, no " +
-    "supongas lo que dice a partir del nombre del archivo.",
+    "Documentos del expediente de un caso asignado, con su id y estado de revision. " +
+    "Devuelve METADATOS, no el contenido: para leer uno, pasa su id a leer_documento. " +
+    "No supongas lo que dice a partir del nombre del archivo.",
   esquema: {
     type: "object",
     properties: {
@@ -314,6 +315,8 @@ export const HERRAMIENTAS_ABOGADO: Record<string, HerramientaAbogado> = {
   casos_asignados: casosAsignados,
   agenda_del_dia: agendaDelDia,
   documentos_del_caso: documentosDelCaso,
+  // Billetera propia y lectura de documentos (billetera o expediente).
+  ...HERRAMIENTAS_DOCUMENTOS,
   plazos_proximos: plazosProximos,
   mis_honorarios: misHonorarios,
   mi_ficha: miFicha,

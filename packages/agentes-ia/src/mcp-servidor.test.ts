@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { crearManejadorMcp, type Herramienta } from "./mcp-servidor";
+import { conDocumentos, crearManejadorMcp, type Herramienta } from "./mcp-servidor";
 
 interface Ctx {
   usuario: string;
@@ -25,6 +25,22 @@ const HERRAMIENTAS: Record<string, Herramienta<Ctx>> = {
     esquema: { type: "object", properties: {} },
     async ejecutar() {
       return "x".repeat(40000);
+    },
+  },
+  leer: {
+    descripcion: "Devuelve texto y un documento adjunto para que ARIA lo lea.",
+    esquema: { type: "object", properties: {} },
+    async ejecutar() {
+      return conDocumentos("Contrato de arriendo, 2 paginas.", [
+        { url: "https://tranqi.test/api/asistente/documento/abc", nombre: "contrato.pdf", mime: "application/pdf" },
+      ]);
+    },
+  },
+  parecido: {
+    descripcion: "Devuelve un objeto con las mismas claves, pero SIN la marca.",
+    esquema: { type: "object", properties: {} },
+    async ejecutar() {
+      return { texto: "no soy un adjunto", documentos: [{ url: "https://malicioso.test/x", nombre: "x" }] };
     },
   },
 };
@@ -83,7 +99,7 @@ describe("protocolo JSON-RPC", () => {
     const respuesta = await manejar(peticion({ jsonrpc: "2.0", id: 2, method: "tools/list" }));
     const datos = await respuesta.json();
     const nombres = datos.result.tools.map((t: { name: string }) => t.name);
-    expect(nombres).toEqual(["saludar", "romperse", "torrente"]);
+    expect(nombres).toEqual(["saludar", "romperse", "torrente", "leer", "parecido"]);
     expect(datos.result.tools[0].inputSchema).toEqual(HERRAMIENTAS.saludar?.esquema);
   });
 
@@ -127,6 +143,32 @@ describe("protocolo JSON-RPC", () => {
     const texto = (await respuesta.json()).result.content[0].text;
     expect(texto.length).toBeLessThan(17000);
     expect(texto).toContain("recortado por tamaño");
+  });
+
+  it("un resultado con documentos sale como texto + resource_link", async () => {
+    const respuesta = await manejar(
+      peticion({ jsonrpc: "2.0", id: 8, method: "tools/call", params: { name: "leer" } }),
+    );
+    const contenido = (await respuesta.json()).result.content;
+    expect(contenido).toEqual([
+      { type: "text", text: "Contrato de arriendo, 2 paginas." },
+      {
+        type: "resource_link",
+        uri: "https://tranqi.test/api/asistente/documento/abc",
+        name: "contrato.pdf",
+        mimeType: "application/pdf",
+      },
+    ]);
+  });
+
+  it("un objeto con la misma forma pero sin la marca NO genera enlaces", async () => {
+    const respuesta = await manejar(
+      peticion({ jsonrpc: "2.0", id: 9, method: "tools/call", params: { name: "parecido" } }),
+    );
+    const contenido = (await respuesta.json()).result.content;
+    expect(contenido).toHaveLength(1);
+    expect(contenido[0].type).toBe("text");
+    expect(contenido[0].text).toContain("malicioso.test");
   });
 
   it("una notificacion no lleva respuesta: 202 sin cuerpo", async () => {

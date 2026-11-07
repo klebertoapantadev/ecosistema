@@ -70,7 +70,7 @@ Migración `20260823000001_tranqui_legal_casos_y_asistente.sql`.
 | :--- | :--- | :--- |
 | `trq_caso_judicial` | `cas_` | Nombre y prefijo fijados como ejemplo canónico en el estándar de nomenclatura §3. `cas_abogado_id` es nullable: un caso entra sin asignar y la asignación es TRQ-ADM-002 |
 | `trq_cita` | `cit_` | `cit_caso_id` nullable — la primera consulta ocurre antes de que haya expediente |
-| `trq_documento_caso` | `dcc_` | Solo metadatos; el binario va al bucket privado. `dcc_dictamen` (jsonb) es donde escriben TRQ-CLI-002 y TRQ-ABG-005 |
+| `trq_documento_caso` | `dcc_` | Solo metadatos; el binario va al bucket privado y `dcc_ruta_storage` lleva **`<bucket>/<ruta>`** (así lo resuelve `leer_documento` del asistente; hoy no hay pantalla que inserte aquí, TRQ-DOC-001 tiene que respetarlo). `dcc_dictamen` (jsonb) es donde escriben TRQ-CLI-002 y TRQ-ABG-005 |
 | `trq_honorario` | `hon_` | `numeric(12,2)`, nunca float. El abogado **lee**; no inserta ni aprueba |
 | `trq_conversacion` | `cnv_` | `cnv_id` **es** el `conversation_id` que se le pasa a ARIA — un solo identificador, sin tabla de correspondencia |
 | `trq_mensaje` | `msg_` | `msg_run_id` guarda el run de ARIA para poder abrir su traza desde `/panel/agentes` |
