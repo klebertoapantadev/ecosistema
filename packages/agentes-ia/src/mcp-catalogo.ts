@@ -17,6 +17,63 @@ export interface OpcionesServidorMcpCatalogo {
   consultarProductos?: (negocioId: string) => Promise<any[]>;
 }
 
+// Palabras que no aportan a la búsqueda: "permiso de salida para mi hijo" busca "permiso salida hijo".
+const PALABRAS_VACIAS = new Set([
+  "de", "del", "la", "el", "los", "las", "un", "una", "para", "por", "mi", "con", "y", "a", "en",
+]);
+
+/** Minúsculas, sin tildes y con guiones (también bajos) como espacios: "Salida del País" → "salida del pais". */
+export function normalizarTextoBusqueda(texto: unknown): string {
+  return String(texto ?? "")
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase()
+    .replace(/[-_]+/g, " ");
+}
+
+/** Palabras del término que cuentan para la búsqueda, sin repetidas ni palabras vacías. */
+export function palabrasSignificativas(termino: string): string[] {
+  const palabras = normalizarTextoBusqueda(termino)
+    .split(/[^a-z0-9]+/)
+    // Una sola letra está contenida en casi cualquier texto: no discrimina.
+    .filter((p) => p.length > 1 && !PALABRAS_VACIAS.has(p));
+  return [...new Set(palabras)];
+}
+
+// Texto normalizado donde se busca cada palabra: nombre, slug, descripción, etiquetas, usos y variantes.
+function textoBuscable(p: any): string {
+  const detalle = p.pro_detalle_producto ?? {};
+  const etiquetas = Array.isArray(detalle.etiquetas) ? detalle.etiquetas : [];
+  const usos = Array.isArray(detalle.usos) ? detalle.usos : Array.isArray(detalle.ocasiones) ? detalle.ocasiones : [];
+  const variantes = Array.isArray(p.variantes)
+    ? p.variantes.flatMap((v: any) => [v.var_nombre || v.nombre, v.var_detalle_variante?.descripcion_corta])
+    : [];
+  return normalizarTextoBusqueda(
+    [p.pro_nombre || p.nombre, p.pro_slug || p.slug, p.pro_descripcion || p.descripcion, ...etiquetas, ...usos, ...variantes]
+      .filter(Boolean)
+      .join(" "),
+  );
+}
+
+/**
+ * Filtra por las palabras del término y ordena por cuántas coinciden (más coincidencias primero;
+ * los empates conservan el orden recibido). Un producto entra si coincide al menos una palabra.
+ * Sin palabras significativas (término vacío o solo palabras vacías) devuelve la lista intacta.
+ */
+export function filtrarPorTermino<T>(productos: T[], termino: string): T[] {
+  const palabras = palabrasSignificativas(termino);
+  if (palabras.length === 0) return productos;
+
+  return productos
+    .map((producto) => {
+      const texto = textoBuscable(producto);
+      return { producto, puntuacion: palabras.filter((palabra) => texto.includes(palabra)).length };
+    })
+    .filter(({ puntuacion }) => puntuacion > 0)
+    .sort((a, b) => b.puntuacion - a.puntuacion)
+    .map(({ producto }) => producto);
+}
+
 export function crearServidorMcpCatalogo(opciones: OpcionesServidorMcpCatalogo) {
   const { negocioPorDefecto } = opciones;
 
@@ -110,7 +167,9 @@ export function crearServidorMcpCatalogo(opciones: OpcionesServidorMcpCatalogo) 
         properties: {
           termino: {
             type: "string",
-            description: "Texto de búsqueda o palabra clave (ej. 'rosas rojas', 'coreano', 'flores', 'divorcio', 'plomería')",
+            description:
+              "Texto de búsqueda: palabra clave o frase natural (ej. 'rosas rojas', 'coreano', 'divorcio', 'permiso de salida del país'). " +
+              "Cada palabra se busca por separado, sin distinguir tildes; primero salen los productos que coinciden con más palabras.",
           },
           categoria: {
             type: "string",
@@ -160,25 +219,8 @@ export function crearServidorMcpCatalogo(opciones: OpcionesServidorMcpCatalogo) 
           });
         }
 
-        if (args.termino && typeof args.termino === "string" && args.termino.trim().length > 0) {
-          const t = args.termino.toLowerCase().trim();
-          filtrados = filtrados.filter((p) => {
-            const nombre = String(p.pro_nombre || p.nombre || "").toLowerCase();
-            const slug = String(p.pro_slug || p.slug || "").toLowerCase();
-            const desc = String(p.pro_descripcion || p.descripcion || "").toLowerCase();
-            const tags = Array.isArray(p.pro_detalle_producto?.etiquetas)
-              ? p.pro_detalle_producto.etiquetas.join(" ").toLowerCase()
-              : "";
-            const usos = Array.isArray(p.pro_detalle_producto?.usos)
-              ? p.pro_detalle_producto.usos.join(" ").toLowerCase()
-              : Array.isArray(p.pro_detalle_producto?.ocasiones)
-              ? p.pro_detalle_producto.ocasiones.join(" ").toLowerCase()
-              : "";
-            const vars = Array.isArray(p.variantes)
-              ? p.variantes.map((v: any) => String(v.var_nombre || v.nombre || "")).join(" ").toLowerCase()
-              : "";
-            return nombre.includes(t) || slug.includes(t) || desc.includes(t) || tags.includes(t) || usos.includes(t) || vars.includes(t);
-          });
+        if (typeof args.termino === "string") {
+          filtrados = filtrarPorTermino(filtrados, args.termino);
         }
 
         const criterioUso = String(args.uso || args.ocasion || args.categoria || "").toLowerCase().trim();
