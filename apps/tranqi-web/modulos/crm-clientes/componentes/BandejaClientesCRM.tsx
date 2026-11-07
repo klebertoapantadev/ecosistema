@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import {
   Users, UserPlus, Search, Building2, User, Scale, Calendar,
   Folder, Eye, Plus, CheckCircle2, Shield, Sparkles, Filter, ChevronRight,
-  RefreshCw, Share2, Pencil, Power, Trash2, AlertCircle
+  RefreshCw, Share2, Pencil, Power, Trash2, AlertCircle, MessageSquare
 } from "lucide-react";
 import {
   obtenerClientesCRM,
@@ -14,6 +14,7 @@ import {
 } from "../acciones";
 import { ModalAltaClienteAsistida } from "./ModalAltaClienteAsistida";
 import { FichaClienteDetalleModal } from "./FichaClienteDetalleModal";
+import { BandejaProspectosChat } from "./BandejaProspectosChat";
 
 interface Props {
   negocio?: string;
@@ -21,6 +22,7 @@ interface Props {
 }
 
 export function BandejaClientesCRM({ negocio = "TRANQ", tipoPersoneriaPorDefecto }: Props) {
+  const [pestanaActiva, setPestanaActiva] = useState<"clientes" | "prospectos_chat">("clientes");
   const [clientes, setClientes] = useState<any[]>([]);
   const [cargando, setCargando] = useState(true);
   const [sincronizando, setSincronizando] = useState(false);
@@ -367,8 +369,58 @@ export function BandejaClientesCRM({ negocio = "TRANQ", tipoPersoneriaPorDefecto
         </div>
       </div>
 
-      {/* Barra de Búsqueda y Filtros */}
-      <div
+      {/* Selector de Pestañas */}
+      <div style={{ display: "flex", gap: "8px", borderBottom: "1px solid #E2E8F0", paddingBottom: "8px" }}>
+        <button
+          type="button"
+          onClick={() => setPestanaActiva("clientes")}
+          style={{
+            padding: "8px 16px",
+            borderRadius: "8px",
+            border: "none",
+            background: pestanaActiva === "clientes" ? "#0284C7" : "#F1F5F9",
+            color: pestanaActiva === "clientes" ? "#FFFFFF" : "#64748B",
+            fontWeight: 700,
+            fontSize: "0.88rem",
+            cursor: "pointer",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "8px",
+            transition: "all 0.15s ease",
+          }}
+        >
+          <Users size={16} />
+          Clientes
+        </button>
+        <button
+          type="button"
+          onClick={() => setPestanaActiva("prospectos_chat")}
+          style={{
+            padding: "8px 16px",
+            borderRadius: "8px",
+            border: "none",
+            background: pestanaActiva === "prospectos_chat" ? "#0284C7" : "#F1F5F9",
+            color: pestanaActiva === "prospectos_chat" ? "#FFFFFF" : "#64748B",
+            fontWeight: 700,
+            fontSize: "0.88rem",
+            cursor: "pointer",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "8px",
+            transition: "all 0.15s ease",
+          }}
+        >
+          <MessageSquare size={16} />
+          Contactos del chat
+        </button>
+      </div>
+
+      {pestanaActiva === "prospectos_chat" ? (
+        <BandejaProspectosChat />
+      ) : (
+        <>
+          {/* Barra de Búsqueda y Filtros */}
+          <div
         style={{
           background: "#FFFFFF",
           border: "1px solid #E2E8F0",
@@ -779,6 +831,8 @@ export function BandejaClientesCRM({ negocio = "TRANQ", tipoPersoneriaPorDefecto
           </div>
         )}
       </div>
+      </>
+      )}
 
       {/* Modales de Alta y Detalle 360 */}
       <ModalAltaClienteAsistida

@@ -1,5 +1,6 @@
 import { crearServidorMcpCatalogo } from "@eco/agentes-ia";
 import { obtenerCatalogoProductosAction } from "@eco/comercio";
+import { herramientaRegistrarContacto } from "../../../../modulos/crm-clientes/herramienta-registrar-contacto";
 
 const manejarMcp = crearServidorMcpCatalogo({
   negocioPorDefecto: "tranqi",
@@ -10,6 +11,9 @@ const manejarMcp = crearServidorMcpCatalogo({
     "sb_publishable_vC-t-FcOQ2Q5_XkTCcPKdQ_bveIh5YS",
   consultarProductos: async (negocioId) => {
     return await obtenerCatalogoProductosAction(negocioId);
+  },
+  herramientasAdicionales: {
+    registrar_contacto: herramientaRegistrarContacto,
   },
 });
 

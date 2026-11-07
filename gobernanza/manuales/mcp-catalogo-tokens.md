@@ -25,7 +25,7 @@ Cada negocio gestiona sus propias credenciales desde la consola web:
 3. Haz clic en el botón **"Crear Token"**.
 4. Define:
    - **Nombre:** Identificador descriptivo (ej. `Agente WhatsApp YCloud`).
-   - **Alcances (Scopes):** `catalogo:leer` (consulta de catálogo y precios) y/o `pedidos:crear`.
+   - **Alcances (Scopes):** `catalogo:leer` (consulta de catálogo y precios), `pedidos:crear` (generación de cotizaciones y pedidos) y/o `prospectos:crear` (registro de contactos captados por asistentes de chat).
    - **Vigencia:** Permanente o caducidad a 30, 90 o 365 días.
 5. **Copia la clave generada:** El token (ej. `eco_live_8f3a9e42...`) se muestra **una única vez**. Guarda este valor en tus variables de entorno o gestor de secretos.
 
@@ -90,6 +90,23 @@ Obtiene la ficha técnica, variantes de precio y fotos de un producto específic
 | `tarifa_iva` / `monto_iva_usd` | Porcentaje y monto de IVA. |
 | `pvp_total_usd` | Precio final con IVA: es el que se comunica al cliente. |
 | `frecuencia` | `var_frecuencia_recurrencia` de la variante: `null` si es pago único, o la periodicidad (`MENSUAL`, …) si se cobra de forma recurrente. Sin este campo un agente no distingue un plan mensual de uno anual. |
+
+### 3. `registrar_contacto` *(Exclusiva de Tranqi Legal — Alcance requerido: `prospectos:crear`)*
+Registra los datos de contacto de una persona interesada para que el equipo de Tranqi la llame. Requiere consentimiento expreso (LOPDP). Solo existe en el MCP de Tranqi Legal.
+
+**Argumentos:**
+```json
+{
+  "nombre": "Carlos Pérez",
+  "whatsapp": "0991234567",
+  "autoriza_contacto": true,
+  "correo": "carlos.perez@ejemplo.com",
+  "ciudad": "Quito",
+  "servicio_sku": "TRQ-DIV-MUT",
+  "interes": "Consulta sobre divorcio de mutuo acuerdo",
+  "canal": "buddy_web"
+}
+```
 
 ---
 
