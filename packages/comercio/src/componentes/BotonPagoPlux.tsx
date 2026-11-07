@@ -8,7 +8,7 @@
 // los scripts se vuelve a disparar con jQuery. La tarjeta se escribe en un
 // iframe de PLUX: nunca pasa por este componente.
 import React, { useEffect, useRef, useState } from "react";
-import { CheckCircle2, Lock, RefreshCw, XCircle } from "lucide-react";
+import { Lock, RefreshCw } from "lucide-react";
 import {
   confirmarPagoPluxAction,
   consultarPagoPluxAction,
@@ -23,9 +23,17 @@ interface Props {
   pagador: PagadorPlux;
   ambiente: string;
   alPagoAprobado: (identificador: string, pago: PagoPluxConsultado) => void;
+  /**
+   * Avisa al checkout de cada fase para que muestre «procesando» o el rechazo.
+   * `motivo` viene de PLUX (p. ej. MONTO_DISTINTO: hubo cobro y va a revisión).
+   */
+  alCambiarFase?: (fase: FasePlux, mensaje: string | null, motivo: string | null) => void;
+  /** Texto del botón principal, p. ej. el importe. */
+  etiqueta?: React.ReactNode;
 }
 
-type Fase = "inicio" | "preparando" | "listo" | "esperando" | "sin_confirmar" | "aprobado" | "rechazado" | "error";
+export type FasePlux = "inicio" | "preparando" | "listo" | "esperando" | "sin_confirmar" | "aprobado" | "rechazado" | "error";
+type Fase = FasePlux;
 
 const ESPERA_MS = 3000;
 const ESPERA_INTENTOS = 40; // 2 minutos: PLUX suele avisar en segundos
@@ -62,11 +70,18 @@ async function esperarEntornoPlux(): Promise<void> {
   throw new Error("PLUX no terminó de cargar");
 }
 
-export function BotonPagoPlux({ negocio, varianteId, pagador, ambiente, alPagoAprobado }: Props) {
+export function BotonPagoPlux({ negocio, varianteId, pagador, ambiente, alPagoAprobado, alCambiarFase, etiqueta }: Props) {
   const [fase, setFase] = useState<Fase>("inicio");
   const [mensaje, setMensaje] = useState<string | null>(null);
   const identificador = useRef<string | null>(null);
   const resuelto = useRef(false);
+  const motivo = useRef<string | null>(null);
+
+  const avisar = useRef(alCambiarFase);
+  avisar.current = alCambiarFase;
+  useEffect(() => {
+    avisar.current?.(fase, mensaje, motivo.current);
+  }, [fase, mensaje]);
 
   // Con #ButtonPaybox ya en el DOM se dispara el `load` que espera PLUX para
   // inyectar su botón. En un efecto y no tras el setState: así es seguro que
@@ -103,6 +118,7 @@ export function BotonPagoPlux({ negocio, varianteId, pagador, ambiente, alPagoAp
         setFase("aprobado");
         alPagoAprobado(id, r.data);
       } else {
+        motivo.current = r.data.motivo;
         setFase("rechazado");
         setMensaje(
           r.data.motivo === "MONTO_DISTINTO"
@@ -122,6 +138,7 @@ export function BotonPagoPlux({ negocio, varianteId, pagador, ambiente, alPagoAp
   async function preparar() {
     setFase("preparando");
     setMensaje(null);
+    motivo.current = null;
     const r = await prepararPagoPluxAction({ negocio, varianteId, pagador });
     if (!r.ok) {
       setFase("error");
@@ -170,79 +187,26 @@ export function BotonPagoPlux({ negocio, varianteId, pagador, ambiente, alPagoAp
     }
   }
 
-  const caja: React.CSSProperties = {
-    border: "1px solid #E2E8F0",
-    borderRadius: "10px",
-    padding: "14px",
-    marginTop: "14px",
-    background: "#F8FAFC",
-  };
+  const preparando = fase === "preparando";
+  const conBoton = fase === "inicio" || fase === "error" || fase === "rechazado" || preparando;
 
+  // Clases del checkout (ver checkout/estilos.ts): este botón solo vive dentro de él.
   return (
-    <div style={caja}>
-      <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
-        <Lock size={16} color="#0284C7" />
-        <strong style={{ fontSize: "0.85rem", color: "#1E293B" }}>Pagar con PLUX</strong>
-        {ambiente !== "PRODUCCION" && (
-          <span
-            style={{
-              marginLeft: "auto",
-              fontSize: "0.7rem",
-              fontWeight: 700,
-              background: "#FEF3C7",
-              color: "#92400E",
-              padding: "2px 8px",
-              borderRadius: "999px",
-            }}
-          >
-            MODO PRUEBA · solo tarjetas de prueba
-          </span>
-        )}
-      </div>
-
-      {(fase === "inicio" || fase === "error" || fase === "rechazado") && (
-        <button
-          type="button"
-          onClick={preparar}
-          style={{
-            background: "#0284C7",
-            color: "#FFFFFF",
-            border: "none",
-            padding: "10px 16px",
-            borderRadius: "8px",
-            fontSize: "0.85rem",
-            fontWeight: 700,
-            cursor: "pointer",
-          }}
-        >
-          {fase === "inicio" ? "Continuar con PLUX" : "Intentar de nuevo"}
+    <div className="ckt-plux-zona">
+      {conBoton && (
+        <button type="button" className="ckt-btn ckt-btn-primario" onClick={preparar} disabled={preparando}>
+          {preparando ? <RefreshCw size={18} className="ckt-girar" /> : <Lock size={18} />}
+          {preparando ? "Preparando…" : fase === "inicio" ? etiqueta ?? "Pagar" : "Reintentar"}
         </button>
       )}
 
-      {fase === "preparando" && (
-        <span style={{ fontSize: "0.82rem", color: "#475569", display: "inline-flex", gap: "6px", alignItems: "center" }}>
-          <RefreshCw size={14} className="animate-spin" /> Preparando el pago…
-        </span>
-      )}
+      {fase === "listo" && <p className="ckt-nota">Pulsa el botón de PLUX y escribe tu tarjeta en su ventana segura.</p>}
 
       {/* PLUX inyecta aquí su botón "Pagar ahora" y, al pulsarlo, su modal. */}
-      {(fase === "listo" || fase === "esperando" || fase === "sin_confirmar") && <div id="ButtonPaybox" style={{ minHeight: "48px" }} />}
+      {(fase === "listo" || fase === "esperando" || fase === "sin_confirmar") && <div id="ButtonPaybox" />}
 
-      {fase === "esperando" && (
-        <p style={{ fontSize: "0.82rem", color: "#475569", display: "flex", gap: "6px", alignItems: "center" }}>
-          <RefreshCw size={14} className="animate-spin" /> Pago autorizado. Esperando la confirmación de PLUX…
-        </p>
-      )}
-
-      {fase === "aprobado" && (
-        <p style={{ fontSize: "0.85rem", color: "#059669", display: "flex", gap: "6px", alignItems: "center" }}>
-          <CheckCircle2 size={16} /> PLUX confirmó el pago.
-        </p>
-      )}
-
-      {mensaje && (
-        <p style={{ fontSize: "0.8rem", color: fase === "sin_confirmar" ? "#475569" : "#B91C1C", display: "flex", gap: "6px" }}>
-          {fase !== "sin_confirmar" && <XCircle size={14} style={{ flexShrink: 0, marginTop: "2px" }} />}
+      {mensaje && fase === "error" && (
+        <p className="ckt-error" role="alert">
           {mensaje}
         </p>
       )}

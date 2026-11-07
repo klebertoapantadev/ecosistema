@@ -600,7 +600,7 @@ export function SeccionCoberturaCliente({
             precio_total: 57.49,
           }}
           alPagoExitoso={async () => {
-            setModalCheckoutAbierto(false);
+            // El modal sigue abierto para mostrar el recibo; se cierra con «Listo».
             await cargarCobertura();
           }}
         />

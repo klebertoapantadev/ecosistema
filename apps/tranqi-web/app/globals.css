@@ -862,6 +862,30 @@ p { line-height: 1.55; }
   --menta-honda: #056B57;
 }
 
+/* ── Checkout (TRQ-ADM-004) ──────────────────────────────────────────
+   El checkout es de plataforma (@eco/comercio) y no trae colores propios:
+   toma los de cada app por estas variables. Violeta como acción, menta como
+   estado positivo y naranja solo para lo urgente (datos que faltan, pago
+   rechazado). Maqueta aprobada: TRANQUI/demo/checkout.html. */
+:root {
+  --ckt-acento: var(--violeta);
+  --ckt-acento-hondo: var(--violeta-oscuro);
+  --ckt-acento-claro: var(--lavanda);
+  --ckt-acento-tenue: #F3EEFF;
+  --ckt-resumen: var(--violeta-tinta);
+  --ckt-positivo: var(--menta);
+  --ckt-positivo-hondo: var(--menta-honda);
+  --ckt-positivo-tenue: #EFFFF9;
+  --ckt-alerta: var(--naranja);
+  --ckt-alerta-tenue: #FFF1EA;
+  --ckt-chip: var(--amarillo);
+  --ckt-confeti-1: var(--violeta);
+  --ckt-confeti-2: var(--lavanda);
+  --ckt-confeti-3: var(--menta);
+  --ckt-confeti-4: var(--amarillo);
+  --ckt-confeti-5: var(--rosa);
+}
+
 /* ── El rail identifica el perfil ────────────────────────────────────
    Regla 2 del sistema visual: un usuario que ve las tres pantallas debe saber
    en cuál está sin leer el título. El rail no tiene color propio; lo toma de

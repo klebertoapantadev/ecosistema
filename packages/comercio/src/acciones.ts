@@ -4921,6 +4921,90 @@ export async function guardarConfiguracionPluxAction(datos: {
 /**
  * Consulta los datos de facturación configurados del usuario autenticado (para precarga en checkout)
  */
+interface DatosFacturacionPerfil {
+  razon_social: string;
+  tipo_identificacion: string;
+  identificacion: string;
+  telefono: string;
+  direccion: string;
+  correo_facturacion: string;
+}
+
+// Guarda los datos de facturación predeterminados en el perfil del usuario
+// (seg_usuario.usu_detalle_usuario.datos_facturacion) sin pisar el resto del detalle.
+async function persistirDatosFacturacion(clienteDb: any, usuarioId: string, datos: DatosFacturacionPerfil) {
+  const { data: usrRow, error: errorLectura } = await clienteDb
+    .schema("comun_seguridad")
+    .from("seg_usuario")
+    .select("usu_detalle_usuario")
+    .eq("usu_id", usuarioId)
+    .maybeSingle();
+  // Sin la lectura no se escribe: el update reemplaza todo usu_detalle_usuario.
+  if (errorLectura || !usrRow) throw errorLectura ?? new Error("Usuario no encontrado");
+
+  const detUsr = (usrRow.usu_detalle_usuario as Record<string, any>) || {};
+  const { error } = await clienteDb
+    .schema("comun_seguridad")
+    .from("seg_usuario")
+    .update({
+      usu_detalle_usuario: {
+        ...detUsr,
+        datos_facturacion: {
+          razon_social: datos.razon_social,
+          tipo_identificacion: datos.tipo_identificacion,
+          identificacion: datos.identificacion,
+          telefono: datos.telefono,
+          direccion: datos.direccion,
+          correo_facturacion: datos.correo_facturacion,
+          actualizado_en: new Date().toISOString(),
+        },
+      },
+      usu_actualizado_en: new Date().toISOString(),
+    })
+    .eq("usu_id", usuarioId);
+  if (error) throw error;
+}
+
+/**
+ * Guarda los datos de facturación del checkout en el perfil del usuario con
+ * sesión. Payphone lo hace al preparar el pago; PLUX prepara el pago en una
+ * RPC aparte, así que el checkout lo llama antes de abrirlo.
+ */
+export async function guardarDatosFacturacionAction(datos: {
+  razonSocial: string;
+  tipoIdentificacion: string;
+  identificacion: string;
+  correoFacturacion: string;
+  telefono: string;
+  direccion?: string;
+}): Promise<{ ok: boolean; error?: string }> {
+  const supabase: any = await crearClienteServidor();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "Sin sesión activa" };
+
+  const limpio = (v: string | undefined, max: number) => (v || "").trim().slice(0, max);
+  const razonSocial = limpio(datos.razonSocial, 300);
+  const identificacion = limpio(datos.identificacion, 20);
+  const correo = limpio(datos.correoFacturacion, 254);
+  if (!razonSocial || !identificacion || !correo) return { ok: false, error: "Datos de facturación incompletos." };
+
+  try {
+    await persistirDatosFacturacion(crearClienteAdmin() || supabase, user.id, {
+      razon_social: razonSocial,
+      tipo_identificacion: ["cedula", "ruc", "pasaporte"].includes(datos.tipoIdentificacion) ? datos.tipoIdentificacion : "cedula",
+      identificacion,
+      telefono: limpio(datos.telefono, 20),
+      direccion: limpio(datos.direccion, 300),
+      correo_facturacion: correo,
+    });
+    return { ok: true };
+  } catch {
+    return { ok: false, error: "No se pudieron guardar tus datos de facturación." };
+  }
+}
+
 export async function obtenerDatosFacturacionAction(): Promise<{
   ok: boolean;
   tienePerfilFacturacion: boolean;
@@ -5062,33 +5146,7 @@ export async function prepararPagoPayphoneAction(datos: {
   // Si el cliente solicitó guardar o actualizar sus datos de facturación por defecto:
   if (datos.pagador.guardarEnPerfil && clienteId && clienteDb) {
     try {
-      const { data: usrRow } = await clienteDb
-        .schema("comun_seguridad")
-        .from("seg_usuario")
-        .select("usu_detalle_usuario")
-        .eq("usu_id", clienteId)
-        .maybeSingle();
-
-      const detUsr = (usrRow?.usu_detalle_usuario as Record<string, any>) || {};
-      await clienteDb
-        .schema("comun_seguridad")
-        .from("seg_usuario")
-        .update({
-          usu_detalle_usuario: {
-            ...detUsr,
-            datos_facturacion: {
-              razon_social: snapshotFacturacion.razon_social,
-              tipo_identificacion: snapshotFacturacion.tipo_identificacion,
-              identificacion: snapshotFacturacion.identificacion,
-              telefono: snapshotFacturacion.telefono,
-              direccion: snapshotFacturacion.direccion,
-              correo_facturacion: snapshotFacturacion.correo_facturacion,
-              actualizado_en: new Date().toISOString(),
-            },
-          },
-          usu_actualizado_en: new Date().toISOString(),
-        })
-        .eq("usu_id", clienteId);
+      await persistirDatosFacturacion(clienteDb, clienteId, snapshotFacturacion);
     } catch (errPerfil) {
       console.warn("No se pudo actualizar datos_facturacion en perfil:", errPerfil);
     }

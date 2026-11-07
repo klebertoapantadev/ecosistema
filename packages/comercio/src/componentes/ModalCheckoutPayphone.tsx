@@ -1,35 +1,50 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+// Checkout de la plataforma (TRQ-ADM-004): facturación → pago → recibo.
+//
+// Sirve a PLUX y a Payphone; el negocio tiene una sola pasarela activa y aquí
+// se muestra esa. La tarjeta nunca pasa por este componente: PLUX la pide en
+// su propio modal y Payphone en su página (o en el simulador de pruebas).
+//
+// El diseño sale de la maqueta aprobada en el taller (TRANQUI/demo/checkout.html).
+// La apariencia de cada producto se define en su app con variables `--ckt-*`
+// (ver checkout/estilos.ts).
+import React, { useEffect, useRef, useState } from "react";
+import { ArrowLeft, Check, ChevronDown, ExternalLink, Lock, Receipt, RefreshCw, ShieldCheck, ShoppingBag, Smartphone, X } from "lucide-react";
 import {
-  CreditCard,
-  ShieldCheck,
-  CheckCircle2,
-  XCircle,
-  AlertTriangle,
-  ExternalLink,
-  RefreshCw,
-  X,
-  FileText,
-  User,
-  Mail,
-  Phone,
-  Hash,
-  Sparkles,
-  Lock,
-  Receipt,
-  MapPin,
-  Building,
-  Save,
-} from "lucide-react";
-import {
-  VarianteCatalogo,
+  type VarianteCatalogo,
   prepararPagoPayphoneAction,
   confirmarPagoPayphoneAction,
   obtenerDatosFacturacionAction,
+  guardarDatosFacturacionAction,
 } from "../acciones";
 import { obtenerPasarelasCheckoutAction, type PasarelaCheckout } from "../acciones-plux";
-import { BotonPagoPlux } from "./BotonPagoPlux";
+import { normalizarIdentificadorNegocio } from "../utils/negocio";
+import { BotonPagoPlux, type FasePlux } from "./BotonPagoPlux";
+import { ESTILOS_CHECKOUT } from "./checkout/estilos";
+import {
+  errorCampo,
+  normalizarTipoIdentificacion,
+  type CampoFacturacion,
+  type TipoIdentificacion,
+} from "./checkout/validacion";
+import {
+  Alerta,
+  Campo,
+  Interruptor,
+  PanelProcesando,
+  PanelRechazo,
+  Pasos,
+  ReciboPago,
+  Segmentos,
+  TarjetaVisual,
+  dinero,
+  useContador,
+  type DatosRecibo,
+  type PasoSiguiente,
+} from "./checkout/piezas";
+
+export type { PasoSiguiente } from "./checkout/piezas";
 
 interface Props {
   abierto: boolean;
@@ -37,8 +52,89 @@ interface Props {
   productoNombre: string;
   variante: VarianteCatalogo | null;
   negocio?: string;
+  /**
+   * Se llama al cerrar el checkout tras un pago aprobado (no en el instante del
+   * pago): si el llamador refresca o desmonta el modal, el cliente ya vio su recibo.
+   */
   alPagoExitoso?: (transaccion: any) => void;
+  /** «¿Qué sigue?» del recibo. Sin él se muestran pasos genéricos y ciertos. */
+  pasosSiguientes?: PasoSiguiente[];
 }
+
+type Etapa = "facturacion" | "pago" | "procesando" | "recibo" | "rechazo";
+
+interface ResultadoPago {
+  estado?: string;
+  mensaje?: string | null;
+  clientTransactionId?: string;
+  autorizacionCodigo?: string | null;
+  marcaTarjeta?: string | null;
+  ultimosDigitos?: string | null;
+  /** Motivo de PLUX; MONTO_DISTINTO significa que hubo cobro y queda en revisión. */
+  motivo?: string | null;
+  [clave: string]: unknown;
+}
+
+/**
+ * Payphone devuelve `codigoAutorizacion` y `tarjeta` («Visa •••• 1234»); PLUX,
+ * `autorizacionCodigo`, `marcaTarjeta` y `ultimosDigitos`. El recibo usa las de PLUX.
+ */
+function normalizarResultado(res: Record<string, any>): ResultadoPago {
+  const tarjeta = typeof res.tarjeta === "string" ? res.tarjeta : "";
+  const [marcaTexto, digitos] = tarjeta.split("••••").map((t: string) => t.trim());
+  return {
+    ...res,
+    autorizacionCodigo: res.autorizacionCodigo ?? res.codigoAutorizacion ?? null,
+    marcaTarjeta: res.marcaTarjeta ?? (marcaTexto || null),
+    ultimosDigitos: res.ultimosDigitos ?? (digitos || null),
+  };
+}
+
+const ORDEN: Record<Etapa, number> = { facturacion: 0, pago: 1, procesando: 1, rechazo: 1, recibo: 2 };
+// Si la pasarela responde al instante, la animación de «procesando» se ve
+// igual lo suficiente para entender qué pasó.
+const MIN_PROCESANDO_MS = 2200;
+const CAMPOS: CampoFacturacion[] = ["identificacion", "razonSocial", "email", "telefono", "direccion"];
+const TIPOS_DOCUMENTO: { valor: TipoIdentificacion; texto: string }[] = [
+  { valor: "cedula", texto: "Cédula" },
+  { valor: "ruc", texto: "RUC" },
+  { valor: "pasaporte", texto: "Pasaporte" },
+];
+const NOMBRE_DOCUMENTO: Record<TipoIdentificacion, string> = { cedula: "Cédula", ruc: "RUC", pasaporte: "Pasaporte" };
+const NOMBRE_MARCA: Record<string, string> = { tranqi: "tranqi", tinkay: "tinkay", fastfix: "FastFix", margaritas: "Margaritas" };
+const TARJETA_OCULTA = "•••• •••• •••• ••••";
+
+// Tarjetas del simulador de Payphone (sin cobro real). La Diners se rechaza.
+const PRESET_INICIAL = { texto: "Visa aprobada", numero: "4500 8912 3456 7890", exp: "08/29", cvv: "456", marca: "Visa" };
+const PRESETS_SIMULADOR = [
+  PRESET_INICIAL,
+  { texto: "Mastercard aprobada", numero: "5412 7534 8901 2345", exp: "11/28", cvv: "123", marca: "Mastercard" },
+  { texto: "Diners rechazada", numero: "3612 3456 7890 12", exp: "04/27", cvv: "890", marca: "Diners Club" },
+];
+
+function detectarMarca(numero: string): string {
+  const limpio = numero.replace(/\s+/g, "");
+  if (/^5[1-5]/.test(limpio) || /^2[2-7]/.test(limpio)) return "Mastercard";
+  if (/^3[47]/.test(limpio)) return "American Express";
+  if (/^3(?:0[0-5]|[68])/.test(limpio)) return "Diners Club";
+  return "Visa";
+}
+
+function textoOferta(variante: VarianteCatalogo): string {
+  const tipo = (variante.var_tipo_oferta || "").toUpperCase();
+  if (tipo === "SUSCRIPCION" || tipo === "RECURRENTE") {
+    const f = (variante.var_frecuencia_recurrencia || "").toLowerCase();
+    return f ? `Suscripción ${f}` : "Suscripción";
+  }
+  return "Pago único";
+}
+
+function medioDePago(r: ResultadoPago): string {
+  const marca = r.marcaTarjeta || "Tarjeta";
+  return r.ultimosDigitos ? `${marca} •••• ${r.ultimosDigitos}` : marca;
+}
+
+const esperar = (ms: number) => new Promise<void>((ok) => setTimeout(ok, ms));
 
 export function ModalCheckoutPayphone({
   abierto,
@@ -47,48 +143,58 @@ export function ModalCheckoutPayphone({
   variante,
   negocio = "tranqi",
   alPagoExitoso,
+  pasosSiguientes,
 }: Props) {
-  // Estado del formulario de facturación del pagador
+  // Facturación
   const [razonSocial, setRazonSocial] = useState("");
-  const [tipoIdentificacion, setTipoIdentificacion] = useState("cedula");
+  const [tipoIdentificacion, setTipoIdentificacion] = useState<TipoIdentificacion>("cedula");
   const [identificacion, setIdentificacion] = useState("");
   const [email, setEmail] = useState("");
   const [telefono, setTelefono] = useState("");
   const [direccion, setDireccion] = useState("");
-
-  // Control de perfil guardado vs ad-hoc
   const [tienePerfilFacturacion, setTienePerfilFacturacion] = useState(false);
   const [guardarEnPerfil, setGuardarEnPerfil] = useState(false);
   const [cargandoPerfil, setCargandoPerfil] = useState(false);
+  const [tocados, setTocados] = useState<Partial<Record<CampoFacturacion, boolean>>>({});
+  const [intentoEnvio, setIntentoEnvio] = useState(false);
+  const [sacudir, setSacudir] = useState(0);
 
-  // Estado del simulador de tarjeta interactivo
-  const [tarjetaNumero, setTarjetaNumero] = useState("4500 8912 3456 7890");
+  // Simulador de Payphone
+  const [tarjetaNumero, setTarjetaNumero] = useState(PRESET_INICIAL.numero);
   const [tarjetaTitular, setTarjetaTitular] = useState("");
-  const [tarjetaExp, setTarjetaExp] = useState("08/29");
-  const [tarjetaCvv, setTarjetaCvv] = useState("456");
-  const [tarjetaMarca, setTarjetaMarca] = useState("Visa");
-  const [enDesafioOTP, setEnDesafioOTP] = useState(false);
-  const [codigoOTP, setCodigoOTP] = useState("");
+  const [tarjetaExp, setTarjetaExp] = useState(PRESET_INICIAL.exp);
+  const [tarjetaCvv, setTarjetaCvv] = useState(PRESET_INICIAL.cvv);
+  const [tarjetaMarca, setTarjetaMarca] = useState(PRESET_INICIAL.marca);
 
-  // Estado del proceso
-  const [paso, setPaso] = useState<"formulario" | "simulando" | "real_abierto" | "resultado">("formulario");
+  // Flujo
+  const [etapa, setEtapa] = useState<Etapa>("facturacion");
+  const [sentido, setSentido] = useState<"adelante" | "atras">("adelante");
   const [modoSimulado, setModoSimulado] = useState(true);
   const [procesando, setProcesando] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-
-  // Datos devueltos tras preparar
   const [prepData, setPrepData] = useState<{
     paymentId: string;
     clientTransactionId: string;
     payWithPayPhone: string | null;
     payWithCard: string | null;
+    esSimulado: boolean;
   } | null>(null);
+  const [resultadoPago, setResultadoPago] = useState<ResultadoPago | null>(null);
+  const [fechaPago, setFechaPago] = useState<Date | null>(null);
+  const [avisoPendiente, setAvisoPendiente] = useState<string | null>(null);
+  const [detalleAbierto, setDetalleAbierto] = useState(false);
+  const [fasePlux, setFasePlux] = useState<FasePlux>("inicio");
 
-  // Resultado de confirmación
-  const [resultadoPago, setResultadoPago] = useState<any | null>(null);
+  const etapaActual = useRef<Etapa>("facturacion");
+  const inicioProcesando = useRef(0);
+  // Cambia al cerrar: un pago que termine después ya no toca este checkout.
+  const sesion = useRef(0);
+  const caja = useRef<HTMLDivElement>(null);
+  const alEscape = useRef<() => void>(() => {});
+  // Pago aprobado que aún no se notificó al llamador (se notifica al cerrar).
+  const pagoAprobado = useRef<ResultadoPago | null>(null);
 
-  // Se consulta qué pasarela activa corresponde mostrar al usuario según la
-  // configuración del negocio (PLUX o Payphone, nunca las dos a la vez).
+  // Pasarela activa del negocio (PLUX o Payphone, nunca las dos a la vez).
   const [plux, setPlux] = useState<PasarelaCheckout | null>(null);
   const [cargandoPasarela, setCargandoPasarela] = useState(true);
   useEffect(() => {
@@ -97,9 +203,10 @@ export function ModalCheckoutPayphone({
     setCargandoPasarela(true);
     obtenerPasarelasCheckoutAction(negocio)
       .then((r) => {
-        if (!cancelado) {
-          setPlux(r.ok ? r.data.find((p) => p.pasarela === "PLUX") ?? null : null);
-        }
+        if (!cancelado) setPlux(r.ok ? r.data.find((p) => p.pasarela === "PLUX") ?? null : null);
+      })
+      .catch(() => {
+        if (!cancelado) setPlux(null);
       })
       .finally(() => {
         if (!cancelado) setCargandoPasarela(false);
@@ -109,48 +216,46 @@ export function ModalCheckoutPayphone({
     };
   }, [abierto, negocio]);
 
-  // Cargar datos de facturación existentes al abrir el modal
+  // Datos de facturación guardados (perfil o, como respaldo, este navegador).
   useEffect(() => {
     if (!abierto) return;
-
     let cancelado = false;
     setCargandoPerfil(true);
-
     obtenerDatosFacturacionAction()
       .then((res) => {
         if (cancelado) return;
         if (res.ok && res.tienePerfilFacturacion) {
           setTienePerfilFacturacion(true);
           setRazonSocial(res.razonSocial || "");
-          setTipoIdentificacion(res.tipoIdentificacion || "cedula");
+          setTipoIdentificacion(normalizarTipoIdentificacion(res.tipoIdentificacion));
           setIdentificacion(res.identificacion || "");
           setEmail(res.correoFacturacion || "");
           setTelefono(res.telefono || "");
           setDireccion(res.direccion || "");
           setGuardarEnPerfil(false);
         } else if (res.ok && !res.tienePerfilFacturacion) {
-          // Si no tiene perfil configurado en BDD, verificar respaldo en localStorage o datos de registro
-          let localDatos: any = null;
+          let local: any = null;
           try {
-            const guardadoLocal = localStorage.getItem("tranqi_datos_facturacion");
-            if (guardadoLocal) localDatos = JSON.parse(guardadoLocal);
-          } catch { /* Ignorar */ }
-
-          if (localDatos?.identificacion || localDatos?.razonSocial) {
+            const guardado = localStorage.getItem("tranqi_datos_facturacion");
+            if (guardado) local = JSON.parse(guardado);
+          } catch {
+            /* sin respaldo local */
+          }
+          if (local?.identificacion || local?.razonSocial) {
             setTienePerfilFacturacion(true);
-            setRazonSocial(localDatos.razonSocial || res.razonSocial || "");
-            setTipoIdentificacion(localDatos.tipoIdentificacion || "cedula");
-            setIdentificacion(localDatos.identificacion || "");
-            setEmail(localDatos.correoFacturacion || res.correoFacturacion || "");
-            setTelefono(localDatos.telefono || res.telefono || "");
-            setDireccion(localDatos.direccion || "");
+            setRazonSocial(local.razonSocial || res.razonSocial || "");
+            setTipoIdentificacion(normalizarTipoIdentificacion(local.tipoIdentificacion));
+            setIdentificacion(local.identificacion || "");
+            setEmail(local.correoFacturacion || res.correoFacturacion || "");
+            setTelefono(local.telefono || res.telefono || "");
+            setDireccion(local.direccion || "");
             setGuardarEnPerfil(false);
           } else {
             setTienePerfilFacturacion(false);
             setRazonSocial(res.razonSocial || "");
             setEmail(res.correoFacturacion || "");
             setTelefono(res.telefono || "");
-            setGuardarEnPerfil(true); // Pre-marcado para invitar a guardar sus datos
+            setGuardarEnPerfil(true); // invita a guardar sus datos
           }
         }
       })
@@ -162,51 +267,177 @@ export function ModalCheckoutPayphone({
       .finally(() => {
         if (!cancelado) setCargandoPerfil(false);
       });
-
     return () => {
       cancelado = true;
     };
   }, [abierto]);
 
+  // Mientras está abierto: sin scroll detrás, foco atrapado dentro y Escape para cerrar.
+  const visible = abierto && Boolean(variante);
+  useEffect(() => {
+    if (!visible) return;
+    const overflowPrevio = document.body.style.overflow;
+    const focoPrevio = document.activeElement as HTMLElement | null;
+    document.body.style.overflow = "hidden";
+    caja.current?.focus();
+    const alPulsar = (e: KeyboardEvent) => {
+      if (e.key === "Escape") return alEscape.current();
+      if (e.key !== "Tab" || !caja.current) return;
+      const enfocables = Array.from(
+        caja.current.querySelectorAll<HTMLElement>(
+          'button:not([disabled]), [href], input:not([disabled]), select, textarea, [tabindex]:not([tabindex="-1"])',
+        ),
+      ).filter((el) => el.offsetParent !== null);
+      const primero = enfocables[0];
+      const ultimo = enfocables[enfocables.length - 1];
+      if (!primero || !ultimo) return;
+      const activo = document.activeElement;
+      if (e.shiftKey && (activo === primero || !caja.current.contains(activo))) {
+        e.preventDefault();
+        ultimo.focus();
+      } else if (!e.shiftKey && (activo === ultimo || !caja.current.contains(activo))) {
+        e.preventDefault();
+        primero.focus();
+      }
+    };
+    window.addEventListener("keydown", alPulsar);
+    return () => {
+      document.body.style.overflow = overflowPrevio;
+      window.removeEventListener("keydown", alPulsar);
+      focoPrevio?.focus?.();
+    };
+  }, [visible]);
+
+  const totalResumen = useContador(abierto && variante ? variante.precio_total : 0, 350);
+
   if (!abierto || !variante) return null;
 
-  // Detectar marca según primeros dígitos
-  const detectarMarca = (num: string) => {
-    const limpio = num.replace(/\s+/g, "");
-    if (limpio.startsWith("4")) return "Visa";
-    if (/^5[1-5]/.test(limpio) || /^2[2-7]/.test(limpio)) return "Mastercard";
-    if (/^3[47]/.test(limpio)) return "American Express";
-    if (/^3(?:0[0-5]|[68])/.test(limpio)) return "Diners Club";
-    return "Visa";
+  const marca = NOMBRE_MARCA[normalizarIdentificadorNegocio(negocio).principal] ?? negocio;
+  const nombrePasarela = plux ? "PLUX" : "Payphone";
+  const total = variante.precio_total;
+  const tarifaIva = Number.isFinite(variante.var_tarifa_iva_porcentaje)
+    ? variante.var_tarifa_iva_porcentaje
+    : variante.var_precio > 0
+      ? Math.round((variante.monto_iva / variante.var_precio) * 100)
+      : 0;
+  const esSuscripcion = ["SUSCRIPCION", "RECURRENTE"].includes((variante.var_tipo_oferta || "").toUpperCase());
+
+  // ── Validación ──
+  const valores: Record<CampoFacturacion, string> = { identificacion, razonSocial, email, telefono, direccion };
+  const opcionesValidacion = { tipoIdentificacion, direccionObligatoria: Boolean(plux) };
+  const errores = Object.fromEntries(CAMPOS.map((c) => [c, errorCampo(c, valores[c], opcionesValidacion)])) as Record<
+    CampoFacturacion,
+    string | null
+  >;
+  const errorVisible = (c: CampoFacturacion) => (intentoEnvio || tocados[c] ? errores[c] : null);
+  const esValido = (c: CampoFacturacion) => !errores[c] && valores[c].trim() !== "";
+  const tocar = (c: CampoFacturacion) => setTocados((t) => (t[c] ? t : { ...t, [c]: true }));
+
+  // ── Navegación ──
+  const irA = (nueva: Etapa) => {
+    setSentido(ORDEN[nueva] < ORDEN[etapaActual.current] ? "atras" : "adelante");
+    etapaActual.current = nueva;
+    setEtapa(nueva);
+    setErrorMsg(null);
   };
 
-  const aplicarPresetTarjeta = (preset: {
-    numero: string;
-    exp: string;
-    cvv: string;
-    marca: string;
-    otp?: boolean;
-  }) => {
-    setTarjetaNumero(preset.numero);
-    setTarjetaExp(preset.exp);
-    setTarjetaCvv(preset.cvv);
-    setTarjetaMarca(preset.marca);
-    if (!tarjetaTitular) {
-      setTarjetaTitular(`${razonSocial.trim() || "CLIENTE"}`.toUpperCase());
+  const iniciarProcesando = () => {
+    inicioProcesando.current = Date.now();
+    setAvisoPendiente(null);
+    irA("procesando");
+  };
+
+  const terminarPago = async (res: ResultadoPago) => {
+    const mia = sesion.current;
+    const resta = MIN_PROCESANDO_MS - (Date.now() - inicioProcesando.current);
+    if (resta > 0) await esperar(resta);
+    if (mia !== sesion.current) return;
+    setResultadoPago(res);
+    if (res.estado === "APROBADO") {
+      pagoAprobado.current = res;
+      setFechaPago(new Date());
+      irA("recibo");
+    } else {
+      irA("rechazo");
     }
   };
 
-  // 1. Manejar envío para preparar transacción
-  const manejarPrepararPago = async (e: React.FormEvent) => {
+  const volverAPagoConError = (mensaje: string, mia: number) => {
+    if (mia !== sesion.current) return;
+    irA("pago");
+    setErrorMsg(mensaje);
+  };
+
+  const reiniciarYCerrar = () => {
+    sesion.current++;
+    const aprobado = pagoAprobado.current;
+    pagoAprobado.current = null;
+    // Sin restos del pago anterior; al reabrir se recargan los datos del perfil.
+    setRazonSocial("");
+    setTipoIdentificacion("cedula");
+    setIdentificacion("");
+    setEmail("");
+    setTelefono("");
+    setDireccion("");
+    setTarjetaTitular("");
+    etapaActual.current = "facturacion";
+    setEtapa("facturacion");
+    setSentido("adelante");
+    setPrepData(null);
+    setResultadoPago(null);
+    setFechaPago(null);
+    setErrorMsg(null);
+    setAvisoPendiente(null);
+    setIntentoEnvio(false);
+    setTocados({});
+    setDetalleAbierto(false);
+    setFasePlux("inicio");
+    alCerrar();
+    if (aprobado) alPagoExitoso?.(aprobado);
+  };
+
+  // Cerrar a media confirmación cortaría la espera de PLUX (el botón vive en
+  // el modal); con el aviso de «sin confirmar» ya se puede cerrar.
+  const cierreBloqueado = etapa === "procesando" && !avisoPendiente;
+
+  // Escape no cierra mientras se cobra ni con la ventana de PLUX en curso:
+  // cerrar desmontaría el botón y con él la espera de la confirmación.
+  const pluxEnCurso = Boolean(plux) && etapa === "pago" && fasePlux !== "inicio" && fasePlux !== "error";
+  alEscape.current = () => {
+    if (!cierreBloqueado && !pluxEnCurso) reiniciarYCerrar();
+  };
+
+  // ── Paso 1: facturación ──
+  const continuarFacturacion = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
+    setIntentoEnvio(true);
+    const conError = CAMPOS.find((c) => errores[c]);
+    if (conError) {
+      setSacudir((n) => n + 1);
+      document.getElementById(`ckt-${conError}`)?.focus();
+      return;
+    }
+    setTarjetaTitular(razonSocial.trim().toUpperCase());
 
-    if (!identificacion.trim() || !email.trim() || !razonSocial.trim() || !telefono.trim()) {
-      setErrorMsg("Por favor completa todos los campos de facturación obligatorios (*).");
+    if (plux) {
+      if (guardarEnPerfil) {
+        setProcesando(true);
+        // No bloquea el pago: si no se guarda, se factura igual con estos datos.
+        await guardarDatosFacturacionAction({
+          razonSocial,
+          tipoIdentificacion,
+          identificacion,
+          correoFacturacion: email,
+          telefono,
+          direccion,
+        }).catch(() => null);
+        setProcesando(false);
+      }
+      irA("pago");
       return;
     }
 
-    setTarjetaTitular(razonSocial.trim().toUpperCase());
     setProcesando(true);
     try {
       const res = await prepararPagoPayphoneAction({
@@ -229,59 +460,45 @@ export function ModalCheckoutPayphone({
         },
         esSimulado: modoSimulado,
       });
-
       if (!res.ok || !res.paymentId || !res.clientTransactionId) {
-        setErrorMsg(res.error || "No se pudo preparar la transacción de pago.");
-        setProcesando(false);
+        setErrorMsg(res.error || "No se pudo preparar el pago.");
         return;
       }
-
       setPrepData({
         paymentId: res.paymentId,
         clientTransactionId: res.clientTransactionId,
         payWithPayPhone: res.payWithPayPhone ?? null,
         payWithCard: res.payWithCard ?? null,
+        esSimulado: Boolean(res.esSimulado),
       });
-
-      if (res.esSimulado) {
-        setPaso("simulando");
-      } else {
-        setPaso("real_abierto");
-        // Abrir pasarela real en pestaña nueva (PCI DSS compliant)
-        if (res.payWithCard) {
-          window.open(res.payWithCard, "_blank", "noopener,noreferrer");
-        }
-      }
+      irA("pago");
+      // Pasarela real en pestaña aparte (PCI DSS): la tarjeta no pasa por aquí.
+      if (!res.esSimulado && res.payWithCard) window.open(res.payWithCard, "_blank", "noopener,noreferrer");
     } catch (err: any) {
-      setErrorMsg(err.message || "Error inesperado al conectar con la pasarela.");
+      setErrorMsg(err?.message || "No pudimos conectar con la pasarela.");
     } finally {
       setProcesando(false);
     }
   };
 
-  // 2. Manejar simulación interactiva completa de tarjeta
-  const manejarProcesarSimulacionTarjeta = async (resultadoForzado?: "APROBADO" | "RECHAZADO") => {
+  // ── Paso 2: Payphone ──
+  const aplicarPreset = (p: (typeof PRESETS_SIMULADOR)[number]) => {
+    setTarjetaNumero(p.numero);
+    setTarjetaExp(p.exp);
+    setTarjetaCvv(p.cvv);
+    setTarjetaMarca(p.marca);
+    if (!tarjetaTitular) setTarjetaTitular((razonSocial.trim() || "CLIENTE").toUpperCase());
+  };
+
+  const pagarSimulado = async (forzado?: "APROBADO" | "RECHAZADO") => {
     if (!prepData) return;
+    if (tarjetaNumero.replace(/\s+/g, "").length < 14) return setErrorMsg("Escribe un número de tarjeta válido.");
+    if (!/^\d{2}\/\d{2}$/.test(tarjetaExp)) return setErrorMsg("Escribe el vencimiento como MM/AA.");
+    if (tarjetaCvv.length < 3) return setErrorMsg("Escribe el código de seguridad (CVV).");
 
-    if (!tarjetaNumero || tarjetaNumero.replace(/\s+/g, "").length < 14) {
-      setErrorMsg("Ingresa un número de tarjeta válido (16 dígitos).");
-      return;
-    }
-    if (!tarjetaExp || !tarjetaExp.includes("/")) {
-      setErrorMsg("Ingresa la fecha de expiración en formato MM/AA.");
-      return;
-    }
-    if (!tarjetaCvv || tarjetaCvv.length < 3) {
-      setErrorMsg("Ingresa el código de seguridad CVV (3-4 dígitos).");
-      return;
-    }
-
-    setProcesando(true);
-    setErrorMsg(null);
-
-    const ultimos4 = tarjetaNumero.replace(/\s+/g, "").slice(-4);
-    const resultado = resultadoForzado || (tarjetaNumero.includes("3612") ? "RECHAZADO" : "APROBADO");
-
+    const resultado = forzado || (tarjetaNumero.includes("3612") ? "RECHAZADO" : "APROBADO");
+    const mia = sesion.current;
+    iniciarProcesando();
     try {
       const res = await confirmarPagoPayphoneAction({
         negocio,
@@ -290,37 +507,24 @@ export function ModalCheckoutPayphone({
         esSimulado: true,
         resultadoSimulacion: resultado,
         marcaTarjetaSimulada: tarjetaMarca,
-        ultimosDigitos: ultimos4,
+        ultimosDigitos: tarjetaNumero.replace(/\s+/g, "").slice(-4),
         titularNombre: tarjetaTitular || razonSocial || "CLIENTE",
         varianteId: variante.var_id,
         productoNombre,
         clienteEmail: email,
       });
-
-      if (!res.ok) {
-        setErrorMsg(res.error || "Error al procesar simulación.");
-        setProcesando(false);
-        return;
-      }
-
-      setResultadoPago(res);
-      setPaso("resultado");
-      if (resultado === "APROBADO" && alPagoExitoso) {
-        alPagoExitoso(res);
-      }
+      // Un rechazo llega con ok:false y estado: es un resultado, no un error técnico.
+      if (!res.ok && !(res as any).estado) return volverAPagoConError(res.error || "No se pudo procesar la simulación.", mia);
+      await terminarPago(normalizarResultado(res));
     } catch (err: any) {
-      setErrorMsg(err.message || "Error al confirmar simulación.");
-    } finally {
-      setProcesando(false);
+      volverAPagoConError(err?.message || "No se pudo confirmar la simulación.", mia);
     }
   };
 
-  // 3. Manejar confirmación de transacción real
-  const manejarConfirmarPagoReal = async () => {
+  const confirmarPagoReal = async () => {
     if (!prepData) return;
-    setProcesando(true);
-    setErrorMsg(null);
-
+    const mia = sesion.current;
+    iniciarProcesando();
     try {
       const res = await confirmarPagoPayphoneAction({
         negocio,
@@ -328,1211 +532,435 @@ export function ModalCheckoutPayphone({
         clientTxId: prepData.clientTransactionId,
         esSimulado: false,
       });
-
-      if (!res.ok) {
-        setErrorMsg(res.error || "La transacción aún no se ha completado en Payphone o fue rechazada.");
-        setProcesando(false);
-        return;
+      if (!res.ok && !(res as any).estado) {
+        return volverAPagoConError(res.error || "El pago aún no se completa en Payphone o fue rechazado.", mia);
       }
-
-      setResultadoPago(res);
-      setPaso("resultado");
-      if (res.estado === "APROBADO" && alPagoExitoso) {
-        alPagoExitoso(res);
-      }
+      await terminarPago(normalizarResultado(res));
     } catch (err: any) {
-      setErrorMsg(err.message || "Error al consultar estado en Payphone.");
-    } finally {
-      setProcesando(false);
+      volverAPagoConError(err?.message || "No pudimos consultar el estado en Payphone.", mia);
     }
   };
 
-  // Reiniciar estado al cerrar
-  const reiniciarYCerrar = () => {
-    setPaso("formulario");
-    setPrepData(null);
-    setResultadoPago(null);
-    setErrorMsg(null);
-    alCerrar();
+  // ── Paso 2: PLUX ──
+  const alAprobarPlux = (identificador: string, pago: { autorizacion: string | null; marcaTarjeta: string | null; ultimosDigitos: string | null }) => {
+    const res: ResultadoPago = {
+      ok: true,
+      estado: "APROBADO",
+      clientTransactionId: identificador,
+      autorizacionCodigo: pago.autorizacion,
+      marcaTarjeta: pago.marcaTarjeta,
+      ultimosDigitos: pago.ultimosDigitos,
+    };
+    void terminarPago(res);
   };
 
+  const alCambiarFasePlux = (fase: FasePlux, mensaje: string | null, motivo: string | null) => {
+    setFasePlux(fase);
+    if (fase === "esperando") iniciarProcesando();
+    else if (fase === "rechazado") {
+      void terminarPago(
+        motivo === "MONTO_DISTINTO"
+          ? { estado: "EN_REVISION", motivo, mensaje }
+          : { estado: "RECHAZADO", motivo, mensaje: "PLUX no aprobó la operación." },
+      );
+    }
+    else if (fase === "sin_confirmar") setAvisoPendiente(mensaje);
+  };
+
+  const revisarDatos = () => {
+    setPrepData(null);
+    irA("facturacion");
+  };
+  // Un pago de Payphone rechazado ya no se puede confirmar: se prepara otro.
+  const reintentar = () => (plux ? irA("pago") : revisarDatos());
+
+  // ── Recibo ──
+  const datosRecibo: DatosRecibo | null =
+    resultadoPago && fechaPago
+      ? {
+          negocio: marca,
+          productoNombre,
+          varianteNombre: variante.var_nombre,
+          subtotal: variante.var_precio,
+          iva: variante.monto_iva,
+          tarifaIva,
+          total,
+          cliente: razonSocial.trim(),
+          documento: `${NOMBRE_DOCUMENTO[tipoIdentificacion]} ${identificacion.trim()}`,
+          medio: medioDePago(resultadoPago),
+          autorizacion: resultadoPago.autorizacionCodigo || null,
+          referencia: resultadoPago.clientTransactionId || prepData?.clientTransactionId || "—",
+          fecha: fechaPago,
+        }
+      : null;
+
+  const pasosDelRecibo: PasoSiguiente[] = pasosSiguientes ?? [
+    { titulo: "Pago confirmado", detalle: `${datosRecibo?.medio ?? "Tarjeta"} · ${dinero(total)}` },
+    esSuscripcion
+      ? { titulo: "Plan activado", detalle: "Tu cobertura queda asociada a tu cuenta." }
+      : { titulo: "Te contactamos", detalle: `${marca} te escribirá a ${email.trim()} para empezar.` },
+    { titulo: "Aviso en tu panel", detalle: "La confirmación queda en tus notificaciones." },
+  ];
+
+  const montoBoton = <span className="ckt-monto">{dinero(total)}</span>;
+  const botonVolver = (accion: () => void) => (
+    <button type="button" className="ckt-btn ckt-btn-secundario" onClick={accion} title="Volver" aria-label="Volver">
+      <ArrowLeft size={18} /> Volver
+    </button>
+  );
+
   return (
-    <div
-      style={{
-        position: "fixed",
-        inset: 0,
-        backgroundColor: "rgba(15, 23, 42, 0.6)",
-        backdropFilter: "blur(4px)",
-        zIndex: 9999,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: "16px",
-      }}
-    >
-      <div
-        style={{
-          background: "#FFFFFF",
-          borderRadius: "20px",
-          width: "100%",
-          maxWidth: "580px",
-          maxHeight: "90vh",
-          overflowY: "auto",
-          boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
-          border: "1px solid #E2E8F0",
-          position: "relative",
-          display: "flex",
-          flexDirection: "column",
-        }}
-      >
-        {/* Cabecera */}
-        <div
-          style={{
-            padding: "20px 24px",
-            borderBottom: "1px solid #E2E8F0",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            background: "#F8FAFC",
-            borderTopLeftRadius: "20px",
-            borderTopRightRadius: "20px",
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <div
-              style={{
-                width: "40px",
-                height: "40px",
-                borderRadius: "10px",
-                background: "#0284C7",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                color: "#FFFFFF",
-              }}
-            >
-              <CreditCard size={22} />
-            </div>
+    <div className="ckt-velo">
+      <style>{ESTILOS_CHECKOUT}</style>
+      <div className="ckt-caja" role="dialog" aria-modal="true" aria-labelledby="ckt-titulo" tabIndex={-1} ref={caja}>
+        {/* ═══ Resumen ═══ */}
+        <aside className={`ckt-resumen ${etapa === "recibo" ? "es-pagado" : ""} ${detalleAbierto ? "es-abierto" : ""}`}>
+          <svg className="ckt-cinta" viewBox="0 0 340 700" preserveAspectRatio="none" aria-hidden="true">
+            <path pathLength={1} d="M 380 250 C 250 260 120 330 150 430 C 180 530 330 520 300 620 C 285 670 220 700 200 760" />
+          </svg>
+          <p className="ckt-marca">{marca}</p>
+          <p className="ckt-etiqueta">Tu compra</p>
+          <div className="ckt-producto">
+            <span className="ckt-producto-icono">
+              <ShoppingBag size={24} />
+            </span>
             <div>
-              <h2 style={{ margin: 0, fontSize: "1.1rem", fontWeight: 700, color: "#0F172A" }}>
-                Pago con tarjeta
-              </h2>
-              <p style={{ margin: 0, fontSize: "0.8rem", color: "#64748B" }}>
-                {plux ? "Crédito o débito con PLUX" : "Crédito, débito y saldo digital con Payphone"}
+              <h2 id="ckt-titulo">{productoNombre}</h2>
+              <p>
+                {variante.var_nombre} · {textoOferta(variante)}
               </p>
             </div>
           </div>
-
+          <div className="ckt-desglose" id="ckt-desglose">
+            <div>
+              <span>Subtotal</span>
+              <span>{dinero(variante.var_precio)}</span>
+            </div>
+            <div>
+              <span>IVA {tarifaIva} %</span>
+              <span>{dinero(variante.monto_iva)}</span>
+            </div>
+            <div className="ckt-total">
+              <span>Total</span>
+              <strong>
+                <small>$</small>
+                {totalResumen}
+              </strong>
+            </div>
+          </div>
+          <span className="ckt-chip-pagado">
+            <Check size={14} strokeWidth={3} /> Pagado
+          </span>
           <button
             type="button"
-            onClick={reiniciarYCerrar}
-            style={{
-              background: "transparent",
-              border: "none",
-              cursor: "pointer",
-              color: "#64748B",
-              padding: "6px",
-              borderRadius: "8px",
-            }}
+            className="ckt-ver-detalle"
+            aria-expanded={detalleAbierto}
+            aria-controls="ckt-desglose"
+            onClick={() => setDetalleAbierto((v) => !v)}
           >
-            <X size={20} />
+            Ver detalle <ChevronDown size={14} />
           </button>
-        </div>
+          <p className="ckt-seguridad">
+            <ShieldCheck size={20} />
+            <span>
+              Pago procesado por {nombrePasarela}. {marca} nunca ve ni guarda tu tarjeta.
+            </span>
+          </p>
+        </aside>
 
-        {/* Resumen del Servicio e Importe */}
-        <div
-          style={{
-            padding: "16px 24px",
-            background: "#F0F9FF",
-            borderBottom: "1px solid #BAE6FD",
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-          }}
-        >
-          <div>
-            <div style={{ fontSize: "0.75rem", fontWeight: 700, color: "#0284C7", textTransform: "uppercase" }}>
-              Servicio a Contratar
-            </div>
-            <div style={{ fontSize: "0.95rem", fontWeight: 700, color: "#0F172A" }}>
-              {productoNombre}
-            </div>
-            <div style={{ fontSize: "0.8rem", color: "#475569" }}>
-              Variante: {variante.var_nombre}
-            </div>
-          </div>
-          <div style={{ textAlign: "right" }}>
-            <div style={{ fontSize: "1.25rem", fontWeight: 800, color: "#0F172A" }}>
-              ${variante.precio_total.toFixed(2)}
-            </div>
-            <div style={{ fontSize: "0.7rem", color: "#64748B" }}>
-              Base: ${variante.var_precio.toFixed(2)} + IVA: ${variante.monto_iva.toFixed(2)}
-            </div>
-          </div>
-        </div>
-
-        {/* Alerta de Error si existe */}
-        {errorMsg && (
-          <div
-            style={{
-              margin: "16px 24px 0",
-              padding: "12px 16px",
-              borderRadius: "10px",
-              background: "#FEF2F2",
-              border: "1px solid #FECACA",
-              color: "#991B1B",
-              fontSize: "0.85rem",
-              display: "flex",
-              alignItems: "center",
-              gap: "8px",
-            }}
+        {/* ═══ Flujo ═══ */}
+        <div className="ckt-flujo">
+          <button
+            type="button"
+            className="ckt-cerrar"
+            onClick={reiniciarYCerrar}
+            disabled={cierreBloqueado}
+            aria-label="Cerrar"
+            title={cierreBloqueado ? "Espera a que termine el pago" : "Cerrar"}
           >
-            <AlertTriangle size={18} />
-            <div>{errorMsg}</div>
-          </div>
-        )}
+            <X size={18} />
+          </button>
 
-        {/* Contenido según Paso */}
-        <div style={{ padding: "20px 24px", flex: 1 }}>
-          {/* PASO 1: Formulario de Facturación y Selección de Modo */}
-          {paso === "formulario" && (
-            <form onSubmit={manejarPrepararPago}>
-              {/* Selector Modo Simulado vs Modo Real (solo cuando el procesador es Payphone) */}
+          <Pasos indice={ORDEN[etapa]} />
+
+          {errorMsg && <Alerta>{errorMsg}</Alerta>}
+
+          {/* Paso 1: facturación */}
+          {etapa === "facturacion" && (
+            <form className="ckt-paso" data-dir={sentido} onSubmit={continuarFacturacion} noValidate>
+              <h3>Datos de facturación</h3>
+              <p className="ckt-bajada">Con ellos emitimos tu comprobante electrónico.</p>
+
+              {cargandoPerfil ? (
+                <div className="ckt-aviso es-neutro">
+                  <RefreshCw size={18} className="ckt-girar" /> Cargando tus datos…
+                </div>
+              ) : tienePerfilFacturacion ? (
+                <div className="ckt-aviso">
+                  <Check size={18} /> Usamos los datos de tu perfil. Puedes cambiarlos.
+                </div>
+              ) : (
+                <div className="ckt-aviso es-neutro">
+                  <Receipt size={18} /> Complétalos una vez y los recordamos.
+                </div>
+              )}
+
+              <div className="ckt-rejilla">
+                <Segmentos
+                  nombre="ckt-tipo-documento"
+                  etiqueta="Tipo de documento"
+                  opciones={TIPOS_DOCUMENTO}
+                  valor={tipoIdentificacion}
+                  alCambiar={setTipoIdentificacion}
+                />
+                <Campo
+                  id="ckt-identificacion"
+                  etiqueta={`Número de ${NOMBRE_DOCUMENTO[tipoIdentificacion].toLowerCase()}`}
+                  valor={identificacion}
+                  alCambiar={(v) => setIdentificacion(tipoIdentificacion === "pasaporte" ? v.toUpperCase() : v.replace(/\D/g, "").slice(0, 13))}
+                  alSalir={() => tocar("identificacion")}
+                  error={errorVisible("identificacion")}
+                  valido={esValido("identificacion")}
+                  sacudir={sacudir}
+                  inputMode={tipoIdentificacion === "pasaporte" ? "text" : "numeric"}
+                  autoComplete="off"
+                  deshabilitado={cargandoPerfil}
+                />
+                <Campo
+                  id="ckt-razonSocial"
+                  etiqueta="Nombre o razón social"
+                  valor={razonSocial}
+                  alCambiar={setRazonSocial}
+                  alSalir={() => tocar("razonSocial")}
+                  error={errorVisible("razonSocial")}
+                  valido={esValido("razonSocial")}
+                  sacudir={sacudir}
+                  autoComplete="name"
+                  deshabilitado={cargandoPerfil}
+                />
+                <Campo
+                  id="ckt-email"
+                  etiqueta="Correo"
+                  tipo="email"
+                  valor={email}
+                  alCambiar={setEmail}
+                  alSalir={() => tocar("email")}
+                  error={errorVisible("email")}
+                  valido={esValido("email")}
+                  sacudir={sacudir}
+                  autoComplete="email"
+                  inputMode="email"
+                  deshabilitado={cargandoPerfil}
+                />
+                <Campo
+                  id="ckt-telefono"
+                  etiqueta="Celular"
+                  tipo="tel"
+                  valor={telefono}
+                  alCambiar={setTelefono}
+                  alSalir={() => tocar("telefono")}
+                  error={errorVisible("telefono")}
+                  valido={esValido("telefono")}
+                  sacudir={sacudir}
+                  autoComplete="tel"
+                  inputMode="tel"
+                  deshabilitado={cargandoPerfil}
+                />
+                <Campo
+                  id="ckt-direccion"
+                  className="ckt-ancho"
+                  etiqueta={plux ? "Dirección" : "Dirección (opcional)"}
+                  valor={direccion}
+                  alCambiar={setDireccion}
+                  alSalir={() => tocar("direccion")}
+                  error={errorVisible("direccion")}
+                  valido={esValido("direccion")}
+                  sacudir={sacudir}
+                  autoComplete="street-address"
+                  deshabilitado={cargandoPerfil}
+                />
+              </div>
+
+              <Interruptor
+                marcado={guardarEnPerfil}
+                alCambiar={setGuardarEnPerfil}
+                titulo={tienePerfilFacturacion ? "Actualizar mis datos guardados" : "Guardar para próximas compras"}
+              />
               {!plux && !cargandoPasarela && (
-                <div
-                  style={{
-                    background: modoSimulado ? "#FEF3C7" : "#F1F5F9",
-                    border: modoSimulado ? "1px solid #FCD34D" : "1px solid #CBD5E1",
-                    borderRadius: "12px",
-                    padding: "12px 16px",
-                    marginBottom: "20px",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                  }}
-                >
-                  <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                    <Sparkles size={20} color={modoSimulado ? "#B45309" : "#64748B"} />
-                    <div>
-                      <div style={{ fontSize: "0.85rem", fontWeight: 700, color: modoSimulado ? "#92400E" : "#334155" }}>
-                        {modoSimulado ? "⚡ Modo Simulado Activo (Sandbox)" : "🔒 Modo Real Payphone"}
-                      </div>
-                      <div style={{ fontSize: "0.75rem", color: modoSimulado ? "#B45309" : "#64748B" }}>
-                        {modoSimulado
-                          ? "Permite probar el flujo de cobro sin débito bancario real."
-                          : "Conecta con la pasarela oficial Payphone para cobro real."}
-                      </div>
-                    </div>
-                  </div>
-
-                  <label style={{ display: "flex", alignItems: "center", cursor: "pointer", gap: "6px" }}>
-                    <input
-                      type="checkbox"
-                      checked={modoSimulado}
-                      onChange={(e) => setModoSimulado(e.target.checked)}
-                      style={{ width: "16px", height: "16px", cursor: "pointer" }}
-                    />
-                    <span style={{ fontSize: "0.8rem", fontWeight: 600, color: "#334155" }}>Simular</span>
-                  </label>
-                </div>
+                <Interruptor
+                  marcado={modoSimulado}
+                  alCambiar={setModoSimulado}
+                  titulo="Modo de prueba"
+                  detalle="Simula el cobro con Payphone, sin débito real."
+                />
               )}
 
-              {/* Banner Informativo de Perfil de Facturación */}
-              {tienePerfilFacturacion ? (
-                <div
-                  style={{
-                    background: "#F0FDF4",
-                    border: "1px solid #86EFAC",
-                    borderRadius: "12px",
-                    padding: "12px 16px",
-                    marginBottom: "16px",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    gap: "10px",
-                  }}
-                >
-                  <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                    <div
-                      style={{
-                        padding: "6px",
-                        borderRadius: "8px",
-                        background: "#DCFCE7",
-                        color: "#166534",
-                        display: "flex",
-                      }}
-                    >
-                      <Receipt size={18} />
-                    </div>
-                    <div>
-                      <div style={{ fontSize: "0.84rem", fontWeight: 700, color: "#166534" }}>
-                        Datos de Facturación del Perfil Cargados
-                      </div>
-                      <div style={{ fontSize: "0.74rem", color: "#15803D" }}>
-                        Se emitirá la factura con estos datos. Puedes modificarlos si deseas facturar a otra persona o empresa.
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div
-                  style={{
-                    background: "#EFF6FF",
-                    border: "1px solid #BFDBFE",
-                    borderRadius: "12px",
-                    padding: "12px 16px",
-                    marginBottom: "16px",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "10px",
-                  }}
-                >
-                  <div
-                    style={{
-                      padding: "6px",
-                      borderRadius: "8px",
-                      background: "#DBEAFE",
-                      color: "#1E40AF",
-                      display: "flex",
-                    }}
-                  >
-                    <FileText size={18} />
-                  </div>
-                  <div>
-                    <div style={{ fontSize: "0.84rem", fontWeight: 700, color: "#1E40AF" }}>
-                      Datos para Comprobante Electrónico SRI
-                    </div>
-                    <div style={{ fontSize: "0.74rem", color: "#2563EB" }}>
-                      Completa los datos fiscales para emitir tu factura electrónica.
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
-                <h4 style={{ margin: 0, fontSize: "0.9rem", color: "#334155", fontWeight: 700 }}>
-                  Datos de Facturación del Cliente
-                </h4>
-                <span style={{ fontSize: "0.72rem", color: "#64748B" }}>
-                  * Campos obligatorios para el SRI
-                </span>
+              <div className="ckt-pie">
+                <button type="submit" className="ckt-btn ckt-btn-primario" disabled={procesando || cargandoPasarela || cargandoPerfil}>
+                  {(procesando || cargandoPasarela) && <RefreshCw size={18} className="ckt-girar" />}
+                  Continuar {montoBoton}
+                </button>
               </div>
-
-              {/* Fila 1: Tipo de Documento y Número de Identificación */}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "12px" }}>
-                <div>
-                  <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 600, color: "#475569", marginBottom: "4px" }}>
-                    Tipo de Documento *
-                  </label>
-                  <select
-                    value={tipoIdentificacion}
-                    onChange={(e) => setTipoIdentificacion(e.target.value)}
-                    style={{
-                      width: "100%",
-                      padding: "8px 12px",
-                      fontSize: "0.85rem",
-                      borderRadius: "8px",
-                      border: "1px solid #CBD5E1",
-                      boxSizing: "border-box",
-                      background: "#FFFFFF",
-                      fontWeight: 500,
-                    }}
-                  >
-                    <option value="cedula">Cédula de Identidad</option>
-                    <option value="ruc">RUC (Empresa o Persona Natural)</option>
-                    <option value="pasaporte">Pasaporte / Extranjero</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 600, color: "#475569", marginBottom: "4px" }}>
-                    Cédula / RUC / Pasaporte *
-                  </label>
-                  <div style={{ position: "relative" }}>
-                    <Hash size={14} color="#94A3B8" style={{ position: "absolute", left: "10px", top: "10px" }} />
-                    <input
-                      type="text"
-                      required
-                      placeholder="Ej. 1718192021 o 1790012345001"
-                      value={identificacion}
-                      onChange={(e) => setIdentificacion(e.target.value)}
-                      style={{
-                        width: "100%",
-                        padding: "8px 12px 8px 32px",
-                        fontSize: "0.85rem",
-                        borderRadius: "8px",
-                        border: "1px solid #CBD5E1",
-                        boxSizing: "border-box",
-                      }}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Fila 2: Razón Social / Nombre Completo */}
-              <div style={{ marginBottom: "12px" }}>
-                <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 600, color: "#475569", marginBottom: "4px" }}>
-                  Nombre Completo / Razón Social para la Factura *
-                </label>
-                <div style={{ position: "relative" }}>
-                  <Building size={14} color="#94A3B8" style={{ position: "absolute", left: "10px", top: "10px" }} />
-                  <input
-                    type="text"
-                    required
-                    placeholder="Ej. Kleber Toapanta o Mi Empresa S.A.S."
-                    value={razonSocial}
-                    onChange={(e) => setRazonSocial(e.target.value)}
-                    style={{
-                      width: "100%",
-                      padding: "8px 12px 8px 32px",
-                      fontSize: "0.85rem",
-                      borderRadius: "8px",
-                      border: "1px solid #CBD5E1",
-                      boxSizing: "border-box",
-                    }}
-                  />
-                </div>
-              </div>
-
-              {/* Fila 3: Correo Electrónico y Teléfono Celular */}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "12px" }}>
-                <div>
-                  <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 600, color: "#475569", marginBottom: "4px" }}>
-                    Correo de Facturación (Envío XML/PDF) *
-                  </label>
-                  <div style={{ position: "relative" }}>
-                    <Mail size={14} color="#94A3B8" style={{ position: "absolute", left: "10px", top: "10px" }} />
-                    <input
-                      type="email"
-                      required
-                      placeholder="facturacion@ejemplo.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      style={{
-                        width: "100%",
-                        padding: "8px 12px 8px 32px",
-                        fontSize: "0.85rem",
-                        borderRadius: "8px",
-                        border: "1px solid #CBD5E1",
-                        boxSizing: "border-box",
-                      }}
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 600, color: "#475569", marginBottom: "4px" }}>
-                    Teléfono Celular *
-                  </label>
-                  <div style={{ position: "relative" }}>
-                    <Phone size={14} color="#94A3B8" style={{ position: "absolute", left: "10px", top: "10px" }} />
-                    <input
-                      type="tel"
-                      required
-                      placeholder="0999999999"
-                      value={telefono}
-                      onChange={(e) => setTelefono(e.target.value)}
-                      style={{
-                        width: "100%",
-                        padding: "8px 12px 8px 32px",
-                        fontSize: "0.85rem",
-                        borderRadius: "8px",
-                        border: "1px solid #CBD5E1",
-                        boxSizing: "border-box",
-                      }}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Fila 4: Dirección Domiciliaria / Fiscal */}
-              <div style={{ marginBottom: "16px" }}>
-                <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 600, color: "#475569", marginBottom: "4px" }}>
-                  Dirección Domiciliaria / Fiscal
-                </label>
-                <div style={{ position: "relative" }}>
-                  <MapPin size={14} color="#94A3B8" style={{ position: "absolute", left: "10px", top: "10px" }} />
-                  <input
-                    type="text"
-                    placeholder="Ej. Av. 6 de Diciembre y Orellana, Edif. Torre 1"
-                    value={direccion}
-                    onChange={(e) => setDireccion(e.target.value)}
-                    style={{
-                      width: "100%",
-                      padding: "8px 12px 8px 32px",
-                      fontSize: "0.85rem",
-                      borderRadius: "8px",
-                      border: "1px solid #CBD5E1",
-                      boxSizing: "border-box",
-                    }}
-                  />
-                </div>
-              </div>
-
-              {/* Opción de Guardar / Actualizar como Datos por Defecto */}
-              <div
-                style={{
-                  background: "#F8FAFC",
-                  border: "1px dashed #CBD5E1",
-                  borderRadius: "10px",
-                  padding: "10px 14px",
-                  marginBottom: "20px",
-                }}
-              >
-                <label style={{ display: "flex", alignItems: "flex-start", gap: "10px", cursor: "pointer" }}>
-                  <input
-                    type="checkbox"
-                    checked={guardarEnPerfil}
-                    onChange={(e) => setGuardarEnPerfil(e.target.checked)}
-                    style={{ width: "16px", height: "16px", marginTop: "2px", cursor: "pointer" }}
-                  />
-                  <div>
-                    <span style={{ fontSize: "0.82rem", fontWeight: 700, color: "#1E293B", display: "block" }}>
-                      {tienePerfilFacturacion
-                        ? "Actualizar también mis datos de facturación guardados en mi cuenta"
-                        : "Guardar como mis datos de facturación predeterminados para futuras compras"}
-                    </span>
-                    <span style={{ fontSize: "0.74rem", color: "#64748B" }}>
-                      {tienePerfilFacturacion
-                        ? "Si no marcas esta opción, estos cambios solo se aplicarán a esta compra particular sin alterar tus datos de cuenta."
-                        : "Se guardarán en tu perfil de cuenta para que no tengas que escribirlos de nuevo en tus próximas compras."}
-                    </span>
-                  </div>
-                </label>
-              </div>
-
-              {plux ? (
-                <div>
-                  {identificacion.trim() && email.trim() && razonSocial.trim() && telefono.trim() && direccion.trim() ? (
-                    <BotonPagoPlux
-                      negocio={negocio}
-                      varianteId={variante.var_id}
-                      ambiente={plux.ambiente}
-                      pagador={{
-                        nombre: razonSocial.trim(),
-                        identificacion: identificacion.trim(),
-                        email: email.trim(),
-                        telefono: telefono.trim(),
-                        direccion: direccion.trim(),
-                      }}
-                      alPagoAprobado={(identificador, pago) => {
-                        const res = {
-                          ok: true,
-                          estado: "APROBADO",
-                          clientTransactionId: identificador,
-                          autorizacionCodigo: pago.autorizacion,
-                          marcaTarjeta: pago.marcaTarjeta,
-                          ultimosDigitos: pago.ultimosDigitos,
-                        };
-                        setResultadoPago(res);
-                        setPaso("resultado");
-                        alPagoExitoso?.(res);
-                      }}
-                    />
-                  ) : (
-                    <p style={{ fontSize: "0.78rem", color: "#64748B", marginTop: "4px", marginBottom: "12px" }}>
-                      Completa todos los datos de facturación, incluida la dirección domiciliaria, para habilitar el pago con PLUX.
-                    </p>
-                  )}
-                  <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "12px" }}>
-                    <button
-                      type="button"
-                      onClick={reiniciarYCerrar}
-                      style={{
-                        background: "#F1F5F9",
-                        color: "#475569",
-                        border: "none",
-                        padding: "10px 16px",
-                        borderRadius: "8px",
-                        fontSize: "0.85rem",
-                        fontWeight: 600,
-                        cursor: "pointer",
-                      }}
-                    >
-                      Cancelar
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
-                  <button
-                    type="button"
-                    onClick={reiniciarYCerrar}
-                    style={{
-                      background: "#F1F5F9",
-                      color: "#475569",
-                      border: "none",
-                      padding: "10px 16px",
-                      borderRadius: "8px",
-                      fontSize: "0.85rem",
-                      fontWeight: 600,
-                      cursor: "pointer",
-                    }}
-                  >
-                    Cancelar
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={procesando || cargandoPasarela}
-                    style={{
-                      background: "#0284C7",
-                      color: "#FFFFFF",
-                      border: "none",
-                      padding: "10px 20px",
-                      borderRadius: "8px",
-                      fontSize: "0.85rem",
-                      fontWeight: 700,
-                      cursor: procesando || cargandoPasarela ? "not-allowed" : "pointer",
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: "8px",
-                    }}
-                  >
-                    {procesando || cargandoPasarela ? <RefreshCw size={16} className="animate-spin" /> : <Lock size={16} />}
-                    {modoSimulado ? "Continuar con Simulación" : "Pagar con Payphone"}
-                  </button>
-                </div>
-              )}
             </form>
           )}
 
-          {/* PASO 2: SIMULADOR INTERACTIVO DE TARJETA BANCARIA */}
-          {paso === "simulando" && prepData && (
-            <div style={{ padding: "8px 0" }}>
-              {/* TARJETA VISUAL DINÁMICA */}
-              <div
-                style={{
-                  background:
-                    tarjetaMarca === "Mastercard"
-                      ? "linear-gradient(135deg, #1E293B 0%, #0F172A 100%)"
-                      : tarjetaMarca === "Diners Club"
-                      ? "linear-gradient(135deg, #0284C7 0%, #0369A1 100%)"
-                      : tarjetaMarca === "American Express"
-                      ? "linear-gradient(135deg, #047857 0%, #065F46 100%)"
-                      : "linear-gradient(135deg, #312E81 0%, #4338CA 50%, #6366F1 100%)",
-                  borderRadius: "20px",
-                  padding: "24px",
-                  color: "#FFFFFF",
-                  position: "relative",
-                  overflow: "hidden",
-                  boxShadow: "0 12px 28px -6px rgba(0, 0, 0, 0.35)",
-                  marginBottom: "20px",
-                  border: "1px solid rgba(255, 255, 255, 0.18)",
-                }}
-              >
-                {/* Micro-chip y Logo */}
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                    <div
-                      style={{
-                        width: "42px",
-                        height: "30px",
-                        background: "linear-gradient(135deg, #FDE047 0%, #CA8A04 100%)",
-                        borderRadius: "6px",
-                        border: "1px solid #EAB308",
-                        position: "relative",
-                        overflow: "hidden",
-                      }}
-                    >
-                      <div style={{ position: "absolute", inset: "3px", border: "1px solid rgba(0,0,0,0.15)", borderRadius: "3px" }} />
-                    </div>
-                    <span style={{ fontSize: "0.75rem", letterSpacing: "1px", opacity: 0.8, fontWeight: 700 }}>
-                      BANCO EMISOR EC
-                    </span>
-                  </div>
-
-                  <span
-                    style={{
-                      fontSize: "1.1rem",
-                      fontWeight: 900,
-                      letterSpacing: "1px",
-                      textTransform: "uppercase",
-                      background: "rgba(255, 255, 255, 0.15)",
-                      padding: "4px 12px",
-                      borderRadius: "8px",
-                      border: "1px solid rgba(255, 255, 255, 0.2)",
-                    }}
-                  >
-                    {tarjetaMarca}
+          {/* Paso 2: pago con PLUX. Sigue montado (oculto) mientras se procesa:
+              el botón espera ahí la confirmación de PLUX. */}
+          {plux && (etapa === "pago" || etapa === "procesando") && (
+            <div className="ckt-paso" data-dir={sentido} hidden={etapa !== "pago"}>
+              <h3>Paga con tarjeta</h3>
+              <p className="ckt-bajada">Crédito o débito. Escribirás la tarjeta en la ventana segura de PLUX.</p>
+              {plux.ambiente !== "PRODUCCION" && <span className="ckt-insignia">Modo prueba · solo tarjetas de prueba</span>}
+              <TarjetaVisual numero={TARJETA_OCULTA} titular={razonSocial.trim().toUpperCase()} vence="" marca={marca} />
+              <div className="ckt-medios" aria-hidden="true">
+                <span>Crédito</span>
+                <span>Débito</span>
+                <span>3-D Secure</span>
+              </div>
+              <div className="ckt-garantias">
+                <div>
+                  <ShieldCheck />
+                  <span>Tu banco puede pedirte una verificación adicional.</span>
+                </div>
+                <div>
+                  <Receipt />
+                  <span>
+                    Facturamos a <b>{razonSocial.trim()}</b> · {email.trim()}
                   </span>
                 </div>
-
-                {/* Número de Tarjeta */}
-                <div
-                  style={{
-                    fontFamily: "monospace",
-                    fontSize: "1.3rem",
-                    letterSpacing: "3px",
-                    fontWeight: 700,
-                    marginBottom: "20px",
-                    textShadow: "0 2px 4px rgba(0,0,0,0.4)",
+              </div>
+              <div className="ckt-pie">
+                {botonVolver(revisarDatos)}
+                <BotonPagoPlux
+                  negocio={negocio}
+                  varianteId={variante.var_id}
+                  ambiente={plux.ambiente}
+                  pagador={{
+                    nombre: razonSocial.trim(),
+                    identificacion: identificacion.trim(),
+                    email: email.trim(),
+                    telefono: telefono.trim(),
+                    direccion: direccion.trim(),
                   }}
-                >
-                  {tarjetaNumero || "•••• •••• •••• ••••"}
-                </div>
-
-                {/* Titular y Expiración */}
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
-                  <div>
-                    <div style={{ fontSize: "0.65rem", textTransform: "uppercase", opacity: 0.7, letterSpacing: "1px" }}>
-                      Titular de la Tarjeta
-                    </div>
-                    <div style={{ fontSize: "0.95rem", fontWeight: 700, letterSpacing: "1px", textTransform: "uppercase" }}>
-                      {tarjetaTitular || (razonSocial ? razonSocial.toUpperCase() : "TITULAR AUTORIZADO")}
-                    </div>
-                  </div>
-
-                  <div style={{ textAlign: "right" }}>
-                    <div style={{ fontSize: "0.65rem", textTransform: "uppercase", opacity: 0.7, letterSpacing: "1px" }}>
-                      Vence
-                    </div>
-                    <div style={{ fontSize: "0.95rem", fontWeight: 700, fontFamily: "monospace" }}>
-                      {tarjetaExp || "MM/AA"}
-                    </div>
-                  </div>
-                </div>
+                  alPagoAprobado={alAprobarPlux}
+                  alCambiarFase={alCambiarFasePlux}
+                  etiqueta={<>Pagar {montoBoton}</>}
+                />
               </div>
+            </div>
+          )}
 
-              {/* PRESETS RÁPIDOS DE PRUEBA */}
-              <div style={{ marginBottom: "18px" }}>
-                <div style={{ fontSize: "0.78rem", fontWeight: 700, color: "#475569", marginBottom: "8px", display: "flex", alignItems: "center", gap: "6px" }}>
-                  <Sparkles size={14} color="#D97706" /> Presets de Prueba Rápida (1 Clic):
-                </div>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "8px" }}>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      aplicarPresetTarjeta({
-                        numero: "4500 8912 3456 7890",
-                        exp: "08/29",
-                        cvv: "456",
-                        marca: "Visa",
-                      })
-                    }
-                    style={{
-                      background: "#F0FDF4",
-                      border: "1px solid #86EFAC",
-                      color: "#166534",
-                      borderRadius: "8px",
-                      padding: "8px",
-                      fontSize: "0.75rem",
-                      fontWeight: 700,
-                      cursor: "pointer",
-                      textAlign: "left",
-                    }}
-                  >
-                    🟢 Visa Pichincha (Aprobada)
+          {/* Paso 2: simulador de Payphone */}
+          {!plux && etapa === "pago" && prepData?.esSimulado && (
+            <div className="ckt-paso" data-dir={sentido}>
+              <h3>Paga con tarjeta</h3>
+              <p className="ckt-bajada">Simulación de Payphone: no se cobra nada.</p>
+              <span className="ckt-insignia">Modo prueba · sin cobro real</span>
+              <TarjetaVisual numero={tarjetaNumero || TARJETA_OCULTA} titular={tarjetaTitular} vence={tarjetaExp} marca={tarjetaMarca} />
+              <div className="ckt-medios">
+                {PRESETS_SIMULADOR.map((p) => (
+                  <button key={p.texto} type="button" onClick={() => aplicarPreset(p)}>
+                    {p.texto}
                   </button>
-
-                  <button
-                    type="button"
-                    onClick={() =>
-                      aplicarPresetTarjeta({
-                        numero: "5412 7534 8901 2345",
-                        exp: "11/28",
-                        cvv: "123",
-                        marca: "Mastercard",
-                      })
-                    }
-                    style={{
-                      background: "#F0FDF4",
-                      border: "1px solid #86EFAC",
-                      color: "#166534",
-                      borderRadius: "8px",
-                      padding: "8px",
-                      fontSize: "0.75rem",
-                      fontWeight: 700,
-                      cursor: "pointer",
-                      textAlign: "left",
-                    }}
-                  >
-                    🟢 Mastercard Guayaquil (Aprobada)
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() =>
-                      aplicarPresetTarjeta({
-                        numero: "3612 3456 7890 12",
-                        exp: "04/27",
-                        cvv: "890",
-                        marca: "Diners Club",
-                      })
-                    }
-                    style={{
-                      background: "#FEF2F2",
-                      border: "1px solid #FECACA",
-                      color: "#991B1B",
-                      borderRadius: "8px",
-                      padding: "8px",
-                      fontSize: "0.75rem",
-                      fontWeight: 700,
-                      cursor: "pointer",
-                      textAlign: "left",
-                    }}
-                  >
-                    🔴 Diners (Sin Fondos / Rechazo)
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() =>
-                      aplicarPresetTarjeta({
-                        numero: "4111 2222 3333 4444",
-                        exp: "12/30",
-                        cvv: "777",
-                        marca: "Visa",
-                      })
-                    }
-                    style={{
-                      background: "#EFF6FF",
-                      border: "1px solid #BFDBFE",
-                      color: "#1E40AF",
-                      borderRadius: "8px",
-                      padding: "8px",
-                      fontSize: "0.75rem",
-                      fontWeight: 700,
-                      cursor: "pointer",
-                      textAlign: "left",
-                    }}
-                  >
-                    🟡 Produbanco (Aprobación Rápida)
-                  </button>
-                </div>
+                ))}
               </div>
-
-              {/* INPUTS DE TARJETA INTERACTIVOS */}
-              <div
-                style={{
-                  background: "#F8FAFC",
-                  border: "1px solid #E2E8F0",
-                  borderRadius: "14px",
-                  padding: "16px",
-                  marginBottom: "20px",
-                  textAlign: "left",
-                }}
-              >
-                <div style={{ marginBottom: "12px" }}>
-                  <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, color: "#334155", marginBottom: "4px" }}>
-                    Número de Tarjeta (16 Dígitos)
-                  </label>
-                  <input
-                    type="text"
-                    value={tarjetaNumero}
-                    onChange={(e) => {
-                      const val = e.target.value.replace(/\D/g, "").slice(0, 16);
-                      const fmt = val.match(/.{1,4}/g)?.join(" ") || val;
-                      setTarjetaNumero(fmt);
-                      setTarjetaMarca(detectarMarca(val));
-                    }}
-                    placeholder="4500 0000 0000 0000"
-                    style={{
-                      width: "100%",
-                      padding: "10px 12px",
-                      borderRadius: "8px",
-                      border: "1px solid #CBD5E1",
-                      fontSize: "0.95rem",
-                      fontFamily: "monospace",
-                      fontWeight: 700,
-                      boxSizing: "border-box",
-                    }}
-                  />
-                </div>
-
-                <div style={{ marginBottom: "12px" }}>
-                  <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, color: "#334155", marginBottom: "4px" }}>
-                    Nombre del Titular (en la Tarjeta)
-                  </label>
-                  <input
-                    type="text"
-                    value={tarjetaTitular}
-                    onChange={(e) => setTarjetaTitular(e.target.value.toUpperCase())}
-                    placeholder="NOMBRE APELLIDO"
-                    style={{
-                      width: "100%",
-                      padding: "10px 12px",
-                      borderRadius: "8px",
-                      border: "1px solid #CBD5E1",
-                      fontSize: "0.88rem",
-                      fontWeight: 700,
-                      textTransform: "uppercase",
-                      boxSizing: "border-box",
-                    }}
-                  />
-                </div>
-
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
-                  <div>
-                    <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, color: "#334155", marginBottom: "4px" }}>
-                      Vencimiento (MM/AA)
-                    </label>
-                    <input
-                      type="text"
-                      value={tarjetaExp}
-                      onChange={(e) => {
-                        let val = e.target.value.replace(/\D/g, "").slice(0, 4);
-                        if (val.length >= 3) {
-                          val = `${val.slice(0, 2)}/${val.slice(2)}`;
-                        }
-                        setTarjetaExp(val);
-                      }}
-                      placeholder="MM/AA"
-                      style={{
-                        width: "100%",
-                        padding: "10px 12px",
-                        borderRadius: "8px",
-                        border: "1px solid #CBD5E1",
-                        fontSize: "0.9rem",
-                        fontFamily: "monospace",
-                        fontWeight: 700,
-                        boxSizing: "border-box",
-                      }}
-                    />
-                  </div>
-
-                  <div>
-                    <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, color: "#334155", marginBottom: "4px" }}>
-                      Código de Seguridad (CVV)
-                    </label>
-                    <input
-                      type="password"
-                      maxLength={4}
-                      value={tarjetaCvv}
-                      onChange={(e) => setTarjetaCvv(e.target.value.replace(/\D/g, "").slice(0, 4))}
-                      placeholder="•••"
-                      style={{
-                        width: "100%",
-                        padding: "10px 12px",
-                        borderRadius: "8px",
-                        border: "1px solid #CBD5E1",
-                        fontSize: "0.9rem",
-                        fontFamily: "monospace",
-                        fontWeight: 700,
-                        boxSizing: "border-box",
-                      }}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* BOTONES DE ACCIÓN DE SIMULACIÓN */}
-              <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end" }}>
-                <button
-                  type="button"
-                  disabled={procesando}
-                  onClick={() => manejarProcesarSimulacionTarjeta("RECHAZADO")}
-                  style={{
-                    background: "#FEE2E2",
-                    color: "#991B1B",
-                    border: "1px solid #FCA5A5",
-                    padding: "10px 16px",
-                    borderRadius: "8px",
-                    fontSize: "0.85rem",
-                    fontWeight: 700,
-                    cursor: procesando ? "not-allowed" : "pointer",
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "6px",
+              <div className="ckt-rejilla" style={{ marginTop: 16 }}>
+                <Campo
+                  id="ckt-tarjeta-numero"
+                  className="ckt-ancho"
+                  etiqueta="Número de tarjeta"
+                  valor={tarjetaNumero}
+                  alCambiar={(v) => {
+                    const digitos = v.replace(/\D/g, "").slice(0, 16);
+                    setTarjetaNumero(digitos.match(/.{1,4}/g)?.join(" ") || digitos);
+                    setTarjetaMarca(detectarMarca(digitos));
                   }}
-                >
-                  <XCircle size={16} /> Simular Rechazo
+                  inputMode="numeric"
+                  autoComplete="off"
+                />
+                <Campo
+                  id="ckt-tarjeta-titular"
+                  className="ckt-ancho"
+                  etiqueta="Titular"
+                  valor={tarjetaTitular}
+                  alCambiar={setTarjetaTitular}
+                  mayusculas
+                  autoComplete="off"
+                />
+                <Campo
+                  id="ckt-tarjeta-vence"
+                  etiqueta="Vence (MM/AA)"
+                  valor={tarjetaExp}
+                  alCambiar={(v) => {
+                    const d = v.replace(/\D/g, "").slice(0, 4);
+                    setTarjetaExp(d.length >= 3 ? `${d.slice(0, 2)}/${d.slice(2)}` : d);
+                  }}
+                  inputMode="numeric"
+                  autoComplete="off"
+                />
+                <Campo
+                  id="ckt-tarjeta-cvv"
+                  etiqueta="CVV"
+                  tipo="password"
+                  valor={tarjetaCvv}
+                  alCambiar={(v) => setTarjetaCvv(v.replace(/\D/g, "").slice(0, 4))}
+                  inputMode="numeric"
+                  autoComplete="off"
+                />
+              </div>
+              <div className="ckt-pie">
+                {botonVolver(revisarDatos)}
+                <button type="button" className="ckt-btn ckt-btn-alerta" onClick={() => pagarSimulado("RECHAZADO")}>
+                  Simular rechazo
                 </button>
-
-                <button
-                  type="button"
-                  disabled={procesando}
-                  onClick={() => manejarProcesarSimulacionTarjeta("APROBADO")}
-                  style={{
-                    background: "linear-gradient(135deg, #059669 0%, #047857 100%)",
-                    color: "#FFFFFF",
-                    border: "none",
-                    padding: "11px 24px",
-                    borderRadius: "8px",
-                    fontSize: "0.9rem",
-                    fontWeight: 800,
-                    cursor: procesando ? "not-allowed" : "pointer",
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "8px",
-                    boxShadow: "0 4px 14px rgba(5, 150, 105, 0.35)",
-                  }}
-                >
-                  {procesando ? <RefreshCw size={16} className="animate-spin" /> : <Lock size={16} />}
-                  Pagar ${variante.precio_total.toFixed(2)} USD (Simulación)
+                <button type="button" className="ckt-btn ckt-btn-primario" onClick={() => pagarSimulado()}>
+                  <Lock size={18} /> Pagar {montoBoton}
                 </button>
               </div>
             </div>
           )}
 
-          {/* PASO 3: ENTORNO REAL ABIERTO EN PESTAÑA NUEVA */}
-          {paso === "real_abierto" && prepData && (
-            <div style={{ textAlign: "center", padding: "10px 0" }}>
-              <div
-                style={{
-                  width: "60px",
-                  height: "60px",
-                  borderRadius: "50%",
-                  background: "#E0F2FE",
-                  color: "#0284C7",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  margin: "0 auto 16px",
-                }}
-              >
-                <ExternalLink size={30} />
-              </div>
-
-              <h3 style={{ margin: "0 0 8px", fontSize: "1.2rem", color: "#0F172A", fontWeight: 700 }}>
-                Ventana de Pago Payphone Abierta
-              </h3>
-              <p style={{ margin: "0 0 20px", fontSize: "0.85rem", color: "#64748B" }}>
-                Hemos abierto la pasarela en una pestaña segura externa. Completa el pago allí con tu tarjeta o app.
-              </p>
-
-              <div style={{ display: "flex", gap: "10px", justifyContent: "center", marginBottom: "20px" }}>
+          {/* Paso 2: Payphone real, en otra pestaña */}
+          {!plux && etapa === "pago" && prepData && !prepData.esSimulado && (
+            <div className="ckt-paso" data-dir={sentido}>
+              <h3>Completa el pago en Payphone</h3>
+              <p className="ckt-bajada">Lo abrimos en otra pestaña. Paga allí y vuelve para confirmar.</p>
+              <TarjetaVisual numero={TARJETA_OCULTA} titular={razonSocial.trim().toUpperCase()} vence="" marca="Payphone" />
+              <div className="ckt-medios">
                 {prepData.payWithCard && (
-                  <a
-                    href={prepData.payWithCard}
-                    target="_blank"
-                    rel="noreferrer"
-                    style={{
-                      background: "#0284C7",
-                      color: "#FFFFFF",
-                      padding: "8px 16px",
-                      borderRadius: "8px",
-                      fontSize: "0.85rem",
-                      fontWeight: 600,
-                      textDecoration: "none",
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: "6px",
-                    }}
-                  >
-                    <ExternalLink size={14} />
-                    Reabrir Formulario Tarjeta
+                  <a className="ckt-btn ckt-btn-secundario" href={prepData.payWithCard} target="_blank" rel="noopener noreferrer">
+                    <ExternalLink size={18} /> Abrir tarjeta
                   </a>
                 )}
                 {prepData.payWithPayPhone && (
-                  <a
-                    href={prepData.payWithPayPhone}
-                    target="_blank"
-                    rel="noreferrer"
-                    style={{
-                      background: "#FF6600",
-                      color: "#FFFFFF",
-                      padding: "8px 16px",
-                      borderRadius: "8px",
-                      fontSize: "0.85rem",
-                      fontWeight: 600,
-                      textDecoration: "none",
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: "6px",
-                    }}
-                  >
-                    <ExternalLink size={14} />
-                    Pagar con App Payphone
+                  <a className="ckt-btn ckt-btn-secundario" href={prepData.payWithPayPhone} target="_blank" rel="noopener noreferrer">
+                    <Smartphone size={18} /> App Payphone
                   </a>
                 )}
               </div>
-
-              <p style={{ fontSize: "0.75rem", color: "#B45309", margin: "0 0 16px" }}>
-                ⚠️ Una vez completado el pago en Payphone, haz clic en "Verificar y Confirmar Pago" para emitir tu comprobante.
-              </p>
-
-              <button
-                type="button"
-                disabled={procesando}
-                onClick={manejarConfirmarPagoReal}
-                style={{
-                  background: "#059669",
-                  color: "#FFFFFF",
-                  border: "none",
-                  padding: "10px 20px",
-                  borderRadius: "8px",
-                  fontSize: "0.85rem",
-                  fontWeight: 700,
-                  cursor: procesando ? "not-allowed" : "pointer",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "8px",
-                }}
-              >
-                {procesando ? <RefreshCw size={16} className="animate-spin" /> : <ShieldCheck size={16} />}
-                Verificar y Confirmar Pago
-              </button>
+              <div className="ckt-pie">
+                {botonVolver(revisarDatos)}
+                <button type="button" className="ckt-btn ckt-btn-primario" onClick={confirmarPagoReal}>
+                  <ShieldCheck size={18} /> Ya pagué
+                </button>
+              </div>
             </div>
           )}
 
-          {/* PASO 4: RESULTADO FINAL (APROBADO O RECHAZADO) */}
-          {paso === "resultado" && resultadoPago && (
-            <div style={{ textAlign: "center", padding: "10px 0" }}>
-              {resultadoPago.estado === "APROBADO" ? (
-                <>
-                  <div
-                    style={{
-                      width: "60px",
-                      height: "60px",
-                      borderRadius: "50%",
-                      background: "#D1FAE5",
-                      color: "#059669",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      margin: "0 auto 16px",
-                    }}
-                  >
-                    <CheckCircle2 size={36} />
-                  </div>
+          {etapa === "procesando" && <PanelProcesando pasarela={nombrePasarela} aviso={avisoPendiente} alCerrar={reiniciarYCerrar} />}
 
-                  <h3 style={{ margin: "0 0 6px", fontSize: "1.25rem", color: "#065F46", fontWeight: 800 }}>
-                    ¡Pago Aprobado Exitosamente!
-                  </h3>
-                  <p style={{ margin: "0 0 20px", fontSize: "0.85rem", color: "#475569" }}>
-                    Tu transacción ha sido procesada y registrada en el sistema contable de Tranqi.
-                  </p>
+          {etapa === "recibo" && datosRecibo && (
+            <ReciboPago datos={datosRecibo} pasosSiguientes={pasosDelRecibo} alCerrar={reiniciarYCerrar} />
+          )}
 
-                  {/* Ficha Comprobante */}
-                  <div
-                    style={{
-                      background: "#F8FAFC",
-                      border: "1px dashed #CBD5E1",
-                      borderRadius: "12px",
-                      padding: "16px",
-                      marginBottom: "24px",
-                      textAlign: "left",
-                      fontSize: "0.85rem",
-                    }}
-                  >
-                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px" }}>
-                      <span style={{ color: "#64748B" }}>Código de Autorización:</span>
-                      <span style={{ fontWeight: 800, color: "#0F172A" }}>{resultadoPago.autorizacionCodigo}</span>
-                    </div>
-                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px" }}>
-                      <span style={{ color: "#64748B" }}>ID Transacción:</span>
-                      <span style={{ fontFamily: "monospace", color: "#334155" }}>{resultadoPago.clientTransactionId}</span>
-                    </div>
-                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px" }}>
-                      <span style={{ color: "#64748B" }}>Medio de Pago:</span>
-                      <span>{resultadoPago.marcaTarjeta || "Tarjeta"} •••• {resultadoPago.ultimosDigitos || "4242"}</span>
-                    </div>
-                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px" }}>
-                      <span style={{ color: "#64748B" }}>Titular / Cédula / RUC:</span>
-                      <span>{razonSocial} ({identificacion})</span>
-                    </div>
-                    <div style={{ display: "flex", justifyContent: "space-between", paddingTop: "8px", borderTop: "1px solid #E2E8F0" }}>
-                      <span style={{ fontWeight: 700, color: "#0F172A" }}>Monto Total Liquidado:</span>
-                      <span style={{ fontWeight: 800, color: "#059669", fontSize: "1.05rem" }}>
-                        ${variante.precio_total.toFixed(2)} USD
-                      </span>
-                    </div>
-                  </div>
-
-                  <div
-                    style={{
-                      background: "#EFF6FF",
-                      border: "1px solid #BFDBFE",
-                      borderRadius: "10px",
-                      padding: "10px 14px",
-                      marginBottom: "18px",
-                      fontSize: "0.8rem",
-                      color: "#1E40AF",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "8px",
-                      textAlign: "left",
-                    }}
-                  >
-                    <CheckCircle2 size={16} color="#2563EB" style={{ flexShrink: 0 }} />
-                    <span>
-                      Se ha emitido tu comprobante electrónico con desglose SRI (IVA 15%) y enviado una confirmación a tu bandeja de notificaciones.
-                    </span>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={reiniciarYCerrar}
-                    style={{
-                      background: "#0284C7",
-                      color: "#FFFFFF",
-                      border: "none",
-                      padding: "10px 24px",
-                      borderRadius: "8px",
-                      fontSize: "0.9rem",
-                      fontWeight: 700,
-                      cursor: "pointer",
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: "6px",
-                    }}
-                  >
-                    <FileText size={16} />
-                    Finalizar y Continuar
-                  </button>
-                </>
-              ) : (
-                <>
-                  <div
-                    style={{
-                      width: "60px",
-                      height: "60px",
-                      borderRadius: "50%",
-                      background: "#FEE2E2",
-                      color: "#DC2626",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      margin: "0 auto 16px",
-                    }}
-                  >
-                    <XCircle size={36} />
-                  </div>
-
-                  <h3 style={{ margin: "0 0 6px", fontSize: "1.25rem", color: "#991B1B", fontWeight: 800 }}>
-                    Transacción Declinada
-                  </h3>
-                  <p style={{ margin: "0 0 20px", fontSize: "0.85rem", color: "#64748B" }}>
-                    {resultadoPago.mensaje || "La pasarela de pago o el banco declinaron la operación."}
-                  </p>
-
-                  <div style={{ display: "flex", gap: "10px", justifyContent: "center" }}>
-                    <button
-                      type="button"
-                      onClick={() => setPaso("formulario")}
-                      style={{
-                        background: "#0284C7",
-                        color: "#FFFFFF",
-                        border: "none",
-                        padding: "10px 20px",
-                        borderRadius: "8px",
-                        fontSize: "0.85rem",
-                        fontWeight: 700,
-                        cursor: "pointer",
-                      }}
-                    >
-                      Intentar Nuevamente
-                    </button>
-                    <button
-                      type="button"
-                      onClick={reiniciarYCerrar}
-                      style={{
-                        background: "#F1F5F9",
-                        color: "#475569",
-                        border: "none",
-                        padding: "10px 16px",
-                        borderRadius: "8px",
-                        fontSize: "0.85rem",
-                        fontWeight: 600,
-                        cursor: "pointer",
-                      }}
-                    >
-                      Cerrar
-                    </button>
-                  </div>
-                </>
-              )}
-            </div>
+          {etapa === "rechazo" && (
+            <PanelRechazo
+              mensaje={resultadoPago?.mensaje ?? null}
+              enRevision={resultadoPago?.estado === "EN_REVISION"}
+              alRevisar={revisarDatos}
+              alReintentar={reintentar}
+              alCerrar={reiniciarYCerrar}
+            />
           )}
         </div>
       </div>
