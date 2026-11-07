@@ -301,7 +301,7 @@ export async function confirmarPagoPluxAction(entrada: {
     try {
       const montoFmt = Number(pago.pag_monto_total || 0).toFixed(2);
       await clienteDb
-        .schema("comun_notificaciones")
+        .schema("comun_notificacion")
         .from("not_registro")
         .insert({
           not_usuario_id: pago.pag_cliente_id,

@@ -5371,7 +5371,7 @@ export async function confirmarPagoPayphoneAction(datos: {
         const montoFormateado = Number(datos.montoTotal ?? varEncontrada?.precio_total ?? 0).toFixed(2);
         if (usuarioId) {
           await clienteDb
-            .schema("comun_notificaciones")
+            .schema("comun_notificacion")
             .from("not_registro")
             .insert({
               not_usuario_id: usuarioId,
