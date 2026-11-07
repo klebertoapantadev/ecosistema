@@ -65,12 +65,17 @@ Deno.serve(async (req: Request) => {
     return respuesta({ error: "No autorizado" }, 401);
   }
 
-  let notificacion: Record<string, unknown>;
+  let cuerpoRecibido: Record<string, unknown>;
   try {
-    notificacion = await req.json();
+    cuerpoRecibido = await req.json();
   } catch {
     return respuesta({ error: "Cuerpo invalido" }, 400);
   }
+  const notificacion =
+    cuerpoRecibido?.detail && typeof cuerpoRecibido.detail === "object"
+      ? { ...cuerpoRecibido, ...(cuerpoRecibido.detail as Record<string, unknown>) }
+      : cuerpoRecibido;
+
   if (typeof notificacion?.extras !== "string") {
     return respuesta({ error: "Falta extras" }, 400);
   }

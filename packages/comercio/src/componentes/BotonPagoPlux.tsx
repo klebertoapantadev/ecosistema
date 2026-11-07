@@ -9,7 +9,12 @@
 // iframe de PLUX: nunca pasa por este componente.
 import React, { useEffect, useRef, useState } from "react";
 import { CheckCircle2, Lock, RefreshCw, XCircle } from "lucide-react";
-import { consultarPagoPluxAction, prepararPagoPluxAction, type PagoPluxConsultado } from "../acciones-plux";
+import {
+  confirmarPagoPluxAction,
+  consultarPagoPluxAction,
+  prepararPagoPluxAction,
+  type PagoPluxConsultado,
+} from "../acciones-plux";
 import { SCRIPT_JQUERY, SCRIPT_PAYBOX, respuestaExitosa, type PagadorPlux } from "../plux";
 
 interface Props {
@@ -129,11 +134,29 @@ export function BotonPagoPlux({ negocio, varianteId, pagador, ambiente, alPagoAp
     const w = window as any;
     // El script de PLUX lee `data` cada vez que se abre el modal.
     w.data = r.data.paybox;
-    w.onAuthorize = (respuesta: unknown) => {
+    w.onAuthorize = async (respuesta: unknown) => {
       // Al cerrar el modal llega un "failed" aunque el pago haya salido bien.
-      if (!respuestaExitosa(respuesta) || !identificador.current) return;
+      if (!respuestaExitosa(respuesta) || !identificador.current || resuelto.current) return;
+      const idActual = identificador.current;
       setFase("esperando");
-      esperarWebhook(identificador.current);
+
+      try {
+        const conf = await confirmarPagoPluxAction({
+          negocio,
+          identificador: idActual,
+          respuestaPaybox: respuesta,
+        });
+        if (conf.ok && conf.data.estado === "APROBADO") {
+          resuelto.current = true;
+          setFase("aprobado");
+          alPagoAprobado(idActual, conf.data);
+          return;
+        }
+      } catch {
+        // Si falla la acción inmediata, continúa esperando por polling del webhook
+      }
+
+      esperarWebhook(idActual);
     };
 
     try {

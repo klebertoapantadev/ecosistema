@@ -376,7 +376,6 @@ export function RejillaPlanes({ negocio = "tranqi", filtroInicial = "todos" }: R
           variante={seleccion.variante}
           negocio={negocio}
           alPagoExitoso={() => {
-            setPagoAbierto(false);
             avisar("ok", "Pago recibido", `${seleccion.producto.pro_nombre} ya está activo. Te enviamos el comprobante por correo.`);
             router.refresh();
           }}
