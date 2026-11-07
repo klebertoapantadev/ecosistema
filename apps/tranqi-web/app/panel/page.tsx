@@ -15,12 +15,13 @@ import { WidgetNotificacionesCliente } from "@eco/notificaciones";
 import { obtenerSolicitudPropia } from "../../modulos/socios/consultas";
 import { ConsolaSuperAdminModular } from "./ConsolaSuperAdminModular";
 import { TarjetaEstadoSolicitudHome } from "./TarjetaEstadoSolicitudHome";
-import { SeccionCoberturaCliente, obtenerCoberturaUsuarioAction, TarjetaBeneficiosCorporativosCliente, BannerInformativoSuperior } from "@eco/comercio";
+import { SeccionCoberturaCliente, obtenerCoberturaUsuarioAction, TarjetaBeneficiosCorporativosCliente } from "@eco/comercio";
 import { MenuCuenta } from "./MenuCuenta";
 import { obtenerResumenInicioCliente, type DocumentoBilletera } from "../../modulos/inicio-cliente/consultas";
 import { CifraQueCuenta } from "../../modulos/inicio-cliente/componentes/CifraQueCuenta";
 import { TarjetaCaso } from "../../modulos/inicio-cliente/componentes/TarjetaCaso";
 import { RejillaPlanes } from "../../modulos/inicio-cliente/componentes/RejillaPlanes";
+import { AvisoLegalDiscreto } from "../../modulos/inicio-cliente/componentes/AvisoLegalDiscreto";
 import { BilleteraVacia } from "../../modulos/inicio-cliente/componentes/BilleteraVacia";
 
 export const metadata: Metadata = { title: "Panel — tranqi" };
@@ -165,14 +166,12 @@ export default async function PagePanel({ searchParams }: Props) {
         />
       </div>
 
-      {/* Banner Informativo Superior - Exclusivo para el Menú de Inicio */}
-      <div style={{ marginBottom: "14px" }}>
-        <BannerInformativoSuperior
-          negocio={NEGOCIO}
-          ubicacion="TODOS"
-          audiencia={modo === "abogado" ? "ABOGADOS" : modo === "cliente" ? "CLIENTES" : "TODOS"}
-        />
-      </div>
+      {/* Avisos legales (campañas informativas): discretos, con colores de marca
+          y que el usuario puede ocultar. Sustituye a la banda azul (TRQ-CLI-001). */}
+      <AvisoLegalDiscreto
+        negocio={NEGOCIO}
+        audiencia={modo === "abogado" ? "ABOGADOS" : modo === "cliente" ? "CLIENTES" : "TODOS"}
+      />
 
       {/* POSICIÓN #1 EN PANEL HOME: Si existe una solicitud en proceso o pendiente de firma, aparece al inicio absoluto */}
       {tieneSolicitudEnProceso && solicitudPropia && (

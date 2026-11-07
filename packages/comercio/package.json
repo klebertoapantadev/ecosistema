@@ -8,6 +8,7 @@
     ".": "./src/index.ts",
     "./componentes/*": "./src/componentes/*.tsx",
     "./acciones": "./src/acciones.ts",
+    "./acciones-informativos": "./src/acciones-informativos.ts",
     "./plux": "./src/plux.ts"
   },
   "scripts": {
