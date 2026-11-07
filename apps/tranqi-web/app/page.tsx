@@ -1,17 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { BannerInformativoSuperior } from "@eco/comercio";
-
-interface AbogadoCard {
-  id: string;
-  nombre: string;
-  cargo: string;
-  materia: string;
-  ubicacion: string;
-  experiencia: string;
-  verificado: boolean;
-}
 
 interface PlanDestacadoLanding {
   categoria: string;
@@ -24,17 +14,6 @@ interface PlanDestacadoLanding {
   destacado: boolean;
 }
 
-const ABOGADOS_BASE: AbogadoCard[] = [
-  { id: "1", nombre: "Mateo Salazar", cargo: "Socio fundador", materia: "Derecho Civil", ubicacion: "Quito · 4 prov.", experiencia: "12 años", verificado: true },
-  { id: "2", nombre: "Camila Rosero", cargo: "Abogada litigante", materia: "Derecho Laboral", ubicacion: "Guayaquil · 2 prov.", experiencia: "8 años", verificado: true },
-  { id: "3", nombre: "Andrés Villacís", cargo: "Abogado litigante", materia: "Derecho Penal", ubicacion: "Cuenca · 3 prov.", experiencia: "15 años", verificado: true },
-  { id: "4", nombre: "Fernanda Cevallos", cargo: "Asesora legal", materia: "Derecho de Familia", ubicacion: "Quito · 1 prov.", experiencia: "6 años", verificado: true },
-  { id: "5", nombre: "Gabriel Mendoza", cargo: "Especialista tributario", materia: "Derecho Mercantil", ubicacion: "Ambato · 3 prov.", experiencia: "10 años", verificado: true },
-  { id: "6", nombre: "Sofía Alarcón", cargo: "Abogada litigante", materia: "Derecho Constitucional", ubicacion: "Loja · 2 prov.", experiencia: "7 años", verificado: true },
-  { id: "7", nombre: "Roberto Peralta", cargo: "Consultor legal", materia: "Derecho Administrativo", ubicacion: "Manta · 4 prov.", experiencia: "14 años", verificado: true },
-  { id: "8", nombre: "Elena Izquierdo", cargo: "Asesora corporativa", materia: "Derecho Societario", ubicacion: "Ibarra · 2 prov.", experiencia: "9 años", verificado: true },
-];
-
 const PRESENTACION =
   "¡Hola! Soy tranqi, tu respaldo legal de confianza. Te acompaño mientras exploras — y si algo te da curiosidad, haz clic en mí y hablamos.";
 
@@ -46,65 +25,23 @@ const FALLBACK: Record<string, string> = {
   planes: "USD 20 al año. Menos de 6 centavos al día por vivir tranqi.",
   statement: "Así de simple: lo legal, para todos.",
   red: "Si eres abogado, la red te da clientes, ingresos y capacitación constante.",
-  equipo: "Nuestros abogados cuentan con título verificado en SENESCYT y matrícula activa en el Foro de Abogados.",
   contacto: "Este es el momento de dar el paso. Pregúntame cómo unirte.",
   vacantes: "Buscamos talento para crecer: revisa nuestras oportunidades laborales en operaciones, soporte y área legal.",
 };
 
 export default function TranqiLanding() {
-  const carruselRef = useRef<HTMLDivElement>(null);
-  const [abogados, setAbogados] = useState<AbogadoCard[]>(ABOGADOS_BASE);
-  const [planesDestacados, setPlanesDestacados] = useState<{
-    familiar: PlanDestacadoLanding;
-    corporativo: PlanDestacadoLanding;
-  }>({
-    familiar: {
-      categoria: "familiar",
-      categoriaNombre: "Planes Familiares",
-      productoId: "prod-trq-plan-proteccion",
-      nombre: "Planes de Protección Jurídica Continua",
-      descripcion: "Membresías de cobertura legal preventiva para personas naturales y familias.",
-      precioDesde: 23,
-      precioDesdeTexto: "23.00",
-      destacado: true,
-    },
-    corporativo: {
-      categoria: "corporativo",
-      categoriaNombre: "Planes Corporativos",
-      productoId: "prod-trq-plan-corporativo",
-      nombre: "Cobertura Legal Corporativa Empresas (B2B)",
-      descripcion: "Licenciamiento legal por tramos de empleados con abogado empresarial dedicado.",
-      precioDesde: 10.35,
-      precioDesdeTexto: "10.35",
-      destacado: true,
-    },
+  // Solo se publica el plan para personas y familias: el corporativo (B2B)
+  // no se vende desde la landing.
+  const [planFamiliar, setPlanFamiliar] = useState<PlanDestacadoLanding>({
+    categoria: "familiar",
+    categoriaNombre: "Planes Familiares",
+    productoId: "prod-trq-plan-proteccion",
+    nombre: "Planes de Protección Jurídica Continua",
+    descripcion: "Membresías de cobertura legal preventiva para personas naturales y familias.",
+    precioDesde: 23,
+    precioDesdeTexto: "23.00",
+    destacado: true,
   });
-  const isDragging = useRef(false);
-  const startX = useRef(0);
-  const scrollLeftPos = useRef(0);
-
-  const deslizarCarrusel = (dir: number) => {
-    if (carruselRef.current) {
-      const scrollAmount = 240 * dir;
-      carruselRef.current.scrollBy({ left: scrollAmount, behavior: "smooth" });
-    }
-  };
-
-  const onMouseDown = (e: React.MouseEvent) => {
-    if (!carruselRef.current) return;
-    isDragging.current = true;
-    startX.current = e.pageX - carruselRef.current.offsetLeft;
-    scrollLeftPos.current = carruselRef.current.scrollLeft;
-  };
-  const onMouseLeave = () => { isDragging.current = false; };
-  const onMouseUp = () => { isDragging.current = false; };
-  const onMouseMove = (e: React.MouseEvent) => {
-    if (!isDragging.current || !carruselRef.current) return;
-    e.preventDefault();
-    const x = e.pageX - carruselRef.current.offsetLeft;
-    const walk = (x - startX.current) * 1.5;
-    carruselRef.current.scrollLeft = scrollLeftPos.current - walk;
-  };
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -118,34 +55,12 @@ export default function TranqiLanding() {
   }, []);
 
   useEffect(() => {
-    async function cargarAbogadosRegistrados() {
-      try {
-        const res = await fetch("/api/abogados-publicos");
-        const json = await res.json();
-        if (json.ok && Array.isArray(json.abogados) && json.abogados.length > 0) {
-          setAbogados((prev) => {
-            const idsExistentes = new Set(json.abogados.map((a: AbogadoCard) => a.id));
-            const baseSinDuplicar = prev.filter((a) => !idsExistentes.has(a.id));
-            return [...json.abogados, ...baseSinDuplicar];
-          });
-        }
-      } catch {
-        // Fallback a plantilla demostrativa
-      }
-    }
-    cargarAbogadosRegistrados();
-  }, []);
-
-  useEffect(() => {
     async function cargarPlanesDestacados() {
       try {
         const res = await fetch("/api/planes-publicos");
         const json = await res.json();
-        if (json.ok && json.familiar && json.corporativo) {
-          setPlanesDestacados({
-            familiar: json.familiar,
-            corporativo: json.corporativo,
-          });
+        if (json.ok && json.familiar) {
+          setPlanFamiliar(json.familiar);
         }
       } catch {
         // Fallback inmediato a los valores por defecto
@@ -453,7 +368,6 @@ export default function TranqiLanding() {
           <a href="#problema">El problema</a>
           <a href="#app">La app</a>
           <a href="#planes">Planes</a>
-          <a href="#equipo">Equipo</a>
           <a href="/ingresar" className="cta">Ingresar</a>
         </div>
       </nav>
@@ -602,55 +516,31 @@ export default function TranqiLanding() {
         <div className="wrap">
           <div className="cabecera-planes reveal">
             <h2>Protección jurídica accesible</h2>
-            <p className="sub">Un sistema diseñado para que cualquier persona o empresa cuente con respaldo legal permanente.</p>
+            <p className="sub">Un sistema diseñado para que cualquier persona o familia cuente con respaldo legal permanente.</p>
           </div>
 
           <div className="planes-grid reveal">
-            {/* 1. Primer plan destacado del grupo 'Planes Familiares' */}
+            {/* Plan para personas y familias (el corporativo no se publica en la landing) */}
             <div className="plan-card">
               <div className="plan-card-header">
-                <span className="plan-badge-categoria">{planesDestacados.familiar.categoriaNombre}</span>
-                {planesDestacados.familiar.destacado && (
+                <span className="plan-badge-categoria">{planFamiliar.categoriaNombre}</span>
+                {planFamiliar.destacado && (
                   <span className="plan-badge-destacado">⭐ DESTACADO</span>
                 )}
               </div>
-              <h3 className="plan-card-titulo">{planesDestacados.familiar.nombre}</h3>
-              <p className="plan-card-desc">{planesDestacados.familiar.descripcion}</p>
+              <h3 className="plan-card-titulo">{planFamiliar.nombre}</h3>
+              <p className="plan-card-desc">{planFamiliar.descripcion}</p>
 
               <div className="plan-card-precio-box">
                 <span className="plan-card-desde">Planes desde</span>
                 <div className="plan-card-monto">
                   <span className="plan-card-moneda">$</span>
-                  <span className="plan-card-valor">{planesDestacados.familiar.precioDesdeTexto}</span>
+                  <span className="plan-card-valor">{planFamiliar.precioDesdeTexto}</span>
                 </div>
               </div>
 
               <a className="btn btn-negro plan-card-btn" href="/ingresar">
                 Ingresar / Registrarme
-              </a>
-            </div>
-
-            {/* 2. Primer plan destacado del grupo 'Planes Corporativos' */}
-            <div className="plan-card">
-              <div className="plan-card-header">
-                <span className="plan-badge-categoria">{planesDestacados.corporativo.categoriaNombre}</span>
-                {planesDestacados.corporativo.destacado && (
-                  <span className="plan-badge-destacado">⭐ DESTACADO</span>
-                )}
-              </div>
-              <h3 className="plan-card-titulo">{planesDestacados.corporativo.nombre}</h3>
-              <p className="plan-card-desc">{planesDestacados.corporativo.descripcion}</p>
-
-              <div className="plan-card-precio-box">
-                <span className="plan-card-desde">Planes desde</span>
-                <div className="plan-card-monto">
-                  <span className="plan-card-moneda">$</span>
-                  <span className="plan-card-valor">{planesDestacados.corporativo.precioDesdeTexto}</span>
-                </div>
-              </div>
-
-              <a className="btn btn-negro plan-card-btn" href="/empresas/contacto">
-                Más Información
               </a>
             </div>
           </div>
@@ -671,95 +561,10 @@ export default function TranqiLanding() {
         </div>
       </section>
 
-      {/* NUESTRO EQUIPO · entra 1094 · sale 70 (TRQ-002 / PLT-019) */}
-      <section id="equipo" data-buddie="equipo">
-        <div className="ribbon"><svg viewBox="0 0 1440 1400" preserveAspectRatio="none">
-          <path pathLength={1} stroke="#05876E" d="M 1094 0 C 1094 280 1150 420 850 470 C 500 500 120 540 120 800 C 120 1080 70 1140 70 1400" />
-        </svg></div>
-        <div className="lienzo-equipo">
-          <div className="cabecera-equipo reveal">
-            <div style={{ maxWidth: "58ch" }}>
-              <p className="rotulo-equipo">Nuestro equipo</p>
-              <h2 style={{ marginBottom: 0 }}>Abogados reales, <i>verificados</i>, listos para acompañarte.</h2>
-            </div>
-          </div>
-
-          <div style={{ position: "relative" }}>
-            <button
-              type="button"
-              onClick={() => deslizarCarrusel(-1)}
-              aria-label="Anterior"
-              className="btn-carrusel-flotante btn-carrusel-flotante-izq"
-              title="Anterior"
-            >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
-            </button>
-
-            <div
-              className="cuadricula-equipo"
-              ref={carruselRef}
-              onMouseDown={onMouseDown}
-              onMouseLeave={onMouseLeave}
-              onMouseUp={onMouseUp}
-              onMouseMove={onMouseMove}
-            >
-              {abogados.map((abg) => (
-                <article key={abg.id} className="card-equipo">
-                  <div className="retrato-equipo">
-                    <span className="etiqueta-equipo">{abg.materia}</span>
-                    <div className="silueta-equipo">
-                      <svg viewBox="0 0 100 100" fill="none" stroke="#D8FFB3" strokeWidth="1.6">
-                        <circle cx="50" cy="38" r="19"/>
-                        <path d="M14 92c0-24 16-38 36-38s36 14 36 38"/>
-                      </svg>
-                    </div>
-                    {abg.verificado && (
-                      <span className="verificado-equipo" title="Verificado">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="#06251D" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M20 6 9 17l-5-5"/>
-                        </svg>
-                      </span>
-                    )}
-                  </div>
-                  <div className="datos-equipo">
-                    <p className="nombre-equipo">{abg.nombre}</p>
-                    <p className="cargo-equipo">{abg.cargo}</p>
-                    <div className="fila-meta-equipo"><span>{abg.ubicacion}</span><b>{abg.experiencia}</b></div>
-                  </div>
-                </article>
-              ))}
-            </div>
-
-            <button
-              type="button"
-              onClick={() => deslizarCarrusel(1)}
-              aria-label="Siguiente"
-              className="btn-carrusel-flotante btn-carrusel-flotante-der"
-              title="Siguiente"
-            >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6"/></svg>
-            </button>
-          </div>
-
-          <div className="pie-equipo">
-            <p className="confianza-equipo">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 2 4 6v6c0 5 3.4 8.5 8 10 4.6-1.5 8-5 8-10V6z"/>
-                <path d="M9 12l2 2 4-4"/>
-              </svg>
-              Título y matrícula verificados antes de aparecer en la red
-            </p>
-            <a className="btn btn-blanco-borde" href="https://www.tranqi24.com/abogados">
-              Únete al equipo legal
-            </a>
-          </div>
-        </div>
-      </section>
-
-      {/* CONTACTO (LÁMINA TRANQI) · entra 70 · sale 720 */}
+      {/* CONTACTO (LÁMINA TRANQI) · entra 1094 · sale 720 */}
       <section id="contacto" data-buddie="contacto">
         <div className="ribbon"><svg viewBox="0 0 1440 900" preserveAspectRatio="none">
-          <path pathLength={1} stroke="#5000BA" d="M 70 0 C 70 200 180 380 320 500 C 460 620 620 720 720 900" />
+          <path pathLength={1} stroke="#5000BA" d="M 1094 0 C 1094 200 980 380 860 500 C 760 600 720 720 720 900" />
         </svg></div>
         <div className="wrap">
           <img className="reveal" src="/assets/tranqi-white.svg" alt="tranqi" />
