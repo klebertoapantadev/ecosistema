@@ -18,8 +18,16 @@ import { crearClienteServidor } from "@eco/supabase/servidor";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 // Esta ruta encadena varias consultas a Supabase y un turno completo del
-// modelo. El limite por defecto del plan es demasiado justo para eso.
-export const maxDuration = 60;
+// modelo. Con 60 s se cortaban turnos reales: el 22-oct-2026 una pregunta de
+// divorcio llevo al asistente-cliente 110 s en ARIA (varias rondas de
+// herramientas), Vercel mato la funcion y el usuario vio un http_504 mientras
+// la respuesta, ya generada, se perdia sin guardarse en trq_mensaje.
+export const maxDuration = 300;
+
+// A ARIA se le espera menos que a la funcion entera, para que quede margen de
+// guardar el mensaje y, si vence, responder con un codigo propio en vez de
+// dejar que Vercel corte sin cuerpo.
+const TIEMPO_MAXIMO_ARIA_MS = 270_000;
 
 /** Prefijo de variables de entorno del agente que corresponde a cada rol. */
 const PREFIJO_AGENTE: Record<RolConAsistente, string> = {
@@ -133,7 +141,15 @@ async function atender(req: NextRequest) {
   );
 
   try {
-    const respuesta = await invocarAgente(config, prompt, conversacionId, { sesion: capsula });
+    const respuesta = await invocarAgente(
+      config,
+      prompt,
+      conversacionId,
+      { sesion: capsula },
+      undefined,
+      undefined,
+      TIEMPO_MAXIMO_ARIA_MS,
+    );
 
     // Persistir la respuesta no debe tumbar un turno ya generado (mismo criterio
     // que _persist_run en ARIA): si el insert falla, se responde igual.
@@ -160,6 +176,14 @@ async function atender(req: NextRequest) {
       run_id: respuesta.runId,
     });
   } catch (e) {
+    // Tardar demasiado y no poder hablar con ARIA piden salidas distintas al
+    // usuario: lo primero se arregla preguntando por partes, lo segundo no.
+    if ((e as Error).name === "TimeoutError") {
+      return NextResponse.json(
+        { error: "ARIA no respondio a tiempo", codigo: "aria_tiempo", conversacion_id: conversacionId },
+        { status: 504 },
+      );
+    }
     return NextResponse.json(
       { error: String((e as Error).message ?? e), codigo: "aria", conversacion_id: conversacionId },
       { status: 502 },
