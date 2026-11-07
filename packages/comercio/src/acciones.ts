@@ -5412,6 +5412,7 @@ export async function confirmarPagoPayphoneAction(datos: {
             productoNombre: datos.productoNombre || "Plan Jurídico",
             clienteEmail: datos.clienteEmail || "cliente@tranqi24.com",
             clienteNombre: datos.titularNombre || "Cliente",
+            revalidar: false,
           });
         } else {
           // Si es un servicio puntual, asegurarse de no activar una suscripción falsa
@@ -6235,6 +6236,8 @@ export async function activarSuscripcionTrasPagoAction(datos: {
   productoNombre: string;
   clienteEmail: string;
   clienteNombre: string;
+  /** false cuando se llama desde el checkout: él refresca al cerrar el recibo. */
+  revalidar?: boolean;
 }) {
   const prods = await obtenerCatalogoProductosAction(datos.negocio);
   let varianteEncontrada: any = null;
@@ -6279,7 +6282,7 @@ export async function activarSuscripcionTrasPagoAction(datos: {
   };
 
   storeCoberturaCliente.set(datos.negocio, nuevaCobertura);
-  revalidatePath("/panel");
+  if (datos.revalidar !== false) revalidatePath("/panel");
   return nuevaCobertura;
 }
 

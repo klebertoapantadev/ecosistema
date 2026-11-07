@@ -1,7 +1,6 @@
 "use server";
 
 // Acciones del checkout con PLUX (TRQ-ADM-004).
-import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { crearClienteAdmin, crearClienteServidor } from "@eco/supabase/servidor";
 import { activarSuscripcionTrasPagoAction } from "./acciones";
@@ -118,6 +117,31 @@ export async function consultarPagoPluxAction(
  * paybox de PLUX, registrando la autorización, activando la suscripción y
  * enviando la notificación in-app sin depender de que el webhook de sandbox llegue.
  */
+// Suscripción = producto SUSCRIPCION o variante recurrente (mismo criterio que
+// confirmarPagoPayphoneAction y que el respaldo directo de arriba).
+async function esVarianteSuscripcion(db: any, varianteId: string): Promise<boolean> {
+  try {
+    const { data: variante } = await db
+      .schema("comun_comercio")
+      .from("com_variante")
+      .select("var_tipo_oferta, var_frecuencia_recurrencia, var_producto_id")
+      .eq("var_id", varianteId)
+      .maybeSingle();
+    if (!variante) return false;
+    const tipo = String(variante.var_tipo_oferta || "").toUpperCase();
+    if (tipo.startsWith("RECURRENTE") || tipo === "SUSCRIPCION" || variante.var_frecuencia_recurrencia) return true;
+    const { data: producto } = await db
+      .schema("comun_comercio")
+      .from("com_producto")
+      .select("pro_tipo")
+      .eq("pro_id", variante.var_producto_id)
+      .maybeSingle();
+    return String(producto?.pro_tipo || "").toUpperCase() === "SUSCRIPCION";
+  } catch {
+    return false;
+  }
+}
+
 export async function confirmarPagoPluxAction(entrada: {
   negocio?: string;
   identificador: string;
@@ -155,8 +179,11 @@ export async function confirmarPagoPluxAction(entrada: {
     .eq("pag_identificador_cliente", identificador)
     .maybeSingle();
 
+  // Sin revalidatePath("/panel"): Next aplicaría la recarga en el cliente en
+  // cuanto termina esta acción, con el checkout aún abierto. El panel se
+  // reordena (plan activo) y desmonta el modal antes del recibo. El checkout
+  // refresca la página cuando el cliente cierra el recibo.
   if (pago?.pag_estado === "APROBADO") {
-    revalidatePath("/panel");
     return {
       ok: true,
       data: {
@@ -282,8 +309,9 @@ export async function confirmarPagoPluxAction(entrada: {
     }
   }
 
-  // 4. Sincronizar cobertura activa y notificación in-app
-  if (varianteId) {
+  // 4. Sincronizar cobertura activa y notificación in-app. Solo una suscripción
+  // activa cobertura; un trámite de pago único no (igual que en Payphone).
+  if (varianteId && (await esVarianteSuscripcion(clienteDb || supabase, varianteId))) {
     try {
       await activarSuscripcionTrasPagoAction({
         negocio,
@@ -291,6 +319,7 @@ export async function confirmarPagoPluxAction(entrada: {
         productoNombre,
         clienteEmail: pagadorEmail,
         clienteNombre: pagadorNombre,
+        revalidar: false,
       });
     } catch {
       // Continuar
@@ -316,7 +345,6 @@ export async function confirmarPagoPluxAction(entrada: {
     }
   }
 
-  revalidatePath("/panel");
   return {
     ok: true,
     data: {

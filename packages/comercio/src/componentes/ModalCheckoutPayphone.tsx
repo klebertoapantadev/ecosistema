@@ -10,6 +10,7 @@
 // La apariencia de cada producto se define en su app con variables `--ckt-*`
 // (ver checkout/estilos.ts).
 import React, { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { ArrowLeft, Check, ChevronDown, ExternalLink, Lock, Receipt, RefreshCw, ShieldCheck, ShoppingBag, Smartphone, X } from "lucide-react";
 import {
   type VarianteCatalogo,
@@ -145,6 +146,7 @@ export function ModalCheckoutPayphone({
   alPagoExitoso,
   pasosSiguientes,
 }: Props) {
+  const router = useRouter();
   // Facturación
   const [razonSocial, setRazonSocial] = useState("");
   const [tipoIdentificacion, setTipoIdentificacion] = useState<TipoIdentificacion>("cedula");
@@ -393,7 +395,12 @@ export function ModalCheckoutPayphone({
     setDetalleAbierto(false);
     setFasePlux("inicio");
     alCerrar();
-    if (aprobado) alPagoExitoso?.(aprobado);
+    if (aprobado) {
+      alPagoExitoso?.(aprobado);
+      // Las acciones de pago ya no revalidan /panel (desmontaba el checkout a
+      // medio pago): se refresca aquí, con el recibo ya visto.
+      router.refresh();
+    }
   };
 
   // Cerrar a media confirmación cortaría la espera de PLUX (el botón vive en
