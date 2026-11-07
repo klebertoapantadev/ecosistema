@@ -58,7 +58,7 @@ modulos/{entidad}/
 | Server Actions | verbo + entidad, camelCase | `enviarSolicitudSocio` |
 | Funciones RPC en Postgres | `{prefijo_tabla}fn_{accion}` | `ssc_fn_enviar_solicitud` |
 | Edge Functions | kebab-case, verbo-entidad | `webhook-pago-payphone` |
-| Ramas de Git | `{CODIGO-ISSUE}-{descripcion-corta}` | `TRQ-014-firma-electronica` |
+| Rama de Git | Trunk-based directo en `master` (no crear ramas secundarias salvo instrucción explícita) | `master` |
 | Variables de entorno | `MAYUSCULAS_CON_GUION_BAJO`, prefijadas por ámbito | `SUPABASE_SERVICE_ROLE_KEY` (server-only), `NEXT_PUBLIC_SUPABASE_URL` (cliente) |
 
 ## 5. TypeScript
