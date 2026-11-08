@@ -39,61 +39,459 @@ El modelo de datos evita duplicar tablas entre negocios dividiendo la base de da
 
 ---
 
-## 2. Diagramas Entidad-Relación (ER) por Dominio
+## 2. Modelo Gráfico de la Base de Datos (Diagramas de Arquitectura y Entidad-Relación)
 
-### 2.1 Identidad, Perfiles RBAC, Widgets y Consentimientos (`comun_seguridad`)
+> **Explorador Visual Interactivo (HTML):** Puedes abrir [`modelo-grafico-bdd.html`](modelo-grafico-bdd.html) en el navegador para filtrar interactivamente por esquema, buscar columnas/tablas y hacer clic en cualquier entidad para inspeccionar su grafo de llaves primarias (`PK`) y foráneas (`FK`) entrantes y salientes.
+
+### 2.0 Mapa Macro de Interconexión entre Esquemas (Topología Multi-Esquema)
+
+```mermaid
+flowchart TB
+    subgraph AUTH["Supabase Auth (Nativo)"]
+        AU["auth.users (id PK)"]
+    end
+
+    subgraph SEG["comun_seguridad (15 tablas · seg_)"]
+        SU["seg_usuario (usu_id PK/FK)"]
+        SM["seg_membresia (mem_id PK)"]
+        SP["seg_perfil (prf_id PK)"]
+        SMP["seg_membresia_perfil (mpf_id PK)"]
+        SW["seg_widget / seg_rol_widget"]
+        ST["seg_termino_documento / seg_usuario_consentimiento"]
+    end
+
+    subgraph COM["comun_comercio (33 tablas · com_)"]
+        CP["com_categoria / com_producto"]
+        CV["com_variante (var_id PK)"]
+        CTP["com_transaccion_pago (pag_id PK)"]
+        CS["com_suscripcion / com_derecho_consumo"]
+        CCE["com_convenio_empresa / com_beneficiario_empresa"]
+        CCOMP["com_compliance_catalogo / com_compliance_empresa_item"]
+    end
+
+    subgraph AGE["comun_agenda (5 tablas · age_)"]
+        ACN["age_config_negocio (cgn_id PK · Horario Telemático/Presencial)"]
+        AP["age_profesional (agp_id PK)"]
+        AF["age_franja / age_bloqueo"]
+        AR["age_reserva (res_id PK · GiST Anti-Solape)"]
+    end
+
+    subgraph TRQ["tranqui_legal (29 tablas · trq_)"]
+        TM["trq_materia (mat_id PK)"]
+        TAB["trq_abogado (abg_id PK) / trq_solicitud_socio"]
+        TCIT["trq_cita (cit_id PK · ARIA + Pago)"]
+        TCRM["trq_cliente_perfil / trq_prospecto"]
+        TCAS["trq_caso_judicial (cas_id PK) + Equipo/Carpetas/Actuaciones"]
+        TBIL["trq_billetera_documento + trq_enlace_compartido_ttl"]
+        TCON["trq_conversacion / trq_mensaje (ARIA)"]
+    end
+
+    subgraph TRANSV["Servicios Transversales (comun_*)"]
+        AUD["comun_auditoria (aud_registro · Trigger Universal)"]
+        CFG["comun_configuracion (cfg_negocio / cfg_smtp)"]
+        NOT["comun_notificacion (not_campana / not_registro / not_cola_correo)"]
+        CAT["comun_catalogo (cat_provincia · 24 Provincias)"]
+        REC["comun_reclutamiento (rec_vacante / rec_postulacion)"]
+        TAR["comun_tareas (tar_ejecucion)"]
+    end
+
+    AU -->|"1:1"| SU
+    SU -->|"mem_usuario_id"| SM
+    SM -->|"mpf_membresia_id"| SMP
+    SP -->|"mpf_perfil_id"| SMP
+    SU -->|"abg_usuario_id"| TAB
+    SU -->|"agp_usuario_id"| AP
+    AP --> AF
+    AP --> AR
+    ACN -.->|"Proyecta huecos por defecto"| TCIT
+    TM -->|"cit_materia_id (Clasificada por ARIA)"| TCIT
+    TAB -->|"cit_abogado_id (Nullable en contingencia)"| TCIT
+    AR -->|"cit_reserva_id"| TCIT
+    CV -->|"cit_variante_id"| TCIT
+    CTP -->|"cit_pago_id (Pago confirmado)"| TCIT
+    CS -->|"cit_derecho_id"| TCIT
+    SU -->|"cas_cliente_id"| TCAS
+    TAB -->|"cas_abogado_id"| TCAS
+    SU -->|"doc_usuario_id"| TBIL
+    CAT -->|"abp_provincia_id"| TAB
+```
+
+---
+
+### 2.1 Diagrama ER — `comun_seguridad` (Identidad, Membresías, Perfiles RBAC, Widgets y Consentimientos)
 
 ```mermaid
 erDiagram
+    seg_usuario {
+        uuid usu_id PK "FK auth.users(id)"
+        bigint usu_secuencial
+        text usu_nombres
+        text usu_apellidos
+        text usu_correo "NOT NULL"
+        text usu_whatsapp
+        text usu_cedula
+        boolean usu_superadmin_plataforma
+        text usu_mfa_modalidad
+        jsonb usu_detalle_usuario
+    }
+    seg_membresia {
+        uuid mem_id PK
+        uuid mem_usuario_id FK "seg_usuario(usu_id)"
+        text mem_negocio "tranqi | fastfix | tinkay | margaritas"
+        text mem_rol "Rol activo"
+        text mem_estado "activo | suspendido"
+        jsonb mem_detalle_membresia
+    }
+    seg_perfil {
+        uuid prf_id PK
+        text prf_clave "UK CLIENTE | OPERADOR | ABOGADO | ADMINISTRADOR | SUPERADMIN"
+        text prf_nombre
+        integer prf_nivel "Jerarquia 1..100"
+        boolean prf_es_sistema
+    }
+    seg_membresia_perfil {
+        uuid mpf_id PK
+        uuid mpf_membresia_id FK "seg_membresia(mem_id)"
+        uuid mpf_perfil_id FK "seg_perfil(prf_id)"
+        uuid mpf_asignado_por FK "seg_usuario(usu_id)"
+        boolean mpf_activo
+    }
+    seg_widget {
+        uuid wdg_id PK
+        text wdg_negocio
+        text wdg_clave "Identificador unico del widget"
+        text wdg_nombre
+        text wdg_ruta
+        text wdg_categoria
+        boolean wdg_activo
+    }
+    seg_rol_widget {
+        uuid rlw_id PK
+        text rlw_negocio
+        text rlw_rol
+        uuid rlw_widget_id FK "seg_widget(wdg_id)"
+    }
+    seg_termino_documento {
+        uuid tdo_id PK
+        text tdo_negocio
+        text tdo_codigo
+        integer tdo_version_actual
+        boolean tdo_obligatorio
+    }
+    seg_termino_historial_version {
+        uuid thv_id PK
+        uuid thv_documento_id FK "seg_termino_documento(tdo_id)"
+        integer thv_version
+        text thv_contenido_md
+        text thv_hash_sha256
+    }
+    seg_usuario_consentimiento {
+        uuid uco_id PK
+        uuid uco_usuario_id FK "seg_usuario(usu_id)"
+        uuid uco_documento_id FK "seg_termino_documento(tdo_id)"
+        uuid uco_version_id FK "seg_termino_historial_version(thv_id)"
+        boolean uco_aceptado
+    }
+    seg_acceso {
+        uuid acc_id PK
+        uuid acc_usuario_id FK "seg_usuario(usu_id)"
+        text acc_negocio
+        text acc_ip
+        text acc_dispositivo
+    }
+    seg_token_mcp {
+        uuid tkm_id PK
+        text tkm_negocio
+        text tkm_token_hash "SHA-256"
+        uuid tkm_creado_por FK "seg_usuario(usu_id)"
+    }
+
     seg_usuario ||--o{ seg_membresia : "usu_id -> mem_usuario_id"
     seg_membresia ||--o{ seg_membresia_perfil : "mem_id -> mpf_membresia_id"
     seg_perfil ||--o{ seg_membresia_perfil : "prf_id -> mpf_perfil_id"
-    seg_widget ||--o{ seg_rol_widget : "wid_clave -> rwi_widget_clave"
+    seg_widget ||--o{ seg_rol_widget : "wdg_id -> rlw_widget_id"
     seg_usuario ||--o{ seg_acceso : "usu_id -> acc_usuario_id"
     seg_usuario ||--o{ seg_usuario_consentimiento : "usu_id -> uco_usuario_id"
     seg_termino_documento ||--o{ seg_termino_historial_version : "tdo_id -> thv_documento_id"
     seg_termino_documento ||--o{ seg_usuario_consentimiento : "tdo_id -> uco_documento_id"
-    seg_usuario ||--o{ seg_dispositivo_push : "usu_id -> dps_usuario_id"
-    seg_usuario ||--o{ seg_preferencia_notificacion : "usu_id -> pno_usuario_id"
-    seg_usuario ||--o{ seg_token_mcp : "usu_id -> tmc_creado_por"
+    seg_usuario ||--o{ seg_token_mcp : "usu_id -> tkm_creado_por"
 ```
 
-### 2.2 Agenda por Defecto, Clasificación ARIA, Citas y Pagos (`comun_agenda` + `tranqui_legal` + `comun_comercio`)
+---
+
+### 2.2 Diagrama ER — `comun_agenda` + `tranqui_legal.trq_cita` (Horarios por Defecto, Clasificación ARIA, Reservas y Pagos)
 
 ```mermaid
 erDiagram
-    age_config_negocio ||--o{ trq_cita : "Horario telematico/presencial por defecto"
-    trq_materia ||--o{ trq_cita : "mat_id -> cit_materia_id (ARIA)"
-    trq_abogado |o--o{ trq_cita : "abg_id -> cit_abogado_id (nullable)"
+    age_config_negocio {
+        uuid cgn_id PK
+        text cgn_negocio "UK tranqi | fastfix | tinkay | margaritas"
+        text cgn_zona_horaria "America/Guayaquil"
+        integer cgn_duracion_cita_min "Default 45"
+        integer cgn_holgura_min "Default 15"
+        boolean cgn_permitir_sin_profesional "Default true"
+        text cgn_direccion_presencial
+        jsonb cgn_franjas_virtual "Horario telematico por defecto"
+        jsonb cgn_franjas_presencial "Horario presencial por defecto"
+        jsonb cgn_detalle_config "materia_defecto_nombre: Civil"
+    }
+    age_profesional {
+        uuid agp_id PK
+        uuid agp_usuario_id FK "seg_usuario(usu_id)"
+        text agp_negocio
+        integer agp_duracion_cita_min
+        integer agp_holgura_min
+        boolean agp_acepta_turno
+        timestamptz agp_ultimo_turno_en
+    }
+    age_franja {
+        uuid fra_id PK
+        uuid fra_profesional_id FK "age_profesional(agp_id)"
+        smallint fra_dia_semana "0=Dom .. 6=Sab"
+        time fra_hora_inicio
+        time fra_hora_fin
+        text fra_modalidad "virtual | presencial | ambas"
+    }
+    age_bloqueo {
+        uuid blq_id PK
+        uuid blq_profesional_id FK "age_profesional(agp_id)"
+        timestamptz blq_inicio_en
+        timestamptz blq_fin_en
+        text blq_origen "manual | audiencia | externo"
+    }
+    age_reserva {
+        uuid res_id PK
+        uuid res_profesional_id FK "age_profesional(agp_id)"
+        uuid res_cliente_id FK "seg_usuario(usu_id)"
+        timestamptz res_inicio_en
+        timestamptz res_fin_en "EXCLUDE USING gist anti-solape"
+        text res_modalidad "virtual | presencial"
+        text res_estado "propuesta | confirmada | cancelada | realizada"
+    }
+    trq_cita {
+        uuid cit_id PK
+        uuid cit_cliente_id FK "seg_usuario(usu_id)"
+        uuid cit_abogado_id FK "trq_abogado(abg_id) NULLABLE"
+        uuid cit_materia_id FK "trq_materia(mat_id) Clasificada por ARIA"
+        uuid cit_reserva_id FK "age_reserva(res_id) NULLABLE"
+        uuid cit_variante_id FK "com_variante(var_id)"
+        uuid cit_pago_id FK "com_transaccion_pago(pag_id)"
+        uuid cit_derecho_id FK "com_derecho_consumo(dco_id)"
+        timestamptz cit_inicio_en
+        timestamptz cit_fin_en
+        text cit_modalidad "virtual | presencial"
+        text cit_cobertura "pendiente | plan | cupon | pagada | cortesia"
+        text cit_asignacion "turno | caso | operador | contingencia"
+        text cit_estado "propuesta | confirmada | reagendada | cancelada | realizada"
+        jsonb cit_detalle_cita
+    }
+
+    age_config_negocio ||--o{ trq_cita : "Proyecta horarios por defecto"
     age_profesional ||--o{ age_franja : "agp_id -> fra_profesional_id"
     age_profesional ||--o{ age_bloqueo : "agp_id -> blq_profesional_id"
     age_profesional ||--o{ age_reserva : "agp_id -> res_profesional_id"
     age_reserva |o--o| trq_cita : "res_id -> cit_reserva_id"
-    com_variante |o--o{ trq_cita : "var_id -> cit_variante_id"
-    com_transaccion_pago |o--o{ trq_cita : "pag_id -> cit_pago_id"
-    com_derecho_consumo |o--o{ trq_cita : "dco_id -> cit_derecho_id"
 ```
 
-### 2.3 Dominio Legaltech Tranqi: Red de Abogados, CRM y Expedientes Judiciales (`tranqui_legal`)
+---
+
+### 2.3 Diagrama ER — `comun_comercio` (Catálogo Unificado, Pasarela Payphone/Plux, Suscripciones, Convenios B2B y Compliance)
 
 ```mermaid
 erDiagram
-    seg_usuario ||--o| trq_abogado : "usu_id -> abg_usuario_id"
+    com_categoria {
+        uuid ctg_id PK
+        text ctg_negocio
+        uuid ctg_padre_id FK "com_categoria(ctg_id)"
+        text ctg_nombre
+        text ctg_slug
+        text ctg_tipo
+    }
+    com_producto {
+        uuid pro_id PK
+        text pro_negocio
+        uuid pro_categoria_principal_id FK "com_categoria(ctg_id)"
+        text pro_sku_base
+        text pro_nombre
+        text pro_tipo "FISICO | SERVICIO | SUSCRIPCION | DIGITAL"
+        boolean pro_activo
+    }
+    com_variante {
+        uuid var_id PK
+        uuid var_producto_id FK "com_producto(pro_id)"
+        text var_sku
+        text var_nombre
+        numeric var_precio "Base imponible USD"
+        numeric var_tarifa_iva_porcentaje "15%"
+        text var_tipo_oferta "UNICO | RECURRENTE"
+        jsonb var_detalle_variante "duracion_min, derechos"
+    }
+    com_transaccion_pago {
+        uuid pag_id PK
+        text pag_negocio
+        uuid pag_usuario_id FK "seg_usuario(usu_id)"
+        uuid pag_variante_id FK "com_variante(var_id)"
+        text pag_pasarela "PAYPHONE | PAGOPLUX"
+        text pag_referencia_cliente "UK clientTransactionId"
+        bigint pag_monto_total_centavos
+        text pag_estado "PENDIENTE | APROBADO | RECHAZADO"
+    }
+    com_suscripcion {
+        uuid sub_id PK
+        text sub_negocio
+        uuid sub_usuario_id FK "seg_usuario(usu_id)"
+        uuid sub_variante_id FK "com_variante(var_id)"
+        text sub_estado "ACTIVA | PAUSADA | CANCELADA"
+    }
+    com_derecho_consumo {
+        uuid dco_id PK
+        uuid dco_suscripcion_id FK "com_suscripcion(sub_id)"
+        uuid dco_usuario_id FK "seg_usuario(usu_id)"
+        text dco_concepto "CONSULTA_TELEMATICA"
+        integer dco_incluidos
+        integer dco_consumidos
+    }
+    com_convenio_empresa {
+        uuid cve_id PK
+        text cve_negocio
+        text cve_ruc
+        text cve_razon_social
+        numeric cve_porcentaje_descuento
+        integer cve_consultas_gratuitas_mes
+    }
+    com_beneficiario_empresa {
+        uuid bne_id PK
+        uuid bne_convenio_id FK "com_convenio_empresa(cve_id)"
+        uuid bne_usuario_id FK "seg_usuario(usu_id)"
+        text bne_identificacion
+        text bne_correo
+    }
+    com_compliance_catalogo {
+        uuid cpl_id PK
+        text cpl_codigo "UK"
+        text cpl_organismo_control "SRI | IESS | MDT | SUPERCIAS | LOPDP"
+        text cpl_titulo
+        integer cpl_peso_score
+    }
+    com_compliance_empresa_item {
+        uuid cei_id PK
+        uuid cei_convenio_id FK "com_convenio_empresa(cve_id)"
+        uuid cei_catalogo_id FK "com_compliance_catalogo(cpl_id)"
+        text cei_estado "CUMPLIDO | EN_PROCESO | VENCIDO"
+        date cei_fecha_vencimiento
+    }
+
+    com_categoria ||--o{ com_producto : "ctg_id -> pro_categoria_principal_id"
+    com_producto ||--o{ com_variante : "pro_id -> var_producto_id"
+    com_variante ||--o{ com_transaccion_pago : "var_id -> pag_variante_id"
+    com_variante ||--o{ com_suscripcion : "var_id -> sub_variante_id"
+    com_suscripcion ||--o{ com_derecho_consumo : "sub_id -> dco_suscripcion_id"
+    com_convenio_empresa ||--o{ com_beneficiario_empresa : "cve_id -> bne_convenio_id"
+    com_convenio_empresa ||--o{ com_compliance_empresa_item : "cve_id -> cei_convenio_id"
+    com_compliance_catalogo ||--o{ com_compliance_empresa_item : "cpl_id -> cei_catalogo_id"
+```
+
+---
+
+### 2.4 Diagrama ER — `tranqui_legal` (Red Profesional de Abogados, CRM Jurídico, Expedientes LPMS, Billetera TTL y ARIA)
+
+```mermaid
+erDiagram
+    trq_materia {
+        uuid mat_id PK
+        text mat_codigo "UK"
+        text mat_nombre "Civil, Familia, Laboral, Penal..."
+        boolean mat_activa
+    }
+    trq_solicitud_socio {
+        uuid ssc_id PK
+        uuid ssc_usuario_id FK "seg_usuario(usu_id)"
+        text ssc_cedula
+        text ssc_numero_matricula
+        text ssc_estado "pendiente | en_revision | aceptada | rechazada"
+    }
+    trq_version_contrato_socio {
+        uuid vcs_id PK
+        uuid vcs_solicitud_id FK "trq_solicitud_socio(ssc_id)"
+        integer vcs_numero_version
+        text vcs_contenido_markdown
+        text vcs_estado_version
+    }
+    trq_abogado {
+        uuid abg_id PK
+        uuid abg_usuario_id FK "seg_usuario(usu_id) UK"
+        uuid abg_solicitud_id FK "trq_solicitud_socio(ssc_id)"
+        text abg_numero_matricula
+        text abg_estado "verificado | suspendido"
+    }
+    trq_abogado_materia {
+        uuid abm_id PK
+        uuid abm_abogado_id FK "trq_abogado(abg_id)"
+        uuid abm_materia_id FK "trq_materia(mat_id)"
+    }
+    trq_abogado_provincia {
+        uuid abp_id PK
+        uuid abp_abogado_id FK "trq_abogado(abg_id)"
+        uuid abp_provincia_id FK "cat_provincia(prv_id)"
+    }
+    trq_cliente_perfil {
+        uuid clp_id PK
+        uuid clp_usuario_id FK "seg_usuario(usu_id)"
+        text clp_tipo_persona "NATURAL | JURIDICA"
+        text clp_identificacion
+        text clp_estado_conflict_check
+    }
+    trq_caso_judicial {
+        uuid cas_id PK
+        text cas_codigo "UK TRQ-2026-xxxx"
+        uuid cas_cliente_id FK "seg_usuario(usu_id)"
+        uuid cas_abogado_id FK "trq_abogado(abg_id)"
+        uuid cas_materia_id FK "trq_materia(mat_id)"
+        text cas_titulo
+        text cas_estado "abierto | en_tramite | audiencia | cerrado"
+    }
+    trq_caso_abogado_equipo {
+        uuid cae_id PK
+        uuid cae_caso_id FK "trq_caso_judicial(cas_id)"
+        uuid cae_abogado_id FK "trq_abogado(abg_id)"
+        text cae_rol_en_caso "TITULAR | CO_PATROCINADOR"
+    }
+    trq_caso_carpeta {
+        uuid cca_id PK
+        uuid cca_caso_id FK "trq_caso_judicial(cas_id)"
+        text cca_codigo
+        text cca_nombre
+    }
+    trq_caso_actuacion {
+        uuid cac_id PK
+        uuid cac_caso_id FK "trq_caso_judicial(cas_id)"
+        text cac_tipo "PROVIDENCIA_SATJE | ESCRITO_PRESENTADO | AUDIENCIA"
+        timestamptz cac_fecha_vencimiento_plazo
+    }
+    trq_billetera_documento {
+        uuid doc_id PK
+        uuid doc_usuario_id FK "seg_usuario(usu_id)"
+        text doc_categoria
+        text doc_titulo
+        date doc_fecha_expiracion
+        jsonb doc_metadatos_ocr
+    }
+    trq_enlace_compartido_ttl {
+        uuid ect_id PK
+        uuid ect_documento_id FK "trq_billetera_documento(doc_id)"
+        text ect_token_hash "UK"
+        timestamptz ect_expira_en
+    }
+
+    trq_solicitud_socio ||--o{ trq_version_contrato_socio : "ssc_id -> vcs_solicitud_id"
+    trq_solicitud_socio ||--o| trq_abogado : "ssc_id -> abg_solicitud_id"
     trq_abogado ||--o{ trq_abogado_materia : "abg_id -> abm_abogado_id"
     trq_materia ||--o{ trq_abogado_materia : "mat_id -> abm_materia_id"
     trq_abogado ||--o{ trq_abogado_provincia : "abg_id -> abp_abogado_id"
-    cat_provincia ||--o{ trq_abogado_provincia : "prv_id -> abp_provincia_id"
-    seg_usuario ||--o{ trq_cliente_perfil : "usu_id -> clp_usuario_id"
-    trq_cliente_perfil ||--o{ trq_contacto_empresa : "clp_id -> cem_cliente_perfil_id"
-    seg_usuario ||--o{ trq_caso_judicial : "usu_id -> cas_cliente_id"
-    trq_abogado |o--o{ trq_caso_judicial : "abg_id -> cas_abogado_id"
     trq_caso_judicial ||--o{ trq_caso_abogado_equipo : "cas_id -> cae_caso_id"
     trq_caso_judicial ||--o{ trq_caso_carpeta : "cas_id -> cca_caso_id"
     trq_caso_judicial ||--o{ trq_caso_actuacion : "cas_id -> cac_caso_id"
-    trq_caso_judicial ||--o{ trq_documento_caso : "cas_id -> dca_caso_id"
-    trq_caso_judicial ||--o{ trq_honorario : "cas_id -> hon_caso_id"
-    seg_usuario ||--o{ trq_billetera_documento : "usu_id -> doc_usuario_id"
-    trq_billetera_documento ||--o{ trq_enlace_compartido_ttl : "doc_id -> enl_documento_id"
+    trq_billetera_documento ||--o{ trq_enlace_compartido_ttl : "doc_id -> ect_documento_id"
 ```
 
 ---
