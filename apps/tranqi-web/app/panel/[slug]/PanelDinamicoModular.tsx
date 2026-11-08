@@ -375,8 +375,8 @@ const INVENTARIO_GLOBAL_WIDGETS: Record<string, { titulo: string; subtitulo: str
     categoria: "Comercio Personas"
   },
   disponibilidad_abogados: {
-    titulo: "Disponibilidad de Abogados & Turnos",
-    subtitulo: "Control de horas disponibles por especialista. Postulación preliminar y aprobación con sincronización ARIA",
+    titulo: "Disponibilidad de Abogados & Horarios",
+    subtitulo: "Horario laborable por defecto (telemático y oficina), fechas exactas (ej. Navidad) y cupo máximo por hora",
     icono: Scale,
     colorIcono: "#5000BA",
     categoria: "Agendamiento & Operación"
@@ -946,10 +946,14 @@ export function PanelDinamicoModular({ slug, negocio, rolInicial = "ADMINISTRADO
         );
       case "horarios_atencion_agenda":
       case "horarios_atencion":
-        return <ConfiguracionHorariosAtencionWidget />;
       case "disponibilidad_abogados":
+        return <ConfiguracionHorariosAtencionWidget />;
       case "disponibilidad_operativa":
-        return <TableroDisponibilidadOperativa negocio={negocio} />;
+        return negocio === "tranqi" || negocio === "TRANQ" ? (
+          <ConfiguracionHorariosAtencionWidget />
+        ) : (
+          <TableroDisponibilidadOperativa negocio={negocio} />
+        );
       case "gestion_usuarios":
       case "perfiles":
         return <AdministracionPerfilesWidget esAdmin={true} negocio={negocio} />;

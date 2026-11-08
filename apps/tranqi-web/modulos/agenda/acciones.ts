@@ -16,6 +16,7 @@ import {
   type ResultadoTriajeAria,
 } from "./clasificador-aria";
 import {
+  actualizarCacheConfigAgendaNegocio,
   listarMateriasAgendables,
   obtenerConfiguracionAgendaNegocio,
 } from "./consultas";
@@ -72,19 +73,76 @@ export async function reservarCitaAction(entrada: unknown): Promise<Resultado<{ 
   const d = validado.data;
 
   const supabase = await crearClienteServidor();
+  const config = await obtenerConfiguracionAgendaNegocio();
 
   // Resolver materia por defecto si no vino materia_id
   let materiaId = d.materia_id ?? "";
   if (!materiaId) {
-    const [materias, config] = await Promise.all([
-      listarMateriasAgendables(),
-      obtenerConfiguracionAgendaNegocio(),
-    ]);
+    const materias = await listarMateriasAgendables();
     const defecto =
       materias.find(
         (m) => m.mat_nombre.toLowerCase() === (config.materia_defecto_nombre || "Civil").toLowerCase(),
       ) ?? materias[0];
     materiaId = defecto?.mat_id ?? "";
+  }
+
+  // Verificar reglas de fecha exacta (ej. Navidad) y cupo máximo de citas simultáneas
+  const inicioDate = new Date(d.inicio_en);
+  const finDate = new Date(inicioDate.getTime() + (config.duracion_cita_min ?? 45) * 60 * 1000);
+  const fechaEcuStr = new Date(inicioDate.getTime() - 5 * 3600 * 1000).toISOString().slice(0, 10);
+  const reglaFecha = (config.fechas_especiales ?? []).find((f) => f.fecha === fechaEcuStr);
+
+  if (reglaFecha) {
+    if (reglaFecha.cerrado_total) {
+      return {
+        ok: false,
+        error: `No hay atención habilitada en la fecha seleccionada (${reglaFecha.nombre}).`,
+      };
+    }
+    if (d.modalidad === "presencial" && !reglaFecha.habilitar_presencial) {
+      return {
+        ok: false,
+        error: `En ${reglaFecha.nombre} (${fechaEcuStr}) solo está habilitada la modalidad de teleconsulta.`,
+      };
+    }
+    if (d.modalidad === "virtual" && !reglaFecha.habilitar_virtual) {
+      return {
+        ok: false,
+        error: `En ${reglaFecha.nombre} (${fechaEcuStr}) no está habilitada la modalidad telemática.`,
+      };
+    }
+  }
+
+  const maxCupoPermitido = Math.max(
+    1,
+    reglaFecha?.max_citas_simultaneas ?? config.max_citas_simultaneas ?? 1,
+  );
+
+  const { data: citasExistentes } = await supabase
+    .schema("tranqui_legal")
+    .from("trq_cita")
+    .select("cit_inicio_en, cit_fin_en, cit_estado")
+    .is("cit_eliminado_en", null)
+    .neq("cit_estado", "cancelada")
+    .gte("cit_inicio_en", new Date(inicioDate.getTime() - 3 * 3600 * 1000).toISOString())
+    .lte("cit_inicio_en", finDate.toISOString());
+
+  const solapadas = ((citasExistentes ?? []) as Array<{
+    cit_inicio_en: string;
+    cit_fin_en: string | null;
+  }>).filter((c) => {
+    const cIni = new Date(c.cit_inicio_en).getTime();
+    const cFin = c.cit_fin_en
+      ? new Date(c.cit_fin_en).getTime()
+      : cIni + (config.duracion_cita_min ?? 45) * 60 * 1000;
+    return cIni < finDate.getTime() && cFin > inicioDate.getTime();
+  }).length;
+
+  if (solapadas >= maxCupoPermitido) {
+    return {
+      ok: false,
+      error: `El cupo máximo de citas (${maxCupoPermitido}) para esta fecha y hora ya fue reservado. Por favor elige otro horario.`,
+    };
   }
 
   // Si la variante es el fallback en memoria (no existe en BD), enviar undefined al RPC
@@ -185,8 +243,16 @@ export async function guardarConfiguracionAgendaNegocioAction(
     };
   }
   const d = validado.data;
+  actualizarCacheConfigAgendaNegocio(d);
 
   const supabase = await crearClienteServidor();
+  const detallePayload = {
+    materia_defecto_nombre: d.materia_defecto_nombre,
+    max_citas_simultaneas: d.max_citas_simultaneas,
+    modo_capacidad: d.modo_capacidad,
+    fechas_especiales: d.fechas_especiales,
+  };
+
   const { error } = await supabase.schema("comun_agenda").rpc(
     "age_fn_guardar_config_negocio" as never,
     {
@@ -198,17 +264,45 @@ export async function guardarConfiguracionAgendaNegocioAction(
         antelacion_minima_horas: d.antelacion_minima_horas,
         horizonte_dias: d.horizonte_dias,
         permitir_sin_profesional: d.permitir_sin_profesional,
+        max_citas_simultaneas: d.max_citas_simultaneas,
+        modo_capacidad: d.modo_capacidad,
         direccion_presencial: d.direccion_presencial ?? "",
         franjas_virtual: d.franjas_virtual,
         franjas_presencial: d.franjas_presencial,
-        detalle: {
-          materia_defecto_nombre: d.materia_defecto_nombre,
-        },
+        fechas_especiales: d.fechas_especiales,
+        detalle_config: detallePayload,
+        detalle: detallePayload,
       },
     } as never,
   );
 
-  if (error) return { ok: false, error: comoError(error.message) };
+  if (error) {
+    // Fallback de escritura directa sobre age_config_negocio si el RPC aún no está aplicado
+    const fallbackUpsert = await supabase
+      .schema("comun_agenda")
+      .from("age_config_negocio" as never)
+      .upsert(
+        {
+          cgn_negocio: NEGOCIO,
+          cgn_zona_horaria: d.zona_horaria,
+          cgn_duracion_cita_min: d.duracion_cita_min,
+          cgn_holgura_min: d.holgura_min,
+          cgn_antelacion_minima_horas: d.antelacion_minima_horas,
+          cgn_horizonte_dias: d.horizonte_dias,
+          cgn_permitir_sin_profesional: d.permitir_sin_profesional,
+          cgn_direccion_presencial: d.direccion_presencial ?? "",
+          cgn_franjas_virtual: d.franjas_virtual,
+          cgn_franjas_presencial: d.franjas_presencial,
+          cgn_detalle_config: detallePayload,
+          cgn_actualizado_en: new Date().toISOString(),
+        } as never,
+        { onConflict: "cgn_negocio" },
+      );
+
+    if (fallbackUpsert.error) {
+      return { ok: false, error: comoError(error.message) };
+    }
+  }
 
   revalidatePath("/panel/agendar");
   revalidatePath("/panel/agendamiento");

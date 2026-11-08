@@ -17,6 +17,16 @@ export const esquemaReserva = z.object({
   confirmar_inmediato: z.boolean().optional(),
 });
 
+export const esquemaRangoHoraSimple = z
+  .object({
+    hora_inicio: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Hora inicio inválida (HH:MM)"),
+    hora_fin: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Hora fin inválida (HH:MM)"),
+  })
+  .refine((f) => f.hora_fin > f.hora_inicio, {
+    message: "La hora de cierre debe ser posterior a la de apertura",
+    path: ["hora_fin"],
+  });
+
 export const esquemaFranjaHorarioNegocio = z
   .object({
     dia_semana: z.number().int().min(1).max(7),
@@ -28,17 +38,33 @@ export const esquemaFranjaHorarioNegocio = z
     path: ["hora_fin"],
   });
 
+export const esquemaFechaEspecialAgenda = z.object({
+  fecha: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Fecha inválida (YYYY-MM-DD)"),
+  nombre: z.string().trim().min(2, "Ingresa una descripción para la fecha (ej. Navidad)").max(120),
+  cerrado_total: z.boolean().default(false),
+  habilitar_virtual: z.boolean().default(true),
+  franjas_virtual: z.array(esquemaRangoHoraSimple).default([]),
+  habilitar_presencial: z.boolean().default(false),
+  franjas_presencial: z.array(esquemaRangoHoraSimple).default([]),
+  max_citas_simultaneas: z.number().int().min(1).max(50).nullish(),
+});
+
 export const esquemaConfigNegocioAgenda = z.object({
   zona_horaria: z.string().trim().min(3).default("America/Guayaquil"),
   duracion_cita_min: z.number().int().min(15).max(180).default(45),
   holgura_min: z.number().int().min(0).max(60).default(15),
   antelacion_minima_horas: z.number().int().min(0).max(168).default(2),
-  horizonte_dias: z.number().int().min(1).max(90).default(21),
+  horizonte_dias: z.number().int().min(1).max(180).default(21),
   permitir_sin_profesional: z.boolean().default(true),
+  max_citas_simultaneas: z.number().int().min(1).max(50).default(1),
+  modo_capacidad: z
+    .enum(["fijo_negocio", "hibrido_abogados", "solo_abogados"])
+    .default("fijo_negocio"),
   direccion_presencial: z.string().trim().max(300).nullish(),
   materia_defecto_nombre: z.string().trim().min(2).max(100).default("Civil"),
   franjas_virtual: z.array(esquemaFranjaHorarioNegocio).min(1, "Configura al menos una franja telemática"),
-  franjas_presencial: z.array(esquemaFranjaHorarioNegocio).min(1, "Configura al menos una franja presencial"),
+  franjas_presencial: z.array(esquemaFranjaHorarioNegocio).min(1, "Configura al menos una franja de oficina"),
+  fechas_especiales: z.array(esquemaFechaEspecialAgenda).default([]),
 });
 
 export const esquemaDecisionCita = z.object({
@@ -72,7 +98,9 @@ export type DatosReserva = z.infer<typeof esquemaReserva>;
 export type DatosDecisionCita = z.infer<typeof esquemaDecisionCita>;
 export type DatosReasignacion = z.infer<typeof esquemaReasignacion>;
 export type DatosBloqueo = z.infer<typeof esquemaBloqueo>;
+export type RangoHoraSimple = z.infer<typeof esquemaRangoHoraSimple>;
 export type FranjaHorarioNegocio = z.infer<typeof esquemaFranjaHorarioNegocio>;
+export type FechaEspecialAgenda = z.infer<typeof esquemaFechaEspecialAgenda>;
 export type DatosConfigNegocioAgenda = z.infer<typeof esquemaConfigNegocioAgenda>;
 
 /** Cómo se le explica al usuario de dónde sale el precio de su cita. */

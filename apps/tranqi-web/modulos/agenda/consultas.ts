@@ -1,6 +1,11 @@
 import { crearClienteServidor } from "@eco/supabase/servidor";
 import { aMinutos, deMinutos, trocearFranja } from "@eco/agenda";
-import type { DatosConfigNegocioAgenda, FranjaHorarioNegocio } from "./esquema";
+import type {
+  DatosConfigNegocioAgenda,
+  FechaEspecialAgenda,
+  FranjaHorarioNegocio,
+  RangoHoraSimple,
+} from "./esquema";
 
 // Server-only. No importar desde un client component.
 //
@@ -62,18 +67,40 @@ const FRANJAS_PRESENCIAL_DEFECTO: FranjaHorarioNegocio[] = [
   { dia_semana: 5, hora_inicio: "09:00", hora_fin: "17:30" },
 ];
 
+const FECHAS_ESPECIALES_DEFECTO: FechaEspecialAgenda[] = [
+  {
+    fecha: "2026-12-25",
+    nombre: "Navidad (Solo Teleconsultas)",
+    cerrado_total: false,
+    habilitar_virtual: true,
+    franjas_virtual: [{ hora_inicio: "08:00", hora_fin: "16:00" }],
+    habilitar_presencial: false,
+    franjas_presencial: [],
+    max_citas_simultaneas: 1,
+  },
+];
+
 export const CONFIG_AGENDA_NEGOCIO_DEFECTO: DatosConfigNegocioAgenda = {
   zona_horaria: "America/Guayaquil",
   duracion_cita_min: 45,
   holgura_min: 15,
   antelacion_minima_horas: 2,
-  horizonte_dias: 21,
+  horizonte_dias: 45,
   permitir_sin_profesional: true,
+  max_citas_simultaneas: 1,
+  modo_capacidad: "fijo_negocio",
   direccion_presencial: "Despacho Central Tranqi · Quito, Ecuador",
   materia_defecto_nombre: "Civil",
   franjas_virtual: FRANJAS_VIRTUAL_DEFECTO,
   franjas_presencial: FRANJAS_PRESENCIAL_DEFECTO,
+  fechas_especiales: FECHAS_ESPECIALES_DEFECTO,
 };
+
+let cacheConfigNegocioMemoria: DatosConfigNegocioAgenda | null = null;
+
+export function actualizarCacheConfigAgendaNegocio(nueva: DatosConfigNegocioAgenda) {
+  cacheConfigNegocioMemoria = nueva;
+}
 
 export async function obtenerConfiguracionAgendaNegocio(): Promise<DatosConfigNegocioAgenda> {
   try {
@@ -88,24 +115,50 @@ export async function obtenerConfiguracionAgendaNegocio(): Promise<DatosConfigNe
 
     const data = rawData as Record<string, unknown> | null;
     if (error || !data) {
-      return CONFIG_AGENDA_NEGOCIO_DEFECTO;
+      return cacheConfigNegocioMemoria ?? CONFIG_AGENDA_NEGOCIO_DEFECTO;
     }
 
     const detalle = (data.cgn_detalle_config ?? {}) as Record<string, unknown>;
-    const franjasVirtual = Array.isArray(data.cgn_franjas_virtual) && data.cgn_franjas_virtual.length > 0
-      ? (data.cgn_franjas_virtual as FranjaHorarioNegocio[])
-      : FRANJAS_VIRTUAL_DEFECTO;
-    const franjasPresencial = Array.isArray(data.cgn_franjas_presencial) && data.cgn_franjas_presencial.length > 0
-      ? (data.cgn_franjas_presencial as FranjaHorarioNegocio[])
-      : FRANJAS_PRESENCIAL_DEFECTO;
+    const franjasVirtual =
+      Array.isArray(data.cgn_franjas_virtual) && data.cgn_franjas_virtual.length > 0
+        ? (data.cgn_franjas_virtual as FranjaHorarioNegocio[])
+        : FRANJAS_VIRTUAL_DEFECTO;
+    const franjasPresencial =
+      Array.isArray(data.cgn_franjas_presencial) && data.cgn_franjas_presencial.length > 0
+        ? (data.cgn_franjas_presencial as FranjaHorarioNegocio[])
+        : FRANJAS_PRESENCIAL_DEFECTO;
 
-    return {
+    const rawFechasCol = data.cgn_fechas_especiales;
+    const rawFechasDet = detalle.fechas_especiales;
+    const fechasEspeciales: FechaEspecialAgenda[] = Array.isArray(rawFechasCol)
+      ? (rawFechasCol as FechaEspecialAgenda[])
+      : Array.isArray(rawFechasDet)
+        ? (rawFechasDet as FechaEspecialAgenda[])
+        : FECHAS_ESPECIALES_DEFECTO;
+
+    const maxCitasRaw =
+      typeof data.cgn_max_citas_simultaneas === "number"
+        ? data.cgn_max_citas_simultaneas
+        : typeof detalle.max_citas_simultaneas === "number"
+          ? detalle.max_citas_simultaneas
+          : 1;
+
+    const modoCapacidadRaw =
+      detalle.modo_capacidad === "hibrido_abogados" ||
+      detalle.modo_capacidad === "solo_abogados" ||
+      detalle.modo_capacidad === "fijo_negocio"
+        ? detalle.modo_capacidad
+        : "fijo_negocio";
+
+    const configFinal: DatosConfigNegocioAgenda = {
       zona_horaria: typeof data.cgn_zona_horaria === "string" ? data.cgn_zona_horaria : "America/Guayaquil",
       duracion_cita_min: Number(data.cgn_duracion_cita_min ?? 45),
       holgura_min: Number(data.cgn_holgura_min ?? 15),
       antelacion_minima_horas: Number(data.cgn_antelacion_minima_horas ?? 2),
-      horizonte_dias: Number(data.cgn_horizonte_dias ?? 21),
+      horizonte_dias: Number(data.cgn_horizonte_dias ?? 45),
       permitir_sin_profesional: Boolean(data.cgn_permitir_sin_profesional ?? true),
+      max_citas_simultaneas: Math.max(1, Math.min(50, Number(maxCitasRaw) || 1)),
+      modo_capacidad: modoCapacidadRaw,
       direccion_presencial:
         typeof data.cgn_direccion_presencial === "string"
           ? data.cgn_direccion_presencial
@@ -116,9 +169,13 @@ export async function obtenerConfiguracionAgendaNegocio(): Promise<DatosConfigNe
           : "Civil",
       franjas_virtual: franjasVirtual,
       franjas_presencial: franjasPresencial,
+      fechas_especiales: fechasEspeciales,
     };
+
+    cacheConfigNegocioMemoria = configFinal;
+    return configFinal;
   } catch {
-    return CONFIG_AGENDA_NEGOCIO_DEFECTO;
+    return cacheConfigNegocioMemoria ?? CONFIG_AGENDA_NEGOCIO_DEFECTO;
   }
 }
 
@@ -201,23 +258,34 @@ export async function listarServiciosAgendables(): Promise<ServicioAgendable[]> 
   });
 }
 
-function proyectarHuecosPorDefectoLocal(
+export function proyectarHuecosPorDefectoLocal(
   desde: Date,
   hasta: Date,
   modalidad: string | null | undefined,
   config: DatosConfigNegocioAgenda,
   duracionOverrideMin?: number | null,
+  ignorarAntelacion?: boolean,
 ): HuecoDisponible[] {
   const duracion = duracionOverrideMin ?? config.duracion_cita_min ?? 45;
   const holgura = config.holgura_min ?? 15;
-  const antelacionMs = (config.antelacion_minima_horas ?? 2) * 3600 * 1000;
-  const horizonteMs = (config.horizonte_dias ?? 21) * 86400 * 1000;
+  const maxCitasDefecto = Math.max(1, config.max_citas_simultaneas ?? 1);
+  const antelacionMs = ignorarAntelacion ? 0 : (config.antelacion_minima_horas ?? 2) * 3600 * 1000;
+  const horizonteMs = ignorarAntelacion
+    ? 365 * 86400 * 1000
+    : (config.horizonte_dias ?? 45) * 86400 * 1000;
   const ahoraMs = Date.now();
-  const minInicioMs = Math.max(desde.getTime(), ahoraMs + antelacionMs);
-  const maxFinMs = Math.min(hasta.getTime(), ahoraMs + horizonteMs);
+  const minInicioMs = ignorarAntelacion ? desde.getTime() : Math.max(desde.getTime(), ahoraMs + antelacionMs);
+  const maxFinMs = ignorarAntelacion ? hasta.getTime() : Math.min(hasta.getTime(), ahoraMs + horizonteMs);
 
-  const franjas =
-    modalidad === "presencial" ? config.franjas_presencial : config.franjas_virtual;
+  const esPresencial = modalidad === "presencial";
+  const franjasSemanales = esPresencial ? config.franjas_presencial : config.franjas_virtual;
+  const fechasEspeciales = Array.isArray(config.fechas_especiales) ? config.fechas_especiales : [];
+  const mapaFechasEspeciales = new Map<string, FechaEspecialAgenda>();
+  for (const fe of fechasEspeciales) {
+    if (fe?.fecha) {
+      mapaFechasEspeciales.set(fe.fecha, fe);
+    }
+  }
 
   const resultado: HuecoDisponible[] = [];
   // Iterar día a día en horario Ecuador (UTC-5)
@@ -232,9 +300,33 @@ function proyectarHuecosPorDefectoLocal(
     const yyyy = fechaEcu.getUTCFullYear();
     const mm = String(fechaEcu.getUTCMonth() + 1).padStart(2, "0");
     const dd = String(fechaEcu.getUTCDate()).padStart(2, "0");
+    const claveFecha = `${yyyy}-${mm}-${dd}`;
 
-    const franjasDia = franjas.filter((f) => f.dia_semana === isoDay);
-    for (const f of franjasDia) {
+    const reglaEspecial = mapaFechasEspeciales.get(claveFecha);
+    let rangosDelDia: RangoHoraSimple[] = [];
+    let cupoDelDia = maxCitasDefecto;
+
+    if (reglaEspecial) {
+      // Si la fecha tiene un horario diferenciado configurado, reemplaza al horario semanal normal
+      if (!reglaEspecial.cerrado_total) {
+        if (esPresencial && reglaEspecial.habilitar_presencial) {
+          rangosDelDia = Array.isArray(reglaEspecial.franjas_presencial)
+            ? reglaEspecial.franjas_presencial
+            : [];
+        } else if (!esPresencial && reglaEspecial.habilitar_virtual) {
+          rangosDelDia = Array.isArray(reglaEspecial.franjas_virtual)
+            ? reglaEspecial.franjas_virtual
+            : [];
+        }
+      }
+      cupoDelDia = Math.max(1, reglaEspecial.max_citas_simultaneas ?? maxCitasDefecto);
+    } else {
+      rangosDelDia = franjasSemanales
+        .filter((f) => f.dia_semana === isoDay)
+        .map((f) => ({ hora_inicio: f.hora_inicio, hora_fin: f.hora_fin }));
+    }
+
+    for (const f of rangosDelDia) {
       const bloques = trocearFranja(
         aMinutos(f.hora_inicio),
         aMinutos(f.hora_fin),
@@ -250,7 +342,7 @@ function proyectarHuecosPorDefectoLocal(
           resultado.push({
             hueco_inicio: inicioIso.toISOString(),
             hueco_fin: finIso.toISOString(),
-            disponibles: 1,
+            disponibles: cupoDelDia,
           });
         }
       }
@@ -270,7 +362,7 @@ export async function obtenerHuecosDeMateria(
   modalidad?: string | null,
 ): Promise<HuecoDisponible[]> {
   const supabase = await crearClienteServidor();
-  const [rpcRes, config] = await Promise.all([
+  const [rpcRes, config, citasRes] = await Promise.all([
     supabase.schema("tranqui_legal").rpc("trq_fn_horarios_materia", {
       p_materia_id: materiaId,
       p_desde: desde.toISOString(),
@@ -280,31 +372,83 @@ export async function obtenerHuecosDeMateria(
       p_provincia_id: undefined,
     }),
     obtenerConfiguracionAgendaNegocio(),
+    supabase
+      .schema("tranqui_legal")
+      .from("trq_cita")
+      .select("cit_inicio_en, cit_fin_en, cit_estado")
+      .is("cit_eliminado_en", null)
+      .neq("cit_estado", "cancelada")
+      .gte("cit_inicio_en", new Date(desde.getTime() - 4 * 3600 * 1000).toISOString())
+      .lte("cit_inicio_en", hasta.toISOString()),
   ]);
 
   const huecosRpc = (!rpcRes.error && Array.isArray(rpcRes.data) ? rpcRes.data : []) as HuecoDisponible[];
+  const citasActivas = ((citasRes.data ?? []) as Array<{
+    cit_inicio_en: string;
+    cit_fin_en: string | null;
+    cit_estado: string;
+  }>).map((c) => {
+    const iniMs = new Date(c.cit_inicio_en).getTime();
+    const finMs = c.cit_fin_en
+      ? new Date(c.cit_fin_en).getTime()
+      : iniMs + (config.duracion_cita_min ?? 45) * 60 * 1000;
+    return { iniMs, finMs };
+  });
 
-  if (!config.permitir_sin_profesional) {
+  if (!config.permitir_sin_profesional || config.modo_capacidad === "solo_abogados") {
     return huecosRpc;
   }
 
-  // Asegurar que los horarios por defecto configurados por el operador para
-  // consultas telemáticas o presenciales siempre estén disponibles aunque no
-  // haya un abogado configurado en ese horario.
+  // Generar los horarios según el horario laborable por defecto + fechas exactas diferenciadas
   const huecosDefecto = proyectarHuecosPorDefectoLocal(desde, hasta, modalidad, config);
+  const fechasEspecialesSet = new Set(
+    (config.fechas_especiales ?? []).map((fe) => fe.fecha),
+  );
+
+  // Descontar citas ya ocupadas en cada bloque horario según max_citas_simultaneas
   const mapa = new Map<string, HuecoDisponible>();
   for (const h of huecosDefecto) {
-    mapa.set(new Date(h.hueco_inicio).toISOString(), h);
-  }
-  for (const h of huecosRpc) {
-    const clave = new Date(h.hueco_inicio).toISOString();
-    const existente = mapa.get(clave);
-    if (!existente || h.disponibles > existente.disponibles) {
-      mapa.set(clave, {
-        hueco_inicio: clave,
+    const iniMs = new Date(h.hueco_inicio).getTime();
+    const finMs = new Date(h.hueco_fin).getTime();
+    const ocupadas = citasActivas.filter((c) => c.iniMs < finMs && c.finMs > iniMs).length;
+    const restantes = Math.max(0, h.disponibles - ocupadas);
+    if (restantes > 0) {
+      mapa.set(new Date(h.hueco_inicio).toISOString(), {
+        hueco_inicio: new Date(h.hueco_inicio).toISOString(),
         hueco_fin: new Date(h.hueco_fin).toISOString(),
-        disponibles: Math.max(h.disponibles, 1),
+        disponibles: restantes,
       });
+    }
+  }
+
+  // Si el modo es 'hibrido_abogados', sumar disponibilidad de abogados en días que no tengan excepción especial
+  if (config.modo_capacidad === "hibrido_abogados") {
+    for (const h of huecosRpc) {
+      const fechaSlot = new Date(new Date(h.hueco_inicio).getTime() - 5 * 3600 * 1000)
+        .toISOString()
+        .slice(0, 10);
+      if (fechasEspecialesSet.has(fechaSlot)) continue;
+
+      const clave = new Date(h.hueco_inicio).toISOString();
+      const existente = mapa.get(clave);
+      if (!existente && h.disponibles > 0) {
+        const iniMs = new Date(h.hueco_inicio).getTime();
+        const finMs = new Date(h.hueco_fin).getTime();
+        const ocupadas = citasActivas.filter((c) => c.iniMs < finMs && c.finMs > iniMs).length;
+        const restantes = Math.max(0, h.disponibles - ocupadas);
+        if (restantes > 0) {
+          mapa.set(clave, {
+            hueco_inicio: clave,
+            hueco_fin: new Date(h.hueco_fin).toISOString(),
+            disponibles: restantes,
+          });
+        }
+      } else if (existente && h.disponibles > existente.disponibles) {
+        mapa.set(clave, {
+          ...existente,
+          disponibles: Math.max(existente.disponibles, h.disponibles),
+        });
+      }
     }
   }
 

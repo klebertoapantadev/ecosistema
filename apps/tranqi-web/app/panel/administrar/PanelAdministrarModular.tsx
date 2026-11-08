@@ -10,8 +10,9 @@ import { GestionTerminosConsentimientosWidget } from "@eco/identidad/componentes
 import { VisorAuditoriaWidget } from "../auditoria/VisorAuditoriaWidget";
 import { ConfiguracionContratoAbogadoWidget } from "../../../modulos/socios/componentes/ConfiguracionContratoAbogadoWidget";
 import { GestionRedProfesionalWidget } from "../../../modulos/socios/componentes/GestionRedProfesionalWidget";
+import { ConfiguracionHorariosAtencionWidget } from "../../../modulos/agenda/componentes/ConfiguracionHorariosAtencionWidget";
 import { BandejaClientesCRM } from "../../../modulos/crm-clientes/componentes/BandejaClientesCRM";
-import { HistorialTransaccionesPago, GestionConveniosCorporativos, TableroDisponibilidadOperativa, ConsolaGestionInformativosWidget, ComplianceScoreEmpresarial, LegalHRLaboral } from "@eco/comercio";
+import { HistorialTransaccionesPago, GestionConveniosCorporativos, ConsolaGestionInformativosWidget, ComplianceScoreEmpresarial, LegalHRLaboral } from "@eco/comercio";
 import { DataGrid, type ColumnaDataGrid } from "@eco/datagrid";
 import { useCustomWidgets } from "../gestorTitulosWidgets";
 import { ModalEditarWidget } from "../ModalEditarWidget";
@@ -79,8 +80,8 @@ const MODULOS_ADMIN: ModuloAdminDef[] = [
   },
   {
     id: "disponibilidad_abogados",
-    titulo: "Disponibilidad de Abogados & Turnos",
-    subtitulo: "Gestión de horas disponibles por especialista. Postulación preliminar y aprobación con sincronización ARIA",
+    titulo: "Disponibilidad de Abogados & Horarios",
+    subtitulo: "Horario laborable por defecto (telemático y oficina), fechas exactas (ej. Navidad) y cupo máximo por hora",
     ruta: "/panel/administrar?widget=disponibilidad_abogados",
     icono: Scale,
     colorIcono: "#5000BA",
@@ -900,9 +901,9 @@ export function PanelAdministrarModular({ negocio = "TRANQ", esSuperAdmin = fals
             )}
 
             {/* 7.8. DISPONIBILIDAD DE ABOGADOS & OPERATIVA */}
-            {(widgetActivo === "disponibilidad_abogados" || widgetActivo === "disponibilidad_operativa") && (
+            {(widgetActivo === "disponibilidad_abogados" || widgetActivo === "disponibilidad_operativa" || widgetActivo === "horarios_atencion_agenda") && (
               <div style={{ width: "100%" }}>
-                <TableroDisponibilidadOperativa negocio={negocio} modoVista="operador" />
+                <ConfiguracionHorariosAtencionWidget />
               </div>
             )}
 

@@ -1847,6 +1847,8 @@ erDiagram
 | `cgn_direccion_presencial` | `text` | `NULL` | — | `'Av. República del Salvador y Naciones Unidas, Quito'` |
 | `cgn_franjas_virtual` | `jsonb` | `NOT NULL` | — | `'[ {"dia_semana": 1, "hora_inicio": "08:00", "hora_fin": "20:00"}, {"dia_semana": 2, "hora_inicio": "08:00", "hora_fin": "20:00"}, {"dia_semana": 3, "hora_inicio": "08:00", "hora_fin": "20:00"}, {"dia_semana": 4, "hora_inicio": "08:00", "hora_fin": "20:00"}, {"dia_semana": 5, "hora_inicio": "08:00", "hora_fin": "20:00"}, {"dia_semana": 6, "hora_inicio": "09:00", "hora_fin": "14:00"} ]'::jsonb` |
 | `cgn_franjas_presencial` | `jsonb` | `NOT NULL` | — | `'[ {"dia_semana": 1, "hora_inicio": "09:00", "hora_fin": "17:30"}, {"dia_semana": 2, "hora_inicio": "09:00", "hora_fin": "17:30"}, {"dia_semana": 3, "hora_inicio": "09:00", "hora_fin": "17:30"}, {"dia_semana": 4, "hora_inicio": "09:00", "hora_fin": "17:30"}, {"dia_semana": 5, "hora_inicio": "09:00", "hora_fin": "17:30"} ]'::jsonb` |
+| `cgn_max_citas_simultaneas` | `int` | `NOT NULL` | — | `1` |
+| `cgn_fechas_especiales` | `jsonb` | `NOT NULL` | — | `'[]'::jsonb` |
 | `cgn_detalle_config` | `jsonb` | `NOT NULL` | — | `'{"materia_defecto_nombre": "Civil"}'::jsonb` |
 | `cgn_creado_en` | `timestamptz` | `NOT NULL` | — | `now()` |
 | `cgn_actualizado_en` | `timestamptz` | `NOT NULL` | — | `now()` |
