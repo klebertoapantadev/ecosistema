@@ -81,6 +81,10 @@ create policy trq_abogado_propio_update on tranqui_legal.trq_abogado
 grant select, insert, update, delete on tranqui_legal.trq_abogado to authenticated;
 grant select, insert, update, delete on tranqui_legal.trq_abogado_materia to authenticated;
 grant select, insert, update, delete on tranqui_legal.trq_abogado_provincia to authenticated;
+grant usage on schema comun_catalogo to authenticated, service_role;
+grant select on all tables in schema comun_catalogo to authenticated, service_role;
+grant usage on schema tranqui_legal to service_role;
+grant all on all tables in schema tranqui_legal to service_role;
 
 -- Permitir al staff de tranqi configurar también la agenda/disponibilidad de un abogado
 drop policy if exists age_profesional_staff_all on comun_agenda.age_profesional;

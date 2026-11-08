@@ -57,6 +57,33 @@ const FRANJAS_HIBRIDAS: Franja[] = [
   { dia_semana: 5, hora_inicio: "14:00", hora_fin: "18:00", modalidad: "presencial" },
 ];
 
+const PROVINCIAS_ECUADOR_INICIALES: ProvinciaItem[] = [
+  { cat_id: "00000000-0000-4000-8000-000000000101", cat_nombre: "Azuay", cat_region: "Sierra" },
+  { cat_id: "00000000-0000-4000-8000-000000000102", cat_nombre: "Bolívar", cat_region: "Sierra" },
+  { cat_id: "00000000-0000-4000-8000-000000000103", cat_nombre: "Cañar", cat_region: "Sierra" },
+  { cat_id: "00000000-0000-4000-8000-000000000104", cat_nombre: "Carchi", cat_region: "Sierra" },
+  { cat_id: "00000000-0000-4000-8000-000000000105", cat_nombre: "Chimborazo", cat_region: "Sierra" },
+  { cat_id: "00000000-0000-4000-8000-000000000106", cat_nombre: "Cotopaxi", cat_region: "Sierra" },
+  { cat_id: "00000000-0000-4000-8000-000000000107", cat_nombre: "El Oro", cat_region: "Costa" },
+  { cat_id: "00000000-0000-4000-8000-000000000108", cat_nombre: "Esmeraldas", cat_region: "Costa" },
+  { cat_id: "00000000-0000-4000-8000-000000000109", cat_nombre: "Galápagos", cat_region: "Insular" },
+  { cat_id: "00000000-0000-4000-8000-000000000110", cat_nombre: "Guayas", cat_region: "Costa" },
+  { cat_id: "00000000-0000-4000-8000-000000000111", cat_nombre: "Imbabura", cat_region: "Sierra" },
+  { cat_id: "00000000-0000-4000-8000-000000000112", cat_nombre: "Loja", cat_region: "Sierra" },
+  { cat_id: "00000000-0000-4000-8000-000000000113", cat_nombre: "Los Ríos", cat_region: "Costa" },
+  { cat_id: "00000000-0000-4000-8000-000000000114", cat_nombre: "Manabí", cat_region: "Costa" },
+  { cat_id: "00000000-0000-4000-8000-000000000115", cat_nombre: "Morona Santiago", cat_region: "Amazonía" },
+  { cat_id: "00000000-0000-4000-8000-000000000116", cat_nombre: "Napo", cat_region: "Amazonía" },
+  { cat_id: "00000000-0000-4000-8000-000000000117", cat_nombre: "Orellana", cat_region: "Amazonía" },
+  { cat_id: "00000000-0000-4000-8000-000000000118", cat_nombre: "Pastaza", cat_region: "Amazonía" },
+  { cat_id: "00000000-0000-4000-8000-000000000119", cat_nombre: "Pichincha", cat_region: "Sierra" },
+  { cat_id: "00000000-0000-4000-8000-000000000120", cat_nombre: "Santa Elena", cat_region: "Costa" },
+  { cat_id: "00000000-0000-4000-8000-000000000121", cat_nombre: "Santo Domingo de los Tsáchilas", cat_region: "Costa" },
+  { cat_id: "00000000-0000-4000-8000-000000000122", cat_nombre: "Sucumbíos", cat_region: "Amazonía" },
+  { cat_id: "00000000-0000-4000-8000-000000000123", cat_nombre: "Tungurahua", cat_region: "Sierra" },
+  { cat_id: "00000000-0000-4000-8000-000000000124", cat_nombre: "Zamora Chinchipe", cat_region: "Amazonía" },
+];
+
 export function MiPerfilRedAbogadoWidget({
   tabInicial = "especialidades",
 }: {
@@ -68,7 +95,9 @@ export function MiPerfilRedAbogadoWidget({
   const [cargando, setCargando] = useState(true);
   const [abogado, setAbogado] = useState<AbogadoRedItem | null>(null);
   const [catalogoMaterias, setCatalogoMaterias] = useState<MateriaItem[]>([]);
-  const [catalogoProvincias, setCatalogoProvincias] = useState<ProvinciaItem[]>([]);
+  const [catalogoProvincias, setCatalogoProvincias] = useState<ProvinciaItem[]>(
+    PROVINCIAS_ECUADOR_INICIALES
+  );
 
   // Campos de Especialidades y Cobertura
   const [matricula, setMatricula] = useState("");
@@ -92,8 +121,14 @@ export function MiPerfilRedAbogadoWidget({
     try {
       const res = await obtenerMiPerfilAbogadoCompletoAction();
       if (res.ok) {
-        setCatalogoMaterias(res.data.catalogoMaterias);
-        setCatalogoProvincias(res.data.catalogoProvincias);
+        if (res.data.catalogoMaterias.length > 0) {
+          setCatalogoMaterias(res.data.catalogoMaterias);
+        }
+        const listaProv =
+          res.data.catalogoProvincias.length > 0
+            ? res.data.catalogoProvincias
+            : PROVINCIAS_ECUADOR_INICIALES;
+        setCatalogoProvincias(listaProv);
         if (res.data.abogado) {
           const a = res.data.abogado;
           setAbogado(a);
@@ -103,7 +138,16 @@ export function MiPerfilRedAbogadoWidget({
           setAnosExperiencia(a.anosExperiencia || 1);
           setResumenProfesional(a.resumenProfesional);
           setMateriasIds(a.materias.map((m) => m.mat_id));
-          setProvinciasIds(a.provincias.map((p) => p.cat_id));
+          setProvinciasIds(
+            a.provincias.map((p) => {
+              const porId = listaProv.find((cat) => cat.cat_id === p.cat_id);
+              if (porId) return porId.cat_id;
+              const porNombre = listaProv.find(
+                (cat) => cat.cat_nombre.toLowerCase() === p.cat_nombre.toLowerCase()
+              );
+              return porNombre ? porNombre.cat_id : p.cat_id;
+            })
+          );
           setConfigAgenda(a.configuracionAgenda || CONFIG_AGENDA_BASE);
           setFranjas(a.franjas.length > 0 ? a.franjas : FRANJAS_OFICINA);
         }

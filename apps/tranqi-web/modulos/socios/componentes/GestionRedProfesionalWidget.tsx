@@ -19,6 +19,10 @@ import {
   Clock,
   Plus,
   X,
+  Mail,
+  Upload,
+  Send,
+  ExternalLink,
 } from "lucide-react";
 import { DataGrid, type ColumnaDataGrid } from "@eco/datagrid";
 import { DIAS_SEMANA, huecosPorSemana, type Franja } from "@eco/agenda";
@@ -31,12 +35,40 @@ import {
   eliminarAbogadoRedAction,
   guardarDisponibilidadCitasAbogadoAction,
   purgarTodasSolicitudesSocioAction,
+  enviarInvitacionesRegistroAbogadosAction,
   type AbogadoRedItem,
   type MateriaItem,
   type ProvinciaItem,
   type UsuarioPlataformaItem,
   type ConfiguracionAgendaAbogado,
 } from "../acciones-red-profesional";
+
+const PROVINCIAS_ECUADOR_INICIALES: ProvinciaItem[] = [
+  { cat_id: "00000000-0000-4000-8000-000000000101", cat_nombre: "Azuay", cat_region: "Sierra" },
+  { cat_id: "00000000-0000-4000-8000-000000000102", cat_nombre: "Bolívar", cat_region: "Sierra" },
+  { cat_id: "00000000-0000-4000-8000-000000000103", cat_nombre: "Cañar", cat_region: "Sierra" },
+  { cat_id: "00000000-0000-4000-8000-000000000104", cat_nombre: "Carchi", cat_region: "Sierra" },
+  { cat_id: "00000000-0000-4000-8000-000000000105", cat_nombre: "Chimborazo", cat_region: "Sierra" },
+  { cat_id: "00000000-0000-4000-8000-000000000106", cat_nombre: "Cotopaxi", cat_region: "Sierra" },
+  { cat_id: "00000000-0000-4000-8000-000000000107", cat_nombre: "El Oro", cat_region: "Costa" },
+  { cat_id: "00000000-0000-4000-8000-000000000108", cat_nombre: "Esmeraldas", cat_region: "Costa" },
+  { cat_id: "00000000-0000-4000-8000-000000000109", cat_nombre: "Galápagos", cat_region: "Insular" },
+  { cat_id: "00000000-0000-4000-8000-000000000110", cat_nombre: "Guayas", cat_region: "Costa" },
+  { cat_id: "00000000-0000-4000-8000-000000000111", cat_nombre: "Imbabura", cat_region: "Sierra" },
+  { cat_id: "00000000-0000-4000-8000-000000000112", cat_nombre: "Loja", cat_region: "Sierra" },
+  { cat_id: "00000000-0000-4000-8000-000000000113", cat_nombre: "Los Ríos", cat_region: "Costa" },
+  { cat_id: "00000000-0000-4000-8000-000000000114", cat_nombre: "Manabí", cat_region: "Costa" },
+  { cat_id: "00000000-0000-4000-8000-000000000115", cat_nombre: "Morona Santiago", cat_region: "Amazonía" },
+  { cat_id: "00000000-0000-4000-8000-000000000116", cat_nombre: "Napo", cat_region: "Amazonía" },
+  { cat_id: "00000000-0000-4000-8000-000000000117", cat_nombre: "Orellana", cat_region: "Amazonía" },
+  { cat_id: "00000000-0000-4000-8000-000000000118", cat_nombre: "Pastaza", cat_region: "Amazonía" },
+  { cat_id: "00000000-0000-4000-8000-000000000119", cat_nombre: "Pichincha", cat_region: "Sierra" },
+  { cat_id: "00000000-0000-4000-8000-000000000120", cat_nombre: "Santa Elena", cat_region: "Costa" },
+  { cat_id: "00000000-0000-4000-8000-000000000121", cat_nombre: "Santo Domingo de los Tsáchilas", cat_region: "Costa" },
+  { cat_id: "00000000-0000-4000-8000-000000000122", cat_nombre: "Sucumbíos", cat_region: "Amazonía" },
+  { cat_id: "00000000-0000-4000-8000-000000000123", cat_nombre: "Tungurahua", cat_region: "Sierra" },
+  { cat_id: "00000000-0000-4000-8000-000000000124", cat_nombre: "Zamora Chinchipe", cat_region: "Amazonía" },
+];
 
 const CONFIG_AGENDA_BASE: ConfiguracionAgendaAbogado = {
   zona_horaria: "America/Guayaquil",
@@ -60,7 +92,7 @@ const FRANJAS_BASE: Franja[] = [
 export function GestionRedProfesionalWidget() {
   const [abogados, setAbogados] = useState<AbogadoRedItem[]>([]);
   const [materiasCat, setMateriasCat] = useState<MateriaItem[]>([]);
-  const [provinciasCat, setProvinciasCat] = useState<ProvinciaItem[]>([]);
+  const [provinciasCat, setProvinciasCat] = useState<ProvinciaItem[]>(PROVINCIAS_ECUADOR_INICIALES);
   const [cargando, setCargando] = useState(true);
   const [mensaje, setMensaje] = useState<{ tipo: "ok" | "error"; texto: string } | null>(null);
 
@@ -94,6 +126,13 @@ export function GestionRedProfesionalWidget() {
   const [franjasAgenda, setFranjasAgenda] = useState<Franja[]>(FRANJAS_BASE);
   const [guardandoAgenda, setGuardandoAgenda] = useState(false);
 
+  // Modal de Invitación por Correo (Individual o Lista Masiva) hacia https://www.tranqi24.com/abogados
+  const [modalInvitarAbierto, setModalInvitarAbierto] = useState(false);
+  const [textoCorreosEntrada, setTextoCorreosEntrada] = useState("");
+  const [listaCorreosInvitar, setListaCorreosInvitar] = useState<string[]>([]);
+  const [mensajePersonalizadoInvitacion, setMensajePersonalizadoInvitacion] = useState("");
+  const [enviandoInvitaciones, setEnviandoInvitaciones] = useState(false);
+
   const cargarTodo = async () => {
     setCargando(true);
     try {
@@ -103,8 +142,12 @@ export function GestionRedProfesionalWidget() {
       ]);
       if (redRes.ok) setAbogados(redRes.data);
       if (catRes.ok) {
-        setMateriasCat(catRes.data.materias);
-        setProvinciasCat(catRes.data.provincias);
+        if (catRes.data.materias.length > 0) setMateriasCat(catRes.data.materias);
+        if (catRes.data.provincias.length > 0) {
+          setProvinciasCat(catRes.data.provincias);
+        } else {
+          setProvinciasCat(PROVINCIAS_ECUADOR_INICIALES);
+        }
       }
     } finally {
       setCargando(false);
@@ -148,9 +191,10 @@ export function GestionRedProfesionalWidget() {
     setResumenProfesional("");
     setEstadoAbogado("verificado");
     setMateriasSeleccionadas(materiasCat.slice(0, 2).map((m) => m.mat_id));
-    const pichincha = provinciasCat.find((p) => p.cat_nombre.toLowerCase().includes("pichincha"));
+    const listaProv = provinciasCat.length > 0 ? provinciasCat : PROVINCIAS_ECUADOR_INICIALES;
+    const pichincha = listaProv.find((p) => p.cat_nombre.toLowerCase().includes("pichincha"));
     setProvinciasSeleccionadas(
-      pichincha ? [pichincha.cat_id] : provinciasCat.slice(0, 1).map((p) => p.cat_id)
+      pichincha ? [pichincha.cat_id] : listaProv.slice(0, 1).map((p) => p.cat_id)
     );
     setMensaje(null);
     setModalAbierto(true);
@@ -171,9 +215,103 @@ export function GestionRedProfesionalWidget() {
     setResumenProfesional(abg.resumenProfesional);
     setEstadoAbogado(abg.estado);
     setMateriasSeleccionadas(abg.materias.map((m) => m.mat_id));
-    setProvinciasSeleccionadas(abg.provincias.map((p) => p.cat_id));
+    const listaProv = provinciasCat.length > 0 ? provinciasCat : PROVINCIAS_ECUADOR_INICIALES;
+    const idsProvResueltos = abg.provincias.map((p) => {
+      const porId = listaProv.find((cat) => cat.cat_id === p.cat_id);
+      if (porId) return porId.cat_id;
+      const porNombre = listaProv.find(
+        (cat) => cat.cat_nombre.toLowerCase() === p.cat_nombre.toLowerCase()
+      );
+      return porNombre ? porNombre.cat_id : p.cat_id;
+    });
+    setProvinciasSeleccionadas(idsProvResueltos);
     setMensaje(null);
     setModalAbierto(true);
+  };
+
+  const extraerCorreosValidos = (texto: string): string[] => {
+    const coincidencias =
+      texto.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g) ?? [];
+    return Array.from(new Set(coincidencias.map((c) => c.trim().toLowerCase())));
+  };
+
+  const abrirModalInvitar = () => {
+    setTextoCorreosEntrada("");
+    setListaCorreosInvitar([]);
+    setMensajePersonalizadoInvitacion("");
+    setMensaje(null);
+    setModalInvitarAbierto(true);
+  };
+
+  const agregarCorreosALista = () => {
+    const extraidos = extraerCorreosValidos(textoCorreosEntrada);
+    if (extraidos.length === 0) {
+      setMensaje({
+        tipo: "error",
+        texto: "No se detectaron correos electrónicos válidos en el texto ingresado.",
+      });
+      return;
+    }
+    setListaCorreosInvitar((prev) => Array.from(new Set([...prev, ...extraidos])));
+    setTextoCorreosEntrada("");
+  };
+
+  const handleCargarArchivoCorreos = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const archivo = e.target.files?.[0];
+    if (!archivo) return;
+    const lector = new FileReader();
+    lector.onload = (ev) => {
+      const contenido = String(ev.target?.result ?? "");
+      const extraidos = extraerCorreosValidos(contenido);
+      if (extraidos.length === 0) {
+        setMensaje({
+          tipo: "error",
+          texto: `El archivo "${archivo.name}" no contiene direcciones de correo electrónico válidas.`,
+        });
+        return;
+      }
+      setListaCorreosInvitar((prev) => Array.from(new Set([...prev, ...extraidos])));
+      setMensaje({
+        tipo: "ok",
+        texto: `Se cargaron ${extraidos.length} correo(s) desde "${archivo.name}".`,
+      });
+    };
+    lector.readAsText(archivo);
+    e.target.value = "";
+  };
+
+  const handleEnviarInvitaciones = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const pendientesTexto = extraerCorreosValidos(textoCorreosEntrada);
+    const todos = Array.from(new Set([...listaCorreosInvitar, ...pendientesTexto]));
+    if (todos.length === 0) {
+      setMensaje({
+        tipo: "error",
+        texto: "Agrega al menos un correo o carga una lista antes de enviar las invitaciones.",
+      });
+      return;
+    }
+    setEnviandoInvitaciones(true);
+    setMensaje(null);
+    try {
+      const res = await enviarInvitacionesRegistroAbogadosAction({
+        correos: todos,
+        mensajePersonalizado: mensajePersonalizadoInvitacion,
+      });
+      if (!res.ok) {
+        setMensaje({ tipo: "error", texto: res.error });
+        return;
+      }
+      setMensaje({
+        tipo: "ok",
+        texto: `Se enviaron ${res.data.enviados} de ${res.data.total} invitaciones con el enlace de registro (https://www.tranqi24.com/abogados).`,
+      });
+      setModalInvitarAbierto(false);
+      setListaCorreosInvitar([]);
+      setTextoCorreosEntrada("");
+    } finally {
+      setEnviandoInvitaciones(false);
+    }
   };
 
   const seleccionarUsuarioPlataforma = (u: UsuarioPlataformaItem) => {
@@ -716,6 +854,31 @@ export function GestionRedProfesionalWidget() {
           >
             <UserPlus size={16} />
             <span className="btn-texto-responsive">Incorporar Abogado</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={abrirModalInvitar}
+            className="btn-responsive-accion"
+            title="Invitar a uno o varios abogados por correo electrónico al portal de registro (https://www.tranqi24.com/abogados)"
+            aria-label="Invitar abogados por correo"
+            style={{
+              background: "#5000BA",
+              color: "#ffffff",
+              border: "1px solid rgba(255,255,255,0.4)",
+              borderRadius: "10px",
+              padding: "10px 16px",
+              fontSize: "0.84rem",
+              fontWeight: 800,
+              cursor: "pointer",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+              boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+            }}
+          >
+            <Mail size={16} />
+            <span className="btn-texto-responsive">Invitar Abogados</span>
           </button>
 
           <button
@@ -1596,6 +1759,303 @@ export function GestionRedProfesionalWidget() {
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 3: Invitar Abogados por Correo (Individual o Lista Masiva) hacia https://www.tranqi24.com/abogados */}
+      {modalInvitarAbierto && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(17, 24, 39, 0.6)",
+            zIndex: 9999,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "16px",
+          }}
+        >
+          <div
+            style={{
+              background: "#ffffff",
+              borderRadius: "18px",
+              width: "100%",
+              maxWidth: "680px",
+              maxHeight: "90vh",
+              overflowY: "auto",
+              boxShadow: "0 20px 50px rgba(0,0,0,0.25)",
+              padding: "24px",
+            }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px" }}>
+              <div>
+                <span
+                  style={{
+                    fontSize: "0.7rem",
+                    fontWeight: 800,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.05em",
+                    background: "#F5F3FF",
+                    color: "#5000BA",
+                    padding: "3px 9px",
+                    borderRadius: "999px",
+                  }}
+                >
+                  Convocatoria de Red Profesional
+                </span>
+                <h3 style={{ margin: "6px 0 2px 0", fontSize: "1.15rem", fontWeight: 900, color: "#111827" }}>
+                  Invitar Abogados por Correo Electrónico
+                </h3>
+                <p style={{ margin: 0, fontSize: "0.82rem", color: "#6B7280" }}>
+                  Ingresa uno o varios correos o carga un archivo con tu lista para enviar el enlace oficial de registro.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setModalInvitarAbierto(false)}
+                style={{ background: "#F3F4F6", border: "none", borderRadius: "50%", width: "34px", height: "34px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <form onSubmit={handleEnviarInvitaciones} style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+              {/* Enlace destino informativo */}
+              <div
+                style={{
+                  background: "#ECFDF5",
+                  border: "1px solid #A7F3D0",
+                  borderRadius: "12px",
+                  padding: "12px 14px",
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  flexWrap: "wrap",
+                  gap: "8px",
+                }}
+              >
+                <div style={{ fontSize: "0.8rem", color: "#065F46" }}>
+                  <strong>Enlace incluido en el correo:</strong>{" "}
+                  <a
+                    href="https://www.tranqi24.com/abogados"
+                    target="_blank"
+                    rel="noreferrer"
+                    style={{ color: "#05876E", fontWeight: 800, textDecoration: "underline", display: "inline-flex", alignItems: "center", gap: "4px" }}
+                  >
+                    https://www.tranqi24.com/abogados <ExternalLink size={12} />
+                  </a>
+                </div>
+              </div>
+
+              {/* Entrada de correo individual o pegado de lista + carga de archivo CSV/TXT */}
+              <div style={{ background: "#F9FAFB", border: "1px solid #E5E7EB", borderRadius: "12px", padding: "14px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px", flexWrap: "wrap", gap: "8px" }}>
+                  <span style={{ fontSize: "0.82rem", fontWeight: 800, color: "#111827" }}>
+                    1. Ingresar correo(s) o pegar lista de correos
+                  </span>
+                  <label
+                    className="btn-responsive-accion"
+                    title="Cargar un archivo .CSV o .TXT con una lista de correos electrónicos"
+                    aria-label="Cargar lista de correos desde archivo"
+                    style={{
+                      background: "#F5F3FF",
+                      color: "#5000BA",
+                      border: "1px solid #DDD6FE",
+                      borderRadius: "8px",
+                      padding: "6px 12px",
+                      fontSize: "0.76rem",
+                      fontWeight: 800,
+                      cursor: "pointer",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "6px",
+                    }}
+                  >
+                    <Upload size={14} />
+                    <span className="btn-texto-responsive">Cargar Lista (.CSV / .TXT)</span>
+                    <input
+                      type="file"
+                      accept=".csv,.txt,text/plain,text/csv"
+                      onChange={handleCargarArchivoCorreos}
+                      style={{ display: "none" }}
+                    />
+                  </label>
+                </div>
+
+                <textarea
+                  rows={3}
+                  value={textoCorreosEntrada}
+                  onChange={(e) => setTextoCorreosEntrada(e.target.value)}
+                  placeholder="Ejemplo: abogado1@firma.ec, abogado2@estudio.com&#10;Puedes pegar varios correos separados por coma, punto y coma o salto de línea..."
+                  style={{
+                    width: "100%",
+                    padding: "10px",
+                    borderRadius: "8px",
+                    border: "1px solid #D1D5DB",
+                    fontSize: "0.82rem",
+                    fontFamily: "inherit",
+                  }}
+                />
+
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "8px", flexWrap: "wrap", gap: "8px" }}>
+                  <span style={{ fontSize: "0.74rem", color: "#6B7280" }}>
+                    Detecta automáticamente todos los correos pegados o del archivo cargado.
+                  </span>
+                  <button
+                    type="button"
+                    onClick={agregarCorreosALista}
+                    className="btn-responsive-accion"
+                    title="Agregar los correos escritos a la lista de destinatarios"
+                    aria-label="Agregar correos"
+                    style={{
+                      background: "#05876E",
+                      color: "#ffffff",
+                      border: "none",
+                      borderRadius: "8px",
+                      padding: "6px 12px",
+                      fontSize: "0.76rem",
+                      fontWeight: 800,
+                      cursor: "pointer",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "5px",
+                    }}
+                  >
+                    <Plus size={14} />
+                    <span className="btn-texto-responsive">Agregar a Lista</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Lista de destinatarios en cola */}
+              <div style={{ background: "#ffffff", border: "1px solid #E5E7EB", borderRadius: "12px", padding: "12px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+                  <span style={{ fontSize: "0.8rem", fontWeight: 800, color: "#111827" }}>
+                    Destinatarios en lista ({listaCorreosInvitar.length})
+                  </span>
+                  {listaCorreosInvitar.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setListaCorreosInvitar([])}
+                      style={{
+                        background: "none",
+                        border: "none",
+                        color: "#DC2626",
+                        fontSize: "0.75rem",
+                        fontWeight: 700,
+                        cursor: "pointer",
+                      }}
+                    >
+                      Vaciar lista
+                    </button>
+                  )}
+                </div>
+
+                {listaCorreosInvitar.length === 0 ? (
+                  <p style={{ margin: 0, fontSize: "0.78rem", color: "#9CA3AF" }}>
+                    Aún no has agregado correos a la lista (también puedes escribir arriba y pulsar directamente &quot;Enviar Invitaciones&quot;).
+                  </p>
+                ) : (
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", maxHeight: "140px", overflowY: "auto" }}>
+                    {listaCorreosInvitar.map((c) => (
+                      <span
+                        key={c}
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "6px",
+                          background: "#F5F3FF",
+                          color: "#5000BA",
+                          border: "1px solid #DDD6FE",
+                          borderRadius: "999px",
+                          padding: "3px 10px",
+                          fontSize: "0.75rem",
+                          fontWeight: 700,
+                        }}
+                      >
+                        {c}
+                        <button
+                          type="button"
+                          onClick={() => setListaCorreosInvitar((prev) => prev.filter((item) => item !== c))}
+                          title={`Quitar ${c}`}
+                          style={{
+                            background: "none",
+                            border: "none",
+                            color: "#5000BA",
+                            cursor: "pointer",
+                            padding: 0,
+                            display: "inline-flex",
+                          }}
+                        >
+                          <X size={13} />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Mensaje personalizado opcional */}
+              <label style={{ display: "flex", flexDirection: "column", gap: "4px", fontSize: "0.8rem", fontWeight: 700 }}>
+                Mensaje adicional en la invitación (Opcional)
+                <textarea
+                  rows={2}
+                  value={mensajePersonalizadoInvitacion}
+                  onChange={(e) => setMensajePersonalizadoInvitacion(e.target.value)}
+                  placeholder="Ej. Estimado colega, te invitamos a formar parte de nuestra red nacional de especialistas en Tranqi..."
+                  style={{
+                    padding: "8px 10px",
+                    borderRadius: "8px",
+                    border: "1px solid #D1D5DB",
+                    fontSize: "0.82rem",
+                    fontFamily: "inherit",
+                  }}
+                />
+              </label>
+
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "4px" }}>
+                <button
+                  type="button"
+                  onClick={() => setModalInvitarAbierto(false)}
+                  style={{
+                    padding: "9px 16px",
+                    borderRadius: "10px",
+                    border: "1px solid #D1D5DB",
+                    background: "#ffffff",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                  }}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={enviandoInvitaciones}
+                  className="btn-responsive-accion"
+                  title="Enviar correo de invitación con el enlace https://www.tranqi24.com/abogados"
+                  aria-label="Enviar invitaciones"
+                  style={{
+                    padding: "9px 18px",
+                    borderRadius: "10px",
+                    border: "none",
+                    background: "#5000BA",
+                    color: "#ffffff",
+                    fontWeight: 800,
+                    cursor: "pointer",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "6px",
+                  }}
+                >
+                  <Send size={15} />
+                  <span className="btn-texto-responsive">
+                    {enviandoInvitaciones ? "Enviando..." : "Enviar Invitaciones"}
+                  </span>
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

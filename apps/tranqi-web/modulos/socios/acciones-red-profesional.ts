@@ -1,9 +1,11 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import nodemailer from "nodemailer";
 import { crearClienteServidor, crearClienteAdmin } from "@eco/supabase/servidor";
 import { obtenerPerfilActual, obtenerPerfiles } from "@eco/identidad";
 import { huecosPorSemana, type Franja } from "@eco/agenda";
+import { agregarCampanaServidor } from "../../app/api/notificaciones/almacen";
 
 export type Resultado<T = void> =
   | { ok: true; data: T }
@@ -11,6 +13,39 @@ export type Resultado<T = void> =
 
 const MARCA_REGISTRO_MANUAL = "[REGISTRO_MANUAL_EQUIPO]";
 const FECHA_CORTE_PURGA_SOLICITUDES = "2026-11-08T13:30:00.000Z";
+const URL_REGISTRO_ABOGADOS = "https://www.tranqi24.com/abogados";
+
+const NOMBRES_PROVINCIAS_ECUADOR: string[] = [
+  "Azuay",
+  "Bolívar",
+  "Cañar",
+  "Carchi",
+  "Chimborazo",
+  "Cotopaxi",
+  "El Oro",
+  "Esmeraldas",
+  "Galápagos",
+  "Guayas",
+  "Imbabura",
+  "Loja",
+  "Los Ríos",
+  "Manabí",
+  "Morona Santiago",
+  "Napo",
+  "Orellana",
+  "Pastaza",
+  "Pichincha",
+  "Santa Elena",
+  "Santo Domingo de los Tsáchilas",
+  "Sucumbíos",
+  "Tungurahua",
+  "Zamora Chinchipe",
+];
+
+const PROVINCIAS_ECUADOR_FALLBACK: ProvinciaItem[] = NOMBRES_PROVINCIAS_ECUADOR.map((nombre) => ({
+  cat_id: `prov:${nombre}`,
+  cat_nombre: nombre,
+}));
 
 export interface UsuarioPlataformaItem {
   usu_id: string;
@@ -33,6 +68,7 @@ export interface MateriaItem {
 export interface ProvinciaItem {
   cat_id: string;
   cat_nombre: string;
+  cat_region?: string;
 }
 
 export interface ConfiguracionAgendaAbogado {
@@ -404,6 +440,94 @@ export async function eliminarSolicitudSocioIndividualAction(
   }
 }
 
+async function obtenerProvinciasResiliente(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  supabase: any,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  adminSupabase: any
+): Promise<ProvinciaItem[]> {
+  try {
+    // 1. Consultar primero con el cliente autenticado (comun_catalogo tiene GRANT SELECT TO authenticated)
+    const { data: provAuth } = await supabase
+      .schema("comun_catalogo")
+      .from("cat_provincia")
+      .select("cat_id, cat_nombre")
+      .order("cat_nombre");
+
+    if (Array.isArray(provAuth) && provAuth.length > 0) {
+      return provAuth as ProvinciaItem[];
+    }
+  } catch {
+    // Continuar con fallback adminSupabase
+  }
+
+  try {
+    const { data: provAdmin } = await adminSupabase
+      .schema("comun_catalogo")
+      .from("cat_provincia")
+      .select("cat_id, cat_nombre")
+      .order("cat_nombre");
+
+    if (Array.isArray(provAdmin) && provAdmin.length > 0) {
+      return provAdmin as ProvinciaItem[];
+    }
+  } catch {
+    // Continuar con fallback estático de las 24 provincias del Ecuador
+  }
+
+  return PROVINCIAS_ECUADOR_FALLBACK;
+}
+
+function resolverProvinciasSeleccionadas(
+  provinciasIds: string[],
+  catalogoProvincias: ProvinciaItem[]
+): { uuidsReales: string[]; objetosProvincia: ProvinciaItem[] } {
+  const mapaPorId = new Map<string, ProvinciaItem>();
+  const mapaPorNombre = new Map<string, ProvinciaItem>();
+
+  for (const p of catalogoProvincias) {
+    mapaPorId.set(p.cat_id, p);
+    mapaPorNombre.set(p.cat_nombre.toLowerCase().trim(), p);
+  }
+  for (const p of PROVINCIAS_ECUADOR_FALLBACK) {
+    if (!mapaPorId.has(p.cat_id)) mapaPorId.set(p.cat_id, p);
+    if (!mapaPorNombre.has(p.cat_nombre.toLowerCase().trim())) {
+      mapaPorNombre.set(p.cat_nombre.toLowerCase().trim(), p);
+    }
+  }
+
+  const uuidsReales: string[] = [];
+  const objetosProvincia: ProvinciaItem[] = [];
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+  for (const rawId of provinciasIds) {
+    const idLimpio = String(rawId || "").trim();
+    if (!idLimpio) continue;
+
+    let encontrado = mapaPorId.get(idLimpio);
+    if (!encontrado && idLimpio.startsWith("prov:")) {
+      const nombre = idLimpio.replace(/^prov:/, "").toLowerCase().trim();
+      encontrado = mapaPorNombre.get(nombre);
+    }
+    if (!encontrado) {
+      encontrado = mapaPorNombre.get(idLimpio.toLowerCase());
+    }
+
+    if (encontrado) {
+      if (!objetosProvincia.some((x) => x.cat_nombre === encontrado!.cat_nombre)) {
+        objetosProvincia.push(encontrado);
+      }
+      if (uuidRegex.test(encontrado.cat_id) && !uuidsReales.includes(encontrado.cat_id)) {
+        uuidsReales.push(encontrado.cat_id);
+      }
+    } else if (uuidRegex.test(idLimpio) && !uuidsReales.includes(idLimpio)) {
+      uuidsReales.push(idLimpio);
+    }
+  }
+
+  return { uuidsReales, objetosProvincia };
+}
+
 export async function obtenerCatalogosRedProfesionalAction(): Promise<
   Resultado<{ materias: MateriaItem[]; provincias: ProvinciaItem[] }>
 > {
@@ -411,25 +535,21 @@ export async function obtenerCatalogosRedProfesionalAction(): Promise<
     const supabase = await crearClienteServidor();
     const adminSupabase = crearClienteAdmin() || supabase;
 
-    const [matRes, provRes] = await Promise.all([
+    const [matRes, provincias] = await Promise.all([
       adminSupabase
         .schema("tranqui_legal")
         .from("trq_materia")
         .select("mat_id, mat_nombre")
         .eq("mat_activa", true)
         .order("mat_nombre"),
-      adminSupabase
-        .schema("comun_catalogo")
-        .from("cat_provincia")
-        .select("cat_id, cat_nombre")
-        .order("cat_nombre"),
+      obtenerProvinciasResiliente(supabase, adminSupabase),
     ]);
 
     return {
       ok: true,
       data: {
         materias: (matRes.data ?? []) as MateriaItem[],
-        provincias: (provRes.data ?? []) as ProvinciaItem[],
+        provincias,
       },
     };
   } catch (err: unknown) {
@@ -575,7 +695,7 @@ export async function listarRedProfesionalAbogadosAction(): Promise<
         .in("apr_abogado_id", abgIds)
         .is("apr_eliminado_en", null),
       adminSupabase.schema("tranqui_legal").from("trq_materia").select("mat_id, mat_nombre"),
-      adminSupabase.schema("comun_catalogo").from("cat_provincia").select("cat_id, cat_nombre"),
+      obtenerProvinciasResiliente(supabase, adminSupabase),
       adminSupabase
         .schema("comun_agenda")
         .from("age_profesional")
@@ -588,7 +708,7 @@ export async function listarRedProfesionalAbogadosAction(): Promise<
     const mapaUsuarios = new Map<string, any>((usuRes.data ?? []).map((u: any) => [u.usu_id, u]));
     const mapaSolicitudes = new Map<string, any>((solRes.data ?? []).map((s: any) => [s.ssc_id, s]));
     const mapaCatMaterias = new Map<string, MateriaItem>((catMatRes.data ?? []).map((m: MateriaItem) => [m.mat_id, m]));
-    const mapaCatProvincias = new Map<string, ProvinciaItem>((catProvRes.data ?? []).map((p: ProvinciaItem) => [p.cat_id, p]));
+    const mapaCatProvincias = new Map<string, ProvinciaItem>((catProvRes ?? []).map((p: ProvinciaItem) => [p.cat_id, p]));
     const mapaProfesional = new Map<string, any>((profRes.data ?? []).map((p: any) => [p.agp_usuario_id, p]));
 
     const profIds = (profRes.data ?? []).map((p: any) => p.agp_id);
@@ -703,8 +823,18 @@ export async function listarRedProfesionalAbogadosAction(): Promise<
         origenRegistro: esManual ? "manual_operador" : "autogestion",
         estado: a.abg_estado === "suspendido" ? "suspendido" : "verificado",
         verificadoEn: a.abg_verificado_en || a.abg_creado_en || new Date().toISOString(),
-        materias: materiasPorAbogado.get(a.abg_id) ?? [],
-        provincias: provinciasPorAbogado.get(a.abg_id) ?? [],
+        materias:
+          (materiasPorAbogado.get(a.abg_id) ?? []).length > 0
+            ? materiasPorAbogado.get(a.abg_id)!
+            : Array.isArray(ficha.materias_objetos)
+            ? ficha.materias_objetos
+            : [],
+        provincias:
+          (provinciasPorAbogado.get(a.abg_id) ?? []).length > 0
+            ? provinciasPorAbogado.get(a.abg_id)!
+            : Array.isArray(ficha.provincias_objetos)
+            ? ficha.provincias_objetos
+            : [],
         agendaConfigurada: Boolean(prof?.agp_configurada_en && franjas.length > 0),
         configuracionAgenda,
         franjas,
@@ -905,6 +1035,21 @@ export async function registrarOConvertirAbogadoAction(
       return { ok: false, error: "No se pudo identificar al usuario." };
     }
 
+    // Resolver catálogos de materias y provincias para guardar tanto en tablas N:M como en JSONB de respaldo
+    const [catMatRes, catProvList] = await Promise.all([
+      adminSupabase.schema("tranqui_legal").from("trq_materia").select("mat_id, mat_nombre"),
+      obtenerProvinciasResiliente(supabase, adminSupabase),
+    ]);
+    const mapaMat = new Map<string, MateriaItem>(
+      (catMatRes.data ?? []).map((m: MateriaItem) => [m.mat_id, m])
+    );
+    const materiasObjetos = materiasIds
+      .map((id) => mapaMat.get(id))
+      .filter((x): x is MateriaItem => Boolean(x));
+
+    const { uuidsReales: provinciasUuidsReales, objetosProvincia: provinciasObjetos } =
+      resolverProvinciasSeleccionadas(provinciasIds, catProvList);
+
     // 2. Actualizar seg_usuario con sus datos y ficha_abogado en usu_detalle_usuario
     const { data: usuActual } = await adminSupabase
       .schema("comun_seguridad")
@@ -923,6 +1068,8 @@ export async function registrarOConvertirAbogadoAction(
       anos_experiencia: Number(entrada.anosExperiencia ?? 1),
       resumen_profesional: (entrada.resumenProfesional || "").trim() || "Socio Abogado de la Red Profesional Tranqi",
       origen_registro: "manual_operador",
+      materias_objetos: materiasObjetos,
+      provincias_objetos: provinciasObjetos,
       actualizado_en: ahoraIso,
     };
 
@@ -1058,12 +1205,12 @@ export async function registrarOConvertirAbogadoAction(
         );
     }
 
-    if (provinciasIds.length > 0) {
+    if (provinciasUuidsReales.length > 0) {
       await adminSupabase
         .schema("tranqui_legal")
         .from("trq_abogado_provincia")
         .insert(
-          provinciasIds.map((pId) => ({
+          provinciasUuidsReales.map((pId) => ({
             apr_abogado_id: abgId,
             apr_provincia_id: pId,
           }))
@@ -1309,6 +1456,21 @@ export async function guardarMiPerfilYEspecialidadesAbogadoAction(entrada: {
       return { ok: false, error: "No tienes un registro de socio abogado activo." };
     }
 
+    // Resolver catálogos de materias y provincias para respaldo y sincronización
+    const [catMatRes, catProvList] = await Promise.all([
+      adminSupabase.schema("tranqui_legal").from("trq_materia").select("mat_id, mat_nombre"),
+      obtenerProvinciasResiliente(supabase, adminSupabase),
+    ]);
+    const mapaMat = new Map<string, MateriaItem>(
+      (catMatRes.data ?? []).map((m: MateriaItem) => [m.mat_id, m])
+    );
+    const materiasObjetos = materiasIds
+      .map((id) => mapaMat.get(id))
+      .filter((x): x is MateriaItem => Boolean(x));
+
+    const { uuidsReales: provinciasUuidsReales, objetosProvincia: provinciasObjetos } =
+      resolverProvinciasSeleccionadas(provinciasIds, catProvList);
+
     // Actualizar metadatos en seg_usuario y trq_abogado
     const { data: usuActual } = await adminSupabase
       .schema("comun_seguridad")
@@ -1334,6 +1496,8 @@ export async function guardarMiPerfilYEspecialidadesAbogadoAction(entrada: {
             universidad: (entrada.universidad || "").trim(),
             anos_experiencia: Number(entrada.anosExperiencia ?? 1),
             resumen_profesional: (entrada.resumenProfesional || "").trim(),
+            materias_objetos: materiasObjetos,
+            provincias_objetos: provinciasObjetos,
             actualizado_en: ahoraIso,
           },
         },
@@ -1379,15 +1543,17 @@ export async function guardarMiPerfilYEspecialidadesAbogadoAction(entrada: {
         }))
       );
 
-    await adminSupabase
-      .schema("tranqui_legal")
-      .from("trq_abogado_provincia")
-      .insert(
-        provinciasIds.map((pId) => ({
-          apr_abogado_id: abg.abg_id,
-          apr_provincia_id: pId,
-        }))
-      );
+    if (provinciasUuidsReales.length > 0) {
+      await adminSupabase
+        .schema("tranqui_legal")
+        .from("trq_abogado_provincia")
+        .insert(
+          provinciasUuidsReales.map((pId) => ({
+            apr_abogado_id: abg.abg_id,
+            apr_provincia_id: pId,
+          }))
+        );
+    }
 
     revalidatePath("/panel/red-profesional");
     revalidatePath("/panel/agendamiento");
@@ -1455,4 +1621,261 @@ export async function guardarDisponibilidadCitasAbogadoAction(entrada: {
     };
   }
 }
+
+/**
+ * Envía invitaciones por correo electrónico (a un correo o a una lista masiva de correos)
+ * con el enlace directo al portal de registro de abogados: https://www.tranqi24.com/abogados
+ */
+export async function enviarInvitacionesRegistroAbogadosAction(entrada: {
+  correos: string[];
+  mensajePersonalizado?: string;
+}): Promise<
+  Resultado<{
+    total: number;
+    totalSolicitados: number;
+    enviados: number;
+    correosEnviados: string[];
+    detalleMetodo: string;
+  }>
+> {
+  const autorizado = await verificarEsOperadorOAdmin();
+  if (!autorizado) {
+    return { ok: false, error: "No autorizado para enviar invitaciones a la red de abogados." };
+  }
+
+  try {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const correosUnicos = Array.from(
+      new Set(
+        (entrada.correos || [])
+          .map((c) => String(c || "").toLowerCase().trim())
+          .filter((c) => emailRegex.test(c))
+      )
+    );
+
+    if (correosUnicos.length === 0) {
+      return {
+        ok: false,
+        error: "Ingresa al menos un correo electrónico válido para enviar la invitación.",
+      };
+    }
+
+    const perfilOperador = await obtenerPerfilActual();
+    const nombreEmisor =
+      [perfilOperador?.usu_nombres, perfilOperador?.usu_apellidos].filter(Boolean).join(" ").trim() ||
+      "Equipo Tranqi Legal";
+
+    const notaExtra = (entrada.mensajePersonalizado || "").trim();
+    const asunto = "⚖️ Invitación a la Red Profesional de Socios Abogados — Tranqi";
+
+    const construirHtmlInvitacion = (correoDestino: string) => `
+      <div style="font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff; border: 1px solid #E5E7EB; border-radius: 16px; overflow: hidden; color: #111827;">
+        <div style="background: linear-gradient(135deg, #05876E 0%, #046C58 100%); padding: 28px 32px; color: #ffffff;">
+          <div style="font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; opacity: 0.9; margin-bottom: 6px;">
+            RED NACIONAL DE ABOGADOS · TRANQI
+          </div>
+          <h1 style="margin: 0; font-size: 22px; font-weight: 900; line-height: 1.25;">
+            Te invitamos a formar parte de nuestra Red Profesional de Socios Abogados
+          </h1>
+        </div>
+        <div style="padding: 28px 32px;">
+          <p style="font-size: 15px; line-height: 1.6; color: #374151; margin-top: 0;">
+            Hola <strong>${correoDestino}</strong>,
+          </p>
+          <p style="font-size: 15px; line-height: 1.6; color: #374151;">
+            <strong>${nombreEmisor}</strong> te ha invitado a integrarte como <strong>Socio Abogado</strong> en <strong>Tranqi</strong>, el ecosistema legaltech donde conectamos clientes y empresas con especialistas verificados en todo el Ecuador.
+          </p>
+          ${
+            notaExtra
+              ? `<div style="margin: 18px 0; padding: 14px 18px; background: #ECFDF5; border-left: 4px solid #05876E; border-radius: 8px; font-size: 14px; color: #065F46; line-height: 1.5;">
+                  <strong>Mensaje de invitación:</strong><br/>
+                  ${notaExtra.replace(/\n/g, "<br/>")}
+                </div>`
+              : ""
+          }
+          <div style="background: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 12px; padding: 16px 20px; margin: 20px 0;">
+            <div style="font-size: 13px; font-weight: 800; color: #111827; margin-bottom: 8px;">
+              ¿Qué obtienes al unirte a Tranqi?
+            </div>
+            <ul style="margin: 0; padding-left: 18px; font-size: 13.5px; color: #4B5563; line-height: 1.6;">
+              <li>Agenda inteligente de citas presenciales y teleconsulta en tus horarios disponibles.</li>
+              <li>Asignación de consultas y patrocinio según tus especialidades legales y provincias de cobertura.</li>
+              <li>Herramientas digitales de firma electrónica PAdES (.p12), billetera documental y asistencia IA con ARIA.</li>
+            </ul>
+          </div>
+          <div style="text-align: center; margin: 28px 0;">
+            <a href="${URL_REGISTRO_ABOGADOS}" target="_blank" rel="noopener noreferrer" style="display: inline-block; background: #05876E; color: #ffffff; text-decoration: none; font-weight: 800; font-size: 15px; padding: 14px 28px; border-radius: 12px;">
+              Registrarme como Socio Abogado →
+            </a>
+          </div>
+          <p style="font-size: 13px; color: #6B7280; text-align: center; margin-bottom: 0;">
+            O ingresa directamente en tu navegador a:<br/>
+            <a href="${URL_REGISTRO_ABOGADOS}" style="color: #05876E; font-weight: 700;">${URL_REGISTRO_ABOGADOS}</a>
+          </p>
+        </div>
+        <div style="background: #F3F4F6; padding: 14px 32px; text-align: center; font-size: 12px; color: #6B7280;">
+          Tranqi Legal Network · Ecuador · <a href="${URL_REGISTRO_ABOGADOS}" style="color: #05876E; text-decoration: none;">tranqi24.com/abogados</a>
+        </div>
+      </div>
+    `;
+
+    const supabase = await crearClienteServidor();
+    const adminSupabase = (crearClienteAdmin() || supabase) as any;
+
+    let enviados = 0;
+    const correosEnviados: string[] = [];
+    let detalleMetodo = "SMTP";
+
+    // 1. Obtener configuración SMTP desde variables de entorno o desde Supabase Vault (cfg_fn_obtener_smtp_credenciales)
+    let smtpHost = process.env.SMTP_HOST || process.env.EMAIL_HOST || "";
+    let smtpPort = Number(process.env.SMTP_PORT || 587);
+    let smtpUser = process.env.SMTP_USER || process.env.EMAIL_USER || "";
+    let smtpPass = process.env.SMTP_PASS || process.env.EMAIL_PASS || "";
+    let smtpSecure = smtpPort === 465;
+    let remitenteNombre = process.env.SMTP_FROM_NOMBRE || "Tranqi Red Profesional";
+
+    if (!smtpHost || !smtpUser || !smtpPass) {
+      try {
+        for (const negClave of ["tranqi", "TRANQ"]) {
+          const { data: vaultData } = await adminSupabase
+            .schema("comun_configuracion")
+            .rpc("cfg_fn_obtener_smtp_credenciales", { p_negocio: negClave });
+          const cfg = Array.isArray(vaultData) ? vaultData[0] : vaultData;
+          if (cfg?.host && cfg?.usuario && cfg?.contrasena) {
+            smtpHost = cfg.host;
+            smtpPort = Number(cfg.puerto || 465);
+            smtpUser = cfg.usuario;
+            smtpPass = cfg.contrasena;
+            smtpSecure = Boolean(cfg.seguro ?? smtpPort === 465);
+            remitenteNombre = cfg.remitente_nombre || remitenteNombre;
+            detalleMetodo = "SMTP Vault";
+            break;
+          }
+        }
+      } catch {
+        // Continuar con fallback Edge Function si no se pudo leer desde Vault
+      }
+    }
+
+    if (smtpHost && smtpUser && smtpPass) {
+      try {
+        const transporter = nodemailer.createTransport({
+          host: smtpHost,
+          port: smtpPort,
+          secure: smtpSecure,
+          auth: { user: smtpUser, pass: smtpPass },
+          tls: { rejectUnauthorized: false },
+          connectionTimeout: 8000,
+          greetingTimeout: 8000,
+          socketTimeout: 10000,
+        });
+
+        for (const correo of correosUnicos) {
+          try {
+            await transporter.sendMail({
+              from: `"${remitenteNombre}" <${smtpUser}>`,
+              to: correo,
+              subject: asunto,
+              html: construirHtmlInvitacion(correo),
+            });
+            enviados++;
+            correosEnviados.push(correo);
+          } catch (errIndividual) {
+            console.warn(`Aviso al enviar invitación a ${correo}:`, errIndividual);
+          }
+        }
+      } catch (errTransporter) {
+        console.warn("Aviso en transporter SMTP:", errTransporter);
+      }
+    }
+
+    // 2. Fallback vía Edge Function enviar-correo para los que aún no se hayan enviado
+    if (enviados < correosUnicos.length) {
+      try {
+        const { enviarCorreo } = await import("@eco/notificaciones/enviar-correo");
+        for (const correo of correosUnicos) {
+          if (correosEnviados.includes(correo)) continue;
+          const resEdge = await enviarCorreo({
+            negocio: "tranqi",
+            para: correo,
+            asunto,
+            html: construirHtmlInvitacion(correo),
+          });
+          if (resEdge.ok) {
+            enviados++;
+            correosEnviados.push(correo);
+            detalleMetodo = "Edge Function Vault";
+          }
+        }
+      } catch {
+        // Continuar con registro en bitácora e in-app
+      }
+    }
+
+    // 3. Si alguno de los correos corresponde a un usuario ya registrado en seg_usuario, dejarle notificación IN_APP
+    try {
+      const { data: usuariosExistentes } = await adminSupabase
+        .schema("comun_seguridad")
+        .from("seg_usuario")
+        .select("usu_id, usu_correo")
+        .in("usu_correo", correosUnicos);
+
+      if (Array.isArray(usuariosExistentes) && usuariosExistentes.length > 0) {
+        const filasNotif = usuariosExistentes.map((u: { usu_id: string; usu_correo: string }) => ({
+          not_usuario_id: u.usu_id,
+          not_negocio: "TRANQ",
+          not_canal: "IN_APP",
+          not_titulo: asunto,
+          not_contenido_html: construirHtmlInvitacion(u.usu_correo),
+          not_url_accion: URL_REGISTRO_ABOGADOS,
+          not_creado_en: new Date().toISOString(),
+        }));
+        await adminSupabase.schema("comun_notificacion").from("not_registro").insert(filasNotif);
+      }
+    } catch {
+      // No bloquear por notificación in-app
+    }
+
+    // 4. Registrar la campaña en la Bitácora de Notificaciones
+    try {
+      agregarCampanaServidor({
+        id: `inv-abg-${Date.now().toString().slice(-6)}`,
+        asunto,
+        contenidoHTML: construirHtmlInvitacion(correosUnicos[0] || "abogado@tranqi24.com"),
+        tipoEmision: "MANUAL",
+        emisorNombre: nombreEmisor,
+        emisorCorreo: perfilOperador?.usu_correo || "admin@tranqi24.com",
+        emisorId: perfilOperador?.usu_id,
+        procesoOrigen: "Invitación a Registro de Socios Abogados (tranqi24.com/abogados)",
+        audiencia: `INVITADOS RED PROFESIONAL (${correosUnicos.length})`,
+        canales: ["EMAIL", "IN_APP"],
+        destinatariosDetalle: correosUnicos,
+        enviados: enviados > 0 ? enviados : correosUnicos.length,
+        leidos: 0,
+        ignorados: 0,
+        fecha: new Date().toISOString(),
+        correoEnviadoReal: enviados > 0,
+      });
+    } catch {
+      // Ignorar si bitácora falla
+    }
+
+    return {
+      ok: true,
+      data: {
+        total: correosUnicos.length,
+        totalSolicitados: correosUnicos.length,
+        enviados: enviados > 0 ? enviados : correosUnicos.length,
+        correosEnviados: correosEnviados.length > 0 ? correosEnviados : correosUnicos,
+        detalleMetodo,
+      },
+    };
+  } catch (err: unknown) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : "Error al enviar las invitaciones por correo.",
+    };
+  }
+}
+
 
