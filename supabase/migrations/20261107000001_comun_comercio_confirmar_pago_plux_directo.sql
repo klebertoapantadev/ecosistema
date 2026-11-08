@@ -166,3 +166,4 @@ $$;
 
 revoke execute on function comun_comercio.com_fn_confirmar_pago_plux_cliente(text, text, jsonb) from public, anon;
 grant execute on function comun_comercio.com_fn_confirmar_pago_plux_cliente(text, text, jsonb) to authenticated, service_role;
+

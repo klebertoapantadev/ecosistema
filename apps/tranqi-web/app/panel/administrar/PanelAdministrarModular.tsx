@@ -9,6 +9,7 @@ import { EmisionNotificacionesWidget, BitacoraNotificacionesWidget, MonitoreoNot
 import { GestionTerminosConsentimientosWidget } from "@eco/identidad/componentes/GestionTerminosConsentimientosWidget";
 import { VisorAuditoriaWidget } from "../auditoria/VisorAuditoriaWidget";
 import { ConfiguracionContratoAbogadoWidget } from "../../../modulos/socios/componentes/ConfiguracionContratoAbogadoWidget";
+import { GestionRedProfesionalWidget } from "../../../modulos/socios/componentes/GestionRedProfesionalWidget";
 import { BandejaClientesCRM } from "../../../modulos/crm-clientes/componentes/BandejaClientesCRM";
 import { HistorialTransaccionesPago, GestionConveniosCorporativos, TableroDisponibilidadOperativa, ConsolaGestionInformativosWidget, ComplianceScoreEmpresarial, LegalHRLaboral } from "@eco/comercio";
 import { DataGrid, type ColumnaDataGrid } from "@eco/datagrid";
@@ -129,6 +130,15 @@ const MODULOS_ADMIN: ModuloAdminDef[] = [
     icono: Shield,
     colorIcono: "#111827",
     categoria: "Seguridad & Auditoría"
+  },
+  {
+    id: "gestion_red_abogados",
+    titulo: "Red Profesional & Registro de Abogados",
+    subtitulo: "Búsqueda de usuarios registrados para convertirlos en socios abogados, registro manual y gestión de especialidades, cobertura y disponibilidad",
+    ruta: "/panel/administrar?widget=gestion_red_abogados",
+    icono: Scale,
+    colorIcono: "#05876E",
+    categoria: "Operación Legal"
   },
   {
     id: "socios",
@@ -805,9 +815,9 @@ export function PanelAdministrarModular({ negocio = "TRANQ", esSuperAdmin = fals
               </div>
             )}
 
-            {/* 2. APROBACIÓN DE SOCIOS ABOGADOS */}
-            {widgetActivo === "socios" && (
-              <SociosWidget />
+            {/* 2. APROBACIÓN DE SOCIOS ABOGADOS Y RED PROFESIONAL */}
+            {(widgetActivo === "socios" || widgetActivo === "gestion_red_abogados") && (
+              <GestionRedProfesionalWidget />
             )}
 
             {/* 3. SOLICITUDES DE SOCIOS */}

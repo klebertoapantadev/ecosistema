@@ -72,6 +72,22 @@ const CATALOGO_FAVORITOS: Record<string, WidgetFavInfo> = {
     href: "/panel/agendamiento?widget=disponibilidad_abogados",
     origen: "Administrar"
   },
+  gestion_red_abogados: {
+    id: "gestion_red_abogados",
+    titulo: "Red Profesional & Registro de Abogados",
+    subtitulo: "Convertir usuarios registrados en abogados, alta manual y gestión de especialidades, cobertura y disponibilidad",
+    icono: Scale,
+    href: "/panel/red-profesional?widget=gestion_red_abogados",
+    origen: "Administrar"
+  },
+  mi_perfil_abogado: {
+    id: "mi_perfil_abogado",
+    titulo: "Mis Especialidades, Cobertura y Disponibilidad",
+    subtitulo: "Configura tus materias legales, provincias de cobertura y horarios de atención presencial y teleconsulta",
+    icono: Scale,
+    href: "/panel/red-profesional?widget=mi_perfil_abogado",
+    origen: "Herramientas"
+  },
   pasarela_payphone: {
     id: "pasarela_payphone",
     titulo: "Pasarela Payphone",

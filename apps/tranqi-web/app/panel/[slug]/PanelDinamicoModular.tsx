@@ -41,6 +41,8 @@ import {
 } from "@eco/comercio";
 import { SociosWidget } from "../administrar/PanelAdministrarModular";
 import { ConfiguracionContratoAbogadoWidget } from "@/modulos/socios/componentes/ConfiguracionContratoAbogadoWidget";
+import { GestionRedProfesionalWidget } from "@/modulos/socios/componentes/GestionRedProfesionalWidget";
+import { MiPerfilRedAbogadoWidget } from "@/modulos/socios/componentes/MiPerfilRedAbogadoWidget";
 import { obtenerConfiguracionNavegacionRolAction } from "@eco/gestion-usuarios/acciones";
 import { MATRIZ_FUNCIONAL_ROLES } from "@eco/gestion-usuarios/matriz-roles";
 
@@ -397,6 +399,20 @@ const INVENTARIO_GLOBAL_WIDGETS: Record<string, { titulo: string; subtitulo: str
     icono: Users,
     colorIcono: "#5000BA",
     categoria: "Consulta & Directorio"
+  },
+  gestion_red_abogados: {
+    titulo: "Red Profesional & Registro de Abogados",
+    subtitulo: "Convertir usuarios registrados en abogados, registro manual y gestión de especialidades, cobertura y disponibilidad",
+    icono: Scale,
+    colorIcono: "#05876E",
+    categoria: "Red Profesional"
+  },
+  mi_perfil_abogado: {
+    titulo: "Mis Especialidades, Cobertura y Disponibilidad",
+    subtitulo: "Configura tus materias legales, provincias de cobertura y horarios de atención presencial y teleconsulta",
+    icono: Scale,
+    colorIcono: "#05876E",
+    categoria: "Red Profesional"
   },
   socios: {
     titulo: "Aprobación de Socios Abogados",
@@ -779,14 +795,15 @@ export function PanelDinamicoModular({ slug, negocio, rolInicial = "ADMINISTRADO
           />
         );
       case "disponibilidad":
-        return (
-          <EnlacePantalla
-            texto="Configurar mi disponibilidad"
-            descripcion="Tus días y horas de atención. Sin franjas activas no apareces disponible ni recibes turnos."
-            ruta="/panel/agenda/disponibilidad"
-            color="#05876E"
-          />
-        );
+        return <MiPerfilRedAbogadoWidget tabInicial="disponibilidad" />;
+      case "mi_perfil_abogado":
+      case "perfil_abogado":
+      case "especialidades_abogado":
+        return <MiPerfilRedAbogadoWidget tabInicial="especialidades" />;
+      case "gestion_red_abogados":
+      case "red_profesional":
+      case "registro_abogados":
+        return <GestionRedProfesionalWidget />;
       case "asignaciones_agenda":
         return (
           <EnlacePantalla

@@ -1,0 +1,1605 @@
+"use client";
+
+import React, { useState, useEffect, useMemo } from "react";
+import {
+  Users,
+  UserPlus,
+  Search,
+  CheckCircle2,
+  XCircle,
+  Calendar,
+  Scale,
+  MapPin,
+  Pencil,
+  Trash2,
+  Video,
+  Building2,
+  RefreshCw,
+  ShieldCheck,
+  Clock,
+  Plus,
+  X,
+} from "lucide-react";
+import { DataGrid, type ColumnaDataGrid } from "@eco/datagrid";
+import { DIAS_SEMANA, huecosPorSemana, type Franja } from "@eco/agenda";
+import {
+  listarRedProfesionalAbogadosAction,
+  obtenerCatalogosRedProfesionalAction,
+  buscarUsuariosPlataformaParaAbogadoAction,
+  registrarOConvertirAbogadoAction,
+  cambiarEstadoAbogadoRedAction,
+  eliminarAbogadoRedAction,
+  guardarDisponibilidadCitasAbogadoAction,
+  purgarTodasSolicitudesSocioAction,
+  type AbogadoRedItem,
+  type MateriaItem,
+  type ProvinciaItem,
+  type UsuarioPlataformaItem,
+  type ConfiguracionAgendaAbogado,
+} from "../acciones-red-profesional";
+
+const CONFIG_AGENDA_BASE: ConfiguracionAgendaAbogado = {
+  zona_horaria: "America/Guayaquil",
+  duracion_cita_min: 45,
+  holgura_min: 15,
+  antelacion_minima_horas: 12,
+  horizonte_dias: 60,
+  modalidades: ["virtual", "presencial"],
+  acepta_turno: true,
+  direccion: "Quito — Atención Presencial y Teleconsulta",
+};
+
+const FRANJAS_BASE: Franja[] = [
+  { dia_semana: 1, hora_inicio: "09:00", hora_fin: "17:00", modalidad: "ambas" },
+  { dia_semana: 2, hora_inicio: "09:00", hora_fin: "17:00", modalidad: "ambas" },
+  { dia_semana: 3, hora_inicio: "09:00", hora_fin: "17:00", modalidad: "ambas" },
+  { dia_semana: 4, hora_inicio: "09:00", hora_fin: "17:00", modalidad: "ambas" },
+  { dia_semana: 5, hora_inicio: "09:00", hora_fin: "17:00", modalidad: "ambas" },
+];
+
+export function GestionRedProfesionalWidget() {
+  const [abogados, setAbogados] = useState<AbogadoRedItem[]>([]);
+  const [materiasCat, setMateriasCat] = useState<MateriaItem[]>([]);
+  const [provinciasCat, setProvinciasCat] = useState<ProvinciaItem[]>([]);
+  const [cargando, setCargando] = useState(true);
+  const [mensaje, setMensaje] = useState<{ tipo: "ok" | "error"; texto: string } | null>(null);
+
+  // Modal de Alta / Conversión / Edición de Socio Abogado
+  const [modalAbierto, setModalAbierto] = useState(false);
+  const [modoOrigenUsuario, setModoOrigenUsuario] = useState<"existente" | "nuevo">("existente");
+  const [busquedaUsuario, setBusquedaUsuario] = useState("");
+  const [usuariosEncontrados, setUsuariosEncontrados] = useState<UsuarioPlataformaItem[]>([]);
+  const [buscandoUsuarios, setBuscandoUsuarios] = useState(false);
+
+  // Estado del formulario de Abogado
+  const [editandoAbogadoId, setEditandoAbogadoId] = useState<string | null>(null);
+  const [usuarioSeleccionadoId, setUsuarioSeleccionadoId] = useState<string | null>(null);
+  const [nombres, setNombres] = useState("");
+  const [apellidos, setApellidos] = useState("");
+  const [correo, setCorreo] = useState("");
+  const [cedula, setCedula] = useState("");
+  const [matricula, setMatricula] = useState("");
+  const [telefono, setTelefono] = useState("");
+  const [universidad, setUniversidad] = useState("");
+  const [anosExperiencia, setAnosExperiencia] = useState<number>(3);
+  const [resumenProfesional, setResumenProfesional] = useState("");
+  const [estadoAbogado, setEstadoAbogado] = useState<"verificado" | "suspendido">("verificado");
+  const [materiasSeleccionadas, setMateriasSeleccionadas] = useState<string[]>([]);
+  const [provinciasSeleccionadas, setProvinciasSeleccionadas] = useState<string[]>([]);
+  const [guardando, setGuardando] = useState(false);
+
+  // Modal de Configuración de Disponibilidad (Citas Presenciales / Teleconsulta)
+  const [abogadoAgendaModal, setAbogadoAgendaModal] = useState<AbogadoRedItem | null>(null);
+  const [configAgenda, setConfigAgenda] = useState<ConfiguracionAgendaAbogado>(CONFIG_AGENDA_BASE);
+  const [franjasAgenda, setFranjasAgenda] = useState<Franja[]>(FRANJAS_BASE);
+  const [guardandoAgenda, setGuardandoAgenda] = useState(false);
+
+  const cargarTodo = async () => {
+    setCargando(true);
+    try {
+      const [redRes, catRes] = await Promise.all([
+        listarRedProfesionalAbogadosAction(),
+        obtenerCatalogosRedProfesionalAction(),
+      ]);
+      if (redRes.ok) setAbogados(redRes.data);
+      if (catRes.ok) {
+        setMateriasCat(catRes.data.materias);
+        setProvinciasCat(catRes.data.provincias);
+      }
+    } finally {
+      setCargando(false);
+    }
+  };
+
+  useEffect(() => {
+    cargarTodo();
+  }, []);
+
+  useEffect(() => {
+    if (!modalAbierto || editandoAbogadoId || modoOrigenUsuario !== "existente") return;
+    let cancelado = false;
+    setBuscandoUsuarios(true);
+    const timer = setTimeout(async () => {
+      const res = await buscarUsuariosPlataformaParaAbogadoAction(busquedaUsuario);
+      if (!cancelado) {
+        if (res.ok) setUsuariosEncontrados(res.data);
+        setBuscandoUsuarios(false);
+      }
+    }, 220);
+    return () => {
+      cancelado = true;
+      clearTimeout(timer);
+    };
+  }, [busquedaUsuario, modalAbierto, editandoAbogadoId, modoOrigenUsuario]);
+
+  const abrirModalNuevo = () => {
+    setEditandoAbogadoId(null);
+    setModoOrigenUsuario("existente");
+    setUsuarioSeleccionadoId(null);
+    setBusquedaUsuario("");
+    setNombres("");
+    setApellidos("");
+    setCorreo("");
+    setCedula("");
+    setMatricula("");
+    setTelefono("");
+    setUniversidad("");
+    setAnosExperiencia(3);
+    setResumenProfesional("");
+    setEstadoAbogado("verificado");
+    setMateriasSeleccionadas(materiasCat.slice(0, 2).map((m) => m.mat_id));
+    const pichincha = provinciasCat.find((p) => p.cat_nombre.toLowerCase().includes("pichincha"));
+    setProvinciasSeleccionadas(
+      pichincha ? [pichincha.cat_id] : provinciasCat.slice(0, 1).map((p) => p.cat_id)
+    );
+    setMensaje(null);
+    setModalAbierto(true);
+  };
+
+  const abrirModalEditar = (abg: AbogadoRedItem) => {
+    setEditandoAbogadoId(abg.abg_id);
+    setModoOrigenUsuario("existente");
+    setUsuarioSeleccionadoId(abg.usu_id);
+    setNombres(abg.nombres);
+    setApellidos(abg.apellidos);
+    setCorreo(abg.correo);
+    setCedula(abg.cedula);
+    setMatricula(abg.matriculaProfesional);
+    setTelefono(abg.telefono);
+    setUniversidad(abg.universidad);
+    setAnosExperiencia(abg.anosExperiencia || 1);
+    setResumenProfesional(abg.resumenProfesional);
+    setEstadoAbogado(abg.estado);
+    setMateriasSeleccionadas(abg.materias.map((m) => m.mat_id));
+    setProvinciasSeleccionadas(abg.provincias.map((p) => p.cat_id));
+    setMensaje(null);
+    setModalAbierto(true);
+  };
+
+  const seleccionarUsuarioPlataforma = (u: UsuarioPlataformaItem) => {
+    setUsuarioSeleccionadoId(u.usu_id);
+    setNombres(u.nombres);
+    setApellidos(u.apellidos);
+    setCorreo(u.correo);
+    if (u.cedula) setCedula(u.cedula);
+    if (u.telefono) setTelefono(u.telefono);
+  };
+
+  const toggleMateria = (id: string) => {
+    setMateriasSeleccionadas((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+  };
+
+  const toggleProvincia = (id: string) => {
+    setProvinciasSeleccionadas((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+  };
+
+  const handleGuardarAbogado = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setGuardando(true);
+    setMensaje(null);
+    try {
+      const res = await registrarOConvertirAbogadoAction({
+        abogadoId: editandoAbogadoId,
+        usuarioId: modoOrigenUsuario === "existente" ? usuarioSeleccionadoId : null,
+        nombres,
+        apellidos,
+        correo,
+        cedula,
+        matriculaProfesional: matricula,
+        telefono,
+        universidad,
+        anosExperiencia,
+        resumenProfesional,
+        estado: estadoAbogado,
+        materiasIds: materiasSeleccionadas,
+        provinciasIds: provinciasSeleccionadas,
+      });
+
+      if (!res.ok) {
+        setMensaje({ tipo: "error", texto: res.error });
+        return;
+      }
+
+      setMensaje({
+        tipo: "ok",
+        texto: editandoAbogadoId
+          ? "Ficha profesional, especialidades y cobertura actualizadas correctamente."
+          : "Abogado incorporado al equipo y habilitado en la plataforma.",
+      });
+      setModalAbierto(false);
+      await cargarTodo();
+    } finally {
+      setGuardando(false);
+    }
+  };
+
+  const abrirModalDisponibilidad = (abg: AbogadoRedItem) => {
+    setAbogadoAgendaModal(abg);
+    setConfigAgenda(abg.configuracionAgenda || CONFIG_AGENDA_BASE);
+    setFranjasAgenda(abg.franjas.length > 0 ? abg.franjas : FRANJAS_BASE);
+    setMensaje(null);
+  };
+
+  const handleGuardarDisponibilidad = async () => {
+    if (!abogadoAgendaModal) return;
+    setGuardandoAgenda(true);
+    setMensaje(null);
+    try {
+      const res = await guardarDisponibilidadCitasAbogadoAction({
+        usuarioId: abogadoAgendaModal.usu_id,
+        configuracion: configAgenda,
+        franjas: franjasAgenda,
+      });
+      if (!res.ok) {
+        setMensaje({ tipo: "error", texto: res.error });
+        return;
+      }
+      setMensaje({
+        tipo: "ok",
+        texto: `Disponibilidad de citas presenciales y teleconsulta actualizada para ${abogadoAgendaModal.nombreCompleto}.`,
+      });
+      setAbogadoAgendaModal(null);
+      await cargarTodo();
+    } finally {
+      setGuardandoAgenda(false);
+    }
+  };
+
+  const handleCambiarEstado = async (abg: AbogadoRedItem) => {
+    const nuevo = abg.estado === "verificado" ? "suspendido" : "verificado";
+    const res = await cambiarEstadoAbogadoRedAction(abg.abg_id, nuevo);
+    if (!res.ok) {
+      setMensaje({ tipo: "error", texto: res.error });
+      return;
+    }
+    setMensaje({
+      tipo: "ok",
+      texto:
+        nuevo === "verificado"
+          ? `${abg.nombreCompleto} activado como Socio Abogado.`
+          : `${abg.nombreCompleto} suspendido temporalmente.`,
+    });
+    await cargarTodo();
+  };
+
+  const handleEliminarAbogado = async (abg: AbogadoRedItem) => {
+    if (
+      typeof window !== "undefined" &&
+      !window.confirm(
+        `¿Retirar a ${abg.nombreCompleto} de la red de socios abogados? El usuario conservará su cuenta base de cliente.`
+      )
+    ) {
+      return;
+    }
+    const res = await eliminarAbogadoRedAction(abg.abg_id);
+    if (!res.ok) {
+      setMensaje({ tipo: "error", texto: res.error });
+      return;
+    }
+    setMensaje({ tipo: "ok", texto: "Abogado retirado de la red profesional." });
+    await cargarTodo();
+  };
+
+  const handlePurgarSolicitudes = async () => {
+    if (
+      typeof window !== "undefined" &&
+      !window.confirm(
+        "¿Eliminar por completo todas las solicitudes de postulación de socio abogado existentes?"
+      )
+    ) {
+      return;
+    }
+    const res = await purgarTodasSolicitudesSocioAction();
+    if (!res.ok) {
+      setMensaje({ tipo: "error", texto: res.error });
+      return;
+    }
+    setMensaje({
+      tipo: "ok",
+      texto: `Solicitudes de postulación eliminadas por completo (${res.data.eliminadas} registros purgados).`,
+    });
+    await cargarTodo();
+  };
+
+  const kpis = useMemo(() => {
+    const total = abogados.length;
+    const activos = abogados.filter((a) => a.estado === "verificado").length;
+    const manuales = abogados.filter((a) => a.origenRegistro === "manual_operador").length;
+    const conAgenda = abogados.filter((a) => a.agendaConfigurada && a.citasPorSemana > 0).length;
+    return { total, activos, manuales, conAgenda };
+  }, [abogados]);
+
+  const huecosCalculadosModal = useMemo(() => {
+    try {
+      return huecosPorSemana({ configuracion: configAgenda, franjas: franjasAgenda });
+    } catch {
+      return 0;
+    }
+  }, [configAgenda, franjasAgenda]);
+
+  const columnas: ColumnaDataGrid<AbogadoRedItem>[] = [
+    {
+      id: "profesional",
+      encabezado: "Abogado / Contacto",
+      valor: (a) => `${a.nombreCompleto} ${a.correo}`,
+      render: (a) => (
+        <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+          <strong style={{ color: "#111827", fontSize: "0.88rem" }}>{a.nombreCompleto}</strong>
+          <span style={{ fontSize: "0.76rem", color: "#4B5563" }}>{a.correo}</span>
+          {a.telefono && (
+            <span style={{ fontSize: "0.73rem", color: "#05876E", fontWeight: 600 }}>
+              Tel: {a.telefono}
+            </span>
+          )}
+        </div>
+      ),
+    },
+    {
+      id: "credenciales",
+      encabezado: "Cédula / Matrícula",
+      valor: (a) => `${a.cedula} ${a.matriculaProfesional}`,
+      render: (a) => (
+        <div style={{ display: "flex", flexDirection: "column", gap: "2px", fontSize: "0.78rem" }}>
+          <span>
+            <b>CI:</b> {a.cedula || "—"}
+          </span>
+          <span style={{ color: "#5000BA", fontWeight: 700 }}>
+            <b>Foro:</b> {a.matriculaProfesional || "—"}
+          </span>
+        </div>
+      ),
+    },
+    {
+      id: "origen",
+      encabezado: "Origen",
+      valor: (a) => (a.origenRegistro === "manual_operador" ? "Equipo Manual" : "Autogestión"),
+      render: (a) => (
+        <span
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "4px",
+            padding: "3px 8px",
+            borderRadius: "999px",
+            fontSize: "0.72rem",
+            fontWeight: 800,
+            background: a.origenRegistro === "manual_operador" ? "#EEF2FF" : "#F3F4F6",
+            color: a.origenRegistro === "manual_operador" ? "#4338CA" : "#374151",
+          }}
+        >
+          {a.origenRegistro === "manual_operador" ? "Equipo Manual" : "Autogestión"}
+        </span>
+      ),
+    },
+    {
+      id: "especialidades",
+      encabezado: "Especialidades",
+      valor: (a) => a.materias.map((m) => m.mat_nombre).join(", "),
+      render: (a) => (
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "4px", maxWidth: "240px" }}>
+          {a.materias.length === 0 ? (
+            <span style={{ fontSize: "0.75rem", color: "#9CA3AF" }}>Sin asignar</span>
+          ) : (
+            a.materias.slice(0, 3).map((m) => (
+              <span
+                key={m.mat_id}
+                style={{
+                  fontSize: "0.7rem",
+                  background: "#F5F3FF",
+                  color: "#5000BA",
+                  border: "1px solid #DDD6FE",
+                  borderRadius: "6px",
+                  padding: "2px 6px",
+                  fontWeight: 700,
+                }}
+              >
+                {m.mat_nombre}
+              </span>
+            ))
+          )}
+          {a.materias.length > 3 && (
+            <span style={{ fontSize: "0.7rem", color: "#6B7280", fontWeight: 700 }}>
+              +{a.materias.length - 3}
+            </span>
+          )}
+        </div>
+      ),
+    },
+    {
+      id: "cobertura",
+      encabezado: "Cobertura",
+      valor: (a) => a.provincias.map((p) => p.cat_nombre).join(", "),
+      render: (a) => (
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "4px", maxWidth: "200px" }}>
+          {a.provincias.length === 0 ? (
+            <span style={{ fontSize: "0.75rem", color: "#9CA3AF" }}>Sin zona</span>
+          ) : a.provincias.length >= 20 ? (
+            <span
+              style={{
+                fontSize: "0.72rem",
+                background: "#ECFDF5",
+                color: "#065F46",
+                borderRadius: "6px",
+                padding: "2px 7px",
+                fontWeight: 800,
+              }}
+            >
+              Nacional ({a.provincias.length} prov.)
+            </span>
+          ) : (
+            <>
+              {a.provincias.slice(0, 2).map((p) => (
+                <span
+                  key={p.cat_id}
+                  style={{
+                    fontSize: "0.7rem",
+                    background: "#F0F9FF",
+                    color: "#0369A1",
+                    border: "1px solid #BAE6FD",
+                    borderRadius: "6px",
+                    padding: "2px 6px",
+                    fontWeight: 700,
+                  }}
+                >
+                  {p.cat_nombre}
+                </span>
+              ))}
+              {a.provincias.length > 2 && (
+                <span style={{ fontSize: "0.7rem", color: "#0369A1", fontWeight: 700 }}>
+                  +{a.provincias.length - 2}
+                </span>
+              )}
+            </>
+          )}
+        </div>
+      ),
+    },
+    {
+      id: "disponibilidad",
+      encabezado: "Atención Citas",
+      valor: (a) => `${a.citasPorSemana} citas/sem`,
+      render: (a) => {
+        const mods = a.configuracionAgenda.modalidades || [];
+        return (
+          <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
+            <div style={{ display: "flex", gap: "4px", flexWrap: "wrap" }}>
+              {mods.includes("virtual") && (
+                <span
+                  style={{
+                    fontSize: "0.68rem",
+                    background: "#EFF6FF",
+                    color: "#1D4ED8",
+                    padding: "1px 6px",
+                    borderRadius: "4px",
+                    fontWeight: 700,
+                  }}
+                >
+                  Teleconsulta
+                </span>
+              )}
+              {mods.includes("presencial") && (
+                <span
+                  style={{
+                    fontSize: "0.68rem",
+                    background: "#FEF3C7",
+                    color: "#92400E",
+                    padding: "1px 6px",
+                    borderRadius: "4px",
+                    fontWeight: 700,
+                  }}
+                >
+                  Presencial
+                </span>
+              )}
+            </div>
+            <span style={{ fontSize: "0.74rem", color: a.citasPorSemana > 0 ? "#05876E" : "#DC2626", fontWeight: 700 }}>
+              {a.citasPorSemana > 0 ? `${a.citasPorSemana} cupos/sem` : "Sin franjas"}
+            </span>
+          </div>
+        );
+      },
+    },
+    {
+      id: "estado",
+      encabezado: "Estado",
+      valor: (a) => (a.estado === "verificado" ? "Activo" : "Suspendido"),
+      render: (a) => (
+        <span
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "4px",
+            padding: "4px 9px",
+            borderRadius: "999px",
+            fontSize: "0.73rem",
+            fontWeight: 800,
+            background: a.estado === "verificado" ? "#ECFDF5" : "#FEF2F2",
+            color: a.estado === "verificado" ? "#065F46" : "#991B1B",
+            border: a.estado === "verificado" ? "1px solid #10B981" : "1px solid #F87171",
+          }}
+        >
+          {a.estado === "verificado" ? <CheckCircle2 size={12} /> : <XCircle size={12} />}
+          {a.estado === "verificado" ? "Activo" : "Suspendido"}
+        </span>
+      ),
+    },
+    {
+      id: "acciones",
+      encabezado: "Acciones",
+      valor: () => "",
+      render: (a) => (
+        <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
+          <button
+            type="button"
+            onClick={() => abrirModalEditar(a)}
+            className="btn-responsive-accion"
+            title="Editar datos, especialidades y zonas de cobertura del abogado"
+            aria-label="Editar abogado"
+            style={{
+              background: "#F5F3FF",
+              color: "#5000BA",
+              border: "1px solid #DDD6FE",
+              borderRadius: "8px",
+              padding: "5px 9px",
+              fontSize: "0.75rem",
+              fontWeight: 700,
+              cursor: "pointer",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "4px",
+            }}
+          >
+            <Pencil size={13} />
+            <span className="btn-texto-responsive">Editar</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => abrirModalDisponibilidad(a)}
+            className="btn-responsive-accion"
+            title="Configurar disponibilidad de citas presenciales y teleconsulta"
+            aria-label="Configurar horarios de citas"
+            style={{
+              background: "#ECFDF5",
+              color: "#05876E",
+              border: "1px solid #A7F3D0",
+              borderRadius: "8px",
+              padding: "5px 9px",
+              fontSize: "0.75rem",
+              fontWeight: 700,
+              cursor: "pointer",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "4px",
+            }}
+          >
+            <Calendar size={13} />
+            <span className="btn-texto-responsive">Horarios</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => handleCambiarEstado(a)}
+            className="btn-responsive-accion"
+            title={a.estado === "verificado" ? "Suspender socio abogado" : "Activar socio abogado"}
+            aria-label={a.estado === "verificado" ? "Suspender abogado" : "Activar abogado"}
+            style={{
+              background: a.estado === "verificado" ? "#FFFBEB" : "#ECFDF5",
+              color: a.estado === "verificado" ? "#B45309" : "#065F46",
+              border: a.estado === "verificado" ? "1px solid #FDE68A" : "1px solid #A7F3D0",
+              borderRadius: "8px",
+              padding: "5px 9px",
+              fontSize: "0.75rem",
+              fontWeight: 700,
+              cursor: "pointer",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "4px",
+            }}
+          >
+            <ShieldCheck size={13} />
+            <span className="btn-texto-responsive">
+              {a.estado === "verificado" ? "Suspender" : "Activar"}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => handleEliminarAbogado(a)}
+            className="btn-responsive-accion"
+            title="Retirar abogado de la red profesional"
+            aria-label="Retirar abogado"
+            style={{
+              background: "#FEF2F2",
+              color: "#DC2626",
+              border: "1px solid #FECACA",
+              borderRadius: "8px",
+              padding: "5px 8px",
+              fontSize: "0.75rem",
+              fontWeight: 700,
+              cursor: "pointer",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "4px",
+            }}
+          >
+            <Trash2 size={13} />
+          </button>
+        </div>
+      ),
+    },
+  ];
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: "20px", width: "100%" }}>
+      {/* Cabecera y Acciones Principales */}
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          flexWrap: "wrap",
+          gap: "12px",
+          background: "linear-gradient(135deg, #05876E 0%, #046A56 100%)",
+          color: "#ffffff",
+          padding: "20px 24px",
+          borderRadius: "16px",
+        }}
+      >
+        <div>
+          <span
+            style={{
+              fontSize: "0.72rem",
+              fontWeight: 800,
+              textTransform: "uppercase",
+              letterSpacing: "0.06em",
+              background: "rgba(255,255,255,0.18)",
+              padding: "3px 9px",
+              borderRadius: "999px",
+            }}
+          >
+            Red Profesional tranqi
+          </span>
+          <h3 style={{ margin: "6px 0 4px 0", fontSize: "1.25rem", fontWeight: 900 }}>
+            Gestión de Abogados, Especialidades y Disponibilidad
+          </h3>
+          <p style={{ margin: 0, fontSize: "0.84rem", opacity: 0.92 }}>
+            Convierte usuarios registrados en socios abogados o incorpóralos manualmente con sus especialidades, provincias y citas presenciales/teleconsulta.
+          </p>
+        </div>
+
+        <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+          <button
+            type="button"
+            onClick={abrirModalNuevo}
+            className="btn-responsive-accion"
+            title="Buscar un usuario registrado o incorporar manualmente un nuevo socio abogado"
+            aria-label="Incorporar socio abogado"
+            style={{
+              background: "#FEE300",
+              color: "#111827",
+              border: "none",
+              borderRadius: "10px",
+              padding: "10px 16px",
+              fontSize: "0.84rem",
+              fontWeight: 800,
+              cursor: "pointer",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+              boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+            }}
+          >
+            <UserPlus size={16} />
+            <span className="btn-texto-responsive">Incorporar Abogado</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={handlePurgarSolicitudes}
+            className="btn-responsive-accion"
+            title="Eliminar por completo todas las solicitudes de postulación existentes"
+            aria-label="Purgar solicitudes de socios"
+            style={{
+              background: "rgba(255,255,255,0.16)",
+              color: "#ffffff",
+              border: "1px solid rgba(255,255,255,0.35)",
+              borderRadius: "10px",
+              padding: "10px 14px",
+              fontSize: "0.8rem",
+              fontWeight: 700,
+              cursor: "pointer",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+            }}
+          >
+            <Trash2 size={15} />
+            <span className="btn-texto-responsive">Purgar Solicitudes</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={cargarTodo}
+            className="btn-responsive-accion"
+            title="Actualizar lista de la red profesional"
+            aria-label="Actualizar lista"
+            style={{
+              background: "rgba(255,255,255,0.16)",
+              color: "#ffffff",
+              border: "1px solid rgba(255,255,255,0.35)",
+              borderRadius: "10px",
+              padding: "10px",
+              cursor: "pointer",
+              display: "inline-flex",
+              alignItems: "center",
+            }}
+          >
+            <RefreshCw size={15} />
+          </button>
+        </div>
+      </div>
+
+      {/* Tarjetas KPI */}
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))",
+          gap: "12px",
+        }}
+      >
+        <div style={{ background: "#ffffff", border: "1px solid #E5E7EB", borderRadius: "12px", padding: "14px 16px" }}>
+          <span style={{ fontSize: "0.75rem", color: "#6B7280", fontWeight: 700 }}>Total Red Profesional</span>
+          <div style={{ fontSize: "1.5rem", fontWeight: 900, color: "#111827", marginTop: "4px" }}>{kpis.total}</div>
+          <span style={{ fontSize: "0.72rem", color: "#05876E" }}>Abogados registrados</span>
+        </div>
+        <div style={{ background: "#ffffff", border: "1px solid #E5E7EB", borderRadius: "12px", padding: "14px 16px" }}>
+          <span style={{ fontSize: "0.75rem", color: "#6B7280", fontWeight: 700 }}>Socios Activos</span>
+          <div style={{ fontSize: "1.5rem", fontWeight: 900, color: "#05876E", marginTop: "4px" }}>{kpis.activos}</div>
+          <span style={{ fontSize: "0.72rem", color: "#6B7280" }}>Con vista de Abogado habilitada</span>
+        </div>
+        <div style={{ background: "#ffffff", border: "1px solid #E5E7EB", borderRadius: "12px", padding: "14px 16px" }}>
+          <span style={{ fontSize: "0.75rem", color: "#6B7280", fontWeight: 700 }}>Alta Manual / Equipo</span>
+          <div style={{ fontSize: "1.5rem", fontWeight: 900, color: "#5000BA", marginTop: "4px" }}>{kpis.manuales}</div>
+          <span style={{ fontSize: "0.72rem", color: "#6B7280" }}>Incorporados por operador</span>
+        </div>
+        <div style={{ background: "#ffffff", border: "1px solid #E5E7EB", borderRadius: "12px", padding: "14px 16px" }}>
+          <span style={{ fontSize: "0.75rem", color: "#6B7280", fontWeight: 700 }}>Con Agenda Activa</span>
+          <div style={{ fontSize: "1.5rem", fontWeight: 900, color: "#0284C7", marginTop: "4px" }}>{kpis.conAgenda}</div>
+          <span style={{ fontSize: "0.72rem", color: "#6B7280" }}>Presencial y Teleconsulta</span>
+        </div>
+      </div>
+
+      {mensaje && (
+        <div
+          style={{
+            padding: "12px 16px",
+            borderRadius: "10px",
+            fontSize: "0.85rem",
+            fontWeight: 700,
+            background: mensaje.tipo === "ok" ? "#ECFDF5" : "#FEF2F2",
+            color: mensaje.tipo === "ok" ? "#065F46" : "#991B1B",
+            border: mensaje.tipo === "ok" ? "1px solid #10B981" : "1px solid #F87171",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <span>{mensaje.texto}</span>
+          <button
+            type="button"
+            onClick={() => setMensaje(null)}
+            style={{ background: "none", border: "none", cursor: "pointer", color: "inherit" }}
+          >
+            <X size={16} />
+          </button>
+        </div>
+      )}
+
+      {/* Tabla principal de Abogados */}
+      <DataGrid<AbogadoRedItem>
+        filas={abogados}
+        columnas={columnas}
+        idFila={(a) => a.abg_id}
+        nombreExportacion="red_profesional_abogados_tranqi"
+      />
+
+      {/* MODAL 1: Incorporar / Convertir Usuario en Abogado o Editar Ficha */}
+      {modalAbierto && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(17, 24, 39, 0.6)",
+            zIndex: 9999,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "16px",
+          }}
+        >
+          <div
+            style={{
+              background: "#ffffff",
+              borderRadius: "18px",
+              width: "100%",
+              maxWidth: "780px",
+              maxHeight: "90vh",
+              overflowY: "auto",
+              boxShadow: "0 20px 50px rgba(0,0,0,0.25)",
+              padding: "24px",
+            }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+              <div>
+                <h3 style={{ margin: 0, fontSize: "1.15rem", fontWeight: 900, color: "#111827" }}>
+                  {editandoAbogadoId
+                    ? "Editar Ficha Profesional, Especialidades y Cobertura"
+                    : "Incorporar Socio Abogado al Equipo"}
+                </h3>
+                <p style={{ margin: "4px 0 0 0", fontSize: "0.82rem", color: "#6B7280" }}>
+                  {editandoAbogadoId
+                    ? "Actualiza los datos mínimos, materias legales y zonas de cobertura."
+                    : "Busca un usuario ya registrado en la plataforma para convertirlo en abogado o registra uno nuevo."}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setModalAbierto(false)}
+                style={{ background: "#F3F4F6", border: "none", borderRadius: "50%", width: "34px", height: "34px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {!editandoAbogadoId && (
+              <div style={{ marginBottom: "18px" }}>
+                <div style={{ display: "flex", gap: "8px", marginBottom: "12px" }}>
+                  <button
+                    type="button"
+                    onClick={() => setModoOrigenUsuario("existente")}
+                    style={{
+                      flex: 1,
+                      padding: "10px",
+                      borderRadius: "10px",
+                      fontWeight: 800,
+                      fontSize: "0.82rem",
+                      cursor: "pointer",
+                      border: modoOrigenUsuario === "existente" ? "2px solid #05876E" : "1px solid #D1D5DB",
+                      background: modoOrigenUsuario === "existente" ? "#ECFDF5" : "#ffffff",
+                      color: modoOrigenUsuario === "existente" ? "#065F46" : "#374151",
+                    }}
+                  >
+                    1. Buscar Usuario Registrado en Plataforma
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setModoOrigenUsuario("nuevo");
+                      setUsuarioSeleccionadoId(null);
+                    }}
+                    style={{
+                      flex: 1,
+                      padding: "10px",
+                      borderRadius: "10px",
+                      fontWeight: 800,
+                      fontSize: "0.82rem",
+                      cursor: "pointer",
+                      border: modoOrigenUsuario === "nuevo" ? "2px solid #5000BA" : "1px solid #D1D5DB",
+                      background: modoOrigenUsuario === "nuevo" ? "#F5F3FF" : "#ffffff",
+                      color: modoOrigenUsuario === "nuevo" ? "#5000BA" : "#374151",
+                    }}
+                  >
+                    2. Crear Usuario Nuevo Directamente
+                  </button>
+                </div>
+
+                {modoOrigenUsuario === "existente" && (
+                  <div
+                    style={{
+                      background: "#F9FAFB",
+                      border: "1px solid #E5E7EB",
+                      borderRadius: "12px",
+                      padding: "12px",
+                    }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
+                      <Search size={16} color="#6B7280" />
+                      <input
+                        type="text"
+                        value={busquedaUsuario}
+                        onChange={(e) => setBusquedaUsuario(e.target.value)}
+                        placeholder="Buscar usuario por nombre, correo, cédula o teléfono..."
+                        style={{
+                          width: "100%",
+                          padding: "8px 10px",
+                          borderRadius: "8px",
+                          border: "1px solid #D1D5DB",
+                          fontSize: "0.84rem",
+                        }}
+                      />
+                    </div>
+
+                    <div
+                      style={{
+                        maxHeight: "150px",
+                        overflowY: "auto",
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "4px",
+                      }}
+                    >
+                      {buscandoUsuarios ? (
+                        <span style={{ fontSize: "0.78rem", color: "#6B7280", padding: "6px" }}>
+                          Buscando usuarios en la plataforma...
+                        </span>
+                      ) : usuariosEncontrados.length === 0 ? (
+                        <span style={{ fontSize: "0.78rem", color: "#6B7280", padding: "6px" }}>
+                          No se encontraron usuarios con ese criterio.
+                        </span>
+                      ) : (
+                        usuariosEncontrados.map((u) => {
+                          const seleccionado = usuarioSeleccionadoId === u.usu_id;
+                          return (
+                            <button
+                              key={u.usu_id}
+                              type="button"
+                              onClick={() => seleccionarUsuarioPlataforma(u)}
+                              style={{
+                                display: "flex",
+                                justifyContent: "space-between",
+                                alignItems: "center",
+                                textAlign: "left",
+                                padding: "8px 10px",
+                                borderRadius: "8px",
+                                border: seleccionado ? "2px solid #05876E" : "1px solid #E5E7EB",
+                                background: seleccionado ? "#ECFDF5" : "#ffffff",
+                                cursor: "pointer",
+                              }}
+                            >
+                              <div>
+                                <strong style={{ fontSize: "0.82rem", color: "#111827" }}>
+                                  {u.nombreCompleto}
+                                </strong>
+                                <span style={{ fontSize: "0.76rem", color: "#6B7280", marginLeft: "8px" }}>
+                                  {u.correo}
+                                </span>
+                              </div>
+                              <span
+                                style={{
+                                  fontSize: "0.7rem",
+                                  fontWeight: 800,
+                                  padding: "2px 7px",
+                                  borderRadius: "999px",
+                                  background: u.yaEsAbogado ? "#EDE9FE" : seleccionado ? "#05876E" : "#F3F4F6",
+                                  color: u.yaEsAbogado ? "#5B21B6" : seleccionado ? "#ffffff" : "#374151",
+                                }}
+                              >
+                                {u.yaEsAbogado
+                                  ? "Ya es Abogado (Editar)"
+                                  : seleccionado
+                                  ? "Seleccionado ✓"
+                                  : "Seleccionar"}
+                              </span>
+                            </button>
+                          );
+                        })
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            <form onSubmit={handleGuardarAbogado} style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+              {/* Datos mínimos de identidad y contacto */}
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))", gap: "12px" }}>
+                <label style={{ display: "flex", flexDirection: "column", gap: "4px", fontSize: "0.8rem", fontWeight: 700 }}>
+                  Nombres *
+                  <input
+                    type="text"
+                    required
+                    value={nombres}
+                    onChange={(e) => setNombres(e.target.value)}
+                    placeholder="Ej. Carlos Andrés"
+                    style={{ padding: "8px 10px", borderRadius: "8px", border: "1px solid #D1D5DB" }}
+                  />
+                </label>
+                <label style={{ display: "flex", flexDirection: "column", gap: "4px", fontSize: "0.8rem", fontWeight: 700 }}>
+                  Apellidos *
+                  <input
+                    type="text"
+                    required
+                    value={apellidos}
+                    onChange={(e) => setApellidos(e.target.value)}
+                    placeholder="Ej. Mendoza Paredes"
+                    style={{ padding: "8px 10px", borderRadius: "8px", border: "1px solid #D1D5DB" }}
+                  />
+                </label>
+                <label style={{ display: "flex", flexDirection: "column", gap: "4px", fontSize: "0.8rem", fontWeight: 700 }}>
+                  Correo Electrónico *
+                  <input
+                    type="email"
+                    required
+                    value={correo}
+                    onChange={(e) => setCorreo(e.target.value)}
+                    placeholder="abogado@dominio.com"
+                    style={{ padding: "8px 10px", borderRadius: "8px", border: "1px solid #D1D5DB" }}
+                  />
+                </label>
+                <label style={{ display: "flex", flexDirection: "column", gap: "4px", fontSize: "0.8rem", fontWeight: 700 }}>
+                  Cédula / RUC *
+                  <input
+                    type="text"
+                    required
+                    value={cedula}
+                    onChange={(e) => setCedula(e.target.value)}
+                    placeholder="1700000000"
+                    style={{ padding: "8px 10px", borderRadius: "8px", border: "1px solid #D1D5DB" }}
+                  />
+                </label>
+                <label style={{ display: "flex", flexDirection: "column", gap: "4px", fontSize: "0.8rem", fontWeight: 700 }}>
+                  N.° Matrícula Foro / Credencial *
+                  <input
+                    type="text"
+                    required
+                    value={matricula}
+                    onChange={(e) => setMatricula(e.target.value)}
+                    placeholder="Ej. 17-2019-452"
+                    style={{ padding: "8px 10px", borderRadius: "8px", border: "1px solid #D1D5DB" }}
+                  />
+                </label>
+                <label style={{ display: "flex", flexDirection: "column", gap: "4px", fontSize: "0.8rem", fontWeight: 700 }}>
+                  Teléfono / WhatsApp *
+                  <input
+                    type="text"
+                    required
+                    value={telefono}
+                    onChange={(e) => setTelefono(e.target.value)}
+                    placeholder="0990000000"
+                    style={{ padding: "8px 10px", borderRadius: "8px", border: "1px solid #D1D5DB" }}
+                  />
+                </label>
+              </div>
+
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "12px" }}>
+                <label style={{ display: "flex", flexDirection: "column", gap: "4px", fontSize: "0.8rem", fontWeight: 700 }}>
+                  Estado en la Red *
+                  <select
+                    value={estadoAbogado}
+                    onChange={(e) => setEstadoAbogado(e.target.value as "verificado" | "suspendido")}
+                    style={{ padding: "8px 10px", borderRadius: "8px", border: "1px solid #D1D5DB", fontWeight: 700 }}
+                  >
+                    <option value="verificado">Activo (Verificado — Ve portal de Abogado)</option>
+                    <option value="suspendido">Suspendido / Inactivo</option>
+                  </select>
+                </label>
+                <label style={{ display: "flex", flexDirection: "column", gap: "4px", fontSize: "0.8rem", fontWeight: 700 }}>
+                  Años de Experiencia
+                  <input
+                    type="number"
+                    min={0}
+                    max={60}
+                    value={anosExperiencia}
+                    onChange={(e) => setAnosExperiencia(Number(e.target.value))}
+                    style={{ padding: "8px 10px", borderRadius: "8px", border: "1px solid #D1D5DB" }}
+                  />
+                </label>
+                <label style={{ display: "flex", flexDirection: "column", gap: "4px", fontSize: "0.8rem", fontWeight: 700 }}>
+                  Universidad (Opcional)
+                  <input
+                    type="text"
+                    value={universidad}
+                    onChange={(e) => setUniversidad(e.target.value)}
+                    placeholder="Ej. PUCE / USFQ / UCE"
+                    style={{ padding: "8px 10px", borderRadius: "8px", border: "1px solid #D1D5DB" }}
+                  />
+                </label>
+              </div>
+
+              {/* Selección de Especialidades Legales */}
+              <div style={{ background: "#F9FAFB", border: "1px solid #E5E7EB", borderRadius: "12px", padding: "12px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+                  <span style={{ fontSize: "0.82rem", fontWeight: 800, color: "#111827", display: "inline-flex", alignItems: "center", gap: "6px" }}>
+                    <Scale size={15} color="#5000BA" />
+                    Especialidades Legales ({materiasSeleccionadas.length} seleccionadas) *
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setMateriasSeleccionadas(
+                        materiasSeleccionadas.length === materiasCat.length
+                          ? []
+                          : materiasCat.map((m) => m.mat_id)
+                      )
+                    }
+                    style={{ background: "none", border: "none", color: "#5000BA", fontSize: "0.75rem", fontWeight: 800, cursor: "pointer" }}
+                  >
+                    {materiasSeleccionadas.length === materiasCat.length ? "Limpiar" : "Seleccionar todas"}
+                  </button>
+                </div>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
+                  {materiasCat.map((m) => {
+                    const activa = materiasSeleccionadas.includes(m.mat_id);
+                    return (
+                      <button
+                        key={m.mat_id}
+                        type="button"
+                        onClick={() => toggleMateria(m.mat_id)}
+                        style={{
+                          padding: "5px 10px",
+                          borderRadius: "999px",
+                          fontSize: "0.76rem",
+                          fontWeight: 700,
+                          cursor: "pointer",
+                          border: activa ? "1.5px solid #5000BA" : "1px solid #D1D5DB",
+                          background: activa ? "#5000BA" : "#ffffff",
+                          color: activa ? "#ffffff" : "#374151",
+                        }}
+                      >
+                        {m.mat_nombre}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Selección de Zonas de Cobertura (Provincias) */}
+              <div style={{ background: "#F9FAFB", border: "1px solid #E5E7EB", borderRadius: "12px", padding: "12px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+                  <span style={{ fontSize: "0.82rem", fontWeight: 800, color: "#111827", display: "inline-flex", alignItems: "center", gap: "6px" }}>
+                    <MapPin size={15} color="#05876E" />
+                    Zonas de Cobertura — Provincias ({provinciasSeleccionadas.length} seleccionadas) *
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setProvinciasSeleccionadas(
+                        provinciasSeleccionadas.length === provinciasCat.length
+                          ? []
+                          : provinciasCat.map((p) => p.cat_id)
+                      )
+                    }
+                    style={{ background: "none", border: "none", color: "#05876E", fontSize: "0.75rem", fontWeight: 800, cursor: "pointer" }}
+                  >
+                    {provinciasSeleccionadas.length === provinciasCat.length
+                      ? "Limpiar"
+                      : "Cobertura Nacional (Todas)"}
+                  </button>
+                </div>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", maxHeight: "125px", overflowY: "auto" }}>
+                  {provinciasCat.map((p) => {
+                    const activa = provinciasSeleccionadas.includes(p.cat_id);
+                    return (
+                      <button
+                        key={p.cat_id}
+                        type="button"
+                        onClick={() => toggleProvincia(p.cat_id)}
+                        style={{
+                          padding: "4px 9px",
+                          borderRadius: "999px",
+                          fontSize: "0.74rem",
+                          fontWeight: 700,
+                          cursor: "pointer",
+                          border: activa ? "1.5px solid #05876E" : "1px solid #D1D5DB",
+                          background: activa ? "#05876E" : "#ffffff",
+                          color: activa ? "#ffffff" : "#374151",
+                        }}
+                      >
+                        {p.cat_nombre}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "6px" }}>
+                <button
+                  type="button"
+                  onClick={() => setModalAbierto(false)}
+                  style={{
+                    padding: "9px 16px",
+                    borderRadius: "10px",
+                    border: "1px solid #D1D5DB",
+                    background: "#ffffff",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                  }}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={guardando}
+                  style={{
+                    padding: "9px 18px",
+                    borderRadius: "10px",
+                    border: "none",
+                    background: "#05876E",
+                    color: "#ffffff",
+                    fontWeight: 800,
+                    cursor: "pointer",
+                  }}
+                >
+                  {guardando ? "Guardando..." : editandoAbogadoId ? "Guardar Cambios" : "Convertir y Activar"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 2: Configuración de Disponibilidad de Citas Presenciales / Teleconsulta */}
+      {abogadoAgendaModal && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(17, 24, 39, 0.6)",
+            zIndex: 9999,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "16px",
+          }}
+        >
+          <div
+            style={{
+              background: "#ffffff",
+              borderRadius: "18px",
+              width: "100%",
+              maxWidth: "760px",
+              maxHeight: "90vh",
+              overflowY: "auto",
+              boxShadow: "0 20px 50px rgba(0,0,0,0.25)",
+              padding: "24px",
+            }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px" }}>
+              <div>
+                <h3 style={{ margin: 0, fontSize: "1.12rem", fontWeight: 900, color: "#111827" }}>
+                  Disponibilidad de Citas — {abogadoAgendaModal.nombreCompleto}
+                </h3>
+                <p style={{ margin: "3px 0 0 0", fontSize: "0.8rem", color: "#6B7280" }}>
+                  Configura modalidades (Presencial y Teleconsulta), duración y franjas horarias semanales.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setAbogadoAgendaModal(null)}
+                style={{ background: "#F3F4F6", border: "none", borderRadius: "50%", width: "34px", height: "34px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+              {/* Modalidades Habilitadas */}
+              <div style={{ background: "#F9FAFB", border: "1px solid #E5E7EB", borderRadius: "12px", padding: "14px" }}>
+                <span style={{ fontSize: "0.82rem", fontWeight: 800, color: "#111827", display: "block", marginBottom: "8px" }}>
+                  Modalidades de Atención Habilitadas
+                </span>
+                <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+                  <label
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "8px",
+                      padding: "8px 14px",
+                      borderRadius: "10px",
+                      border: configAgenda.modalidades.includes("virtual") ? "2px solid #0284C7" : "1px solid #D1D5DB",
+                      background: configAgenda.modalidades.includes("virtual") ? "#F0F9FF" : "#ffffff",
+                      fontWeight: 700,
+                      fontSize: "0.82rem",
+                      cursor: "pointer",
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={configAgenda.modalidades.includes("virtual")}
+                      onChange={(e) => {
+                        const nuevas = e.target.checked
+                          ? Array.from(new Set([...configAgenda.modalidades, "virtual" as const]))
+                          : configAgenda.modalidades.filter((m) => m !== "virtual");
+                        setConfigAgenda({ ...configAgenda, modalidades: nuevas });
+                      }}
+                    />
+                    <Video size={16} color="#0284C7" />
+                    Teleconsulta (Videollamada)
+                  </label>
+
+                  <label
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "8px",
+                      padding: "8px 14px",
+                      borderRadius: "10px",
+                      border: configAgenda.modalidades.includes("presencial") ? "2px solid #05876E" : "1px solid #D1D5DB",
+                      background: configAgenda.modalidades.includes("presencial") ? "#ECFDF5" : "#ffffff",
+                      fontWeight: 700,
+                      fontSize: "0.82rem",
+                      cursor: "pointer",
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={configAgenda.modalidades.includes("presencial")}
+                      onChange={(e) => {
+                        const nuevas = e.target.checked
+                          ? Array.from(new Set([...configAgenda.modalidades, "presencial" as const]))
+                          : configAgenda.modalidades.filter((m) => m !== "presencial");
+                        setConfigAgenda({ ...configAgenda, modalidades: nuevas });
+                      }}
+                    />
+                    <Building2 size={16} color="#05876E" />
+                    Atención Presencial (Consultorio / Despacho)
+                  </label>
+                </div>
+
+                {configAgenda.modalidades.includes("presencial") && (
+                  <label style={{ display: "flex", flexDirection: "column", gap: "4px", fontSize: "0.8rem", fontWeight: 700, marginTop: "12px" }}>
+                    Dirección del Consultorio / Despacho Presencial
+                    <input
+                      type="text"
+                      value={configAgenda.direccion ?? ""}
+                      onChange={(e) => setConfigAgenda({ ...configAgenda, direccion: e.target.value })}
+                      placeholder="Ej. Av. República del Salvador y Naciones Unidas, Edif. Citiplaza, Of. 402"
+                      style={{ padding: "8px 10px", borderRadius: "8px", border: "1px solid #D1D5DB" }}
+                    />
+                  </label>
+                )}
+              </div>
+
+              {/* Parámetros de cita */}
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: "10px" }}>
+                <label style={{ display: "flex", flexDirection: "column", gap: "4px", fontSize: "0.78rem", fontWeight: 700 }}>
+                  Duración Cita
+                  <select
+                    value={configAgenda.duracion_cita_min}
+                    onChange={(e) => setConfigAgenda({ ...configAgenda, duracion_cita_min: Number(e.target.value) })}
+                    style={{ padding: "8px", borderRadius: "8px", border: "1px solid #D1D5DB" }}
+                  >
+                    {[15, 30, 45, 60, 90].map((n) => (
+                      <option key={n} value={n}>{n} minutos</option>
+                    ))}
+                  </select>
+                </label>
+
+                <label style={{ display: "flex", flexDirection: "column", gap: "4px", fontSize: "0.78rem", fontWeight: 700 }}>
+                  Descanso entre Citas
+                  <select
+                    value={configAgenda.holgura_min}
+                    onChange={(e) => setConfigAgenda({ ...configAgenda, holgura_min: Number(e.target.value) })}
+                    style={{ padding: "8px", borderRadius: "8px", border: "1px solid #D1D5DB" }}
+                  >
+                    {[0, 5, 10, 15, 30].map((n) => (
+                      <option key={n} value={n}>{n} minutos</option>
+                    ))}
+                  </select>
+                </label>
+
+                <label style={{ display: "flex", flexDirection: "column", gap: "4px", fontSize: "0.78rem", fontWeight: 700 }}>
+                  Antelación Mínima
+                  <select
+                    value={configAgenda.antelacion_minima_horas}
+                    onChange={(e) => setConfigAgenda({ ...configAgenda, antelacion_minima_horas: Number(e.target.value) })}
+                    style={{ padding: "8px", borderRadius: "8px", border: "1px solid #D1D5DB" }}
+                  >
+                    {[1, 2, 6, 12, 24, 48].map((n) => (
+                      <option key={n} value={n}>{n} horas</option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+
+              {/* Franjas Horarias */}
+              <div style={{ background: "#F9FAFB", border: "1px solid #E5E7EB", borderRadius: "12px", padding: "14px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px", flexWrap: "wrap", gap: "8px" }}>
+                  <span style={{ fontSize: "0.84rem", fontWeight: 800, color: "#111827", display: "inline-flex", alignItems: "center", gap: "6px" }}>
+                    <Clock size={15} color="#5000BA" />
+                    Franjas Horarias Semanales ({huecosCalculadosModal} citas/semana)
+                  </span>
+                  <div style={{ display: "flex", gap: "6px" }}>
+                    <button
+                      type="button"
+                      onClick={() => setFranjasAgenda(FRANJAS_BASE)}
+                      style={{
+                        background: "#EEF2FF",
+                        color: "#4338CA",
+                        border: "1px solid #C7D2FE",
+                        borderRadius: "6px",
+                        padding: "4px 8px",
+                        fontSize: "0.73rem",
+                        fontWeight: 700,
+                        cursor: "pointer",
+                      }}
+                    >
+                      Lun–Vie 09:00–17:00
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setFranjasAgenda((prev) => [
+                          ...prev,
+                          { dia_semana: 1, hora_inicio: "09:00", hora_fin: "13:00", modalidad: "ambas" },
+                        ])
+                      }
+                      style={{
+                        background: "#05876E",
+                        color: "#ffffff",
+                        border: "none",
+                        borderRadius: "6px",
+                        padding: "4px 9px",
+                        fontSize: "0.73rem",
+                        fontWeight: 800,
+                        cursor: "pointer",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "4px",
+                      }}
+                    >
+                      <Plus size={12} /> Añadir Franja
+                    </button>
+                  </div>
+                </div>
+
+                <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                  {franjasAgenda.map((f, idx) => (
+                    <div
+                      key={idx}
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns: "1.2fr 1fr 1fr 1.3fr auto",
+                        gap: "8px",
+                        alignItems: "center",
+                        background: "#ffffff",
+                        padding: "8px 10px",
+                        borderRadius: "8px",
+                        border: "1px solid #E5E7EB",
+                      }}
+                    >
+                      <select
+                        value={f.dia_semana}
+                        onChange={(e) =>
+                          setFranjasAgenda((arr) =>
+                            arr.map((item, i) =>
+                              i === idx ? { ...item, dia_semana: Number(e.target.value) } : item
+                            )
+                          )
+                        }
+                        style={{ padding: "6px", borderRadius: "6px", border: "1px solid #D1D5DB", fontSize: "0.8rem" }}
+                      >
+                        {DIAS_SEMANA.map((d: string, n: number) => (
+                          <option key={n} value={n}>{d}</option>
+                        ))}
+                      </select>
+
+                      <input
+                        type="time"
+                        value={f.hora_inicio.slice(0, 5)}
+                        onChange={(e) =>
+                          setFranjasAgenda((arr) =>
+                            arr.map((item, i) =>
+                              i === idx ? { ...item, hora_inicio: e.target.value } : item
+                            )
+                          )
+                        }
+                        style={{ padding: "6px", borderRadius: "6px", border: "1px solid #D1D5DB", fontSize: "0.8rem" }}
+                      />
+
+                      <input
+                        type="time"
+                        value={f.hora_fin.slice(0, 5)}
+                        onChange={(e) =>
+                          setFranjasAgenda((arr) =>
+                            arr.map((item, i) =>
+                              i === idx ? { ...item, hora_fin: e.target.value } : item
+                            )
+                          )
+                        }
+                        style={{ padding: "6px", borderRadius: "6px", border: "1px solid #D1D5DB", fontSize: "0.8rem" }}
+                      />
+
+                      <select
+                        value={f.modalidad}
+                        onChange={(e) =>
+                          setFranjasAgenda((arr) =>
+                            arr.map((item, i) =>
+                              i === idx
+                                ? { ...item, modalidad: e.target.value as Franja["modalidad"] }
+                                : item
+                            )
+                          )
+                        }
+                        style={{ padding: "6px", borderRadius: "6px", border: "1px solid #D1D5DB", fontSize: "0.8rem" }}
+                      >
+                        <option value="ambas">Presencial y Teleconsulta</option>
+                        <option value="virtual">Solo Teleconsulta</option>
+                        <option value="presencial">Solo Presencial</option>
+                      </select>
+
+                      <button
+                        type="button"
+                        onClick={() => setFranjasAgenda((arr) => arr.filter((_, i) => i !== idx))}
+                        title="Quitar franja"
+                        style={{
+                          background: "#FEF2F2",
+                          color: "#DC2626",
+                          border: "none",
+                          borderRadius: "6px",
+                          padding: "6px",
+                          cursor: "pointer",
+                        }}
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px" }}>
+                <button
+                  type="button"
+                  onClick={() => setAbogadoAgendaModal(null)}
+                  style={{
+                    padding: "9px 16px",
+                    borderRadius: "10px",
+                    border: "1px solid #D1D5DB",
+                    background: "#ffffff",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                  }}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  disabled={guardandoAgenda}
+                  onClick={handleGuardarDisponibilidad}
+                  style={{
+                    padding: "9px 18px",
+                    borderRadius: "10px",
+                    border: "none",
+                    background: "#05876E",
+                    color: "#ffffff",
+                    fontWeight: 800,
+                    cursor: "pointer",
+                  }}
+                >
+                  {guardandoAgenda ? "Guardando..." : "Guardar Disponibilidad"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+

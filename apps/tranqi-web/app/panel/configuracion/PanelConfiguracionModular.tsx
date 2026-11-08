@@ -124,6 +124,8 @@ const ALIAS_WIDGET: Record<string, string> = {
   catalogo_productos: "catalogo_productos",
   catalogo: "catalogo_productos",
   honorarios: "catalogo_productos",
+  gestion_red_abogados: "perfiles",
+  mi_perfil_abogado: "notificaciones",
 };
 
 export function PanelConfiguracionModular({ esAdmin, esSuperadmin = false, configuracion, smtp, negocio }: Props) {

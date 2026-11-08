@@ -11,7 +11,7 @@ import { BotonPlegarRail } from "./BotonPlegarRail";
 import { ProveedorAvisos } from "./AvisosPanel";
 import { BarraAsistente } from "./asistente/BarraAsistente";
 import { rolConAsistente } from "../../modulos/asistente/rol";
-import { crearClienteServidor } from "@eco/supabase/servidor";
+import { crearClienteServidor, crearClienteAdmin } from "@eco/supabase/servidor";
 import type { ModoRol } from "./SelectorRolActivo";
 
 const NEGOCIO = "tranqi";
@@ -88,7 +88,22 @@ export default async function LayoutPanel({ children }: { children: React.ReactN
   const supabase = await crearClienteServidor();
   await asegurarMembresiaCliente(supabase, perfil.usu_id, NEGOCIO);
 
-  const perfiles = await obtenerPerfiles(NEGOCIO);
+  const perfilesBase = await obtenerPerfiles(NEGOCIO);
+  const adminClient = (crearClienteAdmin() || supabase) as any;
+  const { data: regAbogado } = await adminClient
+    .schema("tranqui_legal")
+    .from("trq_abogado")
+    .select("abg_id, abg_estado")
+    .eq("abg_usuario_id", perfil.usu_id)
+    .maybeSingle();
+
+  let perfiles = [...perfilesBase];
+  if (regAbogado?.abg_estado === "verificado" && !perfiles.includes("ABOGADO")) {
+    perfiles.push("ABOGADO");
+  } else if (regAbogado?.abg_estado === "suspendido") {
+    perfiles = perfiles.filter((p) => p.toUpperCase() !== "ABOGADO");
+  }
+
   const correo = perfil.usu_correo?.toLowerCase().trim() || "";
   const esSuperAdminEmail = correo === "familiammtg@gmail.com" || correo === "jesus251296@gmail.com";
   const esSuperAdminPlataforma = Boolean(perfil.usu_superadmin_plataforma);

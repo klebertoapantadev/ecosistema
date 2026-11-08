@@ -107,7 +107,7 @@ function obtenerPanelesInicialesPorRol(modoActivo: ModoRol): PanelDefNav[] {
 
   if (rolKey === "ABOGADO") {
     return PANELES_BASE_DEFAULT.filter(
-      p => p.id === "panel_inicio" || p.id === "panel_clientes" || p.id === "panel_empresas" || p.id === "panel_usuarios" || p.id === "panel_agendamiento" || p.id === "panel_cuenta" || p.id === "panel_herramientas"
+      p => p.id === "panel_inicio" || p.id === "panel_clientes" || p.id === "panel_empresas" || p.id === "panel_red_profesional" || p.id === "panel_agendamiento" || p.id === "panel_cuenta" || p.id === "panel_herramientas"
     );
   }
 

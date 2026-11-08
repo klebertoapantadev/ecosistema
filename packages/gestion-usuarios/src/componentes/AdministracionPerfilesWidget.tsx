@@ -297,10 +297,10 @@ const PERFILES_INICIALES: PerfilDef[] = [
       panel_clientes: ["vitrina_comercial_personas", "muro_informativo_comunidad", "crm_clientes", "agendar_cita", "mis_citas", "billetera_documentos", "firma_documentos_pdf"],
       panel_empresas: ["vitrina_comercial_empresas", "gestion_convenios_corporativos", "crm_clientes", "billetera_documentos", "firma_documentos_pdf"],
       panel_usuarios: ["consulta_usuarios_perfiles", "monitoreo_notificaciones_usuarios"],
-      panel_red_profesional: ["socios", "paquete_beneficios_abogados", "solicitud_socio"],
+      panel_red_profesional: ["gestion_red_abogados", "socios", "paquete_beneficios_abogados", "solicitud_socio"],
       panel_terminos: ["gestion_terminos_consentimientos", "configuracion_contrato_abogado"],
       panel_agendamiento: ["disponibilidad_abogados", "asignaciones_agenda"],
-      panel_administrar: ["gestion_informativos", "gestion_convenios_corporativos", "disponibilidad_abogados", "historial_pagos", "emision_notificaciones", "bitacora_notificaciones"],
+      panel_administrar: ["gestion_red_abogados", "gestion_informativos", "gestion_convenios_corporativos", "disponibilidad_abogados", "historial_pagos", "emision_notificaciones", "bitacora_notificaciones"],
       panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos"],
       panel_herramientas: ["catalogo_productos", "disponibilidad_abogados", "firma_documentos_pdf", "billetera_documentos"],
       panel_configuracion: ["notificaciones", "agentes_ia"]
@@ -318,8 +318,8 @@ const PERFILES_INICIALES: PerfilDef[] = [
       panel_inicio: ["favoritos"],
       panel_clientes: ["vitrina_comercial_personas", "muro_informativo_comunidad", "crm_clientes", "billetera_documentos", "firma_documentos_pdf"],
       panel_empresas: ["vitrina_comercial_empresas", "gestion_convenios_corporativos", "crm_clientes", "billetera_documentos", "firma_documentos_pdf"],
-      panel_red_profesional: ["paquete_beneficios_abogados"],
-      panel_agendamiento: ["disponibilidad_abogados", "citas_programadas", "disponibilidad", "asignaciones_agenda"],
+      panel_red_profesional: ["mi_perfil_abogado", "paquete_beneficios_abogados"],
+      panel_agendamiento: ["mi_perfil_abogado", "disponibilidad_abogados", "citas_programadas", "disponibilidad", "asignaciones_agenda"],
       panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos", "historial_pagos"],
       panel_herramientas: ["catalogo_productos", "disponibilidad_abogados", "firma_documentos_pdf", "billetera_documentos", "solicitud_socio"],
       panel_configuracion: ["notificaciones", "agentes_ia"]
@@ -338,10 +338,10 @@ const PERFILES_INICIALES: PerfilDef[] = [
       panel_clientes: ["vitrina_comercial_personas", "muro_informativo_comunidad", "crm_clientes", "agendar_cita", "mis_citas", "billetera_documentos", "firma_documentos_pdf"],
       panel_empresas: ["vitrina_comercial_empresas", "gestion_convenios_corporativos", "crm_clientes", "billetera_documentos", "firma_documentos_pdf"],
       panel_usuarios: ["gestion_usuarios", "consulta_usuarios_perfiles", "monitoreo_notificaciones_usuarios"],
-      panel_red_profesional: ["socios", "paquete_beneficios_abogados", "solicitud_socio"],
+      panel_red_profesional: ["gestion_red_abogados", "socios", "paquete_beneficios_abogados", "solicitud_socio"],
       panel_terminos: ["gestion_terminos_consentimientos", "configuracion_contrato_abogado"],
       panel_agendamiento: ["disponibilidad_abogados", "asignaciones_agenda"],
-      panel_administrar: ["gestion_informativos", "gestion_convenios_corporativos", "disponibilidad_abogados", "historial_pagos", "emision_notificaciones", "bitacora_notificaciones", "perfiles", "auditoria"],
+      panel_administrar: ["gestion_red_abogados", "gestion_informativos", "gestion_convenios_corporativos", "disponibilidad_abogados", "historial_pagos", "emision_notificaciones", "bitacora_notificaciones", "perfiles", "auditoria"],
       panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos"],
       panel_herramientas: ["catalogo_productos", "disponibilidad_abogados", "firma_documentos_pdf", "billetera_documentos"],
       panel_configuracion: ["configuracion_negocio", "configuracion_correo", "pasarela_payphone", "perfiles", "agentes_ia", "notificaciones", "tokens_mcp"]
@@ -360,10 +360,10 @@ const PERFILES_INICIALES: PerfilDef[] = [
       panel_clientes: ["vitrina_comercial_personas", "muro_informativo_comunidad", "crm_clientes", "agendar_cita", "mis_citas", "billetera_documentos", "firma_documentos_pdf"],
       panel_empresas: ["vitrina_comercial_empresas", "gestion_convenios_corporativos", "crm_clientes", "billetera_documentos", "firma_documentos_pdf"],
       panel_usuarios: ["gestion_usuarios", "consulta_usuarios_perfiles", "monitoreo_notificaciones_usuarios"],
-      panel_red_profesional: ["socios", "paquete_beneficios_abogados", "solicitud_socio"],
+      panel_red_profesional: ["gestion_red_abogados", "mi_perfil_abogado", "socios", "paquete_beneficios_abogados", "solicitud_socio"],
       panel_terminos: ["gestion_terminos_consentimientos", "configuracion_contrato_abogado"],
-      panel_agendamiento: ["disponibilidad_abogados", "asignaciones_agenda"],
-      panel_administrar: ["gestion_informativos", "gestion_convenios_corporativos", "disponibilidad_abogados", "historial_pagos", "emision_notificaciones", "bitacora_notificaciones", "perfiles", "auditoria"],
+      panel_agendamiento: ["mi_perfil_abogado", "disponibilidad_abogados", "asignaciones_agenda"],
+      panel_administrar: ["gestion_red_abogados", "gestion_informativos", "gestion_convenios_corporativos", "disponibilidad_abogados", "historial_pagos", "emision_notificaciones", "bitacora_notificaciones", "perfiles", "auditoria"],
       panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos"],
       panel_herramientas: ["catalogo_productos", "disponibilidad_abogados", "firma_documentos_pdf", "billetera_documentos"],
       panel_configuracion: ["configuracion_negocio", "configuracion_correo", "pasarela_payphone", "perfiles", "agentes_ia", "notificaciones", "tokens_mcp"]
@@ -860,6 +860,28 @@ const WIDGETS_INVENTARIO_INICIALES: WidgetInventarioDef[] = [
     panelId: "panel_agendamiento",
     activo: true,
     creadoEn: "2026-09-05"
+  },
+  {
+    clave: "gestion_red_abogados",
+    nombre: "Red Profesional & Registro de Abogados",
+    descripcion: "Búsqueda de usuarios registrados para convertirlos en socios abogados, alta manual con datos mínimos, gestión de especialidades, provincias y disponibilidad de citas.",
+    categoria: "Red Profesional",
+    ruta: "/panel/red-profesional?widget=gestion_red_abogados",
+    rutaFisica: "/socios/componentes/GestionRedProfesionalWidget.tsx",
+    panelId: "panel_red_profesional",
+    activo: true,
+    creadoEn: "2026-11-08"
+  },
+  {
+    clave: "mi_perfil_abogado",
+    nombre: "Mis Especialidades, Cobertura y Disponibilidad",
+    descripcion: "Autogestión del socio abogado: configuración de materias legales, provincias de cobertura y disponibilidad de citas presenciales y teleconsulta.",
+    categoria: "Red Profesional",
+    ruta: "/panel/red-profesional?widget=mi_perfil_abogado",
+    rutaFisica: "/socios/componentes/MiPerfilRedAbogadoWidget.tsx",
+    panelId: "panel_red_profesional",
+    activo: true,
+    creadoEn: "2026-11-08"
   }
 ];
 
@@ -893,6 +915,36 @@ function RenderizadorWidgetReal({ clave, negocio }: { clave: string; negocio: st
           </p>
           <div style={{ padding: "12px", background: "#F5F3FF", borderRadius: "8px", border: "1px dashed #DDD6FE", textAlign: "center", fontSize: "0.82rem", color: "#5B21B6", fontWeight: 700 }}>
             Postulación Preliminar · Aprobación Operador · Sincronización ARIA MCP
+          </div>
+        </div>
+      );
+
+    case "gestion_red_abogados":
+      return (
+        <div style={{ background: "#ffffff", padding: "18px", borderRadius: "12px", border: "1.5px solid #05876E", boxShadow: "0 4px 12px rgba(5,135,110,0.08)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 800, fontSize: "0.95rem", color: "#05876E", marginBottom: "10px" }}>
+            <Scale size={18} /> Red Profesional & Registro de Abogados
+          </div>
+          <p style={{ fontSize: "0.82rem", color: "#64748B", marginBottom: "12px" }}>
+            Búsqueda de usuarios registrados para convertirlos en socios abogados, alta manual con datos mínimos, gestión de especialidades, cobertura y disponibilidad.
+          </p>
+          <div style={{ padding: "12px", background: "#ECFDF5", borderRadius: "8px", border: "1px dashed #A7F3D0", textAlign: "center", fontSize: "0.82rem", color: "#047857", fontWeight: 700 }}>
+            Convertir Usuario · Alta Manual · Especialidades & Provincias · Disponibilidad Citas
+          </div>
+        </div>
+      );
+
+    case "mi_perfil_abogado":
+      return (
+        <div style={{ background: "#ffffff", padding: "18px", borderRadius: "12px", border: "1.5px solid #05876E", boxShadow: "0 4px 12px rgba(5,135,110,0.08)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 800, fontSize: "0.95rem", color: "#05876E", marginBottom: "10px" }}>
+            <Scale size={18} /> Mis Especialidades, Cobertura y Disponibilidad
+          </div>
+          <p style={{ fontSize: "0.82rem", color: "#64748B", marginBottom: "12px" }}>
+            Autogestión del socio abogado: materias legales atendidas, provincias de cobertura y configuración de horarios presenciales y teleconsulta.
+          </p>
+          <div style={{ padding: "12px", background: "#ECFDF5", borderRadius: "8px", border: "1px dashed #A7F3D0", textAlign: "center", fontSize: "0.82rem", color: "#047857", fontWeight: 700 }}>
+            Especialidades Legales · Provincias de Cobertura · Citas Presenciales / Teleconsulta
           </div>
         </div>
       );

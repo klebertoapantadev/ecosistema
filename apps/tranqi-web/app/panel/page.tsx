@@ -13,6 +13,8 @@ import { TarjetasFavoritasGrid } from "./SeccionFavoritosInicio";
 import { BuscadorModulosGlobal } from "./BuscadorModulosGlobal";
 import { WidgetNotificacionesCliente } from "@eco/notificaciones";
 import { obtenerSolicitudPropia } from "../../modulos/socios/consultas";
+import { obtenerMiPerfilAbogadoCompletoAction } from "../../modulos/socios/acciones-red-profesional";
+import { crearClienteServidor, crearClienteAdmin } from "@eco/supabase/servidor";
 import { ConsolaSuperAdminModular } from "./ConsolaSuperAdminModular";
 import { TarjetaEstadoSolicitudHome } from "./TarjetaEstadoSolicitudHome";
 import { SeccionCoberturaCliente, obtenerCoberturaUsuarioAction, TarjetaBeneficiosCorporativosCliente } from "@eco/comercio";
@@ -40,17 +42,18 @@ const ACCESOS_CLIENTE: { icono: LucideIcon; nombre: string; detalle: string; hre
 ];
 
 const ACCESOS_ABOGADO: { icono: LucideIcon; nombre: string; detalle: string; href?: string }[] = [
-  { icono: Scale, nombre: "Mi Disponibilidad de Horas", detalle: "Declarar horas preliminares", href: "/panel/agendamiento?widget=disponibilidad_abogados" },
+  { icono: Scale, nombre: "Mis Especialidades y Cobertura", detalle: "Materias y provincias activas", href: "/panel/red-profesional?widget=mi_perfil_abogado" },
+  { icono: Calendar, nombre: "Disponibilidad de Citas", detalle: "Horarios presencial y teleconsulta", href: "/panel/agenda/disponibilidad" },
+  { icono: Briefcase, nombre: "Citas Programadas", detalle: "Confirmar y atender consultas", href: "/panel/agenda" },
   { icono: Award, nombre: "Paquete de Beneficios", detalle: "Convenios y capacitaciones", href: "/panel/red-profesional?widget=paquete_beneficios_abogados" },
   { icono: Users, nombre: "CRM & Clientes", detalle: "Directorio y expedientes", href: "/panel/clientes" },
   { icono: Coins, nombre: "Mis honorarios", detalle: "Tarifario y liquidación", href: "/panel/catalogo-productos" },
   { icono: Folder, nombre: "Billetera digital", detalle: "Documentos y expedientes", href: "/panel/billetera-documentos" },
   { icono: FileCheck, nombre: "Firmar un documento", detalle: "Con tu certificado digital", href: "/panel/firma-documentos" },
-  { icono: Briefcase, nombre: "Nuevas solicitudes", detalle: "3 casos en espera" },
-  { icono: Calendar, nombre: "Citas de hoy", detalle: "2 videollamadas" },
 ];
 
 const WIDGETS_OPERADOR: { clave: string; icono: LucideIcon; nombre: string; detalle: string; ruta: string }[] = [
+  { clave: "gestion_red_abogados", icono: UserCheck, nombre: "Red Profesional & Abogados", detalle: "Alta manual, especialidades y horarios", ruta: "/panel/red-profesional?widget=gestion_red_abogados" },
   { clave: "gestion_informativos", icono: Bell, nombre: "Gestión de Informativos", detalle: "Alertas, noticias y beneficios", ruta: "/panel/administrar?widget=gestion_informativos" },
   { clave: "crm_clientes", icono: Users, nombre: "CRM Jurídico & Clientes", detalle: "Directorio 360°, KPIs y alta asistida", ruta: "/panel/clientes" },
   { clave: "disponibilidad_abogados", icono: Scale, nombre: "Disponibilidad de Abogados", detalle: "Aprobación de horas y turnos", ruta: "/panel/agendamiento?widget=disponibilidad_abogados" },
@@ -67,6 +70,7 @@ const WIDGETS_OPERADOR: { clave: string; icono: LucideIcon; nombre: string; deta
 ];
 
 const WIDGETS_ADMIN: { clave: string; icono: LucideIcon; nombre: string; detalle: string; ruta: string; estado: "registrado" | "proximamente" }[] = [
+  { clave: "gestion_red_abogados", icono: UserCheck, nombre: "Red Profesional & Abogados", detalle: "Alta manual, especialidades y horarios", ruta: "/panel/red-profesional?widget=gestion_red_abogados", estado: "registrado" },
   { clave: "gestion_informativos", icono: Bell, nombre: "Gestión de Informativos", detalle: "Alertas y novedades", ruta: "/panel/administrar?widget=gestion_informativos", estado: "registrado" },
   { clave: "catalogo_productos", icono: ShoppingBag, nombre: "Catálogo & Honorarios", detalle: "Servicios y precios con IVA", ruta: "/panel/catalogo-productos", estado: "registrado" },
   { clave: "disponibilidad_abogados", icono: Scale, nombre: "Disponibilidad de Abogados", detalle: "Control de cupos y turnos", ruta: "/panel/agendamiento?widget=disponibilidad_abogados", estado: "registrado" },
@@ -124,17 +128,48 @@ function textoRol(modo: ModoRol): string {
 
 export default async function PagePanel({ searchParams }: Props) {
   const perfil = await obtenerPerfilActual();
-  const perfiles = await obtenerPerfiles(NEGOCIO);
-  const puedeConmutar = Boolean(perfil?.usu_superadmin_plataforma);
+  const perfilesBase = await obtenerPerfiles(NEGOCIO);
+  const supabase = await crearClienteServidor();
+  const adminClient = (crearClienteAdmin() || supabase) as any;
+
+  let regAbogado: { abg_id: string; abg_estado: string } | null = null;
+  if (perfil?.usu_id) {
+    const { data } = await adminClient
+      .schema("tranqui_legal")
+      .from("trq_abogado")
+      .select("abg_id, abg_estado")
+      .eq("abg_usuario_id", perfil.usu_id)
+      .maybeSingle();
+    regAbogado = data;
+  }
+
+  let perfiles = [...perfilesBase];
+  if (regAbogado?.abg_estado === "verificado" && !perfiles.includes("ABOGADO")) {
+    perfiles.push("ABOGADO");
+  } else if (regAbogado?.abg_estado === "suspendido") {
+    perfiles = perfiles.filter((p) => p.toUpperCase() !== "ABOGADO");
+  }
+
+  const puedeConmutar = Boolean(perfil?.usu_superadmin_plataforma || perfiles.length > 1);
   const rawParams = await searchParams;
   const modoURL = modoValido(rawParams?.modo);
   const cookieStore = await cookies();
   const modoCookie = modoValido(cookieStore.get("tranqi_modo_rol")?.value)
     || modoValido(cookieStore.get("tranqi_rol_favorito")?.value);
 
-  const modo: ModoRol = puedeConmutar
-    ? (modoURL ?? modoCookie ?? modoDePerfiles(perfiles))
-    : modoDePerfiles(perfiles);
+  const candidatoModo = modoURL ?? modoCookie;
+  let modo: ModoRol = modoDePerfiles(perfiles);
+  if (perfil?.usu_superadmin_plataforma && candidatoModo) {
+    modo = candidatoModo;
+  } else if (candidatoModo) {
+    const mUp = candidatoModo.toUpperCase();
+    const tieneRol = perfiles.some((p) => {
+      const pUp = p.toUpperCase();
+      if (pUp === "ADMINISTRADOR" && (mUp === "ADMIN" || mUp === "ADMINISTRADOR")) return true;
+      return pUp === mUp;
+    });
+    if (tieneRol) modo = candidatoModo;
+  }
 
   const solicitudPropia = perfil ? await obtenerSolicitudPropia(perfil.usu_id) : null;
   const sPropia = solicitudPropia as unknown as { ssc_contrato_confirmado_en?: string | null; ssc_estado: string } | null;
@@ -430,11 +465,25 @@ async function PanelCliente({ saludo, nombre, usuarioId }: { saludo: string | nu
 }
 
 /* ──────────────── 2. PANEL MODO SOCIO ABOGADO ──────────────── */
-function PanelAbogado({ nombreCompleto }: { nombreCompleto: string }) {
+async function PanelAbogado({ nombreCompleto }: { nombreCompleto: string }) {
+  const resPerfil = await obtenerMiPerfilAbogadoCompletoAction();
+  const miFicha = resPerfil.ok ? resPerfil.data.abogado : null;
+  const materiasTexto =
+    miFicha && miFicha.materias.length > 0
+      ? miFicha.materias.map((m) => m.mat_nombre).join(", ")
+      : "Pendiente de seleccionar especialidades";
+  const provinciasTexto =
+    miFicha && miFicha.provincias.length > 0
+      ? miFicha.provincias.length >= 20
+        ? "Cobertura Nacional (24 provincias)"
+        : miFicha.provincias.map((p) => p.cat_nombre).join(", ")
+      : "Pendiente de definir provincias";
+  const citasSemana = miFicha?.citasPorSemana ?? 0;
+
   return (
     <>
       <h1>Portal Profesional de Abogado — tranqi</h1>
-      <p className="inicio-cliente-sub">Bienvenido Dr. {nombreCompleto}. Panel de gestión de causas y patrocinios.</p>
+      <p className="inicio-cliente-sub">Bienvenido Dr(a). {nombreCompleto}. Panel de gestión de causas, especialidades y agenda de citas.</p>
 
       <div className="rejilla-cliente">
         <div className="columna-cliente">
@@ -442,31 +491,58 @@ function PanelAbogado({ nombreCompleto }: { nombreCompleto: string }) {
           <section className="tarjeta-proteccion tarjeta-abogado" aria-labelledby="t-abogado">
             <div className="tarjeta-proteccion-fila">
               <div>
-                <div className="eyebrow-cliente" id="t-abogado">Socio Acreditado</div>
-                <div className="tarjeta-proteccion-plan">Acreditación Foro de Abogados</div>
+                <div className="eyebrow-cliente" id="t-abogado">
+                  Socio Acreditado {miFicha?.matriculaProfesional ? `· Matrícula ${miFicha.matriculaProfesional}` : ""}
+                </div>
+                <div className="tarjeta-proteccion-plan">Red Profesional de Abogados</div>
                 <div className="tarjeta-proteccion-meta">
-                  Habilitado para atención de patrocinio en materia Civil, Penal, Laboral y Familia.
+                  <b>Especialidades:</b> {materiasTexto}
+                  <br />
+                  <b>Cobertura:</b> {provinciasTexto}
                 </div>
               </div>
               <span className="badge-socio">Socio Activo</span>
             </div>
             <div className="tarjeta-proteccion-chips">
-              <span className="chip-proteccion">Matrícula Verificada</span>
-              <span className="chip-proteccion">SENESCYT Validado</span>
-              <span className="chip-proteccion">Turno SOS Activo</span>
+              <span className="chip-proteccion">
+                {citasSemana > 0 ? `${citasSemana} citas/semana habilitadas` : "Configurar horario de citas"}
+              </span>
+              <span className="chip-proteccion">
+                {miFicha?.configuracionAgenda.modalidades.includes("presencial") &&
+                miFicha?.configuracionAgenda.modalidades.includes("virtual")
+                  ? "Presencial y Teleconsulta"
+                  : miFicha?.configuracionAgenda.modalidades.includes("presencial")
+                  ? "Atención Presencial"
+                  : "Teleconsulta Virtual"}
+              </span>
+              <Link
+                href="/panel/red-profesional?widget=mi_perfil_abogado"
+                className="chip-proteccion"
+                style={{ textDecoration: "none", background: "#FEE300", color: "#111827", fontWeight: 800 }}
+              >
+                Editar Especialidades y Horarios →
+              </Link>
             </div>
           </section>
 
           {/* 2) ACCESS GRID (Favoritos primero + Accesos predeterminados) */}
           <div className="accesos-cliente">
             <TarjetasFavoritasGrid />
-            {ACCESOS_ABOGADO.map((acc, i) => (
-              <div key={i} className="tarjeta-acceso" tabIndex={0} role="button">
-                <acc.icono className="tarjeta-acceso-icono" aria-hidden="true" strokeWidth={1.6} />
-                <strong>{acc.nombre}</strong>
-                <p>{acc.detalle}</p>
-              </div>
-            ))}
+            {ACCESOS_ABOGADO.map((acc, i) =>
+              acc.href ? (
+                <Link key={i} href={acc.href} className="tarjeta-acceso">
+                  <acc.icono className="tarjeta-acceso-icono" aria-hidden="true" strokeWidth={1.6} />
+                  <strong>{acc.nombre}</strong>
+                  <p>{acc.detalle}</p>
+                </Link>
+              ) : (
+                <div key={i} className="tarjeta-acceso" tabIndex={0} role="button">
+                  <acc.icono className="tarjeta-acceso-icono" aria-hidden="true" strokeWidth={1.6} />
+                  <strong>{acc.nombre}</strong>
+                  <p>{acc.detalle}</p>
+                </div>
+              )
+            )}
           </div>
 
           <section className="tarjeta-seccion" aria-labelledby="t-causas">
@@ -482,10 +558,17 @@ function PanelAbogado({ nombreCompleto }: { nombreCompleto: string }) {
           <SeccionNotificacionesEcosistema esAdmin={false} />
 
           <section className="tarjeta-seccion" aria-labelledby="t-turnos">
-            <header><h2 id="t-turnos">Agenda de Citas & Videollamadas</h2></header>
+            <header>
+              <h2 id="t-turnos">Disponibilidad & Citas</h2>
+              <Link href="/panel/agenda/disponibilidad" className="enlace-accion">Configurar</Link>
+            </header>
             <div className="vacio-seccion">
-              <b>Calendario Profesional</b>
-              <span>Sincronizado con Google Calendar.</span>
+              <b>{citasSemana > 0 ? `${citasSemana} cupos semanales activos` : "Sin horario configurado"}</b>
+              <span>
+                {miFicha?.configuracionAgenda.direccion
+                  ? `Despacho: ${miFicha.configuracionAgenda.direccion}`
+                  : "Atención presencial y teleconsulta sincronizada con la agenda de clientes."}
+              </span>
             </div>
           </section>
         </aside>

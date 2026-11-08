@@ -263,6 +263,26 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
     colorIcono: "var(--violeta, #5000BA)"
   },
   {
+    clave: "gestion_red_abogados",
+    nombre: "Red Profesional & Registro de Abogados",
+    detalle: "Convertir usuarios registrados en abogados, registro manual y gestión de especialidades, cobertura y disponibilidad",
+    ruta: "/panel/red-profesional?widget=gestion_red_abogados",
+    categoria: "Red Profesional",
+    minNivel: 30,
+    icono: Scale,
+    colorIcono: "#05876E"
+  },
+  {
+    clave: "mi_perfil_abogado",
+    nombre: "Mis Especialidades, Cobertura y Disponibilidad",
+    detalle: "Autogestión del socio abogado: materias legales, provincias de cobertura y configuración de citas presenciales y teleconsulta",
+    ruta: "/panel/red-profesional?widget=mi_perfil_abogado",
+    categoria: "Red Profesional",
+    minNivel: 50,
+    icono: Scale,
+    colorIcono: "#05876E"
+  },
+  {
     clave: "socios",
     nombre: "Aprobación de Socios Abogados",
     detalle: "Validación de matrículas, acreditación y verificación de abogados",

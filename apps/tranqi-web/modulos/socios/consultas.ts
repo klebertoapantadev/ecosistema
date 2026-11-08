@@ -1,4 +1,5 @@
 import { crearClienteServidor, crearClienteAdmin } from "@eco/supabase/servidor";
+import { ejecutarPurgaSolicitudesSocioInterna, MARCA_REGISTRO_MANUAL } from "./acciones-red-profesional";
 
 // Server-only. No importar desde un client component.
 
@@ -69,6 +70,7 @@ function deduplicarExperiencias<T extends { exp_empresa?: string | null; exp_car
 export async function obtenerSolicitudPropia(usuarioId: string) {
   const supabase = await crearClienteServidor();
   const adminSupabase = crearClienteAdmin() || supabase;
+  await ejecutarPurgaSolicitudesSocioInterna(adminSupabase, true);
   const { data } = await adminSupabase
     .schema("tranqui_legal")
     .from("trq_solicitud_socio")
@@ -87,7 +89,9 @@ export async function obtenerSolicitudPropia(usuarioId: string) {
     .limit(1)
     .maybeSingle();
 
-  if (!data) return null;
+  if (!data || String((data as any).ssc_resumen_profesional || "").includes(MARCA_REGISTRO_MANUAL)) {
+    return null;
+  }
 
   // Auto-sincronizar con la última decisión en caso de inconsistencia previa
   try {
@@ -175,6 +179,7 @@ async function adjuntarUsuarios<T extends { usuarioId: string }>(
 export async function listarSolicitudesParaAdmin(estado?: string) {
   const supabase = await crearClienteServidor();
   const adminSupabase = crearClienteAdmin() || supabase;
+  await ejecutarPurgaSolicitudesSocioInterna(adminSupabase, true);
   let query = adminSupabase
     .schema("tranqui_legal")
     .from("trq_solicitud_socio")
@@ -190,7 +195,11 @@ export async function listarSolicitudesParaAdmin(estado?: string) {
   const { data, error } = await query;
   if (error) throw new Error(error.message);
 
-  const rawList = (data ?? []).map((s: any) => {
+  const dataFiltrada = (data ?? []).filter(
+    (s: any) => !String(s.ssc_resumen_profesional || "").includes(MARCA_REGISTRO_MANUAL)
+  );
+
+  const rawList = dataFiltrada.map((s: any) => {
     let estadoReal = s.ssc_estado;
     const revs = (s.trq_revision_solicitud || []) as Array<{ rev_decision: string; rev_creado_en: string }>;
     if (revs.length > 0) {
