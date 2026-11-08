@@ -60,9 +60,11 @@ const FRANJAS_HIBRIDAS: Franja[] = [
 export function MiPerfilRedAbogadoWidget({
   tabInicial = "especialidades",
 }: {
-  tabInicial?: "especialidades" | "disponibilidad";
+  tabInicial?: "especialidades" | "disponibilidad" | "perfil";
 }) {
-  const [tab, setTab] = useState<"especialidades" | "disponibilidad">(tabInicial);
+  const [tab, setTab] = useState<"especialidades" | "disponibilidad">(
+    tabInicial === "disponibilidad" ? "disponibilidad" : "especialidades"
+  );
   const [cargando, setCargando] = useState(true);
   const [abogado, setAbogado] = useState<AbogadoRedItem | null>(null);
   const [catalogoMaterias, setCatalogoMaterias] = useState<MateriaItem[]>([]);
