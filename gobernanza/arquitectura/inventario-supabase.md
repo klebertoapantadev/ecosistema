@@ -8,6 +8,8 @@ responsable: Kleber Toapanta
 
 # Inventario del Proyecto Supabase Compartido
 
+> **Diccionario y Modelo de Datos Completo (10 esquemas, 93 tablas, columnas, PK y FK):** consultar [`modelo-datos-ecosistema.md`](modelo-datos-ecosistema.md).
+
 ## Regla que no se negocia
 
 El ecosistema usa un **proyecto Supabase dedicado**, separado de cualquier otro sistema. Nunca se comparte instancia con una base de datos operativa ajena a este monorepo.

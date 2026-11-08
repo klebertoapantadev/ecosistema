@@ -8,7 +8,8 @@ responsable: Kleber Toapanta
 
 # Tranqi — Especificación Técnica
 
-**Prefijo de tabla:** `trq_` · **Esquema:** `tranqui_legal` · **Modelo de entrega:** escrow documental (ver [ADR-0001](../../arquitectura/adr/0001-monorepo-y-modelo-de-entrega.md))
+**Prefijo de tabla:** `trq_` · **Esquema:** `tranqui_legal` · **Modelo de entrega:** escrow documental (ver [ADR-0001](../../arquitectura/adr/0001-monorepo-y-modelo-de-entrega.md))  
+**Modelo de Datos Completo (Esquemas, Tablas, Columnas, PK y FK):** [`../../arquitectura/modelo-datos-ecosistema.md`](../../arquitectura/modelo-datos-ecosistema.md)
 
 ## Tablas (TRQ-001, socios)
 

@@ -8,7 +8,8 @@ responsable: Kleber Toapanta
 
 # Plataforma — Especificación Técnica Común
 
-Contraparte técnica de [`especificacion-funcional.md`](especificacion-funcional.md). Este documento es un **índice con estado**, no redefine lo que ya vive en ADRs y políticas — apunta a la fuente y dice qué está construido y qué falta.
+Contraparte técnica de [`especificacion-funcional.md`](especificacion-funcional.md). Este documento es un **índice con estado**, no redefine lo que ya vive en ADRs y políticas — apunta a la fuente y dice qué está construido y qué falta.  
+**Diccionario y Modelo de Datos Completo (Esquemas, Tablas, Columnas, PK, FK y Diagramas ER):** [`../../arquitectura/modelo-datos-ecosistema.md`](../../arquitectura/modelo-datos-ecosistema.md)
 
 **Regla de arquitectura (2026-07-27):** todo lo que implementa un requerimiento `PLT-xxx` (transversal a los 4 negocios) vive en un paquete compartido (`packages/*`), no dentro de `apps/{app}/modulos/`, aunque hoy solo un negocio lo use. `packages/supabase` (`@eco/supabase`) y `packages/identidad` (`@eco/identidad`) son los primeros en seguir este patrón — nacieron dentro de `tranqi-web` y se extrajeron cuando quedó claro que los otros 3 negocios necesitaban exactamente lo mismo. `configuracion-negocio` y `gestion-usuarios` todavía no se extrajeron (pendiente, ver §1.1 y §9) — es deuda de secuencia, no una decisión de diseño distinta.
 
