@@ -226,9 +226,9 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
     clave: "paquete_beneficios_abogados",
     nombre: "Paquete de Beneficios & Convenios para Abogados",
     detalle: "Listado de convenios de capacitación, maestrías, herramientas y beneficios gremiales para la red profesional",
-    ruta: "/panel/red-profesional?widget=paquete_beneficios_abogados",
+    ruta: "/panel/agendamiento?widget=paquete_beneficios_abogados",
     categoria: "Red Profesional",
-    minNivel: 50,
+    minNivel: 20,
     icono: Sparkles,
     colorIcono: "#5000BA"
   },
@@ -276,9 +276,9 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
     clave: "mi_perfil_abogado",
     nombre: "Mis Especialidades, Cobertura y Disponibilidad",
     detalle: "Autogestión del socio abogado: materias legales, provincias de cobertura y configuración de citas presenciales y teleconsulta",
-    ruta: "/panel/red-profesional?widget=mi_perfil_abogado",
+    ruta: "/panel/agendamiento?widget=mi_perfil_abogado",
     categoria: "Red Profesional",
-    minNivel: 50,
+    minNivel: 20,
     icono: Scale,
     colorIcono: "#05876E"
   },

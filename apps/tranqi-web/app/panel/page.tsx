@@ -8,7 +8,7 @@ import {
   type LucideIcon
 } from "lucide-react";
 import { obtenerPerfilActual, obtenerSaludo, obtenerPerfiles, obtenerNivelMaximo } from "@eco/identidad";
-import type { ModoRol } from "./SelectorRolActivo";
+import { ROLES_DEFAULT, type ModoRol } from "./SelectorRolActivo";
 import { TarjetasFavoritasGrid } from "./SeccionFavoritosInicio";
 import { BuscadorModulosGlobal } from "./BuscadorModulosGlobal";
 import { WidgetNotificacionesCliente } from "@eco/notificaciones";
@@ -42,12 +42,10 @@ const ACCESOS_CLIENTE: { icono: LucideIcon; nombre: string; detalle: string; hre
 ];
 
 const ACCESOS_ABOGADO: { icono: LucideIcon; nombre: string; detalle: string; href?: string }[] = [
-  { icono: Scale, nombre: "Mis Especialidades y Cobertura", detalle: "Materias y provincias activas", href: "/panel/red-profesional?widget=mi_perfil_abogado" },
-  { icono: Calendar, nombre: "Disponibilidad de Citas", detalle: "Horarios presencial y teleconsulta", href: "/panel/agenda/disponibilidad" },
+  { icono: Scale, nombre: "Mis Especialidades y Cobertura", detalle: "Materias y provincias activas", href: "/panel/agendamiento?widget=mi_perfil_abogado" },
+  { icono: Calendar, nombre: "Disponibilidad de Citas", detalle: "Horarios presencial y teleconsulta", href: "/panel/agendamiento?widget=disponibilidad" },
   { icono: Briefcase, nombre: "Citas Programadas", detalle: "Confirmar y atender consultas", href: "/panel/agenda" },
-  { icono: Award, nombre: "Paquete de Beneficios", detalle: "Convenios y capacitaciones", href: "/panel/red-profesional?widget=paquete_beneficios_abogados" },
-  { icono: Users, nombre: "CRM & Clientes", detalle: "Directorio y expedientes", href: "/panel/clientes" },
-  { icono: Coins, nombre: "Mis honorarios", detalle: "Tarifario y liquidación", href: "/panel/catalogo-productos" },
+  { icono: Award, nombre: "Paquete de Beneficios", detalle: "Convenios y capacitaciones", href: "/panel/agendamiento?widget=paquete_beneficios_abogados" },
   { icono: Folder, nombre: "Billetera digital", detalle: "Documentos y expedientes", href: "/panel/billetera-documentos" },
   { icono: FileCheck, nombre: "Firmar un documento", detalle: "Con tu certificado digital", href: "/panel/firma-documentos" },
 ];
@@ -150,7 +148,16 @@ export default async function PagePanel({ searchParams }: Props) {
     perfiles = perfiles.filter((p) => p.toUpperCase() !== "ABOGADO");
   }
 
-  const puedeConmutar = Boolean(perfil?.usu_superadmin_plataforma || perfiles.length > 1);
+  const esSuperAdminPlataforma = Boolean(perfil?.usu_superadmin_plataforma || perfiles.includes("SUPERADMIN"));
+  const rolesDisponibles = esSuperAdminPlataforma
+    ? ROLES_DEFAULT
+    : ROLES_DEFAULT.filter((r) => {
+        const setPerfiles = new Set(perfiles.map((p) => p.toUpperCase()));
+        setPerfiles.add("CLIENTE");
+        return setPerfiles.has(r.clave.toUpperCase());
+      });
+
+  const puedeConmutar = Boolean(esSuperAdminPlataforma || rolesDisponibles.length > 1);
   const rawParams = await searchParams;
   const modoURL = modoValido(rawParams?.modo);
   const cookieStore = await cookies();
@@ -159,14 +166,14 @@ export default async function PagePanel({ searchParams }: Props) {
 
   const candidatoModo = modoURL ?? modoCookie;
   let modo: ModoRol = modoDePerfiles(perfiles);
-  if (perfil?.usu_superadmin_plataforma && candidatoModo) {
+  if (esSuperAdminPlataforma && candidatoModo) {
     modo = candidatoModo;
   } else if (candidatoModo) {
     const mUp = candidatoModo.toUpperCase();
-    const tieneRol = perfiles.some((p) => {
-      const pUp = p.toUpperCase();
-      if (pUp === "ADMINISTRADOR" && (mUp === "ADMIN" || mUp === "ADMINISTRADOR")) return true;
-      return pUp === mUp;
+    const tieneRol = rolesDisponibles.some((r) => {
+      const rUp = r.clave.toUpperCase();
+      if (rUp === "ADMINISTRADOR" && (mUp === "ADMIN" || mUp === "ADMINISTRADOR")) return true;
+      return rUp === mUp;
     });
     if (tieneRol) modo = candidatoModo;
   }
@@ -181,13 +188,23 @@ export default async function PagePanel({ searchParams }: Props) {
   const saludo = await obtenerSaludo(perfil?.usu_nombres ?? "", perfil?.usu_apellidos ?? "");
   const nombre = perfil?.usu_nombres?.split(/\s+/)[0] ?? "Usuario";
   const nombreCompleto = [perfil?.usu_nombres, perfil?.usu_apellidos].filter(Boolean).join(" ") || "Usuario";
-  const esAdminGlobal = puedeConmutar || perfiles.includes("ADMINISTRADOR");
+  const esAdminGlobal = esSuperAdminPlataforma || perfiles.includes("ADMINISTRADOR");
   const nivelMaximo = await obtenerNivelMaximo(NEGOCIO);
+  const nivelModoActivo =
+    modo === "superadmin"
+      ? 100
+      : modo === "admin"
+      ? 80
+      : modo === "operador"
+      ? 30
+      : modo === "abogado"
+      ? 20
+      : Math.min(nivelMaximo, 1);
 
   return (
     <div className="contenedor-panel">
       <div className="barra-superior-panel">
-        <BuscadorModulosGlobal nivelUsuario={nivelMaximo} esSuperadmin={puedeConmutar} />
+        <BuscadorModulosGlobal nivelUsuario={nivelModoActivo} esSuperadmin={modo === "superadmin"} />
 
         {/* TRQ-013 (5A): menú de cuenta en vez del enlace suelto a /panel/cuenta. */}
         <MenuCuenta
@@ -198,6 +215,7 @@ export default async function PagePanel({ searchParams }: Props) {
           rolTexto={textoRol(modo)}
           puedeConmutar={puedeConmutar}
           modoActual={modo}
+          rolesDisponibles={rolesDisponibles}
         />
       </div>
 
@@ -516,7 +534,7 @@ async function PanelAbogado({ nombreCompleto }: { nombreCompleto: string }) {
                   : "Teleconsulta Virtual"}
               </span>
               <Link
-                href="/panel/red-profesional?widget=mi_perfil_abogado"
+                href="/panel/agendamiento?widget=mi_perfil_abogado"
                 className="chip-proteccion"
                 style={{ textDecoration: "none", background: "#FEE300", color: "#111827", fontWeight: 800 }}
               >
@@ -560,7 +578,7 @@ async function PanelAbogado({ nombreCompleto }: { nombreCompleto: string }) {
           <section className="tarjeta-seccion" aria-labelledby="t-turnos">
             <header>
               <h2 id="t-turnos">Disponibilidad & Citas</h2>
-              <Link href="/panel/agenda/disponibilidad" className="enlace-accion">Configurar</Link>
+              <Link href="/panel/agendamiento?widget=disponibilidad" className="enlace-accion">Configurar</Link>
             </header>
             <div className="vacio-seccion">
               <b>{citasSemana > 0 ? `${citasSemana} cupos semanales activos` : "Sin horario configurado"}</b>

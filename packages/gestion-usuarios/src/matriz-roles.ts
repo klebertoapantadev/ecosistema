@@ -16,16 +16,11 @@ export const MATRIZ_FUNCIONAL_ROLES: Record<string, { paneles: string[]; widgets
     }
   },
   ABOGADO: {
-    paneles: ["panel_inicio", "panel_clientes", "panel_empresas", "panel_red_profesional", "panel_agendamiento", "panel_cuenta", "panel_herramientas", "panel_configuracion"],
+    paneles: ["panel_inicio", "panel_agendamiento", "panel_cuenta"],
     widgetsPorPanel: {
       panel_inicio: ["favoritos"],
-      panel_clientes: ["vitrina_comercial_personas", "muro_informativo_comunidad", "crm_clientes", "billetera_documentos", "firma_documentos_pdf"],
-      panel_empresas: ["vitrina_comercial_empresas", "gestion_convenios_corporativos", "crm_clientes", "billetera_documentos", "firma_documentos_pdf"],
-      panel_red_profesional: ["mi_perfil_abogado", "paquete_beneficios_abogados"],
-      panel_agendamiento: ["mi_perfil_abogado", "disponibilidad_abogados", "citas_programadas", "disponibilidad", "asignaciones_agenda"],
-      panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos", "historial_pagos"],
-      panel_herramientas: ["catalogo_productos", "disponibilidad_abogados", "firma_documentos_pdf", "billetera_documentos", "solicitud_socio"],
-      panel_configuracion: ["notificaciones", "agentes_ia"]
+      panel_agendamiento: ["mi_perfil_abogado", "disponibilidad", "citas_programadas", "paquete_beneficios_abogados", "billetera_documentos", "firma_documentos_pdf"],
+      panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos", "historial_pagos", "notificaciones"]
     }
   },
   OPERADOR: {

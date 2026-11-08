@@ -107,7 +107,7 @@ function obtenerPanelesInicialesPorRol(modoActivo: ModoRol): PanelDefNav[] {
 
   if (rolKey === "ABOGADO") {
     return PANELES_BASE_DEFAULT.filter(
-      p => p.id === "panel_inicio" || p.id === "panel_clientes" || p.id === "panel_empresas" || p.id === "panel_red_profesional" || p.id === "panel_agendamiento" || p.id === "panel_cuenta" || p.id === "panel_herramientas"
+      p => p.id === "panel_inicio" || p.id === "panel_agendamiento" || p.id === "panel_cuenta"
     );
   }
 
@@ -141,6 +141,15 @@ export function NavegacionSidebar({
             (p) => p.id === "panel_inicio" || p.id === "panel_clientes" || p.id === "panel_agendamiento" || p.id === "panel_cuenta"
           );
           setPanelesVisibles(panelesCliente);
+          return;
+        }
+
+        // REGLA ABOGADO: Menú estrictamente acotado al espacio profesional del socio abogado (sin consolas de Operador como Clientes, Empresas, Red profesional, Herramientas o Configurar)
+        if (rolKey === "ABOGADO") {
+          const panelesAbogado = PANELES_BASE_DEFAULT.filter(
+            (p) => p.id === "panel_inicio" || p.id === "panel_agendamiento" || p.id === "panel_cuenta"
+          );
+          setPanelesVisibles(panelesAbogado);
           return;
         }
 

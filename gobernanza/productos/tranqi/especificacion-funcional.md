@@ -52,7 +52,7 @@ Tranqi adopta las mejores prácticas y estándares internacionales de **Law Prac
 | **`TRQ-ABG-001`** | **Abogado** | **Acreditación, Contratación Dual (Firma Digital .p12 / Manual) y Onboarding** | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`TRQ-ABG-002`** | **Abogado** | **Despacho Virtual: Bandeja de Casos, Expediente Digital y Actuaciones SATJE** | 🟡 En Desarrollo | **25%** | Kleber Toapanta / Jesus Navarrete |
 | **`TRQ-ABG-003`** | **Abogado** | **Firma Electrónica Avanzada PAdES en Navegador (Zero-Custody `.p12`/`.pfx`)** | ✅ Implementado | **100%** | Kleber Toapanta |
-| **`TRQ-ABG-004`** | **Abogado** | **Agenda Profesional, Especialidades, Zonas de Cobertura, Citas Presenciales y Sala de Videoconsulta Segura** | ✅ Implementado | **90%** | Kleber Toapanta / Jesus Navarrete |
+| **`TRQ-ABG-004`** | **Abogado** | **Agenda Profesional, Especialidades, Zonas de Cobertura, Citas Presenciales y Sala de Videoconsulta Segura** | ✅ Implementado | **95%** | Kleber Toapanta / Jesus Navarrete |
 | **`TRQ-ABG-005`** | **Abogado** | **Verificación Inteligente de Identidad y Carnet Profesional con Aria (IA) en Registro Simplificado de Abogados** | ✅ Implementado | **100%** | **Jesus Navarrete (IA) / Kleber Toapanta** |
 | **`TRQ-ABG-006`** | **Abogado** | **Portal Informativo de la Red Nacional de Abogados (/abogados): Beneficios, Modelo Operativo, Validación de Correo y Botón de Registro** | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`TRQ-ADM-001`** | **Operador/Admin** | **Gestión de Red Profesional, Invitación Individual/Masiva por Correo (`/abogados`), Conversión de Usuarios en Abogados, Cobertura y Disponibilidad** | ✅ Implementado | **100%** | Kleber Toapanta |

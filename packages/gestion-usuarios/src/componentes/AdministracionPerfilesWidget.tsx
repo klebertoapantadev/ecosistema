@@ -312,17 +312,12 @@ const PERFILES_INICIALES: PerfilDef[] = [
     nombre: "Socio Abogado / Profesional",
     nivel: 50,
     ambito: "Empresa",
-    descripcion: "Perfil profesional para atención legal de causas, citas y expedientes.",
-    panelesAsignados: ["panel_inicio", "panel_clientes", "panel_empresas", "panel_red_profesional", "panel_agendamiento", "panel_cuenta", "panel_herramientas", "panel_configuracion"],
+    descripcion: "Perfil profesional para atención legal de causas, citas, disponibilidad y especialidades.",
+    panelesAsignados: ["panel_inicio", "panel_agendamiento", "panel_cuenta"],
     widgetsAsignadosPorPanel: {
       panel_inicio: ["favoritos"],
-      panel_clientes: ["vitrina_comercial_personas", "muro_informativo_comunidad", "crm_clientes", "billetera_documentos", "firma_documentos_pdf"],
-      panel_empresas: ["vitrina_comercial_empresas", "gestion_convenios_corporativos", "crm_clientes", "billetera_documentos", "firma_documentos_pdf"],
-      panel_red_profesional: ["mi_perfil_abogado", "paquete_beneficios_abogados"],
-      panel_agendamiento: ["mi_perfil_abogado", "disponibilidad_abogados", "citas_programadas", "disponibilidad", "asignaciones_agenda"],
-      panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos", "historial_pagos"],
-      panel_herramientas: ["catalogo_productos", "disponibilidad_abogados", "firma_documentos_pdf", "billetera_documentos", "solicitud_socio"],
-      panel_configuracion: ["notificaciones", "agentes_ia"]
+      panel_agendamiento: ["mi_perfil_abogado", "disponibilidad", "citas_programadas", "paquete_beneficios_abogados", "billetera_documentos", "firma_documentos_pdf"],
+      panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos", "historial_pagos", "notificaciones"]
     },
     activo: true
   },
@@ -877,9 +872,9 @@ const WIDGETS_INVENTARIO_INICIALES: WidgetInventarioDef[] = [
     nombre: "Mis Especialidades, Cobertura y Disponibilidad",
     descripcion: "Autogestión del socio abogado: configuración de materias legales, provincias de cobertura y disponibilidad de citas presenciales y teleconsulta.",
     categoria: "Red Profesional",
-    ruta: "/panel/red-profesional?widget=mi_perfil_abogado",
+    ruta: "/panel/agendamiento?widget=mi_perfil_abogado",
     rutaFisica: "/socios/componentes/MiPerfilRedAbogadoWidget.tsx",
-    panelId: "panel_red_profesional",
+    panelId: "panel_agendamiento",
     activo: true,
     creadoEn: "2026-11-08"
   }
@@ -1503,8 +1498,12 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
             if (p.clave?.toUpperCase() === "OPERADOR" && widgetsMerged["panel_usuarios"]) {
               widgetsMerged["panel_usuarios"] = widgetsMerged["panel_usuarios"].filter((w: string) => w !== "crm_clientes");
             }
-            if (p.clave?.toUpperCase() === "ABOGADO" && widgetsMerged["panel_usuarios"]) {
-              widgetsMerged["panel_usuarios"] = widgetsMerged["panel_usuarios"].filter((w: string) => w !== "crm_clientes");
+            if (p.clave?.toUpperCase() === "ABOGADO") {
+              return {
+                ...p,
+                panelesAsignados: [...base.panelesAsignados],
+                widgetsAsignadosPorPanel: { ...base.widgetsAsignadosPorPanel }
+              };
             }
 
             return {

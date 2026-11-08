@@ -1,7 +1,9 @@
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { obtenerPerfilActual, obtenerPerfiles } from "@eco/identidad";
+import { crearClienteServidor, crearClienteAdmin } from "@eco/supabase/servidor";
 import { obtenerConfiguracionNavegacionRolAction } from "@eco/gestion-usuarios/acciones";
+import { ROLES_DEFAULT } from "../SelectorRolActivo";
 import { PanelDinamicoModular } from "./PanelDinamicoModular";
 
 const NEGOCIO = "TRANQ";
@@ -23,8 +25,28 @@ export default async function PaginaPanelDinamico({ params }: Props) {
     redirect(`/panel/${slug}`);
   }
 
-  const perfiles = await obtenerPerfiles(NEGOCIO);
-  const perfilesUpper = perfiles.map((p) => p.toUpperCase().trim());
+  const perfilesBase = await obtenerPerfiles(NEGOCIO);
+  const supabase = await crearClienteServidor();
+  const adminClient = (crearClienteAdmin() || supabase) as any;
+
+  let regAbogado: { abg_id: string; abg_estado: string } | null = null;
+  if (perfil.usu_id) {
+    const { data } = await adminClient
+      .schema("tranqui_legal")
+      .from("trq_abogado")
+      .select("abg_id, abg_estado")
+      .eq("abg_usuario_id", perfil.usu_id)
+      .maybeSingle();
+    regAbogado = data;
+  }
+
+  let perfilesUpper = perfilesBase.map((p) => p.toUpperCase().trim());
+  if (regAbogado?.abg_estado === "verificado" && !perfilesUpper.includes("ABOGADO")) {
+    perfilesUpper.push("ABOGADO");
+  } else if (regAbogado?.abg_estado === "suspendido") {
+    perfilesUpper = perfilesUpper.filter((p) => p !== "ABOGADO");
+  }
+
   const correo = perfil.usu_correo?.toLowerCase().trim() || "";
   const esSuperAdminEmail = correo === "familiammtg@gmail.com" || correo === "jesus251296@gmail.com";
   const esSuperAdminPlataforma = Boolean(perfil.usu_superadmin_plataforma);
@@ -36,7 +58,7 @@ export default async function PaginaPanelDinamico({ params }: Props) {
   let rolActivo = "CLIENTE";
   if (esSuperAdmin) {
     rolActivo = modoCookie || "SUPERADMIN";
-  } else if (modoCookie && perfilesUpper.includes(modoCookie)) {
+  } else if (modoCookie && (perfilesUpper.includes(modoCookie) || modoCookie === "CLIENTE")) {
     rolActivo = modoCookie;
   } else if (perfilesUpper.includes("ADMINISTRADOR") || perfilesUpper.includes("ADMIN")) {
     rolActivo = "ADMINISTRADOR";
@@ -52,13 +74,34 @@ export default async function PaginaPanelDinamico({ params }: Props) {
     rolActivo = perfilesUpper[0] || "CLIENTE";
   }
 
+  const slugLimpio = slug.toLowerCase().trim();
+
   // Protección de acceso por rol para CLIENTE
-  if (!esSuperAdmin && rolActivo === "CLIENTE") {
+  if (rolActivo === "CLIENTE") {
     const slugsPermitidosCliente = ["clientes", "empresas", "agendamiento", "herramientas", "cuenta"];
-    if (!slugsPermitidosCliente.includes(slug.toLowerCase().trim())) {
+    if (!slugsPermitidosCliente.includes(slugLimpio)) {
       redirect("/panel");
     }
   }
+
+  // Protección de acceso por rol para ABOGADO (no exponer consolas de Operador como Clientes, Empresas o Red profesional)
+  if (rolActivo === "ABOGADO") {
+    if (slugLimpio === "red-profesional") {
+      redirect("/panel/agendamiento?widget=mi_perfil_abogado");
+    }
+    const slugsPermitidosAbogado = ["agendamiento", "cuenta"];
+    if (!slugsPermitidosAbogado.includes(slugLimpio)) {
+      redirect("/panel");
+    }
+  }
+
+  const rolesDisponibles = esSuperAdmin
+    ? ROLES_DEFAULT
+    : ROLES_DEFAULT.filter((r) => {
+        const setPerfiles = new Set(perfilesUpper);
+        setPerfiles.add("CLIENTE");
+        return setPerfiles.has(r.clave.toUpperCase());
+      });
 
   const resBdd = await obtenerConfiguracionNavegacionRolAction(rolActivo, NEGOCIO);
   const slugNorm = slug.replace(/-/g, "_");
@@ -78,6 +121,7 @@ export default async function PaginaPanelDinamico({ params }: Props) {
       rolInicial={rolActivo}
       esSuperAdmin={esSuperAdmin}
       widgetsIniciales={widgetsIniciales}
+      rolesDisponibles={rolesDisponibles}
     />
   );
 }

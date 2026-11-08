@@ -799,13 +799,22 @@ export async function obtenerConfiguracionNavegacionRolAction(
       if (bddWidgetsPorPanel && typeof bddWidgetsPorPanel === "object") {
         for (const [pId, wList] of Object.entries(bddWidgetsPorPanel)) {
           if (Array.isArray(wList)) {
+            if (rolUpper === "ABOGADO" && !["panel_inicio", "panel_agendamiento", "panel_cuenta"].includes(pId)) {
+              continue;
+            }
             const canonicos = widgetsPorPanel[pId] || [];
-            widgetsPorPanel[pId] = Array.from(new Set([...canonicos, ...wList.map(String)]));
+            const filtrados = rolUpper === "ABOGADO"
+              ? wList.map(String).filter((w) => !["disponibilidad_abogados", "asignaciones_agenda", "gestion_red_abogados", "crm_clientes", "agentes_ia", "socios", "solicitud_socio"].includes(w))
+              : wList.map(String);
+            widgetsPorPanel[pId] = Array.from(new Set([...canonicos, ...filtrados]));
           }
         }
       }
       if (Array.isArray(bddPaneles)) {
-        panelesAsignados = Array.from(new Set([...panelesAsignados, ...bddPaneles.map(String)]));
+        const panelesFiltrados = rolUpper === "ABOGADO"
+          ? bddPaneles.map(String).filter((p) => ["panel_inicio", "panel_agendamiento", "panel_cuenta"].includes(p))
+          : bddPaneles.map(String);
+        panelesAsignados = Array.from(new Set([...panelesAsignados, ...panelesFiltrados]));
       }
       titulosWidgetsPorPanel = negocioConfig?.titulosWidgetsPorPanel || detalle.titulosWidgetsPorPanel || {};
     }

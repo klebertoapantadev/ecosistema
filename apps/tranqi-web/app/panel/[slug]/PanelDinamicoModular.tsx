@@ -20,7 +20,7 @@ import { FormularioSmtp } from "@eco/configuracion-negocio/componentes/Formulari
 import { GestionTokensMcpWidget } from "@eco/configuracion-negocio/componentes/GestionTokensMcpWidget";
 import { FormularioPerfil } from "@eco/identidad/componentes/FormularioPerfil";
 import { WidgetConfiguracionMfa } from "@eco/identidad/componentes/WidgetConfiguracionMfa";
-import { SelectorRolActivo } from "../SelectorRolActivo";
+import { SelectorRolActivo, type RolOpcionDef } from "../SelectorRolActivo";
 import { VisorAuditoriaWidget } from "../auditoria/VisorAuditoriaWidget";
 import { useCustomWidgets } from "../gestorTitulosWidgets";
 import { WidgetFirmaDocumentosPdf } from "@/modulos/firma-documentos/componentes/WidgetFirmaDocumentosPdf";
@@ -52,6 +52,7 @@ interface Props {
   rolInicial?: string;
   esSuperAdmin?: boolean;
   widgetsIniciales?: string[];
+  rolesDisponibles?: RolOpcionDef[];
 }
 
 // PLT-020: las pantallas de agenda son rutas propias, no widgets en linea --
@@ -168,6 +169,20 @@ const INVENTARIO_GLOBAL_WIDGETS: Record<string, { titulo: string; subtitulo: str
     icono: Calendar,
     colorIcono: "#5000BA",
     categoria: "Operación & Citas"
+  },
+  citas_programadas: {
+    titulo: "Citas Programadas & Agenda Legal",
+    subtitulo: "Confirma, atiende o reagenda las consultas legales asignadas a tu turno",
+    icono: Calendar,
+    colorIcono: "#05876E",
+    categoria: "Agenda del Abogado"
+  },
+  disponibilidad: {
+    titulo: "Disponibilidad de Horarios & Citas",
+    subtitulo: "Configura tus franjas horarias de atención presencial y teleconsulta virtual",
+    icono: Calendar,
+    colorIcono: "#05876E",
+    categoria: "Agenda del Abogado"
   },
   vitrina_comercial_personas: {
     titulo: "Oferta para Personas Naturales & Familias",
@@ -568,7 +583,7 @@ function obtenerWidgetsInicialesDinamicos(panelId: string, slugStr: string, rolD
   return [];
 }
 
-export function PanelDinamicoModular({ slug, negocio, rolInicial = "ADMINISTRADOR", esSuperAdmin, widgetsIniciales }: Props) {
+export function PanelDinamicoModular({ slug, negocio, rolInicial = "ADMINISTRADOR", esSuperAdmin, widgetsIniciales, rolesDisponibles }: Props) {
   const slugNormalizado = slug.replace(/-/g, "_");
   const panelIdBuscado = slugNormalizado.startsWith("panel_") ? slugNormalizado : `panel_${slugNormalizado}`;
 
@@ -754,6 +769,9 @@ export function PanelDinamicoModular({ slug, negocio, rolInicial = "ADMINISTRADO
         // Sanitización universal: Si el perfil es OPERADOR y el panel es usuarios, jamás mostrar crm_clientes
         if (rolActivo === "OPERADOR" && (panelIdBuscado === "panel_usuarios" || slugNormalizado === "usuarios")) {
           listW = listW.filter(w => w !== "crm_clientes");
+        }
+        if (rolActivo === "ABOGADO") {
+          listW = wCanonicos;
         }
 
         setWidgetsAsignados(listW);
@@ -943,7 +961,7 @@ export function PanelDinamicoModular({ slug, negocio, rolInicial = "ADMINISTRADO
         return <FormularioPerfil inicial={{ nombres: "", apellidos: "", correo: "", whatsapp: "", autorizaWhatsapp: false }} />;
       case "ver_como":
       case "rol_activo":
-        return <SelectorRolActivo />;
+        return <SelectorRolActivo roles={rolesDisponibles} />;
       case "socios":
       case "aprobacion_socios":
         return <SociosWidget />;
