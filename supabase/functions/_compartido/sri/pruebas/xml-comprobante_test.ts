@@ -1,4 +1,4 @@
-import { assert, assertEquals, assertStringIncludes } from "jsr:@std/assert@1.0.13";
+import { assert, assertEquals, assertStringIncludes, assertThrows } from "jsr:@std/assert@1.0.13";
 import { calcularTotales } from "../totales.ts";
 import { generarXmlComprobante } from "../xml-comprobante.ts";
 import { canonico, documento } from "../xml.ts";
@@ -53,4 +53,10 @@ Deno.test("xml: textos con saltos de línea y demasiado largos se normalizan", a
   const xml = canonico(raiz);
   assert(!xml.includes("\n") && !xml.includes("&#xD;"));
   assertEquals(await erroresXsd(documento(raiz), "01"), []);
+});
+
+Deno.test("xml: más de 15 campos adicionales es un error, no se truncan", () => {
+  const c = factura({ infoAdicional: Array.from({ length: 15 }, (_, i) => ({ nombre: `C${i}`, valor: "v" })) });
+  // 15 propios + el correo del comprador = 16.
+  assertThrows(() => generarXmlComprobante(c, calcularTotales(c.detalles)), Error, "infoAdicional");
 });
