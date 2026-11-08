@@ -1,0 +1,920 @@
+{
+  "_descripcion": "Casos de totales compartidos por el worker (Domo.Firma) y el front. Importes como strings decimales. Algoritmo en IMPLEMENTACION.md §4: base = round_half_up(cantidad*precio - descuento, 2); por grupo de codigo_porcentaje valor_g = round_half_up(suma(base)*tarifa/100, 2); el IVA de cada línea parte de round_half_up(base*tarifa/100, 2) y la diferencia con valor_g se reparte en centavos por resto mayor (empates por orden de línea), de modo que la suma de las líneas es exactamente valor_g y cada línea queda a menos de 1 centavo de base*tarifa/100; total_iva = suma de valor_g; importe_total = total_sin_impuestos + total_iva.",
+  "tarifas": {
+    "0": "0",
+    "4": "15",
+    "5": "5",
+    "6": "0",
+    "7": "0",
+    "10": "13"
+  },
+  "casos": [
+    {
+      "nombre": "una línea IVA 15 %",
+      "lineas": [
+        {
+          "cantidad": "1",
+          "precio_unitario": "10",
+          "descuento": "0",
+          "iva_codigo_porcentaje": "4"
+        }
+      ],
+      "esperado": {
+        "lineas": [
+          {
+            "base": "10.00",
+            "valor_iva": "1.50"
+          }
+        ],
+        "grupos": [
+          {
+            "codigo_porcentaje": "4",
+            "tarifa": "15",
+            "base": "10.00",
+            "valor": "1.50"
+          }
+        ],
+        "total_sin_impuestos": "10.00",
+        "total_descuento": "0.00",
+        "total_iva": "1.50",
+        "importe_total": "11.50"
+      }
+    },
+    {
+      "nombre": "una línea IVA 0 % (servicio de salud)",
+      "lineas": [
+        {
+          "cantidad": "1",
+          "precio_unitario": "35",
+          "descuento": "0",
+          "iva_codigo_porcentaje": "0"
+        }
+      ],
+      "esperado": {
+        "lineas": [
+          {
+            "base": "35.00",
+            "valor_iva": "0.00"
+          }
+        ],
+        "grupos": [
+          {
+            "codigo_porcentaje": "0",
+            "tarifa": "0",
+            "base": "35.00",
+            "valor": "0.00"
+          }
+        ],
+        "total_sin_impuestos": "35.00",
+        "total_descuento": "0.00",
+        "total_iva": "0.00",
+        "importe_total": "35.00"
+      }
+    },
+    {
+      "nombre": "mixta 15 % y 0 %",
+      "lineas": [
+        {
+          "cantidad": "2",
+          "precio_unitario": "12.50",
+          "descuento": "0",
+          "iva_codigo_porcentaje": "4"
+        },
+        {
+          "cantidad": "1",
+          "precio_unitario": "40",
+          "descuento": "0",
+          "iva_codigo_porcentaje": "0"
+        }
+      ],
+      "esperado": {
+        "lineas": [
+          {
+            "base": "25.00",
+            "valor_iva": "3.75"
+          },
+          {
+            "base": "40.00",
+            "valor_iva": "0.00"
+          }
+        ],
+        "grupos": [
+          {
+            "codigo_porcentaje": "0",
+            "tarifa": "0",
+            "base": "40.00",
+            "valor": "0.00"
+          },
+          {
+            "codigo_porcentaje": "4",
+            "tarifa": "15",
+            "base": "25.00",
+            "valor": "3.75"
+          }
+        ],
+        "total_sin_impuestos": "65.00",
+        "total_descuento": "0.00",
+        "total_iva": "3.75",
+        "importe_total": "68.75"
+      }
+    },
+    {
+      "nombre": "redondeo medio hacia arriba en la base (1.005)",
+      "lineas": [
+        {
+          "cantidad": "1",
+          "precio_unitario": "1.005",
+          "descuento": "0",
+          "iva_codigo_porcentaje": "4"
+        }
+      ],
+      "esperado": {
+        "lineas": [
+          {
+            "base": "1.01",
+            "valor_iva": "0.15"
+          }
+        ],
+        "grupos": [
+          {
+            "codigo_porcentaje": "4",
+            "tarifa": "15",
+            "base": "1.01",
+            "valor": "0.15"
+          }
+        ],
+        "total_sin_impuestos": "1.01",
+        "total_descuento": "0.00",
+        "total_iva": "0.15",
+        "importe_total": "1.16"
+      }
+    },
+    {
+      "nombre": "cantidad con 6 decimales",
+      "lineas": [
+        {
+          "cantidad": "0.333333",
+          "precio_unitario": "3",
+          "descuento": "0",
+          "iva_codigo_porcentaje": "4"
+        }
+      ],
+      "esperado": {
+        "lineas": [
+          {
+            "base": "1.00",
+            "valor_iva": "0.15"
+          }
+        ],
+        "grupos": [
+          {
+            "codigo_porcentaje": "4",
+            "tarifa": "15",
+            "base": "1.00",
+            "valor": "0.15"
+          }
+        ],
+        "total_sin_impuestos": "1.00",
+        "total_descuento": "0.00",
+        "total_iva": "0.15",
+        "importe_total": "1.15"
+      }
+    },
+    {
+      "nombre": "precio con 6 decimales",
+      "lineas": [
+        {
+          "cantidad": "3",
+          "precio_unitario": "0.333333",
+          "descuento": "0",
+          "iva_codigo_porcentaje": "4"
+        }
+      ],
+      "esperado": {
+        "lineas": [
+          {
+            "base": "1.00",
+            "valor_iva": "0.15"
+          }
+        ],
+        "grupos": [
+          {
+            "codigo_porcentaje": "4",
+            "tarifa": "15",
+            "base": "1.00",
+            "valor": "0.15"
+          }
+        ],
+        "total_sin_impuestos": "1.00",
+        "total_descuento": "0.00",
+        "total_iva": "0.15",
+        "importe_total": "1.15"
+      }
+    },
+    {
+      "nombre": "descuento en línea",
+      "lineas": [
+        {
+          "cantidad": "2",
+          "precio_unitario": "50",
+          "descuento": "10.00",
+          "iva_codigo_porcentaje": "4"
+        }
+      ],
+      "esperado": {
+        "lineas": [
+          {
+            "base": "90.00",
+            "valor_iva": "13.50"
+          }
+        ],
+        "grupos": [
+          {
+            "codigo_porcentaje": "4",
+            "tarifa": "15",
+            "base": "90.00",
+            "valor": "13.50"
+          }
+        ],
+        "total_sin_impuestos": "90.00",
+        "total_descuento": "10.00",
+        "total_iva": "13.50",
+        "importe_total": "103.50"
+      }
+    },
+    {
+      "nombre": "descuento que deja la base en cero",
+      "lineas": [
+        {
+          "cantidad": "1",
+          "precio_unitario": "20",
+          "descuento": "20.00",
+          "iva_codigo_porcentaje": "4"
+        }
+      ],
+      "esperado": {
+        "lineas": [
+          {
+            "base": "0.00",
+            "valor_iva": "0.00"
+          }
+        ],
+        "grupos": [
+          {
+            "codigo_porcentaje": "4",
+            "tarifa": "15",
+            "base": "0.00",
+            "valor": "0.00"
+          }
+        ],
+        "total_sin_impuestos": "0.00",
+        "total_descuento": "20.00",
+        "total_iva": "0.00",
+        "importe_total": "0.00"
+      }
+    },
+    {
+      "nombre": "IVA 5 %",
+      "lineas": [
+        {
+          "cantidad": "4",
+          "precio_unitario": "2.75",
+          "descuento": "0",
+          "iva_codigo_porcentaje": "5"
+        }
+      ],
+      "esperado": {
+        "lineas": [
+          {
+            "base": "11.00",
+            "valor_iva": "0.55"
+          }
+        ],
+        "grupos": [
+          {
+            "codigo_porcentaje": "5",
+            "tarifa": "5",
+            "base": "11.00",
+            "valor": "0.55"
+          }
+        ],
+        "total_sin_impuestos": "11.00",
+        "total_descuento": "0.00",
+        "total_iva": "0.55",
+        "importe_total": "11.55"
+      }
+    },
+    {
+      "nombre": "IVA 13 %",
+      "lineas": [
+        {
+          "cantidad": "1",
+          "precio_unitario": "99.99",
+          "descuento": "0",
+          "iva_codigo_porcentaje": "10"
+        }
+      ],
+      "esperado": {
+        "lineas": [
+          {
+            "base": "99.99",
+            "valor_iva": "13.00"
+          }
+        ],
+        "grupos": [
+          {
+            "codigo_porcentaje": "10",
+            "tarifa": "13",
+            "base": "99.99",
+            "valor": "13.00"
+          }
+        ],
+        "total_sin_impuestos": "99.99",
+        "total_descuento": "0.00",
+        "total_iva": "13.00",
+        "importe_total": "112.99"
+      }
+    },
+    {
+      "nombre": "no objeto y exento",
+      "lineas": [
+        {
+          "cantidad": "1",
+          "precio_unitario": "10",
+          "descuento": "0",
+          "iva_codigo_porcentaje": "6"
+        },
+        {
+          "cantidad": "1",
+          "precio_unitario": "5",
+          "descuento": "0",
+          "iva_codigo_porcentaje": "7"
+        }
+      ],
+      "esperado": {
+        "lineas": [
+          {
+            "base": "10.00",
+            "valor_iva": "0.00"
+          },
+          {
+            "base": "5.00",
+            "valor_iva": "0.00"
+          }
+        ],
+        "grupos": [
+          {
+            "codigo_porcentaje": "6",
+            "tarifa": "0",
+            "base": "10.00",
+            "valor": "0.00"
+          },
+          {
+            "codigo_porcentaje": "7",
+            "tarifa": "0",
+            "base": "5.00",
+            "valor": "0.00"
+          }
+        ],
+        "total_sin_impuestos": "15.00",
+        "total_descuento": "0.00",
+        "total_iva": "0.00",
+        "importe_total": "15.00"
+      }
+    },
+    {
+      "nombre": "reparto negativo: el redondeo por línea excede el del grupo",
+      "lineas": [
+        {
+          "cantidad": "1",
+          "precio_unitario": "0.10",
+          "descuento": "0",
+          "iva_codigo_porcentaje": "4"
+        },
+        {
+          "cantidad": "1",
+          "precio_unitario": "0.10",
+          "descuento": "0",
+          "iva_codigo_porcentaje": "4"
+        },
+        {
+          "cantidad": "1",
+          "precio_unitario": "0.10",
+          "descuento": "0",
+          "iva_codigo_porcentaje": "4"
+        }
+      ],
+      "esperado": {
+        "lineas": [
+          {
+            "base": "0.10",
+            "valor_iva": "0.01"
+          },
+          {
+            "base": "0.10",
+            "valor_iva": "0.02"
+          },
+          {
+            "base": "0.10",
+            "valor_iva": "0.02"
+          }
+        ],
+        "grupos": [
+          {
+            "codigo_porcentaje": "4",
+            "tarifa": "15",
+            "base": "0.30",
+            "valor": "0.05"
+          }
+        ],
+        "total_sin_impuestos": "0.30",
+        "total_descuento": "0.00",
+        "total_iva": "0.05",
+        "importe_total": "0.35"
+      }
+    },
+    {
+      "nombre": "reparto positivo: muchas líneas pequeñas",
+      "lineas": [
+        {
+          "cantidad": "1",
+          "precio_unitario": "0.03",
+          "descuento": "0",
+          "iva_codigo_porcentaje": "4"
+        },
+        {
+          "cantidad": "1",
+          "precio_unitario": "0.03",
+          "descuento": "0",
+          "iva_codigo_porcentaje": "4"
+        },
+        {
+          "cantidad": "1",
+          "precio_unitario": "0.03",
+          "descuento": "0",
+          "iva_codigo_porcentaje": "4"
+        },
+        {
+          "cantidad": "1",
+          "precio_unitario": "0.03",
+          "descuento": "0",
+          "iva_codigo_porcentaje": "4"
+        },
+        {
+          "cantidad": "1",
+          "precio_unitario": "0.03",
+          "descuento": "0",
+          "iva_codigo_porcentaje": "4"
+        },
+        {
+          "cantidad": "1",
+          "precio_unitario": "0.03",
+          "descuento": "0",
+          "iva_codigo_porcentaje": "4"
+        },
+        {
+          "cantidad": "1",
+          "precio_unitario": "0.03",
+          "descuento": "0",
+          "iva_codigo_porcentaje": "4"
+        }
+      ],
+      "esperado": {
+        "lineas": [
+          {
+            "base": "0.03",
+            "valor_iva": "0.01"
+          },
+          {
+            "base": "0.03",
+            "valor_iva": "0.01"
+          },
+          {
+            "base": "0.03",
+            "valor_iva": "0.01"
+          },
+          {
+            "base": "0.03",
+            "valor_iva": "0.00"
+          },
+          {
+            "base": "0.03",
+            "valor_iva": "0.00"
+          },
+          {
+            "base": "0.03",
+            "valor_iva": "0.00"
+          },
+          {
+            "base": "0.03",
+            "valor_iva": "0.00"
+          }
+        ],
+        "grupos": [
+          {
+            "codigo_porcentaje": "4",
+            "tarifa": "15",
+            "base": "0.21",
+            "valor": "0.03"
+          }
+        ],
+        "total_sin_impuestos": "0.21",
+        "total_descuento": "0.00",
+        "total_iva": "0.03",
+        "importe_total": "0.24"
+      }
+    },
+    {
+      "nombre": "reparto con restos distintos (resto mayor)",
+      "lineas": [
+        {
+          "cantidad": "1",
+          "precio_unitario": "0.07",
+          "descuento": "0",
+          "iva_codigo_porcentaje": "4"
+        },
+        {
+          "cantidad": "1",
+          "precio_unitario": "0.13",
+          "descuento": "0",
+          "iva_codigo_porcentaje": "4"
+        },
+        {
+          "cantidad": "1",
+          "precio_unitario": "0.21",
+          "descuento": "0",
+          "iva_codigo_porcentaje": "4"
+        },
+        {
+          "cantidad": "1",
+          "precio_unitario": "0.33",
+          "descuento": "0",
+          "iva_codigo_porcentaje": "4"
+        }
+      ],
+      "esperado": {
+        "lineas": [
+          {
+            "base": "0.07",
+            "valor_iva": "0.01"
+          },
+          {
+            "base": "0.13",
+            "valor_iva": "0.02"
+          },
+          {
+            "base": "0.21",
+            "valor_iva": "0.03"
+          },
+          {
+            "base": "0.33",
+            "valor_iva": "0.05"
+          }
+        ],
+        "grupos": [
+          {
+            "codigo_porcentaje": "4",
+            "tarifa": "15",
+            "base": "0.74",
+            "valor": "0.11"
+          }
+        ],
+        "total_sin_impuestos": "0.74",
+        "total_descuento": "0.00",
+        "total_iva": "0.11",
+        "importe_total": "0.85"
+      }
+    },
+    {
+      "nombre": "reparto en dos grupos a la vez",
+      "lineas": [
+        {
+          "cantidad": "1",
+          "precio_unitario": "0.10",
+          "descuento": "0",
+          "iva_codigo_porcentaje": "4"
+        },
+        {
+          "cantidad": "1",
+          "precio_unitario": "0.10",
+          "descuento": "0",
+          "iva_codigo_porcentaje": "4"
+        },
+        {
+          "cantidad": "1",
+          "precio_unitario": "0.10",
+          "descuento": "0",
+          "iva_codigo_porcentaje": "4"
+        },
+        {
+          "cantidad": "1",
+          "precio_unitario": "0.30",
+          "descuento": "0",
+          "iva_codigo_porcentaje": "5"
+        },
+        {
+          "cantidad": "1",
+          "precio_unitario": "0.30",
+          "descuento": "0",
+          "iva_codigo_porcentaje": "5"
+        },
+        {
+          "cantidad": "1",
+          "precio_unitario": "0.30",
+          "descuento": "0",
+          "iva_codigo_porcentaje": "5"
+        }
+      ],
+      "esperado": {
+        "lineas": [
+          {
+            "base": "0.10",
+            "valor_iva": "0.01"
+          },
+          {
+            "base": "0.10",
+            "valor_iva": "0.02"
+          },
+          {
+            "base": "0.10",
+            "valor_iva": "0.02"
+          },
+          {
+            "base": "0.30",
+            "valor_iva": "0.01"
+          },
+          {
+            "base": "0.30",
+            "valor_iva": "0.02"
+          },
+          {
+            "base": "0.30",
+            "valor_iva": "0.02"
+          }
+        ],
+        "grupos": [
+          {
+            "codigo_porcentaje": "4",
+            "tarifa": "15",
+            "base": "0.30",
+            "valor": "0.05"
+          },
+          {
+            "codigo_porcentaje": "5",
+            "tarifa": "5",
+            "base": "0.90",
+            "valor": "0.05"
+          }
+        ],
+        "total_sin_impuestos": "1.20",
+        "total_descuento": "0.00",
+        "total_iva": "0.10",
+        "importe_total": "1.30"
+      }
+    },
+    {
+      "nombre": "factura típica de varias líneas",
+      "lineas": [
+        {
+          "cantidad": "2",
+          "precio_unitario": "17.35",
+          "descuento": "0",
+          "iva_codigo_porcentaje": "4"
+        },
+        {
+          "cantidad": "1",
+          "precio_unitario": "8.99",
+          "descuento": "0",
+          "iva_codigo_porcentaje": "4"
+        },
+        {
+          "cantidad": "3",
+          "precio_unitario": "4.15",
+          "descuento": "1.20",
+          "iva_codigo_porcentaje": "4"
+        },
+        {
+          "cantidad": "1",
+          "precio_unitario": "23.47",
+          "descuento": "0",
+          "iva_codigo_porcentaje": "4"
+        },
+        {
+          "cantidad": "5",
+          "precio_unitario": "1.99",
+          "descuento": "0",
+          "iva_codigo_porcentaje": "4"
+        }
+      ],
+      "esperado": {
+        "lineas": [
+          {
+            "base": "34.70",
+            "valor_iva": "5.20"
+          },
+          {
+            "base": "8.99",
+            "valor_iva": "1.35"
+          },
+          {
+            "base": "11.25",
+            "valor_iva": "1.69"
+          },
+          {
+            "base": "23.47",
+            "valor_iva": "3.52"
+          },
+          {
+            "base": "9.95",
+            "valor_iva": "1.49"
+          }
+        ],
+        "grupos": [
+          {
+            "codigo_porcentaje": "4",
+            "tarifa": "15",
+            "base": "88.36",
+            "valor": "13.25"
+          }
+        ],
+        "total_sin_impuestos": "88.36",
+        "total_descuento": "1.20",
+        "total_iva": "13.25",
+        "importe_total": "101.61"
+      }
+    },
+    {
+      "nombre": "importe grande",
+      "lineas": [
+        {
+          "cantidad": "1500",
+          "precio_unitario": "1234.567891",
+          "descuento": "15.50",
+          "iva_codigo_porcentaje": "4"
+        }
+      ],
+      "esperado": {
+        "lineas": [
+          {
+            "base": "1851836.34",
+            "valor_iva": "277775.45"
+          }
+        ],
+        "grupos": [
+          {
+            "codigo_porcentaje": "4",
+            "tarifa": "15",
+            "base": "1851836.34",
+            "valor": "277775.45"
+          }
+        ],
+        "total_sin_impuestos": "1851836.34",
+        "total_descuento": "15.50",
+        "total_iva": "277775.45",
+        "importe_total": "2129611.79"
+      }
+    },
+    {
+      "nombre": "consumidor final exactamente 50 USD",
+      "lineas": [
+        {
+          "cantidad": "1",
+          "precio_unitario": "43.478261",
+          "descuento": "0",
+          "iva_codigo_porcentaje": "4"
+        }
+      ],
+      "esperado": {
+        "lineas": [
+          {
+            "base": "43.48",
+            "valor_iva": "6.52"
+          }
+        ],
+        "grupos": [
+          {
+            "codigo_porcentaje": "4",
+            "tarifa": "15",
+            "base": "43.48",
+            "valor": "6.52"
+          }
+        ],
+        "total_sin_impuestos": "43.48",
+        "total_descuento": "0.00",
+        "total_iva": "6.52",
+        "importe_total": "50.00"
+      }
+    },
+    {
+      "nombre": "todas las tarifas",
+      "lineas": [
+        {
+          "cantidad": "1",
+          "precio_unitario": "10",
+          "descuento": "0",
+          "iva_codigo_porcentaje": "0"
+        },
+        {
+          "cantidad": "1",
+          "precio_unitario": "10",
+          "descuento": "0",
+          "iva_codigo_porcentaje": "4"
+        },
+        {
+          "cantidad": "1",
+          "precio_unitario": "10",
+          "descuento": "0",
+          "iva_codigo_porcentaje": "5"
+        },
+        {
+          "cantidad": "1",
+          "precio_unitario": "10",
+          "descuento": "0",
+          "iva_codigo_porcentaje": "6"
+        },
+        {
+          "cantidad": "1",
+          "precio_unitario": "10",
+          "descuento": "0",
+          "iva_codigo_porcentaje": "7"
+        },
+        {
+          "cantidad": "1",
+          "precio_unitario": "10",
+          "descuento": "0",
+          "iva_codigo_porcentaje": "10"
+        }
+      ],
+      "esperado": {
+        "lineas": [
+          {
+            "base": "10.00",
+            "valor_iva": "0.00"
+          },
+          {
+            "base": "10.00",
+            "valor_iva": "1.50"
+          },
+          {
+            "base": "10.00",
+            "valor_iva": "0.50"
+          },
+          {
+            "base": "10.00",
+            "valor_iva": "0.00"
+          },
+          {
+            "base": "10.00",
+            "valor_iva": "0.00"
+          },
+          {
+            "base": "10.00",
+            "valor_iva": "1.30"
+          }
+        ],
+        "grupos": [
+          {
+            "codigo_porcentaje": "0",
+            "tarifa": "0",
+            "base": "10.00",
+            "valor": "0.00"
+          },
+          {
+            "codigo_porcentaje": "4",
+            "tarifa": "15",
+            "base": "10.00",
+            "valor": "1.50"
+          },
+          {
+            "codigo_porcentaje": "5",
+            "tarifa": "5",
+            "base": "10.00",
+            "valor": "0.50"
+          },
+          {
+            "codigo_porcentaje": "6",
+            "tarifa": "0",
+            "base": "10.00",
+            "valor": "0.00"
+          },
+          {
+            "codigo_porcentaje": "7",
+            "tarifa": "0",
+            "base": "10.00",
+            "valor": "0.00"
+          },
+          {
+            "codigo_porcentaje": "10",
+            "tarifa": "13",
+            "base": "10.00",
+            "valor": "1.30"
+          }
+        ],
+        "total_sin_impuestos": "60.00",
+        "total_descuento": "0.00",
+        "total_iva": "3.30",
+        "importe_total": "63.30"
+      }
+    }
+  ]
+}

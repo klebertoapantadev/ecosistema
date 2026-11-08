@@ -24,7 +24,7 @@ Este documento describe el **comportamiento compartido por los 4 productos** (Tr
 | **`PLT-003`** | Membresías, Jerarquía & Active Role Switcher | ✅ Implementado | **100%** | Kleber Toapanta / Jesus Navarrete |
 | **`PLT-004`** | **Buddie Conversacional (Chat IA ARIA & OCR Multimodal)** | 🟡 En Desarrollo | **60%** | **Jesus Navarrete** |
 | **`PLT-005`** | Auditoría por Triggers y Widget Común | ✅ Implementado | **100%** | Kleber Toapanta |
-| **`PLT-006`** | Datos de Facturación SRI y Comprobantes | ✅ Implementado | **100%** | Kleber Toapanta |
+| **`PLT-006`** | Datos de Facturación SRI y Comprobantes | 🟡 En Desarrollo | **60%** | Kleber Toapanta / Jesus Navarrete |
 | **`PLT-007`** | Catálogo Geográfico (Ecuador 24 Provincias) | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`PLT-008`** | Configuración de Negocio & SMTP en Vault | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`PLT-009`** | Catálogo Comercial Unificado (Productos/Planes/Despachos y Pasarela Payphone) | ✅ Implementado | **100%** | Kleber Toapanta |
@@ -314,6 +314,12 @@ Registra automáticamente todas las modificaciones de datos en las tablas de neg
 
 ### Descripción
 Unifica el procesamiento de pagos y la emisión de comprobantes electrónicos autorizados por el Servicio de Rentas Internas (SRI) de Ecuador.
+
+### Estado (8-nov-2026)
+- ✅ Datos de facturación por defecto y por compra (reglas 3-5) y pasarelas (regla 6).
+- ✅ Emisión SRI, backend (regla 2): esquema `comun_facturacion`, factura automática al aprobarse un pago, firma XAdES-BES y envío al SRI desde la Edge Function `facturacion-sri`, RIDE y XML autorizado en Storage, correo al comprador con el SMTP del negocio (`PLT-008`). Ver [ADR-0007](../../arquitectura/adr/0007-facturacion-electronica-sri.md).
+- ⏳ Widgets de panel (configuración del emisor y del certificado, lista de comprobantes, nota de crédito, «mis comprobantes» del cliente).
+- ⏳ Primer `AUTORIZADO` en el ambiente de pruebas del SRI con el RUC y el `.p12` reales de cada negocio, y después el paso a producción.
 
 ### Reglas de Negocio
 1. **Pasarela de Pagos como Proceso Crítico Común:** El flujo de cobro es la acción crítica común transversal a todas las aplicaciones que activa las garantías de seguridad y MFA TOTP de `PLT-002`.
