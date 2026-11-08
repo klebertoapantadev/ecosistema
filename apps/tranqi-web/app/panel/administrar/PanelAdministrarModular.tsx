@@ -603,14 +603,15 @@ export function PanelAdministrarModular({ negocio = "TRANQ", esSuperAdmin = fals
 
         // Base canónica desde MATRIZ_FUNCIONAL_ROLES
         const matrizRol = MATRIZ_FUNCIONAL_ROLES[rolEncontrado] || MATRIZ_FUNCIONAL_ROLES["ADMINISTRADOR"] || MATRIZ_FUNCIONAL_ROLES["CLIENTE"];
-        let idsAsignados: string[] = matrizRol?.widgetsPorPanel?.["panel_administrar"] ? [...matrizRol.widgetsPorPanel["panel_administrar"]] : [];
+        const idsCanonicos: string[] = matrizRol?.widgetsPorPanel?.["panel_administrar"] ? [...matrizRol.widgetsPorPanel["panel_administrar"]] : [];
+        let idsAsignados: string[] = [...idsCanonicos];
 
         // 1. Consultar servidor BDD PostgreSQL (comun_seguridad.seg_perfil / seg_rol_widget)
         const resBdd = await obtenerConfiguracionNavegacionRolAction(rolEncontrado, (negocio || "TRANQ").toUpperCase());
         if (resBdd.ok && resBdd.data && resBdd.data.widgetsPorPanel) {
           const wBdd = resBdd.data.widgetsPorPanel["panel_administrar"] ?? resBdd.data.widgetsPorPanel["administrar"];
           if (Array.isArray(wBdd) && wBdd.length > 0) {
-            idsAsignados = [...wBdd];
+            idsAsignados = Array.from(new Set([...idsCanonicos, ...wBdd]));
           }
         }
 
@@ -637,7 +638,7 @@ export function PanelAdministrarModular({ negocio = "TRANQ", esSuperAdmin = fals
                 if (Array.isArray(wLocal) && wLocal.length > 0) {
                   const tieneBase = wLocal.includes("gestion_informativos") || wLocal.includes("disponibilidad_abogados");
                   if (rolEncontrado !== "OPERADOR" || tieneBase) {
-                    idsAsignados = [...wLocal];
+                    idsAsignados = Array.from(new Set([...idsCanonicos, ...wLocal]));
                   }
                 }
               }

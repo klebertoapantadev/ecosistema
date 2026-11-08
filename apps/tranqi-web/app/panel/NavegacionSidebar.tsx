@@ -166,10 +166,14 @@ export function NavegacionSidebar({
         }
 
         if (resBdd.ok && resBdd.data && resBdd.data.widgetsPorPanel) {
-          widgetsPorPanel = { ...widgetsPorPanel, ...resBdd.data.widgetsPorPanel };
+          for (const [pId, wList] of Object.entries(resBdd.data.widgetsPorPanel)) {
+            if (Array.isArray(wList)) {
+              widgetsPorPanel[pId] = Array.from(new Set([...(widgetsPorPanel[pId] || []), ...wList]));
+            }
+          }
         }
 
-        // Complementar con personalizaciones en localStorage si existen
+        // Complementar con personalizaciones en localStorage si existen (fusionando con la base canónica)
         const savedPerfiles = localStorage.getItem(`tranqi_perfiles_${negocio}`) || localStorage.getItem("tranqi_perfiles_TRANQ");
         if (savedPerfiles) {
           const perfiles = JSON.parse(savedPerfiles);
@@ -177,7 +181,11 @@ export function NavegacionSidebar({
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const perfilObj = perfiles.find((p: any) => p.clave?.toUpperCase() === rolKey);
             if (perfilObj && perfilObj.widgetsAsignadosPorPanel) {
-              widgetsPorPanel = { ...widgetsPorPanel, ...perfilObj.widgetsAsignadosPorPanel };
+              for (const [pId, wList] of Object.entries(perfilObj.widgetsAsignadosPorPanel)) {
+                if (Array.isArray(wList)) {
+                  widgetsPorPanel[pId] = Array.from(new Set([...(widgetsPorPanel[pId] || []), ...(wList as string[])]));
+                }
+              }
             }
           }
         }

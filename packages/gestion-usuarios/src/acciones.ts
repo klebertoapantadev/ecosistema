@@ -566,9 +566,15 @@ export async function obtenerConfiguracionNavegacionRolAction(
   let widgetsPorPanel: Record<string, string[]> = {};
   let panelesAsignados: string[] = [];
   let titulosWidgetsPorPanel: Record<string, string> = {};
-  let configuracionDesdeBdd = false;
+  const matrizRol = MATRIZ_FUNCIONAL_ROLES[rolUpper] || MATRIZ_FUNCIONAL_ROLES["CLIENTE"] || { paneles: [], widgetsPorPanel: {} };
 
-  // 1. Consultar si seg_perfil tiene configuración específica en per_detalle_perfil
+  // 1. Inicializar siempre desde MATRIZ_FUNCIONAL_ROLES (preconfiguración canónica obligatoria)
+  for (const [panelId, widgets] of Object.entries(matrizRol.widgetsPorPanel)) {
+    widgetsPorPanel[panelId] = [...widgets];
+  }
+  panelesAsignados = [...(matrizRol.paneles || ["panel_inicio", "panel_cuenta"])];
+
+  // 2. Fusionar con cualquier personalización adicional en seg_perfil.per_detalle_perfil sin perder widgets canónicos nuevos
   try {
     const { data: perfilRow } = await (adminSupabase
       .schema("comun_seguridad")
@@ -580,29 +586,24 @@ export async function obtenerConfiguracionNavegacionRolAction(
     if (perfilRow?.per_detalle_perfil) {
       const detalle = perfilRow.per_detalle_perfil as Record<string, any>;
       const negocioConfig = detalle.negocios?.[negocioNorm] || detalle.negocios?.[negocioUpper];
-      if (negocioConfig?.widgetsPorPanel) {
-        widgetsPorPanel = { ...negocioConfig.widgetsPorPanel };
-        panelesAsignados = negocioConfig.panelesAsignados || [];
-        titulosWidgetsPorPanel = negocioConfig.titulosWidgetsPorPanel || detalle.titulosWidgetsPorPanel || {};
-        configuracionDesdeBdd = true;
-      } else if (detalle.widgetsPorPanel) {
-        widgetsPorPanel = { ...detalle.widgetsPorPanel };
-        panelesAsignados = detalle.panelesAsignados || [];
-        titulosWidgetsPorPanel = detalle.titulosWidgetsPorPanel || {};
-        configuracionDesdeBdd = true;
+      const bddWidgetsPorPanel = negocioConfig?.widgetsPorPanel || detalle.widgetsPorPanel;
+      const bddPaneles = negocioConfig?.panelesAsignados || detalle.panelesAsignados;
+
+      if (bddWidgetsPorPanel && typeof bddWidgetsPorPanel === "object") {
+        for (const [pId, wList] of Object.entries(bddWidgetsPorPanel)) {
+          if (Array.isArray(wList)) {
+            const canonicos = widgetsPorPanel[pId] || [];
+            widgetsPorPanel[pId] = Array.from(new Set([...canonicos, ...wList.map(String)]));
+          }
+        }
       }
+      if (Array.isArray(bddPaneles)) {
+        panelesAsignados = Array.from(new Set([...panelesAsignados, ...bddPaneles.map(String)]));
+      }
+      titulosWidgetsPorPanel = negocioConfig?.titulosWidgetsPorPanel || detalle.titulosWidgetsPorPanel || {};
     }
   } catch (e) {
     console.error("Error leyendo per_detalle_perfil:", e);
-  }
-
-  // 2. Si no hay configuración persistida personalizada en seg_perfil, recurrir a MATRIZ_FUNCIONAL_ROLES
-  if (!configuracionDesdeBdd) {
-    const matrizRol = MATRIZ_FUNCIONAL_ROLES[rolUpper] || MATRIZ_FUNCIONAL_ROLES["CLIENTE"] || { paneles: [], widgetsPorPanel: {} };
-    for (const [panelId, widgets] of Object.entries(matrizRol.widgetsPorPanel)) {
-      widgetsPorPanel[panelId] = [...widgets];
-    }
-    panelesAsignados = [...(matrizRol.paneles || ["panel_inicio", "panel_cuenta"])];
   }
 
   const panelesSet = new Set<string>(panelesAsignados);

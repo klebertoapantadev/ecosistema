@@ -742,9 +742,13 @@ export function PanelDinamicoModular({ slug, negocio, rolInicial = "ADMINISTRADO
           }
         }
 
-        // 3. Fallback canónico únicamente si no existe configuración guardada
+        // 3. Garantizar siempre los widgets canónicos de MATRIZ_FUNCIONAL_ROLES (Regla 15 de AGENTS.md)
+        // para que cachés antiguas en localStorage o snapshots previos en BDD no oculten módulos nuevos
+        const wCanonicos = obtenerWidgetsInicialesDinamicos(panelIdBuscado, slug, rolActivo);
         if (!configuracionEncontrada) {
-          listW = obtenerWidgetsInicialesDinamicos(panelIdBuscado, slug, rolActivo);
+          listW = wCanonicos;
+        } else {
+          listW = Array.from(new Set([...wCanonicos, ...listW]));
         }
 
         // Sanitización universal: Si el perfil es OPERADOR y el panel es usuarios, jamás mostrar crm_clientes
