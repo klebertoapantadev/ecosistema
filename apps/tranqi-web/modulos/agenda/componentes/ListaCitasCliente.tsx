@@ -62,16 +62,8 @@ export default function ListaCitasCliente({ citas }: { citas: CitaResumen[] }) {
               <p className="agenda-cita-meta">
                 {c.cit_modalidad === "virtual" ? "Videollamada" : "Presencial"} ·{" "}
                 {ETIQUETA_COBERTURA[c.cit_cobertura] ?? c.cit_cobertura}
-                {c.cit_asignacion === "contingencia" && " · Reasignando abogado"}
               </p>
               {c.cit_motivo && <p className="agenda-cita-motivo">{c.cit_motivo}</p>}
-
-              {c.cit_asignacion === "contingencia" && (
-                <p className="agenda-aviso">
-                  Tu abogado no podrá atenderte a esa hora. Estamos asignándote otro y mantenemos tu
-                  cita en el mismo horario; te avisaremos en cuanto esté confirmado.
-                </p>
-              )}
 
               {c.cit_modalidad === "virtual" && c.cit_estado === "confirmada" && (
                 abierta && c.cit_enlace ? (
