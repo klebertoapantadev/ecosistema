@@ -17,8 +17,7 @@ import {
   Sparkles,
   Video,
 } from "lucide-react";
-import { ModalCheckoutPayphone } from "../../comercio/componentes/ModalCheckoutPayphone";
-import type { VarianteCatalogo } from "../../comercio/acciones";
+import { ModalCheckoutPayphone, type VarianteCatalogo } from "@eco/comercio";
 import { clasificarProblemaConAriaAction, reservarCitaAction } from "../acciones";
 import type { MensajeTriajeAria, ResultadoClasificacionAria } from "../clasificador-aria";
 import type { ServicioAgendable } from "../consultas";
