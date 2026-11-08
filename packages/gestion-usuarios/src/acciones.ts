@@ -9,6 +9,8 @@ export interface Resultado<T = void> {
   ok: boolean;
   data?: T;
   error?: string;
+  mensaje?: string;
+  pendienteAceptacion?: boolean;
 }
 
 export async function obtenerNivelMaximoGestor(negocio: string): Promise<number> {
@@ -95,28 +97,15 @@ export async function asignarPerfil(usuarioId: string, perfil: string, negocio: 
   }
 
   const supabase = await crearClienteServidor();
+  const adminClient = (crearClienteAdmin() || supabase) as any;
   const perfilClaveUpper = perfil.toUpperCase().trim();
   const negocioUpper = (negocio || "TRANQ").toUpperCase().trim();
 
-  // 1. Intentar primero con la RPC de base de datos
-  const { error } = await supabase
-    .schema("comun_seguridad")
-    .rpc("seg_fn_asignar_perfil", { p_usuario_id: usuarioId, p_negocio: negocioUpper, p_perfil: perfilClaveUpper });
-
-  if (!error) {
-    revalidatePath("/panel/usuarios");
-    revalidatePath("/panel/administrar");
-    revalidatePath("/panel");
-    return { ok: true, data: undefined };
-  }
-
-  // 2. Fallback resiliente con cliente Admin si la RPC falla por disparadores o permisos intermedios
   try {
-    const adminClient = crearClienteAdmin() || supabase;
     const { data: dbPerfil } = await adminClient
       .schema("comun_seguridad")
       .from("seg_perfil")
-      .select("per_id, per_nivel, per_activo")
+      .select("per_id, per_nombre, per_nivel, per_activo")
       .eq("per_clave", perfilClaveUpper)
       .maybeSingle();
 
@@ -128,108 +117,177 @@ export async function asignarPerfil(usuarioId: string, perfil: string, negocio: 
       return { ok: false, error: `No puedes asignar un perfil de jerarquía superior a la tuya (${dbPerfil.per_nivel} > ${nivelGestor})` };
     }
 
-    // Buscar si ya existe membresía para este usuario con cualquier alias del negocio
-    const { data: mems } = await adminClient
-      .schema("comun_seguridad")
-      .from("seg_membresia")
-      .select("mem_id, mem_negocio")
-      .eq("mem_usuario_id", usuarioId);
+    // Obtener identidad del operador/administrador que realiza la solicitud
+    const authUser = (await supabase.auth.getUser()).data?.user;
+    let nombreOperador = authUser?.email || "Administrador de Plataforma";
+    let correoOperador = authUser?.email || "admin@tranqi24.com";
+    if (authUser?.id) {
+      const { data: opRow } = await adminClient
+        .schema("comun_seguridad")
+        .from("seg_usuario")
+        .select("usu_nombres, usu_apellidos, usu_correo")
+        .eq("usu_id", authUser.id)
+        .maybeSingle();
+      if (opRow) {
+        nombreOperador = [opRow.usu_nombres, opRow.usu_apellidos].filter(Boolean).join(" ").trim() || opRow.usu_correo || nombreOperador;
+        correoOperador = opRow.usu_correo || correoOperador;
+      }
+    }
 
-    const memExistente = (mems || []).find((m) => {
-      const dbNeg = (m.mem_negocio || "").toUpperCase();
-      return (
-        dbNeg === negocioUpper ||
-        (negocioUpper.startsWith("TRANQ") && dbNeg.startsWith("TRANQ")) ||
-        (negocioUpper.startsWith("FFH") && dbNeg.startsWith("FFH")) ||
-        (negocioUpper.startsWith("FASTFIX") && dbNeg.startsWith("FASTFIX")) ||
-        (negocioUpper.startsWith("TNK") && dbNeg.startsWith("TNK")) ||
-        (negocioUpper.startsWith("TINKAY") && dbNeg.startsWith("TINKAY")) ||
-        (negocioUpper.startsWith("MRG") && dbNeg.startsWith("MRG")) ||
-        (negocioUpper.startsWith("MARGARITAS") && dbNeg.startsWith("MARGARITAS"))
-      );
+    // Obtener datos del usuario objetivo para registrar la propuesta de nuevo rol y notificarle
+    const { data: usuTarget } = await adminClient
+      .schema("comun_seguridad")
+      .from("seg_usuario")
+      .select("usu_id, usu_nombres, usu_apellidos, usu_correo, usu_detalle_usuario")
+      .eq("usu_id", usuarioId)
+      .maybeSingle();
+
+    if (!usuTarget?.usu_id) {
+      return { ok: false, error: "Usuario no encontrado." };
+    }
+
+    const ahoraIso = new Date().toISOString();
+    const fechaLegibleEC = new Date(ahoraIso).toLocaleString("es-EC", {
+      dateStyle: "short",
+      timeStyle: "short",
+      timeZone: "America/Guayaquil",
     });
 
-    let memId = memExistente?.mem_id;
+    const rolNombreLegible = dbPerfil.per_nombre || perfilClaveUpper;
+    const propId = `prop-rol-${perfilClaveUpper}-${Date.now()}`;
 
-    if (!memId) {
-      const { data: nuevaMem, error: errNuevaMem } = await adminClient
-        .schema("comun_seguridad")
-        .from("seg_membresia")
-        .insert({
-          mem_usuario_id: usuarioId,
-          mem_negocio: negocioUpper,
-          mem_rol: perfilClaveUpper,
-          mem_estado: "ACTIVO"
-        })
-        .select("mem_id")
-        .maybeSingle();
+    const det = (usuTarget.usu_detalle_usuario || {}) as Record<string, any>;
+    const propuestasActuales: any[] = Array.isArray(det.propuestas_cambio_rol)
+      ? [...det.propuestas_cambio_rol]
+      : [];
+    const filtradas = propuestasActuales.filter(
+      (p) => !(String(p?.rolClave || "").toUpperCase() === perfilClaveUpper && p?.estado === "pendiente_aceptacion")
+    );
+    filtradas.unshift({
+      id: propId,
+      rolClave: perfilClaveUpper,
+      rolNombre: rolNombreLegible,
+      negocio: negocioUpper,
+      estado: "pendiente_aceptacion",
+      solicitadoPorId: authUser?.id || null,
+      solicitadoPorNombre: nombreOperador,
+      solicitadoPorCorreo: correoOperador,
+      solicitadoEn: ahoraIso,
+      respondidoEn: null,
+      esConversionAbogado: perfilClaveUpper === "ABOGADO",
+    });
 
-      if (errNuevaMem) {
-        return { ok: false, error: `Error al crear membresía: ${errNuevaMem.message}` };
-      }
-      memId = nuevaMem?.mem_id;
-    } else {
+    await adminClient
+      .schema("comun_seguridad")
+      .from("seg_usuario")
+      .update({
+        usu_detalle_usuario: {
+          ...det,
+          propuestas_cambio_rol: filtradas.slice(0, 30),
+        },
+        usu_actualizado_en: ahoraIso,
+      })
+      .eq("usu_id", usuarioId);
+
+    const nombreTarget =
+      [usuTarget.usu_nombres, usuTarget.usu_apellidos].filter(Boolean).join(" ").trim() ||
+      usuTarget.usu_correo ||
+      "Usuario";
+    const asunto = `🛡️ Confirmación Requerida: Nuevo Rol (${rolNombreLegible}) Asignado en Tranqi`;
+    const htmlNotif = `
+      <div style="font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff; border: 1px solid #E5E7EB; border-radius: 16px; overflow: hidden; color: #111827;">
+        <div style="background: linear-gradient(135deg, #5000BA 0%, #3B0764 100%); padding: 24px 28px; color: #ffffff;">
+          <div style="font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; opacity: 0.9; margin-bottom: 6px;">
+            CONFIRMACIÓN DE ROL · TRANQI
+          </div>
+          <h1 style="margin: 0; font-size: 19px; font-weight: 900; line-height: 1.3;">
+            ${asunto}
+          </h1>
+        </div>
+        <div style="padding: 24px 28px;">
+          <p style="font-size: 15px; line-height: 1.6; color: #111827; margin-top: 0;">
+            Hola <strong>${nombreTarget}</strong>,
+          </p>
+          <p style="font-size: 15px; line-height: 1.6; color: #374151;">
+            Te informamos que la plataforma está agregando el nuevo rol <strong>${rolNombreLegible} (${perfilClaveUpper})</strong> a tu cuenta en <strong>Tranqi</strong>.
+          </p>
+          <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px; padding: 12px 14px; margin: 16px 0; font-size: 13.5px; color: #334155;">
+            <strong>👤 Asignado por:</strong> ${nombreOperador} (${correoOperador})<br/>
+            <strong>📅 Fecha y hora:</strong> ${fechaLegibleEC}
+          </div>
+          <p style="font-size: 14px; line-height: 1.6; color: #4B5563;">
+            <strong>Importante:</strong> Tu rol no cambiará de inmediato hasta que confirmes tu aceptación. Ingresa a tu panel en Tranqi y en la sección <strong>Notificaciones</strong> pulsa el botón <strong>«Aceptar Rol»</strong>.
+          </p>
+          <div style="text-align: center; margin: 24px 0;">
+            <a href="https://www.tranqi24.com/panel" target="_blank" rel="noopener noreferrer" style="display: inline-block; background: #05876E; color: #ffffff; text-decoration: none; font-weight: 800; font-size: 14px; padding: 12px 24px; border-radius: 12px;">
+              Revisar y Confirmar Nuevo Rol →
+            </a>
+          </div>
+        </div>
+      </div>
+    `;
+
+    // Insertar en comun_notificacion.not_registro
+    try {
       await adminClient
-        .schema("comun_seguridad")
-        .from("seg_membresia")
-        .update({ mem_estado: "ACTIVO", mem_actualizado_en: new Date().toISOString() })
-        .eq("mem_id", memId);
-    }
-
-    if (memId) {
-      const authUser = (await supabase.auth.getUser()).data?.user;
-      const { error: errMpe } = await adminClient
-        .schema("comun_seguridad")
-        .from("seg_membresia_perfil")
-        .upsert(
+        .schema("comun_notificacion")
+        .from("not_registro")
+        .insert([
           {
-            mpe_membresia_id: memId,
-            mpe_perfil_id: dbPerfil.per_id,
-            mpe_asignado_por: authUser?.id || null,
-            mpe_actualizado_en: new Date().toISOString()
+            not_usuario_id: usuarioId,
+            not_negocio: negocioUpper,
+            not_canal: "IN_APP",
+            not_titulo: asunto,
+            not_contenido_html: htmlNotif,
+            not_url_accion: "/panel",
+            not_detalles: { clave_original: propId },
+            not_creado_en: ahoraIso,
           },
-          { onConflict: "mpe_membresia_id,mpe_perfil_id" }
-        );
-
-      if (errMpe) {
-        return { ok: false, error: `Error al vincular perfil: ${errMpe.message}` };
-      }
-
-      // Sincronizar mem_rol con el perfil de mayor jerarquía
-      const { data: mpList } = await adminClient
-        .schema("comun_seguridad")
-        .from("seg_membresia_perfil")
-        .select("seg_perfil(per_clave, per_nivel)")
-        .eq("mpe_membresia_id", memId);
-
-      const perfilesOrdenados = ((mpList || []) as any[])
-        .map((x) => x.seg_perfil)
-        .filter(Boolean)
-        .sort((a, b) => b.per_nivel - a.per_nivel);
-
-      const rolMayor = perfilesOrdenados[0]?.per_clave || perfilClaveUpper;
-
-      await adminClient
-        .schema("comun_seguridad")
-        .from("seg_membresia")
-        .update({
-          mem_rol: rolMayor,
-          mem_estado: "ACTIVO",
-          mem_actualizado_en: new Date().toISOString()
-        })
-        .eq("mem_id", memId);
-
-      revalidatePath("/panel/usuarios");
-      revalidatePath("/panel/administrar");
-      revalidatePath("/panel");
-      return { ok: true, data: undefined };
+          {
+            not_usuario_id: usuarioId,
+            not_negocio: negocioUpper,
+            not_canal: "PUSH",
+            not_titulo: asunto,
+            not_contenido_html: htmlNotif,
+            not_url_accion: "/panel",
+            not_detalles: { clave_original: propId },
+            not_creado_en: ahoraIso,
+          },
+        ]);
+    } catch {
+      // Continuar
     }
-  } catch (errFallback: any) {
-    console.warn("Aviso en fallback asignarPerfil:", errFallback);
-    return { ok: false, error: errFallback?.message || error.message };
-  }
 
-  return { ok: false, error: error.message };
+    // Enviar correo electrónico vía Edge Function si está disponible
+    if (usuTarget.usu_correo && usuTarget.usu_correo.includes("@") && process.env.CORREO_FUNCION_CLAVE) {
+      try {
+        await supabase.functions.invoke("enviar-correo", {
+          body: {
+            negocio: "tranqi",
+            para: usuTarget.usu_correo,
+            asunto,
+            html: htmlNotif,
+          },
+          headers: { "x-correo-clave": process.env.CORREO_FUNCION_CLAVE },
+        });
+      } catch {
+        // Continuar
+      }
+    }
+
+    revalidatePath("/panel/usuarios");
+    revalidatePath("/panel/administrar");
+    revalidatePath("/panel");
+    return {
+      ok: true,
+      data: undefined,
+      pendienteAceptacion: true,
+      mensaje: `Solicitud de nuevo rol (${rolNombreLegible}) enviada a ${usuTarget.usu_correo}. Se activará cuando el usuario confirme su aceptación en sus notificaciones.`,
+    };
+  } catch (errFallback: any) {
+    console.warn("Aviso en asignarPerfil:", errFallback);
+    return { ok: false, error: errFallback?.message || "No se pudo procesar la asignación de rol." };
+  }
 }
 
 export async function quitarPerfil(usuarioId: string, perfil: string, negocio: string = "TRANQ"): Promise<Resultado> {

@@ -23,6 +23,7 @@ import {
   Upload,
   Send,
   ExternalLink,
+  Bell,
 } from "lucide-react";
 import { DataGrid, type ColumnaDataGrid } from "@eco/datagrid";
 import { DIAS_SEMANA, huecosPorSemana, type Franja } from "@eco/agenda";
@@ -32,6 +33,7 @@ import {
   buscarUsuariosPlataformaParaAbogadoAction,
   registrarOConvertirAbogadoAction,
   cambiarEstadoAbogadoRedAction,
+  reenviarSolicitudAceptacionAbogadoAction,
   eliminarAbogadoRedAction,
   guardarDisponibilidadCitasAbogadoAction,
   purgarTodasSolicitudesSocioAction,
@@ -432,13 +434,27 @@ export function GestionRedProfesionalWidget() {
         tipo: "ok",
         texto: editandoAbogadoId
           ? "Ficha profesional, especialidades y cobertura actualizadas correctamente."
-          : "Abogado incorporado al equipo y habilitado en la plataforma.",
+          : "Solicitud de incorporación registrada y notificación Push + Correo enviada al usuario para que confirme su aceptación del nuevo rol de Socio Abogado.",
       });
       setModalAbierto(false);
       await cargarTodo();
     } finally {
       setGuardando(false);
     }
+  };
+
+  const handleReenviarNotificacionAceptacion = async (abg: AbogadoRedItem) => {
+    setMensaje(null);
+    const res = await reenviarSolicitudAceptacionAbogadoAction(abg.abg_id);
+    if (!res.ok) {
+      setMensaje({ tipo: "error", texto: res.error });
+      return;
+    }
+    setMensaje({
+      tipo: "ok",
+      texto: `Notificación Push / In-App y correo electrónico de aceptación enviados a ${abg.nombreCompleto} (${abg.correo}).`,
+    });
+    await cargarTodo();
   };
 
   const abrirModalDisponibilidad = (abg: AbogadoRedItem) => {
@@ -579,25 +595,88 @@ export function GestionRedProfesionalWidget() {
     },
     {
       id: "origen",
-      encabezado: "Origen",
-      valor: (a) => (a.origenRegistro === "manual_operador" ? "Equipo Manual" : "Autogestión"),
-      render: (a) => (
-        <span
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "4px",
-            padding: "3px 8px",
-            borderRadius: "999px",
-            fontSize: "0.72rem",
-            fontWeight: 800,
-            background: a.origenRegistro === "manual_operador" ? "#EEF2FF" : "#F3F4F6",
-            color: a.origenRegistro === "manual_operador" ? "#4338CA" : "#374151",
-          }}
-        >
-          {a.origenRegistro === "manual_operador" ? "Equipo Manual" : "Autogestión"}
-        </span>
-      ),
+      encabezado: "Registro / Aceptación",
+      valor: (a) =>
+        `${a.origenRegistro === "manual_operador" ? "Equipo Manual" : "Autogestión"} ${a.registradoPorNombre} ${a.registradoPorCorreo} ${a.estadoAceptacion}`,
+      render: (a) => {
+        const fechaAlta = a.fechaRegistro
+          ? new Date(a.fechaRegistro).toLocaleString("es-EC", {
+              day: "2-digit",
+              month: "2-digit",
+              year: "numeric",
+              hour: "2-digit",
+              minute: "2-digit",
+            })
+          : "—";
+        const fechaConfirm = a.fechaAceptacion
+          ? new Date(a.fechaAceptacion).toLocaleString("es-EC", {
+              day: "2-digit",
+              month: "2-digit",
+              year: "numeric",
+              hour: "2-digit",
+              minute: "2-digit",
+            })
+          : null;
+        return (
+          <div style={{ display: "flex", flexDirection: "column", gap: "3px", fontSize: "0.73rem" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "4px", flexWrap: "wrap" }}>
+              <span
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  padding: "2px 7px",
+                  borderRadius: "999px",
+                  fontSize: "0.68rem",
+                  fontWeight: 800,
+                  background: a.origenRegistro === "manual_operador" ? "#EEF2FF" : "#F3F4F6",
+                  color: a.origenRegistro === "manual_operador" ? "#4338CA" : "#374151",
+                }}
+              >
+                {a.origenRegistro === "manual_operador" ? "Equipo Manual" : "Autogestión"}
+              </span>
+              <span
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  padding: "2px 7px",
+                  borderRadius: "999px",
+                  fontSize: "0.68rem",
+                  fontWeight: 800,
+                  background:
+                    a.estadoAceptacion === "aceptado"
+                      ? "#ECFDF5"
+                      : a.estadoAceptacion === "rechazado"
+                      ? "#FEF2F2"
+                      : "#FEF3C7",
+                  color:
+                    a.estadoAceptacion === "aceptado"
+                      ? "#065F46"
+                      : a.estadoAceptacion === "rechazado"
+                      ? "#991B1B"
+                      : "#92400E",
+                }}
+              >
+                {a.estadoAceptacion === "aceptado"
+                  ? "✓ Aceptado"
+                  : a.estadoAceptacion === "rechazado"
+                  ? "✕ Rechazado"
+                  : "⏳ Pendiente Aceptación"}
+              </span>
+            </div>
+            <span style={{ color: "#374151" }}>
+              <b>Por:</b> {a.registradoPorNombre}
+            </span>
+            <span style={{ color: "#6B7280", fontSize: "0.7rem" }}>
+              <b>Alta:</b> {fechaAlta}
+            </span>
+            {fechaConfirm && a.estadoAceptacion === "aceptado" && (
+              <span style={{ color: "#05876E", fontSize: "0.7rem", fontWeight: 700 }}>
+                <b>Aceptó:</b> {fechaConfirm}
+              </span>
+            )}
+          </div>
+        );
+      },
     },
     {
       id: "especialidades",
@@ -803,6 +882,30 @@ export function GestionRedProfesionalWidget() {
           >
             <Calendar size={13} />
             <span className="btn-texto-responsive">Horarios</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => handleReenviarNotificacionAceptacion(a)}
+            className="btn-responsive-accion"
+            title="Enviar notificación Push/In-App y correo electrónico de confirmación de nuevo rol al abogado"
+            aria-label="Notificar al abogado"
+            style={{
+              background: "#EFF6FF",
+              color: "#1D4ED8",
+              border: "1px solid #BFDBFE",
+              borderRadius: "8px",
+              padding: "5px 9px",
+              fontSize: "0.75rem",
+              fontWeight: 700,
+              cursor: "pointer",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "4px",
+            }}
+          >
+            <Bell size={13} />
+            <span className="btn-texto-responsive">Notificar</span>
           </button>
 
           <button
@@ -1078,10 +1181,10 @@ export function GestionRedProfesionalWidget() {
       )}
 
       {/* Tabla principal de Abogados */}
-      <DataGrid
+      <DataGrid<AbogadoRedItem>
         datos={abogados}
         columnas={columnas}
-        claveFila={(a) => a.abg_id}
+        claveFila={(a: AbogadoRedItem) => a.abg_id}
         cargando={cargando}
         placeholderBusqueda="Buscar abogado por nombre, correo, cédula, matrícula, materia o provincia..."
         mensajeVacio="No hay abogados registrados todavía. Usa el botón «Incorporar Abogado» para convertir un usuario registrado o dar de alta uno nuevo."

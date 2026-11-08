@@ -99,6 +99,11 @@ export interface AbogadoRedItem {
   origenRegistro: "manual_operador" | "autogestion";
   estado: "verificado" | "suspendido";
   verificadoEn: string;
+  registradoPorNombre: string;
+  registradoPorCorreo: string;
+  fechaRegistro: string;
+  estadoAceptacion: "pendiente_aceptacion" | "aceptado" | "rechazado";
+  fechaAceptacion: string | null;
   materias: MateriaItem[];
   provincias: ProvinciaItem[];
   agendaConfigurada: boolean;
@@ -988,6 +993,48 @@ export async function listarRedProfesionalAbogadosAction(): Promise<
         citasPorSemana = 0;
       }
 
+      const propuestasRol = Array.isArray(detUsuario.propuestas_cambio_rol)
+        ? (detUsuario.propuestas_cambio_rol as Array<{
+            rolClave?: string;
+            estado?: "pendiente_aceptacion" | "aceptado" | "rechazado";
+            solicitadoPorNombre?: string;
+            solicitadoPorCorreo?: string;
+            solicitadoEn?: string;
+            respondidoEn?: string | null;
+          }>)
+        : [];
+      const propAbogado = propuestasRol.find(
+        (p) => String(p.rolClave || "").toUpperCase() === "ABOGADO"
+      );
+
+      const registradoPorNombre = String(
+        ficha.registrado_por_nombre ||
+          propAbogado?.solicitadoPorNombre ||
+          (esManual ? "Operador Tranqi (satcom latinoamerica)" : "Autogestión del Profesional")
+      );
+      const registradoPorCorreo = String(
+        ficha.registrado_por_correo ||
+          propAbogado?.solicitadoPorCorreo ||
+          (esManual ? "satcomla.ti@gmail.com" : u.usu_correo || "")
+      );
+      const fechaRegistro = String(
+        ficha.registrado_en ||
+          propAbogado?.solicitadoEn ||
+          a.abg_verificado_en ||
+          a.abg_creado_en ||
+          new Date().toISOString()
+      );
+      const estadoAceptacion: "pendiente_aceptacion" | "aceptado" | "rechazado" =
+        ficha.estado_aceptacion === "pendiente_aceptacion" ||
+        ficha.estado_aceptacion === "aceptado" ||
+        ficha.estado_aceptacion === "rechazado"
+          ? ficha.estado_aceptacion
+          : propAbogado?.estado || (a.abg_estado === "verificado" ? "aceptado" : "pendiente_aceptacion");
+      const fechaAceptacion: string | null =
+        ficha.aceptado_en ||
+        propAbogado?.respondidoEn ||
+        (estadoAceptacion === "aceptado" ? a.abg_verificado_en || fechaRegistro : null);
+
       return {
         abg_id: a.abg_id,
         usu_id: a.abg_usuario_id,
@@ -1005,6 +1052,11 @@ export async function listarRedProfesionalAbogadosAction(): Promise<
         origenRegistro: esManual ? "manual_operador" : "autogestion",
         estado: a.abg_estado === "suspendido" ? "suspendido" : "verificado",
         verificadoEn: a.abg_verificado_en || a.abg_creado_en || new Date().toISOString(),
+        registradoPorNombre,
+        registradoPorCorreo,
+        fechaRegistro,
+        estadoAceptacion,
+        fechaAceptacion,
         materias:
           (materiasPorAbogado.get(a.abg_id) ?? []).length > 0
             ? materiasPorAbogado.get(a.abg_id)!
@@ -1157,6 +1209,7 @@ async function guardarDisponibilidadAgendaInterna(
 }
 
 type TipoEventoRedAbogado =
+  | "PROPUESTA_CONVERSION"
   | "CONVERSION_ACTIVO"
   | "CONVERSION_SUSPENDIDO"
   | "ACTIVADO"
@@ -1165,8 +1218,8 @@ type TipoEventoRedAbogado =
   | "RETIRADO";
 
 /**
- * Envía notificación multicanal (Push / In-App en campana + Correo Electrónico HTML + Bitácora)
- * al usuario cuando es convertido en Socio Abogado o cuando cambia su estado / perfil en la red.
+ * Envía notificación multicanal (Push / In-App en campana + Bandeja Persistente en seg_usuario + Correo Electrónico HTML + Bitácora)
+ * al usuario cuando se propone convertirlo en Socio Abogado o cuando cambia su estado / perfil en la red.
  */
 async function notificarEventoRedAbogadoMulticanal(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -1180,13 +1233,14 @@ async function notificarEventoRedAbogadoMulticanal(
     operadorCorreo?: string | null;
     operadorNombre?: string | null;
     operadorId?: string | null;
+    abogadoId?: string | null;
   }
 ): Promise<void> {
   try {
     const { data: usu } = await adminSupabase
       .schema("comun_seguridad")
       .from("seg_usuario")
-      .select("usu_id, usu_nombres, usu_apellidos, usu_correo")
+      .select("usu_id, usu_nombres, usu_apellidos, usu_correo, usu_detalle_usuario")
       .eq("usu_id", parametros.usuarioId)
       .maybeSingle();
 
@@ -1198,6 +1252,15 @@ async function notificarEventoRedAbogadoMulticanal(
 
     const urlPanelAbogado = "https://www.tranqi24.com/panel/red-profesional?widget=mi_perfil_abogado";
     const urlPanelGeneral = "https://www.tranqi24.com/panel";
+    const ahoraIso = new Date().toISOString();
+    const fechaLegibleEC = new Date(ahoraIso).toLocaleString("es-EC", {
+      dateStyle: "short",
+      timeStyle: "short",
+      timeZone: "America/Guayaquil",
+    });
+
+    const nombreOperador = parametros.operadorNombre || "Mesa Operativa Tranqi";
+    const correoOperador = parametros.operadorCorreo || "admin@tranqi24.com";
 
     let asunto = "⚖️ Actualización de tu Perfil Profesional en Tranqi";
     let colorCabecera = "linear-gradient(135deg, #05876E 0%, #046C58 100%)";
@@ -1215,7 +1278,45 @@ async function notificarEventoRedAbogadoMulticanal(
         ? parametros.provinciasNombres.join(", ")
         : "Configuradas en tu perfil";
 
+    const bloqueAuditoriaHtml = `
+      <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px; padding: 12px 14px; margin: 14px 0; font-size: 13px; color: #334155;">
+        <strong>👤 Registrado / Gestionado por:</strong> ${nombreOperador} (${correoOperador})<br/>
+        <strong>📅 Fecha y hora:</strong> ${fechaLegibleEC}
+      </div>
+    `;
+
     switch (parametros.tipoEvento) {
+      case "PROPUESTA_CONVERSION":
+        asunto = "🛡️ Confirmación Requerida: Te han asignado el Rol de Socio Abogado en Tranqi";
+        colorCabecera = "linear-gradient(135deg, #5000BA 0%, #3B0764 100%)";
+        etiquetaEstado = "CONFIRMACIÓN DE NUEVO ROL REQUERIDA";
+        mensajePrincipalHtml = `
+          <p style="font-size: 15px; line-height: 1.6; color: #374151;">
+            Te informamos que la plataforma <strong>Tranqi</strong> está agregando el nuevo rol de <strong>Socio Abogado</strong> a tu cuenta registrada.
+          </p>
+          ${bloqueAuditoriaHtml}
+          <div style="background: #ECFDF5; border: 1px solid #A7F3D0; border-radius: 12px; padding: 16px; margin: 18px 0; font-size: 14px; color: #065F46;">
+            <p style="margin: 0 0 8px 0;"><strong>⚖️ Especialidades preconfiguradas:</strong> ${espTexto}</p>
+            <p style="margin: 0 0 8px 0;"><strong>📍 Zonas de cobertura:</strong> ${provTexto}</p>
+            <p style="margin: 0;"><strong>📅 Disponibilidad base:</strong> Lun–Vie 09:00–17:00 (Presencial y Teleconsulta).</p>
+          </div>
+          ${
+            parametros.passwordTemporal
+              ? `<div style="background: #F5F3FF; border: 1px solid #DDD6FE; border-radius: 12px; padding: 14px; margin: 16px 0; font-size: 14px; color: #5000BA;">
+                  <strong>🔑 Credenciales iniciales de acceso:</strong><br/>
+                  Usuario: <code>${correoDestino}</code><br/>
+                  Contraseña temporal: <code>${parametros.passwordTemporal}</code>
+                </div>`
+              : ""
+          }
+          <p style="font-size: 14px; line-height: 1.6; color: #4B5563;">
+            <strong>Importante:</strong> Tu rol no cambiará automáticamente hasta que confirmes tu aceptación. Ingresa a tu panel en Tranqi y en la sección <strong>Notificaciones</strong> pulsa el botón <strong>«Aceptar Rol»</strong> para habilitar tu Portal Profesional de Abogado.
+          </p>
+        `;
+        textoBotonCta = "Revisar y Confirmar Aceptación de Rol →";
+        urlAccion = urlPanelGeneral;
+        break;
+
       case "CONVERSION_ACTIVO":
         asunto = "🎉 ¡Bienvenido al Equipo! Tu cuenta de Socio Abogado en Tranqi está Activa";
         colorCabecera = "linear-gradient(135deg, #05876E 0%, #046C58 100%)";
@@ -1224,6 +1325,7 @@ async function notificarEventoRedAbogadoMulticanal(
           <p style="font-size: 15px; line-height: 1.6; color: #374151;">
             Te informamos que tu perfil en <strong>Tranqi</strong> ha sido habilitado como <strong>Socio Abogado Activo</strong> de nuestra Red Profesional.
           </p>
+          ${bloqueAuditoriaHtml}
           <div style="background: #ECFDF5; border: 1px solid #A7F3D0; border-radius: 12px; padding: 16px; margin: 18px 0; font-size: 14px; color: #065F46;">
             <p style="margin: 0 0 8px 0;"><strong>⚖️ Especialidades asignadas:</strong> ${espTexto}</p>
             <p style="margin: 0 0 8px 0;"><strong>📍 Zonas de cobertura:</strong> ${provTexto}</p>
@@ -1252,6 +1354,7 @@ async function notificarEventoRedAbogadoMulticanal(
           <p style="font-size: 15px; line-height: 1.6; color: #374151;">
             Tu ficha de <strong>Socio Abogado</strong> ha sido registrada en la Red Profesional de <strong>Tranqi</strong> y se encuentra temporalmente en estado <strong>Suspendido / En Espera de Activación</strong>.
           </p>
+          ${bloqueAuditoriaHtml}
           <p style="font-size: 14px; line-height: 1.6; color: #4B5563;">
             Te notificaremos tan pronto como la Mesa de Control active tu recepción de citas y el portal profesional.
           </p>
@@ -1268,6 +1371,7 @@ async function notificarEventoRedAbogadoMulticanal(
           <p style="font-size: 15px; line-height: 1.6; color: #374151;">
             Te confirmamos que tu estado en la Red Profesional de <strong>Tranqi</strong> ha cambiado a <strong>Activo (Verificado)</strong>.
           </p>
+          ${bloqueAuditoriaHtml}
           <p style="font-size: 14px; line-height: 1.6; color: #4B5563;">
             Tu visibilidad en el directorio legal, la asignación de turnos de citas (presenciales y teleconsulta) y tu <strong>Portal Profesional de Abogado</strong> están nuevamente habilitados.
           </p>
@@ -1282,6 +1386,7 @@ async function notificarEventoRedAbogadoMulticanal(
           <p style="font-size: 15px; line-height: 1.6; color: #374151;">
             Te informamos que tu perfil como <strong>Socio Abogado</strong> en la Red Profesional de <strong>Tranqi</strong> ha cambiado a estado <strong>Suspendido</strong>.
           </p>
+          ${bloqueAuditoriaHtml}
           <p style="font-size: 14px; line-height: 1.6; color: #4B5563;">
             Mientras permanezca en este estado, no se te asignarán nuevas citas automáticas ni aparecerás activo en el directorio público. Tu cuenta de usuario en la plataforma permanece activa.
           </p>
@@ -1298,6 +1403,7 @@ async function notificarEventoRedAbogadoMulticanal(
           <p style="font-size: 15px; line-height: 1.6; color: #374151;">
             Se han actualizado los parámetros de tu perfil profesional en la Red de Abogados de <strong>Tranqi</strong>.
           </p>
+          ${bloqueAuditoriaHtml}
           <div style="background: #F5F3FF; border: 1px solid #DDD6FE; border-radius: 12px; padding: 16px; margin: 18px 0; font-size: 14px; color: #3B0764;">
             <p style="margin: 0 0 8px 0;"><strong>⚖️ Especialidades:</strong> ${espTexto}</p>
             <p style="margin: 0;"><strong>📍 Cobertura:</strong> ${provTexto}</p>
@@ -1316,6 +1422,7 @@ async function notificarEventoRedAbogadoMulticanal(
           <p style="font-size: 15px; line-height: 1.6; color: #374151;">
             Te informamos que tu perfil como <strong>Socio Abogado</strong> ha sido desvinculado de la Red Profesional de <strong>Tranqi</strong>.
           </p>
+          ${bloqueAuditoriaHtml}
           <p style="font-size: 14px; line-height: 1.6; color: #4B5563;">
             Conservas intacto el acceso a tu cuenta personal y a tu Billetera Digital como usuario de la plataforma.
           </p>
@@ -1352,8 +1459,82 @@ async function notificarEventoRedAbogadoMulticanal(
       </div>
     `;
 
+    // 0. Persistir en comun_seguridad.seg_usuario.usu_detalle_usuario (bandeja y propuesta de cambio de rol)
+    // para que el usuario siempre reciba la notificación en su widget aunque sean distintas instancias Serverless
+    try {
+      const { data: uRow } = await adminSupabase
+        .schema("comun_seguridad")
+        .from("seg_usuario")
+        .select("usu_detalle_usuario")
+        .eq("usu_id", parametros.usuarioId)
+        .maybeSingle();
+
+      const det = (uRow?.usu_detalle_usuario || {}) as Record<string, any>;
+      const bandejaActual: any[] = Array.isArray(det.notificaciones_bandeja)
+        ? [...det.notificaciones_bandeja]
+        : [];
+      const propuestasActuales: any[] = Array.isArray(det.propuestas_cambio_rol)
+        ? [...det.propuestas_cambio_rol]
+        : [];
+
+      const notifId =
+        parametros.tipoEvento === "PROPUESTA_CONVERSION"
+          ? `prop-rol-ABOGADO-${Date.now()}`
+          : `notif-abg-${parametros.tipoEvento.toLowerCase()}-${Date.now()}`;
+
+      if (parametros.tipoEvento === "PROPUESTA_CONVERSION") {
+        // Reemplazar cualquier propuesta previa pendiente de ABOGADO
+        const filtradas = propuestasActuales.filter(
+          (p) => !(String(p?.rolClave || "").toUpperCase() === "ABOGADO" && p?.estado === "pendiente_aceptacion")
+        );
+        filtradas.unshift({
+          id: notifId,
+          rolClave: "ABOGADO",
+          rolNombre: "Socio Abogado",
+          negocio: "TRANQ",
+          estado: "pendiente_aceptacion",
+          solicitadoPorId: parametros.operadorId || null,
+          solicitadoPorNombre: nombreOperador,
+          solicitadoPorCorreo: correoOperador,
+          solicitadoEn: ahoraIso,
+          respondidoEn: null,
+          esConversionAbogado: true,
+          abogadoId: parametros.abogadoId || null,
+          especialidadesNombres: parametros.especialidadesNombres || [],
+          provinciasNombres: parametros.provinciasNombres || [],
+        });
+        det.propuestas_cambio_rol = filtradas.slice(0, 30);
+      } else {
+        bandejaActual.unshift({
+          not_id: notifId,
+          not_titulo: asunto,
+          not_contenido_html: `
+            <div>
+              ${mensajePrincipalHtml}
+            </div>
+          `,
+          not_url_accion: urlAccion,
+          not_leido_en: null,
+          not_creado_en: ahoraIso,
+          not_canal: "PUSH",
+          not_eliminada: false,
+        });
+        det.notificaciones_bandeja = bandejaActual.slice(0, 50);
+      }
+
+      await adminSupabase
+        .schema("comun_seguridad")
+        .from("seg_usuario")
+        .update({
+          usu_detalle_usuario: det,
+          usu_actualizado_en: ahoraIso,
+        })
+        .eq("usu_id", parametros.usuarioId);
+    } catch (errPersistUsu) {
+      console.warn("Aviso al persistir notificación en usu_detalle_usuario:", errPersistUsu);
+    }
+
     // 1. Insertar notificación Push e In-App en comun_notificacion.not_registro
-    const ahoraIso = new Date().toISOString();
     try {
       await adminSupabase
         .schema("comun_notificacion")
@@ -1460,7 +1641,7 @@ async function notificarEventoRedAbogadoMulticanal(
         id: `abg-est-${Date.now().toString().slice(-6)}`,
         asunto,
         contenidoHTML: htmlCompleto,
-        tipoEmision: "AUTOMATICA_SISTEMA",
+        tipoEmision: "AUTOMATICA",
         emisorNombre: parametros.operadorNombre || "Mesa Operativa Tranqi",
         emisorCorreo: parametros.operadorCorreo || "admin@tranqi24.com",
         emisorId: parametros.operadorId || undefined,
@@ -1610,8 +1791,34 @@ export async function registrarOConvertirAbogadoAction(
       .eq("usu_id", targetUsuId)
       .maybeSingle();
 
-    const detPrevio = (usuActual?.usu_detalle_usuario || {}) as Record<string, unknown>;
+    const { data: abgPrevio } = await adminSupabase
+      .schema("tranqui_legal")
+      .from("trq_abogado")
+      .select("abg_id, abg_solicitud_id, abg_estado")
+      .eq("abg_usuario_id", targetUsuId)
+      .maybeSingle();
+
+    const eraAbogadoPrevio = Boolean(abgPrevio?.abg_id);
+    const estadoPrevio = abgPrevio?.abg_estado ?? null;
+    let abgId: string | null = abgPrevio?.abg_id ?? null;
+
+    const nombreOperador =
+      [perfilOperador?.usu_nombres, perfilOperador?.usu_apellidos].filter(Boolean).join(" ").trim() ||
+      "Mesa Operativa Tranqi";
+    const correoOperador = perfilOperador?.usu_correo || "satcomla.ti@gmail.com";
+
+    // Regla de gobernanza: cuando se convierte un usuario en abogado por primera vez,
+    // queda en estado pendiente de aceptación ("suspendido") hasta que el usuario confirme su aceptación.
+    const requiereAceptacionUsuario = !eraAbogadoPrevio;
+    const estadoEfectivoAbogado: "verificado" | "suspendido" = requiereAceptacionUsuario
+      ? "suspendido"
+      : estado;
+
+    const detPrevio = (usuActual?.usu_detalle_usuario || {}) as Record<string, any>;
+    const fichaPrevia = (detPrevio.ficha_abogado || {}) as Record<string, any>;
+
     const fichaAbogado = {
+      ...fichaPrevia,
       cedula,
       matricula_profesional: matricula,
       telefono,
@@ -1622,6 +1829,18 @@ export async function registrarOConvertirAbogadoAction(
       origen_registro: "manual_operador",
       materias_objetos: materiasObjetos,
       provincias_objetos: provinciasObjetos,
+      registrado_por_id: fichaPrevia.registrado_por_id || perfilOperador?.usu_id || null,
+      registrado_por_nombre: fichaPrevia.registrado_por_nombre || nombreOperador,
+      registrado_por_correo: fichaPrevia.registrado_por_correo || correoOperador,
+      registrado_en: fichaPrevia.registrado_en || ahoraIso,
+      estado_aceptacion: requiereAceptacionUsuario
+        ? "pendiente_aceptacion"
+        : fichaPrevia.estado_aceptacion || (estadoEfectivoAbogado === "verificado" ? "aceptado" : "pendiente_aceptacion"),
+      aceptado_en: requiereAceptacionUsuario
+        ? null
+        : fichaPrevia.aceptado_en || (estadoEfectivoAbogado === "verificado" ? ahoraIso : null),
+      actualizado_por_nombre: nombreOperador,
+      actualizado_por_correo: correoOperador,
       actualizado_en: ahoraIso,
     };
 
@@ -1648,21 +1867,10 @@ export async function registrarOConvertirAbogadoAction(
       );
 
     // 3. Upsert en tranqui_legal.trq_abogado (intentando primero con las columnas nuevas y abg_solicitud_id null)
-    const { data: abgPrevio } = await adminSupabase
-      .schema("tranqui_legal")
-      .from("trq_abogado")
-      .select("abg_id, abg_solicitud_id, abg_estado")
-      .eq("abg_usuario_id", targetUsuId)
-      .maybeSingle();
-
-    const eraAbogadoPrevio = Boolean(abgPrevio?.abg_id);
-    const estadoPrevio = abgPrevio?.abg_estado ?? null;
-    let abgId: string | null = abgPrevio?.abg_id ?? null;
-
     const payloadNuevo = {
       abg_usuario_id: targetUsuId,
       abg_solicitud_id: abgPrevio?.abg_solicitud_id ?? null,
-      abg_estado: estado,
+      abg_estado: estadoEfectivoAbogado,
       abg_cedula: cedula,
       abg_matricula_profesional: matricula,
       abg_telefono: telefono,
@@ -1715,7 +1923,7 @@ export async function registrarOConvertirAbogadoAction(
           {
             abg_usuario_id: targetUsuId,
             abg_solicitud_id: solicitudRespaldoId,
-            abg_estado: estado,
+            abg_estado: estadoEfectivoAbogado,
             abg_verificado_en: ahoraIso,
             abg_actualizado_en: ahoraIso,
           },
@@ -1771,11 +1979,11 @@ export async function registrarOConvertirAbogadoAction(
         );
     }
 
-    // 5. Sincronizar rol ABOGADO en comun_seguridad según si está activo ('verificado') o suspendido
+    // 5. Sincronizar rol ABOGADO en comun_seguridad solo si no está pendiente de aceptación
     await sincronizarRolAbogadoEnSeguridad(
       adminSupabase,
       targetUsuId,
-      estado === "verificado",
+      estadoEfectivoAbogado === "verificado",
       perfilOperador?.usu_id ?? null
     );
 
@@ -1808,16 +2016,12 @@ export async function registrarOConvertirAbogadoAction(
       }
     }
 
-    // 7. Enviar notificación multicanal (Push / In-App + Correo Electrónico) del alta o cambio de estado
-    const nombreOperador =
-      [perfilOperador?.usu_nombres, perfilOperador?.usu_apellidos].filter(Boolean).join(" ").trim() ||
-      "Mesa Operativa Tranqi";
-
+    // 7. Enviar notificación multicanal (Push / In-App + Correo Electrónico) de propuesta de conversión o cambio de estado
     let tipoEventoNotif: TipoEventoRedAbogado = "ACTUALIZADO";
     if (!eraAbogadoPrevio) {
-      tipoEventoNotif = estado === "verificado" ? "CONVERSION_ACTIVO" : "CONVERSION_SUSPENDIDO";
-    } else if (estadoPrevio !== estado) {
-      tipoEventoNotif = estado === "verificado" ? "ACTIVADO" : "SUSPENDIDO";
+      tipoEventoNotif = "PROPUESTA_CONVERSION";
+    } else if (estadoPrevio !== estadoEfectivoAbogado) {
+      tipoEventoNotif = estadoEfectivoAbogado === "verificado" ? "ACTIVADO" : "SUSPENDIDO";
     }
 
     await notificarEventoRedAbogadoMulticanal(adminSupabase, {
@@ -1826,9 +2030,10 @@ export async function registrarOConvertirAbogadoAction(
       especialidadesNombres: materiasObjetos.map((m) => m.mat_nombre),
       provinciasNombres: provinciasObjetos.map((p) => p.cat_nombre),
       passwordTemporal: passwordTemporalGenerada,
-      operadorCorreo: perfilOperador?.usu_correo ?? null,
+      operadorCorreo: correoOperador,
       operadorNombre: nombreOperador,
       operadorId: perfilOperador?.usu_id ?? null,
+      abogadoId: abgId,
     });
 
     revalidatePath("/panel/administrar");
@@ -1901,6 +2106,76 @@ export async function cambiarEstadoAbogadoRedAction(
     return {
       ok: false,
       error: err instanceof Error ? err.message : "Error al cambiar estado del abogado.",
+    };
+  }
+}
+
+export async function reenviarSolicitudAceptacionAbogadoAction(
+  abogadoId: string
+): Promise<Resultado> {
+  const autorizado = await verificarEsOperadorOAdmin();
+  if (!autorizado) {
+    return { ok: false, error: "No autorizado para enviar notificaciones." };
+  }
+
+  try {
+    const supabase = await crearClienteServidor();
+    const adminSupabase = (crearClienteAdmin() || supabase) as any;
+    const perfilOperador = await obtenerPerfilActual();
+
+    const { data: abg } = await adminSupabase
+      .schema("tranqui_legal")
+      .from("trq_abogado")
+      .select("abg_id, abg_usuario_id")
+      .eq("abg_id", abogadoId)
+      .maybeSingle();
+
+    if (!abg?.abg_usuario_id) {
+      return { ok: false, error: "Abogado no encontrado." };
+    }
+
+    const { data: usu } = await adminSupabase
+      .schema("comun_seguridad")
+      .from("seg_usuario")
+      .select("usu_detalle_usuario")
+      .eq("usu_id", abg.abg_usuario_id)
+      .maybeSingle();
+
+    const det = (usu?.usu_detalle_usuario || {}) as Record<string, any>;
+    const ficha = (det.ficha_abogado || {}) as Record<string, any>;
+    const materiasNombres: string[] = Array.isArray(ficha.materias_objetos)
+      ? ficha.materias_objetos
+          .map((m: { mat_nombre?: string }) => m.mat_nombre)
+          .filter((v): v is string => Boolean(v))
+      : [];
+    const provinciasNombres: string[] = Array.isArray(ficha.provincias_objetos)
+      ? ficha.provincias_objetos
+          .map((p: { cat_nombre?: string }) => p.cat_nombre)
+          .filter((v): v is string => Boolean(v))
+      : [];
+
+    const nombreOperador =
+      [perfilOperador?.usu_nombres, perfilOperador?.usu_apellidos].filter(Boolean).join(" ").trim() ||
+      "Mesa Operativa Tranqi";
+
+    await notificarEventoRedAbogadoMulticanal(adminSupabase, {
+      usuarioId: abg.abg_usuario_id,
+      tipoEvento: "PROPUESTA_CONVERSION",
+      especialidadesNombres: materiasNombres,
+      provinciasNombres: provinciasNombres,
+      operadorCorreo: perfilOperador?.usu_correo ?? null,
+      operadorNombre: nombreOperador,
+      operadorId: perfilOperador?.usu_id ?? null,
+      abogadoId: abg.abg_id,
+    });
+
+    revalidatePath("/panel/red-profesional");
+    revalidatePath("/panel");
+    return { ok: true, data: undefined };
+  } catch (err: unknown) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : "Error al enviar solicitud de aceptación.",
     };
   }
 }

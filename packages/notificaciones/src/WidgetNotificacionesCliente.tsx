@@ -18,6 +18,13 @@ export interface NotificacionItem {
   not_pospuesta_horas?: number | null;
   not_eliminada?: boolean;
   not_eliminada_en?: string | null;
+  es_propuesta_rol?: boolean;
+  rol_propuesto?: string;
+  rol_nombre?: string;
+  solicitado_por_nombre?: string;
+  solicitado_por_correo?: string;
+  solicitado_en?: string;
+  estado_propuesta?: "pendiente_aceptacion" | "aceptado" | "rechazado";
 }
 
 interface Props {
@@ -74,11 +81,11 @@ export function WidgetNotificacionesCliente({ negocio = "tranqi", esAdmin = fals
 
   const enviarAccionServidor = async (
     item: NotificacionItem,
-    accion: "aceptar" | "eliminar" | "posponer" | "restaurar",
+    accion: "aceptar" | "aceptar_rol" | "rechazar_rol" | "eliminar" | "posponer" | "restaurar",
     horas?: number
-  ) => {
+  ): Promise<{ rolActivado?: string | null }> => {
     try {
-      await fetch("/api/notificaciones/usuario", {
+      const res = await fetch("/api/notificaciones/usuario", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -90,16 +97,26 @@ export function WidgetNotificacionesCliente({ negocio = "tranqi", esAdmin = fals
           url_accion: item.not_url_accion
         })
       });
+      const data = await res.json();
+      return { rolActivado: data?.rolActivado || null };
     } catch (err) {
       console.warn("Aviso al sincronizar notificación con el servidor:", err);
+      return {};
     }
   };
 
-  const aceptarNotificacion = (item: NotificacionItem) => {
+  const aceptarNotificacion = async (item: NotificacionItem) => {
     const ahoraIso = new Date().toISOString();
+    const esPropuestaRol = Boolean(item.es_propuesta_rol || item.not_id.startsWith("prop-rol-"));
+    const accionFinal = esPropuestaRol ? "aceptar_rol" : "aceptar";
+
     // 1. Actualizar estado local reactivo
     setNotificaciones(prev =>
-      prev.map(n => (n.not_id === item.not_id ? { ...n, not_leido_en: ahoraIso } : n))
+      prev.map(n =>
+        n.not_id === item.not_id
+          ? { ...n, not_leido_en: ahoraIso, estado_propuesta: esPropuestaRol ? "aceptado" : n.estado_propuesta }
+          : n
+      )
     );
     const nextLeidas = new Set(leidasLocal).add(item.not_id);
     setLeidasLocal(nextLeidas);
@@ -111,7 +128,32 @@ export function WidgetNotificacionesCliente({ negocio = "tranqi", esAdmin = fals
     }
     setDropdownPosponerId(null);
     setDropdownToastPosponer(false);
-    enviarAccionServidor(item, "aceptar");
+    const res = await enviarAccionServidor(item, accionFinal);
+    if ((esPropuestaRol || res.rolActivado) && typeof window !== "undefined") {
+      window.location.reload();
+    }
+  };
+
+  const rechazarPropuestaRol = async (item: NotificacionItem) => {
+    const ahoraIso = new Date().toISOString();
+    setNotificaciones(prev =>
+      prev.map(n =>
+        n.not_id === item.not_id
+          ? { ...n, not_leido_en: ahoraIso, estado_propuesta: "rechazado" }
+          : n
+      )
+    );
+    const nextLeidas = new Set(leidasLocal).add(item.not_id);
+    setLeidasLocal(nextLeidas);
+    if (typeof window !== "undefined") {
+      localStorage.setItem(STORAGE_KEY_LEIDAS, JSON.stringify(Array.from(nextLeidas)));
+    }
+    if (alertaPushToast?.not_id === item.not_id) {
+      setAlertaPushToast(null);
+    }
+    setDropdownPosponerId(null);
+    setDropdownToastPosponer(false);
+    await enviarAccionServidor(item, "rechazar_rol");
   };
 
   const eliminarNotificacion = (item: NotificacionItem) => {
@@ -374,8 +416,33 @@ export function WidgetNotificacionesCliente({ negocio = "tranqi", esAdmin = fals
                 gap: "5px"
               }}
             >
-              <Check size={14} /> Aceptar (Leída)
+              <Check size={14} />{" "}
+              {alertaPushToast.es_propuesta_rol || alertaPushToast.not_id.startsWith("prop-rol-")
+                ? `Confirmar Aceptación (${alertaPushToast.rol_nombre || "Nuevo Rol"})`
+                : "Aceptar (Leída)"}
             </button>
+
+            {(alertaPushToast.es_propuesta_rol || alertaPushToast.not_id.startsWith("prop-rol-")) && (
+              <button
+                type="button"
+                onClick={() => rechazarPropuestaRol(alertaPushToast)}
+                style={{
+                  background: "rgba(239, 68, 68, 0.2)",
+                  color: "#fca5a5",
+                  border: "1px solid rgba(239, 68, 68, 0.5)",
+                  borderRadius: "8px",
+                  padding: "6px 12px",
+                  fontSize: "0.78rem",
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "5px"
+                }}
+              >
+                <X size={14} /> Rechazar Rol
+              </button>
+            )}
 
             <div style={{ position: "relative" }}>
               <button
@@ -586,10 +653,28 @@ export function WidgetNotificacionesCliente({ negocio = "tranqi", esAdmin = fals
                       type="button"
                       className="accion-menor es-principal"
                       onClick={() => aceptarNotificacion(item)}
-                      title="Confirmar lectura y pasar al historial"
+                      title={
+                        item.es_propuesta_rol || item.not_id.startsWith("prop-rol-")
+                          ? "Confirmar aceptación del nuevo rol y activarlo en tu cuenta"
+                          : "Confirmar lectura y pasar al historial"
+                      }
                     >
-                      <Check size={14} aria-hidden="true" /> Aceptar
+                      <Check size={14} aria-hidden="true" />{" "}
+                      {item.es_propuesta_rol || item.not_id.startsWith("prop-rol-")
+                        ? "Aceptar Rol"
+                        : "Aceptar"}
                     </button>
+
+                    {(item.es_propuesta_rol || item.not_id.startsWith("prop-rol-")) && (
+                      <button
+                        type="button"
+                        className="accion-menor es-peligro"
+                        onClick={() => rechazarPropuestaRol(item)}
+                        title="Rechazar la asignación de este nuevo rol"
+                      >
+                        <X size={14} aria-hidden="true" /> Rechazar Rol
+                      </button>
+                    )}
 
                     <div className="envoltura-posponer">
                       <button

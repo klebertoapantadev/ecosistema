@@ -16,6 +16,51 @@ export interface RegistroNotificacion {
   not_pospuesta_horas?: number | null;
   not_eliminada?: boolean;
   not_eliminada_en?: string | null;
+  es_propuesta_rol?: boolean;
+  rol_propuesto?: string;
+  rol_nombre?: string;
+  solicitado_por_nombre?: string;
+  solicitado_por_correo?: string;
+  solicitado_en?: string;
+  estado_propuesta?: "pendiente_aceptacion" | "aceptado" | "rechazado";
+}
+
+interface PropuestaCambioRolPersistida {
+  id: string;
+  rolClave: string;
+  rolNombre: string;
+  negocio: string;
+  estado: "pendiente_aceptacion" | "aceptado" | "rechazado";
+  solicitadoPorId?: string | null;
+  solicitadoPorNombre: string;
+  solicitadoPorCorreo: string;
+  solicitadoEn: string;
+  respondidoEn?: string | null;
+  esConversionAbogado?: boolean;
+  abogadoId?: string | null;
+  especialidadesNombres?: string[];
+  provinciasNombres?: string[];
+}
+
+interface NotificacionBandejaPersistida {
+  not_id: string;
+  not_titulo: string;
+  not_contenido_html: string;
+  not_url_accion?: string;
+  not_leido_en?: string | null;
+  not_creado_en: string;
+  not_canal?: string;
+  not_pospuesta_hasta?: string | null;
+  not_pospuesta_horas?: number | null;
+  not_eliminada?: boolean;
+  not_eliminada_en?: string | null;
+  es_propuesta_rol?: boolean;
+  rol_propuesto?: string;
+  rol_nombre?: string;
+  solicitado_por_nombre?: string;
+  solicitado_por_correo?: string;
+  solicitado_en?: string;
+  estado_propuesta?: "pendiente_aceptacion" | "aceptado" | "rechazado";
 }
 
 // Reemplazo dinámico estricto de variables para el perfil autenticado
@@ -103,6 +148,113 @@ export async function GET() {
         }
 
         const registrosClavesVistas = new Set<string>();
+
+        // 0. Leer bandeja persistente y propuestas de cambio de rol desde comun_seguridad.seg_usuario.usu_detalle_usuario
+        try {
+          const { data: usuDetalleRow } = await client
+            .schema("comun_seguridad")
+            .from("seg_usuario")
+            .select("usu_detalle_usuario")
+            .eq("usu_id", perfil.usu_id)
+            .maybeSingle();
+
+          const detUsu = (usuDetalleRow?.usu_detalle_usuario || {}) as Record<string, any>;
+          const bandejaPersistida: NotificacionBandejaPersistida[] = Array.isArray(detUsu.notificaciones_bandeja)
+            ? detUsu.notificaciones_bandeja
+            : [];
+          const propuestasRol: PropuestaCambioRolPersistida[] = Array.isArray(detUsu.propuestas_cambio_rol)
+            ? detUsu.propuestas_cambio_rol
+            : [];
+
+          // Incluir primero las propuestas de cambio de rol pendientes o procesadas
+          for (const prop of propuestasRol) {
+            if (!prop || !prop.id) continue;
+            const notifEnBandeja = bandejaPersistida.find((b) => b.not_id === prop.id);
+            if (notifEnBandeja?.not_eliminada) continue;
+
+            const fechaFormateada = new Date(prop.solicitadoEn || Date.now()).toLocaleString("es-EC", {
+              dateStyle: "short",
+              timeStyle: "short",
+              timeZone: "America/Guayaquil",
+            });
+
+            const espHtml =
+              Array.isArray(prop.especialidadesNombres) && prop.especialidadesNombres.length > 0
+                ? `<br/><strong>⚖️ Especialidades:</strong> ${prop.especialidadesNombres.join(", ")}`
+                : "";
+            const provHtml =
+              Array.isArray(prop.provinciasNombres) && prop.provinciasNombres.length > 0
+                ? `<br/><strong>📍 Cobertura:</strong> ${prop.provinciasNombres.join(", ")}`
+                : "";
+
+            const estadoBadgeHtml =
+              prop.estado === "aceptado"
+                ? `<span style="display:inline-block;margin-top:6px;padding:3px 8px;border-radius:999px;background:#ECFDF5;color:#065F46;font-weight:800;font-size:11px;">✅ Rol Aceptado el ${new Date(prop.respondidoEn || Date.now()).toLocaleString("es-EC", { dateStyle: "short", timeStyle: "short", timeZone: "America/Guayaquil" })}</span>`
+                : prop.estado === "rechazado"
+                ? `<span style="display:inline-block;margin-top:6px;padding:3px 8px;border-radius:999px;background:#FEF2F2;color:#991B1B;font-weight:800;font-size:11px;">❌ Rol Rechazado</span>`
+                : `<span style="display:inline-block;margin-top:6px;padding:3px 8px;border-radius:999px;background:#FEF3C7;color:#92400E;font-weight:800;font-size:11px;">⏳ Requiere tu confirmación para activar el rol</span>`;
+
+            const tituloProp =
+              prop.estado === "aceptado"
+                ? `✅ Nuevo Rol Activado: ${prop.rolNombre || prop.rolClave}`
+                : prop.estado === "rechazado"
+                ? `❌ Asignación de Rol Rechazada: ${prop.rolNombre || prop.rolClave}`
+                : `🛡️ Confirmación de Nuevo Rol: ${prop.rolNombre || prop.rolClave}`;
+
+            const htmlProp = `
+              <div>
+                <p style="margin: 0 0 6px 0;">
+                  La plataforma está agregando el rol <strong>${prop.rolNombre || prop.rolClave}</strong> a tu cuenta en <strong>Tranqi</strong>.
+                </p>
+                <div style="font-size: 0.78rem; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 8px 10px; margin: 6px 0;">
+                  <strong>👤 Agregado por:</strong> ${prop.solicitadoPorNombre || "Administrador"} (${prop.solicitadoPorCorreo || "admin@tranqi24.com"})<br/>
+                  <strong>📅 Fecha de solicitud:</strong> ${fechaFormateada}
+                  ${espHtml}
+                  ${provHtml}
+                </div>
+                ${estadoBadgeHtml}
+              </div>
+            `;
+
+            registrosClavesVistas.add(prop.id);
+            notificaciones.push({
+              not_id: prop.id,
+              not_titulo: tituloProp,
+              not_contenido_html: htmlProp,
+              not_url_accion: "/panel",
+              not_leido_en:
+                prop.estado === "pendiente_aceptacion"
+                  ? null
+                  : prop.respondidoEn || notifEnBandeja?.not_leido_en || new Date().toISOString(),
+              not_creado_en: prop.solicitadoEn || new Date().toISOString(),
+              not_canal: "PUSH",
+              not_pospuesta_hasta: notifEnBandeja?.not_pospuesta_hasta || null,
+              not_pospuesta_horas: notifEnBandeja?.not_pospuesta_horas || null,
+              not_eliminada: Boolean(notifEnBandeja?.not_eliminada),
+              not_eliminada_en: notifEnBandeja?.not_eliminada_en || null,
+              es_propuesta_rol: true,
+              rol_propuesto: prop.rolClave,
+              rol_nombre: prop.rolNombre || prop.rolClave,
+              solicitado_por_nombre: prop.solicitadoPorNombre,
+              solicitado_por_correo: prop.solicitadoPorCorreo,
+              solicitado_en: prop.solicitadoEn,
+              estado_propuesta: prop.estado,
+            });
+          }
+
+          // Incluir el resto de notificaciones de la bandeja persistida en usu_detalle_usuario
+          for (const itemBandeja of bandejaPersistida) {
+            if (!itemBandeja || !itemBandeja.not_id || registrosClavesVistas.has(itemBandeja.not_id)) continue;
+            registrosClavesVistas.add(itemBandeja.not_id);
+            notificaciones.push({
+              ...itemBandeja,
+              not_titulo: interpolarParaPerfil(itemBandeja.not_titulo, perfil),
+              not_contenido_html: interpolarParaPerfil(itemBandeja.not_contenido_html, perfil),
+            });
+          }
+        } catch (errBandeja) {
+          console.warn("Aviso al leer bandeja en usu_detalle_usuario:", errBandeja);
+        }
 
         if (registros && Array.isArray(registros)) {
           (registros as unknown as Array<{
@@ -241,6 +393,37 @@ export async function POST(request: Request) {
       limpiarCampanasServidor();
       const ahora = new Date().toISOString();
       try {
+        const { data: uRow } = await (client as any)
+          .schema("comun_seguridad")
+          .from("seg_usuario")
+          .select("usu_detalle_usuario")
+          .eq("usu_id", perfil.usu_id)
+          .maybeSingle();
+        const det = (uRow?.usu_detalle_usuario || {}) as Record<string, any>;
+        const bandeja: NotificacionBandejaPersistida[] = Array.isArray(det.notificaciones_bandeja)
+          ? det.notificaciones_bandeja
+          : [];
+        const bandejaMarcada = bandeja.map((b) => ({
+          ...b,
+          not_eliminada: true,
+          not_eliminada_en: ahora,
+          not_leido_en: b.not_leido_en || ahora,
+        }));
+        await (client as any)
+          .schema("comun_seguridad")
+          .from("seg_usuario")
+          .update({
+            usu_detalle_usuario: {
+              ...det,
+              notificaciones_bandeja: bandejaMarcada,
+            },
+            usu_actualizado_en: ahora,
+          })
+          .eq("usu_id", perfil.usu_id);
+      } catch {
+        // Ignorar
+      }
+      try {
         await (client as any)
           .schema("comun_notificacion")
           .from("not_registro")
@@ -257,6 +440,223 @@ export async function POST(request: Request) {
 
     if (!not_id || !accion) {
       return NextResponse.json({ error: "Parámetros incompletos" }, { status: 400 });
+    }
+
+    const ahora = new Date().toISOString();
+    let rolActivadoConExito: string | null = null;
+
+    // 0. Sincronizar estado en comun_seguridad.seg_usuario.usu_detalle_usuario (bandeja y propuestas de cambio de rol)
+    try {
+      const { data: uRow } = await (client as any)
+        .schema("comun_seguridad")
+        .from("seg_usuario")
+        .select("usu_detalle_usuario")
+        .eq("usu_id", perfil.usu_id)
+        .maybeSingle();
+
+      const det = (uRow?.usu_detalle_usuario || {}) as Record<string, any>;
+      const bandeja: NotificacionBandejaPersistida[] = Array.isArray(det.notificaciones_bandeja)
+        ? [...det.notificaciones_bandeja]
+        : [];
+      const propuestas: PropuestaCambioRolPersistida[] = Array.isArray(det.propuestas_cambio_rol)
+        ? [...det.propuestas_cambio_rol]
+        : [];
+      let fichaAbogado = (det.ficha_abogado ? { ...det.ficha_abogado } : null) as Record<string, any> | null;
+
+      const idxProp = propuestas.findIndex((p) => p && p.id === not_id);
+      if (idxProp >= 0) {
+        const prop = { ...propuestas[idxProp]! };
+
+        if (accion === "aceptar" || accion === "aceptar_rol") {
+          prop.estado = "aceptado";
+          prop.respondidoEn = ahora;
+          propuestas[idxProp] = prop;
+          rolActivadoConExito = prop.rolClave;
+
+          // Activar el rol en seg_membresia y seg_membresia_perfil
+          const rolUpper = String(prop.rolClave || "ABOGADO").toUpperCase().trim();
+          const { data: perfRow } = await (client as any)
+            .schema("comun_seguridad")
+            .from("seg_perfil")
+            .select("per_id, per_clave, per_nivel")
+            .eq("per_clave", rolUpper)
+            .maybeSingle();
+
+          const { data: perfCli } = await (client as any)
+            .schema("comun_seguridad")
+            .from("seg_perfil")
+            .select("per_id")
+            .eq("per_clave", "CLIENTE")
+            .maybeSingle();
+
+          const { data: mems } = await (client as any)
+            .schema("comun_seguridad")
+            .from("seg_membresia")
+            .select("mem_id, mem_negocio, mem_rol")
+            .eq("mem_usuario_id", perfil.usu_id);
+
+          const memsTranqi = (mems || []).filter((m: { mem_negocio?: string }) =>
+            (m.mem_negocio || "").toUpperCase().startsWith("TRANQ")
+          );
+
+          if (memsTranqi.length === 0) {
+            for (const negClave of ["tranqi", "TRANQ"]) {
+              const { data: nuevaMem } = await (client as any)
+                .schema("comun_seguridad")
+                .from("seg_membresia")
+                .insert({
+                  mem_usuario_id: perfil.usu_id,
+                  mem_negocio: negClave,
+                  mem_rol: rolUpper,
+                  mem_estado: "ACTIVO",
+                })
+                .select("mem_id, mem_negocio, mem_rol")
+                .maybeSingle();
+              if (nuevaMem) memsTranqi.push(nuevaMem);
+            }
+          }
+
+          for (const mem of memsTranqi) {
+            if (perfCli?.per_id) {
+              await (client as any)
+                .schema("comun_seguridad")
+                .from("seg_membresia_perfil")
+                .upsert(
+                  {
+                    mpe_membresia_id: mem.mem_id,
+                    mpe_perfil_id: perfCli.per_id,
+                    mpe_asignado_por: prop.solicitadoPorId || perfil.usu_id,
+                    mpe_actualizado_en: ahora,
+                  },
+                  { onConflict: "mpe_membresia_id,mpe_perfil_id" }
+                );
+            }
+            if (perfRow?.per_id) {
+              await (client as any)
+                .schema("comun_seguridad")
+                .from("seg_membresia_perfil")
+                .upsert(
+                  {
+                    mpe_membresia_id: mem.mem_id,
+                    mpe_perfil_id: perfRow.per_id,
+                    mpe_asignado_por: prop.solicitadoPorId || perfil.usu_id,
+                    mpe_actualizado_en: ahora,
+                  },
+                  { onConflict: "mpe_membresia_id,mpe_perfil_id" }
+                );
+            }
+
+            // Sincronizar mem_rol con el perfil de mayor jerarquía
+            const { data: mpList } = await (client as any)
+              .schema("comun_seguridad")
+              .from("seg_membresia_perfil")
+              .select("seg_perfil(per_clave, per_nivel)")
+              .eq("mpe_membresia_id", mem.mem_id);
+
+            const perfilesOrdenados = ((mpList || []) as any[])
+              .map((x) => x.seg_perfil)
+              .filter(Boolean)
+              .sort((a, b) => b.per_nivel - a.per_nivel);
+
+            const rolMayor = perfilesOrdenados[0]?.per_clave || rolUpper;
+
+            await (client as any)
+              .schema("comun_seguridad")
+              .from("seg_membresia")
+              .update({
+                mem_rol: rolMayor,
+                mem_estado: "ACTIVO",
+                mem_actualizado_en: ahora,
+              })
+              .eq("mem_id", mem.mem_id);
+          }
+
+          // Si la propuesta corresponde a Socio Abogado, activar trq_abogado y actualizar ficha_abogado
+          if (rolUpper === "ABOGADO" || prop.esConversionAbogado) {
+            await (client as any)
+              .schema("tranqui_legal")
+              .from("trq_abogado")
+              .update({
+                abg_estado: "verificado",
+                abg_verificado_en: ahora,
+                abg_actualizado_en: ahora,
+              })
+              .eq("abg_usuario_id", perfil.usu_id);
+
+            if (fichaAbogado) {
+              fichaAbogado = {
+                ...fichaAbogado,
+                estado_aceptacion: "aceptado",
+                aceptado_en: ahora,
+                actualizado_en: ahora,
+              };
+            }
+          }
+        } else if (accion === "rechazar_rol") {
+          prop.estado = "rechazado";
+          prop.respondidoEn = ahora;
+          propuestas[idxProp] = prop;
+
+          if (String(prop.rolClave || "").toUpperCase() === "ABOGADO" || prop.esConversionAbogado) {
+            await (client as any)
+              .schema("tranqui_legal")
+              .from("trq_abogado")
+              .update({
+                abg_estado: "suspendido",
+                abg_actualizado_en: ahora,
+              })
+              .eq("abg_usuario_id", perfil.usu_id);
+
+            if (fichaAbogado) {
+              fichaAbogado = {
+                ...fichaAbogado,
+                estado_aceptacion: "rechazado",
+                rechazado_en: ahora,
+                actualizado_en: ahora,
+              };
+            }
+          }
+        }
+      }
+
+      // Actualizar estado de la notificación en bandeja
+      const idxBandeja = bandeja.findIndex((b) => b && b.not_id === not_id);
+      if (idxBandeja >= 0) {
+        const item = { ...bandeja[idxBandeja]! };
+        if (accion === "aceptar" || accion === "aceptar_rol" || accion === "rechazar_rol") {
+          item.not_leido_en = ahora;
+          if (accion === "aceptar_rol" || accion === "aceptar") item.estado_propuesta = "aceptado";
+          if (accion === "rechazar_rol") item.estado_propuesta = "rechazado";
+        } else if (accion === "eliminar") {
+          item.not_eliminada = true;
+          item.not_eliminada_en = ahora;
+          item.not_leido_en = item.not_leido_en || ahora;
+        } else if (accion === "restaurar") {
+          item.not_eliminada = false;
+          item.not_eliminada_en = null;
+        } else if (accion === "posponer") {
+          const horasNum = Number(horas) || 3;
+          item.not_pospuesta_hasta = new Date(Date.now() + horasNum * 3600 * 1000).toISOString();
+          item.not_pospuesta_horas = horasNum;
+        }
+        bandeja[idxBandeja] = item;
+      }
+
+      await (client as any)
+        .schema("comun_seguridad")
+        .from("seg_usuario")
+        .update({
+          usu_detalle_usuario: {
+            ...det,
+            ...(fichaAbogado ? { ficha_abogado: fichaAbogado } : {}),
+            notificaciones_bandeja: bandeja,
+            propuestas_cambio_rol: propuestas,
+          },
+          usu_actualizado_en: ahora,
+        })
+        .eq("usu_id", perfil.usu_id);
+    } catch (errSyncUsu) {
+      console.warn("Aviso al sincronizar bandeja/propuesta en seg_usuario:", errSyncUsu);
     }
 
     const esUUIDValido = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(not_id);
@@ -277,21 +677,21 @@ export async function POST(request: Request) {
 
     const { data: registroExistente } = await queryExistente.maybeSingle();
 
-    const ahora = new Date().toISOString();
     const detallesActuales = (registroExistente?.not_detalles as Record<string, unknown>) || {};
 
     if (registroExistente) {
       let nuevosDetalles = { ...detallesActuales };
       let nuevoLeidoEn = registroExistente.not_leido_en;
 
-      if (accion === "aceptar") {
+      if (accion === "aceptar" || accion === "aceptar_rol" || accion === "rechazar_rol") {
         nuevoLeidoEn = ahora;
         nuevosDetalles = {
           ...nuevosDetalles,
           confirmada_por: actorInfo,
           confirmada_en: ahora,
           confirmada_usuario_id: perfil.usu_id,
-          confirmada_usuario_nombre: nombreActor
+          confirmada_usuario_nombre: nombreActor,
+          accion_rol: accion,
         };
       } else if (accion === "eliminar") {
         nuevosDetalles = {
@@ -339,9 +739,9 @@ export async function POST(request: Request) {
       let detallesInsertar: Record<string, unknown> = {};
       let leidoEnInsertar: string | null = null;
 
-      if (accion === "aceptar") {
+      if (accion === "aceptar" || accion === "aceptar_rol" || accion === "rechazar_rol") {
         leidoEnInsertar = ahora;
-        detallesInsertar = { confirmada_por: actorInfo, confirmada_en: ahora, confirmada_usuario_id: perfil.usu_id, confirmada_usuario_nombre: nombreActor };
+        detallesInsertar = { confirmada_por: actorInfo, confirmada_en: ahora, confirmada_usuario_id: perfil.usu_id, confirmada_usuario_nombre: nombreActor, accion_rol: accion };
       } else if (accion === "eliminar") {
         detallesInsertar = { eliminada: true, eliminada_en: ahora, eliminada_por: actorInfo, eliminada_usuario_id: perfil.usu_id, eliminada_usuario_nombre: nombreActor };
         leidoEnInsertar = ahora;
@@ -388,7 +788,13 @@ export async function POST(request: Request) {
       }
     }
 
-    return NextResponse.json({ success: true, not_id, accion, actor: actorInfo });
+    return NextResponse.json({
+      success: true,
+      not_id,
+      accion,
+      actor: actorInfo,
+      rolActivado: rolActivadoConExito,
+    });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : "Error al procesar la acción";
     return NextResponse.json({ error: msg }, { status: 500 });

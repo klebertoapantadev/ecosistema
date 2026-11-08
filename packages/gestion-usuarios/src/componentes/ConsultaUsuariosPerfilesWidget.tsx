@@ -135,6 +135,10 @@ function CeldaPerfilesInteractiva({
         setAsignados(estadoPrevio);
         onActualizarPerfiles?.(usuario.usu_id, estadoPrevio);
         setMensaje(resultado.error ?? "Error al procesar la solicitud");
+      } else if (resultado.pendienteAceptacion) {
+        setAsignados(estadoPrevio);
+        onActualizarPerfiles?.(usuario.usu_id, estadoPrevio);
+        setMensaje(resultado.mensaje ?? "Solicitud enviada al usuario para que confirme su aceptación del nuevo rol.");
       }
     } catch (err: any) {
       setAsignados(estadoPrevio);
