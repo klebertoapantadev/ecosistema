@@ -26,14 +26,7 @@ export default async function PaginaAgendar() {
   }
 
   return (
-    <div className="space-y-4">
-      <div>
-        <h1>Agendar una consulta legal</h1>
-        <p>
-          Cuéntale a <strong>ARIA</strong> qué problema tienes con tus propias palabras. Ella identificará
-          la especialidad jurídica adecuada, te mostrará los horarios disponibles y podrás confirmar tu cita con pago en línea.
-        </p>
-      </div>
+    <div style={{ maxWidth: "780px", margin: "0 auto", padding: "8px 0 32px" }}>
       <FormularioAgendar
         materias={materias}
         servicios={servicios}

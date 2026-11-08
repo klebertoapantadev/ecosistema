@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
   ArrowRight,
-  Bot,
   Building2,
   Calendar,
   Check,
@@ -14,10 +13,8 @@ import {
   CreditCard,
   Loader2,
   RefreshCw,
-  Send,
-  ShieldCheck,
+  Scale,
   Sparkles,
-  User,
   Video,
 } from "lucide-react";
 import { ModalCheckoutPayphone } from "../../comercio/componentes/ModalCheckoutPayphone";
@@ -53,17 +50,13 @@ interface Props {
   buscarHuecos: (materiaId: string, varianteId: string | null, modalidad: string) => Promise<Hueco[]>;
 }
 
-const PASOS = ["Tu Caso (ARIA)", "Fecha y Horario", "Confirmar y Pagar"] as const;
-
-const SUGERENCIAS_RAPIDAS = [
-  "Tengo un problema con un contrato de arriendo o inquilino",
-  "Necesito asesoría sobre divorcio, tenencia o pensión alimenticia",
-  "Me despidieron o tengo dudas con mi liquidación laboral",
-  "Tengo una deuda, pagaré o incumplimiento de contrato",
-  "Tuve un accidente, multa o trámite de tránsito",
-  "Necesito revisar una herencia, terreno o escrituras",
-  "Quiero poner una denuncia penal o me acusan de un delito",
-  "No estoy seguro, necesito una orientación legal general",
+const EJEMPLOS_CORTOS = [
+  { etiqueta: "Divorcio y bienes", texto: "Necesito asesoría sobre divorcio y repartición de bienes" },
+  { etiqueta: "Arriendo o contrato", texto: "Tengo un problema con un contrato de arriendo o inquilino" },
+  { etiqueta: "Despido o liquidación", texto: "Me despidieron o tengo dudas sobre mi liquidación laboral" },
+  { etiqueta: "Deudas o cobros", texto: "Tengo una deuda, pagaré o incumplimiento de pago" },
+  { etiqueta: "Herencia o escrituras", texto: "Necesito revisar una herencia, terreno o escrituras" },
+  { etiqueta: "Tránsito o multa", texto: "Tuve un accidente, multa o trámite de tránsito" },
 ];
 
 const FORMATO_FECHA_COMPLETA = new Intl.DateTimeFormat("es-EC", {
@@ -100,6 +93,30 @@ function formatearUSD(monto: number): string {
   return new Intl.NumberFormat("es-EC", { style: "currency", currency: "USD" }).format(monto);
 }
 
+const SERVICIO_VIRTUAL_FALLBACK: ServicioAgendable = {
+  var_id: "00000000-0000-4000-8000-000000000102",
+  var_producto_id: "00000000-0000-4000-8000-000000000100",
+  var_sku: "TRQ-CON-TEL",
+  var_nombre: "Consulta Telemática con Especialista",
+  var_precio: 25,
+  var_tarifa_iva_porcentaje: 15,
+  var_detalle_variante: { duracion_min: 45, modalidad: ["virtual"], concepto_derecho: "CONSULTA_TELEMATICA" },
+  monto_iva: 3.75,
+  precio_total: 28.75,
+};
+
+const SERVICIO_PRESENCIAL_FALLBACK: ServicioAgendable = {
+  var_id: "00000000-0000-4000-8000-000000000101",
+  var_producto_id: "00000000-0000-4000-8000-000000000100",
+  var_sku: "TRQ-CON-PRE",
+  var_nombre: "Consulta Presencial con Especialista",
+  var_precio: 45,
+  var_tarifa_iva_porcentaje: 15,
+  var_detalle_variante: { duracion_min: 45, modalidad: ["presencial"], concepto_derecho: "CONSULTA_PRESENCIAL" },
+  monto_iva: 6.75,
+  precio_total: 51.75,
+};
+
 export default function FormularioAgendar({
   materias,
   servicios,
@@ -108,48 +125,32 @@ export default function FormularioAgendar({
   buscarHuecos,
 }: Props) {
   const router = useRouter();
-  const [paso, setPaso] = useState(0);
-  const [alcanzado, setAlcanzado] = useState(0);
-  const [direccion, setDireccion] = useState<"der" | "izq">("der");
+  const [paso, setPaso] = useState<0 | 1>(0);
 
-  // Estado Paso 1: Chat y Clasificación con ARIA
-  const [mensajesAria, setMensajesAria] = useState<MensajeTriajeAria[]>([
-    {
-      rol: "assistant",
-      contenido:
-        "¡Hola! Soy ARIA, tu asistente legal en Tranqi. No necesitas saber términos jurídicos: cuéntame en tus propias palabras qué problema tienes o qué necesitas resolver y yo determinaré la especialidad adecuada para tu consulta.",
-    },
-  ]);
-  const [entradaChat, setEntradaChat] = useState("");
+  // Paso 1: Pregunta simple y respuesta de ARIA
+  const [relatoUsuario, setRelatoUsuario] = useState("");
   const [analizandoAria, setAnalizandoAria] = useState(false);
   const [triaje, setTriaje] = useState<ResultadoClasificacionAria | null>(null);
   const [mostrarSelectorManual, setMostrarSelectorManual] = useState(false);
-
-  // Datos de la cita clasificada
   const [materiaId, setMateriaId] = useState("");
   const [motivo, setMotivo] = useState("");
 
-  // Estado Paso 2: Modalidad, Servicio y Horario
+  // Paso 2: Modalidad (Telemática / Presencial), Fecha/Hora y Pago directo
   const [modalidad, setModalidad] = useState<"virtual" | "presencial">("virtual");
-  const [varianteId, setVarianteId] = useState<string>(() => servicios[0]?.var_id ?? "");
   const [huecos, setHuecos] = useState<Hueco[] | null>(null);
   const [diaSeleccionado, setDiaSeleccionado] = useState<string | null>(null);
   const [elegido, setElegido] = useState<string | null>(null);
   const [buscando, setBuscando] = useState(false);
   const [falloHuecos, setFalloHuecos] = useState(false);
 
-  // Estado Paso 3: Confirmación y Pago
-  const [aceptaPolitica, setAceptaPolitica] = useState(true);
+  // Confirmación y Pago
   const [modalPagoAbierto, setModalPagoAbierto] = useState(false);
   const [citaConfirmadaId, setCitaConfirmadaId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [enviando, iniciarEnvio] = useTransition();
 
-  const titulo = useRef<HTMLHeadingElement>(null);
-  const primeraVez = useRef(true);
-  const finChatRef = useRef<HTMLDivElement>(null);
+  const respuestaRef = useRef<HTMLDivElement>(null);
 
-  // Materia por defecto (ej. Civil) configurada por los operadores
   const materiaPorDefecto = useMemo(() => {
     const nombreDefecto = (configAgenda.materia_defecto_nombre || "Civil").toLowerCase();
     return (
@@ -160,17 +161,34 @@ export default function FormularioAgendar({
     );
   }, [materias, configAgenda.materia_defecto_nombre]);
 
-  const servicio = useMemo(
-    () => servicios.find((s) => s.var_id === varianteId) ?? servicios[0] ?? null,
-    [servicios, varianteId],
-  );
   const materia = useMemo(
     () => materias.find((m) => m.mat_id === materiaId) ?? materiaPorDefecto,
     [materias, materiaId, materiaPorDefecto],
   );
 
+  // Seleccionar automáticamente el servicio de consulta acorde a la modalidad (Telemática vs Presencial)
+  const servicioVirtual = useMemo(() => {
+    const encontrado = servicios.find((s) => {
+      const n = s.var_nombre.toLowerCase();
+      return n.includes("consulta") || n.includes("asesor") || n.includes("tele") || n.includes("virtual");
+    });
+    return encontrado ?? SERVICIO_VIRTUAL_FALLBACK;
+  }, [servicios]);
+
+  const servicioPresencial = useMemo(() => {
+    const encontrado = servicios.find((s) => {
+      const n = s.var_nombre.toLowerCase();
+      return (n.includes("consulta") || n.includes("asesor")) && n.includes("presencial");
+    });
+    return encontrado ?? SERVICIO_PRESENCIAL_FALLBACK;
+  }, [servicios]);
+
+  const servicio = modalidad === "virtual" ? servicioVirtual : servicioPresencial;
+
   const conceptoServicio =
-    (servicio?.var_detalle_variante?.concepto_derecho as string) ?? "CONSULTA_TELEMATICA";
+    modalidad === "virtual"
+      ? ((servicio?.var_detalle_variante?.concepto_derecho as string) ?? "CONSULTA_TELEMATICA")
+      : "CONSULTA_PRESENCIAL";
   const cupo = cobertura.find((c) => c.concepto === conceptoServicio);
   const entraEnPlan = cupo ? cupo.incluidos === null || (cupo.restantes ?? 0) > 0 : false;
 
@@ -206,41 +224,15 @@ export default function FormularioAgendar({
     }
   }, [huecosPorDia, diaSeleccionado]);
 
-  useEffect(() => {
-    if (primeraVez.current) {
-      primeraVez.current = false;
-      return;
-    }
-    titulo.current?.focus({ preventScroll: true });
-  }, [paso]);
-
-  useEffect(() => {
-    finChatRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
-  }, [mensajesAria, analizandoAria]);
-
-  function irA(nuevo: number) {
-    setError(null);
-    setDireccion(nuevo > paso ? "der" : "izq");
-    setPaso(nuevo);
-    setAlcanzado((a) => Math.max(a, nuevo));
-  }
-
-  function invalidarHorario() {
-    setHuecos(null);
-    setElegido(null);
-    setFalloHuecos(false);
-    setAlcanzado((a) => Math.min(a, 1));
-  }
-
   async function cargarHuecos(
     matId = materiaId || materiaPorDefecto?.mat_id || "",
-    varId = varianteId || servicio?.var_id || null,
     mod: "virtual" | "presencial" = modalidad,
   ) {
     setBuscando(true);
     setFalloHuecos(false);
     try {
-      const lista = await buscarHuecos(matId, varId, mod);
+      const srv = mod === "virtual" ? servicioVirtual : servicioPresencial;
+      const lista = await buscarHuecos(matId, srv?.var_id || null, mod);
       setHuecos(lista);
     } catch {
       setFalloHuecos(true);
@@ -249,29 +241,31 @@ export default function FormularioAgendar({
     }
   }
 
-  async function enviarMensajeAria(textoDirecto?: string) {
-    const texto = (textoDirecto ?? entradaChat).trim();
-    if (!texto || analizandoAria) return;
+  async function consultarNeedConAria(textoOpcional?: string) {
+    const texto = (textoOpcional ?? relatoUsuario).trim();
+    if (texto.length < 4 || analizandoAria) {
+      setError("Cuéntanos brevemente tu necesidad legal para asignarte al especialista adecuado.");
+      return;
+    }
+
+    if (textoOpcional) {
+      setRelatoUsuario(textoOpcional);
+    }
 
     setError(null);
-    const nuevosMensajes: MensajeTriajeAria[] = [
-      ...mensajesAria,
-      { rol: "user", contenido: texto },
-    ];
-    setMensajesAria(nuevosMensajes);
-    if (!textoDirecto) setEntradaChat("");
     setAnalizandoAria(true);
 
     try {
-      const res = await clasificarProblemaConAriaAction(nuevosMensajes);
+      const historial: MensajeTriajeAria[] = [{ rol: "user", contenido: texto }];
+      const res = await clasificarProblemaConAriaAction(historial);
+
       if (!res.ok) {
-        // Fallback inmediato a la especialidad por defecto para nunca bloquear al cliente
         const matFallback = materiaPorDefecto;
         if (matFallback) {
           setMateriaId(matFallback.mat_id);
           setMotivo(texto.slice(0, 500));
           setTriaje({
-            respuesta_aria: `Gracias por explicarme tu situación. He registrado tu caso y lo asigné a la especialidad de ${matFallback.mat_nombre} para que puedas elegir tu horario de atención.`,
+            respuesta_aria: `Hemos revisado tu solicitud. Para brindarte la mejor asesoría, te asignaremos un abogado especialista en ${matFallback.mat_nombre}.`,
             materia_id: matFallback.mat_id,
             materia_nombre: matFallback.mat_nombre,
             es_por_defecto: true,
@@ -280,13 +274,6 @@ export default function FormularioAgendar({
             modalidad_sugerida: "virtual",
             necesita_aclaracion: false,
           });
-          setMensajesAria((prev) => [
-            ...prev,
-            {
-              rol: "assistant",
-              contenido: `Gracias por explicarme tu situación. He asignado tu consulta a la especialidad de **${matFallback.mat_nombre}**. Ya puedes continuar para elegir fecha y horario.`,
-            },
-          ]);
         } else {
           setError(res.error);
         }
@@ -297,89 +284,45 @@ export default function FormularioAgendar({
       setTriaje(resultado);
       setMateriaId(resultado.materia_id);
       setMotivo(resultado.motivo_resumido || texto.slice(0, 500));
-      invalidarHorario();
-
-      setMensajesAria((prev) => [
-        ...prev,
-        {
-          rol: "assistant",
-          contenido: resultado.respuesta_aria,
-        },
-      ]);
+      setTimeout(() => {
+        respuestaRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      }, 80);
     } finally {
       setAnalizandoAria(false);
     }
   }
 
-  function usarEspecialidadPorDefectoDirecto() {
-    if (!materiaPorDefecto) return;
-    const motivoFinal =
-      motivo.trim().length >= 5
-        ? motivo.trim()
-        : entradaChat.trim().length >= 5
-          ? entradaChat.trim()
-          : "Consulta de orientación jurídica general";
-    setMateriaId(materiaPorDefecto.mat_id);
-    setMotivo(motivoFinal);
-    setTriaje({
-      respuesta_aria: `He asignado la especialidad por defecto (${materiaPorDefecto.mat_nombre}) para tu orientación jurídica.`,
-      materia_id: materiaPorDefecto.mat_id,
-      materia_nombre: materiaPorDefecto.mat_nombre,
-      es_por_defecto: true,
-      confianza: "por_defecto",
-      motivo_resumido: motivoFinal,
-      modalidad_sugerida: "virtual",
-      necesita_aclaracion: false,
-    });
-    invalidarHorario();
-  }
-
-  async function continuar() {
+  async function irAPasoAgendamiento() {
     setError(null);
-    if (paso === 0) {
-      // Si el usuario escribió en la caja pero no pulsó Enviar, analizar primero con ARIA
-      if (!materiaId && entradaChat.trim().length >= 5) {
-        await enviarMensajeAria(entradaChat.trim());
-        return;
-      }
-      const matEfectiva = materiaId || materiaPorDefecto?.mat_id || "";
-      if (!matEfectiva) {
-        setError("Cuéntale brevemente tu problema a ARIA para identificar la especialidad.");
-        return;
-      }
-      if (!motivo || motivo.trim().length < 5) {
-        setMotivo("Consulta jurídica clasificada por ARIA");
-      }
-      irA(1);
-      await cargarHuecos(matEfectiva, varianteId || servicio?.var_id || null, modalidad);
+    const matEfectiva = materiaId || materiaPorDefecto?.mat_id || "";
+    if (!matEfectiva) {
+      setError("Primero cuéntanos tu necesidad para asignar la especialidad.");
       return;
     }
-
-    if (paso === 1) {
-      if (!elegido) {
-        setError("Selecciona una fecha y horario disponible para tu consulta.");
-        return;
-      }
-      irA(2);
-      return;
+    if (!motivo || motivo.trim().length < 4) {
+      setMotivo(relatoUsuario.trim().slice(0, 500) || "Consulta jurídica con especialista");
     }
+    setPaso(1);
+    await cargarHuecos(matEfectiva, modalidad);
   }
 
   function ejecutarReservaConfirmada(pagoId?: string | null) {
     setError(null);
     if (!elegido) {
-      setError("Selecciona primero un horario disponible.");
+      setError("Selecciona primero una fecha y hora disponible.");
       return;
     }
     const matEfectiva = materiaId || materiaPorDefecto?.mat_id || null;
     const motivoEfectivo =
-      motivo.trim().length >= 5 ? motivo.trim() : "Consulta jurídica clasificada por ARIA";
+      motivo.trim().length >= 4
+        ? motivo.trim()
+        : relatoUsuario.trim().slice(0, 500) || "Consulta jurídica clasificada por ARIA";
 
     iniciarEnvio(async () => {
       const r = await reservarCitaAction({
         materia_id: matEfectiva,
         inicio_en: elegido,
-        variante_id: varianteId || servicio?.var_id || null,
+        variante_id: servicio?.var_id || null,
         modalidad,
         motivo: motivoEfectivo,
         caso_id: null,
@@ -390,15 +333,12 @@ export default function FormularioAgendar({
       if (!r.ok) {
         setError(r.error);
         try {
-          await cargarHuecos(matEfectiva || "", varianteId || null, modalidad);
+          await cargarHuecos(matEfectiva || "", modalidad);
         } catch {
           setHuecos(null);
           setFalloHuecos(true);
         }
         setElegido(null);
-        setAlcanzado(1);
-        setDireccion("izq");
-        setPaso(1);
         return;
       }
 
@@ -409,14 +349,10 @@ export default function FormularioAgendar({
     });
   }
 
-  function onConfirmarOPagar() {
+  function onProcederAlPago() {
     setError(null);
     if (!elegido) {
-      setError("Elige uno de los horarios disponibles.");
-      return;
-    }
-    if (!aceptaPolitica) {
-      setError("Debes aceptar las condiciones de agendamiento para continuar.");
+      setError("Selecciona un día y una hora para tu consulta antes de proceder al pago.");
       return;
     }
 
@@ -425,7 +361,6 @@ export default function FormularioAgendar({
       return;
     }
 
-    // Abrir pasarela de pago para confirmar pago antes/junto con el agendamiento
     setModalPagoAbierto(true);
   }
 
@@ -435,7 +370,7 @@ export default function FormularioAgendar({
       var_id: servicio.var_id,
       var_producto_id: servicio.var_producto_id,
       var_sku: servicio.var_sku,
-      var_nombre: `${servicio.var_nombre} — ${materia?.mat_nombre ?? "Consulta Legal"}`,
+      var_nombre: `${modalidad === "virtual" ? "Consulta Telemática" : "Consulta Presencial"} — Especialista en ${materia?.mat_nombre ?? "Derecho"}`,
       var_precio: servicio.var_precio,
       var_tipo_oferta: "UNICO",
       var_codigo_impuesto_sri: "2",
@@ -445,563 +380,904 @@ export default function FormularioAgendar({
       monto_iva: servicio.monto_iva,
       precio_total: servicio.precio_total,
     };
-  }, [servicio, materia]);
+  }, [servicio, modalidad, materia]);
 
-  const puedeContinuarPaso0 = Boolean(materiaId) && motivo.trim().length >= 5;
-  const puedeContinuarPaso1 = Boolean(elegido);
   const grupoDiaActual = huecosPorDia.find((g) => g.clave === diaSeleccionado) ?? huecosPorDia[0];
 
   if (citaConfirmadaId && elegido) {
     return (
-      <div className="rounded-3xl border border-emerald-200 bg-emerald-50/70 p-6 sm:p-8 text-center space-y-4 shadow-sm">
-        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-600 text-white shadow-md">
-          <CheckCircle2 className="h-8 w-8" />
+      <div
+        style={{
+          background: "#ECFDF5",
+          border: "1.5px solid #A7F3D0",
+          borderRadius: "24px",
+          padding: "36px 28px",
+          textAlign: "center",
+          boxShadow: "0 10px 30px rgba(5, 135, 110, 0.08)",
+        }}
+      >
+        <div
+          style={{
+            width: "56px",
+            height: "56px",
+            borderRadius: "18px",
+            background: "#05876E",
+            color: "#FFFFFF",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            margin: "0 auto 16px",
+          }}
+        >
+          <CheckCircle2 size={30} />
         </div>
-        <h2 className="text-xl font-bold text-slate-900">¡Consulta Agendada y Confirmada!</h2>
-        <p className="text-sm text-slate-600 max-w-md mx-auto">
-          Tu cita de <strong>{materia?.mat_nombre ?? "Orientación Legal"}</strong> para el{" "}
-          <strong>{FORMATO_FECHA_COMPLETA.format(new Date(elegido))}</strong> ha quedado registrada y
-          confirmada. Redirigiendo a tus citas…
+        <h2 style={{ fontSize: "1.35rem", fontWeight: 800, color: "#064E3B", margin: "0 0 8px" }}>
+          ¡Consulta Agendada y Confirmada!
+        </h2>
+        <p style={{ fontSize: "0.95rem", color: "#065F46", maxWidth: "460px", margin: "0 auto", lineHeight: 1.5 }}>
+          Tu cita con el especialista en <strong>{materia?.mat_nombre ?? "Derecho"}</strong> para el{" "}
+          <strong>{FORMATO_FECHA_COMPLETA.format(new Date(elegido))}</strong> ha quedado confirmada. Redirigiendo a tus citas…
         </p>
       </div>
     );
   }
 
   return (
-    <div className="agenda-formulario asistente-pasos">
-      <ol className="pasos-agenda" aria-label="Pasos para agendar">
-        {PASOS.map((nombre, k) => {
-          const estado = k < paso ? "hecho" : k === paso ? "actual" : "pendiente";
-          return (
-            <li key={nombre} className={`paso-agenda es-${estado}`}>
-              <button
-                type="button"
-                onClick={() => irA(k)}
-                disabled={k > alcanzado || k === paso || enviando}
-                aria-current={k === paso ? "step" : undefined}
-                aria-label={`Paso ${k + 1}: ${nombre}`}
-              >
-                {k < paso ? <Check size={15} strokeWidth={2.6} aria-hidden="true" /> : k + 1}
-              </button>
-              <span className="paso-agenda-nombre">{nombre}</span>
-            </li>
-          );
-        })}
-      </ol>
-      <p className="lector-oculto" aria-live="polite">
-        {`Paso ${paso + 1} de ${PASOS.length}: ${PASOS[paso]}`}
-      </p>
-
-      <div key={paso} className={`paso-agenda-cuerpo entra-${direccion}`}>
-        {/* =====================================================================
-            PASO 1: CHAT DE DIAGNÓSTICO Y CLASIFICACIÓN CON ARIA (IA)
-           ===================================================================== */}
-        {paso === 0 && (
-          <div className="space-y-5">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200 pb-3">
-              <div>
-                <h2 ref={titulo} tabIndex={-1} className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                  <Sparkles className="h-5 w-5 text-violet-600" />
-                  ¿Qué problema legal necesitas resolver?
-                </h2>
-                <p className="text-xs sm:text-sm text-slate-600">
-                  Explícalo con tus propias palabras. <strong>ARIA</strong> entenderá tu caso y asignará la especialidad jurídica automáticamente.
-                </p>
-              </div>
-              {!triaje && materiaPorDefecto && (
-                <button
-                  type="button"
-                  onClick={usarEspecialidadPorDefectoDirecto}
-                  title={`Asignar especialidad por defecto (${materiaPorDefecto.mat_nombre})`}
-                  aria-label={`Asignar especialidad por defecto (${materiaPorDefecto.mat_nombre})`}
-                  className="btn-responsive-accion self-start sm:self-auto inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition"
-                >
-                  <ShieldCheck className="h-4 w-4 text-violet-600" />
-                  <span className="btn-texto-responsive">Consulta General</span>
-                </button>
-              )}
-            </div>
-
-            {/* Ventana de conversación con ARIA */}
-            <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-3 sm:p-4 space-y-3 max-h-80 overflow-y-auto">
-              {mensajesAria.map((msg, idx) => {
-                const esAria = msg.rol === "assistant";
-                return (
-                  <div
-                    key={idx}
-                    className={`flex items-start gap-2.5 ${esAria ? "justify-start" : "justify-end"}`}
-                  >
-                    {esAria && (
-                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-violet-600 text-white shadow-sm">
-                        <Bot className="h-4 w-4" />
-                      </div>
-                    )}
-                    <div
-                      className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed shadow-xs ${
-                        esAria
-                          ? "bg-white text-slate-800 border border-slate-200/80"
-                          : "bg-violet-600 text-white"
-                      }`}
-                    >
-                      {msg.contenido}
-                    </div>
-                    {!esAria && (
-                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-slate-800 text-white">
-                        <User className="h-4 w-4" />
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-
-              {analizandoAria && (
-                <div className="flex items-center gap-2.5 text-xs font-medium text-violet-700 bg-violet-50 border border-violet-200/70 rounded-xl px-3 py-2 w-fit">
-                  <Loader2 className="h-4 w-4 animate-spin text-violet-600" />
-                  ARIA está analizando tu situación y determinando la especialidad…
-                </div>
-              )}
-              <div ref={finChatRef} />
-            </div>
-
-            {/* Sugerencias rápidas en lenguaje cotidiano */}
-            <div className="space-y-1.5">
-              <p className="text-xs font-semibold text-slate-500">
-                Ejemplos frecuentes (toca uno o escribe tu caso abajo):
-              </p>
-              <div className="flex flex-wrap gap-1.5">
-                {SUGERENCIAS_RAPIDAS.map((sug) => (
-                  <button
-                    key={sug}
-                    type="button"
-                    disabled={analizandoAria}
-                    onClick={() => enviarMensajeAria(sug)}
-                    className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs text-slate-700 hover:border-violet-300 hover:bg-violet-50/60 hover:text-violet-900 transition disabled:opacity-50 text-left"
-                  >
-                    {sug}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Caja de entrada del chat con ARIA */}
-            <div className="flex flex-col sm:flex-row gap-2">
-              <textarea
-                rows={2}
-                value={entradaChat}
-                onChange={(e) => setEntradaChat(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault();
-                    enviarMensajeAria();
-                  }
-                }}
-                placeholder="Ej.: Mi inquilino lleva 3 meses sin pagar el arriendo y no quiere entregar el departamento..."
-                disabled={analizandoAria}
-                className="flex-1 rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-violet-600 focus:outline-none"
-              />
-              <button
-                type="button"
-                onClick={() => enviarMensajeAria()}
-                disabled={analizandoAria || entradaChat.trim().length < 3}
-                title="Enviar descripción a ARIA para clasificar especialidad"
-                aria-label="Enviar descripción a ARIA para clasificar especialidad"
-                className="btn btn-primario btn-responsive-accion inline-flex items-center justify-center gap-2 self-end sm:self-stretch px-4 py-2.5 rounded-xl font-semibold"
-              >
-                {analizandoAria ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                <span className="btn-texto-responsive">Analizar Caso</span>
-              </button>
-            </div>
-
-            {/* Tarjeta de resultado de clasificación de ARIA */}
-            {triaje && materia && (
-              <div className="rounded-2xl border border-violet-200 bg-violet-50/60 p-4 space-y-3">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div className="flex items-center gap-2">
-                    <span className="inline-flex items-center gap-1 rounded-full bg-violet-600 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider text-white">
-                      <Sparkles className="h-3 w-3" />
-                      {triaje.es_por_defecto ? "Especialidad por Defecto" : "Clasificado por ARIA"}
-                    </span>
-                    <span className="text-sm font-bold text-slate-900">
-                      Especialidad: {materia.mat_nombre}
-                    </span>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() => setMostrarSelectorManual((v) => !v)}
-                    className="text-xs font-semibold text-violet-700 underline hover:text-violet-900"
-                  >
-                    {mostrarSelectorManual ? "Ocultar lista" : "Cambiar especialidad"}
-                  </button>
-                </div>
-
-                {mostrarSelectorManual && (
-                  <div className="pt-1">
-                    <label htmlFor="selector-materia-manual" className="block text-xs font-semibold text-slate-700 mb-1">
-                      Seleccionar otra especialidad manualmente:
-                    </label>
-                    <select
-                      id="selector-materia-manual"
-                      value={materiaId}
-                      onChange={(e) => {
-                        setMateriaId(e.target.value);
-                        invalidarHorario();
-                      }}
-                      className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900"
-                    >
-                      {materias.map((m) => (
-                        <option key={m.mat_id} value={m.mat_id}>
-                          {m.mat_nombre}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                )}
-
-                <div>
-                  <label htmlFor="resumen-motivo-aria" className="block text-xs font-semibold text-slate-700 mb-1">
-                    Motivo registrado para tu abogado (puedes editarlo si deseas):
-                  </label>
-                  <input
-                    id="resumen-motivo-aria"
-                    type="text"
-                    value={motivo}
-                    maxLength={500}
-                    onChange={(e) => setMotivo(e.target.value)}
-                    className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800"
-                  />
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* =====================================================================
-            PASO 2: MODALIDAD Y SELECCIÓN DE FECHA / HORARIO DE ATENCIÓN
-           ===================================================================== */}
-        {paso === 1 && (
-          <div className="space-y-6">
-            <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-violet-200 bg-violet-50/50 px-4 py-3">
-              <div className="text-xs sm:text-sm text-slate-800">
-                <span className="font-semibold text-violet-800">Especialidad determinada:</span>{" "}
-                <strong>{materia?.mat_nombre ?? configAgenda.materia_defecto_nombre}</strong>
-                {motivo && <span className="text-slate-600"> · “{motivo}”</span>}
-              </div>
-              <button
-                type="button"
-                onClick={() => irA(0)}
-                className="text-xs font-semibold text-violet-700 underline"
-              >
-                Editar caso
-              </button>
-            </div>
-
-            {/* Selección de modalidad (Telemática vs Presencial) */}
-            <fieldset className="opciones-tarjeta opciones-dos">
-              <legend>
-                <h2 ref={titulo} tabIndex={-1}>1. Modalidad de la consulta</h2>
-              </legend>
-              <label className="opcion-tarjeta">
-                <input
-                  type="radio"
-                  name="modalidad"
-                  checked={modalidad === "virtual"}
-                  onChange={() => {
-                    setModalidad("virtual");
-                    setElegido(null);
-                    void cargarHuecos(materia?.mat_id || "", varianteId || null, "virtual");
-                  }}
-                />
-                <span className="opcion-tarjeta-cuerpo">
-                  <Video size={18} aria-hidden="true" />
-                  <b>Consulta Telemática</b>
-                  <small>Videollamada en línea</small>
-                </span>
-              </label>
-              <label className="opcion-tarjeta">
-                <input
-                  type="radio"
-                  name="modalidad"
-                  checked={modalidad === "presencial"}
-                  onChange={() => {
-                    setModalidad("presencial");
-                    setElegido(null);
-                    void cargarHuecos(materia?.mat_id || "", varianteId || null, "presencial");
-                  }}
-                />
-                <span className="opcion-tarjeta-cuerpo">
-                  <Building2 size={18} aria-hidden="true" />
-                  <b>Consulta Presencial</b>
-                  <small>{configAgenda.direccion_presencial || "En el despacho"}</small>
-                </span>
-              </label>
-            </fieldset>
-
-            {/* Selección de tipo de consulta / tarifa */}
-            {servicios.length > 0 && (
-              <fieldset className="opciones-tarjeta">
-                <legend className="etiqueta-campo">2. Tipo de atención</legend>
-                {servicios.map((s) => (
-                  <label key={s.var_id} className="opcion-tarjeta">
-                    <input
-                      type="radio"
-                      name="servicio"
-                      value={s.var_id}
-                      checked={servicio?.var_id === s.var_id}
-                      onChange={() => {
-                        setVarianteId(s.var_id);
-                        setElegido(null);
-                        void cargarHuecos(materia?.mat_id || "", s.var_id, modalidad);
-                      }}
-                    />
-                    <span className="opcion-tarjeta-cuerpo">
-                      <b>{s.var_nombre}</b>
-                      <small>
-                        {entraEnPlan ? "Incluida en tu plan ($0.00)" : `${formatearUSD(s.precio_total)} (IVA incl.)`}
-                      </small>
-                    </span>
-                  </label>
-                ))}
-              </fieldset>
-            )}
-
-            {/* Calendario / Selector de Fecha y Hora */}
-            <section className="agenda-huecos space-y-3">
-              <div className="flex items-center justify-between gap-2">
-                <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-violet-600" />
-                  3. Selecciona fecha y horario de atención ({modalidad === "virtual" ? "Telemática" : "Presencial"})
-                </h3>
-                <button
-                  type="button"
-                  onClick={() => cargarHuecos(materia?.mat_id || "", servicio?.var_id || null, modalidad)}
-                  disabled={buscando}
-                  title="Actualizar horarios disponibles"
-                  aria-label="Actualizar horarios disponibles"
-                  className="btn-responsive-accion inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50"
-                >
-                  <RefreshCw className={`h-3.5 w-3.5 ${buscando ? "animate-spin" : ""}`} />
-                  <span className="btn-texto-responsive">Actualizar</span>
-                </button>
-              </div>
-
-              {falloHuecos && !buscando ? (
-                <div className="agenda-reintentar">
-                  <p className="estado-vacio">
-                    No pudimos cargar los horarios. Revisa tu conexión e inténtalo otra vez.
-                  </p>
-                  <button
-                    type="button"
-                    className="btn btn-neutro"
-                    onClick={() => cargarHuecos(materia?.mat_id || "", servicio?.var_id || null, modalidad)}
-                  >
-                    Reintentar
-                  </button>
-                </div>
-              ) : buscando || huecos === null ? (
-                <div className="flex items-center gap-2 py-6 text-sm text-slate-600">
-                  <Loader2 className="h-4 w-4 animate-spin text-violet-600" />
-                  Buscando horarios de atención disponibles…
-                </div>
-              ) : huecosPorDia.length === 0 ? (
-                <p className="estado-vacio">
-                  No hay horarios habilitados en esta modalidad para los próximos días. Prueba cambiando entre
-                  consulta telemática y presencial.
-                </p>
-              ) : (
-                <div className="space-y-4">
-                  {/* Pestañas de días */}
-                  <div className="flex gap-2 overflow-x-auto pb-2" role="tablist" aria-label="Días disponibles">
-                    {huecosPorDia.map((grupo) => {
-                      const activo = grupo.clave === (grupoDiaActual?.clave ?? "");
-                      return (
-                        <button
-                          key={grupo.clave}
-                          type="button"
-                          role="tab"
-                          aria-selected={activo}
-                          onClick={() => setDiaSeleccionado(grupo.clave)}
-                          className={`shrink-0 rounded-xl border px-3.5 py-2 text-xs font-semibold capitalize transition ${
-                            activo
-                              ? "border-violet-600 bg-violet-600 text-white shadow-xs"
-                              : "border-slate-200 bg-white text-slate-700 hover:border-violet-300"
-                          }`}
-                        >
-                          <div>{grupo.etiqueta}</div>
-                          <div className={`text-[10px] ${activo ? "text-violet-100" : "text-slate-400"}`}>
-                            {grupo.items.length} horas
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </div>
-
-                  {/* Horas del día seleccionado */}
-                  {grupoDiaActual && (
-                    <div className="space-y-2">
-                      <p className="text-xs text-slate-500 flex items-center gap-1.5">
-                        <Clock className="h-3.5 w-3.5 text-slate-400" />
-                        Horarios disponibles para el <strong className="capitalize">{grupoDiaActual.etiqueta}</strong> (Hora de Ecuador):
-                      </p>
-                      <ul className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2 list-none p-0 m-0">
-                        {grupoDiaActual.items.map((h) => {
-                          const activo = elegido === h.hueco_inicio;
-                          return (
-                            <li key={h.hueco_inicio}>
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setElegido(h.hueco_inicio);
-                                  setError(null);
-                                }}
-                                aria-pressed={activo}
-                                className={`w-full rounded-xl border py-2.5 px-3 text-sm font-semibold transition ${
-                                  activo
-                                    ? "border-violet-600 bg-violet-600 text-white shadow-sm"
-                                    : "border-slate-200 bg-white text-slate-800 hover:border-violet-400 hover:bg-violet-50/50"
-                                }`}
-                              >
-                                {FORMATO_SOLO_HORA.format(new Date(h.hueco_inicio))}
-                              </button>
-                            </li>
-                          );
-                        })}
-                      </ul>
-                    </div>
-                  )}
-
-                  {elegido && (
-                    <div className="rounded-xl border border-emerald-200 bg-emerald-50/70 px-3.5 py-2.5 text-xs sm:text-sm text-emerald-950 flex items-center gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
-                      <span>
-                        Horario seleccionado:{" "}
-                        <strong className="capitalize">{FORMATO_FECHA_COMPLETA.format(new Date(elegido))}</strong>
-                      </span>
-                    </div>
-                  )}
-                </div>
-              )}
-            </section>
-          </div>
-        )}
-
-        {/* =====================================================================
-            PASO 3: CONFIRMAR Y SOLICITAR EL PAGO
-           ===================================================================== */}
-        {paso === 2 && elegido && (
-          <section className="agenda-confirmar space-y-5">
-            <h2 ref={titulo} tabIndex={-1}>Revisa tu cita y confirma el pago</h2>
-
-            <dl className="resumen-agenda">
-              <div>
-                <dt>Especialidad (ARIA)</dt>
-                <dd className="font-semibold text-violet-900">
-                  {materia?.mat_nombre ?? configAgenda.materia_defecto_nombre}
-                  {triaje?.es_por_defecto ? " (Asignada por defecto)" : ""}
-                </dd>
-              </div>
-              <div>
-                <dt>Motivo de consulta</dt>
-                <dd>{motivo}</dd>
-              </div>
-              <div>
-                <dt>Servicio</dt>
-                <dd>{servicio?.var_nombre ?? "Consulta Jurídica"}</dd>
-              </div>
-              <div>
-                <dt>Modalidad</dt>
-                <dd>
-                  {modalidad === "virtual"
-                    ? "Consulta Telemática (Videollamada)"
-                    : `Consulta Presencial (${configAgenda.direccion_presencial || "En Despacho"})`}
-                </dd>
-              </div>
-              <div>
-                <dt>Fecha y Hora</dt>
-                <dd className="capitalize font-semibold">{FORMATO_FECHA_COMPLETA.format(new Date(elegido))}</dd>
-              </div>
-              {servicio && (
-                <div>
-                  <dt>Total a pagar</dt>
-                  <dd className="text-base font-bold text-slate-900">
-                    {entraEnPlan
-                      ? "Incluida en tu plan ($0.00)"
-                      : `${formatearUSD(servicio.precio_total)} (Subtotal ${formatearUSD(servicio.var_precio)} + IVA ${formatearUSD(servicio.monto_iva)})`}
-                  </dd>
-                </div>
-              )}
-            </dl>
-
-            <label className="flex items-start gap-2.5 rounded-xl border border-slate-200 bg-slate-50 p-3.5 text-xs sm:text-sm text-slate-700 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={aceptaPolitica}
-                onChange={(e) => setAceptaPolitica(e.target.checked)}
-                className="mt-0.5 h-4 w-4 rounded border-slate-300 text-violet-600 focus:ring-violet-500"
-              />
-              <span>
-                Confirmo los datos de mi consulta jurídica. Al confirmar el pago, mi horario queda reservado y
-                confirmado inmediatamente con un abogado especialista de Tranqi.
-              </span>
-            </label>
-          </section>
-        )}
-      </div>
-
-      {error && <p className="editor-error">{error}</p>}
-
-      <div className="pie-pasos">
+    <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+      {/* Indicador minimalista de 2 pasos */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          background: "#FFFFFF",
+          border: "1px solid #E5E7EB",
+          borderRadius: "16px",
+          padding: "14px 20px",
+          boxShadow: "0 2px 8px rgba(15, 23, 42, 0.03)",
+        }}
+      >
         <button
           type="button"
-          onClick={() => irA(paso - 1)}
-          disabled={paso === 0 || enviando}
-          title="Volver al paso anterior"
-          aria-label="Volver al paso anterior"
-          className="btn btn-neutro btn-responsive-accion inline-flex items-center gap-1.5"
+          onClick={() => setPaso(0)}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "10px",
+            background: "transparent",
+            border: "none",
+            padding: 0,
+            cursor: "pointer",
+            textAlign: "left",
+          }}
         >
-          <ArrowLeft className="h-4 w-4" />
-          <span className="btn-texto-responsive">Atrás</span>
+          <span
+            style={{
+              width: "30px",
+              height: "30px",
+              borderRadius: "50%",
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: "0.82rem",
+              fontWeight: 800,
+              background: paso === 0 ? "#5000BA" : "#05876E",
+              color: "#FFFFFF",
+            }}
+          >
+            {paso > 0 ? <Check size={16} strokeWidth={2.8} /> : "1"}
+          </span>
+          <div>
+            <div style={{ fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.04em", color: "#6B7280" }}>
+              Paso 1
+            </div>
+            <div style={{ fontSize: "0.9rem", fontWeight: 800, color: paso === 0 ? "#5000BA" : "#111827" }}>
+              Cuéntanos tu necesidad
+            </div>
+          </div>
         </button>
 
-        {paso < 2 ? (
-          <button
-            type="button"
-            onClick={continuar}
-            disabled={
-              (paso === 0 && !puedeContinuarPaso0 && entradaChat.trim().length < 5) ||
-              (paso === 1 && !puedeContinuarPaso1) ||
-              buscando ||
-              analizandoAria
-            }
-            title={paso === 0 ? "Continuar a selección de fecha y horario" : "Continuar a confirmación y pago"}
-            aria-label={paso === 0 ? "Continuar a selección de fecha y horario" : "Continuar a confirmación y pago"}
-            className="btn btn-primario btn-responsive-accion inline-flex items-center gap-1.5"
+        <div style={{ flex: 1, height: "2px", background: paso === 1 ? "#5000BA" : "#E5E7EB", margin: "0 16px", maxWidth: "120px" }} />
+
+        <button
+          type="button"
+          disabled={!triaje && !materiaId}
+          onClick={() => {
+            if (triaje || materiaId) void irAPasoAgendamiento();
+          }}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "10px",
+            background: "transparent",
+            border: "none",
+            padding: 0,
+            cursor: triaje || materiaId ? "pointer" : "default",
+            opacity: paso === 1 || triaje || materiaId ? 1 : 0.5,
+            textAlign: "left",
+          }}
+        >
+          <span
+            style={{
+              width: "30px",
+              height: "30px",
+              borderRadius: "50%",
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: "0.82rem",
+              fontWeight: 800,
+              background: paso === 1 ? "#5000BA" : "#F3F4F6",
+              color: paso === 1 ? "#FFFFFF" : "#6B7280",
+            }}
           >
-            <span className="btn-texto-responsive">
-              {paso === 0 ? "Elegir Horario" : "Continuar"}
-            </span>
-            <ArrowRight className="h-4 w-4" />
-          </button>
-        ) : (
-          <button
-            type="button"
-            onClick={onConfirmarOPagar}
-            disabled={enviando || !aceptaPolitica}
-            title={entraEnPlan ? "Confirmar cita cubierta por el plan" : "Pagar consulta y confirmar agendamiento"}
-            aria-label={entraEnPlan ? "Confirmar cita cubierta por el plan" : "Pagar consulta y confirmar agendamiento"}
-            className="btn btn-primario btn-responsive-accion inline-flex items-center gap-2"
-          >
-            <CreditCard className="h-4 w-4" />
-            <span className="btn-texto-responsive">
-              {enviando
-                ? "Confirmando…"
-                : entraEnPlan
-                  ? "Confirmar Cita"
-                  : `Pagar y Agendar (${servicio ? formatearUSD(servicio.precio_total) : ""})`}
-            </span>
-          </button>
-        )}
+            2
+          </span>
+          <div>
+            <div style={{ fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.04em", color: "#6B7280" }}>
+              Paso 2
+            </div>
+            <div style={{ fontSize: "0.9rem", fontWeight: 800, color: paso === 1 ? "#5000BA" : "#374151" }}>
+              Modalidad, horario y pago
+            </div>
+          </div>
+        </button>
       </div>
+
+      {/* =====================================================================
+          PASO 1: PREGUNTA SIMPLE Y RESPUESTA DE ESPECIALIDAD CON ARIA
+         ===================================================================== */}
+      {paso === 0 && (
+        <div
+          style={{
+            background: "#FFFFFF",
+            border: "1px solid #E5E7EB",
+            borderRadius: "24px",
+            padding: "28px 26px",
+            boxShadow: "0 10px 30px rgba(15, 23, 42, 0.04)",
+            display: "flex",
+            flexDirection: "column",
+            gap: "20px",
+          }}
+        >
+          <div>
+            <span
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+                background: "#F3E8FF",
+                color: "#5000BA",
+                padding: "5px 12px",
+                borderRadius: "999px",
+                fontSize: "0.75rem",
+                fontWeight: 800,
+                letterSpacing: "0.03em",
+                marginBottom: "10px",
+              }}
+            >
+              <Sparkles size={14} /> Asistente Legal ARIA
+            </span>
+            <h1 style={{ fontSize: "1.45rem", fontWeight: 800, color: "#111827", margin: "0 0 6px", letterSpacing: "-0.02em" }}>
+              ¿Qué necesitas resolver hoy?
+            </h1>
+            <p style={{ fontSize: "0.92rem", color: "#4B5563", margin: 0, lineHeight: 1.5 }}>
+              Cuéntanos tu caso con tus propias palabras. Identificaremos de inmediato qué especialista legal debe atenderte.
+            </p>
+          </div>
+
+          {/* Ejemplos rápidos en chips limpios */}
+          <div>
+            <div style={{ fontSize: "0.76rem", fontWeight: 700, color: "#6B7280", marginBottom: "8px" }}>
+              Ideas rápidas (opcional):
+            </div>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
+              {EJEMPLOS_CORTOS.map((ej) => {
+                const activo = relatoUsuario === ej.texto;
+                return (
+                  <button
+                    key={ej.etiqueta}
+                    type="button"
+                    disabled={analizandoAria}
+                    onClick={() => void consultarNeedConAria(ej.texto)}
+                    style={{
+                      background: activo ? "#F3E8FF" : "#F9FAFB",
+                      border: activo ? "1.5px solid #5000BA" : "1px solid #E5E7EB",
+                      color: activo ? "#5000BA" : "#374151",
+                      borderRadius: "999px",
+                      padding: "6px 13px",
+                      fontSize: "0.8rem",
+                      fontWeight: 600,
+                      cursor: analizandoAria ? "wait" : "pointer",
+                      transition: "all 0.15s ease",
+                    }}
+                  >
+                    {ej.etiqueta}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Área de texto limpia y amplia */}
+          <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+            <textarea
+              rows={3}
+              value={relatoUsuario}
+              onChange={(e) => setRelatoUsuario(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  void consultarNeedConAria();
+                }
+              }}
+              placeholder="Escribe aquí tu necesidad... Ej.: Voy a divorciarme de mutuo acuerdo y quiero asesoría sobre la repartición de bienes."
+              disabled={analizandoAria}
+              style={{
+                width: "100%",
+                boxSizing: "border-box",
+                borderRadius: "16px",
+                border: "1.5px solid #D1D5DB",
+                background: "#FAFAFA",
+                padding: "14px 16px",
+                fontSize: "0.95rem",
+                color: "#111827",
+                lineHeight: 1.5,
+                resize: "vertical",
+                outline: "none",
+                fontFamily: "inherit",
+              }}
+            />
+
+            <div style={{ display: "flex", justifyContent: "flex-end" }}>
+              <button
+                type="button"
+                onClick={() => void consultarNeedConAria()}
+                disabled={analizandoAria || relatoUsuario.trim().length < 4}
+                style={{
+                  background: analizandoAria || relatoUsuario.trim().length < 4 ? "#D8B4FE" : "#5000BA",
+                  color: "#FFFFFF",
+                  border: "none",
+                  borderRadius: "14px",
+                  padding: "11px 20px",
+                  fontSize: "0.88rem",
+                  fontWeight: 700,
+                  cursor: analizandoAria || relatoUsuario.trim().length < 4 ? "not-allowed" : "pointer",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  boxShadow: "0 4px 14px rgba(80, 0, 186, 0.18)",
+                }}
+              >
+                {analizandoAria ? (
+                  <>
+                    <Loader2 size={16} className="animate-spin" />
+                    Analizando tu necesidad…
+                  </>
+                ) : (
+                  <>
+                    <Sparkles size={16} />
+                    {triaje ? "Actualizar análisis" : "Consultar con ARIA"}
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+
+          {/* Respuesta de ARIA con la especialidad del especialista y botón de continuar */}
+          {triaje && materia && (
+            <div
+              ref={respuestaRef}
+              style={{
+                background: "linear-gradient(135deg, #F5F3FF 0%, #ECFDF5 100%)",
+                border: "1.5px solid #C4B5FD",
+                borderRadius: "20px",
+                padding: "22px",
+                display: "flex",
+                flexDirection: "column",
+                gap: "16px",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "flex-start", gap: "14px" }}>
+                <div
+                  style={{
+                    width: "42px",
+                    height: "42px",
+                    borderRadius: "14px",
+                    background: "#5000BA",
+                    color: "#FFFFFF",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    flexShrink: 0,
+                  }}
+                >
+                  <Scale size={20} />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: "0.75rem", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.04em", color: "#5000BA", marginBottom: "4px" }}>
+                    Recomendación de ARIA
+                  </div>
+                  <p style={{ fontSize: "0.94rem", color: "#1F2937", margin: "0 0 12px", lineHeight: 1.55 }}>
+                    {triaje.respuesta_aria}
+                  </p>
+
+                  <div
+                    style={{
+                      display: "flex",
+                      flexWrap: "wrap",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      gap: "10px",
+                      background: "#FFFFFF",
+                      border: "1px solid #DDD6FE",
+                      borderRadius: "14px",
+                      padding: "12px 16px",
+                    }}
+                  >
+                    <div>
+                      <div style={{ fontSize: "0.74rem", color: "#6B7280", fontWeight: 600 }}>
+                        Especialista para tu agendamiento:
+                      </div>
+                      <div style={{ fontSize: "1.02rem", fontWeight: 800, color: "#05876E" }}>
+                        Abogado Especialista en {materia.mat_nombre}
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setMostrarSelectorManual((v) => !v)}
+                      style={{
+                        background: "transparent",
+                        border: "none",
+                        color: "#5000BA",
+                        fontSize: "0.78rem",
+                        fontWeight: 700,
+                        textDecoration: "underline",
+                        cursor: "pointer",
+                      }}
+                    >
+                      {mostrarSelectorManual ? "Cerrar" : "Cambiar especialidad"}
+                    </button>
+                  </div>
+
+                  {mostrarSelectorManual && (
+                    <div style={{ marginTop: "10px" }}>
+                      <select
+                        value={materiaId}
+                        onChange={(e) => {
+                          setMateriaId(e.target.value);
+                          setHuecos(null);
+                          setElegido(null);
+                        }}
+                        style={{
+                          width: "100%",
+                          borderRadius: "12px",
+                          border: "1px solid #D1D5DB",
+                          background: "#FFFFFF",
+                          padding: "10px 12px",
+                          fontSize: "0.88rem",
+                          color: "#111827",
+                          fontWeight: 600,
+                        }}
+                      >
+                        {materias.map((m) => (
+                          <option key={m.mat_id} value={m.mat_id}>
+                            {m.mat_nombre}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div style={{ display: "flex", justifyContent: "flex-end", paddingTop: "4px" }}>
+                <button
+                  type="button"
+                  onClick={() => void irAPasoAgendamiento()}
+                  style={{
+                    background: "#05876E",
+                    color: "#FFFFFF",
+                    border: "none",
+                    borderRadius: "14px",
+                    padding: "12px 24px",
+                    fontSize: "0.94rem",
+                    fontWeight: 800,
+                    cursor: "pointer",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    boxShadow: "0 6px 18px rgba(5, 135, 110, 0.24)",
+                  }}
+                >
+                  Continuar al Agendamiento
+                  <ArrowRight size={18} />
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* =====================================================================
+          PASO 2: MODALIDAD (TELEMÁTICA / PRESENCIAL), HORARIO Y PAGO DIRECTO
+         ===================================================================== */}
+      {paso === 1 && (
+        <div
+          style={{
+            background: "#FFFFFF",
+            border: "1px solid #E5E7EB",
+            borderRadius: "24px",
+            padding: "28px 26px",
+            boxShadow: "0 10px 30px rgba(15, 23, 42, 0.04)",
+            display: "flex",
+            flexDirection: "column",
+            gap: "24px",
+          }}
+        >
+          {/* Resumen superior de la especialidad */}
+          <div
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: "12px",
+              background: "#F5F3FF",
+              border: "1px solid #DDD6FE",
+              borderRadius: "16px",
+              padding: "12px 16px",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              <Scale size={18} color="#5000BA" />
+              <span style={{ fontSize: "0.88rem", color: "#1F2937" }}>
+                Especialista asignado: <strong style={{ color: "#5000BA" }}>{materia?.mat_nombre ?? "Civil"}</strong>
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setPaso(0)}
+              style={{
+                background: "transparent",
+                border: "none",
+                color: "#5000BA",
+                fontSize: "0.8rem",
+                fontWeight: 700,
+                textDecoration: "underline",
+                cursor: "pointer",
+              }}
+            >
+              Cambiar caso
+            </button>
+          </div>
+
+          {/* 1. Selección exclusiva entre Telemática o Presencial */}
+          <div>
+            <h2 style={{ fontSize: "1.12rem", fontWeight: 800, color: "#111827", margin: "0 0 12px" }}>
+              1. ¿Cómo prefieres recibir tu consulta?
+            </h2>
+
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
+                gap: "14px",
+              }}
+            >
+              {/* Opción Telemática */}
+              <button
+                type="button"
+                onClick={() => {
+                  setModalidad("virtual");
+                  setElegido(null);
+                  void cargarHuecos(materia?.mat_id || "", "virtual");
+                }}
+                style={{
+                  textAlign: "left",
+                  borderRadius: "18px",
+                  padding: "18px 20px",
+                  border: modalidad === "virtual" ? "2px solid #5000BA" : "1.5px solid #E5E7EB",
+                  background: modalidad === "virtual" ? "#F5F3FF" : "#FFFFFF",
+                  cursor: "pointer",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "8px",
+                  transition: "all 0.15s ease",
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%" }}>
+                  <div
+                    style={{
+                      width: "40px",
+                      height: "40px",
+                      borderRadius: "12px",
+                      background: modalidad === "virtual" ? "#5000BA" : "#F3F4F6",
+                      color: modalidad === "virtual" ? "#FFFFFF" : "#374151",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <Video size={20} />
+                  </div>
+                  <span
+                    style={{
+                      fontSize: "0.88rem",
+                      fontWeight: 800,
+                      color: modalidad === "virtual" ? "#5000BA" : "#111827",
+                      background: modalidad === "virtual" ? "#EDE9FE" : "#F3F4F6",
+                      padding: "4px 10px",
+                      borderRadius: "999px",
+                    }}
+                  >
+                    {entraEnPlan ? "Incluida ($0.00)" : formatearUSD(servicioVirtual.precio_total)}
+                  </span>
+                </div>
+                <div style={{ fontSize: "1rem", fontWeight: 800, color: "#111827", marginTop: "4px" }}>
+                  Consulta Telemática
+                </div>
+                <div style={{ fontSize: "0.82rem", color: "#6B7280", lineHeight: 1.4 }}>
+                  Videollamada en línea desde cualquier lugar con tu abogado especialista.
+                </div>
+              </button>
+
+              {/* Opción Presencial */}
+              <button
+                type="button"
+                onClick={() => {
+                  setModalidad("presencial");
+                  setElegido(null);
+                  void cargarHuecos(materia?.mat_id || "", "presencial");
+                }}
+                style={{
+                  textAlign: "left",
+                  borderRadius: "18px",
+                  padding: "18px 20px",
+                  border: modalidad === "presencial" ? "2px solid #5000BA" : "1.5px solid #E5E7EB",
+                  background: modalidad === "presencial" ? "#F5F3FF" : "#FFFFFF",
+                  cursor: "pointer",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "8px",
+                  transition: "all 0.15s ease",
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%" }}>
+                  <div
+                    style={{
+                      width: "40px",
+                      height: "40px",
+                      borderRadius: "12px",
+                      background: modalidad === "presencial" ? "#5000BA" : "#F3F4F6",
+                      color: modalidad === "presencial" ? "#FFFFFF" : "#374151",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <Building2 size={20} />
+                  </div>
+                  <span
+                    style={{
+                      fontSize: "0.88rem",
+                      fontWeight: 800,
+                      color: modalidad === "presencial" ? "#5000BA" : "#111827",
+                      background: modalidad === "presencial" ? "#EDE9FE" : "#F3F4F6",
+                      padding: "4px 10px",
+                      borderRadius: "999px",
+                    }}
+                  >
+                    {entraEnPlan ? "Incluida ($0.00)" : formatearUSD(servicioPresencial.precio_total)}
+                  </span>
+                </div>
+                <div style={{ fontSize: "1rem", fontWeight: 800, color: "#111827", marginTop: "4px" }}>
+                  Consulta Presencial
+                </div>
+                <div style={{ fontSize: "0.82rem", color: "#6B7280", lineHeight: 1.4 }}>
+                  {configAgenda.direccion_presencial || "Atención personalizada en Despacho Tranqi"}.
+                </div>
+              </button>
+            </div>
+          </div>
+
+          {/* 2. Selección de fecha y hora */}
+          <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "10px" }}>
+              <h2 style={{ fontSize: "1.12rem", fontWeight: 800, color: "#111827", margin: 0, display: "flex", alignItems: "center", gap: "8px" }}>
+                <Calendar size={19} color="#5000BA" />
+                2. Elige el día y la hora ({modalidad === "virtual" ? "Telemática" : "Presencial"})
+              </h2>
+              <button
+                type="button"
+                onClick={() => void cargarHuecos(materia?.mat_id || "", modalidad)}
+                disabled={buscando}
+                style={{
+                  background: "#F9FAFB",
+                  border: "1px solid #E5E7EB",
+                  borderRadius: "10px",
+                  padding: "6px 12px",
+                  fontSize: "0.78rem",
+                  fontWeight: 700,
+                  color: "#374151",
+                  cursor: buscando ? "wait" : "pointer",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px",
+                }}
+              >
+                <RefreshCw size={14} className={buscando ? "animate-spin" : ""} />
+                Actualizar
+              </button>
+            </div>
+
+            {falloHuecos && !buscando ? (
+              <div style={{ padding: "20px", borderRadius: "16px", background: "#FEF2F2", border: "1px solid #FECACA", textAlign: "center" }}>
+                <p style={{ fontSize: "0.88rem", color: "#991B1B", margin: "0 0 10px" }}>
+                  No pudimos cargar los horarios disponibles.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => void cargarHuecos(materia?.mat_id || "", modalidad)}
+                  style={{
+                    background: "#FFFFFF",
+                    border: "1px solid #FCA5A5",
+                    borderRadius: "10px",
+                    padding: "8px 16px",
+                    fontSize: "0.82rem",
+                    fontWeight: 700,
+                    color: "#991B1B",
+                    cursor: "pointer",
+                  }}
+                >
+                  Reintentar
+                </button>
+              </div>
+            ) : buscando || huecos === null ? (
+              <div
+                style={{
+                  padding: "28px",
+                  borderRadius: "16px",
+                  background: "#F9FAFB",
+                  border: "1px solid #E5E7EB",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "10px",
+                  color: "#4B5563",
+                  fontSize: "0.9rem",
+                  fontWeight: 600,
+                }}
+              >
+                <Loader2 size={18} className="animate-spin" color="#5000BA" />
+                Buscando horarios disponibles…
+              </div>
+            ) : huecosPorDia.length === 0 ? (
+              <div
+                style={{
+                  padding: "24px",
+                  borderRadius: "16px",
+                  background: "#F9FAFB",
+                  border: "1px solid #E5E7EB",
+                  textAlign: "center",
+                  color: "#4B5563",
+                  fontSize: "0.88rem",
+                }}
+              >
+                No hay horarios disponibles en esta modalidad para los próximos días. Prueba cambiando entre consulta telemática y presencial.
+              </div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                {/* Selector horizontal de días estilizado */}
+                <div
+                  role="tablist"
+                  aria-label="Días disponibles"
+                  style={{
+                    display: "flex",
+                    gap: "8px",
+                    overflowX: "auto",
+                    paddingBottom: "6px",
+                  }}
+                >
+                  {huecosPorDia.map((grupo) => {
+                    const activo = grupo.clave === (grupoDiaActual?.clave ?? "");
+                    return (
+                      <button
+                        key={grupo.clave}
+                        type="button"
+                        role="tab"
+                        aria-selected={activo}
+                        onClick={() => setDiaSeleccionado(grupo.clave)}
+                        style={{
+                          flexShrink: 0,
+                          borderRadius: "14px",
+                          padding: "10px 14px",
+                          border: activo ? "2px solid #5000BA" : "1px solid #E5E7EB",
+                          background: activo ? "#5000BA" : "#F9FAFB",
+                          color: activo ? "#FFFFFF" : "#1F2937",
+                          cursor: "pointer",
+                          textAlign: "center",
+                          minWidth: "96px",
+                          transition: "all 0.15s ease",
+                        }}
+                      >
+                        <div style={{ fontSize: "0.82rem", fontWeight: 800, textTransform: "capitalize" }}>
+                          {grupo.etiqueta}
+                        </div>
+                        <div
+                          style={{
+                            fontSize: "0.7rem",
+                            fontWeight: 600,
+                            color: activo ? "#E9D5FF" : "#6B7280",
+                            marginTop: "2px",
+                          }}
+                        >
+                          {grupo.items.length} disponibles
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Cuadrícula de horas limpia (sin bullets) */}
+                {grupoDiaActual && (
+                  <div>
+                    <div
+                      style={{
+                        fontSize: "0.8rem",
+                        color: "#6B7280",
+                        fontWeight: 600,
+                        marginBottom: "10px",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "6px",
+                      }}
+                    >
+                      <Clock size={14} color="#5000BA" />
+                      <span>
+                        Horas disponibles para el <strong style={{ color: "#111827", textTransform: "capitalize" }}>{grupoDiaActual.etiqueta}</strong>:
+                      </span>
+                    </div>
+
+                    <div
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns: "repeat(auto-fill, minmax(92px, 1fr))",
+                        gap: "10px",
+                      }}
+                    >
+                      {grupoDiaActual.items.map((h) => {
+                        const activo = elegido === h.hueco_inicio;
+                        return (
+                          <button
+                            key={h.hueco_inicio}
+                            type="button"
+                            onClick={() => {
+                              setElegido(h.hueco_inicio);
+                              setError(null);
+                            }}
+                            aria-pressed={activo}
+                            style={{
+                              borderRadius: "12px",
+                              padding: "11px 10px",
+                              border: activo ? "2px solid #5000BA" : "1px solid #D1D5DB",
+                              background: activo ? "#5000BA" : "#FFFFFF",
+                              color: activo ? "#FFFFFF" : "#111827",
+                              fontSize: "0.88rem",
+                              fontWeight: 800,
+                              cursor: "pointer",
+                              textAlign: "center",
+                              boxShadow: activo ? "0 4px 12px rgba(80, 0, 186, 0.22)" : "none",
+                              transition: "all 0.12s ease",
+                            }}
+                          >
+                            {FORMATO_SOLO_HORA.format(new Date(h.hueco_inicio))}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Barra inferior de resumen y pago directo */}
+          <div
+            style={{
+              marginTop: "6px",
+              paddingTop: "18px",
+              borderTop: "1px solid #E5E7EB",
+              display: "flex",
+              flexWrap: "wrap",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: "14px",
+            }}
+          >
+            <button
+              type="button"
+              onClick={() => setPaso(0)}
+              disabled={enviando}
+              style={{
+                background: "#F3F4F6",
+                color: "#374151",
+                border: "1px solid #E5E7EB",
+                borderRadius: "14px",
+                padding: "11px 18px",
+                fontSize: "0.86rem",
+                fontWeight: 700,
+                cursor: "pointer",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+              }}
+            >
+              <ArrowLeft size={16} />
+              Atrás
+            </button>
+
+            <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "14px" }}>
+              {elegido && (
+                <div style={{ textAlign: "right" }}>
+                  <div style={{ fontSize: "0.75rem", color: "#6B7280", fontWeight: 600, textTransform: "capitalize" }}>
+                    {FORMATO_FECHA_COMPLETA.format(new Date(elegido))}
+                  </div>
+                  <div style={{ fontSize: "0.95rem", fontWeight: 800, color: "#111827" }}>
+                    {entraEnPlan
+                      ? "Cubierta por tu plan ($0.00)"
+                      : `Total: ${formatearUSD(servicio.precio_total)} (IVA incl.)`}
+                  </div>
+                </div>
+              )}
+
+              <button
+                type="button"
+                onClick={onProcederAlPago}
+                disabled={!elegido || enviando}
+                style={{
+                  background: !elegido || enviando ? "#CBD5E1" : "#5000BA",
+                  color: "#FFFFFF",
+                  border: "none",
+                  borderRadius: "14px",
+                  padding: "13px 24px",
+                  fontSize: "0.94rem",
+                  fontWeight: 800,
+                  cursor: !elegido || enviando ? "not-allowed" : "pointer",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  boxShadow: !elegido || enviando ? "none" : "0 6px 20px rgba(80, 0, 186, 0.25)",
+                }}
+              >
+                <CreditCard size={18} />
+                {enviando
+                  ? "Confirmando…"
+                  : entraEnPlan
+                    ? "Confirmar Cita"
+                    : `Proceder al Pago (${formatearUSD(servicio.precio_total)})`}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {error && (
+        <div
+          style={{
+            background: "#FEF2F2",
+            border: "1px solid #FECACA",
+            color: "#991B1B",
+            padding: "12px 16px",
+            borderRadius: "14px",
+            fontSize: "0.86rem",
+            fontWeight: 600,
+          }}
+        >
+          {error}
+        </div>
+      )}
 
       {/* Modal de Checkout con Payphone para confirmar el pago de la cita */}
       {varianteParaCheckout && (
