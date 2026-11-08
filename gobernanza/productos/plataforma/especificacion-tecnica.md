@@ -112,10 +112,22 @@ Función `aud_fn_auditar_tabla()`: ✅ implementada y aplicada como trigger en l
 
 ## 4. `comun_facturacion` — implementa PLT-006
 
-| Tabla | Prefijo | Estado |
+Ver [ADR-0007](../../arquitectura/adr/0007-facturacion-electronica-sri.md). Migración `20261108000001_comun_facturacion.sql`, pruebas pgTAP en `supabase/tests/comun_facturacion.sql`, Edge Functions `facturacion-sri` (worker) y `facturacion-certificado` (subida del `.p12`).
+
+| Tabla | Prefijo col. | Qué guarda |
 | :--- | :--- | :--- |
-| `fac_factura_sri` | `fac_` | Definida en el TRD original. Migración pendiente. |
-| `fac_transaccion_pago` | `pag_` | Definida en el TRD original. Migración pendiente. |
+| `fac_emisor` | `emi_` | Un emisor por negocio: RUC, régimen, establecimiento y punto de emisión, ambiente (1 pruebas / 2 producción), certificado asignado, emisión automática. |
+| `fac_certificado` | `cer_` | Metadatos del `.p12` (titular, RUC/cédula, vigencia, huella). El `.p12` y su contraseña están en Vault (`cer_p12_secreto_id`, `cer_clave_secreto_id`). |
+| `fac_secuencial` | `sec_` | Último secuencial por negocio, ambiente, tipo y punto de emisión. Solo avanza. |
+| `fac_comprobante` | `cmp_` | Factura (01) y nota de crédito (04): número, clave de acceso, comprador (copia), formas de pago, estado, totales calculados por el worker, autorización, rutas del XML y RIDE. |
+| `fac_comprobante_linea` | `lin_` | Detalle: cantidad y precio con hasta 6 decimales, descuento, código de IVA (Tabla 17). |
+| `fac_evento` | `evt_` | Bitácora de cada transición (y de pagos que no se pudieron facturar). |
+
+Estados: `BORRADOR → PENDIENTE → RECIBIDO → AUTORIZADO`, y como finales `DEVUELTO`, `NO_AUTORIZADO`, `ERROR` (los dos primeros y `ERROR` admiten `fac_fn_reintentar`) y `ANULADO` (registro de una anulación hecha en SRI en Línea).
+
+RPC para sesiones: `fac_fn_guardar_emisor`, `fac_fn_cambiar_ambiente` (aal2), `fac_fn_fijar_secuencial`, `fac_fn_desactivar_certificado`, `fac_fn_registrar_anulacion` (ADMINISTRADOR, comprobado con `fac_fn_es_admin`, no con `seg_fn_es_admin_negocio`, que también acepta OPERADOR); `fac_fn_crear_comprobante`, `fac_fn_emitir`, `fac_fn_descartar_borrador`, `fac_fn_reintentar` (operador o admin); `fac_fn_habilitar_produccion` (superadmin). Solo `service_role`: `fac_fn_tomar_lote`, `fac_fn_registrar_resultado`, `fac_fn_registrar_correo`, `fac_fn_obtener_certificado`, `fac_fn_registrar_certificado`.
+
+Storage: bucket privado `facturacion`, rutas `{negocio}/{ambiente}/{aaaa}/{clave}.xml|.pdf`, lectura para operador/admin del negocio y para el comprador de un comprobante autorizado; sin borrado desde la app (conservación de 7 años).
 
 ## 5. `comun_catalogo` — implementa PLT-007
 
@@ -192,7 +204,7 @@ Seed aplicado: una fila por negocio (`tranqi`, `fastfix`, `tinkay`, `margaritas`
 | `comun_agentes` | ❌ Pendiente (tabla) | ✅ `packages/agentes-ia` (vía env vars) | `tranqi-web` |
 | `comun_auditoria` | ✅ Aplicada | ✅ `aud_fn_auditar_tabla()` en las 10 tablas nuevas | `comun_seguridad`, `comun_configuracion` |
 | `comun_configuracion` | ✅ Aplicada | — | `tranqi-web` — configuración del negocio |
-| `comun_facturacion` | ❌ Pendiente | — | Los pagos viven hoy en `comun_comercio` (`com_transaccion_pago`) |
+| `comun_facturacion` | 🟡 Migración `20261108000001` en rama `PLT-006-facturacion-sri` | ✅ Edge Functions `facturacion-sri` y `facturacion-certificado`; ❌ widgets de panel pendientes | Disparador sobre `com_transaccion_pago` (factura automática al aprobarse un pago) |
 | `comun_catalogo` | ❌ Pendiente | — | Ninguno todavía |
 | `comun_comercio` | ❌ Pendiente | ❌ `packages/comercio` pendiente | Ninguno todavía (bloqueante para Tinkay/Margaritas) |
 
