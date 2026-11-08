@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ChevronDown, CircleUser, ShieldCheck, Check } from "lucide-react";
 import { BotonCerrarSesion } from "./BotonCerrarSesion";
-import { ROLES_DEFAULT, type RolOpcionDef } from "./SelectorRolActivo";
+import { ROLES_DEFAULT, type RolOpcionDef } from "./roles-sistema";
 
 /** Menú de cuenta de la barra superior del inicio (TRQ-013, variante 5A).
  *  Sustituye al enlace suelto con la foto y a la etiqueta amarilla "Rol

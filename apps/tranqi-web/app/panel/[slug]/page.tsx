@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 import { obtenerPerfilActual, obtenerPerfiles } from "@eco/identidad";
 import { crearClienteServidor, crearClienteAdmin } from "@eco/supabase/servidor";
 import { obtenerConfiguracionNavegacionRolAction } from "@eco/gestion-usuarios/acciones";
-import { ROLES_DEFAULT } from "../SelectorRolActivo";
+import { ROLES_DEFAULT } from "../roles-sistema";
 import { PanelDinamicoModular } from "./PanelDinamicoModular";
 
 const NEGOCIO = "TRANQ";

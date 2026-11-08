@@ -4,7 +4,7 @@ import { obtenerPerfilesAsignables } from "@eco/gestion-usuarios";
 import { crearClienteServidor, crearClienteAdmin } from "@eco/supabase/servidor";
 import { obtenerSolicitudPropia, listarMaterias, listarProvincias } from "../../../modulos/socios/consultas";
 import { PanelCuentaModular } from "./PanelCuentaModular";
-import type { RolOpcionDef } from "../SelectorRolActivo";
+import type { RolOpcionDef } from "../roles-sistema";
 
 export const metadata: Metadata = { title: "Mi cuenta — tranqi" };
 

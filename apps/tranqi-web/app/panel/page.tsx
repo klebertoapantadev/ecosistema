@@ -8,7 +8,7 @@ import {
   type LucideIcon
 } from "lucide-react";
 import { obtenerPerfilActual, obtenerSaludo, obtenerPerfiles, obtenerNivelMaximo } from "@eco/identidad";
-import { ROLES_DEFAULT, type ModoRol } from "./SelectorRolActivo";
+import { ROLES_DEFAULT, type ModoRol } from "./roles-sistema";
 import { TarjetasFavoritasGrid } from "./SeccionFavoritosInicio";
 import { BuscadorModulosGlobal } from "./BuscadorModulosGlobal";
 import { WidgetNotificacionesCliente } from "@eco/notificaciones";

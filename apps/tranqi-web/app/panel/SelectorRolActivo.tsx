@@ -3,14 +3,9 @@
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { User, Shield, ShieldCheck, UserCheck, ShieldAlert, Sparkles, Star, type LucideIcon } from "lucide-react";
+import { ROLES_DEFAULT, type RolOpcionDef, type ModoRol } from "./roles-sistema";
 
-export interface RolOpcionDef {
-  clave: string;
-  nombre: string;
-  nivel?: number;
-}
-
-export type ModoRol = string;
+export { ROLES_DEFAULT, type RolOpcionDef, type ModoRol };
 
 // Mapeo predeterminado de iconos e identificadores según la clave del perfil
 const MAPA_ICONOS_ROL: Record<string, LucideIcon> = {
@@ -23,15 +18,6 @@ const MAPA_ICONOS_ROL: Record<string, LucideIcon> = {
   ADMINISTRADOR: ShieldCheck,
   SUPERADMIN: ShieldAlert
 };
-
-// Roles predeterminados del sistema en caso de no especificarse
-export const ROLES_DEFAULT: RolOpcionDef[] = [
-  { clave: "CLIENTE", nombre: "Cliente", nivel: 1 },
-  { clave: "OPERADOR", nombre: "Operador / Auxiliar", nivel: 30 },
-  { clave: "ABOGADO", nombre: "Socio Abogado", nivel: 50 },
-  { clave: "ADMINISTRADOR", nombre: "Administrador del Negocio", nivel: 80 },
-  { clave: "SUPERADMIN", nombre: "SuperAdmin de Plataforma", nivel: 100 }
-];
 
 interface Props {
   modoInicial?: ModoRol;
