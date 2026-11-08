@@ -601,21 +601,21 @@ export function GestionRedProfesionalWidget() {
       render: (a) => {
         const fechaAlta = a.fechaRegistro
           ? new Date(a.fechaRegistro).toLocaleString("es-EC", {
-              day: "2-digit",
-              month: "2-digit",
-              year: "numeric",
-              hour: "2-digit",
-              minute: "2-digit",
-            })
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+          })
           : "—";
         const fechaConfirm = a.fechaAceptacion
           ? new Date(a.fechaAceptacion).toLocaleString("es-EC", {
-              day: "2-digit",
-              month: "2-digit",
-              year: "numeric",
-              hour: "2-digit",
-              minute: "2-digit",
-            })
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+          })
           : null;
         return (
           <div style={{ display: "flex", flexDirection: "column", gap: "3px", fontSize: "0.73rem" }}>
@@ -646,21 +646,21 @@ export function GestionRedProfesionalWidget() {
                     a.estadoAceptacion === "aceptado"
                       ? "#ECFDF5"
                       : a.estadoAceptacion === "rechazado"
-                      ? "#FEF2F2"
-                      : "#FEF3C7",
+                        ? "#FEF2F2"
+                        : "#FEF3C7",
                   color:
                     a.estadoAceptacion === "aceptado"
                       ? "#065F46"
                       : a.estadoAceptacion === "rechazado"
-                      ? "#991B1B"
-                      : "#92400E",
+                        ? "#991B1B"
+                        : "#92400E",
                 }}
               >
                 {a.estadoAceptacion === "aceptado"
                   ? "✓ Aceptado"
                   : a.estadoAceptacion === "rechazado"
-                  ? "✕ Rechazado"
-                  : "⏳ Pendiente Aceptación"}
+                    ? "✕ Rechazado"
+                    : "⏳ Pendiente Aceptación"}
               </span>
             </div>
             <span style={{ color: "#374151" }}>
@@ -1182,13 +1182,10 @@ export function GestionRedProfesionalWidget() {
 
       {/* Tabla principal de Abogados */}
       <DataGrid<AbogadoRedItem>
-        datos={abogados}
+        filas={abogados}
         columnas={columnas}
-        claveFila={(a: AbogadoRedItem) => a.abg_id}
-        cargando={cargando}
-        placeholderBusqueda="Buscar abogado por nombre, correo, cédula, matrícula, materia o provincia..."
-        mensajeVacio="No hay abogados registrados todavía. Usa el botón «Incorporar Abogado» para convertir un usuario registrado o dar de alta uno nuevo."
-        nombreArchivoExportacion="red_profesional_abogados_tranqi"
+        idFila={(a) => a.abg_id}
+        nombreExportacion="red_profesional_abogados_tranqi"
       />
 
       {/* MODAL 1: Incorporar / Convertir Usuario en Abogado o Editar Ficha */}
