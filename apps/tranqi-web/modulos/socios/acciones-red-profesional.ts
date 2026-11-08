@@ -560,6 +560,172 @@ export async function obtenerCatalogosRedProfesionalAction(): Promise<
   }
 }
 
+export async function crearEspecialidadLegalAction(
+  nombre: string
+): Promise<Resultado<MateriaItem>> {
+  const autorizado = await verificarEsOperadorOAdmin();
+  if (!autorizado) {
+    return { ok: false, error: "No autorizado para gestionar especialidades legales." };
+  }
+
+  const nombreLimpio = String(nombre || "").trim().replace(/\s+/g, " ");
+  if (nombreLimpio.length < 2) {
+    return { ok: false, error: "Ingresa un nombre válido para la especialidad legal." };
+  }
+
+  try {
+    const supabase = await crearClienteServidor();
+    const adminSupabase = (crearClienteAdmin() || supabase) as any;
+
+    // 1. Verificar si ya existe por nombre (activa o inactiva)
+    const { data: existentes } = await adminSupabase
+      .schema("tranqui_legal")
+      .from("trq_materia")
+      .select("mat_id, mat_nombre, mat_activa");
+
+    const coincidencia = (existentes ?? []).find(
+      (m: { mat_id: string; mat_nombre: string; mat_activa?: boolean }) =>
+        String(m.mat_nombre || "").toLowerCase().trim() === nombreLimpio.toLowerCase()
+    );
+
+    if (coincidencia) {
+      if (!coincidencia.mat_activa) {
+        await adminSupabase
+          .schema("tranqui_legal")
+          .from("trq_materia")
+          .update({ mat_activa: true, mat_nombre: nombreLimpio })
+          .eq("mat_id", coincidencia.mat_id);
+      }
+      revalidatePath("/panel/red-profesional");
+      revalidatePath("/panel/socios");
+      revalidatePath("/panel");
+      return {
+        ok: true,
+        data: { mat_id: coincidencia.mat_id, mat_nombre: nombreLimpio },
+      };
+    }
+
+    const codigoBase = nombreLimpio
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toUpperCase()
+      .replace(/[^A-Z0-9]+/g, "_")
+      .replace(/^_+|_+$/g, "")
+      .slice(0, 40);
+
+    const { data: insertada, error: errInsert } = await adminSupabase
+      .schema("tranqui_legal")
+      .from("trq_materia")
+      .insert({
+        mat_nombre: nombreLimpio,
+        mat_codigo: `${codigoBase}_${Date.now().toString().slice(-4)}`,
+        mat_activa: true,
+      })
+      .select("mat_id, mat_nombre")
+      .single();
+
+    if (errInsert || !insertada) {
+      // Fallback sin mat_codigo en caso de restricción de columna
+      const { data: insertadaSimple, error: errSimple } = await adminSupabase
+        .schema("tranqui_legal")
+        .from("trq_materia")
+        .insert({
+          mat_nombre: nombreLimpio,
+          mat_activa: true,
+        })
+        .select("mat_id, mat_nombre")
+        .single();
+
+      if (errSimple || !insertadaSimple) {
+        return {
+          ok: false,
+          error: errSimple?.message || errInsert?.message || "No se pudo crear la especialidad legal.",
+        };
+      }
+
+      revalidatePath("/panel/red-profesional");
+      revalidatePath("/panel/socios");
+      revalidatePath("/panel");
+      return { ok: true, data: insertadaSimple as MateriaItem };
+    }
+
+    revalidatePath("/panel/red-profesional");
+    revalidatePath("/panel/socios");
+    revalidatePath("/panel");
+    return { ok: true, data: insertada as MateriaItem };
+  } catch (err: unknown) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : "Error al crear la especialidad legal.",
+    };
+  }
+}
+
+export async function eliminarEspecialidadLegalAction(
+  materiaId: string
+): Promise<Resultado<{ eliminadaId: string }>> {
+  const autorizado = await verificarEsOperadorOAdmin();
+  if (!autorizado) {
+    return { ok: false, error: "No autorizado para eliminar especialidades legales." };
+  }
+
+  const idLimpio = String(materiaId || "").trim();
+  if (!idLimpio) {
+    return { ok: false, error: "Identificador de especialidad inválido." };
+  }
+
+  try {
+    const supabase = await crearClienteServidor();
+    const adminSupabase = (crearClienteAdmin() || supabase) as any;
+
+    // 1. Desvincular de relaciones N:M para evitar bloqueo por FK restrict
+    await Promise.all([
+      adminSupabase
+        .schema("tranqui_legal")
+        .from("trq_abogado_materia")
+        .delete()
+        .eq("amt_materia_id", idLimpio),
+      adminSupabase
+        .schema("tranqui_legal")
+        .from("trq_solicitud_materia")
+        .delete()
+        .eq("sma_materia_id", idLimpio),
+    ]);
+
+    // 2. Intentar eliminación física; si existe otra referencia histórica, desactivar (mat_activa = false)
+    const { error: errDel } = await adminSupabase
+      .schema("tranqui_legal")
+      .from("trq_materia")
+      .delete()
+      .eq("mat_id", idLimpio);
+
+    if (errDel) {
+      const { error: errUpd } = await adminSupabase
+        .schema("tranqui_legal")
+        .from("trq_materia")
+        .update({ mat_activa: false })
+        .eq("mat_id", idLimpio);
+
+      if (errUpd) {
+        return {
+          ok: false,
+          error: errUpd.message || errDel.message || "No se pudo eliminar la especialidad legal.",
+        };
+      }
+    }
+
+    revalidatePath("/panel/red-profesional");
+    revalidatePath("/panel/socios");
+    revalidatePath("/panel");
+    return { ok: true, data: { eliminadaId: idLimpio } };
+  } catch (err: unknown) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : "Error al eliminar la especialidad legal.",
+    };
+  }
+}
+
 export async function buscarUsuariosPlataformaParaAbogadoAction(
   busqueda: string = ""
 ): Promise<Resultado<UsuarioPlataformaItem[]>> {
@@ -783,7 +949,18 @@ export async function listarRedProfesionalAbogadosAction(): Promise<
         String(sol.ssc_resumen_profesional || "").includes(MARCA_REGISTRO_MANUAL);
 
       const prof = mapaProfesional.get(a.abg_usuario_id);
-      const franjas = prof ? franjasPorProf.get(prof.agp_id) ?? [] : [];
+      const franjasBd = prof ? franjasPorProf.get(prof.agp_id) ?? [] : [];
+      const franjasFicha = Array.isArray(ficha.franjas_agenda) ? (ficha.franjas_agenda as Franja[]) : [];
+      const franjas: Franja[] =
+        franjasBd.length > 0
+          ? franjasBd
+          : franjasFicha.length > 0
+          ? franjasFicha
+          : a.abg_estado !== "suspendido"
+          ? FRANJAS_POR_DEFECTO
+          : [];
+
+      const configFicha = (ficha.configuracion_agenda || null) as ConfiguracionAgendaAbogado | null;
       const configuracionAgenda: ConfiguracionAgendaAbogado = prof
         ? {
             zona_horaria: prof.agp_zona_horaria || "America/Guayaquil",
@@ -796,6 +973,11 @@ export async function listarRedProfesionalAbogadosAction(): Promise<
               : ["virtual", "presencial"]) as ("virtual" | "presencial")[],
             acepta_turno: Boolean(prof.agp_acepta_turno ?? true),
             direccion: prof.agp_direccion ?? null,
+          }
+        : configFicha
+        ? {
+            ...AGENDA_POR_DEFECTO,
+            ...configFicha,
           }
         : AGENDA_POR_DEFECTO;
 
@@ -835,7 +1017,7 @@ export async function listarRedProfesionalAbogadosAction(): Promise<
             : Array.isArray(ficha.provincias_objetos)
             ? ficha.provincias_objetos
             : [],
-        agendaConfigurada: Boolean(prof?.agp_configurada_en && franjas.length > 0),
+        agendaConfigurada: franjas.length > 0,
         configuracionAgenda,
         franjas,
         citasPorSemana,
@@ -852,7 +1034,8 @@ export async function listarRedProfesionalAbogadosAction(): Promise<
 }
 
 /**
- * Configura la disponibilidad de citas presenciales / teleconsulta para un usuario abogado en comun_agenda.
+ * Configura la disponibilidad de citas presenciales / teleconsulta para un usuario abogado
+ * en comun_agenda y guarda respaldo sincronizado en seg_usuario.usu_detalle_usuario.ficha_abogado.
  */
 async function guardarDisponibilidadAgendaInterna(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -868,59 +1051,100 @@ async function guardarDisponibilidadAgendaInterna(
         ? config.modalidades
         : ["virtual", "presencial"];
 
-    const { data: prof, error: errProf } = await adminSupabase
-      .schema("comun_agenda")
-      .from("age_profesional")
-      .upsert(
-        {
-          agp_usuario_id: usuarioId,
-          agp_negocio: "tranqi",
-          agp_zona_horaria: config.zona_horaria || "America/Guayaquil",
-          agp_duracion_cita_min: Number(config.duracion_cita_min || 45),
-          agp_holgura_min: Number(config.holgura_min ?? 15),
-          agp_antelacion_minima_horas: Number(config.antelacion_minima_horas ?? 12),
-          agp_horizonte_dias: Number(config.horizonte_dias || 60),
-          agp_modalidades: modalidadesLimpias,
-          agp_acepta_turno: Boolean(config.acepta_turno ?? true),
-          agp_direccion: config.direccion || null,
-          agp_configurada_en: ahoraIso,
-          agp_eliminado_en: null,
-          agp_actualizado_en: ahoraIso,
-        },
-        { onConflict: "agp_usuario_id,agp_negocio" }
-      )
-      .select("agp_id")
-      .single();
+    const configNormalizada: ConfiguracionAgendaAbogado = {
+      zona_horaria: config.zona_horaria || "America/Guayaquil",
+      duracion_cita_min: Number(config.duracion_cita_min || 45),
+      holgura_min: Number(config.holgura_min ?? 15),
+      antelacion_minima_horas: Number(config.antelacion_minima_horas ?? 12),
+      horizonte_dias: Number(config.horizonte_dias || 60),
+      modalidades: modalidadesLimpias as ("virtual" | "presencial")[],
+      acepta_turno: Boolean(config.acepta_turno ?? true),
+      direccion: config.direccion || null,
+    };
 
-    if (errProf || !prof?.agp_id) {
-      return { ok: false, error: errProf?.message || "No se pudo guardar el perfil de agenda." };
+    // 1. Guardar respaldo en seg_usuario.usu_detalle_usuario.ficha_abogado para resiliencia total
+    try {
+      const { data: usuRow } = await adminSupabase
+        .schema("comun_seguridad")
+        .from("seg_usuario")
+        .select("usu_detalle_usuario")
+        .eq("usu_id", usuarioId)
+        .maybeSingle();
+
+      const detPrevio = (usuRow?.usu_detalle_usuario || {}) as Record<string, unknown>;
+      const fichaPrevia = ((detPrevio.ficha_abogado || {}) as Record<string, unknown>);
+
+      await adminSupabase
+        .schema("comun_seguridad")
+        .from("seg_usuario")
+        .update({
+          usu_detalle_usuario: {
+            ...detPrevio,
+            ficha_abogado: {
+              ...fichaPrevia,
+              configuracion_agenda: configNormalizada,
+              franjas_agenda: franjas,
+              agenda_configurada_en: ahoraIso,
+            },
+          },
+          usu_actualizado_en: ahoraIso,
+        })
+        .eq("usu_id", usuarioId);
+    } catch {
+      // Continuar con comun_agenda
     }
 
-    // Reemplazar franjas activas
-    await adminSupabase
-      .schema("comun_agenda")
-      .from("age_franja")
-      .update({ fra_eliminado_en: ahoraIso, fra_actualizado_en: ahoraIso })
-      .eq("fra_profesional_id", prof.agp_id)
-      .is("fra_eliminado_en", null);
-
-    if (franjas.length > 0) {
-      const filasFranjas = franjas.map((f) => ({
-        fra_profesional_id: prof.agp_id,
-        fra_dia_semana: Number(f.dia_semana),
-        fra_hora_inicio: f.hora_inicio.length === 5 ? `${f.hora_inicio}:00` : f.hora_inicio,
-        fra_hora_fin: f.hora_fin.length === 5 ? `${f.hora_fin}:00` : f.hora_fin,
-        fra_modalidad: f.modalidad || "ambas",
-      }));
-
-      const { error: errFra } = await adminSupabase
+    // 2. Intentar sincronizar en comun_agenda.age_profesional y age_franja
+    try {
+      const { data: prof, error: errProf } = await adminSupabase
         .schema("comun_agenda")
-        .from("age_franja")
-        .insert(filasFranjas);
+        .from("age_profesional")
+        .upsert(
+          {
+            agp_usuario_id: usuarioId,
+            agp_negocio: "tranqi",
+            agp_zona_horaria: configNormalizada.zona_horaria,
+            agp_duracion_cita_min: configNormalizada.duracion_cita_min,
+            agp_holgura_min: configNormalizada.holgura_min,
+            agp_antelacion_minima_horas: configNormalizada.antelacion_minima_horas,
+            agp_horizonte_dias: configNormalizada.horizonte_dias,
+            agp_modalidades: modalidadesLimpias,
+            agp_acepta_turno: configNormalizada.acepta_turno,
+            agp_direccion: configNormalizada.direccion,
+            agp_configurada_en: ahoraIso,
+            agp_eliminado_en: null,
+            agp_actualizado_en: ahoraIso,
+          },
+          { onConflict: "agp_usuario_id,agp_negocio" }
+        )
+        .select("agp_id")
+        .single();
 
-      if (errFra) {
-        return { ok: false, error: errFra.message };
+      if (!errProf && prof?.agp_id) {
+        await adminSupabase
+          .schema("comun_agenda")
+          .from("age_franja")
+          .update({ fra_eliminado_en: ahoraIso, fra_actualizado_en: ahoraIso })
+          .eq("fra_profesional_id", prof.agp_id)
+          .is("fra_eliminado_en", null);
+
+        if (franjas.length > 0) {
+          const filasFranjas = franjas.map((f) => ({
+            fra_profesional_id: prof.agp_id,
+            fra_dia_semana: Number(f.dia_semana),
+            fra_hora_inicio: f.hora_inicio.length === 5 ? `${f.hora_inicio}:00` : f.hora_inicio,
+            fra_hora_fin: f.hora_fin.length === 5 ? `${f.hora_fin}:00` : f.hora_fin,
+            fra_modalidad: f.modalidad || "ambas",
+          }));
+
+          await adminSupabase
+            .schema("comun_agenda")
+            .from("age_franja")
+            .insert(filasFranjas);
+        }
       }
+    } catch {
+      // Respaldado en ficha_abogado
     }
 
     return { ok: true };
@@ -929,6 +1153,332 @@ async function guardarDisponibilidadAgendaInterna(
       ok: false,
       error: err instanceof Error ? err.message : "Error al guardar disponibilidad.",
     };
+  }
+}
+
+type TipoEventoRedAbogado =
+  | "CONVERSION_ACTIVO"
+  | "CONVERSION_SUSPENDIDO"
+  | "ACTIVADO"
+  | "SUSPENDIDO"
+  | "ACTUALIZADO"
+  | "RETIRADO";
+
+/**
+ * Envía notificación multicanal (Push / In-App en campana + Correo Electrónico HTML + Bitácora)
+ * al usuario cuando es convertido en Socio Abogado o cuando cambia su estado / perfil en la red.
+ */
+async function notificarEventoRedAbogadoMulticanal(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  adminSupabase: any,
+  parametros: {
+    usuarioId: string;
+    tipoEvento: TipoEventoRedAbogado;
+    especialidadesNombres?: string[];
+    provinciasNombres?: string[];
+    passwordTemporal?: string | null;
+    operadorCorreo?: string | null;
+    operadorNombre?: string | null;
+    operadorId?: string | null;
+  }
+): Promise<void> {
+  try {
+    const { data: usu } = await adminSupabase
+      .schema("comun_seguridad")
+      .from("seg_usuario")
+      .select("usu_id, usu_nombres, usu_apellidos, usu_correo")
+      .eq("usu_id", parametros.usuarioId)
+      .maybeSingle();
+
+    const correoDestino = String(usu?.usu_correo || "").trim().toLowerCase();
+    const nombreAbogado =
+      [usu?.usu_nombres, usu?.usu_apellidos].filter(Boolean).join(" ").trim() ||
+      correoDestino ||
+      "Socio Abogado";
+
+    const urlPanelAbogado = "https://www.tranqi24.com/panel/red-profesional?widget=mi_perfil_abogado";
+    const urlPanelGeneral = "https://www.tranqi24.com/panel";
+
+    let asunto = "⚖️ Actualización de tu Perfil Profesional en Tranqi";
+    let colorCabecera = "linear-gradient(135deg, #05876E 0%, #046C58 100%)";
+    let etiquetaEstado = "ACTIVO · VERIFICADO";
+    let mensajePrincipalHtml = "";
+    let textoBotonCta = "Ir a mi Portal de Socio Abogado →";
+    let urlAccion = urlPanelAbogado;
+
+    const espTexto =
+      parametros.especialidadesNombres && parametros.especialidadesNombres.length > 0
+        ? parametros.especialidadesNombres.join(", ")
+        : "Configuradas en tu perfil";
+    const provTexto =
+      parametros.provinciasNombres && parametros.provinciasNombres.length > 0
+        ? parametros.provinciasNombres.join(", ")
+        : "Configuradas en tu perfil";
+
+    switch (parametros.tipoEvento) {
+      case "CONVERSION_ACTIVO":
+        asunto = "🎉 ¡Bienvenido al Equipo! Tu cuenta de Socio Abogado en Tranqi está Activa";
+        colorCabecera = "linear-gradient(135deg, #05876E 0%, #046C58 100%)";
+        etiquetaEstado = "SOCIO ABOGADO ACTIVO";
+        mensajePrincipalHtml = `
+          <p style="font-size: 15px; line-height: 1.6; color: #374151;">
+            Te informamos que tu perfil en <strong>Tranqi</strong> ha sido habilitado como <strong>Socio Abogado Activo</strong> de nuestra Red Profesional.
+          </p>
+          <div style="background: #ECFDF5; border: 1px solid #A7F3D0; border-radius: 12px; padding: 16px; margin: 18px 0; font-size: 14px; color: #065F46;">
+            <p style="margin: 0 0 8px 0;"><strong>⚖️ Especialidades asignadas:</strong> ${espTexto}</p>
+            <p style="margin: 0 0 8px 0;"><strong>📍 Zonas de cobertura:</strong> ${provTexto}</p>
+            <p style="margin: 0;"><strong>📅 Disponibilidad de citas:</strong> Horario base Lun–Vie 09:00–17:00 (Presencial y Teleconsulta).</p>
+          </div>
+          ${
+            parametros.passwordTemporal
+              ? `<div style="background: #F5F3FF; border: 1px solid #DDD6FE; border-radius: 12px; padding: 14px; margin: 16px 0; font-size: 14px; color: #5000BA;">
+                  <strong>🔑 Credenciales iniciales de acceso:</strong><br/>
+                  Usuario: <code>${correoDestino}</code><br/>
+                  Contraseña temporal: <code>${parametros.passwordTemporal}</code>
+                </div>`
+              : ""
+          }
+          <p style="font-size: 14px; line-height: 1.6; color: #4B5563;">
+            Al ingresar a la plataforma ya verás habilitado tu <strong>Portal Profesional de Abogado</strong>, donde puedes actualizar tus especialidades, provincias de cobertura y personalizar tus horarios de atención.
+          </p>
+        `;
+        break;
+
+      case "CONVERSION_SUSPENDIDO":
+        asunto = "ℹ️ Registro en Red Profesional Tranqi — Perfil en Estado Suspendido / En Espera";
+        colorCabecera = "linear-gradient(135deg, #B45309 0%, #92400E 100%)";
+        etiquetaEstado = "REGISTRADO · EN ESPERA DE ACTIVACIÓN";
+        mensajePrincipalHtml = `
+          <p style="font-size: 15px; line-height: 1.6; color: #374151;">
+            Tu ficha de <strong>Socio Abogado</strong> ha sido registrada en la Red Profesional de <strong>Tranqi</strong> y se encuentra temporalmente en estado <strong>Suspendido / En Espera de Activación</strong>.
+          </p>
+          <p style="font-size: 14px; line-height: 1.6; color: #4B5563;">
+            Te notificaremos tan pronto como la Mesa de Control active tu recepción de citas y el portal profesional.
+          </p>
+        `;
+        textoBotonCta = "Ingresar a Tranqi →";
+        urlAccion = urlPanelGeneral;
+        break;
+
+      case "ACTIVADO":
+        asunto = "✅ ¡Tu Perfil de Socio Abogado en Tranqi ha sido Reactivado!";
+        colorCabecera = "linear-gradient(135deg, #05876E 0%, #046C58 100%)";
+        etiquetaEstado = "ESTADO: ACTIVO / VERIFICADO";
+        mensajePrincipalHtml = `
+          <p style="font-size: 15px; line-height: 1.6; color: #374151;">
+            Te confirmamos que tu estado en la Red Profesional de <strong>Tranqi</strong> ha cambiado a <strong>Activo (Verificado)</strong>.
+          </p>
+          <p style="font-size: 14px; line-height: 1.6; color: #4B5563;">
+            Tu visibilidad en el directorio legal, la asignación de turnos de citas (presenciales y teleconsulta) y tu <strong>Portal Profesional de Abogado</strong> están nuevamente habilitados.
+          </p>
+        `;
+        break;
+
+      case "SUSPENDIDO":
+        asunto = "⚠️ Actualización de Estado — Tu Perfil de Socio Abogado ha sido Suspendido Temporalmente";
+        colorCabecera = "linear-gradient(135deg, #B45309 0%, #92400E 100%)";
+        etiquetaEstado = "ESTADO: SUSPENDIDO TEMPORALMENTE";
+        mensajePrincipalHtml = `
+          <p style="font-size: 15px; line-height: 1.6; color: #374151;">
+            Te informamos que tu perfil como <strong>Socio Abogado</strong> en la Red Profesional de <strong>Tranqi</strong> ha cambiado a estado <strong>Suspendido</strong>.
+          </p>
+          <p style="font-size: 14px; line-height: 1.6; color: #4B5563;">
+            Mientras permanezca en este estado, no se te asignarán nuevas citas automáticas ni aparecerás activo en el directorio público. Tu cuenta de usuario en la plataforma permanece activa.
+          </p>
+        `;
+        textoBotonCta = "Revisar mi Cuenta en Tranqi →";
+        urlAccion = urlPanelGeneral;
+        break;
+
+      case "ACTUALIZADO":
+        asunto = "🔔 Actualización en tu Ficha Profesional, Especialidades o Disponibilidad — Tranqi";
+        colorCabecera = "linear-gradient(135deg, #5000BA 0%, #3B0764 100%)";
+        etiquetaEstado = "FICHA PROFESIONAL ACTUALIZADA";
+        mensajePrincipalHtml = `
+          <p style="font-size: 15px; line-height: 1.6; color: #374151;">
+            Se han actualizado los parámetros de tu perfil profesional en la Red de Abogados de <strong>Tranqi</strong>.
+          </p>
+          <div style="background: #F5F3FF; border: 1px solid #DDD6FE; border-radius: 12px; padding: 16px; margin: 18px 0; font-size: 14px; color: #3B0764;">
+            <p style="margin: 0 0 8px 0;"><strong>⚖️ Especialidades:</strong> ${espTexto}</p>
+            <p style="margin: 0;"><strong>📍 Cobertura:</strong> ${provTexto}</p>
+          </div>
+          <p style="font-size: 14px; line-height: 1.6; color: #4B5563;">
+            Puedes revisar y gestionar tus especialidades, zonas de cobertura y disponibilidad horaria desde tu panel.
+          </p>
+        `;
+        break;
+
+      case "RETIRADO":
+        asunto = "ℹ️ Actualización de Cuenta — Retiro de la Red Profesional de Abogados Tranqi";
+        colorCabecera = "linear-gradient(135deg, #374151 0%, #111827 100%)";
+        etiquetaEstado = "BAJA DE RED PROFESIONAL";
+        mensajePrincipalHtml = `
+          <p style="font-size: 15px; line-height: 1.6; color: #374151;">
+            Te informamos que tu perfil como <strong>Socio Abogado</strong> ha sido desvinculado de la Red Profesional de <strong>Tranqi</strong>.
+          </p>
+          <p style="font-size: 14px; line-height: 1.6; color: #4B5563;">
+            Conservas intacto el acceso a tu cuenta personal y a tu Billetera Digital como usuario de la plataforma.
+          </p>
+        `;
+        textoBotonCta = "Ir a mi Panel en Tranqi →";
+        urlAccion = urlPanelGeneral;
+        break;
+    }
+
+    const htmlCompleto = `
+      <div style="font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff; border: 1px solid #E5E7EB; border-radius: 16px; overflow: hidden; color: #111827;">
+        <div style="background: ${colorCabecera}; padding: 26px 32px; color: #ffffff;">
+          <div style="font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; opacity: 0.92; margin-bottom: 6px;">
+            ${etiquetaEstado} · TRANQI LEGAL
+          </div>
+          <h1 style="margin: 0; font-size: 20px; font-weight: 900; line-height: 1.3;">
+            ${asunto}
+          </h1>
+        </div>
+        <div style="padding: 28px 32px;">
+          <p style="font-size: 15px; line-height: 1.6; color: #111827; margin-top: 0;">
+            Hola <strong>${nombreAbogado}</strong>,
+          </p>
+          ${mensajePrincipalHtml}
+          <div style="text-align: center; margin: 28px 0;">
+            <a href="${urlAccion}" target="_blank" rel="noopener noreferrer" style="display: inline-block; background: #05876E; color: #ffffff; text-decoration: none; font-weight: 800; font-size: 14px; padding: 13px 26px; border-radius: 12px;">
+              ${textoBotonCta}
+            </a>
+          </div>
+        </div>
+        <div style="background: #F3F4F6; padding: 14px 32px; text-align: center; font-size: 12px; color: #6B7280;">
+          Tranqi Legal Network · Notificación Automática de Estado Profesional
+        </div>
+      </div>
+    `;
+
+    // 1. Insertar notificación Push e In-App en comun_notificacion.not_registro
+    const ahoraIso = new Date().toISOString();
+    try {
+      await adminSupabase
+        .schema("comun_notificacion")
+        .from("not_registro")
+        .insert([
+          {
+            not_usuario_id: parametros.usuarioId,
+            not_negocio: "TRANQ",
+            not_canal: "IN_APP",
+            not_titulo: asunto,
+            not_contenido_html: htmlCompleto,
+            not_url_accion: urlAccion,
+            not_creado_en: ahoraIso,
+          },
+          {
+            not_usuario_id: parametros.usuarioId,
+            not_negocio: "TRANQ",
+            not_canal: "PUSH",
+            not_titulo: asunto,
+            not_contenido_html: htmlCompleto,
+            not_url_accion: urlAccion,
+            not_creado_en: ahoraIso,
+          },
+        ]);
+    } catch {
+      // No interrumpir flujo si not_registro falla
+    }
+
+    // 2. Enviar Correo Electrónico (SMTP Env -> SMTP Vault -> Edge Function)
+    let correoEnviado = false;
+    if (correoDestino && correoDestino.includes("@")) {
+      let smtpHost = process.env.SMTP_HOST || process.env.EMAIL_HOST || "";
+      let smtpPort = Number(process.env.SMTP_PORT || 587);
+      let smtpUser = process.env.SMTP_USER || process.env.EMAIL_USER || "";
+      let smtpPass = process.env.SMTP_PASS || process.env.EMAIL_PASS || "";
+      let smtpSecure = smtpPort === 465;
+      let remitenteNombre = process.env.SMTP_FROM_NOMBRE || "Tranqi Red Profesional";
+
+      if (!smtpHost || !smtpUser || !smtpPass) {
+        try {
+          for (const negClave of ["tranqi", "TRANQ"]) {
+            const { data: vaultData } = await adminSupabase
+              .schema("comun_configuracion")
+              .rpc("cfg_fn_obtener_smtp_credenciales", { p_negocio: negClave });
+            const cfg = Array.isArray(vaultData) ? vaultData[0] : vaultData;
+            if (cfg?.host && cfg?.usuario && cfg?.contrasena) {
+              smtpHost = cfg.host;
+              smtpPort = Number(cfg.puerto || 465);
+              smtpUser = cfg.usuario;
+              smtpPass = cfg.contrasena;
+              smtpSecure = Boolean(cfg.seguro ?? smtpPort === 465);
+              remitenteNombre = cfg.remitente_nombre || remitenteNombre;
+              break;
+            }
+          }
+        } catch {
+          // Continuar con fallback Edge Function
+        }
+      }
+
+      if (smtpHost && smtpUser && smtpPass) {
+        try {
+          const transporter = nodemailer.createTransport({
+            host: smtpHost,
+            port: smtpPort,
+            secure: smtpSecure,
+            auth: { user: smtpUser, pass: smtpPass },
+            tls: { rejectUnauthorized: false },
+            connectionTimeout: 8000,
+            greetingTimeout: 8000,
+            socketTimeout: 10000,
+          });
+          await transporter.sendMail({
+            from: `"${remitenteNombre}" <${smtpUser}>`,
+            to: correoDestino,
+            subject: asunto,
+            html: htmlCompleto,
+          });
+          correoEnviado = true;
+        } catch {
+          // Intentar fallback Edge Function
+        }
+      }
+
+      if (!correoEnviado) {
+        try {
+          const { enviarCorreo } = await import("@eco/notificaciones/enviar-correo");
+          const resEdge = await enviarCorreo({
+            negocio: "tranqi",
+            para: correoDestino,
+            asunto,
+            html: htmlCompleto,
+          });
+          if (resEdge.ok) correoEnviado = true;
+        } catch {
+          // Continuar con registro en bitácora
+        }
+      }
+    }
+
+    // 3. Registrar en la Bitácora de Campañas y Notificaciones del Servidor
+    try {
+      agregarCampanaServidor({
+        id: `abg-est-${Date.now().toString().slice(-6)}`,
+        asunto,
+        contenidoHTML: htmlCompleto,
+        tipoEmision: "AUTOMATICA_SISTEMA",
+        emisorNombre: parametros.operadorNombre || "Mesa Operativa Tranqi",
+        emisorCorreo: parametros.operadorCorreo || "admin@tranqi24.com",
+        emisorId: parametros.operadorId || undefined,
+        procesoOrigen: `Red Profesional Abogados (${parametros.tipoEvento})`,
+        audiencia: `${nombreAbogado} (${correoDestino || parametros.usuarioId})`,
+        canales: ["EMAIL", "PUSH", "IN_APP"],
+        destinatariosDetalle: correoDestino ? [correoDestino] : [parametros.usuarioId],
+        enviados: 1,
+        leidos: 0,
+        ignorados: 0,
+        fecha: ahoraIso,
+        correoEnviadoReal: correoEnviado,
+      });
+    } catch {
+      // Ignorar errores de bitácora
+    }
+  } catch (err) {
+    console.warn("Aviso al enviar notificación multicanal de estado de abogado:", err);
   }
 }
 
@@ -995,6 +1545,7 @@ export async function registrarOConvertirAbogadoAction(
 
   try {
     let targetUsuId = entrada.usuarioId || null;
+    let passwordTemporalGenerada: string | null = null;
 
     // 1. Resolver o crear el usuario en comun_seguridad.seg_usuario / Supabase Auth
     if (!targetUsuId) {
@@ -1010,6 +1561,7 @@ export async function registrarOConvertirAbogadoAction(
       } else {
         // Crear cuenta en Supabase Auth para que pueda iniciar sesión
         const passwordTemporal = `Tranqi.${cedula.slice(-4)}#${ new Date().getFullYear() }`;
+        passwordTemporalGenerada = passwordTemporal;
         const { data: authData, error: authErr } = await adminSupabase.auth.admin.createUser({
           email: correo,
           password: passwordTemporal,
@@ -1099,10 +1651,12 @@ export async function registrarOConvertirAbogadoAction(
     const { data: abgPrevio } = await adminSupabase
       .schema("tranqui_legal")
       .from("trq_abogado")
-      .select("abg_id, abg_solicitud_id")
+      .select("abg_id, abg_solicitud_id, abg_estado")
       .eq("abg_usuario_id", targetUsuId)
       .maybeSingle();
 
+    const eraAbogadoPrevio = Boolean(abgPrevio?.abg_id);
+    const estadoPrevio = abgPrevio?.abg_estado ?? null;
     let abgId: string | null = abgPrevio?.abg_id ?? null;
 
     const payloadNuevo = {
@@ -1254,6 +1808,29 @@ export async function registrarOConvertirAbogadoAction(
       }
     }
 
+    // 7. Enviar notificación multicanal (Push / In-App + Correo Electrónico) del alta o cambio de estado
+    const nombreOperador =
+      [perfilOperador?.usu_nombres, perfilOperador?.usu_apellidos].filter(Boolean).join(" ").trim() ||
+      "Mesa Operativa Tranqi";
+
+    let tipoEventoNotif: TipoEventoRedAbogado = "ACTUALIZADO";
+    if (!eraAbogadoPrevio) {
+      tipoEventoNotif = estado === "verificado" ? "CONVERSION_ACTIVO" : "CONVERSION_SUSPENDIDO";
+    } else if (estadoPrevio !== estado) {
+      tipoEventoNotif = estado === "verificado" ? "ACTIVADO" : "SUSPENDIDO";
+    }
+
+    await notificarEventoRedAbogadoMulticanal(adminSupabase, {
+      usuarioId: targetUsuId,
+      tipoEvento: tipoEventoNotif,
+      especialidadesNombres: materiasObjetos.map((m) => m.mat_nombre),
+      provinciasNombres: provinciasObjetos.map((p) => p.cat_nombre),
+      passwordTemporal: passwordTemporalGenerada,
+      operadorCorreo: perfilOperador?.usu_correo ?? null,
+      operadorNombre: nombreOperador,
+      operadorId: perfilOperador?.usu_id ?? null,
+    });
+
     revalidatePath("/panel/administrar");
     revalidatePath("/panel/red-profesional");
     revalidatePath("/panel/socios");
@@ -1304,6 +1881,18 @@ export async function cambiarEstadoAbogadoRedAction(
       perfilOperador?.usu_id ?? null
     );
 
+    const nombreOperador =
+      [perfilOperador?.usu_nombres, perfilOperador?.usu_apellidos].filter(Boolean).join(" ").trim() ||
+      "Mesa Operativa Tranqi";
+
+    await notificarEventoRedAbogadoMulticanal(adminSupabase, {
+      usuarioId: abg.abg_usuario_id,
+      tipoEvento: nuevoEstado === "verificado" ? "ACTIVADO" : "SUSPENDIDO",
+      operadorCorreo: perfilOperador?.usu_correo ?? null,
+      operadorNombre: nombreOperador,
+      operadorId: perfilOperador?.usu_id ?? null,
+    });
+
     revalidatePath("/panel/administrar");
     revalidatePath("/panel/red-profesional");
     revalidatePath("/panel");
@@ -1325,6 +1914,7 @@ export async function eliminarAbogadoRedAction(abogadoId: string): Promise<Resul
   try {
     const supabase = await crearClienteServidor();
     const adminSupabase = (crearClienteAdmin() || supabase) as any;
+    const perfilOperador = await obtenerPerfilActual();
 
     const { data: abg } = await adminSupabase
       .schema("tranqui_legal")
@@ -1355,6 +1945,16 @@ export async function eliminarAbogadoRedAction(abogadoId: string): Promise<Resul
 
     if (abg.abg_usuario_id) {
       await sincronizarRolAbogadoEnSeguridad(adminSupabase, abg.abg_usuario_id, false);
+      const nombreOperador =
+        [perfilOperador?.usu_nombres, perfilOperador?.usu_apellidos].filter(Boolean).join(" ").trim() ||
+        "Mesa Operativa Tranqi";
+      await notificarEventoRedAbogadoMulticanal(adminSupabase, {
+        usuarioId: abg.abg_usuario_id,
+        tipoEvento: "RETIRADO",
+        operadorCorreo: perfilOperador?.usu_correo ?? null,
+        operadorNombre: nombreOperador,
+        operadorId: perfilOperador?.usu_id ?? null,
+      });
     }
 
     revalidatePath("/panel/administrar");

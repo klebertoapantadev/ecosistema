@@ -78,6 +78,12 @@ create policy trq_abogado_propio_update on tranqui_legal.trq_abogado
   for update using (abg_usuario_id = auth.uid())
   with check (abg_usuario_id = auth.uid());
 
+drop policy if exists trq_materia_staff_all on tranqui_legal.trq_materia;
+create policy trq_materia_staff_all on tranqui_legal.trq_materia
+  for all using (comun_seguridad.seg_fn_es_operador_o_admin_negocio('tranqi'))
+  with check (comun_seguridad.seg_fn_es_operador_o_admin_negocio('tranqi'));
+
+grant select, insert, update, delete on tranqui_legal.trq_materia to authenticated, service_role;
 grant select, insert, update, delete on tranqui_legal.trq_abogado to authenticated;
 grant select, insert, update, delete on tranqui_legal.trq_abogado_materia to authenticated;
 grant select, insert, update, delete on tranqui_legal.trq_abogado_provincia to authenticated;
@@ -85,6 +91,8 @@ grant usage on schema comun_catalogo to authenticated, service_role;
 grant select on all tables in schema comun_catalogo to authenticated, service_role;
 grant usage on schema tranqui_legal to service_role;
 grant all on all tables in schema tranqui_legal to service_role;
+grant usage on schema comun_agenda to authenticated, service_role;
+grant all on all tables in schema comun_agenda to service_role;
 
 -- Permitir al staff de tranqi configurar también la agenda/disponibilidad de un abogado
 drop policy if exists age_profesional_staff_all on comun_agenda.age_profesional;

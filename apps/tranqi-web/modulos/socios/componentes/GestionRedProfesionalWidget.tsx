@@ -36,6 +36,8 @@ import {
   guardarDisponibilidadCitasAbogadoAction,
   purgarTodasSolicitudesSocioAction,
   enviarInvitacionesRegistroAbogadosAction,
+  crearEspecialidadLegalAction,
+  eliminarEspecialidadLegalAction,
   type AbogadoRedItem,
   type MateriaItem,
   type ProvinciaItem,
@@ -132,6 +134,70 @@ export function GestionRedProfesionalWidget() {
   const [listaCorreosInvitar, setListaCorreosInvitar] = useState<string[]>([]);
   const [mensajePersonalizadoInvitacion, setMensajePersonalizadoInvitacion] = useState("");
   const [enviandoInvitaciones, setEnviandoInvitaciones] = useState(false);
+
+  // Gestión de Especialidades Legales (Agregar / Eliminar en catálogo trq_materia)
+  const [modalEspecialidadesAbierto, setModalEspecialidadesAbierto] = useState(false);
+  const [modoGestionarEspecialidadesEnModal, setModoGestionarEspecialidadesEnModal] = useState(false);
+  const [nuevaEspecialidadNombre, setNuevaEspecialidadNombre] = useState("");
+  const [creandoEspecialidad, setCreandoEspecialidad] = useState(false);
+  const [eliminandoEspecialidadId, setEliminandoEspecialidadId] = useState<string | null>(null);
+
+  const handleAgregarEspecialidad = async (seleccionarAutomaticamente: boolean = false) => {
+    const nombreLimpio = nuevaEspecialidadNombre.trim();
+    if (!nombreLimpio) return;
+    setCreandoEspecialidad(true);
+    setMensaje(null);
+    try {
+      const res = await crearEspecialidadLegalAction(nombreLimpio);
+      if (!res.ok) {
+        setMensaje({ tipo: "error", texto: res.error });
+        return;
+      }
+      const nueva = res.data;
+      setMateriasCat((prev) => {
+        const filtrada = prev.filter((m) => m.mat_id !== nueva.mat_id);
+        return [...filtrada, nueva].sort((a, b) => a.mat_nombre.localeCompare(b.mat_nombre, "es"));
+      });
+      if (seleccionarAutomaticamente) {
+        setMateriasSeleccionadas((prev) =>
+          prev.includes(nueva.mat_id) ? prev : [...prev, nueva.mat_id]
+        );
+      }
+      setNuevaEspecialidadNombre("");
+      setMensaje({
+        tipo: "ok",
+        texto: `Especialidad legal "${nueva.mat_nombre}" agregada al catálogo.`,
+      });
+    } finally {
+      setCreandoEspecialidad(false);
+    }
+  };
+
+  const handleEliminarEspecialidad = async (mat: MateriaItem) => {
+    if (
+      typeof window !== "undefined" &&
+      !window.confirm(`¿Eliminar la especialidad legal "${mat.mat_nombre}" del catálogo?`)
+    ) {
+      return;
+    }
+    setEliminandoEspecialidadId(mat.mat_id);
+    setMensaje(null);
+    try {
+      const res = await eliminarEspecialidadLegalAction(mat.mat_id);
+      if (!res.ok) {
+        setMensaje({ tipo: "error", texto: res.error });
+        return;
+      }
+      setMateriasCat((prev) => prev.filter((m) => m.mat_id !== mat.mat_id));
+      setMateriasSeleccionadas((prev) => prev.filter((id) => id !== mat.mat_id));
+      setMensaje({
+        tipo: "ok",
+        texto: `Especialidad legal "${mat.mat_nombre}" eliminada del catálogo.`,
+      });
+    } finally {
+      setEliminandoEspecialidadId(null);
+    }
+  };
 
   const cargarTodo = async () => {
     setCargando(true);
@@ -883,6 +949,34 @@ export function GestionRedProfesionalWidget() {
 
           <button
             type="button"
+            onClick={() => {
+              setNuevaEspecialidadNombre("");
+              setMensaje(null);
+              setModalEspecialidadesAbierto(true);
+            }}
+            className="btn-responsive-accion"
+            title="Gestionar catálogo de especialidades legales (agregar o eliminar materias)"
+            aria-label="Gestionar especialidades legales"
+            style={{
+              background: "rgba(255,255,255,0.22)",
+              color: "#ffffff",
+              border: "1px solid rgba(255,255,255,0.45)",
+              borderRadius: "10px",
+              padding: "10px 14px",
+              fontSize: "0.82rem",
+              fontWeight: 800,
+              cursor: "pointer",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+            }}
+          >
+            <Scale size={15} />
+            <span className="btn-texto-responsive">Especialidades</span>
+          </button>
+
+          <button
+            type="button"
             onClick={handlePurgarSolicitudes}
             className="btn-responsive-accion"
             title="Eliminar por completo todas las solicitudes de postulación existentes"
@@ -984,11 +1078,14 @@ export function GestionRedProfesionalWidget() {
       )}
 
       {/* Tabla principal de Abogados */}
-      <DataGrid<AbogadoRedItem>
-        filas={abogados}
+      <DataGrid
+        datos={abogados}
         columnas={columnas}
-        idFila={(a) => a.abg_id}
-        nombreExportacion="red_profesional_abogados_tranqi"
+        claveFila={(a) => a.abg_id}
+        cargando={cargando}
+        placeholderBusqueda="Buscar abogado por nombre, correo, cédula, matrícula, materia o provincia..."
+        mensajeVacio="No hay abogados registrados todavía. Usa el botón «Incorporar Abogado» para convertir un usuario registrado o dar de alta uno nuevo."
+        nombreArchivoExportacion="red_profesional_abogados_tranqi"
       />
 
       {/* MODAL 1: Incorporar / Convertir Usuario en Abogado o Editar Ficha */}
@@ -1165,8 +1262,8 @@ export function GestionRedProfesionalWidget() {
                                 {u.yaEsAbogado
                                   ? "Ya es Abogado (Editar)"
                                   : seleccionado
-                                  ? "Seleccionado ✓"
-                                  : "Seleccionar"}
+                                    ? "Seleccionado ✓"
+                                    : "Seleccionar"}
                               </span>
                             </button>
                           );
@@ -1284,48 +1381,163 @@ export function GestionRedProfesionalWidget() {
                 </label>
               </div>
 
-              {/* Selección de Especialidades Legales */}
+              {/* Selección y Gestión de Especialidades Legales */}
               <div style={{ background: "#F9FAFB", border: "1px solid #E5E7EB", borderRadius: "12px", padding: "12px" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px", flexWrap: "wrap", gap: "8px" }}>
                   <span style={{ fontSize: "0.82rem", fontWeight: 800, color: "#111827", display: "inline-flex", alignItems: "center", gap: "6px" }}>
                     <Scale size={15} color="#5000BA" />
                     Especialidades Legales ({materiasSeleccionadas.length} seleccionadas) *
                   </span>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setMateriasSeleccionadas(
-                        materiasSeleccionadas.length === materiasCat.length
-                          ? []
-                          : materiasCat.map((m) => m.mat_id)
-                      )
-                    }
-                    style={{ background: "none", border: "none", color: "#5000BA", fontSize: "0.75rem", fontWeight: 800, cursor: "pointer" }}
-                  >
-                    {materiasSeleccionadas.length === materiasCat.length ? "Limpiar" : "Seleccionar todas"}
-                  </button>
+                  <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                    <button
+                      type="button"
+                      onClick={() => setModoGestionarEspecialidadesEnModal((prev) => !prev)}
+                      style={{
+                        background: modoGestionarEspecialidadesEnModal ? "#5000BA" : "#F5F3FF",
+                        color: modoGestionarEspecialidadesEnModal ? "#ffffff" : "#5000BA",
+                        border: "1px solid #DDD6FE",
+                        borderRadius: "999px",
+                        padding: "3px 10px",
+                        fontSize: "0.73rem",
+                        fontWeight: 800,
+                        cursor: "pointer",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "4px",
+                      }}
+                    >
+                      <Plus size={12} />
+                      {modoGestionarEspecialidadesEnModal ? "Cerrar gestión" : "Gestionar / Agregar"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setMateriasSeleccionadas(
+                          materiasSeleccionadas.length === materiasCat.length
+                            ? []
+                            : materiasCat.map((m) => m.mat_id)
+                        )
+                      }
+                      style={{ background: "none", border: "none", color: "#5000BA", fontSize: "0.75rem", fontWeight: 800, cursor: "pointer" }}
+                    >
+                      {materiasSeleccionadas.length === materiasCat.length ? "Limpiar" : "Seleccionar todas"}
+                    </button>
+                  </div>
                 </div>
+
+                {modoGestionarEspecialidadesEnModal && (
+                  <div
+                    style={{
+                      display: "flex",
+                      gap: "8px",
+                      alignItems: "center",
+                      marginBottom: "10px",
+                      background: "#ffffff",
+                      border: "1px solid #DDD6FE",
+                      borderRadius: "10px",
+                      padding: "8px 10px",
+                    }}
+                  >
+                    <input
+                      type="text"
+                      value={nuevaEspecialidadNombre}
+                      onChange={(e) => setNuevaEspecialidadNombre(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          handleAgregarEspecialidad(true);
+                        }
+                      }}
+                      placeholder="Nueva especialidad legal (ej. Derecho Ambiental, Aduanero...)"
+                      style={{
+                        flex: 1,
+                        padding: "6px 10px",
+                        borderRadius: "8px",
+                        border: "1px solid #D1D5DB",
+                        fontSize: "0.8rem",
+                      }}
+                    />
+                    <button
+                      type="button"
+                      disabled={creandoEspecialidad || !nuevaEspecialidadNombre.trim()}
+                      onClick={() => handleAgregarEspecialidad(true)}
+                      className="btn-responsive-accion"
+                      title="Agregar nueva especialidad legal al catálogo y seleccionarla"
+                      aria-label="Agregar especialidad"
+                      style={{
+                        background: "#5000BA",
+                        color: "#ffffff",
+                        border: "none",
+                        borderRadius: "8px",
+                        padding: "6px 12px",
+                        fontSize: "0.76rem",
+                        fontWeight: 800,
+                        cursor: "pointer",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "4px",
+                      }}
+                    >
+                      <Plus size={14} />
+                      <span className="btn-texto-responsive">
+                        {creandoEspecialidad ? "Agregando..." : "Agregar"}
+                      </span>
+                    </button>
+                  </div>
+                )}
+
                 <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
                   {materiasCat.map((m) => {
                     const activa = materiasSeleccionadas.includes(m.mat_id);
                     return (
-                      <button
+                      <div
                         key={m.mat_id}
-                        type="button"
-                        onClick={() => toggleMateria(m.mat_id)}
                         style={{
-                          padding: "5px 10px",
+                          display: "inline-flex",
+                          alignItems: "center",
                           borderRadius: "999px",
-                          fontSize: "0.76rem",
-                          fontWeight: 700,
-                          cursor: "pointer",
                           border: activa ? "1.5px solid #5000BA" : "1px solid #D1D5DB",
                           background: activa ? "#5000BA" : "#ffffff",
                           color: activa ? "#ffffff" : "#374151",
+                          overflow: "hidden",
                         }}
                       >
-                        {m.mat_nombre}
-                      </button>
+                        <button
+                          type="button"
+                          onClick={() => toggleMateria(m.mat_id)}
+                          style={{
+                            padding: modoGestionarEspecialidadesEnModal ? "5px 6px 5px 10px" : "5px 10px",
+                            fontSize: "0.76rem",
+                            fontWeight: 700,
+                            cursor: "pointer",
+                            border: "none",
+                            background: "transparent",
+                            color: "inherit",
+                          }}
+                        >
+                          {m.mat_nombre}
+                        </button>
+                        {modoGestionarEspecialidadesEnModal && (
+                          <button
+                            type="button"
+                            disabled={eliminandoEspecialidadId === m.mat_id}
+                            onClick={() => handleEliminarEspecialidad(m)}
+                            title={`Eliminar especialidad "${m.mat_nombre}" del catálogo`}
+                            aria-label={`Eliminar ${m.mat_nombre}`}
+                            style={{
+                              padding: "5px 8px 5px 4px",
+                              border: "none",
+                              background: "transparent",
+                              color: activa ? "#FECACA" : "#DC2626",
+                              cursor: "pointer",
+                              display: "inline-flex",
+                              alignItems: "center",
+                            }}
+                          >
+                            <X size={13} />
+                          </button>
+                        )}
+                      </div>
                     );
                   })}
                 </div>
@@ -2059,7 +2271,205 @@ export function GestionRedProfesionalWidget() {
           </div>
         </div>
       )}
+
+      {/* MODAL 4: Gestión del Catálogo de Especialidades Legales (Agregar / Eliminar) */}
+      {modalEspecialidadesAbierto && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(17, 24, 39, 0.6)",
+            zIndex: 9999,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "16px",
+          }}
+        >
+          <div
+            style={{
+              background: "#ffffff",
+              borderRadius: "18px",
+              width: "100%",
+              maxWidth: "620px",
+              maxHeight: "90vh",
+              overflowY: "auto",
+              boxShadow: "0 20px 50px rgba(0,0,0,0.25)",
+              padding: "24px",
+            }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px" }}>
+              <div>
+                <span
+                  style={{
+                    fontSize: "0.7rem",
+                    fontWeight: 800,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.05em",
+                    background: "#F5F3FF",
+                    color: "#5000BA",
+                    padding: "3px 9px",
+                    borderRadius: "999px",
+                  }}
+                >
+                  Catálogo Jurídico · tranqi
+                </span>
+                <h3 style={{ margin: "6px 0 2px 0", fontSize: "1.15rem", fontWeight: 900, color: "#111827" }}>
+                  Gestionar Especialidades Legales ({materiasCat.length})
+                </h3>
+                <p style={{ margin: 0, fontSize: "0.82rem", color: "#6B7280" }}>
+                  Agrega nuevas especialidades o elimina las que ya no requieras en el directorio profesional.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setModalEspecialidadesAbierto(false)}
+                style={{ background: "#F3F4F6", border: "none", borderRadius: "50%", width: "34px", height: "34px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+              {/* Formulario para agregar nueva especialidad */}
+              <div
+                style={{
+                  background: "#F9FAFB",
+                  border: "1px solid #E5E7EB",
+                  borderRadius: "12px",
+                  padding: "12px",
+                  display: "flex",
+                  gap: "8px",
+                  alignItems: "center",
+                }}
+              >
+                <input
+                  type="text"
+                  value={nuevaEspecialidadNombre}
+                  onChange={(e) => setNuevaEspecialidadNombre(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      handleAgregarEspecialidad(false);
+                    }
+                  }}
+                  placeholder="Escribe el nombre de la especialidad (ej. Derecho Ambiental, Aduanero...)"
+                  style={{
+                    flex: 1,
+                    padding: "9px 12px",
+                    borderRadius: "8px",
+                    border: "1px solid #D1D5DB",
+                    fontSize: "0.84rem",
+                  }}
+                />
+                <button
+                  type="button"
+                  disabled={creandoEspecialidad || !nuevaEspecialidadNombre.trim()}
+                  onClick={() => handleAgregarEspecialidad(false)}
+                  className="btn-responsive-accion"
+                  title="Agregar nueva especialidad legal"
+                  aria-label="Agregar especialidad legal"
+                  style={{
+                    background: "#5000BA",
+                    color: "#ffffff",
+                    border: "none",
+                    borderRadius: "8px",
+                    padding: "9px 14px",
+                    fontSize: "0.82rem",
+                    fontWeight: 800,
+                    cursor: "pointer",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "6px",
+                  }}
+                >
+                  <Plus size={15} />
+                  <span className="btn-texto-responsive">
+                    {creandoEspecialidad ? "Agregando..." : "Agregar"}
+                  </span>
+                </button>
+              </div>
+
+              {/* Lista de especialidades existentes */}
+              <div
+                style={{
+                  border: "1px solid #E5E7EB",
+                  borderRadius: "12px",
+                  padding: "12px",
+                  maxHeight: "340px",
+                  overflowY: "auto",
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fill, minmax(230px, 1fr))",
+                  gap: "8px",
+                }}
+              >
+                {materiasCat.length === 0 ? (
+                  <span style={{ fontSize: "0.8rem", color: "#9CA3AF" }}>
+                    No hay especialidades registradas.
+                  </span>
+                ) : (
+                  materiasCat.map((m) => (
+                    <div
+                      key={m.mat_id}
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        padding: "8px 12px",
+                        borderRadius: "10px",
+                        border: "1px solid #E5E7EB",
+                        background: "#ffffff",
+                      }}
+                    >
+                      <span style={{ fontSize: "0.82rem", fontWeight: 700, color: "#111827", display: "inline-flex", alignItems: "center", gap: "6px" }}>
+                        <Scale size={14} color="#5000BA" />
+                        {m.mat_nombre}
+                      </span>
+                      <button
+                        type="button"
+                        disabled={eliminandoEspecialidadId === m.mat_id}
+                        onClick={() => handleEliminarEspecialidad(m)}
+                        title={`Eliminar especialidad "${m.mat_nombre}"`}
+                        aria-label={`Eliminar ${m.mat_nombre}`}
+                        style={{
+                          background: "#FEF2F2",
+                          color: "#DC2626",
+                          border: "1px solid #FECACA",
+                          borderRadius: "6px",
+                          padding: "4px 6px",
+                          cursor: "pointer",
+                          display: "inline-flex",
+                          alignItems: "center",
+                        }}
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                <button
+                  type="button"
+                  onClick={() => setModalEspecialidadesAbierto(false)}
+                  style={{
+                    padding: "9px 18px",
+                    borderRadius: "10px",
+                    border: "none",
+                    background: "#05876E",
+                    color: "#ffffff",
+                    fontWeight: 800,
+                    cursor: "pointer",
+                  }}
+                >
+                  Listo
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
-
