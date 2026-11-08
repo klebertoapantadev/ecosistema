@@ -64,7 +64,7 @@ Extensiones relevantes ya instaladas en el proyecto (heredadas, no instaladas po
 | `comun_auditoria` | ✅ Creado 2026-07-27 (`20260727000001`) |
 | `comun_seguridad` | ✅ Creado 2026-07-27 (`20260727000002`) |
 | `comun_configuracion` | ✅ Creado 2026-07-27 (`20260727000003`) |
-| `comun_facturacion` | Pendiente de crear |
+| `comun_facturacion` | Migración `20261108000001` (PLT-006, ver ADR-0007) |
 | `comun_catalogo` | Pendiente de crear |
 | `comun_agentes` | Pendiente de crear |
 | `comun_comercio` | Pendiente de crear |

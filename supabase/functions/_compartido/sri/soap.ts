@@ -108,20 +108,22 @@ function texto(xml: string, nombre: string): string | null {
   return m ? contenidoTexto(m[1]).trim() : null;
 }
 
-// <mensaje> contiene otro <mensaje> (el texto): se reconoce la secuencia completa
-// identificador, mensaje, informacionAdicional (opcional), tipo.
+// <mensaje> contiene otro <mensaje> (el texto), así que no se puede cortar por
+// </mensaje>. Cada mensaje empieza en su <identificador>: se trocea por ahí y
+// en cada trozo se busca cada campo por separado, sin depender del orden ni de
+// que informacionAdicional venga (puede llegar vacío como <informacionAdicional/>).
 function mensajes(xml: string): MensajeSri[] {
-  const p = (n: string) => `<(?:[\\w.-]+:)?${n}(?:\\s[^>]*)?>([\\s\\S]*?)</(?:[\\w.-]+:)?${n}>`;
-  const re = new RegExp(
-    `${p("identificador")}\\s*${p("mensaje")}\\s*(?:${p("informacionAdicional")}\\s*)?${p("tipo")}`,
-    "g",
-  );
-  return [...xml.matchAll(re)].map((m) => ({
-    identificador: contenidoTexto(m[1]).trim(),
-    mensaje: contenidoTexto(m[2]).trim(),
-    informacionAdicional: m[3] === undefined ? null : contenidoTexto(m[3]).trim() || null,
-    tipo: contenidoTexto(m[4]).trim(),
-  }));
+  const inicios = [...xml.matchAll(/<(?:[\w.-]+:)?identificador(?:\s[^>]*)?>/g)].map((m) => m.index!);
+  return inicios.map((inicio, i) => {
+    const trozo = xml.slice(inicio, inicios[i + 1] ?? xml.length);
+    // El primer <mensaje> del trozo es el texto (el contenedor abrió antes del identificador).
+    return {
+      identificador: texto(trozo, "identificador") ?? "",
+      mensaje: texto(trozo, "mensaje") ?? "",
+      informacionAdicional: texto(trozo, "informacionAdicional") || null,
+      tipo: texto(trozo, "tipo") ?? "",
+    };
+  });
 }
 
 export function parsearRecepcion(xml: string): RespuestaRecepcion {

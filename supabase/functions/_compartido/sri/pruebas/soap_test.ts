@@ -94,3 +94,14 @@ Deno.test("soap: de varias autorizaciones manda la AUTORIZADO", () => {
   const si = parsearAutorizacion(AUTORIZADO).autorizaciones[0];
   assertEquals(autorizacionVigente({ autorizaciones: [no, si] })?.estado, "AUTORIZADO");
 });
+
+Deno.test("soap: informacionAdicional vacía o en otro orden no pierde el mensaje 43", () => {
+  const xml = sobre(
+    "S",
+    '<ns2:validarComprobanteResponse xmlns:ns2="http://ec.gob.sri.ws.recepcion"><RespuestaRecepcionComprobante><estado>DEVUELTA</estado><comprobantes><comprobante><claveAcceso>2409202601179001234500120010020000001231234567818</claveAcceso><mensajes><mensaje><identificador>43</identificador><informacionAdicional/><tipo>ERROR</tipo><mensaje>CLAVE ACCESO REGISTRADA</mensaje></mensaje><mensaje><identificador>70</identificador><mensaje>CLAVE DE ACCESO EN PROCESAMIENTO</mensaje><informacionAdicional xsi:nil="true"/><tipo>ERROR</tipo></mensaje></mensajes></comprobante></comprobantes></RespuestaRecepcionComprobante></ns2:validarComprobanteResponse>',
+  );
+  assertEquals(parsearRecepcion(xml).mensajes, [
+    { identificador: "43", mensaje: "CLAVE ACCESO REGISTRADA", informacionAdicional: null, tipo: "ERROR" },
+    { identificador: "70", mensaje: "CLAVE DE ACCESO EN PROCESAMIENTO", informacionAdicional: null, tipo: "ERROR" },
+  ]);
+});

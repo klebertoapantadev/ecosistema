@@ -123,7 +123,7 @@ Ver [ADR-0007](../../arquitectura/adr/0007-facturacion-electronica-sri.md). Migr
 | `fac_comprobante_linea` | `lin_` | Detalle: cantidad y precio con hasta 6 decimales, descuento, código de IVA (Tabla 17). |
 | `fac_evento` | `evt_` | Bitácora de cada transición (y de pagos que no se pudieron facturar). |
 
-Estados: `BORRADOR → PENDIENTE → RECIBIDO → AUTORIZADO`, y como finales `DEVUELTO`, `NO_AUTORIZADO`, `ERROR` (los dos primeros y `ERROR` admiten `fac_fn_reintentar`) y `ANULADO` (registro de una anulación hecha en SRI en Línea).
+Estados: `BORRADOR → PENDIENTE → RECIBIDO → AUTORIZADO`. `DEVUELTO` y `ERROR` admiten `fac_fn_reintentar` (mismo número y clave; vuelve a `RECIBIDO` si el SRI ya lo había recibido, y entonces no se puede cambiar el comprador). `NO_AUTORIZADO` es final: se corrige con un comprobante nuevo. `ANULADO` registra una anulación hecha en SRI en Línea. Un borrador de consumidor final por encima de 50 USD se emite con `fac_fn_emitir(id, comprador)`.
 
 RPC para sesiones: `fac_fn_guardar_emisor`, `fac_fn_cambiar_ambiente` (aal2), `fac_fn_fijar_secuencial`, `fac_fn_desactivar_certificado`, `fac_fn_registrar_anulacion` (ADMINISTRADOR, comprobado con `fac_fn_es_admin`, no con `seg_fn_es_admin_negocio`, que también acepta OPERADOR); `fac_fn_crear_comprobante`, `fac_fn_emitir`, `fac_fn_descartar_borrador`, `fac_fn_reintentar` (operador o admin); `fac_fn_habilitar_produccion` (superadmin). Solo `service_role`: `fac_fn_tomar_lote`, `fac_fn_registrar_resultado`, `fac_fn_registrar_correo`, `fac_fn_obtener_certificado`, `fac_fn_registrar_certificado`.
 
@@ -204,7 +204,7 @@ Seed aplicado: una fila por negocio (`tranqi`, `fastfix`, `tinkay`, `margaritas`
 | `comun_agentes` | ❌ Pendiente (tabla) | ✅ `packages/agentes-ia` (vía env vars) | `tranqi-web` |
 | `comun_auditoria` | ✅ Aplicada | ✅ `aud_fn_auditar_tabla()` en las 10 tablas nuevas | `comun_seguridad`, `comun_configuracion` |
 | `comun_configuracion` | ✅ Aplicada | — | `tranqi-web` — configuración del negocio |
-| `comun_facturacion` | 🟡 Migración `20261108000001` en rama `PLT-006-facturacion-sri` | ✅ Edge Functions `facturacion-sri` y `facturacion-certificado`; ❌ widgets de panel pendientes | Disparador sobre `com_transaccion_pago` (factura automática al aprobarse un pago) |
+| `comun_facturacion` | 🟡 Migración `20261108000001` (PLT-006, pendiente de aplicar) | ✅ Edge Functions `facturacion-sri` y `facturacion-certificado`; ❌ widgets de panel pendientes | Disparador sobre `com_transaccion_pago` (factura automática al aprobarse un pago) |
 | `comun_catalogo` | ❌ Pendiente | — | Ninguno todavía |
 | `comun_comercio` | ❌ Pendiente | ❌ `packages/comercio` pendiente | Ninguno todavía (bloqueante para Tinkay/Margaritas) |
 

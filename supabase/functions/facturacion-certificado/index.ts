@@ -105,6 +105,13 @@ Deno.serve(async (req: Request) => {
   if (metadatos.validoHasta.getTime() <= Date.now()) {
     return respuesta({ error: "El certificado esta caducado" }, 422);
   }
+  if (metadatos.validoDesde.getTime() > Date.now()) {
+    return respuesta({ error: "El certificado todavia no esta vigente" }, 422);
+  }
+  // Con la CA dentro del .p12, su firma sobre el certificado tiene que validar.
+  if (metadatos.cadenaVerificada === false) {
+    return respuesta({ error: "La CA incluida en el archivo no valida el certificado" }, 422);
+  }
   // La firma debe ser del emisor: su RUC, o la cédula de la persona natural
   // titular de ese RUC (normativa SRI). El certificado de un representante
   // legal de una sociedad trae el RUC de la sociedad en la extensión de la CA.

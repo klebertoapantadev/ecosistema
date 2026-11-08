@@ -63,6 +63,7 @@ export interface FilaComprobante {
   cmp_motivo: string | null;
   cmp_intentos: number;
   cmp_emitido_en: string;
+  cmp_detalle_comprobante?: { reintentado_en?: string } | null;
 }
 
 export interface FilaLinea {
@@ -299,8 +300,15 @@ export class Procesador {
     } catch (e) {
       throw new ErrorComprobante(`Certificado ilegible: ${e instanceof Error ? e.message : String(e)}`);
     }
-    if (cert.metadatos.validoHasta.getTime() <= this.dep.ahora().getTime()) {
+    const ahora = this.dep.ahora().getTime();
+    if (cert.metadatos.validoHasta.getTime() <= ahora) {
       throw new ErrorComprobante("El certificado de firma está caducado");
+    }
+    if (cert.metadatos.validoDesde.getTime() > ahora) {
+      throw new ErrorComprobante("El certificado de firma todavía no está vigente");
+    }
+    if (cert.metadatos.cadenaVerificada === false) {
+      throw new ErrorComprobante("La CA incluida en el .p12 no valida la firma del certificado");
     }
     this.certificados.set(id, cert);
     return cert;
@@ -393,7 +401,8 @@ export class Procesador {
 
     if (!a || (a.estado !== "AUTORIZADO" && a.estado !== "NO AUTORIZADO")) {
       // Sin respuesta todavía (o EN PROCESO): se reintenta, salvo que pasen 48 h.
-      if (this.dep.ahora().getTime() - Date.parse(c.cmp_emitido_en) > LIMITE_AUTORIZACION_MS) {
+      const desde = Math.max(Date.parse(c.cmp_emitido_en), Date.parse(c.cmp_detalle_comprobante?.reintentado_en ?? "") || 0);
+      if (this.dep.ahora().getTime() - desde > LIMITE_AUTORIZACION_MS) {
         throw new ErrorComprobante("El SRI no autorizó el comprobante en 48 horas: consulte su estado en SRI en Línea");
       }
       const intentos = c.cmp_intentos + 1;

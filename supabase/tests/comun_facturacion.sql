@@ -2,7 +2,7 @@
 -- Se ejecuta con `supabase test db` (pgTAP, gobernanza/estandares/04-pruebas.md §4).
 -- Todo dentro de una transacción que se deshace al final.
 begin;
-select plan(59);
+select plan(70);
 
 -- ── Usuarios de prueba ───────────────────────────────────────────────────────
 -- admin y operador de tranqi, operador de fastfix, superadmin y un cliente.
@@ -172,8 +172,13 @@ select vault.create_secret('https://ejemplo.supabase.co/functions/v1/facturacion
 select vault.create_secret('clave-compartida', 'facturacion_funcion_clave');
 create temp table cola_antes as select count(*) as n from net.http_request_queue;
 select comun_facturacion.fac_fn_despertar_worker();
+select is((select count(*) from net.http_request_queue) - (select n from cola_antes), 0::bigint,
+  'mientras el worker tiene el comprobante bloqueado, el despertador no lo vuelve a llamar');
+update comun_facturacion.fac_comprobante set cmp_bloqueado_en = now() - interval '6 minutes'
+ where cmp_id = (select id from ids where nombre = 'f2');
+select comun_facturacion.fac_fn_despertar_worker();
 select is((select count(*) from net.http_request_queue) - (select n from cola_antes), 1::bigint,
-  'el despertador encola una llamada a la Edge Function si hay comprobantes vencidos');
+  'con el bloqueo caducado, encola una llamada a la Edge Function');
 
 -- ── Nota de crédito ─────────────────────────────────────────────────────────
 select pg_temp.como('f0000000-0000-4000-8000-000000000002');
@@ -292,6 +297,89 @@ select pg_temp.como('f0000000-0000-4000-8000-000000000003');
 set local role authenticated;
 select is((select count(*) from storage.objects where bucket_id = 'facturacion')::int, 0,
   'fastfix no lee los XML de tranqi');
+reset role;
+
+-- ── Revisión cruzada: borrador de consumidor final, reintento tras recepción, ──
+-- ── pagos insertados ya aprobados, bases del pago, descuadre y baja de cuenta ──
+select pg_temp.como('f0000000-0000-4000-8000-000000000002');
+set local role authenticated;
+create temp table sec_antes as select sec_ultimo from comun_facturacion.fac_secuencial
+  where sec_negocio = 'tranqi' and sec_ambiente = 1 and sec_tipo = '01';
+select throws_like(format('select comun_facturacion.fac_fn_emitir(%L)',
+    (select cmp_id from comun_facturacion.fac_comprobante where cmp_transaccion_pago_id = 'f2000000-0000-4000-8000-000000000003')),
+  '%consumidor final no puede superar 50 USD%', 'un borrador de consumidor final por encima de 50 USD no se emite sin comprador');
+select is((select sec_ultimo from comun_facturacion.fac_secuencial where sec_negocio = 'tranqi' and sec_ambiente = 1 and sec_tipo = '01'),
+  (select sec_ultimo from sec_antes), 'y no gasta número');
+select lives_ok(format($$select comun_facturacion.fac_fn_emitir(%L, '{"tipo_identificacion":"05","identificacion":"1710034065","razon_social":"Cliente Completo"}')$$,
+    (select cmp_id from comun_facturacion.fac_comprobante where cmp_transaccion_pago_id = 'f2000000-0000-4000-8000-000000000003')),
+  'el operador completa el comprador del borrador y lo emite');
+reset role;
+
+select set_config('request.jwt.claims', '{}', true);
+select comun_facturacion.fac_fn_registrar_resultado((select id from ids where nombre = 'f2'), '{"estado":"RECIBIDO"}', 'recibido');
+select comun_facturacion.fac_fn_registrar_resultado((select id from ids where nombre = 'f2'), '{"estado":"ERROR"}', 'error');
+select pg_temp.como('f0000000-0000-4000-8000-000000000002');
+set local role authenticated;
+select throws_like(format($$select comun_facturacion.fac_fn_reintentar(%L, '{"tipo_identificacion":"05","identificacion":"1710034065","razon_social":"Otro"}')$$,
+    (select id from ids where nombre = 'f2')),
+  '%el SRI ya recibio%', 'si el SRI ya recibió el comprobante no se cambia el comprador');
+select lives_ok(format('select comun_facturacion.fac_fn_reintentar(%L)', (select id from ids where nombre = 'f2')),
+  'reintentar un comprobante ya recibido…');
+select is((select cmp_estado from comun_facturacion.fac_comprobante where cmp_id = (select id from ids where nombre = 'f2')),
+  'RECIBIDO', '…vuelve a consultar la autorización en vez de reenviarlo');
+reset role;
+select set_config('request.jwt.claims', '{}', true);
+
+-- Un pago que se inserta ya aprobado también se factura.
+insert into comun_comercio.com_transaccion_pago (pag_id, pag_negocio, pag_pasarela, pag_identificador_cliente, pag_estado,
+  pag_monto_total, pag_monto_con_iva, pag_monto_iva, pag_detalle_transaccion)
+values ('f2000000-0000-4000-8000-000000000005', 'tranqi', 'TRANSFERENCIA', 'FAC-PRUEBA-5', 'APROBADO', 11.50, 10.00, 1.50,
+  '{"datos_facturacion":{"tipo_identificacion":"ruc","identificacion":"1710034065001","razon_social":"Empresa X"}}');
+select is((select cmp_estado || '/' || (cmp_formas_pago -> 0 ->> 'forma_pago') from comun_facturacion.fac_comprobante
+            where cmp_transaccion_pago_id = 'f2000000-0000-4000-8000-000000000005'),
+  'PENDIENTE/20', 'un pago insertado ya APROBADO se factura (transferencia = forma de pago 20)');
+
+-- Variante al 0 % con base gravada en el pago: no se pierde ningún importe.
+insert into comun_comercio.com_producto (pro_id, pro_negocio, pro_nombre, pro_slug, pro_tipo)
+values ('f3000000-0000-4000-8000-000000000001', 'tranqi', 'Producto fac 0', 'producto-fac-0', 'SERVICIO');
+insert into comun_comercio.com_variante (var_id, var_negocio, var_producto_id, var_sku, var_nombre, var_precio,
+  var_codigo_impuesto_sri, var_tarifa_iva_porcentaje)
+values ('f3000000-0000-4000-8000-000000000002', 'tranqi', 'f3000000-0000-4000-8000-000000000001', 'FAC-0', 'Unico', 25,
+  'IVA_0', 0);
+insert into comun_comercio.com_transaccion_pago (pag_id, pag_negocio, pag_pasarela, pag_identificador_cliente, pag_estado,
+  pag_monto_total, pag_monto_con_iva, pag_monto_sin_iva, pag_monto_iva, pag_detalle_transaccion)
+values ('f2000000-0000-4000-8000-000000000006', 'tranqi', 'PAYPHONE', 'FAC-PRUEBA-6', 'PENDIENTE', 28.00, 20.00, 5.00, 3.00,
+  '{"variante_id":"f3000000-0000-4000-8000-000000000002","datos_facturacion":{"tipo_identificacion":"cedula","identificacion":"1710034065","razon_social":"Y"}}');
+update comun_comercio.com_transaccion_pago set pag_estado = 'APROBADO' where pag_id = 'f2000000-0000-4000-8000-000000000006';
+select is((select string_agg(lin_codigo_iva || ':' || lin_precio_unitario, ',' order by lin_orden)
+             from comun_facturacion.fac_comprobante_linea l join comun_facturacion.fac_comprobante c on c.cmp_id = l.lin_comprobante_id
+            where c.cmp_transaccion_pago_id = 'f2000000-0000-4000-8000-000000000006'),
+  '4:20.000000,0:5.000000', 'la base gravada y la de 0 % del pago van las dos a la factura');
+
+-- PVP 35.00 al 15 %: ninguna base cuadra (30.43 → 34.99); se factura y queda anotado.
+insert into comun_comercio.com_transaccion_pago (pag_id, pag_negocio, pag_pasarela, pag_identificador_cliente, pag_estado,
+  pag_monto_total, pag_monto_con_iva, pag_monto_iva, pag_detalle_transaccion)
+values ('f2000000-0000-4000-8000-000000000007', 'tranqi', 'PAYPHONE', 'FAC-PRUEBA-7', 'APROBADO', 35.00, 30.43, 4.57,
+  '{"datos_facturacion":{"tipo_identificacion":"cedula","identificacion":"1710034065","razon_social":"Z"}}');
+select is((select evt_detalle_evento ->> 'factura' from comun_facturacion.fac_evento e
+             join comun_facturacion.fac_comprobante c on c.cmp_id = e.evt_comprobante_id
+            where c.cmp_transaccion_pago_id = 'f2000000-0000-4000-8000-000000000007' and e.evt_tipo = 'descuadre_con_pago'),
+  '34.99', 'un PVP que no cuadra al centavo deja el evento descuadre_con_pago');
+
+-- Baja de cuenta: quien tiene comprobantes a su nombre se anonimiza, no se borra.
+insert into auth.users (id, email) values ('f0000000-0000-4000-8000-000000000006', 'baja.fac@prueba.ec');
+insert into comun_seguridad.seg_usuario (usu_id, usu_correo) values ('f0000000-0000-4000-8000-000000000006', 'baja.fac@prueba.ec')
+on conflict (usu_id) do nothing;
+select pg_temp.como('f0000000-0000-4000-8000-000000000002');
+set local role authenticated;
+select comun_facturacion.fac_fn_crear_comprobante('tranqi', '01',
+  '{"tipo_identificacion":"05","identificacion":"1710034065","razon_social":"Baja"}',
+  '[{"codigo":"C-2","descripcion":"Consulta","cantidad":1,"precio_unitario":20,"codigo_iva":"4"}]', '[]', '[]', null, null,
+  'f0000000-0000-4000-8000-000000000006', true);
+reset role;
+select pg_temp.como('f0000000-0000-4000-8000-000000000006');
+set local role authenticated;
+select is(comun_seguridad.seg_fn_eliminar_cuenta(), 'anonimizada', 'la baja de cuenta anonimiza a quien tiene comprobantes emitidos');
 reset role;
 
 select * from finish();

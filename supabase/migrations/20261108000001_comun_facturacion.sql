@@ -99,6 +99,7 @@ create table comun_facturacion.fac_secuencial (
   sec_establecimiento text not null,
   sec_punto_emision text not null,
   sec_ultimo bigint not null default 0 check (sec_ultimo between 0 and 999999999),
+  sec_detalle_secuencial jsonb not null default '{}'::jsonb,
   sec_creado_en timestamptz not null default now(),
   sec_actualizado_en timestamptz not null default now(),
   unique (sec_negocio, sec_ambiente, sec_tipo, sec_establecimiento, sec_punto_emision)
@@ -401,8 +402,11 @@ begin
     if substr(v_id, 3, 1)::int < 6 and not comun_facturacion.fac_fn_cedula_valida(left(v_id, 10)) then
       raise exception 'RUC de persona natural invalido';
     end if;
+    -- Tercer dígito: < 6 persona natural, 6 sector público, 9 sociedad; 7 y 8 no existen.
+    if substr(v_id, 3, 1) in ('7', '8') then raise exception 'RUC invalido: tercer digito'; end if;
   elsif v_tipo in ('06', '08') then
-    if v_id !~ '^[A-Z0-9-]{3,20}$' then raise exception 'Identificacion invalida'; end if;
+    -- Pasaporte o identificación del exterior: el XSD solo limita la longitud (hasta 20).
+    if length(v_id) not between 1 and 20 or v_id ~ '\s' then raise exception 'Identificacion invalida'; end if;
   else
     raise exception 'Tipo de identificacion invalido';
   end if;
@@ -421,6 +425,29 @@ begin
     'telefono', nullif(left(btrim(coalesce(p_comprador ->> 'telefono', '')), 20), '')
   );
 end;
+$$;
+
+-- Importe total de un comprobante con el mismo redondeo que totales.ts (base
+-- por línea a 2 decimales, IVA por grupo de tarifa). Sirve para decidir en SQL
+-- (consumidor final > 50 USD, cuadre con el pago); el total que se firma lo
+-- calcula el worker.
+create or replace function comun_facturacion.fac_fn_importe_total(p_id uuid)
+returns numeric
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  with lineas as (
+    select lin_codigo_iva, round(lin_cantidad * lin_precio_unitario - lin_descuento, 2) as base
+      from comun_facturacion.fac_comprobante_linea
+     where lin_comprobante_id = p_id
+  ), grupos as (
+    select lin_codigo_iva, sum(base) as base_g from lineas group by lin_codigo_iva
+  )
+  select coalesce(sum(base_g + round(base_g * case lin_codigo_iva
+           when '4' then 15 when '5' then 5 when '10' then 13 else 0 end / 100.0, 2)), 0)
+    from grupos;
 $$;
 
 -- ═══════════ Configuración del emisor (admin del negocio) ═══════════
@@ -532,7 +559,8 @@ begin
     end if;
     if not exists (
       select 1 from comun_facturacion.fac_certificado
-       where cer_id = v_emisor.emi_certificado_id and cer_activo and cer_valido_hasta > now()
+       where cer_id = v_emisor.emi_certificado_id and cer_activo
+         and cer_valido_desde <= now() and cer_valido_hasta > now()
     ) then
       raise exception 'El emisor no tiene un certificado vigente';
     end if;
@@ -609,6 +637,9 @@ begin
   end if;
   if (p_metadatos ->> 'valido_hasta')::timestamptz <= now() then
     raise exception 'El certificado esta caducado';
+  end if;
+  if (p_metadatos ->> 'valido_desde')::timestamptz > now() then
+    raise exception 'El certificado todavia no esta vigente';
   end if;
 
   select cer_id, cer_p12_secreto_id, cer_clave_secreto_id into v_id, v_p12, v_clave
@@ -829,12 +860,17 @@ begin
   end if;
   if not exists (
     select 1 from comun_facturacion.fac_certificado
-     where cer_id = v_emisor.emi_certificado_id and cer_activo and cer_valido_hasta > now()
+     where cer_id = v_emisor.emi_certificado_id and cer_activo
+       and cer_valido_desde <= now() and cer_valido_hasta > now()
   ) then
     raise exception 'El emisor no tiene un certificado de firma vigente';
   end if;
   if v_emisor.emi_ambiente = 2 and not v_emisor.emi_produccion_habilitada then
     raise exception 'Produccion no habilitada para este negocio';
+  end if;
+  -- Antes de gastar un número: a consumidor final, como mucho 50 USD (ficha p. 29).
+  if v_cmp.cmp_comprador ->> 'tipo_identificacion' = '07' and comun_facturacion.fac_fn_importe_total(p_id) > 50 then
+    raise exception 'Una factura a consumidor final no puede superar 50 USD: hay que identificar al comprador';
   end if;
   if v_cmp.cmp_tipo = '04' and exists (
     select 1 from comun_facturacion.fac_comprobante f
@@ -907,18 +943,29 @@ begin
 end;
 $$;
 
-create or replace function comun_facturacion.fac_fn_emitir(p_id uuid)
+-- p_comprador completa o corrige el adquirente de un borrador antes de emitir
+-- (p. ej. el de un pago a consumidor final por encima de 50 USD).
+create or replace function comun_facturacion.fac_fn_emitir(p_id uuid, p_comprador jsonb default null)
 returns text
 language plpgsql
 security definer
 set search_path = ''
 as $$
 declare
-  v_negocio text;
+  v_cmp comun_facturacion.fac_comprobante%rowtype;
 begin
-  select cmp_negocio into v_negocio from comun_facturacion.fac_comprobante where cmp_id = p_id;
-  if v_negocio is null or not comun_seguridad.seg_fn_es_operador_o_admin_negocio(v_negocio) then
+  select * into v_cmp from comun_facturacion.fac_comprobante where cmp_id = p_id for update;
+  if not found or not comun_seguridad.seg_fn_es_operador_o_admin_negocio(v_cmp.cmp_negocio) then
     raise exception 'No autorizado';
+  end if;
+  if p_comprador is not null then
+    if v_cmp.cmp_estado <> 'BORRADOR' or v_cmp.cmp_tipo <> '01' then
+      raise exception 'Solo se cambia el comprador de una factura en borrador';
+    end if;
+    update comun_facturacion.fac_comprobante
+       set cmp_comprador = comun_facturacion.fac_fn_normalizar_comprador(p_comprador), cmp_actualizado_en = now()
+     where cmp_id = p_id;
+    perform comun_facturacion.fac_fn_evento(p_id, v_cmp.cmp_negocio, 'comprador_completado');
   end if;
   return comun_facturacion.fac_fn_emitir_interno(p_id);
 end;
@@ -946,8 +993,11 @@ end;
 $$;
 
 -- Operador/admin: DEVUELTO o ERROR vuelve a la cola con el mismo número y la
--- misma clave (el SRI no la registró). p_comprador corrige los datos del
--- adquirente si ese fue el motivo del rechazo (la clave no los incluye).
+-- misma clave. Si el SRI nunca lo recibió, va a PENDIENTE y p_comprador puede
+-- corregir el adquirente (la clave no lo incluye). Si ya lo recibió (p. ej.
+-- ERROR tras 48 h sin autorización), vuelve a RECIBIDO para consultar la
+-- autorización y el comprador ya no se toca: el XML registrado en el SRI manda.
+-- NO_AUTORIZADO es final: se corrige con un comprobante nuevo.
 create or replace function comun_facturacion.fac_fn_reintentar(p_id uuid, p_comprador jsonb default null)
 returns void
 language plpgsql
@@ -956,6 +1006,7 @@ set search_path = ''
 as $$
 declare
   v_cmp comun_facturacion.fac_comprobante%rowtype;
+  v_recibido boolean;
 begin
   select * into v_cmp from comun_facturacion.fac_comprobante where cmp_id = p_id for update;
   if not found or not comun_seguridad.seg_fn_es_operador_o_admin_negocio(v_cmp.cmp_negocio) then
@@ -964,21 +1015,26 @@ begin
   if v_cmp.cmp_estado not in ('DEVUELTO', 'ERROR') then
     raise exception 'Solo se reintenta un comprobante devuelto o con error';
   end if;
-  if p_comprador is not null and v_cmp.cmp_tipo = '04' then
-    raise exception 'El comprador de una nota de credito es el de su factura';
+  v_recibido := exists (
+    select 1 from comun_facturacion.fac_evento where evt_comprobante_id = p_id and evt_tipo = 'recibido');
+  if p_comprador is not null and (v_recibido or v_cmp.cmp_tipo = '04') then
+    raise exception 'No se pueden cambiar los datos del comprador: %',
+      case when v_recibido then 'el SRI ya recibio este comprobante' else 'en una nota de credito es el de su factura' end;
   end if;
 
   update comun_facturacion.fac_comprobante
-     set cmp_estado = 'PENDIENTE',
+     set cmp_estado = case when v_recibido then 'RECIBIDO' else 'PENDIENTE' end,
          cmp_comprador = case when p_comprador is null then cmp_comprador
                               else comun_facturacion.fac_fn_normalizar_comprador(p_comprador) end,
          cmp_intentos = 0,
          cmp_proximo_intento = now(),
          cmp_bloqueado_en = null,
+         -- El plazo de 48 h para la autorización cuenta desde el reintento.
+         cmp_detalle_comprobante = cmp_detalle_comprobante || jsonb_build_object('reintentado_en', now()),
          cmp_actualizado_en = now()
    where cmp_id = p_id;
   perform comun_facturacion.fac_fn_evento(p_id, v_cmp.cmp_negocio, 'reintento',
-    jsonb_build_object('comprador_corregido', p_comprador is not null));
+    jsonb_build_object('comprador_corregido', p_comprador is not null, 'ya_recibido', v_recibido));
   perform comun_facturacion.fac_fn_despertar_worker();
 end;
 $$;
@@ -1168,6 +1224,7 @@ begin
     select 1 from comun_facturacion.fac_comprobante
      where cmp_estado in ('PENDIENTE', 'RECIBIDO')
        and coalesce(cmp_proximo_intento, '-infinity'::timestamptz) <= now() + interval '5 seconds'
+       and (cmp_bloqueado_en is null or cmp_bloqueado_en < now() - interval '5 minutes')
   ) then
     return;
   end if;
@@ -1210,7 +1267,7 @@ declare
   v_info jsonb;
   v_id uuid;
 begin
-  if new.pag_estado <> 'APROBADO' or old.pag_estado = 'APROBADO' then
+  if new.pag_estado <> 'APROBADO' or (tg_op = 'UPDATE' and old.pag_estado = 'APROBADO') then
     return new;
   end if;
   select * into v_emisor from comun_facturacion.fac_emisor
@@ -1257,10 +1314,13 @@ begin
       else '4' end;
 
     -- Bases tal como se cobraron: gravada (pag_monto_con_iva) y 0 % (pag_monto_sin_iva).
-    if coalesce(new.pag_monto_con_iva, 0) > 0 and v_codigo_iva in ('4', '5', '10') then
+    -- Si el pago trae base gravada pero la variante dice 0 % o no objeto, manda
+    -- el pago (se cobró IVA): se factura al 15 % en vez de perder ese importe.
+    if coalesce(new.pag_monto_con_iva, 0) > 0 then
       v_lineas := v_lineas || jsonb_build_array(jsonb_build_object(
         'codigo', v_codigo, 'descripcion', v_descripcion, 'cantidad', 1,
-        'precio_unitario', round(new.pag_monto_con_iva, 2), 'descuento', 0, 'codigo_iva', v_codigo_iva));
+        'precio_unitario', round(new.pag_monto_con_iva, 2), 'descuento', 0,
+        'codigo_iva', case when v_codigo_iva in ('4', '5', '10') then v_codigo_iva else '4' end));
     end if;
     if coalesce(new.pag_monto_sin_iva, 0) > 0 then
       v_lineas := v_lineas || jsonb_build_array(jsonb_build_object(
@@ -1303,9 +1363,16 @@ begin
       jsonb_build_array(jsonb_build_object('forma_pago', v_forma, 'total', null)),
       v_info, null, null, new.pag_cliente_id, new.pag_id);
 
+    -- Con precios con IVA incluido hay PVP que ninguna base cuadra al centavo
+    -- (35.00 al 15 % → 34.99 o 35.01): se factura igual y queda anotado.
+    if comun_facturacion.fac_fn_importe_total(v_id) <> round(new.pag_monto_total, 2) then
+      perform comun_facturacion.fac_fn_evento(v_id, new.pag_negocio, 'descuadre_con_pago',
+        jsonb_build_object('pago', new.pag_monto_total, 'factura', comun_facturacion.fac_fn_importe_total(v_id)));
+    end if;
+
     -- Consumidor final por encima de 50 USD exige identificar al adquirente
-    -- (ficha p. 29): queda en borrador para que un operador complete los datos.
-    if v_comprador ->> 'tipo_identificacion' = '07' and new.pag_monto_total > 50 then
+    -- (ficha p. 29): queda en borrador y un operador lo emite con fac_fn_emitir(id, comprador).
+    if v_comprador ->> 'tipo_identificacion' = '07' and comun_facturacion.fac_fn_importe_total(v_id) > 50 then
       perform comun_facturacion.fac_fn_evento(v_id, new.pag_negocio, 'requiere_datos_comprador',
         jsonb_build_object('importe', new.pag_monto_total));
     else
@@ -1321,7 +1388,7 @@ end;
 $$;
 
 create trigger trg_fac_facturar_pago
-  after update of pag_estado on comun_comercio.com_transaccion_pago
+  after insert or update of pag_estado on comun_comercio.com_transaccion_pago
   for each row execute function comun_facturacion.fac_fn_facturar_pago();
 
 -- ═══════════ Cron: barrido cada minuto (reintentos y autorizaciones diferidas) ═══════════
@@ -1361,7 +1428,7 @@ grant execute on function comun_facturacion.fac_fn_cambiar_ambiente(text, smalli
 grant execute on function comun_facturacion.fac_fn_fijar_secuencial(text, smallint, text, bigint) to authenticated;
 grant execute on function comun_facturacion.fac_fn_desactivar_certificado(text, uuid) to authenticated;
 grant execute on function comun_facturacion.fac_fn_crear_comprobante(text, text, jsonb, jsonb, jsonb, jsonb, uuid, text, uuid, boolean) to authenticated;
-grant execute on function comun_facturacion.fac_fn_emitir(uuid) to authenticated;
+grant execute on function comun_facturacion.fac_fn_emitir(uuid, jsonb) to authenticated;
 grant execute on function comun_facturacion.fac_fn_descartar_borrador(uuid) to authenticated;
 grant execute on function comun_facturacion.fac_fn_reintentar(uuid, jsonb) to authenticated;
 grant execute on function comun_facturacion.fac_fn_registrar_anulacion(uuid, text) to authenticated;
@@ -1379,3 +1446,111 @@ grant execute on function comun_facturacion.fac_fn_tomar_lote(int) to service_ro
 grant execute on function comun_facturacion.fac_fn_registrar_resultado(uuid, jsonb, text, jsonb) to service_role;
 grant execute on function comun_facturacion.fac_fn_registrar_correo(uuid, boolean, jsonb) to service_role;
 grant execute on function comun_facturacion.fac_fn_despertar_worker() to service_role;
+
+-- ═══════════ Baja de cuenta (PLT-012): los comprobantes son historial ═══════════
+-- seg_fn_eliminar_cuenta() esperaba a que existiera comun_facturacion para
+-- consultarla (20260905000002 / 20260928000001). Quien tiene comprobantes
+-- emitidos a su nombre se anonimiza, no se borra. Mismo cuerpo que
+-- 20260928000001 salvo el paso 1 y el EXISTS de fac_comprobante.
+create or replace function comun_seguridad.seg_fn_eliminar_cuenta()
+returns text
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_usuario_id uuid := auth.uid();
+  v_historial boolean;
+  v_saldo_real numeric(12,4);
+begin
+  if v_usuario_id is null then
+    raise exception 'Sesión no encontrada';
+  end if;
+
+  -- 1-2. Historial transaccional real: pagos, suscripciones, proformas, billetera y comprobantes SRI.
+  select
+       exists (select 1 from comun_comercio.com_transaccion_pago
+               where pag_cliente_id = v_usuario_id
+                 and pag_estado in ('APROBADO','REVERSADO'))
+    or exists (select 1 from comun_comercio.com_suscripcion
+               where sub_cliente_id = v_usuario_id
+                 and sub_estado in ('ACTIVA','PAUSADA','EN_MORA'))
+    or exists (select 1 from comun_comercio.com_proforma
+               where prf_cliente_id = v_usuario_id)
+    or exists (select 1 from comun_comercio.com_billetera b
+               join comun_comercio.com_billetera_movimiento m on m.wlm_billetera_id = b.wlt_id
+               where b.wlt_usuario_id = v_usuario_id)
+    or exists (select 1 from comun_facturacion.fac_comprobante
+               where cmp_cliente_usuario_id = v_usuario_id
+                 and cmp_estado <> 'BORRADOR')
+  into v_historial;
+
+  -- 3. Saldo real en billetera
+  select coalesce(sum(wlt_saldo_recarga), 0) into v_saldo_real
+  from comun_comercio.com_billetera
+  where wlt_usuario_id = v_usuario_id and wlt_activo;
+
+  if v_saldo_real > 0 then
+    raise exception 'Tu billetera conserva saldo recargado. Solicita su devolución a soporte antes de dar de baja la cuenta.';
+  end if;
+
+  -- 4. Si tiene historial transaccional, anonimizar conforme a LOPDP
+  if v_historial then
+    update comun_seguridad.seg_usuario set
+      usu_nombres         = 'Cuenta',
+      usu_apellidos       = 'dada de baja',
+      usu_correo          = 'anonimo+' || v_usuario_id::text || '@invalido.local',
+      usu_whatsapp        = null,
+      usu_cedula          = null,
+      usu_detalle_usuario = jsonb_build_object('anonimizada_en', now())
+    where usu_id = v_usuario_id;
+
+    update comun_seguridad.seg_membresia
+      set mem_estado = 'INACTIVO'
+    where mem_usuario_id = v_usuario_id;
+
+    if to_regclass('tranqui_legal.trq_cliente_perfil') is not null then
+      update tranqui_legal.trq_cliente_perfil
+      set clp_razon_social = 'Cuenta Anonimizada',
+          clp_identificacion = '9999999999' || substr(v_usuario_id::text, 1, 3),
+          clp_correo = 'anonimo+' || v_usuario_id::text || '@invalido.local',
+          clp_telefono = null,
+          clp_activo = false,
+          clp_eliminado_en = now()
+      where clp_usuario_id = v_usuario_id;
+    end if;
+
+    update auth.users set
+      email              = 'anonimo+' || v_usuario_id::text || '@invalido.local',
+      phone              = null,
+      encrypted_password = null,
+      raw_user_meta_data = '{}'::jsonb,
+      banned_until       = 'infinity'::timestamptz
+    where id = v_usuario_id;
+
+    delete from auth.identities where user_id = v_usuario_id;
+    delete from auth.sessions   where user_id = v_usuario_id;
+
+    return 'anonimizada';
+  end if;
+
+  -- 5. Sin historial transaccional: limpieza previa
+  if to_regclass('tranqui_legal.trq_cliente_perfil') is not null then
+    delete from tranqui_legal.trq_cliente_perfil where clp_usuario_id = v_usuario_id;
+  end if;
+
+  if to_regclass('tranqui_legal.trq_asistente_conversacion') is not null then
+    delete from tranqui_legal.trq_asistente_conversacion where cnv_usuario_id = v_usuario_id;
+  end if;
+
+  if to_regclass('comun_comercio.com_billetera') is not null then
+    delete from comun_comercio.com_billetera where wlt_usuario_id = v_usuario_id;
+  end if;
+
+  delete from auth.users where id = v_usuario_id;
+
+  return 'eliminada';
+end;
+$$;
+
+grant execute on function comun_seguridad.seg_fn_eliminar_cuenta() to authenticated;
