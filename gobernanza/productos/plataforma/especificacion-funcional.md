@@ -209,6 +209,10 @@ Gestiona el control de acceso basado en roles y perfiles (RBAC/ABAC) aislado por
     - Cuando un Administrador, Operador o SuperAdmin convierte o agrega un nuevo rol (`ABOGADO`, `TECNICO`, `OPERADOR`, `ADMINISTRADOR`) a un usuario registrado en la plataforma, **el rol no se activa de forma inmediata**.
     - El sistema registra una **Propuesta de Asignación de Rol** en estado `pendiente_aceptacion` con trazabilidad completa de auditoría (**quién lo asignó**, correo del gestor y **fecha/hora de solicitud**), y despacha de inmediato una notificación In-App/Push y Correo Electrónico al usuario.
     - El usuario visualiza en su bandeja de notificaciones (`WidgetNotificacionesCliente`) los botones **`Confirmar Aceptación` / `Aceptar Rol`** y **`Rechazar`**. Únicamente tras su aceptación explícita se inserta el rol en `seg_membresia_perfil` / `seg_membresia` y se registra la **fecha/hora exacta de aceptación**.
+12. **Baja Lógica de Roles, Control de Casos Activos, Modal Institucional e Historial de Cambios (`PLT-003.12`):**
+    - **Prohibición de `window.confirm` Nativo:** Toda confirmación de cambio o baja de rol utiliza obligatoriamente el modal institucional estilizado de la plataforma (`ModalNotificacionPush`).
+    - **Validación de Carga Operativa antes de Baja de Rol:** Antes de retirar o dar de baja un rol operativo (ej. `ABOGADO`), el sistema verifica que el profesional no mantenga casos activos asignados (`trq_caso_judicial`, `trq_caso_abogado_equipo`) ni citas pendientes (`trq_cita`). Si existen obligaciones activas, se bloquea la baja.
+    - **Asignación y Baja Lógica con Historial Inmutable:** La remoción de roles opera como baja lógica (`baja_logica = true`), preservando la ficha histórica del profesional y registrando cada transición en `usu_detalle_usuario.historial_cambios_rol` (consultable desde el modal `Historial de Cambios de Rol`).
 
 ### Estado de implementación
 

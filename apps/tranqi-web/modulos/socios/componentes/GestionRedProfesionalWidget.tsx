@@ -24,8 +24,11 @@ import {
   Send,
   ExternalLink,
   Bell,
+  History,
+  Briefcase,
 } from "lucide-react";
 import { DataGrid, type ColumnaDataGrid } from "@eco/datagrid";
+import { ModalNotificacionPush } from "@eco/notificaciones";
 import { DIAS_SEMANA, huecosPorSemana, type Franja } from "@eco/agenda";
 import {
   listarRedProfesionalAbogadosAction,
@@ -144,6 +147,32 @@ export function GestionRedProfesionalWidget() {
   const [creandoEspecialidad, setCreandoEspecialidad] = useState(false);
   const [eliminandoEspecialidadId, setEliminandoEspecialidadId] = useState<string | null>(null);
 
+  // Modal de Historial de Cambios de Rol y Estado
+  const [abogadoHistorialModal, setAbogadoHistorialModal] = useState<AbogadoRedItem | null>(null);
+
+  // Modal de Confirmación Personalizado de la Plataforma (reemplaza window.confirm)
+  const [modalConfirmacion, setModalConfirmacion] = useState<{
+    abierto: boolean;
+    tipo: "exito" | "error" | "info" | "advertencia" | "push";
+    titulo: string;
+    mensaje: string;
+    textoBoton?: string;
+    textoCancelar?: string;
+    mostrarConfirmacion?: boolean;
+    alAceptar: () => void;
+    alCancelar?: () => void;
+  }>({
+    abierto: false,
+    tipo: "advertencia",
+    titulo: "",
+    mensaje: "",
+    alAceptar: () => {},
+  });
+
+  const cerrarModalConfirmacion = () => {
+    setModalConfirmacion((prev) => ({ ...prev, abierto: false }));
+  };
+
   const handleAgregarEspecialidad = async (seleccionarAutomaticamente: boolean = false) => {
     const nombreLimpio = nuevaEspecialidadNombre.trim();
     if (!nombreLimpio) return;
@@ -175,30 +204,37 @@ export function GestionRedProfesionalWidget() {
     }
   };
 
-  const handleEliminarEspecialidad = async (mat: MateriaItem) => {
-    if (
-      typeof window !== "undefined" &&
-      !window.confirm(`¿Eliminar la especialidad legal "${mat.mat_nombre}" del catálogo?`)
-    ) {
-      return;
-    }
-    setEliminandoEspecialidadId(mat.mat_id);
-    setMensaje(null);
-    try {
-      const res = await eliminarEspecialidadLegalAction(mat.mat_id);
-      if (!res.ok) {
-        setMensaje({ tipo: "error", texto: res.error });
-        return;
-      }
-      setMateriasCat((prev) => prev.filter((m) => m.mat_id !== mat.mat_id));
-      setMateriasSeleccionadas((prev) => prev.filter((id) => id !== mat.mat_id));
-      setMensaje({
-        tipo: "ok",
-        texto: `Especialidad legal "${mat.mat_nombre}" eliminada del catálogo.`,
-      });
-    } finally {
-      setEliminandoEspecialidadId(null);
-    }
+  const handleEliminarEspecialidad = (mat: MateriaItem) => {
+    setModalConfirmacion({
+      abierto: true,
+      tipo: "advertencia",
+      titulo: "Eliminar Especialidad Legal",
+      mensaje: `¿Estás seguro de eliminar o desactivar la especialidad legal "${mat.mat_nombre}" del catálogo?\n\nSi existen expedientes históricos asociados, el sistema aplicará baja lógica para conservar la integridad referencial.`,
+      textoBoton: "Eliminar Especialidad",
+      textoCancelar: "Cancelar",
+      mostrarConfirmacion: true,
+      alAceptar: async () => {
+        cerrarModalConfirmacion();
+        setEliminandoEspecialidadId(mat.mat_id);
+        setMensaje(null);
+        try {
+          const res = await eliminarEspecialidadLegalAction(mat.mat_id);
+          if (!res.ok) {
+            setMensaje({ tipo: "error", texto: res.error });
+            return;
+          }
+          setMateriasCat((prev) => prev.filter((m) => m.mat_id !== mat.mat_id));
+          setMateriasSeleccionadas((prev) => prev.filter((id) => id !== mat.mat_id));
+          setMensaje({
+            tipo: "ok",
+            texto: `Especialidad legal "${mat.mat_nombre}" eliminada del catálogo.`,
+          });
+        } finally {
+          setEliminandoEspecialidadId(null);
+        }
+      },
+      alCancelar: cerrarModalConfirmacion,
+    });
   };
 
   const cargarTodo = async () => {
@@ -506,43 +542,79 @@ export function GestionRedProfesionalWidget() {
     await cargarTodo();
   };
 
-  const handleEliminarAbogado = async (abg: AbogadoRedItem) => {
-    if (
-      typeof window !== "undefined" &&
-      !window.confirm(
-        `¿Retirar a ${abg.nombreCompleto} de la red de socios abogados? El usuario conservará su cuenta base de cliente.`
-      )
-    ) {
+  const handleEliminarAbogado = (abg: AbogadoRedItem) => {
+    // 1. Validar preventivamente en interfaz si tiene casos o citas activas asignadas
+    if ((abg.casosAsignadosActivos || 0) > 0 || (abg.citasActivas || 0) > 0) {
+      setModalConfirmacion({
+        abierto: true,
+        tipo: "error",
+        titulo: "Baja de Rol Bloqueada — Casos Asignados",
+        mensaje: `No se puede dar de baja el rol de Socio Abogado a "${abg.nombreCompleto}" porque registra:\n\n• ${abg.casosAsignadosActivos || 0} caso(s) judicial(es) activo(s) asignado(s)\n• ${abg.citasActivas || 0} cita(s) programada(s) pendiente(s)\n\nDebes reasignar o cerrar primero sus causas y citas activas antes de desactivar su rol.`,
+        textoBoton: "Entendido",
+        mostrarConfirmacion: false,
+        alAceptar: cerrarModalConfirmacion,
+      });
       return;
     }
-    const res = await eliminarAbogadoRedAction(abg.abg_id);
-    if (!res.ok) {
-      setMensaje({ tipo: "error", texto: res.error });
-      return;
-    }
-    setMensaje({ tipo: "ok", texto: "Abogado retirado de la red profesional." });
-    await cargarTodo();
+
+    setModalConfirmacion({
+      abierto: true,
+      tipo: "advertencia",
+      titulo: "Confirmar Baja Lógica de Rol Abogado",
+      mensaje: `¿Confirmas dar de baja lógica el rol de Socio Abogado para "${abg.nombreCompleto}" (${abg.correo})?\n\n• Se verificó que tiene 0 casos activos asignados.\n• La baja es LÓGICA (no se eliminan sus registros históricos ni credenciales).\n• Quedará registrado en el Historial de Cambios de Rol y el usuario conservará su cuenta base de Cliente.`,
+      textoBoton: "Confirmar Baja de Rol",
+      textoCancelar: "Cancelar",
+      mostrarConfirmacion: true,
+      alAceptar: async () => {
+        cerrarModalConfirmacion();
+        const res = await eliminarAbogadoRedAction(abg.abg_id);
+        if (!res.ok) {
+          setModalConfirmacion({
+            abierto: true,
+            tipo: "error",
+            titulo: "No se pudo dar de baja el rol",
+            mensaje: res.error,
+            textoBoton: "Entendido",
+            mostrarConfirmacion: false,
+            alAceptar: cerrarModalConfirmacion,
+          });
+          return;
+        }
+        setMensaje({
+          tipo: "ok",
+          texto: `Baja lógica del rol de Socio Abogado aplicada a ${abg.nombreCompleto}. Cambio registrado en el historial.`,
+        });
+        await cargarTodo();
+      },
+      alCancelar: cerrarModalConfirmacion,
+    });
   };
 
-  const handlePurgarSolicitudes = async () => {
-    if (
-      typeof window !== "undefined" &&
-      !window.confirm(
-        "¿Eliminar por completo todas las solicitudes de postulación de socio abogado existentes?"
-      )
-    ) {
-      return;
-    }
-    const res = await purgarTodasSolicitudesSocioAction();
-    if (!res.ok) {
-      setMensaje({ tipo: "error", texto: res.error });
-      return;
-    }
-    setMensaje({
-      tipo: "ok",
-      texto: `Solicitudes de postulación eliminadas por completo (${res.data.eliminadas} registros purgados).`,
+  const handlePurgarSolicitudes = () => {
+    setModalConfirmacion({
+      abierto: true,
+      tipo: "advertencia",
+      titulo: "Purgar Solicitudes de Postulación",
+      mensaje:
+        "¿Confirmas eliminar las solicitudes de postulación iniciales pendientes en la bandeja de solicitudes?",
+      textoBoton: "Confirmar Purga",
+      textoCancelar: "Cancelar",
+      mostrarConfirmacion: true,
+      alAceptar: async () => {
+        cerrarModalConfirmacion();
+        const res = await purgarTodasSolicitudesSocioAction();
+        if (!res.ok) {
+          setMensaje({ tipo: "error", texto: res.error });
+          return;
+        }
+        setMensaje({
+          tipo: "ok",
+          texto: `Solicitudes de postulación purgadas (${res.data.eliminadas} registros).`,
+        });
+        await cargarTodo();
+      },
+      alCancelar: cerrarModalConfirmacion,
     });
-    await cargarTodo();
   };
 
   const kpis = useMemo(() => {
@@ -674,6 +746,19 @@ export function GestionRedProfesionalWidget() {
                 <b>Aceptó:</b> {fechaConfirm}
               </span>
             )}
+            {a.bajaLogica && a.fechaBajaLogica && (
+              <span style={{ color: "#991B1B", fontSize: "0.7rem", fontWeight: 700 }}>
+                <b>Baja Lógica:</b>{" "}
+                {new Date(a.fechaBajaLogica).toLocaleString("es-EC", {
+                  day: "2-digit",
+                  month: "2-digit",
+                  year: "numeric",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+                {a.bajaLogicaPorNombre ? ` (${a.bajaLogicaPorNombre})` : ""}
+              </span>
+            )}
           </div>
         );
       },
@@ -802,6 +887,19 @@ export function GestionRedProfesionalWidget() {
             <span style={{ fontSize: "0.74rem", color: a.citasPorSemana > 0 ? "#05876E" : "#DC2626", fontWeight: 700 }}>
               {a.citasPorSemana > 0 ? `${a.citasPorSemana} cupos/sem` : "Sin franjas"}
             </span>
+            <span
+              style={{
+                fontSize: "0.7rem",
+                color: (a.casosAsignadosActivos || 0) > 0 ? "#B45309" : "#6B7280",
+                fontWeight: 700,
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "4px",
+              }}
+            >
+              <Briefcase size={11} />
+              {a.casosAsignadosActivos || 0} caso(s) · {a.citasActivas || 0} cita(s)
+            </span>
           </div>
         );
       },
@@ -809,7 +907,12 @@ export function GestionRedProfesionalWidget() {
     {
       id: "estado",
       encabezado: "Estado",
-      valor: (a) => (a.estado === "verificado" ? "Activo" : "Suspendido"),
+      valor: (a) =>
+        a.bajaLogica
+          ? "Baja Lógica (Inactivo)"
+          : a.estado === "verificado"
+            ? "Activo"
+            : "Suspendido",
       render: (a) => (
         <span
           style={{
@@ -820,13 +923,33 @@ export function GestionRedProfesionalWidget() {
             borderRadius: "999px",
             fontSize: "0.73rem",
             fontWeight: 800,
-            background: a.estado === "verificado" ? "#ECFDF5" : "#FEF2F2",
-            color: a.estado === "verificado" ? "#065F46" : "#991B1B",
-            border: a.estado === "verificado" ? "1px solid #10B981" : "1px solid #F87171",
+            background: a.bajaLogica
+              ? "#F1F5F9"
+              : a.estado === "verificado"
+                ? "#ECFDF5"
+                : "#FEF2F2",
+            color: a.bajaLogica
+              ? "#475569"
+              : a.estado === "verificado"
+                ? "#065F46"
+                : "#991B1B",
+            border: a.bajaLogica
+              ? "1px solid #94A3B8"
+              : a.estado === "verificado"
+                ? "1px solid #10B981"
+                : "1px solid #F87171",
           }}
         >
-          {a.estado === "verificado" ? <CheckCircle2 size={12} /> : <XCircle size={12} />}
-          {a.estado === "verificado" ? "Activo" : "Suspendido"}
+          {a.estado === "verificado" && !a.bajaLogica ? (
+            <CheckCircle2 size={12} />
+          ) : (
+            <XCircle size={12} />
+          )}
+          {a.bajaLogica
+            ? "Baja Lógica"
+            : a.estado === "verificado"
+              ? "Activo"
+              : "Suspendido"}
         </span>
       ),
     },
@@ -910,9 +1033,33 @@ export function GestionRedProfesionalWidget() {
 
           <button
             type="button"
+            onClick={() => setAbogadoHistorialModal(a)}
+            className="btn-responsive-accion"
+            title="Ver historial completo de asignación, aceptación y cambios de rol"
+            aria-label="Ver historial de cambios de rol"
+            style={{
+              background: "#F8FAFC",
+              color: "#334155",
+              border: "1px solid #CBD5E1",
+              borderRadius: "8px",
+              padding: "5px 9px",
+              fontSize: "0.75rem",
+              fontWeight: 700,
+              cursor: "pointer",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "4px",
+            }}
+          >
+            <History size={13} />
+            <span className="btn-texto-responsive">Historial</span>
+          </button>
+
+          <button
+            type="button"
             onClick={() => handleCambiarEstado(a)}
             className="btn-responsive-accion"
-            title={a.estado === "verificado" ? "Suspender socio abogado" : "Activar socio abogado"}
+            title={a.estado === "verificado" ? "Suspender socio abogado" : "Activar / Reactivar rol de socio abogado"}
             aria-label={a.estado === "verificado" ? "Suspender abogado" : "Activar abogado"}
             style={{
               background: a.estado === "verificado" ? "#FFFBEB" : "#ECFDF5",
@@ -934,28 +1081,31 @@ export function GestionRedProfesionalWidget() {
             </span>
           </button>
 
-          <button
-            type="button"
-            onClick={() => handleEliminarAbogado(a)}
-            className="btn-responsive-accion"
-            title="Retirar abogado de la red profesional"
-            aria-label="Retirar abogado"
-            style={{
-              background: "#FEF2F2",
-              color: "#DC2626",
-              border: "1px solid #FECACA",
-              borderRadius: "8px",
-              padding: "5px 8px",
-              fontSize: "0.75rem",
-              fontWeight: 700,
-              cursor: "pointer",
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "4px",
-            }}
-          >
-            <Trash2 size={13} />
-          </button>
+          {!a.bajaLogica && (
+            <button
+              type="button"
+              onClick={() => handleEliminarAbogado(a)}
+              className="btn-responsive-accion"
+              title="Dar de baja lógica el rol de socio abogado (verifica que no tenga casos asignados y registra en el historial)"
+              aria-label="Dar de baja rol de abogado"
+              style={{
+                background: "#FEF2F2",
+                color: "#DC2626",
+                border: "1px solid #FECACA",
+                borderRadius: "8px",
+                padding: "5px 9px",
+                fontSize: "0.75rem",
+                fontWeight: 700,
+                cursor: "pointer",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "4px",
+              }}
+            >
+              <Trash2 size={13} />
+              <span className="btn-texto-responsive">Baja Rol</span>
+            </button>
+          )}
         </div>
       ),
     },
@@ -2570,6 +2720,187 @@ export function GestionRedProfesionalWidget() {
           </div>
         </div>
       )}
+
+      {/* MODAL 5: Historial de Asignación, Aceptación y Cambios de Rol */}
+      {abogadoHistorialModal && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(17, 24, 39, 0.65)",
+            backdropFilter: "blur(4px)",
+            zIndex: 99999,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "16px",
+          }}
+        >
+          <div
+            style={{
+              background: "#ffffff",
+              borderRadius: "20px",
+              width: "100%",
+              maxWidth: "680px",
+              maxHeight: "88vh",
+              overflowY: "auto",
+              boxShadow: "0 25px 50px -12px rgba(0,0,0,0.3)",
+              border: "1px solid #E5E7EB",
+              padding: "24px",
+            }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+              <div>
+                <span
+                  style={{
+                    fontSize: "0.7rem",
+                    fontWeight: 800,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.05em",
+                    background: "#F5F3FF",
+                    color: "#5000BA",
+                    padding: "3px 9px",
+                    borderRadius: "999px",
+                  }}
+                >
+                  Trazabilidad & Auditoría de Rol
+                </span>
+                <h3 style={{ margin: "6px 0 2px 0", fontSize: "1.15rem", fontWeight: 900, color: "#111827" }}>
+                  Historial de Cambios de Rol — {abogadoHistorialModal.nombreCompleto}
+                </h3>
+                <p style={{ margin: 0, fontSize: "0.82rem", color: "#6B7280" }}>
+                  {abogadoHistorialModal.correo} · Cédula: {abogadoHistorialModal.cedula || "—"} · Casos activos:{" "}
+                  <b>{abogadoHistorialModal.casosAsignadosActivos || 0}</b>
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setAbogadoHistorialModal(null)}
+                style={{
+                  background: "#F3F4F6",
+                  border: "none",
+                  borderRadius: "50%",
+                  width: "34px",
+                  height: "34px",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+              {(abogadoHistorialModal.historialCambiosRol || []).length === 0 ? (
+                <p style={{ fontSize: "0.85rem", color: "#6B7280", textAlign: "center", padding: "20px" }}>
+                  No se registran movimientos adicionales en el historial.
+                </p>
+              ) : (
+                abogadoHistorialModal.historialCambiosRol.map((item) => {
+                  const fechaFmt = item.fecha
+                    ? new Date(item.fecha).toLocaleString("es-EC", {
+                        day: "2-digit",
+                        month: "2-digit",
+                        year: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })
+                    : "—";
+                  const badgeColor =
+                    item.estadoResultante === "activo"
+                      ? { bg: "#ECFDF5", fg: "#065F46", label: "✓ Rol Activo" }
+                      : item.estadoResultante === "baja_logica"
+                        ? { bg: "#FEF2F2", fg: "#991B1B", label: "Baja Lógica" }
+                        : item.estadoResultante === "suspendido"
+                          ? { bg: "#FFFBEB", fg: "#92400E", label: "Suspendido" }
+                          : item.estadoResultante === "rechazado"
+                            ? { bg: "#FEF2F2", fg: "#991B1B", label: "Rechazado" }
+                            : { bg: "#EFF6FF", fg: "#1D4ED8", label: "Pendiente Aceptación" };
+
+                  return (
+                    <div
+                      key={item.id}
+                      style={{
+                        border: "1px solid #E5E7EB",
+                        borderRadius: "12px",
+                        padding: "12px 14px",
+                        background: "#F9FAFB",
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "6px",
+                      }}
+                    >
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "8px" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                          <span
+                            style={{
+                              fontSize: "0.7rem",
+                              fontWeight: 800,
+                              padding: "2px 8px",
+                              borderRadius: "999px",
+                              background: badgeColor.bg,
+                              color: badgeColor.fg,
+                            }}
+                          >
+                            {badgeColor.label}
+                          </span>
+                          <strong style={{ fontSize: "0.84rem", color: "#111827" }}>
+                            {item.accion.replace(/_/g, " ")} ({item.rol})
+                          </strong>
+                        </div>
+                        <span style={{ fontSize: "0.76rem", color: "#6B7280", fontWeight: 700 }}>
+                          {fechaFmt}
+                        </span>
+                      </div>
+
+                      <p style={{ margin: 0, fontSize: "0.82rem", color: "#374151" }}>{item.detalle}</p>
+
+                      <div style={{ fontSize: "0.75rem", color: "#6B7280" }}>
+                        <b>Ejecutado por:</b> {item.ejecutadoPorNombre}{" "}
+                        {item.ejecutadoPorCorreo ? `(${item.ejecutadoPorCorreo})` : ""}
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+
+            <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "16px" }}>
+              <button
+                type="button"
+                onClick={() => setAbogadoHistorialModal(null)}
+                style={{
+                  padding: "10px 20px",
+                  borderRadius: "10px",
+                  border: "none",
+                  background: "linear-gradient(135deg, #5000BA 0%, #3B0088 100%)",
+                  color: "#ffffff",
+                  fontWeight: 800,
+                  fontSize: "0.86rem",
+                  cursor: "pointer",
+                }}
+              >
+                Cerrar Historial
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL DE CONFIRMACIÓN PERSONALIZADO DE LA PLATAFORMA */}
+      <ModalNotificacionPush
+        abierto={modalConfirmacion.abierto}
+        tipo={modalConfirmacion.tipo}
+        titulo={modalConfirmacion.titulo}
+        mensaje={modalConfirmacion.mensaje}
+        textoBoton={modalConfirmacion.textoBoton}
+        textoCancelar={modalConfirmacion.textoCancelar}
+        mostrarConfirmacion={modalConfirmacion.mostrarConfirmacion}
+        alAceptar={modalConfirmacion.alAceptar}
+        alCancelar={modalConfirmacion.alCancelar || cerrarModalConfirmacion}
+      />
     </div>
   );
 }

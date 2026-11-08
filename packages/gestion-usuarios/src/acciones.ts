@@ -177,6 +177,20 @@ export async function asignarPerfil(usuarioId: string, perfil: string, negocio: 
       esConversionAbogado: perfilClaveUpper === "ABOGADO",
     });
 
+    const historialCambios = Array.isArray(det.historial_cambios_rol)
+      ? [...det.historial_cambios_rol]
+      : [];
+    historialCambios.unshift({
+      id: `hist-${Date.now()}`,
+      fecha: ahoraIso,
+      accion: "PROPUESTA_ASIGNACION",
+      rol: perfilClaveUpper,
+      estadoResultante: "pendiente_aceptacion",
+      ejecutadoPorNombre: nombreOperador,
+      ejecutadoPorCorreo: correoOperador,
+      detalle: `Solicitud de nuevo rol ${rolNombreLegible} (${perfilClaveUpper}) enviada por ${nombreOperador}. Pendiente de confirmación del usuario.`,
+    });
+
     await adminClient
       .schema("comun_seguridad")
       .from("seg_usuario")
@@ -184,6 +198,7 @@ export async function asignarPerfil(usuarioId: string, perfil: string, negocio: 
         usu_detalle_usuario: {
           ...det,
           propuestas_cambio_rol: filtradas.slice(0, 30),
+          historial_cambios_rol: historialCambios.slice(0, 60),
         },
         usu_actualizado_en: ahoraIso,
       })
@@ -302,6 +317,140 @@ export async function quitarPerfil(usuarioId: string, perfil: string, negocio: s
 
   if (perfilClaveUpper === "CLIENTE") {
     return { ok: false, error: "CLIENTE es el perfil base y no se puede retirar (PLT-003 regla 2)" };
+  }
+
+  const adminClient = (crearClienteAdmin() || supabase) as any;
+
+  // Si se intenta dar de baja el rol ABOGADO, validar que no tenga casos activos ni citas pendientes asignadas
+  if (perfilClaveUpper === "ABOGADO") {
+    try {
+      const { data: abg } = await adminClient
+        .schema("tranqui_legal")
+        .from("trq_abogado")
+        .select("abg_id")
+        .eq("abg_usuario_id", usuarioId)
+        .maybeSingle();
+
+      if (abg?.abg_id) {
+        const [casosTitularRes, casosEquipoRes, citasActivasRes] = await Promise.all([
+          adminClient
+            .schema("tranqui_legal")
+            .from("trq_caso_judicial")
+            .select("cas_id")
+            .eq("cas_abogado_id", abg.abg_id)
+            .is("cas_eliminado_en", null)
+            .neq("cas_estado", "cerrado"),
+          adminClient
+            .schema("tranqui_legal")
+            .from("trq_caso_abogado_equipo")
+            .select("cae_caso_id")
+            .eq("cae_abogado_id", abg.abg_id)
+            .eq("cae_activo", true)
+            .is("cae_eliminado_en", null),
+          adminClient
+            .schema("tranqui_legal")
+            .from("trq_cita")
+            .select("cit_id")
+            .eq("cit_abogado_id", abg.abg_id)
+            .is("cit_eliminado_en", null)
+            .in("cit_estado", ["propuesta", "confirmada", "reagendada"]),
+        ]);
+
+        const idsCasos = new Set<string>();
+        for (const c of casosTitularRes?.data ?? []) if (c.cas_id) idsCasos.add(c.cas_id);
+        for (const ce of casosEquipoRes?.data ?? []) if (ce.cae_caso_id) idsCasos.add(ce.cae_caso_id);
+        const totalCasos = idsCasos.size;
+        const totalCitas = (citasActivasRes?.data ?? []).length;
+
+        if (totalCasos > 0 || totalCitas > 0) {
+          return {
+            ok: false,
+            error: `No se puede dar de baja el rol ABOGADO porque registra ${totalCasos} caso(s) activo(s) y ${totalCitas} cita(s) pendiente(s). Reasigna o cierra primero sus causas.`,
+          };
+        }
+
+        await adminClient
+          .schema("tranqui_legal")
+          .from("trq_abogado")
+          .update({
+            abg_estado: "suspendido",
+            abg_actualizado_en: new Date().toISOString(),
+          })
+          .eq("abg_id", abg.abg_id);
+      }
+    } catch {
+      // Continuar
+    }
+  }
+
+  // Registrar baja lógica en historial_cambios_rol y roles_asignados_logicos de seg_usuario
+  try {
+    const authUser = (await supabase.auth.getUser()).data?.user;
+    let nombreOperador = authUser?.email || "Administrador de Plataforma";
+    let correoOperador = authUser?.email || "admin@tranqi24.com";
+    if (authUser?.id) {
+      const { data: opRow } = await adminClient
+        .schema("comun_seguridad")
+        .from("seg_usuario")
+        .select("usu_nombres, usu_apellidos, usu_correo")
+        .eq("usu_id", authUser.id)
+        .maybeSingle();
+      if (opRow) {
+        nombreOperador =
+          [opRow.usu_nombres, opRow.usu_apellidos].filter(Boolean).join(" ").trim() ||
+          opRow.usu_correo ||
+          nombreOperador;
+        correoOperador = opRow.usu_correo || correoOperador;
+      }
+    }
+
+    const { data: usuTarget } = await adminClient
+      .schema("comun_seguridad")
+      .from("seg_usuario")
+      .select("usu_detalle_usuario")
+      .eq("usu_id", usuarioId)
+      .maybeSingle();
+
+    const ahoraIso = new Date().toISOString();
+    const det = (usuTarget?.usu_detalle_usuario || {}) as Record<string, any>;
+    const historial = Array.isArray(det.historial_cambios_rol)
+      ? [...det.historial_cambios_rol]
+      : [];
+    historial.unshift({
+      id: `hist-baja-${Date.now()}`,
+      fecha: ahoraIso,
+      accion: "BAJA_LOGICA_ROL",
+      rol: perfilClaveUpper,
+      estadoResultante: "baja_logica",
+      ejecutadoPorNombre: nombreOperador,
+      ejecutadoPorCorreo: correoOperador,
+      detalle: `Baja lógica del rol ${perfilClaveUpper} ejecutada por ${nombreOperador}.`,
+    });
+
+    await adminClient
+      .schema("comun_seguridad")
+      .from("seg_usuario")
+      .update({
+        usu_detalle_usuario: {
+          ...det,
+          ...(perfilClaveUpper === "ABOGADO" && det.ficha_abogado
+            ? {
+                ficha_abogado: {
+                  ...det.ficha_abogado,
+                  baja_logica: true,
+                  dado_de_baja_en: ahoraIso,
+                  dado_de_baja_por_nombre: nombreOperador,
+                  dado_de_baja_por_correo: correoOperador,
+                },
+              }
+            : {}),
+          historial_cambios_rol: historial.slice(0, 60),
+        },
+        usu_actualizado_en: ahoraIso,
+      })
+      .eq("usu_id", usuarioId);
+  } catch {
+    // Continuar
   }
 
   // 1. Intentar primero con RPC

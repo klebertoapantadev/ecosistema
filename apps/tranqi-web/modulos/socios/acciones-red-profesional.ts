@@ -82,6 +82,24 @@ export interface ConfiguracionAgendaAbogado {
   direccion: string | null;
 }
 
+export interface HistorialCambioRolItem {
+  id: string;
+  fecha: string;
+  accion:
+    | "PROPUESTA_ASIGNACION"
+    | "ACEPTACION_USUARIO"
+    | "RECHAZO_USUARIO"
+    | "ACTIVACION_ROL"
+    | "SUSPENSION_ROL"
+    | "BAJA_LOGICA_ROL"
+    | "ACTUALIZACION_FICHA";
+  rol: string;
+  estadoResultante: "pendiente_aceptacion" | "activo" | "suspendido" | "baja_logica" | "rechazado";
+  ejecutadoPorNombre: string;
+  ejecutadoPorCorreo: string;
+  detalle: string;
+}
+
 export interface AbogadoRedItem {
   abg_id: string;
   usu_id: string;
@@ -104,6 +122,12 @@ export interface AbogadoRedItem {
   fechaRegistro: string;
   estadoAceptacion: "pendiente_aceptacion" | "aceptado" | "rechazado";
   fechaAceptacion: string | null;
+  bajaLogica: boolean;
+  fechaBajaLogica: string | null;
+  bajaLogicaPorNombre: string | null;
+  casosAsignadosActivos: number;
+  citasActivas: number;
+  historialCambiosRol: HistorialCambioRolItem[];
   materias: MateriaItem[];
   provincias: ProvinciaItem[];
   agendaConfigurada: boolean;
@@ -840,6 +864,9 @@ export async function listarRedProfesionalAbogadosAction(): Promise<
       catMatRes,
       catProvRes,
       profRes,
+      casosTitularRes,
+      casosEquipoRes,
+      citasActivasRes,
     ] = await Promise.all([
       adminSupabase
         .schema("comun_seguridad")
@@ -874,7 +901,51 @@ export async function listarRedProfesionalAbogadosAction(): Promise<
         .eq("agp_negocio", "tranqi")
         .in("agp_usuario_id", usuIds)
         .is("agp_eliminado_en", null),
+      adminSupabase
+        .schema("tranqui_legal")
+        .from("trq_caso_judicial")
+        .select("cas_id, cas_abogado_id, cas_estado")
+        .in("cas_abogado_id", abgIds)
+        .is("cas_eliminado_en", null)
+        .neq("cas_estado", "cerrado"),
+      adminSupabase
+        .schema("tranqui_legal")
+        .from("trq_caso_abogado_equipo")
+        .select("cae_caso_id, cae_abogado_id")
+        .in("cae_abogado_id", abgIds)
+        .eq("cae_activo", true)
+        .is("cae_eliminado_en", null),
+      adminSupabase
+        .schema("tranqui_legal")
+        .from("trq_cita")
+        .select("cit_id, cit_abogado_id, cit_estado")
+        .in("cit_abogado_id", abgIds)
+        .is("cit_eliminado_en", null)
+        .in("cit_estado", ["propuesta", "confirmada", "reagendada"]),
     ]);
+
+    const casosPorAbogado = new Map<string, Set<string>>();
+    for (const c of casosTitularRes?.data ?? []) {
+      if (c.cas_abogado_id) {
+        const set = casosPorAbogado.get(c.cas_abogado_id) ?? new Set<string>();
+        set.add(c.cas_id);
+        casosPorAbogado.set(c.cas_abogado_id, set);
+      }
+    }
+    for (const ce of casosEquipoRes?.data ?? []) {
+      if (ce.cae_abogado_id && ce.cae_caso_id) {
+        const set = casosPorAbogado.get(ce.cae_abogado_id) ?? new Set<string>();
+        set.add(ce.cae_caso_id);
+        casosPorAbogado.set(ce.cae_abogado_id, set);
+      }
+    }
+
+    const citasPorAbogado = new Map<string, number>();
+    for (const ci of citasActivasRes?.data ?? []) {
+      if (ci.cit_abogado_id) {
+        citasPorAbogado.set(ci.cit_abogado_id, (citasPorAbogado.get(ci.cit_abogado_id) ?? 0) + 1);
+      }
+    }
 
     const mapaUsuarios = new Map<string, any>((usuRes.data ?? []).map((u: any) => [u.usu_id, u]));
     const mapaSolicitudes = new Map<string, any>((solRes.data ?? []).map((s: any) => [s.ssc_id, s]));
@@ -1035,6 +1106,50 @@ export async function listarRedProfesionalAbogadosAction(): Promise<
         propAbogado?.respondidoEn ||
         (estadoAceptacion === "aceptado" ? a.abg_verificado_en || fechaRegistro : null);
 
+      const bajaLogica = Boolean(ficha.baja_logica === true);
+      const fechaBajaLogica: string | null = ficha.dado_de_baja_en ? String(ficha.dado_de_baja_en) : null;
+      const bajaLogicaPorNombre: string | null = ficha.dado_de_baja_por_nombre
+        ? String(ficha.dado_de_baja_por_nombre)
+        : null;
+
+      const casosAsignadosActivos = casosPorAbogado.get(a.abg_id)?.size ?? 0;
+      const citasActivas = citasPorAbogado.get(a.abg_id) ?? 0;
+
+      const historialGuardado: HistorialCambioRolItem[] = Array.isArray(detUsuario.historial_cambios_rol)
+        ? (detUsuario.historial_cambios_rol as HistorialCambioRolItem[])
+        : [];
+      const historialCambiosRol: HistorialCambioRolItem[] =
+        historialGuardado.length > 0
+          ? historialGuardado
+          : [
+              ...(fechaAceptacion && estadoAceptacion === "aceptado"
+                ? [
+                    {
+                      id: `hist-acep-${a.abg_id}`,
+                      fecha: fechaAceptacion,
+                      accion: "ACEPTACION_USUARIO" as const,
+                      rol: "ABOGADO",
+                      estadoResultante: "activo" as const,
+                      ejecutadoPorNombre: nombreCompleto,
+                      ejecutadoPorCorreo: u.usu_correo || "",
+                      detalle: "El usuario confirmó la aceptación del rol de Socio Abogado.",
+                    },
+                  ]
+                : []),
+              {
+                id: `hist-reg-${a.abg_id}`,
+                fecha: fechaRegistro,
+                accion: "PROPUESTA_ASIGNACION" as const,
+                rol: "ABOGADO",
+                estadoResultante: (estadoAceptacion === "aceptado" ? "activo" : "pendiente_aceptacion") as
+                  | "activo"
+                  | "pendiente_aceptacion",
+                ejecutadoPorNombre: registradoPorNombre,
+                ejecutadoPorCorreo: registradoPorCorreo,
+                detalle: "Incorporación y postulación de rol de Socio Abogado en la red profesional.",
+              },
+            ];
+
       return {
         abg_id: a.abg_id,
         usu_id: a.abg_usuario_id,
@@ -1057,6 +1172,12 @@ export async function listarRedProfesionalAbogadosAction(): Promise<
         fechaRegistro,
         estadoAceptacion,
         fechaAceptacion,
+        bajaLogica,
+        fechaBajaLogica,
+        bajaLogicaPorNombre,
+        casosAsignadosActivos,
+        citasActivas,
+        historialCambiosRol,
         materias:
           (materiasPorAbogado.get(a.abg_id) ?? []).length > 0
             ? materiasPorAbogado.get(a.abg_id)!
@@ -1839,10 +1960,35 @@ export async function registrarOConvertirAbogadoAction(
       aceptado_en: requiereAceptacionUsuario
         ? null
         : fichaPrevia.aceptado_en || (estadoEfectivoAbogado === "verificado" ? ahoraIso : null),
+      baja_logica: false,
+      dado_de_baja_en: null,
+      dado_de_baja_por_id: null,
+      dado_de_baja_por_nombre: null,
+      dado_de_baja_por_correo: null,
       actualizado_por_nombre: nombreOperador,
       actualizado_por_correo: correoOperador,
       actualizado_en: ahoraIso,
     };
+
+    const historialPrevio: HistorialCambioRolItem[] = Array.isArray(detPrevio.historial_cambios_rol)
+      ? [...detPrevio.historial_cambios_rol]
+      : [];
+    historialPrevio.unshift({
+      id: `hist-${Date.now()}`,
+      fecha: ahoraIso,
+      accion: !eraAbogadoPrevio ? "PROPUESTA_ASIGNACION" : "ACTUALIZACION_FICHA",
+      rol: "ABOGADO",
+      estadoResultante: requiereAceptacionUsuario
+        ? "pendiente_aceptacion"
+        : estadoEfectivoAbogado === "verificado"
+        ? "activo"
+        : "suspendido",
+      ejecutadoPorNombre: nombreOperador,
+      ejecutadoPorCorreo: correoOperador,
+      detalle: !eraAbogadoPrevio
+        ? `Conversión a Socio Abogado solicitada por ${nombreOperador}. Pendiente de confirmación del usuario.`
+        : `Actualización de ficha profesional, especialidades (${materiasObjetos.map((m) => m.mat_nombre).join(", ")}) y cobertura.`,
+    });
 
     await adminSupabase
       .schema("comun_seguridad")
@@ -1860,6 +2006,7 @@ export async function registrarOConvertirAbogadoAction(
             ...detPrevio,
             cedula,
             ficha_abogado: fichaAbogado,
+            historial_cambios_rol: historialPrevio.slice(0, 60),
           },
           usu_actualizado_en: ahoraIso,
         },
@@ -2063,13 +2210,14 @@ export async function cambiarEstadoAbogadoRedAction(
     const supabase = await crearClienteServidor();
     const adminSupabase = (crearClienteAdmin() || supabase) as any;
     const perfilOperador = await obtenerPerfilActual();
+    const ahoraIso = new Date().toISOString();
 
     const { data: abg, error: errAbg } = await adminSupabase
       .schema("tranqui_legal")
       .from("trq_abogado")
       .update({
         abg_estado: nuevoEstado,
-        abg_actualizado_en: new Date().toISOString(),
+        abg_actualizado_en: ahoraIso,
       })
       .eq("abg_id", abogadoId)
       .select("abg_id, abg_usuario_id")
@@ -2079,16 +2227,74 @@ export async function cambiarEstadoAbogadoRedAction(
       return { ok: false, error: errAbg?.message || "Abogado no encontrado." };
     }
 
+    const nombreOperador =
+      [perfilOperador?.usu_nombres, perfilOperador?.usu_apellidos].filter(Boolean).join(" ").trim() ||
+      "Mesa Operativa Tranqi";
+    const correoOperador = perfilOperador?.usu_correo || "satcomla.ti@gmail.com";
+
+    // Actualizar ficha_abogado e historial_cambios_rol en seg_usuario
+    try {
+      const { data: usu } = await adminSupabase
+        .schema("comun_seguridad")
+        .from("seg_usuario")
+        .select("usu_detalle_usuario")
+        .eq("usu_id", abg.abg_usuario_id)
+        .maybeSingle();
+
+      const det = (usu?.usu_detalle_usuario || {}) as Record<string, any>;
+      const ficha = (det.ficha_abogado || {}) as Record<string, any>;
+      const historial: HistorialCambioRolItem[] = Array.isArray(det.historial_cambios_rol)
+        ? [...det.historial_cambios_rol]
+        : [];
+      historial.unshift({
+        id: `hist-${Date.now()}`,
+        fecha: ahoraIso,
+        accion: nuevoEstado === "verificado" ? "ACTIVACION_ROL" : "SUSPENSION_ROL",
+        rol: "ABOGADO",
+        estadoResultante: nuevoEstado === "verificado" ? "activo" : "suspendido",
+        ejecutadoPorNombre: nombreOperador,
+        ejecutadoPorCorreo: correoOperador,
+        detalle:
+          nuevoEstado === "verificado"
+            ? "Reactivación lógica del rol de Socio Abogado y agenda de citas."
+            : "Suspensión temporal del perfil de Socio Abogado y recepción de citas.",
+      });
+
+      await adminSupabase
+        .schema("comun_seguridad")
+        .from("seg_usuario")
+        .update({
+          usu_detalle_usuario: {
+            ...det,
+            ficha_abogado: {
+              ...ficha,
+              ...(nuevoEstado === "verificado"
+                ? {
+                    baja_logica: false,
+                    dado_de_baja_en: null,
+                    estado_aceptacion: "aceptado",
+                    aceptado_en: ficha.aceptado_en || ahoraIso,
+                  }
+                : {}),
+              actualizado_por_nombre: nombreOperador,
+              actualizado_por_correo: correoOperador,
+              actualizado_en: ahoraIso,
+            },
+            historial_cambios_rol: historial.slice(0, 60),
+          },
+          usu_actualizado_en: ahoraIso,
+        })
+        .eq("usu_id", abg.abg_usuario_id);
+    } catch {
+      // Continuar
+    }
+
     await sincronizarRolAbogadoEnSeguridad(
       adminSupabase,
       abg.abg_usuario_id,
       nuevoEstado === "verificado",
       perfilOperador?.usu_id ?? null
     );
-
-    const nombreOperador =
-      [perfilOperador?.usu_nombres, perfilOperador?.usu_apellidos].filter(Boolean).join(" ").trim() ||
-      "Mesa Operativa Tranqi";
 
     await notificarEventoRedAbogadoMulticanal(adminSupabase, {
       usuarioId: abg.abg_usuario_id,
@@ -2180,10 +2386,13 @@ export async function reenviarSolicitudAceptacionAbogadoAction(
   }
 }
 
-export async function eliminarAbogadoRedAction(abogadoId: string): Promise<Resultado> {
+export async function eliminarAbogadoRedAction(
+  abogadoId: string,
+  motivoBaja?: string
+): Promise<Resultado> {
   const autorizado = await verificarEsOperadorOAdmin();
   if (!autorizado) {
-    return { ok: false, error: "No autorizado para retirar abogados de la red." };
+    return { ok: false, error: "No autorizado para dar de baja el rol de abogado." };
   }
 
   try {
@@ -2202,27 +2411,146 @@ export async function eliminarAbogadoRedAction(abogadoId: string): Promise<Resul
       return { ok: false, error: "Abogado no encontrado." };
     }
 
-    await Promise.all([
-      adminSupabase.schema("tranqui_legal").from("trq_honorario").delete().eq("hon_abogado_id", abogadoId),
-      adminSupabase.schema("tranqui_legal").from("trq_abogado_materia").delete().eq("amt_abogado_id", abogadoId),
-      adminSupabase.schema("tranqui_legal").from("trq_abogado_provincia").delete().eq("apr_abogado_id", abogadoId),
+    // 1. Control obligatorio: verificar que el abogado NO tenga casos judiciales activos ni citas pendientes asignadas
+    const [casosTitularRes, casosEquipoRes, citasActivasRes] = await Promise.all([
+      adminSupabase
+        .schema("tranqui_legal")
+        .from("trq_caso_judicial")
+        .select("cas_id, cas_titulo, cas_estado")
+        .eq("cas_abogado_id", abogadoId)
+        .is("cas_eliminado_en", null)
+        .neq("cas_estado", "cerrado"),
+      adminSupabase
+        .schema("tranqui_legal")
+        .from("trq_caso_abogado_equipo")
+        .select("cae_caso_id")
+        .eq("cae_abogado_id", abogadoId)
+        .eq("cae_activo", true)
+        .is("cae_eliminado_en", null),
+      adminSupabase
+        .schema("tranqui_legal")
+        .from("trq_cita")
+        .select("cit_id, cit_estado")
+        .eq("cit_abogado_id", abogadoId)
+        .is("cit_eliminado_en", null)
+        .in("cit_estado", ["propuesta", "confirmada", "reagendada"]),
     ]);
 
+    const idsCasosActivos = new Set<string>();
+    for (const c of casosTitularRes?.data ?? []) {
+      if (c.cas_id) idsCasosActivos.add(c.cas_id);
+    }
+    for (const ce of casosEquipoRes?.data ?? []) {
+      if (ce.cae_caso_id) idsCasosActivos.add(ce.cae_caso_id);
+    }
+    const totalCasosActivos = idsCasosActivos.size;
+    const totalCitasActivas = (citasActivasRes?.data ?? []).length;
+
+    if (totalCasosActivos > 0 || totalCitasActivas > 0) {
+      const partesBloqueo: string[] = [];
+      if (totalCasosActivos > 0) {
+        partesBloqueo.push(`${totalCasosActivos} caso(s) judicial(es) activo(s) asignado(s)`);
+      }
+      if (totalCitasActivas > 0) {
+        partesBloqueo.push(`${totalCitasActivas} cita(s) programada(s) pendiente(s)`);
+      }
+      return {
+        ok: false,
+        error: `No se puede dar de baja el rol de Socio Abogado porque registra ${partesBloqueo.join(" y ")}. Reasigna o cierra primero sus causas y citas antes de retirar el rol.`,
+      };
+    }
+
+    const ahoraIso = new Date().toISOString();
+    const nombreOperador =
+      [perfilOperador?.usu_nombres, perfilOperador?.usu_apellidos].filter(Boolean).join(" ").trim() ||
+      "Mesa Operativa Tranqi";
+    const correoOperador = perfilOperador?.usu_correo || "satcomla.ti@gmail.com";
+
+    // 2. Baja Lógica en tranqui_legal.trq_abogado (NUNCA eliminar físicamente trq_abogado, especialidades ni honorarios)
     await adminSupabase
       .schema("tranqui_legal")
       .from("trq_abogado")
-      .delete()
+      .update({
+        abg_estado: "suspendido",
+        abg_actualizado_en: ahoraIso,
+      })
       .eq("abg_id", abogadoId);
 
-    if (abg.abg_solicitud_id) {
-      await eliminarSolicitudSocioIndividualAction(abg.abg_solicitud_id);
+    // Pausar recepción de turnos en comun_agenda.age_profesional sin eliminar historial
+    if (abg.abg_usuario_id) {
+      await adminSupabase
+        .schema("comun_agenda")
+        .from("age_profesional")
+        .update({
+          agp_acepta_turno: false,
+          agp_actualizado_en: ahoraIso,
+        })
+        .eq("agp_usuario_id", abg.abg_usuario_id)
+        .eq("agp_negocio", "tranqi");
     }
 
+    // 3. Registrar Baja Lógica y almacenar en el Historial de Cambios de Rol (seg_usuario.usu_detalle_usuario)
     if (abg.abg_usuario_id) {
-      await sincronizarRolAbogadoEnSeguridad(adminSupabase, abg.abg_usuario_id, false);
-      const nombreOperador =
-        [perfilOperador?.usu_nombres, perfilOperador?.usu_apellidos].filter(Boolean).join(" ").trim() ||
-        "Mesa Operativa Tranqi";
+      try {
+        const { data: usu } = await adminSupabase
+          .schema("comun_seguridad")
+          .from("seg_usuario")
+          .select("usu_detalle_usuario")
+          .eq("usu_id", abg.abg_usuario_id)
+          .maybeSingle();
+
+        const det = (usu?.usu_detalle_usuario || {}) as Record<string, any>;
+        const ficha = (det.ficha_abogado || {}) as Record<string, any>;
+        const historial: HistorialCambioRolItem[] = Array.isArray(det.historial_cambios_rol)
+          ? [...det.historial_cambios_rol]
+          : [];
+
+        const motivoTexto =
+          (motivoBaja || "").trim() ||
+          "Baja lógica del rol de Socio Abogado verificando 0 casos activos asignados. Se conserva ficha e historial.";
+
+        historial.unshift({
+          id: `hist-baja-${Date.now()}`,
+          fecha: ahoraIso,
+          accion: "BAJA_LOGICA_ROL",
+          rol: "ABOGADO",
+          estadoResultante: "baja_logica",
+          ejecutadoPorNombre: nombreOperador,
+          ejecutadoPorCorreo: correoOperador,
+          detalle: motivoTexto,
+        });
+
+        await adminSupabase
+          .schema("comun_seguridad")
+          .from("seg_usuario")
+          .update({
+            usu_detalle_usuario: {
+              ...det,
+              ficha_abogado: {
+                ...ficha,
+                baja_logica: true,
+                dado_de_baja_en: ahoraIso,
+                dado_de_baja_por_id: perfilOperador?.usu_id ?? null,
+                dado_de_baja_por_nombre: nombreOperador,
+                dado_de_baja_por_correo: correoOperador,
+                motivo_baja: motivoTexto,
+              },
+              historial_cambios_rol: historial.slice(0, 60),
+            },
+            usu_actualizado_en: ahoraIso,
+          })
+          .eq("usu_id", abg.abg_usuario_id);
+      } catch {
+        // Continuar
+      }
+
+      await sincronizarRolAbogadoEnSeguridad(
+        adminSupabase,
+        abg.abg_usuario_id,
+        false,
+        perfilOperador?.usu_id ?? null
+      );
+
       await notificarEventoRedAbogadoMulticanal(adminSupabase, {
         usuarioId: abg.abg_usuario_id,
         tipoEvento: "RETIRADO",
@@ -2239,7 +2567,7 @@ export async function eliminarAbogadoRedAction(abogadoId: string): Promise<Resul
   } catch (err: unknown) {
     return {
       ok: false,
-      error: err instanceof Error ? err.message : "Error al retirar abogado de la red.",
+      error: err instanceof Error ? err.message : "Error al procesar la baja lógica del rol de abogado.",
     };
   }
 }

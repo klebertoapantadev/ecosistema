@@ -586,18 +586,39 @@ export async function POST(request: Request) {
             if (fichaAbogado) {
               fichaAbogado = {
                 ...fichaAbogado,
+                baja_logica: false,
+                dado_de_baja_en: null,
                 estado_aceptacion: "aceptado",
                 aceptado_en: ahora,
                 actualizado_en: ahora,
               };
             }
           }
+
+          const histAceptacion = Array.isArray(det.historial_cambios_rol)
+            ? [...det.historial_cambios_rol]
+            : [];
+          histAceptacion.unshift({
+            id: `hist-acep-${Date.now()}`,
+            fecha: ahora,
+            accion: "ACEPTACION_USUARIO",
+            rol: rolUpper,
+            estadoResultante: "activo",
+            ejecutadoPorNombre:
+              [perfil.usu_nombres, perfil.usu_apellidos].filter(Boolean).join(" ").trim() ||
+              perfil.usu_correo ||
+              "Usuario",
+            ejecutadoPorCorreo: perfil.usu_correo || "",
+            detalle: `El usuario confirmó la aceptación del rol ${prop.rolNombre || rolUpper} (solicitado por ${prop.solicitadoPorNombre || "Operador"}).`,
+          });
+          det.historial_cambios_rol = histAceptacion.slice(0, 60);
         } else if (accion === "rechazar_rol") {
           prop.estado = "rechazado";
           prop.respondidoEn = ahora;
           propuestas[idxProp] = prop;
+          const rolRechazadoUpper = String(prop.rolClave || "ABOGADO").toUpperCase();
 
-          if (String(prop.rolClave || "").toUpperCase() === "ABOGADO" || prop.esConversionAbogado) {
+          if (rolRechazadoUpper === "ABOGADO" || prop.esConversionAbogado) {
             await (client as any)
               .schema("tranqui_legal")
               .from("trq_abogado")
@@ -616,6 +637,24 @@ export async function POST(request: Request) {
               };
             }
           }
+
+          const histRechazo = Array.isArray(det.historial_cambios_rol)
+            ? [...det.historial_cambios_rol]
+            : [];
+          histRechazo.unshift({
+            id: `hist-rech-${Date.now()}`,
+            fecha: ahora,
+            accion: "RECHAZO_USUARIO",
+            rol: rolRechazadoUpper,
+            estadoResultante: "rechazado",
+            ejecutadoPorNombre:
+              [perfil.usu_nombres, perfil.usu_apellidos].filter(Boolean).join(" ").trim() ||
+              perfil.usu_correo ||
+              "Usuario",
+            ejecutadoPorCorreo: perfil.usu_correo || "",
+            detalle: `El usuario rechazó la asignación del rol ${prop.rolNombre || rolRechazadoUpper}.`,
+          });
+          det.historial_cambios_rol = histRechazo.slice(0, 60);
         }
       }
 
