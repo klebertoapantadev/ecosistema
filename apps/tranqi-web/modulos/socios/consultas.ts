@@ -1,5 +1,7 @@
 import { crearClienteServidor, crearClienteAdmin } from "@eco/supabase/servidor";
-import { ejecutarPurgaSolicitudesSocioInterna, MARCA_REGISTRO_MANUAL } from "./acciones-red-profesional";
+import { ejecutarPurgaSolicitudesSocioInterna } from "./acciones-red-profesional";
+
+const MARCA_REGISTRO_MANUAL = "[REGISTRO_MANUAL_EQUIPO]";
 
 // Server-only. No importar desde un client component.
 

@@ -9,7 +9,7 @@ export type Resultado<T = void> =
   | { ok: true; data: T }
   | { ok: false; error: string };
 
-export const MARCA_REGISTRO_MANUAL = "[REGISTRO_MANUAL_EQUIPO]";
+const MARCA_REGISTRO_MANUAL = "[REGISTRO_MANUAL_EQUIPO]";
 const FECHA_CORTE_PURGA_SOLICITUDES = "2026-11-08T13:30:00.000Z";
 
 export interface UsuarioPlataformaItem {
