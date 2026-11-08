@@ -799,7 +799,7 @@ export function PanelDinamicoModular({ slug, negocio, rolInicial = "ADMINISTRADO
       case "mi_perfil_abogado":
       case "perfil_abogado":
       case "especialidades_abogado":
-        return <MiPerfilRedAbogadoWidget tabInicial="especialidades" />;
+        return <MiPerfilRedAbogadoWidget tabInicial="perfil" />;
       case "gestion_red_abogados":
       case "red_profesional":
       case "registro_abogados":
