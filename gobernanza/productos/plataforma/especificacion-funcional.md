@@ -1250,6 +1250,11 @@ Motor centralizado y transversal de disponibilidad horaria, franjas recurrentes,
 
 14. **Aislamiento multitenant.** Cada negocio opera sobre su propio subconjunto de `comun_agenda` identificado por negocio dueño. Una persona que sea profesional en dos negocios tiene una configuración por negocio, pero **una sola línea temporal de ocupación**: no puede duplicarse.
 
+15. **Horarios de Atención por Defecto del Negocio (Telemático y Presencial), Triaje de Especialidad con ARIA y Reserva sin Profesional Disponible (`comun_agenda.age_config_negocio` / `horarios_atencion_agenda`):**
+    - **Configuración Operativa por Modalidad:** Los roles `OPERADOR`, `ADMINISTRADOR` y `SUPERADMIN` configuran en `comun_agenda.age_config_negocio` (widget `horarios_atencion_agenda` en `panel_agendamiento`) el horario de atención por defecto para **consultas telemáticas** (`cgn_franjas_virtual`) y el horario por defecto para **consultas presenciales** (`cgn_franjas_presencial`), así como la especialidad por defecto (`materia_defecto_nombre`, p. ej. `Civil`) y el indicador `cgn_permitir_sin_profesional`.
+    - **Clasificación Automática de Especialidad por ARIA:** En el agendamiento del cliente (`/panel/agendar`), el usuario describe su problema en lenguaje cotidiano sin necesidad de conocer términos técnicos. **ARIA** conversa con el cliente, comprende el motivo general de la consulta y determina la especialidad requerida (`trq_materia`), o asigna la especialidad por defecto si el problema es general o ambiguo.
+    - **Agendamiento Garantizado con Pago Confirmado:** Cuando `cgn_permitir_sin_profesional = true`, `trq_fn_horarios_materia` proyecta las franjas por defecto del negocio (`age_fn_huecos_negocio_defecto`) además del pool de profesionales. Si en el horario elegido hay un profesional libre, se asigna por turno; si no hay ningún profesional libre en ese horario, la cita se agenda e igualmente queda **confirmada tras el pago** (`cit_cobertura = 'pagada'`, `cit_estado = 'confirmada'`, `cit_abogado_id = null`, `cit_asignacion = 'contingencia'`, `cit_materia_id` clasificada por ARIA), pasando a la mesa operativa para que los operadores crucen y asignen al abogado posteriormente.
+
 ### Criterios de Aceptación (Gherkin)
 
 * **Escenario:** Cliente con Plan Activo agenda cita gratuita

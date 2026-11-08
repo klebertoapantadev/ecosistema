@@ -43,6 +43,7 @@ import { SociosWidget } from "../administrar/PanelAdministrarModular";
 import { ConfiguracionContratoAbogadoWidget } from "@/modulos/socios/componentes/ConfiguracionContratoAbogadoWidget";
 import { GestionRedProfesionalWidget } from "@/modulos/socios/componentes/GestionRedProfesionalWidget";
 import { MiPerfilRedAbogadoWidget } from "@/modulos/socios/componentes/MiPerfilRedAbogadoWidget";
+import { ConfiguracionHorariosAtencionWidget } from "@/modulos/agenda/componentes/ConfiguracionHorariosAtencionWidget";
 import { obtenerConfiguracionNavegacionRolAction } from "@eco/gestion-usuarios/acciones";
 import { MATRIZ_FUNCIONAL_ROLES } from "@eco/gestion-usuarios/matriz-roles";
 
@@ -463,6 +464,13 @@ const INVENTARIO_GLOBAL_WIDGETS: Record<string, { titulo: string; subtitulo: str
     icono: FileText,
     colorIcono: "#05876E",
     categoria: "Gobernanza & Legales"
+  },
+  horarios_atencion_agenda: {
+    titulo: "Horarios de Atención (Telemático y Presencial)",
+    subtitulo: "Configura los horarios por defecto de consultas telemáticas y presenciales, y la especialidad por defecto para ARIA",
+    icono: Calendar,
+    colorIcono: "#5000BA",
+    categoria: "Agenda"
   },
   asignaciones_agenda: {
     titulo: "Asignaciones y Contingencia (Agenda)",
@@ -936,6 +944,9 @@ export function PanelDinamicoModular({ slug, negocio, rolInicial = "ADMINISTRADO
             }
           />
         );
+      case "horarios_atencion_agenda":
+      case "horarios_atencion":
+        return <ConfiguracionHorariosAtencionWidget />;
       case "disponibilidad_abogados":
       case "disponibilidad_operativa":
         return <TableroDisponibilidadOperativa negocio={negocio} />;

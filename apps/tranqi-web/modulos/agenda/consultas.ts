@@ -1,4 +1,6 @@
 import { crearClienteServidor } from "@eco/supabase/servidor";
+import { aMinutos, deMinutos, trocearFranja } from "@eco/agenda";
+import type { DatosConfigNegocioAgenda, FranjaHorarioNegocio } from "./esquema";
 
 // Server-only. No importar desde un client component.
 //
@@ -27,6 +29,97 @@ export interface CitaResumen {
   cit_cobertura: string;
   cit_asignacion: string;
   cit_abogado_id: string | null;
+  cit_materia_id?: string | null;
+  cit_detalle_cita?: Record<string, unknown> | null;
+}
+
+export interface ServicioAgendable {
+  var_id: string;
+  var_producto_id: string;
+  var_sku: string;
+  var_nombre: string;
+  var_precio: number;
+  var_tarifa_iva_porcentaje: number;
+  var_detalle_variante: Record<string, unknown> | null;
+  monto_iva: number;
+  precio_total: number;
+}
+
+const FRANJAS_VIRTUAL_DEFECTO: FranjaHorarioNegocio[] = [
+  { dia_semana: 1, hora_inicio: "08:00", hora_fin: "19:00" },
+  { dia_semana: 2, hora_inicio: "08:00", hora_fin: "19:00" },
+  { dia_semana: 3, hora_inicio: "08:00", hora_fin: "19:00" },
+  { dia_semana: 4, hora_inicio: "08:00", hora_fin: "19:00" },
+  { dia_semana: 5, hora_inicio: "08:00", hora_fin: "19:00" },
+  { dia_semana: 6, hora_inicio: "09:00", hora_fin: "14:00" },
+];
+
+const FRANJAS_PRESENCIAL_DEFECTO: FranjaHorarioNegocio[] = [
+  { dia_semana: 1, hora_inicio: "09:00", hora_fin: "17:30" },
+  { dia_semana: 2, hora_inicio: "09:00", hora_fin: "17:30" },
+  { dia_semana: 3, hora_inicio: "09:00", hora_fin: "17:30" },
+  { dia_semana: 4, hora_inicio: "09:00", hora_fin: "17:30" },
+  { dia_semana: 5, hora_inicio: "09:00", hora_fin: "17:30" },
+];
+
+export const CONFIG_AGENDA_NEGOCIO_DEFECTO: DatosConfigNegocioAgenda = {
+  zona_horaria: "America/Guayaquil",
+  duracion_cita_min: 45,
+  holgura_min: 15,
+  antelacion_minima_horas: 2,
+  horizonte_dias: 21,
+  permitir_sin_profesional: true,
+  direccion_presencial: "Despacho Central Tranqi · Quito, Ecuador",
+  materia_defecto_nombre: "Civil",
+  franjas_virtual: FRANJAS_VIRTUAL_DEFECTO,
+  franjas_presencial: FRANJAS_PRESENCIAL_DEFECTO,
+};
+
+export async function obtenerConfiguracionAgendaNegocio(): Promise<DatosConfigNegocioAgenda> {
+  try {
+    const supabase = await crearClienteServidor();
+    const { data: rawData, error } = await supabase
+      .schema("comun_agenda")
+      .from("age_config_negocio" as never)
+      .select("*")
+      .eq("cgn_negocio", NEGOCIO)
+      .is("cgn_eliminado_en", null)
+      .maybeSingle();
+
+    const data = rawData as Record<string, unknown> | null;
+    if (error || !data) {
+      return CONFIG_AGENDA_NEGOCIO_DEFECTO;
+    }
+
+    const detalle = (data.cgn_detalle_config ?? {}) as Record<string, unknown>;
+    const franjasVirtual = Array.isArray(data.cgn_franjas_virtual) && data.cgn_franjas_virtual.length > 0
+      ? (data.cgn_franjas_virtual as FranjaHorarioNegocio[])
+      : FRANJAS_VIRTUAL_DEFECTO;
+    const franjasPresencial = Array.isArray(data.cgn_franjas_presencial) && data.cgn_franjas_presencial.length > 0
+      ? (data.cgn_franjas_presencial as FranjaHorarioNegocio[])
+      : FRANJAS_PRESENCIAL_DEFECTO;
+
+    return {
+      zona_horaria: typeof data.cgn_zona_horaria === "string" ? data.cgn_zona_horaria : "America/Guayaquil",
+      duracion_cita_min: Number(data.cgn_duracion_cita_min ?? 45),
+      holgura_min: Number(data.cgn_holgura_min ?? 15),
+      antelacion_minima_horas: Number(data.cgn_antelacion_minima_horas ?? 2),
+      horizonte_dias: Number(data.cgn_horizonte_dias ?? 21),
+      permitir_sin_profesional: Boolean(data.cgn_permitir_sin_profesional ?? true),
+      direccion_presencial:
+        typeof data.cgn_direccion_presencial === "string"
+          ? data.cgn_direccion_presencial
+          : CONFIG_AGENDA_NEGOCIO_DEFECTO.direccion_presencial,
+      materia_defecto_nombre:
+        typeof detalle.materia_defecto_nombre === "string" && detalle.materia_defecto_nombre.trim()
+          ? detalle.materia_defecto_nombre.trim()
+          : "Civil",
+      franjas_virtual: franjasVirtual,
+      franjas_presencial: franjasPresencial,
+    };
+  } catch {
+    return CONFIG_AGENDA_NEGOCIO_DEFECTO;
+  }
 }
 
 export async function listarMateriasAgendables() {
@@ -41,25 +134,132 @@ export async function listarMateriasAgendables() {
 }
 
 /** Servicios del catálogo que se pueden agendar: los que declaran duración. */
-export async function listarServiciosAgendables() {
+export async function listarServiciosAgendables(): Promise<ServicioAgendable[]> {
   const supabase = await crearClienteServidor();
   const { data } = await supabase.schema("comun_comercio")
     .from("com_variante")
-    .select("var_id, var_sku, var_nombre, var_precio, var_tarifa_iva_porcentaje, var_detalle_variante")
+    .select("var_id, var_producto_id, var_sku, var_nombre, var_precio, var_tarifa_iva_porcentaje, var_detalle_variante")
     .eq("var_negocio", NEGOCIO)
     .eq("var_activo", true)
     .eq("var_tipo_oferta", "UNICO")
     .is("var_eliminado_en", null)
     .order("var_precio");
 
-  return ((data ?? []) as Array<{
+  const filtrados = ((data ?? []) as Array<{
     var_id: string;
+    var_producto_id?: string;
     var_sku: string;
     var_nombre: string;
     var_precio: number;
     var_tarifa_iva_porcentaje: number;
     var_detalle_variante: Record<string, unknown> | null;
   }>).filter((v) => typeof v.var_detalle_variante?.duracion_min === "number");
+
+  if (filtrados.length === 0) {
+    return [
+      {
+        var_id: "00000000-0000-4000-8000-000000000101",
+        var_producto_id: "00000000-0000-4000-8000-000000000100",
+        var_sku: "TRQ-CON-ESP",
+        var_nombre: "Consulta con Abogado Especialista (45 min)",
+        var_precio: 45,
+        var_tarifa_iva_porcentaje: 15,
+        var_detalle_variante: { duracion_min: 45, modalidad: ["virtual", "presencial"] },
+        monto_iva: 6.75,
+        precio_total: 51.75,
+      },
+      {
+        var_id: "00000000-0000-4000-8000-000000000102",
+        var_producto_id: "00000000-0000-4000-8000-000000000100",
+        var_sku: "TRQ-CON-RAP",
+        var_nombre: "Consulta Jurídica Rápida (30 min)",
+        var_precio: 25,
+        var_tarifa_iva_porcentaje: 15,
+        var_detalle_variante: { duracion_min: 30, modalidad: ["virtual"] },
+        monto_iva: 3.75,
+        precio_total: 28.75,
+      },
+    ];
+  }
+
+  return filtrados.map((v) => {
+    const subtotal = Number(v.var_precio ?? 0);
+    const ivaPct = Number(v.var_tarifa_iva_porcentaje ?? 15);
+    const montoIva = Math.round(subtotal * (ivaPct / 100) * 100) / 100;
+    const total = Math.round((subtotal + montoIva) * 100) / 100;
+    return {
+      var_id: v.var_id,
+      var_producto_id: v.var_producto_id ?? v.var_id,
+      var_sku: v.var_sku,
+      var_nombre: v.var_nombre,
+      var_precio: subtotal,
+      var_tarifa_iva_porcentaje: ivaPct,
+      var_detalle_variante: v.var_detalle_variante,
+      monto_iva: montoIva,
+      precio_total: total,
+    };
+  });
+}
+
+function proyectarHuecosPorDefectoLocal(
+  desde: Date,
+  hasta: Date,
+  modalidad: string | null | undefined,
+  config: DatosConfigNegocioAgenda,
+  duracionOverrideMin?: number | null,
+): HuecoDisponible[] {
+  const duracion = duracionOverrideMin ?? config.duracion_cita_min ?? 45;
+  const holgura = config.holgura_min ?? 15;
+  const antelacionMs = (config.antelacion_minima_horas ?? 2) * 3600 * 1000;
+  const horizonteMs = (config.horizonte_dias ?? 21) * 86400 * 1000;
+  const ahoraMs = Date.now();
+  const minInicioMs = Math.max(desde.getTime(), ahoraMs + antelacionMs);
+  const maxFinMs = Math.min(hasta.getTime(), ahoraMs + horizonteMs);
+
+  const franjas =
+    modalidad === "presencial" ? config.franjas_presencial : config.franjas_virtual;
+
+  const resultado: HuecoDisponible[] = [];
+  // Iterar día a día en horario Ecuador (UTC-5)
+  const cursor = new Date(minInicioMs);
+  cursor.setUTCHours(5, 0, 0, 0); // 00:00 America/Guayaquil = 05:00 UTC
+
+  while (cursor.getTime() <= maxFinMs) {
+    // Día de la semana en Ecuador (1=Lunes ... 7=Domingo)
+    const fechaEcu = new Date(cursor.getTime() - 5 * 3600 * 1000);
+    const jsDay = fechaEcu.getUTCDay(); // 0=Dom, 1=Lun...
+    const isoDay = jsDay === 0 ? 7 : jsDay;
+    const yyyy = fechaEcu.getUTCFullYear();
+    const mm = String(fechaEcu.getUTCMonth() + 1).padStart(2, "0");
+    const dd = String(fechaEcu.getUTCDate()).padStart(2, "0");
+
+    const franjasDia = franjas.filter((f) => f.dia_semana === isoDay);
+    for (const f of franjasDia) {
+      const bloques = trocearFranja(
+        aMinutos(f.hora_inicio),
+        aMinutos(f.hora_fin),
+        duracion,
+        holgura,
+      );
+      for (const b of bloques) {
+        const horaIniStr = deMinutos(b.inicioMin);
+        const horaFinStr = deMinutos(b.finMin);
+        const inicioIso = new Date(`${yyyy}-${mm}-${dd}T${horaIniStr}:00-05:00`);
+        const finIso = new Date(`${yyyy}-${mm}-${dd}T${horaFinStr}:00-05:00`);
+        if (inicioIso.getTime() >= minInicioMs && finIso.getTime() <= maxFinMs) {
+          resultado.push({
+            hueco_inicio: inicioIso.toISOString(),
+            hueco_fin: finIso.toISOString(),
+            disponibles: 1,
+          });
+        }
+      }
+    }
+
+    cursor.setUTCDate(cursor.getUTCDate() + 1);
+  }
+
+  return resultado;
 }
 
 export async function obtenerHuecosDeMateria(
@@ -70,16 +270,47 @@ export async function obtenerHuecosDeMateria(
   modalidad?: string | null,
 ): Promise<HuecoDisponible[]> {
   const supabase = await crearClienteServidor();
-  const { data, error } = await supabase.schema("tranqui_legal").rpc("trq_fn_horarios_materia", {
-    p_materia_id: materiaId,
-    p_desde: desde.toISOString(),
-    p_hasta: hasta.toISOString(),
-    p_variante_id: varianteId ?? undefined,
-    p_modalidad: modalidad ?? undefined,
-    p_provincia_id: undefined,
-  });
-  if (error) return [];
-  return (data ?? []) as HuecoDisponible[];
+  const [rpcRes, config] = await Promise.all([
+    supabase.schema("tranqui_legal").rpc("trq_fn_horarios_materia", {
+      p_materia_id: materiaId,
+      p_desde: desde.toISOString(),
+      p_hasta: hasta.toISOString(),
+      p_variante_id: varianteId ?? undefined,
+      p_modalidad: modalidad ?? undefined,
+      p_provincia_id: undefined,
+    }),
+    obtenerConfiguracionAgendaNegocio(),
+  ]);
+
+  const huecosRpc = (!rpcRes.error && Array.isArray(rpcRes.data) ? rpcRes.data : []) as HuecoDisponible[];
+
+  if (!config.permitir_sin_profesional) {
+    return huecosRpc;
+  }
+
+  // Asegurar que los horarios por defecto configurados por el operador para
+  // consultas telemáticas o presenciales siempre estén disponibles aunque no
+  // haya un abogado configurado en ese horario.
+  const huecosDefecto = proyectarHuecosPorDefectoLocal(desde, hasta, modalidad, config);
+  const mapa = new Map<string, HuecoDisponible>();
+  for (const h of huecosDefecto) {
+    mapa.set(new Date(h.hueco_inicio).toISOString(), h);
+  }
+  for (const h of huecosRpc) {
+    const clave = new Date(h.hueco_inicio).toISOString();
+    const existente = mapa.get(clave);
+    if (!existente || h.disponibles > existente.disponibles) {
+      mapa.set(clave, {
+        hueco_inicio: clave,
+        hueco_fin: new Date(h.hueco_fin).toISOString(),
+        disponibles: Math.max(h.disponibles, 1),
+      });
+    }
+  }
+
+  return Array.from(mapa.values()).sort(
+    (a, b) => new Date(a.hueco_inicio).getTime() - new Date(b.hueco_inicio).getTime(),
+  );
 }
 
 /** Qué le cubre el plan al usuario en sesión este periodo. */

@@ -59,6 +59,7 @@ const MAPA_RUTAS_FISICAS_WIDGETS: Record<string, string> = {
   alertas_comunidad: "packages/comercio/src/componentes/TableroBeneficiosAvisosWidget.tsx",
   disponibilidad_abogados: "packages/comercio/src/componentes/TableroDisponibilidadOperativa.tsx",
   disponibilidad_operativa: "packages/comercio/src/componentes/TableroDisponibilidadOperativa.tsx",
+  horarios_atencion_agenda: "apps/tranqi-web/modulos/agenda/componentes/ConfiguracionHorariosAtencionWidget.tsx",
   gestion_usuarios: "packages/gestion-usuarios/src/componentes/AdministracionPerfilesWidget.tsx",
   perfiles: "packages/gestion-usuarios/src/componentes/AdministracionPerfilesWidget.tsx",
   "admin-perfiles": "packages/gestion-usuarios/src/componentes/AdministracionPerfilesWidget.tsx",

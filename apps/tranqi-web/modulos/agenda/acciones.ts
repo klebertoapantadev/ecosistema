@@ -5,10 +5,20 @@ import { crearClienteServidor } from "@eco/supabase/servidor";
 import {
   esquemaAgendaCompleta,
   esquemaBloqueo,
+  esquemaConfigNegocioAgenda,
   esquemaDecisionCita,
   esquemaReasignacion,
   esquemaReserva,
 } from "./esquema";
+import {
+  clasificarProblemaLegalConAria,
+  type MensajeTriajeAria,
+  type ResultadoTriajeAria,
+} from "./clasificador-aria";
+import {
+  listarMateriasAgendables,
+  obtenerConfiguracionAgendaNegocio,
+} from "./consultas";
 
 // Mutaciones del módulo. Devuelven `{ ok }` y nunca lanzan hacia el componente
 // (01-convenciones §6).
@@ -29,6 +39,31 @@ function comoError(mensaje: string | undefined): string {
   return mensaje.replace(/^.*?:\s*/, "").trim() || mensaje;
 }
 
+export async function clasificarProblemaConAriaAction(
+  mensajes: MensajeTriajeAria[],
+): Promise<Resultado<ResultadoTriajeAria>> {
+  try {
+    if (!Array.isArray(mensajes) || mensajes.length === 0) {
+      return { ok: false, error: "Cuéntanos brevemente tu situación para ayudarte." };
+    }
+    const [materias, config] = await Promise.all([
+      listarMateriasAgendables(),
+      obtenerConfiguracionAgendaNegocio(),
+    ]);
+    const resultado = await clasificarProblemaLegalConAria(
+      mensajes,
+      materias,
+      config.materia_defecto_nombre || "Civil",
+    );
+    return { ok: true, data: resultado };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : "No se pudo analizar la consulta en este momento.",
+    };
+  }
+}
+
 export async function reservarCitaAction(entrada: unknown): Promise<Resultado<{ citaId: string }>> {
   const validado = esquemaReserva.safeParse(entrada);
   if (!validado.success) {
@@ -37,21 +72,149 @@ export async function reservarCitaAction(entrada: unknown): Promise<Resultado<{ 
   const d = validado.data;
 
   const supabase = await crearClienteServidor();
-  const { data, error } = await supabase.schema("tranqui_legal").rpc("trq_fn_reservar_cita", {
-    p_materia_id: d.materia_id,
-    p_inicio_en: d.inicio_en,
-    p_variante_id: d.variante_id ?? undefined,
-    p_modalidad: d.modalidad,
-    p_motivo: d.motivo,
-    p_caso_id: d.caso_id ?? undefined,
-    p_provincia_id: undefined,
-    p_origen: "panel",
-  });
+
+  // Resolver materia por defecto si no vino materia_id
+  let materiaId = d.materia_id ?? "";
+  if (!materiaId) {
+    const [materias, config] = await Promise.all([
+      listarMateriasAgendables(),
+      obtenerConfiguracionAgendaNegocio(),
+    ]);
+    const defecto =
+      materias.find(
+        (m) => m.mat_nombre.toLowerCase() === (config.materia_defecto_nombre || "Civil").toLowerCase(),
+      ) ?? materias[0];
+    materiaId = defecto?.mat_id ?? "";
+  }
+
+  // Si la variante es el fallback en memoria (no existe en BD), enviar undefined al RPC
+  const esVarianteSintetica =
+    d.variante_id === "00000000-0000-4000-8000-000000000101" ||
+    d.variante_id === "00000000-0000-4000-8000-000000000102";
+
+  const { data, error } = await supabase.schema("tranqui_legal").rpc(
+    "trq_fn_reservar_cita" as never,
+    {
+      p_materia_id: materiaId,
+      p_inicio_en: d.inicio_en,
+      p_variante_id: esVarianteSintetica ? undefined : (d.variante_id ?? undefined),
+      p_modalidad: d.modalidad,
+      p_motivo: d.motivo,
+      p_caso_id: d.caso_id ?? undefined,
+      p_provincia_id: undefined,
+      p_origen: "panel",
+      p_pago_id: d.pago_id ?? undefined,
+      p_confirmar_inmediato: d.confirmar_inmediato ?? Boolean(d.pago_id),
+    } as never,
+  );
+
+  if (error) {
+    // Fallback por si la firma de 10 argumentos aún no está desplegada en el entorno remoto
+    const fallback = await supabase.schema("tranqui_legal").rpc("trq_fn_reservar_cita", {
+      p_materia_id: materiaId,
+      p_inicio_en: d.inicio_en,
+      p_variante_id: esVarianteSintetica ? undefined : (d.variante_id ?? undefined),
+      p_modalidad: d.modalidad,
+      p_motivo: d.motivo,
+      p_caso_id: d.caso_id ?? undefined,
+      p_provincia_id: undefined,
+      p_origen: "panel",
+    });
+    if (fallback.error) {
+      return { ok: false, error: comoError(error.message) };
+    }
+    revalidatePath("/panel/mis-citas");
+    revalidatePath("/panel/agendar");
+    revalidatePath("/panel/agenda/asignaciones");
+    return { ok: true, data: { citaId: fallback.data as string } };
+  }
+
+  revalidatePath("/panel/mis-citas");
+  revalidatePath("/panel/agendar");
+  revalidatePath("/panel/agenda/asignaciones");
+  return { ok: true, data: { citaId: data as string } };
+}
+
+export async function confirmarPagoCitaAction(
+  citaId: string,
+  pagoId: string,
+): Promise<Resultado<{ estado: string }>> {
+  const supabase = await crearClienteServidor();
+  const { data, error } = await supabase.schema("tranqui_legal").rpc(
+    "trq_fn_confirmar_pago_cita" as never,
+    {
+      p_cita_id: citaId,
+      p_pago_id: pagoId,
+    } as never,
+  );
   if (error) return { ok: false, error: comoError(error.message) };
 
   revalidatePath("/panel/mis-citas");
   revalidatePath("/panel/agendar");
-  return { ok: true, data: { citaId: data as string } };
+  return { ok: true, data: { estado: (data as string) ?? "confirmada" } };
+}
+
+export async function obtenerDatosConfiguracionAgendaAction(): Promise<
+  Resultado<{
+    config: Awaited<ReturnType<typeof obtenerConfiguracionAgendaNegocio>>;
+    materias: Awaited<ReturnType<typeof listarMateriasAgendables>>;
+  }>
+> {
+  try {
+    const [config, materias] = await Promise.all([
+      obtenerConfiguracionAgendaNegocio(),
+      listarMateriasAgendables(),
+    ]);
+    return { ok: true, data: { config, materias } };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : "Error al cargar la configuración de horarios",
+    };
+  }
+}
+
+export async function guardarConfiguracionAgendaNegocioAction(
+  entrada: unknown,
+): Promise<Resultado> {
+  const validado = esquemaConfigNegocioAgenda.safeParse(entrada);
+  if (!validado.success) {
+    return {
+      ok: false,
+      error: validado.error.issues[0]?.message ?? "Revisa los horarios configurados",
+    };
+  }
+  const d = validado.data;
+
+  const supabase = await crearClienteServidor();
+  const { error } = await supabase.schema("comun_agenda").rpc(
+    "age_fn_guardar_config_negocio" as never,
+    {
+      p_negocio: NEGOCIO,
+      p_config: {
+        zona_horaria: d.zona_horaria,
+        duracion_cita_min: d.duracion_cita_min,
+        holgura_min: d.holgura_min,
+        antelacion_minima_horas: d.antelacion_minima_horas,
+        horizonte_dias: d.horizonte_dias,
+        permitir_sin_profesional: d.permitir_sin_profesional,
+        direccion_presencial: d.direccion_presencial ?? "",
+        franjas_virtual: d.franjas_virtual,
+        franjas_presencial: d.franjas_presencial,
+        detalle: {
+          materia_defecto_nombre: d.materia_defecto_nombre,
+        },
+      },
+    } as never,
+  );
+
+  if (error) return { ok: false, error: comoError(error.message) };
+
+  revalidatePath("/panel/agendar");
+  revalidatePath("/panel/agendamiento");
+  revalidatePath("/panel/agenda/asignaciones");
+  revalidatePath("/panel/agenda/disponibilidad");
+  return { ok: true, data: undefined };
 }
 
 export async function decidirCitaAction(entrada: unknown): Promise<Resultado<{ resultado: string }>> {

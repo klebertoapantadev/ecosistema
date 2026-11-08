@@ -2958,15 +2958,17 @@ export async function confirmarPagoPayphoneAction(datos: {
     const marca = datos.marcaTarjetaSimulada || "Visa";
     const ultimosDigitos = datos.ultimosDigitos || "4321";
 
+    let pagoIdResuelto: string | null = null;
     if (clienteDb) {
       try {
         const { data: pagoExistente } = await clienteDb
           .schema("comun_comercio")
           .from("com_transaccion_pago")
-          .select("pag_detalle_transaccion")
+          .select("pag_id, pag_detalle_transaccion")
           .eq("pag_identificador_cliente", datos.clientTxId)
           .maybeSingle();
 
+        pagoIdResuelto = pagoExistente?.pag_id ?? null;
         const detPrevio = (pagoExistente?.pag_detalle_transaccion as Record<string, any>) || {};
 
         await clienteDb
@@ -3009,6 +3011,8 @@ export async function confirmarPagoPayphoneAction(datos: {
 
     return {
       ok: aprobado,
+      pagoId: pagoIdResuelto,
+      clientTransactionId: datos.clientTxId,
       estado: estadoFinal,
       codigoAutorizacion: authCode,
       mensaje: aprobado
@@ -3052,10 +3056,11 @@ export async function confirmarPagoPayphoneAction(datos: {
     const confirmData = await res.json();
     const aprobado = confirmData.transactionStatus === "Approved";
     const estadoFinal = aprobado ? "APROBADO" : "RECHAZADO";
+    let pagoIdReal: string | null = null;
 
     if (clienteDb) {
       try {
-        await clienteDb
+        const { data: filaAct } = await clienteDb
           .schema("comun_comercio")
           .from("com_transaccion_pago")
           .update({
@@ -3069,7 +3074,10 @@ export async function confirmarPagoPayphoneAction(datos: {
               payphone_confirm: confirmData,
             },
           })
-          .eq("pag_identificador_cliente", datos.clientTxId);
+          .eq("pag_identificador_cliente", datos.clientTxId)
+          .select("pag_id")
+          .maybeSingle();
+        pagoIdReal = filaAct?.pag_id ?? null;
       } catch {
         // Continuar
       }
@@ -3077,6 +3085,8 @@ export async function confirmarPagoPayphoneAction(datos: {
 
     return {
       ok: aprobado,
+      pagoId: pagoIdReal,
+      clientTransactionId: datos.clientTxId,
       estado: estadoFinal,
       codigoAutorizacion: confirmData.authorizationCode,
       mensaje: aprobado ? "¡Pago Confirmado y Aprobado por Payphone!" : confirmData.message || "Pago no aprobado",

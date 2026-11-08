@@ -93,6 +93,16 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
     colorIcono: "#5000BA"
   },
   {
+    clave: "horarios_atencion_agenda",
+    nombre: "Horarios de Atención (Telemático y Presencial)",
+    detalle: "Configura horarios por defecto para consultas telemáticas y presenciales, especialidad por defecto de ARIA y agendamiento sin abogado disponible",
+    ruta: "/panel/agendamiento?widget=horarios_atencion_agenda",
+    categoria: "Agendamiento & Operación",
+    minNivel: 30,
+    icono: Sliders,
+    colorIcono: "#5000BA"
+  },
+  {
     clave: "catalogo_productos",
     nombre: "Catálogo Comercial & Honorarios Profesionales",
     detalle: "Catálogo de servicios, tarifario de honorarios y suscripciones legales con cálculo de IVA 15%",

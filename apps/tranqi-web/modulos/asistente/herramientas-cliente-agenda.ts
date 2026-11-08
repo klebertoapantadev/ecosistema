@@ -1,6 +1,7 @@
 import type { Herramienta } from "@eco/agentes-ia";
 import type { ContextoAsistente } from "./contexto";
 import { fechaHoraEcuador, lista } from "./formato";
+import { clasificarProblemaLegalConAria } from "../agenda/clasificador-aria";
 
 // Herramientas de AGENDA del asistente del afiliado (TRQ-ABG-004 / PLT-020).
 //
@@ -19,7 +20,7 @@ type HerramientaCliente = Herramienta<ContextoAsistente>;
 
 const NEGOCIO = "tranqi";
 
-/** Resuelve el texto que dio el modelo contra el catálogo real de materias. */
+/** Resuelve el texto que dio el modelo contra el catálogo real de materias o asigna la especialidad por defecto. */
 async function resolverMateria(
   supabase: ContextoAsistente["supabase"],
   texto: string,
@@ -30,9 +31,6 @@ async function resolverMateria(
     .eq("mat_activa", true);
   if (error) throw new Error(error.message);
 
-  // Comparacion insensible a tildes y mayusculas sin manosear el texto: el
-  // colador de Intl ya sabe que "Transito" y "Transito" con tilde son lo mismo
-  // en espanol, y evita depender de un rango de diacriticos escrito a mano.
   const colador = new Intl.Collator("es", { sensitivity: "base", usage: "search" });
   const igual = (a: string | null | undefined, b: string) =>
     typeof a === "string" && colador.compare(a.trim(), b.trim()) === 0;
@@ -45,15 +43,27 @@ async function resolverMateria(
     materias.find((m) => igual(m.mat_nombre, texto)) ??
     materias.find((m) => contiene(m.mat_nombre, texto) || contiene(texto, m.mat_nombre));
 
-  if (!fila) {
-    // El mensaje lo lee el modelo: se le devuelve el catálogo para que
-    // reformule con el afiliado en vez de inventarse una materia.
-    throw new Error(
-      `No reconozco la materia '${texto}'. Las disponibles son: ` +
-        `${materias.map((m) => m.mat_nombre).join(", ")}. Pregunta al afiliado cuál encaja.`,
-    );
+  if (fila) {
+    return { id: fila.mat_id, nombre: fila.mat_nombre };
   }
-  return { id: fila.mat_id, nombre: fila.mat_nombre };
+
+  // Si el modelo pasó la descripción del problema o no hubo match exacto,
+  // clasificar con ARIA o asignar la materia por defecto (Civil).
+  const clasificado = await clasificarProblemaLegalConAria(
+    [{ autor: "usuario", texto }],
+    materias.map((m) => ({ mat_id: m.mat_id, mat_nombre: m.mat_nombre })),
+    "Civil",
+  );
+  if (clasificado.materia_id) {
+    return { id: clasificado.materia_id, nombre: clasificado.materia_nombre };
+  }
+
+  const defecto =
+    materias.find((m) => contiene(m.mat_nombre, "civil")) ?? materias[0];
+  if (!defecto) {
+    throw new Error("No hay materias configuradas en el catálogo.");
+  }
+  return { id: defecto.mat_id, nombre: defecto.mat_nombre };
 }
 
 const buscarHorarios: HerramientaCliente = {
@@ -238,7 +248,7 @@ const reservarCita: HerramientaCliente = {
 
     const { data: cita } = await supabase.schema("tranqui_legal")
       .from("trq_cita")
-      .select("cit_inicio_en, cit_modalidad, cit_cobertura")
+      .select("cit_inicio_en, cit_modalidad, cit_cobertura, cit_abogado_id")
       .eq("cit_id", citaId)
       .maybeSingle();
 
@@ -249,11 +259,13 @@ const reservarCita: HerramientaCliente = {
           ? "Es una consulta de cortesia, sin costo."
           : "Queda pendiente de pago; el afiliado recibira el enlace para completarlo.";
 
+    const detalleAbogado = cita?.cit_abogado_id
+      ? `Se asigno un abogado especialista en ${m.nombre} por turno.`
+      : `La cita quedo agendada en la especialidad de ${m.nombre} dentro del horario de atencion y nuestro equipo asignara al abogado especialista.`;
+
     return (
       `Cita reservada para el ${fechaHoraEcuador(cita?.cit_inicio_en ?? inicio.toISOString())} ` +
-      `(${cita?.cit_modalidad ?? modalidad}). ${cobertura} ` +
-      `Se asigno un abogado de ${m.nombre} por turno y queda pendiente de que la confirme; ` +
-      `el afiliado recibira el aviso. Identificador: ${citaId}`
+      `(${cita?.cit_modalidad ?? modalidad}). ${cobertura} ${detalleAbogado} Identificador: ${citaId}`
     );
   },
 };

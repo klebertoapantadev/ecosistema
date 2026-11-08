@@ -88,6 +88,14 @@ const CATALOGO_FAVORITOS: Record<string, WidgetFavInfo> = {
     href: "/panel/red-profesional?widget=mi_perfil_abogado",
     origen: "Herramientas"
   },
+  horarios_atencion_agenda: {
+    id: "horarios_atencion_agenda",
+    titulo: "Horarios de Atención (Telemático y Presencial)",
+    subtitulo: "Configura horarios por defecto para consultas telemáticas y presenciales y la especialidad por defecto de ARIA",
+    icono: Scale,
+    href: "/panel/agendamiento?widget=horarios_atencion_agenda",
+    origen: "Administrar"
+  },
   pasarela_payphone: {
     id: "pasarela_payphone",
     titulo: "Pasarela Payphone",

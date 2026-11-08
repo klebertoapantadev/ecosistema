@@ -299,7 +299,7 @@ const PERFILES_INICIALES: PerfilDef[] = [
       panel_usuarios: ["consulta_usuarios_perfiles", "monitoreo_notificaciones_usuarios"],
       panel_red_profesional: ["gestion_red_abogados", "socios", "paquete_beneficios_abogados", "solicitud_socio"],
       panel_terminos: ["gestion_terminos_consentimientos", "configuracion_contrato_abogado"],
-      panel_agendamiento: ["disponibilidad_abogados", "asignaciones_agenda"],
+      panel_agendamiento: ["horarios_atencion_agenda", "disponibilidad_abogados", "asignaciones_agenda"],
       panel_administrar: ["gestion_red_abogados", "gestion_informativos", "gestion_convenios_corporativos", "disponibilidad_abogados", "historial_pagos", "emision_notificaciones", "bitacora_notificaciones"],
       panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos"],
       panel_herramientas: ["catalogo_productos", "disponibilidad_abogados", "firma_documentos_pdf", "billetera_documentos"],
@@ -335,7 +335,7 @@ const PERFILES_INICIALES: PerfilDef[] = [
       panel_usuarios: ["gestion_usuarios", "consulta_usuarios_perfiles", "monitoreo_notificaciones_usuarios"],
       panel_red_profesional: ["gestion_red_abogados", "socios", "paquete_beneficios_abogados", "solicitud_socio"],
       panel_terminos: ["gestion_terminos_consentimientos", "configuracion_contrato_abogado"],
-      panel_agendamiento: ["disponibilidad_abogados", "asignaciones_agenda"],
+      panel_agendamiento: ["horarios_atencion_agenda", "disponibilidad_abogados", "asignaciones_agenda"],
       panel_administrar: ["gestion_red_abogados", "gestion_informativos", "gestion_convenios_corporativos", "disponibilidad_abogados", "historial_pagos", "emision_notificaciones", "bitacora_notificaciones", "perfiles", "auditoria"],
       panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos"],
       panel_herramientas: ["catalogo_productos", "disponibilidad_abogados", "firma_documentos_pdf", "billetera_documentos"],
@@ -357,7 +357,7 @@ const PERFILES_INICIALES: PerfilDef[] = [
       panel_usuarios: ["gestion_usuarios", "consulta_usuarios_perfiles", "monitoreo_notificaciones_usuarios"],
       panel_red_profesional: ["gestion_red_abogados", "mi_perfil_abogado", "socios", "paquete_beneficios_abogados", "solicitud_socio"],
       panel_terminos: ["gestion_terminos_consentimientos", "configuracion_contrato_abogado"],
-      panel_agendamiento: ["mi_perfil_abogado", "disponibilidad_abogados", "asignaciones_agenda"],
+      panel_agendamiento: ["horarios_atencion_agenda", "mi_perfil_abogado", "disponibilidad_abogados", "asignaciones_agenda"],
       panel_administrar: ["gestion_red_abogados", "gestion_informativos", "gestion_convenios_corporativos", "disponibilidad_abogados", "historial_pagos", "emision_notificaciones", "bitacora_notificaciones", "perfiles", "auditoria"],
       panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos"],
       panel_herramientas: ["catalogo_productos", "disponibilidad_abogados", "firma_documentos_pdf", "billetera_documentos"],
@@ -846,6 +846,17 @@ const WIDGETS_INVENTARIO_INICIALES: WidgetInventarioDef[] = [
     creadoEn: "2026-09-05"
   },
   {
+    clave: "horarios_atencion_agenda",
+    nombre: "Horarios de Atención (Telemático y Presencial)",
+    descripcion: "Configuración de horarios por defecto para consultas telemáticas y presenciales, especialidad por defecto para ARIA y agendamiento sin abogado disponible.",
+    categoria: "Agenda",
+    ruta: "/panel/agendamiento?widget=horarios_atencion_agenda",
+    rutaFisica: "/agenda/componentes/ConfiguracionHorariosAtencionWidget.tsx",
+    panelId: "panel_agendamiento",
+    activo: true,
+    creadoEn: "2026-11-08"
+  },
+  {
     clave: "asignaciones_agenda",
     nombre: "Asignaciones y Contingencia (Agenda)",
     descripcion: "Citas que se quedaron sin abogado porque el asignado canceló. La cita del afiliado sigue viva y hay que reasignarla antes de la hora.",
@@ -1194,6 +1205,21 @@ function RenderizadorWidgetReal({ clave, negocio }: { clave: string; negocio: st
           </p>
           <div style={{ padding: "12px", background: "#F5F3FF", borderRadius: "8px", border: "1px dashed #DDD6FE", textAlign: "center", fontSize: "0.82rem", color: "#5B21B6", fontWeight: 700 }}>
             Capacitación Continua · Descuentos Académicos · Enlaces a Beneficios
+          </div>
+        </div>
+      );
+
+    case "horarios_atencion_agenda":
+      return (
+        <div style={{ background: "#ffffff", padding: "18px", borderRadius: "12px", border: "1.5px solid #5000BA", boxShadow: "0 4px 12px rgba(80,0,186,0.08)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 800, fontSize: "0.95rem", color: "#5000BA", marginBottom: "10px" }}>
+            <Sliders size={18} /> Horarios de Atención (Telemático y Presencial)
+          </div>
+          <p style={{ fontSize: "0.82rem", color: "#64748B", marginBottom: "12px" }}>
+            Configuración de franjas por defecto para consultas telemáticas y presenciales, especialidad por defecto para ARIA y agendamiento sin abogado disponible.
+          </p>
+          <div style={{ padding: "12px", background: "#F5F3FF", borderRadius: "8px", border: "1px dashed #DDD6FE", textAlign: "center", fontSize: "0.82rem", color: "#5B21B6", fontWeight: 700 }}>
+            Horario Telemático · Horario Presencial · Especialidad por Defecto ARIA
           </div>
         </div>
       );
