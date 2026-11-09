@@ -75,6 +75,7 @@ export const esquemaDecisionCita = z.object({
     "cancelar_aceptacion",
     "rechazar_asignacion",
     "reagendar",
+    "reagendar_y_aceptar",
     "cancelar",
     "marcar_realizada",
     "marcar_no_asistio",

@@ -35,6 +35,11 @@ import {
   type GestionReunionCita,
   type RegistroHistorialAsignacion,
 } from "./consultas";
+import {
+  construirBloqueHtmlCalendarioCorreo,
+  generarContenidoIcsCita,
+  type DatosEventoCalendarioCita,
+} from "./calendario-ics";
 
 // Mutaciones del módulo. Devuelven `{ ok }` y nunca lanzan hacia el componente
 // (01-convenciones §6).
@@ -65,6 +70,31 @@ const FORMATO_FECHA_CITA_EC = new Intl.DateTimeFormat("es-EC", {
   timeZone: "America/Guayaquil",
 });
 
+async function obtenerCorreoInstitucionalTranqi(): Promise<string> {
+  try {
+    const supabase = await crearClienteServidor();
+    const db = crearClienteAdmin() ?? supabase;
+    const { data: cfg } = await db
+      .schema("comun_configuracion")
+      .from("cfg_negocio")
+      .select("cfg_detalle_configuracion")
+      .eq("cfg_negocio", NEGOCIO)
+      .maybeSingle();
+
+    const det = ((cfg?.cfg_detalle_configuracion ?? {}) as Record<string, unknown>) || {};
+    const smtp = (det.smtp ?? {}) as Record<string, unknown>;
+    const candidato =
+      (typeof det.correoNotificaciones === "string" && det.correoNotificaciones.includes("@")
+        ? det.correoNotificaciones.trim()
+        : null) ||
+      (typeof smtp.usuario === "string" && smtp.usuario.includes("@") ? smtp.usuario.trim() : null) ||
+      "notificaciones@tranqi24.com";
+    return candidato;
+  } catch {
+    return "notificaciones@tranqi24.com";
+  }
+}
+
 async function despacharNotificacionAgendaUsuarios(params: {
   usuarioIds: string[];
   notIdPrefijo: string;
@@ -72,14 +102,47 @@ async function despacharNotificacionAgendaUsuarios(params: {
   contenidoHtml: string;
   urlAccion: string;
   canal?: "IN_APP" | "PUSH";
+  calendarioIcs?: DatosEventoCalendarioCita;
+  copiarAgendaInstitucional?: boolean;
 }) {
   const idsUnicos = Array.from(new Set(params.usuarioIds.filter(Boolean)));
-  if (idsUnicos.length === 0) return;
+  if (idsUnicos.length === 0 && !params.copiarAgendaInstitucional) return;
 
   try {
     const supabase = await crearClienteServidor();
     const db = crearClienteAdmin() ?? supabase;
     const ahoraIso = new Date().toISOString();
+
+    let correoInstitucional = "notificaciones@tranqi24.com";
+    if (params.calendarioIcs || params.copiarAgendaInstitucional) {
+      correoInstitucional = await obtenerCorreoInstitucionalTranqi();
+    }
+
+    const datosIcsEnriquecido: DatosEventoCalendarioCita | undefined = params.calendarioIcs
+      ? {
+          ...params.calendarioIcs,
+          correoInstitucional:
+            params.calendarioIcs.correoInstitucional || correoInstitucional,
+        }
+      : undefined;
+
+    const adjuntosIcs = datosIcsEnriquecido
+      ? [
+          {
+            filename: `cita-tranqi-${datosIcsEnriquecido.citaId.slice(0, 8)}.ics`,
+            content: generarContenidoIcsCita(datosIcsEnriquecido),
+            contentType: `text/calendar; charset=utf-8; method=${
+              datosIcsEnriquecido.metodo ?? "REQUEST"
+            }`,
+          },
+        ]
+      : undefined;
+
+    const htmlEmailConCalendario = datosIcsEnriquecido
+      ? `${params.contenidoHtml}${construirBloqueHtmlCalendarioCorreo(datosIcsEnriquecido)}`
+      : params.contenidoHtml;
+
+    const correosDespachados = new Set<string>();
 
     for (const usuId of idsUnicos) {
       const notId = `${params.notIdPrefijo}-${usuId.slice(0, 8)}`;
@@ -123,14 +186,16 @@ async function despacharNotificacionAgendaUsuarios(params: {
           .eq("usu_id", usuId);
 
         if (uRow?.usu_correo) {
-          const correoDest = uRow.usu_correo;
+          const correoDest = uRow.usu_correo.trim();
+          correosDespachados.add(correoDest.toLowerCase());
           void import("@eco/notificaciones/enviar-correo")
             .then(({ enviarCorreo }) =>
               enviarCorreo({
                 negocio: NEGOCIO,
                 para: correoDest,
                 asunto: params.titulo,
-                html: params.contenidoHtml,
+                html: htmlEmailConCalendario,
+                adjuntos: adjuntosIcs,
               }),
             )
             .catch(() => {
@@ -140,6 +205,26 @@ async function despacharNotificacionAgendaUsuarios(params: {
       } catch {
         // Continuar con el siguiente destinatario
       }
+    }
+
+    // Copiar a la cuenta de correo institucional de Tranqi para mantener la Agenda Institucional sincronizada
+    if (
+      params.copiarAgendaInstitucional &&
+      correoInstitucional.includes("@") &&
+      !correosDespachados.has(correoInstitucional.toLowerCase())
+    ) {
+      correosDespachados.add(correoInstitucional.toLowerCase());
+      void import("@eco/notificaciones/enviar-correo")
+        .then(({ enviarCorreo }) =>
+          enviarCorreo({
+            negocio: NEGOCIO,
+            para: correoInstitucional,
+            asunto: `[Agenda Institucional Tranqi] ${params.titulo}`,
+            html: htmlEmailConCalendario,
+            adjuntos: adjuntosIcs,
+          }),
+        )
+        .catch(() => {});
     }
 
     try {
@@ -238,7 +323,9 @@ async function notificarOperadoresNuevaCitaConfirmada(citaId: string) {
     const { data: cita } = await db
       .schema("tranqui_legal")
       .from("trq_cita")
-      .select("cit_id, cit_cliente_id, cit_abogado_id, cit_inicio_en, cit_modalidad, cit_motivo, cit_estado, cit_asignacion")
+      .select(
+        "cit_id, cit_cliente_id, cit_abogado_id, cit_inicio_en, cit_fin_en, cit_modalidad, cit_motivo, cit_estado, cit_asignacion, cit_enlace, cit_lugar",
+      )
       .eq("cit_id", citaId)
       .maybeSingle();
 
@@ -248,13 +335,14 @@ async function notificarOperadoresNuevaCitaConfirmada(citaId: string) {
       db
         .schema("comun_seguridad")
         .from("seg_usuario")
-        .select("usu_nombres, usu_apellidos, usu_correo")
+        .select("usu_nombres, usu_apellidos, usu_correo, usu_whatsapp, usu_detalle_usuario")
         .eq("usu_id", cita.cit_cliente_id)
         .maybeSingle(),
       obtenerIdsOperadoresTranqi(),
     ]);
 
     let abogadoNombre: string | null = null;
+    let abogadoCorreo: string | null = null;
     if (cita.cit_abogado_id && cita.cit_asignacion !== "contingencia") {
       const { data: abgRow } = await db
         .schema("tranqui_legal")
@@ -273,6 +361,7 @@ async function notificarOperadoresNuevaCitaConfirmada(citaId: string) {
           [uAbg?.usu_nombres, uAbg?.usu_apellidos].filter(Boolean).join(" ").trim() ||
           uAbg?.usu_correo ||
           "Abogado asignado";
+        abogadoCorreo = uAbg?.usu_correo ?? null;
       }
     }
 
@@ -280,10 +369,34 @@ async function notificarOperadoresNuevaCitaConfirmada(citaId: string) {
       [cliRes.data?.usu_nombres, cliRes.data?.usu_apellidos].filter(Boolean).join(" ").trim() ||
       cliRes.data?.usu_correo ||
       "Cliente";
+    const detCli = ((cliRes.data?.usu_detalle_usuario ?? {}) as Record<string, unknown>) || {};
+    const clienteWhatsapp =
+      cliRes.data?.usu_whatsapp ||
+      (typeof detCli.whatsapp === "string" ? detCli.whatsapp : null) ||
+      (typeof detCli.celular === "string" ? detCli.celular : null) ||
+      null;
     const materiaNombre = "General";
     const esPresencial = cita.cit_modalidad === "presencial";
     const etiquetaModalidad = esPresencial ? "Presencial en Oficina" : "Telemática (Videollamada)";
     const fechaTxt = FORMATO_FECHA_CITA_EC.format(new Date(cita.cit_inicio_en));
+
+    const datosIcs: DatosEventoCalendarioCita = {
+      citaId: String(cita.cit_id),
+      inicioIso: String(cita.cit_inicio_en),
+      finIso: cita.cit_fin_en ? String(cita.cit_fin_en) : null,
+      modalidad: String(cita.cit_modalidad ?? "virtual"),
+      materiaNombre,
+      motivo: cita.cit_motivo ? String(cita.cit_motivo) : null,
+      clienteNombre,
+      clienteCorreo: cliRes.data?.usu_correo ?? null,
+      clienteWhatsapp,
+      abogadoNombre,
+      abogadoCorreo,
+      enlaceVideollamada: cita.cit_enlace ? String(cita.cit_enlace) : null,
+      lugarPresencial: cita.cit_lugar ? String(cita.cit_lugar) : null,
+      sequence: 0,
+      metodo: "REQUEST",
+    };
 
     const estadoAbgHtml = abogadoNombre
       ? `<span style="color:#065F46;font-weight:800;">✅ Asignado a Dr(a). ${abogadoNombre}</span>`
@@ -295,7 +408,9 @@ async function notificarOperadoresNuevaCitaConfirmada(citaId: string) {
           Se ha confirmado una nueva consulta jurídica en <strong>Tranqi</strong>.
         </p>
         <div style="font-size:0.82rem;background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;padding:10px 12px;margin:6px 0;">
-          <strong>👤 Cliente:</strong> ${clienteNombre} (${cliRes.data?.usu_correo || "—"})<br/>
+          <strong>👤 Cliente:</strong> ${clienteNombre} (${cliRes.data?.usu_correo || "—"})${
+            clienteWhatsapp ? ` · 📱 ${clienteWhatsapp}` : ""
+          }<br/>
           <strong>📅 Fecha y hora:</strong> ${fechaTxt}<br/>
           <strong>📍 Modalidad:</strong> ${etiquetaModalidad}<br/>
           <strong>⚖️ Especialidad:</strong> ${materiaNombre}<br/>
@@ -310,14 +425,49 @@ async function notificarOperadoresNuevaCitaConfirmada(citaId: string) {
       </div>
     `;
 
-    await despacharNotificacionAgendaUsuarios({
-      usuarioIds: idsOperadores,
-      notIdPrefijo: `nueva-cita-${cita.cit_id.slice(0, 8)}`,
-      titulo: `📅 Nueva consulta jurídica confirmada (${esPresencial ? "Presencial" : "Telemática"})`,
-      contenidoHtml: htmlOperador,
-      urlAccion: "/panel/agendamiento?widget=asignaciones_agenda",
-      canal: "PUSH",
-    });
+    const htmlClienteReserva = `
+      <div>
+        <p style="margin:0 0 8px 0;">
+          Tu consulta jurídica en <strong>Tranqi</strong> ha quedado agendada exitosamente.
+        </p>
+        <div style="font-size:0.82rem;background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;padding:10px 12px;margin:6px 0;">
+          <strong>📅 Fecha y hora:</strong> ${fechaTxt}<br/>
+          <strong>📍 Modalidad:</strong> ${etiquetaModalidad}<br/>
+          <strong>⚖️ Especialidad:</strong> ${materiaNombre}<br/>
+          <strong>👨‍⚖️ Abogado:</strong> ${abogadoNombre ? `Dr(a). ${abogadoNombre}` : "En asignación por operaciones"}<br/>
+          ${cita.cit_motivo ? `<strong>📝 Motivo:</strong> ${cita.cit_motivo}` : ""}
+        </div>
+        <p style="margin:8px 0 0 0;font-size:0.8rem;">
+          <a href="/panel/agendamiento?widget=mis_citas" style="color:#5000BA;font-weight:800;text-decoration:underline;">
+            Ver Mis Citas Programadas →
+          </a>
+        </p>
+      </div>
+    `;
+
+    await Promise.all([
+      despacharNotificacionAgendaUsuarios({
+        usuarioIds: idsOperadores,
+        notIdPrefijo: `nueva-cita-${cita.cit_id.slice(0, 8)}`,
+        titulo: `📅 Nueva consulta jurídica confirmada (${esPresencial ? "Presencial" : "Telemática"})`,
+        contenidoHtml: htmlOperador,
+        urlAccion: "/panel/agendamiento?widget=asignaciones_agenda",
+        canal: "PUSH",
+        calendarioIcs: datosIcs,
+        copiarAgendaInstitucional: true,
+      }),
+      cita.cit_cliente_id
+        ? despacharNotificacionAgendaUsuarios({
+            usuarioIds: [String(cita.cit_cliente_id)],
+            notIdPrefijo: `nueva-cita-cli-${cita.cit_id.slice(0, 8)}`,
+            titulo: `📅 Confirmación de tu cita legal en Tranqi (${fechaTxt})`,
+            contenidoHtml: htmlClienteReserva,
+            urlAccion: "/panel/agendamiento?widget=mis_citas",
+            canal: "PUSH",
+            calendarioIcs: datosIcs,
+          })
+        : Promise.resolve(),
+    ]);
   } catch {
     // Best-effort
   }
@@ -724,8 +874,20 @@ export async function decidirCitaAction(entrada: unknown): Promise<Resultado<{ r
     return { ok: false, error: validado.error.issues[0]?.message ?? "Datos incompletos" };
   }
   const d = validado.data;
-  if (d.decision === "reagendar" && !d.nuevo_inicio) {
+  if (
+    (d.decision === "reagendar" || d.decision === "reagendar_y_aceptar") &&
+    !d.nuevo_inicio
+  ) {
     return { ok: false, error: "Indica la nueva fecha y hora" };
+  }
+  if (
+    (d.decision === "reagendar" || d.decision === "reagendar_y_aceptar") &&
+    (!d.motivo || !d.motivo.trim())
+  ) {
+    return {
+      ok: false,
+      error: "Es obligatorio ingresar un comentario/motivo para realizar el cambio de fecha u hora.",
+    };
   }
 
   const supabase = await crearClienteServidor();
@@ -737,12 +899,13 @@ export async function decidirCitaAction(entrada: unknown): Promise<Resultado<{ r
     .schema("tranqui_legal")
     .from("trq_cita")
     .select(
-      "cit_id, cit_cliente_id, cit_abogado_id, cit_inicio_en, cit_fin_en, cit_modalidad, cit_estado, cit_motivo, cit_notas, cit_asignacion",
+      "cit_id, cit_cliente_id, cit_abogado_id, cit_inicio_en, cit_fin_en, cit_modalidad, cit_estado, cit_motivo, cit_notas, cit_asignacion, cit_enlace, cit_lugar",
     )
     .eq("cit_id", d.cita_id)
     .maybeSingle();
 
   let autorNombre = authData.user?.email ?? "Abogado";
+  let autorCorreo = authData.user?.email ?? null;
   if (actorId) {
     const { data: usuActor } = await db
       .schema("comun_seguridad")
@@ -755,6 +918,61 @@ export async function decidirCitaAction(entrada: unknown): Promise<Resultado<{ r
         [usuActor.usu_nombres, usuActor.usu_apellidos].filter(Boolean).join(" ").trim() ||
         usuActor.usu_correo ||
         autorNombre;
+      autorCorreo = usuActor.usu_correo ?? autorCorreo;
+    }
+  }
+
+  // Cargar datos del cliente y abogado asignado para notificaciones y archivo .ics
+  let clienteNombre = "Cliente";
+  let clienteCorreo: string | null = null;
+  let clienteWhatsapp: string | null = null;
+  if (citaActual?.cit_cliente_id) {
+    const { data: uCli } = await db
+      .schema("comun_seguridad")
+      .from("seg_usuario")
+      .select("usu_nombres, usu_apellidos, usu_correo, usu_whatsapp, usu_detalle_usuario")
+      .eq("usu_id", citaActual.cit_cliente_id)
+      .maybeSingle();
+    if (uCli) {
+      clienteNombre =
+        [uCli.usu_nombres, uCli.usu_apellidos].filter(Boolean).join(" ").trim() ||
+        uCli.usu_correo ||
+        clienteNombre;
+      clienteCorreo = uCli.usu_correo ?? null;
+      const detCli = ((uCli.usu_detalle_usuario ?? {}) as Record<string, unknown>) || {};
+      clienteWhatsapp =
+        uCli.usu_whatsapp ||
+        (typeof detCli.whatsapp === "string" ? detCli.whatsapp : null) ||
+        (typeof detCli.celular === "string" ? detCli.celular : null) ||
+        null;
+    }
+  }
+
+  let abgUsuIdActual: string | null = null;
+  let abgNombreActual: string | null = null;
+  let abgCorreoActual: string | null = null;
+  if (citaActual?.cit_abogado_id) {
+    const { data: abgR } = await db
+      .schema("tranqui_legal")
+      .from("trq_abogado")
+      .select("abg_usuario_id")
+      .eq("abg_id", citaActual.cit_abogado_id)
+      .maybeSingle();
+    if (abgR?.abg_usuario_id) {
+      abgUsuIdActual = String(abgR.abg_usuario_id);
+      const { data: uAbg } = await db
+        .schema("comun_seguridad")
+        .from("seg_usuario")
+        .select("usu_nombres, usu_apellidos, usu_correo")
+        .eq("usu_id", abgUsuIdActual)
+        .maybeSingle();
+      if (uAbg) {
+        abgNombreActual =
+          [uAbg.usu_nombres, uAbg.usu_apellidos].filter(Boolean).join(" ").trim() ||
+          uAbg.usu_correo ||
+          "Abogado";
+        abgCorreoActual = uAbg.usu_correo ?? null;
+      }
     }
   }
 
@@ -798,7 +1016,7 @@ export async function decidirCitaAction(entrada: unknown): Promise<Resultado<{ r
 
     if (errUpd) return { ok: false, error: comoError(errUpd.message) };
 
-    await registrarEventoYEstadoGestionCita(db, d.cita_id, {
+    const seqActual = await registrarEventoYEstadoGestionCita(db, d.cita_id, {
       estado_aceptacion_abogado: "aceptada",
       motivo_aceptacion_abogado: d.motivo?.trim() || null,
       evento: {
@@ -815,21 +1033,51 @@ export async function decidirCitaAction(entrada: unknown): Promise<Resultado<{ r
     if (citaActual?.cit_cliente_id) {
       const fechaTxt = FORMATO_FECHA_CITA_EC.format(new Date(citaActual.cit_inicio_en));
       const operadoresIds = await obtenerIdsOperadoresTranqi();
+      const datosIcsConfirmacion: DatosEventoCalendarioCita = {
+        citaId: d.cita_id,
+        inicioIso: String(citaActual.cit_inicio_en),
+        finIso: citaActual.cit_fin_en ? String(citaActual.cit_fin_en) : null,
+        modalidad: String(citaActual.cit_modalidad ?? "virtual"),
+        motivo: citaActual.cit_motivo ? String(citaActual.cit_motivo) : null,
+        clienteNombre,
+        clienteCorreo,
+        clienteWhatsapp,
+        abogadoNombre: abgNombreActual || autorNombre,
+        abogadoCorreo: abgCorreoActual || autorCorreo,
+        enlaceVideollamada: citaActual.cit_enlace ? String(citaActual.cit_enlace) : null,
+        lugarPresencial: citaActual.cit_lugar ? String(citaActual.cit_lugar) : null,
+        sequence: seqActual,
+        metodo: "REQUEST",
+        comentarioCambio: d.motivo?.trim() || null,
+      };
+
+      const idsNotifAbgCli = Array.from(
+        new Set([citaActual.cit_cliente_id, actorId, abgUsuIdActual].filter(Boolean) as string[]),
+      );
+
       await Promise.all([
         despacharNotificacionAgendaUsuarios({
-          usuarioIds: [citaActual.cit_cliente_id],
+          usuarioIds: idsNotifAbgCli,
           notIdPrefijo: `conf-abg-cli-${d.cita_id.slice(0, 8)}-${Date.now().toString().slice(-4)}`,
-          titulo: `✅ Tu abogado Dr(a). ${autorNombre} confirmó la cita`,
-          contenidoHtml: `<div><p style="margin:0 0 6px 0;">Dr(a). <strong>${autorNombre}</strong> ha confirmado tu consulta del <strong>${fechaTxt}</strong>.</p>${d.motivo ? `<p style="margin:0;font-size:0.82rem;color:#334155;">💬 Mensaje del abogado: "${d.motivo}"</p>` : ""}</div>`,
+          titulo: `✅ Cita legal confirmada con Dr(a). ${autorNombre} (${fechaTxt})`,
+          contenidoHtml: `<div><p style="margin:0 0 6px 0;">Dr(a). <strong>${autorNombre}</strong> ha confirmado la consulta jurídica del <strong>${fechaTxt}</strong>.</p><p style="margin:0 0 6px 0;font-size:0.82rem;color:#334155;">👤 Cliente: <strong>${clienteNombre}</strong>${
+            clienteWhatsapp ? ` · 📱 Cel/WhatsApp: <strong>${clienteWhatsapp}</strong>` : ""
+          }</p>${
+            d.motivo
+              ? `<p style="margin:0;font-size:0.82rem;color:#334155;">💬 Comentario en Tracking: "${d.motivo}"</p>`
+              : ""
+          }</div>`,
           urlAccion: "/panel/agendamiento?widget=mis_citas",
           canal: "PUSH",
+          calendarioIcs: datosIcsConfirmacion,
+          copiarAgendaInstitucional: true,
         }),
         operadoresIds.length > 0
           ? despacharNotificacionAgendaUsuarios({
               usuarioIds: operadoresIds,
               notIdPrefijo: `conf-abg-op-${d.cita_id.slice(0, 8)}-${Date.now().toString().slice(-4)}`,
               titulo: `✅ Cita aceptada por Dr(a). ${autorNombre}`,
-              contenidoHtml: `<div><p style="margin:0;">El abogado asignado aceptó la consulta programada para <strong>${fechaTxt}</strong>.${d.motivo ? ` Nota: "${d.motivo}"` : ""}</p></div>`,
+              contenidoHtml: `<div><p style="margin:0;">El abogado asignado aceptó la consulta programada para <strong>${fechaTxt}</strong> con el cliente <strong>${clienteNombre}</strong>.${d.motivo ? ` Nota: "${d.motivo}"` : ""}</p></div>`,
               urlAccion: "/panel/agendamiento?widget=asignaciones_agenda",
               canal: "IN_APP",
             })
@@ -940,7 +1188,200 @@ export async function decidirCitaAction(entrada: unknown): Promise<Resultado<{ r
     return { ok: true, data: { resultado: "en_contingencia" } };
   }
 
-  // Caso 3: Otras decisiones (reagendar, cancelar por cliente/abogado, marcar_realizada, marcar_no_asistio)
+  // Caso 2.B: Cambio de fecha/hora (Reagendar o Cambiar Hora y Aceptar en 1 paso)
+  // Reglas de negocio:
+  // - Comentario obligatorio (validado arriba).
+  // - Permitido libremente hasta 1 hora antes de la hora programada de la cita.
+  // - Registra evento en el Tracking (Línea de Tiempo).
+  // - Notifica en plataforma y por correo (con archivo .ics SEQUENCE incrementado) a Cliente, Abogado y Agenda Institucional Tranqi.
+  if (d.decision === "reagendar" || d.decision === "reagendar_y_aceptar") {
+    if (!citaActual) {
+      return { ok: false, error: "No se encontró la cita que deseas modificar." };
+    }
+
+    const inicioActualMs = new Date(citaActual.cit_inicio_en).getTime();
+    const ahoraMs = Date.now();
+    // Si la cita es futura y falta menos de 1 hora (60 min) para su inicio, bloquear el cambio libre
+    if (inicioActualMs > ahoraMs && inicioActualMs - ahoraMs < 60 * 60 * 1000) {
+      return {
+        ok: false,
+        error:
+          "El cambio de fecha/hora solo se puede realizar libremente hasta 1 hora antes de la hora programada de la cita.",
+      };
+    }
+
+    const nuevoInicioDate = new Date(d.nuevo_inicio!);
+    if (Number.isNaN(nuevoInicioDate.getTime()) || nuevoInicioDate.getTime() <= ahoraMs - 5 * 60 * 1000) {
+      return {
+        ok: false,
+        error: "Selecciona una fecha y hora futura válida para la reunión.",
+      };
+    }
+
+    const duracionMs =
+      citaActual.cit_fin_en && new Date(citaActual.cit_fin_en).getTime() > inicioActualMs
+        ? new Date(citaActual.cit_fin_en).getTime() - inicioActualMs
+        : 45 * 60 * 1000;
+    const nuevoFinIso = new Date(nuevoInicioDate.getTime() + duracionMs).toISOString();
+    const nuevoInicioIso = nuevoInicioDate.toISOString();
+    const fechaAnteriorTxt = FORMATO_FECHA_CITA_EC.format(new Date(citaActual.cit_inicio_en));
+    const nuevaFechaTxt = FORMATO_FECHA_CITA_EC.format(nuevoInicioDate);
+    const comentarioLimpio = d.motivo!.trim();
+    const confirmarTambien = d.decision === "reagendar_y_aceptar";
+
+    const rolAutor: "ABOGADO" | "CLIENTE" | "OPERADOR" =
+      actorId && citaActual.cit_cliente_id === actorId
+        ? "CLIENTE"
+        : abgActorId
+        ? "ABOGADO"
+        : "OPERADOR";
+
+    const cambiosCitaReagendar: {
+      cit_inicio_en: string;
+      cit_fin_en: string;
+      cit_estado: string;
+      cit_actualizado_en: string;
+      cit_asignacion?: string;
+      cit_abogado_id?: string | null;
+      cit_notas?: string;
+    } = {
+      cit_inicio_en: nuevoInicioIso,
+      cit_fin_en: nuevoFinIso,
+      cit_estado: confirmarTambien ? "confirmada" : "reagendada",
+      cit_actualizado_en: ahoraIso,
+      cit_notas: [
+        citaActual.cit_notas,
+        `[Cambio de fecha/hora por ${autorNombre}: ${nuevaFechaTxt} — ${comentarioLimpio}]`,
+      ]
+        .filter(Boolean)
+        .join("\n"),
+    };
+
+    if (confirmarTambien) {
+      cambiosCitaReagendar.cit_asignacion = "operador";
+      if (!citaActual.cit_abogado_id && abgActorId) {
+        cambiosCitaReagendar.cit_abogado_id = abgActorId;
+      }
+    }
+
+    const { error: errUpdHorario } = await db
+      .schema("tranqui_legal")
+      .from("trq_cita")
+      .update(cambiosCitaReagendar)
+      .eq("cit_id", d.cita_id);
+
+    if (errUpdHorario) {
+      return { ok: false, error: comoError(errUpdHorario.message) };
+    }
+
+    const nuevaSecuencia = await registrarEventoYEstadoGestionCita(db, d.cita_id, {
+      ...(confirmarTambien
+        ? {
+            estado_aceptacion_abogado: "aceptada",
+            motivo_aceptacion_abogado: comentarioLimpio,
+          }
+        : {}),
+      incrementar_sequence_calendario: true,
+      evento: {
+        id: crypto.randomUUID(),
+        fecha: ahoraIso,
+        tipo: "REAGENDAMIENTO",
+        autor_nombre: autorNombre,
+        autor_rol: rolAutor,
+        resumen: confirmarTambien
+          ? `Dr(a). ${autorNombre} cambió la fecha/hora a ${nuevaFechaTxt} y confirmó la cita (antes: ${fechaAnteriorTxt})`
+          : `${autorNombre} (${rolAutor}) reprogramó la fecha/hora para ${nuevaFechaTxt} (antes: ${fechaAnteriorTxt})`,
+        mensaje: comentarioLimpio,
+      },
+    });
+
+    const operadoresIds = await obtenerIdsOperadoresTranqi();
+    const destinatariosPrincipales = Array.from(
+      new Set(
+        [citaActual.cit_cliente_id, abgUsuIdActual, actorId].filter(Boolean) as string[],
+      ),
+    );
+
+    const esPresencial = citaActual.cit_modalidad === "presencial";
+    const etiquetaModalidad = esPresencial ? "Presencial en Oficina" : "Telemática (Videollamada)";
+
+    const datosIcsReagendada: DatosEventoCalendarioCita = {
+      citaId: d.cita_id,
+      inicioIso: nuevoInicioIso,
+      finIso: nuevoFinIso,
+      modalidad: String(citaActual.cit_modalidad ?? "virtual"),
+      motivo: citaActual.cit_motivo ? String(citaActual.cit_motivo) : null,
+      clienteNombre,
+      clienteCorreo,
+      clienteWhatsapp,
+      abogadoNombre: abgNombreActual || (rolAutor === "ABOGADO" ? autorNombre : null),
+      abogadoCorreo: abgCorreoActual || (rolAutor === "ABOGADO" ? autorCorreo : null),
+      enlaceVideollamada: citaActual.cit_enlace ? String(citaActual.cit_enlace) : null,
+      lugarPresencial: citaActual.cit_lugar ? String(citaActual.cit_lugar) : null,
+      sequence: nuevaSecuencia,
+      metodo: "REQUEST",
+      comentarioCambio: comentarioLimpio,
+    };
+
+    const htmlCambioHora = `
+      <div>
+        <p style="margin:0 0 8px 0;">
+          Se ha actualizado la fecha y hora de la consulta jurídica en <strong>Tranqi</strong>${
+            confirmarTambien ? " y el abogado ha <strong>confirmado su asistencia</strong>" : ""
+          }.
+        </p>
+        <div style="font-size:0.82rem;background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;padding:10px 12px;margin:6px 0;">
+          <strong>📅 Nueva fecha y hora:</strong> <span style="color:#05876E;font-weight:800;">${nuevaFechaTxt}</span><br/>
+          <strong>🕒 Horario anterior:</strong> <span style="text-decoration:line-through;color:#64748B;">${fechaAnteriorTxt}</span><br/>
+          <strong>📍 Modalidad:</strong> ${etiquetaModalidad}<br/>
+          <strong>👤 Cliente:</strong> ${clienteNombre}${
+            clienteWhatsapp ? ` (📱 ${clienteWhatsapp})` : ""
+          }<br/>
+          <strong>👨‍⚖️ Abogado:</strong> ${
+            abgNombreActual ? `Dr(a). ${abgNombreActual}` : rolAutor === "ABOGADO" ? `Dr(a). ${autorNombre}` : "Por confirmar"
+          }<br/>
+          <strong>💬 Comentario (${autorNombre} - ${rolAutor}):</strong> "${comentarioLimpio}"
+        </div>
+        <p style="margin:8px 0 0 0;font-size:0.8rem;">
+          <a href="/panel/agendamiento" style="color:#5000BA;font-weight:800;text-decoration:underline;">
+            Ver Tracking y Detalle en Tranqi →
+          </a>
+        </p>
+      </div>
+    `;
+
+    await Promise.all([
+      despacharNotificacionAgendaUsuarios({
+        usuarioIds: destinatariosPrincipales,
+        notIdPrefijo: `reag-cita-${d.cita_id.slice(0, 8)}-${Date.now().toString().slice(-4)}`,
+        titulo: `🔄 Cambio de fecha/hora de cita legal: ${nuevaFechaTxt}`,
+        contenidoHtml: htmlCambioHora,
+        urlAccion: "/panel/agendamiento?widget=mis_citas",
+        canal: "PUSH",
+        calendarioIcs: datosIcsReagendada,
+        copiarAgendaInstitucional: true,
+      }),
+      operadoresIds.length > 0
+        ? despacharNotificacionAgendaUsuarios({
+            usuarioIds: operadoresIds.filter((id) => !destinatariosPrincipales.includes(id)),
+            notIdPrefijo: `reag-op-${d.cita_id.slice(0, 8)}-${Date.now().toString().slice(-4)}`,
+            titulo: `🔄 Cita reprogramada (${clienteNombre}): ${nuevaFechaTxt}`,
+            contenidoHtml: htmlCambioHora,
+            urlAccion: "/panel/agendamiento?widget=asignaciones_agenda",
+            canal: "IN_APP",
+            calendarioIcs: datosIcsReagendada,
+          })
+        : Promise.resolve(),
+    ]);
+
+    revalidatePath("/panel/agenda");
+    revalidatePath("/panel/agendamiento");
+    revalidatePath("/panel/mis-citas");
+    revalidatePath("/panel/agenda/asignaciones");
+    return { ok: true, data: { resultado: confirmarTambien ? "confirmada" : "reagendada" } };
+  }
+
+  // Caso 3: Otras decisiones (cancelar por cliente/abogado, marcar_realizada, marcar_no_asistio)
   const { data, error } = await supabase.schema("tranqui_legal").rpc("trq_fn_decidir_cita", {
     p_cita_id: d.cita_id,
     p_decision: d.decision,
@@ -957,10 +1398,6 @@ export async function decidirCitaAction(entrada: unknown): Promise<Resultado<{ r
     } = { cit_actualizado_en: ahoraIso };
     if (d.decision === "marcar_realizada") cambiosDirectos.cit_estado = "realizada";
     else if (d.decision === "cancelar") cambiosDirectos.cit_estado = "cancelada";
-    else if (d.decision === "reagendar" && d.nuevo_inicio) {
-      cambiosDirectos.cit_inicio_en = d.nuevo_inicio;
-      cambiosDirectos.cit_estado = "reagendada";
-    }
     const { error: errDirecto } = await db
       .schema("tranqui_legal")
       .from("trq_cita")
@@ -970,22 +1407,58 @@ export async function decidirCitaAction(entrada: unknown): Promise<Resultado<{ r
     if (errDirecto) return { ok: false, error: comoError(error.message) };
   }
 
-  await registrarEventoYEstadoGestionCita(db, d.cita_id, {
+  const seqPosterior = await registrarEventoYEstadoGestionCita(db, d.cita_id, {
+    incrementar_sequence_calendario: d.decision === "cancelar",
     evento: {
       id: crypto.randomUUID(),
       fecha: ahoraIso,
-      tipo: d.decision === "reagendar" ? "REAGENDAMIENTO" : "GESTION_REUNION",
+      tipo: "GESTION_REUNION",
       autor_nombre: autorNombre,
       autor_rol: actorId && citaActual?.cit_cliente_id === actorId ? "CLIENTE" : "ABOGADO",
       resumen:
-        d.decision === "reagendar"
-          ? `Cita reagendada por ${autorNombre}`
-          : d.decision === "marcar_realizada"
-          ? `Cita marcada como realizada por ${autorNombre}`
+        d.decision === "marcar_realizada"
+          ? `Cita marcada como ejecutada/realizada por ${autorNombre}`
+          : d.decision === "cancelar"
+          ? `Cita cancelada por ${autorNombre}`
           : `Estado actualizado (${d.decision}) por ${autorNombre}`,
       mensaje: d.motivo?.trim() || null,
     },
   });
+
+  if (d.decision === "cancelar" && citaActual) {
+    const fechaTxt = FORMATO_FECHA_CITA_EC.format(new Date(citaActual.cit_inicio_en));
+    const destinatariosCancelacion = Array.from(
+      new Set([citaActual.cit_cliente_id, abgUsuIdActual].filter(Boolean) as string[]),
+    );
+    const datosIcsCancel: DatosEventoCalendarioCita = {
+      citaId: d.cita_id,
+      inicioIso: String(citaActual.cit_inicio_en),
+      finIso: citaActual.cit_fin_en ? String(citaActual.cit_fin_en) : null,
+      modalidad: String(citaActual.cit_modalidad ?? "virtual"),
+      motivo: citaActual.cit_motivo ? String(citaActual.cit_motivo) : null,
+      clienteNombre,
+      clienteCorreo,
+      clienteWhatsapp,
+      abogadoNombre: abgNombreActual,
+      abogadoCorreo: abgCorreoActual,
+      sequence: seqPosterior,
+      metodo: "CANCEL",
+      comentarioCambio: d.motivo?.trim() || "Cita cancelada",
+    };
+
+    await despacharNotificacionAgendaUsuarios({
+      usuarioIds: destinatariosCancelacion,
+      notIdPrefijo: `canc-cita-${d.cita_id.slice(0, 8)}-${Date.now().toString().slice(-4)}`,
+      titulo: `❌ Cita legal cancelada (${fechaTxt})`,
+      contenidoHtml: `<div><p style="margin:0 0 6px 0;">La consulta programada para <strong>${fechaTxt}</strong> fue cancelada por <strong>${autorNombre}</strong>.</p>${
+        d.motivo ? `<p style="margin:0;font-size:0.82rem;">💬 Motivo: "${d.motivo}"</p>` : ""
+      }</div>`,
+      urlAccion: "/panel/agendamiento?widget=mis_citas",
+      canal: "PUSH",
+      calendarioIcs: datosIcsCancel,
+      copiarAgendaInstitucional: true,
+    });
+  }
 
   revalidatePath("/panel/agenda");
   revalidatePath("/panel/agendamiento");
@@ -1003,9 +1476,10 @@ async function registrarEventoYEstadoGestionCita(
     notas_reunion?: string | null;
     siguientes_pasos?: GestionReunionCita["siguientes_pasos"];
     documentos_adjuntos?: GestionReunionCita["documentos_adjuntos"];
+    incrementar_sequence_calendario?: boolean;
     evento?: EventoLogCita;
   },
-) {
+): Promise<number> {
   try {
     const ahoraIso = new Date().toISOString();
     const { data: cfgRow } = await db
@@ -1027,12 +1501,16 @@ async function registrarEventoYEstadoGestionCita(
       siguientes_pasos: [],
       documentos_adjuntos: [],
       eventos_log: [],
+      sequence_calendario: 0,
       actualizado_en: ahoraIso,
     };
 
     const nuevosEventos = cambios.evento
       ? [cambios.evento, ...(actual.eventos_log ?? [])].slice(0, 100)
       : actual.eventos_log ?? [];
+
+    const seqPrevio = typeof actual.sequence_calendario === "number" ? actual.sequence_calendario : 0;
+    const nuevoSeq = cambios.incrementar_sequence_calendario ? seqPrevio + 1 : seqPrevio;
 
     const actualizado: GestionReunionCita = {
       ...actual,
@@ -1051,6 +1529,7 @@ async function registrarEventoYEstadoGestionCita(
           ? cambios.documentos_adjuntos
           : actual.documentos_adjuntos,
       eventos_log: nuevosEventos,
+      sequence_calendario: nuevoSeq,
       actualizado_en: ahoraIso,
     };
 
@@ -1068,8 +1547,10 @@ async function registrarEventoYEstadoGestionCita(
         cfg_actualizado_en: ahoraIso,
       })
       .eq("cfg_negocio", NEGOCIO);
+    return nuevoSeq;
   } catch {
     // Best-effort log persistence
+    return 1;
   }
 }
 
@@ -1143,26 +1624,51 @@ export async function reasignarCitaAction(
   const usuRes = await db
     .schema("comun_seguridad")
     .from("seg_usuario")
-    .select("usu_id, usu_nombres, usu_apellidos, usu_correo")
+    .select("usu_id, usu_nombres, usu_apellidos, usu_correo, usu_whatsapp, usu_detalle_usuario")
     .in("usu_id", idsUsuarios);
 
-  const mapaUsu = new Map<string, { nombre: string; correo: string | null }>();
+  const mapaUsu = new Map<
+    string,
+    { nombre: string; correo: string | null; whatsapp: string | null }
+  >();
   for (const u of (usuRes.data ?? []) as Array<{
     usu_id: string;
     usu_nombres?: string | null;
     usu_apellidos?: string | null;
     usu_correo?: string | null;
+    usu_whatsapp?: string | null;
+    usu_detalle_usuario?: Record<string, unknown> | null;
   }>) {
+    const det = (u.usu_detalle_usuario ?? {}) as Record<string, unknown>;
+    const wsp =
+      u.usu_whatsapp ||
+      (typeof det.whatsapp === "string" ? det.whatsapp : null) ||
+      (typeof det.celular === "string" ? det.celular : null) ||
+      (typeof det.telefono === "string" ? det.telefono : null) ||
+      null;
     mapaUsu.set(u.usu_id, {
       nombre: [u.usu_nombres, u.usu_apellidos].filter(Boolean).join(" ").trim() || u.usu_correo || "Usuario",
       correo: u.usu_correo ?? null,
+      whatsapp: wsp,
     });
   }
 
-  const clienteInfo = mapaUsu.get(citaActual.cit_cliente_id) ?? { nombre: "Cliente", correo: null };
-  const abgNuevoInfo = mapaUsu.get(abgDestino.abg_usuario_id) ?? { nombre: "Abogado", correo: null };
+  const clienteInfo = mapaUsu.get(citaActual.cit_cliente_id) ?? {
+    nombre: "Cliente",
+    correo: null,
+    whatsapp: null,
+  };
+  const abgNuevoInfo = mapaUsu.get(abgDestino.abg_usuario_id) ?? {
+    nombre: "Abogado",
+    correo: null,
+    whatsapp: null,
+  };
   const abgAntInfo = abgAnteriorUsuId ? (mapaUsu.get(abgAnteriorUsuId) ?? null) : null;
-  const operadorInfo = mapaUsu.get(operadorId) ?? { nombre: "Operador", correo: authData.user?.email ?? null };
+  const operadorInfo = mapaUsu.get(operadorId) ?? {
+    nombre: "Operador",
+    correo: authData.user?.email ?? null,
+    whatsapp: null,
+  };
   const materiaNombre = "General";
 
   // 1. Intentar RPC trq_fn_reasignar_cita y asegurar actualización en tranqui_legal.trq_cita
@@ -1223,6 +1729,7 @@ export async function reasignarCitaAction(
     notificado_abogado: true,
   };
 
+  let secuenciaAsignacion = 1;
   try {
     const { data: cfgRow } = await db
       .schema("comun_configuracion")
@@ -1248,8 +1755,11 @@ export async function reasignarCitaAction(
       siguientes_pasos: [],
       documentos_adjuntos: [],
       eventos_log: [],
+      sequence_calendario: 0,
       actualizado_en: ahoraIso,
     };
+
+    secuenciaAsignacion = (typeof gestionActual.sequence_calendario === "number" ? gestionActual.sequence_calendario : 0) + 1;
 
     const eventoAsignacion: EventoLogCita = {
       id: `asig-${nuevoLog.id}`,
@@ -1266,6 +1776,7 @@ export async function reasignarCitaAction(
       estado_aceptacion_abogado: "pendiente",
       motivo_aceptacion_abogado: d.motivo?.trim() || null,
       eventos_log: [eventoAsignacion, ...(gestionActual.eventos_log ?? [])].slice(0, 100),
+      sequence_calendario: secuenciaAsignacion,
       actualizado_en: ahoraIso,
     };
 
@@ -1288,10 +1799,29 @@ export async function reasignarCitaAction(
     // Continuar con despacho de notificaciones
   }
 
-  // 3. Generar notificación al Cliente y al Abogado indicando la asignación
+  // 3. Generar notificación + Invitación/Actualización de Calendario (.ics) al Cliente, Abogado y Agenda Institucional Tranqi
   const fechaCitaTxt = FORMATO_FECHA_CITA_EC.format(new Date(citaActual.cit_inicio_en));
   const esPresencial = citaActual.cit_modalidad === "presencial";
   const etiquetaModalidad = esPresencial ? "Presencial en Oficina" : "Telemática (Videollamada)";
+
+  const datosIcsAsignacion: DatosEventoCalendarioCita = {
+    citaId: d.cita_id,
+    inicioIso: String(citaActual.cit_inicio_en),
+    finIso: citaActual.cit_fin_en ? String(citaActual.cit_fin_en) : null,
+    modalidad: String(citaActual.cit_modalidad ?? "virtual"),
+    materiaNombre,
+    motivo: citaActual.cit_motivo ? String(citaActual.cit_motivo) : null,
+    clienteNombre: clienteInfo.nombre,
+    clienteCorreo: clienteInfo.correo,
+    clienteWhatsapp: clienteInfo.whatsapp,
+    abogadoNombre: abgNuevoInfo.nombre,
+    abogadoCorreo: abgNuevoInfo.correo,
+    enlaceVideollamada: citaActual.cit_enlace ? String(citaActual.cit_enlace) : null,
+    lugarPresencial: citaActual.cit_lugar ? String(citaActual.cit_lugar) : null,
+    sequence: secuenciaAsignacion,
+    metodo: "REQUEST",
+    comentarioCambio: d.motivo?.trim() || `Asignado a Dr(a). ${abgNuevoInfo.nombre}`,
+  };
 
   const htmlCliente = `
     <div>
@@ -1307,7 +1837,7 @@ export async function reasignarCitaAction(
       </div>
       <p style="margin:8px 0 0 0;font-size:0.8rem;">
         <a href="/panel/agendamiento?widget=mis_citas" style="color:#5000BA;font-weight:800;text-decoration:underline;">
-          Ver detalle en Mis Citas →
+          Ver detalle y Tracking en Mis Citas →
         </a>
       </p>
     </div>
@@ -1319,7 +1849,9 @@ export async function reasignarCitaAction(
         Se te ha asignado una consulta jurídica en tu agenda de <strong>Tranqi</strong>.
       </p>
       <div style="font-size:0.82rem;background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;padding:10px 12px;margin:6px 0;">
-        <strong>👤 Cliente:</strong> ${clienteInfo.nombre} (${clienteInfo.correo || "—"})<br/>
+        <strong>👤 Cliente:</strong> ${clienteInfo.nombre} (${clienteInfo.correo || "—"})${
+          clienteInfo.whatsapp ? ` · 📱 Cel/WhatsApp: <strong>${clienteInfo.whatsapp}</strong>` : ""
+        }<br/>
         <strong>⚖️ Especialidad:</strong> ${materiaNombre}<br/>
         <strong>📅 Fecha y hora:</strong> ${fechaCitaTxt}<br/>
         <strong>📍 Modalidad:</strong> ${etiquetaModalidad}<br/>
@@ -1342,6 +1874,7 @@ export async function reasignarCitaAction(
       contenidoHtml: htmlCliente,
       urlAccion: "/panel/agendamiento?widget=mis_citas",
       canal: "PUSH",
+      calendarioIcs: datosIcsAsignacion,
     }),
     despacharNotificacionAgendaUsuarios({
       usuarioIds: [abgDestino.abg_usuario_id],
@@ -1350,7 +1883,24 @@ export async function reasignarCitaAction(
       contenidoHtml: htmlAbogado,
       urlAccion: "/panel/agendamiento?widget=citas_programadas",
       canal: "PUSH",
+      calendarioIcs: datosIcsAsignacion,
+      copiarAgendaInstitucional: true,
     }),
+    abgAnteriorUsuId && abgAnteriorUsuId !== abgDestino.abg_usuario_id
+      ? despacharNotificacionAgendaUsuarios({
+          usuarioIds: [abgAnteriorUsuId],
+          notIdPrefijo: `reasig-ant-${d.cita_id.slice(0, 8)}-${Date.now().toString().slice(-4)}`,
+          titulo: `🔄 Cita reasignada a otro profesional (${fechaCitaTxt})`,
+          contenidoHtml: `<div><p style="margin:0;">La consulta con <strong>${clienteInfo.nombre}</strong> del <strong>${fechaCitaTxt}</strong> fue reasignada a Dr(a). <strong>${abgNuevoInfo.nombre}</strong>.</p></div>`,
+          urlAccion: "/panel/agendamiento?widget=citas_programadas",
+          canal: "IN_APP",
+          calendarioIcs: {
+            ...datosIcsAsignacion,
+            metodo: "CANCEL",
+            comentarioCambio: `Reasignada a Dr(a). ${abgNuevoInfo.nombre}`,
+          },
+        })
+      : Promise.resolve(),
   ]);
 
   revalidatePath("/panel/agenda/asignaciones");
@@ -2034,6 +2584,165 @@ export async function obtenerAsignacionesWidgetAction() {
     return {
       ok: false as const,
       error: err instanceof Error ? err.message : "No se pudieron cargar las citas y asignaciones.",
+    };
+  }
+}
+
+export async function registrarComentarioTrackingCitaAction(entrada: {
+  cita_id: string;
+  comentario: string;
+  rol_forzado?: "ABOGADO" | "CLIENTE" | "OPERADOR";
+}): Promise<Resultado<{ evento: EventoLogCita }>> {
+  const comentario = (entrada.comentario ?? "").trim();
+  if (!entrada.cita_id || !comentario) {
+    return { ok: false, error: "Escribe un comentario para registrarlo en el Tracking." };
+  }
+
+  try {
+    const supabase = await crearClienteServidor();
+    const db = crearClienteAdmin() ?? supabase;
+    const { data: authData } = await supabase.auth.getUser();
+    const actorId = authData.user?.id;
+    if (!actorId) {
+      return { ok: false, error: "Debes iniciar sesión para registrar en el Tracking." };
+    }
+
+    const [{ data: usuActor }, { data: cita }, { data: abgRow }] = await Promise.all([
+      db
+        .schema("comun_seguridad")
+        .from("seg_usuario")
+        .select("usu_nombres, usu_apellidos, usu_correo")
+        .eq("usu_id", actorId)
+        .maybeSingle(),
+      db
+        .schema("tranqui_legal")
+        .from("trq_cita")
+        .select("cit_id, cit_cliente_id, cit_abogado_id")
+        .eq("cit_id", entrada.cita_id)
+        .maybeSingle(),
+      db
+        .schema("tranqui_legal")
+        .from("trq_abogado")
+        .select("abg_id")
+        .eq("abg_usuario_id", actorId)
+        .maybeSingle(),
+    ]);
+
+    const autorNombre =
+      [usuActor?.usu_nombres, usuActor?.usu_apellidos].filter(Boolean).join(" ").trim() ||
+      usuActor?.usu_correo ||
+      authData.user?.email ||
+      "Usuario";
+
+    const autorRol: "ABOGADO" | "CLIENTE" | "OPERADOR" =
+      entrada.rol_forzado ||
+      (abgRow?.abg_id
+        ? "ABOGADO"
+        : cita?.cit_cliente_id === actorId
+        ? "CLIENTE"
+        : "OPERADOR");
+
+    const nuevoEvento: EventoLogCita = {
+      id: crypto.randomUUID(),
+      fecha: new Date().toISOString(),
+      tipo: "GESTION_REUNION",
+      autor_nombre: autorNombre,
+      autor_rol: autorRol,
+      resumen: `Nota registrada en Tracking por ${autorNombre}`,
+      mensaje: comentario,
+    };
+
+    await registrarEventoYEstadoGestionCita(db, entrada.cita_id, {
+      evento: nuevoEvento,
+    });
+
+    revalidatePath("/panel/agendamiento");
+    revalidatePath("/panel/agenda");
+    revalidatePath("/panel/mis-citas");
+    return { ok: true, data: { evento: nuevoEvento } };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : "No se pudo registrar el comentario en el Tracking.",
+    };
+  }
+}
+
+export async function actualizarContactoClienteCitaAction(entrada: {
+  cita_id: string;
+  cliente_id: string;
+  whatsapp: string;
+}): Promise<Resultado<{ whatsapp: string }>> {
+  const wsp = (entrada.whatsapp ?? "").trim();
+  if (!entrada.cliente_id || !wsp) {
+    return { ok: false, error: "Ingresa un número de celular / WhatsApp válido." };
+  }
+
+  try {
+    const supabase = await crearClienteServidor();
+    const db = crearClienteAdmin() ?? supabase;
+    const { data: authData } = await supabase.auth.getUser();
+    const actorId = authData.user?.id;
+    if (!actorId) {
+      return { ok: false, error: "Debes iniciar sesión para actualizar datos de contacto." };
+    }
+
+    const ahoraIso = new Date().toISOString();
+    const { data: uCli } = await db
+      .schema("comun_seguridad")
+      .from("seg_usuario")
+      .select("usu_detalle_usuario")
+      .eq("usu_id", entrada.cliente_id)
+      .maybeSingle();
+
+    const detPrevio = ((uCli?.usu_detalle_usuario ?? {}) as Record<string, unknown>) || {};
+
+    await db
+      .schema("comun_seguridad")
+      .from("seg_usuario")
+      .update({
+        usu_whatsapp: wsp,
+        usu_detalle_usuario: {
+          ...detPrevio,
+          whatsapp: wsp,
+          celular: wsp,
+        } as never,
+        usu_actualizado_en: ahoraIso,
+      })
+      .eq("usu_id", entrada.cliente_id);
+
+    const { data: usuActor } = await db
+      .schema("comun_seguridad")
+      .from("seg_usuario")
+      .select("usu_nombres, usu_apellidos, usu_correo")
+      .eq("usu_id", actorId)
+      .maybeSingle();
+
+    const autorNombre =
+      [usuActor?.usu_nombres, usuActor?.usu_apellidos].filter(Boolean).join(" ").trim() ||
+      usuActor?.usu_correo ||
+      "Abogado";
+
+    await registrarEventoYEstadoGestionCita(db, entrada.cita_id, {
+      evento: {
+        id: crypto.randomUUID(),
+        fecha: ahoraIso,
+        tipo: "GESTION_REUNION",
+        autor_nombre: autorNombre,
+        autor_rol: "ABOGADO",
+        resumen: `Celular / WhatsApp del cliente actualizado a ${wsp}`,
+        mensaje: `Contacto directo registrado: ${wsp}`,
+      },
+    });
+
+    revalidatePath("/panel/agendamiento");
+    revalidatePath("/panel/agenda");
+    revalidatePath("/panel/mis-citas");
+    return { ok: true, data: { whatsapp: wsp } };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : "No se pudo actualizar el celular del cliente.",
     };
   }
 }

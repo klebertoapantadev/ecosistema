@@ -95,6 +95,7 @@ export interface GestionReunionCita {
   siguientes_pasos: SiguientePasoCita[];
   documentos_adjuntos: DocumentoAdjuntoCita[];
   eventos_log: EventoLogCita[];
+  sequence_calendario?: number;
   actualizado_en: string | null;
 }
 
@@ -117,8 +118,11 @@ export interface CitaResumen {
   cit_detalle_cita?: Record<string, unknown> | null;
   cliente_nombre?: string;
   cliente_correo?: string | null;
+  cliente_whatsapp?: string | null;
+  cliente_cedula?: string | null;
   abogado_nombre?: string | null;
   abogado_correo?: string | null;
+  abogado_whatsapp?: string | null;
   materia_nombre?: string | null;
   gestion_reunion?: GestionReunionCita;
   caso_vinculado?: CasoExpedienteResumen | null;
@@ -688,25 +692,45 @@ async function enriquecerCitasConExpedienteYLog(filasRaw: Array<Record<string, u
     ]),
   );
 
-  const mapaUsuarios = new Map<string, { nombre: string; correo: string | null }>();
+  const mapaUsuarios = new Map<
+    string,
+    { nombre: string; correo: string | null; whatsapp: string | null; cedula: string | null }
+  >();
   if (idsUsuarios.length > 0) {
     const { data: usuRows } = await db
       .schema("comun_seguridad")
       .from("seg_usuario")
-      .select("usu_id, usu_nombres, usu_apellidos, usu_correo")
+      .select("usu_id, usu_nombres, usu_apellidos, usu_correo, usu_whatsapp, usu_cedula, usu_detalle_usuario")
       .in("usu_id", idsUsuarios);
     for (const u of (usuRows ?? []) as Array<{
       usu_id: string;
       usu_nombres?: string | null;
       usu_apellidos?: string | null;
       usu_correo?: string | null;
+      usu_whatsapp?: string | null;
+      usu_cedula?: string | null;
+      usu_detalle_usuario?: Record<string, unknown> | null;
     }>) {
+      const det = (u.usu_detalle_usuario ?? {}) as Record<string, unknown>;
+      const whatsappExtraido =
+        u.usu_whatsapp ||
+        (typeof det.whatsapp === "string" && det.whatsapp.trim() ? det.whatsapp.trim() : null) ||
+        (typeof det.celular === "string" && det.celular.trim() ? det.celular.trim() : null) ||
+        (typeof det.telefono === "string" && det.telefono.trim() ? det.telefono.trim() : null) ||
+        null;
+      const cedulaExtraida =
+        u.usu_cedula ||
+        (typeof det.cedula === "string" && det.cedula.trim() ? det.cedula.trim() : null) ||
+        null;
+
       mapaUsuarios.set(u.usu_id, {
         nombre:
           [u.usu_nombres, u.usu_apellidos].filter(Boolean).join(" ").trim() ||
           u.usu_correo ||
           "Usuario",
         correo: u.usu_correo ?? null,
+        whatsapp: whatsappExtraido,
+        cedula: cedulaExtraida,
       });
     }
   }
@@ -852,8 +876,11 @@ async function enriquecerCitasConExpedienteYLog(filasRaw: Array<Record<string, u
       cit_notas: c.cit_notas ? String(c.cit_notas) : null,
       cliente_nombre: cliInfo?.nombre ?? "Cliente",
       cliente_correo: cliInfo?.correo ?? null,
+      cliente_whatsapp: cliInfo?.whatsapp ?? null,
+      cliente_cedula: cliInfo?.cedula ?? null,
       abogado_nombre: tieneAbogado ? (abgInfo?.nombre ?? "Abogado asignado") : null,
       abogado_correo: tieneAbogado ? (abgInfo?.correo ?? null) : null,
+      abogado_whatsapp: tieneAbogado ? (abgInfo?.whatsapp ?? null) : null,
       materia_nombre: matId ? (mapaMaterias.get(matId) ?? "General") : "General",
       gestion_reunion: gestionCompleta,
       caso_vinculado: casoId ? (mapaCasos.get(casoId) ?? null) : null,

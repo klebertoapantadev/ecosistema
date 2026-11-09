@@ -9,9 +9,13 @@ import {
   Calendar,
   CheckCircle2,
   Clock,
+  Download,
   FileText,
   FolderOpen,
+  GitCommit,
   History,
+  MessageCircle,
+  Phone,
   Plus,
   RotateCcw,
   Save,
@@ -22,11 +26,17 @@ import {
   XCircle,
 } from "lucide-react";
 import {
+  actualizarContactoClienteCitaAction,
   decidirCitaAction,
   guardarGestionReunionYCitaAction,
   subirArchivoRespaldoCitaAction,
 } from "../acciones";
+import {
+  construirEnlacesCalendarioCita,
+  construirUrlWhatsappCliente,
+} from "../calendario-ics";
 import { ETIQUETA_COBERTURA, ETIQUETA_ESTADO_CITA } from "../esquema";
+import LineaTiempoTrackingCita from "./LineaTiempoTrackingCita";
 import type {
   CitaResumen,
   DocumentoAdjuntoCita,
@@ -81,6 +91,10 @@ export default function BandejaCitasAbogado({
   const [citaGestionAbierta, setCitaGestionAbierta] = useState<string | null>(null);
   const [citaLogAbierta, setCitaLogAbierta] = useState<string | null>(null);
   const [mensajesAsignacion, setMensajesAsignacion] = useState<Record<string, string>>({});
+  const [fechasReagendar, setFechasReagendar] = useState<Record<string, string>>({});
+  const [motivosReagendar, setMotivosReagendar] = useState<Record<string, string>>({});
+  const [editandoWhatsappCita, setEditandoWhatsappCita] = useState<string | null>(null);
+  const [nuevoWhatsappCliente, setNuevoWhatsappCliente] = useState<string>("");
   const [citasLocal, setCitasLocal] = useState<CitaResumen[]>(citas);
   const [accionEnCurso, setAccionEnCurso] = useState<{ citaId: string; decision: string } | null>(
     null,
@@ -185,6 +199,27 @@ export default function BandejaCitasAbogado({
                 },
               };
             }
+            if (decision === "reagendar" || decision === "reagendar_y_aceptar") {
+              return {
+                ...item,
+                cit_inicio_en: nuevoInicio ?? item.cit_inicio_en,
+                cit_estado: decision === "reagendar_y_aceptar" ? "confirmada" : "reagendada",
+                cit_asignacion:
+                  decision === "reagendar_y_aceptar" ? "operador" : item.cit_asignacion,
+                gestion_reunion: {
+                  ...gestionPrevia,
+                  estado_aceptacion_abogado:
+                    decision === "reagendar_y_aceptar"
+                      ? "aceptada"
+                      : gestionPrevia.estado_aceptacion_abogado,
+                  motivo_aceptacion_abogado:
+                    decision === "reagendar_y_aceptar"
+                      ? motivo?.trim() || null
+                      : gestionPrevia.motivo_aceptacion_abogado,
+                  sequence_calendario: (gestionPrevia.sequence_calendario ?? 0) + 1,
+                },
+              };
+            }
             if (decision === "marcar_realizada") {
               return {
                 ...item,
@@ -196,7 +231,17 @@ export default function BandejaCitasAbogado({
         );
 
         if (decision === "aceptar_asignacion" || decision === "confirmar") {
-          setExito("✅ Has confirmado la asignación de la cita. Se notificó al cliente y a operaciones.");
+          setExito(
+            "✅ Has confirmado la asignación de la cita. Se notificó al cliente, a operaciones y se envió invitación de calendario (.ics).",
+          );
+        } else if (decision === "reagendar_y_aceptar") {
+          setExito(
+            "✅ Fecha/hora actualizada y cita confirmada. Se registró en el Tracking y se envió actualización de calendario (.ics) al cliente, a tu correo y a la agenda institucional.",
+          );
+        } else if (decision === "reagendar") {
+          setExito(
+            "✅ Fecha/hora de la cita actualizada. Se registró en el Tracking y se envió actualización de calendario (.ics) al cliente, a tu correo y a la agenda institucional.",
+          );
         } else if (decision === "cancelar_aceptacion") {
           setExito("↩️ Has cancelado tu confirmación. La cita vuelve a estar pendiente de tu confirmación.");
         } else if (decision === "rechazar_asignacion") {
@@ -438,10 +483,214 @@ export default function BandejaCitasAbogado({
                       </span>
                     </div>
 
-                    <div style={{ fontSize: "0.85rem", color: "#334155", marginTop: "6px" }}>
-                      <strong>👤 Cliente:</strong> {c.cliente_nombre ?? "Afiliado"}{" "}
-                      {c.cliente_correo ? `(${c.cliente_correo})` : ""}
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "8px",
+                        flexWrap: "wrap",
+                        fontSize: "0.85rem",
+                        color: "#334155",
+                        marginTop: "6px",
+                      }}
+                    >
+                      <span>
+                        <strong>👤 Cliente:</strong> {c.cliente_nombre ?? "Afiliado"}{" "}
+                        {c.cliente_correo ? `(${c.cliente_correo})` : ""}
+                      </span>
+
+                      {c.cliente_whatsapp ? (
+                        <>
+                          <span
+                            style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "4px",
+                              padding: "2px 9px",
+                              borderRadius: "999px",
+                              background: "#ECFDF5",
+                              border: "1px solid #A7F3D0",
+                              color: "#065F46",
+                              fontSize: "0.76rem",
+                              fontWeight: 800,
+                            }}
+                          >
+                            <Phone size={12} />
+                            {c.cliente_whatsapp}
+                          </span>
+                          {(() => {
+                            const urlWa = construirUrlWhatsappCliente({
+                              telefono: c.cliente_whatsapp,
+                              clienteNombre: c.cliente_nombre,
+                              abogadoNombre: c.abogado_nombre,
+                              fechaTexto: FORMATO_CITA.format(inicio),
+                            });
+                            return urlWa ? (
+                              <a
+                                href={urlWa}
+                                target="_blank"
+                                rel="noreferrer"
+                                title="Contactar al cliente por WhatsApp"
+                                aria-label="Contactar por WhatsApp"
+                                style={{
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  gap: "4px",
+                                  padding: "3px 10px",
+                                  borderRadius: "999px",
+                                  background: "#16A34A",
+                                  color: "#FFFFFF",
+                                  fontSize: "0.74rem",
+                                  fontWeight: 800,
+                                  textDecoration: "none",
+                                }}
+                              >
+                                <MessageCircle size={12} />
+                                WhatsApp
+                              </a>
+                            ) : null;
+                          })()}
+                          <a
+                            href={`tel:${c.cliente_whatsapp}`}
+                            title="Llamar al celular del cliente"
+                            aria-label="Llamar al cliente"
+                            style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "4px",
+                              padding: "3px 9px",
+                              borderRadius: "999px",
+                              background: "#F1F5F9",
+                              border: "1px solid #CBD5E1",
+                              color: "#334155",
+                              fontSize: "0.73rem",
+                              fontWeight: 700,
+                              textDecoration: "none",
+                            }}
+                          >
+                            <Phone size={11} />
+                            Llamar
+                          </a>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setEditandoWhatsappCita(
+                                editandoWhatsappCita === c.cit_id ? null : c.cit_id,
+                              );
+                              setNuevoWhatsappCliente(c.cliente_whatsapp ?? "");
+                            }}
+                            title="Actualizar celular / WhatsApp del cliente"
+                            aria-label="Editar celular"
+                            style={{
+                              background: "none",
+                              border: "none",
+                              color: "#64748B",
+                              fontSize: "0.72rem",
+                              fontWeight: 700,
+                              textDecoration: "underline",
+                              cursor: "pointer",
+                              padding: 0,
+                            }}
+                          >
+                            Editar celular
+                          </button>
+                        </>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditandoWhatsappCita(
+                              editandoWhatsappCita === c.cit_id ? null : c.cit_id,
+                            );
+                            setNuevoWhatsappCliente("");
+                          }}
+                          title="Registrar número de celular / WhatsApp del cliente"
+                          aria-label="Registrar celular"
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "4px",
+                            padding: "2px 9px",
+                            borderRadius: "999px",
+                            background: "#FFFBEB",
+                            border: "1px solid #FDE68A",
+                            color: "#92400E",
+                            fontSize: "0.74rem",
+                            fontWeight: 700,
+                            cursor: "pointer",
+                          }}
+                        >
+                          <Phone size={12} />
+                          + Registrar celular/WhatsApp
+                        </button>
+                      )}
                     </div>
+
+                    {editandoWhatsappCita === c.cit_id && c.cit_cliente_id && (
+                      <div
+                        style={{
+                          marginTop: "6px",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "6px",
+                          flexWrap: "wrap",
+                        }}
+                      >
+                        <input
+                          type="tel"
+                          value={nuevoWhatsappCliente}
+                          onChange={(e) => setNuevoWhatsappCliente(e.target.value)}
+                          placeholder="Ej. 0991234567"
+                          style={{
+                            padding: "5px 10px",
+                            borderRadius: "7px",
+                            border: "1px solid #CBD5E1",
+                            fontSize: "0.78rem",
+                            width: "160px",
+                          }}
+                        />
+                        <button
+                          type="button"
+                          disabled={enviando}
+                          onClick={() => {
+                            if (!c.cit_cliente_id) return;
+                            iniciarEnvio(async () => {
+                              const r = await actualizarContactoClienteCitaAction({
+                                cita_id: c.cit_id,
+                                cliente_id: c.cit_cliente_id!,
+                                whatsapp: nuevoWhatsappCliente,
+                              });
+                              if (!r.ok) {
+                                setError(r.error);
+                                return;
+                              }
+                              setCitasLocal((prev) =>
+                                prev.map((it) =>
+                                  it.cit_id === c.cit_id
+                                    ? { ...it, cliente_whatsapp: r.data.whatsapp }
+                                    : it,
+                                ),
+                              );
+                              setEditandoWhatsappCita(null);
+                              setExito("✅ Celular / WhatsApp del cliente actualizado.");
+                              alActualizar?.();
+                            });
+                          }}
+                          style={{
+                            padding: "5px 10px",
+                            borderRadius: "7px",
+                            border: "none",
+                            background: "#05876E",
+                            color: "#FFFFFF",
+                            fontSize: "0.75rem",
+                            fontWeight: 800,
+                            cursor: "pointer",
+                          }}
+                        >
+                          Guardar Celular
+                        </button>
+                      </div>
+                    )}
                   </div>
 
                   {/* Estado de la cita y de la asignación */}
@@ -716,30 +965,46 @@ export default function BandejaCitasAbogado({
 
                         <button
                           type="button"
-                          onClick={() =>
-                            setReagendando(reagendando === c.cit_id ? null : c.cit_id)
-                          }
-                          title="Proponer nueva fecha y hora para la consulta"
-                          aria-label="Reagendar cita"
+                          onClick={() => {
+                            if (reagendando === c.cit_id) {
+                              setReagendando(null);
+                            } else {
+                              // Pre-cargar hora actual de la cita en formato YYYY-MM-DDTHH:mm (hora Ecuador UTC-5)
+                              const fechaEcLocal = new Date(inicio.getTime() - 5 * 3600 * 1000)
+                                .toISOString()
+                                .slice(0, 16);
+                              setFechasReagendar((prev) => ({
+                                ...prev,
+                                [c.cit_id]: prev[c.cit_id] || fechaEcLocal,
+                              }));
+                              setReagendando(c.cit_id);
+                            }
+                          }}
+                          title="Cambiar fecha y hora de la reunión (habilitado hasta 1 hora antes)"
+                          aria-label="Cambiar hora"
                           style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "5px",
                             padding: "8px 12px",
                             borderRadius: "8px",
                             border: "1px solid #CBD5E1",
-                            background: "#FFFFFF",
-                            color: "#334155",
-                            fontWeight: 700,
+                            background: reagendando === c.cit_id ? "#F5F3FF" : "#FFFFFF",
+                            color: reagendando === c.cit_id ? "#5000BA" : "#334155",
+                            fontWeight: 800,
                             fontSize: "0.78rem",
                             cursor: "pointer",
                           }}
                         >
-                          Reagendar
+                          <Clock size={14} />
+                          Cambiar Hora
                         </button>
                       </div>
                     </div>
                   </div>
                 )}
 
-                {/* Botonera de Gestión de la Reunión, Expediente/Caso y Log */}
+                {/* Botonera de Gestión de la Reunión, Expediente/Caso, Tracking y Calendario */}
                 <div
                   style={{
                     display: "flex",
@@ -779,8 +1044,8 @@ export default function BandejaCitasAbogado({
                     <button
                       type="button"
                       onClick={() => setCitaLogAbierta(logAbierto ? null : c.cit_id)}
-                      title="Ver el detalle completo e historial de la cita"
-                      aria-label="Ver el detalle completo e historial de la cita"
+                      title="Ver Tracking de la cita en línea de tiempo y sincronizar calendario"
+                      aria-label="Ver Tracking de la cita"
                       style={{
                         display: "inline-flex",
                         alignItems: "center",
@@ -788,16 +1053,83 @@ export default function BandejaCitasAbogado({
                         padding: "8px 12px",
                         borderRadius: "8px",
                         border: "1px solid #CBD5E1",
-                        background: logAbierto ? "#F1F5F9" : "#FFFFFF",
-                        color: "#334155",
-                        fontWeight: 700,
+                        background: logAbierto ? "#0F172A" : "#FFFFFF",
+                        color: logAbierto ? "#FFFFFF" : "#334155",
+                        fontWeight: 800,
                         fontSize: "0.78rem",
                         cursor: "pointer",
                       }}
                     >
-                      <History size={14} />
-                      Detalle e Historial ({logEventos.length})
+                      <GitCommit size={14} />
+                      Tracking ({logEventos.length})
                     </button>
+
+                    {(() => {
+                      const calLinks = construirEnlacesCalendarioCita({
+                        citaId: c.cit_id,
+                        inicioIso: c.cit_inicio_en,
+                        finIso: c.cit_fin_en,
+                        modalidad: c.cit_modalidad,
+                        materiaNombre: c.materia_nombre ?? "General",
+                        motivo: c.cit_motivo,
+                        clienteNombre: c.cliente_nombre,
+                        clienteCorreo: c.cliente_correo,
+                        clienteWhatsapp: c.cliente_whatsapp,
+                        abogadoNombre: c.abogado_nombre,
+                        abogadoCorreo: c.abogado_correo,
+                        enlaceVideollamada: c.cit_enlace,
+                        lugarPresencial: c.cit_lugar,
+                        sequence: c.gestion_reunion?.sequence_calendario ?? 0,
+                      });
+                      return (
+                        <>
+                          <a
+                            href={calLinks.googleCalendarUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            title="Agregar o actualizar esta cita en tu Google Calendar"
+                            aria-label="Google Calendar"
+                            style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "5px",
+                              padding: "8px 11px",
+                              borderRadius: "8px",
+                              border: "1px solid #DDD6FE",
+                              background: "#FFFFFF",
+                              color: "#5000BA",
+                              fontWeight: 700,
+                              fontSize: "0.76rem",
+                              textDecoration: "none",
+                            }}
+                          >
+                            <Calendar size={13} />
+                            Google Calendar
+                          </a>
+                          <a
+                            href={calLinks.icsDownloadUrl}
+                            title="Descargar archivo .ICS para agendar o actualizar en Outlook / Apple Calendar / Correo"
+                            aria-label="Descargar archivo ICS"
+                            style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "5px",
+                              padding: "8px 11px",
+                              borderRadius: "8px",
+                              border: "1px solid #CBD5E1",
+                              background: "#FFFFFF",
+                              color: "#334155",
+                              fontWeight: 700,
+                              fontSize: "0.76rem",
+                              textDecoration: "none",
+                            }}
+                          >
+                            <Download size={13} />
+                            .ICS Agenda
+                          </a>
+                        </>
+                      );
+                    })()}
                   </div>
 
                   {c.cit_estado !== "realizada" && (
@@ -827,53 +1159,229 @@ export default function BandejaCitasAbogado({
                   )}
                 </div>
 
-                {/* Formulario para reagendar */}
+                {/* Panel para Cambiar Fecha/Hora (con comentario obligatorio y opción de Cambiar Hora y Confirmar) */}
                 {reagendando === c.cit_id && (
-                  <form
-                    className="agenda-reagendar"
-                    action={(datos) => {
-                      const valor = String(datos.get("nuevo") ?? "");
-                      if (!valor) return;
-                      decidir(
-                        c.cit_id,
-                        "reagendar",
-                        new Date(valor).toISOString(),
-                        String(datos.get("motivo") ?? ""),
-                      );
+                  <div
+                    style={{
+                      padding: "14px 16px",
+                      borderRadius: "12px",
+                      background: "#F5F3FF",
+                      border: "1.5px solid #C4B5FD",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "10px",
                     }}
                   >
-                    <label className="etiqueta-campo" htmlFor={`nuevo-${c.cit_id}`}>
-                      Nueva fecha y hora
-                    </label>
-                    <input
-                      id={`nuevo-${c.cit_id}`}
-                      name="nuevo"
-                      type="datetime-local"
-                      required
-                    />
-                    <input
-                      name="motivo"
-                      type="text"
-                      placeholder="Motivo del cambio de hora (opcional)"
-                      maxLength={200}
-                    />
-                    <div className="fila-botones">
-                      <button
-                        type="submit"
-                        className="btn btn-primario"
-                        disabled={enviando}
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        flexWrap: "wrap",
+                        gap: "6px",
+                      }}
+                    >
+                      <strong style={{ fontSize: "0.84rem", color: "#4C1D95" }}>
+                        🕒 Cambiar Fecha y Hora de la Reunión (se registra en el Tracking y actualiza agendas por correo)
+                      </strong>
+                      <span
+                        style={{
+                          padding: "2px 8px",
+                          borderRadius: "999px",
+                          background: "#EDE9FE",
+                          color: "#5B21B6",
+                          fontSize: "0.72rem",
+                          fontWeight: 800,
+                        }}
                       >
-                        Mover cita
-                      </button>
+                        Habilitado libremente hasta 1h antes de la cita · Comentario obligatorio
+                      </span>
+                    </div>
+
+                    <div
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+                        gap: "10px",
+                        alignItems: "end",
+                      }}
+                    >
+                      <div>
+                        <label
+                          htmlFor={`nuevo-${c.cit_id}`}
+                          style={{
+                            display: "block",
+                            fontSize: "0.75rem",
+                            fontWeight: 800,
+                            color: "#334155",
+                            marginBottom: "4px",
+                          }}
+                        >
+                          Nueva fecha y hora *
+                        </label>
+                        <input
+                          id={`nuevo-${c.cit_id}`}
+                          type="datetime-local"
+                          value={fechasReagendar[c.cit_id] ?? ""}
+                          onChange={(e) =>
+                            setFechasReagendar((prev) => ({
+                              ...prev,
+                              [c.cit_id]: e.target.value,
+                            }))
+                          }
+                          required
+                          style={{
+                            width: "100%",
+                            padding: "8px 10px",
+                            borderRadius: "8px",
+                            border: "1px solid #CBD5E1",
+                            background: "#FFFFFF",
+                            fontSize: "0.83rem",
+                          }}
+                        />
+                      </div>
+
+                      <div>
+                        <label
+                          htmlFor={`motivo-reag-${c.cit_id}`}
+                          style={{
+                            display: "block",
+                            fontSize: "0.75rem",
+                            fontWeight: 800,
+                            color: "#334155",
+                            marginBottom: "4px",
+                          }}
+                        >
+                          Comentario obligatorio para el Tracking *
+                        </label>
+                        <input
+                          id={`motivo-reag-${c.cit_id}`}
+                          type="text"
+                          value={motivosReagendar[c.cit_id] ?? ""}
+                          onChange={(e) =>
+                            setMotivosReagendar((prev) => ({
+                              ...prev,
+                              [c.cit_id]: e.target.value,
+                            }))
+                          }
+                          placeholder="Ej. Coordiné por WhatsApp con el cliente mover la reunión a las 15:00"
+                          maxLength={350}
+                          required
+                          style={{
+                            width: "100%",
+                            padding: "8px 10px",
+                            borderRadius: "8px",
+                            border: "1px solid #CBD5E1",
+                            background: "#FFFFFF",
+                            fontSize: "0.83rem",
+                          }}
+                        />
+                      </div>
+                    </div>
+
+                    <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", paddingTop: "2px" }}>
                       <button
                         type="button"
-                        className="btn btn-blanco-borde"
+                        disabled={enviando}
+                        onClick={() => {
+                          const valFecha = fechasReagendar[c.cit_id] ?? "";
+                          const valMotivo = (motivosReagendar[c.cit_id] ?? "").trim();
+                          if (!valFecha) {
+                            setError("Selecciona la nueva fecha y hora para la reunión.");
+                            return;
+                          }
+                          if (!valMotivo) {
+                            setError(
+                              "Es obligatorio ingresar un comentario explicando el cambio de fecha/hora para el Tracking.",
+                            );
+                            return;
+                          }
+                          const iso = new Date(`${valFecha}:00-05:00`).toISOString();
+                          decidir(c.cit_id, "reagendar_y_aceptar", iso, valMotivo);
+                        }}
+                        title="Cambiar la fecha/hora, confirmar la cita y enviar actualización de agenda por correo"
+                        aria-label="Cambiar hora y confirmar"
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "6px",
+                          padding: "8px 14px",
+                          borderRadius: "8px",
+                          border: "none",
+                          background: "#05876E",
+                          color: "#FFFFFF",
+                          fontSize: "0.8rem",
+                          fontWeight: 800,
+                          cursor: enviando ? "wait" : "pointer",
+                        }}
+                      >
+                        <CheckCircle2 size={14} />
+                        {accionEnCurso?.citaId === c.cit_id &&
+                        accionEnCurso?.decision === "reagendar_y_aceptar"
+                          ? "Actualizando…"
+                          : "Cambiar Hora y Confirmar"}
+                      </button>
+
+                      <button
+                        type="button"
+                        disabled={enviando}
+                        onClick={() => {
+                          const valFecha = fechasReagendar[c.cit_id] ?? "";
+                          const valMotivo = (motivosReagendar[c.cit_id] ?? "").trim();
+                          if (!valFecha) {
+                            setError("Selecciona la nueva fecha y hora para la reunión.");
+                            return;
+                          }
+                          if (!valMotivo) {
+                            setError(
+                              "Es obligatorio ingresar un comentario explicando el cambio de fecha/hora para el Tracking.",
+                            );
+                            return;
+                          }
+                          const iso = new Date(`${valFecha}:00-05:00`).toISOString();
+                          decidir(c.cit_id, "reagendar", iso, valMotivo);
+                        }}
+                        title="Solo cambiar la fecha/hora de la cita y notificar"
+                        aria-label="Solo cambiar hora"
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "6px",
+                          padding: "8px 14px",
+                          borderRadius: "8px",
+                          border: "none",
+                          background: "#5000BA",
+                          color: "#FFFFFF",
+                          fontSize: "0.8rem",
+                          fontWeight: 800,
+                          cursor: enviando ? "wait" : "pointer",
+                        }}
+                      >
+                        <Clock size={14} />
+                        {accionEnCurso?.citaId === c.cit_id &&
+                        accionEnCurso?.decision === "reagendar"
+                          ? "Moviendo…"
+                          : "Solo Cambiar Hora"}
+                      </button>
+
+                      <button
+                        type="button"
                         onClick={() => setReagendando(null)}
+                        style={{
+                          padding: "8px 12px",
+                          borderRadius: "8px",
+                          border: "1px solid #CBD5E1",
+                          background: "#FFFFFF",
+                          color: "#334155",
+                          fontSize: "0.78rem",
+                          fontWeight: 700,
+                          cursor: "pointer",
+                        }}
                       >
                         Cancelar
                       </button>
                     </div>
-                  </form>
+                  </div>
                 )}
 
                 {/* Panel desplegable: Gestión de la Reunión + Expediente del Cliente (Consulta vs Caso) */}
@@ -890,139 +1398,16 @@ export default function BandejaCitasAbogado({
                   />
                 )}
 
-                {/* Panel desplegable: Detalle e Historial de la Cita */}
+                {/* Panel desplegable: Tracking (Línea de Tiempo Unificada) */}
                 {logAbierto && (
-                  <div
-                    style={{
-                      padding: "14px 16px",
-                      borderRadius: "10px",
-                      background: "#F8FAFC",
-                      border: "1px solid #E2E8F0",
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: "12px",
+                  <LineaTiempoTrackingCita
+                    cita={c}
+                    rolVista="ABOGADO"
+                    alActualizar={() => {
+                      alActualizar?.();
+                      router.refresh();
                     }}
-                  >
-                    <div
-                      style={{
-                        display: "grid",
-                        gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))",
-                        gap: "10px",
-                        padding: "10px 12px",
-                        borderRadius: "8px",
-                        background: "#FFFFFF",
-                        border: "1px solid #E2E8F0",
-                        fontSize: "0.8rem",
-                        color: "#334155",
-                      }}
-                    >
-                      <div>
-                        <span style={{ color: "#64748B", display: "block", fontSize: "0.72rem" }}>
-                          Cliente y Contacto
-                        </span>
-                        <strong>{c.cliente_nombre ?? "Cliente"}</strong>
-                        {c.cliente_correo && (
-                          <div style={{ fontSize: "0.75rem", color: "#475569" }}>
-                            {c.cliente_correo}
-                          </div>
-                        )}
-                      </div>
-                      <div>
-                        <span style={{ color: "#64748B", display: "block", fontSize: "0.72rem" }}>
-                          Especialidad y Cobertura
-                        </span>
-                        <strong>{c.materia_nombre ?? "General"}</strong>
-                        <div style={{ fontSize: "0.75rem", color: "#475569" }}>
-                          {ETIQUETA_COBERTURA[c.cit_cobertura] ?? c.cit_cobertura}
-                        </div>
-                      </div>
-                      <div>
-                        <span style={{ color: "#64748B", display: "block", fontSize: "0.72rem" }}>
-                          Estado de Ejecución
-                        </span>
-                        <strong>
-                          {c.cit_estado === "realizada"
-                            ? "✅ Ejecutada / Realizada"
-                            : ETIQUETA_ESTADO_CITA[c.cit_estado] ?? c.cit_estado}
-                        </strong>
-                        <div style={{ fontSize: "0.75rem", color: "#475569" }}>
-                          Respaldos: {(c.gestion_reunion?.documentos_adjuntos ?? []).length}{" "}
-                          archivo(s)
-                        </div>
-                      </div>
-                      {c.gestion_reunion?.notas_reunion && (
-                        <div style={{ gridColumn: "1 / -1" }}>
-                          <span style={{ color: "#64748B", display: "block", fontSize: "0.72rem" }}>
-                            Notas Registradas de la Cita
-                          </span>
-                          <div style={{ color: "#0F172A", marginTop: "2px" }}>
-                            {c.gestion_reunion.notas_reunion}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    <div>
-                      <strong
-                        style={{
-                          fontSize: "0.82rem",
-                          color: "#0F172A",
-                          display: "block",
-                          marginBottom: "8px",
-                        }}
-                      >
-                        📜 Historial Cronológico de la Cita (Reserva, Asignación y Ejecución)
-                      </strong>
-                      {logEventos.length === 0 ? (
-                        <p style={{ margin: 0, fontSize: "0.8rem", color: "#64748B" }}>
-                          Sin eventos adicionales registrados aún.
-                        </p>
-                      ) : (
-                        <ul
-                          style={{
-                            listStyle: "none",
-                            margin: 0,
-                            padding: 0,
-                            display: "flex",
-                            flexDirection: "column",
-                            gap: "6px",
-                          }}
-                        >
-                          {logEventos.map((ev) => (
-                            <li
-                              key={ev.id}
-                              style={{
-                                padding: "8px 10px",
-                                borderRadius: "8px",
-                                background: "#FFFFFF",
-                                border: "1px solid #E2E8F0",
-                                fontSize: "0.8rem",
-                              }}
-                            >
-                              <div
-                                style={{
-                                  display: "flex",
-                                  justifyContent: "space-between",
-                                  gap: "8px",
-                                }}
-                              >
-                                <strong>
-                                  [{ev.tipo}] {ev.resumen}
-                                </strong>
-                                <span style={{ color: "#64748B", fontSize: "0.74rem" }}>
-                                  {FORMATO_LOG.format(new Date(ev.fecha))}
-                                </span>
-                              </div>
-                              <div style={{ color: "#475569", marginTop: "2px" }}>
-                                Responsable: {ev.autor_nombre} ({ev.autor_rol})
-                                {ev.mensaje ? ` · 💬 "${ev.mensaje}"` : ""}
-                              </div>
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-                    </div>
-                  </div>
+                  />
                 )}
               </div>
             );

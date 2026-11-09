@@ -2,16 +2,24 @@
 // quien tiene service_role y por tanto quien puede descifrar la contrasena
 // SMTP del negocio desde Supabase Vault (PLT-008, ver ADR-0005).
 
+export interface AdjuntoCorreo {
+  filename: string;
+  content: string;
+  contentType?: string;
+}
+
 export async function enviarCorreo({
   negocio,
   para,
   asunto,
   html,
+  adjuntos,
 }: {
   negocio: string;
   para: string;
   asunto: string;
   html: string;
+  adjuntos?: AdjuntoCorreo[];
 }): Promise<{ ok: true } | { ok: false; error: string }> {
   const clave = process.env.CORREO_FUNCION_CLAVE;
   if (!clave) {
@@ -22,7 +30,7 @@ export async function enviarCorreo({
   const { crearClienteServidor } = await import("@eco/supabase/servidor");
   const supabase = await crearClienteServidor();
   const { data, error } = await supabase.functions.invoke<{ ok?: boolean; error?: string }>("enviar-correo", {
-    body: { negocio, para, asunto, html },
+    body: { negocio, para, asunto, html, adjuntos },
     headers: { "x-correo-clave": clave },
   });
 

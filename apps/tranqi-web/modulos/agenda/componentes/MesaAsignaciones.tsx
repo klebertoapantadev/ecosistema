@@ -11,13 +11,18 @@ import {
   ChevronRight,
   Clock,
   FileText,
+  GitCommit,
   History,
+  MessageCircle,
+  Phone,
   Send,
   UserCheck,
   UserX,
   Video,
 } from "lucide-react";
 import { reasignarCitaAction } from "../acciones";
+import { construirUrlWhatsappCliente } from "../calendario-ics";
+import LineaTiempoTrackingCita from "./LineaTiempoTrackingCita";
 import type {
   CitaCalendarioOperador,
   CitaResumen,
@@ -806,9 +811,74 @@ export default function MesaAsignaciones({
                           </span>
                         </div>
 
-                        <div style={{ fontSize: "0.84rem", color: "#475569", marginTop: "6px" }}>
-                          <strong>👤 Cliente:</strong> {c.cliente_nombre}{" "}
-                          {c.cliente_correo ? `(${c.cliente_correo})` : ""}
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "8px",
+                            flexWrap: "wrap",
+                            fontSize: "0.84rem",
+                            color: "#475569",
+                            marginTop: "6px",
+                          }}
+                        >
+                          <span>
+                            <strong>👤 Cliente:</strong> {c.cliente_nombre}{" "}
+                            {c.cliente_correo ? `(${c.cliente_correo})` : ""}
+                          </span>
+                          {c.cliente_whatsapp && (
+                            <>
+                              <span
+                                style={{
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  gap: "4px",
+                                  padding: "2px 8px",
+                                  borderRadius: "999px",
+                                  background: "#ECFDF5",
+                                  border: "1px solid #A7F3D0",
+                                  color: "#065F46",
+                                  fontSize: "0.75rem",
+                                  fontWeight: 800,
+                                }}
+                              >
+                                <Phone size={11} />
+                                {c.cliente_whatsapp}
+                              </span>
+                              {(() => {
+                                const urlWa = construirUrlWhatsappCliente({
+                                  telefono: c.cliente_whatsapp,
+                                  clienteNombre: c.cliente_nombre,
+                                  abogadoNombre: c.abogado_nombre,
+                                  fechaTexto: FORMATO_FECHA_LARGA.format(inicio),
+                                });
+                                return urlWa ? (
+                                  <a
+                                    href={urlWa}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    title="Contactar al cliente por WhatsApp"
+                                    aria-label="WhatsApp del cliente"
+                                    style={{
+                                      display: "inline-flex",
+                                      alignItems: "center",
+                                      gap: "4px",
+                                      padding: "2px 9px",
+                                      borderRadius: "999px",
+                                      background: "#16A34A",
+                                      color: "#FFFFFF",
+                                      fontSize: "0.73rem",
+                                      fontWeight: 800,
+                                      textDecoration: "none",
+                                    }}
+                                  >
+                                    <MessageCircle size={11} />
+                                    WhatsApp
+                                  </a>
+                                ) : null;
+                              })()}
+                            </>
+                          )}
                         </div>
                       </div>
 
@@ -986,7 +1056,8 @@ export default function MesaAsignaciones({
                         <button
                           type="button"
                           onClick={() => setCitaLogAbierta(verLog ? null : c.cit_id)}
-                          title="Ver historial de asignación y gestión de esta cita"
+                          title="Ver Tracking de la cita en línea de tiempo"
+                          aria-label="Ver Tracking"
                           style={{
                             display: "inline-flex",
                             alignItems: "center",
@@ -994,75 +1065,30 @@ export default function MesaAsignaciones({
                             padding: "9px 12px",
                             borderRadius: "8px",
                             border: "1px solid #CBD5E1",
-                            background: verLog ? "#F1F5F9" : "#FFFFFF",
-                            color: "#334155",
+                            background: verLog ? "#0F172A" : "#FFFFFF",
+                            color: verLog ? "#FFFFFF" : "#334155",
                             fontSize: "0.78rem",
-                            fontWeight: 700,
+                            fontWeight: 800,
                             cursor: "pointer",
                           }}
                         >
-                          <History size={14} />
-                          Log ({logEventos.length})
+                          <GitCommit size={14} />
+                          Tracking ({logEventos.length})
                         </button>
                       </div>
                     </form>
 
-                    {/* Log individual de la cita */}
+                    {/* Tracking individual de la cita en Línea de Tiempo */}
                     {verLog && (
-                      <div
-                        style={{
-                          marginTop: "6px",
-                          padding: "12px 14px",
-                          borderRadius: "10px",
-                          background: "#F8FAFC",
-                          border: "1px solid #E2E8F0",
-                        }}
-                      >
-                        <strong style={{ fontSize: "0.8rem", color: "#0F172A", display: "block", marginBottom: "8px" }}>
-                          📜 Historial de Asignación y Gestión de la Cita
-                        </strong>
-                        {logEventos.length === 0 ? (
-                          <p style={{ margin: 0, fontSize: "0.8rem", color: "#64748B" }}>
-                            Aún no hay movimientos registrados en esta cita.
-                          </p>
-                        ) : (
-                          <ul
-                            style={{
-                              listStyle: "none",
-                              margin: 0,
-                              padding: 0,
-                              display: "flex",
-                              flexDirection: "column",
-                              gap: "8px",
-                            }}
-                          >
-                            {logEventos.map((ev) => (
-                              <li
-                                key={ev.id}
-                                style={{
-                                  fontSize: "0.8rem",
-                                  padding: "8px 10px",
-                                  borderRadius: "8px",
-                                  background: "#FFFFFF",
-                                  border: "1px solid #E2E8F0",
-                                }}
-                              >
-                                <div style={{ display: "flex", justifyContent: "space-between", gap: "8px" }}>
-                                  <strong>
-                                    [{ev.tipo}] {ev.resumen}
-                                  </strong>
-                                  <span style={{ color: "#64748B", fontSize: "0.74rem" }}>
-                                    {FORMATO_FECHA_LOG.format(new Date(ev.fecha))}
-                                  </span>
-                                </div>
-                                <div style={{ color: "#475569", marginTop: "2px" }}>
-                                  Por: {ev.autor_nombre} ({ev.autor_rol})
-                                  {ev.mensaje ? ` · 💬 "${ev.mensaje}"` : ""}
-                                </div>
-                              </li>
-                            ))}
-                          </ul>
-                        )}
+                      <div style={{ marginTop: "6px" }}>
+                        <LineaTiempoTrackingCita
+                          cita={c}
+                          rolVista="OPERADOR"
+                          alActualizar={() => {
+                            alActualizar?.();
+                            router.refresh();
+                          }}
+                        />
                       </div>
                     )}
                   </div>

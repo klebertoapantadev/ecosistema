@@ -53,14 +53,20 @@ Deno.serve(async (req: Request) => {
     return respuesta({ error: "No autorizado" }, 401);
   }
 
-  let cuerpo: { negocio?: unknown; para?: unknown; asunto?: unknown; html?: unknown };
+  let cuerpo: {
+    negocio?: unknown;
+    para?: unknown;
+    asunto?: unknown;
+    html?: unknown;
+    adjuntos?: Array<{ filename?: string; content?: string; contentType?: string }>;
+  };
   try {
     cuerpo = await req.json();
   } catch {
     return respuesta({ error: "Cuerpo invalido" }, 400);
   }
 
-  const { negocio, para, asunto, html } = cuerpo;
+  const { negocio, para, asunto, html, adjuntos } = cuerpo;
   if (
     typeof negocio !== "string" ||
     typeof para !== "string" ||
@@ -99,6 +105,17 @@ Deno.serve(async (req: Request) => {
   });
 
   try {
+    const attachments = Array.isArray(adjuntos)
+      ? adjuntos
+          .filter((a) => a && typeof a.filename === "string" && typeof a.content === "string")
+          .map((a) => ({
+            encoding: "text" as const,
+            filename: a.filename!,
+            content: a.content!,
+            contentType: a.contentType || "text/calendar; charset=utf-8; method=REQUEST",
+          }))
+      : undefined;
+
     await cliente.send({
       from: configuracion.remitente_nombre
         ? `${configuracion.remitente_nombre} <${configuracion.usuario}>`
@@ -106,6 +123,7 @@ Deno.serve(async (req: Request) => {
       to: para,
       subject: asunto,
       html,
+      ...(attachments && attachments.length > 0 ? { attachments } : {}),
     });
   } catch (e) {
     // El mensaje del proveedor SMTP puede traer el usuario, nunca la

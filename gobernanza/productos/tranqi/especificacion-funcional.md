@@ -45,14 +45,14 @@ Tranqi adopta las mejores prácticas y estándares internacionales de **Law Prac
 | **`TRQ-CAS-003`** | **Actuaciones** | **Bitácora Procesal, Plazos COGEP y Notas Internas vs. Públicas** | 🟡 Especificado | **25%** | Kleber Toapanta / Jesus Navarrete |
 | **`TRQ-GES-001`** | **Gestor / Tramitador** | **Rol Gestor (Interno / Externo por Honorarios): Asignación Temporal N:M a Casos, Diligencias Operativas y Registro de Horas Facturables** | ⏳ Pendiente | **0%** | Kleber Toapanta / Jesus Navarrete |
 | **`TRQ-DIG-001`** | **Digitalización** | **Ingesta de Archivo Físico Histórico, Topología de Bodega, Etiquetado QR y Cerebro de Precedentes** | 🟡 En Desarrollo | **60%** | Jesus Navarrete (IA) / Kleber Toapanta |
-| **`TRQ-CLI-001`** | **Cliente** | **Portal de Casos, Solicitud de Patrocinio y Consultas Telemáticas / Presenciales con Triaje ARIA** | 🟡 En Desarrollo | **65%** | Jesus Navarrete / Kleber Toapanta |
+| **`TRQ-CLI-001`** | **Cliente** | **Portal de Casos, Solicitud de Patrocinio y Consultas Telemáticas / Presenciales con Triaje ARIA, Tracking y Sincronización de Calendario (.ics)** | 🟡 En Desarrollo | **80%** | Jesus Navarrete / Kleber Toapanta |
 | **`TRQ-CLI-002`** | **Cliente** | **Módulo Express de Revisión y Dictamen Legal de Contratos/Minutas (IA)** | ⏳ Pendiente | **0%** | **Jesus Navarrete (IA)** |
 | **`TRQ-CLI-003`** | **Cliente** | **Directorio Público y Selección Geolocalizada de Abogados** | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`TRQ-CLI-004`** | **Cliente** | **Calculadora de Honorarios, Pensiones (MIES) e Indemnizaciones Laborales** | ⏳ Pendiente | **0%** | Jesus Navarrete |
 | **`TRQ-ABG-001`** | **Abogado** | **Acreditación, Contratación Dual (Firma Digital .p12 / Manual) y Onboarding** | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`TRQ-ABG-002`** | **Abogado** | **Despacho Virtual: Bandeja de Casos, Expediente Digital y Actuaciones SATJE** | 🟡 En Desarrollo | **25%** | Kleber Toapanta / Jesus Navarrete |
 | **`TRQ-ABG-003`** | **Abogado** | **Firma Electrónica Avanzada PAdES en Navegador (Zero-Custody `.p12`/`.pfx`)** | ✅ Implementado | **100%** | Kleber Toapanta |
-| **`TRQ-ABG-004`** | **Abogado** | **Agenda Profesional, Horarios por Defecto (Telemático / Presencial), Asignación Operativa, Historial de Cita, Confirmación de Ejecución, Notas y Archivos de Respaldo** | ✅ Implementado | **100%** | Kleber Toapanta / Jesus Navarrete |
+| **`TRQ-ABG-004`** | **Abogado** | **Agenda Profesional, Contacto WhatsApp del Cliente, Cambio de Hora + Confirmación (hasta 1h antes), Tracking en Línea de Tiempo, Ejecución de Cita y Sincronización Automática de Calendarios (.ics + Agenda Institucional Tranqi)** | ✅ Implementado | **100%** | Kleber Toapanta / Jesus Navarrete |
 | **`TRQ-ABG-005`** | **Abogado** | **Verificación Inteligente de Identidad y Carnet Profesional con Aria (IA) en Registro Simplificado de Abogados** | ✅ Implementado | **100%** | **Jesus Navarrete (IA) / Kleber Toapanta** |
 | **`TRQ-ABG-006`** | **Abogado** | **Portal Informativo de la Red Nacional de Abogados (/abogados): Beneficios, Modelo Operativo, Validación de Correo y Botón de Registro** | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`TRQ-ADM-001`** | **Operador/Admin** | **Gestión de Red Profesional, Invitación Individual/Masiva por Correo (`/abogados`), Conversión de Usuarios en Abogados, Cobertura y Disponibilidad** | ✅ Implementado | **100%** | Kleber Toapanta |
@@ -281,8 +281,8 @@ graph TD
 
 ---
 
-### TRQ-ABG-004 — Agenda Profesional, Citas Presenciales y Sala de Videoconsulta Segura
-**Responsables:** Kleber Toapanta / Jesus Navarrete | **Estado:** 🟡 En Desarrollo (75%)  
+### TRQ-ABG-004 — Agenda Profesional, Citas Presenciales, Tracking en Línea de Tiempo y Sincronización de Calendarios (.ics)
+**Responsables:** Kleber Toapanta / Jesus Navarrete | **Estado:** ✅ Implementado (100%)  
 **Estándar de Plataforma:** [`PLT-020`](../plataforma/especificacion-funcional.md#plt-020--agenda-disponibilidad-citas-y-consulta-telemática) (Motor Común `comun_agenda` y `@eco/agenda`)
 
 #### 1. Diagnóstico y Corrección de Vulnerabilidad Funcional en Producción
@@ -376,6 +376,10 @@ Implementación estricta de la [`politica-cancelacion-reagendamiento-citas.md`](
 - **Cobertura antes de cobrar:** la cita consume el cupo del plan del afiliado (`com_derecho_consumo`) si lo tiene, y solo si no, se cobra.
 - **Herramientas del asistente** para ambos roles: `buscar_horarios`, `mi_cobertura`, `reservar_cita`, `cancelar_cita` del lado cliente; `mi_disponibilidad`, `configurar_disponibilidad`, `bloquear_agenda`, `citas_pendientes_de_confirmar` y `decidir_cita` del lado abogado.
 - **Recordatorios de 24 h y 1 h** despachados por `PLT-021`.
+- **Contacto directo del cliente (Celular / WhatsApp)** visible para el abogado y el operador en la tarjeta de la cita, con botones de 1 clic para **WhatsApp** (`wa.me` con saludo contextual de la cita) y **Llamar**, más edición rápida del teléfono del cliente.
+- **Cambio de Fecha/Hora hasta 1 hora antes con comentario obligatorio y acción "Cambiar Hora y Confirmar" (`reagendar_y_aceptar`):** permite al abogado acordar una nueva hora con el cliente y confirmar la cita en un solo paso, dejando trazabilidad obligatoria en el Tracking.
+- **Tracking unificado en Línea de Tiempo para todos los roles (`ABOGADO`, `OPERADOR`, `CLIENTE`):** línea de tiempo vertical cronológica con eventos de creación, asignación, confirmación, reprogramación, ejecución y notas de seguimiento.
+- **Agendamiento y actualización automática de calendarios por correo (`.ics` RFC 5545) + Agenda Institucional de Tranqi:** adjunto `cita-tranqi-<id>.ics` (`METHOD:REQUEST` / `METHOD:CANCEL`, `UID` único por cita y `SEQUENCE` incremental) más botones de **Google Calendar**, **Outlook** y descarga `.ICS` enviados al cliente, al abogado asignado y a la cuenta de correo institucional de Tranqi (`notificaciones@tranqi24.com` / SMTP de `cfg_negocio`).
 
 **Pendiente para el 100%:**
 - **Sala de Google Meet** generada por la API de Google Calendar (`PLT-020` regla 7): la columna `cit_google_evento_id` y la ventana de acceso al enlace están; la Edge Function que crea el evento, no.
