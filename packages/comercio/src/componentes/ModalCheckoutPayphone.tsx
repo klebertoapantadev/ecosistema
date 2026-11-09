@@ -549,10 +549,21 @@ export function ModalCheckoutPayphone({
   };
 
   // ── Paso 2: PLUX ──
-  const alAprobarPlux = (identificador: string, pago: { autorizacion: string | null; marcaTarjeta: string | null; ultimosDigitos: string | null }) => {
+  const alAprobarPlux = (
+    identificador: string,
+    pago: {
+      pagoId?: string | null;
+      pasarela?: string;
+      autorizacion: string | null;
+      marcaTarjeta: string | null;
+      ultimosDigitos: string | null;
+    },
+  ) => {
     const res: ResultadoPago = {
       ok: true,
       estado: "APROBADO",
+      pagoId: pago.pagoId ?? null,
+      pasarela: pago.pasarela || "PLUX",
       clientTransactionId: identificador,
       autorizacionCodigo: pago.autorizacion,
       marcaTarjeta: pago.marcaTarjeta,

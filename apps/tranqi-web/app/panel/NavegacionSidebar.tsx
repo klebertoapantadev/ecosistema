@@ -167,8 +167,10 @@ export function NavegacionSidebar({
           }
         }
 
-        // Consultar servidor (PostgreSQL comun_seguridad.seg_rol_widget / seg_perfil)
+        // Consultar servidor (PostgreSQL comun_configuracion.cfg_negocio / comun_seguridad.seg_perfil)
         const resBdd = await obtenerConfiguracionNavegacionRolAction(modoActivo, negocio.toUpperCase());
+        const bddConfigurado = Boolean(resBdd.ok && resBdd.data?.configuradoExplicitamente);
+        const tsBdd = resBdd.ok && resBdd.data?.actualizadoEn ? Date.parse(resBdd.data.actualizadoEn) || 0 : 0;
 
         // Base canónica desde MATRIZ_FUNCIONAL_ROLES
         const matrizRol = MATRIZ_FUNCIONAL_ROLES[rolKey] || MATRIZ_FUNCIONAL_ROLES["CLIENTE"] || { widgetsPorPanel: {} };
@@ -177,28 +179,35 @@ export function NavegacionSidebar({
           widgetsPorPanel[pId] = Array.isArray(wList) ? [...wList] : [];
         }
 
-        if (resBdd.ok && resBdd.data && resBdd.data.widgetsPorPanel) {
-          for (const [pId, wList] of Object.entries(resBdd.data.widgetsPorPanel)) {
-            if (Array.isArray(wList)) {
-              widgetsPorPanel[pId] = [...wList];
+        let panelesAsignadosExplicitos: string[] | null = null;
+        if (resBdd.ok && resBdd.data) {
+          if (Array.isArray(resBdd.data.panelesAsignados) && resBdd.data.panelesAsignados.length > 0) {
+            panelesAsignadosExplicitos = resBdd.data.panelesAsignados;
+          }
+          if (resBdd.data.widgetsPorPanel) {
+            for (const [pId, wList] of Object.entries(resBdd.data.widgetsPorPanel)) {
+              if (Array.isArray(wList)) {
+                widgetsPorPanel[pId] = [...wList];
+              }
             }
           }
         }
 
-        // Complementar con personalizaciones en localStorage si existen (respetando eliminaciones)
+        // Complementar con personalizaciones en localStorage únicamente si son más recientes que la BDD
         const savedPerfiles =
           localStorage.getItem(`tranqi_perfiles_${negocio}`) ||
           localStorage.getItem(`tranqi_perfiles_${(negocio || "").toUpperCase()}`) ||
           localStorage.getItem(`tranqi_perfiles_${(negocio || "").toLowerCase()}`) ||
           localStorage.getItem("tranqi_perfiles_TRANQ") ||
           localStorage.getItem("tranqi_perfiles_tranqi");
-        let panelesAsignadosExplicitos: string[] | null = null;
         if (savedPerfiles) {
           const perfiles = JSON.parse(savedPerfiles);
           if (Array.isArray(perfiles)) {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const perfilObj = perfiles.find((p: any) => p.clave?.toUpperCase() === rolKey);
-            if (perfilObj) {
+            const tsLocal = perfilObj?.actualizadoEn ? Date.parse(perfilObj.actualizadoEn) || 0 : 0;
+            const usarLocal = tsLocal > 0 && (!bddConfigurado || tsLocal > tsBdd);
+            if (usarLocal && perfilObj) {
               if (Array.isArray(perfilObj.panelesAsignados)) {
                 panelesAsignadosExplicitos = perfilObj.panelesAsignados;
               }

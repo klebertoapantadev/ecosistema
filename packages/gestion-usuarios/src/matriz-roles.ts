@@ -8,7 +8,7 @@ export const MATRIZ_FUNCIONAL_ROLES: Record<string, { paneles: string[]; widgets
     widgetsPorPanel: {
       panel_inicio: ["favoritos"],
       panel_agendamiento: ["agendar_cita", "mis_citas"],
-      panel_herramientas: ["historial_pagos", "catalogo_productos", "firma_documentos_pdf", "billetera_documentos", "financiamiento"],
+      panel_herramientas: ["firma_documentos_pdf", "billetera_documentos", "financiamiento"],
       panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "historial_pagos", "mfa_seguridad", "historial_accesos"],
       panel_configuracion: ["notificaciones"]
     }

@@ -409,15 +409,37 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
 
   const formatearEtiquetaMedio = (t: TransaccionPagoCRM) => {
     const p = String(t.pag_pasarela || "").toUpperCase();
-    if (p === "PLUX" || p === "PAYPHONE") {
+    const tipoTarj =
+      String(t.pag_tarjeta_tipo || "").toUpperCase() === "DEBITO" ? "Débito" : "Crédito";
+    if (p === "PLUX" || String(t.pag_identificador_cliente || "").startsWith("TRQ-PLX-")) {
       return {
-        titulo: `Tarjeta (${p})`,
+        titulo: `PagoPlux (PLUX)`,
         subtitulo: t.pag_tarjeta_marca
-          ? `${t.pag_tarjeta_marca} •••• ${t.pag_tarjeta_ultimos_digitos || ""}`
+          ? `Tarjeta ${tipoTarj} · ${t.pag_tarjeta_marca} •••• ${t.pag_tarjeta_ultimos_digitos || ""}`
+          : `Tarjeta ${tipoTarj} · Pasarela PLUX`,
+        esAutomatica: true,
+        colorBg: "#EEF2FF",
+        colorText: "#4338CA",
+      };
+    }
+    if (p === "PAYPHONE") {
+      return {
+        titulo: `Payphone (Tarjeta)`,
+        subtitulo: t.pag_tarjeta_marca
+          ? `Tarjeta ${tipoTarj} · ${t.pag_tarjeta_marca} •••• ${t.pag_tarjeta_ultimos_digitos || ""}`
           : "Emisión Automática",
         esAutomatica: true,
         colorBg: "#EFF6FF",
         colorText: "#1D4ED8",
+      };
+    }
+    if (p === "TARJETA_POS") {
+      return {
+        titulo: "Datafast / POS",
+        subtitulo: "Voucher Físico (Operador)",
+        esAutomatica: false,
+        colorBg: "#E0E7FF",
+        colorText: "#3730A3",
       };
     }
     if (p === "TRANSFERENCIA") {
@@ -447,9 +469,18 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
         colorText: "#6D28D9",
       };
     }
+    if (p === "DEPOSITO") {
+      return {
+        titulo: "Depósito Bancario",
+        subtitulo: "Registro Operador",
+        esAutomatica: false,
+        colorBg: "#ECFDF5",
+        colorText: "#047857",
+      };
+    }
     return {
-      titulo: p,
-      subtitulo: t.pag_detalle_transaccion?.registro_manual ? "Registro Operador" : "Pasarela",
+      titulo: p || "PLUX",
+      subtitulo: t.pag_detalle_transaccion?.registro_manual ? "Registro Operador" : "Pasarela Digital",
       esAutomatica: !t.pag_detalle_transaccion?.registro_manual,
       colorBg: "#F1F5F9",
       colorText: "#334155",

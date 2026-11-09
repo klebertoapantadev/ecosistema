@@ -286,7 +286,7 @@ const PERFILES_INICIALES: PerfilDef[] = [
     widgetsAsignadosPorPanel: {
       panel_inicio: ["favoritos"],
       panel_agendamiento: ["agendar_cita", "mis_citas"],
-      panel_herramientas: ["historial_pagos", "catalogo_productos", "firma_documentos_pdf", "billetera_documentos", "financiamiento"],
+      panel_herramientas: ["firma_documentos_pdf", "billetera_documentos", "financiamiento"],
       panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "historial_pagos", "mfa_seguridad", "historial_accesos"],
       panel_configuracion: ["notificaciones"]
     },
@@ -1694,29 +1694,26 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
       hidratadoRef.current = true;
     }
 
-    // Sincronizar con PostgreSQL (comun_seguridad.seg_perfil) para asegurar consistencia multi-dispositivo y tras recargas
+    // Sincronizar con PostgreSQL (comun_configuracion.cfg_negocio / comun_seguridad.seg_perfil) para asegurar consistencia multi-dispositivo y tras recargas
     obtenerConfiguracionTodosPerfilesAction(negocio)
       .then((resBdd) => {
         if (cancelado || !resBdd.ok || !resBdd.data) return;
         const mapaBdd = resBdd.data;
-        if (Object.keys(mapaBdd).length === 0) return;
 
         setPerfiles((prevPerfiles) => {
           let huboCambiosDesdeBdd = false;
           const fusionados = prevPerfiles.map((p) => {
             const bdd = mapaBdd[p.clave.toUpperCase()];
             if (!bdd || !bdd.configuradoExplicitamente) {
-              // Si en localStorage ya fue personalizado pero en BDD aún no figura, empujar a BDD en segundo plano
-              if (p.actualizadoEn) {
-                guardarConfiguracionPanelesPerfilAction(
-                  p.clave,
-                  negocio,
-                  p.panelesAsignados,
-                  p.widgetsAsignadosPorPanel,
-                  p.titulosWidgetsPorPanel,
-                  p.widgetsRetiradosPorPanel
-                ).catch(() => {});
-              }
+              // Si en BDD aún no figura, empujar la configuración actual del administrador a BDD en segundo plano
+              guardarConfiguracionPanelesPerfilAction(
+                p.clave,
+                negocio,
+                p.panelesAsignados,
+                p.widgetsAsignadosPorPanel,
+                p.titulosWidgetsPorPanel,
+                p.widgetsRetiradosPorPanel
+              ).catch(() => {});
               return p;
             }
 

@@ -5987,6 +5987,7 @@ export async function obtenerHistorialTransaccionesAction(
           }
 
           const idsPagosEnFilas = new Set(filas.map((f) => f.pag_id));
+          const idsFilasPluxUsadas = new Set<string>();
 
           citasRows.forEach((c: any, idxCita: number) => {
             if (c.cit_pago_id && idsPagosEnFilas.has(c.cit_pago_id)) {
@@ -5995,7 +5996,9 @@ export async function obtenerHistorialTransaccionesAction(
             const idSintetico = c.cit_pago_id || `pag-cita-${c.cit_id}`;
             if (idsPagosEnFilas.has(idSintetico)) return;
 
-            const usrCita = mapaUsuariosCitas.get(c.cit_cliente_id) || (c.cit_cliente_id === user?.id ? perfilUsuarioActual : null);
+            const usrCita =
+              mapaUsuariosCitas.get(c.cit_cliente_id) ||
+              (c.cit_cliente_id === user?.id ? perfilUsuarioActual : null);
             const nombreCli =
               [usrCita?.usu_nombres, usrCita?.usu_apellidos].filter(Boolean).join(" ").trim() ||
               usrCita?.usu_correo ||
@@ -6008,6 +6011,7 @@ export async function obtenerHistorialTransaccionesAction(
             const dirFiscalCli = datosFactUsr.direccion || "Quito - Ecuador";
 
             const fechaCitaIso = c.cit_creado_en || c.cit_inicio_en || new Date().toISOString();
+            const tsCita = new Date(fechaCitaIso).getTime();
             const esPresencial = c.cit_modalidad === "presencial";
             const subtotalCita = esPresencial ? 40.0 : 25.0;
             const ivaCita = Math.round(subtotalCita * 15) / 100;
@@ -6015,6 +6019,37 @@ export async function obtenerHistorialTransaccionesAction(
             const modalidadTexto = esPresencial ? "Presencial" : "Teleconsulta";
             const motivoCorto = (c.cit_motivo || "Asesoría Legal Especializada").slice(0, 90);
             const rubroTexto = `Consulta Jurídica (${modalidadTexto}) — ${motivoCorto}`;
+
+            // Verificar si existe una transacción PLUX en com_transaccion_pago de este mismo cliente cercana a la creación de la cita
+            const filaPluxCercana = filas.find((f) => {
+              if (idsFilasPluxUsadas.has(f.pag_id)) return false;
+              if (f.pag_cliente_id !== c.cit_cliente_id) return false;
+              const tsPago = new Date(f.pag_creado_en || 0).getTime();
+              const diffMin = Math.abs(tsCita - tsPago) / (60 * 1000);
+              return diffMin <= 30;
+            });
+
+            if (filaPluxCercana) {
+              idsFilasPluxUsadas.add(filaPluxCercana.pag_id);
+              filaPluxCercana.pag_pasarela = "PLUX";
+              filaPluxCercana.pag_estado = "APROBADO";
+              filaPluxCercana.pag_confirmado_en = filaPluxCercana.pag_confirmado_en || fechaCitaIso;
+              filaPluxCercana.pag_detalle_transaccion = {
+                ...(filaPluxCercana.pag_detalle_transaccion || {}),
+                origen: "cita_agendada",
+                cita_id: c.cit_id,
+                mecanismo_pago: "PLUX (PagoPlux Tarjeta Crédito/Débito)",
+                nombre_servicio: rubroTexto,
+              };
+              return;
+            }
+
+            // Buscar si hay confirmación PLUX guardada en el perfil del cliente
+            const pluxConfirmados: any[] = Array.isArray(usrCita?.usu_detalle_usuario?.pagos_plux_confirmados)
+              ? usrCita.usu_detalle_usuario.pagos_plux_confirmados
+              : [];
+            const pluxMatch = pluxConfirmados[idxCita] || null;
+
             const numSecuencial = 100 + idxCita + 1;
             const secNum = String(numSecuencial).padStart(9, "0");
             const numComp = `001-001-${secNum}`;
@@ -6026,23 +6061,25 @@ export async function obtenerHistorialTransaccionesAction(
               puntoEmision: "001",
               secuencialNumero: numSecuencial,
             });
+            const hexCita = String(c.cit_id).replace(/-/g, "").slice(0, 12).toUpperCase();
 
             filas.push({
               pag_id: idSintetico,
               pag_negocio: "tranqi",
               pag_cliente_id: c.cit_cliente_id,
-              pag_pasarela: "PAYPHONE",
-              pag_identificador_cliente: `TRQ-CITA-${String(c.cit_id).slice(0, 8).toUpperCase()}`,
-              pag_transaccion_pasarela_id: `PP-${String(c.cit_id).slice(0, 8).toUpperCase()}`,
+              pag_pasarela: "PLUX",
+              pag_identificador_cliente: pluxMatch?.identificador || `TRQ-PLX-${hexCita}`,
+              pag_transaccion_pasarela_id: pluxMatch?.id_transaccion || `PLX-${hexCita.slice(0, 8)}`,
               pag_estado: "APROBADO",
               pag_monto_total: totalCita,
               pag_monto_con_iva: subtotalCita,
               pag_monto_sin_iva: 0,
               pag_monto_iva: ivaCita,
               pag_moneda: "USD",
-              pag_autorizacion_codigo: `AUTH-${String(c.cit_id).replace(/-/g, "").slice(0, 6).toUpperCase()}`,
-              pag_tarjeta_marca: "Visa",
-              pag_tarjeta_ultimos_digitos: "4500",
+              pag_autorizacion_codigo: pluxMatch?.autorizacion || `PLX-AUTH-${hexCita.slice(0, 6)}`,
+              pag_tarjeta_tipo: pluxMatch?.tarjeta_tipo || "CREDITO",
+              pag_tarjeta_marca: pluxMatch?.tarjeta_marca || "VISA",
+              pag_tarjeta_ultimos_digitos: pluxMatch?.tarjeta_ultimos_digitos || "4500",
               pag_titular_email: correoFiscalCli,
               pag_titular_identificacion: idFiscalCli,
               pag_titular_telefono: telFiscalCli,
@@ -6050,6 +6087,8 @@ export async function obtenerHistorialTransaccionesAction(
               pag_confirmado_en: fechaCitaIso,
               pag_detalle_transaccion: {
                 origen: "cita_agendada",
+                mecanismo_pago: "PLUX (PagoPlux Tarjeta Crédito/Débito)",
+                pasarela: "PLUX",
                 cita_id: c.cit_id,
                 nombre_servicio: rubroTexto,
                 datos_facturacion: {
@@ -6145,6 +6184,32 @@ export async function obtenerHistorialTransaccionesAction(
       const dfReal = usrReal?.usu_detalle_usuario?.datos_facturacion || {};
       const nombreRealUsr =
         [usrReal?.usu_nombres, usrReal?.usu_apellidos].filter(Boolean).join(" ").trim() || "";
+
+      // Si el identificador o detalle corresponde a PLUX, asegurar que pag_pasarela sea PLUX
+      if (
+        String(t.pag_identificador_cliente || "").startsWith("TRQ-PLX-") ||
+        det.pasarela === "PLUX" ||
+        det.paybox_on_authorize
+      ) {
+        t.pag_pasarela = "PLUX";
+      }
+
+      // Sincronizar confirmaciones PLUX guardadas en usu_detalle_usuario.pagos_plux_confirmados
+      const pluxConfirmadosUsr: any[] = Array.isArray(usrReal?.usu_detalle_usuario?.pagos_plux_confirmados)
+        ? usrReal.usu_detalle_usuario.pagos_plux_confirmados
+        : [];
+      const confirmacionPlux = pluxConfirmadosUsr.find(
+        (item: any) => item?.identificador && item.identificador === t.pag_identificador_cliente,
+      );
+      if (confirmacionPlux && t.pag_estado === "PENDIENTE") {
+        t.pag_estado = "APROBADO";
+        t.pag_pasarela = "PLUX";
+        t.pag_autorizacion_codigo = t.pag_autorizacion_codigo || confirmacionPlux.autorizacion;
+        t.pag_tarjeta_tipo = t.pag_tarjeta_tipo || confirmacionPlux.tarjeta_tipo || "CREDITO";
+        t.pag_tarjeta_marca = t.pag_tarjeta_marca || confirmacionPlux.tarjeta_marca || "VISA";
+        t.pag_tarjeta_ultimos_digitos = t.pag_tarjeta_ultimos_digitos || confirmacionPlux.tarjeta_ultimos_digitos || "0000";
+        t.pag_confirmado_en = t.pag_confirmado_en || confirmacionPlux.confirmado_en || t.pag_creado_en;
+      }
 
       const cmpDb = mapaComprobantes.get(t.pag_id);
       let facturaResumen: FacturaElectronicaResumen | null = det.factura_electronica || null;

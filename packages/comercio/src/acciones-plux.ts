@@ -223,6 +223,8 @@ export async function prepararPagoPluxAction(
 export type EstadoPagoPlux = "PENDIENTE" | "APROBADO" | "RECHAZADO" | "CANCELADO" | "REVERSADO";
 
 export interface PagoPluxConsultado {
+  pagoId?: string | null;
+  pasarela?: string;
   estado: EstadoPagoPlux;
   motivo: string | null;
   autorizacion: string | null;
@@ -240,13 +242,15 @@ export async function consultarPagoPluxAction(
   const { data, error } = await supabase
     .schema("comun_comercio")
     .from("com_transaccion_pago")
-    .select("pag_estado, pag_autorizacion_codigo, pag_tarjeta_marca, pag_tarjeta_ultimos_digitos, pag_detalle_transaccion")
+    .select("pag_id, pag_estado, pag_autorizacion_codigo, pag_tarjeta_marca, pag_tarjeta_ultimos_digitos, pag_detalle_transaccion")
     .eq("pag_identificador_cliente", identificador)
     .maybeSingle();
   if (error || !data) return { ok: false, error: "Pago desconocido." };
   return {
     ok: true,
     data: {
+      pagoId: data.pag_id,
+      pasarela: "PLUX",
       estado: data.pag_estado,
       motivo: data.pag_detalle_transaccion?.motivo ?? null,
       autorizacion: data.pag_autorizacion_codigo,
@@ -331,6 +335,8 @@ export async function confirmarPagoPluxAction(entrada: {
     return {
       ok: true,
       data: {
+        pagoId: pago.pag_id,
+        pasarela: "PLUX",
         estado: "APROBADO",
         motivo: null,
         autorizacion: pago.pag_autorizacion_codigo || autorizacion,
@@ -453,6 +459,57 @@ export async function confirmarPagoPluxAction(entrada: {
     }
   }
 
+  // 3.4. Respaldo en comun_seguridad.seg_usuario.usu_detalle_usuario para garantizar
+  // que el mecanismo de pago PLUX, código de autorización y últimos dígitos de tarjeta
+  // queden siempre registrados aunque la tabla com_transaccion_pago no permita UPDATE directo por RLS
+  try {
+    const {
+      data: { user: authUser },
+    } = await supabase.auth.getUser();
+    const uidTarget = pago?.pag_cliente_id || authUser?.id;
+    if (uidTarget) {
+      const { data: usrRow } = await (clienteDb || supabase)
+        .schema("comun_seguridad")
+        .from("seg_usuario")
+        .select("usu_detalle_usuario")
+        .eq("usu_id", uidTarget)
+        .maybeSingle();
+      const detUsr = (usrRow?.usu_detalle_usuario as Record<string, any>) || {};
+      const listaConfirmados: any[] = Array.isArray(detUsr.pagos_plux_confirmados)
+        ? detUsr.pagos_plux_confirmados
+        : [];
+      const nuevoRegistroPlux = {
+        pag_id: pago?.pag_id || `plux-${identificador}`,
+        identificador,
+        pasarela: "PLUX",
+        estado: "APROBADO",
+        id_transaccion: idTransaccion,
+        autorizacion,
+        tarjeta_tipo: tipoTarjeta,
+        tarjeta_marca: marcaTarjeta,
+        tarjeta_ultimos_digitos: ultimosDigitos,
+        monto_total: Number(montoNotificado ?? pago?.pag_monto_total ?? 28.75),
+        producto_nombre: productoNombre,
+        variante_id: varianteId,
+        confirmado_en: new Date().toISOString(),
+        pagador: detPrevio.pagador || null,
+      };
+      const sinDuplicado = listaConfirmados.filter((item: any) => item?.identificador !== identificador);
+      await (clienteDb || supabase)
+        .schema("comun_seguridad")
+        .from("seg_usuario")
+        .update({
+          usu_detalle_usuario: {
+            ...detUsr,
+            pagos_plux_confirmados: [nuevoRegistroPlux, ...sinDuplicado].slice(0, 50),
+          },
+        })
+        .eq("usu_id", uidTarget);
+    }
+  } catch {
+    // Continuar
+  }
+
   // 3.5. Emitir y sincronizar automáticamente la Factura Electrónica SRI para este pago con tarjeta
   let facturaEmitida: any = null;
   try {
@@ -506,6 +563,8 @@ export async function confirmarPagoPluxAction(entrada: {
   return {
     ok: true,
     data: {
+      pagoId: pago?.pag_id || null,
+      pasarela: "PLUX",
       estado: "APROBADO",
       motivo: null,
       autorizacion,

@@ -720,8 +720,11 @@ export function PanelDinamicoModular({ slug, negocio, rolInicial = "ADMINISTRADO
         let listW: string[] = [];
         let configuracionEncontrada = false;
 
-        // 1. Consultar servidor (PostgreSQL comun_seguridad.seg_perfil / seg_rol_widget)
+        // 1. Consultar servidor (PostgreSQL comun_configuracion.cfg_negocio / comun_seguridad.seg_perfil)
         const resBdd = await obtenerConfiguracionNavegacionRolAction(rolActivo, (negocio || "TRANQ").toUpperCase());
+        const bddConfigurado = Boolean(resBdd.ok && resBdd.data?.configuradoExplicitamente);
+        const tsBdd = resBdd.ok && resBdd.data?.actualizadoEn ? Date.parse(resBdd.data.actualizadoEn) || 0 : 0;
+
         if (resBdd.ok && resBdd.data && resBdd.data.widgetsPorPanel) {
           const wBdd =
             resBdd.data.widgetsPorPanel[panelIdBuscado] ??
@@ -756,7 +759,7 @@ export function PanelDinamicoModular({ slug, negocio, rolInicial = "ADMINISTRADO
           }
         }
 
-        // 2. Complementar con personalizaciones en localStorage si existen en esta máquina
+        // 2. Consultar localStorage únicamente si tiene una marca de tiempo explícita más reciente que la BDD (o si la BDD aún no tiene configuración)
         const savedPerfiles =
           localStorage.getItem(`tranqi_perfiles_${negocio}`) ||
           localStorage.getItem(`tranqi_perfiles_${(negocio || "").toUpperCase()}`) ||
@@ -774,7 +777,10 @@ export function PanelDinamicoModular({ slug, negocio, rolInicial = "ADMINISTRADO
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 perfilObj = perfiles.find((p: any) => p.clave?.toUpperCase() === "OPERADOR");
               }
-              if (perfilObj && perfilObj.widgetsAsignadosPorPanel) {
+              const tsLocal = perfilObj?.actualizadoEn ? Date.parse(perfilObj.actualizadoEn) || 0 : 0;
+              const usarLocal = tsLocal > 0 && (!bddConfigurado || tsLocal > tsBdd);
+
+              if (usarLocal && perfilObj && perfilObj.widgetsAsignadosPorPanel) {
                 const wLocal =
                   perfilObj.widgetsAsignadosPorPanel[panelIdBuscado] ??
                   perfilObj.widgetsAsignadosPorPanel[slug] ??

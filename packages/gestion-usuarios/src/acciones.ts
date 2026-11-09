@@ -624,10 +624,19 @@ export async function guardarWidget(input: GuardarWidgetInput): Promise<Resultad
 function obtenerClavesNegocioCompatibles(negocio: string): string[] {
   const nLower = (negocio || "tranqi").toLowerCase().trim();
   const nUpper = (negocio || "TRANQ").toUpperCase().trim();
-  if (nLower.startsWith("tranq")) {
+  if (nLower.startsWith("tranq") || nLower === "legal") {
     return Array.from(new Set([nLower, nUpper, "tranqi", "tranq", "TRANQ", "TRANQI"]));
   }
   return Array.from(new Set([nLower, nUpper]));
+}
+
+function resolverClaveCfgNegocio(negocio: string): string {
+  const n = (negocio || "tranqi").toLowerCase().trim();
+  if (n.startsWith("tranq") || n === "legal") return "tranqi";
+  if (n === "ffh" || n.startsWith("fastfix")) return "fastfix";
+  if (n === "tnk" || n.startsWith("tinkay")) return "tinkay";
+  if (n === "mrg" || n.startsWith("margarita")) return "margaritas";
+  return n;
 }
 
 export async function guardarAsignacionWidget(
@@ -729,91 +738,172 @@ export async function guardarConfiguracionPanelesPerfilAction(
     const perfilClaveUpper = (perfilClave || "").toUpperCase().trim();
     const clavesNegocio = obtenerClavesNegocioCompatibles(negocio);
     const negocioNorm = clavesNegocio[0] || "tranqi";
+    const cfgNegocioKey = resolverClaveCfgNegocio(negocio);
 
     if (!perfilClaveUpper) return { ok: false, error: "Clave de perfil no válida" };
 
-    // 1. Obtener registro actual del perfil en seg_perfil
-    const { data: perfilRow } = await (adminSupabase
-      .schema("comun_seguridad")
-      .from("seg_perfil")
-      .select("per_detalle_perfil")
-      .eq("per_clave", perfilClaveUpper) as any)
-      .maybeSingle();
-
-    const detalleActual = (perfilRow?.per_detalle_perfil as Record<string, any>) || {};
-    const negociosMap = { ...(detalleActual.negocios || {}) };
-    const negocioConfigActual =
-      negociosMap[negocioNorm] ||
-      clavesNegocio.map(k => negociosMap[k]).find(Boolean) ||
-      {};
-
-    const titulosMerged = {
-      ...(detalleActual.titulosWidgetsPorPanel || {}),
-      ...(negocioConfigActual.titulosWidgetsPorPanel || {}),
-      ...(titulosWidgetsPorPanel || {})
-    };
-
-    const retiradosMerged: Record<string, string[]> = {
-      ...(detalleActual.widgetsRetiradosPorPanel || {}),
-      ...(negocioConfigActual.widgetsRetiradosPorPanel || {}),
-      ...(widgetsRetiradosPorPanel || {})
-    };
-
-    // Si un widget está presente en widgetsAsignadosPorPanel[pId], asegurarse de que NO figure como retirado en ese mismo panel
-    for (const [pId, wActivos] of Object.entries(widgetsAsignadosPorPanel || {})) {
-      if (Array.isArray(wActivos) && Array.isArray(retiradosMerged[pId])) {
-        const setActivos = new Set(wActivos);
-        retiradosMerged[pId] = retiradosMerged[pId].filter(w => !setActivos.has(w));
-      }
-    }
-
     const ahoraIso = new Date().toISOString();
-    const snapshotNegocio = {
-      ...negocioConfigActual,
-      configuradoExplicitamente: true,
-      panelesAsignados,
-      widgetsAsignadosPorPanel,
-      widgetsPorPanel: widgetsAsignadosPorPanel,
-      widgetsRetiradosPorPanel: retiradosMerged,
-      titulosWidgetsPorPanel: titulosMerged,
-      actualizadoEn: ahoraIso
-    };
 
-    // Guardar en todas las variantes de clave del negocio ("tranqi", "tranq", "TRANQ", "TRANQI") para evitar desincronización
-    for (const k of clavesNegocio) {
-      negociosMap[k] = snapshotNegocio;
+    // 1. PERSISTENCIA PRIMARIA EN comun_configuracion.cfg_negocio (GRANT SELECT anon/authenticated + GRANT UPDATE authenticated con RLS seg_fn_es_admin_negocio)
+    let guardadoEnCfg = false;
+    let errorCfg: string | null = null;
+
+    try {
+      const { data: cfgActual } = await (supabase
+        .schema("comun_configuracion")
+        .from("cfg_negocio")
+        .select("cfg_id, cfg_detalle_configuracion")
+        .eq("cfg_negocio", cfgNegocioKey) as any)
+        .maybeSingle();
+
+      const detalleCfgPrevio = (cfgActual?.cfg_detalle_configuracion as Record<string, any>) || {};
+      const perfilesNavPrevios = (detalleCfgPrevio.perfiles_navegacion as Record<string, any>) || {};
+      const perfilCfgPrevio = (perfilesNavPrevios[perfilClaveUpper] as Record<string, any>) || {};
+
+      const titulosMergedCfg = {
+        ...(perfilCfgPrevio.titulosWidgetsPorPanel || {}),
+        ...(titulosWidgetsPorPanel || {})
+      };
+
+      const retiradosMergedCfg: Record<string, string[]> = {
+        ...(perfilCfgPrevio.widgetsRetiradosPorPanel || {}),
+        ...(widgetsRetiradosPorPanel || {})
+      };
+
+      for (const [pId, wActivos] of Object.entries(widgetsAsignadosPorPanel || {})) {
+        if (Array.isArray(wActivos) && Array.isArray(retiradosMergedCfg[pId])) {
+          const setActivos = new Set(wActivos);
+          retiradosMergedCfg[pId] = retiradosMergedCfg[pId].filter(w => !setActivos.has(w));
+        }
+      }
+
+      const snapshotPerfilCfg = {
+        clave: perfilClaveUpper,
+        configuradoExplicitamente: true,
+        panelesAsignados,
+        widgetsAsignadosPorPanel,
+        widgetsPorPanel: widgetsAsignadosPorPanel,
+        widgetsRetiradosPorPanel: retiradosMergedCfg,
+        titulosWidgetsPorPanel: titulosMergedCfg,
+        actualizadoEn: ahoraIso
+      };
+
+      const nuevoDetalleCfg = {
+        ...detalleCfgPrevio,
+        perfiles_navegacion: {
+          ...perfilesNavPrevios,
+          [perfilClaveUpper]: snapshotPerfilCfg
+        }
+      };
+
+      const { data: filasCfg, error: errUpdCfg } = await (supabase
+        .schema("comun_configuracion")
+        .from("cfg_negocio") as any)
+        .update({
+          cfg_detalle_configuracion: nuevoDetalleCfg,
+          cfg_actualizado_en: ahoraIso
+        })
+        .eq("cfg_negocio", cfgNegocioKey)
+        .select("cfg_id");
+
+      if (!errUpdCfg && Array.isArray(filasCfg) && filasCfg.length > 0) {
+        guardadoEnCfg = true;
+      } else if (errUpdCfg) {
+        errorCfg = errUpdCfg.message;
+      }
+    } catch (eCfg: any) {
+      errorCfg = eCfg?.message || "Error actualizando cfg_negocio";
     }
 
-    const nuevoDetalle = {
-      ...detalleActual,
-      configuradoExplicitamente: true,
-      negocios: negociosMap,
-      // Guardar también a nivel raíz para consistencia y fallback
-      panelesAsignados,
-      widgetsAsignadosPorPanel,
-      widgetsPorPanel: widgetsAsignadosPorPanel,
-      widgetsRetiradosPorPanel: retiradosMerged,
-      titulosWidgetsPorPanel: titulosMerged,
-      actualizadoEn: ahoraIso
-    };
+    // 2. PERSISTENCIA SECUNDARIA EN comun_seguridad.seg_perfil (cuando exista política UPDATE o service_role)
+    let guardadoEnSegPerfil = false;
+    try {
+      const { data: perfilRow } = await (adminSupabase
+        .schema("comun_seguridad")
+        .from("seg_perfil")
+        .select("per_detalle_perfil")
+        .eq("per_clave", perfilClaveUpper) as any)
+        .maybeSingle();
 
-    const { error: updErr } = await (adminSupabase
-      .schema("comun_seguridad")
-      .from("seg_perfil") as any)
-      .update({
-        per_detalle_perfil: nuevoDetalle,
-        per_actualizado_en: ahoraIso
-      })
-      .eq("per_clave", perfilClaveUpper);
+      const detalleActual = (perfilRow?.per_detalle_perfil as Record<string, any>) || {};
+      const negociosMap = { ...(detalleActual.negocios || {}) };
+      const negocioConfigActual =
+        negociosMap[negocioNorm] ||
+        clavesNegocio.map(k => negociosMap[k]).find(Boolean) ||
+        {};
 
-    if (updErr) {
-      console.error("Error guardando configuracion en seg_perfil:", updErr);
-      return { ok: false, error: updErr.message };
+      const titulosMerged = {
+        ...(detalleActual.titulosWidgetsPorPanel || {}),
+        ...(negocioConfigActual.titulosWidgetsPorPanel || {}),
+        ...(titulosWidgetsPorPanel || {})
+      };
+
+      const retiradosMerged: Record<string, string[]> = {
+        ...(detalleActual.widgetsRetiradosPorPanel || {}),
+        ...(negocioConfigActual.widgetsRetiradosPorPanel || {}),
+        ...(widgetsRetiradosPorPanel || {})
+      };
+
+      for (const [pId, wActivos] of Object.entries(widgetsAsignadosPorPanel || {})) {
+        if (Array.isArray(wActivos) && Array.isArray(retiradosMerged[pId])) {
+          const setActivos = new Set(wActivos);
+          retiradosMerged[pId] = retiradosMerged[pId].filter(w => !setActivos.has(w));
+        }
+      }
+
+      const snapshotNegocio = {
+        ...negocioConfigActual,
+        configuradoExplicitamente: true,
+        panelesAsignados,
+        widgetsAsignadosPorPanel,
+        widgetsPorPanel: widgetsAsignadosPorPanel,
+        widgetsRetiradosPorPanel: retiradosMerged,
+        titulosWidgetsPorPanel: titulosMerged,
+        actualizadoEn: ahoraIso
+      };
+
+      for (const k of clavesNegocio) {
+        negociosMap[k] = snapshotNegocio;
+      }
+
+      const nuevoDetalle = {
+        ...detalleActual,
+        configuradoExplicitamente: true,
+        negocios: negociosMap,
+        panelesAsignados,
+        widgetsAsignadosPorPanel,
+        widgetsPorPanel: widgetsAsignadosPorPanel,
+        widgetsRetiradosPorPanel: retiradosMerged,
+        titulosWidgetsPorPanel: titulosMerged,
+        actualizadoEn: ahoraIso
+      };
+
+      const { error: updErr } = await (adminSupabase
+        .schema("comun_seguridad")
+        .from("seg_perfil") as any)
+        .update({
+          per_detalle_perfil: nuevoDetalle,
+          per_actualizado_en: ahoraIso
+        })
+        .eq("per_clave", perfilClaveUpper);
+
+      if (!updErr) {
+        guardadoEnSegPerfil = true;
+      }
+    } catch {
+      // Ignorar si seg_perfil no tiene GRANT UPDATE para authenticated
+    }
+
+    if (!guardadoEnCfg && !guardadoEnSegPerfil) {
+      return { ok: false, error: errorCfg || "No se pudo guardar la configuración del perfil en la base de datos" };
     }
 
     revalidatePath("/panel/configuracion");
     revalidatePath("/panel/usuarios");
     revalidatePath("/panel/administrar");
+    revalidatePath("/panel/herramientas");
+    revalidatePath("/panel/agendamiento");
+    revalidatePath("/panel/cuenta");
     revalidatePath("/panel");
 
     return { ok: true, data: undefined };
@@ -840,58 +930,98 @@ export async function obtenerConfiguracionTodosPerfilesAction(
     const supabase = await crearClienteServidor();
     const adminSupabase = crearClienteAdmin() || supabase;
     const clavesNegocio = obtenerClavesNegocioCompatibles(negocio);
+    const cfgNegocioKey = resolverClaveCfgNegocio(negocio);
+    const resultado: Record<string, ConfiguracionPerfilPersistida> = {};
 
-    const { data: filas, error } = await (adminSupabase
-      .schema("comun_seguridad")
-      .from("seg_perfil")
-      .select("per_clave, per_detalle_perfil") as any);
+    // 1. Leer primero desde comun_configuracion.cfg_negocio (fuente primaria en producción con lectura pública/autenticada)
+    try {
+      const { data: cfgRow } = await (supabase
+        .schema("comun_configuracion")
+        .from("cfg_negocio")
+        .select("cfg_detalle_configuracion")
+        .eq("cfg_negocio", cfgNegocioKey) as any)
+        .maybeSingle();
 
-    if (error) {
-      return { ok: false, error: error.message };
+      const perfilesNav = (cfgRow?.cfg_detalle_configuracion as Record<string, any>)?.perfiles_navegacion;
+      if (perfilesNav && typeof perfilesNav === "object") {
+        for (const [k, val] of Object.entries(perfilesNav as Record<string, any>)) {
+          const clave = String(k || "").toUpperCase().trim();
+          if (!clave || !val || typeof val !== "object") continue;
+          const widgetsMap = val.widgetsAsignadosPorPanel || val.widgetsPorPanel;
+          const panelesArr = val.panelesAsignados;
+          const retiradosMap = val.widgetsRetiradosPorPanel;
+          const titulosMap = val.titulosWidgetsPorPanel;
+          if (widgetsMap || panelesArr || retiradosMap) {
+            resultado[clave] = {
+              clave,
+              configuradoExplicitamente: Boolean(val.configuradoExplicitamente || widgetsMap),
+              panelesAsignados: Array.isArray(panelesArr) ? panelesArr.map(String) : undefined,
+              widgetsAsignadosPorPanel: widgetsMap && typeof widgetsMap === "object" ? widgetsMap : undefined,
+              widgetsRetiradosPorPanel: retiradosMap && typeof retiradosMap === "object" ? retiradosMap : undefined,
+              titulosWidgetsPorPanel: titulosMap && typeof titulosMap === "object" ? titulosMap : undefined,
+              actualizadoEn: val.actualizadoEn
+            };
+          }
+        }
+      }
+    } catch {
+      // Continuar con fallback a seg_perfil
     }
 
-    const resultado: Record<string, ConfiguracionPerfilPersistida> = {};
-    for (const fila of (filas || []) as any[]) {
-      const clave = String(fila?.per_clave || "").toUpperCase().trim();
-      if (!clave) continue;
-      const detalle = (fila?.per_detalle_perfil || {}) as Record<string, any>;
-      const negocioCfg =
-        clavesNegocio.map(k => detalle.negocios?.[k]).find(Boolean) ||
-        null;
+    // 2. Complementar con comun_seguridad.seg_perfil si existe alguna fila más reciente
+    try {
+      const { data: filas } = await (adminSupabase
+        .schema("comun_seguridad")
+        .from("seg_perfil")
+        .select("per_clave, per_detalle_perfil") as any);
 
-      const widgetsMap =
-        negocioCfg?.widgetsAsignadosPorPanel ||
-        negocioCfg?.widgetsPorPanel ||
-        detalle.widgetsAsignadosPorPanel ||
-        detalle.widgetsPorPanel;
+      for (const fila of (filas || []) as any[]) {
+        const clave = String(fila?.per_clave || "").toUpperCase().trim();
+        if (!clave) continue;
+        const detalle = (fila?.per_detalle_perfil || {}) as Record<string, any>;
+        const negocioCfg =
+          clavesNegocio.map(k => detalle.negocios?.[k]).find(Boolean) ||
+          null;
 
-      const panelesArr =
-        negocioCfg?.panelesAsignados ||
-        detalle.panelesAsignados;
+        const widgetsMap =
+          negocioCfg?.widgetsAsignadosPorPanel ||
+          negocioCfg?.widgetsPorPanel ||
+          detalle.widgetsAsignadosPorPanel ||
+          detalle.widgetsPorPanel;
 
-      const retiradosMap =
-        negocioCfg?.widgetsRetiradosPorPanel ||
-        detalle.widgetsRetiradosPorPanel;
+        const panelesArr =
+          negocioCfg?.panelesAsignados ||
+          detalle.panelesAsignados;
 
-      const titulosMap =
-        negocioCfg?.titulosWidgetsPorPanel ||
-        detalle.titulosWidgetsPorPanel;
+        const retiradosMap =
+          negocioCfg?.widgetsRetiradosPorPanel ||
+          detalle.widgetsRetiradosPorPanel;
 
-      if (widgetsMap || panelesArr || retiradosMap) {
-        resultado[clave] = {
-          clave,
-          configuradoExplicitamente: Boolean(
-            negocioCfg?.configuradoExplicitamente ||
-            detalle.configuradoExplicitamente ||
-            widgetsMap
-          ),
-          panelesAsignados: Array.isArray(panelesArr) ? panelesArr.map(String) : undefined,
-          widgetsAsignadosPorPanel: widgetsMap && typeof widgetsMap === "object" ? widgetsMap : undefined,
-          widgetsRetiradosPorPanel: retiradosMap && typeof retiradosMap === "object" ? retiradosMap : undefined,
-          titulosWidgetsPorPanel: titulosMap && typeof titulosMap === "object" ? titulosMap : undefined,
-          actualizadoEn: negocioCfg?.actualizadoEn || detalle.actualizadoEn
-        };
+        const titulosMap =
+          negocioCfg?.titulosWidgetsPorPanel ||
+          detalle.titulosWidgetsPorPanel;
+
+        const tsSeg = Date.parse(negocioCfg?.actualizadoEn || detalle.actualizadoEn || "") || 0;
+        const tsExistente = Date.parse(resultado[clave]?.actualizadoEn || "") || 0;
+
+        if ((widgetsMap || panelesArr || retiradosMap) && (!resultado[clave] || tsSeg > tsExistente)) {
+          resultado[clave] = {
+            clave,
+            configuradoExplicitamente: Boolean(
+              negocioCfg?.configuradoExplicitamente ||
+              detalle.configuradoExplicitamente ||
+              widgetsMap
+            ),
+            panelesAsignados: Array.isArray(panelesArr) ? panelesArr.map(String) : undefined,
+            widgetsAsignadosPorPanel: widgetsMap && typeof widgetsMap === "object" ? widgetsMap : undefined,
+            widgetsRetiradosPorPanel: retiradosMap && typeof retiradosMap === "object" ? retiradosMap : undefined,
+            titulosWidgetsPorPanel: titulosMap && typeof titulosMap === "object" ? titulosMap : undefined,
+            actualizadoEn: negocioCfg?.actualizadoEn || detalle.actualizadoEn
+          };
+        }
       }
+    } catch {
+      // Ignorar error de lectura secundaria
     }
 
     return { ok: true, data: resultado };
@@ -903,10 +1033,11 @@ export async function obtenerConfiguracionTodosPerfilesAction(
 export async function obtenerConfiguracionNavegacionRolAction(
   perfilClave: string,
   negocio: string
-): Promise<Resultado<{ widgetsPorPanel: Record<string, string[]>; panelesAsignados: string[]; widgetsRetiradosPorPanel?: Record<string, string[]>; titulosWidgetsPorPanel?: Record<string, string>; configuradoExplicitamente?: boolean }>> {
+): Promise<Resultado<{ widgetsPorPanel: Record<string, string[]>; panelesAsignados: string[]; widgetsRetiradosPorPanel?: Record<string, string[]>; titulosWidgetsPorPanel?: Record<string, string>; configuradoExplicitamente?: boolean; actualizadoEn?: string }>> {
   const supabase = await crearClienteServidor();
   const adminSupabase = crearClienteAdmin() || supabase;
   const variantesNegocio = obtenerClavesNegocioCompatibles(negocio);
+  const cfgNegocioKey = resolverClaveCfgNegocio(negocio);
   const rolUpper = (perfilClave || "CLIENTE").toUpperCase().trim();
 
   const widgetsPorPanel: Record<string, string[]> = {};
@@ -914,6 +1045,7 @@ export async function obtenerConfiguracionNavegacionRolAction(
   let widgetsRetiradosPorPanel: Record<string, string[]> = {};
   let titulosWidgetsPorPanel: Record<string, string> = {};
   let configuradoExplicitamente = false;
+  let actualizadoEn: string | undefined = undefined;
   const matrizRol = MATRIZ_FUNCIONAL_ROLES[rolUpper] || MATRIZ_FUNCIONAL_ROLES["CLIENTE"] || { paneles: [], widgetsPorPanel: {} };
 
   // 1. Inicializar valores base desde MATRIZ_FUNCIONAL_ROLES (solo para paneles que no hayan sido personalizados)
@@ -922,69 +1054,104 @@ export async function obtenerConfiguracionNavegacionRolAction(
   }
   panelesAsignados = [...(matrizRol.paneles || ["panel_inicio", "panel_cuenta"])];
 
-  // 2. Leer la configuración persistida en seg_perfil.per_detalle_perfil y RESPETAR las eliminaciones/personalizaciones
+  // 2. Buscar configuración persistida primero en comun_configuracion.cfg_negocio y luego en comun_seguridad.seg_perfil
   try {
-    const { data: perfilRow } = await (adminSupabase
-      .schema("comun_seguridad")
-      .from("seg_perfil")
-      .select("per_detalle_perfil")
-      .eq("per_clave", rolUpper) as any)
-      .maybeSingle();
+    let bddWidgetsPorPanel: Record<string, string[]> | null = null;
+    let bddPaneles: string[] | null = null;
+    let bddRetirados: Record<string, string[]> = {};
+    let bddTitulos: Record<string, string> = {};
+    let bddTs = 0;
 
-    if (perfilRow?.per_detalle_perfil) {
-      const detalle = perfilRow.per_detalle_perfil as Record<string, any>;
-      const negocioConfig =
-        variantesNegocio.map(k => detalle.negocios?.[k]).find(Boolean) ||
-        null;
+    // 2a. Fuente primaria: comun_configuracion.cfg_negocio.cfg_detalle_configuracion.perfiles_navegacion
+    try {
+      const { data: cfgRow } = await (supabase
+        .schema("comun_configuracion")
+        .from("cfg_negocio")
+        .select("cfg_detalle_configuracion")
+        .eq("cfg_negocio", cfgNegocioKey) as any)
+        .maybeSingle();
 
-      const bddWidgetsPorPanel =
-        negocioConfig?.widgetsAsignadosPorPanel ||
-        negocioConfig?.widgetsPorPanel ||
-        detalle.widgetsAsignadosPorPanel ||
-        detalle.widgetsPorPanel;
-      const bddPaneles =
-        negocioConfig?.panelesAsignados ||
-        detalle.panelesAsignados;
-      const bddRetirados =
-        negocioConfig?.widgetsRetiradosPorPanel ||
-        detalle.widgetsRetiradosPorPanel ||
-        {};
-
-      widgetsRetiradosPorPanel = bddRetirados;
-
-      if (bddWidgetsPorPanel && typeof bddWidgetsPorPanel === "object") {
-        configuradoExplicitamente = true;
-        for (const [pId, wList] of Object.entries(bddWidgetsPorPanel)) {
-          if (Array.isArray(wList)) {
-            const retiradosPanel = new Set<string>(Array.isArray(bddRetirados[pId]) ? bddRetirados[pId].map(String) : []);
-            const normalizados = wList
-              .map(String)
-              .map((w) => (w === "facturacion_electronica" ? "historial_pagos" : w))
-              .filter((w) => !retiradosPanel.has(w) && !(w === "historial_pagos" && retiradosPanel.has("facturacion_electronica")));
-
-            // Respetar exactamente la lista guardada para este panel sin re-inyectar widgets canónicos eliminados
-            widgetsPorPanel[pId] = Array.from(new Set(normalizados));
-          }
-        }
+      const cfgPerfil = (cfgRow?.cfg_detalle_configuracion as Record<string, any>)?.perfiles_navegacion?.[rolUpper];
+      if (cfgPerfil && typeof cfgPerfil === "object") {
+        bddWidgetsPorPanel = cfgPerfil.widgetsAsignadosPorPanel || cfgPerfil.widgetsPorPanel || null;
+        bddPaneles = Array.isArray(cfgPerfil.panelesAsignados) ? cfgPerfil.panelesAsignados : null;
+        bddRetirados = cfgPerfil.widgetsRetiradosPorPanel || {};
+        bddTitulos = cfgPerfil.titulosWidgetsPorPanel || {};
+        actualizadoEn = cfgPerfil.actualizadoEn;
+        bddTs = Date.parse(cfgPerfil.actualizadoEn || "") || 0;
       }
-
-      // Aplicar exclusión de widgetsRetiradosPorPanel sobre cualquier panel restante
-      for (const [pId, retList] of Object.entries(bddRetirados)) {
-        if (Array.isArray(retList) && retList.length > 0 && Array.isArray(widgetsPorPanel[pId])) {
-          const retSet = new Set(retList.map(String));
-          widgetsPorPanel[pId] = widgetsPorPanel[pId].filter(
-            (w) => !retSet.has(w) && !(w === "historial_pagos" && retSet.has("facturacion_electronica"))
-          );
-        }
-      }
-
-      if (Array.isArray(bddPaneles) && bddPaneles.length > 0) {
-        panelesAsignados = Array.from(new Set(bddPaneles.map(String)));
-      }
-      titulosWidgetsPorPanel = negocioConfig?.titulosWidgetsPorPanel || detalle.titulosWidgetsPorPanel || {};
+    } catch {
+      // Fallback a seg_perfil
     }
+
+    // 2b. Fuente secundaria: comun_seguridad.seg_perfil.per_detalle_perfil (si es más reciente o si cfg_negocio no tenía entrada)
+    try {
+      const { data: perfilRow } = await (adminSupabase
+        .schema("comun_seguridad")
+        .from("seg_perfil")
+        .select("per_detalle_perfil")
+        .eq("per_clave", rolUpper) as any)
+        .maybeSingle();
+
+      if (perfilRow?.per_detalle_perfil) {
+        const detalle = perfilRow.per_detalle_perfil as Record<string, any>;
+        const negocioConfig =
+          variantesNegocio.map(k => detalle.negocios?.[k]).find(Boolean) ||
+          null;
+
+        const segWidgets =
+          negocioConfig?.widgetsAsignadosPorPanel ||
+          negocioConfig?.widgetsPorPanel ||
+          detalle.widgetsAsignadosPorPanel ||
+          detalle.widgetsPorPanel;
+        const segTs = Date.parse(negocioConfig?.actualizadoEn || detalle.actualizadoEn || "") || 0;
+
+        if (segWidgets && (!bddWidgetsPorPanel || segTs > bddTs)) {
+          bddWidgetsPorPanel = segWidgets;
+          bddPaneles = negocioConfig?.panelesAsignados || detalle.panelesAsignados || bddPaneles;
+          bddRetirados = negocioConfig?.widgetsRetiradosPorPanel || detalle.widgetsRetiradosPorPanel || bddRetirados;
+          bddTitulos = negocioConfig?.titulosWidgetsPorPanel || detalle.titulosWidgetsPorPanel || bddTitulos;
+          actualizadoEn = negocioConfig?.actualizadoEn || detalle.actualizadoEn || actualizadoEn;
+        }
+      }
+    } catch {
+      // Ignorar error secundario
+    }
+
+    widgetsRetiradosPorPanel = bddRetirados;
+
+    if (bddWidgetsPorPanel && typeof bddWidgetsPorPanel === "object") {
+      configuradoExplicitamente = true;
+      for (const [pId, wList] of Object.entries(bddWidgetsPorPanel)) {
+        if (Array.isArray(wList)) {
+          const retiradosPanel = new Set<string>(Array.isArray(bddRetirados[pId]) ? bddRetirados[pId].map(String) : []);
+          const normalizados = wList
+            .map(String)
+            .map((w) => (w === "facturacion_electronica" ? "historial_pagos" : w))
+            .filter((w) => !retiradosPanel.has(w) && !(w === "historial_pagos" && retiradosPanel.has("facturacion_electronica")));
+
+          // Respetar exactamente la lista guardada para este panel sin re-inyectar widgets canónicos eliminados
+          widgetsPorPanel[pId] = Array.from(new Set(normalizados));
+        }
+      }
+    }
+
+    // Aplicar exclusión de widgetsRetiradosPorPanel sobre cualquier panel restante
+    for (const [pId, retList] of Object.entries(bddRetirados)) {
+      if (Array.isArray(retList) && retList.length > 0 && Array.isArray(widgetsPorPanel[pId])) {
+        const retSet = new Set(retList.map(String));
+        widgetsPorPanel[pId] = widgetsPorPanel[pId].filter(
+          (w) => !retSet.has(w) && !(w === "historial_pagos" && retSet.has("facturacion_electronica"))
+        );
+      }
+    }
+
+    if (Array.isArray(bddPaneles) && bddPaneles.length > 0) {
+      panelesAsignados = Array.from(new Set(bddPaneles.map(String)));
+    }
+    titulosWidgetsPorPanel = bddTitulos;
   } catch (e) {
-    console.error("Error leyendo per_detalle_perfil:", e);
+    console.error("Error leyendo configuración de perfil:", e);
   }
 
   return {
@@ -994,7 +1161,8 @@ export async function obtenerConfiguracionNavegacionRolAction(
       panelesAsignados,
       widgetsRetiradosPorPanel,
       titulosWidgetsPorPanel,
-      configuradoExplicitamente
+      configuradoExplicitamente,
+      actualizadoEn
     }
   };
 }
