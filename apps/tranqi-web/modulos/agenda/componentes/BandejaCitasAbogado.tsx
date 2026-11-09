@@ -15,10 +15,16 @@ import {
   Plus,
   Save,
   Trash2,
+  Upload,
+  ExternalLink,
   Video,
   XCircle,
 } from "lucide-react";
-import { decidirCitaAction, guardarGestionReunionYCitaAction } from "../acciones";
+import {
+  decidirCitaAction,
+  guardarGestionReunionYCitaAction,
+  subirArchivoRespaldoCitaAction,
+} from "../acciones";
 import { ETIQUETA_COBERTURA, ETIQUETA_ESTADO_CITA } from "../esquema";
 import type {
   CitaResumen,
@@ -595,6 +601,8 @@ export default function BandejaCitasAbogado({
                       onClick={() =>
                         setCitaGestionAbierta(gestionAbierta ? null : c.cit_id)
                       }
+                      title="Gestionar cita, adjuntar notas y archivos de respaldo"
+                      aria-label="Gestionar cita, adjuntar notas y archivos de respaldo"
                       style={{
                         display: "inline-flex",
                         alignItems: "center",
@@ -610,14 +618,14 @@ export default function BandejaCitasAbogado({
                       }}
                     >
                       <FolderOpen size={14} />
-                      {gestionAbierta
-                        ? "Cerrar Gestión y Expediente"
-                        : "Gestionar Reunión y Expediente"}
+                      {gestionAbierta ? "Cerrar Gestión" : "Gestionar Cita"}
                     </button>
 
                     <button
                       type="button"
                       onClick={() => setCitaLogAbierta(logAbierto ? null : c.cit_id)}
+                      title="Ver el detalle completo e historial de la cita"
+                      aria-label="Ver el detalle completo e historial de la cita"
                       style={{
                         display: "inline-flex",
                         alignItems: "center",
@@ -633,7 +641,7 @@ export default function BandejaCitasAbogado({
                       }}
                     >
                       <History size={14} />
-                      Log de la cita ({logEventos.length})
+                      Detalle e Historial ({logEventos.length})
                     </button>
                   </div>
 
@@ -642,18 +650,20 @@ export default function BandejaCitasAbogado({
                       type="button"
                       onClick={() => decidir(c.cit_id, "marcar_realizada")}
                       disabled={enviando}
+                      title="Confirmar la ejecución de esta cita"
+                      aria-label="Confirmar la ejecución de esta cita"
                       style={{
                         padding: "7px 12px",
                         borderRadius: "8px",
                         border: "1px solid #A7F3D0",
                         background: "#ECFDF5",
                         color: "#065F46",
-                        fontWeight: 700,
+                        fontWeight: 800,
                         fontSize: "0.78rem",
                         cursor: "pointer",
                       }}
                     >
-                      ✓ Marcar realizada
+                      ✓ Confirmar Ejecución
                     </button>
                   )}
                 </div>
@@ -721,74 +731,138 @@ export default function BandejaCitasAbogado({
                   />
                 )}
 
-                {/* Panel desplegable: Log de la Cita */}
+                {/* Panel desplegable: Detalle e Historial de la Cita */}
                 {logAbierto && (
                   <div
                     style={{
-                      padding: "12px 14px",
+                      padding: "14px 16px",
                       borderRadius: "10px",
                       background: "#F8FAFC",
                       border: "1px solid #E2E8F0",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "12px",
                     }}
                   >
-                    <strong
+                    <div
                       style={{
-                        fontSize: "0.82rem",
-                        color: "#0F172A",
-                        display: "block",
-                        marginBottom: "8px",
+                        display: "grid",
+                        gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))",
+                        gap: "10px",
+                        padding: "10px 12px",
+                        borderRadius: "8px",
+                        background: "#FFFFFF",
+                        border: "1px solid #E2E8F0",
+                        fontSize: "0.8rem",
+                        color: "#334155",
                       }}
                     >
-                      📜 Trazabilidad de la Cita (Asignación, Aceptación/Rechazo y Gestión)
-                    </strong>
-                    {logEventos.length === 0 ? (
-                      <p style={{ margin: 0, fontSize: "0.8rem", color: "#64748B" }}>
-                        Sin eventos adicionales registrados aún.
-                      </p>
-                    ) : (
-                      <ul
+                      <div>
+                        <span style={{ color: "#64748B", display: "block", fontSize: "0.72rem" }}>
+                          Cliente y Contacto
+                        </span>
+                        <strong>{c.cliente_nombre ?? "Cliente"}</strong>
+                        {c.cliente_correo && (
+                          <div style={{ fontSize: "0.75rem", color: "#475569" }}>
+                            {c.cliente_correo}
+                          </div>
+                        )}
+                      </div>
+                      <div>
+                        <span style={{ color: "#64748B", display: "block", fontSize: "0.72rem" }}>
+                          Especialidad y Cobertura
+                        </span>
+                        <strong>{c.materia_nombre ?? "General"}</strong>
+                        <div style={{ fontSize: "0.75rem", color: "#475569" }}>
+                          {ETIQUETA_COBERTURA[c.cit_cobertura] ?? c.cit_cobertura}
+                        </div>
+                      </div>
+                      <div>
+                        <span style={{ color: "#64748B", display: "block", fontSize: "0.72rem" }}>
+                          Estado de Ejecución
+                        </span>
+                        <strong>
+                          {c.cit_estado === "realizada"
+                            ? "✅ Ejecutada / Realizada"
+                            : ETIQUETA_ESTADO_CITA[c.cit_estado] ?? c.cit_estado}
+                        </strong>
+                        <div style={{ fontSize: "0.75rem", color: "#475569" }}>
+                          Respaldos: {(c.gestion_reunion?.documentos_adjuntos ?? []).length}{" "}
+                          archivo(s)
+                        </div>
+                      </div>
+                      {c.gestion_reunion?.notas_reunion && (
+                        <div style={{ gridColumn: "1 / -1" }}>
+                          <span style={{ color: "#64748B", display: "block", fontSize: "0.72rem" }}>
+                            Notas Registradas de la Cita
+                          </span>
+                          <div style={{ color: "#0F172A", marginTop: "2px" }}>
+                            {c.gestion_reunion.notas_reunion}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    <div>
+                      <strong
                         style={{
-                          listStyle: "none",
-                          margin: 0,
-                          padding: 0,
-                          display: "flex",
-                          flexDirection: "column",
-                          gap: "6px",
+                          fontSize: "0.82rem",
+                          color: "#0F172A",
+                          display: "block",
+                          marginBottom: "8px",
                         }}
                       >
-                        {logEventos.map((ev) => (
-                          <li
-                            key={ev.id}
-                            style={{
-                              padding: "8px 10px",
-                              borderRadius: "8px",
-                              background: "#FFFFFF",
-                              border: "1px solid #E2E8F0",
-                              fontSize: "0.8rem",
-                            }}
-                          >
-                            <div
+                        📜 Historial Cronológico de la Cita (Reserva, Asignación y Ejecución)
+                      </strong>
+                      {logEventos.length === 0 ? (
+                        <p style={{ margin: 0, fontSize: "0.8rem", color: "#64748B" }}>
+                          Sin eventos adicionales registrados aún.
+                        </p>
+                      ) : (
+                        <ul
+                          style={{
+                            listStyle: "none",
+                            margin: 0,
+                            padding: 0,
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: "6px",
+                          }}
+                        >
+                          {logEventos.map((ev) => (
+                            <li
+                              key={ev.id}
                               style={{
-                                display: "flex",
-                                justifyContent: "space-between",
-                                gap: "8px",
+                                padding: "8px 10px",
+                                borderRadius: "8px",
+                                background: "#FFFFFF",
+                                border: "1px solid #E2E8F0",
+                                fontSize: "0.8rem",
                               }}
                             >
-                              <strong>
-                                [{ev.tipo}] {ev.resumen}
-                              </strong>
-                              <span style={{ color: "#64748B", fontSize: "0.74rem" }}>
-                                {FORMATO_LOG.format(new Date(ev.fecha))}
-                              </span>
-                            </div>
-                            <div style={{ color: "#475569", marginTop: "2px" }}>
-                              Responsable: {ev.autor_nombre} ({ev.autor_rol})
-                              {ev.mensaje ? ` · 💬 "${ev.mensaje}"` : ""}
-                            </div>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
+                              <div
+                                style={{
+                                  display: "flex",
+                                  justifyContent: "space-between",
+                                  gap: "8px",
+                                }}
+                              >
+                                <strong>
+                                  [{ev.tipo}] {ev.resumen}
+                                </strong>
+                                <span style={{ color: "#64748B", fontSize: "0.74rem" }}>
+                                  {FORMATO_LOG.format(new Date(ev.fecha))}
+                                </span>
+                              </div>
+                              <div style={{ color: "#475569", marginTop: "2px" }}>
+                                Responsable: {ev.autor_nombre} ({ev.autor_rol})
+                                {ev.mensaje ? ` · 💬 "${ev.mensaje}"` : ""}
+                              </div>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
                   </div>
                 )}
               </div>
@@ -823,8 +897,10 @@ function PanelGestionReunionYExpediente({
     cita.gestion_reunion?.documentos_adjuntos ?? [],
   );
   const [nuevoDocNombre, setNuevoDocNombre] = useState("");
-  const [nuevoDocTipo, setNuevoDocTipo] = useState<DocumentoAdjuntoCita["tipo"]>("contrato");
+  const [nuevoDocTipo, setNuevoDocTipo] = useState<DocumentoAdjuntoCita["tipo"]>("prueba");
   const [nuevoDocRef, setNuevoDocRef] = useState("");
+  const [nuevoDocNotaArchivo, setNuevoDocNotaArchivo] = useState("");
+  const [subiendoArchivo, setSubiendoArchivo] = useState(false);
 
   const casosDelCliente = cita.casos_cliente ?? [];
   const [accionCaso, setAccionCaso] = useState<
@@ -850,7 +926,7 @@ function PanelGestionReunionYExpediente({
     cita.abogado_nombre ?? "Abogado asignado",
   );
 
-  const [marcarRealizada, setMarcarRealizada] = useState(false);
+  const [marcarRealizada, setMarcarRealizada] = useState(cita.cit_estado === "realizada");
   const [errLocal, setErrLocal] = useState<string | null>(null);
   const [guardando, iniciarGuardado] = useTransition();
 
@@ -883,11 +959,47 @@ function PanelGestionReunionYExpediente({
         nombre: nuevoDocNombre.trim(),
         tipo: nuevoDocTipo,
         url_o_referencia: nuevoDocRef.trim() || null,
+        notas: nuevoDocNotaArchivo.trim() || null,
         fecha: new Date().toISOString(),
       },
     ]);
     setNuevoDocNombre("");
     setNuevoDocRef("");
+    setNuevoDocNotaArchivo("");
+  }
+
+  async function manejarSubidaArchivos(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    setErrLocal(null);
+    setSubiendoArchivo(true);
+    try {
+      const nuevosSubidos: DocumentoAdjuntoCita[] = [];
+      for (const file of Array.from(files)) {
+        const fd = new FormData();
+        fd.append("cita_id", cita.cit_id);
+        fd.append("archivo", file);
+        fd.append("tipo", nuevoDocTipo);
+        if (nuevoDocNotaArchivo.trim()) {
+          fd.append("notas", nuevoDocNotaArchivo.trim());
+        }
+        const res = await subirArchivoRespaldoCitaAction(fd);
+        if (!res.ok) {
+          setErrLocal(res.error);
+        } else {
+          nuevosSubidos.push(res.data.documento);
+        }
+      }
+      if (nuevosSubidos.length > 0) {
+        setDocumentos((prev) => [...nuevosSubidos, ...prev]);
+        setNuevoDocNotaArchivo("");
+      }
+    } catch {
+      setErrLocal("No se pudo subir el archivo de respaldo.");
+    } finally {
+      setSubiendoArchivo(false);
+      e.target.value = "";
+    }
   }
 
   function guardarTodo() {
@@ -1153,7 +1265,7 @@ function PanelGestionReunionYExpediente({
         </div>
       </div>
 
-      {/* 3. Documentos Adjuntos (N documentos de la cita / caso) */}
+      {/* 3. Archivos de Respaldo y Documentos Adjuntos */}
       <div>
         <strong
           style={{
@@ -1164,14 +1276,14 @@ function PanelGestionReunionYExpediente({
             marginBottom: "6px",
           }}
         >
-          📎 3. Documentos Adjuntos de la Consulta / Caso ({documentos.length})
+          📎 3. Archivos de Respaldo y Documentos Adjuntos ({documentos.length})
         </strong>
 
         {documentos.length > 0 && (
           <ul
             style={{
               listStyle: "none",
-              margin: "0 0 8px 0",
+              margin: "0 0 10px 0",
               padding: 0,
               display: "flex",
               flexDirection: "column",
@@ -1185,41 +1297,180 @@ function PanelGestionReunionYExpediente({
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "space-between",
-                  padding: "7px 10px",
+                  flexWrap: "wrap",
+                  gap: "8px",
+                  padding: "8px 12px",
                   borderRadius: "8px",
                   background: "#FFFFFF",
                   border: "1px solid #E2E8F0",
                   fontSize: "0.82rem",
                 }}
               >
-                <span>
-                  <FileText size={13} style={{ display: "inline", marginRight: "5px" }} />
-                  <strong>{doc.nombre}</strong> ({doc.tipo})
-                  {doc.url_o_referencia ? ` · ${doc.url_o_referencia}` : ""}
-                </span>
-                <button
-                  type="button"
-                  onClick={() =>
-                    setDocumentos((prev) => prev.filter((x) => x.id !== doc.id))
-                  }
-                  style={{
-                    background: "none",
-                    border: "none",
-                    color: "#DC2626",
-                    cursor: "pointer",
-                  }}
-                >
-                  <Trash2 size={14} />
-                </button>
+                <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                  <span>
+                    <FileText size={13} style={{ display: "inline", marginRight: "5px" }} />
+                    <strong>{doc.nombre}</strong>{" "}
+                    <span
+                      style={{
+                        fontSize: "0.72rem",
+                        padding: "1px 6px",
+                        borderRadius: "6px",
+                        background: "#F1F5F9",
+                        color: "#475569",
+                        fontWeight: 700,
+                      }}
+                    >
+                      {doc.tipo}
+                    </span>
+                  </span>
+                  {doc.notas && (
+                    <span style={{ fontSize: "0.75rem", color: "#64748B" }}>
+                      Nota: {doc.notas}
+                    </span>
+                  )}
+                </div>
+
+                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                  {doc.url_o_referencia && (
+                    <a
+                      href={doc.url_o_referencia}
+                      target="_blank"
+                      rel="noreferrer"
+                      download={doc.url_o_referencia.startsWith("data:") ? doc.nombre : undefined}
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "4px",
+                        padding: "4px 10px",
+                        borderRadius: "6px",
+                        background: "#F5F3FF",
+                        border: "1px solid #DDD6FE",
+                        color: "#5000BA",
+                        fontSize: "0.75rem",
+                        fontWeight: 800,
+                        textDecoration: "none",
+                      }}
+                    >
+                      <ExternalLink size={12} />
+                      Ver Respaldo
+                    </a>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setDocumentos((prev) => prev.filter((x) => x.id !== doc.id))
+                    }
+                    title="Eliminar archivo de respaldo"
+                    aria-label="Eliminar archivo de respaldo"
+                    style={{
+                      background: "none",
+                      border: "none",
+                      color: "#DC2626",
+                      cursor: "pointer",
+                    }}
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
               </li>
             ))}
           </ul>
         )}
 
+        {/* Subida directa de archivos desde el dispositivo */}
+        <div
+          style={{
+            padding: "12px",
+            borderRadius: "10px",
+            background: "#FFFFFF",
+            border: "1px dashed #94A3B8",
+            display: "flex",
+            flexDirection: "column",
+            gap: "8px",
+            marginBottom: "8px",
+          }}
+        >
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+              gap: "8px",
+              alignItems: "center",
+            }}
+          >
+            <select
+              value={nuevoDocTipo}
+              onChange={(e) =>
+                setNuevoDocTipo(e.target.value as DocumentoAdjuntoCita["tipo"])
+              }
+              style={{
+                padding: "8px 10px",
+                borderRadius: "8px",
+                border: "1px solid #CBD5E1",
+                fontSize: "0.82rem",
+                background: "#FFFFFF",
+              }}
+            >
+              <option value="prueba">Prueba / Respaldo de consulta</option>
+              <option value="contrato">Contrato</option>
+              <option value="minuta">Minuta / Acta</option>
+              <option value="notificacion">Citación / Notificación</option>
+              <option value="escrito">Escrito judicial</option>
+              <option value="cedula">Cédula / RUC</option>
+              <option value="otro">Otro documento</option>
+            </select>
+
+            <input
+              type="text"
+              value={nuevoDocNotaArchivo}
+              onChange={(e) => setNuevoDocNotaArchivo(e.target.value)}
+              placeholder="Descripción o nota del archivo (opcional)…"
+              style={{
+                padding: "8px 10px",
+                borderRadius: "8px",
+                border: "1px solid #CBD5E1",
+                fontSize: "0.82rem",
+                background: "#FFFFFF",
+              }}
+            />
+
+            <label
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "6px",
+                padding: "8px 14px",
+                borderRadius: "8px",
+                background: subiendoArchivo ? "#94A3B8" : "#5000BA",
+                color: "#FFFFFF",
+                fontWeight: 800,
+                fontSize: "0.8rem",
+                cursor: subiendoArchivo ? "wait" : "pointer",
+              }}
+            >
+              <Upload size={14} />
+              {subiendoArchivo ? "Subiendo archivo…" : "Subir Archivo de Respaldo"}
+              <input
+                type="file"
+                multiple
+                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.webp,.txt,.zip"
+                onChange={manejarSubidaArchivos}
+                disabled={subiendoArchivo}
+                style={{ display: "none" }}
+              />
+            </label>
+          </div>
+          <span style={{ fontSize: "0.74rem", color: "#64748B" }}>
+            Formatos soportados: PDF, Word (.doc/.docx), Imágenes (JPG/PNG/WebP), TXT o ZIP (máx. 20 MB).
+          </span>
+        </div>
+
+        {/* Opción alternativa por referencia manual */}
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "1.5fr 1fr 1.5fr auto",
+            gridTemplateColumns: "1.5fr 1.5fr auto",
             gap: "8px",
             alignItems: "center",
           }}
@@ -1228,7 +1479,7 @@ function PanelGestionReunionYExpediente({
             type="text"
             value={nuevoDocNombre}
             onChange={(e) => setNuevoDocNombre(e.target.value)}
-            placeholder="Nombre del documento (ej. Contrato laboral firmado.pdf)"
+            placeholder="O registrar referencia manual (ej. Contrato firmado.pdf)"
             style={{
               padding: "8px 10px",
               borderRadius: "8px",
@@ -1237,32 +1488,11 @@ function PanelGestionReunionYExpediente({
               background: "#FFFFFF",
             }}
           />
-          <select
-            value={nuevoDocTipo}
-            onChange={(e) =>
-              setNuevoDocTipo(e.target.value as DocumentoAdjuntoCita["tipo"])
-            }
-            style={{
-              padding: "8px 10px",
-              borderRadius: "8px",
-              border: "1px solid #CBD5E1",
-              fontSize: "0.82rem",
-              background: "#FFFFFF",
-            }}
-          >
-            <option value="contrato">Contrato</option>
-            <option value="minuta">Minuta</option>
-            <option value="notificacion">Citación / Notificación</option>
-            <option value="prueba">Prueba / Anexo</option>
-            <option value="escrito">Escrito judicial</option>
-            <option value="cedula">Cédula / RUC</option>
-            <option value="otro">Otro documento</option>
-          </select>
           <input
             type="text"
             value={nuevoDocRef}
             onChange={(e) => setNuevoDocRef(e.target.value)}
-            placeholder="Enlace o referencia en Billetera Digital (opcional)"
+            placeholder="URL o referencia externa (opcional)"
             style={{
               padding: "8px 10px",
               borderRadius: "8px",
@@ -1287,7 +1517,7 @@ function PanelGestionReunionYExpediente({
               cursor: "pointer",
             }}
           >
-            <Plus size={14} /> Adjuntar
+            <Plus size={14} /> Añadir Ref.
           </button>
         </div>
       </div>

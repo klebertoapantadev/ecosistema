@@ -32,7 +32,8 @@ export interface EventoLogCita {
     | "RECHAZO"
     | "REAGENDAMIENTO"
     | "GESTION_REUNION"
-    | "VINCULACION_CASO";
+    | "VINCULACION_CASO"
+    | "DOCUMENTO";
   autor_nombre: string;
   autor_rol: "OPERADOR" | "ABOGADO" | "CLIENTE" | "SISTEMA";
   resumen: string;
