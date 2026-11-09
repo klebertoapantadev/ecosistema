@@ -230,22 +230,22 @@ const INVENTARIO_GLOBAL_WIDGETS: Record<string, { titulo: string; subtitulo: str
     categoria: "Comercio y Pagos"
   },
   facturacion_electronica: {
-    titulo: "Facturación Electrónica & Comprobantes SRI",
-    subtitulo: "Valores generados, valores pagados, detalle del rubro facturado y emisión automática o manual de factura electrónica",
+    titulo: "Historial de Pagos",
+    subtitulo: "Valores generados, valores pagados, detalle del rubro facturado y descarga de facturas electrónicas SRI",
     icono: Receipt,
-    colorIcono: "#5000BA",
+    colorIcono: "#05876E",
     categoria: "Comercio y Pagos"
   },
   comprobantes_electronicos: {
-    titulo: "Facturación Electrónica & Comprobantes SRI",
-    subtitulo: "Valores generados, valores pagados, detalle del rubro facturado y emisión automática o manual de factura electrónica",
+    titulo: "Historial de Pagos",
+    subtitulo: "Valores generados, valores pagados, detalle del rubro facturado y descarga de facturas electrónicas SRI",
     icono: Receipt,
-    colorIcono: "#5000BA",
+    colorIcono: "#05876E",
     categoria: "Comercio y Pagos"
   },
   historial_pagos: {
-    titulo: "Historial de Transacciones & Pagos",
-    subtitulo: "Valores generados, valores pagados, detalle del rubro facturado y comprobantes electrónicos emitidos",
+    titulo: "Historial de Pagos",
+    subtitulo: "Valores generados, valores pagados, detalle del rubro facturado y descarga de facturas electrónicas SRI",
     icono: CreditCard,
     colorIcono: "#05876E",
     categoria: "Comercio y Pagos"
@@ -632,7 +632,9 @@ export function PanelDinamicoModular({ slug, negocio, rolInicial = "ADMINISTRADO
 
   const [widgetsAsignados, setWidgetsAsignados] = useState<string[]>(() => {
     if (widgetsIniciales && widgetsIniciales.length > 0) {
-      let w = [...widgetsIniciales];
+      let w = Array.from(
+        new Set(widgetsIniciales.map(item => (item === "facturacion_electronica" ? "historial_pagos" : item)))
+      );
       if (rolInicial?.toUpperCase() === "OPERADOR" && (panelIdBuscado === "panel_usuarios" || slugNormalizado === "usuarios")) {
         w = w.filter(item => item !== "crm_clientes");
       }
@@ -804,6 +806,11 @@ export function PanelDinamicoModular({ slug, negocio, rolInicial = "ADMINISTRADO
         if (rolActivo === "ABOGADO" || rolActivo === "CLIENTE") {
           listW = wCanonicos;
         }
+
+        // Unificar facturacion_electronica dentro de historial_pagos sin duplicados
+        listW = Array.from(
+          new Set(listW.map(w => (w === "facturacion_electronica" ? "historial_pagos" : w)))
+        );
 
         setWidgetsAsignados(listW);
       } catch (err) {

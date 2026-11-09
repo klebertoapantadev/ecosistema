@@ -5968,16 +5968,25 @@ export async function obtenerHistorialTransaccionesAction(
 
         const { data: citasRows } = await queryCitas;
         if (citasRows && Array.isArray(citasRows) && citasRows.length > 0) {
+          // Consultar en lote los perfiles reales de los clientes dueños de cada cita
+          const idsClientesCitas = Array.from(
+            new Set(citasRows.map((c: any) => c.cit_cliente_id).filter(Boolean)),
+          ) as string[];
+          const mapaUsuariosCitas = new Map<string, any>();
+          if (idsClientesCitas.length > 0) {
+            const { data: usrsCitas } = await db
+              .schema("comun_seguridad")
+              .from("seg_usuario")
+              .select("usu_id, usu_nombres, usu_apellidos, usu_correo, usu_whatsapp, usu_detalle_usuario")
+              .in("usu_id", idsClientesCitas);
+            if (usrsCitas && Array.isArray(usrsCitas)) {
+              for (const u of usrsCitas) {
+                mapaUsuariosCitas.set(u.usu_id, u);
+              }
+            }
+          }
+
           const idsPagosEnFilas = new Set(filas.map((f) => f.pag_id));
-          const nombreCli =
-            [perfilUsuarioActual?.usu_nombres, perfilUsuarioActual?.usu_apellidos].filter(Boolean).join(" ").trim() ||
-            user?.email ||
-            "Cliente Tranqi";
-          const datosFactUsr = perfilUsuarioActual?.usu_detalle_usuario?.datos_facturacion || {};
-          const idFiscalCli = datosFactUsr.identificacion || "1710034065";
-          const razonFiscalCli = datosFactUsr.razon_social || nombreCli;
-          const correoFiscalCli = datosFactUsr.correo_facturacion || perfilUsuarioActual?.usu_correo || user?.email || "";
-          const dirFiscalCli = datosFactUsr.direccion || "Quito - Ecuador";
 
           citasRows.forEach((c: any, idxCita: number) => {
             if (c.cit_pago_id && idsPagosEnFilas.has(c.cit_pago_id)) {
@@ -5985,6 +5994,18 @@ export async function obtenerHistorialTransaccionesAction(
             }
             const idSintetico = c.cit_pago_id || `pag-cita-${c.cit_id}`;
             if (idsPagosEnFilas.has(idSintetico)) return;
+
+            const usrCita = mapaUsuariosCitas.get(c.cit_cliente_id) || (c.cit_cliente_id === user?.id ? perfilUsuarioActual : null);
+            const nombreCli =
+              [usrCita?.usu_nombres, usrCita?.usu_apellidos].filter(Boolean).join(" ").trim() ||
+              usrCita?.usu_correo ||
+              "Cliente Tranqi";
+            const datosFactUsr = usrCita?.usu_detalle_usuario?.datos_facturacion || {};
+            const idFiscalCli = datosFactUsr.identificacion || usrCita?.usu_detalle_usuario?.cedula || "1714896228";
+            const razonFiscalCli = datosFactUsr.razon_social || nombreCli;
+            const correoFiscalCli = datosFactUsr.correo_facturacion || usrCita?.usu_correo || "";
+            const telFiscalCli = datosFactUsr.telefono || usrCita?.usu_whatsapp || "";
+            const dirFiscalCli = datosFactUsr.direccion || "Quito - Ecuador";
 
             const fechaCitaIso = c.cit_creado_en || c.cit_inicio_en || new Date().toISOString();
             const esPresencial = c.cit_modalidad === "presencial";
@@ -6024,6 +6045,7 @@ export async function obtenerHistorialTransaccionesAction(
               pag_tarjeta_ultimos_digitos: "4500",
               pag_titular_email: correoFiscalCli,
               pag_titular_identificacion: idFiscalCli,
+              pag_titular_telefono: telFiscalCli,
               pag_creado_en: fechaCitaIso,
               pag_confirmado_en: fechaCitaIso,
               pag_detalle_transaccion: {
@@ -6035,6 +6057,7 @@ export async function obtenerHistorialTransaccionesAction(
                   identificacion: idFiscalCli,
                   tipo_identificacion: idFiscalCli.length === 13 ? "04" : "05",
                   correo_facturacion: correoFiscalCli,
+                  telefono: telFiscalCli,
                   direccion: dirFiscalCli,
                 },
                 factura_electronica: {
@@ -6054,6 +6077,7 @@ export async function obtenerHistorialTransaccionesAction(
                     identificacion: idFiscalCli,
                     razon_social: razonFiscalCli,
                     correo: correoFiscalCli,
+                    telefono: telFiscalCli,
                     direccion: dirFiscalCli,
                   },
                 },
@@ -6064,6 +6088,28 @@ export async function obtenerHistorialTransaccionesAction(
         }
       } catch {
         // Ignorar si trq_cita no está disponible
+      }
+    }
+
+    // Consultar en lote los perfiles de seg_usuario para todas las filas de pagos
+    const mapaUsuariosPagos = new Map<string, any>();
+    const idsClientesPagos = Array.from(
+      new Set(filas.map((f) => f.pag_cliente_id).filter(Boolean)),
+    ) as string[];
+    if (idsClientesPagos.length > 0 && db) {
+      try {
+        const { data: usrsPagos } = await db
+          .schema("comun_seguridad")
+          .from("seg_usuario")
+          .select("usu_id, usu_nombres, usu_apellidos, usu_correo, usu_whatsapp, usu_detalle_usuario")
+          .in("usu_id", idsClientesPagos);
+        if (usrsPagos && Array.isArray(usrsPagos)) {
+          for (const u of usrsPagos) {
+            mapaUsuariosPagos.set(u.usu_id, u);
+          }
+        }
+      } catch {
+        // Continuar
       }
     }
 
@@ -6091,10 +6137,15 @@ export async function obtenerHistorialTransaccionesAction(
       }
     }
 
-    // Enriquecer cada transacción con rubro facturado y factura electrónica
+    // Enriquecer cada transacción con rubro facturado, datos reales del cliente y factura electrónica
     const resultado: TransaccionPagoCRM[] = [];
     for (const t of filas) {
       const det = (t.pag_detalle_transaccion as Record<string, any>) || {};
+      const usrReal = t.pag_cliente_id ? mapaUsuariosPagos.get(t.pag_cliente_id) : null;
+      const dfReal = usrReal?.usu_detalle_usuario?.datos_facturacion || {};
+      const nombreRealUsr =
+        [usrReal?.usu_nombres, usrReal?.usu_apellidos].filter(Boolean).join(" ").trim() || "";
+
       const cmpDb = mapaComprobantes.get(t.pag_id);
       let facturaResumen: FacturaElectronicaResumen | null = det.factura_electronica || null;
 
@@ -6123,10 +6174,34 @@ export async function obtenerHistorialTransaccionesAction(
       }
 
       const rubro = facturaResumen?.rubro_facturado || extraerRubroFacturadoDeTransaccion(t);
-      const clienteNombre = extraerNombreClienteDeTransaccion(t);
+      const clienteNombre =
+        dfReal.razon_social ||
+        nombreRealUsr ||
+        extraerNombreClienteDeTransaccion(t);
+      const emailTitular =
+        t.pag_titular_email ||
+        dfReal.correo_facturacion ||
+        usrReal?.usu_correo ||
+        facturaResumen?.comprador?.correo ||
+        null;
+      const idTitular =
+        t.pag_titular_identificacion ||
+        dfReal.identificacion ||
+        usrReal?.usu_detalle_usuario?.cedula ||
+        facturaResumen?.comprador?.identificacion ||
+        null;
+      const telTitular =
+        t.pag_titular_telefono ||
+        dfReal.telefono ||
+        usrReal?.usu_whatsapp ||
+        facturaResumen?.comprador?.telefono ||
+        null;
 
       resultado.push({
         ...t,
+        pag_titular_email: emailTitular,
+        pag_titular_identificacion: idTitular,
+        pag_titular_telefono: telTitular,
         rubro_facturado: rubro,
         cliente_nombre: clienteNombre,
         numero_comprobante: facturaResumen?.numero_comprobante || null,
@@ -6170,17 +6245,16 @@ export async function obtenerClientesParaFacturacionAction(
     const { data: usuarios } = await db
       .schema("comun_seguridad")
       .from("seg_usuario")
-      .select("usu_id, usu_nombre, usu_apellido, usu_email, usu_telefono, usu_detalle_perfil")
-      .eq("usu_estado_cuenta", "ACTIVO")
+      .select("usu_id, usu_nombres, usu_apellidos, usu_correo, usu_whatsapp, usu_detalle_usuario")
       .order("usu_creado_en", { ascending: false })
       .limit(100);
 
     if (!usuarios || !Array.isArray(usuarios)) return [];
 
     return usuarios.map((u: any) => {
-      const det = (u.usu_detalle_perfil as Record<string, any>) || {};
+      const det = (u.usu_detalle_usuario as Record<string, any>) || {};
       const df = det.datos_facturacion || {};
-      const nombreCompleto = `${u.usu_nombre || ""} ${u.usu_apellido || ""}`.trim() || u.usu_email || "Cliente";
+      const nombreCompleto = `${u.usu_nombres || ""} ${u.usu_apellidos || ""}`.trim() || u.usu_correo || "Cliente";
       const id = String(df.identificacion || det.cedula || "").trim();
       const tipoId: "04" | "05" | "06" =
         df.tipo_identificacion === "ruc" || (id.length === 13 && id.endsWith("001"))
@@ -6192,8 +6266,8 @@ export async function obtenerClientesParaFacturacionAction(
       return {
         usu_id: u.usu_id,
         nombre_completo: nombreCompleto,
-        email: df.correo_facturacion || u.usu_email || "",
-        telefono: df.telefono || u.usu_telefono || "",
+        email: df.correo_facturacion || u.usu_correo || "",
+        telefono: df.telefono || u.usu_whatsapp || "",
         identificacion: id,
         tipo_identificacion: tipoId,
         razon_social: df.razon_social || nombreCompleto,
@@ -6202,6 +6276,447 @@ export async function obtenerClientesParaFacturacionAction(
     });
   } catch {
     return [];
+  }
+}
+
+export interface ExpedienteCliente360 {
+  usu_id: string | null;
+  nombre_completo: string;
+  razon_social: string;
+  email: string;
+  telefono: string;
+  identificacion: string;
+  direccion: string;
+  plan_activo: string | null;
+  estado_suscripcion: string | null;
+  metricas: {
+    total_facturado: number;
+    total_pagado: number;
+    cantidad_pagos: number;
+    cantidad_facturas: number;
+    cantidad_reuniones: number;
+    cantidad_casos: number;
+    cantidad_documentos: number;
+  };
+  cliente: {
+    usu_id: string | null;
+    nombre_completo: string;
+    razon_social: string;
+    correo: string;
+    whatsapp: string;
+    identificacion: string;
+    tipo_identificacion: string;
+    direccion_fiscal: string;
+    registrado_en: string | null;
+    roles: string[];
+    plan_activo: {
+      nombre: string;
+      frecuencia: string;
+      estado: string;
+      proximo_cobro: string | null;
+    } | null;
+  };
+  resumen: {
+    total_facturado: number;
+    total_pagado: number;
+    cantidad_pagos: number;
+    cantidad_citas: number;
+    cantidad_casos: number;
+    cantidad_documentos_billetera: number;
+  };
+  casos: Array<{
+    id: string;
+    cas_id: string;
+    secuencial: number;
+    cas_secuencial: number;
+    titulo: string;
+    cas_titulo: string;
+    descripcion: string | null;
+    cas_descripcion: string | null;
+    estado: string;
+    cas_estado: string;
+    numero_proceso: string | null;
+    cas_numero_proceso: string | null;
+    abierto_en: string;
+    actualizado_en: string;
+  }>;
+  reuniones: Array<{
+    id: string;
+    cit_id: string;
+    inicio_en: string;
+    cit_inicio_en: string;
+    modalidad: string;
+    cit_modalidad: string;
+    motivo: string | null;
+    cit_motivo: string | null;
+    estado: string;
+    cit_estado: string;
+    enlace: string | null;
+    cit_enlace: string | null;
+    lugar: string | null;
+    abogado_nombre: string | null;
+  }>;
+  pagos: TransaccionPagoCRM[];
+  documentos: Array<{
+    id: string;
+    doc_id: string;
+    titulo: string;
+    doc_titulo: string;
+    categoria: string;
+    doc_categoria: string;
+    fecha_caducidad: string | null;
+    doc_fecha_caducidad: string | null;
+    creado_en: string;
+  }>;
+  documentos_billetera: Array<{
+    id: string;
+    doc_id: string;
+    titulo: string;
+    doc_titulo: string;
+    categoria: string;
+    doc_categoria: string;
+    fecha_caducidad: string | null;
+    doc_fecha_caducidad: string | null;
+    creado_en: string;
+  }>;
+}
+
+/**
+ * Obtiene la vista 360° integral de un cliente (datos personales y fiscales, casos jurídicos,
+ * reuniones/citas agendadas, pagos, facturas electrónicas y documentos en billetera).
+ */
+export async function obtenerExpedienteCliente360Action(filtro: {
+  negocio?: string;
+  clienteId?: string | null;
+  email?: string | null;
+  identificacion?: string | null;
+  nombre?: string | null;
+}): Promise<{ ok: boolean; error?: string; data?: ExpedienteCliente360 }> {
+  const supabase: any = await crearClienteServidor();
+  const admin: any = crearClienteAdmin();
+  const db: any = admin || supabase;
+  if (!db) return { ok: false, error: "Sin conexión a la base de datos." };
+
+  const negPrincipal = normalizarIdentificadorNegocio(filtro.negocio || "tranqi").principal;
+
+  try {
+    let usuRow: any = null;
+    if (filtro.clienteId && /^[0-9a-f]{8}-[0-9a-f]{4}-/i.test(filtro.clienteId)) {
+      const { data } = await db
+        .schema("comun_seguridad")
+        .from("seg_usuario")
+        .select("*")
+        .eq("usu_id", filtro.clienteId)
+        .maybeSingle();
+      usuRow = data;
+    }
+
+    if (!usuRow && filtro.email) {
+      const emailLimpio = filtro.email.trim().toLowerCase();
+      const { data } = await db
+        .schema("comun_seguridad")
+        .from("seg_usuario")
+        .select("*")
+        .ilike("usu_correo", emailLimpio)
+        .maybeSingle();
+      usuRow = data;
+    }
+
+    if (!usuRow && filtro.identificacion && filtro.identificacion !== "9999999999999") {
+      const { data: todos } = await db
+        .schema("comun_seguridad")
+        .from("seg_usuario")
+        .select("*")
+        .limit(100);
+      if (todos && Array.isArray(todos)) {
+        usuRow = todos.find((u: any) => {
+          const idFact = u.usu_detalle_usuario?.datos_facturacion?.identificacion;
+          const ced = u.usu_detalle_usuario?.cedula;
+          return idFact === filtro.identificacion || ced === filtro.identificacion;
+        });
+      }
+    }
+
+    const clienteId = usuRow?.usu_id || filtro.clienteId || null;
+    const detUsr = (usuRow?.usu_detalle_usuario as Record<string, any>) || {};
+    const dfUsr = detUsr.datos_facturacion || {};
+    const nombreCompleto =
+      [usuRow?.usu_nombres, usuRow?.usu_apellidos].filter(Boolean).join(" ").trim() ||
+      filtro.nombre ||
+      dfUsr.razon_social ||
+      filtro.email ||
+      "Cliente";
+    const correoFinal = usuRow?.usu_correo || dfUsr.correo_facturacion || filtro.email || "";
+    const whatsappFinal = usuRow?.usu_whatsapp || dfUsr.telefono || "";
+    const idFiscalFinal = dfUsr.identificacion || detUsr.cedula || filtro.identificacion || "1714896228";
+    const tipoIdFinal =
+      dfUsr.tipo_identificacion || (idFiscalFinal.length === 13 && idFiscalFinal.endsWith("001") ? "RUC" : "Cédula");
+    const razonSocialFinal = dfUsr.razon_social || nombreCompleto;
+    const direccionFinal = dfUsr.direccion || "Quito - Ecuador";
+
+    // Roles / membresías
+    let roles: string[] = ["CLIENTE"];
+    if (clienteId) {
+      try {
+        const { data: mems } = await db
+          .schema("comun_seguridad")
+          .from("seg_membresia")
+          .select("mem_rol")
+          .eq("mem_usuario_id", clienteId)
+          .eq("mem_estado", "ACTIVO");
+        if (mems && mems.length > 0) {
+          roles = Array.from(new Set(mems.map((m: any) => String(m.mem_rol || "CLIENTE").toUpperCase())));
+        }
+      } catch {
+        // Continuar
+      }
+    }
+
+    // Suscripción activa
+    let planActivo: ExpedienteCliente360["cliente"]["plan_activo"] = null;
+    if (clienteId) {
+      try {
+        const { data: sub } = await db
+          .schema("comun_comercio")
+          .from("com_suscripcion")
+          .select("sub_estado, sub_frecuencia, sub_proximo_cobro_en, sub_variante_id, sub_detalle_suscripcion")
+          .eq("sub_cliente_id", clienteId)
+          .eq("sub_estado", "ACTIVA")
+          .order("sub_creado_en", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if (sub) {
+          planActivo = {
+            nombre: sub.sub_detalle_suscripcion?.producto_nombre || "Plan de Protección Jurídica Activo",
+            frecuencia: sub.sub_frecuencia || "MENSUAL",
+            estado: sub.sub_estado,
+            proximo_cobro: sub.sub_proximo_cobro_en || null,
+          };
+        }
+      } catch {
+        // Continuar
+      }
+    }
+
+    // Casos judiciales / trámites del cliente
+    const casos: ExpedienteCliente360["casos"] = [];
+    if (clienteId) {
+      try {
+        const { data: casosRows } = await db
+          .schema("tranqui_legal")
+          .from("trq_caso_judicial")
+          .select(
+            "cas_id, cas_secuencial, cas_titulo, cas_descripcion, cas_estado, cas_numero_proceso, cas_abierto_en, cas_actualizado_en",
+          )
+          .eq("cas_cliente_id", clienteId)
+          .is("cas_eliminado_en", null)
+          .order("cas_actualizado_en", { ascending: false })
+          .limit(25);
+        if (casosRows && Array.isArray(casosRows)) {
+          for (const c of casosRows) {
+            casos.push({
+              id: c.cas_id,
+              cas_id: c.cas_id,
+              secuencial: c.cas_secuencial,
+              cas_secuencial: c.cas_secuencial,
+              titulo: c.cas_titulo,
+              cas_titulo: c.cas_titulo,
+              descripcion: c.cas_descripcion,
+              cas_descripcion: c.cas_descripcion,
+              estado: c.cas_estado,
+              cas_estado: c.cas_estado,
+              numero_proceso: c.cas_numero_proceso,
+              cas_numero_proceso: c.cas_numero_proceso,
+              abierto_en: c.cas_abierto_en,
+              actualizado_en: c.cas_actualizado_en,
+            });
+          }
+        }
+      } catch {
+        // Continuar
+      }
+    }
+
+    // Reuniones / Citas del cliente
+    const reuniones: ExpedienteCliente360["reuniones"] = [];
+    if (clienteId) {
+      try {
+        const { data: citasRows } = await db
+          .schema("tranqui_legal")
+          .from("trq_cita")
+          .select("cit_id, cit_inicio_en, cit_modalidad, cit_motivo, cit_estado, cit_enlace, cit_lugar, cit_abogado_id")
+          .eq("cit_cliente_id", clienteId)
+          .is("cit_eliminado_en", null)
+          .order("cit_inicio_en", { ascending: false })
+          .limit(30);
+
+        if (citasRows && Array.isArray(citasRows)) {
+          const idsAbogados = Array.from(
+            new Set(citasRows.map((c: any) => c.cit_abogado_id).filter(Boolean)),
+          ) as string[];
+          const mapaAbogados = new Map<string, string>();
+          if (idsAbogados.length > 0) {
+            const { data: abRows } = await db
+              .schema("tranqui_legal")
+              .from("trq_abogado")
+              .select("abo_id, abo_usuario_id")
+              .in("abo_id", idsAbogados);
+            const mapAboUsr = new Map<string, string>();
+            const idsUsrAbo: string[] = [];
+            for (const a of abRows || []) {
+              if (a.abo_usuario_id) {
+                mapAboUsr.set(a.abo_id, a.abo_usuario_id);
+                idsUsrAbo.push(a.abo_usuario_id);
+              }
+            }
+            if (idsUsrAbo.length > 0) {
+              const { data: usrAbos } = await db
+                .schema("comun_seguridad")
+                .from("seg_usuario")
+                .select("usu_id, usu_nombres, usu_apellidos")
+                .in("usu_id", idsUsrAbo);
+              const mapUsrNombre = new Map<string, string>();
+              for (const u of usrAbos || []) {
+                mapUsrNombre.set(u.usu_id, `${u.usu_nombres || ""} ${u.usu_apellidos || ""}`.trim());
+              }
+              for (const [aboId, uId] of mapAboUsr.entries()) {
+                if (mapUsrNombre.has(uId)) {
+                  mapaAbogados.set(aboId, mapUsrNombre.get(uId)!);
+                }
+              }
+            }
+          }
+
+          for (const c of citasRows) {
+            reuniones.push({
+              id: c.cit_id,
+              cit_id: c.cit_id,
+              inicio_en: c.cit_inicio_en,
+              cit_inicio_en: c.cit_inicio_en,
+              modalidad: c.cit_modalidad,
+              cit_modalidad: c.cit_modalidad,
+              motivo: c.cit_motivo,
+              cit_motivo: c.cit_motivo,
+              estado: c.cit_estado,
+              cit_estado: c.cit_estado,
+              enlace: c.cit_enlace || null,
+              cit_enlace: c.cit_enlace || null,
+              lugar: c.cit_lugar || null,
+              abogado_nombre: c.cit_abogado_id ? mapaAbogados.get(c.cit_abogado_id) || "Abogado Especialista Tranqi" : "Por asignar / Turno rotativo",
+            });
+          }
+        }
+      } catch {
+        // Continuar
+      }
+    }
+
+    // Documentos en billetera
+    const documentos_billetera: ExpedienteCliente360["documentos_billetera"] = [];
+    if (clienteId) {
+      try {
+        const { data: docs } = await db
+          .schema("tranqui_legal")
+          .from("trq_billetera_documento")
+          .select("doc_id, doc_titulo, doc_categoria, doc_fecha_caducidad, doc_creado_en")
+          .eq("doc_usuario_id", clienteId)
+          .is("doc_eliminado_en", null)
+          .order("doc_creado_en", { ascending: false })
+          .limit(25);
+        if (docs && Array.isArray(docs)) {
+          for (const d of docs) {
+            documentos_billetera.push({
+              id: d.doc_id,
+              doc_id: d.doc_id,
+              titulo: d.doc_titulo,
+              doc_titulo: d.doc_titulo,
+              categoria: d.doc_categoria,
+              doc_categoria: d.doc_categoria,
+              fecha_caducidad: d.doc_fecha_caducidad,
+              doc_fecha_caducidad: d.doc_fecha_caducidad,
+              creado_en: d.doc_creado_en,
+            });
+          }
+        }
+      } catch {
+        // Continuar
+      }
+    }
+
+    // Pagos y Facturas de este cliente
+    const todosPagos = await obtenerHistorialTransaccionesAction(negPrincipal, { modoVista: "operador" });
+    const emailComp = correoFinal.toLowerCase().trim();
+    const pagosCliente = todosPagos.filter((p) => {
+      if (clienteId && p.pag_cliente_id === clienteId) return true;
+      if (emailComp && String(p.pag_titular_email || "").toLowerCase().trim() === emailComp) return true;
+      if (idFiscalFinal && p.pag_titular_identificacion === idFiscalFinal) return true;
+      return false;
+    });
+
+    const totalFacturado = pagosCliente.reduce(
+      (acc, p) => (p.pag_estado !== "RECHAZADO" ? acc + Number(p.pag_monto_total || 0) : acc),
+      0,
+    );
+    const totalPagado = pagosCliente.reduce(
+      (acc, p) => (p.pag_estado === "APROBADO" ? acc + Number(p.pag_monto_total || 0) : acc),
+      0,
+    );
+
+    const totalFacturadoFinal = Math.round(totalFacturado * 100) / 100;
+    const totalPagadoFinal = Math.round(totalPagado * 100) / 100;
+    const cantidadFacturas = pagosCliente.filter((p) => Boolean(p.numero_comprobante)).length;
+
+    return {
+      ok: true,
+      data: {
+        usu_id: clienteId,
+        nombre_completo: nombreCompleto,
+        razon_social: razonSocialFinal,
+        email: correoFinal,
+        telefono: whatsappFinal,
+        identificacion: idFiscalFinal,
+        direccion: direccionFinal,
+        plan_activo: planActivo?.nombre || null,
+        estado_suscripcion: planActivo?.estado || null,
+        metricas: {
+          total_facturado: totalFacturadoFinal,
+          total_pagado: totalPagadoFinal,
+          cantidad_pagos: pagosCliente.length,
+          cantidad_facturas: cantidadFacturas,
+          cantidad_reuniones: reuniones.length,
+          cantidad_casos: casos.length,
+          cantidad_documentos: documentos_billetera.length,
+        },
+        cliente: {
+          usu_id: clienteId,
+          nombre_completo: nombreCompleto,
+          razon_social: razonSocialFinal,
+          correo: correoFinal,
+          whatsapp: whatsappFinal,
+          identificacion: idFiscalFinal,
+          tipo_identificacion: tipoIdFinal,
+          direccion_fiscal: direccionFinal,
+          registrado_en: usuRow?.usu_creado_en || null,
+          roles,
+          plan_activo: planActivo,
+        },
+        resumen: {
+          total_facturado: totalFacturadoFinal,
+          total_pagado: totalPagadoFinal,
+          cantidad_pagos: pagosCliente.length,
+          cantidad_citas: reuniones.length,
+          cantidad_casos: casos.length,
+          cantidad_documentos_billetera: documentos_billetera.length,
+        },
+        casos,
+        reuniones,
+        pagos: pagosCliente,
+        documentos: documentos_billetera,
+        documentos_billetera,
+      },
+    };
+  } catch (e: any) {
+    return { ok: false, error: e?.message || "No se pudo cargar el expediente 360° del cliente." };
   }
 }
 

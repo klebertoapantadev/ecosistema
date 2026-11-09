@@ -88,18 +88,9 @@ const MODULOS_ADMIN: ModuloAdminDef[] = [
     categoria: "Agendamiento & Operación"
   },
   {
-    id: "facturacion_electronica",
-    titulo: "Facturación Electrónica & Registrar Pagos",
-    subtitulo: "Valores generados, valores pagados, registro manual de pagos (transferencia, efectivo, Deuna) y emisión de factura electrónica SRI",
-    ruta: "/panel/administrar?widget=facturacion_electronica",
-    icono: Receipt,
-    colorIcono: "#5000BA",
-    categoria: "Comercio y Pagos"
-  },
-  {
     id: "historial_pagos",
-    titulo: "Historial de Transacciones & Pagos",
-    subtitulo: "Auditoría contable, detalle de rubro facturado, comprobantes SRI y registro de pagos",
+    titulo: "Historial de Pagos",
+    subtitulo: "Valores generados, valores pagados, detalle del rubro facturado, registro de pagos y emisión/descarga de facturas electrónicas SRI",
     ruta: "/panel/administrar?widget=historial_pagos",
     icono: Receipt,
     colorIcono: "#05876E",

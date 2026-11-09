@@ -21,14 +21,25 @@ import {
   Sparkles,
   Wallet,
   ArrowUpRight,
+  Briefcase,
+  Calendar,
+  FolderOpen,
+  Mail,
+  Phone,
+  MapPin,
+  ExternalLink,
+  Eye,
+  User,
 } from "lucide-react";
 import {
   TransaccionPagoCRM,
   ProductoCatalogo,
   ClienteDirectorioFacturacion,
+  ExpedienteCliente360,
   obtenerHistorialTransaccionesAction,
   obtenerCatalogoProductosAction,
   obtenerClientesParaFacturacionAction,
+  obtenerExpedienteCliente360Action,
   registrarPagoManualOperadorAction,
   emitirFacturaDePagoExistenteAction,
 } from "../acciones";
@@ -79,6 +90,48 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
   >("TRANSFERENCIA");
   const [referenciaPago, setReferenciaPago] = useState("");
   const [observacionesPago, setObservacionesPago] = useState("");
+
+  // Modal de Análisis 360° del Cliente
+  const [modal360Abierto, setModal360Abierto] = useState(false);
+  const [cargando360, setCargando360] = useState(false);
+  const [expediente360, setExpediente360] = useState<ExpedienteCliente360 | null>(null);
+  const [pestana360, setPestana360] = useState<"resumen" | "casos" | "reuniones" | "pagos" | "documentos">("resumen");
+
+  const abrirAnalisisCliente360 = async (t: TransaccionPagoCRM) => {
+    setModal360Abierto(true);
+    setCargando360(true);
+    setPestana360("resumen");
+    try {
+      const res = await obtenerExpedienteCliente360Action({
+        negocio,
+        clienteId: t.pag_cliente_id || null,
+        email: t.pag_titular_email || t.factura_electronica?.comprador?.correo || null,
+        identificacion: t.pag_titular_identificacion || t.factura_electronica?.comprador?.identificacion || null,
+        nombre: t.cliente_nombre || t.factura_electronica?.comprador?.razon_social || null,
+      });
+      if (res.ok && res.data) {
+        setExpediente360(res.data);
+      }
+    } catch (err) {
+      console.error("Error al abrir expediente 360 del cliente:", err);
+    } finally {
+      setCargando360(false);
+    }
+  };
+
+  const abrirPagoManualParaCliente360 = (exp: ExpedienteCliente360) => {
+    setModal360Abierto(false);
+    setClienteSeleccionadoId(exp.cliente.usu_id || "");
+    const idLimpia = exp.cliente.identificacion || "";
+    setTipoIdentificacion(idLimpia.length === 13 ? "04" : idLimpia.length === 10 ? "05" : "05");
+    setIdentificacion(idLimpia !== "9999999999999" ? idLimpia : "");
+    setRazonSocial(exp.cliente.razon_social || exp.cliente.nombre_completo || "");
+    setCorreoCliente(exp.cliente.correo || "");
+    setTelefonoCliente(exp.cliente.whatsapp || "");
+    setDireccionCliente(exp.cliente.direccion_fiscal || "Quito - Ecuador");
+    setErrorPagoManual(null);
+    setModalPagoManualAbierto(true);
+  };
 
   const resolverModoVista = (): string => {
     if (modoVistaForzado !== "auto") return modoVistaForzado;
@@ -1209,13 +1262,97 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                         </div>
                       </td>
 
-                      {/* Columna 4: Cliente / Adquirente */}
-                      <td style={{ padding: "13px 14px" }}>
-                        <div style={{ fontWeight: 600, color: "#0F172A" }}>
-                          {t.cliente_nombre || t.pag_titular_email || "Cliente"}
-                        </div>
-                        <div style={{ fontSize: "0.73rem", color: "#64748B" }}>
-                          ID: {t.pag_titular_identificacion || "9999999999999"}
+                      {/* Columna 4: Cliente / Adquirente con Links y Análisis 360° */}
+                      <td style={{ padding: "13px 14px", minWidth: "210px" }}>
+                        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: "3px" }}>
+                          <button
+                            type="button"
+                            onClick={() => abrirAnalisisCliente360(t)}
+                            title="Ver ficha 360° del cliente: datos, casos, reuniones y pagos"
+                            aria-label="Analizar cliente 360"
+                            style={{
+                              background: "transparent",
+                              border: "none",
+                              padding: 0,
+                              margin: 0,
+                              fontWeight: 700,
+                              fontSize: "0.84rem",
+                              color: "#1E1B4B",
+                              cursor: "pointer",
+                              textAlign: "left",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "5px",
+                              textDecoration: "underline",
+                              textDecorationColor: "#A5B4FC",
+                              textUnderlineOffset: "3px",
+                            }}
+                          >
+                            <span>{t.cliente_nombre || t.pag_titular_email || "Cliente"}</span>
+                            <ArrowUpRight size={13} color="#4F46E5" />
+                          </button>
+
+                          {t.pag_titular_email && (
+                            <button
+                              type="button"
+                              onClick={() => abrirAnalisisCliente360(t)}
+                              title={`Analizar expediente 360° de ${t.pag_titular_email}`}
+                              aria-label={`Abrir expediente de ${t.pag_titular_email}`}
+                              style={{
+                                background: "transparent",
+                                border: "none",
+                                padding: 0,
+                                margin: 0,
+                                fontSize: "0.74rem",
+                                fontWeight: 600,
+                                color: "#4F46E5",
+                                cursor: "pointer",
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "4px",
+                              }}
+                            >
+                              <Mail size={11} />
+                              <span>{t.pag_titular_email}</span>
+                            </button>
+                          )}
+
+                          <div
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "6px",
+                              flexWrap: "wrap",
+                              marginTop: "2px",
+                            }}
+                          >
+                            <span style={{ fontSize: "0.72rem", color: "#64748B", fontFamily: "monospace" }}>
+                              ID: {t.pag_titular_identificacion || "9999999999999"}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => abrirAnalisisCliente360(t)}
+                              className="btn-responsive-accion"
+                              title="Analizar cliente 360°: datos personales, casos, reuniones y pagos"
+                              aria-label="Cliente 360"
+                              style={{
+                                background: "#EEF2FF",
+                                color: "#4338CA",
+                                border: "1px solid #C7D2FE",
+                                padding: "2px 8px",
+                                borderRadius: "999px",
+                                fontSize: "0.69rem",
+                                fontWeight: 800,
+                                cursor: "pointer",
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "4px",
+                              }}
+                            >
+                              <Eye size={11} />
+                              <span className="btn-texto-responsive">Cliente 360°</span>
+                            </button>
+                          </div>
                         </div>
                       </td>
 
@@ -2125,7 +2262,28 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
               >
                 <div>
                   <strong>Razón Social / Comprador:</strong>{" "}
-                  {transaccionSeleccionada.cliente_nombre || "CONSUMIDOR FINAL"}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const tx = transaccionSeleccionada;
+                      setTransaccionSeleccionada(null);
+                      abrirAnalisisCliente360(tx);
+                    }}
+                    title="Abrir expediente 360° de este cliente"
+                    aria-label="Abrir expediente 360"
+                    style={{
+                      background: "transparent",
+                      border: "none",
+                      padding: 0,
+                      color: "#4338CA",
+                      fontWeight: 700,
+                      textDecoration: "underline",
+                      cursor: "pointer",
+                      fontSize: "0.8rem",
+                    }}
+                  >
+                    {transaccionSeleccionada.cliente_nombre || "CONSUMIDOR FINAL"} (Ver 360°)
+                  </button>
                 </div>
                 <div>
                   <strong>Identificación (RUC/C.I.):</strong>{" "}
@@ -2237,6 +2395,878 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                 );
               })()}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ===========================================================================
+          MODAL 3: ANÁLISIS 360° DEL CLIENTE (DATOS, CASOS, REUNIONES, PAGOS Y DOCS)
+         =========================================================================== */}
+      {modal360Abierto && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(15, 23, 42, 0.7)",
+            zIndex: 10000,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "16px",
+          }}
+        >
+          <div
+            style={{
+              background: "#FFFFFF",
+              borderRadius: "20px",
+              width: "100%",
+              maxWidth: "920px",
+              maxHeight: "92vh",
+              overflowY: "auto",
+              boxShadow: "0 24px 60px rgba(15, 23, 42, 0.35)",
+              border: "1px solid #E2E8F0",
+            }}
+          >
+            {/* Cabecera del Modal 360° */}
+            <div
+              style={{
+                padding: "18px 24px",
+                background: "linear-gradient(135deg, #1E1B4B 0%, #312E81 100%)",
+                color: "#FFFFFF",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "flex-start",
+                gap: "14px",
+                flexWrap: "wrap",
+              }}
+            >
+              <div>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px", flexWrap: "wrap" }}>
+                  <span
+                    style={{
+                      background: "rgba(255, 255, 255, 0.16)",
+                      color: "#E0E7FF",
+                      padding: "3px 10px",
+                      borderRadius: "999px",
+                      fontSize: "0.7rem",
+                      fontWeight: 800,
+                      letterSpacing: "0.03em",
+                      textTransform: "uppercase",
+                    }}
+                  >
+                    EXPEDIENTE CLIENTE 360°
+                  </span>
+                  {expediente360?.cliente.plan_activo && (
+                    <span
+                      style={{
+                        background: "#10B981",
+                        color: "#FFFFFF",
+                        padding: "3px 10px",
+                        borderRadius: "999px",
+                        fontSize: "0.7rem",
+                        fontWeight: 800,
+                      }}
+                    >
+                      Plan: {expediente360.cliente.plan_activo.nombre} ({expediente360.cliente.plan_activo.estado || "ACTIVA"})
+                    </span>
+                  )}
+                </div>
+
+                <h2 style={{ margin: 0, fontSize: "1.28rem", fontWeight: 800, color: "#FFFFFF" }}>
+                  {cargando360 ? "Cargando expediente del cliente..." : expediente360?.cliente.nombre_completo || "Cliente"}
+                </h2>
+
+                {!cargando360 && expediente360 && (
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "14px",
+                      flexWrap: "wrap",
+                      marginTop: "6px",
+                      fontSize: "0.8rem",
+                      color: "#C7D2FE",
+                    }}
+                  >
+                    {expediente360.cliente.correo && (
+                      <a
+                        href={`mailto:${expediente360.cliente.correo}`}
+                        style={{
+                          color: "#E0E7FF",
+                          textDecoration: "underline",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "5px",
+                          fontWeight: 600,
+                        }}
+                      >
+                        <Mail size={13} />
+                        {expediente360.cliente.correo}
+                      </a>
+                    )}
+                    {expediente360.cliente.whatsapp && (
+                      <a
+                        href={`https://wa.me/${expediente360.cliente.whatsapp.replace(/\D/g, "")}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        style={{
+                          color: "#A7F3D0",
+                          textDecoration: "underline",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "5px",
+                          fontWeight: 600,
+                        }}
+                      >
+                        <Phone size={13} />
+                        {expediente360.cliente.whatsapp}
+                      </a>
+                    )}
+                    <span style={{ fontFamily: "monospace" }}>
+                      C.I./RUC: {expediente360.cliente.identificacion || "9999999999999"}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                {!esVistaCliente && expediente360 && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => abrirPagoManualParaCliente360(expediente360)}
+                      className="btn-responsive-accion"
+                      title="Registrar pago manual y emitir factura electrónica a este cliente"
+                      aria-label="Registrar Pago"
+                      style={{
+                        background: "#10B981",
+                        color: "#FFFFFF",
+                        border: "none",
+                        padding: "7px 13px",
+                        borderRadius: "9px",
+                        fontSize: "0.78rem",
+                        fontWeight: 700,
+                        cursor: "pointer",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "5px",
+                      }}
+                    >
+                      <PlusCircle size={14} />
+                      <span className="btn-texto-responsive">Registrar Pago</span>
+                    </button>
+
+                    <a
+                      href={`/panel/clientes${expediente360.cliente.correo ? `?q=${encodeURIComponent(expediente360.cliente.correo)}` : ""}`}
+                      className="btn-responsive-accion"
+                      title="Abrir ficha completa en el Directorio CRM Jurídico"
+                      aria-label="Ir al CRM"
+                      style={{
+                        background: "rgba(255, 255, 255, 0.14)",
+                        color: "#FFFFFF",
+                        border: "1px solid rgba(255, 255, 255, 0.25)",
+                        padding: "7px 12px",
+                        borderRadius: "9px",
+                        fontSize: "0.78rem",
+                        fontWeight: 700,
+                        textDecoration: "none",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "5px",
+                      }}
+                    >
+                      <ExternalLink size={14} />
+                      <span className="btn-texto-responsive">Ir al CRM</span>
+                    </a>
+                  </>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => setModal360Abierto(false)}
+                  title="Cerrar análisis 360°"
+                  aria-label="Cerrar análisis 360"
+                  style={{
+                    background: "rgba(255, 255, 255, 0.14)",
+                    border: "none",
+                    borderRadius: "8px",
+                    padding: "6px",
+                    cursor: "pointer",
+                    color: "#FFFFFF",
+                  }}
+                >
+                  <X size={18} />
+                </button>
+              </div>
+            </div>
+
+            {cargando360 || !expediente360 ? (
+              <div style={{ padding: "50px 24px", textAlign: "center", color: "#64748B" }}>
+                <RefreshCw size={26} style={{ margin: "0 auto 10px" }} />
+                <div>Consultando casos, reuniones, pagos y facturas electrónicas del cliente...</div>
+              </div>
+            ) : (
+              <div style={{ padding: "20px 24px" }}>
+                {/* 4 Tarjetas KPI del Cliente 360° */}
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))",
+                    gap: "12px",
+                    marginBottom: "18px",
+                  }}
+                >
+                  <div
+                    onClick={() => setPestana360("pagos")}
+                    style={{
+                      background: "#ECFDF5",
+                      border: "1px solid #A7F3D0",
+                      borderRadius: "14px",
+                      padding: "13px 15px",
+                      cursor: "pointer",
+                    }}
+                  >
+                    <div style={{ fontSize: "0.72rem", fontWeight: 800, color: "#065F46", textTransform: "uppercase" }}>
+                      Total Pagado / Facturado
+                    </div>
+                    <div style={{ fontSize: "1.35rem", fontWeight: 800, color: "#065F46", marginTop: "3px" }}>
+                      ${expediente360.resumen.total_pagado.toFixed(2)} USD
+                    </div>
+                    <div style={{ fontSize: "0.74rem", color: "#047857", marginTop: "3px" }}>
+                      {expediente360.resumen.cantidad_pagos} pago(s) · Facturado: ${expediente360.resumen.total_facturado.toFixed(2)}
+                    </div>
+                  </div>
+
+                  <div
+                    onClick={() => setPestana360("reuniones")}
+                    style={{
+                      background: "#EFF6FF",
+                      border: "1px solid #BFDBFE",
+                      borderRadius: "14px",
+                      padding: "13px 15px",
+                      cursor: "pointer",
+                    }}
+                  >
+                    <div style={{ fontSize: "0.72rem", fontWeight: 800, color: "#1E40AF", textTransform: "uppercase" }}>
+                      Reuniones & Citas
+                    </div>
+                    <div style={{ fontSize: "1.35rem", fontWeight: 800, color: "#1E3A8A", marginTop: "3px" }}>
+                      {expediente360.resumen.cantidad_citas} cita(s)
+                    </div>
+                    <div style={{ fontSize: "0.74rem", color: "#1D4ED8", marginTop: "3px" }}>
+                      Teleconsultas y sesiones agendadas
+                    </div>
+                  </div>
+
+                  <div
+                    onClick={() => setPestana360("casos")}
+                    style={{
+                      background: "#F5F3FF",
+                      border: "1px solid #DDD6FE",
+                      borderRadius: "14px",
+                      padding: "13px 15px",
+                      cursor: "pointer",
+                    }}
+                  >
+                    <div style={{ fontSize: "0.72rem", fontWeight: 800, color: "#5B21B6", textTransform: "uppercase" }}>
+                      Casos / Expedientes
+                    </div>
+                    <div style={{ fontSize: "1.35rem", fontWeight: 800, color: "#4C1D95", marginTop: "3px" }}>
+                      {expediente360.resumen.cantidad_casos} caso(s)
+                    </div>
+                    <div style={{ fontSize: "0.74rem", color: "#6D28D9", marginTop: "3px" }}>
+                      Procesos judiciales y patrocinios
+                    </div>
+                  </div>
+
+                  <div
+                    onClick={() => setPestana360("documentos")}
+                    style={{
+                      background: "#F8FAFC",
+                      border: "1px solid #E2E8F0",
+                      borderRadius: "14px",
+                      padding: "13px 15px",
+                      cursor: "pointer",
+                    }}
+                  >
+                    <div style={{ fontSize: "0.72rem", fontWeight: 800, color: "#334155", textTransform: "uppercase" }}>
+                      Billetera Digital
+                    </div>
+                    <div style={{ fontSize: "1.35rem", fontWeight: 800, color: "#0F172A", marginTop: "3px" }}>
+                      {expediente360.resumen.cantidad_documentos_billetera} doc(s)
+                    </div>
+                    <div style={{ fontSize: "0.74rem", color: "#64748B", marginTop: "3px" }}>
+                      Documentos y contratos custodiados
+                    </div>
+                  </div>
+                </div>
+
+                {/* Pestañas de Navegación del Expediente 360° */}
+                <div
+                  style={{
+                    display: "flex",
+                    gap: "6px",
+                    flexWrap: "wrap",
+                    borderBottom: "1px solid #E2E8F0",
+                    paddingBottom: "10px",
+                    marginBottom: "16px",
+                  }}
+                >
+                  {[
+                    { id: "resumen", label: "Vista 360° & Datos", icon: User },
+                    { id: "reuniones", label: `Reuniones (${expediente360.reuniones.length})`, icon: Calendar },
+                    { id: "casos", label: `Casos (${expediente360.casos.length})`, icon: Briefcase },
+                    { id: "pagos", label: `Pagos & Facturas (${expediente360.pagos.length})`, icon: Receipt },
+                    { id: "documentos", label: `Documentos (${expediente360.documentos_billetera.length})`, icon: FolderOpen },
+                  ].map((tab) => {
+                    const IconoTab = tab.icon;
+                    const activa = pestana360 === tab.id;
+                    return (
+                      <button
+                        key={tab.id}
+                        type="button"
+                        onClick={() => setPestana360(tab.id as any)}
+                        style={{
+                          background: activa ? "#4F46E5" : "#F1F5F9",
+                          color: activa ? "#FFFFFF" : "#475569",
+                          border: "none",
+                          padding: "7px 14px",
+                          borderRadius: "9px",
+                          fontSize: "0.8rem",
+                          fontWeight: 700,
+                          cursor: "pointer",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "6px",
+                        }}
+                      >
+                        <IconoTab size={14} />
+                        <span>{tab.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* CONTENIDO PESTAÑA 1: RESUMEN 360° Y DATOS FISCALES */}
+                {pestana360 === "resumen" && (
+                  <div style={{ display: "grid", gap: "16px" }}>
+                    <div
+                      style={{
+                        background: "#F8FAFC",
+                        border: "1px solid #E2E8F0",
+                        borderRadius: "14px",
+                        padding: "16px",
+                        display: "grid",
+                        gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+                        gap: "12px",
+                        fontSize: "0.82rem",
+                      }}
+                    >
+                      <div>
+                        <div style={{ fontSize: "0.72rem", fontWeight: 700, color: "#64748B" }}>NOMBRES Y APELLIDOS</div>
+                        <div style={{ fontWeight: 800, color: "#0F172A", marginTop: "2px" }}>
+                          {expediente360.cliente.nombre_completo}
+                        </div>
+                      </div>
+                      <div>
+                        <div style={{ fontSize: "0.72rem", fontWeight: 700, color: "#64748B" }}>CORREO ELECTRÓNICO</div>
+                        <div style={{ fontWeight: 700, color: "#4F46E5", marginTop: "2px" }}>
+                          {expediente360.cliente.correo || "—"}
+                        </div>
+                      </div>
+                      <div>
+                        <div style={{ fontSize: "0.72rem", fontWeight: 700, color: "#64748B" }}>CÉDULA / RUC</div>
+                        <div style={{ fontWeight: 700, color: "#0F172A", fontFamily: "monospace", marginTop: "2px" }}>
+                          {expediente360.cliente.identificacion}
+                        </div>
+                      </div>
+                      <div>
+                        <div style={{ fontSize: "0.72rem", fontWeight: 700, color: "#64748B" }}>WHATSAPP / TELÉFONO</div>
+                        <div style={{ fontWeight: 700, color: "#0F172A", marginTop: "2px" }}>
+                          {expediente360.cliente.whatsapp || "No registrado"}
+                        </div>
+                      </div>
+                      <div>
+                        <div style={{ fontSize: "0.72rem", fontWeight: 700, color: "#64748B" }}>RAZÓN SOCIAL FACTURACIÓN</div>
+                        <div style={{ fontWeight: 700, color: "#0F172A", marginTop: "2px" }}>
+                          {expediente360.cliente.razon_social}
+                        </div>
+                      </div>
+                      <div>
+                        <div style={{ fontSize: "0.72rem", fontWeight: 700, color: "#64748B" }}>DIRECCIÓN FISCAL</div>
+                        <div style={{ fontWeight: 600, color: "#334155", marginTop: "2px" }}>
+                          {expediente360.cliente.direccion_fiscal}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Vista rápida de Reuniones y Pagos en el Resumen */}
+                    <div
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
+                        gap: "14px",
+                      }}
+                    >
+                      {/* Últimas Reuniones */}
+                      <div
+                        style={{
+                          border: "1px solid #E2E8F0",
+                          borderRadius: "14px",
+                          padding: "14px",
+                          background: "#FFFFFF",
+                        }}
+                      >
+                        <div
+                          style={{
+                            fontSize: "0.82rem",
+                            fontWeight: 800,
+                            color: "#0F172A",
+                            marginBottom: "10px",
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                          }}
+                        >
+                          <span>Últimas Reuniones / Citas ({expediente360.reuniones.length})</span>
+                          <button
+                            type="button"
+                            onClick={() => setPestana360("reuniones")}
+                            style={{
+                              background: "transparent",
+                              border: "none",
+                              color: "#4F46E5",
+                              fontSize: "0.75rem",
+                              fontWeight: 700,
+                              cursor: "pointer",
+                            }}
+                          >
+                            Ver todas →
+                          </button>
+                        </div>
+                        {expediente360.reuniones.length === 0 ? (
+                          <div style={{ fontSize: "0.8rem", color: "#64748B", padding: "12px 0" }}>
+                            Sin reuniones registradas para este cliente.
+                          </div>
+                        ) : (
+                          expediente360.reuniones.slice(0, 3).map((r) => (
+                            <div
+                              key={r.id}
+                              style={{
+                                padding: "9px 0",
+                                borderBottom: "1px solid #F1F5F9",
+                                fontSize: "0.8rem",
+                              }}
+                            >
+                              <div style={{ fontWeight: 700, color: "#0F172A" }}>
+                                {r.modalidad === "PRESENCIAL" ? "Cita Presencial" : "Teleconsulta"} — {r.motivo}
+                              </div>
+                              <div style={{ fontSize: "0.73rem", color: "#64748B", marginTop: "2px" }}>
+                                {new Date(r.inicio_en).toLocaleString("es-EC", {
+                                  dateStyle: "medium",
+                                  timeStyle: "short",
+                                })}{" "}
+                                · Estado: <strong>{r.estado}</strong> · {r.abogado_nombre}
+                              </div>
+                            </div>
+                          ))
+                        )}
+                      </div>
+
+                      {/* Últimos Pagos y Facturas */}
+                      <div
+                        style={{
+                          border: "1px solid #E2E8F0",
+                          borderRadius: "14px",
+                          padding: "14px",
+                          background: "#FFFFFF",
+                        }}
+                      >
+                        <div
+                          style={{
+                            fontSize: "0.82rem",
+                            fontWeight: 800,
+                            color: "#0F172A",
+                            marginBottom: "10px",
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                          }}
+                        >
+                          <span>Últimos Pagos & Facturas ({expediente360.pagos.length})</span>
+                          <button
+                            type="button"
+                            onClick={() => setPestana360("pagos")}
+                            style={{
+                              background: "transparent",
+                              border: "none",
+                              color: "#4F46E5",
+                              fontSize: "0.75rem",
+                              fontWeight: 700,
+                              cursor: "pointer",
+                            }}
+                          >
+                            Ver todos →
+                          </button>
+                        </div>
+                        {expediente360.pagos.length === 0 ? (
+                          <div style={{ fontSize: "0.8rem", color: "#64748B", padding: "12px 0" }}>
+                            Sin pagos registrados para este cliente.
+                          </div>
+                        ) : (
+                          expediente360.pagos.slice(0, 3).map((p) => (
+                            <div
+                              key={p.pag_id}
+                              style={{
+                                padding: "9px 0",
+                                borderBottom: "1px solid #F1F5F9",
+                                fontSize: "0.8rem",
+                                display: "flex",
+                                justifyContent: "space-between",
+                                alignItems: "center",
+                                gap: "8px",
+                              }}
+                            >
+                              <div>
+                                <div style={{ fontWeight: 700, color: "#0F172A" }}>
+                                  {p.numero_comprobante || p.pag_identificador_cliente} · ${Number(p.pag_monto_total).toFixed(2)} USD
+                                </div>
+                                <div style={{ fontSize: "0.73rem", color: "#64748B" }}>
+                                  {p.rubro_facturado}
+                                </div>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => descargarFacturaRide(p)}
+                                className="btn-responsive-accion"
+                                title="Descargar Factura Electrónica"
+                                aria-label="Descargar Factura"
+                                style={{
+                                  background: "#059669",
+                                  color: "#FFFFFF",
+                                  border: "none",
+                                  padding: "5px 9px",
+                                  borderRadius: "7px",
+                                  fontSize: "0.72rem",
+                                  fontWeight: 700,
+                                  cursor: "pointer",
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  gap: "4px",
+                                }}
+                              >
+                                <Download size={12} />
+                                <span className="btn-texto-responsive">Factura</span>
+                              </button>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* CONTENIDO PESTAÑA 2: REUNIONES Y CITAS DEL CLIENTE */}
+                {pestana360 === "reuniones" && (
+                  <div>
+                    {expediente360.reuniones.length === 0 ? (
+                      <div style={{ padding: "30px", textAlign: "center", color: "#64748B", fontSize: "0.85rem" }}>
+                        Este cliente aún no registra reuniones ni citas agendadas.
+                      </div>
+                    ) : (
+                      <div style={{ display: "grid", gap: "10px" }}>
+                        {expediente360.reuniones.map((r) => (
+                          <div
+                            key={r.id}
+                            style={{
+                              border: "1px solid #E2E8F0",
+                              borderRadius: "12px",
+                              padding: "12px 16px",
+                              background: "#F8FAFC",
+                              display: "flex",
+                              justifyContent: "space-between",
+                              alignItems: "center",
+                              flexWrap: "wrap",
+                              gap: "10px",
+                            }}
+                          >
+                            <div>
+                              <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                                <span
+                                  style={{
+                                    background: "#EEF2FF",
+                                    color: "#4338CA",
+                                    padding: "2px 8px",
+                                    borderRadius: "6px",
+                                    fontSize: "0.72rem",
+                                    fontWeight: 800,
+                                  }}
+                                >
+                                  {r.modalidad}
+                                </span>
+                                <span
+                                  style={{
+                                    background: r.estado === "CONFIRMADA" ? "#D1FAE5" : "#FEF3C7",
+                                    color: r.estado === "CONFIRMADA" ? "#065F46" : "#92400E",
+                                    padding: "2px 8px",
+                                    borderRadius: "6px",
+                                    fontSize: "0.72rem",
+                                    fontWeight: 800,
+                                  }}
+                                >
+                                  {r.estado}
+                                </span>
+                                <strong style={{ fontSize: "0.86rem", color: "#0F172A" }}>
+                                  {new Date(r.inicio_en).toLocaleString("es-EC", {
+                                    dateStyle: "full",
+                                    timeStyle: "short",
+                                  })}
+                                </strong>
+                              </div>
+                              <div style={{ fontSize: "0.82rem", color: "#334155", marginTop: "5px" }}>
+                                <strong>Motivo / Caso:</strong> {r.motivo}
+                              </div>
+                              <div style={{ fontSize: "0.75rem", color: "#64748B", marginTop: "3px" }}>
+                                Especialista asignado: <strong>{r.abogado_nombre}</strong>
+                              </div>
+                            </div>
+
+                            {r.enlace && (
+                              <a
+                                href={r.enlace}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="btn-responsive-accion"
+                                title="Abrir enlace de sala telemática"
+                                aria-label="Unirse a Sala"
+                                style={{
+                                  background: "#2563EB",
+                                  color: "#FFFFFF",
+                                  padding: "7px 12px",
+                                  borderRadius: "8px",
+                                  fontSize: "0.76rem",
+                                  fontWeight: 700,
+                                  textDecoration: "none",
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  gap: "5px",
+                                }}
+                              >
+                                <ExternalLink size={13} />
+                                <span className="btn-texto-responsive">Sala Virtual</span>
+                              </a>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* CONTENIDO PESTAÑA 3: CASOS JURÍDICOS DEL CLIENTE */}
+                {pestana360 === "casos" && (
+                  <div>
+                    {expediente360.casos.length === 0 ? (
+                      <div style={{ padding: "30px", textAlign: "center", color: "#64748B", fontSize: "0.85rem" }}>
+                        Este cliente no tiene expedientes o procesos judiciales abiertos actualmente.
+                      </div>
+                    ) : (
+                      <div style={{ display: "grid", gap: "10px" }}>
+                        {expediente360.casos.map((c) => (
+                          <div
+                            key={c.id}
+                            style={{
+                              border: "1px solid #E2E8F0",
+                              borderRadius: "12px",
+                              padding: "12px 16px",
+                              background: "#F8FAFC",
+                            }}
+                          >
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "8px" }}>
+                              <strong style={{ fontSize: "0.88rem", color: "#0F172A" }}>
+                                #{c.secuencial} — {c.titulo}
+                              </strong>
+                              <span
+                                style={{
+                                  background: "#EDE9FE",
+                                  color: "#5B21B6",
+                                  padding: "3px 9px",
+                                  borderRadius: "999px",
+                                  fontSize: "0.72rem",
+                                  fontWeight: 800,
+                                }}
+                              >
+                                {c.estado}
+                              </span>
+                            </div>
+                            {c.numero_proceso && (
+                              <div style={{ fontSize: "0.76rem", color: "#4F46E5", fontFamily: "monospace", marginTop: "3px" }}>
+                                Proceso Judicial SATJE: {c.numero_proceso}
+                              </div>
+                            )}
+                            {c.descripcion && (
+                              <div style={{ fontSize: "0.8rem", color: "#334155", marginTop: "5px" }}>
+                                {c.descripcion}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* CONTENIDO PESTAÑA 4: PAGOS Y FACTURAS ELECTRÓNICAS DEL CLIENTE */}
+                {pestana360 === "pagos" && (
+                  <div>
+                    {expediente360.pagos.length === 0 ? (
+                      <div style={{ padding: "30px", textAlign: "center", color: "#64748B", fontSize: "0.85rem" }}>
+                        No se registran pagos ni facturas para este cliente.
+                      </div>
+                    ) : (
+                      <div style={{ display: "grid", gap: "10px" }}>
+                        {expediente360.pagos.map((p) => (
+                          <div
+                            key={p.pag_id}
+                            style={{
+                              border: "1px solid #E2E8F0",
+                              borderRadius: "12px",
+                              padding: "12px 16px",
+                              background: "#F8FAFC",
+                              display: "flex",
+                              justifyContent: "space-between",
+                              alignItems: "center",
+                              flexWrap: "wrap",
+                              gap: "10px",
+                            }}
+                          >
+                            <div>
+                              <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                                <span
+                                  style={{
+                                    fontFamily: "monospace",
+                                    fontWeight: 800,
+                                    fontSize: "0.82rem",
+                                    color: "#4338CA",
+                                    background: "#EEF2FF",
+                                    padding: "2px 8px",
+                                    borderRadius: "6px",
+                                  }}
+                                >
+                                  {p.numero_comprobante || "Sin comprobante"}
+                                </span>
+                                <strong style={{ fontSize: "0.9rem", color: "#0F172A" }}>
+                                  ${Number(p.pag_monto_total).toFixed(2)} USD
+                                </strong>
+                                {getBadgeEstado(p.pag_estado)}
+                              </div>
+                              <div style={{ fontSize: "0.8rem", color: "#334155", marginTop: "4px", fontWeight: 600 }}>
+                                {p.rubro_facturado}
+                              </div>
+                              <div style={{ fontSize: "0.73rem", color: "#64748B", marginTop: "2px" }}>
+                                Fecha: {new Date(p.pag_confirmado_en || p.pag_creado_en).toLocaleString("es-EC")} · Medio:{" "}
+                                {p.pag_pasarela}
+                              </div>
+                            </div>
+
+                            <div style={{ display: "flex", gap: "6px" }}>
+                              <button
+                                type="button"
+                                onClick={() => descargarFacturaRide(p)}
+                                className="btn-responsive-accion"
+                                title="Descargar Factura Electrónica RIDE"
+                                aria-label="Descargar Factura"
+                                style={{
+                                  background: "#059669",
+                                  color: "#FFFFFF",
+                                  border: "none",
+                                  padding: "6px 11px",
+                                  borderRadius: "8px",
+                                  fontSize: "0.75rem",
+                                  fontWeight: 700,
+                                  cursor: "pointer",
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  gap: "5px",
+                                }}
+                              >
+                                <Download size={13} />
+                                <span className="btn-texto-responsive">Descargar Factura</span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setModal360Abierto(false);
+                                  setTransaccionSeleccionada(p);
+                                }}
+                                className="btn-responsive-accion"
+                                title="Ver Factura Electrónica RIDE"
+                                aria-label="Ver Factura"
+                                style={{
+                                  background: "#EEF2FF",
+                                  color: "#4338CA",
+                                  border: "1px solid #C7D2FE",
+                                  padding: "6px 11px",
+                                  borderRadius: "8px",
+                                  fontSize: "0.75rem",
+                                  fontWeight: 700,
+                                  cursor: "pointer",
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  gap: "5px",
+                                }}
+                              >
+                                <FileText size={13} />
+                                <span className="btn-texto-responsive">Ver Factura</span>
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* CONTENIDO PESTAÑA 5: DOCUMENTOS EN BILLETERA DIGITAL */}
+                {pestana360 === "documentos" && (
+                  <div>
+                    {expediente360.documentos_billetera.length === 0 ? (
+                      <div style={{ padding: "30px", textAlign: "center", color: "#64748B", fontSize: "0.85rem" }}>
+                        El cliente aún no tiene documentos cargados en su Billetera Digital.
+                      </div>
+                    ) : (
+                      <div style={{ display: "grid", gap: "8px" }}>
+                        {expediente360.documentos_billetera.map((d) => (
+                          <div
+                            key={d.id}
+                            style={{
+                              border: "1px solid #E2E8F0",
+                              borderRadius: "10px",
+                              padding: "10px 14px",
+                              background: "#F8FAFC",
+                              display: "flex",
+                              justifyContent: "space-between",
+                              alignItems: "center",
+                              fontSize: "0.82rem",
+                            }}
+                          >
+                            <div>
+                              <strong style={{ color: "#0F172A" }}>{d.titulo}</strong>
+                              <span style={{ marginLeft: "8px", fontSize: "0.73rem", color: "#64748B" }}>
+                                ({d.categoria})
+                              </span>
+                            </div>
+                            <span style={{ fontSize: "0.74rem", color: "#475569" }}>
+                              {d.fecha_caducidad ? `Vence: ${d.fecha_caducidad}` : "Vigente"}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       )}

@@ -806,10 +806,13 @@ export async function obtenerConfiguracionNavegacionRolAction(
               continue;
             }
             const canonicos = widgetsPorPanel[pId] || [];
+            const normalizados = wList
+              .map(String)
+              .map((w) => (w === "facturacion_electronica" ? "historial_pagos" : w));
             const filtrados =
               rolUpper === "ABOGADO" || rolUpper === "CLIENTE"
-                ? wList.map(String).filter((w) => !["disponibilidad_abogados", "asignaciones_agenda", "gestion_red_abogados", "crm_clientes", "agentes_ia", "socios", "solicitud_socio"].includes(w))
-                : wList.map(String);
+                ? normalizados.filter((w) => !["disponibilidad_abogados", "asignaciones_agenda", "gestion_red_abogados", "crm_clientes", "agentes_ia", "socios", "solicitud_socio"].includes(w))
+                : normalizados;
             widgetsPorPanel[pId] = Array.from(new Set([...canonicos, ...filtrados]));
           }
         }

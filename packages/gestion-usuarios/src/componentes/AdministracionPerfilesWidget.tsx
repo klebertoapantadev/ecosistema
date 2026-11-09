@@ -277,7 +277,7 @@ const PERFILES_INICIALES: PerfilDef[] = [
     widgetsAsignadosPorPanel: {
       panel_inicio: ["favoritos"],
       panel_agendamiento: ["agendar_cita", "mis_citas"],
-      panel_herramientas: ["historial_pagos", "facturacion_electronica", "catalogo_productos", "firma_documentos_pdf", "billetera_documentos", "financiamiento"],
+      panel_herramientas: ["historial_pagos", "catalogo_productos", "firma_documentos_pdf", "billetera_documentos", "financiamiento"],
       panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "historial_pagos", "mfa_seguridad", "historial_accesos"],
       panel_configuracion: ["notificaciones"]
     },
@@ -292,15 +292,15 @@ const PERFILES_INICIALES: PerfilDef[] = [
     panelesAsignados: ["panel_inicio", "panel_clientes", "panel_empresas", "panel_usuarios", "panel_red_profesional", "panel_terminos", "panel_agendamiento", "panel_administrar", "panel_cuenta", "panel_herramientas", "panel_configuracion"],
     widgetsAsignadosPorPanel: {
       panel_inicio: ["favoritos"],
-      panel_clientes: ["facturacion_electronica", "vitrina_comercial_personas", "muro_informativo_comunidad", "crm_clientes", "agendar_cita", "mis_citas", "billetera_documentos", "firma_documentos_pdf", "financiamiento"],
-      panel_empresas: ["facturacion_electronica", "vitrina_comercial_empresas", "gestion_convenios_corporativos", "crm_clientes", "billetera_documentos", "firma_documentos_pdf"],
+      panel_clientes: ["historial_pagos", "vitrina_comercial_personas", "muro_informativo_comunidad", "crm_clientes", "agendar_cita", "mis_citas", "billetera_documentos", "firma_documentos_pdf", "financiamiento"],
+      panel_empresas: ["historial_pagos", "vitrina_comercial_empresas", "gestion_convenios_corporativos", "crm_clientes", "billetera_documentos", "firma_documentos_pdf"],
       panel_usuarios: ["consulta_usuarios_perfiles", "monitoreo_notificaciones_usuarios"],
       panel_red_profesional: ["gestion_red_abogados", "socios", "paquete_beneficios_abogados", "solicitud_socio"],
       panel_terminos: ["gestion_terminos_consentimientos", "configuracion_contrato_abogado"],
       panel_agendamiento: ["horarios_atencion_agenda", "disponibilidad_abogados", "asignaciones_agenda"],
-      panel_administrar: ["gestion_red_abogados", "gestion_informativos", "gestion_convenios_corporativos", "disponibilidad_abogados", "facturacion_electronica", "historial_pagos", "emision_notificaciones", "bitacora_notificaciones"],
+      panel_administrar: ["gestion_red_abogados", "gestion_informativos", "gestion_convenios_corporativos", "disponibilidad_abogados", "historial_pagos", "emision_notificaciones", "bitacora_notificaciones"],
       panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "historial_pagos", "mfa_seguridad", "historial_accesos"],
-      panel_herramientas: ["facturacion_electronica", "catalogo_productos", "disponibilidad_abogados", "firma_documentos_pdf", "billetera_documentos"],
+      panel_herramientas: ["historial_pagos", "catalogo_productos", "disponibilidad_abogados", "firma_documentos_pdf", "billetera_documentos"],
       panel_configuracion: ["notificaciones", "agentes_ia"]
     },
     activo: true
@@ -311,10 +311,11 @@ const PERFILES_INICIALES: PerfilDef[] = [
     nivel: 50,
     ambito: "Empresa",
     descripcion: "Perfil profesional para atención legal de causas, citas, disponibilidad y especialidades.",
-    panelesAsignados: ["panel_inicio", "panel_agendamiento", "panel_cuenta"],
+    panelesAsignados: ["panel_inicio", "panel_agendamiento", "panel_herramientas", "panel_cuenta"],
     widgetsAsignadosPorPanel: {
       panel_inicio: ["favoritos"],
       panel_agendamiento: ["mi_perfil_abogado", "disponibilidad", "citas_programadas", "paquete_beneficios_abogados", "billetera_documentos", "firma_documentos_pdf"],
+      panel_herramientas: ["historial_pagos", "firma_documentos_pdf", "billetera_documentos"],
       panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos", "historial_pagos", "notificaciones"]
     },
     activo: true
@@ -328,15 +329,15 @@ const PERFILES_INICIALES: PerfilDef[] = [
     panelesAsignados: ["panel_inicio", "panel_clientes", "panel_empresas", "panel_usuarios", "panel_red_profesional", "panel_terminos", "panel_agendamiento", "panel_administrar", "panel_cuenta", "panel_herramientas", "panel_configuracion"],
     widgetsAsignadosPorPanel: {
       panel_inicio: ["favoritos"],
-      panel_clientes: ["facturacion_electronica", "vitrina_comercial_personas", "muro_informativo_comunidad", "crm_clientes", "agendar_cita", "mis_citas", "billetera_documentos", "firma_documentos_pdf", "financiamiento"],
-      panel_empresas: ["facturacion_electronica", "vitrina_comercial_empresas", "gestion_convenios_corporativos", "crm_clientes", "billetera_documentos", "firma_documentos_pdf"],
+      panel_clientes: ["historial_pagos", "vitrina_comercial_personas", "muro_informativo_comunidad", "crm_clientes", "agendar_cita", "mis_citas", "billetera_documentos", "firma_documentos_pdf", "financiamiento"],
+      panel_empresas: ["historial_pagos", "vitrina_comercial_empresas", "gestion_convenios_corporativos", "crm_clientes", "billetera_documentos", "firma_documentos_pdf"],
       panel_usuarios: ["gestion_usuarios", "consulta_usuarios_perfiles", "monitoreo_notificaciones_usuarios"],
       panel_red_profesional: ["gestion_red_abogados", "socios", "paquete_beneficios_abogados", "solicitud_socio"],
       panel_terminos: ["gestion_terminos_consentimientos", "configuracion_contrato_abogado"],
       panel_agendamiento: ["horarios_atencion_agenda", "disponibilidad_abogados", "asignaciones_agenda"],
-      panel_administrar: ["gestion_red_abogados", "gestion_informativos", "gestion_convenios_corporativos", "disponibilidad_abogados", "facturacion_electronica", "historial_pagos", "emision_notificaciones", "bitacora_notificaciones", "perfiles", "auditoria"],
+      panel_administrar: ["gestion_red_abogados", "gestion_informativos", "gestion_convenios_corporativos", "disponibilidad_abogados", "historial_pagos", "emision_notificaciones", "bitacora_notificaciones", "perfiles", "auditoria"],
       panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "historial_pagos", "mfa_seguridad", "historial_accesos"],
-      panel_herramientas: ["facturacion_electronica", "catalogo_productos", "disponibilidad_abogados", "firma_documentos_pdf", "billetera_documentos"],
+      panel_herramientas: ["historial_pagos", "catalogo_productos", "disponibilidad_abogados", "firma_documentos_pdf", "billetera_documentos"],
       panel_configuracion: ["configuracion_negocio", "configuracion_correo", "pasarela_payphone", "perfiles", "agentes_ia", "notificaciones", "tokens_mcp"]
     },
     activo: true
@@ -350,15 +351,15 @@ const PERFILES_INICIALES: PerfilDef[] = [
     panelesAsignados: ["panel_inicio", "panel_clientes", "panel_empresas", "panel_usuarios", "panel_red_profesional", "panel_terminos", "panel_agendamiento", "panel_administrar", "panel_cuenta", "panel_herramientas", "panel_configuracion"],
     widgetsAsignadosPorPanel: {
       panel_inicio: ["favoritos"],
-      panel_clientes: ["facturacion_electronica", "vitrina_comercial_personas", "muro_informativo_comunidad", "crm_clientes", "agendar_cita", "mis_citas", "billetera_documentos", "firma_documentos_pdf", "financiamiento"],
-      panel_empresas: ["facturacion_electronica", "vitrina_comercial_empresas", "gestion_convenios_corporativos", "crm_clientes", "billetera_documentos", "firma_documentos_pdf"],
+      panel_clientes: ["historial_pagos", "vitrina_comercial_personas", "muro_informativo_comunidad", "crm_clientes", "agendar_cita", "mis_citas", "billetera_documentos", "firma_documentos_pdf", "financiamiento"],
+      panel_empresas: ["historial_pagos", "vitrina_comercial_empresas", "gestion_convenios_corporativos", "crm_clientes", "billetera_documentos", "firma_documentos_pdf"],
       panel_usuarios: ["gestion_usuarios", "consulta_usuarios_perfiles", "monitoreo_notificaciones_usuarios"],
       panel_red_profesional: ["gestion_red_abogados", "mi_perfil_abogado", "socios", "paquete_beneficios_abogados", "solicitud_socio"],
       panel_terminos: ["gestion_terminos_consentimientos", "configuracion_contrato_abogado"],
       panel_agendamiento: ["horarios_atencion_agenda", "mi_perfil_abogado", "disponibilidad_abogados", "asignaciones_agenda"],
-      panel_administrar: ["gestion_red_abogados", "gestion_informativos", "gestion_convenios_corporativos", "disponibilidad_abogados", "facturacion_electronica", "historial_pagos", "emision_notificaciones", "bitacora_notificaciones", "perfiles", "auditoria"],
+      panel_administrar: ["gestion_red_abogados", "gestion_informativos", "gestion_convenios_corporativos", "disponibilidad_abogados", "historial_pagos", "emision_notificaciones", "bitacora_notificaciones", "perfiles", "auditoria"],
       panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "historial_pagos", "mfa_seguridad", "historial_accesos"],
-      panel_herramientas: ["facturacion_electronica", "catalogo_productos", "disponibilidad_abogados", "firma_documentos_pdf", "billetera_documentos"],
+      panel_herramientas: ["historial_pagos", "catalogo_productos", "disponibilidad_abogados", "firma_documentos_pdf", "billetera_documentos"],
       panel_configuracion: ["configuracion_negocio", "configuracion_correo", "pasarela_payphone", "perfiles", "agentes_ia", "notificaciones", "tokens_mcp"]
     },
     activo: true,
@@ -591,24 +592,13 @@ const WIDGETS_INVENTARIO_INICIALES: WidgetInventarioDef[] = [
     creadoEn: "2026-08-20"
   },
   {
-    clave: "facturacion_electronica",
-    nombre: "Facturación Electrónica & Comprobantes SRI",
-    descripcion: "Valores generados vs. valores pagados, detalle del rubro facturado, emisión automática con tarjeta y registro manual de pagos con factura electrónica.",
-    categoria: "Comercio y Pagos",
-    ruta: "/panel/herramientas?widget=facturacion_electronica",
-    rutaFisica: "/comercio/componentes/WidgetFacturacionElectronica.tsx",
-    panelId: "panel_herramientas",
-    activo: true,
-    creadoEn: "2026-11-08"
-  },
-  {
     clave: "historial_pagos",
-    nombre: "Historial de Transacciones & Pagos",
-    descripcion: "Auditoría contable inmutable de cobros bancarios, detalle de rubro facturado y facturas electrónicas emitidas.",
+    nombre: "Historial de Pagos",
+    descripcion: "Valores generados, valores pagados, detalle del rubro facturado y descarga/emisión de facturas electrónicas SRI.",
     categoria: "Comercio y Pagos",
-    ruta: "/panel/cuenta?widget=historial_pagos",
+    ruta: "/panel/herramientas?widget=historial_pagos",
     rutaFisica: "/comercio/componentes/HistorialTransaccionesPago.tsx",
-    panelId: "panel_cuenta",
+    panelId: "panel_herramientas",
     activo: true,
     creadoEn: "2026-08-21"
   },
@@ -1552,6 +1542,14 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
               if (widgetsMerged[panelKey] === undefined) {
                 // Solo asignar por defecto si el panel nunca fue configurado
                 widgetsMerged[panelKey] = [...listBase];
+              }
+            });
+
+            Object.entries(widgetsMerged).forEach(([panelKey, currentList]) => {
+              if (Array.isArray(currentList)) {
+                widgetsMerged[panelKey] = Array.from(
+                  new Set(currentList.map((w: string) => (w === "facturacion_electronica" ? "historial_pagos" : w)))
+                );
               }
             });
 

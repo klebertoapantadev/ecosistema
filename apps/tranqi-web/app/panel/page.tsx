@@ -32,7 +32,7 @@ const NEGOCIO = "tranqi";
 
 const ACCESOS_CLIENTE: { icono: LucideIcon; nombre: string; detalle: string; href?: string }[] = [
   { icono: ShoppingBag, nombre: "Catálogo & Servicios", detalle: "Honorarios y planes legales", href: "/panel/catalogo-productos" },
-  { icono: Receipt, nombre: "Mis Pagos & Facturas", detalle: "Historial y descarga de factura SRI", href: "/panel/herramientas?widget=historial_pagos" },
+  { icono: Receipt, nombre: "Historial de Pagos", detalle: "Pagos realizados y descarga de factura SRI", href: "/panel/herramientas?widget=historial_pagos" },
   { icono: Bell, nombre: "Avisos & Alertas", detalle: "Novedades y alertas legales", href: "/panel/herramientas?widget=muro_informativo_comunidad" },
   { icono: Folder, nombre: "Billetera digital", detalle: "Documentos con OCR y TTL", href: "/panel/billetera-documentos" },
   { icono: FileCheck, nombre: "Firmar un documento", detalle: "Con tu certificado digital", href: "/panel/firma-documentos" },
@@ -50,8 +50,7 @@ const ACCESOS_ABOGADO: { icono: LucideIcon; nombre: string; detalle: string; hre
 ];
 
 const WIDGETS_OPERADOR: { clave: string; icono: LucideIcon; nombre: string; detalle: string; ruta: string }[] = [
-  { clave: "facturacion_electronica", icono: Receipt, nombre: "Facturación & Registrar Pago", detalle: "Registrar cobros manuales y emitir factura SRI", ruta: "/panel/herramientas?widget=facturacion_electronica" },
-  { clave: "historial_pagos", icono: CreditCard, nombre: "Historial de Pagos", detalle: "Valores generados, pagados y comprobantes", ruta: "/panel/administrar?widget=historial_pagos" },
+  { clave: "historial_pagos", icono: CreditCard, nombre: "Historial de Pagos", detalle: "Valores generados, pagados y comprobantes SRI", ruta: "/panel/administrar?widget=historial_pagos" },
   { clave: "gestion_red_abogados", icono: UserCheck, nombre: "Red Profesional & Abogados", detalle: "Alta manual, especialidades y horarios", ruta: "/panel/red-profesional?widget=gestion_red_abogados" },
   { clave: "gestion_informativos", icono: Bell, nombre: "Gestión de Informativos", detalle: "Alertas, noticias y beneficios", ruta: "/panel/administrar?widget=gestion_informativos" },
   { clave: "crm_clientes", icono: Users, nombre: "CRM Jurídico & Clientes", detalle: "Directorio 360°, KPIs y alta asistida", ruta: "/panel/clientes" },
@@ -68,7 +67,7 @@ const WIDGETS_OPERADOR: { clave: string; icono: LucideIcon; nombre: string; deta
 ];
 
 const WIDGETS_ADMIN: { clave: string; icono: LucideIcon; nombre: string; detalle: string; ruta: string; estado: "registrado" | "proximamente" }[] = [
-  { clave: "facturacion_electronica", icono: Receipt, nombre: "Facturación & Registrar Pago", detalle: "Registrar cobros manuales y emitir factura SRI", ruta: "/panel/herramientas?widget=facturacion_electronica", estado: "registrado" },
+  { clave: "historial_pagos", icono: Receipt, nombre: "Historial de Pagos", detalle: "Valores generados, pagados y comprobantes SRI", ruta: "/panel/herramientas?widget=historial_pagos", estado: "registrado" },
   { clave: "gestion_red_abogados", icono: UserCheck, nombre: "Red Profesional & Abogados", detalle: "Alta manual, especialidades y horarios", ruta: "/panel/red-profesional?widget=gestion_red_abogados", estado: "registrado" },
   { clave: "gestion_informativos", icono: Bell, nombre: "Gestión de Informativos", detalle: "Alertas y novedades", ruta: "/panel/administrar?widget=gestion_informativos", estado: "registrado" },
   { clave: "catalogo_productos", icono: ShoppingBag, nombre: "Catálogo & Honorarios", detalle: "Servicios y precios con IVA", ruta: "/panel/catalogo-productos", estado: "registrado" },
