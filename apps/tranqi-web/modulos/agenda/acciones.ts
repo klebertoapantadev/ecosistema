@@ -1390,8 +1390,8 @@ export async function decidirCitaAction(entrada: unknown): Promise<Resultado<{ r
     p_motivo: d.motivo ?? undefined,
   });
 
-  if (error) {
-    // Fallback administrativo si el RPC falla por no tener fila en comun_agenda
+  if (error || d.decision === "marcar_realizada" || d.decision === "cancelar") {
+    // Asegurar sincronización directa en trq_cita para todos los paneles (Abogado, Operador y Cliente)
     const cambiosDirectos: {
       cit_actualizado_en: string;
       cit_estado?: string;
@@ -1405,7 +1405,7 @@ export async function decidirCitaAction(entrada: unknown): Promise<Resultado<{ r
       .update(cambiosDirectos)
       .eq("cit_id", d.cita_id);
 
-    if (errDirecto) return { ok: false, error: comoError(error.message) };
+    if (error && errDirecto) return { ok: false, error: comoError(error.message) };
   }
 
   const seqPosterior = await registrarEventoYEstadoGestionCita(db, d.cita_id, {

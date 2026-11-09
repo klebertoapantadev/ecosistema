@@ -190,13 +190,21 @@ export default function MesaAsignaciones({
   }, [anioMes]);
 
   const citasFiltradas = useMemo(() => {
-    return citasNormalizadas.filter((c) => {
+    const filtradas = citasNormalizadas.filter((c) => {
       if (diaSeleccionado && c.clave_dia !== diaSeleccionado) return false;
       if (filtroEstado === "sin_abogado" && c.tiene_abogado) return false;
       if (filtroEstado === "con_abogado" && !c.tiene_abogado) return false;
       if (filtroEstado === "virtual" && c.cit_modalidad === "presencial") return false;
       if (filtroEstado === "presencial" && c.cit_modalidad !== "presencial") return false;
       return true;
+    });
+
+    // Mostrar las citas activas primero y las ya atendidas ("realizada") al final con estilo opaco
+    return [...filtradas].sort((a, b) => {
+      const aRealizada = a.cit_estado === "realizada" ? 1 : 0;
+      const bRealizada = b.cit_estado === "realizada" ? 1 : 0;
+      if (aRealizada !== bRealizada) return aRealizada - bRealizada;
+      return new Date(a.cit_inicio_en).getTime() - new Date(b.cit_inicio_en).getTime();
     });
   }, [citasNormalizadas, diaSeleccionado, filtroEstado]);
 
@@ -656,33 +664,47 @@ export default function MesaAsignaciones({
                     <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
                       {citasDia.slice(0, 3).map((c) => {
                         const esPres = c.cit_modalidad === "presencial";
+                        const esRealizadaCelda = c.cit_estado === "realizada";
                         const hora = FORMATO_HORA.format(new Date(c.cit_inicio_en));
                         return (
                           <div
                             key={c.cit_id}
                             title={`${hora} · ${esPres ? "Presencial" : "Telemática"} · ${c.cliente_nombre} · ${
-                              c.tiene_abogado ? `Abg: ${c.abogado_nombre}` : "SIN ABOGADO"
+                              esRealizadaCelda
+                                ? "CONSULTA REALIZADA"
+                                : c.tiene_abogado
+                                ? `Abg: ${c.abogado_nombre}`
+                                : "SIN ABOGADO"
                             }`}
                             style={{
                               fontSize: "0.68rem",
                               padding: "2px 5px",
                               borderRadius: "5px",
-                              background: !c.tiene_abogado
+                              opacity: esRealizadaCelda ? 0.68 : 1,
+                              background: esRealizadaCelda
+                                ? "#E2E8F0"
+                                : !c.tiene_abogado
                                 ? "#FFFBEB"
                                 : esPres
                                 ? "#E0F2FE"
                                 : "#F3E8FF",
                               borderLeft: `3px solid ${
-                                !c.tiene_abogado ? "#F59E0B" : esPres ? "#0284C7" : "#7C3AED"
+                                esRealizadaCelda
+                                  ? "#64748B"
+                                  : !c.tiene_abogado
+                                  ? "#F59E0B"
+                                  : esPres
+                                  ? "#0284C7"
+                                  : "#7C3AED"
                               }`,
-                              color: "#0F172A",
+                              color: esRealizadaCelda ? "#475569" : "#0F172A",
                               whiteSpace: "nowrap",
                               overflow: "hidden",
                               textOverflow: "ellipsis",
                               fontWeight: 700,
                             }}
                           >
-                            {esPres ? "🏢" : "🎥"} {hora} {c.tiene_abogado ? "✅" : "⚠️"}
+                            {esPres ? "🏢" : "🎥"} {hora} {esRealizadaCelda ? "✓" : c.tiene_abogado ? "✅" : "⚠️"}
                           </div>
                         );
                       })}
@@ -753,6 +775,150 @@ export default function MesaAsignaciones({
                 const estadoAceptacion = c.gestion_reunion?.estado_aceptacion_abogado ?? "pendiente";
                 const logEventos = c.gestion_reunion?.eventos_log ?? [];
                 const verLog = citaLogAbierta === c.cit_id;
+                const esRealizada = c.cit_estado === "realizada";
+
+                // Vista compacta, opaca y de información básica para citas ya atendidas ("realizada") en consola operativa
+                if (esRealizada) {
+                  return (
+                    <div
+                      key={c.cit_id}
+                      style={{
+                        background: "#F1F5F9",
+                        borderRadius: "12px",
+                        border: "1px solid #CBD5E1",
+                        padding: "12px 16px",
+                        opacity: 0.78,
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "10px",
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          flexWrap: "wrap",
+                          gap: "10px",
+                        }}
+                      >
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "8px",
+                            flexWrap: "wrap",
+                          }}
+                        >
+                          <strong
+                            style={{
+                              fontSize: "0.92rem",
+                              color: "#475569",
+                              textTransform: "capitalize",
+                            }}
+                          >
+                            {FORMATO_FECHA_LARGA.format(inicio)}
+                          </strong>
+                          <span
+                            style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "4px",
+                              padding: "2px 8px",
+                              borderRadius: "999px",
+                              fontSize: "0.72rem",
+                              fontWeight: 700,
+                              background: "#E2E8F0",
+                              color: "#475569",
+                            }}
+                          >
+                            {esPresencial ? <Building2 size={12} /> : <Video size={12} />}
+                            {esPresencial ? "Presencial" : "Telemática"}
+                          </span>
+                          <span
+                            style={{
+                              padding: "2px 8px",
+                              borderRadius: "999px",
+                              fontSize: "0.72rem",
+                              fontWeight: 700,
+                              background: "#E2E8F0",
+                              color: "#475569",
+                            }}
+                          >
+                            ⚖️ {c.materia_nombre}
+                          </span>
+                          <span style={{ fontSize: "0.82rem", color: "#475569" }}>
+                            · <strong>👤 Cliente:</strong> {c.cliente_nombre}
+                          </span>
+                          {c.abogado_nombre && (
+                            <span style={{ fontSize: "0.8rem", color: "#475569" }}>
+                              · <strong>👨‍⚖️ Abogado:</strong> Dr(a). {c.abogado_nombre}
+                            </span>
+                          )}
+                        </div>
+
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "8px",
+                            flexWrap: "wrap",
+                          }}
+                        >
+                          <span
+                            style={{
+                              padding: "3px 10px",
+                              borderRadius: "999px",
+                              fontSize: "0.73rem",
+                              fontWeight: 800,
+                              background: "#E2E8F0",
+                              color: "#334155",
+                              border: "1px solid #CBD5E1",
+                            }}
+                          >
+                            ✅ Consulta Realizada
+                          </span>
+
+                          <button
+                            type="button"
+                            onClick={() => setCitaLogAbierta(verLog ? null : c.cit_id)}
+                            title="Visualizar bajo demanda el Tracking de esta consulta atendida"
+                            aria-label="Ver Tracking"
+                            style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "5px",
+                              padding: "5px 10px",
+                              borderRadius: "8px",
+                              border: "1px solid #94A3B8",
+                              background: verLog ? "#334155" : "#FFFFFF",
+                              color: verLog ? "#FFFFFF" : "#334155",
+                              fontWeight: 800,
+                              fontSize: "0.75rem",
+                              cursor: "pointer",
+                            }}
+                          >
+                            <GitCommit size={13} />
+                            {verLog ? "Ocultar Tracking" : `Tracking (${logEventos.length})`}
+                          </button>
+                        </div>
+                      </div>
+
+                      {verLog && (
+                        <div style={{ marginTop: "4px" }}>
+                          <LineaTiempoTrackingCita
+                            cita={c}
+                            rolVista="OPERADOR"
+                            alActualizar={() => {
+                              alActualizar?.();
+                              router.refresh();
+                            }}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  );
+                }
 
                 return (
                   <div

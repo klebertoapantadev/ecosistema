@@ -858,6 +858,16 @@ async function enriquecerCitasConExpedienteYLog(filasRaw: Array<Record<string, u
       actualizado_en: gestionGuardada?.actualizado_en ?? null,
     };
 
+    const tieneEventorealizada = eventosUnificados.some((e) =>
+      typeof e.resumen === "string" &&
+      (e.resumen.includes("marcada como ejecutada/realizada") ||
+        e.resumen.includes("Reunión finalizada y acta registrada")),
+    );
+    const estadoEfectivo =
+      String(c.cit_estado ?? "confirmada") === "realizada" || tieneEventorealizada
+        ? "realizada"
+        : String(c.cit_estado ?? "confirmada");
+
     return {
       cit_id: citaId,
       cit_caso_id: casoId,
@@ -865,7 +875,7 @@ async function enriquecerCitasConExpedienteYLog(filasRaw: Array<Record<string, u
       cit_inicio_en: String(c.cit_inicio_en),
       cit_fin_en: c.cit_fin_en ? String(c.cit_fin_en) : null,
       cit_modalidad: String(c.cit_modalidad ?? "virtual"),
-      cit_estado: String(c.cit_estado ?? "confirmada"),
+      cit_estado: estadoEfectivo,
       cit_motivo: c.cit_motivo ? String(c.cit_motivo) : null,
       cit_enlace: c.cit_enlace ? String(c.cit_enlace) : null,
       cit_lugar: c.cit_lugar ? String(c.cit_lugar) : null,
